@@ -217,3 +217,61 @@ describe('tryCoalesce M3 group merge (§4.4 align/distribute/z-order consecutive
     expect(tryCoalesce(top, incoming)).toBeUndefined();
   });
 });
+
+// HCA10-P2-1: M2 coalesce must preserve payload integrity. A forward diff carrying
+// `variables` or `reordered` is NOT a pure single-node property update and must not be
+// silently stripped by the merge (which only re-emits `updated`).
+describe('tryCoalesce payload integrity (HCA10-P2-1: do not drop variables/reordered)', () => {
+  it('does NOT coalesce when forward carries variables diff (would drop variables)', () => {
+    const top: UndoStackEntry = {
+      forward: {
+        added: [],
+        removed: [],
+        updated: [{ id: 'a', patch: { x: 10 } }],
+        variables: { added: [], removed: [], updated: [{ id: 'v1', patch: { value: 2 } }] },
+      },
+      inverse: { added: [], removed: [], updated: [{ id: 'a', patch: { x: 0 } }] },
+      operationKind: 'update-symbol',
+      timestamp: 1000,
+    };
+    const incoming: UndoStackEntry = {
+      forward: {
+        added: [],
+        removed: [],
+        updated: [{ id: 'a', patch: { x: 20 } }],
+        variables: { added: [], removed: [], updated: [{ id: 'v1', patch: { value: 3 } }] },
+      },
+      inverse: { added: [], removed: [], updated: [{ id: 'a', patch: { x: 10 } }] },
+      operationKind: 'update-symbol',
+      timestamp: 1100,
+    };
+    // Must NOT merge: a diff carrying variables is not a pure single-node property update.
+    expect(tryCoalesce(top, incoming)).toBeUndefined();
+  });
+
+  it('does NOT coalesce when forward carries reordered diff (would drop reorder)', () => {
+    const top: UndoStackEntry = {
+      forward: {
+        added: [],
+        removed: [],
+        updated: [{ id: 'a', patch: { x: 10 } }],
+        reordered: ['a', 'b'],
+      },
+      inverse: { added: [], removed: [], updated: [{ id: 'a', patch: { x: 0 } }] },
+      operationKind: 'update-symbol',
+      timestamp: 1000,
+    };
+    const incoming: UndoStackEntry = {
+      forward: {
+        added: [],
+        removed: [],
+        updated: [{ id: 'a', patch: { x: 20 } }],
+        reordered: ['b', 'a'],
+      },
+      inverse: { added: [], removed: [], updated: [{ id: 'a', patch: { x: 10 } }] },
+      operationKind: 'update-symbol',
+      timestamp: 1100,
+    };
+    expect(tryCoalesce(top, incoming)).toBeUndefined();
+  });
+});

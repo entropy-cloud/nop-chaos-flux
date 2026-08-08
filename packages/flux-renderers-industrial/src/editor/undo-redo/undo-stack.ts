@@ -148,9 +148,12 @@ export class UndoStack {
   replaceUndoTop(entry: UndoStackEntry): void {
     if (this.undoStack.length === 0) {
       this.undoStack.push(entry);
-      return;
+    } else {
+      this.undoStack[this.undoStack.length - 1] = entry;
     }
-    this.undoStack[this.undoStack.length - 1] = entry;
+    // 合并替换也是一次「新提交」（coalesce-merge 产出新 forward），按 U6 截断 redo 分支，
+    // 与 push 同语义（design-undo-redo.md §4.5 + §12.1 U6：undo 后任何新操作丢弃 redoStack）。
+    this.redoStack = [];
   }
 
   /** 清空两栈（load 句柄消费，design-undo-redo.md §8.2 编辑历史不保留）。 */

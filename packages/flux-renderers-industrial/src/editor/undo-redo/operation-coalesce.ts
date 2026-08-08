@@ -99,10 +99,13 @@ function isCoalescable(kind: EditorOperationKind): boolean {
   return kind === 'update-symbol' || kind === 'property-edit';
 }
 
-/** 若 diff 是「单 nodeId + 纯属性更新（added/removed 空）」则返回该 update，否则 undefined。 */
+/** 若 diff 是「单 nodeId + 纯属性更新（added/removed 空，无 variables/reordered）」则返回该 update，否则 undefined。 */
 function singleNodeUpdate(diff: ScadaConfigDiff): { id: string; patch: Partial<ScadaSymbolNode> } | undefined {
   if (diff.added.length > 0 || diff.removed.length > 0) return undefined;
   if (diff.updated.length !== 1) return undefined;
+  // 携带 variables 或 reordered 的 diff 不是纯单节点属性更新——合并只搬运 updated 字段，
+  // 若放行会静默丢弃 variables/reordered 载荷（mergedForward 只构造 updated）。拒绝合并以保载荷完整。
+  if (diff.variables !== undefined || diff.reordered !== undefined) return undefined;
   return diff.updated[0];
 }
 

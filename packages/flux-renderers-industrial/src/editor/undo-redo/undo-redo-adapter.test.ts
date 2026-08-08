@@ -127,6 +127,38 @@ describe('UndoRedoAdapter pushOperation coalesce (design-undo-redo.md §4.4)', (
     adapter.pushOperation('update-symbol', cfg([node('a', 10), node('b', 0)]), cfg([node('a', 10), node('b', 5)]));
     expect(stack.undoStackDepth).toBe(2);
   });
+
+  // HCA10-P1-1 end-to-end: a coalesced commit after an undo must truncate the redo
+  // branch (plan Failure Path `redo-after-new-commit` + design U6).
+  it('coalesce-merge after undo truncates redo branch (U6 redo-after-new-commit)', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    vi.useFakeTimers();
+    const t0 = Date.now();
+    // E1: update a.x=10
+    adapter.pushOperation('update-symbol', cfg([node('a', 0)]), cfg([node('a', 10)]));
+    // E2: update b.y (different node, not coalescable with E1)
+    vi.setSystemTime(t0 + 50);
+    adapter.pushOperation(
+      'update-symbol',
+      cfg([node('a', 10), { id: 'b', type: 'scada-rect', x: 0, y: 0, width: 1, height: 1 }]),
+      cfg([node('a', 10), { id: 'b', type: 'scada-rect', x: 0, y: 5, width: 1, height: 1 }]),
+    );
+    expect(stack.undoStackDepth).toBe(2);
+    // undo E2 → redoStack non-empty
+    adapter.undo();
+    expect(stack.redoStackDepth).toBe(1);
+    expect(stack.canRedo).toBe(true);
+    // new coalescable edit on a.x (same nodeId + same field + within 500ms of E1)
+    vi.setSystemTime(t0 + 100);
+    adapter.pushOperation('update-symbol', cfg([node('a', 10)]), cfg([node('a', 20)]));
+    vi.useRealTimers();
+    // U6: the merged commit must discard the redo branch
+    expect(stack.undoStackDepth).toBe(1);
+    expect(stack.redoStackDepth).toBe(0);
+    expect(stack.canRedo).toBe(false);
+    expect(stack.peekUndoTop()!.forward.updated[0].patch.x).toBe(20);
+  });
 });
 
 describe('UndoRedoAdapter pushForward (structure diff + coalesce path)', () => {

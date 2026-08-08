@@ -132,4 +132,23 @@ describe('UndoStack replaceUndoTop (coalesce merge)', () => {
     stack.replaceUndoTop(merged);
     expect(stack.peekUndoTop()).toBe(merged);
   });
+
+  // HCA10-P1-1: replaceUndoTop is a "new commit" path (coalesce-merge) and must
+  // truncate the redo branch per U6 (design-undo-redo.md §4.5 + §12.1 U6), same as push.
+  it('replaceUndoTop clears redo stack (U6: coalesce-merge is a new commit)', () => {
+    const stack = new UndoStack();
+    stack.push(entry('update-symbol', 1));
+    stack.push(entry('update-symbol', 2));
+    // undo the top entry → redoStack non-empty
+    stack.popForUndo();
+    expect(stack.redoStackDepth).toBe(1);
+    expect(stack.canRedo).toBe(true);
+    // a new coalescable edit merges via replaceUndoTop
+    const merged = entry('property-edit', 3);
+    stack.replaceUndoTop(merged);
+    // U6: new commit (even merged) must discard the redo branch
+    expect(stack.redoStackDepth).toBe(0);
+    expect(stack.canRedo).toBe(false);
+    expect(stack.peekUndoTop()).toBe(merged);
+  });
 });
