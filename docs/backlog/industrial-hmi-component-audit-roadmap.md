@@ -263,7 +263,7 @@ graph TD
 
 > 来源：2026-08-08-1712 两份 audit（open-ended adversarial + multi-dimensional）的 **P2** findings。P0/P1 分两波进 remediation plans：第一波 `docs/plans/2026-08-08-1809-{1,2,3}-industrial-scada-*.md`（F2/F4 + F1/F3/P1-1/P1-3 + P1-2/P1-4/P1-5），第二波 `docs/plans/2026-08-08-1910-{1,2,3}-industrial-scada-*.md`（A1 P0/A11/A12 + A2/A6/A7/A8 + A3/A4）。此处只登记 P2（非阻塞 polish），每条带源 audit 路径以保持可追溯。不驱动独立 plan，由后续 polish 轮或 CR-类 work item 收口。
 >
-> **第一波执行进度**：`2026-08-08-1809-1`（F2/F4）✅ completed（closure audit PASS fresh session `ses_01ece5f09ffelaMWMFqJ5u73pE`；assertShape finite 对齐 + validate 广度/总量上限 fail-closed 早退，industrial 1349 tests 零回归）；`1809-2` / `1809-3` 待执行。F10 follow-up 已可复用 1809-1 产出的 `isFiniteNumber` helper。
+> **第一波执行进度**：`2026-08-08-1809-1`（F2/F4）✅ completed（closure audit PASS fresh session `ses_01ece5f09ffelaMWMFqJ5u73pE`；assertShape finite 对齐 + validate 广度/总量上限 fail-closed 早退，industrial 1349 tests 零回归）；`2026-08-08-1809-2`（F1/F3/P1-1/P1-3）✅ completed（F1 缺失 variables 回归锁定；F3 `addWorkingSymbol` 单一 owner 碰撞自增去重对齐 group/paste；P1-1 `load`/`importConfigFn` 在 `resetSession` 前 `abortTransaction`；P1-3 `applyUndoRedoDiff` commit 后 `collectAllSymbols` 修剪 selection 经 `setSessionSelection` 同步 mirror+engine；failing-first 8 测断言跨 data↔engine 可观测结果，industrial 1358 tests 零回归；typecheck/build/lint 全绿）；`1809-3` 待执行。F10 follow-up 已可复用 1809-1 产出的 `isFiniteNumber` helper。
 
 ### 来自 `docs/audits/2026-08-08-1712-open-audit-industrial-hmi-component-audit.md`
 
