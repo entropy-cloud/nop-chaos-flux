@@ -30,14 +30,17 @@ const symbols: ScadaSymbolNode[] = [
 ];
 
 describe('collectSymbolBounds', () => {
-  it('flattens symbols including group children', () => {
+  it('flattens symbols including group children with accumulated parent offset', () => {
+    // plan 2026-08-09-0648-3 Phase 1 / P2-5：父 group 非零偏移——collectSymbolBounds 经
+    // collectWorldBounds 累加 parent offset（旧 x:0/y:0 → world==local，累加逻辑无论对错都通过=false-green）。
     const withGroup: ScadaSymbolNode[] = [
-      { id: 'g', type: 'scada-group', x: 0, y: 0, children: [{ id: 'c', type: 'scada-rect', x: 5, y: 6, width: 10, height: 12 }] },
+      { id: 'g', type: 'scada-group', x: 100, y: 50, children: [{ id: 'c', type: 'scada-rect', x: 5, y: 6, width: 10, height: 12 }] },
     ];
     const bounds = collectSymbolBounds(withGroup);
     expect(bounds).toEqual([
-      { id: 'g', x: 0, y: 0, width: 0, height: 0 },
-      { id: 'c', x: 5, y: 6, width: 10, height: 12 },
+      { id: 'g', x: 100, y: 50, width: 0, height: 0 },
+      // c local (5,6) + 父偏移 (100,50) → world (105, 56)。父偏移非 0 → 真断言。
+      { id: 'c', x: 105, y: 56, width: 10, height: 12 },
     ]);
   });
 

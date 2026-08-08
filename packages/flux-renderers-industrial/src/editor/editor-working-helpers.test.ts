@@ -18,8 +18,10 @@ const configWithCustom: ScadaConfig = {
     {
       id: 'g1',
       type: 'scada-group',
-      x: 0,
-      y: 0,
+      // plan 2026-08-09-0648-3 Phase 1 / P2-5：父 group 非零偏移——使 collectWorldBounds 的
+      // 父偏移累加能区分对错（旧 x:0/y:0 → world==local，累加逻辑无论对错都断言通过=false-green）。
+      x: 100,
+      y: 50,
       children: [
         {
           id: 'j2',
@@ -105,8 +107,13 @@ describe('collectAllSymbols + collectWorldBounds (regression)', () => {
   it('collectWorldBounds accumulates parent offset for group children', () => {
     const bounds = collectWorldBounds(configWithCustom.symbols, 0, 0);
     const j2 = bounds.find((b) => b.id === 'j2');
-    // j2 is child of g1 (x:0,y:0); j2 local (5,5) → world (5,5)
-    expect(j2?.x).toBe(5);
-    expect(j2?.y).toBe(5);
+    // plan 2026-08-09-0648-3 Phase 1 / P2-5：父 group g1 非零偏移 (x:100, y:50)；
+    // j2 local (5,5) → world = local + 父偏移 = (105, 55)。父偏移非 0 → 真断言（能区分累加对错）。
+    expect(j2?.x).toBe(105);
+    expect(j2?.y).toBe(55);
+    // sanity：g1 自身 world bounds == 其 local (100,50)（顶层无父偏移）。
+    const g1 = bounds.find((b) => b.id === 'g1');
+    expect(g1?.x).toBe(100);
+    expect(g1?.y).toBe(50);
   });
 });
