@@ -78,6 +78,10 @@ export function cloneConfigSnapshot(config: ScadaConfig): ScadaConfig {
 /** 递归深克隆图元（含 group children 子树；与 undo-redo-adapter.cloneNodeDeep 同语义）。 */
 function cloneNodeDeep(node: ScadaSymbolNode): ScadaSymbolNode {
   const clone: ScadaSymbolNode = { ...node };
+  // plan HCA11 P2-1（扩展 P2 #4）：深克隆 custom——与 editor-session.cloneNode 同纪律，使 prevSnapshot /
+  // synced.config / committedBaseline 与 working copy 间 custom 子对象引用隔离，任一 in-place 改
+  // custom.connections 不串改多份。对齐本函数 doc「deep-cloned」声明。
+  if (node.custom) clone.custom = structuredClone(node.custom);
   if (node.children) clone.children = node.children.map(cloneNodeDeep);
   return clone;
 }

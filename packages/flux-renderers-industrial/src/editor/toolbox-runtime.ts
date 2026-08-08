@@ -232,6 +232,12 @@ export function buildToolboxRuntime(ctx: EditorRuntimeContext): EditorToolboxRun
       latest.current.onSelectionChange?.([]);
       synced.config = cloneConfigSnapshot(session.workingConfig);
       engine.build(session.workingConfig);
+      // plan HCA11 P1-1（P1-08 parity）：build 后校正 engine.mode → session.mode。resetSession 强制
+      // session.mode='edit'，engine.build 用 engine.mode 决定 editable 注入；若此前在 preview 态调用
+      // importConfig，engine.mode 仍 'preview'（desync）。与 load()（runtime-mutators.ts）同型同步。
+      if (engine.currentMode !== session.mode) {
+        engine.setMode(session.mode);
+      }
       notifySession();
       return true;
     } catch (error) {

@@ -8,6 +8,7 @@ import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { validEditorConfig } from '../test-support/editor-config-fixtures.js';
 import { readScadaEditorTestHandle } from './editor-test-handle.js';
 import { industrialEditorRendererDefinitions } from './renderer-definitions.js';
+import type { ScadaConfig } from '../serialization/config-types.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
 vi.mock('@leafer-in/viewport', () => ({}));
@@ -332,5 +333,82 @@ describe('scada-editor-canvas operations (add/update/remove via test handle)', (
     expect(afterUngroup.some((s) => s.id === 'editor-rect')).toBe(true);
     expect(afterUngroup.some((s) => s.id === 'editor-rect-2')).toBe(true);
     expect(afterUngroup.some((s) => s.type === 'scada-group')).toBe(false);
+  });
+});
+
+describe('HCA11-P1-1: importConfig syncs engine.mode to session.mode (P1-08 parity)', () => {
+  it('importConfig after switchMode(preview) resyncs engine.mode back to edit (no desync)', async () => {
+    const { container } = renderEditor('import-mode-sync');
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const engine = handle.engine as { currentMode?: string };
+    // baseline: both edit
+    expect(handle.session.mode).toBe('edit');
+    expect(engine.currentMode).toBe('edit');
+    // switch to preview → both preview (switchMode updates both)
+    handle.switchMode('preview');
+    expect(handle.session.mode).toBe('preview');
+    expect(engine.currentMode).toBe('preview');
+    // import a fresh config while in preview → resetSession forces session.mode='edit';
+    // engine.mode must be resynced to 'edit' (P1-08 parity with load()).
+    const imported: ScadaConfig = {
+      version: 1,
+      variables: [],
+      symbols: [{ id: 'imported-rect', type: 'scada-rect', x: 5, y: 5, width: 10, height: 10 }],
+    };
+    const ok = handle.toolbox.importConfig(imported);
+    expect(ok).toBe(true);
+    expect(handle.session.mode).toBe('edit');
+    expect(handle.session.workingConfig.symbols.some((s) => s.id === 'imported-rect')).toBe(true);
+    // the core desync assertion: engine.mode follows session.mode back to edit
+    expect(engine.currentMode).toBe('edit');
+  });
+});
+
+describe('HCA11-P2-1: save committedBaseline isolates custom from working copy (R5 Layer 2)', () => {
+  it('save() deep-clones committedBaseline.custom (no shared ref with working copy)', async () => {
+    // junction-bearing config so custom.connections is present on a symbol
+    const junctionConfig: ScadaConfig = {
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'junction-save',
+          type: 'scada-pipe-junction',
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          custom: { connections: [{ id: 'c-save', x: 0.5, y: 0.5, direction: 'out', target: 'dev-save' }] },
+        },
+        { id: 'dev-save', type: 'scada-rect', x: 200, y: 0, width: 60, height: 60 },
+      ],
+    };
+    const SchemaRenderer = createSchemaRenderer(industrialEditorRendererDefinitions);
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://editor-ops/save-baseline-custom"
+        schema={{ type: 'scada-editor-canvas', config: junctionConfig as never }}
+        env={createDefaultEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+
+    // write a connection so custom.connections is freshly set on working copy, then save
+    handle.save();
+
+    const workingSymbol = handle.session.workingConfig.symbols.find((s) => s.id === 'junction-save')!;
+    const baselineSymbol = handle.session.committedBaseline.symbols.find((s) => s.id === 'junction-save')!;
+    // top-level symbol identity independent
+    expect(baselineSymbol).not.toBe(workingSymbol);
+    // custom must be deep-isolated (R5 Layer 2 — extends P2 #4 to save() baseline)
+    expect(baselineSymbol.custom).not.toBe(workingSymbol.custom);
+    // in-place mutation of working custom must not leak into baseline
+    const workingConn = (workingSymbol.custom as { connections: Array<{ x: number }> }).connections;
+    workingConn[0].x = 0.123;
+    const baselineConn = (baselineSymbol.custom as { connections: Array<{ x: number }> }).connections;
+    expect(baselineConn[0].x).toBe(0.5);
   });
 });

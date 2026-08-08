@@ -190,10 +190,10 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
 
   const save = (): string => {
     // commit baseline 到 working copy 当前态（manual 提交后 baseline = 当前 working copy）。
-    session.committedBaseline = {
-      ...session.workingConfig,
-      symbols: session.workingConfig.symbols.map((n) => ({ ...n })),
-    };
+    // plan HCA11 P2-1（扩展 P2 #4）：committedBaseline 经 cloneConfigSnapshot 深克隆（含 custom 深克隆），
+    // 与 createScadaEditorSession/resetSession 的 cloneConfig 同 R5 Layer 2 隔离纪律——避免浅 `{...n}`
+    // 共享 custom/children ref 致 working in-place 改动串改 baseline。
+    session.committedBaseline = cloneConfigSnapshot(session.workingConfig);
     const serialized = serializeScadaConfig(session.workingConfig);
     // plan 2026-08-07-1835-2 Phase 2 / multi P1-04：dispatch scada-editor:save → host onSave 收到 serializedConfig
     // （此前 save 仅 mutate state、0 dispatch 站点；onSave schema 事件声明但永不触发）。
