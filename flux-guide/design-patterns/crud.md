@@ -234,6 +234,7 @@ CRUD 把只读摘要发布到 scope 的 `$crud`，可在任意子节点表达式
 - `listActions` 里的按钮可用 `${$crud.hasSelection}` 控制禁用态。
 - 跨页选择保留：`keepOnPageChange: true`。
 - 按行可勾选条件：`selection.checkableWhen`（raw 表达式，行 scope 求值）。
+- **批量操作参数映射（AMIS 兼容）**：CRUD 把选中行键以 `selectionField` 指定的名字（默认 `ids`）发布到按钮 action scope，后端生成的 `@mutation:X__batchDelete?ids=${ids}` 可直接解析。与 `pageField`/`pageSizeField` 同一参数名映射模式；自定义名用 `selectionField: "selectedPositionIds"` 并写 `${selectedPositionIds}`。
 
 ---
 
