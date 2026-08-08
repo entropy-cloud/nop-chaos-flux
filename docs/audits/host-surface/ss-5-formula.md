@@ -48,7 +48,7 @@ ss-5 公式面：`spreadsheet:setCellFormula` 命令链（host contract setCellF
 
 ## 组合宿主场景（真实浏览器验证，bug 73 模式专项）
 
-- 场景（Phase 5 新增）: 独立宿主页 seed 含 formula 单元格（经宿主按钮 dispatch setCellFormula → 单元格 formula 存储断言）| 断言: 宿主页暴露公式按钮或经 window hook 读取 core.exportDocument() | 结果: 待 Phase 5
+- 场景（Phase 5 新增）: 独立宿主页 seed 含 formula 单元格（经宿主按钮 dispatch setCellFormula → 单元格 formula 存储断言）| 断言: 宿主页暴露公式按钮或经 window hook 读取 core.exportDocument() | 结果: pass（`tests/e2e/spreadsheet-demo.spec.ts:99` formula 写入 + window hook 导出断言，10/10 全绿）
 
 ## 修复记录
 
@@ -56,4 +56,4 @@ ss-5 公式面：`spreadsheet:setCellFormula` 命令链（host contract setCellF
 
 ## Closure
 
-- 独立 closure audit: pass | fail + 记录位置（fresh session）
+- 独立 closure audit: **pass**（独立 fresh session 于 2026-08-09 正式收口，轮 1 fail（1 Major + 3 Minor 全修复）→ 轮 2 pass；证据见 plan `docs/plans/2026-08-08-1315-1-round2-d32-spreadsheet-surface-audit.md` Closure 节与 `docs/logs/2026/08-08.md` D3.2 节「closure 复核更正」）

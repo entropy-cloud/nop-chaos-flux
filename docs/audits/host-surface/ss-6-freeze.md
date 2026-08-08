@@ -42,7 +42,7 @@ ss-6 冻结面：`spreadsheet:freezePanes`/`unfreezePanes` 命令链（host 契�
 
 ## 发现清单
 
-- [P1-1] **冻结窗格渲染不固定（真实浏览器滚动时冻结行/列随内容滚走）**——viewport.ts 将 frozen 行/列排入可见索引 + table-shell 渲染 `frozen-row` 类 + `data-cell-frozen`，但 `canvas-styles.css` 对冻结**数据行/列**无 position:sticky 规则（仅 thead th 表头 sticky：canvas-styles.css:139-162；`.frozen-row` 零规则；`.ss-cell[data-cell-frozen]` 仅背景 tint 666-670；`ss-frozen-separator-col/row` 死 CSS 无渲染方 703-713）——单滚动容器 + 单 table 结构下冻结单元格随内容滚动离屏，仅表头固定 → 状态: **fixed**（`table-shell.tsx` 冻结 tr sticky top + 冻结列 cell sticky left + `constants.ts` GRID_HEADER_HEIGHT；复现测试 `__tests__/freeze-pinning.test.tsx`，bug note 107，plan Phase 4；Phase 5 e2e 滚动固定断言确认中）
+- [P1-1] **冻结窗格渲染不固定（真实浏览器滚动时冻结行/列随内容滚走）**——viewport.ts 将 frozen 行/列排入可见索引 + table-shell 渲染 `frozen-row` 类 + `data-cell-frozen`，但 `canvas-styles.css` 对冻结**数据行/列**无 position:sticky 规则（仅 thead th 表头 sticky：canvas-styles.css:139-162；`.frozen-row` 零规则；`.ss-cell[data-cell-frozen]` 仅背景 tint 666-670；`ss-frozen-separator-col/row` 死 CSS 无渲染方 703-713）——单滚动容器 + 单 table 结构下冻结单元格随内容滚动离屏，仅表头固定 → 状态: **fixed**（`table-shell.tsx` 冻结 tr sticky top + 冻结列 cell sticky left + `constants.ts` GRID_HEADER_HEIGHT；复现测试 `__tests__/freeze-pinning.test.tsx`，bug note 107，plan Phase 4；Phase 5 e2e 滚动固定断言确认（`tests/e2e/spreadsheet-demo.spec.ts:116`，10/10 全绿））
 - [P3-1] `ss-frozen-separator-col/row` 分隔线 CSS 死类（canvas-styles.css:703-713 无渲染方）→ 状态: 卡内记录（随 P1-1 修复一并落地或清理）
 - [P3-2] 无冻结时 unfreeze 产生 no-op 命令污染 undo 栈 + dirty 误标（`applyUnfreezePanes` 恒新对象 sheet-operations.ts:217-220 + `applySimpleDocumentMutation` 无条件 pushUndo internal-state.ts:81-90）→ 状态: 卡内记录（机制级，ss-3 P3-2 互见）｜**DR plan Phase 4 裁决（2026-08-08）: keep（P3 语义维持）**——live 核对确认，无数据损坏/无用户可见功能损失；CX-13+ 插入建议已登记（`round2-dr-adjudication.md` §2），人工确认后路由
 
@@ -56,4 +56,4 @@ ss-6 冻结面：`spreadsheet:freezePanes`/`unfreezePanes` 命令链（host 契�
 
 ## Closure
 
-- 独立 closure audit: pass | fail + 记录位置（fresh session）
+- 独立 closure audit: **pass**（独立 fresh session 于 2026-08-09 正式收口，轮 1 fail（1 Major + 3 Minor 全修复）→ 轮 2 pass；证据见 plan `docs/plans/2026-08-08-1315-1-round2-d32-spreadsheet-surface-audit.md` Closure 节与 `docs/logs/2026/08-08.md` D3.2 节「closure 复核更正」）

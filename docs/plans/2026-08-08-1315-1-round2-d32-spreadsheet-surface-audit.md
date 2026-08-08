@@ -1,6 +1,6 @@
 # D3.2 spreadsheet 大面审计（spreadsheet-core + spreadsheet-renderers）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit-round2
 > Work Item: D3.2
 > Last Reviewed: 2026-08-08
@@ -222,8 +222,8 @@ Status Note: 5 Phase 全 completed；10 面审计卡全 closed；4 条 P1 + 2 �
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 独立子 agent（fresh session）
-- Evidence: （待独立子 agent 填写）
+- Auditor / Agent: 独立子 agent（fresh session，2026-08-09，DV 全量验证轮正式收口）
+- Evidence: **轮 1** verdict `fail`——1 Major（closure 流程完整性：audit gate 无证据勾选 + `Plan Status` 未翻转 + Closure Audit Evidence 空 + roadmap/daily log 过早断言 closure-audit pass）+ 3 Minor（① 卡状态计数过时：roadmap/daily log 记「6 closed + 4 fixed-pending-closure」而 live 10 卡全部 `closed`；② ss-3/4/5/6/10 卡场景行「待 Phase 5 / 确认中」过时；③ 10 卡 Closure 占位未填）。实质交付物全部 live 核对通过（10 卡 closed + 卡内 test-first 证据、4 条 P1 回归测试实测绿（spreadsheet-core 272 / spreadsheet-renderers 154）、bug note 107–110 + README 索引、DR-3..DR-6 终态零悬挂、宿主页 + 路由 + `spreadsheet-demo.spec.ts` 10 用例实测 10/10 绿、owner doc 在案、roadmap `done` + daily log 节、`pnpm check` exit 0、deferred 诚实）。**轮 2** verdict `pass`——零 Blocker/Major/Minor；修复逐项 live 复核（roadmap 计数 + 过早断言更正、daily log「closure 复核更正」披露节、5 卡场景行 pass + spec 行号、实质交付物 spot-reconfirm）；信息性注记（plan:191 gate 勾选在证据回填后成立）随本回填自动闭合。
 
 Follow-up:
 

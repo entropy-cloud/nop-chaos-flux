@@ -136,3 +136,5 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/115-word-editor-dataset-unlabeled-column-lost-on-recovery-fix.md`
 - `docs/bugs/116-word-editor-dataset-panel-fields-unreachable-dead-menu-fix.md`
 - `docs/bugs/117-tiptap-editor-label-activation-race-fix.md`
+- `docs/bugs/118-diff-view-reaction-echo-dispatch-loop-fix.md`
+- `docs/bugs/119-gantt-strictmode-store-destroy-empty-state-fix.md`

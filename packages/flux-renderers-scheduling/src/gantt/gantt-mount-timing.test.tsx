@@ -146,4 +146,38 @@ describe('Gantt listener mount timing (1-7): loading/empty first mount must not 
     });
     expect(gridScrollContainer.scrollTop).toBe(50);
   });
+
+  it('re-seeds the store after a StrictMode double-mount destroy cycle so bars still render (119)', () => {
+    // Regression: the P3-5 unmount cleanup calls store.destroy(), which under
+    // the React 18/19 StrictMode dev cycle (setup → cleanup → setup, state
+    // preserved) empties the store; the re-seed effect's reference snapshot is
+    // unchanged so it early-returns and the gantt stays in the empty state
+    // (dblclick editor unreachable). The store-empty self-heal must re-parse
+    // the schema data on the remount effect pass. Stable prop references are
+    // required — fresh per-render arrays would re-trigger dataChanged and mask
+    // the destroyed-store path.
+    const strictTasks = [
+      { id: 't1', text: 'T1', start: '2026-01-01', end: '2026-01-10' },
+      { id: 't2', text: 'T2', start: '2026-01-02', end: '2026-01-11' },
+    ];
+    const { container } = render(
+      React.createElement(React.StrictMode, null, [
+        React.createElement(Gantt, {
+          ...baseProps,
+          props: { tasks: strictTasks, links: [] } as any,
+        }),
+      ]),
+    );
+    // destroy() does not bump layoutRevision, so stale bars survive in the DOM;
+    // the broken state only surfaces on the next store-driven re-render. Drive
+    // one (dblclick → editTask → editingTaskId re-render) and assert the editor
+    // dialog still opens — pre-fix this re-render hits the empty-state branch.
+    const bar = container.querySelector('[data-slot="gantt-bar"]') as HTMLElement;
+    expect(bar).toBeTruthy();
+    act(() => {
+      bar.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    });
+    // Radix Dialog portals to document.body — query the body, not container.
+    expect(document.body.querySelector('[role="dialog"]')).toBeTruthy();
+  });
 });

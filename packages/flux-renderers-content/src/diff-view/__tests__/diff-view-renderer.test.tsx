@@ -349,6 +349,43 @@ describe('DiffViewRenderer', () => {
     expect(reactions.toggleViewType.dispatch).not.toHaveBeenCalled();
   });
 
+  it('breaks the self-referential reaction echo: a dispatch that re-invokes the same handle method fires exactly once and skips the echo mutation (118)', async () => {
+    // Simulates a schema-declared reaction whose action resolves to the same
+    // component handle method it is dispatched from (e.g.
+    // setViewType → `component:setViewType`). Without the re-entrancy latch
+    // this spins an infinite dispatch loop that hangs the render (lab
+    // host-diff-reaction regression, bug 118).
+    const dispatchMock = vi.fn((_payload?: unknown) => Promise.resolve({ ok: true }));
+    const reactions = {
+      toggleViewType: { ready: vi.fn(), dispatch: vi.fn() },
+      setViewType: { ready: vi.fn(), dispatch: dispatchMock },
+      expandAll: { ready: vi.fn(), dispatch: vi.fn() },
+      collapseAll: { ready: vi.fn(), dispatch: vi.fn() },
+    };
+    render(<DiffViewRenderer {...createMockProps()} reactions={reactions as never} />);
+    const handle = lastHandle();
+
+    // Reaction echo: dispatching setViewType re-invokes the same handle method.
+    const invoke = handle.capabilities.invoke.bind(handle.capabilities);
+    dispatchMock.mockImplementation(() => {
+      invoke('setViewType', { viewType: 'unified' }, {} as never);
+      return Promise.resolve({ ok: true });
+    });
+
+    act(() => {
+      expect(invoke('setViewType', { viewType: 'split' }, {} as never)).toMatchObject({ ok: true });
+    });
+
+    // The nested echo invoke is suppressed (dispatch AND state mutation); the
+    // reaction fires exactly once and the view stays at the requested value.
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(dispatchMock).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[data-view="split"]')).toBeTruthy();
+  });
+
   it('clamps a negative activeFileIndex to the first file (P1-5)', () => {
     render(
       <DiffViewRenderer

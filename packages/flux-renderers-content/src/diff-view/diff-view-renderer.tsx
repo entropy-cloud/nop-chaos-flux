@@ -238,6 +238,39 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
     reactionsRef.current = reactions;
   }, [reactions]);
 
+  // 118: re-entrancy latch — a declared reaction whose action resolves to the
+  // same component handle method (e.g. setViewType → `component:setViewType`)
+  // must not re-dispatch itself through the handle invoke echo; otherwise a
+  // single trigger spins an infinite dispatch loop (lab host-diff-reaction).
+  // The latch also suppresses the echo invoke's state mutation so the
+  // mount-time initial fires (dependsOn scope write) settle deterministically
+  // instead of racing the echo.
+  const reactionLatches = useRef<Partial<Record<(typeof REACTION_FIELD_KEYS)[number], boolean>>>({});
+
+  const isReactionEcho = useCallback(
+    (key: (typeof REACTION_FIELD_KEYS)[number]): boolean => reactionLatches.current[key] === true,
+    [],
+  );
+
+  const dispatchReaction = useCallback(
+    (key: (typeof REACTION_FIELD_KEYS)[number]) => {
+      const reaction = reactionsRef.current[key];
+      if (!reaction || isReactionEcho(key)) {
+        return;
+      }
+      reactionLatches.current[key] = true;
+      const result = reaction.dispatch();
+      if (result && typeof (result as Promise<unknown>).finally === 'function') {
+        void (result as Promise<unknown>).finally(() => {
+          reactionLatches.current[key] = false;
+        });
+      } else {
+        reactionLatches.current[key] = false;
+      }
+    },
+    [isReactionEcho],
+  );
+
   useEffect(() => {
     if (!componentRegistry) {
       return;
@@ -249,10 +282,12 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
         invoke(method, payload) {
           switch (method) {
             case 'toggleViewType':
-              setSingleViewType((prev) => (prev === 'split' ? 'unified' : 'split'));
-              // 1-9: 句柄 invoke 即派发 schema reaction（对齐 calendar 22-05 /
-              // gantt 22-13「触发即派发」家族标准）。
-              void reactionsRef.current.toggleViewType?.dispatch();
+              if (!isReactionEcho('toggleViewType')) {
+                setSingleViewType((prev) => (prev === 'split' ? 'unified' : 'split'));
+                // 1-9: 句柄 invoke 即派发 schema reaction（对齐 calendar 22-05 /
+                // gantt 22-13「触发即派发」家族标准）。
+                dispatchReaction('toggleViewType');
+              }
               return {
                 ok: true,
                 data: { viewType: viewTypeRef.current === 'split' ? 'unified' : 'split' },
@@ -260,8 +295,10 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
             case 'setViewType': {
               const requested = payload?.viewType;
               if (requested === 'split' || requested === 'unified') {
-                setSingleViewType(requested);
-                void reactionsRef.current.setViewType?.dispatch();
+                if (!isReactionEcho('setViewType')) {
+                  setSingleViewType(requested);
+                  dispatchReaction('setViewType');
+                }
                 return { ok: true, data: { viewType: requested } };
               }
               return {
@@ -274,12 +311,12 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
             case 'expandAll':
               setExpansionState('all-expanded');
               setRemountKey((k) => k + 1);
-              void reactionsRef.current.expandAll?.dispatch();
+              dispatchReaction('expandAll');
               return { ok: true };
             case 'collapseAll':
               setExpansionState('all-collapsed');
               setRemountKey((k) => k + 1);
-              void reactionsRef.current.collapseAll?.dispatch();
+              dispatchReaction('collapseAll');
               return { ok: true };
             default:
               return { ok: false, error: new Error(`Unsupported diff-view method: ${method}`) };
@@ -297,7 +334,7 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
       },
     };
     return componentRegistry.register(handle, { cid: meta.cid });
-  }, [allProps.id, componentRegistry, meta.cid]);
+  }, [allProps.id, componentRegistry, meta.cid, dispatchReaction, isReactionEcho]);
 
   useEffect(() => {
     for (const key of REACTION_FIELD_KEYS) {
@@ -306,10 +343,13 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
   }, [reactions]);
 
   const toggleViewType = useCallback(() => {
+    if (isReactionEcho('toggleViewType')) {
+      return;
+    }
     setSingleViewType((prev) => (prev === 'split' ? 'unified' : 'split'));
     // 1-9: UI toggle 触发即派发 schema reaction（对齐「触发即派发」家族标准）。
-    void reactionsRef.current.toggleViewType?.dispatch();
-  }, []);
+    dispatchReaction('toggleViewType');
+  }, [dispatchReaction, isReactionEcho]);
 
   if (!meta.visible) return null;
 

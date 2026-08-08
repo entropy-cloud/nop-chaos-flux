@@ -49,7 +49,7 @@ ss-10 undo 面：Undo/RedoSpreadsheetCommand + Begin/Commit/RollbackSpreadsheetT
 
 ## 组合宿主场景（真实浏览器验证，bug 73 模式专项）
 
-- 场景（Phase 5 新增）: 独立宿主页单元格输入 → Ctrl+Z 撤销（文本回退）→ Ctrl+Y 重做（文本恢复）→ 工具栏 undo/redo 按钮往返 | 断言: td 文本往返 | 结果: 待 Phase 5
+- 场景（Phase 5 新增）: 独立宿主页单元格输入 → Ctrl+Z 撤销（文本回退）→ Ctrl+Y 重做（文本恢复）→ 工具栏 undo/redo 按钮往返 | 断言: td 文本往返 | 结果: pass（`tests/e2e/spreadsheet-demo.spec.ts:269` undo/redo 往返断言，10/10 全绿）
 
 ## 修复记录
 
@@ -57,4 +57,4 @@ ss-10 undo 面：Undo/RedoSpreadsheetCommand + Begin/Commit/RollbackSpreadsheetT
 
 ## Closure
 
-- 独立 closure audit: pass | fail + 记录位置（fresh session）
+- 独立 closure audit: **pass**（独立 fresh session 于 2026-08-09 正式收口，轮 1 fail（1 Major + 3 Minor 全修复）→ 轮 2 pass；证据见 plan `docs/plans/2026-08-08-1315-1-round2-d32-spreadsheet-surface-audit.md` Closure 节与 `docs/logs/2026/08-08.md` D3.2 节「closure 复核更正」）

@@ -1,6 +1,6 @@
 # DV 全量验证（typecheck/build/lint + test + e2e full-green + pnpm check exit 0 + full-green 记录）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit-round2
 > Work Item: DV
 > Last Reviewed: 2026-08-08
@@ -71,71 +71,71 @@
 
 ### Phase 1 - 收口前一致性核对
 
-Status: planned
+Status: completed
 Targets: `docs/plans/2026-08-08-*.md`（round-2 全部 plan 文件）、`docs/backlog/component-audit-round2-roadmap.md`、`docs/logs/2026/08-08.md`
 
 - Item Types: `Proof | Decision`
 
-- [ ] round-2 各 plan 文件 ↔ roadmap 状态一致性核对（Proof）：D0..D3.4 + DR 的 roadmap 状态 vs 各 plan `Plan Status` + Closure 节证据；**roadmap D3.3 行格式破损修复**（残留 `| todo | 同上 | ~8 卡 | D0 |` 碎片删除，单元格恢复规范列数）。
-- [ ] **D3.2 收口缺口处理（Decision，两条诚实路径，禁止以「既有证据」机械自证收口）**：(a) **执行真实 closure-audit**——由独立子 agent（fresh session，不复用 D3.2 执行者上下文）按 D3.3/D3.4 证据范式（session id + verdict + 逐项核对）审计 D3.2 plan（live 核对 5 Phase Exit Criteria + Closure Gates + 卡终态 + deferred 诚实性），pass 后 Plan Status `active → completed` + Closure Audit Evidence 回填 + Closure Gates 审计门禁项勾选依据补录；(b) **无独立 agent 可用**——显式登记「待补」+ roadmap D3.2 行回退 `done → planned` + roadmap 证据列更正（不得虚构证据）；两条路径均需在 daily log 留痕。D3.2 收口前其产出（spreadsheet-demo spec 等）不阻塞本 plan 验证范围（以 live 文件为准）。
-- [ ] watch-only 清单终态确认（Decision）：D2 终态 + DR 修复后终态（w3d-editor:28 / c3-5 ×2 预期已移除；gantt-perf/kanban-perf 维持「需 60Hz 环境确认」；ai-attachments closed）——清单落 full-green 记录依据。
-- [ ] 验证范围清单确认（Proof）：D3.x + DR 新增/修改 spec 全集（flow-designer ×2 / spreadsheet / report-designer-host / word-editor-recovery / entry-pages 等）在案核对，与全量 e2e 跑批对齐。
+- [x] round-2 各 plan 文件 ↔ roadmap 状态一致性核对（Proof）：D0..D3.4 + DR 的 roadmap 状态 vs 各 plan `Plan Status` + Closure 节证据；**roadmap D3.3 行格式破损修复**（残留 `| todo | 同上 | ~8 卡 | D0 |` 碎片删除，单元格恢复规范列数）。
+- [x] **D3.2 收口缺口处理（Decision，两条诚实路径，禁止以「既有证据」机械自证收口）**：(a) **执行真实 closure-audit**——由独立子 agent（fresh session，不复用 D3.2 执行者上下文）按 D3.3/D3.4 证据范式（session id + verdict + 逐项核对）审计 D3.2 plan（live 核对 5 Phase Exit Criteria + Closure Gates + 卡终态 + deferred 诚实性），pass 后 Plan Status `active → completed` + Closure Audit Evidence 回填 + Closure Gates 审计门禁项勾选依据补录；(b) **无独立 agent 可用**——显式登记「待补」+ roadmap D3.2 行回退 `done → planned` + roadmap 证据列更正（不得虚构证据）；两条路径均需在 daily log 留痕。D3.2 收口前其产出（spreadsheet-demo spec 等）不阻塞本 plan 验证范围（以 live 文件为准）。
+- [x] watch-only 清单终态确认（Decision）：D2 终态 + DR 修复后终态（w3d-editor:28 / c3-5 ×2 预期已移除；gantt-perf/kanban-perf 维持「需 60Hz 环境确认」；ai-attachments closed）——清单落 full-green 记录依据。
+- [x] 验证范围清单确认（Proof）：D3.x + DR 新增/修改 spec 全集（flow-designer ×2 / spreadsheet / report-designer-host / word-editor-recovery / entry-pages 等）在案核对，与全量 e2e 跑批对齐。
 
 Exit Criteria:
 
-- [ ] 一致性核对结论在案（D3.2 补齐或显式登记待补 + roadmap 状态一致）；watch-only 终态清单落记录。
-- [ ] 验证范围清单（spec 全集）与 live 文件核对一致。
+- [x] 一致性核对结论在案（D3.2 补齐或显式登记待补 + roadmap 状态一致）；watch-only 终态清单落记录。
+- [x] 验证范围清单（spec 全集）与 live 文件核对一致。
 
 ### Phase 2 - 全量静态与单测验证
 
-Status: planned
+Status: completed
 Targets: 全仓库（32 包）
 
 - Item Types: `Proof`
 
-- [ ] `pnpm typecheck` 32/32、`pnpm build` 32/32、`pnpm lint` 32/32（既有 informational warning 维持归因）——**fresh 执行声明**：本 plan 是验证轮，关键命令以 fresh/零缓存语义执行为准（`pnpm test --force` 或等价零缓存证据；turbo 全缓存命中不作为 full-green 证据，除非显式声明接受缓存并注明）；typecheck/build/lint 参照 CV 先例。
-- [ ] `pnpm test` 59/59 全绿（测试计数在案，含 D3.x/DR 新增回归）——fresh 执行（零缓存）优先。
-- [ ] `pnpm check` 28 项逐项重跑：27/28 exit 0 + `check:duplicates:detail` 非门禁归因维持 + oversized 仅 2 条既有 locale 豁免 + audit 三门禁零命中 + `pnpm test:scripts` 6/15 全绿。
-- [ ] 任何新增命中按门禁纪律裁决（先修代码或显式登记归因；禁止临时改门禁规则）。
+- [x] `pnpm typecheck` 32/32、`pnpm build` 32/32、`pnpm lint` 32/32（既有 informational warning 维持归因）——**fresh 执行声明**：本 plan 是验证轮，关键命令以 fresh/零缓存语义执行为准（`pnpm test --force` 或等价零缓存证据；turbo 全缓存命中不作为 full-green 证据，除非显式声明接受缓存并注明）；typecheck/build/lint 参照 CV 先例。
+- [x] `pnpm test` 59/59 全绿（测试计数在案，含 D3.x/DR 新增回归）——fresh 执行（零缓存）优先。
+- [x] `pnpm check` 28 项逐项重跑：27/28 exit 0 + `check:duplicates:detail` 非门禁归因维持 + oversized 仅 2 条既有 locale 豁免 + audit 三门禁零命中 + `pnpm test:scripts` 6/15 全绿。
+- [x] 任何新增命中按门禁纪律裁决（先修代码或显式登记归因；禁止临时改门禁规则）。
 
 Exit Criteria:
 
-- [ ] typecheck/build/lint/test/check 全绿（或显式归因清单零悬空）；`pnpm test:scripts` 全绿。
-- [ ] 验证结果与 project-context 基线可对比（计数记录在案）。
+- [x] typecheck/build/lint/test/check 全绿（或显式归因清单零悬空）；`pnpm test:scripts` 全绿。
+- [x] 验证结果与 project-context 基线可对比（计数记录在案）。
 
 ### Phase 3 - 全量 e2e 验证
 
-Status: planned
+Status: completed
 Targets: `pnpm test:e2e`（全量）、`component-lab`、`smoke`、`navigation`、`host-surfaces` 套件
 
 - Item Types: `Proof`
 
-- [ ] `pnpm test:e2e` 全量跑批：通过数/跳过数/失败数在案；失败项逐条归因——watch-only 清单内 = 维持记录（gantt-perf/kanban-perf 50Hz 等）；清单外 = 阻断（clean-tree stash 复跑 / 隔离复跑确认后登记归因或路由回 DR）。
-- [ ] D3.x + DR 新增 host 面 spec 全绿复核（flow-designer undo-clipboard/slot-drag、spreadsheet-demo 10、report-designer-host 5、word-editor-recovery 6、entry-pages 路由断言等）。
-- [ ] component-lab（334/1/2 基线对照）+ smoke+navigation（111/111 基线对照）+ host-surfaces（42/42 基线对照）回归。
-- [ ] 归因纪律：禁截图诊断（programmatic DOM）；watch-only 清单外零悬空失败。
+- [x] `pnpm test:e2e` 全量跑批：通过数/跳过数/失败数在案；失败项逐条归因——watch-only 清单内 = 维持记录（gantt-perf/kanban-perf 50Hz 等）；清单外 = 阻断（clean-tree stash 复跑 / 隔离复跑确认后登记归因或路由回 DR）。
+- [x] D3.x + DR 新增 host 面 spec 全绿复核（flow-designer undo-clipboard/slot-drag、spreadsheet-demo 10、report-designer-host 5、word-editor-recovery 6、entry-pages 路由断言等）。
+- [x] component-lab（334/1/2 基线对照）+ smoke+navigation（111/111 基线对照）+ host-surfaces（42/42 基线对照）回归。
+- [x] 归因纪律：禁截图诊断（programmatic DOM）；watch-only 清单外零悬空失败。
 
 Exit Criteria:
 
-- [ ] e2e 全量结果在案：全绿 或 失败全数落入 watch-only 归因清单（逐条理由 + clean-tree/隔离复跑证据）。
-- [ ] 新增 host 面 spec 全绿；component-lab/smoke/navigation/host-surfaces 与基线对照结论在案。
+- [x] e2e 全量结果在案：全绿 或 失败全数落入 watch-only 归因清单（逐条理由 + clean-tree/隔离复跑证据）。
+- [x] 新增 host 面 spec 全绿；component-lab/smoke/navigation/host-surfaces 与基线对照结论在案。
 
 ### Phase 4 - full-green 记录 + 收口登记
 
-Status: planned
+Status: completed
 Targets: 执行日所属 `docs/logs/2026/{MM-DD}.md`、`docs/backlog/component-audit-round2-roadmap.md`（DV 行）、`docs/context/project-context.md`（DG 承接回写，本 plan 只记录不改写）
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] full-green 记录：执行日所属 daily log 节（typecheck/build/lint 32/32 + test 59/59 计数 + e2e 计数/失败归因清单 + `pnpm check` exit 0 + component-lab/smoke/navigation/host-surfaces 计数 + watch-only 终态清单 + fresh/零缓存执行证据）。
-- [ ] roadmap DV 行 `todo`→`done`（附执行证据引用）。
-- [ ] 一致性核对遗留（D3.2 补齐或待补登记）收口确认；归因清单更新（如 DR 终态与记录差异）。
-- [ ] 为 DG 提供收口输入清单（full-green 记录位置、门禁基线、index 素材范围）。
+- [x] full-green 记录：执行日所属 daily log 节（typecheck/build/lint 32/32 + test 59/59 计数 + e2e 计数/失败归因清单 + `pnpm check` exit 0 + component-lab/smoke/navigation/host-surfaces 计数 + watch-only 终态清单 + fresh/零缓存执行证据）。
+- [x] roadmap DV 行 `todo`→`done`（附执行证据引用）。
+- [x] 一致性核对遗留（D3.2 补齐或待补登记）收口确认；归因清单更新（如 DR 终态与记录差异）。
+- [x] 为 DG 提供收口输入清单（full-green 记录位置、门禁基线、index 素材范围）。
 
 Exit Criteria:
 
-- [ ] full-green 记录在案（计数 + watch-only 终态清单 + 归因零悬空）；roadmap DV 行 `done` + daily log 收口节。
-- [ ] 本 plan 所有 in-scope 项勾选完成（closable 状态交独立 closure-audit 裁决）。
+- [x] full-green 记录在案（计数 + watch-only 终态清单 + 归因零悬空）；roadmap DV 行 `done` + daily log 收口节。
+- [x] 本 plan 所有 in-scope 项勾选完成（closable 状态交独立 closure-audit 裁决）。
 
 ## Draft Review Record
 
@@ -154,18 +154,18 @@ Exit Criteria:
 
 > **关闭条件**：本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选 `[x]` 后，才能将 `Plan Status` 改为 `completed`。closure-audit 由独立 fresh session 执行，执行 session 不得自审勾选。
 
-- [ ] 全量验证达成（typecheck/build/lint 32/32 + test 59/59 + e2e 全绿或 watch-only 终态归因零悬空 + component-lab/smoke/navigation/host-surfaces 回归通过）
-- [ ] `pnpm check` exit 0（28 项，`check:duplicates:detail` 非门禁归因维持；无新增命中或显式归因）
-- [ ] watch-only 终态清单在案（D2 终态 + DR 修复后终态，逐条理由）
-- [ ] round-2 plan 文件 ↔ roadmap 一致性核对完成（D3.2 补齐或显式登记待补）
-- [ ] full-green 记录于 daily log + roadmap DV 行 `done`
-- [ ] 不存在被静默吞掉的失败或归因悬空项
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] 全量验证达成（typecheck/build/lint 32/32 + test 59/59 + e2e 全绿或 watch-only 终态归因零悬空 + component-lab/smoke/navigation/host-surfaces 回归通过）
+- [x] `pnpm check` exit 0（28 项，`check:duplicates:detail` 非门禁归因维持；无新增命中或显式归因）
+- [x] watch-only 终态清单在案（D2 终态 + DR 修复后终态，逐条理由）
+- [x] round-2 plan 文件 ↔ roadmap 一致性核对完成（D3.2 补齐或显式登记待补）
+- [x] full-green 记录于 daily log + roadmap DV 行 `done`
+- [x] 不存在被静默吞掉的失败或归因悬空项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 
@@ -198,13 +198,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待执行完成时填写）
+Status Note: 4 Phase 全 completed（2026-08-09 实测全绿）；typecheck/build/lint 32/32（--force 零缓存）、test 59/59（10,703 passed / 0 failed）、e2e 1086 passed / 43 skipped / 3 failed（全数 watch-only 50Hz：gantt-perf ×2 + kanban-perf ×1）、`pnpm check` exit 0、test:scripts 6/15、component-lab 336/0、smoke+navigation 111/111、host-surfaces 133/0；round-2 plan↔roadmap 一致性核对完成（D3.3/D3.1 行格式修复 + D3.2 closure 由独立 fresh session 正式收口 轮 1 fail → 轮 2 pass）；阻断缺陷 bug 118（diff-view reaction 回声派发死循环）/ bug 119（gantt StrictMode store.destroy 空态）修复 + 回归测试 + bug note 行内补写；full-green 记录于 `docs/logs/2026/08-09.md`；roadmap DV 行 `todo → done`（附执行证据）；watch-only 终态清单零悬空。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立子 agent 填写）
-- Evidence: （待独立子 agent 填写）
+- Auditor / Agent: 独立子 agent（fresh session，mission-driver closure audit，2026-08-09）
+- Evidence: verdict `pass`——零 Blocker/Major，2 项 informational 已收口（Info-1：roadmap DV 行 deps 单元格补「（执行证据：…）」引用，与其他 completed 行格式对齐；Info-2：roadmap `Last Updated` 08-08 → 08-09）。逐项核对：① plan 文本一致性——Phase 1-4 全 `Status: completed` + 全部 item/Exit Criteria `[x]`（Closure Gates 为预置未勾态，按既有 executor-backfill 机制由本收口勾选）；② full-green 记录在案（`docs/logs/2026/08-09.md` DV 节：typecheck/build/lint 32/32 --force 零缓存、test 59/59 10,703/0、e2e 1086/43/3 全数 watch-only、check exit 0、test:scripts 6/15、component-lab 336/0、smoke+navigation 111/111、host-surfaces 133/0）；③ roadmap——DV 行 `done`（附执行证据）、D3.1/D3.3 行 6 列规范（awk 全表核对）、`Last Updated` 已 bump；④ D3.2 closure——plan `Plan Status: completed` + Closure Audit Evidence 轮 1 fail → 轮 2 pass 在案 + 10 卡 `closed` + Closure 行回填 + roadmap/daily log 更正；⑤ bug 118——diff-view-renderer.tsx:248-271 per-key latch + 回归测试（diff-view-renderer.test.tsx:352，断言正确结果非错误缺失）+ docs/bugs/118 + README:139 索引；⑥ bug 119——gantt.tsx:93-98/124 storeEmpty 自愈 + 回归测试（gantt-mount-timing.test.tsx:150，StrictMode 包裹 + dblclick 驱动 + Radix portal 断言）+ docs/bugs/119 + README:140 索引；⑦ vitest.scripts.config.ts:14 testTimeout 30_000（仅 harness 配置，无门禁规则/断言变更）；⑧ 诚实性——3 条 e2e 失败逐条核对为 50Hz 物理不可达阈值（gantt-perf.spec.ts:41/73 `>50`、kanban-perf.spec.ts:61 `>60`），`check:duplicates:detail` 为无阈值 jscpd dump 非门禁归因，两个阻断 bug 全 test-first 修复 + bug note 归因而非忽略；⑨ 独立复跑——`pnpm check` exit 0、`pnpm test:scripts` 6/15、flux-renderers-content 35 文件/293 测试、flux-renderers-scheduling 82 文件/919 测试全绿（含新回归测试）。
 
 Follow-up:
 
-- （待执行完成时填写）
+- project-context 基线回写（DV full-green 终态）由 DG 承接（本 plan 不改写）。
+- 验证中发现并修复的阻断缺陷（bug 118/119）为 D3.2/D3.3 时期误归「环境」的历史回归——如 DG/后续轮次在 e2e 归因中遇到类似「页面静默渲染空/悬挂但主线程响应」模式，优先查 dispatch 环与 StrictMode destroy 家族（bug note 118/119 Notes 节）。
+- 其余不阻塞治理项登记 daily log（供 DG 承接）。

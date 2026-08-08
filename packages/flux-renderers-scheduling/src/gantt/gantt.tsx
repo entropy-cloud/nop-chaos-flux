@@ -90,7 +90,12 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         prev.links !== resolved.links ||
         prev.resources !== resolved.resources ||
         prev.assignments !== resolved.assignments;
-      if (!configChanged && !dataChanged) return;
+      // 119: StrictMode 双挂载自愈——unmount cleanup 的 store.destroy()（P3-5）
+      // 会在 dev 双挂载周期清空 store，而 lastDataRef 快照未变导致 dataChanged
+      // 为 false 提前返回，store 永久空态（gantt 渲染空容器、dblclick 无编辑器）。
+      // store 空态时按当前 schema 数据重灌，幂等（合法空数据重灌结果不变）。
+      const storeEmpty = store.tasks.size === 0;
+      if (!configChanged && !dataChanged && !storeEmpty) return;
       lastDataRef.current = {
         tasks: resolved.tasks,
         links: resolved.links,
@@ -116,7 +121,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           );
         }
       }
-      if (dataChanged) {
+      if (dataChanged || storeEmpty) {
         const taskData = (resolved.tasks as any[]) ?? [];
         const linkData = (resolved.links as any[]) ?? [];
         const resourceData = (resolved.resources as any[]) ?? undefined;

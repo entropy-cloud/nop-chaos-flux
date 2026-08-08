@@ -47,7 +47,7 @@ ss-4 状态栏面：`SpreadsheetToolbarStatus`（当前 cell address + 冻结徽
 
 ## 组合宿主场景（真实浏览器验证，bug 73 模式专项）
 
-- 场景（Phase 5 新增）: 独立宿主页点击单元格 → spreadsheet-toolbar-cell-address 文案 = A1 类地址；冻结后 frozen-badge 出现 → 解冻消失 | 断言: data-slot 文本 + 计数 | 结果: 待 Phase 5
+- 场景（Phase 5 新增）: 独立宿主页点击单元格 → spreadsheet-toolbar-cell-address 文案 = A1 类地址；冻结后 frozen-badge 出现 → 解冻消失 | 断言: data-slot 文本 + 计数 | 结果: pass（`tests/e2e/spreadsheet-demo.spec.ts:77` 地址 + 冻结徽章断言，10/10 全绿）
 
 ## 修复记录
 
@@ -55,4 +55,4 @@ ss-4 状态栏面：`SpreadsheetToolbarStatus`（当前 cell address + 冻结徽
 
 ## Closure
 
-- 独立 closure audit: pass | fail + 记录位置（fresh session）
+- 独立 closure audit: **pass**（独立 fresh session 于 2026-08-09 正式收口，轮 1 fail（1 Major + 3 Minor 全修复）→ 轮 2 pass；证据见 plan `docs/plans/2026-08-08-1315-1-round2-d32-spreadsheet-surface-audit.md` Closure 节与 `docs/logs/2026/08-08.md` D3.2 节「closure 复核更正」）

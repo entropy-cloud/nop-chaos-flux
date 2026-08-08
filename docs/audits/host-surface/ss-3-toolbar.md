@@ -50,7 +50,7 @@ ss-3 工具栏面：`SpreadsheetToolbar`（toolbar 容器）→ `SpreadsheetTool
 ## 组合宿主场景（真实浏览器验证，bug 73 模式专项）
 
 - 场景（既有）: `report-designer-demo.spec.ts` 用例 6（toolbar 布局单行 + 本地化按钮名 + 数量 >10）| 断言: getComputedStyle + getByRole 文案 | 结果: pass（宿主归属 report-designer）
-- 场景（Phase 5 新增）: 独立宿主页单元格输入 → 工具栏 Bold 点击 → td 样式类 ss-bold 断言；冻结按钮 → data-cell-frozen 断言；undo/redo 按钮往返 | 断言: td classList + data 标记 + 文本 | 结果: 待 Phase 5
+- 场景（Phase 5 新增）: 独立宿主页单元格输入 → 工具栏 Bold 点击 → td 样式类 ss-bold 断言；冻结按钮 → data-cell-frozen 断言；undo/redo 按钮往返 | 断言: td classList + data 标记 + 文本 | 结果: pass（`tests/e2e/spreadsheet-demo.spec.ts:66` 加粗类断言，10/10 全绿）
 
 ## 修复记录
 
@@ -58,4 +58,4 @@ ss-3 工具栏面：`SpreadsheetToolbar`（toolbar 容器）→ `SpreadsheetTool
 
 ## Closure
 
-- 独立 closure audit: pass | fail + 记录位置（fresh session）
+- 独立 closure audit: **pass**（独立 fresh session 于 2026-08-09 正式收口，轮 1 fail（1 Major + 3 Minor 全修复）→ 轮 2 pass；证据见 plan `docs/plans/2026-08-08-1315-1-round2-d32-spreadsheet-surface-audit.md` Closure 节与 `docs/logs/2026/08-08.md` D3.2 节「closure 复核更正」）
