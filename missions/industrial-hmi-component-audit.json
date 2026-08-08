@@ -1,0 +1,21 @@
+{
+  "name": "industrial-hmi-component-audit",
+  "description": "Industrial HMI 逐模块深度审计 + 自动修复 mission：以 @nop-chaos/flux-renderers-industrial 包的全部子系统（renderer / engine / binding / serialization / symbols / editor 全层，101 源文件 ~14k 行）为审计对象，按模块族（HCA1–HCA11）逐一完成契约审查 + P0/P1 自动修复 + 回归测试 + bug/lesson 汇总。Renderer 层（scada-canvas / scada-editor-canvas）用 component-audit 18 维组件 checklist；内部模块层用 deep-audit 23 维包级深审（复杂交互层必选 21-23）。审计中发现共性缺陷（≥2 文件/跨层同根因）时主动插入 HCAX-n work item。HCA-BL 归档 bug 到 docs/bugs/，HCA-LL 沉淀 lesson 到 checklist/skills/架构文档。HCA1/HCA7 已完成审计+修复（审计卡 fixed-pending-closure，work item planned），HCAX-1/HCAX-2 已完成。代码变更授权范围：industrial 包全量（flux-renderers-industrial/src/、定义、schema、样式契约）+ 受影响公共面（flux-i18n locale）。",
+  "roadmapPath": "docs/backlog/industrial-hmi-component-audit-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": "packages",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "fix(industrial-hmi-component-audit): <description>"
+}
