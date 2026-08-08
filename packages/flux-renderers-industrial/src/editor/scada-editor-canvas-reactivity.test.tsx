@@ -54,8 +54,8 @@ async function waitForReadyAndCid(container: HTMLElement): Promise<number> {
 function findUndoButton(container: HTMLElement): HTMLButtonElement {
   const toolbox = container.querySelector('[data-slot="scada-editor-toolbox"]');
   if (!toolbox) throw new Error('toolbox not rendered');
-  const buttons = Array.from(toolbox.querySelectorAll('button'));
-  const undo = buttons.find((b) => b.textContent?.trim() === 'Undo');
+  // plan 2026-08-09-0648-2 Phase 3：word 按钮 label 经 i18n 解析（随 locale 变化），改用稳定 data-testid 定位。
+  const undo = toolbox.querySelector('button[data-testid="toolbox-btn-undo"]');
   if (!undo) throw new Error('Undo button not found');
   return undo as HTMLButtonElement;
 }

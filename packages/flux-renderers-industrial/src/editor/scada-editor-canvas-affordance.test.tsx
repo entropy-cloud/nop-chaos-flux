@@ -72,7 +72,8 @@ describe('P1-B delete via default UI Del button', () => {
     const cid = await selectAndRender(container, ['editor-rect']);
     const handle = readScadaEditorTestHandle(cid)!;
     const before = handle.session.workingConfig.symbols.length;
-    const delBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Del')!;
+    // plan 2026-08-09-0648-2 Phase 3：word 按钮 label 经 i18n 解析（随 locale 变化），改用稳定 data-testid 定位。
+    const delBtn = container.querySelector('button[data-testid="toolbox-btn-delete"]') as HTMLButtonElement;
     expect(delBtn).toBeTruthy();
     act(() => {
       fireEvent.click(delBtn);
@@ -84,7 +85,8 @@ describe('P1-B delete via default UI Del button', () => {
   it('Del button is disabled when no selection', async () => {
     const { container } = renderEditor('del-disabled');
     await waitForReadyAndCid(container);
-    const delBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Del')!;
+    // plan 2026-08-09-0648-2 Phase 3：word 按钮 label 经 i18n 解析（随 locale 变化），改用稳定 data-testid 定位。
+    const delBtn = container.querySelector('button[data-testid="toolbox-btn-delete"]') as HTMLButtonElement;
     expect(delBtn.disabled).toBe(true);
   });
 });
@@ -94,7 +96,7 @@ describe('P1-B group/ungroup via default UI buttons', () => {
     const { container } = renderEditor('group-btn');
     const cid = await selectAndRender(container, ['editor-rect', 'editor-ellipse']);
     const handle = readScadaEditorTestHandle(cid)!;
-    const groupBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Group')!;
+    const groupBtn = container.querySelector('button[data-testid="toolbox-btn-group"]') as HTMLButtonElement;
     expect(groupBtn.disabled).toBe(false);
     act(() => {
       fireEvent.click(groupBtn);
@@ -133,10 +135,10 @@ describe('P1-B group/ungroup via default UI buttons', () => {
     const cid = await selectAndRender(container, ['scada-group-1']);
     const handle = readScadaEditorTestHandle(cid)!;
     await waitFor(() => {
-      const ub = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Ungroup')!;
+      const ub = container.querySelector('button[data-testid="toolbox-btn-ungroup"]') as HTMLButtonElement;
       expect(ub.disabled).toBe(false);
     });
-    const ungroupBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Ungroup')!;
+    const ungroupBtn = container.querySelector('button[data-testid="toolbox-btn-ungroup"]') as HTMLButtonElement;
     act(() => {
       fireEvent.click(ungroupBtn);
     });
@@ -317,7 +319,7 @@ describe('P1-10 raw <textarea> replaced by @nop-chaos/ui Textarea', () => {
     const { container } = renderEditor('raw-textarea');
     const cid = await waitForReadyAndCid(container);
     const handle = readScadaEditorTestHandle(cid)!;
-    const importBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Import')!;
+    const importBtn = container.querySelector('button[data-testid="toolbox-btn-import"]') as HTMLButtonElement;
     expect(importBtn).toBeTruthy();
     act(() => {
       fireEvent.click(importBtn);

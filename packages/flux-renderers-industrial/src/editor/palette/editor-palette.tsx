@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Button } from '@nop-chaos/ui';
+import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { listScadaSymbols } from '../../symbols/symbol-registry.js';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
 
@@ -18,6 +19,16 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
   // plan 2026-08-08-0900-2 Phase 4 / #20：移除冗余 useMemo（React Compiler 自动 memoize；listScadaSymbols 纯查询）。
   const symbols = listScadaSymbols();
   const idCounter = useRef(0);
+  const { t } = useFluxTranslation();
+
+  // plan 2026-08-09-0648-2 Phase 1/2 (D1 方案 B / D5)：palette 可见名称经 i18n 解析。key 由 def.type 派生
+  // （industrial.scada.symbol.<type>）。i18next 未命中返回 key 字符串本身（非 falsy）→ 用 `=== key` 显式
+  // 未命中检测后回退 def.name（字面英文），不依赖 `||` 短路（短路永不触发，会渲染 raw key）。
+  const resolveName = (type: string, fallback: string) => {
+    const key = `industrial.scada.symbol.${type}`;
+    const resolved = t(key);
+    return resolved === key ? fallback : resolved;
+  };
 
   const handleDragStart = (event: React.DragEvent<HTMLButtonElement>, type: string) => {
     event.dataTransfer.setData('application/x-scada-symbol-type', type);
@@ -39,20 +50,23 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
 
   return (
     <aside data-slot="scada-editor-palette" className="nop-scada-editor-palette">
-      {symbols.map((def) => (
-        <Button
-          key={def.type}
-          variant="ghost"
-          size="sm"
-          className="nop-scada-editor-palette-item justify-start"
-          draggable
-          onDragStart={(e) => handleDragStart(e, def.type)}
-          onClick={() => handleAddDefault(def.type)}
-          title={def.name}
-        >
-          {def.name}
-        </Button>
-      ))}
+      {symbols.map((def) => {
+        const name = resolveName(def.type, def.name);
+        return (
+          <Button
+            key={def.type}
+            variant="ghost"
+            size="sm"
+            className="nop-scada-editor-palette-item justify-start"
+            draggable
+            onDragStart={(e) => handleDragStart(e, def.type)}
+            onClick={() => handleAddDefault(def.type)}
+            title={name}
+          >
+            {name}
+          </Button>
+        );
+      })}
     </aside>
   );
 }
