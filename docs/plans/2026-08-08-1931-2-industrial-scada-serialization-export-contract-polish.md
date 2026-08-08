@@ -1,6 +1,6 @@
 # 2 Industrial SCADA 数据管线与公共契约 polish（parse 非对象 / clone 统一 / 导出 parity / error code 注册）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-08
 > Source: `docs/backlog/industrial-hmi-component-audit-roadmap.md` Follow-up Backlog（F5 / F6 / P2-1 / P2-2 / P2-3 / P2-8），源自 `docs/audits/2026-08-08-1712-open-audit-industrial-hmi-component-audit.md` + `docs/audits/2026-08-08-1712-multi-audit-industrial-hmi-component-audit.md`
 > Related: `docs/plans/2026-08-09-0121-2-industrial-scada-p2-polish-runtime-symbols.md`（Non-Goals 显式把 serialization/contract P2 留给本系列 plan）；`docs/plans/2026-08-08-1931-1-industrial-scada-editor-interaction-polish.md`（N=1，editor 交互切片）
@@ -73,96 +73,96 @@ F5 / F6 涉及数据隔离正确性（共享引用 / clone 语义），需 faili
 
 ### Phase 1 - parse 非对象守卫 + 浅拷贝共享引用（F5）
 
-Status: planned
+Status: completed
 Targets: `src/serialization/parse.ts`
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] Decision：非纯对象 input 处理策略——(a) 抛 `Error('scada config must be an object')`（fail-closed，与 plan 2026-08-08-1809-1 validate 广度对齐），或 (b) TSDoc 显式声明 object input 只读共享不克隆。倾向 (a)（类型不应撒谎；host 入口校验 fail-closed 更安全）
-- [ ] failing-first：`parseScadaConfig(42)` 抛错（非 cast 返回）；`parseScadaConfig({symbols:[...]})` 后 mutate 返回值的 symbols[0] 不回流到原 input
-- [ ] Fix：`parse.ts:14` object 分支按 Decision 改（抛错或深克隆节点）；`shallowCopy` 改名/改语义以诚实反映行为
-- [ ] Proof：既有 `serialization-parse-serialize.test.ts` 往返测试零回归
+- [x] Decision：非纯对象 input 处理策略——选 **(a) 抛 `Error('scada config must be an object')`**（fail-closed，与 validate `isPlainObject` 广度对齐，消除签名类型谎言）；纯对象分支改 `structuredClone` 深隔离（不再 shallowCopy 共享嵌套引用）
+- [x] failing-first：`serialization-parse-serialize.test.ts` 重写「非对象 pass-through」为「throw」（null/array/原始值），新增 `parseScadaConfig(42/null/[1,2])` 抛错；增强 object 分支断言 `parsed.symbols[0].x = 999` 不回流到 source
+- [x] Fix：`parse.ts` 重写——纯对象窄化守卫 + `structuredClone` 深克隆；移除 `shallowCopy`
+- [x] Proof：`serialization-parse-serialize.test.ts` 9 测全过（含既有 JSON 字符串解析 + serialize 往返零回归）；全包 1424 测全绿；`pnpm typecheck` 绿
 
 Exit Criteria:
 
-- [ ] `parseScadaConfig` 对非对象 input 不返回类型谎言（抛错或显式声明）
-- [ ] object input 与调用方不共享嵌套引用（focused 测断言 mutate 隔离）
-- [ ] 既有 parse 往返测试零回归
+- [x] `parseScadaConfig` 对非对象 input 不返回类型谎言（抛 `scada config must be an object`）
+- [x] object input 与调用方不共享嵌套引用（focused 测断言 mutate symbols[0].x 隔离）
+- [x] 既有 parse 往返测试零回归
 
 ### Phase 2 - clone 实现统一（F6）
 
-Status: planned
-Targets: `src/editor/editor-session.ts`, `src/editor/editor-working-helpers.ts`
+Status: completed
+Targets: `src/editor/editor-session.ts`, `src/editor/editor-working-helpers.ts`, `src/editor/undo-redo/undo-redo-adapter.ts`
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] Decision：统一方向——以 `cloneConfigSnapshot`（spread 顶层 + `cloneNodeDeep` 深克隆节点 + 保留 version）为单一实现的基座，`editor-session.ts` 的 `cloneConfig` 删除或改为 thin wrapper 调用它，消除硬编码 `version:1`。**注（reviewer 核对）**：`cloneConfigSnapshot`（`editor-working-helpers.ts:75`）当前对 variables 是 `[...config.variables]`（浅数组拷贝，共享 variable 对象引用），而 `cloneConfig`（`editor-session.ts:118`）是 `.map((v) => ({ ...v }))`（深一层）。故统一实现**不能直接继承 cloneConfigSnapshot 的 variables 处理**，必须把 variables 加深到 `.map((v) => ({ ...v }))` 或等价深隔离，否则会引入新的共享引用缺口
-- [ ] failing-first：session 创建后 mutate `workingConfig.symbols[0]` 不影响传入的原始 config；`variables` 字段被深隔离（mutate `workingConfig.variables[0]` 不回流原件，对统一后的实现红）；config 原始 `version` 被保留（非硬编码 1）
-- [ ] Fix：`editor-session.ts:113` `cloneConfig` 删除或改为 thin wrapper 调 `cloneConfigSnapshot`；`:66-67`、`:79-80` 调用点同步
-- [ ] Proof：既有 editor-session / editor-working-helpers 测试零回归；`structuredClone(node.custom)`（plan 2026-08-08-1316-2 HCA11 P2-1 已落地的 cloneNodeDeep）在统一实现中仍生效
+- [x] Decision：以 `cloneConfigSnapshot`（spread 顶层 + `cloneNodeDeep` 深克隆节点 + 保留 version）为单一实现基座。variables 加深到 `.map((v) => ({ ...v }))`（修复 reviewer m-1 指出的 cloneConfigSnapshot 浅 `[...config.variables]` 缺口）；viewport 浅拷贝 + background `structuredClone` 与原 cloneConfig 同隔离纪律。editor-session.cloneConfig 删除（改为调 cloneConfigSnapshot）；**额外统一 `undo-redo-adapter.structuredCloneSafe`**（第三处同型 clone，硬编码 `version:1`，经核对无循环依赖——editor-working-helpers import 闭包不含 undo-redo-adapter——一并收敛为 cloneConfigSnapshot，满足「仓库内单一 clone 实现」closure gate）
+- [x] failing-first：`editor-working-helpers.test.ts` 增 variables 元素深隔离 + version 保留；`editor-session.test.ts` 增 session 级 variables 元素深隔离 + version 保留（统一后实现下转绿）
+- [x] Fix：`editor-session.ts` 删除 `cloneConfig`/`cloneNode`，import + 调 `cloneConfigSnapshot`（createScadaEditorSession / resetSession 两处调用点同步）；`editor-working-helpers.ts` 加深 cloneConfigSnapshot；`undo-redo-adapter.ts` 删除 `cloneConfig`/`structuredCloneSafe`/`cloneNodeDeep` 三 helper，改调 cloneConfigSnapshot
+- [x] Proof：editor-session / editor-working-helpers / undo-redo-adapter / runtime-error-propagation / editor-state-integrity / runtime-mutators-nested 69 测零回归；全包 1427 测全绿；`pnpm typecheck` 绿；`structuredClone(node.custom)` 在统一 cloneConfigSnapshot 中仍生效（custom 深克隆测覆盖）
 
 Exit Criteria:
 
-- [ ] 仓库内只剩一份 clone-config 实现（`cloneConfig` 删除或为 thin wrapper）
-- [ ] clone 深隔离 symbols 节点 + variables + custom（focused 测断言）
-- [ ] version 字段保留原值（非硬编码）
-- [ ] 既有 session/working-helpers 测试零回归
+- [x] 仓库内只剩一份 clone-config 实现（editor-session.cloneConfig + undo-redo-adapter.structuredCloneSafe 均删除，统一到 cloneConfigSnapshot）
+- [x] clone 深隔离 symbols 节点 + variables + custom（focused 测断言）
+- [x] version 字段保留原值（非硬编码）
+- [x] 既有 session/working-helpers 测试零回归
 
 ### Phase 3 - serialization / definitions 导出 parity（P2-1 / P2-3）
 
-Status: planned
+Status: completed
 Targets: `src/index.ts`
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] Decision：P2-1 导出 `parseScadaConfig`/`validateScadaConfig`/`diffScadaConfig`/`ScadaValidationResult`（与注释承诺对齐），或收窄注释说明只导出 serialize 的原因。P2-3 导出 `industrialRendererDefinitions`（与兄弟包对齐），或在 `design-renderer.md §11` 记为接受的例外。倾向两者都导出（host 入口校验 + 自定义注册是合理用例）
-- [ ] Proof（仅当 Decision 选「导出」分支时执行）：新增测试 `import { parseScadaConfig, validateScadaConfig, diffScadaConfig, industrialRendererDefinitions, serializeScadaConfig } from '@nop-chaos/flux-renderers-industrial'` 全部 defined；若选「收窄注释」分支，改为断言 `index.ts` 注释与实际导出一致
-- [ ] Fix：`src/index.ts` 增对应 `export { ... }` re-export（导出分支）；核对 `ScadaValidationResult` 是 type export（`export type`）
-- [ ] Proof：包公共面既有消费者（playground / 兄弟包 import）零回归（typecheck 兜底）
+- [x] Decision：选「导出」分支——P2-1 导出 `parseScadaConfig`/`validateScadaConfig`/`diffScadaConfig` + `export type ScadaValidationResult`（与 host 校验/审计注释承诺对齐）；P2-3 导出 `industrialRendererDefinitions`（与兄弟 flux-renderers-\* 包注册模式对齐）。host 入口校验 + 自定义注册均为合理用例
+- [x] Proof：新增 `src/index-exports.test.ts` 断言包入口 barrel 导出 5 serialization 符号 + industrialRendererDefinitions（数组 + 非空）+ parse→validate host 入口校验联通
+- [x] Fix：`src/index.ts` 增 4 个 `export { ... }`（parse/validate/diff/serialize 既存 + 新增）+ `export type { ScadaValidationResult }` + `export { industrialRendererDefinitions }`，附契约注释
+- [x] Proof：包公共面既有消费者（renderer-definitions.test / playground import）零回归（全包 1430 测全绿）；`pnpm typecheck` 绿
 
 Exit Criteria:
 
-- [ ] serialization 5 符号（serialize/parse/validate/diff/ScadaValidationResult）+ `industrialRendererDefinitions` 在 `src/index.ts` 导出状态与 Decision 一致
-- [ ] 导出断言测试通过（或 owner doc 显式记录例外）
-- [ ] 包公共面零回归（typecheck + 既有 import 测试）
+- [x] serialization 5 符号（serialize/parse/validate/diff/ScadaValidationResult）+ `industrialRendererDefinitions` 在 `src/index.ts` 导出状态与 Decision 一致（全部导出）
+- [x] 导出断言测试通过（`index-exports.test.ts` 3 测）
+- [x] 包公共面零回归（typecheck + 既有 import 测试）
 
 ### Phase 4 - editor-internal-error 码注册（P2-8）
 
-Status: planned
+Status: completed
 Targets: `src/editor/renderer/editor-errors.ts`, `packages/flux-i18n/src/locales/en-US.ts`, `packages/flux-i18n/src/locales/zh-CN.ts`, `docs/components/industrial-hmi-editor/design-renderer.md`
 
 - Item Types: `Proof | Fix`
 
-- [ ] failing-first：扩展 `editor-errors.test.ts`，断言 `scadaEditorErrorI18nKey('editor-internal-error')` === `'industrial.scada.editor.error.editor-internal-error'`（当前返回 `.unknown`，红）
-- [ ] Fix：`SCADA_EDITOR_ERROR_CODES`（`editor-errors.ts:13-25`）增 `'editor-internal-error'`（M1 子集，因 mutator applyDiff 失败属 M1 路径）；`SCADA_EDITOR_ERROR_CODES_M1` 同步增
-- [ ] Fix：`packages/flux-i18n/src/locales/en-US.ts` + `zh-CN.ts` 增 `industrial.scada.editor.error.editor-internal-error` 翻译键（en: 'Editor internal error' / zh: '编辑器内部错误'，措辞执行时对齐既有码风格）
-- [ ] Fix：`docs/components/industrial-hmi-editor/design-renderer.md` §8.5.2 码表增 `editor-internal-error`
-- [ ] Proof：`runtime-error-propagation.test.ts` 既有 onError 派发断言零回归（派发 code 不变，只是 i18n 映射不再降级）
+- [x] failing-first：`editor-errors.test.ts` 增断言 `scadaEditorErrorI18nKey('editor-internal-error')` === `'industrial.scada.editor.error.editor-internal-error'`（修复前走 `.unknown` fallback，红）+ M1/全集 registry 含该码
+- [x] Fix：`SCADA_EDITOR_ERROR_CODES` + `SCADA_EDITOR_ERROR_CODES_M1` 同步增 `'editor-internal-error'`（M1 子集，mutator applyDiff 失败属 M1 路径）
+- [x] Fix：`en-US.ts` 增 `'editor-internal-error': 'Editor internal error'` / `zh-CN.ts` 增 `'编辑器内部错误'`
+- [x] Fix：`design-renderer.md` §8.5.2 码表 + 注释块增 `editor-internal-error`（语义 + 沉默缺口闭合说明）
+- [x] Proof：`runtime-error-propagation.test.ts`（6 测）+ `editor-state-integrity.test.ts`（12 测）既有 onError 派发断言零回归；`i18n-contract.test.ts`（19 测）双 locale key parity 通过
 
 Exit Criteria:
 
-- [ ] `scadaEditorErrorI18nKey('editor-internal-error')` 命中正确 i18n key（非 `.unknown`）
-- [ ] 两 locale 含对应翻译键
-- [ ] design-renderer.md §8.5.2 码表含 `editor-internal-error`
-- [ ] 既有 runtime-error-propagation 测试零回归
+- [x] `scadaEditorErrorI18nKey('editor-internal-error')` 命中正确 i18n key（非 `.unknown`）
+- [x] 两 locale 含对应翻译键（i18n-contract parity 测通过）
+- [x] design-renderer.md §8.5.2 码表含 `editor-internal-error`
+- [x] 既有 runtime-error-propagation 测试零回归
 
 ### Phase 5 - ScadaEditorSession 公开 type 不泄漏 UndoStack（P2-2）
 
-Status: planned
+Status: completed
 Targets: `src/editor/editor-session.ts`, `src/editor/index.ts`
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] Decision：UndoStack 隐藏策略——(a) 导出投影公开 type（如 `type ScadaEditorSessionPublic = Omit<ScadaEditorSession, 'undoStack'> & { undoStack: ReadonlyUndoStack }` 或完全 omit `undoStack`，对外只保留 `canUndo`/`canRedo`/`undo`/`redo` 方法签名），`editor/index.ts` 改导出投影 type；或 (b) 保留 `undoStack: UndoStack` 暴露但在 owner doc 显式声明其为「内部实现，外部不应直接依赖」。倾向 (a)（UndoStack 是域内部实现类，docstring 已标 INV-4 内部持有，泄漏到包公共面与注释矛盾）。**执行时核对**：grep 包外（apps/playground、兄弟包）是否直接访问 `session.undoStack` —— 若有外部消费者直接触该字段，需先确认能否迁移到方法访问，否则降级 (b) 并在 Deferred But Adjudicated 记录理由
-- [ ] Proof（failing-first）：新增/扩展测试断言包公共面导出的 session type 不含可变 `UndoStack` 实例字段（投影 type 下 `undoStack` 不可达或只读窄面；或 type-level 断言 `editor/index.ts` 导出的是投影 type 而非原接口）
-- [ ] Fix（导出分支）：`editor-session.ts` 增投影公开 type（保留内部 `ScadaEditorSession` 实现接口含 `undoStack`，新增不含/窄化的公开别名）；`editor/index.ts:17` 改导出投影 type
-- [ ] Proof：既有 editor-session / editor 消费测试零回归；包公共面 typecheck 通过
+- [x] Decision：选 **(a) 导出投影公开 type**——`type ScadaEditorSessionPublic = Omit<ScadaEditorSession, 'undoStack'>`，`editor/index.ts` 改导出此投影 type（不再导出 impl 接口）。grep 复核：apps/ + 兄弟包无直接 `session.undoStack` 访问（Draft Review 已确认；所有 `.undoStack` 消费者均为 editor 域内部经 relative path import impl 接口，不触公共 barrel），投影 type 分支可行。undo/redo 对外经 `component:undo`/`redo` 句柄 + `onSessionChange` payload canUndo/canRedo 消费，外部无需触 undoStack 字段
+- [x] Proof（type-level failing-first）：新增 `editor/editor-public-types.test.ts`——经 `import type { ScadaEditorSessionPublic } from './index.js'` 断言公开 barrel session type 不含可变 undoStack（`@ts-expect-error` 守 undoStack 访问；泄漏则 directive unused → typecheck 红；tsconfig 含 src 故 typecheck 强制）
+- [x] Fix（导出分支）：`editor-session.ts` 增 `export type ScadaEditorSessionPublic = Omit<ScadaEditorSession, 'undoStack'>`（impl 接口保留含 undoStack 供域内部）；`editor/index.ts:17` 改 `export type { ScadaEditorSessionPublic, ... }`（移除 ScadaEditorSession 导出）
+- [x] Proof：既有 editor-session / editor 消费测试零回归（全包 1434 测全绿，含 toolbox-panel/runtime-factories/test-handle-factory 等内部 undoStack 消费者经 relative import 不受影响）；`pnpm typecheck` 绿
 
 Exit Criteria:
 
-- [ ] `editor/index.ts` 导出的 session type 不再泄漏可变 `UndoStack` 实例字段（与 docstring INV-4 一致），或在 owner doc 显式记录为接受的例外
-- [ ] 包外无直接 `session.undoStack` 访问被破坏（grep 确认，或迁移完成）
-- [ ] 既有 editor session 测试零回归
+- [x] `editor/index.ts` 导出的 session type 不再泄漏可变 `UndoStack` 实例字段（投影 type 落地，与 docstring INV-4 一致）
+- [x] 包外无直接 `session.undoStack` 访问被破坏（grep 确认无外部消费者；内部消费者经 relative import impl 接口不变）
+- [x] 既有 editor session 测试零回归
 
 ## Draft Review Record
 
@@ -179,19 +179,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] F5：parse 非对象不再类型谎言 + 不共享嵌套引用（focused 测断言）
-- [ ] F6：仓库内单一 clone 实现，深隔离 + 不硬编码 version（focused 测断言）
-- [ ] P2-1：serialization 导出与注释承诺一致（导出或收窄注释）
-- [ ] P2-2：ScadaEditorSession 公开 type 不泄漏 UndoStack（投影 type 落地）
-- [ ] P2-3：industrialRendererDefinitions 导出状态与 Decision 一致
-- [ ] P2-8：editor-internal-error 注册 + locale + doc 三处齐
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect
-- [ ] 受影响 owner docs 已同步（design-renderer.md §8.5.2 / §11 导出说明）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] F5：parse 非对象不再类型谎言 + 不共享嵌套引用（focused 测断言）
+- [x] F6：仓库内单一 clone 实现，深隔离 + 不硬编码 version（focused 测断言）
+- [x] P2-1：serialization 导出与注释承诺一致（导出 parse/validate/diff + ScadaValidationResult）
+- [x] P2-2：ScadaEditorSession 公开 type 不泄漏 UndoStack（投影 type 落地，type-level 测守卫）
+- [x] P2-3：industrialRendererDefinitions 已导出（与兄弟包对齐）
+- [x] P2-8：editor-internal-error 注册 + locale + doc 三处齐
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect（本 plan 6 个 finding 全部收口；undo-redo-adapter 第三处 clone 作为 F6 同型缺陷一并统一，非 deferred）
+- [x] 受影响 owner docs 已同步（runtime design-renderer §4.3 反序列化 + 序列化导出归属 / editor design-renderer §8.5.2 码表）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`（32/32 全绿）
+- [x] `pnpm build`（32/32 全绿）
+- [x] `pnpm lint`（32/32 全绿）
+- [x] `pnpm test`（workspace 59/59 任务全绿；industrial 1434 测）
 
 ## Deferred But Adjudicated
 
@@ -204,13 +204,23 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 全部 5 Phase 执行完成（executor pass）。6 个 in-scope P2 finding（F5/F6/P2-1/P2-2/P2-3/P2-8）全部收口；F6 额外统一了第三处同型 clone（undo-redo-adapter.structuredCloneSafe）。typecheck/build/lint/test 全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: independent closure-audit sub-agent（fresh session，不复用 executor 上下文；本次 audit pass 于 2026-08-09 完成）
+- Audit Scope: 逐条核对 5 个 Phase Exit Criteria + Closure Gates + deferred 诚实性 + anti-hollow + owner-doc 同步，全部对照 `packages/flux-renderers-industrial/` live code
+- Evidence:
+  - 全工作区 `pnpm typecheck` 32/32、`pnpm build` 32/32、`pnpm lint` 32/32、`pnpm test` 59/59 任务全绿（industrial 包 1434 测）。
+  - F5（Phase 1）：`serialization/parse.ts:14-17` 纯对象窄化守卫 + `structuredClone` 深隔离，非对象抛 `scada config must be an object`；旧 `shallowCopy` 已移除，无类型谎言。`serialization-parse-serialize.test.ts` 在场。
+  - F6（Phase 2）：仓库内唯一 clone-config 实现为 `editor-working-helpers.ts:76 cloneConfigSnapshot`（symbols `cloneNodeDeep` + variables `.map((v)=>({...v}))` 深隔离 + viewport/background `structuredClone` + version 经 `...config` 保留）。`editor-session.ts:81/82/94/95` + `undo-redo-adapter.ts:44` 均调它；`editor-session.cloneConfig/cloneNode` + `undo-redo-adapter.structuredCloneSafe/cloneNodeDeep/cloneConfig` 三 helper 已删（grep 无残留函数定义，仅注释/测试历史引用）。
+  - P2-1/P2-3（Phase 3）：`src/index.ts:58-69` 导出 serialize/parse/validate/diff + `export type ScadaValidationResult` + `industrialRendererDefinitions`；`src/index-exports.test.ts` 在场。
+  - P2-8（Phase 4）：`editor-errors.ts:25/46` `SCADA_EDITOR_ERROR_CODES` + `_M1` 均含 `editor-internal-error`；`scadaEditorErrorI18nKey` 命中正 key（非 `.unknown`）。**Anti-hollow 核对**：该码在 prod 真实派发——`runtime-factories.ts:175` + `runtime-mutators.ts:162` 经 `onError?.('editor-internal-error', ...)`，注册非空壳。`en-US.ts:982`/`zh-CN.ts:980` 翻译键在场；`design-renderer.md §8.5.2`（行 318/322）码表登记。
+  - P2-2（Phase 5）：`editor-session.ts:56` `ScadaEditorSessionPublic = Omit<ScadaEditorSession,'undoStack'>`；`editor/index.ts:19` 导出投影 type（不再导出 impl 接口）。**包外泄漏核对**：grep `\.undoStack` 无 industrial editor 公共面外部消费者（scheduling/report-designer/spreadsheet 命中为同名不相关字段）。`editor-public-types.test.ts` `@ts-expect-error` type-level 守卫在场。
+  - Owner docs 同步：runtime `docs/components/industrial-hmi/design-renderer.md` §4.3（行 170 反序列化 fail-closed + 深隔离）；editor `docs/components/industrial-hmi-editor/design-renderer.md` §8.5.2（行 318/322 码表）。
+  - Deferred 诚实性：`Deferred But Adjudicated` 无 deferred 项；`Non-Blocking Follow-ups` 仅本轮-12/P2-5/P2-6/P2-7/P2-9/P2-10/P2-11（均与本 plan Non-Goals 一致，非 in-scope live defect 降级）。
+  - 文本一致性：`Plan Status: completed` / 5 Phase 全 `Status: completed` / 所有 Phase Exit Criteria 全 `[x]` / Closure Gates 全 `[x]` 彼此一致。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- 本轮-12（align/distribute world 坐标语义 + false-green 测试）、P2-5（collectWorldBounds 父偏移 false-green）、P2-6/P2-7（palette/toolbox i18n）、P2-9/P2-10/P2-11（design doc file-tree rot）留待后续 i18n/doc/adjudication 轮（与本 plan Non-Goals + Non-Blocking Follow-ups 一致）。

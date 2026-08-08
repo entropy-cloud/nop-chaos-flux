@@ -315,9 +315,11 @@ interface ScadaEditorTestHandle {
 | `component:save()`                      | 提交（§4.5：序列化 working copy + 经 onSave 或同步链触发下游）                                                                      | `not-mounted`                                                                                |
 | `component:load(config)`                | 加载（替换 working copy + 重置 undo/redo 栈）                                                                                       | `not-mounted`/`invalid-config`                                                               |
 
-**错误码注册表 + i18n 文案**：复用 runtime `SCADA_ERROR_CODES` 注册模式（design-renderer.md §8.5）+ 新增编辑器错误码（`editor-mount-failed`/`invalid-node`/`duplicate-id`/`invalid-patch`/`empty-selection`/`not-a-group`/`no-undo`/`no-redo`），code→i18n key 映射复用 `scadaErrorI18nKey` 模式但走 editor 专用映射函数（`editor-errors.ts` 内独立实现，前缀 `industrial.scada.editor.error.<code>`；runtime `scadaErrorI18nKey` 硬编码前缀 `industrial.scada.error` + SCADA_ERROR_CODES 数组守卫，editor 新增码不在 runtime 数组内会返回 `.unknown` fallback，故 editor 需自有映射），locale 文案在 `flux-i18n`（E5 落地）。
+**错误码注册表 + i18n 文案**：复用 runtime `SCADA_ERROR_CODES` 注册模式（design-renderer.md §8.5）+ 新增编辑器错误码（`editor-mount-failed`/`invalid-node`/`duplicate-id`/`invalid-patch`/`invalid-config`/`editor-internal-error`/`empty-selection`/`not-a-group`/`no-undo`/`no-redo`），code→i18n key 映射复用 `scadaErrorI18nKey` 模式但走 editor 专用映射函数（`editor-errors.ts` 内独立实现，前缀 `industrial.scada.editor.error.<code>`；runtime `scadaErrorI18nKey` 硬编码前缀 `industrial.scada.error` + SCADA_ERROR_CODES 数组守卫，editor 新增码不在 runtime 数组内会返回 `.unknown` fallback，故 editor 需自有映射），locale 文案在 `flux-i18n`（M1 子集含 `editor-internal-error`，E5/M1 落地）。
 
 > plan 2026-08-08-0900-2 Phase 3 / #31：`editor-mount-failed` 已在 `editor-errors.ts` registry 注册并在 mount 失败路径发射，现补 §8.5.2 文档化（此前码已注册发射但未文档化）。语义：编辑器 mount 阶段（leafer Editor/App 装配 / 初始 config parse-validate）失败时发射，触发 `onError` + 置 `data-status="error"`。
+
+> plan 2026-08-08-1931-2 Phase 4 / P2-8：`editor-internal-error` 补登 registry M1 子集 + 两 locale 翻译键（en: 'Editor internal error' / zh: '编辑器内部错误'）。语义：mutator `applyDiff` / undo / redo / 事务 commit 失败时由 `runtime-factories.syncWorkingCopy` + `runtime-mutators` + `undo-redo-adapter` 派发（rollback working copy 后通知 host）。先前码在 prod 派发但 registry 漏登 → `scadaEditorErrorI18nKey` 走 `.unknown` fallback，host 显示 unknown 文案（沉默缺口，现闭合）。
 
 ## 9. 数据源、表达式、导入能力接入点
 
