@@ -31,7 +31,7 @@ describe('ConnectionOverlayRenderer (E8 M-1)', () => {
     expect(added).toHaveLength(0);
   });
 
-  it('update is a noop when sky layer missing', () => {
+  it('update is a noop when sky layer missing (no nodes created, no crash)', () => {
     const renderer = new ConnectionOverlayRenderer(makeEngine(undefined));
     expect(() =>
       renderer.update({
@@ -39,6 +39,9 @@ describe('ConnectionOverlayRenderer (E8 M-1)', () => {
         dragLines: [],
       }),
     ).not.toThrow();
+    // HCA9 P2-1 (dim 23): not.toThrow alone doesn't verify the noop contract —
+    // also assert no nodes were retained (sky missing → early return before any sky.add).
+    expect((renderer as unknown as { nodes: unknown[] }).nodes).toHaveLength(0);
   });
 
   it('clear destroys previously added nodes', () => {
