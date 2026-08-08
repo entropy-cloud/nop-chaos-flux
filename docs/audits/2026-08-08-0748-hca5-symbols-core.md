@@ -129,3 +129,5 @@
 | 候选                                             | 复杂/跨层                                                                         | 归档建议                                                                        |
 | ------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | P1-1 `fontFamily`/`fontWeight`/`align` diff 漏键 | 跨层（symbols core ScadaSymbolProps ↔ serialization ScadaSymbolNode/SYMBOL_KEYS） | 复杂度中（跨层根因，机械修复但须 test-first 证 diff 行为），建议归 `docs/bugs/` |
+
+> **HCA-BL 回链（已闭环）**：P1-1 已归档为 `docs/bugs/79-industrial-hmi-component-audit-cross-layer-symbol-diff-missing-font-keys.md`（HCA-BL 裁定：归档——跨层 + 非显然根因 + 已复发 1 次 + guard 落地 + 回归测试）。

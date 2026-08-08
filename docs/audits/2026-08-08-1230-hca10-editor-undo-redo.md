@@ -171,6 +171,8 @@
 
 **无复杂/跨层 bug 候选需归 `docs/bugs/`。** 本层 4 文件逐文件深审零 P0；P1-1（replaceUndoTop redo 截断）是单层局部 defect，test-first 修复（Phase 2），不跨层；P2-1（singleNodeUpdate 载荷完整性）同理。两者均在审计卡内留痕 + 回归测试覆盖即可，无需 `docs/bugs/` 卡片（按 `docs/bugs/00-bug-fix-note-writing-guide.md`「简单 bug 在审计卡内留痕即可」）。
 
+> **HCA-BL 回链（已闭环）**：HCA-BL 独立复核**升级**裁定——P1-1 + P2-1 虽为单层，但均命中 writing-guide「非显然状态机根因 + 回归测试 + 易被 coalesce 重构再引入」，**合并归档**为 `docs/bugs/83-industrial-hmi-component-audit-undo-redo-coalesce-correctness.md`（同模块 / 同验证路径 / 同重构风险面，两 finding 合一卡）。源审计「留痕」推荐被 anti-slacking 安全机制覆盖（plan M-1）。
+
 ### 6.2 P3 backlog（→ HCA-CR 跨层集中修复）
 
 | 编号       | 文件:行                                                 | 摘要                                                                                                                                                                                                                                                    | Triage |

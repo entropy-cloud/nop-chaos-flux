@@ -311,3 +311,5 @@
 | 候选                                     | 复杂/跨层                                                                                                                                                                | 归档建议                                                                                    |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
 | P2-1 pipe-junction width/height 静默丢弃 | 单包（pipe-junction.ts），根因中非显然（HCA5 P3-2 裁定聚焦 composite 族 composite.ts:72-77，未覆盖 pipe-junction 自定义 applyProps 借用 applyCompositeProps 的同型缺口） | 复杂度中（test-first 已修 + 2 regression；可被 applyProps 重构再引入），建议归 `docs/bugs/` |
+
+> **HCA-BL 回链（已闭环）**：P2-1 pipe-junction 已归档为 `docs/bugs/80-industrial-hmi-component-audit-pipe-junction-resize-silent-drop.md`（HCA-BL 裁定：归档——非显然根因（EXTENT_FIELDS 静默丢弃）+ 回归测试 + applyProps 重构易再引入）。

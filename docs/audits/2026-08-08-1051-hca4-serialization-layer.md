@@ -113,6 +113,8 @@
 
 - **无复杂/跨层 bug 候选**。serialization 层 finding 均为局部覆盖缺口（P3）或 governance 项（P2-BND-1），无 non-obvious 根因、无可被重构再引入的跨包隐患、无跨层契约违约。prior 修复（0900-1/0653-4/2129-1）已在各自 plan 的 bug 卡 / 审计卡留痕。
 
+> **HCA-BL 回链（已闭环）**：HCA-BL 裁定**留痕**——serialization 层无复杂/跨层 bug 候选（零 P0/P1，2 个 P3 为局部覆盖缺口），本审计记录内留痕即可，不开 `docs/bugs/` 卡。
+
 ## Phase 3 先验修复回归抽查
 
 | 先验修复                                                                      | 抽查路径                                                                                                                                          | 结果 |

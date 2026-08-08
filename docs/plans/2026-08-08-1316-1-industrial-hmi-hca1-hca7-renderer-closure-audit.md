@@ -39,8 +39,8 @@
 
 ### 共性项（已 `done`）
 
-- **HCAX-1** error code `invalid-config`→`config-invalid`：跨 renderer + editor + runtime-mutators + toolbox-runtime 统一，状态 `done`。
-- **HCAX-2** canvas 交互面 a11y：scada-canvas + scada-editor-canvas 两 renderer wrapper 加 `role="application"` + `aria-label` + i18n key，状态 `done`。
+- **HCAX-1** error code `invalid-config`→`config-invalid`：跨 renderer + editor + runtime-mutators + toolbox-runtime 统一，状态 `done`。HCA-BL 归档 `docs/bugs/77-industrial-hmi-component-audit-cross-layer-error-code-unification.md`。
+- **HCAX-2** canvas 交互面 a11y：scada-canvas + scada-editor-canvas 两 renderer wrapper 加 `role="application"` + `aria-label` + i18n key，状态 `done`。HCA-BL 归档 `docs/bugs/78-industrial-hmi-component-audit-canvas-wrapper-a11y-role-aria-label.md`。
 
 ### owner doc 现状
 

@@ -60,9 +60,9 @@ scada-editor-canvas / @nop-chaos/flux-renderers-industrial（`/editor` subpath�
   - **P2-1** propContracts(7)+eventContracts(7) LANDED：`editor/renderer-definitions.ts:30-79` 7 propContracts（config/width/height/mode/commitPolicy/viewport/events）+ `:80-149` 7 eventContracts（onReady/onError/onSelectionChange/onModeChange/onSessionChange/onSave/onLoad，含 payload shape）。
   - **P2-2** a11y role/aria-label（HCAX-2）LANDED：`scada-editor-canvas.tsx:270` `role="application"` + `:271` `aria-label={t('industrial.scada.editor.canvasLabel')}`；i18n `zh-CN.ts:955` / `en-US.ts:957` 双 locale key 存在。
   - **P2-3** disabled meta 响应 LANDED：`scada-editor-canvas.tsx:217` `disabled` 派生 + `:272` `aria-disabled` + `:273` `inert` + `:275` drop guard + `:305` keyboard guard（四态守护齐全）。
-  - **P2-4（shared）** error code `config-invalid`（HCAX-1）LANDED：`scada-editor-canvas.tsx:42` 与 runtime `scada-canvas.tsx:46` 同用 `config-invalid`（校验失败升级码）；`invalid-config` 为独立命令句柄失败码（非升级），语义切分一致（`scada-errors.ts:55` / `editor-errors.ts:19`）。
+  - **P2-4（shared）** error code `config-invalid`（HCAX-1）LANDED：`scada-editor-canvas.tsx:42` 与 runtime `scada-canvas.tsx:46` 同用 `config-invalid`（校验失败升级码）；`invalid-config` 为独立命令句柄失败码（非升级），语义切分一致（`scada-errors.ts:55` / `editor-errors.ts:19`）。HCA-BL 归档 `docs/bugs/77-industrial-hmi-component-audit-cross-layer-error-code-unification.md`（P2-4 finding）。
   - **P3-1** palette title LANDED：`editor-palette.tsx:51` `title={def.name}`（非 `def.type`）。
-  - 18 维：5 fail 维度（dim 1/7/8/10/18）全部 fixed，无遗留；HCAX-1/HCAX-2 共性 fix 在 editor 与 runtime 落地一致。
+  - 18 维：5 fail 维度（dim 1/7/8/10/18）全部 fixed，无遗留；HCAX-1/HCAX-2 共性 fix 在 editor 与 runtime 落地一致。P2-2 a11y（HCAX-2）HCA-BL 归档 `docs/bugs/78-industrial-hmi-component-audit-canvas-wrapper-a11y-role-aria-label.md`。
 - Closure remediation（fresh session 抽查发现，已落地）：
   - owner doc drift：`docs/components/industrial-hmi-editor/design-renderer.md` §4.1 schema 块补 `loading?`/`empty?`/`error?` region 声明；§4.3 fields 表补 `loading`/`empty`/`error` region 行；§10 marker 表补 `scada-editor-empty` 行 + 画布交互面 a11y/disabled 四态说明。
   - disabled 回归守护：新增 `scada-editor-canvas-disabled-meta.test.tsx`（3 测：role/aria-label a11y + disabled→aria-disabled/inert + 非 disabled 保持可交互），断言结果值非 not.toThrow。

@@ -133,6 +133,8 @@
 
 **无复杂/跨层 bug 候选需归 `docs/bugs/`。** 本层 6 文件逐文件深审零 P0/P1，先验 #8/#3/#2 修复复核成立，#1 维持 watch-only residual。简单 P3 留痕于本表即可。
 
+> **HCA-BL 回链（已闭环）**：HCA-BL 裁定**留痕**——#2 safeDiv / #3 tooltip 死字段 / #8 dangling collectIds 为先验修复复核成立（非新缺陷），无跨层影响，本审计记录 §5.1 内留痕即可，不开 `docs/bugs/` 卡。
+
 ### 5.2 P3 backlog（→ HCA-CR 跨层集中修复）
 
 | 编号      | 文件:行                                   | 摘要                                                                                                                   | Triage |

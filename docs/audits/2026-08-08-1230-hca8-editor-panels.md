@@ -155,6 +155,8 @@ editor panels 是 React UI 面板 + 纯逻辑适配器层，非注册 renderer�
 - **P2-FE-1**（嵌套子节点校验错误归因）：非平凡根因（findSymbolIndex 返回值语义错误——对子节点返回父索引而非递归路径），可被重构再引入，跨 inspector/validate 边界。修复后建议 HCA-BL 归档为 `docs/bugs/NN-field-errors-nested-child-attribution.md`（HCA-BL 正式归档动作）。
 - 其余 P3 为机械/局部问题，HCA-BL 留审计记录即可，不单独归档。
 
+> **HCA-BL 回链（已闭环）**：P2-FE-1 已归档为 `docs/bugs/81-industrial-hmi-component-audit-nested-child-validation-error-attribution.md`（HCA-BL 裁定：归档——非显然根因（findSymbolIndex 返父索引）+ 跨 inspector/validate 边界 + 回归测试）。其余 P3 已裁定留痕（机械/局部，本审计记录内留痕，不单独归档）。
+
 ## Phase 3 - owner doc 一致性核对 + 先验修复回归抽查
 
 ### owner doc 一致性（design-toolbox.md §4.2/§4.3/§5/§10 + design-property-panel.md）

@@ -52,7 +52,7 @@ scada-canvas / @nop-chaos/flux-renderers-industrial / ScadaCanvasSchema（`schem
 
 - 独立 closure audit: **PASS**（fresh session `ses_0202b17cbffeXMF0hmlW22VM6N`，2026-08-08）
 - Evidence（live `文件:行` 复核，行为完成非仅接口存在）：
-  - **P2-1** a11y role/aria-label LANDED：`scada-canvas.tsx:298` `role="application"` + `:299` `aria-label={t('industrial.scada.canvasLabel')}`；i18n `zh-CN.ts:935` / `en-US.ts:936` 双 locale key 存在。JSX 每渲染发射到根交互面，i18n 驱动（非硬编码）。
+  - **P2-1** a11y role/aria-label LANDED：`scada-canvas.tsx:298` `role="application"` + `:299` `aria-label={t('industrial.scada.canvasLabel')}`；i18n `zh-CN.ts:935` / `en-US.ts:936` 双 locale key 存在。JSX 每渲染发射到根交互面，i18n 驱动（非硬编码）。HCA-BL 归档 `docs/bugs/78-industrial-hmi-component-audit-canvas-wrapper-a11y-role-aria-label.md`（HCAX-2 共性）。
   - **P3-1** 6 处 `useCallback`（`:94/:100/:135/:175/:218/:278`）确认为 P3 recorded（非阻塞），分类诚实，归 HCA-LL/HCA-CR（本卡 `Deferred But Adjudicated`）。
   - 18 维 tally：14 pass / 2 n-a（dim 3 值所有权 + dim 4 表单参与）/ 2 fail（dim 8 a11y 已修 + dim 14 React19 P3 recorded）；无未分类维度，无未修阻塞性 fail。
 - Closure remediation（fresh session 抽查发现，已落地）：

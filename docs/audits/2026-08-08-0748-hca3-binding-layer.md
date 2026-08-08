@@ -183,3 +183,5 @@
 | （无） | —         | binding 层零 P0/P1 live defect，无复杂/跨层 bug 候选喂入 HCA-BL |
 
 **说明**：binding 层经多轮先验修复后行为正确性扎实，23 维深审未发现新的 live defect。P2-BND-1（文件行数治理）为 governance 项非 bug，本 plan 内拆分落地。
+
+> **HCA-BL 回链（已闭环）**：HCA-BL 裁定**留痕**——binding 层零 P0/P1 live defect，无复杂/跨层 bug 候选，本审计记录内留痕即可，不开 `docs/bugs/` 卡。
