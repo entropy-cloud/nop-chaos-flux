@@ -48,7 +48,7 @@
 - [P3-1] collectAllTags/wipOverLimitColumns 每 render O(n)（`kanban-board.tsx:197,226-231`）→ 状态: 记录
 - [P3-2] `use-kanban-board-effects.ts:141-144` legacy aria-grabbed、drop indicator 无 ARIA → 状态: 记录
 - [P3-3] `kanban-export.ts` 未接线死代码 + 原始浏览器 IO（INV-1 观察）→ 状态: 记录（CR 评估接线或删除）
-- [P3-4] `kanban-board.tsx:6` 注释 "snapshot-based" 与实现 command-based 不符 → 状态: 记录
+- [P3-4] `kanban-board.tsx:6` 注释 "snapshot-based" 与实现 command-based 不符 → 状态: **fixed**（plan-2026-08-08-0715-3：注释同步为 command-based 模式，指向 utils/kanban-undo-stack.ts）
 
 ## 组合宿主场景（真实浏览器验证）
 

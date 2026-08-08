@@ -53,7 +53,7 @@ wizard / flux-renderers-layout / WizardSchema（`schemas.ts:28-65`）+ WizardSte
 - [P2-5] component-lab lab 页缺失（grid/collapse/wizard 3 组件同案，plan 预裁定「P2 成本低可当场补」）→ 状态: fixed（Phase 3 新增 `wizard-lab-page.tsx` + 宿主场景 host-wizard-step/gate/dialog，证据见修复记录）
 - [P2-6] commit 失败路径零单测：onStepCommit `{ok:false}` → lastCommitStatus='error' + onStepError + 不前进无断言（formId 校验路径单测盲区 → Phase 3 真机覆盖）→ 状态: fixed（wizard-c5-1-contract.test.tsx「surfaces commit failure…」先红后绿——{ok:false} → data-last-commit-status=error + 错误区展示 + 不前进；校验路径真机覆盖见 Phase 3 host-wizard-step）
 - [P2-b] design.md §7 推荐句柄（component:setValue/getValue/next/prev/goToStep/commitStep）未实现——「推荐支持」非承诺契约 + flux-vs-amis-analysis G6 为「改进计划」项；实现需组件 capability 注册面（>15 分钟）→ 状态: backlog（审计卡 backlog 归 CR 集中处理；G7-G10 同案）
-- [P3-1] `mode === 'vertical' ? 'mt-4' : 'mt-4'` 恒等三元（:668-669）→ 状态: keep（P3 记录）
+- [P3-1] `mode === 'vertical' ? 'mt-4' : 'mt-4'` 恒等三元（:668-669）→ 状态: **fixed**（plan-2026-08-08-0715-3：去恒等三元为 `className="mt-4"`；wizard-c5-1-contract.test.tsx +1 双 orientation 断言）
 - [P3-2] 步进切换无焦点管理（dim 8 焦点管理；step body 无 heading 目标元素）→ 状态: keep
 - [P3-3] 同 tick 双击 Next commit 竞态（committing 守卫非原子，React 批处理内双触发）→ 状态: keep（按钮 disabled 在下一帧生效，风险窗口极小）
 - [P3-4] flux-vs-amis-analysis.md G3 行过时（3/4 label 已实现 + actionNextSaveLabel 移除）——历史分析文档不回写（guide rule 21）→ 状态: keep

@@ -47,7 +47,7 @@
 - [P3-2] 文档 phantom：design.md §8.1 payload 命名、§8.3/design-export.md component 句柄、§9.0 loadAction、§12.7 onScheduleProgress、undoLimit；`example.json` `${event.taskId}` → 状态: fixed（CR plan-2026-08-06-0329-1 Phase 4 dim 17 同步：§8.1 payload 改 `_taskId`/`_sourceId`/`_linkType`（CX-12 前缀，以实现为准）、§8.3 句柄表改实现注册面 zoomIn/zoomOut/scrollToToday/scrollToTask + 未实现项标注、§9.0 loadAction/§12.7 onScheduleProgress/§12.8 undoLimit 与 component:undo/redo 全部标注未实现；example.json `${event.taskId}`→`${_taskId}`；design-export.md 句柄标注未实现）
 - [P3-3] `gantt-drop-indicator` 无 nop- 前缀（`use-gantt-drag.ts:35`）→ 状态: 记录
 - [P3-4] 死代码组件（filter-bar/export-handles/scheduler-config/resource-load-\*，未 import）→ 状态: 记录
-- [P3-5] `store.destroy()` 未在卸载时调用（`gantt.tsx:74-76`）→ 状态: 记录
+- [P3-5] `store.destroy()` 未在卸载时调用（`gantt.tsx:74-76`）→ 状态: **fixed**（plan-2026-08-08-0715-3：onMount effect cleanup 追加 store.destroy()；gantt-store.test.ts +1 destroy 重置状态用例）
 
 ## 组合宿主场景（真实浏览器验证）
 

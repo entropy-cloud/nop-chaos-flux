@@ -72,7 +72,7 @@ diff-view / flux-renderers-content / DiffViewSchema（`schemas.ts:16-42`）/ def
 - [P2-6] viewType/activeFileIndex 无受控 echo（schema prop 变化不反映）——design §7 local 语义下裁定为有意设计 → 状态: keep（裁定留痕）
 - [P3-1] 文件搜索 input 无 label（diff-file-list.tsx:89-93 placeholder 仅）→ keep
 - [P3-2] three-column mid pane gutter `data-diff-gutter="mid"` 不在 design §10 old/new 词汇表（:151）→ keep（P1-3 修复时顺手同步 design §10 三栏词汇）
-- [P3-3] three-column flash setTimeout 未清理（diff-three-column-view.tsx:56，仅 classList 操作无害）→ keep
+- [P3-3] three-column flash setTimeout 未清理（diff-three-column-view.tsx:56，仅 classList 操作无害）→ 状态: **fixed**（plan-2026-08-08-0715-3：effect cleanup 统一 clearTimeout；diff-view-renderer.test.tsx +1 假时钟用例锁定 unmount 清零 + 500ms 移除 flash）
 - [P3-4] content 包注册项均不声明 componentCapabilityContracts（design §8 失败路径表为契约描述但 dispatch 期无 payload 校验）——族内惯例 → keep（P1-8 修复后 handle 可达，校验属设计器增强面）
 
 ## 组合宿主场景（真实浏览器验证）

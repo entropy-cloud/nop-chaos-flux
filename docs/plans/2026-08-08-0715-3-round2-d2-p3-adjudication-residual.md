@@ -1,6 +1,6 @@
 # D2 P3 裁决与残余收口（149 P3 逐条裁决 + @reserved 契约核对 + watch-only e2e 复核 + Follow-ups 归集）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit-round2
 > Work Item: D2
 > Last Reviewed: 2026-08-08
@@ -69,68 +69,68 @@
 
 ### Phase 1 - P3 逐条裁决
 
-Status: planned
+Status: completed
 Targets: `docs/audits/round2-p3-inventory.md`（D0 产物）、新建 `docs/audits/round2-p3-adjudication.md`、`docs/audits/per-component/*.md`（回写）
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] 确认 D0 输入就绪：`docs/audits/round2-p3-inventory.md` 存在且零悬挂（149 P3 + 审计 P3 + Follow-ups）。
-- [ ] 逐条裁决 149 P3 + 08-06/08-07 审计 P3 + **D1 登记入表的 P3 行**：四档处理——(a) 低成本（约 15 分钟内）当场修复（test-first，回写卡内状态 fixed + plan 引用）；(b) 卡内既有 `fixed`（已带 plan 引用，如 array-field P3-1、condition-builder P3-1）直接镜像为 fixed；(c) 记录留痕（keep，卡内既有裁决保持）；(d) 驳回 + 理由（dismissed）；（约 30 条需实质裁定优先处理）。
-- [ ] **D1 P3 交接收口（顺序纪律）**：D1（`2026-08-08-0715-2`）与 D2 并行开工，但本 Phase 的裁决在 D1 回扫登记完成后再执行（或在收口前补裁 D1 行）——零悬挂口径必须覆盖 D1 登记行，不得先宣布零悬挂再等 D1 行到达。
-- [ ] 裁决表结构：每条 = 卡/P3 编号、内容摘要、裁决（fixed/keep/dismissed + 理由）、证据（`文件:行` 或 plan 引用）；零悬挂声明（与库存表 149 + 新增 P3 逐条对齐）。
-- [ ] 当场修复验证：受影响包 `pnpm --filter <pkg> typecheck/build/lint/test` 绿；修复后卡内状态回写。
+- [x] 确认 D0 输入就绪：`docs/audits/round2-p3-inventory.md` 存在且零悬挂（149 P3 + 审计 P3 + Follow-ups）。
+- [x] 逐条裁决 149 P3 + 08-06/08-07 审计 P3 + **D1 登记入表的 P3 行**：四档处理——(a) 低成本（约 15 分钟内）当场修复（test-first，回写卡内状态 fixed + plan 引用）；(b) 卡内既有 `fixed`（已带 plan 引用，如 array-field P3-1、condition-builder P3-1）直接镜像为 fixed；(c) 记录留痕（keep，卡内既有裁决保持）；(d) 驳回 + 理由（dismissed）；（约 30 条需实质裁定优先处理）。
+- [x] **D1 P3 交接收口（顺序纪律）**：D1（`2026-08-08-0715-2`）与 D2 并行开工，但本 Phase 的裁决在 D1 回扫登记完成后再执行（或在收口前补裁 D1 行）——零悬挂口径必须覆盖 D1 登记行，不得先宣布零悬挂再等 D1 行到达。
+- [x] 裁决表结构：每条 = 卡/P3 编号、内容摘要、裁决（fixed/keep/dismissed + 理由）、证据（`文件:行` 或 plan 引用）；零悬挂声明（与库存表 149 + 新增 P3 逐条对齐）。
+- [x] 当场修复验证：受影响包 `pnpm --filter <pkg> typecheck/build/lint/test` 绿；修复后卡内状态回写。
 
 Exit Criteria:
 
-- [ ] `docs/audits/round2-p3-adjudication.md` 零悬挂（149 P3 + 审计 P3 + D1 登记 P3 逐条裁决，每条有裁决 + 理由；裁决表计数 = 库存 + D1 登记行，与逐条对齐而非与 D0 库存等值）；低成本修复条目带 focused 测试并验证绿。
-- [ ] 审计卡回写完成（fixed 条目标注 plan 引用）；裁决表与卡内状态一致。
+- [x] `docs/audits/round2-p3-adjudication.md` 零悬挂（149 P3 + 审计 P3 + D1 登记 P3 逐条裁决，每条有裁决 + 理由；裁决表计数 = 库存 + D1 登记行，与逐条对齐而非与 D0 库存等值）；低成本修复条目带 focused 测试并验证绿。
+- [x] 审计卡回写完成（fixed 条目标注 plan 引用）；裁决表与卡内状态一致。
 
 ### Phase 2 - @reserved 契约核对
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/crud-schema.ts`、`packages/flux-renderers-scheduling/src/scheduling-renderer-definitions.ts`、`packages/flux-renderers-scheduling/src/calendar/calendar.tsx`、对应 design.md
 
 - Item Types: `Proof | Decision | Fix`
 
-- [ ] `rg "@reserved" packages/*/src` 全量登记（实测 7 处 / 3 文件）+ design.md 标注对照。
-- [ ] 逐处 live 消费核对：schema 字段消费、`component:*` 句柄注册、文档引用；零消费者 → 维持 `@reserved` 并回写状态；新消费者 → 裁决激活（移除标注 + 对齐 design.md）或撤销（契约废弃，design.md 同步）。
-- [ ] ghost contract 专项结论：核对结果（维持/激活/撤销逐处留痕）落裁决表或 daily log。
+- [x] `rg "@reserved" packages/*/src` 全量登记（实测 7 处 / 3 文件）+ design.md 标注对照。
+- [x] 逐处 live 消费核对：schema 字段消费、`component:*` 句柄注册、文档引用；零消费者 → 维持 `@reserved` 并回写状态；新消费者 → 裁决激活（移除标注 + 对齐 design.md）或撤销（契约废弃，design.md 同步）。
+- [x] ghost contract 专项结论：核对结果（维持/激活/撤销逐处留痕）落裁决表或 daily log。
 
 Exit Criteria:
 
-- [ ] 7 处 `@reserved` 全部有逐处裁决（维持/激活/撤销 + 证据 `文件:行`）；任何激活/撤销已同步 design.md；`pnpm check` 无新增命中。
+- [x] 7 处 `@reserved` 全部有逐处裁决（维持/激活/撤销 + 证据 `文件:行`）；任何激活/撤销已同步 design.md；`pnpm check` 无新增命中。
 
 ### Phase 3 - 6 条 watch-only e2e 复核
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/component-lab/c3-5-host-surfaces.spec.ts`、`tests/e2e/w3d-editor.spec.ts`、`tests/e2e/gantt-perf.spec.ts`、`tests/e2e/kanban-perf.spec.ts`、`tests/e2e/ai-attachments.spec.ts`
 
 - Item Types: `Proof | Decision`
 
-- [ ] Tiptap 批次（c3-5-host-surfaces :27/:81）与 w3d-editor（:28）隔离复跑（`npx playwright test <spec>:<line> --reporter=list`）：稳定失败 → 判真缺陷归 DR/D3.x；隔离绿 → 维持 watch-only 环境归因。
-- [ ] gantt-perf / kanban-perf：实测显示刷新率（本机 50.00Hz 则阈值不可达）→ 维持归因 + 标注"需 60Hz 环境最终确认"。
-- [ ] ai-attachments：多轮复跑确认 flake 不再现（不占 6 席，复核记录终态）。
-- [ ] 复核结论落裁决表或 daily log（每项：复跑结果 + 归因 + 路由）。
+- [x] Tiptap 批次（c3-5-host-surfaces :27/:81）与 w3d-editor（:28）隔离复跑（`npx playwright test <spec>:<line> --reporter=list`）：稳定失败 → 判真缺陷归 DR/D3.x；隔离绿 → 维持 watch-only 环境归因。
+- [x] gantt-perf / kanban-perf：实测显示刷新率（本机 50.00Hz 则阈值不可达）→ 维持归因 + 标注"需 60Hz 环境最终确认"。
+- [x] ai-attachments：多轮复跑确认 flake 不再现（不占 6 席，复核记录终态）。
+- [x] 复核结论落裁决表或 daily log（每项：复跑结果 + 归因 + 路由）。
 
 Exit Criteria:
 
-- [ ] 6 条 watch-only 每条有复核结论（真缺陷→DR 路由 / 维持 watch-only + 依据 / flake 确认不再现）；daily log 记录复跑计数。
+- [x] 6 条 watch-only 每条有复核结论（真缺陷→DR 路由 / 维持 watch-only + 依据 / flake 确认不再现）；daily log 记录复跑计数。
 
 ### Phase 4 - Non-Blocking Follow-ups 归集收口
 
-Status: planned
+Status: completed
 Targets: `docs/components/schema-gap-from-erp-integration-design.md`、`docs/plans/2026-08-07-2228-3-*.md`、`docs/plans/2026-08-08-0150-1-*.md`、`docs/logs/2026/08-08.md`
 
 - Item Types: `Decision | Proof`
 
-- [ ] 2228-1 ERP 设计文档 watch-only（`polling.stopWhen`，依赖 SurfaceRuntime `$surface.hasOpenSurface`）复核：无新消费者证据 → 维持 watch-only 并记录复核结论。
-- [ ] 2228-3 工具治理条目终态核验：01-02/03-01/03-02/03-03/14-1/14-2/14-4/14-5+23-3 已由 0150-1/2/3 落定的逐条复核引用。
-- [ ] 0150-1 `find-event-dispatch-without-ctx.test.ts` stagedDirs 治理：路由裁定（工具治理轮次或 D1 承接），记录于归集表。
-- [ ] 归集收口声明：全部 Follow-up 条目落 collected/closed，无遗留悬挂。
+- [x] 2228-1 ERP 设计文档 watch-only（`polling.stopWhen`，依赖 SurfaceRuntime `$surface.hasOpenSurface`）复核：无新消费者证据 → 维持 watch-only 并记录复核结论。
+- [x] 2228-3 工具治理条目终态核验：01-02/03-01/03-02/03-03/14-1/14-2/14-4/14-5+23-3 已由 0150-1/2/3 落定的逐条复核引用。
+- [x] 0150-1 `find-event-dispatch-without-ctx.test.ts` stagedDirs 治理：路由裁定（工具治理轮次或 D1 承接），记录于归集表。
+- [x] 归集收口声明：全部 Follow-up 条目落 collected/closed，无遗留悬挂。
 
 Exit Criteria:
 
-- [ ] 归集表每条落最终状态（closed/维持 watch-only/路由明确）；daily log 记录归集收口结论。
+- [x] 归集表每条落最终状态（closed/维持 watch-only/路由明确）；daily log 记录归集收口结论。
 
 ## Draft Review Record
 
@@ -143,19 +143,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `docs/audits/round2-p3-adjudication.md` 零悬挂（149 P3 + 审计 P3 + **D1 登记 P3** 逐条裁决，每条有状态 + 理由）
-- [ ] 低成本修复条目带 focused 测试并验证绿；审计卡状态回写一致
-- [ ] 7 处 `@reserved` 逐处裁决完成（维持/激活/撤销 + 证据）；激活/撤销已同步 design.md
-- [ ] 6 条 watch-only e2e 每条有复核结论（真缺陷路由 / 维持 watch-only / flake 终态）
-- [ ] Non-Blocking Follow-ups 归集收口（全部 collected/closed，无遗留悬挂）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（真缺陷显式路由 DR/D3.x，非静默延期）
-- [ ] 受影响的 owner docs 已同步（design.md 若 @reserved 变更、`docs/audits/` 索引、daily log）或明确写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增命中）
+- [x] `docs/audits/round2-p3-adjudication.md` 零悬挂（149 P3 + 审计 P3 + **D1 登记 P3** 逐条裁决，每条有状态 + 理由）
+- [x] 低成本修复条目带 focused 测试并验证绿；审计卡状态回写一致
+- [x] 7 处 `@reserved` 逐处裁决完成（维持/激活/撤销 + 证据）；激活/撤销已同步 design.md
+- [x] 6 条 watch-only e2e 每条有复核结论（真缺陷路由 / 维持 watch-only / flake 终态）
+- [x] Non-Blocking Follow-ups 归集收口（全部 collected/closed，无遗留悬挂）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（真缺陷显式路由 DR/D3.x，非静默延期）
+- [x] 受影响的 owner docs 已同步（design.md 若 @reserved 变更、`docs/audits/` 索引、daily log）或明确写明 No owner-doc update required
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新增命中）
 
 ## Deferred But Adjudicated
 
@@ -168,10 +168,10 @@ Exit Criteria:
 
 ### Tiptap 批次（c3-5-host-surfaces ×2 / w3d-editor）——按复核结果路由
 
-- Classification: `watch-only residual`（若隔离复跑全绿）或 `out-of-scope improvement`（若判真缺陷 → DR/D3.x）
-- Why Not Blocking Closure: 基线为隔离重跑全绿 + clean HEAD 同值复现（2026-08-06 记录）；Phase 3 复核将给出终态裁决；即使判真缺陷也属 ai/editor 面非本轮 supported baseline 缺口，显式路由 DR/D3.x 不静默延期。
-- Successor Required: `yes`（若判真缺陷）
-- Successor Path: `docs/backlog/component-audit-round2-roadmap.md` DR 行（跨面集中修复）或 D3.4 word-editor 大面审计
+- Classification: `watch-only residual`（c3-5 ×2：隔离复跑 6/6 全绿，维持环境归因，根因纳入 DR editor 面）`out-of-scope improvement`（w3d-editor：**2026-08-08 Phase 3 复核判真缺陷**——隔离复跑 3/15 绿，click+type keystroke 丢失竞态，CV 后 editor 代码零变更，"隔离全绿"归因不再成立）
+- Why Not Blocking Closure: w3d-editor 竞态属 editor 面非本轮 supported baseline 缺口，已显式路由 DR（editor 面跨面集中修复），非静默延期；c3-5 隔离全绿维持 watch-only。
+- Successor Required: `yes`
+- Successor Path: `docs/backlog/component-audit-round2-roadmap.md` DR 行（跨面集中修复，editor/Tiptap 面）
 
 ## Non-Blocking Follow-ups
 
@@ -180,13 +180,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行
+Status Note: 2026-08-08 执行完毕。4 Phase 全 completed。交付物：① `docs/audits/round2-p3-adjudication.md` 零悬挂（149 P3 = fixed 26 / keep 99 / dismissed 24 + 审计 P3 5 条 fixed + D1 登记 0 条；live `rg -c -- "[P3-"` 复核一致）——6 条低成本当场修复（wizard/kanban/gantt/diff-view/form/input-time）带 focused 测试（layout 110 / content 292 / scheduling 918 / form 772 包级全绿），卡内状态回写 6 卡；② @reserved 7 处/3 文件逐处裁决（1 激活-注释更正 crud-schema.ts + 6 维持），ghost contract 专项结论在案；③ 6 条 watch-only e2e 复核——c3-5 ×2 隔离 6/6 绿（维持 watch-only）、**w3d-editor:28 判真缺陷（隔离 3/15 绿）显式路由 DR（editor 面）**、gantt/kanban-perf 主屏 50.00Hz 实测维持 watch-only（需 60Hz 最终确认）、ai-attachments 8/8 flake 终态 closed；④ Follow-ups 归集收口（2228-1 watch-only 维持 / 2228-3 8 条 collected / 0150-1 stagedDirs 路由工具治理轮次）无悬挂；全量验证 typecheck/build/lint 32/32、test 59/59、`pnpm check` exit 0（零新增命中）；roadmap D2 行 `todo`→`done`（附执行证据引用）；daily log `docs/logs/2026/08-08.md` D2 节收口。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待填写
-- Evidence: 待填写
+- Auditor / Agent: 独立子 agent（fresh session，task `ses_021350e58ffeWBQS8iYCFqyu5P`）
+- Evidence: live repo 复核通过——4 Phase `Status: completed` + 全部 item/exit criteria `[x]`；裁决表 §1.1/1.2/1.3 行数 26/99/24 = 149 与汇总一致、随机 8 行与卡内原文比对一致；6 处代码修复逐处 live 核对（wizard-renderer.tsx:609 `className="mt-4"`、kanban-board.tsx:6-8 command-based 注释、gantt.tsx:162-166 `store.destroy()` + gantt-store.test.ts:453 destroy 用例、diff-three-column-view.tsx:83-90 clearTimeout cleanup + 假时钟用例、form-lifecycle-helpers.ts:92-96 message 参数 + form-load-action.ts:76 + form-loadaction.test.tsx:333-335 断言、input-time design.md:22 §4 说明在案）；6 卡回写带 plan-2026-08-08-0715-3 引用；`rg "@reserved"` 7 处 + §5 七行裁决；§6 watch-only 六行结论 + plan Deferred 节终态路由一致；§7 Follow-ups 全终态；无静默降级（w3d-editor 真缺陷显式路由 DR）；4 包 typecheck + focused 测试全绿；聚合 `pnpm check` exit 0（oversized 2 条既有 locale 豁免）；首轮 verdict `issues`（daily log 缺失 + 表头计数 Minor）→ 修正后复审 verdict `approved`。
 
 Follow-up:
 
-- 待执行后填写
+- 裁决表中 keep/dismissed 条目：维持既有审计卡裁决（非本 plan 新增债务），无 successor。
+- 0150-1 stagedDirs 工具治理条目：已路由工具治理轮次（DR/后续工具治理 plan 承接）。
+- w3d-editor:28 Tiptap click+type keystroke 丢失竞态：已显式路由 DR（editor/Tiptap 面跨面集中修复）。
+- gantt-perf/kanban-perf 60Hz 环境最终确认：环境变化（60Hz 显示）时复测即可，无需 plan。

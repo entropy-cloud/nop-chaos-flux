@@ -39,7 +39,7 @@ form / flux-renderers-form / FormSchema（`schemas.ts:82`）/ `{type:'form', bod
 - [P2-2] `eventContracts` 缺失 `loadAction`（`form-definition.ts:245-266`；`form.tsx:454`）→ 状态: **fixed**（eventContracts 补 loadAction；contract 测试断言 6 事件齐全）
 - [P2-3] `propContracts` 缺失 gap/labelWidth/bodyClassName/actionsClassName/autoInit/autoLoad/submitScope（`form-definition.ts:126-244`）→ 状态: **fixed**（补全 7 项 propContracts）
 - [P2-4] `docs/components/form/design.md` §4/§5 缺 loadAction/autoLoad 文档（实现与测试存在）→ 状态: **fixed**（§4 目标字段 + §5 分类 + §9 数据源接入点补 loadAction/autoLoad）
-- [P3-1] loadAction 失败消息复用 "Form initAction failed"（`form.tsx:505` + :121）→ 状态: 卡内记录（console 级措辞，P3）
+- [P3-1] loadAction 失败消息复用 "Form initAction failed"（`form.tsx:505` + :121）→ 状态: **fixed**（plan-2026-08-08-0715-3：reportFormInitActionError 增 message 参数，loadAction 路径报 "Form loadAction failed"；form-loadaction.test.tsx +1 断言 notify 消息）
 - [P3-2] onSubmitSuccess/onSubmitError `evaluationBindings.prevResult: undefined` 冗余（分支绑定覆盖，行为正确，`form.tsx:312-345`）→ 状态: 卡内记录（P3）
 - [P3-3] `static` fields valueType boolean vs schema union（boolean|string，`form-definition.ts:382` vs `schemas.ts:127`）→ 状态: 卡内记录（editor 分类 nit，P3）
 

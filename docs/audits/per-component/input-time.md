@@ -35,7 +35,7 @@ input-time / flux-renderers-form / InputTimeSchema（`schemas.ts:340-348`）/ `{
 ## 发现清单
 
 - [P2-1] Clear aria-label 硬编码（`input-time-renderer.tsx:130`）→ 状态: **fixed**（`t('flux.common.clear')`；date-i18n.test.tsx zh/en 断言先红后绿）
-- [P3-1] displayFormat 仅驱动秒分辨率（原生控件显示不可定制）→ 状态: 卡内记录（P3，design.md §4 补一句说明）
+- [P3-1] displayFormat 仅驱动秒分辨率（原生控件显示不可定制）→ 状态: **fixed**（design.md §4「displayFormat 语义（2026-08-03 C2.4 收敛）」说明已在案，plan-2026-08-08-0715-3 复核确认无缺口）
 - [P3-2] 原生 time input 的 placeholder 在多数浏览器不渲染（`input-time-renderer.tsx:119`）→ 状态: 卡内记录（P3，浏览器契约）
 
 ## 组合宿主场景（真实浏览器验证）
