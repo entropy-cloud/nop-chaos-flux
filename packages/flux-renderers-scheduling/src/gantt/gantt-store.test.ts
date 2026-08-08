@@ -449,5 +449,18 @@ describe('GanttStore', () => {
       const task = store.tasks.get('t1')!;
       expect(task.$w).toBe(40);
     });
+
+    it('destroy resets parsed state (P3-5: renderer calls destroy on unmount)', () => {
+      const store = new GanttStore();
+      store.parse([makeTask({ id: 't1' }), makeTask({ id: 't2' })], [makeLink({ id: 'l1', source: 't1', target: 't2' })]);
+      expect(store.tasks.size).toBe(2);
+      expect(store.links.size).toBe(1);
+
+      store.destroy();
+      expect(store.tasks.size).toBe(0);
+      expect(store.links.size).toBe(0);
+      expect(store.resources.size).toBe(0);
+      expect(store.assignments.size).toBe(0);
+    });
   });
 });

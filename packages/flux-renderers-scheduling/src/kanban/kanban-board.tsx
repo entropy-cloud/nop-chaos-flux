@@ -3,7 +3,9 @@
  * Kanban has a flatter component tree (board → columns → cards) compared to Gantt,
  * making direct useState + imperative callbacks sufficient and simpler than Zustand.
  * Board state is centralized in `boardData` (useState) with controlled/uncontrolled
- * branching. Undo uses snapshot-based pattern (full BoardData copies).
+ * branching. Undo uses command-based pattern (utils/kanban-undo-stack.ts:
+ * each mutation records an UndoCommand; undo/redo apply reverse/forward
+ * transformations without full BoardData snapshots).
  * Gantt uses Zustand + Context (deeper tree, more inter-component subscriptions).
  * Calendar uses custom hooks (view state localized to scroll/navigation hooks).
  */

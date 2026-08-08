@@ -161,8 +161,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       undoStack.clear();
       return () => {
         void eventsRef.current.onUnmount?.({}, eventCtx({}));
+        store.destroy();
       };
-    }, [eventCtx, undoStack]);
+    }, [eventCtx, undoStack, store]);
 
     const handleTaskDragCommit = (taskId: string | number, changes: Record<string, string>) => {
       const payload = { _taskId: taskId, changes };
