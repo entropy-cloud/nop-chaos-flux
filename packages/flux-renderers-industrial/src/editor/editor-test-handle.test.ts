@@ -32,6 +32,7 @@ function makeHandle(overrides: Partial<ScadaEditorTestHandle> = {}): ScadaEditor
     load: () => undefined,
     addSymbol: () => undefined,
     removeSymbol: () => undefined,
+    removeSymbols: () => undefined,
     updateSymbol: () => undefined,
     group: () => undefined,
     ungroup: () => undefined,

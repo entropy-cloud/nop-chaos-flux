@@ -24,6 +24,7 @@ import {
   buildClipboardCopy,
   buildClipboardCut,
   buildClipboardPaste,
+  PASTE_OFFSET,
   type EditorClipboard,
 } from './toolbox/clipboard.js';
 import type { EditorRuntimeContext } from './runtime-factories.js';
@@ -200,7 +201,14 @@ export function buildToolboxRuntime(ctx: EditorRuntimeContext): EditorToolboxRun
 
   const pasteFn = (): string[] => {
     if (!clipboard.current) return [];
-    const { forward, newIds, counterConsumed } = buildClipboardPaste(clipboard.current, paste.counter);
+    // plan 2026-08-08-1931-1 Phase 2 / 本轮-11：传 working copy 现有 id 集 → paste id 碰撞自增。
+    const existingIds = new Set(collectAllSymbols(session.workingConfig.symbols).map((s) => s.id));
+    const { forward, newIds, counterConsumed } = buildClipboardPaste(
+      clipboard.current,
+      paste.counter,
+      PASTE_OFFSET,
+      existingIds,
+    );
     paste.counter += counterConsumed;
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
     session.workingConfig = {

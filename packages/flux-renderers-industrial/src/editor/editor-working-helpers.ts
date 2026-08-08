@@ -176,7 +176,7 @@ export function recomputeLinkagesForMovedNode(session: ScadaEditorSession, moved
  * 经上层 snapshot-based undo（`pushOperation` 用 prevSnapshot）或 forward.updated 记录使 undo 可恢复。
  *
  * 不可变纪律：仅在节点确有 connection 被 prune 时重建 `{...node, custom: {...}}`；group 节点仅在其
- * 子树变化时重建 `{...node, children: ...}`（与 removeNodeRecursive / diffScadaConfig 的 equality 检测一致）。
+ * 子树变化时重建 `{...node, children: ...}`（与 detachNodesRecursive / diffScadaConfig 的 equality 检测一致）。
  *
  * @returns 新 symbols 数组（与输入不共享被改节点的 custom/children 引用）
  */

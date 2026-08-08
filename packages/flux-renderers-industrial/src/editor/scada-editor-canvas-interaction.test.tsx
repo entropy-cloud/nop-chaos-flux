@@ -125,6 +125,28 @@ describe('scada-editor-canvas palette interaction (E5.2 preview)', () => {
     expect(handle.session.workingConfig.symbols.length).toBe(before + 1);
     expect(handle.session.workingConfig.symbols[before].type).toBe('scada-ellipse');
   });
+
+  // plan 2026-08-08-1931-1 Phase 1 / F11：drop 入口符号类型校验——
+  // 未注册 type 不进入 working copy/engine（断言结果：节点数不变），且 onError 派发 invalid-node。
+  it('drop of unregistered symbol type is ignored — no new node (F11 failing-first)', async () => {
+    const { container } = renderEditor('palette-drop-unknown');
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const before = handle.session.workingConfig.symbols.length;
+    const canvasArea = container.querySelector('.nop-scada-editor-layout-canvas') as HTMLElement;
+    act(() => {
+      fireEvent.drop(canvasArea, {
+        dataTransfer: {
+          getData: (type: string) =>
+            type === 'application/x-scada-symbol-type' ? 'scada-nonexistent-xyz' : '',
+        } as unknown as DataTransfer,
+      });
+    });
+    // 未注册 type 不进入 working copy（节点数不变）。
+    expect(handle.session.workingConfig.symbols.length).toBe(before);
+    // editor 仍 ready（drop 被忽略不是 fatal error）。
+    expect(container.querySelector('[data-slot="scada-editor-canvas"]')?.getAttribute('data-status')).toBe('ready');
+  });
 });
 
 describe('scada-editor-canvas error paths', () => {
@@ -271,6 +293,44 @@ describe('scada-editor-canvas events dispatch', () => {
     } finally {
       unregisterScadaSymbol('test-throwing-onerror');
     }
+  });
+
+  // plan 2026-08-08-1931-1 Phase 1 / F11 Decision：drop 未注册 type → onError 派发 invalid-node
+  // （code 已在 SCADA_EDITOR_ERROR_CODES 注册；editor 不进 error 态，drop 被忽略）。
+  it('drop of unregistered type dispatches onError with invalid-node code (F11)', async () => {
+    const dispatch = vi.fn();
+    const SchemaRenderer = createSchemaRenderer(createDispatchSpiedDefinitions(dispatch));
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://editor-events/drop-unknown"
+        schema={{
+          type: 'scada-editor-canvas',
+          config: validEditorConfig() as never,
+          events: { onError: { action: 'test' } },
+        }}
+        env={createDefaultEnv()}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('[data-slot="scada-editor-canvas"]')?.getAttribute('data-status')).toBe('ready');
+    });
+    const canvasArea = container.querySelector('.nop-scada-editor-layout-canvas') as HTMLElement;
+    act(() => {
+      fireEvent.drop(canvasArea, {
+        dataTransfer: {
+          getData: (type: string) =>
+            type === 'application/x-scada-symbol-type' ? 'scada-nonexistent-xyz' : '',
+        } as unknown as DataTransfer,
+      });
+    });
+    const errorEvents = dispatch.mock.calls
+      .map((call) => (call[1] as { event?: { type?: string; code?: string } } | undefined)?.event)
+      .filter((event) => event?.type === 'scada-editor:error');
+    expect(errorEvents.length).toBeGreaterThan(0);
+    expect(errorEvents[0]!.code).toBe('invalid-node');
+    // editor 仍 ready（非 fatal）。
+    expect(container.querySelector('[data-slot="scada-editor-canvas"]')?.getAttribute('data-status')).toBe('ready');
   });
 });
 

@@ -14,6 +14,7 @@ import { EditorPalettePanel } from './palette/editor-palette.js';
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
 import { EditorToolboxPanel } from './toolbox/toolbox-panel.js';
 import { collectWorldBounds } from './editor-working-helpers.js';
+import { hasScadaSymbol } from '../symbols/symbol-registry.js';
 import type { Bounds } from '../engine/viewport.js';
 
 export type ScadaEditorCanvasStatus = 'loading' | 'ready' | 'error' | 'destroyed';
@@ -290,6 +291,18 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
           e.preventDefault();
           const type = e.dataTransfer.getData('application/x-scada-symbol-type');
           if (type && runtime) {
+            // plan 2026-08-08-1931-1 Phase 1 / F11：drop 入口符号类型校验——
+            // 未注册 / 拼写错误 / 已注销的 type 不进入 working copy/engine（静默忽略 + onError 上报
+            // invalid-node，code 已在 SCADA_EDITOR_ERROR_CODES 注册）。不调 handleError（避免置 status='error'
+            // 破坏整个编辑器；drop 被忽略是 non-fatal）。与 group/connection id 纪律一致：未知 type 早退。
+            if (!hasScadaSymbol(type)) {
+              dispatchEvent(
+                'scada-editor:error',
+                { code: 'invalid-node', message: t('industrial.scada.editor.error.invalid-node') },
+                eventsRef.current?.onError,
+              );
+              return;
+            }
             idCounter.current += 1;
             const id = `${type}-${idCounter.current}`;
             // plan 2026-08-07-1835-2 Phase 3 / multi P1-11：palette drop 落在指针处
@@ -323,7 +336,8 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
           if (key === 'delete' || key === 'backspace') {
             if (sel.length === 0) return;
             e.preventDefault();
-            for (const id of sel) runtime.removeWorkingSymbol(id);
+            // plan 2026-08-08-1931-1 Phase 3 / P2-4：批量单 diff——传完整 selection，产 1 undo entry。
+            runtime.removeWorkingSymbol(sel);
           } else if (ctrl && !e.shiftKey && key === 'z') {
             e.preventDefault();
             runtime.undo();
@@ -337,10 +351,8 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
             }
           } else if (ctrl && e.shiftKey && key === 'g') {
             e.preventDefault();
-            for (const id of sel) {
-              const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
-              if (node?.type === 'scada-group') runtime.ungroupSymbols(id);
-            }
+            // plan 2026-08-08-1931-1 Phase 3 / P2-4：批量单 diff——传完整 selection，产 1 undo entry。
+            runtime.ungroupSymbols(sel);
           } else if (key === 'arrowleft' || key === 'arrowright' || key === 'arrowup' || key === 'arrowdown') {
             if (sel.length === 0) return;
             e.preventDefault();

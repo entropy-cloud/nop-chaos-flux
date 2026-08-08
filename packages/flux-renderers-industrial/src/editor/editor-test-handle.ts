@@ -43,6 +43,8 @@ export interface ScadaEditorTestHandle {
   addSymbol(node: import('../serialization/config-types.js').ScadaSymbolNode): void;
   /** 从 working copy 删除图元（测试投影 removeSymbol 句柄）。 */
   removeSymbol(nodeId: string): void;
+  /** 从 working copy 批量删除图元（测试投影；plan 2026-08-08-1931-1 Phase 3 / P2-4 批量单 undo entry）。 */
+  removeSymbols(nodeIds: string[]): void;
   /** 更新 working copy 节点属性（测试投影 updateSymbol 句柄）。 */
   updateSymbol(nodeId: string, patch: Partial<import('../serialization/config-types.js').ScadaSymbolNode>): void;
   /** group 句柄（E7.2，design-renderer.md §8.5.2）。 */

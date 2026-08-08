@@ -31,11 +31,11 @@ export interface EditorRuntimeMutators {
     connections: ConnectionWriteResult['connections'],
   ) => void;
   addWorkingSymbol: (node: ScadaSymbolNode) => void;
-  removeWorkingSymbol: (nodeId: string) => void;
+  removeWorkingSymbol: (nodeId: string | string[]) => void;
   undo: () => void;
   redo: () => void;
   groupSymbols: (nodeIds: string[]) => void;
-  ungroupSymbols: (groupId: string) => void;
+  ungroupSymbols: (groupId: string | string[]) => void;
   switchMode: (mode: 'edit' | 'preview') => void;
   setSelection: (nodeIds: string[]) => void;
   clearSelection: () => void;
@@ -89,22 +89,27 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     notifySession();
   };
 
-  const removeWorkingSymbol = (nodeId: string) => {
+  const removeWorkingSymbol = (nodeId: string | string[]) => {
+    // plan 2026-08-08-1931-1 Phase 3 / P2-4：接受 string | string[]——
+    // 单 id 透传既有 single-id 语义（1 snapshot + 1 push）；多 id 批量去重在单次 snapshot/push 内完成，
+    // 使 N 元选中删除产 1 undo entry（一次 undo 全恢复），而非 N entry。
+    // 与 transform-move 拖拽的事务式单 push（runtime-factories.ts handleTransformEnd）同形。
+    const ids = Array.isArray(nodeId) ? nodeId : [nodeId];
+    if (ids.length === 0) return;
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
-    // plan 2026-08-08-1809-3 Phase 2 / P1-4：递归解链——旧实现仅 `.filter` 顶层 symbols，
-    // 嵌套子图元（group.children 内）的 id 不匹配 → 静默 no-op（与 selectionNodes 经
-    // collectAllSymbols 解析嵌套 id 的纪律不对称，CV-delete-nested）。现用递归 walker 从任意
-    // 深度（顶层或 group.children）解链匹配节点；group 节点经 `{...node, children: ...}` 重建
-    // 保持上层 immutability 纪律（与既有顶层 filter + groupSymbols 的 spread 同风格）。
-    let nextSymbols = removeNodeRecursive(session.workingConfig.symbols, nodeId);
-    // plan 2026-08-08-1910-2 Phase 4 / A8：prune 其它 junction 上 target===被删id 的 connection 声明，
+    // plan 2026-08-08-1809-3 Phase 2 / P1-4：递归解链——detachNodesRecursive 从任意深度（顶层或
+    // group.children）批量解链匹配节点（与 collectAllSymbols 解析嵌套 id 的纪律对称，CV-delete-nested）。
+    // group 节点经 `{...node, children: ...}` 重建保持上层 immutability 纪律。
+    const idSet = new Set(ids);
+    let nextSymbols = detachNodesRecursive(session.workingConfig.symbols, idSet);
+    // plan 2026-08-08-1910-2 Phase 4 / A8：prune 其它 junction 上 target∈被删集 的 connection 声明，
     // 防保存后永久 dangling 数据污染。snapshot-based undo（prevSnapshot）保留原 connections 供 undo 恢复。
-    nextSymbols = pruneDanglingConnections(nextSymbols, new Set([nodeId]));
+    nextSymbols = pruneDanglingConnections(nextSymbols, idSet);
     session.workingConfig = {
       ...session.workingConfig,
       symbols: nextSymbols,
     };
-    setSessionSelection(session.selection.filter((id) => id !== nodeId));
+    setSessionSelection(session.selection.filter((id) => !idSet.has(id)));
     undoRedo.pushOperation('remove-symbol', prevSnapshot, session.workingConfig);
     syncWorkingCopy();
     notifySession();
@@ -204,21 +209,32 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     notifySession();
   };
 
-  const ungroupSymbols = (groupId: string) => {
+  const ungroupSymbols = (groupId: string | string[]) => {
     // design-undo-redo.md §4.3：ungroup 结构 diff（removed=Group id / added=子图元提升顶层）。
+    // plan 2026-08-08-1931-1 Phase 3 / P2-4：接受 string | string[]——单 id 透传既有语义；
+    // 多 id 批量解组在单次 snapshot/push 内完成，使 N 元解组产 1 undo entry（一次 undo 全恢复）。
+    const ids = Array.isArray(groupId) ? groupId : [groupId];
+    if (ids.length === 0) return;
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
-    // plan 2026-08-08-1809-3 Phase 2 / P1-4：递归定位——旧实现 `.find` 仅顶层 symbols，
-    // 嵌套 group 不匹配 → 静默 return（CV-ungroup-nested）。先用 findNodeInWorking（递归）校验
-    // group 存在（保持「非 group / 无 children 时 no-op」语义不变），再用 ungroupRecursive
-    // 在任意深度拆解并把子图元提升进父 children（嵌套 group）或顶层（顶层 group）。
-    const target = findNodeInWorking(session.workingConfig.symbols, groupId);
-    if (!target || target.type !== 'scada-group' || !target.children) return;
-    const promotedIds = target.children.map((c) => c.id);
+    let symbols = session.workingConfig.symbols;
+    const allPromoted: string[] = [];
+    let changed = false;
+    for (const id of ids) {
+      // plan 2026-08-08-1809-3 Phase 2 / P1-4：递归定位——findNodeInWorking 在 symbols（可能已被前一个
+      // ungroup 修改）中递归校验 group 存在（保持「非 group / 无 children 时 no-op」语义不变），再用
+      // ungroupRecursive 在任意深度拆解并把子图元提升进父 children（嵌套 group）或顶层（顶层 group）。
+      const target = findNodeInWorking(symbols, id);
+      if (!target || target.type !== 'scada-group' || !target.children) continue;
+      allPromoted.push(...target.children.map((c) => c.id));
+      symbols = ungroupRecursive(symbols, id);
+      changed = true;
+    }
+    if (!changed) return;
     session.workingConfig = {
       ...session.workingConfig,
-      symbols: ungroupRecursive(session.workingConfig.symbols, groupId),
+      symbols,
     };
-    setSessionSelection(promotedIds);
+    setSessionSelection(allPromoted);
     undoRedo.pushOperation('ungroup', prevSnapshot, session.workingConfig);
     syncWorkingCopy();
     notifySession();
@@ -332,31 +348,11 @@ function resolveUniqueNodeId(node: ScadaSymbolNode, existingIds: Set<string>): S
 }
 
 /**
- * 递归解链指定 id 的节点（plan 2026-08-08-1809-3 Phase 2 / P1-4）。
+ * 递归解链一组 id 的节点（plan 2026-08-08-1809-3 Phase 2 / P1-4 groupSymbols 消费；
+ * plan 2026-08-08-1931-1 Phase 3 / P2-4 removeWorkingSymbol 批量路径消费）。
  *
- * 顶层或任意 group.children 命中均移除；group 节点经 `{...node, children: ...}` 重建
- * （保持 immutability 纪律，便于 diffScadaConfig 经 equality.ts 检出变更）。旧实现仅
- * `.filter` 顶层 symbols → 嵌套子图元静默 no-op。
- */
-function removeNodeRecursive(symbols: ScadaSymbolNode[], id: string): ScadaSymbolNode[] {
-  const out: ScadaSymbolNode[] = [];
-  for (const node of symbols) {
-    if (node.id === id) continue;
-    if (node.children) {
-      out.push({ ...node, children: removeNodeRecursive(node.children, id) });
-    } else {
-      out.push(node);
-    }
-  }
-  return out;
-}
-
-/**
- * 递归解链一组 id 的节点（plan 2026-08-08-1809-3 Phase 2 / P1-4 groupSymbols 消费）。
- *
- * 与 `removeNodeRecursive` 同语义，但对一组 id 批量解链（groupSymbols 一次选中多项）。
- * group 节点经 `{...node, children: ...}` 重建；被解链的 group 若 children 全空仍保留
- * （用户可能后续重填；空 group 不在 ungroupSymbols 的 scope）。
+ * 对一组 id 批量解链（一次选中多项）。group 节点经 `{...node, children: ...}` 重建；
+ * 被解链的 group 若 children 全空仍保留（用户可能后续重填；空 group 不在 ungroupSymbols 的 scope）。
  */
 function detachNodesRecursive(symbols: ScadaSymbolNode[], idsToRemove: Set<string>): ScadaSymbolNode[] {
   const out: ScadaSymbolNode[] = [];

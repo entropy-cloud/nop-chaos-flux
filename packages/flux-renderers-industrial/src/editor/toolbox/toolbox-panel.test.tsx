@@ -52,12 +52,12 @@ function makeRuntime(overrides: Partial<EditorEngineRuntime> = {}): EditorEngine
     syncWorkingCopy: () => undefined,
     updateWorkingNode: () => undefined,
     addWorkingSymbol: () => undefined,
-    removeWorkingSymbol: () => undefined,
+    removeWorkingSymbol: track('removeWorkingSymbol', () => undefined),
     undoRedo,
     undo: track('undo', () => undefined),
     redo: track('redo', () => undefined),
-    groupSymbols: () => undefined,
-    ungroupSymbols: () => undefined,
+    groupSymbols: track('groupSymbols', () => undefined),
+    ungroupSymbols: track('ungroupSymbols', () => undefined),
     fitView: track('fitView', () => true),
     centerView: track('centerView', () => true),
     resetView: track('resetView', () => undefined),
@@ -360,5 +360,21 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     // Trigger re-render (parent bumpSessionVersion analog — status change forces re-render).
     fireEvent.click(buttonByText(container, 'Fit'));
     expect(buttonByText(container, 'Paste').disabled).toBe(true);
+  });
+
+  // plan 2026-08-08-1931-1 Phase 3 / P2-4：按钮路径传完整 selection（数组）→ 批量单 diff。
+  it('Del button calls removeWorkingSymbol with full selection array (batch, P2-4)', () => {
+    const { container, runtime } = renderPanel(['a', 'b', 'c']);
+    fireEvent.click(buttonByText(container, 'Del'));
+    expect(runtime.calls.removeWorkingSymbol).toBeDefined();
+    // 传完整 selection 数组（非逐个循环）。
+    expect(runtime.calls.removeWorkingSymbol[0]).toEqual(['a', 'b', 'c']);
+  });
+
+  it('Ungroup button calls ungroupSymbols with full selection array (batch, P2-4)', () => {
+    const { container, runtime } = renderPanel(['a', 'b']);
+    fireEvent.click(buttonByText(container, 'Ungroup'));
+    expect(runtime.calls.ungroupSymbols).toBeDefined();
+    expect(runtime.calls.ungroupSymbols[0]).toEqual(['a', 'b']);
   });
 });

@@ -110,8 +110,10 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
   // plan 2026-08-07-1835-2 Phase 3 / open P1-B：delete/group/ungroup 从默认 UI 按钮可达
   // （此前仅 component:* handle 注册，默认 panel 不接；M2 基础操作不再只靠测试 handle）。
   // disabled prop 已保证非空/足量选区；runtime 方法自守（groupSymbols 空 children / ungroup 非 group 均安全 no-op）。
+  // plan 2026-08-08-1931-1 Phase 3 / P2-4：批量单 diff——传完整 selection（数组），runtime 在单次 snapshot/push
+  // 内完成 N 元删除/解组，产 1 undo entry（一次 undo 全恢复），而非 N entry。
   const handleDelete = () => {
-    for (const id of selection) runtime.removeWorkingSymbol(id);
+    runtime.removeWorkingSymbol(selection);
     flashStatus(t('industrial.scada.editor.toolbox.deleted'));
   };
 
@@ -121,10 +123,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
   };
 
   const handleUngroup = () => {
-    for (const id of selection) {
-      const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
-      if (node?.type === 'scada-group') runtime.ungroupSymbols(id);
-    }
+    runtime.ungroupSymbols(selection);
     flashStatus(t('industrial.scada.editor.toolbox.ungrouped'));
   };
 

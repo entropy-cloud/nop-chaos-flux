@@ -78,8 +78,10 @@ function makeRuntime(): EditorEngineRuntime {
     addWorkingSymbol: (node: { id: string }) => {
       session.workingConfig.symbols.push(node as never);
     },
-    removeWorkingSymbol: (id: string) => {
-      session.workingConfig.symbols = session.workingConfig.symbols.filter((s) => s.id !== id);
+    removeWorkingSymbol: (id: string | string[]) => {
+      const ids = Array.isArray(id) ? id : [id];
+      const set = new Set(ids);
+      session.workingConfig.symbols = session.workingConfig.symbols.filter((s) => !set.has(s.id));
     },
     undoRedo: new UndoRedoAdapter(session.undoStack),
     undo: () => undefined,
@@ -459,8 +461,8 @@ describe('useEditorHandles', () => {
       children: [{ id: 'c1', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10 }],
     } as never);
     let ungroupedId: string | null = null;
-    runtime.ungroupSymbols = (id: string) => {
-      ungroupedId = id;
+    runtime.ungroupSymbols = (id: string | string[]) => {
+      ungroupedId = Array.isArray(id) ? id[0] : id;
     };
     render(<HookHost componentRegistry={registry as unknown as ComponentHandleRegistry} id="e" cid={1} runtime={runtime} />);
     const result = registry.getCapabilities('e')!.invoke('ungroup', { groupId: 'g1' }, {} as never) as { ok: boolean };

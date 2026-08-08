@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor, act, fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSchemaRenderer, createDefaultEnv } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -161,5 +161,126 @@ describe('scada-editor-canvas multi-select + group/ungroup (E7.2 Phase 3)', () =
     handle.ungroup(groupNode.id);
     // no crash + working copy consistent = R5 isolation maintained
     expect(handle.session.workingConfig.symbols).toHaveLength(3);
+  });
+});
+
+// plan 2026-08-08-1931-1 Phase 3 / P2-4：多元删除/解组单 undo entry——
+// 按钮 + 键盘两路径对 N 元选中产单个 undo entry（批量 diff），一次 undo 完整恢复。
+describe('scada-editor-canvas batch delete/ungroup single undo entry (P2-4)', () => {
+  function twoGroupConfig(): ScadaConfig {
+    return {
+      version: 1,
+      variables: [],
+      symbols: [
+        {
+          id: 'g1',
+          type: 'scada-group',
+          x: 0,
+          y: 0,
+          children: [
+            { id: 'c1', type: 'scada-rect', x: 10, y: 10, width: 40, height: 40 },
+            { id: 'c2', type: 'scada-rect', x: 60, y: 10, width: 40, height: 40 },
+          ],
+        },
+        {
+          id: 'g2',
+          type: 'scada-group',
+          x: 200,
+          y: 0,
+          children: [
+            { id: 'c3', type: 'scada-ellipse', x: 10, y: 10, width: 40, height: 40 },
+            { id: 'c4', type: 'scada-ellipse', x: 60, y: 10, width: 40, height: 40 },
+          ],
+        },
+      ],
+    };
+  }
+
+  it('batch delete N (3) nodes → single undo entry, one undo restores all', async () => {
+    const { container } = renderEditor('batch-delete-3', multiSymbolConfig());
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const before = handle.undoRedo.getStackState().undoStackDepth;
+    handle.removeSymbols(['r1', 'r2', 'r3']);
+    // 单 undo entry（非 N=3 entry）。
+    expect(handle.undoRedo.getStackState().undoStackDepth).toBe(before + 1);
+    expect(handle.session.workingConfig.symbols).toHaveLength(0);
+    // 一次 undo 全恢复。
+    handle.undo();
+    expect(handle.session.workingConfig.symbols).toHaveLength(3);
+    expect(handle.session.workingConfig.symbols.map((s) => s.id).sort()).toEqual(['r1', 'r2', 'r3']);
+  });
+
+  it('batch delete with group subtree → single undo restores subtree nodes', async () => {
+    const { container } = renderEditor('batch-delete-group', twoGroupConfig());
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const before = handle.undoRedo.getStackState().undoStackDepth;
+    // 删除两个 group（含 4 子节点）。
+    handle.removeSymbols(['g1', 'g2']);
+    expect(handle.undoRedo.getStackState().undoStackDepth).toBe(before + 1);
+    expect(handle.session.workingConfig.symbols).toHaveLength(0);
+    // undo 恢复两个 group + 其子树。
+    handle.undo();
+    const symbols = handle.session.workingConfig.symbols;
+    expect(symbols).toHaveLength(2);
+    const g1 = symbols.find((s) => s.id === 'g1')!;
+    const g2 = symbols.find((s) => s.id === 'g2')!;
+    expect(g1.children).toHaveLength(2);
+    expect(g2.children).toHaveLength(2);
+    expect(g1.children!.map((c) => c.id).sort()).toEqual(['c1', 'c2']);
+  });
+
+  it('batch ungroup N (2) groups → single undo entry, one undo restores groups', async () => {
+    const { container } = renderEditor('batch-ungroup-2', twoGroupConfig());
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const before = handle.undoRedo.getStackState().undoStackDepth;
+    const canvasArea = container.querySelector('.nop-scada-editor-layout-canvas') as HTMLElement;
+    // 先同步 React selection state（handle.setSelection 经 onSelectionChange → setSelection）。
+    await act(async () => {
+      handle.setSelection(['g1', 'g2']);
+    });
+    await waitFor(() => {
+      expect(handle.session.selection).toEqual(['g1', 'g2']);
+    });
+    // 键盘 Ctrl+Shift+G → runtime.ungroupSymbols(sel) → 批量单 diff。
+    await act(async () => {
+      fireEvent.keyDown(canvasArea, { key: 'g', ctrlKey: true, shiftKey: true });
+    });
+    // 单 undo entry（非 N=2 entry）。
+    expect(handle.undoRedo.getStackState().undoStackDepth).toBe(before + 1);
+    // 两 group 解散 → 4 子节点提升顶层。
+    expect(handle.session.workingConfig.symbols.filter((s) => s.type === 'scada-group')).toHaveLength(0);
+    expect(handle.session.workingConfig.symbols).toHaveLength(4);
+    // undo 恢复两个 group。
+    handle.undo();
+    expect(handle.session.workingConfig.symbols.filter((s) => s.type === 'scada-group')).toHaveLength(2);
+    expect(handle.session.workingConfig.symbols).toHaveLength(2);
+  });
+
+  it('single-id delete still produces 1 undo entry (regression)', async () => {
+    const { container } = renderEditor('single-delete-regression', multiSymbolConfig());
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const before = handle.undoRedo.getStackState().undoStackDepth;
+    handle.removeSymbol('r1');
+    expect(handle.undoRedo.getStackState().undoStackDepth).toBe(before + 1);
+    handle.undo();
+    expect(handle.session.workingConfig.symbols).toHaveLength(3);
+  });
+
+  it('single-id ungroup still produces 1 undo entry (regression)', async () => {
+    const { container } = renderEditor('single-ungroup-regression', twoGroupConfig());
+    const cid = await waitForReadyAndCid(container);
+    const handle = readScadaEditorTestHandle(cid)!;
+    const before = handle.undoRedo.getStackState().undoStackDepth;
+    handle.ungroup('g1');
+    expect(handle.undoRedo.getStackState().undoStackDepth).toBe(before + 1);
+    // g1 解散 → c1, c2 提升顶层。
+    expect(handle.session.workingConfig.symbols.filter((s) => s.type === 'scada-group')).toHaveLength(1);
+    expect(handle.session.workingConfig.symbols).toHaveLength(3); // g2 + c1 + c2
+    handle.undo();
+    expect(handle.session.workingConfig.symbols.filter((s) => s.type === 'scada-group')).toHaveLength(2);
   });
 });

@@ -42,8 +42,8 @@ export interface EditorEngineRuntime {
   updateWorkingNode: (nodeId: string, patch: Partial<ScadaSymbolNode>) => void;
   /** 新增图元到 working copy（palette 拖入经此写回）。 */
   addWorkingSymbol: (node: ScadaSymbolNode) => void;
-  /** 从 working copy 删除图元。 */
-  removeWorkingSymbol: (nodeId: string) => void;
+  /** 从 working copy 删除图元（接受单 id 或 id 数组；数组批量删产单 undo entry）。 */
+  removeWorkingSymbol: (nodeId: string | string[]) => void;
   /** undo-redo 适配层（事务边界 + 入栈协调；E7.2 落地）。 */
   undoRedo: UndoRedoAdapter;
   /** 撤销（design-renderer.md §8.5.2）。 */
@@ -52,8 +52,8 @@ export interface EditorEngineRuntime {
   redo: () => void;
   /** 成组（design-renderer.md §8.5.2，Phase 3）。 */
   groupSymbols: (nodeIds: string[]) => void;
-  /** 解组（design-renderer.md §8.5.2，Phase 3）。 */
-  ungroupSymbols: (groupId: string) => void;
+  /** 解组（接受单 groupId 或数组；数组批量解组产单 undo entry）。 */
+  ungroupSymbols: (groupId: string | string[]) => void;
   // ---- E9.1 工具箱扩展（design-toolbox.md 五项工具） ----
   /** 视图工具：fit 适应画布（复用 engine.fit，runtime 复用点 #1）。空场景返回 false。 */
   fitView: () => boolean;

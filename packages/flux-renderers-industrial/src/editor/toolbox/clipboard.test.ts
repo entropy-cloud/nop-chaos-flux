@@ -209,4 +209,63 @@ describe('clipboard (design-toolbox.md §4.3)', () => {
       expect(conns.map((c) => c.target).sort()).toEqual(['device-1-copy-2', 'device-2-copy-3']);
     });
   });
+
+  // plan 2026-08-08-1931-1 Phase 2 / 本轮-11：paste id 碰撞自增——
+  // clipboard paste 生成的 -copy-N id 与 working copy 现有 id 碰撞时自增后缀，
+  // 与 groupSymbols（do/while 自增）/ addWorkingSymbol（resolveUniqueNodeId）/ generateConnectionId 同形。
+  describe('本轮-11 — buildClipboardPaste auto-increments id on collision with existing working copy', () => {
+    it('top-level -copy-N collides → auto-increments to next free suffix', () => {
+      const cb = buildClipboardCopy([rect('foo')]);
+      // working copy 已含 foo-copy-1（如用户先 paste 一次再手动建同名，或跨会话 counter 重置）。
+      const existingIds = new Set(['foo-copy-1']);
+      const { forward, newIds } = buildClipboardPaste(cb, 0, PASTE_OFFSET, existingIds);
+      // counter=1 生成 foo-copy-1 → 碰撞 → 自增到 foo-copy-2。
+      expect(newIds).toEqual(['foo-copy-2']);
+      expect(forward.added[0].id).toBe('foo-copy-2');
+      // 新 id 不与现有集碰撞。
+      expect(existingIds.has(newIds[0])).toBe(false);
+    });
+
+    it('multiple collisions → keeps incrementing until free', () => {
+      const cb = buildClipboardCopy([rect('foo')]);
+      // foo-copy-1 和 foo-copy-2 都已存在 → 应自增到 foo-copy-3。
+      const existingIds = new Set(['foo-copy-1', 'foo-copy-2']);
+      const { newIds } = buildClipboardPaste(cb, 0, PASTE_OFFSET, existingIds);
+      expect(newIds).toEqual(['foo-copy-3']);
+    });
+
+    it('group child id collides → child auto-increments', () => {
+      const cb = buildClipboardCopy([group('g', [rect('c1')])]);
+      // 顶层 g-copy-1 不碰撞，但子树 g-copy-1-c1 已存在 → 子 id 自增。
+      const existingIds = new Set(['g-copy-1-c1']);
+      const { forward, newIds } = buildClipboardPaste(cb, 0, PASTE_OFFSET, existingIds);
+      expect(newIds).toEqual(['g-copy-1']);
+      expect(forward.added[0].id).toBe('g-copy-1');
+      const childId = forward.added[0].children![0].id;
+      expect(childId).not.toBe('g-copy-1-c1');
+      expect(existingIds.has(childId)).toBe(false);
+    });
+
+    it('no collision → existingIds param does not change behavior (zero regression)', () => {
+      const cb = buildClipboardCopy([rect('a'), rect('b')]);
+      const { newIds, counterConsumed } = buildClipboardPaste(cb, 0, PASTE_OFFSET, new Set());
+      // 与无 existingIds 参数时行为一致。
+      expect(newIds).toEqual(['a-copy-1', 'b-copy-2']);
+      expect(counterConsumed).toBe(2);
+    });
+
+    it('paste id collision with existing does not collide with other paste-generated ids (intra-paste uniqueness)', () => {
+      // 两个节点都 paste：foo 和 bar。foo-copy-1 碰撞 → 自增。bar 的 id 不受影响。
+      const cb = buildClipboardCopy([rect('foo'), rect('bar')]);
+      const existingIds = new Set(['foo-copy-1']);
+      const { forward, newIds } = buildClipboardPaste(cb, 0, PASTE_OFFSET, existingIds);
+      expect(newIds).toEqual(['foo-copy-2', 'bar-copy-3']);
+      // 所有 forward.added 的 id 互不碰撞，且不与 existingIds 碰撞。
+      const allNewIds = new Set(forward.added.map((n) => n.id));
+      expect(allNewIds.size).toBe(forward.added.length);
+      for (const id of allNewIds) {
+        expect(existingIds.has(id)).toBe(false);
+      }
+    });
+  });
 });

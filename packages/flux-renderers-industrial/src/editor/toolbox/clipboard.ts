@@ -75,6 +75,7 @@ export function buildClipboardPaste(
   clipboard: EditorClipboard,
   pasteCounter: number,
   offset: { x: number; y: number } = PASTE_OFFSET,
+  existingIds?: Set<string>,
 ): {
   forward: ScadaConfigDiff;
   newIds: string[];
@@ -83,20 +84,29 @@ export function buildClipboardPaste(
   const newNodes: ScadaSymbolNode[] = [];
   const newIds: string[] = [];
   let counter = pasteCounter;
+  // plan 2026-08-08-1931-1 Phase 2 / 本轮-11：碰撞自增——taken 起始含 working copy 现有 id，
+  // paste 生成的 id（顶层 + group 子树）碰撞时自增后缀直到不碰撞。
+  // 与 groupSymbols（do/while 自增）/ addWorkingSymbol（resolveUniqueNodeId）/ generateConnectionId 同形。
+  const taken = new Set(existingIds);
 
   // Pass 1：建 oldId→newId 全图映射（顶层 + group 子树递归），供 connection target/id 重写使用。
   // 子节点 id 推导与 reassignIdsRecursive 同形（`${newId}-${childId}`），保持既有 child id 纪律。
   const idMap = new Map<string, string>();
   for (const node of clipboard.symbols) {
     counter += 1;
-    const newId = `${node.id}-copy-${counter}`;
-    buildIdMapRecursive(node, newId, idMap);
+    let newId = `${node.id}-copy-${counter}`;
+    // 顶层 id 碰撞 → 自增 counter 直到不碰撞（counter 计入 counterConsumed）。
+    while (taken.has(newId)) {
+      counter += 1;
+      newId = `${node.id}-copy-${counter}`;
+    }
+    taken.add(newId);
+    buildIdMapRecursive(node, newId, idMap, taken);
   }
 
   // Pass 2：clone + 重分配 id（经映射）+ 位移 + 重写 connection target/id。
-  counter = pasteCounter;
+  // counter 不重置——newId 经 idMap 查找（Pass 1 已碰撞解析）；counterConsumed 反映 Pass 1 实际消费。
   for (const node of clipboard.symbols) {
-    counter += 1;
     const clone = cloneNodeDeep(node);
     const newId = idMap.get(node.id)!;
     reassignIdsFromMap(clone, idMap);
@@ -115,14 +125,44 @@ export function buildClipboardPaste(
 
 /**
  * 递归构建 oldId→newId 映射（顶层用新 id；group 子节点用 `${newId}-${原childId}` 保持唯一）。
+ *
+ * plan 2026-08-08-1931-1 Phase 2 / 本轮-11：接收 `taken` 集合，子节点 id 碰撞时自增后缀直到不碰撞。
+ * 自增逻辑与 runtime-mutators.ts resolveUniqueNodeId 同形（解析尾随数字，无则从 1 起）。
  */
-function buildIdMapRecursive(node: ScadaSymbolNode, newId: string, idMap: Map<string, string>): void {
+function buildIdMapRecursive(
+  node: ScadaSymbolNode,
+  newId: string,
+  idMap: Map<string, string>,
+  taken: Set<string>,
+): void {
   idMap.set(node.id, newId);
   if (node.children) {
     for (const child of node.children) {
-      buildIdMapRecursive(child, `${newId}-${child.id}`, idMap);
+      const candidate = `${newId}-${child.id}`;
+      const resolved = taken.has(candidate) ? resolveUniquePasteId(candidate, taken) : candidate;
+      taken.add(resolved);
+      buildIdMapRecursive(child, resolved, idMap, taken);
     }
   }
+}
+
+/**
+ * 解析 candidate id 到与 taken 集不碰撞的唯一值（plan 2026-08-08-1931-1 Phase 2 / 本轮-11）。
+ *
+ * 与 runtime-mutators.ts resolveUniqueNodeId 同形：解析尾随数字（`base-N`），无则 base=candidate、从 1 起。
+ * 碰撞时按 `${base}-${n}` 自增直到不碰撞。
+ */
+function resolveUniquePasteId(candidate: string, taken: Set<string>): string {
+  if (!taken.has(candidate)) return candidate;
+  const match = /^(.*)-(\d+)$/.exec(candidate);
+  const base = match ? match[1] : candidate;
+  let n = match ? parseInt(match[2], 10) : 1;
+  let id: string;
+  do {
+    n += 1;
+    id = `${base}-${n}`;
+  } while (taken.has(id));
+  return id;
 }
 
 /**

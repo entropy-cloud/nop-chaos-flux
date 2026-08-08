@@ -79,6 +79,8 @@ export function buildEditorTestHandle(
     load: mutators.load,
     addSymbol: mutators.addWorkingSymbol,
     removeSymbol: mutators.removeWorkingSymbol,
+    // plan 2026-08-08-1931-1 Phase 3 / P2-4：批量删除测试句柄（传 id 数组 → 单 undo entry）。
+    removeSymbols: (nodeIds: string[]) => mutators.removeWorkingSymbol(nodeIds),
     updateSymbol: mutators.updateWorkingNode,
     group: mutators.groupSymbols,
     ungroup: mutators.ungroupSymbols,
