@@ -132,6 +132,10 @@ vi.mock('./pages/report-designer-page', () => ({
   ReportDesignerPage: () => <div data-testid="report-designer-page" />,
 }));
 
+vi.mock('./pages/spreadsheet-page', () => ({
+  SpreadsheetPage: () => <div data-testid="spreadsheet-page" />,
+}));
+
 vi.mock('./pages/debugger-lab-page', () => ({
   DebuggerLabPage: () => <div data-testid="debugger-lab-page" />,
 }));

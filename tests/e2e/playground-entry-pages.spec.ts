@@ -414,6 +414,10 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-slot="graph"]').first()).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-slot="graph-node"]').first()).toBeVisible({ timeout: 15_000 });
   },
+  'spreadsheet': async (page) => {
+    await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-slot="spreadsheet-toolbar"]')).toBeVisible({ timeout: 15_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

@@ -76,6 +76,9 @@ import { Spinner } from '@nop-chaos/ui';
 const LazyReportDesignerPage = lazy(() =>
   import('./pages/report-designer-page').then((m) => ({ default: m.ReportDesignerPage })),
 );
+const LazySpreadsheetPage = lazy(() =>
+  import('./pages/spreadsheet-page').then((m) => ({ default: m.SpreadsheetPage })),
+);
 const LazyDebuggerLabPage = lazy(() =>
   import('./pages/debugger-lab-page').then((m) => ({ default: m.DebuggerLabPage })),
 );
@@ -197,6 +200,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <TaskFlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
         case 'report-designer':
           return <LazyReportDesignerPage onBack={goHome} />;
+        case 'spreadsheet':
+          return <LazySpreadsheetPage onBack={goHome} />;
         case 'debugger-lab':
           return <LazyDebuggerLabPage debuggerController={debuggerController} onBack={goHome} />;
         case 'condition-builder':

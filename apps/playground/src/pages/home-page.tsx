@@ -11,6 +11,7 @@ type NavigationTarget =
   | 'graph-demo'
   | 'taskflow-designer'
   | 'report-designer'
+  | 'spreadsheet'
   | 'debugger-lab'
   | 'condition-builder'
   | 'code-editor'
@@ -112,6 +113,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Spreadsheet + Metadata',
     description:
       'Report template page, field panel, inspector shell, namespaced actions, and report metadata bindings.',
+  },
+  {
+    id: 'spreadsheet',
+    title: 'Spreadsheet',
+    eyebrow: 'Spreadsheet Host',
+    description:
+      'Standalone spreadsheet host: virtual grid, cell editing, toolbar, freeze panes, selection, keyboard navigation, find/replace, undo.',
   },
   {
     id: 'debugger-lab',

@@ -247,6 +247,7 @@ describe('Domain route inventory', () => {
     for (const pageId of [
       'flow-designer',
       'report-designer',
+      'spreadsheet',
       'debugger-lab',
       'condition-builder',
       'code-editor',

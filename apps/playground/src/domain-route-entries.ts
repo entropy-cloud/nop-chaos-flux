@@ -63,6 +63,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'report-designer-page, field panel, inspector shell, toolbar, spreadsheet canvas.',
   },
   {
+    id: 'spreadsheet',
+    title: 'Spreadsheet',
+    eyebrow: 'Spreadsheet Host',
+    description: 'standalone spreadsheet host: grid, cell editing, toolbar, freeze, selection, keyboard navigation, find/replace, undo.',
+  },
+  {
     id: 'debugger-lab',
     title: 'Debugger Lab',
     eyebrow: 'DevTools',
