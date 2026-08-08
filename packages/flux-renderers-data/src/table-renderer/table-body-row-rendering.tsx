@@ -72,6 +72,7 @@ type DataRowRenderProps = {
   isAtMaxSelection?: boolean;
   combinePlan?: CombinePlan;
   rowIndex: number;
+  indexColumnOffset?: number;
   treeMode?: boolean;
   expandedTreeRowKeys?: Set<string>;
   onToggleTreeExpand?: (rowKey: string) => void;
@@ -97,6 +98,7 @@ function DataRowView({
   isAtMaxSelection,
   combinePlan,
   rowIndex,
+  indexColumnOffset = 0,
   treeMode,
   expandedTreeRowKeys,
   onToggleTreeExpand,
@@ -106,6 +108,7 @@ function DataRowView({
   rowDragSortApi,
 }: DataRowRenderProps) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
+  const viewIndex = entry.viewIndex ?? rowIndex;
   const hasRowClickHandler = Boolean(parentProps.events.onRowClick);
   const toggleOnRowClick = schemaProps.rowSelection?.toggleOnRowClick === true;
   const isRowClickable = hasRowClickHandler || expandRowByClick || toggleOnRowClick;
@@ -381,6 +384,32 @@ function DataRowView({
         ) : null;
         const treeIndentStyle = treeMode && isFirstDataColumn ? indentStyle(treeLevel) : undefined;
 
+        // index 列（序号列）：不读 record，显示跨页累计的行号（viewIndex 为页内 0-based，
+        // indexColumnOffset 为 (currentPage-1)*pageSize，对齐 AMIS __index 的 offset 语义）。
+        if (column.type === 'index') {
+          return (
+            <TableCell
+              key={`${column.name ?? `index-${columnIndex}`}`}
+              className={cn(
+                'text-center',
+                resolveCellChromeClass(column, columnIndex),
+                fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
+              )}
+              style={{
+                ...(column.width !== undefined ? { width: column.width } : undefined),
+                ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+              }}
+              rowSpan={rowSpan}
+              data-fixed={
+                fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
+              }
+              data-slot="table-index-cell"
+            >
+              {viewIndex + indexColumnOffset + 1}
+            </TableCell>
+          );
+        }
+
         if (column.type === 'operation' && buttonRegion) {
           return (
             <TableCell
@@ -562,6 +591,7 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.schemaProps.quickSaveItemAction === next.schemaProps.quickSaveItemAction &&
     prev.combinePlan === next.combinePlan &&
     prev.rowIndex === next.rowIndex &&
+    prev.indexColumnOffset === next.indexColumnOffset &&
     areColumnsRenderEquivalent(prev.columns, next.columns) &&
     prev.helpers === next.helpers &&
     prev.parentProps.events.onRowClick === next.parentProps.events.onRowClick &&
@@ -606,6 +636,7 @@ export function renderDataRow(
   lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>,
   draggable?: boolean,
   rowDragSortApi?: RowDragSortApi | null,
+  indexColumnOffset?: number,
 ) {
   return (
     <MemoizedDataRow
@@ -631,6 +662,7 @@ export function renderDataRow(
       lazyChildrenMap={lazyChildrenMap}
       draggable={draggable}
       rowDragSortApi={rowDragSortApi}
+      indexColumnOffset={indexColumnOffset}
     />
   );
 }

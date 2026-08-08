@@ -60,13 +60,16 @@
 
 **列类型**：
 
-| `type`         | 说明       | 示例                                                              |
-| -------------- | ---------- | ----------------------------------------------------------------- |
-| `text`（默认） | 纯文本     | `{ "name": "name", "label": "姓名" }`                             |
-| `mapping`      | 值映射     | `{ "name": "status", "type": "mapping", "map": { "1": "启用" } }` |
-| `operation`    | 操作列     | `{ "type": "operation", "buttons": [...] }`                       |
-| `image`        | 图片       | `{ "name": "avatar", "type": "image", "width": 60 }`              |
-| `date`         | 日期格式化 | `{ "name": "date", "type": "date", "format": "YYYY-MM-DD" }`      |
+| `type`         | 说明       | 示例                                                                                  |
+| -------------- | ---------- | ------------------------------------------------------------------------------------- |
+| `text`（默认） | 纯文本     | `{ "name": "name", "label": "姓名" }`                                                 |
+| `index`        | 序号列     | `{ "type": "index", "name": "index", "label": "序号", "width": 50, "fixed": "left" }` |
+| `mapping`      | 值映射     | `{ "name": "status", "type": "mapping", "map": { "1": "启用" } }`                     |
+| `operation`    | 操作列     | `{ "type": "operation", "buttons": [...] }`                                           |
+| `image`        | 图片       | `{ "name": "avatar", "type": "image", "width": 60 }`                                  |
+| `date`         | 日期格式化 | `{ "name": "date", "type": "date", "format": "YYYY-MM-DD" }`                          |
+
+> **index 序号列**：不读 `record`，自动渲染跨页累计的行号（`(currentPage-1)*pageSize + 页内行号 + 1`），对齐 AMIS `__index` 的 offset 语义。建议配 `width` + `fixed` 作为固定列。
 
 ---
 

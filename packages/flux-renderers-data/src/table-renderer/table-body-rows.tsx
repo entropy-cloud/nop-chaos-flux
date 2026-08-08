@@ -45,6 +45,7 @@ interface TableBodyRowsProps {
   lazyChildrenMap?: ReadonlyMap<string, import('./use-table-lazy-children.js').LazyChildrenState>;
   rowDragSortApi?: RowDragSortApi | null;
   draggable?: boolean;
+  indexColumnOffset?: number;
 }
 
 export function TableBodyRows({
@@ -78,6 +79,7 @@ export function TableBodyRows({
   lazyChildrenMap,
   rowDragSortApi,
   draggable,
+  indexColumnOffset,
 }: TableBodyRowsProps) {
   if (!virtualEnabled || processedData.length === 0) {
     return (
@@ -110,6 +112,7 @@ export function TableBodyRows({
         lazyChildrenMap={lazyChildrenMap}
         rowDragSortApi={rowDragSortApi}
         draggable={draggable}
+        indexColumnOffset={indexColumnOffset}
       />
     );
   }
@@ -145,6 +148,7 @@ export function TableBodyRows({
       lazyChildrenMap={lazyChildrenMap}
       rowDragSortApi={rowDragSortApi}
       draggable={draggable}
+      indexColumnOffset={indexColumnOffset}
     />
   );
 }
@@ -178,6 +182,7 @@ function NonVirtualBody({
   lazyChildrenMap,
   rowDragSortApi,
   draggable,
+  indexColumnOffset,
 }: TableBodyRowsProps) {
   const schemaProps = props.props as TableSchema;
   const helpers = props.helpers;
@@ -252,6 +257,7 @@ function NonVirtualBody({
               lazyChildrenMap,
               draggable,
               rowDragSortApi,
+              indexColumnOffset,
             )}
             {isExpanded && schemaProps.expandable?.expandedRowRegionKey
               ? renderExpandedRow(
@@ -325,6 +331,7 @@ function VirtualBody({
   lazyChildrenMap,
   rowDragSortApi,
   draggable,
+  indexColumnOffset,
 }: TableBodyRowsProps) {
   const parentRef = scrollRef;
   const schemaProps = props.props as TableSchema;
@@ -436,6 +443,7 @@ function VirtualBody({
                     lazyChildrenMap,
                     draggable,
                     rowDragSortApi,
+                    indexColumnOffset,
                   )}
                 </React.Fragment>
               );

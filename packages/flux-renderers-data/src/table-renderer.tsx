@@ -261,6 +261,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     ? Math.min(Math.max(1, currentPage), totalPages)
     : 1;
 
+  // index 列（序号列）跨页累计偏移：(currentPage-1)*pageSize，对齐 AMIS __index 的 offset 语义。
+  const indexColumnOffset = paginationEnabled ? (resolvedCurrentPage - 1) * pageSize : 0;
+
   const processedData = useMemo(
     () => paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, resolvedCurrentPage, pageSize),
     [treeFlattenedData, paginationEnabled, serverPaged, resolvedCurrentPage, pageSize],
@@ -597,6 +600,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             scrollRef={scrollRef}
             combineNum={schemaProps.combineNum}
             combineFromIndex={schemaProps.combineFromIndex}
+            expandAllByDefault={expandAllByDefault}
             treeMode={treeMode}
             expandedTreeRowKeys={expandedTreeRowKeys}
             onToggleTreeExpand={handleToggleTreeExpand}
@@ -604,7 +608,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             lazyChildrenMap={lazyChildrenMap}
             rowDragSortApi={rowDragSortApi}
             draggable={schemaProps.draggable === true}
-            expandAllByDefault={expandAllByDefault}
+            indexColumnOffset={indexColumnOffset}
           />
 
           {schemaProps.affixRow ? (

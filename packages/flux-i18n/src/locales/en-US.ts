@@ -179,6 +179,7 @@ export const enUS: Resource = {
       noChildren: 'No children',
       dragToReorder: 'Drag to reorder row',
       loadChildrenFailed: 'Failed to load children.',
+      index: 'Index',
     },
     form: {
       required: 'Required',

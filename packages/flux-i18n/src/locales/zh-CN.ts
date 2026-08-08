@@ -180,6 +180,7 @@ export const zhCN: Resource = {
       noChildren: '暂无子节点',
       dragToReorder: '拖拽调整行顺序',
       loadChildrenFailed: '子节点加载失败',
+      index: '序号',
     },
     form: {
       required: '必填',
