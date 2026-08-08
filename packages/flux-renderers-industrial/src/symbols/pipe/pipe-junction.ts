@@ -1,5 +1,5 @@
 import { Line, Rect } from 'leafer-ui';
-import { applyCompositeProps, compositePropSchema, createCompositeGroup } from '../composite.js';
+import { applyCompositeProps, compositePropSchema, createCompositeGroup, setAttrs } from '../composite.js';
 import type { LeafNode, ScadaSymbolDefinition, ScadaSymbolProps } from '../symbol-types.js';
 
 export const scadaPipeJunctionType = 'scada-pipe-junction';
@@ -16,6 +16,7 @@ export interface ScadaPipeConnection {
 interface JunctionState {
   body: LeafNode;
   stubs: LeafNode[];
+  connections: ScadaPipeConnection[];
 }
 
 const junctionState = new WeakMap<LeafNode, JunctionState>();
@@ -96,12 +97,31 @@ export const scadaPipeJunctionDefinition: ScadaSymbolDefinition = {
       { name: 'body', node: body },
       ...stubs.map((stub, index) => ({ name: `stub-${index}`, node: stub })),
     ]);
-    junctionState.set(root, { body, stubs });
+    junctionState.set(root, { body, stubs, connections });
     return root;
   },
   applyProps: (node, props) => {
     const state = junctionState.get(node);
     if (!state) return;
+    // plan 2026-08-08-1121 HCA6 P2-1（HCA5 P3-2 复核升级）：width/height 重算 body 容器 + 各 stub points。
+    // pipe-junction 借用 applyCompositeProps 但 parts 无 extent/resize，width/height 原被 EXTENT_FIELDS 静默丢弃；
+    // setSymbolProps / width 绑定改尺寸时须重算 body 尺寸 + stubs 按 connection 归一化坐标 × 新尺寸派生。
+    if (props.width !== undefined || props.height !== undefined) {
+      const newWidth = props.width ?? (state.body as unknown as { width: number }).width;
+      const newHeight = props.height ?? (state.body as unknown as { height: number }).height;
+      setAttrs(state.body, { width: newWidth, height: newHeight });
+      const centerX = newWidth / 2;
+      const centerY = newHeight / 2;
+      state.stubs.forEach((stub, index) => {
+        const connection = state.connections[index];
+        if (!connection) return;
+        setAttrs(stub, {
+          x: centerX,
+          y: centerY,
+          points: [0, 0, connection.x * newWidth - centerX, connection.y * newHeight - centerY],
+        });
+      });
+    }
     const patch: Record<string, unknown> = {};
     if (props.flow !== undefined) {
       Object.assign(patch, flowPatch(props.flow, props.strokeDash));

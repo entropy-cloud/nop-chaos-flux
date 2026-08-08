@@ -237,6 +237,69 @@ describe('I9.4 scada-pipe-junction (连接点 + 流动方向动画 + 与设备�
     });
   });
 
+  // plan 2026-08-08-1121 HCA6 P2-1（HCA5 P3-2 复核升级）：
+  // pipe-junction applyProps 调 applyCompositeProps 传 parts 无 extent/resize → width/height 静默丢弃。
+  // setSymbolProps / width 绑定改尺寸时 body 不 resize、stubs 不重算 → 接头几何 stuck 在 create-time 尺寸。
+  // 修复后 width/height 重算 body 尺寸 + 各 stub points（按 connection 归一化坐标 × 新尺寸派生）。
+  describe('scada-pipe-junction width/height resize (plan 2026-08-08-1121 HCA6 P2-1)', () => {
+    it('setSymbolProps width/height 重算 body 尺寸 + stubs points（非静默丢弃）', () => {
+      const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+      engine.reset({
+        version: 1,
+        symbols: [
+          junctionNode('j1', {
+            width: 80,
+            height: 40,
+            custom: {
+              connections: [
+                { id: 'a', x: 0, y: 0.5, direction: 'in' },
+                { id: 'b', x: 1, y: 0.5, direction: 'out' },
+              ],
+            },
+          }),
+        ],
+      });
+      // create-time baseline：centerX=40/centerY=20
+      // stub a (x=0,y=0.5): points [0,0, 0*80-40, 0.5*40-20] = [0,0,-40,0]
+      // stub b (x=1,y=0.5): points [0,0, 1*80-40, 0.5*40-20] = [0,0,40,0]
+      expect(stubOf(engine.getSymbol('j1')!.node, 0).points).toEqual([0, 0, -40, 0]);
+      expect(stubOf(engine.getSymbol('j1')!.node, 1).points).toEqual([0, 0, 40, 0]);
+      expect(childOf(engine.getSymbol('j1')!.node, 'body').width).toBe(80);
+      expect(childOf(engine.getSymbol('j1')!.node, 'body').height).toBe(40);
+
+      // resize 160×80：centerX=80/centerY=40
+      engine.setSymbolProps('j1', { width: 160, height: 80 });
+      // body resize
+      expect(childOf(engine.getSymbol('j1')!.node, 'body').width).toBe(160);
+      expect(childOf(engine.getSymbol('j1')!.node, 'body').height).toBe(80);
+      // stub a: points [0,0, 0*160-80, 0.5*80-40] = [0,0,-80,0]
+      expect(stubOf(engine.getSymbol('j1')!.node, 0).points).toEqual([0, 0, -80, 0]);
+      // stub b: points [0,0, 1*160-80, 0.5*80-40] = [0,0,80,0]
+      expect(stubOf(engine.getSymbol('j1')!.node, 1).points).toEqual([0, 0, 80, 0]);
+      engine.destroy();
+    });
+
+    it('单维 width 变更保留既有 height 重算 body + stubs', () => {
+      const engine = ScadaCanvasEngine.create({ container: makeContainer() });
+      engine.reset({
+        version: 1,
+        symbols: [
+          junctionNode('j1', {
+            width: 80,
+            height: 40,
+            custom: { connections: [{ id: 'a', x: 1, y: 0.5, direction: 'out' }] },
+          }),
+        ],
+      });
+      engine.setSymbolProps('j1', { width: 160 });
+      expect(childOf(engine.getSymbol('j1')!.node, 'body').width).toBe(160);
+      expect(childOf(engine.getSymbol('j1')!.node, 'body').height).toBe(40);
+      // centerX=80/centerY=20；stub a (x=1,y=0.5): points [0,0, 1*160-80, 0.5*40-20] = [0,0,80,0]
+      expect(stubOf(engine.getSymbol('j1')!.node, 0).points).toEqual([0, 0, 80, 0]);
+      engine.destroy();
+    });
+  });
+
   it('should validate the flow parameter shape', () => {
     const base = { id: 'j1', type: 'scada-pipe-junction', x: 0, y: 0, custom: { connections: [] } };
     expect(validateScadaConfig({ version: 1, symbols: [base] })).toEqual({ ok: true });
