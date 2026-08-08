@@ -54,6 +54,9 @@ Each note should include the sections that best fit the case. Common sections ar
 - [03 Schema Event Dispatch Requires `{ event, evaluationBindings, scope }` Ctx](03-schema-event-dispatch-requires-event-evaluation-bindings-scope-ctx.md)
 - [04 Surface Args With Embedded Schema Body Get Eagerly Evaluated (CX-11)](04-surface-args-embedded-schema-body-eager-evaluation-cx-11.md)
 - [05 `kind:'reaction'` Fields Must Be Wired: ready() + ComponentHandle](05-reaction-field-wiring-requires-ready-and-component-handle.md)
+- [06 Audit Closure Only Guarantees "No Known Issues This Round"（审计必漏定律）](06-audit-closure-only-guarantees-no-known-issues.md)
+- [07 Tool-Gate Sedimentation With Committed Regression Tests（工具门禁沉淀法）](07-tool-gate-sedimentation-with-committed-regression-tests.md)
+- [08 Ghost Contract: Declaration Is Contract, Two-Way Verification（声明即契约检测法）](08-ghost-contract-declaration-is-contract-detection.md)
 
 ---
 

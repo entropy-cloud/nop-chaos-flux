@@ -1,6 +1,6 @@
 # DL Lessons 沉淀（06–08：审计必漏定律 / 工具门禁沉淀法 / 声明即契约检测法）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit-round2
 > Work Item: DL
 > Last Reviewed: 2026-08-08
@@ -58,46 +58,46 @@
 
 ### Phase 1 - Lesson 06：审计必漏定律
 
-Status: planned
+Status: completed
 Targets: 新建 `docs/lessons/06-*.md`、`docs/logs/2026/08-07.md`、`docs/logs/2026/08-08.md`
 
 - Item Types: `Follow-up`
 
-- [ ] 撰写 06：审计必漏定律——closure 只保证「本轮无已知问题」；证据链（08-06 收口 → 08-06/08-07 两轮 post-closure 仍 85 条真缺陷，逐条 plan 修复在案）；制度结论（大规模审计收口后必须安排 1–2 轮 post-closure audit，审计轮间隔不宜长）。
-- [ ] 每条证据引用 live 核对（daily log 行号 / plan 路径）。
+- [x] 撰写 06：审计必漏定律——closure 只保证「本轮无已知问题」；证据链（08-06 收口 → 08-06/08-07 两轮 post-closure 仍 85 条真缺陷，逐条 plan 修复在案）；制度结论（大规模审计收口后必须安排 1–2 轮 post-closure audit，审计轮间隔不宜长）。
+- [x] 每条证据引用 live 核对（daily log 行号 / plan 路径）。
 
 Exit Criteria:
 
-- [ ] `docs/lessons/06-*.md` 存在，含完整 Recommended Sections + 证据出处（daily log / plan 引用）。
+- [x] `docs/lessons/06-*.md` 存在，含完整 Recommended Sections + 证据出处（daily log / plan 引用）。
 
 ### Phase 2 - Lesson 07：工具门禁沉淀法
 
-Status: planned
+Status: completed
 Targets: 新建 `docs/lessons/07-*.md`、`scripts/__tests__/`、root `package.json`（`check:*` 清单）
 
 - Item Types: `Follow-up`
 
-- [ ] 撰写 07：每修一类模式落一个 `check:` + committed 回归测试（`scripts/__tests__/`），基线零命中才是真收口；门禁自身也会回归（browser-io 6d2497ea 漏扫 10 包）——门禁必须有测试。
-- [ ] 证据引用 live 核对（0150-1 修复记录 + `scripts/__tests__/find-renderer-browser-io.test.ts` 正例夹具 + `pnpm test:scripts` 6/15 在案）。
+- [x] 撰写 07：每修一类模式落一个 `check:` + committed 回归测试（`scripts/__tests__/`），基线零命中才是真收口；门禁自身也会回归（browser-io 6d2497ea 漏扫 10 包）——门禁必须有测试。
+- [x] 证据引用 live 核对（0150-1 修复记录 + `scripts/__tests__/find-renderer-browser-io.test.ts` 正例夹具 + `pnpm test:scripts` 6/15 在案）。
 
 Exit Criteria:
 
-- [ ] `docs/lessons/07-*.md` 存在，含证据出处（0150-1 / 门禁回归套件路径）。
+- [x] `docs/lessons/07-*.md` 存在，含证据出处（0150-1 / 门禁回归套件路径）。
 
 ### Phase 3 - Lesson 08：声明即契约（ghost contract）检测法 + README 收口
 
-Status: planned
+Status: completed
 Targets: 新建 `docs/lessons/08-*.md`、`docs/lessons/README.md`、`docs/backlog/component-audit-round2-roadmap.md`（DL 行）、`docs/logs/2026/08-08.md`
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] 撰写 08：声明即契约检测法——注册项 defaultSchema/fields、事件派发点、`component:*` 句柄、schema 字段与 design.md 双向核对；「声明即死」是第一轮最高产缺陷类别（stopWhen/finishAction/importsReady/22-12 等，证据含 D2 @reserved 核对先例）。
-- [ ] README 索引更新：06–08 登记（含 Component-Audit Lessons 或新增节组织，对齐既有 02–05 节结构）。
-- [ ] 收口登记：roadmap DL 行 `todo`→`done`（附执行证据引用）+ daily log 收口节。
+- [x] 撰写 08：声明即契约检测法——注册项 defaultSchema/fields、事件派发点、`component:*` 句柄、schema 字段与 design.md 双向核对；「声明即死」是第一轮最高产缺陷类别（stopWhen/finishAction/importsReady/22-12 等，证据含 D2 @reserved 核对先例）。
+- [x] README 索引更新：06–08 登记（含 Component-Audit Lessons 或新增节组织，对齐既有 02–05 节结构）。
+- [x] 收口登记：roadmap DL 行 `todo`→`done`（附执行证据引用）+ daily log 收口节。
 
 Exit Criteria:
 
-- [ ] `docs/lessons/08-*.md` 存在；README 索引含 06–08 三行且链接有效；roadmap DL 行 `done` + daily log 收口节。
+- [x] `docs/lessons/08-*.md` 存在；README 索引含 06–08 三行且链接有效；roadmap DL 行 `done` + daily log 收口节。
 
 ## Draft Review Record
 
@@ -117,12 +117,12 @@ Exit Criteria:
 >
 > **纯文档计划条款**：`pnpm test`/`lint`/`typecheck`/`build` 从本表移除；`pnpm check` 保留（docs 变更受 `check:active-doc-code-anchors` / `check:docs-garbled` 约束）。
 
-- [ ] 三条 lesson note 落地（06/07/08，证据出处 live 核对）
-- [ ] README 索引与 lesson 文件零缺口（链接有效）
-- [ ] 不存在被静默降级到 deferred 的 in-scope 项
-- [ ] 受影响的 owner docs 已同步（`docs/lessons/README.md`、roadmap DL 行、daily log）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm check`
+- [x] 三条 lesson note 落地（06/07/08，证据出处 live 核对）
+- [x] README 索引与 lesson 文件零缺口（链接有效）
+- [x] 不存在被静默降级到 deferred 的 in-scope 项
+- [x] 受影响的 owner docs 已同步（`docs/lessons/README.md`、roadmap DL 行、daily log）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 
@@ -134,13 +134,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （执行完成后填写）
+Status Note: 三条 lesson note（06/07/08）落地，证据出处全部 live 核对在案；`docs/lessons/README.md` 索引 06–08 三行登记链接有效；roadmap DL 行 `todo` → `done`（附执行证据引用）；daily log 收口节（`docs/logs/2026/08-08.md` DL 节）。纯文档计划：`pnpm test`/`lint`/`typecheck`/`build` 按纯文档计划条款从门禁表移除；聚合 `pnpm check` exit 0（oversized 仅 2 条既有 locale 豁免，零新增命中；active-doc-code-anchors 308 docs 零失效；docs-garbled exit 0）。3 Phase 全部 `completed`，Closure Gates 全 `[x]`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立子 agent，fresh session）
-- Evidence: （填写）
+- Auditor / Agent: 独立子 agent（fresh session，task `ses_02040df29ffeacc4qoV9xwq64s`，一轮 `approved`）
+- Evidence: 逐项 PASS ① 三条 lesson note 存在且含完整 Recommended Sections（8 节）；② 证据引用 live 可溯（08-06 log CV 10,397/1054、08-08 log :120 精确 85（46+39）、15 个修复 plan 路径在案、browser-io 正例夹具 :60-64、`scripts/__tests__/` 6 files、round2-p3-adjudication §5 七行、bug 106 在案）；③ README 索引 06–08 链接解析有效；④ roadmap DL 行 `done`；⑤ daily log DL 收口节在案；⑥ plan 文本一致性（Phase 全 `[x]` + Status completed，仅审计项留待本 session 勾选）；⑦ `pnpm check` 实测 exit 0 + `pnpm test:scripts` 6/15 实测全绿；额外 spot-check：6d2497ea 正则回归经 git diff 实证、修订正则 live 逐字一致、package.json 28 项 `check:*` 含 14 项 `check:audit-*` 与 lesson 07 声明一致。零 Blocker 零 Major，非阻塞观察无漂移。
 
 Follow-up:
 
-- （填写；DG 从 09 起续写）
+- 无剩余 plan-owned work；DG 从 **09** 起续写第二轮 host 面审计方法 lessons（roadmap Cross-Cutting「lessons 编号纪律」已定，非本 plan 义务）。
