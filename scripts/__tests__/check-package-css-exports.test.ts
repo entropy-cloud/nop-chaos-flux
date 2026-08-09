@@ -17,6 +17,6 @@ describe('check-package-css-exports', () => {
     });
 
     expect(stderr).toBe('');
-    expect(stdout).toContain('Verified 17 CSS export subpaths across 17 resolved targets');
+    expect(stdout).toContain('Verified 19 CSS export subpaths across 19 resolved targets');
   });
 });
