@@ -191,6 +191,13 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     // 空（死 id），改为派发 onError（invalid-node）使 host 可见，而非静默 return。已在上方 length 检查
     // 兜底——保持 return 但经 notifySession 路径不变（既有顶层 groupSymbols 同行为，零回归）。
     const detached = detachNodesRecursive(session.workingConfig.symbols, childSet);
+    // plan 2026-08-09-1300-1 Phase 1 / 1931-P2-1：祖先+后代同选去重——当选集含 [G1, G2] 且 G2 ⊂ G1.children
+    // 时，下方 `selectedNodes.map((c) => ({ ...c }))` 会把 G1（带 G2 子树）与 G2（独立）同时塞进
+    // groupNode.children → G2 的 id 重复（collectAllSymbols 与序列化输出均含两份 G2，数据完整性破坏）。
+    // 修复：构造 children 前剔除「是另一选中节点后代」的选中节点——后代保留在其选中祖先的子树内
+    // （经 {...ancestor} 的 children 浅拷贝带入，不重复作为顶层 child）。仅剥顶层重复，不展开子树
+    // （保留「选中 group 整体作为 child」语义）。parent 索引取自 detach 前的原始 working copy。
+    const dedupedNodes = dedupAncestorDescendant(selectedNodes, childSet, session.workingConfig.symbols);
     // plan 2026-08-07-1835-1 Phase 2 / open P1-D：group id 用单调计数器 + 碰撞自增（替代 Date.now()），
     // 同毫秒连续 group 也不再碰撞。对齐 clipboard/connection id 站点纪律。
     const existingIds = new Set(collectAllSymbols(session.workingConfig.symbols).map((s) => s.id));
@@ -204,7 +211,7 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
       type: 'scada-group',
       x: 0,
       y: 0,
-      children: selectedNodes.map((c) => ({ ...c })),
+      children: dedupedNodes.map((c) => ({ ...c })),
     };
     session.workingConfig = { ...session.workingConfig, symbols: [...detached, groupNode] };
     setSessionSelection([groupId]);
@@ -393,4 +400,38 @@ function ungroupRecursive(symbols: ScadaSymbolNode[], groupId: string): ScadaSym
     }
   }
   return out;
+}
+
+/**
+ * 剔除选集中「是另一选中节点后代」的节点（plan 2026-08-09-1300-1 Phase 1 / 1931-P2-1）。
+ *
+ * 当选集同时含祖先与后代（如 [G1, G2] 且 G2 ⊂ G1.children）时，`{...ancestor}` 浅克隆会把
+ * 后代保留在祖先子树内；若后代又作为顶层 child 进 groupNode.children，则其 id 重复
+ * （collectAllSymbols / 序列化输出均含两份）。本函数从原始树构建 parent→id 索引，对每个选中
+ * 节点向上遍历祖先链，若任一祖先也在选集中则剔除该节点（保留在其选中祖先的子树内）。
+ *
+ * 不展开子树——保留「选中 group 整体作为 child」语义。无重叠选集（兄弟节点 / 无嵌套关系）
+ * 经 parent 链遍历不命中任一选中祖先，原样返回（零回归）。
+ */
+function dedupAncestorDescendant(
+  selectedNodes: ScadaSymbolNode[],
+  selectedIds: Set<string>,
+  rootSymbols: ScadaSymbolNode[],
+): ScadaSymbolNode[] {
+  const parentOf = new Map<string, string | undefined>();
+  const buildParentIndex = (nodes: ScadaSymbolNode[], parentId: string | undefined): void => {
+    for (const node of nodes) {
+      parentOf.set(node.id, parentId);
+      if (node.children) buildParentIndex(node.children, node.id);
+    }
+  };
+  buildParentIndex(rootSymbols, undefined);
+  return selectedNodes.filter((node) => {
+    let ancestor = parentOf.get(node.id);
+    while (ancestor !== undefined) {
+      if (selectedIds.has(ancestor)) return false;
+      ancestor = parentOf.get(ancestor);
+    }
+    return true;
+  });
 }

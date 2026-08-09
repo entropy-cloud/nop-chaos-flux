@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, render, waitFor, within } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSchemaRenderer, createDefaultEnv } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -107,7 +107,6 @@ describe('scada-editor-canvas reactivity (plan 2026-08-07-1835-1 Phase 1 / open 
     const { container } = renderEditor('selection-mirror');
     const cid = await waitForReadyAndCid(container);
     const handle = readScadaEditorTestHandle(cid)!;
-    const root = container.querySelector('[data-slot="scada-editor-canvas"]') as HTMLElement;
 
     // group: after grouping two top-level nodes, the React selection mirror must reflect the new group id
     handle.setSelection(['editor-rect', 'editor-rect-2']);
@@ -143,8 +142,5 @@ describe('scada-editor-canvas reactivity (plan 2026-08-07-1835-1 Phase 1 / open 
     // — verify the React mirror by reading the toolbox binding output is non-trivial without a probe;
     // we instead assert no stale ids leaked through (selection has only the new paste ids).
     expect(handle.session.selection).not.toContain('editor-rect-2');
-
-    // Touch the root element to keep `within` import meaningful for future field-level assertions.
-    expect(within(root).queryByTestId('noop')).toBeNull();
   });
 });

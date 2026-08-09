@@ -19,6 +19,15 @@ export type { ScadaEditorTestHandle } from './editor-test-handle.js';
 export type { ScadaEditorSessionPublic, ScadaEditorMode, ScadaCommitPolicy } from './editor-session.js';
 
 /**
+ * 编辑器 renderer 定义数组（plan 2026-08-09-1300-1 Phase 2 / 1931-P2-4）。
+ *
+ * 与主入口 `industrialRendererDefinitions`（`src/index.ts`）对称导出——供 host 自定义注册
+ * （选择性注册 editor renderer / 自建 registry / 顺序控制），与所有兄弟 `flux-renderers-*` 包注册模式对齐。
+ * `registerScadaEditorRenderers` 仍是一键全注册便捷入口。
+ */
+export { industrialEditorRendererDefinitions } from './renderer-definitions.js';
+
+/**
  * `scada-editor-canvas` renderer 注册入口（design-renderer.md §11）。
  *
  * 注册 `scada-editor-canvas` renderer 定义（E5.1 完整 fields/regions）。

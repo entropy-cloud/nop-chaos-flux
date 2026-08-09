@@ -184,11 +184,15 @@ describe('P1-3 — undo/redo prunes stale selection', () => {
   });
 
   it('undo an add prunes the removed id from selection + fires onSelectionChange + later remove is clean no-op', () => {
-    const { session, mutators, onSelectionChange } = s;
+    const { session, mutators, engine, onSelectionChange } = s;
     mutators.addWorkingSymbol({ id: 'foo', type: 'scada-rect', x: 0, y: 0, width: 5, height: 5 });
     mutators.setSelection(['foo']);
     expect(session.selection).toEqual(['foo']);
     onSelectionChange.mockClear();
+    // plan 2026-08-09-1300-1 Phase 3 / 1931-P2-7：监视引擎层 target 再同步——undo 后 selection 为空
+    // → reconcileEditorTargets 应触发 engine.clearEditorSelection（旧实现只断言 session.selection，
+    // 引擎层 leafer editor 可能仍高亮死节点而对测试不可见）。
+    const clearSpy = vi.spyOn(engine, 'clearEditorSelection');
 
     mutators.undo(); // inverse of add → removes foo
     // selection must no longer hold the dead id.
@@ -198,6 +202,8 @@ describe('P1-3 — undo/redo prunes stale selection', () => {
     expect(onSelectionChange).toHaveBeenCalled();
     const lastCall = onSelectionChange.mock.calls[onSelectionChange.mock.calls.length - 1]?.[0];
     expect(lastCall).not.toContain('foo');
+    // 引擎层 target 再同步：foo 死节点已从 editor.target 清除（leafer editor 不再保留死高亮框）。
+    expect(clearSpy).toHaveBeenCalled();
     // canUndo/canRedo consistent with stack (undo consumed the add entry → canUndo false, canRedo true).
     expect(session.undoStack.canUndo).toBe(false);
     expect(session.undoStack.canRedo).toBe(true);
@@ -209,26 +215,37 @@ describe('P1-3 — undo/redo prunes stale selection', () => {
   });
 
   it('redo a remove prunes the re-removed id from selection', () => {
-    const { session, mutators } = s;
+    const { session, mutators, engine } = s;
     mutators.addWorkingSymbol({ id: 'foo', type: 'scada-rect', x: 0, y: 0, width: 5, height: 5 });
     mutators.removeWorkingSymbol('foo'); // deselects foo; pushes remove-symbol
     mutators.undo(); // re-adds foo
     expect(session.workingConfig.symbols.map((n) => n.id)).toContain('foo');
     mutators.setSelection(['foo']); // select foo again
     expect(session.selection).toEqual(['foo']);
+    // plan 2026-08-09-1300-1 Phase 3 / 1931-P2-7：监视引擎层 target 再同步——redo 后 selection 为空
+    // → reconcileEditorTargets 应触发 engine.clearEditorSelection。
+    const clearSpy = vi.spyOn(engine, 'clearEditorSelection');
 
     mutators.redo(); // re-removes foo → selection must prune
     expect(session.selection).not.toContain('foo');
     expect(session.workingConfig.symbols.map((n) => n.id)).not.toContain('foo');
+    // 引擎层 target 再同步：leafer editor 不再高亮已重删的 foo 死节点。
+    expect(clearSpy).toHaveBeenCalled();
   });
 
   it('undo with live selection does not spuriously notify (no stale id → no prune)', () => {
-    const { session, mutators, onSelectionChange } = s;
+    const { session, mutators, engine, onSelectionChange } = s;
     mutators.addWorkingSymbol({ id: 'foo', type: 'scada-rect', x: 0, y: 0, width: 5, height: 5 });
     mutators.setSelection(['a']); // 'a' survives any undo of the add
     onSelectionChange.mockClear();
+    // plan 2026-08-09-1300-1 Phase 3 / 1931-P2-7：监视引擎层 target 再同步——selection 长度未变（仍 ['a']）
+    // 但 applyUndoRedoDiff 重建子树使 LeafNode identity 可能变；reconcileEditorTargets 无条件重解析
+    // → setEditorTargets 被调用（防 editor.target dangle 在被销毁的旧节点，长度门控会漏掉此分支）。
+    const setTargetsSpy = vi.spyOn(engine, 'setEditorTargets');
     mutators.undo(); // removes foo, 'a' still live → selection unchanged
     expect(session.selection).toEqual(['a']);
+    // 引擎层 target 无条件重解析：setEditorTargets 以 live 'a' 节点触发（即便 selection 长度未变）。
+    expect(setTargetsSpy).toHaveBeenCalled();
   });
 });
 

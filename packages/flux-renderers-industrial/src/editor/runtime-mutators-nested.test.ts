@@ -6,6 +6,8 @@ import { createRuntimeCore, type EditorRuntimeContext, type UseEditorEngineArgs 
 import { buildRuntimeMutators } from './runtime-mutators.js';
 import { buildToolboxRuntime } from './toolbox-runtime.js';
 import { createScadaEditorSession } from './editor-session.js';
+import { collectAllSymbols } from './editor-working-helpers.js';
+import { parseScadaConfig } from '../serialization/parse.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 
 vi.mock('leafer-ui', () => import('../test-support/leafer-ui-mock.js'));
@@ -259,5 +261,100 @@ describe('P1-4 — ungroupSymbols resolves nested group (CV-ungroup-nested)', ()
     mutators.ungroupSymbols(groupNode.id);
     expect(session.workingConfig.symbols.find((n) => n.id === groupNode.id)).toBeUndefined();
     expect(session.workingConfig.symbols.map((n) => n.id).sort()).toEqual(['r1', 'r2']);
+  });
+});
+
+// plan 2026-08-09-1300-1 Phase 1 / 1931-P2-1：groupSymbols 祖先+后代同选去重（数据完整性）。
+// 旧实现 groupNode.children = selectedNodes.map((c) => ({ ...c })) 浅克隆——当选 [G1, G2] 且 G2 ⊂ G1.children
+// 时，G2 同时作为 G1.children 的内层节点（经 G1 的 ...c 带入）+ groupNode.children 的顶层节点出现 → 重复 id
+// （collectAllSymbols 与序列化输出均含两份 G2）。修复：构造 children 前剔除「是另一选中节点后代」的选中节点，
+// 后代保留在其选中祖先的子树内。
+const ancestorDescendantConfig: ScadaConfig = {
+  version: 1,
+  variables: [],
+  symbols: [
+    { id: 'sibling', type: 'scada-rect', x: 0, y: 0, width: 10, height: 10 },
+    {
+      id: 'G1',
+      type: 'scada-group',
+      children: [
+        { id: 'G2', type: 'scada-rect', x: 5, y: 5, width: 10, height: 10 },
+        { id: 'G3', type: 'scada-ellipse', x: 25, y: 25, width: 10, height: 10 },
+      ],
+    },
+  ],
+};
+
+describe('P2-1 — groupSymbols ancestor+descendant selection dedup (no duplicate id)', () => {
+  let s: Setup;
+  beforeEach(() => {
+    s = setupWithConfig(ancestorDescendantConfig);
+  });
+  afterEach(() => {
+    s.detachAdapter();
+    s.engine.destroy();
+    s.container.remove();
+    vi.restoreAllMocks();
+  });
+
+  it('grouping [G1, G2] (G2 ⊂ G1.children) yields zero duplicate ids across working copy + serialized output', () => {
+    const { session, mutators } = s;
+
+    mutators.groupSymbols(['G1', 'G2']);
+
+    // (b) collectAllSymbols(result) has no duplicate id.
+    const allIds = collectAllSymbols(session.workingConfig.symbols).map((n) => n.id);
+    expect(allIds.length, `ids should be unique, got: ${allIds.join(',')}`).toBe(new Set(allIds).size);
+
+    // (a) serialized output round-trips without duplicate id.
+    const serialized = mutators.save();
+    const reparsed = parseScadaConfig(serialized);
+    const reparsedIds = collectAllSymbols(reparsed.symbols).map((n) => n.id);
+    expect(reparsedIds.length).toBe(new Set(reparsedIds).size);
+
+    // (c) the new group's direct children hold G1 (with G2 still nested inside) and NOT G2 as a sibling.
+    const newGroup = session.workingConfig.symbols.find(
+      (n) => n.type === 'scada-group' && n.id.startsWith('scada-group'),
+    );
+    expect(newGroup, 'a new group should be created').toBeDefined();
+    const directChildIds = newGroup!.children?.map((c) => c.id) ?? [];
+    expect(directChildIds).toContain('G1');
+    expect(directChildIds, 'G2 must NOT be a direct child of the new group (stays nested in G1)').not.toContain('G2');
+
+    // G2 still exists (nested inside G1 inside the new group), G1 retains its original children.
+    expect(allIds).toContain('G2');
+    const g1 = newGroup!.children?.find((c) => c.id === 'G1');
+    expect(g1?.children?.map((c) => c.id).sort()).toEqual(['G2', 'G3']);
+  });
+
+  it('grouping [G1, G2, sibling] (mixed ancestor + descendant + sibling) keeps each id once', () => {
+    const { session, mutators } = s;
+
+    mutators.groupSymbols(['G1', 'G2', 'sibling']);
+
+    const allIds = collectAllSymbols(session.workingConfig.symbols).map((n) => n.id);
+    expect(allIds.length).toBe(new Set(allIds).size);
+    // sibling + G1 are top-level children of new group; G2 nested in G1.
+    const newGroup = session.workingConfig.symbols.find(
+      (n) => n.type === 'scada-group' && n.id.startsWith('scada-group'),
+    )!;
+    const directChildIds = newGroup.children?.map((c) => c.id).sort() ?? [];
+    expect(directChildIds).toEqual(['G1', 'sibling']);
+  });
+
+  it('regression — grouping sibling top-level nodes (no nesting overlap) still works', () => {
+    const { session, mutators } = s;
+
+    mutators.groupSymbols(['sibling', 'G1']);
+
+    const allIds = collectAllSymbols(session.workingConfig.symbols).map((n) => n.id);
+    expect(allIds.length).toBe(new Set(allIds).size);
+    const newGroup = session.workingConfig.symbols.find(
+      (n) => n.type === 'scada-group' && n.id.startsWith('scada-group'),
+    )!;
+    // both selected top-level nodes become direct children of the new group; G1's subtree (G2/G3) stays nested.
+    expect(newGroup.children?.map((c) => c.id).sort()).toEqual(['G1', 'sibling']);
+    expect(allIds).toContain('G2');
+    expect(allIds).toContain('G3');
   });
 });

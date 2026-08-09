@@ -255,13 +255,23 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
   }, [containerRef, cancelPendingResize, releaseRuntime]);
 
   // width/height props 变更 → engine.setSize（design-renderer.md §8.3）。
+  // plan 2026-08-09-1300-1 Phase 1 / 1931-P2-2：container-driven DOM sizing（与 runtime use-scada-engine 同型修复）。
+  // schema width/height 表达 world design space，不是 leafer canvas DOM 尺寸——post-P1-5 DOM 必须跟随
+  // container 真实尺寸（与构造器 container-first + ResizeObserver 一致）。旧实现 args-first
+  // （`args.width ?? container ?? 0`），mount 期 schema width 覆盖构造器的 container 尺寸 → viewport fit
+  // 用错配 size → 失真（runtime 已于 plan 2026-08-09-0121-1 修正对称缺陷）。现 container 优先
+  // （`container?.clientWidth || args.width || 0`），schema 仅在 container=0（jsdom 无布局 / 未挂载）时 fallback。
+  // setSize 后追加 refitViewportOnResize，保持声明 viewport policy 与 size 一致（与 ResizeObserver handler 对称，
+  // 无 policy 时 no-op）。
   useEffect(() => {
     const current = runtimeRef.current;
     if (!current) return;
-    const targetWidth = args.width ?? containerRef.current?.clientWidth ?? 0;
-    const targetHeight = args.height ?? containerRef.current?.clientHeight ?? 0;
+    const container = containerRef.current;
+    const targetWidth = container?.clientWidth || args.width || 0;
+    const targetHeight = container?.clientHeight || args.height || 0;
     if (targetWidth > 0 && targetHeight > 0) {
       current.engine.setSize(targetWidth, targetHeight);
+      current.refitViewportOnResize?.();
     }
   }, [runtime, containerRef, args.width, args.height]);
 

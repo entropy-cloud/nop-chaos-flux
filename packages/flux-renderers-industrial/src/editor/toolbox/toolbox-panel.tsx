@@ -158,9 +158,9 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
   return (
     <div data-slot="scada-editor-toolbox" className={cn('nop-scada-editor-toolbox')}>
       <ButtonGroup>
-        {btn(labelOr('industrial.scada.editor.toolbox.label.delete', 'Del'), handleDelete, !hasSelection, t('industrial.scada.editor.toolbox.delete') || 'Delete', 'toolbox-btn-delete')}
-        {btn(labelOr('industrial.scada.editor.toolbox.label.group', 'Group'), handleGroup, selection.length < 2, t('industrial.scada.editor.toolbox.group') || 'Group', 'toolbox-btn-group')}
-        {btn(labelOr('industrial.scada.editor.toolbox.label.ungroup', 'Ungroup'), handleUngroup, !hasSelection, t('industrial.scada.editor.toolbox.ungroup') || 'Ungroup', 'toolbox-btn-ungroup')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.delete', 'Del'), handleDelete, !hasSelection, t('industrial.scada.editor.toolbox.delete'), 'toolbox-btn-delete')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.group', 'Group'), handleGroup, selection.length < 2, t('industrial.scada.editor.toolbox.group'), 'toolbox-btn-group')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.ungroup', 'Ungroup'), handleUngroup, !hasSelection, t('industrial.scada.editor.toolbox.ungroup'), 'toolbox-btn-ungroup')}
       </ButtonGroup>
       <Separator orientation="vertical" className="nop-scada-editor-toolbox-sep" />
       <ButtonGroup>

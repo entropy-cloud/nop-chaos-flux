@@ -9,6 +9,7 @@ import type { ScadaConfig } from '../serialization/config-types.js';
 import type { ScadaEditorCanvasSchema, ScadaEditorCanvasEvents } from './schemas.js';
 import { useEditorEngine } from './renderer/hooks/use-editor-engine.js';
 import { useEditorHandles } from './renderer/hooks/use-editor-handles.js';
+import { scadaEditorErrorI18nKey } from './renderer/editor-errors.js';
 import { projectSessionChange, type ScadaEditorSession } from './editor-session.js';
 import { EditorPalettePanel } from './palette/editor-palette.js';
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
@@ -295,10 +296,14 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
             // 未注册 / 拼写错误 / 已注销的 type 不进入 working copy/engine（静默忽略 + onError 上报
             // invalid-node，code 已在 SCADA_EDITOR_ERROR_CODES 注册）。不调 handleError（避免置 status='error'
             // 破坏整个编辑器；drop 被忽略是 non-fatal）。与 group/connection id 纪律一致：未知 type 早退。
+            // plan 2026-08-09-1300-1 Phase 2 / 1931-P2-6（Option A wire-in）：code→i18n-key 解析经
+            // scadaEditorErrorI18nKey（editor-errors.ts 中心映射），不再硬编码 'industrial.scada.editor.error.<code>'。
+            // 使 .unknown fallback 成为真实安全网（未注册码不再渲染 raw dotted key）+ 给 editor-errors.ts
+            // 一个生产 importer（消除「带测试的零-importer 死代码」）。
             if (!hasScadaSymbol(type)) {
               dispatchEvent(
                 'scada-editor:error',
-                { code: 'invalid-node', message: t('industrial.scada.editor.error.invalid-node') },
+                { code: 'invalid-node', message: t(scadaEditorErrorI18nKey('invalid-node')) },
                 eventsRef.current?.onError,
               );
               return;
