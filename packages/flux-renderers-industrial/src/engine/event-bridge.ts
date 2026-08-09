@@ -1,0 +1,202 @@
+import type { HitResolver } from './hit.js';
+
+export type ScadaSymbolEventName = 'symbol:click' | 'symbol:dblclick' | 'symbol:hover' | 'symbol:hover-miss';
+
+/** 事件载荷规范化（design-renderer.md §8.2）。`createNormalizedActionEvent` 调用与 dispatch 属 I11.1。 */
+export interface ScadaSymbolEventPayload {
+  symbolId: string;
+  symbolType: string;
+  pointValues?: Record<string, unknown>;
+  world?: { x: number; y: number };
+  viewport?: { x: number; y: number };
+}
+
+export interface BuildSymbolEventPayloadInput {
+  symbolId: string;
+  symbolType?: string;
+  pointValues?: Record<string, unknown>;
+  world?: { x: number; y: number };
+  viewport?: { x: number; y: number };
+}
+
+/** 事件载荷规范化模块：构造对齐 design-renderer.md §8.2 的数据对象（symbolType 兜底 'unknown'，可选字段缺失不输出）。 */
+export function buildSymbolEventPayload(input: BuildSymbolEventPayloadInput): ScadaSymbolEventPayload {
+  const payload: ScadaSymbolEventPayload = {
+    symbolId: input.symbolId,
+    symbolType: input.symbolType ?? 'unknown',
+  };
+  if (input.pointValues !== undefined) payload.pointValues = input.pointValues;
+  if (input.world !== undefined) payload.world = { ...input.world };
+  if (input.viewport !== undefined) payload.viewport = { ...input.viewport };
+  return payload;
+}
+
+interface EventTarget {
+  on(event: string, cb: (...args: unknown[]) => void): unknown;
+  off(event: string, cb: (...args: unknown[]) => void): unknown;
+}
+
+export interface EventBridgeOptions {
+  /** leafer tree 层（tap/double_tap 挂载点）。 */
+  tree: EventTarget;
+  /**
+   * pointer.move/pointer.leave 挂载面（I15.1 live defect 修复，mock↔真实漂移类）：
+   * 真实 leafer 交互层在指针位于空白画布（无图元命中）时命中路径为空/defaultPath，
+   * tree 层收不到 `pointer.move`（leafer Interaction pointerMoveReal → checkPath → emit 沿 path 派发；
+   * 实测 probe：空白区移动 tree.move 计数不变，app.move 恒增）——tree 面订阅使
+   * `symbol:hover-miss` 永不发射、hover 覆盖物移出图元后不消失。App 视图面 `pointer.move`
+   * 对画布内任意位置（含空白区）恒发射，`pointer.leave` 覆盖指针离开画布场景。
+   */
+  moveTarget: EventTarget;
+  resolver: HitResolver;
+  viewportToWorld: (point: { x: number; y: number }) => { x: number; y: number };
+  getSymbolType?: (symbolId: string) => string | undefined;
+  /** 命中的绑定点值快照投影（只读；经 point-store 投影）。 */
+  getPointValues?: (symbolId: string) => Record<string, unknown> | undefined;
+  onSymbolEvent: (name: ScadaSymbolEventName, payload: ScadaSymbolEventPayload) => void;
+  /**
+   * 处理器异常隔离上报通道（plan 2026-08-04-1558-2 Phase 2 SL-5/m3）：用户侧 onSymbolEvent
+   * throw（坏 ActionSchema 等）经去重上报，**不升级画布 status**（P1-8 降级契约）——异常不冒泡进
+   * leafer 交互管线，后续 move/tap 仍可达。缺省吞掉（仅隔离）。
+   */
+  onHandlerError?: (error: unknown) => void;
+}
+
+/**
+ * 引擎事件桥（I6.4，design-engine.md §8.1；I11.1/I11.2 扩展）：
+ * tree 层 leafer 指针事件（tap/double_tap/pointer.move）→ 命中解析 → symbol:click/dblclick/hover 发射。
+ * 载荷 `{ symbolId, world, viewport }`（对齐 §8.1）+ 规范化扩充（symbolType/pointValues，§8.2）。
+ * hover 退出信号（I11.2）：pointer.move 命中为空且前一命中存在 → `symbol:hover-miss`（载荷承载前一
+ * symbolId，仅覆盖物消费不派发 action，design-engine.md §8.1 事件表外）；A→B 切换不发 miss（hover(B)
+ * 到达时消费方自清前一目标）。
+ */
+// plan 2026-08-09-0121-2 Workstream A 本轮-4/F9：handler-error 去重 Set 上限（防无界增长）。
+// 超限即整体清空（report-once-until-reset 语义，可接受同错误在 reset 后再报一次），与 point-store 同形。
+const MAX_REPORTED_HANDLER_ERRORS = 256;
+
+export class EventBridge {
+  private attached = false;
+  private lastHovered: string | undefined;
+  private reportedHandlerErrors = new Set<string>();
+
+  constructor(private readonly options: EventBridgeOptions) {}
+
+  attach(): void {
+    if (this.attached) return;
+    this.attached = true;
+    this.options.tree.on('tap', this.handleTap);
+    this.options.tree.on('double_tap', this.handleDoubleTap);
+    this.options.moveTarget.on('pointer.move', this.handlePointerMove);
+    this.options.moveTarget.on('pointer.leave', this.handlePointerLeave);
+  }
+
+  destroy(): void {
+    if (!this.attached) return;
+    this.attached = false;
+    this.lastHovered = undefined;
+    this.reportedHandlerErrors.clear();
+    this.options.tree.off('tap', this.handleTap);
+    this.options.tree.off('double_tap', this.handleDoubleTap);
+    this.options.moveTarget.off('pointer.move', this.handlePointerMove);
+    this.options.moveTarget.off('pointer.leave', this.handlePointerLeave);
+  }
+
+  private readonly handleTap = (event: unknown): void => {
+    this.safeRun('tap', () => {
+      const point = this.pointOf(event);
+      if (!point) return;
+      const symbolId = this.resolveSymbol(point);
+      if (symbolId !== undefined) this.emit('symbol:click', point, symbolId);
+    });
+  };
+
+  private readonly handleDoubleTap = (event: unknown): void => {
+    this.safeRun('double_tap', () => {
+      const point = this.pointOf(event);
+      if (!point) return;
+      const symbolId = this.resolveSymbol(point);
+      if (symbolId !== undefined) this.emit('symbol:dblclick', point, symbolId);
+    });
+  };
+
+  private readonly handlePointerMove = (event: unknown): void => {
+    this.safeRun('pointer.move', () => {
+      const point = this.pointOf(event);
+      if (point) this.handleHover(point);
+    });
+  };
+
+  /** 指针离开画布（moveTarget `pointer.leave`）：前一命中图元 hover 退出（覆盖物清除）。 */
+  private readonly handlePointerLeave = (): void => {
+    this.safeRun('pointer.leave', () => {
+      if (this.lastHovered === undefined) return;
+      const prev = this.lastHovered;
+      this.lastHovered = undefined;
+      this.emit('symbol:hover-miss', undefined, prev);
+    });
+  };
+
+  private handleHover(point: { x: number; y: number }): void {
+    const symbolId = this.resolveSymbol(point);
+    if (symbolId !== undefined) {
+      // plan 2026-08-04-1558-2 Phase 2 WD-4：同符号去重——`lastHovered === symbolId` 时不重复
+      // emit `symbol:hover`（悬停同一符号期间 hover 事件只发射一次）。hover-miss 后 `lastHovered`
+      // 重置为 undefined，重入同符号再发射。InteractionOverlay 视口跟随经 `refresh()` 钩子维护
+      // （pan/zoom 触发），无需每次 move 重复发射。
+      if (this.lastHovered === symbolId) return;
+      this.lastHovered = symbolId;
+      this.emit('symbol:hover', point, symbolId);
+      return;
+    }
+    if (this.lastHovered !== undefined) {
+      const prev = this.lastHovered;
+      this.lastHovered = undefined;
+      this.emit('symbol:hover-miss', undefined, prev);
+    }
+  }
+
+  private safeRun(site: string, fn: () => void): void {
+    try {
+      fn();
+    } catch (error) {
+      this.reportHandlerError(site, error);
+    }
+  }
+
+  private reportHandlerError(site: string, error: unknown): void {
+    const message = error instanceof Error ? error.message : String(error);
+    // plan 2026-08-09-0121-2 Workstream A 本轮-4/F9：去重键加 call-site 维度——同文案不同 call-site
+    // （tap vs pointer.move）的错误不再互吞；仅同 site 同 message 去重（保留 report-once 反风暴语义）。
+    const key = `${site}:${message}`;
+    if (this.reportedHandlerErrors.has(key)) return;
+    // Set 上限（防无界增长）：超限整体清空，可接受同错误 reset 后再报一次（与 point-store 同形）。
+    if (this.reportedHandlerErrors.size >= MAX_REPORTED_HANDLER_ERRORS) {
+      this.reportedHandlerErrors.clear();
+    }
+    this.reportedHandlerErrors.add(key);
+    this.options.onHandlerError?.(error);
+  }
+
+  private resolveSymbol(viewportPoint: { x: number; y: number }): string | undefined {
+    return this.options.resolver.resolveSymbolId(viewportPoint.x, viewportPoint.y);
+  }
+
+  private pointOf(event: unknown): { x: number; y: number } | undefined {
+    if (event === undefined || event === null || typeof event !== 'object') return undefined;
+    // leafer 指针事件数据为 `{ ..., x, y, ... }`（PointerEventHelper.convert；UIEvent 仅 x/y + getPagePoint）——无 `point` 属性（gate-3-review §3 抽查项 2 / M-1）
+    const { x, y } = event as { x?: unknown; y?: unknown };
+    if (typeof x !== 'number' || typeof y !== 'number') return undefined;
+    return { x, y };
+  }
+
+  private emit(name: ScadaSymbolEventName, viewportPoint: { x: number; y: number } | undefined, symbolId: string): void {
+    const payload = buildSymbolEventPayload({
+      symbolId,
+      symbolType: this.options.getSymbolType?.(symbolId),
+      pointValues: this.options.getPointValues?.(symbolId),
+      world: viewportPoint ? this.options.viewportToWorld(viewportPoint) : undefined,
+      viewport: viewportPoint,
+    });
+    this.options.onSymbolEvent(name, payload);
+  }
+}

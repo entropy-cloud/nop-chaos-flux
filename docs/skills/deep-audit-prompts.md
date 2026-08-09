@@ -527,6 +527,19 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 
 不要再在本文件重复维护第二份“项目背景 + 特例口径”清单，以避免提示词与历史 meta-review 结论继续漂移。
 
+### Industrial 包（`@nop-chaos/flux-renderers-industrial`）专项提示
+
+> 来源：HCA-LL lesson 沉淀（`docs/plans/2026-08-08-1527-2-industrial-hmi-hca-ll-lesson-sink.md`，2026-08-08）。工业 HMI 包的内部子系统（canvas 场景图引擎 / 数据绑定管线 / 序列化 / 符号库 / 编辑器）有 renderer checklist 18 维之外的特有检查点。**完整的 industrial 专项检查点清单 + bug 卡回链维护在 `docs/audits/component-audit-checklist.md` §2.1（IND-1~IND-6）**，本节只记录派发维度子 agent 时必须内联的高频提示词，不重复维护第二份清单。
+
+审计 industrial 包时，相关维度子 agent 必须额外核查以下 industrial 包级要点（详见 §2.1 对应维度 + 源 bug 卡）：
+
+- **canvas renderer wrapper 必查 a11y**（维度 20）：leafer 渲染容器是普通 div，无原生 landmark/region 语义，wrapper 必须显式 `role="application"` + `aria-label`（i18n key）。回链 `docs/bugs/78`（HCAX-2）。
+- **error code 升级码 vs 命令句柄码不可混用**（维度 19）：config 校验失败用升级码 `config-invalid`（触发 empty error region），命令执行失败用命令句柄码 `invalid-config`（不升级）；两码字面相似易混。回链 `docs/bugs/77`（HCAX-1）。
+- **useCallback 在 canvas 生命周期 renderer 逐个审查**（维度 07）：canvas 生命周期 renderer（leafer 挂载/卸载/视口 sync）的 useCallback 须逐个判断，React Compiler 基线下仍有生命周期稳定回调需求，非一刀切移除。回链 HCA1 P3-1。
+- **跨点 custom 克隆一致性**（维度 04/07）：所有 config/node clone 路径必须深克隆 `custom`（`structuredClone`），跨多站点（session/working-helpers/mutators/undo-redo-adapter）。回链 `docs/bugs/85`（HCA11 P2-1）。
+- **三向 wire 类型同步**（维度 08）：`ScadaSymbolProps` ↔ `ScadaSymbolNode` ↔ `SYMBOL_KEYS` 字段集须一致，复发类漏键配 `scripts/check-scada-symbol-keys.mjs` 机械 guard。回链 `docs/bugs/79`（HCA5 P1-1）。
+- **editor renderer 四态 + schema 同步**（项目校准）：editor renderer 必须消费 `props.meta.disabled`（四态）；schema interface 须与 `renderer-definitions.ts` fields 同步。回链 HCA7 P2-3 / P1-1。
+
 ---
 
 ## A. 架构与模块边界
@@ -933,6 +946,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 7. 检查 React 19 特有模式：
    a. 是否有可以用 use(promise) + Suspense 替代的数据获取 effect
    b. 是否有可以用 useActionState 替代的表单 effect
+
+8. **industrial 包级提示**（来源 HCA-LL，详见 `docs/audits/component-audit-checklist.md` §2.1 IND-1/IND-5）：canvas 生命周期 renderer（如 scada-canvas / scada-editor-canvas 的 leafer 挂载/卸载/视口 sync effect）的 `useCallback` 必须逐个审查——React Compiler 基线下仍有生命周期稳定回调需求（leafer app ref / 视口 transform / event bridge 解绑），非一刀切移除也非一刀切添加；逐个判断「该回调是否被 effect deps / leafer 生命周期 / ref 复用」。回链 HCA1 P3-1。
 
 输出格式：
 
@@ -1722,6 +1737,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    b. 检查 {ok: false} 或 Result.err 类返回是否也被计入失败计数
    c. 检查是否存在"只有 throw 才算失败"的逻辑偏差
 
+6. **industrial 包级提示**（来源 HCA-LL，详见 `docs/audits/component-audit-checklist.md` §2.1 IND-1）：canvas 场景图引擎的错误码有两类语义——**升级码**（config 校验失败 / engine 创建失败 → 触发 empty error region，如 `config-invalid`）与**命令句柄码**（命令执行失败，不升级画布，如 `invalid-config`）——两者**不可混用**。两码字面相似（仅连字符位置/词序不同）易被当拼写差异忽略。核查：新增 config 校验失败路径是否用了升级码？`editor-errors.ts` 的 elevated 判定是否与 `scada-errors.ts` 分类表一致？跨层（renderer runtime + editor + runtime-mutators + toolbox-runtime）出口码是否 parity？回链 `docs/bugs/77`（HCAX-1）。
+
 输出格式：
 
 对每个发现：
@@ -1778,6 +1795,8 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
    b. 表格数据是否使用 <table> + <th>
    c. 分组内容是否使用 <fieldset> + <legend>
    d. 导航区域是否使用 <nav>
+
+6. **industrial 包级提示**（来源 HCA-LL，详见 `docs/audits/component-audit-checklist.md` §2.1 IND-1）：canvas 场景（如 scada-canvas / scada-editor-canvas 的 leafer 渲染容器）由第三方图形库在普通 `<div>` 上渲染，该 div 无原生 landmark/region 语义，屏幕阅读器无法识别画布区域用途。wrapper 必须显式赋予 `role="application"`（告知辅助技术这是富交互应用区）+ `aria-label`（可达名称，走 i18n key）。同型 renderer（runtime + editor）须一致。a11y 缺陷在纯逻辑单测里不可见，须以 DOM 属性级断言（`getAttribute('role')` / `getAttribute('aria-label')`）守护，非仅 `not.toThrow`。回链 `docs/bugs/78`（HCAX-2）。
 
 范围限定：
 - 重点审查 flux-renderers-form、flux-renderers-form-advanced、flux-renderers-data 中的交互组件

@@ -1,0 +1,21 @@
+{
+  "name": "industrial-hmi-editor",
+  "description": "Build the industrial HMI/SCADA configuration editor as the successor mission to industrial-hmi (runtime). Scope decided 2026-08-03 (docs/discussions/2026-08-03-industrial-hmi-scada-mission-scope-discussion.md §七 Q8 + §八 decision 1: editor deferred to successor mission) and initiated 2026-08-05 based on docs/components/industrial-hmi/editor-initiation.md (I16.1 output): leafer-editor plugin base + self-developed SCADA semantic adaptation layer (property panel schema, undo-redo diff stack, connection declaration, save/load), with 3 milestones (M1 MVP / M2 connection+undo / M3 toolbox). Mission starts with 3 spike verifications (editor-initiation.md §4.3: viewport+Editor gesture arbitration / Editor event family payload / edit-mode overlay dense scene perf) to decide main path (leafer-editor plugin base vs self-developed interaction layer); spike results may trigger human-confirmation on selection change. Reuses 10 runtime touchpoints (editor-initiation.md §3, all live-verified): engine layer, ConfigAdapter nodeById index, symbol registry, JSON serialization, component handles, sky interaction overlay, test handle, binding/animation engine, event dispatch chain, benchmark base. Editor edit-mode overlay/handles must not be enabled in runtime mode (dual-state isolation). Roadmap fixes independent-agent review gates (post-spike selection / post-design / post-M1 / post-M2 / post-M3) that may revise direction and prior artifacts, and mandates independent-agent consensus review of all AI-written documents. Spike scratch goes to ~/sources/industrial-hmi-research/spike-editor/.",
+  "roadmapPath": "docs/components/roadmap-industrial-hmi-editor.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": "packages",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(industrial-hmi-editor): <description>"
+}

@@ -61,7 +61,9 @@
     "barcode-input",
     "diff-view",
     "timeline",
-    "graph"
+    "graph",
+    "scada-canvas",
+    "scada-editor-canvas"
   ],
   "targetContract": [
     "alert",

@@ -429,4 +429,52 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description:
       'Comprehensive showcase of all AI widget renderers: ai-welcome, ai-bubble, ai-sender, ai-prompts, ai-feedback, ai-tool-call, ai-attachments, ai-citations, ai-voice-input, ai-token-usage, and ai-suggestions.',
   },
+  {
+    id: 'dingtalk-flow-demo',
+    title: 'DingTalk Flow Demo',
+    eyebrow: 'Style Prototype',
+    description: 'Static DingTalk approval flow visual reference with interactive node insertion.',
+  },
+  {
+    id: 'scada-demo',
+    title: 'Scada Demo',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I13.1 工艺流程组态演示：设备图元 + 管道 + 仪表，点表模拟数据定时刷新（flux 桥接轨 + component:setPointValue 句柄轨双演示），单击设备弹出详情（I11 三链路并入）。',
+  },
+  {
+    id: 'scada-pressure-demo',
+    title: 'Scada Pressure Demo',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I13.2 大屏/复杂组态示例：万级（10k）图元程序化生成压力画面 + 多画面 tab 切换（工艺流程大屏 / 高密度压力画面），固定随机种子保证 e2e 确定性。',
+  },
+  {
+    id: 'scada-edge-cases',
+    title: 'Scada Edge Cases',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I15.1 边界用例测试页：最小合法 config / 空画面（symbols: []）/ 非法 JSON（empty region + onError）/ 线多边形 hover 覆盖物验证（m-C），e2e 程序化断言入口。',
+  },
+  {
+    id: 'scada-editor-demo',
+    title: 'Scada Editor Demo',
+    eyebrow: 'Industrial HMI Editor',
+    description:
+      'E5 M1 MVP 编辑器演示：palette 图元库面板（24 内置图元，拖拽放置）+ canvas 编辑态画布（双态切换）+ inspector 属性面板（六类字段分组 + validate）+ save/load 提交语义。',
+  },
+  {
+    id: 'scada-perf-scale',
+    title: 'Scada Performance Scale',
+    eyebrow: 'Performance',
+    description:
+      'I14.1 性能基准测量页：10 万图元首屏创建 / 拖动 fps（双口径）/ 内存（含无 stroke 对照）/ 1 万点实时刷新端到端延迟，e2e 程序化驱动。',
+  },
+  {
+    id: 'leafer-examples',
+    title: 'LeaferJS Examples',
+    eyebrow: 'Reference',
+    description:
+      'I17.3 LeaferJS 官方基础示例对照页（不进 home 卡片）：创建 Leafer/App + 基础元素 + animate 动画 + Group + 视口缩放/平移，团队学习 + 编辑器 mission 决策对照 + v3 升级回归基线。',
+  },
 ];

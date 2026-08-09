@@ -1,0 +1,53 @@
+{
+  "name": "@nop-chaos/flux-renderers-industrial",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": [
+    "*.css"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./editor": {
+      "types": "./dist/editor/index.d.ts",
+      "default": "./dist/editor/index.js"
+    },
+    "./styles.css": {
+      "default": "./dist/styles.css"
+    },
+    "./editor/styles.css": {
+      "default": "./dist/editor/styles.css"
+    }
+  },
+  "dependencies": {
+    "@leafer-in/editor": "2.2.9",
+    "@leafer-in/viewport": "2.2.9",
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/ui": "workspace:*",
+    "leafer-ui": "2.2.9"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-runtime": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css src/editor/styles.css dist/editor/styles.css",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests --coverage",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "Industrial HMI SCADA renderers: scada-canvas (runtime) + scada-editor-canvas (editor, /editor subpath)."
+}

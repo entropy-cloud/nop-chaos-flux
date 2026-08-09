@@ -29,6 +29,7 @@ Code source of truth: `packages/flux-core/src/types/`, `packages/flux-react/src/
 | flux-renderers-ai                                    | @nop-chaos/flux-renderers-ai            | 7     |
 | flux-renderers-graph                                 | @nop-chaos/flux-renderers-graph         | 7     |
 | flux-renderers-scheduling                            | @nop-chaos/flux-renderers-scheduling    | 7     |
+| flux-renderers-industrial                            | @nop-chaos/flux-renderers-industrial    | 7     |
 | ui                                                   | @nop-chaos/ui                           | 7     |
 | flux-code-editor                                     | @nop-chaos/flux-code-editor             | 7     |
 | flux-i18n                                            | @nop-chaos/flux-i18n                    | 7     |
@@ -775,6 +776,64 @@ All schema types are re-exported from the package barrel via `schemas.ts`.
 - **Gantt**: Class-based command pattern (`Command` interface with `execute/undo/redo` methods) — fine-grained mergeable commands for linked task graphs.
 - **Kanban**: Type-based command pattern — operations stored as type+params deltas, applied/reversed via kanban helpers.
 - Both are command-based; neither uses full-state snapshots.
+
+````
+
+---
+
+## Industrial Package — @nop-chaos/flux-renderers-industrial
+
+### Component Registration
+
+```ts
+import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial';
+// registry: RendererRegistry
+registerScadaRenderers(registry);
+````
+
+Registers one renderer type: `scada-canvas`（category `industrial`）.
+
+### Schema Types
+
+| Schema              | Import path                                               |
+| ------------------- | --------------------------------------------------------- |
+| `ScadaCanvasSchema` | `@nop-chaos/flux-renderers-industrial` (barrel re-export) |
+
+Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（source-enabled，组态 JSON 单一字段）/`width`/`height`/`viewport`/`events` 为 prop；`loading`/`empty` 为 region。**`events` 注册为整体 prop（非 `events.*` event 规则）**——flux-compiler 无点号字段支持，schema 事件经 renderer 桥接 `createNormalizedActionEvent` + `helpers.dispatch` 派发。
+
+### Key Hooks (internal to the package)
+
+| Hook                   | Location                                 | Purpose                                          |
+| ---------------------- | ---------------------------------------- | ------------------------------------------------ |
+| `useScadaEngine`       | `renderer/hooks/use-scada-engine`        | 引擎生命周期（创建/resize/destroy/绑定域）       |
+| `useScadaConfigSync`   | `renderer/hooks/use-scada-config-sync`   | config 同步（full reset / diff 增量）            |
+| `useScadaPointsBridge` | `renderer/hooks/use-scada-points-bridge` | 点表 flux 轨桥接（useScopeSelector + 合帧）      |
+| `useScadaEvents`       | `renderer/hooks/use-scada-events`        | 图元事件→action 派发 + hover 覆盖物驱动          |
+| `useScadaHandles`      | `renderer/hooks/use-scada-handles`       | `component:*` 句柄注册（fit/center/.../destroy） |
+
+### Component Handles（`component:<method>`）
+
+`fit` / `center`（视口命令）、`getSymbols` / `getSymbol`（场景树只读，getSymbol 返回 leafer 属性面）、`setPointValue` / `getPointTable`（点表）、`exportConfig` / `importConfig`（序列化契约）、`destroy`。失败路径：`not-mounted` / `symbol-not-found` / `point-not-found` / `invalid-config`。
+
+### Test Handle（e2e 程序化断言锚点）
+
+`window.__flux_scada_<cid>`（cid 来自 `RendererResolvedProps.cid`）：`engine`（getSymbols/getSymbol/getSymbolProps/getViewport/getViewportPoint/...）、`tree`（render 帧事件）、`app`（sky 层覆盖物断言）、`getSymbol/getPointValue/getViewport/forceRender` + dev/test 批量注入 `setPointValues`。恒开（生产裁剪属 host 配置）；roadmap 测试纪律：canvas 一律 Playwright 程序化断言、禁截图、不引 node-canvas。
+
+### Performance Red Lines
+
+1 万点批量刷新合并帧（渲染增量 = 1）、10 万图元首屏 <2s / 拖动 ≥45fps / 内存 ≤320MB（`docs/analysis/industrial-hmi/benchmark-report.md` 口径）；点表刷新不逐点 setState 直刷 React。
+
+### `scada-editor-canvas`（编辑态画布，E5–E9）
+
+编辑态画布（`@nop-chaos/flux-renderers-industrial/editor`，`registerScadaEditorRenderers`）：基于 leafer-editor 的双态编辑器，**与运行态 `scada-canvas` 严格双态隔离**（R5：编辑操作不派发 `symbol:*` 运行事件）。
+
+- **Schema**：`ScadaEditorCanvasSchema`。Props：`config`（组态 JSON，与 scada-canvas 同构）/ `width`/`height`/`mode`（`edit`↔`preview`）/ `commitPolicy`（缺省 `manual`）/ `viewport`。Regions：`palette`/`inspector`/`toolbox`/`statusBar`（缺省内置面板，host 可 override）。Events（整体 prop）：`onReady`/`onError`/`onSelectionChange`/`onModeChange`/`onSessionChange`/`onSave`/`onLoad`。
+- **Component Handles**（合并注册 18 方法，plan 2026-08-07-1835-2 Phase 2 / P1-06）：**runtime 9** `fit`/`center`/`getSymbols`/`getSymbol`/`setPointValue`（编辑态 not-supported）/`getPointTable`（空）/`exportConfig`/`importConfig`/`destroy`（置 `data-status="destroyed"`）+ **编辑扩展 9** `save`/`load`/`addSymbol`/`removeSymbol`/`updateSymbol`/`group`/`ungroup`/`undo`/`redo`（均入 undo 栈，不派发 `symbol:*`）。失败路径（plan 2026-08-08-0900-2 Phase 3 / #36 双向对齐 `editor-errors.ts` registry）：**editor registry 9** `editor-mount-failed`/`invalid-node`/`duplicate-id`/`invalid-patch`/`invalid-config`/`empty-selection`/`not-a-group`/`no-undo`/`no-redo` + **runtime 共享 3** `not-mounted`/`symbol-not-found`/`invalid-config` + **handle-path 补充** `not-visible`（fit/center 返回 false 时抛，未入 editor registry）。注：`destroyed` 是 `data-status` 值（非失败路径码）。
+- **契约接线**（plan 2026-08-07-1835-2 Phase 2）：`save`/`load` 派发 `scada-editor:save`/`load`（host `events.onSave`/`onLoad` 接收）；`commitPolicy:'auto'` → 编辑即持久化（notifySession 触发 save+onSave，事务期跳过）；controlled 推回（host 改 `config`→load、改 `mode`→switchMode）。
+- **UI affordance + 键盘层**（Phase 3 / P1-B）：默认 toolbox 补 Delete/Group/Ungroup 按钮；canvas 键盘层 Delete/Ctrl+Z/Y/Ctrl+G/Ctrl+Shift+G/方向键（Shift=10px）；palette drop 落指针处。
+- **Test Handle**：`window.__flux_scada_editor_<cid>`（与运行态 `__flux_scada_<cid>` 命名空间隔离）—— `session`（workingConfig/canUndo/canRedo/selection/mode）+ `engine`/`editor`/`app` + 操作方法 + `connection`/`undoRedo`/`toolbox` 子句柄。canvas 一律 Playwright 程序化断言、禁截图、不引 node-canvas。
+- **Undo/Redo**：diff 命令栈（forward+inverse 增量，无全量快照，R4）；transform 事务节流（一拖拽 = 一 undo 步）；工具箱操作入栈。
+- **编辑态包络**（R7 待人工最终确认）：拖拽 ≥30fps @ 选区 ≤1k（primary）/ 编辑操作 per-call <100ms / 内存 ≤320MB（`docs/analysis/industrial-hmi-editor/editing-envelope-2026-08-06.md` 裁定建议 + `editing-envelope-retest-2026-08-07.md` runtime 复测）。
 
 ```
 

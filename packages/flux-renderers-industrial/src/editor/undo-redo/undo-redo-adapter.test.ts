@@ -1,0 +1,304 @@
+import { describe, it, expect, vi } from 'vitest';
+import { UndoRedoAdapter } from './undo-redo-adapter.js';
+import { UndoStack } from './undo-stack.js';
+import type { ScadaConfig, ScadaSymbolNode } from '../../serialization/config-types.js';
+
+function cfg(symbols: ScadaSymbolNode[]): ScadaConfig {
+  return { version: 1, symbols };
+}
+
+const node = (id: string, x: number): ScadaSymbolNode => ({ id, type: 'scada-rect', x, y: 0, width: 10, height: 10 });
+
+describe('UndoRedoAdapter transaction semantics (design-undo-redo.md §4.2)', () => {
+  it('beginTransaction + commitTransaction pushes a single diff for the whole transaction', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    const initial = cfg([node('a', 0)]);
+    adapter.beginTransaction('transform-move', initial);
+    expect(adapter.isInTransaction).toBe(true);
+    // simulate per-frame working copy updates during the transaction (NOT pushed)
+    const moved = cfg([node('a', 5)]);
+    const movedMore = cfg([node('a', 10)]);
+    // commit uses the final working copy
+    const entry = adapter.commitTransaction(movedMore);
+    expect(entry).toBeDefined();
+    expect(entry!.operationKind).toBe('transform-move');
+    expect(entry!.forward.updated[0].patch.x).toBe(10);
+    expect(stack.undoStackDepth).toBe(1);
+    // moved / movedMore intermediates not on the stack (only one entry)
+    void moved;
+  });
+
+  it('commitTransaction with no changes returns undefined (empty diff not pushed)', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    const initial = cfg([node('a', 0)]);
+    adapter.beginTransaction('transform-move', initial);
+    expect(adapter.commitTransaction(initial)).toBeUndefined();
+  });
+
+  it('commitTransaction with no active transaction returns undefined', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    expect(adapter.commitTransaction(cfg([node('a', 0)]))).toBeUndefined();
+  });
+
+  it('abortTransaction cancels without pushing', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    adapter.beginTransaction('transform-move', cfg([node('a', 0)]));
+    adapter.abortTransaction();
+    expect(adapter.isInTransaction).toBe(false);
+    expect(stack.undoStackDepth).toBe(0);
+  });
+
+  it('nested beginTransaction is ignored (first transaction wins)', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    adapter.beginTransaction('transform-move', cfg([node('a', 0)]));
+    adapter.beginTransaction('transform-scale', cfg([node('a', 5)])); // ignored
+    const entry = adapter.commitTransaction(cfg([node('a', 10)]));
+    expect(entry!.operationKind).toBe('transform-move'); // first kind retained
+  });
+});
+
+describe('UndoRedoAdapter pushOperation (add/remove/update)', () => {
+  it('pushOperation computes diff + inverse and pushes', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    const prev = cfg([node('a', 0)]);
+    const current = cfg([node('a', 50)]);
+    const entry = adapter.pushOperation('update-symbol', prev, current);
+    expect(entry).toBeDefined();
+    expect(entry!.forward.updated[0].patch.x).toBe(50);
+    expect(entry!.inverse.updated[0].patch.x).toBe(0);
+  });
+
+  it('pushOperation returns undefined for empty diff', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    const same = cfg([node('a', 0)]);
+    expect(adapter.pushOperation('update-symbol', same, same)).toBeUndefined();
+  });
+
+  it('undo/redo return inverse/forward diff respectively', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    adapter.pushOperation('update-symbol', cfg([node('a', 0)]), cfg([node('a', 50)]));
+    const inverse = adapter.undo();
+    expect(inverse!.updated[0].patch.x).toBe(0);
+    const forward = adapter.redo();
+    expect(forward!.updated[0].patch.x).toBe(50);
+  });
+
+  it('undo on empty stack returns undefined (boundary no-undo)', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    expect(adapter.undo()).toBeUndefined();
+    expect(adapter.redo()).toBeUndefined();
+  });
+});
+
+describe('UndoRedoAdapter applyDiff (working copy consistency)', () => {
+  it('applyDiff applies a diff immutably to config', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    const config = cfg([node('a', 0)]);
+    const next = adapter.applyDiff(config, { added: [], removed: [], updated: [{ id: 'a', patch: { x: 99 } }] });
+    expect(next.symbols[0].x).toBe(99);
+    expect(config.symbols[0].x).toBe(0); // original unchanged
+  });
+});
+
+describe('UndoRedoAdapter pushOperation coalesce (design-undo-redo.md §4.4)', () => {
+  it('coalesces consecutive same-nodeId same-field update-symbol within window', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    vi.useFakeTimers();
+    const t0 = Date.now();
+    adapter.pushOperation('update-symbol', cfg([node('a', 0)]), cfg([node('a', 10)]));
+    vi.setSystemTime(t0 + 100);
+    adapter.pushOperation('update-symbol', cfg([node('a', 10)]), cfg([node('a', 20)]));
+    vi.useRealTimers();
+    // coalesced into 1 entry
+    expect(stack.undoStackDepth).toBe(1);
+    expect(stack.peekUndoTop()!.forward.updated[0].patch.x).toBe(20);
+    // inverse preserves original value (0)
+    expect(stack.peekUndoTop()!.inverse.updated[0].patch.x).toBe(0);
+  });
+
+  it('does NOT coalesce different nodeIds', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    adapter.pushOperation('update-symbol', cfg([node('a', 0)]), cfg([node('a', 10)]));
+    adapter.pushOperation('update-symbol', cfg([node('a', 10), node('b', 0)]), cfg([node('a', 10), node('b', 5)]));
+    expect(stack.undoStackDepth).toBe(2);
+  });
+
+  // HCA10-P1-1 end-to-end: a coalesced commit after an undo must truncate the redo
+  // branch (plan Failure Path `redo-after-new-commit` + design U6).
+  it('coalesce-merge after undo truncates redo branch (U6 redo-after-new-commit)', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    vi.useFakeTimers();
+    const t0 = Date.now();
+    // E1: update a.x=10
+    adapter.pushOperation('update-symbol', cfg([node('a', 0)]), cfg([node('a', 10)]));
+    // E2: update b.y (different node, not coalescable with E1)
+    vi.setSystemTime(t0 + 50);
+    adapter.pushOperation(
+      'update-symbol',
+      cfg([node('a', 10), { id: 'b', type: 'scada-rect', x: 0, y: 0, width: 1, height: 1 }]),
+      cfg([node('a', 10), { id: 'b', type: 'scada-rect', x: 0, y: 5, width: 1, height: 1 }]),
+    );
+    expect(stack.undoStackDepth).toBe(2);
+    // undo E2 → redoStack non-empty
+    adapter.undo();
+    expect(stack.redoStackDepth).toBe(1);
+    expect(stack.canRedo).toBe(true);
+    // new coalescable edit on a.x (same nodeId + same field + within 500ms of E1)
+    vi.setSystemTime(t0 + 100);
+    adapter.pushOperation('update-symbol', cfg([node('a', 10)]), cfg([node('a', 20)]));
+    vi.useRealTimers();
+    // U6: the merged commit must discard the redo branch
+    expect(stack.undoStackDepth).toBe(1);
+    expect(stack.redoStackDepth).toBe(0);
+    expect(stack.canRedo).toBe(false);
+    expect(stack.peekUndoTop()!.forward.updated[0].patch.x).toBe(20);
+  });
+});
+
+describe('UndoRedoAdapter pushForward (structure diff + coalesce path)', () => {
+  it('pushForward pushes structure diff directly', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    const prev = cfg([node('a', 0)]);
+    const forward = { added: [node('b', 5)], removed: [], updated: [] };
+    const entry = adapter.pushForward('add-symbol', forward, prev);
+    expect(entry).toBeDefined();
+    expect(stack.undoStackDepth).toBe(1);
+  });
+
+  it('pushForward returns undefined for empty diff', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    expect(adapter.pushForward('add-symbol', { added: [], removed: [], updated: [] }, cfg([]))).toBeUndefined();
+  });
+
+  it('pushForward with coalesce=true merges consecutive same-field updates', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    adapter.pushForward(
+      'update-symbol',
+      { added: [], removed: [], updated: [{ id: 'a', patch: { x: 10 } }] },
+      cfg([node('a', 0)]),
+    );
+    adapter.pushForward(
+      'update-symbol',
+      { added: [], removed: [], updated: [{ id: 'a', patch: { x: 20 } }] },
+      cfg([node('a', 10)]),
+      true,
+    );
+    expect(stack.undoStackDepth).toBe(1);
+    expect(stack.peekUndoTop()!.forward.updated[0].patch.x).toBe(20);
+  });
+
+  it('pushForward with coalesce=true but non-coalescable kind pushes normally', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    adapter.pushForward(
+      'add-symbol',
+      { added: [node('b', 5)], removed: [], updated: [] },
+      cfg([node('a', 0)]),
+      true,
+    );
+    expect(stack.undoStackDepth).toBe(1);
+  });
+});
+
+describe('UndoRedoAdapter transaction with variables (structuredCloneSafe coverage)', () => {
+  it('beginTransaction snapshots config with variables and restores on commit inverse', () => {
+    const stack = new UndoStack();
+    const adapter = new UndoRedoAdapter(stack);
+    const initial: ScadaConfig = {
+      version: 1,
+      symbols: [node('a', 0)],
+      variables: [{ id: 'var1', source: 'static', value: 42 }],
+    };
+    adapter.beginTransaction('transform-move', initial);
+    // simulate variable change during transaction
+    const afterChange: ScadaConfig = {
+      version: 1,
+      symbols: [node('a', 5)],
+      variables: [{ id: 'var1', source: 'static', value: 99 }],
+    };
+    const entry = adapter.commitTransaction(afterChange);
+    expect(entry).toBeDefined();
+    expect(entry!.inverse.variables).toBeDefined();
+  });
+});
+
+// HCA11-P3-1（归 HCA-CR）：cloneNodeDeep（事务快照）未深克隆 custom，与 P2-1（已修）/ editor-session.cloneNode
+// 同型残留。事务期间 in-place 改 custom.connections 会串改 prevAtOpStart 快照 → diff 漏 custom 变更。
+describe('UndoRedoAdapter transaction snapshot deep-clones custom (HCA11-P3-1)', () => {
+  it('in-place custom mutation during transaction is captured in diff (snapshot isolated)', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    const config: ScadaConfig = {
+      version: 1,
+      symbols: [
+        {
+          id: 'j1',
+          type: 'scada-pipe-junction',
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 10,
+          custom: { connections: [{ x: 0.5 }] },
+        },
+      ],
+    };
+    adapter.beginTransaction('transform-move', config);
+    // In-place mutate custom + geometry during the transaction (simulating a mutator that
+    // mutates working copy by reference). Before fix: custom shared ref → prev snapshot corrupted.
+    (config.symbols[0].custom as { connections: Array<{ x: number }> }).connections[0].x = 0.99;
+    config.symbols[0].x = 50;
+    const entry = adapter.commitTransaction(config);
+    expect(entry).toBeDefined();
+    // forward diff must capture BOTH geometry and custom change.
+    // Before fix: custom shared ref → diffScadaConfig sees prev.custom === current.custom → custom omitted.
+    const patch = entry!.forward.updated[0].patch as Record<string, unknown>;
+    expect(patch.x).toBe(50);
+    expect(patch.custom).toBeDefined();
+    // inverse must hold the ORIGINAL custom (0.5) for correct undo.
+    const inversePatch = entry!.inverse.updated[0].patch as Record<string, unknown>;
+    expect(inversePatch.custom).toBeDefined();
+    expect(
+      (inversePatch.custom as { connections: Array<{ x: number }> }).connections[0].x,
+    ).toBe(0.5);
+  });
+
+  it('snapshot custom is not the same reference as source (isolation)', () => {
+    const adapter = new UndoRedoAdapter(new UndoStack());
+    const config: ScadaConfig = {
+      version: 1,
+      symbols: [
+        {
+          id: 'j1',
+          type: 'scada-pipe-junction',
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 10,
+          custom: { connections: [] },
+        },
+      ],
+    };
+    adapter.beginTransaction('transform-move', config);
+    config.symbols[0].x = 5;
+    const entry = adapter.commitTransaction(config);
+    expect(entry).toBeDefined();
+    // After commit, mutating current custom must not affect a re-snapshot path.
+    // (Structural assertion: forward patch.custom is a clone, not the live ref.)
+    config.symbols[0].x = 9;
+    // re-open a new transaction to snapshot again — prev isolation must hold across transactions.
+    adapter.beginTransaction('transform-move', config);
+    (config.symbols[0].custom as { connections: unknown[] }).connections.push({ x: 1 });
+    config.symbols[0].x = 20;
+    const entry2 = adapter.commitTransaction(config);
+    expect(entry2).toBeDefined();
+    const patch2 = entry2!.forward.updated[0].patch as Record<string, unknown>;
+    expect(patch2.custom).toBeDefined();
+  });
+});

@@ -47,6 +47,9 @@ const { registerMobileRenderers } = await import(
 const { registerCodeEditorRenderers } = await import(
   resolve(REPO_ROOT, 'packages/flux-code-editor/dist/index.js')
 );
+const { registerScadaRenderers } = await import(
+  resolve(REPO_ROOT, 'packages/flux-renderers-industrial/dist/index.js')
+);
 
 // ─── Setup full registry ────────────────────────────────────────────────────
 
@@ -59,6 +62,7 @@ registerDataRenderers(registry);
 registerContentRenderers(registry);
 registerMobileRenderers(registry);
 registerCodeEditorRenderers(registry);
+registerScadaRenderers(registry);
 
 // ─── JSONC → JSON (comments, single quotes, trailing commas, unquoted keys) ─
 

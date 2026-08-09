@@ -380,6 +380,26 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       timeout: 15_000,
     });
   },
+  'scada-demo': async (page) => {
+    await expect(page.getByRole('heading', { name: /scada-demo 工艺流程组态演示页/i, level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
+  },
+  'scada-pressure-demo': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: /scada-pressure-demo 大屏\/复杂组态示例页/i, level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'scada-edge-cases': async (page) => {
+    await expect(page.getByRole('heading', { name: /scada 边界用例测试页/i, level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
+  },
+  'scada-perf-scale': async (page) => {
+    await expect(page.getByRole('heading', { name: /scada-perf-scale 性能基准测量页/i, level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
+  },
   'env-stream': async (page) => {
     await expect(page.getByRole('heading', { name: /env\.stream/i })).toBeVisible({ timeout: 15_000 });
   },
@@ -434,6 +454,12 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-slot="spreadsheet-toolbar"]')).toBeVisible({ timeout: 15_000 });
   },
+  'leafer-examples': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'LeaferJS 官方示例对照页', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="leafer-example-canvas"]')).toHaveCount(4, { timeout: 10_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {
@@ -447,6 +473,9 @@ test('domain route coverage matches playground route inventory', () => {
   expect(assertionIds).toEqual(routeIds);
 });
 
+// plan 2026-08-04-1558-3 Phase 2：scada-perf-scale 经 open-audit live probe 证 0 console.error/pageerror，
+// 从 KNOWN_ERRORS 移除（证据驱动）。其余 8 条（gantt/kanban/scheduling/calendar/barcode 等）属其他家族、
+// 无本计划探针证据——不盲删，归各自 owner 或凭逐路由探针证据移除（m3-r2）。
 const ROUTES_WITH_KNOWN_ERRORS = new Set(['gantt', 'kanban', 'scheduling-calendar', 'barcode-input', 'calendar-perf-scale', 'kanban-perf-scale', 'gantt-perf-scale', 'diff-perf-scale']);
 
 for (const route of DOMAIN_RENDERER_ROUTES) {

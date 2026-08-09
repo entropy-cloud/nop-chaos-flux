@@ -10,6 +10,10 @@ import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { registerGraphRenderers } from '@nop-chaos/flux-renderers-graph';
+import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial';
+// Editor registration via `/editor` subpath (NOT main entry) — preserves bundle isolation:
+// `@leafer-in/editor` stays out of the runtime `scada-canvas` bundle (design-architecture.md §4.4.1).
+import { registerScadaEditorRenderers } from '@nop-chaos/flux-renderers-industrial/editor';
 import { HomePage } from './pages/home-page';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
@@ -48,6 +52,11 @@ import { M5MobileShowcaseDemoPage } from './pages/m5-mobile-showcase-demo';
 import { GanttDemoPage } from './pages/gantt-demo';
 import { KanbanDemoPage } from './pages/kanban-demo';
 import { DiffDemoPage } from './pages/diff-demo';
+import { ScadaDemoPage } from './pages/scada-demo';
+import { ScadaPressureDemoPage } from './pages/scada-pressure-demo';
+import { ScadaPerfScaleDemoPage } from './pages/scada-perf-scale-demo';
+import { ScadaEdgeDemoPage } from './pages/scada-edge-demo';
+import { ScadaEditorDemoPage } from './pages/scada-editor-demo';
 import { CalendarDemoPage } from './pages/calendar-demo';
 import { BarcodeDemoPage } from './pages/barcode-demo';
 import { GraphDemoPage } from './pages/graph-demo';
@@ -101,6 +110,12 @@ const LazyWordEditorPage = lazy(() =>
 const LazyAiRichTextDemoPage = lazy(() =>
   import('./pages/ai-rich-text-demo').then((m) => ({ default: m.AiRichTextDemoPage })),
 );
+// Lazy-loaded: pulls in leafer-ui canvas runtime (~heavy, requires browser CanvasRenderingContext2D) —
+// only loaded when the user navigates to #/leafer-examples. Keeps the main bundle + App unit tests
+// leafer-ui-free (mirrors report-designer / debugger-lab lazy isolation).
+const LazyLeaferExamplesDemoPage = lazy(() =>
+  import('./pages/leafer-examples-demo').then((m) => ({ default: m.LeaferExamplesDemoPage })),
+);
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
@@ -111,6 +126,8 @@ registerContentRenderers(registry);
 registerLayoutRenderers(registry);
 registerSchedulingRenderers(registry);
 registerGraphRenderers(registry);
+registerScadaRenderers(registry);
+registerScadaEditorRenderers(registry);
 
 if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
   window.__NOP_DEBUGGER__ = {
@@ -286,6 +303,18 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <GraphDemoPage onBack={goHome} />;
         case 'diff-view':
           return <DiffDemoPage onBack={goHome} />;
+        case 'scada-demo':
+          return <ScadaDemoPage onBack={goHome} />;
+        case 'scada-pressure-demo':
+          return <ScadaPressureDemoPage onBack={goHome} />;
+        case 'scada-perf-scale':
+          return <ScadaPerfScaleDemoPage onBack={goHome} />;
+        case 'leafer-examples':
+          return <LazyLeaferExamplesDemoPage onBack={goHome} />;
+        case 'scada-edge-cases':
+          return <ScadaEdgeDemoPage onBack={goHome} />;
+        case 'scada-editor-demo':
+          return <ScadaEditorDemoPage onBack={goHome} />;
         case 'calendar-perf-scale':
           return <CalendarPerfScaleDemoPage onBack={goHome} />;
         case 'kanban-perf-scale':

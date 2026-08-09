@@ -365,6 +365,7 @@ UI primitive 对齐补充规则：
 - `report-toolbar`
 - `spreadsheet-page`
 - `word-editor-page`
+- `scada-canvas`（`flux-renderers-industrial`，plan 2026-08-04-1558-1 Phase 3 补登记；含 9 component handles + 5 events 静态元数据）
 
 ### 已文档化但 runtime 尚未注册的 retained renderer
 

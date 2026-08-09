@@ -19,6 +19,7 @@ export const REGISTER_PACKAGES = [
   { pkg: 'flux-code-editor', fn: 'registerCodeEditorRenderers' },
   { pkg: 'flux-renderers-scheduling', fn: 'registerSchedulingRenderers' },
   { pkg: 'flux-renderers-ai', fn: 'registerAiRenderers' },
+  { pkg: 'flux-renderers-industrial', fn: 'registerScadaRenderers' },
 ];
 
 /**

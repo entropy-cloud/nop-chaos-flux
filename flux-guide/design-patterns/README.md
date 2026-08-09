@@ -42,3 +42,5 @@
 | 36  | `barcode-input.md`              | Barcode Input 条码输入（摄像头扫码/连续扫码/批量队列/静态校验）                                                                                           |
 | 37  | `ai.md`                         | AI 组件家族（ai-chat 中枢 + 13 卫星组件 + MessageEngine + 宿主接线）                                                                                      |
 | 38  | `remaining-components.md`       | Transfer / Picker / DropdownButton / ScopeDebug / TreeSelect / InputTree / TagList / KeyValue / ArrayEditor / ConditionBuilder / DetailField / DetailView |
+| 39  | `scada.md`                      | Scada Canvas 组态画布（组态 JSON/点表三源/事件联动/性能红线/测试句柄）                                                                                    |
+| 40  | `scada-editor.md`               | Scada Editor Canvas 组态编辑器（双态隔离/工具箱/save-load/undo-redo/编辑态测试句柄）                                                                      |

@@ -1,0 +1,170 @@
+/* scada-editor-canvas 完整样式（E5.1，design-renderer.md §10）。
+ * 8 个 marker + data-slot；root 容器填满；canvas 绝对定位填满 root。
+ * regions 使用既有 @nop-chaos/ui 样式系统（无新 token 命名空间）。
+ */
+
+/* 根容器（design-renderer.md §10：data-slot="scada-editor-canvas"）。 */
+.nop-scada-editor-canvas {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* canvas 画布（leafer App 在容器内创建 <canvas>）。 */
+.nop-scada-editor-canvas-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* 图元库面板（E5.2）。 */
+.nop-scada-editor-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  overflow-y: auto;
+  background: var(--nop-surface, #ffffff);
+  border-right: 1px solid var(--nop-border, #e2e8f0);
+}
+
+/* 属性面板（E5.3）。 */
+.nop-scada-editor-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  background: var(--nop-surface, #ffffff);
+  border-left: 1px solid var(--nop-border, #e2e8f0);
+}
+
+/* 工具箱（E9.1 占位）。 */
+.nop-scada-editor-toolbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--nop-surface, #ffffff);
+  border-bottom: 1px solid var(--nop-border, #e2e8f0);
+}
+
+/* 状态栏（含 undo/redo 边界提示，M1 占位）。 */
+.nop-scada-editor-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--nop-body-copy, #64748b);
+  background: var(--nop-surface, #ffffff);
+  border-top: 1px solid var(--nop-border, #e2e8f0);
+}
+
+/* 加载占位（design-renderer.md §10：data-slot="scada-editor-loading"）。 */
+.nop-scada-editor-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--nop-body-copy, #64748b);
+  font-size: 13px;
+}
+
+/* 错误提示（design-renderer.md §10：data-slot="scada-editor-error"）。 */
+.nop-scada-editor-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  color: var(--nop-danger, #dc2626);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 编辑器布局骨架：列方向栈——toolbox（顶栏）/ body（palette | canvas | inspector 三栏）/ statusBar（底栏）。
+   plan 2026-08-08-0900-1 Phase 4 / P2 #40：layout 为外层 column flex 容器，
+   body 行含 palette|canvas|inspector；canvas-area 是 body 的 flex 子——leafer canvas 填充 canvas 区，不覆盖兄弟 panel。 */
+.nop-scada-editor-layout {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.nop-scada-editor-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nop-scada-editor-layout-canvas {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  /* plan 2026-08-08-0900-1 Phase 4 / P2 #40：canvas containment——leafer <canvas>（absolute inset:0）
+     在此 div 内填充，clip 防溢出到 palette/inspector 兄弟区。 */
+  overflow: hidden;
+}
+
+.nop-scada-editor-layout > .nop-scada-editor-toolbox {
+  flex: 0 0 auto;
+}
+
+.nop-scada-editor-layout > .nop-scada-editor-status-bar {
+  flex: 0 0 auto;
+}
+
+/* 空场景提示（plan 2026-08-08-0900-1 Phase 3 / P2 #12：ready 但无图元时 canvas 区 overlay）。 */
+.nop-scada-editor-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--nop-body-copy, #64748b);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.nop-scada-editor-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: grab;
+  border-radius: 4px;
+  user-select: none;
+}
+
+.nop-scada-editor-palette-item:hover {
+  background: var(--nop-hover, #f1f5f9);
+}
+
+.nop-scada-editor-palette-item[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nop-scada-editor-field-error {
+  color: var(--nop-danger, #dc2626);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.nop-scada-editor-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--nop-body-copy, #64748b);
+  margin-top: 8px;
+  margin-bottom: 2px;
+}

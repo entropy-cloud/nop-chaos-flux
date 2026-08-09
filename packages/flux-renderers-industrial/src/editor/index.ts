@@ -1,0 +1,39 @@
+import { registerRendererDefinitions, type RendererRegistry } from '@nop-chaos/flux-core';
+import { industrialEditorRendererDefinitions } from './renderer-definitions.js';
+
+/**
+ * 编辑器 subpath 入口（`@nop-chaos/flux-renderers-industrial/editor`，E4.2 落地 / E5.1+ 完整实现）。
+ *
+ * **包结构裁定**：方案 A（design-architecture.md §4.4.1）——编辑器实现放入既有
+ * `flux-renderers-industrial` 的 `src/editor/` subpath，经独立注册函数 + subpath `/editor` export +
+ * 模块图隔离（主入口 `src/index.ts` 不 import 本模块），保证 `@leafer-in/editor` 不污染 runtime bundle。
+ *
+ * **公共面**（design-renderer.md §11）：
+ * - 注册入口：`registerScadaEditorRenderers`（独立于 runtime `registerScadaRenderers`）
+ * - 类型：`ScadaEditorCanvasSchema` / `ScadaEditorCanvasEvents` / `ScadaEditorTestHandle`
+ */
+export type { ScadaEditorCanvasSchema, ScadaEditorCanvasEvents, ScadaEditorViewportPolicy } from './schemas.js';
+export type { ScadaEditorTestHandle } from './editor-test-handle.js';
+// plan 2026-08-08-1931-2 Phase 5 / P2-2：包公共面导出 session 投影 type（Omit undoStack），
+// 不泄漏内部 UndoStack 实现类（域内部 INV-4）。实现接口 ScadaEditorSession 仅供 editor 域内部 relative path 消费。
+export type { ScadaEditorSessionPublic, ScadaEditorMode, ScadaCommitPolicy } from './editor-session.js';
+
+/**
+ * 编辑器 renderer 定义数组（plan 2026-08-09-1300-1 Phase 2 / 1931-P2-4）。
+ *
+ * 与主入口 `industrialRendererDefinitions`（`src/index.ts`）对称导出——供 host 自定义注册
+ * （选择性注册 editor renderer / 自建 registry / 顺序控制），与所有兄弟 `flux-renderers-*` 包注册模式对齐。
+ * `registerScadaEditorRenderers` 仍是一键全注册便捷入口。
+ */
+export { industrialEditorRendererDefinitions } from './renderer-definitions.js';
+
+/**
+ * `scada-editor-canvas` renderer 注册入口（design-renderer.md §11）。
+ *
+ * 注册 `scada-editor-canvas` renderer 定义（E5.1 完整 fields/regions）。
+ * 与 runtime `registerScadaRenderers`（主入口 `src/index.ts`）**完全独立**——
+ * 不注册 runtime 内置图元（图元库面板经 runtime `registerScadaSymbols` 复用，design-renderer.md §3）。
+ */
+export function registerScadaEditorRenderers(registry: RendererRegistry) {
+  return registerRendererDefinitions(registry, industrialEditorRendererDefinitions);
+}

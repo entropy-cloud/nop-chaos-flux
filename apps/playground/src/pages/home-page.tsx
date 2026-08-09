@@ -17,6 +17,9 @@ type NavigationTarget =
   | 'code-editor'
   | 'word-editor'
   | 'performance-table'
+  | 'scada-demo'
+  | 'scada-pressure-demo'
+  | 'scada-edge-cases'
   | 'm5-showcase'
   | 'ai-widgets'
   ;
@@ -155,6 +158,27 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Large Data Stress',
     description:
       'Same-environment comparative measurement page for a 1000-row paged table baseline plus nested loop cards, aggregate formulas, scope-backed selection/pagination, and many mounted editable controls.',
+  },
+  {
+    id: 'scada-demo',
+    title: 'Scada Demo',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I13.1 工艺流程组态演示：设备图元 + 管道 + 仪表，点表模拟数据定时刷新（双轨），单击设备弹出详情，双击跳转，按钮触发数据请求。',
+  },
+  {
+    id: 'scada-pressure-demo',
+    title: 'Scada Pressure Demo',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I13.2 大屏/复杂组态示例：万级（10k）图元压力画面 + 多画面切换（工艺流程大屏 / 高密度压力画面），程序化生成、固定随机种子。',
+  },
+  {
+    id: 'scada-edge-cases',
+    title: 'Scada Edge Cases',
+    eyebrow: 'Industrial HMI',
+    description:
+      'I15.1 边界用例测试页：最小合法 config / 空画面 / 非法 JSON（empty region + onError）/ 线多边形 hover 覆盖物验证，e2e 程序化断言入口。',
   },
   {
     id: 'm5-showcase',
