@@ -36,7 +36,9 @@
 | 可视化层       | 柱/线/饼/散点/面积/双轴/热力图/地图/仪表盘                              | 5 种基础图表                 | 双轴、热力图、地图、brush/zoom 缺失 |
 | 交叉分析层     | **pivot-table（透视表）**                                               | 仅静态交叉（table 组合模拟） | **交互式透视缺失**                  |
 | 编排层（看板） | panel-chrome（面板外壳）、dashboard-filter（全局筛选联动）、grid layout | 无                           | **整层缺失**                        |
-| KPI 层         | stat-tile（大数字 + 同比环比 + sparkline）、条件格式                    | statistics 仅总条数          | KPI 卡片、条件格式缺失              |
+| KPI 层         | stat-tile（大数字 + 同比环比 + sparkline）                              | statistics 仅总条数          | KPI 卡片缺失（sparkline 独立组件）  |
+
+> 修正（2026-08-09 复核）：~~条件格式~~ —— table 已有 `classNameExpr`（cell 级条件样式表达式），能力已覆盖；"规则编辑器 UI"仅面向业务用户自助配置时才需要，属可选编辑器非控件缺口。~~data-grid~~ —— 非新控件，降级为 table 能力增强候选（选区聚合、右键菜单，按需评估）。
 
 ### 差距量化
 
@@ -93,6 +95,22 @@
 
 **对路径 B 的修订**：`PivotTable` 数据契约（`rows`/`columns` 维度 + `indicators` 指标 + `aggregationRules`）可直接映射为 flux schema（`rowDimensions`/`columnDimensions`/`indicators`），数据变换由 VTable 内部承担；React 封装参照 Chat2DB 命令式 + 实例事件模式，与现有 renderer 事件体系（selection/copy/edit）对接。
 
+#### 3.4.1 VTable PivotTable 应用案例调研（2026-08-09）
+
+| 应用/项目                             | 是否用 PivotTable | 说明                                                                                                                                                                                                                     |
+| ------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **火山引擎 DataWind（智能数据洞察）** | ✅ 生产级         | 字节自家增强型 ABI 平台（亿级数据/亚秒查询），官方明确"重度使用 VChart + VTable，实现二维表、**透视表**、透视图能力"（`developer.volcengine.com/articles/7317468158817173531`）；是 VTable PivotTable 最大的真实生产案例 |
+| VisActor 官方 demo 集                 | ✅ 示例级         | 仓库 `docs/assets/demo` 有 **62 个 pivot 相关 demo**：透视聚合/下钻/小计总计/计算字段/派生字段/排序/过滤/自定义 rowTree-columnTree/sparkline 指标/PivotChart 等，覆盖真实业务场景（销售分析、趋势表）                    |
+| Superset-VisActor（官方 BI 示例）     | 待确认            | VisActor 官方示例项目，用 VisActor 图表替换 Superset 图表层（`github.com/VisActor/Superset-VisActor`，10★，实验性）                                                                                                      |
+| Chat2DB                               | ❌ 仅 ListTable   | 用 VTable 做 SQL 结果集表格（高性能网格），**未用 PivotTable**——其封装模式（命令式 + 实例事件）仍是路径 B 的首选集成范本                                                                                                 |
+| 社区开源项目                          | ❌ 极少           | GitHub 仓库搜索 `@visactor/vtable` 仅命中 demo 项目（`jackywq/react-vtable-demos` 等）；公开生产使用 PivotTable 的开源项目未见                                                                                           |
+
+**调研结论**：
+
+1. VTable 的 **PivotTable 生产案例集中于字节生态内部**（DataWind 是其最大的落地场景），社区侧普遍用 `ListTable` 做高性能表格（Chat2DB 即代表）。
+2. PivotTable 能力文档化程度高（62 个 demo + 完整 option 文档 + 源码分析文档 `docs/assets/contributing/zh/source-code-details/7.*PivotTable*`），风险主要在**封装层**而非能力层。
+3. 对 flux 的启示不变：**基座可信（MIT + 生产验证），自研重点是 schema 映射、命令式封装、主题适配、事件桥接**；可将 DataWind 的"透视表 + 指标组 + 下钻"交互形态作为 schema 设计的参照。
+
 ---
 
 ## 4. 结论与建议
@@ -133,3 +151,56 @@
 - 交叉表参考：**VTable**（`~/sources/vtable`，字节 VisActor，MIT，`PivotTable` 原生透视）、**Chat2DB**（`~/sources/Chat2DB`，命令式 ListTable 封装先例）、pivot-table-uni 设计、tanstack table（grouping/aggregation，无动态列）
 - 编排层参考：Grafana/Metabase/Superset/Redash（panel-chrome、dashboard-filter、stat-tile）
 - 静态交叉配合：Doris/StarRocks/ClickHouse/Calcite（服务端聚合）
+
+---
+
+## 6. 地图组件封装调研（2026-08-09）
+
+> 依据：`docs/analysis/2026-08-04-control-gap-survey.md`（map 中高价值，参考 nocobase/leaflet/maplibre）+ 本次本地源码调研。
+
+### 6.1 已有项目地图做法调研矩阵
+
+| 项目                                    | 地图技术                                                                                        | geojson/数据源方式                                                                                              | 特点                                                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **ECharts**（`~/sources/bi/echarts`）   | 原生 `MapChart` + `GeoComponent`（geo 坐标系，Canvas/SVG 渲染）                                 | `registerMap(name, geojson)` 应用侧注册；geojson 静态导入                                                       | **最轻**：无地图 SDK、无 token；内置世界/中国省市 map JSON 可打包；支持区域着色/散点/飞线/热力/标注 |
+| **Superset**（`~/sources/bi/superset`） | deck.gl 9.x（`DeckGLOverlayMapLibre`/`Mapbox` 双后端）+ echarts 地图 + legacy country/world map | geojson 作为**数据集列**（`Geojson/buildQuery.ts`：数据表带 geojson 列，`IS NOT NULL` 过滤）+ mapbox token 底图 | 重方案：点聚合/弧线/热力 9+ 图层；依赖大、需底图服务                                                |
+| **Metabase**（`~/sources/bi/metabase`） | **leaflet**，`MapRenderer.tsx` 单独 chunk **懒加载**（避免进初始 bundle）                       | 内置世界/美国 geojson + 自定义 geojson URL                                                                      | 轻-中；懒加载策略值得借鉴；需瓦片底图源                                                             |
+| **Grafana**（`~/sources/bi/grafana`）   | **OpenLayers**（geomap 面板）                                                                   | 内置 basemap + geojson/xyz 图层                                                                                 | 重（OL 全量）；基线地图/跟踪类场景                                                                  |
+| **nocobase**（`~/sources/nocobase`）    | **AMap（高德）** + GoogleMaps（plugin-map）                                                     | 坐标字段（经纬度）→ 地图 SDK 渲染                                                                               | **字段级地图**（表单/详情展示坐标点），非图表级；商用 SDK 需 key                                    |
+| **amis**（`~/sources/amis`）            | **无地图组件**                                                                                  | —                                                                                                               | 低代码平台可无地图而成立                                                                            |
+
+### 6.2 封装路径对比（2026-08-09 复核修正 v2）
+
+> 修正 v1：ECharts map/geo 是**矢量区域图形**（geojson 渲染），无详细底图 → 弃 leaflet 主方案。
+> 修正 v2（选型复核）：Leaflet vs OpenLayers——**OpenLayers 更活跃更现代**（GitHub 2026-08-09：OL v10.10.0 月更发布 vs Leaflet 1.9.4 停更 3 年；OL v7 起 TypeScript 官方重写、ES modules 按需导入、cluster/矢量瓦片/投影内置），主方案改 OpenLayers；Leaflet 降为备选（插件生态丰富）。
+
+| 路径                                   | 底层                                                                       | 能力边界                                                                                                                                                                                                                                                                                                                    | 建议                                                 |
+| -------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| A. ECharts geo/map（轻）               | echarts 6.1.0 `MapChart`/`GeoComponent`（`~/sources/bi/echarts` 源码验证） | ✅ 区域着色/散点/飞线/热力/roam 缩放平移/区域选中；❌ **无瓦片底图**（源码无 tileLayer）、无街道/POI/地名标签/卫星图；geojson 资源完全自管                                                                                                                                                                                  | 备选：仅"纯统计型地图"（无底图需求）场景             |
+| B. **OpenLayers（首选）**              | **OpenLayers v10**（官方 TS、ES modules）                                  | ✅ 瓦片底图（OSM/自定义 xyz/天地图）、GeoJSON 层区域着色（choropleth）、**内置 cluster 聚合**、矢量瓦片（MVT）、投影体系、绘制/热力内置、交互（缩放/弹窗）；**模块化按需导入天然契合懒加载 + tree-shaking**；生产先例：**Grafana geomap 面板**（`~/sources/bi/grafana`）；⚠️ 中国场景 OSM 瓦片访问性一般，天地图/高德需 key | **首选**：详细底图 + 点位 + 区域着色的 BI 地图主场景 |
+| B'. leaflet（Metabase 模式）           | leaflet 1.9 + 瓦片底图（**维护模式**：2023-05 后无 release）               | ✅ 瓦片底图/geoJSON/marker + 插件生态丰富（markercluster 等）；❌ TS 类型社区维护、聚簇等能力靠插件                                                                                                                                                                                                                         | 备选：插件生态依赖场景；Metabase 懒加载做法仍可借鉴  |
+| C. deck.gl + MapLibre（Superset 模式） | deck.gl 9 + maplibre                                                       | 点聚合/弧线/轨迹等复杂图层                                                                                                                                                                                                                                                                                                  | 不推荐首版：大依赖 + 底图 token                      |
+
+**双模式蓝本**：Metabase `MapRenderer.tsx` 的 `map.type = 'region' | 'pin'`（区域着色 + 点位）语义保留，底层以 OpenLayers 实现（GeoJSON 层着色 + 内置 cluster 点位）。
+
+### 6.3 推荐封装方案（路径 B，OpenLayers）
+
+- **type**: `map`（独立包 `flux-renderers-map`：ol 依赖隔离 + **懒加载**——`import('ol/Map')` 等按需模块动态加载，OL ES modules 天然支持；参照 Grafana geomap 先例）。
+- **schema 草案**：
+  - `mapType: 'pin' | 'region'`（点位/区域着色双模式，对齐 Metabase 语义）
+  - `basemap?: { url: string; attribution?: string; type?: 'xyz' | 'wms' }`（瓦片源：缺省 OSM；中国场景可配天地图/高德，key 由应用注入）
+  - `regionData?: SchemaValue`（区域着色：`[{ name: '北京', value: 123 }]`，geojson 内建或 `geojsonUrl`/`geojson?: SchemaValue` 自定义）
+  - `pinData?: SchemaValue`（点位：`[{ name, lat, lng, value? }]`）
+  - `cluster?: boolean`（**OL 内置 cluster** 源）、`zoom?`/`center?`、`height`、`empty`、`visualMap?`（色阶）
+  - 事件：`onClick`（区域/点位点击，payload `{ name, value }`）→ flux action
+- **geojson 资源管理**：
+  - 内建：`map-data` 数据包（世界/中国/省市 geojson 静态 JSON，应用侧 import；参照 echarts 生态的行政区划数据源）
+  - 自定义：`geojsonUrl`（运行时 fetch + 缓存）或 `geojson` 表达式（scope/data-source 传入）
+- **样式**：区域色/边框/高亮经 schema + CSS 变量映射（theme-compatibility 原则）；瓦片底图明暗主题由 url 切换（OSM 标准层/暗色层）。
+- **字段级地图**（nocobase 参考：AMap 坐标字段展示）作后续 follow-up，非首版。
+- **中国场景注意**：OSM 瓦片访问性依赖部署环境；生产建议天地图（需 key）/高德 JS API（需 key）/自建瓦片，key 经 RendererEnv 或应用配置注入（INV-2 边界内，无新 IO 类型）。
+
+### 6.4 与既有计划的关系
+
+- BI 骨架计划 Phase 5「地图独立评估」由本调研闭环：**建议落地为独立 `map` renderer（路径 B，OpenLayers）**，并入 BI 骨架计划或独立计划立项。
+- 触发条件：出现真实地域分析需求（区域销售/门店分布/轨迹）时按 `complex-component-design-process.md` 立项。
