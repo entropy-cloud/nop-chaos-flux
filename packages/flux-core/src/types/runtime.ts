@@ -281,6 +281,10 @@ export interface OwnedSurfaceStateBase {
    * `onSubmitSuccess` hook has run (AMIS `Dialog.closeOnSubmit` semantic).
    * Only processed by action-style openDialog/openDrawer surfaces; default
    * `false` (callers close explicitly via `closeSurface`).
+   *
+   * 仅布尔 `true` 生效（fail-closed）：`"true"`、`1` 等非布尔值视为未开启。
+   * 归一化点在 adapter 入口（`args.closeOnSubmit === true`），本字段是唯一
+   * 归一化后的存储形态；消费点一律以 `=== true` 判断，不再做 truthy 判定。
    */
   closeOnSubmit?: boolean;
   /**
@@ -366,6 +370,13 @@ export interface SurfaceRuntime {
     kind: 'dialog' | 'drawer' | 'sheet';
     scope: ScopeRef;
     statusPath?: string;
+    /**
+     * Optional explicit owner scope. Resolution rule (unified with
+     * `publishSurfaceStatus` / `clearSurfaceStatus`): `ownerScope ?? scope.parent ?? scope`.
+     * Backward-compatible: existing callers may omit it and keep the
+     * `scope.parent ?? scope` fallback.
+     */
+    ownerScope?: ScopeRef;
   }): void;
   close(surfaceId?: string): void;
   closeTop(): void;

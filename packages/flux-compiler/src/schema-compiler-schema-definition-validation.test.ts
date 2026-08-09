@@ -285,6 +285,44 @@ describe('built-in action definition args validation', () => {
     expect(diagnostics).toEqual([]);
   });
 
+  it('accepts boolean closeOnSubmit and rejects string closeOnSubmit (fail-closed)', () => {
+    const compiler = makeCompiler([actionButtonRenderer, formRenderer]);
+
+    const okDiagnostics = compiler.validate?.({
+      type: 'button',
+      onClick: {
+        action: 'openDialog',
+        args: { closeOnSubmit: true, body: { type: 'form' } },
+      },
+    } as never);
+    expect(okDiagnostics).toEqual([]);
+
+    const okDrawerDiagnostics = compiler.validate?.({
+      type: 'button',
+      onClick: {
+        action: 'openDrawer',
+        args: { closeOnSubmit: true, body: { type: 'form' } },
+      },
+    } as never);
+    expect(okDrawerDiagnostics).toEqual([]);
+
+    const badDiagnostics = compiler.validate?.({
+      type: 'button',
+      onClick: {
+        action: 'openDialog',
+        args: { closeOnSubmit: 'true', body: { type: 'form' } },
+      },
+    } as never);
+    expect(badDiagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-action-shape',
+          path: '/onClick/args/closeOnSubmit',
+        }),
+      ]),
+    );
+  });
+
   it('recurses args.body into analyzeSchemaInput (unknown renderer inside dialog body is reported)', () => {
     const compiler = makeCompiler([actionButtonRenderer]);
 

@@ -130,6 +130,25 @@ describe('built-in action definition table', () => {
     expect(openDialog.fieldRules.actions).toBe('schema-array');
   });
 
+  it('declares closeOnSubmit as a boolean value in openDialog/openDrawer fieldRules', () => {
+    const openDialog = BUILT_IN_ACTION_DEFINITIONS.openDialog;
+    expect(openDialog.fieldRules.closeOnSubmit).toEqual({
+      kind: 'value',
+      valueType: 'boolean',
+    });
+
+    const openDrawer = BUILT_IN_ACTION_DEFINITIONS.openDrawer;
+    expect(openDrawer.fieldRules.closeOnSubmit).toEqual({
+      kind: 'value',
+      valueType: 'boolean',
+    });
+    expect(openDrawer.fieldRules.body).toBe('schema');
+    expect(openDrawer.fieldRules.actions).toBe('schema-array');
+    expect(openDrawer.fieldRules.onClose).toBe('action');
+    expect(openDrawer.fieldRules.onSubmitSuccess).toBe('action');
+    expect(openDrawer.fieldRules.onSubmitError).toBe('action');
+  });
+
   it('declares ajax constraints and argsRequired', () => {
     const ajax = BUILT_IN_ACTION_DEFINITIONS.ajax;
     expect(ajax.argsRequired).toBe(true);

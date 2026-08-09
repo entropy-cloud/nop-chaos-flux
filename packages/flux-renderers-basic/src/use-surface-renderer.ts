@@ -140,7 +140,7 @@ export function useSurfaceRenderer(
     id,
     kind,
     statusPath,
-    ownerScope: node.scope,
+    nodeScope: node.scope,
     declarativeScope,
   });
 
@@ -154,7 +154,7 @@ export function useSurfaceRenderer(
       id,
       kind,
       statusPath,
-      ownerScope: node.scope,
+      nodeScope: node.scope,
       declarativeScope,
     };
   }, [declarativeScope, id, kind, node.scope, statusPath, surfaceRuntime]);
@@ -377,7 +377,7 @@ export function useSurfaceRenderer(
         current.surfaceRuntime?.publishClosed({
           surfaceId: current.id,
           kind: current.kind,
-          scope: current.declarativeScope ?? current.ownerScope,
+          scope: current.declarativeScope ?? current.nodeScope,
           statusPath: current.statusPath,
         });
         closedPublishedRef.current = true;

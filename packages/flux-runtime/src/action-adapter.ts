@@ -231,7 +231,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             invocation.args?.data && typeof invocation.args.data === 'object'
               ? (invocation.args.data as Record<string, unknown>)
               : undefined;
-          const dialogIsolate = !!(invocation.args as Record<string, unknown>)?.isolate;
+          const dialogIsolate = !!invocation.args?.isolate;
           const dialogScope = input.createSurfaceScope('dialog', ctx, dialogData, dialogIsolate);
           const dialogId = ctx.surfaceRuntime.open({
             kind: 'dialog',
@@ -246,7 +246,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               onCloseNodes: invocation.args?.onClose as ActionSchema | ActionSchema[] | undefined,
               onSubmitSuccessNodes: invocation.args?.onSubmitSuccess as ActionSchema | ActionSchema[] | undefined,
               onSubmitErrorNodes: invocation.args?.onSubmitError as ActionSchema | ActionSchema[] | undefined,
-              closeOnSubmit: (invocation.args as Record<string, unknown> | undefined)?.closeOnSubmit === true,
+              closeOnSubmit: invocation.args?.closeOnSubmit === true,
               ownerActionCtx: ctx,
             },
           });
@@ -295,7 +295,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             invocation.args?.data && typeof invocation.args.data === 'object'
               ? (invocation.args.data as Record<string, unknown>)
               : undefined;
-          const drawerIsolate = !!(invocation.args as Record<string, unknown>)?.isolate;
+          const drawerIsolate = !!invocation.args?.isolate;
           const drawerScope = input.createSurfaceScope('drawer', ctx, drawerData, drawerIsolate);
 
           const drawerId = ctx.surfaceRuntime.open({
@@ -311,7 +311,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               onCloseNodes: invocation.args?.onClose as ActionSchema | ActionSchema[] | undefined,
               onSubmitSuccessNodes: invocation.args?.onSubmitSuccess as ActionSchema | ActionSchema[] | undefined,
               onSubmitErrorNodes: invocation.args?.onSubmitError as ActionSchema | ActionSchema[] | undefined,
-              closeOnSubmit: (invocation.args as Record<string, unknown> | undefined)?.closeOnSubmit === true,
+              closeOnSubmit: invocation.args?.closeOnSubmit === true,
               ownerActionCtx: ctx,
             },
           });

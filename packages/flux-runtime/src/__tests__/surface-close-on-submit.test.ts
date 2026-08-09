@@ -1,8 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { RendererEnv, RendererRuntime } from '@nop-chaos/flux-core';
+import type { ApiRequestExecutor } from '../async-data/request-runtime.js';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '../index.js';
 import { pageRenderer, textRenderer, env } from './test-fixtures.js';
+import {
+  createActionRuntimeAdapter,
+  createBuiltInInvocation,
+  createCtx,
+} from './action-adapter.test-support.js';
+import { createScopeRef } from '../scope.js';
 
 /**
  * closeOnSubmit (AMIS semantic): a surface opened with `closeOnSubmit: true`
@@ -323,5 +331,59 @@ describe('surface closeOnSubmit', () => {
     const entry = surfaceRuntime.store.getState().entries[0]!;
     expect(entry.kind).toBe('drawer');
     expect(entry.closeOnSubmit).toBe(true);
+  });
+
+  it('normalizes closeOnSubmit at the adapter entry — only boolean true triggers auto-close (matrix: true / "true" / undefined)', async () => {
+    const { page, surfaceRuntime } = setupRuntime();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => env as RendererEnv,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
+      runtime: { env, compile: vi.fn() } as unknown as RendererRuntime,
+      createSurfaceScope: (kind, _ctx, patch) =>
+        createScopeRef({
+          id: `${kind}-matrix-scope`,
+          path: `$${kind}`,
+          initialData: patch,
+        }),
+    });
+    const ctx = createCtx({ page, surfaceRuntime, scope: page.scope });
+
+    const cases: Array<{ input: unknown; normalized: boolean }> = [
+      { input: true, normalized: true },
+      { input: 'true', normalized: false },
+      { input: undefined, normalized: false },
+    ];
+
+    for (const { input, normalized } of cases) {
+      const args: Record<string, unknown> = { title: 'Matrix dialog' };
+      if (input !== undefined) {
+        args.closeOnSubmit = input;
+      }
+
+      const result = await adapter.invokeBuiltInAction(
+        createBuiltInInvocation('openDialog', args),
+        ctx,
+      );
+      expect(result.ok).toBe(true);
+
+      const entry = surfaceRuntime.store.getState().entries.at(-1)!;
+      expect(entry.closeOnSubmit).toBe(normalized);
+
+      await surfaceRuntime.triggerHook!(entry, 'submit:success', {
+        result: { id: 42 },
+        hookName: 'submit:success',
+      });
+
+      const remaining = surfaceRuntime.store
+        .getState()
+        .entries.find((candidate) => candidate.id === entry.id);
+      if (normalized) {
+        expect(remaining).toBeUndefined();
+      } else {
+        expect(remaining).toBeDefined();
+      }
+    }
   });
 });

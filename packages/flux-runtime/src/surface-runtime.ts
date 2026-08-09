@@ -40,10 +40,14 @@ export function createManagedSurfaceRuntime(
     return `${scope.id}-${kind}-${surfaceCounter}`;
   }
 
+  function resolveStatusOwnerScope(ownerScope: ScopeRef | undefined, scope: ScopeRef) {
+    return ownerScope ?? scope.parent ?? scope;
+  }
+
   function publishSurfaceStatus(entry: SurfaceEntry, active: boolean) {
     const statusPath =
       typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
-    const ownerScope = entry.ownerScope ?? entry.scope.parent ?? entry.scope;
+    const ownerScope = resolveStatusOwnerScope(entry.ownerScope, entry.scope);
     publishOwnerStatus(ownerScope, statusPath, {
       id: entry.id,
       kind: entry.kind,
@@ -61,7 +65,7 @@ export function createManagedSurfaceRuntime(
 
     const statusPath =
       typeof entry.surface.statusPath === 'string' ? entry.surface.statusPath : undefined;
-    const ownerScope = entry.ownerScope ?? entry.scope.parent ?? entry.scope;
+    const ownerScope = resolveStatusOwnerScope(entry.ownerScope, entry.scope);
     publishOwnerStatus(ownerScope, statusPath, {
       id: entry.id,
       kind: entry.kind,
@@ -77,8 +81,9 @@ export function createManagedSurfaceRuntime(
     kind: SurfaceEntry['kind'];
     scope: ScopeRef;
     statusPath?: string;
+    ownerScope?: ScopeRef;
   }) {
-    const ownerScope = inputValue.scope.parent ?? inputValue.scope;
+    const ownerScope = resolveStatusOwnerScope(inputValue.ownerScope, inputValue.scope);
     publishOwnerStatus(ownerScope, inputValue.statusPath, {
       id: inputValue.surfaceId,
       kind: inputValue.kind,
@@ -265,7 +270,7 @@ export function createManagedSurfaceRuntime(
       else nodes = entry.onCloseNodes;
 
       if (!nodes || !entry.ownerActionCtx) {
-        if (hookName === 'submit:success' && entry.closeOnSubmit) {
+        if (hookName === 'submit:success' && entry.closeOnSubmit === true) {
           this.close(entry.id);
         }
         return { ok: true, data: { skipped: true } };
@@ -285,7 +290,7 @@ export function createManagedSurfaceRuntime(
       // submit failure. Single close point keeps both failure
       // characterizations uniform (contract: see
       // docs/architecture/surface-lifecycle-callbacks.md §Hook Error Semantics).
-      if (hookName === 'submit:success' && entry.closeOnSubmit) {
+      if (hookName === 'submit:success' && entry.closeOnSubmit === true) {
         this.close(entry.id);
       }
       return result;
