@@ -45,6 +45,26 @@
 - 可支持 `onClick` 作为卡片整体点击事件。
 - 行级 itemScope（per-row `item`/`index` 求值上下文）是**集合** `cards` 的能力（见 `docs/components/cards/design.md` §6/§8），不属于独立的 `card`。独立 `card` 无 per-row itemScope，其 `onClick` 在自身节点 scope 求值。
 
+### 8.1 面板刷新约定（panel-chrome 组合支撑，2026-08-09 裁定）
+
+- **裁定：不新增 `refreshAction` 约定字段**（plan `2026-08-09-bi-kpi-filter-chart-enhance-plan.md` Phase 4 Decision）。判据 = 示例 schema 体积与复用性：
+  - 组合式仅需 header region 内一个 Button + `refreshSource` action（`targetId` 寻址 data-source name，约 5 行 schema），复用既有 action 机制，零新 API 面。
+  - 字段式需要：card schema 新字段 + renderer 渲染按钮 + 无 data-source 时的禁用/隐藏语义（card 无法感知兄弟 data-source，需额外 registry 探测）——投入产出比低。
+- **组合式约定**（供 BI 面板复用，走查单测 `card-refresh-convention.test.tsx`）：
+  ```jsonc
+  {
+    "type": "card",
+    "title": "营收走势",
+    "header": [
+      { "type": "button", "label": "刷新",
+        "onClick": { "action": "refreshSource", "targetId": "sales" } }
+    ],
+    "body": [{ "type": "chart", "source": "${sales}", ... }]
+  }
+  ```
+  `refreshSource`（按 data-source name 寻址）触发 `runtime.refreshDataSource` → 目标 controller `refresh()`，与筛选联动（dashboard-filter `filter.*` 发布）正交共存——见 `docs/components/dashboard-filter/design.md` §7。
+- `refreshSource` 作者面参数是 **`targetId`（action 顶层字段）**，非 args 内嵌（`action-adapter`/`built-in-actions` 仅读 `action.targeting.targetId`）。
+
 ## 9. 数据源、表达式、导入能力接入点
 
 - 标题、图片和子区域都可由表达式或 loader 产出最终值。
@@ -61,3 +81,4 @@
 ## 12. 风险、取舍与后续阶段
 
 - 需要防止 `card` 继续吸收 list/table 的集合语义。
+- **panel-chrome 独立控件化评估（2026-08-09 记录）**：当前组合基线（card regions + header 刷新按钮 + dashboard-filter 联动）已满足 BI 面板需求，不新增独立控件；若未来组合重复 >3 次且出现无样式原语的共享语义，按 `docs/components/dashboard-filter/design.md` §7 的判据再评估。

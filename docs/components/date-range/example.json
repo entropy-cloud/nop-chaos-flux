@@ -6,5 +6,31 @@
   "valueFormat": "YYYY-MM-DD",
   "displayFormat": "YYYY-MM-DD",
   "delimiter": " to ",
-  "shortcuts": ["today", "last7days"]
+  "presets": [
+    {
+      "label": "近7天",
+      "value": {
+        "relative": "last7days"
+      }
+    },
+    {
+      "label": "近30天",
+      "value": {
+        "relative": "last30days"
+      }
+    },
+    {
+      "label": "本月",
+      "value": {
+        "relative": "thisMonth"
+      }
+    },
+    {
+      "label": "Q1",
+      "value": {
+        "start": "2026-01-01",
+        "end": "2026-03-31"
+      }
+    }
+  ]
 }

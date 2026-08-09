@@ -4,6 +4,7 @@
 > 范围：评估 flux 现有前端控件对 BI 应用的支持度，重点回答「是否需要新增 pivot-table」
 > 关联：`docs/analysis/2026-08-04-control-gap-survey.md`（Tier 2 已列 pivot-table 候选）、`docs/plans/455-table-input-table-doc-gap-and-footer-plan.md`（「固定列 + 后端 pivot」先例）
 > 结论前置：**需要 pivot-table，但不是 BI 支持的最大缺口；BI 控件族（编排层 + KPI + 筛选联动）应先于或与 pivot-table 并行补建。**
+> 状态标注（2026-08-09）：**`stat-tile` 已落地**——plan `2026-08-09-bi-kpi-filter-chart-enhance-plan.md` Phase 1 完成（renderer `flux-renderers-data/src/stat-tile-renderer.tsx` + `StatTileSchema` + 单测 + `docs/components/stat-tile/design.md` + `example.json`）；`statistics` 维持保留（分页总数语义，与 stat-tile 不重叠，裁定见 stat-tile design.md §2）。其余 BI 骨架项（dashboard-filter 约定 / date-range 相对预设 / card 刷新约定 / chart 双轴·brush·heatmap）随同一 plan 推进。
 
 ---
 
@@ -126,11 +127,11 @@
 > 编排层三件套的「组合 vs 新组件」裁定（2026-08-09 复核）：
 > 判断标准 = 功能能否全部用已有控件表达；重复 >3 次且样式语义无原语则提取新组件。
 
-| 控件               | 组合可行性      | 裁定                                  | 依据                                                                                                                                                                                                            |
-| ------------------ | --------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `panel-chrome`     | ✅ 可行         | **不新增**，用 card regions 组合      | card 已有 title + header/body/footer/actions regions + variant；刷新/展开/菜单 = header 内 Button + onClick action。顶多给 card 加「刷新动作」约定字段                                                          |
-| `dashboard-filter` | ✅ 可行         | **不新增**，建编排约定 + 1 个控件增强 | crud queryForm 已示范「表单→query summary→联动」模式；`data-source` 已订阅 `useRenderScope()`，scope 变更自动重载——全局筛选 = 一个共享 scope 的 query-form 约定 + `date-range` 相对时间预设增强（既有控件增强） |
-| `stat-tile`        | ⚠️ 可拼但重复高 | **新增轻量组件**                      | card+text+chart 能拼外形，但：每卡 ~30 行重复 schema；大数字样式语义（特大字号/涨跌色/同比环比布局）无样式原语；sparkline 需把 chart 缩到 40px。轻量封装（1 schema + 样式 + 数据绑定约定）投入产出比高          |
+| 控件               | 组合可行性      | 裁定                                     | 依据                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------ | --------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `panel-chrome`     | ✅ 可行         | **不新增**，用 card regions 组合         | card 已有 title + header/body/footer/actions regions + variant；刷新/展开/菜单 = header 内 Button + onClick action。顶多给 card 加「刷新动作」约定字段                                                                                                                                                                                                                 |
+| `dashboard-filter` | ✅ 可行         | **不新增**，建编排约定 + 1 个控件增强    | crud queryForm 已示范「表单→query summary→联动」模式；`data-source` 已订阅 `useRenderScope()`，scope 变更自动重载——全局筛选 = 一个共享 scope 的 query-form 约定 + `date-range` 相对时间预设增强（既有控件增强）                                                                                                                                                        |
+| `stat-tile`        | ⚠️ 可拼但重复高 | **新增轻量组件（2026-08-09 已落地 ✅）** | card+text+chart 能拼外形，但：每卡 ~30 行重复 schema；大数字样式语义（特大字号/涨跌色/同比环比布局）无样式原语；sparkline 需把 chart 缩到 40px。轻量封装（1 schema + 样式 + 数据绑定约定）投入产出比高——已按 plan `2026-08-09-bi-kpi-filter-chart-enhance-plan.md` Phase 1 落地（`stat-tile` renderer + 自绘 SVG sparkline，见 `docs/components/stat-tile/design.md`） |
 
 | 阶段               | 内容                                                                                                                                                                                                     | 工作量级                                                 |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |

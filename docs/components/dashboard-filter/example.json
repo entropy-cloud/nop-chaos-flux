@@ -1,0 +1,85 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "form",
+      "id": "dashboard-filter",
+      "title": "销售看板筛选",
+      "valuesPath": "filter",
+      "data": {
+        "region": "华东",
+        "period": "2026-01-01,2026-03-31"
+      },
+      "mode": "inline",
+      "body": [
+        {
+          "type": "select",
+          "name": "region",
+          "label": "区域",
+          "options": [
+            { "label": "华东", "value": "华东" },
+            { "label": "华北", "value": "华北" },
+            { "label": "华南", "value": "华南" }
+          ]
+        },
+        {
+          "type": "date-range",
+          "name": "period",
+          "label": "周期",
+          "valueFormat": "YYYY-MM-DD",
+          "presets": [
+            { "label": "近7天", "value": { "relative": "last7days" } },
+            { "label": "近30天", "value": { "relative": "last30days" } },
+            { "label": "本月", "value": { "relative": "thisMonth" } }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "data-source",
+      "action": "ajax",
+      "args": {
+        "url": "/api/sales",
+        "params": {
+          "region": "${filter?.region}",
+          "period": "${filter?.period}"
+        }
+      },
+      "name": "sales",
+      "initialData": []
+    },
+    {
+      "type": "card",
+      "title": "营收走势",
+      "header": [
+        {
+          "type": "button",
+          "label": "刷新",
+          "onClick": { "action": "refreshSource", "targetId": "sales" }
+        }
+      ],
+      "body": [
+        {
+          "type": "chart",
+          "chartType": "bar",
+          "height": 260,
+          "source": "${sales}",
+          "xAxis": { "dataKey": "month", "label": "月份" },
+          "series": [{ "name": "营收", "dataRegionKey": "revenue" }]
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "销售明细",
+      "source": "${sales}",
+      "rowKey": "id",
+      "columns": [
+        { "name": "region", "label": "区域" },
+        { "name": "month", "label": "月份" },
+        { "name": "revenue", "label": "营收" },
+        { "name": "orders", "label": "订单数" }
+      ]
+    }
+  ]
+}

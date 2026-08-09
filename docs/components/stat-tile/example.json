@@ -1,0 +1,17 @@
+{
+  "type": "stat-tile",
+  "value": "${kpi.revenue}",
+  "label": "本月营收",
+  "prefix": "¥",
+  "suffix": "万",
+  "formatter": {
+    "thousands": true,
+    "decimals": 2
+  },
+  "delta": {
+    "value": 12.5,
+    "label": "同比 +12.5%",
+    "direction": "up"
+  },
+  "sparkline": "${kpi.revenueTrend}"
+}

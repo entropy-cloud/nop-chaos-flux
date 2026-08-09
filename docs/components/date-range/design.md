@@ -18,13 +18,29 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `name`、`label`、`rangeKind`、`valueFormat`、`displayFormat`、`delimiter`、`minDate`、`maxDate`、`utc`、`shortcuts`。
+- 建议正式字段为 `name`、`label`、`rangeKind`、`valueFormat`、`displayFormat`、`delimiter`、`minDate`、`maxDate`、`utc`、`shortcuts`、`presets`。
 - `rangeKind` 建议取值 `date`、`datetime`、`time`。
+
+### 4.1 相对时间预设（`presets`，BI 增强，2026-08-09）
+
+- `presets?: Array<{ label: string; value: { start: string; end: string } | { relative: 'today' | 'yesterday' | 'last7days' | 'last30days' | 'thisMonth' | 'lastMonth' } }>`。
+- **相对档位运行期解析为绝对区间**写入字段值；绝对区间（`{start, end}`）原样透传。两条路径都走 `commitRange` 同款的存储格式（`valueFormat`）与归一化（`normalizeRange`），**与既有 date-range value 协议（delimited 绝对字符串）完全兼容**。
+- 档位语义（wall-clock local，`resolveRelativePreset`）：
+  - `today`：今日 00:00:00 → 今日 23:59:59.999
+  - `yesterday`：昨日 00:00:00 → 昨日 23:59:59.999
+  - `last7days`：今日-6 天 00:00:00 → 今日 23:59:59.999（含今日的 7 天窗口）
+  - `last30days`：今日-29 天 00:00:00 → 今日 23:59:59.999
+  - `thisMonth`：本月 1 日 00:00:00 → 今日 23:59:59.999
+  - `lastMonth`：上月 1 日 00:00:00 → 上月最后一日 23:59:59.999
+- 边界（跨月/跨年）由 `Date` 滚动天然正确；`now` 可注入保证单测确定性（`resolveRelativePreset(key, now)`）。
+- **Failure Path date-range-preset-invalid**：非法预设条目（无 label、value 既非绝对区间也非 relative 档位、未知档位键）被 `sanitizePresets` 过滤/`resolveRelativePreset` 回退 undefined——**回退无预设，不抛错**。
+- 渲染：预设 chip 行 `data-testid="range-presets"`（与 `shortcuts` 独立并存；shortcuts 是绝对区间快捷项，presets 是含相对档位的 BI 预设）。
+- 实现：纯函数 `resolveRelativePreset`/`resolvePresetEntry`/`sanitizePresets` 落 `date-utils.ts`（可独立单测），renderer 只做 UI + writeback。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `name`、`rangeKind`、`valueFormat`、`displayFormat`、`delimiter`、`minDate`、`maxDate`、`utc`、`shortcuts`: `value`
+- `name`、`rangeKind`、`valueFormat`、`displayFormat`、`delimiter`、`minDate`、`maxDate`、`utc`、`shortcuts`、`presets`: `value`
 - `onChange`: `event`
 
 ## 6. regions 与 slot 约定
