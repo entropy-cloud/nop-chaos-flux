@@ -87,9 +87,14 @@ describe('useMessage', () => {
     act(() => {
       turn = result.current.sendMessage('hi');
     });
-    // Let the generator emit the first chunk.
-    await Promise.resolve();
-    await Promise.resolve();
+    // Wait until the first chunk has actually been consumed (committed) —
+    // polling beats a fixed microtask count. Only content streamed BEFORE the
+    // abort is retained (K2: post-abort yields are suppressed).
+    while (
+      !String(result.current.engine?.getState().messages[1]?.content).includes('partial')
+    ) {
+      await Promise.resolve();
+    }
     await act(async () => {
       await result.current.abortRequest();
     });
@@ -98,7 +103,9 @@ describe('useMessage', () => {
       await turn;
     });
     expect(result.current.requestState).toBe('aborted');
-    expect((result.current.messages[1].content as string).startsWith('partial')).toBe(true);
+    // Content streamed before abort is retained; the post-abort '-tail' chunk
+    // is suppressed by the K2 per-iteration abort check.
+    expect(result.current.messages[1].content).toBe('partial');
   });
 
   // F2.2: a self-built engine must abort its in-flight stream on unmount so a

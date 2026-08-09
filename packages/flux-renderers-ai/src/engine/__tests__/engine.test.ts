@@ -86,9 +86,12 @@ describe('createMessageEngine — state machine', () => {
     };
     const engine = createMessageEngine({ connector });
     const turn = engine.sendMessage('hi');
-    // Let the generator emit the first chunk.
-    await Promise.resolve();
-    await Promise.resolve();
+    // Wait until the first chunk has actually been CONSUMED (committed) —
+    // polling beats a fixed microtask count. Only content streamed BEFORE the
+    // abort is retained (K2: post-abort yields are suppressed).
+    while (!String(engine.getState().messages[1]?.content).includes('partial')) {
+      await Promise.resolve();
+    }
     await engine.abort();
     resolveFirst!();
     await turn;
@@ -96,7 +99,9 @@ describe('createMessageEngine — state machine', () => {
     expect(final.requestState).toBe('aborted');
     const assistant = final.messages[1];
     expect(typeof assistant.content).toBe('string');
-    expect((assistant.content as string).startsWith('partial')).toBe(true);
+    // Content streamed before abort is retained; the post-abort '-tail' chunk
+    // is suppressed by the K2 per-iteration abort check.
+    expect(assistant.content).toBe('partial');
   });
 
   it('empty send is a no-op (no request, no message added)', async () => {

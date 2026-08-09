@@ -8,7 +8,7 @@ import type {
   ChatMessage,
   InternalMessageState,
 } from '../types.js';
-import { okChunks, slowConnector } from '../../adapters/__tests__/use-conversation-test-helpers.js';
+import { okChunks, slowConnector, wait } from '../../adapters/__tests__/use-conversation-test-helpers.js';
 
 class InspectableAdapter extends BaseMessageStateAdapter {
   peek(): InternalMessageState {
@@ -214,6 +214,95 @@ describe('Invariant ③ — catch/finally controller identity guard', () => {
       await turnB;
   });
 
+  it('completion-path identity guard: stale turn completion does not clobber a new turn (abort during onTurnStart)', async () => {
+      // probe-A scenario (K1): abort() is called while turn A is suspended in
+      // `plugin.onTurnStart` (try-outer) → sync reset → sendMessage starts
+      // turn B (new controller) → A resumes and its completion mutate must
+      // NOT write 'completed' over B's in-flight state.
+      let resolveTurnStart!: () => void;
+      const turnStartGate = new Promise<void>((r) => { resolveTurnStart = r; });
+      let resolveStreamB!: () => void;
+      const streamBGate = new Promise<void>((r) => { resolveStreamB = r; });
+      let streamCallCount = 0;
+      const stream = vi.fn(async (_req: AiConnectorRequest) => {
+        streamCallCount += 1;
+        async function* gen(): AsyncGenerator<AiConnectorChunk> {
+          yield { delta: { content: 'partial' } };
+          if (streamCallCount === 2) await streamBGate;
+          yield { finishReason: 'stop' };
+        }
+        void _req;
+        return gen();
+      });
+      const connector: AiConnector = { stream };
+      const onTurnStart = vi.fn(async () => { await turnStartGate; });
+      const { engine, adapter } = makeEngine(connector);
+      engine.registerPlugin({ name: 'test-on-turn-start', onTurnStart });
+
+      // Turn A: enters processing, then hangs in plugin.onTurnStart (before the try).
+      const turnA = engine.sendMessage('turn-A');
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(adapter.peek().isProcessing).toBe(true);
+
+      // Abort while A is suspended in onTurnStart → synchronous reset.
+      await engine.abort();
+      expect(adapter.peek().requestState).toBe('aborted');
+      expect(adapter.peek().isProcessing).toBe(false);
+
+      // Turn B starts a new turn with its own controller (also hangs in onTurnStart).
+      const turnB = engine.sendMessage('turn-B');
+      await Promise.resolve();
+      await Promise.resolve();
+      const ctrlB = adapter.peek().abortController;
+      expect(ctrlB).not.toBeNull();
+      expect(adapter.peek().isProcessing).toBe(true);
+
+      // Release onTurnStart for both turns.
+      resolveTurnStart();
+      await turnA;
+      await Promise.resolve();
+      await Promise.resolve();
+
+      // CRITICAL: A's completion mutate must NOT have clobbered B's state —
+      // B is still mid-stream (suspended at streamBGate).
+      expect(adapter.peek().requestState).toBe('processing');
+      expect(adapter.peek().isProcessing).toBe(true);
+      expect(adapter.peek().abortController).toBe(ctrlB);
+
+      // Cleanup turn B.
+      resolveStreamB();
+      await turnB;
+  });
+
+  it('completion-path guard preserves aborted terminal state when no new send follows', async () => {
+      // Guard-preservation assertion (K1): abort during onTurnStart with NO
+      // subsequent send must leave the terminal state 'aborted' — the
+      // completion mutate's existing `requestState === 'aborted'` early return
+      // must be preserved by the additive identity guard.
+      let resolveTurnStart!: () => void;
+      const turnStartGate = new Promise<void>((r) => { resolveTurnStart = r; });
+      const { engine, adapter } = makeEngine(gatedConnector(new Promise<void>(() => {})));
+      engine.registerPlugin({ name: 'test-turn-start-gate', onTurnStart: async () => { await turnStartGate; } });
+
+      const turn = engine.sendMessage('turn');
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(adapter.peek().isProcessing).toBe(true);
+
+      await engine.abort();
+      expect(adapter.peek().requestState).toBe('aborted');
+
+      resolveTurnStart();
+      await turn;
+      await Promise.resolve();
+
+      // The stale completion must not flip 'aborted' back to 'completed'.
+      expect(adapter.peek().requestState).toBe('aborted');
+      expect(adapter.peek().isProcessing).toBe(false);
+      expect(adapter.peek().abortController).toBeNull();
+  });
+
   it('runOnce catch identity guard: aborted stream does not clobber a subsequent turn', async () => {
       let resolveFirst!: () => void;
       const firstGate = new Promise<void>((r) => { resolveFirst = r; });
@@ -285,6 +374,50 @@ describe('Invariant ⑤ — abort path cleanup', () => {
 
       resolveGate();
       await first;
+  });
+
+  it('abort forces in-flight generator termination: late chunks after abort are not applied', async () => {
+      // probe for K2: a signal-IGNORING connector that keeps yielding after
+      // abort but settles after a finite number of yields (so the test fails
+      // fast on vitest timeout instead of hanging forever).
+      let resolveGate!: () => void;
+      const gate = new Promise<void>((r) => { resolveGate = r; });
+      const stream = vi.fn(async (_req: AiConnectorRequest) => {
+        async function* gen(): AsyncGenerator<AiConnectorChunk> {
+          yield { delta: { content: 'a' } };
+          await gate;
+          yield { delta: { content: 'b' } };
+          yield { finishReason: 'stop' };
+        }
+        void _req;
+        return gen();
+      });
+      const connector: AiConnector = { stream };
+      const { engine, adapter } = makeEngine(connector);
+
+      const turn = engine.sendMessage('turn');
+      await Promise.resolve();
+      await Promise.resolve();
+      await wait(5);
+      expect(adapter.peek().isProcessing).toBe(true);
+      // 'a' applied; the generator is now suspended at the gate.
+      expect(adapter.peek().messages.at(-1)?.content).toBe('a');
+
+      await engine.abort();
+      // Release the gate — the generator resumes and (signal-ignoring) keeps
+      // yielding. The abort must force termination + suppress late chunks.
+      resolveGate();
+      await turn;
+      await Promise.resolve();
+
+      // (a) the in-flight round settles within finite iterations.
+      expect(adapter.peek().requestState).toBe('aborted');
+      expect(adapter.peek().isProcessing).toBe(false);
+      expect(adapter.peek().abortController).toBeNull();
+
+      // (b) chunks produced AFTER abort are not applied/committed to the message.
+      const lastMessage = adapter.peek().messages.at(-1);
+      expect(lastMessage?.content).toBe('a');
   });
 });
 

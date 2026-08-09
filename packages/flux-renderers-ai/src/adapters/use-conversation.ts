@@ -144,6 +144,15 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   // so subscriptions are torn down on evict / delete / unmount.
   const autoSaveUnsubsRef = useRef(new Map<string, () => void>());
 
+  // K3 (ai-invariant-loop): per-conversation in-flight save chain. Every
+  // auto-save is chained onto the conversation's latest pending promise so a
+  // save that started before a delete/clearAll can never land AFTER the
+  // storage deletion (ghost re-landing). deleteConversation awaits the chain
+  // (async signature), clearAll chains the storage clear behind it (sync
+  // signature `(): void` is preserved — the drain→clear order is guaranteed
+  // without awaiting).
+  const pendingSavesRef = useRef(new Map<string, Promise<unknown>>());
+
   function buildEngine(): MessageEngine {
     const plugins = (createEngineOptions?.plugins ?? []) as MessageEnginePlugin[];
     return createMessageEngine({
@@ -185,11 +194,19 @@ export function useConversation(options: UseConversationOptions): UseConversatio
           // getMessages() returns a per-message shallow-isolated copy (O-2),
           // so the async storage implementation cannot read a cross-turn
           // mixed snapshot even if it awaits before serializing.
-          Promise.resolve(storage.saveMessages(conversationId, engine.getMessages())).catch(
-            (error: unknown) => {
-              reportStorageError({ phase: 'saveMessages', conversationId, error });
-            },
-          );
+          const snapshot = engine.getMessages();
+          // K3: serialize this save behind the conversation's previous
+          // pending save (a rejection must not skip the next save — settle
+          // first, then write). The chain entry is what deleteConversation
+          // drains and clearAll chains its storage clear behind.
+          const prevPending = pendingSavesRef.current.get(conversationId);
+          const pending = Promise.resolve(prevPending)
+            .catch(() => {})
+            .then(() => storage.saveMessages(conversationId, snapshot));
+          pending.catch((error: unknown) => {
+            reportStorageError({ phase: 'saveMessages', conversationId, error });
+          });
+          pendingSavesRef.current.set(conversationId, pending);
         } catch (error) {
           reportStorageError({ phase: 'saveMessages', conversationId, error });
         }
@@ -270,6 +287,11 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       metadata: params?.metadata,
     };
     setConversations((prev) => [info, ...prev]);
+    // K4 (ai-invariant-loop): keep the list mirror in sync SYNCHRONOUSLY — a
+    // same-tick reader (renameConversation / deleteConversation) must see the
+    // new conversation before the mirror effect flushes (parity with the
+    // activeIdRef synchronous update below).
+    conversationsRef.current = [info, ...conversationsRef.current];
     setActiveId(info.id);
     // P1-a: keep the active-id mirror in sync synchronously so a post-await
     // reader (deleteConversation / switchConversation eviction) sees this
@@ -364,6 +386,16 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       activeIdRef.current = nextId;
       setActiveEngine(next ? (engineCache.get(next.id) ?? null) : null);
     }
+    // K3: drain the conversation's in-flight saves BEFORE the storage delete
+    // — a save that started before deleteConversation must settle first, so
+    // it can never re-land its messages after the record is gone (ghost).
+    // The chain entry is dropped after draining (its save is complete or
+    // failed and already routed through reportStorageError).
+    const pendingSave = pendingSavesRef.current.get(id);
+    if (pendingSave) {
+      await Promise.allSettled([pendingSave]);
+      pendingSavesRef.current.delete(id);
+    }
     try {
       await storage?.deleteConversation?.(id);
     } catch (error) {
@@ -373,53 +405,73 @@ export function useConversation(options: UseConversationOptions): UseConversatio
 
   function renameConversation(id: string, title: string): void {
     const now = Date.now();
-    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title, updatedAt: now } : c)));
-    const updated = conversations.find((c) => c.id === id);
-    if (updated) {
-      // P1-2: route saveConversation failures through reportStorageError
-      // (parity with create + the saveMessages / load* call sites). Was a bare
-      // `void storage?.saveConversation?.(...)` that silently swallowed
-      // rejections — a rename-time persistence failure was unobservable.
-      const next = { ...updated, title, updatedAt: now };
-      Promise.resolve(storage?.saveConversation?.(next)).catch((error: unknown) => {
-        reportStorageError({ phase: 'saveConversation', conversationId: id, error });
-      });
-    }
+    // K4 (ai-invariant-loop): read the list from the ref mirror, NOT the
+    // render closure — a same-tick createConversation+renameConversation
+    // would otherwise read a stale snapshot (the create's setState has not
+    // re-rendered yet) and silently skip the rename's persistence.
+    const updated = conversationsRef.current.find((c) => c.id === id);
+    if (!updated) return;
+    const next = { ...updated, title, updatedAt: now };
+    setConversations((prev) => prev.map((c) => (c.id === id ? next : c)));
+    // K4: keep the list mirror in sync synchronously (same-tick readers).
+    conversationsRef.current = conversationsRef.current.map((c) => (c.id === id ? next : c));
+    // P1-2: route saveConversation failures through reportStorageError
+    // (parity with create + the saveMessages / load* call sites). Was a bare
+    // `void storage?.saveConversation?.(...)` that silently swallowed
+    // rejections — a rename-time persistence failure was unobservable.
+    Promise.resolve(storage?.saveConversation?.(next)).catch((error: unknown) => {
+      reportStorageError({ phase: 'saveConversation', conversationId: id, error });
+    });
   }
 
   function clearAll(): void {
     // Capture ids before mutating the cache so the storage fan-out iterates a
     // stable snapshot (the cache is cleared below).
     const ids = [...engineCache.keys()];
-    for (const [, engine] of engineCache.entries()) {
-      if (engine.getState().isProcessing) {
+    // K3: detach (unsubscribe) BEFORE aborting — an abort's requestState
+    // transition fires the auto-save callback, and an abort-triggered save of
+    // the aborted snapshot must not be able to start after the storage clear.
+    // Previously the abort loop ran first, letting the aborted snapshot
+    // re-land after the clear (ghost).
+    for (const id of ids) detachEngine(id);
+    for (const id of ids) {
+      const engine = engineCache.get(id);
+      if (engine && engine.getState().isProcessing) {
         void engine.abort();
       }
     }
-    for (const id of ids) detachEngine(id);
     engineCache.clear();
     setConversations([]);
     setActiveId(null);
     activeIdRef.current = null;
     setActiveEngine(null);
+    // K3: drain every conversation's in-flight save chain, then clear
+    // storage. clearAll keeps its sync signature `(): void` (public API
+    // contract) — the storage clear is chained behind the drain so the
+    // drain→clear order is guaranteed without awaiting.
+    const drain = Promise.allSettled(
+      ids.map((id) => pendingSavesRef.current.get(id) ?? Promise.resolve()),
+    );
+    pendingSavesRef.current.clear();
     // P1-b (open-audit): keep storage consistent so a remount does not
     // rehydrate cleared items (FP-2 ghost rehydration). Prefer an atomic
     // `storage.clearAll` when the host provides one; otherwise fall back to a
     // per-id `deleteConversation` fan-out (mirroring deleteConversation's
     // storage path). Per-id failures route through reportStorageError so one
-    // rejection doesn't hide the others (FP-3). Fire-and-forget, like the
-    // existing `void engine.abort()` calls.
-    if (storage?.clearAll) {
-      Promise.resolve(storage.clearAll()).catch((error: unknown) => {
-        reportStorageError({ phase: 'deleteConversation', error });
-      });
-    } else {
-      for (const id of ids) {
-        Promise.resolve(storage?.deleteConversation?.(id)).catch((error: unknown) => {
-          reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
+    // rejection doesn't hide the others (FP-3).
+    void drain.then(() => {
+      if (storage?.clearAll) {
+        Promise.resolve(storage.clearAll()).catch((error: unknown) => {
+          reportStorageError({ phase: 'deleteConversation', error });
         });
+      } else {
+        for (const id of ids) {
+          Promise.resolve(storage?.deleteConversation?.(id)).catch((error: unknown) => {
+            reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
+          });
+        }
       }
-    }
+    });
   }
 
   const controller: AiConversationControllerBridge = {

@@ -14,6 +14,7 @@ import {
 import { executeToolCalls } from './tool-execution.js';
 import type {
   AiConnector,
+  AiConnectorChunk,
   AiConnectorRequest,
   AiToolSchema,
   ChatMessage,
@@ -98,6 +99,12 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   // Pending branch-id stamp for the next assistant message (consumed once by
   // `runOnce`). Undefined for normal turns (no branch).
   let pendingBranchId: string | undefined;
+  // K2 (ai-invariant-loop): handle on the in-flight stream generator so
+  // `abort()` can force-terminate it best-effort (generators suspended at a
+  // `yield` are preemptible via `return()`; see engine.md §Invariants Failure
+  // Path for the never-settle connector contract ruling). Nulled at every
+  // runOnce exit (a consumed generator's `return()` is a no-op).
+  let activeGenerator: AsyncGenerator<AiConnectorChunk> | undefined;
 
   function getState(): MessageEngineState {
     return adapter.getState();
@@ -317,6 +324,11 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       // Unless aborted, mark the turn completed.
       adapter.mutate('requestState', (draft) => {
         if (draft.requestState === 'aborted') return;
+        // K1 (ai-invariant-loop): controller-identity guard parity with the
+        // catch/finally paths — a stale turn whose abort raced a new
+        // `sendMessage` (abort during `plugin.onTurnStart`, try-outer) must
+        // not write 'completed' over the new turn's in-flight state.
+        if (draft.abortController !== abortController) return;
         draft.requestState = 'completed';
         draft.isProcessing = false;
         draft.processingState = undefined;
@@ -410,22 +422,35 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
 
     try {
       const generator = await connector.stream(ctx.request);
+      // K2: register the in-flight generator so abort() can force-terminate
+      // it; cleared on every exit from the consume loop below.
+      activeGenerator = generator;
       let firstChunkReceived = false;
       let lastFinishReason: string | undefined;
       let lastMetadata: ChatMessageMetadata | undefined;
-
-      for await (const chunk of generator) {
-        if (!firstChunkReceived) {
-          firstChunkReceived = true;
-          assistant.loading = false;
+      try {
+        for await (const chunk of generator) {
+          // K2: per-iteration abort check — a signal-ignoring connector that
+          // keeps yielding after abort must not have its late chunks applied
+          // (break also triggers AsyncIteratorClose → cooperative generators
+          // settle via their `.return()`).
+          if (abortController.signal.aborted) break;
+          if (!firstChunkReceived) {
+            firstChunkReceived = true;
+            assistant.loading = false;
+          }
+          applyChunk(assistant, chunk);
+          if (chunk.finishReason) lastFinishReason = chunk.finishReason;
+          if (chunk.metadata) lastMetadata = chunk.metadata;
+          for (const plugin of plugins) {
+            plugin.onCompletionChunk?.(ctx, chunk, assistant);
+          }
+          commitAssistant();
         }
-        applyChunk(assistant, chunk);
-        if (chunk.finishReason) lastFinishReason = chunk.finishReason;
-        if (chunk.metadata) lastMetadata = chunk.metadata;
-        for (const plugin of plugins) {
-          plugin.onCompletionChunk?.(ctx, chunk, assistant);
-        }
-        commitAssistant();
+      } finally {
+        // The generator is consumed (or being closed); drop the handle so a
+        // subsequent abort() has nothing stale to terminate.
+        if (activeGenerator === generator) activeGenerator = undefined;
       }
 
       if (!firstChunkReceived) {
@@ -510,6 +535,17 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     const controller = adapter.getAbortController();
     if (!controller) return;
     controller.abort();
+    // K2: best-effort forced termination of the in-flight generator. A
+    // generator suspended at a `yield` settles immediately on `.return()`;
+    // a generator stuck inside its own internal await cannot be preempted
+    // (connector contract violation — see engine.md §Invariants). Swallow the
+    // return-completion rejection: the stream's own catch path reports it.
+    const generator = activeGenerator;
+    if (generator) {
+      // The value is ignored by the for-await consumer (done=true); an empty
+      // chunk satisfies the TS return() signature.
+      Promise.resolve(generator.return({})).catch(() => {});
+    }
     // F1.6: set requestState synchronously so callers observe `aborted`
     // immediately (the stream's catch block also sets it after it unblocks).
     adapter.mutate('requestState', (draft) => {

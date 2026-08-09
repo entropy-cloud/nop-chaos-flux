@@ -49,6 +49,12 @@ function runTurn() {
   finally { adapter.mutate('full', (draft) => {
     if (draft.abortController === abortController) draft.abortController = null;
   }); }
+  adapter.mutate('requestState', (draft) => {
+    if (draft.requestState === 'aborted') return;
+    if (draft.abortController !== abortController) return;
+    draft.requestState = 'completed';
+    draft.isProcessing = false;
+  });
 }
 `,
       'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
@@ -56,6 +62,17 @@ async function deleteConversation(id) {
   await removed.abort();
   if (activeIdRef.current === id) { setActiveId(null); }
   void storage?.deleteConversation(id).catch((e) => reportStorageError({ phase: 'deleteConversation', error: e }));
+}
+function switchConversation(id) {
+  const exists = conversations.some((c) => c.id === id); // first statement, pre-state-change → exempt
+  setActiveId(id);
+  if (!exists) return;
+}
+function renameConversation(id, title) {
+  const updated = conversationsRef.current.find((c) => c.id === id); // ref mirror, K4-clean
+  setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
+  conversationsRef.current = conversationsRef.current.map((c) => (c.id === id ? { ...c, title } : c));
+  if (!updated) return;
 }
 `,
     });
@@ -97,6 +114,25 @@ function bad() {
     expect(result.stderr).toContain('③');
   });
 
+  it('violating fixture ③ (K1): completion mutate writes requestState=completed without identity guard → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/engine/create-engine.ts': `
+function bad() {
+  adapter.mutate('requestState', (draft) => {
+    if (draft.requestState === 'aborted') return;
+    draft.requestState = 'completed';
+    draft.isProcessing = false;
+  });
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('③');
+    expect(result.stderr).toContain('completed');
+  });
+
   it('violating fixture ②: post-await bare activeId → exit 1', () => {
     const root = makeFixture({
       'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
@@ -110,5 +146,22 @@ async function bad() {
     const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain('②');
+  });
+
+  it('violating fixture ② (K4): rename reads bare conversations after setConversations → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+function renameConversation(id, title) {
+  setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
+  const updated = conversations.find((c) => c.id === id); // post-state-change bare read → must be conversationsRef.current
+  if (updated) { void storage?.saveConversation(updated).catch(() => {}); }
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('②');
+    expect(result.stderr).toContain('conversations');
   });
 });

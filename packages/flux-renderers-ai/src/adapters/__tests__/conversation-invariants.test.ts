@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useConversation } from '../use-conversation.js';
-import type { AiConversationInfo } from '../../engine/types.js';
+import type { AiConversationInfo, ChatMessage } from '../../engine/types.js';
 import type { ConversationStorageStrategy } from '../../storage/types.js';
 import { okChunks, slowConnector, wait } from './use-conversation-test-helpers.js';
 
@@ -277,6 +277,189 @@ describe('Invariant ⑤ — abort path cleanup (adapter side)', () => {
     await act(async () => { await wait(20); });
 
     expect(xEngine.getState().isProcessing).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Invariant ④ (K3 extension) — save-after-delete / clearAll timing guard
+// ---------------------------------------------------------------------------
+
+describe('Invariant ④ — save-after-delete/clearAll timing guard (K3)', () => {
+  /**
+   * A storage whose saveMessages write LANDS only after a gate resolves
+   * (simulated async I/O) and whose deleteConversation actually removes the
+   * record — so a save that started before a delete but lands after it would
+   * re-create a ghost entry for the deleted conversation.
+   */
+  function gatedStorage() {
+    const calls = { saveMessages: 0, deleteConversation: 0 };
+    const savedMessages: Record<string, ChatMessage[]> = {};
+    let releaseSave!: () => void;
+    const saveGate = new Promise<void>((r) => {
+      releaseSave = r;
+    });
+    const strategy: ConversationStorageStrategy = {
+      async loadConversations() {
+        return [];
+      },
+      async loadMessages() {
+        return [];
+      },
+      async saveConversation() {},
+      async saveMessages(id: string, messages: ChatMessage[]) {
+        calls.saveMessages++;
+        await saveGate;
+        savedMessages[id] = messages;
+      },
+      async deleteConversation(id: string) {
+        calls.deleteConversation++;
+        delete savedMessages[id];
+      },
+    };
+    return { strategy, calls, savedMessages, releaseSave };
+  }
+
+  it('delete during an in-flight save: the late save never re-lands as a ghost', async () => {
+    const { strategy, calls, savedMessages, releaseSave } = gatedStorage();
+    const { result } = renderHook(() =>
+      useConversation({
+        connector: slowConnector(okChunks, 1),
+        storage: strategy,
+        autoSaveMessages: true,
+      }),
+    );
+    await act(async () => {
+      await wait(5);
+    });
+
+    let convId = '';
+    act(() => {
+      convId = result.current.createConversation({ title: 'X' }).id;
+    });
+    // Complete a turn → auto-save starts; its write is suspended at the gate
+    // (started BEFORE the delete, lands AFTER it without the drain).
+    await act(async () => {
+      await result.current.activeEngine!.sendMessage('hi');
+    });
+    await act(async () => {
+      await wait(5);
+    });
+    expect(calls.saveMessages).toBe(1);
+
+    // Delete without awaiting — with the drain fix deleteConversation waits
+    // for the in-flight save; without it, the storage delete runs immediately.
+    const deletePromise = result.current.deleteConversation(convId);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    // Release the save I/O: the write would land after the delete.
+    releaseSave();
+    await act(async () => {
+      await deletePromise;
+    });
+    await act(async () => {
+      await wait(5);
+    });
+
+    // The deleted conversation must have NO ghost messages in storage.
+    expect(savedMessages[convId]).toBeUndefined();
+    expect(calls.deleteConversation).toBe(1);
+  });
+
+  it('clearAll while a turn is processing: the aborted snapshot never lands, storage ends empty', async () => {
+    const { strategy, calls, savedMessages, releaseSave } = gatedStorage();
+    const longChunks = [
+      { delta: { content: 'a' } },
+      { delta: { content: 'b' } },
+      { delta: { content: 'c' } },
+      { finishReason: 'stop' as const },
+    ];
+    const { result } = renderHook(() =>
+      useConversation({
+        connector: slowConnector(longChunks, 30),
+        storage: strategy,
+        autoSaveMessages: true,
+      }),
+    );
+    await act(async () => {
+      await wait(5);
+    });
+
+    act(() => {
+      result.current.createConversation({ title: 'X' });
+    });
+    act(() => {
+      void result.current.activeEngine!.sendMessage('go');
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.activeEngine!.getState().isProcessing).toBe(true);
+
+    act(() => {
+      result.current.clearAll();
+    });
+    // Release the save I/O late: any save that started during clearAll would
+    // land after the storage clear (aborted-snapshot ghost re-landing).
+    setTimeout(() => releaseSave(), 10);
+    await act(async () => {
+      await wait(40);
+    });
+
+    // Storage final state: empty — no aborted snapshot was re-landed.
+    expect(Object.keys(savedMessages)).toHaveLength(0);
+    expect(calls.deleteConversation).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Invariant ② (K4 extension) — sync closure reads in adapter mutating methods
+// ---------------------------------------------------------------------------
+
+describe('Invariant ② — sync closure reads in mutating methods (K4)', () => {
+  it('same-tick create+rename persists the RENAMED title (no stale closure read)', async () => {
+    // probe-K4 scenario: `renameConversation` reads the render closure
+    // `conversations`, which a same-tick `createConversation` has NOT yet
+    // re-rendered — the renamed title must still reach storage.
+    const saved: Record<string, { title?: string; updatedAt: number }> = {};
+    const strategy: ConversationStorageStrategy = {
+      async loadConversations() {
+        return [];
+      },
+      async loadMessages() {
+        return [];
+      },
+      async saveConversation(info) {
+        saved[info.id] = { title: info.title, updatedAt: info.updatedAt };
+      },
+      async saveMessages() {},
+      async deleteConversation() {},
+    };
+    const { result } = renderHook(() =>
+      useConversation({
+        connector: slowConnector(okChunks),
+        storage: strategy,
+        autoSaveMessages: true,
+      }),
+    );
+    await act(async () => {
+      await wait(5);
+    });
+
+    let convId = '';
+    act(() => {
+      const conv = result.current.createConversation({ title: 'T1' });
+      convId = conv.id;
+      // Same tick: rename BEFORE React flushes the new list to the closure.
+      result.current.renameConversation(conv.id, 'T2');
+    });
+    await act(async () => {
+      await wait(10);
+    });
+
+    // The rename's saveConversation must carry the RENAMED title — the
+    // rename must read the ref mirror, not the stale render snapshot.
+    expect(saved[convId]?.title).toBe('T2');
   });
 });
 

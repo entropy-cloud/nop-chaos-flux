@@ -125,6 +125,33 @@ function scanControllerIdentityGuard(code, relPath) {
 }
 
 /**
+ * Invariant ③ (K1 extension) — success-path completion mutate identity guard.
+ *
+ * The turn-completion mutate (`draft.requestState = 'completed'`) must be
+ * gated by `draft.abortController !== abortController` so a stale turn whose
+ * abort raced a new sendMessage (abort during plugin.onTurnStart) cannot
+ * clobber the new turn's in-flight state. Scans the whole file (the recipe
+ * lives in the try path, not a catch/finally block).
+ */
+function scanCompletionIdentityGuard(code, relPath) {
+  const violations = [];
+  const lines = code.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    if (!/draft\.requestState\s*=\s*'completed'/.test(lines[i])) continue;
+    const context = lines.slice(Math.max(0, i - 3), i + 4).join('\n');
+    if (!/draft\.abortController\s*!==\s*abortController/.test(context)) {
+      violations.push({
+        file: relPath,
+        line: i + 1,
+        invariant: '③',
+        detail: `completion-path mutate writes requestState='completed' without controller identity guard (invariant ③)`,
+      });
+    }
+  }
+  return violations;
+}
+
+/**
  * Invariant ② — post-await bare activeId/conversations reads (not ref).
  *
  * In use-conversation.ts, after `await` statements, flag bare `activeId` or
@@ -185,6 +212,80 @@ function scanPostAwaitClosureReads(code, relPath) {
   return violations;
 }
 
+/**
+ * Invariant ② (K4 extension) — adapter mutating methods must not read bare
+ * `conversations`/`activeId` closure state after their first state-change
+ * statement (`setConversations`/`setActiveId`/`await`).
+ *
+ * Discrimination criterion (I4 plan, M2 adjudication): only flag bare reads
+ * AFTER the first state-change statement of a mutating method body
+ * (createConversation / switchConversation / deleteConversation /
+ * renameConversation / clearAll). A read that is the method's FIRST statement
+ * (before any state change) operates on the render-time snapshot by design and
+ * is exempt — e.g. `switchConversation`'s `const exists = conversations.some(...)`.
+ * `renameConversation`'s `const updated = conversations.find(...)` sits after
+ * `setConversations` → flagged.
+ */
+function scanAdapterSyncClosureReads(code, relPath) {
+  const violations = [];
+  const lines = code.split('\n');
+  const mutatingMethods = /^\s*function\s+(createConversation|switchConversation|deleteConversation|renameConversation|clearAll)\s*\(/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const decl = lines[i].match(mutatingMethods);
+    if (!decl) continue;
+
+    // Extract the function body via brace depth from the declaration line.
+    let depth = 0;
+    let bodyStart = -1;
+    let bodyEnd = -1;
+    for (let j = i; j < lines.length; j++) {
+      const line = lines[j];
+      const stripped = line.replace(/\/\/.*$/, '');
+      for (const ch of stripped) {
+        if (ch === '{') { depth += 1; if (depth === 1 && bodyStart < 0) bodyStart = j; }
+        else if (ch === '}') depth -= 1;
+      }
+      if (bodyStart >= 0 && depth === 0) {
+        bodyEnd = j;
+        break;
+      }
+    }
+    if (bodyEnd < 0) continue;
+
+    let seenStateChange = false;
+    for (let j = bodyStart; j <= bodyEnd; j++) {
+      const stripped = lines[j].replace(/\/\/.*$/, '');
+      if (/\b(await|setConversations|setActiveId)\b/.test(stripped)) {
+        seenStateChange = true;
+        continue;
+      }
+      if (!seenStateChange) continue;
+      if (/activeIdRef\.current|conversationsRef\.current/.test(stripped)) continue;
+
+      // Bare `activeId` (not setActiveId / activeIdRef / activeConversationId).
+      if (/(?<!set)\bactiveId\b(?!Ref|Conversation)/.test(stripped)) {
+        violations.push({
+          file: relPath,
+          line: j + 1,
+          invariant: '②',
+          detail: `adapter mutating method reads bare 'activeId' after a state-change statement (expected activeIdRef.current) (invariant ②, K4 sync-read extension)`,
+        });
+      }
+      // Bare `conversations` (not conversationsRef / setConversations).
+      if (/\bconversations\b(?!Ref)/.test(stripped) && !/setConversations|conversations:/.test(stripped)) {
+        violations.push({
+          file: relPath,
+          line: j + 1,
+          invariant: '②',
+          detail: `adapter mutating method reads bare 'conversations' after a state-change statement (expected conversationsRef.current) (invariant ②, K4 sync-read extension)`,
+        });
+      }
+    }
+  }
+  return violations;
+}
+
 async function main() {
   const allViolations = [];
 
@@ -203,11 +304,13 @@ async function main() {
     if (rel.endsWith('use-conversation.ts')) {
       allViolations.push(...scanStorageCalls(code, relPath));
       allViolations.push(...scanPostAwaitClosureReads(code, relPath));
+      allViolations.push(...scanAdapterSyncClosureReads(code, relPath));
     }
 
     // ③ controller identity guard — only for create-engine.ts
     if (rel.endsWith('create-engine.ts')) {
       allViolations.push(...scanControllerIdentityGuard(code, relPath));
+      allViolations.push(...scanCompletionIdentityGuard(code, relPath));
     }
   }
 
