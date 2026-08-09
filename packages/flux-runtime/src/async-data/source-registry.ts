@@ -4,6 +4,7 @@ import type {
   DataSourceController,
   DataSourceRegistration,
   RendererRuntime,
+  ScopeChange,
   ScopeDependencySet,
   ScopeRef,
 } from '@nop-chaos/flux-core';
@@ -29,6 +30,8 @@ interface RuntimeSourceEntry {
   scope: ScopeRef;
   controller: DataSourceController;
   dependencies?: ScopeDependencySet;
+  /** dashboard-filter 约定：消费端 action 源码中引用的 `filter.<key>` 集合。 */
+  filterKeys: readonly string[];
   targetPath?: string;
   statusPath?: string;
   dispose(): void;
@@ -39,6 +42,69 @@ interface SourceCascadeState {
 }
 
 const sourceCascadeTestState: SourceCascadeState = { depth: 0 };
+
+/**
+ * dashboard-filter 约定（`docs/components/dashboard-filter/design.md`）的 key
+ * 失配诊断（Failure Path dashboard-filter-no-link）。触发条件：共享 `filter`
+ * 对象已存在（筛选表单已写过值）且当前 scope 变更落在 `filter` 根上，但消费端
+ * action 源码中引用的 `filter.<key>` 在 scope 中仍为 undefined——即筛选表单写入
+ * 的 key 与消费端引用的 key 不一致。按 (sourceId, key) 一次性上报，避免重复刷屏。
+ *
+ * 注意：运行时依赖收集把表达式路径归一化到根（`filter.product` → `filter`），
+ * 无法给出具体 key，故这里改为在注册期从 action 原始 schema 源码扫描
+ * `\${filter?.key}` 引用（`CompiledActionNode.source` 保留作者原文）。
+ */
+const dashboardFilterMismatchReported = new Set<string>();
+
+function extractFilterReferenceKeys(source: unknown): string[] {
+  if (source == null) {
+    return [];
+  }
+  let json: string;
+  try {
+    json = typeof source === 'string' ? source : JSON.stringify(source);
+  } catch {
+    return [];
+  }
+  const keys = new Set<string>();
+  const pattern = /\$\{filter\??\.([A-Za-z_$][\w$]*)/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(json)) !== null) {
+    keys.add(match[1]);
+  }
+  return Array.from(keys);
+}
+
+function reportDashboardFilterKeyMismatch(
+  sourceId: string,
+  filterKeys: readonly string[],
+  scope: ScopeRef,
+  change: ScopeChange,
+): void {
+  if (filterKeys.length === 0 || !scope.has('filter')) {
+    return;
+  }
+  const touchedFilterRoot = normalizeRootPaths(change.paths).some(
+    (root) => root === 'filter' || root.startsWith('filter.'),
+  );
+  if (!touchedFilterRoot) {
+    return;
+  }
+  for (const key of filterKeys) {
+    if (scope.has(`filter.${key}`)) {
+      continue;
+    }
+    const reportKey = `${sourceId}:filter.${key}`;
+    if (dashboardFilterMismatchReported.has(reportKey)) {
+      continue;
+    }
+    dashboardFilterMismatchReported.add(reportKey);
+    console.warn(
+      `[dashboard-filter-no-link] Data source "${sourceId}" references filter key "filter.${key}", which is not present in the shared filter scope. ` +
+        'Align the key with the filter form (dashboard-filter convention: shared `filter.*` scope keys).',
+    );
+  }
+}
 
 function tryEnterSourceCascade(state: SourceCascadeState): boolean {
   if (state.depth >= MAX_SOURCE_CASCADE_DEPTH) {
@@ -235,6 +301,11 @@ export function createRuntimeSourceRegistry(input: {
         return;
       }
 
+      // dashboard-filter key mismatch diagnosis runs before the dependency hit
+      // test: a mismatched key never hits the dependency set, so the linkage
+      // break would otherwise be silent (stale all-data render, no warn).
+      reportDashboardFilterKeyMismatch(args.id, entry.filterKeys, args.scope, observedChange);
+
       if (!scopeChangeHitsDependencies(observedChange, dependencies)) {
         return;
       }
@@ -273,6 +344,10 @@ export function createRuntimeSourceRegistry(input: {
 
     const sourceName = compiled.targetPath?.isStatic ? compiled.targetPath.value : undefined;
 
+    const filterKeys = isActionSource
+      ? extractFilterReferenceKeys(compiled.action?.nodes?.[0]?.source)
+      : [];
+
     const entry: RuntimeSourceEntry = {
       id: args.id,
       name: sourceName,
@@ -280,6 +355,7 @@ export function createRuntimeSourceRegistry(input: {
       scope: args.scope,
       controller,
       dependencies,
+      filterKeys,
       targetPath,
       statusPath,
       dispose() {
