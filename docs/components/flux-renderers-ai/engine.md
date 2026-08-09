@@ -435,3 +435,28 @@ engine 在内部调 `connector.stream({ messages, tools, signal })`；不再有 
 - ❌ 不实现 `formatMessages` / `extractTextFromResponse`
 - ❌ 不内置 `createOpenAICompatibleProvider` / `createMockProvider`（v1 错误，已删除）
 - ❌ 不内置任何 SSE/流式协议解析模块（v1 的 `src/sse/sse-stream-to-generator.ts` 已删除，协议解析下沉到 `env.stream`）
+
+## §Invariants — AI Engine 不变式契约
+
+> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）
+
+AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大复发失败模式族（并发守卫 / stale-closure / storage 静默丢），已沉淀为**首批 5 类可执行不变式契约**，防重构/新增方法回归。
+
+- **不变式目录**：`docs/audits/ai-invariants/invariant-catalog.md`（每条含陈述 + 覆盖失败族 + 历史 bug 证据 live 行号 + 检测方法）。
+- **门禁清单**：`docs/audits/ai-invariants/gates.md`（5 类不变式 × 覆盖方法 × 检测方式 × 运行命令，棘轮单调追加登记处）。
+
+### 运行命令
+
+```bash
+# 参数化穷举不变式测试（engine + adapter，含表完备性门禁）
+pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts
+
+# 静态门禁（②③④，live 基线零命中）
+pnpm check:ai-engine-invariants
+```
+
+### 表完备性规则
+
+engine/adapter 任何新增或重构的变更方法若不在测试表也不在白名单 → 测试红（`Object.keys(createMessageEngine())` 运行时枚举断言）。这是「治反应式盲区」的核心——不再依赖人工记住把新方法加入测试。
+
+白名单（非变更，不写会话状态）：`getState`/`subscribe`/`setConnector`/`registerPlugin`/`getMessages`。`runTurn` 为内部管道（非公共成员），不进表，由 `send`/`sendMessage`/`regenerate` 间接覆盖。
