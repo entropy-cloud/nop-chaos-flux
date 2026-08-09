@@ -1,6 +1,6 @@
 # 2 Cycle 1 / I4 — 修复执行（实例 + 类别清扫 + 门禁补强）（ai-invariant-loop）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: ai-invariant-loop
 > Work Item: Cycle 1 / I4. 修复执行（实例 + 类别清扫 + 测试）
 > Last Reviewed: 2026-08-09
@@ -77,95 +77,95 @@
 
 ### Phase 1 — K1：成功路径完成 mutate 身份守卫（engine）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/engine/create-engine.ts`、`src/engine/__tests__/engine-invariants.test.ts`、`scripts/audit/find-ai-engine-invariant-violations.mjs`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（probe-A 场景）——`abort()` 于 `plugin.onTurnStart` 挂起期间被调用 → 同步复位 → 立即 `sendMessage` 启动新 turn → 陈旧 turn 从 onTurnStart 恢复后完成写入：断言新 turn 的 `requestState`/`isProcessing` 不被 clobber（新 turn 流式期间状态仍 `'processing'`、abortController 为新控制器）——**此半即 RED 半**；另断言「abort 后无新 send」场景下终态仍为 `'aborted'`——**此为守卫保持断言（修复前已绿，属既有 :319 早退语义），防修复回归**；修复前 probe-A 半 RED
-- [ ] Fix: `create-engine.ts:318-323` 完成 mutate 加身份守卫 `if (draft.abortController !== abortController) return;`（对齐 :334/:451/:470 既有模式）——**保留既有 `if (draft.requestState === 'aborted') return;` 早退，新守卫为加性修改**；类别清扫——grep 全部 `adapter.mutate('requestState', ...)` 终态写入 recipe（:211-217 connector-missing 同步早退路径记录「无并发窗口」理由；:288-293 tool-no-executor 路径核对守卫必要性），清扫记录入档
-- [ ] Fix: 门禁 ③ 扩展——`engine-invariants.test.ts` 参数化表新增「完成路径身份守卫」行（abort-during-onTurnStart + send 交错断言）；扫描器补成功路径规则（完成 mutate 的 `'completed'` recipe 必须含 `draft.abortController !==` 判据）；`scripts/__tests__/find-ai-engine-invariant-violations.test.ts` 追加违规/清洁 fixture 用例
-- [ ] Proof: PROOF 用例——注入「完成 mutate 无守卫」违规 fixture → 扫描器/测试红（先红后绿证据记录）
+- [x] Proof: RED 回归测试（probe-A 场景）——`abort()` 于 `plugin.onTurnStart` 挂起期间被调用 → 同步复位 → 立即 `sendMessage` 启动新 turn → 陈旧 turn 从 onTurnStart 恢复后完成写入：断言新 turn 的 `requestState`/`isProcessing` 不被 clobber（新 turn 流式期间状态仍 `'processing'`、abortController 为新控制器）——**此半即 RED 半**；另断言「abort 后无新 send」场景下终态仍为 `'aborted'`——**此为守卫保持断言（修复前已绿，属既有 :319 早退语义），防修复回归**；修复前 probe-A 半 RED
+- [x] Fix: `create-engine.ts:318-323` 完成 mutate 加身份守卫 `if (draft.abortController !== abortController) return;`（对齐 :334/:451/:470 既有模式）——**保留既有 `if (draft.requestState === 'aborted') return;` 早退，新守卫为加性修改**；类别清扫——grep 全部 `adapter.mutate('requestState', ...)` 终态写入 recipe（:211-217 connector-missing 同步早退路径记录「无并发窗口」理由；:288-293 tool-no-executor 路径核对守卫必要性），清扫记录入档
+- [x] Fix: 门禁 ③ 扩展——`engine-invariants.test.ts` 参数化表新增「完成路径身份守卫」行（abort-during-onTurnStart + send 交错断言）；扫描器补成功路径规则（完成 mutate 的 `'completed'` recipe 必须含 `draft.abortController !==` 判据）；`scripts/__tests__/find-ai-engine-invariant-violations.test.ts` 追加违规/清洁 fixture 用例
+- [x] Proof: PROOF 用例——注入「完成 mutate 无守卫」违规 fixture → 扫描器/测试红（先红后绿证据记录）
 
 Exit Criteria:
 
-- [ ] K1 回归测试由 RED 转 GREEN；probe-A 场景断言全绿
-- [ ] 门禁 ③ 扩展覆盖完成路径（参数化 + 扫描器 + committed 回归），live 扫描零命中
-- [ ] 类别清扫记录入档（engine 全部终态写入 recipe 核对结论）
+- [x] K1 回归测试由 RED 转 GREEN；probe-A 场景断言全绿
+- [x] 门禁 ③ 扩展覆盖完成路径（参数化 + 扫描器 + committed 回归），live 扫描零命中
+- [x] 类别清扫记录入档（engine 全部终态写入 recipe 核对结论）
 
 ### Phase 2 — K2：abort 强制终结在途 generator 消费（engine）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/engine/create-engine.ts`、`src/engine/__tests__/engine-invariants.test.ts`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Proof: RED 回归测试——signal-ignoring 但**有限 yield 后 settle** 的 connector（abort 后继续产出 N 个 chunk 再正常结束，保证测试快速失败而非 vitest 超时）：abort 后断言（a）在途轮在有限迭代内 settle（`requestState='aborted'`/`isProcessing=false`/abortController=null）；（b）abort 之后产出的迟到 chunk 不被 apply/commit 到消息（修复前此断言即 RED）；「永不 settle 的 generator」不放入运行时测试（由 Decision 项裁定为 connector 契约违背）
-- [ ] Fix: chunk 循环（:417-429）加 per-iteration `if (abortController.signal.aborted) break;`（迟到 chunk 抑制；break 触发 AsyncIteratorClose → 协作式 generator 的 `.return()` 立即结算）；engine 闭包新增在途 generator 句柄（`let activeGenerator`，`runOnce` 在 `connector.stream()` 后登记；正常完成 / catch / 后置 abort 检查各出口置 null——已耗尽的 generator 上 `.return()` 为 no-op，置 null 防悬挂句柄）；`abort()`（:509-519）调用 `activeGenerator?.return()`（best-effort 强制终结）+ 既有同步复位
-- [ ] Decision: 记录设计裁定——「永不 yield 的 generator（卡在自己内部 await）无法从外部抢占，属 connector 契约违背」；该裁定经 Phase 5 统一写入 engine.md Failure Path（本 Phase 只做裁决记录，避免双写）
-- [ ] Fix: 门禁 ⑤ 扩展——`engine-invariants.test.ts` 参数化表新增「abort 强制终结」行（signal-ignoring-yielding connector 断言）；纯行为不变式不静态化（沿用 I1 裁定）
+- [x] Proof: RED 回归测试——signal-ignoring 但**有限 yield 后 settle** 的 connector（abort 后继续产出 N 个 chunk 再正常结束，保证测试快速失败而非 vitest 超时）：abort 后断言（a）在途轮在有限迭代内 settle（`requestState='aborted'`/`isProcessing=false`/abortController=null）；（b）abort 之后产出的迟到 chunk 不被 apply/commit 到消息（修复前此断言即 RED）；「永不 settle 的 generator」不放入运行时测试（由 Decision 项裁定为 connector 契约违背）
+- [x] Fix: chunk 循环（:417-429）加 per-iteration `if (abortController.signal.aborted) break;`（迟到 chunk 抑制；break 触发 AsyncIteratorClose → 协作式 generator 的 `.return()` 立即结算）；engine 闭包新增在途 generator 句柄（`let activeGenerator`，`runOnce` 在 `connector.stream()` 后登记；正常完成 / catch / 后置 abort 检查各出口置 null——已耗尽的 generator 上 `.return()` 为 no-op，置 null 防悬挂句柄）；`abort()`（:509-519）调用 `activeGenerator?.return()`（best-effort 强制终结）+ 既有同步复位
+- [x] Decision: 记录设计裁定——「永不 yield 的 generator（卡在自己内部 await）无法从外部抢占，属 connector 契约违背」；该裁定经 Phase 5 统一写入 engine.md Failure Path（本 Phase 只做裁决记录，避免双写）
+- [x] Fix: 门禁 ⑤ 扩展——`engine-invariants.test.ts` 参数化表新增「abort 强制终结」行（signal-ignoring-yielding connector 断言）；纯行为不变式不静态化（沿用 I1 裁定）
 
 Exit Criteria:
 
-- [ ] K2 回归测试由 RED 转 GREEN（含迟到 chunk 抑制断言）
-- [ ] 门禁 ⑤ 扩展测试覆盖 abort 强制终结路径，live 零命中
-- [ ] 设计裁定（永不 settle connector = 契约违背）记录入档
+- [x] K2 回归测试由 RED 转 GREEN（含迟到 chunk 抑制断言）
+- [x] 门禁 ⑤ 扩展测试覆盖 abort 强制终结路径，live 零命中
+- [x] 设计裁定（永不 settle connector = 契约违背）记录入档
 
 ### Phase 3 — K3：save-after-delete/clearAll ghost 重落盘（adapter）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/adapters/use-conversation.ts`、`src/adapters/__tests__/conversation-invariants.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（probe-6 场景，mock storage 可控 resolve 顺序）——（a）in-flight `saveMessages`（先于 delete 启动、后于 delete 完成）→ 断言 delete 后 storage 不含已删会话消息（无 ghost）；（b）processing 中 `clearAll` → 断言 aborted 快照不落盘、**storage 终态为空**（clearAll 为同步签名 `(): void`，测试侧等待 mock storage 最后一次操作 resolve 或 `waitFor` 终态，不断言单个 promise 完成顺序）；修复前 RED
-- [ ] Fix: `use-conversation.ts`——① per-conversation 在途 save 串行化（`pendingSavesRef`：attachAutoSave 把 `saveMessages` 链到该会话 pending promise 上）；② **按方法签名分机制排空在途 save**——`deleteConversation`（异步 `:348`）在 `storage.deleteConversation` **之前** `await Promise.allSettled` 该会话在途 save；`clearAll`（同步 `(): void`，公共 API 签名不变）**不 await**，改为把 storage 清空链到排空链之后（`void (async () => { await drain; await storage?.clearAll?.(); })()` 或 `.then()` 追加，per-id fan-out 同理）——排空→删除的顺序保证不变、sync 签名不破坏，**链内 storage 调用保持 `reportStorageError` 路由（.catch per 不变式④）**（记录该理由）；③ `clearAll` 顺序调整：`detachEngine`（退订）先于 abort 循环（:394-399 反序）——abort 触发的 auto-save 回调不得再启动新 save
-- [ ] Fix: 类别清扫——delete/clearAll/create/switch 的 storage 调用点全部核对「在途 save 排空」语义（clearAll 走链式排空、delete 走 await 排空）；`attachAutoSave` 订阅生命周期与退订顺序核对；清扫记录入档
-- [ ] Fix: 门禁 ④ 扩展——`conversation-invariants.test.ts` 参数化表新增「save-after-delete 时序守卫」行（mock storage 乱序 resolve → 无 ghost，断言 storage 终态）；扫描器不扩展（运行时时序，静态误报高——记录理由）
+- [x] Proof: RED 回归测试（probe-6 场景，mock storage 可控 resolve 顺序）——（a）in-flight `saveMessages`（先于 delete 启动、后于 delete 完成）→ 断言 delete 后 storage 不含已删会话消息（无 ghost）；（b）processing 中 `clearAll` → 断言 aborted 快照不落盘、**storage 终态为空**（clearAll 为同步签名 `(): void`，测试侧等待 mock storage 最后一次操作 resolve 或 `waitFor` 终态，不断言单个 promise 完成顺序）；修复前 RED
+- [x] Fix: `use-conversation.ts`——① per-conversation 在途 save 串行化（`pendingSavesRef`：attachAutoSave 把 `saveMessages` 链到该会话 pending promise 上）；② **按方法签名分机制排空在途 save**——`deleteConversation`（异步 `:348`）在 `storage.deleteConversation` **之前** `await Promise.allSettled` 该会话在途 save；`clearAll`（同步 `(): void`，公共 API 签名不变）**不 await**，改为把 storage 清空链到排空链之后（`void (async () => { await drain; await storage?.clearAll?.(); })()` 或 `.then()` 追加，per-id fan-out 同理）——排空→删除的顺序保证不变、sync 签名不破坏，**链内 storage 调用保持 `reportStorageError` 路由（.catch per 不变式④）**（记录该理由）；③ `clearAll` 顺序调整：`detachEngine`（退订）先于 abort 循环（:394-399 反序）——abort 触发的 auto-save 回调不得再启动新 save
+- [x] Fix: 类别清扫——delete/clearAll/create/switch 的 storage 调用点全部核对「在途 save 排空」语义（clearAll 走链式排空、delete 走 await 排空）；`attachAutoSave` 订阅生命周期与退订顺序核对；清扫记录入档
+- [x] Fix: 门禁 ④ 扩展——`conversation-invariants.test.ts` 参数化表新增「save-after-delete 时序守卫」行（mock storage 乱序 resolve → 无 ghost，断言 storage 终态）；扫描器不扩展（运行时时序，静态误报高——记录理由）
 
 Exit Criteria:
 
-- [ ] K3 回归测试由 RED 转 GREEN（两个断言场景全绿）
-- [ ] 门禁 ④ 扩展测试覆盖时序守卫，live 零命中
-- [ ] 类别清扫记录入档（adapter 全部 storage 调用点核对结论）
+- [x] K3 回归测试由 RED 转 GREEN（两个断言场景全绿）
+- [x] 门禁 ④ 扩展测试覆盖时序守卫，live 零命中
+- [x] 类别清扫记录入档（adapter 全部 storage 调用点核对结论）
 
 ### Phase 4 — K4：renameConversation sync 闭包读取（adapter）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/adapters/use-conversation.ts`、`src/adapters/__tests__/conversation-invariants.test.ts`、`scripts/audit/find-ai-engine-invariant-violations.mjs`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（probe-K4 场景）——同 tick `createConversation()` + `renameConversation(id,'T2')` → 断言 storage 收到的保存 title === `'T2'`（持久化不丢失）；修复前 RED
-- [ ] Fix: `use-conversation.ts`——`renameConversation`（:374-388）改读 `conversationsRef.current`；`createConversation`（:272）同步更新 `conversationsRef.current`（对齐 `activeIdRef` 同步更新 :278 模式）
-- [ ] Fix: 类别清扫——全部 conversations 列表变更方法（create :272 / rename :376 / delete :349 / clearAll :401）的 ref mirror 同步核对（**全部**改为同步维护，不依赖 effect flush）；`switchConversation` :294 闭包读（异步方法**首语句、await 之前**的读取）记录「安全，不改」理由并**在扫描器规则中显式豁免**；清扫记录入档
-- [ ] Fix: 门禁 ② 扩展——不变式陈述扩展至「adapter 变更方法的 sync 闭包读取」；`conversation-invariants.test.ts` 参数化表新增 rename sync 行；扫描器补规则——**判别准则：仅 flag adapter 变更方法体内「首次状态变更语句（`setConversations`/`setActiveId`/`create`/`delete`/`await`）之后」出现的裸 `conversations`/`activeId` 读取**（`switchConversation:294` 为方法首语句、await 前读取 → 豁免并记录理由；`renameConversation:377` 在 `setConversations`（:376）之后 → 被抓）；committed 回归 fixture 追加
+- [x] Proof: RED 回归测试（probe-K4 场景）——同 tick `createConversation()` + `renameConversation(id,'T2')` → 断言 storage 收到的保存 title === `'T2'`（持久化不丢失）；修复前 RED
+- [x] Fix: `use-conversation.ts`——`renameConversation`（:374-388）改读 `conversationsRef.current`；`createConversation`（:272）同步更新 `conversationsRef.current`（对齐 `activeIdRef` 同步更新 :278 模式）
+- [x] Fix: 类别清扫——全部 conversations 列表变更方法（create :272 / rename :376 / delete :349 / clearAll :401）的 ref mirror 同步核对（**全部**改为同步维护，不依赖 effect flush）；`switchConversation` :294 闭包读（异步方法**首语句、await 之前**的读取）记录「安全，不改」理由并**在扫描器规则中显式豁免**；清扫记录入档
+- [x] Fix: 门禁 ② 扩展——不变式陈述扩展至「adapter 变更方法的 sync 闭包读取」；`conversation-invariants.test.ts` 参数化表新增 rename sync 行；扫描器补规则——**判别准则：仅 flag adapter 变更方法体内「首次状态变更语句（`setConversations`/`setActiveId`/`create`/`delete`/`await`）之后」出现的裸 `conversations`/`activeId` 读取**（`switchConversation:294` 为方法首语句、await 前读取 → 豁免并记录理由；`renameConversation:377` 在 `setConversations`（:376）之后 → 被抓）；committed 回归 fixture 追加
 
 Exit Criteria:
 
-- [ ] K4 回归测试由 RED 转 GREEN（同 tick create+rename 持久化断言全绿）
-- [ ] 门禁 ② 扩展覆盖 sync 读取（参数化 + 扫描器 + committed 回归），live 扫描零命中
-- [ ] 类别清扫记录入档（adapter 全部列表变更方法 ref 同步核对结论）
+- [x] K4 回归测试由 RED 转 GREEN（同 tick create+rename 持久化断言全绿）
+- [x] 门禁 ② 扩展覆盖 sync 读取（参数化 + 扫描器 + committed 回归），live 扫描零命中
+- [x] 类别清扫记录入档（adapter 全部列表变更方法 ref 同步核对结论）
 
 ### Phase 5 — 类别清扫复核 + 登记处同步 + bug notes
 
-Status: planned
+Status: completed
 Targets: `docs/audits/ai-invariants/invariant-catalog.md`、`docs/audits/ai-invariants/gates.md`、`docs/components/flux-renderers-ai/engine.md`、`docs/bugs/`、`docs/logs/2026/08-09.md`
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] Proof: 类别清扫终审——跨 engine + adapter grep 四类修复模式全部兄弟实例（终态写入守卫 / generator 消费 / storage 时序 / 列表闭包读取），与 Phase 1-4 清扫记录逐条核对，形成清扫总表（文件:行 + 结论）入档
-- [ ] Fix: `invariant-catalog.md` ②③④⑤ 陈述扩展（对齐本 plan 门禁补强：② sync 读取 / ③ 完成路径 / ④ 时序守卫 / ⑤ 强制终结）+ `gates.md` 门禁清单追加/更新（棘轮单调）
-- [ ] Fix: `engine.md` §invariants 同步（门禁清单 + 运行命令 + K2 设计裁定「永不 settle connector = 契约违背」Failure Path）
-- [ ] Fix: bug notes 121+（K1-K4 各一条，按 `docs/bugs/00-bug-fix-note-writing-guide.md`：触发 / 根因 / 修复 / 类别清扫范围 / 回归测试）
-- [ ] Proof: AI 包全量测试（`pnpm --filter @nop-chaos/flux-renderers-ai test`）+ `pnpm check:ai-engine-invariants`（扩展后）live 零命中 + `pnpm test:scripts`（committed 回归追加用例全绿）
-- [ ] Follow-up: daily log 记录本 plan 收口（K1-K4 修复 + 门禁扩展 + 清扫总表摘要）
+- [x] Proof: 类别清扫终审——跨 engine + adapter grep 四类修复模式全部兄弟实例（终态写入守卫 / generator 消费 / storage 时序 / 列表闭包读取），与 Phase 1-4 清扫记录逐条核对，形成清扫总表（文件:行 + 结论）入档
+- [x] Fix: `invariant-catalog.md` ②③④⑤ 陈述扩展（对齐本 plan 门禁补强：② sync 读取 / ③ 完成路径 / ④ 时序守卫 / ⑤ 强制终结）+ `gates.md` 门禁清单追加/更新（棘轮单调）
+- [x] Fix: `engine.md` §invariants 同步（门禁清单 + 运行命令 + K2 设计裁定「永不 settle connector = 契约违背」Failure Path）
+- [x] Fix: bug notes 121+（K1-K4 各一条，按 `docs/bugs/00-bug-fix-note-writing-guide.md`：触发 / 根因 / 修复 / 类别清扫范围 / 回归测试）
+- [x] Proof: AI 包全量测试（`pnpm --filter @nop-chaos/flux-renderers-ai test`）+ `pnpm check:ai-engine-invariants`（扩展后）live 零命中 + `pnpm test:scripts`（committed 回归追加用例全绿）
+- [x] Follow-up: daily log 记录本 plan 收口（K1-K4 修复 + 门禁扩展 + 清扫总表摘要）
 
 Exit Criteria:
 
-- [ ] 清扫总表入档（含全部兄弟实例核对结论，closure audit 抽查依据）
-- [ ] catalog / gates.md / engine.md 与 live 门禁状态一致；bug notes 121+ 落档
-- [ ] AI 包测试全绿零回归；扩展后门禁 live 零命中；scripts 回归全绿
+- [x] 清扫总表入档（含全部兄弟实例核对结论，closure audit 抽查依据）
+- [x] catalog / gates.md / engine.md 与 live 门禁状态一致；bug notes 121+ 落档
+- [x] AI 包测试全绿零回归；扩展后门禁 live 零命中；scripts 回归全绿
 
 ## Draft Review Record
 
@@ -186,16 +186,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] K1-K4 全部修复落地，各自 RED→GREEN 回归测试在案（probe-A / signal-ignoring / probe-6 / probe-K4 场景）
-- [ ] 门禁 ②③④⑤ 扩展全部落地（参数化测试 + 扫描器规则（②③）+ committed 回归追加），live 零命中
-- [ ] 类别清扫强制满足：清扫总表入档（修任一实例必核对全部兄弟；closure audit 抽查）
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect（K1-K4 全部修复；N1-N5/W1-W4 路由明确且不在本 plan scope）
-- [ ] 登记处同步完成：`invariant-catalog.md` / `gates.md` / `engine.md` §invariants / bug notes 121+
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] K1-K4 全部修复落地，各自 RED→GREEN 回归测试在案（probe-A / signal-ignoring / probe-6 / probe-K4 场景）
+- [x] 门禁 ②③④⑤ 扩展全部落地（参数化测试 + 扫描器规则（②③）+ committed 回归追加），live 零命中
+- [x] 类别清扫强制满足：清扫总表入档（修任一实例必核对全部兄弟；closure audit 抽查）
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect（K1-K4 全部修复；N1-N5/W1-W4 路由明确且不在本 plan scope）
+- [x] 登记处同步完成：`invariant-catalog.md` / `gates.md` / `engine.md` §invariants / bug notes 121+
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -216,15 +216,67 @@ Exit Criteria:
 
 - K2 修复后 W1 的 abortController 残留面复查（若已被收敛，I5/I6 时从 watch-only 清单移除并记录）
 
+## 类别清扫总表（Sweep Record，closure audit 抽查依据）
+
+> 2026-08-09 live 逐条核对；四类修复模式跨 engine + adapter 的全部兄弟实例，与 Phase 1-4 清扫记录逐条勾对。
+> 注（closure-audit M1）：表中行号为总表成表时的 live 位置，修复落地后源文件整体漂移 ±1-3 行（如 abort 同步复位 :548→live :551、完成 recipe :324→:325、clearAll 链 :463-470→:462-474、unmount effect :249-261→:266-278）；全部 recipe 身份与结论已由 closure-audit 独立复核一致，行号以 `rg` 实时定位为准。
+
+### A. 终态写入守卫（engine `adapter.mutate('requestState')` recipes，共 8 处）
+
+| live 位置              | recipe                         | 结论                                                                                                    |
+| ---------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `create-engine.ts:217` | connector-missing              | 同步早退路径，无 await 窗口 → 无需守卫（记录）                                                          |
+| `create-engine.ts:233` | processing 入口                | 入口写入（创建 controller）→ N/A                                                                        |
+| `create-engine.ts:294` | tool-no-executor               | runOnce 判定与 mutate 间无 await → 无窗口（记录）                                                       |
+| `create-engine.ts:324` | completion `'completed'`       | **K1 修复：+ `draft.abortController !== abortController` 守卫**（保留 `requestState==='aborted'` 早退） |
+| `create-engine.ts:340` | runTurn catch                  | 既有守卫 ✓                                                                                              |
+| `create-engine.ts:471` | runOnce post-stream abort 检查 | 既有守卫 ✓                                                                                              |
+| `create-engine.ts:490` | runOnce catch                  | 既有守卫 ✓                                                                                              |
+| `create-engine.ts:548` | abort() 同步复位               | 总是针对刚 abort 的当前 controller → 安全（记录）                                                       |
+
+### B. generator 消费（engine，单一消费面已全覆盖）
+
+| live 位置                  | 内容                                                                                  | 结论         |
+| -------------------------- | ------------------------------------------------------------------------------------- | ------------ |
+| `create-engine.ts:423`     | `connector.stream()` 唯一调用点（send/sendMessage/regenerate 全汇入 runTurn→runOnce） | 无兄弟调用点 |
+| `create-engine.ts:426`     | `activeGenerator` 登记                                                                | **K2**       |
+| `create-engine.ts:431`     | `for await` 唯一消费循环 + 每迭代 `signal.aborted` 检查                               | **K2**       |
+| `create-engine.ts:452`     | consume 循环 finally 出口置 null                                                      | **K2**       |
+| `create-engine.ts:542-547` | `abort()` 强制终结（`generator.return({})` best-effort）                              | **K2**       |
+
+### C. storage 时序（adapter，全部调用点核对）
+
+| live 位置                     | 调用点                                     | 结论                                                      |
+| ----------------------------- | ------------------------------------------ | --------------------------------------------------------- |
+| `use-conversation.ts:205`     | attachAutoSave `saveMessages`              | **K3：链入 `pendingSavesRef` per-conversation 串行化**    |
+| `use-conversation.ts:240`     | bootstrap `loadConversations`              | 单次加载，无删除竞态 → 不涉排空                           |
+| `use-conversation.ts:309`     | create `saveConversation`                  | 会话元数据单次写，无消息重落盘面 → 不入排空链（记录理由） |
+| `use-conversation.ts:331`     | switch `loadMessages`                      | 单次加载 → 不涉排空                                       |
+| `use-conversation.ts:400`     | delete `storage.deleteConversation`        | **K3：drain（`await Promise.allSettled`）之后**           |
+| `use-conversation.ts:422`     | rename `saveConversation`                  | 同 create：元数据单次写 → 不入排空链（记录理由）          |
+| `use-conversation.ts:463-470` | clearAll `storage.clearAll`/per-id fan-out | **K3：链到排空链之后 + `detachEngine` 先于 abort 循环**   |
+| `use-conversation.ts:249-261` | unmount effect                             | 无 storage 调用（abort only）✓                            |
+
+### D. 列表闭包读取（adapter，全部变更方法 ref 同步核对）
+
+| live 位置                     | 方法                                         | 结论                                                                                      |
+| ----------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `use-conversation.ts:289-294` | createConversation                           | **K4：`setConversations` 后同步 prepend `conversationsRef.current`**                      |
+| `use-conversation.ts:316`     | switchConversation `conversations.some(...)` | 方法**首语句**、状态变更前 → 渲染快照读取为设计语义，豁免（扫描器显式豁免 + 理由记录）    |
+| `use-conversation.ts:371-383` | deleteConversation                           | `setConversations` 后无裸读；post-await 读 `activeIdRef`/`conversationsRef`（既有 P1-a）✓ |
+| `use-conversation.ts:412-417` | renameConversation                           | **K4：读 `conversationsRef.current`（状态变更前）+ 同步 map 回写**                        |
+| `use-conversation.ts:444-446` | clearAll                                     | `setConversations([])` 后无列表读；`activeIdRef` 同步置 null ✓                            |
+
 ## Closure
 
-Status Note: （待执行后填写）
+Status Note: 已收口（2026-08-09）。K1-K4 全部修复落地（test-first 先红后绿在案）、门禁 ②③④⑤ 扩展全部落地且 live 零命中、类别清扫总表入档（A-D 四族逐条核对）、登记处同步（invariant-catalog §7/§8 + gates.md + engine.md §Invariants + bug notes 121-124）、full-green 验证（typecheck/build/lint 33/33、test 60/60、AI 包 66 files/542 tests、test:scripts 36/36、check:ai-engine-invariants exit 0、pnpm check 仅既有登记 red 零新增）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立 fresh session 填写）
-- Evidence: —
+- Auditor / Agent: fresh sub-agent session `ses_01951c859ffexp4FjJrOpeDWSP`（独立复核，非执行 session）
+- Verdict: `pass-with-minors`（0 Blocker / 0 Major / 3 Minor）
+- Evidence: 复跑 `check:ai-engine-invariants` exit 0 零命中、invariants 两文件 28 tests 全绿、`test:scripts` 36/36 全绿、engine+use-message 25 tests 全绿；清单 7 项全 PASS（plan 一致性 / RED→GREEN 覆盖 / 门禁扩展 / 类别清扫独立 re-grep / docs 一致性 / 无静默降级 / 加固测试意图保持）；3 Minor 均非阻塞——M1 清扫总表行号漂移（已加注说明）、M2 closure 记账待填（本项已填）、M3 全量 workspace 断言未独立复跑（执行 session 已跑，无相反证据）
 
 Follow-up:
 
-- （待执行后填写；预期：无 plan-owned 剩余工作，后续为 I5 全量验证）
+- 无 plan-owned 剩余工作；后续为 I5 全量验证（typecheck/build/lint + AI 包 test + pnpm check 全链 + 相关 e2e，full-green 记录）。W1（abortController 残留）由 I5/I6 按 Non-Blocking Follow-ups 复查是否从 watch-only 移除。

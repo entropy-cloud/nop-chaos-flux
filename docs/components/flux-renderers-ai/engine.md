@@ -438,12 +438,12 @@ engine 在内部调 `connector.stream({ messages, tools, signal })`；不再有 
 
 ## §Invariants — AI Engine 不变式契约
 
-> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）
+> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）
 
-AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大复发失败模式族（并发守卫 / stale-closure / storage 静默丢），已沉淀为**首批 5 类可执行不变式契约**，防重构/新增方法回归。
+AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大复发失败模式族（并发守卫 / stale-closure / storage 静默丢），已沉淀为**首批 5 类可执行不变式契约**，防重构/新增方法回归。I2 审计在门禁盲区发现 K1-K4 四个实例（I3 裁决 P0/P1），I4 修复并把门禁补强至对应路径：
 
-- **不变式目录**：`docs/audits/ai-invariants/invariant-catalog.md`（每条含陈述 + 覆盖失败族 + 历史 bug 证据 live 行号 + 检测方法）。
-- **门禁清单**：`docs/audits/ai-invariants/gates.md`（5 类不变式 × 覆盖方法 × 检测方式 × 运行命令，棘轮单调追加登记处）。
+- **不变式目录**：`docs/audits/ai-invariants/invariant-catalog.md`（每条含陈述 + 覆盖失败族 + 历史 bug 证据 live 行号 + 检测方法；§7 = I4 的 ②③④⑤ 扩展契约）。
+- **门禁清单**：`docs/audits/ai-invariants/gates.md`（5 类不变式 × 覆盖方法 × 检测方式 × 运行命令，棘轮单调追加登记处；I4 追加 ③ 完成路径 / ⑤ 强制终结 / ④ 时序守卫 / ② sync 读取）。
 
 ### 运行命令
 
@@ -451,7 +451,7 @@ AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大�
 # 参数化穷举不变式测试（engine + adapter，含表完备性门禁）
 pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts
 
-# 静态门禁（②③④，live 基线零命中）
+# 静态门禁（②③④，live 基线零命中；I4 扩展：③ 完成路径 + ② sync 读取）
 pnpm check:ai-engine-invariants
 ```
 
@@ -460,3 +460,7 @@ pnpm check:ai-engine-invariants
 engine/adapter 任何新增或重构的变更方法若不在测试表也不在白名单 → 测试红（`Object.keys(createMessageEngine())` 运行时枚举断言）。这是「治反应式盲区」的核心——不再依赖人工记住把新方法加入测试。
 
 白名单（非变更，不写会话状态）：`getState`/`subscribe`/`setConnector`/`registerPlugin`/`getMessages`。`runTurn` 为内部管道（非公共成员），不进表，由 `send`/`sendMessage`/`regenerate` 间接覆盖。
+
+### Failure Path — 永不 settle 的 connector（K2 设计裁定）
+
+`abort()` 以 best-effort 强制终结在途 generator（`activeGenerator?.return()` + chunk 循环每迭代 `signal.aborted` 检查）——**协作式** generator（挂在 `yield` 上）经 `.return()` 立即结算；**永不 yield 的 generator（卡在自己内部 `await`）无法从外部抢占**，属 **connector 契约违背**，非 engine 缺陷（invariant-catalog §7.2 / bug note 122）。host 侧若需绝对终止保证，connector 必须尊重 `request.signal` 或保持协作式 yield 结构。

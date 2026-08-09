@@ -1,10 +1,10 @@
 # AI Engine 不变式目录（Invariant Catalog）
 
-> Status: active（Cycle 1 / I0 产出，供 I1 门禁沉淀与 I2 审计引用）
+> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展，供 I5 验证与后续审计引用）
 > Last Updated: 2026-08-09
-> Source: `docs/backlog/ai-invariant-loop-roadmap.md`（Cycle 1 / I0）+ 4 轮 AI 审计（`docs/audits/2026-07-23-2141-*ai.md`、`2026-07-24-1757-*ai.md`、`2026-07-24-2151-*ai.md`、`2026-07-25-0707-*ai.md`）+ C8.1/8.2/8.3 + post-closure + Bug 07 note
-> Produced By: plan `docs/plans/2026-08-09-1826-1-i0-invariant-inventory-baseline.md`（纯文档计划）
-> 下游消费: I1（门禁沉淀 `check:ai-engine-invariants`）、I2（不变式驱动审计）、Loop Rule（新族派生）
+> Source: `docs/backlog/ai-invariant-loop-roadmap.md`（Cycle 1 / I0）+ 4 轮 AI 审计（`docs/audits/2026-07-23-2141-*ai.md`、`2026-07-24-1757-*ai.md`、`2026-07-24-2151-*ai.md`、`2026-07-25-0707-*ai.md`）+ C8.1/8.2/8.3 + post-closure + Bug 07 note + I4 修复执行（K1-K4）
+> Produced By: plan `docs/plans/2026-08-09-1826-1-i0-invariant-inventory-baseline.md`（纯文档计划）；扩展于 plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`（K1-K4 + 门禁 ②③④⑤ 补强）
+> 下游消费: I1（门禁沉淀 `check:ai-engine-invariants`）、I2（不变式驱动审计）、Loop Rule（新族派生）、I5（全量验证）
 
 ## 1. 基线确认：当前零 engine 不变式门禁
 
@@ -144,6 +144,40 @@
   - UseConversationReturn 函数字段（5）：`createConversation, switchConversation, deleteConversation, renameConversation, clearAll` → 全部入变更面；**零未覆盖**
   - 目标集 12 项 == 期望 12 项，**DIFF = ZERO**
 - **运行时双保险**：临时 vitest（`Object.keys(createMessageEngine())` 断言 = 上述 12 键，1/1 passed，执行后已删除临时文件，工作区零残留）——对象字面量 = 运行时键集的确定性来源，静态提取与真运行时一致。
+
+## 7. Cycle 1 / I4 门禁补强（K1-K4 修复契约，②③④⑤ 陈述扩展）
+
+> 2026-08-09 落地（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`）。I2 审计发现 §2 五条不变式存在四个门禁盲区（K1-K4，findings §3.1 全 RED），I3 裁决为 P0/P1 路由本 plan 修复并补强门禁。下列扩展为对 §2 对应陈述的**加性扩展**（原陈述不变），K1-K4 各自 RED→GREEN 回归测试在案（`engine-invariants.test.ts` / `conversation-invariants.test.ts`），bug notes 121-124 落档。
+
+### 7.1 不变式 ③ 扩展 —— 成功路径完成 mutate 身份守卫（K1）
+
+- **扩展陈述**：`runTurn` 成功路径的完成 mutate（写 `draft.requestState = 'completed'`）必须与 catch/finally 同构携带 controller 身份守卫（`if (draft.abortController !== abortController) return;`），且**保留**既有 `requestState === 'aborted'` 早退（加性守卫）。abort 于 try 外挂起（`plugin.onTurnStart`）→ 同步复位 → 新 turn 启动的竞态下，陈旧 turn 的完成写入不得 clobber 新 turn 的 in-flight 状态（probe-A）。
+- **新增检测方法**：静态扫描器规则 `scanCompletionIdentityGuard`（全文件扫 `draft.requestState = 'completed'` recipe 的 ±3 行窗口必须出现 `draft.abortController !== abortController`）；committed 回归（违规 fixture exit 1 / 清洁 fixture exit 0）。
+- **类别清扫结论**：engine 全部 8 处 `adapter.mutate('requestState')` 终态写入 recipe 逐条核对——connector-missing（同步早退，无 await 窗口）、tool-no-executor（runOnce 判定与 mutate 间无 await，无窗口）、abort() 同步复位（总是针对刚 abort 的当前 controller）三处记录「无并发窗口/安全」理由，其余全部携带身份守卫（bug note 121）。
+
+### 7.2 不变式 ⑤ 扩展 —— abort 强制终结在途 generator（K2）
+
+- **扩展陈述**：`abort()` 必须 best-effort 强制终结在途 generator——chunk 消费循环每迭代检查 `abortController.signal.aborted`（迟到 chunk 抑制；break 触发 AsyncIteratorClose → 协作式 generator 经 `.return()` 立即结算）；`abort()` 持在途 generator 句柄（`activeGenerator`）并调用 `generator.return()`，句柄在各出口置 null。**契约裁定**：永不 yield 的 generator（卡在自己内部 await）无法从外部抢占，属 **connector 契约违背**（engine.md §Invariants Failure Path），非 engine 缺陷。
+- **新增检测方法**：运行时参数化测试（signal-ignoring 有限 yield connector：abort 后 settle + 迟到 chunk 不 commit）；纯行为不变式不静态化（沿用 I1 裁定，误报率高）。
+- **附带收敛**：W1（abortController 残留 watch-only）预期被本修复的 finally 清理面部分收敛（不作承诺，I5/I6 复查）。
+
+### 7.3 不变式 ④ 扩展 —— storage save-after-delete/clearAll 时序守卫（K3）
+
+- **扩展陈述**：auto-save 与 storage 删除必须满足「排空→删除」顺序——每个会话的在途 `saveMessages` 链入 `pendingSavesRef`（per-conversation 串行化）；异步方法（`deleteConversation`）在 `storage.deleteConversation` **之前** `await Promise.allSettled` 该会话在途 save；同步方法（`clearAll`，`(): void` 签名不变）把 storage 清空**链到排空链之后**（`.then()` 追加，per-id fan-out 各自 `.catch` → `reportStorageError`，不变式④错误路由保持）；`clearAll` 必须 `detachEngine`（退订）**先于** abort 循环——abort 触发的 auto-save 回调不得再启动新 save（aborted 快照重落盘 = ghost）。
+- **新增检测方法**：运行时参数化测试（mock storage 可控 resolve 顺序：乱序 resolve → 断言 storage 终态无 ghost / 终态为空）；**扫描器不扩展**（运行时时序，静态误报高——理由记录）。
+- **类别清扫结论**：adapter 全部 storage 调用点（saveMessages / saveConversation×2 / deleteConversation / clearAll / load×2 / unmount）逐条核对——saveConversation（create/rename）为单次会话元数据写（无消息重落盘面，错误路由已就位）不入排空链；消息保存唯一入口 attachAutoSave 已串行化（bug note 123）。
+
+### 7.4 不变式 ② 扩展 —— adapter 变更方法的 sync 闭包读取（K4）
+
+- **扩展陈述**：不变式 ② 的适用范围从「await 之后」扩展至**全部 adapter 变更方法体内的状态读取**——列表/active 读取必须读 ref mirror（`conversationsRef.current`/`activeIdRef.current`），且所有列表变更方法（create/rename/delete/clearAll）必须**同步维护** ref mirror（不依赖 effect flush）；同 tick create+rename 场景 rename 的持久化不得静默丢失（probe-K4）。
+- **新增检测方法**：静态扫描器规则 `scanAdapterSyncClosureReads`——**判别准则**：仅 flag adapter 变更方法（create/switch/delete/rename/clearAll）体内「首次状态变更语句（`setConversations`/`setActiveId`/`await`）**之后**」出现的裸 `conversations`/`activeId` 读取；方法**首语句**（状态变更前）的渲染快照读取为设计语义 → 豁免（`switchConversation:294` `conversations.some(...)` 显式豁免并记录理由）；committed 回归（违规 fixture exit 1 / 清洁 fixture 含豁免样例 exit 0）。
+- **类别清扫结论**：create（同步 prepend `conversationsRef.current`）、rename（读 ref + 同步 map）、delete（post-await 已读 ref）、clearAll（同步置空 + `activeIdRef`）全部同步维护；`switchConversation` :294 首语句豁免（bug note 124）。
+
+## 8. 引用索引（I4 追加）
+
+- 审计产物：`docs/audits/ai-invariants/cycle1-findings.md`（K1-K4 RED 证据 + N1-N5/W1-W4）、`docs/audits/ai-invariants/cycle1-adjudication.md`（P0/P1 裁决 + 门禁补强契约 ③/⑤/④/②）
+- Bug notes：`docs/bugs/121-ai-engine-completion-mutate-identity-guard-fix.md`（K1）、`docs/bugs/122-ai-engine-abort-force-terminates-inflight-generator-fix.md`（K2）、`docs/bugs/123-ai-conversation-save-after-delete-ghost-fix.md`（K3）、`docs/bugs/124-ai-conversation-rename-sync-closure-read-fix.md`（K4）
+- 门禁登记处：`docs/audits/ai-invariants/gates.md`（I4 追加行）
 
 ## 6. 引用索引
 
