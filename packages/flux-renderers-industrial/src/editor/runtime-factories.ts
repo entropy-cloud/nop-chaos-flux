@@ -81,6 +81,16 @@ export interface EditorRuntimeContext {
   setSessionSelection: (next: string[]) => void;
   syncWorkingCopy: () => void;
   /**
+   * editor.target 对齐 helper（plan 2026-08-08-1931-4 Phase 2 / Decision）：把当前 `session.selection`
+   * 经 `engine.getSymbol(id)?.node` 重解析到 live registry，并装配到 `editor.target`（或清空）。
+   *
+   * 在所有可能改变 leafer 节点 identity 的代码路径后无条件调用——applyUpdate 的 patch.children 子树重建
+   * （P1-2 common edit path）、engine.build 全量重建（P1-3 / P1-4 catches）都会替换 LeafNode 对象；
+   * `editor.target` 是强节点引用，不重解析会指向被销毁的旧节点（dangle），下次 transform 命中 detached
+   * 节点。长度门控（"selection id 集不变则跳过"）不够——identity 在 id 不变时也会变。
+   */
+  reconcileEditorTargets: () => void;
+  /**
    * save 句柄（plan 2026-08-07-1835-2 Phase 2 / multi P1-04/05）：由 runtime-mutators 装配后回填。
    * notifySession 在 commitPolicy='auto' 时调用此句柄触发 save + onSave（编辑即持久化）。
    * 经回填而非构造期注入，避免与 mutators 的构造环依赖（mutators 闭包捕获 notifySession）。
@@ -159,6 +169,21 @@ export function createRuntimeCore(
     session.selection = [...next];
     latest.current.onSelectionChange?.(next);
   };
+  /**
+   * editor.target 重解析 helper（plan 2026-08-08-1931-4 Phase 2 / P1-2a Decision）：把当前
+   * `session.selection` 经 `engine.getSymbol(id)?.node` 重解析到 live registry，装配到 editor.target
+   * （或 clearEditorSelection）。在所有可能改变 leafer 节点 identity 的路径后无条件调用。
+   */
+  const reconcileEditorTargets = () => {
+    const resolvedNodes = session.selection
+      .map((id) => engine.getSymbol(id)?.node)
+      .filter((n): n is NonNullable<typeof n> => n !== undefined);
+    if (resolvedNodes.length === 0) {
+      engine.clearEditorSelection();
+    } else {
+      engine.setEditorTargets(resolvedNodes);
+    }
+  };
   const syncWorkingCopy = () => {
     const diff = diffScadaConfig(synced.config, session.workingConfig);
     const hasChanges =
@@ -169,9 +194,24 @@ export function createRuntimeCore(
     try {
       engine.applyDiff(diff, session.workingConfig);
       synced.config = cloneConfigSnapshot(session.workingConfig);
+      // plan 2026-08-08-1931-4 Phase 2 / P1-2a：applyDiff 中的 applyUpdate 收到 patch.children 时
+      // 重建 group 子树，LeafNode 对象 identity 变化；editor.target 是强节点引用，不重解析会指向被销毁
+      // 的旧子节点（P1-2 defect：选中嵌套子图元改 fill 后选区/变换框 dangle 在 destroyed node）。
+      // 所有 syncWorkingCopy 调用者（updateWorkingNode / addWorkingSymbol / removeWorkingSymbol /
+      // group / ungroup / connection-write）经此统一对齐 target，与 success-path 重建对称。
+      reconcileEditorTargets();
     } catch (error) {
+      // plan 2026-08-08-1931-4 Phase 2 / P1-4：backport 1910-2 A6 全量重建模式到此 catch。
+      // 旧实现仅回滚 working copy + undoRedo.rollbackOnApplyFailure + onError——但 leafer 无事务，
+      // engine.applyDiff 半途抛错时场景树已半变（如 applyUpdate remove→buildNode 链中段失败）；
+      // synced.config === working copy 还原态，下轮 syncWorkingCopy diff 为空 → 引擎永不愈合，
+      // 画布与 working copy 永久背离（1910-2 注释已定义为 defect，但仅 backport 到 applyUndoRedoDiff）。
+      // 现闭合：catch 经 engine.build(synced.config) 全量重建到 pre-call 已知良好态（O(n) 但仅错误路径），
+      // 再 reconcileEditorTargets 对齐 target。与 applyUndoRedoDiff catch 行为对称——同一失败类两 catch 一致。
       session.workingConfig = cloneConfigSnapshot(synced.config);
       undoRedo.rollbackOnApplyFailure();
+      engine.build(synced.config);
+      reconcileEditorTargets();
       latest.current.onError?.('editor-internal-error', errorMessage(error));
     }
   };
@@ -189,6 +229,7 @@ export function createRuntimeCore(
     notifySession: () => latest.current.onSessionChange?.(session),
     setSessionSelection,
     syncWorkingCopy,
+    reconcileEditorTargets,
   };
 
   /**

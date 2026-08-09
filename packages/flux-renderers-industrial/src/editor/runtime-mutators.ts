@@ -44,7 +44,7 @@ export interface EditorRuntimeMutators {
 }
 
 export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMutators {
-  const { engine, session, undoRedo, latest, synced, notifySession, setSessionSelection, syncWorkingCopy } = ctx;
+  const { engine, session, undoRedo, latest, synced, notifySession, setSessionSelection, syncWorkingCopy, reconcileEditorTargets } = ctx;
 
   const writeConnection = (
     junctionId: string,
@@ -132,20 +132,19 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
       // plan 2026-08-08-1809-2 Phase 3 / P1-3：commit 后修剪 selection 到新 working config 仍存在的 id。
       // undo 一个 add（或 redo 一个 remove）后 selection 可能持有已不存在的 id → inspector/toolbox 在死 id
       // 上静默 no-op。用 collectAllSymbols（递归，前向兼容 plan {3} P1-4 嵌套 id）收集现存集，过滤死 id，
-      // 经 setSessionSelection 统一同步 canonical + React mirror + 触发 onSelectionChange，并校正 engine targets。
+      // 经 setSessionSelection 统一同步 canonical + React mirror + 触发 onSelectionChange。
       const liveIds = new Set(collectAllSymbols(session.workingConfig.symbols).map((s) => s.id));
       const pruned = session.selection.filter((id) => liveIds.has(id));
+      // plan 2026-08-08-1931-4 Phase 2 / P1-2b：长度门控移除——engine.applyDiff 中的 applyUpdate 收到
+      // patch.children 时重建 group 子树，LeafNode 对象 identity 变化即使 selection id 集不变；旧长度门控
+      // （pruned.length !== session.selection.length）跳过此分支 → editor.target dangle 在被销毁的旧节点。
+      // 现无条件重解析 target。setSessionSelection 仍在长度变化时调用（保持既有 canonical / React mirror /
+      // onSelectionChange 通知语义不变——死 id 修剪才需派发，长度不变时无新事件可派发）。
       if (pruned.length !== session.selection.length) {
         setSessionSelection(pruned);
-        if (pruned.length === 0) {
-          engine.clearEditorSelection();
-        } else {
-          const resolvedNodes = pruned
-            .map((id) => engine.getSymbol(id)?.node)
-            .filter((n): n is NonNullable<typeof n> => n !== undefined);
-          engine.setEditorTargets(resolvedNodes);
-        }
       }
+      // 无条件重解析 editor.target 到当前 live registry（与 syncWorkingCopy 成功路径 / 两 catch 对齐）。
+      reconcileEditorTargets();
       notifySession();
     } catch (error) {
       // plan 2026-08-08-1910-2 Phase 2 / A6：回滚 working copy + 引擎场景到 apply 前态。
@@ -159,6 +158,11 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
       session.workingConfig = beforeWorking;
       engine.build(beforeWorking);
       synced.config = cloneConfigSnapshot(beforeWorking);
+      // plan 2026-08-08-1931-4 Phase 2 / P1-3：catch 经 engine.build 全量重建后 LeafNode 对象 identity 全变；
+      // editor.target 是强节点引用，不重解析会指向 rollback 前销毁的节点（dangle）。从 session.selection
+      // 重解析到 rebuilt registry（与 success-path prune 同形——可能含死 id，reconcileEditorTargets 经
+      // getSymbol 过滤 + 空则 clearEditorSelection）。
+      reconcileEditorTargets();
       latest.current.onError?.('editor-internal-error', errorMessage(error));
     }
   };
