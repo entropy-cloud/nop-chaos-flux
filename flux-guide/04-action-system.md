@@ -126,11 +126,12 @@
 
 `openDialog` / `openDrawer` 的 `args` 除了 `title` / `size` / `data` / `body` 等常规字段外，还支持三个 lifecycle callback 字段（仅对 action-style 生效；declarative `type: 'dialog'` / `type: 'drawer'` 不走此机制）：
 
-| 字段              | 触发时机                                               | `$formData` | `$result`  | 典型用途                                              |
-| ----------------- | ------------------------------------------------------ | ----------- | ---------- | ----------------------------------------------------- |
-| `onClose`         | surface 被关闭时（任意路径）                           | ✗           | ✗          | 关闭后刷新外部列表（`refreshNearest`）、清理状态      |
-| `onSubmitSuccess` | surface body 内 `submitScope: 'surface'` form 提交成功 | ✓           | ✓ response | 提交后刷新外部列表、导航、上报                        |
-| `onSubmitError`   | surface body 内 `submitScope: 'surface'` form 提交失败 | ✓           | ✓ error    | 错误恢复（字段重置、上报）—— **不替代默认错误 toast** |
+| 字段              | 触发时机                                                                  | `$formData` | `$result`  | 典型用途                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------- | ----------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `onClose`         | surface 被关闭时（任意路径）                                              | ✗           | ✗          | 关闭后刷新外部列表（`refreshNearest`）、清理状态                                                           |
+| `onSubmitSuccess` | surface body 内 `submitScope: 'surface'` form 提交成功                    | ✓           | ✓ response | 提交后刷新外部列表、导航、上报                                                                             |
+| `onSubmitError`   | surface body 内 `submitScope: 'surface'` form 提交失败                    | ✓           | ✓ error    | 错误恢复（字段重置、上报）—— **不替代默认错误 toast**                                                      |
+| `closeOnSubmit`   | （行为开关，非 callback）`submitScope: 'surface'` form 提交成功后自动关闭 | —           | —          | AMIS `Dialog.closeOnSubmit` 语义：按钮或 Enter 提交统一生效，先跑 `onSubmitSuccess` 再关闭；提交失败不关闭 |
 
 > **关键约束**：submit callback 只对 form schema 上**显式标了 `submitScope: 'surface'`** 的 form 触发。多 form dialog 场景必须在主提交 form 上声明。详见 `design-patterns/page-dialog-drawer.md` §6.4。
 

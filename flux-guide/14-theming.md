@@ -27,6 +27,54 @@
 - **间距**：`--space-page-body` / `--space-section-gap` / `--space-form-item-gap` / `--space-fieldset-body-gap` / `--space-form-actions-gap` / `--space-form-body-to-actions` / `--space-field-internal` / `--space-field-label-gap` / `--space-field-label-h-gap` / `--space-tabs-content-gap`
 - **图表**：`--chart-1` ... `--chart-5`
 
+### 组件级 token 面（C1a，2026-08-09 起）
+
+组件视觉基线（Table / Dialog / CRUD 工具栏）的**所有关键数值**经下列变量控制，组件与样式文件内不写死魔法数字。三者全部定义在 `theme-tokens/styles.css` 的 `:root` 默认块，宿主同重名变量直接覆盖即可整体换调（优先级高于默认值）：
+
+- **表格**（消费链：`packages/ui/src/styles/table.css` ← `ui Table/TableHead/TableCell` + `flux-renderers-data` table-renderer）：
+
+| 变量                                                      | 默认                     | 语义                             |
+| --------------------------------------------------------- | ------------------------ | -------------------------------- |
+| `--table-body-font-size`                                  | 12px                     | 表体字号                         |
+| `--table-header-font-size` / `--table-header-font-weight` | 14px / 400               | 表头字号/字重                    |
+| `--table-cell-padding-y` / `--table-cell-padding-x`       | 11px / 10px              | 单元内边距                       |
+| `--table-edge-padding-x`                                  | 16px                     | 首/末列水平边距                  |
+| `--table-row-height`                                      | 40px                     | thead th 高度                    |
+| `--table-header-bg`                                       | `hsl(var(--background))` | thead 背景                       |
+| `--table-header-separator-color`                          | `hsl(var(--border))`     | thead 列分隔线                   |
+| `--table-hover-bg` / `--table-hover-bg-gradient`          | primary 6% / 9% 渐变     | 行 hover（含固定列透传）         |
+| `--table-selected-bg` / `--table-selected-bg-strong`      | primary 10% / 12%        | 行选中                           |
+| `--table-striped-bg`                                      | transparent              | stripe（默认与 AMIS 一致无条纹） |
+| `--table-empty-height`                                    | 200px                    | empty 高度                       |
+| `--table-fixed-edge-width`                                | 30px                     | 固定边缘阴影宽                   |
+| `--table-fixed-edge-shadow` / `-right`                    | inset 阴影               | 左/右固定边缘阴影                |
+| `--table-row-action-height`                               | 32px                     | 操作列按钮高                     |
+| `--table-row-action-gap`                                  | 10px                     | 操作列按钮 gap                   |
+| `--crud-toolbar-gap`                                      | 10px                     | CRUD 工具栏 gap                  |
+
+- **对话框**（消费链：`ui/src/components/ui/dialog.tsx` ← `flux-react/dialog-host.tsx`）：
+
+| 变量                                | 默认                         | 职责                            |
+| ----------------------------------- | ---------------------------- | ------------------------------- |
+| `--dialog-size-xs/sm/base/md/lg/xl` | 375/350/500/800/1100px / 90% | 6 档宽度（未传 size 默认 base） |
+| `--dialog-top-offset`               | 60px                         | 顶部吸附定位                    |
+| `--dialog-stack-step`               | 30px                         | 多层叠加步进                    |
+| `--dialog-overlay-bg`               | `rgb(0 0 0 / 0.7)`           | 遮罩色                          |
+| `--dialog-title-font-size`          | 14px                         | 标题字号                        |
+| `--dialog-body-padding-x`           | 24px                         | body 水平内边距                 |
+| `--dialog-footer-button-min-width`  | 72px                         | footer 按钮最小宽               |
+| `--dialog-content-border-radius`    | 6px                          | content 圆角                    |
+| `--dialog-footer-gap`               | 8px                          | footer 间距                     |
+
+宿主覆盖示例（如在 `.host-shell` 上）：
+
+```css
+.host-shell {
+  --table-body-font-size: 13px; /* 更大表体 */
+  --dialog-overlay-bg: rgb(0 0 0 / 0.5); /* 更浅遮罩 */
+}
+```
+
 ### 4 个主题变体（`styles.css:71-309`）
 
 每个变体都重新定义上述全部 token 的扩展超集（额外含 `--primary-dark/light/bg`、`--secondary`、`--info`、`--success`、`--danger`、`--warning`、`--gray-50..900`、`--glass-blur`、`--app-topbar-bg`、`--app-sidebar-bg`、`--app-tabs-bg`、`--card-surface`、`--border-surface` 等）：

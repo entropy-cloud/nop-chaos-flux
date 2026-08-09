@@ -138,3 +138,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/117-tiptap-editor-label-activation-race-fix.md`
 - `docs/bugs/118-diff-view-reaction-echo-dispatch-loop-fix.md`
 - `docs/bugs/119-gantt-strictmode-store-destroy-empty-state-fix.md`
+- `docs/bugs/120-table-column-width-strategy-class-split-fix.md`

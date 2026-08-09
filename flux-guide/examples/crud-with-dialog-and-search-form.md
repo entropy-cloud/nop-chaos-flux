@@ -127,9 +127,11 @@ form. The search form keeps the default `'local'` scope.
   (page scope). `refreshNearest` walks up from page scope and finds the outer
   `users-page-list` CRUD — not the inner `user-activity-list` (which lives in
   dialog scope, outside the owner's scope chain).
-- **Dialog is closed** via the submit button's `submitForm.then: closeSurface`
-  chain, not inside `onSubmitSuccess`. This ensures the data refresh completes
-  before the UI closes.
+- **Dialog is closed** via `closeOnSubmit: true` (AMIS semantic — button click
+  and Enter-key submit both close it, after the `onSubmitSuccess` refresh runs).
+  The submit button itself only triggers `submitForm`; the alternative
+  `submitForm.then: closeSurface` chain works for button clicks but does NOT
+  fire on Enter-key submits (see `design-patterns/page-dialog-drawer.md` §6.2).
 - **`onClose`** also refreshes — covers the case where the user cancels via
   ESC / mask click without submitting.
 

@@ -153,6 +153,9 @@ export interface OpenDialogActionSchema extends ActionShapeFields {
     onClose?: ActionSchema | ActionSchema[];
     onSubmitSuccess?: ActionSchema | ActionSchema[];
     onSubmitError?: ActionSchema | ActionSchema[];
+    /** 提交成功后自动关闭（AMIS closeOnSubmit 语义）：surface 内 submitScope='surface' 的 form
+     *  提交成功（按钮或 Enter 均生效）→ 先执行 onSubmitSuccess hook → 自动 closeSurface。默认 false */
+    closeOnSubmit?: boolean;
   };
 }
 
@@ -171,6 +174,8 @@ export interface OpenDrawerActionSchema extends ActionShapeFields {
     onClose?: ActionSchema | ActionSchema[];
     onSubmitSuccess?: ActionSchema | ActionSchema[];
     onSubmitError?: ActionSchema | ActionSchema[];
+    /** 提交成功后自动关闭（AMIS closeOnSubmit 语义），语义同 openDialog */
+    closeOnSubmit?: boolean;
   };
 }
 

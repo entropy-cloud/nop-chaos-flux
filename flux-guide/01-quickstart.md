@@ -121,13 +121,15 @@
       "body": {
         "type": "form",
         "id": "editForm",
+        "submitScope": "surface",
         "submitAction": {
           "action": "ajax",
           "args": { "url": "/api/users/${id}", "method": "put" }
         },
-        "onSubmitSuccess": { "action": "closeSurface" },
         "body": [{ "type": "input-text", "name": "name", "label": "姓名" }]
-      }
+      },
+      "closeOnSubmit": true,
+      "onSubmitSuccess": { "action": "refreshNearest" }
     }
   }
 }

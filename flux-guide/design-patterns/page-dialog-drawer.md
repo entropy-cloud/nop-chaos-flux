@@ -221,29 +221,17 @@ Drawer 的 `data` / `isolate` 语义与 Dialog 相同，`isolate: true` 同样�
 > 1. **callback 在 owner ctx 执行**（不是 surface child scope）——`refreshNearest` 从 owner scope 开始向上查找，能命中外层 CRUD；`setValue` 写到 owner scope。
 > 2. **submit callback 只对 `submitScope: 'surface'` 的 form 触发**——多 form dialog 场景必须在主提交 form 上显式声明 `submitScope: 'surface'`，否则即使配了 `args.onSubmitSuccess` 也不会触发。详见 §6.4。
 > 3. **`onClose` 是 fire-and-forget 异步执行**——`closeSurface` 立即关闭 surface（同步），`onClose` callback 异步执行不阻塞 UI；hook 内 action 抛错只 `console.warn`，不影响 close 主流程。
-> 4. **declarative dialog/drawer 不走此机制**——`type: 'dialog'` / `type: 'drawer'` 节点的 form submit 不触发 `args.onSubmitSuccess`；declarative surface 用自己的 function-based `onClose` 路径。本节机制仅适用于 action-style `openDialog` / `openDrawer`。
+> 4. **declarative dialog/drawer 不走此机制**——`type: 'dialog'` / `type: 'drawer'` 节点的 form submit 不触发 `args.onSubmitSuccess`；declarative surface 用自己的 function-based `onClose` 路径。本节机制（含 `closeOnSubmit`）仅适用于 action-style `openDialog` / `openDrawer`。
 
 完整规则（owner context reconstruction、triggering order、与 ajax 默认通知的关系）见 `docs/architecture/surface-lifecycle-callbacks.md`。
 
-### 6.2 提交后刷新外部列表：用 `refreshNearest`
+### 6.2 提交后刷新外部列表：用 `refreshNearest` + `closeOnSubmit`
 
-如果 dialog 内提交后想刷新外部 CRUD，推荐用 `refreshNearest`（不需要知道外层 CRUD 的 id/name）。**注意**：`closeSurface` 不应放在 `onSubmitSuccess` 中，而应放在 `submitForm` 的 `then` 链中。原因：
+dialog 内提交成功后：**关闭 dialog 用 `closeOnSubmit`（推荐）**，刷新外部列表用 `refreshNearest`（不需要知道外层 CRUD 的 id/name）。
 
-- `onSubmitSuccess` 是 owner 侧的数据回调（刷新列表、导航、上报），不是 UI 控制点
-- `closeSurface` 是 UI 动作，应作为 `submitForm` 的后置操作（`then` 链），让 dialog 在数据刷新完成后才关闭
-- 把 `closeSurface` 放在 `onSubmitSuccess` 中会导致关闭与刷新的时序耦合不清晰，且与 `submitForm.then` 链重复
+**`closeOnSubmit`（AMIS 语义）**：`openDialog` / `openDrawer` 的 `args.closeOnSubmit: true` 时，surface 内 `submitScope: 'surface'` 的 form 提交成功后（按钮点击或 Enter 回车都生效，两条路径统一经过 submit:success hook）先执行 `args.onSubmitSuccess`，再自动关闭 surface。提交失败（submit:error）不关闭。**推荐用它取代手写 `submitForm.then: closeSurface`**——后者只对按钮点击生效，Enter 回车提交不会经过按钮的 onClick。
 
-```jsonc
-{
-  "type": "button",
-  "label": "提交",
-  "level": "primary",
-  "onClick": {
-    "action": "submitForm",
-    "then": { "action": "closeSurface" },
-  },
-}
-```
+> **为什么不用 `submitForm.then: closeSurface` 了？** flux 表单输入框内按 Enter 会触发 form 内置提交（`ownedForm.submit()`），不经过提交按钮的 onClick，因此按钮 then 链里的 `closeSurface` 不会执行——产生"提交成功但 dialog 不关闭"的体验落差。`closeOnSubmit` 把"提交成功 → 关闭"绑定到 form 提交流程本身（与 AMIS `Dialog.closeOnSubmit` 默认 true 同语义），Enter 与按钮行为一致。
 
 ```jsonc
 {
@@ -258,7 +246,17 @@ Drawer 的 `data` / `isolate` 语义与 Dialog 相同，`isolate: true` 同样�
       ],
     },
     "onSubmitSuccess": { "action": "refreshNearest" },
+    "closeOnSubmit": true,
   },
+}
+```
+
+```jsonc
+// 提交按钮只触发提交，不负责关闭
+{
+  "label": "提交",
+  "level": "primary",
+  "onClick": { "action": "submitForm" },
 }
 ```
 
@@ -269,10 +267,12 @@ form.submitAction (ajax)
   ↓
 form lifecycle handlers (form schema 的 onSubmitSuccess)
   ↓
-surface submit hook (args.onSubmitSuccess → refreshNearest)
-  ↓ dialog UI 保持打开，用户看到刷新完成
-submitForm.then → closeSurface（关闭 dialog）
+surface submit hook (args.onSubmitSuccess → refreshNearest，owner ctx，dialog 保持打开)
+  ↓
+runtime 自动 closeSurface（closeOnSubmit，关闭 dialog）
 ```
+
+> **兼容**：`submitForm.then: closeSurface` 仍可用（显式编排风格），`closeOnSubmit` 打开时二者叠加为幂等关闭（closeSurface 对已关闭 surface 是 no-op），无副作用。
 
 `refreshNearest` 从 callback 执行的 owner scope 开始沿 `scope.parent` 链向上查找，命中第一个具备 `refresh` capability 的 CRUD / tree 或第一个 data-source，调用其 refresh。
 
@@ -371,16 +371,15 @@ dialog 内可能有多个 form（搜索 form + 编辑 form / 主 form + 子 form
 }
 ```
 
-> **注意**：主编辑 form 的提交按钮应配合 `submitForm.then` 关闭 dialog：
+> **注意**：主编辑 form 的提交按钮配合 `closeOnSubmit: true`（推荐）或 `submitForm.then` 关闭 dialog：
 >
 > ```jsonc
 > "onClick": {
->   "action": "submitForm",
->   "then": { "action": "closeSurface" }
+>   "action": "submitForm"
 > }
 > ```
 >
-> `closeSurface` 放在 `submitForm.then` 中而非 `onSubmitSuccess` 中，以保持数据回调与 UI 动作的职责分离。详见 §6.2。
+> `closeOnSubmit: true` 时提交成功（按钮或 Enter）自动关闭，推荐；手写 `submitForm.then: closeSurface` 亦可（Enter 提交不生效），详见 §6.2。
 
 > **注意**：当前 flux 没有 schema-level 校验"同一 surface 内最多一个 `submitScope: 'surface'` form"。如果多个 form 都标了 `'surface'`，它们的 submit 都会触发同一个 callback。建议业务侧自行保证只有一个主 form。
 
