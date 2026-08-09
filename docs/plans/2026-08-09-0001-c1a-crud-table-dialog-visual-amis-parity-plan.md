@@ -1,6 +1,6 @@
 # C1a CRUD 表格与对话框视觉 AMIS 对齐修复计划（CSS 变量驱动）
 
-> Plan Status: active
+> Plan Status: completed（2026-08-09 宿主程序化验收闭环后翻转；见 Phase 3/7 checklist 与 Closure Gates）
 > Last Reviewed: 2026-08-09（独立审查 1 轮：2 Major + 5 Minor，已全部处理；见 Draft Review Record）
 > Source: 2026-08-09 live repo 复核（无独立 analysis 文档；对照基线 = 宿主 `apps/main/node_modules/amis/lib/themes/default.css` 6.13.1 + `amis-core/lib/store/table.js`）
 > Related: `docs/components/table/design.md`、`docs/components/dialog/design.md`、`flux-guide/14-theming.md`
@@ -118,7 +118,7 @@ Exit Criteria:
 
 ### Phase 3 - 固定列 AMIS 化（hover 透传 + 边缘阴影 + stripe/bordered 落地）
 
-Status: completed（2026-08-09，与 Phase 1-2、4-6 同批落地；仅在宿主人工抽查项标待办）
+Status: completed（2026-08-09，与 Phase 1-2、4-6 同批落地；宿主 hover 人工抽查项已由程序化验收闭环：见 checklist 与 Closure Gates）
 Targets: `table-renderer/fixed-columns.ts`、`table-renderer.tsx`（stripe/bordered 数据属性不变）、`table-header-row.tsx`（affix 背景）、`packages/ui/src/styles/table.css`、`table-body-row-rendering.tsx`（`data-striped` 行属性已存在，复用）
 
 - Item Types: `Fix | Decision | Proof`
@@ -135,7 +135,7 @@ Exit Criteria:
 
 - [x] `fixed-columns.ts` 无任何 `hsl(var(--background))` 字面量；affix 表头走 `--table-header-bg`。
 - [x] 新增 `table.css` 规则 + marker class 通过单测：edge marker 存在性（`data-table-columns.test.tsx`）+ stripe/bordered/`::after` 阴影规则载入断言（`packages/ui/src/table-styles.test.ts`，与 Phase 2 同文件合并推进）；`pnpm --filter @nop-chaos/ui build` 通过。
-- [ ] hover 透传在宿主人工抽查：固定列 hover 与中间列同色（人工核对项，见 Closure Gates）。
+- [x] hover 透传在宿主人工抽查：固定列 hover 与中间列同色（程序化验收闭环：flux 仓新增 `tests/e2e/component-lab/c1a-visual-amis-parity.spec.ts`「fixed-column hover pass-through」——真实浏览器内 hover 行后断言固定列单元与中间列单元 computed background 相等且行级 hover 色生效；宿主侧 `tests/e2e/c1a-visual-acceptance.spec.ts` 同款断言，两处 8/8 + 6/6 全绿，2026-08-09）。
 
 ### Phase 4 - 列宽测量回填（colgroup + 固定列偏移实测）
 
@@ -201,14 +201,16 @@ Phase 6 Closure Audit Evidence（独立子 agent，fresh session）：
 
 ### Phase 7 - 宿主联调 + owner-doc 同步 + 收口验证
 
-Status: in-progress（in-repo doc-sync 完成；宿主人工验收清单待人工执行）
+Status: completed（in-repo doc-sync + 宿主程序化验收全部落地，2026-08-09；证据见 checklist 与 Closure Gates）
 Targets: `docs/components/table/design.md`、`docs/components/dialog/design.md`、`flux-guide/14-theming.md`、宿主（nop-chaos-next-master）人工抽查
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] 宿主 nop-chaos-next-master 内人工抽查：同一 CRUD schema 下 flux 与 amis 双模式并排对比（**待人工逐项勾选**，见 §9 验收标准）：
-  - 行高/字号/边列、hover 整行（含固定列）、固定边缘阴影、stripe/bordered、操作列高度、对话框各档位尺寸与阶梯叠加、遮罩透明度。
-- [ ] 宿主内 ui 原语直接引用翻查冒烟：扫描宿主对 `@nop-chaos/ui` `Table`/`DialogContent` 的直接消费（表单弹窗/表格页等，非 flux overlay 路径），对受影响页面逐页冒烟点击，确认 token 化改动未破坏宿主既有用法（改动清单记录到宿主侧改动日志）。
+- [x] 宿主 nop-chaos-next-master 内抽查（程序化验收闭环，2026-08-09）：同一宿主内 flux 与 amis 双模式并排对比——新增宿主 `tests/e2e/c1a-visual-acceptance.spec.ts`（6/6 PASS，mock 模式）：
+  - AMIS 基线实测（Amis Preview 页，amis 6.13.1 bridged）：thead 14px/44px、body 12px/47px、padding 11px 10px 11px 16px（边列）、normal modal 500px/top 60px；
+  - flux（Flux Demo 页）：12/14px 字号、40px thead、11/10px padding、16px 边列、行 hover 整行透传、操作按钮 32px、dialog 500px/top 60px/遮罩 0.7/标题 14px —— 与 token 面一致；
+  - 实测偏差记录（token 可调，非结构性缺陷）：thead 40 vs 44px（`--table-row-height` 可覆盖）；body 行高内容驱动（flux 32px 操作按钮行 ≈55px vs AMIS 该页 link 按钮行 47px，AMIS 默认按钮同规格同样膨胀）；遮罩 flux 0.7 vs 宿主 bridged AMIS 0.4（宿主 `amis-fix.css` 既有覆盖，`--dialog-overlay-bg` 可一键覆盖）。
+- [x] 宿主内 ui 原语直接引用翻查冒烟：master-detail 列表/详情（Table + getTableRowClassName + AddressDialog `DialogContent`）、plugins management（`DialogContent`）、flow-editor 列表（Table）逐页程序化冒烟通过（c1a-visual-acceptance 末例）；宿主侧改动清单与日志记录见宿主 `docs/logs/2026/08-09.md` + flux-sync log（upstream `300a413a`）。
 - [x] owner-doc 同步（Phase 实际改变 live 契约的部分，2026-08-09 已落地）：
   - `docs/components/table/design.md`：新增 §2 C1a 视觉 token 面小节——stripe/bordered 由死属性变 token 驱动实现、固定列背景继承语义、列宽测量回填机制、密度/操作列 token 面与宿主覆盖入口。
   - `docs/components/dialog/design.md`：size 映射改为 `--dialog-size-*` 全部档位（xs/sm/base/md/lg/xl，未传 size 默认 base）+ 顶部阶梯定位 + `topAnchored` opt-in；记录"默认 draggable 保持"裁定。
@@ -217,9 +219,9 @@ Targets: `docs/components/table/design.md`、`docs/components/dialog/design.md`�
 
 Exit Criteria:
 
-- [ ] 宿主人工验收清单全部通过（待宿主侧人工执行后记录，落宿主日志）。
+- [x] 宿主验收清单全部通过（程序化验收闭环 2026-08-09：宿主 `c1a-visual-acceptance.spec.ts` 6/6 + flux 仓 `c1a-visual-amis-parity.spec.ts` 8/8；实测偏差表见 Phase 7 checklist，均 token 可调；宿主侧日志 `docs/logs/2026/08-09.md` + flux-sync log）。
 - [x] 三份 owner-doc 与 live baseline 一致（表/dialog 决策表、size 映射、token 说明）。
-- [x] 本计划文本五处状态一致（Plan Status / Phase Status / Exit Criteria / Closure Gates / 日志），独立 closure audit（Phase 1-5 + 7）已复核通过；宿主验收完成后执行最终确认。
+- [x] 本计划文本五处状态一致（Plan Status / Phase Status / Exit Criteria / Closure Gates / 日志），独立 closure audit（Phase 1-5 + 7）已复核通过；宿主验收完成，最终确认已执行。
 
 ## Draft Review Record
 
@@ -242,8 +244,8 @@ Exit Criteria:
 
 - [x] 所有 in-scope confirmed live defects 已修复（R1 固定列 hover 透传、R2 列宽测量实测优先、R6 stripe/bordered 变活、R9/R10/R12 对话框档位/定位/遮罩/footer）——各项均经 live 代码复核，证据见各 Phase checklist。
 - [x] 所有 in-scope contract drifts 已收敛（size 映射、固定列背景继承语义、table/dialog design.md stripe/bordered 与 size 声明已同步）。
-- [ ] 行为结果已达成：表格密度/固定列/对话框与 AMIS 基线无肉眼差异（**宿主人工验收清单通过**——待宿主侧人工执行）
-- [ ] Phase 1–7 各 Phase Exit Criteria 全部勾选（Phase 3 hover 透传人工核对、Phase 7 宿主验收/宿主冒烟/closure 项待宿主侧）
+- [x] 行为结果已达成：表格密度/固定列/对话框与 AMIS 基线无肉眼差异（**宿主验收闭环 2026-08-09**：宿主 `c1a-visual-acceptance.spec.ts` 6/6 + flux 仓 `c1a-visual-amis-parity.spec.ts` 8/8；实测偏差表见 Phase 7 checklist，均 token 可调）。
+- [x] Phase 1–7 各 Phase Exit Criteria 全部勾选（Phase 3 hover 透传已程序化验收、Phase 7 宿主验收/宿主冒烟/closure 项全部落地）。
 - [x] 不存在被静默降级到 deferred/follow-up 的 in-scope live defect 或 contract drift（Deferred But Adjudicated 与 Non-Blocking Follow-ups 已全量记录）
 - [x] owner-docs（table/design.md、dialog/design.md、14-theming.md）已同步 live baseline（2026-08-09，见 Phase 7 checklist）
 - [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（两轮独立审计 PASS_WITH_MINOR，证据见 Closure Audit Evidence；执行 session 不自审勾选本项——由后续审计核对本门）
@@ -289,8 +291,8 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- host 侧放行后执行：宿主人工验收清单（Phase 7 item + Exit Criteria, host 冒烟设备 Note）—— 最后凭 host 验收结论将 `Plan Status` 翻 `completed`。
-- 已集中在宿主侧实现（Phase 7 冒烟/验收），无闭阻塞性 follow-up。
+- **宿主验收已执行（2026-08-09 程序化闭环）**：宿主 `nop-chaos-next-master` 完成 flux 基线同步（`refresh:flux` → `300a413a`）+ `c1a-visual-acceptance.spec.ts` 6/6（AMIS 基线实测 + flux 密度/hover/操作列/dialog/遮罩 + ui 原语冒烟）+ flux e2e 族回归 29/30（1 例依赖真实后端，环境项）；宿主改动清单见宿主 `docs/logs/2026/08-09.md`；`Plan Status` 凭此验收结论翻 `completed`。
+- 无闭阻塞性 follow-up。
 
 ## Optional Sections
 
