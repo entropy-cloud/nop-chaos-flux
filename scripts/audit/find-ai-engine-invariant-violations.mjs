@@ -15,11 +15,16 @@
  * ④ storage calls without reportStorageError:
  *    In use-conversation.ts, `storage?.<method>(...)` without trailing `.catch`.
  *
+ * ⑥ displacement methods without switchVersionRef bump (N1, Cycle 2):
+ *    In use-conversation.ts, createConversation / deleteConversation / clearAll
+ *    function bodies must contain a `switchVersionRef.current` bump.
+ *
  * Pure behavior invariants ①⑤ (isProcessing guard, abort cleanup) are covered
  * by runtime tests (engine-invariants.test.ts / conversation-invariants.test.ts)
  * and are NOT statically scanned (high false-positive rate, low ROI).
  *
- * Ratchet gate: baseline is zero violations on live code. New violations block CI.
+ * Ratchet gate: registered red hits (⑥×3 live displacement methods, Cycle 2 /
+ * I4 clears) are the only expected hits; new violations block CI.
  */
 
 import { readFile } from 'fs/promises';
@@ -286,6 +291,154 @@ function scanAdapterSyncClosureReads(code, relPath) {
   return violations;
 }
 
+/**
+ * Invariant ⑥ (Cycle 2 / N1) — displacement methods must bump switchVersionRef.
+ *
+ * Displacement methods (createConversation / deleteConversation / clearAll)
+ * shift the active conversation away from an in-flight switch target — they
+ * must bump `switchVersionRef.current` (self-increment or version write) so a
+ * pending switch's post-await promotion/hydration is invalidated. A missing
+ * bump lets the in-flight switch write stale engines over the displaced
+ * active state (probe-1/1b/1c).
+ *
+ * Expected live hits (registered red, Cycle 2 / I4 clears): 3 —
+ * createConversation / deleteConversation / clearAll. There are no exemptions:
+ * all three are displacement surfaces and must bump.
+ */
+function scanDisplacementVersionBumps(code, relPath) {
+  const violations = [];
+  const lines = code.split('\n');
+  const displacementMethods = /^\s*(?:async\s+)?function\s+(createConversation|deleteConversation|clearAll)\s*\(/;
+  const bumpRe = /switchVersionRef\.current\s*(?:\+\+|--|[-+]?=)|\+\+\s*switchVersionRef\.current/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const decl = lines[i].match(displacementMethods);
+    if (!decl) continue;
+
+    // Extract the function body via brace depth from the declaration line.
+    let depth = 0;
+    let bodyStart = -1;
+    let bodyEnd = -1;
+    for (let j = i; j < lines.length; j++) {
+      const stripped = lines[j].replace(/\/\/.*$/, '');
+      for (const ch of stripped) {
+        if (ch === '{') { depth += 1; if (depth === 1 && bodyStart < 0) bodyStart = j; }
+        else if (ch === '}') depth -= 1;
+      }
+      if (bodyStart >= 0 && depth === 0) {
+        bodyEnd = j;
+        break;
+      }
+    }
+    if (bodyEnd < 0) continue;
+
+    const body = lines.slice(bodyStart, bodyEnd + 1).join('\n');
+    if (!bumpRe.test(body)) {
+      violations.push({
+        file: relPath,
+        line: i + 1,
+        invariant: '⑥',
+        detail: `displacement method ${decl[1]} does not bump switchVersionRef.current (invariant ⑥, N1 active displacement integrity)`,
+      });
+    }
+  }
+  return violations;
+}
+
+/**
+ * Invariant ⑧ (Cycle 2 / N3) — runTurn early returns must not leak the
+ * pending branch stamp.
+ *
+ * `pendingBranchId` (createMessageEngine closure scope) is consumed once by
+ * runOnce (`pendingBranchId = undefined`). A runTurn early return BEFORE the
+ * runOnce call leaves the stamp unconsumed, leaking it into the next
+ * unrelated turn (probe-3). Static feasibility confirmed: pendingBranchId,
+ * runTurn and runOnce all live in the same closure scope (create-engine.ts),
+ * so a same-function scan of runTurn is sound.
+ *
+ * Scan/waiver surface (recorded): the entry `isProcessing` guard early return
+ * is unreachable in the stamp path — regenerate guards isProcessing BEFORE
+ * stamping and invokes runTurn synchronously after the stamp is set → exempt
+ * with reason. The connector-missing early return is reachable (regenerate
+ * with no connector always reaches it) → scan target.
+ *
+ * Expected live hits (registered red, Cycle 2 / I4 clears): 1 —
+ * the connector-missing early return.
+ */
+function scanBranchStampReset(code, relPath) {
+  const violations = [];
+  const lines = code.split('\n');
+  const runTurnRe = /^\s*(?:async\s+)?function\s+runTurn\s*\(/;
+  const clearRe = /pendingBranchId\s*=/;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!runTurnRe.test(lines[i])) continue;
+
+    // Extract the runTurn body via brace depth.
+    let depth = 0;
+    let bodyStart = -1;
+    let bodyEnd = -1;
+    for (let j = i; j < lines.length; j++) {
+      const stripped = lines[j].replace(/\/\/.*$/, '');
+      for (const ch of stripped) {
+        if (ch === '{') { depth += 1; if (depth === 1 && bodyStart < 0) bodyStart = j; }
+        else if (ch === '}') depth -= 1;
+      }
+      if (bodyStart >= 0 && depth === 0) {
+        bodyEnd = j;
+        break;
+      }
+    }
+    if (bodyEnd < 0) continue;
+
+    // First runOnce consumption point inside the body.
+    let runOnceIdx = -1;
+    for (let j = bodyStart; j <= bodyEnd; j++) {
+      if (/\brunOnce\s*\(/.test(lines[j])) {
+        runOnceIdx = j;
+        break;
+      }
+    }
+    if (runOnceIdx < 0) continue;
+
+    // Early returns before the runOnce consumption.
+    for (let j = bodyStart; j < runOnceIdx; j++) {
+      const stripped = lines[j].replace(/\/\/.*$/, '');
+      if (!/\breturn\s*;/.test(stripped)) continue;
+
+      // Nearest preceding `if (...) {` header owning the return path
+      // (the return's own line is included so a same-line
+      // `if (...) { return; }` guard is detected too).
+      let headerIdx = -1;
+      for (let k = j; k >= bodyStart; k--) {
+        if (/if\s*\(/.test(lines[k]) && (/\{/.test(lines[k]) || /\breturn\s*;/.test(lines[k]))) {
+          headerIdx = k;
+          break;
+        }
+      }
+
+      // Exemption: the entry isProcessing guard (stamp path unreachable —
+      // regenerate guards isProcessing before stamping; runTurn is invoked
+      // synchronously right after the stamp is set, so no interleaving can
+      // reach this guard with a pending stamp).
+      if (headerIdx >= 0 && /isProcessing/.test(lines[headerIdx])) continue;
+
+      // The early-return path must be accompanied by a pendingBranchId clear
+      // (anywhere in the path prefix from the body start to the return).
+      const prefix = lines.slice(bodyStart, j + 1).join('\n');
+      if (!clearRe.test(prefix)) {
+        violations.push({
+          file: relPath,
+          line: j + 1,
+          invariant: '⑧',
+          detail: `runTurn early return before runOnce leaves pendingBranchId unconsumed (invariant ⑧, N3 branch stamp leak)`,
+        });
+      }
+    }
+  }
+  return violations;
+}
+
 async function main() {
   const allViolations = [];
 
@@ -305,12 +458,14 @@ async function main() {
       allViolations.push(...scanStorageCalls(code, relPath));
       allViolations.push(...scanPostAwaitClosureReads(code, relPath));
       allViolations.push(...scanAdapterSyncClosureReads(code, relPath));
+      allViolations.push(...scanDisplacementVersionBumps(code, relPath));
     }
 
     // ③ controller identity guard — only for create-engine.ts
     if (rel.endsWith('create-engine.ts')) {
       allViolations.push(...scanControllerIdentityGuard(code, relPath));
       allViolations.push(...scanCompletionIdentityGuard(code, relPath));
+      allViolations.push(...scanBranchStampReset(code, relPath));
     }
   }
 

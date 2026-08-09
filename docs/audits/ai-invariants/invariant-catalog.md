@@ -1,10 +1,10 @@
 # AI Engine 不变式目录（Invariant Catalog）
 
-> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展，供 I5 验证与后续审计引用）
+> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展 + Cycle 2 / I1 §9 新族 ⑥-⑩ 沉淀，供 I5 验证与后续审计引用）
 > Last Updated: 2026-08-09
-> Source: `docs/backlog/ai-invariant-loop-roadmap.md`（Cycle 1 / I0）+ 4 轮 AI 审计（`docs/audits/2026-07-23-2141-*ai.md`、`2026-07-24-1757-*ai.md`、`2026-07-24-2151-*ai.md`、`2026-07-25-0707-*ai.md`）+ C8.1/8.2/8.3 + post-closure + Bug 07 note + I4 修复执行（K1-K4）
-> Produced By: plan `docs/plans/2026-08-09-1826-1-i0-invariant-inventory-baseline.md`（纯文档计划）；扩展于 plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`（K1-K4 + 门禁 ②③④⑤ 补强）
-> 下游消费: I1（门禁沉淀 `check:ai-engine-invariants`）、I2（不变式驱动审计）、Loop Rule（新族派生）、I5（全量验证）
+> Source: `docs/backlog/ai-invariant-loop-roadmap.md`（Cycle 1 / I0 + Cycle 2 / I1 派生）+ 4 轮 AI 审计（`docs/audits/2026-07-23-2141-*ai.md`、`2026-07-24-1757-*ai.md`、`2026-07-24-2151-*ai.md`、`2026-07-25-0707-*ai.md`）+ C8.1/8.2/8.3 + post-closure + Bug 07 note + I4 修复执行（K1-K4）+ Cycle 2 / I1 沉淀执行（N1-N5 → ⑥-⑩）
+> Produced By: plan `docs/plans/2026-08-09-1826-1-i0-invariant-inventory-baseline.md`（纯文档计划）；扩展于 plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`（K1-K4 + 门禁 ②③④⑤ 补强）；§9 沉淀于 plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`（⑥-⑩ 第二批门禁）
+> 下游消费: I1（门禁沉淀 `check:ai-engine-invariants`）、I2（不变式驱动审计）、Loop Rule（新族派生）、I5（全量验证）、Cycle 2 / I2（⑥-⑩ 门禁运行审计）
 
 ## 1. 基线确认：当前零 engine 不变式门禁
 
@@ -178,6 +178,45 @@
 - 审计产物：`docs/audits/ai-invariants/cycle1-findings.md`（K1-K4 RED 证据 + N1-N5/W1-W4）、`docs/audits/ai-invariants/cycle1-adjudication.md`（P0/P1 裁决 + 门禁补强契约 ③/⑤/④/②）
 - Bug notes：`docs/bugs/121-ai-engine-completion-mutate-identity-guard-fix.md`（K1）、`docs/bugs/122-ai-engine-abort-force-terminates-inflight-generator-fix.md`（K2）、`docs/bugs/123-ai-conversation-save-after-delete-ghost-fix.md`（K3）、`docs/bugs/124-ai-conversation-rename-sync-closure-read-fix.md`（K4）
 - 门禁登记处：`docs/audits/ai-invariants/gates.md`（I4 追加行）
+
+## 9. Cycle 2 / I1 新增不变式（⑥-⑩，第二批门禁）
+
+> 2026-08-09 落地（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`）。由 Cycle 1 / I6 按 Loop Rule 派生（Cycle 1 新族 N1-N5，findings §3.2 触发证据 + adjudication §3 N 表）。**当前 live 代码违反 ⑥-⑩**（N1-N5 全部已复现 RED，probe 编号见 findings §3.2）——门禁以「预期失败」形态落库（vitest `it.fails` + 扫描器注册红），Cycle 2 / I4 修复后翻转/清零。每条四字段：陈述 / 覆盖失败族 / 历史 bug 证据 / 检测方法。
+
+### 9.1 不变式 ⑥ —— active 位移完整性（N1）
+
+- **不变式陈述**：adapter 的 post-await 提升/复水写入（`setActiveEngine`/`engine.setMessages`）必须以 `activeIdRef`/`switchVersionRef` 为唯一裁决面且目标必须仍存在；**位移方法（delete/clearAll/create）必须 bump `switchVersionRef` 使在途 switch 失效**；删除 active 后的 next 引擎必须 build-on-demand（禁 `setActiveEngine(null)` 悬挂）；同 id 快速重 switch 时 hydration 不得被 version guard 整体丢弃。
+- **覆盖失败族**：active 位移完整族（N1，findings §3.2 5 成员 probe 全部复现 RED——await 间隙位移 → UI 显示与持久化状态错位，probe-B 含数据丢失面）。
+- **历史 bug 证据**：`use-conversation.ts:280-313`（createConversation 不 bump）、`:315-368`（switchConversation :322 唯一 bump 点）、`:370-404`（deleteConversation :382-388 fixup `setActiveEngine(next ? engineCache.get(next.id) ?? null : null)`——next 不在 cache 时 null 悬挂）、`:427-475`（clearAll 不 bump）；probe-1/1b/1c/B/C 全部 RED（findings §3.2 N1）。
+- **检测方法**：参数化穷举测试（`conversation-invariants-cycle2.test.ts` Invariant ⑥ 块，`it.fails` × 5 成员场景——套件保持全绿，I4 翻转）+ 静态扫描器规则 `scanDisplacementVersionBumps`（位移方法 delete/clearAll/create 函数体必须含 `switchVersionRef.current` bump 语句，缺失即违例；**live 预期命中 3**：create/delete/clearAll，注册红待 I4 清零）。
+
+### 9.2 不变式 ⑦ —— storage bootstrap 列表合并（N2）
+
+- **不变式陈述**：storage bootstrap 的 post-await `setConversations` 必须合并当前状态（functional updater），不得覆盖加载期间由 `createConversation` 创建的会话（防列表回滚 + activeId 悬空出列）。
+- **覆盖失败族**：bootstrap 覆盖族（N2，findings §3.2 probe-2 RED——create X 后 bootstrap resolve → 列表=[A]，activeId=X 悬空出列）。
+- **历史 bug 证据**：`use-conversation.ts:234-257`（bootstrap effect `:243` `setConversations(convs)` 整体覆盖，非 functional merge）；probe-2 RED（findings §3.2 N2）。
+- **检测方法**：运行时参数化测试（`conversation-invariants-cycle2.test.ts` Invariant ⑦ 块，`it.fails` × 2 场景）；**不静态化**（functional updater 为行为面，静态误报高，理由记录 gates.md）。
+
+### 9.3 不变式 ⑧ —— branch 戳消费/清除（N3）
+
+- **不变式陈述**：`pendingBranchId` 必须在使用前被消费或清除；runTurn 任一提前返回路径不得遗留待消费的 branch 戳（防泄漏到无关 turn）。
+- **覆盖失败族**：branching/fork 族（N3，I0 §3 登记候选族正式触发，findings §3.2 probe-3 RED——regenerate+connector-missing 后，下一正常 turn 的 assistant 被戳 `branchId:'branch-1'`）。
+- **历史 bug 证据**：`create-engine.ts:101`（`pendingBranchId` 声明）、`:210-229`（connector-missing 早退，runOnce 之前 return，戳未消费）、`:383-397`（runOnce 消费，`:397` `pendingBranchId = undefined`）、`:578-602`（regenerate 设戳 + `await runTurn([])`）；probe-3 RED（findings §3.2 N3）。
+- **检测方法**：运行时参数化测试（`engine-invariants.test.ts` Invariant ⑧ 块，`it.fails` 泄漏 ×1 + 消费控制 `it` ×1）+ 静态扫描器规则 `scanBranchStampReset`（runTurn 内 runOnce 调用前的提前 return 路径必须伴随 `pendingBranchId` 清除；**扫描/豁免面**：isProcessing 早退（`:206-208`）在设戳路径（regenerate→runTurn）不可达 → 豁免并记录理由；connector-missing 早退（`:210-229`）可达 → 扫描目标，**live 预期命中 1**，注册红待 I4 清零）。
+
+### 9.4 不变式 ⑨ —— plugin 错误隔离（N4）
+
+- **不变式陈述**：plugin hook 的 rejection 不得使 turn 状态卡死或绕过状态写入：onTurnStart 必须纳入 try/finally 清理面；onError 调用不得先于状态写入（或写入不得被 hook 抛错跳过）；onTurnEnd rejection 不得遮蔽原错误（所有错误必须落在 `requestState`/`lastError`）。
+- **覆盖失败族**：plugin 生命周期族（N4，I0 §3 登记候选族正式触发，findings §3.2 probe-4/probe-E RED + onTurnEnd 静态证据）。
+- **历史 bug 证据**：`create-engine.ts:247-249`（`await plugin.onTurnStart` 在 try 之外，rejection 卡死 processing）、`:336-340`（catch 内 `plugin.onError` 先于 mutate——onError 抛错跳过状态写入）、`:362-364`（finally 内 `await plugin.onTurnEnd` 无守卫——rejection 遮蔽原错误）；probe-4/probe-E RED（findings §3.2 N4）。
+- **检测方法**：运行时参数化测试（`engine-invariants.test.ts` Invariant ⑨ 块，`it.fails` × 3 场景）；**不静态化**（plugin 回调交错为行为面，误报高，理由记录 gates.md）。
+
+### 9.5 不变式 ⑩ —— 失败轮产物清理（N5）
+
+- **不变式陈述**：failed/aborted 轮的残留空 placeholder 不得进入后续请求历史（应移除或排除）；失败轮必须清理自身产物。
+- **覆盖失败族**：失败轮残留污染族（N5，findings §3.2 probe-D RED——请求 #2 携带 `{content:'', loading:false}` 空 assistant 消息）。
+- **历史 bug 证据**：`create-engine.ts:484-504`（runOnce catch `:485-486` `loading=false` + commitAssistant 保留空 placeholder）、`:507-528`（buildContext `:511` 仅排除 `isStreamingAssistantPlaceholder`（loading=true）尾消息）；probe-D RED（findings §3.2 N5）。
+- **检测方法**：运行时参数化测试（`engine-invariants.test.ts` Invariant ⑩ 块，`it.fails` 排除 ×1 + 正常轮控制 `it` ×1）；**不静态化**（buildContext 排除谓词为行为面，误报高，理由记录 gates.md）。
 
 ## 6. 引用索引
 

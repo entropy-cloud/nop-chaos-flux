@@ -58,10 +58,27 @@ function runTurn() {
 }
 `,
       'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+function createConversation(params) {
+  const info = { id: 'new', ...params };
+  ++switchVersionRef.current; // ⑥ displacement bump
+  setConversations((prev) => [info, ...prev]);
+  conversationsRef.current = [info, ...conversationsRef.current];
+  setActiveId(info.id);
+  activeIdRef.current = info.id;
+  return info;
+}
 async function deleteConversation(id) {
+  switchVersionRef.current += 1; // ⑥ displacement bump
   await removed.abort();
   if (activeIdRef.current === id) { setActiveId(null); }
   void storage?.deleteConversation(id).catch((e) => reportStorageError({ phase: 'deleteConversation', error: e }));
+}
+function clearAll() {
+  switchVersionRef.current = switchVersionRef.current + 1; // ⑥ displacement bump
+  engineCache.clear();
+  setConversations([]);
+  setActiveId(null);
+  activeIdRef.current = null;
 }
 function switchConversation(id) {
   const exists = conversations.some((c) => c.id === id); // first statement, pre-state-change → exempt
@@ -146,6 +163,65 @@ async function bad() {
     const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain('②');
+  });
+
+  it('violating fixture ⑥: displacement method without switchVersionRef bump → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+function clearAll() {
+  engineCache.clear();
+  setConversations([]);
+  setActiveId(null);
+  activeIdRef.current = null;
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('⑥');
+    expect(result.stderr).toContain('clearAll');
+  });
+
+  it('violating fixture ⑧: runTurn early return before runOnce without pendingBranchId clear → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/engine/create-engine.ts': `
+async function runTurn(incoming) {
+  if (adapter.getState().isProcessing) { return; } // entry guard → exempt
+  const connector = adapterStateConnector();
+  if (!connector) {
+    adapter.mutate('requestState', (draft) => { draft.requestState = 'error'; });
+    return; // early return without pendingBranchId clear → violation
+  }
+  const outcome = await runOnce(connector, abortController);
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('⑧');
+  });
+
+  it('clean fixture ⑧: early return clears pendingBranchId before returning → exit 0', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/engine/create-engine.ts': `
+async function runTurn(incoming) {
+  if (adapter.getState().isProcessing) { return; } // entry guard → exempt
+  pendingBranchId = undefined; // ⑧ clear before any early return
+  const connector = adapterStateConnector();
+  if (!connector) {
+    adapter.mutate('requestState', (draft) => { draft.requestState = 'error'; });
+    return;
+  }
+  const outcome = await runOnce(connector, abortController);
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('No invariant violations');
   });
 
   it('violating fixture ② (K4): rename reads bare conversations after setConversations → exit 1', () => {

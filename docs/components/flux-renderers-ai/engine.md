@@ -438,20 +438,30 @@ engine 在内部调 `connector.stream({ messages, tools, signal })`；不再有 
 
 ## §Invariants — AI Engine 不变式契约
 
-> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）
+> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）；2026-08-09 Cycle 2 / I1（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`，N1-N5 → 第二批门禁 ⑥-⑩ 沉淀）
 
-AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大复发失败模式族（并发守卫 / stale-closure / storage 静默丢），已沉淀为**首批 5 类可执行不变式契约**，防重构/新增方法回归。I2 审计在门禁盲区发现 K1-K4 四个实例（I3 裁决 P0/P1），I4 修复并把门禁补强至对应路径：
+AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大复发失败模式族（并发守卫 / stale-closure / storage 静默丢），已沉淀为**首批 5 类可执行不变式契约**，防重构/新增方法回归。I2 审计在门禁盲区发现 K1-K4 四个实例（I3 裁决 P0/P1），I4 修复并把门禁补强至对应路径；Cycle 1 / I6 按 Loop Rule 派生的 Cycle 2 新族 N1-N5（active 位移完整性 / bootstrap 合并 / branch 戳泄漏 / plugin 错误隔离 / 失败轮残留污染），已沉淀为**第二批门禁 ⑥-⑩**（见下节）：
 
-- **不变式目录**：`docs/audits/ai-invariants/invariant-catalog.md`（每条含陈述 + 覆盖失败族 + 历史 bug 证据 live 行号 + 检测方法；§7 = I4 的 ②③④⑤ 扩展契约）。
-- **门禁清单**：`docs/audits/ai-invariants/gates.md`（5 类不变式 × 覆盖方法 × 检测方式 × 运行命令，棘轮单调追加登记处；I4 追加 ③ 完成路径 / ⑤ 强制终结 / ④ 时序守卫 / ② sync 读取）。
+- **不变式目录**：`docs/audits/ai-invariants/invariant-catalog.md`（每条含陈述 + 覆盖失败族 + 历史 bug 证据 live 行号 + 检测方法；§7 = I4 的 ②③④⑤ 扩展契约；§9 = Cycle 2 的 ⑥-⑩ 契约）。
+- **门禁清单**：`docs/audits/ai-invariants/gates.md`（不变式 × 覆盖方法 × 检测方式 × 运行命令，棘轮单调追加登记处；Cycle 2 追加 ⑥-⑩ 五行 + 注册红节）。
+
+### Cycle 2 门禁 ⑥-⑩（预期红，待 Cycle 2 / I4 修复）
+
+> 当前 live 代码违反 ⑥-⑩（N1-N5 全部已复现 RED，findings §3.2 probe 全 RED）——门禁以「预期失败」形态落库：参数化测试用 vitest `it.fails`（断言正确行为 → live 违反 → 预期失败，套件保持全绿）；静态可检测面（⑥⑧）注册为扫描器 red（`check:ai-engine-invariants`，注册 4 命中：⑥×3 + ⑧×1）。**修复 = Cycle 2 / I4 职责**（test-first 先红后绿 + 类别清扫强制）；I4 完成后 `it.fails` 翻转 `it`、注册红清零。
+
+- **⑥ active 位移完整性（N1）**：post-await 提升/复水写入（`setActiveEngine`/`engine.setMessages`）以 `activeIdRef`/`switchVersionRef` 为唯一裁决面且目标必须仍存在；位移方法（delete/clearAll/create）必须 bump `switchVersionRef`；删除 active 后 next 引擎 build-on-demand（禁 null 悬挂）；同 id 快速重 switch hydration 不得被整体丢弃。扫描器：`scanDisplacementVersionBumps`（注册红 3：create/delete/clearAll）。
+- **⑦ storage bootstrap 列表合并（N2）**：bootstrap post-await `setConversations` 必须 functional merge，不得覆盖加载期间创建的会话。
+- **⑧ branch 戳消费/清除（N3）**：`pendingBranchId` 使用前必须消费或清除；runTurn 提前返回路径不得遗留待消费戳。扫描器：`scanBranchStampReset`（注册红 1：connector-missing 早退；isProcessing 入口早退豁免——设戳路径不可达）。
+- **⑨ plugin 错误隔离（N4）**：plugin hook rejection 不得使 turn 卡死或绕过状态写入——onTurnStart 纳入 try/finally 清理面；onError 不先于状态写入；onTurnEnd rejection 不遮蔽原错误（全部落 `requestState`/`lastError`）。
+- **⑩ 失败轮产物清理（N5）**：failed/aborted 轮残留空 placeholder 不得进入后续请求历史（移除或排除）；失败轮必须清理自身产物。
 
 ### 运行命令
 
 ```bash
-# 参数化穷举不变式测试（engine + adapter，含表完备性门禁）
-pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts
+# 参数化穷举不变式测试（engine + adapter，含表完备性门禁；⑥⑦ 在 conversation-invariants-cycle2.test.ts）
+pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts src/adapters/__tests__/conversation-invariants-cycle2.test.ts
 
-# 静态门禁（②③④，live 基线零命中；I4 扩展：③ 完成路径 + ② sync 读取）
+# 静态门禁（②③④⑥⑧，①⑤⑦⑨⑩ 纯行为/行为面不静态化；Cycle 2 注册红 = ⑥×3 + ⑧×1 预期命中）
 pnpm check:ai-engine-invariants
 ```
 
@@ -464,3 +474,15 @@ engine/adapter 任何新增或重构的变更方法若不在测试表也不在�
 ### Failure Path — 永不 settle 的 connector（K2 设计裁定）
 
 `abort()` 以 best-effort 强制终结在途 generator（`activeGenerator?.return()` + chunk 循环每迭代 `signal.aborted` 检查）——**协作式** generator（挂在 `yield` 上）经 `.return()` 立即结算；**永不 yield 的 generator（卡在自己内部 `await`）无法从外部抢占**，属 **connector 契约违背**，非 engine 缺陷（invariant-catalog §7.2 / bug note 122）。host 侧若需绝对终止保证，connector 必须尊重 `request.signal` 或保持协作式 yield 结构。
+
+### Failure Path — 已知违背面（Cycle 2 / ⑥-⑩，待 I4 修复）
+
+当前 live 代码的以下面已被门禁钉死为**预期红**（`it.fails` + 扫描器注册红），Cycle 2 / I4 修复前行为即违背：
+
+- **失败轮空 placeholder 进后续历史**（⑩/N5）：失败轮 catch 提交 `loading=false, content=''` 的 assistant placeholder，`buildContext` 仅排除 `loading===true` 尾消息 → 空块进入下一请求（严格后端拒绝）。
+- **plugin hook rejection 卡死 turn**（⑨/N4）：`onTurnStart` 在 try 之外（rejection 使 `processing` 卡死）、catch 内 `onError` 先于状态写入（抛错跳过 mutate）、`onTurnEnd` rejection 遮蔽原错误。
+- **active 位移错位**（⑥/N1）：switch 在途 × delete/clearAll/create 时，post-await 提升/复水可能覆盖被位移的 active 状态；delete active 后 next 引擎 null 悬挂；同 id 快速重 switch hydration 被 version guard 丢弃。
+- **branch 戳泄漏**（⑧/N3）：connector-missing 早退遗留 `pendingBranchId` → 下一无关 turn 被戳 branchId。
+- **bootstrap 列表覆盖**（⑦/N2）：bootstrap 整体覆盖加载期间创建的会话。
+
+修复路由 = Cycle 2 / I4（roadmap Phase Details I4，test-first 先红后绿 + 类别清扫强制）；修复完成即 `it.fails` 翻转 `it` + 注册红清零。
