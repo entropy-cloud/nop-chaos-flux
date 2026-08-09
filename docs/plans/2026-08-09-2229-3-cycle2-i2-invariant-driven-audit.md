@@ -70,56 +70,56 @@
 
 ### Phase 1 — 门禁全量运行与 red list 确定性确认
 
-Status: planned
+Status: completed
 Targets: `pnpm check`、`pnpm check:ai-engine-invariants`、`pnpm --filter @nop-chaos/flux-renderers-ai test`
 
 - Item Types: `Proof`
 
-- [ ] Proof: `pnpm check:ai-engine-invariants`（含 ⑥⑧ 新规则）standalone 复跑——命中清单与 Cycle 2 / I1 注册面逐条核对（⑥ delete/clearAll/create ×3 + ⑧ connector-missing ×1 + 零未注册），exit code 与注册表零差异
-- [ ] Proof: `pnpm --filter @nop-chaos/flux-renderers-ai test`——⑥-⑩ it.fails 门禁按预期失败（套件绿）、①-⑤ 全绿、既有回归全绿；如出现 unexpected-pass 按 Failure Paths 处理
-- [ ] Proof: `pnpm check`——仅既有登记 red + 注册命中，零未注册新命中；链尾若被登记 red 中断则 standalone 复跑补证（对齐 Cycle 1 先例）
-- [ ] Proof: red list 落档（确定性结论：门禁表达的违背面 == 注册面）
+- [x] Proof: `pnpm check:ai-engine-invariants`（含 ⑥⑧ 新规则）standalone 复跑——命中清单与 Cycle 2 / I1 注册面逐条核对（⑥ delete/clearAll/create ×3 + ⑧ connector-missing ×1 + 零未注册），exit code 与注册表零差异
+- [x] Proof: `pnpm --filter @nop-chaos/flux-renderers-ai test`——⑥-⑩ it.fails 门禁按预期失败（套件绿）、①-⑤ 全绿、既有回归全绿；如出现 unexpected-pass 按 Failure Paths 处理
+- [x] Proof: `pnpm check`——仅既有登记 red + 注册命中，零未注册新命中；链尾若被登记 red 中断则 standalone 复跑补证（对齐 Cycle 1 先例）
+- [x] Proof: red list 落档（确定性结论：门禁表达的违背面 == 注册面）
 
 Exit Criteria:
 
-- [ ] red list 确定性与注册面零差异（命中清单逐条核对记录在案）
-- [ ] AI 包测试绿（it.fails 预期失败语义）+ `pnpm check` 零未注册新增
+- [x] red list 确定性与注册面零差异（命中清单逐条核对记录在案）
+- [x] AI 包测试绿（it.fails 预期失败语义）+ `pnpm check` 零未注册新增
 
 ### Phase 2 — 对抗式探查（双轮）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/engine/create-engine.ts`、`src/adapters/use-conversation.ts`（只读探查）、`docs/analysis/2026-08-09-i2-cycle2-adversarial-probe/`（记录）
 
 - Item Types: `Proof | Decision`
 
-- [ ] Proof: 执行 session 轮探查——按 `docs/skills/open-ended-adversarial-review-prompt.md`，聚焦 ⑥-⑩ 门禁未表达盲区（新交错组合：⑥ hydration × ⑧ 戳、⑨ plugin × abort 交错、⑩ 残留 × ⑥ 位移叠加；refactor 新方法 / runTurn 新早退路径；跨方法组合状态）；候选发现全部临时 vitest 复现（RED/GREEN 记录，复跑后删除临时文件）——记录 `round-01-executor.md`
-- [ ] Proof: 独立 fresh session 轮探查（不复用执行 session 上下文）——对执行轮结论独立复核 + 补充发现——记录 `round-02-independent.md`
-- [ ] Decision: 每条发现分类——已知族（门禁漏覆盖，机制已被 ⑥-⑩ 陈述覆盖但检测未表达 → Cycle 2 / I3 补门禁）/ 新族（需要新不变式 → Cycle 3 / I1 派生候选，附触发证据 `文件:行` + 不变式陈述）/ watch-only（低严重度/未确定性复现，附复触发条件）
-- [ ] Proof: 12 方法 × ⑥-⑩ 覆盖矩阵落档（covered / partial / uncovered / N/A，uncovered 格必须已探查，对齐 Cycle 1 零悬空格先例）
-- [ ] Proof: W1-W4 复核——**以 I6（`2026-08-09-2229-1` Phase 1）的 W1 实证复查结论为交接锚点**（W1 收敛面属 Cycle 1 K2/I6 复查范围，非 ⑥ 门禁面）；新门禁面下复触发条件如有变化则更新 findings，其余维持
+- [x] Proof: 执行 session 轮探查——按 `docs/skills/open-ended-adversarial-review-prompt.md`，聚焦 ⑥-⑩ 门禁未表达盲区（新交错组合：⑥ hydration × ⑧ 戳、⑨ plugin × abort 交错、⑩ 残留 × ⑥ 位移叠加；refactor 新方法 / runTurn 新早退路径；跨方法组合状态）；候选发现全部临时 vitest 复现（RED/GREEN 记录，复跑后删除临时文件）——记录 `round-01-executor.md`
+- [x] Proof: 独立 fresh session 轮探查（不复用执行 session 上下文）——对执行轮结论独立复核 + 补充发现——记录 `round-02-independent.md`
+- [x] Decision: 每条发现分类——已知族（门禁漏覆盖，机制已被 ⑥-⑩ 陈述覆盖但检测未表达 → Cycle 2 / I3 补门禁）/ 新族（需要新不变式 → Cycle 3 / I1 派生候选，附触发证据 `文件:行` + 不变式陈述）/ watch-only（低严重度/未确定性复现，附复触发条件）
+- [x] Proof: 12 方法 × ⑥-⑩ 覆盖矩阵落档（covered / partial / uncovered / N/A，uncovered 格必须已探查，对齐 Cycle 1 零悬空格先例）
+- [x] Proof: W1-W4 复核——**以 I6（`2026-08-09-2229-1` Phase 1）的 W1 实证复查结论为交接锚点**（W1 收敛面属 Cycle 1 K2/I6 复查范围，非 ⑥ 门禁面）；新门禁面下复触发条件如有变化则更新 findings，其余维持
 
 Exit Criteria:
 
-- [ ] 双轮探查记录齐备（round-01/02）；候选发现全部有复现证据（临时文件零残留）
-- [ ] 覆盖矩阵零悬空格；发现分类零悬挂（K/N/W 逐条）
+- [x] 双轮探查记录齐备（round-01/02）；候选发现全部有复现证据（临时文件零残留）
+- [x] 覆盖矩阵零悬空格；发现分类零悬挂（K/N/W 逐条）
 
 ### Phase 3 — findings 落档 + 收口
 
-Status: planned
+Status: completed
 Targets: `docs/audits/ai-invariants/cycle2-findings.md`（新建）、`docs/backlog/ai-invariant-loop-roadmap.md`、`docs/logs/2026/08-09.md`
 
 - Item Types: `Proof | Decision | Follow-up`
 
-- [ ] Proof: `cycle2-findings.md` 落档（对齐 Cycle 1 格式：red list 记录 / 覆盖矩阵 / 发现清单（K/N/W 分类，每条含 `文件:行` + 不变式陈述 + 复现证据）/ watch-only / 未触发候选族登记 / Loop Rule 派生摘要）
-- [ ] Proof: 零悬挂核对——发现条目 ↔ 分类逐条勾对（K → I3 补门禁 / N → Cycle 3 / I1 触发证据 / W → watch-only），无未分类条目
-- [ ] Decision: 未触发候选族登记（tool-execution 并发 / streaming backpressure 若本轮未触及则维持登记，对齐 Cycle 1 §5）
-- [ ] Proof: roadmap Cycle 2 / I2 行 `todo` → `✅`（附执行证据：plan 路径 + findings 引用）；daily log 记录（red list 结论 + 发现摘要 + 探查轮次）
-- [ ] Proof: `pnpm check:docs-garbled`（新增/修改 docs：findings + roadmap + daily log + analysis 记录）exit 0 或候选全部归属既有文件
-- [ ] Follow-up: git commit——`docs(ai-invariant-loop): plan-2026-08-09-2229-3 Cycle 2 I2 审计收口——red list 确定性确认 + 双轮探查 + cycle2-findings 零悬挂`（对齐 I2-Cycle1 纯记录先例；仅 stage 本 plan 相关文件）
+- [x] Proof: `cycle2-findings.md` 落档（对齐 Cycle 1 格式：red list 记录 / 覆盖矩阵 / 发现清单（K/N/W 分类，每条含 `文件:行` + 不变式陈述 + 复现证据）/ watch-only / 未触发候选族登记 / Loop Rule 派生摘要）
+- [x] Proof: 零悬挂核对——发现条目 ↔ 分类逐条勾对（K → I3 补门禁 / N → Cycle 3 / I1 触发证据 / W → watch-only），无未分类条目
+- [x] Decision: 未触发候选族登记（tool-execution 并发 / streaming backpressure 若本轮未触及则维持登记，对齐 Cycle 1 §5）
+- [x] Proof: roadmap Cycle 2 / I2 行 `todo` → `✅`（附执行证据：plan 路径 + findings 引用）；daily log 记录（red list 结论 + 发现摘要 + 探查轮次）
+- [x] Proof: `pnpm check:docs-garbled`（新增/修改 docs：findings + roadmap + daily log + analysis 记录）exit 0 或候选全部归属既有文件
+- [x] Follow-up: git commit——`docs(ai-invariant-loop): plan-2026-08-09-2229-3 Cycle 2 I2 审计收口——red list 确定性确认 + 双轮探查 + cycle2-findings 零悬挂`（对齐 I2-Cycle1 纯记录先例；仅 stage 本 plan 相关文件）
 
 Exit Criteria:
 
-- [ ] `cycle2-findings.md` 零悬挂落档；roadmap Cycle 2 / I2 行 ✅；daily log + docs-garbled + commit 完成
+- [x] `cycle2-findings.md` 零悬挂落档；roadmap Cycle 2 / I2 行 ✅；daily log + docs-garbled + commit 完成
 
 ## Draft Review Record
 
@@ -136,13 +136,13 @@ Exit Criteria:
 
 > 关闭条件：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。纯文档计划：不涉及代码变更，`pnpm test`/`lint`/`typecheck`/`build` 从 Closure Gates 移除（guide 纯文档条款）。
 
-- [ ] red list 确定性确认（门禁表达违背面 == Cycle 2 / I1 注册面，零差异零未注册新增）
-- [ ] 双轮对抗探查完成 + 覆盖矩阵零悬空格 + 发现全部分类（K/N/W）零悬挂
-- [ ] `cycle2-findings.md` 落档且与 live 证据逐条核对（`文件:行` 一致）；不存在被静默降级到 deferred 的 in-scope 发现（新族显式路由 Cycle 3 / I1 触发证据，非延期）
-- [ ] 临时探查文件/测试零残留（工作区仅 docs 变更）
-- [ ] 受影响的 owner docs 已同步（roadmap Cycle 2 / I2 行 + 动态状态区 + daily log）
+- [x] red list 确定性确认（门禁表达违背面 == Cycle 2 / I1 注册面，零差异零未注册新增）
+- [x] 双轮对抗探查完成 + 覆盖矩阵零悬空格 + 发现全部分类（K/N/W）零悬挂
+- [x] `cycle2-findings.md` 落档且与 live 证据逐条核对（`文件:行` 一致）；不存在被静默降级到 deferred 的 in-scope 发现（新族显式路由 Cycle 3 / I1 触发证据，非延期）
+- [x] 临时探查文件/测试零残留（工作区仅 docs 变更）
+- [x] 受影响的 owner docs 已同步（roadmap Cycle 2 / I2 行 + 动态状态区 + daily log）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm check:docs-garbled` 通过或候选全部归属既有文件
+- [x] `pnpm check:docs-garbled` 通过或候选全部归属既有文件
 
 ## Deferred But Adjudicated
 
@@ -165,14 +165,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: 执行完成待 closure-audit（Phase 1/2/3 全 completed + 全 checklist [x]；Closure Gates 6/7 [x]，audit 项待独立 sub-agent）。red list 确定性确认（4 注册命中 == 注册面零差异）、双轮探查 13K/0N/4W 零悬挂、`cycle2-findings.md` 落档、roadmap Cycle 2 / I2 行 ✅、daily log 收口、临时文件零残留。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立审计者或独立子 agent）
+- Auditor / Agent: （独立审计者或独立子 agent，待执行）
 - Evidence: （task id / daily log link / findings 摘要）
 
 Follow-up:
 
-- （只记录 non-blocking follow-up；confirmed live defect 不得出现在这里）
-- 或明确写 no remaining plan-owned work
+- Cycle 2 / I3 裁决（基于 `cycle2-findings.md`；K 类补门禁契约打包）。
+- W1-W4 + 新 W-E/W-⑨-a/b/c 复核结论维持登记（I6-Cycle2 收口时从 watch-only 清单更新）。
+- 明确 no remaining plan-owned work（除上述 non-blocking follow-up）。
