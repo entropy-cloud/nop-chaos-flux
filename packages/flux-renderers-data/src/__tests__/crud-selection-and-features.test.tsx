@@ -490,6 +490,42 @@ describe('CRUD selection and features', () => {
       expect(document.querySelector('[data-slot="header-toolbar-pagination"]')).toBeTruthy();
     });
 
+    it('uses tokenized toolbar gaps instead of hardcoded spacing', async () => {
+      const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://data/crud-toolbar-tokens"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'crud',
+                source: records,
+                rowKey: 'id',
+                toolbar: [{ type: 'button', label: 'Create' }],
+                toolbarLayout: {
+                  header: ['listActions', 'pagination'],
+                  footer: ['statistics'],
+                },
+                columns: [{ label: 'ID', name: 'id' }],
+              },
+            ],
+          }}
+          env={env}
+          formulaCompiler={formulaCompiler}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
+      });
+
+      const layout = document.querySelector('[data-slot="header-toolbar-layout"]');
+      expect(layout?.className).toContain('gap-[var(--crud-toolbar-gap)]');
+      expect(layout?.className).not.toContain('gap-3');
+    });
+
     it('renders table body with checkbox selection and field values', async () => {
       const SchemaRenderer = createDataSchemaRenderer();
 

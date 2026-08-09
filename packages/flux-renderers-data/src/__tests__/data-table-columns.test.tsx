@@ -37,6 +37,41 @@ describe('dataRendererDefinitions table columns', () => {
     expect(fixedCell?.dataset.fixed).toBe('left');
     expect(fixedCell?.style.position).toBe('sticky');
     expect(fixedCell?.style.left).toBe('0px');
+    expect(fixedCell?.style.background).toBe('');
+    expect(fixedCell?.className).toContain('nop-table-sticky-edge-left');
+    expect(fixedCell?.className).not.toContain('bg-background');
+  });
+
+  it('renders a colgroup with one measured-width col per data column', async () => {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/table-colgroup"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'table',
+              columns: [
+                { label: 'Name', name: 'name', fixed: 'left', width: 120 },
+                { label: 'Email', name: 'email', width: 180 },
+              ],
+              source: [{ id: 1, name: 'Alice', email: 'alice@example.com' }],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    await screen.findByText('Name');
+    const colgroup = document.querySelector('colgroup[data-slot="table-column-group"]');
+    expect(colgroup).not.toBeNull();
+    const cols = Array.from(colgroup?.querySelectorAll('col') ?? []);
+    expect(cols).toHaveLength(2);
+    expect(cols[0]?.getAttribute('data-column-width-col-key')).toBe('name:0');
+    expect(cols[1]?.getAttribute('data-column-width-col-key')).toBe('email:1');
   });
 
   it('keeps operation columns fixed on the right when configured', async () => {
@@ -77,6 +112,11 @@ describe('dataRendererDefinitions table columns', () => {
     expect(operationCell?.dataset.fixed).toBe('right');
     expect(operationCell?.style.position).toBe('sticky');
     expect(operationCell?.style.right).toBe('0px');
+    expect(operationCell?.style.background).toBe('');
+    expect(operationCell?.className).toContain('nop-table-sticky-edge-right');
+    const actionsRegion = operationCell?.querySelector('[data-slot="table-actions"]');
+    expect(actionsRegion?.className).toContain('gap-[var(--table-row-action-gap)]');
+    expect(actionsRegion?.className).not.toContain('gap-3');
   });
 
   it('filters rows through header search input for searchable columns', async () => {

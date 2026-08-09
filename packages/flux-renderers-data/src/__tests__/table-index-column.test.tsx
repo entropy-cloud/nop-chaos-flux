@@ -47,6 +47,11 @@ describe('table index column', () => {
     expect(cells[0].textContent).toBe('1');
     expect(cells[1].textContent).toBe('2');
     expect(cells[2].textContent).toBe('3');
+    // 序号列宽度：width=50 建议值 + minWidth/maxWidth=50，
+    // 防止 table-layout:auto 下剩余空间把序号列拉伸变宽
+    expect(cells[0].style.width).toBe('50px');
+    expect(cells[0].style.minWidth).toBe('50px');
+    expect(cells[0].style.maxWidth).toBe('50px');
   });
 
   it('renders cumulative row numbers across pages with pagination', async () => {

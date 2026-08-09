@@ -1,6 +1,6 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import type { FixedColumnLayout } from '../table-renderer/fixed-columns.js';
 import type { TableColumnSchema, TableSchema } from '../schemas.js';
@@ -23,6 +23,8 @@ import {
   renderExpandedRow,
 } from '../table-renderer/table-body-row-rendering.js';
 import { areColumnsRenderEquivalent } from '../table-renderer/table-flattened-items.js';
+
+afterEach(cleanup);
 
 function makeRowScope(record: Record<string, unknown>, index: number): ScopeRef {
   const $slot = { record, index };
@@ -185,6 +187,11 @@ describe('fixed column layout', () => {
     expect(layout.hasStickyColumns).toBe(true);
     expect(layout.getExpandCellProps()).toMatchObject({ fixed: 'left' });
     expect(layout.getSelectionCellProps()).toMatchObject({ fixed: 'left' });
+    // 固定列（序号/checkbox/expand/数据列）必须带 maxWidth=width，
+    // 防止 table-layout:auto 下剩余空间把列拉伸变宽
+    expect(layout.getSelectionCellProps().style).toEqual(
+      expect.objectContaining({ width: 40, minWidth: 40, maxWidth: 40 }),
+    );
     expect(
       layout.getColumnCellProps(
         { name: 'name', fixed: 'left', width: 120 } as TableColumnSchema,
@@ -192,7 +199,7 @@ describe('fixed column layout', () => {
       ),
     ).toMatchObject({
       fixed: 'left',
-      style: expect.objectContaining({ left: '80px', width: 120 }),
+      style: expect.objectContaining({ left: '80px', width: 120, maxWidth: 120 }),
     });
     expect(
       layout.getColumnCellProps(
@@ -208,15 +215,24 @@ describe('fixed column layout', () => {
     ).toEqual({});
   });
 
-  it('returns non-sticky layout when no fixed columns exist', () => {
+  it('returns non-sticky layout when no fixed columns exist (control columns still pinned, P1-02)', () => {
     const layout = createFixedColumnLayout(
       { type: 'table' } as TableSchema,
       [{ name: 'name' }] as TableColumnSchema[],
       false,
     );
     expect(layout.hasStickyColumns).toBe(false);
-    expect(layout.getExpandCellProps()).toEqual({});
-    expect(layout.getSelectionCellProps()).toEqual({});
+    // P1-02: even without any fixed data column, the selection/expand control
+    // columns must keep their declared width (auto layout otherwise stretches
+    // them with the table's remaining space).
+    expect(layout.getSelectionCellProps().fixed).toBeUndefined();
+    expect(layout.getSelectionCellProps().style).toEqual(
+      expect.objectContaining({ width: 40, minWidth: 40, maxWidth: 40 }),
+    );
+    expect(layout.getExpandCellProps().style).toEqual(
+      expect.objectContaining({ width: 40, minWidth: 40, maxWidth: 40 }),
+    );
+    expect(layout.getColumnCellProps({ name: 'name' } as TableColumnSchema, 0)).toEqual({});
   });
 });
 
@@ -492,8 +508,10 @@ describe('table row rendering helpers', () => {
     );
 
     expect(screen.getByTestId('responsive-label')).toBeTruthy();
-    expect(document.querySelector('[data-slot="table-responsive-expanded-label"]')?.textContent).toBe(
-      'Email',
+    // labelRegionKey region output wins over the plain column label
+    // (renderExpandedRow: labelRegion?.render() ?? column.label).
+    expect(container.querySelector('[data-slot="table-responsive-expanded-label"]')?.textContent).toBe(
+      'Custom Label',
     );
     expect(container.querySelector('[data-slot="table-responsive-expanded-value"]')?.textContent).toBe(
       'alice@example.com',

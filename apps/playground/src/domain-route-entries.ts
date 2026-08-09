@@ -176,6 +176,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'E3 table cell detail popOver: column-level popOver config (trigger/placement/icon/content region/title/showOnOverflow/onEmpty), coexists with copyable icon, content region rendering.',
   },
   {
+    id: 'table-column-width',
+    title: 'Table Column Width Strategy',
+    eyebrow: 'Table Column Width (E3)',
+    description:
+      'E3 table column-width strategy host fixture: no-width data columns must stretch to fill the w-full container; non-sticky selection control column must stay pinned at 40px.',
+  },
+  {
     id: 'mobile-infrastructure',
     title: 'Mobile Infrastructure',
     eyebrow: 'Mobile Baseline (M0.1)',

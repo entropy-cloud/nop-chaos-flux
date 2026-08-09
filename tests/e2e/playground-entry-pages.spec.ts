@@ -146,6 +146,14 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       timeout: 15_000,
     });
   },
+  'table-column-width': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'Table 列宽策略宿主 fixture', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
+    await expect(page.getByTestId('width-default-auto').locator('table[data-slot="table"]')).toBeVisible();
+    await expect(page.getByTestId('width-selection-pinned').locator('table[data-slot="table"]')).toBeVisible();
+  },
   'mobile-infrastructure': async (page) => {
     await expect(
       page.getByRole('heading', {

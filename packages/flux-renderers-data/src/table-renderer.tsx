@@ -31,7 +31,8 @@ import {
   serializeInstancePath,
 } from './table-renderer/table-data.js';
 import { TableBodyRows } from './table-renderer/table-body-rows.js';
-import { createFixedColumnLayout } from './table-renderer/fixed-columns.js';
+import { createFixedColumnLayout, getFixedColumnKey } from './table-renderer/fixed-columns.js';
+import { useTableColumnWidths } from './table-renderer/column-width-measure.js';
 import { TableHeaderRow } from './table-renderer/table-header-row.js';
 import { TableSummaryRowView } from './table-renderer/table-summary-row.js';
 import { TableLoadingOverlay } from './table-renderer/table-loading-overlay.js';
@@ -276,10 +277,6 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   // stale layout object. A genuine layout change still forces a row re-render
   // because all content inputs are covered by the row comparator (columns via
   // areColumnsRenderEquivalent, rowSelection, showExpandColumn).
-  const fixedColumnLayout = useMemo(
-    () => createFixedColumnLayout({ rowSelection: tableSchemaProps.rowSelection }, mainColumns, showExpandColumn),
-    [mainColumns, tableSchemaProps.rowSelection, showExpandColumn],
-  );
 
   const columnResizeEnabled = schemaProps.columnResize !== false;
   const resizeApi = useColumnResize(
@@ -312,6 +309,40 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     });
     return changed ? next : baseColumns;
   }, [columnResizeEnabled, leafBodyColumns, mainColumns, nestedHeadersActive, resizeApi.widths]);
+
+  const measureRootRef = useRef<HTMLDivElement | null>(null);
+  const measuredWidths = useTableColumnWidths(measureRootRef, [
+    mainColumns,
+    showExpandColumn,
+    Boolean(schemaProps.rowSelection),
+    resizeApi.widths,
+    visibleColumns,
+  ]);
+  const fixedColumnLayout = useMemo(
+    () =>
+      createFixedColumnLayout(
+        { rowSelection: tableSchemaProps.rowSelection },
+        mainColumns,
+        showExpandColumn,
+        measuredWidths,
+      ),
+    [mainColumns, tableSchemaProps.rowSelection, showExpandColumn, measuredWidths],
+  );
+
+  const colgroupEntries = useMemo(() => {
+    const entries: { key: string; width: number | undefined }[] = [];
+    if (showExpandColumn) {
+      entries.push({ key: '__expand__', width: measuredWidths.get('__expand__') });
+    }
+    if (schemaProps.rowSelection) {
+      entries.push({ key: '__selection__', width: measuredWidths.get('__selection__') });
+    }
+    effectiveMainColumns.forEach((column, index) => {
+      const key = getFixedColumnKey(column, index);
+      entries.push({ key, width: measuredWidths.get(key) });
+    });
+    return entries;
+  }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, showExpandColumn]);
 
   const rowDragSortApi = useRowDragSort({
     enabled: schemaProps.draggable === true,
@@ -516,7 +547,15 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       ) : null}
 
       <div
-        ref={autoFillActive ? autoFill.containerRef : virtualEnabled ? scrollRef : undefined}
+        ref={(element) => {
+          measureRootRef.current = element;
+          if (element && autoFillActive) {
+            // eslint-disable-next-line react-hooks/immutability, react-compiler/react-compiler -- C1a 组合 ref 回调：同一元素路由到三个 ref（列宽测量 + autoFill + 虚拟滚动），hook 返回的 ref 对象由消费方赋 .current 是既有契约
+            autoFill.containerRef.current = element;
+          } else if (element && virtualEnabled) {
+            scrollRef.current = element;
+          }
+        }}
         className={cn(
           autoFillActive
             ? 'overflow-auto'
@@ -536,6 +575,15 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         data-auto-fill-height={autoFillActive ? 'true' : undefined}
       >
         <Table data-striped={isStriped || undefined} data-bordered={isBordered || undefined}>
+          <colgroup data-slot="table-column-group">
+            {colgroupEntries.map(({ key, width }) => (
+              <col
+                key={key}
+                data-column-width-col-key={key}
+                style={width === undefined ? undefined : { width }}
+              />
+            ))}
+          </colgroup>
           {schemaProps.showHeader !== false ? (
             <TableHeader data-slot="table-header">
               <TableHeaderRow

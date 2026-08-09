@@ -54,7 +54,11 @@ export function isColumnResizable(column: TableColumnSchema, columnResize: boole
 
 export interface ColumnResizeApi {
   widths: Record<string, number>;
-  getColumnWidth(column: TableColumnSchema, index: number): number;
+  // Returns the tracked/resized width when present, otherwise the column's
+  // declared `column.width` (string or number), otherwise `undefined` — a
+  // no-width column must fall back to the schema semantic and stay
+  // auto-stretchable (P1-01: never invent a 120px default here).
+  getColumnWidth(column: TableColumnSchema, index: number): number | string | undefined;
   startResize(column: TableColumnSchema, index: number, startClientX: number): () => void;
   // Keyboard entry point (WCAG 2.1 SC 2.1.1): ArrowLeft/ArrowRight step the
   // width by `delta` px, clamped to [minWidth, maxWidth], and commit through the
@@ -136,6 +140,13 @@ export function useColumnResize(
     const map: Record<string, number> = {};
     columns.forEach((column, index) => {
       if (!isColumnResizable(column, columnResize)) {
+        return;
+      }
+      // Only columns with a valid explicit width are tracked up front. A
+      // no-width column must NOT be prefilled with the 120 fallback — otherwise
+      // getColumnWidth/effectiveMainColumns turn the fallback into a hard cap
+      // and a write-back (P1-01).
+      if (!Number.isFinite(toNumericWidth(column.width, NaN))) {
         return;
       }
       const key = column.name ?? `column-${index}`;
@@ -235,9 +246,12 @@ export function useColumnResize(
   );
 
   const getColumnWidth = useCallback(
-    (column: TableColumnSchema, index: number): number => {
+    (column: TableColumnSchema, index: number): number | string | undefined => {
       const key = columnKey(column, index);
-      return widths[key] ?? resolveColumnWidth(column);
+      if (key in widths) {
+        return widths[key];
+      }
+      return column.width;
     },
     [columnKey, widths],
   );

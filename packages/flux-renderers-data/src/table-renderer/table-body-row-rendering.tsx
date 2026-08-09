@@ -396,7 +396,9 @@ function DataRowView({
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
               )}
               style={{
-                ...(column.width !== undefined ? { width: column.width } : undefined),
+                ...(column.width !== undefined
+                  ? { width: column.width, minWidth: column.width, maxWidth: column.width }
+                  : undefined),
                 ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
               }}
               rowSpan={rowSpan}
@@ -430,7 +432,7 @@ function DataRowView({
               {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- onClick is stopPropagation only; real interaction is the inner <Button> elements */}
               <div
                 data-slot="table-actions"
-                className="flex flex-wrap gap-3"
+                className="flex flex-wrap gap-[var(--table-row-action-gap)]"
                 onClick={(event) => event.stopPropagation()}
               >
                 {buttonRegion
@@ -569,13 +571,15 @@ function DataRowView({
 // H10: row-level bailout is load-bearing for the table single-row locality
 // contract (a change to one row must not re-render sibling rows — see the
 // playground `performance-table-page` diagnostic; the React Compiler is not
-// active in the test environment, so an explicit memo is required there). The
-// previous hand-written comparator compared every field the row reads EXCEPT
-// `fixedColumnLayout` (used ~11× in JSX), so a `fixedColumnLayout` identity
-// churn with all compared fields equal made the comparator return true and the
-// row rendered with stale sticky offset / className / style. The comparator now
-// includes `fixedColumnLayout`, closing that stale-render gap while preserving
-// row locality.
+// active in the test environment, so an explicit memo is required there). All
+// `fixedColumnLayout` content inputs are covered BY CONTENT: columns via
+// `areColumnsRenderEquivalent` (fixed/width included), `rowSelection` and
+// `showExpandColumn` compared directly — so a content-equal layout cannot
+// render stale sticky offsets. A direct `fixedColumnLayout` identity check is
+// deliberately NOT in the comparator: the layout object identity churns with
+// render-derived inputs (e.g. measured-width state), which would re-render
+// every row on every table render and break the locality diagnostic (sibling
+// probe delta 0 → 2, verified 2026-08-09).
 const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
   return (
     prev.item.entry.record === next.item.entry.record &&

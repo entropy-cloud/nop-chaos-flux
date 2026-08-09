@@ -15,6 +15,7 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import { ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon, ListFilterIcon } from 'lucide-react';
 import type { TableColumnSchema, TableSchema } from '../schemas.js';
+import { getFixedColumnKey } from './fixed-columns.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import type { FilterState, MultiSortState, SortEntry, SortState } from './types.js';
 import {
@@ -174,11 +175,14 @@ function renderLeafHeaderCell(
       key={columnKey}
       className={cn(cellProps.className, headerAlignClass)}
       style={{
-        ...(resolvedWidth ? { width: resolvedWidth, minWidth: resolvedWidth } : undefined),
+        ...(resolvedWidth
+          ? { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
+          : undefined),
         ...cellProps.style,
       }}
       data-slot="table-head"
       data-fixed={cellProps.fixed || undefined}
+      data-column-width-key={getFixedColumnKey(column, index)}
       data-resizable={resizable || undefined}
       data-interactive={isSortable || isFilterable || undefined}
       aria-sort={
@@ -387,15 +391,16 @@ function FlatTableHeaderRow({
       className={cn(isAffix ? 'nop-table-header-sticky' : undefined)}
       style={
         isAffix
-          ? { position: 'sticky', top: 0, zIndex: 3, background: 'hsl(var(--background))' }
+          ? { position: 'sticky', top: 0, zIndex: 3, background: 'var(--table-header-bg)' }
           : undefined
       }
     >
       {showExpandColumn ? (
         <TableHead
           data-slot="table-expand-column"
+          data-column-width-key="__expand__"
           className={fixedColumnLayout.getExpandCellProps().className}
-          style={{ width: '40px', ...fixedColumnLayout.getExpandCellProps().style }}
+          style={fixedColumnLayout.getExpandCellProps().style}
         >
           <span className="sr-only">{t('flux.table.expand')}</span>
         </TableHead>
@@ -404,8 +409,9 @@ function FlatTableHeaderRow({
       {schemaProps.rowSelection ? (
         <TableHead
           data-slot="table-select-column"
+          data-column-width-key="__selection__"
           className={fixedColumnLayout.getSelectionCellProps().className}
-          style={{ width: '40px', ...fixedColumnLayout.getSelectionCellProps().style }}
+          style={fixedColumnLayout.getSelectionCellProps().style}
         >
           {schemaProps.rowSelection.type === 'checkbox' && (
             <Checkbox
@@ -504,7 +510,7 @@ function NestedTableHeaderRows({
   };
 
   const stickyStyle = isAffix
-    ? { position: 'sticky' as const, top: 0, zIndex: 3, background: 'hsl(var(--background))' }
+    ? { position: 'sticky' as const, top: 0, zIndex: 3, background: 'var(--table-header-bg)' }
     : undefined;
 
   return (
@@ -527,8 +533,9 @@ function NestedTableHeaderRows({
               <TableHead
                 rowSpan={rows.length}
                 data-slot="table-expand-column"
+                data-column-width-key="__expand__"
                 className={fixedColumnLayout.getExpandCellProps().className}
-                style={{ width: '40px', ...fixedColumnLayout.getExpandCellProps().style }}
+                style={fixedColumnLayout.getExpandCellProps().style}
               >
                 <span className="sr-only">{t('flux.table.expand')}</span>
               </TableHead>
@@ -537,8 +544,9 @@ function NestedTableHeaderRows({
               <TableHead
                 rowSpan={rows.length}
                 data-slot="table-select-column"
+                data-column-width-key="__selection__"
                 className={fixedColumnLayout.getSelectionCellProps().className}
-                style={{ width: '40px', ...fixedColumnLayout.getSelectionCellProps().style }}
+                style={fixedColumnLayout.getSelectionCellProps().style}
               >
                 {schemaProps.rowSelection.type === 'checkbox' && (
                   <Checkbox

@@ -175,17 +175,17 @@ export function CrudToolbarBlocks(props: {
   return (
     <div
       className={cn(
-        'flex gap-3',
+        'flex gap-[var(--crud-toolbar-gap)]',
         isMobile ? 'flex-col items-stretch' : 'flex-wrap items-center justify-between',
       )}
       data-slot={`${slot}-toolbar-layout`}
       data-responsive={isMobile ? 'narrow' : undefined}
     >
-      <div className={cn('gap-3', isMobile ? 'flex flex-col' : 'flex flex-wrap items-center')}>
+      <div className={cn('gap-[var(--crud-toolbar-gap)]', isMobile ? 'flex flex-col' : 'flex flex-wrap items-center')}>
         {leftBlocks.map(renderBlock)}
         {pollingToggleNode}
       </div>
-      <div className={cn('gap-3', isMobile ? 'flex flex-col' : 'flex flex-wrap items-center')}>
+      <div className={cn('gap-[var(--crud-toolbar-gap)]', isMobile ? 'flex flex-col' : 'flex flex-wrap items-center')}>
         {rightBlocks.map(renderBlock)}
       </div>
     </div>

@@ -40,15 +40,29 @@ function createStickyStyle(
     position: 'sticky',
     [fixed]: `${offset}px`,
     zIndex: fixed === 'left' ? 2 : 1,
-    background: 'hsl(var(--background))',
-    ...(width !== undefined ? { width, minWidth: width } : {}),
+    // 背景透明继承：行级 hover/斑马纹/选中态通过 --table-hover-bg 等 token 透传到固定列（AMIS .is-sticky { background: inherit } 等价语义）。
+    // maxWidth 防止 table-layout:auto 下剩余空间把固定列（序号/checkbox/expand 等）
+    // 拉伸变宽：width 是建议值，没有 maxWidth 时浏览器会把表格剩余宽度分给所有列。
+    ...(width !== undefined ? { width, minWidth: width, maxWidth: width } : {}),
   };
+}
+
+// 控制列（selection/expand）宽度与 sticky 解耦（P1-02）：非 sticky 配置
+// （最常见 CRUD 选择表格）下也必须 width/minWidth/maxWidth 三件套封顶，
+// 否则 auto 布局把剩余空间分给控制列、原始「序号/checkbox 列过宽」缺陷保留。
+function createControlColumnStyle(width: number | string): CSSProperties {
+  return { width, minWidth: width, maxWidth: width };
+}
+
+export function getFixedColumnKey(column: TableColumnSchema, index: number) {
+  return `${column.name ?? 'column'}:${index}`;
 }
 
 export function createFixedColumnLayout(
   schemaProps: Pick<TableSchema, 'rowSelection' | 'expandable'>,
   columns: TableColumnSchema[],
   showExpandColumn = Boolean(schemaProps.expandable),
+  measuredWidths?: ReadonlyMap<string, number>,
 ) {
   const hasLeftFixedDataColumn = columns.some((column) => column.fixed === 'left');
   const entries: FixedColumnEntry[] = [];
@@ -67,11 +81,14 @@ export function createFixedColumnLayout(
     }
 
     entries.push({
-      key: `${column.name ?? 'column'}:${index}`,
+      key: getFixedColumnKey(column, index),
       fixed: column.fixed,
       width: toWidth(column.width, DEFAULT_FIXED_COLUMN_WIDTH),
     });
   });
+
+  const resolveEntryWidth = (entryWidth: number, key: string) =>
+    Math.round(measuredWidths?.get(key) ?? entryWidth);
 
   const leftOffsets = new Map<string, number>();
   let leftOffset = 0;
@@ -80,7 +97,7 @@ export function createFixedColumnLayout(
       continue;
     }
     leftOffsets.set(entry.key, leftOffset);
-    leftOffset += entry.width;
+    leftOffset += resolveEntryWidth(entry.width, entry.key);
   }
 
   const rightOffsets = new Map<string, number>();
@@ -91,28 +108,59 @@ export function createFixedColumnLayout(
       continue;
     }
     rightOffsets.set(entry.key, rightOffset);
-    rightOffset += entry.width;
+    rightOffset += resolveEntryWidth(entry.width, entry.key);
+  }
+
+  // 固定边缘阴影 marker：仅"左侧最后一列固定列 / 右侧第一列固定列"承载，表头与数据区共用。
+  let lastLeftEdgeKey: string | undefined;
+  for (const entry of entries) {
+    if (entry.fixed === 'left') {
+      lastLeftEdgeKey = entry.key;
+    }
+  }
+  let firstRightEdgeKey: string | undefined;
+  for (const entry of entries) {
+    if (entry.fixed === 'right') {
+      firstRightEdgeKey = entry.key;
+      break;
+    }
   }
 
   function resolveEntry(key: string, width?: number | string): FixedCellProps {
+    const entryWidth = measuredWidths?.get(key);
+    const realizedWidth =
+      entryWidth !== undefined
+        ? entryWidth
+        : typeof width === 'number' && Number.isFinite(width) && width > 0
+          ? width
+          : undefined;
     if (leftOffsets.has(key)) {
       return {
         fixed: 'left',
-        className: 'bg-background',
-        style: createStickyStyle('left', leftOffsets.get(key) ?? 0, width ?? CONTROL_COLUMN_WIDTH),
+        className: key === lastLeftEdgeKey ? 'nop-table-sticky-edge-left' : undefined,
+        style: createStickyStyle(
+          'left',
+          leftOffsets.get(key) ?? 0,
+          realizedWidth ?? width ?? CONTROL_COLUMN_WIDTH,
+        ),
       };
     }
 
     if (rightOffsets.has(key)) {
       return {
         fixed: 'right',
-        className: 'bg-background',
+        className: key === firstRightEdgeKey ? 'nop-table-sticky-edge-right' : undefined,
         style: createStickyStyle(
           'right',
           rightOffsets.get(key) ?? 0,
-          width ?? DEFAULT_FIXED_COLUMN_WIDTH,
+          realizedWidth ?? width ?? DEFAULT_FIXED_COLUMN_WIDTH,
         ),
       };
+    }
+
+    // 控制列在无 fixed 数据列（非 sticky）时也要封顶（P1-02）。
+    if (key === '__selection__' || key === '__expand__') {
+      return { style: createControlColumnStyle(width ?? CONTROL_COLUMN_WIDTH) };
     }
 
     return {};

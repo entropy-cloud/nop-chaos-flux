@@ -27,6 +27,7 @@ import { FormInputEnhancementsDemoPage } from './pages/form-input-enhancements-d
 import { InputSuggestDemoPage } from './pages/input-suggest-demo';
 import { TreeDisplayUxDemoPage } from './pages/tree-display-ux-demo';
 import { TablePopOverDemoPage } from './pages/table-popover-demo';
+import { TableColumnWidthDemoPage } from './pages/table-column-width-demo';
 import { MobileInfrastructureDemoPage } from './pages/mobile-infrastructure-demo';
 import { MobileComponentsDemoPage } from './pages/mobile-components-demo';
 import { W1bContentFeedbackDemoPage } from './pages/w1b-content-feedback-demo';
@@ -243,6 +244,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <TreeDisplayUxDemoPage onBack={goHome} />;
         case 'table-popover':
           return <TablePopOverDemoPage onBack={goHome} />;
+        case 'table-column-width':
+          return <TableColumnWidthDemoPage onBack={goHome} />;
         case 'mobile-infrastructure':
           return <MobileInfrastructureDemoPage onBack={goHome} />;
         case 'mobile-components':
