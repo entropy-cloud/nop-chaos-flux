@@ -114,6 +114,7 @@ export const dateRendererDefinitions: RendererDefinition[] = [
       { key: 'minDate', kind: 'prop' },
       { key: 'maxDate', kind: 'prop' },
       { key: 'shortcuts', kind: 'prop' },
+      { key: 'presets', kind: 'prop' },
     ],
     validation: createRangeFieldValidation(),
     schemaValidator: validateInputFieldSchema,

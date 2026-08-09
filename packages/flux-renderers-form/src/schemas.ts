@@ -353,6 +353,21 @@ export interface InputTimeSchema extends BoundFieldSchemaBase {
   clearable?: boolean;
 }
 
+export type DateRangePresetRelative =
+  | 'today'
+  | 'yesterday'
+  | 'last7days'
+  | 'last30days'
+  | 'thisMonth'
+  | 'lastMonth';
+
+export interface DateRangePresetSchema extends SchemaObject {
+  label: string;
+  value:
+    | { start: string; end: string }
+    | { relative: DateRangePresetRelative };
+}
+
 export interface DateRangeSchema extends BoundFieldSchemaBase {
   type: 'date-range';
   placeholder?: string;
@@ -365,6 +380,8 @@ export interface DateRangeSchema extends BoundFieldSchemaBase {
   utc?: boolean;
   clearable?: boolean;
   shortcuts?: Array<{ label: string; start: string; end: string }>;
+  /** 相对时间预设（BI）：绝对区间或相对档位，选中后解析为绝对区间写入值。 */
+  presets?: DateRangePresetSchema[];
 }
 
 /**

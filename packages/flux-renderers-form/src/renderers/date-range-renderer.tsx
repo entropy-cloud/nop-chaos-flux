@@ -23,6 +23,11 @@ import {
   toCalendarDate,
   toStorageDate,
 } from './date/date-utils.js';
+import {
+  type DateRangePresetEntry,
+  resolvePresetEntry,
+  sanitizePresets,
+} from './date/date-presets.js';
 
 const DATE_RANGE_METHODS = ['clear', 'focus'] as const;
 
@@ -142,6 +147,8 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
       )
     : [];
 
+  const presets: DateRangePresetEntry[] = sanitizePresets(props.props.presets);
+
   useInputComponentHandle({
     id: props.id,
     name,
@@ -218,6 +225,17 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
 
   function applyShortcut(shortcut: RangeShortcut) {
     const normalized = normalizeRange(shortcut.start, shortcut.end, valueFormat, options);
+    handlers.onChange(joinDateRange(normalized.start, normalized.end, delimiter));
+  }
+
+  function applyPreset(preset: DateRangePresetEntry) {
+    // 相对档位运行期解析为绝对区间（同 commitRange 的存储格式/归一化路径，
+    // 输出与现有 date-range value 协议完全兼容）。
+    const resolved = resolvePresetEntry(preset, valueFormat, options);
+    const normalized = normalizeRange(resolved.start, resolved.end, valueFormat, options);
+    if (!normalized.start && !normalized.end) {
+      return;
+    }
     handlers.onChange(joinDateRange(normalized.start, normalized.end, delimiter));
   }
 
@@ -352,6 +370,22 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
                   onClick={() => applyShortcut(shortcut)}
                 >
                   {shortcut.label}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+
+          {presets.length > 0 ? (
+            <div className="flex flex-wrap gap-1 px-1 pt-2" data-testid="range-presets">
+              {presets.map((preset) => (
+                <Button
+                  key={preset.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyPreset(preset)}
+                >
+                  {preset.label}
                 </Button>
               ))}
             </div>
