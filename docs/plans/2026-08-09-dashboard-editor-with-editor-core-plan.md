@@ -1,6 +1,6 @@
 # Dashboard Editor 计划（editor-core 公共抽取 + workbench 复用 + hmi-editor 迁移预留）
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-08-09
 > Source: `docs/analysis/2026-08-09-bi-control-support-analysis.md`（仪表盘拖拽布局缺口）、`docs/components/industrial-hmi-editor/design-architecture.md`（编辑器架构模式）、`docs/plans/2026-08-09-bi-kpi-filter-chart-enhance-plan.md`（BI 骨架）
 > Related: `docs/plans/2026-08-09-pivot-table-vtable-wrapper-plan.md`（面板内容）、`docs/plans/2026-08-09-bi-kpi-filter-chart-enhance-plan.md`
@@ -17,7 +17,7 @@
 
 - **WorkbenchShell 可直接复用**：`packages/flux-react/src/workbench/workbench-shell.tsx`（header + 左面板折叠/调宽 + canvas + 右面板折叠/调宽 + dialogs），**flow-designer 编辑器已在用**（`flow-designer-renderers/src/designer-page-body.tsx:498` `<WorkbenchShell`）。
 - `grid` 布局 renderer 存在（`flux-renderers-layout/src/grid-renderer.tsx` + `GridSchema`：items/columns/gap/autoFlow/响应式）——可作 dashboard 运行态布局基础，但**无拖拽/缩放编辑能力**（CSS grid flow 语义，非网格吸附布局）。
-- `industrial-hmi-editor`（`flux-renderers-industrial/src/editor/`）：编辑会话模型 `ScadaEditorSession`（workingConfig/committedBaseline/selection/mode + undoStack/redoStack，`editor-session.ts`）、`UndoStack`（`editor-session.ts` import 自 `./undo-redo/undo-stack.js`）、`cloneConfigSnapshot`（`editor-working-helpers.ts`）、双态 edit/preview——**模式已验证但深绑定 SCADA**（ScadaConfig/ScadaSymbolNode/symbol:\* action/leafer canvas/palette 拖 data 类型）。
+- `industrial-hmi-editor`（`flux-renderers-industrial/src/editor/`）：编辑会话模型 `ScadaEditorSession`（workingConfig/committedBaseline/selection/mode + undoStack——单一 `UndoStack` 实例一体持有 undo/redo 双栈，`editor-session.ts`）、`cloneConfigSnapshot`（`editor-working-helpers.ts`）、双态 edit/preview、提交策略 `ScadaCommitPolicy`（manual/auto，manual 经 `component:save()` 触发）——**模式已验证但深绑定 SCADA**（ScadaConfig/ScadaSymbolNode/symbol:\* action/leafer canvas/palette 拖 data 类型）。
 - 领域适配器先例：`flow-designer-core/src/tree-domain.ts`（`registerTreeDomainAdapter`/`getTreeDomainAdapter`/`listTreeDomainAdapters`）——注册表机制蓝本。
 - core/renderers 拆分惯例：`flow-designer-core` + `flow-designer-renderers`、`report-designer-core` + `report-designer-renderers`。
 - 面板内容控件：chart/pivot-table（VTable 封装计划中）/table/stat-tile（BI 骨架计划中）等 renderer 就绪或规划中。
@@ -125,7 +125,7 @@ Targets: `packages/flux-renderers-dashboard/src/editor/`（canvas/palette/inspec
 - [ ] (Decision) 裁定编辑态模型：`editor-core` 会话（layout JSON 为 document）；面板拖拽/resize 经**纯函数坐标更新**（`dragPanel`/`resizePanel`/`snapToGrid`，可单测）→ 会话 working 变更 → undo 栈记录 diff。
 - [ ] (Proof) failing 单测：拖拽坐标纯函数（网格吸附/边界 clamp/最小尺寸）、resize 八向句柄计算、undo/redo 经 editor-core 集成（拖拽→undo→坐标复原）。
 - [ ] (Fix) 编辑态画布：DOM pointer 拖拽 + resize handles + 网格吸附 + 选中高亮 + 删除/复制（键盘+按钮），预览模式切换（双态）。
-- [ ] (Fix) palette：面板类型列表（chart/pivot-table/table/stat-tile/iframe/html/text 等，拖入画布生成 panel）；inspector：位置/尺寸/标题/type/props 编辑（提交语义 manual）。
+- [ ] (Fix) palette：面板类型列表（chart/pivot-table/table/stat-tile/iframe/html/text 等，拖入画布生成 panel）；inspector：位置/尺寸/标题/type/props 编辑（提交语义 manual）。**跨计划依赖：`pivot-table`（`2026-08-09-pivot-table-vtable-wrapper-plan.md`，review 未过）与 `stat-tile`（`2026-08-09-bi-kpi-filter-chart-enhance-plan.md`，active）——执行时未落地的类型不入 palette，回退到已落地面板类型（table/chart/iframe/html/text），回退结论记入 design.md；palette 类型清单以执行时已注册 renderer 为准。**
 - [ ] (Fix) **WorkbenchShell 复用装配**：header（保存/撤销/重做/预览切换）+ leftPanel（palette）+ canvas + rightPanel（inspector），对齐 flow-designer `designer-page-body.tsx` 用法。
 - [ ] (Fix) 保存链路：`component:save()` → 会话 commit → 布局 JSON 序列化 → 下游同步（对齐 hmi 提交语义）。
 - [ ] (Follow-up) 记录面板内容配置器（编辑面板内部字段）为后续项。
@@ -142,7 +142,7 @@ Targets: `apps/playground/src/`、`docs/components/dashboard-editor/example.json
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] (Fix) playground 示例页：BI 看板（KPI 卡 + chart + pivot-table + table 面板，筛选联动，编辑态↔运行态切换）。
+- [ ] (Fix) playground 示例页：BI 看板（KPI 卡 + chart + pivot-table + table 面板，筛选联动，编辑态↔运行态切换）。示例面板组合随执行时已落地面板类型调整（pivot-table/stat-tile 未落地则替换为 table/chart/iframe/text），至少保留：KPI 卡 + chart + table 三类面板。
 - [ ] (Proof) 示例走查：编辑布局 → 保存 → 刷新后布局还原；面板数据经 `source` 表达式联动 data-source。
 - [ ] (Fix) `docs/components/dashboard-editor/design.md`（schema/坐标模型/复用点清单：WorkbenchShell/grid/data-source/editor-core）+ `example.json`。
 - [ ] (Fix) 更新分析报告（BI 缺口闭环标注）+ daily log。
@@ -172,12 +172,12 @@ Exit Criteria:
 
 ## Draft Review Record
 
-> 待独立子 agent（fresh session）review 后填写；pass 前维持 `draft`。
+> 独立子 agent（fresh session）review 通过，2026-08-09。
 
-- Reviewer / Agent: 待定
-- Verdict: 待定
-- Rounds: 待定
-- Findings addressed: 待定
+- Reviewer / Agent: mission-driver 2026-08-09-182611（fresh session review）
+- Verdict: `pass-with-minors`
+- Rounds: 1
+- Findings addressed: ① Major——Phase 3 palette / Phase 4 示例对 `pivot-table`（draft plan）与 `stat-tile` 的跨计划依赖未显式声明，已补充依赖说明 + 未落地回退策略（回退结论记 design.md）；② Minor——Current Baseline 中 `ScadaEditorSession` 字段描述（undoStack/redoStack → 单一 `UndoStack` 一体持有双栈）已修正。
 
 ## Closure Gates
 

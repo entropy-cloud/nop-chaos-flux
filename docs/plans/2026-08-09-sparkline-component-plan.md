@@ -1,6 +1,6 @@
 # sparkline 原子组件计划
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-08-09
 > Source: `docs/analysis/2026-08-09-bi-control-support-analysis.md`（KPI 层缺口）、`docs/plans/2026-08-09-bi-kpi-filter-chart-enhance-plan.md`（Phase 1 sparkline 路径裁定承接）
 > Related: `docs/plans/2026-08-09-pivot-table-vtable-wrapper-plan.md`（VTable cellType sparkline 对照）、`docs/plans/2026-08-09-map-openlayers-wrapper-plan.md`（独立包 vs 包内组件裁定先例）
@@ -28,7 +28,7 @@
 ## Non-Goals
 
 - 交互（tooltip/点击/缩放）——纯展示原子；交互形态（如迷你图点击）后续按需评估。
-- 动画、面积渐变之外的视觉复杂度（虚线/多序列对比图——多序列可用两个 sparkline 叠加，不内置）。
+- 动画、虚线、多序列对比等视觉复杂度（多序列可用两个 sparkline 叠加，不内置；渐变填充仅按 `fill` 开关支持，见 Goals）。
 - 重绘性能优化（首版面向 ≤1k 数据点）。
 
 ## Scope
@@ -81,7 +81,7 @@ Targets: `packages/flux-renderers-data/src/sparkline-schemas.ts`、`sparkline-pa
 - [ ] (Fix) 实现 `sparkline-path.ts`（纯函数）+ `sparkline-renderer.tsx`（`RendererComponentProps`，SVG 渲染，data 经 `helpers.evaluate`，`color.status` → CSS 变量，fill 渐变 `defs`）——**数据经 props/scope，无 IO**（INV-1 合规）。
 - [ ] (Fix) 注册进 `dataRendererDefinitions`：type `sparkline`、category `data`、sourcePackage、schemaValidator（data 非数组时 dev warn 不抛错）。
 - [ ] (Proof) 渲染层测试（jsdom）：SVG `path.d` 与纯函数输出一致；`status` 颜色类正确；空数据渲染占位。
-- [ ] (Follow-up) 记录 stat-tile 复用约定（design.md 中声明：stat-tile 的 `sparkline` 字段渲染为内部 `<SparklineRenderer>` 子组件或内联复用 path 纯函数——由 stat-tile 计划执行时按组合裁定）。
+- [ ] (Follow-up) 裁定 stat-tile 复用契约边界：`sparkline` 字段可复用 `<SparklineRenderer>` 子组件或内联复用 path 纯函数（最终组合由 stat-tile 计划执行时裁定）——以代码注释 + daily log 记录；design.md 正式声明归 Phase 2。
 
 Exit Criteria:
 
@@ -108,12 +108,12 @@ Exit Criteria:
 
 ## Draft Review Record
 
-> 待独立子 agent（fresh session）review 后填写；pass 前维持 `draft`。
-
-- Reviewer / Agent: 待定
-- Verdict: 待定
-- Rounds: 待定
-- Findings addressed: 待定
+- Reviewer / Agent: 独立 review sub-agent（mission-driver 2026-08-09-182611 审查轮）
+- Verdict: `pass`
+- Rounds: 1
+- Findings addressed:
+  - (Major) Phase 1 `(Follow-up)` stat-tile 复用约定条目原引用 Phase 2 才产出的 design.md，存在前向依赖、Phase 1 无法自足完成——已改写为 Phase 1 内可完成（契约边界裁定 + 代码注释/daily log 记录），design.md 正式声明归 Phase 2（该 Phase design.md 条目已含此项）。
+  - (Minor) Non-Goals 原表述「动画、面积渐变之外的视觉复杂度」歧义（可误读为动画在 scope 内）——已改写为明确枚举（动画/虚线/多序列对比出 scope，渐变仅按 `fill` 开关支持）。
 
 ## Closure Gates
 

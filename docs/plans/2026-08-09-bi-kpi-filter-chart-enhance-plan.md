@@ -1,6 +1,6 @@
 # BI 骨架能力补齐计划（pivot-table 之外）
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-08-09
 > Source: `docs/analysis/2026-08-09-bi-control-support-analysis.md`（BI 控件支持分析）、`docs/analysis/2026-08-04-control-gap-survey.md`（Tier 2 候选）
 > Related: `docs/components/chart/design.md`、`docs/components/crud/design.md`、`docs/components/card/design.md`（如存在）
@@ -118,7 +118,7 @@ Targets: `docs/components/dashboard-filter/design.md`（新建约定文档）、
 - [ ] (Decision) 裁定筛选模型：复用 `crud` queryForm 的"表单 → summary"模式，但筛选值写入**共享 scope**（约定 key 前缀如 `filter.*`），消费端（chart/table 的 `source` 表达式、data-source）经 `${filter.xxx}` 读取；提交动作显式触发消费端 data-source `refresh`。
 - [ ] (Proof) 走查单测：共享 scope 写入 → `data-source` 因 `useRenderScope` 订阅自动重载（不依赖手动 refresh 也可联动）；key 失配时 dev warn（Failure Path dashboard-filter-no-link）。
 - [ ] (Fix) 产出 `docs/components/dashboard-filter/design.md`：约定（scope key 命名、提交/重置语义、与 crud 的复用边界）+ 最小可运行 `example.json`（2 个筛选 + 1 chart + 1 table 联动）。
-- [ ] (Fix) 在 playground 增加 `dashboard-filter` 示例页（若 playground 有 BI 示例目录则放入），验证人工可操作。
+- [ ] (Fix) 在 playground 增加 `dashboard-filter` 示例页（并入 `apps/playground/src/data-route-entries.ts`；若后续出现 BI/仪表盘示例目录则优先放入），验证人工可操作。
 - [ ] (Follow-up) 记录 `panel-chrome` 组合基线（card regions + 刷新按钮 + filter 联动）到 design.md，作为后续独立控件的裁决依据。
 
 Exit Criteria:
@@ -166,12 +166,10 @@ Exit Criteria:
 
 ## Draft Review Record
 
-> 待独立子 agent（fresh session）review 后填写；pass 前维持 `draft`。
-
-- Reviewer / Agent: 待定
-- Verdict: 待定
-- Rounds: 待定
-- Findings addressed: 待定
+- Reviewer / Agent: mission-driver review session（2026-08-09，独立于起草者）
+- Verdict: `pass`
+- Rounds: 1
+- Findings addressed: 无 Blocker/Major。Minor（已就地修正）：Closure Gates 补 `pnpm check` 与 `docs/logs/` 收口记录（对齐 AGENTS.md 验证清单与日志义务）；Phase 3 playground 示例项措辞由条件式改为确定落点（`data-route-entries.ts`）。
 
 ## Closure Gates
 
@@ -181,11 +179,13 @@ Exit Criteria:
 - [ ] `docs/components/stat-tile/design.md`、`docs/components/dashboard-filter/design.md`、`docs/components/chart/design.md`、`docs/components/date-range/design.md` 与 live baseline 一致。
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 行为缺口。
 - [ ] 受影响的 owner docs 已同步到 live baseline。
+- [ ] `docs/logs/` 已按 AGENTS.md 写入收口记录（含 full-green 验证状态，如有）。
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
+- [ ] `pnpm check`（零新增未登记 red）
 
 ## Deferred But Adjudicated
 

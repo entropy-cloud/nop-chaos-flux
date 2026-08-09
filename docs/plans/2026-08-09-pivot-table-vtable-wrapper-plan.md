@@ -1,6 +1,6 @@
 # pivot-table 渲染器封装计划（基于 VTable PivotTable）
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-08-09
 > Source: `docs/analysis/2026-08-09-bi-control-support-analysis.md`（3.4 节 VTable 调研）、`docs/plans/2026-08-09-bi-kpi-filter-chart-enhance-plan.md`（路径 B 归属）
 > Related: `docs/references/new-renderer-introduction-audit.md`（INV-1~5）、`docs/references/complex-component-design-process.md`
@@ -33,7 +33,7 @@
 ## Non-Goals
 
 - VTable 全部能力平铺（只封装透视核心形态：维度/指标/聚合/总计/排序/过滤/展开；编辑、PivotChart、vtable-sheet 等不进入首版 schema）。
-- `table` 静态透视路径 A（属另一计划，`2026-08-09-bi-kpi-filter-chart-enhance-plan.md`）。
+- `table` 静态透视路径 A（分析报告 §3.2「一期」table 能力增强，独立立项；不属于本计划，也不属于 `2026-08-09-bi-kpi-filter-chart-enhance-plan.md`——该计划已显式排除 pivot-table 全部路径）。
 - 前端维度建模 UI（拖拽字段到行/列/值）——schema 声明式先行，交互式建模器后续单独评估。
 - 地图、data-grid 等其他 BI 控件。
 
@@ -183,12 +183,13 @@ Exit Criteria:
 
 ## Draft Review Record
 
-> 待独立子 agent（fresh session）review 后填写；pass 前维持 `draft`。
+> 由独立子 agent（fresh session）执行；零 Blocker / 零 Major 后提升为 `active`。
 
-- Reviewer / Agent: 待定
-- Verdict: 待定
-- Rounds: 待定
-- Findings addressed: 待定
+- Reviewer / Agent: mission-driver 2026-08-09-182611（fresh session，未复用起草者上下文）
+- Verdict: `pass`
+- Rounds: 1
+- Findings addressed:
+  - [Major] Non-Goals 中路径 A 归属引用不实：`2026-08-09-bi-kpi-filter-chart-enhance-plan.md` 已显式排除 pivot-table 全部路径（含路径 A），分析报告 §3.2 将路径 A 列为「一期」table 能力增强、独立立项——已修正 Non-Goals 措辞，改为正确归属（分析报告 + 独立立项），不再指向 KPI 计划。
 
 ## Closure Gates
 

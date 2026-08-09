@@ -1,6 +1,6 @@
 # map 组件封装计划（OpenLayers）
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-08-09
 > Source: `docs/analysis/2026-08-09-bi-control-support-analysis.md` §6（地图封装调研，OpenLayers 主方案）
 > Related: `docs/plans/2026-08-09-bi-kpi-filter-chart-enhance-plan.md`（BI 骨架，地图评估占位）、`docs/plans/2026-08-09-pivot-table-vtable-wrapper-plan.md`（独立包封装先例）、`docs/references/new-renderer-introduction-audit.md`
@@ -25,7 +25,7 @@
 
 - 新建 `@nop-chaos/flux-renderers-map`，`type: 'map'`，双模式：`region`（GeoJSON 层区域着色，choropleth）+ `pin`（点位 + OL 内置 cluster 聚合）。
 - schema：`basemap`（瓦片源 url/type/attribution）、`regionData`/`pinData`、`cluster`、`zoom`/`center`、`visualMap` 色阶、`empty`/`height`、`onClick` 事件。
-- geojson 资源自管：内建 `map-data` 数据包（中国/世界省市 geojson 静态 JSON）+ **`geojsonSource?: ActionSchema` 经 flux action 加载**（对齐 table `childrenSource` 先例：`helpers.dispatch` → 校验 → 缓存复用；不自建 fetch）。
+- geojson 资源自管：内建 `map-data` 数据模块（`flux-renderers-map` 包内 `src/map-data/*.json` 静态 JSON：中国/世界省市 geojson，随 lazy chunk 加载，**不另立 workspace 包**）+ **`geojsonSource?: ActionSchema` 经 flux action 加载**（对齐 table `childrenSource` 先例：`helpers.dispatch` → 校验 → 缓存复用；不自建 fetch）。
 - 懒加载：OL 模块动态导入（renderer 组件 lazy + OL 内部按需 import），不进初始 bundle。
 - 主题映射：CSS 变量 → OL 样式（区域填充/边框/高亮/点位色）。
 - 内部 state（map 实例、图层、selection）renderer-local（INV-4）；key 经 RendererEnv 注入（INV-2 边界内）。
@@ -45,7 +45,7 @@
 - 包骨架 + `MapSchema` + 注册（`registerMapRenderers`）+ 别名/tsconfig。
 - 数据管线纯函数（failing-first）：regionData → GeoJSON Feature、pinData → Feature + cluster 配置、色阶计算（visualMap）、坐标/缩放归一化。
 - renderer：懒加载 OL 模块、地图实例生命周期（创建/更新/销毁）、图层管理（basemap/vector/cluster）、事件桥接（单点/区域点击 → flux action）、主题映射、loading/empty 态。
-- geojson 资源：`map-data` 数据包（内建中国省市 + world，静态 JSON）或 **`geojsonSource` action 加载**（`helpers.dispatch` → FeatureCollection 校验 → 缓存复用，对齐 `useTableLazyChildren` loading/error/成功三态模式；scope 含参数）。
+- geojson 资源：`map-data` 数据模块（包内 `src/map-data/*.json` 静态 JSON：中国省市 + world，不另立 workspace 包）或 **`geojsonSource` action 加载**（`helpers.dispatch` → FeatureCollection 校验 → 缓存复用，对齐 `useTableLazyChildren` loading/error/成功三态模式；scope 含参数）。
 - playground 示例 + design.md + example.json + INV audit + daily log。
 
 ### Out Of Scope
@@ -89,7 +89,8 @@ Targets: `packages/flux-renderers-map/`（新）、`vite.workspace-alias.ts`、�
   - `visualMap?: { min?; max?; colors?: string[]; defaultColor?: string }`（色阶）
   - `center?`/`zoom?`、`height`、`empty`（value-or-region）、`loading?`
   - 事件：`onClick`（payload `{ name, value, feature }`）
-- [ ] (Fix) 包骨架（graph 模板）：package.json（依赖 `ol` `^10.10.0` + flux-core/i18n/react/ui workspace + peer react）、tsconfig/tsconfig.build.json、src/index.ts（`registerMapRenderers`）、styles.css。
+  - `map-data` 内建资源落位裁定：**包内 `src/map-data/*.json` 静态 JSON 模块**（随 lazy chunk 加载；不另立 workspace 包——Phase 1 仅注册 `flux-renderers-map` 一个包）
+- [ ] (Fix) 包骨架（graph 模板）：package.json（依赖 `ol` `^10.10.0` + flux-core/i18n/react/ui workspace + peer react）、tsconfig/tsconfig.build.json、vitest.config.ts（`createSharedVitestConfig`，INV 审计 checklist G 硬项）、src/index.ts（`registerMapRenderers`）、styles.css。
 - [ ] (Fix) 注册：vite.workspace-alias.ts（包 + styles.css alias）、根 tsconfig.json references。
 - [ ] (Proof) 包级空转：`pnpm --filter @nop-chaos/flux-renderers-map typecheck` 通过。
 
@@ -150,14 +151,15 @@ Exit Criteria:
 Status: planned
 Targets: `apps/playground/src/`、`docs/components/map/design.md`、`docs/components/map/example.json`、`docs/analysis/2026-08-09-bi-control-support-analysis.md`、`docs/logs/2026/08-09.md`
 
-- Item Types: `Fix | Proof | Follow-up`
+- Item Types: `Fix | Proof`
 
+- [ ] (Fix) playground host 接线：`apps/playground/package.json` 加 `@nop-chaos/flux-renderers-map` workspace 依赖、`src/App.tsx` 调 `registerMapRenderers(registry)`、`src/styles.css` 加 `@import '@nop-chaos/flux-renderers-map/styles.css'`（INV 审计 checklist G 硬项）。
 - [ ] (Fix) playground 新增 map 示例页：region 模式（中国省市销售着色，内建 geojson）+ pin 模式（门店点位 cluster）+ 自定义 geojson（`geojsonSource` action 加载）+ 空态。
 - [ ] (Proof) 示例走查：双模式渲染、缩放/平移、点位聚合、区域点击事件、主题切换（明暗）、数据更新不闪屏、空态。
-- [ ] (Fix) `docs/components/map/design.md`（schema 字段表/双模式说明/geojson 资源管理——内建数据包 + `geojsonSource` action/主题映射/事件契约/Non-Goals）+ `example.json`。
+- [ ] (Fix) `docs/components/map/design.md`（schema 字段表/双模式说明/geojson 资源管理——内建数据模块 + `geojsonSource` action/主题映射/事件契约/Non-Goals）+ `example.json`。
 - [ ] (Fix) 更新分析报告 §6.4（地图已落地标注）+ daily log。
-- [ ] (Fix) INV-1~5 审计：无新 IO 类型（瓦片/geojson 经 url/表达式，key 经 RendererEnv）；内部 state 本地化；`RendererComponentProps` 契约。
-- [ ] (Follow-up) 检查 `pnpm check` 新增包无违规。
+- [ ] (Fix) INV-1~5 审计：无新 IO 类型（边界 geojson 经 `geojsonSource` action → env.fetcher；basemap 瓦片网络加载属 OL 库内部渲染管线，渲染器代码不直调 `fetch`/`XMLHttpRequest`；key/瓦片 url 经 schema + RendererEnv 注入，无硬编码）；内部 state 本地化（INV-4）；`RendererComponentProps` 契约（INV-5）。
+- [ ] (Proof) `pnpm check` 新增包无违规（workspace-manifest-deps / oversized 等静态检查为硬门禁，不可降级为 follow-up）。
 
 Exit Criteria:
 
@@ -166,12 +168,17 @@ Exit Criteria:
 
 ## Draft Review Record
 
-> 待独立子 agent（fresh session）review 后填写；pass 前维持 `draft`。
+> 独立子 agent（fresh session，mission-driver 2026-08-09-182611）review 完成；零 Blocker/Major 遗留，升为 `active`。
 
-- Reviewer / Agent: 待定
-- Verdict: 待定
-- Rounds: 待定
-- Findings addressed: 待定
+- Reviewer / Agent: mission-driver review（fresh session）
+- Verdict: `pass`
+- Rounds: 1
+- Findings addressed:
+  - Major: `map-data` 内建资源落位未指定 → 裁定包内 `src/map-data/*.json` 静态 JSON，不另立 workspace 包（Goals / Scope / Phase 1 Decision 同步）。
+  - Major: 新包骨架缺 `vitest.config.ts`（INV 审计 checklist G 硬项）→ 补入 Phase 1 (Fix)。
+  - Major: playground host 接线（package.json dep / App.tsx `registerMapRenderers` / styles.css `@import`）未显式列为执行项 → Phase 4 新增 (Fix) 项。
+  - Major: `pnpm check` 属仓库硬门禁被标为 Follow-up（违反 Minimum Rule 13）→ 改为 (Proof)。
+  - Minor: Phase 4 INV-2 表述收紧（basemap 瓦片 IO 归 OL 库内部渲染管线，渲染器不直调 fetch；key 经 RendererEnv）。
 
 ## Closure Gates
 
