@@ -206,7 +206,7 @@ Exit Criteria:
 - [x] INV-1~5 审计通过。
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 行为缺口。
 - [x] 受影响的 owner docs 已同步（分析报告、daily log）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
