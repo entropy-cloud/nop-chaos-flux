@@ -199,6 +199,9 @@ describe('Route inventory - live renderer coverage', () => {
   });
 
   it('total shared renderer count matches live registry sizes', () => {
+    // 约定型示例路由（无对应 renderer definition，如 dashboard-filter 编排约定）
+    // 计入 ALL_SHARED_RENDERER_ROUTES 但不计入 renderer definitions。
+    const conventionOnlyRouteIds = new Set(['dashboard-filter']);
     const liveTotal =
       basicRendererDefinitions.length +
       formRendererDefinitions.length +
@@ -208,7 +211,8 @@ describe('Route inventory - live renderer coverage', () => {
       CONTENT_RENDERER_ROUTES.length +
       MOBILE_RENDERER_ROUTES.length +
       AI_RENDERER_ROUTES.length +
-      SCHEDULING_RENDERER_ROUTES.length;
+      SCHEDULING_RENDERER_ROUTES.length +
+      conventionOnlyRouteIds.size;
     expect(ALL_SHARED_RENDERER_ROUTES.length).toBe(liveTotal);
   });
 });

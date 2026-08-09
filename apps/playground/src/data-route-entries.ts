@@ -59,4 +59,20 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
     sourcePackage: '@nop-chaos/flux-renderers-data',
     description: 'Compact numeric statistics display (total/count) for dashboards and summaries.',
   },
+  {
+    id: 'stat-tile',
+    title: 'Stat Tile',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description:
+      'BI KPI 卡片：大数字 + 标签 + 同比/环比（delta）+ sparkline 迷你趋势，涨跌色语义。',
+  },
+  {
+    id: 'dashboard-filter',
+    title: 'Dashboard Filter',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description:
+      'BI 筛选联动编排约定示例：筛选表单经 valuesPath 发布到共享 filter.* 作用域，消费端 data-source 自动重载联动 chart/table/stat-tile。',
+  },
 ];
