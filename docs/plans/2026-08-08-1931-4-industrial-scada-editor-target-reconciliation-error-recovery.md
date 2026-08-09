@@ -1,6 +1,6 @@
 # 1931-4 Industrial SCADA Editor-Target Reconciliation & Error-Recovery Completeness
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-09
 > Source: `docs/audits/2026-08-08-1931-multi-audit-industrial-hmi-component-audit.md` §[P1-2] (Dim 04/22), §[P1-3] (Dim 19/22), §[P1-4] (Dim 19/22) + Cross-Cutting Patterns #1 & #2
 > Related: `docs/plans/2026-08-08-1931-3-industrial-scada-oversized-test-split.md` (prerequisite {1}; its test-file split makes room for this plan's failing-first regression tests)
@@ -94,55 +94,59 @@ These are editor-correctness defects on a documented first-class feature (groupe
 
 ### Phase 1 - Proof: failing-first regression tests for all three behaviors
 
-Status: planned
+Status: completed
 Targets: new test file(s) under `packages/flux-renderers-industrial/src/editor/` (e.g. `editor-target-reconciliation.test.ts`); engine-target assertions also extendable into the existing `editor-engine.test.ts` P1-2 describe if it stays under the 700 gate after plan {1}.
 
 - Item Types: `Proof`
 
-- [ ] **P1-2 edit-path test:** build a group with child `inner-1`; `setSelection(['inner-1'])` → `engine.setEditorTargets([inner-1.node])`; capture `engine.editor.target` reference; call `runtime.updateWorkingNode('inner-1', { fill: '#aabbcc' })` (which runs `syncWorkingCopy → applyUpdate` child rebuild); assert `engine.editor.target === engine.getSymbol('inner-1')!.node` (the NEW node object, not the pre-edit reference) **and** the pre-edit reference is no longer the live target. (Fails on current code — target dangles on the destroyed node.)
-- [ ] **P1-2 length-gate test:** drive an undo whose selected id survives a rebuild (selection length unchanged) and assert `engine.setEditorTargets`/target re-resolution still fires (fails on current code because the length-gate skips refresh).
-- [ ] **P1-3 catch test:** seed a selection (`engine.editor.target = [nodeA,...]`); force `engine.applyDiff` to throw mid-way during undo/redo (e.g. inject a symbol type that makes `buildNode` throw); assert the catch's `engine.build(beforeWorking)` rebuilds and `engine.editor.target` references only live rebuilt nodes (fails on current code — target still references destroyed pre-rollback nodes).
-- [ ] **P1-4 catch test:** force `engine.applyDiff` to throw mid-way inside `syncWorkingCopy` (partial apply → half-mutated scene); assert post-catch `engine.getSymbol(...)` reflects the pre-call `synced.config` state (scene fully rebuilt, not half-mutated) **and** a subsequent no-op `syncWorkingCopy` does not leave a diverged canvas (fails on current code — scene stays half-mutated because the catch never rebuilds).
-- [ ] Confirm all four fail on the unmodified codebase (red), captured as the baseline before Phase 2.
+- [x] **P1-2 edit-path test:** build a group with child `inner-1`; `setSelection(['inner-1'])` → `engine.setEditorTargets([inner-1.node])`; capture `engine.editor.target` reference; call `runtime.updateWorkingNode('inner-1', { fill: '#aabbcc' })` (which runs `syncWorkingCopy → applyUpdate` child rebuild); assert `engine.editor.target === engine.getSymbol('inner-1')!.node` (the NEW node object, not the pre-edit reference) **and** the pre-edit reference is no longer the live target. (Fails on current code — target dangles on the destroyed node.)
+- [x] **P1-2 length-gate test:** drive an undo whose selected id survives a rebuild (selection length unchanged) and assert `engine.setEditorTargets`/target re-resolution still fires (fails on current code because the length-gate skips refresh).
+- [x] **P1-3 catch test:** seed a selection (`engine.editor.target = [nodeA,...]`); force `engine.applyDiff` to throw mid-way during undo/redo (e.g. inject a symbol type that makes `buildNode` throw); assert the catch's `engine.build(beforeWorking)` rebuilds and `engine.editor.target` references only live rebuilt nodes (fails on current code — target still references destroyed pre-rollback nodes).
+- [x] **P1-4 catch test:** force `engine.applyDiff` to throw mid-way inside `syncWorkingCopy` (partial apply → half-mutated scene); assert post-catch `engine.getSymbol(...)` reflects the pre-call `synced.config` state (scene fully rebuilt, not half-mutated) **and** a subsequent no-op `syncWorkingCopy` does not leave a diverged canvas (fails on current code — scene stays half-mutated because the catch never rebuilds).
+- [x] Confirm all four fail on the unmodified codebase (red), captured as the baseline before Phase 2.
 
 Exit Criteria:
 
-- [ ] Four failing-first tests committed and demonstrably **red** against current code (proof the tests actually exercise the defect, not a false-green).
-- [ ] Tests assert engine-target / scene state (object identity or `getSymbol(...).node` equivalence), not merely `not.toThrow` or `session.selection` arrays.
+- [x] Four failing-first tests committed and demonstrably **red** against current code (proof the tests actually exercise the defect, not a false-green).
+- [x] Tests assert engine-target / scene state (object identity or `getSymbol(...).node` equivalence), not merely `not.toThrow` or `session.selection` arrays.
 
 ### Phase 2 - Fix: reconcile `editor.target` on every node-identity-changing path; backport scene rebuild
 
-Status: planned
+Status: completed
 Targets: `runtime-mutators.ts`, `runtime-factories.ts`, (optionally) `editor-engine.ts`
 
 - Item Types: `Fix | Decision`
 
-- [ ] **P1-2a (common edit path):** Re-resolve `editor.target` after `syncWorkingCopy`/`updateWorkingNode` whenever `applyDiff` may have run an `applyUpdate` with `patch.children`. Preferred landing: add a single reconciliation step at the end of `syncWorkingCopy` (or `updateWorkingNode`) that, given current `session.selection`, resolves `engine.getSymbol(id)?.node` for each id and calls `engine.setEditorTargets(...)` (or `clearEditorSelection()` when empty/all-stale). This covers `updateWorkingNode`, `addWorkingSymbol`, `removeWorkingSymbol`, connection writes — all the `syncWorkingCopy` callers — uniformly.
-- [ ] **P1-2b (drop the length-gate):** In `applyUndoRedoDiff`'s success-path prune, remove the `if (pruned.length !== session.selection.length)` gate around the target re-resolution — re-resolve targets whenever a rebuild may have occurred (the prune-to-live-ids stays; the _target refresh_ becomes unconditional). Keep `setSessionSelection` semantics intact.
-- [ ] **P1-3 (undo/redo catch reconcile):** After `engine.build(beforeWorking)` in `applyUndoRedoDiff`'s catch, re-resolve `session.selection` against the rebuilt registry and call `engine.setEditorTargets(...)` (or `engine.clearEditorSelection()` if empty/all-stale) — mirror the success-path prune logic.
-- [ ] **P1-4 (sync catch backport):** In `syncWorkingCopy`'s catch, after restoring `session.workingConfig = clone(synced.config)` and `undoRedo.rollbackOnApplyFailure()`, call `engine.build(synced.config)` (full rebuild to the known-good pre-call state, mirroring the 1910-2 pattern), then reconcile `editor.target` (reuse the same reconciliation step from P1-2a). Keep `synced.config` unchanged (it already equals the pre-call state).
-- [ ] **Decision (helper extraction):** If the reconciliation step is needed in ≥3 sites (success path, both catches, common sync path), extract a single private helper (e.g. `reconcileEditorTargetsFromSelection(ctx)` in `runtime-factories.ts` or as an engine method) rather than duplicating the resolve-or-clear logic. Choose the landing with the smaller blast radius; record the choice in the Phase 3 owner-doc note.
-- [ ] All four Phase-1 failing-first tests now pass (green).
+- [x] **P1-2a (common edit path):** Re-resolve `editor.target` after `syncWorkingCopy`/`updateWorkingNode` whenever `applyDiff` may have run an `applyUpdate` with `patch.children`. Preferred landing: add a single reconciliation step at the end of `syncWorkingCopy` (or `updateWorkingNode`) that, given current `session.selection`, resolves `engine.getSymbol(id)?.node` for each id and calls `engine.setEditorTargets(...)` (or `clearEditorSelection()` when empty/all-stale). This covers `updateWorkingNode`, `addWorkingSymbol`, `removeWorkingSymbol`, connection writes — all the `syncWorkingCopy` callers — uniformly.
+- [x] **P1-2b (drop the length-gate):** In `applyUndoRedoDiff`'s success-path prune, remove the `if (pruned.length !== session.selection.length)` gate around the target re-resolution — re-resolve targets whenever a rebuild may have occurred (the prune-to-live-ids stays; the _target refresh_ becomes unconditional). Keep `setSessionSelection` semantics intact.
+- [x] **P1-3 (undo/redo catch reconcile):** After `engine.build(beforeWorking)` in `applyUndoRedoDiff`'s catch, re-resolve `session.selection` against the rebuilt registry and call `engine.setEditorTargets(...)` (or `engine.clearEditorSelection()` if empty/all-stale) — mirror the success-path prune logic.
+- [x] **P1-4 (sync catch backport):** In `syncWorkingCopy`'s catch, after restoring `session.workingConfig = clone(synced.config)` and `undoRedo.rollbackOnApplyFailure()`, call `engine.build(synced.config)` (full rebuild to the known-good pre-call state, mirroring the 1910-2 pattern), then reconcile `editor.target` (reuse the same reconciliation step from P1-2a). Keep `synced.config` unchanged (it already equals the pre-call state).
+- [x] **Decision (helper extraction):** If the reconciliation step is needed in ≥3 sites (success path, both catches, common sync path), extract a single private helper (e.g. `reconcileEditorTargetsFromSelection(ctx)` in `runtime-factories.ts` or as an engine method) rather than duplicating the resolve-or-clear logic. Choose the landing with the smaller blast radius; record the choice in the Phase 3 owner-doc note.
+- [x] All four Phase-1 failing-first tests now pass (green).
 
 Exit Criteria:
 
-- [ ] All four Phase-1 failing-first tests pass; target/scene assertions hold.
-- [ ] No regression in the existing editor suite (`editor-engine.test.ts`, `editor-state-integrity.test.ts`, `runtime-mutators-nested.test.ts`) — re-run focused; full suite re-run is a Closure Gate.
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck` green (local; unblocks owner-doc work).
+- [x] All four Phase-1 failing-first tests pass; target/scene assertions hold.
+- [x] No regression in the existing editor suite (`editor-engine.test.ts`, `editor-state-integrity.test.ts`, `runtime-mutators-nested.test.ts`) — re-run focused; full suite re-run is a Closure Gate.
+- [x] `pnpm --filter @nop-chaos/flux-renderers-industrial typecheck` green (local; unblocks owner-doc work).
+
+> Decision record: helper landed as `reconcileEditorTargets` on `EditorRuntimeContext` (4 sites — `syncWorkingCopy` success path + catch, `applyUndoRedoDiff` success path + catch). Chose ctx-method landing over standalone function or engine method because (a) `setSessionSelection`/`syncWorkingCopy`/`notifySession` already follow the same ctx-closure pattern (consistent shape), (b) the helper reads `session.selection` + `engine` (both already on ctx — no extra plumbing), and (c) `EditorRuntimeContext` is editor-domain internal (not a public exported type), so widening it has zero cross-package blast radius.
 
 ### Phase 3 - Owner-doc sync (only if the error-recovery / target-reconciliation behavior is documented)
 
-Status: planned
+Status: completed
 Targets: `docs/components/industrial-hmi-editor/design-renderer.md`, `docs/components/industrial-hmi-editor/design-undo-redo.md` (only the sections describing editor error recovery / selection lifecycle)
 
 - Item Types: `Fix | Follow-up` (`Fix` when the grep finds an owner-doc describing the pre-fix catch/selection behavior — owner-doc drift is non-degradable per Anti-Slacking Rule; `Follow-up` = none, if no doc describes the behavior)
 
-- [ ] Grep the owner docs for error-recovery / `editor-internal-error` / selection-reconcile descriptions. If (and only if) a doc section describes the catch behavior or selection/target lifecycle, update it to match the post-fix behavior (both catches now rebuild scene + reconcile targets; common edit path re-resolves target). If no doc describes this behavior, write no owner-doc change (per Minimum Rule 17 — do not add boilerplate).
-- [ ] If `design-undo-redo.md` documents the 1910-2 catch pattern, note the backport to `syncWorkingCopy`'s catch so the two catches are described consistently.
+- [x] Grep the owner docs for error-recovery / `editor-internal-error` / selection-reconcile descriptions. If (and only if) a doc section describes the catch behavior or selection/target lifecycle, update it to match the post-fix behavior (both catches now rebuild scene + reconcile targets; common edit path re-resolves target). If no doc describes this behavior, write no owner-doc change (per Minimum Rule 17 — do not add boilerplate).
+- [x] If `design-undo-redo.md` documents the 1910-2 catch pattern, note the backport to `syncWorkingCopy`'s catch so the two catches are described consistently.
 
 Exit Criteria:
 
-- [ ] Owner docs (if any describe the touched behavior) match live code; or an explicit one-line note that no owner-doc change was required.
+- [x] Owner docs (if any describe the touched behavior) match live code; or an explicit one-line note that no owner-doc change was required.
+
+> Owner-doc sync record: `design-undo-redo.md` §12.1 risk table U8 documents the `applyUndoRedoDiff` catch rebuild pattern (1910-2 / A6). Updated U8 to note the Phase 2 / P1-4 backport to `syncWorkingCopy`'s catch (so the two same-failure-class catches are described consistently) + added U9 to document the new `editor.target` reconciliation behavior across all node-identity-changing paths. `design-renderer.md` §8.5.2 line 322 (the `editor-internal-error` code semantics) was re-verified — it already describes both `syncWorkingCopy` + `applyUndoRedoDiff` as firing sources, no drift. No doc describes the `editor.target` selection lifecycle directly (grep for `editor.target` / `setEditorTargets` / `clearEditorSelection` returned zero hits in `docs/components/industrial-hmi-editor/`), so no boilerplate was added for that surface; the new behavior is captured in U9 instead.
 
 ## Draft Review Record
 
@@ -157,18 +161,18 @@ Exit Criteria:
 
 > Behavioral correctness plan. Load-bearing: the failing-first tests must stay green and no in-scope defect may be downgraded.
 
-- [ ] **P1-2** — `editor.target` references the live node after a grouped-child edit (failing-first test green).
-- [ ] **P1-2** — length-gate removed; target re-resolution is unconditional on rebuild paths.
-- [ ] **P1-3** — `applyUndoRedoDiff` catch reconciles `editor.target` after `engine.build(beforeWorking)` (failing-first test green).
-- [ ] **P1-4** — `syncWorkingCopy` catch backports `engine.build(synced.config)` full rebuild + target reconcile; no permanent canvas↔data divergence (failing-first test green).
-- [ ] The two editor error catches now handle the same failure class consistently (both rebuild scene + reconcile targets).
-- [ ] No in-scope live defect / contract drift / hard-gate failure downgraded to deferred or follow-up.
-- [ ] Affected owner docs synced to live baseline (or explicit "no owner-doc update required" with reason).
-- [ ] Independent sub-agent closure audit completed and recorded (executor session must not self-audit this item).
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] **P1-2** — `editor.target` references the live node after a grouped-child edit (failing-first test green).
+- [x] **P1-2** — length-gate removed; target re-resolution is unconditional on rebuild paths.
+- [x] **P1-3** — `applyUndoRedoDiff` catch reconciles `editor.target` after `engine.build(beforeWorking)` (failing-first test green).
+- [x] **P1-4** — `syncWorkingCopy` catch backports `engine.build(synced.config)` full rebuild + target reconcile; no permanent canvas↔data divergence (failing-first test green).
+- [x] The two editor error catches now handle the same failure class consistently (both rebuild scene + reconcile targets).
+- [x] No in-scope live defect / contract drift / hard-gate failure downgraded to deferred or follow-up.
+- [x] Affected owner docs synced to live baseline (or explicit "no owner-doc update required" with reason).
+- [x] Independent sub-agent closure audit completed and recorded (executor session must not self-audit this item).
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -181,12 +185,13 @@ _None at draft time._ If during execution a rebuild-performance concern arises o
 
 ## Closure
 
-Status Note: _filled at closure_
+Status Note: ✅ All phases executed, all closure gates met (incl. independent closure audit pass). Plan status flipped to `completed` 2026-08-09.
 
 Closure Audit Evidence:
 
-- Auditor / Agent: _filled at closure_
-- Evidence: _filled at closure_
+- Auditor / Agent: independent sub-agent fresh session `ses_01b24628affeDu1LRouyfkl0sm` (closure audit, fresh context three-piece set: task plan + diff summary + verification output).
+- Verdict: `pass` — 0 Blocker / 0 Major / 1 Minor (non-load-bearing: `editor-target-reconciliation.test.ts:308` first assertion vacuously true in OLD code, but companion `not.toBe(liveBefore!.node)` is the load-bearing failing-first proof — test still validly fails on OLD).
+- Evidence: Verified all 4 Phase 2 fixes match plan intent via live source re-read — `reconcileEditorTargets()` defined once (`runtime-factories.ts:177-186`) and shared across all 4 sites (sync success/catch, `applyUndoRedoDiff` success/catch); length-gate in `applyUndoRedoDiff` success path now wraps only `setSessionSelection` (`mutators.ts:143-145`) with `reconcileEditorTargets()` called unconditionally after; both catches consistently rebuild scene + reconcile targets + dispatch `onError`; `synced.config` read-only in sync catch (never reassigned). All 5 new tests assert engine-target/scene identity (object equality vs `getSymbol(...).node`), not `not.toThrow` or `session.selection` arrays. Focused industrial test re-run: 116 files / 1444 tests green; industrial typecheck + lint green. Owner-doc U8 update + new U9 accurately describe post-fix behavior; roadmap progress paragraph + status flip landed. `engine` variable in `runtime-mutators.ts` still used at 6 other sites — no dead closures or unused imports introduced.
 
 Follow-up:
 
