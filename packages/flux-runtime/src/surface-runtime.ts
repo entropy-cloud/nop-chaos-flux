@@ -158,6 +158,7 @@ export function createManagedSurfaceRuntime(
         onCloseNodes: options?.onCloseNodes,
         onSubmitSuccessNodes: options?.onSubmitSuccessNodes,
         onSubmitErrorNodes: options?.onSubmitErrorNodes,
+        closeOnSubmit: options?.closeOnSubmit,
         ownerActionCtx: options?.ownerActionCtx,
       };
 
@@ -262,11 +263,22 @@ export function createManagedSurfaceRuntime(
       else nodes = entry.onCloseNodes;
 
       if (!nodes || !entry.ownerActionCtx) {
+        if (hookName === 'submit:success' && entry.closeOnSubmit) {
+          this.close(entry.id);
+        }
         return { ok: true, data: { skipped: true } };
       }
 
       try {
-        return await dispatchInOwner(entry, nodes, payload);
+        const result = await dispatchInOwner(entry, nodes, payload);
+        // AMIS closeOnSubmit semantic: after the owner-side onSubmitSuccess
+        // hook has run, close the surface. Applies to any submit path
+        // (button submitForm or Enter key), both of which funnel through
+        // this hook.
+        if (hookName === 'submit:success' && entry.closeOnSubmit) {
+          this.close(entry.id);
+        }
+        return result;
       } catch (err) {
         console.warn(`[surface] ${hookName} hook failed:`, err);
         return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };

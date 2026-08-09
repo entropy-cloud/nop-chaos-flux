@@ -246,6 +246,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               onCloseNodes: invocation.args?.onClose as ActionSchema | ActionSchema[] | undefined,
               onSubmitSuccessNodes: invocation.args?.onSubmitSuccess as ActionSchema | ActionSchema[] | undefined,
               onSubmitErrorNodes: invocation.args?.onSubmitError as ActionSchema | ActionSchema[] | undefined,
+              closeOnSubmit: (invocation.args as Record<string, unknown> | undefined)?.closeOnSubmit === true,
               ownerActionCtx: ctx,
             },
           });
@@ -310,6 +311,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               onCloseNodes: invocation.args?.onClose as ActionSchema | ActionSchema[] | undefined,
               onSubmitSuccessNodes: invocation.args?.onSubmitSuccess as ActionSchema | ActionSchema[] | undefined,
               onSubmitErrorNodes: invocation.args?.onSubmitError as ActionSchema | ActionSchema[] | undefined,
+              closeOnSubmit: (invocation.args as Record<string, unknown> | undefined)?.closeOnSubmit === true,
               ownerActionCtx: ctx,
             },
           });

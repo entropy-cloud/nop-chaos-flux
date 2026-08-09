@@ -86,6 +86,8 @@ type ActionContextSurfaceRuntime = {
       onCloseNodes?: ActionSchema | ActionSchema[];
       onSubmitSuccessNodes?: ActionSchema | ActionSchema[];
       onSubmitErrorNodes?: ActionSchema | ActionSchema[];
+      // ── auto-close after submit:success (AMIS closeOnSubmit semantic) ──
+      closeOnSubmit?: boolean;
       // ── owner ActionContext snapshot for hook dispatch ──
       ownerActionCtx?: ActionContext;
     };

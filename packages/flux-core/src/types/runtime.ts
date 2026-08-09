@@ -276,6 +276,14 @@ export interface OwnedSurfaceStateBase {
   onSubmitSuccessNodes?: ActionSchema | ActionSchema[];
   onSubmitErrorNodes?: ActionSchema | ActionSchema[];
   /**
+   * When a `submitScope: 'surface'` form inside this surface submits
+   * successfully, close the surface automatically after the
+   * `onSubmitSuccess` hook has run (AMIS `Dialog.closeOnSubmit` semantic).
+   * Only processed by action-style openDialog/openDrawer surfaces; default
+   * `false` (callers close explicitly via `closeSurface`).
+   */
+  closeOnSubmit?: boolean;
+  /**
    * Snapshot of the owner ActionContext captured at surface open time. Used by
    * lifecycle hook dispatch to reconstruct an owner-side ctx (scope, runtime,
    * componentRegistry, etc.). May become stale if the owner runtime is torn down
@@ -345,6 +353,8 @@ export interface SurfaceRuntime {
       onCloseNodes?: ActionSchema | ActionSchema[];
       onSubmitSuccessNodes?: ActionSchema | ActionSchema[];
       onSubmitErrorNodes?: ActionSchema | ActionSchema[];
+      // ── auto-close after submit:success (AMIS closeOnSubmit semantic) ──
+      closeOnSubmit?: boolean;
       // ── owner ActionContext snapshot for hook dispatch ──
       ownerActionCtx?: ActionContext;
     };
