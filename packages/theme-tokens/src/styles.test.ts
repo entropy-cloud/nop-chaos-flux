@@ -34,6 +34,46 @@ describe('@nop-chaos/theme-tokens styles contract', () => {
     expect(styles).not.toContain('--host-primary:');
   });
 
+  it('defines the C1a table token surface on :root', () => {
+    expect(styles).toContain('--table-body-font-size: 12px;');
+    expect(styles).toContain('--table-header-font-size: 14px;');
+    expect(styles).toContain('--table-header-font-weight: 400;');
+    expect(styles).toContain('--table-header-bg:');
+    expect(styles).toContain('--table-cell-padding-y: 11px;');
+    expect(styles).toContain('--table-cell-padding-x: 10px;');
+    expect(styles).toContain('--table-edge-padding-x: 16px;');
+    expect(styles).toContain('--table-row-height: 40px;');
+    expect(styles).toContain('--table-header-separator-color: hsl(var(--border));');
+    expect(styles).toContain('--table-hover-bg:');
+    expect(styles).toContain('--table-selected-bg:');
+    expect(styles).toContain('--table-selected-bg-strong:');
+    expect(styles).toContain('--table-striped-bg: transparent;');
+    expect(styles).toContain('--table-fixed-edge-width: 30px;');
+    expect(styles).toContain('--table-fixed-edge-shadow:');
+    expect(styles).toContain('--table-fixed-edge-shadow-right:');
+    expect(styles).toContain('--table-empty-height: 200px;');
+    expect(styles).toContain('--table-row-action-height: 32px;');
+    expect(styles).toContain('--table-row-action-gap: 10px;');
+    expect(styles).toContain('--crud-toolbar-gap: 10px;');
+  });
+
+  it('defines the C1a dialog size and position tokens on :root', () => {
+    expect(styles).toContain('--dialog-size-xs: 375px;');
+    expect(styles).toContain('--dialog-size-sm: 350px;');
+    expect(styles).toContain('--dialog-size-base: 500px;');
+    expect(styles).toContain('--dialog-size-md: 800px;');
+    expect(styles).toContain('--dialog-size-lg: 1100px;');
+    expect(styles).toContain('--dialog-size-xl: 90%;');
+    expect(styles).toContain('--dialog-top-offset: 60px;');
+    expect(styles).toContain('--dialog-stack-step: 30px;');
+    expect(styles).toContain('--dialog-overlay-bg: rgb(0 0 0 / 0.7);');
+    expect(styles).toContain('--dialog-title-font-size: 14px;');
+    expect(styles).toContain('--dialog-body-padding-x: 24px;');
+    expect(styles).toContain('--dialog-footer-gap: 8px;');
+    expect(styles).toContain('--dialog-footer-button-min-width: 72px;');
+    expect(styles).toContain('--dialog-content-border-radius: 6px;');
+  });
+
   it('defines all supported theme root selectors', () => {
     expect(styles).toContain(":root[data-theme='classic'][data-mode='light']");
     expect(styles).toContain(":root[data-theme='classic'][data-mode='dark']");

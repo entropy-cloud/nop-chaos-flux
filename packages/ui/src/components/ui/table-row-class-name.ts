@@ -1,8 +1,8 @@
 const tableRowClassNames = {
   default:
-    'border-b transition-colors duration-200 hover:bg-[color-mix(in_hsl,hsl(var(--primary))_6%,transparent)] data-[state=selected]:bg-[color-mix(in_hsl,hsl(var(--primary))_10%,transparent)]',
+    'border-b transition-colors duration-200 hover:bg-[var(--table-hover-bg)] data-[state=selected]:bg-[var(--table-selected-bg)]',
   interactive:
-    'cursor-pointer hover:bg-[linear-gradient(90deg,color-mix(in_hsl,hsl(var(--primary))_9%,transparent),transparent)] data-[state=selected]:bg-[color-mix(in_hsl,hsl(var(--primary))_12%,transparent)]',
+    'cursor-pointer hover:bg-[var(--table-hover-bg-gradient)] data-[state=selected]:bg-[var(--table-selected-bg-strong)]',
   subtle: 'hover:bg-surface-hover',
 } as const;
 

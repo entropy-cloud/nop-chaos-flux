@@ -80,8 +80,55 @@ describe('Dialog', () => {
     );
 
     const overlay = document.body.querySelector('[data-slot="dialog-overlay"]');
-    expect(overlay?.className).toContain('bg-surface-overlay');
+    expect(overlay?.className).toContain('bg-[var(--dialog-overlay-bg)]');
+    expect(overlay?.className).not.toContain('bg-surface-overlay');
     expect(overlay?.className).not.toContain('bg-black/10');
+  });
+
+  it('maps every size tier to its --dialog-size-* token width and emits data-size', () => {
+    const expectations: Record<string, string> = {
+      xs: 'var(--dialog-size-xs)',
+      sm: 'var(--dialog-size-sm)',
+      base: 'var(--dialog-size-base)',
+      default: 'var(--dialog-size-base)',
+      md: 'var(--dialog-size-md)',
+      lg: 'var(--dialog-size-lg)',
+      xl: 'var(--dialog-size-xl)',
+    };
+
+    for (const [size, widthVar] of Object.entries(expectations)) {
+      const { unmount } = render(
+        <Dialog modal={false} open>
+          <DialogContent showCloseButton={false} size={size as never}>
+            Sized
+          </DialogContent>
+        </Dialog>,
+      );
+
+      const popup = document.querySelector(
+        '[data-slot="dialog-content"]',
+      ) as HTMLDivElement | null;
+      expect(popup).toBeTruthy();
+      expect(popup!.style.width).toBe(widthVar);
+      expect(popup!.getAttribute('data-size')).toBe(size);
+      unmount();
+    }
+  });
+
+  it('anchors content to the top token when topAnchored with a horizontal-only base transform', () => {
+    render(
+      <Dialog modal={false} open>
+        <DialogContent showCloseButton={false} topAnchored>
+          Top anchored
+        </DialogContent>
+      </Dialog>,
+    );
+
+    const popup = document.querySelector('[data-slot="dialog-content"]') as HTMLDivElement | null;
+    expect(popup).toBeTruthy();
+    expect(popup!.className).toContain('top-[var(--dialog-top-offset)]');
+    expect(popup!.className).not.toContain('-translate-y-1/2');
+    expect(popup!.style.transform).toBe('translate(-50%, 0)');
   });
 
   it('wraps Tab focus from the last focusable back to the first inside the popup', () => {

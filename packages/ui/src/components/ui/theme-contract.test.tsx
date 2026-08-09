@@ -46,7 +46,8 @@ describe('ui theme contracts', () => {
       }),
     );
 
-    expect(dialogOverlayMarkup).toContain('bg-surface-overlay');
+    expect(dialogOverlayMarkup).toContain('bg-[var(--dialog-overlay-bg)]');
+    expect(dialogOverlayMarkup).not.toContain('bg-surface-overlay');
     expect(dialogOverlayMarkup).not.toContain('bg-black/10');
     expect(drawerOverlayMarkup).toContain('bg-surface-overlay');
     expect(drawerOverlayMarkup).not.toContain('bg-black/10');

@@ -95,7 +95,7 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn('nop-dialog ',
-        'isolate bg-surface-overlay duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+        'isolate bg-[var(--dialog-overlay-bg)] duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
         isContained ? 'absolute inset-0' : 'fixed inset-0',
         className,
       )}
@@ -111,7 +111,8 @@ const DialogContent = React.forwardRef<
     showCloseButton?: boolean;
     offsetRef?: React.MutableRefObject<{ x: number; y: number }>;
     baseTransform?: string;
-    size?: 'sm' | 'default' | 'lg' | 'xl';
+    size?: 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl' | 'default';
+    topAnchored?: boolean;
   }
 >(function DialogContent(
   {
@@ -121,6 +122,7 @@ const DialogContent = React.forwardRef<
     offsetRef,
     baseTransform,
     size = 'default',
+    topAnchored = false,
     ...props
   },
   ref,
@@ -130,12 +132,26 @@ const DialogContent = React.forwardRef<
   const isContained = containerElement != null;
   const zIndex = useGlobalZIndex();
   const effectiveBaseTransform = noCenter
-    ? isContained
-      ? ''
-      : ''
-    : isContained
-      ? 'translate(-50%, -50%)'
-      : (baseTransform ?? 'translate(-50%, -50%)');
+    ? ''
+    : topAnchored
+      ? 'translate(-50%, 0)'
+      : isContained
+        ? 'translate(-50%, -50%)'
+        : (baseTransform ?? 'translate(-50%, -50%)');
+  const sizeVar =
+    size === 'xs'
+      ? 'var(--dialog-size-xs)'
+      : size === 'sm'
+        ? 'var(--dialog-size-sm)'
+        : size === 'base' || size === 'default'
+          ? 'var(--dialog-size-base)'
+          : size === 'md'
+            ? 'var(--dialog-size-md)'
+            : size === 'lg'
+              ? 'var(--dialog-size-lg)'
+              : size === 'xl'
+                ? 'var(--dialog-size-xl)'
+                : undefined;
   const { contentRef, handlePointerDown, moveBy, resetPosition } = useDialogDrag(
     { enabled: draggable, offsetRef, baseTransform: effectiveBaseTransform },
     ref,
@@ -159,21 +175,22 @@ const DialogContent = React.forwardRef<
           data-slot="dialog-content"
           data-size={size}
           className={cn('nop-dialog ',
-            'flex w-full max-w-[calc(100%-2rem)] flex-col rounded-xl bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+            'flex w-full max-w-[calc(100%-2rem)] flex-col rounded-[var(--dialog-content-border-radius)] bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
             'max-h-[calc(100dvh-2rem)]',
-            'data-[size=sm]:sm:max-w-sm data-[size=default]:sm:max-w-lg data-[size=lg]:sm:max-w-2xl data-[size=xl]:sm:max-w-4xl',
             isContained ? 'absolute' : 'fixed',
-            noCenter ? '' : 'top-[50%] left-[50%]',
+            noCenter ? '' : topAnchored ? 'top-[var(--dialog-top-offset)] left-[50%]' : 'top-[50%] left-[50%]',
             !draggable &&
               !noCenter &&
-              '-translate-x-1/2 -translate-y-1/2 data-open:zoom-in-95 data-closed:zoom-out-95',
+              (topAnchored
+                ? '-translate-x-1/2 data-open:zoom-in-95 data-closed:zoom-out-95'
+                : '-translate-x-1/2 -translate-y-1/2 data-open:zoom-in-95 data-closed:zoom-out-95'),
             className,
           )}
           {...props}
           style={
             draggable
-              ? { transform: noCenter ? undefined : effectiveBaseTransform, zIndex, ...props.style }
-              : { zIndex, ...props.style }
+              ? { transform: noCenter ? undefined : effectiveBaseTransform, zIndex, width: sizeVar, ...props.style }
+              : { zIndex, width: sizeVar, ...props.style }
           }
           onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
           onKeyDown={(event) => {
@@ -279,7 +296,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
 
 function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div data-slot="dialog-body" className={cn('nop-dialog ','flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4', className)} {...props} />
+    <div data-slot="dialog-body" className={cn('nop-dialog ','flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-[var(--dialog-body-padding-x)] py-4', className)} {...props} />
   );
 }
 
@@ -295,7 +312,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn('nop-dialog ',
-        'mt-auto flex shrink-0 flex-col-reverse gap-2 border-t bg-muted/50 p-4 sm:flex-row sm:justify-end',
+        'mt-auto flex shrink-0 flex-col-reverse gap-[var(--dialog-footer-gap)] p-4 [&_button]:min-w-[var(--dialog-footer-button-min-width)] sm:flex-row sm:justify-end',
         className,
       )}
       {...props}
@@ -314,7 +331,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('nop-dialog ','font-heading text-base leading-none font-medium', className)}
+      className={cn('nop-dialog ','font-heading text-[length:var(--dialog-title-font-size)] leading-none font-medium', className)}
       {...props}
     />
   );

@@ -127,7 +127,7 @@ describe('DialogHost responsive behavior (M1c)', () => {
     const props = mocks.dialogContentProps[0]!;
     expect(props['data-mobile-fullscreen']).toBeUndefined();
     expect(props.style).toMatchObject({});
-    expect(props.size).toBe('default');
+    expect(props.size).toBe('sm');
   });
 
   it('does not force fullscreen on desktop', () => {

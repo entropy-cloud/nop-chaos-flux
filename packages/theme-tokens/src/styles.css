@@ -66,6 +66,47 @@
   --surface-highlight: rgba(255, 255, 255, 0.75);
   --surface-hover: rgba(255, 255, 255, 0.55);
   --surface-overlay: rgba(15, 23, 42, 0.4);
+
+  --table-body-font-size: 12px;
+  --table-header-font-size: 14px;
+  --table-header-font-weight: 400;
+  --table-cell-padding-y: 11px;
+  --table-cell-padding-x: 10px;
+  --table-edge-padding-x: 16px;
+  --table-row-height: 40px;
+  --table-header-bg: hsl(var(--background));
+  --table-header-separator-color: hsl(var(--border));
+  --table-hover-bg: color-mix(in hsl, hsl(var(--primary)) 6%, transparent);
+  --table-hover-bg-gradient: linear-gradient(
+    90deg,
+    color-mix(in hsl, hsl(var(--primary)) 9%, transparent),
+    transparent
+  );
+  --table-selected-bg: color-mix(in hsl, hsl(var(--primary)) 10%, transparent);
+  --table-selected-bg-strong: color-mix(in hsl, hsl(var(--primary)) 12%, transparent);
+  --table-striped-bg: transparent;
+  --table-empty-height: 200px;
+  --table-fixed-edge-width: 30px;
+  --table-fixed-edge-shadow: inset 10px 0 8px -8px rgba(5, 5, 5, 0.06);
+  --table-fixed-edge-shadow-right: inset -10px 0 8px -8px rgba(5, 5, 5, 0.06);
+  --table-row-action-height: 32px;
+  --table-row-action-gap: 10px;
+  --crud-toolbar-gap: 10px;
+
+  --dialog-size-xs: 375px;
+  --dialog-size-sm: 350px;
+  --dialog-size-base: 500px;
+  --dialog-size-md: 800px;
+  --dialog-size-lg: 1100px;
+  --dialog-size-xl: 90%;
+  --dialog-top-offset: 60px;
+  --dialog-stack-step: 30px;
+  --dialog-overlay-bg: rgb(0 0 0 / 0.7);
+  --dialog-title-font-size: 14px;
+  --dialog-body-padding-x: 24px;
+  --dialog-footer-button-min-width: 72px;
+  --dialog-content-border-radius: 6px;
+  --dialog-footer-gap: 8px;
 }
 
 :root[data-theme='classic'][data-mode='light'] {

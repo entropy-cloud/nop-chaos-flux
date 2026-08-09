@@ -29,13 +29,18 @@ import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with
 
 type FluxSurfaceSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
-function resolveDialogPrimitiveSize(size: FluxSurfaceSize | undefined): 'sm' | 'default' | 'lg' | undefined {
+type PrimitiveDialogSize = 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl' | undefined;
+
+function resolveDialogPrimitiveSize(size: FluxSurfaceSize | undefined): PrimitiveDialogSize {
   if (!size) {
     return undefined;
   }
-  if (size === 'xs') return 'sm';
-  if (size === 'sm' || size === 'md') return 'default';
-  return 'lg';
+  if (size === 'xs') return 'xs';
+  if (size === 'sm') return 'sm';
+  if (size === 'md') return 'base';
+  if (size === 'lg') return 'md';
+  if (size === 'xl') return 'lg';
+  return undefined;
 }
 
 function normalizeCssLength(value: number | string | undefined): string | undefined {
@@ -167,7 +172,7 @@ export function DialogHost() {
 
   return (
     <>
-      {surfaces.map((surface: SurfaceEntry) =>
+      {surfaces.map((surface, surfaceIndex) =>
         surface.kind === 'dialog' ? (
           <DialogView
             key={surface.id}
@@ -175,6 +180,7 @@ export function DialogHost() {
             surfaceRuntime={surfaceRuntime}
             modalContainer={modalContainer}
             isTopmost={surface.id === topmostDialogId}
+            stackIndex={surfaces.slice(0, surfaceIndex).filter((s) => s.kind === 'dialog').length}
           />
         ) : (
           <DrawerView
@@ -194,8 +200,9 @@ function DialogView(props: {
   surfaceRuntime: SurfaceRuntime;
   modalContainer?: string;
   isTopmost: boolean;
+  stackIndex: number;
 }) {
-  const { surface, surfaceRuntime, isTopmost } = props;
+  const { surface, surfaceRuntime, isTopmost, stackIndex } = props;
   const isMobile = useIsMobile();
   const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
     | ((nextOpen: boolean) => void)
@@ -254,6 +261,12 @@ function DialogView(props: {
     height: surface.surface.height as string | number | undefined,
     fullSize: 'viewport',
   });
+  const isMobileFullscreen = isMobile && !hasExplicitSize;
+  const applyTopAnchored = !isMobileFullscreen && effectiveSize !== 'full';
+  const surfaceStyle: React.CSSProperties = { ...inlineStyle };
+  if (applyTopAnchored) {
+    surfaceStyle.top = `calc(var(--dialog-top-offset) + ${stackIndex} * var(--dialog-stack-step))`;
+  }
   const headerClassName = surface.surface.headerClassName as string | undefined;
   const bodyClassName = surface.surface.bodyClassName as string | undefined;
   const footerClassName = surface.surface.footerClassName as string | undefined;
@@ -301,8 +314,9 @@ function DialogView(props: {
         data-close-on-esc={closeOnEsc ? 'true' : 'false'}
         data-mobile-fullscreen={isMobile && !hasExplicitSize ? 'true' : undefined}
         size={primitiveSize}
+        topAnchored={applyTopAnchored}
         showCloseButton={showCloseButton}
-        style={inlineStyle}
+        style={surfaceStyle}
         onClickCapture={(event) => {
           const target = event.target;
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 function ThrowOnRender(props: { message: string }): never {
   throw new Error(props.message);
@@ -68,8 +68,14 @@ vi.mock('@nop-chaos/ui', () => ({
       {children}
     </div>
   ),
-  DialogContent: ({ children, onClickCapture }: any) => (
-    <div data-testid="dialog-content" onClickCapture={onClickCapture}>
+  DialogContent: ({ children, onClickCapture, size, topAnchored, style }: any) => (
+    <div
+      data-testid="dialog-content"
+      data-size={size ?? ''}
+      data-top-anchored={String(topAnchored)}
+      data-style-top={style?.top ?? ''}
+      onClickCapture={onClickCapture}
+    >
       {children}
     </div>
   ),
@@ -139,6 +145,7 @@ function makeSurfaceRuntime(entries: any[]) {
 
 describe('DialogHost', () => {
   beforeEach(() => {
+    cleanup();
     vi.clearAllMocks();
   });
 
@@ -208,6 +215,144 @@ describe('DialogHost', () => {
 
     expect(surfaceRuntime.close).toHaveBeenCalledWith('dialog-1');
     expect(surfaceRuntime.close).toHaveBeenCalledWith('dialog-2');
+  });
+
+  it('maps surface sizes to the --dialog-size-* scale and stacks dialogs with the top token', () => {
+    const scope = makeScope();
+    const surfaceRuntime = makeSurfaceRuntime([
+      {
+        id: 'd-xl',
+        kind: 'dialog',
+        scope,
+        validationOwner: { scopeId: 'd-xl-validation' },
+        actionScope: undefined,
+        componentRegistry: undefined,
+        ownerNodeInstance: undefined,
+        title: 'dialog-xl',
+        body: undefined,
+        surface: { body: 'xl-body', size: 'lg' },
+      },
+      {
+        id: 'd-md',
+        kind: 'dialog',
+        scope,
+        validationOwner: { scopeId: 'd-md-validation' },
+        actionScope: undefined,
+        componentRegistry: undefined,
+        ownerNodeInstance: undefined,
+        title: undefined,
+        body: undefined,
+        surface: { body: 'md-body', size: 'md' },
+      },
+      {
+        id: 'd-full',
+        kind: 'dialog',
+        scope,
+        validationOwner: { scopeId: 'd-full-validation' },
+        actionScope: undefined,
+        componentRegistry: undefined,
+        ownerNodeInstance: undefined,
+        title: undefined,
+        body: undefined,
+        surface: { body: 'full-body', size: 'full' },
+      },
+    ]);
+
+    mocks.useCurrentPage.mockReturnValue({});
+    mocks.useCurrentSurfaceRuntime.mockReturnValue(surfaceRuntime);
+
+    render(<DialogHost />);
+
+    const contents = screen.getAllByTestId('dialog-content');
+    expect(contents).toHaveLength(3);
+    const [xl, md, full] = contents;
+
+    expect(xl?.getAttribute('data-size')).toBe('md');
+    expect(xl?.getAttribute('data-top-anchored')).toBe('true');
+    expect(xl?.getAttribute('data-style-top')).toBe(
+      'calc(var(--dialog-top-offset) + 0 * var(--dialog-stack-step))',
+    );
+
+    expect(md?.getAttribute('data-size')).toBe('base');
+    expect(md?.getAttribute('data-style-top')).toBe(
+      'calc(var(--dialog-top-offset) + 1 * var(--dialog-stack-step))',
+    );
+
+    expect(full?.getAttribute('data-size')).toBe('');
+    expect(full?.getAttribute('data-top-anchored')).toBe('false');
+    expect(full?.getAttribute('data-style-top')).toBe('');
+  });
+
+  it('counts only dialogs when indexing stack offsets (drawers do not advance the step)', () => {
+    const scope = makeScope();
+    const surfaceRuntime = makeSurfaceRuntime([
+      {
+        id: 'drawer-a',
+        kind: 'drawer',
+        scope,
+        validationOwner: { scopeId: 'drawer-a-validation' },
+        actionScope: undefined,
+        componentRegistry: undefined,
+        ownerNodeInstance: undefined,
+        title: 'drawer-a',
+        body: undefined,
+        surface: { body: 'da-body' },
+      },
+      {
+        id: 'd-first',
+        kind: 'dialog',
+        scope,
+        validationOwner: { scopeId: 'd-first-validation' },
+        actionScope: undefined,
+        componentRegistry: undefined,
+        ownerNodeInstance: undefined,
+        title: 'd-first',
+        body: undefined,
+        surface: { body: 'df-body' },
+      },
+      {
+        id: 'drawer-b',
+        kind: 'drawer',
+        scope,
+        validationOwner: { scopeId: 'drawer-b-validation' },
+        actionScope: undefined,
+        componentRegistry: undefined,
+        ownerNodeInstance: undefined,
+        title: 'drawer-b',
+        body: undefined,
+        surface: { body: 'db-body' },
+      },
+      {
+        id: 'd-second',
+        kind: 'dialog',
+        scope,
+        validationOwner: { scopeId: 'd-second-validation' },
+        actionScope: undefined,
+        componentRegistry: undefined,
+        ownerNodeInstance: undefined,
+        title: 'd-second',
+        body: undefined,
+        surface: { body: 'ds-body' },
+      },
+    ]);
+
+    mocks.useCurrentPage.mockReturnValue({});
+    mocks.useCurrentSurfaceRuntime.mockReturnValue(surfaceRuntime);
+
+    render(<DialogHost />);
+
+    const contents = screen
+      .getAllByTestId('dialog-content')
+      .filter((node) => node.getAttribute('data-size') === '');
+    expect(contents).toHaveLength(2);
+    expect(contents[0]?.getAttribute('data-style-top')).toBe(
+      'calc(var(--dialog-top-offset) + 0 * var(--dialog-stack-step))',
+    );
+    expect(contents[1]?.getAttribute('data-style-top')).toBe(
+      'calc(var(--dialog-top-offset) + 1 * var(--dialog-stack-step))',
+    );
+    expect(contents[0]?.getAttribute('data-top-anchored')).toBe('true');
+    expect(contents[1]?.getAttribute('data-top-anchored')).toBe('true');
   });
 
   it('renders drawers with each supported direction and closes them from close targets', () => {

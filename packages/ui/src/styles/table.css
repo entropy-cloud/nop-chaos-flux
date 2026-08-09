@@ -1,0 +1,69 @@
+.nop-table {
+  font-size: var(--table-body-font-size);
+}
+
+.nop-table thead th {
+  height: var(--table-row-height);
+  padding: 0 var(--table-cell-padding-x);
+  font-size: var(--table-header-font-size);
+  font-weight: var(--table-header-font-weight);
+  background: var(--table-header-bg);
+}
+
+.nop-table thead th + th {
+  border-left: 1px solid var(--table-header-separator-color);
+}
+
+.nop-table tbody td {
+  padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
+}
+
+.nop-table tbody td:first-child {
+  padding-left: var(--table-edge-padding-x);
+}
+
+.nop-table tbody td:last-child {
+  padding-right: var(--table-edge-padding-x);
+}
+
+.nop-table tbody tr[data-striped]:not(:hover) {
+  background: var(--table-striped-bg);
+}
+
+.nop-table [data-slot='table-actions'] button {
+  height: var(--table-row-action-height);
+}
+
+.nop-table[data-bordered] {
+  border: 1px solid var(--border);
+}
+
+.nop-table[data-bordered] tbody td + td,
+.nop-table[data-bordered] tbody td + th,
+.nop-table[data-bordered] tbody th + td {
+  border-left: 1px solid var(--border);
+}
+
+.nop-table th.nop-table-sticky-edge-left::after,
+.nop-table td.nop-table-sticky-edge-left::after,
+.nop-table th.nop-table-sticky-edge-right::after,
+.nop-table td.nop-table-sticky-edge-right::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--table-fixed-edge-width);
+  pointer-events: none;
+}
+
+.nop-table th.nop-table-sticky-edge-left::after,
+.nop-table td.nop-table-sticky-edge-left::after {
+  left: 100%;
+  box-shadow: var(--table-fixed-edge-shadow);
+}
+
+.nop-table th.nop-table-sticky-edge-right::after,
+.nop-table td.nop-table-sticky-edge-right::after {
+  right: 100%;
+  box-shadow: var(--table-fixed-edge-shadow-right);
+}

@@ -386,7 +386,7 @@ describe('reactive meta and draggable dialogs', () => {
 
     fireEvent.click(screen.getByText('Open transform dialog'));
     const content = await screen.findByRole('dialog');
-    expect(content.style.transform).toBe('translate(-50%, -50%)');
+    expect(content.style.transform).toBe('translate(-50%, 0)');
     expect(content.className).not.toContain('translate-x-[-50%]');
     expect(content.getAttribute('data-slot')).toBe('dialog-surface');
     expect(document.querySelector('.nop-dialog-card')).toBeNull();
