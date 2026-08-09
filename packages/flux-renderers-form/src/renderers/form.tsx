@@ -174,14 +174,13 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       if (!curSurfaceId) return;
       const entry = currentSurfaceRuntime.store.getState().entries.find((e) => e.id === curSurfaceId);
       if (!entry) return;
-      try {
-        await currentSurfaceRuntime.triggerHook(entry, hookName, {
-          result,
-          formData: { ...ownedForm.store.getState().values },
-          hookName,
-        });
-      } catch (err) {
-        console.warn(`[form] surface ${hookName} hook failed:`, err);
+      const hookResult = await currentSurfaceRuntime.triggerHook(entry, hookName, {
+        result,
+        formData: { ...ownedForm.store.getState().values },
+        hookName,
+      });
+      if (!hookResult?.ok) {
+        console.warn('[form] surface submit hook failed:', hookResult?.error ?? hookResult);
       }
     };
 

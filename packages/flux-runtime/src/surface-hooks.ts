@@ -18,9 +18,9 @@ export interface HookPayload {
  *   opened without the action-adapter hook plumbing) → returns
  *   `{ ok: false, error: ... }` without dispatching.
  * - If the hook schema is missing or empty → returns `{ ok: true, skipped: true }`.
- * - Hook dispatch errors are propagated as `{ ok: false, error }`. Callers
- *   should wrap in try/catch to keep the triggering flow resilient (see
- *   `surface-runtime.close` which catches and console.warns).
+ * - Hook dispatch failures are returned as `{ ok: false, error }` — this
+ *   helper never throws. Callers inspect `result.ok` to diagnose hook
+ *   failures (see `surface-runtime.triggerHook` and `form.tsx`).
  */
 export async function dispatchInOwner(
   entry: SurfaceEntry,

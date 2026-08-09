@@ -1,5 +1,6 @@
 import type {
   ActionSchema,
+  ActionResult,
   CompiledFormValidationModel,
   FormRuntime,
   RenderNodeInput,
@@ -253,8 +254,9 @@ export function createManagedSurfaceRuntime(
      * (see form.tsx) when a `submitScope: 'surface'` form completes ajax and
      * the entry has matching hook schema nodes.
      *
-     * Resolves with the hook dispatch result. Errors propagate; callers
-     * should wrap in try/catch when triggering hooks from non-blocking flows.
+     * Resolves with the hook dispatch result. Hook failures are captured as
+     * `{ ok: false, error }` — triggerHook never throws; callers should
+     * inspect `result.ok` to diagnose hook failures.
      */
     async triggerHook(entry: SurfaceEntry, hookName: 'submit:success' | 'submit:error' | 'close', payload: HookPayload) {
       let nodes: ActionSchema | ActionSchema[] | undefined;
@@ -269,20 +271,24 @@ export function createManagedSurfaceRuntime(
         return { ok: true, data: { skipped: true } };
       }
 
+      let result: ActionResult;
       try {
-        const result = await dispatchInOwner(entry, nodes, payload);
-        // AMIS closeOnSubmit semantic: after the owner-side onSubmitSuccess
-        // hook has run, close the surface. Applies to any submit path
-        // (button submitForm or Enter key), both of which funnel through
-        // this hook.
-        if (hookName === 'submit:success' && entry.closeOnSubmit) {
-          this.close(entry.id);
-        }
-        return result;
+        result = await dispatchInOwner(entry, nodes, payload);
       } catch (err) {
         console.warn(`[surface] ${hookName} hook failed:`, err);
-        return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
+        result = { ok: false, error: err instanceof Error ? err : new Error(String(err)) };
       }
+
+      // AMIS closeOnSubmit semantic: the close decision binds to submit
+      // success only. Hook outcome (`{ok:false}` or thrown) does not change
+      // it — a hook failure is an owner-side side-effect failure, not a
+      // submit failure. Single close point keeps both failure
+      // characterizations uniform (contract: see
+      // docs/architecture/surface-lifecycle-callbacks.md §Hook Error Semantics).
+      if (hookName === 'submit:success' && entry.closeOnSubmit) {
+        this.close(entry.id);
+      }
+      return result;
     },
     setSurfaceForm(surfaceId: string, form: FormRuntime | undefined) {
       const entries = store.getState().entries;

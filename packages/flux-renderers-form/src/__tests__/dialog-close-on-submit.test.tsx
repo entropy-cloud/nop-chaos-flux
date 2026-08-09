@@ -119,6 +119,7 @@ describe('closeOnSubmit — dialog/drawer auto-close after submit', () => {
   function makeEnv(saveResponse: () => { ok: boolean; data?: unknown; error?: Error }) {
     return {
       ...baseEnv,
+      notify: vi.fn(),
       fetcher: vi.fn(async (api: { url: string }) => {
         if (api.url.includes('__save')) {
           return saveResponse();
@@ -192,16 +193,27 @@ describe('closeOnSubmit — dialog/drawer auto-close after submit', () => {
   it('keeps the dialog open when submit fails even with closeOnSubmit', async () => {
     cleanup();
     const env = makeEnv(() => ({ ok: false, error: new Error('boom') }));
-    renderPage(env, openDialogSchema({ closeOnSubmit: true }));
+    renderPage(
+      env,
+      openDialogSchema({
+        closeOnSubmit: true,
+        onSubmitError: { action: 'showToast', args: { level: 'error', message: 'save failed' } },
+      }),
+    );
 
     fireEvent.click(screen.getByText('Add'));
     await waitFor(() => expect(screen.getByText('OK')).toBeTruthy(), { timeout: 5000 });
 
     fireEvent.click(screen.getByText('OK'));
 
-    await waitFor(() => expect(env.fetcher).toHaveBeenCalled(), { timeout: 5000 });
+    // 失败链终态同步（P2-04）：surface submit:error hook 的 error toast 已发出
+    // = 提交失败链（ajax 失败 → form 生命周期 handler → surface submit:error
+    // hook）走完的终态信号，之后才断言「保持打开」——不再用固定 50ms 盲等
+    // （假绿窗口，无法区分「永不关闭」与「稍后关闭」）。
+    await waitFor(() => expect(env.notify).toHaveBeenCalledWith('error', 'save failed'), {
+      timeout: 5000,
+    });
     // 提交失败不触发 submit:success → 不关闭
-    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.getByText('OK')).toBeTruthy();
   });
 });

@@ -1,6 +1,6 @@
 # {2} closeOnSubmit 契约收口（owner 文档漂移 + 失败语义分叉 + 测试加固）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-09
 > Source: `docs/audits/2026-08-09-1114-multi-audit-component-audit-round2.md`（[P1-01] owner 架构文档与 closeOnSubmit 契约矛盾 + 零提及 + Mandatory Updates 违约；[P2-02] hook 失败语义分叉；[P2-03] 顺序契约断言缺失；[P2-04] 失败路径假绿窗口）
 > Related: `docs/logs/2026/08-09.md`（未提交 WIP = closeOnSubmit 功能）、`docs/plans/2026-08-09-1140-1-table-column-width-strategy-rework.md`
@@ -67,52 +67,52 @@
 
 ### Phase 1 - 失败语义裁决 + 契约测试钉住（Decision + Proof + Fix）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/surface-runtime.ts`、`packages/flux-runtime/src/__tests__/surface-close-on-submit.test.ts`
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] **Proof（测试先钉住当前分叉）**：新增 unit 用例——hook action 返回 `{ok:false}` → 关闭；hook 抛错 → 不关闭（当前行为实证）；用例在裁决落地前为 red/green 基准记录。
-- [ ] **Decision（失败语义收口）**：二选一——(a) 与 AMIS 对齐（推荐）：close 只绑定 submit 成功，catch 分支也关闭，删除分叉；(b) 保留「hook 失败不关闭」：`{ok:false}` 时跳过 close 且 form.tsx 消费结果做 warn/notify。裁决记录理由（AMIS 语义 + 用户可重试性 + 与 guide §6.2「提交失败不关闭」的一致性）。
-- [ ] **Fix（按裁决落地）**：`surface-runtime.ts:272-285` 与 `form.tsx` 消费侧按裁决实现（(a) 删除分叉；(b) 判断 `result.ok` + 消费结果）；P2-02 关联的 `form.tsx:177-186` try/catch 死代码与 `{ok:false}` 静默丢弃（P3-05 相邻项）一并处理。
-- [ ] **Proof（契约测试）**：hook 抛错 → 保持打开；hook `{ok:false}` → 按裁决的关闭/不关闭断言；`submit:error` → 不关闭（既有）；10 个新增用例全绿。
+- [x] **Proof（测试先钉住当前分叉）**：新增 unit 用例——hook action 返回 `{ok:false}` → 关闭；hook 抛错 → 不关闭（当前行为实证）；用例在裁决落地前为 red/green 基准记录。（2026-08-09 落地：`surface-close-on-submit.test.ts` +2 用例，裁决前全绿基线 1413 passed。）
+- [x] **Decision（失败语义收口）**：二选一——(a) 与 AMIS 对齐（推荐）：close 只绑定 submit 成功，catch 分支也关闭，删除分叉；(b) 保留「hook 失败不关闭」：`{ok:false}` 时跳过 close 且 form.tsx 消费结果做 warn/notify。**裁决 = (a) AMIS 对齐**。理由：①AMIS 语义——`closeOnSubmit` 只绑定 form 提交成功，owner 侧 hook（刷新/导航/上报）是提交成功后的副作用，hook 失败不代表提交失败；②与 guide §6.2「提交失败不关闭」一致性——submit:error（真正提交失败）仍不关闭，hook 失败不属于提交失败；③可预测性——`{ok:false}` 与抛错两种失败表征统一为同一关闭行为，删除分叉；④用户可重试性（反方论据，不阻断）——刷新失败后 dialog 关闭看似不可重试，但提交本身已成功，重试入口在外层数据区，且 hook 失败经 form.tsx `console.warn` 可诊断；保留 dialog 会与 AMIS 语义冲突并诱导重复提交。
+- [x] **Fix（按裁决落地）**：`surface-runtime.ts:272-285` 与 `form.tsx` 消费侧按裁决实现（(a) 删除分叉）；P2-02 关联的 `form.tsx:177-186` try/catch 死代码与 `{ok:false}` 静默丢弃（P3-05 相邻项）一并处理。（2026-08-09 落地：`triggerHook` 重构为单点关闭决策——hook dispatch try/catch 捕获后统一走 close 判断；`form.tsx` 消费 `hookResult.ok`、失败 `console.warn`、删除死 catch；JSDoc 同步。）
+- [x] **Proof（契约测试）**：按裁决 (a) 断言——hook 抛错 → 关闭；hook `{ok:false}` → 关闭；无 closeOnSubmit 时两种 hook 失败 → 保持打开；`submit:error` → 不关闭（既有）；closeOnSubmit 相关用例 10+ 全绿。（2026-08-09 落地：`surface-close-on-submit.test.ts` 11 用例全绿，含提交成功 × 抛错/{ok:false} × 有无 closeOnSubmit × submit:error 全象限。）
 
 Exit Criteria:
 
-- [ ] 裁决记录存在（Plan 文本或 daily log 引用）；`surface-runtime.ts` 与 `form.tsx` 消费侧与裁决一致（live 可核验）。
-- [ ] 失败语义 unit 断言绿（抛错/`{ok:false}` 两分支各按裁决成立）；`pnpm --filter @nop-chaos/flux-runtime test` 全绿（closeOnSubmit 相关 10+ 用例在内）。
+- [x] 裁决记录存在（Plan 文本或 daily log 引用）；`surface-runtime.ts` 与 `form.tsx` 消费侧与裁决一致（live 可核验）。
+- [x] 失败语义 unit 断言绿（抛错/`{ok:false}` 两分支各按裁决成立）；`pnpm --filter @nop-chaos/flux-runtime test` 全绿（closeOnSubmit 相关 10+ 用例在内）。（1417 passed / 0 failed）
 
 ### Phase 2 - owner 契约文档重写（Fix，P1-01）
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/surface-lifecycle-callbacks.md`、`docs/logs/2026/08-09.md`
 
 - Item Types: `Fix`
 
-- [ ] **Fix（双路径模型重写）**：`:287` 修订为「默认不自动关闭；`closeOnSubmit: true` 时 submit:success 自动关闭（先跑 onSubmitSuccess 再关闭；submit:error 不关闭；hook 失败分支的关闭行为按 Phase 1 裁决口径）」；`:313/:320-324` 修订为双路径推荐（closeOnSubmit 为主，`submitForm.then: closeSurface` 标注「仅按钮点击生效、Enter 失效」）；`:356` 修订说明 onClose 是否触发取决于关闭路径；字段表 `:44-58` 补 closeOnSubmit 行（类型/默认值/行为）。
-- [ ] **Fix（Hook Error Semantics 节）**：新增/修订 closeOnSubmit × hook 失败交互契约节，与 Phase 1 裁决一致。
-- [ ] **Fix（daily log）**：`docs/logs/2026/08-09.md` Doc-sync 清单补记架构文档同步条目（Mandatory Updates 履约）。
+- [x] **Fix（双路径模型重写）**：`:287` 修订为「默认不自动关闭；`closeOnSubmit: true` 时 submit:success 自动关闭（先跑 onSubmitSuccess 再关闭；submit:error 不关闭；hook 失败分支的关闭行为按 Phase 1 裁决口径）」；`:313/:320-324` 修订为双路径推荐（closeOnSubmit 为主，`submitForm.then: closeSurface` 标注「仅按钮点击生效、Enter 失效」）；`:356` 修订说明 onClose 是否触发取决于关闭路径；字段表 `:44-58` 补 closeOnSubmit 行（类型/默认值/行为）。（2026-08-09 落地：§Triggering Order 重写为双路径关闭模型 + 标准 CRUD 示例迁移到推荐路径，`rg closeOnSubmit` 命中 10+ 处。）
+- [x] **Fix（Hook Error Semantics 节）**：新增/修订 closeOnSubmit × hook 失败交互契约节，与 Phase 1 裁决一致。（2026-08-09 落地：新增「closeOnSubmit × hook 失败交互（契约）」小节，含两种失败表征统一关闭、submit:error 恒不关闭、诊断路径与实现锚点。）
+- [x] **Fix（daily log）**：`docs/logs/2026/08-09.md` Doc-sync 清单补记架构文档同步条目（Mandatory Updates 履约）。（2026-08-09 落地：顶部新增本 plan 收口条目。）
 
 Exit Criteria:
 
-- [ ] `surface-lifecycle-callbacks.md` 全文无与 live 实现矛盾的断言（`:287/:313/:320-324/:356` 逐条修订后与 `surface-runtime.ts:259-286` 一致）；`rg "closeOnSubmit" docs/architecture/surface-lifecycle-callbacks.md` 有命中（字段表 + 双路径节）。
-- [ ] daily log 08-09 条目已补架构文档同步记录。
+- [x] `surface-lifecycle-callbacks.md` 全文无与 live 实现矛盾的断言（`:287/:313/:320-324/:356` 逐条修订后与 `surface-runtime.ts:259-286` 一致）；`rg "closeOnSubmit" docs/architecture/surface-lifecycle-callbacks.md` 有命中（字段表 + 双路径节）。
+- [x] daily log 08-09 条目已补架构文档同步记录。
 
 ### Phase 3 - 顺序断言 + 失败路径测试加固（Fix + Proof）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/__tests__/surface-close-on-submit.test.ts`、`packages/flux-renderers-form/src/__tests__/dialog-close-on-submit.test.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] **Fix（P2-03 顺序断言）**：对 `surfaceRuntime.store.remove`（或 close 路径可观测点）spy，断言 `notifySpy.mock.invocationCallOrder[0] < removeSpy.mock.invocationCallOrder[0]`（或等价「hook 执行瞬间 entries 仍为 1」断言）；注释声称与断言一致。
-- [ ] **Fix（P2-04 终态同步）**：`dialog-close-on-submit.test.tsx:202-205` 改为同步到失败链终态信号（`env.notify` 收到 error toast 或 `submitting` 回到 false）后再断言「OK 仍在」；删除 50ms 盲等（或改为有界 waitFor 并注明理由）。
-- [ ] **Proof（回归）**：runtime + form 包 closeOnSubmit 相关测试全绿；`dialog-close-on-submit.test.tsx` 与 `surface-close-on-submit.test.ts` 10+ 用例绿。
+- [x] **Fix（P2-03 顺序断言）**：对 `surfaceRuntime.store.remove`（或 close 路径可观测点）spy，断言 `notifySpy.mock.invocationCallOrder[0] < removeSpy.mock.invocationCallOrder[0]`（或等价「hook 执行瞬间 entries 仍为 1」断言）；注释声称与断言一致。（2026-08-09 落地：首例加 `removeSpy` + `invocationCallOrder` 断言 + 注释；临时改为先 close 再 dispatch 时该断言变红验证通过后还原；顺带收口 P3-09 `notifySpy` restore。）
+- [x] **Fix（P2-04 终态同步）**：`dialog-close-on-submit.test.tsx:202-205` 改为同步到失败链终态信号（`env.notify` 收到 error toast 或 `submitting` 回到 false）后再断言「OK 仍在」；删除 50ms 盲等（或改为有界 waitFor 并注明理由）。（2026-08-09 落地：测试 schema 加 `onSubmitError: showToast`，以 submit:error hook 的 error toast 为失败链终态信号——ajax 默认 toast 在 renderer 流程中被 onActionError 诊断通道抑制，`submitting` 无 DOM 可观测面；50ms 盲等已删除。）
+- [x] **Proof（回归）**：runtime + form 包 closeOnSubmit 相关测试全绿；`dialog-close-on-submit.test.tsx` 与 `surface-close-on-submit.test.ts` 10+ 用例绿。（2026-08-09 落地：runtime 1417 / form 777，closeOnSubmit 相关 runtime 11 例 + renderer 5 例全绿。）
 
 Exit Criteria:
 
-- [ ] 顺序反转可被检测（将实现临时改为先 close 再 dispatch 时该断言变红——以 test comment 或手动验证记录为准）；50ms 盲等已删除/替换为终态同步（live diff 可核验）。
-- [ ] `pnpm --filter @nop-chaos/flux-runtime test`、`pnpm --filter @nop-chaos/flux-renderers-form test` 全绿。
+- [x] 顺序反转可被检测（将实现临时改为先 close 再 dispatch 时该断言变红——以 test comment 或手动验证记录为准）；50ms 盲等已删除/替换为终态同步（live diff 可核验）。
+- [x] `pnpm --filter @nop-chaos/flux-runtime test`、`pnpm --filter @nop-chaos/flux-renderers-form test` 全绿。
 
 ## Draft Review Record
 
@@ -127,16 +127,16 @@ Exit Criteria:
 
 > 关闭条件：本 section 所有条目 + 每个 Phase Exit Criteria 全部 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 所有 in-scope confirmed contract drift 已收敛（surface-lifecycle-callbacks.md 与 live 实现一致）
-- [ ] closeOnSubmit × hook 失败语义已裁决并测试钉住（无未文档化分叉）
-- [ ] 顺序契约可被断言检测；失败路径测试无假绿窗口
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs（surface-lifecycle-callbacks.md、daily log）已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed contract drift 已收敛（surface-lifecycle-callbacks.md 与 live 实现一致）
+- [x] closeOnSubmit × hook 失败语义已裁决并测试钉住（无未文档化分叉）
+- [x] 顺序契约可被断言检测；失败路径测试无假绿窗口
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs（surface-lifecycle-callbacks.md、daily log）已同步到 live baseline
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -155,13 +155,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待填写（完成或关闭时填写）
+Status Note: 完成——Phase 1-3 全部落地（失败语义裁决 (a) AMIS 对齐 + 契约测试 11 用例钉住；owner 架构文档双路径重写；顺序断言 + 失败路径终态同步），全量验证 typecheck/build/lint 32/32、test 59/59 tasks = 10,754 passed / 0 failed、`pnpm check` exit 0（oversized 2 豁免维持基线）；closure-audit 由独立 fresh session 执行 pass；closeOnSubmit 核心成功语义未改（Non-Goal 遵守）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待填写
-- Evidence: 待填写
+- Auditor / Agent: task `ses_01acb9f30ffeonIkanBP6fYV4b`（独立 fresh session closure audit，2026-08-09）
+- Verdict: `pass`（零 Blocker/Major）
+- Evidence: 六项核对全 PASS——A 计划文本一致性（三 Phase 全 `[x]` + Status completed；Plan Status 审计前保持 active 正确）；B live 代码语义（surface-runtime.ts:261-292 单点关闭决策、双失败分支统一关闭、submit:error 恒不关闭；form.tsx:162-185 消费 result.ok + warn）；C 测试（11 用例 + invocationCallOrder 顺序断言 + spy restore；50ms 盲等已删除）；D 文档一致性（rg closeOnSubmit 13 命中、双路径模型、Hook Error Semantics 契约节、daily log 条目）；E deferred 诚实性（P3-05/P3-09 已收口、P3-06/07/08/10 真 out-of-scope）；F 计数可复现（runtime 1417 / form 777 精确复现）。Minor×2：diff summary 措辞（无实害）、backlog P3-09 行注记（审计后已补「已随 plan 顺手收口」）。
 
 Follow-up:
 
-- 待填写（只记录 non-blocking follow-up；confirmed live defect 不得出现在这里）
+- 无 plan-owned 剩余工作（P3-06/07/08/10 记录在案随修复批次，见 `docs/backlog/audit-followups-2026-08-09-1114.md`；open-audit P2-02 `publishClosedSummary` 归 backlog 待后续批次，均非本 plan 承接）

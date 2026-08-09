@@ -45,15 +45,20 @@ export interface OpenDialogActionSchema extends ActionShapeFields {
     onClose?: ActionSchema | ActionSchema[];
     onSubmitSuccess?: ActionSchema | ActionSchema[];
     onSubmitError?: ActionSchema | ActionSchema[];
+    // ── 提交成功后自动关闭（AMIS closeOnSubmit 语义） ──
+    closeOnSubmit?: boolean;
   };
 }
 ```
 
-| 字段              | 触发时机                                                                          | `$formData` | `$result`       | `$hook`            | 典型用途                                             |
-| ----------------- | --------------------------------------------------------------------------------- | ----------- | --------------- | ------------------ | ---------------------------------------------------- |
-| `onClose`         | surface 被关闭时（任意路径：手动关闭、`closeSurface` action、ESC、outside click） | ✗           | ✗               | `'close'`          | 关闭后刷新列表、清理临时状态                         |
-| `onSubmitSuccess` | surface body 内的 form submit ajax 返回成功后                                     | ✓           | ✓ ajax response | `'submit:success'` | 提交成功后刷新列表、自定义副作用（导航、上报、关闭） |
-| `onSubmitError`   | surface body 内的 form submit ajax 返回失败后                                     | ✓           | ✓ error payload | `'submit:error'`   | 自定义错误恢复（重置字段、跳转错误页、上报埋点）     |
+| 字段              | 触发时机                                                                                                    | `$formData` | `$result`       | `$hook`            | 典型用途                                                |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- | ----------- | --------------- | ------------------ | ------------------------------------------------------- |
+| `onClose`         | surface 被关闭时（任意路径：手动关闭、`closeSurface` action、ESC、outside click、`closeOnSubmit` 自动关闭） | ✗           | ✗               | `'close'`          | 关闭后刷新列表、清理临时状态                            |
+| `onSubmitSuccess` | surface body 内的 form submit ajax 返回成功后                                                               | ✓           | ✓ ajax response | `'submit:success'` | 提交成功后刷新列表、自定义副作用（导航、上报、关闭）    |
+| `onSubmitError`   | surface body 内的 form submit ajax 返回失败后                                                               | ✓           | ✓ error payload | `'submit:error'`   | 自定义错误恢复（重置字段、跳转错误页、上报埋点）        |
+| `closeOnSubmit`   | 默认 `false`；`true` 时在 `submit:success` 的 onSubmitSuccess hook 跑完后自动关闭                           | ✗           | ✗               | ✗                  | 提交成功自动关闭（按钮与 Enter 提交均生效），推荐主路径 |
+
+> **`closeOnSubmit` 语义**：开关字段，非 callback。`true` 时关闭决策只绑定提交成功——先跑 `onSubmitSuccess`（owner 侧刷新等副作用）再关闭；`submit:error` 不关闭；hook 失败（`{ok:false}` 或抛错）不改变关闭决策（见 §Hook Error Semantics）。自动关闭路径同样触发 `onClose`（fire-and-forget），见 §Close Hook。
 
 三个字段都是可选。不写就没有 callback，surface 行为与没有 lifecycle callback 时完全一致。
 
@@ -284,7 +289,7 @@ const triggerSurfaceSubmitHook = async (hookName, result) => {
 - submit hooks 只对 **action-style** openDialog/openDrawer 有效（`onSubmitSuccessNodes` / `onSubmitErrorNodes` 字段只有 action-style entry 才有）。declarative surface 内的 form submit 不触发 surface callback（declarative surface 已有自己的 onSubmitSuccess 触发路径，由 `use-surface-renderer.ts` 透传）。
 - submit hooks 不替代 ajax 默认的 error→notify（详见 §Relationship With Ajax Default Notifications）。
 - submit hooks 在 form lifecycle handler 之后触发（form 自己的 `onSubmitSuccess` 字段先执行，然后才是 surface `args.onSubmitSuccess`）。
-- submit hooks 不自动关闭 surface。如果业务想在成功后关闭，应在 hook 里显式写 `{ action: 'closeSurface' }`。
+- submit hooks 默认不自动关闭 surface。**`closeOnSubmit: true` 时**：`submit:success` 的 onSubmitSuccess hook 跑完后自动关闭（先刷新后关闭，按钮与 Enter 两条提交路径统一生效）；`submit:error` 不关闭；hook 失败不改变关闭决策（见 §Hook Error Semantics）。
 
 > **设计权衡（为什么触发位置在 form.tsx 而不是 form-runtime-submit-flow.ts）**：`form-runtime-submit-flow.ts` 是 form runtime 的纯函数式 submit 流程，不持有 surfaceRuntime / dialogId / schema 等 React-context-bound 信息。让 submit-flow 持有这些会破坏其纯函数性。`form.tsx` 是 React 组件，通过 `useCurrentSurfaceRuntime()` 和 `props.props.submitScope` 拿到这些信息天然合适。lifecycle handler 包装方式让 form-runtime-submit-flow 不变。
 
@@ -296,6 +301,18 @@ hook 内 action 抛错的处理契约：
 - **hook 抛错不阻塞 form submit 流程**：`triggerHook` 内部 try/catch，submit 本身的成功状态不被 hook 失败影响
 - **owner runtime 已 teardown 时**：`dispatchInOwner` 调用 `entry.ownerActionCtx.runtime.dispatch` 时可能抛错（runtime 对象已失效），错误被上层 catch 捕获并 `console.warn`。flux 当前 `ActionContextRuntime` 不暴露 `disposed` 字段，因此**没有显式 pre-check**，依赖 try/catch 兜底
 - hook 抛错时，错误信息走 action dispatcher 默认 error notify（一次 toast），与普通 action 失败一致
+
+#### closeOnSubmit × hook 失败交互（契约）
+
+`closeOnSubmit` 的关闭决策**只绑定 form 提交成功**，与 hook 执行结果解耦：
+
+- hook action 返回 `{ok:false}`（如 `refreshNearest` 的 `notFound: 'error'`）→ 提交已成功，surface 照常关闭
+- hook 抛错（如 owner runtime 已 teardown）→ `triggerHook` 捕获后返回 `{ok:false, error}`，surface 照常关闭
+- 两种失败表征（返回值失败 / 抛错）产生**相同**的关闭结果——无分叉；hook 失败是 owner 侧副作用失败，不是提交失败
+- `submit:error` 路径无论 hook 结果如何都**不关闭**（§6.2「提交失败不关闭」）
+- 诊断：`triggerHook` 永不抛错，统一以 `result.ok` 表达成败；`form.tsx` 消费 `result.ok`，失败时 `console.warn('[form] surface submit hook failed:', error)`。作者如需「hook 必须成功否则保留 dialog」的语义，应改用显式编排路径（`submitForm.then: closeSurface`，见 §Triggering Order）并在 hook 内自行处理失败分支
+
+实现锚点：`packages/flux-runtime/src/surface-runtime.ts` `triggerHook`（单点关闭决策）与 `packages/flux-renderers-form/src/renderers/form.tsx` `triggerSurfaceSubmitHook`。
 
 ### Triggering Order
 
@@ -310,20 +327,51 @@ form lifecycle handlers (form schema 的 onSubmitSuccess / onSubmitError 字段)
   ↓
 surface submit hooks (openDialog args.onSubmitSuccess / args.onSubmitError)
   ↓
-submitForm.then chain (closeSurface 等 UI 后置操作)
+[推荐路径 closeOnSubmit: true] close() 自动触发（submit:success 的 hook 跑完后）
+[显式编排路径 submitForm.then] closeSurface 等 UI 后置操作（仅按钮点击生效，Enter 失效）
   ↓
 surface close hook (openDialog args.onClose)
   ↓
 disposeEntry
 ```
 
-**`closeSurface` 的职责分离**：`closeSurface` 不应放在 `onSubmitSuccess` 中，而应放在 `submitForm` 的 `then` 链中：
+**双路径关闭模型**：
+
+1. **推荐路径：`closeOnSubmit: true`**（openDialog/openDrawer args）——关闭绑定提交流程本身，`submit:success` 的 onSubmitSuccess hook 跑完后自动 close()。按钮点击提交与 **Enter 内置提交**统一生效（两条路径都汇合到 `triggerHook('submit:success')`），刷新（owner 侧 hook）先于关闭执行。nop-entropy 生成器默认输出此路径。
+2. **显式编排路径：`submitForm.then: closeSurface`**——关闭写在提交按钮的 `then` 链中，**仅按钮点击生效**（Enter 走 form 内置提交，不经过按钮 onClick，提交成功但 dialog 不关）。保留用于需要在提交后做额外 UI 编排的场景，但不再是推荐写法。
+
+**`closeSurface` 的职责分离**：无论走哪条路径，`closeSurface` 都不应放在 `onSubmitSuccess` 中：
 
 - `onSubmitSuccess` 是 owner 侧的数据回调（刷新、导航、上报），不是 UI 控制点
 - `closeSurface` 是 UI 动作（关闭浮层），属于提交后的 UI 后置操作
-- 把 `closeSurface` 放在 `onSubmitSuccess` 中会导致关闭与刷新的时序耦合，且与 `submitForm.then` 链重复
+- 把 `closeSurface` 放在 `onSubmitSuccess` 中会导致关闭与刷新的时序耦合，且与两条规范路径重复
 
-Submit 按钮的推荐写法：
+推荐写法（路径 1，主路径）：
+
+```jsonc
+{
+  "action": "openDialog",
+  "args": {
+    "body": {
+      /* form with submitScope: 'surface' */
+    },
+    "onSubmitSuccess": { "action": "refreshNearest" },
+    "closeOnSubmit": true,
+  },
+}
+```
+
+```jsonc
+// surface footer 提交按钮：无需 then closeSurface
+{
+  "type": "button",
+  "label": "提交",
+  "level": "primary",
+  "onClick": { "action": "submitForm" },
+}
+```
+
+显式编排路径（路径 2，保留形态）：
 
 ```jsonc
 {
@@ -337,23 +385,9 @@ Submit 按钮的推荐写法：
 }
 ```
 
-openDialog args 的推荐写法：
+这确保 `refreshNearest` 在 dialog 仍打开时执行（用户看到刷新完成），然后关闭。
 
-```jsonc
-{
-  "action": "openDialog",
-  "args": {
-    "body": {
-      /* form with submitScope: 'surface' */
-    },
-    "onSubmitSuccess": { "action": "refreshNearest" },
-  },
-}
-```
-
-这确保 `refreshNearest` 在 dialog 仍打开时执行（用户看到刷新完成），然后 `closeSurface` 关闭 UI。
-
-注意：`onClose` 不会在 submit 成功后**自动**触发——`closeSurface` 在 `submitForm.then` 中触发，之后才进入 close hook。如果想让"用户取消也刷新"，在 `onClose` 中更新即可。
+注意：`onClose` 是否在 submit 成功后触发**取决于关闭路径**——closeOnSubmit 自动关闭路径（当前推荐主路径）会在 submit 成功后进入 close hook（fire-and-forget 触发 `args.onClose`）；`submitForm.then: closeSurface` 路径同样在关闭时进入 close hook。两条路径的 onClose 行为一致；「submit 成功后不触发 onClose」的说法只在 dialog 一直保持打开（未设置任何关闭动作）时成立。如果想让「用户取消也刷新」，在 `onClose` 中更新即可。
 
 ## `refreshNearest` Action
 
@@ -530,6 +564,7 @@ declarative `type: 'dialog'` / `type: 'drawer'`（走 `useSurfaceRenderer`）已
             "args": {
               "title": "编辑",
               "data": { "id": "${id}" },
+              "closeOnSubmit": true,
               "body": {
                 "type": "form",
                 "submitScope": "surface",
@@ -544,10 +579,7 @@ declarative `type: 'dialog'` / `type: 'drawer'`（走 `useSurfaceRenderer`）已
                     "type": "button",
                     "label": "提交",
                     "level": "primary",
-                    "onClick": {
-                      "action": "submitForm",
-                      "then": { "action": "closeSurface" },
-                    },
+                    "onClick": { "action": "submitForm" },
                   },
                 ],
               },

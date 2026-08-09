@@ -20,7 +20,7 @@
 - **[P3-06] `BUILT_IN_ACTION_DEFINITIONS.openDialog/openDrawer.fieldRules` 遗漏 closeOnSubmit**（`flux-core/src/constants.ts:124-145`）——去向：**待后续批次**（补 `{ kind: 'value', valueType: 'boolean' }` ×2 + constants.test.ts 断言）。
 - **[P3-07] action-adapter `as Record<string, unknown>` 恒等冗余转换 ×2**（`action-adapter.ts:249,314`）——去向：**待后续批次**（去掉 cast，可与 `isolate` 同型转换一并清理）。
 - **[P3-08] schema 入口 `=== true` vs 消费点 truthy 归一化不一致**（`action-adapter.ts:249/314` vs `surface-runtime.ts:266/278`）——去向：**待后续批次**（消费点改 `=== true` 或 JSDoc 声明仅 `true` 生效）。
-- **[P3-09] `surface-close-on-submit.test.ts` notifySpy 未 restore**（`:29`）——去向：**待后续批次**（补 `mockRestore()` 或文件级 `afterEach(vi.restoreAllMocks)`；可随 plan `2026-08-09-1140-2` 执行顺手收口）。
+- **[P3-09] `surface-close-on-submit.test.ts` notifySpy 未 restore**（`:29`）——去向：**已随 plan `2026-08-09-1140-2` Phase 3 顺手收口**（`notifySpy.mockRestore()` + `removeSpy.mockRestore()` 已落地，2026-08-09）。
 - **[P3-10] quick-reference.md action 表未反映 closeOnSubmit**（`quick-reference.md:647-648`）——去向：**待后续批次**（补 `closeOnSubmit?` 行或指引一句）。
 
 ## 备注
