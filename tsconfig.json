@@ -26,6 +26,8 @@
     { "path": "./packages/ui" },
     { "path": "./packages/flow-designer-core" },
     { "path": "./packages/flow-designer-renderers" },
+    { "path": "./packages/editor-core" },
+    { "path": "./packages/flux-renderers-dashboard" },
     { "path": "./packages/spreadsheet-core" },
     { "path": "./packages/spreadsheet-renderers" },
     { "path": "./packages/report-designer-core" },

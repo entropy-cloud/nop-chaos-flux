@@ -97,6 +97,8 @@
       ],
       "@nop-chaos/report-designer-renderers": ["./packages/report-designer-renderers/src/index.ts"],
       "@nop-chaos/flow-designer-core": ["./packages/flow-designer-core/src/index.ts"],
+      "@nop-chaos/editor-core": ["./packages/editor-core/src/index.ts"],
+      "@nop-chaos/flux-renderers-dashboard": ["./packages/flux-renderers-dashboard/src/index.ts"],
       "@nop-chaos/flow-designer-renderers/designer-theme.css": [
         "./packages/flow-designer-renderers/src/designer-theme.css"
       ],

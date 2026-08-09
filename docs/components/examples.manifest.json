@@ -63,7 +63,9 @@
     "timeline",
     "graph",
     "scada-canvas",
-    "scada-editor-canvas"
+    "scada-editor-canvas",
+    "dashboard",
+    "dashboard-editor"
   ],
   "targetContract": [
     "alert",

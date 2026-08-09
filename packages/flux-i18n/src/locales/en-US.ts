@@ -1335,6 +1335,23 @@ export const enUS: Resource = {
         },
       },
     },
+    dashboard: {
+      editor: {
+        headerTitle: 'Dashboard Editor',
+        undo: 'Undo',
+        redo: 'Redo',
+        delete: 'Delete',
+        save: 'Save',
+        preview: 'Preview',
+        edit: 'Edit',
+        commitFailed: 'commit failed',
+        panelTypes: 'Panel Types',
+        noPanelTypes: 'No panel types registered.',
+        selectHint: 'Select a panel to edit its properties.',
+        reset: 'Reset',
+        apply: 'Apply',
+      },
+    },
   },
 };
 export default enUS;

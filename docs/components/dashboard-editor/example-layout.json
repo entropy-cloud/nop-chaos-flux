@@ -1,0 +1,70 @@
+{
+  "panels": [
+    {
+      "id": "kpi-revenue",
+      "type": "stat-tile",
+      "title": "Revenue",
+      "x": 0,
+      "y": 0,
+      "w": 3,
+      "h": 2,
+      "props": {
+        "value": "${revenue}",
+        "delta": 12.5
+      }
+    },
+    {
+      "id": "kpi-orders",
+      "type": "stat-tile",
+      "title": "Orders",
+      "x": 3,
+      "y": 0,
+      "w": 3,
+      "h": 2,
+      "props": {
+        "value": "${orders}"
+      }
+    },
+    {
+      "id": "chart-sales",
+      "type": "chart",
+      "title": "Sales Trend",
+      "x": 6,
+      "y": 0,
+      "w": 6,
+      "h": 4,
+      "source": "${salesData}",
+      "props": {
+        "chartType": "line",
+        "xAxis": {
+          "dataKey": "month"
+        },
+        "series": [
+          {
+            "name": "Sales",
+            "data": "${salesSeries}"
+          }
+        ],
+        "legend": true
+      }
+    },
+    {
+      "id": "table-orders",
+      "type": "table",
+      "title": "Orders",
+      "x": 0,
+      "y": 2,
+      "w": 6,
+      "h": 4,
+      "source": "${ordersData}",
+      "props": {
+        "columns": [
+          { "name": "orderId", "label": "Order ID" },
+          { "name": "product", "label": "Product" },
+          { "name": "amount", "label": "Amount" },
+          { "name": "status", "label": "Status" }
+        ]
+      }
+    }
+  ]
+}

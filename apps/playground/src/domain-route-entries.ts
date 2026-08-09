@@ -464,6 +464,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'E5 M1 MVP 编辑器演示：palette 图元库面板（24 内置图元，拖拽放置）+ canvas 编辑态画布（双态切换）+ inspector 属性面板（六类字段分组 + validate）+ save/load 提交语义。',
   },
   {
+    id: 'dashboard-demo',
+    title: 'Dashboard Editor',
+    eyebrow: 'BI Dashboard',
+    description:
+      'BI 看板编辑器（editor-core 内核）：WorkbenchShell 三段式外壳（palette + canvas + inspector）+ 网格拖拽/缩放/吸附 + undo/redo + 保存（布局序列化 → host 持久化，刷新还原）+ 预览切换（运行态渲染）+ KPI/chart/table 面板。',
+  },
+  {
     id: 'scada-perf-scale',
     title: 'Scada Performance Scale',
     eyebrow: 'Performance',

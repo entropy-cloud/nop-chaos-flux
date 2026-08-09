@@ -1,0 +1,37 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "col",
+      "className": "gap-3",
+      "body": [
+        {
+          "type": "dashboard-editor",
+          "testid": "bi-dashboard",
+          "layout": "${dashboardLayout}",
+          "height": 560,
+          "onSave": [
+            {
+              "action": "setValue",
+              "args": {
+                "path": "dashboardLayout",
+                "value": "${event.serialized}"
+              }
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "title": "Saved Layout",
+          "body": [
+            {
+              "type": "json-view",
+              "data": "${dashboardLayout}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

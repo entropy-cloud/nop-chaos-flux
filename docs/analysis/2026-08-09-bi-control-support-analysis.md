@@ -5,6 +5,8 @@
 > 关联：`docs/analysis/2026-08-04-control-gap-survey.md`（Tier 2 已列 pivot-table 候选）、`docs/plans/455-table-input-table-doc-gap-and-footer-plan.md`（「固定列 + 后端 pivot」先例）
 > 结论前置：**需要 pivot-table，但不是 BI 支持的最大缺口；BI 控件族（编排层 + KPI + 筛选联动）应先于或与 pivot-table 并行补建。**
 > 状态标注（2026-08-09）：**`stat-tile` 已落地**——plan `2026-08-09-bi-kpi-filter-chart-enhance-plan.md` Phase 1 完成（renderer `flux-renderers-data/src/stat-tile-renderer.tsx` + `StatTileSchema` + 单测 + `docs/components/stat-tile/design.md` + `example.json`）；`statistics` 维持保留（分页总数语义，与 stat-tile 不重叠，裁定见 stat-tile design.md §2）。其余 BI 骨架项（dashboard-filter 约定 / date-range 相对预设 / card 刷新约定 / chart 双轴·brush·heatmap）随同一 plan 推进。
+>
+> 状态标注（2026-08-09 晚间）：**编排层（看板）缺口已闭环**——plan `2026-08-09-dashboard-editor-with-editor-core-plan.md` 落地 `@nop-chaos/editor-core`（领域无关编辑器内核）+ `@nop-chaos/flux-renderers-dashboard`（运行态 `dashboard` + 编辑态 `dashboard-editor`：拖拽/缩放/吸附/undo/保存），看板组装能力就绪（见 `docs/components/dashboard-editor/design.md` + `example.json`）。§4.2 中「编排层整层缺失」的结论自此更新：`panel-chrome`（card 组合）与 `dashboard-filter`（约定）仍按原裁定不新增组件，看板骨架由 dashboard editor 承载。
 
 ---
 
@@ -36,8 +38,10 @@
 | -------------- | ----------------------------------------------------------------------- | ---------------------------- | ----------------------------------- |
 | 可视化层       | 柱/线/饼/散点/面积/双轴/热力图/地图/仪表盘                              | 5 种基础图表                 | 双轴、热力图、地图、brush/zoom 缺失 |
 | 交叉分析层     | **pivot-table（透视表）**                                               | 仅静态交叉（table 组合模拟） | **交互式透视缺失**                  |
-| 编排层（看板） | panel-chrome（面板外壳）、dashboard-filter（全局筛选联动）、grid layout | 无                           | **整层缺失**                        |
+| 编排层（看板） | panel-chrome（面板外壳）、dashboard-filter（全局筛选联动）、grid layout | 看板骨架已闭环（见下方注记） | ~~整层缺失~~                        |
 | KPI 层         | stat-tile（大数字 + 同比环比 + sparkline）                              | statistics 仅总条数          | KPI 卡片缺失（sparkline 独立组件）  |
+
+> 注记（2026-08-09 晚间）：编排层「整层缺失」已闭环——`dashboard-editor`（`@nop-chaos/flux-renderers-dashboard`，基于 `@nop-chaos/editor-core`）提供看板网格布局编辑/运行（拖拽/缩放/吸附/undo/保存），面板内容复用 chart/table/stat-tile 等现有 renderer；`panel-chrome`/`dashboard-filter` 维持「不新增组件」原裁定（card 组合 + 编排约定）。
 
 > 修正（2026-08-09 复核）：~~条件格式~~ —— table 已有 `classNameExpr`（cell 级条件样式表达式），能力已覆盖；"规则编辑器 UI"仅面向业务用户自助配置时才需要，属可选编辑器非控件缺口。~~data-grid~~ —— 非新控件，降级为 table 能力增强候选（选区聚合、右键菜单，按需评估）。
 

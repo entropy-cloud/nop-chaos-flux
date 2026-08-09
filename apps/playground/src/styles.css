@@ -11,6 +11,7 @@
 @import '@nop-chaos/flux-renderers-graph/styles.css';
 @import '@nop-chaos/flux-renderers-industrial/styles.css';
 @import '@nop-chaos/flux-renderers-industrial/editor/styles.css';
+@import '@nop-chaos/flux-renderers-dashboard/styles.css';
 @import './styles-theme-utilities.css';
 @source "../../../packages";
 

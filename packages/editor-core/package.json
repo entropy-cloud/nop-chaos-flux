@@ -1,0 +1,22 @@
+{
+  "name": "@nop-chaos/editor-core",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "Domain-agnostic editor kernel: editor sessions, undo/redo diff command stacks, selection, commit policy, and domain adapter registry"
+}

@@ -1333,6 +1333,23 @@ export const zhCN: Resource = {
         },
       },
     },
+    dashboard: {
+      editor: {
+        headerTitle: '仪表盘编辑器',
+        undo: '撤销',
+        redo: '重做',
+        delete: '删除',
+        save: '保存',
+        preview: '预览',
+        edit: '编辑',
+        commitFailed: '提交失败',
+        panelTypes: '面板类型',
+        noPanelTypes: '未注册面板类型',
+        selectHint: '选中面板以编辑其属性',
+        reset: '重置',
+        apply: '应用',
+      },
+    },
   },
 };
 

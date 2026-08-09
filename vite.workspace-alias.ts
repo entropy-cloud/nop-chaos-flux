@@ -163,6 +163,15 @@ export const workspacePackageAliases = {
   '@nop-chaos/flow-designer-core': fileURLToPath(
     new URL('./packages/flow-designer-core/src/index.ts', import.meta.url),
   ),
+  '@nop-chaos/editor-core': fileURLToPath(
+    new URL('./packages/editor-core/src/index.ts', import.meta.url),
+  ),
+  '@nop-chaos/flux-renderers-dashboard/styles.css': fileURLToPath(
+    new URL('./packages/flux-renderers-dashboard/src/styles.css', import.meta.url),
+  ),
+  '@nop-chaos/flux-renderers-dashboard': fileURLToPath(
+    new URL('./packages/flux-renderers-dashboard/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/flow-designer-renderers/unstable': fileURLToPath(
     new URL('./packages/flow-designer-renderers/src/unstable.ts', import.meta.url),
   ),
