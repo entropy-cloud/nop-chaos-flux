@@ -1,0 +1,60 @@
+.nop-map {
+  position: relative;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  background: hsl(var(--map-background, var(--background)));
+  color: hsl(var(--foreground));
+  border-radius: var(--radius, 0.5rem);
+  border: 1px solid hsl(var(--border));
+}
+
+.nop-map .ol-viewport {
+  width: 100%;
+  height: 100%;
+}
+
+.nop-map .ol-attribution {
+  font-size: 10px;
+}
+
+.nop-map .ol-attribution ul {
+  color: hsl(var(--muted-foreground));
+}
+
+.nop-map .ol-attribution a {
+  color: hsl(var(--muted-foreground));
+}
+
+.nop-map .ol-zoom {
+  top: auto;
+  bottom: 0.5rem;
+  left: 0.5rem;
+}
+
+.nop-map .ol-zoom .ol-zoom-in,
+.nop-map .ol-zoom .ol-zoom-out {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius, 0.5rem) * 0.5);
+}
+
+.nop-map[data-state='loading'] .ol-viewport {
+  visibility: hidden;
+}
+
+.nop-map [data-slot='map-loading'],
+.nop-map [data-slot='map-empty'],
+.nop-map [data-slot='map-error'] {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--background));
+}

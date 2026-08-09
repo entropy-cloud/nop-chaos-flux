@@ -209,3 +209,4 @@
 
 - BI 骨架计划 Phase 5「地图独立评估」由本调研闭环：**建议落地为独立 `map` renderer（路径 B，OpenLayers）**，并入 BI 骨架计划或独立计划立项。
 - 触发条件：出现真实地域分析需求（区域销售/门店分布/轨迹）时按 `complex-component-design-process.md` 立项。
+- **状态标注（2026-08-10）：地图已落地 ✅**——plan `docs/plans/2026-08-09-map-openlayers-wrapper-plan.md` 完成：`@nop-chaos/flux-renderers-map`（type `map`，`region` 区域着色 + `pin` 点位聚合，OpenLayers v10 懒加载），内建中国/世界 geojson + `geojsonSource` action 边界数据加载，主题映射 CSS 变量；见 `docs/components/map/design.md` + `example.json`。§2 可视化层地图缺口自此关闭（双轴/热力图/brush 仍随图表增强项推进）。

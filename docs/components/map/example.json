@@ -1,0 +1,26 @@
+{
+  "type": "map",
+  "id": "salesRegionMap",
+  "label": "区域销售地图",
+  "mapType": "region",
+  "geojsonName": "china-provinces",
+  "height": 420,
+  "regionData": "${salesByRegion}",
+  "visualMap": {
+    "min": 0,
+    "max": 200,
+    "colors": ["#c7e4ff", "#1e88e5", "#7b1fa2"],
+    "defaultColor": "#dddddd"
+  },
+  "onClick": {
+    "action": "setValue",
+    "args": {
+      "path": "selectedRegion",
+      "value": "${event.name}"
+    }
+  },
+  "empty": {
+    "type": "text",
+    "text": "暂无区域数据"
+  }
+}

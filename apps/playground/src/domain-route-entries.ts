@@ -51,6 +51,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'Read-only interactive graph viewer: dagre hierarchy/flow layouts, node search, single-selection, zoom/pan/fit controls, malformed-data degradation.',
   },
   {
+    id: 'map-demo',
+    title: 'Map (OpenLayers)',
+    eyebrow: 'BI Map',
+    description: 'OpenLayers map renderer: region choropleth (builtin china/world geojson), pin clustering, custom boundaries via geojsonSource action, theme-colored vector layers, empty state.',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',

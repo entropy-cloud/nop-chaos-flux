@@ -155,6 +155,13 @@ export const enUS: Resource = {
       fitView: 'Fit view',
       toggleLayout: 'Toggle layout',
     },
+    map: {
+      geojsonInvalid: 'Boundary data is not a valid FeatureCollection',
+      mapLoadFailed: 'Failed to load the map',
+      loadRegionDataFailed: 'Failed to load region data',
+      loadPinDataFailed: 'Failed to load pin data',
+      cluster: '{{count}} points',
+    },
     table: {
       columns: 'Columns',
       expand: 'Expand',

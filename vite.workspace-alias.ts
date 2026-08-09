@@ -120,6 +120,12 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-renderers-industrial': fileURLToPath(
     new URL('./packages/flux-renderers-industrial/src/index.ts', import.meta.url),
   ),
+  '@nop-chaos/flux-renderers-map/styles.css': fileURLToPath(
+    new URL('./packages/flux-renderers-map/src/styles.css', import.meta.url),
+  ),
+  '@nop-chaos/flux-renderers-map': fileURLToPath(
+    new URL('./packages/flux-renderers-map/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-code-editor': fileURLToPath(
     new URL('./packages/flux-code-editor/src/index.ts', import.meta.url),
   ),

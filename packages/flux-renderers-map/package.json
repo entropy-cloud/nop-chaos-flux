@@ -1,0 +1,42 @@
+{
+  "name": "@nop-chaos/flux-renderers-map",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": [
+    "*.css"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": {
+      "default": "./dist/styles.css"
+    }
+  },
+  "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/ui": "workspace:*",
+    "ol": "^10.10.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "react": "^19.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "BI map renderer over OpenLayers: region choropleth + pin clustering, lazy-loaded."
+}

@@ -10,6 +10,7 @@ import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { registerGraphRenderers } from '@nop-chaos/flux-renderers-graph';
+import { registerMapRenderers } from '@nop-chaos/flux-renderers-map';
 import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial';
 // Editor registration via `/editor` subpath (NOT main entry) — preserves bundle isolation:
 // `@leafer-in/editor` stays out of the runtime `scada-canvas` bundle (design-architecture.md §4.4.1).
@@ -61,6 +62,7 @@ import { DashboardDemoPage } from './pages/dashboard-demo';
 import { CalendarDemoPage } from './pages/calendar-demo';
 import { BarcodeDemoPage } from './pages/barcode-demo';
 import { GraphDemoPage } from './pages/graph-demo';
+import { MapDemoPage } from './pages/map-demo';
 import { CalendarPerfScaleDemoPage } from './pages/calendar-perf-scale-demo';
 import { KanbanPerfScaleDemoPage } from './pages/kanban-perf-scale-demo';
 import { GanttPerfScaleDemoPage } from './pages/gantt-perf-scale-demo';
@@ -127,6 +129,7 @@ registerContentRenderers(registry);
 registerLayoutRenderers(registry);
 registerSchedulingRenderers(registry);
 registerGraphRenderers(registry);
+registerMapRenderers(registry);
 registerScadaRenderers(registry);
 registerScadaEditorRenderers(registry);
 
@@ -302,6 +305,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <BarcodeDemoPage onBack={goHome} />;
         case 'graph-demo':
           return <GraphDemoPage onBack={goHome} />;
+        case 'map-demo':
+          return <MapDemoPage onBack={goHome} />;
         case 'diff-view':
           return <DiffDemoPage onBack={goHome} />;
         case 'scada-demo':

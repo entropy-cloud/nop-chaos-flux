@@ -450,6 +450,18 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-slot="graph"]').first()).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-slot="graph-node"]').first()).toBeVisible({ timeout: 15_000 });
   },
+  'map-demo': async (page) => {
+    // region 模式：OL 懒加载（renderer chunk + ol 模块动态导入）后渲染 canvas 视口
+    await expect(page.locator('[data-slot="map"]').first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[data-slot="map"] [data-slot="map-viewport"] .ol-viewport').first()).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.locator('[data-slot="map"] canvas').first()).toBeAttached({ timeout: 30_000 });
+    // 空态卡渲染 empty slot（不创建地图）
+    await expect(page.locator('[data-slot="map"][data-state="empty"]').first()).toBeVisible({
+      timeout: 30_000,
+    });
+  },
   'spreadsheet': async (page) => {
     await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-slot="spreadsheet-toolbar"]')).toBeVisible({ timeout: 15_000 });

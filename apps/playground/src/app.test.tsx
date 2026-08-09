@@ -25,6 +25,10 @@ vi.mock('@nop-chaos/flux-renderers-data', () => ({
   registerDataRenderers: () => undefined,
 }));
 
+vi.mock('@nop-chaos/flux-renderers-map', () => ({
+  registerMapRenderers: () => undefined,
+}));
+
 vi.mock('@nop-chaos/flux-renderers-industrial', () => ({
   registerScadaRenderers: () => undefined,
   registerScadaSymbols: () => undefined,

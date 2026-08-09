@@ -156,6 +156,13 @@ export const zhCN: Resource = {
       fitView: '适应视图',
       toggleLayout: '切换布局',
     },
+    map: {
+      geojsonInvalid: '边界数据无效（需为 FeatureCollection）',
+      mapLoadFailed: '地图加载失败',
+      loadRegionDataFailed: '区域数据加载失败',
+      loadPinDataFailed: '点位数据加载失败',
+      cluster: '{{count}} 个点',
+    },
     table: {
       columns: '列设置',
       expand: '展开',
