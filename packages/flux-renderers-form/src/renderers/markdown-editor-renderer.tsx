@@ -228,8 +228,6 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
         <div
           className="nop-markdown-editor-toolbar mb-1.5 flex flex-wrap items-center gap-1"
           data-slot="markdown-editor-toolbar"
-          role="toolbar"
-          aria-label={t('markdown.toolbarLabel')}
         >
           {TOOLBAR_GROUPS.map((group, gi) => (
             <div key={group[0].id} className="flex items-center gap-1">

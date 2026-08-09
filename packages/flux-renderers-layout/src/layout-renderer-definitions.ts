@@ -551,7 +551,6 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
               disabled: 'value',
               destructive: 'value',
               key: 'value',
-              icon: 'value',
             },
           },
         },
