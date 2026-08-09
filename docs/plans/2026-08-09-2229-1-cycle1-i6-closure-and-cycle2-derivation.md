@@ -1,6 +1,6 @@
 # 1 Cycle 1 / I6 — 循环收口与下一轮触发判定（ai-invariant-loop）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: ai-invariant-loop
 > Work Item: Cycle 1 / I6. 循环收口与下一轮触发判定
 > Last Reviewed: 2026-08-09
@@ -100,7 +100,7 @@ Exit Criteria:
 
 ### Phase 3 — 收口（同步 + 记录 + closure）
 
-Status: in progress
+Status: completed
 Targets: `docs/logs/2026/08-09.md`、`docs/backlog/ai-invariant-loop-roadmap.md`（I6 行翻转）、git commit
 
 - Item Types: `Proof`
@@ -108,11 +108,11 @@ Targets: `docs/logs/2026/08-09.md`、`docs/backlog/ai-invariant-loop-roadmap.md`
 - [x] Proof: daily log 记录本 plan 收口（Cycle 1 统计 + W1 复查结论 + Cycle 2 派生三行 + 触发证据引用）
 - [x] Proof: roadmap I6 行 `todo` → `✅`（附执行证据：plan 路径 + daily log + 独立 closure-audit 引用）；Follow-up Backlog 节同步（W1 复查结论；W2-W4 维持登记）
 - [x] Proof: `pnpm check:docs-garbled`（本 plan 新增/修改 docs：roadmap + findings + daily log）exit 0 或候选全部归属既有文件（对齐 I0/I1/I2 先例）
-- [ ] Proof: git commit——`docs(ai-invariant-loop): plan-2026-08-09-2229-1 Cycle 1 I6 收口 + Cycle 2 派生……`（对齐 I3/I5 纯记录先例；仅 stage 本 plan 相关文件）
+- [x] Proof: git commit——`docs(ai-invariant-loop): plan-2026-08-09-2229-1 Cycle 1 I6 收口 + Cycle 2 派生……`（对齐 I3/I5 纯记录先例；仅 stage 本 plan 相关文件）
 
 Exit Criteria:
 
-- [ ] daily log 落档；roadmap I6 行 ✅；Follow-up Backlog 同步；docs-garbled 通过；commit 完成
+- [x] daily log 落档；roadmap I6 行 ✅；Follow-up Backlog 同步；docs-garbled 通过；commit 完成
 
 ## Draft Review Record
 
@@ -129,13 +129,13 @@ Exit Criteria:
 
 > 关闭条件：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。纯文档计划：不涉及代码变更，`pnpm test`/`lint`/`typecheck`/`build` 从 Closure Gates 移除（guide 纯文档条款）。
 
-- [ ] Cycle 1 统计落档且与 I1/I2/I4 交付物逐项对应（门禁数 / red list / 新族数）
-- [ ] W1 复查完成并有实证裁决（移除或维持，均记录依据）
-- [ ] 稳态判定 + Cycle 2 / I1 + I2 + I3 三行追加 roadmap，触发证据与 findings §3.2 / adjudication §3 逐条核对零悬挂
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect（N1-N5 显式路由 Cycle 2 / I1（沉淀）→ I4（修复），非延期裁定；W1 按复查实证分类）
-- [ ] 受影响的 owner docs 已同步（roadmap Work Item Status + 动态状态区 + Follow-up Backlog + findings W1 行（如维持/移除）+ daily log）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm check:docs-garbled` 通过或候选全部归属既有文件
+- [x] Cycle 1 统计落档且与 I1/I2/I4 交付物逐项对应（门禁数 / red list / 新族数）
+- [x] W1 复查完成并有实证裁决（移除或维持，均记录依据）
+- [x] 稳态判定 + Cycle 2 / I1 + I2 + I3 三行追加 roadmap，触发证据与 findings §3.2 / adjudication §3 逐条核对零悬挂
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect（N1-N5 显式路由 Cycle 2 / I1（沉淀）→ I4（修复），非延期裁定；W1 按复查实证分类）
+- [x] 受影响的 owner docs 已同步（roadmap Work Item Status + 动态状态区 + Follow-up Backlog + findings W1 行（如维持/移除）+ daily log）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm check:docs-garbled` 通过或候选全部归属既有文件
 
 ## Deferred But Adjudicated
 
@@ -160,14 +160,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: Cycle 1 / I6 收口完成——统计落档（门禁 5 类 + I4 扩展 / red list 0 / 新族 5）+ W1 实证复查（临时 vitest 3/3，窗口仍可复现 → 维持 watch-only，findings §4 更新证据）+ 稳态判定（非稳态）→ Cycle 2 / I1 + I2 + I3 三行按 Loop Rule 派生回写 roadmap（附触发证据引用，逐条与 findings §3.2 / adjudication §3 对应零造数）+ 动态状态区 / Follow-up Backlog / daily log 同步 + commit `0ae711c6`；独立 closure-audit **approved**（零 Blocker / 零 Major）→ Plan Status `completed`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立审计者或独立子 agent）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: `ses_018f2057dffeJmWQX182ImvLfJ`（independent fresh sub-agent session，不复用执行者上下文）
+- Evidence: verdict **approved**（0 Blocker / 0 Major；3 Minor 均为收口表述类——M1 daily log 措辞「Closure Gates 全 [x]」随本 finalization 轮成立、M2 handoff 摘要计数笔误（4→5 份 BI 草稿）、M3 plan 文件 commit 时序（Phase 3 翻转在 `0ae711c6` 之后）——无内容影响）；audit 9 项 checklist 全 PASS：① 文本一致性（Phase 1/2/3 全 completed + 全部 [x]）② 统计准确性（gates.md:12-16 五行 + 4 项 I4 扩展 + committed 回归 6 用例；findings:22 red list 0；findings §3.2 新族 5）③ 触发证据零造数（roadmap:47-49 行号逐条对应 findings:97/110/117/126-128/135 + adjudication §3 N 表族名）④ W1 裁决诚实（静态核对 create-engine.ts:534-555/:557-570/:146-158/:354-361 代码一致）⑤ roadmap 同步（I6 行 ✅ + 动态状态区 + Follow-up Backlog）⑥ deferred 诚实 ⑦ `pnpm check:docs-garbled` exit 0 候选全 pre-existing（daily log:256 "façade" 为 HEAD 既有）⑧ 工作区零残留（临时 vitest 已删；零代码文件改动）⑨ interface-vs-semantics（文档状态均在 live 文件实际存在）
 
 Follow-up:
 
-- （只记录 non-blocking follow-up；confirmed live defect 不得出现在这里）
-- 或明确写 no remaining plan-owned work
+- Cycle 2 / I1（`2026-08-09-2229-2`）+ I2（`2026-08-09-2229-3`）执行序接续；Cycle 2 / I3 待 I2 findings 产出后起草。
+- W1 维持 watch-only：复触发窗口已实证（findings §4 更新在案），Cycle 2 / I2 审计若触及按 findings 流程复核。
+- 无 remaining plan-owned work。
