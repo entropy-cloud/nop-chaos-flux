@@ -10,6 +10,7 @@
 @import '@nop-chaos/flux-renderers-layout/styles.css';
 @import '@nop-chaos/flux-renderers-graph/styles.css';
 @import '@nop-chaos/flux-renderers-map/styles.css';
+@import '@nop-chaos/flux-renderers-pivot/styles.css';
 @import '@nop-chaos/flux-renderers-industrial/styles.css';
 @import '@nop-chaos/flux-renderers-industrial/editor/styles.css';
 @import '@nop-chaos/flux-renderers-dashboard/styles.css';

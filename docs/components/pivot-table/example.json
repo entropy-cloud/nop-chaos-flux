@@ -1,0 +1,52 @@
+{
+  "type": "pivot-table",
+  "id": "sales-pivot-example",
+  "label": "销售透视（region×quarter 行 / category 列）",
+  "records": [
+    { "region": "North", "quarter": "Q1", "category": "Electronics", "sales": 1200, "profit": 240 },
+    { "region": "North", "quarter": "Q1", "category": "Furniture", "sales": 800, "profit": 160 },
+    { "region": "North", "quarter": "Q2", "category": "Electronics", "sales": 1500, "profit": 300 },
+    { "region": "North", "quarter": "Q2", "category": "Furniture", "sales": 900, "profit": 135 },
+    { "region": "South", "quarter": "Q1", "category": "Electronics", "sales": 900, "profit": 135 },
+    { "region": "South", "quarter": "Q1", "category": "Furniture", "sales": 700, "profit": 140 },
+    { "region": "South", "quarter": "Q2", "category": "Electronics", "sales": 1100, "profit": 220 },
+    { "region": "South", "quarter": "Q2", "category": "Furniture", "sales": 850, "profit": 170 }
+  ],
+  "rowDimensions": [
+    { "dimensionKey": "region", "title": "地区" },
+    { "dimensionKey": "quarter", "title": "季度" }
+  ],
+  "columnDimensions": [{ "dimensionKey": "category", "title": "品类" }],
+  "indicators": [
+    { "field": "sales", "title": "销售额", "aggregationType": "SUM", "cellType": "text" },
+    { "field": "profit", "title": "利润", "aggregationType": "SUM", "cellType": "text" }
+  ],
+  "dataConfig": {
+    "totals": {
+      "row": {
+        "showGrandTotals": true,
+        "showSubTotals": true,
+        "subTotalsDimensions": ["region", "quarter"],
+        "grandTotalLabel": "总计",
+        "subTotalLabel": "小计"
+      },
+      "column": {
+        "showGrandTotals": true,
+        "showSubTotals": false,
+        "grandTotalLabel": "合计"
+      }
+    },
+    "sortRules": [{ "field": "sales", "sortType": "DESC" }],
+    "filterRules": [{ "field": "sales", "operator": ">", "value": 500 }]
+  },
+  "cornerTitleOnDimension": "all",
+  "height": 420,
+  "empty": "暂无销售数据",
+  "onCellClick": {
+    "action": "setValue",
+    "args": {
+      "path": "selectedPivotCell",
+      "value": "${event}"
+    }
+  }
+}

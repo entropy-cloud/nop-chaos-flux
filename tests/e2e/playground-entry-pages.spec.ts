@@ -462,6 +462,15 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       timeout: 30_000,
     });
   },
+  'pivot-table-demo': async (page) => {
+    // VTable Canvas 渲染：非空卡挂 canvas，空卡渲染 empty slot
+    await expect(page.locator('[data-slot="pivot-canvas"] canvas').first()).toBeAttached({
+      timeout: 30_000,
+    });
+    await expect(page.locator('[data-slot="pivot-empty"]').first()).toBeVisible({
+      timeout: 30_000,
+    });
+  },
   'spreadsheet': async (page) => {
     await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-slot="spreadsheet-toolbar"]')).toBeVisible({ timeout: 15_000 });

@@ -76,6 +76,7 @@
 ### 3.4 VTable（字节 VisActor）专项调研
 
 > 调研对象：`~/sources/vtable`（v1.26.6，MIT）+ `~/sources/Chat2DB`（chat2db-community-client）实际应用方式。
+> **落地状态（2026-08-10）：路径 B 已按 plan `2026-08-09-pivot-table-vtable-wrapper-plan.md` 落地为 `@nop-chaos/flux-renderers-pivot`（`type: 'pivot-table'`，VTable `PivotTable` 命令式封装 + schema 映射 + 事件桥接 + 主题映射），见 `docs/components/pivot-table/design.md`。**
 
 **结论：VTable 原生支持透视表，且是路径 B 的现成基座候选（比 pivot-table-uni 完整度更高）。**
 
@@ -137,16 +138,16 @@
 | `dashboard-filter` | ✅ 可行         | **不新增**，建编排约定 + 1 个控件增强    | crud queryForm 已示范「表单→query summary→联动」模式；`data-source` 已订阅 `useRenderScope()`，scope 变更自动重载——全局筛选 = 一个共享 scope 的 query-form 约定 + `date-range` 相对时间预设增强（既有控件增强）                                                                                                                                                        |
 | `stat-tile`        | ⚠️ 可拼但重复高 | **新增轻量组件（2026-08-09 已落地 ✅）** | card+text+chart 能拼外形，但：每卡 ~30 行重复 schema；大数字样式语义（特大字号/涨跌色/同比环比布局）无样式原语；sparkline 需把 chart 缩到 40px。轻量封装（1 schema + 样式 + 数据绑定约定）投入产出比高——已按 plan `2026-08-09-bi-kpi-filter-chart-enhance-plan.md` Phase 1 落地（`stat-tile` renderer + 自绘 SVG sparkline，见 `docs/components/stat-tile/design.md`） |
 
-| 阶段               | 内容                                                                                                                                                                                                     | 工作量级                                                 |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| 一期（BI 骨架）    | 新增 `stat-tile`（KPI 卡片，statistics 升级）；`dashboard-filter` = 全局 scope query-form 编排约定 + `date-range` 相对预设增强；`panel-chrome` = card regions 组合（不新增）；`grid` 布局复用现有 layout | 低-中                                                    |
-| 一期（静态透视）   | `table` 透视映射模式（路径 A），配合 OLAP 服务端预聚合                                                                                                                                                   | 低-中                                                    |
-| 二期（完整 pivot） | 独立 `pivot-table` renderer（路径 B）：VTable `PivotTable` 基座 + 命令式封装（Chat2DB 模式），schema 映射 `rowDimensions`/`columnDimensions`/`indicators`/`aggregationRules`                             | 中（VTable 承担 transform，自研 schema/事件/主题适配层） |
-| 二期（图表增强）   | 双轴、热力图、brush/zoom；地图独立评估                                                                                                                                                                   | 中                                                       |
+| 阶段               | 内容                                                                                                                                                                                                                                                           | 工作量级                                                 |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| 一期（BI 骨架）    | 新增 `stat-tile`（KPI 卡片，statistics 升级）；`dashboard-filter` = 全局 scope query-form 编排约定 + `date-range` 相对预设增强；`panel-chrome` = card regions 组合（不新增）；`grid` 布局复用现有 layout                                                       | 低-中                                                    |
+| 一期（静态透视）   | `table` 透视映射模式（路径 A），配合 OLAP 服务端预聚合                                                                                                                                                                                                         | 低-中                                                    |
+| 二期（完整 pivot） | 独立 `pivot-table` renderer（路径 B）：VTable `PivotTable` 基座 + 命令式封装（Chat2DB 模式），schema 映射 `rowDimensions`/`columnDimensions`/`indicators`/`aggregationRules`。**已落地 ✅（2026-08-10，`@nop-chaos/flux-renderers-pivot`，见 §3.4 落地状态）** | 中（VTable 承担 transform，自研 schema/事件/主题适配层） |
+| 二期（图表增强）   | 双轴、热力图、brush/zoom；地图独立评估                                                                                                                                                                                                                         | 中                                                       |
 
 ### 4.3 触发条件（何时立即立项）
 
-- 若 nop-app 系出现真实 BI 看板/经营分析页面需求（如 ERP 销售分析、财务交叉报表），按 `complex-component-design-process.md` 立项 pivot-table 并产出 `docs/components/pivot-table/design.md` + `example.json`。
+- 若 nop-app 系出现真实 BI 看板/经营分析页面需求（如 ERP 销售分析、财务交叉报表），按 `complex-component-design-process.md` 立项 pivot-table 并产出 `docs/components/pivot-table/design.md` + `example.json`。**（已立项并落地，2026-08-10）**
 - 若仅需"报表导出交叉结果"，一期路径 A 已够用，不立项新控件。
 
 ---

@@ -57,6 +57,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'OpenLayers map renderer: region choropleth (builtin china/world geojson), pin clustering, custom boundaries via geojsonSource action, theme-colored vector layers, empty state.',
   },
   {
+    id: 'pivot-table-demo',
+    title: 'Pivot Table',
+    eyebrow: 'BI Pivot (VTable)',
+    description: 'VTable PivotTable wrapper: row/column dimensions, indicators with aggregation, row/column grand+sub totals, sort/filter rules, corner title, theme linkage, empty state.',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',
