@@ -1,6 +1,6 @@
 # 1 Round-2 Surface 契约残项批次收口（audit-followups-2026-08-09-1114 待后续批次）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: component-audit-round2
 > Work Item: audit-followups-2026-08-09-1114 待后续批次（surface 契约残项收口）
 > Last Reviewed: 2026-08-09
@@ -73,56 +73,56 @@
 
 ### Phase 1 - closeOnSubmit 编译期诊断与参考文档（P3-06 + P3-10）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/constants.ts`、`packages/flux-core/src/constants.test.ts`、`docs/references/quick-reference.md`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：`constants.ts:124-145` `openDialog`/`openDrawer` `fieldRules` 各补 `closeOnSubmit: { kind: 'value', valueType: 'boolean' }`（与 `types/actions.ts:89-90` 声明对齐；`validateSchemaDefinitionConstraints` 会按 `spec.valueType` 校验，达编译期诊断目的）。
-- [ ] Proof：`constants.test.ts:124-131` openDialog 断言块补 `closeOnSubmit` fieldRule 断言，并新增 openDrawer 断言块（同形态）；运行 `pnpm --filter @nop-chaos/flux-core test -- --grep constants` 全绿。
-- [ ] Proof：compile 回归——字段类型正确（`true` 布尔）或缺失 closeOnSubmit 的 openDialog schema 编译零新警告（fieldRules 为 allowlist 语义核对；flux-compiler 相关既有测试绿）；注意 `"true"` 字符串会经 `invalid-action-shape` 被编译期拒绝（fail-closed，与 fp-schema-true-string 一致）。
-- [ ] Fix：`docs/references/quick-reference.md:647-648` action 表 `openDialog`/`openDrawer` 行 Key args 补 `closeOnSubmit?`（指引 `docs/architecture/surface-lifecycle-callbacks.md` §「closeOnSubmit × hook 失败交互（契约）」）。
+- [x] Fix：`constants.ts:124-145` `openDialog`/`openDrawer` `fieldRules` 各补 `closeOnSubmit: { kind: 'value', valueType: 'boolean' }`（与 `types/actions.ts:89-90` 声明对齐；`validateSchemaDefinitionConstraints` 会按 `spec.valueType` 校验，达编译期诊断目的）。
+- [x] Proof：`constants.test.ts:124-131` openDialog 断言块补 `closeOnSubmit` fieldRule 断言，并新增 openDrawer 断言块（同形态）；运行 `pnpm --filter @nop-chaos/flux-core test -- --grep constants` 全绿。
+- [x] Proof：compile 回归——字段类型正确（`true` 布尔）或缺失 closeOnSubmit 的 openDialog schema 编译零新警告（fieldRules 为 allowlist 语义核对；flux-compiler 相关既有测试绿）；注意 `"true"` 字符串会经 `invalid-action-shape` 被编译期拒绝（fail-closed，与 fp-schema-true-string 一致）。
+- [x] Fix：`docs/references/quick-reference.md:647-648` action 表 `openDialog`/`openDrawer` 行 Key args 补 `closeOnSubmit?`（指引 `docs/architecture/surface-lifecycle-callbacks.md` §「closeOnSubmit × hook 失败交互（契约）」）。
 
 Exit Criteria:
 
-- [ ] live diff 可见 `fieldRules.closeOnSubmit` ×2 落地且 constants.test 新增断言绿（focused test 通过）。
-- [ ] `quick-reference.md` 两行已反映 `closeOnSubmit?`；无 compile 新警告回归。
+- [x] live diff 可见 `fieldRules.closeOnSubmit` ×2 落地且 constants.test 新增断言绿（focused test 通过）。
+- [x] `quick-reference.md` 两行已反映 `closeOnSubmit?`；无 compile 新警告回归。
 
 ### Phase 2 - action-adapter 恒等 cast 清理与 `=== true` 归一化（P3-07 + P3-08）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/action-adapter.ts`、`packages/flux-runtime/src/surface-runtime.ts`、`packages/flux-runtime/src/__tests__/surface-close-on-submit.test.ts`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Decision：归一化方向裁定——保持 adapter 入口 `=== true` 为唯一布尔归一化点，消费点 `entry.closeOnSubmit` 改 `=== true` 并加 JSDoc「仅布尔 `true` 生效」；理由：adapter 是唯一生产者，入口归一化已 fail-closed 拒绝 `"true"` 等非布尔值（fp-schema-true-string）。
-- [ ] Fix：`action-adapter.ts:234,249,298,314` 四处 `(invocation.args as Record<string, unknown>)?.x` 恒等 cast 移除（保留 `=== true` 归一化与 `!!` 转布尔语义），直接读类型化 args。
-- [ ] Fix：`surface-runtime.ts:268,288` 消费点 `entry.closeOnSubmit` 改 `=== true`，`OwnedSurfaceStateBase.closeOnSubmit` JSDoc（`types/runtime.ts:281-285`）声明仅布尔 `true` 生效。
-- [ ] Proof：`surface-close-on-submit.test.ts` 扩展——closeOnSubmit 归一化输入矩阵（`true` / `"true"` / `undefined`）断言：仅 `true` 触发自动关闭、`"true"` fail-closed 保持打开；注意该矩阵测试须**直接构造 invocation**（绕过 compile，沿用既有测试 :308 同款做法），因 Phase 1 后编译期会拒绝 `"true"`；既有 11 用例零回归。
+- [x] Decision：归一化方向裁定——保持 adapter 入口 `=== true` 为唯一布尔归一化点，消费点 `entry.closeOnSubmit` 改 `=== true` 并加 JSDoc「仅布尔 `true` 生效」；理由：adapter 是唯一生产者，入口归一化已 fail-closed 拒绝 `"true"` 等非布尔值（fp-schema-true-string）。
+- [x] Fix：`action-adapter.ts:234,249,298,314` 四处 `(invocation.args as Record<string, unknown>)?.x` 恒等 cast 移除（保留 `=== true` 归一化与 `!!` 转布尔语义），直接读类型化 args。
+- [x] Fix：`surface-runtime.ts:268,288` 消费点 `entry.closeOnSubmit` 改 `=== true`，`OwnedSurfaceStateBase.closeOnSubmit` JSDoc（`types/runtime.ts:281-285`）声明仅布尔 `true` 生效。
+- [x] Proof：`surface-close-on-submit.test.ts` 扩展——closeOnSubmit 归一化输入矩阵（`true` / `"true"` / `undefined`）断言：仅 `true` 触发自动关闭、`"true"` fail-closed 保持打开；注意该矩阵测试须**直接构造 invocation**（绕过 compile，沿用既有测试 :308 同款做法），因 Phase 1 后编译期会拒绝 `"true"`；既有 11 用例零回归。
 
 Exit Criteria:
 
-- [ ] 四处 cast 移除 + 消费点 `=== true` 落地（live diff 可见）；`=== true` 决策记录写回本 plan Phase 2 与 backlog 行。
-- [ ] 归一化输入矩阵断言全绿（`pnpm --filter @nop-chaos/flux-runtime test -- --grep "close-on-submit"`），既有用例零回归。
+- [x] 四处 cast 移除 + 消费点 `=== true` 落地（live diff 可见）；`=== true` 决策记录写回本 plan Phase 2 与 backlog 行。
+- [x] 归一化输入矩阵断言全绿（`pnpm --filter @nop-chaos/flux-runtime test -- --grep "close-on-submit"`），既有用例零回归。
 
 ### Phase 3 - 状态发布 owner-scope 解析统一与回退链收敛（P2-02）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/surface-runtime.ts`、`packages/flux-core/src/types/runtime.ts`、`packages/flux-renderers-basic/src/use-surface-renderer.ts`、`packages/flux-runtime/src/__tests__/surface-*.test.ts`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Decision：`publishClosed` 输入扩展——`types/runtime.ts:364-369` 加可选 `ownerScope?: ScopeRef`（向后兼容，现有调用点零改型）；解析统一为 `ownerScope ?? scope.parent ?? scope`（与 `publishSurfaceStatus`/`clearSurfaceStatus` 同形态）。
-- [ ] Fix：`surface-runtime.ts` 三处解析收敛——`publishClosedSummary` 消费新 `ownerScope` 输入；三处提取/复用同一解析形态（不改变声明式路径现状行为：`entry.ownerScope`/新输入均 undefined 时回退链与现状一致）。
-- [ ] Fix：`use-surface-renderer.ts` 三个 `publishClosed` 调用点（:340/:358/:380）回退链统一为一致形态（`declarativeScope ?? node.scope`；cleanup ref 的 `ownerScope` 字段更名/对齐为 `nodeScope` 避免语义混淆，:143/:157/:380）。
-- [ ] Proof：focused 测试——`publishClosed` 带 ownerScope 发布到 owner scope、不带时回退 `scope.parent ?? scope`（fp-publish-closed-owner/fallback 两行钉住）；声明式 dialog 关闭 statusPath 发布行为现状回归断言（既有 surface 生命周期测试绿）。
-- [ ] Fix：`docs/architecture/surface-lifecycle-callbacks.md` **新增状态发布/statusPath 节**（该文档当前无此节，标题清单已核对）并写明 owner-scope 解析规则（`ownerScope ?? scope.parent ?? scope`）——按 Phase 实际结果定稿：语义变更如实写，仅形态统一则注明解析链形态。
+- [x] Decision：`publishClosed` 输入扩展——`types/runtime.ts:364-369` 加可选 `ownerScope?: ScopeRef`（向后兼容，现有调用点零改型）；解析统一为 `ownerScope ?? scope.parent ?? scope`（与 `publishSurfaceStatus`/`clearSurfaceStatus` 同形态）。
+- [x] Fix：`surface-runtime.ts` 三处解析收敛——`publishClosedSummary` 消费新 `ownerScope` 输入；三处提取/复用同一解析形态（不改变声明式路径现状行为：`entry.ownerScope`/新输入均 undefined 时回退链与现状一致）。
+- [x] Fix：`use-surface-renderer.ts` 三个 `publishClosed` 调用点（:340/:358/:380）回退链统一为一致形态（`declarativeScope ?? node.scope`；cleanup ref 的 `ownerScope` 字段更名/对齐为 `nodeScope` 避免语义混淆，:143/:157/:380）。
+- [x] Proof：focused 测试——`publishClosed` 带 ownerScope 发布到 owner scope、不带时回退 `scope.parent ?? scope`（fp-publish-closed-owner/fallback 两行钉住）；声明式 dialog 关闭 statusPath 发布行为现状回归断言（既有 surface 生命周期测试绿）。
+- [x] Fix：`docs/architecture/surface-lifecycle-callbacks.md` **新增状态发布/statusPath 节**（该文档当前无此节，标题清单已核对）并写明 owner-scope 解析规则（`ownerScope ?? scope.parent ?? scope`）——按 Phase 实际结果定稿：语义变更如实写，仅形态统一则注明解析链形态。
 
 Exit Criteria:
 
-- [ ] 三处解析同形态 + `publishClosed` 可选 ownerScope 落地（live diff + typecheck 通过）；use-surface-renderer 三调用点回退链一致。
-- [ ] P2-02 两条 focused 断言绿 + 既有 surface 测试零回归（`pnpm --filter @nop-chaos/flux-runtime test` 与 `pnpm --filter @nop-chaos/flux-renderers-basic test` 局部跑绿）。
-- [ ] `surface-lifecycle-callbacks.md` 新增状态发布节与 live 解析一致（Phase 实际结果为准）。
+- [x] 三处解析同形态 + `publishClosed` 可选 ownerScope 落地（live diff + typecheck 通过）；use-surface-renderer 三调用点回退链一致。
+- [x] P2-02 两条 focused 断言绿 + 既有 surface 测试零回归（`pnpm --filter @nop-chaos/flux-runtime test` 与 `pnpm --filter @nop-chaos/flux-renderers-basic test` 局部跑绿）。
+- [x] `surface-lifecycle-callbacks.md` 新增状态发布节与 live 解析一致（Phase 实际结果为准）。
 
 ## Draft Review Record
 
@@ -135,17 +135,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 全部 5 条 backlog 项（P2-02 / P3-06 / P3-07 / P3-08 / P3-10）landed，`docs/backlog/audit-followups-2026-08-09-1114.md` 对应行回写终态。
-- [ ] 无 in-scope confirmed live defect / contract drift 被静默降级到 deferred 或 follow-up。
-- [ ] 契约结果达成：fieldRules 诊断一致、`=== true` 归一化一致、owner-scope 解析三处一致、quick-reference 反映 closeOnSubmit。
-- [ ] focused verification 完成（Phase 1-3 Proof 全绿，既有 surface 测试零回归）。
-- [ ] 受影响 owner docs 已同步：`quick-reference.md`（scope 内交付）、`surface-lifecycle-callbacks.md`（Phase 3 结果为准）、backlog 回写；无其它 owner-doc 漂移。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（exit 0，零新增命中）
+- [x] 全部 5 条 backlog 项（P2-02 / P3-06 / P3-07 / P3-08 / P3-10）landed，`docs/backlog/audit-followups-2026-08-09-1114.md` 对应行回写终态。
+- [x] 无 in-scope confirmed live defect / contract drift 被静默降级到 deferred 或 follow-up。
+- [x] 契约结果达成：fieldRules 诊断一致、`=== true` 归一化一致、owner-scope 解析三处一致、quick-reference 反映 closeOnSubmit。
+- [x] focused verification 完成（Phase 1-3 Proof 全绿，既有 surface 测试零回归）。
+- [x] 受影响 owner docs 已同步：`quick-reference.md`（scope 内交付）、`surface-lifecycle-callbacks.md`（Phase 3 结果为准）、backlog 回写；无其它 owner-doc 漂移。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（exit 0，零新增命中）
 
 ## Deferred But Adjudicated
 
@@ -167,13 +167,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待执行完成后填写）
+Status Note: 2026-08-09 执行完成并收口。Phase 1-3 全部 completed：P3-06 fieldRules `closeOnSubmit` ×2 补齐（constants.test + flux-compiler compile 回归：`"true"` 编译期 `invalid-action-shape` fail-closed）；P3-07 四处恒等 cast 移除；P3-08 Decision（adapter 入口 `=== true` 为唯一归一化点）+ 消费点 `=== true` + JSDoc + 归一化矩阵测试（true/`"true"`/undefined）；P2-02 `publishClosed` 可选 ownerScope 输入 + 三处解析统一 `ownerScope ?? scope.parent ?? scope`（`resolveStatusOwnerScope` 复用）+ use-surface-renderer 三调用点回退链统一 + focused 测试 4 用例；P3-10 quick-reference 两行补 `closeOnSubmit?`。全量验证：typecheck/build/lint 32/32 + test 59/59 + `pnpm check` exit 0。closure-audit 独立 fresh session pass（task `ses_01a68658effeMnp4YZgFsGd2oL`）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立 fresh session 填写）
-- Evidence: （待填写）
+- Auditor / Agent: 独立 fresh session（task `ses_01a68658effeMnp4YZgFsGd2oL`，2026-08-09，输入 = 本 plan + diff summary + verification output）
+- Evidence: Verdict `pass`——① plan 文本一致性：3 Phase completed + Phase 1-3 全 checklist [x]，仅 Closure Gates 未勾（含 audit gate，执行 session 未自审）；② live 核对：constants.ts ×2、action-adapter 四 cast 移除（余留 `as Record<string, unknown>` 仅 :226/:290 合法非恒等 + 既有 :135/:232/:296）、surface-runtime `=== true` ×2 + `resolveStatusOwnerScope` 3×、types/runtime ownerScope 可选 + JSDoc、use-surface-renderer nodeScope ×3 统一；③ focused 测试实测：close-on-submit + status-publish 16 passed、constants closeOnSubmit 1 passed、compile closeOnSubmit 1 passed、drawer-and-dispose 5 passed 零回归、`pnpm check` exit 0；④ deferred 诚实：CX-13+（out-of-scope improvement，人工路由）+ 3 watch-only e2e（watch-only residual），无 in-scope 静默降级；⑤ doc 同步：quick-reference 两行 + 脚注、surface-lifecycle-callbacks 状态发布节与 live 解析一致、backlog 5 行终态「已收口」。
 
 Follow-up:
 
-- （待填写：no remaining plan-owned work 或 non-blocking follow-up）
+- 无 remaining plan-owned work（5 条 backlog 条目全部 landed，`audit-followups-2026-08-09-1114.md` 达零悬挂；CX-13+ 待人工路由，3 条 watch-only e2e 维持 DV 终态清单）。

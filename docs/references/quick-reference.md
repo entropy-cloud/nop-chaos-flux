@@ -640,22 +640,24 @@ createScopeRef(input: { id; path; initialData?; parent?; store?; isolate?; updat
 
 ## Action Types Quick Reference
 
-| Action type                 | Schema interface            | Key args                      |
-| --------------------------- | --------------------------- | ----------------------------- |
-| `ajax`                      | `AjaxActionSchema`          | api, adaptor                  |
-| `submitForm`                | `SubmitFormActionSchema`    | (none — nearest form)         |
-| `openDialog`                | `OpenDialogActionSchema`    | title, body                   |
-| `openDrawer`                | `OpenDrawerActionSchema`    | title, body                   |
-| `closeSurface`              | `CloseSurfaceActionSchema`  | surfaceId? (default: current) |
-| `closeDialog`/`closeDrawer` | alias of `closeSurface`     | surfaceId?                    |
-| `refreshTable`              | `RefreshTableActionSchema`  | target                        |
-| `refreshSource`             | `RefreshSourceActionSchema` | sourceName                    |
-| `setValue`                  | `SetValueActionSchema`      | path, value                   |
-| `setValues`                 | `SetValuesActionSchema`     | path, values                  |
-| `showToast`                 | `ShowToastActionSchema`     | level, message                |
-| `navigate`                  | `NavigateActionSchema`      | url, replace, back            |
-| `component:method`          | `ComponentActionSchema`     | \_targetCid, method, args     |
-| `ns:method`                 | `NamespacedActionSchema`    | namespace, method, args       |
+| Action type                 | Schema interface            | Key args                                |
+| --------------------------- | --------------------------- | --------------------------------------- |
+| `ajax`                      | `AjaxActionSchema`          | api, adaptor                            |
+| `submitForm`                | `SubmitFormActionSchema`    | (none — nearest form)                   |
+| `openDialog`                | `OpenDialogActionSchema`    | title, body, closeOnSubmit?<sup>1</sup> |
+| `openDrawer`                | `OpenDrawerActionSchema`    | title, body, closeOnSubmit?<sup>1</sup> |
+| `closeSurface`              | `CloseSurfaceActionSchema`  | surfaceId? (default: current)           |
+| `closeDialog`/`closeDrawer` | alias of `closeSurface`     | surfaceId?                              |
+| `refreshTable`              | `RefreshTableActionSchema`  | target                                  |
+| `refreshSource`             | `RefreshSourceActionSchema` | sourceName                              |
+| `setValue`                  | `SetValueActionSchema`      | path, value                             |
+| `setValues`                 | `SetValuesActionSchema`     | path, values                            |
+| `showToast`                 | `ShowToastActionSchema`     | level, message                          |
+| `navigate`                  | `NavigateActionSchema`      | url, replace, back                      |
+| `component:method`          | `ComponentActionSchema`     | \_targetCid, method, args               |
+| `ns:method`                 | `NamespacedActionSchema`    | namespace, method, args                 |
+
+> <sup>1</sup> `closeOnSubmit?: boolean` — `true` 时在 `submit:success` 的 onSubmitSuccess hook 跑完后自动关闭（仅布尔 `true` 生效，fail-closed）。契约详见 `docs/architecture/surface-lifecycle-callbacks.md` §「closeOnSubmit × hook 失败交互（契约）」。
 
 ### Targeting: prefer nearest-ancestor over `componentId`/`componentName`
 

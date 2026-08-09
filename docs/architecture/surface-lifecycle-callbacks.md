@@ -389,6 +389,39 @@ disposeEntry
 
 注意：`onClose` 是否在 submit 成功后触发**取决于关闭路径**——closeOnSubmit 自动关闭路径（当前推荐主路径）会在 submit 成功后进入 close hook（fire-and-forget 触发 `args.onClose`）；`submitForm.then: closeSurface` 路径同样在关闭时进入 close hook。两条路径的 onClose 行为一致；「submit 成功后不触发 onClose」的说法只在 dialog 一直保持打开（未设置任何关闭动作）时成立。如果想让「用户取消也刷新」，在 `onClose` 中更新即可。
 
+## Status Path Publication（状态发布 / statusPath）
+
+surface 通过 `statusPath`（action-style 的 `args.statusPath` / declarative 的 `statusPath`）把生命周期状态发布到 owner scope（`publishOwnerStatus` → `scope.update(statusPath, summary)`）：
+
+```ts
+{
+  id: surfaceId,
+  kind: 'dialog' | 'drawer' | 'sheet',
+  open: boolean,
+  active: boolean, // 是否栈顶 surface
+  opening: false,
+  closing: false,
+}
+```
+
+`statusPath` 缺省时不发布任何状态（`publishOwnerStatus` 对 undefined statusPath 为 no-op）。
+
+### Owner-Scope Resolution Rule
+
+三处状态发布点统一使用同一解析形态：
+
+```
+ownerScope ?? scope.parent ?? scope
+```
+
+- `publishSurfaceStatus` / `clearSurfaceStatus`（open/close 生命周期）：解析 `entry.ownerScope ?? entry.scope.parent ?? entry.scope`
+- `publishClosed`（`use-surface-renderer.ts` 显式发布 closed summary）：解析 `input.ownerScope ?? input.scope.parent ?? input.scope`。`ownerScope` 为**可选输入**（2026-08-09 契约收口新增，向后兼容：现有调用点不传时回退链与历史行为完全一致）
+
+### Action-Style vs Declarative
+
+- **action-style（`openDialog`/`openDrawer` action）**：`open()` 时 adapter 传 `options.ownerScope = ctx.scope`，`entry.ownerScope` 恒存在 → 状态发布到 action 触发点的 owner scope（page / 外层组件 scope）
+- **declarative（`type: dialog` / `type: drawer`）**：`openSurface` 不传 ownerScope，`entry.ownerScope` 为 undefined → 回退 `entry.scope.parent ?? entry.scope`（`use-surface-renderer.ts` 创建 surface child scope 的父级 = 声明点 `node.scope`）；`use-surface-renderer.ts` 三个 `publishClosed` 调用点（:340/:358/:380）回退链统一为 `declarativeScope ?? node.scope`（cleanup 路径经 ref 捕获，形态一致）
+
 ## `refreshNearest` Action
 
 ### Schema
