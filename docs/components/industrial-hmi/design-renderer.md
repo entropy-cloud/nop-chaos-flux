@@ -301,10 +301,20 @@ packages/flux-renderers-industrial/src/
 ├── symbols/                      # 图元模型域核心（design-symbols.md §11）
 ├── serialization/                # 组态 JSON 序列化（纯逻辑）
 │   ├── config-types.ts           # ScadaConfig/ScadaSymbolNode 类型（schemas.ts 再导出）
-│   ├── validate.ts               # validateScadaConfig（I5.3，Vitest 单测）
+│   ├── validate.ts               # validateScadaConfig（I5.3，Vitest 单测；消费 legacy-scan + validators/）
 │   ├── parse.ts / serialize.ts   # 反序列化/序列化（I5.3，Vitest 单测）
 │   ├── diff.ts                   # diffScadaConfig（I5.3，Vitest 单测）
-│   └── equality.ts               # 共享 deepEqual（plan 2026-08-05-0653-4 C2 / W5）
+│   ├── equality.ts               # 共享 deepEqual（plan 2026-08-05-0653-4 C2 / W5）
+│   ├── legacy-scan.ts            # scanLegacyAtSyntax（@{pointId} 方言递归 warn，validate.ts 消费）
+│   └── validators/               # 校验子域（HCA-CG 拆分，validate.ts 经 index.ts barrel 消费）
+│       ├── index.ts              # barrel：validateSymbolNode / validatePointDeclaration
+│       ├── helpers.ts            # assertShape / checkNumberField / MAX_SYMBOLS / MAX_VARIABLES（fail-closed 上限 + 子形状校验）
+│       ├── animation.ts          # 动画字段校验（from/to/缩放子形状）
+│       ├── binding.ts            # 绑定字段校验
+│       ├── point-declaration.ts  # 点表声明校验（id 唯一/三源字段合法）
+│       ├── state-declaration.ts  # 状态声明校验
+│       ├── symbol-event.ts       # 图元事件校验
+│       └── symbol-node.ts        # 图元节点递归校验（id 唯一/children 仅 group/type 已注册/深度上限）
 ├── renderer/
 │   ├── scada-canvas.tsx          # 主渲染器：RendererComponentProps 装配 + 桥接（I10.1）
 │   ├── scada-errors.ts           # SCADA_ERROR_CODES 注册表 + i18n 映射（plan 2026-08-04-1558-2 Phase 4，§10 错误码段落）

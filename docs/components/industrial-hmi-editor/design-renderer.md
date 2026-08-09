@@ -321,6 +321,8 @@ interface ScadaEditorTestHandle {
 
 > plan 2026-08-08-1931-2 Phase 4 / P2-8：`editor-internal-error` 补登 registry M1 子集 + 两 locale 翻译键（en: 'Editor internal error' / zh: '编辑器内部错误'）。语义：mutator `applyDiff` / undo / redo / 事务 commit 失败时由 `runtime-factories.syncWorkingCopy` + `runtime-mutators` + `undo-redo-adapter` 派发（rollback working copy 后通知 host）。先前码在 prod 派发但 registry 漏登 → `scadaEditorErrorI18nKey` 走 `.unknown` fallback，host 显示 unknown 文案（沉默缺口，现闭合）。
 
+> plan 2026-08-09-1300-1 Phase 2 / 1931-P2-6（Option A 裁定）：`scadaEditorErrorI18nKey` 已接入生产解析站点——`scada-editor-canvas.tsx` drop 路径的 `invalid-node` code→i18n-key 解析改用 `t(scadaEditorErrorI18nKey('invalid-node'))`（替代硬编码 `'industrial.scada.editor.error.invalid-node'`），使 `.unknown` fallback 成为真实安全网（未注册码不再渲染 raw dotted key）并消除「带测试的零-importer 死代码」。其余 onError 派发站点（`editor-internal-error` 等）传 raw error message 非 i18n key，属另一关注点（不在本 finding scope）。
+
 ## 9. 数据源、表达式、导入能力接入点
 
 - 编辑器 renderer**不接数据源**（编辑期不消费点表绑定，R5 隔离）；
@@ -353,7 +355,7 @@ interface ScadaEditorTestHandle {
 
 ```
 packages/flux-renderers-industrial/src/editor/   （方案 A 裁定，经 subpath /editor + 独立注册函数隔离；不新建包）
-├── index.ts                     # 公共面：registerScadaEditorRenderers + 类型
+├── index.ts                     # 公共面：registerScadaEditorRenderers + industrialEditorRendererDefinitions（plan 2026-08-09-1300-1 P2-4，与主入口 industrialRendererDefinitions 对称导出供 host 选择性注册）+ 类型
 ├── renderer-definitions.ts      # registerScadaEditorRenderers：fields/events/regions/handles（§4.3 完整 + E4.2 注册）
 ├── schemas.ts                   # ScadaEditorCanvasSchema 类型（§4.1 完整）
 ├── scada-editor-canvas.tsx      # 主渲染器：RendererComponentProps 装配 + 桥接（E5.1；live 在 editor/ 顶层）
