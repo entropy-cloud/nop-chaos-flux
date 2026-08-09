@@ -201,4 +201,75 @@ describe('input-table: row editing + composite handle addRow/removeRow/moveRow',
   });
 });
 
+describe('input-table: footer slot', () => {
+  it('renders SchemaInput footer content at the table bottom when provided', () => {
+    renderSchema({
+      type: 'form',
+      id: 'f',
+      data: { rows: [{ sku: 'A1', amount: 3 }] },
+      body: [
+        {
+          type: 'input-table',
+          id: 't',
+          name: 'rows',
+          label: 'Rows',
+          columns: tableColumns,
+          item: tableItemRegion,
+          footer: { type: 'text', text: 'Footer note' },
+        },
+      ],
+    });
+
+    const footer = document.querySelector('[data-slot="input-table-footer"]');
+    expect(footer).toBeTruthy();
+    expect(footer!.textContent).toContain('Footer note');
+    expect(footer!.nextElementSibling).toBeNull();
+  });
+
+  it('renders plain string footer values', () => {
+    renderSchema({
+      type: 'form',
+      id: 'f',
+      data: { rows: [{ sku: 'A1', amount: 3 }] },
+      body: [
+        {
+          type: 'input-table',
+          id: 't',
+          name: 'rows',
+          label: 'Rows',
+          columns: tableColumns,
+          item: tableItemRegion,
+          footer: 'Footer summary',
+        },
+      ],
+    });
+
+    const footer = document.querySelector('[data-slot="input-table-footer"]');
+    expect(footer).toBeTruthy();
+    expect(footer!.textContent).toContain('Footer summary');
+  });
+
+  it('renders no footer when footer is missing and keeps existing behavior intact', () => {
+    renderSchema({
+      type: 'form',
+      id: 'f',
+      data: { rows: [{ sku: 'A1', amount: 3 }] },
+      body: [
+        {
+          type: 'input-table',
+          id: 't',
+          name: 'rows',
+          label: 'Rows',
+          columns: tableColumns,
+          item: tableItemRegion,
+        },
+      ],
+    });
+
+    expect(document.querySelector('[data-slot="input-table-footer"]')).toBeNull();
+    expect(document.querySelector('[data-slot="input-table-add"]')).toBeTruthy();
+    expect(document.querySelectorAll('[data-slot="input-table-row"]')).toHaveLength(1);
+  });
+});
+
 export {};

@@ -8,6 +8,8 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
+  hasRendererSlotContent,
+  resolveRendererSlotContent,
   useCompositeFieldHandle,
   useCurrentComponentRegistry,
   useCurrentForm,
@@ -39,6 +41,10 @@ export { InputTableRow } from './input-table-row.js';
 
 const EMPTY_ITEMS: unknown[] = [];
 const EMPTY_COLUMNS: InputTableColumn[] = [];
+
+function asReactNode(value: unknown): React.ReactNode {
+  return value as React.ReactNode;
+}
 
 function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
@@ -328,6 +334,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
 
   const interactionDisabled = presentation.effectiveDisabled || presentation.readOnly;
   const headerColumnCount = Math.max(1, columns.length);
+  const footerContent = resolveRendererSlotContent(props, 'footer');
 
   return (
     <div className={cn('nop-input-table', 'flex flex-col gap-2', props.meta.className)}>
@@ -407,6 +414,9 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
           {t('flux.form.addRow', { defaultValue: 'Add row' })}
         </Button>
       )}
+      {hasRendererSlotContent(footerContent) ? (
+        <div data-slot="input-table-footer">{asReactNode(footerContent)}</div>
+      ) : null}
     </div>
   );
 }
@@ -430,6 +440,7 @@ export const inputTableRendererDefinition: RendererDefinition = {
     { key: 'maxItems', kind: 'prop' },
     { key: 'removeWhen', kind: 'prop', lazyEval: true, params: ['record', 'index', 'value'] },
     { key: 'readOnly', kind: 'prop' },
+    { key: 'footer', kind: 'value-or-region', regionKey: 'footer' },
     { key: 'onAdd', kind: 'event' },
     { key: 'onRemove', kind: 'event' },
     { key: 'onReorder', kind: 'event' },

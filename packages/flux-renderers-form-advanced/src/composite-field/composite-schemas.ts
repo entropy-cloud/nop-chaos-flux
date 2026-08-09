@@ -122,6 +122,8 @@ export interface InputTableSchema extends BoundFieldSchemaBase {
   minItems?: number;
   maxItems?: number;
   removeWhen?: string;
+  /** Bottom slot rendered below the table (type aligned with `TableSchema.footer`). */
+  footer?: SchemaInput | string;
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];
   onReorder?: ActionSchema | ActionSchema[];
