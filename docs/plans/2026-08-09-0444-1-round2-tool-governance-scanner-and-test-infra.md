@@ -203,7 +203,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- lessons 续写（如本轮沉淀新的扫描器盲区模式）：归后续 DG 类轮次，不阻塞本 plan。
+- ~~lessons 续写（如本轮沉淀新的扫描器盲区模式）：归后续 DG 类轮次，不阻塞本 plan。~~ **已由 lesson-11 plan 收口（2026-08-09）**（`docs/plans/2026-08-09-0917-1-round2-lesson-11-scanner-blind-spot-class.md`：`docs/lessons/11-scanner-false-positive-comment-string-stripping.md` 落地 + README 索引登记 + daily log 收口）。
 - 其他包 test-support 模块若有新发现的同型隐式 hook：按本轮裁决表方法处理，登记 daily log。
 
 ## Closure
@@ -245,4 +245,4 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- （无新增——lessons 续写按 plan Non-Blocking Follow-ups 归后续 DG 类轮次；本 plan 收口的 4 类 deferred 条目已在 daily log 回写来源 plan 状态）
+- （无新增——lessons 续写按 plan Non-Blocking Follow-ups 归后续 DG 类轮次，已由 lesson-11 plan 收口（2026-08-09）；本 plan 收口的 4 类 deferred 条目已在 daily log 回写来源 plan 状态）
