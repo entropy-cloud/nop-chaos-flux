@@ -1,6 +1,6 @@
 # 3 Cycle 2 / I2 — 不变式驱动审计（ai-invariant-loop）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: ai-invariant-loop
 > Work Item: Cycle 2 / I2. 不变式驱动审计
 > Last Reviewed: 2026-08-09
@@ -141,7 +141,7 @@ Exit Criteria:
 - [x] `cycle2-findings.md` 落档且与 live 证据逐条核对（`文件:行` 一致）；不存在被静默降级到 deferred 的 in-scope 发现（新族显式路由 Cycle 3 / I1 触发证据，非延期）
 - [x] 临时探查文件/测试零残留（工作区仅 docs 变更）
 - [x] 受影响的 owner docs 已同步（roadmap Cycle 2 / I2 行 + 动态状态区 + daily log）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 - [x] `pnpm check:docs-garbled` 通过或候选全部归属既有文件
 
 ## Deferred But Adjudicated
@@ -165,12 +165,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 执行完成待 closure-audit（Phase 1/2/3 全 completed + 全 checklist [x]；Closure Gates 6/7 [x]，audit 项待独立 sub-agent）。red list 确定性确认（4 注册命中 == 注册面零差异）、双轮探查 13K/0N/4W 零悬挂、`cycle2-findings.md` 落档、roadmap Cycle 2 / I2 行 ✅、daily log 收口、临时文件零残留。
+Status Note: closure-audit approved——Phase 1/2/3 全 completed + 全 checklist [x] + Closure Gates 7/7 [x]。red list 确定性确认（4 注册命中 == 注册面零差异）、双轮探查 13K/0N/4W 零悬挂、`cycle2-findings.md` 落档、roadmap Cycle 2 / I2 行 ✅、daily log 收口、临时文件零残留。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立审计者或独立子 agent，待执行）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: 独立 closure-audit sub-agent（mission-driver 2026-08-09-182611 closure-audit，fresh session，不复用执行上下文）
+- Evidence: live repo 复核（2026-08-09）——① `pnpm check:ai-engine-invariants` 复跑 exit 1 = **4 注册命中**（⑧×1 `create-engine.ts:228` + ⑥×3 `use-conversation.ts:280/:370/:427`），与 Cycle 2 / I1 注册表逐条对应、零未注册；② `pnpm --filter @nop-chaos/flux-renderers-ai test` 复跑 **67 files / 544 passed + 12 expected fail**（556）与 findings §1.1 记录一致；③ `pnpm check` 复跑仅既有登记 red（`check:audit-event-dispatch-ctx` industrial 6 hits）链中断，ai-engine-invariants standalone 补证零未注册；④ findings `文件:行` 抽查与 live 代码一致（`create-engine.ts:228` connector-missing 早退、`:362-364` finally onTurnEnd、`:407-410` onBeforeRequest try 外、`:432-483` chunk 循环 abort-break/首 chunk 处理、`use-conversation.ts:242-246` bootstrap setActiveId、`:427-475` clearAll drain 只排 saveMessages 链）；⑤ `cycle2-findings.md` 零悬挂（K 13 / N 0 / W 4 + Cycle 1 W1-W4 维持）与 roadmap Cycle 2 / I2 行 ✅（附执行证据）+ daily log 记录逐条一致；⑥ 临时探查文件零残留（git 工作区干净，仅 docs 变更）；⑦ `pnpm check:docs-garbled` 复跑通过（16 likely-garbled 全为既有文件，本 plan 新增 docs 零候选）。零 Blocker / 零 Major。
 
 Follow-up:
 
