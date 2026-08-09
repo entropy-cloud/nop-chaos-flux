@@ -1,0 +1,114 @@
+import { describe, it, expect } from 'vitest';
+import { execFileSync } from 'child_process';
+import { mkdtempSync, writeFileSync, mkdirSync } from 'fs';
+import { tmpdir } from 'os';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const scannerPath = path.join(__dirname, '..', 'audit', 'find-ai-engine-invariant-violations.mjs');
+
+function runScanner(env = {}): { stdout: string; stderr: string; exitCode: number } {
+  try {
+    const stdout = execFileSync('node', [scannerPath], {
+      encoding: 'utf-8',
+      env: { ...process.env, ...env },
+      cwd: path.join(__dirname, '..', '..'),
+    });
+    return { stdout, stderr: '', exitCode: 0 };
+  } catch (e: unknown) {
+    const err = e as { stdout?: string; stderr?: string; status?: number };
+    return {
+      stdout: err.stdout ?? '',
+      stderr: err.stderr ?? '',
+      exitCode: err.status ?? 1,
+    };
+  }
+}
+
+function makeFixture(files: Record<string, string>): string {
+  const root = mkdtempSync(path.join(tmpdir(), 'ai-inv-test-'));
+  for (const [rel, content] of Object.entries(files)) {
+    const fullPath = path.join(root, rel);
+    mkdirSync(path.dirname(fullPath), { recursive: true });
+    writeFileSync(fullPath, content);
+  }
+  return root;
+}
+
+describe('find-ai-engine-invariant-violations — scanner regression', () => {
+  it('clean fixture: zero violations (exit 0)', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/engine/create-engine.ts': `
+function runTurn() {
+  try { adapter.mutate('full', (draft) => { /* ok */ }); }
+  catch { adapter.mutate('requestState', (draft) => {
+    if (draft.abortController !== abortController) return;
+    draft.abortController = null;
+  }); }
+  finally { adapter.mutate('full', (draft) => {
+    if (draft.abortController === abortController) draft.abortController = null;
+  }); }
+}
+`,
+      'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+async function deleteConversation(id) {
+  await removed.abort();
+  if (activeIdRef.current === id) { setActiveId(null); }
+  void storage?.deleteConversation(id).catch((e) => reportStorageError({ phase: 'deleteConversation', error: e }));
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('No invariant violations');
+  });
+
+  it('violating fixture ④: storage call without .catch → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+function bad() {
+  void storage?.saveConversation(conv);
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('④');
+    expect(result.stderr).toContain('saveConversation');
+  });
+
+  it('violating fixture ③: catch writes abortController without identity guard → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/engine/create-engine.ts': `
+function bad() {
+  try { doStuff(); }
+  catch { adapter.mutate('requestState', (draft) => {
+    draft.abortController = null;
+  }); }
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('③');
+  });
+
+  it('violating fixture ②: post-await bare activeId → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+async function bad() {
+  await something();
+  if (activeId === id) { setActiveId(null); }
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('②');
+  });
+});
