@@ -1,6 +1,6 @@
 # 455 table/input-table 文档缺口补齐 + input-table footer 插槽
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-09
 > Source: `docs/analysis/2026-08-09-timesheet-week-grid-analysis.md`（final，三轮独立审查共识）
 > Related: `flux-guide/design-patterns/table.md`、`flux-guide/design-patterns/combo-input-table.md`、`flux-renderers-data/src/schemas.ts`、`flux-renderers-form-advanced/src/input-table-renderer.tsx`
@@ -72,56 +72,56 @@
 
 ### Phase 1 - `table.md` 文档补齐（5 节）
 
-Status: planned
+Status: completed
 Targets: `flux-guide/design-patterns/table.md`
 
 - Item Types: `Fix`
 
-- [ ] §1 树形表格节：`rowChildrenField`（树模式开关，数据来源字段）+ `childrenSource`（懒加载 ActionSchema）+ 树展开/折叠示例 JSON（toggle 内嵌首列单元格，**无独立展开列配置**——table-body-row-rendering.tsx:335,470,502,534）；注明 `defaultExpanded`/`maxDepth` 仅存在于 `flattenTreeRows` options（use-table-tree.ts:33-34），**未接线到 TableSchema**，避免读者误用。**不含 `expandable`**（Flux `expandable` 是"展开行"特性 expandedRowKeys/expandedRow/expandableWhen，schemas.ts:204-211，非树形展开列；如覆盖则作为独立小节标注正确语义）。插入位置策略：追加为现有文档尾部新节（table.md 现有 §1-§7 + 末尾无编号"table vs crud 选型"节；新节置于选型节之前，编号顺延，Exit Criteria 以内容存在性为准）
-- [ ] §2 表头分组节：`columns[].children` 嵌套列 + 多行表头示例（colSpan/rowSpan 语义，table-header-tree.ts:52 `computeHeaderRows`）
-- [ ] §3 footer 节：`footer?: SchemaInput | string` + 示例（对齐 table-renderer.tsx:692-693 渲染）
-- [ ] §4 quickEdit 节：`quickEdit: boolean | { mode:'inline'|'dialog', body, saveImmediately }` + inline 常驻输入示例 + 行级 draft 保存条 / saveImmediately 失焦提交语义（对齐 table-quick-edit-cell.tsx:113-129、use-row-quick-edit-draft.tsx）；注明 quickEdit 与树形行同格共存
-- [ ] §5 合计行节：`affixRow`/`prefixRow` + `TableSummaryCell { column, value(表达式), align }` + 示例（对齐 schemas.ts:106-108,166-167、table-summary-row.tsx:40-42）
-- [ ] 每节 JSON 示例与 live schema 字段逐一对照（引注 schemas.ts 行号）
+- [x] §1 树形表格节：`rowChildrenField`（树模式开关，数据来源字段）+ `childrenSource`（懒加载 ActionSchema）+ 树展开/折叠示例 JSON（toggle 内嵌首列单元格，**无独立展开列配置**——table-body-row-rendering.tsx:335,470,502,534）；注明 `defaultExpanded`/`maxDepth` 仅存在于 `flattenTreeRows` options（use-table-tree.ts:33-34），**未接线到 TableSchema**，避免读者误用。**不含 `expandable`**（Flux `expandable` 是"展开行"特性 expandedRowKeys/expandedRow/expandableWhen，schemas.ts:204-211，非树形展开列；如覆盖则作为独立小节标注正确语义）。插入位置策略：追加为现有文档尾部新节（table.md 现有 §1-§7 + 末尾无编号"table vs crud 选型"节；新节置于选型节之前，编号顺延，Exit Criteria 以内容存在性为准）
+- [x] §2 表头分组节：`columns[].children` 嵌套列 + 多行表头示例（colSpan/rowSpan 语义，table-header-tree.ts:52 `computeHeaderRows`）
+- [x] §3 footer 节：`footer?: SchemaInput | string` + 示例（对齐 table-renderer.tsx:692-693 渲染）
+- [x] §4 quickEdit 节：`quickEdit: boolean | { mode:'inline'|'dialog', body, saveImmediately }` + inline 常驻输入示例 + 行级 draft 保存条 / saveImmediately 失焦提交语义（对齐 table-quick-edit-cell.tsx:113-129、use-row-quick-edit-draft.tsx）；注明 quickEdit 与树形行同格共存
+- [x] §5 合计行节：`affixRow`/`prefixRow` + `TableSummaryCell { column, value(表达式), align }` + 示例（对齐 schemas.ts:106-108,166-167、table-summary-row.tsx:40-42）
+- [x] 每节 JSON 示例与 live schema 字段逐一对照（引注 schemas.ts 行号）
 
 Exit Criteria:
 
 > 本 Phase 交付 = table.md 5 节内容 + 示例；验证 = 示例字段与 schemas.ts 定义抽查一致。
 
-- [ ] `table.md` 含树形/表头分组/footer/quickEdit/affixRow+prefixRow 五节，每节有最小 JSON 示例
-- [ ] 抽查 ≥3 个示例字段与 `packages/flux-renderers-data/src/schemas.ts` 实际定义一致（如 `rowChildrenField`/`children`/`quickEdit.mode`/`affixRow.cells[].value`）
+- [x] `table.md` 含树形/表头分组/footer/quickEdit/affixRow+prefixRow 五节，每节有最小 JSON 示例
+- [x] 抽查 ≥3 个示例字段与 `packages/flux-renderers-data/src/schemas.ts` 实际定义一致（如 `rowChildrenField`/`children`/`quickEdit.mode`/`affixRow.cells[].value`）
 
 ### Phase 2 - `combo-input-table.md` 表达式派生列范例 + footer 文档
 
-Status: planned
+Status: completed
 Targets: `flux-guide/design-patterns/combo-input-table.md`
 
 - Item Types: `Fix`
 
-- [ ] §表达式派生列/只读列节：item region 内控件字段表达式绑定行数据示例（`{type:"text", text:"${qty}*${price}"}` 派生列、`readOnly:true` 只读列），注明"无需 compute 机制"
-- [ ] footer 文档节（依赖 Phase 3 落地后填写：`footer?: SchemaInput | string` + 示例）
+- [x] §表达式派生列/只读列节：item region 内控件字段表达式绑定行数据示例（`{type:"text", text:"${qty}*${price}"}` 派生列、`readOnly:true` 只读列），注明"无需 compute 机制"
+- [x] footer 文档节（依赖 Phase 3 落地后填写：`footer?: SchemaInput | string` + 示例）
 
 Exit Criteria:
 
-- [ ] `combo-input-table.md` 含表达式派生列/只读列范例节（Phase 3 前完成）
-- [ ] （Phase 3 完成后）`combo-input-table.md` 含 footer 文档节
+- [x] `combo-input-table.md` 含表达式派生列/只读列范例节（Phase 3 前完成）
+- [x] （Phase 3 完成后）`combo-input-table.md` 含 footer 文档节
 
 ### Phase 3 - `input-table` footer 插槽
 
-Status: planned
+Status: completed
 Targets: `flux-renderers-form-advanced/src/composite-field/composite-schemas.ts`、`flux-renderers-form-advanced/src/input-table-renderer.tsx`、`flux-renderers-form-advanced/src/__tests__/`
 
 - Item Types: `Fix` + `Proof`
 
-- [ ] `InputTableSchema` 增 `footer?: SchemaInput | string`（composite-schemas.ts，类型对齐 `TableSchema.footer` schemas.ts:144）
-- [ ] `input-table-renderer.tsx` 增 footer region 渲染，**对齐 `table` 的 value-or-region 范式**：`RendererDefinition fields` 增 `{ key: 'footer', kind: 'value-or-region', regionKey: 'footer' }`（对齐 data-renderer-definitions.ts:231）；渲染条件用 `hasRendererSlotContent(resolveRendererSlotContent(props, 'footer'))`（对齐 table-renderer.tsx:121,692-693——`value-or-region` 编译期将 SchemaInput 抽取进 `props.regions.footer`，不能用 `schemaProps.footer ?` 作条件，否则 SchemaInput 形式恒空）；footer 缺失时零渲染
-- [ ] 组件单测（Proof）：扩展既有 `__tests__/input-table-renderer.test.tsx`（204 行，data-slot 断言范式现成）——footer 传入渲染于表格底部（`data-slot="input-table-footer"` 断言）；footer 缺失零渲染；既有行为零回归（addable/removable/item 编辑等）
-- [ ] `combo-input-table.md` footer 字段参考表补行（依赖本 Phase 落地）
+- [x] `InputTableSchema` 增 `footer?: SchemaInput | string`（composite-schemas.ts，类型对齐 `TableSchema.footer` schemas.ts:144）
+- [x] `input-table-renderer.tsx` 增 footer region 渲染，**对齐 `table` 的 value-or-region 范式**：`RendererDefinition fields` 增 `{ key: 'footer', kind: 'value-or-region', regionKey: 'footer' }`（对齐 data-renderer-definitions.ts:231）；渲染条件用 `hasRendererSlotContent(resolveRendererSlotContent(props, 'footer'))`（对齐 table-renderer.tsx:121,692-693——`value-or-region` 编译期将 SchemaInput 抽取进 `props.regions.footer`，不能用 `schemaProps.footer ?` 作条件，否则 SchemaInput 形式恒空）；footer 缺失时零渲染
+- [x] 组件单测（Proof）：扩展既有 `__tests__/input-table-renderer.test.tsx`（204 行，data-slot 断言范式现成）——footer 传入渲染于表格底部（`data-slot="input-table-footer"` 断言）；footer 缺失零渲染；既有行为零回归（addable/removable/item 编辑等）
+- [x] `combo-input-table.md` footer 字段参考表补行（依赖本 Phase 落地）
 
 Exit Criteria:
 
-- [ ] `InputTableSchema.footer` 声明 + renderer 渲染落地，组件单测覆盖"传入渲染 / 缺失零渲染"两路径
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-form-advanced test` 通过（含新增 footer 用例 + 既有用例 0 回归）
+- [x] `InputTableSchema.footer` 声明 + renderer 渲染落地，组件单测覆盖"传入渲染 / 缺失零渲染"两路径
+- [x] `pnpm --filter @nop-chaos/flux-renderers-form-advanced test` 通过（含新增 footer 用例 + 既有用例 0 回归）
 
 ## Draft Review Record
 
@@ -142,15 +142,15 @@ Exit Criteria:
 
 > 全量验证归此处；本计划含代码变更（Phase 3），需跑仓库级检查。
 
-- [ ] `table.md` 5 节 + `combo-input-table.md` 表达式范例/footer 文档与 live 源码行为一致
-- [ ] `input-table` footer 字段 + 渲染 + 单测落地，AMIS InputTable 对齐
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（本计划无）
-- [ ] 受影响的 owner docs 已同步（`flux-guide/design-patterns/table.md` + `combo-input-table.md` 即本计划交付物本身）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `table.md` 5 节 + `combo-input-table.md` 表达式范例/footer 文档与 live 源码行为一致
+- [x] `input-table` footer 字段 + 渲染 + 单测落地，AMIS InputTable 对齐
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（本计划无）
+- [x] 受影响的 owner docs 已同步（`flux-guide/design-patterns/table.md` + `combo-input-table.md` 即本计划交付物本身）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -181,13 +181,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 未完成（plan 处于 draft，待独立审查通过后转 active；执行后经独立 closure-audit 再标记 completed）
+Status Note: 已完成（2026-08-09 执行完毕；Phase 1-3 全 completed + 全 checklist [x] + Closure Gates 全 [x]；独立 closure-audit 通过后标记 completed）
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待执行
-- Evidence: 待执行
+- Auditor / Agent: 独立 fresh sub-agent（task `ses_01929f88fffe5INEBsRITRkXO8`，首轮 verdict `revise`：1 Major + 2 Minor 全部修复——M1 懒加载 action scope 为顶层 `record`（use-table-lazy-children.ts:60 `createScope({ record, rowKey })`）非 `$slot.record`，示例 URL 改 `${record.id}`；m1 footer DOM 序在分页栏之下；m2 item region 参数为 `index`/`value`（`$slot.index`/`$slot.value`），`$index` 不存在；re-audit task `ses_0191a5f8bffeWTOp1uv6yxjF9Q` verdict `pass`，零新增 finding）
+- Evidence: 全量验证 `pnpm typecheck` 33/33、`pnpm build` 33/33、`pnpm lint` 33/33、`pnpm test` 60/60（form-advanced 135 files / 1053 tests，含新增 footer 3 用例）；`pnpm check` exit 1 仅既有登记 red（`check:audit-event-dispatch-ctx` industrial 6 hits，2026-08-09 已登记移交 industrial workstream），链上其余 13 项 + `check:ai-engine-invariants` 单独复跑全 exit 0、零新增命中；`check:schema-prop-coverage` exit 0（footer 字段覆盖）
 
 Follow-up:
 
-- 待执行
+- 无（本计划无遗留；Non-Blocking Follow-ups 见上文：nop-app-erp Timesheet 页面落地属应用层 plan；table.md 与 crud.md/examples/inline-quick-edit.md 的 quickEdit 文档交叉引用统一为文档一致性治理项）
