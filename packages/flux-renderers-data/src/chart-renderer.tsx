@@ -17,6 +17,7 @@ import {
   CartesianGrid,
   ReferenceLine,
   ReferenceArea,
+  Brush,
 } from 'recharts';
 import { getIn, type ComponentHandle, type RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -34,14 +35,16 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from '@nop-chaos/ui/chart';
-import type {
-  ChartSchema,
-  ChartSeriesSchema,
-  ChartType,
-  ChartReferenceLineSchema,
-  ChartBandSchema,
-  ChartMarkersSchema,
-} from './chart-schemas.js';
+import type { ChartSchema, ChartSeriesSchema, ChartType } from './chart-schemas.js';
+import { buildHeatmapGrid, HeatmapGrid, sanitizeHeatmapRows } from './chart-heatmap.js';
+import { sanitizeYAxis, type SanitizedYAxisEntry } from './chart-y-axis.js';
+import {
+  isChartType,
+  sanitizeBand,
+  sanitizeMarkers,
+  sanitizeReferenceLines,
+  sanitizeSeries,
+} from './chart-sanitize.js';
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -50,140 +53,6 @@ const COLORS = [
   'hsl(var(--chart-4))',
   'hsl(var(--chart-5))',
 ];
-
-function isChartType(value: unknown): value is ChartType {
-  return (
-    value === 'bar' ||
-    value === 'line' ||
-    value === 'pie' ||
-    value === 'scatter' ||
-    value === 'area'
-  );
-}
-
-function isChartDatum(value: unknown): value is number | { name?: string; value: number } {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return true;
-  }
-
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const candidate = value as { name?: unknown; value?: unknown };
-  return (
-    typeof candidate.value === 'number' &&
-    Number.isFinite(candidate.value) &&
-    (candidate.name === undefined || typeof candidate.name === 'string')
-  );
-}
-
-function sanitizeSeries(value: unknown): ChartSeriesSchema[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.flatMap((entry) => {
-    if (!entry || typeof entry !== 'object') {
-      return [];
-    }
-
-    const candidate = entry as Record<string, unknown>;
-    return [
-      {
-        name: typeof candidate.name === 'string' ? candidate.name : undefined,
-        type: isChartType(candidate.type) ? candidate.type : undefined,
-        data: Array.isArray(candidate.data) ? candidate.data.filter(isChartDatum) : undefined,
-        dataRegionKey: typeof candidate.dataRegionKey === 'string' ? candidate.dataRegionKey : undefined,
-      },
-    ];
-  });
-}
-
-function sanitizeReferenceLines(value: unknown): ChartReferenceLineSchema[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  const lines: ChartReferenceLineSchema[] = [];
-  for (const entry of value) {
-    if (!entry || typeof entry !== 'object') {
-      continue;
-    }
-
-    const candidate = entry as Record<string, unknown>;
-    const line: ChartReferenceLineSchema = {};
-    if (typeof candidate.value === 'number' && Number.isFinite(candidate.value)) {
-      line.value = candidate.value;
-    }
-    if (typeof candidate.label === 'string') {
-      line.label = candidate.label;
-    }
-    if (typeof candidate.color === 'string') {
-      line.color = candidate.color;
-    }
-    if (typeof candidate.dashed === 'boolean') {
-      line.dashed = candidate.dashed;
-    }
-    if (line.value !== undefined) {
-      lines.push(line);
-    }
-  }
-  return lines;
-}
-
-function sanitizeBand(value: unknown): ChartBandSchema | undefined {
-  if (!value || typeof value !== 'object') {
-    return undefined;
-  }
-
-  const candidate = value as Record<string, unknown>;
-  const band: ChartBandSchema = {};
-  if (typeof candidate.upper === 'number' && Number.isFinite(candidate.upper)) {
-    band.upper = candidate.upper;
-  }
-  if (typeof candidate.lower === 'number' && Number.isFinite(candidate.lower)) {
-    band.lower = candidate.lower;
-  }
-  if (typeof candidate.color === 'string') {
-    band.color = candidate.color;
-  }
-  if (typeof candidate.opacity === 'number' && Number.isFinite(candidate.opacity)) {
-    band.opacity = candidate.opacity;
-  }
-  if (band.upper === undefined || band.lower === undefined) {
-    return undefined;
-  }
-  return band;
-}
-
-function sanitizeMarkers(value: unknown): ChartMarkersSchema | undefined {
-  if (!value || typeof value !== 'object') {
-    return undefined;
-  }
-
-  const candidate = value as Record<string, unknown>;
-  const markers: ChartMarkersSchema = {};
-  if (typeof candidate.dataKey === 'string') {
-    markers.dataKey = candidate.dataKey;
-  }
-  if (Array.isArray(candidate.indices)) {
-    const indices = candidate.indices.filter(
-      (item): item is number =>
-        typeof item === 'number' && Number.isInteger(item) && item >= 0,
-    );
-    if (indices.length > 0) {
-      markers.indices = indices;
-    }
-  }
-  if (typeof candidate.color === 'string') {
-    markers.color = candidate.color;
-  }
-  if (markers.dataKey === undefined && markers.indices === undefined) {
-    return undefined;
-  }
-  return markers;
-}
 
 export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
@@ -240,20 +109,19 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const componentId =
     typeof props.props.componentId === 'string' ? props.props.componentId : props.id;
   const xAxis = props.props.xAxis as { dataKey?: string; label?: string } | undefined;
-  const yAxis = props.props.yAxis as { label?: string } | undefined;
+  const yAxisInfo = sanitizeYAxis(props.props.yAxis);
   const height = props.props.height ?? 400;
   const loading = props.props.loading as boolean | undefined;
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
     fallback: t('flux.common.noData'),
   });
 
-  const isEmpty = source.length === 0 && series.every((s) => !s.data || s.data.length === 0);
-
   const xKey = xAxis?.dataKey;
   const hasMultipleSeries = series.length > 1;
   const showLegend = (props.props.legend as boolean | undefined) ?? hasMultipleSeries;
   const showGrid = (props.props.grid as boolean | undefined) ?? true;
   const stacked = props.props.stacked === true;
+  const brushEnabled = props.props.brush === true;
   const palette =
     Array.isArray(props.props.colors) && props.props.colors.length > 0
       ? (props.props.colors as string[])
@@ -313,6 +181,26 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     return [];
   })();
 
+  // 双轴/多轴：yAxis 数组形态 + 至少一个 series 声明 yAxisId 才启用；缺映射
+  // 回退单轴渲染（Failure Path chart-dual-axis-invalid）。
+  const dualAxisEnabled = yAxisInfo.multi && series.some((s) => typeof s.yAxisId === 'number');
+  const yAxisEntries: SanitizedYAxisEntry[] = dualAxisEnabled
+    ? yAxisInfo.entries.map((entry, index) => ({
+        ...entry,
+        position: entry.position === 'right' ? 'right' : index === 0 ? 'left' : 'right',
+      }))
+    : [yAxisInfo.entries[0]];
+
+  // 自绘 heatmap 网格（recharts 无原生 heatmap 系列）。
+  const heatmapRows = sanitizeHeatmapRows(
+    source.length > 0 ? source : (series[0]?.data ?? []),
+  );
+  const heatmapGrid = buildHeatmapGrid(heatmapRows);
+  const isHeatmap = (series.length > 0 ? (series[0].type ?? chartType) : chartType) === 'heatmap';
+  const isEmpty = isHeatmap
+    ? heatmapRows.length === 0
+    : source.length === 0 && series.every((s) => !s.data || s.data.length === 0);
+
   const MOBILE_BREAKPOINT = 768;
   const MOBILE_HEIGHT_CEILING = 300;
   const isNarrow = containerWidth !== null && containerWidth < MOBILE_BREAKPOINT;
@@ -330,6 +218,9 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     series.length > 0 ? (series[0].type ?? chartType) : chartType
   ) as ChartType;
   const chartDataSummary = (() => {
+    if (isHeatmap) {
+      return heatmapRows.slice(0, 20).map((row) => `${row.x}/${row.y}: ${row.value}`);
+    }
     if (resolvedChartType === 'pie') {
       return pieData.map((item) => `${item.name}: ${item.value}`);
     }
@@ -445,6 +336,10 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     ) : null;
 
   const renderChart = () => {
+    if (isHeatmap) {
+      return <HeatmapGrid grid={heatmapGrid} accessibleName={chartAccessibleName} />;
+    }
+
     if (resolvedChartType === 'pie') {
       return (
         <PieChart>
@@ -469,7 +364,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         <ScatterChart>
           {showGrid && <CartesianGrid strokeDasharray="3 3" />}
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
-          <YAxis name={yAxis?.label} />
+          <YAxis name={yAxisEntries[0].label} />
           <ChartTooltip content={<ChartTooltipContent />} />
           {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
           {series.length > 0 ? (
@@ -499,7 +394,17 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         <LineChart data={cartesianData}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" />}
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
-          <YAxis name={yAxis?.label} />
+          {yAxisEntries.map((entry, index) => (
+            <YAxis
+              key={entry.label ?? `axis-${index}`}
+              yAxisId={index}
+              orientation={entry.position}
+              name={entry.label}
+            />
+          ))}
+          {brushEnabled && xKey ? (
+            <Brush dataKey={xKey} height={24} stroke="hsl(var(--chart-5))" />
+          ) : null}
           {referenceOverlay}
           <ChartTooltip content={<ChartTooltipContent />} />
           {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
@@ -510,6 +415,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
                 type="monotone"
                 dataKey={s.dataRegionKey ?? s.name ?? 'value'}
                 name={s.name}
+                yAxisId={dualAxisEnabled ? (s.yAxisId ?? 0) : 0}
                 stroke={palette[i % palette.length]}
                 strokeWidth={2}
                 dot={markerDot ?? false}
@@ -519,6 +425,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
             <Line
               type="monotone"
               dataKey="value"
+              yAxisId={0}
               stroke={palette[0]}
               strokeWidth={2}
               dot={markerDot ?? false}
@@ -533,7 +440,17 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         <AreaChart data={cartesianData}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" />}
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
-          <YAxis name={yAxis?.label} />
+          {yAxisEntries.map((entry, index) => (
+            <YAxis
+              key={entry.label ?? `axis-${index}`}
+              yAxisId={index}
+              orientation={entry.position}
+              name={entry.label}
+            />
+          ))}
+          {brushEnabled && xKey ? (
+            <Brush dataKey={xKey} height={24} stroke="hsl(var(--chart-5))" />
+          ) : null}
           {referenceOverlay}
           <ChartTooltip content={<ChartTooltipContent />} />
           {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
@@ -544,13 +461,14 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
                 type="monotone"
                 dataKey={s.dataRegionKey ?? s.name ?? 'value'}
                 name={s.name}
+                yAxisId={dualAxisEnabled ? (s.yAxisId ?? 0) : 0}
                 stroke={palette[i % palette.length]}
                 fill={palette[i % palette.length]}
                 stackId={stacked ? 'a' : undefined}
               />
             ))
           ) : (
-            <Area type="monotone" dataKey="value" stroke={palette[0]} fill={palette[0]} />
+            <Area type="monotone" dataKey="value" yAxisId={0} stroke={palette[0]} fill={palette[0]} />
           )}
         </AreaChart>
       );
@@ -560,7 +478,17 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       <BarChart data={cartesianData}>
         {showGrid && <CartesianGrid strokeDasharray="3 3" />}
         {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
-        <YAxis name={yAxis?.label} />
+        {yAxisEntries.map((entry, index) => (
+          <YAxis
+            key={entry.label ?? `axis-${index}`}
+            yAxisId={index}
+            orientation={entry.position}
+            name={entry.label}
+          />
+        ))}
+        {brushEnabled && xKey ? (
+          <Brush dataKey={xKey} height={24} stroke="hsl(var(--chart-5))" />
+        ) : null}
         {referenceOverlay}
         <ChartTooltip content={<ChartTooltipContent />} />
         {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
@@ -570,12 +498,13 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
               key={s.name ?? `series-${i}`}
               dataKey={s.dataRegionKey ?? s.name ?? 'value'}
               name={s.name}
+              yAxisId={dualAxisEnabled ? (s.yAxisId ?? 0) : 0}
               fill={palette[i % palette.length]}
               stackId={stacked ? 'a' : undefined}
             />
           ))
         ) : (
-          <Bar dataKey="value" fill={palette[0]} />
+          <Bar dataKey="value" yAxisId={0} fill={palette[0]} />
         )}
       </BarChart>
     );

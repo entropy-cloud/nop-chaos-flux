@@ -324,4 +324,46 @@ export interface StatisticsSchema extends BaseSchema {
   total?: number;
 }
 
+// ───────────────────────────── stat-tile（BI KPI 卡片） ─────────────────────────────
+
+/** 涨跌方向。`up`/`down` 驱动涨跌色，`neutral` 中性。 */
+export type StatTileStatus = 'up' | 'down' | 'neutral';
+
+export interface StatTileDeltaSchema extends SchemaObject {
+  /** 同比/环比数值（百分数，如 12.5 表示 +12.5%）。 */
+  value?: number;
+  /** 展示标签，缺省为带符号百分数（如 `+12.5%`）。 */
+  label?: string;
+  /** 方向，缺省由 `value` 符号推导（正→up、负→down、零→neutral）。 */
+  direction?: StatTileStatus;
+}
+
+export interface StatTileFormatterSchema extends SchemaObject {
+  /** 千分位分隔，缺省 false。 */
+  thousands?: boolean;
+  /** 小数位，缺省 0。 */
+  decimals?: number;
+}
+
+export interface StatTileSchema extends BaseSchema {
+  type: 'stat-tile';
+  /** KPI 数字（支持 `${expr}` 表达式；null/undefined/非数字渲染 `--`）。 */
+  value?: SchemaValue;
+  /** 数值前缀（如货币符号 `¥`）。 */
+  prefix?: string;
+  /** 数值后缀（如单位 `万`）。 */
+  suffix?: string;
+  /** 同比/环比：数字（百分数）或 `{ value, label, direction }`。 */
+  delta?: number | StatTileDeltaSchema;
+  /** sparkline 数据（`number[]`；也支持 `${expr}` 表达式解析出数组）。 */
+  sparkline?: SchemaValue;
+  /** 数值格式化：千分位/小数位。 */
+  formatter?: StatTileFormatterSchema;
+  /** 涨跌色显式声明，覆盖 delta 符号推导。 */
+  status?: StatTileStatus;
+  // NOTE: `label` 沿用 BaseSchema 的 `label?: string`（编译期按
+  // value-or-region 处理——author 可写字符串或 schema fragment，运行时经
+  // resolveRendererSlotContent 双形态消费，与 chart `title` 同一 authoring 模式）。
+}
+
 export * from './chart-schemas.js';

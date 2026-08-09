@@ -7,6 +7,7 @@ import { TableRenderer } from './table-renderer.js';
 import { TreeRenderer } from './tree-renderer.js';
 import { crudRendererDefinition } from './crud-renderer-definition.js';
 import { w2aDataCompositionDefinitions } from './w2a-data-composition-definitions.js';
+import { statTileRendererDefinition } from './stat-tile-renderer-definition.js';
 import type { ChartSchema } from './chart-schemas.js';
 
 const LazyChartRenderer = createLazyRendererComponent<ChartSchema>(
@@ -386,6 +387,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'referenceLines', kind: 'prop' },
       { key: 'band', kind: 'prop' },
       { key: 'markers', kind: 'prop' },
+      { key: 'brush', kind: 'prop' },
       { key: 'componentId', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
       { key: 'onHover', kind: 'event' },
@@ -597,5 +599,6 @@ export const dataRendererDefinitions: RendererDefinition[] = [
     ],
   },
   ...w2aDataCompositionDefinitions,
+  statTileRendererDefinition,
   crudRendererDefinition,
 ];
