@@ -171,7 +171,7 @@ body {
 }
 
 [data-slot='dialog-overlay'] {
-  background-color: var(--nop-dialog-backdrop);
+  background-color: var(--dialog-overlay-bg);
 }
 
 [data-slot='drawer-overlay'] {

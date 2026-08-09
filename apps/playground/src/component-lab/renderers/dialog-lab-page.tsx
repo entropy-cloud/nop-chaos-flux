@@ -302,6 +302,56 @@ const crudRowEditDialog = {
     },
   ],
 };
+
+const c1aSizeMatrixDialog = {
+  type: 'page',
+  body: [
+    {
+      type: 'text',
+      text: 'C1a AMIS parity acceptance: each button opens a dialog with an explicit flux surface size.',
+    },
+    {
+      type: 'flex',
+      body: [
+        { type: 'button', label: 'Open xs', onClick: { action: 'openDialog', args: { title: 'xs dialog', size: 'xs', body: { type: 'text', text: 'xs 375px' } } } },
+        { type: 'button', label: 'Open sm', onClick: { action: 'openDialog', args: { title: 'sm dialog', size: 'sm', body: { type: 'text', text: 'sm 350px' } } } },
+        { type: 'button', label: 'Open md', onClick: { action: 'openDialog', args: { title: 'md dialog', size: 'md', body: { type: 'text', text: 'md -> base 500px' } } } },
+        { type: 'button', label: 'Open lg', onClick: { action: 'openDialog', args: { title: 'lg dialog', size: 'lg', body: { type: 'text', text: 'lg -> md 800px' } } } },
+        { type: 'button', label: 'Open xl', onClick: { action: 'openDialog', args: { title: 'xl dialog', size: 'xl', body: { type: 'text', text: 'xl -> lg 1100px' } } } },
+        { type: 'button', label: 'Open full', onClick: { action: 'openDialog', args: { title: 'full dialog', size: 'full', body: { type: 'text', text: 'full 100vw' } } } },
+        {
+          type: 'button',
+          label: 'Open default',
+          onClick: {
+            action: 'openDialog',
+            args: {
+              title: 'default dialog',
+              body: {
+                type: 'flex',
+                body: [
+                  { type: 'text', text: 'default -> base 500px' },
+                  {
+                    type: 'button',
+                    label: 'Open stacked sm',
+                    onClick: {
+                      action: 'openDialog',
+                      args: {
+                        title: 'sm dialog (stacked)',
+                        size: 'sm',
+                        body: { type: 'text', text: 'sm 350px at top offset + 30px step' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    },
+  ],
+};
+
 export function DialogLabPage() {
   return (
     <MultiScenarioLabPage
@@ -348,6 +398,12 @@ export function DialogLabPage() {
           description: 'Real CRUD row-action structure: row data (7 cols) + openDialog + loadAction + ${field} submitAction.',
           schema: crudRowEditDialog,
           env: { fetcher: crudRowEditFetcher },
+        },
+        {
+          title: 'C1a dialog size matrix',
+          description:
+            'AMIS parity acceptance: explicit flux sizes xs/sm/md/lg/xl/full plus default map to --dialog-size-* widths.',
+          schema: c1aSizeMatrixDialog,
         },
       ]}
     />
