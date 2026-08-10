@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
-import { generateMessageId, isVacuousAssistantResidue } from '../engine/utils.js';
+import { generateMessageId } from '../engine/utils.js';
 import { createMessageEngine } from '../engine/create-engine.js';
 import { createReactMessageAdapter } from './react-adapter.js';
+import { attachAutoSave } from './use-conversation-autosave.js';
 import type {
   AiConnector,
   AiConversationInfo,
   ChatMessage,
   MessageEngine,
   MessageEnginePlugin,
-  RequestState,
 } from '../engine/types.js';
 import type { UseMessageOptions } from './use-message.js';
 import type { ConversationStorageStrategy } from '../storage/types.js';
@@ -186,62 +186,24 @@ export function useConversation(options: UseConversationOptions): UseConversatio
    * Attach a `requestState` subscription that persists the engine snapshot
    * when a turn completes. Returns the unsubscribe handle (no-op when storage
    * or `autoSaveMessages` is disabled). Bound to the engine lifecycle: the
-   * caller evicts the handle together with the engine cache entry.
+   * caller evicts the handle together with the engine cache entry. Lives in
+   * `use-conversation-autosave.ts` (oversized-code-files split) — the helper
+   * receives the hook's refs + storage-error reporter via `AutoSaveDeps`.
    */
-  function attachAutoSave(engine: MessageEngine, conversationId: string): () => void {
-    const prev = autoSaveUnsubsRef.current.get(conversationId);
-    if (prev) prev();
-    if (!storage || !autoSaveMessages) {
-      autoSaveUnsubsRef.current.delete(conversationId);
-      return () => {};
-    }
-    let prevState: RequestState = engine.getState().requestState;
-    const unsub = engine.subscribe('requestState', (state) => {
-      const next = state.requestState;
-      const wasProcessing = prevState === 'processing';
-      const isDone = next === 'completed' || next === 'aborted' || next === 'error';
-      prevState = next;
-      if (wasProcessing && isDone) {
-        try {
-          // getMessages() returns a per-message shallow-isolated copy (O-2),
-          // so the async storage implementation cannot read a cross-turn
-          // mixed snapshot even if it awaits before serializing.
-          const snapshot = engine.getMessages();
-          // K-⑩-3 (ai-invariant-loop): never persist a failed/aborted turn's
-          // vacuous empty assistant residue. `abort()` flips requestState to
-          // 'aborted' synchronously — before the engine's own cleanup runs —
-          // so the snapshot taken here can still contain the placeholder;
-          // strip trailing vacuous empties (same predicate as the engine).
-          while (
-            snapshot.length > 0 &&
-            isVacuousAssistantResidue(snapshot[snapshot.length - 1])
-          ) {
-            snapshot.pop();
-          }
-          // K3: serialize this save behind the conversation's previous
-          // pending save (a rejection must not skip the next save — settle
-          // first, then write). The chain entry is what deleteConversation
-          // drains and clearAll chains its storage clear behind.
-          const prevPending = pendingSavesRef.current.get(conversationId);
-          const pending = Promise.resolve(prevPending)
-            .catch(() => {})
-            .then(() => storage.saveMessages(conversationId, snapshot));
-          pending.catch((error: unknown) => {
-            reportStorageError({ phase: 'saveMessages', conversationId, error });
-          });
-          pendingSavesRef.current.set(conversationId, pending);
-        } catch (error) {
-          reportStorageError({ phase: 'saveMessages', conversationId, error });
-        }
-      }
+  function attachAutoSaveToEngine(engine: MessageEngine, conversationId: string): () => void {
+    return attachAutoSave(engine, conversationId, {
+      storage,
+      autoSaveMessages,
+      pendingSavesRef,
+      conversationsRef,
+      autoSaveUnsubsRef,
+      reportStorageError,
     });
-    autoSaveUnsubsRef.current.set(conversationId, unsub);
-    return unsub;
   }
 
   function buildEngineFor(conversationId: string): MessageEngine {
     const engine = buildEngine();
-    attachAutoSave(engine, conversationId);
+    attachAutoSaveToEngine(engine, conversationId);
     return engine;
   }
 
@@ -573,9 +535,22 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   }
 
   function clearAll(): void {
-    // Capture ids before mutating the cache so the storage fan-out iterates a
-    // stable snapshot (the cache is cleared below).
-    const ids = [...engineCache.keys()];
+    // P1-3/P1-4 (2026-08-10 multi-audit): the fan-out enumeration source is
+    // the FULL storage conversation set, not just `engineCache.keys()`. The
+    // cache only holds sessions that built an engine — a session evicted by
+    // `switchConversation` (its in-flight autoSave still pending) or loaded
+    // by bootstrap but never opened would otherwise escape the drain and the
+    // per-id delete fallback → their records survive the clear → ghost
+    // rehydration on remount (FP-2). The list mirror
+    // (`conversationsRef.current`) + pending-save keys + engine cache cover
+    // every session that can hold storage state.
+    const ids = [
+      ...new Set([
+        ...engineCache.keys(),
+        ...pendingSavesRef.current.keys(),
+        ...conversationsRef.current.map((c) => c.id),
+      ]),
+    ];
     // K3: detach (unsubscribe) BEFORE aborting — an abort's requestState
     // transition fires the auto-save callback, and an abort-triggered save of
     // the aborted snapshot must not be able to start after the storage clear.

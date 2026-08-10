@@ -115,12 +115,21 @@ describe('createMessageEngine — state machine', () => {
   });
 
   it('accumulates streamed tool_calls by index', async () => {
+    // P1-2 (2026-08-10): a tool_calls assistant with no paired tool response
+    // and empty content is a dangling residue and is now dropped (⑩ member).
+    // The by-index accumulation coverage is preserved by pairing the round
+    // with a toolExecutor — the committed assistant then keeps its tool_calls.
     const chunks: AiConnectorChunk[] = [
       { delta: { tool_calls: [{ index: 0, id: 'c1', type: 'function', function: { name: 'f', arguments: '{"a":1' } }] } },
       { delta: { tool_calls: [{ index: 0, function: { arguments: '}' } }] } },
       { finishReason: 'tool_calls' },
+      { delta: { content: 'done' } },
+      { finishReason: 'stop' },
     ];
-    const engine = createMessageEngine({ connector: makeMockConnector(chunks) });
+    const engine = createMessageEngine({
+      connector: makeMockConnector(chunks),
+      toolExecutor: async () => 'ok',
+    });
     await engine.sendMessage('do it');
     const assistant = engine.getState().messages[1];
     expect(assistant.tool_calls).toHaveLength(1);

@@ -190,6 +190,8 @@ export interface MessageStateAdapter {
 | `onTurnEnd(context)`         | 整个对话轮结束              | 兜底重置 thinking 状态                                                                 |
 | `onError(context)`           | abort 或异常                | 区分 `aborted` 与 `error`，写 `requestState`                                           |
 
+> **插件上下文只读契约（⑪，2026-08-10）**：`MessageEngineContext` 的 `request.messages` 与 `state` 均为 **read-only**（`engine/types.ts` 文档化）。`request.messages` 是引擎历史的**数组 + 元素双重隔离副本**（`buildContext` 经 wire 白名单投影逐元素新建对象）——插件可以塑造出站请求（如 push system prompt），但任何 push / 元素原地修改都**不会写穿**进引擎历史（绕过 `mutate`/notify 的污染路径已封堵）。`state` 为 live 引擎状态对象，插件**不得**直接修改（引擎写入只走 `adapter.mutate` recipe）。注入 system prompt 的推荐方式 = `CreateMessageEngineOptions.systemPrompt`（不进历史）；次选 = 在 `onTurnStart` 内 push 到 `ctx.request.messages`（只影响本轮出站载荷，不进历史、不持久化）。
+
 ### 8.4 流式累积算法（移植 `combineDeltaData`）
 
 `src/engine/utils.ts:combineDeltaData(target, source)` 处理：
@@ -327,7 +329,11 @@ export interface AiConnectorRequest {
   /** 其他 OpenAI 兼容参数（temperature / top_p / max_tokens 等） */
   [key: string]: unknown;
 }
+```
 
+> **载荷白名单（⑪/P1-5，2026-08-10）**：engine 在 `buildContext` 对 `messages` 做 **wire 投影**（`projectWireMessage`，`engine/utils.ts`）——渲染器私有 `state`（editing 草稿 / toolCall UI / thinking）与内部工具 metadata（`toolError` Error stack / `toolStatus`）**不进入连接器请求**（design.md §11.5「state 不投影」）；保留 `{id, role, content, reasoning_content, tool_calls, tool_call_id, name}` + 良性 metadata（createdAt/model/finishReason）。剥离在 engine 边界（非 connector 归一化层）：engine 是唯一知道哪些字段是域内部的层，全部 connector（`createStreamBasedAiConnector` 或自定义实现）按契约收到干净载荷。`state` 仍是引擎内部消息形状（`getMessages()` 完整返回），仅 wire 面排除——不改公共类型签名。
+
+```ts
 export interface AiConnector {
   /** 流式调用：返回增量 chunk 的 AsyncGenerator */
   stream(request: AiConnectorRequest): AiConnectorStreamResult;
@@ -438,7 +444,7 @@ engine 在内部调 `connector.stream({ messages, tools, signal })`；不再有 
 
 ## §Invariants — AI Engine 不变式契约
 
-> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）；2026-08-09 Cycle 2 / I1（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`，N1-N5 → 第二批门禁 ⑥-⑩ 沉淀）；**2026-08-10 Cycle 2 / I4（plan `docs/plans/2026-08-10-0925-2-cycle2-i4-fix-execution.md`：13 条 K finding 全部修复 + 12 处 `it.fails` 翻转 + 注册红清零 + 门禁 ⑥⑦⑨⑩②④ 补强）**
+> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）；2026-08-09 Cycle 2 / I1（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`，N1-N5 → 第二批门禁 ⑥-⑩ 沉淀）；**2026-08-10 Cycle 2 / I4（plan `docs/plans/2026-08-10-0925-2-cycle2-i4-fix-execution.md`：13 条 K finding 全部修复 + 12 处 `it.fails` 翻转 + 注册红清零 + 门禁 ⑥⑦⑨⑩②④ 补强）**；**2026-08-10 双审计 P1（plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`：6 条 P1 修复 + 门禁 ⑩ dangling-tool_calls 成员 + ⑪ plugin ctx 写隔离新族 + ④ fan-out 源成员）**
 
 AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大复发失败模式族（并发守卫 / stale-closure / storage 静默丢），已沉淀为**首批 5 类可执行不变式契约**，防重构/新增方法回归。I2 审计在门禁盲区发现 K1-K4 四个实例（I3 裁决 P0/P1），I4 修复并把门禁补强至对应路径；Cycle 1 / I6 按 Loop Rule 派生的 Cycle 2 新族 N1-N5（active 位移完整性 / bootstrap 合并 / branch 戳泄漏 / plugin 错误隔离 / 失败轮残留污染），已沉淀为**第二批门禁 ⑥-⑩**（见下节）：
 
@@ -454,6 +460,8 @@ AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大�
 - **⑧ branch 戳消费/清除（N3）**：`pendingBranchId` 使用前必须消费或清除；runTurn 提前返回路径不得遗留待消费戳（connector-missing 早退已清戳）。扫描器：`scanBranchStampReset`（live 零命中）。
 - **⑨ plugin 错误隔离（N4）**：plugin hook rejection 不得使 turn 卡死或绕过状态写入——onTurnStart 纳入 try 清理面；onError 经 `callPluginError` 隔离（抛错不跳过状态写入）；onTurnEnd rejection 隔离（不 reject host-facing promise，abort 变体 K-⑨-1）。
 - **⑩ 失败轮产物清理（N5）**：failed/aborted/退化成功（零 chunk）轮的空产物（`content:''` + 无 finishReason）不得进入请求历史与 autoSave 快照——终态提交层 drop（`commitOrDropResidue`）+ buildContext 尾部排除 + autoSave 尾部剥除（K-⑩-1/2/3/4/5）。
+- **⑩ 扩展（2026-08-10，P1-2）**：**dangling tool_calls 形状**——assistant 消息携带 `tool_calls` 且其后无配对 `role:'tool'` 响应（`tool_call_id` 匹配）时，**不得作为 tool_calls 携带者**进入请求载荷 / autoSave / 后续轮次历史（严格 OpenAI 兼容后端对无配对 tool 响应的 tool_calls 返回 400，重试环反复失败）。**content-agnostic** 判定（交错文本+tool_calls 形状同样覆盖）：内容非空 → strip `tool_calls` 保留文本；内容为空 → 整体 drop；部分配对（multi-call 部分 commit 后 abort）→ 仅 strip 无配对条目（不得整数组 strip 使已 commit 的 tool 消息孤儿化）。统一谓词 `isDanglingToolCallsMessage` / `cleanDanglingToolCalls` / `sanitizeDanglingToolCalls`（`engine/utils.ts`），三个清理面（runOnce abort 分支 / tool-no-executor / runTurn abort-mid-executor 返回）+ buildContext 投影 + autoSave 臂同源。独立于 `isVacuousAssistantResidue`（后者要求 `!finishReason`——dangling 轮带 `finishReason:'tool_calls'`）。
+- **⑪ plugin ctx 写隔离（2026-08-10，open P1-1）**：全部 plugin hook 的 `ctx.request.messages` 不得是 engine 的 live message 数组——`buildContext` 无条件产出数组 + 元素双重隔离副本（`sanitizeDanglingToolCalls(...).map(projectWireMessage)`）。按 engine.md §8.3 文档模式 push system prompt 只能塑造出站请求，**不能写穿 engine 历史**（绕过 `mutate`/notify → 永久进历史 → 流向下轮载荷与 autoSave 快照的污染路径已封堵）。同族：**请求载荷白名单化（P1-5）**——`AiConnectorRequest.messages` 是 wire 投影：渲染器私有 `state`（editing 草稿 / toolCall UI / thinking，design.md §11.5「不投影」）与内部工具 metadata（`toolError` Error stack / `toolStatus`）在 engine 边界剥离（白名单 `{id, role, content, reasoning_content, tool_calls, tool_call_id, name}` + 良性 metadata），全部 connector 按契约收到干净载荷。
 
 ### 空产物清理设计裁定（K-⑩，重构防回退）
 
@@ -462,10 +470,10 @@ AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大�
 ### 运行命令
 
 ```bash
-# 参数化穷举不变式测试（engine + adapter，含表完备性门禁；⑥⑦ 在 conversation-invariants-cycle2.test.ts，⑩ 与 ②/④ 元数据排空臂在 engine-invariants-i4.test.ts / conversation-invariants-i4.test.ts）
-pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts src/adapters/__tests__/conversation-invariants-cycle2.test.ts src/engine/__tests__/engine-invariants-i4.test.ts src/adapters/__tests__/conversation-invariants-i4.test.ts
+# 参数化穷举不变式测试（engine + adapter，含表完备性门禁；⑥⑦ 在 conversation-invariants-cycle2.test.ts，⑩ 与 ②/④ 元数据排空臂在 engine-invariants-i4.test.ts / conversation-invariants-i4.test.ts，⑪ + ⑩ dangling 成员在 engine-invariants-p1.test.ts / engine-invariants-i4.test.ts / conversation-invariants-i4.test.ts）
+pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts src/adapters/__tests__/conversation-invariants-cycle2.test.ts src/engine/__tests__/engine-invariants-i4.test.ts src/adapters/__tests__/conversation-invariants-i4.test.ts src/engine/__tests__/engine-invariants-p1.test.ts
 
-# 静态门禁（②③④⑥⑧ + ② 镜像写面；①⑤⑦⑨⑩ 纯行为/行为面不静态化；Cycle 2 / I4 后 live 零命中）
+# 静态门禁（②③④⑥⑧ + ② 镜像写面 + ④ fan-out 源；①⑤⑦⑨⑩⑪ 纯行为/行为面不静态化；live 零命中）
 pnpm check:ai-engine-invariants
 ```
 

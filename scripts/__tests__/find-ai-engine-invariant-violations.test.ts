@@ -77,6 +77,7 @@ async function deleteConversation(id) {
 function clearAll() {
   switchVersionRef.current = switchVersionRef.current + 1; // ⑥ displacement bump
   conversationsRef.current = []; // ② mirror write surface
+  const ids = [...new Set([...engineCache.keys(), ...pendingSavesRef.current.keys(), ...conversationsRef.current.map((c) => c.id)])]; // ④ fan-out source (P1-3/P1-4)
   engineCache.clear();
   setConversations([]);
   setActiveId(null);
@@ -279,7 +280,44 @@ async function deleteConversation(id) {
 }
 function clearAll() {
   ++switchVersionRef.current; // ⑥ displacement bump
-  conversationsRef.current = [];
+  conversationsRef.current = []; // ② mirror write surface
+  const ids = [...new Set([...engineCache.keys(), ...pendingSavesRef.current.keys(), ...conversationsRef.current.map((c) => c.id)])]; // ④ fan-out source
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('No invariant violations');
+  });
+
+  it('violating fixture ④ (P1-3/P1-4): clearAll enumerates only engineCache keys → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+function clearAll() {
+  ++switchVersionRef.current; // ⑥ displacement bump
+  conversationsRef.current = []; // ② mirror write surface
+  const ids = [...engineCache.keys()]; // cache-only enumeration → fan-out gap
+  engineCache.clear();
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('④');
+    expect(result.stderr).toContain('clearAll');
+    expect(result.stderr).toContain('fan-out source');
+  });
+
+  it('clean fixture ④ (P1-3/P1-4): clearAll enumerates the list mirror → exit 0', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+function clearAll() {
+  ++switchVersionRef.current; // ⑥ displacement bump
+  conversationsRef.current = []; // ② mirror write surface
+  const ids = [...new Set([...engineCache.keys(), ...pendingSavesRef.current.keys(), ...conversationsRef.current.map((c) => c.id)])];
+  engineCache.clear();
 }
 `,
     });

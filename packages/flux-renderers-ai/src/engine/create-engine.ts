@@ -3,7 +3,6 @@ import {
   createAbortController,
   generateMessageId,
   isEmptyContent,
-  isStreamingAssistantPlaceholder,
   isVacuousAssistantResidue,
 } from './utils.js';
 import { createNativeMessageAdapter } from './native-adapter.js';
@@ -12,11 +11,11 @@ import {
   findLastUserIndex,
   findPriorAssistantBranchId,
 } from './branching.js';
-import { executeToolCalls } from './tool-execution.js';
+import { buildEngineContext } from './build-context.js';
+import { executeToolCalls, cleanDanglingAssistantAt } from './tool-execution.js';
 import type {
   AiConnector,
   AiConnectorChunk,
-  AiConnectorRequest,
   AiToolSchema,
   ChatMessage,
   ChatMessageContentPart,
@@ -304,6 +303,11 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
               draft.processingState = undefined;
               draft.lastError = noExecutorError;
             });
+            // P1-2 (⑩): no executor → no tool response will ever pair this
+            // assistant — drop it (empty content) or strip tool_calls (text
+            // kept), so the dangling shape never reaches the next payload or
+            // autoSave (strict backends 400 unpaired tool_calls).
+            cleanDanglingAssistantAt(adapter, outcome.assistantIndex);
             callPluginError(abortController, noExecutorError);
             return;
           }
@@ -315,7 +319,14 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
             { adapter, toolExecutor },
           );
           if (!shouldContinue) {
-            // Abort signaled mid-execution.
+            // Abort signaled mid-execution (P1-1): calls completed BEFORE the
+            // abort keep their commits; the in-flight call skips both its
+            // UI-state and tool-message commits.
+            // P1-2 (⑩): the committed assistant's un-executed tool_calls are
+            // now dangling (finishReason='tool_calls', no paired tool
+            // response) — this is the abort-mid-executor fallback surface:
+            // drop (empty content) or strip only the unpaired entries.
+            cleanDanglingAssistantAt(adapter, outcome.assistantIndex);
             return;
           }
           // Continue the loop → next runOnce will include the tool messages.
@@ -402,7 +413,13 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
 
   /** Outcome of a single streaming round. */
   type RunOnceOutcome =
-    | { kind: 'ok'; finishReason?: string; assistantMessage: ChatMessage }
+    | {
+        kind: 'ok';
+        finishReason?: string;
+        assistantMessage: ChatMessage;
+        /** P1-2 (⑩): index of the committed assistant — cleanup surface target. */
+        assistantIndex: number;
+      }
     | { kind: 'error' }
     | { kind: 'aborted' };
 
@@ -534,6 +551,10 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       commitOrDropResidue();
 
       if (abortController.signal.aborted) {
+        // P1-2 (⑩, surface 1 of 3): the round ended with
+        // finishReason='tool_calls' but no tool response exists — drop the
+        // empty assistant / strip tool_calls (text kept).
+        cleanDanglingAssistantAt(adapter, assistantIndex);
         adapter.mutate('requestState', (draft) => {
           // P1#1 controller-identity guard: the post-stream abort check must
           // not overwrite a new turn's state when this turn was aborted and a
@@ -545,7 +566,12 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         });
         return { kind: 'aborted' };
       }
-      return { kind: 'ok', finishReason: lastFinishReason, assistantMessage: assistant };
+      return {
+        kind: 'ok',
+        finishReason: lastFinishReason,
+        assistantMessage: assistant,
+        assistantIndex,
+      };
     } catch (error) {
       assistant.loading = false;
       commitOrDropResidue();
@@ -570,32 +596,20 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   }
 
   function buildContext(abortController: AbortController): MessageEngineContext {
-    const allMessages = adapter.getState().messages;
-    // Exclude the trailing in-progress assistant placeholder (empty content,
-    // loading) from the request payload; works for follow-up rounds too.
-    // K-⑩ (ai-invariant-loop): the predicate also excludes a trailing vacuous
-    // residue (empty content, no finishReason, loading or not) — defense in
-    // depth for any path that could still leave one behind.
-    const isPlaceholder =
-      allMessages.length > 0 &&
-      (isStreamingAssistantPlaceholder(allMessages[allMessages.length - 1]) ||
-        isVacuousAssistantResidue(allMessages[allMessages.length - 1]));
-    const history = isPlaceholder ? allMessages.slice(0, -1) : allMessages;
-    const requestMessages: ChatMessage[] = systemPrompt
-      ? [{ id: 'system-prompt', role: 'system', content: systemPrompt }, ...history]
-      : history;
-    const request: AiConnectorRequest = {
-      messages: requestMessages,
-      signal: abortController.signal,
-      ...(hostTools && hostTools.length > 0 ? { tools: hostTools } : {}),
-      ...extraRequestParams,
-    };
-    return {
+    // ⑪ (2026-08-10 multi-audit, open P1-1 + P1-5): the request payload is
+    // array + element isolated from the live message list and wire-projected
+    // (renderer-private state / internal metadata stripped) — see
+    // `build-context.ts`. A plugin mutating `ctx.request.messages` cannot
+    // write through into engine history.
+    return buildEngineContext({
       engine,
+      messages: adapter.getState().messages,
       state: adapter.getState(),
-      request,
+      systemPrompt,
+      tools: hostTools,
+      extraRequestParams,
       signal: abortController.signal,
-    };
+    });
   }
 
   function adapterStateConnector(): AiConnector | null {

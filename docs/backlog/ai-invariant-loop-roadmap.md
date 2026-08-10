@@ -147,3 +147,33 @@ flowchart LR
 - **Cycle 2 I3 填充（2026-08-10）**：零 P2/P3 项（裁决表 `cycle2-adjudication.md` §4：findings 21 条目全部落入 K 13（P0 ×3 + P1 ×10 → Cycle 2 / I4）/ N=零（Loop Rule 路由空转）/ watch-only 8 三态，无条目落入 P2/P3 区间）→ 无 P2/P3 填充项。
 - **稳态期 watch-only 项（2026-08-10 更新）**：新 3 条 **W-E / W-⑨-a/c**（findings §3.3 复触发条件登记在案；**W-⑨-b 已随 K-⑥-3 修复自然收敛移除**，findings §3.3 2026-08-10 更新注记）+ **W1-W4 维持**（findings §4 + I6 复查结论为锚）；W-E 注「I4 附带评估不收敛」——`onAfterRequest` 仍在空产物 drop 前触发（`:531-532` 无条件调用，修复仅 drop 空产物未重排 hook 面），维持登记。
 - **I6 同步（2026-08-10，plan `docs/plans/2026-08-10-1154-1-cycle2-i6-closure-and-steady-state-determination.md`）**：watch-only 复核 = **7 条登记**（W-E / W-⑨-a / W-⑨-c + W1-W4 全部维持，live 锚点抽查实证；W-⑨-b 收敛移除核销）；Cycle 2 判定 **N=零 + red list 零 ⇒ 稳态暂停**，复触发条件三选一（① CI 任一 engine 不变式门禁变红；② `packages/flux-renderers-ai/src/engine/` 或 `src/adapters/use-conversation*` 结构变更（新增/重命名变更型方法）；③ 周期复探——每 major release 或季度取早），复触发时按 Loop Rule 自动派生 Cycle 3 / I2（直接审计，跳过 I1）。
+- **2026-08-09-1826 双审计 P2 填充（2026-08-10，mission-driver 起草轮）**：两审计 `Audit Status: open → planned`（P1 已路由 `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md` + `2026-08-10-1301-2-renderer-bubble-p1-remediation.md`）。**26 条 P2 全部入本 backlog（带源审计路径）**：
+  - **P1 路由收口注记（2026-08-10，plan `2026-08-10-1301-1` 完成）**：engine/adapter 族 6 条 P1（P1-1/P1-2/P1-3/P1-4/P1-5 + open P1-1）全部修复落地 + 门禁 ⑩ dangling 成员 / ⑪ 新族 / ④ fan-out 源成员（`check:ai-engine-invariants` 零命中）；两审计 `Audit Status → closed`；renderer 族 P1-6/7/8/9 由 `2026-08-10-1301-2` 独立 closure surface 跟踪。
+  - **multi-audit（源：`docs/audits/2026-08-09-1826-multi-audit-ai-invariant-loop.md`）18 条**：
+    - P2-1 `pendingBranchId` 残留被无关 turn 消费（create-engine.ts:262,427-432,649-672；建议扩展 ⑧ 门禁 break/throw 路径）
+    - P2-2 unmount 清理顺序与 clearAll detach-before-abort 不变式相反（use-conversation.ts:357-369）
+    - P2-3 slash/mention 弹出层零匹配键盘死区 + 注释与实现矛盾（tiptap-sender.tsx:224-249,332-335,370-394）
+    - P2-4 FallbackToolCallCard 未透传 onApproval，HITL 审批在默认气泡路径结构性不可达（ai-tool-call.tsx:198-216,312-320；tools.tsx:43-51；types.ts:55-64）
+    - P2-5 全部 14 个 AI 渲染器未消费 schema `disabled` + `AiSenderExtensionProps.disabled` 死契约字段（ai-sender.tsx:124-142,214-246；schemas.ts:167-199）
+    - P2-6 ai-voice-input 同 tick 双击麦克风双重识别实例（ai-voice-input.tsx:147-230）
+    - P2-7 useConversation bootstrap effect 依赖不稳定 `storage` 引用逐 render 重跑 loadConversations（use-conversation.ts:297-348）
+    - P2-8 engineNullSwitch 窗口期 component handle / action provider 绑定到被隐藏自建 engine（ai-chat.tsx:118-144,189-199；use-message.ts:87-88）
+    - P2-9 useAutoScroll 核心行为（trigger 滚底 + scrollToBottom）零测试断言（use-auto-scroll.ts:42-58；phase5-deepening.test.tsx:66-112）
+    - P2-10 engine.md §8.1 MessageEngine 接口清单缺 `setMessageEditing`，"共 11 个方法"计数过期（engine.md:106-151 vs types.ts:287-335）
+    - P2-11 engine.md §8.5/§9.5 `UseMessageOptions` 接口列表过时（3 vs 9 字段）且与同节正文自相矛盾（engine.md:206-211,421-427 vs use-message.ts:14-41）
+    - P2-12 engine.md §8.6 `UseConversationOptions` 缺 `initialConversations` 与 `onStorageError`（engine.md:251-257 vs use-conversation.ts:16-31）
+    - P2-13 engine.md §9.3 示例文件路径与函数名不存在（engine.md:354-357,404-405；实际 `apps/playground/src/ai/openai-connector.ts` `createOpenAICompatibleConnector`）
+    - P2-14 ai-chat 投影克隆 abort 同步翻转窗口可捕获空产物幽灵（K-⑩ 三落地面缺第四面；ai-chat.tsx:244-250；create-engine.ts:605-626）——**同面附注**：`docs/plans/2026-08-10-1301-2` Phase 3（投影重建触发扩展）顺带覆盖评估
+    - P2-15 dompurify 非可选 peerDependency + devDependency，包内零引用（package.json:36,57）
+    - P2-16 invariant-catalog / gates.md 记录 live 行号在 Cycle 2 / I4 后系统性漂移（catalog:33,43,52,63,73,82-86,109-122,190-218；gates.md:52-53）
+    - P2-17 ai-conversations 当前会话缺 `aria-current`（ai-conversations.tsx:70-78）
+    - P2-18 user-edit 编辑态 Textarea 无 accessible name（user-edit.tsx:81-87）
+  - **open-audit（源：`docs/audits/2026-08-09-1826-open-audit-ai-invariant-loop.md`）8 条**：
+    - P2-1 useConversation-built engines 永不 sync 变更的 `connector`（use-conversation.ts:84-87,168-183；2151 hot-swap 族新成员）
+    - P2-2 `createEngineOptions` type 允许 `engine` 但 `buildEngine` 静默丢弃（use-conversation.ts:18,168-183）
+    - P2-3 `autofocus` 死契约字段（schemas.ts:23,132；ai-renderer-definitions.ts:55,122）
+    - P2-4 `buildImageContentParts` 死模块级导出 + 真实 send 路径重复内联逻辑（ai-attachments.tsx:373-377,190-196）
+    - P2-5 `cloneMessages`/`cloneMessage` 无 structuredClone 抛错 fallback（ai-chat.tsx:46-54）
+    - P2-6 O-2 注释声称 engine 从不 in-place mutate 嵌套对象——streaming 期间不成立（create-engine.ts:139-141）
+    - P2-7 ai-feedback 无法表达"无操作栏"（`actions: []` 映射为默认栏，ai-feedback.tsx:107-111）
+    - P2-8 ai-citations 年份误报（`[2026]` 渲染空 citation 卡，ai-citations.tsx:258,282-292）

@@ -8,7 +8,7 @@ import type {
   ChatMessage,
   InternalMessageState,
 } from '../types.js';
-import { okChunks, slowConnector } from '../../adapters/__tests__/use-conversation-test-helpers.js';
+import { okChunks, slowConnector, wait } from '../../adapters/__tests__/use-conversation-test-helpers.js';
 
 /**
  * Cycle 2 / I4 — Invariant ⑩ failed-turn residue cleanup (K-⑩-1/2/4/5).
@@ -197,6 +197,197 @@ describe('Invariant ⑩ — failed-turn residue cleanup (N5)', () => {
     const secondHistory = requests[1].messages;
     expect(
       secondHistory.some((m) => m.role === 'assistant' && m.content === ''),
+    ).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Invariant ⑩ (P1-2 extension, 2026-08-10 multi-audit) — dangling tool_calls
+// cleanup. An assistant message carrying `tool_calls` with NO paired
+// `role:'tool'` response (abort-in-window / tool-no-executor / abort-
+// mid-executor) is a protocol violation: strict OpenAI-compatible backends
+// return 400 and the retry loop fails repeatedly. The residue must be dropped
+// (empty content) or have `tool_calls` stripped (non-empty content keeps the
+// text) — content-agnostic, so the interleaved text+tool_calls shape is
+// covered too. The predicate sits OUTSIDE `isVacuousAssistantResidue` (which
+// requires `!metadata.finishReason` — dangling rounds DO carry
+// `finishReason:'tool_calls'`), so this is a new member, not a merge.
+// ---------------------------------------------------------------------------
+
+describe('Invariant ⑩ — dangling tool_calls cleanup (P1-2, 2026-08-10)', () => {
+  const danglingChunks = (id: string): AiConnectorChunk[] => [
+    {
+      delta: {
+        tool_calls: [
+          { index: 0, id, type: 'function', function: { name: 'f', arguments: '{}' } },
+        ],
+      },
+    },
+    { finishReason: 'tool_calls' as const },
+  ];
+  const stopChunks = (text: string): AiConnectorChunk[] => [
+    { delta: { content: text } },
+    { finishReason: 'stop' as const },
+  ];
+
+  it('abort-in-window: the dangling tool_calls assistant must not remain in the list', async () => {
+    let resolveGate!: () => void;
+    const gate = new Promise<void>((r) => {
+      resolveGate = r;
+    });
+    const stream = vi.fn(async () => {
+      async function* gen(): AsyncGenerator<AiConnectorChunk> {
+        yield danglingChunks('c_win')[0];
+        yield { finishReason: 'tool_calls' as const };
+        await gate;
+      }
+      return gen();
+    });
+    const { engine, adapter } = makeEngine({ stream } as AiConnector);
+
+    const turn = engine.sendMessage('go');
+    // Let the chunk loop consume both yields (suspended at the gate).
+    await wait(10);
+    await engine.abort();
+    resolveGate();
+    await turn;
+
+    expect(adapter.peek().requestState).toBe('aborted');
+    expect(
+      adapter.peek().messages.some((m) => m.role === 'assistant' && m.tool_calls?.length),
+    ).toBe(false);
+  });
+
+  it('tool-no-executor: the dangling assistant must not remain in the list', async () => {
+    const stream = vi.fn(async () => {
+      async function* gen(): AsyncGenerator<AiConnectorChunk> {
+        for (const c of danglingChunks('c_ne2')) yield c;
+      }
+      return gen();
+    });
+    const { engine, adapter } = makeEngine({ stream } as AiConnector);
+
+    await engine.sendMessage('go');
+    expect(adapter.peek().requestState).toBe('error');
+    expect(
+      adapter.peek().messages.some((m) => m.role === 'assistant' && m.tool_calls?.length),
+    ).toBe(false);
+  });
+
+  it('payload arm: the next request history must exclude the dangling shape', async () => {
+    let round = 0;
+    const requests: AiConnectorRequest[] = [];
+    const stream = vi.fn(async (req: AiConnectorRequest) => {
+      requests.push(req);
+      const r = round;
+      round += 1;
+      async function* gen(): AsyncGenerator<AiConnectorChunk> {
+        for (const c of (r === 0 ? danglingChunks('c_p') : stopChunks('Hi'))) yield c;
+      }
+      return gen();
+    });
+    const { engine, adapter } = makeEngine({ stream } as AiConnector);
+
+    await engine.sendMessage('first');
+    expect(adapter.peek().requestState).toBe('error');
+
+    await engine.sendMessage('second');
+    expect(requests.length).toBe(2);
+    const secondHistory = requests[1].messages;
+    expect(
+      secondHistory.some((m) => m.role === 'assistant' && m.tool_calls?.length),
+    ).toBe(false);
+  });
+
+  it('interleaved shape: non-empty content survives, tool_calls is stripped', async () => {
+    let round = 0;
+    const stream = vi.fn(async () => {
+      const r = round;
+      round += 1;
+      async function* gen(): AsyncGenerator<AiConnectorChunk> {
+        if (r === 0) {
+          yield { delta: { content: 'Let me check that...' } };
+          yield danglingChunks('c_it')[0];
+          yield { finishReason: 'tool_calls' as const };
+        } else {
+          for (const c of stopChunks('Hi')) yield c;
+        }
+      }
+      return gen();
+    });
+    const { engine, adapter } = makeEngine({ stream } as AiConnector);
+
+    await engine.sendMessage('first');
+    expect(adapter.peek().requestState).toBe('error');
+
+    // The interleaved text is a real user-visible answer — it survives; only
+    // the unpaired tool_calls is stripped (never the whole array for a
+    // partially-paired / text-carrying message).
+    const assistant = adapter.peek().messages.find((m) => m.role === 'assistant');
+    expect(assistant).toBeDefined();
+    expect(assistant?.content).toBe('Let me check that...');
+    expect(assistant?.tool_calls).toBeUndefined();
+  });
+
+  it('abort-mid-executor: the residue must not enter the list nor the next request', async () => {
+    // Phase 1 fix path: runTurn's `!shouldContinue` return — the assistant is
+    // already committed (finishReason='tool_calls' → not vacuous) when the
+    // executor is still suspended at the abort.
+    let round = 0;
+    const requests: AiConnectorRequest[] = [];
+    const stream = vi.fn(async (req: AiConnectorRequest) => {
+      requests.push(req);
+      const r = round;
+      round += 1;
+      async function* gen(): AsyncGenerator<AiConnectorChunk> {
+        for (const c of (r === 0 ? danglingChunks('c_mid') : stopChunks('Hi'))) yield c;
+      }
+      return gen();
+    });
+    let resolveExecutor!: () => void;
+    let markCalled!: () => void;
+    const executorGate = new Promise<void>((r) => {
+      resolveExecutor = r;
+    });
+    const calledGate = new Promise<void>((r) => {
+      markCalled = r;
+    });
+    const adapter = new InspectableAdapter();
+    adapter.initialize({
+      messages: [],
+      requestState: 'idle',
+      isProcessing: false,
+      abortController: null,
+      connector: null,
+    });
+    const engine = createMessageEngine({
+      connector: { stream },
+      adapter,
+      toolExecutor: async ({ toolCall }) => {
+        if (toolCall.id === 'c_mid') {
+          markCalled();
+          await executorGate;
+        }
+        return 'ok';
+      },
+    });
+
+    const turn = engine.sendMessage('go');
+    await calledGate;
+    await engine.abort();
+    resolveExecutor();
+    await turn;
+
+    expect(adapter.peek().requestState).toBe('aborted');
+    expect(
+      adapter.peek().messages.some((m) => m.role === 'assistant' && m.tool_calls?.length),
+    ).toBe(false);
+
+    // The next request history must not carry the residue either.
+    await engine.sendMessage('second');
+    expect(requests.length).toBe(2);
+    expect(
+      requests[1].messages.some((m) => m.role === 'assistant' && m.tool_calls?.length),
     ).toBe(false);
   });
 });

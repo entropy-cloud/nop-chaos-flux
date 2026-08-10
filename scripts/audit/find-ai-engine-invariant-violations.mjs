@@ -19,6 +19,11 @@
  *    In use-conversation.ts, createConversation / deleteConversation / clearAll
  *    function bodies must contain a `switchVersionRef.current` bump.
  *
+ * ④ clearAll fan-out source (P1-3/P1-4, 2026-08-10): clearAll must enumerate
+ *    the list mirror (`conversationsRef.current.map(...)`) — not just
+ *    `engineCache.keys()` — so evicted / never-opened sessions cannot survive
+ *    the storage clear (ghost rehydration).
+ *
  * Pure behavior invariants ①⑤ (isProcessing guard, abort cleanup) are covered
  * by runtime tests (engine-invariants.test.ts / conversation-invariants.test.ts)
  * and are NOT statically scanned (high false-positive rate, low ROI).
@@ -35,7 +40,9 @@ const LABEL = 'find-ai-engine-invariant-violations';
 
 const TARGET_FILES = [
   'packages/flux-renderers-ai/src/engine/create-engine.ts',
+  'packages/flux-renderers-ai/src/engine/build-context.ts',
   'packages/flux-renderers-ai/src/adapters/use-conversation.ts',
+  'packages/flux-renderers-ai/src/adapters/use-conversation-autosave.ts',
 ];
 
 const scanRootOverride = process.env.FLUX_AUDIT_SCAN_ROOT
@@ -490,6 +497,53 @@ function scanMirrorWriteSurface(code, relPath) {
   return violations;
 }
 
+/**
+ * Invariant ④ (P1-3/P1-4 extension, 2026-08-10 multi-audit) — clearAll
+ * fan-out source. `clearAll` must enumerate the FULL storage conversation set
+ * — the list mirror (`conversationsRef.current.map(...)`) — not just
+ * `engineCache.keys()`. Evicted sessions with in-flight autoSaves (P1-3) and
+ * bootstrap-loaded-but-never-opened sessions (P1-4) never hold a cache entry;
+ * a cache-only enumeration lets their storage records survive the clear →
+ * ghost rehydration on remount.
+ */
+function scanClearAllFanOutSource(code, relPath) {
+  const violations = [];
+  const lines = code.split('\n');
+  const clearAllRe = /^\s*(?:async\s+)?function\s+clearAll\s*\(/;
+  const mirrorEnumRe = /conversationsRef\.current\.map\s*\(/;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!clearAllRe.test(lines[i])) continue;
+
+    let depth = 0;
+    let bodyStart = -1;
+    let bodyEnd = -1;
+    for (let j = i; j < lines.length; j++) {
+      const stripped = lines[j].replace(/\/\/.*$/, '');
+      for (const ch of stripped) {
+        if (ch === '{') { depth += 1; if (depth === 1 && bodyStart < 0) bodyStart = j; }
+        else if (ch === '}') depth -= 1;
+      }
+      if (bodyStart >= 0 && depth === 0) {
+        bodyEnd = j;
+        break;
+      }
+    }
+    if (bodyEnd < 0) continue;
+
+    const body = lines.slice(bodyStart, bodyEnd + 1).join('\n');
+    if (!mirrorEnumRe.test(body)) {
+      violations.push({
+        file: relPath,
+        line: i + 1,
+        invariant: '④',
+        detail: `clearAll does not enumerate the list mirror (conversationsRef.current.map) for its fan-out (invariant ④, P1-3/P1-4 fan-out source)`,
+      });
+    }
+  }
+  return violations;
+}
+
 async function main() {
   const allViolations = [];
 
@@ -511,6 +565,12 @@ async function main() {
       allViolations.push(...scanAdapterSyncClosureReads(code, relPath));
       allViolations.push(...scanDisplacementVersionBumps(code, relPath));
       allViolations.push(...scanMirrorWriteSurface(code, relPath));
+      allViolations.push(...scanClearAllFanOutSource(code, relPath));
+    }
+    // ④ storage calls — the extracted auto-save module (same invariant:
+    // storage?.saveMessages must route through .catch → reportStorageError).
+    if (rel.endsWith('use-conversation-autosave.ts')) {
+      allViolations.push(...scanStorageCalls(code, relPath));
     }
 
     // ③ controller identity guard — only for create-engine.ts

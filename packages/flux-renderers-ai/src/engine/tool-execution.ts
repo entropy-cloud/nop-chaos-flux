@@ -1,4 +1,4 @@
-import { generateMessageId } from './utils.js';
+import { cleanDanglingToolCalls, generateMessageId } from './utils.js';
 import type {
   ChatMessage,
   ChatToolCall,
@@ -69,6 +69,18 @@ export async function executeToolCalls(
       status = 'failed';
       toolError = err instanceof Error ? err : new Error(String(err));
     }
+    // P1-1 (2026-08-10 multi-audit): second abort check AFTER the executor
+    // settled. The loop-top check only guarded the window before `await
+    // toolExecutor(...)`; an abort that fires while the executor is suspended
+    // (signal-aware reject → AbortError, or signal-ignoring resolve →
+    // success) previously committed the late `role:'tool'` result message and
+    // per-call UI state AFTER the turn already reached its terminal
+    // 'aborted' state — the residue was then persisted by autoSave and fed to
+    // the model on the next request. Aborted calls skip BOTH commits
+    // (per-call UI state + tool message push) and short-circuit `false`, same
+    // semantics as the loop-top check. Calls that completed BEFORE the abort
+    // keep their commits (no rollback of settled calls).
+    if (abortController.signal.aborted) return false;
     // Update per-call UI state on the owning assistant message — entirely
     // inside the mutate recipe (read-old → build-new → replace) so the cached
     // owner element is never mutated in place. The current owner is read from
@@ -118,4 +130,30 @@ export function normalizeToolResult(raw: string | ToolExecutionResult): ToolExec
     return { ok: true, result: raw };
   }
   return raw;
+}
+
+/**
+ * P1-2 (⑩, 2026-08-10 multi-audit): apply the dangling-tool_calls policy to
+ * the committed assistant at `index` (one of the three cleanup surfaces:
+ * runOnce abort branch / tool-no-executor / abort-mid-executor return). The
+ * element is read FRESH inside the mutate recipe (the caller's assistant
+ * reference can be stale — `executeToolCalls` replaces the element with a new
+ * object when it commits per-call UI state), and pairing is computed against
+ * the current message list so already-committed tool responses keep their
+ * owner. `index < 0` (already dropped by `commitOrDropResidue`) is a no-op.
+ */
+export function cleanDanglingAssistantAt(
+  adapter: MessageStateAdapter,
+  index: number,
+): void {
+  if (index < 0) return;
+  adapter.mutate('messages', (draft) => {
+    if (index >= draft.messages.length) return;
+    const cleaned = cleanDanglingToolCalls(draft.messages[index], draft.messages);
+    if (cleaned === null) {
+      draft.messages.splice(index, 1);
+    } else {
+      draft.messages[index] = cleaned;
+    }
+  });
 }

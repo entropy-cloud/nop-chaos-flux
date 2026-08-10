@@ -259,6 +259,18 @@ export interface MessageStateAdapter {
 // Plugin lifecycle (ported from tiny-robot plugin chain)
 // ============================================
 
+/**
+ * Plugin lifecycle context. **READ-ONLY** (⑪, 2026-08-10 multi-audit):
+ *
+ * - `request.messages` is an array-isolated copy of the request history — a
+ *   fresh array whose elements are fresh wire-projection objects. It is safe
+ *   to shape the OUTGOING request (e.g. push a system prompt per engine.md
+ *   §8.3), but mutations never write through into engine history.
+ * - `state` is the live engine state object. Do NOT mutate it — engine
+ *   writes go through `adapter.mutate` recipes only.
+ * - `engine` / `signal` are live references (engine methods are the intended
+ *   read/write surface).
+ */
 export interface MessageEngineContext {
   engine: MessageEngine;
   state: MessageEngineState;

@@ -162,6 +162,113 @@ export function isVacuousAssistantResidue(message: ChatMessage): boolean {
 }
 
 /**
+ * P1-2 (2026-08-10 multi-audit, invariant ⑩ extension): true when an
+ * assistant message carries `tool_calls` with NO paired `role:'tool'`
+ * response anywhere in the same list. Content-agnostic by design — the
+ * interleaved text+tool_calls shape (non-empty content) is covered exactly
+ * like the empty-content shape. Distinct from `isVacuousAssistantResidue`
+ * (which requires `!finishReason` — dangling rounds DO carry
+ * `finishReason:'tool_calls'`), so it is a new member, not a merge.
+ */
+export function isDanglingToolCallsMessage(message: ChatMessage, messages: ChatMessage[]): boolean {
+  if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
+    return false;
+  }
+  return !message.tool_calls.some((call) =>
+    messages.some((m) => m.role === 'tool' && m.tool_call_id === call.id),
+  );
+}
+
+/**
+ * P1-2 (2026-08-10 multi-audit, invariant ⑩ extension): apply the
+ * dangling-tool_calls policy to a single assistant message against the full
+ * message list:
+ *
+ * - fully dangling (no paired `role:'tool'` at all): empty content → drop
+ *   (returns `null`); non-empty content → strip `tool_calls`, keep the text
+ * - partially paired (some calls committed before an abort): strip only the
+ *   unpaired entries — never the whole array, or already-committed tool
+ *   messages would become orphans
+ * - not an assistant / no tool_calls / fully paired → returned unchanged
+ */
+export function cleanDanglingToolCalls(
+  message: ChatMessage,
+  messages: ChatMessage[],
+): ChatMessage | null {
+  if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
+    return message;
+  }
+  const paired = new Set<string>();
+  for (const call of message.tool_calls) {
+    if (messages.some((m) => m.role === 'tool' && m.tool_call_id === call.id)) {
+      paired.add(call.id);
+    }
+  }
+  if (paired.size === message.tool_calls.length) return message;
+  if (paired.size === 0) {
+    if (isEmptyContent(message.content)) return null;
+    const rest = { ...message };
+    delete rest.tool_calls;
+    return rest as ChatMessage;
+  }
+  return { ...message, tool_calls: message.tool_calls.filter((call) => paired.has(call.id)) };
+}
+
+/**
+ * P1-2 (2026-08-10 multi-audit, invariant ⑩ extension): apply the
+ * dangling-tool_calls policy to a whole list. Returns a NEW array (dropped
+ * messages removed; stripped messages replaced with copies) — also serves as
+ * the request-payload projection's array isolation (open P1-1, invariant ⑪).
+ */
+export function sanitizeDanglingToolCalls(messages: ChatMessage[]): ChatMessage[] {
+  const out: ChatMessage[] = [];
+  for (const message of messages) {
+    const cleaned = cleanDanglingToolCalls(message, messages);
+    if (cleaned !== null) out.push(cleaned);
+  }
+  return out;
+}
+
+/**
+ * P1-5 (2026-08-10 multi-audit): wire whitelist for `AiConnectorRequest`
+ * payload messages. Renderer-private `state` (editing drafts / toolCall UI /
+ * thinking) and internal tool-execution `metadata` (toolError — an Error with
+ * stack — / toolStatus) are domain-internal ("不投影", design.md §11.5) and
+ * must never reach the model provider: un-submitted edit drafts leak on every
+ * request, an Error stack may hit the wire, and strict backends can 400
+ * unknown fields. Kept: id/role/content/reasoning_content/tool_calls/
+ * tool_call_id/name + benign metadata (createdAt/model/finishReason/host
+ * fields). Returns a new message object so the payload projection never
+ * aliases engine state.
+ */
+const WIRE_MESSAGE_KEYS = [
+  'id',
+  'role',
+  'content',
+  'reasoning_content',
+  'tool_calls',
+  'tool_call_id',
+  'name',
+] as const;
+
+export function projectWireMessage(message: ChatMessage): ChatMessage {
+  const out: ChatMessage = {} as ChatMessage;
+  for (const key of WIRE_MESSAGE_KEYS) {
+    const value = (message as unknown as Record<string, unknown>)[key];
+    if (value !== undefined) {
+      (out as unknown as Record<string, unknown>)[key] = value;
+    }
+  }
+  if (message.metadata) {
+    const metadata = { ...message.metadata };
+    delete metadata.toolError;
+    delete metadata.toolStatus;
+    out.metadata = metadata;
+  }
+  return out;
+}
+
+/**
  * Apply a streaming chunk's delta/snapshot to the accumulated assistant
  * message via `combineDeltaData`.
  */

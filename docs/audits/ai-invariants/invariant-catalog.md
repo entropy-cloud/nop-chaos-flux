@@ -1,9 +1,9 @@
 # AI Engine 不变式目录（Invariant Catalog）
 
-> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展 + Cycle 2 / I1 §9 新族 ⑥-⑩ 沉淀 + Cycle 2 / I4 §10 补强扩展，供 I5 验证与后续审计引用）
+> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展 + Cycle 2 / I1 §9 新族 ⑥-⑩ 沉淀 + Cycle 2 / I4 §10 补强扩展 + 2026-08-10 双审计 P1 §11 扩展（⑩ dangling 成员 + ⑪ 新族 + ④ fan-out 源），供 I5 验证与后续审计引用）
 > Last Updated: 2026-08-10
-> Source: `docs/backlog/ai-invariant-loop-roadmap.md`（Cycle 1 / I0 + Cycle 2 / I1 派生）+ 4 轮 AI 审计（`docs/audits/2026-07-23-2141-*ai.md`、`2026-07-24-1757-*ai.md`、`2026-07-24-2151-*ai.md`、`2026-07-25-0707-*ai.md`）+ C8.1/8.2/8.3 + post-closure + Bug 07 note + I4 修复执行（K1-K4）+ Cycle 2 / I1 沉淀执行（N1-N5 → ⑥-⑩）
-> Produced By: plan `docs/plans/2026-08-09-1826-1-i0-invariant-inventory-baseline.md`（纯文档计划）；扩展于 plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`（K1-K4 + 门禁 ②③④⑤ 补强）；§9 沉淀于 plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`（⑥-⑩ 第二批门禁）
+> Source: `docs/backlog/ai-invariant-loop-roadmap.md`（Cycle 1 / I0 + Cycle 2 / I1 派生）+ 4 轮 AI 审计（`docs/audits/2026-07-23-2141-*ai.md`、`2026-07-24-1757-*ai.md`、`2026-07-24-2151-*ai.md`、`2026-07-25-0707-*ai.md`）+ C8.1/8.2/8.3 + post-closure + Bug 07 note + I4 修复执行（K1-K4）+ Cycle 2 / I1 沉淀执行（N1-N5 → ⑥-⑩）+ 2026-08-09-1826 双审计 P1 修复执行（plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`）
+> Produced By: plan `docs/plans/2026-08-09-1826-1-i0-invariant-inventory-baseline.md`（纯文档计划）；扩展于 plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`（K1-K4 + 门禁 ②③④⑤ 补强）；§9 沉淀于 plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`（⑥-⑩ 第二批门禁）；§11 扩展于 plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`（⑩ dangling 成员 + ⑪ 新族 + ④ fan-out 源）
 > 下游消费: I1（门禁沉淀 `check:ai-engine-invariants`）、I2（不变式驱动审计）、Loop Rule（新族派生）、I5（全量验证）、Cycle 2 / I2（⑥-⑩ 门禁运行审计）
 
 ## 1. 基线确认：当前零 engine 不变式门禁
@@ -270,6 +270,31 @@
 - **显式 supersede §7.3**：「saveConversation（create/rename）不入排空链」结论被 K-K3/④-1 / K-K4/②-1/2 修复推翻 → 改为 **「create/rename 元数据写均入排空链 + settlement-time 镜像再校验」**（§10.4/§10.5 契约）。
 - **显式 supersede §7.4**：写面范围从 create/rename 扩展至**全部列表变更方法**（delete/clearAll + bootstrap merge，§10.2/§10.4）；`switchConversation` 首语句 exists 检查改读 `conversationsRef.current`（原「渲染快照首语句豁免」注释随 K-⑥-2 修复失效——现在它是镜像读取，非闭包读取）。
 - **watch-only 附带评估**：W-⑨-b 随 K-⑥-3 修复自然收敛（从 watch-only 移除，findings §3.3 已更新）；W-E 不收敛（维持登记，如实记录）。
+
+## 11. 2026-08-10 双审计 P1 门禁扩展（⑩ dangling 成员 + ⑪ 新族 + ④ fan-out 源）
+
+> 2026-08-10 落地（plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`）。源审计 = `docs/audits/2026-08-09-1826-multi-audit-ai-invariant-loop.md`（P1-2/P1-3/P1-4/P1-5）+ `docs/audits/2026-08-09-1826-open-audit-ai-invariant-loop.md`（P1-1 = 不变式 ⑪ 触发）。双审计触发 Loop Rule 新族派生：⑪ 为新族（I6-Cycle2 稳态暂停后复触发，条件①③）。全部 P1 修复 test-first（RED→GREEN 在案）+ 门禁扩展 live 零命中 + bug notes 131-133 落档。
+
+### 11.1 不变式 ⑩ 扩展 —— dangling tool_calls 清理（P1-2）
+
+- **扩展陈述**：assistant 消息携带 `tool_calls` 且其后**无配对 `role:'tool'` 响应**（`tool_call_id` 匹配）时，不得作为 tool_calls 携带者进入请求载荷 / autoSave / 后续轮次历史。判定 **content-agnostic**（交错文本+tool_calls 形状同覆盖）：内容非空 → strip `tool_calls` 保留文本；内容为空 → 整体 drop；**部分配对**（multi-call 部分 commit 后 abort）→ 仅 strip 无配对条目（不得整数组 strip 使已 commit 的 tool 消息孤儿化）。统一谓词 `isDanglingToolCallsMessage`/`cleanDanglingToolCalls`/`sanitizeDanglingToolCalls`（`engine/utils.ts`），**独立于** `isVacuousAssistantResidue`（后者要求 `!metadata.finishReason`；dangling 轮带 `finishReason:'tool_calls'`——故为新成员非合并）。
+- **覆盖失败族**：失败轮残留污染族（N5）dangling 形状成员——abort-in-window / tool-no-executor / abort-mid-executor（runTurn `!shouldContinue` 返回兜底面）/ 载荷臂 / autoSave 臂 / 交错文本 strip 臂。
+- **历史 bug 证据**：`docs/bugs/131-ai-engine-dangling-tool-calls-residue-fix.md`（P1-1/P1-2 合并族）。
+- **检测方法**：运行时参数化测试（`engine-invariants-i4.test.ts` Invariant ⑩ dangling 块 5 成员 + `conversation-invariants-i4.test.ts` autoSave 臂成员）；**不静态化**（谓词组合行为面，沿用 §9.5 裁定）。
+
+### 11.2 不变式 ⑪ —— plugin ctx 写隔离 + 请求载荷白名单（open P1-1 + P1-5，新族）
+
+- **不变式陈述**：① 全部 plugin hook（onTurnStart/onTurnEnd/onBeforeRequest/onAfterRequest/onCompletionChunk）的 `ctx.request.messages` **不得是** engine 的 live message 数组——`buildContext` 无条件产出数组 + 元素双重隔离副本（`sanitizeDanglingToolCalls(...).map(projectWireMessage)`）；按 engine.md §8.3 文档模式 push system prompt 只能塑造出站请求，**不能写穿 engine 历史**（绕过 `mutate`/notify → 永久进历史 → 流向下轮载荷与 autoSave 快照）。② **请求载荷白名单**：`AiConnectorRequest.messages` 各消息不得携带渲染器私有 `state`（editing 草稿 / toolCall UI / thinking，design.md §11.5「不投影」）与内部工具 metadata（`toolError` Error stack / `toolStatus`）；剥离在 **engine 边界**（`buildContext`，非 connector 归一化层——engine 是唯一知道域内部字段的层）。
+- **覆盖失败族**：plugin 生命周期族（N4 派生同族面）+ 载荷泄漏族（新，双审计触发）。
+- **历史 bug 证据**：`docs/bugs/133-ai-engine-plugin-ctx-write-isolation-and-payload-hygiene-fix.md`（P1-5 + open P1-1 合并族）。
+- **检测方法**：运行时参数化测试（`engine-invariants-p1.test.ts`：5 hook 穷举 `ctx.request.messages !== engine.getState().messages` + push 不写穿 + payload 元素隔离 + P1-5 白名单双用例）；**不静态化**（数组隔离为行为面，静态误报高——沿用 ⑦⑨⑩ 裁定）。
+
+### 11.3 不变式 ④ 扩展 —— clearAll fan-out 源（P1-3/P1-4）
+
+- **扩展陈述**：`clearAll` 的 storage 清空枚举源 = **完整 storage 会话集**（`[...new Set([...engineCache.keys(), ...pendingSavesRef.current.keys(), ...conversationsRef.current.map(c => c.id)])]`），**不是**仅 `engineCache.keys()`——已 switch 逐出会话（在途 autoSave 仍 pending）与 bootstrap 加载但从未打开的会话不在 engine cache，cache-only 枚举使它们的 storage 记录逃过清空 → remount ghost 复活（FP-2）。配套：`saveMessages` settlement-time 镜像再检查（会话已不在 `conversationsRef` 则跳过落盘，与 create/rename 语义对齐）。
+- **覆盖失败族**：storage 静默丢族（0707 clearAll 家族同源兄弟——P1-3 逐出会话在途 autoSave / P1-4 未打开会话）。
+- **历史 bug 证据**：`docs/bugs/132-ai-conversation-clear-all-ghost-evicted-sessions-fix.md`（P1-3/P1-4 合并族）。
+- **检测方法**：运行时参数化测试（`conversation-invariants-i4.test.ts` fan-out 源成员 ×2）+ **静态扫描器规则 `scanClearAllFanOutSource`**（clearAll 函数体必须含 `conversationsRef.current.map(` 枚举，缺失即违例——fan-out 源静态可检性落地为 yes，入 `check:ai-engine-invariants`）+ committed 回归 fixtures ×2（违规 exit 1 / 清洁 exit 0）。
 
 ## 6. 引用索引
 

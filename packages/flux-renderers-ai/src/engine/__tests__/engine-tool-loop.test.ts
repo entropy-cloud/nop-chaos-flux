@@ -260,6 +260,117 @@ describe('createMessageEngine — agentic tool execution loop', () => {
     // No successful follow-up 'stop' round.
     expect(connector.calls).toHaveLength(1);
   });
+
+  // P1-1 (2026-08-10 multi-audit): abort during `toolExecutor` suspension must
+  // NOT commit the late tool result into history. `executeToolCalls` only
+  // checked the abort signal at the loop top — a signal-aware executor that
+  // rejects with AbortError (recorded as failed) or a signal-ignoring executor
+  // that resolves (recorded as success) both pushed a `role:'tool'` message
+  // AFTER the turn already reached its terminal 'aborted' state. The residue
+  // was then persisted by autoSave and fed to the model on the next request.
+  it('P1-1: signal-aware executor rejects AbortError mid-execution → no tool message committed', async () => {
+    const connector = scriptedConnector([toolCallChunks('c_ab1', 'f', '{}'), stopChunks('late')]);
+    let resolveExecutor: () => void;
+    let markCalled!: () => void;
+    const executorGate = new Promise<void>((r) => {
+      resolveExecutor = r;
+    });
+    const calledGate = new Promise<void>((r) => {
+      markCalled = r;
+    });
+    const executor: ToolExecutor = vi.fn(async () => {
+      markCalled();
+      await executorGate;
+      throw new DOMException('Aborted', 'AbortError');
+    });
+    const engine = createMessageEngine({ connector, toolExecutor: executor });
+    const turn = engine.sendMessage('go');
+    // Wait until the executor is actually suspended (abort must land mid-await).
+    await calledGate;
+    await engine.abort();
+    resolveExecutor!();
+    await turn;
+
+    const final = engine.getState();
+    expect(final.requestState).toBe('aborted');
+    // The aborted round's tool result must NOT be committed to history.
+    expect(final.messages.some((m) => m.role === 'tool')).toBe(false);
+  });
+
+  it('P1-1: signal-ignoring executor resolves mid-execution → no tool message committed', async () => {
+    const connector = scriptedConnector([toolCallChunks('c_ab2', 'f', '{}'), stopChunks('late')]);
+    let resolveExecutor: () => void;
+    let markCalled!: () => void;
+    const executorGate = new Promise<void>((r) => {
+      resolveExecutor = r;
+    });
+    const calledGate = new Promise<void>((r) => {
+      markCalled = r;
+    });
+    const executor: ToolExecutor = vi.fn(async () => {
+      markCalled();
+      await executorGate;
+      return 'late-success';
+    });
+    const engine = createMessageEngine({ connector, toolExecutor: executor });
+    const turn = engine.sendMessage('go');
+    await calledGate;
+    await engine.abort();
+    resolveExecutor!();
+    await turn;
+
+    const final = engine.getState();
+    expect(final.requestState).toBe('aborted');
+    expect(final.messages.some((m) => m.role === 'tool')).toBe(false);
+    // The owning assistant message must not carry a tool result UI state for
+    // the never-committed call (no 'success' echo from the late resolve).
+    const owner = final.messages.find(
+      (m) => m.role === 'assistant' && m.tool_calls?.length,
+    ) as ChatMessage | undefined;
+    expect(owner?.state?.toolCall?.['c_ab2']?.status).toBeUndefined();
+  });
+
+  // P1-1 category-sweep control: calls completed BEFORE the abort keep their
+  // commits (an abort mid-loop must not roll back already-settled calls).
+  it('P1-1: calls completed before the abort keep their tool messages', async () => {
+    const connector = scriptedConnector([
+      toolCallChunks('c_first', 'f', '{}'),
+      toolCallChunks('c_ab3', 'f', '{}'),
+    ]);
+    const calls: string[] = [];
+    let resolveSecond!: () => void;
+    let markSecondCalled!: () => void;
+    const secondGate = new Promise<void>((r) => {
+      resolveSecond = r;
+    });
+    const secondCalledGate = new Promise<void>((r) => {
+      markSecondCalled = r;
+    });
+    const executor: ToolExecutor = vi.fn(async ({ toolCall }) => {
+      calls.push(toolCall.id);
+      if (toolCall.id === 'c_ab3') {
+        markSecondCalled();
+        await secondGate;
+      }
+      return 'ok';
+    });
+    const engine = createMessageEngine({ connector, toolExecutor: executor });
+    const turn = engine.sendMessage('go');
+    // Let the first call complete + its tool message commit; the second call
+    // is now suspended in the executor.
+    await secondCalledGate;
+    expect(calls).toEqual(['c_first', 'c_ab3']);
+    await engine.abort();
+    resolveSecond!();
+    await turn;
+
+    const final = engine.getState();
+    expect(final.requestState).toBe('aborted');
+    // The FIRST call's tool message was committed before the abort and stays.
+    const toolMessages = final.messages.filter((m) => m.role === 'tool');
+    expect(toolMessages).toHaveLength(1);
+    expect(toolMessages[0].tool_call_id).toBe('c_first');
+  });
 });
 
 describe('createToolPlugin — resolveTools + status flow', () => {
