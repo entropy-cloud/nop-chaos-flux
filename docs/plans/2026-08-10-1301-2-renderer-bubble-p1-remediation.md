@@ -1,6 +1,6 @@
 # 2 Renderer/Bubble 族 P1 修复（投影刷新 / 工具卡展开 / reasoning 面板 / 渲染器遮蔽）（ai-invariant-loop）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: ai-invariant-loop
 > Last Reviewed: 2026-08-10
 > Source: `docs/audits/2026-08-09-1826-multi-audit-ai-invariant-loop.md`（P1-6/P1-7/P1-8/P1-9）；live repo 核对 2026-08-10
@@ -73,83 +73,83 @@
 
 ### Phase 1 — 工具卡展开 + reasoning 面板同根族收口（P1-7 + P1-8）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-tool-call.tsx`、`src/renderers/ai-bubble/renderers/tools.tsx`、`src/renderers/ai-bubble/renderers/reasoning.tsx`、`src/engine/plugins/tool-plugin.ts`、`src/engine/plugins/thinking-plugin.ts`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Proof: RED 回归测试（P1-7 气泡路径）——气泡渲染 assistant 消息（`state.toolCall[key]` 存在或 map 缺 key）→ 点击展开 chevron → 断言函数参数 JSON 区域出现、`aria-expanded=true`；修复前 RED
-- [ ] Proof: RED 回归测试（P1-8 插件路径）——thinkingPlugin 注册 + reasoning_content 消息 → 断言折叠按钮 `disabled` 为 false 且点击后面板展开（内容可见）；修复前 RED
-- [ ] Decision: 裁定统一策略——`ChatToolCallUIState.open` / `thinking.open` 采用「插件不写 `open:false`（保持 undefined，让 `?? internalOpen` 生效）或 renderer 合并 `state?.open !== undefined ? state.open : internalOpen` + `onToggle` 写回 engine state」二选一；**默认倾向 = 方案 A（插件不 pin `open:false`，保持 undefined-absent + renderer 本地展开态）**——engine 侧无已验证的 `message.state.toolCall/thinking` 写回 API（仅 `setMessageEditing` 存在，见 multi P2-10），方案 B 需新引擎写回面；若执行中发现方案 A 与虚拟化行回收（local state 丢失）冲突且存在可用写回 API，再升格方案 B（写回引擎 + `onToggle` 接线）；裁定理由入档
-- [ ] Fix: `tool-plugin.ts` 两处写面停止写 `open:false`（改为仅在 status 变更时写，`open` 保持 undefined）或按裁定写回；`tools.tsx:57-61` `resolveToolState` 默认值同步（无 key 时 `open` 保持 undefined）
-- [ ] Fix: `ai-tool-call.tsx:52-53` 合并逻辑改为 `state?.open !== undefined ? state.open : internalOpen`（或按裁定）；`handleToggle`（`:95-99`）接线 `props.onToggle` 写回（如裁定走写回）
-- [ ] Fix: `thinking-plugin.ts:21-26` 停止 pin `open:false`；`reasoning.tsx:21-25,35-37,53` 展开合并逻辑与 `disabled` 判定同步修正（`controlled` 存在且 `open` 未定义时允许 local 展开，或 `onToggle` 写回 `state.thinking.open`）
-- [ ] Fix: 类别清扫——`ChatMessageUIState` 全部字段消费面核对（`toolCall.*` / `thinking.*` / `editing.*` 的写面与读面），确认无其他 write-once-false 死字段（cross-cutting pattern 1 建议）；清扫记录入档
-- [ ] Fix: 测试扩展——A-10 既有断言补展开/disabled 行为断言；虚拟化行回收场景抽查（local 展开态不因回收丢失）
+- [x] Proof: RED 回归测试（P1-7 气泡路径）——气泡渲染 assistant 消息（`state.toolCall[key]` 存在或 map 缺 key）→ 点击展开 chevron → 断言函数参数 JSON 区域出现、`aria-expanded=true`；修复前 RED
+- [x] Proof: RED 回归测试（P1-8 插件路径）——thinkingPlugin 注册 + reasoning_content 消息 → 断言折叠按钮 `disabled` 为 false 且点击后面板展开（内容可见）；修复前 RED
+- [x] Decision: 裁定统一策略——**方案 A 落地**：插件写面全部停止 pin `open:false`（`tool-plugin.ts` 两处 + `thinking-plugin.ts` 首 chunk 均改为 undefined-absent），renderer 合并改为 `state?.open !== undefined ? state.open : internalOpen`（`ai-tool-call.tsx`）+ `controlled?.open !== undefined ? controlled.open : internalOpen`（`reasoning.tsx`），展开态为 renderer 本地 state，`onToggle` 保持调用面不写回。**理由**：engine 侧无已验证的 `message.state.toolCall/thinking` 写回 API（仅 `setMessageEditing` 存在，multi P2-10 同族）；虚拟化行回收冲突确实存在（`ai-message-list.tsx` VIRTUAL_SCROLL_THRESHOLD=200，@tanstack/react-virtual 行卸载回收）但升格方案 B 的前置条件「存在可用写回 API」不成立 → 维持方案 A，行回收后本地展开态复位、engine 持有的 `open`（host 显式写入）随引擎快照存活（新增 remount 存活抽查测试）；禁用判定同步：`reasoning.tsx` `disabled` 仅在 engine 显式持有 `open` 时生效（插件路径永不触发）
+- [x] Fix: `tool-plugin.ts` 两处写面停止写 `open:false`（改为 `{ status: 'running' }`）；`tools.tsx:57-61` `resolveToolState` 默认值同步（无 key 时 `{ status: 'running' }`，`open` 保持 undefined）
+- [x] Fix: `ai-tool-call.tsx` 合并逻辑改为 `state?.open !== undefined ? state.open : internalOpen`；`handleToggle` 保持 `setInternalOpen` + `props.onToggle?.(next)`（方案 A 不写回，接线面无生产消费方，保持不变）
+- [x] Fix: `thinking-plugin.ts` 首 chunk 停止 pin `open:false`（`{ startedAt }`）；`reasoning.tsx` 展开合并逻辑与 `disabled` 判定同步修正（`controlled.open` 未定义时允许 local 展开）
+- [x] Fix: 类别清扫——`ChatMessageUIState` 全部字段写面/读面核对：`toolCall[*].open`（写：tool-plugin ×2 已修复 / tool-execution 仅 status+result；读：resolveToolState 默认值已修复 / ai-tool-call 合并已修复 / FallbackToolCallCard defaultOpen 无碍）、`thinking.open`（写：thinking-plugin 已修复；读：reasoning.tsx 已修复）、`editing.*`（engine `setMessageEditing` API 写回存在，A-8 活面，非 write-once-false）、`approval`（engine 不写、host 工作流，文档化契约）、`result`（tool-execution 写真实结果，活面）——**无其他 write-once-false 死字段**
+- [x] Fix: 测试扩展——A-10 既有断言补展开/disabled 行为断言（fixture 移除 `open:false` 对齐新契约）；虚拟化行回收场景抽查（engine 持有 `open:true` 经 unmount/remount 存活；本地展开态复位为设计内成本，随方案 A 记录）
 
 Exit Criteria:
 
-- [ ] P1-7 / P1-8 RED 测试全部转 GREEN（气泡路径 + 插件路径断言全绿）
-- [ ] 裁定记录入档（open 字段策略 + 理由）
-- [ ] 类别清扫记录入档（ChatMessageUIState 写面/读面核对结论）
+- [x] P1-7 / P1-8 RED 测试全部转 GREEN（气泡路径 + 插件路径断言全绿；RED 实证 8 failed→GREEN，AI 包 70 files / 600 tests 全绿零回归）
+- [x] 裁定记录入档（open 字段策略 = 方案 A undefined-absent + 理由见上）
+- [x] 类别清扫记录入档（ChatMessageUIState 写面/读面核对结论见上）
 
 ### Phase 2 — 混合消息渲染器遮蔽修复（P1-9）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-bubble/index.tsx`、`src/renderers/ai-bubble/renderers/default-renderers.ts`、`src/renderers/ai-bubble/types.ts`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Proof: RED 回归测试（文本 + reasoning_content）——消息含非空文本 + `reasoning_content` → 断言 reasoning 面板与文本**同时**渲染；修复前 RED
-- [ ] Proof: RED 回归测试（文本 + tool_calls）——消息含非空文本 + `tool_calls` → 断言工具卡与文本**同时**渲染；修复前 RED
-- [ ] Decision: 裁定渲染策略二选一——（a）reasoning/tools 在消息级匹配并渲染（与切片级 markdown 并行），或（b）消息级字段（`reasoning_content` / `tool_calls`）在切片级 markdown 之前判定；选择与现有 `resolveContentSlices` 结构、注册表扩展性（host 自定义 matcher）最一致者；裁定理由入档
-- [ ] Fix: 按裁定实现（`ai-bubble/index.tsx` 渲染装配 + `default-renderers.ts` 匹配顺序/注册语义调整），保持 `content:''` 分支既有行为（零回归）
-- [ ] Fix: 类别清扫——全部 8 个默认 renderer 的匹配面核对（LOADING/NORMAL/CONTENT/ROLE 四档 × find 谓词），确认无其他被遮蔽组合；`error` / `data-*` / `image` 与文本混合形状抽查
-- [ ] Fix: 测试扩展——混合内容集成断言（文本+reasoning / 文本+tool_calls / 文本+image），含 streaming 期间首 chunk 到达后的面板可见性
+- [x] Proof: RED 回归测试（文本 + reasoning_content）——消息含非空文本 + `reasoning_content` → 断言 reasoning 面板与文本**同时**渲染；修复前 RED
+- [x] Proof: RED 回归测试（文本 + tool_calls）——消息含非空文本 + `tool_calls` → 断言工具卡与文本**同时**渲染；修复前 RED
+- [x] Decision: 裁定渲染策略 = **方案 (a) 消息级并行渲染**——tools/reasoning/error 标 `messageLevel: true`（`BubbleContentRendererMatch` 新增**可选**字段，additive 不改公共签名），在 `AiBubbleView` 消息级 pass 每次渲染一次，与切片级 markdown/image/data-part/text pass 并行；loading 保持切片级 LOADING(-1) 首匹配即赢（流式首 chunk 前 spinner 独占，行为不变）；流式中消息级 pass 跳过（`!isStreaming` 门，与既有 loading 独占语义一致）。**理由**：与现有 `resolveContentSlices` 单切片单渲染器结构一致（每个切片仍只选一个渲染器），注册表扩展性保留（host 自定义 matcher 可自行标 `messageLevel`），`content:''` 分支零回归（既有 find() 单测 + 渲染路径均不受影响）
+- [x] Fix: 按裁定实现（`ai-bubble/index.tsx` 渲染装配拆 message-level / slice-level 双 pass + `default-renderers.ts` 三处 `messageLevel: true` + `types.ts` 可选字段 + `tryMatch` 抽取复用故障 matcher 守卫）
+- [x] Fix: 类别清扫——全部 8 个默认 renderer 匹配面核对（LOADING/NORMAL/CONTENT/ROLE 四档 × find 谓词）：loading（切片级 -1，首匹配即赢不可遮蔽）/ markdown（NORMAL=0 切片级，遮蔽者已与被遮蔽者解耦）/ tools+reasoning+error（消息级，不再可遮蔽）/ image（切片级，仅数组 parts，markdown 不匹配 image part——不可遮蔽）/ data-part（切片级，仅 `data-*` parts——不可遮蔽）/ text（ROLE 兜底）；**文本混合形状抽查**：text+image（数组 parts 双渲染）、text+data-part（双渲染）、error+text（双渲染）、loading+tool_calls（spinner 独占）、content:'' 工具消息（工具卡仍渲染）全部入测
+- [x] Fix: 测试扩展——混合内容集成断言 8 条（文本+reasoning / 文本+tool_calls / streaming 首 chunk 到达后 reasoning 可见 / error+文本 / 文本+image / 文本+data-part / content:'' 零回归 / loading 独占）
 
 Exit Criteria:
 
-- [ ] P1-9 两条 RED 测试转 GREEN（混合消息断言全绿）
-- [ ] `content:''` 分支既有测试零回归
-- [ ] 类别清扫记录入档（渲染器匹配面核对结论）
+- [x] P1-9 两条 RED 测试转 GREEN（混合消息断言全绿；RED 实证 4 failed→GREEN，AI 包 70 files / 608 tests 全绿零回归）
+- [x] `content:''` 分支既有测试零回归（matcher 单测 + AiBubbleView 渲染路径均绿）
+- [x] 类别清扫记录入档（渲染器匹配面核对结论见上）
 
 ### Phase 3 — 投影快照 engine 替换刷新（P1-6）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-chat.tsx`、`src/renderers/__tests__/ai-chat-projection.test.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（会话切换）——会话 A 完成后切换到会话 B（engine 替换，双 idle）→ 断言 `${messages}` 投影区域显示 B 的消息（而非 A）；修复前 RED
-- [ ] Proof: RED 回归测试（clear / 复水）——`clear()` 与 `setMessages` 复水后投影快照同步刷新；修复前 RED
-- [ ] Fix: 投影重建触发条件扩展——在 `isProcessing` 翻转之外，增加 engine-identity 变化与 `requestState` 终态变化（completed/aborted/error）触发重建（快照克隆保持 turn-boundary 成本纪律：仅在终态或 engine 替换时克隆，streaming 期间不每 chunk 克隆）
-- [ ] Fix: 类别清扫——`ai-chat.tsx` 全部"引擎状态镜像"面核对（投影 / hostScopeData / provider 数据），确认 engine 替换时各镜像面同步；清扫记录入档
-- [ ] Fix: 测试扩展——engine-swap 投影回归测试（含 P2-14 同面窗口：abort 同步翻转时的空产物幽灵不进入投影快照，如本面修复顺带覆盖则记录）
+- [x] Proof: RED 回归测试（会话切换）——会话 A 完成后切换到会话 B（engine 替换，双 idle）→ 断言 `${messages}` 投影区域显示 B 的消息（而非 A）；修复前 RED
+- [x] Proof: RED 回归测试（clear / 复水）——`clear()` 与 `setMessages` 复水后投影快照同步刷新；修复前 RED
+- [x] Fix: 投影重建触发条件扩展——`ai-chat.tsx` 投影 state 扩为 `{ prevIsProcessing, prevRequestState, snapSourceRef, snapLength, snap }`：重建触发 = ① isProcessing 翻转（既有 turn-boundary 语义）② requestState 进入终态（completed/aborted/error）③ 空闲期 messages **数组引用**变化（clear/setMessages/engine swap 均为 mutate recipe 内整体替换）④ 空闲期 messages **length** 变化（state-adapter `recipe(this.state)` 原地变更——abort 残渣 drop 的 `splice` 不换引用，补齐后 P2-14 幽灵在 abort 边界重建后被二次 idle 重建清除）；`snapSourceRef`/`snapLength` 每 render 收敛到 live 恒等（流式不克隆、守卫不重触发），`snap` 仅在 shouldClone（boundary/terminal/idle 集合变化）时 `cloneMessages`——turn-boundary 成本纪律保持（streaming 期间不每 chunk 克隆）
+- [x] Fix: 类别清扫——`ai-chat.tsx` 全部"引擎状态镜像"面核对：投影 `hostScopeData.messages`（本面已修复）/ `hostScopeData` bundle（useMemo 随 projectedMessages + isProcessing + activeConversationId，流式稳定）/ `AiChatProvider` `chatContextValue`（读 useMessage live `messages`，恒最新，非投影面）/ `onResponseComplete` 快照 handoff（subscribe 依赖 `[engine]`，engine swap 重订阅拿最新消息）——**无其他停滞镜像面**；清扫记录入档
+- [x] Fix: 测试扩展——engine-swap 投影回归测试含 **P2-14 同面窗口**（zero-chunk abort 空产物幽灵：abort 同步翻转边界重建会先捕获幽灵，残渣 drop 后 length 信号触发二次 idle 重建清除幽灵——**本面修复顺带覆盖 P2-14**，不再是孤立 watch-only 窗口；测试断言投影终态零 vacuous placeholder + committed user 消息仍在）；测试隔离：P1-6 新用例集放文件末尾避免污染既有 P1#2 turn-boundary 用例（顺序依赖实证）
 
 Exit Criteria:
 
-- [ ] P1-6 RED 测试全部转 GREEN（会话切换 / clear / 复水断言全绿）
-- [ ] 既有 turn-boundary 投影稳定性测试零回归
-- [ ] 类别清扫记录入档（engine 状态镜像面核对结论）
+- [x] P1-6 RED 测试全部转 GREEN（会话切换 / clear / 复水断言全绿；RED 实证 3 failed→GREEN，AI 包 70 files / 612 tests 全绿零回归）
+- [x] 既有 turn-boundary 投影稳定性测试零回归（P1#2 gated-streaming 用例保持绿）
+- [x] 类别清扫记录入档（engine 状态镜像面核对结论见上）
 
 ### Phase 4 — 登记处同步 + 收口
 
-Status: planned
+Status: completed
 Targets: `docs/components/flux-renderers-ai/design.md`、`docs/components/flux-renderers-ai/engine.md`、`docs/bugs/`、`docs/logs/2026/08-10.md`
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] Fix: `design.md` 投影节更新（投影重建触发条件含 engine 替换 / requestState 终态）+ 渲染器选择节更新（混合消息语义）；如裁定选择消息级并行渲染，更新注册表/匹配语义描述
-- [ ] Fix: `engine.md` §8.3 plugin 表格补 `state.thinking` / `state.toolCall.open` 写面注记（open 字段策略：undefined-absent 或 live write-back）
-- [ ] Fix: bug notes 131+（P1-7/P1-8 合并族 + P1-9 + P1-6，按 guide）
-- [ ] Proof: AI 包全量测试 + `pnpm typecheck/lint`（AI 包）零回归
-- [ ] Follow-up: daily log `docs/logs/2026/08-10.md` 记录本 plan 收口
+- [x] Fix: `design.md` 投影节更新（投影重建触发条件含 engine 替换 / requestState 终态）+ 渲染器选择节更新（混合消息语义）；如裁定选择消息级并行渲染，更新注册表/匹配语义描述
+- [x] Fix: `engine.md` §8.3 plugin 表格补 `state.thinking` / `state.toolCall.open` 写面注记（open 字段策略：undefined-absent 或 live write-back）
+- [x] Fix: bug notes 131+（P1-7/P1-8 合并族 + P1-9 + P1-6，按 guide）
+- [x] Proof: AI 包全量测试 + `pnpm typecheck/lint`（AI 包）零回归
+- [x] Follow-up: daily log `docs/logs/2026/08-10.md` 记录本 plan 收口
 
 Exit Criteria:
 
-- [ ] design.md / engine.md / bug notes 同步到位（live 核对一致）
-- [ ] AI 包测试全绿零回归
-- [ ] daily log 收口记录落档
+- [x] design.md / engine.md / bug notes 同步到位（live 核对一致）
+- [x] AI 包测试全绿零回归
+- [x] daily log 收口记录落档
 
 ## Draft Review Record
 
@@ -162,17 +162,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 4 条 P1（P1-6/P1-7/P1-8/P1-9）全部修复落地（test-first RED→GREEN 证据在案）
-- [ ] 混合消息渲染行为达成（tools/reasoning/image 与文本同现）
-- [ ] 投影快照在 engine 替换 / requestState 终态变化时刷新
-- [ ] 类别清扫记录入档（ChatMessageUIState 写读面 / 渲染器匹配面 / 引擎状态镜像面）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（design.md / engine.md / bug notes / daily log）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 4 条 P1（P1-6/P1-7/P1-8/P1-9）全部修复落地（test-first RED→GREEN 证据在案）
+- [x] 混合消息渲染行为达成（tools/reasoning/image 与文本同现）
+- [x] 投影快照在 engine 替换 / requestState 终态变化时刷新
+- [x] 类别清扫记录入档（ChatMessageUIState 写读面 / 渲染器匹配面 / 引擎状态镜像面）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步（design.md / engine.md / bug notes / daily log）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -195,13 +195,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: 4 条 P1（P1-6/P1-7/P1-8/P1-9）全部修复落地（test-first RED→GREEN 证据在案：Phase 1 RED 实证 8 failed→GREEN / Phase 2 RED 实证 4 failed→GREEN / Phase 3 RED 实证 3 failed→GREEN）；AI 包 70 files/612 tests 全绿；全仓 typecheck/build/lint 37/37 ×3 + `pnpm test` 66/66 tasks；`pnpm check` 仅既有登记红零新增（audit-event-dispatch-ctx 6 条 industrial 2026-08-09 登记 + oversized 2 条 exempt locale）；`check:ai-engine-invariants` exit 0 零命中；`check:docs-garbled` 16 既有均非本 plan 文件零新增；bug notes 134-136 落档 + design.md / engine.md 同步 + roadmap Follow-up Backlog 收口注记；源审计 `2026-08-09-1826-multi-audit-ai-invariant-loop.md` Audit Status 已 closed（plan 1301-1 收口时翻，本 plan 幂等跳过）。2026-08-10 收口。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立子 agent）
-- Evidence: （待填写）
+- Auditor / Agent: 独立 closure auditor（fresh session，未参与本 plan 执行；task id `ses_01ae0b96fffeN8Bc5g0W21uXx7`）
+- Evidence: verdict `pass`。逐门核对：G1 一致性 pass（Plan Status completed；Phase 1-4 Status 全 completed 且与 [x] 项/Exit Criteria 全勾一致；Closure Gates 1-6/8-11 [x]）。G2 代码抽查 pass（live tree 核对：tool-plugin.ts 两写面 + thinking-plugin.ts 首 chunk 均已去 `open:false`，全包生产代码零 `open:false` 写（仅注释）；ai-tool-call.tsx `state?.open !== undefined ? state.open : internalOpen` + onToggle 接线保留；reasoning.tsx 合并/disabled 判定同步；tools.tsx resolveToolState 默认 `{status:'running'}`；ai-bubble/index.tsx 消息级/切片级双 pass + tryMatch 抽取；default-renderers.ts tools/reasoning/error 标 `messageLevel:true`；types.ts 可选字段带文档；ai-chat.tsx 投影四触发条件落地）。G3 测试 pass（fresh 复跑 `pnpm --filter @nop-chaos/flux-renderers-ai test` = **70 files / 612 tests 全绿**，与声明一致）。G4 无静默降级 pass（Scope 4 条 P1 全落地；P2 全量 26 条在 roadmap Follow-up Backlog（带源审计路径），P2-14 维持 watch-only 且 Phase 3 顺带覆盖实证入档）。G5 文档同步 pass（design.md 投影触发 + 消息级 vs 切片级 + §11.5 折叠态 ownership 行；engine.md §8.3 插件写面注记；roadmap 收口注记；daily log 08-10 收口条目；bug notes 134/135/136 按 guide 落档——minor：三份 notes 缺「Notes For Future Refactors」节（既有 130-133 均有），信息已含于 Fix/Tests，非阻塞）。G6 源审计 pass（`2026-08-09-1826-multi-audit-ai-invariant-loop.md` Audit Status = closed，幂等未重开）。门禁 fresh 抽查 pass：`check:ai-engine-invariants` exit 0 零命中；`check:oversized-code-files` 2 errors 均 exempt locale；`check:audit-event-dispatch-ctx` 6 hits 全在 flux-renderers-industrial（该包本树零 diff，2026-08-09 已登记预存面）。零 Blocker 零 Major，1 minor（bug notes 缺 Future Refactors 节）。2026-08-10 独立审计收口。
 
 Follow-up:
 
-- （待填写：no remaining plan-owned work 或 non-blocking 项）
+- no remaining plan-owned work。closure-audit minor（docs/bugs/134-136 补「Notes For Future Refactors」节）已由执行 session 就地补入（docs-only，非阻塞，审计后落档）。

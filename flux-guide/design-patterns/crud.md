@@ -220,7 +220,7 @@ flux CRUD 的分页有三套并存机制，**其中一套不联动**，踩坑成
 
 **序号列**：`{ "type": "index", "name": "index", "label": "序号", "width": 50 }` —— 渲染跨页累计行号 `viewIndex + indexColumnOffset + 1`（`indexColumnOffset = (currentPage-1)*pageSize`），自带 `text-center` 居中与 `data-slot="table-index-cell"`。测试覆盖见 `table-index-column.test.tsx`。
 
-**selection（checkbox）列**：`selection: {}` 启用多选。渲染为：
+**selection（checkbox）列**：`selection: true`（或 `'multiple'`）启用多选（推荐简写；旧写法 `selection: {}` 兼容）。渲染为：
 
 - 表头：`<th data-slot="table-select-column">`（内含全选 Checkbox）
 - 表行：`<td data-slot="table-select-cell">`（内含行 Checkbox）
@@ -304,7 +304,11 @@ CRUD 把只读摘要发布到 scope 的 `$crud`，可在任意子节点表达式
 }
 ```
 
-- `selection: {}` 即启用多选；`type: "radio"` 为单选。
+- `selection` 简写形式（**设置即启用，缺省不启用**）：
+  - `selection: true` / `'multiple'` → 多选 checkbox（最常用）
+  - `selection: 'single'` → 单选 radio
+  - `selection: { type: 'radio', maxSelectionLength: 5, checkableWhen: '...' }` → 高级配置
+  - 旧写法 `selection: {}` 仍兼容（= 启用多选全默认）
 - `listActions` 里的按钮可用 `${$crud.hasSelection}` 控制禁用态。
 - 跨页选择保留：`keepOnPageChange: true`。
 - 按行可勾选条件：`selection.checkableWhen`（raw 表达式，行 scope 求值）。

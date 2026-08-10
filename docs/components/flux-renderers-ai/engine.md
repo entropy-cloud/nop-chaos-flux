@@ -191,6 +191,8 @@ export interface MessageStateAdapter {
 | `onError(context)`           | abort 或异常                | 区分 `aborted` 与 `error`，写 `requestState`                                           |
 
 > **插件上下文只读契约（⑪，2026-08-10）**：`MessageEngineContext` 的 `request.messages` 与 `state` 均为 **read-only**（`engine/types.ts` 文档化）。`request.messages` 是引擎历史的**数组 + 元素双重隔离副本**（`buildContext` 经 wire 白名单投影逐元素新建对象）——插件可以塑造出站请求（如 push system prompt），但任何 push / 元素原地修改都**不会写穿**进引擎历史（绕过 `mutate`/notify 的污染路径已封堵）。`state` 为 live 引擎状态对象，插件**不得**直接修改（引擎写入只走 `adapter.mutate` recipe）。注入 system prompt 的推荐方式 = `CreateMessageEngineOptions.systemPrompt`（不进历史）；次选 = 在 `onTurnStart` 内 push 到 `ctx.request.messages`（只影响本轮出站载荷，不进历史、不持久化）。
+>
+> **插件 state 写面注记（P1-7/P1-8，2026-08-10 multi-audit）**：`thinkingPlugin` 与 `toolPlugin` 在 `onCompletionChunk` 写 `message.state.thinking` / `message.state.toolCall[id]`（status / startedAt / endedAt / result），但**不写 `open` 字段**（保持 undefined-absent）。历史缺陷：两插件 write-once-false pin `open:false` → 气泡渲染器 `?? internalOpen` 被短路，展开 chevron / reasoning 面板死控件。现契约 = `open` 为可选字段：engine 不持有即 renderer 本地展开态（方案 A，无引擎写回 API 支撑写回面）；host 显式写入 `open: true/false` 时渲染器以 engine 值为准（随消息快照存活）。
 
 ### 8.4 流式累积算法（移植 `combineDeltaData`）
 
