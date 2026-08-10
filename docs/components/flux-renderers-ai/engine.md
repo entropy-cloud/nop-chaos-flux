@@ -126,6 +126,12 @@ export interface MessageEngine {
    */
   setMessages(messages: ChatMessage[]): void;
   /**
+   * Renderer-driven message editing state（design.md §11.5）。写
+   * `message.state.editing`；`editing` 为 `null` 时清除。`messageId` 无匹配时
+   * no-op（Failure Path `edit-unknown-message`）。不投影到 scope。
+   */
+  setMessageEditing(messageId: string, editing: { active: boolean; draft?: string } | null): void;
+  /**
    * A-16 消息分支：丢弃尾部 assistant 轮（回到最后一条 user 消息）并重发请求，
    * 给新 assistant 消息盖 `metadata.branchId`。engine 不存分支集——host 拥有
    * 完整分支历史；本方法只记录新分支 id。`branchId` 可选：省略时 engine 分配
@@ -145,10 +151,12 @@ export interface MessageEngineState {
 }
 ```
 
-> **AI-06 同步（2026-07-24）**：接口共 11 个方法（`getState` / `subscribe` /
-> `sendMessage` / `send` / `abort` / `clear` / `setConnector` / `registerPlugin` /
-> `getMessages` / `setMessages` / `regenerate`）。此前文档仅列 7 个，漏掉了
-> `clear` / `getMessages` / `setMessages` / `regenerate`（A3 / A16 扩展期加入）。
+> **AI-06 同步（2026-07-24；方法计数 2026-08-10 校准）**：接口共 **12** 个方法
+> （`getState` / `subscribe` / `sendMessage` / `send` / `abort` / `clear` /
+> `setConnector` / `registerPlugin` / `getMessages` / `setMessages` /
+> `setMessageEditing` / `regenerate`）。此前文档仅列 7 个，漏掉了
+> `clear` / `getMessages` / `setMessages` / `regenerate`（A3 / A16 扩展期加入）；
+> 2026-08-10 补 `setMessageEditing`（§4.7 消息编辑，P1-9 后加入）并把计数校准为 12。
 
 引擎自身是纯 TS（无 React / Vue / DOM 依赖），可独立单测。
 
@@ -209,9 +217,20 @@ export interface MessageStateAdapter {
 
 ```ts
 export interface UseMessageOptions {
-  connector: AiConnector;
+  /** 可选外部 `MessageEngine`（如 `useConversation.activeEngine`）；提供时绑定它，否则自建（零回归默认）。 */
+  engine?: MessageEngine | null;
+  connector: AiConnector | null;
   initialMessages?: ChatMessage[];
   plugins?: MessageEnginePlugin[];
+  /** 每次请求额外透传的 OpenAI 兼容参数。 */
+  extraRequestParams?: Record<string, unknown>;
+  systemPrompt?: string;
+  /** host 注入的工具 schema（作为 `request.tools` 转发）。 */
+  tools?: AiToolSchema[];
+  /** host 注入的工具执行器（启用多轮 tool_calls 循环）。 */
+  toolExecutor?: ToolExecutor | null;
+  /** 连续工具调用轮数上限（默认 8）。 */
+  maxToolRounds?: number;
 }
 
 export interface UseMessageReturn {
@@ -253,10 +272,15 @@ export function useMessage(options: UseMessageOptions): UseMessageReturn;
 
 ```ts
 export interface UseConversationOptions {
+  connector: AiConnector;
+  /** 自建 engine 的构造选项（排除 `connector`/`engine`——热替换路径 + buildEngine 静默丢弃面，open P2-1/P2-2）。 */
+  createEngineOptions?: Omit<UseMessageOptions, 'connector' | 'engine'>;
   storage?: ConversationStorageStrategy;
   autoSaveMessages?: boolean;
-  connector: AiConnector;
-  createEngineOptions?: Omit<UseMessageOptions, 'connector'>;
+  /** 初始会话列表（提供 `storage` 时忽略）。 */
+  initialConversations?: AiConversationInfo[];
+  /** AI-28：存储操作失败回调（`{ phase, conversationId?, error }`），非致命。 */
+  onStorageError?: (event: ConversationStorageErrorEvent) => void;
 }
 
 export interface UseConversationReturn {
@@ -278,6 +302,13 @@ export interface UseConversationReturn {
 ```
 
 照搬 tiny-robot 双层模型：`conversations` 数组始终全量内存；`engines: Map` 惰性创建，切走时清理非活跃非 processing 的 engine，保留正在流式的会话后台运行。
+
+> **行为注记（2026-08-10，multi P2-2/P2-7 + open P2-1/P2-2；接口清单本体同步归 `docs/plans/2026-08-10-1606-3-ai-contract-doc-truthfulness-remediation.md`）**
+>
+> - **unmount 清理 = detach-before-abort**：卸载 cleanup 先 unsubscribe autoSave 再 abort in-flight engine（与 `clearAll` K3 同序），并清空 `pendingSavesRef`——卸载期 abort 不再入队无人排空的 aborted 快照 save（multi P2-2）。
+> - **bootstrap effect 依赖稳定**：mount bootstrap 经 `storageRef` 镜像读取（host 每 render 内联构造 storage 不再逐 render 重跑 `loadConversations`；multi P2-7）。
+> - **connector 变更 fan-out**：`connector` 变更时对 engineCache 全量自建 engine `setConnector`（open P2-1）。
+> - **`createEngineOptions` 收窄**：类型排除 `engine`（`Omit<UseMessageOptions, 'connector' | 'engine'>`）——被 `buildEngine` 静默丢弃的字段不再可传（open P2-2）。
 
 > **存储/驱逐契约（0730-1 P1 修正）**
 >
@@ -359,20 +390,20 @@ export interface AiConnector {
 由于 `env.stream` 已自动处理 SSE 切分 + JSON 解析（参见 `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md` §第 2 轮），组装 Connector 非常简洁：
 
 ```ts
-// host 应用代码示例（apps/playground/src/ai-connectors.ts）
+// host 应用代码示例（apps/playground/src/ai/openai-connector.ts）
 import { createStreamBasedAiConnector, type AiConnector } from '@nop-chaos/flux-renderers-ai';
 
-export function createOpenAIConnector(
+export function createOpenAICompatibleConnector(
   env: RendererEnv,
   config: { baseURL: string; apiKey: string; model: string },
 ): AiConnector {
   return createStreamBasedAiConnector({
     env,
     buildRequest: (req) => ({
-      url: `${config.baseURL}/chat/completions`,
+      url: `${config.baseURL.replace(/\/$/, '')}/chat/completions`,
       method: 'POST',
       headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
-      body: { model: config.model, messages: req.messages, tools: req.tools, stream: true },
+      data: { model: config.model, messages: req.messages, tools: req.tools, stream: true },
       // env.stream 默认就是 streamProtocol: 'sse' + streamChunkType: 'json'，无需显式指定
     }),
   });
@@ -406,11 +437,12 @@ export const myCustomConnector: AiConnector = {
 host 在 `xui:imports` 注册 connector 实例：
 
 ```ts
-// host 应用启动代码
+// host 应用启动代码（playground：apps/playground/src/ai/openai-connector.ts 的
+// createOpenAICompatibleConnector，配置经 resolveOpenAIConfigFromEnv 读取 VITE_* 环境变量）
 runtime.registerImport('ai', {
   connectors: {
-    openai: createOpenAIConnector(env, { baseURL: '...', apiKey: '...', model: 'gpt-4' }),
-    deepseek: createOpenAIConnector(env, { baseURL: 'https://api.deepseek.com/v1', ... }),
+    openai: createOpenAICompatibleConnector(env, { baseURL: '...', apiKey: '...', model: 'gpt-4' }),
+    deepseek: createOpenAICompatibleConnector(env, { baseURL: 'https://api.deepseek.com/v1', ... }),
   }
 });
 ```
@@ -428,9 +460,15 @@ schema 通过表达式引用：
 
 ```ts
 export interface UseMessageOptions {
-  connector: AiConnector;
+  engine?: MessageEngine | null;
+  connector: AiConnector | null;
   initialMessages?: ChatMessage[];
   plugins?: MessageEnginePlugin[];
+  extraRequestParams?: Record<string, unknown>;
+  systemPrompt?: string;
+  tools?: AiToolSchema[];
+  toolExecutor?: ToolExecutor | null;
+  maxToolRounds?: number;
 }
 ```
 
@@ -446,7 +484,7 @@ engine 在内部调 `connector.stream({ messages, tools, signal })`；不再有 
 
 ## §Invariants — AI Engine 不变式契约
 
-> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）；2026-08-09 Cycle 2 / I1（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`，N1-N5 → 第二批门禁 ⑥-⑩ 沉淀）；**2026-08-10 Cycle 2 / I4（plan `docs/plans/2026-08-10-0925-2-cycle2-i4-fix-execution.md`：13 条 K finding 全部修复 + 12 处 `it.fails` 翻转 + 注册红清零 + 门禁 ⑥⑦⑨⑩②④ 补强）**；**2026-08-10 双审计 P1（plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`：6 条 P1 修复 + 门禁 ⑩ dangling-tool_calls 成员 + ⑪ plugin ctx 写隔离新族 + ④ fan-out 源成员）**
+> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）；2026-08-09 Cycle 2 / I1（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`，N1-N5 → 第二批门禁 ⑥-⑩ 沉淀）；**2026-08-10 Cycle 2 / I4（plan `docs/plans/2026-08-10-0925-2-cycle2-i4-fix-execution.md`：13 条 K finding 全部修复 + 12 处 `it.fails` 翻转 + 注册红清零 + 门禁 ⑥⑦⑨⑩②④ 补强）**；**2026-08-10 双审计 P1（plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`：6 条 P1 修复 + 门禁 ⑩ dangling-tool_calls 成员 + ⑪ plugin ctx 写隔离新族 + ④ fan-out 源成员）**；**2026-08-10 双审计 P2（plan `docs/plans/2026-08-10-1606-1-engine-adapter-p2-remediation.md`：⑧ break/throw 扩面 + adapter 面行为修正——unmount detach-before-abort / bootstrap storage 依赖稳定化 / connector fan-out / createEngineOptions 类型收窄 / O-2 注释重写）**
 
 AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大复发失败模式族（并发守卫 / stale-closure / storage 静默丢），已沉淀为**首批 5 类可执行不变式契约**，防重构/新增方法回归。I2 审计在门禁盲区发现 K1-K4 四个实例（I3 裁决 P0/P1），I4 修复并把门禁补强至对应路径；Cycle 1 / I6 按 Loop Rule 派生的 Cycle 2 新族 N1-N5（active 位移完整性 / bootstrap 合并 / branch 戳泄漏 / plugin 错误隔离 / 失败轮残留污染），已沉淀为**第二批门禁 ⑥-⑩**（见下节）：
 
@@ -460,10 +498,18 @@ AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大�
 - **⑥ active 位移完整性（N1）**：post-await 提升/复水写入（`setActiveEngine`/`engine.setMessages`）以 `activeIdRef`/`switchVersionRef` 为唯一裁决面且目标必须仍存在；位移方法（delete/clearAll/create）必须 bump `switchVersionRef` + 重置 `switchTargetRef`；switch 入口 exists 检查读镜像；version guard 为 id-aware（同 id 重 switch 不丢 hydration）；删除 active 后 next 引擎 build-on-demand；bootstrap 选中 active 建引擎 + loadMessages（K-⑥-3）。扫描器：`scanDisplacementVersionBumps`（live 零命中）。
 - **⑦ storage bootstrap 列表合并（N2）**：bootstrap post-await `setConversations` 必须合并（不得覆盖加载期间创建的会话）+ clearAll 守卫（已清列表不复活，K-⑦-1）。
 - **⑧ branch 戳消费/清除（N3）**：`pendingBranchId` 使用前必须消费或清除；runTurn 提前返回路径不得遗留待消费戳（connector-missing 早退已清戳）。扫描器：`scanBranchStampReset`（live 零命中）。
+- **⑧ 扩面（2026-08-10，multi P2-1）**：覆盖路径从「提前 `return`」扩展到 **break/throw 早退**——abort while-head break（`if (signal.aborted) break`）与 plugin `onTurnStart` 抛错（catch）两条在 runOnce 消费前退出 turn 的路径均曾残留 `pendingBranchId`（下一无关 turn 被误戳 branchId + regenerate 序列偏移）。修复：break 前置清戳 + catch 内清戳（同 connector-missing 语义）。**门禁扩面**：静态扫描器 `scanBranchStampReset` 三条规则（return / break 前缀清除 / pre-runOnce plugin-await try 的 catch 清除，committed 回归 fixture +4）；运行时参数化成员 +3（break 臂 / throw 臂 / regenerate 序列臂，`it.fails` 落库 → 翻转 `it`）。详见 `docs/audits/ai-invariants/invariant-catalog.md` §9.3 注记。
 - **⑨ plugin 错误隔离（N4）**：plugin hook rejection 不得使 turn 卡死或绕过状态写入——onTurnStart 纳入 try 清理面；onError 经 `callPluginError` 隔离（抛错不跳过状态写入）；onTurnEnd rejection 隔离（不 reject host-facing promise，abort 变体 K-⑨-1）。
 - **⑩ 失败轮产物清理（N5）**：failed/aborted/退化成功（零 chunk）轮的空产物（`content:''` + 无 finishReason）不得进入请求历史与 autoSave 快照——终态提交层 drop（`commitOrDropResidue`）+ buildContext 尾部排除 + autoSave 尾部剥除（K-⑩-1/2/3/4/5）。
 - **⑩ 扩展（2026-08-10，P1-2）**：**dangling tool_calls 形状**——assistant 消息携带 `tool_calls` 且其后无配对 `role:'tool'` 响应（`tool_call_id` 匹配）时，**不得作为 tool_calls 携带者**进入请求载荷 / autoSave / 后续轮次历史（严格 OpenAI 兼容后端对无配对 tool 响应的 tool_calls 返回 400，重试环反复失败）。**content-agnostic** 判定（交错文本+tool_calls 形状同样覆盖）：内容非空 → strip `tool_calls` 保留文本；内容为空 → 整体 drop；部分配对（multi-call 部分 commit 后 abort）→ 仅 strip 无配对条目（不得整数组 strip 使已 commit 的 tool 消息孤儿化）。统一谓词 `isDanglingToolCallsMessage` / `cleanDanglingToolCalls` / `sanitizeDanglingToolCalls`（`engine/utils.ts`），三个清理面（runOnce abort 分支 / tool-no-executor / runTurn abort-mid-executor 返回）+ buildContext 投影 + autoSave 臂同源。独立于 `isVacuousAssistantResidue`（后者要求 `!finishReason`——dangling 轮带 `finishReason:'tool_calls'`）。
 - **⑪ plugin ctx 写隔离（2026-08-10，open P1-1）**：全部 plugin hook 的 `ctx.request.messages` 不得是 engine 的 live message 数组——`buildContext` 无条件产出数组 + 元素双重隔离副本（`sanitizeDanglingToolCalls(...).map(projectWireMessage)`）。按 engine.md §8.3 文档模式 push system prompt 只能塑造出站请求，**不能写穿 engine 历史**（绕过 `mutate`/notify → 永久进历史 → 流向下轮载荷与 autoSave 快照的污染路径已封堵）。同族：**请求载荷白名单化（P1-5）**——`AiConnectorRequest.messages` 是 wire 投影：渲染器私有 `state`（editing 草稿 / toolCall UI / thinking，design.md §11.5「不投影」）与内部工具 metadata（`toolError` Error stack / `toolStatus`）在 engine 边界剥离（白名单 `{id, role, content, reasoning_content, tool_calls, tool_call_id, name}` + 良性 metadata），全部 connector 按契约收到干净载荷。
+
+### adapter 面行为注记（2026-08-10，multi P2-2/P2-7 + open P2-1/P2-2）
+
+- **unmount 清理顺序（multi P2-2）**：`useConversation` 的 unmount cleanup 与 `clearAll` 同序——**先 detach（unsubscribe autoSave）再 abort**。abort 的 `requestState` 翻转（`processing` → `aborted`）会触发 autoSave 回调；卸载期若 listener 仍挂载，会把 aborted 快照 save 入队到已无 drain 面的 hook（快速 remount 的 cross-mount ghost）。卸载路径同时清空 `pendingSavesRef`（卸载前排入的已完成 turn save 由 promise 链自行结算，镜像再校验存活于闭包）。
+- **bootstrap 依赖稳定化（multi P2-7）**：mount bootstrap effect 读 `storageRef.current`（ref 镜像，对齐 `connectorRef` 先例），effect deps 不再含 `storage`——host 每 render 内联构造 storage 不再逐 render 重跑 `loadConversations()`（每次重跑会 abort 上一 controller）。
+- **connector 变更 fan-out（open P2-1）**：`connector` 变更时对 `engineCache` 全量自建 engine fan-out `setConnector(connector)`（与 `useMessage` 的 hot-swap 同语义，2151 hot-swap 族；m4「绝不触碰外部 engine 的 connector」不适用——cache 只持有本 hook 自建 engine）。`buildEngine` 后续新建 engine 仍取最新 `connectorRef.current`。
+- **createEngineOptions 类型收窄（open P2-2）**：`Omit<UseMessageOptions, 'connector' | 'engine'>`——`engine` 此前可传但被 `buildEngine` 静默丢弃（类型契约静默 no-op），现编译期报错。其余字段（plugins/tools/toolExecutor/systemPrompt 等）有意 build-time 捕获：引擎按会话惰性构建，host 变更选项即新建 engine（与 use-message hot-swap scope 文档同语义）。
 
 ### 空产物清理设计裁定（K-⑩，重构防回退）
 
@@ -496,6 +542,6 @@ engine/adapter 任何新增或重构的变更方法若不在测试表也不在�
 - **失败轮空 placeholder 进后续历史/持久化**（⑩/N5）：失败轮 catch 提交 `loading=false, content=''` 的 assistant placeholder，`buildContext` 仅排除 `loading===true` 尾消息 → 空块进入下一请求（严格后端拒绝）且经 autoSave 持久化。**修复**：空产物（`content:''` + 无 finishReason）统一谓词 `isVacuousAssistantResidue`（`engine/utils.ts`）——终态提交层 drop（`commitOrDropResidue`）、buildContext 尾部排除扩展、autoSave 快照尾部剥除（K-⑩-1/2/3/4/5，bug note 125）。
 - **plugin hook rejection 卡死 turn**（⑨/N4）：`onTurnStart` 在 try 之外（rejection 使 `processing` 卡死）、catch 内 `onError` 先于状态写入（抛错跳过 mutate）、`onTurnEnd` rejection 遮蔽原错误。**修复**：onTurnStart 移入 try；`callPluginError` 隔离全部 onError 调用点；onTurnEnd rejection 隔离（不 reject host-facing promise，abort 变体 K-⑨-1，bug note 130）。
 - **active 位移错位**（⑥/N1）：switch 在途 × delete/clearAll/create 时，post-await 提升/复水可能覆盖被位移的 active 状态；delete active 后 next 引擎 null 悬挂；同 id 快速重 switch hydration 被 version guard 丢弃。**修复**：位移方法 bump + 镜像写面 + id-aware version guard + build-on-demand（bootstrap/delete-fixup，K-⑥-1/2/3，bug note 126）。
-- **branch 戳泄漏**（⑧/N3）：connector-missing 早退遗留 `pendingBranchId` → 下一无关 turn 被戳 branchId。**修复**：早退前清戳（bug note 125/130 同文件面）。
+- **branch 戳泄漏**（⑧/N3）：connector-missing 早退遗留 `pendingBranchId` → 下一无关 turn 被戳 branchId。**修复**：早退前清戳（bug note 125/130 同文件面）。**2026-08-10 multi P2-1 扩面**：abort while-head break 与 onTurnStart 抛错（catch）两条 pre-runOnce 早退同样残留戳（`it.fails` ×3 落库 → 翻转 `it`）；修复 = break 前置清戳 + catch 内清戳 + 扫描器 break/throw 规则（bug note 137）。
 - **bootstrap 列表覆盖**（⑦/N2）：bootstrap 整体覆盖加载期间创建的会话。**修复**：合并 + clearAll 守卫（K-⑦-1，bug note 127）。
 - **storage 元数据幽灵**（②/④，K-K4/②-1/2 + K-K3/④-1）：delete/clearAll 缺镜像写面 → rename 重存已删会话；rename/create 元数据写不入排空链 → gated 写晚于 clearAll 落盘。**修复**：镜像写面全方法同步 + 元数据写入排空链 + settlement-time 再校验（bug notes 128/129）。

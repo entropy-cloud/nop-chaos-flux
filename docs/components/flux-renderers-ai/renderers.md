@@ -18,7 +18,6 @@ export interface AiChatSchema extends BaseSchema {
   placeholder?: string;
   emptyState?: SchemaInput; // value-or-region：空消息态；engine 为 null（会话切换瞬间）时也渲染此 region（engine-null-switch）
   systemPrompt?: string;
-  autofocus?: boolean;
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
   maxLength?: number;
   showWordLimit?: boolean;
@@ -75,7 +74,7 @@ export interface AiChatSchema extends BaseSchema {
 
 > Failure-Path 变体（`ai-chat.tsx` 早返回分支）：
 >
-> - `engine-null-switch`（host 注入 `null`，如会话切换瞬间）：`data-state="empty"`，根下渲染 `<div data-slot="ai-chat-empty">…</div>`（`emptyState` region 或默认文案）。
+> - `engine-null-switch`（host 注入 `null`，如会话切换瞬间）：`data-state="empty"`，根下渲染 `<div data-slot="ai-chat-empty">…</div>`（`emptyState` region 或默认文案）。**无 ghost 写入（multi-audit P2-8，2026-08-10）**：窗口期 `ComponentHandle` 与 `ai` namespace 绑定**显式 null engine**——`component:sendMessage` / `ai:send` 等 engine 动作返回 `{ ok: false, error: 'ai-chat engine is not ready …' }`（显式拒绝），**不**写入将被隐藏的自建 engine（B 到达时其消息会蒸发）；conversation 动作（controller-bound）照常工作。
 > - `connector-missing`（无 engine 且无 connector）：`data-state="error"`，根下渲染 `<div data-slot="ai-chat-error">…</div>`。
 >
 > `data-state` 反映 `engine.requestState`（`idle|processing|completed|aborted|error`）或上述 `empty` 变体，便于 CSS 选择器做状态样式。
@@ -234,9 +233,7 @@ export interface BubbleToolRendererMatch {
 export interface AiSenderSchema extends BaseSchema {
   type: 'ai-sender';
   placeholder?: string;
-  disabled?: boolean;
   loading?: SchemaValue; // engine.isProcessing 的镜像，true 显示停止按钮
-  autofocus?: boolean;
   maxLength?: number;
   showWordLimit?: boolean;
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
@@ -280,6 +277,7 @@ export interface AiSenderExtensionProps {
 - P0 不依赖 Tiptap。使用 `@nop-chaos/ui` 的 `Textarea` + `Button`。
 - 内部 `useState` 持有 draft text；提交时调 `engine.sendMessage(text)` 并触发 `onSubmit` event。
 - `loading` 默认从 `useAiChatContext().isProcessing` 派生；显式 `loading` 字段优先。
+- **P2-5 disabled 契约（2026-08-10 multi-audit）**：`disabled` 是**节点级 meta 字段**（编译器 `BOOLEAN_META_FIELDS`，非 schema prop，`AiSenderSchema` 无 `disabled` 字段）——`props.meta.disabled === true` 时 Textarea / 提交 / 停止按钮全部禁用（跨包契约，与 layout/content/scheduling/industrial 一致）；扩展路径同步传 `disabled`（`AiSenderExtensionProps.disabled` 已接线，不再死字段）。
 - Enter 提交 / Shift+Enter 换行按 `submitType` 处理。
 - 字数超限：禁用提交按钮 + 显示红色计数。
 - 取消（停止）按钮：`engine.abort()` + 触发 `onCancel` event。
@@ -363,7 +361,9 @@ export interface AiFeedbackSchema extends BaseSchema {
   type: 'ai-feedback';
   message?: SchemaValue; // ChatMessage（用于 copy / refresh 内容源）
   actions?: Array<'copy' | 'refresh' | 'like' | 'dislike' | 'sources'>;
-  // 默认 ['copy', 'refresh']
+  // open-audit P2-7（2026-08-10）：省略/未解析 → 默认 ['copy', 'refresh']；
+  // 显式 `actions: []` → 渲染空操作栏（host 可表达"无操作栏"，如只读 transcript）；
+  // 显式数组（含全未知项过滤为空）→ 渲染过滤后结果（显式意图优先于静默默认）
 
   onAction?: ActionSchema; // { action: 'copy'|'refresh'|..., message }
 }
@@ -455,7 +455,8 @@ export interface AiToolCallSchema extends BaseSchema {
 - `approval === 'pending'`：卡片底部渲染 approve/reject 按钮（`@nop-chaos/ui` `Button`，绿色 approve / 中性 reject），根节点加 `data-requires-approval=""`（presence-only）与 `data-approval="pending"`；a11y 焦点陷阱——进入 pending 时聚焦 approve，Tab 在 approve/reject 间循环，Esc 还原先前焦点。
 - 点击触发 `onApproval` event，payload `{ action: 'approve'|'reject', toolCall, toolCallId }`；engine **不**改 `approval`（host 决策后写回）。
 - `approved`/`rejected`：按钮区隐藏，改为已决策徽标（✓ Approved 绿 / ✗ Rejected 红，复用 A-12 色板），`data-approval-decision`。
-- `hitl-no-handler`：host 未挂 handler 时按钮可点但 event 无效（flux action no-op），`approval` 不变。
+- `hitl-no-handler`：host 未挂 handler 时按钮 **disabled**（无死点击）+ title 提示；`approval` 不变。
+- **气泡路径（multi-audit P2-4，2026-08-10）**：默认气泡路径的 pending 工具卡（`ToolsContentRenderer` → `FallbackToolCallCard`）同样可达——`ai-chat` schema `onApproval` event 经 `AiChatContextValue` → `AiMessageList` → `AiBubbleViewProps` → 消息级 tools renderer 全链线程（对齐 `onBranchChange` 先例），host 注册的自定义工具卡与 `*` fallback 均收到 `BubbleToolRendererProps.onApproval`（additive 可选字段）。独立 `ai-tool-call` renderer 路径与独立 `ai-bubble` renderer（schema `onApproval` event）亦接线；未接线时按钮 disabled（`hitl-no-handler` 不变）。
 
 ## 10b. ai-citations（Widget, P3, A-13）
 
@@ -485,6 +486,8 @@ export interface AiCitationsSchema extends BaseSchema {
 ### 来源优先级 + 安全
 
 来源读取顺序：显式 `sources` prop > `message.metadata.sources` > `data-sources` ChatMessageDataPart（A-1）。`citation-no-sources`：检测到 `[N]` 但无对应来源时，标记渲染但卡片显示空态文案。
+
+**引用索引上限（open-audit P2-8，2026-08-10）**：`[N]` 仅当 `1 ≤ N ≤ 64` 时解析为引用标记；超出上限（如 "Since [2026]" 的年份）与 `0`/负数一样按字面文本渲染（不产生可点 sup / 空卡片）。裁定理由：sources 可选（`citation-no-sources` 空卡是有意保留的 Failure Path），来源匹配约束会压制该路径；上限约束简单稳定且年份（≥1000）全部落于界外。
 
 安全：inline 路径对**原始** `message.content` 直接做 `[N]` 解析，每个文本 run 渲染为**受控 React 文本节点**（绝不用 `dangerouslySetInnerHTML` 处理用户内容）——`<`/`>`/`&` 由 React 恰好转义一次，`<script>` 元素不可能进入 DOM（XSS 门）。**不再**先经 `sanitizeHtml`（DOMPurify）：其输出为 HTML 转义串，再经 React 文本节点渲染会二次转义（`5 < 3` → 字面 `&lt;` 双编码，且会吞掉禁标签内的引用标记——multi-audit P1-d 裁定移除）；markdown 路径（`ai-bubble/renderers/markdown.tsx`）仍用 `sanitizeHtml`（react-markdown 会重新解析 HTML 实体，无双编码）。引用标记渲染为**受控 React 元素**，防 XSS。
 
@@ -605,28 +608,30 @@ export interface AiMcpManagerSchema extends BaseSchema {
 
 ## 13. Events 总览
 
-| 渲染器           | event                                                                | payload                                                                              |
-| ---------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| ai-chat          | `onResponseComplete`                                                 | `{ message: ChatMessage }`                                                           |
-| ai-chat          | `onError`                                                            | `{ error: Error }`                                                                   |
-| ai-chat          | `onAbort`                                                            | `{}`                                                                                 |
-| ai-chat          | `onConversationChange`                                               | `{ conversationId }`（resolved activeConversationId prop 变化时派发；含清空到 null） |
-| ai-chat          | `onBranchChange`                                                     | `{ type: 'ai:branch-change', branchId }`                                             |
-| ai-sender        | `onSubmit`                                                           | `{ text: string }`                                                                   |
-| ai-sender        | `onCancel`                                                           | `{}`                                                                                 |
-| ai-sender        | `onChange`                                                           | `{ text: string }`                                                                   |
-| ai-bubble        | `onBranchChange`                                                     | `{ type: 'ai:branch-change', branchId }`                                             |
-| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ type?: 'ai:conversation-*', id?, conversation?, title? }`                         |
-| ai-prompts       | `onSelect`                                                           | `{ item, index }`                                                                    |
-| ai-feedback      | `onAction`                                                           | `{ action, message }`                                                                |
-| ai-attachments   | `onChange` / `onError` / `onUpload`                                  | `{ attachments }` / `{ reason }` / `{ attachments }`                                 |
-| ai-tool-call     | `onApproval` (P3 HITL)                                               | `{ action, toolCall, toolCallId }`                                                   |
-| ai-citations     | `onSourceClick`                                                      | `{ source, index }`                                                                  |
-| ai-token-usage   | `onClick`                                                            | `{ usage }`                                                                          |
-| ai-suggestions   | `onSelect`                                                           | `{ item, index }`                                                                    |
-| ai-voice-input   | `onResult`                                                           | `{ transcript }`                                                                     |
-| ai-voice-input   | `onError`                                                            | `{ reason: 'unsupported' \| 'permission-denied' \| 'no-result' }`                    |
-| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                                                                                 |
+| 渲染器           | event                                                                | payload                                                                                 |
+| ---------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| ai-chat          | `onResponseComplete`                                                 | `{ message: ChatMessage }`                                                              |
+| ai-chat          | `onError`                                                            | `{ error: Error }`                                                                      |
+| ai-chat          | `onAbort`                                                            | `{}`                                                                                    |
+| ai-chat          | `onConversationChange`                                               | `{ conversationId }`（resolved activeConversationId prop 变化时派发；含清空到 null）    |
+| ai-chat          | `onBranchChange`                                                     | `{ type: 'ai:branch-change', branchId }`                                                |
+| ai-chat          | `onApproval`（P2-4 2026-08-10，气泡路径 HITL）                       | `{ type: 'ai:tool-call-approval', action }`（经 AiChatContextValue 线程到气泡内工具卡） |
+| ai-sender        | `onSubmit`                                                           | `{ text: string }`                                                                      |
+| ai-sender        | `onCancel`                                                           | `{}`                                                                                    |
+| ai-sender        | `onChange`                                                           | `{ text: string }`                                                                      |
+| ai-bubble        | `onBranchChange`                                                     | `{ type: 'ai:branch-change', branchId }`                                                |
+| ai-bubble        | `onApproval`（P2-4 2026-08-10，独立气泡路径）                        | `{ type: 'ai:tool-call-approval', action }`                                             |
+| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ type?: 'ai:conversation-*', id?, conversation?, title? }`                            |
+| ai-prompts       | `onSelect`                                                           | `{ item, index }`                                                                       |
+| ai-feedback      | `onAction`                                                           | `{ action, message }`                                                                   |
+| ai-attachments   | `onChange` / `onError` / `onUpload`                                  | `{ attachments }` / `{ reason }` / `{ attachments }`                                    |
+| ai-tool-call     | `onApproval` (P3 HITL)                                               | `{ action, toolCall, toolCallId }`                                                      |
+| ai-citations     | `onSourceClick`                                                      | `{ source, index }`                                                                     |
+| ai-token-usage   | `onClick`                                                            | `{ usage }`                                                                             |
+| ai-suggestions   | `onSelect`                                                           | `{ item, index }`                                                                       |
+| ai-voice-input   | `onResult`                                                           | `{ transcript }`                                                                        |
+| ai-voice-input   | `onError`                                                            | `{ reason: 'unsupported' \| 'permission-denied' \| 'no-result' }`                       |
+| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                                                                                    |
 
 ## 14. 端到端 Schema 示例
 

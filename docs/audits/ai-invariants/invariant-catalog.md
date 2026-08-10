@@ -1,6 +1,6 @@
 # AI Engine 不变式目录（Invariant Catalog）
 
-> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展 + Cycle 2 / I1 §9 新族 ⑥-⑩ 沉淀 + Cycle 2 / I4 §10 补强扩展 + 2026-08-10 双审计 P1 §11 扩展（⑩ dangling 成员 + ⑪ 新族 + ④ fan-out 源），供 I5 验证与后续审计引用）
+> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展 + Cycle 2 / I1 §9 新族 ⑥-⑩ 沉淀 + Cycle 2 / I4 §10 补强扩展 + 2026-08-10 双审计 P1 §11 扩展（⑩ dangling 成员 + ⑪ 新族 + ④ fan-out 源）+ 2026-08-10 契约/文档族 P2 §2/§4/§9 锚点行号校准（multi P2-16），供 I5 验证与后续审计引用）
 > Last Updated: 2026-08-10
 > Source: `docs/backlog/ai-invariant-loop-roadmap.md`（Cycle 1 / I0 + Cycle 2 / I1 派生）+ 4 轮 AI 审计（`docs/audits/2026-07-23-2141-*ai.md`、`2026-07-24-1757-*ai.md`、`2026-07-24-2151-*ai.md`、`2026-07-25-0707-*ai.md`）+ C8.1/8.2/8.3 + post-closure + Bug 07 note + I4 修复执行（K1-K4）+ Cycle 2 / I1 沉淀执行（N1-N5 → ⑥-⑩）+ 2026-08-09-1826 双审计 P1 修复执行（plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`）
 > Produced By: plan `docs/plans/2026-08-09-1826-1-i0-invariant-inventory-baseline.md`（纯文档计划）；扩展于 plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`（K1-K4 + 门禁 ②③④⑤ 补强）；§9 沉淀于 plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`（⑥-⑩ 第二批门禁）；§11 扩展于 plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`（⑩ dangling 成员 + ⑪ 新族 + ④ fan-out 源）
@@ -20,7 +20,7 @@
 
 ## 2. 首批 5 类不变式
 
-> 每条四字段：**不变式陈述 / 覆盖失败族 / 历史 bug 证据（live `文件:行` 或 bug note 编号）/ 检测方法**。所有行号均经 2026-08-09 live 复核。三大复发族当前终态均为「已修复」（§2.6 逐条核对记录），本目录把它们沉淀为**可执行契约**，防重构/新增方法回归（I1 落门禁）。
+> 每条四字段：**不变式陈述 / 覆盖失败族 / 历史 bug 证据（live `文件:行` 或 bug note 编号）/ 检测方法**。所有行号均经 **2026-08-10 live 复核**（multi P2-16 校准；此前 2026-08-09 记录值在 Cycle 2 / I4 与 2026-08-10 双审计修复后漂移 +108~+185，已全部修正为 live 值——**锚点随代码演化持续漂移，审计/维护者以 live 复核为准**，本节记录值仅为最近一次校准快照）。三大复发族当前终态均为「已修复」（§2.6 逐条核对记录），本目录把它们沉淀为**可执行契约**，防重构/新增方法回归（I1 落门禁）。
 
 ### 2.1 不变式 ① —— 异步变更入口 `isProcessing` 守卫
 
@@ -30,7 +30,7 @@
   - `docs/bugs/07-submit-concurrent-guard-fix.md`（Bug 07：submit 无并发守卫 → 双 API 调用 + finally 早复位；"all mutating async methods should have a concurrency guard" 是首次实例）
   - `docs/audits/2026-07-23-2141-multi-audit-ai.md` **[AI-01]**（P0：`sendMessage`/`send`/`runTurn` 缺并发守卫 = Bug 07 复发；仅 `clear`/`setMessages`/`regenerate` 有守卫，三个主 send 入口无）
   - `docs/audits/2026-07-24-1757-open-audit-ai.md` :21（F1.1 已修复实证）
-  - live 终态（已修复，实证行号）：`create-engine.ts:199-201`（`runTurn` 入口守卫）、`:543-545`（`regenerate` 入口守卫）、`:525-527`（`clear` in-flight 守卫）、`:142-144`（`setMessages` in-flight 守卫）
+  - live 终态（已修复，实证行号）：`create-engine.ts:206-208`（`runTurn` 入口守卫）、`:672-674`（`regenerate` 入口守卫）、`:654-656`（`clear` in-flight 守卫）、`:149-151`（`setMessages` in-flight 守卫）
 - **检测方法**：静态 grep——`async function (sendMessage|send|runTurn|regenerate)\b` 的函数体首个状态读取必须出现 `isProcessing` 检查（`if (adapter.getState().isProcessing) return;`），缺失即违例；`clear`/`setMessages` 同理（守卫形式不同但必须存在）。运行时断言——in-flight 期间二次 `sendMessage` 不产生第二次 connector 请求、`requestState` 不被改写（I1 参数化方法表驱动）。
 
 ### 2.2 不变式 ② —— `await` 后状态读取用 `activeIdRef`/`versionRef`（非闭包捕获）
@@ -40,7 +40,7 @@
 - **历史 bug 证据**：
   - `docs/audits/2026-07-25-0707-multi-audit-ai.md` **[P1-1]**（`deleteConversation` post-await stale-closure race；:56-82 含完整风险链：delete 流式会话 → abort await 间隙 create Y → post-await 闭包读取 `activeId==='X'` → `setActiveId(null)` 覆盖 `setActiveId('Y')`）
   - 先例（已修复）：`switchConversation` 的 P1-3 修复（version guard + activeIdRef，见 :117-129 注释块 + `:313`/`:324` version 检查）
-  - live 终态（已修复，实证行号）：`use-conversation.ts:126-129`（`activeIdRef` mirror + effect）、`:133-136`（`conversationsRef` mirror）、`:121`（`switchVersionRef`）、`:313`/`:324`（switch post-await version guard）、`:339`（eviction 读 `activeIdRef.current`）、`:360-366`（deleteConversation post-await 读 `activeIdRef.current` + `conversationsRef.current`）
+  - live 终态（已修复，实证行号）：`use-conversation.ts:147-151`（`activeIdRef` mirror + effect）、`:154-157`（`conversationsRef` mirror）、`:136`（`switchVersionRef`）、`:464`/`:477`（switch post-await version guard）、`:492`（eviction 读 `activeIdRef.current`）、`:522-540`（deleteConversation post-await 读 `activeIdRef.current` + `conversationsRef.current`）
 - **检测方法**：静态 grep——`async function` 体内 `await` 之后出现的 `activeId`/`conversations` 裸读取（非 `Ref.current`）即违例；运行时断言——delete-during-abort + 并发 create 交错后新会话保持 active（既有回归：`adapters/__tests__/use-conversation-delete-during-abort.test.ts`、`use-conversation-switch.test.ts`）。
 
 ### 2.3 不变式 ③ —— `catch`/`finally` 的 controller 写入做身份守卫
@@ -49,7 +49,7 @@
 - **覆盖失败族**：controller 生命周期族（1757 发现：AI-01 守卫修了入口，未修出口）。
 - **历史 bug 证据**：
   - `docs/audits/2026-07-24-1757-multi-audit-ai.md` **[P1] abort→send race clobbers the new turn's controller and requestState**（:34-62：finally 无条件 `abortController=null`（:39-53 证据）；场景 = Turn A 流式 → `abort()` 同步置 false → `sendMessage('next')` 过入口守卫装 controllerB → A 的 catch/finally 续跑 → clobber B；修复建议 :60；Planned Into `docs/plans/2026-07-24-1757-1-ai-message-snapshot-contract-remediation.md` P1#1）
-  - live 终态（已修复，实证行号）：`create-engine.ts:334`（runTurn catch mutate 身份守卫）、`:346-348`（runTurn finally 只清自己的 controller）、`:451`（runOnce 轮次内 post-stream abort 检查身份守卫）、`:470`（runOnce catch 身份守卫）——全部标 `P1#1`
+  - live 终态（已修复，实证行号）：`create-engine.ts:369-371`（runTurn catch mutate 身份守卫）、`:381-385`（runTurn finally 只清自己的 controller）、`:569-571`（runOnce 轮次内 post-stream abort 检查身份守卫）、`:593-595`（runOnce catch 身份守卫）——全部标 `P1#1`
 - **检测方法**：静态 grep——`runTurn`/`runOnce` 的 `catch`/`finally` 块内 `adapter.mutate` recipe 第一行必须是 `draft.abortController ===/!== abortController` 身份判断，缺失即违例；运行时断言——abort→send 紧邻交错后，新 turn 的 `requestState==='processing'` 且 `abortController` 为新控制器（既有回归：`engine/__tests__/engine-concurrency.test.ts`）。
 
 ### 2.4 不变式 ④ —— storage 变更经 `reportStorageError`
@@ -60,7 +60,7 @@
   - `docs/audits/2026-07-25-0707-open-audit-ai.md` **[P1-1] `clearAll()` silently leaves every conversation in storage → ghost rehydration**（:41-68：`rg clearAll **/*.test.*` = 0 hits；失败链 = clearAll 后 remount 时 `loadConversations()` rehydrate 全部已清会话）
   - 先例（已修复）：`docs/audits/2026-07-25-0707-multi-audit-ai.md` :33（P1-2 storage bypass on create/rename → FIXED，经 `reportStorageError({phase:'saveConversation'})`）
   - `docs/audits/2026-07-23-2141-multi-audit-ai.md` **[AI-28]**（:660：bare `catch {}` 吞 storage 失败仅 console.warn → 引 `onStorageError` host 回调）
-  - live 终态（已修复，实证行号）：`use-conversation.ts:97-105`（`reportStorageError` 定义）、`:287-289`（createConversation saveConversation `.catch`）、`:384-386`（renameConversation saveConversation `.catch`）、`:370`（deleteConversation storage delete `.catch`）、`:412-422`（clearAll：`storage.clearAll` 优先 + per-id fan-out，各自 `.catch`→`reportStorageError`）、`:234`（loadConversations catch）、`:318`（loadMessages catch）
+  - live 终态（已修复，实证行号）：`use-conversation.ts:112-120`（`reportStorageError` 定义）、`:421-431`（createConversation saveConversation `.catch` + 排空链）、`:573-585`（renameConversation saveConversation `.catch` + 排空链）、`:546-551`（deleteConversation storage delete `.catch`）、`:589-665`（clearAll：`storage.clearAll` 优先 + per-id fan-out，各自 `.catch`→`reportStorageError`）、`:344`（loadConversations catch）、`:280`/`:471`（loadMessages catch）
 - **检测方法**：静态 grep——`storage?.(saveConversation|deleteConversation|clearAll|loadConversations|loadMessages)` 调用点必须紧跟 `.catch(...reportStorageError...)`，裸 `void storage?....(` 即违例；运行时断言——mock storage 各操作 reject 时 `onStorageError` 收到对应 `phase` 事件且内存状态不损坏（既有回归：`adapters/__tests__/use-conversation-clear-all.test.ts`、`use-conversation-storage.test.ts`）。
 
 ### 2.5 不变式 ⑤ —— abort 路径清理 controller
@@ -70,20 +70,20 @@
 - **历史 bug 证据**：
   - `docs/audits/2026-07-23-2141-open-audit-ai.md` **[F2.2]**（:26/:102：卸载不 abort 在途流 → 孤儿流/连接不释放；:133 建议把 abort/turn-serialization/lifecycle 收敛进 engine 单一职责）
   - `docs/audits/2026-07-24-1757-open-audit-ai.md` :27（F2.2 已修复实证：`use-conversation.ts:223-235`、`use-message.ts:100-108` 均新增自建引擎 unmount-abort——旧行号，当前见下）
-  - live 终态（已修复，实证行号）：`use-conversation.ts:249-261`（unmount effect：cache 中 `isProcessing` engine 逐一 `void engine.abort()` + 订阅清理）、`:353-355`（deleteConversation 对 in-flight engine abort）、`:394-398`（clearAll 对 in-flight engine abort）；`create-engine.ts:509-519`（`abort()` 同步置 `requestState='aborted'`/`isProcessing=false` + `controller.abort()`）、`:342-353`（finally 按身份守卫清理 controller）
+  - live 终态（已修复，实证行号）：`use-conversation.ts:359-385`（unmount effect：**detach-before-abort**（multi P2-2）——先退订 autoSave 再 abort in-flight engine + 清空 `pendingSavesRef`）、`:515-519`（deleteConversation 对 in-flight engine abort）、`:611-615`（clearAll 对 in-flight engine abort）；`create-engine.ts:627-648`（`abort()` 同步置 `requestState='aborted'`/`isProcessing=false` + `controller.abort()` + generator.return()）、`:381-385`（finally 按身份守卫清理 controller）
 - **检测方法**：静态 grep——创建/持有 engine 的组件卸载 effect 必须包含 `engine.getState().isProcessing → engine.abort()` 分支；`abort()` 实现必须同步 mutate `requestState`；运行时断言——unmount 后 connector 的 signal 已 aborted、无遗留订阅（既有回归：`adapters/__tests__/use-conversation-delete-during-abort.test.ts`、`use-conversation-clear-all.test.ts`）。
 
 ### 2.6 三大复发族「已修复」逐条核对记录（Proof）
 
-（2026-08-09 live 逐行核对，全部一致）
+（2026-08-10 live 逐行复核；行号已按 multi P2-16 校准——锚点随代码演化漂移，以 live 复核为准）
 
-| 族                                                      | 计划引用行号                                           | live 实测                                                                                                     | 结论   |
-| ------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------ |
-| 并发守卫族（controller 身份守卫）                       | `create-engine.ts:330-346`                             | catch mutate :329-341（守卫 :334）、finally :342-353（守卫 :346）                                             | ✓ 一致 |
-| 并发守卫族（轮次内 runOnce 守卫）                       | `create-engine.ts:448-472`                             | post-stream abort mutate :447-455（守卫 :451）、catch mutate :466-477（守卫 :470）                            | ✓ 一致 |
-| stale-closure 族（ref 读取）                            | `use-conversation.ts:122-128`                          | `activeIdRef` :126-129（注释 :122-125）                                                                       | ✓ 一致 |
-| stale-closure 族（eviction / delete）                   | `use-conversation.ts:339` / `:360`                     | :339 `const currentActiveId = activeIdRef.current`；:360 `if (activeIdRef.current === id)`                    | ✓ 一致 |
-| storage 静默族（clearAll fan-out + reportStorageError） | clearAll storage fan-out + per-id `reportStorageError` | :412-422（`storage.clearAll` 优先 + per-id `deleteConversation` fan-out，各自 `.catch`→`reportStorageError`） | ✓ 一致 |
+| 族                                                      | 计划引用行号                                                     | live 实测                                                                                                     | 结论   |
+| ------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------ |
+| 并发守卫族（controller 身份守卫）                       | `create-engine.ts:348-386`（K1 完成守卫 :351 + catch 守卫 :370） | 完成 mutate :348-358（守卫 :351）、catch mutate :367-378（守卫 :370）、finally :381-385（守卫 :382）          | ✓ 一致 |
+| 并发守卫族（轮次内 runOnce 守卫）                       | `create-engine.ts:566-608`                                       | post-stream abort mutate :566-579（守卫 :570）、catch mutate :585-608（守卫 :594）                            | ✓ 一致 |
+| stale-closure 族（ref 读取）                            | `use-conversation.ts:147-151`                                    | `activeIdRef` :147-151（注释 :143-146）                                                                       | ✓ 一致 |
+| stale-closure 族（eviction / delete）                   | `use-conversation.ts:492` / `:522`                               | :492 `const currentActiveId = activeIdRef.current`；:522 `if (activeIdRef.current === id)`                    | ✓ 一致 |
+| storage 静默族（clearAll fan-out + reportStorageError） | clearAll storage fan-out + per-id `reportStorageError`           | :589-665（`storage.clearAll` 优先 + per-id `deleteConversation` fan-out，各自 `.catch`→`reportStorageError`） | ✓ 一致 |
 
 ## 3. 已知未覆盖族（Cycle 2+ 候选不变式，Cycle 1 不实现）
 
@@ -98,7 +98,7 @@
 
 ## 4. 审计目标集枚举（变更型方法）
 
-> 供 I1 表完备性门禁（断言测试表方法集 == 本表 + 白名单）与 I2 审计直接引用。行号经 2026-08-09 live 反查。
+> 供 I1 表完备性门禁（断言测试表方法集 == 本表 + 白名单）与 I2 审计直接引用。行号经 **2026-08-10 live 反查**（multi P2-16 校准，锚点以 live 为准）。
 
 ### 4.1 变更型判定准则（裁定）
 
@@ -108,36 +108,36 @@
 
 | #   | 方法                 | 声明（接口）                                             | 实现                      | 类型                                                               |
 | --- | -------------------- | -------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------ |
-| 1   | `sendMessage`        | `engine/types.ts:290`                                    | `create-engine.ts:172`    | engine 异步变更                                                    |
-| 2   | `send`               | `engine/types.ts:291`                                    | `create-engine.ts:185`    | engine 异步变更                                                    |
-| 3   | `abort`              | `engine/types.ts:292`                                    | `create-engine.ts:509`    | engine 异步变更                                                    |
-| 4   | `regenerate`         | `engine/types.ts:334`                                    | `create-engine.ts:542`    | engine 异步变更                                                    |
-| 5   | `clear`              | `engine/types.ts:294`                                    | `create-engine.ts:521`    | engine 同步变更（in-flight 守卫行，非①适用面）                     |
-| 6   | `setMessages`        | `engine/types.ts:311`                                    | `create-engine.ts:139`    | engine 同步变更（同 clear 行类）                                   |
-| 7   | `setMessageEditing`  | `engine/types.ts:320`                                    | `create-engine.ts:153`    | engine **同步变更**（写 `message.state.editing`，纳入理由见 §4.3） |
-| 8   | `createConversation` | `use-conversation.ts:52`（UseConversationReturn :47-59） | `use-conversation.ts:263` | adapter 变更（列表 + activeId + storage）                          |
-| 9   | `switchConversation` | `use-conversation.ts:53`                                 | `use-conversation.ts:293` | adapter 变更（activeId + engine cache + storage）                  |
-| 10  | `deleteConversation` | `use-conversation.ts:54`                                 | `use-conversation.ts:348` | adapter 变更（列表 + activeId + storage）                          |
-| 11  | `renameConversation` | `use-conversation.ts:55`                                 | `use-conversation.ts:374` | adapter 变更（列表 + storage）                                     |
-| 12  | `clearAll`           | `use-conversation.ts:56`                                 | `use-conversation.ts:390` | adapter 变更（列表 + activeId + engine cache + storage）           |
+| 1   | `sendMessage`        | `engine/types.ts:316`                                    | `create-engine.ts:179`    | engine 异步变更                                                    |
+| 2   | `send`               | `engine/types.ts:317`                                    | `create-engine.ts:192`    | engine 异步变更                                                    |
+| 3   | `abort`              | `engine/types.ts:318`                                    | `create-engine.ts:627`    | engine 异步变更                                                    |
+| 4   | `regenerate`         | `engine/types.ts:360`                                    | `create-engine.ts:671`    | engine 异步变更                                                    |
+| 5   | `clear`              | `engine/types.ts:320`                                    | `create-engine.ts:650`    | engine 同步变更（in-flight 守卫行，非①适用面）                     |
+| 6   | `setMessages`        | `engine/types.ts:337`                                    | `create-engine.ts:146`    | engine 同步变更（同 clear 行类）                                   |
+| 7   | `setMessageEditing`  | `engine/types.ts:346`                                    | `create-engine.ts:160`    | engine **同步变更**（写 `message.state.editing`，纳入理由见 §4.3） |
+| 8   | `createConversation` | `use-conversation.ts:57`（UseConversationReturn :53-65） | `use-conversation.ts:385` | adapter 变更（列表 + activeId + storage）                          |
+| 9   | `switchConversation` | `use-conversation.ts:58`                                 | `use-conversation.ts:436` | adapter 变更（activeId + engine cache + storage）                  |
+| 10  | `deleteConversation` | `use-conversation.ts:59`                                 | `use-conversation.ts:501` | adapter 变更（列表 + activeId + storage）                          |
+| 11  | `renameConversation` | `use-conversation.ts:60`                                 | `use-conversation.ts:554` | adapter 变更（列表 + storage）                                     |
+| 12  | `clearAll`           | `use-conversation.ts:61`                                 | `use-conversation.ts:589` | adapter 变更（列表 + activeId + engine cache + storage）           |
 
-- **不入目标集但必须进 I1 显式非变更白名单**（配置/读取类，不写会话状态）：`setConnector`（`types.ts:295`/`create-engine.ts:106`）、`registerPlugin`（`types.ts:296`/`create-engine.ts:117`）、`getMessages`（`types.ts:305`/`create-engine.ts:125`）、`getState`（`types.ts:288`/`create-engine.ts:102`）、`subscribe`（`types.ts:289`/`create-engine.ts:81-82`）。
+- **不入目标集但必须进 I1 显式非变更白名单**（配置/读取类，不写会话状态）：`setConnector`（`types.ts:321`/`create-engine.ts:113`）、`registerPlugin`（`types.ts:322`/`create-engine.ts:124`）、`getMessages`（`types.ts:331`/`create-engine.ts:132`）、`getState`（`types.ts:314`/`create-engine.ts:109`）、`subscribe`（`types.ts:315`/`create-engine.ts:82-83`）。
 - **adapter 非函数字段**（不入运行时提取面，I1 表完备性门禁仍须断言存在性）：`conversations`、`activeConversationId`、`activeEngine`、`controller`（:425-430 为 4 方法组合桥，嵌套键 ⊆ 表 ∪ 白名单——I1 门禁对嵌套 `controller` 键断言 `Object.keys(controller)` ⊆ 变更表）。
 
 ### 4.2 `runTurn` 归属裁定（Decision）
 
-- **裁定**：`runTurn`（`create-engine.ts:193`）为**内部共享管道**，不是 `MessageEngine` 公共成员——`engine/types.ts:287-334` 接口无 `runTurn`，engine 对象字面量（`create-engine.ts:78-93`）无 `runTurn` 键；`sendMessage`（:182）/`send`（:190）/`regenerate`（:565）均汇入 `runTurn`。
+- **裁定**：`runTurn`（`create-engine.ts:200`）为**内部共享管道**，不是 `MessageEngine` 公共成员——`engine/types.ts:313-361` 接口无 `runTurn`，engine 对象字面量（`create-engine.ts:79-95`）无 `runTurn` 键；`sendMessage`（:179）/`send`（:192）/`regenerate`（:671）均汇入 `runTurn`。
 - **理由**：I1 表完备性门禁的断言面是"公共变更方法集"（运行时 `Object.keys(engine)`），`runTurn` 不在该面；其行为由三个公共入口的间接覆盖 + 不变式③（身份守卫）直接覆盖。若把内部管道塞进测试表，会与运行时枚举面不一致（门禁自相矛盾）。
 - **供 I1 引用**：表完备性门禁测试表 = §4.1 的 12 项 + 白名单 5 项；`runTurn` 不进表，在 `engine-invariants.test.ts` 中以 `send`/`sendMessage`/`regenerate` 的驱动路径间接覆盖。
 
 ### 4.3 边界成员归属裁定（Decision）
 
-- **`setMessageEditing` → 纳入目标集**：`types.ts:320` 声明、`create-engine.ts:153-170` 实现。同步变更方法，写 `message.state.editing`（经 `adapter.mutate('messages', ...)` 变更消息状态，属判定准则中的 `messages` 写入面）。与 `clear`/`setMessages` 同属"同步变更行"，供 in-flight 守卫与状态一致性不变式覆盖（§2.1/§2.4 的适用面扩展）。**理由**：它是公共接口上唯一"同步写单个消息状态"的变更面，漏出目标集 = 该状态面成为盲区。
+- **`setMessageEditing` → 纳入目标集**：`types.ts:346` 声明、`create-engine.ts:160-177` 实现。同步变更方法，写 `message.state.editing`（经 `adapter.mutate('messages', ...)` 变更消息状态，属判定准则中的 `messages` 写入面）。与 `clear`/`setMessages` 同属"同步变更行"，供 in-flight 守卫与状态一致性不变式覆盖（§2.1/§2.4 的适用面扩展）。**理由**：它是公共接口上唯一"同步写单个消息状态"的变更面，漏出目标集 = 该状态面成为盲区。
 - **`setConnector`/`registerPlugin`/`getMessages`/`getState`/`subscribe` → 不入目标集，进 I1 显式非变更白名单**：`setConnector` 写 connector 引用（配置面，非会话状态六元组）；`registerPlugin` 写插件数组（配置面）；`getMessages`/`getState` 为只读快照；`subscribe` 为订阅注册。**理由**：白名单化而非忽略——I1 表完备性门禁断言"测试表 ∪ 白名单 == 运行时公共面"（`Object.keys(createMessageEngine())` + UseConversationReturn 函数字段 + 嵌套 `controller` 键），任一**新增**公共方法既不在表也不在白名单 ⇒ 门禁红，防新方法静默成盲区。
 
 ## 5. 目标集 × live 类型交叉验证（Proof，零 diff）
 
-- **提取源**（按计划钉死）：`create-engine.ts:78-93` engine 对象字面量的可枚举函数键（= 运行时 `Object.keys(createMessageEngine())` 返回值）+ `use-conversation.ts:47-59` UseConversationReturn 接口函数字段。
+- **提取源**（按计划钉死）：`create-engine.ts:79-95` engine 对象字面量的可枚举函数键（= 运行时 `Object.keys(createMessageEngine())` 返回值）+ `use-conversation.ts:53-65` UseConversationReturn 接口函数字段。
 - **一次性自动化反查**：`node /var/folders/lv/yfm8thx903d6bnjjz9c4m_mm0000gn/T/opencode/ai-invariant-proof.mjs`（2026-08-09，I0 执行轮）——提取键集 → 按 §4.1 判定准则过滤 → 与 §4.1 目标集比对。
 - **结果**（零 diff，pass）：
   - engine 字面量键（12）：`getState, subscribe, sendMessage, send, abort, clear, setConnector, registerPlugin, getMessages, setMessages, setMessageEditing, regenerate` → 变更面过滤后 = `sendMessage, send, abort, clear, setMessages, setMessageEditing, regenerate`（7）；白名单 = `getState, subscribe, setConnector, registerPlugin, getMessages`（5）；**零未覆盖**
@@ -170,7 +170,7 @@
 ### 7.4 不变式 ② 扩展 —— adapter 变更方法的 sync 闭包读取（K4）
 
 - **扩展陈述**：不变式 ② 的适用范围从「await 之后」扩展至**全部 adapter 变更方法体内的状态读取**——列表/active 读取必须读 ref mirror（`conversationsRef.current`/`activeIdRef.current`），且所有列表变更方法（create/rename/delete/clearAll）必须**同步维护** ref mirror（不依赖 effect flush）；同 tick create+rename 场景 rename 的持久化不得静默丢失（probe-K4）。
-- **新增检测方法**：静态扫描器规则 `scanAdapterSyncClosureReads`——**判别准则**：仅 flag adapter 变更方法（create/switch/delete/rename/clearAll）体内「首次状态变更语句（`setConversations`/`setActiveId`/`await`）**之后**」出现的裸 `conversations`/`activeId` 读取；方法**首语句**（状态变更前）的渲染快照读取为设计语义 → 豁免（`switchConversation:294` `conversations.some(...)` 显式豁免并记录理由）；committed 回归（违规 fixture exit 1 / 清洁 fixture 含豁免样例 exit 0）。
+- **新增检测方法**：静态扫描器规则 `scanAdapterSyncClosureReads`——**判别准则**：仅 flag adapter 变更方法（create/switch/delete/rename/clearAll）体内「首次状态变更语句（`setConversations`/`setActiveId`/`await`）**之后**」出现的裸 `conversations`/`activeId` 读取；方法**首语句**（状态变更前）的渲染快照读取为设计语义 → 豁免（`switchConversation:442` `conversationsRef.current.some(...)` 显式豁免并记录理由）；committed 回归（违规 fixture exit 1 / 清洁 fixture 含豁免样例 exit 0）。
 - **类别清扫结论**：create（同步 prepend `conversationsRef.current`）、rename（读 ref + 同步 map）、delete（post-await 已读 ref）、clearAll（同步置空 + `activeIdRef`）全部同步维护；`switchConversation` :294 首语句豁免（bug note 124）。**（2026-08-10 Cycle 2 / I4 supersede：写面扩展至全部列表变更方法（delete/clearAll + bootstrap merge），`switchConversation` 首语句 exists 检查改读 `conversationsRef.current`（K-⑥-2），原「首语句渲染快照豁免」注释随之失效——见 §10.2/§10.4。）**
 
 ## 8. 引用索引（I4 追加）
@@ -187,35 +187,37 @@
 
 - **不变式陈述**：adapter 的 post-await 提升/复水写入（`setActiveEngine`/`engine.setMessages`）必须以 `activeIdRef`/`switchVersionRef` 为唯一裁决面且目标必须仍存在；**位移方法（delete/clearAll/create）必须 bump `switchVersionRef` 使在途 switch 失效**；删除 active 后的 next 引擎必须 build-on-demand（禁 `setActiveEngine(null)` 悬挂）；同 id 快速重 switch 时 hydration 不得被 version guard 整体丢弃。
 - **覆盖失败族**：active 位移完整族（N1，findings §3.2 5 成员 probe 全部复现 RED——await 间隙位移 → UI 显示与持久化状态错位，probe-B 含数据丢失面）。
-- **历史 bug 证据**：`use-conversation.ts:280-313`（createConversation 不 bump）、`:315-368`（switchConversation :322 唯一 bump 点）、`:370-404`（deleteConversation :382-388 fixup `setActiveEngine(next ? engineCache.get(next.id) ?? null : null)`——next 不在 cache 时 null 悬挂）、`:427-475`（clearAll 不 bump）；probe-1/1b/1c/B/C 全部 RED（findings §3.2 N1）。
+- **历史 bug 证据**：`use-conversation.ts:385-434`（createConversation 不 bump）、`:436-499`（switchConversation :448-449 唯一 bump 点）、`:501-552`（deleteConversation :522-540 fixup `setActiveEngine(next ? engineCache.get(next.id) ?? null : null)`——next 不在 cache 时 null 悬挂）、`:589-665`（clearAll 不 bump）；probe-1/1b/1c/B/C 全部 RED（findings §3.2 N1）。
 - **检测方法**：参数化穷举测试（`conversation-invariants-cycle2.test.ts` Invariant ⑥ 块，`it.fails` × 5 成员场景——套件保持全绿，I4 翻转）+ 静态扫描器规则 `scanDisplacementVersionBumps`（位移方法 delete/clearAll/create 函数体必须含 `switchVersionRef.current` bump 语句，缺失即违例；**live 预期命中 3**：create/delete/clearAll，注册红待 I4 清零）。
 
 ### 9.2 不变式 ⑦ —— storage bootstrap 列表合并（N2）
 
 - **不变式陈述**：storage bootstrap 的 post-await `setConversations` 必须合并当前状态（functional updater），不得覆盖加载期间由 `createConversation` 创建的会话（防列表回滚 + activeId 悬空出列）。
 - **覆盖失败族**：bootstrap 覆盖族（N2，findings §3.2 probe-2 RED——create X 后 bootstrap resolve → 列表=[A]，activeId=X 悬空出列）。
-- **历史 bug 证据**：`use-conversation.ts:234-257`（bootstrap effect `:243` `setConversations(convs)` 整体覆盖，非 functional merge）；probe-2 RED（findings §3.2 N2）。
+- **历史 bug 证据**：`use-conversation.ts:299-350`（bootstrap effect `:313-326` `setConversations` 整体覆盖，非 functional merge——现为合并实现）；probe-2 RED（findings §3.2 N2）。
 - **检测方法**：运行时参数化测试（`conversation-invariants-cycle2.test.ts` Invariant ⑦ 块，`it.fails` × 2 场景）；**不静态化**（functional updater 为行为面，静态误报高，理由记录 gates.md）。
 
 ### 9.3 不变式 ⑧ —— branch 戳消费/清除（N3）
 
 - **不变式陈述**：`pendingBranchId` 必须在使用前被消费或清除；runTurn 任一提前返回路径不得遗留待消费的 branch 戳（防泄漏到无关 turn）。
 - **覆盖失败族**：branching/fork 族（N3，I0 §3 登记候选族正式触发，findings §3.2 probe-3 RED——regenerate+connector-missing 后，下一正常 turn 的 assistant 被戳 `branchId:'branch-1'`）。
-- **历史 bug 证据**：`create-engine.ts:101`（`pendingBranchId` 声明）、`:210-229`（connector-missing 早退，runOnce 之前 return，戳未消费）、`:383-397`（runOnce 消费，`:397` `pendingBranchId = undefined`）、`:578-602`（regenerate 设戳 + `await runTurn([])`）；probe-3 RED（findings §3.2 N3）。
+- **历史 bug 证据**：`create-engine.ts:101`（`pendingBranchId` 声明）、`:219-237`（connector-missing 早退，runOnce 之前 return，戳未消费）、`:439-457`（runOnce 消费，`:457` `pendingBranchId = undefined`）、`:671-698`（regenerate 设戳 + `await runTurn([])`）；probe-3 RED（findings §3.2 N3）。
 - **检测方法**：运行时参数化测试（`engine-invariants.test.ts` Invariant ⑧ 块，`it.fails` 泄漏 ×1 + 消费控制 `it` ×1）+ 静态扫描器规则 `scanBranchStampReset`（runTurn 内 runOnce 调用前的提前 return 路径必须伴随 `pendingBranchId` 清除；**扫描/豁免面**：isProcessing 早退（`:206-208`）在设戳路径（regenerate→runTurn）不可达 → 豁免并记录理由；connector-missing 早退（`:210-229`）可达 → 扫描目标，**live 预期命中 1**，注册红待 I4 清零）。
+
+> **2026-08-10 multi P2-1 扩面（plan `docs/plans/2026-08-10-1606-1-engine-adapter-p2-remediation.md`）**：⑧ 覆盖路径从「提前 `return`」扩展到「break/throw 早退」——abort while-head break 与 onTurnStart 抛错（catch）两条路径在 runOnce 消费前退出 turn，均曾残留 `pendingBranchId`（branch 误分组 + regenerate 序列偏移，metadata 级 defect）。修复：break 前置清戳 + catch 内清戳（live `create-engine.ts` 重置面 `:219`（connector-missing）/ `:264`（abort break）/ `:360`（catch，throw 路径），消费面 `:457`）。**检测方法扩展**：运行时成员 +3（break 臂 / throw 臂 / regenerate 序列臂，`it.fails` 落库 → 翻转 `it`，共 4 泄漏路径 + 消费控制全绿）；静态扫描器 `scanBranchStampReset` 扩三条规则（return / break / catch-clear，见 gates.md）。live 零命中维持。
 
 ### 9.4 不变式 ⑨ —— plugin 错误隔离（N4）
 
 - **不变式陈述**：plugin hook 的 rejection 不得使 turn 状态卡死或绕过状态写入：onTurnStart 必须纳入 try/finally 清理面；onError 调用不得先于状态写入（或写入不得被 hook 抛错跳过）；onTurnEnd rejection 不得遮蔽原错误（所有错误必须落在 `requestState`/`lastError`）。
 - **覆盖失败族**：plugin 生命周期族（N4，I0 §3 登记候选族正式触发，findings §3.2 probe-4/probe-E RED + onTurnEnd 静态证据）。
-- **历史 bug 证据**：`create-engine.ts:247-249`（`await plugin.onTurnStart` 在 try 之外，rejection 卡死 processing）、`:336-340`（catch 内 `plugin.onError` 先于 mutate——onError 抛错跳过状态写入）、`:362-364`（finally 内 `await plugin.onTurnEnd` 无守卫——rejection 遮蔽原错误）；probe-4/probe-E RED（findings §3.2 N4）。
+- **历史 bug 证据**：`create-engine.ts:248-252`（`await plugin.onTurnStart`——现已在 try 内，rejection 经 catch 落态）、`:363-365`（catch 内 `callPluginError` 先于 mutate——onError 抛错跳过状态写入）、`:395-405`（finally 内 `await plugin.onTurnEnd` 有隔离守卫——rejection 不再遮蔽原错误）；probe-4/probe-E RED（findings §3.2 N4）。
 - **检测方法**：运行时参数化测试（`engine-invariants.test.ts` Invariant ⑨ 块，`it.fails` × 3 场景）；**不静态化**（plugin 回调交错为行为面，误报高，理由记录 gates.md）。
 
 ### 9.5 不变式 ⑩ —— 失败轮产物清理（N5）
 
 - **不变式陈述**：failed/aborted 轮的残留空 placeholder 不得进入后续请求历史（应移除或排除）；失败轮必须清理自身产物。
 - **覆盖失败族**：失败轮残留污染族（N5，findings §3.2 probe-D RED——请求 #2 携带 `{content:'', loading:false}` 空 assistant 消息）。
-- **历史 bug 证据**：`create-engine.ts:484-504`（runOnce catch `:485-486` `loading=false` + commitAssistant 保留空 placeholder）、`:507-528`（buildContext `:511` 仅排除 `isStreamingAssistantPlaceholder`（loading=true）尾消息）；probe-D RED（findings §3.2 N5）。
+- **历史 bug 证据**：`create-engine.ts:585-608`（runOnce catch `:586` `loading=false` + `commitOrDropResidue` 保留空 placeholder）、`:606-619`（buildContext `:608-616` 经 `buildEngineContext` 投影——现含 `isVacuousAssistantResidue` 排除 + wire 白名单）；probe-D RED（findings §3.2 N5）。
 - **检测方法**：运行时参数化测试（`engine-invariants.test.ts` Invariant ⑩ 块，`it.fails` 排除 ×1 + 正常轮控制 `it` ×1）；**不静态化**（buildContext 排除谓词为行为面，误报高，理由记录 gates.md）。
 
 ## 10. Cycle 2 / I4 门禁补强（13 条 K 修复契约，⑥⑦⑨⑩②④ 扩展）

@@ -419,6 +419,8 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
 
 **Failure Paths**：`sender-extension-fallback`（未声明 → Textarea 降级）、`tiptap-not-installed`（host import 子路径但未装 Tiptap → host 侧 import error）、`extension-data-missing`（扩展启用但无数据源 → popup 为空不弹出）、`tiptap-submit-empty`（空内容禁用 submit）。
 
+**键盘拦截面（multi-audit P2-3，2026-08-10）**：`handleKeyDown` 在弹出层打开时拦截 ArrowDown/ArrowUp/Enter/Escape（导航/确认/关闭），IME 组合期（`isComposing`/keyCode 229）放行；**零匹配**（`popupItems.length === 0`）时弹出层不渲染且按键**全部放行**（Enter 落回 submit keymap，Arrow 落回默认光标移动）——消除"弹出层视觉消失但按键仍被吞"的键盘死区。长度经 `popupItemsLengthRef` 镜像（`useEditor` 闭包内不可直接读 memo 数组，防 stale）。
+
 ## 11. 与 flux 的集成策略
 
 ### 11.1 集成层次（三层渐进）
@@ -612,6 +614,12 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
 
 > 严守 `docs/architecture/renderer-markers-and-selectors.md`：状态用 `data-*` / `aria-*`，**禁止 BEM modifier**（如 `nop-ai-bubble--streaming`）。
 
+**a11y 状态属性（2026-08-10 multi-audit 补强）**：
+
+- `ai-conversations` 当前会话项补 `aria-current="true"`（P2-17；`data-active` + 边框/背景色非 SR 可观测，WCAG 1.3.1 / 4.1.2）；`suggestion-popup` 既有 `aria-selected` 维持。
+- `ai-bubble` 用户消息编辑态 Textarea 补 `aria-label`（P2-18，对齐 `ai-sender` Textarea 先例；WCAG 4.1.2）。
+- `ai-voice-input` 双击守卫（P2-6，2026-08-10）：`handleStart` 经专用 in-flight ref 拦截同 tick 二次启动（`status` state 守卫异步）；`onend` / stop 分支 / `start()` 抛错三处清位，正常 stop 后可重启——杜绝 `continuous:true` 首实例持 mic 至页面卸载的双实例泄漏。
+
 ### 13.4 不引入新 token 命名空间
 
 tiny-robot 用 `--tr-*` 前缀。flux-renderers-ai **不引入** `--tr-*` 或 `--ai-*` token，全部复用 flux 现有 token + Tailwind utility classes（如 `bg-muted`, `text-foreground`, `rounded-lg`）。若未来确需 AI 专属视觉 token，由 `theme-tokens` 包统一加，不由本包私自加。
@@ -641,6 +649,8 @@ tiny-robot 用 `--tr-*` 前缀。flux-renderers-ai **不引入** `--tr-*` 或 `-
 | `ai:renameConversation` | `{ id, title }`         | 同上                          |
 
 表达式 helper（同名命名空间）：`${$ai.isProcessing}`、`${$ai.messages}`、`${$ai.activeConversationId}`。
+
+> **engineNullSwitch 窗口期绑定（multi-audit P2-8，2026-08-10）**：`engine` prop 解析为 `null` 的切换窗口内，`ai` namespace 与 ComponentHandle（§14.3）绑定到**显式 null engine**——engine 动作（`ai:send` / `ai:abort` / `ai:clear` / `component:sendMessage` 等）返回 `{ ok: false, error: 'ai-chat engine is not ready (external engine switch in progress)' }` 显式拒绝，**不写入**将被隐藏的自建 engine（其消息在外部 engine B 到达时会蒸发）；conversation 动作（controller-bound）与读面不受影响。窗口结束（engine B 就绪）后绑定自动恢复。
 
 ### 14.3 ComponentHandle（P2）
 
@@ -687,7 +697,7 @@ tiny-robot 用 `--tr-*` 前缀。flux-renderers-ai **不引入** `--tr-*` 或 `-
 11. **包内不直调任何外部 IO API**：`src/engine/` 与 `src/renderers/` 下**禁止**直接调用 `fetch` / `XMLHttpRequest` / `WebSocket` / `EventSource` / `RTCPeerConnection` / `localStorage` / `sessionStorage` / `IndexedDB` / `history.pushState` / 动态 `import()`。CI 加 INV-1 守卫测试。
 12. **包内不硬编码后端配置**：禁止出现 `baseURL` / `apiKey` / `model` 等业务字段在包代码中。所有后端配置由 host 在 `xui:imports` 注册时提供。
 13. **`src/storage/` 只含接口**：包内不提供任何具体 storage 实现（localStorage / IndexedDB / Server 均由 host 提供）。
-14. **不内置任何具体 Connector 实现**：包内不出现 `createOpenAIConnector` / `createDeepSeekConnector` / `createMockConnector` 等工厂。仅提供 `createStreamBasedAiConnector`（host helper，把 `env.stream` 输出映射为 `AiConnector`，不含后端配置，不含协议解析——`env.stream` 已自动处理）。
+14. **不内置任何具体 Connector 实现**：包内不出现 `createOpenAICompatibleConnector` / `createDeepSeekConnector` / `createMockConnector` 等工厂。仅提供 `createStreamBasedAiConnector`（host helper，把 `env.stream` 输出映射为 `AiConnector`，不含后端配置，不含协议解析——`env.stream` 已自动处理）。具体 host 实现示例见 playground `apps/playground/src/ai/openai-connector.ts`（`createOpenAICompatibleConnector`）。
 15. **不实现 SSE/流式协议解析**：协议解析（SSE 切分、NDJSON 切分、chunk JSON.parse）已下沉到 `env.stream` 内部，包内不出现 `src/sse/sse-stream-to-generator.ts` 或类似模块。
 
 ### 18.3 state 边界不变量（v2 新增，按 INV-4）

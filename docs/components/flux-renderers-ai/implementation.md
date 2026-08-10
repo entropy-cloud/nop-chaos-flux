@@ -162,7 +162,7 @@ export function registerAiHost(runtime: RendererRuntime, env: RendererEnv) {
   runtime.registerImport('ai', {
     connectors: {
       mock: createMockConnector(env),
-      // openai: createOpenAIConnector(env, { baseURL, apiKey, model }),  // P1 实施时补
+      // openai: createOpenAICompatibleConnector(env, { baseURL, apiKey, model }),  // P1 实施时补（见 playground openai-connector.ts）
     },
     storage: createMockStorage(),
     capabilities: {
