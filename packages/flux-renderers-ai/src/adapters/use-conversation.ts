@@ -3,6 +3,7 @@ import { generateMessageId } from '../engine/utils.js';
 import { createMessageEngine } from '../engine/create-engine.js';
 import { createReactMessageAdapter } from './react-adapter.js';
 import { attachAutoSave } from './use-conversation-autosave.js';
+import { hydrateConversationsFromStorage } from './use-conversation-bootstrap.js';
 import type {
   AiConnector,
   AiConversationInfo,
@@ -161,6 +162,14 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   // restored (the bootstrap merges — but only into a list the host did NOT
   // deliberately clear).
   const listClearedRef = useRef(false);
+  // R1-F4 (2026-08-11, engine/adapter P2): ids deleted while the mount
+  // bootstrap `loadConversations` is pending. K-⑦'s merge base is the RAW
+  // loaded `convs` — a delete filters the mirror synchronously, but the
+  // loaded base still contains the id → the merge resurrects it as a ghost
+  // list item (and a sole deleted conversation would wrongly become active).
+  // Mirrors the `listClearedRef` clearAll guard precedent; cleared after the
+  // one-time bootstrap merge.
+  const deletedDuringLoadRef = useRef<Set<string>>(new Set());
 
   // Engine cache: id → engine. We keep this in a ref-like closure local so
   // updates don't trigger re-renders (the engine is read via subscribe).
@@ -292,62 +301,48 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   );
 
   // ---- Mount bootstrap: hydrate conversations from storage (P3) ----
-  // multi P2-7 (2026-08-10): reads `storageRef.current` (not the render
-  // closure) so the effect deps stay stable — a host constructing the storage
-  // inline used to re-run loadConversations on every render (each run
-  // aborting the previous controller).
+  // Load + merge body in `use-conversation-bootstrap.ts` (attachAutoSave
+  // plain-function precedent); this effect owns the AbortController; K-⑥-3
+  // build-on-demand runs via `onFirstActiveSelected` (in-effect closure).
   useEffect(() => {
     if (!storageRef.current) return;
     const controller = new AbortController();
-    const { signal } = controller;
-    (async () => {
-      try {
-        const convs = await storageRef.current!.loadConversations();
-        if (signal.aborted) return;
-        // K-⑦-1 (Cycle 2 / I4): clearAll during the load invalidates the
-        // restore — the deliberately cleared list must not be resurrected by
-        // the late resolve.
-        if (listClearedRef.current) return;
-        if (convs.length > 0) {
-          // K-⑦ (Cycle 2 / I4): MERGE, do not wholesale-overwrite — a
-          // conversation created while `loadConversations` was pending must
-          // stay in the list (probe-2: create X → bootstrap resolve → list
-          // rolled back to [A], activeId=X dangling off-list). The merge is
-          // computed against the synchronous mirror (same-tick source of
-          // truth for created conversations).
-          const merged = [
-            ...convs,
-            ...conversationsRef.current.filter((c) => !convs.some((l) => l.id === c.id)),
-          ];
-          setConversations(merged);
-          // K4 (ai-invariant-loop): sync the mirror synchronously so a
-          // same-tick reader (create/rename/delete) sees the loaded list
-          // before the mirror effect flushes.
-          conversationsRef.current = merged;
-          // Select the first conversation as active when none is active yet.
-          // K-⑥-3 (Cycle 2 / I4): build the engine for the selected active
-          // conversation on demand and hydrate its stored messages — the
-          // default conversation's messages must be visible without a manual
-          // switch (mirror of switchConversation's build-on-demand semantics).
-          const currentActive = activeIdRef.current;
-          setActiveId((current) => current ?? convs[0].id);
-          if (!currentActive) {
-            activeIdRef.current = convs[0].id;
-            const engine = ensureEngineAndHydrateEvent(convs[0].id);
-            setActiveEngine(engine);
-          }
-        }
-      } catch (error) {
-        if (signal.aborted) return;
-        // Failure Path `storage-load-error`: non-fatal, keep the empty list.
-        // AI-28: surface to host (callback may be undefined).
-        reportStorageError({ phase: 'loadConversations', error });
-      }
-    })();
+    void hydrateConversationsFromStorage({
+      storageRef,
+      conversationsRef,
+      activeIdRef,
+      listClearedRef,
+      deletedDuringLoadRef,
+      reportStorageError,
+      setConversations,
+      setActiveId,
+      signal: controller.signal,
+      onFirstActiveSelected: (conversationId) => {
+        activeIdRef.current = conversationId;
+        const engine = ensureEngineAndHydrateEvent(conversationId);
+        setActiveEngine(engine);
+      },
+    });
     return () => {
       controller.abort();
     };
   }, [reportStorageError]);
+
+  // R1-F3 (2026-08-11, engine/adapter P2): no-storage + `initialConversations`
+  // first-session build-on-demand — `activeId` seeds from `initialConversations[0]`
+  // but `activeEngine` stayed null (K-⑥-3 covered only the storage path);
+  // build on demand, skip hydrate. Idempotent for strict-mode double mount.
+  const buildEngineForEvent = useEffectEvent((conversationId: string) =>
+    buildEngineFor(conversationId),
+  );
+  useEffect(() => {
+    if (storageRef.current) return;
+    const targetId = activeIdRef.current;
+    if (!targetId || engineCache.get(targetId)) return;
+    const engine = buildEngineForEvent(targetId);
+    engineCache.set(targetId, engine);
+    setActiveEngine(engine);
+  }, [engineCache]);
 
   // ---- Unmount: abort in-flight streams + tear down auto-save subscriptions ----
   // F2.2: every engine in the cache is SELF-BUILT by this hook, so on full
@@ -500,6 +495,10 @@ export function useConversation(options: UseConversationOptions): UseConversatio
 
   async function deleteConversation(id: string): Promise<void> {
     setConversations((prev) => prev.filter((c) => c.id !== id));
+  // R1-F4 (2026-08-11, engine/adapter P2): record the deletion so the pending
+  // bootstrap merge filters it out of the loaded base (K-⑦ merge guard —
+  // see `deletedDuringLoadRef`).
+  deletedDuringLoadRef.current.add(id);
     // K4/K-K4 (ai-invariant-loop): keep the list mirror in sync SYNCHRONOUSLY —
     // a same-tick reader (renameConversation / deleteConversation fixup /
     // switchConversation exists-check) must see the deletion before the mirror

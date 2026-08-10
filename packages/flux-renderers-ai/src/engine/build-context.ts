@@ -25,6 +25,11 @@ import type {
  * `ctx.request.messages` (the engine.md §8.3 injection pattern) can only
  * shape the outgoing request — never write through into engine history.
  *
+ * ⑪ extension (2026-08-11, R1-F2): the projection also deep-isolates NESTED
+ * values (`tool_calls` / `content` parts / `reasoning_content` / `metadata`
+ * are cloned element-by-element) — plugin mutation at any nesting depth
+ * shapes only the outgoing request, never engine history.
+ *
  * P1-5: the wire projection strips renderer-private `state` and internal
  * tool-execution `metadata` (toolError/toolStatus) at the engine boundary.
  *

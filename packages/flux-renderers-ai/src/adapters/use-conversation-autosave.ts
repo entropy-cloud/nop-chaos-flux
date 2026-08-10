@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { isVacuousAssistantResidue, sanitizeDanglingToolCalls } from '../engine/utils.js';
-import type { AiConversationInfo, MessageEngine, RequestState } from '../engine/types.js';
+import type { AiConversationInfo, MessageEngine, MessageEngineState, RequestState } from '../engine/types.js';
 import type { ConversationStorageErrorEvent } from './use-conversation.js';
 import type { ConversationStorageStrategy } from '../storage/types.js';
 
@@ -36,12 +36,28 @@ export function attachAutoSave(
     return () => {};
   }
   let prevState: RequestState = engine.getState().requestState;
-  const unsub = engine.subscribe('requestState', (state) => {
+  // FIND-12 (2026-08-11, engine/adapter P2): per-conversation message-count
+  // watermark. The connector-missing branch (`create-engine.ts` runTurn)
+  // settles `idle → 'error'` directly — `isProcessing` never becomes true, so
+  // the `wasProcessing && isDone` predicate never fires for it even though the
+  // incoming user messages WERE pushed before the early return. The watermark
+  // (message count at the last observed state) detects that arm: the count
+  // grew since the last event ⇒ the failed round received messages ⇒ persist.
+  // The `full` channel syncs the watermark across non-requestState resets
+  // (`clear` / `setMessages` fire `full` only), so a clear-then-connector-
+  // missing sequence is still detected. Combined with the K-⑩-3 residue
+  // stripping below, a vacuous round (regenerate with no incoming messages)
+  // stays unpersisted.
+  let lastSeenCount = engine.getMessages().length;
+  const onStateChange = (state: MessageEngineState): void => {
     const next = state.requestState;
+    const countNow = engine.getMessages().length;
     const wasProcessing = prevState === 'processing';
     const isDone = next === 'completed' || next === 'aborted' || next === 'error';
+    const messagesGrew = countNow > lastSeenCount;
     prevState = next;
-    if (wasProcessing && isDone) {
+    lastSeenCount = countNow;
+    if ((wasProcessing && isDone) || (isDone && messagesGrew)) {
       try {
         // getMessages() returns a per-message shallow-isolated copy (O-2),
         // so the async storage implementation cannot read a cross-turn
@@ -92,7 +108,13 @@ export function attachAutoSave(
         reportStorageError({ phase: 'saveMessages', conversationId, error });
       }
     }
-  });
-  autoSaveUnsubsRef.current.set(conversationId, unsub);
-  return unsub;
+  };
+  const unsub = engine.subscribe('requestState', onStateChange);
+  const unsubFull = engine.subscribe('full', onStateChange);
+  const unsubscribe = () => {
+    unsub();
+    unsubFull();
+  };
+  autoSaveUnsubsRef.current.set(conversationId, unsubscribe);
+  return unsubscribe;
 }

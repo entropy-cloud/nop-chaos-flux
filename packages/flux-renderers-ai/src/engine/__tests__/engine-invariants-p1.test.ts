@@ -6,6 +6,7 @@ import type {
   AiConnectorChunk,
   AiConnectorRequest,
   ChatMessage,
+  ChatMessageContentPart,
   InternalMessageState,
   MessageEngineContext,
   MessageEnginePlugin,
@@ -137,6 +138,126 @@ describe('Invariant ⑪ — plugin ctx write isolation (open P1-1)', () => {
 
     const stateUser = engine.getState().messages.find((m) => m.role === 'user');
     expect(stateUser?.content).toBe('hello');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Invariant ⑪ — nested write isolation (R1-F2, 2026-08-11 engine/adapter P2)
+// ---------------------------------------------------------------------------
+//
+// open P1-1's array + element isolation covered `push` on the request array and
+// top-level element mutation, but `projectWireMessage` still assigned nested
+// values BY REFERENCE: `tool_calls` / `content` (array parts) and nested
+// `metadata` values shared identity with engine history — so a plugin mutating
+// `ctx.request.messages[i].tool_calls` (the engine.md §8.3 shaping pattern)
+// pushed/mutated through into engine history + the wire payload (R1-F2,
+// source `docs/audits/2026-08-10-2245-open-audit-ai-invariant-loop.md`).
+
+describe('Invariant ⑪ — nested write isolation (R1-F2, 2026-08-11)', () => {
+  function pairedToolHistory(): ChatMessage[] {
+    return [
+      { id: 'u1', role: 'user', content: 'hi' },
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: 'answer',
+        tool_calls: [
+          { index: 0, id: 'c0', type: 'function', function: { name: 'f', arguments: '{}' } },
+        ],
+      },
+      { id: 't1', role: 'tool', tool_call_id: 'c0', content: 'result' },
+    ] as ChatMessage[];
+  }
+
+  it('onBeforeRequest: pushing into ctx.request.messages[i].tool_calls does not write through into history', async () => {
+    const requests: AiConnectorRequest[] = [];
+    const { engine } = makeEngine(stopConnector(requests));
+    engine.setMessages(pairedToolHistory());
+
+    const plugin = {
+      name: 'nested-tool-call-writer',
+      onBeforeRequest: (ctx: MessageEngineContext) => {
+        const assistant = ctx.request.messages.find((m) => m.id === 'a1');
+        assistant?.tool_calls?.push({
+          index: 1,
+          id: 'c1',
+          type: 'function',
+          function: { name: 'g', arguments: '{}' },
+        });
+      },
+    } as unknown as MessageEnginePlugin;
+    engine.registerPlugin(plugin);
+
+    await engine.sendMessage('next');
+    expect(requests).toHaveLength(1);
+
+    // The wire payload WAS shaped (plugin contract preserved)…
+    expect(requests[0].messages.find((m) => m.id === 'a1')?.tool_calls).toHaveLength(2);
+    // …but the engine history keeps the original tool_calls untouched.
+    const a1 = engine.getState().messages.find((m) => m.id === 'a1');
+    expect(a1?.tool_calls).toHaveLength(1);
+    expect(a1?.tool_calls?.[0].id).toBe('c0');
+  });
+
+  it('onBeforeRequest: pushing into ctx.request.messages[i].content parts does not write through into history', async () => {
+    const requests: AiConnectorRequest[] = [];
+    const { engine } = makeEngine(stopConnector(requests));
+    engine.setMessages([
+      { id: 'u1', role: 'user', content: [{ type: 'text', text: 'hi' }] },
+    ] as ChatMessage[]);
+
+    const plugin = {
+      name: 'nested-content-writer',
+      onBeforeRequest: (ctx: MessageEngineContext) => {
+        const user = ctx.request.messages.find((m) => m.id === 'u1');
+        (user?.content as ChatMessageContentPart[]).push({ type: 'text', text: 'injected' });
+      },
+    } as unknown as MessageEnginePlugin;
+    engine.registerPlugin(plugin);
+
+    await engine.sendMessage('next');
+    expect(requests).toHaveLength(1);
+
+    const payloadUser = requests[0].messages.find((m) => m.id === 'u1');
+    expect((payloadUser?.content as ChatMessageContentPart[]).length).toBe(2);
+
+    const historyUser = engine.getState().messages.find((m) => m.id === 'u1');
+    expect((historyUser?.content as ChatMessageContentPart[]).length).toBe(1);
+    expect((historyUser?.content as ChatMessageContentPart[])[0]).toEqual({ type: 'text', text: 'hi' });
+  });
+
+  it('onTurnStart: mutating ctx.request.messages[i].metadata nested values does not write through into history', async () => {
+    const requests: AiConnectorRequest[] = [];
+    const { engine } = makeEngine(stopConnector(requests));
+    engine.setMessages([
+      {
+        id: 'u1',
+        role: 'user',
+        content: 'hi',
+        metadata: { createdAt: 1, nested: { counter: 1 } },
+      },
+    ] as ChatMessage[]);
+
+    const plugin = {
+      name: 'nested-metadata-writer',
+      onTurnStart: (ctx: MessageEngineContext) => {
+        const user = ctx.request.messages.find((m) => m.id === 'u1');
+        // In-place mutation of a nested object — the write-through shape
+        // (assignment to a top-level metadata key would only touch the
+        // projection copy and never hit engine history).
+        (user?.metadata?.nested as Record<string, unknown>).counter = 999;
+        (user?.metadata as Record<string, unknown>).extra = 'injected';
+      },
+    } as unknown as MessageEnginePlugin;
+    engine.registerPlugin(plugin);
+
+    await engine.sendMessage('next');
+    expect(requests).toHaveLength(1);
+
+    const historyUser = engine.getState().messages.find((m) => m.id === 'u1');
+    const historyMetadata = historyUser?.metadata as Record<string, unknown>;
+    expect(historyMetadata.nested).toEqual({ counter: 1 });
+    expect(historyMetadata.extra).toBeUndefined();
   });
 });
 

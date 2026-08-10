@@ -274,12 +274,16 @@ export interface MessageStateAdapter {
 // ============================================
 
 /**
- * Plugin lifecycle context. **READ-ONLY** (⑪, 2026-08-10 multi-audit):
+ * Plugin lifecycle context. **READ-ONLY** (⑪, 2026-08-10 multi-audit; nested
+ * depth 2026-08-11 R1-F2):
  *
  * - `request.messages` is an array-isolated copy of the request history — a
- *   fresh array whose elements are fresh wire-projection objects. It is safe
- *   to shape the OUTGOING request (e.g. push a system prompt per engine.md
- *   §8.3), but mutations never write through into engine history.
+ *   fresh array whose elements are fresh wire-projection objects with
+ *   DEEP-isolated nested values (`tool_calls` / `content` parts /
+ *   `reasoning_content` / `metadata` are cloned element-by-element). It is
+ *   safe to shape the OUTGOING request (e.g. push a system prompt or mutate
+ *   a payload message per engine.md §8.3) — mutations never write through
+ *   into engine history at any nesting depth.
  * - `state` is the live engine state object. Do NOT mutate it — engine
  *   writes go through `adapter.mutate` recipes only.
  * - `engine` / `signal` are live references (engine methods are the intended

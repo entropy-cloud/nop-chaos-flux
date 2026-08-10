@@ -5,6 +5,18 @@ import type { ChatMessage } from './types.js';
  * remediation). The engine assigns `branch-<n>` ids when the host does not pass
  * an explicit one; the host owns the full branch set.
  *
+ * Branch-id format contract (R2-F3, 2026-08-11 — see engine.md §8.1 A-16):
+ *
+ * - `next(prev)`: the trailing digits are parsed with `parseInt(m[2], 10)` —
+ *   leading zeros normalize away (`branch-01` advances to `branch-2`, not
+ *   `branch-02`). Numeric semantics, display-level format normalization.
+ * - `next(prev)` fallback: when `prev` carries NO trailing number (e.g.
+ *   host-provided `branch-abc`), a fresh `branch-<n>` is minted from the
+ *   internal sequence counter (never `branch-abc-1`-style).
+ * - `findPriorAssistantBranchId` does NOT validate the format of the prior
+ *   branch id — a host-provided non-numeric id is passed through verbatim;
+ *   format handling happens downstream in `branchSeq.next`.
+ *
  * Framework-agnostic: no `react`/DOM references.
  */
 

@@ -13,7 +13,7 @@
  * - a source key absent from target is assigned directly (cloned)
  */
 
-import type { AiConnectorChunk, ChatMessage, ChatMessageContentPart } from './types.js';
+import type { AiConnectorChunk, ChatMessage, ChatMessageContentPart, ChatMessageMetadata } from './types.js';
 
 export type AnyRecord = Record<string, unknown>;
 
@@ -256,11 +256,19 @@ export function projectWireMessage(message: ChatMessage): ChatMessage {
   for (const key of WIRE_MESSAGE_KEYS) {
     const value = (message as unknown as Record<string, unknown>)[key];
     if (value !== undefined) {
-      (out as unknown as Record<string, unknown>)[key] = value;
+      // R1-F2 (2026-08-11, engine/adapter P2): nested values are deep-isolated
+      // — `tool_calls` / `content` (array parts) / `reasoning_content` were
+      // previously assigned BY REFERENCE, and `metadata` was only shallow-
+      // copied, so a plugin mutating `ctx.request.messages[i]` nested values
+      // (engine.md §8.3 shaping) wrote through into engine history + the wire
+      // payload (⑪ write-isolation family extension, open P1-1 residual).
+      (out as unknown as Record<string, unknown>)[key] = deepClone(value);
     }
   }
   if (message.metadata) {
-    const metadata = { ...message.metadata };
+    // Deep clone so nested metadata values are isolated too; internal
+    // tool-execution keys are then stripped from the wire projection.
+    const metadata = deepClone(message.metadata) as ChatMessageMetadata;
     delete metadata.toolError;
     delete metadata.toolStatus;
     out.metadata = metadata;
