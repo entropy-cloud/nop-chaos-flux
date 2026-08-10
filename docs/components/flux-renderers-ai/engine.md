@@ -184,8 +184,8 @@ export interface MessageStateAdapter {
 
 两种实现：
 
-- `createNativeMessageAdapter()`：纯 TS，闭包持有 state。**生产默认 + 公共导出** —— 是 `createMessageEngine` 的默认 adapter 创建路径（`create-engine.ts` 中 `options.adapter ?? createNativeMessageAdapter()`），并经 `index.ts` 公共导出（`export { createNativeMessageAdapter }`）。无需 React / DOM 即可驱动 engine，亦用于 engine 单测。
-- `createReactMessageAdapter()`：内部用 module-level store + `Set<listener>`，配合 `useSyncExternalStore`。`mutate` 跑完 recipe 后通知订阅者；不依赖 React，但**为 React 订阅模型优化**（state 引用替换、按 kind 分通道通知）；同样经 `index.ts` 公共导出。
+- `createNativeMessageAdapter()`：纯 TS，闭包持有 state。**生产默认 + 公共导出** —— 是 `createMessageEngine` 的默认 adapter 创建路径（`create-engine.ts` 中 `options.adapter ?? createNativeMessageAdapter()`），并经 `index.ts` 公共导出（`export { createNativeMessageAdapter }`）。无需 React / DOM 即可驱动 engine，亦用于 engine 单测。**快照稳定性限制（FIND-05，2026-08-11，plan `2026-08-11-0008-3`）**：`getState()` 每次调用都重建新对象引用——对 React 宿主直绑（`useSyncExternalStore`）**不稳定**（快照引用每次变化 → 无限渲染循环「Maximum update depth exceeded」页面崩溃）。native adapter 只供**非 React 消费**（engine 单测 / Node / 其他框架）。React 绑定必须先经 `createReactMessageAdapter()` 构造 engine（见 §8.5 前置条件）。
+- `createReactMessageAdapter()`：内部用 module-level store + `Set<listener>`，配合 `useSyncExternalStore`。`mutate` 跑完 recipe 后通知订阅者；不依赖 React，但**为 React 订阅模型优化**（state 引用替换、按 kind 分通道通知）；同样经 `index.ts` 公共导出。`getState()` 返回**缓存快照**（mutation 之间引用稳定）——满足 `useSyncExternalStore` 快照恒等契约。
 
 ### 8.3 插件链生命周期
 
@@ -256,10 +256,7 @@ export function useMessage(options: UseMessageOptions): UseMessageReturn;
   `engine.setConnector`（idempotent on mount）。此前文档误写 `useRef`。
 - `useSyncExternalStore(engine.subscribe, engine.getState)` 订阅状态
 - React 19 默认不加 `useMemo` / `useCallback`，按 AGENTS.md React 19 章节
-- 当 `options.engine`（外部 engine，如 `useConversation.activeEngine`）被传入时，
-  绑定该外部 engine，自建 engine 保持 idle；外部 engine 的 connector 生命周期归
-  owner，热替换 effect 对它跳过（review m4: never touch an external engine's
-  connector）。自建 engine 在卸载时会 `abort()` 在途流（F2.2）。
+- **外部 engine adapter 前置条件（FIND-05，2026-08-11，plan `2026-08-11-0008-3`）**：当 `options.engine`（外部 engine，如 `useConversation.activeEngine`）被传入时，绑定该外部 engine。**被绑定的外部 engine 必须用 `createReactMessageAdapter()` 构造**（`createMessageEngine({ connector, adapter: createReactMessageAdapter() })`）——`useEngineView` 的 `useSyncExternalStore` 绑定要求 `getSnapshot` 在两次通知之间返回稳定引用；默认 native adapter（`createMessageEngine({ connector })` 的默认构造）每次 `getState()` 都重建对象 → 无限渲染循环。运行时守卫（`use-engine-view.ts`）：检测到连续两次快照引用不等（native adapter 特征；React adapter 的合法变更只产生孤立 mismatch，零误报）时 `console.warn` 一次并指向 `createReactMessageAdapter`——宿主按 §8.5 文档化路径接入即收到可诊断错误而非页面崩溃。自建 engine 恒经 React adapter（零回归默认）；外部 engine 的 connector 生命周期归 owner，热替换 effect 对它跳过（review m4: never touch an external engine's connector）。自建 engine 在卸载时会 `abort()` 在途流（F2.2）。
 - **热替换 scope（2151 P2 doc hardening）**：**只有 `connector` 是热替换字段**——
   `options.connector` 引用变化时调 `engine.setConnector`。其余选项
   （`systemPrompt` / `tools` / `toolExecutor` / `maxToolRounds` / `extraRequestParams` /
@@ -310,9 +307,9 @@ export interface UseConversationReturn {
 > - **connector 变更 fan-out**：`connector` 变更时对 engineCache 全量自建 engine `setConnector`（open P2-1）。
 > - **`createEngineOptions` 收窄**：类型排除 `engine`（`Omit<UseMessageOptions, 'connector' | 'engine'>`）——被 `buildEngine` 静默丢弃的字段不再可传（open P2-2）。
 
-> **存储/驱逐契约（0730-1 P1 修正）**
+> **存储/驱逐契约（0730-1 P1 修正 + 2026-08-11 FIND-02 收口）**
 >
-> - **`clearAll()`** 不再是「仅清内存」的半成品：注入 `storage` 时它会逐条（或当 host 提供 `storage.clearAll?` 时原子地）调 `deleteConversation`/`clearAll` 清存储，单条失败经 `onStorageError({ phase:'deleteConversation' })` 上报且不阻断其余条；内存态始终清空。这避免了「清空后重载 ghost rehydration」（FP-2/FP-3）。
+> - **`clearAll()`** 不再是「仅清内存」的半成品：注入 `storage` 时它逐条（clearAll 时点会话快照 per-id）调 `deleteConversation` 清存储，单条失败经 `onStorageError({ phase:'deleteConversation', conversationId })` 上报且不阻断其余条；内存态始终清空。这避免了「清空后重载 ghost rehydration」（FP-2/FP-3）。**FIND-02（2026-08-11，plan `2026-08-11-0008-3`）裁定（方案 a 采用）**：存储清空**只对 clearAll 时点快照做 per-id `deleteConversation` fan-out，永不调用 `storage.clearAll()`**——原子 clear 链在 drain 之后结算，会晚于「clearAll→drain 窗口内新建会话」的 save（该 save 不入本 drain：`pendingSavesRef` 同步清空）并抹掉新记录（「ghost-free-creation in reverse」：列表存活但记录被擦）。per-id 快照删除天然只作用于 clearAll 时点存在的会话，clear 后新写永不被扫；`ConversationStorageStrategy.clearAll` 保留为 host 直调面（`storage/types.ts` 文档同步）。既有 K3 守卫覆盖「旧写在 delete/clear 前 drain」方向，本面补「clear 后新写不被误清」反向。
 > - **`switchConversation` 的驱逐循环是 storage-aware**：仅当注入了 `storage` 时才驱逐非活跃、非 processing 的 idle engine（可经 `loadMessages` 回灌）；无 storage 时**不驱逐**——因为 ephemeral-by-design，无 rehydration 可恢复，驱逐即丢消息（FP-4）。host 仍可经 `deleteConversation` 主动收敛内存。
 > - **`deleteConversation` 的 post-await 分支读 ref**（`activeIdRef.current` / `conversationsRef.current`）而非闭包值，确保删除进行中的会话期间并发 `createConversation` 时新会话不被陈旧闭包覆盖（FP-1）。所有 `setActiveId` 调用点同步刷新 `activeIdRef.current`，闭合 effect-mirror 与 abort 微任务的竞态。
 
@@ -484,7 +481,7 @@ engine 在内部调 `connector.stream({ messages, tools, signal })`；不再有 
 
 ## §Invariants — AI Engine 不变式契约
 
-> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）；2026-08-09 Cycle 2 / I1（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`，N1-N5 → 第二批门禁 ⑥-⑩ 沉淀）；**2026-08-10 Cycle 2 / I4（plan `docs/plans/2026-08-10-0925-2-cycle2-i4-fix-execution.md`：13 条 K finding 全部修复 + 12 处 `it.fails` 翻转 + 注册红清零 + 门禁 ⑥⑦⑨⑩②④ 补强）**；**2026-08-10 双审计 P1（plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`：6 条 P1 修复 + 门禁 ⑩ dangling-tool_calls 成员 + ⑪ plugin ctx 写隔离新族 + ④ fan-out 源成员）**；**2026-08-10 双审计 P2（plan `docs/plans/2026-08-10-1606-1-engine-adapter-p2-remediation.md`：⑧ break/throw 扩面 + adapter 面行为修正——unmount detach-before-abort / bootstrap storage 依赖稳定化 / connector fan-out / createEngineOptions 类型收窄 / O-2 注释重写）**；**2026-08-11 双审计 P1（plan `docs/plans/2026-08-11-0008-2-engine-loop-termination-and-error-carrier-remediation.md`：R1-F1 marker 载体归位 + renderer 终止消费 + FIND-03 A-5 错误载体回归；⑩ 面枚举事实修正注记 + 失败路径记录）**
+> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）；2026-08-09 Cycle 2 / I1（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`，N1-N5 → 第二批门禁 ⑥-⑩ 沉淀）；**2026-08-10 Cycle 2 / I4（plan `docs/plans/2026-08-10-0925-2-cycle2-i4-fix-execution.md`：13 条 K finding 全部修复 + 12 处 `it.fails` 翻转 + 注册红清零 + 门禁 ⑥⑦⑨⑩②④ 补强）**；**2026-08-10 双审计 P1（plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`：6 条 P1 修复 + 门禁 ⑩ dangling-tool_calls 成员 + ⑪ plugin ctx 写隔离新族 + ④ fan-out 源成员）**；**2026-08-10 双审计 P2（plan `docs/plans/2026-08-10-1606-1-engine-adapter-p2-remediation.md`：⑧ break/throw 扩面 + adapter 面行为修正——unmount detach-before-abort / bootstrap storage 依赖稳定化 / connector fan-out / createEngineOptions 类型收窄 / O-2 注释重写）**；**2026-08-11 双审计 P1（plan `docs/plans/2026-08-11-0008-2-engine-loop-termination-and-error-carrier-remediation.md`：R1-F1 marker 载体归位 + renderer 终止消费 + FIND-03 A-5 错误载体回归；⑩ 面枚举事实修正注记 + 失败路径记录）**；**2026-08-11 双审计 P1（plan `docs/plans/2026-08-11-0008-3-conversation-adapter-host-contract-remediation.md`：FIND-02 clearAll×create 反向竞态（快照 per-id fan-out 裁定）+ FIND-04 命令边界失败保真 + FIND-05 native adapter 渲染循环守卫 + 失败路径记录）**
 
 AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大复发失败模式族（并发守卫 / stale-closure / storage 静默丢），已沉淀为**首批 5 类可执行不变式契约**，防重构/新增方法回归。I2 审计在门禁盲区发现 K1-K4 四个实例（I3 裁决 P0/P1），I4 修复并把门禁补强至对应路径；Cycle 1 / I6 按 Loop Rule 派生的 Cycle 2 新族 N1-N5（active 位移完整性 / bootstrap 合并 / branch 戳泄漏 / plugin 错误隔离 / 失败轮残留污染），已沉淀为**第二批门禁 ⑥-⑩**（见下节）：
 
@@ -553,3 +550,9 @@ engine/adapter 任何新增或重构的变更方法若不在测试表也不在�
 
 - **tool-loop-max 终止不可见（R1-F1）**：`maxToolRounds` 达上限 break 时，`toolLoopMaxReached` marker 曾写在 **tool 消息 tail**（`draft.messages[len-1]`，恒为 executeToolCalls 追加的最后一条 `role:'tool'`）而非触发终止的 assistant，且 **renderer 零消费者**——循环达上限终止对用户完全不可见。**修复**：写面归位为**末条 assistant**（loop-top break recipe 从 tail 向前跳过 `role:'tool'` 定位，snapshot 恒等纪律保持——recipe 内 read-old → build-new → replace）；消费面 = `ai-message-list` 末条 assistant 带 marker 时渲染终止 note（`data-slot="ai-message-list-loop-limit"`，i18n `flux.ai.toolLoopMaxReached`，非错误态、无操作栏，配对工具卡保持已提交终态）；**不 strip 配对 tool_calls**（工具结果保持用户可见；正常 loop-max 路径无 dangling 形状，见 ⑩ 面枚举修正注记）。bug note 149。
 - **A-5 错误载体回归（FIND-03）**：K-⑩ 空产物 drop 使「零 chunk 失败轮」（auth 401/429、网络首字节前失败、`onBeforeRequest` 拒绝）后末条为 user 消息，`ai-message-list` 的 `isError` 绑定（末条 assistant）恒 false → 错误气泡 + 重试入口结构性不可达。**修复**：list 级错误横幅载体（`ListErrorBanner`，`data-slot="ai-message-list-error"` + retry，`requestState==='error'` 且末条非 assistant 时渲染；末条为 assistant 时 bubble 级错误继续生效；engine/历史/持久化 drop 语义不变）。bug note 150。
+
+### Failure Path — 2026-08-11 双审计 P1（adapter/宿主契约面 FIND-02/FIND-04/FIND-05，plan `2026-08-11-0008-3`，已修复）
+
+- **clearAll×create 反向竞态（FIND-02）**：`clearAll()` 把 `storage.clearAll()` 链在 pending-save drain 之后；「clearAll 之后新建会话」的 `saveConversation` 不入该 drain（`pendingSavesRef` 同步清空），在 drain 结算前落盘 → 延迟原子 clear 最后执行**抹掉新会话记录**（「ghost-free-creation in reverse」：列表存活但记录被擦，remount 后数据丢失）。既有 K3 守卫只覆盖「旧写在 delete/clear 前 drain」正向方向，反向方向零覆盖。**修复（裁定方案 a）**：存储清空 = clearAll 时点 `ids` 快照逐 id `deleteConversation` fan-out，**永不调用 `storage.clearAll()`**——per-id 删除天然只作用于 clearAll 时点存在的会话，clear 后新写永不被扫；`ConversationStorageStrategy.clearAll` 保留为 host 直调面（接口零变更）。bug note 151。
+- **命令边界失败保真（FIND-04）**：`ai:send` / `component:sendMessage` 对失败轮（connector 抛错 → engine settle `requestState:'error'` + `lastError`）与忙时二次发送（runTurn `isProcessing` 入口守卫静默丢弃）统一返回 `{ok:true}`——命令边界谎报成功。**修复**：`ai-action-provider.ts` / `ai-component-handle.ts` 的 send/sendMessage 分支——await 后快照 `engine.getState().requestState`，'error' → `{ok:false, error: lastError}`（非 Error 包装 `{cause}`）；发送前 `isProcessing` 预检 → `{ok:false, error: engine busy: ...}`；同族忙时静默 no-op 面（`clear` / `regenerate` 的 engine processing 守卫）同步补齐预检。engine void-settle 契约零改动（只改映射层）。bug note 152。
+- **native adapter 渲染循环（FIND-05）**：`createMessageEngine({ connector })` 默认 native adapter 的 `getState()` 每次重建新对象；宿主按 §8.5 外部 engine 路径直绑 → `useSyncExternalStore` 快照引用每次变化 → 无限渲染循环「Maximum update depth exceeded」页面崩溃（仓内消费方全部显式传 `createReactMessageAdapter`，裸绑仅 host 面可达）。**修复（裁定方案 a+b）**：`useEngineView` 运行时不稳定 getSnapshot 检测（连续 ≥2 次 `getState()` 返回值引用不等 → `console.warn` 一次并指向 `createReactMessageAdapter`；React adapter 的合法变更只产生孤立 mismatch，零误报；module-level WeakMap 每 engine 一次）+ engine.md §8.2/§8.5 文档化 adapter 前置条件。渲染行为本身不改（React 深度上限仍终止循环，但宿主先收到可诊断输出）。bug note 153。

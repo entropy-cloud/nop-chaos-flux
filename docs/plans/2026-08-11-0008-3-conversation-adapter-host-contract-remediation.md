@@ -1,6 +1,6 @@
 # 3 Conversation Adapter / 宿主契约收口：clearAll×create 竞态 + 命令失败保真 + native adapter 渲染循环（ai-invariant-loop）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: ai-invariant-loop
 > Last Reviewed: 2026-08-11
 > Source: `docs/audits/2026-08-10-2245-multi-audit-ai-invariant-loop.md`（FIND-02 [P1]、FIND-04 [P1]、FIND-05 [P1]）；live repo 核对 2026-08-11（行号以审计时点为准，执行时 live 复核）
@@ -72,88 +72,88 @@
 
 ### Phase 1 — clearAll×create 反向竞态修复（FIND-02 [P1]）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/adapters/use-conversation.ts`、`src/adapters/__tests__/use-conversation-clear-all.test.ts`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Proof: RED 回归测试——mock storage 实现原子 `clearAll`；`clearAll(); createConversation(...)` 顺序：断言新会话 save 在 clear 之后落地且 remount（storage 重读）后记录存活；修复前 RED（记录被抹掉）
-- [ ] Decision: 裁定原子 clear 策略——候选：(a) 快照 per-id fan-out（clearAll 时点 `ids` 快照逐 id `deleteConversation`，不用 `storage.clearAll()`）；(b) list-mirror-union drain（drain 合并 clearAll 后注册的新写，原子 clear 前先完成新写）；默认倾向 (a)（per-id 删除天然只作用于 clearAll 时点存在的会话，窗口语义明确，FP-3 错误上报路径复用）；若宿主提供 `clearAll` 的语义是"全删"，(a) 在其上逐 id 删除同样收敛；裁定理由入档
-- [ ] Fix: 按裁定实现——原子 clear 目标改为 clearAll 时点会话快照（per-id fan-out over snapshot 或等价的 list-mirror-union），新会话写不再被清空抹除；`reportStorageError` 语义保持（FP-3）
-- [ ] Proof: 类别清扫——use-conversation 全部时序窗口核对：clearAll / deleteConversation / createConversation / switchConversation / renameConversation 的 drain-save 窗口逐对核对（旧写 drain 方向既有守卫 + 反向新写不被误清方向本面），结论入档
-- [ ] Fix: 测试扩展——既有 create+clearAll（create 在前）与无 `clearAll` 实现的 storage 用例保持零回归；补原子 clear + clearAll-first 组合
+- [x] Proof: RED 回归测试——mock storage 实现原子 `clearAll`；`clearAll(); createConversation(...)` 顺序：断言新会话 save 在 clear 之后落地且 remount（storage 重读）后记录存活；修复前 RED（记录被抹掉）
+- [x] Decision: 裁定原子 clear 策略——候选：(a) 快照 per-id fan-out（clearAll 时点 `ids` 快照逐 id `deleteConversation`，不用 `storage.clearAll()`）；(b) list-mirror-union drain（drain 合并 clearAll 后注册的新写，原子 clear 前先完成新写）；默认倾向 (a)（per-id 删除天然只作用于 clearAll 时点存在的会话，窗口语义明确，FP-3 错误上报路径复用）；若宿主提供 `clearAll` 的语义是"全删"，(a) 在其上逐 id 删除同样收敛；裁定理由入档
+- [x] Fix: 按裁定实现——原子 clear 目标改为 clearAll 时点会话快照（per-id fan-out over snapshot 或等价的 list-mirror-union），新会话写不再被清空抹除；`reportStorageError` 语义保持（FP-3）
+- [x] Proof: 类别清扫——use-conversation 全部时序窗口核对：clearAll / deleteConversation / createConversation / switchConversation / renameConversation 的 drain-save 窗口逐对核对（旧写 drain 方向既有守卫 + 反向新写不被误清方向本面），结论入档
+- [x] Fix: 测试扩展——既有 create+clearAll（create 在前）与无 `clearAll` 实现的 storage 用例保持零回归；补原子 clear + clearAll-first 组合
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。写法原则：只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续所必需的局部检查。
 
-- [ ] FIND-02 RED 测试转 GREEN（clearAll-first + create 记录存活断言）
-- [ ] 既有 clear-all 测试族零回归（含无 clearAll 实现 storage 的 fallback 路径）
-- [ ] 类别清扫记录入档（时序窗口逐对核对结论）
+- [x] FIND-02 RED 测试转 GREEN（clearAll-first + create 记录存活断言）
+- [x] 既有 clear-all 测试族零回归（含无 clearAll 实现 storage 的 fallback 路径）
+- [x] 类别清扫记录入档（时序窗口逐对核对结论）
 
 ### Phase 2 — 命令边界失败保真（FIND-04 [P1]）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/adapters/ai-action-provider.ts`、`src/adapters/ai-component-handle.ts`、`src/renderers/__tests__/action-provider.test.tsx`、`src/renderers/__tests__/component-handle.test.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（失败轮）——真实 engine（connector 抛错）经 `ai:send` / `component:sendMessage`：断言 `ActionResult.ok === false` 且 `error` 携带 `lastError` 信息；修复前 RED（`ok:true`）
-- [ ] Proof: RED 回归测试（busy drop）——`isProcessing` 期间二次发送：断言 `{ok:false, error: engine busy}` 语义；修复前 RED（静默 ok:true）
-- [ ] Fix: `ai-action-provider.ts` `send` 分支——`await engine.sendMessage(text)` 后快照 `engine.getState().requestState`，'error' → `fail(lastError)`；busy drop（发送前 `isProcessing` 且消息未发出）→ `fail('engine busy')` 或等价（实现与 engine 状态读取解耦，不改 engine void-settle 契约）
-- [ ] Fix: `ai-component-handle.ts` 同步——`:67-72,108-110` dead catch 修正为与 provider 同语义的失败保真
-- [ ] Proof: 类别清扫——adapter 层全部命令（send/abort/clear/createConversation/deleteConversation/renameConversation/switchConversation）ActionResult 保真核对：哪些命令有同步失败判定、哪些 await 后需读状态，逐条核对结论入档；`AI_NAMESPACE_ACTIONS` 清单对照
-- [ ] Fix: 测试扩展——成功路径既有断言保持；新增失败轮 + busy-drop 双断言（provider + component-handle 双面）
+- [x] Proof: RED 回归测试（失败轮）——真实 engine（connector 抛错）经 `ai:send` / `component:sendMessage`：断言 `ActionResult.ok === false` 且 `error` 携带 `lastError` 信息；修复前 RED（`ok:true`）
+- [x] Proof: RED 回归测试（busy drop）——`isProcessing` 期间二次发送：断言 `{ok:false, error: engine busy}` 语义；修复前 RED（静默 ok:true）
+- [x] Fix: `ai-action-provider.ts` `send` 分支——`await engine.sendMessage(text)` 后快照 `engine.getState().requestState`，'error' → `fail(lastError)`；busy drop（发送前 `isProcessing` 且消息未发出）→ `fail('engine busy')` 或等价（实现与 engine 状态读取解耦，不改 engine void-settle 契约）
+- [x] Fix: `ai-component-handle.ts` 同步——`:67-72,108-110` dead catch 修正为与 provider 同语义的失败保真
+- [x] Proof: 类别清扫——adapter 层全部命令（send/abort/clear/createConversation/deleteConversation/renameConversation/switchConversation）ActionResult 保真核对：哪些命令有同步失败判定、哪些 await 后需读状态，逐条核对结论入档；`AI_NAMESPACE_ACTIONS` 清单对照
+- [x] Fix: 测试扩展——成功路径既有断言保持；新增失败轮 + busy-drop 双断言（provider + component-handle 双面）
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。写法原则同 Phase 1。
 
-- [ ] FIND-04 两条 RED 测试转 GREEN（失败轮 + busy-drop 双断言，provider + handle 双面）
-- [ ] 既有 action-provider 成功路径测试零回归
-- [ ] 类别清扫记录入档（命令边界 ActionResult 核对结论）
+- [x] FIND-04 两条 RED 测试转 GREEN（失败轮 + busy-drop 双断言，provider + handle 双面）
+- [x] 既有 action-provider 成功路径测试零回归
+- [x] 类别清扫记录入档（命令边界 ActionResult 核对结论）
 
 ### Phase 3 — native adapter 渲染循环守卫（FIND-05 [P1]）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/adapters/use-engine-view.ts`、`src/renderers/ai-chat.tsx`、`src/adapters/__tests__/react-adapter-identity.test.ts`、`docs/components/flux-renderers-ai/engine.md`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Proof: RED 回归测试——native adapter 构造的 engine 绑定 `useEngineView`/ai-chat：断言产生可诊断结果（console.warn 调用 / 错误抛出示警），而非无限渲染循环；修复前 RED（或既有环境直接断言崩溃路径被守卫拦截）
-- [ ] Proof: 类别清扫——全部 `useSyncExternalStore` 绑定面（`use-engine-view` / `useMessage` / `ai-chat` 外部 engine 面）getSnapshot 稳定性核对（哪个面可被不稳定 getSnapshot 击中、哪个面已有缓存 adapter），结论入档
-- [ ] Decision: 裁定守卫方案——候选：(a) `useEngineView` 运行时不稳定 getSnapshot 检测（比较前两次 getState 返回值引用，不等则 `console.warn` 一次 + 指向 `createReactMessageAdapter`，检测带引用计数/去抖避免误报）；(b) 仅文档化 adapter 前置条件（engine.md §8.2/§8.5）；默认倾向 (a)+(b) 组合（守卫为宿主提供可诊断错误，文档为正确用法提供指引）；裁定理由入档
-- [ ] Fix: 按裁定实现——`useEngineView`（或 ai-chat 绑定面）不稳定 getSnapshot 守卫（仅 warn + 提示，不改渲染行为本身）；`ai-chat` duck-type 守卫可扩展检查快照稳定性或文档注记
-- [ ] Fix: `engine.md` §8.2 补 native adapter 快照稳定性限制说明（非 React 宿主直绑）+ §8.5 外部 engine 接入补 adapter 前置条件（`createReactMessageAdapter` 必选 + 默认 native 仅限非 React 消费）；`use-engine-view.ts:30-35` 注释同步
-- [ ] Fix: 测试扩展——宿主向回归：native engine 绑定 → 可诊断输出（warn/错误）断言；React adapter 绑定 → 零警告零循环断言
+- [x] Proof: RED 回归测试——native adapter 构造的 engine 绑定 `useEngineView`/ai-chat：断言产生可诊断结果（console.warn 调用 / 错误抛出示警），而非无限渲染循环；修复前 RED（或既有环境直接断言崩溃路径被守卫拦截）
+- [x] Proof: 类别清扫——全部 `useSyncExternalStore` 绑定面（`use-engine-view` / `useMessage` / `ai-chat` 外部 engine 面）getSnapshot 稳定性核对（哪个面可被不稳定 getSnapshot 击中、哪个面已有缓存 adapter），结论入档
+- [x] Decision: 裁定守卫方案——候选：(a) `useEngineView` 运行时不稳定 getSnapshot 检测（比较前两次 getState 返回值引用，不等则 `console.warn` 一次 + 指向 `createReactMessageAdapter`，检测带引用计数/去抖避免误报）；(b) 仅文档化 adapter 前置条件（engine.md §8.2/§8.5）；默认倾向 (a)+(b) 组合（守卫为宿主提供可诊断错误，文档为正确用法提供指引）；裁定理由入档
+- [x] Fix: 按裁定实现——`useEngineView`（或 ai-chat 绑定面）不稳定 getSnapshot 守卫（仅 warn + 提示，不改渲染行为本身）；`ai-chat` duck-type 守卫可扩展检查快照稳定性或文档注记
+- [x] Fix: `engine.md` §8.2 补 native adapter 快照稳定性限制说明（非 React 宿主直绑）+ §8.5 外部 engine 接入补 adapter 前置条件（`createReactMessageAdapter` 必选 + 默认 native 仅限非 React 消费）；`use-engine-view.ts:30-35` 注释同步
+- [x] Fix: 测试扩展——宿主向回归：native engine 绑定 → 可诊断输出（warn/错误）断言；React adapter 绑定 → 零警告零循环断言
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。写法原则同 Phase 1。
 
-- [ ] FIND-05 RED 测试转 GREEN（native 绑定产生可诊断结果，React adapter 零误报）
-- [ ] engine.md §8.2/§8.5 同步到位（live 核对一致）
-- [ ] 既有外部 engine 测试（`ai-chat-external-engine.test.tsx`）零回归
-- [ ] getSnapshot 面类别清扫记录入档（全部 useSyncExternalStore 绑定面核对结论）
+- [x] FIND-05 RED 测试转 GREEN（native 绑定产生可诊断结果，React adapter 零误报）
+- [x] engine.md §8.2/§8.5 同步到位（live 核对一致）
+- [x] 既有外部 engine 测试（`ai-chat-external-engine.test.tsx`）零回归
+- [x] getSnapshot 面类别清扫记录入档（全部 useSyncExternalStore 绑定面核对结论）
 
 ### Phase 4 — 登记处同步 + 收口
 
-Status: planned
+Status: completed
 Targets: `docs/components/flux-renderers-ai/engine.md`、`docs/bugs/`、`docs/logs/2026/08-11.md`
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] Fix: bug notes 147+（FIND-02 / FIND-04 / FIND-05，按 guide）
-- [ ] Proof: AI 包全量测试 + `pnpm typecheck/lint`（AI 包）零回归；`check:ai-engine-invariants` 零命中
-- [ ] Follow-up: daily log `docs/logs/2026/08-11.md` 记录本 plan 收口
+- [x] Fix: bug notes 147+（FIND-02 / FIND-04 / FIND-05，按 guide）
+- [x] Proof: AI 包全量测试 + `pnpm typecheck/lint`（AI 包）零回归；`check:ai-engine-invariants` 零命中
+- [x] Follow-up: daily log `docs/logs/2026/08-11.md` 记录本 plan 收口
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。写法原则同 Phase 1。
 
-- [ ] bug notes 同步到位；engine.md 无漂移（live 核对一致）
-- [ ] AI 包测试全绿零回归 + `check:ai-engine-invariants` 零命中
-- [ ] daily log 收口记录落档
+- [x] bug notes 同步到位；engine.md 无漂移（live 核对一致）
+- [x] AI 包测试全绿零回归 + `check:ai-engine-invariants` 零命中
+- [x] daily log 收口记录落档
 
 ## Draft Review Record
 
@@ -168,17 +168,17 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] FIND-02（clearAll×create 反向竞态）已修复落地（RED→GREEN 证据在案）
-- [ ] FIND-04（命令边界失败保真）已修复落地（失败轮 + busy-drop 断言在案）
-- [ ] FIND-05（native adapter 渲染循环守卫）已修复落地（可诊断结果断言 + engine.md 同步）
-- [ ] 类别清扫记录入档（时序窗口 / 命令边界 / getSnapshot 面核对）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步（engine.md / bug notes / daily log）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] FIND-02（clearAll×create 反向竞态）已修复落地（RED→GREEN 证据在案）
+- [x] FIND-04（命令边界失败保真）已修复落地（失败轮 + busy-drop 断言在案）
+- [x] FIND-05（native adapter 渲染循环守卫）已修复落地（可诊断结果断言 + engine.md 同步）
+- [x] 类别清扫记录入档（时序窗口 / 命令边界 / getSnapshot 面核对）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步（engine.md / bug notes / daily log）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -195,13 +195,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待完成时填写。
+Status Note: 2026-08-11 收口——三条 P1 全部 test-first 先红后绿落地（FIND-02 RED：原子 clear 抹掉 clearAll→drain 窗口新建会话记录；FIND-04 RED ×4：失败轮 + busy-drop 双面谎报 ok:true；FIND-05 RED ×2：native adapter 绑定零可诊断输出）；AI 包 79 files/678 tests 全绿零回归（基线 79/669 + 9 新用例）；全仓 typecheck/build/lint 37/37 + `pnpm test` 66/66 tasks 全绿；`check:ai-engine-invariants` exit 0 零命中；`pnpm check` 仅既有登记红零新增；bug notes 151-153 + engine.md §8.2/§8.5/§8.6/§Invariants/Failure Path 同步 + daily log + roadmap 收口注记；源审计 multi-audit 已于 0008-1 翻 closed 幂等跳过。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent（fresh session）执行
-- Evidence: 待定
+- Auditor / Agent: 独立子 agent（fresh session）`ses_012db03a2ffezNOnwNF4m1Qf5K`
+- Evidence: G2-G7 全 PASS（代码落点 + 3 组 focused 测试复跑绿 + 文档同步核对 + 无静默降级）；G1/G8 为 plan 收尾动作（Phase 4 勾选 / Closure Gates / Closure 节 / Plan Status），审计通过后由本执行轮完成最终化（与 0008-2 先例同序）
 
 Follow-up:
 
-- 待定。
+- 无剩余 plan-owned work；P2 全量已入 roadmap Follow-up Backlog（2026-08-10-2245 填充节），FIND-08/FIND-09 维持 P2 backlog 登记（Non-Blocking Follow-ups 已声明）。
