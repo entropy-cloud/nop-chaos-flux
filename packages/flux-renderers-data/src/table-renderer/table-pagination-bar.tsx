@@ -148,7 +148,11 @@ export function TablePaginationBar({
       </Pagination>
 
       <div className="text-sm text-muted-foreground whitespace-nowrap">
-        {`${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalRows)} of ${totalRows}`}
+        {t('flux.pagination.range', {
+          from: (currentPage - 1) * pageSize + 1,
+          to: Math.min(currentPage * pageSize, totalRows),
+          total: totalRows,
+        })}
       </div>
     </div>
   );

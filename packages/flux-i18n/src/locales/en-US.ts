@@ -52,6 +52,7 @@ export const enUS: Resource = {
       page: 'Page {{current}} of {{total}}',
       goto: 'Go to',
       total: 'Total {{count}}',
+      range: '{{from}}-{{to}} of {{total}}',
       first: 'First page',
       last: 'Last page',
       previous: 'Previous page',
