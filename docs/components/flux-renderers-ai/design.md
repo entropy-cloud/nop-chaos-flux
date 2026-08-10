@@ -652,6 +652,8 @@ tiny-robot 用 `--tr-*` 前缀。flux-renderers-ai **不引入** `--tr-*` 或 `-
 
 > **engineNullSwitch 窗口期绑定（multi-audit P2-8，2026-08-10）**：`engine` prop 解析为 `null` 的切换窗口内，`ai` namespace 与 ComponentHandle（§14.3）绑定到**显式 null engine**——engine 动作（`ai:send` / `ai:abort` / `ai:clear` / `component:sendMessage` 等）返回 `{ ok: false, error: 'ai-chat engine is not ready (external engine switch in progress)' }` 显式拒绝，**不写入**将被隐藏的自建 engine（其消息在外部 engine B 到达时会蒸发）；conversation 动作（controller-bound）与读面不受影响。窗口结束（engine B 就绪）后绑定自动恢复。
 
+> **多实例语义（R1-F5，2026-08-11）**：`ai` namespace 是 **namespace-keyed、非实例隔离**的——`registerNamespace` 对同 namespace 重复注册执行 `cleanupProvider(existing)` **顶替**（后挂载者接管），先卸载者的 unregister 会注销**整个** namespace（`flux-runtime/src/action-scope.ts`）。因此**单页多 ai-chat 时 `ai:*` 动作由后挂载者接管**，且先卸载者离开后 namespace 消失；`ai-chat` 在注册前检测到 namespace 已被占用时 `console.warn` 一次（不再静默错乱）。多实例控制请使用 ComponentHandle 路径（`component:sendMessage` 等，cid-isolated）或 host 侧按实例提供独立 ActionScope；完整实例隔离方案（按实例 namespace / 前缀隔离 / action-scope 多 provider）涉及 flux-runtime 公共语义变更，属结构性重构（决策记录：超出 P2 范围，入非阻塞 follow-up 需人工确认）。
+
 ### 14.3 ComponentHandle（P2）
 
 `ai-chat` 注册 component handle，可被 `componentId` / `componentName` 寻址：

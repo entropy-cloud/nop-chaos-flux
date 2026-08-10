@@ -522,6 +522,10 @@ AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大�
 - **no-storage 首会话 build-on-demand（R1-F3）**：无 storage + `initialConversations` 时 mount 即为首会话建 engine（`use-conversation.ts` mount effect，K-⑥-3 `ensureEngineAndHydrateEvent` 同语义，无 storage 跳过 hydrate）——`activeEngine` 不再恒 null（此前 host 绑定 `engine={activeEngine}` 得到「已激活会话却空态」）。幂等：strict-mode 双 mount 命中缓存跳过。
 - **delete-during-load merge 过滤（R1-F4）**：mount bootstrap `loadConversations` 期间 `deleteConversation` 的已删 id 记入 `deletedDuringLoadRef`，K-⑦ merge 基在非空判断**前**过滤——被删会话不复活为幽灵列表项、唯一被删会话不重新成为 active（与 `listClearedRef` clearAll 守卫语义并列）。
 
+### renderer 面行为注记（2026-08-11，R1-F5）
+
+- **`ai` ActionScope namespace 多实例语义**：`ai-chat` 渲染器注册的 `ai` namespace 是 **namespace-keyed、非实例隔离**的——`flux-runtime` `registerNamespace` 对同 namespace 重复注册执行 `cleanupProvider(existing)` 顶替（后挂载者接管），先卸载者的 unregister 注销整个 namespace（`action-scope.ts`）。**单页多 ai-chat：`ai:*` 动作由后挂载者接管、先卸载者注销**；`ai-chat` 注册前检测到 namespace 已被占用时 `console.warn` 一次（设计.md §14.2 多实例注记）。多实例控制走 ComponentHandle 路径（cid-isolated）或 host 按实例提供独立 ActionScope；完整实例隔离方案（按实例 namespace / 前缀隔离 / action-scope 多 provider）属 flux-runtime 公共语义结构性重构，入非阻塞 follow-up 需人工确认（决策见 plan `2026-08-11-0335-2` Phase 5 与 bug note 160）。
+
 ### 空产物清理设计裁定（K-⑩，重构防回退）
 
 **空产物（`content:''` 且无 `finishReason`）的 assistant 消息不得进入请求历史与 autoSave 快照**——统一谓词 `isVacuousAssistantResidue`（`engine/utils.ts`）。三条落地面缺一不可：① 终态提交层 drop（`commitOrDropResidue`，失败/中止/退化轮不提交空产物）；② `buildContext` 尾部排除谓词扩展（纵深防御）；③ autoSave 快照尾部剥除（覆盖 `abort()` 同步翻 `requestState` 早于 engine 清理的窗口）。部分内容（非空）的失败轮产物保留提交（用户已见部分回答）；带 finishReason 的空内容提交保留（真实完成）。见 `docs/audits/ai-invariants/invariant-catalog.md` §10.1 / bug note 125。

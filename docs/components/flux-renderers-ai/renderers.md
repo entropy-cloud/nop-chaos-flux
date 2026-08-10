@@ -49,6 +49,8 @@ export interface AiChatSchema extends BaseSchema {
 }
 ```
 
+> **host 可写字段防御（R3-F1，2026-08-11）**：`metadata.createdAt` 是 host 可写字段——`TimestampContentRenderer` 对任何 Date 不可表示值（NaN / ±Infinity / 越界有限值如 `Number.MAX_VALUE`）**返回 null 不渲染**（`Number.isNaN(date.getTime())` 早退），不再在 `toISOString()` 上抛 RangeError 崩整棵气泡树（ai-chat 无 Error Boundary）。合法值渲染行为不变。
+
 ### 1.3 DOM 结构
 
 ```html
@@ -87,6 +89,7 @@ export interface AiChatSchema extends BaseSchema {
 - `connector` 表达式变化触发 `engine.setConnector(newConnector)`；进行中的请求不中断（避免半句响应分裂）。外部 engine 自带 connector 生命周期，热替换仅作用于自建 engine。
 - marker：`nop-ai-chat`；Layout 类型，不硬编码 gap/padding；spacing 由 schema `className` 的 `stack-*` 别名表达。
 - `data-state` 反映 `engine.requestState`，便于 CSS 选择器做状态样式。
+- **`ai` namespace 多实例语义（R1-F5，2026-08-11）**：`ai` namespace 非实例隔离（namespace-keyed）——同页多 ai-chat 时 `ai:*` 动作由**后挂载者接管**、先卸载者注销整个 namespace；`ai-chat` 注册前检测到占用时 `console.warn` 一次（design.md §14.2 多实例注记）。多实例控制走 ComponentHandle 路径（cid-isolated）或 host 按实例提供独立 ActionScope；完整实例隔离方案（flux-runtime 公共语义变更）入非阻塞 follow-up 需人工确认。
 
 ## 2. ai-message-list（Layout, P0）
 

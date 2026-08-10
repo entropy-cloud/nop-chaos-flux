@@ -1,6 +1,6 @@
 # 2 Renderer/UI 族 P2 修复（citations 显式空 sources / clipboard 假成功 / timestamp 崩溃 / message-list 空态 className / attachments region 名 / ActionScope 实例隔离）（ai-invariant-loop）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: ai-invariant-loop
 > Work Item: Follow-up Backlog P2（2026-08-10-2245 双审计 renderer/UI 族）：R2-F1 / R2-F2 / R3-F1 / FIND-13 / FIND-20 / R1-F5
 > Last Reviewed: 2026-08-11
@@ -81,101 +81,103 @@ renderer 行为 + a11y 契约回归（roadmap Rule：不变式门禁即测试的
 
 ### Phase 1 — citations 显式空 sources（R2-F1）+ 类别清扫
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-citations.tsx`、`src/renderers/__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（显式空数组权威）——消息显式 `sources: []` + metadata.sources 非空 → 断言渲染零引用卡（`sources` 解析为空）；修复前 RED
-- [ ] Proof: RED 回归测试（data-sources 覆盖面）——显式 `sources: []` + content `data-sources` 非空 → 断言零引用卡；修复前 RED
-- [ ] Fix: `resolveSources` 契约修正——`Array.isArray(explicitSources)`（含空数组）即权威返回 `normalizeSources(explicitSources)`；metadata / data-sources fallback 仅在 explicitSources 为 undefined/非数组时触发
-- [ ] Fix: 类别清扫——全部「显式输入覆盖 metadata」契约面核对：ai-feedback（P2-7 已修）/ ai-citations（本面）/ 其余消费 `metadata.*` 的渲染器是否同族；清扫记录入档
-- [ ] Proof: 既有 citations 测试零回归（metadata 路径用例保持绿）
+- [x] Proof: RED 回归测试（显式空数组权威）——消息显式 `sources: []` + metadata.sources 非空 → 断言渲染零引用卡（`sources` 解析为空）；修复前 RED
+- [x] Proof: RED 回归测试（data-sources 覆盖面）——显式 `sources: []` + content `data-sources` 非空 → 断言零引用卡；修复前 RED
+- [x] Fix: `resolveSources` 契约修正——`Array.isArray(explicitSources)`（含空数组）即权威返回 `normalizeSources(explicitSources)`；metadata / data-sources fallback 仅在 explicitSources 为 undefined/非数组时触发
+- [x] Fix: 类别清扫——全部「显式输入覆盖 metadata」契约面核对：ai-feedback（P2-7 已修）/ ai-citations（本面）/ 其余消费 `metadata.*` 的渲染器是否同族；清扫记录入档
+- [x] Proof: 既有 citations 测试零回归（metadata 路径用例保持绿）
 
 Exit Criteria:
 
-- [ ] R2-F1 两条 RED 测试全部转 GREEN（显式空数组覆盖 metadata 与 data-sources）
-- [ ] 既有 citations 用例零回归（非空显式/无显式路径行为不变）
-- [ ] 类别清扫记录入档（显式输入覆盖契约核对结论）
+- [x] R2-F1 两条 RED 测试全部转 GREEN（显式空数组覆盖 metadata 与 data-sources）
+- [x] 既有 citations 用例零回归（非空显式/无显式路径行为不变）
+- [x] 类别清扫记录入档（显式输入覆盖契约核对结论）
 
 ### Phase 2 — clipboard 假成功（R2-F2）+ 类别清扫
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-bubble/renderers/markdown.tsx`、`src/renderers/__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（无 clipboard API）——`navigator.clipboard` 缺失（stub 移除）→ 点复制 → 断言不出现「Copied」（按钮保持原态）；修复前 RED
-- [ ] Proof: RED 回归测试（writeText 缺失面）——`navigator.clipboard` 存在但无 `writeText` → 同上断言；修复前 RED
-- [ ] Fix: `clipboardAdapter.writeText` 缺失面语义——API 缺失时返回 reject 或显式失败信号（`handleCopy` 的 `.catch` 路径保持按钮原态，与既有拒绝处理一致）
-- [ ] Fix: 类别清扫——全包「复制」面核对：ai-feedback 复制（P3 登记，同根因）/ markdown CodeBlock（本面）/ 其余 copy 交互；清扫记录入档（P3 已登记项是否顺带收敛，记录结论）
-- [ ] Proof: 既有 markdown 复制用例零回归（正常路径「Copied」仍成立）
+- [x] Proof: RED 回归测试（无 clipboard API）——`navigator.clipboard` 缺失（stub 移除）→ 点复制 → 断言不出现「Copied」（按钮保持原态）；修复前 RED
+- [x] Proof: RED 回归测试（writeText 缺失面）——`navigator.clipboard` 存在但无 `writeText` → 同上断言；修复前 RED
+- [x] Fix: `clipboardAdapter.writeText` 缺失面语义——API 缺失时返回 reject 或显式失败信号（`handleCopy` 的 `.catch` 路径保持按钮原态，与既有拒绝处理一致）
+- [x] Fix: 类别清扫——全包「复制」面核对：ai-feedback 复制（P3 登记，同根因）/ markdown CodeBlock（本面）/ 其余 copy 交互；清扫记录入档（P3 已登记项是否顺带收敛，记录结论）
+- [x] Proof: 既有 markdown 复制用例零回归（正常路径「Copied」仍成立）
 
 Exit Criteria:
 
-- [ ] R2-F2 两条 RED 测试全部转 GREEN（API 缺失与 writeText 缺失两面对称）
-- [ ] 既有复制用例零回归（正常环境「Copied」保持）
-- [ ] 类别清扫记录入档（全包复制面核对结论）
+- [x] R2-F2 两条 RED 测试全部转 GREEN（API 缺失与 writeText 缺失两面对称）
+- [x] 既有复制用例零回归（正常环境「Copied」保持）
+- [x] 类别清扫记录入档（全包复制面核对结论）
 
 ### Phase 3 — timestamp 非法值守卫（R3-F1）+ 类别清扫
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-bubble/renderers/timestamp.tsx`、`src/renderers/__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（NaN）——`metadata.createdAt = NaN` → 断言组件渲染 null、树不崩（无 RangeError）；修复前 RED
-- [ ] Proof: RED 回归测试（越界/非法值面）——`Number.MAX_VALUE`、非法字符串→数字等 host 可写值 → 断言不崩树；修复前 RED
-- [ ] Fix: 守卫修正——`typeof createdAt !== 'number'` 之外补 `Number.isFinite(createdAt)` **且 Date 可表示范围**检查（Date 有效范围 ±8.64e15 ms；`Number.isFinite(Number.MAX_VALUE)` 为 true 但 `new Date(Number.MAX_VALUE)` 仍非法）——或等价实现：`Number.isNaN(date.getTime())` 早退 / 对 `toISOString()` 兜底 try-catch；对齐 ai-token-usage 的 isFinite 先例并补足 Date 语义
-- [ ] Fix: 类别清扫——全包「host 可写 metadata 数值面」核对：ai-token-usage（已 isFinite）/ timestamp（本面）/ 其余消费 `metadata.*` 数值的渲染器；清扫记录入档
-- [ ] Proof: 既有 timestamp 用例零回归（合法值渲染保持）
+- [x] Proof: RED 回归测试（NaN）——`metadata.createdAt = NaN` → 断言组件渲染 null、树不崩（无 RangeError）；修复前 RED
+- [x] Proof: RED 回归测试（越界/非法值面）——`Number.MAX_VALUE`、非法字符串→数字等 host 可写值 → 断言不崩树；修复前 RED
+- [x] Fix: 守卫修正——`typeof createdAt !== 'number'` 之外补 `Number.isFinite(createdAt)` **且 Date 可表示范围**检查（Date 有效范围 ±8.64e15 ms；`Number.isFinite(Number.MAX_VALUE)` 为 true 但 `new Date(Number.MAX_VALUE)` 仍非法）——或等价实现：`Number.isNaN(date.getTime())` 早退 / 对 `toISOString()` 兜底 try-catch；对齐 ai-token-usage 的 isFinite 先例并补足 Date 语义
+- [x] Fix: 类别清扫——全包「host 可写 metadata 数值面」核对：ai-token-usage（已 isFinite）/ timestamp（本面）/ 其余消费 `metadata.*` 数值的渲染器；清扫记录入档
+- [x] Proof: 既有 timestamp 用例零回归（合法值渲染保持）
 
 Exit Criteria:
 
-- [ ] R3-F1 两条 RED 测试全部转 GREEN（NaN + 越界值不崩树）
-- [ ] 既有 timestamp 合法值用例零回归
-- [ ] 类别清扫记录入档（host 可写数值面核对结论）
+- [x] R3-F1 两条 RED 测试全部转 GREEN（NaN + 越界值不崩树）
+- [x] 既有 timestamp 合法值用例零回归
+- [x] 类别清扫记录入档（host 可写数值面核对结论）
 
 ### Phase 4 — message-list 空态 className（FIND-13）+ attachments region 名（FIND-20）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-message-list.tsx`、`src/renderers/ai-attachments.tsx`、`src/renderers/__tests__/`、i18n
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（空态 className）——空会话渲染 → 断言根节点 class 含 `props.meta.className` 值；修复前 RED
-- [ ] Fix: 空态分支 `cn('nop-ai-message-list', props.className)`（对齐非空分支 :81 与 ai-prompts/ai-suggestions 先例）
-- [ ] Fix: 类别清扫——全包「空态/缺省分支丢 className」面核对：ai-message-list（本面）/ ai-prompts（已含）/ ai-suggestions（已含）/ 其余含空态分支的 renderer；清扫记录入档
-- [ ] Proof: RED 回归测试（region accessible name）——渲染 attachments → 断言根节点 `aria-label` 非空（i18n `flux.ai.attachments` 或等价 key）；修复前 RED
-- [ ] Fix: 根节点补 `aria-label={t('flux.ai.attachments')}`（i18n en/zh 对称注册，对齐既有 `flux.ai.*` key 先例）；或按组件语义改 role（裁定记录）
-- [ ] Proof: 既有 message-list / attachments 用例零回归
+- [x] Proof: RED 回归测试（空态 className）——空会话渲染 → 断言根节点 class 含 `props.meta.className` 值；修复前 RED
+- [x] Fix: 空态分支 `cn('nop-ai-message-list', props.className)`（对齐非空分支 :81 与 ai-prompts/ai-suggestions 先例）
+- [x] Fix: 类别清扫——全包「空态/缺省分支丢 className」面核对：ai-message-list（本面）/ ai-prompts（已含）/ ai-suggestions（已含）/ 其余含空态分支的 renderer；清扫记录入档
+- [x] Proof: RED 回归测试（region accessible name）——渲染 attachments → 断言根节点 `aria-label` 非空（i18n `flux.ai.attachments` 或等价 key）；修复前 RED
+- [x] Fix: 根节点补 `aria-label={t('flux.ai.attachments')}`（i18n en/zh 对称注册，对齐既有 `flux.ai.*` key 先例）；或按组件语义改 role（裁定记录）
+- [x] Proof: 既有 message-list / attachments 用例零回归
 
 Exit Criteria:
 
-- [ ] FIND-13 RED 测试转 GREEN（空态 className 合并）；既有空态用例零回归
-- [ ] FIND-20 RED 测试转 GREEN（aria-label 存在）；i18n en/zh 对称
-- [ ] 类别清扫记录入档（空态 className 面 + region 命名面）
+- [x] FIND-13 RED 测试转 GREEN（空态 className 合并）；既有空态用例零回归
+- [x] FIND-20 RED 测试转 GREEN（aria-label 存在）；i18n en/zh 对称
+- [x] 类别清扫记录入档（空态 className 面 + region 命名面）
 
 ### Phase 5 — ActionScope namespace 冲突守卫（R1-F5）+ 文档化 + 收口
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-chat.tsx`、`docs/components/flux-renderers-ai/engine.md`、`docs/components/flux-renderers-ai/renderers.md`、`src/renderers/__tests__/`、`docs/bugs/`、`docs/logs/2026/08-11.md`
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] Proof: RED 回归测试（冲突 warn）——同页双 ai-chat（`useNamespaceRegistration` 同一 actionScope）→ 断言后挂载者触发一次性 warn（console.warn spy）；修复前 RED（现无 warn）
-- [ ] Fix: ai-chat 注册前检测——`actionScope` 已有 `ai` provider 且非本实例时 `console.warn` 一次（指向 design.md §14.2「ActionScope namespace（P1）」多实例注记 + 本 plan 新增 engine.md 注记节，engine.md 无 §8.7/§14，不引用不存在的锚点）；不改变注册/注销语义
-- [ ] Decision: 完整实例隔离方案评估与裁定——方案（按实例 namespace / 前缀隔离 / action-scope 多 provider）各自影响面（flux-runtime 公共 API 变更）记录，裁定为「超出 P2 范围，入非阻塞 follow-up 需人工确认」
-- [ ] Fix: engine.md / renderers.md 文档化——「单页多 ai-chat：`ai:*` namespace 由后挂载者接管、先卸载者注销；ComponentHandle 路径 cid-isolated；多实例需 host 侧按实例作用域或等待完整方案」；与 Plan 3 FIND-19 双接口文档化协调（同文档面）
-- [ ] Fix: bug notes 154+（R2-F1/R2-F2/R3-F1/FIND-13/FIND-20/R1-F5 族，按 guide；R1-F5 注明决策 + 完整方案 follow-up）
-- [ ] Proof: AI 包全量测试 + `check:ai-engine-invariants` live 复跑 exit 0
-- [ ] Follow-up: daily log `docs/logs/2026/08-11.md` 记录本 plan 收口
+- [x] Proof: RED 回归测试（冲突 warn）——同页双 ai-chat（`useNamespaceRegistration` 同一 actionScope）→ 断言后挂载者触发一次性 warn（console.warn spy）；修复前 RED（现无 warn）
+- [x] Fix: ai-chat 注册前检测——`actionScope` 已有 `ai` provider 且非本实例时 `console.warn` 一次（指向 design.md §14.2「ActionScope namespace（P1）」多实例注记 + 本 plan 新增 engine.md 注记节，engine.md 无 §8.7/§14，不引用不存在的锚点）；不改变注册/注销语义
+- [x] Decision: 完整实例隔离方案评估与裁定——方案（按实例 namespace / 前缀隔离 / action-scope 多 provider）各自影响面（flux-runtime 公共 API 变更）记录，裁定为「超出 P2 范围，入非阻塞 follow-up 需人工确认」
+- [x] Fix: engine.md / renderers.md 文档化——「单页多 ai-chat：`ai:*` namespace 由后挂载者接管、先卸载者注销；ComponentHandle 路径 cid-isolated；多实例需 host 侧按实例作用域或等待完整方案」；与 Plan 3 FIND-19 双接口文档化协调（同文档面）
+- [x] Fix: bug notes 154+（R2-F1/R2-F2/R3-F1/FIND-13/FIND-20/R1-F5 族，按 guide；R1-F5 注明决策 + 完整方案 follow-up）
+- [x] Proof: AI 包全量测试 + `check:ai-engine-invariants` live 复跑 exit 0
+- [x] Follow-up: daily log `docs/logs/2026/08-11.md` 记录本 plan 收口
 
 Exit Criteria:
 
-- [ ] R1-F5 RED 测试转 GREEN（冲突 warn 触发）；既有 ai-chat 用例零回归
-- [ ] 决策记录入档（完整方案裁定 + 理由）；engine.md / renderers.md 多实例注记同步
-- [ ] bug notes 154+ 与 daily log 收口记录落档；`check:ai-engine-invariants` exit 0
+- [x] R1-F5 RED 测试转 GREEN（冲突 warn 触发）；既有 ai-chat 用例零回归
+- [x] 决策记录入档（完整方案裁定 + 理由）；engine.md / renderers.md 多实例注记同步
+- [x] bug notes 154+ 与 daily log 收口记录落档；`check:ai-engine-invariants` exit 0
+
+**Decision Record（R1-F5 完整实例隔离方案评估，2026-08-11）**：三个候选方案的影响面——① 按实例 namespace（每个 ai-chat 注册 `ai:<cid>` 派生 namespace）：改动 ai-chat 注册面 + 既有 `ai:*` schema 动作契约（`ai:send` 等）全部失效，host 侧所有 action 配置需迁移；② 前缀隔离（host 每实例配置 namespace 前缀）：把隔离责任推给 host，schema 动作配置 per-instance 化，公共 API 不动但契约漂移风险高；③ action-scope 多 provider（`registerNamespace` 支持同 namespace 多 provider + 按 scope 解析）：改 `flux-runtime/src/action-scope.ts` 公共语义（`ActionScope` 接口 / `resolve` 解析顺序 / provider 生命周期），全部消费方（非 AI 包）受影响。三者均涉及 flux-runtime 公共 API 变更或既有契约迁移，属结构性重构需人工确认 → **裁定：超出 P2 范围，入非阻塞 follow-up**（plan「Non-Blocking Follow-ups」+ bug note 160 + design.md §14.2 注记）。P2 守卫（注册前检测 + 一次性 warn）+ 文档化已消除「静默路由错乱」的信息缺失；单页多 ai-chat 可用 ComponentHandle 路径（cid-isolated）。
 
 ## Draft Review Record
 
@@ -192,16 +194,16 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 6 条 P2（R2-F1 / R2-F2 / R3-F1 / FIND-13 / FIND-20 / R1-F5）全部修复落地（test-first RED→GREEN 证据在案）
-- [ ] R1-F5 守卫 + 文档化收口（完整方案决策入档，不做结构性重构）
-- [ ] 类别清扫记录入档（显式输入覆盖契约 / 全包复制面 / host 可写数值面 / 空态 className 面）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（engine.md / renderers.md / i18n / bug notes / daily log）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 6 条 P2（R2-F1 / R2-F2 / R3-F1 / FIND-13 / FIND-20 / R1-F5）全部修复落地（test-first RED→GREEN 证据在案）
+- [x] R1-F5 守卫 + 文档化收口（完整方案决策入档，不做结构性重构）
+- [x] 类别清扫记录入档（显式输入覆盖契约 / 全包复制面 / host 可写数值面 / 空态 className 面）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步（design.md / engine.md / renderers.md / i18n / bug notes / daily log / roadmap）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -233,13 +235,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: 2026-08-11 收口——6 条 renderer/UI 族 P2（R2-F1 / R2-F2 / R3-F1 / FIND-13 / FIND-20 / R1-F5）全部 test-first 修复落地（RED→GREEN，14 条新回归用例），类别清扫 4 族记录入档，owner docs（design.md §14.2 / engine.md / renderers.md / i18n en/zh / bug notes 159-160 / daily log / roadmap）全部同步，`check:ai-engine-invariants` exit 0 零命中，全仓 typecheck/build/lint 37/37 + test 66/66 全绿，`pnpm check` 仅既有登记红零新增。R1-F5 完整实例隔离方案裁定超出 P2 范围入非阻塞 follow-up（需人工确认），P2 守卫 + 文档化消除静默错乱。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待填）
-- Evidence: （待填）
+- Auditor / Agent: 独立 fresh sub-agent（task `ses_0127c9c64ffe5jzuWkg4Ojhy3d`，本次执行 session 未自审）
+- Evidence: verdict `approved`——逐 Phase live code 核对（ai-citations.tsx:471 / markdown.tsx clipboardAdapter reject / timestamp.tsx:22 getTime() 早退 / ai-message-list.tsx:103 空态 className / ai-attachments.tsx:223 aria-label + en/zh :86/:87 / ai-chat.tsx:214 注册前 useLayoutEffect warn，layout-effect 声明序语义 trace 成立）；14 条新用例行为断言核对（非 not.toThrow-only）；plan 文本一致性（Phase Status/Exit Criteria/Closure Gates/daily log 基线 690→704 数字吻合）；deferred honesty 通过（0335-1 completed / 0335-3 active 实存，FIND-21 live 核销）；独立复跑 7 文件 80 files/704 tests 全绿 + `check:ai-engine-invariants` exit 0 + `check:i18n-keys` 绿；`pnpm check` exit 1 仅既有登记红（6 条 industrial audit-event-dispatch-ctx + 2 exempt locale oversized）零新增。
 
 Follow-up:
 
-- （待填）
+- R1-F5 完整实例隔离方案（flux-runtime action-scope 多实例支持）：结构性重构，需人工确认后另立 plan（Non-Blocking）。
+- open-audit 总评「host 输入归一化统一入口」（R3-F1 同族更大方案）：P3 级观察项。
+- 契约/文档族 11 条 P2（FIND-07/08/09/14/19 + 10/11/15/16/17/18）：由 sibling plan `2026-08-11-0335-3` 独立 closure surface 跟踪。
+- no remaining plan-owned work（本 plan 6 条 in-scope P2 全部收口）。
