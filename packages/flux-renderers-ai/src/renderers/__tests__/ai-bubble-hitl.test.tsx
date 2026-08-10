@@ -1,16 +1,15 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import React from 'react';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { ActionScope, FluxActionEvent } from '@nop-chaos/flux-core';
+import { createActionScope } from '@nop-chaos/flux-runtime';
 import {
   aiFormulaCompiler,
   aiMockEnv,
   createAiSchemaRenderer,
 } from '../../ai-test-support.js';
-import { AiChatRenderer } from '../ai-chat.js';
 import { createMessageEngine } from '../../engine/create-engine.js';
 import { createReactMessageAdapter } from '../../adapters/react-adapter.js';
-import type { AiChatSchema } from '../../schemas.js';
 import type {
   AiConnector,
   AiConnectorChunk,
@@ -23,7 +22,33 @@ import type {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  resetCapturedApprovals();
 });
+
+/**
+ * FIND-01 (2026-08-11, plan 2026-08-11-0008-1): capture harness that observes
+ * `onApproval` dispatch through the REAL compiled pipeline — a registered
+ * ActionScope provider (schema → `RendererDefinition.fields` → `eventPlans` →
+ * `props.events.onApproval` → runtime dispatch → provider.invoke). No
+ * `{ ...props.events, onApproval: spy }` injection: the tests below only
+ * declare `onApproval` in the schema and observe the dispatch side.
+ */
+let capturedApprovals: FluxActionEvent[] = [];
+function resetCapturedApprovals(): void {
+  capturedApprovals = [];
+}
+
+function createCaptureScope(): ActionScope {
+  const scope = createActionScope({ id: 'hitl-capture-scope' });
+  scope.registerNamespace('capture', {
+    kind: 'host',
+    invoke: (_method, _payload, ctx) => {
+      capturedApprovals.push(ctx.event as FluxActionEvent);
+      return { ok: true };
+    },
+  });
+  return scope;
+}
 
 function mockConnector(chunks: AiConnectorChunk[]): AiConnector {
   return {
@@ -65,60 +90,43 @@ const pendingHitlMessage: ChatMessage = {
   state: { toolCall: { call_hitl: { status: 'running', approval: 'pending' } } },
 };
 
-/**
- * Spy wrapper that intercepts `onApproval` payloads (same capture pattern as
- * ai-chat-conversation-change.test.tsx — records exactly what `ai-chat` hands
- * to the event channel).
- */
-let captured: Array<Record<string, unknown>> = [];
-function resetCaptured(): void {
-  captured = [];
-}
-
-function SpyAiChat(props: RendererComponentProps<AiChatSchema>): React.ReactElement {
-  const Chat = AiChatRenderer as unknown as React.ComponentType<RendererComponentProps<AiChatSchema>>;
-  const wrappedEvents = {
-    ...props.events,
-    onApproval: ((event: unknown) => {
-      captured.push(event as Record<string, unknown>);
-    }) as never,
-  };
-  return <Chat {...props} events={wrappedEvents} />;
-}
-
-const spyChat: RendererDefinition = { type: 'spy-ai-chat', component: SpyAiChat };
-const SpySchemaRenderer = createAiSchemaRenderer([spyChat]);
+const SchemaRenderer = createAiSchemaRenderer();
 
 // ============================================================================
-// multi-audit P2-4 (plan 2026-08-10-1606-2): HITL approval is structurally
-// unreachable on the default bubble path. `FallbackToolCallCard` dropped
-// `onApproval` and `BubbleToolRendererProps` had no such field, so a pending
-// tool call rendered in a bubble hit the `hitl-no-handler` guard (buttons
-// disabled). The fix threads `onApproval` through the full chain:
-// ai-chat events → AiChatContextValue → AiMessageList → AiBubbleView →
-// message-level tools renderer → BubbleToolRendererProps → FallbackToolCallCard.
+// multi-audit FIND-01 (plan 2026-08-11-0008-1): `onApproval` was declared in
+// the schemas + consumed by the renderers but NEVER registered in
+// `RendererDefinition.fields` — `classifyField` put it into `kind:'prop'`, so
+// `props.events.onApproval` was permanently `undefined`. The P2-4 regression
+// test masked this by injecting the handler into `props.events` via a spy
+// wrapper (fake-green: the test schema did not even contain `onApproval`).
+// These tests assert dispatch through the REAL compiled pipeline: schema
+// declares `onApproval`, the fields registration decides whether
+// `props.events.onApproval` exists, and the ActionScope provider observes the
+// dispatched payload.
 // ============================================================================
 
-describe('ai-chat bubble path — HITL approval reachability (multi-audit P2-4)', () => {
-  it('pending tool-call card in a bubble: approve/reject buttons are ENABLED and dispatch onApproval', async () => {
-    resetCaptured();
+describe('ai-chat bubble path — HITL approval via real compiled pipeline (FIND-01)', () => {
+  it('schema-declared onApproval is compiled into props.events and dispatches approve/reject', async () => {
+    const captureScope = createCaptureScope();
     const external = buildExternalEngine(mockConnector(replyChunks), [pendingHitlMessage]);
 
     render(
-      <SpySchemaRenderer
+      <SchemaRenderer
         schemaUrl="test://ai/bubble-hitl"
         schema={{
           type: 'page',
           body: [
             {
-              type: 'spy-ai-chat',
+              type: 'ai-chat',
               testid: 'chat-hitl',
               engine: external as never,
+              onApproval: { action: 'capture:approval' },
             },
           ],
         }}
         env={aiMockEnv()}
         formulaCompiler={aiFormulaCompiler}
+        actionScope={captureScope}
       />,
     );
 
@@ -134,21 +142,75 @@ describe('ai-chat bubble path — HITL approval reachability (multi-audit P2-4)'
       expect(reject).not.toBeNull();
     });
 
-    // P2-4: on the bubble path the handler IS wired — buttons must be enabled
-    // (pre-fix they were disabled by the hitl-no-handler guard).
+    // The bubble path is context-wired (buttons enabled even pre-fix); the
+    // FIND-01 signal is the DISPATCH: pre-fix `props.events.onApproval` is
+    // undefined → `eventsRef.current.onApproval?.()` is a silent no-op →
+    // `capturedApprovals` stays empty forever (the fake-green spy masked this).
+    await act(async () => {
+      fireEvent.click(approve!);
+    });
+    expect(capturedApprovals).toHaveLength(1);
+    expect(capturedApprovals[0]).toMatchObject({ type: 'ai:tool-call-approval', action: 'approve' });
+
+    await act(async () => {
+      fireEvent.click(reject!);
+    });
+    expect(capturedApprovals).toHaveLength(2);
+    expect(capturedApprovals[1]).toMatchObject({ type: 'ai:tool-call-approval', action: 'reject' });
+  });
+});
+
+describe('standalone ai-bubble — HITL approval via real compiled pipeline (FIND-01)', () => {
+  it('schema-declared onApproval reaches props.events: buttons enabled and dispatch fires', async () => {
+    const captureScope = createCaptureScope();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://ai/bubble-hitl-standalone"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'ai-bubble',
+              testid: 'bubble-hitl-standalone',
+              message: pendingHitlMessage as never,
+              onApproval: { action: 'capture:approval' },
+            },
+          ],
+        }}
+        env={aiMockEnv()}
+        formulaCompiler={aiFormulaCompiler}
+        actionScope={captureScope}
+      />,
+    );
+
+    const approve = document.querySelector(
+      '[data-slot="ai-tool-call-approve"]',
+    ) as HTMLButtonElement | null;
+    const reject = document.querySelector(
+      '[data-slot="ai-tool-call-reject"]',
+    ) as HTMLButtonElement | null;
+    await waitFor(() => {
+      expect(approve).not.toBeNull();
+      expect(reject).not.toBeNull();
+    });
+
+    // Pre-fix: `props.events.onApproval === undefined` → the `hitl-no-handler`
+    // guard disables both buttons (dead path). Post-fix: the compiled event
+    // exists → buttons are actionable.
     expect(approve!.disabled).toBe(false);
     expect(reject!.disabled).toBe(false);
 
     await act(async () => {
       fireEvent.click(approve!);
     });
-    expect(captured.length).toBe(1);
-    expect(captured[0]).toMatchObject({ type: 'ai:tool-call-approval', action: 'approve' });
+    expect(capturedApprovals).toHaveLength(1);
+    expect(capturedApprovals[0]).toMatchObject({ type: 'ai:tool-call-approval', action: 'approve' });
 
     await act(async () => {
       fireEvent.click(reject!);
     });
-    expect(captured.length).toBe(2);
-    expect(captured[1]).toMatchObject({ type: 'ai:tool-call-approval', action: 'reject' });
+    expect(capturedApprovals).toHaveLength(2);
+    expect(capturedApprovals[1]).toMatchObject({ type: 'ai:tool-call-approval', action: 'reject' });
   });
 });

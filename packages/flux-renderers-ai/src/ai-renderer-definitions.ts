@@ -74,6 +74,7 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'branches', kind: 'prop' },
       { key: 'activeBranchId', kind: 'prop' },
       { key: 'onBranchChange', kind: 'event' },
+      { key: 'onApproval', kind: 'event' },
     ],
   },
   {
@@ -106,6 +107,7 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'branches', kind: 'prop' },
       { key: 'activeBranchId', kind: 'prop' },
       { key: 'onBranchChange', kind: 'event' },
+      { key: 'onApproval', kind: 'event' },
     ],
   },
   {

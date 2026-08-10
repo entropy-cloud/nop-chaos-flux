@@ -80,6 +80,22 @@ function isRequestStateTerminal(state: RequestState): boolean {
 }
 
 /**
+ * FIND-06 (2026-08-11 multi-audit, plan 2026-08-11-0008-1): element-identity
+ * fingerprint of the message set tail — last-message id + finishReason +
+ * tool_calls length. Catches EQUAL-LENGTH IN-PLACE element replacements that
+ * the coarse ref/length signals cannot see (abort-mid-executor
+ * strip-keeps-text swaps the trailing assistant element with a stripped copy
+ * at the same index: same array ref, same length, tool_calls gone). Kept
+ * cheap (O(1), no deep traversal); evaluated only in the idle guard so the
+ * streaming no-clone discipline is preserved.
+ */
+function messageSetFingerprint(messages: ChatMessage[]): string {
+  const last = messages[messages.length - 1];
+  if (!last) return '';
+  return `${last.id}|${last.metadata?.finishReason ?? ''}|${last.tool_calls?.length ?? 0}`;
+}
+
+/**
  * P1 (C8.1): build the dispatch ctx for a schema event so action-args templates
  * can read the payload keys (bug 83 / diff-view P1-10 family convention — the
  * runtime only resolves `evaluationBindings` + scope, never a bare `event`
@@ -275,62 +291,82 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // live `messages` via `AiChatProvider` (this projection only feeds the
   // header / beforeMessages / afterMessages / footer / emptyState regions).
   //
-  // P1-6 (2026-08-10 multi-audit): the turn-boundary flip alone leaves
-  // message-replacement surfaces stale — engine swap (double idle), `clear()`
-  // and `setMessages` rehydration all replace `messages` without any
-  // isProcessing flip, so `${messages}` regions would show the previous
-  // conversation indefinitely. The rebuild triggers are now:
-  //   1. `isProcessing` flip (turn boundary — existing behavior);
-  //   2. `requestState` entering a terminal state (completed/aborted/error);
-  //   3. the engine's `messages` ARRAY REFERENCE changing while idle
-  //      (`clear`/`setMessages`/engine swap all replace the array inside the
-  //      mutate recipe; streaming chunks never trigger this branch because
-  //      `isProcessing` is true mid-stream);
-  //   4. the messages array LENGTH changing while idle — the engine mutates
-  //      in place (state-adapter `recipe(this.state)`), so an aborted-turn
-  //      residue drop (`commitOrDropResidue` splice) keeps the same array
-  //      ref; without the length signal the P2-14 vacuous-ghost captured at
-  //      the abort boundary flip would persist in the projection.
-  // The streaming discipline is preserved: chunks do not clone. The
-  // `snapSourceRef`/`snapLength` bookkeeping always converges to the LIVE
-  // message-set identity on every render (accepted without cloning), so the
-  // guard never re-fires mid-stream; a clone happens only when the set
-  // identity changed while idle (or at a boundary / terminal arrival).
+  //   P1-6 (2026-08-10 multi-audit): the turn-boundary flip alone leaves
+  //   message-replacement surfaces stale — engine swap (double idle), `clear()`
+  //   and `setMessages` rehydration all replace `messages` without any
+  //   isProcessing flip, so `${messages}` regions would show the previous
+  //   conversation indefinitely. The rebuild triggers are now:
+  //     1. `isProcessing` flip (turn boundary — existing behavior);
+  //     2. `requestState` entering a terminal state (completed/aborted/error);
+  //     3. the engine's `messages` ARRAY REFERENCE changing (engine swap /
+  //        `clear`/`setMessages` replace the array inside the mutate recipe) —
+  //        evaluated UNCONDITIONALLY, so a swap onto a background-streaming
+  //        session rebuilds immediately (FIND-06 blind spot B);
+  //     4. while idle, the messages array LENGTH changing — the engine mutates
+  //        in place (state-adapter `recipe(this.state)`), so an aborted-turn
+  //        residue drop (`commitOrDropResidue` splice) keeps the same array
+  //        ref; without the length signal the P2-14 vacuous-ghost captured at
+  //        the abort boundary flip would persist in the projection;
+  //     5. while idle, the message-set element-identity FINGERPRINT changing
+  //        (last-message id + finishReason + tool_calls length) — an
+  //        equal-length in-place element swap (`cleanDanglingAssistantAt`
+  //        strip-keeps-text / partial-pair filter after abort-mid-executor)
+  //        keeps ref AND length but removes `tool_calls`; without the
+  //        fingerprint the pre-strip ghost survives until the next turn
+  //        boundary (FIND-06 blind spot A).
+  //   The streaming discipline is preserved: chunks do not clone — during
+  //   streaming the array ref is stable (only elements/content mutate in
+  //   place) and the fingerprint/length checks are idle-gated. The
+  //   `snapSourceRef`/`snapLength`/`snapFingerprint` bookkeeping always
+  //   converges to the LIVE message-set identity on every render (accepted
+  //   without cloning), so the guard never re-fires mid-stream; a clone
+  //   happens only when the set identity changed (or at a boundary / terminal
+  //   arrival).
   //
-  // Implemented via the React "adjusting state during render" pattern (not a
-  // ref), so it satisfies `react-hooks/refs`. It converges: after the update
-  // all tracked signals equal their previous values, so the guard is false on
-  // the next render.
+  //   Implemented via the React "adjusting state during render" pattern (not a
+  //   ref), so it satisfies `react-hooks/refs`. It converges: after the update
+  //   all tracked signals equal their previous values, so the guard is false on
+  //   the next render.
   const [projection, setProjection] = useState<{
     prevIsProcessing: boolean;
     prevRequestState: RequestState;
     snapSourceRef: ChatMessage[];
     snapLength: number;
+    snapFingerprint: string;
     snap: ChatMessage[];
   }>(() => ({
     prevIsProcessing: isProcessing,
     prevRequestState: requestState,
     snapSourceRef: messages,
     snapLength: messages.length,
+    snapFingerprint: messageSetFingerprint(messages),
     snap: cloneMessages(messages),
   }));
   if (
     projection.prevIsProcessing !== isProcessing ||
     projection.prevRequestState !== requestState ||
     projection.snapSourceRef !== messages ||
-    projection.snapLength !== messages.length
+    projection.snapLength !== messages.length ||
+    projection.snapFingerprint !== messageSetFingerprint(messages)
   ) {
     const crossedBoundary = projection.prevIsProcessing && !isProcessing;
     const terminalCrossed = isRequestStateTerminal(requestState) && !isRequestStateTerminal(projection.prevRequestState);
+    // FIND-06 blind spot B: engine-identity swap (array reference change) is
+    // unconditional — a swap onto a background-streaming session (idle→
+    // processing) must rebuild immediately instead of waiting for the
+    // `!isProcessing` idle gate or a processing→idle flip.
+    const engineIdentitySwap = projection.snapSourceRef !== messages;
     const idleMessageReplacement =
       !isProcessing &&
-      (projection.snapSourceRef !== messages || projection.snapLength !== messages.length);
-    const shouldClone = crossedBoundary || terminalCrossed || idleMessageReplacement;
+      (projection.snapLength !== messages.length ||
+        projection.snapFingerprint !== messageSetFingerprint(messages));
+    const shouldClone = crossedBoundary || terminalCrossed || engineIdentitySwap || idleMessageReplacement;
     setProjection({
       prevIsProcessing: isProcessing,
       prevRequestState: requestState,
       snapSourceRef: messages,
       snapLength: messages.length,
+      snapFingerprint: messageSetFingerprint(messages),
       snap: shouldClone ? cloneMessages(messages) : projection.snap,
     });
   }

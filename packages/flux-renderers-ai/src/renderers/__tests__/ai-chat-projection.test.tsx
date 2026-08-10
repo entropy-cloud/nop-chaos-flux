@@ -1,84 +1,28 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
-import React, { useEffect } from 'react';
-import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
-import { useScopeSelector } from '@nop-chaos/flux-react';
+import React from 'react';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 import {
   aiFormulaCompiler,
   aiMockEnv,
-  createAiSchemaRenderer,
 } from '../../ai-test-support.js';
-import { AiChatRenderer } from '../ai-chat.js';
-import { createMessageEngine } from '../../engine/create-engine.js';
-import { createReactMessageAdapter } from '../../adapters/react-adapter.js';
-import type {
-  AiChatSchema,
-} from '../../schemas.js';
 import type {
   AiConnector,
   AiConnectorChunk,
   AiConnectorRequest,
   ChatMessage,
-  MessageEngine,
 } from '../../engine/types.js';
-
-/**
- * Probe that captures the projected `ai` host-scope messages array so a test
- * can mutate the captured reference and assert the engine internal array is
- * unaffected (Decision-A, AI-02).
- */
-let capturedProjectedMessages: ChatMessage[] | null = null;
-function resetCapturedProjectedMessages(): void {
-  capturedProjectedMessages = null;
-}
-
-function MessagesProbe(): React.ReactElement {
-  const msgs = useScopeSelector<ChatMessage[]>(
-    (data) => (data as { messages?: ChatMessage[] }).messages ?? [],
-  );
-  useEffect(() => {
-    capturedProjectedMessages = msgs;
-  });
-  return <span data-testid="messages-probe" />;
-}
-
-const messagesProbe: RendererDefinition = {
-  type: 'messages-probe',
-  component: MessagesProbe,
-};
-
-/**
- * AI-09 / AI-19 capture harness. The flux-react runtime normalizes a raw
- * `{ message }` event payload to an undefined `ctx.event` (it lacks a `.type`
- * string), so the payload would be dropped before reaching any registered
- * action. To observe EXACTLY what `ai-chat` hands to `onResponseComplete`, we
- * wrap the real renderer in a spy that intercepts its `props.events` object and
- * records each call's raw payload (before normalization).
- */
-let capturedOnComplete: { message: ChatMessage }[] = [];
-function resetCapturedOnComplete(): void {
-  capturedOnComplete = [];
-}
-
-function SpyAiChat(props: RendererComponentProps<AiChatSchema>): React.ReactElement {
-  // Inject a capture handler for onResponseComplete. ai-chat reads events
-  // through a latest-ref, so a fresh wrapper each render is fine.
-  const Chat = AiChatRenderer as unknown as React.ComponentType<RendererComponentProps<AiChatSchema>>;
-  const wrappedEvents = {
-    ...props.events,
-    onResponseComplete: ((event: unknown) => {
-      capturedOnComplete.push({ message: (event as { message: ChatMessage }).message });
-    }) as never,
-  };
-  return <Chat {...props} events={wrappedEvents} />;
-}
-
-const spyChat: RendererDefinition = {
-  type: 'spy-ai-chat',
-  component: SpyAiChat,
-};
-
-const SchemaRenderer = createAiSchemaRenderer([messagesProbe, spyChat]);
+import {
+  buildExternalEngine,
+  mockConnector,
+  readCapturedOnComplete,
+  readCapturedProjectedMessages,
+  replyChunks,
+  resetCapturedOnComplete,
+  resetCapturedProjectedMessages,
+  SchemaRenderer,
+  seedMessages,
+} from './ai-chat-projection-test-support.js';
 
 afterEach(() => {
   cleanup();
@@ -86,36 +30,6 @@ afterEach(() => {
   resetCapturedProjectedMessages();
   resetCapturedOnComplete();
 });
-
-function mockConnector(chunks: AiConnectorChunk[]): AiConnector {
-  return {
-    async stream(_req: AiConnectorRequest) {
-      async function* gen() {
-        for (const c of chunks) yield c;
-      }
-      void _req;
-      return gen();
-    },
-  };
-}
-
-const replyChunks: AiConnectorChunk[] = [
-  { delta: { content: 'Reply' } },
-  { finishReason: 'stop' },
-];
-
-function buildExternalEngine(connector: AiConnector, initialMessages?: ChatMessage[]): MessageEngine {
-  return createMessageEngine({
-    connector,
-    initialMessages,
-    adapter: createReactMessageAdapter(),
-  });
-}
-
-const seedMessages: ChatMessage[] = [
-  { id: 'seed-user', role: 'user', content: 'seed-hello' },
-  { id: 'seed-assistant', role: 'assistant', content: 'seed-reply' },
-];
 
 describe('ai-chat — Decision-A projection (AI-02): hostScopeData.messages is a snapshot', () => {
   it('does NOT leak the engine internal messages array reference to descendants', async () => {
@@ -141,13 +55,13 @@ describe('ai-chat — Decision-A projection (AI-02): hostScopeData.messages is a
     );
 
     await waitFor(() => {
-      expect(capturedProjectedMessages).not.toBeNull();
+      expect(readCapturedProjectedMessages()).not.toBeNull();
     });
 
     const engineMessages = external.getState().messages;
     // After the fix the projection must be a distinct array reference
     // (snapshot), not the engine's internal array.
-    expect(capturedProjectedMessages).not.toBe(engineMessages);
+    expect(readCapturedProjectedMessages()).not.toBe(engineMessages);
   });
 
   it('mutating the projected messages array does NOT pollute the engine internal state', async () => {
@@ -173,7 +87,7 @@ describe('ai-chat — Decision-A projection (AI-02): hostScopeData.messages is a
     );
 
     await waitFor(() => {
-      expect(capturedProjectedMessages).not.toBeNull();
+      expect(readCapturedProjectedMessages()).not.toBeNull();
     });
 
     const engineBefore = external.getState().messages;
@@ -183,8 +97,8 @@ describe('ai-chat — Decision-A projection (AI-02): hostScopeData.messages is a
     // Descendant/host mutates the captured projection in-place: push a fake
     // message + mutate an existing message's content. This is exactly the
     // Decision-A hazard ("host 持有 engine 引用会污染域内部").
-    capturedProjectedMessages!.push({ id: 'tampered', role: 'user', content: 'INJECTED' });
-    (capturedProjectedMessages![0] as { content: string }).content = 'TAMPERED';
+    readCapturedProjectedMessages()!.push({ id: 'tampered', role: 'user', content: 'INJECTED' });
+    (readCapturedProjectedMessages()![0] as { content: string }).content = 'TAMPERED';
 
     const engineAfter = external.getState().messages;
     expect(engineAfter.length).toBe(engineBeforeLen);
@@ -226,10 +140,10 @@ describe('ai-chat — Decision-A event handoff (AI-09): onResponseComplete messa
     });
 
     await waitFor(() => {
-      expect(capturedOnComplete).toHaveLength(1);
+      expect(readCapturedOnComplete()).toHaveLength(1);
     });
 
-    const delivered = capturedOnComplete[0].message;
+    const delivered = readCapturedOnComplete()[0].message;
     const engineLast = external.getState().messages[external.getState().messages.length - 1];
     // Decision-A: the delivered message must be a distinct object (snapshot),
     // not the live engine reference, while carrying equal content.
@@ -270,11 +184,11 @@ describe('ai-chat — Decision-A event handoff (AI-09): onResponseComplete messa
       fireEvent.keyDown(textarea, { key: 'Enter' });
     });
     await waitFor(() => {
-      expect(capturedOnComplete).toHaveLength(1);
+      expect(readCapturedOnComplete()).toHaveLength(1);
     });
 
     // Host tampers with the captured snapshot.
-    const capturedFirst = capturedOnComplete[0].message;
+    const capturedFirst = readCapturedOnComplete()[0].message;
     (capturedFirst as { content: string }).content = 'HOST-TAMPERED';
 
     // Turn 2 (new assistant reply)
@@ -283,7 +197,7 @@ describe('ai-chat — Decision-A event handoff (AI-09): onResponseComplete messa
       fireEvent.keyDown(textarea, { key: 'Enter' });
     });
     await waitFor(() => {
-      expect(capturedOnComplete).toHaveLength(2);
+      expect(readCapturedOnComplete()).toHaveLength(2);
     });
 
     // The engine internal messages must not contain the tampered content.
@@ -346,9 +260,9 @@ describe('ai-chat — P1#2 hostScopeData clone gated to turn boundaries', () => 
     );
 
     await waitFor(() => {
-      expect(capturedProjectedMessages).not.toBeNull();
+      expect(readCapturedProjectedMessages()).not.toBeNull();
     });
-    const refAtIdle = capturedProjectedMessages!;
+    const refAtIdle = readCapturedProjectedMessages()!;
     // Decision-A: the idle projection is already a snapshot, not the live array.
     expect(refAtIdle).not.toBe(external.getState().messages);
 
@@ -366,7 +280,7 @@ describe('ai-chat — P1#2 hostScopeData clone gated to turn boundaries', () => 
     // the clone is gated to the turn boundary, so the probe did not re-render
     // per chunk. Before the fix `cloneMessages(messages)` ran every render,
     // producing a fresh ref per chunk; the probe would then see a new ref here.
-    expect(capturedProjectedMessages).toBe(refAtIdle);
+    expect(readCapturedProjectedMessages()).toBe(refAtIdle);
 
     // The engine is genuinely mid-stream (still processing, gated).
     expect(external.getState().isProcessing).toBe(true);
@@ -377,12 +291,12 @@ describe('ai-chat — P1#2 hostScopeData clone gated to turn boundaries', () => 
       await turnP!;
     });
     await waitFor(() => {
-      expect(capturedProjectedMessages).not.toBe(refAtIdle);
+      expect(readCapturedProjectedMessages()).not.toBe(refAtIdle);
     });
 
     // The rebuilt projection reflects the completed turn's message set.
-    expect(capturedProjectedMessages!.length).toBe(external.getState().messages.length);
-    expect(capturedProjectedMessages).not.toBe(external.getState().messages);
+    expect(readCapturedProjectedMessages()!.length).toBe(external.getState().messages.length);
+    expect(readCapturedProjectedMessages()).not.toBe(external.getState().messages);
   });
 });
 
@@ -419,11 +333,11 @@ describe('ai-chat — P1-6 (plan 2026-08-10-1301-2) projection rebuilds on engin
     );
 
     await waitFor(() => {
-      expect(capturedProjectedMessages).not.toBeNull();
+      expect(readCapturedProjectedMessages()).not.toBeNull();
     });
     // Session A projection visible.
-    expect(capturedProjectedMessages!.some((m) => m.content === 'seed-hello')).toBe(true);
-    expect(capturedProjectedMessages!.some((m) => m.content === 'session-b-hello')).toBe(false);
+    expect(readCapturedProjectedMessages()!.some((m) => m.content === 'seed-hello')).toBe(true);
+    expect(readCapturedProjectedMessages()!.some((m) => m.content === 'session-b-hello')).toBe(false);
 
     // Host swaps the engine to session B while BOTH engines are idle.
     rerender(
@@ -446,10 +360,10 @@ describe('ai-chat — P1-6 (plan 2026-08-10-1301-2) projection rebuilds on engin
     );
 
     await waitFor(() => {
-      expect(capturedProjectedMessages!.some((m) => m.content === 'session-b-hello')).toBe(true);
+      expect(readCapturedProjectedMessages()!.some((m) => m.content === 'session-b-hello')).toBe(true);
     });
     // Session A must no longer appear in the projection (fresh session data).
-    expect(capturedProjectedMessages!.some((m) => m.content === 'seed-hello')).toBe(false);
+    expect(readCapturedProjectedMessages()!.some((m) => m.content === 'seed-hello')).toBe(false);
   });
 
   it('clear() on the same engine refreshes the projected messages', async () => {
@@ -474,16 +388,16 @@ describe('ai-chat — P1-6 (plan 2026-08-10-1301-2) projection rebuilds on engin
     );
 
     await waitFor(() => {
-      expect(capturedProjectedMessages).not.toBeNull();
+      expect(readCapturedProjectedMessages()).not.toBeNull();
     });
-    expect(capturedProjectedMessages!.length).toBe(2);
+    expect(readCapturedProjectedMessages()!.length).toBe(2);
 
     await act(async () => {
       external.clear();
     });
 
     await waitFor(() => {
-      expect(capturedProjectedMessages!.length).toBe(0);
+      expect(readCapturedProjectedMessages()!.length).toBe(0);
     });
   });
 
@@ -509,9 +423,9 @@ describe('ai-chat — P1-6 (plan 2026-08-10-1301-2) projection rebuilds on engin
     );
 
     await waitFor(() => {
-      expect(capturedProjectedMessages).not.toBeNull();
+      expect(readCapturedProjectedMessages()).not.toBeNull();
     });
-    expect(capturedProjectedMessages!.some((m) => m.content === 'seed-hello')).toBe(true);
+    expect(readCapturedProjectedMessages()!.some((m) => m.content === 'seed-hello')).toBe(true);
 
     const hydrated: ChatMessage[] = [
       { id: 'h1', role: 'user', content: 'hydrated-q' },
@@ -522,9 +436,9 @@ describe('ai-chat — P1-6 (plan 2026-08-10-1301-2) projection rebuilds on engin
     });
 
     await waitFor(() => {
-      expect(capturedProjectedMessages!.some((m) => m.content === 'hydrated-q')).toBe(true);
+      expect(readCapturedProjectedMessages()!.some((m) => m.content === 'hydrated-q')).toBe(true);
     });
-    expect(capturedProjectedMessages!.some((m) => m.content === 'seed-hello')).toBe(false);
+    expect(readCapturedProjectedMessages()!.some((m) => m.content === 'seed-hello')).toBe(false);
   });
 
   it('P2-14 same-surface window: vacuous abort residue does not enter the projection', async () => {
@@ -588,11 +502,10 @@ describe('ai-chat — P1-6 (plan 2026-08-10-1301-2) projection rebuilds on engin
     // when the engine drops the vacuous residue — the ghost placeholder must
     // never remain in the projected snapshot.
     await waitFor(() => {
-      const ghost = capturedProjectedMessages!.filter((m) => m.role === 'assistant').length;
+      const ghost = readCapturedProjectedMessages()!.filter((m) => m.role === 'assistant').length;
       expect(ghost).toBe(0);
     });
     // The committed user message is still projected.
-    expect(capturedProjectedMessages!.some((m) => m.content === 'abort-me')).toBe(true);
+    expect(readCapturedProjectedMessages()!.some((m) => m.content === 'abort-me')).toBe(true);
   });
 });
-
