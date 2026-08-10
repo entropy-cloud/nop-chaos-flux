@@ -28,9 +28,14 @@ export type AiComponentMethod = (typeof AI_COMPONENT_METHODS)[number];
  * `getMessages` returns a read-only snapshot; `setMessages` replaces the list
  * (Phase 1 engine extension). `sendMessage` accepts `{ text }` or multimodal
  * `{ parts }`.
+ *
+ * P2-8 (2026-08-10 multi-audit): `engine` may be `null` — the renderer binds
+ * the handle to an explicit null engine during the engineNullSwitch window
+ * (external engine A → null → B) so dispatch is an explicit rejection instead
+ * of writing ghost messages into the hidden self-built engine.
  */
 export function createAiComponentHandle(input: {
-  engine: MessageEngine;
+  engine: MessageEngine | null;
   id: string;
   name?: string;
 }): ComponentHandle {
@@ -41,6 +46,18 @@ export function createAiComponentHandle(input: {
       payload: Record<string, unknown> | undefined,
       _ctx: ComponentCapabilityActionContext,
     ): Promise<ComponentCapabilityResult> {
+      // P2-8: null-engine window — no live engine is bound. Reject explicitly;
+      // the host sees a clear error instead of a silent drop into the hidden
+      // self-built engine (whose messages would vanish when the external
+      // engine arrives).
+      if (!engine) {
+        return {
+          ok: false,
+          error: new Error(
+            'ai-chat engine is not ready (external engine switch in progress)',
+          ),
+        };
+      }
       try {
         switch (method) {
           case 'sendMessage': {

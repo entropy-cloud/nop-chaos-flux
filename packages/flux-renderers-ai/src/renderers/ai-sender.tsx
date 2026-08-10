@@ -13,6 +13,11 @@ export interface AiSenderViewProps {
   showWordLimit?: boolean;
   clearOnSubmit?: boolean;
   className?: string;
+  /**
+   * P2-5 (2026-08-10 multi-audit): node-level `meta.disabled` control —
+   * disables the input + actions (cross-package contract).
+   */
+  disabled?: boolean;
   /** Override the loading state (defaults to engine.isProcessing). */
   loading?: boolean;
   /** When true (default), focus returns to the input after each submit. */
@@ -53,12 +58,15 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   const clearOnSubmit = props.clearOnSubmit !== false;
   const refocusAfterSubmit = props.refocusAfterSubmit !== false;
   const loading = props.loading ?? ctx?.isProcessing ?? false;
+  // P2-5: node-level `meta.disabled` gates the whole interaction surface.
+  const disabled = props.disabled === true;
   const ExtensionComponent = props.extensionComponent;
 
   const overLimit = typeof maxLength === 'number' && draft.length > maxLength;
   const trimmedLength = draft.trim().length;
 
   function commit(text: string) {
+    if (disabled) return;
     // P2 silent-drop guard (FP `sender-commit-stream`): host `senderExtensions`
     // components are responsible for their own disabled state, but if they
     // don't gate on `loading` (or fire onSubmit imperatively), Enter-driven
@@ -88,11 +96,13 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   }
 
   function handleCancel() {
+    if (disabled) return;
     if (props.onCancel) props.onCancel();
     else void ctx?.abortRequest();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (disabled) return;
     if (shouldSubmit(event, submitType)) {
       event.preventDefault();
       handleSubmit();
@@ -102,7 +112,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   const actions = (
     <div data-slot="ai-sender-actions" className="flex items-center justify-end gap-2">
       {loading ? (
-        <Button data-slot="ai-sender-cancel" variant="outline" size="sm" onClick={handleCancel}>
+        <Button data-slot="ai-sender-cancel" variant="outline" size="sm" onClick={handleCancel} disabled={disabled}>
           {t('flux.ai.stop')}
         </Button>
       ) : null}
@@ -110,7 +120,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
         data-slot="ai-sender-submit"
         size="sm"
         onClick={handleSubmit}
-        disabled={loading || trimmedLength === 0 || overLimit}
+        disabled={loading || trimmedLength === 0 || overLimit || disabled}
       >
         {t('flux.ai.send')}
       </Button>
@@ -139,6 +149,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
             showWordLimit={props.showWordLimit}
             submitType={submitType}
             clearOnSubmit={clearOnSubmit}
+            disabled={loading || disabled}
           />
           {props.showWordLimit && typeof maxLength === 'number' ? (
             <span
@@ -165,7 +176,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
           value={draft}
           placeholder={props.placeholder ?? t('flux.ai.placeholder')}
           aria-label={props.placeholder ?? t('flux.ai.messageInput')}
-          disabled={loading}
+          disabled={loading || disabled}
           rows={1}
           maxLength={maxLength}
           onChange={(e) => {
@@ -219,6 +230,7 @@ export function AiSenderRenderer(props: RendererComponentProps<AiSenderSchema>):
       showWordLimit={resolved.showWordLimit}
       clearOnSubmit={resolved.clearOnSubmit}
       loading={resolved.loading as boolean | undefined}
+      disabled={props.meta.disabled === true}
       className={props.meta.className}
       testid={props.meta.testid}
       cid={props.meta.cid}

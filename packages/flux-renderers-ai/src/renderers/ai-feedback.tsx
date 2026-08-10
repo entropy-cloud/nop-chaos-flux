@@ -37,6 +37,9 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
   const resolved = props.props;
   const message = resolved.message as ChatMessage | undefined;
   const actions = normalizeActions(resolved.actions);
+  // P2-5 (2026-08-10 multi-audit): node-level `meta.disabled` disables the
+  // action bar (cross-package contract).
+  const disabled = props.meta.disabled === true;
   const [voted, setVoted] = useState<'like' | 'dislike' | null>(null);
   const [copied, setCopied] = useState(false);
   // 2-20: the copied-reset timer must be cleared on unmount (no setState on
@@ -95,6 +98,7 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
               : undefined
           }
           aria-label={labelFor(action)}
+          disabled={disabled}
           onClick={() => fire(action)}
         >
           {labelVisible(action, { copied })}
@@ -104,8 +108,18 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
   );
 }
 
+/**
+ * Resolve the action set. open-audit P2-7 (2026-08-10 multi-audit): an
+ * EXPLICIT `actions: []` now renders an empty action area — the host can
+ * express "no action bar" (e.g. read-only transcripts). Only an ABSENT value
+ * (undefined/null) falls back to the default set; a non-array or an
+ * explicitly-provided array is filtered to the known action names (an
+ * all-unknown list filters to an empty bar — explicit host intent wins over
+ * the silent default).
+ */
 function normalizeActions(value: unknown): FeedbackAction[] {
-  if (!Array.isArray(value) || value.length === 0) return DEFAULT_ACTIONS;
+  if (value === undefined || value === null) return DEFAULT_ACTIONS;
+  if (!Array.isArray(value)) return DEFAULT_ACTIONS;
   const known: FeedbackAction[] = ['copy', 'refresh', 'like', 'dislike', 'sources'];
   return value.filter((x): x is FeedbackAction => typeof x === 'string' && known.includes(x as FeedbackAction));
 }

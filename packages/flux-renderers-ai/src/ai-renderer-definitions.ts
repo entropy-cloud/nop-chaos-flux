@@ -52,7 +52,6 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'maxLength', kind: 'prop' },
       { key: 'showWordLimit', kind: 'prop', valueType: 'boolean' },
       { key: 'showTimestamp', kind: 'prop', valueType: 'boolean' },
-      { key: 'autofocus', kind: 'prop', valueType: 'boolean' },
       { key: 'initialMessages', kind: 'prop' },
       { key: 'senderExtensions', kind: 'prop' },
       { key: 'conversationController', kind: 'prop' },
@@ -119,7 +118,6 @@ export const aiRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'placeholder', kind: 'prop' },
       { key: 'loading', kind: 'prop' },
-      { key: 'autofocus', kind: 'prop', valueType: 'boolean' },
       { key: 'maxLength', kind: 'prop' },
       { key: 'showWordLimit', kind: 'prop', valueType: 'boolean' },
       { key: 'submitType', kind: 'prop' },

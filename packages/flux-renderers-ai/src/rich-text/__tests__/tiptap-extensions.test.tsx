@@ -285,6 +285,97 @@ describe('createTiptapSender — Phase 3 built-in extensions', () => {
     expect(container.querySelector('[data-slot="ai-sender-tiptap-popup"]')).toBeNull();
   });
 
+  // multi-audit P2-3 (plan 2026-08-10-1606-2): when the popup is open but the
+  // query matches ZERO items, the popup is not rendered — yet handleKeyDown
+  // still returned `true` for Enter/Arrows (deadzone: the keys are swallowed
+  // while the visual popup is gone). The fix lets keys pass through when
+  // `popupItems.length === 0`, so Enter falls through to the submit keymap.
+  it('P2-3: slash popup with zero matches does NOT swallow Enter (no keyboard deadzone)', async () => {
+    const { options: captureOpts, box } = captureEditor();
+    const onSubmit = vi.fn();
+    const Sender = createTiptapSender({
+      extensions: ['slash'],
+      slashCommands: SLASH_COMMANDS,
+      ...captureOpts,
+    });
+    const { container } = render(<Sender {...makeProps({ onSubmit })} />);
+    const editor = await waitForEditor(box);
+    const editable = container.querySelector('.ProseMirror') as HTMLElement;
+
+    await act(async () => {
+      editor.commands.focus();
+      editor.commands.insertContent(' /zzz'); // zero slash-command matches
+    });
+
+    // Popup state is open but zero matches → popup not rendered (visually gone).
+    expect(container.querySelector('[data-slot="ai-sender-tiptap-popup"]')).toBeNull();
+
+    await act(async () => {
+      fireEvent.keyDown(editable, { key: 'Enter', shiftKey: false });
+    });
+    // The key must pass through to the submit keymap — a swallowed Enter leaves
+    // the user with a keyboard deadzone (no submit, no popup, no feedback).
+    expect(onSubmit).toHaveBeenCalled();
+  });
+
+  it('P2-3: mention popup with zero matches does NOT swallow Enter (no keyboard deadzone)', async () => {
+    const { options: captureOpts, box } = captureEditor();
+    const onSubmit = vi.fn();
+    const Sender = createTiptapSender({
+      extensions: ['mention'],
+      mentions: MENTIONS,
+      ...captureOpts,
+    });
+    const { container } = render(<Sender {...makeProps({ onSubmit })} />);
+    const editor = await waitForEditor(box);
+    const editable = container.querySelector('.ProseMirror') as HTMLElement;
+
+    await act(async () => {
+      editor.commands.focus();
+      editor.commands.insertContent('@zzz'); // zero mention matches
+    });
+
+    expect(container.querySelector('[data-slot="ai-sender-tiptap-popup"]')).toBeNull();
+
+    await act(async () => {
+      fireEvent.keyDown(editable, { key: 'Enter', shiftKey: false });
+    });
+    expect(onSubmit).toHaveBeenCalled();
+  });
+
+  it('P2-3: arrow keys also pass through when the popup has zero matches', async () => {
+    const { options: captureOpts, box } = captureEditor();
+    const onSubmit = vi.fn();
+    const Sender = createTiptapSender({
+      extensions: ['slash'],
+      slashCommands: SLASH_COMMANDS,
+      ...captureOpts,
+    });
+    const { container } = render(<Sender {...makeProps({ onSubmit })} />);
+    const editor = await waitForEditor(box);
+    const editable = container.querySelector('.ProseMirror') as HTMLElement;
+
+    await act(async () => {
+      editor.commands.focus();
+      editor.commands.insertContent(' /zzz');
+    });
+
+    expect(container.querySelector('[data-slot="ai-sender-tiptap-popup"]')).toBeNull();
+    // ArrowDown/ArrowUp must not throw and must not re-open the popup (the
+    // deadzone fix routes them to ProseMirror's default caret movement).
+    await act(async () => {
+      fireEvent.keyDown(editable, { key: 'ArrowDown' });
+      fireEvent.keyDown(editable, { key: 'ArrowUp' });
+    });
+    expect(container.querySelector('[data-slot="ai-sender-tiptap-popup"]')).toBeNull();
+    // After the arrows, Enter still reaches the submit keymap — the popup
+    // handler must not have re-engaged the swallow path.
+    await act(async () => {
+      fireEvent.keyDown(editable, { key: 'Enter', shiftKey: false });
+    });
+    expect(onSubmit).toHaveBeenCalled();
+  });
+
   it('all extensions disabled (empty extensions[]) → StarterKit only, no popups or bars', async () => {
     const Sender = createTiptapSender({ extensions: [] });
     const { container } = render(<Sender {...makeProps()} />);

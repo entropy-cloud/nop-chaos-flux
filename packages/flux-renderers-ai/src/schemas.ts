@@ -20,7 +20,6 @@ export interface AiChatSchema extends BaseSchema {
   engine?: SchemaValue;
   placeholder?: string;
   systemPrompt?: string;
-  autofocus?: boolean;
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
   maxLength?: number;
   showWordLimit?: boolean;
@@ -85,6 +84,15 @@ export interface AiChatSchema extends BaseSchema {
   activeBranchId?: SchemaValue;
 
   onBranchChange?: ActionSchema;
+
+  /**
+   * P2-4 (2026-08-10 multi-audit): HITL approval dispatch for the bubble path.
+   * Threaded from `ai-chat` schema events → AiChatContextValue → AiMessageList
+   * → AiBubbleView → the message-level tools renderer → FallbackToolCallCard,
+   * so a pending tool-call card rendered inside a bubble can approve/reject
+   * (mirrors the `onBranchChange` chain).
+   */
+  onApproval?: ActionSchema;
 }
 
 /**
@@ -123,13 +131,20 @@ export interface AiBubbleSchema extends BaseSchema {
   activeBranchId?: SchemaValue;
 
   onBranchChange?: ActionSchema;
+
+  /**
+   * P2-4 (2026-08-10 multi-audit): HITL approval dispatch for the standalone
+   * bubble path (schema-driven `ai-bubble` outside a chat). In an `ai-chat`
+   * subtree the context-wired callback wins; this event is the standalone
+   * equivalent.
+   */
+  onApproval?: ActionSchema;
 }
 
 export interface AiSenderSchema extends BaseSchema {
   type: 'ai-sender';
   placeholder?: string;
   loading?: SchemaValue;
-  autofocus?: boolean;
   maxLength?: number;
   showWordLimit?: boolean;
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';

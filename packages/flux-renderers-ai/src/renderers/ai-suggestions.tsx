@@ -31,10 +31,12 @@ function normalizeItems(items: unknown): AiSuggestionItem[] {
 function SuggestionPill({
   item,
   index,
+  disabled,
   onSelect,
 }: {
   item: AiSuggestionItem;
   index: number;
+  disabled?: boolean;
   onSelect?: (item: AiSuggestionItem, index: number) => void;
 }): React.ReactElement {
   return (
@@ -44,6 +46,7 @@ function SuggestionPill({
       data-slot="ai-suggestions-item"
       data-index={index}
       className="rounded-full whitespace-nowrap"
+      disabled={disabled}
       onClick={() => onSelect?.(item, index)}
     >
       {typeof item.icon === 'string' && item.icon.length > 0 ? (
@@ -70,12 +73,15 @@ export function AiSuggestionsView(props: {
   className?: string;
   testid?: string;
   cid?: number;
+  /** P2-5 (2026-08-10 multi-audit): node-level `meta.disabled` control. */
+  disabled?: boolean;
   onSelect?: (item: AiSuggestionItem, index: number) => void;
 }): React.ReactElement {
   const items = props.items ?? [];
   const overflowMode = props.overflowMode ?? 'scroll';
   const maxVisible = typeof props.maxVisible === 'number' && props.maxVisible > 0 ? props.maxVisible : 3;
   const cid = props.cid;
+  const disabled = props.disabled === true;
 
   if (items.length === 0) {
     return (
@@ -115,7 +121,7 @@ export function AiSuggestionsView(props: {
         // P2 (N-6): AiSuggestionItem has no stable id; pure `text` collides
         // for duplicate copy. Append the index so each pill stays unique.
         // eslint-disable-next-line react/no-array-index-key
-        <SuggestionPill key={`${item.text}#${index}`} item={item} index={index} onSelect={props.onSelect} />
+        <SuggestionPill key={`${item.text}#${index}`} item={item} index={index} disabled={disabled} onSelect={props.onSelect} />
       ))}
       {overflow.length > 0 ? (
         <Popover>
@@ -127,6 +133,7 @@ export function AiSuggestionsView(props: {
                 size="sm"
                 data-slot="ai-suggestions-overflow"
                 className="h-6 rounded-full px-2 text-xs"
+                disabled={disabled}
               >
                 +{overflow.length}
               </Button>
@@ -142,6 +149,7 @@ export function AiSuggestionsView(props: {
                   data-slot="ai-suggestions-item"
                   data-index={maxVisible + i}
                   className="justify-start text-left"
+                  disabled={disabled}
                   onClick={() => props.onSelect?.(item, maxVisible + i)}
                 >
                   {typeof item.icon === 'string' && item.icon.length > 0 ? (
@@ -171,6 +179,7 @@ export function AiSuggestionsRenderer(props: RendererComponentProps<AiSuggestion
       className={props.meta.className}
       testid={props.meta.testid}
       cid={props.meta.cid}
+      disabled={props.meta.disabled === true}
       onSelect={
         props.events.onSelect
           ? (item, index) => {

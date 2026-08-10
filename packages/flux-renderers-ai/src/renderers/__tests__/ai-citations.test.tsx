@@ -383,3 +383,47 @@ describe('ai-citations — P2 code-block + non-positive index protection', () =>
     expect(triggers[0].getAttribute('data-citation-index')).toBe('1');
   });
 });
+
+// ============================================================================
+// open-audit P2-8 (plan 2026-08-10-1606-2): `CITATION_RE` matched ANY `[N]`
+// (N > 0), so "Since [2026]" rendered a clickable sup + an EMPTY citation
+// card (year false positive). Decision: index upper bound — only indices
+// within `CITATION_INDEX_MAX` (64) are citations; anything above (years are
+// >= 1000) stays literal text. Legal small indices zero-regress.
+// ============================================================================
+
+describe('ai-citations — open-audit P2-8 year false positive (index upper bound)', () => {
+  it('"Since [2026]" renders as literal text — no citation card', () => {
+    const message: ChatMessage = {
+      id: 'm',
+      role: 'assistant',
+      content: 'Since [2026] the model can cite sources.',
+    };
+    const { container } = render(<AiCitationsView message={message} />);
+    // No clickable trigger, no empty-card popover anywhere.
+    expect(container.querySelector('[data-citation-index]')).toBeNull();
+    expect(container.querySelector('[data-slot="ai-citation-empty"]')).toBeNull();
+    // The marker survives verbatim as literal text.
+    expect(container.textContent).toContain('Since [2026] the model can cite sources.');
+  });
+
+  it('a legal [1] marker still renders a citation card (zero regression)', () => {
+    const message: ChatMessage = {
+      id: 'm',
+      role: 'assistant',
+      content: 'See [1] for the details.',
+    };
+    const { container } = render(<AiCitationsView message={message} />);
+    expect(container.querySelector('[data-citation-index="1"]')).not.toBeNull();
+  });
+
+  it('parseCitations keeps in-range indices and drops out-of-range ones (> 64)', () => {
+    const segs = parseCitations('see [12] and [2026]');
+    const citationSegs = segs.filter((s) => s.kind === 'citation');
+    expect(citationSegs.length).toBe(1);
+    expect('indices' in citationSegs[0] ? citationSegs[0].indices : []).toEqual([12]);
+    // The [2026] marker survives as literal text.
+    const joined = segs.map((s) => ('text' in s ? s.text : `[${('indices' in s ? s.indices : []).join(',')}]`)).join('');
+    expect(joined).toContain('[2026]');
+  });
+});

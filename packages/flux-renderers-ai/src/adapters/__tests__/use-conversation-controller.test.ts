@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { useConversation } from '../use-conversation.js';
+import { useConversation, type UseConversationOptions } from '../use-conversation.js';
+import { createMessageEngine } from '../../engine/create-engine.js';
 import type { ToolExecutor } from '../../engine/types.js';
 import { okChunks, scriptedConnector, slowConnector } from './use-conversation-test-helpers.js';
 
@@ -20,6 +21,29 @@ describe('useConversation — controller binding', () => {
       result.current.controller.renameConversation(id, 'Via controller');
     });
     expect(result.current.conversations[0].title).toBe('Via controller');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// open P2-2 (2026-08-10) — `createEngineOptions` type narrowing. The type
+// previously allowed `engine` (inherited from `UseMessageOptions`) while
+// `buildEngine` silently dropped it — a type-contract silent no-op. The
+// Omit now excludes `'engine'`, so a host passing it fails at typecheck time
+// instead of getting a silently-ignored option. Negative assertion via
+// `@ts-expect-error`: pre-fix the line does not error (RED), post-fix it
+// must (GREEN).
+// ---------------------------------------------------------------------------
+
+describe('open P2-2 — createEngineOptions excludes engine', () => {
+  it('passing `engine` to createEngineOptions is a compile-time error (type contract)', () => {
+    const connector = slowConnector(okChunks);
+    const engine = createMessageEngine({ connector });
+    const opts: UseConversationOptions = {
+      connector,
+      // @ts-expect-error — `engine` is Omitted from createEngineOptions (open P2-2): buildEngine self-builds and would silently drop it
+      createEngineOptions: { engine },
+    };
+    expect(opts.connector).toBe(connector);
   });
 });
 

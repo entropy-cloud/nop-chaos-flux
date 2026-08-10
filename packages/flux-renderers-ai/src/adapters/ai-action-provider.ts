@@ -21,7 +21,14 @@ export const AI_NAMESPACE_ACTIONS = [
 ] as const;
 
 export interface CreateAiActionProviderInput {
-  engine: MessageEngine;
+  /**
+   * The engine backing the chat. P2-8 (2026-08-10 multi-audit): may be `null`
+   * — the renderer binds the provider to an explicit null engine during the
+   * engineNullSwitch window (external engine A → null → B) so engine actions
+   * return an explicit error instead of writing ghost messages into the hidden
+   * self-built engine. Conversation actions (controller-bound) still work.
+   */
+  engine: MessageEngine | null;
   /**
    * Optional host-side conversation controller. When absent, conversation
    * actions return `ok:false` with a clear error (Failure Path
@@ -61,20 +68,39 @@ export function createAiActionProvider(input: CreateAiActionProviderInput): Acti
     async invoke(method, payload, _ctx: ActionContext): Promise<ActionResult> {
       const args = (payload ?? {}) as Record<string, unknown>;
 
+      // P2-8: null-engine window — no live engine is bound. Engine actions
+      // reject explicitly (no ghost writes into the hidden self-built engine);
+      // conversation actions stay functional (controller-bound).
+      if (!engine) {
+        const needsEngine = method === 'send' || method === 'abort' || method === 'clear';
+        if (needsEngine) {
+          return fail('ai-chat engine is not ready (external engine switch in progress)');
+        }
+      }
+
       switch (method) {
         case 'send': {
           const text = args.text;
           if (typeof text !== 'string' || text.length === 0) {
             return fail('ai:send requires { text: string }');
           }
+          if (!engine) {
+            return fail('ai-chat engine is not ready (external engine switch in progress)');
+          }
           await engine.sendMessage(text);
           return ok();
         }
         case 'abort': {
+          if (!engine) {
+            return fail('ai-chat engine is not ready (external engine switch in progress)');
+          }
           await engine.abort();
           return ok();
         }
         case 'clear': {
+          if (!engine) {
+            return fail('ai-chat engine is not ready (external engine switch in progress)');
+          }
           engine.clear();
           return ok();
         }

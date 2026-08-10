@@ -85,6 +85,9 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
   const interimResults = resolved.interimResults === true;
 
   const [status, setStatus] = useState<'idle' | 'listening'>('idle');
+  // P2-5 (2026-08-10 multi-audit): node-level `meta.disabled` disables the mic
+  // button (cross-package contract).
+  const disabled = props.meta.disabled === true;
   // Detect once synchronously during the first render (no effect churn).
   const [unsupported] = useState<boolean>(() => !getSpeechRecognitionCtor());
   const firedUnsupportedRef = useRef(false);
@@ -107,6 +110,14 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
   // recognition lived only inside the `handleStart` closure, so the stop button
   // never called `stop()` and unmount left the mic + stale callbacks alive.
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  // P2-6 (2026-08-10 multi-audit): in-flight guard for `start`. The `status`
+  // state guard is async — two same-tick clicks previously created two
+  // recognition instances (the first `continuous:true` one kept the mic until
+  // page unload). The flag is set in `handleStart`, cleared on `onend` / the
+  // stop branch / a throwing `start()` — so a restart after a normal stop is
+  // never permanently blocked (a bare "ref non-empty" guard would be, because
+  // `onend` and the stop branch do not null the ref).
+  const inFlightRef = useRef(false);
 
   // Release the microphone + detach callbacks on unmount (Failure Path
   // `voice-mic-released-on-stop`). Nulling the handlers guarantees no stale
@@ -145,12 +156,18 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
   }
 
   function handleStart(): void {
+    if (disabled) return;
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor) {
       // Detected at init (button is disabled); guard anyway.
       fireError('unsupported');
       return;
     }
+    // P2-6: same-tick double start must not create a second recognition
+    // instance (the `status` state guard is async). The flag is cleared on
+    // onend / stop / start-failure below.
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     const recognition = new Ctor();
     recognition.lang = lang ?? '';
     recognition.continuous = continuous;
@@ -188,6 +205,9 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
       }
     };
     recognition.onend = () => {
+      // P2-6: the session ended — release the in-flight guard so a later
+      // start is allowed (the browser fires onend after stop()/abort()/end).
+      inFlightRef.current = false;
       setStatus('idle');
       if (!gotFinal && !errorAlreadyFired) {
         // voice-no-result: emit so the host can show a hint (non-fatal).
@@ -203,12 +223,14 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
       setStatus('listening');
     } catch {
       // start() throws if mic is unavailable or already started.
+      inFlightRef.current = false;
       fireError('permission-denied');
       setStatus('idle');
     }
   }
 
   function handleClick(): void {
+    if (disabled) return;
     // Unsupported → button is disabled (clicks never arrive); the mount effect
     // already emitted onError('unsupported').
     if (status === 'listening') {
@@ -223,6 +245,9 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
           // stop() throws if not started — ignore; state still resets below.
         }
       }
+      // P2-6: release the in-flight guard immediately (idempotent with the
+      // onend clear) so a restart is possible even if onend is delayed.
+      inFlightRef.current = false;
       setStatus('idle');
       return;
     }
@@ -239,7 +264,7 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
       data-unsupported={unsupported ? '' : undefined}
       data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
-      disabled={unsupported}
+      disabled={unsupported || disabled}
       aria-label={t('flux.ai.voiceInput')}
       aria-pressed={status === 'listening'}
       className={cn('nop-ai-voice-input', props.meta.className)}

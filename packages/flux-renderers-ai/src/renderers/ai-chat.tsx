@@ -42,14 +42,34 @@ function isMessageEngine(value: unknown): value is MessageEngine {
  * reference (mutating a projected array would otherwise pollute the engine's
  * internal state). `structuredClone` is the primary path (deep, faithful to the
  * "host 必须 copy" rule); the shallow fallback covers runtimes without it.
+ *
+ * P2-5 (2026-08-10 multi-audit): `structuredClone` can also THROW a
+ * `DataCloneError` when a host wrote an uncloneable value (function / symbol /
+ * DOM node) into `metadata` / `data-*` parts — previously that crashed every
+ * boundary render with no degradation. The try/catch below treats a throwing
+ * clone exactly like a missing `structuredClone`: degrade to the shallow copy
+ * (the boundary no longer crashes; engine self-produced content — always
+ * cloneable — keeps the deep-copy path unchanged).
  */
 function cloneMessages(messages: ChatMessage[]): ChatMessage[] {
-  if (typeof structuredClone === 'function') return structuredClone(messages);
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(messages);
+    } catch {
+      // DataCloneError — fall through to the shallow copy.
+    }
+  }
   return messages.map((m) => ({ ...m }));
 }
 
 function cloneMessage(message: ChatMessage): ChatMessage {
-  if (typeof structuredClone === 'function') return structuredClone(message);
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(message);
+    } catch {
+      // DataCloneError — fall through to the shallow copy.
+    }
+  }
   return { ...message };
 }
 
@@ -171,9 +191,15 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // conversation controller; both are host-stable references). The renderer
   // rebuilds `props.events` every render, but the provider closes over the
   // engine directly (not events), so its identity is stable across chunks.
+  // P2-8 (2026-08-10 multi-audit): during the engineNullSwitch window the
+  // provider binds to an explicit NULL engine — `ai:*` engine actions return
+  // an explicit rejection instead of writing ghost messages into the hidden
+  // self-built engine (whose state evaporates when the external engine B
+  // arrives). Conversation actions stay functional (controller-bound).
+  const boundEngine = engineNullSwitch ? null : engine;
   const actionProvider = useMemo(
-    () => createAiActionProvider({ engine, conversationController }),
-    [engine, conversationController],
+    () => createAiActionProvider({ engine: boundEngine, conversationController }),
+    [boundEngine, conversationController],
   );
   // `useNamespaceRegistration` performs the capability check internally
   // (`actionScope` undefined → no-op). Returns the unregister fn on cleanup.
@@ -192,12 +218,14 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // AI-31: stabilize the handle so the register effect deps
   // `[componentRegistry, props.meta.cid, componentHandle]` do not change every
   // render → register/unregister only fires when the engine or id changes.
+  // P2-8: same null-engine binding as the action provider above — the handle
+  // stays resolvable during the switch window but dispatch rejects explicitly.
   const componentHandle = useMemo(
-    () => createAiComponentHandle({ engine, id: componentIdResolved, name: componentNameResolved }),
+    () => createAiComponentHandle({ engine: boundEngine, id: componentIdResolved, name: componentNameResolved }),
     // Rebuild when the engine reference or the resolved id/name strings change.
     // `props.id` is a stable renderer instance id; `props.meta.testid` is
     // schema-stable. The literal strings are stable across renders.
-    [engine, componentIdResolved, componentNameResolved],
+    [boundEngine, componentIdResolved, componentNameResolved],
   );
   useEffect(() => {
     if (!componentRegistry) return;
@@ -223,6 +251,14 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   const onBranchChange = useCallback((branchId: string) => {
     const payload = { type: 'ai:branch-change', branchId };
     void eventsRef.current.onBranchChange?.(payload, eventCtx(payload, nodeScopeRef.current));
+  }, []);
+  // P2-4 (2026-08-10 multi-audit): HITL approval for the bubble path — the
+  // message-level tools renderer (and host-registered tool cards) dispatch
+  // through this context callback. Mirrors the onBranchChange pattern
+  // (stable identity, latest events via eventsRef).
+  const onApproval = useCallback((action: 'approve' | 'reject') => {
+    const payload = { type: 'ai:tool-call-approval', action };
+    void eventsRef.current.onApproval?.(payload, eventCtx(payload, nodeScopeRef.current));
   }, []);
   // Decision-A (AI-02): project a SNAPSHOT of the engine messages, not the
   // live internal array. Descendants that read `${messages}` (via
@@ -386,8 +422,8 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // re-render problem across the Provider boundary.) Declared before the early
   // returns so the hook order is unconditional (rules-of-hooks).
   const chatContextValue = useMemo(
-    () => ({ engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange }),
-    [engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange],
+    () => ({ engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange, onApproval }),
+    [engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange, onApproval],
   );
 
   // engine-null-switch: the host injected `null` (activeEngine is null during
@@ -454,6 +490,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
           submitType={resolved.submitType}
           maxLength={resolved.maxLength}
           showWordLimit={resolved.showWordLimit}
+          disabled={props.meta.disabled === true}
           extensionComponent={
             (resolved.senderExtensions as React.ComponentType<AiSenderExtensionProps> | undefined | null) ?? null
           }

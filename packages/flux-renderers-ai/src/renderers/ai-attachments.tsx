@@ -62,6 +62,9 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   const maxFiles = typeof resolved.maxFiles === 'number' ? resolved.maxFiles : undefined;
   const enableDrop = resolved.enableDrop !== false;
   const mode = resolved.mode ?? 'auto';
+  // P2-5 (2026-08-10 multi-audit): node-level `meta.disabled` control —
+  // disables pick/upload/remove + the drop/paste surface.
+  const disabled = props.meta.disabled === true;
 
   const controlledValue = Array.isArray(resolved.value) ? (resolved.value as AiAttachmentItem[]) : null;
   const [internalAttachments, setInternalAttachments] = useState<AiAttachment[]>([]);
@@ -133,12 +136,14 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   }
 
   function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    if (disabled) return;
     const files = event.target.files ? Array.from(event.target.files) : [];
     addFiles(files);
     event.target.value = '';
   }
 
   function handleRemove(id: string) {
+    if (disabled) return;
     const removed = attachments.find((a) => a.id === id);
     if (removed && localUrlsRef.current.has(removed.url)) {
       try {
@@ -153,7 +158,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   }
 
   function handleDrop(event: React.DragEvent<HTMLDivElement>) {
-    if (!enableDrop) return;
+    if (disabled || !enableDrop) return;
     event.preventDefault();
     setDragging(false);
     const files = event.dataTransfer.files ? Array.from(event.dataTransfer.files) : [];
@@ -161,7 +166,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   }
 
   function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
-    if (!enableDrop) return;
+    if (disabled || !enableDrop) return;
     event.preventDefault();
     setDragging(true);
   }
@@ -171,6 +176,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   }
 
   function handlePaste(event: React.ClipboardEvent<HTMLDivElement>) {
+    if (disabled) return;
     const files = event.clipboardData?.files ? Array.from(event.clipboardData.files) : [];
     if (files.length > 0) {
       event.preventDefault();
@@ -179,19 +185,20 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   }
 
   async function handleUpload() {
+    // P2-5: page-level disabled also guards the imperatively-invoked path.
+    if (disabled) return;
     // P2 silent-drop guard (FP `attachments-upload-stream`): never call
     // sendMessage while a turn is streaming — the engine drops it silently.
     // The upload button is also disabled via `loading` below; this guards the
     // imperatively-invoked path and any future trigger.
     if (ctx?.isProcessing) return;
-    const imageAttachments = attachments.filter((a) => isImageMime(a.contentType) || isImageExt(a.name));
     const uploadPayload = { type: 'ai:attachments-upload', attachments };
     void props.events.onUpload?.(uploadPayload, dispatchCtx(uploadPayload, props.node.scope as ScopeRef | undefined));
-    if (imageAttachments.length > 0 && ctx) {
-      const parts: ChatMessageContentPart[] = imageAttachments.map((a) => ({
-        type: 'image_url',
-        image_url: { url: a.url },
-      }));
+    // open-audit P2-4 (2026-08-10 multi-audit): reuse the shared
+    // `buildImageContentParts` helper — the inline filter+map duplication was
+    // a second copy of the multimodal assembly logic (drift risk).
+    const parts = buildImageContentParts(attachments);
+    if (parts.length > 0 && ctx) {
       await ctx.sendMessage(parts);
     }
   }
@@ -233,6 +240,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
           variant="outline"
           size="sm"
           data-slot="ai-attachments-pick"
+          disabled={disabled}
           onClick={() => inputRef.current?.click()}
         >
           <Paperclip className="h-4 w-4" />
@@ -243,7 +251,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
             type="button"
             size="sm"
             data-slot="ai-attachments-upload"
-            disabled={ctx?.isProcessing ?? false}
+            disabled={disabled || (ctx?.isProcessing ?? false)}
             onClick={handleUpload}
           >
             {t('flux.ai.send')}
@@ -263,6 +271,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
               key={a.id}
               attachment={a}
               mode={effectiveMode}
+              disabled={disabled}
               onRemove={() => handleRemove(a.id)}
             />
           ))}
@@ -275,9 +284,10 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
 function AttachmentItemView(props: {
   attachment: AiAttachment;
   mode: 'image' | 'card';
+  disabled?: boolean;
   onRemove: () => void;
 }): React.ReactElement {
-  const { attachment, mode, onRemove } = props;
+  const { attachment, mode, disabled, onRemove } = props;
   if (mode === 'image' && (isImageMime(attachment.contentType) || isImageExt(attachment.name))) {
     return (
       <div
@@ -302,6 +312,7 @@ function AttachmentItemView(props: {
           className="absolute right-0 top-0 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
           data-slot="ai-attachments-remove"
           aria-label={t('flux.ai.removeFile')}
+          disabled={disabled}
           onClick={onRemove}
         >
           <X className="h-3 w-3" />
@@ -332,6 +343,7 @@ function AttachmentItemView(props: {
         className="h-5 w-5 p-0"
         data-slot="ai-attachments-remove"
         aria-label={t('flux.ai.removeFile')}
+        disabled={disabled}
         onClick={onRemove}
       >
         <X className="h-3 w-3" />

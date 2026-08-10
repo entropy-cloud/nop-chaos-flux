@@ -113,6 +113,98 @@ describe('A-9 useAutoScroll contract', () => {
   });
 });
 
+// ============================================================================
+// multi-audit P2-9 (plan 2026-08-10-1606-2): the A-9 suite above only asserted
+// `isAtBottom` toggling from MANUAL scrolls — the hook's core behavior (the
+// `trigger` effect scrolling a pinned container to the bottom + the public
+// `scrollToBottom()`) had ZERO assertions ("删掉也绿"). These tests cover the
+// core contract; deleting the trigger effect / scrollToBottom body must fail.
+// ============================================================================
+
+describe('A-9 useAutoScroll core behavior (multi-audit P2-9)', () => {
+  function CoreProbe({ trigger }: { trigger: unknown }) {
+    const { containerRef, onScroll, isAtBottom } = useAutoScroll(trigger);
+    // `onScroll`/`isAtBottom` only touch a ref; force a re-render to read state.
+    const [, force] = useState(0);
+    return (
+      <div
+        ref={containerRef}
+        data-testid="scroll"
+        onScroll={() => {
+          onScroll();
+          force((x) => x + 1);
+        }}
+        data-at-bottom={isAtBottom() ? 'true' : 'false'}
+      >
+        <div data-testid="inner" />
+      </div>
+    );
+  }
+
+  function renderScroll() {
+    const view = render(<CoreProbe trigger={1} />);
+    const el = view.container.querySelector('[data-testid="scroll"]') as HTMLDivElement;
+    return { ...view, el };
+  }
+
+  it('trigger change while pinned scrolls the container to the bottom (scrollTop ≈ scrollHeight)', () => {
+    const { el, rerender } = renderScroll();
+    setDims(el, { scrollHeight: 1000, clientHeight: 400, scrollTop: 0 });
+
+    // A trigger change while pinned (default) must scroll to the bottom.
+    rerender(<CoreProbe trigger={2} />);
+    expect(el.scrollTop).toBe(1000);
+
+    // A further trigger change keeps it pinned at the bottom.
+    rerender(<CoreProbe trigger={3} />);
+    expect(el.scrollTop).toBe(1000);
+  });
+
+  it('scrollToBottom() directly scrolls the container to the bottom', () => {
+    const box: { current: (() => void) | null } = { current: null };
+    function ScrollerProbe() {
+      const { containerRef, onScroll, scrollToBottom } = useAutoScroll('x');
+      useEffect(() => {
+        box.current = scrollToBottom;
+      });
+      const [, force] = useState(0);
+      return (
+        <div
+          ref={containerRef}
+          data-testid="scroll"
+          onScroll={() => {
+            onScroll();
+            force((x) => x + 1);
+          }}
+        >
+          <div data-testid="inner" />
+        </div>
+      );
+    }
+    const { container } = render(<ScrollerProbe />);
+    const el = container.querySelector('[data-testid="scroll"]') as HTMLDivElement;
+    setDims(el, { scrollHeight: 1000, clientHeight: 400, scrollTop: 0 });
+    expect(box.current).not.toBeNull();
+
+    act(() => {
+      box.current!();
+    });
+    expect(el.scrollTop).toBe(1000);
+  });
+
+  it('when NOT pinned, a trigger change does NOT scroll (user-reading is respected)', () => {
+    const { el, rerender } = renderScroll();
+    setDims(el, { scrollHeight: 1000, clientHeight: 400, scrollTop: 0 });
+    // Scroll far up → distance 600 > threshold 80 → unpinned.
+    fireEvent.scroll(el);
+    expect(el.getAttribute('data-at-bottom')).toBe('false');
+
+    rerender(<CoreProbe trigger={2} />);
+    // The trigger effect must respect the pinned gate — scrollTop stays 0.
+    expect(el.scrollTop).toBe(0);
+  });
+});
+
 // ============ A-10: reasoning duration ============
 
 describe('A-10 reasoning duration', () => {

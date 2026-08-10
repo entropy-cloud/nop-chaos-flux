@@ -33,7 +33,6 @@
   "peerDependencies": {
     "@tiptap/react": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",
-    "dompurify": "^3.4.11",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-markdown": "^10.1.0",
@@ -54,7 +53,6 @@
     "@tiptap/core": "^3.27.1",
     "@tiptap/react": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",
-    "dompurify": "^3.4.11",
     "jsdom": "^29.1.1",
     "jsonrepair": "^3.13.0",
     "lucide-react": "^1.17.0",

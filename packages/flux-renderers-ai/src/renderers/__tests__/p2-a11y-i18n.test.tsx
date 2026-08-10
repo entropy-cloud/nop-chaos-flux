@@ -237,6 +237,27 @@ describe('P2-1 — ai-bubble user-edit pencil button aria-label', () => {
     expect(label).toBe('Edit message');
     expect(label).not.toBe('Copy');
   });
+
+  it('multi-audit P2-18: edit-mode Textarea has a non-empty accessible name', () => {
+    const message: ChatMessage = {
+      id: 'm1',
+      role: 'user',
+      content: 'hi',
+      state: { editing: { active: true, draft: 'hi' } },
+    };
+    const { container } = harness(message);
+    const textarea = container.querySelector(
+      '[data-slot="ai-bubble-edit-input"]',
+    ) as HTMLTextAreaElement;
+    expect(textarea).toBeTruthy();
+    // Programmatic accessible name: aria-label / label association / placeholder.
+    const name =
+      textarea.getAttribute('aria-label') ??
+      textarea.getAttribute('aria-labelledby') ??
+      textarea.getAttribute('placeholder');
+    expect(name).toBeTruthy();
+    expect(name!.length).toBeGreaterThan(0);
+  });
 });
 
 describe('P2-4 — rich-text components aria-labels use translations', () => {

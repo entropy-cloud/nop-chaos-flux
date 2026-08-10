@@ -82,6 +82,10 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
           data-slot="ai-bubble-edit-input"
           value={draft}
           rows={2}
+          // P2-18 (2026-08-10 multi-audit): the edit-mode Textarea had no
+          // accessible name (WCAG 4.1.2) — align with the ai-sender Textarea
+          // precedent (aria-label from a translated label).
+          aria-label={t('flux.ai.editMessage')}
           onChange={(ev) => e.setMessageEditing(message.id, { active: true, draft: ev.target.value })}
           className="min-h-[60px]"
         />

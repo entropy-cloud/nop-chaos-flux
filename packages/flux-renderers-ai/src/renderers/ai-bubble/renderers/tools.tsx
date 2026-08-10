@@ -22,6 +22,11 @@ export function ToolsContentRenderer(props: ToolsContentRendererProps): React.Re
   const calls = message.tool_calls;
   if (!calls || calls.length === 0) return null;
   const registrations = props.toolRenderers;
+  // P2-4 (2026-08-10 multi-audit): HITL approval threaded from the bubble/
+  // context chain — forwarded to BOTH host-registered cards and the generic
+  // `*` fallback so a pending call can approve/reject on the default bubble
+  // path.
+  const onApproval = props.onApproval;
   return (
     <div data-slot="ai-bubble-tools" className="flex flex-col gap-1">
       {calls.map((call) => {
@@ -37,6 +42,7 @@ export function ToolsContentRenderer(props: ToolsContentRendererProps): React.Re
               toolCall={call}
               state={state}
               toolCallKey={key}
+              onApproval={onApproval}
             />
           );
         }
@@ -47,6 +53,7 @@ export function ToolsContentRenderer(props: ToolsContentRendererProps): React.Re
             toolCall={call}
             state={state}
             toolCallKey={key}
+            onApproval={onApproval}
           />
         );
       })}

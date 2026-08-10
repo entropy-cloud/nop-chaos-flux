@@ -227,6 +227,90 @@ async function runTurn(incoming) {
     expect(result.stdout).toContain('No invariant violations');
   });
 
+  it('violating fixture ⑧ (break path, multi P2-1): while-head break without pendingBranchId clear → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/engine/create-engine.ts': `
+async function runTurn(incoming) {
+  const connector = adapterStateConnector();
+  let needsFollowUp = true;
+  while (needsFollowUp) {
+    if (abortController.signal.aborted) break; // break without clear → violation
+    const outcome = await runOnce(connector, abortController);
+  }
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('⑧');
+    expect(result.stderr).toContain('break');
+  });
+
+  it('clean fixture ⑧ (break path, multi P2-1): break preceded by pendingBranchId clear → exit 0', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/engine/create-engine.ts': `
+async function runTurn(incoming) {
+  const connector = adapterStateConnector();
+  let needsFollowUp = true;
+  while (needsFollowUp) {
+    if (abortController.signal.aborted) {
+      pendingBranchId = undefined; // ⑧ break 前置 clear
+      break;
+    }
+    const outcome = await runOnce(connector, abortController);
+  }
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('No invariant violations');
+  });
+
+  it('violating fixture ⑧ (throw path, multi P2-1): pre-runOnce plugin-await try catch without clear → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/engine/create-engine.ts': `
+async function runTurn(incoming) {
+  const connector = adapterStateConnector();
+  try {
+    await plugin.onTurnStart(turnCtx);
+    const outcome = await runOnce(connector, abortController);
+  } catch (error) {
+    adapter.mutate('requestState', (draft) => { draft.requestState = 'error'; }); // catch without clear → violation
+  }
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('⑧');
+    expect(result.stderr).toContain('throw path');
+  });
+
+  it('clean fixture ⑧ (throw path, multi P2-1): pre-runOnce plugin-await try catch clears pendingBranchId → exit 0', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/engine/create-engine.ts': `
+async function runTurn(incoming) {
+  const connector = adapterStateConnector();
+  try {
+    await plugin.onTurnStart(turnCtx);
+    const outcome = await runOnce(connector, abortController);
+  } catch (error) {
+    pendingBranchId = undefined; // ⑧ throw path clear
+    adapter.mutate('requestState', (draft) => { draft.requestState = 'error'; });
+  }
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('No invariant violations');
+  });
+
   it('violating fixture ② (K4): rename reads bare conversations after setConversations → exit 1', () => {
     const root = makeFixture({
       'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `

@@ -160,6 +160,24 @@ describe('AiAttachmentsRenderer — multimodal send', () => {
     });
   });
 
+  it('open-audit P2-4: handleUpload assembles parts via buildImageContentParts (mixed image+pdf sends only image parts)', async () => {
+    const send = vi.fn(async () => undefined);
+    const { container } = harness({}, {}, send);
+    const input = container.querySelector('[data-slot="ai-attachments-input"]') as HTMLInputElement;
+    fireEvent.change(input, {
+      target: { files: [makeFile('a.png'), makeFile('doc.pdf', { type: 'application/pdf' })] },
+    });
+    const uploadBtn = container.querySelector('[data-slot="ai-attachments-upload"]') as HTMLButtonElement;
+    fireEvent.click(uploadBtn);
+    await Promise.resolve();
+    expect(send).toHaveBeenCalledTimes(1);
+    const calls = (send as { mock: { calls: unknown[][] } }).mock.calls;
+    const parts = calls[0]?.[0] as ChatMessageContentPart[] | undefined;
+    // The shared helper filters non-image attachments — the pdf is excluded.
+    expect(parts!.length).toBe(1);
+    expect(parts![0]).toMatchObject({ type: 'image_url' });
+  });
+
   it('validation onError carries the dispatch ctx (C8.2, CX-10 family)', () => {
     const onError = vi.fn();
     const { container } = harness({ maxSize: 1000 }, { onError });

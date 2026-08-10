@@ -329,3 +329,194 @@ describe('useConversation — AI-28 storage error observability', () => {
     expect(result.current.conversations[0].title).toBe('New');
   });
 });
+
+// ---------------------------------------------------------------------------
+// multi P2-2 (2026-08-10) — unmount cleanup order. The unmount effect used to
+// abort in-flight engines BEFORE unsubscribing the auto-save listeners, so the
+// abort's requestState transition ('processing' → 'aborted') fired the
+// listener and enqueued an aborted-snapshot save into `pendingSavesRef` — with
+// the hook gone there was no drain surface left (cross-mount ghost on rapid
+// remount). clearAll's K3 detach-before-abort ordering is the reference.
+// ---------------------------------------------------------------------------
+
+describe('multi P2-2 — unmount cleanup order (detach-before-abort)', () => {
+  /**
+   * Storage whose `saveMessages` write LANDS only after a gate resolves, so a
+   * save enqueued by the unmount-time abort is observable as a ghost landing.
+   */
+  function gatedUnmountStorage() {
+    const calls = { saveMessages: 0, deleteConversation: 0 };
+    const savedMessages: Record<string, ChatMessage[]> = {};
+    const deleted: string[] = [];
+    let releaseSave!: () => void;
+    const saveGate = new Promise<void>((r) => {
+      releaseSave = r;
+    });
+    const strategy: ConversationStorageStrategy = {
+      async loadConversations() {
+        return [];
+      },
+      async loadMessages() {
+        return [];
+      },
+      async saveConversation() {},
+      async saveMessages(id: string, messages: ChatMessage[]) {
+        calls.saveMessages++;
+        await saveGate;
+        savedMessages[id] = messages;
+      },
+      async deleteConversation(id: string) {
+        calls.deleteConversation++;
+        deleted.push(id);
+      },
+    };
+    return { strategy, calls, savedMessages, deleted, releaseSave };
+  }
+
+  const longChunks = [
+    { delta: { content: 'a' } },
+    { delta: { content: 'b' } },
+    { delta: { content: 'c' } },
+    { finishReason: 'stop' as const },
+  ];
+
+  it('unmount during an in-flight turn must not enqueue an aborted-snapshot save', async () => {
+    const { strategy, calls, savedMessages, releaseSave } = gatedUnmountStorage();
+    const { result, unmount } = renderHook(() =>
+      useConversation({
+        connector: slowConnector(longChunks, 30),
+        storage: strategy,
+        autoSaveMessages: true,
+      }),
+    );
+    await act(async () => {
+      await wait(5);
+    });
+
+    let convId = '';
+    act(() => {
+      convId = result.current.createConversation({ title: 'X' }).id;
+    });
+    act(() => {
+      void result.current.activeEngine!.sendMessage('go');
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.activeEngine!.getState().isProcessing).toBe(true);
+
+    // Unmount: the cleanup aborts the in-flight engine. Pre-fix the auto-save
+    // listener is still attached, so the abort enqueues an aborted-snapshot
+    // save with no drain surface left (the hook is gone).
+    act(() => {
+      unmount();
+    });
+    // Release the save I/O: pre-fix the aborted snapshot lands as a ghost.
+    releaseSave();
+    await act(async () => {
+      await wait(20);
+    });
+
+    expect(calls.saveMessages).toBe(0);
+    expect(savedMessages[convId]).toBeUndefined();
+  });
+
+  it('rapid remount + new turn must not rehydrate the previous session aborted snapshot', async () => {
+    const { strategy, savedMessages, releaseSave } = gatedUnmountStorage();
+    const connector = slowConnector(longChunks, 30);
+    const { result, unmount } = renderHook(() =>
+      useConversation({
+        connector,
+        storage: strategy,
+        autoSaveMessages: true,
+      }),
+    );
+    await act(async () => {
+      await wait(5);
+    });
+
+    let convId = '';
+    act(() => {
+      convId = result.current.createConversation({ title: 'X' }).id;
+    });
+    act(() => {
+      void result.current.activeEngine!.sendMessage('go');
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    act(() => {
+      unmount();
+    });
+    // Release the ghost save (pre-fix it was enqueued at unmount-abort).
+    releaseSave();
+    await act(async () => {
+      await wait(20);
+    });
+
+    // Remount from the same storage + a new turn.
+    const { result: remounted } = renderHook(() =>
+      useConversation({
+        connector,
+        storage: strategy,
+        autoSaveMessages: true,
+      }),
+    );
+    await act(async () => {
+      await wait(5);
+    });
+    // Bootstrap loaded the stored conversation; the ghost snapshot (pre-fix)
+    // is rehydrated into the new session's engine via loadMessages.
+    const messages = remounted.current.activeEngine?.getState().messages ?? [];
+    const assistants = messages.filter((m) => m.role === 'assistant');
+    expect(assistants).toHaveLength(0);
+    expect(savedMessages[convId]).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// multi P2-7 (2026-08-10) — mount bootstrap effect deps. `storage` went into
+// the effect deps directly, so a host constructing the strategy inline
+// re-ran `loadConversations()` on every render (each run aborting the
+// previous controller). The `connector` option already uses a ref mirror —
+// storage must follow the same pattern.
+// ---------------------------------------------------------------------------
+
+describe('multi P2-7 — bootstrap effect stable storage deps', () => {
+  it('a fresh storage object each render must not re-run loadConversations', async () => {
+    const calls = { loadConversations: 0 };
+    const makeStrategy = (): ConversationStorageStrategy => ({
+      async loadConversations() {
+        calls.loadConversations++;
+        return [];
+      },
+      async loadMessages() {
+        return [];
+      },
+      async saveConversation() {},
+      async saveMessages() {},
+      async deleteConversation() {},
+    });
+    const { rerender } = renderHook(
+      ({ storage }: { storage: ConversationStorageStrategy }) =>
+        useConversation({
+          connector: slowConnector(okChunks),
+          storage,
+          autoSaveMessages: true,
+        }),
+      { initialProps: { storage: makeStrategy() } },
+    );
+    await act(async () => {
+      await wait(10);
+    });
+
+    // Equivalent of inline construction: a NEW storage object on every render.
+    rerender({ storage: makeStrategy() });
+    rerender({ storage: makeStrategy() });
+    await act(async () => {
+      await wait(10);
+    });
+
+    expect(calls.loadConversations).toBe(1);
+  });
+});

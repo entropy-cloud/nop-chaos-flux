@@ -257,6 +257,19 @@ function CitationBody({
 
 const CITATION_RE = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
 
+/**
+ * open-audit P2-8 (2026-08-10 multi-audit): citation indices are bounded
+ * above. `CITATION_RE` matches ANY `[N]` (N > 0), so "Since [2026]" rendered
+ * a clickable sup + an EMPTY citation card (year false positive). Real
+ * citation indices are small (< 64 sources in one answer is already extreme)
+ * while years are >= 1000 — the bound kills the year false positive with zero
+ * regression on legal citations. Rationale for the bound over source-matching:
+ * `sources` is optional (Failure Path `citation-no-sources` intentionally
+ * renders an empty card for a legitimate-but-missing source), so requiring a
+ * source match would suppress the documented empty-card path.
+ */
+const CITATION_INDEX_MAX = 64;
+
 type CitationSegment =
   | { kind: 'text'; text: string; id: string }
   | { kind: 'citation'; indices: number[]; id: string };
@@ -272,6 +285,10 @@ type CitationSegment =
  * literal `array[0]` inside code never becomes an empty `[0]` citation card.
  * Indices that are not 1-based positive integers (`0`, negatives) are also
  * dropped: citations are 1-based per the schema contract.
+ *
+ * P2-8 (2026-08-10 multi-audit): indices above `CITATION_INDEX_MAX` (e.g.
+ * `[2026]` — a year, not a citation) are dropped the same way, so the marker
+ * stays literal text instead of rendering an empty citation card.
  */
 export function parseCitations(text: string): CitationSegment[] {
   const segments: CitationSegment[] = [];
@@ -282,9 +299,10 @@ export function parseCitations(text: string): CitationSegment[] {
     const indices = match[1]
       .split(',')
       .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => Number.isFinite(n) && n > 0);
-    // If every index was filtered out (e.g. `[0]`), emit the raw text back
-    // instead of an empty citation group, so the marker stays as literal text.
+      .filter((n) => Number.isFinite(n) && n > 0 && n <= CITATION_INDEX_MAX);
+    // If every index was filtered out (e.g. `[0]` / `[2026]`), emit the raw
+    // text back instead of an empty citation group, so the marker stays as
+    // literal text.
     if (indices.length === 0) {
       segments.push({ kind: 'text', text: match[0], id: `t@${start}` });
     } else {

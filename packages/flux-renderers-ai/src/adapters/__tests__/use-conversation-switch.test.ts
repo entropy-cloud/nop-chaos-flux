@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useConversation } from '../use-conversation.js';
-import type { AiConnectorChunk } from '../../engine/types.js';
+import type { AiConnector, AiConnectorChunk, AiConnectorRequest, AiConversationInfo } from '../../engine/types.js';
 import type { ConversationStorageStrategy } from '../../storage/types.js';
 import { okChunks, slowConnector, mockStorage, wait } from './use-conversation-test-helpers.js';
 
@@ -178,5 +178,75 @@ describe('useConversation — switch / background processing', () => {
     expect(
       aEngineAfter.getMessages().some((m) => m.role === 'user'),
     ).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// open P2-1 (2026-08-10) — connector hot-swap must fan out to EVERY cached
+// self-built engine. `buildEngine` captured `connectorRef.current` at build
+// time and the hook had zero `setConnector` call sites, so a host swapping
+// the connector left old sessions on stale credentials/model (2151 hot-swap
+// family). useConversation's cache is self-built by definition (m4: external
+// engines are never cached here).
+// ---------------------------------------------------------------------------
+
+describe('open P2-1 — connector change fans out to cached engines', () => {
+  function countingConnector(count: { n: number }): AiConnector {
+    return {
+      async stream(_req: AiConnectorRequest) {
+        count.n += 1;
+        async function* gen(): AsyncGenerator<AiConnectorChunk> {
+          yield { delta: { content: 'ok' } };
+          yield { finishReason: 'stop' as const };
+        }
+        void _req;
+        return gen();
+      },
+    };
+  }
+
+  it('swapping the connector updates the active AND the cached idle engines', async () => {
+    const callsA = { n: 0 };
+    const callsB = { n: 0 };
+    const connectorA = countingConnector(callsA);
+    const connectorB = countingConnector(callsB);
+    const convs = [
+      { id: 'A', title: 'A', createdAt: 0, updatedAt: 0 } as AiConversationInfo,
+      { id: 'B', title: 'B', createdAt: 0, updatedAt: 0 } as AiConversationInfo,
+    ];
+    const { result, rerender } = renderHook(
+      ({ connector }: { connector: AiConnector }) =>
+        useConversation({ connector, initialConversations: convs }),
+      { initialProps: { connector: connectorA } },
+    );
+    await act(async () => {
+      await wait(5);
+    });
+    // Engine A active; build engine B via switch (no storage → no eviction,
+    // so both engines stay cached).
+    await act(async () => {
+      await result.current.switchConversation('B');
+    });
+
+    // Host swaps the connector.
+    rerender({ connector: connectorB });
+    await act(async () => {
+      await wait(5);
+    });
+
+    // The active (B) engine's next send must flow through connectorB.
+    await act(async () => {
+      await result.current.activeEngine!.sendMessage('hi');
+    });
+    expect(callsB.n).toBe(1);
+    expect(callsA.n).toBe(0);
+    // Switch back to A — its cached engine must ALSO carry connectorB.
+    await act(async () => {
+      await result.current.switchConversation('A');
+    });
+    await act(async () => {
+      await result.current.activeEngine!.sendMessage('hi');
+    });
+    expect(callsB.n).toBe(2);
   });
 });

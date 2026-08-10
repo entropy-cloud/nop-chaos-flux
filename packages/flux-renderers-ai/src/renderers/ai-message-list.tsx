@@ -15,6 +15,12 @@ export interface AiMessageListViewProps {
   cid?: number;
   /** A-4: forward to every bubble so `metadata.createdAt` renders as a time footer. */
   showTimestamp?: boolean;
+  /**
+   * P2-4 (2026-08-10 multi-audit): HITL approval for the bubble path —
+   * forwarded from the ai-chat context to every bubble so a pending tool-call
+   * card can approve/reject.
+   */
+  onApproval?: (action: 'approve' | 'reject') => void;
 }
 
 /** A-8: message count above which windowed virtual rendering kicks in. */
@@ -106,6 +112,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
                   branches={ctx?.branches}
                   activeBranchId={ctx?.activeBranchId}
                   onBranchChange={ctx?.onBranchChange}
+                  onApproval={ctx?.onApproval}
                 />
               </div>
             );
@@ -121,6 +128,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
             branches={ctx?.branches}
             activeBranchId={ctx?.activeBranchId}
             onBranchChange={ctx?.onBranchChange}
+            onApproval={ctx?.onApproval}
           />
         ))
       )}

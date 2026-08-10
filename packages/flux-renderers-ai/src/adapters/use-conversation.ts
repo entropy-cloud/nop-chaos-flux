@@ -15,7 +15,13 @@ import type { ConversationStorageStrategy } from '../storage/types.js';
 
 export interface UseConversationOptions {
   connector: AiConnector;
-  createEngineOptions?: Omit<UseMessageOptions, 'connector'>;
+  /**
+   * Engine-construction options forwarded to the hook's SELF-BUILT engines.
+   * `connector` and `engine` are excluded: the connector flows through the
+   * hot-swap path (open P2-1) and `engine` would be silently dropped by
+   * `buildEngine` (open P2-2 — the type contract rejects it at compile time).
+   */
+  createEngineOptions?: Omit<UseMessageOptions, 'connector' | 'engine'>;
   storage?: ConversationStorageStrategy;
   autoSaveMessages?: boolean;
   /** Initial conversations to seed the list (ignored when `storage` is provided). */
@@ -85,6 +91,15 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   useEffect(() => {
     connectorRef.current = connector;
   }, [connector]);
+  // multi P2-7 (2026-08-10): storage ref mirror — the mount bootstrap effect
+  // must not re-run `loadConversations` when a host re-constructs the storage
+  // object every render (inline construction). Aligns with the connectorRef
+  // precedent: the ref is synced by an effect; the bootstrap effect reads
+  // `storageRef.current` and keeps stable deps.
+  const storageRef = useRef(storage);
+  useEffect(() => {
+    storageRef.current = storage;
+  }, [storage]);
 
   // AI-28: stable storage-error reporter. useCallback is retained here (not
   // removed by F3.1) because the mount-bootstrap effect depends on it — the
@@ -152,6 +167,19 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   const [engineCache] = useState(() => new Map<string, MessageEngine>());
   const [activeEngine, setActiveEngine] = useState<MessageEngine | null>(null);
 
+  // open P2-1 (2026-08-10): connector hot-swap fan-out. `buildEngine` captures
+  // `connectorRef.current` at build time; without this fan-out a host swapping
+  // the connector would leave every cached SELF-BUILT engine on stale
+  // credentials/model (2151 hot-swap family). m4 does not apply — the cache
+  // holds only engines built by this hook; external engines are never cached
+  // here. `setConnector` is idempotent (skips the same reference), so the
+  // mount-time run is a no-op for already-correct engines.
+  useEffect(() => {
+    for (const cached of engineCache.values()) {
+      cached.setConnector(connector);
+    }
+  }, [connector, engineCache]);
+
   // Per-engine auto-save unsubscribe handles, kept alongside the engine cache
   // so subscriptions are torn down on evict / delete / unmount.
   const autoSaveUnsubsRef = useRef(new Map<string, () => void>());
@@ -165,6 +193,14 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   // without awaiting).
   const pendingSavesRef = useRef(new Map<string, Promise<unknown>>());
 
+  // Host-input sync sweep (2026-08-10, multi P2-7 / open P2-1 / open P2-2):
+  // `connector` is ref-mirrored + hot-swapped (fan-out above); `storage` is
+  // ref-mirrored for the mount bootstrap; `createEngineOptions` fields are
+  // INTENTIONALLY build-time captured (engines are built lazily per
+  // conversation — a host changing options mid-session builds a new engine,
+  // same documented contract as use-message's hot-swap scope); `onStorageError`
+  // is ref-mirrored (`onStorageErrorRef`); `initialConversations` is
+  // mount-only by design.
   function buildEngine(): MessageEngine {
     const plugins = (createEngineOptions?.plugins ?? []) as MessageEnginePlugin[];
     return createMessageEngine({
@@ -256,13 +292,17 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   );
 
   // ---- Mount bootstrap: hydrate conversations from storage (P3) ----
+  // multi P2-7 (2026-08-10): reads `storageRef.current` (not the render
+  // closure) so the effect deps stay stable — a host constructing the storage
+  // inline used to re-run loadConversations on every render (each run
+  // aborting the previous controller).
   useEffect(() => {
-    if (!storage) return;
+    if (!storageRef.current) return;
     const controller = new AbortController();
     const { signal } = controller;
     (async () => {
       try {
-        const convs = await storage.loadConversations();
+        const convs = await storageRef.current!.loadConversations();
         if (signal.aborted) return;
         // K-⑦-1 (Cycle 2 / I4): clearAll during the load invalidates the
         // restore — the deliberately cleared list must not be resurrected by
@@ -307,7 +347,7 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     return () => {
       controller.abort();
     };
-  }, [storage, reportStorageError]);
+  }, [reportStorageError]);
 
   // ---- Unmount: abort in-flight streams + tear down auto-save subscriptions ----
   // F2.2: every engine in the cache is SELF-BUILT by this hook, so on full
@@ -319,14 +359,26 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   useEffect(() => {
     const unsubs = autoSaveUnsubsRef.current;
     const cache = engineCache;
+    const pendingSaves = pendingSavesRef.current;
     return () => {
+      // multi P2-2 (2026-08-10): detach (unsubscribe) BEFORE abort — the
+      // abort's requestState transition ('processing' → 'aborted') fires the
+      // auto-save callback, and an abort-triggered save of the aborted
+      // snapshot must not be enqueued by a hook that is about to be gone (no
+      // drain surface left → cross-mount ghost on rapid remount). Mirrors
+      // clearAll's K3 detach-before-abort ordering.
+      for (const unsub of unsubs.values()) unsub();
+      unsubs.clear();
       for (const engine of cache.values()) {
         if (engine.getState().isProcessing) {
           void engine.abort();
         }
       }
-      for (const unsub of unsubs.values()) unsub();
-      unsubs.clear();
+      // Pending saves chained BEFORE unmount (completed turns) continue to
+      // settle on their own — the chain is promise-owned and its settlement
+      // re-check reads the mirror, which outlives the hook. Drop the map so
+      // the unmounted hook has no stale drain surface.
+      pendingSaves.clear();
     };
   }, [engineCache]);
 

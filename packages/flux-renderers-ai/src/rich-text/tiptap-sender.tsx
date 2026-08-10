@@ -106,6 +106,12 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
   // Popup navigation control (set from the React layer; consumed by the
   // editor's handleKeyDown to move the active item / confirm / close).
   const popupControlsRef = useRef<PopupControls>({ move: () => {}, confirm: () => {}, close: () => {} });
+  // P2-3 (2026-08-10 multi-audit): mirror of `popupItems.length` so the
+  // editor's `handleKeyDown` (registered once inside the `useEditor` closure,
+  // which would otherwise read a stale `popupItems`) can tell a zero-match
+  // popup from a live one. Kept in sync by the same effect that refreshes
+  // `popupControlsRef` (deps `[popupItems]`).
+  const popupItemsLengthRef = useRef(0);
 
   // Stable mutable callbacks container (mirrors `handlersRef` in
   // `editor-renderer.tsx`). The Tiptap editor is built once and its keymap +
@@ -224,6 +230,12 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
         handleKeyDown(_view, event) {
           const state = popupStateRef.current;
           if (state.kind === 'none') return false;
+          // P2-3 (2026-08-10 multi-audit): a popup that is open but has ZERO
+          // matches is not rendered (see the render guard below) — swallowing
+          // Enter/Arrows here would leave the user with a keyboard deadzone
+          // (the visual popup is gone but the keys never reach the editor).
+          // Let all keys pass through to the editor's own keymaps.
+          if (popupItemsLengthRef.current === 0) return false;
           // IME composition guard (O-3): hand the key back to the input method
           // (candidate navigation / confirm) instead of moving/confirming the
           // popup. Covers Enter-confirm and Arrow-key candidate navigation.
@@ -368,6 +380,7 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
   // Keep popupControlsRef fresh so the editor's handleKeyDown calls the
   // latest navigation handlers. Updated in an effect (not during render).
   useEffect(() => {
+    popupItemsLengthRef.current = popupItems.length;
     popupControlsRef.current = {
       move(delta) {
         if (popupItems.length === 0) return;

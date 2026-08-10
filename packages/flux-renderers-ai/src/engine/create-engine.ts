@@ -130,16 +130,16 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   }
 
   function getMessages(): ChatMessage[] {
-    // Return a per-message shallow-isolated copy (O-2): a new array whose
-    // elements are shallow copies of the internal message objects. This
-    // isolates top-level fields (content / role / id …) so a host or async
-    // storage path that pushes onto the array or mutates an element field
-    // cannot write through to the engine's internal state. Nested objects
-    // (metadata / tool_calls / state) still share refs — but Phase 1 already
-    // routed every engine write through a `mutate` recipe, so the engine
-    // itself never mutates those nested objects in place. Only invoked at
-    // turn boundaries (onResponseComplete / saveMessages), so O(n) per turn
-    // is acceptable.
+    // Return a per-message shallow-isolated copy (O-2): top-level fields are
+    // isolated from the engine's internal state, but nested objects
+    // (metadata / tool_calls / state) still share refs — and DURING
+    // streaming the engine DOES mutate them in place: `applyChunk` →
+    // `combineDeltaData` merges the in-flight assistant in place, and after
+    // the first per-chunk `commitAssistant` the draft is rebound to the live
+    // state element (open P2-6). Benign at per-chunk commit granularity, but
+    // snapshot readers must not hold a nested reference across turns. Only
+    // invoked at turn boundaries (onResponseComplete / saveMessages), so
+    // O(n) per turn is acceptable.
     return adapter.getState().messages.map((m) => ({ ...m }));
   }
 
@@ -258,7 +258,12 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       // Prime the loop: the first request uses the full conversation history.
       let needsFollowUp = true;
       while (needsFollowUp) {
-        if (abortController.signal.aborted) break;
+        if (abortController.signal.aborted) {
+          // ⑧ multi P2-1: clear the pending stamp before the abort break —
+          // it is consumed only by runOnce (see bug note 137).
+          pendingBranchId = undefined;
+          break;
+        }
         if (rounds >= maxToolRounds) {
           // Failure Path `tool-loop-max`: terminate the loop, record cause.
           // The marker is written entirely inside the mutate recipe
@@ -350,6 +355,9 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       });
     } catch (error) {
       const aborted = abortController.signal.aborted;
+      // ⑧ multi P2-1: a pre-runOnce throw (onTurnStart rejection) must clear
+      // the pending stamp — consumed only by runOnce (see bug note 137).
+      pendingBranchId = undefined;
       // ⑨ (ai-invariant-loop): a throwing onError must not skip the state
       // write below (it used to propagate out of the catch and reject the
       // host-facing promise with the turn stuck mid-state).

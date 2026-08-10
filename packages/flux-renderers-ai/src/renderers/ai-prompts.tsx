@@ -30,6 +30,8 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
   const items = normalizeItems(resolved.items);
   const layout = resolved.layout ?? 'vertical';
   const size = resolved.size ?? 'md';
+  // P2-5 (2026-08-10 multi-audit): node-level `meta.disabled` control.
+  const disabled = props.meta.disabled === true;
 
   const layoutClass =
     layout === 'horizontal'
@@ -74,6 +76,7 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
           variant="outline"
           data-slot="ai-prompts-item"
           data-index={index}
+          disabled={disabled}
           className={cn(
             'rounded-md bg-card text-card-foreground text-left',
             sizeClass,

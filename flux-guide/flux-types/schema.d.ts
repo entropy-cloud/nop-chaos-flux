@@ -1605,7 +1605,6 @@ export interface AiChatSchema extends BaseSchema {
   submitType?: SchemaValue;
   maxLength?: SchemaValue;
   showWordLimit?: boolean;
-  autofocus?: boolean;
   initialMessages?: SchemaValue;
   senderExtensions?: SchemaValue;
   conversationController?: SchemaValue;
@@ -1653,7 +1652,6 @@ export interface AiSenderSchema extends BaseSchema {
   type: 'ai-sender';
   placeholder?: SchemaValue;
   loading?: SchemaValue;
-  autofocus?: boolean;
   maxLength?: SchemaValue;
   showWordLimit?: boolean;
   submitType?: SchemaValue;

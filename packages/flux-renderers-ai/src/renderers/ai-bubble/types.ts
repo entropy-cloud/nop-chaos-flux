@@ -7,6 +7,13 @@ export interface BubbleContentRendererProps {
   content: unknown;
   /** Index into the content array (0 for plain-string content). */
   contentIndex: number;
+  /**
+   * P2-4 (2026-08-10 multi-audit): HITL approval dispatch for the bubble path.
+   * Only the message-level `tools` renderer consumes it (threaded from
+   * `ai-chat` schema events → context → AiBubbleView). Additive optional —
+   * other renderers ignore it.
+   */
+  onApproval?: (action: 'approve' | 'reject') => void;
 }
 
 export interface BubbleContentRendererMatch {
@@ -71,6 +78,14 @@ export interface BubbleToolRendererProps {
   state: ChatToolCallUIState;
   /** Stable key derived from `toolCall.id ?? idx-${index}` (React key). */
   toolCallKey: string;
+  /**
+   * P2-4 (2026-08-10 multi-audit): HITL approval dispatch (bubble path).
+   * Threaded from `ai-chat` schema events through the context/bubble chain so
+   * the generic `*` fallback AND host-registered tool cards can approve/
+   * reject a pending call. Omitted → `hitl-no-handler` guard disables the
+   * buttons (unchanged standalone behavior). Additive optional field.
+   */
+  onApproval?: (action: 'approve' | 'reject') => void;
 }
 
 /**

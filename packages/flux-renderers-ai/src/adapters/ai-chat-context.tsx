@@ -20,6 +20,14 @@ export interface AiChatContextValue {
   branches?: AiBranch[];
   activeBranchId?: string;
   onBranchChange?: (branchId: string) => void;
+  /**
+   * P2-4 (2026-08-10 multi-audit): HITL approval dispatch for the bubble path.
+   * `ai-chat` threads its schema `onApproval` event through the context so a
+   * pending tool-call card rendered inside a bubble (via the message-level
+   * tools renderer) can approve/reject. Omitted → the `hitl-no-handler` guard
+   * disables the buttons (unchanged standalone behavior).
+   */
+  onApproval?: (action: 'approve' | 'reject') => void;
 }
 
 const AiChatContext = createContext<AiChatContextValue | null>(null);

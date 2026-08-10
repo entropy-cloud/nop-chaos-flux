@@ -307,3 +307,93 @@ describe('ai-voice-input — AI-04 resource lifecycle (microphone release)', () 
     mock.remove();
   });
 });
+
+// ============================================================================
+// multi-audit P2-6 (plan 2026-08-10-1606-2): same-tick double-start guard.
+// The `status` state guard is async — two clicks in one tick previously
+// created TWO recognition instances (the first, `continuous:true`, held the
+// mic until page unload). An in-flight ref guard must allow exactly one.
+// ============================================================================
+
+describe('ai-voice-input — P2-6 in-flight guard (single recognition instance)', () => {
+  it('double-clicking the mic in the same tick creates only ONE recognition instance', () => {
+    const mock = installMockSpeechRecognition();
+    const props = makeProps();
+    const { container } = render(<Voice {...props} />);
+    const btn = container.querySelector('[data-slot="ai-voice-input"]') as HTMLElement;
+
+    act(() => {
+      fireEvent.click(btn);
+      fireEvent.click(btn);
+    });
+
+    // In-flight guard: the second same-tick click must be short-circuited.
+    expect(mock.instances.length).toBe(1);
+    expect(mock.instances[0].start).toHaveBeenCalledTimes(1);
+    mock.remove();
+  });
+
+  it('restart-after-stop: a normal stop releases the guard and the mic can start again', () => {
+    const mock = installMockSpeechRecognition();
+    const props = makeProps();
+    const { container } = render(<Voice {...props} />);
+    const btn = container.querySelector('[data-slot="ai-voice-input"]') as HTMLElement;
+
+    act(() => {
+      fireEvent.click(btn);
+    });
+    expect(mock.instances.length).toBe(1);
+
+    // Stop → the browser fires onend → the in-flight guard must clear.
+    act(() => {
+      fireEvent.click(btn);
+      mock.instances[0].onend?.();
+    });
+
+    // A new session is allowed after the stop (guard must NOT permanently block).
+    act(() => {
+      fireEvent.click(btn);
+    });
+    expect(mock.instances.length).toBe(2);
+    expect(mock.instances[1].start).toHaveBeenCalledTimes(1);
+    mock.remove();
+  });
+
+  it('start() throwing clears the guard so a retry is possible', () => {
+    // Install a ctor whose start() throws (mic unavailable / already started).
+    function ThrowingCtor(this: MockRecognition) {
+      this.lang = '';
+      this.continuous = false;
+      this.interimResults = false;
+      this.onresult = null;
+      this.onerror = null;
+      this.onend = null;
+      this.start = vi.fn(() => {
+        throw new Error('mic unavailable');
+      });
+      this.stop = vi.fn();
+      this.abort = vi.fn();
+    }
+    const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+    w.SpeechRecognition = ThrowingCtor;
+    const onError = vi.fn();
+    const props = makeProps({ events: { onError } });
+    const { container } = render(<Voice {...props} />);
+    const btn = container.querySelector('[data-slot="ai-voice-input"]') as HTMLElement;
+
+    act(() => {
+      fireEvent.click(btn);
+    });
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'ai:voice-error', reason: 'permission-denied' }),
+      expect.anything(),
+    );
+
+    // Guard cleared by the catch branch → a second start attempt is allowed.
+    act(() => {
+      fireEvent.click(btn);
+    });
+    expect(onError.mock.calls.length).toBe(2);
+    delete w.SpeechRecognition;
+  });
+});

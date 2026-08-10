@@ -584,9 +584,6 @@ importers:
       '@tiptap/starter-kit':
         specifier: ^3.27.1
         version: 3.27.1
-      dompurify:
-        specifier: ^3.4.11
-        version: 3.4.11
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1

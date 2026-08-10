@@ -156,3 +156,46 @@ describe('ai-feedback — copy reset timer cleanup (2-20)', () => {
     }
   });
 });
+
+// ============================================================================
+// open-audit P2-7 (plan 2026-08-10-1606-2): the host could not express "no
+// action bar" — `normalizeActions` treated an empty array as "use defaults",
+// so `actions: []` still rendered copy/refresh. Decision (方案 A): an
+// EXPLICIT `actions: []` renders an empty action area; only an ABSENT value
+// falls back to the default action set.
+// ============================================================================
+
+describe('ai-feedback — open-audit P2-7 explicit no-action-bar', () => {
+  it('actions: [] renders the root with zero buttons (no default fallback)', () => {
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: [], message: MESSAGE as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const root = container.querySelector('[data-slot="ai-feedback"]') as HTMLElement;
+    expect(root).not.toBeNull();
+    // The action area is EMPTY — no copy/refresh defaults leak in.
+    expect(root.querySelectorAll('button').length).toBe(0);
+  });
+
+  it('absent actions still render the default action set (zero regression)', () => {
+    const props = makeProps({
+      props: { type: 'ai-feedback', message: MESSAGE as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const root = container.querySelector('[data-slot="ai-feedback"]') as HTMLElement;
+    expect(root.querySelector('[data-slot="ai-feedback-copy"]')).not.toBeNull();
+    expect(root.querySelector('[data-slot="ai-feedback-refresh"]')).not.toBeNull();
+  });
+
+  it('an explicitly filtered-to-empty actions list also renders no bar', () => {
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['unknown-action'], message: MESSAGE as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const root = container.querySelector('[data-slot="ai-feedback"]') as HTMLElement;
+    expect(root.querySelectorAll('button').length).toBe(0);
+  });
+});

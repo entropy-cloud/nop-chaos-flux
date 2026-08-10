@@ -43,10 +43,14 @@ export function AiToolCallView(props: {
   onToggle?: (open: boolean) => void;
   /** P3 HITL: invoked with 'approve' | 'reject'. No-op when undefined. */
   onApproval?: (action: 'approve' | 'reject') => void;
+  /** P2-5 (2026-08-10 multi-audit): node-level `meta.disabled` control. */
+  disabled?: boolean;
   cid?: number;
   testid?: string;
 }): React.ReactElement | null {
   const { toolCall, state } = props;
+  // P2-5: page-level disabled gates the expand toggle + approval buttons.
+  const disabled = props.disabled === true;
   const status: ToolCallStatus = state?.status ?? 'running';
   const approval = state?.approval;
   const [internalOpen, setInternalOpen] = useState(props.defaultOpen ?? false);
@@ -151,6 +155,7 @@ export function AiToolCallView(props: {
           data-slot="ai-tool-call-toggle"
           aria-label={open ? t('flux.ai.collapse') : t('flux.ai.expand')}
           aria-expanded={open}
+          disabled={disabled}
           onClick={handleToggle}
         >
           {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
@@ -172,6 +177,7 @@ export function AiToolCallView(props: {
           footerRef={approvalFooterRef}
           onKeyDown={handleApprovalKeyDown}
           onApproval={props.onApproval}
+          disabled={disabled}
           toolCallId={toolCall.id}
         />
       ) : null}
@@ -184,12 +190,15 @@ function ApprovalFooter({
   footerRef,
   onKeyDown,
   onApproval,
+  disabled,
   toolCallId,
 }: {
   approval: ToolCallApproval;
   footerRef: React.RefObject<HTMLDivElement | null>;
   onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
   onApproval?: (action: 'approve' | 'reject') => void;
+  /** P2-5: node-level `meta.disabled` control (page-level disable). */
+  disabled?: boolean;
   toolCallId: string;
 }): React.ReactElement {
   if (approval === 'pending') {
@@ -217,7 +226,7 @@ function ApprovalFooter({
           data-slot="ai-tool-call-approve"
           data-tool-call-id={toolCallId}
           aria-label={t('flux.ai.approve')}
-          disabled={noHandler}
+          disabled={noHandler || disabled}
           title={noHandlerTitle}
           onClick={() => onApproval?.('approve')}
           onKeyDown={onKeyDown}
@@ -232,7 +241,7 @@ function ApprovalFooter({
           data-slot="ai-tool-call-reject"
           data-tool-call-id={toolCallId}
           aria-label={t('flux.ai.reject')}
-          disabled={noHandler}
+          disabled={noHandler || disabled}
           title={noHandlerTitle}
           onClick={() => onApproval?.('reject')}
           onKeyDown={onKeyDown}
@@ -284,6 +293,7 @@ export function AiToolCallRenderer(props: RendererComponentProps<AiToolCallSchem
       className={props.meta.className}
       cid={props.meta.cid}
       testid={props.meta.testid}
+      disabled={props.meta.disabled === true}
       onApproval={
         props.events?.onApproval
           ? (action) => {
@@ -319,6 +329,7 @@ export function FallbackToolCallCard(props: BubbleToolRendererProps): React.Reac
       toolCall={props.toolCall}
       state={props.state}
       defaultOpen={props.state?.open}
+      onApproval={props.onApproval}
     />
   );
 }

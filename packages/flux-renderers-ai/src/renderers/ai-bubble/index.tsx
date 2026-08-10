@@ -36,6 +36,12 @@ export interface AiBubbleViewProps {
   branches?: AiBranch[];
   activeBranchId?: string;
   onBranchChange?: (branchId: string) => void;
+  /**
+   * P2-4 (2026-08-10 multi-audit): HITL approval for the bubble path —
+   * forwarded to the message-level tools renderer so a pending tool-call card
+   * can approve/reject. Falls back to the ai-chat context.
+   */
+  onApproval?: (action: 'approve' | 'reject') => void;
   className?: string;
   testid?: string;
   cid?: number;
@@ -104,6 +110,9 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
   const branches = props.branches ?? ctx?.branches;
   const activeBranchId = props.activeBranchId ?? ctx?.activeBranchId;
   const onBranchChange = props.onBranchChange ?? ctx?.onBranchChange;
+  // P2-4: HITL approval — explicit prop wins, falls back to the ai-chat
+  // context (which is threaded from the `ai-chat` schema `onApproval` event).
+  const onApproval = props.onApproval ?? ctx?.onApproval;
   const isBranchPoint =
     Array.isArray(branches) &&
     branches.length > 0 &&
@@ -136,6 +145,7 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
                       message={renderMessage}
                       content=""
                       contentIndex={-1}
+                      onApproval={onApproval}
                     />
                   );
                 })
@@ -305,6 +315,22 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
                 scope: props.node.scope as ScopeRef | undefined,
               };
               void props.events.onBranchChange?.(payload, ctx);
+            }
+          : undefined
+      }
+      onApproval={
+        props.events?.onApproval
+          ? (action: 'approve' | 'reject') => {
+              // P2-4 (2026-08-10 multi-audit): standalone bubble path HITL
+              // dispatch (in an ai-chat subtree the context-wired callback is
+              // used instead). Payload mirrors the ai-tool-call renderer.
+              const payload = { type: 'ai:tool-call-approval', action };
+              const ctx: Partial<ActionContext> = {
+                event: payload as FluxActionEvent,
+                evaluationBindings: payload,
+                scope: props.node.scope as ScopeRef | undefined,
+              };
+              void props.events.onApproval?.(payload, ctx);
             }
           : undefined
       }

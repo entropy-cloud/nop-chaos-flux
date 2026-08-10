@@ -20,6 +20,9 @@ export function AiConversationsRenderer(
   const conversations = normalizeConversations(resolved.conversations);
   const activeId = typeof resolved.activeId === 'string' ? (resolved.activeId as string) : null;
   const showRenameControls = resolved.showRenameControls !== false;
+  // P2-5 (2026-08-10 multi-audit): node-level `meta.disabled` control —
+  // disables create / item / rename / delete (cross-package contract).
+  const disabled = props.meta.disabled === true;
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState('');
 
@@ -33,6 +36,7 @@ export function AiConversationsRenderer(
   });
 
   function commitRename() {
+    if (disabled) return;
     if (renamingId && draftTitle.trim().length > 0) {
       const payload = { type: 'ai:conversation-rename', id: renamingId, title: draftTitle.trim() };
       void props.events.onItemRename?.(payload, dispatchCtx(payload));
@@ -54,6 +58,7 @@ export function AiConversationsRenderer(
           variant="outline"
           size="sm"
           data-slot="ai-conversations-create"
+          disabled={disabled}
           onClick={() => {
             const payload = { type: 'ai:conversation-create' };
             void props.events.onCreate?.(payload, dispatchCtx(payload));
@@ -72,6 +77,11 @@ export function AiConversationsRenderer(
               data-slot="ai-conversations-item"
               data-id={conv.id}
               data-active={isActive ? '' : undefined}
+              // P2-17 (2026-08-10 multi-audit): screen readers need the
+              // current-conversation state programmatically (WCAG 1.3.1 /
+              // 4.1.2) — `data-active` + border/background color alone are
+              // not SR-observable.
+              aria-current={isActive ? 'true' : undefined}
               className={cn(
                 'flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm',
                 isActive ? 'border-primary bg-accent' : 'border-transparent hover:bg-accent/50',
@@ -99,6 +109,7 @@ export function AiConversationsRenderer(
                   variant="ghost"
                   data-slot="ai-conversations-item-button"
                   className="flex-1 justify-start text-left"
+                  disabled={disabled}
                   onClick={() => {
                     const payload = { type: 'ai:conversation-click', id: conv.id, conversation: conv };
                     void props.events.onItemClick?.(payload, dispatchCtx(payload));
@@ -116,6 +127,7 @@ export function AiConversationsRenderer(
                     size="sm"
                     data-slot="ai-conversations-rename"
                     aria-label={t('flux.ai.renameConversation')}
+                    disabled={disabled}
                     onClick={() => {
                       setRenamingId(conv.id);
                       setDraftTitle(conv.title ?? '');
@@ -129,6 +141,7 @@ export function AiConversationsRenderer(
                     size="sm"
                     data-slot="ai-conversations-delete"
                     aria-label={t('flux.ai.deleteConversation')}
+                    disabled={disabled}
                     onClick={() => {
                       const payload = { type: 'ai:conversation-delete', id: conv.id };
                       void props.events.onItemDelete?.(payload, dispatchCtx(payload));
