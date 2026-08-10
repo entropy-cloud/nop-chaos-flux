@@ -136,6 +136,8 @@
 - 弹窗 `data` 传当前行数据 → 表单引用 `${id}` → 成功后 `closeSurface` 再 `refreshSource`。
 - `footerToolbar` 接收 schema 对象数组——`statistics` 和 `pagination` 都是独立 renderer，`total` 可通过表达式绑定到 `${$crud.total}`。
 
+> ⚠️ **`footerToolbar` 里的 `{ "type": "pagination" }` 是自包含组件，不与 CRUD 分页状态联动**（点击页码不触发数据刷新）。loadAction/source 路径下分页请用缺省内建 `TablePaginationBar`（不写分页配置即可）或 `toolbarLayout` 拆分方案，详见下方 **§2a**。`statistics` 独立 renderer 是纯展示（读 `$crud.total`），放在 footerToolbar 正常。
+
 > **弹窗提交后刷新外部 CRUD**：上例的 `onSubmitSuccess: { closeSurface, then: refreshSource }` 写法依赖 `then` 链共享 ctx，仅适用于** declarative dialog 或 source/CRUD 共享 page scope** 的场景。action-style `openDialog` 推荐改用 lifecycle callback + `refreshNearest`，详见 `design-patterns/page-dialog-drawer.md` §6 与 `docs/architecture/surface-lifecycle-callbacks.md`：
 >
 > ```jsonc
@@ -172,6 +174,78 @@ CRUD 自己声明如何拉数据，`loadAction` 接收分页/查询/排序/筛�
 - `loadAction` 派发时，action 的 `evaluationBindings` 会带上 `pagination`（`{ currentPage, pageSize }`）、`query`、`sort`、`filters`。
 - 后端按 `page`/`perPage` 字段名（可用 `pageField`/`pageSizeField` 覆盖）返回 `{ items, total }`。
 - 一次性拉全量、前端分页/过滤：加 `loadAllData: true`。
+
+**翻页重载机制（loadAction 路径）**：分页变化会写入 scope 的 `paginationStatePath`（默认 `$_crud.<id>.pagination`），CRUD 内部据此重新派发 `loadAction`（`useCrudLoadAction` 的 imperative effect 依赖 pagination 状态，不依赖 `dependsOn`）。上游测试保证：翻页触发恰好一次 load（`crud-loadaction-reaction-regression.test.tsx`）。因此 **loadAction 不需要显式 `dependsOn` 分页路径**。
+
+---
+
+## 2a. 分页器：三套机制与正确用法（重要）
+
+flux CRUD 的分页有三套并存机制，**其中一套不联动**，踩坑成本高，先给结论：
+
+| 路径                                          | 配置                                        | 翻页联动      | 页码列表             | 统计                       | 适用                                                                        |
+| --------------------------------------------- | ------------------------------------------- | ------------- | -------------------- | -------------------------- | --------------------------------------------------------------------------- |
+| A. footerToolbar 放独立 `pagination` renderer | `footerToolbar: [{ "type": "pagination" }]` | ❌ **不联动** | 完整                 | —                          | **不要用**（自包含组件，点击只更新自身 DOM，不驱动 loadAction/source 刷新） |
+| B. 缺省内建 `TablePaginationBar`              | **不写任何分页配置**                        | ✅            | 完整 + 省略号        | `1-10 of 15`（英文硬编码） | **推荐**，零配置                                                            |
+| C. `toolbarLayout` 拆分 blocks                | `toolbarLayout: { footer: [...] }`          | ✅            | 仅 `‹ 第 X / Y 页 ›` | `共 X 条`（i18n）          | 需要自定义布局/中文统计时                                                   |
+
+**路径 A 的坑**（crud.md §1 示例写法，loadAction 模式下不工作）：独立 `pagination` renderer 是通用受控组件（配合普通 table 使用时需显式传 `total`/`currentPage`/`pageSize` 并自行接事件），放进 CRUD footerToolbar 后**不会**与 CRUD 分页状态联动 —— 点击页码只更新自身 DOM，表格数据不刷新。已在上游标注（见 `nop-chaos-next` 排查记录）。
+
+**路径 B（缺省内建栏）**：CRUD 的 table 在 `paginationMode: "pages"`（默认）且未配置 `toolbarLayout` 时，自动渲染 `TablePaginationBar`（`data-slot="table-pagination"`）：左侧每页条数选择、中间完整页码、右侧 `1-10 of 15` 统计，`flex justify-between` 左中右布局。翻页走 CRUD `handlePageChange` → scope 分页状态 → loadAction 重载。
+
+**路径 C（toolbarLayout 拆分）**：显式配置后内建栏被抑制：
+
+```jsonc
+{
+  "type": "crud",
+  "toolbarLayout": {
+    "footer": [
+      { "type": "statistics", "align": "left" },
+      { "type": "pagination", "align": "right" }
+    ]
+  },
+  "columns": [...],
+}
+```
+
+- 支持 block：`statistics`（共 X 条）、`pagination`（简化：`‹ 第 X / Y 页 ›`）、`switch-per-page`、`listActions`
+- `align: "left" | "right"` 决定左右分组，`CrudToolbarBlocks` 用 `flex justify-between` 渲染同一行
+- 分页 block 走 `handleToolbarPageChange`（联动正确）；`PaginationPrevious/Next` 来自 `@nop-chaos/ui`，样式可被 host CSS 覆盖替换
+
+**已知上游限制**：路径 B 的统计文案 `1-10 of 15` 为硬编码英文（无 i18n）；如需中文"共 X 条" + 完整页码列表，需上游增强。
+
+---
+
+## 2b. 序号列与 selection 列
+
+**序号列**：`{ "type": "index", "name": "index", "label": "序号", "width": 50 }` —— 渲染跨页累计行号 `viewIndex + indexColumnOffset + 1`（`indexColumnOffset = (currentPage-1)*pageSize`），自带 `text-center` 居中与 `data-slot="table-index-cell"`。测试覆盖见 `table-index-column.test.tsx`。
+
+**selection（checkbox）列**：`selection: {}` 启用多选。渲染为：
+
+- 表头：`<th data-slot="table-select-column">`（内含全选 Checkbox）
+- 表行：`<td data-slot="table-select-cell">`（内含行 Checkbox）
+
+默认 `text-align: left`（checkbox 靠左），且表行首列有 `--table-edge-padding-x`（16px）左留白而表头没有，导致表头/表行 checkbox 水平错位。**居中需 host CSS 覆盖**（见 `nop-chaos-next` 的 `flux-spacing.css` F14 系列）：
+
+```css
+[data-slot='crud-table'] .nop-table [data-slot='table-select-column'],
+[data-slot='crud-table'] .nop-table [data-slot='table-select-cell'] {
+  text-align: center;
+  vertical-align: middle;
+}
+[data-slot='crud-table'] .nop-table [data-slot='table-select-column'] [data-slot='checkbox'],
+[data-slot='crud-table'] .nop-table [data-slot='table-select-cell'] [data-slot='checkbox'] {
+  margin-inline: auto;
+}
+/* 表头首列与表行首列 padding 对齐（16px edge padding 只留给文本首列） */
+[data-slot='crud-table'] .nop-table thead th:first-child {
+  padding-left: var(--table-edge-padding-x);
+}
+[data-slot='crud-table'] .nop-table thead th[data-slot='table-select-column'],
+[data-slot='crud-table'] .nop-table tbody [data-slot='table-select-cell'] {
+  padding-left: var(--table-cell-padding-x);
+}
+```
 
 ---
 
