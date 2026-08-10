@@ -1,7 +1,7 @@
 import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../../../adapters/ai-chat-context.js';
-import type { ChatMessage } from '../../../engine/types.js';
+import type { ChatMessage, ChatMessageContentPart } from '../../../engine/types.js';
 import type { BubbleContentRendererProps } from '../types.js';
 
 /**
@@ -48,7 +48,69 @@ export function ErrorContentRenderer({ message }: BubbleContentRendererProps) {
 function extractLastUserText(message: ChatMessage, messages: ChatMessage[]): string {
   const idx = messages.findIndex((m) => m.id === message.id);
   if (idx === -1) return '';
-  for (let i = idx - 1; i >= 0; i--) {
+  return lastUserTextBefore(messages, idx);
+}
+
+/**
+ * Match an assistant message flagged as the error carrier. The bubble view
+ * flips `message.metadata.isError` to `true` (see `AiBubbleView`) when the
+ * engine `requestState` is `error` for the in-flight assistant placeholder.
+ */
+export function errorMatcher(message: ChatMessage): boolean {
+  return message.metadata?.isError === true;
+}
+
+export interface ListErrorBannerProps {
+  messages: ChatMessage[];
+  sendMessage?: (content: string | ChatMessageContentPart[]) => Promise<void>;
+}
+
+/**
+ * FIND-03 (2026-08-11, A-5 error carrier): list-level error banner for failed
+ * turns whose assistant residue was dropped by invariant ⑩
+ * (`commitOrDropResidue` — zero-chunk / auth 401/429 / pre-first-byte /
+ * `onBeforeRequest` rejection). The bubble-level error renderer binds to a
+ * trailing assistant message (`requestState==='error'` + last message
+ * assistant); when the residue is dropped only the user message remains and
+ * that binding can never fire — this banner is the A-5 carrier for that
+ * surface. Rendered by `ai-message-list`; reuses the bubble error affordance
+ * (message + retry entry re-sending the last user text).
+ */
+export function ListErrorBanner({ messages, sendMessage }: ListErrorBannerProps): React.ReactElement | null {
+  const lastUserText = lastUserTextBefore(messages, messages.length);
+  return (
+    <div
+      data-slot="ai-message-list-error"
+      className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-sm text-destructive"
+      role="alert"
+    >
+      <span className="flex-1">{t('flux.ai.requestFailed')}</span>
+      {lastUserText && sendMessage ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-slot="ai-message-list-error-retry"
+          aria-label={t('flux.ai.retry')}
+          onClick={() => {
+            void sendMessage(lastUserText);
+          }}
+        >
+          {t('flux.ai.retry')}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Extract the text of the last user message in `messages[0, endExclusive)`
+ * (shared by the bubble error renderer and the list-level error banner).
+ * Returns `''` when there is no user message with extractable text (retry
+ * button stays hidden).
+ */
+function lastUserTextBefore(messages: ChatMessage[], endExclusive: number): string {
+  for (let i = endExclusive - 1; i >= 0; i--) {
     const m = messages[i];
     if (m.role !== 'user') continue;
     const content = m.content;
@@ -62,13 +124,4 @@ function extractLastUserText(message: ChatMessage, messages: ChatMessage[]): str
     }
   }
   return '';
-}
-
-/**
- * Match an assistant message flagged as the error carrier. The bubble view
- * flips `message.metadata.isError` to `true` (see `AiBubbleView`) when the
- * engine `requestState` is `error` for the in-flight assistant placeholder.
- */
-export function errorMatcher(message: ChatMessage): boolean {
-  return message.metadata?.isError === true;
 }

@@ -157,3 +157,31 @@ export function cleanDanglingAssistantAt(
     }
   });
 }
+
+/**
+ * R1-F1 (2026-08-11): stamp the tool-loop-max termination marker
+ * (`metadata.toolLoopMaxReached`) onto the LAST ASSISTANT — the round that
+ * triggered termination (`finishReason:'tool_calls'` + paired tool_calls),
+ * located by skipping the `role:'tool'` result messages `executeToolCalls`
+ * appended after it. The marker is written entirely inside the mutate recipe
+ * (read-old → build-new → replace) so the cached snapshot's element is never
+ * mutated in place (snapshot identity contract). The paired tool_calls are
+ * intentionally NOT stripped — tool results stay user-visible (the normal
+ * loop-max path has no dangling shape; see the `tool-loop-max: no dangling
+ * shape` guard test and engine.md §Invariants ⑩ enumeration note).
+ */
+export function markToolLoopMaxReached(adapter: MessageStateAdapter): void {
+  adapter.mutate('messages', (draft) => {
+    let idx = draft.messages.length - 1;
+    while (idx >= 0 && draft.messages[idx].role === 'tool') {
+      idx -= 1;
+    }
+    const target = idx >= 0 ? draft.messages[idx] : undefined;
+    if (target) {
+      draft.messages[idx] = {
+        ...target,
+        metadata: { ...target.metadata, toolLoopMaxReached: true },
+      };
+    }
+  });
+}

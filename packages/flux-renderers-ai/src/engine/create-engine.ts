@@ -12,7 +12,11 @@ import {
   findPriorAssistantBranchId,
 } from './branching.js';
 import { buildEngineContext } from './build-context.js';
-import { executeToolCalls, cleanDanglingAssistantAt } from './tool-execution.js';
+import {
+  executeToolCalls,
+  cleanDanglingAssistantAt,
+  markToolLoopMaxReached,
+} from './tool-execution.js';
 import type {
   AiConnector,
   AiConnectorChunk,
@@ -266,19 +270,11 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         }
         if (rounds >= maxToolRounds) {
           // Failure Path `tool-loop-max`: terminate the loop, record cause.
-          // The marker is written entirely inside the mutate recipe
-          // (read-old → build-new → replace) so the cached snapshot's tail
-          // element is never mutated in place (snapshot identity contract).
-          adapter.mutate('messages', (draft) => {
-            const len = draft.messages.length;
-            const tail = draft.messages[len - 1];
-            if (tail) {
-              draft.messages[len - 1] = {
-                ...tail,
-                metadata: { ...tail.metadata, toolLoopMaxReached: true },
-              };
-            }
-          });
+          // The marker belongs to the assistant that TRIGGERED termination —
+          // the last assistant, NOT the tool tail (see
+          // `markToolLoopMaxReached`; contract in engine.md §Invariants ⑩
+          // enumeration note + bug note 149).
+          markToolLoopMaxReached(adapter);
           break;
         }
         rounds += 1;

@@ -43,10 +43,12 @@ const toolCallChunks = (id: string, name: string, args: string): AiConnectorChun
 ];
 
 describe('Phase 1 — engine write-path snapshot discipline', () => {
-  it('tool-loop-max: the cached tail message is NOT mutated in place; the marker lands on a fresh ref via mutate', async () => {
+  it('tool-loop-max: the cached marker-carrier message is NOT mutated in place; the marker lands on a fresh ref via mutate', async () => {
     // Always returns tool_calls → loop terminates via maxToolRounds after one
-    // tool-execution round. The tool message appended by executeToolCalls is
-    // the tail when the loop-max path runs.
+    // tool-execution round. R1-F1 (2026-08-11): the marker carrier is the
+    // LAST ASSISTANT (the round that triggered termination) — the
+    // role:'tool' messages appended by executeToolCalls sit AFTER it and are
+    // skipped when locating the carrier.
     const connector = scriptedConnector([toolCallChunks('r0', 'loop', '{}')]);
     const executor: ToolExecutor = async () => 'ok';
     const engine = createMessageEngine({
@@ -56,31 +58,41 @@ describe('Phase 1 — engine write-path snapshot discipline', () => {
       adapter: createReactMessageAdapter(),
     });
 
-    // Capture the cached tool-message element reference the moment it is first
-    // published (its pre-loop-max state — no toolLoopMaxReached marker yet).
-    let capturedToolMessage: ChatMessage | null = null;
+    // Capture the cached marker-carrier element reference the moment it is
+    // first published (its pre-loop-max state — no toolLoopMaxReached marker
+    // yet). Keep updating until the marker write lands, so the last captured
+    // ref is the exact cached element the loop-max recipe replaces.
+    let capturedCarrier: ChatMessage | null = null;
     engine.subscribe('messages', (state) => {
-      const tool = state.messages.find((m) => m.role === 'tool');
-      if (tool && capturedToolMessage === null) {
-        capturedToolMessage = tool;
+      const carrier = state.messages.find(
+        (m) => m.role === 'assistant' && m.tool_calls && m.tool_calls.length > 0,
+      );
+      if (carrier && !carrier.metadata?.toolLoopMaxReached) {
+        capturedCarrier = carrier;
       }
     });
 
     await engine.sendMessage('loop');
 
-    expect(capturedToolMessage).not.toBeNull();
+    expect(capturedCarrier).not.toBeNull();
     // INVARIANT: the cached element ref captured before the loop-max write must
     // NOT have been mutated in place. Before the fix the engine did
     // `last.metadata = { ...last.metadata, toolLoopMaxReached: true }` directly
     // on the cached object — this assertion would then fail.
-    expect(capturedToolMessage!.metadata?.toolLoopMaxReached).not.toBe(true);
+    expect(capturedCarrier!.metadata?.toolLoopMaxReached).not.toBe(true);
 
-    // The marker IS set — but on a fresh reference produced inside the mutate
-    // recipe (read-old → build-new → replace), reachable via getState().
-    const finalTail = engine.getState().messages.at(-1) as ChatMessage;
-    expect(finalTail.metadata?.toolLoopMaxReached).toBe(true);
-    // The fresh tail is a distinct object from the cached pre-write element.
-    expect(finalTail).not.toBe(capturedToolMessage);
+    // The marker IS set — on the LAST ASSISTANT, on a fresh reference produced
+    // inside the mutate recipe (read-old → build-new → replace), reachable via
+    // getState().
+    const messages = engine.getState().messages;
+    const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant') as ChatMessage;
+    expect(lastAssistant.metadata?.toolLoopMaxReached).toBe(true);
+    // The fresh carrier is a distinct object from the cached pre-write element.
+    expect(lastAssistant).not.toBe(capturedCarrier);
+    // The role:'tool' tail (appended by executeToolCalls) carries NO marker.
+    const toolTail = messages[messages.length - 1];
+    expect(toolTail.role).toBe('tool');
+    expect(toolTail.metadata?.toolLoopMaxReached).not.toBe(true);
   });
 
   it('executeToolCalls: the cached owner message state.toolCall is NOT mutated in place; the per-call state lands on a fresh ref via mutate', async () => {

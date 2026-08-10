@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createMessageEngine } from '../create-engine.js';
 import { createToolPlugin } from '../plugins/tool-plugin.js';
+import { isDanglingToolCallsMessage } from '../utils.js';
 import type {
   AiConnector,
   AiConnectorChunk,
@@ -207,9 +208,45 @@ describe('createMessageEngine — agentic tool execution loop', () => {
     // Only maxToolRounds (2) tool-execution rounds ran → 2 tool messages.
     const toolMsgs = final.messages.filter((m) => m.role === 'tool');
     expect(toolMsgs).toHaveLength(2);
-    // Last assistant message carries the loop-max marker.
-    const lastAssistant = final.messages[final.messages.length - 1];
+    // R1-F1 (2026-08-11): the loop-max marker belongs to the LAST ASSISTANT —
+    // the round that triggered termination (finishReason:'tool_calls' + paired
+    // tool_calls) — NOT the role:'tool' tail appended by executeToolCalls.
+    // Pre-fix the marker was written to the tail (tool message) and the
+    // terminating assistant carried none; this assertion is the RED proof.
+    const lastAssistant = [...final.messages].reverse().find((m) => m.role === 'assistant') as ChatMessage;
     expect(lastAssistant.metadata?.toolLoopMaxReached).toBe(true);
+    // The tool-message tail (what executeToolCalls appended) carries no marker.
+    const toolTail = final.messages[final.messages.length - 1];
+    expect(toolTail.role).toBe('tool');
+    expect(toolTail.metadata?.toolLoopMaxReached).not.toBe(true);
+  });
+
+  // R1-F1 harmlessness guard (2026-08-11): the normal loop-max terminal shape
+  // must stay pairing-clean — the terminating assistant's tool_calls all have
+  // paired role:'tool' responses (executeToolCalls appends one per call), so
+  // `isDanglingToolCallsMessage` is false for every assistant in history. This
+  // pins the corrected contract semantics: the loop-max path is NOT a
+  // dangling-cleanup surface (⑩ enumeration); if a future refactor changes the
+  // loop order (e.g. executeToolCalls returning early without appending), this
+  // guard turns red and a real dangling surface exists.
+  it('tool-loop-max: no dangling shape — every tool_call is paired with a role:tool response', async () => {
+    const connector = scriptedConnector([
+      toolCallChunks('r0', 'loop', '{}'),
+      toolCallChunks('r1', 'loop', '{}'),
+      toolCallChunks('r2', 'loop', '{}'),
+    ]);
+    const executor: ToolExecutor = async () => 'ok';
+
+    const engine = createMessageEngine({ connector, toolExecutor: executor, maxToolRounds: 2 });
+    await engine.sendMessage('loop');
+    const final = engine.getState();
+    const assistantsWithCalls = final.messages.filter(
+      (m) => m.role === 'assistant' && m.tool_calls && m.tool_calls.length > 0,
+    );
+    expect(assistantsWithCalls.length).toBeGreaterThan(0);
+    for (const asst of assistantsWithCalls) {
+      expect(isDanglingToolCallsMessage(asst, final.messages)).toBe(false);
+    }
   });
 
   it('tool-no-executor: finish_reason tool_calls without executor → error, no loop', async () => {
