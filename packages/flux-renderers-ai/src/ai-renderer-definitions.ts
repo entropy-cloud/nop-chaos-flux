@@ -103,7 +103,6 @@ export const aiRendererDefinitions: RendererDefinition[] = [
       { key: 'shape', kind: 'prop' },
       { key: 'showAvatar', kind: 'prop', valueType: 'boolean' },
       { key: 'showTimestamp', kind: 'prop', valueType: 'boolean' },
-      { key: 'contentResolverName', kind: 'prop' },
       { key: 'branches', kind: 'prop' },
       { key: 'activeBranchId', kind: 'prop' },
       { key: 'onBranchChange', kind: 'event' },

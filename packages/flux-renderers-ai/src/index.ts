@@ -130,6 +130,7 @@ export {
   useConversation,
   type UseConversationOptions,
   type UseConversationReturn,
+  type ConversationStorageErrorEvent,
   type AiConversationControllerBridge,
 } from './adapters/use-conversation.js';
 

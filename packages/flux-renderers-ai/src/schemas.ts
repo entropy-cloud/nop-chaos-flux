@@ -120,7 +120,6 @@ export interface AiBubbleSchema extends BaseSchema {
   shape?: 'corner' | 'rounded' | 'none';
   showAvatar?: boolean;
   showTimestamp?: boolean;
-  contentResolverName?: string;
   /**
    * A-16 message branches: the host-managed branch set this message belongs to.
    * Each entry maps a branch id to a message id; the picker renders prev/next +

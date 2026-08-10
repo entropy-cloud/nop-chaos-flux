@@ -1,9 +1,19 @@
 import { describe, it, expect, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { useConversation, type UseConversationOptions } from '../use-conversation.js';
+import { useConversation, type UseConversationOptions, type AiConversationControllerBridge } from '../use-conversation.js';
+import type { AiConversationController } from '../ai-conversation-controller.js';
 import { createMessageEngine } from '../../engine/create-engine.js';
 import type { ToolExecutor } from '../../engine/types.js';
 import { okChunks, scriptedConnector, slowConnector } from './use-conversation-test-helpers.js';
+
+// FIND-19 (2026-08-11, plan 2026-08-11-0335-3): compile-time proof that the
+// hook's product shape (Bridge) is structurally assignable to the consumption
+// surface (Controller) — members are isomorphic except `renameConversation`'s
+// return width (`void` ⊆ `MaybePromise<void>`). Dual naming is retained for
+// hook product type stability; keep members in lockstep.
+type _BridgeAssignableToController = AiConversationControllerBridge extends AiConversationController ? true : false;
+const _bridgeAssignable: _BridgeAssignableToController = true;
+void _bridgeAssignable;
 
 /**
  * Domain: controller binding + F1.2 tool-loop forwarding. Split out of the

@@ -335,8 +335,9 @@ export interface MessageEngine {
   getMessages(): ChatMessage[];
   /**
    * Replace the entire message list. Used by the Layer C ComponentHandle
-   * `setMessages` method (design.md §14.3 line 556). Must not be called while a
-   * turn is in-flight; callers should `abort()` first.
+   * `setMessages` method (design.md §14.3 ComponentHandle — section anchor,
+   * no line number, per FIND-17 calibration 2026-08-11). Must not be called
+   * while a turn is in-flight; callers should `abort()` first.
    */
   setMessages(messages: ChatMessage[]): void;
   /**

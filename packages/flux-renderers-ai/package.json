@@ -31,6 +31,7 @@
     "jsonrepair": "^3.13.0"
   },
   "peerDependencies": {
+    "@tiptap/core": "^3.27.1",
     "@tiptap/react": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",
     "lucide-react": "^1.17.0",
@@ -40,6 +41,9 @@
     "remark-gfm": "^4.0.1"
   },
   "peerDependenciesMeta": {
+    "@tiptap/core": {
+      "optional": true
+    },
     "@tiptap/react": {
       "optional": true
     },
@@ -54,7 +58,6 @@
     "@tiptap/react": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",
     "jsdom": "^29.1.1",
-    "jsonrepair": "^3.13.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-markdown": "^10.1.0",

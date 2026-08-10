@@ -684,9 +684,10 @@ export function useConversation(options: UseConversationOptions): UseConversatio
 }
 
 /**
- * The bridge the `ai-chat` `ai` namespace delegates conversation actions to.
- * Returned by `useConversation` so hosts can pass `controller={conv.controller}`
- * without re-wiring each method.
+ * Bridge produced by `useConversation` for the `ai-chat` `ai` namespace
+ * delegation; structurally assignable to `AiConversationController`
+ * (ai-conversation-controller.ts) — keep members lockstep (FIND-19
+ * adjudication, plan `2026-08-11-0335-3`).
  */
 export interface AiConversationControllerBridge {
   createConversation(params?: { title?: string; metadata?: Record<string, unknown> }): AiConversationInfo | Promise<AiConversationInfo>;

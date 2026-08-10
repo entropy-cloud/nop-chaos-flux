@@ -157,11 +157,11 @@ const connector = createStreamBasedAiConnector({
 }
 ```
 
-| 组件              | 关键字段                                                                                                                                                    | 事件                               |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `ai-message-list` | `autoScroll`（默认 true）、`emptyRegion`（value-or-region）                                                                                                 | -                                  |
-| `ai-bubble`       | `message`、`placement`（start/end/auto）、`shape`（corner/rounded/none）、`showAvatar`、`showTimestamp`、`contentResolverName`、`branches`/`activeBranchId` | `onBranchChange`                   |
-| `ai-sender`       | `placeholder`、`loading`、`maxLength`、`showWordLimit`、`submitType`、`clearOnSubmit`、`senderExtensions`（`disabled` 为节点级 meta 字段，非 schema prop）  | `onSubmit`、`onCancel`、`onChange` |
+| 组件              | 关键字段                                                                                                                                                   | 事件                               |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `ai-message-list` | `autoScroll`（默认 true）、`emptyRegion`（value-or-region）                                                                                                | -                                  |
+| `ai-bubble`       | `message`、`placement`（start/end/auto）、`shape`（corner/rounded/none）、`showAvatar`、`showTimestamp`、`branches`/`activeBranchId`                       | `onBranchChange`                   |
+| `ai-sender`       | `placeholder`、`loading`、`maxLength`、`showWordLimit`、`submitType`、`clearOnSubmit`、`senderExtensions`（`disabled` 为节点级 meta 字段，非 schema prop） | `onSubmit`、`onCancel`、`onChange` |
 
 > `ai-bubble` 的 `message` / `ai-sender` 的 `loading` 等以表达式从 scope 取（如 `${message}`、`${loading}`），典型用法是把 `ai-chat` 与独立子组件组合成自定义布局（程序化视图组件：`AiMessageListView` / `AiBubbleView` / `AiSenderView` 等可宿主直接组合）。
 

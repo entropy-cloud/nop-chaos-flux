@@ -1642,7 +1642,6 @@ export interface AiBubbleSchema extends BaseSchema {
   shape?: SchemaValue;
   showAvatar?: boolean;
   showTimestamp?: boolean;
-  contentResolverName?: SchemaValue;
   branches?: SchemaValue;
   activeBranchId?: SchemaValue;
   onBranchChange?: ActionSchema | ActionSchema[];
