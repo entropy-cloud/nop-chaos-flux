@@ -385,3 +385,214 @@ describe('ai-chat — P1#2 hostScopeData clone gated to turn boundaries', () => 
     expect(capturedProjectedMessages).not.toBe(external.getState().messages);
   });
 });
+
+describe('ai-chat — P1-6 (plan 2026-08-10-1301-2) projection rebuilds on engine replacement', () => {
+  const engineA = buildExternalEngine(mockConnector(replyChunks), seedMessages);
+  const engineB = buildExternalEngine(mockConnector(replyChunks), [
+    { id: 'b-user', role: 'user', content: 'session-b-hello' },
+    { id: 'b-assistant', role: 'assistant', content: 'session-b-reply' },
+  ]);
+
+  afterEach(() => {
+    engineA.clear();
+    engineB.clear();
+  });
+
+  it('engine swap (double idle) refreshes the projected messages', async () => {
+    const { rerender } = render(
+      <SchemaRenderer
+        schemaUrl="test://ai/p1-6-swap"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'ai-chat',
+              testid: 'chat-swap',
+              engine: engineA as never,
+              beforeMessages: { type: 'messages-probe' },
+            },
+          ],
+        }}
+        env={aiMockEnv()}
+        formulaCompiler={aiFormulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(capturedProjectedMessages).not.toBeNull();
+    });
+    // Session A projection visible.
+    expect(capturedProjectedMessages!.some((m) => m.content === 'seed-hello')).toBe(true);
+    expect(capturedProjectedMessages!.some((m) => m.content === 'session-b-hello')).toBe(false);
+
+    // Host swaps the engine to session B while BOTH engines are idle.
+    rerender(
+      <SchemaRenderer
+        schemaUrl="test://ai/p1-6-swap"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'ai-chat',
+              testid: 'chat-swap',
+              engine: engineB as never,
+              beforeMessages: { type: 'messages-probe' },
+            },
+          ],
+        }}
+        env={aiMockEnv()}
+        formulaCompiler={aiFormulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(capturedProjectedMessages!.some((m) => m.content === 'session-b-hello')).toBe(true);
+    });
+    // Session A must no longer appear in the projection (fresh session data).
+    expect(capturedProjectedMessages!.some((m) => m.content === 'seed-hello')).toBe(false);
+  });
+
+  it('clear() on the same engine refreshes the projected messages', async () => {
+    const external = buildExternalEngine(mockConnector(replyChunks), seedMessages);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://ai/p1-6-clear"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'ai-chat',
+              testid: 'chat-clear',
+              engine: external as never,
+              beforeMessages: { type: 'messages-probe' },
+            },
+          ],
+        }}
+        env={aiMockEnv()}
+        formulaCompiler={aiFormulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(capturedProjectedMessages).not.toBeNull();
+    });
+    expect(capturedProjectedMessages!.length).toBe(2);
+
+    await act(async () => {
+      external.clear();
+    });
+
+    await waitFor(() => {
+      expect(capturedProjectedMessages!.length).toBe(0);
+    });
+  });
+
+  it('setMessages hydration (rehydrate) refreshes the projected messages', async () => {
+    const external = buildExternalEngine(mockConnector(replyChunks), seedMessages);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://ai/p1-6-hydrate"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'ai-chat',
+              testid: 'chat-hydrate',
+              engine: external as never,
+              beforeMessages: { type: 'messages-probe' },
+            },
+          ],
+        }}
+        env={aiMockEnv()}
+        formulaCompiler={aiFormulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(capturedProjectedMessages).not.toBeNull();
+    });
+    expect(capturedProjectedMessages!.some((m) => m.content === 'seed-hello')).toBe(true);
+
+    const hydrated: ChatMessage[] = [
+      { id: 'h1', role: 'user', content: 'hydrated-q' },
+      { id: 'h2', role: 'assistant', content: 'hydrated-a' },
+    ];
+    await act(async () => {
+      external.setMessages(hydrated);
+    });
+
+    await waitFor(() => {
+      expect(capturedProjectedMessages!.some((m) => m.content === 'hydrated-q')).toBe(true);
+    });
+    expect(capturedProjectedMessages!.some((m) => m.content === 'seed-hello')).toBe(false);
+  });
+
+  it('P2-14 same-surface window: vacuous abort residue does not enter the projection', async () => {
+    // Zero-chunk connector: the assistant placeholder stays empty (vacuous
+    // residue) until abort — the P2-14 ghost shape. Abort-aware: rejects with
+    // AbortError when the engine signal fires (the K2 `.return()` fallback
+    // cannot preempt a generator stuck inside its own await).
+    const gated: AiConnector = {
+      async stream(req: AiConnectorRequest) {
+        const { signal } = req;
+        const abortPromise = new Promise<never>((_, reject) => {
+          const onAbort = () => reject(new DOMException('aborted', 'AbortError'));
+          if (signal.aborted) {
+            reject(new DOMException('aborted', 'AbortError'));
+            return;
+          }
+          signal.addEventListener('abort', onAbort, { once: true });
+        });
+        async function* gen(): AsyncGenerator<AiConnectorChunk> {
+          // The race never resolves in this test — abort rejects it.
+          await Promise.race([new Promise<void>(() => {}), abortPromise]);
+          // Unreachable in this test (the abort rejection wins the race).
+          yield { finishReason: 'stop' };
+        }
+        return gen();
+      },
+    };
+    const external = buildExternalEngine(gated);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://ai/p1-6-abort-ghost"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'ai-chat',
+              testid: 'chat-abort-ghost',
+              engine: external as never,
+              beforeMessages: { type: 'messages-probe' },
+            },
+          ],
+        }}
+        env={aiMockEnv()}
+        formulaCompiler={aiFormulaCompiler}
+      />,
+    );
+
+    let turnP: Promise<void>;
+    await act(async () => {
+      turnP = external.sendMessage('abort-me');
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(external.getState().isProcessing).toBe(true);
+
+    await act(async () => {
+      await external.abort();
+      await turnP!;
+    });
+
+    // Turn ended: the projection rebuilds at the terminal boundary AND again
+    // when the engine drops the vacuous residue — the ghost placeholder must
+    // never remain in the projected snapshot.
+    await waitFor(() => {
+      const ghost = capturedProjectedMessages!.filter((m) => m.role === 'assistant').length;
+      expect(ghost).toBe(0);
+    });
+    // The committed user message is still projected.
+    expect(capturedProjectedMessages!.some((m) => m.content === 'abort-me')).toBe(true);
+  });
+});
+

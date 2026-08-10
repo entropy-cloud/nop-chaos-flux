@@ -14,6 +14,16 @@ export interface BubbleContentRendererMatch {
   renderer: ComponentType<BubbleContentRendererProps>;
   /** Lower = higher priority. */
   priority?: number;
+  /**
+   * P1-9 (plan 2026-08-10-1301-2): when true, the matcher inspects
+   * message-level fields (e.g. `tool_calls` / `reasoning_content` /
+   * `metadata.isError`) rather than the content slice, and the renderer runs
+   * ONCE per message in parallel with the slice-level content pass — it can no
+   * longer be shadowed by markdown on non-empty-text messages. Message-level
+   * renderers receive `content=""` and `contentIndex={-1}`. Defaults to false
+   * (slice-level, first-match-wins semantics unchanged).
+   */
+  messageLevel?: boolean;
 }
 
 export const BubbleRendererMatchPriority = {

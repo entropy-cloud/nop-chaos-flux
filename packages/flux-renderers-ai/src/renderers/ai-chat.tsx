@@ -53,6 +53,12 @@ function cloneMessage(message: ChatMessage): ChatMessage {
   return { ...message };
 }
 
+/** Terminal `requestState` values — a terminal arrival triggers a projection
+ * rebuild (P1-6, 2026-08-10 multi-audit) even without an isProcessing flip. */
+function isRequestStateTerminal(state: RequestState): boolean {
+  return state === 'completed' || state === 'aborted' || state === 'error';
+}
+
 /**
  * P1 (C8.1): build the dispatch ctx for a schema event so action-args templates
  * can read the payload keys (bug 83 / diff-view P1-10 family convention — the
@@ -233,19 +239,63 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // live `messages` via `AiChatProvider` (this projection only feeds the
   // header / beforeMessages / afterMessages / footer / emptyState regions).
   //
+  // P1-6 (2026-08-10 multi-audit): the turn-boundary flip alone leaves
+  // message-replacement surfaces stale — engine swap (double idle), `clear()`
+  // and `setMessages` rehydration all replace `messages` without any
+  // isProcessing flip, so `${messages}` regions would show the previous
+  // conversation indefinitely. The rebuild triggers are now:
+  //   1. `isProcessing` flip (turn boundary — existing behavior);
+  //   2. `requestState` entering a terminal state (completed/aborted/error);
+  //   3. the engine's `messages` ARRAY REFERENCE changing while idle
+  //      (`clear`/`setMessages`/engine swap all replace the array inside the
+  //      mutate recipe; streaming chunks never trigger this branch because
+  //      `isProcessing` is true mid-stream);
+  //   4. the messages array LENGTH changing while idle — the engine mutates
+  //      in place (state-adapter `recipe(this.state)`), so an aborted-turn
+  //      residue drop (`commitOrDropResidue` splice) keeps the same array
+  //      ref; without the length signal the P2-14 vacuous-ghost captured at
+  //      the abort boundary flip would persist in the projection.
+  // The streaming discipline is preserved: chunks do not clone. The
+  // `snapSourceRef`/`snapLength` bookkeeping always converges to the LIVE
+  // message-set identity on every render (accepted without cloning), so the
+  // guard never re-fires mid-stream; a clone happens only when the set
+  // identity changed while idle (or at a boundary / terminal arrival).
+  //
   // Implemented via the React "adjusting state during render" pattern (not a
-  // ref), so it satisfies `react-hooks/refs`. On a turn-start flip (false→true)
-  // only the tracked flag updates (no clone); only the boundary flip (true→
-  // false) re-clones. It converges: after the update `prevIsProcessing ===
-  // isProcessing`, so the guard is false on the next render.
-  const [projection, setProjection] = useState<{ prevIsProcessing: boolean; snap: ChatMessage[] }>(
-    () => ({ prevIsProcessing: isProcessing, snap: cloneMessages(messages) }),
-  );
-  if (projection.prevIsProcessing !== isProcessing) {
+  // ref), so it satisfies `react-hooks/refs`. It converges: after the update
+  // all tracked signals equal their previous values, so the guard is false on
+  // the next render.
+  const [projection, setProjection] = useState<{
+    prevIsProcessing: boolean;
+    prevRequestState: RequestState;
+    snapSourceRef: ChatMessage[];
+    snapLength: number;
+    snap: ChatMessage[];
+  }>(() => ({
+    prevIsProcessing: isProcessing,
+    prevRequestState: requestState,
+    snapSourceRef: messages,
+    snapLength: messages.length,
+    snap: cloneMessages(messages),
+  }));
+  if (
+    projection.prevIsProcessing !== isProcessing ||
+    projection.prevRequestState !== requestState ||
+    projection.snapSourceRef !== messages ||
+    projection.snapLength !== messages.length
+  ) {
     const crossedBoundary = projection.prevIsProcessing && !isProcessing;
+    const terminalCrossed = isRequestStateTerminal(requestState) && !isRequestStateTerminal(projection.prevRequestState);
+    const idleMessageReplacement =
+      !isProcessing &&
+      (projection.snapSourceRef !== messages || projection.snapLength !== messages.length);
+    const shouldClone = crossedBoundary || terminalCrossed || idleMessageReplacement;
     setProjection({
       prevIsProcessing: isProcessing,
-      snap: crossedBoundary ? cloneMessages(messages) : projection.snap,
+      prevRequestState: requestState,
+      snapSourceRef: messages,
+      snapLength: messages.length,
+      snap: shouldClone ? cloneMessages(messages) : projection.snap,
     });
   }
   const projectedMessages = projection.snap;

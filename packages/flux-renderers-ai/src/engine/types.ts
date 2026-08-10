@@ -46,6 +46,13 @@ export interface ChatMessageMetadata {
 
 export interface ChatToolCallUIState {
   status: 'running' | 'success' | 'failed' | 'cancelled';
+  /**
+   * Expand state. P1-7 (2026-08-10 multi-audit): OPTIONAL and never written
+   * by the engine plugins (undefined-absent) — the renderer's local expand
+   * state engages via `open !== undefined ? open : internalOpen`. A host that
+   * explicitly writes `open` pins the card to that value (survives row
+   * recycling).
+   */
   open?: boolean;
   result?: string;
   /** P3 HITL approval state. Engine only holds the field; host handles workflow. */
@@ -58,7 +65,14 @@ export interface ChatMessageEditingState {
 }
 
 export interface ChatMessageUIState {
-  thinking?: { open: boolean; startedAt?: number; endedAt?: number };
+  /**
+   * Reasoning-panel UI state written by `thinkingPlugin`. P1-8
+   * (2026-08-10 multi-audit): `open` is OPTIONAL and the plugin never writes
+   * it (undefined-absent) — the renderer's local expand state engages via
+   * `open !== undefined ? open : internalOpen`. A host that explicitly writes
+   * `open` pins the panel to that value (survives row recycling).
+   */
+  thinking?: { open?: boolean; startedAt?: number; endedAt?: number };
   toolCall?: Record<string, ChatToolCallUIState>;
   /**
    * Renderer-driven message editing state (user-message edit affordance,

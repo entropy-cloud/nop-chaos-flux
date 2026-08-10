@@ -50,7 +50,11 @@ export function AiToolCallView(props: {
   const status: ToolCallStatus = state?.status ?? 'running';
   const approval = state?.approval;
   const [internalOpen, setInternalOpen] = useState(props.defaultOpen ?? false);
-  const open = state?.open ?? internalOpen;
+  // P1-7 (2026-08-10 multi-audit): `?? internalOpen` was short-circuited by
+  // write-once-false `state.open`. Merge only when the engine actually holds a
+  // value — absent `open` falls through to the local expand state (the engine
+  // no longer writes `open`, see tool-plugin.ts).
+  const open = state?.open !== undefined ? state.open : internalOpen;
 
   // Focus trap for the pending-approval footer (a11y §7 P3).
   const approvalFooterRef = useRef<HTMLDivElement | null>(null);

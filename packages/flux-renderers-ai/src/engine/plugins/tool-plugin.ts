@@ -7,11 +7,16 @@ import type {
 
 /**
  * toolPlugin — observes streamed `tool_calls` on the assistant message and
- * projects per-call UI state onto `message.state.toolCall[id]` (status / open /
+ * projects per-call UI state onto `message.state.toolCall[id]` (status /
  * result). Streaming sets `status:'running'`; the engine's tool-execution loop
  * (`create-engine.ts` `executeToolCalls`) then overwrites it with
  * `success`/`failed` based on the host executor outcome. This plugin no longer
  * unconditionally marks calls `success` on `onAfterRequest`.
+ *
+ * P1-7 (2026-08-10 multi-audit): the plugin never writes `open` — the expand
+ * state stays undefined-absent so the renderer's local expand state
+ * (`state?.open !== undefined ? state.open : internalOpen`) is never
+ * short-circuited by a write-once-false field.
  *
  * `onBeforeRequest` aggregates host-provided `tools` schemas onto
  * `request.tools` so the model is told what it may call (engine.md §8.3).
@@ -40,7 +45,7 @@ export function createToolPlugin(options: CreateToolPluginOptions = {}): Message
       for (const call of calls) {
         const key = resolveToolCallKey(call);
         if (!toolCallState[key]) {
-          toolCallState[key] = { status: 'running', open: false };
+          toolCallState[key] = { status: 'running' };
         } else if (toolCallState[key].status === 'running') {
           // keep running while streaming; do not flip to success here
         }
@@ -60,7 +65,7 @@ export function createToolPlugin(options: CreateToolPluginOptions = {}): Message
         const key = resolveToolCallKey(call);
         // Only ensure the entry exists; do not override engine-written status.
         if (!toolCallState[key]) {
-          toolCallState[key] = { status: 'running', open: false };
+          toolCallState[key] = { status: 'running' };
         }
       }
       assistantMessage.state.toolCall = toolCallState;

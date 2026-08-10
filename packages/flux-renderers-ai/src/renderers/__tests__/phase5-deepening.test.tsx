@@ -9,6 +9,7 @@ import { ReasoningContentRenderer } from '../ai-bubble/renderers/reasoning.js';
 import { AiMessageListView } from '../ai-message-list.js';
 import { AiChatProvider } from '../../adapters/ai-chat-context.js';
 import { createMessageEngine } from '../../engine/create-engine.js';
+import { createThinkingPlugin } from '../../engine/plugins/thinking-plugin.js';
 import type {
   AiConnector,
   AiConnectorChunk,
@@ -16,6 +17,7 @@ import type {
   ChatMessage,
   ChatMessageContentPart,
   MessageEngine,
+  MessageEngineContext,
 } from '../../engine/types.js';
 
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
@@ -121,7 +123,7 @@ describe('A-10 reasoning duration', () => {
       content: '',
       reasoning_content: 'Because of X',
       loading: false,
-      state: { thinking: { open: false, startedAt: 1000, endedAt: 3500 } },
+      state: { thinking: { startedAt: 1000, endedAt: 3500 } },
     };
     const { container } = render(<ReasoningContentRenderer message={message} content="" contentIndex={0} />);
     // 2500ms -> round(2.5) = 3s (en-US: "Thought for 3s")
@@ -135,10 +137,80 @@ describe('A-10 reasoning duration', () => {
       content: '',
       reasoning_content: 'thinking...',
       loading: true,
-      state: { thinking: { open: false, startedAt: 1000, endedAt: 1100 } },
+      state: { thinking: { startedAt: 1000, endedAt: 1100 } },
     };
     const { container } = render(<ReasoningContentRenderer message={message} content="" contentIndex={0} />);
     expect(container.textContent?.toLowerCase()).toContain('thinking');
+  });
+
+  // P1-8 (plan 2026-08-10-1301-2): with `open` undefined-absent (the plugin
+  // never pins open:false), the panel button stays enabled and the panel is
+  // expandable even though `state.thinking` exists.
+  it('A-10 label assertions extend to expand/disabled behavior (open undefined-absent)', () => {
+    const message: ChatMessage = {
+      id: 'm3',
+      role: 'assistant',
+      content: '',
+      reasoning_content: 'Because of X',
+      loading: false,
+      state: { thinking: { startedAt: 1000, endedAt: 3500 } },
+    };
+    const { container } = render(<ReasoningContentRenderer message={message} content="" contentIndex={0} />);
+    const panel = container.querySelector('[data-slot="ai-bubble-reasoning"]') as HTMLElement;
+    const btn = panel.querySelector('button') as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(panel.hasAttribute('data-open')).toBe(false);
+    fireEvent.click(btn);
+    expect(panel.hasAttribute('data-open')).toBe(true);
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    expect(container.textContent).toContain('Because of X');
+  });
+});
+
+// ============ P1-8 (plan 2026-08-10-1301-2): reasoning panel expand ============
+
+describe('P1-8 reasoning panel — expand/disabled behavior on the thinking-plugin path', () => {
+  it('thinkingPlugin-shaped message renders an enabled, expandable panel', () => {
+    const plugin = createThinkingPlugin();
+    const message: ChatMessage = {
+      id: 'p18a',
+      role: 'assistant',
+      content: 'text',
+      reasoning_content: 'Because of X',
+    };
+    plugin.onCompletionChunk!({} as MessageEngineContext, {}, message);
+    const { container } = render(
+      <ReasoningContentRenderer message={message} content="" contentIndex={0} />,
+    );
+    const panel = container.querySelector('[data-slot="ai-bubble-reasoning"]') as HTMLElement;
+    const btn = panel.querySelector('button') as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(panel.hasAttribute('data-open')).toBe(false);
+    fireEvent.click(btn);
+    expect(panel.hasAttribute('data-open')).toBe(true);
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    expect(container.textContent).toContain('Because of X');
+  });
+
+  it('reasoning content stays collapsible after the turn ends (post-stream)', () => {
+    const plugin = createThinkingPlugin();
+    const message: ChatMessage = {
+      id: 'p18b',
+      role: 'assistant',
+      content: 'text',
+      reasoning_content: 'step one step two',
+    };
+    plugin.onCompletionChunk!({} as MessageEngineContext, {}, message);
+    const { container } = render(
+      <ReasoningContentRenderer message={message} content="" contentIndex={0} />,
+    );
+    const panel = container.querySelector('[data-slot="ai-bubble-reasoning"]') as HTMLElement;
+    const btn = panel.querySelector('button') as HTMLButtonElement;
+    fireEvent.click(btn);
+    expect(panel.hasAttribute('data-open')).toBe(true);
+    fireEvent.click(btn);
+    expect(panel.hasAttribute('data-open')).toBe(false);
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
   });
 });
 

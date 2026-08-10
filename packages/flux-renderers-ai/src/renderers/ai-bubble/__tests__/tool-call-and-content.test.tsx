@@ -8,7 +8,8 @@ import { defaultBubbleContentRenderers } from '../renderers/default-renderers.js
 import { ToolsContentRenderer } from '../renderers/tools.js';
 import { reasoningMatcher } from '../renderers/reasoning.js';
 import { imageMatcher } from '../renderers/image.js';
-import type { ChatMessage, ChatToolCall, ChatToolCallUIState } from '../../../engine/types.js';
+import { createToolPlugin } from '../../../engine/plugins/tool-plugin.js';
+import type { ChatMessage, ChatToolCall, ChatToolCallUIState, MessageEngineContext } from '../../../engine/types.js';
 
 afterEach(() => {
   cleanup();
@@ -218,6 +219,170 @@ describe('bubble content renderer matchers — tools/reasoning/image priority', 
       content: [{ type: 'image_url', image_url: { url: 'http://x/a.png' } }],
     };
     expect(imageMatcher(message)).toBe(true);
+  });
+});
+
+describe('P1-7 bubble-path tool card expand (plan 2026-08-10-1301-2)', () => {
+  it('expand chevron works when the state map lacks the key (resolveToolState default)', () => {
+    const message: ChatMessage = {
+      id: 'p17a',
+      role: 'assistant',
+      content: '',
+      tool_calls: [makeCall()],
+    };
+    const { container } = render(
+      <ToolsContentRenderer message={message} content="" contentIndex={0} />,
+    );
+    const toggle = container.querySelector('[data-slot="ai-tool-call-toggle"]') as HTMLButtonElement;
+    expect(toggle).not.toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(toggle);
+    const args = container.querySelector('[data-slot="ai-tool-call-args"]');
+    expect(args).not.toBeNull();
+    expect(args?.textContent).toContain('city');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('expand chevron works when the tool-plugin wrote the state entry', () => {
+    const message: ChatMessage = {
+      id: 'p17b',
+      role: 'assistant',
+      content: '',
+      tool_calls: [makeCall()],
+    };
+    createToolPlugin().onCompletionChunk!({} as MessageEngineContext, {}, message);
+    expect(message.state?.toolCall?.call_1).toBeDefined();
+    const { container } = render(
+      <ToolsContentRenderer message={message} content="" contentIndex={0} />,
+    );
+    const toggle = container.querySelector('[data-slot="ai-tool-call-toggle"]') as HTMLButtonElement;
+    fireEvent.click(toggle);
+    const args = container.querySelector('[data-slot="ai-tool-call-args"]');
+    expect(args).not.toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('engine-provided open survives remount (virtualized row recycle keeps host state)', () => {
+    const message: ChatMessage = {
+      id: 'p17c',
+      role: 'assistant',
+      content: '',
+      tool_calls: [makeCall()],
+      state: { toolCall: { call_1: { status: 'running', open: true } } },
+    };
+    const cardState = message.state!.toolCall!.call_1;
+    const first = render(
+      <AiToolCallView toolCall={message.tool_calls![0]} state={cardState} />,
+    );
+    expect(first.container.querySelector('[data-slot="ai-tool-call-args"]')).not.toBeNull();
+    first.unmount();
+    const second = render(
+      <AiToolCallView toolCall={message.tool_calls![0]} state={cardState} />,
+    );
+    expect(second.container.querySelector('[data-slot="ai-tool-call-args"]')).not.toBeNull();
+    second.unmount();
+  });
+});
+
+describe('P1-9 mixed-message renderer coexistence (plan 2026-08-10-1301-2)', () => {
+  it('text + reasoning_content renders BOTH markdown and the reasoning panel', () => {
+    const message: ChatMessage = {
+      id: 'p19a',
+      role: 'assistant',
+      content: 'Answer text',
+      reasoning_content: 'Because of X',
+    };
+    const { container } = render(<AiBubbleView message={message} />);
+    expect(container.querySelector('[data-slot="ai-bubble-markdown"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="ai-bubble-reasoning"]')).not.toBeNull();
+  });
+
+  it('text + tool_calls renders BOTH markdown and the tool card', () => {
+    const message: ChatMessage = {
+      id: 'p19b',
+      role: 'assistant',
+      content: 'Calling a tool',
+      tool_calls: [makeCall()],
+    };
+    const { container } = render(<AiBubbleView message={message} />);
+    expect(container.querySelector('[data-slot="ai-bubble-markdown"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="ai-tool-call"]')).not.toBeNull();
+  });
+
+  it('streaming first-chunk arrival (loading=false) shows the reasoning panel alongside text', () => {
+    const message: ChatMessage = {
+      id: 'p19c',
+      role: 'assistant',
+      content: 'Answer',
+      reasoning_content: 'think',
+      loading: false,
+    };
+    const { container } = render(<AiBubbleView message={message} />);
+    expect(container.querySelector('[data-slot="ai-bubble-markdown"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="ai-bubble-reasoning"]')).not.toBeNull();
+  });
+
+  it('error flag + text renders the error affordance alongside markdown', () => {
+    const message: ChatMessage = {
+      id: 'p19d',
+      role: 'assistant',
+      content: 'partial text',
+    };
+    const { container } = render(<AiBubbleView message={message} isError />);
+    expect(container.querySelector('[data-slot="ai-bubble-markdown"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="ai-bubble-error"]')).not.toBeNull();
+  });
+
+  it('text + image_url parts render both markdown and the image grid', () => {
+    const message: ChatMessage = {
+      id: 'p19e',
+      role: 'assistant',
+      content: [
+        { type: 'text', text: 'See the chart:' },
+        { type: 'image_url', image_url: { url: 'http://x/a.png' } },
+      ],
+    };
+    const { container } = render(<AiBubbleView message={message} />);
+    expect(container.querySelector('[data-slot="ai-bubble-markdown"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="ai-bubble-image"]')).not.toBeNull();
+  });
+
+  it('text + data-* parts render both markdown and the data-part block', () => {
+    const message: ChatMessage = {
+      id: 'p19f',
+      role: 'assistant',
+      content: [
+        { type: 'text', text: 'Summary' },
+        { type: 'data-table', id: 't1', data: { rows: 2 } },
+      ],
+    };
+    const { container } = render(<AiBubbleView message={message} />);
+    expect(container.querySelector('[data-slot="ai-bubble-markdown"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="ai-bubble-data-part"]')).not.toBeNull();
+  });
+
+  it('content:"" tool message keeps rendering the tool card (empty-content branch, zero regression)', () => {
+    const message: ChatMessage = {
+      id: 'p19g',
+      role: 'assistant',
+      content: '',
+      tool_calls: [makeCall()],
+    };
+    const { container } = render(<AiBubbleView message={message} />);
+    expect(container.querySelector('[data-slot="ai-tool-call"]')).not.toBeNull();
+  });
+
+  it('loading message renders the loading placeholder, not the tool card', () => {
+    const message: ChatMessage = {
+      id: 'p19h',
+      role: 'assistant',
+      content: '',
+      loading: true,
+      tool_calls: [makeCall()],
+    };
+    const { container } = render(<AiBubbleView message={message} />);
+    expect(container.querySelector('[data-slot="ai-bubble-loading"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="ai-tool-call"]')).toBeNull();
   });
 });
 

@@ -14,6 +14,12 @@ import { ToolsContentRenderer, toolsMatcher } from './tools.js';
  * registration system walks matches and picks the first `find` that returns
  * true, preferring lower priority values.
  *
+ * P1-9 (plan 2026-08-10-1301-2): tools / reasoning / error inspect
+ * message-level fields and are marked `messageLevel` — they run once per
+ * message in parallel with the slice-level pass, so a non-empty text slice can
+ * no longer shadow them (mixed messages render text AND tool cards / reasoning
+ * panels / error affordance together).
+ *
  * P0 ships: loading / markdown / text.
  * P1 (A-1) adds: data-part (`data-${string}` content blocks).
  * P2 adds: tools (tool_calls), reasoning (reasoning_content), image
@@ -22,16 +28,20 @@ import { ToolsContentRenderer, toolsMatcher } from './tools.js';
 export const defaultBubbleContentRenderers: BubbleContentRendererMatch[] = [
   {
     priority: BubbleRendererMatchPriority.LOADING,
+    // Slice-level: LOADING(-1) wins over every other renderer while the
+    // message is still waiting for its first chunk.
     find: (message) => message.loading === true,
     renderer: LoadingContentRenderer,
   },
   {
     priority: BubbleRendererMatchPriority.CONTENT,
+    messageLevel: true,
     find: toolsMatcher,
     renderer: ToolsContentRenderer,
   },
   {
     priority: BubbleRendererMatchPriority.CONTENT,
+    messageLevel: true,
     find: reasoningMatcher,
     renderer: ReasoningContentRenderer,
   },
@@ -42,6 +52,7 @@ export const defaultBubbleContentRenderers: BubbleContentRendererMatch[] = [
   },
   {
     priority: BubbleRendererMatchPriority.CONTENT,
+    messageLevel: true,
     find: (message) => errorMatcher(message),
     renderer: ErrorContentRenderer,
   },

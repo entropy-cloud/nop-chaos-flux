@@ -80,6 +80,17 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
       : message;
   const slices = resolveContentSlices(renderMessage);
 
+  // P1-9 (plan 2026-08-10-1301-2): split the registry into message-level
+  // renderers (tools / reasoning / error — matchers inspect message-level
+  // fields, run once per message) and slice-level renderers (markdown / image
+  // / data-part / text — matched per content slice). The message-level pass
+  // runs IN PARALLEL with the slice pass, so a non-empty text slice can no
+  // longer shadow tools / reasoning / image / error on mixed messages. While
+  // the message is still loading (first chunk pending) the message-level pass
+  // is skipped so the LOADING placeholder wins alone (unchanged behavior).
+  const messageLevelRenderers = renderers.filter((r) => r.messageLevel === true);
+  const sliceLevelRenderers = renderers.filter((r) => r.messageLevel !== true);
+
   // §4.7 message editing: user messages get an inline edit affordance; while
   // editing the normal content slices are hidden and the editor takes over.
   // Editing state is engine-held (`message.state.editing`), so this derives
@@ -113,9 +124,24 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
     >
       {showAvatar ? <div data-slot="ai-bubble-avatar" aria-hidden="true" /> : null}
       <div data-slot="ai-bubble-content" className="flex flex-col gap-2">
-        {!(isUser && isEditing)
-          ? slices.map((slice) => {
-              const match = pickRenderer(renderers, renderMessage, slice.content, slice.index);
+        {!(isUser && isEditing) ? (
+          <>
+            {!isStreaming
+              ? messageLevelRenderers.map((match) => {
+                  if (!tryMatch(match, renderMessage, '', -1)) return null;
+                  const Renderer = match.renderer;
+                  return (
+                    <Renderer
+                      key={match.renderer.name}
+                      message={renderMessage}
+                      content=""
+                      contentIndex={-1}
+                    />
+                  );
+                })
+              : null}
+            {slices.map((slice) => {
+              const match = pickRenderer(sliceLevelRenderers, renderMessage, slice.content, slice.index);
               if (!match) return null;
               const Renderer = match.renderer;
               return (
@@ -126,8 +152,9 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
                   contentIndex={slice.index}
                 />
               );
-            })
-          : null}
+            })}
+          </>
+        ) : null}
         {!(isUser && isEditing) && showTimestamp ? (
           <TimestampContentRenderer message={renderMessage} content="" contentIndex={-1} />
         ) : null}
@@ -208,6 +235,27 @@ function BranchPicker({
   );
 }
 
+/**
+ * Run a single matcher with the A-9 faulty-matcher guard: a throwing matcher
+ * must not break rendering — it is skipped with a console warning so hosts can
+ * debug custom matchers.
+ */
+function tryMatch(
+  match: BubbleContentRendererMatch,
+  message: ChatMessage,
+  content: unknown,
+  contentIndex: number,
+): boolean {
+  try {
+    return match.find(message, content, contentIndex);
+  } catch (err) {
+    if (typeof console !== 'undefined') {
+      console.warn('[ai-bubble] custom content matcher threw; skipping', err);
+    }
+    return false;
+  }
+}
+
 function pickRenderer(
   renderers: BubbleContentRendererMatch[],
   message: ChatMessage,
@@ -219,16 +267,7 @@ function pickRenderer(
     (a, b) => (a.priority ?? BubbleRendererMatchPriority.NORMAL) - (b.priority ?? BubbleRendererMatchPriority.NORMAL),
   );
   for (const candidate of ordered) {
-    try {
-      if (candidate.find(message, content, contentIndex)) return candidate;
-    } catch (err) {
-      // A faulty matcher must not break rendering; skip it. Surface the
-      // exception so hosts can debug custom matchers (the previous bare
-      // `catch {}` swallowed matcher throws silently).
-      if (typeof console !== 'undefined') {
-        console.warn('[ai-bubble] custom content matcher threw; skipping', err);
-      }
-    }
+    if (tryMatch(candidate, message, content, contentIndex)) return candidate;
   }
   return undefined;
 }

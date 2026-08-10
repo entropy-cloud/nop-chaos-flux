@@ -57,7 +57,10 @@ export function ToolsContentRenderer(props: ToolsContentRendererProps): React.Re
 function resolveToolState(message: ChatMessage, key: string): ChatToolCallUIState {
   const map = message.state?.toolCall;
   if (map && map[key]) return map[key];
-  return { status: 'running', open: false };
+  // P1-7 (2026-08-10 multi-audit): do NOT pin `open: false` — an absent
+  // `open` lets the card's local expand state engage (`?? internalOpen`);
+  // a pinned false would short-circuit it (dead expand chevron).
+  return { status: 'running' };
 }
 
 /** Match predicate: assistant message with at least one tool_call. */

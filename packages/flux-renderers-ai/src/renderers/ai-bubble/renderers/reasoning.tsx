@@ -10,9 +10,13 @@ import { MarkdownContentRenderer } from './markdown.js';
 /**
  * `reasoning` bubble content renderer (design.md §3.3). Matches assistant
  * messages carrying a non-empty `reasoning_content` (DeepSeek / Anthropic
- * style) and renders a collapsible "thinking" panel. Collapse state mirrors
- * `message.state.thinking.open` when present (written by `thinkingPlugin`),
+ * style) and renders a collapsible "thinking" panel. Collapse state honors
+ * `message.state.thinking.open` only when the engine explicitly holds a value;
  * otherwise it is local component state.
+ *
+ * P1-8 (2026-08-10 multi-audit): `thinkingPlugin` no longer pins `open: false`
+ * (write-once-false froze the panel + disabled the button). With `open`
+ * undefined-absent the local expand state engages and the button stays enabled.
  *
  * Registered at `CONTENT` priority.
  */
@@ -22,7 +26,7 @@ export function ReasoningContentRenderer({ message }: BubbleContentRendererProps
   if (typeof reasoning !== 'string' || reasoning.length === 0) return null;
 
   const controlled = message.state?.thinking;
-  const open = controlled ? controlled.open : internalOpen;
+  const open = controlled && controlled.open !== undefined ? controlled.open : internalOpen;
   const streaming = message.loading === true;
 
   // A-10: reasoning duration from thinking-plugin timing (ms → s).
@@ -33,7 +37,9 @@ export function ReasoningContentRenderer({ message }: BubbleContentRendererProps
       : 0;
 
   function toggle() {
-    if (!controlled) setInternalOpen((v) => !v);
+    // Local expand state — the engine never pins `open`, so the panel is
+    // always user-toggleable on the plugin path.
+    setInternalOpen((v) => !v);
   }
 
   const label = streaming ? t('flux.ai.thinking') : t('flux.ai.thoughtFor', { seconds });
@@ -50,7 +56,7 @@ export function ReasoningContentRenderer({ message }: BubbleContentRendererProps
         className="flex w-full justify-start gap-1 px-2 py-1 text-left"
         aria-expanded={open}
         onClick={toggle}
-        disabled={controlled !== undefined}
+        disabled={controlled !== undefined && controlled.open !== undefined}
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         <span>{label}</span>

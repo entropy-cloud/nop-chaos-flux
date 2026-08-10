@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createLengthPlugin, measureContentLength } from '../plugins/length-plugin.js';
 import { createThinkingPlugin } from '../plugins/thinking-plugin.js';
-import type { ChatMessage, MessageEngineContext } from '../types.js';
+import { createToolPlugin } from '../plugins/tool-plugin.js';
+import type { ChatMessage, ChatToolCall, MessageEngineContext } from '../types.js';
 
 /**
  * Direct unit coverage for the engine plugins — previously only exercised
@@ -66,7 +67,10 @@ describe('thinkingPlugin', () => {
     plugin.onCompletionChunk!(fakeCtx(), {}, msg);
     expect(msg.state?.thinking).toBeDefined();
     expect(typeof msg.state!.thinking!.startedAt).toBe('number');
-    expect(msg.state!.thinking!.open).toBe(false);
+    // P1-8 (plan 2026-08-10-1301-2): the plugin no longer pins `open: false`
+    // — the field stays undefined-absent so the renderer's local expand state
+    // (`?? internalOpen`) is never short-circuited.
+    expect(msg.state!.thinking!.open).toBeUndefined();
     expect(typeof msg.state!.thinking!.endedAt).toBe('number');
   });
 
@@ -95,5 +99,45 @@ describe('thinkingPlugin', () => {
     const msg: ChatMessage = { id: 't', role: 'assistant', content: 'just text' };
     plugin.onCompletionChunk!(fakeCtx(), {}, msg);
     expect(msg.state).toBeUndefined();
+  });
+});
+
+describe('toolPlugin — toolCall UI state write surface', () => {
+  const call: ChatToolCall = {
+    index: 0,
+    id: 'call_1',
+    type: 'function',
+    function: { name: 'get_weather', arguments: '{}' },
+  };
+
+  it('onCompletionChunk writes status running without pinning open (P1-7 undefined-absent)', () => {
+    const plugin = createToolPlugin();
+    const msg: ChatMessage = { id: 't', role: 'assistant', content: '', tool_calls: [call] };
+    plugin.onCompletionChunk!(fakeCtx(), {}, msg);
+    expect(msg.state?.toolCall?.call_1).toBeDefined();
+    expect(msg.state!.toolCall!.call_1.status).toBe('running');
+    expect(msg.state!.toolCall!.call_1.open).toBeUndefined();
+  });
+
+  it('onAfterRequest ensures the entry exists without pinning open', () => {
+    const plugin = createToolPlugin();
+    const msg: ChatMessage = { id: 't', role: 'assistant', content: '', tool_calls: [call] };
+    plugin.onAfterRequest!(fakeCtx(), msg);
+    expect(msg.state?.toolCall?.call_1).toBeDefined();
+    expect(msg.state!.toolCall!.call_1.open).toBeUndefined();
+  });
+
+  it('does not overwrite an engine-written status when the entry already exists', () => {
+    const plugin = createToolPlugin();
+    const msg: ChatMessage = {
+      id: 't',
+      role: 'assistant',
+      content: '',
+      tool_calls: [call],
+      state: { toolCall: { call_1: { status: 'success', result: 'done' } } },
+    };
+    plugin.onCompletionChunk!(fakeCtx(), {}, msg);
+    expect(msg.state!.toolCall!.call_1.status).toBe('success');
+    expect(msg.state!.toolCall!.call_1.result).toBe('done');
   });
 });
