@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { generateMessageId } from '../engine/utils.js';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { generateMessageId, isVacuousAssistantResidue } from '../engine/utils.js';
 import { createMessageEngine } from '../engine/create-engine.js';
 import { createReactMessageAdapter } from './react-adapter.js';
 import type {
@@ -119,6 +119,12 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   // (Failure Path FP-5 — A→B fast switch with a slow A loadMessages must not
   // let A's late resolve clobber engineB or wrongly evict it).
   const switchVersionRef = useRef(0);
+  // K-⑥ (Cycle 2 / I4): latest switch target id. A switch only supersedes an
+  // in-flight switch when it targets a DIFFERENT conversation — a same-id fast
+  // re-switch must not drop the in-flight hydration wholesale. Displacement
+  // methods (create/delete/clearAll) reset the target to null so ANY in-flight
+  // switch is invalidated regardless of target.
+  const switchTargetRef = useRef<string | null>(null);
   // P1-3: latest active-id mirror, read by the post-await eviction loop so it
   // evicts against the CURRENT active conversation (not the closure-captured
   // switch target, which a createConversation could have displaced). Mirrored
@@ -134,6 +140,12 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   useEffect(() => {
     conversationsRef.current = conversations;
   });
+  // K-⑦-1 (Cycle 2 / I4): marks that clearAll emptied the list. The mount
+  // bootstrap consults it after `loadConversations` resolves: a clearAll that
+  // happened while the load was pending must not have the loaded list
+  // restored (the bootstrap merges — but only into a list the host did NOT
+  // deliberately clear).
+  const listClearedRef = useRef(false);
 
   // Engine cache: id → engine. We keep this in a ref-like closure local so
   // updates don't trigger re-renders (the engine is read via subscribe).
@@ -195,6 +207,17 @@ export function useConversation(options: UseConversationOptions): UseConversatio
           // so the async storage implementation cannot read a cross-turn
           // mixed snapshot even if it awaits before serializing.
           const snapshot = engine.getMessages();
+          // K-⑩-3 (ai-invariant-loop): never persist a failed/aborted turn's
+          // vacuous empty assistant residue. `abort()` flips requestState to
+          // 'aborted' synchronously — before the engine's own cleanup runs —
+          // so the snapshot taken here can still contain the placeholder;
+          // strip trailing vacuous empties (same predicate as the engine).
+          while (
+            snapshot.length > 0 &&
+            isVacuousAssistantResidue(snapshot[snapshot.length - 1])
+          ) {
+            snapshot.pop();
+          }
           // K3: serialize this save behind the conversation's previous
           // pending save (a rejection must not skip the next save — settle
           // first, then write). The chain entry is what deleteConversation
@@ -230,6 +253,46 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     }
   }
 
+  // K-⑥ (Cycle 2 / I4): build (or reuse) the engine for a conversation and
+  // hydrate its stored messages, mirroring `switchConversation`'s
+  // loadMessages + version-guard semantics (id-aware: a same-id switch must
+  // not drop the late hydration). Used by the delete-active fixup.
+  function ensureEngineAndHydrate(conversationId: string): MessageEngine {
+    const existing = engineCache.get(conversationId);
+    if (existing) return existing;
+    const engine = buildEngineFor(conversationId);
+    engineCache.set(conversationId, engine);
+    if (storage) {
+      const myVersion = switchVersionRef.current;
+      void (async () => {
+        try {
+          const stored = await storage.loadMessages(conversationId);
+          // A displacement during the await (create/delete/clearAll — target
+          // reset to null — or a switch to a DIFFERENT conversation)
+          // invalidates the late hydration. A same-id switch must NOT drop it
+          // (same-id fast re-switch / bootstrap members).
+          if (
+            switchVersionRef.current !== myVersion &&
+            switchTargetRef.current !== conversationId
+          ) {
+            return;
+          }
+          if (stored.length > 0) engine.setMessages(stored);
+        } catch (error) {
+          reportStorageError({ phase: 'loadMessages', conversationId, error });
+        }
+      })();
+    }
+    return engine;
+  }
+
+  // useEffectEvent (React 19): the mount-bootstrap effect needs the helper's
+  // fresh closure without forcing mount-once deps to include the per-render
+  // function identity (which would re-run loadConversations every render).
+  const ensureEngineAndHydrateEvent = useEffectEvent((conversationId: string) =>
+    ensureEngineAndHydrate(conversationId),
+  );
+
   // ---- Mount bootstrap: hydrate conversations from storage (P3) ----
   useEffect(() => {
     if (!storage) return;
@@ -239,10 +302,38 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       try {
         const convs = await storage.loadConversations();
         if (signal.aborted) return;
+        // K-⑦-1 (Cycle 2 / I4): clearAll during the load invalidates the
+        // restore — the deliberately cleared list must not be resurrected by
+        // the late resolve.
+        if (listClearedRef.current) return;
         if (convs.length > 0) {
-          setConversations(convs);
+          // K-⑦ (Cycle 2 / I4): MERGE, do not wholesale-overwrite — a
+          // conversation created while `loadConversations` was pending must
+          // stay in the list (probe-2: create X → bootstrap resolve → list
+          // rolled back to [A], activeId=X dangling off-list). The merge is
+          // computed against the synchronous mirror (same-tick source of
+          // truth for created conversations).
+          const merged = [
+            ...convs,
+            ...conversationsRef.current.filter((c) => !convs.some((l) => l.id === c.id)),
+          ];
+          setConversations(merged);
+          // K4 (ai-invariant-loop): sync the mirror synchronously so a
+          // same-tick reader (create/rename/delete) sees the loaded list
+          // before the mirror effect flushes.
+          conversationsRef.current = merged;
           // Select the first conversation as active when none is active yet.
+          // K-⑥-3 (Cycle 2 / I4): build the engine for the selected active
+          // conversation on demand and hydrate its stored messages — the
+          // default conversation's messages must be visible without a manual
+          // switch (mirror of switchConversation's build-on-demand semantics).
+          const currentActive = activeIdRef.current;
           setActiveId((current) => current ?? convs[0].id);
+          if (!currentActive) {
+            activeIdRef.current = convs[0].id;
+            const engine = ensureEngineAndHydrateEvent(convs[0].id);
+            setActiveEngine(engine);
+          }
         }
       } catch (error) {
         if (signal.aborted) return;
@@ -292,6 +383,9 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     // new conversation before the mirror effect flushes (parity with the
     // activeIdRef synchronous update below).
     conversationsRef.current = [info, ...conversationsRef.current];
+    // K-⑥ (Cycle 2 / I4): displacement — invalidate any in-flight switch.
+    ++switchVersionRef.current;
+    switchTargetRef.current = null;
     setActiveId(info.id);
     // P1-a: keep the active-id mirror in sync synchronously so a post-await
     // reader (deleteConversation / switchConversation eviction) sees this
@@ -306,20 +400,39 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     // bare `void storage?.saveConversation?.(...)` that silently swallowed
     // rejections — the host had no way to observe a create-time persistence
     // failure (Failure Path FP-4).
-    Promise.resolve(storage?.saveConversation?.(info)).catch((error: unknown) => {
+    // K-K3/④ (Cycle 2 / I4): the metadata write is CHAINED into the
+    // conversation's pending-save drain (K3 排空链 now covers metadata writes
+    // too — a same-tick clearAll/delete must be able to drain it) and
+    // re-checks the mirror at settlement time (a same-tick delete/clearAll
+    // skips the write — no ghost re-save).
+    const prevPending = pendingSavesRef.current.get(info.id);
+    const pending = Promise.resolve(prevPending)
+      .catch(() => {})
+      .then(() => {
+        if (!conversationsRef.current.some((c) => c.id === info.id)) return;
+        return storage?.saveConversation?.(info);
+      });
+    pending.catch((error: unknown) => {
       reportStorageError({ phase: 'saveConversation', conversationId: info.id, error });
     });
+    pendingSavesRef.current.set(info.id, pending);
     return info;
   }
 
   async function switchConversation(id: string): Promise<void> {
-    const exists = conversations.some((c) => c.id === id);
+    // K-⑥-2 (Cycle 2 / I4): the existence check reads the SYNCHRONOUS mirror
+    // (not the render closure) — a same-tick deleteConversation(X)+
+    // switchConversation(X) must see X already removed and bail BEFORE
+    // `setActiveId(id)` (the guard must be in effect before the active id
+    // moves, or the deleted target gets promoted + a fresh engine cached).
+    const exists = conversationsRef.current.some((c) => c.id === id);
     if (!exists) return;
     setActiveId(id);
     // P1-3: stamp this switch with a version + sync the active-id mirror so the
     // post-await checks (version guard + eviction) see the freshest state even
     // before the effect flushes.
     const myVersion = ++switchVersionRef.current;
+    switchTargetRef.current = id;
     activeIdRef.current = id;
 
     let engine = engineCache.get(id);
@@ -329,10 +442,14 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       if (storage) {
         try {
           const stored = await storage.loadMessages(id);
-          // P1-3: a newer switch superseded this one while loadMessages was
-          // pending — drop the late resolve before it can hydrate a stale
-          // engine or displace the now-active one (Failure Path FP-5).
-          if (switchVersionRef.current !== myVersion) return;
+          // P1-3 + K-⑥ (Cycle 2 / I4): a newer switch supersedes this one only
+          // when it targets a DIFFERENT conversation — drop the late resolve
+          // before it can hydrate a stale engine or displace the now-active
+          // one (Failure Path FP-5). A same-id fast re-switch must NOT drop
+          // this hydration wholesale.
+          if (switchVersionRef.current !== myVersion && switchTargetRef.current !== id) {
+            return;
+          }
           if (stored.length > 0) {
             engine.setMessages(stored);
           }
@@ -341,9 +458,9 @@ export function useConversation(options: UseConversationOptions): UseConversatio
         }
       }
     }
-    // P1-3: a newer switch owns the active slot now — do not promote this
-    // (possibly stale) engine to activeEngine.
-    if (switchVersionRef.current !== myVersion) return;
+    // P1-3 + K-⑥: a newer switch (different target) owns the active slot now —
+    // do not promote this (possibly stale) engine to activeEngine.
+    if (switchVersionRef.current !== myVersion && switchTargetRef.current !== id) return;
     setActiveEngine(engine);
 
     // P1-3: evict against the CURRENT active id (activeIdRef.current), not the
@@ -369,6 +486,15 @@ export function useConversation(options: UseConversationOptions): UseConversatio
 
   async function deleteConversation(id: string): Promise<void> {
     setConversations((prev) => prev.filter((c) => c.id !== id));
+    // K4/K-K4 (ai-invariant-loop): keep the list mirror in sync SYNCHRONOUSLY —
+    // a same-tick reader (renameConversation / deleteConversation fixup /
+    // switchConversation exists-check) must see the deletion before the mirror
+    // effect flushes (K-K4/②-1: the delete's own fixup used to read a stale
+    // mirror and pick a ghost next-active; K-⑥-1 ghost fixup root cause).
+    conversationsRef.current = conversationsRef.current.filter((c) => c.id !== id);
+    // K-⑥ (Cycle 2 / I4): displacement — invalidate any in-flight switch.
+    ++switchVersionRef.current;
+    switchTargetRef.current = null;
     const removed = engineCache.get(id);
     detachEngine(id);
     engineCache.delete(id);
@@ -384,7 +510,15 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       const nextId = next?.id ?? null;
       setActiveId(nextId);
       activeIdRef.current = nextId;
-      setActiveEngine(next ? (engineCache.get(next.id) ?? null) : null);
+      // K-⑥ (Cycle 2 / I4): build the next engine on demand instead of
+      // null-hanging — a conversation that was never switched to has no
+      // cached engine (registration member "delete active → build-on-demand").
+      if (next) {
+        const nextEngine = ensureEngineAndHydrate(next.id);
+        setActiveEngine(nextEngine);
+      } else {
+        setActiveEngine(null);
+      }
     }
     // K3: drain the conversation's in-flight saves BEFORE the storage delete
     // — a save that started before deleteConversation must settle first, so
@@ -419,9 +553,23 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     // (parity with create + the saveMessages / load* call sites). Was a bare
     // `void storage?.saveConversation?.(...)` that silently swallowed
     // rejections — a rename-time persistence failure was unobservable.
-    Promise.resolve(storage?.saveConversation?.(next)).catch((error: unknown) => {
+    // K-K4/② (Cycle 2 / I4): the metadata write is CHAINED into the
+    // conversation's pending-save drain (delete's drain and clearAll's
+    // drain must cover it — a gated rename write must not land after the
+    // storage delete/clear, K-K4/②-1/2) and re-checks the mirror at
+    // settlement time (a same-tick delete/clearAll skips the write — the
+    // renamed record is not re-saved as a ghost).
+    const prevPending = pendingSavesRef.current.get(id);
+    const pending = Promise.resolve(prevPending)
+      .catch(() => {})
+      .then(() => {
+        if (!conversationsRef.current.some((c) => c.id === id)) return;
+        return storage?.saveConversation?.(next);
+      });
+    pending.catch((error: unknown) => {
       reportStorageError({ phase: 'saveConversation', conversationId: id, error });
     });
+    pendingSavesRef.current.set(id, pending);
   }
 
   function clearAll(): void {
@@ -441,6 +589,18 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       }
     }
     engineCache.clear();
+    // K-⑦-1 (Cycle 2 / I4): mark the list as deliberately cleared so a
+    // pending mount bootstrap does not restore the loaded list.
+    listClearedRef.current = true;
+    // K4/K-K4 (ai-invariant-loop): keep the list mirror in sync SYNCHRONOUSLY
+    // — a same-tick reader (deleteConversation fixup / renameConversation)
+    // must see the cleared list before the mirror effect flushes (K-⑥-1 ghost
+    // fixup root cause: the fixup used to read a stale mirror and re-select a
+    // cleared conversation as active).
+    conversationsRef.current = [];
+    // K-⑥ (Cycle 2 / I4): displacement — invalidate any in-flight switch.
+    ++switchVersionRef.current;
+    switchTargetRef.current = null;
     setConversations([]);
     setActiveId(null);
     activeIdRef.current = null;

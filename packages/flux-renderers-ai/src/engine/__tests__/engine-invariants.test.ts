@@ -433,7 +433,7 @@ describe('Invariant ⑤ — abort path cleanup', () => {
 // wrongly stamped `branchId:'branch-1'`.
 
 describe('Invariant ⑧ — pendingBranchId consumption/clear (N3)', () => {
-  it.fails('regenerate + connector-missing: next normal turn must not carry the leaked branch stamp', async () => {
+  it('regenerate + connector-missing: next normal turn must not carry the leaked branch stamp', async () => {
     // No connector — runTurn's connector-missing early return fires before
     // runOnce can consume the stamp.
     const { engine, adapter } = makeEngine();
@@ -490,7 +490,7 @@ describe('Invariant ⑨ — plugin error isolation (N4)', () => {
     return { stream } as unknown as AiConnector;
   }
 
-  it.fails('onTurnStart rejection settles the turn (must not stick processing)', async () => {
+  it('onTurnStart rejection settles the turn (must not stick processing)', async () => {
     const { engine, adapter } = makeEngine(slowConnector(okChunks, 1));
     engine.registerPlugin({
       name: 'start-throws',
@@ -505,7 +505,7 @@ describe('Invariant ⑨ — plugin error isolation (N4)', () => {
     expect(adapter.peek().requestState).not.toBe('processing');
   });
 
-  it.fails('plugin.onError throwing must not skip the error state write', async () => {
+  it('plugin.onError throwing must not skip the error state write', async () => {
     const { engine, adapter } = makeEngine(throwingStream());
     engine.registerPlugin({
       name: 'error-throws',
@@ -521,7 +521,7 @@ describe('Invariant ⑨ — plugin error isolation (N4)', () => {
     expect(adapter.peek().lastError).toBeInstanceOf(Error);
   });
 
-  it.fails('onTurnEnd rejection must not shadow the original error (all errors land in state)', async () => {
+  it('onTurnEnd rejection must not shadow the original error (all errors land in state)', async () => {
     const { engine, adapter } = makeEngine(throwingStream());
     engine.registerPlugin({
       name: 'end-throws',
@@ -536,67 +536,45 @@ describe('Invariant ⑨ — plugin error isolation (N4)', () => {
     expect(adapter.peek().requestState).toBe('error');
     expect(adapter.peek().lastError).toBeInstanceOf(Error);
   });
-});
 
-// ---------------------------------------------------------------------------
-// Invariant ⑩ — failed-turn residue cleanup (N5，Cycle 2 / I1)
-// ---------------------------------------------------------------------------
-//
-// The residual empty placeholder of a failed/aborted round (committed with
-// `loading=false, content=''`) must not enter a subsequent request's history
-// (probe-D: request #2 carries `{content:'', loading:false}` — strict
-// backends reject empty blocks). Live: buildContext only excludes the
-// loading===true tail → the residue leaks.
-
-describe('Invariant ⑩ — failed-turn residue cleanup (N5)', () => {
-  function recordingStream(failFirst: boolean) {
-    const requests: AiConnectorRequest[] = [];
-    let shouldFail = failFirst;
-    const stream = vi.fn(async (req: AiConnectorRequest) => {
-      requests.push(req);
-      if (shouldFail) {
-        shouldFail = false;
-        throw new Error('connector-boom');
-      }
-      async function* gen(): AsyncGenerator<AiConnectorChunk> {
-        yield { delta: { content: 'Hi' } };
-        yield { finishReason: 'stop' };
-      }
-      return gen();
+  it('aborted turn: onTurnEnd rejection must not reject the host-facing promise (K-⑨-1)', async () => {
+    // K-⑨-1 (Cycle 2 / I4): abort → the finally's `await plugin.onTurnEnd`
+    // used to reject the host-facing sendMessage promise (`void
+    // engine.sendMessage()` = unhandled rejection) even though the state had
+    // already landed 'aborted'. The teardown rejection must be isolated.
+    let resolveGate!: () => void;
+    const gate = new Promise<void>((r) => {
+      resolveGate = r;
     });
-    return { requests, stream };
-  }
+    const connector: AiConnector = {
+      async stream() {
+        async function* gen(): AsyncGenerator<AiConnectorChunk> {
+          await gate;
+          yield { delta: { content: 'late' } };
+        }
+        return gen();
+      },
+    };
+    const { engine, adapter } = makeEngine(connector);
+    engine.registerPlugin({
+      name: 'end-throws',
+      onTurnEnd: async () => {
+        throw new Error('onTurnEnd-boom');
+      },
+    });
 
-  it.fails('failed-turn residue: the empty placeholder must not enter the next request history', async () => {
-    const { requests, stream } = recordingStream(true);
-    const { engine, adapter } = makeEngine({ stream } as AiConnector);
-
-    // Failed turn #1 commits the empty placeholder (loading=false).
-    await engine.sendMessage('first');
-    expect(adapter.peek().requestState).toBe('error');
-
-    // Normal turn #2 — its request history must exclude the residue.
-    await engine.sendMessage('second');
-    const secondHistory = requests[1].messages;
-    expect(
-      secondHistory.some((m) => m.role === 'assistant' && m.content === ''),
-    ).toBe(false);
-  });
-
-  it('normal turn history is preserved (only the empty residue is excluded)', async () => {
-    // Positive control (passes on live): a completed assistant message IS part
-    // of history — the exclusion predicate targets only empty placeholders.
-    const { requests, stream } = recordingStream(false);
-    const { engine } = makeEngine({ stream } as AiConnector);
-
-    await engine.sendMessage('first');
-    await engine.sendMessage('second');
-    const secondHistory = requests[1].messages;
-
-    expect(secondHistory.some((m) => m.role === 'assistant' && m.content === 'Hi')).toBe(true);
-    expect(secondHistory.some((m) => m.role === 'assistant' && m.content === '')).toBe(false);
+    const turn = engine.sendMessage('hi');
+    await Promise.resolve();
+    await Promise.resolve();
+    await engine.abort();
+    resolveGate();
+    // Must RESOLVE — the onTurnEnd rejection is isolated, not propagated.
+    await expect(turn).resolves.toBeUndefined();
+    expect(adapter.peek().requestState).toBe('aborted');
+    expect(adapter.peek().isProcessing).toBe(false);
   });
 });
+
 
 // ---------------------------------------------------------------------------
 // §4 Table completeness gate — runtime enumeration

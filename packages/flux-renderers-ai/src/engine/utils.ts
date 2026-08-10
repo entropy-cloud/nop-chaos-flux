@@ -146,6 +146,22 @@ export function isStreamingAssistantPlaceholder(message: ChatMessage): boolean {
 }
 
 /**
+ * True for a vacuous assistant product: empty content and no finish reason
+ * (Cycle 2 / I4, invariant ⑩ K-⑩-1/3/4/5). Failed, aborted or zero-chunk
+ * "completed" turns can leave such an empty message behind; it must not enter
+ * the next request history nor an autoSave snapshot (strict backends reject
+ * empty blocks). A partial stream (non-empty content) or a real completion
+ * (finishReason present) is NOT vacuous and is kept.
+ */
+export function isVacuousAssistantResidue(message: ChatMessage): boolean {
+  return (
+    message.role === 'assistant' &&
+    isEmptyContent(message.content) &&
+    !message.metadata?.finishReason
+  );
+}
+
+/**
  * Apply a streaming chunk's delta/snapshot to the accumulated assistant
  * message via `combineDeltaData`.
  */

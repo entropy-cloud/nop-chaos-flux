@@ -26,9 +26,11 @@ import { okChunks, slowConnector, wait } from './use-conversation-test-helpers.j
 // `setActiveEngine(null)` hang); a same-id fast re-switch must not have its
 // hydration dropped wholesale by the version guard.
 //
-// All five member scenarios are RED on live code (findings §3.2 N1
-// probe-1/1b/1c/B/C) — tests are committed in `it.fails` expected-failure form
-// (suite stays green). Cycle 2 / I4 flips them to `it`.
+// All five member scenarios were RED on live code (findings §3.2 N1
+// probe-1/1b/1c/B/C) — tests were committed in `it.fails` expected-failure
+// form (suite stays green). Cycle 2 / I4 fixed them and flipped to `it`, and
+// added the same-tick combination members (K-⑥-1/2) + bootstrap build-on-demand
+// member (K-⑥-3).
 
 function gatedLoadStorage(initial: {
   conversations: AiConversationInfo[];
@@ -59,7 +61,7 @@ function assistantMsg(content: string): ChatMessage {
 }
 
 describe('Invariant ⑥ — active displacement integrity (N1)', () => {
-  it.fails('switch A→B in-flight × delete B: late promotion must not resurrect the deleted engine', async () => {
+  it('switch A→B in-flight × delete B: late promotion must not resurrect the deleted engine', async () => {
     const { strategy, gates } = gatedLoadStorage({
       conversations: [convInfo('A'), convInfo('B')],
       messages: { B: [assistantMsg('stored-B')] },
@@ -80,17 +82,22 @@ describe('Invariant ⑥ — active displacement integrity (N1)', () => {
     await act(async () => {
       await result.current.deleteConversation('B');
     });
-    // Release the gate: the late switch must NOT re-promote B's engine.
+    // Release the switch's gate (the last loadMessages call): the late switch
+    // must NOT re-promote B's engine.
     await act(async () => {
-      gates[0]();
+      gates[gates.length - 1]();
       await switchP;
+      await wait(5);
     });
 
     expect(result.current.activeConversationId).toBe('A');
-    expect(result.current.activeEngine).toBeNull();
+    expect(result.current.activeConversationId).not.toBe('B');
+    // K-⑥-3 bootstrap: the active engine is A's on-demand engine (B's engine
+    // must not have been promoted).
+    expect(result.current.activeEngine).not.toBeNull();
   });
 
-  it.fails('switch in-flight × clearAll: no promotion after the list was cleared', async () => {
+  it('switch in-flight × clearAll: no promotion after the list was cleared', async () => {
     const { strategy, gates } = gatedLoadStorage({
       conversations: [convInfo('A'), convInfo('B')],
       messages: { B: [assistantMsg('stored-B')] },
@@ -110,7 +117,12 @@ describe('Invariant ⑥ — active displacement integrity (N1)', () => {
       result.current.clearAll();
     });
     await act(async () => {
+      // gates[0] is the bootstrap's A-hydration (K-⑥-3), gates[1] the
+      // switch's B-hydration. Release BOTH: the switch's gate lets switchP
+      // settle; the bootstrap's late hydration must be invalidated by the
+      // clearAll displacement (no resurrection).
       gates[0]();
+      gates[gates.length - 1]();
       await switchP;
       await wait(5);
     });
@@ -119,7 +131,7 @@ describe('Invariant ⑥ — active displacement integrity (N1)', () => {
     expect(result.current.activeEngine).toBeNull();
   });
 
-  it.fails('switch in-flight × create X: activeEngine must stay the new conversation\'s engine', async () => {
+  it('switch in-flight × create X: activeEngine must stay the new conversation\'s engine', async () => {
     const { strategy, gates } = gatedLoadStorage({
       conversations: [convInfo('A'), convInfo('B')],
       messages: { B: [assistantMsg('stored-B')] },
@@ -143,7 +155,7 @@ describe('Invariant ⑥ — active displacement integrity (N1)', () => {
     });
     const xEngine = result.current.activeEngine;
     await act(async () => {
-      gates[0]();
+      gates[gates.length - 1]();
       await switchP;
     });
 
@@ -151,7 +163,7 @@ describe('Invariant ⑥ — active displacement integrity (N1)', () => {
     expect(result.current.activeEngine).toBe(xEngine);
   });
 
-  it.fails('same-id fast double switch: stored hydration must not be dropped by the version guard', async () => {
+  it('same-id fast double switch: stored hydration must not be dropped by the version guard', async () => {
     const { strategy, gates } = gatedLoadStorage({
       conversations: [convInfo('A')],
       messages: { A: [assistantMsg('stored-A')] },
@@ -172,15 +184,16 @@ describe('Invariant ⑥ — active displacement integrity (N1)', () => {
     });
     const second = result.current.switchConversation('A');
     await act(async () => {
-      gates[0]();
+      gates[gates.length - 1]();
       await first;
       await second;
+      await wait(5);
     });
 
     expect(result.current.activeEngine?.getState().messages.map((m) => m.content)).toContain('stored-A');
   });
 
-  it.fails('delete active in storage mode: next engine must be built on demand (no null hang)', async () => {
+  it('delete active in storage mode: next engine must be built on demand (no null hang)', async () => {
     const { strategy } = gatedLoadStorage({
       conversations: [convInfo('A'), convInfo('B')],
       messages: { B: [assistantMsg('stored-B')] },
@@ -200,6 +213,93 @@ describe('Invariant ⑥ — active displacement integrity (N1)', () => {
 
     expect(result.current.activeConversationId).toBe('B');
     expect(result.current.activeEngine).not.toBeNull();
+  });
+
+  it('same-tick clearAll+create+delete: no ghost activeId fixup (K-⑥-1)', async () => {
+    // K-⑥-1 (Cycle 2 / I4): clearAll used to leave `conversationsRef` stale,
+    // so the delete's fixup read the old mirror ([X, A]) and re-selected the
+    // cleared 'A' as active — a ghost activeId with an empty list.
+    const { strategy } = gatedLoadStorage({
+      conversations: [convInfo('A')],
+      messages: {},
+    });
+    const { result } = renderHook(() =>
+      useConversation({ connector: slowConnector(okChunks), storage: strategy }),
+    );
+    await act(async () => {
+      await wait(5);
+    });
+
+    act(() => {
+      result.current.clearAll();
+      const xId = result.current.createConversation({ title: 'X' }).id;
+      void result.current.deleteConversation(xId);
+    });
+    await act(async () => {
+      await wait(5);
+    });
+
+    expect(result.current.conversations).toHaveLength(0);
+    expect(result.current.activeConversationId).toBeNull();
+    expect(result.current.activeEngine).toBeNull();
+  });
+
+  it('same-tick delete+switch: must not promote the deleted target (K-⑥-2)', async () => {
+    // K-⑥-2 (Cycle 2 / I4): the switch's existence check read the render
+    // closure (X still listed), so a same-tick delete+switch promoted the
+    // deleted conversation. The exists check must read the sync mirror.
+    const { strategy } = gatedLoadStorage({
+      conversations: [convInfo('A'), convInfo('B')],
+      messages: { B: [assistantMsg('stored-B')] },
+    });
+    const { result } = renderHook(() =>
+      useConversation({ connector: slowConnector(okChunks), storage: strategy }),
+    );
+    await act(async () => {
+      await wait(5);
+    });
+
+    act(() => {
+      void result.current.deleteConversation('B');
+      void result.current.switchConversation('B');
+    });
+    await act(async () => {
+      await wait(10);
+    });
+
+    expect(result.current.conversations.some((c) => c.id === 'B')).toBe(false);
+    expect(result.current.activeConversationId).not.toBe('B');
+    expect(result.current.activeConversationId).toBe('A');
+  });
+
+  it('bootstrap selects active: engine built on demand with stored messages visible (K-⑥-3)', async () => {
+    // K-⑥-3 (Cycle 2 / I4): mount bootstrap selects convs[0] as active but
+    // used to build no engine — the default conversation's stored messages
+    // were invisible until a manual switch. The bootstrap must build the
+    // engine on demand and hydrate its stored messages.
+    const { strategy, gates } = gatedLoadStorage({
+      conversations: [convInfo('A'), convInfo('B')],
+      messages: { A: [assistantMsg('stored-A')] },
+    });
+    const { result } = renderHook(() =>
+      useConversation({ connector: slowConnector(okChunks), storage: strategy }),
+    );
+    await act(async () => {
+      await wait(5);
+    });
+
+    expect(result.current.activeConversationId).toBe('A');
+    expect(result.current.activeEngine).not.toBeNull();
+
+    // Release the bootstrap hydration gate → the stored messages are visible
+    // on the active engine WITHOUT any manual switch.
+    await act(async () => {
+      gates[0]();
+      await wait(5);
+    });
+    expect(
+      result.current.activeEngine?.getState().messages.map((m) => m.content),
+    ).toContain('stored-A');
   });
 });
 
@@ -233,7 +333,7 @@ describe('Invariant ⑦ — storage bootstrap list merge (N2)', () => {
     return { strategy, releaseLoad };
   }
 
-  it.fails('bootstrap resolve after create: the created conversation must not be overwritten off the list', async () => {
+  it('bootstrap resolve after create: the created conversation must not be overwritten off the list', async () => {
     const { strategy, releaseLoad } = gatedBootstrapStorage([convInfo('A')]);
     const { result } = renderHook(() =>
       useConversation({ connector: slowConnector(okChunks), storage: strategy }),
@@ -254,7 +354,7 @@ describe('Invariant ⑦ — storage bootstrap list merge (N2)', () => {
     expect(result.current.activeConversationId).toBe(xId);
   });
 
-  it.fails('bootstrap merge semantics: loaded conversations join the list without dropping created ones', async () => {
+  it('bootstrap merge semantics: loaded conversations join the list without dropping created ones', async () => {
     const { strategy, releaseLoad } = gatedBootstrapStorage([convInfo('B'), convInfo('C')]);
     const { result } = renderHook(() =>
       useConversation({ connector: slowConnector(okChunks), storage: strategy }),
@@ -272,5 +372,27 @@ describe('Invariant ⑦ — storage bootstrap list merge (N2)', () => {
     expect(ids).toContain('B');
     expect(ids).toContain('C');
     expect(ids.some((id) => id !== 'B' && id !== 'C')).toBe(true);
+  });
+
+  it('bootstrap in-flight × clearAll: the cleared list must not be resurrected (K-⑦-1)', async () => {
+    // K-⑦-1 (Cycle 2 / I4): clearAll while `loadConversations` is pending
+    // (memory + storage both cleared) — the bootstrap's late resolve must NOT
+    // wholesale-restore the loaded list.
+    const { strategy, releaseLoad } = gatedBootstrapStorage([convInfo('A'), convInfo('B')]);
+    const { result } = renderHook(() =>
+      useConversation({ connector: slowConnector(okChunks), storage: strategy }),
+    );
+
+    act(() => {
+      result.current.clearAll();
+    });
+    await act(async () => {
+      releaseLoad();
+      await wait(10);
+    });
+
+    expect(result.current.conversations).toHaveLength(0);
+    expect(result.current.activeConversationId).toBeNull();
+    expect(result.current.activeEngine).toBeNull();
   });
 });

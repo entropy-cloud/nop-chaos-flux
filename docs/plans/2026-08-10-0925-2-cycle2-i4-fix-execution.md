@@ -1,6 +1,6 @@
 # 2 Cycle 2 / I4 — 修复执行（实例 + 类别清扫 + 门禁补强）（ai-invariant-loop）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: ai-invariant-loop
 > Work Item: Cycle 2 / I4. 修复执行（实例 + 类别清扫 + 测试）
 > Last Reviewed: 2026-08-10
@@ -92,114 +92,114 @@
 
 ### Phase 1 — K-⑩ 失败轮产物清理（engine，5 条）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/engine/create-engine.ts`、`src/engine/__tests__/engine-invariants.test.ts`、`src/adapters/use-conversation.ts`（K-⑩-3 autoSave 臂）、`src/adapters/__tests__/conversation-invariants.test.ts`（autoSave 臂门禁成员，见下）
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Proof: RED 回归测试（K-⑩-1 abort-before-first-chunk 场景）——`abort()` 于首 chunk 前 → 轮次 aborted 后，断言下一 `sendMessage` 的请求历史**不含**空 assistant（`requests[n].messages` 尾部无 `{content:'', loading:false}`）；修复前 RED
-- [ ] Proof: RED 回归测试（K-⑩-2 onBeforeRequest rejection 场景）——plugin `onBeforeRequest` reject → 断言消息列表**无** `loading:true` 幽灵 placeholder（残留被清理或显式标记失败）；修复前 RED
-- [ ] Proof: RED 回归测试（K-⑩-3 autoSave 持久化臂场景，mock storage）——失败轮空残留 → 断言 `savedMessages[A]` **不含**空 assistant（autoSave 快照排除失败轮残留）；修复前 RED
-- [ ] Proof: RED 回归测试（K-⑩-4 regenerate×connector-throw 场景）——regenerate 后 connector-throw → 断言（a）旧回答销毁后**有**替代产物或轮次失败不产生空残留（messages 尾部无 `content:''` 空 assistant）；（b）host 可见错误状态；修复前 RED
-- [ ] Proof: RED 回归测试（K-⑩-5 零 chunk completed 轮场景）——connector 零 chunk 正常 settle → 断言下一请求历史**不含**空 assistant（空响应轮不产空残留）；修复前 RED
-- [ ] Fix: K-⑩ 族——统一「失败/中止/退化轮产物清理」策略（Design 裁定：**空产物（`content:''` + 无 finishReason）的 assistant 消息不得进入请求历史与 autoSave 快照**——在 commitAssistant/终态 mutate 层拦截或 buildContext 排除谓词扩展为「尾部空 assistant（非 loading 且 content 为空）」；同时确保失败轮清空/不提交自己的 placeholder）；按 probe 场景逐条验证
-- [ ] Fix: K-⑩-2——`onBeforeRequest` 纳入 try/finally 清理面（或 rejection 时移除/标记 placeholder），不产生 loading 幽灵
-- [ ] Fix: K-⑩-3——autoSave 快照与 buildContext 同源排除失败轮残留（`use-conversation.ts:202-209` saveMessages 侧或 engine.getMessages 侧收敛）
-- [ ] Fix: K-⑩-4——regenerate 失败路径不得残留空 assistant（与 ⑩-1 清理策略同源）
-- [ ] Fix: K-⑩-5——退化成功轮（零 chunk）同样走清理策略
-- [ ] Fix: 门禁 ⑩ 扩展——`engine-invariants.test.ts` 参数化表新增 5 成员（abort-before-first-chunk / onBeforeRequest 幽灵 / autoSave 持久化臂（conversation-invariants 侧）/ regenerate 臂 / 零 chunk 成功轮）；既有 ⑩ `it.fails` 1 处翻转 `it`（如清理策略改变排除谓词，同步更新测试形态）；扫描器不扩展（行为面，沿用不静态化裁定）
-- [ ] Decision: 记录「空产物不得进入历史与持久化」统一谓词裁定（供 Phase 5 写入 engine.md Failure Path）
-- [ ] Fix: 类别清扫——engine 全部「产物提交/排除」路径核对（commitAssistant 调用点 / buildContext 排除谓词 / getMessages 快照 / autoSave 臂），清扫记录入档
+- [x] Proof: RED 回归测试（K-⑩-1 abort-before-first-chunk 场景）——`abort()` 于首 chunk 前 → 轮次 aborted 后，断言下一 `sendMessage` 的请求历史**不含**空 assistant（`requests[n].messages` 尾部无 `{content:'', loading:false}`）；修复前 RED
+- [x] Proof: RED 回归测试（K-⑩-2 onBeforeRequest rejection 场景）——plugin `onBeforeRequest` reject → 断言消息列表**无** `loading:true` 幽灵 placeholder（残留被清理或显式标记失败）；修复前 RED
+- [x] Proof: RED 回归测试（K-⑩-3 autoSave 持久化臂场景，mock storage）——失败轮空残留 → 断言 `savedMessages[A]` **不含**空 assistant（autoSave 快照排除失败轮残留）；修复前 RED
+- [x] Proof: RED 回归测试（K-⑩-4 regenerate×connector-throw 场景）——regenerate 后 connector-throw → 断言（a）旧回答销毁后**有**替代产物或轮次失败不产生空残留（messages 尾部无 `content:''` 空 assistant）；（b）host 可见错误状态；修复前 RED
+- [x] Proof: RED 回归测试（K-⑩-5 零 chunk completed 轮场景）——connector 零 chunk 正常 settle → 断言下一请求历史**不含**空 assistant（空响应轮不产空残留）；修复前 RED
+- [x] Fix: K-⑩ 族——统一「失败/中止/退化轮产物清理」策略（Design 裁定：**空产物（`content:''` + 无 finishReason）的 assistant 消息不得进入请求历史与 autoSave 快照**——在 commitAssistant/终态 mutate 层拦截或 buildContext 排除谓词扩展为「尾部空 assistant（非 loading 且 content 为空）」；同时确保失败轮清空/不提交自己的 placeholder）；按 probe 场景逐条验证
+- [x] Fix: K-⑩-2——`onBeforeRequest` 纳入 try/finally 清理面（或 rejection 时移除/标记 placeholder），不产生 loading 幽灵
+- [x] Fix: K-⑩-3——autoSave 快照与 buildContext 同源排除失败轮残留（`use-conversation.ts:202-209` saveMessages 侧或 engine.getMessages 侧收敛）
+- [x] Fix: K-⑩-4——regenerate 失败路径不得残留空 assistant（与 ⑩-1 清理策略同源）
+- [x] Fix: K-⑩-5——退化成功轮（零 chunk）同样走清理策略
+- [x] Fix: 门禁 ⑩ 扩展——`engine-invariants.test.ts` 参数化表新增 5 成员（abort-before-first-chunk / onBeforeRequest 幽灵 / autoSave 持久化臂（conversation-invariants 侧）/ regenerate 臂 / 零 chunk 成功轮）；既有 ⑩ `it.fails` 1 处翻转 `it`（如清理策略改变排除谓词，同步更新测试形态）；扫描器不扩展（行为面，沿用不静态化裁定）
+- [x] Decision: 记录「空产物不得进入历史与持久化」统一谓词裁定（供 Phase 5 写入 engine.md Failure Path）
+- [x] Fix: 类别清扫——engine 全部「产物提交/排除」路径核对（commitAssistant 调用点 / buildContext 排除谓词 / getMessages 快照 / autoSave 臂），清扫记录入档
 
 Exit Criteria:
 
-- [ ] K-⑩ 5 条 RED 测试全部转 GREEN（probe A/B/P3/P4/P6 场景断言全绿——K-⑩-2 对应 probe B）
-- [ ] 门禁 ⑩ 扩展覆盖 5 新成员 + 既有 ⑩ it.fails 翻转，live 零命中
-- [ ] 类别清扫记录入档（engine 全部产物提交/排除路径核对结论）
+- [x] K-⑩ 5 条 RED 测试全部转 GREEN（probe A/B/P3/P4/P6 场景断言全绿——K-⑩-2 对应 probe B）
+- [x] 门禁 ⑩ 扩展覆盖 5 新成员 + 既有 ⑩ it.fails 翻转，live 零命中
+- [x] 类别清扫记录入档（engine 全部产物提交/排除路径核对结论）
 
 ### Phase 2 — K-⑥ active 位移完整性（adapter，3 条）+ 注册红 ⑥×3 清零
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/adapters/use-conversation.ts`、`src/adapters/__tests__/conversation-invariants-cycle2.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（K-⑥-1 同 tick clearAll+create+delete 场景）——同 tick 三连后断言 `activeConversationId` **不是**已清会话幽灵（列表为空时 activeId 必为 null / 或 fixup 读到的镜像为最新）；修复前 RED
-- [ ] Proof: RED 回归测试（K-⑥-2 同 tick delete+switch 场景）——delete 后 switch 已删目标 → 断言**不**提升已删会话（activeId 不在列表时为 null 或保持 delete 后 fixup 结果）；修复前 RED
-- [ ] Proof: RED 回归测试（K-⑥-3 bootstrap 选中 active 场景，mock storage）——storage 首挂载 → 断言 `activeEngine` **非 null** 且默认会话的**存储消息渲染可见**（bootstrap 选中 active 即 build-on-demand 建引擎 + 加载存储消息，无需手动 switch 即可见）；修复前 RED
-- [ ] Fix: K-⑥ 族——① create/delete/clearAll 全部 bump `switchVersionRef`（**注册红 ⑥×3 清零**）；② **deleteConversation 与 clearAll 全部同步写 `conversationsRef`**（镜像写面补齐——clearAll 置 `conversationsRef.current = []`、delete 过滤同步，fixup 读最新镜像，K-⑥-1 幽灵根因；与 Phase 3 K-K4/② 共享写面契约，Phase 2 先行落地、Phase 3 以门禁断言固化）；③ **switchConversation 入口 exists 检查（:316 `conversations.some`）改读 `conversationsRef.current` 并保留「目标仍存在」校验（K-⑥-2，守卫须早于 `setActiveId(id)` 生效——仅提升路径校验不足以阻止入口处 activeId 复活 + 新引擎入 cache）**；④ bootstrap `setActiveId` 后为选中 active build-on-demand 建引擎**并加载其存储消息**（K-⑥-3，镜像 `switchConversation` 的 `loadMessages` + version guard 语义——只建引擎不加载则存储消息仍不可见）
-- [ ] Fix: 门禁 ⑥ 扩展——`conversation-invariants-cycle2.test.ts` 参数化表新增同 tick 组合成员（clearAll+create+delete 幽灵 / delete+switch 提升已删目标）+ bootstrap build-on-demand 成员；⑥×5 `it.fails` 全部翻转 `it`；扫描器 `scanDisplacementVersionBumps` 保持（bump 后 live 零命中）
-- [ ] Fix: 类别清扫——全部位移方法（create/delete/clearAll/switch）的 version bump + 镜像写面 + build-on-demand 语义核对（findings §3.1 镜像写面注记：delete/clearAll 缺镜像写——与 Phase 3 K-K4/② 共享写面契约），清扫记录入档
+- [x] Proof: RED 回归测试（K-⑥-1 同 tick clearAll+create+delete 场景）——同 tick 三连后断言 `activeConversationId` **不是**已清会话幽灵（列表为空时 activeId 必为 null / 或 fixup 读到的镜像为最新）；修复前 RED
+- [x] Proof: RED 回归测试（K-⑥-2 同 tick delete+switch 场景）——delete 后 switch 已删目标 → 断言**不**提升已删会话（activeId 不在列表时为 null 或保持 delete 后 fixup 结果）；修复前 RED
+- [x] Proof: RED 回归测试（K-⑥-3 bootstrap 选中 active 场景，mock storage）——storage 首挂载 → 断言 `activeEngine` **非 null** 且默认会话的**存储消息渲染可见**（bootstrap 选中 active 即 build-on-demand 建引擎 + 加载存储消息，无需手动 switch 即可见）；修复前 RED
+- [x] Fix: K-⑥ 族——① create/delete/clearAll 全部 bump `switchVersionRef`（**注册红 ⑥×3 清零**）；② **deleteConversation 与 clearAll 全部同步写 `conversationsRef`**（镜像写面补齐——clearAll 置 `conversationsRef.current = []`、delete 过滤同步，fixup 读最新镜像，K-⑥-1 幽灵根因；与 Phase 3 K-K4/② 共享写面契约，Phase 2 先行落地、Phase 3 以门禁断言固化）；③ **switchConversation 入口 exists 检查（:316 `conversations.some`）改读 `conversationsRef.current` 并保留「目标仍存在」校验（K-⑥-2，守卫须早于 `setActiveId(id)` 生效——仅提升路径校验不足以阻止入口处 activeId 复活 + 新引擎入 cache）**；④ bootstrap `setActiveId` 后为选中 active build-on-demand 建引擎**并加载其存储消息**（K-⑥-3，镜像 `switchConversation` 的 `loadMessages` + version guard 语义——只建引擎不加载则存储消息仍不可见）
+- [x] Fix: 门禁 ⑥ 扩展——`conversation-invariants-cycle2.test.ts` 参数化表新增同 tick 组合成员（clearAll+create+delete 幽灵 / delete+switch 提升已删目标）+ bootstrap build-on-demand 成员；⑥×5 `it.fails` 全部翻转 `it`；扫描器 `scanDisplacementVersionBumps` 保持（bump 后 live 零命中）
+- [x] Fix: 类别清扫——全部位移方法（create/delete/clearAll/switch）的 version bump + 镜像写面 + build-on-demand 语义核对（findings §3.1 镜像写面注记：delete/clearAll 缺镜像写——与 Phase 3 K-K4/② 共享写面契约），清扫记录入档
 
 Exit Criteria:
 
-- [ ] K-⑥ 3 条 RED 测试全部转 GREEN；注册红 ⑥×3 清零（`check:ai-engine-invariants` ⑥ 规则零命中）
-- [ ] 门禁 ⑥ 扩展覆盖新成员 + ⑥×5 it.fails 翻转，live 零命中
-- [ ] 类别清扫记录入档（adapter 位移方法版本/镜像语义核对结论）
+- [x] K-⑥ 3 条 RED 测试全部转 GREEN；注册红 ⑥×3 清零（`check:ai-engine-invariants` ⑥ 规则零命中）
+- [x] 门禁 ⑥ 扩展覆盖新成员 + ⑥×5 it.fails 翻转，live 零命中
+- [x] 类别清扫记录入档（adapter 位移方法版本/镜像语义核对结论）
 
 ### Phase 3 — K-⑦ + K-K4/② + K-K3/④（adapter storage 时序与镜像写面，4 条）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/adapters/use-conversation.ts`、`src/adapters/__tests__/conversation-invariants-cycle2.test.ts`、`src/adapters/__tests__/conversation-invariants.test.ts`、`scripts/audit/find-ai-engine-invariant-violations.mjs`（② 扫描器规则扩展评估）
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（K-⑦-1 bootstrap×clearAll 场景，mock storage 可控 resolve 顺序）——`loadConversations` 在途时 `clearAll()` → 迟到 resolve 后断言 `conversations.length === 0`（已清列表不复活）；修复前 RED
-- [ ] Proof: RED 回归测试（K-K4/②-1 delete+rename 场景，**双序**）——同 tick `deleteConversation(X)` + `renameConversation(X,'T2')`（delete-first 与 rename-first 两序）→ 断言 storage **无** X 幽灵重存（`storage[X]` 不存在）；修复前 RED
-- [ ] Proof: RED 回归测试（K-K4/②-2 rename+clearAll 场景，**双序**）——同 tick `renameConversation('A','T2')` + `clearAll()`（rename-first 与 clearAll-first 两序；rename-first 为 findings P1 复现形态——gated saveConversation 晚于 storage.clearAll resolve 落盘）→ 断言 storage **无** `{A: title:'T2'}` 元数据幽灵；修复前 RED
-- [ ] Proof: RED 回归测试（K-K3/④-1 create+clearAll 场景）——同 tick `createConversation(X)` + `clearAll()` → 断言 storage **无** X 幽灵会话（X 元数据不入排空链 → 修复后排空链覆盖元数据写）；修复前 RED
-- [ ] Fix: K-⑦-1——bootstrap post-await `setConversations` 改 functional merge 且带「列表已被 clearAll 清空」守卫（与 Cycle 2 / I1 ⑦ 契约一致：不得覆盖加载期间状态；clearAll 成员：若 clearAll 已发生则不恢复列表）
-- [ ] Fix: K-K4/②-1 + K-K4/②-2——delete/clearAll 同步写 `conversationsRef`（镜像写面补齐，Phase 2 fix ② 已先行；K4/§7.4 写面从 create/rename 扩展至全部列表变更方法）；rename 的 `saveConversation` 不得重存已删会话——**settlement-time 再校验 + 排空链覆盖双管齐下**：rename 写入时校验镜像目标仍存在（防 rename-first × clearAll/delete 后目标已消失仍落盘），且 rename 的 `saveConversation` 链入 `pendingSavesRef` 排空链（防 gated 写入晚于 storage.clearAll resolve 的「rename-first」顺序幽灵——rename 先触发、clearAll 排空必须覆盖该在途写；K-K4/②-1 的 rename-first × delete 同型）
-- [ ] Fix: K-K3/④-1——create 的 `saveConversation` 元数据写链入 `pendingSavesRef` 排空链（或等价的时序守卫：clearAll/delete 排空覆盖元数据写），与 K3/§7.3 排空链契约对齐（create 元数据写从「不入链」改为「入链」）；**rename 的 `saveConversation` 同样入链**（与 K-K4/②-2 共享排空契约，避免只修 create 漏 rename 的兄弟盲区）
-- [ ] Fix: 门禁 ⑦/②/④ 扩展——⑦：`conversation-invariants-cycle2.test.ts` clearAll 成员新增 + ⑦×2 `it.fails` 翻转；②：`conversation-invariants.test.ts` 镜像写面成员新增（delete/clearAll 同步镜像断言）+ 扫描器 `scanAdapterSyncClosureReads` 写面规则评估（镜像写缺失静态可检性）；④：`conversation-invariants.test.ts` 排空成员新增——**create 与 rename 两个元数据写臂**（同 tick create+clearAll / rename+clearAll 均无幽灵）；committed 回归 fixture 追加
-- [ ] Fix: 类别清扫——adapter 全部列表变更方法（create/rename/delete/clearAll）镜像写面 + 全部 storage 写调用点（saveConversation×2 / saveMessages / delete / clearAll）排空语义核对（与 Phase 1/2 清扫记录互核），清扫记录入档
+- [x] Proof: RED 回归测试（K-⑦-1 bootstrap×clearAll 场景，mock storage 可控 resolve 顺序）——`loadConversations` 在途时 `clearAll()` → 迟到 resolve 后断言 `conversations.length === 0`（已清列表不复活）；修复前 RED
+- [x] Proof: RED 回归测试（K-K4/②-1 delete+rename 场景，**双序**）——同 tick `deleteConversation(X)` + `renameConversation(X,'T2')`（delete-first 与 rename-first 两序）→ 断言 storage **无** X 幽灵重存（`storage[X]` 不存在）；修复前 RED
+- [x] Proof: RED 回归测试（K-K4/②-2 rename+clearAll 场景，**双序**）——同 tick `renameConversation('A','T2')` + `clearAll()`（rename-first 与 clearAll-first 两序；rename-first 为 findings P1 复现形态——gated saveConversation 晚于 storage.clearAll resolve 落盘）→ 断言 storage **无** `{A: title:'T2'}` 元数据幽灵；修复前 RED
+- [x] Proof: RED 回归测试（K-K3/④-1 create+clearAll 场景）——同 tick `createConversation(X)` + `clearAll()` → 断言 storage **无** X 幽灵会话（X 元数据不入排空链 → 修复后排空链覆盖元数据写）；修复前 RED
+- [x] Fix: K-⑦-1——bootstrap post-await `setConversations` 改 functional merge 且带「列表已被 clearAll 清空」守卫（与 Cycle 2 / I1 ⑦ 契约一致：不得覆盖加载期间状态；clearAll 成员：若 clearAll 已发生则不恢复列表）
+- [x] Fix: K-K4/②-1 + K-K4/②-2——delete/clearAll 同步写 `conversationsRef`（镜像写面补齐，Phase 2 fix ② 已先行；K4/§7.4 写面从 create/rename 扩展至全部列表变更方法）；rename 的 `saveConversation` 不得重存已删会话——**settlement-time 再校验 + 排空链覆盖双管齐下**：rename 写入时校验镜像目标仍存在（防 rename-first × clearAll/delete 后目标已消失仍落盘），且 rename 的 `saveConversation` 链入 `pendingSavesRef` 排空链（防 gated 写入晚于 storage.clearAll resolve 的「rename-first」顺序幽灵——rename 先触发、clearAll 排空必须覆盖该在途写；K-K4/②-1 的 rename-first × delete 同型）
+- [x] Fix: K-K3/④-1——create 的 `saveConversation` 元数据写链入 `pendingSavesRef` 排空链（或等价的时序守卫：clearAll/delete 排空覆盖元数据写），与 K3/§7.3 排空链契约对齐（create 元数据写从「不入链」改为「入链」）；**rename 的 `saveConversation` 同样入链**（与 K-K4/②-2 共享排空契约，避免只修 create 漏 rename 的兄弟盲区）
+- [x] Fix: 门禁 ⑦/②/④ 扩展——⑦：`conversation-invariants-cycle2.test.ts` clearAll 成员新增 + ⑦×2 `it.fails` 翻转；②：`conversation-invariants.test.ts` 镜像写面成员新增（delete/clearAll 同步镜像断言）+ 扫描器 `scanAdapterSyncClosureReads` 写面规则评估（镜像写缺失静态可检性——**评估落地：新增 `scanMirrorWriteSurface` 规则**）；④：`conversation-invariants.test.ts` 排空成员新增——**create 与 rename 两个元数据写臂**（同 tick create+clearAll / rename+clearAll 均无幽灵）；committed 回归 fixture 追加
+- [x] Fix: 类别清扫——adapter 全部列表变更方法（create/rename/delete/clearAll）镜像写面 + 全部 storage 写调用点（saveConversation×2 / saveMessages / delete / clearAll）排空语义核对（与 Phase 1/2 清扫记录互核），清扫记录入档
 
 Exit Criteria:
 
-- [ ] K-⑦-1 / K-K4/②-1 / K-K4/②-2 / K-K3/④-1 四条 RED 测试全部转 GREEN（storage 终态断言全绿，K-K4/②-1 与 K-K4/②-2 双序覆盖）
-- [ ] 门禁 ⑦/②/④ 扩展覆盖新成员（含 create 与 rename 两个元数据排空臂）+ ⑦×2 it.fails 翻转，live 零命中
-- [ ] 类别清扫记录入档（adapter 镜像写面 + storage 排空全部调用点核对结论）
+- [x] K-⑦-1 / K-K4/②-1 / K-K4/②-2 / K-K3/④-1 四条 RED 测试全部转 GREEN（storage 终态断言全绿，K-K4/②-1 与 K-K4/②-2 双序覆盖）
+- [x] 门禁 ⑦/②/④ 扩展覆盖新成员（含 create 与 rename 两个元数据排空臂）+ ⑦×2 it.fails 翻转，live 零命中
+- [x] 类别清扫记录入档（adapter 镜像写面 + storage 排空全部调用点核对结论）
 
 ### Phase 4 — K-⑨-1 plugin 错误隔离 abort 变体 + 注册红 ⑧ 清零（engine）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/engine/create-engine.ts`、`src/engine/__tests__/engine-invariants.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: RED 回归测试（K-⑨-1 abort 变体场景）——aborted 轮 + plugin `onTurnEnd` reject → 断言 host-facing `sendMessage` promise **不 reject**（终态正确落 'aborted'，onTurnEnd rejection 被隔离：落 `lastError` 或静默记录，不遮蔽 aborted 终态、不产生 unhandled rejection）；修复前 RED
-- [ ] Fix: K-⑨-1——finally 内 `await plugin.onTurnEnd` 加 abort 变体守卫（aborted 轮 onTurnEnd rejection 不 reject host-facing promise；错误经隔离路径记录）；对齐 ⑨ 契约「onTurnEnd rejection 不得遮蔽原错误」
-- [ ] Fix: 注册红 ⑧ 清零——connector-missing 早退路径（`create-engine.ts:210-229`）在 return 前清 `pendingBranchId`（戳不得泄漏到下一 turn）
-- [ ] Fix: 门禁 ⑨ 扩展——`engine-invariants.test.ts` abort 变体成员新增；⑨×3 `it.fails` 全部翻转 `it`；⑧ `it.fails` 1 处翻转 `it`（connector-missing 早退清戳后）
-- [ ] Fix: 类别清扫——engine 全部 plugin hook 调用点（onTurnStart/onBeforeRequest/onError/onAfterRequest/onTurnEnd）错误隔离语义核对（abort 变体 + 非 abort 变体全覆盖），清扫记录入档
+- [x] Proof: RED 回归测试（K-⑨-1 abort 变体场景）——aborted 轮 + plugin `onTurnEnd` reject → 断言 host-facing `sendMessage` promise **不 reject**（终态正确落 'aborted'，onTurnEnd rejection 被隔离：落 `lastError` 或静默记录，不遮蔽 aborted 终态、不产生 unhandled rejection）；修复前 RED
+- [x] Fix: K-⑨-1——finally 内 `await plugin.onTurnEnd` 加 abort 变体守卫（aborted 轮 onTurnEnd rejection 不 reject host-facing promise；错误经隔离路径记录）；对齐 ⑨ 契约「onTurnEnd rejection 不得遮蔽原错误」
+- [x] Fix: 注册红 ⑧ 清零——connector-missing 早退路径（`create-engine.ts:210-229`）在 return 前清 `pendingBranchId`（戳不得泄漏到下一 turn）
+- [x] Fix: 门禁 ⑨ 扩展——`engine-invariants.test.ts` abort 变体成员新增；⑨×3 `it.fails` 全部翻转 `it`；⑧ `it.fails` 1 处翻转 `it`（connector-missing 早退清戳后）
+- [x] Fix: 类别清扫——engine 全部 plugin hook 调用点（onTurnStart/onBeforeRequest/onError/onAfterRequest/onTurnEnd）错误隔离语义核对（abort 变体 + 非 abort 变体全覆盖），清扫记录入档
 
 Exit Criteria:
 
-- [ ] K-⑨-1 RED 测试转 GREEN；注册红 ⑧ 清零（`check:ai-engine-invariants` ⑧ 规则零命中）
-- [ ] 门禁 ⑨ 扩展覆盖 abort 变体 + ⑨×3/⑧×1 it.fails 翻转，live 零命中
-- [ ] 类别清扫记录入档（engine plugin hook 错误隔离全部调用点核对结论）
+- [x] K-⑨-1 RED 测试转 GREEN；注册红 ⑧ 清零（`check:ai-engine-invariants` ⑧ 规则零命中）
+- [x] 门禁 ⑨ 扩展覆盖 abort 变体 + ⑨×3/⑧×1 it.fails 翻转，live 零命中
+- [x] 类别清扫记录入档（engine plugin hook 错误隔离全部调用点核对结论）
 
 ### Phase 5 — 类别清扫复核 + 注册红清零终验 + 登记处同步 + bug notes
 
-Status: planned
+Status: completed
 Targets: `docs/audits/ai-invariants/invariant-catalog.md`、`docs/audits/ai-invariants/gates.md`、`docs/components/flux-renderers-ai/engine.md`、`docs/bugs/`、`docs/logs/2026/08-10.md`、`docs/audits/ai-invariants/cycle2-findings.md`（W-E/W-⑨-b 行更新）
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] Proof: 类别清扫终审——跨 engine + adapter grep 全部修复族兄弟实例（失败轮产物清理 / version bump+镜像写面 / bootstrap 合并 / storage 排空 / plugin 错误隔离），与 Phase 1-4 清扫记录逐条核对，形成清扫总表（文件:行 + 结论）入档
-- [ ] Proof: `it.fails` 全量翻转核验——12 处（⑥×5 + ⑦×2 + ⑧×1 + ⑨×3 + ⑩×1）全部 `it` 且全绿；新增成员用例全绿；`pnpm --filter @nop-chaos/flux-renderers-ai test` 全量零回归（基线 67 files / 544 + 新增用例，以 live 为准记录）
-- [ ] Proof: `pnpm check:ai-engine-invariants`（扩展后）live 零命中——注册红 ⑥×3 + ⑧×1 清零确认
-- [ ] Fix: `invariant-catalog.md` §10（Cycle 2 / I4 扩展契约：⑩ 空产物清理谓词 / ⑥ 同 tick + bootstrap 成员 / ⑦ clearAll 成员 / ② 镜像写面 / ④ 元数据排空 / ⑨ abort 变体）——**显式 supersede §7.3 类别清扫结论**（「saveConversation（create/rename）不入排空链」被 K-K3/④-1 修复推翻，改为「create/rename 元数据写均入排空链」）**与 §7.4 写面范围**（从 create/rename 扩展至全部列表变更方法）+ `gates.md` 门禁清单更新（⑥-⑩ 行棘轮状态 → 全绿/翻转 + 注册红节清零）+ `engine.md` §Invariants 同步（已知违背面 Failure Path → 已修复态 + K-⑩-1 空产物清理设计裁定）
-- [ ] Fix: bug notes 125+（13 条 K finding 按族合并：⑩ 族 / ⑥ 族 / ⑦ / K-K4/② / K-K3/④ / ⑨，按 `docs/bugs/00-bug-fix-note-writing-guide.md`：触发 / 诊断 / 根因 / 修复 / 类别清扫范围 / 回归测试）
-- [ ] Proof: W-E / W-⑨-b 附带评估——K-⑩-1 修复后 W-E（onAfterRequest 空回调）是否自然收敛、K-⑥-3 修复后 W-⑨-b（bootstrap-active 会话 autoSave）是否自然覆盖；结论回写 `cycle2-findings.md` §3.3 对应行（维持或移除，如实记录）
-- [ ] Proof: `pnpm test:scripts`（committed 回归追加用例全绿）+ `pnpm check:docs-garbled`（新增/修改 docs 候选核对）
-- [ ] Follow-up: daily log 记录本 plan 收口（13 条 K 修复 + 注册红清零 + 门禁扩展 + 清扫总表摘要 + W-E/W-⑨-b 评估结论）
+- [x] Proof: 类别清扫终审——跨 engine + adapter grep 全部修复族兄弟实例（失败轮产物清理 / version bump+镜像写面 / bootstrap 合并 / storage 排空 / plugin 错误隔离），与 Phase 1-4 清扫记录逐条核对，形成清扫总表（文件:行 + 结论）入档
+- [x] Proof: `it.fails` 全量翻转核验——12 处（⑥×5 + ⑦×2 + ⑧×1 + ⑨×3 + ⑩×1）全部 `it` 且全绿；新增成员用例全绿；`pnpm --filter @nop-chaos/flux-renderers-ai test` 全量零回归（基线 67 files / 544 + 新增用例，以 live 为准记录）
+- [x] Proof: `pnpm check:ai-engine-invariants`（扩展后）live 零命中——注册红 ⑥×3 + ⑧×1 清零确认
+- [x] Fix: `invariant-catalog.md` §10（Cycle 2 / I4 扩展契约：⑩ 空产物清理谓词 / ⑥ 同 tick + bootstrap 成员 / ⑦ clearAll 成员 / ② 镜像写面 / ④ 元数据排空 / ⑨ abort 变体）——**显式 supersede §7.3 类别清扫结论**（「saveConversation（create/rename）不入排空链」被 K-K3/④-1 修复推翻，改为「create/rename 元数据写均入排空链」）**与 §7.4 写面范围**（从 create/rename 扩展至全部列表变更方法）+ `gates.md` 门禁清单更新（⑥-⑩ 行棘轮状态 → 全绿/翻转 + 注册红节清零）+ `engine.md` §Invariants 同步（已知违背面 Failure Path → 已修复态 + K-⑩-1 空产物清理设计裁定）
+- [x] Fix: bug notes 125+（13 条 K finding 按族合并：⑩ 族 / ⑥ 族 / ⑦ / K-K4/② / K-K3/④ / ⑨，按 `docs/bugs/00-bug-fix-note-writing-guide.md`：触发 / 诊断 / 根因 / 修复 / 类别清扫范围 / 回归测试）
+- [x] Proof: W-E / W-⑨-b 附带评估——K-⑩-1 修复后 W-E（onAfterRequest 空回调）是否自然收敛、K-⑥-3 修复后 W-⑨-b（bootstrap-active 会话 autoSave）是否自然覆盖；结论回写 `cycle2-findings.md` §3.3 对应行（维持或移除，如实记录）
+- [x] Proof: `pnpm test:scripts`（committed 回归追加用例全绿）+ `pnpm check:docs-garbled`（新增/修改 docs 候选核对）
+- [x] Follow-up: daily log 记录本 plan 收口（13 条 K 修复 + 注册红清零 + 门禁扩展 + 清扫总表摘要 + W-E/W-⑨-b 评估结论）
 
 Exit Criteria:
 
-- [ ] 清扫总表入档（含全部兄弟实例核对结论，closure audit 抽查依据）
-- [ ] `it.fails` 12 处全量翻转全绿 + 注册红 ⑥×3/⑧×1 清零（`check:ai-engine-invariants` exit 0）
-- [ ] catalog §10 / gates.md / engine.md 与 live 门禁状态一致；bug notes 125+ 落档；AI 包测试全绿零回归；W-E/W-⑨-b 评估结论回写
+- [x] 清扫总表入档（含全部兄弟实例核对结论，closure audit 抽查依据）
+- [x] `it.fails` 12 处全量翻转全绿 + 注册红 ⑥×3/⑧×1 清零（`check:ai-engine-invariants` exit 0）
+- [x] catalog §10 / gates.md / engine.md 与 live 门禁状态一致；bug notes 125+ 落档；AI 包测试全绿零回归；W-E/W-⑨-b 评估结论回写
 
 ## Draft Review Record
 
@@ -222,17 +222,17 @@ Exit Criteria:
 
 > 关闭条件：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 13 条 K finding 全部修复落地，各自 RED→GREEN 回归测试在案（probe A/B/P3/P4/P6/C/C2/P7/F/D/P1/P2/P5 场景）
-- [ ] 注册红清零：⑥×3（create/delete/clearAll bump）+ ⑧×1（connector-missing 清戳）→ `check:ai-engine-invariants` exit 0 零命中
-- [ ] 门禁 ⑥⑦⑨⑩②④ 扩展全部落地（参数化测试 + 扫描器规则（如适用）+ committed 回归追加），12 处 `it.fails` 全量翻转且全绿
-- [ ] 类别清扫强制满足：清扫总表入档（修任一实例必核对全部兄弟；closure audit 抽查）
-- [ ] 不存在被静默降级到 deferred 的 in-scope live defect（13 条 K 全部修复；watch-only 8 条路由明确且不在本 plan scope；W-E/W-⑨-b 评估结论如实记录）
-- [ ] 登记处同步完成：`invariant-catalog.md` §10 / `gates.md` / `engine.md` §Invariants / bug notes 125+ / `cycle2-findings.md` W-E/W-⑨-b 行
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 13 条 K finding 全部修复落地，各自 RED→GREEN 回归测试在案（probe A/B/P3/P4/P6/C/C2/P7/F/D/P1/P2/P5 场景）
+- [x] 注册红清零：⑥×3（create/delete/clearAll bump）+ ⑧×1（connector-missing 清戳）→ `check:ai-engine-invariants` exit 0 零命中
+- [x] 门禁 ⑥⑦⑨⑩②④ 扩展全部落地（参数化测试 + 扫描器规则（如适用）+ committed 回归追加），12 处 `it.fails` 全量翻转且全绿
+- [x] 类别清扫强制满足：清扫总表入档（修任一实例必核对全部兄弟；closure audit 抽查）
+- [x] 不存在被静默降级到 deferred 的 in-scope live defect（13 条 K 全部修复；watch-only 8 条路由明确且不在本 plan scope；W-E/W-⑨-b 评估结论如实记录）
+- [x] 登记处同步完成：`invariant-catalog.md` §10 / `gates.md` / `engine.md` §Invariants / bug notes 125+ / `cycle2-findings.md` W-E/W-⑨-b 行
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -245,17 +245,77 @@ Exit Criteria:
 ## Non-Blocking Follow-ups
 
 - 修复后如发现新兄弟实例（类别清扫证据），回读 I3 裁决表确认路由一致（对齐 Cycle 1 先例）。
-- K-⑩ 空产物清理设计裁定在 engine.md 显式记录（重构防回退）。
+- K-⑩ 空产物清理设计裁定在 engine.md 显式记录（重构防回退）——已落（engine.md §Invariants「空产物清理设计裁定」节）。
+
+## 类别清扫总表（Sweep Record，closure audit 抽查依据）
+
+> 2026-08-10 live 逐条核对；五类修复模式跨 engine + adapter 的全部兄弟实例，与 Phase 1-4 清扫记录逐条勾对。行号为总表成表时的 live 位置。
+> 注（check:oversized-code-files 门禁）：I4 新增测试使 `engine-invariants.test.ts`（789 行）/ `conversation-invariants.test.ts`（775 行）超 700 行上限——按 cycle2 先例拆分：⑩ 门禁块 → 新文件 `engine-invariants-i4.test.ts`；⑩ autoSave 臂 + ②/④ 元数据排空/镜像写面块 → 新文件 `conversation-invariants-i4.test.ts`（两原文件回到 ≤700，`check:oversized-code-files` 仅既有 2 exempt locale；gates.md / catalog §10 / engine.md 运行命令 / bug notes 125/128/129 引用同步更新）。
+
+### A. 失败轮产物清理（engine 产物提交/排除面，全部调用点）
+
+| live 位置                     | 面                                | 结论                                                                                |
+| ----------------------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
+| `create-engine.ts:453`        | onBeforeRequest rejection         | `commitOrDropResidue`（drop 空 placeholder）+ rethrow → runTurn catch 落态（K-⑩-2） |
+| `create-engine.ts:474-486`    | `commitOrDropResidue` 定义        | 空产物（`isVacuousAssistantResidue` :476）→ splice drop；非空 → 普通 commit         |
+| `create-engine.ts:513`        | chunk 循环 per-chunk commit       | 保持普通 commit（流式中途 drop 破坏流）——记录                                       |
+| `create-engine.ts:534`        | post-stream 终态提交              | `commitOrDropResidue`（K-⑩-1 aborted / K-⑩-5 零 chunk 成功轮）                      |
+| `create-engine.ts:551`        | runOnce catch 终态提交            | `commitOrDropResidue`（K-⑩-3 持久化臂 / K-⑩-4 regenerate 臂）                       |
+| `create-engine.ts:578-582`    | buildContext 尾部排除谓词         | 扩展为 `loading \|\| vacuous`（纵深防御）                                           |
+| `use-conversation.ts:197-207` | attachAutoSave 快照               | 尾部剥除 vacuous（覆盖 `abort()` 同步翻 state 早于 engine 清理的窗口，K-⑩-3）       |
+| `ai-component-handle.ts:71`   | `component:getMessages` host 快照 | 主机显式读取面，不在「请求历史/持久化」契约内——记录（不改）                         |
+
+### B. version bump + 镜像写面（adapter 全部位移方法）
+
+| live 位置                     | 方法               | 结论                                                                                |
+| ----------------------------- | ------------------ | ----------------------------------------------------------------------------------- |
+| `use-conversation.ts:385-388` | createConversation | 镜像同步 prepend + `++switchVersionRef` + `switchTargetRef = null`                  |
+| `use-conversation.ts:494-497` | deleteConversation | 镜像同步 filter + `++switchVersionRef` + target 重置（K-⑥-1/2 根因面）              |
+| `use-conversation.ts:600-602` | clearAll           | 镜像同步 `[]` + `++switchVersionRef` + target 重置                                  |
+| `use-conversation.ts:428-435` | switchConversation | 入口 exists 读镜像（K-⑥-2）+ id-aware bump/target（同 id 重 switch 不丢 hydration） |
+| `use-conversation.ts:317-325` | bootstrap merge    | 镜像同步写 merged（Phase 3，K-⑦ 合并面）                                            |
+
+### C. bootstrap 合并 + build-on-demand（adapter）
+
+| live 位置                     | 面                           | 结论                                                                            |
+| ----------------------------- | ---------------------------- | ------------------------------------------------------------------------------- |
+| `use-conversation.ts:303-312` | bootstrap post-await         | 合并（`[...loaded, ...created]`）+ `listClearedRef` 守卫（K-⑦-1）               |
+| `use-conversation.ts:594`     | clearAll 置 `listClearedRef` | 守卫标记（K-⑦-1）                                                               |
+| `use-conversation.ts:260-291` | `ensureEngineAndHydrate`     | bootstrap/delete-fixup build-on-demand + loadMessages + id-aware guard（K-⑥-3） |
+
+### D. storage 排空（adapter 全部写调用点）
+
+| live 位置                     | 调用点                        | 结论                                                                   |
+| ----------------------------- | ----------------------------- | ---------------------------------------------------------------------- |
+| `use-conversation.ts:225-232` | attachAutoSave `saveMessages` | 既有 K3 入链 ✓（不变）                                                 |
+| `use-conversation.ts:408-418` | create `saveConversation`     | **I4：入 `pendingSavesRef` 链 + settlement 镜像再校验（K-K3/④-1）**    |
+| `use-conversation.ts:559-573` | rename `saveConversation`     | **I4：入链 + settlement 再校验（K-K4/②-1/2；与 create 共享排空契约）** |
+| `use-conversation.ts:527-531` | delete drain                  | 排空覆盖元数据链（await allSettled → storage delete）                  |
+| `use-conversation.ts:608-630` | clearAll drain + storage 清   | 排空覆盖元数据链（drain → clearAll/per-id fan-out）                    |
+
+### E. plugin 错误隔离（engine 全部 hook 调用点）
+
+| live 位置                  | hook                         | 结论                                                                             |
+| -------------------------- | ---------------------------- | -------------------------------------------------------------------------------- |
+| `create-engine.ts:248-255` | onTurnStart                  | 移入 try（rejection → catch 落态，不卡 processing；⑨ 注册成员翻转）              |
+| `create-engine.ts:449-453` | onBeforeRequest              | 清理面 wrapper（drop + rethrow，K-⑩-2 幽灵）                                     |
+| `create-engine.ts:230`     | onError（connector-missing） | `callPluginError` 隔离（抛错不跳过状态写入）                                     |
+| `create-engine.ts:307`     | onError（tool-no-executor）  | 同上                                                                             |
+| `create-engine.ts:345`     | onError（runTurn catch）     | 同上                                                                             |
+| `create-engine.ts:555`     | onError（runOnce catch）     | 同上                                                                             |
+| `create-engine.ts:510-513` | onCompletionChunk            | try 内 ✓（记录）                                                                 |
+| `create-engine.ts:531-534` | onAfterRequest               | try 内 ✓（记录）——W-E 不收敛结论依据（hook 面未重排）                            |
+| `create-engine.ts:367-387` | onTurnEnd                    | finally 隔离（不 reject host promise；abort 变体 K-⑨-1 + 非 abort 遮蔽原错误面） |
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 已收口（2026-08-10）。13 条 K finding 全部修复落地（test-first 先红后绿在案）、注册红清零（`check:ai-engine-invariants` live 零命中）、门禁 ⑥⑦⑨⑩②④ 补强（12 处 `it.fails` 全量翻转 + 参数化成员扩展 + `scanMirrorWriteSurface` 新规则 + committed 回归追加）、类别清扫总表入档（A-E 五族）、登记处同步（catalog §10 + gates.md + engine.md + bug notes 125-130 + cycle2-findings W-E/W-⑨-b 评估）、full-green 验证（AI 包 69 files / 572/572 全绿零 expected fail；typecheck/build/lint 37/37；test:scripts 40/41 唯一失败为既有 CSS stale literal；pnpm check 仅既有登记 red 零新增）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 fresh sub-agent `ses_01664036affeTCJhM9FDtO59oV`（general，fresh session）
+- Evidence: verdict **PASS_WITH_MINORS**（零 Blocker / 零 Major）——checklist 7 项全 PASS（plan 一致性 / 代码修复落地 spot-check / RED→GREEN 翻转证据 / 门禁复跑全绿 / 类别清扫 / 登记处同步 / 无静默降级）；2 Minor 非阻塞（gates.md committed 回归计数 13→11 文案算术、daily log Phase 2「⑤」→「⑥」单字笔误）均已就地修复；审计复跑：AI 包 572/572、`check:ai-engine-invariants` exit 0、typecheck/build/lint 37/37、test:scripts 40/41（唯一失败 HEAD stash 实证 pre-existing）、pnpm check 仅既有登记 red。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- 无 confirmed live defect；non-blocking follow-up：修复后如发现新兄弟实例（类别清扫证据）回读 I3 裁决表确认路由一致（对齐 Cycle 1 先例，plan Non-Blocking Follow-ups 已记录）。

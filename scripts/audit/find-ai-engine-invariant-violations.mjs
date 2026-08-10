@@ -439,6 +439,57 @@ function scanBranchStampReset(code, relPath) {
   return violations;
 }
 
+/**
+ * Invariant ② (K-K4/② extension, Cycle 2 / I4) — list-mutation methods must
+ * synchronously maintain the conversationsRef mirror (write surface).
+ *
+ * create/rename already did (Cycle 1 K4). delete/clearAll must too: a missing
+ * write lets a same-tick reader (rename save settlement check / delete fixup /
+ * switch exists-check) act on stale data — the delete's fixup re-selected a
+ * cleared ghost conversation (K-⑥-1), rename re-saved a deleted conversation
+ * (K-K4/②-1) and re-landed metadata after clearAll (K-K4/②-2). Same scan
+ * shape as scanDisplacementVersionBumps: the function body must contain a
+ * `conversationsRef.current = ...` write.
+ */
+function scanMirrorWriteSurface(code, relPath) {
+  const violations = [];
+  const lines = code.split('\n');
+  const listMutators = /^\s*(?:async\s+)?function\s+(createConversation|renameConversation|deleteConversation|clearAll)\s*\(/;
+  const mirrorWriteRe = /conversationsRef\.current\s*=/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const decl = lines[i].match(listMutators);
+    if (!decl) continue;
+
+    let depth = 0;
+    let bodyStart = -1;
+    let bodyEnd = -1;
+    for (let j = i; j < lines.length; j++) {
+      const stripped = lines[j].replace(/\/\/.*$/, '');
+      for (const ch of stripped) {
+        if (ch === '{') { depth += 1; if (depth === 1 && bodyStart < 0) bodyStart = j; }
+        else if (ch === '}') depth -= 1;
+      }
+      if (bodyStart >= 0 && depth === 0) {
+        bodyEnd = j;
+        break;
+      }
+    }
+    if (bodyEnd < 0) continue;
+
+    const body = lines.slice(bodyStart, bodyEnd + 1).join('\n');
+    if (!mirrorWriteRe.test(body)) {
+      violations.push({
+        file: relPath,
+        line: i + 1,
+        invariant: '②',
+        detail: `list-mutation method ${decl[1]} does not synchronously write conversationsRef.current (invariant ②, K-K4/② mirror write surface)`,
+      });
+    }
+  }
+  return violations;
+}
+
 async function main() {
   const allViolations = [];
 
@@ -459,6 +510,7 @@ async function main() {
       allViolations.push(...scanPostAwaitClosureReads(code, relPath));
       allViolations.push(...scanAdapterSyncClosureReads(code, relPath));
       allViolations.push(...scanDisplacementVersionBumps(code, relPath));
+      allViolations.push(...scanMirrorWriteSurface(code, relPath));
     }
 
     // ③ controller identity guard — only for create-engine.ts

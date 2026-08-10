@@ -4,6 +4,7 @@ import {
   generateMessageId,
   isEmptyContent,
   isStreamingAssistantPlaceholder,
+  isVacuousAssistantResidue,
 } from './utils.js';
 import { createNativeMessageAdapter } from './native-adapter.js';
 import {
@@ -213,6 +214,10 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       // tool-no-executor branch so error-state consumers can read the reason
       // instead of just the requestState flip (Failure Path FP-6). Was
       // previously a silent error transition with no lastError written.
+      // ⑧ (ai-invariant-loop): consume the pending branch stamp before this
+      // early return — regenerate stamps it and this path never reaches
+      // runOnce's consumption (probe-3 leak into the next unrelated turn).
+      pendingBranchId = undefined;
       const connectorMissingError = new Error('connector-missing');
       const errorCtxAbort = createAbortController();
       adapter.mutate('requestState', (draft) => {
@@ -222,9 +227,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         draft.processingState = undefined;
         draft.lastError = connectorMissingError;
       });
-      for (const plugin of plugins) {
-        plugin.onError?.(buildContext(errorCtxAbort), connectorMissingError);
-      }
+      callPluginError(errorCtxAbort, connectorMissingError);
       return;
     }
 
@@ -241,14 +244,17 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       draft.lastError = undefined;
     });
 
-    // Fire onTurnStart once for the whole turn (NOT per round) so the plugin
-    // hook order stays: turnStart → (beforeRequest → chunks → afterRequest)* → turnEnd.
-    const turnCtx = buildContext(abortController);
-    for (const plugin of plugins) {
-      await plugin.onTurnStart?.(turnCtx);
-    }
-
     try {
+      // Fire onTurnStart once for the whole turn (NOT per round) so the plugin
+      // hook order stays: turnStart → (beforeRequest → chunks → afterRequest)* → turnEnd.
+      // ⑨ (ai-invariant-loop): onTurnStart is INSIDE the try/finally cleanup
+      // surface — a rejection must settle the turn (state write via the catch
+      // path), not stick `processing` nor reject the host-facing promise.
+      const turnCtx = buildContext(abortController);
+      for (const plugin of plugins) {
+        await plugin.onTurnStart?.(turnCtx);
+      }
+
       let rounds = 0;
       // Prime the loop: the first request uses the full conversation history.
       let needsFollowUp = true;
@@ -298,9 +304,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
               draft.processingState = undefined;
               draft.lastError = noExecutorError;
             });
-            for (const plugin of plugins) {
-              plugin.onError?.(buildContext(abortController), noExecutorError);
-            }
+            callPluginError(abortController, noExecutorError);
             return;
           }
           // Execute each tool_call, append role:'tool' result messages, then
@@ -335,9 +339,10 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       });
     } catch (error) {
       const aborted = abortController.signal.aborted;
-      for (const plugin of plugins) {
-        plugin.onError?.(buildContext(abortController), error);
-      }
+      // ⑨ (ai-invariant-loop): a throwing onError must not skip the state
+      // write below (it used to propagate out of the catch and reject the
+      // host-facing promise with the turn stuck mid-state).
+      callPluginError(abortController, error);
       adapter.mutate('requestState', (draft) => {
         // P1#1 controller-identity guard: a stale turn whose abort raced a new
         // `sendMessage` must not overwrite the new turn's requestState /
@@ -360,7 +365,37 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         }
       });
       for (const plugin of plugins) {
-        await plugin.onTurnEnd?.(buildContext(abortController));
+        // K-⑨-1 (ai-invariant-loop): isolate onTurnEnd rejections — an aborted
+        // turn's plugin teardown failure must NOT reject the host-facing
+        // promise (`void engine.sendMessage()` → unhandled rejection). The
+        // error is recorded via lastError only when the turn has no prior
+        // error to keep (a failed round keeps its original error; an aborted
+        // round records the teardown failure without changing its terminal
+        // state).
+        try {
+          await plugin.onTurnEnd?.(buildContext(abortController));
+        } catch (error) {
+          adapter.mutate('requestState', (draft) => {
+            if (draft.abortController !== abortController) return;
+            if (draft.lastError) return;
+            draft.lastError = error;
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * ⑨ (ai-invariant-loop): forward a turn error to every plugin's onError,
+   * isolating per-plugin rejections so a throwing onError can neither skip
+   * the engine's own state write nor propagate to the host-facing promise.
+   */
+  function callPluginError(abortController: AbortController, error: unknown): void {
+    for (const plugin of plugins) {
+      try {
+        plugin.onError?.(buildContext(abortController), error);
+      } catch {
+        // Isolated: plugin errors never change the turn's outcome.
       }
     }
   }
@@ -405,8 +440,18 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     });
 
     const ctx = buildContext(abortController);
-    for (const plugin of plugins) {
-      await plugin.onBeforeRequest?.(ctx);
+    // K-⑩-2 (ai-invariant-loop): `onBeforeRequest` must be inside the cleanup
+    // surface. The placeholder is pushed above; a rejection here would
+    // otherwise leave a permanent `loading:true` ghost (runOnce's try/catch
+    // never runs). Drop the never-committed placeholder, then rethrow so
+    // runTurn's catch settles the turn state.
+    try {
+      for (const plugin of plugins) {
+        await plugin.onBeforeRequest?.(ctx);
+      }
+    } catch (error) {
+      commitOrDropResidue();
+      throw error;
     }
 
     /** Commit the working `assistant` draft into state with a fresh reference. */
@@ -418,6 +463,26 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
           assistant = draft.messages[assistantIndex];
         }
       });
+    }
+
+    /**
+     * K-⑩ (ai-invariant-loop): terminal commit. A vacuous empty product
+     * (`content:''` + no finishReason — failed / aborted / zero-chunk round)
+     * is REMOVED instead of committed, so it can never enter the next request
+     * history or an autoSave snapshot. Partial content is committed as before.
+     */
+    function commitOrDropResidue(): void {
+      if (assistantIndex < 0) return;
+      if (isVacuousAssistantResidue(assistant)) {
+        adapter.mutate('messages', (draft) => {
+          if (assistantIndex < draft.messages.length) {
+            draft.messages.splice(assistantIndex, 1);
+            assistantIndex = -1;
+          }
+        });
+        return;
+      }
+      commitAssistant();
     }
 
     try {
@@ -466,7 +531,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       for (const plugin of plugins) {
         await plugin.onAfterRequest?.(ctx, assistant);
       }
-      commitAssistant();
+      commitOrDropResidue();
 
       if (abortController.signal.aborted) {
         adapter.mutate('requestState', (draft) => {
@@ -483,11 +548,11 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       return { kind: 'ok', finishReason: lastFinishReason, assistantMessage: assistant };
     } catch (error) {
       assistant.loading = false;
-      commitAssistant();
+      commitOrDropResidue();
       const aborted = abortController.signal.aborted;
-      for (const plugin of plugins) {
-        plugin.onError?.(ctx, error);
-      }
+      // ⑨ (ai-invariant-loop): isolate a throwing onError so the state write
+      // below is never skipped.
+      callPluginError(abortController, error);
       adapter.mutate('requestState', (draft) => {
         // P1#1 controller-identity guard: this is the PRIMARY abort→send race
         // path — the stream rejected mid-stream after abort, while a new turn
@@ -508,7 +573,13 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     const allMessages = adapter.getState().messages;
     // Exclude the trailing in-progress assistant placeholder (empty content,
     // loading) from the request payload; works for follow-up rounds too.
-    const isPlaceholder = allMessages.length > 0 && isStreamingAssistantPlaceholder(allMessages[allMessages.length - 1]);
+    // K-⑩ (ai-invariant-loop): the predicate also excludes a trailing vacuous
+    // residue (empty content, no finishReason, loading or not) — defense in
+    // depth for any path that could still leave one behind.
+    const isPlaceholder =
+      allMessages.length > 0 &&
+      (isStreamingAssistantPlaceholder(allMessages[allMessages.length - 1]) ||
+        isVacuousAssistantResidue(allMessages[allMessages.length - 1]));
     const history = isPlaceholder ? allMessages.slice(0, -1) : allMessages;
     const requestMessages: ChatMessage[] = systemPrompt
       ? [{ id: 'system-prompt', role: 'system', content: systemPrompt }, ...history]

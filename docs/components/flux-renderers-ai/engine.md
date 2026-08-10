@@ -438,30 +438,34 @@ engine 在内部调 `connector.stream({ messages, tools, signal })`；不再有 
 
 ## §Invariants — AI Engine 不变式契约
 
-> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）；2026-08-09 Cycle 2 / I1（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`，N1-N5 → 第二批门禁 ⑥-⑩ 沉淀）
+> 2026-08-09 沉淀（plan `docs/plans/2026-08-09-1826-2-i1-invariant-gate-sedimentation.md`，ai-invariant-loop Cycle 1 / I1）；2026-08-09 扩展（plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`，K1-K4 修复 + 门禁 ②③④⑤ 补强）；2026-08-09 Cycle 2 / I1（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`，N1-N5 → 第二批门禁 ⑥-⑩ 沉淀）；**2026-08-10 Cycle 2 / I4（plan `docs/plans/2026-08-10-0925-2-cycle2-i4-fix-execution.md`：13 条 K finding 全部修复 + 12 处 `it.fails` 翻转 + 注册红清零 + 门禁 ⑥⑦⑨⑩②④ 补强）**
 
 AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大复发失败模式族（并发守卫 / stale-closure / storage 静默丢），已沉淀为**首批 5 类可执行不变式契约**，防重构/新增方法回归。I2 审计在门禁盲区发现 K1-K4 四个实例（I3 裁决 P0/P1），I4 修复并把门禁补强至对应路径；Cycle 1 / I6 按 Loop Rule 派生的 Cycle 2 新族 N1-N5（active 位移完整性 / bootstrap 合并 / branch 戳泄漏 / plugin 错误隔离 / 失败轮残留污染），已沉淀为**第二批门禁 ⑥-⑩**（见下节）：
 
 - **不变式目录**：`docs/audits/ai-invariants/invariant-catalog.md`（每条含陈述 + 覆盖失败族 + 历史 bug 证据 live 行号 + 检测方法；§7 = I4 的 ②③④⑤ 扩展契约；§9 = Cycle 2 的 ⑥-⑩ 契约）。
 - **门禁清单**：`docs/audits/ai-invariants/gates.md`（不变式 × 覆盖方法 × 检测方式 × 运行命令，棘轮单调追加登记处；Cycle 2 追加 ⑥-⑩ 五行 + 注册红节）。
 
-### Cycle 2 门禁 ⑥-⑩（预期红，待 Cycle 2 / I4 修复）
+### Cycle 2 门禁 ⑥-⑩（已修复，Cycle 2 / I4 翻转 + 清零）
 
-> 当前 live 代码违反 ⑥-⑩（N1-N5 全部已复现 RED，findings §3.2 probe 全 RED）——门禁以「预期失败」形态落库：参数化测试用 vitest `it.fails`（断言正确行为 → live 违反 → 预期失败，套件保持全绿）；静态可检测面（⑥⑧）注册为扫描器 red（`check:ai-engine-invariants`，注册 4 命中：⑥×3 + ⑧×1）。**修复 = Cycle 2 / I4 职责**（test-first 先红后绿 + 类别清扫强制）；I4 完成后 `it.fails` 翻转 `it`、注册红清零。
+> 沉淀时（2026-08-09）live 代码违反 ⑥-⑩——门禁以「预期失败」形态落库（`it.fails` ×12 + 扫描器注册红 ⑥×3 + ⑧×1）。**Cycle 2 / I4（2026-08-10）已全部修复：12 处 `it.fails` 全量翻转 `it` 且全绿、注册红清零（`check:ai-engine-invariants` live 零命中）、门禁按 I4 契约补强**（catalog §10：⑩ 空产物统一谓词 / ⑥ 同 tick 组合 + bootstrap build-on-demand / ⑦ clearAll 守卫 / ② 镜像写面 + `scanMirrorWriteSurface` / ④ 元数据排空链 / ⑨ abort 变体）。
 
-- **⑥ active 位移完整性（N1）**：post-await 提升/复水写入（`setActiveEngine`/`engine.setMessages`）以 `activeIdRef`/`switchVersionRef` 为唯一裁决面且目标必须仍存在；位移方法（delete/clearAll/create）必须 bump `switchVersionRef`；删除 active 后 next 引擎 build-on-demand（禁 null 悬挂）；同 id 快速重 switch hydration 不得被整体丢弃。扫描器：`scanDisplacementVersionBumps`（注册红 3：create/delete/clearAll）。
-- **⑦ storage bootstrap 列表合并（N2）**：bootstrap post-await `setConversations` 必须 functional merge，不得覆盖加载期间创建的会话。
-- **⑧ branch 戳消费/清除（N3）**：`pendingBranchId` 使用前必须消费或清除；runTurn 提前返回路径不得遗留待消费戳。扫描器：`scanBranchStampReset`（注册红 1：connector-missing 早退；isProcessing 入口早退豁免——设戳路径不可达）。
-- **⑨ plugin 错误隔离（N4）**：plugin hook rejection 不得使 turn 卡死或绕过状态写入——onTurnStart 纳入 try/finally 清理面；onError 不先于状态写入；onTurnEnd rejection 不遮蔽原错误（全部落 `requestState`/`lastError`）。
-- **⑩ 失败轮产物清理（N5）**：failed/aborted 轮残留空 placeholder 不得进入后续请求历史（移除或排除）；失败轮必须清理自身产物。
+- **⑥ active 位移完整性（N1）**：post-await 提升/复水写入（`setActiveEngine`/`engine.setMessages`）以 `activeIdRef`/`switchVersionRef` 为唯一裁决面且目标必须仍存在；位移方法（delete/clearAll/create）必须 bump `switchVersionRef` + 重置 `switchTargetRef`；switch 入口 exists 检查读镜像；version guard 为 id-aware（同 id 重 switch 不丢 hydration）；删除 active 后 next 引擎 build-on-demand；bootstrap 选中 active 建引擎 + loadMessages（K-⑥-3）。扫描器：`scanDisplacementVersionBumps`（live 零命中）。
+- **⑦ storage bootstrap 列表合并（N2）**：bootstrap post-await `setConversations` 必须合并（不得覆盖加载期间创建的会话）+ clearAll 守卫（已清列表不复活，K-⑦-1）。
+- **⑧ branch 戳消费/清除（N3）**：`pendingBranchId` 使用前必须消费或清除；runTurn 提前返回路径不得遗留待消费戳（connector-missing 早退已清戳）。扫描器：`scanBranchStampReset`（live 零命中）。
+- **⑨ plugin 错误隔离（N4）**：plugin hook rejection 不得使 turn 卡死或绕过状态写入——onTurnStart 纳入 try 清理面；onError 经 `callPluginError` 隔离（抛错不跳过状态写入）；onTurnEnd rejection 隔离（不 reject host-facing promise，abort 变体 K-⑨-1）。
+- **⑩ 失败轮产物清理（N5）**：failed/aborted/退化成功（零 chunk）轮的空产物（`content:''` + 无 finishReason）不得进入请求历史与 autoSave 快照——终态提交层 drop（`commitOrDropResidue`）+ buildContext 尾部排除 + autoSave 尾部剥除（K-⑩-1/2/3/4/5）。
+
+### 空产物清理设计裁定（K-⑩，重构防回退）
+
+**空产物（`content:''` 且无 `finishReason`）的 assistant 消息不得进入请求历史与 autoSave 快照**——统一谓词 `isVacuousAssistantResidue`（`engine/utils.ts`）。三条落地面缺一不可：① 终态提交层 drop（`commitOrDropResidue`，失败/中止/退化轮不提交空产物）；② `buildContext` 尾部排除谓词扩展（纵深防御）；③ autoSave 快照尾部剥除（覆盖 `abort()` 同步翻 `requestState` 早于 engine 清理的窗口）。部分内容（非空）的失败轮产物保留提交（用户已见部分回答）；带 finishReason 的空内容提交保留（真实完成）。见 `docs/audits/ai-invariants/invariant-catalog.md` §10.1 / bug note 125。
 
 ### 运行命令
 
 ```bash
-# 参数化穷举不变式测试（engine + adapter，含表完备性门禁；⑥⑦ 在 conversation-invariants-cycle2.test.ts）
-pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts src/adapters/__tests__/conversation-invariants-cycle2.test.ts
+# 参数化穷举不变式测试（engine + adapter，含表完备性门禁；⑥⑦ 在 conversation-invariants-cycle2.test.ts，⑩ 与 ②/④ 元数据排空臂在 engine-invariants-i4.test.ts / conversation-invariants-i4.test.ts）
+pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts src/adapters/__tests__/conversation-invariants-cycle2.test.ts src/engine/__tests__/engine-invariants-i4.test.ts src/adapters/__tests__/conversation-invariants-i4.test.ts
 
-# 静态门禁（②③④⑥⑧，①⑤⑦⑨⑩ 纯行为/行为面不静态化；Cycle 2 注册红 = ⑥×3 + ⑧×1 预期命中）
+# 静态门禁（②③④⑥⑧ + ② 镜像写面；①⑤⑦⑨⑩ 纯行为/行为面不静态化；Cycle 2 / I4 后 live 零命中）
 pnpm check:ai-engine-invariants
 ```
 
@@ -475,14 +479,13 @@ engine/adapter 任何新增或重构的变更方法若不在测试表也不在�
 
 `abort()` 以 best-effort 强制终结在途 generator（`activeGenerator?.return()` + chunk 循环每迭代 `signal.aborted` 检查）——**协作式** generator（挂在 `yield` 上）经 `.return()` 立即结算；**永不 yield 的 generator（卡在自己内部 `await`）无法从外部抢占**，属 **connector 契约违背**，非 engine 缺陷（invariant-catalog §7.2 / bug note 122）。host 侧若需绝对终止保证，connector 必须尊重 `request.signal` 或保持协作式 yield 结构。
 
-### Failure Path — 已知违背面（Cycle 2 / ⑥-⑩，待 I4 修复）
+### Failure Path — 已知违背面（Cycle 2 / ⑥-⑩，已修复）
 
-当前 live 代码的以下面已被门禁钉死为**预期红**（`it.fails` + 扫描器注册红），Cycle 2 / I4 修复前行为即违背：
+> Cycle 2 / I4（2026-08-10）修复前，以下面曾被门禁钉死为预期红（`it.fails` + 扫描器注册红）。**全部已修复并翻转**（`engine-invariants.test.ts` / `conversation-invariants-cycle2.test.ts` / `conversation-invariants.test.ts` 全 `it` 全绿；`check:ai-engine-invariants` live 零命中）。本段保留为修复记录：
 
-- **失败轮空 placeholder 进后续历史**（⑩/N5）：失败轮 catch 提交 `loading=false, content=''` 的 assistant placeholder，`buildContext` 仅排除 `loading===true` 尾消息 → 空块进入下一请求（严格后端拒绝）。
-- **plugin hook rejection 卡死 turn**（⑨/N4）：`onTurnStart` 在 try 之外（rejection 使 `processing` 卡死）、catch 内 `onError` 先于状态写入（抛错跳过 mutate）、`onTurnEnd` rejection 遮蔽原错误。
-- **active 位移错位**（⑥/N1）：switch 在途 × delete/clearAll/create 时，post-await 提升/复水可能覆盖被位移的 active 状态；delete active 后 next 引擎 null 悬挂；同 id 快速重 switch hydration 被 version guard 丢弃。
-- **branch 戳泄漏**（⑧/N3）：connector-missing 早退遗留 `pendingBranchId` → 下一无关 turn 被戳 branchId。
-- **bootstrap 列表覆盖**（⑦/N2）：bootstrap 整体覆盖加载期间创建的会话。
-
-修复路由 = Cycle 2 / I4（roadmap Phase Details I4，test-first 先红后绿 + 类别清扫强制）；修复完成即 `it.fails` 翻转 `it` + 注册红清零。
+- **失败轮空 placeholder 进后续历史/持久化**（⑩/N5）：失败轮 catch 提交 `loading=false, content=''` 的 assistant placeholder，`buildContext` 仅排除 `loading===true` 尾消息 → 空块进入下一请求（严格后端拒绝）且经 autoSave 持久化。**修复**：空产物（`content:''` + 无 finishReason）统一谓词 `isVacuousAssistantResidue`（`engine/utils.ts`）——终态提交层 drop（`commitOrDropResidue`）、buildContext 尾部排除扩展、autoSave 快照尾部剥除（K-⑩-1/2/3/4/5，bug note 125）。
+- **plugin hook rejection 卡死 turn**（⑨/N4）：`onTurnStart` 在 try 之外（rejection 使 `processing` 卡死）、catch 内 `onError` 先于状态写入（抛错跳过 mutate）、`onTurnEnd` rejection 遮蔽原错误。**修复**：onTurnStart 移入 try；`callPluginError` 隔离全部 onError 调用点；onTurnEnd rejection 隔离（不 reject host-facing promise，abort 变体 K-⑨-1，bug note 130）。
+- **active 位移错位**（⑥/N1）：switch 在途 × delete/clearAll/create 时，post-await 提升/复水可能覆盖被位移的 active 状态；delete active 后 next 引擎 null 悬挂；同 id 快速重 switch hydration 被 version guard 丢弃。**修复**：位移方法 bump + 镜像写面 + id-aware version guard + build-on-demand（bootstrap/delete-fixup，K-⑥-1/2/3，bug note 126）。
+- **branch 戳泄漏**（⑧/N3）：connector-missing 早退遗留 `pendingBranchId` → 下一无关 turn 被戳 branchId。**修复**：早退前清戳（bug note 125/130 同文件面）。
+- **bootstrap 列表覆盖**（⑦/N2）：bootstrap 整体覆盖加载期间创建的会话。**修复**：合并 + clearAll 守卫（K-⑦-1，bug note 127）。
+- **storage 元数据幽灵**（②/④，K-K4/②-1/2 + K-K3/④-1）：delete/clearAll 缺镜像写面 → rename 重存已删会话；rename/create 元数据写不入排空链 → gated 写晚于 clearAll 落盘。**修复**：镜像写面全方法同步 + 元数据写入排空链 + settlement-time 再校验（bug notes 128/129）。

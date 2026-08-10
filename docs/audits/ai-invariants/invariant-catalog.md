@@ -1,7 +1,7 @@
 # AI Engine 不变式目录（Invariant Catalog）
 
-> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展 + Cycle 2 / I1 §9 新族 ⑥-⑩ 沉淀，供 I5 验证与后续审计引用）
-> Last Updated: 2026-08-09
+> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展 + Cycle 2 / I1 §9 新族 ⑥-⑩ 沉淀 + Cycle 2 / I4 §10 补强扩展，供 I5 验证与后续审计引用）
+> Last Updated: 2026-08-10
 > Source: `docs/backlog/ai-invariant-loop-roadmap.md`（Cycle 1 / I0 + Cycle 2 / I1 派生）+ 4 轮 AI 审计（`docs/audits/2026-07-23-2141-*ai.md`、`2026-07-24-1757-*ai.md`、`2026-07-24-2151-*ai.md`、`2026-07-25-0707-*ai.md`）+ C8.1/8.2/8.3 + post-closure + Bug 07 note + I4 修复执行（K1-K4）+ Cycle 2 / I1 沉淀执行（N1-N5 → ⑥-⑩）
 > Produced By: plan `docs/plans/2026-08-09-1826-1-i0-invariant-inventory-baseline.md`（纯文档计划）；扩展于 plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`（K1-K4 + 门禁 ②③④⑤ 补强）；§9 沉淀于 plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`（⑥-⑩ 第二批门禁）
 > 下游消费: I1（门禁沉淀 `check:ai-engine-invariants`）、I2（不变式驱动审计）、Loop Rule（新族派生）、I5（全量验证）、Cycle 2 / I2（⑥-⑩ 门禁运行审计）
@@ -165,13 +165,13 @@
 
 - **扩展陈述**：auto-save 与 storage 删除必须满足「排空→删除」顺序——每个会话的在途 `saveMessages` 链入 `pendingSavesRef`（per-conversation 串行化）；异步方法（`deleteConversation`）在 `storage.deleteConversation` **之前** `await Promise.allSettled` 该会话在途 save；同步方法（`clearAll`，`(): void` 签名不变）把 storage 清空**链到排空链之后**（`.then()` 追加，per-id fan-out 各自 `.catch` → `reportStorageError`，不变式④错误路由保持）；`clearAll` 必须 `detachEngine`（退订）**先于** abort 循环——abort 触发的 auto-save 回调不得再启动新 save（aborted 快照重落盘 = ghost）。
 - **新增检测方法**：运行时参数化测试（mock storage 可控 resolve 顺序：乱序 resolve → 断言 storage 终态无 ghost / 终态为空）；**扫描器不扩展**（运行时时序，静态误报高——理由记录）。
-- **类别清扫结论**：adapter 全部 storage 调用点（saveMessages / saveConversation×2 / deleteConversation / clearAll / load×2 / unmount）逐条核对——saveConversation（create/rename）为单次会话元数据写（无消息重落盘面，错误路由已就位）不入排空链；消息保存唯一入口 attachAutoSave 已串行化（bug note 123）。
+- **类别清扫结论**：adapter 全部 storage 调用点（saveMessages / saveConversation×2 / deleteConversation / clearAll / load×2 / unmount）逐条核对——saveConversation（create/rename）为单次会话元数据写（无消息重落盘面，错误路由已就位）不入排空链；消息保存唯一入口 attachAutoSave 已串行化（bug note 123）。**（2026-08-10 Cycle 2 / I4 supersede：此结论被 K-K3/④-1 / K-K4/②-1/2 修复推翻——create/rename 元数据写现均入排空链 + settlement-time 镜像再校验，见 §10.5/§10.4。）**
 
 ### 7.4 不变式 ② 扩展 —— adapter 变更方法的 sync 闭包读取（K4）
 
 - **扩展陈述**：不变式 ② 的适用范围从「await 之后」扩展至**全部 adapter 变更方法体内的状态读取**——列表/active 读取必须读 ref mirror（`conversationsRef.current`/`activeIdRef.current`），且所有列表变更方法（create/rename/delete/clearAll）必须**同步维护** ref mirror（不依赖 effect flush）；同 tick create+rename 场景 rename 的持久化不得静默丢失（probe-K4）。
 - **新增检测方法**：静态扫描器规则 `scanAdapterSyncClosureReads`——**判别准则**：仅 flag adapter 变更方法（create/switch/delete/rename/clearAll）体内「首次状态变更语句（`setConversations`/`setActiveId`/`await`）**之后**」出现的裸 `conversations`/`activeId` 读取；方法**首语句**（状态变更前）的渲染快照读取为设计语义 → 豁免（`switchConversation:294` `conversations.some(...)` 显式豁免并记录理由）；committed 回归（违规 fixture exit 1 / 清洁 fixture 含豁免样例 exit 0）。
-- **类别清扫结论**：create（同步 prepend `conversationsRef.current`）、rename（读 ref + 同步 map）、delete（post-await 已读 ref）、clearAll（同步置空 + `activeIdRef`）全部同步维护；`switchConversation` :294 首语句豁免（bug note 124）。
+- **类别清扫结论**：create（同步 prepend `conversationsRef.current`）、rename（读 ref + 同步 map）、delete（post-await 已读 ref）、clearAll（同步置空 + `activeIdRef`）全部同步维护；`switchConversation` :294 首语句豁免（bug note 124）。**（2026-08-10 Cycle 2 / I4 supersede：写面扩展至全部列表变更方法（delete/clearAll + bootstrap merge），`switchConversation` 首语句 exists 检查改读 `conversationsRef.current`（K-⑥-2），原「首语句渲染快照豁免」注释随之失效——见 §10.2/§10.4。）**
 
 ## 8. 引用索引（I4 追加）
 
@@ -181,7 +181,7 @@
 
 ## 9. Cycle 2 / I1 新增不变式（⑥-⑩，第二批门禁）
 
-> 2026-08-09 落地（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`）。由 Cycle 1 / I6 按 Loop Rule 派生（Cycle 1 新族 N1-N5，findings §3.2 触发证据 + adjudication §3 N 表）。**当前 live 代码违反 ⑥-⑩**（N1-N5 全部已复现 RED，probe 编号见 findings §3.2）——门禁以「预期失败」形态落库（vitest `it.fails` + 扫描器注册红），Cycle 2 / I4 修复后翻转/清零。每条四字段：陈述 / 覆盖失败族 / 历史 bug 证据 / 检测方法。
+> 2026-08-09 落地（plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`）。由 Cycle 1 / I6 按 Loop Rule 派生（Cycle 1 新族 N1-N5，findings §3.2 触发证据 + adjudication §3 N 表）。**沉淀时 live 代码违反 ⑥-⑩**（N1-N5 全部已复现 RED，probe 编号见 findings §3.2）——门禁以「预期失败」形态落库（vitest `it.fails` + 扫描器注册红）。**2026-08-10 Cycle 2 / I4 已全部修复：12 处 `it.fails` 翻转 `it`、注册红清零、成员按 §10 扩展——本节的「当前违反」表述仅指 I1 沉淀时点，live 现状见 §10。**每条四字段：陈述 / 覆盖失败族 / 历史 bug 证据 / 检测方法。
 
 ### 9.1 不变式 ⑥ —— active 位移完整性（N1）
 
@@ -217,6 +217,59 @@
 - **覆盖失败族**：失败轮残留污染族（N5，findings §3.2 probe-D RED——请求 #2 携带 `{content:'', loading:false}` 空 assistant 消息）。
 - **历史 bug 证据**：`create-engine.ts:484-504`（runOnce catch `:485-486` `loading=false` + commitAssistant 保留空 placeholder）、`:507-528`（buildContext `:511` 仅排除 `isStreamingAssistantPlaceholder`（loading=true）尾消息）；probe-D RED（findings §3.2 N5）。
 - **检测方法**：运行时参数化测试（`engine-invariants.test.ts` Invariant ⑩ 块，`it.fails` 排除 ×1 + 正常轮控制 `it` ×1）；**不静态化**（buildContext 排除谓词为行为面，误报高，理由记录 gates.md）。
+
+## 10. Cycle 2 / I4 门禁补强（13 条 K 修复契约，⑥⑦⑨⑩②④ 扩展）
+
+> 2026-08-10 落地（plan `docs/plans/2026-08-10-0925-2-cycle2-i4-fix-execution.md`）。I2 审计发现 13 条 K finding（findings §3.1 全 RED），I3 裁决 P0 ×3 + P1 ×10 路由本 plan 修复并补强门禁。下列为对 §9（及 §7.3/§7.4）对应陈述的**加性/修订扩展**：13 条 K 全部 RED→GREEN（test-first 在案）、12 处 `it.fails` 全量翻转、注册红 ⑥×3 + ⑧×1 清零（`check:ai-engine-invariants` live 零命中）、bug notes 125-130 落档。**§7.3 与 §7.4 的类别清扫结论在此显式 supersede（见下）**。
+
+### 10.1 不变式 ⑩ 扩展 —— 空产物清理统一谓词（K-⑩-1/2/3/4/5）
+
+- **扩展陈述**：**空产物（`content:''` 且无 `finishReason`）的 assistant 消息不得进入请求历史与 autoSave 快照**——统一谓词 = `isVacuousAssistantResidue`（`engine/utils.ts`，`role==='assistant' && isEmptyContent(content) && !metadata.finishReason`）。失败/中止/退化成功轮（零 chunk）的残留 placeholder 在**终态提交层 drop**（`commitOrDropResidue`），而非以 `loading=false` 提交；`onBeforeRequest` rejection 不得留 `loading:true` 幽灵（纳入清理面）；autoSave 快照剥除尾部空残留（覆盖 `abort()` 同步翻 state 早于 engine 清理的窗口）；`buildContext` 尾部排除谓词扩展至空残留（纵深防御）。
+- **覆盖失败族**：失败轮残留污染族（N5）五成员——aborted 轮（K-⑩-1）、hook 拒绝幽灵（K-⑩-2）、autoSave 持久化臂（K-⑩-3）、regenerate 臂（K-⑩-4，P0 数据丢失形态）、零 chunk 成功轮（K-⑩-5）。
+- **历史 bug 证据**：`docs/bugs/125-ai-engine-failed-turn-residue-cleanup-fix.md`（K-⑩ 族全 5 条合并）。
+- **检测方法**：运行时参数化测试（`engine-invariants-i4.test.ts` Invariant ⑩ 块 6 成员 + `conversation-invariants-i4.test.ts` autoSave 臂成员——I4 拆分新文件，对齐 cycle2 先例）；**不静态化**（行为面，沿用 I1/§9 裁定）。
+
+### 10.2 不变式 ⑥ 扩展 —— 同 tick 组合 + bootstrap build-on-demand 成员（K-⑥-1/2/3）
+
+- **扩展陈述**：位移方法（create/delete/clearAll）必须 bump `switchVersionRef` **并重置 `switchTargetRef = null`**（id-aware 守卫的健全性前提）；**delete/clearAll 必须同步写 `conversationsRef`**（镜像写面，K-⑥-1 幽灵 fixup 根因）；switch 入口 exists 检查读 `conversationsRef.current`（守卫须早于 `setActiveId`，K-⑥-2）；version guard 升级为 **id-aware**（`version !== myVersion && target !== id` 才 bail——同 id 快速重 switch 的 hydration 不得整体丢弃，注册成员 4）；**mount bootstrap 选中 active 必须 build-on-demand 建引擎 + loadMessages**（K-⑥-3，`ensureEngineAndHydrate`，镜像 switch 语义；删除 active 的 fixup 同用）。
+- **覆盖失败族**：active 位移完整族（N1）3 新成员 + 5 注册成员。
+- **历史 bug 证据**：`docs/bugs/126-ai-conversation-active-displacement-integrity-fix.md`（K-⑥ 族全 3 条合并）。
+- **检测方法**：运行时参数化测试（`conversation-invariants-cycle2.test.ts` Invariant ⑥ 块 8 成员全 `it`）+ 静态扫描器 `scanDisplacementVersionBumps` 保持（bump 后 live 零命中）。
+
+### 10.3 不变式 ⑦ 扩展 —— clearAll 成员（K-⑦-1）
+
+- **扩展陈述**：bootstrap post-await 的 `setConversations` 必须**合并**（`[...loaded, ...加载期间创建且不在 loaded]`，按同步镜像计算）且带**「列表已被 clearAll 清空」守卫**（`listClearedRef`，clearAll 置位；守卫命中则不恢复列表、不建引擎）。create 成员与 clearAll 成员的判别：create 不抑制恢复（合并且保留创建项），clearAll 抑制（恢复即复活已清列表）。
+- **覆盖失败族**：bootstrap 覆盖族（N2）clearAll 成员。
+- **历史 bug 证据**：`docs/bugs/127-ai-conversation-bootstrap-cleared-list-restore-fix.md`（K-⑦-1）。
+- **检测方法**：运行时参数化测试（`conversation-invariants-cycle2.test.ts` Invariant ⑦ 块 3 成员全 `it`）；**不静态化**（functional merge 行为面）。
+
+### 10.4 不变式 ② 扩展 —— 镜像**写面**全方法 + 扫描器规则（K-K4/②-1/2）
+
+- **扩展陈述**：**所有列表变更方法（create/rename/delete/clearAll + bootstrap merge）必须同步维护 `conversationsRef`**（§7.4 写面从 create/rename 扩展至全部列表变更方法）；rename 的 `saveConversation` **链入 `pendingSavesRef` 排空链** + **settlement-time 再校验**（写入时镜像目标仍存在，否则跳过）——rename-first × delete/clearAll 双序均无幽灵重存/元数据幽灵。
+- **覆盖失败族**：K4/② sync 闭包读取/镜像维护族（delete/clearAll 写面成员 + rename 重存成员）。
+- **历史 bug 证据**：`docs/bugs/128-ai-conversation-rename-resave-ghost-fix.md`（K-K4/②-1/2 合并）。
+- **检测方法**：运行时参数化测试（`conversation-invariants-i4.test.ts` 镜像写面 + 双序幽灵成员）+ **新增静态扫描器规则 `scanMirrorWriteSurface`**（列表变更方法函数体必须含 `conversationsRef.current =` 写，缺失即违例——镜像写缺失静态可检性评估落地为 yes）+ committed 回归 fixtures。
+
+### 10.5 不变式 ④ 扩展 —— create/rename 元数据写入排空链（K-K3/④-1）
+
+- **扩展陈述**：**create 与 rename 的 `saveConversation` 元数据写均链入 `pendingSavesRef` 排空链**（K3 排空链从仅 saveMessages 扩展至全部 storage 写）+ settlement-time 镜像再校验——同 tick create+clearAll / rename+clearAll 均无幽灵会话/元数据。
+- **覆盖失败族**：K3/④ storage 时序守卫族（create 元数据写成员；rename 同型兄弟一并覆盖）。
+- **历史 bug 证据**：`docs/bugs/129-ai-conversation-create-metadata-drain-fix.md`（K-K3/④-1）。
+- **检测方法**：运行时参数化测试（`conversation-invariants-i4.test.ts` create 与 rename 两个元数据排空臂成员）；**不静态化**（运行时序，沿用 §7.3 裁定）。
+
+### 10.6 不变式 ⑨ 扩展 —— abort 变体 + hook 调用点全覆盖（K-⑨-1）
+
+- **扩展陈述**：plugin hook 全部调用点（onTurnStart / onBeforeRequest / onError×4 / onCompletionChunk / onAfterRequest / onTurnEnd）纳入错误隔离面——onTurnStart 移入 try（rejection 经 catch 落态，不卡 processing）；`callPluginError` 包装全部 onError 调用点（onError 抛错不得跳过状态写入）；finally 的 onTurnEnd rejection **隔离**（不 reject host-facing promise，abort 变体 = K-⑨-1；错误经 `lastError` 记录仅在无先验错误时）。
+- **覆盖失败族**：plugin 生命周期族（N4）abort 变体成员 + 3 注册成员。
+- **历史 bug 证据**：`docs/bugs/130-ai-engine-plugin-error-isolation-fix.md`（K-⑨-1）。
+- **检测方法**：运行时参数化测试（`engine-invariants.test.ts` Invariant ⑨ 块 4 成员全 `it`）；**不静态化**（plugin 回调交错行为面）。
+
+### 10.7 注册红清零 + §7.3/§7.4 supersede 记录（Proof）
+
+- **注册红清零**：⑥×3（create/delete/clearAll bump `switchVersionRef`）+ ⑧×1（connector-missing 早退清 `pendingBranchId`）→ `check:ai-engine-invariants`（扩展后）live **零命中**（2026-08-10 实测）。
+- **显式 supersede §7.3**：「saveConversation（create/rename）不入排空链」结论被 K-K3/④-1 / K-K4/②-1/2 修复推翻 → 改为 **「create/rename 元数据写均入排空链 + settlement-time 镜像再校验」**（§10.4/§10.5 契约）。
+- **显式 supersede §7.4**：写面范围从 create/rename 扩展至**全部列表变更方法**（delete/clearAll + bootstrap merge，§10.2/§10.4）；`switchConversation` 首语句 exists 检查改读 `conversationsRef.current`（原「渲染快照首语句豁免」注释随 K-⑥-2 修复失效——现在它是镜像读取，非闭包读取）。
+- **watch-only 附带评估**：W-⑨-b 随 K-⑥-3 修复自然收敛（从 watch-only 移除，findings §3.3 已更新）；W-E 不收敛（维持登记，如实记录）。
 
 ## 6. 引用索引
 

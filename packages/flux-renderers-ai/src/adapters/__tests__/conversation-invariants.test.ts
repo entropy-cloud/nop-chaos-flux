@@ -412,10 +412,10 @@ describe('Invariant ④ — save-after-delete/clearAll timing guard (K3)', () =>
   });
 });
 
+
 // ---------------------------------------------------------------------------
 // Invariant ② (K4 extension) — sync closure reads in adapter mutating methods
 // ---------------------------------------------------------------------------
-
 describe('Invariant ② — sync closure reads in mutating methods (K4)', () => {
   it('same-tick create+rename persists the RENAMED title (no stale closure read)', async () => {
     // probe-K4 scenario: `renameConversation` reads the render closure

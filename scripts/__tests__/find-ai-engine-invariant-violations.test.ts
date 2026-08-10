@@ -69,12 +69,14 @@ function createConversation(params) {
 }
 async function deleteConversation(id) {
   switchVersionRef.current += 1; // ⑥ displacement bump
+  conversationsRef.current = conversationsRef.current.filter((c) => c.id !== id); // ② mirror write surface
   await removed.abort();
   if (activeIdRef.current === id) { setActiveId(null); }
   void storage?.deleteConversation(id).catch((e) => reportStorageError({ phase: 'deleteConversation', error: e }));
 }
 function clearAll() {
   switchVersionRef.current = switchVersionRef.current + 1; // ⑥ displacement bump
+  conversationsRef.current = []; // ② mirror write surface
   engineCache.clear();
   setConversations([]);
   setActiveId(null);
@@ -239,5 +241,51 @@ function renameConversation(id, title) {
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain('②');
     expect(result.stderr).toContain('conversations');
+  });
+
+  it('violating fixture ② (K-K4/②): clearAll without conversationsRef write → exit 1', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+function clearAll() {
+  switchVersionRef.current += 1; // ⑥ displacement bump present
+  engineCache.clear();
+  setConversations([]);
+  setActiveId(null);
+  activeIdRef.current = null;
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('②');
+    expect(result.stderr).toContain('clearAll');
+    expect(result.stderr).toContain('mirror write surface');
+  });
+
+  it('clean fixture ② (K-K4/②): all list mutators write conversationsRef → exit 0', () => {
+    const root = makeFixture({
+      'packages/flux-renderers-ai/src/adapters/use-conversation.ts': `
+function createConversation(params) {
+  ++switchVersionRef.current; // ⑥ displacement bump
+  conversationsRef.current = [info, ...conversationsRef.current];
+}
+function renameConversation(id, title) {
+  conversationsRef.current = conversationsRef.current.map((c) => (c.id === id ? { ...c, title } : c));
+}
+async function deleteConversation(id) {
+  ++switchVersionRef.current; // ⑥ displacement bump
+  conversationsRef.current = conversationsRef.current.filter((c) => c.id !== id);
+}
+function clearAll() {
+  ++switchVersionRef.current; // ⑥ displacement bump
+  conversationsRef.current = [];
+}
+`,
+    });
+
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('No invariant violations');
   });
 });
