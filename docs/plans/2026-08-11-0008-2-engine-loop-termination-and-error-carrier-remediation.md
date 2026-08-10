@@ -1,6 +1,6 @@
 # 2 Engine 循环终止面收口：tool-loop-max 终止可见性（marker 归位 + renderer 消费）+ A-5 错误载体回归（ai-invariant-loop）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: ai-invariant-loop
 > Last Reviewed: 2026-08-11
 > Source: `docs/audits/2026-08-10-2245-open-audit-ai-invariant-loop.md`（R1-F1 [P1]，含事实修正：审计循环顺序误读，live 复核后重述为 marker 错位 + 零消费）、`docs/audits/2026-08-10-2245-multi-audit-ai-invariant-loop.md`（FIND-03 [P1]）；live repo 核对 2026-08-11（HEAD `ab2a1622`；行号 = 审计时点，执行时 live 复核）
@@ -69,68 +69,68 @@
 
 ### Phase 1 — tool-loop-max marker 载体修正 + renderer 终止消费（R1-F1 [P1]，按修正后事实）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/engine/create-engine.ts`、`src/renderers/ai-message-list.tsx`、`src/engine/__tests__/engine-tool-loop.test.ts`、`src/engine/__tests__/engine-snapshot-write-path.test.ts`、`packages/flux-i18n/src/locales/en-US.ts` + `zh-CN.ts`（i18n key 注册）
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Proof: RED 回归测试（engine 面 marker 载体）——`maxToolRounds` 达上限后：断言**末条 assistant**（`finishReason:'tool_calls'` 的最后一条 assistant，非 tool 消息）`metadata.toolLoopMaxReached === true`；修复前 RED（marker 在 tool 消息上，assistant 无 marker）
-- [ ] Proof: RED 回归测试（render 面）——末条 assistant 带 `toolLoopMaxReached` 的消息渲染：断言 termination note 可见且无运行态假象（既有工具卡保持已提交终态）；修复前 RED（无任何终止 UI）
-- [ ] Proof: 无害性守卫测试（保持绿）——loop-max 终态：末条 assistant 的 tool_calls 全部有配对 `role:'tool'` 响应（`isDanglingToolCallsMessage` false），历史无 dangling 形状（正常路径本已成立，作为防回归守卫钉住修正后的契约语义）
-- [ ] Decision: 裁定 marker 载体策略（MJ-1/MJ-3 审议结论）——**方案 B（marker 归位，不清理）**：loop-top break 的 mutate recipe（`:272-281`）写面从 `draft.messages[len-1]`（tool 消息 tail）改为**末条 assistant**（从 tail 向前跳过 `role:'tool'` 消息定位，recipe 内 read-old → build-new → replace，snapshot 恒等纪律保持）；**不 strip tool_calls、不 drop 载体**（配对形状无协议风险，strip 会破坏用户可见工具结果）；**两个既有测试钉住旧错位，随修复更新**：`engine-snapshot-write-path.test.ts:80-83`（`at(-1)` → 末条 assistant）与 `engine-tool-loop.test.ts:210-212`（同，注释修正），更新属本 phase Fix 一部分（非测试弱化：断言目标从"错误的载体"改为"正确的载体"，语义更严）；`engine-tool-loop.test.ts:207-209` 的 tool 消息计数断言不动。与审计原文的偏差（dangling 清理面第四面不存在）记录入档
-- [ ] Fix: `create-engine.ts` loop-top break recipe 写面改为末条 assistant（recipe 内定位 + replace，marker 契约注释同步「marker 归属 = 触发终止的 assistant」）
-- [ ] Fix: renderer 消息级消费——`ai-message-list`（或气泡消息级面）末条 assistant 带 `toolLoopMaxReached` 时渲染终止 note（文案走 i18n `t()`，**新 key 注册进 `flux-i18n` en-US/zh-CN**，`check:i18n-keys` 门禁保持绿；无操作栏、非错误态）；既有工具卡渲染路径零改动
-- [ ] Fix: 两个既有测试更新（载体断言归位 + 注释修正）+ 无害性守卫测试落位
-- [ ] Proof: 类别清扫——⑩ 清理面枚举核对（修正后口径）：tool-no-executor（`:315`）/ abort-mid-executor（`:334`）/ runOnce abort（`:561-576`）三面 dangling 清理 + `commitOrDropResidue`（`:585`）vacuous drop（`isVacuousAssistantResidue`，`utils.ts:156-162`）——**两套谓词区分核对**（dangling 谓词 `utils.ts:173-215` vs vacuous 谓词），结论入档；`toolLoopMaxReached` 写入面（1）与消费面（≥1）grep 清零核对
+- [x] Proof: RED 回归测试（engine 面 marker 载体）——`maxToolRounds` 达上限后：断言**末条 assistant**（`finishReason:'tool_calls'` 的最后一条 assistant，非 tool 消息）`metadata.toolLoopMaxReached === true`；修复前 RED（marker 在 tool 消息上，assistant 无 marker）
+- [x] Proof: RED 回归测试（render 面）——末条 assistant 带 `toolLoopMaxReached` 的消息渲染：断言 termination note 可见且无运行态假象（既有工具卡保持已提交终态）；修复前 RED（无任何终止 UI）
+- [x] Proof: 无害性守卫测试（保持绿）——loop-max 终态：末条 assistant 的 tool_calls 全部有配对 `role:'tool'` 响应（`isDanglingToolCallsMessage` false），历史无 dangling 形状（正常路径本已成立，作为防回归守卫钉住修正后的契约语义）
+- [x] Decision: 裁定 marker 载体策略（MJ-1/MJ-3 审议结论）——**方案 B（marker 归位，不清理）**：loop-top break 的 mutate recipe（`:272-281`）写面从 `draft.messages[len-1]`（tool 消息 tail）改为**末条 assistant**（从 tail 向前跳过 `role:'tool'` 消息定位，recipe 内 read-old → build-new → replace，snapshot 恒等纪律保持）；**不 strip tool_calls、不 drop 载体**（配对形状无协议风险，strip 会破坏用户可见工具结果）；**两个既有测试钉住旧错位，随修复更新**：`engine-snapshot-write-path.test.ts:80-83`（`at(-1)` → 末条 assistant）与 `engine-tool-loop.test.ts:210-212`（同，注释修正），更新属本 phase Fix 一部分（非测试弱化：断言目标从"错误的载体"改为"正确的载体"，语义更严）；`engine-tool-loop.test.ts:207-209` 的 tool 消息计数断言不动。与审计原文的偏差（dangling 清理面第四面不存在）记录入档
+- [x] Fix: `create-engine.ts` loop-top break recipe 写面改为末条 assistant（recipe 内定位 + replace，marker 契约注释同步「marker 归属 = 触发终止的 assistant」）
+- [x] Fix: renderer 消息级消费——`ai-message-list`（或气泡消息级面）末条 assistant 带 `toolLoopMaxReached` 时渲染终止 note（文案走 i18n `t()`，**新 key 注册进 `flux-i18n` en-US/zh-CN**，`check:i18n-keys` 门禁保持绿；无操作栏、非错误态）；既有工具卡渲染路径零改动
+- [x] Fix: 两个既有测试更新（载体断言归位 + 注释修正）+ 无害性守卫测试落位
+- [x] Proof: 类别清扫——⑩ 清理面枚举核对（修正后口径）：tool-no-executor（`:326`）/ abort-mid-executor（`:345`）/ runOnce abort（`:576`）三面 dangling 清理 + `commitOrDropResidue`（`:489/:570/:596`）vacuous drop（`isVacuousAssistantResidue`，`utils.ts:156-162`）——**两套谓词区分核对**（dangling 谓词 `utils.ts:173-215` vs vacuous 谓词），结论入档；`toolLoopMaxReached` 写入面（1）与消费面（≥1）grep 清零核对
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。写法原则：只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续所必需的局部检查。
 
-- [ ] R1-F1 RED 测试转 GREEN（末条 assistant marker 断言 + render 终止 note 断言）
-- [ ] 无害性守卫测试保持绿（无 dangling 形状）+ `engine-tool-loop.test.ts:207-209` tool 消息计数断言零回归
-- [ ] 类别清扫记录入档（⑩ 清理面修正后枚举 + marker 消费面 grep 核对）
+- [x] R1-F1 RED 测试转 GREEN（末条 assistant marker 断言 + render 终止 note 断言）
+- [x] 无害性守卫测试保持绿（无 dangling 形状）+ `engine-tool-loop.test.ts:207-209` tool 消息计数断言零回归
+- [x] 类别清扫记录入档（⑩ 清理面修正后枚举 + marker 消费面 grep 核对）
 
 ### Phase 2 — A-5 错误载体回归修复（FIND-03 [P1]）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-message-list.tsx`、`src/renderers/ai-bubble/renderers/error.tsx`、`src/engine/__tests__/engine-invariants-i4.test.ts`（保持）、新增 render 集成测试
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Proof: RED 回归测试（集成）——真实 engine（mock connector 抛 401/零 chunk 拒绝）触发失败轮：断言列表内渲染错误气泡 + 重试入口；修复前 RED（无错误 UI）
-- [ ] Decision: 裁定错误载体方案——候选：(a) `ai-message-list` list 级错误横幅：`requestState==='error'` 且末条非 assistant 时渲染（`error.tsx` 复用，含重试入口）；(b) 投影面保留 `metadata.isError` 标记 assistant 载体（不污染 live 历史/持久化）。默认倾向 (a)（不改 engine/历史语义，list 级渲染，与 A-5 契约一致）；裁定理由入档
-- [ ] Fix: 按裁定实现——list 级错误横幅（或等价载体），`requestState==='error'` 且末条非 assistant 时渲染，含重试入口（复用既有重试行为）；engine 侧 drop 语义不变（`engine-invariants-i4.test.ts:139-157` 保持绿）
-- [ ] Proof: 类别清扫——A-5 失败轮渲染面枚举核对：零 chunk 失败 / 流中失败 / 工具轮失败 / connector-missing / abort 五类失败轮的 render 面终态核对（哪类显示错误 UI、哪类显示终止态、哪类无 UI），结论入档；`error-retry.test.tsx` 既有合成用例保持
-- [ ] Fix: 测试扩展——真实 engine 零 chunk 失败 → 错误 UI 集成测试 + 重试按钮点击后新轮发起断言
+- [x] Proof: RED 回归测试（集成）——真实 engine（mock connector 抛 401/零 chunk 拒绝）触发失败轮：断言列表内渲染错误气泡 + 重试入口；修复前 RED（无错误 UI）
+- [x] Decision: 裁定错误载体方案——**方案 (a) 采用**：`ai-message-list` list 级错误横幅（`ListErrorBanner`，`error.tsx` 同文件实现并复用 `lastUserTextBefore` 扫描 helper + `requestFailed`/`retry` i18n key + retry 按钮 `void` 纪律）：`requestState==='error'` 且末条非 assistant 时渲染（`data-slot="ai-message-list-error"`，retry `data-slot="ai-message-list-error-retry"`）；方案 (b) 投影面 `metadata.isError` 载体拒绝（会污染 live 历史/持久化，违背 ⑩ 协议洁净目标）。裁定理由：不改 engine/历史语义、list 级渲染、与 A-5 契约一致；engine 侧 drop 语义不变（`engine-invariants-i4.test.ts:139-157` 保持绿）
+- [x] Fix: 按裁定实现——list 级错误横幅，`requestState==='error'` 且末条非 assistant 时渲染，含重试入口（复用既有重试行为）；engine 侧 drop 语义不变（`engine-invariants-i4.test.ts:139-157` 保持绿）
+- [x] Proof: 类别清扫——A-5 失败轮渲染面枚举核对：零 chunk 失败（401/429/网络首字节前）与 `onBeforeRequest` 拒绝 → 空产物 drop → 末条非 assistant → **list 级错误横幅**（新）；流中失败（部分内容已提交）→ 末条 assistant → **bubble 级错误**（既有）；工具轮失败（tool-no-executor 空产物同样 drop）→ 末条非 assistant → **list 级横幅**（同面）；connector-missing → ai-chat 根 `ai-chat-error`（mount 无 connector 时连 list 都不渲染；engine 运行时断连走 list 横幅）；abort → requestState `aborted` ≠ error → **无错误 UI**（回归测试钉住）。结论入档；`error-retry.test.tsx` 既有合成用例保持（full suite 662→669 全绿）
+- [x] Fix: 测试扩展——真实 engine 零 chunk 失败 → 错误 UI 集成测试 + 重试按钮点击后新轮发起断言
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。写法原则同 Phase 1。
 
-- [ ] FIND-03 RED 测试转 GREEN（真实 engine 失败轮错误 UI + 重试入口断言）
-- [ ] `engine-invariants-i4.test.ts` 既有 engine 侧 drop 断言零回归
-- [ ] 类别清扫记录入档（A-5 失败轮 render 面五类终态核对）
+- [x] FIND-03 RED 测试转 GREEN（真实 engine 失败轮错误 UI + 重试入口断言）
+- [x] `engine-invariants-i4.test.ts` 既有 engine 侧 drop 断言零回归
+- [x] 类别清扫记录入档（A-5 失败轮 render 面五类终态核对）
 
 ### Phase 3 — 登记处同步 + 收口
 
-Status: planned
+Status: completed
 Targets: `docs/components/flux-renderers-ai/engine.md`、`docs/bugs/`、`docs/logs/2026/08-11.md`
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] Fix: `engine.md` 更新——失败路径表 `tool-loop-max` 行补 marker 载体契约（归属末条 assistant）+ renderer 终止 note 语义；A-5 错误载体契约更新（list 级错误横幅）；⑩ 面枚举注记补「正常 loop-max 路径无 dangling（工具响应逐 call 配对）」修正说明
-- [ ] Fix: bug notes 147+（R1-F1 marker 载体 + FIND-03，按 guide，含 R1-F1 事实修正说明）
-- [ ] Proof: AI 包全量测试 + `pnpm typecheck/lint`（AI 包）零回归；`check:ai-engine-invariants` 零命中
-- [ ] Follow-up: daily log `docs/logs/2026/08-11.md` 记录本 plan 收口
+- [x] Fix: `engine.md` 更新——失败路径表 `tool-loop-max` 行补 marker 载体契约（归属末条 assistant）+ renderer 终止 note 语义；A-5 错误载体契约更新（list 级错误横幅）；⑩ 面枚举注记补「正常 loop-max 路径无 dangling（工具响应逐 call 配对）」修正说明
+- [x] Fix: bug notes 149-150（R1-F1 marker 载体 + FIND-03，按 guide 全 8 节，含 R1-F1 事实修正说明；live 最高编号 148 → 149/150）
+- [x] Proof: AI 包全量测试 + `pnpm typecheck/lint`（AI 包）零回归；`check:ai-engine-invariants` 零命中（另：`check:i18n-keys` 绿；oversized 门禁——`create-engine.ts` 加注释后 698→710 超 700 硬线，已按门禁纪律把 marker 写面提取到 `tool-execution.ts` `markToolLoopMaxReached`，回落 694，仅剩 2 条既有 exempt locale 登记红）
+- [x] Follow-up: daily log `docs/logs/2026/08-11.md` 记录本 plan 收口
 
 Exit Criteria:
 
 > 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。写法原则同 Phase 1。
 
-- [ ] engine.md / bug notes 同步到位（live 核对一致）
-- [ ] AI 包测试全绿零回归 + `check:ai-engine-invariants` 零命中
-- [ ] daily log 收口记录落档
+- [x] engine.md / bug notes 同步到位（live 核对一致）
+- [x] AI 包测试全绿零回归 + `check:ai-engine-invariants` 零命中
+- [x] daily log 收口记录落档
 
 ## Draft Review Record
 
@@ -145,16 +145,16 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] R1-F1（marker 载体归位 + renderer 终止消费）已修复落地（RED→GREEN 证据在案）
-- [ ] FIND-03（A-5 错误载体）已修复落地（真实 engine 失败轮集成测试在案）
-- [ ] 类别清扫记录入档（⑩ 清理面修正后枚举 + A-5 失败轮 render 面）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步（engine.md / bug notes / daily log）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] R1-F1（marker 载体归位 + renderer 终止消费）已修复落地（RED→GREEN 证据在案）
+- [x] FIND-03（A-5 错误载体）已修复落地（真实 engine 失败轮集成测试在案）
+- [x] 类别清扫记录入档（⑩ 清理面修正后枚举 + A-5 失败轮 render 面）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步（engine.md / bug notes 149-150 / daily log）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -177,13 +177,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待完成时填写。
+Status Note: 两条 P1（R1-F1 marker 载体归位 + renderer 终止消费；FIND-03 A-5 list 级错误载体）test-first 先红后绿全部落地，类别清扫入档，engine.md/bug notes 149-150/daily log 同步，AI 包 79 files/669 tests 全绿，全仓 typecheck/build/lint 37/37 + `pnpm test --force` 66/66 tasks 零缓存全绿，`check:ai-engine-invariants` exit 0 零命中，`pnpm check` 零新增命中（仅既有登记红：audit-event-dispatch-ctx 6 条 industrial + oversized 2 exempt locale）。独立 closure-audit pass（G1-G8 全 PASS，1 Minor 已就地修复），本 plan 可关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent（fresh session）执行
-- Evidence: 待定
+- Auditor / Agent: 独立子 agent（fresh session，`ses_01316b533ffeMHxco0FkWyIo1i`）
+- Evidence: verdict **pass-with-1-minor**（G1 plan 一致性 / G2 engine 修复行为 / G3 renderer 消费 / G4 docs 同步 / G5 测试（focused 27/27 + AI 包 79/669 独立复跑）/ G6 deferred 诚实 / G7 无静默降级 / G8 验证证据 全 PASS；1 Minor = daily log 收口措辞超前，已就地修复）；closure-audit 独立复跑 focused 4 文件 27/27 + `check:ai-engine-invariants` exit 0
 
 Follow-up:
 
-- 待定。
+- no remaining plan-owned work（P2 全量 + dangling 第四面 watch-only residual 已按 Deferred But Adjudicated 登记）

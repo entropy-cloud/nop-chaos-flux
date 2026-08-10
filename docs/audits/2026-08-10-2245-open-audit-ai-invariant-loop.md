@@ -1,4 +1,4 @@
-> Audit Status: planned（原 open → 2026-08-11 mission-driver 起草轮 planned：P1 R1-F1 已路由 `docs/plans/2026-08-11-0008-2-engine-loop-termination-and-error-carrier-remediation.md`；8 条 P2 已移入 `docs/backlog/ai-invariant-loop-roadmap.md` Follow-up Backlog「2026-08-10-2245 双审计 P2 填充」节）
+> Audit Status: closed（原 open → 2026-08-11 mission-driver 起草轮 planned：P1 R1-F1 已路由 `docs/plans/2026-08-11-0008-2-engine-loop-termination-and-error-carrier-remediation.md`；8 条 P2 已移入 `docs/backlog/ai-invariant-loop-roadmap.md` Follow-up Backlog「2026-08-10-2245 双审计 P2 填充」节 → **2026-08-11 plan `2026-08-11-0008-2` 收口翻 closed**（R1-F1 按事实修正后收口：marker 载体归位末条 assistant + renderer 终止 note 消费 + 无害性守卫钉住「正常 loop-max 路径无 dangling」；本 audit 原文的「dangling 清理第四面」主张经独立 review + live 复核重述为 marker 错位 + 零消费，见该 plan Purpose 事实修正段 + bug note 149；其余 8 条 P2 全部入 roadmap Follow-up Backlog））
 > Audit Type: open-ended
 > Mission: ai-invariant-loop
 
