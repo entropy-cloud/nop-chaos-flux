@@ -141,6 +141,20 @@ export interface CrudSelectionConfig extends SchemaObject {
   labelTpl?: string;
 }
 
+/**
+ * Selection enablement & configuration.
+ *
+ * Shorthand forms:
+ * - `true` / `'multiple'` → checkbox multi-select (all defaults)
+ * - `'single'` → radio single-select
+ * - `CrudSelectionConfig` object → advanced config (`type`/`maxSelectionLength`/…)
+ *
+ * Semantics: **setting this field (truthy) ENABLES selection**; omitting it
+ * disables the selection column. The legacy empty-object form (`selection: {}`)
+ * is still accepted and means "enable with all defaults".
+ */
+export type CrudSelectionInput = boolean | 'single' | 'multiple' | CrudSelectionConfig;
+
 export interface CrudMigrationHints extends SchemaObject {
   amisApi?: SchemaValue;
   amisFilter?: SchemaInput;
@@ -162,6 +176,15 @@ export interface CrudSchema extends BaseSchema {
   toolbarLayout?: CrudToolbarLayoutConfig;
   columns?: CrudColumnSchema[];
   empty?: SchemaInput | string;
+  /**
+   * Row selection enablement & configuration. Setting this field (truthy)
+   * enables the selection column:
+   * - `true` / `'multiple'` → checkbox multi-select
+   * - `'single'` → radio single-select
+   * - object → advanced config (see `CrudSelectionConfig`)
+   * Omit to disable. Legacy `selection: {}` is accepted as "enable, all defaults".
+   */
+  selection?: CrudSelectionInput;
   /**
    * Row rendering carrier. `'table'` (default) renders rows through the internal
    * `<TableRenderer>` (zero-regression default path). `'cards'` / `'list'` render
@@ -193,7 +216,6 @@ export interface CrudSchema extends BaseSchema {
   filterStatePath?: string;
   rowKey?: string;
   autoClearSelectionOnRefresh?: boolean;
-  selection?: CrudSelectionConfig;
   pageField?: string;
   pageSizeField?: string;
   /** 选中行键发布到按钮 action scope 的变量名（AMIS 兼容：批量操作 URL 用 ${ids}）。

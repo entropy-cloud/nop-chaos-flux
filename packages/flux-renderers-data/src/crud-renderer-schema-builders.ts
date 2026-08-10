@@ -1,7 +1,28 @@
 import type { BaseSchema, TemplateNode } from '@nop-chaos/flux-core';
-import type { CrudSchema } from './crud-schema.js';
+import type { CrudSchema, CrudSelectionConfig, CrudSelectionInput } from './crud-schema.js';
 import type { TableSchema } from './schemas.js';
 import { DEFAULT_PAGE_SIZE_OPTIONS } from './crud-renderer-state.js';
+
+/**
+ * Normalize the `selection` shorthand forms into a config object.
+ * - `true` / `'multiple'` / `{}` → `{ type: 'checkbox' }`
+ * - `'single'` → `{ type: 'radio' }`
+ * - object → passthrough (type defaults to checkbox)
+ */
+export function normalizeCrudSelection(
+  selection: CrudSelectionInput | undefined,
+): CrudSelectionConfig | undefined {
+  if (selection == null || selection === false) {
+    return undefined;
+  }
+  if (selection === true || selection === 'multiple') {
+    return { type: 'checkbox' };
+  }
+  if (selection === 'single') {
+    return { type: 'radio' };
+  }
+  return { ...selection, type: selection.type ?? 'checkbox' };
+}
 
 export function buildCrudTableSchema(input: {
   id: string;
@@ -77,14 +98,15 @@ export function buildCrudTableSchema(input: {
     quickSaveItemAction: schema.quickSaveItemAction,
   };
 
-  if (schema.selection) {
+  const selection = normalizeCrudSelection(schema.selection);
+  if (selection) {
     base.rowSelection = {
-      type: schema.selection.type ?? 'checkbox',
+      type: selection.type ?? 'checkbox',
       selectedRowKeys,
-      keepOnPageChange: schema.selection.keepOnPageChange,
-      maxSelectionLength: schema.selection.maxSelectionLength,
-      checkableWhen: schema.selection.checkableWhen,
-      toggleOnRowClick: schema.selection.toggleOnRowClick,
+      keepOnPageChange: selection.keepOnPageChange,
+      maxSelectionLength: selection.maxSelectionLength,
+      checkableWhen: selection.checkableWhen,
+      toggleOnRowClick: selection.toggleOnRowClick,
     };
   }
 

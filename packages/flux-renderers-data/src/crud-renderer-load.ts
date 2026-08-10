@@ -121,6 +121,14 @@ export function useCrudLoadAction(args: {
   // Latest evaluation bindings for error reporting from the load callbacks
   // (reactive force() dispatches carry no renderer-side ctx).
   const lastBindingsRef = useRef<Record<string, unknown>>({});
+  // Latest selection for the imperative dispatch bindings. Selection must NOT
+  // be part of the load effect deps (clicking a row checkbox must not refetch
+  // the list), so we track the latest value in a ref and read it at dispatch
+  // time instead of capturing it in the effect closure.
+  const selectionRef = useRef(selection);
+  useEffect(() => {
+    selectionRef.current = selection;
+  }, [selection]);
 
   const reload = useCallback(() => {
     loadedAllRef.current = false;
@@ -345,7 +353,7 @@ export function useCrudLoadAction(args: {
       query,
       sort,
       filters,
-      selection,
+      selection: selectionRef.current,
       pageField,
       pageSizeField,
     });
@@ -365,10 +373,14 @@ export function useCrudLoadAction(args: {
     return () => {
       controller.abort();
     };
-    // Note: all CRUD internal state (pagination/query/sort/filters/selection)
-    // is intentionally in deps. In table mode, pagination/pageSize changes
-    // bypass CRUD handlers — TableRenderer writes directly to scope, and the
-    // CRUD detects the change via useScopeSelector → re-render → this effect.
+    // Note: pagination/query/sort/filters are intentionally in deps. In table
+    // mode, pagination/pageSize changes bypass CRUD handlers — TableRenderer
+    // writes directly to scope, and the CRUD detects the change via
+    // useScopeSelector → re-render → this effect.
+    // `selection` is intentionally EXCLUDED from deps: toggling row/header
+    // checkboxes must not refetch the list (selection is client-only state).
+    // The latest selection is read via selectionRef at dispatch time so the
+    // evaluationBindings still carry the current selection.
     // Server-correction loop prevention relies on scope.update value
     // comparison (Fix 3) once implemented; until then, the loop is
     // self-stabilizing (at most 1 extra fetch).
@@ -382,7 +394,6 @@ export function useCrudLoadAction(args: {
     query,
     sort,
     filters,
-    selection,
     paginationStatePath,
     reloadNonce,
     pageField,

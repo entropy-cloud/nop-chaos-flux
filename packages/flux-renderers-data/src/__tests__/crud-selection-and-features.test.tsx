@@ -579,3 +579,88 @@ describe('CRUD selection and features', () => {
     });
   });
 });
+
+describe('CRUD selection shorthand forms', () => {
+  const records = [
+    { id: '1', name: 'Alpha' },
+    { id: '2', name: 'Beta' },
+  ];
+
+  function renderCrud(selection: unknown) {
+    cleanup();
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl={`test://data/crud-selection-shorthand-${JSON.stringify(selection)}`}
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'crud',
+              source: records,
+              rowKey: 'id',
+              selection: selection as never,
+              columns: [
+                { label: 'ID', name: 'id' },
+                { label: 'Name', name: 'name' },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+  }
+
+  async function selectionColumnCount(): Promise<number> {
+    await waitFor(() => {
+      expect(document.querySelectorAll('tbody [data-slot="table-row"]').length).toBe(2);
+    });
+    return document.querySelectorAll('thead [data-slot="table-select-column"]').length;
+  }
+
+  it('omitted selection disables the selection column', async () => {
+    renderCrud(undefined);
+    expect(await selectionColumnCount()).toBe(0);
+  });
+
+  it('selection: false disables the selection column', async () => {
+    renderCrud(false);
+    expect(await selectionColumnCount()).toBe(0);
+  });
+
+  it('selection: true enables checkbox multi-select (shorthand)', async () => {
+    renderCrud(true);
+    const cols = await selectionColumnCount();
+    expect(cols).toBe(1);
+    expect(document.querySelectorAll('thead [data-slot="table-select-column"] [data-slot="checkbox"]').length).toBe(1);
+  });
+
+  it("selection: 'multiple' enables checkbox multi-select", async () => {
+    renderCrud('multiple');
+    expect(await selectionColumnCount()).toBe(1);
+  });
+
+  it("selection: 'single' enables radio single-select", async () => {
+    renderCrud('single');
+    const cols = await selectionColumnCount();
+    expect(cols).toBe(1);
+    expect(
+      document.querySelectorAll(
+        'tbody [data-slot="table-select-cell"] [data-slot="radio-group-item"]',
+      ).length,
+    ).toBe(2);
+  });
+
+  it('selection object still works (legacy/advanced)', async () => {
+    renderCrud({ type: 'radio', maxSelectionLength: 1 });
+    const cols = await selectionColumnCount();
+    expect(cols).toBe(1);
+    expect(
+      document.querySelectorAll(
+        'tbody [data-slot="table-select-cell"] [data-slot="radio-group-item"]',
+      ).length,
+    ).toBe(2);
+  });
+});

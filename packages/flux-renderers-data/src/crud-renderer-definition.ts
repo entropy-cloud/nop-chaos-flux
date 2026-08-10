@@ -158,9 +158,10 @@ export const crudRendererDefinition: RendererDefinition = {
       editorType: 'object',
     },
     selection: {
-      shape: { kind: 'object', fields: {} },
+      shape: { kind: 'unknown' },
       displayName: 'Selection',
-      description: 'CRUD selection configuration such as checkbox/radio mode and selection limits.',
+      description:
+        'Row selection enablement & config: true / "multiple" (checkbox), "single" (radio), or a config object. Setting it (truthy) enables the selection column; omit to disable.',
       editorType: 'object',
     },
     selectionStatePath: {

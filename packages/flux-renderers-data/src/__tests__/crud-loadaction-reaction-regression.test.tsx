@@ -57,7 +57,11 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
               loadAction: { action: 'probe:load', dependsOn: ['__selection_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
-              selectable: true,
+              // NOTE: must be `selection: {}` — `selectable` is NOT a CRUD
+              // schema field, and without a real selection config the checkbox
+              // column is never rendered (the old `selectable: true` here made
+              // the whole test a false positive: no checkbox to click at all).
+              selection: {},
             },
           ],
         }}
@@ -78,11 +82,31 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
     });
 
     // Click checkboxes to toggle selection (should NOT trigger another load
-    // because `dependsOn` is `['__selection_test__']`, not `['selection']`).
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach((cb) => {
+    // because `dependsOn` is `['__selection_test__']`, not `['selection']`, and
+    // the imperative load effect excludes selection from its deps).
+    // NOTE on Base UI checkbox interaction in jsdom:
+    // - flux Checkbox renders a Base UI span[role=checkbox] with an internal
+    //   hidden <input type="checkbox">.
+    // - Firing click on the span goes through Base UI's onClick which
+    //   dispatches a synthetic PointerEvent('click') at the input; jsdom does
+    //   NOT simulate native checkbox toggle for synthetic events, so the
+    //   selection never changes.
+    // - Firing click directly on the input works: @testing-library's
+    //   fireEvent.click(input) toggles checked + fires change for checkbox
+    //   inputs, which Base UI subscribes to.
+    // Previously this test used `selectable: true` (NOT a real CRUD schema
+    // field) so no checkbox column rendered at all and every assertion was a
+    // false positive.
+    const inputs = document.querySelectorAll('input[type="checkbox"]');
+    expect(inputs.length).toBeGreaterThan(0);
+    // jsdom cannot reliably toggle Base UI checkboxes via click (Base UI
+    // forwards a synthetic PointerEvent('click') to the input, which jsdom
+    // does not treat as a native checkbox toggle). Fire change directly on
+    // the input — this is what Base UI's onChange listens to and is the
+    // standard @testing-library approach for checkbox inputs.
+    inputs.forEach((cb) => {
       try {
-        fireEvent.click(cb);
+        fireEvent.change(cb, { target: { checked: true } });
       } catch {
         // some checkboxes may not be interactive
       }
@@ -90,6 +114,14 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
 
     // Wait a tick to ensure no extra load fires.
     await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Guard against false positives: the clicks must have actually toggled the
+    // checkboxes (selection really changed). Without this, a stale selector
+    // that matches nothing would make the "no refetch" assertion trivially pass.
+    const checkedAfter = document.querySelectorAll(
+      'input[type="checkbox"]:checked, input[type="checkbox"][data-checked], [data-slot="checkbox"][data-checked]',
+    );
+    expect(checkedAfter.length).toBeGreaterThan(0);
 
     // Still only 1 load call (selection change doesn't trigger refetch).
     expect(calls.filter((c) => c.method === 'load').length).toBe(1);
