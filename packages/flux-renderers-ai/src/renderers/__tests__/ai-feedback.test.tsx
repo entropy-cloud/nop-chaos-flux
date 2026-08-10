@@ -165,6 +165,58 @@ describe('ai-feedback — copy reset timer cleanup (2-20)', () => {
 // falls back to the default action set.
 // ============================================================================
 
+describe('ai-feedback — R2-F2 family (2026-08-11): missing clipboard API is a failure, not a false "Copied"', () => {
+  it('copy with no navigator.clipboard API keeps the button in its pre-copy state', async () => {
+    const originalClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    try {
+      const props = makeProps({
+        props: { type: 'ai-feedback', actions: ['copy'], message: MESSAGE as never },
+        events: { onAction: vi.fn() },
+      });
+      const { container } = render(<Feedback {...props} />);
+      const copyBtn = container.querySelector('[data-slot="ai-feedback-copy"]') as HTMLElement;
+
+      fireEvent.click(copyBtn);
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(copyBtn.textContent).not.toBe('Copied');
+    } finally {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: originalClipboard,
+        configurable: true,
+      });
+    }
+  });
+
+  it('copy with a clipboard that lacks writeText keeps the button in its pre-copy state', async () => {
+    const originalClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', { value: {}, configurable: true });
+    try {
+      const props = makeProps({
+        props: { type: 'ai-feedback', actions: ['copy'], message: MESSAGE as never },
+        events: { onAction: vi.fn() },
+      });
+      const { container } = render(<Feedback {...props} />);
+      const copyBtn = container.querySelector('[data-slot="ai-feedback-copy"]') as HTMLElement;
+
+      fireEvent.click(copyBtn);
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(copyBtn.textContent).not.toBe('Copied');
+    } finally {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: originalClipboard,
+        configurable: true,
+      });
+    }
+  });
+});
+
 describe('ai-feedback — open-audit P2-7 explicit no-action-bar', () => {
   it('actions: [] renders the root with zero buttons (no default fallback)', () => {
     const props = makeProps({

@@ -220,6 +220,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
       data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
       role="region"
+      aria-label={t('flux.ai.attachments')}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}

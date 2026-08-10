@@ -7,6 +7,7 @@ import type { ChatMessage, ChatMessageContentPart } from '../../../engine/types.
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe('A-3 code block copy button', () => {
@@ -81,6 +82,68 @@ describe('A-3 code block copy button', () => {
       expect(btn.textContent).not.toBe(t('flux.ai.copied'));
     } finally {
       clipboardAdapter.writeText = original;
+    }
+  });
+
+  // ==========================================================================
+  // R2-F2 (2026-08-11 open-audit, plan 2026-08-11-0335-2): the adapter treated
+  // a MISSING clipboard API (`navigator.clipboard` absent / no `writeText`) as
+  // a successful write (`return undefined` → `Promise.resolve(undefined)` →
+  // `setCopied(true)`), showing a false "Copied" in non-https / sandboxed
+  // environments. After the fix the adapter REJECTS on the missing surface so
+  // the `.catch` path keeps the button in its pre-copy state — same as the
+  // documented rejected-write behavior.
+  // ==========================================================================
+  it('R2-F2: no navigator.clipboard API → copy does not flip the button to "Copied"', async () => {
+    const originalClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    try {
+      const message: ChatMessage = {
+        id: 'm-no-clip',
+        role: 'assistant',
+        content: '```js\nconst a = 1;\n```',
+      };
+      const { container } = render(<AiBubbleView message={message} />);
+      const btn = container.querySelector('[data-slot="ai-bubble-copy-code"]') as HTMLButtonElement;
+      expect(btn).not.toBeNull();
+      btn.click();
+
+      // The write can never succeed — the button must stay in the copy state.
+      await waitFor(() => {
+        expect(btn.textContent).toBe(t('flux.ai.copy'));
+      });
+      expect(btn.textContent).not.toBe(t('flux.ai.copied'));
+    } finally {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: originalClipboard,
+        configurable: true,
+      });
+    }
+  });
+
+  it('R2-F2: navigator.clipboard exists but writeText is missing → copy does not flip the button to "Copied"', async () => {
+    const originalClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', { value: {}, configurable: true });
+    try {
+      const message: ChatMessage = {
+        id: 'm-no-write',
+        role: 'assistant',
+        content: '```js\nconst b = 2;\n```',
+      };
+      const { container } = render(<AiBubbleView message={message} />);
+      const btn = container.querySelector('[data-slot="ai-bubble-copy-code"]') as HTMLButtonElement;
+      expect(btn).not.toBeNull();
+      btn.click();
+
+      await waitFor(() => {
+        expect(btn.textContent).toBe(t('flux.ai.copy'));
+      });
+      expect(btn.textContent).not.toBe(t('flux.ai.copied'));
+    } finally {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: originalClipboard,
+        configurable: true,
+      });
     }
   });
 });

@@ -457,12 +457,18 @@ function textOfPart(part: ChatMessageContentPart): string {
  * explicit `sources` prop > `message.metadata.sources` > a `data-sources`
  * ChatMessageDataPart (A-1). Returns an empty list when none are present
  * (Failure Path `citation-no-sources`).
+ *
+ * R2-F1 (2026-08-11 open-audit): an EXPLICIT array — INCLUDING `[]` — is
+ * authoritative and overrides metadata / data-sources, so the host can
+ * disable citation rendering per-message (P2-7 "explicit empty array =
+ * explicit intent" sibling contract, ai-feedback precedent). Only an ABSENT
+ * value (undefined / non-array) falls back to the metadata chain.
  */
 export function resolveSources(
   message: ChatMessage | undefined,
   explicitSources?: AiCitationSource[] | unknown,
 ): AiCitationSource[] {
-  if (Array.isArray(explicitSources) && explicitSources.length > 0) {
+  if (Array.isArray(explicitSources)) {
     return normalizeSources(explicitSources);
   }
   const metaSources = message?.metadata?.sources;

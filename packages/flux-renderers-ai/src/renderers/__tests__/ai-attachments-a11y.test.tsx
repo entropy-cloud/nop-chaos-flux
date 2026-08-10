@@ -44,13 +44,12 @@ function harness(schemaProps: Record<string, unknown> = {}) {
 }
 
 describe('11-01 ai-attachments container must not masquerade as a button', () => {
-  it('renders the container without role="button" / tabIndex / aria-label (drop surface is a plain region)', () => {
+  it('renders the container without role="button" / tabIndex (drop surface is a plain region)', () => {
     const { container } = harness();
     const root = container.querySelector('[data-slot="ai-attachments"]') as HTMLElement;
     expect(root).toBeTruthy();
     expect(root.getAttribute('role')).not.toBe('button');
     expect(root.hasAttribute('tabindex')).toBe(false);
-    expect(root.getAttribute('aria-label')).toBeNull();
   });
 
   it('Enter/Space on the container does not hijack the hidden input click; the pick button still activates it', () => {
@@ -90,5 +89,22 @@ describe('20-06 ai-attachments image remove button focus visibility (WCAG 2.4.7)
     expect(className).toContain('opacity-0');
     expect(className).toContain('group-hover:opacity-100');
     expect(className).toContain('focus-visible:opacity-100');
+  });
+});
+
+// ============================================================================
+// FIND-20 (2026-08-11 multi-audit, plan 2026-08-11-0335-2): the root
+// `role="region"` had NO accessible name — unnamed regions are not exposed as
+// landmarks (WCAG 4.1.2 / 1.3.1). The fix adds an `aria-label` (i18n
+// `flux.ai.attachments`, en/zh symmetric).
+// ============================================================================
+describe('FIND-20 ai-attachments region accessible name (WCAG 1.3.1/4.1.2)', () => {
+  it('renders a non-empty aria-label on the role="region" root', () => {
+    const { container } = harness();
+    const root = container.querySelector('[data-slot="ai-attachments"]') as HTMLElement;
+    expect(root.getAttribute('role')).toBe('region');
+    const label = root.getAttribute('aria-label');
+    expect(label).toBeTruthy();
+    expect(label!.trim().length).toBeGreaterThan(0);
   });
 });

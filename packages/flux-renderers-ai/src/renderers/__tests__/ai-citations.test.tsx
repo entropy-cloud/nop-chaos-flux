@@ -270,6 +270,49 @@ describe('ai-citations — source resolution priority', () => {
     expect(resolveSources(message)).toEqual([]);
   });
 
+  // ==========================================================================
+  // R2-F1 (2026-08-11 open-audit, plan 2026-08-11-0335-2): an EXPLICIT
+  // `sources: []` is an explicit host intent (the P2-7 "explicit empty array =
+  // explicit intent" contract, ai-feedback sibling) and must OVERRIDE
+  // `metadata.sources` / a `data-sources` part — the host can disable citation
+  // rendering per-message. Pre-fix `resolveSources` required `length > 0`, so
+  // an explicit empty array silently fell through to metadata.
+  // ==========================================================================
+  it('R2-F1: explicit empty sources [] overrides metadata.sources (host can disable citations)', () => {
+    const message: ChatMessage = {
+      id: 'm',
+      role: 'assistant',
+      content: '[1]',
+      metadata: { sources: [{ index: 1, title: 'From metadata' }] },
+    };
+    const resolved = resolveSources(message, []);
+    expect(resolved).toEqual([]);
+  });
+
+  it('R2-F1: explicit empty sources [] overrides a non-empty data-sources content part', () => {
+    const message: ChatMessage = {
+      id: 'm',
+      role: 'assistant',
+      content: [
+        { type: 'text', text: '[1]' },
+        { type: 'data-sources', data: [{ index: 1, title: 'Part source' }] },
+      ],
+    };
+    const resolved = resolveSources(message, []);
+    expect(resolved).toEqual([]);
+  });
+
+  it('R2-F1: a non-array explicit value still falls back to metadata (only arrays are authoritative)', () => {
+    const message: ChatMessage = {
+      id: 'm',
+      role: 'assistant',
+      content: '[1]',
+      metadata: { sources: [{ index: 1, title: 'Meta source' }] },
+    };
+    const resolved = resolveSources(message, { nope: true });
+    expect(resolved[0].title).toBe('Meta source');
+  });
+
   it('extractMessageText joins text parts from array content', () => {
     const message: ChatMessage = {
       id: 'm',

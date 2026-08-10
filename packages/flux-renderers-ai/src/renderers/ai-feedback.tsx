@@ -155,7 +155,10 @@ function copyMessageText(message: ChatMessage): Promise<void> {
       return Promise.reject(error);
     }
   }
-  return Promise.resolve();
+  // R2-F2 family (2026-08-11, P3 same-root member): a MISSING clipboard API
+  // (non-https / sandboxed) is an explicit failure — resolving here flipped
+  // the button to a false "Copied" (`fire('copy')` flips on resolve).
+  return Promise.reject(new Error('navigator.clipboard is not available'));
 }
 
 function extractMessageText(message: ChatMessage): string {

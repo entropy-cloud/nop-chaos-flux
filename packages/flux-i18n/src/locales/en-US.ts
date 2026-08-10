@@ -83,6 +83,7 @@ export const enUS: Resource = {
       toolCall: 'Tool call: {{name}}',
       thoughtFor: 'Thought for {{seconds}}s',
       attachFiles: 'Attach files',
+      attachments: 'Attachments',
       fileTooLarge: 'File is too large',
       tooManyFiles: 'Too many files',
       removeFile: 'Remove',

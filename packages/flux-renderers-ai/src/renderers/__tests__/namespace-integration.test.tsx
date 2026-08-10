@@ -220,4 +220,100 @@ describe('ai namespace integration via ai-chat (Layer B + $ai projection channel
     expect(result.ok).toBe(true);
     expect(createSpy).toHaveBeenCalledWith({ title: 'Host-managed', metadata: undefined });
   });
+
+  // ==========================================================================
+  // R1-F5 (2026-08-11 open-audit, plan 2026-08-11-0335-2): the `ai` ActionScope
+  // namespace is NOT instance-isolated — `registerNamespace` replaces an
+  // existing provider (`cleanupProvider(existing)`), so with two ai-chat on one
+  // page the LATER-mounted instance silently takes over `ai:*` routing and the
+  // FIRST-unmounted instance unregisters the whole namespace. The P2 guard:
+  // ai-chat warns once before registering when another provider already owns
+  // `ai`, so the takeover is never silent. (Full per-instance isolation is a
+  // structural flux-runtime change — adjudicated out of scope, see the plan.)
+  // ==========================================================================
+  it('R1-F5: a later-mounted ai-chat warns once when another instance already owns the `ai` namespace', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const connector = mockStreamConnector(okChunks);
+      let observed: ActionScope | null = null;
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://ai/r1f5-two-chats"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'ai-chat',
+                testid: 'chat-a',
+                connector: connector as never,
+                activeConversationId: 'c-a',
+              },
+              {
+                type: 'ai-chat',
+                testid: 'chat-b',
+                connector: connector as never,
+                activeConversationId: 'c-b',
+              },
+            ],
+          }}
+          env={aiMockEnv()}
+          formulaCompiler={aiFormulaCompiler}
+          onActionScopeChange={(scope) => {
+            observed = scope;
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(observed?.listNamespaces()).toContain('ai');
+      });
+      expect(document.querySelector('[data-testid="chat-a"]')).not.toBeNull();
+      expect(document.querySelector('[data-testid="chat-b"]')).not.toBeNull();
+
+      // The later-mounted instance must surface the takeover as a warn, never
+      // silently — at least one `[ai-chat]` warn must have fired.
+      const chatWarns = warnSpy.mock.calls.filter((call) => String(call[0]).includes('[ai-chat]'));
+      expect(chatWarns.length).toBeGreaterThanOrEqual(1);
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('R1-F5: a single ai-chat registers the `ai` namespace WITHOUT any conflict warn', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const connector = mockStreamConnector(okChunks);
+      let observed: ActionScope | null = null;
+
+      render(
+        <SchemaRenderer
+          schemaUrl="test://ai/r1f5-single-chat"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'ai-chat',
+                connector: connector as never,
+                activeConversationId: 'c-1',
+              },
+            ],
+          }}
+          env={aiMockEnv()}
+          formulaCompiler={aiFormulaCompiler}
+          onActionScopeChange={(scope) => {
+            observed = scope;
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(observed?.listNamespaces()).toContain('ai');
+      });
+      const chatWarns = warnSpy.mock.calls.filter((call) => String(call[0]).includes('[ai-chat]'));
+      expect(chatWarns.length).toBe(0);
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
 });

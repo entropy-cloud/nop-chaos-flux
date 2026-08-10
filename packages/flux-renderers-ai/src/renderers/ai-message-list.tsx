@@ -100,7 +100,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
   if (messages.length === 0) {
     return (
       <div
-        className={cn('nop-ai-message-list')}
+        className={cn('nop-ai-message-list', props.className)}
         data-slot="ai-message-list"
         data-empty=""
         data-cid={cid || undefined}

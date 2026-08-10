@@ -136,6 +136,34 @@ describe('AiMessageListView + AiSenderView inside an ai-chat context', () => {
     expect(container.querySelectorAll('.nop-ai-bubble').length).toBe(0);
   });
 
+  // ==========================================================================
+  // FIND-13 (2026-08-11 multi-audit, plan 2026-08-11-0335-2): the empty-state
+  // branch dropped `props.meta.className` (`cn('nop-ai-message-list')` without
+  // the className), breaking the canonical-root className routing contract for
+  // empty sessions — the non-empty branch and the ai-prompts / ai-suggestions
+  // precedents keep the className.
+  // ==========================================================================
+  it('FIND-13: empty state keeps the schema className on the root', () => {
+    const { container } = render(
+      <AiChatProvider
+        value={{
+          engine: {} as never,
+          messages: [],
+          requestState: 'idle',
+          isProcessing: false,
+          sendMessage: vi.fn(async () => undefined),
+          abortRequest: async () => undefined,
+        }}
+      >
+        <AiMessageListView className="my-schema-class" />
+      </AiChatProvider>,
+    );
+    const list = container.querySelector('.nop-ai-message-list');
+    expect(list).not.toBeNull();
+    expect(list?.getAttribute('data-empty')).toBe('');
+    expect(list?.className).toContain('my-schema-class');
+  });
+
   it('forwards showTimestamp to bubbles (A-4 timestamp footer wiring)', async () => {
     const connector = mockConnector([{ delta: { content: 'Hi' } }, { finishReason: 'stop' }]);
     function TimestampHarness() {

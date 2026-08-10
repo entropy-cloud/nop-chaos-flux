@@ -344,4 +344,57 @@ describe('ai-bubble A-4 timestamp', () => {
     const { container } = render(<AiBubbleView message={message} showTimestamp={false} />);
     expect(container.querySelector('[data-slot="ai-bubble-timestamp"]')).toBeNull();
   });
+
+  // ==========================================================================
+  // R3-F1 (2026-08-11 open-audit, plan 2026-08-11-0335-2): `metadata.createdAt`
+  // is host-writable. The old `typeof createdAt !== 'number'` guard passes NaN
+  // and out-of-range finite values (e.g. `Number.MAX_VALUE`), and
+  // `date.toISOString()` on an Invalid Date THROWS RangeError — crashing the
+  // whole bubble tree (ai-chat has no Error Boundary). After the fix the
+  // renderer returns null on any Date-unrepresentable value; the tree survives.
+  // ==========================================================================
+  it('R3-F1: NaN createdAt does not crash the bubble tree (timestamp omitted)', () => {
+    const message: ChatMessage = {
+      id: 'm1',
+      role: 'assistant',
+      content: 'hi',
+      metadata: { createdAt: NaN },
+    };
+    expect(() => {
+      render(<AiBubbleView message={message} showTimestamp />);
+    }).not.toThrow();
+    cleanup();
+    const { container } = render(<AiBubbleView message={message} showTimestamp />);
+    expect(container.querySelector('[data-slot="ai-bubble-timestamp"]')).toBeNull();
+  });
+
+  it('R3-F1: out-of-range finite createdAt (Number.MAX_VALUE) does not crash (timestamp omitted)', () => {
+    const message: ChatMessage = {
+      id: 'm1',
+      role: 'assistant',
+      content: 'hi',
+      metadata: { createdAt: Number.MAX_VALUE },
+    };
+    expect(() => {
+      render(<AiBubbleView message={message} showTimestamp />);
+    }).not.toThrow();
+    cleanup();
+    const { container } = render(<AiBubbleView message={message} showTimestamp />);
+    expect(container.querySelector('[data-slot="ai-bubble-timestamp"]')).toBeNull();
+  });
+
+  it('R3-F1: Infinity / -Infinity createdAt do not crash (timestamp omitted)', () => {
+    for (const bad of [Infinity, -Infinity]) {
+      const message: ChatMessage = {
+        id: 'm1',
+        role: 'assistant',
+        content: 'hi',
+        metadata: { createdAt: bad },
+      };
+      expect(() => {
+        render(<AiBubbleView message={message} showTimestamp />);
+      }).not.toThrow();
+      cleanup();
+    }
+  });
 });

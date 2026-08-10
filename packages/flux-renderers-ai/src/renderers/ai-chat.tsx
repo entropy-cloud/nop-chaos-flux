@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ActionContext, FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -202,6 +202,28 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
 
   // ---- Layer B: ActionScope namespace `ai` registration ----
   const actionScope = useCurrentActionScope();
+  // R1-F5 (2026-08-11 open-audit): the `ai` ActionScope namespace is NOT
+  // instance-isolated — `registerNamespace` replaces an existing provider, so
+  // two ai-chat on one page silently route `ai:*` to the LATER-mounted instance
+  // and the FIRST-unmounted one unregisters the whole namespace. P2 guard: warn
+  // once BEFORE registering when another provider already owns `ai` (layout
+  // effects run in declaration order, so this check sees the pre-registration
+  // state). Registration/unregistration semantics are unchanged; full
+  // per-instance isolation is a structural flux-runtime change (adjudicated
+  // out of scope — see design.md §14.2 + engine.md note section).
+  useLayoutEffect(() => {
+    if (!actionScope) return;
+    if (actionScope.listNamespaces().includes('ai')) {
+      if (typeof console !== 'undefined') {
+        console.warn(
+          '[ai-chat] ActionScope namespace "ai" is already registered by another instance; ' +
+            '`ai:*` actions now route to the LATER-mounted ai-chat (design.md §14.2). ' +
+            'For multi-chat pages use per-instance ActionScopes, the ComponentHandle path ' +
+            '(cid-isolated), or wait for the full per-instance isolation solution.',
+        );
+      }
+    }
+  }, [actionScope]);
   // AI-31: stabilize the provider so `useNamespaceRegistration` does not
   // re-subscribe on every streaming chunk (it depends on the engine + the
   // conversation controller; both are host-stable references). The renderer

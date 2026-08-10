@@ -162,13 +162,20 @@ function extractElementText(node: React.ReactNode): string {
  * Clipboard write indirection. Tests can stub this; production uses
  * `navigator.clipboard`. Allowed under INV-1 because clipboard is a
  * user-gesture browser API, not a network/storage primitive.
+ *
+ * R2-F2 (2026-08-11 open-audit): a MISSING clipboard API (non-https /
+ * sandboxed / no `writeText`) must be an explicit failure signal, not a
+ * silent success — the old `return undefined` resolved through
+ * `Promise.resolve(undefined)` and flipped the button to a false "Copied".
+ * The rejection flows into `handleCopy`'s `.catch`, keeping the button in its
+ * pre-copy state (same behavior as a rejected write).
  */
 export const clipboardAdapter: { writeText(text: string): void | Promise<void> } = {
   writeText(text: string): void | Promise<void> {
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       return navigator.clipboard.writeText(text);
     }
-    return undefined;
+    return Promise.reject(new Error('navigator.clipboard is not available'));
   },
 };
 

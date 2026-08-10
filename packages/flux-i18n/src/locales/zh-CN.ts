@@ -84,6 +84,7 @@ export const zhCN: Resource = {
       toolCall: '工具调用：{{name}}',
       thoughtFor: '思考了 {{seconds}} 秒',
       attachFiles: '添加附件',
+      attachments: '附件',
       fileTooLarge: '文件过大',
       tooManyFiles: '文件数量超限',
       removeFile: '移除',
