@@ -21,6 +21,30 @@ function mockConnector(chunks: AiConnectorChunk[]): AiConnector {
   };
 }
 
+function slowConnector(chunks: AiConnectorChunk[], delayMs = 20): AiConnector {
+  return {
+    async stream(_req: AiConnectorRequest) {
+      async function* gen() {
+        for (const c of chunks) {
+          await new Promise((r) => setTimeout(r, delayMs));
+          yield c;
+        }
+      }
+      void _req;
+      return gen();
+    },
+  };
+}
+
+/** Connector whose stream throws immediately — engine settles 'error'. */
+function failingConnector(message: string): AiConnector {
+  return {
+    async stream() {
+      throw new Error(message);
+    },
+  };
+}
+
 const okChunks: AiConnectorChunk[] = [
   { delta: { content: 'Hi' } },
   { finishReason: 'stop' },
@@ -48,6 +72,28 @@ describe('createAiActionProvider — namespace `ai` action surface (unit)', () =
     expect(empty.ok).toBe(false);
     const wrongType = await provider.invoke('send', { text: 42 }, {} as ActionContext);
     expect(wrongType.ok).toBe(false);
+  });
+
+  it('FIND-04 ai:send returns ok:false with the engine error on a failed turn', async () => {
+    const engine = createMessageEngine({ connector: failingConnector('boom-provider') });
+    const provider = createAiActionProvider({ engine });
+    const result = await provider.invoke('send', { text: 'hello' }, {} as ActionContext);
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect(String((result.error as Error).message)).toContain('boom-provider');
+  });
+
+  it('FIND-04 ai:send returns ok:false engine-busy on a second send while a turn is processing', async () => {
+    const engine = createMessageEngine({ connector: slowConnector(okChunks) });
+    const provider = createAiActionProvider({ engine });
+    const first = engine.sendMessage('first');
+    const result = await provider.invoke('send', { text: 'second' }, {} as ActionContext);
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect(String((result.error as Error).message)).toContain('busy');
+    // The busy drop must NOT push the second message (no silent half-send).
+    expect(engine.getState().messages.some((m) => m.content === 'second')).toBe(false);
+    await first;
   });
 
   it('ai:clear empties messages and resets requestState to idle', async () => {

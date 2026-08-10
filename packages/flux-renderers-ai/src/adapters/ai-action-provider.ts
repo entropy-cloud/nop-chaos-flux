@@ -46,6 +46,22 @@ function fail(message: string): ActionResult {
 }
 
 /**
+ * FIND-04 (2026-08-11, plan 2026-08-11-0008-3): derive the command-boundary
+ * error from the engine's post-await state. `engine.sendMessage` settles void
+ * (documented void-settle contract — every failure branch settles into
+ * `requestState`/`lastError`), so a failed turn must surface `lastError`
+ * (non-Error causes wrapped with `{ cause }`) instead of an unconditional ok.
+ */
+function engineStateError(engine: MessageEngine): Error {
+  const cause = engine.getState().lastError;
+  return cause instanceof Error ? cause : new Error(String(cause ?? 'AI request failed'), { cause: cause });
+}
+
+function engineBusy(): ActionResult {
+  return fail('engine busy: a previous request is still processing');
+}
+
+/**
  * Build the `ai` ActionScope namespace provider. The renderer registers it via
  * `useNamespaceRegistration(actionScope, 'ai', provider)` (live API; the
  * design.md §11.1 `runtime.actionScope?.registerNamespace` phrasing is stale —
@@ -87,7 +103,16 @@ export function createAiActionProvider(input: CreateAiActionProviderInput): Acti
           if (!engine) {
             return fail('ai-chat engine is not ready (external engine switch in progress)');
           }
+          // FIND-04: busy-drop — a second send while a turn is in-flight is
+          // silently discarded inside runTurn (isProcessing entry guard); the
+          // command boundary must report the drop explicitly, not ok:true.
+          if (engine.getState().isProcessing) {
+            return engineBusy();
+          }
           await engine.sendMessage(text);
+          if (engine.getState().requestState === 'error') {
+            return { ok: false, error: engineStateError(engine) };
+          }
           return ok();
         }
         case 'abort': {
@@ -100,6 +125,12 @@ export function createAiActionProvider(input: CreateAiActionProviderInput): Acti
         case 'clear': {
           if (!engine) {
             return fail('ai-chat engine is not ready (external engine switch in progress)');
+          }
+          // FIND-04 category-sweep: `engine.clear` silently no-ops while a
+          // turn is in-flight (documented engine guard) — report the drop
+          // instead of a lying ok:true.
+          if (engine.getState().isProcessing) {
+            return engineBusy();
           }
           engine.clear();
           return ok();

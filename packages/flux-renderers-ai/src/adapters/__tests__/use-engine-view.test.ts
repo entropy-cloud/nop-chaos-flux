@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useEngineView } from '../use-engine-view.js';
 import { createMessageEngine } from '../../engine/create-engine.js';
@@ -9,6 +9,10 @@ import type {
   AiConnectorRequest,
   MessageEngine,
 } from '../../engine/types.js';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function mockConnector(chunks: AiConnectorChunk[]): AiConnector {
   return {
@@ -86,5 +90,30 @@ describe('useEngineView — bind an existing engine to React', () => {
       await result.current.sendMessage('two');
     });
     expect(result.current.messages[1].content).toBe('B');
+  });
+
+  it('FIND-05 warns with a createReactMessageAdapter hint when the engine is backed by the native adapter', () => {
+    // Native adapter (the engine default) rebuilds a fresh snapshot object on
+    // every getState() call → useSyncExternalStore loops. The FIND-05 guard
+    // must emit a diagnosable warning pointing at createReactMessageAdapter.
+    // React's own uncached-getSnapshot guard / nested-update limit may still
+    // terminate the render loop afterwards — the diagnostic fires first.
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const nativeEngine = createMessageEngine({ connector: mockConnector(helloChunks) });
+    try {
+      renderHook(() => useEngineView(nativeEngine));
+    } catch {
+      // The render loop is terminated by React's depth guard; the FIND-05
+      // diagnostic must have been emitted before it.
+    }
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('createReactMessageAdapter'));
+  });
+
+  it('FIND-05 React-adapter engine binds with zero snapshot-stability warnings', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const engine = buildEngine(mockConnector(helloChunks));
+    const { result } = renderHook(() => useEngineView(engine));
+    expect(result.current.engine).toBe(engine);
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });

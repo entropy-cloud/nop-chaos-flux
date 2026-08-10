@@ -641,22 +641,25 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     );
     pendingSavesRef.current.clear();
     // P1-b (open-audit): keep storage consistent so a remount does not
-    // rehydrate cleared items (FP-2 ghost rehydration). Prefer an atomic
-    // `storage.clearAll` when the host provides one; otherwise fall back to a
-    // per-id `deleteConversation` fan-out (mirroring deleteConversation's
-    // storage path). Per-id failures route through reportStorageError so one
+    // rehydrate cleared items (FP-2 ghost rehydration).
+    // FIND-02 (2026-08-11, plan 2026-08-11-0008-3): the storage clear must
+    // target the clearAll-TIME conversation snapshot — per-id
+    // `deleteConversation` fan-out over `ids` — and must NEVER use an atomic
+    // `storage.clearAll()`. An atomic clear chained behind the drain settles
+    // AFTER any conversation created in the clearAll→drain window (its save
+    // is not part of this drain: pendingSavesRef is cleared synchronously),
+    // so the late atomic clear wipes the new conversation's record
+    // ("ghost-free-creation in reverse": the list survived, the record was
+    // erased; the K3 drain only guards the forward direction — old writes
+    // drain before the clear). Per-id deletes over the snapshot only touch
+    // conversations that existed at clearAll time; post-clearAll writes are
+    // never swept. Per-id failures route through reportStorageError so one
     // rejection doesn't hide the others (FP-3).
     void drain.then(() => {
-      if (storage?.clearAll) {
-        Promise.resolve(storage.clearAll()).catch((error: unknown) => {
-          reportStorageError({ phase: 'deleteConversation', error });
+      for (const id of ids) {
+        Promise.resolve(storage?.deleteConversation?.(id)).catch((error: unknown) => {
+          reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
         });
-      } else {
-        for (const id of ids) {
-          Promise.resolve(storage?.deleteConversation?.(id)).catch((error: unknown) => {
-            reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
-          });
-        }
       }
     });
   }

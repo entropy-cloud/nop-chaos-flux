@@ -34,6 +34,29 @@ export type AiComponentMethod = (typeof AI_COMPONENT_METHODS)[number];
  * (external engine A → null → B) so dispatch is an explicit rejection instead
  * of writing ghost messages into the hidden self-built engine.
  */
+/**
+ * FIND-04 (2026-08-11, plan 2026-08-11-0008-3): command-boundary failure
+ * fidelity for `component:sendMessage`. The engine's `sendMessage` settles
+ * void (documented void-settle contract — every failure branch settles into
+ * `requestState`/`lastError`), so the handle must derive its result from the
+ * post-await engine state instead of unconditionally reporting ok.
+ */
+function handleStateError(engine: MessageEngine): Error {
+  const cause = engine.getState().lastError;
+  return cause instanceof Error ? cause : new Error(String(cause ?? 'AI request failed'), { cause: cause });
+}
+
+function handleSendSettlement(engine: MessageEngine): ComponentCapabilityResult {
+  if (engine.getState().requestState === 'error') {
+    return { ok: false, error: handleStateError(engine) };
+  }
+  return { ok: true };
+}
+
+function handleBusy(): ComponentCapabilityResult {
+  return { ok: false, error: new Error('engine busy: a previous request is still processing') };
+}
+
 export function createAiComponentHandle(input: {
   engine: MessageEngine | null;
   id: string;
@@ -63,13 +86,18 @@ export function createAiComponentHandle(input: {
           case 'sendMessage': {
             const text = payload?.text;
             const parts = payload?.parts;
+            // FIND-04: busy-drop — a second send while a turn is in-flight is
+            // silently discarded inside runTurn; report the drop explicitly.
+            if (engine.getState().isProcessing) {
+              return handleBusy();
+            }
             if (Array.isArray(parts)) {
               await engine.sendMessage(parts as ChatMessageContentPart[]);
-              return { ok: true };
+              return handleSendSettlement(engine);
             }
             if (typeof text === 'string' && text.length > 0) {
               await engine.sendMessage(text);
-              return { ok: true };
+              return handleSendSettlement(engine);
             }
             return { ok: false, error: new Error('component:sendMessage requires { text } or { parts }') };
           }
@@ -78,6 +106,12 @@ export function createAiComponentHandle(input: {
             return { ok: true };
           }
           case 'clear': {
+            // FIND-04 category-sweep: `engine.clear` silently no-ops while a
+            // turn is in-flight (documented engine guard) — report the drop
+            // instead of a lying ok:true.
+            if (engine.getState().isProcessing) {
+              return handleBusy();
+            }
             engine.clear();
             return { ok: true };
           }
@@ -97,6 +131,12 @@ export function createAiComponentHandle(input: {
             return { ok: true };
           }
           case 'regenerate': {
+            // FIND-04 category-sweep: `engine.regenerate` silently no-ops
+            // while a turn is in-flight (documented engine guard) — report
+            // the drop instead of a lying ok:true.
+            if (engine.getState().isProcessing) {
+              return handleBusy();
+            }
             // A-16: optional explicit branch id; engine assigns one when omitted.
             const branchId = typeof payload?.branchId === 'string' ? payload.branchId : undefined;
             await engine.regenerate(branchId);

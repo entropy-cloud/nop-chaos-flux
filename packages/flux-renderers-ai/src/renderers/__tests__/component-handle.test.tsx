@@ -2,7 +2,7 @@ import { afterEach, describe, it, expect } from 'vitest';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { ComponentRegistryContext } from '@nop-chaos/flux-react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import type { ComponentCapabilityActionContext, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   aiFormulaCompiler,
   aiMockEnv,
@@ -10,8 +10,10 @@ import {
   mockStreamConnector,
 } from '../../ai-test-support.js';
 import { AiChatRenderer } from '../ai-chat.js';
+import { createAiComponentHandle } from '../../adapters/ai-component-handle.js';
+import { createMessageEngine } from '../../engine/create-engine.js';
 import type { AiChatSchema } from '../../schemas.js';
-import type { AiConnectorChunk } from '../../engine/types.js';
+import type { AiConnector, AiConnectorChunk, AiConnectorRequest } from '../../engine/types.js';
 
 const SchemaRenderer = createAiSchemaRenderer();
 
@@ -23,6 +25,66 @@ const okChunks: AiConnectorChunk[] = [
   { delta: { content: 'Hi' } },
   { finishReason: 'stop' },
 ];
+
+function slowConnector(chunks: AiConnectorChunk[], delayMs = 20): AiConnector {
+  return {
+    async stream(_req: AiConnectorRequest) {
+      async function* gen() {
+        for (const c of chunks) {
+          await new Promise((r) => setTimeout(r, delayMs));
+          yield c;
+        }
+      }
+      void _req;
+      return gen();
+    },
+  };
+}
+
+function failingConnector(message: string): AiConnector {
+  return {
+    async stream() {
+      throw new Error(message);
+    },
+  };
+}
+
+// ============================================================================
+// FIND-04 (plan 2026-08-11-0008-3): command-boundary failure fidelity for the
+// Layer C ComponentHandle — component:sendMessage must not report ok:true for
+// a failed turn (engine settles 'error' with lastError) or a busy drop.
+// ============================================================================
+
+describe('ai-chat Layer C — component:sendMessage failure fidelity (FIND-04)', () => {
+  it('returns ok:false with the engine error on a failed turn', async () => {
+    const engine = createMessageEngine({ connector: failingConnector('boom-handle') });
+    const handle = createAiComponentHandle({ engine, id: 'chat-err' });
+    const result = await handle.capabilities.invoke(
+      'sendMessage',
+      { text: 'hi' },
+      {} as ComponentCapabilityActionContext,
+    );
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect(String((result.error as Error).message)).toContain('boom-handle');
+  });
+
+  it('returns ok:false engine-busy on a second send while a turn is processing', async () => {
+    const engine = createMessageEngine({ connector: slowConnector(okChunks) });
+    const handle = createAiComponentHandle({ engine, id: 'chat-busy' });
+    const first = engine.sendMessage('first');
+    const result = await handle.capabilities.invoke(
+      'sendMessage',
+      { text: 'second' },
+      {} as ComponentCapabilityActionContext,
+    );
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect(String((result.error as Error).message)).toContain('busy');
+    expect(engine.getState().messages.some((m) => m.content === 'second')).toBe(false);
+    await first;
+  });
+});
 
 describe('ai-chat Layer C ComponentHandle (registration lifecycle + dispatch)', () => {
   it('registers a component handle on mount and the handle is resolvable by componentId', async () => {

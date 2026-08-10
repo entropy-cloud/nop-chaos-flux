@@ -235,4 +235,64 @@ describe('ai-chat — external engine injection', () => {
     // Default "select conversation" prompt is visible.
     expect(root?.querySelector('[data-slot="ai-chat-empty"]')).not.toBeNull();
   });
+
+  it('FIND-05 binding a native-adapter engine emits a diagnosable warning pointing at createReactMessageAdapter', () => {
+    // A host following engine.md §8.5 with the DEFAULT native adapter
+    // (createMessageEngine({ connector }) — no adapter option) used to hit an
+    // infinite render loop ("Maximum update depth exceeded"). The FIND-05
+    // guard must emit a one-time console.warn with the fix hint before React's
+    // own depth guard terminates the loop.
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const nativeEngine = createMessageEngine({ connector: mockConnector(replyChunks) });
+    try {
+      render(
+        <SchemaRenderer
+          schemaUrl="test://ai/native-engine"
+          schema={{
+            type: 'page',
+            body: [
+              {
+                type: 'ai-chat',
+                testid: 'chat-native',
+                engine: nativeEngine as never,
+              },
+            ],
+          }}
+          env={aiMockEnv()}
+          formulaCompiler={aiFormulaCompiler}
+        />,
+      );
+    } catch {
+      // The render loop is still terminated by React's depth guard; the
+      // FIND-05 diagnostic must have been emitted first.
+    }
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('createReactMessageAdapter'));
+  });
+
+  it('FIND-05 React-adapter external engine binds with zero snapshot-stability warnings', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const external = buildExternalEngine(mockConnector(replyChunks));
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://ai/react-adapter-engine"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'ai-chat',
+              testid: 'chat-react',
+              engine: external as never,
+            },
+          ],
+        }}
+        env={aiMockEnv()}
+        formulaCompiler={aiFormulaCompiler}
+      />,
+    );
+
+    // No crash and no snapshot-stability warning — the chat rendered fine.
+    expect(document.querySelector('.nop-ai-chat')).not.toBeNull();
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
 });
