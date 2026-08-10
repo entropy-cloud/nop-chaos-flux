@@ -90,6 +90,7 @@ export interface AiChatSchema extends BaseSchema {
 - marker：`nop-ai-chat`；Layout 类型，不硬编码 gap/padding；spacing 由 schema `className` 的 `stack-*` 别名表达。
 - `data-state` 反映 `engine.requestState`，便于 CSS 选择器做状态样式。
 - **`ai` namespace 多实例语义（R1-F5，2026-08-11）**：`ai` namespace 非实例隔离（namespace-keyed）——同页多 ai-chat 时 `ai:*` 动作由**后挂载者接管**、先卸载者注销整个 namespace；`ai-chat` 注册前检测到占用时 `console.warn` 一次（design.md §14.2 多实例注记）。多实例控制走 ComponentHandle 路径（cid-isolated）或 host 按实例提供独立 ActionScope；完整实例隔离方案（flux-runtime 公共语义变更）入非阻塞 follow-up 需人工确认。
+- **双命名接口关系（FIND-19，2026-08-11，plan `2026-08-11-0335-3`）**：会话控制器存在两个公共接口——`AiConversationController`（`ai-conversation-controller.ts`，`ai` ActionScope namespace / action-provider 的**消费面**，`MaybePromise` 返回语义）与 `AiConversationControllerBridge`（`use-conversation.ts`，`useConversation` hook 的**产出面**，3/4 成员同构、`renameConversation` 仅返回类型宽度差 `void` vs `MaybePromise<void>`）。二者结构性可赋值：host 把 `useConversation()` 返回的 `controller`（Bridge）直接绑到 `ai-chat` 的 `conversationController` prop（Controller 类型）即成立（playground `ai-persistence-demo.tsx` 实证）。双命名保留为 hook 产物类型稳定性，成员须两接口同步演进（FIND-19 裁定：不做结构性合并，公共导出面变更需人工确认）。
 
 ## 2. ai-message-list（Layout, P0）
 
@@ -125,7 +126,6 @@ export interface AiBubbleSchema extends BaseSchema {
   shape?: 'corner' | 'rounded' | 'none'; // 默认 'rounded'
   showAvatar?: boolean;
   avatarRegion?: SchemaInput; // 自定义头像渲染
-  contentResolverName?: string; // 注册的内容解析器名字（默认 'default'）
   // 业务方通过 xui:imports 注册自定义 boxRenderer / contentRenderer
 
   // A-16 消息分支：host 注入的同级分支集 + 当前激活分支；当前消息 id 出现在

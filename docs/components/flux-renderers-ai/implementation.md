@@ -156,25 +156,43 @@ export function createMockStorage(): ConversationStorageStrategy {
   };
 }
 
-// 3. Host 启动时注册 import
-export function registerAiHost(runtime: RendererRuntime, env: RendererEnv) {
-  // 通过 xui:imports 注册命名空间 'ai'，同时产生表达式 helper（$ai）+ action namespace（ai:*）
-  runtime.registerImport('ai', {
-    connectors: {
-      mock: createMockConnector(env),
-      // openai: createOpenAICompatibleConnector(env, { baseURL, apiKey, model }),  // P1 实施时补（见 playground openai-connector.ts）
+// 3. Host 侧提供 env.importLoader（FIND-11 校准：注入无全局注册 API，
+//    真实机制 = env.importLoader 解析 xui:imports spec + schema 声明引用，
+//    见 playground apps/playground/src/ai/mock-ai-env.ts:96-125）
+export function createAiImportLoader(
+  connector: AiConnector,
+  extra?: { tools?: unknown; toolExecutor?: unknown },
+): {
+  importLoader: { load(spec: XuiImportSpec): Promise<ImportedLibraryModule> };
+  resolveImportUrl: (schemaUrl: string, from: string) => string;
+} {
+  const module: ImportedLibraryModule = {
+    createNamespace: () => ({ listMethods: () => [], invoke: () => ({ ok: true }) }),
+    createExpressionHelpers: () => ({
+      connectors: { mock: connector },
+      tools: extra?.tools,
+      toolExecutor: extra?.toolExecutor,
+    }),
+  };
+  return {
+    importLoader: {
+      load(spec) {
+        if (spec.from === 'ai://') return Promise.resolve(module);
+        throw new Error(`Unknown AI import: ${spec.from}`);
+      },
     },
-    storage: createMockStorage(),
-    capabilities: {
-      stream: Boolean(env.stream),
-      openSocket: Boolean(env.openSocket),
-    },
-  });
+    resolveImportUrl: (_schemaUrl: string, from: string) => (from === 'ai' ? 'ai://' : from),
+  };
 }
+// 组装 env 时注入：const { importLoader, resolveImportUrl } = createAiImportLoader(connector);
+// env 追加 importLoader / resolveImportUrl 字段
 
-// 4. Schema 引用
-//    { "type": "ai-chat", "connector": "${$ai.connectors.mock}" }
-//    { "type": "ai-conversations", "conversations": "${$page.conversations}", ... }
+// 4. Schema 引用（xui:imports 声明 + 表达式 helper 消费）
+//    { "type": "page", "xui:imports": [{ "from": "ai", "as": "ai" }],
+//      "body": [
+//        { "type": "ai-chat", "connector": "${$ai.connectors.mock}" },
+//        { "type": "ai-conversations", "conversations": "${$page.conversations}", ... }
+//      ] }
 ```
 
 **关键点**：

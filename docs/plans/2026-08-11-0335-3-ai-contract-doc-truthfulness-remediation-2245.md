@@ -1,6 +1,6 @@
 # 3 契约/文档族 P2 治理（contentResolverName 死字段 / 未导出类型 / manifest 不一致 / 双命名接口 / 文档锚点漂移）（ai-invariant-loop）
 
-> Plan Status: active
+> Plan Status: completed
 > Mission: ai-invariant-loop
 > Work Item: Follow-up Backlog P2（2026-08-10-2245 双审计 契约/文档族）：FIND-07 / FIND-08 / FIND-09 / FIND-14 / FIND-19 / FIND-10 / FIND-11 / FIND-15 / FIND-16 / FIND-17 / FIND-18
 > Last Reviewed: 2026-08-11
@@ -84,102 +84,145 @@ dead field drop（FIND-07）与双命名接口（FIND-19）为契约裁定 + 一
 
 ### Phase 1 — 死字段 drop（FIND-07）+ 未导出类型补导出（FIND-08）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/schemas.ts`、`src/ai-renderer-definitions.ts`、`src/index.ts`、`src/adapters/use-conversation.ts`、`docs/components/flux-renderers-ai/renderers.md`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Proof: 基线 grep——`rg contentResolver` 全包零消费者确认（记录证据，证明 drop 无行为影响；grep 范围 = live 源码 + 本 plan 列出的文档面）
-- [ ] Fix: FIND-07 drop——`schemas.ts:123` 删除 `contentResolverName` 字段 + `ai-renderer-definitions.ts:106` 删除 `{ key: 'contentResolverName', kind: 'prop' }` + `renderers.md:125` 删除声明 + **`flux-guide/flux-types/schema.d.ts:1645`（`contentResolverName?: SchemaValue`）与 `flux-guide/design-patterns/ai.md:163`（ai-bubble 字段表）同步清理**（1606-3 autofocus drop 先例曾因漏 6 处已入库声明/文档面被 Round-1 Major-1 打回，本面全仓 grep 确认后再收口）
-- [ ] Proof: RED 型验证（FIND-08）——修复前 `import type { ConversationStorageErrorEvent } from '@nop-chaos/flux-renderers-ai'` typecheck 失败（负向断言记录）
-- [ ] Fix: FIND-08 补导出——`index.ts` 补 `export type { ConversationStorageErrorEvent }`（对齐 `ConversationStorageStrategy` 先例 `:111`）；`use-conversation.ts` 无需改（定义已导出面，index 转发即可）
-- [ ] Proof: 正向 typecheck 断言——补导出后 `import type { ConversationStorageErrorEvent }` 通过（AI 包 typecheck + 或负向→正向切换测试文件断言）
-- [ ] Fix: 类别清扫——全包「公共签名引用但未导出类型」面核对：`ConversationStorageErrorEvent`（本面）/ `ConversationStorageStrategy`（已导出）/ 其余 options 引用类型；清扫记录入档
-- [ ] Fix: renderers.md / engine.md 同步——FIND-07 清理残留声明；FIND-08 注记（§8.6 `UseConversationOptions.onStorageError` 事件类型现已导出）
+- [x] Proof: 基线 grep——`rg contentResolver` 全包零消费者确认（记录证据，证明 drop 无行为影响；grep 范围 = live 源码 + 本 plan 列出的文档面）
+- [x] Fix: FIND-07 drop——`schemas.ts:123` 删除 `contentResolverName` 字段 + `ai-renderer-definitions.ts:106` 删除 `{ key: 'contentResolverName', kind: 'prop' }` + `renderers.md:125` 删除声明 + **`flux-guide/flux-types/schema.d.ts:1645`（`contentResolverName?: SchemaValue`）与 `flux-guide/design-patterns/ai.md:163`（ai-bubble 字段表）同步清理**（1606-3 autofocus drop 先例曾因漏 6 处已入库声明/文档面被 Round-1 Major-1 打回，本面全仓 grep 确认后再收口）
+- [x] Proof: RED 型验证（FIND-08）——修复前 `import type { ConversationStorageErrorEvent } from '@nop-chaos/flux-renderers-ai'` typecheck 失败（负向断言记录）
+- [x] Fix: FIND-08 补导出——`index.ts` 补 `export type { ConversationStorageErrorEvent }`（对齐 `ConversationStorageStrategy` 先例 `:111`）；`use-conversation.ts` 无需改（定义已导出面，index 转发即可）
+- [x] Proof: 正向 typecheck 断言——补导出后 `import type { ConversationStorageErrorEvent }` 通过（AI 包 typecheck + 或负向→正向切换测试文件断言）
+- [x] Fix: 类别清扫——全包「公共签名引用但未导出类型」面核对：`ConversationStorageErrorEvent`（本面）/ `ConversationStorageStrategy`（已导出）/ 其余 options 引用类型；清扫记录入档
+- [x] Fix: renderers.md / engine.md 同步——FIND-07 清理残留声明；FIND-08 注记（§8.6 `UseConversationOptions.onStorageError` 事件类型现已导出）
 
 Exit Criteria:
 
-- [ ] FIND-07：`rg contentResolver` 目标面零残留——**scope = live 源码 + 本 plan 列出的文档面（schemas.ts / ai-renderer-definitions.ts / renderers.md / flux-guide schema.d.ts / flux-guide ai.md）**；豁免面显式登记（历史审计记录 `docs/audits/2026-08-10-2245-multi-audit…`、roadmap Follow-up Backlog、per-component card、已完成 plan 等**永久保留记录的既有字符串引用**按 1606-3 `:121` 豁免清单模式逐面列出，不重写历史记录——Minimum Rule 21）
-- [ ] FIND-08：`ConversationStorageErrorEvent` 经包入口可 `import type`（typecheck 正向断言在案）
-- [ ] 类别清扫记录入档（未导出类型面核对结论）
+- [x] FIND-07：`rg contentResolver` 目标面零残留——**scope = live 源码 + 本 plan 列出的文档面（schemas.ts / ai-renderer-definitions.ts / renderers.md / flux-guide schema.d.ts / flux-guide ai.md）**；豁免面显式登记（历史审计记录 `docs/audits/2026-08-10-2245-multi-audit…`、roadmap Follow-up Backlog、per-component card、已完成 plan 等**永久保留记录的既有字符串引用**按 1606-3 `:121` 豁免清单模式逐面列出，不重写历史记录——Minimum Rule 21）
+- [x] FIND-08：`ConversationStorageErrorEvent` 经包入口可 `import type`（typecheck 正向断言在案）
+- [x] 类别清扫记录入档（未导出类型面核对结论）
+
+> **Phase 1 执行证据（2026-08-11，plan `2026-08-11-0335-3`）**
+>
+> - **FIND-07 基线 grep**：`rg contentResolver` 在 `packages/flux-renderers-ai/src/` 仅 2 命中（schemas.ts:123 声明 + ai-renderer-definitions.ts:106 注册），零消费者；`ai-bubble/index.tsx` 真实机制为注入 `contentRenderers` matcher 数组（`:72` `const renderers = contentRenderers ?? defaultBubbleContentRenderers`）——drop 无行为影响。
+> - **FIND-07 落地**：schemas.ts 删字段 + ai-renderer-definitions.ts 删注册 + renderers.md 删声明 + flux-guide/schema.d.ts:1645 删类型 + flux-guide/design-patterns/ai.md:163 删字段表引用。**目标面零残留**（`rg contentResolver` 于 5 文件面 exit 1）。
+> - **FIND-07 豁免记录（全仓剩余命中全为永久历史记录，不重写——Minimum Rule 21）**：① 源审计 `docs/audits/2026-08-10-2245-multi-audit-ai-invariant-loop.md:190,192`；② roadmap Follow-up Backlog `docs/backlog/ai-invariant-loop-roadmap.md:190`；③ per-component card `docs/audits/per-component/ai-bubble.md:18`；④ 本 plan 自身记录文本；⑤ 历史分析 `docs/analysis/ai-survey/2026-07-21-tiny-robot-*.md:32,51,190`（tiny-robot 原语 `contentResolver` 概念回顾，非本仓库 live 字段）。
+> - **FIND-08 RED 断言**：scratch 文件 `import type { ConversationStorageErrorEvent } from '@nop-chaos/flux-renderers-ai'`（tsconfig paths 映射至 `src/index.ts`）→ `tsc -p tsconfig.json` 报 `TS2305: no exported member 'ConversationStorageErrorEvent'`（修复前）。
+> - **FIND-08 正向断言**：index.ts Group 3c 补 `type ConversationStorageErrorEvent` 后同 scratch 文件 typecheck 通过（`POSITIVE_PASS`），scratch 文件已删除。
+> - **类别清扫结论**：入口 106 个导出类型全量核对——公共签名引用的选项/事件类型（`UseConversationOptions` 引用链 `AiConnector`/`UseMessageOptions`/`ConversationStorageStrategy`/`AiConversationInfo`/`ConversationStorageErrorEvent`、`UseConversationReturn` 引用链、`CreateStreamBasedAiConnectorOptions`、`CreateMessageEngineOptions` 等）全部经入口导出；仅 3 个「未导出」命中为内部模块类型/测试 helper（`AutoSaveDeps`、`ConversationStorageBootstrapDeps`、`MockStorageCalls`），从不跨入口面，无需导出。
+> - **验证**：AI 包 typecheck 通过；AI 包 test 80 files / 704 tests 全绿（0008-3 后基线 79/678 + 本轮新增测试文件）。
 
 ### Phase 2 — manifest 修正（FIND-09 @tiptap/core + FIND-14 jsonrepair 去重）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/package.json`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: FIND-09——`@tiptap/core` 加入 peerDependencies + peerDependenciesMeta（optional: true），devDependencies 保留（测试仍需）；对齐 `@tiptap/react`/`@tiptap/starter-kit` 处理
-- [ ] Fix: FIND-14——devDependencies 移除冗余 `jsonrepair`（dependencies 保留，生产 import 于 `ai-tool-call.tsx:11`）
-- [ ] Proof: `pnpm install --lockfile-only`（或按仓库惯例更新 lockfile）后 `pnpm check`（workspace-manifest-deps）零新增命中
-- [ ] Proof: `pnpm --filter @nop-chaos/flux-renderers-ai typecheck` 通过（tiptap-sender 值导入在 optional peer 下仍可解析——peer 已安装于 dev 环境）
-- [ ] Fix: 类别清扫——`package.json` 全量声明核对：dependencies/devDependencies/peerDependencies 三区逐项「声明-引用」一致性（生产代码 import ∩ 三区覆盖），记录结论；同族 tiptap 三件套 + jsonrepair + 其余依赖
+- [x] Fix: FIND-09——`@tiptap/core` 加入 peerDependencies + peerDependenciesMeta（optional: true），devDependencies 保留（测试仍需）；对齐 `@tiptap/react`/`@tiptap/starter-kit` 处理
+- [x] Fix: FIND-14——devDependencies 移除冗余 `jsonrepair`（dependencies 保留，生产 import 于 `ai-tool-call.tsx:11`）
+- [x] Proof: `pnpm install --lockfile-only`（或按仓库惯例更新 lockfile）后 `pnpm check`（workspace-manifest-deps）零新增命中
+- [x] Proof: `pnpm --filter @nop-chaos/flux-renderers-ai typecheck` 通过（tiptap-sender 值导入在 optional peer 下仍可解析——peer 已安装于 dev 环境）
+- [x] Fix: 类别清扫——`package.json` 全量声明核对：dependencies/devDependencies/peerDependencies 三区逐项「声明-引用」一致性（生产代码 import ∩ 三区覆盖），记录结论；同族 tiptap 三件套 + jsonrepair + 其余依赖
 
 Exit Criteria:
 
-- [ ] FIND-09/FIND-14 修复落地（manifest diff 在案）+ `pnpm check` 零新增
-- [ ] AI 包 typecheck 通过（tiptap 导入链未破坏）
-- [ ] 类别清扫记录入档（依赖声明-引用一致性核对结论）
+- [x] FIND-09/FIND-14 修复落地（manifest diff 在案）+ `pnpm check` 零新增
+- [x] AI 包 typecheck 通过（tiptap 导入链未破坏）
+- [x] 类别清扫记录入档（依赖声明-引用一致性核对结论）
+
+> **Phase 2 执行证据（2026-08-11，plan `2026-08-11-0335-3`）**
+>
+> - **FIND-09**：`@tiptap/core: ^3.27.1` 加入 peerDependencies + `peerDependenciesMeta.@tiptap/core.optional: true`，devDependencies 保留——与 `@tiptap/react`/`@tiptap/starter-kit` 完全同构（值导入于 `rich-text/tiptap-sender.tsx:19`，rich-text 子路径宿主安装通道声明齐全）。
+> - **FIND-14**：devDependencies 移除 `jsonrepair`（dependencies 保留 `^3.13.0`，生产 import 于 `ai-tool-call.tsx:11`）。
+> - **lockfile**：`pnpm install --lockfile-only` 零变更（声明迁移不改解析版本，版本已由同族 tiptap 依赖带入）。
+> - **类别清扫结论**：三区「声明-引用」核对——生产 import 全量（10 个外部包）逐一落在依赖区覆盖内（`@tanstack/react-virtual`→dependencies；`jsonrepair`→dependencies；tiptap 三件套 / lucide-react / react / react-markdown / rehype-raw / remark-gfm→dev+peer）；无「生产 import 未声明」、无「dependencies 声明但生产零引用」；jsdom + workspace 测试面（flux-formula/flux-runtime）仅 devDependencies 正确。
+> - **验证**：`pnpm check` 全量跑——`check:workspace-manifest-deps` PASS（"All package source workspace imports are declared in local manifests…"）；全仓仅既有登记红（audit-event-dispatch-ctx 6 条 industrial + oversized 2 exempt locale，与 2026-08-11 日志登记一致，git stash 基线复跑确认非本 plan 新增）；AI 包 typecheck PASS。
 
 ### Phase 3 — 双命名接口文档化裁定（FIND-19）
 
-Status: planned
+Status: completed
 Targets: `docs/components/flux-renderers-ai/engine.md`、`renderers.md`、`src/adapters/use-conversation.ts`（类型注记）、`src/index.ts`（如需）
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Decision: 裁定记录——不做结构性合并/删除（公共接口变更需人工确认）；两接口关系文档化：`AiConversationController`（action namespace 消费面，`MaybePromise` 语义）与 `AiConversationControllerBridge`（hook 产出面，3/4 成员同构、`renameConversation` 返回类型宽度差）结构性可赋值、双命名保留理由（hook 产物类型稳定性）入档；**未来风险条款一并记录**（「任一未来成员新增即分叉契约」——审计 FIND-19 原注，作为 watch-only residual 登记）
-- [ ] Fix: `use-conversation.ts:692-697` Bridge 定义补 doc-comment——指向 Controller 说明关系（对齐 `ai-conversation-controller.ts:19-24` 现有注释风格）
-- [ ] Fix: engine.md / renderers.md 补注记——「§8.6/§14.2 两接口关系：hook 产出 Bridge，props/action-provider 消费 Controller，结构性可赋值；命名差异为历史保留」；与 sibling 2（R1-F5 多实例注记）同文档面协调 merge-aware
-- [ ] Proof: 类型兼容性验证——`AiConversationControllerBridge` 可赋值给 `AiConversationController` 的既有消费面（action-provider / props）typecheck 通过（现状已成立，验证记录在案）
-- [ ] Proof: `rg AiConversationController` 全部消费面核对（index exports / action-provider / ai-chat props / 文档）——确认零其他未记录消费面
+- [x] Decision: 裁定记录——不做结构性合并/删除（公共接口变更需人工确认）；两接口关系文档化：`AiConversationController`（action namespace 消费面，`MaybePromise` 语义）与 `AiConversationControllerBridge`（hook 产出面，3/4 成员同构、`renameConversation` 返回类型宽度差）结构性可赋值、双命名保留理由（hook 产物类型稳定性）入档；**未来风险条款一并记录**（「任一未来成员新增即分叉契约」——审计 FIND-19 原注，作为 watch-only residual 登记）
+- [x] Fix: `use-conversation.ts:692-697` Bridge 定义补 doc-comment——指向 Controller 说明关系（对齐 `ai-conversation-controller.ts:19-24` 现有注释风格）
+- [x] Fix: engine.md / renderers.md 补注记——「§8.6/§14.2 两接口关系：hook 产出 Bridge，props/action-provider 消费 Controller，结构性可赋值；命名差异为历史保留」；与 sibling 2（R1-F5 多实例注记）同文档面协调 merge-aware
+- [x] Proof: 类型兼容性验证——`AiConversationControllerBridge` 可赋值给 `AiConversationController` 的既有消费面（action-provider / props）typecheck 通过（现状已成立，验证记录在案）
+- [x] Proof: `rg AiConversationController` 全部消费面核对（index exports / action-provider / ai-chat props / 文档）——确认零其他未记录消费面
 
 Exit Criteria:
 
-- [ ] FIND-19 裁定与文档化落地（engine.md / renderers.md / Bridge 注记一致）
-- [ ] 类型兼容验证通过（消费面 typecheck 零回归）
-- [ ] 消费面核对记录入档
+- [x] FIND-19 裁定与文档化落地（engine.md / renderers.md / Bridge 注记一致）
+- [x] 类型兼容验证通过（消费面 typecheck 零回归）
+- [x] 消费面核对记录入档
+
+> **Phase 3 执行证据（2026-08-11，plan `2026-08-11-0335-3`）**
+>
+> - **裁定**：FIND-19 不做结构性合并/删除——`AiConversationController`（消费面）与 `AiConversationControllerBridge`（产出面）双命名保留（hook 产物类型稳定性）；「任一未来成员只加其一即分叉契约」记为 watch-only residual。
+> - **Bridge 注记**：`use-conversation.ts` Bridge 定义 doc-comment 补「relationship to `AiConversationController`」段（对齐 controller 文件注释风格，注明唯一差异 = `renameConversation` 返回宽度 + 锁步演进要求）。
+> - **文档**：engine.md §8.6 与 renderers.md §1.4 各补「双命名接口关系（FIND-19）」注记（与 R1-F5 多实例注记同文档面、merge-aware 并排）。
+> - **类型兼容验证**：**编译期断言落地**——`use-conversation-controller.test.ts` 新增 `_BridgeAssignableToController` 类型断言（`AiConversationControllerBridge extends AiConversationController ? true : false` = true，成员同构、`renameConversation` 返回宽度 `void ⊆ MaybePromise<void>`）——结构性可赋值为**类型级事实经编译证立**（非仅运行时观察）；`@nop-chaos/flux-renderers-ai` + `@nop-chaos/flux-playground` typecheck PASS。playground 绑定实证：`ai-persistence-demo.tsx:73` `controller: conversations.controller`（Bridge）经 page-data → schema prop → `ai-chat.tsx:143-145` cast 到 `AiConversationController` 消费（schema prop 面运行时解析，编译期由上述断言兜底）。
+> - **消费面核对**：`rg AiConversationController` 全命中 8 文件——生产面 5（index.ts:125 导出 / ai-action-provider.ts:7,37 / ai-chat.tsx:15,144 / ai-conversation-controller.ts:19 定义 / use-conversation.ts 注记）+ 测试面 2（action-provider.test.tsx、namespace-integration.test.tsx）+ 文档面 3（engine.md / renderers.md / design.md:454,552）——零未记录消费面。
 
 ### Phase 4 — engine.md / design.md / implementation.md 文档契约修复（FIND-10 / FIND-11 / FIND-15 / FIND-17）
 
-Status: planned
+Status: completed
 Targets: `docs/components/flux-renderers-ai/engine.md`、`design.md`、`implementation.md`、`packages/flux-renderers-ai/src/engine/types.ts`（注释锚）
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: FIND-10——`engine.md:51-55` §7.1 `ChatMessageUIState` 代码块同步 live `types.ts:67-84`（`thinking` 形状 + `editing` 字段）；与 §8.3（engine.md:203）一致
-- [ ] Fix: FIND-11——`engine.md:437-448` §9.4 示例重写为真实机制（schema `xui:imports` + `env.importLoader`，对齐 `apps/playground/src/ai/mock-ai-env.ts:90-115` 真实用法）；`design.md:504` / `implementation.md:162` 同步；移除 `runtime.registerImport` 虚构 API
-- [ ] Fix: FIND-15——`engine.md:520-526` 运行命令清单补 `engine-invariants-p2.test.ts`（7 文件清单）；`gates.md:19` ⑧ 行「同上」改显式清单或补注（含 p2 文件）
-- [ ] Fix: FIND-17——`engine.md:123-127` / `types.ts:332-336` 的 design.md §14.3 行锚更新为 live（`:655-666`，或改节引用去行号——按文档稳定性选优，记录选择理由）
-- [ ] Proof: `rg registerImport` 目标面零残留（scope = live 源码 + 本 plan 列出的文档面 engine.md/design.md/implementation.md；**历史记录豁免**——源审计、roadmap backlog、已完成 plan 的既有引用不重写）；`rg "line 556"` 目标文件（engine.md / types.ts 注释面）零残留
-- [ ] Proof: engine.md 修正后 focused 命令实跑——`pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants-p2.test.ts`（清单内文件可独立运行）
+- [x] Fix: FIND-10——`engine.md:51-55` §7.1 `ChatMessageUIState` 代码块同步 live `types.ts:67-84`（`thinking` 形状 + `editing` 字段）；与 §8.3（engine.md:203）一致
+- [x] Fix: FIND-11——`engine.md:437-448` §9.4 示例重写为真实机制（schema `xui:imports` + `env.importLoader`，对齐 `apps/playground/src/ai/mock-ai-env.ts:90-115` 真实用法）；`design.md:504` / `implementation.md:162` 同步；移除 `runtime.registerImport` 虚构 API
+- [x] Fix: FIND-15——`engine.md:520-526` 运行命令清单补 `engine-invariants-p2.test.ts`（7 文件清单）；`gates.md:19` ⑧ 行「同上」改显式清单或补注（含 p2 文件）
+- [x] Fix: FIND-17——`engine.md:123-127` / `types.ts:332-336` 的 design.md §14.3 行锚更新为 live（`:655-666`，或改节引用去行号——按文档稳定性选优，记录选择理由）
+- [x] Proof: `rg registerImport` 目标面零残留（scope = live 源码 + 本 plan 列出的文档面 engine.md/design.md/implementation.md；**历史记录豁免**——源审计、roadmap backlog、已完成 plan 的既有引用不重写）；`rg "line 556"` 目标文件（engine.md / types.ts 注释面）零残留
+- [x] Proof: engine.md 修正后 focused 命令实跑——`pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants-p2.test.ts`（清单内文件可独立运行）
 
 Exit Criteria:
 
-- [ ] FIND-10/11/15/17 修复落地（rg 零残留 + 清单实跑通过）
-- [ ] §7.1 代码块与 live types.ts 一致（目测 + §8.3 自洽）
-- [ ] 运行命令清单 7 文件可实跑（engine-invariants-p2 覆盖 ⑧ break/throw/regenerate 臂）
+- [x] FIND-10/11/15/17 修复落地（rg 零残留 + 清单实跑通过）
+- [x] §7.1 代码块与 live types.ts 一致（目测 + §8.3 自洽）
+- [x] 运行命令清单 7 文件可实跑（engine-invariants-p2 覆盖 ⑧ break/throw/regenerate 臂）
+
+> **Phase 4 执行证据（2026-08-11，plan `2026-08-11-0335-3`）**
+>
+> - **FIND-10**：engine.md §7.1 代码块同步 live——补 `ChatMessageEditingState` 接口 + `thinking` 形状改 `{ open?: boolean; startedAt?: number; endedAt?: number }` + `editing?: ChatMessageEditingState` 字段（live `types.ts:62-84` 逐字段一致）。
+> - **FIND-11**：engine.md §9.4 重写为两步真实机制（host `env.importLoader` = `createAiImportLoader(connector, extra?)` 解析 `ai://` spec → 模块 `createExpressionHelpers: () => ({ connectors: { mock }, tools, toolExecutor })`；schema `xui:imports: [{ from: 'ai', as: 'ai' }]` + `${$ai.connectors.mock}`，对齐 playground `mock-ai-env.ts:96-125` 与 `ai-chat-example.json`）；design.md §11.3 注入块改 `useConversation({ storage })`（顺带修正相邻漂移：schema 无 `storage` 字段、无 `${$ai.storage}` 引用）；implementation.md §6 示例改 `createAiImportLoader` 形态。移除全部虚构全局注册示例，**注记措辞也避免复述虚构 API 名**（grep 门禁口径）。
+> - **FIND-15**：engine.md 运行命令清单补 `src/engine/__tests__/engine-invariants-p2.test.ts`（现 8 文件）+ 注释行标注 ⑧ 泄漏臂归属；gates.md ⑧ 行运行列由「同上 + check」改为显式 `engine-invariants-p2.test.ts` + check。
+> - **FIND-17**：engine.md:133 / types.ts:338 的「design.md §14.3 line 556」行锚**改节引用去行号**（§14.3 标题为稳定锚点，行号随文档增长漂移——选优理由 = 文档稳定性，types.ts 注释内注记校准来源）。
+> - **Proof**：`rg registerImport` 于目标面（engine.md / design.md / implementation.md + live 源码 + playground）exit 1 零残留；`rg "line 556"` 于 engine.md / types.ts exit 1 零残留；focused 命令实跑 `engine-invariants-p2.test.ts` 1 file / 3 tests PASS（⑧ break/throw/regenerate 臂可独立运行）。
 
 ### Phase 5 — ai-invariants 记录锚点校准（FIND-16 / FIND-18）+ 收口
 
-Status: planned
+Status: completed
 Targets: `docs/audits/ai-invariants/invariant-catalog.md`、`cycle2-findings.md`、`cycle2-adjudication.md`、`docs/bugs/`、`docs/logs/2026/08-11.md`
 
 - Item Types: `Fix | Proof | Follow-up`
 
-- [ ] Fix: FIND-16——`invariant-catalog.md:125` §4.1 controller 锚点校准至 live `use-conversation.ts:667-672`（P2-16 校准表漏掉的「adapter 非函数字段」注记行；语义/检测方法不变）
-- [ ] Fix: FIND-18——`cycle2-findings.md:74,170,173` / `cycle2-adjudication.md:43,76,79` 行号校准（K-⑩-3 autoSave 引用改 `use-conversation-autosave.ts:42/:85`；W-E/W-⑨-c create-engine 锚点按 live 更新）；补「anchor-epoch + live-verify」注记（对齐 multi-audit 交叉模式 4 建议，`active` 头部注记：行号 = 2026-08-09/10 时点，live 以复核为准）
-- [ ] Proof: `rg "use-conversation.ts:190|:203-209|:425-430"` 目标文件（cycle2-findings.md / cycle2-adjudication.md / invariant-catalog.md）零残留（校准后）；catalog §4.1 控制器锚点与 live 定义一致
-- [ ] Fix: bug notes（如 FIND-19 裁定 / FIND-07 drop 需留痕则补；纯文档项按 guide 可并入 daily log）
-- [ ] Proof: `pnpm check`（含 `check:ai-engine-invariants` 与 workspace-manifest-deps）零新增命中 + AI 包 typecheck/test（index.ts/package.json 改动面）全绿
-- [ ] Follow-up: daily log `docs/logs/2026/08-11.md` 记录本 plan 收口
+- [x] Fix: FIND-16——`invariant-catalog.md:125` §4.1 controller 锚点校准至 live `use-conversation.ts:667-672`（P2-16 校准表漏掉的「adapter 非函数字段」注记行；语义/检测方法不变）
+- [x] Fix: FIND-18——`cycle2-findings.md:74,170,173` / `cycle2-adjudication.md:43,76,79` 行号校准（K-⑩-3 autoSave 引用改 `use-conversation-autosave.ts:42/:85`；W-E/W-⑨-c create-engine 锚点按 live 更新）；补「anchor-epoch + live-verify」注记（对齐 multi-audit 交叉模式 4 建议，`active` 头部注记：行号 = 2026-08-09/10 时点，live 以复核为准）
+- [x] Proof: `rg "use-conversation.ts:190|:203-209|:425-430"` 目标文件（cycle2-findings.md / cycle2-adjudication.md / invariant-catalog.md）零残留（校准后）；catalog §4.1 控制器锚点与 live 定义一致
+- [x] Fix: bug notes（如 FIND-19 裁定 / FIND-07 drop 需留痕则补；纯文档项按 guide 可并入 daily log）
+- [x] Proof: `pnpm check`（含 `check:ai-engine-invariants` 与 workspace-manifest-deps）零新增命中 + AI 包 typecheck/test（index.ts/package.json 改动面）全绿
+- [x] Follow-up: daily log `docs/logs/2026/08-11.md` 记录本 plan 收口
 
 Exit Criteria:
 
-- [ ] FIND-16/18 校准落地（rg 零残留 + anchor-epoch 注记入档）
-- [ ] `pnpm check` 零新增命中（manifest / 文档门禁面）
-- [ ] AI 包 typecheck/test 全绿零回归；daily log 收口记录落档
+- [x] FIND-16/18 校准落地（rg 零残留 + anchor-epoch 注记入档）
+- [x] `pnpm check` 零新增命中（manifest / 文档门禁面）
+- [x] AI 包 typecheck/test 全绿零回归；daily log 收口记录落档
+
+> **Phase 5 执行证据（2026-08-11，plan `2026-08-11-0335-3`）**
+>
+> - **FIND-16**：invariant-catalog.md §4.1「adapter 非函数字段」`controller` 锚点 `:425-430` → live `use-conversation.ts:666-671`（controller 对象字面量，4 方法组合桥；语义/检测方法不变，仅注记行校准 + FIND-16 标注）。
+> - **FIND-18**：cycle2-findings.md / cycle2-adjudication.md 行号校准——K-⑩-3（findings §3.1 行，adjudication:45）autoSave 引用改 `use-conversation-autosave.ts:56`（isDone 谓词）/`:101`（saveMessages 落盘，1606-1 模块抽取后迁移）+ create-engine catch `commitOrDropResidue` `:579-580`（定义 `:495-507`）；W-E（findings §3.3 表 W-E 行 / adjudication §3.4 W-E 行）onAfterRequest `:552-554`（含 I4 注记 `:531-532` 旧锚 → `:552-554`/drop 在 `:555`）；W-⑨-a（findings §3.3 表 W-⑨-a 行 / adjudication §3.4 W-⑨-a 行，同表相邻同族）connector-missing 早退 `:215-238`；W-⑨-c（findings §3.3 表 W-⑨-c 行 / adjudication §3.4 W-⑨-c 行）setMessages `:150-162` / clear `:646-660` / runTurn 清除 `:247`；两文件头部补 **anchor-epoch 注记**（行号 = 2026-08-09/10 时点，live 以复核为准，multi-audit 交叉模式 4）；adjudication「修正痕迹」行（`:101`）补 **anchor-epoch 豁免注记**（2026-08-10 审计时点核对记录，历史验证记录不重写——grep 门禁豁免，live 以复核为准）。
+> - **Proof**：`rg "use-conversation.ts:190|:203-209|:425-430"` 于三目标文件零残留（唯一剩余命中 = 修正痕迹行，已显式豁免注记）；catalog §4.1 锚点 `:666-671` 与 live 对象字面量一致。
+> - **Bug note 154** 落档（`docs/bugs/154-ai-contentresolver-dead-field-drop-and-dual-interface-adjudication.md`，FIND-07 drop + FIND-08 导出 + FIND-19 裁定契约族，按 guide 全 8 节）。
+> - **验证**：`pnpm check` 全链——`check:ai-engine-invariants` exit 0 零命中、`check:workspace-manifest-deps` PASS、`check:active-doc-code-anchors` exit 0、`check:oversized-code-files` 仅既有 2 豁免 locale 红（本 plan 执行中曾触发 `use-conversation.ts` 709 行新命中 → 注释压缩回落 699 行归零）、`check:audit-event-dispatch-ctx` 6 条 industrial 为既有登记红（git stash 基线复跑确认非本 plan 新增）；AI 包 typecheck/test 全绿（80 files / 704 tests）。
+> - **Follow-up**：daily log `docs/logs/2026/08-11.md` 收口记录落档（本 plan 执行节）。
 
 ## Draft Review Record
 
@@ -203,16 +246,16 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。
 
-- [ ] 11 条 P2（FIND-07/08/09/14/19/10/11/15/16/17/18）全部收口落地（drop/补导出/文档化/校准证据在案）
-- [ ] `rg` 目标模式零残留（`contentResolver` / `registerImport` / 失效行锚）——**scope = live 源码 + 本 plan 列出的文档面；历史记录豁免按 Phase 1/4/5 口径**
-- [ ] `pnpm check` 零新增命中（含 `check:ai-engine-invariants`）；AI 包 typecheck/test 全绿零回归
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（FIND-19 结构性合并为显式裁定非降级）
-- [ ] 受影响的 owner docs 已同步（engine.md / renderers.md / design.md / implementation.md / invariant-catalog.md / gates.md / cycle2 记录 / bug notes / daily log）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 11 条 P2（FIND-07/08/09/14/19/10/11/15/16/17/18）全部收口落地（drop/补导出/文档化/校准证据在案）
+- [x] `rg` 目标模式零残留（`contentResolver` / `registerImport` / 失效行锚）——**scope = live 源码 + 本 plan 列出的文档面；历史记录豁免按 Phase 1/4/5 口径**
+- [x] `pnpm check` 零新增命中（含 `check:ai-engine-invariants`）；AI 包 typecheck/test 全绿零回归
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（FIND-19 结构性合并为显式裁定非降级）
+- [x] 受影响的 owner docs 已同步（engine.md / renderers.md / design.md / implementation.md / invariant-catalog.md / gates.md / cycle2 记录 / bug notes / daily log）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -244,13 +287,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （完成或关闭时填写）
+Status Note: 11 条契约/文档族 P2 全部收口落地——FIND-07 `contentResolverName` 死字段五面 drop（目标面 grep 零残留 + 豁免面显式登记）+ FIND-08 `ConversationStorageErrorEvent` 补导出（RED→正向 typecheck 断言）+ FIND-09 `@tiptap/core` 升 optional peer（对齐同族）+ FIND-14 `jsonrepair` devDeps 去重 + FIND-19 双命名接口文档化裁定（编译期结构性可赋值断言 + 消费面核对 + watch-only 登记）+ FIND-10/11/15/16/17/18 六处文档锚点/契约漂移全部校准（`rg registerImport`/`line 556`/失效行锚目标面零残留，anchor-epoch 注记入档，虚构 API 示例移除）；5 Phase 全 completed、全 checklist [x]、Exit Criteria 全勾；AI 包 80 files/704 tests 全绿 + 全仓 typecheck/build/lint 37/37 + test 66/66 + `check:ai-engine-invariants` exit 0 + `pnpm check` 仅既有登记红零新增（git stash 基线复跑确认）；独立 fresh sub-agent closure-audit **approved**（Round 1 `issues`（B1：Phase 5 文本未勾选，工作已落地）→ 修正 → Round 2 `approved`，证据见下）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待填）
-- Evidence: （待填）
+- Auditor / Agent: 独立 fresh sub-agent（Round 1 `ses_01265ec1cffeQKmCkPe8kKCRSz` → Round 2 `ses_012603b77ffe6LrsM5PnUHdn5s`）
+- Evidence: Round 1 verdict `issues`——G2-G8 落地全部 live 验证通过，唯一 blocking B1 = plan 文本 Phase 5 遗留 `Status: planned` + 全部 `[ ]`（工作已落地，文本未同步），另 2 条 non-blocking 观察（Phase 3 证据措辞高估 playground 实证 / roadmap FIND-18 措辞 overclaim）；Round 2 verdict **approved**——G1-G8 全 PASS（5 Phase 全 completed + 零 in-scope `[ ]` + 全 Exit Criteria [x]；代码落地点逐条 live 核对；docs 与 live 一致性；deferred 诚实；roadmap 11 条 ✅ done + 收口注记；bug note 154 全 8 节；`check:ai-engine-invariants` 独立复跑 exit 0；grep 门禁独立复跑仅豁免注记行命中）；非阻塞观察（evidence 行号 off-by-2）已就地修正。执行 session 不自审。
 
 Follow-up:
 
-- （待填）
+- 无剩余 plan-owned work（11 条 P2 全数闭环，2026-08-10-2245 双审计 P2 23/23）。
+- Non-blocking follow-up 按 Deferred But Adjudicated / Non-Blocking Follow-ups 节登记（FIND-19 结构性合并需人工确认后另立 plan；docs 全量行锚比对为 P3 级观察项）。

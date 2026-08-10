@@ -48,9 +48,17 @@ export interface ChatToolCallUIState {
   approval?: 'pending' | 'approved' | 'rejected';
 }
 
+export interface ChatMessageEditingState {
+  active: boolean;
+  draft?: string;
+}
+
 export interface ChatMessageUIState {
-  thinking?: { open: boolean };
+  thinking?: { open?: boolean; startedAt?: number; endedAt?: number };
   toolCall?: Record<string, ChatToolCallUIState>;
+  // renderer 驱动的消息编辑态（用户消息编辑入口，design.md §11.5）。engine 持有，
+  // 虚拟滚动回收（A-8）不会丢掉 editing 标志/草稿；不投射到 flux scope。
+  editing?: ChatMessageEditingState;
   [key: string]: unknown;
 }
 
@@ -122,7 +130,7 @@ export interface MessageEngine {
   getMessages(): ChatMessage[];
   /**
    * 替换整个消息列表。由 Layer C ComponentHandle 的 `setMessages` 方法使用
-   * （design.md §14.3 line 556）。回合进行中不可调用；调用方应先 `abort()`。
+   * （design.md §14.3 ComponentHandle）。回合进行中不可调用；调用方应先 `abort()`。
    */
   setMessages(messages: ChatMessage[]): void;
   /**
@@ -306,6 +314,10 @@ export interface UseConversationReturn {
 
 照搬 tiny-robot 双层模型：`conversations` 数组始终全量内存；`engines: Map` 惰性创建，切走时清理非活跃非 processing 的 engine，保留正在流式的会话后台运行。
 
+> **FIND-08（2026-08-11，plan `2026-08-11-0335-3`）**：`ConversationStorageErrorEvent`（`onStorageError` 回调的事件类型）已从包入口导出——宿主可直接 `import type { ConversationStorageErrorEvent } from '@nop-chaos/flux-renderers-ai'` 命名该类型（对齐 `ConversationStorageStrategy` 先例）。
+>
+> **双命名接口关系（FIND-19，2026-08-11，plan `2026-08-11-0335-3`）**：`controller` 字段类型为 `AiConversationControllerBridge`（hook 产出面）；`ai` namespace / action-provider 消费面是 `AiConversationController`（`ai-conversation-controller.ts`，design.md §14.2）——二者结构性可赋值（3/4 成员同构，`renameConversation` 仅返回类型宽度差 `void` vs `MaybePromise<void>`），host 将 `useConversation()` 的 `controller` 直接绑到 `conversationController` prop 即成立。双命名保留为 hook 产物类型稳定性；成员须两接口同步演进，不做结构性合并（公共导出面变更需人工确认）。
+
 > **行为注记（2026-08-10，multi P2-2/P2-7 + open P2-1/P2-2；接口清单本体同步归 `docs/plans/2026-08-10-1606-3-ai-contract-doc-truthfulness-remediation.md`）**
 >
 > - **unmount 清理 = detach-before-abort**：卸载 cleanup 先 unsubscribe autoSave 再 abort in-flight engine（与 `clearAll` K3 同序），并清空 `pendingSavesRef`——卸载期 abort 不再入队无人排空的 aborted 快照 save（multi P2-2）。
@@ -437,25 +449,34 @@ export const myCustomConnector: AiConnector = {
 
 ### 9.4 注入到 schema
 
-host 在 `xui:imports` 注册 connector 实例：
+注入分两步：host 侧提供 `env.importLoader`（把 `xui:imports` 的 spec 解析成命名空间模块），schema 侧声明 `xui:imports` 并以表达式引用。**不存在任何全局注册 API**——FIND-11（plan `2026-08-11-0335-3`）已移除虚构的全局注册示例，真实机制仅此一种。
+
+host 侧（playground 真实实现 `apps/playground/src/ai/mock-ai-env.ts:96-125`）：
 
 ```ts
-// host 应用启动代码（playground：apps/playground/src/ai/openai-connector.ts 的
-// createOpenAICompatibleConnector，配置经 resolveOpenAIConfigFromEnv 读取 VITE_* 环境变量）
-runtime.registerImport('ai', {
-  connectors: {
-    openai: createOpenAICompatibleConnector(env, { baseURL: '...', apiKey: '...', model: 'gpt-4' }),
-    deepseek: createOpenAICompatibleConnector(env, { baseURL: 'https://api.deepseek.com/v1', ... }),
-  }
+// host 应用代码示例：经 env.importLoader 暴露 `ai` 命名空间
+const { importLoader, resolveImportUrl } = createAiImportLoader(connector, {
+  tools: mockToolSchemas,
+  toolExecutor: mockToolExecutor,
 });
+const env: RendererEnv = {
+  /* ...既有字段 */ importLoader,
+  resolveImportUrl,
+  stream: createMockAiStream(),
+};
+
+// importLoader.load(spec) 内部：spec.from === 'ai://' → 返回模块 {
+//   createExpressionHelpers: () => ({ connectors: { mock: connector }, tools, toolExecutor })
+// }
 ```
 
-schema 通过表达式引用：
+schema 侧声明并引用：
 
 ```json
 {
-  "type": "ai-chat",
-  "connector": "${$ai.connectors.openai}"
+  "type": "page",
+  "xui:imports": [{ "from": "ai", "as": "ai" }],
+  "body": [{ "type": "ai-chat", "connector": "${$ai.connectors.mock}" }]
 }
 ```
 
@@ -535,8 +556,8 @@ AI engine 历经 4 轮审计（`docs/audits/2026-07-2*-ai.md`）发现的三大�
 ### 运行命令
 
 ```bash
-# 参数化穷举不变式测试（engine + adapter，含表完备性门禁；⑥⑦ 在 conversation-invariants-cycle2.test.ts，⑩ 与 ②/④ 元数据排空臂在 engine-invariants-i4.test.ts / conversation-invariants-i4.test.ts，⑪ + ⑩ dangling 成员在 engine-invariants-p1.test.ts / engine-invariants-i4.test.ts / conversation-invariants-i4.test.ts，2026-08-11 P2 族（FIND-12/R1-F3/R1-F4 + ⑪ 嵌套成员）在 conversation-invariants-p2.test.ts / engine-invariants-p1.test.ts）
-pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts src/adapters/__tests__/conversation-invariants-cycle2.test.ts src/engine/__tests__/engine-invariants-i4.test.ts src/adapters/__tests__/conversation-invariants-i4.test.ts src/engine/__tests__/engine-invariants-p1.test.ts src/adapters/__tests__/conversation-invariants-p2.test.ts
+# 参数化穷举不变式测试（engine + adapter，含表完备性门禁；⑥⑦ 在 conversation-invariants-cycle2.test.ts，⑩ 与 ②/④ 元数据排空臂在 engine-invariants-i4.test.ts / conversation-invariants-i4.test.ts，⑪ + ⑩ dangling 成员在 engine-invariants-p1.test.ts / engine-invariants-i4.test.ts / conversation-invariants-i4.test.ts，⑧ break/throw/regenerate 泄漏臂（multi P2-1 扩面）在 engine-invariants-p2.test.ts，2026-08-11 P2 族（FIND-12/R1-F3/R1-F4 + ⑪ 嵌套成员）在 conversation-invariants-p2.test.ts / engine-invariants-p1.test.ts——FIND-15 校准：engine-invariants-p2.test.ts 补入本清单）
+pnpm --filter @nop-chaos/flux-renderers-ai exec vitest run src/engine/__tests__/engine-invariants.test.ts src/adapters/__tests__/conversation-invariants.test.ts src/adapters/__tests__/conversation-invariants-cycle2.test.ts src/engine/__tests__/engine-invariants-i4.test.ts src/adapters/__tests__/conversation-invariants-i4.test.ts src/engine/__tests__/engine-invariants-p1.test.ts src/engine/__tests__/engine-invariants-p2.test.ts src/adapters/__tests__/conversation-invariants-p2.test.ts
 
 # 静态门禁（②③④⑥⑧ + ② 镜像写面 + ④ fan-out 源；①⑤⑦⑨⑩⑪ 纯行为/行为面不静态化；live 零命中）
 pnpm check:ai-engine-invariants

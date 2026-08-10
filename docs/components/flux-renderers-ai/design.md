@@ -499,20 +499,21 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
   }
   ```
 - 包内**不提供**任何具体实现（`localStorage` / `IndexedDB` / `Server` 均由 host 实现）
-- host 通过 `xui:imports` 注入实现：
+- host 经 `useConversation` host helper 注入实现（`use-conversation.ts` 的 `UseConversationOptions.storage`，FIND-11 校准：**非** `xui:imports` / schema 字段，`ai-chat` schema 无 `storage` 字段）：
   ```ts
-  runtime.registerImport('ai', {
+  const conv = useConversation({
+    connector,
     storage: createLocalStorageStorage({ key: 'my-app-ai' }), // host 实现
     // 或 createIndexedDbStorage({ dbName: 'my-app' }),
     // 或 createServerStorage({ endpoint: '/api/conversations' }),
+    autoSaveMessages: true,
   });
   ```
-- schema 通过 `ai-chat.storage: "${$ai.storage}"` 引用
+- schema 经 scope 表达式消费 `useConversation` 产出的列表/活动 id（`ai-conversations.conversations: "${$page.conversations}"` 等，host 管理 scope 同步）
 
 #### 默认行为
 
 - 渲染器默认**不持久化**（页面刷新清空）—— 符合"渲染器纯展示，存储是 host 关注点"
-- 若 schema 显式声明 `storage` 字段且 import 注入了实现，则启用持久化
 - `useConversation` hook 的 `storage` 参数为 **optional**：host 必须选择——注入 `ConversationStorageStrategy` 实现以启用持久化（mount 引导 `loadConversations`、切换经 `engine.setMessages` 重水合、turn 完成按 `autoSaveMessages` 调 `saveMessages` 落盘），不注入则默认不持久化（与 live `storage?: ConversationStorageStrategy` 类型 + 本节"默认不持久化"一致）。storage 失败为非致命（`storage-load-error` / `storage-save-error`，不阻塞对话）。
 
 #### 理由

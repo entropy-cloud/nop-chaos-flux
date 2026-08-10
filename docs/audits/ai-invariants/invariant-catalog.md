@@ -122,7 +122,7 @@
 | 12  | `clearAll`           | `use-conversation.ts:61`                                 | `use-conversation.ts:589` | adapter 变更（列表 + activeId + engine cache + storage）           |
 
 - **不入目标集但必须进 I1 显式非变更白名单**（配置/读取类，不写会话状态）：`setConnector`（`types.ts:321`/`create-engine.ts:113`）、`registerPlugin`（`types.ts:322`/`create-engine.ts:124`）、`getMessages`（`types.ts:331`/`create-engine.ts:132`）、`getState`（`types.ts:314`/`create-engine.ts:109`）、`subscribe`（`types.ts:315`/`create-engine.ts:82-83`）。
-- **adapter 非函数字段**（不入运行时提取面，I1 表完备性门禁仍须断言存在性）：`conversations`、`activeConversationId`、`activeEngine`、`controller`（:425-430 为 4 方法组合桥，嵌套键 ⊆ 表 ∪ 白名单——I1 门禁对嵌套 `controller` 键断言 `Object.keys(controller)` ⊆ 变更表）。
+- **adapter 非函数字段**（不入运行时提取面，I1 表完备性门禁仍须断言存在性）：`conversations`、`activeConversationId`、`activeEngine`、`controller`（**FIND-16 校准 2026-08-11**：对象字面量 live 于 `use-conversation.ts:666-671`，4 方法组合桥；嵌套键 ⊆ 表 ∪ 白名单——I1 门禁对嵌套 `controller` 键断言 `Object.keys(controller)` ⊆ 变更表）。
 
 ### 4.2 `runTurn` 归属裁定（Decision）
 
