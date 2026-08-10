@@ -69,6 +69,7 @@ export const enUS: Resource = {
       messageInput: 'Message',
       connectorMissing: 'AI connector is not configured.',
       requestFailed: 'AI request failed',
+      toolLoopMaxReached: 'Reached the tool call loop limit.',
       copy: 'Copy',
       copied: 'Copied',
       copyCode: 'Copy code',

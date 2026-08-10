@@ -70,6 +70,7 @@ export const zhCN: Resource = {
       messageInput: '消息',
       connectorMissing: '未配置 AI 连接器。',
       requestFailed: 'AI 请求失败',
+      toolLoopMaxReached: '已达工具调用循环上限。',
       copy: '复制',
       copied: '已复制',
       copyCode: '复制代码',
