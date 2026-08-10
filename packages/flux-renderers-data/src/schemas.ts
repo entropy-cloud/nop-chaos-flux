@@ -367,3 +367,4 @@ export interface StatTileSchema extends BaseSchema {
 }
 
 export * from './chart-schemas.js';
+export * from './sparkline-schemas.js';

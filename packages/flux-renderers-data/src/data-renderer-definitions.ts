@@ -8,6 +8,7 @@ import { TreeRenderer } from './tree-renderer.js';
 import { crudRendererDefinition } from './crud-renderer-definition.js';
 import { w2aDataCompositionDefinitions } from './w2a-data-composition-definitions.js';
 import { statTileRendererDefinition } from './stat-tile-renderer-definition.js';
+import { sparklineRendererDefinition } from './sparkline-renderer-definition.js';
 import type { ChartSchema } from './chart-schemas.js';
 
 const LazyChartRenderer = createLazyRendererComponent<ChartSchema>(
@@ -15,6 +16,7 @@ const LazyChartRenderer = createLazyRendererComponent<ChartSchema>(
 );
 
 export { crudRendererDefinition } from './crud-renderer-definition.js';
+export { sparklineRendererDefinition } from './sparkline-renderer-definition.js';
 
 export const dataRendererDefinitions: RendererDefinition[] = [
   {
@@ -600,5 +602,6 @@ export const dataRendererDefinitions: RendererDefinition[] = [
   },
   ...w2aDataCompositionDefinitions,
   statTileRendererDefinition,
+  sparklineRendererDefinition,
   crudRendererDefinition,
 ];

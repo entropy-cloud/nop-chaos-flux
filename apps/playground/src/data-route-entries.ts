@@ -68,6 +68,14 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
       'BI KPI 卡片：大数字 + 标签 + 同比/环比（delta）+ sparkline 迷你趋势，涨跌色语义。',
   },
   {
+    id: 'sparkline',
+    title: 'Sparkline',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description:
+      '自绘 SVG 迷你趋势图原子组件：data/${expr}、静态色或 { status } 趋势语义色、fill 渐变、smooth 平滑、min/max 显式 Y 域。',
+  },
+  {
     id: 'dashboard-filter',
     title: 'Dashboard Filter',
     category: 'data',

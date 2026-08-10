@@ -53,6 +53,7 @@ export { ListLabPage } from './list-lab-page';
 export { PaginationLabPage } from './pagination-lab-page';
 export { StatisticsLabPage } from './statistics-lab-page';
 export { StatTileLabPage } from './stat-tile-lab-page';
+export { SparklineLabPage } from './sparkline-lab-page';
 export { DashboardFilterLabPage } from './dashboard-filter-lab-page';
 export { InputDateLabPage } from './input-date-lab-page';
 export { InputDatetimeLabPage } from './input-datetime-lab-page';

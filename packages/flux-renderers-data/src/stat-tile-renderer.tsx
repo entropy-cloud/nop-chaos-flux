@@ -15,6 +15,16 @@ const SPARKLINE_WIDTH = 96;
 const SPARKLINE_HEIGHT = 32;
 const SPARKLINE_PADDING = 2;
 
+// NOTE: stat-tile 与独立 `sparkline` 原子组件（type: 'sparkline'）的复用契约
+// （plan 2026-08-09-sparkline-component-plan Phase 1 Follow-up）：
+// - 本组件保留内联 buildSparklineGeometry（96×32 布局微调 + 单点/面积/极值降级），
+//   不替换为 <SparklineRenderer>——stat-tile 是卡片级组合语义，sparkline 是
+//   可独立使用的展示原子，二者维持各自实现；共享的是同一套计算语义
+//   （`sparkline-path.ts` 的 normalizeYDomain/buildSparklinePoints/buildSparklinePath）。
+// - 最终组合裁定归 stat-tile 后续演进：若需要渐变/平滑/显式 Y 域，可直接复用
+//   `sparkline-path.ts` 纯函数或 `<SparklineRenderer>` 子组件（design.md 正式声明见
+//   docs/components/sparkline/design.md §11 复用约定）。
+
 function sanitizeNumber(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;

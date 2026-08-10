@@ -11,9 +11,14 @@ export { ListRenderer } from './list-renderer.js';
 export { PaginationRenderer } from './pagination-renderer.js';
 export { StatisticsRenderer } from './statistics-renderer.js';
 export { StatTileRenderer } from './stat-tile-renderer.js';
+export { SparklineRenderer } from './sparkline-renderer.js';
 export { CrudRenderer } from './crud-renderer.js';
 export { createCrudNormalizedSourceContext } from './crud-renderer-state.js';
-export { crudRendererDefinition, dataRendererDefinitions } from './data-renderer-definitions.js';
+export {
+  crudRendererDefinition,
+  dataRendererDefinitions,
+  sparklineRendererDefinition,
+} from './data-renderer-definitions.js';
 
 export function registerDataRenderers(registry: RendererRegistry) {
   return registerRendererDefinitions(registry, dataRendererDefinitions);
