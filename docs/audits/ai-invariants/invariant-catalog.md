@@ -1,6 +1,6 @@
 # AI Engine 不变式目录（Invariant Catalog）
 
-> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展 + Cycle 2 / I1 §9 新族 ⑥-⑩ 沉淀 + Cycle 2 / I4 §10 补强扩展 + 2026-08-10 双审计 P1 §11 扩展（⑩ dangling 成员 + ⑪ 新族 + ④ fan-out 源）+ 2026-08-10 契约/文档族 P2 §2/§4/§9 锚点行号校准（multi P2-16），供 I5 验证与后续审计引用）
+> Status: active（Cycle 1 / I0 产出 + I4 门禁补强扩展 + Cycle 2 / I1 §9 新族 ⑥-⑩ 沉淀 + Cycle 2 / I4 §10 补强扩展 + 2026-08-10 双审计 P1 §11 扩展（⑩ dangling 成员 + ⑪ 新族 + ④ fan-out 源）+ 2026-08-10 契约/文档族 P2 §2/§4/§9 锚点行号校准（multi P2-16）+ 2026-08-11 双审计 P2 §11.2 扩展（⑪ 嵌套深度成员，R1-F2），供 I5 验证与后续审计引用）
 > Last Updated: 2026-08-10
 > Source: `docs/backlog/ai-invariant-loop-roadmap.md`（Cycle 1 / I0 + Cycle 2 / I1 派生）+ 4 轮 AI 审计（`docs/audits/2026-07-23-2141-*ai.md`、`2026-07-24-1757-*ai.md`、`2026-07-24-2151-*ai.md`、`2026-07-25-0707-*ai.md`）+ C8.1/8.2/8.3 + post-closure + Bug 07 note + I4 修复执行（K1-K4）+ Cycle 2 / I1 沉淀执行（N1-N5 → ⑥-⑩）+ 2026-08-09-1826 双审计 P1 修复执行（plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`）
 > Produced By: plan `docs/plans/2026-08-09-1826-1-i0-invariant-inventory-baseline.md`（纯文档计划）；扩展于 plan `docs/plans/2026-08-09-2007-2-cycle1-i4-fix-execution.md`（K1-K4 + 门禁 ②③④⑤ 补强）；§9 沉淀于 plan `docs/plans/2026-08-09-2229-2-cycle2-i1-invariant-sedimentation.md`（⑥-⑩ 第二批门禁）；§11 扩展于 plan `docs/plans/2026-08-10-1301-1-engine-adapter-p1-remediation.md`（⑩ dangling 成员 + ⑪ 新族 + ④ fan-out 源）
@@ -290,6 +290,7 @@
 - **覆盖失败族**：plugin 生命周期族（N4 派生同族面）+ 载荷泄漏族（新，双审计触发）。
 - **历史 bug 证据**：`docs/bugs/133-ai-engine-plugin-ctx-write-isolation-and-payload-hygiene-fix.md`（P1-5 + open P1-1 合并族）。
 - **检测方法**：运行时参数化测试（`engine-invariants-p1.test.ts`：5 hook 穷举 `ctx.request.messages !== engine.getState().messages` + push 不写穿 + payload 元素隔离 + P1-5 白名单双用例）；**不静态化**（数组隔离为行为面，静态误报高——沿用 ⑦⑨⑩ 裁定）。
+- **扩展（2026-08-11，R1-F2，plan `docs/plans/2026-08-11-0335-1-engine-adapter-p2-remediation-2245.md`）**：**嵌套深度成员**——`projectWireMessage` 此前对 `tool_calls`/`content`（数组部件）/`reasoning_content` **按引用赋值**、`metadata` 仅浅拷贝（`{ ...message.metadata }` 嵌套值共享）→ plugin 对 `ctx.request.messages[i].tool_calls` 等 `push`/mutate 写穿 engine 历史 + wire payload（open P1-1 已修族的嵌套深度残留成员）。**扩展陈述**：写隔离覆盖**全部嵌套深度**——`projectWireMessage` 对白名单字段与 metadata 做元素级深克隆（`deepClone`，`engine/utils.ts`），wire payload 与 engine 历史彻底断引用。**检测方法**：运行时参数化成员 +3（tool_calls push / content parts push / metadata 嵌套值 in-place mutate，`engine-invariants-p1.test.ts` Invariant ⑪ nested 块），修复前全 RED 修复后全 GREEN；`types.ts` MessageEngineContext 注释与 `build-context.ts` 同步如实描述隔离深度（原「never write through」承诺现于全深度成立）。**评估结论**：⑪ 门禁测试成员**需补**嵌套成员（既有 8 成员仅覆盖数组 + element 层，不覆盖嵌套深度——不补则 R1-F2 面无防回归守卫）；已补 3 成员，`check:ai-engine-invariants` 不静态化面维持（行为面裁定不变）。
 
 ### 11.3 不变式 ④ 扩展 —— clearAll fan-out 源（P1-3/P1-4）
 
