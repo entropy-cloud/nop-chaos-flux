@@ -1,6 +1,6 @@
 # AI Engine 不变式驱动的持续审计闭环（AI Engine Invariant-Driven Continuous Audit Loop）
 
-> Last Updated: 2026-08-10
+> Last Updated: 2026-08-11
 > 产出方法：`docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`（诊断→选型→拟制→共识审查）；经 2 轮独立 fresh session 审查至共识（Round 1 revised → 修正 → Round 2 approved）
 > 驱动方：`missions/ai-invariant-loop.json`（范围：`packages/flux-renderers-ai/` engine + adapters；授权/commitFormat/Loop Rule 见该 mission description）
 > 先例与诊断依据：AI 模块 4 轮 open/multi audit（`docs/audits/2026-07-2*-ai.md`、`2026-07-25-0*-ai.md`）+ C8.1/C8.2/C8.3 逐组件卡 + post-closure；诊断结论见 `docs/logs/2026/08-08.md`
@@ -182,3 +182,31 @@ flowchart LR
     - P2-6 O-2 注释声称 engine 从不 in-place mutate 嵌套对象——streaming 期间不成立（create-engine.ts:139-141）
     - P2-7 ai-feedback 无法表达"无操作栏"（`actions: []` 映射为默认栏，ai-feedback.tsx:107-111）
     - P2-8 ai-citations 年份误报（`[2026]` 渲染空 citation 卡，ai-citations.tsx:258,282-292）
+- **2026-08-10-2245 双审计 P2 填充（2026-08-11，mission-driver 起草轮）**：两审计 `Audit Status: open → planned`（P0×1 + P1×6 已路由三 plan：FIND-01/FIND-06 → `docs/plans/2026-08-11-0008-1-renderer-contract-wiring-onapproval-and-projection-remediation.md`；R1-F1/FIND-03 → `docs/plans/2026-08-11-0008-2-engine-loop-termination-and-error-carrier-remediation.md`；FIND-02/FIND-04/FIND-05 → `docs/plans/2026-08-11-0008-3-conversation-adapter-host-contract-remediation.md`；三 plan 均经独立 fresh-session review 达成共识转 `active`，执行序 1→2→3）。**24 条 P2 全部入本 backlog（带源审计路径）**：
+  - **P0/P1 路由收口注记（2026-08-11，plan `2026-08-11-0008-1` 完成）**：renderer 契约接线族 2 条全修复落地——FIND-01 [P0]（ai-chat/ai-bubble `RendererDefinition.fields` 注册 `onApproval` event，真实编译管线断言重写假绿测试）+ FIND-06 [P1]（投影谓词补元素恒等指纹 + engine 身份交换无条件克隆，盲区 A/B 回归）；AI 包 77 files/662 tests 全绿 + bug notes 147-148 + 类别清扫入档（全包 `on*` 已消费/已声明核对 + 引擎状态镜像面核对）；engine/adapter 面 FIND-03/FIND-02/FIND-04/FIND-05 由 plan `2026-08-11-0008-2`/`0008-3` 独立 closure surface 跟踪。
+  - **multi-audit（源：`docs/audits/2026-08-10-2245-multi-audit-ai-invariant-loop.md`）16 条**：
+    - FIND-07 `contentResolverName` 死契约字段（schemas.ts:123；ai-renderer-definitions.ts:105；renderers.md:125；ai-bubble/index.tsx:286-341 零读取；1606-3 autofocus 死字段 drop 同族）
+    - FIND-08 `ConversationStorageErrorEvent` 被 `UseConversationOptions.onStorageError` 引用但未从包入口导出（use-conversation.ts:36,39-51；index.ts:129-134 vs :111）
+    - FIND-09 `@tiptap/core` 生产值导入（rich-text 子路径 tiptap-sender.tsx:19）但仅 devDependencies，与同族 optional peer 处理不一致（package.json:33-49,53）
+    - FIND-10 engine.md §7.1 `ChatMessageUIState` 代码块与 live types.ts 漂移（thinking 形状 + 漏 editing；engine.md:51-55 vs types.ts:67-84）
+    - FIND-11 engine.md §9.4 示例使用不存在的 `runtime.registerImport` API（engine.md:437-448；design.md:504；implementation.md:162；P2-13 同族未修净）
+    - FIND-12 autoSave 不覆盖 connector-missing 轮（use-conversation-autosave.ts:38-44；create-engine.ts:209-231；用户消息只进内存 reload 丢失）
+    - FIND-13 ai-message-list 空态分支丢弃 `props.meta.className`（ai-message-list.tsx:61-76 vs :78-90；同包先例 ai-prompts.tsx:49 / ai-suggestions.tsx:89）
+    - FIND-14 `jsonrepair` 重复声明于 dependencies 与 devDependencies（package.json:31,57；P2-trivial）
+    - FIND-15 invariant ⑧ 新测试文件 `engine-invariants-p2.test.ts` 未进 engine.md 运行命令清单与 gates.md ⑧ 行（engine.md:520-526；gates.md:19；engine-invariants-p2.test.ts:45-160）
+    - FIND-16 invariant-catalog §4.1 `controller` 锚点漂移 ~240 行（invariant-catalog.md:125 vs use-conversation.ts:664-669）
+    - FIND-17 engine.md:123-127 / types.ts:332-336 的「design.md §14.3 line 556」行锚失效（design.md 已增长，§14.3 现于 :655-666）
+    - FIND-18 cycle2-findings / cycle2-adjudication 的 `文件:行` 引用在 1606-1 模块抽取后失效（cycle2-findings.md:74,170,173；cycle2-adjudication.md:43,76,79；K-⑩-3 实为 use-conversation-autosave.ts:42/:85）
+    - FIND-19 `AiConversationController` 与 `AiConversationControllerBridge` 同包双命名公共接口（ai-conversation-controller.ts:19-24；use-conversation.ts:689-694；index.ts:124-126,129-134；3/4 成员同构）
+    - FIND-20 ai-attachments 根节点 `role="region"` 无 accessible name（ai-attachments.tsx:214-227；WCAG 4.1.2/1.3.1）
+    - FIND-21 `ai-bubble-hitl.test.tsx` 模块级 `let captured` 无 afterEach 重置（:73,23-25,104；正确模式 ai-chat-projection.test.tsx:83-88；**同面注记**：plan `2026-08-11-0008-1` Phase 1 重写该文件时顺带修复）
+    - FIND-22 `branching.ts` 「prev 无数字后缀」fallback 分支零测试覆盖（branching.ts:32-35,34-35；engine-branches.test.ts:24-127）
+  - **open-audit（源：`docs/audits/2026-08-10-2245-open-audit-ai-invariant-loop.md`）8 条**：
+    - R1-F2 ⑪ plugin ctx 写隔离只到 element 层：`ctx.request.messages[i]` 嵌套值（tool_calls/content/metadata）仍共享引用（build-context.ts:55；utils.ts:254-268 projectWireMessage 直接引用赋值；types.ts:277-287 注释过度承诺；open P1-1 已修族的嵌套深度残留成员）
+    - R1-F3 `useConversation` 无 storage + `initialConversations`：首会话 activeId 已指向但 activeEngine 恒 null（use-conversation.ts:125-130,168,329-338；K-⑥-3 只覆盖 storage bootstrap 面）
+    - R1-F4 bootstrap `loadConversations` 期间 `deleteConversation` 被 K-⑦ merge 复活为幽灵列表项（use-conversation.ts:311-326 merge、:501-552 delete 镜像过滤；K-⑦ 只守卫 clearAll-during-load）
+    - R1-F5 `ai` ActionScope namespace 无实例隔离：同页双 ai-chat 后挂载者顶替 + 先卸载者整 namespace 注销（ai-chat.tsx:200-206；flux-runtime/src/action-scope.ts:53-68）
+    - R2-F1 `ai-citations` 显式 `sources: []` 不覆盖 `metadata.sources`（ai-citations.tsx:465-486 resolveSources；schemas.ts:344 override 承诺；ai-feedback P2-7 修复同族 sibling 成员）
+    - R2-F2 markdown CodeBlock 复制在无 `navigator.clipboard` 环境报假「已复制」（ai-bubble/renderers/markdown.tsx:119-130,166-177；ai-feedback P3 家族第二实例）
+    - R2-F3 `branching.ts` 前导零 branch id 归一化无契约说明（branch-01→branch-2），`findPriorAssistantBranchId` 不校验格式（branching.ts:32-35,55-63）
+    - R3-F1 `TimestampContentRenderer` 对 host 可写非法 `metadata.createdAt` 无防护：Invalid Date 上 `toISOString()` 抛 RangeError 崩整棵气泡树（ai-bubble/renderers/timestamp.tsx:17-30；F6 cloneMessages 同族未守卫成员）

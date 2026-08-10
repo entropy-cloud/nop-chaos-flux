@@ -456,7 +456,7 @@ export interface AiToolCallSchema extends BaseSchema {
 - 点击触发 `onApproval` event，payload `{ action: 'approve'|'reject', toolCall, toolCallId }`；engine **不**改 `approval`（host 决策后写回）。
 - `approved`/`rejected`：按钮区隐藏，改为已决策徽标（✓ Approved 绿 / ✗ Rejected 红，复用 A-12 色板），`data-approval-decision`。
 - `hitl-no-handler`：host 未挂 handler 时按钮 **disabled**（无死点击）+ title 提示；`approval` 不变。
-- **气泡路径（multi-audit P2-4，2026-08-10）**：默认气泡路径的 pending 工具卡（`ToolsContentRenderer` → `FallbackToolCallCard`）同样可达——`ai-chat` schema `onApproval` event 经 `AiChatContextValue` → `AiMessageList` → `AiBubbleViewProps` → 消息级 tools renderer 全链线程（对齐 `onBranchChange` 先例），host 注册的自定义工具卡与 `*` fallback 均收到 `BubbleToolRendererProps.onApproval`（additive 可选字段）。独立 `ai-tool-call` renderer 路径与独立 `ai-bubble` renderer（schema `onApproval` event）亦接线；未接线时按钮 disabled（`hitl-no-handler` 不变）。
+- **气泡路径（multi-audit P2-4，2026-08-10；FIND-01 编译注册收口 2026-08-11）**：默认气泡路径的 pending 工具卡（`ToolsContentRenderer` → `FallbackToolCallCard`）同样可达——`ai-chat` schema `onApproval` event 经 `AiChatContextValue` → `AiMessageList` → `AiBubbleViewProps` → 消息级 tools renderer 全链线程（对齐 `onBranchChange` 先例），host 注册的自定义工具卡与 `*` fallback 均收到 `BubbleToolRendererProps.onApproval`（additive 可选字段）。独立 `ai-tool-call` renderer 路径与独立 `ai-bubble` renderer（schema `onApproval` event）亦接线；未接线时按钮 disabled（`hitl-no-handler` 不变）。**FIND-01 收口：`ai-chat` 与 `ai-bubble` 的 `RendererDefinition.fields` 均已注册 `{ key: 'onApproval', kind: 'event' }`（此前仅 schema 类型 + doc 承诺 + 渲染器消费，未注册面使 `props.events.onApproval` 恒 undefined）**——未注册 `onApproval` 前该承诺结构性不可达，回归测试已改为真实编译管线断言（bug note 147）。
 
 ## 10b. ai-citations（Widget, P3, A-13）
 
@@ -608,30 +608,30 @@ export interface AiMcpManagerSchema extends BaseSchema {
 
 ## 13. Events 总览
 
-| 渲染器           | event                                                                | payload                                                                                 |
-| ---------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| ai-chat          | `onResponseComplete`                                                 | `{ message: ChatMessage }`                                                              |
-| ai-chat          | `onError`                                                            | `{ error: Error }`                                                                      |
-| ai-chat          | `onAbort`                                                            | `{}`                                                                                    |
-| ai-chat          | `onConversationChange`                                               | `{ conversationId }`（resolved activeConversationId prop 变化时派发；含清空到 null）    |
-| ai-chat          | `onBranchChange`                                                     | `{ type: 'ai:branch-change', branchId }`                                                |
-| ai-chat          | `onApproval`（P2-4 2026-08-10，气泡路径 HITL）                       | `{ type: 'ai:tool-call-approval', action }`（经 AiChatContextValue 线程到气泡内工具卡） |
-| ai-sender        | `onSubmit`                                                           | `{ text: string }`                                                                      |
-| ai-sender        | `onCancel`                                                           | `{}`                                                                                    |
-| ai-sender        | `onChange`                                                           | `{ text: string }`                                                                      |
-| ai-bubble        | `onBranchChange`                                                     | `{ type: 'ai:branch-change', branchId }`                                                |
-| ai-bubble        | `onApproval`（P2-4 2026-08-10，独立气泡路径）                        | `{ type: 'ai:tool-call-approval', action }`                                             |
-| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`         | `{ type?: 'ai:conversation-*', id?, conversation?, title? }`                            |
-| ai-prompts       | `onSelect`                                                           | `{ item, index }`                                                                       |
-| ai-feedback      | `onAction`                                                           | `{ action, message }`                                                                   |
-| ai-attachments   | `onChange` / `onError` / `onUpload`                                  | `{ attachments }` / `{ reason }` / `{ attachments }`                                    |
-| ai-tool-call     | `onApproval` (P3 HITL)                                               | `{ action, toolCall, toolCallId }`                                                      |
-| ai-citations     | `onSourceClick`                                                      | `{ source, index }`                                                                     |
-| ai-token-usage   | `onClick`                                                            | `{ usage }`                                                                             |
-| ai-suggestions   | `onSelect`                                                           | `{ item, index }`                                                                       |
-| ai-voice-input   | `onResult`                                                           | `{ transcript }`                                                                        |
-| ai-voice-input   | `onError`                                                            | `{ reason: 'unsupported' \| 'permission-denied' \| 'no-result' }`                       |
-| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle` | 各异                                                                                    |
+| 渲染器           | event                                                                              | payload                                                                                 |
+| ---------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| ai-chat          | `onResponseComplete`                                                               | `{ message: ChatMessage }`                                                              |
+| ai-chat          | `onError`                                                                          | `{ error: Error }`                                                                      |
+| ai-chat          | `onAbort`                                                                          | `{}`                                                                                    |
+| ai-chat          | `onConversationChange`                                                             | `{ conversationId }`（resolved activeConversationId prop 变化时派发；含清空到 null）    |
+| ai-chat          | `onBranchChange`                                                                   | `{ type: 'ai:branch-change', branchId }`                                                |
+| ai-chat          | `onApproval`（P2-4 2026-08-10；FIND-01 2026-08-11 已注册 `fields`，气泡路径 HITL） | `{ type: 'ai:tool-call-approval', action }`（经 AiChatContextValue 线程到气泡内工具卡） |
+| ai-sender        | `onSubmit`                                                                         | `{ text: string }`                                                                      |
+| ai-sender        | `onCancel`                                                                         | `{}`                                                                                    |
+| ai-sender        | `onChange`                                                                         | `{ text: string }`                                                                      |
+| ai-bubble        | `onBranchChange`                                                                   | `{ type: 'ai:branch-change', branchId }`                                                |
+| ai-bubble        | `onApproval`（P2-4 2026-08-10；FIND-01 2026-08-11 已注册 `fields`，独立气泡路径）  | `{ type: 'ai:tool-call-approval', action }`                                             |
+| ai-conversations | `onItemClick` / `onItemRename` / `onItemDelete` / `onCreate`                       | `{ type?: 'ai:conversation-*', id?, conversation?, title? }`                            |
+| ai-prompts       | `onSelect`                                                                         | `{ item, index }`                                                                       |
+| ai-feedback      | `onAction`                                                                         | `{ action, message }`                                                                   |
+| ai-attachments   | `onChange` / `onError` / `onUpload`                                                | `{ attachments }` / `{ reason }` / `{ attachments }`                                    |
+| ai-tool-call     | `onApproval` (P3 HITL)                                                             | `{ action, toolCall, toolCallId }`                                                      |
+| ai-citations     | `onSourceClick`                                                                    | `{ source, index }`                                                                     |
+| ai-token-usage   | `onClick`                                                                          | `{ usage }`                                                                             |
+| ai-suggestions   | `onSelect`                                                                         | `{ item, index }`                                                                       |
+| ai-voice-input   | `onResult`                                                                         | `{ transcript }`                                                                        |
+| ai-voice-input   | `onError`                                                                          | `{ reason: 'unsupported' \| 'permission-denied' \| 'no-result' }`                       |
+| ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle`               | 各异                                                                                    |
 
 ## 14. 端到端 Schema 示例
 
