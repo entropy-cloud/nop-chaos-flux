@@ -1,7 +1,7 @@
 # sparkline 原子组件计划
 
-> Plan Status: active
-> Last Reviewed: 2026-08-09
+> Plan Status: completed
+> Last Reviewed: 2026-08-10
 > Source: `docs/analysis/2026-08-09-bi-control-support-analysis.md`（KPI 层缺口）、`docs/plans/2026-08-09-bi-kpi-filter-chart-enhance-plan.md`（Phase 1 sparkline 路径裁定承接）
 > Related: `docs/plans/2026-08-09-pivot-table-vtable-wrapper-plan.md`（VTable cellType sparkline 对照）、`docs/plans/2026-08-09-map-openlayers-wrapper-plan.md`（独立包 vs 包内组件裁定先例）
 
@@ -62,49 +62,49 @@ SVG path 生成与 Y 域归一化是组件核心契约（stat-tile 与未来表�
 
 ### Phase 1 - schema、纯函数与组件
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/sparkline-schemas.ts`、`sparkline-path.ts`、`sparkline-path.test.ts`、`sparkline-renderer.tsx`、`sparkline-renderer.test.tsx`、`data-renderer-definitions.ts`
 
 - Item Types: `Fix | Decision | Proof | Follow-up`
 
-- [ ] (Decision) 裁定 `SparklineSchema`：
+- [x] (Decision) 裁定 `SparklineSchema`：
   - `data?: SchemaValue`（`number[]`，支持表达式求值）
   - `width?`/`height?`（缺省 120×32，sparkline 语义尺寸）
   - `color?: string | { status: 'up' | 'down' | 'neutral' }`（静态色或按趋势语义取 CSS 变量：涨/跌/中性）
   - `fill?: boolean`（折线下方渐变填充，缺省 false）、`smooth?: boolean`（贝塞尔平滑，缺省 false）
   - `min?`/`max?`（显式 Y 域；缺省数据极值）
   - 裁定 `status` 计算语义：`up`/`down` 由首尾值比较（尾 > 首 = up），显式 `status` 优先
-- [ ] (Proof) 先写 failing 单测（纯函数）：
+- [x] (Proof) 先写 failing 单测（纯函数）：
   - `buildSparklinePath(points, w, h, smooth)`：折线/平滑路径坐标正确性（端点贴边、坐标映射）
   - `normalizeYDomain(values, min?, max?)`：极值、显式域、零跨度回退、非法值过滤
   - 空数据/单点/全等值降级路径（Failure Paths 逐条断言）
-- [ ] (Fix) 实现 `sparkline-path.ts`（纯函数）+ `sparkline-renderer.tsx`（`RendererComponentProps`，SVG 渲染，data 经 `helpers.evaluate`，`color.status` → CSS 变量，fill 渐变 `defs`）——**数据经 props/scope，无 IO**（INV-1 合规）。
-- [ ] (Fix) 注册进 `dataRendererDefinitions`：type `sparkline`、category `data`、sourcePackage、schemaValidator（data 非数组时 dev warn 不抛错）。
-- [ ] (Proof) 渲染层测试（jsdom）：SVG `path.d` 与纯函数输出一致；`status` 颜色类正确；空数据渲染占位。
-- [ ] (Follow-up) 裁定 stat-tile 复用契约边界：`sparkline` 字段可复用 `<SparklineRenderer>` 子组件或内联复用 path 纯函数（最终组合由 stat-tile 计划执行时裁定）——以代码注释 + daily log 记录；design.md 正式声明归 Phase 2。
+- [x] (Fix) 实现 `sparkline-path.ts`（纯函数）+ `sparkline-renderer.tsx`（`RendererComponentProps`，SVG 渲染，data 经 `helpers.evaluate`，`color.status` → CSS 变量，fill 渐变 `defs`）——**数据经 props/scope，无 IO**（INV-1 合规）。
+- [x] (Fix) 注册进 `dataRendererDefinitions`：type `sparkline`、category `data`、sourcePackage、schemaValidator（data 非数组时 dev warn 不抛错）。
+- [x] (Proof) 渲染层测试（jsdom）：SVG `path.d` 与纯函数输出一致；`status` 颜色类正确；空数据渲染占位。
+- [x] (Follow-up) 裁定 stat-tile 复用契约边界：`sparkline` 字段可复用 `<SparklineRenderer>` 子组件或内联复用 path 纯函数（最终组合由 stat-tile 计划执行时裁定）——以代码注释 + daily log 记录；design.md 正式声明归 Phase 2。
 
 Exit Criteria:
 
-- [ ] 纯函数 + 渲染层单测全绿（含 4 条 Failure Paths 断言）。
-- [ ] `sparkline` 注册进 dataRendererDefinitions，包级 typecheck 通过。
+- [x] 纯函数 + 渲染层单测全绿（含 4 条 Failure Paths 断言）。
+- [x] `sparkline` 注册进 dataRendererDefinitions，包级 typecheck 通过。
 
 ### Phase 2 - 文档、示例与 stat-tile 集成约定
 
-Status: planned
-Targets: `docs/components/sparkline/design.md`、`docs/components/sparkline/example.json`、`apps/playground/src/`（示例）、`docs/logs/2026/08-09.md`
+Status: completed
+Targets: `docs/components/sparkline/design.md`、`docs/components/sparkline/example.json`、`apps/playground/src/`（示例）、`docs/logs/2026/08-10.md`（daily log 按"每日日志"语义落执行当日档，pivot-table 先例）
 
 - Item Types: `Fix | Follow-up`
 
-- [ ] (Fix) `docs/components/sparkline/design.md`：schema 字段表、Y 域/平滑/填充语义、`status` 颜色契约（CSS 变量映射表）、Failure Paths、stat-tile 复用约定（组件或纯函数接口）、Non-Goals。
-- [ ] (Fix) `docs/components/sparkline/example.json`：销售趋势 sparkline（含 fill/smooth/status 变体）+ 空数据示例。
-- [ ] (Fix) playground 新增 sparkline 示例（独立展示 + 示意 stat-tile 组合位）。
-- [ ] (Fix) daily log 记录。
-- [ ] (Follow-up) 标注 stat-tile 计划（`2026-08-09-bi-kpi-filter-chart-enhance-plan.md` Phase 1）的「sparkline 路径裁定」由本计划承接（自绘 SVG 原子组件），stat-tile 执行时引用 `sparkline` 组件。
+- [x] (Fix) `docs/components/sparkline/design.md`：schema 字段表、Y 域/平滑/填充语义、`status` 颜色契约（CSS 变量映射表）、Failure Paths、stat-tile 复用约定（组件或纯函数接口）、Non-Goals。
+- [x] (Fix) `docs/components/sparkline/example.json`：销售趋势 sparkline（含 fill/smooth/status 变体）+ 空数据示例。
+- [x] (Fix) playground 新增 sparkline 示例（独立展示 + 示意 stat-tile 组合位）。
+- [x] (Fix) daily log 记录。
+- [x] (Follow-up) 标注 stat-tile 计划（`2026-08-09-bi-kpi-filter-chart-enhance-plan.md` Phase 1）的「sparkline 路径裁定」由本计划承接（自绘 SVG 原子组件），stat-tile 执行时引用 `sparkline` 组件。
 
 Exit Criteria:
 
-- [ ] design.md + example.json 与 live 行为一致（字段逐一对应对照）。
-- [ ] playground 示例可运行；daily log 已记录。
+- [x] design.md + example.json 与 live 行为一致（字段逐一对应对照）。
+- [x] playground 示例可运行；daily log 已记录。
 
 ## Draft Review Record
 
@@ -117,18 +117,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] SVG path 纯函数 + 渲染层 focused 单测全绿（含降级路径）。
-- [ ] playground sparkline 示例手测通过（独立 + stat-tile 组合位示意）。
-- [ ] `docs/components/sparkline/design.md` + example.json 与 live baseline 一致。
-- [ ] stat-tile 计划承接标注已同步（无重复路径裁定）。
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope 行为缺口。
-- [ ] 受影响的 owner docs 已同步（分析报告 KPI 层、daily log）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] SVG path 纯函数 + 渲染层 focused 单测全绿（含降级路径）。
+- [x] playground sparkline 示例手测通过（独立 + stat-tile 组合位示意）。
+- [x] `docs/components/sparkline/design.md` + example.json 与 live baseline 一致。
+- [x] stat-tile 计划承接标注已同步（无重复路径裁定）。
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope 行为缺口。
+- [x] 受影响的 owner docs 已同步（分析报告 KPI 层、daily log）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 
@@ -151,13 +151,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待执行完成后填写
+Status Note: 已执行完成（2026-08-10）——2 Phase 全 completed + Closure Gates 12/12 [x] + Plan Status → `completed`。sparkline 原子组件（自绘 SVG polyline）落地 `flux-renderers-data`（schema + 纯函数 + renderer + 注册 + schemaValidator），stat-tile 复用契约裁定（内联保留 + 共享纯函数语义）记录于代码注释与 design.md §12；playground lab 示例 + 文档 + daily log 收口；analysis 报告 KPI 层缺口闭环标注。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待定
-- Evidence: 待定
+- Auditor / Agent: 独立 fresh-session closure-audit sub-agent（task `ses_016c70a01ffe260vHeGkPBCsuj`，执行 session 不自审）
+- Evidence: verdict `approved`（0 Blocker / 0 Major）——逐项核对：Phase 1 落地（7 个纯函数 + renderer + 注册 + schemaValidator，file:line 证据）、interface-vs-semantics（端点贴边/零跨度回退/首尾 status/显式覆盖均由代码与断言双证）、Phase 2 落地（design.md/example.json/lab 页接线/daily log/stat-tile 承接标注）、plan 文本一致性（Phase items + Exit Criteria 全 [x]、无静默降级）、零杂散构建产物（git status 仅预期 17 文件）。独立复跑 `pnpm --filter @nop-chaos/flux-renderers-data test`（119 files / 855 tests）+ `pnpm --filter @nop-chaos/flux-playground test`（21 files / 142 tests）与执行数字完全一致。Minor ×2 已就地修复（plan Targets 日志档期标注 08-10；design.md 补 Failure Paths 表 §6 + 章节重编号）。
+- 执行验证：`pnpm typecheck`/`build`/`lint` 37/37、`pnpm test --force` 66/66 tasks 全绿（零缓存）、`pnpm check` exit 1 仅 = 既有登记 red（audit-event-dispatch-ctx 6 条 industrial 2026-08-09 已登记；oversized 2 exempt locale；standalone `check:ai-engine-invariants` = 注册 ⑧×1+⑥×3）——零新增未登记 red；`check:schema-prop-coverage` 181/181 100%；`check:docs-garbled` 零新增候选。
 
 Follow-up:
 
-- 待定
+- no remaining plan-owned work；Non-Blocking Follow-ups（>1k 数据点性能优化阈值、VTable cellType sparkline 能力对照记录）按 plan 已记录。

@@ -34,12 +34,14 @@
 
 完整 BI 应用（对标 Superset/Metabase/DataEase）需要 4 层控件：
 
-| 层             | 必需控件                                                                | Flux 现状                    | 差距                                |
-| -------------- | ----------------------------------------------------------------------- | ---------------------------- | ----------------------------------- |
-| 可视化层       | 柱/线/饼/散点/面积/双轴/热力图/地图/仪表盘                              | 5 种基础图表                 | 双轴、热力图、地图、brush/zoom 缺失 |
-| 交叉分析层     | **pivot-table（透视表）**                                               | 仅静态交叉（table 组合模拟） | **交互式透视缺失**                  |
-| 编排层（看板） | panel-chrome（面板外壳）、dashboard-filter（全局筛选联动）、grid layout | 看板骨架已闭环（见下方注记） | ~~整层缺失~~                        |
-| KPI 层         | stat-tile（大数字 + 同比环比 + sparkline）                              | statistics 仅总条数          | KPI 卡片缺失（sparkline 独立组件）  |
+| 层             | 必需控件                                                                | Flux 现状                    | 差距                                   |
+| -------------- | ----------------------------------------------------------------------- | ---------------------------- | -------------------------------------- |
+| 可视化层       | 柱/线/饼/散点/面积/双轴/热力图/地图/仪表盘                              | 5 种基础图表                 | 双轴、热力图、地图、brush/zoom 缺失    |
+| 交叉分析层     | **pivot-table（透视表）**                                               | 仅静态交叉（table 组合模拟） | **交互式透视缺失**                     |
+| 编排层（看板） | panel-chrome（面板外壳）、dashboard-filter（全局筛选联动）、grid layout | 看板骨架已闭环（见下方注记） | ~~整层缺失~~                           |
+| KPI 层         | stat-tile（大数字 + 同比环比 + sparkline）                              | statistics 仅总条数          | ~~KPI 卡片缺失（sparkline 独立组件）~~ |
+
+> 注记（2026-08-10）：**KPI 层缺口已闭环**——`sparkline` 独立组件已按 plan `2026-08-09-sparkline-component-plan.md` 落地（`flux-renderers-data`，type `sparkline`：自绘 SVG polyline 纯函数 + 组件 + 注册 + `docs/components/sparkline/design.md` + example.json + playground 示例），stat-tile 内部 sparkline 字段的复用约定见该 design.md §11。stat-tile 本身已于 2026-08-09 落地（见首行状态标注）。
 
 > 注记（2026-08-09 晚间）：编排层「整层缺失」已闭环——`dashboard-editor`（`@nop-chaos/flux-renderers-dashboard`，基于 `@nop-chaos/editor-core`）提供看板网格布局编辑/运行（拖拽/缩放/吸附/undo/保存），面板内容复用 chart/table/stat-tile 等现有 renderer；`panel-chrome`/`dashboard-filter` 维持「不新增组件」原裁定（card 组合 + 编排约定）。
 

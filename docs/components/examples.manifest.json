@@ -45,6 +45,7 @@
     "data-source",
     "chart",
     "crud",
+    "sparkline",
     "designer-page",
     "designer-field",
     "designer-canvas",

@@ -1,0 +1,43 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "row",
+      "gap": 4,
+      "body": [
+        {
+          "type": "sparkline",
+          "label": "销售趋势（fill + smooth + status up）",
+          "data": "${sales.trend}",
+          "fill": true,
+          "smooth": true,
+          "width": 160,
+          "height": 40,
+          "color": { "status": "up" }
+        },
+        {
+          "type": "sparkline",
+          "label": "下行指标（status down）",
+          "data": "${sales.downtrend}",
+          "color": { "status": "down" }
+        },
+        {
+          "type": "sparkline",
+          "label": "静态色 + 显式 Y 域",
+          "data": "${sales.trend}",
+          "width": 160,
+          "height": 40,
+          "color": "hsl(var(--chart-2))",
+          "min": 0,
+          "max": 200
+        },
+        {
+          "type": "sparkline",
+          "label": "空数据示例",
+          "data": []
+        }
+      ]
+    }
+  ]
+}

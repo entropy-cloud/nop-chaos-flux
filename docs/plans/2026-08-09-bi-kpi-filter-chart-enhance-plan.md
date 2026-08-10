@@ -80,6 +80,7 @@ Targets: `packages/flux-renderers-data/src/stat-tile-*`、`packages/flux-rendere
 
 - [x] (Decision) 裁定 `stat-tile` schema：`value`（`SchemaInput`，支持 `${expr}`）、`label`（value-or-region）、`delta`（同比/环比数值或 `{value, label, direction}`）、`sparkline`（`number[]` 或 `dataRegionKey`）、`prefix`/`suffix`、`formatter`（千分位/小数位）、`status`（`up`/`down`/`neutral` 驱动涨跌色）。
 - [x] (Decision) 裁定 sparkline 实现路径：自绘 SVG polyline（无新依赖、轻量）vs 复用 recharts 迷你 LineChart（依赖既有 recharts，样式对齐 chart）；给出选型理由并落地。
+  - **承接标注（2026-08-10，plan `2026-08-09-sparkline-component-plan.md`）**：本项裁定的**自绘 SVG polyline 路径**已由 sparkline 原子组件计划正式承接并落地——独立 `sparkline` renderer（type `sparkline`，`flux-renderers-data`，`sparkline-path.ts` 纯函数 + `sparkline-renderer.tsx` + 注册 + `docs/components/sparkline/design.md` + example.json + playground 示例）。stat-tile 复用契约（内联实现 vs 子组件/纯函数复用）裁定见 `docs/components/sparkline/design.md` §11；stat-tile 执行/演进时引用 `sparkline` 组件，无重复路径裁定。
 - [x] (Proof) 先写 failing 单测：KPI 数字格式化、`delta` 方向与颜色语义、sparkline 空数据降级、`value` 表达式求值、null 值 `--` 占位。
 - [x] (Fix) 实现 `stat-tile` renderer + schema + 注册进 `data-renderer-definitions.ts`（type `stat-tile`，category `data`）。
 - [x] (Follow-up) 评估 `statistics` 与 `stat-tile` 关系：保留 `statistics`（分页总数语义）或标记 deprecated——按 `docs/skills/deprecated-feature-cleanup.md` 流程，结论写入 design.md。
