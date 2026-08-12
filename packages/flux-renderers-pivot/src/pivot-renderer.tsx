@@ -127,7 +127,7 @@ export function PivotTableRenderer(props: RendererComponentProps<PivotTableSchem
   });
 
   useEffect(() => {
-    if (empty || option === null) {
+    if (loading || empty || option === null) {
       const instance = instanceRef.current;
       if (instance) {
         instanceRef.current = null;
@@ -180,7 +180,7 @@ export function PivotTableRenderer(props: RendererComponentProps<PivotTableSchem
       existing.setRecords(data);
       dataRef.current = data;
     }
-  }, [empty, option, data, props.id, props.meta.cid, props.node.scope]);
+  }, [loading, empty, option, data, props.id, props.meta.cid, props.node.scope]);
 
   useEffect(() => {
     return () => {

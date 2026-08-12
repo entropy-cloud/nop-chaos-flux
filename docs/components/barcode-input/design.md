@@ -37,10 +37,10 @@ interface BarcodeInputSchema extends BoundFieldSchemaBase {
 
   // — 扫码专属 —
   formats?: BarcodeFormat[]; // 限制可识别的码制，如 ["ean_13", "code_128", "qr_code"]；未声明时由 BarcodeDetector 默认
-  continuousScan?: boolean; // 是否连续扫描（默认 true）；false 时每次扫码后关闭摄像头
+  continuousScan?: boolean; // 是否连续扫描（默认 false，单次扫码后自动关闭）；true 时解码循环持续运行
   scanButton?: boolean; // 是否显示扫码按钮（默认 true）
   scanInterval?: number; // 解码间隔毫秒数（默认 300）
-  wasmUrl?: string; // 自定义 @zxing/library WASM 地址（默认使用公共 CDN）
+  wasmUrl?: string; // 自定义 @zxing/library WASM 地址（fail-closed：必须显式声明，无内置默认 CDN 端点）
   autoSubmit?: boolean; // 扫码成功后自动提交所在表单（默认 false）
   scanOnFocus?: boolean; // focus 时自动打开扫码（默认 false；移动端 PDA 场景使用）
 
@@ -199,7 +199,7 @@ src/
 
 - `useBarcodeCamera` 的 session 管理：递增 `sessionRef`，所有异步步骤第一步检查 stale 会话，安全处理暂停/恢复/相机切换。
 - 解码循环：`setTimeout` 递归，`timeBetweenDecodingAttempts` 缺省 300ms；倾斜重试角度 [-20,-15,-10,-5,5,10,15,20]。
-- WASM 加载：`prepareWasm` 幂等单例（首次调用加载，后续返回同一 Promise），默认从公共 CDN 加载 ZXing WASM，`wasmUrl` 允许自定义路径。
+- WASM 加载：`prepareWasm` 幂等单例（首次调用加载，后续返回同一 Promise），**fail-closed**：`wasmUrl` 必须显式声明（无内置默认 CDN 端点，INV-1/R5），且必须注入 `RendererEnv` fetcher。
 - `BarcodeDetector` API 优先使用原生实现；降级时通过 `@zxing/library` ponyfill 提供。
 - 关闭/卸载时：关闭摄像头流、清除定时器、释放 WASM 资源（如果需要）。
 
@@ -207,13 +207,13 @@ src/
 
 ### 风险
 
-| 风险                            | 影响                        | 缓解方案                                                          |
-| ------------------------------- | --------------------------- | ----------------------------------------------------------------- |
-| 摄像头仅在 HTTPS/localhost 可用 | 开发/演示环境需要配置 HTTPS | 文档提示；非安全上下文时自动降级为纯文本输入                      |
-| WASM 加载约 2MB 体积            | 首次扫码延迟 + 带宽消耗     | 默认 CDN 加载 + 懒加载（首次点击扫码按钮时加载）                  |
-| BarcodeDetector 浏览器兼容性    | 部分浏览器不支持原生 API    | @zxing/library ponyfill 降级                                      |
-| 移动端相机权限复杂              | 权限被拒时无扫码能力        | 静默降级为文本输入；无权限提示由浏览器提供                        |
-| 连续扫码的 CPU 消耗             | 电池 / 性能                 | 可配置 `scanInterval` 降低频率；`continuousScan` 允许切换单次模式 |
+| 风险                            | 影响                        | 缓解方案                                                                                 |
+| ------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------- |
+| 摄像头仅在 HTTPS/localhost 可用 | 开发/演示环境需要配置 HTTPS | 文档提示；非安全上下文时自动降级为纯文本输入                                             |
+| WASM 加载约 2MB 体积            | 首次扫码延迟 + 带宽消耗     | 显式 `wasmUrl`（自托管或 CDN，fail-closed 无内置默认）+ 懒加载（首次点击扫码按钮时加载） |
+| BarcodeDetector 浏览器兼容性    | 部分浏览器不支持原生 API    | @zxing/library ponyfill 降级                                                             |
+| 移动端相机权限复杂              | 权限被拒时无扫码能力        | 静默降级为文本输入；无权限提示由浏览器提供                                               |
+| 连续扫码的 CPU 消耗             | 电池 / 性能                 | 可配置 `scanInterval` 降低频率；`continuousScan` 允许切换单次模式                        |
 
 ### 取舍
 
@@ -327,13 +327,13 @@ navigator.mediaDevices?.getUserMedia 不可用
 
 ### 新增 Props
 
-| Prop          | 类型      | 默认值  | 说明                                |
-| ------------- | --------- | ------- | ----------------------------------- |
-| `autoSubmit`  | `boolean` | `false` | 扫码成功后自动提交所在表单          |
-| `scanOnFocus` | `boolean` | `false` | focus 时自动打开扫码（PDA 场景）    |
-| `wasmUrl`     | `string`  | 见下方  | 自定义 @zxing/library WASM CDN 地址 |
+| Prop          | 类型      | 默认值  | 说明                             |
+| ------------- | --------- | ------- | -------------------------------- |
+| `autoSubmit`  | `boolean` | `false` | 扫码成功后自动提交所在表单       |
+| `scanOnFocus` | `boolean` | `false` | focus 时自动打开扫码（PDA 场景） |
+| `wasmUrl`     | `string`  | 无      | 自定义 @zxing/library WASM 地址  |
 
-- `wasmUrl` 默认值：`https://unpkg.com/@zxing/library@0.21.3/umd/zxing_reader.wasm`
+- `wasmUrl` **无默认值（fail-closed）**：`prepareWasm` 未声明 URL 时直接抛错（无内置默认 CDN 端点，INV-1/R5 安全红线）。
 - `wasmUrl` 支持表达式，允许按环境动态切换 CDN 路径。
 
 ### 新增组件句柄

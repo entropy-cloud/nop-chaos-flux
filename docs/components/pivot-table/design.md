@@ -22,7 +22,7 @@ AMIS 无等价透视控件（`table` 静态组合可模拟只读交叉，无交�
 | 能力                                                                                           | 采纳                                 | 不采纳              | 理由                                                                                                                                                                                                                           |
 | ---------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 行/列维度（`rowDimensions`/`columnDimensions`，字符串或 `{dimensionKey,title?,headerStyle?}`） | **实现**                             | —                   | 直接映射 VTable `rows`/`columns`；字符串形态归一化为 `{dimensionKey,title,headerType:'text'}`。                                                                                                                                |
-| 指标（`indicators`：field/title/aggregationType/format/cellType）                              | **实现**                             | —                   | `aggregationType`（SUM/AVG/COUNT/MIN/MAX/NONE，缺省 SUM）→ `dataConfig.aggregationRules`；`cellType` 首版限 text/progressbar/sparkline。                                                                                       |
+| 指标（`indicators`：field/title/aggregationType/cellType）                                     | **实现**                             | —                   | `aggregationType`（SUM/AVG/COUNT/MIN/MAX/NONE，缺省 SUM）→ `dataConfig.aggregationRules`；`cellType` 首版限 text/progressbar/sparkline。                                                                                       |
 | 小计/总计（`dataConfig.totals` 行/列两侧）                                                     | **实现**                             | —                   | showGrandTotals/showSubTotals/subTotalsDimensions/grandTotalLabel/subTotalLabel 逐字段映射 VTable `Totals`；未声明标志缺省 false（fail-closed）。                                                                              |
 | 排序（`dataConfig.sortRules`：field + ASC/DESC 缺省 ASC）                                      | **实现**                             | —                   | 映射 VTable `SortRule`（sortField/sortType）。                                                                                                                                                                                 |
 | 过滤（`dataConfig.filterRules` 声明式子集）                                                    | **实现**（`{field,operator,value}`） | 函数式 `filterFunc` | 首版仅 `=`/`!=`/`>`/`>=`/`<`/`<=`/`IN`/`NOT_IN`/`LIKE` 九种算子，编译为 VTable `filterFunc` 谓词；函数式不进 schema。                                                                                                          |
@@ -41,7 +41,7 @@ AMIS 无等价透视控件（`table` 静态组合可模拟只读交叉，无交�
 
 1. **基座**：`@visactor/vtable`（锁定 `^1.26.6`，MIT）。不采纳 react-vtable（Chat2DB 同裁定：命令式封装保留实例控制面 + 生命周期明确）；不采纳 ag-grid（商业许可，分析报告 §3.2 路径 C）。
 2. **包隔离**：独立包 `@nop-chaos/flux-renderers-pivot`（graph/gantt 先例）——VTable Canvas 渲染与 DOM table 体系分离，且 vrender 依赖系较重，不污染 `flux-renderers-data` bundle。
-3. **数据更新策略**：option 签名（JSON 序列化，剔除 records 与函数）不变 + records 引用变化 → `setRecords`；签名变化 → `updateOption` 全量。无 remount（DD2 契约）。
+3. **数据更新策略**：option 签名（JSON 序列化，剔除 records 与函数）不变 + records 引用变化 → `setRecords`；签名变化 → `updateOption` 全量。无 remount（DD2 契约）。**`loading` 周期例外**：`loading=true` 时渲染占位替换 canvas div，实例走 release 路径（与 empty 同构）；`loading` 翻回 false 后因 instanceRef 为 null 走新建路径绑定新 canvas div（P1-02 修复：`loading` 在实例生命周期 effect deps 中，与 `empty` 对称）。
 4. **`records` vs `source`**：`source` 为原始数据集优先，`records` 为直接数据；同设 source 优先 + dev warn（chart `series`/`source` 裁定延续）。
 5. **内部 state 不进 scope**：实例、option 签名、事件 handler 镜像、warn-once 集合全部 renderer-local（ref/module）；对外仅经 `__flux_pivot_<id>` 程序化断言锚点暴露实例（scada `__flux_scada_<cid>` 先例的 id 化变体——cid 为 per-runtime 计数器，多 SchemaRenderer 并存时可能重复，故以 schema id 为键）。
 
@@ -75,7 +75,6 @@ interface PivotTableSchema extends BaseSchema {
     field: string; // 必填；映射 indicatorKey + aggregationRules.field
     title?: string; // 缺省 = field
     aggregationType?: 'SUM' | 'AVG' | 'COUNT' | 'MIN' | 'MAX' | 'NONE'; // 缺省 SUM
-    format?: string;
     cellType?: 'text' | 'progressbar' | 'sparkline'; // 缺省 text
   }[];
   dataConfig?: {

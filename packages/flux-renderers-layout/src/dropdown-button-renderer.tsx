@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ActionSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, unwrapPreservedLiteral } from '@nop-chaos/flux-react';
 import {
@@ -53,6 +53,60 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
 
   const [open, setOpen] = useState(false);
 
+  // P1-04: the menu content is rendered through a portal into document.body —
+  // a synchronous close on wrapper mouseleave makes `trigger="hover"` unusable
+  // for mouse users (the pointer can never reach the portal menu before it
+  // unmounts). Close is deferred into a grace window that the portal menu's
+  // own hover cancels; hover mode stays mouse-oriented (touch users should use
+  // the default click trigger — the 150ms window never delays a click-driven
+  // open/close cycle).
+  const HOVER_CLOSE_GRACE_MS = 150;
+  const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelHoverClose = () => {
+    if (hoverCloseTimerRef.current) {
+      clearTimeout(hoverCloseTimerRef.current);
+      hoverCloseTimerRef.current = null;
+    }
+  };
+
+  const scheduleHoverClose = () => {
+    cancelHoverClose();
+    hoverCloseTimerRef.current = setTimeout(() => {
+      hoverCloseTimerRef.current = null;
+      setOpen(false);
+    }, HOVER_CLOSE_GRACE_MS);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverCloseTimerRef.current) {
+        clearTimeout(hoverCloseTimerRef.current);
+      }
+    };
+  }, []);
+
+  const hoverOpenHandlers =
+    trigger === 'hover' && !disabled
+      ? {
+          onMouseEnter: () => {
+            cancelHoverClose();
+            setOpen(true);
+          },
+          onMouseLeave: scheduleHoverClose,
+        }
+      : {};
+  // The portal menu lives outside the wrapper subtree: its own hover must
+  // cancel the pending close (pointer traveling trigger → menu) and re-arm it
+  // when the pointer leaves the menu.
+  const hoverContentHandlers =
+    trigger === 'hover' && !disabled
+      ? {
+          onMouseEnter: cancelHoverClose,
+          onMouseLeave: scheduleHoverClose,
+        }
+      : {};
+
   const handleItemClick = (item: ResolvedItem, index: number, itemDisabled: boolean) => {
     if (itemDisabled) return;
     const action = resolveItemAction(item);
@@ -62,6 +116,7 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
         evaluationBindings: { item, index },
       });
     }
+    cancelHoverClose();
     setOpen(false);
   };
 
@@ -71,9 +126,7 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="dropdown-button-root"
-      {...(trigger === 'hover' && !disabled
-        ? { onMouseEnter: () => setOpen(true), onMouseLeave: () => setOpen(false) }
-        : {})}
+      {...hoverOpenHandlers}
     >
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
@@ -101,7 +154,7 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
             </Button>
           }
         />
-        <DropdownMenuContent>
+        <DropdownMenuContent {...hoverContentHandlers}>
           {rawItems.map((item, index) => {
             const key =
               item.key !== undefined && item.key !== null && item.key !== ''

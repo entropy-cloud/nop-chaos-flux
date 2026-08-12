@@ -42,9 +42,6 @@ export function useBarcodeDetect(
     abortRef.current = controller;
     const signal = controller.signal;
 
-    const video = getVideoRef.current();
-    if (!video) return;
-
     if (!detectorRef.current) {
       detectorRef.current = createBarcodeDetector(optionsRef.current?.formats);
     }

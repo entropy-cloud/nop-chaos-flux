@@ -16,7 +16,6 @@ export interface PivotIndicatorSchema extends SchemaObject {
   field: string;
   title?: string;
   aggregationType?: PivotAggregationType;
-  format?: string;
   cellType?: PivotCellType;
 }
 

@@ -90,6 +90,12 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           ? schemaProps.defaultValue
           : 0;
     if (typeof initial === 'number') {
+      // P2-09: numeric values key-match first (a step may declare a numeric
+      // key); only fall back to 0-based index clamping when no key matches.
+      const keyMatch = findStepIndexByKey(steps, initial);
+      if (keyMatch >= 0) {
+        return { currentStepIndex: keyMatch };
+      }
       return { currentStepIndex: Math.max(0, Math.min(initial, Math.max(0, stepCount - 1))) };
     }
     const found = findStepIndexByKey(steps, initial);
@@ -265,6 +271,10 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
     targetIndex: number,
     options?: { skipLinearGate?: boolean },
   ) => {
+    // P1-03: navigation is locked while a step commit is in flight — the
+    // commit continuation must not race against a step change (stale closure
+    // navigation + deceptive wizard:change/complete/step-error payloads).
+    if (lifecycle.committing) return;
     if (targetIndex < 0 || targetIndex >= stepCount) return;
     if (targetIndex === currentStepIndex) return;
     const skipLinearGate = options?.skipLinearGate === true;
@@ -300,17 +310,8 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
     });
   };
 
-  const goNext = (): Promise<void> => {
-    if (!canGoNext) return Promise.resolve();
-    for (let i = currentStepIndex + 1; i < stepCount; i += 1) {
-      if (computeCanGoTo(steps, i, linear, allowStepJump, furthestReached)) {
-        return goToStep(i);
-      }
-    }
-    return Promise.resolve();
-  };
-
   const goPrev = (): Promise<void> => {
+    if (lifecycle.committing) return Promise.resolve();
     if (!canGoPrev) return Promise.resolve();
     for (let i = currentStepIndex - 1; i >= 0; i -= 1) {
       if (isStepVisible(steps[i]) && !isStepDisabled(steps[i])) {
@@ -324,6 +325,15 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
 
   const commitStep = async () => {
     if (lifecycle.committing) return;
+
+    // P1-03: freeze the step being committed BEFORE any await — the
+    // continuation below must reason about the step that was current when the
+    // commit started. Navigation is locked during the commit, so the snapshot
+    // equals the live values; it also removes the stale-closure hazard if a
+    // future change ever allows interaction mid-commit.
+    const committedStepIndex = currentStepIndex;
+    const committedStepKey = currentStepKey;
+    const committedIsLastStep = isLastStep;
 
     // Enter committing state — lifecycle layer ONLY, interaction state untouched.
     setLifecycle({
@@ -354,8 +364,8 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
             });
             const stepErrorPayload = {
               type: 'wizard:step-error',
-              currentStepKey,
-              currentStepIndex,
+              currentStepKey: committedStepKey,
+              currentStepIndex: committedStepIndex,
               reason: 'validation-failed',
             };
             void props.events.onStepError?.(stepErrorPayload, {
@@ -371,8 +381,8 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       // ─── User-defined commit action ───
       const commitPayload = {
         type: 'wizard:step-commit',
-        currentStepKey,
-        currentStepIndex,
+        currentStepKey: committedStepKey,
+        currentStepIndex: committedStepIndex,
       };
       const result = await props.events.onStepCommit?.(
         commitPayload,
@@ -394,8 +404,8 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
         });
         const stepErrorPayload = {
           type: 'wizard:step-error',
-          currentStepKey,
-          currentStepIndex,
+          currentStepKey: committedStepKey,
+          currentStepIndex: committedStepIndex,
           reason: 'commit-failed',
         };
         void props.events.onStepError?.(stepErrorPayload, {
@@ -413,11 +423,11 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
         stepError: undefined,
       });
 
-      if (isLastStep) {
+      if (committedIsLastStep) {
         const completePayload = {
           type: 'wizard:complete',
-          currentStepKey,
-          currentStepIndex,
+          currentStepKey: committedStepKey,
+          currentStepIndex: committedStepIndex,
         };
         void props.events.onComplete?.(completePayload, {
           event: completePayload,
@@ -427,9 +437,16 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
         return;
       }
 
-      // Advance to next step — interaction layer mutation (awaited so the
-      // beforeLeave/beforeEnter transition guards gate advancement too).
-      await goNext();
+      // Advance to the next step AFTER the committed one — resolved from the
+      // frozen index (P1-03: never from a stale closure's currentStepIndex).
+      // Awaiting keeps the beforeLeave/beforeEnter transition guards gating
+      // the advancement.
+      for (let i = committedStepIndex + 1; i < stepCount; i += 1) {
+        if (computeCanGoTo(steps, i, linear, allowStepJump, furthestReached)) {
+          await goToStep(i);
+          return;
+        }
+      }
     } catch (error) {
       setLifecycle({
         committing: false,
@@ -439,8 +456,8 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       });
       const stepErrorPayload = {
         type: 'wizard:step-error',
-        currentStepKey,
-        currentStepIndex,
+        currentStepKey: committedStepKey,
+        currentStepIndex: committedStepIndex,
         reason: 'commit-threw',
         error,
       };
@@ -686,9 +703,11 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           role="alert"
           className="mt-3 text-sm text-destructive"
         >
-          {lifecycle.lastCommitStatus === 'validationError'
-            ? t('flux.wizard.validationFailed')
-            : t('flux.wizard.commitFailed')}
+          {/* P2-10: render the real stepError message; generic i18n only when empty */}
+          {lifecycle.stepError ||
+            (lifecycle.lastCommitStatus === 'validationError'
+              ? t('flux.wizard.validationFailed')
+              : t('flux.wizard.commitFailed'))}
         </div>
       )}
     </div>

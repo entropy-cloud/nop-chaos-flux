@@ -36,7 +36,9 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
 
   const { value, handlers, presentation } = useFormFieldFromProps(props);
 
-  const storedValue = typeof value === 'string' ? value : undefined;
+  // P1-05: the value path resolves relative expressions too (value:'today'
+  // initializes to today); non-relative strings pass through unchanged.
+  const storedValue = resolveRelativeDate(typeof value === 'string' ? value : undefined);
   const errorId = name ? `${name}-error` : undefined;
 
   const minDate = toCalendarDate(

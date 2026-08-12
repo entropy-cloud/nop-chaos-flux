@@ -31,7 +31,3 @@ export function checkCameraAvailability(): Promise<CameraAvailabilityResult> {
       return cachedAvailability;
     });
 }
-
-export function clearCameraAvailabilityCache(): void {
-  cachedAvailability = null;
-}

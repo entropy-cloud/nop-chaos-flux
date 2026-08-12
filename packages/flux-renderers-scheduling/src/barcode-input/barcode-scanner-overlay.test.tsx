@@ -8,10 +8,12 @@ const mockUseBarcodeDetect = vi.hoisted(() => vi.fn<any>(() => ({
   error: null,
 })));
 
+const mockCameraState = vi.hoisted(() => ({ isActive: false }));
+
 vi.mock('./hooks/use-barcode-camera.js', () => ({
   useBarcodeCamera: () => ({
     videoRef: { current: null },
-    isActive: false,
+    isActive: mockCameraState.isActive,
     error: null,
     start: vi.fn(),
     stop: vi.fn(),
@@ -132,6 +134,42 @@ describe('BarcodeScannerOverlay', () => {
     const overlay = document.querySelector('[data-slot="barcode-scanner-overlay"]');
     expect(overlay).toBeTruthy();
     expect(overlay?.parentElement).toBe(document.body);
+  });
+
+  it('closed-mount → open transition wires detect enabled on the same hook instance (P0-01 main flow)', () => {
+    mockUseBarcodeDetect.mockReturnValue({ result: null, isScanning: false, error: null });
+
+    // The overlay is mounted unconditionally (closed state): the detect hook
+    // must be wired while closed — P0-01 regression: this mount chain used to
+    // kill the polling loop entirely because the video was null.
+    const { rerender } = render(
+      <BarcodeScannerOverlay
+        open={false}
+        onClose={vi.fn()}
+        onScan={vi.fn()}
+      />,
+    );
+    expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeNull();
+    expect(mockUseBarcodeDetect).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.objectContaining({ enabled: false }),
+    );
+
+    // Open: the same hook instance flips enabled on — the poll loop that was
+    // established at closed-mount must now drive detection.
+    mockCameraState.isActive = true;
+    rerender(
+      <BarcodeScannerOverlay
+        open={true}
+        onClose={vi.fn()}
+        onScan={vi.fn()}
+      />,
+    );
+    expect(document.querySelector('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+    expect(mockUseBarcodeDetect).toHaveBeenLastCalledWith(
+      expect.any(Function),
+      expect.objectContaining({ enabled: true }),
+    );
   });
 
   describe('Phase 2 — autoSubmit', () => {

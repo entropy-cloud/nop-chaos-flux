@@ -192,7 +192,6 @@ export const pivotRendererDefinitions: RendererDefinition[] = [
                   { kind: 'literal', value: 'NONE' },
                 ],
               },
-              format: { kind: 'string' },
               cellType: {
                 kind: 'union',
                 anyOf: [
@@ -202,11 +201,11 @@ export const pivotRendererDefinitions: RendererDefinition[] = [
                 ],
               },
             },
-            optional: ['title', 'aggregationType', 'format', 'cellType'],
+            optional: ['title', 'aggregationType', 'cellType'],
           },
         },
         displayName: 'Indicators',
-        description: '指标（值列）：field + 聚合类型 + 可选格式/cellType。',
+        description: '指标（值列）：field + 聚合类型 + cellType。',
         editorType: 'array',
       },
       dataConfig: {

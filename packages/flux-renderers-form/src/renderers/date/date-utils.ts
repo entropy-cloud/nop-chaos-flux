@@ -180,6 +180,17 @@ export function parseDate(
 
   const match = new RegExp(regex).exec(str);
   if (!match) {
+    // P1-05: relative-date expressions (`now`/`today`/`now±Nd`/`today±Nd`)
+    // resolve to ISO-8601 strings (see resolveRelativeDate) that never match
+    // the valueFormat-anchored regex. Accept a well-formed ISO instant as a
+    // fallback so `minDate:'now'` / `value:'today'` constraints are not
+    // silently dropped downstream.
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/.test(str)) {
+      const isoDate = new Date(str);
+      if (!Number.isNaN(isoDate.getTime())) {
+        return isoDate;
+      }
+    }
     return undefined;
   }
 

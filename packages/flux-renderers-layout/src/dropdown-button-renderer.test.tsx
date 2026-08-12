@@ -182,6 +182,55 @@ describe('DropdownButtonRenderer (W3b — menu-style action trigger)', () => {
     expect(dropdownTrigger().getAttribute('data-trigger')).toBe('hover');
   });
 
+  it('P1-04: hover menu stays open while the pointer travels from the trigger into the portal menu', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/dropdown-button-hover-travel"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dropdown-button',
+              label: 'Hover Me',
+              trigger: 'hover',
+              items: [{ label: 'Edit' }, { label: 'Delete' }],
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const wrapper = document.querySelector('[data-slot="dropdown-button-root"]') as HTMLElement;
+    const trigger = dropdownTrigger();
+    expect(trigger.getAttribute('data-trigger')).toBe('hover');
+
+    // Enter the trigger → menu opens (real DropdownMenu + portal, not stubbed).
+    fireEvent.mouseEnter(wrapper);
+    await waitFor(() => expect(screen.getByText('Edit')).toBeTruthy());
+
+    // Leave the trigger: the menu must NOT close synchronously — the pointer
+    // needs a grace window to travel into the portaled menu (P1-04 regression:
+    // a synchronous close makes hover unusable for mouse users).
+    fireEvent.mouseLeave(wrapper);
+    await new Promise((r) => setTimeout(r, 60));
+    const content = document.querySelector('[data-slot="dropdown-menu-content"]');
+    expect(content).toBeTruthy();
+
+    // Pointer reaches the portal menu within the grace window → close cancelled.
+    fireEvent.mouseEnter(content as HTMLElement);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.querySelector('[data-slot="dropdown-menu-content"]')).toBeTruthy();
+
+    // Leaving the menu (with no re-entry) closes it after the grace window.
+    fireEvent.mouseLeave(content as HTMLElement);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.querySelector('[data-slot="dropdown-menu-content"]')).toBeNull();
+  });
+
   it('unwrap chain: dispatches envelope-form item action (compiler-preserved literal)', async () => {
     const SchemaRenderer = createLayoutSchemaRenderer();
     render(

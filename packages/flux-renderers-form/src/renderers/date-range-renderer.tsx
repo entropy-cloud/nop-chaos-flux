@@ -105,7 +105,17 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
 
   const { value, handlers, presentation } = useFormFieldFromProps(props);
 
-  const storedValue = typeof value === 'string' ? value : undefined;
+  // P1-05: the value path resolves relative expressions on EACH range end
+  // (value:'today,today' initializes to today); non-relative ends pass through
+  // unchanged.
+  const storedValue = (() => {
+    const raw = typeof value === 'string' ? value : undefined;
+    if (raw === undefined || raw === '') {
+      return raw;
+    }
+    const parts = raw.split(delimiter);
+    return joinDateRange(resolveRelativeDate(parts[0]), resolveRelativeDate(parts[1]), delimiter);
+  })();
   const errorId = name ? `${name}-error` : undefined;
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);

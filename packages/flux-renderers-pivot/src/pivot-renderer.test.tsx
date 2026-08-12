@@ -266,6 +266,28 @@ describe('PivotTableRenderer - loading 态', () => {
     expect(pivotMockInstances).toHaveLength(0);
     expect(document.querySelector('[data-slot="pivot-loading"]')).toBeTruthy();
   });
+
+  it('loading=true → false 往返：旧实例释放、新 canvas div 绑定新实例（P1-02）', () => {
+    const { rerender } = render(<PivotTableRenderer {...makeProps()} />);
+    expect(pivotMockInstances).toHaveLength(1);
+    const first = pivotMockInstances[0];
+
+    // loading=true：canvas div 被 loading 占位替换；悬挂在已卸载节点上的旧实例必须被释放
+    rerender(<PivotTableRenderer {...makeProps({ props: { loading: true } })} />);
+    expect(document.querySelector('[data-slot="pivot-loading"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="pivot-canvas"]')).toBeNull();
+    expect(first.release).toHaveBeenCalled();
+    expect(exposedInstance()).toBeUndefined();
+
+    // loading 翻回 false（同 data）：新 canvas div 挂载，实例 effect 重跑 → 新实例绑定新节点
+    rerender(<PivotTableRenderer {...makeProps()} />);
+    expect(pivotMockInstances).toHaveLength(2);
+    const second = pivotMockInstances[1];
+    expect(exposedInstance()).toBe(second);
+    expect(document.querySelector('[data-slot="pivot-canvas"]')).toBeTruthy();
+    expect(second.container).toBe(document.querySelector('[data-slot="pivot-canvas"]'));
+    expect(first.release).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('PivotTableRenderer - 事件桥接', () => {

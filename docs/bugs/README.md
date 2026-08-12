@@ -179,3 +179,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/158-branching-fallback-and-format-normalization-contract-fix.md`
 - `docs/bugs/159-renderer-ui-citations-empty-timestamp-crash-empty-classname-region-name-fix.md`
 - `docs/bugs/160-clipboard-false-success-action-scope-namespace-takeover-fix.md`
+- `docs/bugs/161-barcode-input-scan-poll-dead-on-closed-mount-fix.md`

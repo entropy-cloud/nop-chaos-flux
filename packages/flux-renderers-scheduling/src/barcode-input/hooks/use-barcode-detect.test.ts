@@ -106,6 +106,58 @@ describe('useBarcodeDetect', () => {
     expect(result.current.isScanning).toBe(false);
   });
 
+  describe('P0-01 closed-mount → open transition (main scan flow)', () => {
+    function makeReadyVideo(): HTMLVideoElement {
+      const video = document.createElement('video');
+      Object.defineProperty(video, 'readyState', { value: 2, configurable: true });
+      Object.defineProperty(video, 'videoWidth', { value: 640, configurable: true });
+      return video;
+    }
+
+    beforeEach(() => {
+      vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+        drawImage: vi.fn(),
+        clearRect: vi.fn(),
+        save: vi.fn(),
+        restore: vi.fn(),
+        translate: vi.fn(),
+        rotate: vi.fn(),
+      } as unknown as CanvasRenderingContext2D);
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('mounts closed (video null) → video appears → detection is produced', async () => {
+      let video: HTMLVideoElement | null = null;
+      const getVideoElement = () => video;
+      mockDecode.result = { barcode: 'OPENED', format: 'code_128' };
+
+      const { result } = renderHook(
+        () => useBarcodeDetect(getVideoElement, { enabled: true, interval: 300 }),
+      );
+
+      // Mounted closed: video is null. The poll loop must still be scheduled
+      // (it retries while the video is missing) — P0-01 regression: the old
+      // early-return killed polling entirely, so nothing below would ever run.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(300);
+      });
+      expect(result.current.result).toBeNull();
+      expect(result.current.isScanning).toBe(false);
+
+      // "Open": the video element appears and is ready — the running poll
+      // picks it up and produces a detection.
+      video = makeReadyVideo();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(300);
+      });
+      expect(result.current.result?.barcode).toBe('OPENED');
+      expect(result.current.isScanning).toBe(true);
+    });
+  });
+
   describe('2-13 dedupe adjudication', () => {
     function makeReadyVideo(): HTMLVideoElement {
       const video = document.createElement('video');
