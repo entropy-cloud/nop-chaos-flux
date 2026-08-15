@@ -5,7 +5,7 @@
 
 ## Results Summary
 
-**Total pages tested**: 8 / 7
+**Total pages tested**: 7 / 7
 
 | Page              | console.errors | pageerrors | debugger errors | debugger failures | Passed |
 | ----------------- | -------------- | ---------- | --------------- | ----------------- | ------ |
