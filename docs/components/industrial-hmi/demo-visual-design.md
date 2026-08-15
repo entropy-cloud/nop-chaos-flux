@@ -1,9 +1,9 @@
 # SCADA Demo 视觉重设计 demo-visual-design.md
 
-> 日期：2026-08-06
-> 状态：draft（待确认）
-> 上游：用户反馈「画面画乱」+ I17.1 坐标 8px 对齐未解决视觉问题（`docs/plans/2026-08-05-2129-2` 只做了坐标微调）
-> 关联：`apps/playground/src/pages/scada-demo.tsx`（900×480 画布，~20 symbols）、`docs/components/industrial-hmi/design-symbols.md`（图元库）、register-builtin.ts（24 内置图元）
+> 日期：2026-08-06（v1）/ 2026-08-15（v2 增量，见 §八）
+> 状态：v1 落地（I13.1）；v2 已落地（2026-08-15 商业级视觉刷新）
+> 上游：用户反馈「画面画乱」+ I17.1 坐标 8px 对齐未解决视觉问题（`docs/plans/2026-08-05-2129-2` 只做了坐标微调）；v2 上游为用户反馈「达到真实商业水准」
+> 关联：`apps/playground/src/pages/scada-demo.tsx`（960×520 画布，~40 symbols）、`docs/components/industrial-hmi/design-symbols.md`（图元库）、register-builtin.ts（24 内置图元）、`packages/flux-renderers-industrial/src/symbols/visuals.ts`（v2 视觉 token）
 
 ## 一、问题诊断
 
@@ -172,3 +172,30 @@
 5. 无大块死空间（任意 100×100 区域至少有一个图元或标签）
 6. 标题栏深色底白字，视觉突出
 7. 所有 testid/bindings/events 功能不变（e2e 全绿）
+
+## 八、v2 增量（2026-08-15 商业级视觉刷新）
+
+用户验收 v1 为「工程示意级」，要求达到商业组态软件（WinCC/Ignition）视觉水准。v2 在 **§五迁移约束完全保持**（testid/bindings/events/variables/states/custom/全部 symbol 坐标尺寸零改动）的前提下做三层刷新：
+
+### 8.1 图元视觉 v2（包级，`symbols/visuals.ts` + 各 symbol build 增强）
+
+- **共享视觉模块** `packages/flux-renderers-industrial/src/symbols/visuals.ts`：leafer 线性渐变 paint 构造器（`linearPaint`，from/to 单位坐标）+ 工业 token（`INDUSTRIAL_TOKENS`：表盘暗面色、钢色三阶、液柱蓝、暖橙温柱等）+ 仪表极坐标工具（`polar`/`arcPath`，0°=正上、顺时针为正，与 bindings.rotation scale 换算同口径）。
+- **gauge**：新表盘族 `symbols/instrument/dial.ts`（createDial/relayoutDial，build 与 resize hook 共用）——暗色渐变表盘 + 三段量程色带（绿 0-60% / 黄 60-85% / 红 85-100%，可经 `custom.zones` 覆盖）+ 5 主 10 次刻度 + 刻度值（min..max 均分）+ 玻璃高光 + 双层 hub；指针带尾配重段（points 两段）+ 投影。**子节点 z 序锁定**：`needle` 保持命名 `needle`（单测/e2e 断言 tag=Line），新增装饰子节点全部命名 `dial-*`/`hub-*`。
+- **level/thermometer**：液柱改双端渐变（水面高光感：顶亮底深）；level 加玻璃高光条 + 右侧 4 档刻度线；thermometer 加泡部高光点 + 右侧刻度线。液柱锚定语义（level=罐底 reserve 0 / thermo=泡顶 BULB_RESERVE -24）与 `liquid`/`bar` extent 路由**不变**（单测锁定）。
+- **pump**：蜗壳环（volute-ring 白描边）+ 底部双安装脚 + 左吸入/顶排出短管 + hub 高光；impeller 仍为命名 `impeller` 的 Ellipse（rotate 动画面）。
+- **motor**：左右端盖（endbell 渐变）+ 顶部接线盒 + 右侧轴伸 + hub；rotor 仍为命名 `rotor` 的 Ellipse。
+- **fan**：防护罩圈 + 十字护网（guard-ring/hbar/vbar）+ 底部支架 + hub；body 改 opacity 0.35 半透明面板（状态色作背景色调）；blades 组仍为命名 `blades`。
+- **valve**：左右法兰 + 阀杆 + 阀盖 + 橙色手轮（闸阀语义）；core 开度语义（openRatio→rotation）不变。
+- **indicator**：lamp 加粗深色描边（灯圈效果）；**z-order 不变量保持** children `[housing, body(lamp), lamp-shine]`（回归测试锁定 housing#455a64 平色 + body 在 [1]）。
+- **button**：cap 改金属渐变 + 投影 + 高光条。
+- **约束纪律**：渐变 paint 只落 build() 内部装饰节点；props/defaults 层 fill 保持 string（schema/serialization 契约不变）；BODY_FIELDS 路由仍指向 body 命名子节点（状态色可见性不变，1449 单测全绿）。
+
+### 8.2 demo 主题 v2（页面级，`scada-demo.tsx`）
+
+- 暗色控制室工况屏主题（页面内 `theme` 常量）：画布底 `#0e1729` + 网格 `#1b2b45`；标题栏 `#0a1322` + 3px 青色 accent 线（`#2dd4bf`）；区卡片改暗色（fill `#152238` / stroke `#2a3b58`）；管道 `#41618c` strokeWidth 7（v1 为 4，粗管更接近商业管线图）；文字层级 title `#f1f6fd` / zone `#8098b8` / label `#c5d3e8` / tip `#64789a`；level/thermometer 罐体改暗色透明感（fill `#0f1c31`）配合液柱渐变。
+- 页面控制条：13 个裸按钮改为 **6 组工位分组**（电机/泵/阀/风机/报警/视口），label 标题 + `variant`（outline/destructive/secondary）+ `size: sm` 语义化按钮；全部 testid 原样保留。
+
+### 8.3 v2 验收
+
+- `pnpm --filter @nop-chaos/flux-renderers-industrial test` 1449/1449 全绿（含状态色路由、extent/resize 语义、indicator z-order、valve core 锚定公式等全部锁定断言）。
+- `tests/e2e/scada-demo.spec.ts` + `scada-pointer-events-regression.spec.ts` 16/16 全绿（真实 leafer 环境，含 TE-3 像素探测与 A1 中心点几何断言）。

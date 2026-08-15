@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
-import type { ExecutableApiRequest, RendererEnv } from '@nop-chaos/flux-core';
+import type { ExecutableApiRequest, RendererEnv, SchemaValue } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
@@ -10,6 +10,8 @@ import { Button } from '@nop-chaos/ui';
 
 // I13.1 scada-demo 正式演示页（取代 I11 临时验证页，三链路场景并入本页）：
 // 工艺流程组态画面（设备图元 + 管道 + 仪表）+ 点表模拟数据定时刷新 + 点击设备弹出详情。
+// 2026-08-15 商业级视觉刷新：暗色控制室工况屏主题（深海军蓝底 + 钢青管路 + 表盘刻度），
+// 控制按钮按工位分组（电机/泵阀/风机/报警/视口）。
 //
 // 点表刷新双轨演示（I13 plan Phase 1 Decision 裁定）：
 // - flux 轨（定时器）：tankLevel/flow/temp/flowOn 声明为 `source: 'flux'`，页面组件 setInterval
@@ -18,6 +20,27 @@ import { Button } from '@nop-chaos/ui';
 // - static 轨（句柄）：motorState/pumpState/valveOpen/fanState/alarm 声明为 `source: 'static'`，
 //   由下方 schema 按钮经 `component:setPointValue` 派发（I10.2 组件句柄轨，组态内点表自包含）。
 const initialSim = { tankLevel: 55, flow: 48, temp: 50, flowOn: 1 };
+
+// 暗色工况屏主题 token（与 symbols/visuals.ts 视觉语言同族）。
+const theme = {
+  bg: '#0e1729',
+  grid: '#1b2b45',
+  titleBar: '#0a1322',
+  accent: '#2dd4bf',
+  zoneFill: '#152238',
+  zoneStroke: '#2a3b58',
+  pipe: '#41618c',
+  arrow: '#8aa3c4',
+  textTitle: '#f1f6fd',
+  textZone: '#8098b8',
+  textLabel: '#c5d3e8',
+  textTip: '#64789a',
+  gaugeFace: '#9fb2cf',
+  gaugeStroke: '#22304a',
+  tankFill: '#0f1c31',
+  tankStroke: '#3d5a80',
+  textColor: '#eaf1fb',
+};
 
 const schema = {
   type: 'page',
@@ -30,21 +53,33 @@ const schema = {
         {
           type: 'flex',
           direction: 'row',
-          className: 'flex-wrap items-center gap-2',
+          className: 'flex-wrap items-start gap-x-5 gap-y-3',
           body: [
-            { type: 'button', label: '电机启动', testid: 'scada-btn-motor-start', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'motorState', value: 1 } } },
-            { type: 'button', label: '电机停止', testid: 'scada-btn-motor-stop', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'motorState', value: 0 } } },
-            { type: 'button', label: '电机故障', testid: 'scada-btn-motor-fault', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'motorState', value: 2 } } },
-            { type: 'button', label: '泵启动', testid: 'scada-btn-pump-start', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'pumpState', value: 1 } } },
-            { type: 'button', label: '泵停止', testid: 'scada-btn-pump-stop', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'pumpState', value: 0 } } },
-            { type: 'button', label: '阀门开', testid: 'scada-btn-valve-open', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'valveOpen', value: 1 } } },
-            { type: 'button', label: '阀门关', testid: 'scada-btn-valve-close', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'valveOpen', value: 0 } } },
-            { type: 'button', label: '风机启动', testid: 'scada-btn-fan-start', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'fanState', value: 1 } } },
-            { type: 'button', label: '风机停止', testid: 'scada-btn-fan-stop', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'fanState', value: 0 } } },
-            { type: 'button', label: '报警触发', testid: 'scada-btn-alarm-on', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'alarm', value: 1 } } },
-            { type: 'button', label: '报警复位', testid: 'scada-btn-alarm-off', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'alarm', value: 0 } } },
-            { type: 'button', label: 'Fit', testid: 'scada-btn-fit', onClick: { action: 'component:fit', componentId: 'scada-demo-canvas' } },
-            { type: 'button', label: 'Center', testid: 'scada-btn-center', onClick: { action: 'component:center', componentId: 'scada-demo-canvas' } },
+            controlGroup('电机 M-101', [
+              { type: 'button', label: '启动', variant: 'outline', size: 'sm', testid: 'scada-btn-motor-start', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'motorState', value: 1 } } },
+              { type: 'button', label: '停止', variant: 'outline', size: 'sm', testid: 'scada-btn-motor-stop', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'motorState', value: 0 } } },
+              { type: 'button', label: '故障', variant: 'destructive', size: 'sm', testid: 'scada-btn-motor-fault', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'motorState', value: 2 } } },
+            ]),
+            controlGroup('泵 P-101', [
+              { type: 'button', label: '启动', variant: 'outline', size: 'sm', testid: 'scada-btn-pump-start', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'pumpState', value: 1 } } },
+              { type: 'button', label: '停止', variant: 'outline', size: 'sm', testid: 'scada-btn-pump-stop', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'pumpState', value: 0 } } },
+            ]),
+            controlGroup('阀 V-101', [
+              { type: 'button', label: '开', variant: 'outline', size: 'sm', testid: 'scada-btn-valve-open', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'valveOpen', value: 1 } } },
+              { type: 'button', label: '关', variant: 'outline', size: 'sm', testid: 'scada-btn-valve-close', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'valveOpen', value: 0 } } },
+            ]),
+            controlGroup('风机 F-101', [
+              { type: 'button', label: '启动', variant: 'outline', size: 'sm', testid: 'scada-btn-fan-start', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'fanState', value: 1 } } },
+              { type: 'button', label: '停止', variant: 'outline', size: 'sm', testid: 'scada-btn-fan-stop', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'fanState', value: 0 } } },
+            ]),
+            controlGroup('报警', [
+              { type: 'button', label: '触发', variant: 'destructive', size: 'sm', testid: 'scada-btn-alarm-on', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'alarm', value: 1 } } },
+              { type: 'button', label: '复位', variant: 'outline', size: 'sm', testid: 'scada-btn-alarm-off', onClick: { action: 'component:setPointValue', componentId: 'scada-demo-canvas', args: { pointId: 'alarm', value: 0 } } },
+            ]),
+            controlGroup('视口', [
+              { type: 'button', label: 'Fit', variant: 'secondary', size: 'sm', testid: 'scada-btn-fit', onClick: { action: 'component:fit', componentId: 'scada-demo-canvas' } },
+              { type: 'button', label: 'Center', variant: 'secondary', size: 'sm', testid: 'scada-btn-center', onClick: { action: 'component:center', componentId: 'scada-demo-canvas' } },
+            ]),
           ],
         },
         {
@@ -55,7 +90,7 @@ const schema = {
           viewport: { fit: 'contain' },
           config: {
             version: 1,
-            background: { color: '#eef2f6', grid: { size: 24, color: '#dae3ec' } },
+            background: { color: theme.bg, grid: { size: 24, color: theme.grid } },
             variables: [
               { id: 'tankLevel', source: 'flux', flux: 'tankLevel' },
               { id: 'flow', source: 'flux', flux: 'flow' },
@@ -68,11 +103,12 @@ const schema = {
               { id: 'alarm', source: 'static', value: 0 },
             ],
             symbols: [
-              { id: 'title-bar', type: 'scada-round-rect', x: 0, y: 0, width: 960, height: 48, fill: '#1a2332' },
-              { id: 'zone-1-bg', type: 'scada-round-rect', x: 16, y: 64, width: 240, height: 384, fill: '#ffffff', stroke: '#cfd8dc', strokeWidth: 1 },
-              { id: 'zone-2-bg', type: 'scada-round-rect', x: 272, y: 64, width: 284, height: 384, fill: '#ffffff', stroke: '#cfd8dc', strokeWidth: 1 },
-              { id: 'zone-3-bg', type: 'scada-round-rect', x: 572, y: 64, width: 372, height: 384, fill: '#ffffff', stroke: '#cfd8dc', strokeWidth: 1 },
-              { id: 'pipe-in-1', type: 'scada-pipe', x: 0, y: 280, width: 104, height: 0 },
+              { id: 'title-bar', type: 'scada-round-rect', x: 0, y: 0, width: 960, height: 48, cornerRadius: 0, fill: theme.titleBar },
+              { id: 'title-accent', type: 'scada-round-rect', x: 0, y: 45, width: 960, height: 3, cornerRadius: 0, fill: theme.accent },
+              { id: 'zone-1-bg', type: 'scada-round-rect', x: 16, y: 64, width: 240, height: 384, fill: theme.zoneFill, stroke: theme.zoneStroke, strokeWidth: 1 },
+              { id: 'zone-2-bg', type: 'scada-round-rect', x: 272, y: 64, width: 284, height: 384, fill: theme.zoneFill, stroke: theme.zoneStroke, strokeWidth: 1 },
+              { id: 'zone-3-bg', type: 'scada-round-rect', x: 572, y: 64, width: 372, height: 384, fill: theme.zoneFill, stroke: theme.zoneStroke, strokeWidth: 1 },
+              { id: 'pipe-in-1', type: 'scada-pipe', x: 0, y: 280, width: 104, height: 0, fill: theme.pipe, stroke: theme.pipe, strokeWidth: 7 },
               {
                 id: 'level-1',
                 type: 'scada-instrument-level',
@@ -80,6 +116,9 @@ const schema = {
                 y: 192,
                 width: 64,
                 height: 140,
+                fill: theme.tankFill,
+                stroke: theme.tankStroke,
+                textColor: theme.textColor,
                 custom: { min: 0, max: 100, unit: '%' },
                 bindings: { height: { point: 'tankLevel', scale: { k: 1.4 } }, text: { point: 'tankLevel', format: '%d %%' } },
                 events: [
@@ -95,7 +134,7 @@ const schema = {
                   },
                 ],
               },
-              { id: 'pipe-level-pump', type: 'scada-pipe', x: 168, y: 280, width: 152, height: 0 },
+              { id: 'pipe-level-pump', type: 'scada-pipe', x: 168, y: 280, width: 152, height: 0, fill: theme.pipe, stroke: theme.pipe, strokeWidth: 7 },
               {
                 id: 'pump-1',
                 type: 'scada-device-pump',
@@ -118,7 +157,7 @@ const schema = {
                   },
                 ],
               },
-              { id: 'pipe-pump-valve', type: 'scada-pipe', x: 380, y: 280, width: 60, height: 0 },
+              { id: 'pipe-pump-valve', type: 'scada-pipe', x: 380, y: 280, width: 60, height: 0, fill: theme.pipe, stroke: theme.pipe, strokeWidth: 7 },
               {
                 id: 'valve-1',
                 type: 'scada-device-valve',
@@ -142,7 +181,7 @@ const schema = {
                   },
                 ],
               },
-              { id: 'pipe-valve-junc', type: 'scada-pipe', x: 500, y: 280, width: 76, height: 0 },
+              { id: 'pipe-valve-junc', type: 'scada-pipe', x: 500, y: 280, width: 76, height: 0, fill: theme.pipe, stroke: theme.pipe, strokeWidth: 7 },
               {
                 id: 'junction-1',
                 type: 'scada-pipe-junction',
@@ -155,7 +194,7 @@ const schema = {
                 bindings: { fill: { point: 'flowOn' } },
                 states: { states: {}, valueMap: { '1': 'run', '0': 'stop' } },
               },
-              { id: 'pipe-junc-gauge', type: 'scada-pipe', x: 656, y: 280, width: 16, height: 0 },
+              { id: 'pipe-junc-gauge', type: 'scada-pipe', x: 656, y: 280, width: 16, height: 0, fill: theme.pipe, stroke: theme.pipe, strokeWidth: 7 },
               {
                 id: 'gauge-1',
                 type: 'scada-instrument-gauge',
@@ -163,6 +202,9 @@ const schema = {
                 y: 200,
                 width: 120,
                 height: 120,
+                fill: theme.gaugeFace,
+                stroke: theme.gaugeStroke,
+                textColor: theme.textColor,
                 custom: { min: 0, max: 100, unit: 'L/min' },
                 bindings: { rotation: { point: 'flow', scale: { k: 2.7, b: -135 } }, text: { point: 'flow', format: '%d L/min' } },
                 events: [
@@ -230,12 +272,15 @@ const schema = {
                 y: 180,
                 width: 40,
                 height: 140,
+                fill: theme.tankFill,
+                stroke: theme.tankStroke,
+                textColor: theme.textColor,
                 bindings: { height: { point: 'temp', scale: { k: 1.2 } }, text: { point: 'temp', format: '%d °C' } },
               },
-              { id: 'arrow-1', type: 'scada-arrow', x: 40, y: 270, width: 24, height: 0, stroke: '#546e7a', strokeWidth: 2 },
-              { id: 'arrow-2', type: 'scada-arrow', x: 232, y: 270, width: 24, height: 0, stroke: '#546e7a', strokeWidth: 2 },
-              { id: 'arrow-3', type: 'scada-arrow', x: 398, y: 270, width: 24, height: 0, stroke: '#546e7a', strokeWidth: 2 },
-              { id: 'arrow-4', type: 'scada-arrow', x: 526, y: 270, width: 24, height: 0, stroke: '#546e7a', strokeWidth: 2 },
+              { id: 'arrow-1', type: 'scada-arrow', x: 40, y: 270, width: 24, height: 0, stroke: theme.arrow, strokeWidth: 2 },
+              { id: 'arrow-2', type: 'scada-arrow', x: 232, y: 270, width: 24, height: 0, stroke: theme.arrow, strokeWidth: 2 },
+              { id: 'arrow-3', type: 'scada-arrow', x: 398, y: 270, width: 24, height: 0, stroke: theme.arrow, strokeWidth: 2 },
+              { id: 'arrow-4', type: 'scada-arrow', x: 526, y: 270, width: 24, height: 0, stroke: theme.arrow, strokeWidth: 2 },
               {
                 id: 'indicator-1',
                 type: 'scada-sensor-control-indicator',
@@ -267,18 +312,18 @@ const schema = {
                 height: 28,
                 events: [{ on: 'click', action: { action: 'ajax', args: { url: '/api/scada-demo/points', method: 'get' } } }],
               },
-              { id: 'text-title', type: 'scada-text', x: 480, y: 14, text: '反应釜工艺流程演示', textSize: 20, textColor: '#ffffff', fontWeight: 'bold', align: 'center' },
-              { id: 'zone-1-label', type: 'scada-text', x: 136, y: 72, text: '储水区', textSize: 13, textColor: '#607d8b', align: 'center' },
-              { id: 'zone-2-label', type: 'scada-text', x: 414, y: 72, text: '泵阀区', textSize: 13, textColor: '#607d8b', align: 'center' },
-              { id: 'zone-3-label', type: 'scada-text', x: 758, y: 72, text: '仪表 / 冷却区', textSize: 13, textColor: '#607d8b', align: 'center' },
-              { id: 'text-motor', type: 'scada-text', x: 136, y: 172, text: '搅拌电机 M-101', textSize: 11, textColor: '#37474f', align: 'center' },
-              { id: 'text-level', type: 'scada-text', x: 136, y: 340, text: '储水罐 LT-101', textSize: 11, textColor: '#37474f', align: 'center' },
-              { id: 'text-pump', type: 'scada-text', x: 350, y: 316, text: '给水泵 P-101', textSize: 11, textColor: '#37474f', align: 'center' },
-              { id: 'text-valve', type: 'scada-text', x: 470, y: 316, text: '调节阀 V-101', textSize: 11, textColor: '#37474f', align: 'center' },
-              { id: 'text-fan', type: 'scada-text', x: 680, y: 172, text: '冷却风机 F-101', textSize: 11, textColor: '#37474f', align: 'center' },
-              { id: 'text-gauge', type: 'scada-text', x: 732, y: 328, text: '流量计 FI-201', textSize: 11, textColor: '#37474f', align: 'center' },
-              { id: 'text-temp', type: 'scada-text', x: 860, y: 328, text: '温度 TE-201', textSize: 11, textColor: '#37474f', align: 'center' },
-              { id: 'text-tip', type: 'scada-text', x: 280, y: 484, text: '单击设备 → 详情；双击电机 → 跳转 flux-basic；单击按钮 → 数据请求', textSize: 11, textColor: '#90a4ae' },
+              { id: 'text-title', type: 'scada-text', x: 480, y: 13, text: '反应釜工艺流程演示', textSize: 20, textColor: theme.textTitle, fontWeight: 'bold', align: 'center' },
+              { id: 'zone-1-label', type: 'scada-text', x: 136, y: 72, text: '储水区', textSize: 13, textColor: theme.textZone, align: 'center' },
+              { id: 'zone-2-label', type: 'scada-text', x: 414, y: 72, text: '泵阀区', textSize: 13, textColor: theme.textZone, align: 'center' },
+              { id: 'zone-3-label', type: 'scada-text', x: 758, y: 72, text: '仪表 / 冷却区', textSize: 13, textColor: theme.textZone, align: 'center' },
+              { id: 'text-motor', type: 'scada-text', x: 136, y: 172, text: '搅拌电机 M-101', textSize: 11, textColor: theme.textLabel, align: 'center' },
+              { id: 'text-level', type: 'scada-text', x: 136, y: 340, text: '储水罐 LT-101', textSize: 11, textColor: theme.textLabel, align: 'center' },
+              { id: 'text-pump', type: 'scada-text', x: 350, y: 316, text: '给水泵 P-101', textSize: 11, textColor: theme.textLabel, align: 'center' },
+              { id: 'text-valve', type: 'scada-text', x: 470, y: 316, text: '调节阀 V-101', textSize: 11, textColor: theme.textLabel, align: 'center' },
+              { id: 'text-fan', type: 'scada-text', x: 680, y: 172, text: '冷却风机 F-101', textSize: 11, textColor: theme.textLabel, align: 'center' },
+              { id: 'text-gauge', type: 'scada-text', x: 732, y: 328, text: '流量计 FI-201', textSize: 11, textColor: theme.textLabel, align: 'center' },
+              { id: 'text-temp', type: 'scada-text', x: 860, y: 328, text: '温度 TE-201', textSize: 11, textColor: theme.textLabel, align: 'center' },
+              { id: 'text-tip', type: 'scada-text', x: 280, y: 484, text: '单击设备 → 详情；双击电机 → 跳转 flux-basic；单击按钮 → 数据请求', textSize: 11, textColor: theme.textTip },
             ],
           },
           loading: { type: 'text', text: 'scada 场景加载中…' },
@@ -300,6 +345,15 @@ const schema = {
     },
   ],
 };
+
+function controlGroup(title: string, buttons: SchemaValue[]) {
+  return {
+    type: 'flex',
+    direction: 'col',
+    className: 'gap-1',
+    body: [{ type: 'text', tag: 'label', text: title }, { type: 'flex', direction: 'row', className: 'flex-wrap gap-1.5', body: buttons }],
+  };
+}
 
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
