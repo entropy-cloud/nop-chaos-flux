@@ -47,7 +47,7 @@ const SCHEMA = {
       },
       beforeMessages: {
         type: 'flex',
-        direction: 'col',
+        direction: 'column',
         className: 'px-4 py-3 gap-3',
         body: [
           {
@@ -67,7 +67,7 @@ const SCHEMA = {
       },
       afterMessages: {
         type: 'flex',
-        direction: 'col',
+        direction: 'column',
         className: 'px-4 py-2 gap-2',
         body: [
           {

@@ -147,7 +147,7 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
       body: [
         {
           type: 'flex',
-          direction: 'col',
+          direction: 'column',
           className: 'gap-3',
           body: [
             {

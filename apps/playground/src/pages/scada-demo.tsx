@@ -44,11 +44,13 @@ const theme = {
 
 const schema = {
   type: 'page',
+  className: 'flex-1 min-h-0 flex flex-col',
+  bodyClassName: 'flex-1 min-h-0',
   body: [
     {
       type: 'flex',
-      direction: 'col',
-      className: 'gap-3',
+      direction: 'column',
+      className: 'gap-3 h-full min-h-0',
       body: [
         {
           type: 'flex',
@@ -87,6 +89,7 @@ const schema = {
           id: 'scada-demo-canvas',
           width: 960,
           height: 520,
+          className: 'flex-1 min-h-0',
           viewport: { fit: 'contain' },
           config: {
             version: 1,
@@ -349,7 +352,7 @@ const schema = {
 function controlGroup(title: string, buttons: SchemaValue[]) {
   return {
     type: 'flex',
-    direction: 'col',
+    direction: 'column',
     className: 'gap-1',
     body: [{ type: 'text', tag: 'label', text: title }, { type: 'flex', direction: 'row', className: 'flex-wrap gap-1.5', body: buttons }],
   };
@@ -408,8 +411,8 @@ export function ScadaDemoPage({ onBack }: ScadaDemoPageProps) {
   }, []);
 
   return (
-    <main className="min-h-screen grid place-items-center p-6">
-      <section className="max-w-[1100px] w-full p-10 rounded-3xl bg-[var(--nop-hero-bg)] border border-[var(--nop-hero-border)] shadow-[var(--nop-hero-shadow)]">
+    <main className="h-screen grid place-items-center p-6">
+      <section className="max-w-[1100px] w-full h-full p-10 rounded-3xl bg-[var(--nop-hero-bg)] border border-[var(--nop-hero-border)] shadow-[var(--nop-hero-shadow)] flex flex-col min-h-0">
         <Button
           variant="outline"
           className="mb-[18px] px-3.5 py-2.5 rounded-full border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] font-sans text-[13px] font-bold cursor-pointer transition-[transform,box-shadow,border-color] duration-160 hover:-translate-y-px hover:shadow-[var(--nop-nav-shadow-active)] hover:border-[var(--nop-nav-hover-border)]"
@@ -426,7 +429,7 @@ export function ScadaDemoPage({ onBack }: ScadaDemoPageProps) {
           定时刷新（flux 桥接轨 + component:setPointValue 句柄轨双演示）；单击设备弹出详情、双击电机跳转、
           按钮图元触发数据请求（I11 三链路并入）。画布支持平移/缩放（滚轮）与 hover 高亮反馈。
         </p>
-        <div className="mt-8">
+        <div className="mt-8 flex-1 min-h-0 flex flex-col">
           <SchemaRenderer
             schemaUrl="playground://pages/scada-demo"
             schema={schema}
