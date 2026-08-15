@@ -14,12 +14,14 @@ import { execFile } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { build } from 'vite';
 
 const execFileAsync = promisify(execFile);
 const isWin = process.platform === 'win32';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HARNESS_DIR = path.join(__dirname, 'flux-bundle-built-dist');
 const REPO_ROOT = path.join(__dirname, '..', '..');
 const DIST_DIR = path.join(REPO_ROOT, 'packages', 'flux-bundle', 'dist');
