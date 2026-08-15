@@ -1,13 +1,13 @@
-const js = require('@eslint/js');
-const react = require('eslint-plugin-react');
-const tseslint = require('typescript-eslint');
-const reactHooks = require('eslint-plugin-react-hooks');
-const reactCompiler = require('eslint-plugin-react-compiler');
-const i18next = require('eslint-plugin-i18next');
-const unicorn = require('eslint-plugin-unicorn').default;
-const jsxAlly = require('eslint-plugin-jsx-a11y');
-const globals = require('globals');
-const eslintConfigPrettier = require('eslint-config-prettier');
+import js from '@eslint/js';
+import react from 'eslint-plugin-react';
+import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactCompiler from 'eslint-plugin-react-compiler';
+import i18next from 'eslint-plugin-i18next';
+import unicorn from 'eslint-plugin-unicorn';
+import jsxAlly from 'eslint-plugin-jsx-a11y';
+import globals from 'globals';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
 const reactHooksLatest = reactHooks.configs.flat['recommended-latest'];
 
@@ -33,7 +33,7 @@ const react19RestrictedImports = [
   },
 ];
 
-module.exports = [
+export default [
   {
     ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
     linterOptions: {

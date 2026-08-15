@@ -1,12 +1,13 @@
 {
   "name": "nop-chaos-flux-workspace",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "turbo run dev --filter=@nop-chaos/flux-playground",
     "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:schema-prop-coverage && pnpm check:scada-symbol-keys && pnpm check:audit-suspects && pnpm check:audit-renderer-browser-io && pnpm check:audit-event-dispatch-ctx && pnpm check:ai-engine-invariants",
     "analyze": "turbo run analyze --filter=@nop-chaos/flux-playground",
-    "audit:deps": "depcruise --config .dependency-cruiser.cjs apps packages scripts",
+    "audit:deps": "depcruise --config .dependency-cruiser.mjs apps packages scripts",
     "audit:knip": "knip --config knip.json",
     "audit:knip:packages": "knip --config knip.json --workspace \"./packages/*\"",
     "audit:knip:playground": "knip --config knip.json --workspace ./apps/playground",
