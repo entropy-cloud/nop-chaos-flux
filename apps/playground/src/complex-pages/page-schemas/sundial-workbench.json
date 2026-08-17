@@ -1,0 +1,1481 @@
+{
+  "type": "page",
+  "testid": "sundial-workbench-page",
+  "className": "sd-root",
+  "bodyClassName": "h-full",
+  "body": [
+    {
+      "type": "responsive",
+      "testid": "sundial-shell",
+      "variants": [
+        {
+          "key": "mobile",
+          "max": "lg",
+          "body": [
+            {
+              "type": "container",
+              "testid": "sundial-mobile-view",
+              "className": "flex-1 min-w-0 flex flex-col p-6 gap-4",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-start",
+                  "body": [
+                    {
+                      "type": "container",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "工作台（移动端）",
+                          "className": "text-2xl font-semibold text-[#0d0d0d]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "侧边栏在窄屏隐藏，由底部导航替代（P8 Non-Goal）",
+                          "className": "text-xs text-[#636363] mt-1"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "sd-card p-4 text-xs text-[#636363] sd-mono"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "desktop",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "className": "h-full min-h-0",
+              "body": [
+                {
+                  "type": "container",
+                  "testid": "sundial-sidebar",
+                  "className": "w-[272px] shrink-0 sd-sidebar p-4 flex flex-col gap-0 min-h-0",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "sun",
+                          "size": 24,
+                          "color": "#ea7a2a"
+                        },
+                        {
+                          "type": "text",
+                          "text": "Sundial",
+                          "className": "text-lg font-semibold text-[#0d0d0d]"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "className": "mt-4 mb-3",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 6,
+                          "className": "items-center",
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "search",
+                              "size": 14,
+                              "color": "#636363"
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "search",
+                              "className": "sd-input flex-1",
+                              "placeholder": "搜索",
+                              "testid": "sundial-search"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "className": "flex flex-col gap-0.5",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-selected",
+                          "testid": "sundial-nav-workbench",
+                          "data-selected": "true",
+                          "visible": "${activeSection === 'workbench'}",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "activeSection",
+                              "value": "workbench"
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "layers",
+                              "size": 18,
+                              "color": "#ea7a2a"
+                            },
+                            {
+                              "type": "text",
+                              "text": "工作台",
+                              "className": "text-sm text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "14",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row",
+                          "testid": "sundial-nav-workbench",
+                          "data-selected": "false",
+                          "visible": "${activeSection !== 'workbench'}",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "activeSection",
+                              "value": "workbench"
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "layers",
+                              "size": 18,
+                              "color": "#636363"
+                            },
+                            {
+                              "type": "text",
+                              "text": "工作台",
+                              "className": "text-sm text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "14",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-selected",
+                          "testid": "sundial-nav-lists",
+                          "data-selected": "true",
+                          "visible": "${activeSection === 'lists'}",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "activeSection",
+                              "value": "lists"
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "tray",
+                              "size": 18,
+                              "color": "#ea7a2a"
+                            },
+                            {
+                              "type": "text",
+                              "text": "列表",
+                              "className": "text-sm text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "4",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row",
+                          "testid": "sundial-nav-lists",
+                          "data-selected": "false",
+                          "visible": "${activeSection !== 'lists'}",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "activeSection",
+                              "value": "lists"
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "tray",
+                              "size": 18,
+                              "color": "#636363"
+                            },
+                            {
+                              "type": "text",
+                              "text": "列表",
+                              "className": "text-sm text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "4",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-selected",
+                          "testid": "sundial-nav-analytics",
+                          "data-selected": "true",
+                          "visible": "${activeSection === 'analytics'}",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "activeSection",
+                              "value": "analytics"
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "bar-chart-3",
+                              "size": 18,
+                              "color": "#ea7a2a"
+                            },
+                            {
+                              "type": "text",
+                              "text": "分析",
+                              "className": "text-sm text-[#0d0d0d]"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row",
+                          "testid": "sundial-nav-analytics",
+                          "data-selected": "false",
+                          "visible": "${activeSection !== 'analytics'}",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "activeSection",
+                              "value": "analytics"
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "bar-chart-3",
+                              "size": 18,
+                              "color": "#636363"
+                            },
+                            {
+                              "type": "text",
+                              "text": "分析",
+                              "className": "text-sm text-[#0d0d0d]"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "工作台视图",
+                      "className": "sd-sidebar-label mt-4 mb-1"
+                    },
+                    {
+                      "type": "container",
+                      "className": "flex flex-col gap-0.5",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary sd-nav-selected",
+                          "testid": "sundial-view-all",
+                          "data-selected": "true",
+                          "visible": "${activeView === 'all'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "all"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：全部"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "layers",
+                              "size": 16,
+                              "color": "#ea7a2a"
+                            },
+                            {
+                              "type": "text",
+                              "text": "全部",
+                              "className": "text-xs text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "14",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary",
+                          "testid": "sundial-view-all",
+                          "data-selected": "false",
+                          "visible": "${activeView !== 'all'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "all"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：全部"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "layers",
+                              "size": 16,
+                              "color": "#636363"
+                            },
+                            {
+                              "type": "text",
+                              "text": "全部",
+                              "className": "text-xs text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "14",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary sd-nav-selected",
+                          "testid": "sundial-view-today",
+                          "data-selected": "true",
+                          "visible": "${activeView === 'today'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "today"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：今天"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "sun",
+                              "size": 16,
+                              "color": "#ea7a2a"
+                            },
+                            {
+                              "type": "text",
+                              "text": "今天",
+                              "className": "text-xs text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "5",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary",
+                          "testid": "sundial-view-today",
+                          "data-selected": "false",
+                          "visible": "${activeView !== 'today'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "today"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：今天"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "sun",
+                              "size": 16,
+                              "color": "#636363"
+                            },
+                            {
+                              "type": "text",
+                              "text": "今天",
+                              "className": "text-xs text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "5",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary sd-nav-selected",
+                          "testid": "sundial-view-scheduled",
+                          "data-selected": "true",
+                          "visible": "${activeView === 'scheduled'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "scheduled"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：计划"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "calendar-clock",
+                              "size": 16,
+                              "color": "#ea7a2a"
+                            },
+                            {
+                              "type": "text",
+                              "text": "计划",
+                              "className": "text-xs text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "4",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary",
+                          "testid": "sundial-view-scheduled",
+                          "data-selected": "false",
+                          "visible": "${activeView !== 'scheduled'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "scheduled"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：计划"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "calendar-clock",
+                              "size": 16,
+                              "color": "#636363"
+                            },
+                            {
+                              "type": "text",
+                              "text": "计划",
+                              "className": "text-xs text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "4",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary sd-nav-selected",
+                          "testid": "sundial-view-completed",
+                          "data-selected": "true",
+                          "visible": "${activeView === 'completed'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "completed"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：已完成"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "circle-check",
+                              "size": 16,
+                              "color": "#ea7a2a"
+                            },
+                            {
+                              "type": "text",
+                              "text": "已完成",
+                              "className": "text-xs text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "6",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary",
+                          "testid": "sundial-view-completed",
+                          "data-selected": "false",
+                          "visible": "${activeView !== 'completed'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "completed"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：已完成"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "circle-check",
+                              "size": 16,
+                              "color": "#636363"
+                            },
+                            {
+                              "type": "text",
+                              "text": "已完成",
+                              "className": "text-xs text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "6",
+                              "className": "ml-auto text-xs text-[#636363] sd-mono"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary sd-nav-selected",
+                          "testid": "sundial-view-trash",
+                          "data-selected": "true",
+                          "visible": "${activeView === 'trash'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "trash"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：垃圾箱"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "trash-2",
+                              "size": 16,
+                              "color": "#ea7a2a"
+                            },
+                            {
+                              "type": "text",
+                              "text": "垃圾箱",
+                              "className": "text-xs text-[#0d0d0d]"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "sd-nav-row sd-nav-secondary",
+                          "testid": "sundial-view-trash",
+                          "data-selected": "false",
+                          "visible": "${activeView !== 'trash'}",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "activeView",
+                                "value": "trash"
+                              }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "message": "视图：垃圾箱"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "trash-2",
+                              "size": 16,
+                              "color": "#636363"
+                            },
+                            {
+                              "type": "text",
+                              "text": "垃圾箱",
+                              "className": "text-xs text-[#0d0d0d]"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "className": "flex-1 min-h-0"
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center py-2",
+                      "testid": "sundial-sync-footer",
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "refresh-cw",
+                          "size": 12,
+                          "color": "#636363"
+                        },
+                        {
+                          "type": "text",
+                          "text": "本地模式",
+                          "className": "text-xs text-[#636363]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "",
+                          "className": "flex-1"
+                        },
+                        {
+                          "type": "button",
+                          "size": "icon",
+                          "variant": "ghost",
+                          "icon": "settings",
+                          "className": "sd-btn-icon",
+                          "testid": "sundial-settings-icon",
+                          "onClick": {
+                            "action": "showToast",
+                            "args": {
+                              "message": "打开设置"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "testid": "sundial-main",
+                  "className": "flex-1 min-w-0 flex flex-col p-6 gap-4 overflow-y-auto",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-start",
+                      "body": [
+                        {
+                          "type": "container",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "工作台",
+                              "className": "text-2xl font-semibold text-[#0d0d0d]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "2026-08-16",
+                              "className": "text-xs text-[#636363] mt-1"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "",
+                          "className": "flex-1"
+                        },
+                        {
+                          "type": "button",
+                          "label": "添加待办",
+                          "variant": "ghost",
+                          "className": "sd-btn sd-btn-ghost",
+                          "testid": "sundial-add-todo",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "todoDialogOpen",
+                              "value": true
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "sundial-pressure-card",
+                      "className": "sd-card p-4",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "sd-rail",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "",
+                              "className": "block h-full w-[21%] bg-[#d25151]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "",
+                              "className": "block h-full w-[36%] bg-[#ea7a2a]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "",
+                              "className": "block h-full w-[29%] bg-[#3c83f6]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "",
+                              "className": "block h-full w-[14%] bg-[#636363]"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "container",
+                          "className": "sd-legend",
+                          "body": [
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 5,
+                              "className": "items-center",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "",
+                                  "className": "block w-1.5 h-1.5 rounded-[3px] bg-[#d25151]"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "逾期",
+                                  "className": "text-xs text-[#636363]"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "3",
+                                  "className": "text-[10px] text-[#d25151] sd-mono"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 5,
+                              "className": "items-center",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "",
+                                  "className": "block w-1.5 h-1.5 rounded-[3px] bg-[#ea7a2a]"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "今天",
+                                  "className": "text-xs text-[#636363]"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "5",
+                                  "className": "text-[10px] text-[#ea7a2a] sd-mono"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 5,
+                              "className": "items-center",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "",
+                                  "className": "block w-1.5 h-1.5 rounded-[3px] bg-[#3c83f6]"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "未来 7 天",
+                                  "className": "text-xs text-[#636363]"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "4",
+                                  "className": "text-[10px] text-[#3c83f6] sd-mono"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 5,
+                              "className": "items-center",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "",
+                                  "className": "block w-1.5 h-1.5 rounded-[3px] bg-[#636363]"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "无日期",
+                                  "className": "text-xs text-[#636363]"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "2",
+                                  "className": "text-[10px] text-[#636363] sd-mono"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 5,
+                              "className": "items-center",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "总计",
+                                  "className": "text-xs text-[#636363]"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "14",
+                                  "className": "text-[10px] text-[#0d0d0d] sd-mono"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "collapse",
+                      "id": "sd-section-overdue",
+                      "testid": "sundial-section-overdue",
+                      "className": "sd-section",
+                      "multiple": true,
+                      "defaultValue": ["overdue", "today", "future", "nodate", "organize"],
+                      "items": [
+                        {
+                          "key": "overdue",
+                          "title": "逾期",
+                          "body": {
+                            "type": "container",
+                            "className": "flex flex-col",
+                            "body": [
+                              {
+                                "type": "flex",
+                                "direction": "row",
+                                "gap": 10,
+                                "className": "sd-task-row",
+                                "testid": "sundial-task-overdue-1",
+                                "onClick": {
+                                  "action": "showToast",
+                                  "args": {
+                                    "message": "打开详情（占位反馈）"
+                                  }
+                                },
+                                "body": [
+                                  {
+                                    "type": "checkbox",
+                                    "name": "t1",
+                                    "className": "sd-checkbox",
+                                    "testid": "sundial-cb-t1",
+                                    "shape": "circle"
+                                  },
+                                  {
+                                    "type": "container",
+                                    "className": "flex-1 min-w-0",
+                                    "body": [
+                                      {
+                                        "type": "text",
+                                        "text": "整理季度报税材料",
+                                        "className": "text-sm font-medium text-[#0d0d0d] truncate"
+                                      },
+                                      {
+                                        "type": "text",
+                                        "text": "发票 + 银行流水",
+                                        "className": "text-xs text-[#636363] truncate"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "昨天",
+                                    "className": "sd-badge sd-badge-error"
+                                  },
+                                  {
+                                    "type": "icon",
+                                    "icon": "flag",
+                                    "size": 14,
+                                    "color": "#db7706"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          "tone": "danger",
+                          "count": "1"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "collapse",
+                      "id": "sd-section-today",
+                      "testid": "sundial-section-today",
+                      "className": "sd-section",
+                      "multiple": true,
+                      "defaultValue": ["overdue", "today", "future", "nodate", "organize"],
+                      "items": [
+                        {
+                          "key": "today",
+                          "title": "今天",
+                          "body": {
+                            "type": "container",
+                            "className": "flex flex-col",
+                            "body": [
+                              {
+                                "type": "flex",
+                                "direction": "row",
+                                "gap": 10,
+                                "className": "sd-task-row",
+                                "testid": "sundial-task-today-1",
+                                "onClick": {
+                                  "action": "showToast",
+                                  "args": {
+                                    "message": "打开详情（占位反馈）"
+                                  }
+                                },
+                                "body": [
+                                  {
+                                    "type": "checkbox",
+                                    "name": "t2",
+                                    "className": "sd-checkbox",
+                                    "testid": "sundial-cb-t2",
+                                    "shape": "circle"
+                                  },
+                                  {
+                                    "type": "container",
+                                    "className": "flex-1 min-w-0",
+                                    "body": [
+                                      {
+                                        "type": "text",
+                                        "text": "给项目经理回电话",
+                                        "className": "text-sm font-medium text-[#636363] line-through truncate"
+                                      },
+                                      {
+                                        "type": "text",
+                                        "text": "已完成 8/16",
+                                        "className": "text-xs text-[#636363] truncate"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "今天",
+                                    "className": "sd-badge sd-badge-brand"
+                                  },
+                                  {
+                                    "type": "icon",
+                                    "icon": "flag",
+                                    "size": 14,
+                                    "color": "#636363"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "flex",
+                                "direction": "row",
+                                "gap": 10,
+                                "className": "sd-task-row",
+                                "testid": "sundial-task-today-2",
+                                "onClick": {
+                                  "action": "showToast",
+                                  "args": {
+                                    "message": "打开详情（占位反馈）"
+                                  }
+                                },
+                                "body": [
+                                  {
+                                    "type": "checkbox",
+                                    "name": "t3",
+                                    "className": "sd-checkbox",
+                                    "testid": "sundial-cb-t3",
+                                    "shape": "circle"
+                                  },
+                                  {
+                                    "type": "container",
+                                    "className": "flex-1 min-w-0",
+                                    "body": [
+                                      {
+                                        "type": "text",
+                                        "text": "整理收件箱里的票据",
+                                        "className": "text-sm font-medium text-[#0d0d0d] truncate"
+                                      },
+                                      {
+                                        "type": "text",
+                                        "text": "2 个子任务",
+                                        "className": "text-xs text-[#636363] truncate"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "今天",
+                                    "className": "sd-badge sd-badge-brand"
+                                  },
+                                  {
+                                    "type": "icon",
+                                    "icon": "flag",
+                                    "size": 14,
+                                    "color": "#636363"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          "tone": "brand",
+                          "count": "2"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "collapse",
+                      "id": "sd-section-future",
+                      "testid": "sundial-section-future",
+                      "className": "sd-section",
+                      "multiple": true,
+                      "defaultValue": ["overdue", "today", "future", "nodate", "organize"],
+                      "items": [
+                        {
+                          "key": "future",
+                          "title": "未来 7 天",
+                          "body": {
+                            "type": "container",
+                            "className": "flex flex-col",
+                            "body": [
+                              {
+                                "type": "flex",
+                                "direction": "row",
+                                "gap": 10,
+                                "className": "sd-task-row",
+                                "testid": "sundial-task-future-1",
+                                "onClick": {
+                                  "action": "showToast",
+                                  "args": {
+                                    "message": "打开详情（占位反馈）"
+                                  }
+                                },
+                                "body": [
+                                  {
+                                    "type": "checkbox",
+                                    "name": "t4",
+                                    "className": "sd-checkbox",
+                                    "testid": "sundial-cb-t4",
+                                    "shape": "circle"
+                                  },
+                                  {
+                                    "type": "container",
+                                    "className": "flex-1 min-w-0",
+                                    "body": [
+                                      {
+                                        "type": "text",
+                                        "text": "预约牙医检查",
+                                        "className": "text-sm font-medium text-[#0d0d0d] truncate"
+                                      },
+                                      {
+                                        "type": "text",
+                                        "text": "无备注",
+                                        "className": "text-xs text-[#636363] truncate"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "8/18",
+                                    "className": "sd-badge sd-badge-neutral"
+                                  },
+                                  {
+                                    "type": "icon",
+                                    "icon": "flag",
+                                    "size": 14,
+                                    "color": "#636363"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "flex",
+                                "direction": "row",
+                                "gap": 10,
+                                "className": "sd-task-row",
+                                "testid": "sundial-task-future-2",
+                                "onClick": {
+                                  "action": "showToast",
+                                  "args": {
+                                    "message": "打开详情（占位反馈）"
+                                  }
+                                },
+                                "body": [
+                                  {
+                                    "type": "checkbox",
+                                    "name": "t5",
+                                    "className": "sd-checkbox",
+                                    "testid": "sundial-cb-t5",
+                                    "shape": "circle"
+                                  },
+                                  {
+                                    "type": "container",
+                                    "className": "flex-1 min-w-0",
+                                    "body": [
+                                      {
+                                        "type": "text",
+                                        "text": "撰写周报",
+                                        "className": "text-sm font-medium text-[#0d0d0d] truncate"
+                                      },
+                                      {
+                                        "type": "text",
+                                        "text": "1 个子任务",
+                                        "className": "text-xs text-[#636363] truncate"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "8/19",
+                                    "className": "sd-badge sd-badge-neutral"
+                                  },
+                                  {
+                                    "type": "icon",
+                                    "icon": "flag",
+                                    "size": 14,
+                                    "color": "#636363"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          "tone": "info",
+                          "count": "2"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "collapse",
+                      "id": "sd-section-nodate",
+                      "testid": "sundial-section-nodate",
+                      "className": "sd-section",
+                      "multiple": true,
+                      "defaultValue": ["overdue", "today", "future", "nodate", "organize"],
+                      "items": [
+                        {
+                          "key": "nodate",
+                          "title": "无日期",
+                          "body": {
+                            "type": "container",
+                            "className": "flex flex-col",
+                            "body": [
+                              {
+                                "type": "flex",
+                                "direction": "row",
+                                "gap": 10,
+                                "className": "sd-task-row",
+                                "testid": "sundial-task-nodate-1",
+                                "onClick": {
+                                  "action": "showToast",
+                                  "args": {
+                                    "message": "打开详情（占位反馈）"
+                                  }
+                                },
+                                "body": [
+                                  {
+                                    "type": "checkbox",
+                                    "name": "t6",
+                                    "className": "sd-checkbox",
+                                    "testid": "sundial-cb-t6",
+                                    "shape": "circle"
+                                  },
+                                  {
+                                    "type": "container",
+                                    "className": "flex-1 min-w-0",
+                                    "body": [
+                                      {
+                                        "type": "text",
+                                        "text": "读完《设计中的设计》",
+                                        "className": "text-sm font-medium text-[#0d0d0d] truncate"
+                                      },
+                                      {
+                                        "type": "text",
+                                        "text": "还剩两章",
+                                        "className": "text-xs text-[#636363] truncate"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "icon",
+                                    "icon": "flag",
+                                    "size": 14,
+                                    "color": "#db7706"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          "tone": "neutral",
+                          "count": "1"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "collapse",
+                      "id": "sd-section-organize",
+                      "testid": "sundial-section-organize",
+                      "className": "sd-section",
+                      "multiple": true,
+                      "defaultValue": ["overdue", "today", "future", "nodate", "organize"],
+                      "items": [
+                        {
+                          "key": "organize",
+                          "title": "待整理",
+                          "body": {
+                            "type": "container",
+                            "className": "flex flex-col",
+                            "body": [
+                              {
+                                "type": "flex",
+                                "direction": "row",
+                                "gap": 10,
+                                "className": "sd-task-row",
+                                "testid": "sundial-task-organize-1",
+                                "onClick": {
+                                  "action": "showToast",
+                                  "args": {
+                                    "message": "打开详情（占位反馈）"
+                                  }
+                                },
+                                "body": [
+                                  {
+                                    "type": "checkbox",
+                                    "name": "t7",
+                                    "className": "sd-checkbox",
+                                    "testid": "sundial-cb-t7",
+                                    "shape": "circle"
+                                  },
+                                  {
+                                    "type": "container",
+                                    "className": "flex-1 min-w-0",
+                                    "body": [
+                                      {
+                                        "type": "text",
+                                        "text": "把会议纪要归档到项目文件夹",
+                                        "className": "text-sm font-medium text-[#0d0d0d] truncate"
+                                      },
+                                      {
+                                        "type": "text",
+                                        "text": "待归类 · 无日期",
+                                        "className": "text-xs text-[#636363] truncate"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "icon",
+                                    "icon": "flag",
+                                    "size": 14,
+                                    "color": "#636363"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          "tone": "warning",
+                          "count": "1"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "dialog",
+      "id": "sundial-workbench-todo-dialog",
+      "title": "新建待办",
+      "className": "sd-dialog",
+      "open": "${todoDialogOpen}",
+      "body": [
+        {
+          "type": "form",
+          "id": "sundial-workbench-todo-form",
+          "data": {
+            "title": "",
+            "note": ""
+          },
+          "bodyClassName": "p-0",
+          "body": [
+            {
+              "type": "input-text",
+              "name": "title",
+              "className": "sd-input",
+              "placeholder": "标题",
+              "testid": "sundial-workbench-todo-title"
+            },
+            {
+              "type": "textarea",
+              "name": "note",
+              "className": "sd-input mt-2",
+              "placeholder": "备注（可选）…",
+              "testid": "sundial-workbench-todo-note"
+            }
+          ],
+          "actions": [
+            {
+              "type": "button",
+              "label": "取消",
+              "variant": "ghost",
+              "className": "sd-btn sd-btn-ghost",
+              "onClick": {
+                "action": "closeSurface"
+              }
+            },
+            {
+              "type": "button",
+              "label": "添加",
+              "variant": "default",
+              "className": "sd-btn sd-btn-default",
+              "testid": "sundial-workbench-todo-submit",
+              "onClick": {
+                "action": "closeSurface"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

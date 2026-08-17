@@ -1,0 +1,1555 @@
+{
+  "type": "page",
+  "testid": "sundial-detail-page",
+  "className": "sd-root",
+  "body": [
+    {
+      "type": "container",
+      "className": "p-6",
+      "body": [
+        {
+          "type": "container",
+          "testid": "sundial-detail-panel",
+          "className": "sd-card w-[400px] p-4 flex flex-col gap-3",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center",
+              "testid": "sundial-detail-status-row",
+              "body": [
+                {
+                  "type": "checkbox",
+                  "name": "d-done",
+                  "className": "sd-checkbox",
+                  "testid": "sundial-detail-checkbox",
+                  "shape": "circle"
+                },
+                {
+                  "type": "text",
+                  "text": "待办",
+                  "className": "text-xs font-semibold text-[#333333]"
+                },
+                {
+                  "type": "text",
+                  "text": "8/18",
+                  "className": "sd-badge sd-badge-warning"
+                },
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "flex-1"
+                },
+                {
+                  "type": "button",
+                  "size": "icon",
+                  "variant": "ghost",
+                  "icon": "x",
+                  "className": "sd-btn-icon",
+                  "testid": "sundial-detail-close",
+                  "onClick": {
+                    "action": "showToast",
+                    "args": {
+                      "message": "关闭详情"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "input-text",
+              "name": "detail-title",
+              "className": "sd-input-bare",
+              "value": "撰写季度复盘报告",
+              "testid": "sundial-detail-title"
+            },
+            {
+              "type": "container",
+              "className": "bg-[#f5f5f5] rounded-[2px] p-1",
+              "body": [
+                {
+                  "type": "textarea",
+                  "name": "detail-note",
+                  "className": "sd-input-bare",
+                  "value": "包含数据复盘和 OKR 回顾两部分",
+                  "placeholder": "备注…",
+                  "testid": "sundial-detail-note"
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "flex flex-col",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "sd-field-row",
+                  "testid": "sundial-detail-row-date",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "flex-1 min-w-0 items-center",
+                      "testid": "sundial-detail-row-date-pick",
+                      "onClick": {
+                        "action": "setValue",
+                        "args": {
+                          "path": "dateOpen",
+                          "value": true
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "calendar",
+                          "size": 14,
+                          "color": "#636363"
+                        },
+                        {
+                          "type": "text",
+                          "text": "日期",
+                          "className": "text-xs text-[#333333]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "8/18",
+                          "className": "sd-badge sd-badge-warning"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "button",
+                      "label": "清除",
+                      "variant": "ghost",
+                      "className": "sd-btn sd-btn-ghost ml-auto",
+                      "testid": "sundial-detail-clear-date",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demo-date",
+                            "value": ""
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "日期已清除"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "sd-field-row",
+                  "testid": "sundial-detail-row-recurrence",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "clock",
+                      "size": 14,
+                      "color": "#636363"
+                    },
+                    {
+                      "type": "text",
+                      "text": "重复",
+                      "className": "text-xs text-[#333333]"
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 4,
+                      "className": "ml-auto items-center",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "每周",
+                          "className": "sd-badge sd-badge-info"
+                        }
+                      ]
+                    }
+                  ],
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "recurOpen",
+                      "value": true
+                    }
+                  }
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "sd-field-row",
+                  "testid": "sundial-detail-row-flag",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "flag",
+                      "size": 14,
+                      "color": "#636363"
+                    },
+                    {
+                      "type": "text",
+                      "text": "旗标",
+                      "className": "text-xs text-[#333333]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "flex-1"
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "visible": "${flagged}",
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "flag",
+                          "size": 14,
+                          "color": "#db7706"
+                        },
+                        {
+                          "type": "text",
+                          "text": "已标记",
+                          "className": "text-xs text-[#db7706]"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "visible": "${!flagged}",
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "flag",
+                          "size": 14,
+                          "color": "#636363"
+                        },
+                        {
+                          "type": "text",
+                          "text": "未标记",
+                          "className": "text-xs text-[#636363]"
+                        }
+                      ]
+                    }
+                  ],
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "flagged",
+                        "value": "${!flagged}"
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "旗标已切换"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "sd-field-row",
+                  "testid": "sundial-detail-row-list",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "tray",
+                      "size": 14,
+                      "color": "#636363"
+                    },
+                    {
+                      "type": "text",
+                      "text": "列表",
+                      "className": "text-xs text-[#333333]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "flex-1"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-blue"
+                    },
+                    {
+                      "type": "text",
+                      "text": "工作",
+                      "className": "text-xs text-[#0d0d0d]"
+                    }
+                  ],
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "listOpen",
+                      "value": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 6,
+              "className": "items-center mt-1",
+              "testid": "sundial-detail-subtasks-header",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "chevron-down",
+                  "size": 14,
+                  "color": "#636363"
+                },
+                {
+                  "type": "text",
+                  "text": "子任务",
+                  "className": "text-xs font-semibold text-[#636363]"
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "flex flex-col gap-0.5",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center py-1",
+                  "testid": "sundial-detail-subtask-1",
+                  "body": [
+                    {
+                      "type": "checkbox",
+                      "name": "d-s1",
+                      "className": "sd-checkbox",
+                      "testid": "sundial-detail-sub1-cb",
+                      "shape": "circle"
+                    },
+                    {
+                      "type": "text",
+                      "text": "收集销售数据",
+                      "className": "text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "flex-1"
+                    },
+                    {
+                      "type": "button",
+                      "size": "icon",
+                      "variant": "ghost",
+                      "icon": "chevron-right",
+                      "className": "sd-btn-icon",
+                      "testid": "sundial-subtask-open-1",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": {
+                          "message": "打开子任务详情"
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "size": "icon",
+                      "variant": "ghost",
+                      "icon": "trash-2",
+                      "className": "sd-btn-icon",
+                      "testid": "sundial-subtask-delete-1",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": {
+                          "message": "删除子任务"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center py-1",
+                  "testid": "sundial-detail-subtask-2",
+                  "body": [
+                    {
+                      "type": "checkbox",
+                      "name": "d-s2",
+                      "className": "sd-checkbox",
+                      "testid": "sundial-detail-sub2-cb",
+                      "shape": "circle"
+                    },
+                    {
+                      "type": "text",
+                      "text": "整理 OKR 回顾",
+                      "className": "text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "flex-1"
+                    },
+                    {
+                      "type": "button",
+                      "size": "icon",
+                      "variant": "ghost",
+                      "icon": "chevron-right",
+                      "className": "sd-btn-icon",
+                      "testid": "sundial-subtask-open-2",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": {
+                          "message": "打开子任务详情"
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "size": "icon",
+                      "variant": "ghost",
+                      "icon": "trash-2",
+                      "className": "sd-btn-icon",
+                      "testid": "sundial-subtask-delete-2",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": {
+                          "message": "删除子任务"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center py-1",
+                  "testid": "sundial-detail-subtask-3",
+                  "body": [
+                    {
+                      "type": "checkbox",
+                      "name": "d-s3",
+                      "className": "sd-checkbox",
+                      "testid": "sundial-detail-sub3-cb",
+                      "shape": "circle"
+                    },
+                    {
+                      "type": "text",
+                      "text": "撰写结论部分",
+                      "className": "text-sm text-[#636363] line-through"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "flex-1"
+                    },
+                    {
+                      "type": "button",
+                      "size": "icon",
+                      "variant": "ghost",
+                      "icon": "chevron-right",
+                      "className": "sd-btn-icon",
+                      "testid": "sundial-subtask-open-3",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": {
+                          "message": "打开子任务详情"
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "size": "icon",
+                      "variant": "ghost",
+                      "icon": "trash-2",
+                      "className": "sd-btn-icon",
+                      "testid": "sundial-subtask-delete-3",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": {
+                          "message": "删除子任务"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "input-text",
+              "name": "subtask-add",
+              "className": "sd-input",
+              "placeholder": "添加子任务…",
+              "testid": "sundial-detail-subtask-add"
+            },
+            {
+              "type": "text",
+              "text": "创建于 8 月 10 日",
+              "className": "text-xs text-[#636363] mt-2"
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "mt-1",
+              "body": [
+                {
+                  "type": "button",
+                  "label": "移到列表",
+                  "variant": "ghost",
+                  "className": "sd-btn sd-btn-ghost flex-1",
+                  "testid": "sundial-detail-move-list",
+                  "onClick": {
+                    "action": "showToast",
+                    "args": {
+                      "message": "已选择目标列表"
+                    }
+                  }
+                },
+                {
+                  "type": "button",
+                  "label": "移到垃圾箱",
+                  "variant": "destructive",
+                  "className": "sd-btn sd-btn-danger flex-1",
+                  "testid": "sundial-detail-trash",
+                  "onClick": {
+                    "action": "showToast",
+                    "args": {
+                      "message": "已移到垃圾箱"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "选择器对话框（点击打开）：",
+          "className": "text-xs text-[#636363] mt-4"
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 8,
+          "className": "mt-2",
+          "body": [
+            {
+              "type": "button",
+              "label": "日期选择器",
+              "variant": "ghost",
+              "className": "sd-btn sd-btn-ghost",
+              "testid": "sundial-open-date-dialog",
+              "onClick": {
+                "action": "setValue",
+                "args": {
+                  "path": "dateOpen",
+                  "value": true
+                }
+              }
+            },
+            {
+              "type": "button",
+              "label": "重复选择器",
+              "variant": "ghost",
+              "className": "sd-btn sd-btn-ghost",
+              "testid": "sundial-open-recurrence-dialog",
+              "onClick": {
+                "action": "setValue",
+                "args": {
+                  "path": "recurOpen",
+                  "value": true
+                }
+              }
+            },
+            {
+              "type": "button",
+              "label": "列表选择器",
+              "variant": "ghost",
+              "className": "sd-btn sd-btn-ghost",
+              "testid": "sundial-open-list-dialog",
+              "onClick": {
+                "action": "setValue",
+                "args": {
+                  "path": "listOpen",
+                  "value": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "现有组件替代（flux `input-date`，原生输入形态）：",
+          "className": "text-xs text-[#636363] mt-4"
+        },
+        {
+          "type": "container",
+          "testid": "sundial-input-date-demo",
+          "className": "sd-card p-4 mt-2 w-[400px] flex flex-col gap-2",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "calendar",
+                  "size": 14,
+                  "color": "#636363"
+                },
+                {
+                  "type": "text",
+                  "text": "日期（input-date 字段）",
+                  "className": "text-xs text-[#333333]"
+                }
+              ]
+            },
+            {
+              "type": "input-date",
+              "name": "demo-date",
+              "value": "2026-08-18",
+              "className": "sd-input mt-1",
+              "testid": "sundial-demo-date-input"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "dialog",
+      "id": "sundial-date-dialog",
+      "title": "选择日期",
+      "className": "sd-dialog",
+      "open": "${dateOpen}",
+      "data": {
+        "demo-time": "14:00"
+      },
+      "body": [
+        {
+          "type": "container",
+          "className": "flex flex-col",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 4,
+              "className": "items-center justify-between mb-3",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "chevron-left",
+                  "size": 14,
+                  "color": "#636363"
+                },
+                {
+                  "type": "text",
+                  "text": "2026 年 8 月",
+                  "className": "text-sm font-semibold text-[#0d0d0d]"
+                },
+                {
+                  "type": "icon",
+                  "icon": "chevron-right",
+                  "size": 14,
+                  "color": "#636363"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 4,
+              "className": "mb-1",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "一",
+                  "className": "flex-1 text-center text-[10px] font-semibold text-[#636363]"
+                },
+                {
+                  "type": "text",
+                  "text": "二",
+                  "className": "flex-1 text-center text-[10px] font-semibold text-[#636363]"
+                },
+                {
+                  "type": "text",
+                  "text": "三",
+                  "className": "flex-1 text-center text-[10px] font-semibold text-[#636363]"
+                },
+                {
+                  "type": "text",
+                  "text": "四",
+                  "className": "flex-1 text-center text-[10px] font-semibold text-[#636363]"
+                },
+                {
+                  "type": "text",
+                  "text": "五",
+                  "className": "flex-1 text-center text-[10px] font-semibold text-[#636363]"
+                },
+                {
+                  "type": "text",
+                  "text": "六",
+                  "className": "flex-1 text-center text-[10px] font-semibold text-[#636363]"
+                },
+                {
+                  "type": "text",
+                  "text": "日",
+                  "className": "flex-1 text-center text-[10px] font-semibold text-[#636363]"
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "flex flex-col gap-0.5",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "flex-1 aspect-square rounded-[2px]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "flex-1 aspect-square rounded-[2px]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "1",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "2",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "3",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "4",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "5",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "6",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "7",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "8",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "9",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "10",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "11",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "12",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "13",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "14",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "15",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm bg-[#ea7a2a] text-white"
+                    },
+                    {
+                      "type": "text",
+                      "text": "16",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#ea7a2a]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "17",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "18",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "19",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "20",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "21",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "22",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "23",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "24",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "25",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "26",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "27",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "28",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "29",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "30",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "31",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "flex-1 aspect-square rounded-[2px]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "flex-1 aspect-square rounded-[2px]"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center mt-4",
+              "testid": "sundial-date-time-row",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "时间",
+                  "className": "text-sm text-[#333333]"
+                },
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "flex-1"
+                },
+                {
+                  "type": "input-time",
+                  "name": "demo-time",
+                  "value": "14:00",
+                  "steppers": true,
+                  "hourStep": 1,
+                  "minuteStep": 5,
+                  "className": "sd-time-stepper",
+                  "testid": "sundial-time-stepper"
+                },
+                {
+                  "type": "text",
+                  "text": "分",
+                  "className": "text-xs text-[#636363]"
+                },
+                {
+                  "type": "button",
+                  "label": "清除时间",
+                  "variant": "ghost",
+                  "className": "sd-btn sd-btn-ghost",
+                  "testid": "sundial-clear-time",
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "demo-time",
+                        "value": ""
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "时间已清除"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "dialog",
+      "id": "sundial-recurrence-dialog",
+      "title": "重复",
+      "className": "sd-dialog",
+      "open": "${recurOpen}",
+      "body": [
+        {
+          "type": "container",
+          "className": "flex flex-col",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "sd-field-row items-center py-2.5 sd-choice-selected",
+              "testid": "sundial-recur-none",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "不重复",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                },
+                {
+                  "type": "icon",
+                  "icon": "circle-check",
+                  "size": 16,
+                  "color": "#ea7a2a"
+                }
+              ],
+              "data-selected": "true",
+              "visible": "${recur === 'none'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "recur",
+                    "value": "none"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "重复：不重复"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "sd-field-row items-center py-2.5",
+              "testid": "sundial-recur-none",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "不重复",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                }
+              ],
+              "data-selected": "false",
+              "visible": "${recur !== 'none'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "recur",
+                    "value": "none"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "重复：不重复"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "sd-field-row items-center py-2.5 sd-choice-selected",
+              "testid": "sundial-recur-daily",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "每天",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                },
+                {
+                  "type": "icon",
+                  "icon": "circle-check",
+                  "size": 16,
+                  "color": "#ea7a2a"
+                }
+              ],
+              "data-selected": "true",
+              "visible": "${recur === 'daily'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "recur",
+                    "value": "daily"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "重复：每天"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "sd-field-row items-center py-2.5",
+              "testid": "sundial-recur-daily",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "每天",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                }
+              ],
+              "data-selected": "false",
+              "visible": "${recur !== 'daily'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "recur",
+                    "value": "daily"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "重复：每天"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "sd-field-row items-center py-2.5 sd-choice-selected",
+              "testid": "sundial-recur-weekly",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "每周",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                },
+                {
+                  "type": "icon",
+                  "icon": "circle-check",
+                  "size": 16,
+                  "color": "#ea7a2a"
+                }
+              ],
+              "data-selected": "true",
+              "visible": "${recur === 'weekly'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "recur",
+                    "value": "weekly"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "重复：每周"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "sd-field-row items-center py-2.5",
+              "testid": "sundial-recur-weekly",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "每周",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                }
+              ],
+              "data-selected": "false",
+              "visible": "${recur !== 'weekly'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "recur",
+                    "value": "weekly"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "重复：每周"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "sd-field-row items-center py-2.5 sd-choice-selected",
+              "testid": "sundial-recur-monthly",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "每月",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                },
+                {
+                  "type": "icon",
+                  "icon": "circle-check",
+                  "size": 16,
+                  "color": "#ea7a2a"
+                }
+              ],
+              "data-selected": "true",
+              "visible": "${recur === 'monthly'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "recur",
+                    "value": "monthly"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "重复：每月"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "sd-field-row items-center py-2.5",
+              "testid": "sundial-recur-monthly",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "每月",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                }
+              ],
+              "data-selected": "false",
+              "visible": "${recur !== 'monthly'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "recur",
+                    "value": "monthly"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "重复：每月"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "className": "justify-end mt-3",
+              "body": [
+                {
+                  "type": "button",
+                  "label": "关闭",
+                  "variant": "ghost",
+                  "className": "sd-btn sd-btn-ghost",
+                  "testid": "sundial-recur-close",
+                  "onClick": {
+                    "action": "closeSurface"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "dialog",
+      "id": "sundial-list-dialog",
+      "title": "选择列表",
+      "className": "sd-dialog",
+      "open": "${listOpen}",
+      "body": [
+        {
+          "type": "container",
+          "className": "flex flex-col",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center py-1.5",
+              "testid": "sundial-list-option-work",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-blue"
+                },
+                {
+                  "type": "text",
+                  "text": "工作",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                },
+                {
+                  "type": "icon",
+                  "icon": "circle-check",
+                  "size": 16,
+                  "color": "#ea7a2a"
+                }
+              ],
+              "data-selected": "true",
+              "visible": "${list === 'work'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "list",
+                    "value": "work"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "列表：工作"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center py-1.5",
+              "testid": "sundial-list-option-work",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-blue"
+                },
+                {
+                  "type": "text",
+                  "text": "工作",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                }
+              ],
+              "data-selected": "false",
+              "visible": "${list !== 'work'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "list",
+                    "value": "work"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "列表：工作"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center py-1.5",
+              "testid": "sundial-list-option-family",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-orange"
+                },
+                {
+                  "type": "text",
+                  "text": "家庭",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                },
+                {
+                  "type": "icon",
+                  "icon": "circle-check",
+                  "size": 16,
+                  "color": "#ea7a2a"
+                }
+              ],
+              "data-selected": "true",
+              "visible": "${list === 'family'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "list",
+                    "value": "family"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "列表：家庭"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center py-1.5",
+              "testid": "sundial-list-option-family",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-orange"
+                },
+                {
+                  "type": "text",
+                  "text": "家庭",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                }
+              ],
+              "data-selected": "false",
+              "visible": "${list !== 'family'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "list",
+                    "value": "family"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "列表：家庭"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center py-1.5",
+              "testid": "sundial-list-option-inbox",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-neutral"
+                },
+                {
+                  "type": "text",
+                  "text": "收件箱",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                },
+                {
+                  "type": "icon",
+                  "icon": "circle-check",
+                  "size": 16,
+                  "color": "#ea7a2a"
+                }
+              ],
+              "data-selected": "true",
+              "visible": "${list === 'inbox'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "list",
+                    "value": "inbox"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "列表：收件箱"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center py-1.5",
+              "testid": "sundial-list-option-inbox",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-neutral"
+                },
+                {
+                  "type": "text",
+                  "text": "收件箱",
+                  "className": "text-sm text-[#0d0d0d] flex-1"
+                }
+              ],
+              "data-selected": "false",
+              "visible": "${list !== 'inbox'}",
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "list",
+                    "value": "inbox"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "列表：收件箱"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

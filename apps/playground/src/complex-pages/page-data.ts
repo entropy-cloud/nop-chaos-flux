@@ -56,3 +56,34 @@ PAGE_DATA['complex-form'] = {
   provinceOptions: PROVINCE_OPTIONS,
   cityMap: CITY_MAP,
 };
+
+// ── Sundial replicas: checkbox initial states ──
+PAGE_DATA['sundial-workbench'] = {
+  t1: false,
+  t2: true,
+  t3: false,
+  t4: false,
+  t5: false,
+  t6: false,
+  t7: false,
+  // Interaction state (plan 457): sidebar nav + view selection
+  activeSection: 'workbench',
+  activeView: 'all',
+};
+
+PAGE_DATA['sundial-detail'] = {
+  'd-done': false,
+  'd-s1': false,
+  'd-s2': false,
+  'd-s3': true,
+  // Interaction state (plan 457): recurrence/list/flag selection
+  recur: 'weekly',
+  list: 'work',
+  flagged: true,
+};
+
+PAGE_DATA['sundial-settings'] = {
+  // Interaction state (plan 457): mode card + rail selection
+  mode: 'local',
+  activeSection: 'sync',
+};

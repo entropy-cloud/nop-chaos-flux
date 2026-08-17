@@ -471,6 +471,128 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       } as { status: number; data: T };
     }
 
+    // ----- Sundial replica endpoints (see docs/analysis/sundial-ui-reproduction-analysis.md) -----
+    if (url.includes('/r/Sundial__summary') && method === 'get') {
+      return {
+        status: 0,
+        data: clone({
+          todayCompleted: 6,
+          streakDays: 4,
+          weekEnergy: 32,
+          completionRate: '68%',
+          encouragement: '今天已经推进 6 件，连续 4 天有完成记录。节奏正在形成。',
+        }) as T,
+      };
+    }
+    if (url.includes('/r/Sundial__trend') && method === 'get') {
+      return {
+        status: 0,
+        data: clone({
+          items: [
+            { label: '8/10', count: 3 },
+            { label: '8/11', count: 5 },
+            { label: '8/12', count: 2 },
+            { label: '8/13', count: 7 },
+            { label: '8/14', count: 4 },
+            { label: '8/15', count: 6 },
+            { label: '今天', count: 2 },
+          ],
+          total: 7,
+        }) as T,
+      };
+    }
+    if (url.includes('/r/Sundial__energy') && method === 'get') {
+      return {
+        status: 0,
+        data: clone({
+          items: [
+            { label: '8/10', points: 4 },
+            { label: '8/11', points: 9 },
+            { label: '8/12', points: 3 },
+            { label: '8/13', points: 12 },
+            { label: '8/14', points: 6 },
+            { label: '8/15', points: 10 },
+            { label: '今天', points: 4 },
+          ],
+          total: 7,
+        }) as T,
+      };
+    }
+    if (url.includes('/r/Sundial__pressure') && method === 'get') {
+      return {
+        status: 0,
+        data: clone({
+          items: [
+            { bucket: '逾期', count: 3, tone: '#d25151' },
+            { bucket: '今天', count: 5, tone: '#ea7a2a' },
+            { bucket: '未来 7 天', count: 4, tone: '#3c83f6' },
+            { bucket: '无日期', count: 2, tone: '#636363' },
+          ],
+          count_overdue: 3,
+          count_today: 5,
+          count_future: 4,
+          count_none: 2,
+          total: 14,
+        }) as T,
+      };
+    }
+    if (url.includes('/r/Sundial__outputStructure') && method === 'get') {
+      return {
+        status: 0,
+        data: clone({
+          deepTasks: 2,
+          quickWins: 8,
+          flaggedDone: 1,
+          outputSummary: '本周已经输出 32 点，继续保持节奏。',
+        }) as T,
+      };
+    }
+    if (url.includes('/r/Sundial__lists') && method === 'get') {
+      return {
+        status: 0,
+        data: clone({
+          items: [
+            { name: '工作', color: 'blue', count: 6 },
+            { name: '家庭', color: 'orange', count: 3 },
+            { name: '购物', color: 'green', count: 4 },
+            { name: '收件箱', color: 'neutral', count: 2 },
+          ],
+          total: 4,
+        }) as T,
+      };
+    }
+    if (url.includes('/r/Sundial__todos') && method === 'get') {
+      return {
+        status: 0,
+        data: clone({
+          items: [
+            { id: 1, title: '整理季度报税材料', note: '发票 + 银行流水', done: false, dueLabel: '昨天', dueTone: 'overdue', flagged: true, subtasks: 2 },
+            { id: 2, title: '给项目经理回电话', note: '讨论上线时间', done: false, dueLabel: '今天', dueTone: 'today', flagged: false, subtasks: 0 },
+            { id: 3, title: '预约牙医检查', note: '', done: false, dueLabel: '8/18', dueTone: 'future', flagged: false, subtasks: 0 },
+            { id: 4, title: '读完《设计中的设计》', note: '还剩两章', done: false, dueLabel: '', dueTone: 'none', flagged: true, subtasks: 0 },
+            { id: 5, title: '整理收件箱里的票据', note: '', done: false, dueLabel: '今天', dueTone: 'today', flagged: false, subtasks: 0 },
+            { id: 6, title: '撰写周报', note: '数据部分已完成', done: false, dueLabel: '8/19', dueTone: 'future', flagged: false, subtasks: 1 },
+            { id: 7, title: '更新团队共享日历', note: '', done: true, dueLabel: '今天', dueTone: 'today', flagged: false, subtasks: 0 },
+          ],
+          total: 7,
+        }) as T,
+      };
+    }
+    if (url.includes('/r/Sundial__todayTasks') && method === 'get') {
+      return {
+        status: 0,
+        data: clone({
+          items: [
+            { time: '08:30', title: '晨间拉伸', past: true },
+            { time: '10:00', title: '项目同步会', past: true },
+            { time: '14:00', title: '写周报', past: false },
+            { time: '17:30', title: '预约牙医', past: false },
+          ],
+          total: 4,
+        }) as T,
+      };
+    }
+
     return { status: 0, data: null as T };
   };
 

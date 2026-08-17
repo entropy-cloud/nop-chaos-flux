@@ -1,0 +1,197 @@
+{
+  "type": "page",
+  "testid": "sundial-todo-dialog-page",
+  "className": "sd-root",
+  "body": [
+    {
+      "type": "container",
+      "className": "p-6 flex flex-col gap-3 max-w-xl",
+      "body": [
+        {
+          "type": "text",
+          "text": "新建待办对话框",
+          "className": "text-lg font-semibold text-[#0d0d0d]"
+        },
+        {
+          "type": "text",
+          "text": "复刻 Sundial 的新建待办对话框：360dp 圆角面板（#FEFEFE）、标题自动聚焦、备注多行、日期/旗标/列表字段行。对话框由声明式 dialog 节点 + className 驱动，点击页面上的按钮可打开。",
+          "className": "text-xs text-[#636363] leading-relaxed"
+        },
+        {
+          "type": "button",
+          "label": "打开新建待办对话框",
+          "variant": "ghost",
+          "className": "sd-btn sd-btn-default self-start mt-2",
+          "testid": "sundial-open-todo-dialog",
+          "onClick": {
+            "action": "setValue",
+            "args": {
+              "path": "todoDialogOpen",
+              "value": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "dialog",
+      "id": "sundial-todo-dialog",
+      "title": "新建待办",
+      "className": "sd-dialog",
+      "open": "${todoDialogOpen}",
+      "body": [
+        {
+          "type": "form",
+          "id": "sundial-todo-form",
+          "data": {
+            "title": "",
+            "note": "",
+            "list": "收件箱"
+          },
+          "bodyClassName": "p-0",
+          "body": [
+            {
+              "type": "input-text",
+              "name": "title",
+              "className": "sd-input",
+              "placeholder": "标题",
+              "testid": "sundial-todo-title"
+            },
+            {
+              "type": "textarea",
+              "name": "note",
+              "className": "sd-input mt-2",
+              "placeholder": "备注（可选）…",
+              "testid": "sundial-todo-note"
+            },
+            {
+              "type": "container",
+              "className": "mt-3 flex flex-col",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 10,
+                  "className": "sd-field-row",
+                  "testid": "sundial-todo-date-row",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "calendar",
+                      "size": 14,
+                      "color": "#636363"
+                    },
+                    {
+                      "type": "text",
+                      "text": "日期",
+                      "className": "text-xs text-[#333333]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "无",
+                      "className": "ml-auto text-xs text-[#636363]"
+                    }
+                  ],
+                  "onClick": {
+                    "action": "showToast",
+                    "args": {
+                      "message": "选择日期（占位反馈）"
+                    }
+                  }
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 10,
+                  "className": "sd-field-row",
+                  "testid": "sundial-todo-flag-row",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "flag",
+                      "size": 14,
+                      "color": "#636363"
+                    },
+                    {
+                      "type": "text",
+                      "text": "旗标",
+                      "className": "text-xs text-[#333333]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "未标记",
+                      "className": "ml-auto text-xs text-[#636363]"
+                    }
+                  ],
+                  "onClick": {
+                    "action": "showToast",
+                    "args": {
+                      "message": "切换旗标（占位反馈）"
+                    }
+                  }
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 10,
+                  "className": "sd-field-row",
+                  "testid": "sundial-todo-list-row",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "tray",
+                      "size": 14,
+                      "color": "#636363"
+                    },
+                    {
+                      "type": "text",
+                      "text": "列表",
+                      "className": "text-xs text-[#333333]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "",
+                      "className": "ml-auto block w-2.5 h-2.5 rounded-full bg-[#636363]"
+                    },
+                    {
+                      "type": "text",
+                      "text": "收件箱",
+                      "className": "text-xs text-[#0d0d0d]"
+                    }
+                  ],
+                  "onClick": {
+                    "action": "showToast",
+                    "args": {
+                      "message": "选择列表（占位反馈）"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "actions": [
+            {
+              "type": "button",
+              "label": "取消",
+              "variant": "ghost",
+              "className": "sd-btn sd-btn-ghost",
+              "onClick": {
+                "action": "closeSurface"
+              }
+            },
+            {
+              "type": "button",
+              "label": "添加",
+              "variant": "default",
+              "className": "sd-btn sd-btn-default",
+              "testid": "sundial-todo-submit",
+              "onClick": {
+                "action": "closeSurface"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

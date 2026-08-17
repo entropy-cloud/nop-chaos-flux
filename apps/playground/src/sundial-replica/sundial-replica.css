@@ -1,0 +1,660 @@
+/*
+ * Sundial replica styles (light mode).
+ *
+ * Replicates the Sundial KMP Compose design system (see
+ * docs/analysis/sundial-ui-reproduction-analysis.md §2) purely via CSS
+ * tokens + marker classes, following the "schema className + custom marker
+ * CSS" pattern established by the dashboard complex page.
+ *
+ * The page schemas under complex-pages/page-schemas/sundial-*.json reference
+ * these classes; no renderer internals are modified.
+ */
+
+/* ── 1. Design tokens (light mode) ──────────────────────────────────────── */
+
+.sd-root {
+  --sd-bg: #f2f2f2;
+  --sd-surface: #ffffff;
+  --sd-surface-alt: #f7f7f5;
+  --sd-panel: #e3e3e3;
+  --sd-input-bg: #f5f5f5;
+  --sd-border: #d9d9d9;
+  --sd-border-subtle: #eae7e2;
+  --sd-text-high: #0d0d0d;
+  --sd-text-normal: #333333;
+  --sd-text-low: #636363;
+  --sd-brand: #ea7a2a;
+  --sd-brand-hover: #e79255;
+  --sd-brand-subtle: #fff2e8;
+  --sd-row-hover: #f4f4f2;
+  --sd-error: #d25151;
+  --sd-success: #54b04f;
+  --sd-warning: #db7706;
+  --sd-info: #3c83f6;
+  --sd-list-blue: #0a84ff;
+  --sd-list-red: #ff3b30;
+  --sd-list-orange: #ff9500;
+  --sd-list-yellow: #ffcc00;
+  --sd-list-green: #34c759;
+  --sd-list-teal: #5ac8fa;
+  --sd-list-purple: #af52de;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  color: var(--sd-text-normal);
+  background: var(--sd-bg);
+  font-size: 14px;
+}
+
+.sd-root,
+.sd-root * {
+  box-sizing: border-box;
+}
+
+.sd-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ── 2. Surfaces / cards ────────────────────────────────────────────────── */
+
+.sd-card {
+  background: var(--sd-surface);
+  border-radius: 8px;
+  border: 1px solid var(--sd-border-subtle);
+}
+
+.sd-card-hover:hover {
+  background: var(--sd-row-hover);
+}
+
+/* ── 3. Badges (accent @ 8% bg + accent text, 2px radius, mono 10px) ────── */
+
+.sd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 2px;
+  padding: 2px 6px;
+  font-size: 10px;
+  line-height: 1.2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: nowrap;
+}
+
+.sd-badge-brand {
+  background: rgba(234, 122, 42, 0.08);
+  color: var(--sd-brand);
+}
+
+.sd-badge-warning {
+  background: rgba(219, 119, 6, 0.08);
+  color: var(--sd-warning);
+}
+
+.sd-badge-error {
+  background: rgba(210, 81, 81, 0.08);
+  color: var(--sd-error);
+}
+
+.sd-badge-info {
+  background: rgba(60, 131, 246, 0.08);
+  color: var(--sd-info);
+}
+
+.sd-badge-success {
+  background: rgba(84, 176, 79, 0.08);
+  color: var(--sd-success);
+}
+
+.sd-badge-neutral {
+  background: var(--sd-panel);
+  color: var(--sd-text-low);
+}
+
+/* ── 4. Buttons (32px tall, 8px radius, 12px semibold) ──────────────────── */
+
+.sd-btn[data-slot='button'] {
+  height: 32px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 14px;
+  gap: 4px;
+}
+
+.sd-btn-ghost[data-slot='button'] {
+  background: transparent;
+  color: var(--sd-text-normal);
+}
+
+.sd-btn-ghost[data-slot='button']:hover:not(:disabled) {
+  background: var(--sd-row-hover);
+  color: var(--sd-text-normal);
+}
+
+.sd-btn-default[data-slot='button'] {
+  background: var(--sd-brand);
+  color: #ffffff;
+}
+
+.sd-btn-default[data-slot='button']:hover:not(:disabled) {
+  background: var(--sd-brand-hover);
+  color: #ffffff;
+}
+
+.sd-btn-default[data-slot='button']:disabled {
+  background: rgba(234, 122, 42, 0.4);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.sd-btn-danger[data-slot='button'] {
+  background: transparent;
+  color: var(--sd-error);
+  border: 1px solid var(--sd-border);
+}
+
+.sd-btn-danger[data-slot='button']:hover:not(:disabled) {
+  background: rgba(210, 81, 81, 0.08);
+  color: var(--sd-error);
+}
+
+/* ── 5. Circular checkbox ────────────────────────────────────────────────
+   The schema uses shape:"circle" (native ui Checkbox data-shape output);
+   these rules only customize the checked indicator to the Sundial look
+   (brand fill + white checkmark instead of the default white dot). ─────── */
+
+.sd-checkbox [data-slot='checkbox'] {
+  position: relative;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 9999px !important;
+  background: transparent !important;
+  border: 1.5px solid var(--sd-text-low) !important;
+  box-shadow: none !important;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sd-checkbox [data-slot='checkbox']:hover {
+  border-color: var(--sd-text-high) !important;
+}
+
+.sd-checkbox [data-slot='checkbox'][data-checked] {
+  background: var(--sd-brand) !important;
+  border-color: var(--sd-brand) !important;
+}
+
+.sd-checkbox [data-slot='checkbox-indicator'] {
+  display: none;
+}
+
+.sd-checkbox [data-slot='checkbox'][data-checked]::after {
+  content: '';
+  position: absolute;
+  left: 4.5px;
+  top: 1.5px;
+  width: 4px;
+  height: 8px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* ── 6. Text inputs (2px radius, inputBg, 1px border, brand focus) ──────── */
+
+.sd-input input {
+  background: var(--sd-input-bg) !important;
+  border: 1px solid var(--sd-border) !important;
+  border-radius: 2px !important;
+  padding: 6px 10px !important;
+  min-height: 34px;
+}
+
+.sd-input input:focus {
+  border-color: var(--sd-brand) !important;
+  box-shadow: none !important;
+}
+
+.sd-input-bare input {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 2px !important;
+  min-height: auto !important;
+  color: var(--sd-text-high) !important;
+}
+
+/* ── 7. Nav rows (sidebar / settings rail) ──────────────────────────────── */
+
+.sd-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 9px 10px;
+  color: var(--sd-text-high);
+  cursor: pointer;
+  min-height: 42px;
+}
+
+.sd-nav-row:hover {
+  background: var(--sd-row-hover);
+}
+
+.sd-nav-row.sd-nav-selected {
+  background: var(--sd-brand-subtle);
+}
+
+.sd-nav-secondary {
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+/* ── 8. Task rows ───────────────────────────────────────────────────────── */
+
+.sd-task-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+.sd-task-row:hover {
+  background: var(--sd-row-hover);
+}
+
+.sd-task-row.sd-row-selected {
+  background: var(--sd-brand-subtle);
+}
+
+/* ── 9. Sundial accordion sections (native markers: data-tone / tone-bar /
+        count — collapse emits semantics, CSS below only styles the markers) ── */
+
+.sd-section {
+  background: var(--sd-surface);
+  border-radius: 8px;
+  border: 1px solid var(--sd-border-subtle);
+}
+
+.sd-section .nop-collapse[data-slot='collapse-root'] {
+  display: flex;
+  flex-direction: column;
+}
+
+.sd-section [data-slot='collapse-item'] {
+  display: flex;
+  flex-direction: column;
+}
+
+.sd-section [data-slot='collapse-trigger'] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 9px !important;
+  width: 100%;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 4px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.sd-section [data-slot='collapse-trigger']:hover {
+  background: transparent !important;
+}
+
+/* Native tone bar marker: 3×18px, radius 2, colored by data-tone. */
+.sd-section [data-slot='collapse-tone-bar'] {
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--sd-text-low);
+  flex-shrink: 0;
+}
+
+.sd-section [data-slot='collapse-trigger'][data-tone='brand'] [data-slot='collapse-tone-bar'] {
+  background: var(--sd-brand);
+}
+
+.sd-section [data-slot='collapse-trigger'][data-tone='danger'] [data-slot='collapse-tone-bar'] {
+  background: var(--sd-error);
+}
+
+.sd-section [data-slot='collapse-trigger'][data-tone='info'] [data-slot='collapse-tone-bar'] {
+  background: var(--sd-info);
+}
+
+.sd-section [data-slot='collapse-trigger'][data-tone='neutral'] [data-slot='collapse-tone-bar'] {
+  background: var(--sd-text-low);
+}
+
+.sd-section [data-slot='collapse-trigger'][data-tone='warning'] [data-slot='collapse-tone-bar'] {
+  background: var(--sd-warning);
+}
+
+.sd-section [data-slot='collapse-trigger'][data-tone='success'] [data-slot='collapse-tone-bar'] {
+  background: var(--sd-success);
+}
+
+/* Title colored by the semantic tone; count stays muted. */
+.sd-section [data-slot='collapse-trigger'][data-tone='brand'] [data-slot='collapse-trigger-label'] {
+  color: var(--sd-brand);
+}
+
+.sd-section
+  [data-slot='collapse-trigger'][data-tone='danger']
+  [data-slot='collapse-trigger-label'] {
+  color: var(--sd-error);
+}
+
+.sd-section [data-slot='collapse-trigger'][data-tone='info'] [data-slot='collapse-trigger-label'] {
+  color: var(--sd-info);
+}
+
+.sd-section
+  [data-slot='collapse-trigger'][data-tone='neutral']
+  [data-slot='collapse-trigger-label'] {
+  color: var(--sd-text-low);
+}
+
+.sd-section
+  [data-slot='collapse-trigger'][data-tone='warning']
+  [data-slot='collapse-trigger-label'] {
+  color: var(--sd-warning);
+}
+
+.sd-section
+  [data-slot='collapse-trigger'][data-tone='success']
+  [data-slot='collapse-trigger-label'] {
+  color: var(--sd-success);
+}
+
+.sd-section [data-slot='collapse-trigger-icon'] {
+  order: 1;
+  width: 14px !important;
+  height: 14px !important;
+  color: var(--sd-text-low) !important;
+}
+
+.sd-section [data-slot='collapse-item'][data-open] [data-slot='collapse-trigger-icon'] {
+  transform: none !important;
+}
+
+.sd-section [data-slot='collapse-trigger-label'] {
+  order: 2;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Native count marker: monospace, pushed right. */
+.sd-section [data-slot='collapse-count'] {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 400;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--sd-text-low);
+}
+
+.sd-section [data-slot='collapse-content'] > div {
+  padding: 0 !important;
+}
+
+.sd-section .sd-task-row {
+  border-top: 1px solid var(--sd-border-subtle);
+}
+
+.sd-section .sd-task-row:first-of-type {
+  border-top: none;
+}
+
+.sd-section [data-slot='collapse-item']:not([data-open]) [data-slot='collapse-trigger-icon'] {
+  transform: rotate(-90deg) !important;
+}
+
+.sd-section [data-slot='collapse-item'][data-open] [data-slot='collapse-trigger-icon'] {
+  transform: none !important;
+}
+
+/* ── 10. Pressure distribution rail + legend ────────────────────────────── */
+
+.sd-rail {
+  display: flex;
+  height: 6px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--sd-panel);
+}
+
+.sd-rail-seg {
+  height: 100%;
+}
+
+.sd-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 10px;
+}
+
+.sd-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── 11. Today timeline rail (06:00–24:00) ──────────────────────────────── */
+
+.sd-timeline-rail {
+  position: relative;
+  height: 34px;
+  margin-top: 14px;
+}
+
+.sd-timeline-base {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--sd-border-subtle);
+}
+
+.sd-timeline-tick {
+  position: absolute;
+  top: 11px;
+  width: 1px;
+  height: 10px;
+  background: var(--sd-border);
+}
+
+.sd-timeline-now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--sd-brand);
+}
+
+.sd-timeline-dot {
+  position: absolute;
+  top: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.sd-timeline-dot-next {
+  top: 11px;
+  width: 10px;
+  height: 10px;
+  background: var(--sd-brand);
+}
+
+/* ── 12. Field rows (detail / settings option rows) ─────────────────────── */
+
+.sd-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.sd-field-row:hover {
+  background: var(--sd-row-hover);
+}
+
+.sd-choice-row {
+  border-radius: 8px;
+  border: 1px solid var(--sd-border-subtle);
+  background: var(--sd-surface);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.sd-choice-row:hover {
+  background: var(--sd-row-hover);
+}
+
+.sd-choice-row.sd-choice-selected {
+  background: var(--sd-brand-subtle);
+  border-color: rgba(234, 122, 42, 0.35);
+}
+
+/* ── 13. Sidebar shell ──────────────────────────────────────────────────── */
+
+.sd-sidebar {
+  background: var(--sd-surface);
+  border-right: 1px solid var(--sd-border-subtle);
+}
+
+.sd-sidebar-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sd-text-low);
+}
+
+/* ── 14. List color dots ────────────────────────────────────────────────── */
+
+.sd-list-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sd-list-dot-blue {
+  background: var(--sd-list-blue);
+}
+
+.sd-list-dot-red {
+  background: var(--sd-list-red);
+}
+
+.sd-list-dot-orange {
+  background: var(--sd-list-orange);
+}
+
+.sd-list-dot-yellow {
+  background: var(--sd-list-yellow);
+}
+
+.sd-list-dot-green {
+  background: var(--sd-list-green);
+}
+
+.sd-list-dot-teal {
+  background: var(--sd-list-teal);
+}
+
+.sd-list-dot-purple {
+  background: var(--sd-list-purple);
+}
+
+.sd-list-dot-neutral {
+  background: var(--sd-text-low);
+}
+
+/* ── 15. Dialog (360px, 16px radius, #FEFEFE panel) ─────────────────────── */
+
+.sd-dialog[data-slot='dialog-surface'] {
+  max-width: 360px;
+  width: 360px;
+  border-radius: 16px;
+  background: #fefefe;
+  border: 1px solid var(--sd-border);
+  box-shadow: none;
+  padding: 20px;
+}
+
+.sd-dialog [data-slot='dialog-header'] {
+  padding: 0;
+}
+
+.sd-dialog [data-slot='dialog-body'] {
+  padding: 0;
+}
+
+.sd-dialog [data-slot='dialog-footer'] {
+  padding: 0;
+}
+
+/* ── 16. KPI cards (analytics) ──────────────────────────────────────────── */
+
+.sd-kpi-card {
+  background: var(--sd-surface);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.sd-chart-card {
+  background: var(--sd-surface);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* ── 17. Settings rail ──────────────────────────────────────────────────── */
+
+.sd-settings-rail {
+  background: var(--sd-surface-alt);
+  border-right: 1px solid var(--sd-border-subtle);
+}
+
+/* ── 18. Accordion (organize suggestions) ───────────────────────────────── */
+
+.sd-org-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sd-brand);
+}
+
+.sd-org-header .sd-org-count {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 400;
+}
+
+/* ── 19. Press feedback (80% foreground alpha) ──────────────────────────── */
+
+.sd-press {
+  transition: opacity 0.15s ease;
+}
+
+.sd-press:active {
+  opacity: 0.8;
+}

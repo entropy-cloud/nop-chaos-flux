@@ -2,7 +2,8 @@ export type ComplexPageCategory =
   | 'data-lists'
   | 'master-detail'
   | 'complex-forms'
-  | 'visualization';
+  | 'visualization'
+  | 'app-replica';
 
 export interface ComplexPageEntry {
   id: string;
@@ -24,6 +25,7 @@ export const COMPLEX_PAGE_CATEGORY_ORDER: ComplexPageCategory[] = [
   'master-detail',
   'complex-forms',
   'visualization',
+  'app-replica',
 ];
 
 export const COMPLEX_PAGE_CATEGORY_META: Record<ComplexPageCategory, ComplexPageCategoryMeta> = {
@@ -46,6 +48,11 @@ export const COMPLEX_PAGE_CATEGORY_META: Record<ComplexPageCategory, ComplexPage
     id: 'visualization',
     label: '数据可视化',
     blurb: '统计卡片 + 图表 + 明细表格组合的概览仪表盘。',
+  },
+  'app-replica': {
+    id: 'app-replica',
+    label: '外部应用复刻',
+    blurb: '用 schema + 自定义 CSS 复刻真实外部应用（Sundial 待办）的界面，验证 flux 对外部设计系统的还原能力。',
   },
 };
 
@@ -161,5 +168,45 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
     description:
       '模拟运营大屏：6 张 KPI 卡片（订单总数/今日订单/活跃/待付款/收入/增长率）+ 3 图（趋势面积图/每日订单柱状图/渠道占比饼图）+ 2 表（最近订单/待审批任务）。6 个 data-source 并行取数。',
     features: ['stat cards', 'chart（area/pie/bar）', 'data-source 并行', 'table ×2'],
+  },
+  {
+    id: 'sundial-workbench',
+    title: 'Sundial 工作台',
+    category: 'app-replica',
+    description:
+      '复刻 Sundial（KMP 待办应用）桌面端工作台：272px 侧边栏（品牌/搜索/主导航/工作台视图/同步状态）+ 页头（标题+日期+添加待办）+ 压力分布 rail 卡 + 逾期/今天/未来7天/无日期/待整理五个可折叠分组（色调条 + 彩色标题 + 等宽计数）+ 任务行（圆形 checkbox/标题/截止 badge/旗标）。',
+    features: ['复刻样式', '圆形 checkbox', '压力 rail', '折叠分组', '色调条', '任务行'],
+  },
+  {
+    id: 'sundial-analytics',
+    title: 'Sundial 分析',
+    category: 'app-replica',
+    description:
+      '复刻 Sundial 分析页：鼓励语页头 + 4 张 KPI 卡（今天完成/连续完成/7天输出/完成率）+ 4 张图表卡（完成趋势折线 / 精力输出柱状 / 待办压力多色柱状+图例 / 输出结构洞察行+badge），数据经 mock 后端 Sundial__* 端点拉取。',
+    features: ['复刻样式', 'KPI 卡', '折线图', '多色柱状图', '图例', 'insight 行'],
+  },
+  {
+    id: 'sundial-detail',
+    title: 'Sundial 待办详情',
+    category: 'app-replica',
+    description:
+      '复刻 Sundial 详情检查器：状态行（checkbox + 状态文案 + 日期 badge）+ 无边框标题输入 + 备注内嵌框 + 日期/重复/旗标/列表四个字段行（hover 背景 + badge 值）+ 子任务列表 + 底部"移到列表 / 移到垃圾箱"按钮，含日期/重复/列表选择对话框。',
+    features: ['复刻样式', '字段行', 'badge', '子任务', '选择对话框', 'hover 交互'],
+  },
+  {
+    id: 'sundial-settings',
+    title: 'Sundial 设置',
+    category: 'app-replica',
+    description:
+      '复刻 Sundial 设置页：280px 导航 rail（同步/列表/数据/外观/关于）+ 同步面板（本地/Supabase/自建服务器三种模式选项卡 + 连接信息输入 + 同步状态卡）+ 列表管理（色点行 + 新建列表对话框）+ 数据事实行 + 关于信息。',
+    features: ['复刻样式', '导航 rail', '模式选项卡', '状态卡', '色点列表行'],
+  },
+  {
+    id: 'sundial-todo-dialog',
+    title: 'Sundial 新建待办',
+    category: 'app-replica',
+    description:
+      '复刻 Sundial 新建待办对话框：360dp 圆角对话框，标题输入（自动聚焦）+ 备注多行 + 日期字段行（badge+清除按钮）+ 旗标行 + 列表行（色点 + 名称）+ 取消/添加按钮，全部由 schema + openDialog 动作驱动。',
+    features: ['复刻样式', '对话框', '表单字段', 'badge', 'openDialog'],
   },
 ];

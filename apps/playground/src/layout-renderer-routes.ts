@@ -63,4 +63,12 @@ export const LAYOUT_RENDERER_ROUTES: RendererRouteEntry[] = [
     description:
       'Event timeline display collection with mode/orientation/reverse options; display-only, no owner state.',
   },
+  {
+    id: 'responsive',
+    title: 'Responsive',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-layout',
+    description:
+      'Structural responsive container: renders exactly one variant subtree per viewport (desktop shell ↔ mobile shell).',
+  },
 ];

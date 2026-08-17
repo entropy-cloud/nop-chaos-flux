@@ -73,6 +73,7 @@ export { ButtonGroupLabPage } from './button-group-lab-page';
 export { DropdownButtonLabPage } from './dropdown-button-lab-page';
 export { StepsLabPage } from './steps-lab-page';
 export { TimelineLabPage } from './timeline-lab-page';
+export { ResponsiveLabPage } from './responsive-lab-page';
 export { MarkdownLabPage } from './markdown-lab-page';
 export { HtmlLabPage } from './html-lab-page';
 export { JsonViewLabPage } from './json-view-lab-page';

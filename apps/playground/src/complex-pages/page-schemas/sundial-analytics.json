@@ -1,0 +1,653 @@
+{
+  "type": "page",
+  "testid": "sundial-analytics-page",
+  "className": "sd-root",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "summary",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__summary",
+        "method": "get"
+      },
+      "testid": "sundial-summary-source"
+    },
+    {
+      "type": "data-source",
+      "name": "trend",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__trend",
+        "method": "get"
+      }
+    },
+    {
+      "type": "data-source",
+      "name": "energy",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__energy",
+        "method": "get"
+      }
+    },
+    {
+      "type": "data-source",
+      "name": "pressure",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__pressure",
+        "method": "get"
+      }
+    },
+    {
+      "type": "data-source",
+      "name": "output",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__outputStructure",
+        "method": "get"
+      }
+    },
+    {
+      "type": "container",
+      "className": "p-6 flex flex-col gap-4",
+      "body": [
+        {
+          "type": "text",
+          "text": "${summary?.encouragement ?? '今天已经推进 X 件，节奏正在形成。'}",
+          "className": "text-lg font-semibold text-[#0d0d0d]",
+          "testid": "sundial-encouragement"
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "wrap": true,
+          "body": [
+            {
+              "type": "container",
+              "testid": "sundial-kpi-today",
+              "className": "flex-1 sd-kpi-card min-w-[150px]",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "circle-check",
+                      "size": 15,
+                      "color": "#ea7a2a"
+                    },
+                    {
+                      "type": "text",
+                      "text": "今天完成",
+                      "className": "text-xs font-semibold text-[#636363]"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "items-end mt-2.5",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${summary?.todayCompleted ?? 0}",
+                      "className": "text-2xl font-semibold leading-none text-[#0d0d0d] sd-mono"
+                    },
+                    {
+                      "type": "text",
+                      "text": "件",
+                      "className": "text-xs text-[#636363]"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "testid": "sundial-kpi-streak",
+              "className": "flex-1 sd-kpi-card min-w-[150px]",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "clock",
+                      "size": 15,
+                      "color": "#ea7a2a"
+                    },
+                    {
+                      "type": "text",
+                      "text": "连续完成",
+                      "className": "text-xs font-semibold text-[#636363]"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "items-end mt-2.5",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${summary?.streakDays ?? 0}",
+                      "className": "text-2xl font-semibold leading-none text-[#0d0d0d] sd-mono"
+                    },
+                    {
+                      "type": "text",
+                      "text": "天",
+                      "className": "text-xs text-[#636363]"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "testid": "sundial-kpi-energy",
+              "className": "flex-1 sd-kpi-card min-w-[150px]",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "bar-chart-3",
+                      "size": 15,
+                      "color": "#ea7a2a"
+                    },
+                    {
+                      "type": "text",
+                      "text": "7 天输出",
+                      "className": "text-xs font-semibold text-[#636363]"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "items-end mt-2.5",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${summary?.weekEnergy ?? 0}",
+                      "className": "text-2xl font-semibold leading-none text-[#0d0d0d] sd-mono"
+                    },
+                    {
+                      "type": "text",
+                      "text": "点",
+                      "className": "text-xs text-[#636363]"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "testid": "sundial-kpi-rate",
+              "className": "flex-1 sd-kpi-card min-w-[150px]",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "layers",
+                      "size": 15,
+                      "color": "#ea7a2a"
+                    },
+                    {
+                      "type": "text",
+                      "text": "完成率",
+                      "className": "text-xs font-semibold text-[#636363]"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "items-end mt-2.5",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${summary?.completionRate ?? '0%'}",
+                      "className": "text-2xl font-semibold leading-none text-[#0d0d0d] sd-mono"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 16,
+          "wrap": true,
+          "body": [
+            {
+              "type": "container",
+              "testid": "sundial-trend-card",
+              "className": "flex-1 sd-chart-card min-w-[300px]",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "items-start justify-between",
+                  "body": [
+                    {
+                      "type": "container",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "完成趋势",
+                          "className": "text-lg font-semibold text-[#0d0d0d]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "最近 7 天每天完成的任务数量",
+                          "className": "text-xs text-[#636363] mt-1"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon",
+                      "icon": "bar-chart-3",
+                      "size": 15,
+                      "color": "#636363"
+                    }
+                  ]
+                },
+                {
+                  "type": "chart",
+                  "testid": "sundial-trend-chart",
+                  "chartType": "line",
+                  "source": "${trend?.items}",
+                  "height": 160,
+                  "xAxis": {
+                    "dataKey": "label"
+                  },
+                  "series": [
+                    {
+                      "name": "完成数",
+                      "dataRegionKey": "count"
+                    }
+                  ],
+                  "colors": ["#ea7a2a"],
+                  "grid": false,
+                  "legend": false
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "testid": "sundial-energy-card",
+              "className": "flex-1 sd-chart-card min-w-[300px]",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "items-start justify-between",
+                  "body": [
+                    {
+                      "type": "container",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "精力输出",
+                          "className": "text-lg font-semibold text-[#0d0d0d]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "按完成任务复杂度估算的输出点数",
+                          "className": "text-xs text-[#636363] mt-1"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon",
+                      "icon": "bar-chart-3",
+                      "size": 15,
+                      "color": "#636363"
+                    }
+                  ]
+                },
+                {
+                  "type": "chart",
+                  "testid": "sundial-energy-chart",
+                  "chartType": "bar",
+                  "source": "${energy?.items}",
+                  "height": 160,
+                  "xAxis": {
+                    "dataKey": "label"
+                  },
+                  "series": [
+                    {
+                      "name": "输出点",
+                      "dataRegionKey": "points"
+                    }
+                  ],
+                  "colors": ["#ea7a2a"],
+                  "grid": false,
+                  "legend": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 16,
+          "wrap": true,
+          "body": [
+            {
+              "type": "container",
+              "testid": "sundial-pressure-card",
+              "className": "flex-1 sd-chart-card min-w-[300px]",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "items-start justify-between",
+                  "body": [
+                    {
+                      "type": "container",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "待办压力",
+                          "className": "text-lg font-semibold text-[#0d0d0d]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "当前未完成任务的时间分布",
+                          "className": "text-xs text-[#636363] mt-1"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon",
+                      "icon": "bar-chart-3",
+                      "size": 15,
+                      "color": "#636363"
+                    }
+                  ]
+                },
+                {
+                  "type": "chart",
+                  "testid": "sundial-pressure-chart",
+                  "chartType": "bar",
+                  "source": "${pressure?.items}",
+                  "height": 120,
+                  "series": [
+                    {
+                      "name": "压力",
+                      "dataRegionKey": "count",
+                      "colorRegionKey": "tone"
+                    }
+                  ],
+                  "grid": false,
+                  "legend": false,
+                  "xAxis": {
+                    "dataKey": "bucket"
+                  }
+                },
+                {
+                  "type": "container",
+                  "className": "flex flex-col gap-2 mt-3",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "testid": "sundial-legend-overdue",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "",
+                          "className": "block w-2 h-2 rounded-full bg-[#d25151] shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "逾期",
+                          "className": "text-xs text-[#636363]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${pressure?.items?.[0]?.count ?? 0}",
+                          "className": "ml-auto text-xs font-semibold sd-mono text-[#d25151]"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "testid": "sundial-legend-today",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "",
+                          "className": "block w-2 h-2 rounded-full bg-[#ea7a2a] shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "今天",
+                          "className": "text-xs text-[#636363]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${pressure?.items?.[1]?.count ?? 0}",
+                          "className": "ml-auto text-xs font-semibold sd-mono text-[#ea7a2a]"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "testid": "sundial-legend-future",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "",
+                          "className": "block w-2 h-2 rounded-full bg-[#3c83f6] shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "未来 7 天",
+                          "className": "text-xs text-[#636363]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${pressure?.items?.[2]?.count ?? 0}",
+                          "className": "ml-auto text-xs font-semibold sd-mono text-[#3c83f6]"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "testid": "sundial-legend-none",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "",
+                          "className": "block w-2 h-2 rounded-full bg-[#636363] shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "无日期",
+                          "className": "text-xs text-[#636363]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${pressure?.items?.[3]?.count ?? 0}",
+                          "className": "ml-auto text-xs font-semibold sd-mono text-[#636363]"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "testid": "sundial-structure-card",
+              "className": "flex-1 sd-chart-card min-w-[300px]",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "items-start justify-between",
+                  "body": [
+                    {
+                      "type": "container",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "输出结构",
+                          "className": "text-lg font-semibold text-[#0d0d0d]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "让你看到完成的不是数量，而是推进量",
+                          "className": "text-xs text-[#636363] mt-1"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon",
+                      "icon": "bar-chart-3",
+                      "size": 15,
+                      "color": "#636363"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "justify-between mt-1",
+                  "body": [
+                    {
+                      "type": "container",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "深度任务",
+                          "className": "text-xs font-semibold text-[#333333]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "完成后输出点数 >= 3",
+                          "className": "text-[10px] text-[#636363] mt-0.5"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "${output?.deepTasks ?? 0}",
+                      "className": "text-lg font-semibold text-[#0d0d0d] sd-mono"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "justify-between",
+                  "body": [
+                    {
+                      "type": "container",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "快速推进",
+                          "className": "text-xs font-semibold text-[#333333]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "轻量任务，适合维持手感",
+                          "className": "text-[10px] text-[#636363] mt-0.5"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "${output?.quickWins ?? 0}",
+                      "className": "text-lg font-semibold text-[#0d0d0d] sd-mono"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "justify-between",
+                  "body": [
+                    {
+                      "type": "container",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "已标记完成",
+                          "className": "text-xs font-semibold text-[#333333]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "重要任务中的已完成项",
+                          "className": "text-[10px] text-[#636363] mt-0.5"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "${output?.flaggedDone ?? 0}",
+                      "className": "text-lg font-semibold text-[#0d0d0d] sd-mono"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "${output?.outputSummary ?? ''}",
+                  "className": "sd-badge sd-badge-brand mt-3",
+                  "testid": "sundial-output-badge"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -15,6 +15,7 @@
 @import '@nop-chaos/flux-renderers-industrial/editor/styles.css';
 @import '@nop-chaos/flux-renderers-dashboard/styles.css';
 @import './styles-theme-utilities.css';
+@import './sundial-replica/sundial-replica.css';
 @source "../../../packages";
 
 @theme inline {
