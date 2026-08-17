@@ -41,11 +41,82 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
 
   const useFlexChild =
     wrap || align !== undefined || gap.className || gap.style || direction !== undefined || hasResponsive;
+
+  const isClickable = props.events.onClick != null;
+
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    void props.events.onClick?.(event);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      void props.events.onClick?.(event);
+    }
+  };
+
+  const commonClassName = cn('nop-container', props.meta.className);
+
+  if (!isClickable) {
+    return (
+      <div
+        className={commonClassName}
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid || undefined}
+      >
+        {hasRendererSlotContent(headerContent) ? (
+          <div data-slot="container-header" className={cn(slotProps.headerClassName)}>
+            {headerContent}
+          </div>
+        ) : null}
+        {useFlexChild ? (
+          <div
+            data-slot="container-body"
+            data-flex=""
+            data-direction={direction || undefined}
+            data-wrap={wrap ? 'true' : undefined}
+            data-align={align || undefined}
+            data-gap={slotProps.gap !== undefined ? String(slotProps.gap) : undefined}
+            className={cn(
+              'flex',
+              resolveDirection(direction),
+              wrap && 'flex-wrap',
+              ...responsiveDirectionClasses,
+              ...responsiveWrapClasses,
+              align === 'center' && 'items-center justify-center',
+              align === 'start' && 'items-start justify-start',
+              align === 'end' && 'items-end justify-end',
+              align === 'stretch' && 'items-stretch',
+              gap.className,
+              slotProps.bodyClassName,
+            )}
+            style={gap.style}
+          >
+            {bodyContent}
+          </div>
+        ) : (
+          <div data-slot="container-body" className={cn(slotProps.bodyClassName)}>
+            {bodyContent}
+          </div>
+        )}
+        {hasRendererSlotContent(footerContent) ? (
+          <div data-slot="container-footer" className={cn(slotProps.footerClassName)}>
+            {footerContent}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div
-      className={cn('nop-container', props.meta.className)}
+      className={commonClassName}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
+      role="button"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       {hasRendererSlotContent(headerContent) ? (
         <div data-slot="container-header" className={cn(slotProps.headerClassName)}>

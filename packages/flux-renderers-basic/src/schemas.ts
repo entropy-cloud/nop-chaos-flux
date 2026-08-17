@@ -2,6 +2,7 @@ import type {
   ActionSchema,
   BaseSchema,
   DynamicRendererSchema,
+  ResponsiveBreakpoint,
   SchemaInput,
   SchemaObject,
   SchemaValue,
@@ -13,7 +14,8 @@ export type FlexDirection = 'row' | 'column' | 'row-reverse' | 'column-reverse';
 
 export type ContainerDirection = 'row' | 'column';
 
-export type ResponsiveBreakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+/** Re-exported from @nop-chaos/flux-core (kept for backward compatibility). */
+export type { ResponsiveBreakpoint } from '@nop-chaos/flux-core';
 
 export type ResponsiveFlexDirection = Partial<Record<ResponsiveBreakpoint, FlexDirection>>;
 
@@ -175,6 +177,8 @@ export interface ContainerSchema extends BaseSchema {
   footerClassName?: string;
   responsiveDirection?: ResponsiveContainerDirection;
   responsiveWrap?: ResponsiveWrap;
+  /** Click action run when the container root is activated. */
+  onClick?: ActionSchema | ActionSchema[];
 }
 
 export interface FragmentSchema extends BaseSchema {
@@ -295,6 +299,8 @@ export interface FlexSchema extends BaseSchema {
   className?: string;
   responsiveDirection?: ResponsiveFlexDirection;
   responsiveWrap?: ResponsiveWrap;
+  /** Click action run when the flex root is activated. */
+  onClick?: ActionSchema | ActionSchema[];
 }
 
 export interface ScopeDebugSchema extends BaseSchema {

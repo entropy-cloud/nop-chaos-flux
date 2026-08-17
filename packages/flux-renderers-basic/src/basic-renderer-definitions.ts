@@ -61,6 +61,22 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'container', body: [] },
     component: ContainerRenderer,
+    eventContracts: {
+      onClick: {
+        displayName: 'Click',
+        description: 'Runs when the container root is activated.',
+        payload: {
+          kind: 'object',
+          fields: {
+            type: { kind: 'string' },
+            nativeEvent: { kind: 'unknown' },
+            currentTarget: { kind: 'unknown' },
+            target: { kind: 'unknown' },
+          },
+          optional: ['nativeEvent', 'currentTarget', 'target'],
+        },
+      },
+    },
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'header', kind: 'region', regionKey: 'header' },
@@ -74,6 +90,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'bodyClassName', kind: 'prop' },
       { key: 'headerClassName', kind: 'prop' },
       { key: 'footerClassName', kind: 'prop' },
+      { key: 'onClick', kind: 'event' },
     ],
     staticCapable: true,
   },
@@ -133,6 +150,22 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'flex', body: [] },
     component: FlexRenderer,
+    eventContracts: {
+      onClick: {
+        displayName: 'Click',
+        description: 'Runs when the flex root is activated.',
+        payload: {
+          kind: 'object',
+          fields: {
+            type: { kind: 'string' },
+            nativeEvent: { kind: 'unknown' },
+            currentTarget: { kind: 'unknown' },
+            target: { kind: 'unknown' },
+          },
+          optional: ['nativeEvent', 'currentTarget', 'target'],
+        },
+      },
+    },
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'items', kind: 'region', regionKey: 'items' },
@@ -144,6 +177,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'gap', kind: 'prop' },
       { key: 'responsiveDirection', kind: 'prop' },
       { key: 'responsiveWrap', kind: 'prop' },
+      { key: 'onClick', kind: 'event' },
     ],
     staticCapable: true,
   },

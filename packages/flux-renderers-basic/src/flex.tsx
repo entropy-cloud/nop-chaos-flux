@@ -60,24 +60,57 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
   const itemsContent = asReactNode(props.regions.items?.render());
   const dataAttrs = collectDataAttrs(props.props);
 
+  const isClickable = props.events.onClick != null;
+
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    void props.events.onClick?.(event);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      void props.events.onClick?.(event);
+    }
+  };
+
+  const commonClassName = cn(
+    'nop-flex',
+    resolveDirection(direction),
+    wrap && 'flex-wrap',
+    ...responsiveDirectionClasses,
+    ...responsiveWrapClasses,
+    align,
+    justify,
+    alignContent,
+    props.meta.className,
+    gap.className,
+  );
+
+  if (!isClickable) {
+    return (
+      <div
+        {...dataAttrs}
+        className={commonClassName}
+        style={gap.style}
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid || undefined}
+      >
+        {bodyContent ?? itemsContent}
+      </div>
+    );
+  }
+
   return (
     <div
       {...dataAttrs}
-      className={cn(
-        'nop-flex',
-        resolveDirection(direction),
-        wrap && 'flex-wrap',
-        ...responsiveDirectionClasses,
-        ...responsiveWrapClasses,
-        align,
-        justify,
-        alignContent,
-        props.meta.className,
-        gap.className,
-      )}
+      className={commonClassName}
       style={gap.style}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
+      role="button"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       {bodyContent ?? itemsContent}
     </div>
