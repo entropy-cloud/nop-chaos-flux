@@ -641,22 +641,22 @@ createScopeRef(input: { id; path; initialData?; parent?; store?; isolate?; updat
 
 ## Action Types Quick Reference
 
-| Action type                 | Schema interface            | Key args                                |
-| --------------------------- | --------------------------- | --------------------------------------- |
-| `ajax`                      | `AjaxActionSchema`          | api, adaptor                            |
-| `submitForm`                | `SubmitFormActionSchema`    | (none — nearest form)                   |
-| `openDialog`                | `OpenDialogActionSchema`    | title, body, closeOnSubmit?<sup>1</sup> |
-| `openDrawer`                | `OpenDrawerActionSchema`    | title, body, closeOnSubmit?<sup>1</sup> |
-| `closeSurface`              | `CloseSurfaceActionSchema`  | surfaceId? (default: current)           |
-| `closeDialog`/`closeDrawer` | alias of `closeSurface`     | surfaceId?                              |
-| `refreshTable`              | `RefreshTableActionSchema`  | target                                  |
-| `refreshSource`             | `RefreshSourceActionSchema` | sourceName                              |
-| `setValue`                  | `SetValueActionSchema`      | path, value                             |
-| `setValues`                 | `SetValuesActionSchema`     | path, values                            |
-| `showToast`                 | `ShowToastActionSchema`     | level, message                          |
-| `navigate`                  | `NavigateActionSchema`      | url, replace, back                      |
-| `component:method`          | `ComponentActionSchema`     | \_targetCid, method, args               |
-| `ns:method`                 | `NamespacedActionSchema`    | namespace, method, args                 |
+| Action type                 | Schema interface            | Key args                                                                     |
+| --------------------------- | --------------------------- | ---------------------------------------------------------------------------- |
+| `ajax`                      | `AjaxActionSchema`          | api, adaptor                                                                 |
+| `submitForm`                | `SubmitFormActionSchema`    | (none — nearest form)                                                        |
+| `openDialog`                | `OpenDialogActionSchema`    | title, body, className?, testid?, bodyClassName?, closeOnSubmit?<sup>1</sup> |
+| `openDrawer`                | `OpenDrawerActionSchema`    | title, body, className?, testid?, bodyClassName?, closeOnSubmit?<sup>1</sup> |
+| `closeSurface`              | `CloseSurfaceActionSchema`  | surfaceId? (default: current)                                                |
+| `closeDialog`/`closeDrawer` | alias of `closeSurface`     | surfaceId?                                                                   |
+| `refreshTable`              | `RefreshTableActionSchema`  | target                                                                       |
+| `refreshSource`             | `RefreshSourceActionSchema` | sourceName                                                                   |
+| `setValue`                  | `SetValueActionSchema`      | path, value                                                                  |
+| `setValues`                 | `SetValuesActionSchema`     | path, values                                                                 |
+| `showToast`                 | `ShowToastActionSchema`     | level, message                                                               |
+| `navigate`                  | `NavigateActionSchema`      | url, replace, back                                                           |
+| `component:method`          | `ComponentActionSchema`     | \_targetCid, method, args                                                    |
+| `ns:method`                 | `NamespacedActionSchema`    | namespace, method, args                                                      |
 
 > <sup>1</sup> `closeOnSubmit?: boolean` — `true` 时在 `submit:success` 的 onSubmitSuccess hook 跑完后自动关闭（仅布尔 `true` 生效，fail-closed）。契约详见 `docs/architecture/surface-lifecycle-callbacks.md` §「closeOnSubmit × hook 失败交互（契约）」。
 
@@ -835,6 +835,52 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 - **Undo/Redo**：diff 命令栈（forward+inverse 增量，无全量快照，R4）；transform 事务节流（一拖拽 = 一 undo 步）；工具箱操作入栈。
 - **编辑态包络**（R7 待人工最终确认）：拖拽 ≥30fps @ 选区 ≤1k（primary）/ 编辑操作 per-call <100ms / 内存 ≤320MB（`docs/analysis/industrial-hmi-editor/editing-envelope-2026-08-06.md` 裁定建议 + `editing-envelope-retest-2026-08-07.md` runtime 复测）。
 
+## Responsive 结构断点 — @nop-chaos/flux-renderers-layout
+
+`responsive` 容器：同一逻辑区域按视口断点渲染**一棵完整子树**（结构级响应式，区别于 `flex.responsiveDirection` 的样式级切换）。
+
+```jsonc
+{
+  "type": "responsive",
+  "variants": [
+    {
+      "key": "desktop",
+      "min": "lg",
+      "body": [
+        /* 桌面树 */
+      ],
+    },
+    {
+      "key": "mobile",
+      "body": [
+        /* 默认树（无 bounds） */
+      ],
+    },
+  ],
+}
 ```
 
+- `min`/`max`：命名断点（sm=640/md=768/lg=1024/xl=1280/2xl=1536）或任意 px；min 含、max 不含（`max-width: <max-1>px`）
+- 匹配：声明顺序取第一个满足 bounds 的变体；无命中渲染第一个无 bounds 变体（默认树）
+- 切换语义：整树卸载重建；scope 数据由页面层持有，切换不丢状态
+- 检测：`useBreakpoints(queries)`（`@nop-chaos/ui`），无 matchMedia 环境（SSR/jsdom）回退默认变体
+- 设计文档：`docs/architecture/responsive-and-renderer-enhancements.md`
+
+## Layout Interaction — flex/container onClick
+
+`flex` 与 `container`（`@nop-chaos/flux-renderers-basic`）支持 `onClick` 事件字段（`ActionSchema | ActionSchema[]`，声明于 `FlexSchema`/`ContainerSchema`），实现"行/块可点"的最小交互面：
+
+- 事件挂载位置：flex 挂 `nop-flex` root div；container 挂 `nop-container` root div（非 `container-body`）。
+- 接线模式与 button 相同：renderer 调用 `props.events.onClick?.(event)`，action 在节点 scope 上派发（`setValue`/`showToast`/`openDialog` 等均可）。
+- 未声明 `onClick` 时不挂 handler，行为与旧版一致。
+- 选中态等动态 UI 用 `visible: "${expr}"` 双渲染（选中版/未选中版）表达，`className` 是静态字符串、不支持表达式。
+- 动态选中态依赖 scope 初始值：注入 `PAGE_DATA`（playground）或页面 `data`。
+
+```jsonc
+{
+  "type": "flex",
+  "testid": "sundial-nav-workbench",
+  "onClick": { "action": "setValue", "args": { "path": "activeSection", "value": "workbench" } },
+  "visible": "${activeSection !== 'workbench'}", // 未选中版；选中版用 ${activeSection === 'workbench'}
+}
 ```

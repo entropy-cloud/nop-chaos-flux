@@ -92,6 +92,18 @@
 
 **值类型**：`boolean`
 
+支持 `shape: 'circle'` 渲染圆形复选框（`data-shape` 输出，适合任务行/列表行勾选场景）：
+
+```jsonc
+{
+  "type": "checkbox",
+  "name": "done",
+  "shape": "circle",
+}
+```
+
+其他字段：`option: { label, value? }`（显示标签）、`trueValue`/`falseValue`（值映射）、`disabled`。
+
 ---
 
 ## 3. Switch 开关

@@ -63,4 +63,31 @@
 | `collapsible`          | `boolean`                                  | 面板可折叠（默认 true）           |
 | `onChange`             | `ActionSchema`                             | 展开状态变化时触发                |
 
-每项支持：`key`、`title`（value-or-region）、`body`（region）、`disabled`。
+每项支持：`key`、`title`（value-or-region）、`body`（region）、`leading`（region）、`tone`、`count`、`disabled`。
+
+## 语义化 trigger（tone / count / leading）
+
+`tone`/`count`/`leading` 让分组头语义可表达（渲染器输出 marker，视觉由宿主 CSS 定制）——典型场景是"色调条 + 彩色标题 + 等宽计数"的任务分组头（如 Sundial 工作台的逾期/今天/未来 7 天分组）：
+
+```json
+{
+  "type": "collapse",
+  "items": [
+    {
+      "key": "overdue",
+      "title": "逾期",
+      "tone": "danger",
+      "count": 3,
+      "leading": { "type": "icon", "icon": "flag", "size": 14, "color": "#d25151" },
+      "body": [{ "type": "text", "text": "整理季度报税材料" }]
+    },
+    { "key": "today", "title": "今天", "tone": "brand", "count": "${todayCount}", "body": [] }
+  ]
+}
+```
+
+- `tone`：`'brand' | 'info' | 'warning' | 'danger' | 'success' | 'neutral'` → trigger 根 `data-tone` 属性 + `[data-slot="collapse-tone-bar"]` 色调条
+- `count`：值或表达式 → `[data-slot="collapse-count"]`（等宽计数，monospace 由宿主 CSS 控制）
+- `leading`：region → `[data-slot="collapse-leading"]`（title 前自定义节点）
+
+未声明这些字段时 trigger 与既有行为完全一致。marker 契约详见 `docs/architecture/styling-system.md`「Collapse 语义 trigger marker 契约」。

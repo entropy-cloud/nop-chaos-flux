@@ -134,6 +134,8 @@
 
 ### 5.5 响应式布局
 
+**样式级响应式**（同一棵树内切换方向/换行，CSS 断点类驱动）：
+
 ```json
 {
   "type": "flex",
@@ -146,6 +148,30 @@
   ]
 }
 ```
+
+**结构级响应式**（`responsive` 容器：同一区域按视口断点渲染**一棵完整子树**，断点跨越时整树重建，scope 数据保持）——适合"桌面三栏 ↔ 移动单栏"这类结构切换：
+
+```json
+{
+  "type": "responsive",
+  "variants": [
+    {
+      "key": "mobile",
+      "max": "lg",
+      "body": [{ "type": "container", "body": "移动端树（无侧边栏）" }]
+    },
+    {
+      "key": "desktop",
+      "body": [{ "type": "flex", "direction": "row", "body": "桌面树（侧边栏 + 主区）" }]
+    }
+  ]
+}
+```
+
+- `min`/`max`：命名断点（sm=640/md=768/lg=1024/xl=1280/2xl=1536）或任意 px；min 含、max 不含
+- 匹配：声明顺序取第一个满足 bounds 的变体；无命中渲染第一个无 bounds 变体（默认树）
+- 无 matchMedia 环境（SSR/jsdom）回退默认树；检测经 `@nop-chaos/ui` 的 `useBreakpoints` hook
+- 完整说明：`docs/architecture/responsive-and-renderer-enhancements.md`
 
 ## 6. 常见误区
 

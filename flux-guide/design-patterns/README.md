@@ -13,7 +13,7 @@
 | 7   | `cascading-select.md`           | 远程选项联动（省市区级联）                                                                                                                                |
 | 8   | `file-upload.md`                | 文件/图片上传                                                                                                                                             |
 | 9   | `cards.md`                      | 卡片列表展示                                                                                                                                              |
-| 10  | `layout.md`                     | 布局容器选型（container/flex/grid）                                                                                                                       |
+| 10  | `layout.md`                     | 布局容器选型（container/flex/grid）+ responsive 结构断点                                                                                                  |
 | 11  | `wizard.md`                     | Wizard 多步骤向导                                                                                                                                         |
 | 12  | `chart.md`                      | Chart 图表（bar/line/pie/area）                                                                                                                           |
 | 13  | `dynamic-renderer.md`           | DynamicRenderer 动态加载 schema                                                                                                                           |

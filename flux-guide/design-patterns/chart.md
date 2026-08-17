@@ -93,6 +93,25 @@
 }
 ```
 
+## 逐点上色（单 series 多色）
+
+同一数据系列内逐根柱/逐点不同颜色（如"待办压力分布：逾期红 / 今天橙 / 未来蓝 / 无日期灰"）——无需拆多个 series：
+
+```json
+{
+  "type": "chart",
+  "chartType": "bar",
+  "source": "${pressure?.items}",
+  "xAxis": { "dataKey": "bucket" },
+  "series": [{ "name": "压力", "dataRegionKey": "count", "colorRegionKey": "tone" }]
+}
+```
+
+- `series.colors?: string[]`：定长色板，按数据点索引取色（超出循环）
+- `series.colorRegionKey?: string`：从每条数据记录取色值（CSS 颜色字符串）
+
+支持范围：**bar / scatter**（recharts `Cell` 逐点着色）；line/area 暂不支持（声明时回退 series 色）。两者互斥，均 optional，未声明时行为与现状一致。
+
 ## 字段参考
 
 | 字段             | 类型                                              | 说明                              |

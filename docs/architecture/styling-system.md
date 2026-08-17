@@ -403,6 +403,10 @@ Layout renderers must follow a strict separation:
 
 **Why**: A container used inside a card needs `gap-1` (4px), the same container in a form needs `gap-4` (16px), and in a list item it needs `gap-0`. The renderer cannot predict the correct value. When a renderer hardcodes `gap-4`, schema authors cannot see this hidden style and cannot override it without knowing it exists.
 
+### Interaction on Layout Renderers
+
+`onClick` is a supported schema event on `flex`/`container` (flux-renderers-basic). It is an **interaction** capability, orthogonal to the styling contract: the renderer attaches the handler to the root marker element (`nop-flex`/`nop-container`) and dispatches via `props.events.onClick`; it adds no implicit styles (no cursor/pointer classes are injected — hover affordance stays the schema/global-CSS layer's job, e.g. `nop-haptic` or host CSS).
+
 ### Widget Renderer Styling
 
 Widget renderers are self-styled UI controls. Their internal components use Tailwind classes directly (flex, gap, padding, grid, etc.) because the visual design is intentional and complete out-of-the-box. Widget renderers still follow these rules:
@@ -806,3 +810,16 @@ If a package does need Tailwind-processed CSS, add a PostCSS build step with `ta
 - `packages/ui/src/index.ts` - Authoritative UI component export list
 - `packages/flux-core/src/index.ts` - `BaseSchema.classAliases` type
 - `packages/flux-core/src/class-aliases.ts` - Resolution implementation
+
+## Collapse 语义 trigger marker 契约（2026-08-16）
+
+`collapse` 的 trigger 支持 schema 语义驱动（`tone`/`count`/`leading`，见 `docs/architecture/responsive-and-renderer-enhancements.md` D2）。**渲染器只发 marker，视觉全部归宿主 CSS**：
+
+| Marker                                                         | 条件                            | 说明                                                                 |
+| -------------------------------------------------------------- | ------------------------------- | -------------------------------------------------------------------- |
+| `data-tone="<brand\|info\|warning\|danger\|success\|neutral>"` | item 声明 `tone`                | trigger 根属性，语义色（如 Sundial 分组头色调条）                    |
+| `[data-slot="collapse-tone-bar"]`                              | 同上                            | 色调条占位（当前 `size-0.5 self-stretch`，宿主 CSS 自定义尺寸/颜色） |
+| `[data-slot="collapse-count"]`                                 | item 声明 `count`（值或表达式） | 等宽计数（monospace 由宿主 CSS 控制）                                |
+| `[data-slot="collapse-leading"]`                               | item 声明 `leading` region      | title 前自定义节点（图标等）                                         |
+
+未声明语义字段时 trigger 结构与既有行为完全一致（向后兼容）。宿主 CSS 可按 marker 定制（Sundial 复刻页 `sundial-replica.css` 的 `.sd-section` 覆盖可用原生 marker 替代）。
