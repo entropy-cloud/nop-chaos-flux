@@ -21,6 +21,7 @@ export type {
   TimelineItemSchema,
   TimelineItemLevel,
   TimelineMode,
+  ResponsiveSchema,
 } from './schemas.js';
 export { WizardRenderer } from './wizard-renderer.js';
 export { GridRenderer } from './grid-renderer.js';
@@ -29,6 +30,7 @@ export { ButtonGroupRenderer } from './button-group-renderer.js';
 export { DropdownButtonRenderer } from './dropdown-button-renderer.js';
 export { StepsRenderer } from './steps-renderer.js';
 export { TimelineRenderer } from './timeline-renderer.js';
+export { ResponsiveRenderer } from './responsive-renderer.js';
 export { layoutRendererDefinitions } from './layout-renderer-definitions.js';
 
 export function registerLayoutRenderers(registry: RendererRegistry) {

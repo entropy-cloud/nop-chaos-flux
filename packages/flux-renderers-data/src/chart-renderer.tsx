@@ -140,6 +140,28 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     return config;
   })();
 
+  /**
+   * Per-point color for bar/scatter series: `colorRegionKey` reads the color
+   * from each data record; `colors` is a fixed palette picked by point index.
+   * Returns undefined when the series declares neither.
+   */
+  const resolvePointColor = (
+    s: ChartSeriesSchema,
+    item: Record<string, unknown>,
+    index: number,
+  ): string | undefined => {
+    if (typeof s.colorRegionKey === 'string' && s.colorRegionKey) {
+      const raw = getIn(item, s.colorRegionKey);
+      if (typeof raw === 'string' && raw) {
+        return raw;
+      }
+    }
+    if (Array.isArray(s.colors) && s.colors.length > 0) {
+      return s.colors[index % s.colors.length];
+    }
+    return undefined;
+  };
+
   const pieData = (() => {
     if (source.length > 0 && xKey) {
       return source.map((item, i) => {
@@ -380,7 +402,18 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
                       }))
                     : cartesianData
                 }
-              />
+              >
+                {cartesianData.map((item, pointIndex) => {
+                  const color = resolvePointColor(s, item, pointIndex);
+                  if (!color) {
+                    return null;
+                  }
+                  const cellKey = `${s.name ?? 'series'}:${String(
+                    getIn(item, xKey ?? 'name') ?? '',
+                  )}:${String(getIn(item, s.dataRegionKey ?? 'value') ?? '')}`;
+                  return <Cell key={`scatter-cell-${cellKey}`} fill={color} />;
+                })}
+              </Scatter>
             ))
           ) : (
             <Scatter data={cartesianData} />
@@ -501,7 +534,18 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
               yAxisId={dualAxisEnabled ? (s.yAxisId ?? 0) : 0}
               fill={palette[i % palette.length]}
               stackId={stacked ? 'a' : undefined}
-            />
+            >
+              {cartesianData.map((item, pointIndex) => {
+                const color = resolvePointColor(s, item, pointIndex);
+                if (!color) {
+                  return null;
+                }
+                const cellKey = `${s.name ?? 'series'}:${String(
+                  getIn(item, xKey ?? 'name') ?? '',
+                )}:${String(getIn(item, s.dataRegionKey ?? 'value') ?? '')}`;
+                return <Cell key={`bar-cell-${cellKey}`} fill={color} />;
+              })}
+            </Bar>
           ))
         ) : (
           <Bar dataKey="value" yAxisId={0} fill={palette[0]} />

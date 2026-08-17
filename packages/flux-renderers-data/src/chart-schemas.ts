@@ -9,6 +9,17 @@ export interface ChartSeriesSchema {
   dataRegionKey?: string;
   /** 双轴归属：映射到 `yAxis` 数组下标。缺省 0（默认左轴）。 */
   yAxisId?: number;
+  /**
+   * Per-point palette for bar/scatter series: colors are picked by data point
+   * index (wrapping when the palette is shorter than the data). Mutually
+   * exclusive with `colorRegionKey`.
+   */
+  colors?: string[];
+  /**
+   * Per-point color field: each data record's value at this path is used as
+   * the point color (CSS color string). Mutually exclusive with `colors`.
+   */
+  colorRegionKey?: string;
 }
 
 export interface ChartReferenceLineSchema {

@@ -55,6 +55,12 @@ export function sanitizeSeries(value: unknown): ChartSeriesSchema[] {
           typeof candidate.yAxisId === 'number' && Number.isInteger(candidate.yAxisId) && candidate.yAxisId >= 0
             ? candidate.yAxisId
             : undefined,
+        colors:
+          Array.isArray(candidate.colors) && candidate.colors.every((c) => typeof c === 'string')
+            ? (candidate.colors as string[])
+            : undefined,
+        colorRegionKey:
+          typeof candidate.colorRegionKey === 'string' ? candidate.colorRegionKey : undefined,
       },
     ];
   });

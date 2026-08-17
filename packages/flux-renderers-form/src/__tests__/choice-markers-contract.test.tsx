@@ -40,6 +40,23 @@ describe('choice root type marker contract (CX-5)', () => {
     expect(root?.className).toMatch(/\bnop-checkbox(?!-)\b/);
   });
 
+  it('checkbox shape="circle" is passed through to the ui control', () => {
+    const { container } = renderForm([
+      { type: 'checkbox', name: 'circle', label: 'Circle', shape: 'circle' },
+    ]);
+    const control = container.querySelector('[data-slot="checkbox"]');
+    expect(control).toBeTruthy();
+    expect(control?.getAttribute('data-shape')).toBe('circle');
+  });
+
+  it('checkbox defaults to square shape when shape is not declared', () => {
+    const { container } = renderForm([
+      { type: 'checkbox', name: 'plain', label: 'Plain' },
+    ]);
+    const control = container.querySelector('[data-slot="checkbox"]');
+    expect(control?.getAttribute('data-shape')).toBe('square');
+  });
+
   it('switch root emits nop-switch marker', () => {
     const { container } = renderForm([{ type: 'switch', name: 'active', label: 'Active' }]);
     const root = container.querySelector('[data-slot="switch-wrapper"]');

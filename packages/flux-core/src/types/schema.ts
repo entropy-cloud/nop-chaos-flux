@@ -124,6 +124,42 @@ export interface BaseSchema extends SchemaObject {
 
 export type SchemaInput = BaseSchema | BaseSchema[];
 
+/**
+ * Named responsive breakpoints (aligned with Tailwind's default scale).
+ * Used by style-level responsive props (flex responsiveDirection) and the
+ * structural `responsive` variant container.
+ */
+export type ResponsiveBreakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+
+/**
+ * A single structural variant of a `responsive` container. `min`/`max` accept
+ * a named breakpoint or an arbitrary pixel width; matching is declarative
+ * order — the first variant satisfying both bounds wins, otherwise the first
+ * variant without bounds (the default tree) is rendered.
+ */
+export interface ResponsiveVariantSchema extends SchemaObject {
+  key?: string;
+  min?: ResponsiveBreakpoint | number;
+  max?: ResponsiveBreakpoint | number;
+  body?: BaseSchema[];
+}
+
+/**
+ * Structural responsive container: renders exactly one variant subtree per
+ * viewport. Variants are matched in declaration order — the first whose
+ * `min`/`max` bounds are satisfied wins; when nothing matches, the first
+ * variant without bounds (the default tree) is rendered. `min` is inclusive,
+ * `max` is exclusive (matching `min-width` / `max-width: <max - 1>px`).
+ *
+ * Unlike style-level responsive props (flex responsiveDirection), switching
+ * variants rebuilds the whole subtree — the pattern Sundial uses for its
+ * desktop shell ↔ mobile shell split.
+ */
+export interface ResponsiveSchema extends BaseSchema {
+  type: 'responsive';
+  variants: ResponsiveVariantSchema[];
+}
+
 export interface FieldRemarkSchema extends SchemaObject {
   icon?: string;
   content: string;

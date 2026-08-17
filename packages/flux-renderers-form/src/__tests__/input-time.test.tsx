@@ -138,4 +138,105 @@ describe('input-time renderer', () => {
     await waitFor(() => expect(submitCalls.length).toBe(1));
     expect(submitCalls[0].at).toBe('1200');
   });
+
+  describe('steppers mode (Sundial-style ±hourStep/±minuteStep)', () => {
+    async function renderSteppers(
+      extra: Record<string, unknown> = {},
+    ): Promise<{ submit: () => Promise<void> }> {
+      renderSchema({
+        type: 'form',
+        id: 'time-form',
+        data: { at: '14:00' },
+        submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+        body: [
+          {
+            type: 'input-time',
+            name: 'at',
+            label: 'At',
+            steppers: true,
+            hourStep: 1,
+            minuteStep: 5,
+            testid: 'at',
+            ...extra,
+          },
+          {
+            type: 'button',
+            label: 'Submit',
+            onClick: { action: 'component:submit', componentId: 'time-form' },
+          },
+        ],
+      } as any);
+      return {
+        submit: async () => {
+          fireEvent.click(screen.getByText('Submit'));
+          await waitFor(() => expect(submitCalls.length).toBeGreaterThan(0));
+        },
+      };
+    }
+
+    it('renders hour/minute stepper buttons and a formatted display instead of the native input', () => {
+      renderSchema({
+        type: 'form',
+        data: { at: '14:00' },
+        body: [{ type: 'input-time', name: 'at', steppers: true, testid: 'at' }],
+      } as any);
+      expect(document.querySelector('.nop-input-time[data-steppers="true"]')).toBeTruthy();
+      expect(document.querySelector('input[type="time"]')).toBeNull();
+      expect(screen.getByTestId('at-display').textContent).toMatch(/14 : 00/);
+      expect(screen.getByTestId('at-hour-up')).toBeTruthy();
+      expect(screen.getByTestId('at-hour-down')).toBeTruthy();
+      expect(screen.getByTestId('at-minute-up')).toBeTruthy();
+      expect(screen.getByTestId('at-minute-down')).toBeTruthy();
+    });
+
+    it('steps minutes by minuteStep and hours by hourStep, writing to the form value', async () => {
+      const { submit } = await renderSteppers();
+
+      fireEvent.click(screen.getByTestId('at-minute-up'));
+      expect(screen.getByTestId('at-display').textContent).toMatch(/14 : 05/);
+
+      fireEvent.click(screen.getByTestId('at-hour-up'));
+      expect(screen.getByTestId('at-display').textContent).toMatch(/15 : 05/);
+
+      fireEvent.click(screen.getByTestId('at-hour-down'));
+      expect(screen.getByTestId('at-display').textContent).toMatch(/14 : 05/);
+
+      await submit();
+      expect(submitCalls[submitCalls.length - 1].at).toBe('14:05');
+    });
+
+    it('wraps around 23:55 → 00:00 and honors custom steps', async () => {
+      renderSchema({
+        type: 'form',
+        id: 'time-form',
+        data: { at: '23:55' },
+        submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+        body: [
+          {
+            type: 'input-time',
+            name: 'at',
+            steppers: true,
+            minuteStep: 5,
+            testid: 'at',
+          },
+        ],
+      } as any);
+
+      fireEvent.click(screen.getByTestId('at-minute-up'));
+      expect(screen.getByTestId('at-display').textContent).toMatch(/00 : 00/);
+
+      fireEvent.click(screen.getByTestId('at-hour-up'));
+      expect(screen.getByTestId('at-display').textContent).toMatch(/01 : 00/);
+    });
+
+    it('starts from 00:00 when no value is stored', () => {
+      renderSchema({
+        type: 'form',
+        body: [{ type: 'input-time', name: 'at', steppers: true, testid: 'at' }],
+      } as any);
+      expect(screen.getByTestId('at-display').textContent).toMatch(/00 : 00/);
+      fireEvent.click(screen.getByTestId('at-minute-up'));
+      expect(screen.getByTestId('at-display').textContent).toMatch(/00 : 05/);
+    });
+  });
 });

@@ -97,7 +97,33 @@ const collapseItemsShape = {
         params: ['item', 'index', 'key'],
         isolate: false,
       },
+      leading: {
+        kind: 'region' as const,
+        regionKey: 'leadingRegionKey',
+        params: ['item', 'index', 'key'],
+        isolate: false,
+      },
+      count: 'value' as const,
+      tone: 'literal' as const,
       disabled: 'literal' as const,
+    },
+  },
+};
+
+const responsiveVariantsShape = {
+  kind: 'array' as const,
+  item: {
+    kind: 'schema-definition' as const,
+    fieldRules: {
+      key: 'literal' as const,
+      min: 'literal' as const,
+      max: 'literal' as const,
+      body: {
+        kind: 'region' as const,
+        regionKey: 'bodyRegionKey',
+        params: ['variant', 'index', 'key'],
+        isolate: false,
+      },
     },
   },
 };
@@ -184,6 +210,22 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
       ],
     },
     {
+      type: 'responsive',
+      displayName: 'Responsive',
+      category: 'layout',
+      sourcePackage: '@nop-chaos/flux-renderers-layout',
+      component: ResponsiveRendererForTest,
+      propContracts: {
+        variants: {
+          shape: responsiveVariantsShape,
+          displayName: 'Variants',
+        },
+      },
+      fields: [
+        { key: 'variants', kind: 'prop' },
+      ],
+    },
+    {
       type: 'button-group',
       displayName: 'Button Group',
       category: 'layout',
@@ -260,6 +302,7 @@ import { DropdownButtonRenderer as DropdownButtonRendererForTest } from './dropd
 import { WizardRenderer as WizardRendererForTest } from './wizard-renderer.js';
 import { StepsRenderer as StepsRendererForTest } from './steps-renderer.js';
 import { TimelineRenderer as TimelineRendererForTest } from './timeline-renderer.js';
+import { ResponsiveRenderer as ResponsiveRendererForTest } from './responsive-renderer.js';
 
 export { env };
 export const formulaCompiler = createFormulaCompiler();

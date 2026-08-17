@@ -248,6 +248,8 @@ export interface CheckboxSchema extends InputSchema {
   };
   trueValue?: SchemaValue;
   falseValue?: SchemaValue;
+  /** Visual shape of the control (default 'square'). 'circle' renders a circular checkbox. */
+  shape?: 'square' | 'circle';
 }export interface SwitchSchema extends InputSchema {
   option?: {
     onLabel?: string;
@@ -351,6 +353,12 @@ export interface InputTimeSchema extends BoundFieldSchemaBase {
   minTime?: string;
   maxTime?: string;
   clearable?: boolean;
+  /** Sundial-style hour/minute steppers（±hourStep / ±minuteStep，循环步进）。默认 false（原生 time input）。 */
+  steppers?: boolean;
+  /** 小时步进量，0-23 循环（默认 1）。 */
+  hourStep?: number;
+  /** 分钟步进量，0-55 循环（默认 5）。 */
+  minuteStep?: number;
 }
 
 export type DateRangePresetRelative =

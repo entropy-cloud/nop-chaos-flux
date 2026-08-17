@@ -328,4 +328,75 @@ describe('CollapseRenderer (W3a — collapsible content group)', () => {
       ).not.toBeNull();
     });
   });
+
+  it('renders tone bar, count and leading region markers from item semantics', () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/collapse-semantics"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'collapse',
+              items: [
+                {
+                  key: 'overdue',
+                  title: '逾期',
+                  tone: 'danger',
+                  count: 3,
+                  leading: { type: 'text', text: 'LEAD' },
+                  body: [{ type: 'text', text: 'body-overdue' }],
+                },
+                { key: 'plain', title: '普通', body: [{ type: 'text', text: 'body-plain' }] },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const overdueTrigger = document.querySelector('[data-item-key="overdue"] [data-slot="collapse-trigger"]');
+    expect(overdueTrigger).toBeTruthy();
+    expect(overdueTrigger!.getAttribute('data-tone')).toBe('danger');
+    expect(overdueTrigger!.querySelector('[data-slot="collapse-tone-bar"]')).toBeTruthy();
+    expect(overdueTrigger!.querySelector('[data-slot="collapse-count"]')?.textContent).toBe('3');
+    expect(overdueTrigger!.querySelector('[data-slot="collapse-leading"]')?.textContent).toContain('LEAD');
+
+    // Items without semantics keep the previous trigger shape.
+    const plainTrigger = document.querySelector('[data-item-key="plain"] [data-slot="collapse-trigger"]');
+    expect(plainTrigger!.getAttribute('data-tone')).toBeNull();
+    expect(plainTrigger!.querySelector('[data-slot="collapse-tone-bar"]')).toBeNull();
+    expect(plainTrigger!.querySelector('[data-slot="collapse-count"]')).toBeNull();
+    expect(plainTrigger!.querySelector('[data-slot="collapse-leading"]')).toBeNull();
+    expect(plainTrigger!.textContent).toContain('普通');
+  });
+
+  it('renders an expression-driven count value', () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/collapse-count-expr"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'collapse',
+              items: [
+                { key: 'a', title: 'A', count: '${cnt}', body: [{ type: 'text', text: 'x' }] },
+              ],
+            },
+          ],
+        }}
+        data={{ cnt: 7 }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    expect(
+      document.querySelector('[data-item-key="a"] [data-slot="collapse-count"]')?.textContent,
+    ).toBe('7');
+  });
 });

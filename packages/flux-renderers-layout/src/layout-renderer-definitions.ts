@@ -4,6 +4,7 @@ import { CollapseRenderer } from './collapse-renderer.js';
 import { ButtonGroupRenderer } from './button-group-renderer.js';
 import { DropdownButtonRenderer } from './dropdown-button-renderer.js';
 import { WizardRenderer } from './wizard-renderer.js';
+import { ResponsiveRenderer } from './responsive-renderer.js';
 import { stepsRendererDefinition, timelineRendererDefinition } from './process-display-definitions.js';
 
 export const layoutRendererDefinitions: RendererDefinition[] = [
@@ -285,13 +286,21 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
                 params: ['item', 'index', 'key'],
                 isolate: false,
               },
+              leading: {
+                kind: 'region',
+                regionKey: 'leadingRegionKey',
+                params: ['item', 'index', 'key'],
+                isolate: false,
+              },
+              count: 'value',
+              tone: 'literal',
               disabled: 'literal',
             },
           },
         },
         displayName: 'Items',
         description:
-          'Collapse panel collection. Each item carries title + body regions plus key/disabled flags.',
+          'Collapse panel collection. Each item carries title + body + leading regions plus key/tone/count/disabled flags.',
         editorType: 'object-array',
       },
       value: {
@@ -590,4 +599,39 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
   },
   stepsRendererDefinition,
   timelineRendererDefinition,
+  {
+    type: 'responsive',
+    displayName: 'Responsive',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-layout',
+    component: ResponsiveRenderer,
+    propContracts: {
+      variants: {
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              key: 'literal',
+              min: 'literal',
+              max: 'literal',
+              body: {
+                kind: 'region',
+                regionKey: 'bodyRegionKey',
+                params: ['variant', 'index', 'key'],
+                isolate: false,
+              },
+            },
+          },
+        },
+        displayName: 'Variants',
+        description:
+          'Structural responsive variants. First variant whose min/max bounds match wins; otherwise the first variant without bounds (default tree) renders.',
+        editorType: 'object-array',
+      },
+    },
+    fields: [
+      { key: 'variants', kind: 'prop' },
+    ],
+  },
 ];

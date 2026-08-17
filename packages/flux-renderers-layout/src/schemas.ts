@@ -1,4 +1,4 @@
-import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, ResponsiveVariantSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
 
 // ───────────────────────────── W2a Wizard ─────────────────────────────
 
@@ -143,6 +143,12 @@ export interface CollapseItemSchema extends SchemaObject {
   body?: SchemaInput;
   /** Item disabled (cannot toggle) */
   disabled?: SchemaValue;
+  /** Semantic tone driving the trigger marker (`collapse-tone-bar` color). */
+  tone?: 'brand' | 'info' | 'warning' | 'danger' | 'success' | 'neutral';
+  /** Trailing monospace count rendered in the trigger (value-or-expression). */
+  count?: SchemaValue;
+  /** Leading region rendered before the title inside the trigger (e.g. an icon). */
+  leading?: SchemaInput;
 }
 
 export interface CollapseSchema extends BaseSchema {
@@ -314,4 +320,15 @@ export interface TimelineSchema extends BaseSchema {
   valueStatePath?: string;
   /** Click-seek event (v2; items become clickable only when declared). */
   onChange?: ActionSchema;
+}
+
+// ───────────────────────────── Responsive ─────────────────────────────
+
+/**
+ * Structural responsive container. Renders exactly one variant subtree per
+ * viewport; see `ResponsiveSchema` in flux-core for the matching semantics.
+ */
+export interface ResponsiveSchema extends BaseSchema {
+  type: 'responsive';
+  variants: ResponsiveVariantSchema[];
 }

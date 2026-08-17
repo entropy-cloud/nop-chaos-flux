@@ -469,6 +469,7 @@ export function CheckboxRenderer(props: RendererComponentProps<CheckboxSchema>) 
         id={name ? `${name}-control` : undefined}
         checked={checked}
         disabled={presentation.effectiveDisabled}
+        shape={(props.props as CheckboxSchema).shape ?? 'square'}
         aria-readonly={presentation.readOnly ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
         aria-label={optionLabel ?? name}

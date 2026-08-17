@@ -267,6 +267,71 @@ describe('ChartRenderer', () => {
     expect(screen.getByLabelText('Revenue chart')).toBeTruthy();
   });
 
+  it('colors bar points per-point via the series colors palette', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'bar',
+            source: [
+              { label: 'a', v: 1 },
+              { label: 'b', v: 2 },
+              { label: 'c', v: 3 },
+            ],
+            series: [{ name: 'S', dataRegionKey: 'v', colors: ['#111111', '#222222'] }],
+          },
+        })}
+      />,
+    );
+
+    const cells = document.querySelectorAll('[data-testid="Cell"]');
+    expect(cells.length).toBe(3);
+    const fills = Array.from(cells).map(
+      (cell) => JSON.parse(cell.getAttribute('data-props')!).fill,
+    );
+    // Palette wraps beyond its length.
+    expect(fills).toEqual(['#111111', '#222222', '#111111']);
+  });
+
+  it('colors bar points from a colorRegionKey field on each record', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'bar',
+            source: [
+              { label: 'a', v: 1, tone: '#ff0000' },
+              { label: 'b', v: 2, tone: '#00ff00' },
+            ],
+            series: [{ name: 'S', dataRegionKey: 'v', colorRegionKey: 'tone' }],
+          },
+        })}
+      />,
+    );
+
+    const cells = document.querySelectorAll('[data-testid="Cell"]');
+    expect(cells.length).toBe(2);
+    const fills = Array.from(cells).map(
+      (cell) => JSON.parse(cell.getAttribute('data-props')!).fill,
+    );
+    expect(fills).toEqual(['#ff0000', '#00ff00']);
+  });
+
+  it('emits no cells when the series declares no per-point coloring', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'bar',
+            source: [{ label: 'a', v: 1 }],
+            series: [{ name: 'S', dataRegionKey: 'v' }],
+          },
+        })}
+      />,
+    );
+    expect(document.querySelectorAll('[data-testid="Cell"]').length).toBe(0);
+  });
+
   it('renders a region-backed title and exposes it through aria-labelledby', () => {
     render(
       <ChartRenderer

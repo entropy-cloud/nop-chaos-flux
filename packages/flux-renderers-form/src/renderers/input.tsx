@@ -594,6 +594,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'option', kind: 'prop' },
       { key: 'trueValue', kind: 'prop' },
       { key: 'falseValue', kind: 'prop' },
+      { key: 'shape', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,

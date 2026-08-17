@@ -1,6 +1,6 @@
 import React, { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { getIn, type RendererComponentProps, type RendererRenderOutput } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector, unwrapBooleanLiteral } from '@nop-chaos/flux-react';
+import { unwrapPreservedLiteral, useRenderScope, useScopeSelector, unwrapBooleanLiteral } from '@nop-chaos/flux-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import type { CollapseItemSchema, CollapseSchema } from './schemas.js';
@@ -8,6 +8,7 @@ import type { CollapseItemSchema, CollapseSchema } from './schemas.js';
 type CompiledCollapseItem = CollapseItemSchema & {
   titleRegionKey?: string;
   bodyRegionKey?: string;
+  leadingRegionKey?: string;
 };
 
 function asReactNode(value: RendererRenderOutput): React.ReactNode {
@@ -175,6 +176,23 @@ export function CollapseRenderer(props: RendererComponentProps<CollapseSchema>) 
           typeof item.bodyRegionKey === 'string' ? props.regions[item.bodyRegionKey] : undefined;
         const bodyContent = bodyRegion ? asReactNode(bodyRegion.render()) : null;
 
+        const leadingRegion =
+          typeof item.leadingRegionKey === 'string'
+            ? props.regions[item.leadingRegionKey]
+            : undefined;
+        const leadingContent = leadingRegion ? asReactNode(leadingRegion.render()) : null;
+
+        const tone = unwrapPreservedLiteral(item.tone) ?? item.tone;
+        const toneValue =
+          typeof tone === 'string' &&
+          ['brand', 'info', 'warning', 'danger', 'success', 'neutral'].includes(tone)
+            ? tone
+            : undefined;
+        const countValue =
+          item.count === undefined || item.count === null
+            ? undefined
+            : String(unwrapPreservedLiteral(item.count) ?? item.count);
+
         return (
           <Collapsible
             key={key}
@@ -187,6 +205,7 @@ export function CollapseRenderer(props: RendererComponentProps<CollapseSchema>) 
           >
             <CollapsibleTrigger
               data-slot="collapse-trigger"
+              data-tone={toneValue}
               disabled={disabled}
               onClick={() => handleToggle(key, disabled)}
               className={cn(
@@ -194,7 +213,16 @@ export function CollapseRenderer(props: RendererComponentProps<CollapseSchema>) 
                 isOpen && 'bg-muted',
               )}
             >
-              <span data-slot="collapse-trigger-label">{titleText}</span>
+              {toneValue ? (
+                <span data-slot="collapse-tone-bar" className="size-0.5 shrink-0 self-stretch" />
+              ) : null}
+              <span data-slot="collapse-trigger-label">
+                {leadingContent ? <span data-slot="collapse-leading">{leadingContent}</span> : null}
+                {titleText}
+                {countValue !== undefined ? (
+                  <span data-slot="collapse-count">{countValue}</span>
+                ) : null}
+              </span>
               <ChevronDownIcon
                 data-slot="collapse-trigger-icon"
                 className={cn(

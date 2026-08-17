@@ -3,7 +3,8 @@ import type { ChangeEvent } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Input, Button, cn } from '@nop-chaos/ui';
+import { Button, Input, cn } from '@nop-chaos/ui';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useFormFieldFromProps } from '../field-utils.js';
 import type { InputTimeSchema } from '../schemas.js';
 import {
@@ -23,6 +24,30 @@ function resolveTimeInputFormat(formats: string[]): string {
     : DEFAULT_TIME_FORMAT;
 }
 
+interface StepperButtonProps {
+  direction: 'up' | 'down';
+  label: string;
+  onClick: () => void;
+  testid?: string;
+}
+
+function StepperButton({ direction, label, onClick, testid }: StepperButtonProps) {
+  const Icon = direction === 'up' ? ChevronUp : ChevronDown;
+  return (
+    <Button
+      type="button"
+      size="icon-xs"
+      variant="ghost"
+      aria-label={label}
+      data-testid={testid}
+      className="size-5 p-0"
+      onClick={onClick}
+    >
+      <Icon className="size-3.5" />
+    </Button>
+  );
+}
+
 export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>) {
   const name = String(props.props.name ?? '');
   const valueFormat =
@@ -38,6 +63,15 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
     typeof props.props.placeholder === 'string' && props.props.placeholder
       ? props.props.placeholder
       : undefined;
+  const steppers = props.props.steppers === true;
+  const hourStep =
+    typeof props.props.hourStep === 'number' && Number.isFinite(props.props.hourStep)
+      ? props.props.hourStep
+      : 1;
+  const minuteStep =
+    typeof props.props.minuteStep === 'number' && Number.isFinite(props.props.minuteStep)
+      ? props.props.minuteStep
+      : 5;
 
   const { value, handlers, presentation } = useFormFieldFromProps(props);
 
@@ -71,6 +105,23 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
     clearValue: () => handlers.onChange(undefined),
   });
 
+  function clampIntoWindow(date: Date): Date {
+    if (isWithinRange(date, minDate, maxDate)) {
+      return date;
+    }
+    if (minDate && date.getTime() < minDate.getTime()) {
+      return new Date(minDate);
+    }
+    if (maxDate) {
+      return new Date(maxDate);
+    }
+    return date;
+  }
+
+  function commitDate(date: Date) {
+    handlers.onChange(formatDate(clampIntoWindow(date), valueFormat));
+  }
+
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const native = event.target.value;
     if (native === '') {
@@ -91,6 +142,75 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
       }
     }
     handlers.onChange(next ?? native);
+  }
+
+  function stepField(field: 'hours' | 'minutes', delta: number) {
+    const current = parseDate(storedValue, valueFormat) ?? new Date(2000, 0, 1, 0, 0, 0);
+    const next = new Date(current);
+    if (field === 'hours') {
+      next.setHours((current.getHours() + delta + 24) % 24, current.getMinutes(), 0, 0);
+    } else {
+      // Minute stepping carries into the hour and wraps around midnight.
+      const totalMinutes = current.getHours() * 60 + current.getMinutes() + delta;
+      const wrapped = ((totalMinutes % 1440) + 1440) % 1440;
+      next.setHours(Math.floor(wrapped / 60), wrapped % 60, 0, 0);
+    }
+    commitDate(next);
+  }
+
+  const stepHourUp = () => stepField('hours', hourStep);
+  const stepHourDown = () => stepField('hours', -hourStep);
+  const stepMinuteUp = () => stepField('minutes', minuteStep);
+  const stepMinuteDown = () => stepField('minutes', -minuteStep);
+
+  if (steppers) {
+    // Sundial-style stepper layout: [hour -/+] HH : MM [+/- minute].
+    const displayValue = storedValue
+      ? convertValueFormat(storedValue, valueFormat, timeInputFormat)
+      : undefined;
+    const [h, m] = displayValue ? displayValue.split(':') : ['00', '00'];
+    const baseTestId = props.meta.testid ? `${props.meta.testid}-` : name ? `${name}-` : 'time-';
+    return (
+      <div
+        className={cn('nop-input-time', 'flex items-center gap-1', props.meta.className)}
+        data-steppers="true"
+      >
+        <div className="flex flex-col">
+          <StepperButton
+            direction="up"
+            label={`+${hourStep} ${t('flux.date.hour')}`}
+            testid={`${baseTestId}hour-up`}
+            onClick={stepHourUp}
+          />
+          <StepperButton
+            direction="down"
+            label={`-${hourStep} ${t('flux.date.hour')}`}
+            testid={`${baseTestId}hour-down`}
+            onClick={stepHourDown}
+          />
+        </div>
+        <span
+          data-testid={`${baseTestId}display`}
+          className="px-1 font-mono text-base text-foreground"
+        >
+          {h} : {m}
+        </span>
+        <div className="flex flex-col">
+          <StepperButton
+            direction="up"
+            label={`+${minuteStep} ${t('flux.date.minute')}`}
+            testid={`${baseTestId}minute-up`}
+            onClick={stepMinuteUp}
+          />
+          <StepperButton
+            direction="down"
+            label={`-${minuteStep} ${t('flux.date.minute')}`}
+            testid={`${baseTestId}minute-down`}
+            onClick={stepMinuteDown}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (

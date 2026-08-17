@@ -57,6 +57,8 @@ export { Toaster, TOASTER_Z_INDEX } from './components/ui/sonner.js';
 export { toast } from 'sonner';
 export { cn } from './lib/utils.js';
 export { useIsMobile } from './hooks/use-mobile.js';
+export { useBreakpoint } from './hooks/use-breakpoint.js';
+export { useBreakpoints } from './hooks/use-breakpoints.js';
 export {
   useGlobalZIndex,
   nextGlobalZIndex,
