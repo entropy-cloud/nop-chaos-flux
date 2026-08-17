@@ -25,6 +25,33 @@ describe('parseFormula', () => {
     expect(() => parseFormula('user?.run()')).toThrow(/Optional call is not supported/);
   });
 
+  it('supports optional chaining before a computed index (?.[)', () => {
+    const ast = parseFormula('items?.[0]');
+    expect(ast.type).toBe('MemberExpression');
+    if (ast.type !== 'MemberExpression') {
+      throw new Error('Expected MemberExpression');
+    }
+    expect(ast.computed).toBe(true);
+    expect(ast.optional).toBe(true);
+
+    const chained = parseFormula('items?.[key].name');
+    expect(chained.type).toBe('MemberExpression');
+    if (chained.type !== 'MemberExpression') {
+      throw new Error('Expected MemberExpression');
+    }
+    expect(chained.optional).toBe(false);
+    expect(chained.object.type).toBe('MemberExpression');
+    if (chained.object.type === 'MemberExpression') {
+      expect(chained.object.optional).toBe(true);
+      expect(chained.object.computed).toBe(true);
+    }
+  });
+
+  it('supports plain computed index access without optional chaining', () => {
+    const ast = parseFormula('items[0].name');
+    expect(ast.type).toBe('MemberExpression');
+  });
+
   it('rejects unsupported object keys', () => {
     expect(() => parseFormula('{1: value}')).toThrow(/Invalid object key/);
   });

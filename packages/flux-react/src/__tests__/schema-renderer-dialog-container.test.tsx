@@ -303,3 +303,51 @@ describe('dialog state preservation', () => {
     await waitFor(() => expect(screen.queryByText('Dialog provider content')).toBeNull());
   });
 });
+
+describe('openDialog styling args contract', () => {
+  function renderOpenDialog(args: Record<string, unknown>) {
+    const SchemaRenderer = createSchemaRenderer([pageRenderer, textRenderer, buttonRenderer]);
+    return render(
+      <SchemaRenderer
+        schemaUrl="test://open-dialog-style"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'button',
+              label: 'Open',
+              onClick: { action: 'openDialog', args: args as never },
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={sharedFormulaCompiler}
+      />,
+    );
+  }
+
+  it('openDialog args className IS applied to the surface element', async () => {
+    renderOpenDialog({ title: 'Styled', className: 'sd-custom-class', body: [{ type: 'text', text: 'Hi' }] });
+    fireEvent.click(screen.getByText('Open'));
+    await screen.findByText('Styled');
+    const surface = document.querySelector('[data-slot="dialog-surface"]') as HTMLElement;
+    expect(surface).toBeTruthy();
+    expect(surface.classList.contains('sd-custom-class')).toBe(true);
+  });
+
+  it('openDialog args testid IS applied to the surface element', async () => {
+    renderOpenDialog({ title: 'Titled', testid: 'my-dialog', body: [{ type: 'text', text: 'Hi' }] });
+    fireEvent.click(screen.getByText('Open'));
+    await screen.findByText('Titled');
+    const surface = document.querySelector('[data-slot="dialog-surface"]') as HTMLElement;
+    expect(surface?.getAttribute('data-testid')).toBe('my-dialog');
+  });
+
+  it('openDialog args bodyClassName IS applied to the dialog body', async () => {
+    renderOpenDialog({ title: 'Bodied', bodyClassName: 'sd-body-custom', body: [{ type: 'text', text: 'Hi' }] });
+    fireEvent.click(screen.getByText('Open'));
+    await screen.findByText('Bodied');
+    const body = document.querySelector('[data-slot="dialog-body"]') as HTMLElement;
+    expect(body.classList.contains('sd-body-custom')).toBe(true);
+  });
+});

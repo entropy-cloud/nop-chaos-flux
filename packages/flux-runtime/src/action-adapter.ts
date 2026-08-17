@@ -57,6 +57,21 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
     };
   }
 
+  function resolveSurfaceMeta(
+    args: Record<string, unknown> | undefined,
+  ): { className?: string; testid?: string; cid?: number } | undefined {
+    if (!args || typeof args !== 'object') {
+      return undefined;
+    }
+    const className = typeof args.className === 'string' ? args.className : undefined;
+    const testid = typeof args.testid === 'string' ? args.testid : undefined;
+    const cid = typeof args.cid === 'number' ? args.cid : undefined;
+    if (className === undefined && testid === undefined && cid === undefined) {
+      return undefined;
+    }
+    return { className, testid, cid };
+  }
+
   function resolveComponentCapabilityContract(
     handle: import('@nop-chaos/flux-core').ComponentHandle,
     method: string,
@@ -243,6 +258,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
               validationPlan: validation.plan,
               ownerNodeInstance: ctx.nodeInstance,
+              meta: resolveSurfaceMeta(invocation.args),
               onCloseNodes: invocation.args?.onClose as ActionSchema | ActionSchema[] | undefined,
               onSubmitSuccessNodes: invocation.args?.onSubmitSuccess as ActionSchema | ActionSchema[] | undefined,
               onSubmitErrorNodes: invocation.args?.onSubmitError as ActionSchema | ActionSchema[] | undefined,
@@ -308,6 +324,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
               componentRegistry: input.getDialogComponentRegistry?.(ctx) ?? ctx.componentRegistry,
               validationPlan: validation.plan,
               ownerNodeInstance: ctx.nodeInstance,
+              meta: resolveSurfaceMeta(invocation.args),
               onCloseNodes: invocation.args?.onClose as ActionSchema | ActionSchema[] | undefined,
               onSubmitSuccessNodes: invocation.args?.onSubmitSuccess as ActionSchema | ActionSchema[] | undefined,
               onSubmitErrorNodes: invocation.args?.onSubmitError as ActionSchema | ActionSchema[] | undefined,

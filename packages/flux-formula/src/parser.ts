@@ -336,16 +336,30 @@ class Parser {
     while (true) {
       if (this.match('operator', '?.')) {
         const operator = this.consume();
-        const property = createIdentifierNode(this.expect('identifier'));
-        expression = createMemberExpressionNode({
-          object: expression,
-          property,
-          computed: false,
-          optional: true,
-          end: property.loc.end,
-        });
-        if (this.match('punctuation', '(')) {
-          this.throwSyntaxError('Optional call is not supported');
+        if (this.match('punctuation', '[')) {
+          // Optional computed member: `?.[expr]` (e.g. `items?.[0]`).
+          this.consume();
+          const property = this.parseArrowExpression();
+          const closing = this.expect('punctuation', ']');
+          expression = createMemberExpressionNode({
+            object: expression,
+            property,
+            computed: true,
+            optional: true,
+            end: closing.end,
+          });
+        } else {
+          const property = createIdentifierNode(this.expect('identifier'));
+          expression = createMemberExpressionNode({
+            object: expression,
+            property,
+            computed: false,
+            optional: true,
+            end: property.loc.end,
+          });
+          if (this.match('punctuation', '(')) {
+            this.throwSyntaxError('Optional call is not supported');
+          }
         }
         void operator;
         continue;

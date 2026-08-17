@@ -255,5 +255,36 @@ describe('surface family enhancements (E2f)', () => {
       expect(body!.className).toContain('p-8');
       expect(body!.className).toContain('custom-body');
     });
+
+    it('applies declarative dialog className and testid to the surface element', async () => {
+      renderSchema({
+        type: 'dialog',
+        title: 'Styled dialog',
+        open: true,
+        className: 'sd-decl-class',
+        testid: 'styled-dialog-surface',
+        body: [{ type: 'text', text: 'Body' }],
+      });
+
+      await waitFor(() => expect(queryDialog()).toBeTruthy());
+      const surface = queryDialog()!;
+      expect(surface.className).toContain('sd-decl-class');
+      expect(surface.getAttribute('data-testid')).toBe('styled-dialog-surface');
+    });
+
+    it('applies declarative dialog bodyClassName to the dialog body', async () => {
+      renderSchema({
+        type: 'dialog',
+        title: 'Body className dialog',
+        open: true,
+        bodyClassName: 'sd-body-decl',
+        body: [{ type: 'text', text: 'Body' }],
+      });
+
+      await waitFor(() => expect(queryDialog()).toBeTruthy());
+      const body = document.querySelector('[data-slot="dialog-body"]') as HTMLElement | null;
+      expect(body).toBeTruthy();
+      expect(body!.className).toContain('sd-body-decl');
+    });
   });
 });
