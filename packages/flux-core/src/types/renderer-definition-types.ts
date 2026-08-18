@@ -92,6 +92,14 @@ export interface RendererDefinitionShape<S extends BaseSchema = BaseSchema> {
   compilation?: RendererCompilationDefinition;
   wrap?: boolean;
   frameRootTag?: 'div' | 'label';
+  /**
+   * Default `frameWrap` for this renderer type when the schema does not
+   * declare one. Group-choice renderers (radio-group / checkbox-group) declare
+   * `'group'` so their multi-option control area is wrapped in fieldset/legend
+   * instead of a `<label>` — a label wrapper forwards gap-area clicks to the
+   * first option control and silently selects it (plan 460 B3).
+   */
+  frameWrap?: 'label' | 'group' | 'none';
   staticCapable?: boolean;
   hostContract?: RendererHostContract;
 }

@@ -9,7 +9,7 @@ import type {
   ExpressionCompiler,
   ExpressionCompileOptions,
 } from '@nop-chaos/flux-core';
-import { isSchemaInput } from '@nop-chaos/flux-core';
+import { getBuiltInActionDefinition, isSchemaInput } from '@nop-chaos/flux-core';
 
 /**
  * C8.3 P1-2 (CX-11): schema-valued args (e.g. `openDialog`/`openDrawer` `body`)
@@ -23,11 +23,26 @@ import { isSchemaInput } from '@nop-chaos/flux-core';
  * Keeping the body static means nested templates stay raw and are evaluated
  * lazily in the surface scope at event-dispatch time.
  */
-function preserveSchemaArgs(args: Record<string, unknown>): Record<string, unknown> {
+function preserveSchemaArgs(
+  action: ActionSchema,
+  args: Record<string, unknown>,
+): Record<string, unknown> {
   let changed = false;
   const preserved: Record<string, unknown> = {};
+
+  const definition = getBuiltInActionDefinition(action.action);
+  const actionClassKeys = new Set<string>();
+  if (definition) {
+    for (const [key, spec] of Object.entries(definition.fieldRules)) {
+      const kind = typeof spec === 'string' ? spec : spec.kind;
+      if (kind === 'action' || kind === 'event') {
+        actionClassKeys.add(key);
+      }
+    }
+  }
+
   for (const [key, value] of Object.entries(args)) {
-    if (isSchemaInput(value)) {
+    if (isSchemaInput(value) || actionClassKeys.has(key)) {
       preserved[key] = { __nopPreserveLiteral: true, value };
       changed = true;
     } else {
@@ -36,7 +51,6 @@ function preserveSchemaArgs(args: Record<string, unknown>): Record<string, unkno
   }
   return changed ? preserved : args;
 }
-
 function compilePayload(
   action: ActionSchema,
   compiler: ExpressionCompiler,
@@ -46,7 +60,7 @@ function compilePayload(
 
   if (action.args !== undefined) {
     payload.args = compiler.compileValue<Record<string, unknown>>(
-      preserveSchemaArgs(action.args),
+      preserveSchemaArgs(action, action.args),
       options,
     );
   }

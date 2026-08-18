@@ -628,6 +628,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: FOCUS_ONLY_CAPABILITY_CONTRACTS,
     wrap: true,
+    // plan 460 B3: fieldset/legend frame — a <label> wrapper would forward
+    // gap-area clicks to the first option control and silently select it.
+    frameWrap: 'group',
     component: RadioGroupRenderer,
   },
   {
@@ -645,6 +648,8 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: FOCUS_ONLY_CAPABILITY_CONTRACTS,
     wrap: true,
+    // plan 460 B3: same group-frame rationale as radio-group.
+    frameWrap: 'group',
     component: CheckboxGroupRenderer,
   },
   {
