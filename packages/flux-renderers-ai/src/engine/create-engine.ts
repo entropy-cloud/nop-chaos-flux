@@ -6,10 +6,11 @@ import {
   isVacuousAssistantResidue,
 } from './utils.js';
 import { createNativeMessageAdapter } from './native-adapter.js';
+import { resolveAdapterCachesSnapshot } from './snapshot-cache-detection.js';
 import {
   createBranchSequencer,
-  findLastUserIndex,
-  findPriorAssistantBranchId,
+
+
 } from './branching.js';
 import { buildEngineContext } from './build-context.js';
 import {
@@ -17,6 +18,7 @@ import {
   cleanDanglingAssistantAt,
   markToolLoopMaxReached,
 } from './tool-execution.js';
+import { regenerateTurn } from './regenerate.js';
 import type {
   AiConnector,
   AiConnectorChunk,
@@ -71,12 +73,10 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   const hostTools: AiToolSchema[] | undefined = options.tools;
   const toolExecutor: ToolExecutor | null = options.toolExecutor ?? null;
   const maxToolRounds = options.maxToolRounds ?? 8;
-  // P2-3 (plan 461): adapter identity marker so `useEngineView`'s React-warning
-  // guard can skip cached adapters (false positives when a mutation happens
-  // between two `getSnapshot` calls — the cache legitimately invalidates).
-  // Only annotated when the adapter genuinely caches — leaving it undefined for
-  // non-caching adapters so the warning stays active for the original bug.
-  const adapterCachesSnapshot = isAdapterCaching(adapter) ? true : undefined;
+  // P2-3 (plan 461): see ./snapshot-cache-detection.ts. The flag short-circuits
+  // `useEngineView`'s false-positive warning when a mutation happens between
+  // two `getSnapshot` calls (the cache legitimately invalidates).
+  const adapterCachesSnapshot = resolveAdapterCachesSnapshot(adapter);
 
   adapter.initialize({
     messages: options.initialMessages ? options.initialMessages.map((m) => ({ ...m })) : [],
@@ -674,47 +674,24 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
    * request, stamping the new assistant message's `metadata.branchId`. The
    * engine stores NO branch set; the host owns full branch history. The branch
    * id advances from the prior assistant's branchId when the host omits one.
+   *
+   * Plan 461 size-budget: implementation lives in `regenerate.ts`; this is a
+   * closure bridge so the body can mutate `pendingBranchId` and call `runTurn`.
    */
   async function regenerate(branchId?: string): Promise<void> {
-    if (adapter.getState().isProcessing) {
-      return;
-    }
-    const current = adapter.getState().messages;
-    // Find the last user message — everything after it is the assistant turn to
-    // regenerate. If there is no preceding user message, there is nothing to
-    // re-request.
-    const lastUserIdx = findLastUserIndex(current);
-    if (lastUserIdx < 0) return;
-
-    // Determine the branch id: explicit > advance prior > new sequence.
-    const priorBranchId = findPriorAssistantBranchId(current, lastUserIdx + 1);
-    const nextBranchId = branchId ?? branchSeq.next(priorBranchId);
-
-    // Truncate to [0..lastUserIdx] (keep the user prompt; drop the old turn).
-    adapter.mutate('messages', (draft) => {
-      draft.messages = draft.messages.slice(0, lastUserIdx + 1);
-    });
-
-    pendingBranchId = nextBranchId;
-    // Re-run the turn with no new incoming messages — runOnce streams a fresh
-    // assistant message using the existing (now user-terminated) history.
-    await runTurn([]);
+    await regenerateTurn(
+      {
+        adapter,
+        branchSeq,
+        getPendingBranchId: () => pendingBranchId,
+        setPendingBranchId: (id) => {
+          pendingBranchId = id;
+        },
+        runTurn,
+      },
+      branchId,
+    );
   }
 
   return engine;
-}
-
-/**
- * Plan 461 P2-3: detect whether the supplied adapter caches its snapshot
- * (currently only `ReactMessageAdapter`). Used to short-circuit the
- * `useEngineView` warning when the engine is correctly backed by a caching
- * adapter, since a mutation between two consecutive `getSnapshot` calls
- * legitimately invalidates the cache and produces 2 consecutive mismatches.
- *
- * Detection looks for the `cached` field on the adapter (an implementation
- * detail of `ReactMessageAdapter`); if you build a new caching adapter,
- * either give it the same field or extend this check.
- */
-function isAdapterCaching(adapter: MessageStateAdapter): boolean {
-  return adapter != null && typeof (adapter as { cached?: unknown }).cached !== 'undefined';
 }
