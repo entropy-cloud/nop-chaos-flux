@@ -33,13 +33,13 @@ const SAMPLE_SOURCES: AiCitationSource[] = [
   {
     index: 1,
     title: 'flux-renderers-ai design.md',
-    url: 'https://example.com/design',
+    url: 'https://github.com/nop-chaos/nop-chaos/blob/main/docs/architecture/ai/README.md',
     snippet: 'Architecture and renderer contract for the AI conversation package.',
   },
   {
     index: 2,
     title: 'engine.md — MessageEngine',
-    url: 'https://example.com/engine',
+    url: 'https://github.com/nop-chaos/nop-chaos/blob/main/docs/architecture/ai/engine.md',
     snippet: 'Framework-agnostic engine ported from tiny-robot.',
   },
 ];

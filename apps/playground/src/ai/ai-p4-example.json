@@ -29,7 +29,15 @@
         {
           "type": "ai-voice-input",
           "testid": "p4-voice",
-          "lang": "en-US"
+          "lang": "en-US",
+          "onResult": {
+            "action": "showToast",
+            "args": { "level": "success", "message": "P4 voice transcript: ${transcript}" }
+          },
+          "onError": {
+            "action": "showToast",
+            "args": { "level": "warning", "message": "P4 voice error: ${reason}" }
+          }
         }
       ]
     },
@@ -61,7 +69,11 @@
           "type": "ai-suggestions",
           "testid": "p4-suggestions",
           "items": "${suggestions}",
-          "overflowMode": "expand"
+          "overflowMode": "expand",
+          "onSelect": {
+            "action": "showToast",
+            "args": { "level": "info", "message": "P4 suggestion: ${item.text}" }
+          }
         }
       ]
     },
@@ -80,7 +92,11 @@
           "testid": "p4-suggestions-popover",
           "items": "${suggestions}",
           "overflowMode": "popover",
-          "maxVisible": 2
+          "maxVisible": 2,
+          "onSelect": {
+            "action": "showToast",
+            "args": { "level": "info", "message": "P4 popover suggestion: ${item.text}" }
+          }
         }
       ]
     }

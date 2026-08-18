@@ -62,6 +62,10 @@ const SCHEMA = {
             items: '${promptItems}',
             layout: 'wrap',
             size: 'sm',
+            onSelect: {
+              action: 'showToast',
+              args: { level: 'info', message: 'Prompt selected: ${item.label}' },
+            },
           },
         ],
       },
@@ -71,16 +75,40 @@ const SCHEMA = {
         className: 'px-4 py-2 gap-2',
         body: [
           {
+            type: 'ai-feedback',
+            actions: ['copy', 'refresh', 'like', 'dislike', 'sources'],
+            message: '${feedbackMsg}',
+            onAction: {
+              action: 'showToast',
+              args: { level: 'info', message: 'feedback: ${action} on ${message.id}' },
+            },
+          },
+          {
             type: 'ai-suggestions',
             items: '${suggestionItems}',
             overflowMode: 'expand',
+            onSelect: {
+              action: 'showToast',
+              args: { level: 'info', message: 'Suggestion tapped: ${item.text}' },
+            },
           },
           {
             type: 'flex',
             direction: 'row',
             className: 'items-center gap-2',
             body: [
-              { type: 'ai-voice-input', lang: 'en-US' },
+              {
+                type: 'ai-voice-input',
+                lang: 'en-US',
+                onResult: {
+                  action: 'showToast',
+                  args: { level: 'success', message: 'Voice transcript: ${transcript}' },
+                },
+                onError: {
+                  action: 'showToast',
+                  args: { level: 'warning', message: 'Voice error: ${reason}' },
+                },
+              },
               { type: 'text', text: 'Try voice input', className: 'text-xs text-muted-foreground' },
             ],
           },
@@ -125,6 +153,11 @@ export function AiWidgetsDemoPage({ onBack }: Props) {
       },
       promptItems: PROMPT_ITEMS,
       suggestionItems: SUGGESTION_ITEMS,
+      feedbackMsg: {
+        id: 'm_fb_widgets',
+        role: 'assistant',
+        content: 'AI Widgets Showcase — feedback widget wired to showToast so every action is visible.',
+      },
     }),
     [],
   );

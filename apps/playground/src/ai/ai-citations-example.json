@@ -25,7 +25,11 @@
           "message": "${citationMessage}",
           "sources": "${citationSources}",
           "mode": "inline",
-          "className": "border rounded-md p-4 bg-muted/30"
+          "className": "border rounded-md p-4 bg-muted/30",
+          "onSourceClick": {
+            "action": "showToast",
+            "args": { "level": "info", "message": "Citation #${index} → ${source.title}" }
+          }
         },
         {
           "type": "text",
@@ -36,7 +40,11 @@
           "type": "ai-citations",
           "testid": "ai-citations-list",
           "sources": "${citationSources}",
-          "mode": "list"
+          "mode": "list",
+          "onSourceClick": {
+            "action": "showToast",
+            "args": { "level": "info", "message": "List source #${index} → ${source.title}" }
+          }
         }
       ]
     }

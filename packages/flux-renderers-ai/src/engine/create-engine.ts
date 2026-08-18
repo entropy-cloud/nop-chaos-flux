@@ -71,6 +71,12 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   const hostTools: AiToolSchema[] | undefined = options.tools;
   const toolExecutor: ToolExecutor | null = options.toolExecutor ?? null;
   const maxToolRounds = options.maxToolRounds ?? 8;
+  // P2-3 (plan 461): adapter identity marker so `useEngineView`'s React-warning
+  // guard can skip cached adapters (false positives when a mutation happens
+  // between two `getSnapshot` calls — the cache legitimately invalidates).
+  // Only annotated when the adapter genuinely caches — leaving it undefined for
+  // non-caching adapters so the warning stays active for the original bug.
+  const adapterCachesSnapshot = isAdapterCaching(adapter) ? true : undefined;
 
   adapter.initialize({
     messages: options.initialMessages ? options.initialMessages.map((m) => ({ ...m })) : [],
@@ -95,6 +101,11 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     setMessages,
     setMessageEditing,
     regenerate,
+    // P2-3 (plan 461): marks the engine as backed by a snapshot-caching adapter
+    // (ReactMessageAdapter). Used by `useEngineView`'s stability guard to
+    // suppress false-positive warnings when a mutation happens between two
+    // consecutive `getSnapshot` calls (the cache legitimately invalidates).
+    ...(adapterCachesSnapshot !== undefined ? { hasStableSnapshotAdapter: true } : {}),
   };
 
   // A-16: branch-id sequencer. The engine assigns `branch-<n>` when the host
@@ -691,4 +702,19 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
   }
 
   return engine;
+}
+
+/**
+ * Plan 461 P2-3: detect whether the supplied adapter caches its snapshot
+ * (currently only `ReactMessageAdapter`). Used to short-circuit the
+ * `useEngineView` warning when the engine is correctly backed by a caching
+ * adapter, since a mutation between two consecutive `getSnapshot` calls
+ * legitimately invalidates the cache and produces 2 consecutive mismatches.
+ *
+ * Detection looks for the `cached` field on the adapter (an implementation
+ * detail of `ReactMessageAdapter`); if you build a new caching adapter,
+ * either give it the same field or extend this check.
+ */
+function isAdapterCaching(adapter: MessageStateAdapter): boolean {
+  return adapter != null && typeof (adapter as { cached?: unknown }).cached !== 'undefined';
 }

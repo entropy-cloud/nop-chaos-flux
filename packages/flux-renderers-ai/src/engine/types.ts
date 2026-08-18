@@ -363,4 +363,13 @@ export interface MessageEngine {
    * Must not be called while a turn is in-flight; callers should `abort()` first.
    */
   regenerate(branchId?: string): Promise<void>;
+  /**
+   * Plan 461 P2-3: `true` when the engine is backed by a snapshot-caching
+   * adapter (e.g. `ReactMessageAdapter`). Lets binding hooks (such as
+   * `useEngineView`) suppress the "no snapshot-caching adapter" warning when
+   * the engine is correctly bound to React, because a mutation between two
+   * consecutive `getSnapshot` calls legitimately invalidates the cache and
+   * produces a transient mismatch — not a render-loop bug.
+   */
+  hasStableSnapshotAdapter?: boolean;
 }

@@ -116,4 +116,14 @@ describe('useEngineView — bind an existing engine to React', () => {
     expect(result.current.engine).toBe(engine);
     expect(warnSpy).not.toHaveBeenCalled();
   });
+
+  it('plan 461 P2-3: engine has hasStableSnapshotAdapter=true when built with React adapter', () => {
+    const engine = buildEngine(mockConnector(helloChunks));
+    expect(engine.hasStableSnapshotAdapter).toBe(true);
+  });
+
+  it('plan 461 P2-3: engine has hasStableSnapshotAdapter=undefined when built with native adapter', () => {
+    const nativeEngine = createMessageEngine({ connector: mockConnector(helloChunks) });
+    expect(nativeEngine.hasStableSnapshotAdapter).toBeUndefined();
+  });
 });

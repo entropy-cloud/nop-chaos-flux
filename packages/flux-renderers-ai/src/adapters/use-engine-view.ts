@@ -62,29 +62,36 @@ const snapshotStability = new WeakMap<
 export function useEngineView(engine: MessageEngine): UseEngineViewReturn {
   const getSnapshot = (): MessageEngineState => {
     const snapshot = engine.getState();
-    let track = snapshotStability.get(engine);
-    if (!track) {
-      track = { lastSnapshot: undefined, consecutiveMismatches: 0, warned: false };
-      snapshotStability.set(engine, track);
-    }
-    if (track.lastSnapshot !== snapshot) {
-      track.consecutiveMismatches += 1;
-      if (track.consecutiveMismatches >= 2 && !track.warned) {
-        track.warned = true;
-        if (typeof console !== 'undefined') {
-          console.warn(
-            '[ai-chat] MessageEngine.getState() returns a new snapshot reference on consecutive calls — ' +
-              'the engine is NOT backed by a snapshot-caching adapter and binding it to React can cause an ' +
-              'infinite render loop. Build the engine with ' +
-              '`createMessageEngine({ adapter: createReactMessageAdapter(), ... })` ' +
-              'when binding it to React (see engine.md §8.2/§8.5).',
-          );
-        }
+    // Plan 461 P2-3: when the engine is backed by a snapshot-caching adapter
+    // (e.g. `ReactMessageAdapter`), a mutation between two consecutive
+    // `getSnapshot` calls legitimately invalidates the cache and produces
+    // 2 consecutive mismatches — that's NOT a render-loop bug. Skip the
+    // warning entirely for caching adapters.
+    if (engine.hasStableSnapshotAdapter !== true) {
+      let track = snapshotStability.get(engine);
+      if (!track) {
+        track = { lastSnapshot: undefined, consecutiveMismatches: 0, warned: false };
+        snapshotStability.set(engine, track);
       }
-    } else {
-      track.consecutiveMismatches = 0;
+      if (track.lastSnapshot !== snapshot) {
+        track.consecutiveMismatches += 1;
+        if (track.consecutiveMismatches >= 2 && !track.warned) {
+          track.warned = true;
+          if (typeof console !== 'undefined') {
+            console.warn(
+              '[ai-chat] MessageEngine.getState() returns a new snapshot reference on consecutive calls — ' +
+                'the engine is NOT backed by a snapshot-caching adapter and binding it to React can cause an ' +
+                'infinite render loop. Build the engine with ' +
+                '`createMessageEngine({ adapter: createReactMessageAdapter(), ... })` ' +
+                'when binding it to React (see engine.md §8.2/§8.5).',
+            );
+          }
+        }
+      } else {
+        track.consecutiveMismatches = 0;
+      }
+      track.lastSnapshot = snapshot;
     }
-    track.lastSnapshot = snapshot;
     return snapshot;
   };
   const state = useSyncExternalStore(engine.subscribe, getSnapshot, getSnapshot) as MessageEngineState;

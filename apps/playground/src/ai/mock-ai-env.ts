@@ -15,6 +15,7 @@ import type {
   StreamFetcher,
   XuiImportSpec,
 } from '@nop-chaos/flux-core';
+import { toast } from '@nop-chaos/ui';
 import {
   createStreamBasedAiConnector,
   type AiConnector,
@@ -82,7 +83,15 @@ export function createMockAiEnv(): RendererEnv {
   return {
     fetcher: (async () => ({ status: 200, data: null })) as RendererEnv['fetcher'],
     stream: createMockAiStream(),
-    notify: () => undefined,
+    // Plan 461: route `showToast` to the playground's sonner Toaster so wiring
+    // actions like `ai-prompts.onSelect` produce visible feedback.
+    notify: (level, message) => {
+      const text = typeof message === 'string' ? message : String(message ?? '');
+      if (level === 'error') toast.error(text || 'Error');
+      else if (level === 'success') toast.success(text || 'Success');
+      else if (level === 'warning') toast.warning?.(text || 'Warning');
+      else toast.info?.(text || 'Info');
+    },
   };
 }
 

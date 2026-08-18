@@ -77,6 +77,12 @@
   --popover: 30 20% 98%;
   --popover-foreground: 25 15% 35%;
   --radius: 0.75rem;
+  --success: 160 84% 39%;
+  --success-bg: 160 84% 95%;
+  --warning: 38 92% 50%;
+  --warning-bg: 38 92% 95%;
+  --info: 199 89% 48%;
+  --info-bg: 199 89% 95%;
 }
 
 .nop-theme-root {

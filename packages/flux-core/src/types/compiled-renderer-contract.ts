@@ -27,6 +27,7 @@ export interface CompiledRendererContract<S extends BaseSchema = BaseSchema> {
   };
   wrap?: boolean;
   frameRootTag?: 'div' | 'label';
+  frameWrap?: 'label' | 'group' | 'none';
   staticCapable?: boolean;
 }
 
@@ -42,6 +43,7 @@ export function toCompiledRendererContract<S extends BaseSchema = BaseSchema>(de
   compilation?: CompiledRendererContract<S>['compilation'];
   wrap?: boolean;
   frameRootTag?: 'div' | 'label';
+  frameWrap?: 'label' | 'group' | 'none';
   staticCapable?: boolean;
 }): CompiledRendererContract<S> {
   return {
@@ -56,6 +58,7 @@ export function toCompiledRendererContract<S extends BaseSchema = BaseSchema>(de
     compilation: definition.compilation,
     wrap: definition.wrap,
     frameRootTag: definition.frameRootTag,
+    frameWrap: definition.frameWrap,
     staticCapable: definition.staticCapable,
   };
 }

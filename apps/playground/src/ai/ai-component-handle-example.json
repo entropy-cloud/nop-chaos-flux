@@ -4,7 +4,7 @@
   "body": [
     {
       "type": "flex",
-      "direction": "col",
+      "direction": "column",
       "className": "h-[80vh] max-w-3xl mx-auto gap-2 p-4",
       "items": [
         {
@@ -32,7 +32,7 @@
           "connector": "${$ai.connectors.mock}",
           "placeholder": "Type, or click the external button above (component:sendMessage)…",
           "submitType": "enter",
-          "className": "flex flex-col flex-1 min-h-0 gap-2"
+          "className": "flex flex-col flex-1 min-h-0 min-w-0 gap-2 w-full"
         }
       ]
     }

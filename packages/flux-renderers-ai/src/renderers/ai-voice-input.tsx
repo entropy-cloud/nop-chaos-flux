@@ -299,6 +299,13 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
           <TooltipTrigger render={button} />
           <TooltipContent>{t('flux.ai.voiceUnsupported')}</TooltipContent>
         </Tooltip>
+        <span
+          data-slot="ai-voice-input-unavailable-badge"
+          aria-label={t('flux.ai.voiceUnsupported')}
+          className="ml-2 inline-flex items-center rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs text-warning"
+        >
+          {t('flux.ai.voiceUnsupported')}
+        </span>
       </TooltipProvider>
     );
   }
