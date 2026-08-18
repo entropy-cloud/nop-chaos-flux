@@ -15,6 +15,20 @@ function getSurfaceScopeId(
   return `${surfaceId}:${kind}-scope`;
 }
 
+/**
+ * Extract a simple scope path from a controlled-open expression like
+ * `"${todoDialogOpen}"` or `"${panel.open}"`. Returns undefined for booleans
+ * or arbitrary expressions (those keep the pure-latch semantics).
+ */
+function extractControlledOpenPath(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') {
+    return undefined;
+  }
+  const trimmed = raw.trim();
+  const match = trimmed.match(/^\$\{([a-zA-Z_$][\w$]*(\.[a-zA-Z_$][\w$]*)*)\}$/);
+  return match?.[1];
+}
+
 function disposeSurfaceScope(runtime: { disposeScope: (scopeId: string) => void }, scope: ScopeRef | undefined) {
   if (!scope) {
     return;
@@ -63,7 +77,16 @@ export function useSurfaceRenderer(
     },
     () => defaultOpen,
   );
-  const effectiveOpen = controlledOpen !== undefined ? Boolean(controlledOpen) : uncontrolledOpen;
+  // Plan 459 B1: when a controlled dialog's surface entry is closed by the
+  // user (X / outside / Esc) the controlled expression stays true, so a
+  // subsequent idempotent setValue(openPath, true) never flips and the
+  // dialog can never reopen. Add a userClosed latch that the X-close path
+  // sets to true and the schema-open path resets to false on a real false→true
+  // flip. Scope variables also need sync so the user close is observable by
+  // the schema's `open` expression.
+  const [userClosed, setUserClosed] = React.useState(false);
+  const effectiveOpen =
+    (controlledOpen !== undefined ? Boolean(controlledOpen) : uncontrolledOpen) && !userClosed;
   const [openingData, setOpeningData] = React.useState<Record<string, unknown> | undefined>(() =>
     effectiveOpen ? resolvedData : undefined,
   );
@@ -186,6 +209,18 @@ export function useSurfaceRenderer(
         closeHandledRef.current = true;
         const payload = { surfaceId: id, kind, open: false };
         void eventHandlers.onClose?.(payload, eventCtx(payload));
+        // Plan 459 fix: controlled dialog X / outside / Esc — also tear down the
+        // surface and sync the controlled scope variable so the schema's
+        // next open intent (setValue(openPath, true)) can flip false→true.
+        surfaceRuntime?.close(id);
+        if (controlledOpen !== undefined) {
+          setUserClosed(true);
+          const rawOpen = (templateNode.schema as { open?: unknown } | undefined)?.open;
+          const openPath = extractControlledOpenPath(rawOpen);
+          if (openPath) {
+            node.scope.update(openPath, false);
+          }
+        }
         return;
       }
 
@@ -193,7 +228,7 @@ export function useSurfaceRenderer(
       const payload = { surfaceId: id, kind, open: true };
       void eventHandlers.onOpen?.(payload, eventCtx(payload));
     },
-    [controlledOpen, eventCtx, eventHandlers, id, kind, surfaceRuntime],
+    [controlledOpen, eventCtx, eventHandlers, id, kind, node.scope, surfaceRuntime, templateNode],
   );
   const surfacePayload = React.useMemo(
     () => ({
@@ -456,6 +491,49 @@ export function useSurfaceRenderer(
       surfaceRuntime?.store.setUncontrolledOpen(id, nextOpen);
     },
   });
+
+  // Plan 459 B1 reopen: when the controlled expression flips false → true
+  // again (the schema-author reopen path), clear the userClosed latch so the
+  // surface can re-surface. handleSurfaceOpenChange(true) is never invoked
+  // by base-ui (only close is reported), so an effect is the canonical hook.
+  const prevControlledOpenRef = React.useRef(controlledOpen);
+  React.useEffect(() => {
+    const prev = prevControlledOpenRef.current;
+    prevControlledOpenRef.current = controlledOpen;
+    if (
+      controlledOpen !== undefined &&
+      Boolean(controlledOpen) &&
+      !prev
+    ) {
+      setUserClosed(false);
+    }
+  }, [controlledOpen]);
+
+  // Plan 460 B1: when a controlled dialog's surface entry is removed by an
+  // external path (closeSurface action, surfaceRuntime.close) instead of the
+  // X/outside/Esc route in handleSurfaceOpenChange, the scope variable driving
+  // the open expression stays true. If the schema's open expression was
+  // already true when the entry vanished, write the variable back to false so
+  // the schema's idempotent setValue(openPath, true) can reopen it. The
+  // X-close path already wrote the scope to false — but calling update again
+  // on the same value is a no-op so the latch-less code path is safe.
+  const wasSummaryOpenRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!surfaceRuntime || controlledOpen === undefined) {
+      wasSummaryOpenRef.current = summary.open;
+      return;
+    }
+    const wasOpen = wasSummaryOpenRef.current;
+    wasSummaryOpenRef.current = summary.open;
+    if (!wasOpen || summary.open || !controlledOpen) {
+      return;
+    }
+    const rawOpen = (templateNode.schema as { open?: unknown } | undefined)?.open;
+    const openPath = extractControlledOpenPath(rawOpen);
+    if (openPath) {
+      node.scope.update(openPath, false);
+    }
+  }, [controlledOpen, id, node.scope, summary.open, surfaceRuntime, templateNode]);
 
   return {
     summary,
