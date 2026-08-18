@@ -517,14 +517,22 @@ export function useSurfaceRenderer(
   // the schema's idempotent setValue(openPath, true) can reopen it. The
   // X-close path already wrote the scope to false — but calling update again
   // on the same value is a no-op so the latch-less code path is safe.
+  // Track a 'saw-open' latch so the first effect run (entry appearing on mount)
+  // is not mistaken for an external removal.
+  const sawSummaryOpenRef = React.useRef(false);
   const wasSummaryOpenRef = React.useRef(false);
   React.useEffect(() => {
     if (!surfaceRuntime || controlledOpen === undefined) {
       wasSummaryOpenRef.current = summary.open;
+      sawSummaryOpenRef.current = summary.open;
       return;
     }
     const wasOpen = wasSummaryOpenRef.current;
     wasSummaryOpenRef.current = summary.open;
+    if (!sawSummaryOpenRef.current && summary.open) {
+      sawSummaryOpenRef.current = true;
+      return;
+    }
     if (!wasOpen || summary.open || !controlledOpen) {
       return;
     }
