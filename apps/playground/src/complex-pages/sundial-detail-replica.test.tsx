@@ -36,7 +36,7 @@ describe('Sundial replica — detail inspector', () => {
 
     // Real input-date calendar popover with year/month navigation
     const trigger = document.querySelector(
-      '[data-testid="sundial-date-input"] [data-testid="date-trigger"]',
+      '[data-testid="sundial-datetime-input"] [data-testid="date-trigger"]',
     ) as Element | null;
     await waitFor(() => expect(trigger).toBeTruthy());
     fireEvent.click(trigger!);
@@ -50,12 +50,12 @@ describe('Sundial replica — detail inspector', () => {
     expect(navButtons.length).toBeGreaterThanOrEqual(2);
 
     // Sundial-style ±1h/±5m stepper (real input-time steppers mode)
-    const displaySel = '[data-testid="sundial-time-stepper-display"], [data-testid="time-display"]';
+    const displaySel = '[data-testid="time-display"]';
     await waitFor(() => {
       const el = document.querySelector(displaySel) as Element | null;
       expect(el?.textContent).toMatch(/14 : 00/);
     });
-    fireEvent.click(screen.getByTestId('sundial-time-stepper-minute-up') || screen.getByTestId('time-minute-up'));
+    fireEvent.click(screen.getByTestId('time-minute-up'));
     const el = document.querySelector(displaySel) as Element | null;
     expect(el?.textContent).toMatch(/14 : 05/);
 
@@ -214,24 +214,31 @@ describe('Sundial replica — detail inspector', () => {
     });
   });
 
-  it('wires the time clear button (plan 457 C13 + plan 460 B6)', async () => {
+  it('clears the datetime via the picker clear button (plan 457 C13 + plan 460 B6)', async () => {
     render(<SchemaPage pageId="sundial-detail" env={env} />);
     fireEvent.click(screen.getByTestId('sundial-open-date-dialog'));
     await waitFor(() => {
-      // real input-date calendar: trigger present, no static "2026 年 8 月" text
-      expect(screen.getByTestId('sundial-date-input')).toBeTruthy();
+      expect(screen.getByTestId('sundial-datetime-input')).toBeTruthy();
     });
-    // clear-time button lives inside the picker form; its onClick sets pickedTime
-    // to '' and emits a showToast. The picker is portal-mounted so the toast is
-    // rendered at the playground Toaster level — assert the action ran by
-    // closing the picker (the field row still shows the default date label).
-    fireEvent.click(screen.getByTestId('sundial-clear-time'));
-    // The picker stays open (clear-time does not close it); close it via X.
-    const closeTimePicker = document.querySelector('[data-slot="dialog-close"]');
-    if (closeTimePicker) fireEvent.click(closeTimePicker);
+    // input-datetime renders an inline clear button once a value exists
+    const dtTrigger = document.querySelector(
+      '[data-testid="sundial-datetime-input"] [data-testid="date-trigger"]',
+    ) as Element | null;
+    await waitFor(() => expect(dtTrigger).toBeTruthy());
+    fireEvent.click(dtTrigger!);
     await waitFor(() => {
-      expect(screen.queryByTestId('sundial-clear-time')).toBeNull();
+      expect(document.querySelector('[data-testid="date-popover"] [data-testid="date-clear"]')).toBeTruthy();
     });
+    fireEvent.click(document.querySelector('[data-testid="date-popover"] [data-testid="date-clear"]') as Element);
+    await waitFor(() => {
+      expect(document.querySelector('[data-testid="date-popover"] [data-testid="date-display"]')).toBeNull();
+    });
+    // cancel preserves the page value
+    fireEvent.click(screen.getByTestId('sundial-date-cancel'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-date-cancel')).toBeNull();
+    });
+    expect(screen.getByTestId('sundial-detail-row-date').textContent).toMatch(/8\/18/);
   });
 
   it('opens dialogs from detail field rows and toggles the flag (plan 457 C3)', async () => {
@@ -240,7 +247,7 @@ describe('Sundial replica — detail inspector', () => {
     // date row pick opens dialog with real calendar
     fireEvent.click(screen.getByTestId('sundial-detail-row-date-pick'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-date-input')).toBeTruthy();
+      expect(screen.getByTestId('sundial-datetime-input')).toBeTruthy();
     });
     // cancel preserves the original page value
     fireEvent.click(screen.getByTestId('sundial-date-cancel'));
@@ -283,10 +290,10 @@ describe('Sundial replica — detail inspector', () => {
     // date picker: real input-date calendar → open popover → click day 20
     fireEvent.click(screen.getByTestId('sundial-open-date-dialog'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-date-input')).toBeTruthy();
+      expect(screen.getByTestId('sundial-datetime-input')).toBeTruthy();
     });
     const trigger = document.querySelector(
-      '[data-testid="sundial-date-input"] [data-testid="date-trigger"]',
+      '[data-testid="sundial-datetime-input"] [data-testid="date-trigger"]',
     ) as Element | null;
     await waitFor(() => expect(trigger).toBeTruthy());
     fireEvent.click(trigger!);
@@ -300,7 +307,7 @@ describe('Sundial replica — detail inspector', () => {
     fireEvent.click(day20!);
     // after selecting a day, the input-date trigger shows the picked value
     await waitFor(() => {
-      const triggerText = (document.querySelector('[data-testid="sundial-date-input"]') as HTMLElement)?.textContent || '';
+      const triggerText = (document.querySelector('[data-testid="sundial-datetime-input"]') as HTMLElement)?.textContent || '';
       expect(triggerText).toMatch(/8\/20|08-20/);
     });
     // confirm (submit) writes the picked date back to the page field row

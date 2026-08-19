@@ -343,6 +343,12 @@ export interface InputDatetimeSchema extends BoundFieldSchemaBase {
   maxDate?: string;
   utc?: boolean;
   clearable?: boolean;
+  /** Sundial-style hour/minute steppers（±hourStep / ±minuteStep，循环步进）。默认 false（数字输入框）。 */
+  steppers?: boolean;
+  /** 小时步进量，0-23 循环（默认 1）。 */
+  hourStep?: number;
+  /** 分钟步进量，0-59 循环（默认 5）。 */
+  minuteStep?: number;
 }
 
 export interface InputTimeSchema extends BoundFieldSchemaBase {

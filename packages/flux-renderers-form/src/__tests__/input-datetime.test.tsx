@@ -298,3 +298,88 @@ describe('input-datetime — min/max across entry paths (D9)', () => {
     expect(submitCalls[0].at).toBe('2024-06-10 10:30');
   });
 });
+
+describe('input-datetime — steppers mode (Sundial-style ±hourStep/±minuteStep)', () => {
+  it('renders time steppers instead of number inputs when steppers: true', async () => {
+    renderSchema({
+      type: 'form',
+      data: { at: '2024-06-09 14:30' },
+      body: [
+        { type: 'input-datetime', name: 'at', label: 'At', steppers: true },
+      ],
+    } as any);
+
+    const popover = await openPicker();
+    expect(within(popover).getByTestId('time-display').textContent).toMatch(/14 : 30/);
+    // Number inputs are absent in steppers mode.
+    expect(within(popover).queryByLabelText('Hour')).toBeNull();
+    expect(within(popover).getByTestId('time-hour-up')).toBeTruthy();
+    expect(within(popover).getByTestId('time-minute-down')).toBeTruthy();
+  });
+
+  it('defaults to number inputs when steppers is not set', async () => {
+    renderSchema({
+      type: 'form',
+      data: { at: '2024-06-09 14:30' },
+      body: [{ type: 'input-datetime', name: 'at', label: 'At' }],
+    } as any);
+
+    const popover = await openPicker();
+    expect(within(popover).getByLabelText('Hour')).toBeTruthy();
+    expect(within(popover).queryByTestId('time-display')).toBeNull();
+    expect(within(popover).queryByTestId('time-hour-up')).toBeNull();
+  });
+
+  it('steps hour and minute by configured units with wrapping', async () => {
+    renderSchema({
+      type: 'form',
+      data: { at: '2024-06-09 23:55' },
+      body: [
+        {
+          type: 'input-datetime',
+          name: 'at',
+          label: 'At',
+          steppers: true,
+          hourStep: 2,
+          minuteStep: 10,
+        },
+      ],
+    } as any);
+
+    const popover = await openPicker();
+    // Hour 23 +2 wraps to 01 (2-hour step, 0-23 cycle).
+    fireEvent.click(within(popover).getByTestId('time-hour-up'));
+    expect(within(popover).getByTestId('time-display').textContent).toMatch(/01 : 55/);
+    // Minute 55 +10 wraps past midnight into 05 (carry into hour).
+    fireEvent.click(within(popover).getByTestId('time-minute-up'));
+    expect(within(popover).getByTestId('time-display').textContent).toMatch(/02 : 05/);
+    // Minute down -10 → 01:55 again (negative wrap).
+    fireEvent.click(within(popover).getByTestId('time-minute-down'));
+    expect(within(popover).getByTestId('time-display').textContent).toMatch(/01 : 55/);
+  });
+
+  it('commits stepped time to the form value', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'dt-stepper-form',
+      data: { at: '2024-06-09 14:30' },
+      submitAction: { action: 'ajax', args: { url: '/api/test', method: 'post' } },
+      body: [
+        { type: 'input-datetime', name: 'at', label: 'At', steppers: true },
+        {
+          type: 'button',
+          label: 'Submit',
+          onClick: { action: 'component:submit', componentId: 'dt-stepper-form' },
+        },
+      ],
+    } as any);
+
+    const popover = await openPicker();
+    fireEvent.click(within(popover).getByTestId('time-minute-up'));
+
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(submitCalls.length).toBe(1));
+    // 14:30 +5m → 14:35; date part unchanged.
+    expect(submitCalls[0].at).toBe('2024-06-09 14:35');
+  });
+});

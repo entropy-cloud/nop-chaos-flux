@@ -127,22 +127,15 @@
                             {
                               "action": "setValue",
                               "args": {
-                                "path": "pickedDate",
-                                "value": "${$formData.pickedDate}"
+                                "path": "pickedDateTime",
+                                "value": "${$formData.pickedDateTime}"
                               }
                             },
                             {
                               "action": "setValue",
                               "args": {
                                 "path": "pickedDateLabel",
-                                "value": "${ $Date.month($formData.pickedDate) }/${ $Date.day($formData.pickedDate) }"
-                              }
-                            },
-                            {
-                              "action": "setValue",
-                              "args": {
-                                "path": "pickedTime",
-                                "value": "${$formData.pickedTime}"
+                                "value": "${ $Date.month($formData.pickedDateTime) }/${ $Date.day($formData.pickedDateTime) }"
                               }
                             }
                           ],
@@ -152,69 +145,18 @@
                               "id": "sundial-date-form",
                               "submitScope": "surface",
                               "data": {
-                                "pickedDate": "${pickedDate || \"2026-08-18\"}",
-                                "pickedDateLabel": "${pickedDateLabel || \"8/18\"}",
-                                "pickedTime": "${pickedTime || \"14:00\"}"
+                                "pickedDateTime": "${pickedDateTime || \"2026-08-18 14:00\"}"
                               },
                               "body": [
                                 {
-                                  "type": "input-date",
-                                  "name": "pickedDate",
+                                  "type": "input-datetime",
+                                  "name": "pickedDateTime",
                                   "className": "sd-input",
-                                  "testid": "sundial-date-input"
-                                },
-                                {
-                                  "type": "flex",
-                                  "direction": "row",
-                                  "gap": 8,
-                                  "className": "items-center mt-1",
-                                  "body": [
-                                    {
-                                      "type": "text",
-                                      "text": "时间",
-                                      "className": "text-xs text-[#333333]"
-                                    },
-                                    {
-                                      "type": "input-time",
-                                      "name": "pickedTime",
-                                      "steppers": true,
-                                      "className": "sd-time-stepper",
-                                      "testid": "sundial-time-stepper"
-                                    },
-                                    {
-                                      "type": "button",
-                                      "label": "清除时间",
-                                      "variant": "ghost",
-                                      "className": "sd-btn sd-btn-ghost",
-                                      "testid": "sundial-clear-time",
-                                      "onClick": {
-                                        "action": "setValue",
-                                        "args": {
-                                          "path": "pickedTime",
-                                          "value": ""
-                                        }
-                                      }
-                                    }
-                                  ]
-                                },
-                                {
-                                  "type": "flex",
-                                  "direction": "row",
-                                  "gap": 8,
-                                  "className": "items-center mt-2",
-                                  "body": [
-                                    {
-                                      "type": "text",
-                                      "text": "当前选择",
-                                      "className": "text-xs text-[#636363]"
-                                    },
-                                    {
-                                      "type": "text",
-                                      "text": "${pickedDate} ${pickedTime}",
-                                      "className": "text-xs sd-mono text-[#ea7a2a]",
-                                      "testid": "sundial-date-summary"
-                                    }
-                                  ]
+                                  "testid": "sundial-datetime-input",
+                                  "steppers": true,
+                                  "hourStep": 1,
+                                  "minuteStep": 5,
+                                  "clearable": true
                                 }
                               ],
                               "actions": [
@@ -977,22 +919,15 @@
                     {
                       "action": "setValue",
                       "args": {
-                        "path": "pickedDate",
-                        "value": "${$formData.pickedDate}"
+                        "path": "pickedDateTime",
+                        "value": "${$formData.pickedDateTime}"
                       }
                     },
                     {
                       "action": "setValue",
                       "args": {
                         "path": "pickedDateLabel",
-                        "value": "${ $Date.month($formData.pickedDate) }/${ $Date.day($formData.pickedDate) }"
-                      }
-                    },
-                    {
-                      "action": "setValue",
-                      "args": {
-                        "path": "pickedTime",
-                        "value": "${$formData.pickedTime}"
+                        "value": "${ $Date.month($formData.pickedDateTime) }/${ $Date.day($formData.pickedDateTime) }"
                       }
                     }
                   ],
@@ -1002,69 +937,18 @@
                       "id": "sundial-date-form",
                       "submitScope": "surface",
                       "data": {
-                        "pickedDate": "${pickedDate || \"2026-08-18\"}",
-                        "pickedDateLabel": "${pickedDateLabel || \"8/18\"}",
-                        "pickedTime": "${pickedTime || \"14:00\"}"
+                        "pickedDateTime": "${pickedDateTime || \"2026-08-18 14:00\"}"
                       },
                       "body": [
                         {
-                          "type": "input-date",
-                          "name": "pickedDate",
+                          "type": "input-datetime",
+                          "name": "pickedDateTime",
                           "className": "sd-input",
-                          "testid": "sundial-date-input"
-                        },
-                        {
-                          "type": "flex",
-                          "direction": "row",
-                          "gap": 8,
-                          "className": "items-center mt-1",
-                          "body": [
-                            {
-                              "type": "text",
-                              "text": "时间",
-                              "className": "text-xs text-[#333333]"
-                            },
-                            {
-                              "type": "input-time",
-                              "name": "pickedTime",
-                              "steppers": true,
-                              "className": "sd-time-stepper",
-                              "testid": "sundial-time-stepper"
-                            },
-                            {
-                              "type": "button",
-                              "label": "清除时间",
-                              "variant": "ghost",
-                              "className": "sd-btn sd-btn-ghost",
-                              "testid": "sundial-clear-time",
-                              "onClick": {
-                                "action": "setValue",
-                                "args": {
-                                  "path": "pickedTime",
-                                  "value": ""
-                                }
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "flex",
-                          "direction": "row",
-                          "gap": 8,
-                          "className": "items-center mt-2",
-                          "body": [
-                            {
-                              "type": "text",
-                              "text": "当前选择",
-                              "className": "text-xs text-[#636363]"
-                            },
-                            {
-                              "type": "text",
-                              "text": "${pickedDate} ${pickedTime}",
-                              "className": "text-xs sd-mono text-[#ea7a2a]",
-                              "testid": "sundial-date-summary"
-                            }
-                          ]
+                          "testid": "sundial-datetime-input",
+                          "steppers": true,
+                          "hourStep": 1,
+                          "minuteStep": 5,
+                          "clearable": true
                         }
                       ],
                       "actions": [

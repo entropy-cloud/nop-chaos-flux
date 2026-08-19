@@ -4,7 +4,6 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useFormFieldFromProps } from '../field-utils.js';
 import type { InputTimeSchema } from '../schemas.js';
 import {
@@ -15,6 +14,7 @@ import {
   isWithinRange,
   parseDate,
 } from './date/date-utils.js';
+import { StepperButton } from './date/stepper-button.js';
 
 const INPUT_TIME_METHODS = ['clear', 'focus'] as const;
 
@@ -22,30 +22,6 @@ function resolveTimeInputFormat(formats: string[]): string {
   return formats.some((fmt) => fmt.includes('ss'))
     ? DEFAULT_TIME_SECONDS_FORMAT
     : DEFAULT_TIME_FORMAT;
-}
-
-interface StepperButtonProps {
-  direction: 'up' | 'down';
-  label: string;
-  onClick: () => void;
-  testid?: string;
-}
-
-function StepperButton({ direction, label, onClick, testid }: StepperButtonProps) {
-  const Icon = direction === 'up' ? ChevronUp : ChevronDown;
-  return (
-    <Button
-      type="button"
-      size="icon-xs"
-      variant="ghost"
-      aria-label={label}
-      data-testid={testid}
-      className="size-5 p-0"
-      onClick={onClick}
-    >
-      <Icon className="size-3.5" />
-    </Button>
-  );
 }
 
 export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>) {

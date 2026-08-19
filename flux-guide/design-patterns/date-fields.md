@@ -61,6 +61,30 @@
 
 `valueFormat` 必须含时间部分；时间在 popover 内以时/分/秒数字框编辑（`timeFormat` 控制是否含秒）。
 
+### 步进器模式（Sundial 风格，可选）
+
+设置 `"steppers": true` 后，popover 内的时间区切换为**小时/分钟两组循环步进按钮**（±hourStep 小时、±minuteStep 分钟，越过 23:59 自动回绕），适合"任务截止时间"类 UI；日期仍由同一 popover 的月历选择，**日期+时间一次弹出完成**：
+
+```jsonc
+{
+  "type": "input-datetime",
+  "name": "dueAt",
+  "label": "截止时间",
+  "valueFormat": "YYYY-MM-DD HH:mm",
+  "steppers": true,
+  "hourStep": 1,
+  "minuteStep": 5,
+}
+```
+
+| 属性         | 默认  | 说明                                    |
+| ------------ | ----- | --------------------------------------- |
+| `steppers`   | false | 切换为小时/分钟步进器交互（默认数字框） |
+| `hourStep`   | 1     | 小时步进量（0-23 循环）                 |
+| `minuteStep` | 5     | 分钟步进量（分钟进位到小时，0-59 循环） |
+
+> 与 `input-time` 的 steppers 共用同一实现（`date/stepper-button.tsx`）。默认（不配置 `steppers`）仍是数字输入框，与 AMIS `input-datetime` 一致。
+
 ## 3. InputTime 时间
 
 默认渲染为原生 `<input type="time">`（浏览器自带时间选择/步进），支持范围钳制与清除。
@@ -147,4 +171,4 @@
 playground 复杂页面 `sundial-detail`（`apps/playground/src/complex-pages/page-schemas/sundial-detail.json`）演示了：
 
 - `input-date` popover 月历（`sundial-input-date-demo` 区块）
-- `input-time` 步进器模式（日期选择对话框的时间行，±1h/±5m，复刻 Sundial）
+- `input-datetime` 步进器模式（日期选择对话框，一个 popover 内月历选日期 + ±1h/±5m 时间步进器，复刻 Sundial）

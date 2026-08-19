@@ -14,6 +14,7 @@ import {
   toCalendarDate,
   toStorageDate,
 } from './date-utils.js';
+import { StepperButton } from './stepper-button.js';
 
 /** Structurally compatible with react-day-picker's DateBefore / DateAfter matchers. */
 type RangeMatcher = { before: Date } | { after: Date };
@@ -36,6 +37,12 @@ export interface DateFieldControlProps {
   withTime: boolean;
   /** Popover time-input granularity (e.g. `HH:mm:ss` renders a seconds field). */
   timeFormat?: string;
+  /** Sundial-style ±hourStep/±minuteStep time steppers instead of number inputs. */
+  steppers?: boolean;
+  /** Hour step amount for steppers mode, wraps 0-23 (default 1). */
+  hourStep?: number;
+  /** Minute step amount for steppers mode, wraps 0-59 (default 5). */
+  minuteStep?: number;
   minDate: Date | undefined;
   maxDate: Date | undefined;
   clearable: boolean;
@@ -84,6 +91,9 @@ export function DateFieldControl(props: DateFieldControlProps) {
     utc,
     withTime,
     timeFormat = DEFAULT_TIME_FORMAT,
+    steppers = false,
+    hourStep = 1,
+    minuteStep = 5,
     minDate,
     maxDate,
     clearable,
@@ -178,6 +188,21 @@ export function DateFieldControl(props: DateFieldControlProps) {
     commitDate(clampToRange(base));
   }
 
+  function stepTimeField(field: 'hour' | 'minute', delta: number) {
+    const base = selected ? new Date(selected) : new Date();
+    const next = new Date(base);
+    if (field === 'hour') {
+      // Hours wrap 0-23; minutes/seconds carry over untouched.
+      next.setHours((base.getHours() + delta + 24) % 24, base.getMinutes(), withSeconds ? base.getSeconds() : 0, 0);
+    } else {
+      // Minute stepping carries into the hour and wraps around midnight.
+      const totalMinutes = base.getHours() * 60 + base.getMinutes() + delta;
+      const wrapped = ((totalMinutes % 1440) + 1440) % 1440;
+      next.setHours(Math.floor(wrapped / 60), wrapped % 60, withSeconds ? base.getSeconds() : 0, 0);
+    }
+    commitDate(clampToRange(next));
+  }
+
   function clampToRange(date: Date): Date {
     if (isWithinRange(date, minDate, maxDate)) {
       return date;
@@ -248,7 +273,42 @@ export function DateFieldControl(props: DateFieldControlProps) {
             captionLayout="dropdown"
             locale={calendarLocaleFor(i18n.language)}
           />
-          {withTime ? (
+          {withTime && steppers ? (
+            <div className="flex items-center justify-center gap-1 px-1 pt-2" data-time-steppers="true">
+              <div className="flex flex-col">
+                <StepperButton
+                  direction="up"
+                  label={`+${hourStep} ${t('flux.date.hour')}`}
+                  testid="time-hour-up"
+                  onClick={() => stepTimeField('hour', hourStep)}
+                />
+                <StepperButton
+                  direction="down"
+                  label={`-${hourStep} ${t('flux.date.hour')}`}
+                  testid="time-hour-down"
+                  onClick={() => stepTimeField('hour', -hourStep)}
+                />
+              </div>
+              <span data-testid="time-display" className="px-1 font-mono text-base text-foreground">
+                {String(hour).padStart(2, '0')} : {String(minute).padStart(2, '0')}
+              </span>
+              <div className="flex flex-col">
+                <StepperButton
+                  direction="up"
+                  label={`+${minuteStep} ${t('flux.date.minute')}`}
+                  testid="time-minute-up"
+                  onClick={() => stepTimeField('minute', minuteStep)}
+                />
+                <StepperButton
+                  direction="down"
+                  label={`-${minuteStep} ${t('flux.date.minute')}`}
+                  testid="time-minute-down"
+                  onClick={() => stepTimeField('minute', -minuteStep)}
+                />
+              </div>
+            </div>
+          ) : null}
+          {withTime && !steppers ? (
             <div className="flex items-center gap-2 px-1 pt-2">
               <Input
                 type="number"

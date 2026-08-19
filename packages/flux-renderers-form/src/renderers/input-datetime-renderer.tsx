@@ -29,6 +29,15 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
       : DEFAULT_TIME_FORMAT;
   const utc = props.props.utc === true;
   const clearable = props.props.clearable === true;
+  const steppers = props.props.steppers === true;
+  const hourStep =
+    typeof props.props.hourStep === 'number' && Number.isFinite(props.props.hourStep)
+      ? props.props.hourStep
+      : 1;
+  const minuteStep =
+    typeof props.props.minuteStep === 'number' && Number.isFinite(props.props.minuteStep)
+      ? props.props.minuteStep
+      : 5;
   const placeholder =
     typeof props.props.placeholder === 'string' && props.props.placeholder
       ? props.props.placeholder
@@ -71,6 +80,9 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
         utc={utc}
         withTime={true}
         timeFormat={timeFormat}
+        steppers={steppers}
+        hourStep={hourStep}
+        minuteStep={minuteStep}
         minDate={minDate}
         maxDate={maxDate}
         clearable={clearable}
