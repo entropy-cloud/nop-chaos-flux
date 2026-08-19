@@ -87,9 +87,10 @@ PAGE_DATA['sundial-detail'] = {
   subtaskDeleted2: false,
   subtaskDeleted3: false,
   taskTrashed: false,
-  // plan 460 B4: date dialog calendar selection
-  selectedDate: '',
-  demoDateLabel: '',
+  // plan 460 B6: date picker writeback (input-date + input-time)
+  pickedDate: '',
+  pickedDateLabel: '',
+  pickedTime: '',
 };
 
 PAGE_DATA['sundial-analytics'] = {

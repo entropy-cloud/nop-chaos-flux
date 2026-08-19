@@ -620,6 +620,36 @@
   font-weight: 600;
 }
 
+/* plan 460 B6: picker dialog choice list (radio rows styled as Sundial
+   option rows) + footer button bar (cancel/confirm, right aligned). */
+.sd-choice-list[data-slot='radio-group-wrapper'] [data-slot='radio-group-options'] {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sd-choice-list [data-slot='radio-group-item'] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--sd-text-high);
+}
+
+.sd-choice-list [data-slot='radio-group-item']:hover {
+  background: var(--sd-row-hover);
+}
+
+.sd-choice-list [data-slot='radio-group-item']:has([aria-checked='true']) {
+  background: var(--sd-brand-subtle);
+}
+
+.sd-choice-list [data-slot='radio-group-item-label'] {
+  font-size: 14px;
+}
+
 /* ── 16. KPI cards (analytics) ──────────────────────────────────────────── */
 
 .sd-kpi-card {
