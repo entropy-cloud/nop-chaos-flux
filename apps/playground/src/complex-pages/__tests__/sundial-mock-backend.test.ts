@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createMockDatabase, filterSundialTasks, updateSundialTask } from '../shared/mock-backend';
+import {
+  createMockDatabase,
+  deleteSundialSubtask,
+  filterSundialTasks,
+  updateSundialTask,
+} from '../shared/mock-backend';
 
 describe('Sundial mock backend', () => {
   it('seeds 10 tasks with done/trashed/recur/list fields', () => {
@@ -44,5 +49,19 @@ describe('Sundial mock backend', () => {
   it('returns null when updating an unknown task', () => {
     const db = createMockDatabase();
     expect(updateSundialTask(db.sundialTasks, 12345, { done: true })).toBeNull();
+  });
+
+  it('seeds sundial settings defaults (plan 460 P7)', () => {
+    const db = createMockDatabase();
+    expect(db.sundialSettings).toEqual({ mode: 'local', savedAt: '从未' });
+  });
+
+  it('deletes subtasks in-memory via deleteSundialSubtask (plan 460 P8)', () => {
+    const db = createMockDatabase();
+    expect(db.sundialSubtasks).toHaveLength(3);
+    expect(deleteSundialSubtask(db.sundialSubtasks, 2)).toBe(true);
+    expect(db.sundialSubtasks.find((s) => s.id === 2)).toBeUndefined();
+    expect(db.sundialSubtasks).toHaveLength(2);
+    expect(deleteSundialSubtask(db.sundialSubtasks, 999)).toBe(false);
   });
 });

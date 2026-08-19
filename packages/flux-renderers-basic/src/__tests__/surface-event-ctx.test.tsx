@@ -84,27 +84,25 @@ describe('dialog/drawer surface event dispatch ctx (CX-10 / bug-83 family)', () 
 
     await waitFor(() => expect(screen.getByRole('dialog')).toBeTruthy());
 
-    // Controlled dialog stays mounted: fire close first, capture the resolved
-    // surfaceId, then confirm with the same id.
-    const closeButton = screen.getByRole('dialog').querySelector('[data-slot="dialog-close"]');
-    expect(closeButton).toBeTruthy();
-    fireEvent.click(closeButton!);
-
-    await waitFor(() => {
-      const calls = fetcherMock.mock.calls;
-      expect(calls.some((call) => (call[0] as { url?: string })?.url?.startsWith('/close-'))).toBe(true);
-    });
-    const closeUrl = fetcherMock.mock.calls
-      .map((call) => (call[0] as { url?: string })?.url ?? '')
-      .find((url) => url.startsWith('/close-')) ?? '';
-    const surfaceId = closeUrl.slice('/close-'.length);
-    expect(surfaceId.length).toBeGreaterThan(0);
-
+    // Since plan 459/460 B1 user-close semantics, an X-closed controlled dialog
+    // unmounts (the literal `open: true` can never flip back), so capture both
+    // hooks from one lifecycle instead: confirm submits, the surface then
+    // closes, and both onConfirm and onClose must resolve the same surfaceId.
     fireEvent.click(screen.getByTestId('surface-confirm-submit'));
 
     await waitFor(() => {
       const calls = fetcherMock.mock.calls;
-      expect(calls.some((call) => (call[0] as { url?: string })?.url === `/confirm-${surfaceId}`)).toBe(true);
+      expect(calls.some((call) => (call[0] as { url?: string })?.url?.startsWith('/confirm-'))).toBe(true);
+    });
+    const confirmUrl = fetcherMock.mock.calls
+      .map((call) => (call[0] as { url?: string })?.url ?? '')
+      .find((url) => url.startsWith('/confirm-')) ?? '';
+    const surfaceId = confirmUrl.slice('/confirm-'.length);
+    expect(surfaceId.length).toBeGreaterThan(0);
+
+    await waitFor(() => {
+      const calls = fetcherMock.mock.calls;
+      expect(calls.some((call) => (call[0] as { url?: string })?.url === `/close-${surfaceId}`)).toBe(true);
     });
     cleanup();
   });

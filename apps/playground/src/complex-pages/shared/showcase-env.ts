@@ -5,6 +5,7 @@ import {
   clone,
   collectDeptSubtree,
   createMockDatabase,
+  deleteSundialSubtask,
   filterSundialTasks,
   MOCK_DICTS,
   nowStamp,
@@ -13,6 +14,7 @@ import {
   updateSundialTask,
   type FetcherApi,
   type MockDatabase,
+  type SundialSettings,
   type SundialTask,
   type SundialTaskView,
   type UserRecord,
@@ -593,6 +595,27 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       const taskId = asNumber(body.taskId ?? params.taskId);
       const items = db.sundialSubtasks.filter((st) => st.taskId === taskId);
       return { status: 0, data: clone({ items, total: items.length }) as T };
+    }
+    if (url.includes('/r/Sundial__deleteSubtask') && method === 'post') {
+      const id = asNumber(body.id);
+      if (id === undefined) {
+        return { status: 1, data: clone({ ok: false, error: 'missing id' }) as T };
+      }
+      const deleted = deleteSundialSubtask(db.sundialSubtasks, id);
+      if (!deleted) {
+        return { status: 1, data: clone({ ok: false, error: 'subtask not found' }) as T };
+      }
+      return { status: 0, data: clone({ ok: true, id }) as T };
+    }
+    if (url.includes('/r/Sundial__updateSettings') && method === 'post') {
+      const mode = body.mode;
+      const validModes: SundialSettings['mode'][] = ['local', 'supabase', 'selfhost'];
+      if (typeof mode !== 'string' || !validModes.includes(mode as SundialSettings['mode'])) {
+        return { status: 1, data: clone({ ok: false, error: 'invalid mode' }) as T };
+      }
+      db.sundialSettings.mode = mode as SundialSettings['mode'];
+      db.sundialSettings.savedAt = '刚刚';
+      return { status: 0, data: clone({ ok: true, ...db.sundialSettings }) as T };
     }
     if (url.includes('/r/Sundial__todayTasks') && method === 'get') {
       return {

@@ -1,0 +1,23 @@
+{
+  "name": "ui-review",
+  "description": "nop-chaos-flux UI review mission：对标分析 + 一致性审查 + 复杂页面构想 + 参考应用复刻。范围：①以五组成熟体系（AMIS / Ant Design+Pro / shadcn-ui+blocks / Retool·Appsmith·ToolJet·Budibase / Vant）为参照，对 UI 美观度与完善度做分维证据化评分（R0–R1）；②按 docs/skills/ux-design-pattern-audit-prompt.md 对 14 个 renderer 包与 playground 复杂页做多轮递归一致性审查并修复 P0/P1（R2–R3，P0/P1 自动修复预授权，模式同 component-audit：test-first + 类别清扫）；③构想 8–12 个高复杂度页面并预判能力缺口（C1–C2 滚动裁决 CSS 可解/渲染器增强/新原语/runtime）；④线上调研 6 个参考应用（Ant Design Pro / Cal.com / Linear / Notion database / Airtable grid / Stripe dashboard），沿 sundial 五步复刻模板（令牌提取→页面分级→能力映射→schema+CSS 复刻→交互接线+mock 后端+e2e）仿制页面与核心交互，每应用 a(静态)+b(交互) 两个 work item（P1–P7）；⑤缺口产品化与门禁沉淀（D1–D2）。范围排除：不做数据持久化业务层（沿 sundial Non-Goal）；不修改 flux-core 编译内核（若缺口裁决触及，走独立 plan + 保护区域流程）。授权：全部工作在 worktree nop-chaos-flux-ui-review（分支 ui-review）执行；合并回 master 为人工门禁；保护区域（ui/src/index.ts 公共导出、renderer 定义字段、样式契约）按 ai-autonomy-policy.md 分级，P0/P1 一致性缺陷与复刻缺口自动修复预授权，结构性重构（公共 API/包边界/新原语入 index.ts）执行前人工确认。共性机制：每个复刻 plan closure 必须回写 C2 滚动文档（缺口回流，见 roadmap Cross-Cutting §5）；Pi-c 深化追加按 roadmap Rule §2 预授权。自动修复机制沿用 component-audit 模式（test-first + 回归测试 + 类别清扫 + 验证门禁），指针见 roadmap Phase Details R3 节。",
+  "model": "opencode-go/deepseek-v4-flash",
+  "variant": "max",
+  "roadmapPath": "docs/backlog/ui-review-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": ".",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "uxAudit": "docs/skills/ux-design-pattern-audit-prompt.md",
+    "multiAudit": "docs/skills/deep-audit-prompts.md"
+  },
+  "commitFormat": "feat(ui-review): <description>"
+}

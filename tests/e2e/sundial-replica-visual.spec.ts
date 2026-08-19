@@ -62,7 +62,6 @@ test.describe('Sundial replica — visual snapshots', () => {
   test('03 workbench — task row click opens detail dialog (plan 457 C14 + 460 P4)', async ({ page }) => {
     await openPage(page, 'sundial-workbench', 'Sundial 工作台');
     await page.getByTestId('sundial-task-today-1').click();
-    await expect(page.getByText('打开详情')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByTestId('sundial-task-detail-dialog')).toBeVisible({ timeout: 5_000 });
     await snap(page, '03-workbench-task-detail.png');
   });
@@ -235,5 +234,54 @@ test.describe('Sundial replica — plan 460 interactions', () => {
     await expect(page.getByTestId('sundial-subtask-dialog')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByTestId('sundial-subtask-title-text')).toContainText('收集销售数据');
     await snap(page, '20-detail-subtask-dialog.png');
+  });
+
+  test('21 workbench — detail dialog flag toggle + date picker writeback (plan 460 Phase 3)', async ({ page }) => {
+    await openPage(page, 'sundial-workbench', 'Sundial 工作台');
+    await page.getByTestId('sundial-task-today-1').click();
+    await expect(page.getByTestId('sundial-task-detail-dialog')).toBeVisible({ timeout: 5_000 });
+
+    await page.getByTestId('sundial-detail-row-flag').click();
+    await expect(page.getByTestId('sundial-taskdetail-flag-value')).toContainText('已标记', { timeout: 5_000 });
+
+    await page.getByTestId('sundial-detail-row-date').click();
+    await expect(page.getByTestId('sundial-taskdetail-date-picker')).toBeVisible({ timeout: 5_000 });
+    await page
+      .locator('label[data-slot="radio-group-item"]')
+      .filter({ hasText: '明天' })
+      .click();
+    await page.getByTestId('sundial-taskdetail-date-submit').click();
+    await expect(page.getByTestId('sundial-taskdetail-date-value')).toContainText('明天', { timeout: 5_000 });
+    // outer dialog survives the nested picker close
+    await expect(page.getByTestId('sundial-task-detail-dialog')).toBeVisible();
+    await snap(page, '21-workbench-detail-pickers.png');
+  });
+
+  test('22 workbench — move-to-list picks family, dialog closes (plan 460 P9)', async ({ page }) => {
+    await openPage(page, 'sundial-workbench', 'Sundial 工作台');
+    await page.getByTestId('sundial-task-today-1').click();
+    await expect(page.getByTestId('sundial-task-detail-dialog')).toBeVisible({ timeout: 5_000 });
+    await page.getByTestId('sundial-task-detail-move-list').click();
+    await expect(page.getByTestId('sundial-taskdetail-move-picker')).toBeVisible({ timeout: 5_000 });
+    await page
+      .locator('label[data-slot="radio-group-item"]')
+      .filter({ hasText: '家庭' })
+      .click();
+    await page.getByTestId('sundial-taskdetail-move-submit').click();
+    await expect(page.getByTestId('sundial-task-detail-dialog')).toBeHidden({ timeout: 5_000 });
+  });
+
+  test('23 detail — subtask trash removes the row (plan 460 P8)', async ({ page }) => {
+    await openPage(page, 'sundial-detail', 'Sundial 待办详情');
+    await expect(page.getByTestId('sundial-detail-subtask-1')).toBeVisible({ timeout: 5_000 });
+    await page.getByTestId('sundial-subtask-delete-1').click();
+    await expect(page.getByTestId('sundial-detail-subtask-1')).toBeHidden({ timeout: 5_000 });
+  });
+
+  test('24 settings — save posts mode to the mock backend (plan 460 P7)', async ({ page }) => {
+    await openPage(page, 'sundial-settings', 'Sundial 设置');
+    await page.getByTestId('sundial-mode-supabase').click();
+    await page.getByTestId('sundial-settings-save').click();
+    await expect(page.getByText(/保存成功/)).toBeVisible({ timeout: 5_000 });
   });
 });

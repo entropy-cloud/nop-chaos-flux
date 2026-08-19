@@ -1,7 +1,7 @@
 import React from 'react';import { afterEach, describe, expect, it } from 'vitest';import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';import { createShowcaseEnv } from './shared/showcase-env';import { SchemaPage } from './schema-page';afterEach(() => cleanup());/** * Sundial replica pages (see docs/analysis/sundial-ui-reproduction-analysis.md). * These tests verify the schema-driven replicas render their Sundial-style * structures: design tokens via className, collapse sections, circular * checkboxes, badges, KPI cards, charts, dialogs. */
 
 describe('Sundial replica — settings', () => {
-  const { env } = createShowcaseEnv();
+  const { env, db } = createShowcaseEnv();
 
   it('renders settings rail and sync section', async () => {
     render(<SchemaPage pageId="sundial-settings" env={env} />);
@@ -116,10 +116,17 @@ describe('Sundial replica — settings', () => {
     expect(screen.queryByTestId('sundial-panel-about')).toBeNull();
   });
 
-  it('save button writes demo state with feedback (plan 460 P7)', async () => {
+  it('save button writes the chosen mode to the mock backend (plan 460 P7)', async () => {
     render(<SchemaPage pageId="sundial-settings" env={env} />);
+
+    // choose the supabase mode card, then save → backend settings row updated
+    fireEvent.click(screen.getByTestId('sundial-mode-supabase'));
     fireEvent.click(screen.getByTestId('sundial-settings-save'));
     await screen.findByText(/保存成功/);
+    await waitFor(() => {
+      expect(db.sundialSettings.mode).toBe('supabase');
+      expect(db.sundialSettings.savedAt).toBe('刚刚');
+    });
   });
 });
 
@@ -215,5 +222,121 @@ describe('Sundial replica — new todo dialog', () => {
     await waitFor(() => {
       expect(screen.getByText('新建待办')).toBeTruthy();
     });
+  });
+});
+
+describe('Sundial replica — workbench task detail dialog (plan 460 Phase 3/P4/P9)', () => {
+  const { env, db } = createShowcaseEnv();
+
+  it('settings icon navigates from workbench to the settings page (plan 460 P11)', async () => {
+    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    fireEvent.click(screen.getByTestId('sundial-settings-icon'));
+    await waitFor(() => {
+      expect(window.location.hash).toBe('#/complex-pages/sundial-settings');
+    });
+  });
+
+  const pickRadio = (label: string) => {
+    const radio = Array.from(document.querySelectorAll('[role="radio"]')).find((r) =>
+      r.closest('label')?.textContent?.includes(label),
+    );
+    expect(radio).toBeTruthy();
+    fireEvent.click(radio!);
+  };
+
+  it('field rows open nested pickers and write values back (plan 460 Phase 3)', async () => {
+    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    fireEvent.click(screen.getByTestId('sundial-task-today-1'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-task-detail-dialog')).toBeTruthy();
+    });
+
+    // flag toggle (P2 pattern)
+    expect(screen.getByTestId('sundial-taskdetail-flag-value').textContent).toMatch(/未标记/);
+    fireEvent.click(screen.getByTestId('sundial-detail-row-flag'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-taskdetail-flag-value').textContent).toMatch(/已标记/);
+    });
+
+    // date picker → 明天 → badge writeback
+    fireEvent.click(screen.getByTestId('sundial-detail-row-date'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-taskdetail-date-picker')).toBeTruthy();
+    });
+    pickRadio('明天');
+    fireEvent.click(screen.getByTestId('sundial-taskdetail-date-submit'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-taskdetail-date-picker')).toBeNull();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-taskdetail-date-value').textContent).toMatch(/明天/);
+    });
+
+    // recurrence picker → 每天
+    fireEvent.click(screen.getByTestId('sundial-detail-row-recurrence'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-taskdetail-recur-picker')).toBeTruthy();
+    });
+    pickRadio('每天');
+    fireEvent.click(screen.getByTestId('sundial-taskdetail-recur-submit'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-taskdetail-recur-picker')).toBeNull();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-taskdetail-recur-value').textContent).toMatch(/每天/);
+    });
+
+    // list picker → 家庭
+    fireEvent.click(screen.getByTestId('sundial-detail-row-list'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-taskdetail-list-picker')).toBeTruthy();
+    });
+    pickRadio('家庭');
+    fireEvent.click(screen.getByTestId('sundial-taskdetail-list-submit'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-taskdetail-list-picker')).toBeNull();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-taskdetail-list-value').textContent).toMatch(/家庭/);
+    });
+
+    // outer detail dialog survives all picker closes
+    expect(screen.getByTestId('sundial-task-detail-dialog')).toBeTruthy();
+  });
+
+  it('move-to-list writes the mock backend and closes the dialog (plan 460 P9)', async () => {
+    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    fireEvent.click(screen.getByTestId('sundial-task-today-1'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-task-detail-dialog')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId('sundial-task-detail-move-list'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-taskdetail-move-picker')).toBeTruthy();
+    });
+    pickRadio('家庭');
+    fireEvent.click(screen.getByTestId('sundial-taskdetail-move-submit'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-taskdetail-move-picker')).toBeNull();
+    });
+    await screen.findByText(/已移到列表/);
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-task-detail-dialog')).toBeNull();
+    });
+    expect(db.sundialTasks.find((t) => t.id === 2)?.list).toBe('family');
+  });
+
+  it('move-to-trash writes the mock backend and closes the dialog (plan 460 P9)', async () => {
+    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    fireEvent.click(screen.getByTestId('sundial-task-nodate-1'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-task-detail-dialog')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId('sundial-task-detail-trash'));
+    await screen.findByText(/已移到垃圾箱/);
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-task-detail-dialog')).toBeNull();
+    });
+    expect(db.sundialTasks.find((t) => t.id === 4)?.trashed).toBe(true);
   });
 });

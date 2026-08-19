@@ -1002,14 +1002,15 @@
                                       {
                                         "action": "setValue",
                                         "args": {
-                                          "path": "taskDetailOpen",
-                                          "value": true
+                                          "path": "activeTaskId",
+                                          "value": 1
                                         }
                                       },
                                       {
-                                        "action": "showToast",
+                                        "action": "setValue",
                                         "args": {
-                                          "message": "打开详情"
+                                          "path": "taskDetailOpen",
+                                          "value": true
                                         }
                                       }
                                     ],
@@ -1083,14 +1084,15 @@
                                       {
                                         "action": "setValue",
                                         "args": {
-                                          "path": "taskDetailOpen",
-                                          "value": true
+                                          "path": "activeTaskId",
+                                          "value": 2
                                         }
                                       },
                                       {
-                                        "action": "showToast",
+                                        "action": "setValue",
                                         "args": {
-                                          "message": "打开详情"
+                                          "path": "taskDetailOpen",
+                                          "value": true
                                         }
                                       }
                                     ],
@@ -1141,14 +1143,15 @@
                                       {
                                         "action": "setValue",
                                         "args": {
-                                          "path": "taskDetailOpen",
-                                          "value": true
+                                          "path": "activeTaskId",
+                                          "value": 5
                                         }
                                       },
                                       {
-                                        "action": "showToast",
+                                        "action": "setValue",
                                         "args": {
-                                          "message": "打开详情"
+                                          "path": "taskDetailOpen",
+                                          "value": true
                                         }
                                       }
                                     ],
@@ -1222,14 +1225,15 @@
                                       {
                                         "action": "setValue",
                                         "args": {
-                                          "path": "taskDetailOpen",
-                                          "value": true
+                                          "path": "activeTaskId",
+                                          "value": 3
                                         }
                                       },
                                       {
-                                        "action": "showToast",
+                                        "action": "setValue",
                                         "args": {
-                                          "message": "打开详情"
+                                          "path": "taskDetailOpen",
+                                          "value": true
                                         }
                                       }
                                     ],
@@ -1280,14 +1284,15 @@
                                       {
                                         "action": "setValue",
                                         "args": {
-                                          "path": "taskDetailOpen",
-                                          "value": true
+                                          "path": "activeTaskId",
+                                          "value": 6
                                         }
                                       },
                                       {
-                                        "action": "showToast",
+                                        "action": "setValue",
                                         "args": {
-                                          "message": "打开详情"
+                                          "path": "taskDetailOpen",
+                                          "value": true
                                         }
                                       }
                                     ],
@@ -1361,14 +1366,15 @@
                                       {
                                         "action": "setValue",
                                         "args": {
-                                          "path": "taskDetailOpen",
-                                          "value": true
+                                          "path": "activeTaskId",
+                                          "value": 4
                                         }
                                       },
                                       {
-                                        "action": "showToast",
+                                        "action": "setValue",
                                         "args": {
-                                          "message": "打开详情"
+                                          "path": "taskDetailOpen",
+                                          "value": true
                                         }
                                       }
                                     ],
@@ -1437,14 +1443,15 @@
                                       {
                                         "action": "setValue",
                                         "args": {
-                                          "path": "taskDetailOpen",
-                                          "value": true
+                                          "path": "activeTaskId",
+                                          "value": 10
                                         }
                                       },
                                       {
-                                        "action": "showToast",
+                                        "action": "setValue",
                                         "args": {
-                                          "message": "打开详情"
+                                          "path": "taskDetailOpen",
+                                          "value": true
                                         }
                                       }
                                     ],
@@ -1725,6 +1732,7 @@
       "title": "任务详情",
       "className": "sd-dialog",
       "open": "${taskDetailOpen}",
+      "closeOnOutsideClick": false,
       "testid": "sundial-task-detail-dialog",
       "body": [
         {
@@ -1781,10 +1789,73 @@
                     },
                     {
                       "type": "text",
-                      "text": "8/18",
-                      "className": "sd-badge sd-badge-warning ml-auto"
+                      "text": "${taskDetailDate ?? '8/18'}",
+                      "className": "sd-badge sd-badge-warning ml-auto",
+                      "testid": "sundial-taskdetail-date-value"
                     }
-                  ]
+                  ],
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "选择日期",
+                      "className": "sd-dialog",
+                      "testid": "sundial-taskdetail-date-picker",
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "setValue",
+                        "args": {
+                          "path": "taskDetailDate",
+                          "value": "${$formData.taskDetailDate}"
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "sundial-taskdetail-date-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "taskDetailDate": "${taskDetailDate ?? '今天'}"
+                          },
+                          "body": [
+                            {
+                              "type": "radio-group",
+                              "name": "taskDetailDate",
+                              "horizontal": false,
+                              "className": "sd-choice-list",
+                              "options": [
+                                { "label": "今天", "value": "今天" },
+                                { "label": "明天", "value": "明天" },
+                                { "label": "下周", "value": "下周" },
+                                { "label": "无日期", "value": "无日期" }
+                              ]
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "取消",
+                              "variant": "ghost",
+                              "className": "sd-btn sd-btn-ghost",
+                              "testid": "sundial-taskdetail-date-cancel",
+                              "onClick": {
+                                "action": "closeSurface"
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "确定",
+                              "variant": "default",
+                              "className": "sd-btn sd-btn-default",
+                              "testid": "sundial-taskdetail-date-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 },
                 {
                   "type": "flex",
@@ -1806,10 +1877,73 @@
                     },
                     {
                       "type": "text",
-                      "text": "每周",
-                      "className": "sd-badge sd-badge-info ml-auto"
+                      "text": "${taskDetailRecur ?? '每周'}",
+                      "className": "sd-badge sd-badge-info ml-auto",
+                      "testid": "sundial-taskdetail-recur-value"
                     }
-                  ]
+                  ],
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "重复",
+                      "className": "sd-dialog",
+                      "testid": "sundial-taskdetail-recur-picker",
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "setValue",
+                        "args": {
+                          "path": "taskDetailRecur",
+                          "value": "${$formData.taskDetailRecur}"
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "sundial-taskdetail-recur-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "taskDetailRecur": "${taskDetailRecur ?? '每周'}"
+                          },
+                          "body": [
+                            {
+                              "type": "radio-group",
+                              "name": "taskDetailRecur",
+                              "horizontal": false,
+                              "className": "sd-choice-list",
+                              "options": [
+                                { "label": "不重复", "value": "不重复" },
+                                { "label": "每天", "value": "每天" },
+                                { "label": "每周", "value": "每周" },
+                                { "label": "每月", "value": "每月" }
+                              ]
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "取消",
+                              "variant": "ghost",
+                              "className": "sd-btn sd-btn-ghost",
+                              "testid": "sundial-taskdetail-recur-cancel",
+                              "onClick": {
+                                "action": "closeSurface"
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "确定",
+                              "variant": "default",
+                              "className": "sd-btn sd-btn-default",
+                              "testid": "sundial-taskdetail-recur-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 },
                 {
                   "type": "flex",
@@ -1831,8 +1965,24 @@
                     },
                     {
                       "type": "text",
-                      "text": "未标记",
-                      "className": "text-xs text-[#636363] ml-auto"
+                      "text": "${taskDetailFlag ? '已标记' : '未标记'}",
+                      "className": "text-xs text-[#636363] ml-auto",
+                      "testid": "sundial-taskdetail-flag-value"
+                    }
+                  ],
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "taskDetailFlag",
+                        "value": "${!taskDetailFlag}"
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "旗标已切换"
+                      }
                     }
                   ]
                 },
@@ -1856,10 +2006,72 @@
                     },
                     {
                       "type": "text",
-                      "text": "工作",
-                      "className": "text-sm text-[#0d0d0d] ml-auto"
+                      "text": "${taskDetailListLabel ?? '工作'}",
+                      "className": "text-sm text-[#0d0d0d] ml-auto",
+                      "testid": "sundial-taskdetail-list-value"
                     }
-                  ]
+                  ],
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "选择列表",
+                      "className": "sd-dialog",
+                      "testid": "sundial-taskdetail-list-picker",
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "setValue",
+                        "args": {
+                          "path": "taskDetailListLabel",
+                          "value": "${$formData.taskDetailListLabel}"
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "sundial-taskdetail-list-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "taskDetailListLabel": "${taskDetailListLabel ?? '工作'}"
+                          },
+                          "body": [
+                            {
+                              "type": "radio-group",
+                              "name": "taskDetailListLabel",
+                              "horizontal": false,
+                              "className": "sd-choice-list",
+                              "options": [
+                                { "label": "工作", "value": "工作" },
+                                { "label": "家庭", "value": "家庭" },
+                                { "label": "收件箱", "value": "收件箱" }
+                              ]
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "取消",
+                              "variant": "ghost",
+                              "className": "sd-btn sd-btn-ghost",
+                              "testid": "sundial-taskdetail-list-cancel",
+                              "onClick": {
+                                "action": "closeSurface"
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "确定",
+                              "variant": "default",
+                              "className": "sd-btn sd-btn-default",
+                              "testid": "sundial-taskdetail-list-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 }
               ]
             },
@@ -1875,21 +2087,88 @@
                   "variant": "ghost",
                   "className": "sd-btn sd-btn-ghost",
                   "testid": "sundial-task-detail-move-list",
-                  "onClick": [
-                    {
-                      "action": "showToast",
-                      "args": {
-                        "message": "已移到目标列表"
-                      }
-                    },
-                    {
-                      "action": "setValue",
-                      "args": {
-                        "path": "taskDetailOpen",
-                        "value": false
-                      }
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "移到列表",
+                      "className": "sd-dialog",
+                      "testid": "sundial-taskdetail-move-picker",
+                      "closeOnSubmit": true,
+                      "data": {
+                        "taskId": "${activeTaskId}",
+                        "list": "work"
+                      },
+                      "onSubmitSuccess": [
+                        {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/Sundial__updateTodoItem",
+                            "method": "post",
+                            "data": {
+                              "id": "${$formData.taskId}",
+                              "list": "${$formData.list}"
+                            }
+                          }
+                        },
+                        {
+                          "action": "closeDialog",
+                          "surfaceId": "sundial-task-detail-dialog"
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已移到列表"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "sundial-taskdetail-move-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "taskId": "${taskId}",
+                            "list": "${list ?? \"work\"}"
+                          },
+                          "body": [
+                            {
+                              "type": "radio-group",
+                              "name": "list",
+                              "horizontal": false,
+                              "className": "sd-choice-list",
+                              "options": [
+                                { "label": "工作", "value": "work" },
+                                { "label": "家庭", "value": "family" },
+                                { "label": "收件箱", "value": "inbox" }
+                              ]
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "取消",
+                              "variant": "ghost",
+                              "className": "sd-btn sd-btn-ghost",
+                              "testid": "sundial-taskdetail-move-cancel",
+                              "onClick": {
+                                "action": "closeSurface"
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "确认",
+                              "variant": "default",
+                              "className": "sd-btn sd-btn-default",
+                              "testid": "sundial-taskdetail-move-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ]
+                        }
+                      ]
                     }
-                  ]
+                  }
                 },
                 {
                   "type": "button",
@@ -1899,16 +2178,24 @@
                   "testid": "sundial-task-detail-trash",
                   "onClick": [
                     {
-                      "action": "showToast",
+                      "action": "ajax",
                       "args": {
-                        "message": "已移到垃圾桶"
+                        "url": "/r/Sundial__updateTodoItem",
+                        "method": "post",
+                        "data": {
+                          "id": "${activeTaskId}",
+                          "trashed": true
+                        }
                       }
                     },
                     {
-                      "action": "setValue",
+                      "action": "closeDialog",
+                      "surfaceId": "sundial-task-detail-dialog"
+                    },
+                    {
+                      "action": "showToast",
                       "args": {
-                        "path": "taskDetailOpen",
-                        "value": false
+                        "message": "已移到垃圾箱"
                       }
                     }
                   ]
