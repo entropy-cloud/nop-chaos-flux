@@ -80,6 +80,18 @@ PAGE_DATA['sundial-detail'] = {
   recur: 'weekly',
   list: 'work',
   flagged: true,
+  // Interaction state (plan 460): subtask dialog / delete / trash
+  subtaskOpen: false,
+  activeSubtask: 1,
+  subtaskDeleted1: false,
+  subtaskDeleted2: false,
+  subtaskDeleted3: false,
+  taskTrashed: false,
+};
+
+PAGE_DATA['sundial-analytics'] = {
+  // Interaction state (plan 460): chart drill-down focus
+  chartFocus: '',
 };
 
 PAGE_DATA['sundial-settings'] = {

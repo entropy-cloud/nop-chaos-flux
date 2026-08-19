@@ -295,7 +295,22 @@
                   ],
                   "colors": ["#ea7a2a"],
                   "grid": false,
-                  "legend": false
+                  "legend": false,
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "chartFocus",
+                        "value": "trend"
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "聚焦：完成趋势"
+                      }
+                    }
+                  ]
                 }
               ]
             },
@@ -350,7 +365,22 @@
                   ],
                   "colors": ["#ea7a2a"],
                   "grid": false,
-                  "legend": false
+                  "legend": false,
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "chartFocus",
+                        "value": "energy"
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "聚焦：精力输出"
+                      }
+                    }
+                  ]
                 }
               ]
             }
@@ -413,7 +443,22 @@
                   "legend": false,
                   "xAxis": {
                     "dataKey": "bucket"
-                  }
+                  },
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "chartFocus",
+                        "value": "pressure"
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "聚焦：压力分布"
+                      }
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -644,6 +689,39 @@
                   "testid": "sundial-output-badge"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "testid": "sundial-chart-focus-card",
+          "visible": "${chartFocus !== ''}",
+          "className": "sd-card p-4 flex flex-col gap-2",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "bar-chart-3",
+                  "size": 14,
+                  "color": "#ea7a2a"
+                },
+                {
+                  "type": "text",
+                  "text": "图表钻取",
+                  "className": "text-xs font-semibold text-[#333333]"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "testid": "sundial-chart-focus",
+              "text": "${chartFocus === 'trend' ? '完成趋势（最近 7 天）：8/13 达到峰值 7 件' : chartFocus === 'energy' ? '精力输出（按复杂度）：8/13 输出 12 点' : chartFocus === 'pressure' ? '压力桶（当前未完成）：今天 5 件占 36%' : ''}",
+              "className": "text-sm font-medium text-[#0d0d0d]"
             }
           ]
         }

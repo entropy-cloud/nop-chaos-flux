@@ -63,10 +63,12 @@ describe('Sundial replica — workbench', () => {
     expect(document.querySelector('[data-testid="sundial-cb-t1"] [data-slot="checkbox"]')?.getAttribute('data-shape')).toBe('circle');
   });
 
-  it('wires the sidebar settings icon with toast feedback (plan 457 C2)', async () => {
+  it('wires the sidebar settings icon to navigate to the settings page (plan 457 C2 + 460 P11)', async () => {
     render(<SchemaPage pageId="sundial-workbench" env={env} />);
     fireEvent.click(screen.getByTestId('sundial-settings-icon'));
-    await screen.findByText('打开设置');
+    await waitFor(() => {
+      expect(window.location.hash).toBe('#/complex-pages/sundial-settings');
+    });
   });
 
   it('opens the new-todo dialog from the 添加待办 button', async () => {
@@ -101,10 +103,60 @@ describe('Sundial replica — workbench', () => {
     expect(screen.getByTestId('sundial-view-all').getAttribute('data-selected')).toBe('false');
   });
 
-  it('wires task rows with toast feedback (plan 457 C14)', async () => {
+  it('wires task rows with detail dialog (plan 457 C14 + plan 460 P4)', async () => {
     render(<SchemaPage pageId="sundial-workbench" env={env} />);
     fireEvent.click(screen.getByTestId('sundial-task-today-1'));
-    await screen.findByText('打开详情（占位反馈）');
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-task-detail-dialog')).toBeTruthy();
+    });
+    expect(screen.getByTestId('sundial-detail-title-text').textContent).toMatch(/撰写季度复盘报告/);
+    expect(screen.getByTestId('sundial-detail-row-date').textContent).toMatch(/8\/18/);
+    expect(screen.getByTestId('sundial-detail-row-recurrence').textContent).toMatch(/每周/);
+  });
+
+  it('switches the main board content between views (plan 460 P5)', async () => {
+    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+
+    // all: every collapse visible, panels hidden
+    expect(screen.getByTestId('sundial-pressure-card')).toBeTruthy();
+    expect(screen.getByTestId('sundial-section-nodate')).toBeTruthy();
+    expect(screen.queryByTestId('sundial-board-completed')).toBeNull();
+
+    // today: nodate/organize hidden
+    fireEvent.click(screen.getByTestId('sundial-view-today'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-section-nodate')).toBeNull();
+    });
+    expect(screen.getByTestId('sundial-section-today')).toBeTruthy();
+
+    // scheduled: overdue+future, today hidden
+    fireEvent.click(screen.getByTestId('sundial-view-scheduled'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-section-today')).toBeNull();
+    });
+    expect(screen.getByTestId('sundial-section-overdue')).toBeTruthy();
+    expect(screen.getByTestId('sundial-section-future')).toBeTruthy();
+
+    // completed: dedicated panel
+    fireEvent.click(screen.getByTestId('sundial-view-completed'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-board-completed')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('sundial-board-default')).toBeNull();
+    expect(screen.getByTestId('sundial-task-completed-7').textContent).toMatch(/更新团队共享日历/);
+
+    // trash: trash panel
+    fireEvent.click(screen.getByTestId('sundial-view-trash'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-board-trash')).toBeTruthy();
+    });
+    expect(screen.getByTestId('sundial-task-trashed-9').textContent).toMatch(/回复客户邮件/);
+
+    // back to all
+    fireEvent.click(screen.getByTestId('sundial-view-all'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-board-default')).toBeTruthy();
+    });
   });
 
   it('switches to the mobile variant when the viewport matches max:lg', () => {
@@ -167,6 +219,35 @@ describe('Sundial replica — analytics', () => {
     // Output structure badge
     await waitFor(() => {
       expect(screen.getByTestId('sundial-output-badge').textContent).toMatch(/32 点/);
+    });
+  });
+
+  it('dispatches chart drill-down on click with focus card (plan 460 P13)', async () => {
+    render(<SchemaPage pageId="sundial-analytics" env={env} />);
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-trend-chart')).toBeTruthy();
+    });
+
+    expect(screen.queryByTestId('sundial-chart-focus-card')).toBeNull();
+
+    const trendCanvas = document.querySelector('[data-testid="sundial-trend-chart"] [data-slot="chart-canvas"]') as Element;
+    expect(trendCanvas).toBeTruthy();
+    fireEvent.click(trendCanvas);
+    await screen.findByText('聚焦：完成趋势');
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-chart-focus-card')).toBeTruthy();
+      expect(screen.getByTestId('sundial-chart-focus').textContent).toMatch(/完成趋势/);
+    });
+
+    const energyCanvas = document.querySelector('[data-testid="sundial-energy-chart"] [data-slot="chart-canvas"]') as Element;
+    fireEvent.click(energyCanvas);
+    await screen.findByText('聚焦：精力输出');
+
+    const pressureCanvas = document.querySelector('[data-testid="sundial-pressure-chart"] [data-slot="chart-canvas"]') as Element;
+    fireEvent.click(pressureCanvas);
+    await screen.findByText(/聚焦：压力/);
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-chart-focus').textContent).toMatch(/压力/);
     });
   });
 });
@@ -247,17 +328,30 @@ describe('Sundial replica — detail inspector', () => {
     fireEvent.click(screen.getByTestId('sundial-detail-clear-date'));
     await screen.findByText('日期已清除');
 
-    // C5: move list / trash
+    // C5 + plan 460 P9: move-list opens the list picker; trash sets taskTrashed
     fireEvent.click(screen.getByTestId('sundial-detail-move-list'));
-    await screen.findByText('已选择目标列表');
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-list-option-work')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId('sundial-list-option-family'));
     fireEvent.click(screen.getByTestId('sundial-detail-trash'));
     await screen.findByText('已移到垃圾箱');
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-trashed-banner')).toBeTruthy();
+    });
 
-    // C6: subtask chevron / trash (icon-only buttons)
+    // C6 + plan 460 P8: subtask chevron opens the subtask dialog; delete hides the row
     fireEvent.click(screen.getByTestId('sundial-subtask-open-1'));
-    await screen.findByText('打开子任务详情');
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-subtask-dialog')).toBeTruthy();
+    });
+    expect(screen.getByTestId('sundial-subtask-title-text').textContent).toMatch(/收集销售数据/);
+    fireEvent.click(screen.getByTestId('sundial-subtask-dialog-close'));
     fireEvent.click(screen.getByTestId('sundial-subtask-delete-1'));
-    await screen.findByText('删除子任务');
+    await screen.findByText('子任务已删除');
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-detail-subtask-1')).toBeNull();
+    });
   });
 
   it('wires the time clear button with toast feedback (plan 457 C13)', async () => {
@@ -368,11 +462,13 @@ describe('Sundial replica — settings', () => {
 
     // C16: back row (flex onClick)
     fireEvent.click(screen.getByTestId('sundial-settings-back'));
-    await screen.findByText('返回');
+    await waitFor(() => {
+      expect(window.location.hash).toBe('#/complex-pages/sundial-workbench');
+    });
 
     // C9: save button
     fireEvent.click(screen.getByTestId('sundial-settings-save'));
-    await screen.findByText('保存成功');
+    await screen.findByText(/保存成功/);
   });
 
   it('switches the settings rail selection with toast feedback (plan 457 C8)', async () => {
@@ -409,6 +505,55 @@ describe('Sundial replica — settings', () => {
       expect(screen.queryByTestId('sundial-connection-info')).toBeNull();
     });
   });
+
+  it('switches the main panel between 5 sections (plan 460 P6)', async () => {
+    render(<SchemaPage pageId="sundial-settings" env={env} />);
+
+    expect(screen.getByTestId('sundial-panel-sync')).toBeTruthy();
+    expect(screen.queryByTestId('sundial-panel-lists')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('sundial-settings-lists'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-panel-lists')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('sundial-panel-sync')).toBeNull();
+    await waitFor(() => {
+      const rows = screen.getAllByTestId('sundial-list-row');
+      expect(rows.length).toBeGreaterThanOrEqual(4);
+      expect(rows[0].textContent).toMatch(/工作/);
+    });
+
+    fireEvent.click(screen.getByTestId('sundial-settings-appearance'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-panel-appearance')).toBeTruthy();
+    });
+    expect(screen.getByTestId('sundial-theme-value').textContent).toMatch(/浅色/);
+
+    fireEvent.click(screen.getByTestId('sundial-settings-data'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-panel-data')).toBeTruthy();
+    });
+    expect(screen.getByTestId('sundial-data-size').textContent).toMatch(/条任务/);
+
+    fireEvent.click(screen.getByTestId('sundial-settings-about'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-panel-about')).toBeTruthy();
+    });
+    expect(screen.getByTestId('sundial-about-version-value').textContent).toMatch(/0\.10\.0/);
+    expect(screen.getByTestId('sundial-about-license').textContent).toMatch(/Apache-2\.0/);
+
+    fireEvent.click(screen.getByTestId('sundial-settings-sync'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-panel-sync')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('sundial-panel-about')).toBeNull();
+  });
+
+  it('save button writes demo state with feedback (plan 460 P7)', async () => {
+    render(<SchemaPage pageId="sundial-settings" env={env} />);
+    fireEvent.click(screen.getByTestId('sundial-settings-save'));
+    await screen.findByText(/保存成功/);
+  });
 });
 
 describe('Sundial replica — new todo dialog', () => {
@@ -428,17 +573,80 @@ describe('Sundial replica — new todo dialog', () => {
     expect(screen.getByTestId('sundial-todo-submit').textContent).toMatch(/添加/);
   });
 
-  it('wires todo dialog field rows with toast feedback (plan 457 C10)', async () => {
+  it('wires todo dialog field rows with real pickers via openDialog + owner-scope writeback (plan 460 P1-P3)', async () => {
     render(<SchemaPage pageId="sundial-todo-dialog" env={env} />);
     fireEvent.click(screen.getByTestId('sundial-open-todo-dialog'));
     await waitFor(() => {
       expect(screen.getByText('新建待办')).toBeTruthy();
     });
+
+    // P1: date picker → 明天 → field row updates via onSubmitSuccess writeback
+    expect(screen.getByTestId('sundial-todo-date-value').textContent).toMatch(/无/);
     fireEvent.click(screen.getByTestId('sundial-todo-date-row'));
-    await screen.findByText('选择日期（占位反馈）');
+    await waitFor(() => {
+      expect(screen.getByText('明天')).toBeTruthy();
+    });
+    const radios = document.querySelectorAll('[role="radio"]');
+    const tomorrow = Array.from(radios).find((r) =>
+      r.closest('label')?.textContent?.includes('明天'),
+    );
+    expect(tomorrow).toBeTruthy();
+    fireEvent.click(tomorrow!);
+    fireEvent.click(screen.getByTestId('sundial-todo-date-submit'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-todo-date-picker')).toBeNull();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-todo-date-value').textContent).toMatch(/明天/);
+    });
+
+    // P2: flag toggle
+    expect(screen.getByTestId('sundial-todo-flag-value').textContent).toMatch(/未标记/);
     fireEvent.click(screen.getByTestId('sundial-todo-flag-row'));
-    await screen.findByText('切换旗标（占位反馈）');
+    await screen.findByText('旗标已切换');
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-todo-flag-value').textContent).toMatch(/已标记/);
+    });
+
+    // P3: list picker → 工作 → field row updates
+    expect(screen.getByTestId('sundial-todo-list-value').textContent).toMatch(/收件箱/);
     fireEvent.click(screen.getByTestId('sundial-todo-list-row'));
-    await screen.findByText('选择列表（占位反馈）');
+    await waitFor(() => {
+      expect(screen.getByText('家庭')).toBeTruthy();
+    });
+    const listRadios = document.querySelectorAll('[role="radio"]');
+    const work = Array.from(listRadios).find((r) =>
+      r.closest('label')?.textContent?.includes('工作'),
+    );
+    expect(work).toBeTruthy();
+    fireEvent.click(work!);
+    fireEvent.click(screen.getByTestId('sundial-todo-list-submit'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-todo-list-picker')).toBeNull();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-todo-list-value').textContent).toMatch(/工作/);
+    });
+
+    // Outer dialog survives picker close (closeOnOutsideClick:false)
+    expect(screen.getByText('新建待办')).toBeTruthy();
+  });
+
+  it('reopens the todo dialog after cancel (closeSurface) and after X (plan 460 B1)', async () => {
+    render(<SchemaPage pageId="sundial-todo-dialog" env={env} />);
+
+    // cancel → reopen
+    fireEvent.click(screen.getByTestId('sundial-open-todo-dialog'));
+    await waitFor(() => {
+      expect(screen.getByText('新建待办')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
+    await waitFor(() => {
+      expect(screen.queryByText('新建待办')).toBeNull();
+    });
+    fireEvent.click(screen.getByTestId('sundial-open-todo-dialog'));
+    await waitFor(() => {
+      expect(screen.getByText('新建待办')).toBeTruthy();
+    });
   });
 });

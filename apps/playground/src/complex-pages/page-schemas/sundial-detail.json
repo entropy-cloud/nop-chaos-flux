@@ -16,6 +16,27 @@
               "type": "flex",
               "direction": "row",
               "gap": 8,
+              "testid": "sundial-trashed-banner",
+              "visible": "${taskTrashed}",
+              "className": "sd-badge sd-badge-error self-start",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "trash-2",
+                  "size": 12,
+                  "color": "#d25151"
+                },
+                {
+                  "type": "text",
+                  "text": "已移到垃圾箱",
+                  "className": "text-[10px] sd-mono"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
               "className": "items-center",
               "testid": "sundial-detail-status-row",
               "body": [
@@ -364,12 +385,22 @@
                       "icon": "chevron-right",
                       "className": "sd-btn-icon",
                       "testid": "sundial-subtask-open-1",
-                      "onClick": {
-                        "action": "showToast",
-                        "args": {
-                          "message": "打开子任务详情"
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "activeSubtask",
+                            "value": 1
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "subtaskOpen",
+                            "value": true
+                          }
                         }
-                      }
+                      ]
                     },
                     {
                       "type": "button",
@@ -378,14 +409,24 @@
                       "icon": "trash-2",
                       "className": "sd-btn-icon",
                       "testid": "sundial-subtask-delete-1",
-                      "onClick": {
-                        "action": "showToast",
-                        "args": {
-                          "message": "删除子任务"
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "subtaskDeleted1",
+                            "value": true
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "子任务已删除"
+                          }
                         }
-                      }
+                      ]
                     }
-                  ]
+                  ],
+                  "visible": "${!subtaskDeleted1}"
                 },
                 {
                   "type": "flex",
@@ -418,12 +459,22 @@
                       "icon": "chevron-right",
                       "className": "sd-btn-icon",
                       "testid": "sundial-subtask-open-2",
-                      "onClick": {
-                        "action": "showToast",
-                        "args": {
-                          "message": "打开子任务详情"
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "activeSubtask",
+                            "value": 2
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "subtaskOpen",
+                            "value": true
+                          }
                         }
-                      }
+                      ]
                     },
                     {
                       "type": "button",
@@ -432,14 +483,24 @@
                       "icon": "trash-2",
                       "className": "sd-btn-icon",
                       "testid": "sundial-subtask-delete-2",
-                      "onClick": {
-                        "action": "showToast",
-                        "args": {
-                          "message": "删除子任务"
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "subtaskDeleted2",
+                            "value": true
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "子任务已删除"
+                          }
                         }
-                      }
+                      ]
                     }
-                  ]
+                  ],
+                  "visible": "${!subtaskDeleted2}"
                 },
                 {
                   "type": "flex",
@@ -472,12 +533,22 @@
                       "icon": "chevron-right",
                       "className": "sd-btn-icon",
                       "testid": "sundial-subtask-open-3",
-                      "onClick": {
-                        "action": "showToast",
-                        "args": {
-                          "message": "打开子任务详情"
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "activeSubtask",
+                            "value": 3
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "subtaskOpen",
+                            "value": true
+                          }
                         }
-                      }
+                      ]
                     },
                     {
                       "type": "button",
@@ -486,14 +557,24 @@
                       "icon": "trash-2",
                       "className": "sd-btn-icon",
                       "testid": "sundial-subtask-delete-3",
-                      "onClick": {
-                        "action": "showToast",
-                        "args": {
-                          "message": "删除子任务"
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "subtaskDeleted3",
+                            "value": true
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "子任务已删除"
+                          }
                         }
-                      }
+                      ]
                     }
-                  ]
+                  ],
+                  "visible": "${!subtaskDeleted3}"
                 }
               ]
             },
@@ -521,12 +602,22 @@
                   "variant": "ghost",
                   "className": "sd-btn sd-btn-ghost flex-1",
                   "testid": "sundial-detail-move-list",
-                  "onClick": {
-                    "action": "showToast",
-                    "args": {
-                      "message": "已选择目标列表"
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "moveMode",
+                        "value": "list"
+                      }
+                    },
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "listOpen",
+                        "value": true
+                      }
                     }
-                  }
+                  ]
                 },
                 {
                   "type": "button",
@@ -534,12 +625,21 @@
                   "variant": "destructive",
                   "className": "sd-btn sd-btn-danger flex-1",
                   "testid": "sundial-detail-trash",
-                  "onClick": {
-                    "action": "showToast",
-                    "args": {
-                      "message": "已移到垃圾箱"
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "taskTrashed",
+                        "value": true
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "已移到垃圾箱"
+                      }
                     }
-                  }
+                  ]
                 }
               ]
             }
@@ -1543,6 +1643,113 @@
                   "action": "showToast",
                   "args": {
                     "message": "列表：收件箱"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "dialog",
+      "id": "sundial-subtask-dialog",
+      "title": "子任务详情",
+      "className": "sd-dialog",
+      "open": "${subtaskOpen}",
+      "testid": "sundial-subtask-dialog",
+      "closeOnOutsideClick": false,
+      "body": [
+        {
+          "type": "container",
+          "className": "p-1 flex flex-col gap-3",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "circle-check",
+                  "size": 16,
+                  "color": "#ea7a2a"
+                },
+                {
+                  "type": "text",
+                  "text": "${activeSubtask === 1 ? \"收集销售数据\" : activeSubtask === 2 ? \"整理发票\" : \"撰写结论部分\"}",
+                  "className": "text-sm font-medium text-[#0d0d0d]",
+                  "testid": "sundial-subtask-title-text"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "子任务属于\"整理季度报税材料\"，完成后自动计入进度。",
+              "className": "text-xs text-[#636363]"
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "justify-end mt-3",
+              "body": [
+                {
+                  "type": "button",
+                  "label": "删除子任务",
+                  "variant": "ghost",
+                  "className": "sd-btn sd-btn-ghost",
+                  "testid": "sundial-subtask-dialog-delete",
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "subtaskDeleted1",
+                        "value": "${activeSubtask === 1 ? true : subtaskDeleted1}"
+                      }
+                    },
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "subtaskDeleted2",
+                        "value": "${activeSubtask === 2 ? true : subtaskDeleted2}"
+                      }
+                    },
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "subtaskDeleted3",
+                        "value": "${activeSubtask === 3 ? true : subtaskDeleted3}"
+                      }
+                    },
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "subtaskOpen",
+                        "value": false
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "子任务已删除"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "button",
+                  "label": "关闭",
+                  "variant": "default",
+                  "className": "sd-btn sd-btn-default",
+                  "testid": "sundial-subtask-dialog-close",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "subtaskOpen",
+                      "value": false
+                    }
                   }
                 }
               ]

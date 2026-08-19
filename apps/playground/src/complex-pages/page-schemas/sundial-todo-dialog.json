@@ -41,6 +41,236 @@
       "open": "${todoDialogOpen}",
       "body": [
         {
+          "type": "container",
+          "className": "mt-3 flex flex-col",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 10,
+              "className": "sd-field-row",
+              "testid": "sundial-todo-date-row",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "calendar",
+                  "size": 14,
+                  "color": "#636363"
+                },
+                {
+                  "type": "text",
+                  "text": "日期",
+                  "className": "text-xs text-[#333333]"
+                },
+                {
+                  "type": "text",
+                  "text": "${todoDate === 'today' ? '今天' : todoDate === 'tomorrow' ? '明天' : todoDate === 'next-week' ? '下周' : '无'}",
+                  "className": "ml-auto text-xs text-[#636363]",
+                  "testid": "sundial-todo-date-value"
+                }
+              ],
+              "onClick": {
+                "action": "openDialog",
+                "args": {
+                  "title": "选择日期",
+                  "className": "sd-dialog",
+                  "testid": "sundial-todo-date-picker",
+                  "closeOnSubmit": true,
+                  "onSubmitSuccess": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "todoDate",
+                      "value": "${$formData.todoDate}"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "sundial-todo-date-form",
+                      "submitScope": "surface",
+                      "data": {
+                        "todoDate": "${todoDate ?? \"none\"}"
+                      },
+                      "body": [
+                        {
+                          "type": "radio-group",
+                          "name": "todoDate",
+                          "horizontal": false,
+                          "options": [
+                            {
+                              "label": "今天",
+                              "value": "today"
+                            },
+                            {
+                              "label": "明天",
+                              "value": "tomorrow"
+                            },
+                            {
+                              "label": "下周",
+                              "value": "next-week"
+                            },
+                            {
+                              "label": "清除",
+                              "value": "none"
+                            }
+                          ]
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "确定",
+                          "variant": "default",
+                          "className": "sd-btn sd-btn-default",
+                          "testid": "sundial-todo-date-submit",
+                          "onClick": {
+                            "action": "submitForm"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 10,
+              "className": "sd-field-row",
+              "testid": "sundial-todo-flag-row",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "flag",
+                  "size": 14,
+                  "color": "#636363"
+                },
+                {
+                  "type": "text",
+                  "text": "旗标",
+                  "className": "text-xs text-[#333333]"
+                },
+                {
+                  "type": "text",
+                  "text": "${todoFlag ? '已标记' : '未标记'}",
+                  "className": "ml-auto text-xs text-[#636363]",
+                  "testid": "sundial-todo-flag-value"
+                }
+              ],
+              "onClick": [
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "todoFlag",
+                    "value": "${!todoFlag}"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "旗标已切换"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 10,
+              "className": "sd-field-row",
+              "testid": "sundial-todo-list-row",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "tray",
+                  "size": 14,
+                  "color": "#636363"
+                },
+                {
+                  "type": "text",
+                  "text": "列表",
+                  "className": "text-xs text-[#333333]"
+                },
+                {
+                  "type": "text",
+                  "text": "",
+                  "className": "ml-auto block w-2.5 h-2.5 rounded-full bg-[#636363]"
+                },
+                {
+                  "type": "text",
+                  "text": "${todoList === 'work' ? '工作' : todoList === 'family' ? '家庭' : todoList === 'shopping' ? '购物' : '收件箱'}",
+                  "className": "text-xs text-[#0d0d0d]",
+                  "testid": "sundial-todo-list-value"
+                }
+              ],
+              "onClick": {
+                "action": "openDialog",
+                "args": {
+                  "title": "选择列表",
+                  "className": "sd-dialog",
+                  "testid": "sundial-todo-list-picker",
+                  "closeOnSubmit": true,
+                  "onSubmitSuccess": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "todoList",
+                      "value": "${$formData.todoList}"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "sundial-todo-list-form",
+                      "submitScope": "surface",
+                      "data": {
+                        "todoList": "${todoList ?? \"inbox\"}"
+                      },
+                      "body": [
+                        {
+                          "type": "radio-group",
+                          "name": "todoList",
+                          "horizontal": false,
+                          "options": [
+                            {
+                              "label": "收件箱",
+                              "value": "inbox"
+                            },
+                            {
+                              "label": "工作",
+                              "value": "work"
+                            },
+                            {
+                              "label": "家庭",
+                              "value": "family"
+                            },
+                            {
+                              "label": "购物",
+                              "value": "shopping"
+                            }
+                          ]
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "确定",
+                          "variant": "default",
+                          "className": "sd-btn sd-btn-default",
+                          "testid": "sundial-todo-list-submit",
+                          "onClick": {
+                            "action": "submitForm"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
           "type": "form",
           "id": "sundial-todo-form",
           "data": {
@@ -63,110 +293,6 @@
               "className": "sd-input mt-2",
               "placeholder": "备注（可选）…",
               "testid": "sundial-todo-note"
-            },
-            {
-              "type": "container",
-              "className": "mt-3 flex flex-col",
-              "body": [
-                {
-                  "type": "flex",
-                  "direction": "row",
-                  "gap": 10,
-                  "className": "sd-field-row",
-                  "testid": "sundial-todo-date-row",
-                  "body": [
-                    {
-                      "type": "icon",
-                      "icon": "calendar",
-                      "size": 14,
-                      "color": "#636363"
-                    },
-                    {
-                      "type": "text",
-                      "text": "日期",
-                      "className": "text-xs text-[#333333]"
-                    },
-                    {
-                      "type": "text",
-                      "text": "无",
-                      "className": "ml-auto text-xs text-[#636363]"
-                    }
-                  ],
-                  "onClick": {
-                    "action": "showToast",
-                    "args": {
-                      "message": "选择日期（占位反馈）"
-                    }
-                  }
-                },
-                {
-                  "type": "flex",
-                  "direction": "row",
-                  "gap": 10,
-                  "className": "sd-field-row",
-                  "testid": "sundial-todo-flag-row",
-                  "body": [
-                    {
-                      "type": "icon",
-                      "icon": "flag",
-                      "size": 14,
-                      "color": "#636363"
-                    },
-                    {
-                      "type": "text",
-                      "text": "旗标",
-                      "className": "text-xs text-[#333333]"
-                    },
-                    {
-                      "type": "text",
-                      "text": "未标记",
-                      "className": "ml-auto text-xs text-[#636363]"
-                    }
-                  ],
-                  "onClick": {
-                    "action": "showToast",
-                    "args": {
-                      "message": "切换旗标（占位反馈）"
-                    }
-                  }
-                },
-                {
-                  "type": "flex",
-                  "direction": "row",
-                  "gap": 10,
-                  "className": "sd-field-row",
-                  "testid": "sundial-todo-list-row",
-                  "body": [
-                    {
-                      "type": "icon",
-                      "icon": "tray",
-                      "size": 14,
-                      "color": "#636363"
-                    },
-                    {
-                      "type": "text",
-                      "text": "列表",
-                      "className": "text-xs text-[#333333]"
-                    },
-                    {
-                      "type": "text",
-                      "text": "",
-                      "className": "ml-auto block w-2.5 h-2.5 rounded-full bg-[#636363]"
-                    },
-                    {
-                      "type": "text",
-                      "text": "收件箱",
-                      "className": "text-xs text-[#0d0d0d]"
-                    }
-                  ],
-                  "onClick": {
-                    "action": "showToast",
-                    "args": {
-                      "message": "选择列表（占位反馈）"
-                    }
-                  }
-                }
-              ]
             }
           ],
           "actions": [
@@ -191,7 +317,13 @@
             }
           ]
         }
-      ]
+      ],
+      "data": {
+        "todoFlag": false,
+        "todoDate": "none",
+        "todoList": "inbox"
+      },
+      "closeOnOutsideClick": false
     }
   ]
 }

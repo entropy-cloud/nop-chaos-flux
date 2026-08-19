@@ -5,12 +5,16 @@ import {
   clone,
   collectDeptSubtree,
   createMockDatabase,
+  filterSundialTasks,
   MOCK_DICTS,
   nowStamp,
   toOrderListRecord,
   toUserListRecord,
+  updateSundialTask,
   type FetcherApi,
   type MockDatabase,
+  type SundialTask,
+  type SundialTaskView,
   type UserRecord,
 } from './mock-backend';
 import { confirmBridge } from './confirm-bridge';
@@ -562,21 +566,33 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       };
     }
     if (url.includes('/r/Sundial__todos') && method === 'get') {
+      const viewMatch = url.match(/[?&]view=([a-z]+)/);
+      const viewRaw = viewMatch?.[1] ?? 'all';
+      const view: SundialTaskView = (['all', 'today', 'scheduled', 'done', 'trash'] as const).includes(viewRaw as SundialTaskView)
+        ? (viewRaw as SundialTaskView)
+        : 'all';
+      const items = filterSundialTasks(db.sundialTasks, view);
       return {
         status: 0,
-        data: clone({
-          items: [
-            { id: 1, title: '整理季度报税材料', note: '发票 + 银行流水', done: false, dueLabel: '昨天', dueTone: 'overdue', flagged: true, subtasks: 2 },
-            { id: 2, title: '给项目经理回电话', note: '讨论上线时间', done: false, dueLabel: '今天', dueTone: 'today', flagged: false, subtasks: 0 },
-            { id: 3, title: '预约牙医检查', note: '', done: false, dueLabel: '8/18', dueTone: 'future', flagged: false, subtasks: 0 },
-            { id: 4, title: '读完《设计中的设计》', note: '还剩两章', done: false, dueLabel: '', dueTone: 'none', flagged: true, subtasks: 0 },
-            { id: 5, title: '整理收件箱里的票据', note: '', done: false, dueLabel: '今天', dueTone: 'today', flagged: false, subtasks: 0 },
-            { id: 6, title: '撰写周报', note: '数据部分已完成', done: false, dueLabel: '8/19', dueTone: 'future', flagged: false, subtasks: 1 },
-            { id: 7, title: '更新团队共享日历', note: '', done: true, dueLabel: '今天', dueTone: 'today', flagged: false, subtasks: 0 },
-          ],
-          total: 7,
-        }) as T,
+        data: clone({ items, total: items.length, view }) as T,
       };
+    }
+    if (url.includes('/r/Sundial__updateTodoItem') && method === 'post') {
+      const id = asNumber(body.id);
+      if (id === undefined) {
+        return { status: 1, data: clone({ ok: false, error: 'missing id' }) as T };
+      }
+      const { id: _ignored, ...patch } = body as Record<string, unknown>;
+      const updated = updateSundialTask(db.sundialTasks, id, patch as Partial<SundialTask>);
+      if (!updated) {
+        return { status: 1, data: clone({ ok: false, error: 'task not found' }) as T };
+      }
+      return { status: 0, data: clone({ ok: true, task: { ...updated } }) as T };
+    }
+    if (url.includes('/r/Sundial__subtasks') && method === 'get') {
+      const taskId = asNumber(body.taskId ?? params.taskId);
+      const items = db.sundialSubtasks.filter((st) => st.taskId === taskId);
+      return { status: 0, data: clone({ items, total: items.length }) as T };
     }
     if (url.includes('/r/Sundial__todayTasks') && method === 'get') {
       return {
@@ -606,6 +622,18 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       else toast.info?.(text || 'Info');
     },
     confirm: (message, title) => confirmBridge.confirm(message, title),
+    navigate: (input, options) => {
+      if (typeof input === 'number') {
+        window.history.go(input);
+        return;
+      }
+      const url = String(input);
+      if (options?.replace) {
+        window.location.replace(url);
+      } else {
+        window.location.hash = url.startsWith('#') ? url : url;
+      }
+    },
     loadDict: async (name: string) => {
       return { name, options: MOCK_DICTS[name] ?? [] };
     },
