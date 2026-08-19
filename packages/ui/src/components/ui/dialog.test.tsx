@@ -53,11 +53,14 @@ describe('Dialog', () => {
       </Dialog>,
     );
 
-    const header = screen.getByLabelText('flux.dialog.moveDialog');
+    // The header itself is the drag surface (AMIS parity): focusable and
+    // arrow-key movable, no dedicated grip button.
+    const header = document.querySelector('[data-slot="dialog-header"]') as HTMLDivElement | null;
     const popup = document.querySelector('[data-slot="dialog-content"]') as HTMLDivElement | null;
 
-    expect(header.getAttribute('tabindex')).toBe('0');
-    expect(header.getAttribute('aria-keyshortcuts')).toBe('ArrowLeft ArrowRight ArrowUp ArrowDown Home');
+    expect(header).toBeTruthy();
+    expect(header!.getAttribute('tabindex')).toBe('0');
+    expect(document.querySelector('[data-slot="dialog-drag-handle"]')).toBeNull();
     expect(popup).toBeTruthy();
 
     Object.defineProperty(popup!, 'getBoundingClientRect', {
@@ -65,10 +68,10 @@ describe('Dialog', () => {
       value: () => ({ left: 100, top: 100, right: 400, bottom: 260, width: 300, height: 160 }),
     });
 
-    fireEvent.keyDown(header, { key: 'ArrowRight' });
+    fireEvent.keyDown(header!, { key: 'ArrowRight' });
     expect(popup!.style.transform).toContain('translate(16px, 0px)');
 
-    fireEvent.keyDown(header, { key: 'Home' });
+    fireEvent.keyDown(header!, { key: 'Home' });
     expect(popup!.style.transform).toBe('translate(-50%, -50%)');
   });
 
@@ -151,8 +154,9 @@ describe('Dialog', () => {
     const popup = document.querySelector('[data-slot="dialog-content"]') as HTMLDivElement | null;
     expect(popup).toBeTruthy();
 
-    // The drag handle is the first focusable inside the popup (draggable default).
-    const first = popup!.querySelector('button:not([disabled])') as HTMLButtonElement;
+    // With the grip handle removed, the header div itself is the first
+    // focusable inside the popup (draggable default gives it tabIndex=0).
+    const first = popup!.querySelector('[data-slot="dialog-header"]') as HTMLDivElement;
     const last = screen.getByTestId('wrap-last') as HTMLButtonElement;
     expect(first).toBeTruthy();
 

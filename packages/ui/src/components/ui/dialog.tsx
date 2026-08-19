@@ -6,7 +6,7 @@ import { t } from '../../lib/i18n.js';
 
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
-import { GripHorizontalIcon, XIcon } from 'lucide-react';
+import { XIcon } from 'lucide-react';
 import { useDialogDrag } from './use-dialog-drag.js';
 import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
 import { wrapSurfaceTabFocus } from './wrap-surface-tab-focus.js';
@@ -229,7 +229,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   const { onKeyDown, ...restProps } = props;
   const forwardedOnKeyDown = onKeyDown as ((event: React.KeyboardEvent<HTMLElement>) => void) | undefined;
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
     forwardedOnKeyDown?.(event);
     if (event.defaultPrevented || !dragContext.enabled) {
       return;
@@ -263,31 +263,28 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- the header doubles as the drag surface (AMIS parity: handle=`.Modal-header` on a plain div); it is not a button — clicks pass through to children, only focus+arrows reposition.
     <div
       data-slot="dialog-header"
       className={cn('nop-dialog ',
         'relative flex shrink-0 flex-col gap-2 p-4 pb-0',
-        draggable && 'pl-12',
+        // AMIS parity: the whole header is the drag surface (no dedicated
+        // grip icon — a floating icon collides with the title in narrow
+        // dialogs); `cursor-grab` is the only drag affordance. Keyboard moves
+        // (arrows/Home) stay available when the header itself is focused.
         draggable && 'cursor-grab select-none',
         className,
       )}
+      role={dragContext.enabled ? 'toolbar' : undefined}
+      aria-orientation={dragContext.enabled ? 'horizontal' : undefined}
+      tabIndex={dragContext.enabled ? 0 : undefined}
+      onKeyDown={handleKeyDown}
       {...restProps}
     >
       {dragContext.enabled ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="absolute top-3 left-3 cursor-grab"
-          data-slot="dialog-drag-handle"
-          aria-roledescription={t('flux.dialog.dragHandleRoleDescription')}
-          aria-label={t('flux.dialog.moveDialog')}
-          aria-describedby={dragContext.descriptionId}
-          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home"
-          onKeyDown={handleKeyDown}
-        >
-          <GripHorizontalIcon />
-        </Button>
+        <p id={dragContext.descriptionId} className="sr-only">
+          {t('flux.dialog.moveDialog')}
+        </p>
       ) : null}
       {props.children}
     </div>
