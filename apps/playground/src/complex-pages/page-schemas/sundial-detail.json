@@ -192,17 +192,73 @@
                       "body": [
                         {
                           "type": "text",
-                          "text": "每周",
+                          "text": "${recur === 'none' ? '不重复' : recur === 'daily' ? '每天' : recur === 'monthly' ? '每月' : '每周'}",
                           "className": "sd-badge sd-badge-info"
                         }
                       ]
                     }
                   ],
                   "onClick": {
-                    "action": "setValue",
+                    "action": "openDialog",
                     "args": {
-                      "path": "recurOpen",
-                      "value": true
+                      "title": "重复",
+                      "className": "sd-dialog",
+                      "testid": "sundial-recurrence-dialog",
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "setValue",
+                        "args": {
+                          "path": "recur",
+                          "value": "${$formData.recur}"
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "sundial-recur-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "recur": "${recur ?? \"weekly\"}"
+                          },
+                          "body": [
+                            {
+                              "type": "radio-group",
+                              "name": "recur",
+                              "horizontal": false,
+                              "options": [
+                                {
+                                  "label": "不重复",
+                                  "value": "none"
+                                },
+                                {
+                                  "label": "每天",
+                                  "value": "daily"
+                                },
+                                {
+                                  "label": "每周",
+                                  "value": "weekly"
+                                },
+                                {
+                                  "label": "每月",
+                                  "value": "monthly"
+                                }
+                              ]
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "确定",
+                              "variant": "default",
+                              "className": "sd-btn sd-btn-default",
+                              "testid": "sundial-recur-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ]
+                        }
+                      ]
                     }
                   }
                 },
@@ -306,7 +362,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "",
+                      "text": "${list === 'work' ? '工作' : list === 'family' ? '家庭' : '收件箱'}",
                       "className": "flex-1"
                     },
                     {
@@ -321,10 +377,62 @@
                     }
                   ],
                   "onClick": {
-                    "action": "setValue",
+                    "action": "openDialog",
                     "args": {
-                      "path": "listOpen",
-                      "value": true
+                      "title": "选择列表",
+                      "className": "sd-dialog",
+                      "testid": "sundial-list-dialog",
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "setValue",
+                        "args": {
+                          "path": "list",
+                          "value": "${$formData.list}"
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "sundial-list-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "list": "${list ?? \"work\"}"
+                          },
+                          "body": [
+                            {
+                              "type": "radio-group",
+                              "name": "list",
+                              "horizontal": false,
+                              "options": [
+                                {
+                                  "label": "工作",
+                                  "value": "work"
+                                },
+                                {
+                                  "label": "家庭",
+                                  "value": "family"
+                                },
+                                {
+                                  "label": "收件箱",
+                                  "value": "inbox"
+                                }
+                              ]
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "确定",
+                              "variant": "default",
+                              "className": "sd-btn sd-btn-default",
+                              "testid": "sundial-list-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ]
+                        }
+                      ]
                     }
                   }
                 }
@@ -602,22 +710,65 @@
                   "variant": "ghost",
                   "className": "sd-btn sd-btn-ghost flex-1",
                   "testid": "sundial-detail-move-list",
-                  "onClick": [
-                    {
-                      "action": "setValue",
-                      "args": {
-                        "path": "moveMode",
-                        "value": "list"
-                      }
-                    },
-                    {
-                      "action": "setValue",
-                      "args": {
-                        "path": "listOpen",
-                        "value": true
-                      }
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "选择列表",
+                      "className": "sd-dialog",
+                      "testid": "sundial-list-dialog",
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "setValue",
+                        "args": {
+                          "path": "list",
+                          "value": "${$formData.list}"
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "sundial-list-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "list": "${list ?? \"work\"}"
+                          },
+                          "body": [
+                            {
+                              "type": "radio-group",
+                              "name": "list",
+                              "horizontal": false,
+                              "options": [
+                                {
+                                  "label": "工作",
+                                  "value": "work"
+                                },
+                                {
+                                  "label": "家庭",
+                                  "value": "family"
+                                },
+                                {
+                                  "label": "收件箱",
+                                  "value": "inbox"
+                                }
+                              ]
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "确定",
+                              "variant": "default",
+                              "className": "sd-btn sd-btn-default",
+                              "testid": "sundial-list-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ]
+                        }
+                      ]
                     }
-                  ]
+                  }
                 },
                 {
                   "type": "button",
@@ -677,10 +828,66 @@
               "className": "sd-btn sd-btn-ghost",
               "testid": "sundial-open-recurrence-dialog",
               "onClick": {
-                "action": "setValue",
+                "action": "openDialog",
                 "args": {
-                  "path": "recurOpen",
-                  "value": true
+                  "title": "重复",
+                  "className": "sd-dialog",
+                  "testid": "sundial-recurrence-dialog",
+                  "closeOnSubmit": true,
+                  "onSubmitSuccess": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "recur",
+                      "value": "${$formData.recur}"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "sundial-recur-form",
+                      "submitScope": "surface",
+                      "data": {
+                        "recur": "${recur ?? \"weekly\"}"
+                      },
+                      "body": [
+                        {
+                          "type": "radio-group",
+                          "name": "recur",
+                          "horizontal": false,
+                          "options": [
+                            {
+                              "label": "不重复",
+                              "value": "none"
+                            },
+                            {
+                              "label": "每天",
+                              "value": "daily"
+                            },
+                            {
+                              "label": "每周",
+                              "value": "weekly"
+                            },
+                            {
+                              "label": "每月",
+                              "value": "monthly"
+                            }
+                          ]
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "确定",
+                          "variant": "default",
+                          "className": "sd-btn sd-btn-default",
+                          "testid": "sundial-recur-submit",
+                          "onClick": {
+                            "action": "submitForm"
+                          }
+                        }
+                      ]
+                    }
+                  ]
                 }
               }
             },
@@ -691,10 +898,62 @@
               "className": "sd-btn sd-btn-ghost",
               "testid": "sundial-open-list-dialog",
               "onClick": {
-                "action": "setValue",
+                "action": "openDialog",
                 "args": {
-                  "path": "listOpen",
-                  "value": true
+                  "title": "选择列表",
+                  "className": "sd-dialog",
+                  "testid": "sundial-list-dialog",
+                  "closeOnSubmit": true,
+                  "onSubmitSuccess": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "list",
+                      "value": "${$formData.list}"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "sundial-list-form",
+                      "submitScope": "surface",
+                      "data": {
+                        "list": "${list ?? \"work\"}"
+                      },
+                      "body": [
+                        {
+                          "type": "radio-group",
+                          "name": "list",
+                          "horizontal": false,
+                          "options": [
+                            {
+                              "label": "工作",
+                              "value": "work"
+                            },
+                            {
+                              "label": "家庭",
+                              "value": "family"
+                            },
+                            {
+                              "label": "收件箱",
+                              "value": "inbox"
+                            }
+                          ]
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "确定",
+                          "variant": "default",
+                          "className": "sd-btn sd-btn-default",
+                          "testid": "sundial-list-submit",
+                          "onClick": {
+                            "action": "submitForm"
+                          }
+                        }
+                      ]
+                    }
+                  ]
                 }
               }
             }
@@ -776,6 +1035,12 @@
                   "icon": "chevron-right",
                   "size": 14,
                   "color": "#636363"
+                },
+                {
+                  "type": "text",
+                  "text": "${demoDateLabel || '未选择'}",
+                  "className": "ml-auto text-xs sd-mono text-[#ea7a2a]",
+                  "testid": "sundial-selected-date-label"
                 }
               ]
             },
@@ -842,29 +1107,179 @@
                       "className": "flex-1 aspect-square rounded-[2px]"
                     },
                     {
-                      "type": "text",
-                      "text": "1",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-1",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-01' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-01"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/1"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月1日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "1",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "2",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-2",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-02' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-02"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/2"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月2日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "2",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "3",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-3",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-03' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-03"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/3"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月3日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "3",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "4",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-4",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-04' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-04"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/4"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月4日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "4",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "5",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-5",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-05' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-05"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/5"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月5日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "5",
+                          "className": "leading-none"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -874,39 +1289,249 @@
                   "gap": 4,
                   "body": [
                     {
-                      "type": "text",
-                      "text": "6",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-6",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-06' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-06"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/6"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月6日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "6",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "7",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-7",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-07' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-07"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/7"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月7日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "7",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "8",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-8",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-08' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-08"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/8"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月8日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "8",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "9",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-9",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-09' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-09"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/9"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月9日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "9",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "10",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-10",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-10' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-10"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/10"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月10日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "10",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "11",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-11",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-11' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-11"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/11"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月11日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "11",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "12",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-12",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-12' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-12"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/12"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月12日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "12",
+                          "className": "leading-none"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -916,39 +1541,249 @@
                   "gap": 4,
                   "body": [
                     {
-                      "type": "text",
-                      "text": "13",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-13",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-13' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-13"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/13"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月13日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "13",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "14",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-14",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-14' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-14"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/14"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月14日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "14",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "15",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm bg-[#ea7a2a] text-white"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-15",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-15' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-15"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/15"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月15日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "15",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "16",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#ea7a2a]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-16",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-16' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-16"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/16"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月16日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "16",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "17",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-17",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-17' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-17"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/17"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月17日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "17",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "18",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-18",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-18' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-18"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/18"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月18日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "18",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "19",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-19",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-19' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-19"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/19"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月19日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "19",
+                          "className": "leading-none"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -958,39 +1793,249 @@
                   "gap": 4,
                   "body": [
                     {
-                      "type": "text",
-                      "text": "20",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-20",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-20' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-20"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/20"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月20日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "20",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "21",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-21",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-21' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-21"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/21"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月21日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "21",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "22",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-22",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-22' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-22"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/22"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月22日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "22",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "23",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-23",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-23' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-23"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/23"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月23日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "23",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "24",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-24",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-24' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-24"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/24"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月24日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "24",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "25",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-25",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-25' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-25"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/25"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月25日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "25",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "26",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-26",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-26' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-26"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/26"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月26日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "26",
+                          "className": "leading-none"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1000,29 +2045,179 @@
                   "gap": 4,
                   "body": [
                     {
-                      "type": "text",
-                      "text": "27",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-27",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-27' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-27"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/27"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月27日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "27",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "28",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-28",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-28' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-28"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/28"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月28日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "28",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "29",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-29",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-29' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-29"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/29"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月29日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "29",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "30",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-30",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-30' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-30"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/30"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月30日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "30",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
-                      "type": "text",
-                      "text": "31",
-                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm text-[#0d0d0d]"
+                      "type": "flex",
+                      "testid": "sundial-cal-day-31",
+                      "className": "flex-1 aspect-square rounded-[2px] flex items-center justify-center text-sm cursor-pointer text-[#0d0d0d] hover:bg-[#f2f2f2] sd-cal-day",
+                      "data-selected": "${selectedDate === '2026-08-31' ? 'true' : 'false'}",
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDate",
+                            "value": "2026-08-31"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "demoDateLabel",
+                            "value": "8/31"
+                          }
+                        },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "message": "已选择：8月31日"
+                          }
+                        }
+                      ],
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "31",
+                          "className": "leading-none"
+                        }
+                      ]
                     },
                     {
                       "type": "text",
@@ -1091,559 +2286,6 @@
                       }
                     }
                   ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "dialog",
-      "id": "sundial-recurrence-dialog",
-      "title": "重复",
-      "className": "sd-dialog",
-      "open": "${recurOpen}",
-      "body": [
-        {
-          "type": "container",
-          "className": "flex flex-col",
-          "body": [
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "sd-field-row items-center py-2.5 sd-choice-selected",
-              "testid": "sundial-recur-none",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "不重复",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                },
-                {
-                  "type": "icon",
-                  "icon": "circle-check",
-                  "size": 16,
-                  "color": "#ea7a2a"
-                }
-              ],
-              "data-selected": "true",
-              "visible": "${recur === 'none'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "recur",
-                    "value": "none"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "重复：不重复"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "sd-field-row items-center py-2.5",
-              "testid": "sundial-recur-none",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "不重复",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                }
-              ],
-              "data-selected": "false",
-              "visible": "${recur !== 'none'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "recur",
-                    "value": "none"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "重复：不重复"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "sd-field-row items-center py-2.5 sd-choice-selected",
-              "testid": "sundial-recur-daily",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "每天",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                },
-                {
-                  "type": "icon",
-                  "icon": "circle-check",
-                  "size": 16,
-                  "color": "#ea7a2a"
-                }
-              ],
-              "data-selected": "true",
-              "visible": "${recur === 'daily'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "recur",
-                    "value": "daily"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "重复：每天"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "sd-field-row items-center py-2.5",
-              "testid": "sundial-recur-daily",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "每天",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                }
-              ],
-              "data-selected": "false",
-              "visible": "${recur !== 'daily'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "recur",
-                    "value": "daily"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "重复：每天"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "sd-field-row items-center py-2.5 sd-choice-selected",
-              "testid": "sundial-recur-weekly",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "每周",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                },
-                {
-                  "type": "icon",
-                  "icon": "circle-check",
-                  "size": 16,
-                  "color": "#ea7a2a"
-                }
-              ],
-              "data-selected": "true",
-              "visible": "${recur === 'weekly'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "recur",
-                    "value": "weekly"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "重复：每周"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "sd-field-row items-center py-2.5",
-              "testid": "sundial-recur-weekly",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "每周",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                }
-              ],
-              "data-selected": "false",
-              "visible": "${recur !== 'weekly'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "recur",
-                    "value": "weekly"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "重复：每周"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "sd-field-row items-center py-2.5 sd-choice-selected",
-              "testid": "sundial-recur-monthly",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "每月",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                },
-                {
-                  "type": "icon",
-                  "icon": "circle-check",
-                  "size": 16,
-                  "color": "#ea7a2a"
-                }
-              ],
-              "data-selected": "true",
-              "visible": "${recur === 'monthly'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "recur",
-                    "value": "monthly"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "重复：每月"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "sd-field-row items-center py-2.5",
-              "testid": "sundial-recur-monthly",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "每月",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                }
-              ],
-              "data-selected": "false",
-              "visible": "${recur !== 'monthly'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "recur",
-                    "value": "monthly"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "重复：每月"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "className": "justify-end mt-3",
-              "body": [
-                {
-                  "type": "button",
-                  "label": "关闭",
-                  "variant": "ghost",
-                  "className": "sd-btn sd-btn-ghost",
-                  "testid": "sundial-recur-close",
-                  "onClick": {
-                    "action": "closeSurface"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "dialog",
-      "id": "sundial-list-dialog",
-      "title": "选择列表",
-      "className": "sd-dialog",
-      "open": "${listOpen}",
-      "body": [
-        {
-          "type": "container",
-          "className": "flex flex-col",
-          "body": [
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "items-center py-1.5",
-              "testid": "sundial-list-option-work",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "",
-                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-blue"
-                },
-                {
-                  "type": "text",
-                  "text": "工作",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                },
-                {
-                  "type": "icon",
-                  "icon": "circle-check",
-                  "size": 16,
-                  "color": "#ea7a2a"
-                }
-              ],
-              "data-selected": "true",
-              "visible": "${list === 'work'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "list",
-                    "value": "work"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "列表：工作"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "items-center py-1.5",
-              "testid": "sundial-list-option-work",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "",
-                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-blue"
-                },
-                {
-                  "type": "text",
-                  "text": "工作",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                }
-              ],
-              "data-selected": "false",
-              "visible": "${list !== 'work'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "list",
-                    "value": "work"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "列表：工作"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "items-center py-1.5",
-              "testid": "sundial-list-option-family",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "",
-                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-orange"
-                },
-                {
-                  "type": "text",
-                  "text": "家庭",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                },
-                {
-                  "type": "icon",
-                  "icon": "circle-check",
-                  "size": 16,
-                  "color": "#ea7a2a"
-                }
-              ],
-              "data-selected": "true",
-              "visible": "${list === 'family'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "list",
-                    "value": "family"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "列表：家庭"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "items-center py-1.5",
-              "testid": "sundial-list-option-family",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "",
-                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-orange"
-                },
-                {
-                  "type": "text",
-                  "text": "家庭",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                }
-              ],
-              "data-selected": "false",
-              "visible": "${list !== 'family'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "list",
-                    "value": "family"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "列表：家庭"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "items-center py-1.5",
-              "testid": "sundial-list-option-inbox",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "",
-                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-neutral"
-                },
-                {
-                  "type": "text",
-                  "text": "收件箱",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                },
-                {
-                  "type": "icon",
-                  "icon": "circle-check",
-                  "size": 16,
-                  "color": "#ea7a2a"
-                }
-              ],
-              "data-selected": "true",
-              "visible": "${list === 'inbox'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "list",
-                    "value": "inbox"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "列表：收件箱"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "items-center py-1.5",
-              "testid": "sundial-list-option-inbox",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "",
-                  "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-neutral"
-                },
-                {
-                  "type": "text",
-                  "text": "收件箱",
-                  "className": "text-sm text-[#0d0d0d] flex-1"
-                }
-              ],
-              "data-selected": "false",
-              "visible": "${list !== 'inbox'}",
-              "onClick": [
-                {
-                  "action": "setValue",
-                  "args": {
-                    "path": "list",
-                    "value": "inbox"
-                  }
-                },
-                {
-                  "action": "showToast",
-                  "args": {
-                    "message": "列表：收件箱"
-                  }
                 }
               ]
             }

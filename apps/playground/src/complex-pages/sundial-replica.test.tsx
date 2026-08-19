@@ -272,12 +272,28 @@ describe('Sundial replica — detail inspector', () => {
     expect(screen.getByTestId('sundial-detail-trash').textContent).toMatch(/移到垃圾箱/);
   });
 
-  it('opens the date picker dialog with a real input-time stepper', async () => {
+  it('opens the date picker dialog with a clickable calendar and input-time stepper', async () => {
     render(<SchemaPage pageId="sundial-detail" env={env} />);
     fireEvent.click(screen.getByTestId('sundial-open-date-dialog'));
     await waitFor(() => {
       expect(screen.getByText('2026 年 8 月')).toBeTruthy();
     });
+
+    // plan 460 B4: day cells are interactive — click 19 selects it
+    expect(screen.getByTestId('sundial-selected-date-label').textContent).toMatch(/未选择/);
+    fireEvent.click(screen.getByTestId('sundial-cal-day-19'));
+    await screen.findByText('已选择：8月19日');
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-cal-day-19').getAttribute('data-selected')).toBe('true');
+      expect(screen.getByTestId('sundial-selected-date-label').textContent).toMatch(/8\/19/);
+    });
+    // switching selection moves the selected marker
+    fireEvent.click(screen.getByTestId('sundial-cal-day-21'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-cal-day-21').getAttribute('data-selected')).toBe('true');
+      expect(screen.getByTestId('sundial-cal-day-19').getAttribute('data-selected')).toBe('false');
+    });
+
     // Sundial-style ±1h/±5m stepper (real input-time steppers mode)
     await waitFor(() => {
       expect(screen.getByTestId('sundial-time-stepper-display').textContent).toMatch(/14 : 00/);
@@ -300,21 +316,24 @@ describe('Sundial replica — detail inspector', () => {
     expect(document.querySelector('[data-testid="date-popover"]')).toBeTruthy();
   });
 
-  it('opens the recurrence picker and list picker dialogs', async () => {
+  it('opens the recurrence and list pickers with radio options (plan 460 B5)', async () => {
     render(<SchemaPage pageId="sundial-detail" env={env} />);
     fireEvent.click(screen.getByTestId('sundial-open-recurrence-dialog'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-recur-weekly')).toBeTruthy();
+      expect(document.querySelectorAll('[role="radio"]').length).toBeGreaterThanOrEqual(4);
     });
-    expect(screen.getByTestId('sundial-recur-weekly').textContent).toMatch(/每周/);
-    expect(screen.getByTestId('sundial-recur-none').textContent).toMatch(/不重复/);
+    // current value weekly is preselected
+    const weeklyRadio = Array.from(document.querySelectorAll('[role="radio"]')).find((r) =>
+      r.closest('label')?.textContent?.includes('每周'),
+    );
+    expect(weeklyRadio).toBeTruthy();
+    expect(weeklyRadio!.getAttribute('aria-checked')).toBe('true');
 
-    fireEvent.click(screen.getByTestId('sundial-recur-close'));
     fireEvent.click(screen.getByTestId('sundial-open-list-dialog'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-list-option-work').textContent).toMatch(/工作/);
+      const listRadios = document.querySelectorAll('[role="radio"]');
+      expect(listRadios.length).toBeGreaterThanOrEqual(3);
     });
-    expect(screen.getByTestId('sundial-list-option-inbox').textContent).toMatch(/收件箱/);
   });
 
   it('wires button/icon actions with toast feedback (plan 457 C4/C5/C13/C15/C6)', async () => {
@@ -331,9 +350,14 @@ describe('Sundial replica — detail inspector', () => {
     // C5 + plan 460 P9: move-list opens the list picker; trash sets taskTrashed
     fireEvent.click(screen.getByTestId('sundial-detail-move-list'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-list-option-work')).toBeTruthy();
+      expect(screen.getByText('家庭')).toBeTruthy();
     });
-    fireEvent.click(screen.getByTestId('sundial-list-option-family'));
+    const moveRadios = document.querySelectorAll('[role="radio"]');
+    const familyOpt = Array.from(moveRadios).find((r) =>
+      r.closest('label')?.textContent?.includes('家庭'),
+    );
+    fireEvent.click(familyOpt!);
+    fireEvent.click(screen.getByTestId('sundial-list-submit'));
     fireEvent.click(screen.getByTestId('sundial-detail-trash'));
     await screen.findByText('已移到垃圾箱');
     await waitFor(() => {
@@ -372,16 +396,24 @@ describe('Sundial replica — detail inspector', () => {
     await screen.findByText('日期已清除');
     expect(screen.queryByText('2026 年 8 月')).toBeNull();
 
-    // pick area opens the date dialog
+    // pick area opens the date dialog (calendar with clickable day cells)
     fireEvent.click(screen.getByTestId('sundial-detail-row-date-pick'));
     await waitFor(() => {
       expect(screen.getByText('2026 年 8 月')).toBeTruthy();
     });
+    fireEvent.click(screen.getByTestId('sundial-cal-day-20'));
+    await screen.findByText('已选择：8月20日');
+    // close it (X) before the next picker
+    const closeDate = document.querySelector('[data-slot="dialog-close"]');
+    fireEvent.click(closeDate!);
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-cal-day-20')).toBeNull();
+    });
 
-    // recurrence row opens the recurrence dialog
+    // recurrence row opens the recurrence picker (radio + submit, owner writeback)
     fireEvent.click(screen.getByTestId('sundial-detail-row-recurrence'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-recur-weekly')).toBeTruthy();
+      expect(screen.getByText('不重复')).toBeTruthy();
     });
 
     // flag row toggles flagged state with toast
@@ -392,44 +424,56 @@ describe('Sundial replica — detail inspector', () => {
       expect(screen.getByTestId('sundial-detail-row-flag').textContent).toMatch(/未标记/);
     });
 
-    // list row opens the list dialog
+    // list row opens the list picker
     fireEvent.click(screen.getByTestId('sundial-detail-row-list'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-list-option-work')).toBeTruthy();
+      expect(screen.getByText('收件箱')).toBeTruthy();
     });
   });
 
-  it('switches recurrence/list option selected state (plan 457 C11/C12)', async () => {
+  it('switches recurrence/list selection and writes back to the page field row (plan 457 C11/C12 + plan 460 B5)', async () => {
     render(<SchemaPage pageId="sundial-detail" env={env} />);
 
-    // Initial recur selection: weekly (from PAGE_DATA)
+    // recur: page field row shows 每周 (PAGE_DATA recur=weekly)
+    expect(screen.getByTestId('sundial-detail-row-recurrence').textContent).toMatch(/每周/);
+
+    // open picker (openDialog + radio-group), pick 每天, submit
     fireEvent.click(screen.getByTestId('sundial-detail-row-recurrence'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-recur-weekly')).toBeTruthy();
+      expect(document.querySelectorAll('[role="radio"]').length).toBeGreaterThanOrEqual(4);
     });
-    expect(screen.getByTestId('sundial-recur-weekly').getAttribute('data-selected')).toBe('true');
-    expect(screen.getByTestId('sundial-recur-daily').getAttribute('data-selected')).toBe('false');
-
-    fireEvent.click(screen.getByTestId('sundial-recur-daily'));
-    await screen.findByText('重复：每天');
+    const dailyRadio = Array.from(document.querySelectorAll('[role="radio"]')).find((r) =>
+      r.closest('label')?.textContent?.includes('每天'),
+    );
+    fireEvent.click(dailyRadio!);
+    fireEvent.click(screen.getByTestId('sundial-recur-submit'));
+    // picker closes; onSubmitSuccess wrote recur=daily into the OWNER scope →
+    // the page-level field row now reads the new value (the original bug was
+    // that this writeback never happened — the row stayed on the old value).
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-recur-daily').getAttribute('data-selected')).toBe('true');
+      expect(screen.queryByTestId('sundial-recur-submit')).toBeNull();
     });
-    expect(screen.getByTestId('sundial-recur-weekly').getAttribute('data-selected')).toBe('false');
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-detail-row-recurrence').textContent).toMatch(/每天/);
+    });
 
-    fireEvent.click(screen.getByTestId('sundial-recur-close'));
+    // list: same flow — pick 家庭, row updates from 工作 to 家庭
+    expect(screen.getByTestId('sundial-detail-row-list').textContent).toMatch(/工作/);
     fireEvent.click(screen.getByTestId('sundial-detail-row-list'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-list-option-work')).toBeTruthy();
+      expect(document.querySelectorAll('[role="radio"]').length).toBeGreaterThanOrEqual(3);
     });
-    expect(screen.getByTestId('sundial-list-option-work').getAttribute('data-selected')).toBe('true');
-
-    fireEvent.click(screen.getByTestId('sundial-list-option-family'));
-    await screen.findByText('列表：家庭');
+    const familyRadio = Array.from(document.querySelectorAll('[role="radio"]')).find((r) =>
+      r.closest('label')?.textContent?.includes('家庭'),
+    );
+    fireEvent.click(familyRadio!);
+    fireEvent.click(screen.getByTestId('sundial-list-submit'));
     await waitFor(() => {
-      expect(screen.getByTestId('sundial-list-option-family').getAttribute('data-selected')).toBe('true');
+      expect(screen.queryByTestId('sundial-list-submit')).toBeNull();
     });
-    expect(screen.getByTestId('sundial-list-option-work').getAttribute('data-selected')).toBe('false');
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-detail-row-list').textContent).toMatch(/家庭/);
+    });
   });
 });
 

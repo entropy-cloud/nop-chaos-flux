@@ -611,6 +611,15 @@
   padding: 0;
 }
 
+/* plan 460 B4: clickable calendar day cells in the detail date dialog.
+   Base classes are inline in the schema; this adds the selected state the
+   data-selected attribute drives (same visual language as sd-nav-selected). */
+.sd-cal-day[data-selected='true'] {
+  background: var(--sd-brand);
+  color: #ffffff;
+  font-weight: 600;
+}
+
 /* ── 16. KPI cards (analytics) ──────────────────────────────────────────── */
 
 .sd-kpi-card {
