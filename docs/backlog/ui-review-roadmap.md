@@ -24,7 +24,7 @@
 > 状态流转：draft review 通过 → `todo` 改 `planned`；closure audit 通过 → `planned` 改 `done`（不得提前）。执行顺序 = 本列表顺序（R → C → P → D），AI 不重排。
 > 拆分阀：单个 work item 若实测一个 plan 收不下（最高风险：R2/R3、P2a），经人工确认拆分为带独立状态的子项后更新本区，不默认囤积。
 
-- R0. UI 资产盘点与基线实测: `todo`
+- R0. UI 资产盘点与基线实测: `done`
 - R1. 成熟框架对标分析（美观度 × 完善度双维评分卡）: `todo`
 - R2. 全量 UI 一致性审查（ux-design-pattern-audit 多轮递归）: `todo`
 - R3. 一致性 P0/P1 修复与共性归类收口: `todo`
@@ -70,11 +70,11 @@
 
 本节数据为 2026-08-19 live 实测（worktree `nop-chaos-flux-ui-review`，基点 master `0078f2a40`）：
 
-- **Renderer 包 14 个**（Reuse 表所列）；注册 renderer type 实测 **88 个**（`rg "type: '[a-z0-9-]+'"` 限 `*-definitions.ts` 口径——该口径漏计 form-advanced 等散装注册的 combo/input-table/transfer/picker/condition-builder 等，**精确注册数由 R0 以运行时 registry 口径重新实测**后修正本行）。
-- **`@nop-chaos/ui` 导出 64 行**（含类型/工具导出；组件清单以 `AGENTS.md` 列出的 40+ 组件为准）。
+- **Renderer 包 14 个**（Reuse 表所列）；注册 renderer type 实测 **122 个**（2026-08-19 R0 运行时 registry 口径：逐包 `register*Renderers` + `registry.list().length`；industrial/editor/ai 因 leafer canvas 依赖改用定义文件静态口径复核，逐包明细与复测命令见 `docs/analysis/ui-review/R0-baseline-inventory.md` §1——原 88 为 `*-definitions.ts` grep 口径下限，已修正）。
+- **`@nop-chaos/ui`：62 个组件模块**（`export *` 全量导出，R0 实测非 test 模块数）**+ 16 工具/hooks**（`AGENTS.md` 40+ 清单为常用精选面而非全集；未宣传的 ~22 模块是 R1/R2 的输入）。
 - **playground 复杂页 19 个 schema**：14 个企业向（standard-crud / master-detail / dashboard / advanced-query / approval-tasks / form-wizard / complex-form / combo-editor / tree-crud / inline-edit-table / detail-subtables / business-document / dynamic-tabs / crud-views-export）+ 5 个 Sundial 复刻页（workbench / detail / analytics / settings / todo-dialog）。
-- **Sundial 复刻先例——在途，非已完成（live plan 状态 2026-08-19 实测）**：`docs/analysis/sundial-ui-reproduction-analysis.md`（令牌提取 + 8 页复杂度分级 + 能力映射矩阵）；plans 实况——456（渲染器增强）/457（交互接线）/459（受控 dialog 修复）`completed`，458（交互深化）`superseded-reverted`（2026-08-17 因 nested-dialog 缺陷整体撤销，改由 460 重做），**460（全量交互重实现）`drafting` 在途**：Phase 1–4 对应批次已落地（git log 批次标记 B1–B7，master HEAD 即 460 B7），Phase 5–8（settings 切换+保存 / detail 真实化 / 导航+analytics / 收口验证）pending。因此当前实际剩余缺口 = **460 Phase 5–8** + 分析文档登记的 **G3 剩余**（input-date 行触发形态，优化项）与 **G5**（hover/选中态的 schema 表达——"可选行/选中值绑定"目前只能 CSS `.group:hover` 或 visible 双渲染模拟，建议通用 `option-row` 原语）。
-- **R0 前置**：按 `ai-autonomy-policy.md` Backlog Selection Rule（在途 plan 先于新 work item 恢复），本 roadmap 首个 work item R0 启动前，须先在 `ui-review` 分支恢复并收口 plan 460（或经人工裁决将其移出/移交）。
+- **Sundial 复刻先例——已完成（2026-08-19 收口）**：plan 460 `completed`（commit 66476513d，两轮独立 closure audit approved；P1-P13 全部真实化且逐项有断言；附带等强度修复 B1 逃逸回归 surface-event-ctx）。B8 收口内容：settings 保存写 mock 后端、子任务删除/移动写后端、详情 X 真实导航、task-detail-dialog 字段行 picker 化；runtime 语义发现 4 条记入 plan 与日志。历史在途记录：plans 456/457/459 `completed`，458 `superseded-reverted`，460 Phase 1–4 对应批次 B1–B7（master HEAD 即 B7）。分析文档登记的剩余优化项仍开放：**G3 剩余**（input-date 行触发形态）与 **G5**（hover/选中态的 schema 表达——"可选行/选中值绑定"目前只能 CSS `.group:hover` 或 visible 双渲染模拟，建议通用 `option-row` 原语）。
+- **R0 前置**：~~plan 460 须先恢复并收口~~ → 已满足（2026-08-19 plan 460 `completed`，见上条）。
 - **既有对标物**：AMIS 侧有 `amis-baseline-matrix.md`（组件覆盖对照）；移动端侧有 vs Vant 全量对比；**企业后台框架（Ant Design Pro）、同品类低代码构建器（Retool 系）、组件美学生态（shadcn blocks）三个方向尚无系统对标** —— R1 补齐。
 - **初步判断（待 R1/R2 量化，此处仅为工作假设）**：
   - 完善度——结构层完备（AMIS 基线组件大部分 runtime，另有 graph/scheduling/ai 等超出项）；短板在**页面级模板层**（Ant Design Pro 的 list/form/detail/result/dashboard 页面模板级预设）、**键盘/命令交互**（command palette、chord 导航）、**多视图数据库形态**（table/board/gallery 切换）、**行内网格编辑深度**（Airtable 型）。
