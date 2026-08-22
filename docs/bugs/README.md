@@ -180,3 +180,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/159-renderer-ui-citations-empty-timestamp-crash-empty-classname-region-name-fix.md`
 - `docs/bugs/160-clipboard-false-success-action-scope-namespace-takeover-fix.md`
 - `docs/bugs/161-barcode-input-scan-poll-dead-on-closed-mount-fix.md`
+- `docs/bugs/162-stacked-dialog-non-topmost-outside-press-closes-parent-fix.md`

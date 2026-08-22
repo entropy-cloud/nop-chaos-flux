@@ -273,6 +273,7 @@
         {
           "type": "form",
           "id": "sundial-todo-form",
+          "autoFocus": true,
           "data": {
             "title": "",
             "note": "",

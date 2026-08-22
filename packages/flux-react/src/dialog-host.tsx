@@ -293,6 +293,19 @@ function DialogView(props: {
     ) {
       return;
     }
+    // Stacked-dialog fix: a dialog that is not the topmost one is interactionally
+    // inert — the user is interacting with whatever is on top of it (a nested
+    // openDialog, a picker, etc.). The Base UI click-outside and Esc detectors
+    // fire on every dialog that has them enabled, regardless of stacking, so an
+    // inner click reaches the outer's outside-press listener and the outer's
+    // controlled dialog then writes `openPath = false` into the page scope,
+    // closing the parent the user never asked to close. Suppress outside-press
+    // and Esc for any non-topmost dialog; surface close paths (closeDialog,
+    // closeOnSubmit, etc.) still work because they call surfaceRuntime.close
+    // directly without going through onOpenChange.
+    if (!isTopmost && (reason === 'outside-press' || reason === 'escape-key')) {
+      return;
+    }
     handleClose();
   };
 

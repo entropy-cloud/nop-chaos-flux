@@ -189,10 +189,9 @@
                           "data-selected": "true",
                           "visible": "${activeSection === 'lists'}",
                           "onClick": {
-                            "action": "setValue",
+                            "action": "navigate",
                             "args": {
-                              "path": "activeSection",
-                              "value": "lists"
+                              "url": "#/complex-pages/sundial-settings"
                             }
                           },
                           "body": [
@@ -223,10 +222,9 @@
                           "data-selected": "false",
                           "visible": "${activeSection !== 'lists'}",
                           "onClick": {
-                            "action": "setValue",
+                            "action": "navigate",
                             "args": {
-                              "path": "activeSection",
-                              "value": "lists"
+                              "url": "#/complex-pages/sundial-settings"
                             }
                           },
                           "body": [
@@ -257,10 +255,9 @@
                           "data-selected": "true",
                           "visible": "${activeSection === 'analytics'}",
                           "onClick": {
-                            "action": "setValue",
+                            "action": "navigate",
                             "args": {
-                              "path": "activeSection",
-                              "value": "analytics"
+                              "url": "#/complex-pages/sundial-analytics"
                             }
                           },
                           "body": [
@@ -286,10 +283,9 @@
                           "data-selected": "false",
                           "visible": "${activeSection !== 'analytics'}",
                           "onClick": {
-                            "action": "setValue",
+                            "action": "navigate",
                             "args": {
-                              "path": "activeSection",
-                              "value": "analytics"
+                              "url": "#/complex-pages/sundial-analytics"
                             }
                           },
                           "body": [
@@ -1005,12 +1001,6 @@
                                           "path": "taskDetailOpen",
                                           "value": true
                                         }
-                                      },
-                                      {
-                                        "action": "showToast",
-                                        "args": {
-                                          "message": "打开详情"
-                                        }
                                       }
                                     ],
                                     "body": [
@@ -1086,12 +1076,6 @@
                                           "path": "taskDetailOpen",
                                           "value": true
                                         }
-                                      },
-                                      {
-                                        "action": "showToast",
-                                        "args": {
-                                          "message": "打开详情"
-                                        }
                                       }
                                     ],
                                     "body": [
@@ -1143,12 +1127,6 @@
                                         "args": {
                                           "path": "taskDetailOpen",
                                           "value": true
-                                        }
-                                      },
-                                      {
-                                        "action": "showToast",
-                                        "args": {
-                                          "message": "打开详情"
                                         }
                                       }
                                     ],
@@ -1225,12 +1203,6 @@
                                           "path": "taskDetailOpen",
                                           "value": true
                                         }
-                                      },
-                                      {
-                                        "action": "showToast",
-                                        "args": {
-                                          "message": "打开详情"
-                                        }
                                       }
                                     ],
                                     "body": [
@@ -1282,12 +1254,6 @@
                                         "args": {
                                           "path": "taskDetailOpen",
                                           "value": true
-                                        }
-                                      },
-                                      {
-                                        "action": "showToast",
-                                        "args": {
-                                          "message": "打开详情"
                                         }
                                       }
                                     ],
@@ -1364,12 +1330,6 @@
                                           "path": "taskDetailOpen",
                                           "value": true
                                         }
-                                      },
-                                      {
-                                        "action": "showToast",
-                                        "args": {
-                                          "message": "打开详情"
-                                        }
                                       }
                                     ],
                                     "body": [
@@ -1439,12 +1399,6 @@
                                         "args": {
                                           "path": "taskDetailOpen",
                                           "value": true
-                                        }
-                                      },
-                                      {
-                                        "action": "showToast",
-                                        "args": {
-                                          "message": "打开详情"
                                         }
                                       }
                                     ],
@@ -1721,7 +1675,6 @@
     },
     {
       "type": "dialog",
-      "id": "sundial-task-detail-dialog",
       "title": "任务详情",
       "className": "sd-dialog",
       "open": "${taskDetailOpen}",
@@ -1732,30 +1685,30 @@
           "className": "p-1 flex flex-col gap-3",
           "body": [
             {
-              "type": "flex",
-              "direction": "row",
-              "gap": 8,
-              "className": "items-center",
+              "type": "form",
+              "id": "sundial-workbench-detail-form",
+              "bodyClassName": "p-0 flex flex-col gap-2",
+              "data": {
+                "title": "撰写季度复盘报告",
+                "note": "包含数据复盘和 OKR 回顾两部分"
+              },
               "body": [
                 {
-                  "type": "icon",
-                  "icon": "check-circle",
-                  "size": 16,
-                  "color": "#ea7a2a"
+                  "type": "input-text",
+                  "name": "title",
+                  "className": "sd-input border-0 px-0 text-sm font-medium",
+                  "placeholder": "标题",
+                  "testid": "sundial-detail-title-input"
                 },
                 {
-                  "type": "text",
-                  "text": "撰写季度复盘报告",
-                  "className": "text-sm font-medium text-[#0d0d0d]",
-                  "testid": "sundial-detail-title-text"
+                  "type": "textarea",
+                  "name": "note",
+                  "className": "sd-input border-0 px-0 text-xs",
+                  "placeholder": "备注（可选）…",
+                  "rows": 3,
+                  "testid": "sundial-detail-note-input"
                 }
               ]
-            },
-            {
-              "type": "text",
-              "text": "包含数据复盘和 OKR 回顾两部分",
-              "className": "text-xs text-[#636363]",
-              "testid": "sundial-detail-note-text"
             },
             {
               "type": "container",
@@ -1781,10 +1734,59 @@
                     },
                     {
                       "type": "text",
-                      "text": "8/18",
+                      "text": "${taskDetailDate === 'today' ? '今天' : taskDetailDate === 'tomorrow' ? '明天' : '8/18'}",
                       "className": "sd-badge sd-badge-warning ml-auto"
                     }
-                  ]
+                  ],
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "选择日期",
+                      "className": "sd-dialog",
+                      "testid": "sundial-workbench-detail-date-picker",
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "setValue",
+                        "args": {
+                          "path": "taskDetailDate",
+                          "value": "${$formData.taskDetailDate}"
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "sundial-workbench-detail-date-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "taskDetailDate": "${taskDetailDate ?? '8/18'}"
+                          },
+                          "body": [
+                            {
+                              "type": "radio-group",
+                              "name": "taskDetailDate",
+                              "horizontal": false,
+                              "options": [
+                                { "label": "今天", "value": "today" },
+                                { "label": "明天", "value": "tomorrow" },
+                                { "label": "下周", "value": "next-week" },
+                                { "label": "清除", "value": "8/18" }
+                              ]
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "确定",
+                              "variant": "default",
+                              "className": "sd-btn sd-btn-default",
+                              "testid": "sundial-workbench-detail-date-submit",
+                              "onClick": { "action": "submitForm" }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 },
                 {
                   "type": "flex",
@@ -1806,8 +1808,23 @@
                     },
                     {
                       "type": "text",
-                      "text": "每周",
+                      "text": "${taskDetailRecur === 'daily' ? '每天' : taskDetailRecur === 'monthly' ? '每月' : taskDetailRecur === 'none' ? '不重复' : '每周'}",
                       "className": "sd-badge sd-badge-info ml-auto"
+                    }
+                  ],
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "taskDetailRecur",
+                        "value": "${taskDetailRecur === 'none' ? 'daily' : taskDetailRecur === 'daily' ? 'weekly' : taskDetailRecur === 'weekly' ? 'monthly' : 'none'}"
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "已切换重复"
+                      }
                     }
                   ]
                 },
@@ -1831,8 +1848,23 @@
                     },
                     {
                       "type": "text",
-                      "text": "未标记",
+                      "text": "${taskDetailFlag ? '已标记' : '未标记'}",
                       "className": "text-xs text-[#636363] ml-auto"
+                    }
+                  ],
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "taskDetailFlag",
+                        "value": "${!taskDetailFlag}"
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "旗标已切换"
+                      }
                     }
                   ]
                 },
@@ -1856,8 +1888,23 @@
                     },
                     {
                       "type": "text",
-                      "text": "工作",
+                      "text": "${taskDetailList === 'work' ? '工作' : taskDetailList === 'family' ? '家庭' : taskDetailList === 'shopping' ? '购物' : '收件箱'}",
                       "className": "text-sm text-[#0d0d0d] ml-auto"
+                    }
+                  ],
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "taskDetailList",
+                        "value": "${taskDetailList === 'inbox' ? 'work' : taskDetailList === 'work' ? 'family' : taskDetailList === 'family' ? 'shopping' : 'inbox'}"
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "message": "已切换列表"
+                      }
                     }
                   ]
                 }
@@ -1877,16 +1924,16 @@
                   "testid": "sundial-task-detail-move-list",
                   "onClick": [
                     {
-                      "action": "showToast",
+                      "action": "setValue",
                       "args": {
-                        "message": "已移到目标列表"
+                        "path": "taskDetailList",
+                        "value": "${taskDetailList === 'inbox' ? 'work' : taskDetailList === 'work' ? 'family' : taskDetailList === 'family' ? 'shopping' : 'inbox'}"
                       }
                     },
                     {
-                      "action": "setValue",
+                      "action": "showToast",
                       "args": {
-                        "path": "taskDetailOpen",
-                        "value": false
+                        "message": "已切换列表"
                       }
                     }
                   ]
