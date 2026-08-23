@@ -34,7 +34,7 @@ const SCHEMA = {
       header: {
         type: 'flex',
         direction: 'row',
-        className: 'items-center justify-between px-4 py-3 border-b bg-background shrink-0',
+        className: 'items-center justify-between px-4 py-3 border-b bg-background shrink-0 flex-wrap gap-2',
         body: [
           { type: 'text', text: 'AI Assistant', className: 'text-base font-semibold' },
           {

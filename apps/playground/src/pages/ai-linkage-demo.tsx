@@ -151,7 +151,7 @@ export function AiLinkageDemoPage({ onBack }: Props) {
       </header>
       <main className="flex-1 flex max-w-5xl mx-auto w-full gap-3 p-4">
         <section className="flex-1 min-w-0 flex flex-col gap-2 border rounded-md p-2" data-testid="p4-branches">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-sm font-medium">Conversation</span>
             <Button size="sm" variant="outline" data-testid="p4-regenerate" onClick={handleRegenerate}>
               Regenerate
