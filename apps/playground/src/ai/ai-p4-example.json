@@ -6,7 +6,7 @@
     {
       "type": "flex",
       "direction": "row",
-      "className": "items-center justify-between",
+      "className": "items-center justify-between flex-wrap gap-2",
       "items": [
         { "type": "text", "text": "AI P4 Widgets (A-15 / A-17 / suggestions)" },
         {
