@@ -2,6 +2,7 @@ import {
   type CompiledValidationBehavior,
   type FormFieldStateSnapshot,
   type RendererComponentProps,
+  type RendererPropContract,
   type SchemaFieldRule,
   type ValidationError,
 } from '@nop-chaos/flux-core';
@@ -26,6 +27,40 @@ export const formFieldChromeRules: SchemaFieldRule[] = [
   { key: 'labelAlign', kind: 'prop' },
   { key: 'labelWidth', kind: 'prop' },
 ];
+
+/**
+ * Plan 462: shared `propContracts` for the form-field fields that every
+ * input renderer inherits via `formFieldRules`. Spread this into each
+ * input renderer's `propContracts` to keep the contract surface
+ * synchronized with the field-rule surface (single source of truth:
+ * `formFieldRules` for the rule list, `formFieldContracts` for the
+ * validator shapes). New fields added to `formFieldRules` MUST also be
+ * added here.
+ */
+export const formFieldContracts: Record<string, RendererPropContract> = {
+  readOnly: {
+    displayName: 'Read Only',
+    description: 'Renders the field as non-editable; user input is ignored.',
+    shape: { kind: 'boolean' },
+    editorType: 'switch',
+  },
+  required: {
+    displayName: 'Required',
+    description: 'Field is mandatory; empty submission fails validation.',
+    shape: { kind: 'boolean' },
+    editorType: 'switch',
+  },
+  labelAlign: {
+    displayName: 'Label Align',
+    description: 'Position of the label relative to the input. top stacks; left/right are inline.',
+    shape: {
+      kind: 'union',
+      anyOf: ['top', 'left', 'right'].map((v) => ({ kind: 'literal', value: v })),
+    },
+    editorType: 'select',
+    defaultValue: 'left',
+  },
+};
 
 export const formFieldRules: SchemaFieldRule[] = [
   formLabelFieldRule,

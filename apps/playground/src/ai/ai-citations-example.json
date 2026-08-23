@@ -3,7 +3,7 @@
   "body": [
     {
       "type": "flex",
-      "direction": "col",
+      "direction": "column",
       "className": "max-w-3xl mx-auto p-6 gap-4",
       "items": [
         {

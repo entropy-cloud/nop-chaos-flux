@@ -73,7 +73,6 @@ Covered capabilities:
             {
               "type": "input-text",
               "name": "keyword",
-              "label": "搜索",
               "placeholder": "输入用户名或邮箱"
             }
           ],
@@ -211,18 +210,15 @@ Covered capabilities:
                         "body": [
                           {
                             "type": "text",
-                            "name": "username",
-                            "label": "用户名"
+                            "name": "username"
                           },
                           {
                             "type": "text",
-                            "name": "email",
-                            "label": "邮箱"
+                            "name": "email"
                           },
                           {
                             "type": "text",
-                            "name": "role",
-                            "label": "角色"
+                            "name": "role"
                           },
                           {
                             "type": "button",

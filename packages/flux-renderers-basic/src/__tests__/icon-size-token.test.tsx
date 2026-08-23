@@ -2,6 +2,7 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BaseSchema } from '@nop-chaos/flux-core';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+import { resolveIconSize } from '../icon.js';
 
 function renderInPage(body: BaseSchema) {
   const SchemaRenderer = createBasicSchemaRenderer();
@@ -66,9 +67,13 @@ describe('icon renderer - size token', () => {
     expect(readSize(container)).toBe(16);
   });
 
-  it('falls back to 16px and warns on invalid token (Failure Path icon-size-token-invalid)', () => {
-    const { container } = renderInPage({ type: 'icon', icon: 'star', size: 'xl' as any });
-    expect(readSize(container)).toBe(16);
+  it('falls back to 16px and warns on invalid token (Failure Path icon-size-token-invalid) — direct unit test of resolveIconSize', () => {
+    // Plan 462: the schema-level `icon.size` propContract now enumerates
+    // 'sm' | 'md' | 'lg' (plus `number`), so the `'xl' as any` path is no
+    // longer reachable through a valid Flux schema. The runtime fallback
+    // path itself is still alive for non-IO call sites — test it
+    // directly against the exported `resolveIconSize` helper instead.
+    expect(resolveIconSize('xl' as never)).toBe(16);
     expect(console.warn).toHaveBeenCalled();
   });
 

@@ -492,6 +492,97 @@ Authoring/runtime split reminder:
 - `hostContract` remains host-only and should appear only on `domain-host-renderer`
 - `domain-host-renderer` families should not publish parallel `$designer` / `$report` / `$spreadsheet` aliases through `scopeExportContracts` unless the live runtime actually exports those keys and all host families follow the same rule
 
+### `propContracts` Coverage Discipline (plan 462)
+
+Every renderer that has a finite enumeration / literal / boolean / number / string prop MUST register it under `propContracts` so the schema compiler (`packages/flux-compiler/src/schema-compiler/shape-validation-node-fields.ts:39-66` → `validateFluxValueShape`) catches typos at compile time. Without a `propContracts[key]` entry, the validator early-returns and the typo silently reaches the runtime, which (per the design principle) degrades gracefully but never tells anyone.
+
+**Mandatory coverage checklist for a new renderer / new prop** (audit gate):
+
+1. **Any `kind: 'literal' | 'union' | 'boolean' | 'number' | 'string'` field in `fields`** → register a `propContracts[key]` entry. The audit test `packages/flux-compiler/src/renderer-prop-coverage-audit.test.ts` reports the per-renderer gap; CI must stay green on this test (default `expect(coverage).toBeGreaterThanOrEqual(0)` plus the per-package floor in §`Deferred But Adjudicated`).
+2. **Structural props (array / object / schema-definition)** → register `propContracts[key].shape` with the matching `kind: 'array' | 'object' | 'schema-definition'`. These never produce a closed-model `unknown-property` warning, so they are not part of the same gap, but still benefit from a `shape` for tooling introspection.
+3. **`data-*` attributes** are HTML5 passthrough; the closed-model `unknown-property` check at `shape-validation-node-fields.ts:242-269` exempts them via `!key.startsWith('data-')`. Authoring a `data-slot` on a renderer does not need a contract entry — the renderer reads it via `collectDataAttrs(props.props)`.
+4. **Shared fields across multiple renderers** (e.g. `flux-renderers-form`'s `formFieldRules` is spread into every input renderer) → use a sibling `formFieldContracts: Record<string, RendererPropContract>` array in the shared module and spread it into each renderer's `propContracts`. Single source of truth: when a field is added to `formFieldRules`, the matching entry MUST also be added to `formFieldContracts`. The compiler does not enforce this — see `docs/logs/2026/08-23.md` for the ad-hoc convention.
+5. **Don't add a `propContracts` entry for `regions` / `events`** — those are classified via `fields: { key, kind: 'region' | 'event' | 'reaction' | 'value-or-region' }`, and the schema compiler's `validateActionShape` / `findSchemaDefinitionShape` paths handle them. Adding a literal-shape contract to a region field would conflict with the action-shape validator and produce `invalid-property-value` errors for valid action schemas.
+
+**Canonical shape templates**:
+
+```ts
+// Union of string literals
+propContracts: {
+  variant: {
+    displayName: 'Variant',
+    shape: {
+      kind: 'union',
+      anyOf: [
+        { kind: 'literal', value: 'default' },
+        { kind: 'literal', value: 'destructive' },
+        { kind: 'literal', value: 'outline' },
+        { kind: 'literal', value: 'secondary' },
+        { kind: 'literal', value: 'ghost' },
+        { kind: 'literal', value: 'link' },
+      ],
+    },
+    editorType: 'select',
+    defaultValue: 'default',
+  },
+}
+
+// Boolean (with default editor type 'switch')
+propContracts: {
+  disabled: { displayName: 'Disabled', shape: { kind: 'boolean' } },
+}
+
+// Single literal (lock-down pattern, e.g. ai-tool-call `approval: 'pending'`)
+propContracts: {
+  direction: {
+    displayName: 'Direction',
+    description: 'OA-14: locked to "down" (pull-up loading belongs to infinite-scroll).',
+    shape: { kind: 'literal', value: 'down' },
+    editorType: 'select',
+    defaultValue: 'down',
+  },
+}
+
+// Mixed (number OR string token, e.g. icon.size = number | 'sm' | 'md' | 'lg')
+propContracts: {
+  size: {
+    displayName: 'Size',
+    shape: {
+      kind: 'union',
+      anyOf: [
+        { kind: 'number' },
+        { kind: 'literal', value: 'sm' },
+        { kind: 'literal', value: 'md' },
+        { kind: 'literal', value: 'lg' },
+      ],
+    },
+    editorType: 'text',
+    defaultValue: 'md',
+  },
+}
+```
+
+**Live coverage baseline (2026-08-23, plan 462)**:
+
+| Package                     | Before plan 462 | After plan 462 (Phase 8)                       | Plan-462 target                                                |
+| --------------------------- | --------------- | ---------------------------------------------- | -------------------------------------------------------------- |
+| `flux-renderers-basic`      | 11.2% (14/125)  | ~80%                                           | ≥ 90% (deferred for `loop`/`recurse`/`responsive` structurals) |
+| `flux-renderers-form`       | 13.7% (20/146)  | ~50% (via shared `formFieldContracts`)         | ≥ 90% (deferred: complex input renderers with 20+ fields)      |
+| `flux-renderers-ai`         | 0%              | 100% (14 renderer types covered)               | 100% ✅                                                        |
+| `flux-renderers-mobile`     | 0%              | 100% (5 renderer types covered)                | 100% ✅                                                        |
+| `flux-renderers-scheduling` | 0%              | 100% (gantt/kanban/calendar)                   | 100% (barcode-input uses formFieldContracts)                   |
+| `flux-renderers-content`    | 19.3%           | 27%+ (separator/link/image/diff-view added)    | ≥ 90% (deferred: cards/alert/mapping/... still partial)        |
+| `flux-renderers-dashboard`  | 38.7%           | 100% (both `dashboard` and `dashboard-editor`) | 100% ✅                                                        |
+| `flux-renderers-data`       | 45.2%           | 45.2% (unchanged — `Deferred But Adjudicated`) | watch-only                                                     |
+| `flux-renderers-layout`     | 47.2%           | 47.2% (unchanged)                              | watch-only                                                     |
+| `flow-designer-renderers`   | 69.2%           | unchanged                                      | watch-only                                                     |
+| `flux-renderers-industrial` | 83.3%           | unchanged                                      | watch-only                                                     |
+| `flux-renderers-pivot`      | 90.9%           | unchanged                                      | watch-only                                                     |
+| `flux-renderers-map`        | 100%            | unchanged                                      | 100% ✅                                                        |
+| `flux-renderers-graph`      | 100%            | unchanged                                      | 100% ✅                                                        |
+
+**Live audit**: `pnpm --filter @nop-chaos/flux-compiler test renderer-prop-coverage` runs the per-renderer gap report in vitest output (`console.log`). CI should fail the build if a renderer that is _in scope_ loses a contract entry without an explicit deferred note in `docs/plans/462-...md §Deferred But Adjudicated`.
+
 Representative mapping:
 
 - `button` -> `instance-renderer`

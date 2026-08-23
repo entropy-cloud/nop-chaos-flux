@@ -61,6 +61,10 @@
         "./packages/flux-renderers-scheduling/src/styles.css"
       ],
       "@nop-chaos/flux-renderers-graph": ["./packages/flux-renderers-graph/src/index.ts"],
+      "@nop-chaos/flux-renderers-mobile": ["./packages/flux-renderers-mobile/src/index.ts"],
+      "@nop-chaos/flux-renderers-mobile/styles.css": [
+        "./packages/flux-renderers-mobile/src/styles.css"
+      ],
       "@nop-chaos/flux-renderers-graph/styles.css": [
         "./packages/flux-renderers-graph/src/styles.css"
       ],

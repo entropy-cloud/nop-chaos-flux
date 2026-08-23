@@ -242,6 +242,7 @@ export function inspectSchemaNodeFields(
     if (
       (closedModel || strictMode) &&
       !acceptedKeys.has(key) &&
+      !key.startsWith('data-') &&
       diagnostics.validation.unknownBarePropertyPolicy !== 'ignore'
     ) {
       const severity = closedModel

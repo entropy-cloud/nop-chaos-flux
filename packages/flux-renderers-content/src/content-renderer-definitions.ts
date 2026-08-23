@@ -48,6 +48,18 @@ export const contentRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-content',
     defaultSchema: { type: 'separator' },
     component: SeparatorRenderer,
+    propContracts: {
+      orientation: {
+        displayName: 'Orientation',
+        shape: {
+          kind: 'union',
+          anyOf: ['horizontal', 'vertical'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'horizontal',
+      },
+      decorative: { displayName: 'Decorative', shape: { kind: 'boolean' } },
+    },
     fields: [
       { key: 'orientation', kind: 'prop' },
       { key: 'decorative', kind: 'prop', valueType: 'boolean' },
@@ -122,6 +134,20 @@ export const contentRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-content',
     defaultSchema: { type: 'link' },
     component: LinkRenderer,
+    propContracts: {
+      target: {
+        displayName: 'Target',
+        shape: {
+          kind: 'union',
+          anyOf: ['_self', '_blank', '_parent', '_top'].map((v) => ({
+            kind: 'literal',
+            value: v,
+          })),
+        },
+        editorType: 'select',
+        defaultValue: '_self',
+      },
+    },
     fields: [
       { key: 'label', kind: 'value-or-region', regionKey: 'label' },
       { key: 'href', kind: 'prop' },
@@ -137,6 +163,10 @@ export const contentRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-content',
     defaultSchema: { type: 'image' },
     component: ImageRenderer,
+    propContracts: {
+      preview: { displayName: 'Preview', shape: { kind: 'boolean' } },
+      lazy: { displayName: 'Lazy', shape: { kind: 'boolean' } },
+    },
     fields: [
       { key: 'src', kind: 'prop' },
       { key: 'alt', kind: 'prop' },
@@ -513,6 +543,19 @@ export const contentRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-content',
     defaultSchema: { type: 'diff-view', viewType: 'split', showLineNumbers: true },
     component: DiffViewRenderer,
+    propContracts: {
+      viewType: {
+        displayName: 'View Type',
+        shape: {
+          kind: 'union',
+          anyOf: ['split', 'unified'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'split',
+      },
+      showLineNumbers: { displayName: 'Show Line Numbers', shape: { kind: 'boolean' } },
+      showInlineDiff: { displayName: 'Show Inline Diff', shape: { kind: 'boolean' } },
+    },
     eventContracts: {
       onLineClick: {
         displayName: 'On Line Click',

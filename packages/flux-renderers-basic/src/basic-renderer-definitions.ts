@@ -14,6 +14,13 @@ import { ScopeDebugRenderer } from './scope-debug.js';
 import { TabsRenderer } from './tabs.js';
 import { TextRenderer } from './text.js';
 import { dialogRendererDefinition, drawerRendererDefinition } from './surface-renderer-definitions.js';
+import {
+  badgeContracts,
+  containerContracts,
+  flexContracts,
+  iconContracts,
+  textContracts,
+} from './basic-renderer-contracts.js';
 
 export const basicRendererDefinitions: RendererDefinition[] = [
   {
@@ -61,6 +68,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'container', body: [] },
     component: ContainerRenderer,
+    propContracts: containerContracts,
     eventContracts: {
       onClick: {
         displayName: 'Click',
@@ -150,6 +158,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'flex', body: [] },
     component: FlexRenderer,
+    propContracts: flexContracts,
     eventContracts: {
       onClick: {
         displayName: 'Click',
@@ -188,6 +197,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'text', text: 'Text' },
     component: TextRenderer,
+    propContracts: textContracts,
     fields: [
       { key: 'name', kind: 'prop' },
       { key: 'text', kind: 'prop', allowSource: true },
@@ -351,6 +361,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'icon', icon: 'star' },
     component: IconRenderer,
+    propContracts: iconContracts,
     fields: [
       { key: 'icon', kind: 'prop' },
       { key: 'size', kind: 'prop' },
@@ -365,6 +376,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'badge', text: 'Badge' },
     component: BadgeRenderer,
+    propContracts: badgeContracts,
     fields: [
       { key: 'text', kind: 'prop' },
       { key: 'level', kind: 'prop' },
