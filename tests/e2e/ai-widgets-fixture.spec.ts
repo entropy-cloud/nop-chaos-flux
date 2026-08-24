@@ -6,9 +6,10 @@ import { expect, test, assertTrackedPageErrors } from './fixtures.js';
  * Each test sends one keyword on `# /ai-widgets` (whose mock env is created with
  * `{ delayMs: 200, fixtures: true }`) and asserts the representative markdown
  * element from the D0 product-spec §4.2 coverage outline — not fixture text
- * details. `formula` asserts the LaTeX SOURCE delimiters (`$$`), not `.katex`
- * (D6 scope); `reasoning` asserts markdown-level elements, not a collapse
- * panel (structured fields are D5 scope).
+ * details. `formula` asserts the KaTeX output (D6 landed: remark-math +
+ * rehype-katex consume the `$`/`$$` source delimiters; the `$$` text
+ * assertion was migrated per the D6 plan); `reasoning` asserts markdown-level
+ * elements, not a collapse panel (structured fields are D5 scope).
  */
 
 const ASSISTANT_MD = '[data-slot="ai-bubble"][data-role="assistant"] [data-slot="ai-bubble-markdown"]';
@@ -47,13 +48,17 @@ test.describe('AI widgets — rich markdown fixtures (D1)', () => {
     await assertTrackedPageErrors(page);
   });
 
-  test('formula keyword renders blockquote and LaTeX source delimiters', async ({ page }) => {
+  test('formula keyword renders blockquote and KaTeX math', async ({ page }) => {
     await openWidgetsPage(page);
     await sendUserMessage(page, 'Explain the formula for mass energy equivalence');
 
     const md = page.locator(ASSISTANT_MD);
     await expect(md.locator('blockquote')).toBeVisible({ timeout: 30_000 });
-    await expect(md).toContainText('$$', { timeout: 30_000 });
+    // D6 (planned migration pre-embedded by the D1 plan): the formula preset
+    // now renders through remark-math + rehype-katex, so the LaTeX SOURCE
+    // delimiters ($$) are consumed — assert the rendered KaTeX output instead.
+    await expect(md.locator('span.katex').first()).toBeVisible({ timeout: 30_000 });
+    await expect(md.locator('.katex-display')).toBeVisible();
 
     await assertTrackedPageErrors(page);
   });

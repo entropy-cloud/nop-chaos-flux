@@ -363,3 +363,40 @@
 [data-mode='dark'] [data-slot='ai-welcome-icon'] {
   color: hsl(var(--muted-foreground, 215 25% 75%));
 }
+
+/* D6 (G5): KaTeX container typography — LAYOUT ONLY. Colors and fonts come
+   from the host-imported `katex/dist/katex.min.css` (design.md §10.4 LaTeX
+   decision: the package never bundles katex styles). The markdown scope's
+   1.7 line-height would inflate stacked math; display formulas get a
+   horizontal scroll guard instead of overflowing the bubble. */
+[data-slot='ai-bubble-markdown'] .katex {
+  line-height: 1.2;
+}
+
+[data-slot='ai-bubble-markdown'] .katex-display {
+  margin: 0.75em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+}
+
+/* D6 (G6): lowlight code tokens under the markdown scope. Same semantic
+   palette as the AI-15 tool-call tokens (.tok-key/.tok-str/.tok-num/.tok-bool,
+   theme-controlled); key/num reuse the D2 --ai-md-primary var (auto dark
+   track), str/bool follow the D2 dual-track pattern (theme var first, literal
+   fallback second). */
+[data-slot='ai-bubble-markdown'] .tok-key {
+  color: var(--ai-md-primary);
+}
+
+[data-slot='ai-bubble-markdown'] .tok-str {
+  color: hsl(var(--success, 142 71% 45%));
+}
+
+[data-slot='ai-bubble-markdown'] .tok-num {
+  color: var(--ai-md-primary);
+}
+
+[data-slot='ai-bubble-markdown'] .tok-bool {
+  color: hsl(var(--destructive, 0 84% 60%));
+}

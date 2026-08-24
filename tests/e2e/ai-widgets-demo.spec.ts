@@ -169,3 +169,43 @@ test.describe('AI widgets — welcome, prompts, token usage, suggestions', () =>
     await assertTrackedPageErrors(page);
   });
 });
+
+test.describe('AI widgets — D6 LaTeX rendering + code highlight', () => {
+  const ASSISTANT_MD = '[data-slot="ai-bubble"][data-role="assistant"] [data-slot="ai-bubble-markdown"]';
+
+  async function sendUserMessage(page: import('@playwright/test').Page, text: string) {
+    const input = page.locator('[data-slot="ai-sender-input"] textarea');
+    await expect(input).toBeVisible();
+    await input.fill(text);
+    await page.locator('[data-slot="ai-sender-submit"]').click();
+  }
+
+  test('formula keyword renders KaTeX spans for block and inline math (G5)', async ({ page }) => {
+    await openWidgetsPage(page);
+    await sendUserMessage(page, 'Explain the formula for mass energy equivalence');
+
+    const md = page.locator(ASSISTANT_MD);
+    const katex = md.locator('span.katex');
+    await expect(katex.first()).toBeVisible({ timeout: 30_000 });
+    // The formula preset carries one $$...$$ block form plus several $...$
+    // inline forms; both must render through KaTeX.
+    expect(await katex.count()).toBeGreaterThanOrEqual(2);
+    await expect(md.locator('.katex-display')).toBeVisible();
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('code keyword renders lowlight token spans in the fenced block (G6)', async ({ page }) => {
+    await openWidgetsPage(page);
+    await sendUserMessage(page, 'Help me debug this code');
+
+    const md = page.locator(ASSISTANT_MD);
+    const code = md.locator('[data-slot="ai-bubble-code"]');
+    await expect(code).toBeVisible({ timeout: 30_000 });
+    const tokens = code.locator('[class*="tok-"]');
+    await expect(tokens.first()).toBeVisible({ timeout: 30_000 });
+    expect(await tokens.count()).toBeGreaterThanOrEqual(1);
+
+    await assertTrackedPageErrors(page);
+  });
+});

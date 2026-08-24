@@ -21,6 +21,8 @@
 const MATH_BLOCK = /\$\$/g;
 const MATH_INLINE_OPEN = /\\\(/g;
 const MATH_INLINE_CLOSE = /\\\)/g;
+const MATH_BRACKET_OPEN = /\\\[/g;
+const MATH_BRACKET_CLOSE = /\\\]/g;
 
 /**
  * Compute the safe-to-render prefix of the given raw markdown text. Returns
@@ -93,12 +95,22 @@ function findUnclosedFenceCutoffForKind(text: string, ch: '`' | '~'): number | u
 
 /**
  * Locate the index at which to cut so that an odd number of `$$` math block
- * delimiters is avoided. Also handles unbalanced `\(` / `\)`.
+ * delimiters is avoided. Also handles unbalanced `\(` / `\)` and — D6 —
+ * unbalanced `\[` / `\]` block delimiters and unclosed single-`$` inline
+ * math candidates.
  */
 function findUnclosedMathCutoff(text: string): number | undefined {
   const dollarMatches = [...text.matchAll(MATH_BLOCK)];
   if (dollarMatches.length % 2 === 1) {
     const last = dollarMatches[dollarMatches.length - 1];
+    return last.index ?? 0;
+  }
+
+  // D6: `\[` / `\]` block math, aligned with the `\(` / `\)` handling below.
+  const bracketOpens = [...text.matchAll(MATH_BRACKET_OPEN)];
+  const bracketCloses = [...text.matchAll(MATH_BRACKET_CLOSE)];
+  if (bracketOpens.length > bracketCloses.length) {
+    const last = bracketOpens[bracketOpens.length - 1];
     return last.index ?? 0;
   }
 
@@ -109,5 +121,155 @@ function findUnclosedMathCutoff(text: string): number | undefined {
     return last.index ?? 0;
   }
 
-  return undefined;
+  return findUnclosedSingleDollarCutoff(text);
+}
+
+/**
+ * D6 (Decision D-a): locate the cut for an unclosed single-`$` inline math
+ * candidate, with an anti-currency guard. A `$` only OPENS a math candidate
+ * when the next character is neither whitespace nor a digit, so currency
+ * text (`$5` / `$ 5` / `US$`) never opens a candidate and complete currency
+ * sentences are never truncated (currency-single-dollar failure path).
+ *
+ * Immunity: `$$`+ runs (block math is owned by the `$$` parity check above),
+ * fenced code regions, inline code spans, and escaped `\$` do not participate
+ * in single-`$` pairing.
+ *
+ * Pairing model follows micromark-extension-math semantics (live-verified):
+ * an open `$` is closed by the NEXT single-`$` run — space-padded closers are
+ * valid — so a candidate with no later single-`$` is unclosed and we cut at
+ * its index (same cut-at-delimiter-start convention as `$$`).
+ */
+function findUnclosedSingleDollarCutoff(text: string): number | undefined {
+  const len = text.length;
+  const masked = new Uint8Array(len);
+  maskCodeRegions(text, masked);
+
+  let open = -1;
+  let i = 0;
+  while (i < len) {
+    if (text.charCodeAt(i) !== 0x24 /* `$` */ || masked[i]) {
+      i++;
+      continue;
+    }
+    // Measure the raw dollar run starting at `i`.
+    let runEnd = i;
+    while (runEnd < len && text.charCodeAt(runEnd) === 0x24) runEnd++;
+    if (runEnd - i >= 2) {
+      // `$$`+ run: block-math territory, never a single-`$` delimiter.
+      i = runEnd;
+      continue;
+    }
+    if (i > 0 && text.charCodeAt(i - 1) === 0x5c /* `\` */) {
+      // Escaped `\$` is a literal dollar, not a delimiter.
+      i++;
+      continue;
+    }
+    if (open === -1) {
+      const next = i + 1 < len ? text.charCodeAt(i + 1) : -1;
+      const opensCandidate =
+        next !== -1 &&
+        !isWhitespaceCode(next) &&
+        !(next >= 0x30 /* 0 */ && next <= 0x39 /* 9 */);
+      if (opensCandidate) open = i;
+    } else {
+      // Any later single-`$` closes (micromark padding semantics).
+      open = -1;
+    }
+    i++;
+  }
+  return open === -1 ? undefined : open;
+}
+
+function isWhitespaceCode(code: number): boolean {
+  return (
+    code === 0x20 /* space */ ||
+    code === 0x09 /* tab */ ||
+    code === 0x0a /* LF */ ||
+    code === 0x0d /* CR */ ||
+    code === 0x0c /* FF */
+  );
+}
+
+/**
+ * Mask (set to 1) the character indices that code contexts occupy: fenced
+ * code blocks (``` / ~~~, whole region from opening fence through closing
+ * fence) and inline code spans (matching backtick runs). Dollars inside code
+ * are literal (shell variables, prices in code) and must not be mistaken for
+ * math delimiters.
+ */
+function maskCodeRegions(text: string, masked: Uint8Array): void {
+  maskFencedCode(text, masked);
+  maskInlineCodeSpans(text, masked);
+}
+
+function maskFencedCode(text: string, masked: Uint8Array): void {
+  const lineRe = /^ {0,3}(`{3,}|~{3,})/;
+  let offset = 0;
+  let fenceChar = '';
+  let fenceLen = 0;
+  let fenceStart = -1;
+  for (const line of text.split('\n')) {
+    const match = lineRe.exec(line);
+    if (fenceChar === '') {
+      if (match) {
+        fenceChar = match[1][0];
+        fenceLen = match[1].length;
+        fenceStart = offset;
+      }
+    } else if (match && match[1][0] === fenceChar && match[1].length >= fenceLen) {
+      // Closing fence: mask the whole fenced region (fences included).
+      maskRange(masked, fenceStart, offset + line.length);
+      fenceChar = '';
+    }
+    offset += line.length + 1;
+  }
+  if (fenceChar !== '') {
+    // Unclosed fence: the fence cutter owns this case (safeMarkdownSlice only
+    // reaches the math scan when fences are balanced, but stay inert here).
+    maskRange(masked, fenceStart, text.length);
+  }
+}
+
+function maskInlineCodeSpans(text: string, masked: Uint8Array): void {
+  const len = text.length;
+  let i = 0;
+  while (i < len) {
+    if (text[i] !== '`' || masked[i]) {
+      i++;
+      continue;
+    }
+    const start = i;
+    let openLen = 0;
+    while (i < len && text[i] === '`') {
+      openLen++;
+      i++;
+    }
+    // Find the next unmasked backtick run of exactly the same length.
+    let j = i;
+    let closeStart = -1;
+    while (j < len) {
+      if (text[j] === '`' && !masked[j]) {
+        const runStart = j;
+        let runLen = 0;
+        while (j < len && text[j] === '`') {
+          runLen++;
+          j++;
+        }
+        if (runLen === openLen) {
+          closeStart = runStart;
+          break;
+        }
+      } else {
+        j++;
+      }
+    }
+    if (closeStart === -1) continue; // unmatched backtick run: literal
+    maskRange(masked, start, closeStart + openLen);
+    i = closeStart + openLen;
+  }
+}
+
+function maskRange(masked: Uint8Array, start: number, end: number): void {
+  for (let i = Math.max(0, start); i < Math.min(masked.length, end); i++) masked[i] = 1;
 }
