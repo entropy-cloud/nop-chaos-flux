@@ -1,6 +1,6 @@
 # 452 submitForm Surface Discovery And ComponentId/Name Unification
 
-> Plan Status: in progress
+> Plan Status: completed（2026-08-24 回升：全部 Phase checklist 与 Closure Gates 均已勾选；唯一残留幽灵字段已由 remediation plan `2026-08-11-1929-3` Phase 2 收口（`schema.ts` componentName 已删 + 编译期拒绝有红绿测试），该 plan closure-audit 明确「452 可在后续 hygiene pass 回升 completed」。本轮 hygiene 回升验证：typecheck/build/lint 37/37、test 68/68 tasks、check exit 0 全绿）
 > Last Reviewed: 2026-08-24
 > Source: `docs/discussions/component-id-name-unification.md`, E2E debugging session for nop-entropy flux-mode auth-user tests
 > Related: `docs/architecture/component-resolution.md`, `docs/architecture/surface-lifecycle-callbacks.md`
@@ -12,6 +12,7 @@
 - **Phase 1/Phase 2 全部 checklist 项均已落地**（核对依据见各项内注记），本轮补勾。
 - **残留一处幽灵字段**：`packages/flux-core/src/types/schema.ts:83` `ActionShapeLikeFields.componentName`（不在本 plan 原 checklist 内，属 schema 侧同名字段，零消费）——由 remediation plan `2026-08-11-1929-3` Phase 2 收口（删除字段 + 编译期 `invalid-action-shape` 拒绝）。
 - Plan Status 维持诚实状态 `in progress`：除上述幽灵字段（已移交 remediation plan）外无剩余本计划工作；待 remediation plan 收口后本计划可视需要直接关闭。
+  - （2026-08-24 收口更新）remediation plan `2026-08-11-1929-3` 已 `completed`：Phase 2 删除 `schema.ts:83` `ActionShapeLikeFields.componentName` 并加编译期 `invalid-action-shape` 拒绝（红绿测试钉住，`schema-compiler-componentname-targeting.test.ts`），其 closure-audit verdict approved 并登记 follow-up「452 plan 可在后续 hygiene pass 回升 completed」。本计划据此回升 `completed`。
 
 ## Purpose
 
@@ -205,7 +206,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （2026-08-24 修正）原 Status Note 声称「所有 Phase 和 Closure Gates 已通过」，与当时 Phase 1 `in_progress`、Phase 2 `planned`、14 项未勾选的事实矛盾。经 2026-08-24 live 逐项核对：Phase 1/2/3 全部 checklist 项与 Closure Gates 实质均已落地并补勾；唯一残留是 `schema.ts:83` `ActionShapeLikeFields.componentName` 幽灵字段（不在本 plan 原 checklist 内），已移交 `docs/plans/2026-08-11-1929-3-claim-vs-reality-plan-doc-contract-integrity-remediation.md` Phase 2 收口。submitForm surface discovery 使 dialog footer 按钮零参数即可触发表单提交；componentId/name 统一消除了 componentName 作为独立 targeting 属性的冗余（ActionShapeLikeFields 幽灵字段除外）。
+Status Note: （2026-08-24 修正）原 Status Note 声称「所有 Phase 和 Closure Gates 已通过」，与当时 Phase 1 `in_progress`、Phase 2 `planned`、14 项未勾选的事实矛盾。经 2026-08-24 live 逐项核对：Phase 1/2/3 全部 checklist 项与 Closure Gates 实质均已落地并补勾；唯一残留是 `schema.ts:83` `ActionShapeLikeFields.componentName` 幽灵字段（不在本 plan 原 checklist 内），已移交 `docs/plans/2026-08-11-1929-3-claim-vs-reality-plan-doc-contract-integrity-remediation.md` Phase 2 收口。submitForm surface discovery 使 dialog footer 按钮零参数即可触发表单提交；componentId/name 统一消除了 componentName 作为独立 targeting 属性的冗余（ActionShapeLikeFields 幽灵字段除外）。（2026-08-24 回升 completed）remediation plan 已完成且幽灵字段已消除，本计划按其登记的 follow-up 回升 `completed`；回升轮全量验证绿（typecheck/build/lint 37/37、test 68/68、check exit 0，仅注册豁免的 i18n 超限）。
 
 Closure Audit Evidence:
 
