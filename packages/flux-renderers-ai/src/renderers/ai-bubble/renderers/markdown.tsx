@@ -35,10 +35,7 @@ export function MarkdownContentRenderer({ message, content }: BubbleContentRende
   // Security gate: sanitize first, then let rehype-raw render the safe subset.
   const safe = sanitizeHtml(source);
   return (
-    <div
-      data-slot="ai-bubble-markdown"
-      className={cn('prose prose-sm max-w-none break-words dark:prose-invert')}
-    >
+    <div data-slot="ai-bubble-markdown" className="max-w-none break-words">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { cleanup, render, fireEvent, act } from '@testing-library/react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -267,3 +268,78 @@ describe('MarkdownContentRenderer — rehype-raw XSS regression', () => {
     }
   });
 });
+
+// ============================================================================
+// D2 (G2): typography contract — dead `prose` classes removed, scoped custom
+// CSS in charge. jsdom does not load the package stylesheet, so the CSS side
+// is asserted as source text (repo precedent: packages/ui/src/mobile-styles.test.ts,
+// packages/theme-tokens/src/styles.test.ts); computed-style verification is
+// owned by the DV e2e layer (product-spec.md §7).
+// ============================================================================
+const stylesCss = readFileSync('src/styles.css', 'utf8');
+
+describe('MarkdownContentRenderer — D2 typography contract (G2)', () => {
+  it('(a) container drops the dead prose family and keeps overflow utilities', () => {
+    const message = makeMessage({ content: '# Title\n\nparagraph with `code`' });
+    const { container } = render(
+      <MarkdownContentRenderer {...makeProps({ message, content: message.content })} />,
+    );
+    const markdown = container.querySelector('[data-slot="ai-bubble-markdown"]') as HTMLElement;
+    expect(markdown).toBeTruthy();
+    // @tailwindcss/typography is not a repo dependency — any prose-* class is a
+    // dead class pretending to style the bubble (G2).
+    expect(markdown.className).not.toMatch(/\bprose\b/);
+    expect(markdown.className).not.toMatch(/\bprose-[a-z-]+\b/);
+    // Horizontal overflow guard utilities stay (D2 Decision: unrelated to the
+    // dead plugin classes).
+    expect(markdown.className).toContain('max-w-none');
+    expect(markdown.className).toContain('break-words');
+  });
+
+  it('(b) styles.css covers the element matrix under the ai-bubble-markdown scope', () => {
+    const SCOPE = "\\[data-slot='ai-bubble-markdown'\\]";
+    const coverage: Array<[string, RegExp]> = [
+      ['headings', new RegExp(`${SCOPE} h[1-6][,\\s]`)],
+      ['paragraph', new RegExp(`${SCOPE} p[\\s,{]`)],
+      ['unordered list', new RegExp(`${SCOPE} ul[\\s,{]`)],
+      ['ordered list', new RegExp(`${SCOPE} ol[\\s,{]`)],
+      ['list marker', new RegExp(`${SCOPE} li::marker`)],
+      ['task-list checkbox', new RegExp(`${SCOPE} input\\[type='checkbox'\\]`)],
+      ['blockquote', new RegExp(`${SCOPE} blockquote[\\s,{]`)],
+      ['fenced code block', new RegExp(`${SCOPE} pre[\\s,{]`)],
+      ['inline code', new RegExp(`${SCOPE} :not\\(pre\\) > code[\\s,{]`)],
+      ['link', new RegExp(`${SCOPE} a[\\s,{:]`)],
+      ['table', new RegExp(`${SCOPE} table[\\s,{]`)],
+      ['table cell', new RegExp(`${SCOPE} (th|td)[\\s,{]`)],
+      ['hr', new RegExp(`${SCOPE} hr[\\s,{]`)],
+      ['img', new RegExp(`${SCOPE} img[\\s,{]`)],
+      ['strong', new RegExp(`${SCOPE} strong[\\s,{]`)],
+      ['em', new RegExp(`${SCOPE} em[\\s,{]`)],
+    ];
+    for (const [name, re] of coverage) {
+      expect(stylesCss, `missing scoped rule for ${name}`).toMatch(re);
+    }
+    // The scoped rules must consume theme variables via the package-level
+    // custom properties (colors must not be hardcoded-only).
+    expect(stylesCss).toContain(`[data-slot='ai-bubble-markdown'] {
+  --ai-md-fg: hsl(var(--foreground, 222 84% 5%));`);
+  });
+
+  it('(c1) dark path — prefers-color-scheme media query with literal dark fallbacks', () => {
+    expect(stylesCss).toMatch(
+      /@media\s*\(prefers-color-scheme:\s*dark\)\s*\{[\s\S]*?\[data-slot='ai-bubble-markdown'\]\s*\{/,
+    );
+    // Dual-track Decision: var() first (theme hosts), literal classic-dark
+    // fallback second (standalone hosts without theme attributes).
+    expect(stylesCss).toContain('hsl(var(--foreground, 210 40% 98%))');
+    expect(stylesCss).toContain('hsl(var(--muted-foreground, 215 25% 75%))');
+    expect(stylesCss).toContain('hsl(var(--primary, 217 89% 63%))');
+  });
+
+  it('(c2) dark path — [data-mode] attribute trigger', () => {
+    expect(stylesCss).toMatch(
+      /\[data-mode='dark'\]\s+\[data-slot='ai-bubble-markdown'\]\s*\{/,
+    );
+  });
+});
+
