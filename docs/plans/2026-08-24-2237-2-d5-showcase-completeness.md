@@ -1,7 +1,7 @@
 # 02 D5 Showcase 完整性（G7 收口：缩略卡 + 结构化 fixture 触发）
 
-> Plan Status: active
-> Last Reviewed: 2026-08-24
+> Plan Status: completed
+> Last Reviewed: 2026-08-25
 > Source: `docs/backlog/ai-widgets-product-roadmap.md` D5；`docs/components/flux-renderers-ai/product-spec.md` §6（D0 产物，showcase 口径契约）
 > Mission: ai-widgets-product
 > Work Item: D5
@@ -78,67 +78,67 @@
 
 ### Phase 1 - e2e 预期先行（red 锁定）
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/ai-widgets-showcase.spec.ts`（新）
 
 - Item Types: `Decision | Proof`
 
-- [ ] Decision D-b（卡片原语）：缩略卡用 content 包 `html` renderer（sanitize 门控锚点）还是 structural 组合（flex + button + 链接 action）——起草倾向 html 锚点卡（sanitize 已有 + 真 `<a>` 语义）；执行时按 live 注册面定案并记录
-- [ ] 新 spec ≥5 测试落盘：(a) 首屏可见 widget 计数 ≥8——**计数集显式钉死**（review 修正：`[data-slot^="ai-"]` 裸匹配会把嵌套 slot 一并计入导致基线即 ≥8、red 不成立）：只计 showcase 条目根 slot 白名单（`ai-welcome` / `ai-prompts` / `ai-token-usage` / `ai-feedback` / `ai-suggestions` / `ai-voice-input`，各 `toBeVisible` 后计 1）+ 缩略卡 `a[href="#/ai-tools"]` / `a[href="#/ai-citations"]` 各计 1（若 Phase 3 落地 live `ai-citations` 实例，则白名单 + `ai-citations` 计 9，断言 ≥8 不变）；基线 = 6 < 8（red 成立），实装后 = 8–9。**注**：测试 (a)(b) 的卡 href 选择器耦合 Decision D-b 的 html 锚点卡形态——D-b 若在执行时改裁 structural 形态，(a)(b) 选择器随 D-b 定案同步调整为该形态的等价锚点断言（断言语义「卡存在且指向目标路由」不变）；(b) 两张卡分别链接 `#/ai-tools`、`#/ai-citations`；(c) 发送 `reasoning` 关键词 → `[data-slot="ai-bubble-reasoning"]` 可见；(d) 发送 `weather` 关键词 → `[data-slot="ai-bubble-tools"]` 卡片可见且后续 content 表格仍出现；(e) citations marker：`[data-slot="ai-citations"]` 内 `sup`（`data-citation-index`）marker 可见（D-a 首选静态绑定下初始即在场，断言钉在 widget 内 marker 结构而非触发时序）
-- [ ] 对当前 repo 跑一次记录 red 证据（无卡、计数 6 < 8、三类 widget 元素均 not found）
+- [x] Decision D-b（卡片原语，执行时定案）：**裁 `link` renderer（content 包）+ flex structural 组合**。执行时 live 注册面核实 `registerContentRenderers` 同时注册 `html` 与 `link`（`content-renderer-definitions.ts:131/213`）：`link` renderer 输出真 `<a data-slot="link" href>` 且带 `isSafeNavigationUrl` 协议门（`link.tsx:29-34`，`#/ai-tools` 相对 URL 通过），与 html 锚点卡同等的 `<a>` 语义与安全门，且避免在 schema 里维护原始 HTML 字符串（DOMPurify allowlist 会随卡视觉迭代漂移）。测试 (a)(b) 的 `a[href="#/ai-tools"]` / `a[href="#/ai-citations"]` 锚点选择器**不变**（断言语义「卡存在且指向目标路由」保持）
+- [x] 新 spec ≥5 测试落盘：(a) 首屏可见 widget 计数 ≥8——**计数集显式钉死**（review 修正：`[data-slot^="ai-"]` 裸匹配会把嵌套 slot 一并计入导致基线即 ≥8、red 不成立）：只计 showcase 条目根 slot 白名单（`ai-welcome` / `ai-prompts` / `ai-token-usage` / `ai-feedback` / `ai-suggestions` / `ai-voice-input`，各 `toBeVisible` 后计 1）+ 缩略卡 `a[href="#/ai-tools"]` / `a[href="#/ai-citations"]` 各计 1（若 Phase 3 落地 live `ai-citations` 实例，则白名单 + `ai-citations` 计 9，断言 ≥8 不变）；基线 = 6 < 8（red 成立），实装后 = 8–9。**注**：测试 (a)(b) 的卡 href 选择器耦合 Decision D-b 的 html 锚点卡形态——D-b 若在执行时改裁 structural 形态，(a)(b) 选择器随 D-b 定案同步调整为该形态的等价锚点断言（断言语义「卡存在且指向目标路由」不变）——D-b 定案 `link` renderer，锚点选择器无需调整；(b) 两张卡分别链接 `#/ai-tools`、`#/ai-citations`，另加 §6.2 摆放断言（welcome 与 prompts 之间，DOM order）；(c) 发送 `reasoning` 关键词 → `[data-slot="ai-bubble-reasoning"]` 可见；(d) 发送 `weather` 关键词 → `[data-slot="ai-bubble-tools"]` 卡片可见且后续 content 表格仍出现；(e) citations marker：`[data-slot="ai-citations"]` 内 `sup`（`data-citation-index`）marker 可见（D-a 首选静态绑定下初始即在场，断言钉在 widget 内 marker 结构而非触发时序）
+- [x] 对当前 repo 跑一次记录 red 证据（无卡、计数 6 < 8、三类 widget 元素均 not found）——2026-08-25 实跑：5/5 red；(a) 计数证据 `found: ai-welcome, ai-prompts, ai-token-usage, ai-feedback, ai-suggestions, ai-voice-input`（= 6 < 8）；(b) 两卡 locator not found；(c) `ai-bubble-reasoning` not found；(d) `ai-bubble-tools` not found；(e) `ai-citations` not found
 
 Exit Criteria:
 
-- [ ] 新 spec ≥5 测试落盘且当前为 red（red 证据记 plan 内备注或 daily log）
+- [x] 新 spec ≥5 测试落盘且当前为 red（red 证据记 plan 内备注或 daily log）——`tests/e2e/ai-widgets-showcase.spec.ts` 5 测试，2026-08-25 red 实跑证据见上条
 
 ### Phase 2 - fixture 结构化扩展与 stream 发射
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/ai/ai-widgets-fixture.ts`、`apps/playground/src/ai/mock-ai-env.ts`
 
 - Item Types: `Fix | Decision`
 
-- [ ] Decision D-c（触发分布裁定）：roadmap「fixture A–F 每个至少含 1 种新 widget 触发」按「tool / citation / reasoning 三类各 ≥1 个专属触发 preset」落地（weather→tool、reasoning→reasoning、citation→citation）；`default`/`code`/`formula` 保持纯 markdown——理由：default 单 bubble + `Hello` 10s 预算是既有 e2e 保护面（Failure Paths 表），code/formula 纯度保护 D6 断言面。若独立 review 裁定需逐 preset 覆盖，扩分布并复核 10+6 既有测试仍绿
-- [ ] `AiWidgetsFixture` 增 `reasoning?: string`、`toolRound?: boolean` 可选字段（缺省无结构化——其余 preset 与 default 行为按构造不变）
-- [ ] mock stream fixture 模式：`reasoning` 字段 → 先发 `delta.reasoning_content` chunk 流再发 content；`toolRound` → 首轮发 `delta.tool_calls`（get_weather，参数与 `tool-mock.ts` executor 匹配）+ `finish_reason:'tool_calls'`，工具结果消息在场时（次轮）发正常 content（复用 `createMockToolStream` 的轮次判定模式，`tool-mock.ts:30-74`）
-- [ ] `citation` preset content 增 `[1]`/`[2]` marker（保留既有 `ol li a` 代表锚点——fixture spec :71-79 断言不动）
+- [x] Decision D-c（触发分布裁定）：按「tool / citation / reasoning 三类各 ≥1 个专属触发 preset」落地（weather→`toolRound`、reasoning→`reasoning` 前导、citation→content 内 `[N]` marker）；`default`/`code`/`formula` 保持纯 markdown（无结构化字段，chunk 序列与 D1 基线逐 chunk 等价）。执行期无 review 裁定要求逐 preset 覆盖，分布按计划落地
+- [x] `AiWidgetsFixture` 增 `reasoning?: string`、`toolRound?: boolean` 可选字段（缺省无结构化——其余 preset 与 default 行为按构造不变）
+- [x] mock stream fixture 模式：`reasoning` 字段 → 先发 `delta.reasoning_content` chunk 流再发 content；`toolRound` → 首轮发 `delta.tool_calls`（get_weather，参数 `{"city":"Hangzhou"}` 与 `tool-mock.ts` executor 匹配——executor 按 function name 分发不校验 city 值）+ `finish_reason:'tool_calls'`，工具结果消息在场时（次轮，trailing `role:'tool'` 判定，复用 `createMockToolStream` 的轮次判定模式）发正常 content
+- [x] `citation` preset content 增 `[1]`/`[2]`/`[1,2]` marker（保留既有 `ol li a` 代表锚点——fixture spec :71-79 断言不动）
 
 Exit Criteria:
 
-- [ ] fixture 文件结构化字段 + 分发不变（6 关键词映射零改动）可 grep 核对
-- [ ] `default`/`code`/`formula` preset 输出 chunk 序列与 D1 基线逐 chunk 等价（无结构化字段即无新 chunk 类型）
+- [x] fixture 文件结构化字段 + 分发不变（6 关键词映射零改动）可 grep 核对——2026-08-25 grep：`KEYWORD_ORDER` 5 关键词 + default fallback 零改动；`toolRound:` 仅 weather（:89）、`reasoning:` 字段仅 reasoning preset（:161）
+- [x] `default`/`code`/`formula` preset 输出 chunk 序列与 D1 基线逐 chunk 等价（无结构化字段即无新 chunk 类型）——代码结构核实：无字段 → generator 走原 content 循环 + stop marker，无新增 chunk；live 回归在 Phase 4 fixture spec 全量复跑确认；`apps/playground` 局部 typecheck 通过
 
 ### Phase 3 - demo 接线（tools / 卡 / citations 实例）
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/pages/ai-widgets-demo.tsx`
 
 - Item Types: `Fix | Decision`
 
-- [ ] `createAiImportLoader(connector, { tools: mockToolSchemas, toolExecutor: mockToolExecutor })` 接线；ai-chat schema 增 `tools`/`toolExecutor`（`maxToolRounds` 用引擎默认 8 或显式 2——执行时定，记录 Decision）
-- [ ] beforeMessages welcome 与 prompts 之间插入 2 张缩略卡（D-b 定案原语；卡内标注 Tool Call / Citations）
-- [ ] Decision D-a（citations marker 机制，review 修正后首选反转）：**首选**——afterMessages 增 `ai-citations`（inline）实例，绑 `pageData` 静态 demo message（content 含 `[1]`/`[2]` marker）+ `sources` explicit prop（`ai-citations-demo.tsx:29-51` canonical 用法 + `feedbackMsg` 先例 `ai-widgets-demo.tsx:156-161`）——组合模型合规（widget 不与 ai-bubble 双渲染 live 消息，`ai-citations.tsx:37-43` Decision-C）。**弃用为次选**——`${messages}` live 绑定（`ai-chat.tsx:273-404` 投影）：技术上可行，但 inline 模式全文重渲染最新回复为 plain text（:92-123），在消息列表与输入框间产生每条回复的纯文本副本，违背产品化目标；若 review 或执行中裁定 live 性必需，须先解决双渲染问题（超出本 plan 范围，记 successor 候选）。裁定与理由记 daily log
-- [ ] dev 实跑抽查：`weather` 触发 tool 轮 → 卡片 + 表格；`reasoning` 触发折叠面板；citations 实例 marker + 卡片常显（结果记 daily log）
+- [x] `createAiImportLoader(connector, { tools: mockToolSchemas, toolExecutor: mockToolExecutor })` 接线（`ai-widgets-demo.tsx:196-199`）；ai-chat schema 增 `tools: '${$ai.tools}'` / `toolExecutor: '${$ai.toolExecutor}'`（:32-33）。Decision（maxToolRounds）：**显式 `2`**——fixture tool 轮恰好需要 2 轮（tool_calls 轮 + content 轮），比引擎默认 8 更紧的确定性上界（mock 失控时 showcase 最多 2 轮即终止；先例 `ai-tools-example.json` 用 5）
+- [x] beforeMessages welcome 与 prompts 之间插入 2 张缩略卡（D-b 定案 `link` renderer + flex row，`ai-widgets-demo.tsx:65-85`；卡内标注 Tool Call / Citations，href `#/ai-tools` / `#/ai-citations`）
+- [x] Decision D-a（citations marker 机制，首选落地）：afterMessages 末尾 `ai-citations`（inline）实例（:146-150），绑 `pageData` 静态 demo message（`CITATION_MESSAGE` content 含 `[1]`/`[2]` marker）+ `sources` explicit prop（`CITATION_SOURCES`，`ai-citations-demo.tsx:29-51` canonical 用法 + `feedbackMsg` 先例）——组合模型合规（widget 不与 ai-bubble 双渲染 live 消息）。`${messages}` live 绑定弃用理由（inline 全文重渲染 plain-text 副本问题）按 plan 记录，裁定与理由记 daily log
+- [x] dev 实跑抽查（2026-08-25，programmatic probe `_tmp/d5-showcase-inspect.mjs` 对 live dev server，遵守 AGENTS.md 禁截图判读）：`weather` → `get_weather` tool 卡 + 后续表格（toolRoundThenTable=true）；`reasoning` → 折叠面板可见、默认折叠、点击展开渲染 reasoning markdown body（expandedAfterClick=true）；citations 实例 2 个 `[N]` marker 常显、点击打开 source 卡片（title+snippet，portal）；pageErrors=[]。结果记 daily log
 
 Exit Criteria:
 
-- [ ] widgets demo schema 含 tools 接线 + 2 卡 + citations 实例（文件内可直接核对）
-- [ ] dev 抽查三类触发全部可见（daily log 记录）
+- [x] widgets demo schema 含 tools 接线 + 2 卡 + citations 实例（文件内可直接核对——`apps/playground/src/pages/ai-widgets-demo.tsx` :32-34 tools/toolExecutor/maxToolRounds、:65-85 两卡、:146-150 citations 实例；`apps/playground` 局部 typecheck 通过）
+- [x] dev 抽查三类触发全部可见（daily log 记录——见上条 probe 结果，2026-08-25 log）
 
 ### Phase 4 - 转绿与回归
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/ai-widgets-showcase.spec.ts` + 既有 ai spec 家族
 
 - Item Types: `Proof`
 
-- [ ] Phase 1 新 spec 全部转绿（≥5 测试）
-- [ ] 回归：17 个 ai spec 文件全过——重点 `ai-widgets-demo.spec.ts` 10 测试（default 路径单 bubble + `Hello`）与 `ai-widgets-fixture.spec.ts` 6 测试（weather 多 bubble 下链式 locator 仍单命中；若遇 strict mode 多元素违规，仅做 `.first()` 类语义保持修正并记录，D1 先例）
+- [x] Phase 1 新 spec 全部转绿（≥5 测试）——2026-08-25：`ai-widgets-showcase.spec.ts` 5/5 绿（(a) 计数 9：6 live slot + 2 卡 + 1 live `ai-citations` 实例）
+- [x] 回归：17 个 ai spec 文件全过——2026-08-25 全家族实跑 116 passed + 2 flaky（`ai-attachments.spec.ts` 文件上传用例，并行 worker 环境 flake；单文件复跑 2/2 稳定通过，与本 plan 改动无涉——attachments demo 走 `createMockAiEnv()` legacy 路径，未被本 plan 触及）。重点保护面：`ai-widgets-demo.spec.ts` 12 测试全绿（live 计数 12 = D1 基线 10 + D3 增 2，plan 文本沿用 D1 期计数；default 路径单 bubble + `Hello` 断言原样通过）与 `ai-widgets-fixture.spec.ts` 6 测试全绿（weather 多 bubble 下链式 locator 仍单命中；**未发生任何 strict mode 违规，零既有断言修改**）
 
 Exit Criteria:
 
-- [ ] 新 spec ≥5 测试全过
-- [ ] 17 个 ai spec 文件全过；任何既有断言修改均为语义保持型且在 plan 内逐条记录
+- [x] 新 spec ≥5 测试全过
+- [x] 17 个 ai spec 文件全过；任何既有断言修改均为语义保持型且在 plan 内逐条记录——记录：零修改（未触发 strict mode 修正路径，D1 先例预案未用上）
 
 ## Draft Review Record
 
@@ -149,17 +149,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] G7 收口：首屏可见 widget ≥8（§6.1 程序化计数）+ 触发后对话区含 tool-call 卡片 + citations marker + reasoning 折叠面板（e2e 三断言）
-- [ ] 缩略卡为 playground-local in-content link（`App.tsx` nav 零新增项）
-- [ ] `packages/flux-renderers-ai` 包零改动（`git diff` 不含该包路径）
-- [ ] 既有 10+6 e2e 零破坏；既有断言修改仅限语义保持型且已记录
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] owner-doc：无需更新（mock/demo 属 playground host 层，不改包公共契约；owner-doc 同步统一归 DG）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] G7 收口：首屏可见 widget ≥8（§6.1 程序化计数——showcase spec (a) 白名单计数 = 9：6 live slot + 2 卡 + 1 live `ai-citations` 实例）+ 触发后对话区含 tool-call 卡片 + citations marker + reasoning 折叠面板（e2e 三断言 = spec (d)(e)(c)，5/5 绿）
+- [x] 缩略卡为 playground-local in-content link（`App.tsx` nav 零新增项——`git status` 无 App.tsx 改动；卡为 beforeMessages 内 `link` renderer `<a>`）
+- [x] `packages/flux-renderers-ai` 包零改动（`git diff` 不含该包路径——改动面仅 `apps/playground/src/**` + 新 e2e spec + 本 plan）
+- [x] 既有 10+6 e2e 零破坏（`ai-widgets-demo.spec.ts` 12/12、`ai-widgets-fixture.spec.ts` 6/6 全绿）；既有断言修改为零（无语义保持型修正被触发）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（Deferred 区为空；Non-Blocking Follow-ups 三条均为 doc-alignment / future-need 治理项，经 closure-audit 复核诚实）
+- [x] owner-doc：无需更新（mock/demo 属 playground host 层，不改包公共契约；owner-doc 同步统一归 DG）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项——audit session `ses_fcb529d07ffeMGH4kDjbl0IwXQ`（2026-08-25，非执行 session）：verdict `issues → approved`，唯一 Blocker 为 daily log 缺失（docs-only，审计明示补写后 flip，见 `docs/logs/2026/08-25.md` D5 条目）；代码/测试面全验证通过（含独立复跑 23/23 绿）
+- [x] `pnpm typecheck`（37/37）
+- [x] `pnpm build`（37/37）
+- [x] `pnpm lint`（37/37）
+- [x] `pnpm test`（68/68 tasks；playground 26 files / 175 tests；ai e2e 家族 18 文件 116 passed + 2 flaky 环境性通过——单文件复跑稳定，见 Phase 4）
 
 ## Deferred But Adjudicated
 
@@ -173,13 +173,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note:
+Status Note: 4 Phase 全部 `completed` 且 Exit Criteria 全勾；G7 showcase 契约（product-spec §6）兑现——首屏白名单计数 9 ≥ 8，fixture 触发后对话区含 tool-call 卡 + citations marker + reasoning 折叠；改动面全部在 playground host 层（`packages/flux-renderers-ai` 零改动）；既有 widgets demo/fixture e2e 零破坏、零断言修改；Closure Gates 全过（typecheck/build/lint/test/check + 独立 closure-audit approved）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: fresh sub-agent session `ses_fcb529d07ffeMGH4kDjbl0IwXQ`（2026-08-25，非执行 session，三件套输入：plan + diff summary + 验证输出）
+- Evidence: verdict `issues → approved`——唯一 Blocker 为 D5 daily log 缺失（docs-only；补写 `docs/logs/2026/08-25.md` D5 条目后 flip approved，D3 closure 同型先例）；审计核实：fixture/mock/demo 逐行 live 核对（结构化字段、分发零改动、legacy 路径不变、tools 接线、卡与 citations 实例位置）、spec 断言与真实 renderer data-slot 面一致（reasoning/tools/tool-call/citations slot + 路由）、`git status` 零 `packages/flux-renderers-ai` diff / 零 App.tsx diff、独立复跑 23/23 绿（showcase 5 + demo 12 + fixture 6）、follow-ups 分类诚实；Minor（roadmap D5 未翻转）为收口后 bookkeeping，本 Closing 已同步完成。
 
 Follow-up:
 
--
+- 见 Non-Blocking Follow-ups 三条（roadmap §D5 文本 2 处偏差、product-spec §6.1 operationalization 差异——均归 DG 收口注记；`${messages}` live 绑定 citations 为 successor 候选）。无 plan-owned 剩余工作。
