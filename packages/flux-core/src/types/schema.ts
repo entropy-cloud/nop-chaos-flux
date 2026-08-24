@@ -80,7 +80,6 @@ export interface ActionShapeLikeFields extends SchemaObject {
   _targetTemplateId?: string;
   targetId?: string;
   componentId?: string;
-  componentName?: string;
   dialogId?: string;
   surfaceId?: string;
   args?: Record<string, SchemaValue>;
@@ -321,8 +320,9 @@ export interface ActionDataSourceSchema extends BaseDataSourceSchema, SourceActi
    * Whether to automatically fetch on mount/start. Defaults to `true`.
    * When `false`, the source is still registered but the first refresh is skipped;
    * `refresh()` / `component:refresh` can still trigger a fetch manually.
+   * A `${...}` expression string is compiled to a dynamic boolean gate.
    */
-  initFetch?: boolean;
+  initFetch?: boolean | string;
   /**
    * Dispatched after a successful fetch completes. Payload available to the action:
    * `{ data, dataUpdatedAt }`.

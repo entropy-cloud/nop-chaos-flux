@@ -127,12 +127,29 @@ export async function refreshNearest(
     };
   }
 
-  const refreshed = await runtime.refreshDataSource({
+  const outcome = await runtime.refreshDataSource({
     name: target.name,
     scope: target.scope,
   });
-  return {
-    ok: refreshed,
-    data: { found: true, kind: 'source', name: target.name, refreshed },
-  };
+
+  if (!outcome.found) {
+    return {
+      ok: false,
+      data: { found: true, kind: 'source', name: target.name, refreshed: false },
+      error: new Error(`refreshNearest target source disappeared before refresh: ${target.name}`),
+    };
+  }
+
+  const result = outcome.result ?? { skipped: false };
+  if (result.skipped) {
+    return { ok: true, data: { found: true, kind: 'source', name: target.name, refreshed: true } };
+  }
+  if (result.ok === false) {
+    return {
+      ok: false,
+      data: { found: true, kind: 'source', name: target.name, refreshed: false },
+      error: result.error ?? new Error(`Source refresh failed: ${target.name}`),
+    };
+  }
+  return { ok: true, data: { found: true, kind: 'source', name: target.name, refreshed: true } };
 }

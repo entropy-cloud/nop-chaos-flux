@@ -33,7 +33,14 @@ function resolveInitFetch(input: CreateApiDataSourceControllerInput): boolean {
   }
   try {
     return input.runtime.evaluateCompiled<boolean>(input.initFetch, input.scope) !== false;
-  } catch {
+  } catch (error) {
+    reportRuntimeHostIssue({
+      env: input.runtime.env,
+      level: 'error',
+      message: 'Data source initFetch evaluation failed; treating as true (conservative fetch)',
+      error,
+      phase: 'api',
+    });
     return true;
   }
 }
@@ -150,7 +157,24 @@ export function createDataSourceController(
         return Promise.resolve({ skipped: true });
       }
 
-      return runRequest().then(() => ({ skipped: false }));
+      return runRequest().then((outcome) => {
+        if (outcome.status === 'failed') {
+          return { skipped: false, ok: false, error: outcome.error };
+        }
+        if (outcome.status === 'cancelled') {
+          return {
+            skipped: false,
+            ok: false,
+            error:
+              outcome.error ??
+              new Error(`Data source refresh was cancelled: ${input.scope.id}`),
+          };
+        }
+        if (outcome.status === 'deferred') {
+          return { skipped: true };
+        }
+        return { skipped: false, ok: true };
+      });
     },
     reset() {
       mutable.started = false;

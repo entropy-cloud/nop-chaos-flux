@@ -265,7 +265,7 @@ describe('createRuntimeSourceRegistry', () => {
     });
     firstRegistration.controller.refresh = firstRefresh as () => Promise<DataSourceRefreshResult>;
 
-    const secondRefresh = vi.fn().mockResolvedValue({ skipped: false });
+    const secondRefresh = vi.fn().mockResolvedValue({ skipped: false, ok: true });
     const secondRegistration = secondRegistry.registerDataSource({
       id: 'source-2',
       scope: secondScope,
@@ -286,7 +286,7 @@ describe('createRuntimeSourceRegistry', () => {
     const refreshed = await secondRegistry.refreshDataSource({ name: 'result', scope: secondScope });
     await Promise.resolve();
 
-    expect(refreshed).toBe(true);
+    expect(refreshed).toEqual({ found: true, result: { skipped: false, ok: true } });
     expect(secondRefresh).toHaveBeenCalledTimes(1);
     expect(secondNotify).not.toHaveBeenCalledWith('error', 'Source cascade depth limit exceeded');
 

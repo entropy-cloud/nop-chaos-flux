@@ -386,7 +386,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
     });
 
     const allowed = await registration.controller.refresh();
-    expect(allowed).toEqual({ skipped: false });
+    expect(allowed).toEqual({ skipped: false, ok: true });
     expect(fetcher).toHaveBeenCalledTimes(1);
 
     // flip the ancestor value → refresh now skipped

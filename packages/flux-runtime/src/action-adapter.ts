@@ -429,16 +429,31 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             return { ok: false, error: new Error('refreshSource requires targetId') };
           }
 
-          const refreshed = await runtime.refreshDataSource({
+          const outcome = await runtime.refreshDataSource({
             name: targetId,
             scope: ctx.scope,
           });
 
-          return {
-            ok: refreshed,
-            data: refreshed,
-            error: refreshed ? undefined : new Error(`Source not found: ${targetId}`),
-          };
+          if (!outcome.found) {
+            return {
+              ok: false,
+              data: false,
+              error: new Error(`Source not found: ${targetId}`),
+            };
+          }
+
+          const result = outcome.result ?? { skipped: false };
+          if (result.skipped) {
+            return { ok: true, data: true };
+          }
+          if (result.ok === false) {
+            return {
+              ok: false,
+              data: false,
+              error: result.error ?? new Error(`Source refresh failed: ${targetId}`),
+            };
+          }
+          return { ok: true, data: true };
         }
 
         case 'refreshNearest': {

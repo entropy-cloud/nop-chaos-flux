@@ -2,6 +2,8 @@ import type {
   AsyncGovernanceStore,
   CompiledDataSource,
   DataSourceController,
+  DataSourceRefreshOutcome,
+  DataSourceRefreshResult,
   DataSourceRegistration,
   RendererRuntime,
   ScopeChange,
@@ -153,7 +155,7 @@ export interface RuntimeSourceRegistry {
     scope: ScopeRef;
     compiledSource: CompiledDataSource;
   }): DataSourceRegistration;
-  refreshDataSource(input: { name: string; scope?: ScopeRef }): Promise<boolean>;
+  refreshDataSource(input: { name: string; scope?: ScopeRef }): Promise<DataSourceRefreshOutcome>;
   findFirstInScope(scope: ScopeRef): { name: string; scope: ScopeRef } | undefined;
   disposeScope(scopeId: string): void;
   disposeScopeTree(scopeId: string): void;
@@ -422,35 +424,45 @@ export function createRuntimeSourceRegistry(input: {
     }
   }
 
-  async function refreshDataSource(args: { name: string; scope?: ScopeRef }): Promise<boolean> {
+  /**
+   * Run a controller refresh and normalize rejections (e.g. formula sources
+   * whose re-evaluation throws) into the `ok: false` result channel so
+   * `refreshDataSource` never rejects for request failures.
+   */
+  async function runControllerRefresh(entry: RuntimeSourceEntry): Promise<DataSourceRefreshResult> {
+    try {
+      return await entry.controller.refresh();
+    } catch (error) {
+      return { skipped: false, ok: false, error };
+    }
+  }
+
+  async function refreshDataSource(args: { name: string; scope?: ScopeRef }): Promise<DataSourceRefreshOutcome> {
     if (args.scope) {
       const bucket = scopeEntries.get(args.scope.id);
       const entry = Array.from(bucket?.values() ?? []).find((candidate) => candidate.name === args.name);
 
       if (!entry) {
-        return false;
+        return { found: false };
       }
 
-      await entry.controller.refresh();
-      return true;
+      return { found: true, result: await runControllerRefresh(entry) };
     }
 
     for (const bucket of scopeEntries.values()) {
       const entry = Array.from(bucket.values()).find((candidate) => candidate.name === args.name);
 
       if (entry) {
-        await entry.controller.refresh();
-        return true;
+        return { found: true, result: await runControllerRefresh(entry) };
       }
     }
 
     const namedEntry = nameIndex.get(args.name);
     if (namedEntry) {
-      await namedEntry.controller.refresh();
-      return true;
+      return { found: true, result: await runControllerRefresh(namedEntry) };
     }
 
-    return false;
+    return { found: false };
   }
 
   /**

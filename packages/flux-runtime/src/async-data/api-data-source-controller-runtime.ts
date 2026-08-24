@@ -165,6 +165,25 @@ function evaluateSingleAjaxAction(input: CreateApiDataSourceControllerInput, sco
   };
 }
 
+/**
+ * Observable outcome of one `runRequest()` cycle, consumed by
+ * `DataSourceController.refresh()` to build a `DataSourceRefreshResult`.
+ *
+ * - `succeeded`: the request (or cache hit) completed and published.
+ * - `failed`: the request ran and failed — `refresh()` reports `ok: false`.
+ * - `cancelled`: the cycle was aborted or the controller stopped mid-flight.
+ * - `deferred`: no attributable cycle ran for this call (dedup `ignore-new`,
+ *   `cancel-previous` pending relaunch, stale-dropped, or stop-condition) —
+ *   `refresh()` reports `skipped: true`.
+ */
+export type DataSourceRequestRunOutcome =
+  | { status: 'succeeded' }
+  | { status: 'failed'; error: unknown }
+  | { status: 'cancelled'; error?: unknown }
+  | { status: 'deferred' };
+
+const DEFERRED_RUN: DataSourceRequestRunOutcome = { status: 'deferred' };
+
 export function createApiDataSourceRequestRunner(
   input: CreateApiDataSourceControllerInput,
   mutable: ApiDataSourceControllerMutableState,
@@ -183,19 +202,19 @@ export function createApiDataSourceRequestRunner(
     });
   }
 
-  async function runRequest(): Promise<void> {
+  async function runRequest(): Promise<DataSourceRequestRunOutcome> {
     if (mutable.stopped) {
-      return;
+      return DEFERRED_RUN;
     }
 
     if (evaluateControllerStopCondition(input, mutable)) {
       options.stop();
-      return;
+      return DEFERRED_RUN;
     }
 
     if (hasActiveControllerRequest(mutable)) {
       if (mutable.refreshDedup === 'ignore-new') {
-        return;
+        return DEFERRED_RUN;
       }
 
       if (mutable.refreshDedup === 'parallel') {
@@ -203,7 +222,7 @@ export function createApiDataSourceRequestRunner(
       } else {
         mutable.pendingRefresh = true;
         mutable.abortController?.abort();
-        return;
+        return DEFERRED_RUN;
       }
     }
 
@@ -287,7 +306,7 @@ export function createApiDataSourceRequestRunner(
               updateControllerState(input, mutable, (current) => toIdleFetchState(current));
             }
             updateControllerState(input, mutable, (current) => current);
-            return;
+            return { status: 'cancelled' };
           }
 
           if (
@@ -298,7 +317,7 @@ export function createApiDataSourceRequestRunner(
             input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
             runSettled = true;
             updateControllerState(input, mutable, (current) => current);
-            return;
+            return DEFERRED_RUN;
           }
 
           const mappedValue = applyResultMapping({
@@ -332,7 +351,7 @@ export function createApiDataSourceRequestRunner(
           }
 
           updateControllerState(input, mutable, (current) => current);
-          return;
+          return { status: 'succeeded' };
         }
       }
 
@@ -349,14 +368,14 @@ export function createApiDataSourceRequestRunner(
           updateControllerState(input, mutable, (current) => toIdleFetchState(current));
         }
         updateControllerState(input, mutable, (current) => current);
-        return;
+        return { status: 'cancelled' };
       }
 
       if (run && input.asyncGovernance && !input.asyncGovernance.isCurrentRun(run)) {
         input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
         runSettled = true;
         updateControllerState(input, mutable, (current) => current);
-        return;
+        return DEFERRED_RUN;
       }
 
       mutable.latestSettledRequestSequence = Math.max(
@@ -395,6 +414,7 @@ export function createApiDataSourceRequestRunner(
       }
 
       updateControllerState(input, mutable, (current) => current);
+      return { status: 'succeeded' };
     } catch (caughtError) {
       if (mutable.stopped || isAbortError(caughtError)) {
         if (run && input.asyncGovernance) {
@@ -409,7 +429,7 @@ export function createApiDataSourceRequestRunner(
           updateControllerState(input, mutable, (current) => toIdleFetchState(current));
         }
         updateControllerState(input, mutable, (current) => current);
-        return;
+        return { status: 'cancelled', error: caughtError };
       }
 
       const settledRun = settleControllerRunIfNeeded(input, mutable, run, requestSequence, {
@@ -420,7 +440,7 @@ export function createApiDataSourceRequestRunner(
 
       if (settledRun?.outcome === 'stale-dropped') {
         updateControllerState(input, mutable, (current) => current);
-        return;
+        return DEFERRED_RUN;
       }
 
       if (
@@ -431,7 +451,7 @@ export function createApiDataSourceRequestRunner(
         requestSequence < mutable.latestSettledRequestSequence
       ) {
         updateControllerState(input, mutable, (current) => current);
-        return;
+        return DEFERRED_RUN;
       }
 
       updateControllerState(input, mutable, (current) =>
@@ -451,6 +471,7 @@ export function createApiDataSourceRequestRunner(
       });
 
       updateControllerState(input, mutable, (current) => current);
+      return { status: 'failed', error: caughtError };
     } finally {
       if (controller) {
         mutable.activeControllers.delete(controller);

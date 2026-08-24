@@ -161,6 +161,19 @@ export function validateActionShape(
     );
   }
 
+  if (value.componentName !== undefined) {
+    emitSchemaDiagnostic(
+      diagnostics,
+      {
+        code: 'invalid-action-shape',
+        path: appendJsonPointer(path, 'componentName'),
+        message:
+          'componentName targeting has been removed; use componentId (resolves handle.id first, then handle.name).',
+      },
+      enabled,
+    );
+  }
+
   validateBuiltInActionArgsByDefinition(
     value,
     path,

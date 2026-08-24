@@ -154,4 +154,47 @@ describe('normalizeBlobResponse', () => {
 
     expect((fakeAnchor as { download: string }).download).toBe('override.csv');
   });
+
+  it('returns { ok: false } with diagnostics when JSON-in-blob body fails to parse (no synthetic success, no download)', async () => {
+    const createUrlSpy = vi.fn().mockReturnValue('blob:bad');
+    vi.stubGlobal('URL', { createObjectURL: createUrlSpy, revokeObjectURL: vi.fn() });
+    const clickSpy = vi.fn();
+    const fakeAnchor = { click: clickSpy } as unknown as HTMLAnchorElement;
+    vi.stubGlobal('document', {
+      createElement: vi.fn().mockReturnValue(fakeAnchor),
+      body: { appendChild: vi.fn(), removeChild: vi.fn() } as unknown as HTMLElement,
+    });
+
+    const blob = {
+      type: 'application/json',
+      text: async () => 'not-json{{broken',
+    } as unknown as Blob;
+    const result = await normalizeBlobResponse(blob, { url: '/dl' });
+
+    expect(result.ok).toBe(false);
+    expect(result.msg).toContain('application/json');
+    expect(result.msg).toContain('/dl');
+    expect(result.msg).toContain('JSON');
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(createUrlSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns { ok: false } instead of a synthetic success when no filename can be resolved', async () => {
+    const createUrlSpy = vi.fn().mockReturnValue('blob:noname');
+    vi.stubGlobal('URL', { createObjectURL: createUrlSpy, revokeObjectURL: vi.fn() });
+    const clickSpy = vi.fn();
+    const fakeAnchor = { click: clickSpy } as unknown as HTMLAnchorElement;
+    vi.stubGlobal('document', {
+      createElement: vi.fn().mockReturnValue(fakeAnchor),
+      body: { appendChild: vi.fn(), removeChild: vi.fn() } as unknown as HTMLElement,
+    });
+
+    const blob = { type: 'application/octet-stream' } as Blob;
+    const result = await normalizeBlobResponse(blob, { url: '/dl' });
+
+    expect(result.ok).toBe(false);
+    expect(result.msg).toContain('filename');
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(createUrlSpy).not.toHaveBeenCalled();
+  });
 });

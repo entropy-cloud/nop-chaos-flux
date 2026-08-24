@@ -38,7 +38,7 @@ describe('createRendererRuntime', () => {
 
     await expect(
       runtime.refreshDataSource({ name: 'total', scope: page.scope }),
-    ).resolves.toBe(true);
+    ).resolves.toEqual({ found: true, result: { skipped: false, ok: true } });
     expect(page.scope.get('total')).toBe(10);
 
     registration.dispose();

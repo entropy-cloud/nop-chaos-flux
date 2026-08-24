@@ -85,18 +85,39 @@ export async function normalizeBlobResponse(
         msg: parsed.msg,
         errors: parsed.errors,
       };
-    } catch {
-      // Fall through to download path if JSON parse fails.
+    } catch (parseError) {
+      // The response declared a JSON content-type (error-envelope intent) but the
+      // body is not parseable JSON. Report the failure with full context instead
+      // of falling through to a download or a synthetic success.
+      return {
+        ok: false,
+        status: 0,
+        data: null,
+        msg:
+          `Blob response declared JSON content-type (blob type: ${blob.type || 'unknown'}, ` +
+          `url: ${api.url ?? 'unknown'}) but the body failed to parse as JSON: ` +
+          `${parseError instanceof Error ? parseError.message : String(parseError)}`,
+      };
     }
   }
 
   const contentDisposition = responseHeaders?.get('content-disposition') ?? api.headers?.['content-disposition'];
   const filename = resolveDownloadFilename(api, contentDisposition);
 
-  if (filename) {
-    // Errors routed through browser environment — download errors are user-visible via browser UI
-    downloadBlob(blob, filename);
+  if (!filename) {
+    // No filename means no download could be started — do not fabricate success.
+    return {
+      ok: false,
+      status: 0,
+      data: null,
+      msg:
+        `Blob download failed: no filename resolved (content-disposition missing and ` +
+        `api.downloadFileName unset; url: ${api.url ?? 'unknown'}, blob type: ${blob.type || 'unknown'})`,
+    };
   }
+
+  // Errors routed through browser environment — download errors are user-visible via browser UI
+  downloadBlob(blob, filename);
 
   // Synthetic success: the actual file download is delegated to the browser.
   return {
