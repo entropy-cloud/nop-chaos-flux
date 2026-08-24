@@ -47,6 +47,27 @@ export async function measureFps(page: Page, durationMs: number): Promise<FpsRes
   }, durationMs);
 }
 
+/**
+ * Settle helper for perf specs: wait for a fixed number of animation frames
+ * instead of a wall-clock sleep. Frame-based settling is the domain-correct
+ * signal for "let rendering settle before measuring" (no fixed waitForTimeout).
+ */
+export async function waitForRenderFrames(page: Page, frames: number): Promise<void> {
+  await page.evaluate(
+    (frameCount: number) =>
+      new Promise<void>((resolve) => {
+        let remaining = frameCount;
+        const tick = () => {
+          remaining -= 1;
+          if (remaining <= 0) resolve();
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+    frames,
+  );
+}
+
 export async function measureTiming(page: Page, label: string): Promise<TimingResult> {
   return page.evaluate(async (lbl) => {
     return new Promise((resolve) => {

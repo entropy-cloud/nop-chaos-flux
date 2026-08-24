@@ -3,6 +3,13 @@ import { test, expect, assertTrackedPageErrors } from './fixtures.js';
 const ROUTE = '/#/gantt';
 const HEADING = /Gantt Chart Demo/i;
 
+const getScaleLabels = (page: import('@playwright/test').Page) =>
+  page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-slot="gantt-scale-cell"]'))
+      .map((el) => el.textContent)
+      .filter(Boolean) as string[],
+  );
+
 test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -60,19 +67,14 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const getScaleLabels = () =>
-      page.evaluate(() => Array.from(document.querySelectorAll('[data-slot="gantt-scale-cell"]')).map((el) => el.textContent).filter(Boolean) as string[]);
-
-    const before = await getScaleLabels();
+    const before = await getScaleLabels(page);
     expect(before.length).toBeGreaterThan(0);
 
     const zoomOut = page.locator('[data-slot="gantt-toolbar"] button').first();
     await zoomOut.click();
-    await page.waitForTimeout(300);
-
-    const after = await getScaleLabels();
-    expect(after.length).toBeGreaterThan(0);
-    expect(after.join(' ')).not.toBe(before.join(' '));
+    await expect
+      .poll(async () => (await getScaleLabels(page)).join(' '), { timeout: 5_000 })
+      .not.toBe(before.join(' '));
 
     await assertTrackedPageErrors(page);
   });
@@ -82,15 +84,17 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
     const zoomIn = page.locator('[data-slot="gantt-toolbar"] button').nth(1);
+    const labelsBefore = await getScaleLabels(page);
     await zoomIn.click();
-    await page.waitForTimeout(300);
+    await expect
+      .poll(async () => (await getScaleLabels(page)).join(' '), { timeout: 5_000 })
+      .not.toBe(labelsBefore.join(' '));
 
     const zoomFit = page.locator('[data-slot="gantt-toolbar"] button').nth(2);
     await zoomFit.click();
-    await page.waitForTimeout(300);
-
-    const scaleCells = await page.locator('[data-slot="gantt-scale-cell"]').count();
-    expect(scaleCells).toBeGreaterThan(0);
+    await expect
+      .poll(async () => page.locator('[data-slot="gantt-scale-cell"]').count(), { timeout: 5_000 })
+      .toBeGreaterThan(0);
 
     await assertTrackedPageErrors(page);
   });
@@ -183,19 +187,13 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
       const btn = document.querySelector('[aria-expanded="true"]') as HTMLButtonElement | null;
       if (btn) btn.click();
     });
-    await page.waitForTimeout(500);
-
-    const collapsedCount = await getRowCount();
-    expect(collapsedCount).toBeLessThan(initialCount);
+    await expect.poll(getRowCount, { timeout: 5_000 }).toBeLessThan(initialCount);
 
     const toggledRow = page.locator(`[data-slot="gantt-grid-row"][data-task-id="${firstTaskName}"]`);
     await expect(toggledRow.locator('button')).toHaveAttribute('aria-expanded', 'false', { timeout: 3_000 });
 
     await toggledRow.locator('button').click();
-    await page.waitForTimeout(500);
-
-    const expandedCount = await getRowCount();
-    expect(expandedCount).toBe(initialCount);
+    await expect.poll(getRowCount, { timeout: 5_000 }).toBe(initialCount);
 
     await assertTrackedPageErrors(page);
   });
@@ -231,7 +229,6 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
 
     const row = page.locator('[data-slot="gantt-grid-row"]').nth(1);
     await row.dblclick();
-    await page.waitForTimeout(200);
 
     const input = page.locator('[data-slot="gantt-grid"] input');
     await expect(input).toBeVisible({ timeout: 3_000 });
@@ -253,7 +250,6 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
     const _originalText = await row.textContent();
 
     await row.dblclick();
-    await page.waitForTimeout(200);
 
     const input = page.locator('[data-slot="gantt-grid"] input');
     await expect(input).toBeVisible({ timeout: 3_000 });
@@ -379,7 +375,9 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
     const zoomOutBtn = page.locator('[data-slot="gantt"] button').filter({ hasText: '−' }).first();
     if (await zoomOutBtn.isVisible()) {
       await zoomOutBtn.click();
-      await page.waitForTimeout(200);
+      await expect
+        .poll(async () => page.locator('[data-weekend="true"]').count(), { timeout: 5_000 })
+        .toBeGreaterThanOrEqual(2);
     }
 
     const weekendCols = page.locator('[data-weekend="true"]');

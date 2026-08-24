@@ -1,4 +1,4 @@
-import type { BaseSchema, SchemaInput, SchemaObject, ActionSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput, SchemaObject, ActionSchema, SchemaValue } from '@nop-chaos/flux-core';
 
 export type GanttId = string | number;
 
@@ -205,5 +205,6 @@ export interface GanttSchema extends BaseSchema {
   onMount?: ActionSchema;
   onUnmount?: ActionSchema;
   empty?: SchemaInput;
-  loading?: SchemaInput;
+  /** Boolean/expression (loading Skeleton) OR schema input (custom loading region). */
+  loading?: SchemaInput | SchemaValue;
 }
