@@ -1,0 +1,25 @@
+{
+  "name": "ai-widgets-product",
+  "description": "nop-chaos-flux AI Widgets Showcase 产品化（驱动 docs/backlog/ai-widgets-product-roadmap.md）：把 # /ai-widgets demo 从「功能正确但 demo 粗糙」提升到「产品级」——收口 docs/analysis/2026-08-23-ai-widgets-vs-tiny-robot-comparison.md 识别的 12 项 gaps（G1 mock 富 fixture + env 工厂 option 化 / G2 prose→自定义 typography CSS + [data-mode=dark] 触发对齐项目双轴主题 / G3 avatar lucide + G8 welcome icon lucide 同源 / G5 **LaTeX 内置**——2026-08-23 human gate supersession design.md §10.4 / improvement-analysis.md §4.2 / plan A3 三处旧裁定，引入 remark-math@^6 + rehype-katex@^7 + katex@^0.16 硬 peer deps + markdown-buffer 扩 \\[ 边界 + markdown.tsx 挂双插件 + playground import katex CSS / G6 代码高亮 lowlight 复用 / G7 widget showcase 完整 / G4 真实按钮副作用 + G9 pill icon lucide 同源 / G10 流式节奏 200ms / G11 owner-doc gap 补 ai-bubble-typography 段 / G12 e2e 视觉断言）。按线性 roadmap 执行 D0 产品标准基线 → D1 富 markdown fixture（11 种元素 + 6 preset 关键词分发：weather / code / formula / reasoning / citation / 默认；createMockAiEnv 接受 { delayMs } option 默认 15ms，ai-widgets-demo.tsx 显式传 200ms 收口 G10）→ D2 markdown typography 自定义 CSS（不引入 @tailwindcss/typography：实测 tarball ~25-30KB / unpacked ~78KB / gzip ~17KB 违反包体积纪律；dark 触发走 [data-mode=dark] + prefers-color-scheme 双轴；rich-text/tiptap-sender 独立 scope 排除）→ D3 气泡 avatar lucide + 圆形 + 32px + welcome icon lucide 分发（G3+G8 同源）→ D4 真实按钮副作用（component:setSenderDraft 新 ComponentHandle 方法含 append/replace mode draft race 处理 + ai:regenerate 新 action namespace + feedback 写 message.metadata.feedback + voice transcript 填 sender）+ suggestion pill icon lucide（G4+G9 同源）→ D5 showcase 完整性（welcome 区扩 3 个 widget 缩略卡：in-content link 引用 ai-tools-demo + ai-citations-demo；reasoning 不单独 demo 页由 ai-bubble content renderer 触发 + fixture 注入 Tool/Citation）→ D6 **LaTeX 公式渲染**（remark-math + rehype-katex + katex 硬 peer deps，markdown-buffer 扩 \\[ 边界，markdown.tsx 挂双插件，playground import katex CSS）+ 代码高亮（lowlight@^3 复用 flux-renderers-content 已有的低层 API，markdown-buffer 扩 fence 边界）→ DV 全量验证 + e2e ≥16 测试增量化（13→16）→ DG owner-doc 同步（design.md §10.4 supersession 注释已落 + improvement-analysis.md §4.2 supersession 注释已落 + renderers.md 增 setSenderDraft / ai:regenerate 段）+ daily log + closure。代码变更授权范围：跨 packages/flux-renderers-ai/ + apps/playground/ + tests/e2e/ + docs/components/flux-renderers-ai/ 四处目录（moduleDir 已置 .）；均不在 Protected Areas 表（flux-core/src/、schema/contract validation、ui/src/index.ts、renderer definition、样式契约受保护），AI 默认 implement；P0/P1 自动修复预授权（沿用 component-audit / ai-invariant-loop 纪律，闭环 ≤ 1 plan）；结构性重构（如新增 ai:regenerate 修改 AI_NAMESPACE_ACTIONS 常量 + 引入 LaTeX 硬 peer deps 修改 package.json）执行前人工确认；不新增 check:* 门禁（一次性 polish 非防回退，与 ai-invariant-loop 区分）；commitFormat 字段与 roadmap §Cross-cutting 逐字符一致。范围独立声明：与 docs/backlog/ai-invariant-loop-roadmap.md（AI engine 不变式闭环，专注防回退）+ docs/backlog/component-audit-roadmap.md（host 大面 + P3 裁决）范围不重叠（roadmap 主动单向声明；反向 ack 待 ai-invariant-loop 下一轮修订时显式加入 + 本图 closure 时 human gate 签字承认单向声明）；本图收口一次性 polish 收口后即 mission closeout，不进入持续闭环。",
+  "roadmapPath": "docs/backlog/ai-widgets-product-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": ".",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck",
+    "e2e": "pnpm test:e2e",
+    "check": "pnpm check"
+  },
+  "prompts": {
+    "uxAudit": "docs/skills/ux-design-pattern-audit-prompt.md",
+    "displayOperability": "docs/skills/complex-component-display-operability-audit-prompt.md",
+    "deepAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "fix(ai-widgets-product): <description>"
+}

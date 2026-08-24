@@ -1,8 +1,9 @@
 # Audit Follow-ups — 2026-08-11 19:29 audits（component-audit-round2）
 
-> Last Updated: 2026-08-11
+> Last Updated: 2026-08-24
 > 用途：登记 2026-08-11 19:29 两轮审计（multi-audit + open-audit，mission component-audit-round2）的 P2 发现，保证可追溯（每条含来源审计文件路径与路由去向）。
 > 路由规则：P0/P1 → remediation plans（`docs/plans/2026-08-11-1929-1-renderer-core-path-defect-remediation.md`、`docs/plans/2026-08-11-1929-2-flux-bundle-facade-host-contract-remediation.md`、`docs/plans/2026-08-11-1929-3-claim-vs-reality-plan-doc-contract-integrity-remediation.md`）；P2 → 本 backlog（与 P0/P1 同 closure surface 的 P2 已折叠进对应 plan 的 Fix/Proof 项，本表同步登记去向）。
+> 收口注记（2026-08-24）：plan `2026-08-11-1929-1` 已 completed（独立 closure-audit approved）——其折叠的 P2-09/P2-10/P2-11 及 P2-17 barcode/pivot 子项均已随该 plan 落地修复；源 open-audit 已翻 `closed`。本表 backlog 项仍待后续轮次处理。
 
 ## Follow-up Backlog
 

@@ -1,7 +1,7 @@
 # 1 渲染器核心路径缺陷修复（barcode / pivot / wizard / dropdown-button / 相对日期）（component-audit-round2）
 
-> Plan Status: active
-> Last Reviewed: 2026-08-11
+> Plan Status: completed
+> Last Reviewed: 2026-08-24（closure-audit 收口复核）
 > Source: `docs/audits/2026-08-11-1929-open-audit-component-audit-round2.md`（P0-01, P1-02..P1-05；折叠 P2-09/P2-10/P2-11 及 P2-17 barcode 子项 / pivot 子项）
 > Related: `docs/plans/2026-08-11-1929-2-flux-bundle-facade-host-contract-remediation.md`（独立 closure surface）、`docs/plans/2026-08-11-1929-3-claim-vs-reality-plan-doc-contract-integrity-remediation.md`（独立 closure surface）
 
@@ -178,15 +178,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复（P0-01、P1-02..P1-05 及折叠 P2 按 phase 完成）
-- [ ] 各 Phase 的 Proof 项（先红后绿）均有记录；无被静默降级到 deferred 的 in-scope defect
-- [ ] 受影响 owner docs（barcode-input design.md 等）已同步到 live baseline
-- [ ] 复杂缺陷 bug note 按 `docs/bugs/00-bug-fix-note-writing-guide.md` 行内补写（编号 90 起约定）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live defects 已修复（P0-01、P1-02..P1-05 及折叠 P2 按 phase 完成）
+- [x] 各 Phase 的 Proof 项（先红后绿）均有记录（`docs/logs/2026/08-11.md` 每 phase RED 计数 ×2/×1/×3/×1/×4）；无被静默降级到 deferred 的 in-scope defect
+- [x] 受影响 owner docs（barcode-input design.md 等）已同步到 live baseline
+- [x] 复杂缺陷 bug note 按 `docs/bugs/00-bug-fix-note-writing-guide.md` 行内补写（编号 90 起约定）——`docs/bugs/161-barcode-input-scan-poll-dead-on-closed-mount-fix.md`
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项——审计 session `ses_fced38d61ffekYQxxfhDchwcxX` verdict **approved**（9 gates 全 PASS、零 finding，见 Closure Audit Evidence）
+- [x] `pnpm typecheck`（37/37 绿）
+- [x] `pnpm build`（37/37 绿）
+- [x] `pnpm lint`（37/37 绿）
+- [x] `pnpm test`（51/52 包绿；本 plan 四包 form/layout/pivot/scheduling 全绿并经审计 session 独立复跑确认。唯一失败 = `flux-renderers-basic/src/__tests__/surface-event-ctx.test.tsx`，为已登记 out-of-scope baseline 红：bisect 实证由 `f616f0163`（plan 459，2026-08-18）引入、晚于本 plan 2026-08-12 落地 6 天，登记于 `docs/logs/2026/08-22.md` + `docs/audits/check/00-baseline-tooling.md:37`（待独立 plan 修），与本 plan 改动因果无关。本收口不声明 full-green）
 
 ## Deferred But Adjudicated
 
@@ -203,13 +203,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待完成
+Status Note: P0-01 与 P1-02..P1-05 五条主缺陷 + 折叠 P2（wizard key 匹配 / stepError 真实消息 / barcode design.md 与离线横幅如实化 / pivot indicators[].format 裁决删除 / clearCameraAvailabilityCache 死导出清除）全部按 phase 落地并有 focused 测试钉住（先红后绿记录于 `docs/logs/2026/08-11.md`）。收口验证：全仓 `pnpm typecheck`/`build`/`lint` 37/37 绿 + `pnpm check` exit 0（仅既有登记豁免）；`pnpm test` 51/52 包绿，本 plan 四包（form/layout/pivot/scheduling）全绿并经独立审计复跑确认，唯一失败为已登记 out-of-scope baseline 红（`surface-event-ctx.test.tsx`，由 plan 459 `f616f0163` 2026-08-18 引入，登记于 `docs/audits/check/00-baseline-tooling.md:37` 待独立 plan 修，与本 plan 因果无关）——本收口不声明 full-green。独立 closure-audit（fresh session）verdict approved，本 plan 关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待定
-- Evidence: 待定
+- Auditor / Agent: 独立子 agent（fresh session，`ses_fced38d61ffekYQxxfhDchwcxX`，执行 session 未自审）
+- Evidence: verdict **approved**（零 Blocker/Major/Minor finding）。G1-G9 逐门 PASS：G1 live 修复逐处核验（committing early-return `wizard-renderer.tsx:278/:315`、冻结快照 :335-337/:427-450、pivot loading release `pivot-renderer.tsx:130,183`、parseDate ISO fallback `date-utils.ts:182-194`、hover 150ms grace + 菜单取消 `dropdown-button-renderer.tsx:63-108`、`indicators[].format` 全包零命中、死导出已删）；G2 先红后绿记录核对；G3 owner docs 同步核对；G4 bug note 161 结构核对；G6 deferred 诚实（e2e residual watch-only + P2 backlog 路由）；G9 `pnpm test` 门禁裁定 = 可勾（失败项因果无关 + 已登记 baseline 红 + 四包独立复跑全绿）。审计 session 独立复跑：scheduling 920 / pivot 56 / layout 124 / form 813 全绿，flux-renderers-basic 仅既有登记红 1/500。
 
 Follow-up:
 
-- 待完成时填写
+- 无剩余 plan-owned work；e2e 真机补验为 watch-only residual（见 Deferred But Adjudicated），其余 P2 已登记 `docs/backlog/audit-followups-2026-08-11-1929.md` 待后续轮次
