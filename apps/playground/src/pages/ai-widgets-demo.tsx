@@ -134,7 +134,7 @@ const SUGGESTION_ITEMS = [
 ];
 
 export function AiWidgetsDemoPage({ onBack }: Props) {
-  const env = useMemo(() => createMockAiEnv(), []);
+  const env = useMemo(() => createMockAiEnv({ delayMs: 200, fixtures: true }), []);
   const connector = useMemo(() => createMockAiConnector(env), [env]);
   const { importLoader, resolveImportUrl } = useMemo(() => createAiImportLoader(connector), [connector]);
   const decoratedEnv = useMemo(

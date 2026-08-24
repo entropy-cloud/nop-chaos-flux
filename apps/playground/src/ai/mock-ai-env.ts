@@ -21,8 +21,16 @@ import {
   type AiConnector,
 } from '@nop-chaos/flux-renderers-ai';
 import type { ChatMessage } from '@nop-chaos/flux-renderers-ai';
+import { pickAiWidgetsFixture } from './ai-widgets-fixture.js';
 
 const CANNED_REPLY_WORDS = ['Hello', 'from', 'the', 'mock', 'AI', 'connector!', 'Streaming', 'works.'];
+
+export interface MockAiEnvOptions {
+  /** Delay between streamed chunks in ms. Default 15 (unchanged legacy behavior). */
+  delayMs?: number;
+  /** When true, replies are dispatched to the D1 rich markdown fixtures by keyword. Default false. */
+  fixtures?: boolean;
+}
 
 function extractLastUserText(messages: unknown): string {
   if (!Array.isArray(messages)) return '';
@@ -36,22 +44,40 @@ function extractLastUserText(messages: unknown): string {
 }
 
 /**
+ * Split markdown text into whitespace-preserving chunks so that joining all
+ * chunks reproduces the source exactly (markdown structure never depends on
+ * characters split across chunks).
+ */
+function tokenizeMarkdown(text: string): string[] {
+  return text.match(/\S+\s*/g) ?? [];
+}
+
+/**
  * Mock `env.stream`: ignores the URL entirely and returns canned OpenAI
  * ChatCompletion chunks derived from the last user message, streamed with a
  * small delay to simulate token-by-token output.
+ *
+ * `fixtures = true` switches the reply source from the legacy 8-word canned
+ * line to the D1 rich markdown fixtures (`ai-widgets-fixture.ts`), dispatched
+ * by keyword; chunk shape and the trailing `finish_reason: 'stop'` marker are
+ * identical in both modes.
  */
-export function createMockAiStream(delayMs = 15): StreamFetcher {
+export function createMockAiStream(delayMs = 15, fixtures = false): StreamFetcher {
   const fn = async (api: StreamApiRequest): Promise<StreamFetchResult<unknown>> => {
     const body = (api.data ?? {}) as { messages?: unknown };
     const userText = extractLastUserText(body.messages);
-    const echo = userText.length > 0 ? [`Echo:`, userText] : [];
-    const words = [...echo, ...CANNED_REPLY_WORDS];
+    const chunks: string[] = fixtures
+      ? tokenizeMarkdown(pickAiWidgetsFixture(userText).content)
+      : [
+          ...(userText.length > 0 ? [`Echo: `, `${userText} `] : []),
+          ...CANNED_REPLY_WORDS.map((word) => `${word} `),
+        ];
 
     async function* generate(): AsyncGenerator<unknown> {
-      for (const word of words) {
+      for (const chunk of chunks) {
         yield {
           model: 'flux-mock',
-          choices: [{ index: 0, delta: { content: `${word} ` }, finish_reason: null }],
+          choices: [{ index: 0, delta: { content: chunk }, finish_reason: null }],
         };
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
@@ -78,11 +104,20 @@ export function createMockAiConnector(env: RendererEnv): AiConnector {
   });
 }
 
-/** Build a minimal env with a mock `stream` for the AI demo. */
-export function createMockAiEnv(): RendererEnv {
+/**
+ * Build a minimal env with a mock `stream` for the AI demo.
+ *
+ * Zero-arg (or default) options keep the legacy behavior exactly: 15ms
+ * chunk delay + echo + 8-word canned reply. `fixtures: true` dispatches to
+ * the D1 rich markdown presets; a larger `delayMs` (e.g. 200 on the widgets
+ * showcase, product-spec §5) makes the streaming cadence visible.
+ */
+export function createMockAiEnv(options?: MockAiEnvOptions): RendererEnv {
+  const delayMs = options?.delayMs ?? 15;
+  const fixtures = options?.fixtures ?? false;
   return {
     fetcher: (async () => ({ status: 200, data: null })) as RendererEnv['fetcher'],
-    stream: createMockAiStream(),
+    stream: createMockAiStream(delayMs, fixtures),
     // Plan 461: route `showToast` to the playground's sonner Toaster so wiring
     // actions like `ai-prompts.onSelect` produce visible feedback.
     notify: (level, message) => {
