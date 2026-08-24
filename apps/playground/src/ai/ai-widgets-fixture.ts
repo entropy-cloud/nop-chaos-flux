@@ -34,6 +34,15 @@
  * - The math preset keyword is `formula`, never `math` (product-spec §4.3);
  *   `formula` carries LaTeX SOURCE delimiters (`$...$` / `$$...$$`) which
  *   render as KaTeX only after D6.
+ *
+ * D5 structured extension (plan 2026-08-24-2237-2, Decision D-c): each new
+ * widget capability gets exactly one dedicated trigger preset — `weather`
+ * carries `toolRound` (agentic get_weather round before the content), the
+ * `reasoning` preset carries `reasoning` (leading `reasoning_content`), and
+ * `citation` embeds `[N]` / `[N,M]` markers in its content. `default` /
+ * `code` / `formula` stay PURE markdown (no structured fields → their chunk
+ * sequence is byte-identical to the D1 baseline; protects the default single-
+ * bubble + `Hello` 10s budget and the D6 assertion surface).
  */
 
 export type AiWidgetsFixtureId = 'default' | 'weather' | 'code' | 'formula' | 'reasoning' | 'citation';
@@ -41,6 +50,19 @@ export type AiWidgetsFixtureId = 'default' | 'weather' | 'code' | 'formula' | 'r
 export interface AiWidgetsFixture {
   id: AiWidgetsFixtureId;
   content: string;
+  /**
+   * D5 structured field: leading thinking text, streamed as
+   * `delta.reasoning_content` chunks before the content stream (renders the
+   * ai-bubble reasoning collapse panel).
+   */
+  reasoning?: string;
+  /**
+   * D5 structured field: first round emits a `get_weather` `delta.tool_calls`
+   * + `finish_reason:'tool_calls'` (arguments match the `tool-mock.ts`
+   * executor); the follow-up round (after the `role:'tool'` result message)
+   * streams `content` as usual.
+   */
+  toolRound?: boolean;
 }
 
 export const AI_WIDGETS_FIXTURES: Record<AiWidgetsFixtureId, AiWidgetsFixture> = {
@@ -64,6 +86,7 @@ export const AI_WIDGETS_FIXTURES: Record<AiWidgetsFixtureId, AiWidgetsFixture> =
   },
   weather: {
     id: 'weather',
+    toolRound: true,
     content: `Here's the 7-day outlook for Hangzhou.
 
 ## 7-Day Forecast
@@ -135,6 +158,7 @@ $$
   },
   reasoning: {
     id: 'reasoning',
+    reasoning: `Preflight rejection points at custom headers; verify that before touching gateway routing rules.`,
     content: `Working through the routing failure step by step.
 
 ## Thought excerpt
@@ -157,9 +181,9 @@ The **most likely cause** is a missing allowlist entry; the checklist above clos
 
 ## Key findings
 
-1. Streaming parsers must hold back partial tokens — see [Stream Parsing Patterns](https://example.com/papers/stream-parsing)
-2. Back-pressure keeps memory flat under burst — see [Back-pressure Notes](https://example.com/papers/back-pressure)
-3. The same principles apply to UI buffers — see [Rendering Streams](https://example.com/papers/rendering-streams)
+1. Streaming parsers must hold back partial tokens [1] — see [Stream Parsing Patterns](https://example.com/papers/stream-parsing)
+2. Back-pressure keeps memory flat under burst [2] — see [Back-pressure Notes](https://example.com/papers/back-pressure)
+3. The same principles apply to UI buffers [1,2] — see [Rendering Streams](https://example.com/papers/rendering-streams)
 
 > "Latency is a product feature; buffers are how you buy it."
 

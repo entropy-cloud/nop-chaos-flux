@@ -43,6 +43,13 @@ function extractLastUserText(messages: unknown): string {
   return '';
 }
 
+/** D5 tool-round detection: the engine's follow-up request ends with the `role:'tool'` result message (tool-mock.ts round pattern). */
+function lastMessageRole(messages: unknown): string | null {
+  if (!Array.isArray(messages) || messages.length === 0) return null;
+  const m = messages[messages.length - 1] as Partial<ChatMessage> | undefined;
+  return m && typeof m.role === 'string' ? m.role : null;
+}
+
 /**
  * Split markdown text into whitespace-preserving chunks so that joining all
  * chunks reproduces the source exactly (markdown structure never depends on
@@ -61,19 +68,69 @@ function tokenizeMarkdown(text: string): string[] {
  * line to the D1 rich markdown fixtures (`ai-widgets-fixture.ts`), dispatched
  * by keyword; chunk shape and the trailing `finish_reason: 'stop'` marker are
  * identical in both modes.
+ *
+ * D5 structured emission (fixture mode only): a preset with `toolRound` emits
+ * a `get_weather` `delta.tool_calls` + `finish_reason:'tool_calls'` on the
+ * first round (arguments match the `tool-mock.ts` executor) and a normal
+ * content stream once the engine's follow-up request arrives (detected by the
+ * trailing `role:'tool'` message); a preset with `reasoning` streams
+ * `delta.reasoning_content` chunks ahead of the content stream. Presets
+ * without structured fields keep the exact D1 chunk sequence.
  */
 export function createMockAiStream(delayMs = 15, fixtures = false): StreamFetcher {
   const fn = async (api: StreamApiRequest): Promise<StreamFetchResult<unknown>> => {
     const body = (api.data ?? {}) as { messages?: unknown };
     const userText = extractLastUserText(body.messages);
-    const chunks: string[] = fixtures
-      ? tokenizeMarkdown(pickAiWidgetsFixture(userText).content)
-      : [
-          ...(userText.length > 0 ? [`Echo: `, `${userText} `] : []),
-          ...CANNED_REPLY_WORDS.map((word) => `${word} `),
-        ];
+    const fixture = fixtures ? pickAiWidgetsFixture(userText) : undefined;
+    const legacyChunks: string[] = [
+      ...(userText.length > 0 ? [`Echo: `, `${userText} `] : []),
+      ...CANNED_REPLY_WORDS.map((word) => `${word} `),
+    ];
+    const chunks: string[] = fixture
+      ? tokenizeMarkdown(fixture.content)
+      : legacyChunks;
 
     async function* generate(): AsyncGenerator<unknown> {
+      if (fixture?.toolRound && lastMessageRole(body.messages) !== 'tool') {
+        // D5 tool round: ask the weather tool, then hand control back to the
+        // engine (agentic loop). Round shape mirrors `tool-mock.ts`.
+        yield {
+          model: 'flux-mock',
+          choices: [
+            {
+              index: 0,
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: 'call_weather_widgets',
+                    type: 'function',
+                    function: {
+                      name: 'get_weather',
+                      arguments: '{"city":"Hangzhou"}',
+                    },
+                  },
+                ],
+              },
+              finish_reason: null,
+            },
+          ],
+        };
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        yield { model: 'flux-mock', choices: [{ index: 0, delta: {}, finish_reason: 'tool_calls' }] };
+        return;
+      }
+
+      if (fixture?.reasoning) {
+        for (const chunk of tokenizeMarkdown(fixture.reasoning)) {
+          yield {
+            model: 'flux-mock',
+            choices: [{ index: 0, delta: { reasoning_content: chunk }, finish_reason: null }],
+          };
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+      }
+
       for (const chunk of chunks) {
         yield {
           model: 'flux-mock',

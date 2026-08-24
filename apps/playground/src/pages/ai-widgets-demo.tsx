@@ -5,8 +5,9 @@ import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-rea
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
-import { registerAiRenderers } from '@nop-chaos/flux-renderers-ai';
+import { registerAiRenderers, type AiCitationSource, type ChatMessage } from '@nop-chaos/flux-renderers-ai';
 import { createMockAiConnector, createMockAiEnv, createAiImportLoader } from '../ai/mock-ai-env.js';
+import { mockToolSchemas, mockToolExecutor } from '../ai/tool-mock.js';
 
 interface Props {
   onBack: () => void;
@@ -28,6 +29,9 @@ const SCHEMA = {
     {
       type: 'ai-chat',
       connector: '${$ai.connectors.mock}',
+      tools: '${$ai.tools}',
+      toolExecutor: '${$ai.toolExecutor}',
+      maxToolRounds: 2,
       placeholder: 'Ask me anything about weather, docs, or data…',
       submitType: 'enter',
       showAvatar: true,
@@ -57,6 +61,27 @@ const SCHEMA = {
             description: 'This demo showcases all flux-renderers-ai widgets in a real chat context. Try sending a message or click a suggestion below.',
             icon: 'bot',
             align: 'center',
+          },
+          {
+            type: 'flex',
+            direction: 'row',
+            className: 'gap-2 flex-wrap justify-center',
+            body: [
+              {
+                type: 'link',
+                href: '#/ai-tools',
+                label: 'Tool Call — agentic tool-loop demo →',
+                className:
+                  'nop-link rounded-lg border bg-card px-3 py-2 text-sm font-medium no-underline hover:bg-accent transition-colors',
+              },
+              {
+                type: 'link',
+                href: '#/ai-citations',
+                label: 'Citations — [N] source cards demo →',
+                className:
+                  'nop-link rounded-lg border bg-card px-3 py-2 text-sm font-medium no-underline hover:bg-accent transition-colors',
+              },
+            ],
           },
           {
             type: 'ai-prompts',
@@ -113,6 +138,16 @@ const SCHEMA = {
               { type: 'text', text: 'Try voice input', className: 'text-xs text-muted-foreground' },
             ],
           },
+          {
+            type: 'text',
+            text: 'Citations — hover a [N] marker for its source card',
+            className: 'text-xs text-muted-foreground',
+          },
+          {
+            type: 'ai-citations',
+            message: '${citationMsg}',
+            sources: '${citationSources}',
+          },
         ],
       },
     },
@@ -134,10 +169,34 @@ const SUGGESTION_ITEMS = [
   { text: 'Expand', icon: '➕' },
 ];
 
+const CITATION_MESSAGE: ChatMessage = {
+  id: 'm_citation_widgets',
+  role: 'assistant',
+  content: 'Every showcase claim is traceable [1], and citations reuse the shared sanitize pipeline [2].',
+};
+
+const CITATION_SOURCES: AiCitationSource[] = [
+  {
+    index: 1,
+    title: 'flux-renderers-ai design.md',
+    url: 'https://github.com/nop-chaos/nop-chaos/blob/main/docs/architecture/ai/README.md',
+    snippet: 'Architecture and renderer contract for the AI conversation package.',
+  },
+  {
+    index: 2,
+    title: 'product-spec §6 — showcase completeness',
+    url: 'https://github.com/nop-chaos/nop-chaos/blob/main/docs/components/flux-renderers-ai/product-spec.md',
+    snippet: 'First-screen widget counting contract and D5 trigger surface.',
+  },
+];
+
 export function AiWidgetsDemoPage({ onBack }: Props) {
   const env = useMemo(() => createMockAiEnv({ delayMs: 200, fixtures: true }), []);
   const connector = useMemo(() => createMockAiConnector(env), [env]);
-  const { importLoader, resolveImportUrl } = useMemo(() => createAiImportLoader(connector), [connector]);
+  const { importLoader, resolveImportUrl } = useMemo(
+    () => createAiImportLoader(connector, { tools: mockToolSchemas, toolExecutor: mockToolExecutor }),
+    [connector],
+  );
   const decoratedEnv = useMemo(
     () => ({ ...env, importLoader, resolveImportUrl }),
     [env, importLoader, resolveImportUrl],
@@ -154,6 +213,8 @@ export function AiWidgetsDemoPage({ onBack }: Props) {
       },
       promptItems: PROMPT_ITEMS,
       suggestionItems: SUGGESTION_ITEMS,
+      citationMsg: CITATION_MESSAGE,
+      citationSources: CITATION_SOURCES,
       feedbackMsg: {
         id: 'm_fb_widgets',
         role: 'assistant',
