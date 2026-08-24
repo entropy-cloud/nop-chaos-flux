@@ -1,6 +1,6 @@
 # DG 收口：owner-doc 同步 + closure log + mission closeout
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-08-25
 > Source: `docs/backlog/ai-widgets-product-roadmap.md` §DG + D4/D5/D6 plans 的 Non-Blocking Follow-ups（DG 注记归属）
 > Mission: ai-widgets-product
@@ -66,57 +66,57 @@ mission `ai-widgets-product` 的收口 plan：owner-doc 同步（design.md 新�
 
 ### Phase 1 - owner-doc 同步（design.md + renderers.md）
 
-Status: planned
+Status: completed
 Targets: `docs/components/flux-renderers-ai/design.md`、`docs/components/flux-renderers-ai/renderers.md`
 
 - Item Types: `Fix`
 
-- [ ] design.md 新增 `### ai-bubble-typography` 段：scoped `[data-slot="ai-bubble-markdown"]` 自定义 CSS（h1-h6 / p / 列表 / blockquote / pre / code / a / table / hr / img）、拒绝 `@tailwindcss/typography` 的体积依据（tarball ~25-30KB / unpacked ~78KB / gzip ~17KB）、dark 双触发（`prefers-color-scheme` + `[data-mode='dark']`）、D6 增量（`.katex` 容器排版 + `.tok-*` token 配色）。内容以 product-spec §2 为设计输入、以 live `styles.css` / `markdown.tsx` 为事实基准（只写最终设计状态，不写 Proposed vs Current）。
-- [ ] renderers.md ai-bubble 章节：avatar 段——lucide `<Bot/>`（assistant）/ `<User/>`（user）默认渲染 + `data-role` + 32×32 圆形 token 规格 + `avatar?: ReactNode` 扩展位 + `showAvatar` 从 ai-chat / ai-message-list 的转发链。
-- [ ] renderers.md 新增 `setSenderDraft` 段：`component:setSenderDraft` ComponentHandle 方法（args `{ text, mode?: 'append' | 'replace' }`，默认 append；`\n` join 保留键入、同值 dedupe、cid 隔离、缺 text 拒绝）。
-- [ ] renderers.md 新增 `ai` namespace action 清单段：8 action（send / abort / clear / createConversation / switchConversation / deleteConversation / renameConversation / **regenerate**）+ `ai:regenerate` 的 truncate-rerun 语义（丢弃尾部 assistant 轮次重新请求、计数不变、`branchId` 更新、busy 拒绝）。
+- [x] design.md 新增 `### ai-bubble-typography` 段：scoped `[data-slot="ai-bubble-markdown"]` 自定义 CSS（h1-h6 / p / 列表 / blockquote / pre / code / a / table / hr / img）、拒绝 `@tailwindcss/typography` 的体积依据（tarball ~25-30KB / unpacked ~78KB / gzip ~17KB）、dark 双触发（`prefers-color-scheme` + `[data-mode='dark']`）、D6 增量（`.katex` 容器排版 + `.tok-*` token 配色）。内容以 product-spec §2 为设计输入、以 live `styles.css` / `markdown.tsx` 为事实基准（只写最终设计状态，不写 Proposed vs Current）。
+- [x] renderers.md ai-bubble 章节：avatar 段——lucide `<Bot/>`（assistant）/ `<User/>`（user）默认渲染 + `data-role` + 32×32 圆形 token 规格 + `avatar?: ReactNode` 扩展位 + `showAvatar` 从 ai-chat / ai-message-list 的转发链。
+- [x] renderers.md 新增 `setSenderDraft` 段：`component:setSenderDraft` ComponentHandle 方法（args `{ text, mode?: 'append' | 'replace' }`，默认 append；`\n` join 保留键入、同值 dedupe、cid 隔离、缺 text 拒绝）。
+- [x] renderers.md 新增 `ai` namespace action 清单段：8 action（send / abort / clear / createConversation / switchConversation / deleteConversation / renameConversation / **regenerate**）+ `ai:regenerate` 的 truncate-rerun 语义（丢弃尾部 assistant 轮次重新请求、计数不变、`branchId` 更新、busy 拒绝）。
 
 Exit Criteria:
 
-- [ ] `grep -n "ai-bubble-typography" docs/components/flux-renderers-ai/design.md` ≥ 1 段命中。
-- [ ] `grep -n "setSenderDraft\|ai:regenerate" docs/components/flux-renderers-ai/renderers.md` 各 ≥ 1。
-- [ ] renderers.md avatar 段含 32×32 / lucide / showAvatar 三个关键词。
-- [ ] 新段落与 live 行为零矛盾抽查：`ai-action-provider.ts` 的 `AI_NAMESPACE_ACTIONS` 8 项字面清单、`ai-component-handle.ts` 的方法面、`ai-bubble/index.tsx` avatar 默认渲染——文档清单与代码逐一对应。
+- [x] `grep -n "ai-bubble-typography" docs/components/flux-renderers-ai/design.md` ≥ 1 段命中。
+- [x] `grep -n "setSenderDraft\|ai:regenerate" docs/components/flux-renderers-ai/renderers.md` 各 ≥ 1。
+- [x] renderers.md avatar 段含 32×32 / lucide / showAvatar 三个关键词。
+- [x] 新段落与 live 行为零矛盾抽查：`ai-action-provider.ts` 的 `AI_NAMESPACE_ACTIONS` 8 项字面清单、`ai-component-handle.ts` 的方法面、`ai-bubble/index.tsx` avatar 默认渲染——文档清单与代码逐一对应。
 
 ### Phase 2 - bug 167 登记 + successor 路由
 
-Status: planned
+Status: completed
 Targets: `docs/bugs/167-diff-view-lowlight-zero-grammar-registration.md`（新文件）
 
 - Item Types: `Fix | Follow-up`
 
-- [ ] 按 `docs/bugs/00-bug-fix-note-writing-guide.md` 格式登记：根因（`syntax-highlight.ts:7` 裸 `createLowlight()` 零 grammar 注册）、影响面（`packages/flux-renderers-content/src/diff-view/components/diff-{split,unified,three-column}-view.tsx` 三视图（imports :6/:5/:7）高亮从未生效、catch 静默回退掩盖）、发现来源（ai-widgets-product D6 执行期 cross-package 复核）、修复方向（`createLowlight(common)` 或按需 register——参考 D6 `markdown.tsx` 同款接法）。
-- [ ] successor 路由注记：归属 content 包 owner（候选 = ai-invariant-loop 轮次或独立修复 plan），明确不属本 mission scope。
+- [x] 按 `docs/bugs/00-bug-fix-note-writing-guide.md` 格式登记：根因（`syntax-highlight.ts:7` 裸 `createLowlight()` 零 grammar 注册）、影响面（`packages/flux-renderers-content/src/diff-view/components/diff-{split,unified,three-column}-view.tsx` 三视图（imports :6/:5/:7）高亮从未生效、catch 静默回退掩盖）、发现来源（ai-widgets-product D6 执行期 cross-package 复核）、修复方向（`createLowlight(common)` 或按需 register——参考 D6 `markdown.tsx` 同款接法）。
+- [x] successor 路由注记：归属 content 包 owner（候选 = ai-invariant-loop 轮次或独立修复 plan），明确不属本 mission scope。
 
 Exit Criteria:
 
-- [ ] `docs/bugs/167-*.md` 存在且含 file:line 锚点 + 修复方向 + successor 路由。
-- [ ] bug note 不含本 mission 已修的虚假范围（content 缺陷与本 mission 代码零交叠）。
+- [x] `docs/bugs/167-*.md` 存在且含 file:line 锚点 + 修复方向 + successor 路由。
+- [x] bug note 不含本 mission 已修的虚假范围（content 缺陷与本 mission 代码零交叠）。
 
 ### Phase 3 - closure log + roadmap 翻转 + closeout 材料
 
-Status: planned
+Status: completed
 Targets: `docs/logs/{year}/{month}-{day}.md`、`docs/backlog/ai-widgets-product-roadmap.md`
 
 - Item Types: `Follow-up | Decision`
 
-- [ ] closure log：G1–G12 逐条闭合 checklist（gap 描述 → 闭合 phase → 证据锚点 file:line / spec / test 名），G5 注记 human gate supersession 链。
-- [ ] 各 phase 收口摘要（D0–D6 + DV）+ full-green 验证状态（引用 DV 收口记录）。
-- [ ] 6 条偏差注记逐条落档（Current Baseline 所列 1–6，措辞差异不回写 roadmap / 历史计划原文）。
-- [ ] roadmap Work Item Status 表：DV / DG 按 roadmap 状态机流转（`todo → planned`：draft review 通过时；`planned → done`：各自 closure-audit 通过后，不得提前；本 plan 自身的 `done` 在本 plan closure-audit 后）。
-- [ ] human gate 待签项登记：双向范围独立声明的单向性签字（roadmap Rule 明示要求，本 plan 不代签）。
-- [ ] mission closeout 材料核对单：roadmap 全 phase done 状态 + closure log 完整 + 偏差注记齐备 + bug 167 已路由——供 engine 决策引用。
+- [x] closure log：G1–G12 逐条闭合 checklist（gap 描述 → 闭合 phase → 证据锚点 file:line / spec / test 名），G5 注记 human gate supersession 链。
+- [x] 各 phase 收口摘要（D0–D6 + DV）+ full-green 验证状态（引用 DV 收口记录）。
+- [x] 6 条偏差注记逐条落档（Current Baseline 所列 1–6，措辞差异不回写 roadmap / 历史计划原文）。
+- [x] roadmap Work Item Status 表：DV / DG 按 roadmap 状态机流转（`todo → planned`：draft review 通过时；`planned → done`：各自 closure-audit 通过后，不得提前；本 plan 自身的 `done` 在本 plan closure-audit 后）。
+- [x] human gate 待签项登记：双向范围独立声明的单向性签字（roadmap Rule 明示要求，本 plan 不代签）。
+- [x] mission closeout 材料核对单：roadmap 全 phase done 状态 + closure log 完整 + 偏差注记齐备 + bug 167 已路由——供 engine 决策引用。
 
 Exit Criteria:
 
-- [ ] daily log 含 G1–G12 全闭合 checklist（12/12，每条有证据锚点）。
-- [ ] 6 条偏差注记全部落档（可 grep 到关键词：truncate-rerun / D-race / 缩略卡 / §6.1 / A3 占位 / D-b）。
-- [ ] roadmap Work Item Status 表 DV/DG 状态与各 plan closure-audit 状态一致（无提前翻转）。
+- [x] daily log 含 G1–G12 全闭合 checklist（12/12，每条有证据锚点）。
+- [x] 6 条偏差注记全部落档（可 grep 到关键词：truncate-rerun / D-race / 缩略卡 / §6.1 / A3 占位 / D-b）。
+- [x] roadmap Work Item Status 表 DV/DG 状态与各 plan closure-audit 状态一致（无提前翻转）。
 
 ## Draft Review Record
 
@@ -131,15 +131,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] G11 owner-doc gap 收口：design.md `ai-bubble-typography` 段存在且与 live `styles.css` 一致。
-- [ ] renderers.md 三块补齐（avatar / setSenderDraft / ai:regenerate）且与代码清单逐一对应。
-- [ ] bug 167 已登记并路由 successor（content 包缺陷不残留为无主 debt）。
-- [ ] grep 验证（roadmap §DG 完成判定）：`prose prose-sm` 字串在 `packages/flux-renderers-ai` 的 `markdown.tsx` 0 命中（**rich-text/tiptap-sender.tsx 的 `prose max-w-none` 独立 scope 不计入**）；`setSenderDraft` 字串在 `docs/components/flux-renderers-ai/renderers.md` ≥ 1；`ai-bubble-typography` 段在 `design.md` 存在。
-- [ ] closure log 写入（G1–G12 checklist + phase 摘要 + 6 条偏差注记 + full-green 引用）。
-- [ ] 6 条 D4/D5/D6 follow-up 注记全部处置（无静默丢失）。
-- [ ] roadmap DV/DG 翻转与 closure-audit 状态一致；human gate 待签项已登记（不代签）。
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
-- [ ] 纯文档计划：`pnpm typecheck` / `build` / `lint` / `test` 按模板注释豁免（无代码变更；若执行中意外产生代码 diff 则取消豁免并全量跑）。
+- [x] G11 owner-doc gap 收口：design.md `ai-bubble-typography` 段存在且与 live `styles.css` 一致。
+- [x] renderers.md 三块补齐（avatar / setSenderDraft / ai:regenerate）且与代码清单逐一对应。
+- [x] bug 167 已登记并路由 successor（content 包缺陷不残留为无主 debt）。
+- [x] grep 验证（roadmap §DG 完成判定）：`prose prose-sm` 字串在 `packages/flux-renderers-ai` 的 `markdown.tsx` 0 命中（**rich-text/tiptap-sender.tsx 的 `prose max-w-none` 独立 scope 不计入**）；`setSenderDraft` 字串在 `docs/components/flux-renderers-ai/renderers.md` ≥ 1；`ai-bubble-typography` 段在 `design.md` 存在。
+- [x] closure log 写入（G1–G12 checklist + phase 摘要 + 6 条偏差注记 + full-green 引用）。
+- [x] 6 条 D4/D5/D6 follow-up 注记全部处置（无静默丢失）。
+- [x] roadmap DV/DG 翻转与 closure-audit 状态一致；human gate 待签项已登记（不代签）。
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项。
+- [x] 纯文档计划：`pnpm typecheck` / `build` / `lint` / `test` 按模板注释豁免（无代码变更；若执行中意外产生代码 diff 则取消豁免并全量跑）。
 
 ## Deferred But Adjudicated
 
@@ -164,13 +164,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 纯文档收口 plan 全部完成——G11 owner-doc gap 闭合（design.md §10.7 + renderers.md §3.1c/§13b/§13c，与 live 代码零矛盾）、bug 167 登记并路由 successor、closure log（G1–G12 12/12 + phase 摘要 + 6 条偏差注记 + full-green 引用）写入 `docs/logs/2026/08-25.md`、roadmap 状态机无提前翻转、human gate 待签项与 mission closeout 材料备齐。唯一 Minor（design.md「≤150 行红线」措辞可误读为全文件上界）已按审计建议修正为「D2 增量 150 行贴红线」。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立 fresh sub-agent session `ses_fcac4369fffemymHQo7dvU0v9n`（非执行 session，三件套 fresh-context 输入：plan + diff 摘要 + 验证输出）
+- Evidence: verdict **approved**（0 Blocker / 0 Major / 1 Minor non-blocking）——7 门逐项 PASS：plan checklist 一致性（audit 项审计时未勾）、Phase 1 live-code 零矛盾抽查（`AI_NAMESPACE_ACTIONS` 8 项 / `AI_COMPONENT_METHODS` 7 项 / setSenderDraft 语义 / avatar 默认渲染 / styles.css 双 dark 触发与 `.katex`/`.tok-*` 逐项命中）、bug 167 锚点 live 核实（:7 裸构造 + 三消费视图 + 参照修复 :112）、closure log 6 关键词 grep、roadmap DG 未提前翻转、deferred 诚实性、`git status` 仅 docs diff + 审计独立复跑 `pnpm check` exit 0。Minor 见 Status Note（已修正）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- bug 167（content 包 diff-view 高亮零注册）已路由 successor（content 包 owner：ai-invariant-loop 轮次或独立修复 plan），非本 plan-owned work。
+- human gate 待签：双向范围独立声明的单向性签字（roadmap Rule，engine/human 处置）。
+- mission closeout 决策归 engine（依审计轮次）；材料核对单已备（closure log）。
+- 无其他剩余 plan-owned work。

@@ -22,6 +22,7 @@ export interface AiChatSchema extends BaseSchema {
   maxLength?: number;
   showWordLimit?: boolean;
   showTimestamp?: boolean; // A-4：true 时每个气泡渲染 metadata.createdAt 时间脚注（经 ai-message-list 转发给 ai-bubble）
+  showAvatar?: boolean; // D3：true 时每个气泡渲染 role 分发的 lucide avatar（经 ai-message-list 转发给 ai-bubble，见 §3.1c）
   initialMessages?: SchemaValue; // 表达式：初始 ChatMessage[]
   senderExtensions?: SchemaValue; // P6/A6：host 注入的富文本扩展组件（`React.ComponentType<AiSenderExtensionProps>`，典型 `${$ai.tiptapSender}`）
   conversationController?: SchemaValue; // 表达式：host 侧会话控制器（`AiConversationController`），绑定后 `ai` namespace 会话动作委托给它
@@ -102,6 +103,8 @@ export interface AiMessageListSchema extends BaseSchema {
   autoScroll?: boolean; // 默认 true
   itemRegion?: SchemaInput; // 参数化 region：$slot.message / $slot.index
   emptyRegion?: SchemaInput; // 覆盖 ai-chat.emptyState
+  showTimestamp?: boolean; // A-4
+  showAvatar?: boolean; // D3：转发给每条 ai-bubble（见 §3.1c）
 }
 ```
 
@@ -125,7 +128,7 @@ export interface AiBubbleSchema extends BaseSchema {
   placement?: 'start' | 'end' | 'auto'; // 默认 'auto'（user→end，其他→start）
   shape?: 'corner' | 'rounded' | 'none'; // 默认 'rounded'
   showAvatar?: boolean;
-  avatarRegion?: SchemaInput; // 自定义头像渲染
+  avatar?: SchemaValue; // D3：host 注入的 avatar 覆盖（ReactNode，经 xui:imports / 表达式解析；缺省走 lucide 默认，见 §3.1c）
   // 业务方通过 xui:imports 注册自定义 boxRenderer / contentRenderer
 
   // A-16 消息分支：host 注入的同级分支集 + 当前激活分支；当前消息 id 出现在
@@ -135,6 +138,17 @@ export interface AiBubbleSchema extends BaseSchema {
   onBranchChange?: ActionSchema; // { branchId }
 }
 ```
+
+> **不存在** `avatarRegion` 字段——历史文档残留，已从代码移除（`contract-honesty.test.ts` 断言零命中）。avatar 自定义位为 `avatar`（D3）。
+
+### 3.1c 气泡 avatar（D3）
+
+`showAvatar: true` 时气泡在 content 前渲染 avatar 节点（`ai-bubble/index.tsx`）：
+
+- **默认渲染**：lucide 按 role 分发——`user` → `<User />`，其余（assistant 等）→ `<Bot />`；节点 `<div data-slot="ai-bubble-avatar" data-role={message.role} aria-hidden="true">`（装饰性）。
+- **视觉规格**（`styles.css` `[data-slot='ai-bubble-avatar']`）：**32×32 px** 圆形（`border-radius: 9999px`）、`hsl(var(--secondary-surface))` 背景 + 1px `hsl(var(--border))` 边框、内含 16px lucide svg；dark 双轨（`prefers-color-scheme` + `[data-mode='dark']`）对齐 D2 先例。行布局经 `:has(> [data-slot='ai-bubble-avatar'])` 仅作用于带 avatar 的气泡。
+- **host 扩展位**：`AiBubbleSchema.avatar`（`SchemaValue`，经 `xui:imports` 注入 ReactNode）覆盖 lucide 默认；程序化面 `AiBubbleViewProps.avatar?: ReactNode`（向后兼容）。
+- **`showAvatar` 转发链**：`ai-chat.showAvatar` / `ai-message-list.showAvatar` → `AiMessageListView` → 每条 `AiBubbleView`；独立 `ai-bubble` 自持。缺省 `false`（不渲染 avatar 节点）。
 
 ### 3.1b 消息分支（A-16）
 
@@ -636,6 +650,48 @@ export interface AiMcpManagerSchema extends BaseSchema {
 | ai-voice-input   | `onError`                                                                          | `{ reason: 'unsupported' \| 'permission-denied' \| 'no-result' }`                       |
 | ai-mcp-manager   | `onPluginToggle` / `onPluginAdd` / `onPluginCreate` / `onToolToggle`               | 各异                                                                                    |
 
+## 13b. ai-chat ComponentHandle：`component:setSenderDraft`（D4）
+
+`ai-chat` 的 Layer C ComponentHandle 在 P2 基线 6 方法（design.md §14.3）之上，D4 新增第 7 个逻辑方法 `setSenderDraft`——live 清单见 `ai-component-handle.ts` `AI_COMPONENT_METHODS`（drift-guard 断言 7 项）：
+
+```json
+{
+  "action": "component:setSenderDraft",
+  "componentId": "my-chat",
+  "args": { "text": "提前写入的草稿", "mode": "append" }
+}
+```
+
+- **args**：`{ text: string, mode?: 'append' | 'replace' }`，`mode` 缺省 `append`；`text` 缺失/空串 → `{ ok: false }` 显式拒绝。
+- **append 语义**（`AiSenderDraftStore.apply`，`ai-chat-context.tsx`）：基于**当前** draft 值计算（含用户键入）——空基直接写入；非空基以 `\n` join 追加（键入保留，不打断）。同一写入落在未变化的 draft 上被 **dedupe** 跳过。
+- **replace 语义**：整体覆盖草稿（不 join、不 dedupe）。
+- **cid 隔离**：draft 通道为 per-`ai-chat` 实例（`ai-chat` 创建、经 `AiChatContextValue.senderDraft` 下发；`ai-sender` 订阅合并进本地 draft，键入走 `setLocal` 写透防回环）。dispatch 按 `componentId` 寻址只影响目标 ai-chat；未绑定通道的 handle 显式拒绝。
+- **消费场景**：`ai-prompts` / `ai-suggestions` 的 `onSelect` 预填输入框、`ai-voice-input` 转写追加（`ai-widgets-demo.tsx` demo 接线即此三处）。
+
+## 13c. `ai` namespace action 清单（8 action）+ `ai:regenerate`（D4）
+
+`ai` namespace 暴露 **8 个 action**（live 清单 `ai-action-provider.ts` `AI_NAMESPACE_ACTIONS`，drift-guard 断言字面 8 项；design.md §14.2 表为 P1 基线 7 action，`regenerate` 为 D4 增量，以本清单为准）：
+
+| action                  | 参数                    | 行为                                                |
+| ----------------------- | ----------------------- | --------------------------------------------------- |
+| `ai:send`               | `{ text: string }`      | 调 `engine.sendMessage(text)`；busy 显式拒绝        |
+| `ai:abort`              | —                       | 调 `engine.abort()`                                 |
+| `ai:clear`              | —                       | 清空 messages；busy 显式拒绝                        |
+| `ai:createConversation` | `{ title?, metadata? }` | 委托 conversationController（未绑定 → `ok:false`）  |
+| `ai:switchConversation` | `{ id }`                | 同上                                                |
+| `ai:deleteConversation` | `{ id }`                | 同上                                                |
+| `ai:renameConversation` | `{ id, title }`         | 同上                                                |
+| `ai:regenerate`         | `{ branchId? }`         | 重新生成末条 assistant 消息（truncate-rerun，见下） |
+
+### `ai:regenerate` 的 truncate-rerun 语义（D4 裁定）
+
+- **truncate-rerun（非 append）**：丢弃尾部 assistant 轮次（截断到最后一条 user 消息、保留其 prompt），基于剩余历史**重新请求**——assistant 消息数**不变**（一删一增），不是追加新回复（`engine/regenerate.ts`）。
+- **`branchId` 更新**：新 assistant 消息盖新 `metadata.branchId`（显式 arg > 承接递增 > 新序列 `branch-<n>`；连续 regenerate 依次 `branch-1` → `branch-2`）。
+- **busy 拒绝**：`isProcessing` 时命令边界显式 `{ ok: false, error: 'engine busy…' }`（engine 层为静默 no-op；action / handle 边界显式上报 drop）。
+- **无前导 user 消息**：engine 层静默 no-op（无可重发内容）。
+- **null-engine 窗口**：外部 engine 切换期显式拒绝（P2-8 语义，与 send/clear 一致）。
+- ComponentHandle 路径 `component:regenerate` 语义相同（A-16）。
+
 ## 14. 端到端 Schema 示例
 
 ### 14.1 最小可运行示例
@@ -674,11 +730,7 @@ export interface AiMcpManagerSchema extends BaseSchema {
   "itemRegion": {
     "type": "ai-bubble",
     "placement": "auto",
-    "showAvatar": true,
-    "avatarRegion": {
-      "type": "image",
-      "src": "${$slot.message.role === 'user' ? '/me.png' : '/bot.png'}"
-    }
+    "showAvatar": true
   },
   "onConversationChange": {
     "action": "setValue",

@@ -421,6 +421,18 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
 
 **键盘拦截面（multi-audit P2-3，2026-08-10）**：`handleKeyDown` 在弹出层打开时拦截 ArrowDown/ArrowUp/Enter/Escape（导航/确认/关闭），IME 组合期（`isComposing`/keyCode 229）放行；**零匹配**（`popupItems.length === 0`）时弹出层不渲染且按键**全部放行**（Enter 落回 submit keymap，Arrow 落回默认光标移动）——消除"弹出层视觉消失但按键仍被吞"的键盘死区。长度经 `popupItemsLengthRef` 镜像（`useEditor` 闭包内不可直接读 memo 数组，防 stale）。
 
+### 10.7 ai-bubble-typography（Markdown 排版自定义 CSS）
+
+气泡 markdown 正文排版不走 `@tailwindcss/typography`（`prose`），而是**包内 scoped 自定义 CSS**：全部选择器以 `[data-slot='ai-bubble-markdown']` 为前缀，落在 `src/styles.css`（D2 落地，D2 增量 150 行贴红线；下述 D6 增量另行计入）。数值契约以 `product-spec.md` §2.4 排版节奏表为设计输入。
+
+- **方案**：`markdown.tsx` 容器只保留 `max-w-none break-words` 横向溢出防护工具类；排版规则覆盖 h1–h6 / p / ul / ol（含 GFM 任务列表 checkbox）/ blockquote / pre / 行内 code / a / table / hr / img / strong / em。基准语境 `0.875rem` / `line-height 1.7`；标题分级字号（h1 1.5rem → h4 1rem、h5/h6 0.875rem muted）。
+- **拒绝 `@tailwindcss/typography` 的体积依据**：实测 `@tailwindcss/typography@0.5.16` tarball ~25–30 KB / unpacked ~78 KB / gzip ~17 KB——渲染器包不引入仅为一组排版规则服务的大体积插件（违反包体积纪律）；且全仓 0 引入，引入反而是新依赖面。≤150 行自定义 CSS 即完整覆盖同等功能。
+- **双轨 token 实现**：`--ai-md-*` 包级自定义属性（fg / muted-fg / muted / line / primary / pre-bg / pre-border / code-bg + mono 字体栈），取值统一 `hsl(var(--token, 字面回退值))`——theme host 逐主题保真（主题变量优先），standalone host 无 attribute 时字面回退仍生效。
+- **dark 双触发**：`@media (prefers-color-scheme: dark)`（OS 偏好轨，standalone host）与 `[data-mode='dark']`（host 显式属性轨，theme host 的 operative 轨）两条路径都覆盖，fallback 字面值取 theme-tokens classic dark 轴。`[data-mode]` 单轴即足够：主题系统双轴为 `:root[data-theme][data-mode]`，ai-bubble 不感知 theme variant。
+- **scope 边界**：仅 ai-bubble markdown 公共路径。`rich-text/tiptap-sender.tsx` 的 `prose max-w-none` 属 opt-in 子路径独立 scope（A6/P6 lineage，host 显式 import 才进 bundle），不在本方案内。
+- **D6 增量**：(a) `.katex` / `.katex-display` 容器排版——`line-height: 1.2` 防 markdown 1.7 行距撑高堆叠公式、display 块居中 + `overflow-x: auto` 横向滚动守卫；**仅排版**，颜色字体靠 host 必须 `import 'katex/dist/katex.min.css'`（§10.4 LaTeX 决策：包不内嵌 katex 样式）。(b) fenced code 的 `.tok-key` / `.tok-str` / `.tok-num` / `.tok-bool` lowlight token 配色——与 AI-15 tool-call JSON 高亮同一语义调色板（theme var 驱动）；key/num 复用 `--ai-md-primary`（自动随 dark 双轨），str/bool 走 `--success` / `--destructive` 双轨。
+- **验证锚点**：单元层 CSS 源文本断言（`markdown-content.test.tsx`，jsdom 不加载包级 stylesheet 的 repo 先例）；computed-style 断言归 e2e（`tests/e2e/ai-widgets-demo.spec.ts` typography light/dark 两测试，product-spec §7）。
+
 ## 11. 与 flux 的集成策略
 
 ### 11.1 集成层次（三层渐进）
