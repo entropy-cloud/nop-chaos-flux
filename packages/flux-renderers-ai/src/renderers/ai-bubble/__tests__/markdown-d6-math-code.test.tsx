@@ -103,3 +103,84 @@ describe('MarkdownContentRenderer — D6 fenced code highlight (G6)', () => {
     expect(container.querySelector('[data-slot="ai-bubble-copy-code"]')).toBeTruthy();
   });
 });
+
+// ============================================================================
+// P1-2 + P1-3 remediation (plan 2026-08-25-0410-1, Phase 2 Decision (b)):
+// render-time math delimiter preprocessing between `safeMarkdownSlice` and
+// the markdown pipeline. ① Currency disambiguation: an ORIGINAL-text single
+// `$` followed by a digit (outside code, not `$$`-run, not `\$`) is escaped
+// to a literal dollar — prose with two dollar amounts renders as plain `<p>`
+// with no `.katex`. ② Paired delimiter mapping: `\(`/`\)` → `$` and
+// `\[`/`\]` → `$$` (left-to-right pairing; orphan closers stay literal), so
+// mainstream LLM delimiter forms render as math. Digit-leading formulas
+// survive via `$$`-run immunity (pass ①) and via mapping (pass ② never feeds
+// generated `$` back into pass ①).
+// ============================================================================
+describe('MarkdownContentRenderer — P1-2 currency prose is not math', () => {
+  it('renders a completed two-amount sentence as a plain paragraph with literal dollars (audit live-probe case)', () => {
+    const container = renderMarkdown('The plan costs $5 today and $10 tomorrow.');
+    const md = container.querySelector('[data-slot="ai-bubble-markdown"]')!;
+    expect(md.querySelector('p')).toBeTruthy();
+    expect(container.querySelector('.katex')).toBeNull();
+    // Every dollar amount stays visible as literal text.
+    expect(md.textContent).toContain('$5');
+    expect(md.textContent).toContain('$10');
+    expect(md.textContent).toContain('today and');
+    expect(md.textContent).toContain('tomorrow.');
+  });
+});
+
+describe('MarkdownContentRenderer — P1-3 \\( \\) and \\[ \\] render as math', () => {
+  it('renders inline \\(...\\) into a .katex element', () => {
+    const container = renderMarkdown('Inline \\(E = mc^2\\) formula');
+    expect(container.querySelector('.katex')).toBeTruthy();
+  });
+
+  it('renders block \\[...\\] into a .katex-display element', () => {
+    const container = renderMarkdown('Intro\n\n\\[\nE = mc^2\n\\]\n\nOutro');
+    const display = container.querySelector('.katex-display');
+    expect(display).toBeTruthy();
+    expect(display!.querySelector('.katex')).toBeTruthy();
+  });
+
+  it('digit-leading \\(3 \\times 10^8\\) survives (mapped $ never re-enters the currency pass)', () => {
+    const container = renderMarkdown('Speed \\(3 \\times 10^8\\) m/s');
+    expect(container.querySelector('.katex')).toBeTruthy();
+  });
+
+  it('digit-leading $$5x + 1$$ survives via $$-run immunity', () => {
+    const container = renderMarkdown('Intro\n\n$$5x + 1$$\n\nOutro');
+    expect(container.querySelector('.katex')).toBeTruthy();
+  });
+
+  it('keeps \\( and $5 literal inside inline code', () => {
+    const container = renderMarkdown('Use `\\(x\\)` and `$5` in code');
+    const md = container.querySelector('[data-slot="ai-bubble-markdown"]')!;
+    expect(container.querySelector('.katex')).toBeNull();
+    expect(md.textContent).toContain('\\(x\\)');
+    expect(md.textContent).toContain('$5');
+  });
+
+  it('keeps \\( and $5 literal inside a fenced code block', () => {
+    const container = renderMarkdown('```bash\necho \\( $5\n```');
+    const md = container.querySelector('[data-slot="ai-bubble-markdown"]')!;
+    expect(container.querySelector('.katex')).toBeNull();
+    expect(md.textContent).toContain('\\( $5');
+  });
+
+  it('does not double-escape an already-escaped \\$5', () => {
+    const container = renderMarkdown('It costs \\$5 total');
+    const md = container.querySelector('[data-slot="ai-bubble-markdown"]')!;
+    expect(container.querySelector('.katex')).toBeNull();
+    expect(md.textContent).toContain('$5');
+    expect(md.textContent).not.toContain('\\$5');
+  });
+
+  it('leaves an orphan close delimiter literal (no math, ] visible)', () => {
+    const container = renderMarkdown('a \\] b');
+    const md = container.querySelector('[data-slot="ai-bubble-markdown"]')!;
+    expect(container.querySelector('.katex')).toBeNull();
+    // CommonMark consumes the backslash escape, so assert the visible bracket.
+    expect(md.textContent).toContain(']');
+  });
+});

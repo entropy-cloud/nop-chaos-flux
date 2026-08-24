@@ -80,14 +80,17 @@ function findUnclosedFenceCutoff(text: string): number | undefined {
 }
 
 function findUnclosedFenceCutoffForKind(text: string, ch: '`' | '~'): number | undefined {
-  const fenceRe = new RegExp(`(^|\\n)(${ch}{3,})`, 'g');
+  // ≤3 leading spaces are part of a fence opener (CommonMark), aligned with
+  // `maskFencedCode`'s `^ {0,3}` caliber — indented fences have the same
+  // identity in both scanners.
+  const fenceRe = new RegExp(`(^|\\n)( {0,3})(${ch}{3,})`, 'g');
   const matches = [...text.matchAll(fenceRe)];
   if (matches.length === 0) return undefined;
   if (matches.length % 2 === 0) return undefined;
 
-  // Odd count → the last fence is unclosed. Cut at its start (including the
-  // preceding newline so we don't leave a stray `\n` that confuses the next
-  // render).
+  // Odd count → the last fence is unclosed. Cut at its start (the line start,
+  // so the fence indentation and the preceding newline stay out of the safe
+  // prefix — same convention as `maskFencedCode`'s line-start `fenceStart`).
   const last = matches[matches.length - 1];
   const fenceStart = (last.index ?? 0) + (last[1]?.length ?? 0);
   return fenceStart;
@@ -98,30 +101,42 @@ function findUnclosedFenceCutoffForKind(text: string, ch: '`' | '~'): number | u
  * delimiters is avoided. Also handles unbalanced `\(` / `\)` and — D6 —
  * unbalanced `\[` / `\]` block delimiters and unclosed single-`$` inline
  * math candidates.
+ *
+ * P1-1: `$$` / `\[` / `\(` counting shares the `maskCodeRegions` code mask
+ * with the single-`$` scanner — dollars and paren/bracket delimiters inside
+ * fenced/inline code are literal (bash `$$` PID, PHP `$$var`, regex sources)
+ * and never participate in math parity, so complete messages containing them
+ * render in full instead of being permanently truncated.
  */
 function findUnclosedMathCutoff(text: string): number | undefined {
-  const dollarMatches = [...text.matchAll(MATH_BLOCK)];
+  const masked = computeCodeRegionMask(text);
+
+  const dollarMatches = unmaskedMatches(text, MATH_BLOCK, masked);
   if (dollarMatches.length % 2 === 1) {
     const last = dollarMatches[dollarMatches.length - 1];
     return last.index ?? 0;
   }
 
   // D6: `\[` / `\]` block math, aligned with the `\(` / `\)` handling below.
-  const bracketOpens = [...text.matchAll(MATH_BRACKET_OPEN)];
-  const bracketCloses = [...text.matchAll(MATH_BRACKET_CLOSE)];
+  const bracketOpens = unmaskedMatches(text, MATH_BRACKET_OPEN, masked);
+  const bracketCloses = unmaskedMatches(text, MATH_BRACKET_CLOSE, masked);
   if (bracketOpens.length > bracketCloses.length) {
     const last = bracketOpens[bracketOpens.length - 1];
     return last.index ?? 0;
   }
 
-  const opens = [...text.matchAll(MATH_INLINE_OPEN)];
-  const closes = [...text.matchAll(MATH_INLINE_CLOSE)];
+  const opens = unmaskedMatches(text, MATH_INLINE_OPEN, masked);
+  const closes = unmaskedMatches(text, MATH_INLINE_CLOSE, masked);
   if (opens.length > closes.length) {
     const last = opens[opens.length - 1];
     return last.index ?? 0;
   }
 
-  return findUnclosedSingleDollarCutoff(text);
+  return findUnclosedSingleDollarCutoff(text, masked);
+}
+
+function unmaskedMatches(text: string, re: RegExp, masked: Uint8Array): RegExpMatchArray[] {
+  return [...text.matchAll(re)].filter((m) => !masked[m.index ?? 0]);
 }
 
 /**
@@ -140,10 +155,8 @@ function findUnclosedMathCutoff(text: string): number | undefined {
  * valid — so a candidate with no later single-`$` is unclosed and we cut at
  * its index (same cut-at-delimiter-start convention as `$$`).
  */
-function findUnclosedSingleDollarCutoff(text: string): number | undefined {
+function findUnclosedSingleDollarCutoff(text: string, masked: Uint8Array): number | undefined {
   const len = text.length;
-  const masked = new Uint8Array(len);
-  maskCodeRegions(text, masked);
 
   let open = -1;
   let i = 0;
@@ -189,6 +202,19 @@ function isWhitespaceCode(code: number): boolean {
     code === 0x0d /* CR */ ||
     code === 0x0c /* FF */
   );
+}
+
+/**
+ * Compute the code-region mask for `text`: `masked[i] === 1` means index `i`
+ * sits inside a fenced code block or inline code span. This is the single
+ * definition point of "what is a code region" — the buffer cut layer and the
+ * render-time math-delimiter preprocessing (`math-delimiter-preprocess.ts`)
+ * both consume this mask instead of each keeping a scanner copy.
+ */
+export function computeCodeRegionMask(text: string): Uint8Array {
+  const masked = new Uint8Array(text.length);
+  maskCodeRegions(text, masked);
+  return masked;
 }
 
 /**

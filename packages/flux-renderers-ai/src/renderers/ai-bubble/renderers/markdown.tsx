@@ -12,6 +12,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import type { Components } from 'react-markdown';
 import type { BubbleContentRendererProps } from '../types.js';
 import { safeMarkdownSlice } from '../markdown-buffer.js';
+import { preprocessMathDelimiters } from '../math-delimiter-preprocess.js';
 
 /**
  * Markdown content renderer (A-2 streaming-safe + A-3 code-block copy).
@@ -32,10 +33,15 @@ import { safeMarkdownSlice } from '../markdown-buffer.js';
  * - D6 (G5 + G6): `remark-math` + `rehype-katex` render LaTeX (`$...$` /
  *   `$$...$$`); fenced code is highlighted via lowlight with tokens rendered
  *   as controlled React elements (no `dangerouslySetInnerHTML`).
+ * - P1-2/P1-3 (2026-08-25 remediation): `preprocessMathDelimiters` runs on
+ *   the safe slice before sanitize/parse — it escapes original-text currency
+ *   dollars (`$5` → literal, no `.katex`) and maps paired `\(...\)` /
+ *   `\[...\]` delimiters to `$`/`$$` so mainstream LLM formula forms render
+ *   as math (design.md §10.4 delimiter semantic table).
  */
 export function MarkdownContentRenderer({ message, content }: BubbleContentRendererProps) {
   const raw = extractContentText(content);
-  const source = safeMarkdownSlice(raw);
+  const source = preprocessMathDelimiters(safeMarkdownSlice(raw));
   if (source.length === 0) return null;
 
   // A-11: append a blinking cursor while the assistant message is streaming.

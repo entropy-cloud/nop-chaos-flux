@@ -158,3 +158,61 @@ describe('D6 safeMarkdownSlice — single-$ inline math boundary (Decision D-a)'
     expect(safeMarkdownSlice('intro\n```\necho $5')).toBe('intro\n');
   });
 });
+
+// ============================================================================
+// P1-1 remediation (plan 2026-08-25-0410-1): the `$$` / `\[` / `\(` counters
+// in `findUnclosedMathCutoff` must share the `maskCodeRegions` code masking
+// with the single-`$` scanner — dollars and paren/bracket delimiters inside
+// fenced/inline code are literal and must not participate in math parity.
+// Fence recognition caliber is also converged: ≤3-space indented fences are
+// fences in BOTH the cut scanner and the mask scanner (CommonMark).
+// ============================================================================
+describe('P1-1 safeMarkdownSlice — code-masked $$ no longer truncates complete text', () => {
+  it('renders a completed message with $$ inside a fenced bash block fully (audit live-probe case)', () => {
+    const full =
+      'To see the current shell process id, run:\n\n```bash\necho "PID=$$"\n```\n\nThat is all.';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+
+  it('renders a completed message with PHP $$var inside a fenced block fully', () => {
+    const full = '```php\n$name = "key";\n$$name = "value";\n```\nafter the block';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+
+  it('renders inline-code `$$` literally without truncating (parity ignores masked matches)', () => {
+    const full = 'run `$$` in your shell now';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+
+  it('still truncates at an unclosed non-code $$ even when masked $$ exists earlier', () => {
+    // One `$$` inside the (balanced) fence is masked out of the parity count;
+    // the later unclosed non-code `$$` is the only unmasked occurrence → odd
+    // → cut at its index, everything before (including the fence) survives.
+    expect(safeMarkdownSlice('```bash\necho $$\n```\nthen $$\nunclosed tail')).toBe(
+      '```bash\necho $$\n```\nthen ',
+    );
+  });
+
+  it('masks \\( and \\[ inside fenced code out of the unclosed-delimiter counts', () => {
+    const full = '```ts\nconst re = /\\(/;\nconst re2 = /\\[/;\n```\nafter';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+});
+
+describe('P1-1 safeMarkdownSlice — indented fence caliber (cut scanner ≡ mask scanner)', () => {
+  it('holds back content after an unclosed ≤3-space indented fence', () => {
+    // The indented ``` is a fence in both scanners: the cut happens at the
+    // fence line start (indentation included in the fence start).
+    expect(safeMarkdownSlice('intro\n   ```\nthis is code')).toBe('intro\n');
+  });
+
+  it('renders balanced indented fences fully', () => {
+    const full = 'before\n   ```js\nconst x = 1;\n   ```\nafter';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+
+  it('renders $$ inside a balanced indented fence fully (both scanners agree)', () => {
+    const full = '   ```bash\necho $$\n   ```\ntail';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+});

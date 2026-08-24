@@ -218,6 +218,8 @@ export interface BubbleToolRendererMatch {
 | `data-part` | CONTENT(10) | content part 的 `type` 以 `data-` 前缀开头（A-1 host 自定义） | host 自定义内容块                                                     |
 | `text`      | ROLE(20)    | 兜底 `() => true`（非字符串/未匹配 content 降级为文本）       | 纯文本                                                                |
 
+**markdown 数学定界符契约（与 `design.md` §10.4 语义表同源）**：`markdown` renderer 支持的公式定界符集合为 `$...$`（行内，`.katex`）、`$$...$$`（块级，`.katex-display`）、`\(...\)`（行内，预处理映射为 `$...$`）、`\[...\]`（块级，映射为 `$$...$$`）。字面例外：code 区域（fenced / inline）内的定界符与 `$` 一律字面；**原文 `$` 后随数字视为货币**（转义为 `\$` 字面渲染，open 与 close 侧同口径），数字开头的行内公式须用 `$$` / `\(...\)` 形态表达；孤立闭定界符（`\)` / `\]` 无前置未闭合 open）保持字面；`\$` 为字面美元；`\\(` / `\\[`（转义反斜杠）为字面。
+
 ### 3.4 DOM 结构
 
 ```html
