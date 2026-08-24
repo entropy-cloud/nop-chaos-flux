@@ -209,3 +209,92 @@ test.describe('AI widgets — D6 LaTeX rendering + code highlight', () => {
     await assertTrackedPageErrors(page);
   });
 });
+
+test.describe('AI widgets — DV computed-style typography + streaming cadence', () => {
+  const ASSISTANT_MD = '[data-slot="ai-bubble"][data-role="assistant"] [data-slot="ai-bubble-markdown"]';
+
+  async function sendUserMessage(page: import('@playwright/test').Page, text: string) {
+    const input = page.locator('[data-slot="ai-sender-input"] textarea');
+    await expect(input).toBeVisible();
+    await input.fill(text);
+    await page.locator('[data-slot="ai-sender-submit"]').click();
+  }
+
+  test('citation fixture typography computes styled h2/blockquote/link (light, product-spec §7 row 1)', async ({ page }) => {
+    await openWidgetsPage(page);
+    // `citation` is the only preset covering all three assertion targets at
+    // once (h2 + links + blockquote; default/weather carry no blockquote).
+    await sendUserMessage(page, 'Give me a citation summary of the papers');
+
+    const md = page.locator(ASSISTANT_MD);
+    const h2 = md.locator('h2').first();
+    const blockquote = md.locator('blockquote').first();
+    const link = md.locator('a').first();
+    await expect(h2).toBeVisible({ timeout: 30_000 });
+    await expect(blockquote).toBeVisible({ timeout: 30_000 });
+    await expect(link).toBeVisible({ timeout: 30_000 });
+
+    // h2 computed fontSize = 20px (1.25rem) — the D2 rule, not the browser
+    // default 1.5em = 24px.
+    expect(await h2.evaluate((el) => getComputedStyle(el).fontSize)).toBe('20px');
+
+    // blockquote computed backgroundColor non-transparent (muted token applies).
+    expect(await blockquote.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(
+      'rgba(0, 0, 0, 0)',
+    );
+
+    // a computed color is the primary token, not the browser default blue.
+    expect(await link.evaluate((el) => getComputedStyle(el).color)).not.toBe('rgb(0, 0, 238)');
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('dark-mode typography computes a dark fenced-code background (product-spec §7 row 2)', async ({ page }) => {
+    await openWidgetsPage(page);
+    // D2 dual-track dark injection. The host-attribute track is the operative
+    // one in the playground (theme-tokens resolve --muted at :root, so the
+    // media track's literal fallback never fires here); emulateMedia keeps
+    // the §7 wording's prefers-color-scheme simulation active as well.
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.evaluate(() => document.documentElement.setAttribute('data-mode', 'dark'));
+
+    await sendUserMessage(page, 'Help me debug this code');
+
+    const pre = page.locator(`${ASSISTANT_MD} [data-slot="ai-bubble-pre"]`).first();
+    await expect(pre).toBeVisible({ timeout: 30_000 });
+
+    const bg = await pre.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg, 'fenced code must have a painted (non-transparent) background').not.toBe(
+      'rgba(0, 0, 0, 0)',
+    );
+    const channels = (bg.match(/\d+(\.\d+)?/g) ?? []).map(Number).slice(0, 3);
+    expect(channels, `expected rgb() channels from ${bg}`).toHaveLength(3);
+    // Dark fallback values: theme classic-dark --muted hsl(217 33% 18%) ≈
+    // rgb(31, 42, 61); package literal hsl(222 47% 11%) is darker still.
+    // Light muted hsl(210 40% 96%) ≈ rgb(240, 245, 250) must fail this.
+    expect(Math.max(...channels), `expected a dark fenced-code background, got ${bg}`).toBeLessThan(100);
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('streaming cadence: full widgets-demo stream spans seconds, not milliseconds (product-spec §7 last row)', async ({ page }) => {
+    await openWidgetsPage(page);
+
+    const root = page.locator('[data-slot="ai-chat-root"]');
+    const input = page.locator('[data-slot="ai-sender-input"] textarea');
+    await expect(input).toBeVisible();
+    await input.fill('plain greeting');
+
+    // Indirect evidence of the §5 cadence: 200ms/word × >= 10 words means the
+    // default preset's full stream must last seconds. The legacy 15ms/word
+    // cadence finished in ~120ms, far below this bound. Exact duration is
+    // deliberately NOT asserted.
+    const startedAt = Date.now();
+    await page.locator('[data-slot="ai-sender-submit"]').click();
+    await expect(root).toHaveAttribute('data-state', 'completed', { timeout: 20_000 });
+    const elapsedMs = Date.now() - startedAt;
+    expect(elapsedMs).toBeGreaterThanOrEqual(2000);
+
+    await assertTrackedPageErrors(page);
+  });
+});

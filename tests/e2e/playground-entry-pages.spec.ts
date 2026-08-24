@@ -481,6 +481,38 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-testid="leafer-example-canvas"]')).toHaveCount(4, { timeout: 10_000 });
   },
+  // DV (plan 2026-08-25-0215-1 Phase 2): the five routes below were registered
+  // in DOMAIN_RENDERER_ROUTES without ROUTE_ASSERTIONS entries, so their
+  // loop-generated smoke tests were no-ops and the :490 inventory test was red.
+  'gantt-states': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'Gantt States — empty / loading / baselines / regions', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'ai-coverage': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'AI Coverage — states, widgets & edge cases', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'dingtalk-flow-demo': async (page) => {
+    // The standalone dingtalk demo page was removed (plan 2026-08-07-1053-2);
+    // this route id has no App.tsx case, so live behavior is the home-page
+    // fallback. The smoke pins that live fallback until the stale route entry
+    // is cleaned up by its owner.
+    await expect(page.getByRole('heading', { name: 'Playground', level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
+  },
+  'scada-editor-demo': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'scada-editor-demo 编辑器演示页', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'dashboard-demo': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'dashboard-editor 演示页', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {
