@@ -24,7 +24,7 @@ import type { RendererDefinition, RendererRegistry, SchemaFieldRule } from '@nop
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createDefaultRegistry } from '@nop-chaos/flux-react';
 import { createFormulaCompiler, createExpressionCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaCompiler } from './schema-compiler.js';
+import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';

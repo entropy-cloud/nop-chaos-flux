@@ -48,6 +48,8 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@nop-chaos/flux-renderers-dashboard": "workspace:*",
+    "@nop-chaos/flux-renderers-scheduling": "workspace:*",
     "@vitejs/plugin-react": "^6.0.1",
     "vite": "^8.0.3"
   }

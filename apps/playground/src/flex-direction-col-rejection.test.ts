@@ -16,7 +16,7 @@ import { describe, it, expect } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createFormulaCompiler, createExpressionCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaCompiler } from './schema-compiler.js';
+import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { FlexRenderer, ContainerRenderer } from '@nop-chaos/flux-renderers-basic';
 
 const FLEX_DIRECTION_LITERALS = ['row', 'column', 'row-reverse', 'column-reverse'] as const;
