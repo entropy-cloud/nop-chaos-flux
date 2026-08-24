@@ -67,7 +67,17 @@ export function createFluxSchemaRendererWithRegistry(
           data={props.data}
           formulaCompiler={formulaCompiler}
           registry={registry}
+          plugins={props.plugins}
+          pageStore={props.pageStore}
+          surfaceRuntime={props.surfaceRuntime}
+          moduleCache={props.moduleCache}
+          parentScope={props.parentScope}
+          actionScope={props.actionScope}
+          componentRegistry={props.componentRegistry}
           strictValidation={props.strictValidation}
+          onRuntimeChange={props.onRuntimeChange}
+          onComponentRegistryChange={props.onComponentRegistryChange}
+          onActionScopeChange={props.onActionScopeChange}
           onActionError={props.onActionError}
         />
       </div>
