@@ -1,9 +1,17 @@
 # 444 Deep Audit 2026-06-02 Consolidated Remediation Plan
 
 > Plan Status: completed
-> Last Reviewed: 2026-06-02
+> Last Reviewed: 2026-08-24
 > Source: `docs/analysis/2026-06-02-deep-audit-full/summary.md`, `docs/analysis/2026-06-02-open-ended-adversarial-review-01/round-01.md` through `round-08.md`
 > Related: `docs/plans/436-deep-audit-2026-05-24-full-remediation-plan.md` (completed predecessor)
+
+## Outdated Note（2026-08-24 checklist 回写修正，P2-22）
+
+本计划 2026-06-02 关闭时经独立 closure audit 核准（行为面），但执行 checklist（~119 项）从未逐项回写，长期处于「completed + 全部未勾选」的失真状态（违反 plan guide Rule 19/20）。2026-08-24（源：`docs/plans/2026-08-11-1929-3-claim-vs-reality-plan-doc-contract-integrity-remediation.md` Phase 1）对全部 11 个 workstream 做了 live 抽核（每 workstream 2-4 项，锚点见各项注记），结论：
+
+- **绝大多数 item 已落地**，本轮补勾（带「2026-08-24 核对」注记的项为直接实证；其余为 closure audit 核准 + 抽核无反证）。
+- **3 项偏差**，保持未勾选并移入 `Deferred But Adjudicated`：17-03（`use-form-hooks.ts` rename 未落地，文件仍为旧名）、15-01（stopWhen null-member 特例仍在——`api-data-source-controller-state.ts:147-158` dev-warn + 继续轮询，未按原案改为全量 fail-closed）、17-04（dataSource vs source 命名映射文档未见实证）。
+- 原「follow-up: no remaining plan-owned work」以 closure audit 为准；上述 3 项为本次回写核对新识别的残留，均已裁定处理路径。
 
 ## Purpose
 
@@ -107,24 +115,24 @@ Targets: `packages/flux-renderers-form-advanced`, `packages/word-editor-renderer
 
 - Item Types: `Fix | Decision | Follow-up`
 
-- [ ] **[P1]** Fix `01-02`: move `attachScopeDebugToSchema` from `apps/playground` into a shared test utility or inline it into `array-field-object-items.test.tsx`.
-- [ ] **[P2]** Fix `01-01`: replace `import from '../../../flux-react/src/contexts.js'` with `import from '@nop-chaos/flux-react/unstable'` in word-editor test.
-- [ ] **[P2]** Fix `17-04`: audit all `dataSource` vs `source` prop usage and document the canonical name mapping; apply normalization where safe.
-- [ ] **[P2]** Fix `18-01`: add a minimal zustand/vanilla seam adapter for flow-designer-core state subscription so consumers don't need to know about the closure pattern; document the bridge.
-- [ ] **[P3]** Fix `17-01`: clarify `ActionContextRendererEnv` vs `RendererEnv` relationship with a code comment or type alias.
-- [ ] **[P3]** Fix `17-02`: evaluate and deprecate `Flux*` prefix aliases in `flux-bundle` if no external consumer depends on them.
-- [ ] **[P3]** Fix `17-03`: rename `use-form-hooks.ts` to `useFormHooks.ts`.
-- [ ] **[P4]** Fix `18-02`: unify eslint-disable comment style across the repo (automated codemod acceptable).
-- [ ] **[P4]** Fix `02-N4`: add `description` field to all 25 `package.json` files.
+- [x] **[P1]** Fix `01-02`: move `attachScopeDebugToSchema` from `apps/playground` into a shared test utility or inline it into `array-field-object-items.test.tsx`.（2026-08-24 核对：test 仅 import `@nop-chaos/*` 包 + 本包 `../test-support`，无 playground 深路径）
+- [x] **[P2]** Fix `01-01`: replace `import from '../../../flux-react/src/contexts.js'` with `import from '@nop-chaos/flux-react/unstable'` in word-editor test.（2026-08-24 核对：word-editor 测试 import `@nop-chaos/flux-react` 公共出口）
+- [ ] **[P2]** Fix `17-04`: audit all `dataSource` vs `source` prop usage and document the canonical name mapping; apply normalization where safe.（2026-08-24 核对：未见命名映射文档或 normalization 实证 → 已移入 Deferred But Adjudicated）
+- [x] **[P2]** Fix `18-01`: add a minimal zustand/vanilla seam adapter for flow-designer-core state subscription so consumers don't need to know about the closure pattern; document the bridge.（2026-08-24 核对：`packages/flow-designer-core/src/adapters/designer-store-adapter.ts` 存在且带测试）
+- [x] **[P3]** Fix `17-01`: clarify `ActionContextRendererEnv` vs `RendererEnv` relationship with a code comment or type alias.（2026-08-24 核对：`flux-core/types/actions.ts:101-105` 独立类型 + doc comment）
+- [x] **[P3]** Fix `17-02`: evaluate and deprecate `Flux*` prefix aliases in `flux-bundle` if no external consumer depends on them.（评估项：closure audit 核准；2026-08-24 核对 `Flux*` 导出仍在且无 `@deprecated`——评估结论为保留）
+- [ ] **[P3]** Fix `17-03`: rename `use-form-hooks.ts` to `useFormHooks.ts`.（2026-08-24 核对：`packages/flux-react/src/hooks/use-form-hooks.ts` 仍为旧文件名，rename 未落地 → 已移入 Deferred But Adjudicated）
+- [x] **[P4]** Fix `18-02`: unify eslint-disable comment style across the repo (automated codemod acceptable).（closure audit 核准；抽核现存 disable 均为 `eslint-disable-next-line` 统一形态）
+- [x] **[P4]** Fix `02-N4`: add `description` field to all 25 `package.json` files.（2026-08-24 核对：36/36 packages 均有 description）
 
 Exit Criteria:
 
-- [ ] `01-02` no longer reproduces: test file imports only from `@nop-chaos/*` or shared utilities.
-- [ ] `01-01` no longer reproduces: test uses public export path.
-- [ ] `17-04` has a documented naming mapping and normalization where safe.
-- [ ] `18-01` has a documented seam and no consumer directly depends on closure internals.
-- [ ] `pnpm typecheck`, `pnpm build`, `pnpm lint` pass.
-- [ ] `docs/logs/` updated.
+- [x] `01-02` no longer reproduces: test file imports only from `@nop-chaos/*` or shared utilities.
+- [x] `01-01` no longer reproduces: test uses public export path.
+- [ ] `17-04` has a documented naming mapping and normalization where safe.（未落地，见 Deferred）
+- [x] `18-01` has a documented seam and no consumer directly depends on closure internals.
+- [x] `pnpm typecheck`, `pnpm build`, `pnpm lint` pass.
+- [x] `docs/logs/` updated.
 
 ### Workstream 2 - Report Designer Host Contract And Workbook Truth
 
@@ -133,21 +141,21 @@ Targets: `packages/report-designer-renderers/src/host-data.ts`, `packages/report
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **[P1]** Fix `04-02` + `R01-F2`: select a single workbook owner (spreadsheet runtime when live editing, report snapshot otherwise); unify `buildReportDesignerScopeData` so `reportDocument.spreadsheet.workbook`, top-level `workbook`, and `spreadsheet.workbook` always point to the same canonical baseline.
-- [ ] **[P2]** Fix `04-02-A`: align `createHostData` and `buildReportDesignerScopeData` on the same copy-vs-reference strategy (defensive copy for both, or documented shared reference).
-- [ ] **[P2]** Fix `R01-F3`: normalize `report-designer:preview`, `report-designer:save`, and `report-designer:exportTemplate` action results into a structured discriminated envelope; update manifest to declare the result shape instead of `unknown`.
-- [ ] **[P2]** Fix `16-02`: update `docs/architecture/report-designer/design.md` to reflect the final single-baseline workbook semantics and structured action results.
-- [ ] **[P3]** Fix `04-05`: ensure `buildReportDesignerScopeData` workbook references are immutable or defensively copied to prevent accidental mutation of core state.
-- [ ] Add focused tests asserting workbook identity, structured results, and immutability.
+- [x] **[P1]** Fix `04-02` + `R01-F2`: select a single workbook owner (spreadsheet runtime when live editing, report snapshot otherwise); unify `buildReportDesignerScopeData` so `reportDocument.spreadsheet.workbook`, top-level `workbook`, and `spreadsheet.workbook` always point to the same canonical baseline.（2026-08-24 核对：`host-data.ts` 统一读 `snapshot.document.spreadsheet.workbook`）
+- [x] **[P2]** Fix `04-02-A`: align `createHostData` and `buildReportDesignerScopeData` on the same copy-vs-reference strategy (defensive copy for both, or documented shared reference).
+- [x] **[P2]** Fix `R01-F3`: normalize `report-designer:preview`, `report-designer:save`, and `report-designer:exportTemplate` action results into a structured discriminated envelope; update manifest to declare the result shape instead of `unknown`.
+- [x] **[P2]** Fix `16-02`: update `docs/architecture/report-designer/design.md` to reflect the final single-baseline workbook semantics and structured action results.
+- [x] **[P3]** Fix `04-05`: ensure `buildReportDesignerScopeData` workbook references are immutable or defensively copied to prevent accidental mutation of core state.
+- [x] Add focused tests asserting workbook identity, structured results, and immutability.（2026-08-24 核对：`host-data.test.ts` 存在）
 
 Exit Criteria:
 
-- [ ] `host-data.test.ts` asserts `reportDocument.spreadsheet.workbook === spreadsheet.workbook === top-level workbook` identity across snapshot scenarios.
-- [ ] `createHostData` and `buildReportDesignerScopeData` use consistent copy/reference semantics.
-- [ ] Manifest declares structured result shapes for preview/save/exportTemplate instead of `unknown`.
-- [ ] Owner docs match live behavior.
-- [ ] Focused tests pass.
-- [ ] `docs/logs/` updated.
+- [x] `host-data.test.ts` asserts `reportDocument.spreadsheet.workbook === spreadsheet.workbook === top-level workbook` identity across snapshot scenarios.
+- [x] `createHostData` and `buildReportDesignerScopeData` use consistent copy/reference semantics.
+- [x] Manifest declares structured result shapes for preview/save/exportTemplate instead of `unknown`.
+- [x] Owner docs match live behavior.
+- [x] Focused tests pass.
+- [x] `docs/logs/` updated.
 
 ### Workstream 3 - Spreadsheet/Table Editing State And Async Safety
 
@@ -156,21 +164,21 @@ Targets: `packages/spreadsheet-renderers/src/spreadsheet-interactions/use-editin
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **[P2]** Fix `04-01`: converge inline editing session into spreadsheet-core or a designated editing owner; renderer-local state retains only IME/focus/composition DOM transient, not `editingCell`/`editValue`/`editSaveState` business facts.
-- [ ] **[P2]** Fix `04-03`: add `editing` to `SpreadsheetHostSnapshot` and bridge selector so adjacent surfaces can consume editing truth.
-- [ ] **[P3]** Fix `04-01-A`: either populate `SpreadsheetEditingState` in core or remove the type declaration; don't leave declared-but-never-populated types.
-- [ ] **[P3]** Fix `04-04`: add validity check in `commitEditingCell` to verify editing cell coordinates are still within bounds.
-- [ ] **[P2]** Fix `R01-F4`: add a generation guard or abort mechanism to `table-quick-edit-controller.runSave()` so stale async completions cannot write into a different record/field than the one that launched the save.
-- [ ] Add focused tests for editing owner convergence, bridge editing projection, stale async save rejection.
+- [x] **[P2]** Fix `04-01`: converge inline editing session into spreadsheet-core or a designated editing owner; renderer-local state retains only IME/focus/composition DOM transient, not `editingCell`/`editValue`/`editSaveState` business facts.（2026-08-24 核对：`spreadsheet-core/types.ts:253` `SpreadsheetEditingState`）
+- [x] **[P2]** Fix `04-03`: add `editing` to `SpreadsheetHostSnapshot` and bridge selector so adjacent surfaces can consume editing truth.（2026-08-24 核对：`bridge.ts:19/56-57`）
+- [x] **[P3]** Fix `04-01-A`: either populate `SpreadsheetEditingState` in core or remove the type declaration; don't leave declared-but-never-populated types.
+- [x] **[P3]** Fix `04-04`: add validity check in `commitEditingCell` to verify editing cell coordinates are still within bounds.
+- [x] **[P2]** Fix `R01-F4`: add a generation guard or abort mechanism to `table-quick-edit-controller.runSave()` so stale async completions cannot write into a different record/field than the one that launched the save.（2026-08-24 核对：`saveGenerationRef` generation guard `table-quick-edit-controller.ts:309-346`）
+- [x] Add focused tests for editing owner convergence, bridge editing projection, stale async save rejection.
 
 Exit Criteria:
 
-- [ ] `use-editing.ts` no longer declares `useState`/`useRef` for `editingCell`/`editValue`/`editSaveState`; editing truth consumed from core or designated owner.
-- [ ] `SpreadsheetHostSnapshot` includes `editing` field and bridge selector maps it.
-- [ ] Table quick-edit save ties async completion to the originating generation (e.g., via request id or AbortController).
-- [ ] Focused tests pass.
-- [ ] Owner docs updated: `docs/components/spreadsheet-page/design.md`, `docs/architecture/scope-ownership-and-isolation.md`.
-- [ ] `docs/logs/` updated.
+- [x] `use-editing.ts` no longer declares `useState`/`useRef` for `editingCell`/`editValue`/`editSaveState`; editing truth consumed from core or designated owner.
+- [x] `SpreadsheetHostSnapshot` includes `editing` field and bridge selector maps it.
+- [x] Table quick-edit save ties async completion to the originating generation (e.g., via request id or AbortController).
+- [x] Focused tests pass.
+- [x] Owner docs updated: `docs/components/spreadsheet-page/design.md`, `docs/architecture/scope-ownership-and-isolation.md`.
+- [x] `docs/logs/` updated.
 
 ### Workstream 4 - Renderer Contract Normalization And Error Containment
 
@@ -179,24 +187,24 @@ Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`, `packages/flux-re
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **[P1]** Fix `09-02`: refactor `CrudRenderer` to stop forging `RendererComponentProps`; extract shared table view/controller layer or use `helpers.render(tableSchema, ...)` through standard path.
-- [ ] **[P1]** Fix `09-03`: replace `helpers.dispatch.__actionScope`/`.__componentRegistry` private field access with standard `useCurrentActionScope()`/`useCurrentComponentRegistry()` hooks.
-- [ ] **[P2]** Fix `09-04`: surface open/close events (`onOpen`/`onClose`) should receive semantic event payload (surfaceId, kind, open state) instead of being called with zero arguments.
-- [ ] **[P2]** Fix `R05-F1`: in strict mode, unknown schema types should produce a diagnostic event or visible placeholder instead of being silently dropped.
-- [ ] **[P3]** Fix `R06-F1`: wrap dialog/drawer `titleNode` and `actionsNode` in `SurfaceBodyBoundary` or dedicated boundary so crashes in these regions don't propagate past the dialog.
-- [ ] **[P3]** Fix `R06-F3`: wrap runtime creation factories (`createRendererRuntime`, `createPageRuntime`, `createSurfaceRuntime`) in try/catch within `useMemo`/`useRef` to prevent white-screen crashes.
-- [ ] **[P3]** Fix `19-02`: extend `AdapterValidationIssue` with `value` and `cause` fields for better debugging.
-- [ ] Add focused tests asserting standard path usage, error containment, and diagnostic signaling.
+- [x] **[P1]** Fix `09-02`: refactor `CrudRenderer` to stop forging `RendererComponentProps`; extract shared table view/controller layer or use `helpers.render(tableSchema, ...)` through standard path.（2026-08-24 核对：`crud-renderer.tsx:539` 走 `props.helpers.render(carrierSchema, ...)` 标准路径）
+- [x] **[P1]** Fix `09-03`: replace `helpers.dispatch.__actionScope`/`.__componentRegistry` private field access with standard `useCurrentActionScope()`/`useCurrentComponentRegistry()` hooks.（2026-08-24 核对：`__actionScope`/`__componentRegistry` 私有字段访问零残留）
+- [x] **[P2]** Fix `09-04`: surface open/close events (`onOpen`/`onClose`) should receive semantic event payload (surfaceId, kind, open state) instead of being called with zero arguments.（2026-08-24 核对：declarative 事件路径 `use-surface-renderer.ts` 以 `onClose?.(payload, eventCtx(payload))` 携带语义 payload）
+- [x] **[P2]** Fix `R05-F1`: in strict mode, unknown schema types should produce a diagnostic event or visible placeholder instead of being silently dropped.
+- [x] **[P3]** Fix `R06-F1`: wrap dialog/drawer `titleNode` and `actionsNode` in `SurfaceBodyBoundary` or dedicated boundary so crashes in these regions don't propagate past the dialog.（2026-08-24 核对：`flux-react/src/node-error-boundary.tsx` + dialog-host 接线）
+- [x] **[P3]** Fix `R06-F3`: wrap runtime creation factories (`createRendererRuntime`, `createPageRuntime`, `createSurfaceRuntime`) in try/catch within `useMemo`/`useRef` to prevent white-screen crashes.（2026-08-24 核对：`schema-renderer.tsx:141` `creationErrorRef` + try/catch 守卫）
+- [x] **[P3]** Fix `19-02`: extend `AdapterValidationIssue` with `value` and `cause` fields for better debugging.（2026-08-24 核对：`value-adapter.ts:32` `cause?: unknown`）
+- [x] Add focused tests asserting standard path usage, error containment, and diagnostic signaling.
 
 Exit Criteria:
 
-- [ ] `CrudRenderer` uses standard renderer assembly path or shared extracted layer.
-- [ ] `useSurfaceRenderer` uses standard hooks, not private field access.
-- [ ] Surface events carry semantic payloads.
-- [ ] Strict mode produces observable feedback for unknown types.
-- [ ] Dialog title/actions and runtime factories are error-contained.
-- [ ] Owner docs updated: `docs/architecture/renderer-runtime.md`, `docs/architecture/styling-system.md`.
-- [ ] `docs/logs/` updated.
+- [x] `CrudRenderer` uses standard renderer assembly path or shared extracted layer.
+- [x] `useSurfaceRenderer` uses standard hooks, not private field access.
+- [x] Surface events carry semantic payloads.
+- [x] Strict mode produces observable feedback for unknown types.
+- [x] Dialog title/actions and runtime factories are error-contained.
+- [x] Owner docs updated: `docs/architecture/renderer-runtime.md`, `docs/architecture/styling-system.md`.
+- [x] `docs/logs/` updated.
 
 ### Workstream 5 - Data Source Pipeline Safety
 
@@ -205,19 +213,19 @@ Targets: `packages/flux-runtime/src/async-data/api-data-source-controller-state.
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **[P1]** Fix `15-02`: stop downgrading `stopWhen` from compiled expression to source string; preserve `CompiledRuntimeValue<boolean>` through registration and poll via `runtime.evaluateCompiled(...)` instead of `runtime.evaluate(string, ...)`.
-- [ ] **[P1]** Fix `15-03`: reset `started` flag in `formula-data-source-controller.stop()` and `reset()` so `start()`/`refresh()` work after stop/reset; add stop→start and reset→refresh regression tests.
-- [ ] **[P2]** Fix `15-01`: remove null-member special-case in `stopWhen` evaluation error handling; all evaluation errors should enter error state and report to host.
-- [ ] Add focused tests for compile-once preservation, restartable lifecycle, and fail-closed error handling.
+- [x] **[P1]** Fix `15-02`: stop downgrading `stopWhen` from compiled expression to source string; preserve `CompiledRuntimeValue<boolean>` through registration and poll via `runtime.evaluateCompiled(...)` instead of `runtime.evaluate(string, ...)`.（2026-08-24 核对：`api-data-source-controller-state.ts:136-142` `evaluateCompiled` 路径）
+- [x] **[P1]** Fix `15-03`: reset `started` flag in `formula-data-source-controller.stop()` and `reset()` so `start()`/`refresh()` work after stop/reset; add stop→start and reset→refresh regression tests.（2026-08-24 核对：`formula-data-source-controller.ts:260/:280` `started = false`）
+- [ ] **[P2]** Fix `15-01`: remove null-member special-case in `stopWhen` evaluation error handling; all evaluation errors should enter error state and report to host.（2026-08-24 核对：null-member 特例仍在——`api-data-source-controller-state.ts:147-158` dev-warn 后 `return false` 继续轮询，仅其它错误进入 error 态；与原案不符 → 已移入 Deferred But Adjudicated）
+- [x] Add focused tests for compile-once preservation, restartable lifecycle, and fail-closed error handling.
 
 Exit Criteria:
 
-- [ ] `stopWhen` is never downgraded from compiled to string in the polling path.
-- [ ] Formula data-source is restartable after stop/reset.
-- [ ] All `stopWhen` evaluation errors enter error state, no silent continue.
-- [ ] Focused tests pass.
-- [ ] Owner docs updated: `docs/architecture/api-data-source.md`.
-- [ ] `docs/logs/` updated.
+- [x] `stopWhen` is never downgraded from compiled to string in the polling path.
+- [x] Formula data-source is restartable after stop/reset.
+- [ ] All `stopWhen` evaluation errors enter error state, no silent continue.（null-member 特例保留，见 Deferred 裁定）
+- [x] Focused tests pass.
+- [x] Owner docs updated: `docs/architecture/api-data-source.md`.
+- [x] `docs/logs/` updated.
 
 ### Workstream 6 - Async Lifecycle, Resource Management, And Form Validation
 
@@ -226,18 +234,18 @@ Targets: `packages/flux-action-core/src/action-dispatcher/action-execution.ts`, 
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **[P2]** Fix `R04-F1`: ensure `mergeAbortSignals` cleans up its `abort` listener on `rootSignal` after normal completion (not just on abort); use a completion callback or weak-ref dedup to prevent monotonic listener accumulation.
-- [ ] **[P2]** Fix `R04-F2`: add a dedup guard to `useNodeLifecycleActions` so `onMount` doesn't fire twice in React 19 StrictMode; parallel the `lastInitKeyRef` pattern from `form.tsx`.
-- [ ] **[P2]** Fix `R06-F2`: close the TOCTOU window in `validateForm` by using functional update or per-form validation lock instead of snapshot-based read-then-replace of `fieldStates`.
-- [ ] Add focused tests for listener cleanup, StrictMode dedup, and concurrent validation serialization.
+- [x] **[P2]** Fix `R04-F1`: ensure `mergeAbortSignals` cleans up its `abort` listener on `rootSignal` after normal completion (not just on abort); use a completion callback or weak-ref dedup to prevent monotonic listener accumulation.（2026-08-24 核对：`action-execution.ts:92-130` cleanup 移除双 listener）
+- [x] **[P2]** Fix `R04-F2`: add a dedup guard to `useNodeLifecycleActions` so `onMount` doesn't fire twice in React 19 StrictMode; parallel the `lastInitKeyRef` pattern from `form.tsx`.（2026-08-24 核对：`node-renderer-effects.ts:22-36` `lastInitKeyRef`）
+- [x] **[P2]** Fix `R06-F2`: close the TOCTOU window in `validateForm` by using functional update or per-form validation lock instead of snapshot-based read-then-replace of `fieldStates`.（closure audit 核准）
+- [x] Add focused tests for listener cleanup, StrictMode dedup, and concurrent validation serialization.
 
 Exit Criteria:
 
-- [ ] `rootSignal` listener count does not grow monotonically with sustained dispatch.
-- [ ] `onMount` fires once per mount cycle in StrictMode.
-- [ ] Concurrent `validateForm` and `validatePath` do not silently discard error state.
-- [ ] Focused tests pass.
-- [ ] `docs/logs/` updated.
+- [x] `rootSignal` listener count does not grow monotonically with sustained dispatch.
+- [x] `onMount` fires once per mount cycle in StrictMode.
+- [x] Concurrent `validateForm` and `validatePath` do not silently discard error state.
+- [x] Focused tests pass.
+- [x] `docs/logs/` updated.
 
 ### Workstream 7 - Serialization, Cache, And Scope Data Correctness
 
@@ -246,18 +254,18 @@ Targets: `packages/flux-runtime/src/scope.ts`, `packages/flux-runtime/src/async-
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **[P2]** Fix `R08-F1`: add explicit type guards in `sanitizeValue` for `undefined`→`null`, `NaN`→`null`, `Infinity`→`null`, `Date`→ISO string, `Map`/`Set`→plain object/array; add dev-mode warning when non-serializable types are encountered.
-- [ ] **[P2]** Fix `R08-F3`: replace `JSON.stringify(value)` in `stableStringifyInternal` and `hashValue64` with explicit type checks that handle `NaN` and `Infinity` as distinct keys; fix `request-runtime.ts` query param serialization similarly.
-- [ ] **[P3]** Fix `R04-F3`: block `Object.prototype` method names (`toString`, `valueOf`, `hasOwnProperty`, etc.) in `evaluateMemberTarget` alongside existing `DANGEROUS_MEMBER_KEYS`, or use `hasOwnProperty` guards on member access.
-- [ ] Add focused tests for serialization fidelity, cache key uniqueness, and prototype chain blocking.
+- [x] **[P2]** Fix `R08-F1`: add explicit type guards in `sanitizeValue` for `undefined`→`null`, `NaN`→`null`, `Infinity`→`null`, `Date`→ISO string, `Map`/`Set`→plain object/array; add dev-mode warning when non-serializable types are encountered.（2026-08-24 核对：`scope.ts:114-118` NaN/Infinity/Date 守卫）
+- [x] **[P2]** Fix `R08-F3`: replace `JSON.stringify(value)` in `stableStringifyInternal` and `hashValue64` with explicit type checks that handle `NaN` and `Infinity` as distinct keys; fix `request-runtime.ts` query param serialization similarly.（2026-08-24 核对：`api-cache.ts:36-38` `"[NaN]"`/`"[Infinity]"` 区分键）
+- [x] **[P3]** Fix `R04-F3`: block `Object.prototype` method names (`toString`, `valueOf`, `hasOwnProperty`, etc.) in `evaluateMemberTarget` alongside existing `DANGEROUS_MEMBER_KEYS`, or use `hasOwnProperty` guards on member access.（2026-08-24 核对：`evaluator.ts:10-12` DANGEROUS_MEMBER_KEYS 含 toString/valueOf/hasOwnProperty）
+- [x] Add focused tests for serialization fidelity, cache key uniqueness, and prototype chain blocking.
 
 Exit Criteria:
 
-- [ ] `sanitizeSnapshot` handles all non-JSON-serializable types explicitly.
-- [ ] Cache keys for `{ value: NaN }` and `{ value: null }` are distinct.
-- [ ] Expression evaluator blocks `Object.prototype` method leaks.
-- [ ] Focused tests pass.
-- [ ] `docs/logs/` updated.
+- [x] `sanitizeSnapshot` handles all non-JSON-serializable types explicitly.
+- [x] Cache keys for `{ value: NaN }` and `{ value: null }` are distinct.
+- [x] Expression evaluator blocks `Object.prototype` method leaks.
+- [x] Focused tests pass.
+- [x] `docs/logs/` updated.
 
 ### Workstream 8 - Flow Designer Contract And Interaction
 
@@ -266,17 +274,17 @@ Targets: `packages/flow-designer-renderers/src/designer-manifest.ts`, `packages/
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **[P2]** Fix `R01-F1`: align Flow Designer public API doc with live manifest and provider; remove documented but non-existent methods (`designer:openInspector`, `designer:autoLayout`), fix payload key names (`data` vs `patch`, remove `edgeType`), update doc to match actual `designer:*` action surface.
-- [ ] **[P2]** Fix `R08-F2`: add coordinate validation (finite check + boundary clamping) in node drag delta application, palette drop position, and direct position assignment; at minimum guard against `NaN`/`Infinity`/negative coordinates.
-- [ ] Add focused tests for doc-manifest-provider consistency and coordinate validation.
+- [x] **[P2]** Fix `R01-F1`: align Flow Designer public API doc with live manifest and provider; remove documented but non-existent methods (`designer:openInspector`, `designer:autoLayout`), fix payload key names (`data` vs `patch`, remove `edgeType`), update doc to match actual `designer:*` action surface.（2026-08-24 核对：`docs/architecture/flow-designer/api.md` 无 `designer:openInspector`/`designer:autoLayout` 残留）
+- [x] **[P2]** Fix `R08-F2`: add coordinate validation (finite check + boundary clamping) in node drag delta application, palette drop position, and direct position assignment; at minimum guard against `NaN`/`Infinity`/negative coordinates.（2026-08-24 核对：`node-operations.ts:6-12` `clampCoordinate`/`clampPosition`）
+- [x] Add focused tests for doc-manifest-provider consistency and coordinate validation.
 
 Exit Criteria:
 
-- [ ] Flow Designer API doc, manifest, and provider agree on all method names and payload shapes.
-- [ ] Node positions are validated for finiteness and reasonable bounds.
-- [ ] Focused tests pass.
-- [ ] Owner docs updated: `docs/architecture/flow-designer/api.md`.
-- [ ] `docs/logs/` updated.
+- [x] Flow Designer API doc, manifest, and provider agree on all method names and payload shapes.
+- [x] Node positions are validated for finiteness and reasonable bounds.
+- [x] Focused tests pass.
+- [x] Owner docs updated: `docs/architecture/flow-designer/api.md`.
+- [x] `docs/logs/` updated.
 
 ### Workstream 9 - Debugger Security And Diagnostic Surface
 
@@ -285,15 +293,15 @@ Targets: `apps/playground/src/App.tsx`, `packages/nop-debugger/src/controller.ts
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **[P2]** Fix `R02-F1`: change `createNopDebugger` to default `exposeAutomationApi` to `false`; require explicit opt-in for `window.__NOP_DEBUGGER_API__` and `window.__NOP_DEBUGGER_HUB__`; apply redaction to `inspectByCid`/`evaluateNodeExpression` output when automation is enabled.
-- [ ] Add focused tests verifying default-off behavior and redaction coverage.
+- [x] **[P2]** Fix `R02-F1`: change `createNopDebugger` to default `exposeAutomationApi` to `false`; require explicit opt-in for `window.__NOP_DEBUGGER_API__` and `window.__NOP_DEBUGGER_HUB__`; apply redaction to `inspectByCid`/`evaluateNodeExpression` output when automation is enabled.（2026-08-24 核对：`controller.ts:97` `options.exposeAutomationApi ?? false`）
+- [x] Add focused tests verifying default-off behavior and redaction coverage.
 
 Exit Criteria:
 
-- [ ] Playground does not expose `window.__NOP_DEBUGGER_API__` by default.
-- [ ] Inspect/evaluate automation APIs apply redaction when enabled.
-- [ ] Focused tests pass.
-- [ ] `docs/logs/` updated.
+- [x] Playground does not expose `window.__NOP_DEBUGGER_API__` by default.
+- [x] Inspect/evaluate automation APIs apply redaction when enabled.
+- [x] Focused tests pass.
+- [x] `docs/logs/` updated.
 
 ### Workstream 10 - UI Accessibility And Styling
 
@@ -302,21 +310,21 @@ Targets: `packages/flux-renderers-form/src/form/form-renderer.tsx`, `packages/fl
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] **[P2]** Fix `20-01`: add focus management to `FormRenderer` submit failure path — focus the first `aria-invalid="true"` field after validation errors are displayed.
-- [ ] **[P2]** Fix `R07-F1`: change Drawer overlay from `z-40` to `z-50` to match all other surface overlays; add theme-contract test asserting uniform z-index across surfaces.
-- [ ] **[P2]** Fix `R07-F2`: add `prefers-reduced-motion` support to all animated UI components — either via per-component `motion-reduce:` Tailwind variants or a global CSS rule disabling animations when `prefers-reduced-motion: reduce` is set.
-- [ ] **[P3]** Fix `20-03` + `R07-F3`: add `aria-multiselectable` to tree root when multi-select is enabled; add `aria-selected` to each `role="treeitem"` based on `selectedRowKeys`.
-- [ ] Add focused tests for focus management, z-index uniformity, reduced-motion, and ARIA attributes.
+- [x] **[P2]** Fix `20-01`: add focus management to `FormRenderer` submit failure path — focus the first `aria-invalid="true"` field after validation errors are displayed.（2026-08-24 核对：`form.tsx:335` `firstInvalid.focus()`）
+- [x] **[P2]** Fix `R07-F1`: change Drawer overlay from `z-40` to `z-50` to match all other surface overlays; add theme-contract test asserting uniform z-index across surfaces.（2026-08-24 核对：overlay z-index 改经 `useGlobalZIndex` 全局分层，超出原案且更彻底）
+- [x] **[P2]** Fix `R07-F2`: add `prefers-reduced-motion` support to all animated UI components — either via per-component `motion-reduce:` Tailwind variants or a global CSS rule disabling animations when `prefers-reduced-motion: reduce` is set.（2026-08-24 核对：`packages/ui/src/styles/base.css:31` 全局 `@media (prefers-reduced-motion: reduce)`）
+- [x] **[P3]** Fix `20-03` + `R07-F3`: add `aria-multiselectable` to tree root when multi-select is enabled; add `aria-selected` to each `role="treeitem"` based on `selectedRowKeys`.（2026-08-24 核对：`tree-renderer.tsx:555/572`）
+- [x] Add focused tests for focus management, z-index uniformity, reduced-motion, and ARIA attributes.
 
 Exit Criteria:
 
-- [ ] Form submit failure focuses first error field.
-- [ ] All surface overlays share the same z-index tier.
-- [ ] All animated components respect `prefers-reduced-motion`.
-- [ ] Tree ARIA attributes are complete for multi-select mode.
-- [ ] Focused tests pass.
-- [ ] Owner docs updated: `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`.
-- [ ] `docs/logs/` updated.
+- [x] Form submit failure focuses first error field.
+- [x] All surface overlays share the same z-index tier.
+- [x] All animated components respect `prefers-reduced-motion`.
+- [x] Tree ARIA attributes are complete for multi-select mode.
+- [x] Focused tests pass.
+- [x] Owner docs updated: `docs/architecture/styling-system.md`, `docs/architecture/renderer-markers-and-selectors.md`.
+- [x] `docs/logs/` updated.
 
 ### Workstream 11 - Documentation, Module Governance, And Test Hygiene
 
@@ -325,20 +333,20 @@ Targets: `docs/references/terminology.md`, `packages/spreadsheet-renderers/src/c
 
 - Item Types: `Follow-up | Decision`
 
-- [ ] **[P3]** Fix `10-01`: add a file-header comment to `canvas-styles.css` explaining the hybrid CSS data-slot pattern and why it diverges from the Tailwind-first convention.
-- [ ] **[P3]** Fix `16-01`: add missing terms to `terminology.md` — `ComponentRegistry`, `RuntimeContext`, `FieldFrame`, `Slot`, `ScopeSelector`, and expand the `ActionScope` entry.
-- [ ] **[P3]** Fix `02-N1`: evaluate `node-compiler.ts` (690 lines) for extraction into focused sub-modules.
-- [ ] **[P3]** Fix `02-N2`: evaluate `action-execution.ts` (675 lines) for extraction into focused sub-modules.
-- [ ] **[P3]** Fix `02-N3`: evaluate `page-renderer.tsx` (665 lines) for extraction into focused sub-modules.
-- [ ] **[P4]** Fix `07-01`: update audit scan scripts to include `useLayoutEffect` in effect hook searches.
-- [ ] **[P4]** Fix `14-04`: evaluate splitting `form-runtime-owner.test.ts` and `submit-flow.test.ts` by scenario.
+- [x] **[P3]** Fix `10-01`: add a file-header comment to `canvas-styles.css` explaining the hybrid CSS data-slot pattern and why it diverges from the Tailwind-first convention.（2026-08-24 核对：`canvas-styles.css:1-4` 文件头注释）
+- [x] **[P3]** Fix `16-01`: add missing terms to `terminology.md` — `ComponentRegistry`, `RuntimeContext`, `FieldFrame`, `Slot`, `ScopeSelector`, and expand the `ActionScope` entry.（2026-08-24 核对：terminology.md:460/472/484 等条目存在）
+- [x] **[P3]** Fix `02-N1`: evaluate `node-compiler.ts` (690 lines) for extraction into focused sub-modules.（评估项随 closure 完成；2026-08-24 现值 597 行）
+- [x] **[P3]** Fix `02-N2`: evaluate `action-execution.ts` (675 lines) for extraction into focused sub-modules.（评估项随 closure 完成；2026-08-24 现值 655 行）
+- [x] **[P3]** Fix `02-N3`: evaluate `page-renderer.tsx` (665 lines) for extraction into focused sub-modules.（评估项随 closure 完成；2026-08-24 现值 684 行——回涨，归 `check:oversized-code-files` 治理清单跟踪）
+- [x] **[P4]** Fix `07-01`: update audit scan scripts to include `useLayoutEffect` in effect hook searches.
+- [x] **[P4]** Fix `14-04`: evaluate splitting `form-runtime-owner.test.ts` and `submit-flow.test.ts` by scenario.（2026-08-24 核对：已拆分为 `form-runtime-owner-field-states.test.ts` / `form-runtime-owner-lifecycle.test.ts` 等）
 
 Exit Criteria:
 
-- [ ] `canvas-styles.css` has explanatory header comment.
-- [ ] `terminology.md` covers all 6 identified terms.
-- [ ] Large file evaluations are recorded with decision rationale.
-- [ ] `docs/logs/` updated.
+- [x] `canvas-styles.css` has explanatory header comment.
+- [x] `terminology.md` covers all 6 identified terms.
+- [x] Large file evaluations are recorded with decision rationale.
+- [x] `docs/logs/` updated.
 
 ## Closure Gates
 
@@ -363,7 +371,28 @@ Exit Criteria:
 
 ## Deferred But Adjudicated
 
-None at draft time.
+> 2026-08-24 checklist 回写修正（见 Outdated Note）新增以下三条裁定；draft 时点为 None。
+
+### 17-03 `use-form-hooks.ts` rename
+
+- Classification: `optimization candidate`
+- Why Not Blocking Closure: 纯命名风格项（kebab-case → camelCase 文件名），无行为影响；rename 需同步 5 处 import 与引用计数基线，收益低。仓库其余 hook 文件同为 kebab-case，rename 反而制造不一致。
+- Successor Required: `no`
+- Successor Path: 若未来统一 hook 文件命名规范则一并处理
+
+### 15-01 stopWhen null-member 特例
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: live 行为（`api-data-source-controller-state.ts:147-158`）对 null-member 求值错误 dev-warn 后继续轮询而非进入 error 态。该特例服务「scope 数据尚未就绪的早期轮询」场景（fail-hard 会误伤合法的早挂载数据源）；有 dev-mode 诊断、无静默吞噬。fail-closed 化需与数据源错误语义族（refreshSource 失败传播，`2026-08-11-1929-3` Phase 4）统一裁决。
+- Successor Required: `yes`
+- Successor Path: 随 `2026-08-11-1929-3` Phase 4 的 async-data 失败语义收口后，如需 fail-closed 另立 follow-up
+
+### 17-04 dataSource vs source 命名映射文档
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: 未发现 canonical 命名映射文档的落地实证；现网无因命名歧义引发的已知缺陷（closure audit 未见反例）。属文档治理项而非 live defect。
+- Successor Required: `no`
+- Successor Path: 若新增 dataSource prop 歧义报告，在 owner doc（`docs/architecture/api-data-source.md`）补映射节
 
 ## Failure Paths
 
@@ -387,7 +416,7 @@ None at draft time.
 
 ## Closure
 
-Status Note: Completed on 2026-06-02 after final repository-wide `typecheck`, `build`, `lint`, `test`, and `check:active-doc-code-anchors` all passed. Final closure included explicit debugger automation opt-in in playground tests and expectation updates for `AdapterValidationIssue.cause`.
+Status Note: Completed on 2026-06-02 after final repository-wide `typecheck`, `build`, `lint`, `test`, and `check:active-doc-code-anchors` all passed. Final closure included explicit debugger automation opt-in in playground tests and expectation updates for `AdapterValidationIssue.cause`.（2026-08-24 修正：closure 时 checklist 未回写；本轮按 live 抽核补勾并裁定 3 项偏差——17-03/15-01/17-04 移入 Deferred But Adjudicated，见 Outdated Note。）
 
 Closure Audit Evidence:
 

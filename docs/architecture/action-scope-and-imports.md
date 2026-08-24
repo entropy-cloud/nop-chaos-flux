@@ -13,7 +13,7 @@ Use it when:
 
 This document replaces the earlier lexical-scope-method-dispatch proposal. The active direction is not to turn `ScopeRef` into a general method table, but to add a separate action-scope layer that keeps data lookup and behavior lookup distinct.
 
-It also defines a separate component-targeted invocation model for actions that need to locate a specific rendered component instance by `componentId` or `componentName` and invoke an explicitly exposed capability such as form submission.
+It also defines a separate component-targeted invocation model for actions that need to locate a specific rendered component instance by `componentId` and invoke an explicitly exposed capability such as form submission. (`componentName` targeting was removed; `componentId` resolves `handle.id` first, then `handle.name`.)
 
 ## Normative Baseline
 
@@ -246,7 +246,7 @@ The action-scope layer sits on top of that bridge and maps namespaced actions to
 
 ### Component Handle Registry
 
-Some actions are not best expressed as host-scoped namespace lookup. They need to locate one concrete rendered component instance by `componentId` or `componentName` and invoke an explicitly exposed capability.
+Some actions are not best expressed as host-scoped namespace lookup. They need to locate one concrete rendered component instance by `componentId` and invoke an explicitly exposed capability.
 
 Common examples:
 
@@ -273,7 +273,6 @@ interface ComponentHandleRegistry {
 interface ComponentTarget {
   _targetCid?: number;
   componentId?: string;
-  componentName?: string;
 }
 
 interface ComponentHandle {
@@ -296,7 +295,7 @@ interface ComponentCapabilities {
 }
 ```
 
-`store` is optional metadata, not the public contract. The public contract is the explicitly exposed capability surface. `_targetCid` is a runtime/debugger-oriented direct mounted-instance target and exists alongside the human-authored `componentId` / `componentName` path instead of replacing them.
+`store` is optional metadata, not the public contract. The public contract is the explicitly exposed capability surface. `_targetCid` is a runtime/debugger-oriented direct mounted-instance target and exists alongside the human-authored `componentId` path instead of replacing it.
 
 ### Shared Contract Language Versus Runtime Lookup
 
@@ -367,7 +366,7 @@ Current baseline:
 
 Preferred access pattern:
 
-1. resolve a concrete component by `componentId`, `componentName`, or structural target
+1. resolve a concrete component by `componentId` (resolves `handle.id` first, then `handle.name`) or structural target
 2. verify the handle is currently materialized
 3. read `handle.ref` when the renderer deliberately exposes a DOM anchor
 
@@ -481,12 +480,9 @@ Built-in platform actions do not use namespace lookup. Their selectors stay plai
 Schema authoring preference:
 
 - **New schema should prefer `openDialog`** for opening dialogs. The name is more explicit and consistent with `openDrawer`.
-- `dialog` remains supported for compatibility but should be treated as a legacy alias.
-- Both names resolve to the same runtime behavior; this is a naming convention choice, not a functional difference.
-- When writing new examples or shared schema libraries, use `openDialog` consistently.
-- New schema should prefer `openDrawer` for opening drawers.
-- `drawer` remains supported for compatibility but should be treated as a legacy alias.
-- New schema should prefer `closeSurface` for closing the current surface. `closeDialog` and `closeDrawer` remain compatibility aliases.
+- Both `openDialog` and `openDrawer` are the canonical selectors; there are no `dialog` / `drawer` action names in the live built-in registry (`BUILT_IN_ACTION_REGISTRY` in `packages/flux-core/src/constants.ts`) — schemas written with bare `dialog` / `drawer` action names are rejected as unknown actions.
+- When writing new examples or shared schema libraries, use `openDialog` / `openDrawer` consistently.
+- Prefer `closeSurface` for closing the current surface. `closeDialog` and `closeDrawer` remain supported compatibility aliases.
 
 Compatibility note:
 
@@ -656,7 +652,7 @@ For component-targeted invocation, use `component:<method>` syntax:
 ```json
 {
   "action": "component:refresh",
-  "componentName": "ordersTable",
+  "componentId": "ordersTable",
   "args": {
     "reason": "external-filter-changed"
   }
@@ -667,7 +663,7 @@ The method name is extracted from the action string after the `component:` prefi
 
 Preferred targeting matrix:
 
-- component instance -> `component:<method>` plus `componentId` or `componentName`
+- component instance -> `component:<method>` plus `componentId`
 - surface family -> built-in `closeSurface`, which closes the current surface by default and only needs `surfaceId` for an explicit non-default target
 - runtime-owned source entry -> built-in `refreshSource` plus `targetId`, where the target value is the source `name`
 
@@ -676,15 +672,15 @@ amis `reload` → Flux mapping (NOT-ADOPTED 字面 `reload`):
 - Flux 在 action-dispatch pipeline **没有**字面 `reload` built-in（`built-in-actions.ts` switch 无 `reload` case；故意拒绝 amis 术语）。
 - amis 的 `reload`（定向重载命名目标，非整页）在 Flux 由两条**定向**路径实现，均**不**触发整页 `refreshTable`：
   - `refreshSource` + `targetId`：按 source `name` 重载（`built-in-actions.ts:194-210` → `action-adapter.ts:325-342` → `async-data/source-registry.ts:341`，调用 `controller.refresh()`，**不调** `ctx.page?.refresh()`）。
-  - `component:refresh` + `componentId`/`componentName`：按组件实例重载（`action-runners.ts:70-137` → `action-adapter.ts:352-431`，调用 `handle.capabilities.invoke('refresh', ...)`，**不调** `ctx.page?.refresh()`）。
+  - `component:refresh` + `componentId`：按组件实例重载（`action-runners.ts:70-137` → `action-adapter.ts:352-431`，调用 `handle.capabilities.invoke('refresh', ...)`，**不调** `ctx.page?.refresh()`）。
 - 整页刷新是**独立的** `refreshTable`（`built-in-actions.ts:185-193` → `action-adapter.ts:317-323`，唯一调 `ctx.page?.refresh()` 并递增 `refreshTick` 的路径）。
 - 回归锚：`refreshSource`/`component:refresh` 后 `page.refreshTick` **不变**（`packages/flux-runtime/src/__tests__/runtime-actions-advanced.test.ts`「does not bump page refreshTick」断言锁定）。
 
 Compatibility carriers:
 
 - built-in `setValue` / `setValues` belong to the lexical scope-write family, not the component-targeting family. Their canonical baseline is to write the current dispatch scope only. If schema needs to target a concrete form or component instance, prefer `component:setValue` / `component:setValues`.
-- **Contextual built-ins resolve to the nearest enclosing owner — prefer them over `componentId`/`componentName`.** `submitForm` submits `ctx.form` (the nearest form, resolved via `useCurrentForm()`); `closeSurface`/`closeDialog`/`closeDrawer` close `ctx.dialogId` or the top surface. A button inside a form's `actions` region should use `{ "action": "submitForm" }`, not `{ "action": "component:submit", "componentId": "..." }`. Reserve `component:<method>` + `componentId`/`componentName` for **cross-tree** targets that are not the enclosing owner — e.g. refreshing a sibling/ancestor CRUD from inside a dialog (`component:refresh`). When the target genuinely is the current form/surface, explicit targeting is redundant and brittle (it breaks if the id is renamed or the fragment is reused).
-- overloaded path-style targeting fields such as `componentPath` are not the preferred authoring baseline for new schema when stable instance targeting by `componentId` or `componentName` is available
+- **Contextual built-ins resolve to the nearest enclosing owner — prefer them over `componentId`.** `submitForm` submits `ctx.form` (the nearest form, resolved via `useCurrentForm()`); `closeSurface`/`closeDialog`/`closeDrawer` close `ctx.dialogId` or the top surface. A button inside a form's `actions` region should use `{ "action": "submitForm" }`, not `{ "action": "component:submit", "componentId": "..." }`. Reserve `component:<method>` + `componentId` for **cross-tree** targets that are not the enclosing owner — e.g. refreshing a sibling/ancestor CRUD from inside a dialog (`component:refresh`). When the target genuinely is the current form/surface, explicit targeting is redundant and brittle (it breaks if the id is renamed or the fragment is reused).
+- overloaded path-style targeting fields such as `componentPath` are not the preferred authoring baseline for new schema when stable instance targeting by `componentId` is available
 
 ## Action Scope Ownership
 
@@ -1244,7 +1240,7 @@ The key rule is:
 - do make action-scope use explicit at host boundaries
 - do preserve the caller's runtime `ActionContext.scope` when dispatching a resolved `xui:actions` program; action-scope lookup must not silently switch data evaluation back to the definition site's data scope
 
-The runtime will also need a component-target dispatch path for actions that identify `componentId` or `componentName`.
+The runtime will also need a component-target dispatch path for actions that identify `componentId`.
 
 Recommended internal direction:
 
@@ -1295,7 +1291,7 @@ Execution model for `component:<method>`:
 
 1. match action name against `component:<method>` pattern
 2. extract method name from action string
-3. locate the target component by `componentId` or `componentName`
+3. locate the target component by `componentId`
 4. validate that the component handle exposes the requested method
 5. call `capabilities.invoke(method, payload, ctx)`
 6. return a normal `ActionResult`

@@ -62,7 +62,7 @@ export interface OpenDialogActionSchema extends ActionShapeFields {
 
 三个字段都是可选。不写就没有 callback，surface 行为与没有 lifecycle callback 时完全一致。
 
-> **字段命名说明**：上表的 schema 字段名（作者视角）是 `onClose` / `onSubmitSuccess` / `onSubmitError`。runtime 内部存储为 `entry.onCloseNodes` / `entry.onSubmitSuccessNodes` / `entry.onSubmitErrorNodes`（编译后的 `ActionNode[]`），与现有 `entry.onClose`（function 类型，declarative surface 专用）共存。详见 §Hook Triggering Semantics。
+> **字段命名说明**：上表的 schema 字段名（作者视角）是 `onClose` / `onSubmitSuccess` / `onSubmitError`。runtime 内部存储为 `entry.onCloseNodes` / `entry.onSubmitSuccessNodes` / `entry.onSubmitErrorNodes`（类型 `ActionSchema | ActionSchema[]`，dispatch 时经 `runtime.dispatch` 编译执行，不预编译为 `ActionNode[]`），与现有 `entry.onClose`（function 类型，declarative surface 专用）共存。详见 §Hook Triggering Semantics。
 
 ## Form Submit Scope
 
@@ -172,11 +172,12 @@ surface 打开时（`surfaceRuntime.open`）必须保存以下 owner 引用到 `
 callback 触发时构造的 ctx：
 
 ```ts
+// live implementation: packages/flux-runtime/src/surface-hooks.ts dispatchInOwner
 const ownerCtx: ActionContext = {
   ...entry.ownerActionCtx,
-  scope: entry.ownerScope,
-  nodeInstance: entry.ownerNodeInstance,
-  prevResult: payload.result,
+  scope: (entry.ownerScope ?? entry.ownerActionCtx.scope) as ScopeRef,
+  nodeInstance: entry.ownerNodeInstance ?? entry.ownerActionCtx.nodeInstance,
+  prevResult: payload.result as ActionResult | undefined,
   evaluationBindings: {
     ...(entry.ownerActionCtx.evaluationBindings ?? {}),
     $formData: payload.formData ?? {},
@@ -184,6 +185,7 @@ const ownerCtx: ActionContext = {
     $hook: payload.hookName,
   },
 };
+return entry.ownerActionCtx.runtime.dispatch(nodes, ownerCtx);
 ```
 
 ### Why Owner Scope, Not Surface Child Scope
@@ -216,7 +218,7 @@ callback 默认不传 `ctx.form`（因为 callback 在 owner ctx 执行，与 su
 `surfaceRuntime.close(surfaceId)` removes the entry first (preserving the existing sync close contract that callers rely on), then **fire-and-forgets** `onCloseNodes` asynchronously (only action-style openDialog/openDrawer entries have this field; declarative surface's `entry.onClose` is a function, handled by `use-surface-renderer.ts`, and is not part of this mechanism):
 
 ```ts
-// live implementation (packages/flux-runtime/src/surface-runtime.ts)
+// live implementation (packages/flux-runtime/src/surface-runtime.ts close())
 close(surfaceId) {
   const removed = store.remove(surfaceId);
   if (!removed) return;
@@ -229,11 +231,19 @@ close(surfaceId) {
   republishActiveStatuses();
 
   // Fire onCloseNodes asynchronously after dispose (fire-and-forget).
-  // close() stays sync; hook errors are warned, not thrown.
+  // close() stays sync; hook errors are reported via reportRuntimeHostIssue
+  // (level 'warning'), not thrown.
   if (closeNodes && ownerActionCtx) {
     dispatchInOwner({ ...removed, ownerActionCtx }, closeNodes, { hookName: 'close' }).catch(
       (err) => {
-        console.warn('[surface] onClose hook failed:', err);
+        reportRuntimeHostIssue({
+          env: ownerActionCtx.runtime.env,
+          level: 'warning',
+          message: 'Surface onClose hook failed',
+          error: err,
+          phase: 'action',
+          details: { surfaceId, hookName: 'close' },
+        });
       },
     );
   }
@@ -251,9 +261,9 @@ close(surfaceId) {
 - 整个 page runtime 强制 dispose（如 SPA 卸载）—— 这种情况所有 callback 都不保证触发
 - 同一 surface 内多次 close 调用（去重后只触发一次）
 
-declarative surface（`type: 'dialog'` / `type: 'drawer'`）的 close 路径**保持现状**：`entry.onClose` (function) 由 `use-surface-renderer.ts:223/325/348` 直接调用，不经 `dispatchInOwner`。两套机制共存，互不干扰。详见 `surface-owner.md` §Declarative And Action-Opened Surfaces。
+declarative surface（`type: 'dialog'` / `type: 'drawer'`）的 close 路径**保持现状**：`entry.onClose` (function) 由 `use-surface-renderer.ts` 的 onClose 调用点（事件 handler 包装与 cleanup 路径）直接调用，不经 `dispatchInOwner`。两套机制共存，互不干扰。详见 `surface-owner.md` §Declarative And Action-Opened Surfaces。
 
-> **设计权衡（为什么是 sync fire-and-forget 而不是 async）**：让 `close()` 改为 async 会破坏所有现有调用方（5 处：`use-surface-renderer.ts:328`、`dialog-host.tsx:209/388`、`action-adapter.ts:239/241`）。这些调用方依赖 close 立即移除 entry 并触发 React unmount。把 close 改 async 会引入 race（mask 点击后 React tree 还没卸载，用户可能再次点击）。sync + fire-and-forget 保持了 close 的"立即生效"语义，hook 作为副作用异步执行不阻塞 UI 响应。
+> **设计权衡（为什么是 sync fire-and-forget 而不是 async）**：让 `close()` 改为 async 会破坏所有现有调用方（`use-surface-renderer.ts` 的 unmount cleanup、`dialog-host.tsx` 的 close 处理、`action-adapter.ts` 的 closeSurface/closeDialog/closeDrawer）。这些调用方依赖 close 立即移除 entry 并触发 React unmount。把 close 改 async 会引入 race（mask 点击后 React tree 还没卸载，用户可能再次点击）。sync + fire-and-forget 保持了 close 的"立即生效"语义，hook 作为副作用异步执行不阻塞 UI 响应。
 
 ### Submit Hooks
 
@@ -297,7 +307,7 @@ const triggerSurfaceSubmitHook = async (hookName, result) => {
 
 hook 内 action 抛错的处理契约：
 
-- **hook 抛错不阻塞 surface close 流程**：`close` 用 Promise.catch 包裹 `dispatchInOwner`，捕获错误后 `console.warn`。entry 已在 dispatch 前 dispose，hook 失败不影响 close 主流程。
+- **hook 抛错不阻塞 surface close 流程**：`close` 用 Promise.catch 包裹 `dispatchInOwner`，捕获错误后经 `reportRuntimeHostIssue`（level `warning`）上报 host issue 通道。entry 已在 dispatch 前 dispose，hook 失败不影响 close 主流程。
 - **hook 抛错不阻塞 form submit 流程**：`triggerHook` 内部 try/catch，submit 本身的成功状态不被 hook 失败影响
 - **owner runtime 已 teardown 时**：`dispatchInOwner` 调用 `entry.ownerActionCtx.runtime.dispatch` 时可能抛错（runtime 对象已失效），错误被上层 catch 捕获并 `console.warn`。flux 当前 `ActionContextRuntime` 不暴露 `disposed` 字段，因此**没有显式 pre-check**，依赖 try/catch 兜底
 - hook 抛错时，错误信息走 action dispatcher 默认 error notify（一次 toast），与普通 action 失败一致
@@ -420,7 +430,7 @@ ownerScope ?? scope.parent ?? scope
 ### Action-Style vs Declarative
 
 - **action-style（`openDialog`/`openDrawer` action）**：`open()` 时 adapter 传 `options.ownerScope = ctx.scope`，`entry.ownerScope` 恒存在 → 状态发布到 action 触发点的 owner scope（page / 外层组件 scope）
-- **declarative（`type: dialog` / `type: drawer`）**：`openSurface` 不传 ownerScope，`entry.ownerScope` 为 undefined → 回退 `entry.scope.parent ?? entry.scope`（`use-surface-renderer.ts` 创建 surface child scope 的父级 = 声明点 `node.scope`）；`use-surface-renderer.ts` 三个 `publishClosed` 调用点（:340/:358/:380）回退链统一为 `declarativeScope ?? node.scope`（cleanup 路径经 ref 捕获，形态一致）
+- **declarative（`type: dialog` / `type: drawer`）**：`openSurface` 不传 ownerScope，`entry.ownerScope` 为 undefined → 回退 `entry.scope.parent ?? entry.scope`（`use-surface-renderer.ts` 创建 surface child scope 的父级 = 声明点 `node.scope`）；`use-surface-renderer.ts` 的三个 `publishClosed` 调用点（unmount cleanup / 显式关闭 / ref 捕获 cleanup 路径）回退链统一为 `declarativeScope ?? node.scope`（cleanup 路径经 ref 捕获，形态一致）
 
 ## `refreshNearest` Action
 
@@ -447,24 +457,30 @@ export interface RefreshNearestActionSchema extends ActionShapeFields {
 
 ### Finding Algorithm
 
+live 实现见 `packages/flux-runtime/src/refresh-nearest.ts` 的 `findNearestRefreshable`（示意要点，以 live 为准）：
+
 ```ts
-async function findNearestRefreshable(startScope, registry, sourceRegistry, targetType) {
+async function findNearestRefreshable({ startScope, componentRegistry, runtime, targetType }) {
   let scope = startScope;
   while (scope) {
-    // 在此 scope 的 component registry bucket 找匹配的 component
-    if (targetType === 'auto' || targetType === 'crud' || targetType === 'tree') {
-      const handle = registry.findFirstInScope(scope, (h) =>
-        targetType === 'auto'
-          ? h.componentType === 'crud' || h.componentType === 'tree'
-          : h.componentType === targetType,
-      );
-      if (handle) return { kind: 'component', handle, scope };
+    // 组件路径：沿 registry.parent 链逐个 registry 查询该 scope bucket
+    if (wantComponent) {
+      let registry = componentRegistry;
+      while (registry) {
+        const handle = registry.findFirstInScope?.(scope, (h) =>
+          targetType === 'auto'
+            ? h.type === 'crud' || h.type === 'tree' || h.type === 'form'
+            : h.type === targetType,
+        );
+        if (handle) return { kind: 'component', handle, scope };
+        registry = registry.parent;
+      }
     }
 
-    // 在此 scope 的 source registry bucket 找 data-source
-    if (targetType === 'auto' || targetType === 'data-source') {
-      const entry = sourceRegistry.findFirstInScope(scope);
-      if (entry) return { kind: 'source', entry, scope };
+    // 数据源路径：runtime 级 source registry 查询该 scope bucket
+    if (wantSource) {
+      const entry = runtime.findFirstInScope(scope);
+      if (entry) return { kind: 'source', name: entry.name, scope: entry.scope };
     }
 
     scope = scope.parent;
@@ -473,14 +489,9 @@ async function findNearestRefreshable(startScope, registry, sourceRegistry, targ
 }
 ```
 
-`ComponentHandleRegistry.findFirstInScope` 和 `SourceRegistry.findFirstInScope` 是新增的 helper API，按 `scope.id` 精确匹配 bucket，在 bucket 内按 predicate 找第一个。开销可控（同一 scope 下 CRUD / data-source 通常很少）。
+`auto` 匹配集为 `crud` / `tree` / `form` 三类 component handle（按 `handle.type` 属性判断），`data-source` 模式走 source registry 路径。
 
-**实现注意事项**：两个 registry 的内部存储模型不对称：
-
-- `SourceRegistry` 已经按 `scope.id` 分桶（`scopeEntries: Map<scopeId, Map<name, entry>>`，见 `packages/flux-runtime/src/async-data/source-registry.ts:110-112`），`findFirstInScope` 直接读 bucket 即可。
-- `ComponentHandleRegistry` 是 flat `Set<ComponentHandle>` + by-id / by-name / by-cid 索引（`packages/flux-runtime/src/component-handle-registry.ts:19-24`），**没有 scope-id 维度**。`findFirstInScope` 实现需要遍历 handles 并按 `handle.scope.id === targetScope.id` 过滤，或者在 registry 初始化时新增一个 `Map<scopeId, Set<ComponentHandle>>` 索引。
-
-实现时优先选择新增 scope-id 索引（性能 + 一致性），避免每次 scan。索引维护与 handle register / unregister 同步。
+**实现现状**：`ComponentHandleRegistry.findFirstInScope` 与 `SourceRegistry.findFirstInScope` 均已实现（`component-handle-registry.ts` 的 `handlesByScopeId` scope-id 索引 + `source-registry.ts` 的既有 scope bucket 直读）。两者按 `scope.id` 精确匹配 bucket，在 bucket 内按 predicate 找第一个；scope 链遍历由 `refreshNearest` 调用方负责（两者都不沿 parent 链向上）。开销可控（同一 scope 下 CRUD / data-source 通常很少）。
 
 ### `notFound` Behavior
 
@@ -568,12 +579,12 @@ ajax action 在不写任何 callback / messages / onError 时：
 
 ## Relationship With Declarative Surface
 
-declarative `type: 'dialog'` / `type: 'drawer'`（走 `useSurfaceRenderer`）已有 `onClose` 字段（React unmount 触发）。本设计补充的 `onSubmitSuccess` / `onSubmitError` 对 declarative surface 同样适用：
+declarative `type: 'dialog'` / `type: 'drawer'`（走 `useSurfaceRenderer`）已有 function-based `onClose`（React unmount 触发）。**本设计的 `onSubmitSuccess` / `onSubmitError` submit hooks 只对 action-style surface 生效**：
 
-- declarative surface 的 `onClose` 由 React unmount 触发，由 surface-runtime 通过 `useSurfaceRenderer` 透传
-- declarative surface 的 `onSubmitSuccess` / `onSubmitError` 由 form submit 触发，逻辑与 action-style surface 一致
+- declarative surface 的 `onClose` 由 React unmount 触发，由 surface-runtime 通过 `useSurfaceRenderer` 透传（function-based，schema `onClose` 事件经 renderer events 派发）
+- declarative surface 的 form submit **不触发** surface submit hooks——`use-surface-renderer.ts` 创建 declarative entry 时不写 `onSubmitSuccessNodes` / `onSubmitErrorNodes`，`triggerHook` 对无 hook 节点的 entry 走 `skipped` 分支（与 §Submit Hooks「只对 action-style 有效」一致）。declarative surface 内的 form 复用 form 自己的 lifecycle handler（form schema 的 `onSubmitSuccess` / `onSubmitError` 字段）
 
-两种 authoring 入口（declarative 和 action-style）的 callback 行为对齐，不长期保留双轨差异。这与 `surface-owner.md` 的 §Declarative And Action-Opened Surfaces 一致。
+> **行为对齐为未承诺项**：是否让 declarative surface 也支持 schema 声明的 `onSubmitSuccess` / `onSubmitError` surface callback（与 action-style 对齐）是产品演进决策，未列入当前契约；如需对齐应单独立项。当前两种 authoring 入口在 submit hooks 上**有意保持差异**（declarative 仅 function-based onClose；action-style 三个 hook 全支持）。close 路径的双轨共存描述见 `surface-owner.md` §Declarative And Action-Opened Surfaces。
 
 ## Authoring Examples
 

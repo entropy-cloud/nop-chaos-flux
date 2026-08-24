@@ -1,9 +1,17 @@
 # 2 Gantt / AI E2E 全面覆盖 & 修复计划
 
-> Plan Status: completed
-> Last Reviewed: 2026-07-25
+> Plan Status: in progress
+> Last Reviewed: 2026-08-24
 > Source: Gantt 渲染崩溃/显示错乱 + AI Chat / Gantt e2e 覆盖缺口全量审计
 > Related: `packages/flux-renderers-scheduling/src/gantt/`, `packages/flux-renderers-ai/src/renderers/`, `tests/e2e/`
+
+## Outdated Note（2026-08-24 状态事实修正，P1-03）
+
+本计划曾在 2026-07 关闭时标 `Plan Status: completed`，但该关闭声明与文件内容矛盾：4 个 Phase 全部 `planned`、211 项 checklist 未勾选，且 Closure Gates 自身的 `pnpm test` 注记承认「e2e 需 Playwright server，暂未执行」——按 plan guide Rule 19/20 该 `completed` 不成立。本轮（源：`docs/plans/2026-08-11-1929-3-claim-vs-reality-plan-doc-contract-integrity-remediation.md` Phase 1）按 live 代码逐项核对后回退为 `in progress`，并修正失真的 closure 声称。live 核对结论（2026-08-24）：
+
+- **Phase 0（Gantt 渲染缺陷）已落地**：7 项中 6 项按原方案落地（`gantt-markers.tsx`/`gantt-links.tsx` 的 `?? 0` 兜底、`gantt-bars.tsx:117-118` 坐标兜底、`gantt-store.ts` parentIndex 重算、`gantt.tsx` timeline `minHeight: timelineHeight`、`gantt-cellgrid.tsx:17` 统一 totalHeight）；第 6 项（bars `width: 100%` 改计算宽度）未按原方案落地，布局修复经 `gantt.tsx:514` minHeight 路径达成，该项保持未勾选并以此注记替代。
+- **e2e 覆盖为部分覆盖，非「全部功能点覆盖完成」**：后续轮次补齐了 `gantt-bars-and-links.spec.ts`（15 tests）与 `gantt-editor-and-keyboard.spec.ts`（12 tests）；当前 Gantt e2e 共 50 tests / 4 specs，AI Chat 47 tests / 13 specs。Phase 1/2/3 的逐功能点 checklist（~200 项）从未逐项执行，保持未勾选，作为剩余覆盖 backlog。
+- **门禁现状**：gantt specs 残留 20 处 `waitForTimeout`（ai specs 4 处）；`gantt-perf.spec.ts` 3 个用例使用 `allowConsoleErrors(10)`（perf 例外）。原 closure 声称「无 waitForTimeout 残留」「全部 ~80/~100 功能点覆盖」均与现状不符，已撤回（见 Closure Gates 注记）。
 
 ## Purpose
 
@@ -26,8 +34,8 @@
 
 - [x] 修复 Gantt 树点击崩溃和右侧错乱
 - [x] Gantt e2e 零错误门禁（替换 `allowConsoleErrors(100)`）
-- [x] Gantt **全部 ~80 个功能点**的 e2e 覆盖
-- [x] AI Chat **全部 ~100 个功能点**的 e2e 覆盖
+- [ ] Gantt **全部 ~80 个功能点**的 e2e 覆盖（部分覆盖：50 tests / 4 specs，逐项矩阵未执行，见 Outdated Note）
+- [ ] AI Chat **全部 ~100 个功能点**的 e2e 覆盖（部分覆盖：47 tests / 13 specs，逐项矩阵未执行，见 Outdated Note）
 - [x] 全量 typecheck / build / lint / test 通过
 
 ## Non-Goals
@@ -49,13 +57,13 @@ Targets: `packages/flux-renderers-scheduling/src/gantt/`
 
 - Item Types: `Fix`
 
-- [ ] `gantt-markers.tsx:18` — `reduce` 累加加 `?? 0` 兜底
-- [ ] `gantt-links.tsx:18` — 同上
-- [ ] `gantt-bars.tsx:117-118` — `task.$y` / `task.$h` 加 `?? 0` 兜底
-- [ ] `gantt-store.ts:232` — `computeCoordinates` 前检查 `parentIndex` 完整性
-- [ ] `gantt.tsx:319-343` — timeline 容器显式设置 `min-height` 或改用非绝对定位方案
-- [ ] `gantt-bars.tsx:110` — `width: 100%` 改为计算宽度
-- [ ] `gantt-cellgrid.tsx:17` — 统一 totalHeight 计算方式
+- [x] `gantt-markers.tsx:18` — `reduce` 累加加 `?? 0` 兜底（live 核对 2026-08-24：已落地）
+- [x] `gantt-links.tsx:18` — 同上（live：`gantt-links.tsx:21` 已落地）
+- [x] `gantt-bars.tsx:117-118` — `task.$y` / `task.$h` 加 `?? 0` 兜底（live：已落地）
+- [x] `gantt-store.ts:232` — `computeCoordinates` 前检查 `parentIndex` 完整性（live：`buildParentIndex` 重算路径已落地）
+- [x] `gantt.tsx:319-343` — timeline 容器显式设置 `min-height` 或改用非绝对定位方案（live：`gantt.tsx:514` `minHeight: timelineHeight` 已落地）
+- [ ] `gantt-bars.tsx:110` — `width: 100%` 改为计算宽度（未按原方案落地：bars 容器保持 `width: 100%`，布局缺陷经 `gantt.tsx:514` minHeight 路径修复，Exit Criteria「bars 与 grid 行对齐」已由后续 e2e 验证；本项按 superseded 处理不再执行）
+- [x] `gantt-cellgrid.tsx:17` — 统一 totalHeight 计算方式（live：`tasks.length * store.rowHeight` 已落地）
 
 Exit Criteria:
 
@@ -445,17 +453,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [x] Gantt NaN 崩溃和右侧错乱已修复
-- [x] Gantt 全部 ~80 个功能点有 e2e 覆盖
-- [x] AI Chat 全部 ~100 个功能点有 e2e 覆盖
-- [x] 所有 e2e 测试使用 `assertTrackedPageErrors(page)` 零错误门禁
-- [x] 无 `waitForTimeout` 残留
+- [x] Gantt NaN 崩溃和右侧错乱已修复（live 核对 2026-08-24 确认）
+- [ ] Gantt 全部 ~80 个功能点有 e2e 覆盖（撤回原 [x]：仅部分覆盖——50 tests / 4 specs，逐项矩阵未执行，见 Outdated Note）
+- [ ] AI Chat 全部 ~100 个功能点有 e2e 覆盖（撤回原 [x]：仅部分覆盖——47 tests / 13 specs，逐项矩阵未执行，见 Outdated Note）
+- [ ] 所有 e2e 测试使用 `assertTrackedPageErrors(page)` 零错误门禁（撤回原 [x]：`gantt-perf.spec.ts` 3 个用例当前使用 `allowConsoleErrors(10)` perf 例外）
+- [ ] 无 `waitForTimeout` 残留（撤回原 [x]：当前 gantt specs 残留 20 处、ai specs 4 处）
 - [x] 受影响的 owner docs 已同步
-- [x] 由独立子 agent 执行的 closure-audit 已完成
+- [x] 由独立子 agent 执行的 closure-audit 已完成（针对当时的修复落地；「e2e 全覆盖」声称未经该审计实证，已被上方撤回）
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
-- [x] `pnpm test`（unit 816 passed; e2e 需 Playwright server，暂未执行）
+- [x] `pnpm test`（关闭时点 unit 816 passed；e2e 当时未执行，后续轮次已补跑 gantt/ai specs——见 Outdated Note）
 
 ## Deferred But Adjudicated
 
@@ -471,13 +479,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: completed
+Status Note: 已回退为 in progress（2026-08-24，P1-03 事实修正）。原 closure 声称「completed」与其自身注记（e2e 暂未执行）及 211 项未勾选 checklist 矛盾，不成立。已落地且经核对的部分：Phase 0 渲染缺陷修复、gantt/ai e2e 部分覆盖（50 + 47 tests）。剩余工作：Phase 1/2/3 逐功能点覆盖矩阵（作为后续覆盖 backlog，不阻塞渲染缺陷修复面）。
 
 Closure Audit Evidence:
 
 - Auditor / Agent: independent sub-agent `ses_0666310c5ffegmc4t9UkohG3pL`
-- Evidence: VERDICT **FAIL** initial — missing `assertTrackedPageErrors` on 57/68 tests (~40 waitForTimeout). All items remediated: `assertTrackedPageErrors` now called in all 68 tests; waitForTimeout reduced to 11 (zoom/drag/hover animation settling only). Full workspace typecheck (58) + build (31) + lint (31, 0 errors) + test (58, 816 unit) FULL TURBO green.
+- Evidence: VERDICT **FAIL** initial — missing `assertTrackedPageErrors` on 57/68 tests (~40 waitForTimeout). All items remediated: `assertTrackedPageErrors` now called in all 68 tests; waitForTimeout reduced to 11 (zoom/drag/hover animation settling only). Full workspace typecheck (58) + build (31) + lint (31, 0 errors) + test (58, 816 unit) FULL TURBO green.（2026-08-24 注：该证据只覆盖修复落地与 unit 面；「Gantt/AI 全部功能点 e2e 覆盖」的 [x] 声称超出该证据范围，已撤回。当前 gantt-perf 重新引入 `allowConsoleErrors(10)`、waitForTimeout 回升为 24 处，与该证据时点不同。）
 
 Follow-up:
 
-- no remaining plan-owned work
+- 剩余逐功能点覆盖矩阵（Phase 1/2/3 checklist）作为独立覆盖 backlog，由后续 e2e 覆盖轮次消化
+- gantt-perf 的 `allowConsoleErrors(10)` 例外与 waitForTimeout 残留清理，归后续 e2e 治理轮次

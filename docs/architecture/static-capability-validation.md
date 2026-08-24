@@ -182,7 +182,7 @@ Validation mode may enforce:
 
 Without such a binding source, validation mode must not claim that it knows:
 
-- which renderer type a `componentId`, `componentName`, or `_targetCid` refers to
+- which renderer type a `componentId` or `_targetCid` refers to
 - whether the target is unique
 - whether the target exists in the mounted runtime tree
 
@@ -258,7 +258,7 @@ Silent downgrade is not acceptable in strict validation mode.
 
 The following remain runtime-owned unless a future contract source is added:
 
-- runtime existence and uniqueness of `componentId` / `componentName` targets
+- runtime existence and uniqueness of `componentId` targets
 - concrete renderer typing for component targets without explicit compile-time binding metadata
 - generic host projection property/path validation before publication attribution is compiler-visible
 - imported namespace args/result/deprecation validation beyond `namespaceMethods` existence checks

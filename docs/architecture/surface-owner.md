@@ -367,7 +367,7 @@ callback 的核心规则：
 X1 落地 `component:open`/`close`/`toggle` handle（dialog/drawer），与既有 `openDialog`/`openDrawer`/`closeSurface` action API 共存。关系裁定（详见 `docs/references/component-handle-vocabulary.md` §surface-family）：
 
 - **action API**（`openDialog`/`openDrawer`/`closeSurface`）：跨 target，surface body 可在 action 内联声明（ad-hoc surface）。按 `surfaceId`/top-most 寻址。
-- **component capability handle**（`component:open`/`close`/`toggle`）：同 component，操作已声明的 declarative dialog/drawer 实例。按 `componentId`/`componentName` 寻址（target 必须是已渲染的 dialog/drawer renderer 节点）。
+- **component capability handle**（`component:open`/`close`/`toggle`）：同 component，操作已声明的 declarative dialog/drawer 实例。按 `componentId` 寻址（target 必须是已渲染的 dialog/drawer renderer 节点）。
 - 二者最终 lower 到同一 `SurfaceRuntime` 内核（同一 surface stack、同一 focus/dismiss/child scope/status publication 规则），**不存在双状态源**。
 - authoring 建议：declarative dialog/drawer 用 `component:*`；ad-hoc 弹层用 `openDialog`/`openDrawer`。
 - Failure paths：`x1-open-no-target`（component target 未注册）、`x1-close-not-open`（已 closed 时 close → `{ok:true, skipped:true}`）。

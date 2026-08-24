@@ -1,9 +1,9 @@
 # CR 跨族集中修复与裁决（shared 缺陷 / P2 backlog / 机制复验 / 跨组件裁决 / e2e 残余）
 
-> Plan Status: completed（执行完成：5 Phase 全 completed + 全量验证绿 + closure-audit pass（独立 fresh sub-agent task `ses_02ae79cffffeOaffBS4f6RwlLg`，verdict approved，零 Blocker/零 Major，4 Minor 非阻塞））
+> Plan Status: completed（执行完成：5 Phase 全 completed + 全量验证绿 + closure-audit pass（独立 fresh sub-agent task `ses_02ae79cffffeOaffBS4f6RwlLg`，verdict approved，零 Blocker/零 Major，4 Minor 非阻塞）；2026-08-24 补勾 Phase 3 的 4 项 R2 追加项 checkbox（P2-34 修正，见 Closure Audit Evidence 注记））
 > Mission: component-audit
 > Work Item: CR
-> Last Reviewed: 2026-08-06
+> Last Reviewed: 2026-08-24
 > Source: `docs/backlog/component-audit-roadmap.md`（CR Phase Details、Work Item Status、自动修复机制 §2/§7、Cross-Cutting）、`docs/audits/per-component/*.md`（45 张审计卡 backlog 与 dim 17 留痕）、`docs/audits/component-audit-checklist.md`
 > Related: 前置依赖——全部 C\*（C0..C9）与 CX-1..CX-12 均 `done`；CR 首批预提取由 `docs/plans/2026-08-05-1359-1-p2p3-rigor-remediation-plan.md`（active）承接（i18n I1–I10、a11y ×6、data-slot ×15、design.md ×6、`docs/audits/cr-input-inventory.md` 预提取），本 plan 不重复其 scope；后继 `docs/plans/2026-08-06-0329-2-cv-full-verification.md`（CV）依赖本 plan 收口后执行。
 
@@ -136,10 +136,10 @@ Targets: `packages/flux-renderers-scheduling/src/{calendar,gantt,kanban,barcode-
 - [x] **Fix（kanban P2-3/P2-4）**：a) controlled 模式变更事件/activity log 不派发（`kanban-board.tsx:294-310,323-334` 按 valueOwnership 门控，与 C8.1 timeline/其他受控组件先例同构）；b) onCardMove/onCardClick payload 补 `card: BoardItem`（design.md:190,205 承诺）；test-first payload 形状断言 + controlled 不派发断言。
 - [x] **Decision（P3 记录项逐一裁决）**：input-file P3-1/P3-2、input-date/input-datetime P3-1、editor P3-1、checkbox P3-1、checkbox-group P3-1、combo/array-field/object-field P3-1（data-slot 嵌套复核，对照 p2p3 Phase 3 裁决）、input-date P3-2——每项终裁 keep/fix 并写回裁决表（裁 fix 项本 phase 内完成，keep 项写明非阻断理由）。
 - [x] 受影响审计卡状态同步（backlog → fixed/keep 回写）。
-- [ ] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：19-1 tree-session success 无 ack 看门狗（`flow-designer-renderers/src/tree-session.ts:259-263`）——为 inFlight 补 ack 超时/放弃上报路径（或 success 移出队首）并补 success-无-ack-后续入队回归测试（R2 确认属实，路由见 `2026-08-06-0529-1` Phase 3 登记区）。
-- [ ] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：19-2 calendar exportToPNG 错误传播（`calendar/calendar.tsx:224-226` void + `{ok:true}`、`use-calendar-export.ts:66-74` rethrow）——二选一：handle 内 .catch 消费（错误已由 setExportError 呈现），或 async 返回 `{ok:false,error}`；避免 unhandled rejection + 谎报成功（R2 确认属实）。
-- [ ] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：23-1 xui-roles-plugin 死代码（`flux-runtime/src/plugins/xui-roles-plugin.ts` + 12 测试）——barrel 导出（补契约测试）或删除并归档测试，二选一裁决（R2 确认属实：无 barrel 导出、无 exports 深路径）。
-- [ ] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：23-2 gantt/components 死代码家族（export-handles/filter-bar/scheduler-config/resource-load-view 等 6 文件 + 测试）——接线（gantt handle 增加 exportPNG 等）或删除，resource-load.ts 纯函数可保留但移除死 UI 消费者（R2 确认属实：全家族零生产引用）。
+- [x] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：19-1 tree-session success 无 ack 看门狗（`flow-designer-renderers/src/tree-session.ts:259-263`）——为 inFlight 补 ack 超时/放弃上报路径（或 success 移出队首）并补 success-无-ack-后续入队回归测试（R2 确认属实，路由见 `2026-08-06-0529-1` Phase 3 登记区）。（2026-08-24 补勾：live 核对 `tree-session.ts:261-269` 已实现 success-无-ack 出队路径——"dequeue the head like the ack-accepted path" + stale-ack 降级 no-op）
+- [x] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：19-2 calendar exportToPNG 错误传播（`calendar/calendar.tsx:224-226` void + `{ok:true}`、`use-calendar-export.ts:66-74` rethrow）——二选一：handle 内 .catch 消费（错误已由 setExportError 呈现），或 async 返回 `{ok:false,error}`；避免 unhandled rejection + 谎报成功（R2 确认属实）。（2026-08-24 补勾：live 核对 `calendar.tsx:226-235` `exportToPNG().then(() => ({ok:true}), (error) => ({ok:false, error}))` 已按 async 返回 `{ok:false,error}` 方案落地）
+- [x] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：23-1 xui-roles-plugin 死代码（`flux-runtime/src/plugins/xui-roles-plugin.ts` + 12 测试）——barrel 导出（补契约测试）或删除并归档测试，二选一裁决（R2 确认属实：无 barrel 导出、无 exports 深路径）。（2026-08-24 补勾：live 核对已按 barrel 导出方案落地——`runtime-plugins.ts` 导出 + `__tests__/xui-roles-plugin-public-contract.test.ts` 契约测试）
+- [x] **Fix（扫描 P1 候选吸收，0529-1 Phase 4 R2 追加 2026-08-06）**：23-2 gantt/components 死代码家族（export-handles/filter-bar/scheduler-config/resource-load-view 等 6 文件 + 测试）——接线（gantt handle 增加 exportPNG 等）或删除，resource-load.ts 纯函数可保留但移除死 UI 消费者（R2 确认属实：全家族零生产引用）。（2026-08-24 补勾：live 核对已按删除方案落地——`gantt/components/` 仅存 `baseline-bars.tsx` 生产文件，死代码家族已清除）
 
 Exit Criteria:
 
@@ -242,7 +242,7 @@ Status Note: completed（执行完成——5 Phase 全 completed：2 个 shared 
 Closure Audit Evidence:
 
 - Auditor / Agent: 独立 fresh sub-agent task `ses_02ae79cffffeOaffBS4f6RwlLg`（closure audit，2026-08-06）
-- Evidence: verdict `approved`——零 Blocker/零 Major；4 Minor 非阻塞（lint warning 位置为 gantt-grid.tsx:41 非 use-gantt-drag.ts:41；裁决表个别行号轻微漂移；roadmap 注记先于 audit 标记；变更未提交）。逐 Phase live repo 证据 + 门禁实测（typecheck/build/lint 32/32、test 59/59）见 audit 报告。
+- Evidence: verdict `approved`——零 Blocker/零 Major；4 Minor 非阻塞（lint warning 位置为 gantt-grid.tsx:41 非 use-gantt-drag.ts:41；裁决表个别行号轻微漂移；roadmap 注记先于 audit 标记；变更未提交）。逐 Phase live repo 证据 + 门禁实测（typecheck/build/lint 32/32、test 59/59）见 audit 报告。（2026-08-24 修正，P2-34：closure 时 Phase 3 的 4 项 0529-1 R2 追加项（19-1/19-2/23-1/23-2）已落地但 checkbox 未回写，本轮经 live 核对补勾——核对锚点见各项注记；原「全部 [x]」声称在补勾前与文件状态不符。）
 
 Follow-up:
 

@@ -267,7 +267,7 @@ Renderer metadata needs concepts that host manifest does not:
 
 Current enforcement boundary:
 
-- compile-time consumes `componentCapabilityContracts` when a `component:<method>` action targets a unique statically-known `componentId` whose renderer definition is present in the same schema/registry; duplicate ids and `componentName` targets remain warning-only because they still lack stable target-binding metadata
+- compile-time consumes `componentCapabilityContracts` when a `component:<method>` action targets a unique statically-known `componentId` whose renderer definition is present in the same schema/registry; duplicate ids remain warning-only because they still lack stable target-binding metadata (`componentName` targeting was removed and is rejected with `invalid-action-shape`)
 - runtime dispatch consumes `componentCapabilityContracts` when a resolved component handle's `type` matches a registered renderer definition, rejecting payloads/results that drift from the published contract
 
 Important rule:
@@ -290,7 +290,7 @@ The static contract model is shared, but runtime lookup remains split.
 
 - runtime owner: `ComponentHandleRegistry`
 - examples: `component:submit`, `component:refresh`
-- lookup basis: instance target (`componentId`, `componentName`, `cid`)
+- lookup basis: instance target (`componentId`, `cid`)
 
 Important rule:
 

@@ -1,9 +1,17 @@
 # 452 submitForm Surface Discovery And ComponentId/Name Unification
 
-> Plan Status: completed
-> Last Reviewed: 2026-07-29
+> Plan Status: in progress
+> Last Reviewed: 2026-08-24
 > Source: `docs/discussions/component-id-name-unification.md`, E2E debugging session for nop-entropy flux-mode auth-user tests
 > Related: `docs/architecture/component-resolution.md`, `docs/architecture/surface-lifecycle-callbacks.md`
+
+## Outdated Note（2026-08-24 状态事实修正，P1-04）
+
+原 closure 声称「所有 Phase 和 Closure Gates 已通过」，但 Phase 1 停留在 `in_progress`（3 项待办未勾选）、Phase 2 停留在 `planned`（11 项未勾选），状态与声称矛盾（违反 plan guide Rule 19/20）。2026-08-24 按 live 代码逐项核对（源：`docs/plans/2026-08-11-1929-3-claim-vs-reality-plan-doc-contract-integrity-remediation.md` Phase 1）：
+
+- **Phase 1/Phase 2 全部 checklist 项均已落地**（核对依据见各项内注记），本轮补勾。
+- **残留一处幽灵字段**：`packages/flux-core/src/types/schema.ts:83` `ActionShapeLikeFields.componentName`（不在本 plan 原 checklist 内，属 schema 侧同名字段，零消费）——由 remediation plan `2026-08-11-1929-3` Phase 2 收口（删除字段 + 编译期 `invalid-action-shape` 拒绝）。
+- Plan Status 维持诚实状态 `in progress`：除上述幽灵字段（已移交 remediation plan）外无剩余本计划工作；待 remediation plan 收口后本计划可视需要直接关闭。
 
 ## Purpose
 
@@ -91,7 +99,7 @@
 
 ### Phase 1 - Surface Form Discovery（已完成大部分，需验证编译和测试）
 
-Status: in_progress
+Status: completed
 Targets: `flux-core/types/runtime.ts`, `flux-runtime/surface-runtime.ts`, `flux-renderers-form/renderers/form.tsx`, `flux-react/renderer-helpers.ts`
 
 - Item Types: `Fix | Proof`
@@ -106,40 +114,42 @@ Targets: `flux-core/types/runtime.ts`, `flux-runtime/surface-runtime.ts`, `flux-
 
 待完成：
 
-- [ ] 确认 `pnpm build` 全量通过
-- [ ] 写 unit test：form with submitScope='surface' registers with surfaceRuntime
-- [ ] 写 unit test：dispatch from outside FormContext resolves surface form into ctx.form
+- [x] 确认 `pnpm build` 全量通过（2026-08-24 补勾：该改动已合入主干，后续多轮全量 build 绿）
+- [x] 写 unit test：form with submitScope='surface' registers with surfaceRuntime（2026-08-24 补勾：落地为集成级 focused 测试——`flux-renderers-form/src/__tests__/submit-action-scope.test.tsx`（openDialog + submitScope='surface' + footer submit 全链路）、`dialog-close-on-submit.test.tsx`（footer submitForm 依赖 surfaceForm 注册才能解析 form））
+- [x] 写 unit test：dispatch from outside FormContext resolves surface form into ctx.form（2026-08-24 补勾：同上，`renderer-helpers.ts:264-266` 的 surfaceForm 回填路径被上述测试覆盖）
 
 Exit Criteria:
 
-- [ ] `flux-runtime` 和 `flux-action-core` 和 `flux-react` 和 `flux-renderers-form` 各自 build 通过
-- [ ] surface form 注册/注销的 focused 测试存在且通过
-- [ ] dispatch 时 ctx.form 解析的 focused 测试存在且通过
+- [x] `flux-runtime` 和 `flux-action-core` 和 `flux-react` 和 `flux-renderers-form` 各自 build 通过
+- [x] surface form 注册/注销的 focused 测试存在且通过
+- [x] dispatch 时 ctx.form 解析的 focused 测试存在且通过
 
 ### Phase 2 - ComponentId/Name Unification
 
-Status: planned
+Status: completed
 Targets: `flux-core/types/actions.ts`, `flux-core/types/component-handle-core.ts`, `flux-runtime/component-handle-registry.ts`, `flux-action-core/action-dispatcher/action-runners.ts`, `flux-runtime/action-adapter.ts`
 
 - Item Types: `Fix | Decision`
 
-- [ ] `ComponentTarget`（`component-handle-core.ts:31-35`）：移除 `componentName`，保留 `componentId`
-- [ ] `CompiledActionTargeting`（`actions.ts:429-437`）：移除 `componentName`
-- [ ] `ActionShapeFields`（`actions.ts:140-146`）：移除 `componentName`
-- [ ] `SubmitFormActionSchema` 及其他具体 schema：继承变化自动生效
-- [ ] `component-handle-registry.ts`：`resolveInScope` 统一为单路径——先查 `handlesById`，未命中再查 `handlesByName`，使用同一个 `componentId` 参数
-- [ ] `action-runners.ts`（`runComponentAction`）：`target` 只读 `componentId`，移除 `componentName`
-- [ ] `action-adapter.ts`：submitForm fallback 只用 `componentId`
-- [ ] `action-dispatcher-routing.test.ts`：更新 mock 中 `targeting.componentName` → `componentId`
-- [ ] `action-adapter.capabilities.test.ts`：更新 mock
-- [ ] `component-handle-registry` 测试：更新使用 `componentName` 的用例
-- [ ] 全仓库搜索 `componentName` 在 `targeting`/`ComponentTarget` 上下文中的残留引用并清理
+（2026-08-24 补勾：以下各项经 live 核对均已落地，核对锚点见各项注记）
+
+- [x] `ComponentTarget`（`component-handle-core.ts:31-35`）：移除 `componentName`，保留 `componentId`（live：`ComponentTarget` 无 componentName 字段）
+- [x] `CompiledActionTargeting`（`actions.ts:429-437`）：移除 `componentName`（live：`actions.ts:435-442` 仅 `_targetCid/_targetTemplateId/targetId/componentId/dialogId/surfaceId`）
+- [x] `ActionShapeFields`（`actions.ts:140-146`）：移除 `componentName`（live：actions.ts 中 componentName 仅存于 `ActionResult`/`ActionMonitorPayload` 元数据，属 Deferred 裁定范围）
+- [x] `SubmitFormActionSchema` 及其他具体 schema：继承变化自动生效
+- [x] `component-handle-registry.ts`：`resolveInScope` 统一为单路径——先查 `handlesById`，未命中再查 `handlesByName`，使用同一个 `componentId` 参数（live：`component-handle-registry.ts:279-309`）
+- [x] `action-runners.ts`（`runComponentAction`）：`target` 只读 `componentId`，移除 `componentName`（live：仅剩 ActionResult 元数据 Pick）
+- [x] `action-adapter.ts`：submitForm fallback 只用 `componentId`（live：`action-adapter.ts:209-215`）
+- [x] `action-dispatcher-routing.test.ts`：更新 mock 中 `targeting.componentName` → `componentId`
+- [x] `action-adapter.capabilities.test.ts`：更新 mock
+- [x] `component-handle-registry` 测试：更新使用 `componentName` 的用例（live：`container-hooks.test.ts` 'prefers componentId over componentName' 等已按新语义覆盖）
+- [x] 全仓库搜索 `componentName` 在 `targeting`/`ComponentTarget` 上下文中的残留引用并清理（2026-08-24 复核：targeting 上下文零残留；`schema.ts:83` `ActionShapeLikeFields.componentName` 幽灵字段除外——见 Outdated Note，由 `2026-08-11-1929-3` Phase 2 收口）
 
 Exit Criteria:
 
-- [ ] `pnpm typecheck` 通过（编译器报错即为残留引用未清理）
-- [ ] `component-handle-registry` 的 resolve 测试覆盖：componentId 匹配 handle.id、匹配 handle.name、两者都不匹配
-- [ ] component action 测试更新后通过
+- [x] `pnpm typecheck` 通过（编译器报错即为残留引用未清理）
+- [x] `component-handle-registry` 的 resolve 测试覆盖：componentId 匹配 handle.id、匹配 handle.name、两者都不匹配
+- [x] component action 测试更新后通过
 
 ### Phase 3 - Documentation
 
@@ -195,13 +205,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 所有 Phase 和 Closure Gates 已通过。submitForm surface discovery 使 dialog footer 按钮零参数即可触发表单提交；componentId/name 统一消除了 componentName 作为独立 targeting 属性的冗余。
+Status Note: （2026-08-24 修正）原 Status Note 声称「所有 Phase 和 Closure Gates 已通过」，与当时 Phase 1 `in_progress`、Phase 2 `planned`、14 项未勾选的事实矛盾。经 2026-08-24 live 逐项核对：Phase 1/2/3 全部 checklist 项与 Closure Gates 实质均已落地并补勾；唯一残留是 `schema.ts:83` `ActionShapeLikeFields.componentName` 幽灵字段（不在本 plan 原 checklist 内），已移交 `docs/plans/2026-08-11-1929-3-claim-vs-reality-plan-doc-contract-integrity-remediation.md` Phase 2 收口。submitForm surface discovery 使 dialog footer 按钮零参数即可触发表单提交；componentId/name 统一消除了 componentName 作为独立 targeting 属性的冗余（ActionShapeLikeFields 幽灵字段除外）。
 
 Closure Audit Evidence:
 
 - Auditor / Agent: `ses_0531ca74dfferQYA0MUSJezvuW`（独立子 agent）
-- Evidence: 审计报告确认所有 6 个 closure gates 全部 PASS。Flux 5 个受影响包共 3150 个测试通过，pnpm typecheck 和 pnpm build 通过。文档已同步并验证。
+- Evidence: 审计报告确认所有 6 个 closure gates 全部 PASS。Flux 5 个受影响包共 3150 个测试通过，pnpm typecheck 和 pnpm build 通过。文档已同步并验证。（2026-08-24 注：该审计针对行为面成立；checklist 回写缺失与 schema.ts 幽灵字段由 P1-04 修正轮补齐。）
 
 Follow-up:
 
-- 无剩余 plan-owned work
+- `schema.ts:83` `ActionShapeLikeFields.componentName` 幽灵字段 → `2026-08-11-1929-3` Phase 2（删除 + 编译期拒绝）
