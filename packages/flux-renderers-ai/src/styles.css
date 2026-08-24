@@ -299,3 +299,67 @@
   --ai-md-pre-border: hsl(var(--border, 217 33% 23%));
   --ai-md-code-bg: hsl(var(--muted, 217 33% 26%));
 }
+
+/* D3 (G3): bubble avatar — 32×32 circle with a lucide role icon
+   (product-spec.md §3.1). Dual-track colors follow the D2 precedent: theme
+   var first, literal fallback second (light in base block, classic-dark in
+   dark blocks). `:has` scopes the row layout to avatar-bearing bubbles only,
+   so avatar-less bubbles keep their current block layout. */
+[data-slot='ai-bubble']:has(> [data-slot='ai-bubble-avatar']) {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+[data-slot='ai-bubble-avatar'] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background-color: hsl(var(--secondary-surface, 217 89% 96%));
+  border: 1px solid hsl(var(--border, 214 32% 91%));
+  color: hsl(var(--muted-foreground, 215 19% 35%));
+}
+
+[data-slot='ai-bubble-avatar'] svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-slot='ai-bubble-avatar'] {
+    background-color: hsl(var(--secondary-surface, 217 30% 20%));
+    border-color: hsl(var(--border, 217 33% 27%));
+    color: hsl(var(--muted-foreground, 215 25% 75%));
+  }
+}
+
+[data-mode='dark'] [data-slot='ai-bubble-avatar'] {
+  background-color: hsl(var(--secondary-surface, 217 30% 20%));
+  border-color: hsl(var(--border, 217 33% 27%));
+  color: hsl(var(--muted-foreground, 215 25% 75%));
+}
+
+/* D3 (G8): welcome icon — muted-foreground tint for both the lucide preset
+   renderings and the literal character fallback (product-spec.md §3.2). */
+[data-slot='ai-welcome-icon'] {
+  color: hsl(var(--muted-foreground, 215 19% 35%));
+}
+
+[data-slot='ai-welcome-icon'] svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-slot='ai-welcome-icon'] {
+    color: hsl(var(--muted-foreground, 215 25% 75%));
+  }
+}
+
+[data-mode='dark'] [data-slot='ai-welcome-icon'] {
+  color: hsl(var(--muted-foreground, 215 25% 75%));
+}

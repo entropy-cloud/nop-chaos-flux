@@ -113,6 +113,42 @@ test.describe('AI widgets — welcome, prompts, token usage, suggestions', () =>
     await assertTrackedPageErrors(page);
   });
 
+  test('assistant bubble avatar renders 32×32 circle with a lucide svg (D3)', async ({ page }) => {
+    await openWidgetsPage(page);
+
+    const input = page.locator('[data-slot="ai-sender-input"] textarea');
+    await expect(input).toBeVisible();
+    await input.fill('avatar geometry');
+    await page.locator('[data-slot="ai-sender-submit"]').click();
+
+    const assistantBubble = page.locator('[data-slot="ai-bubble"][data-role="assistant"]').first();
+    await expect(assistantBubble).toContainText('Hello', { timeout: 10_000 });
+
+    const avatar = assistantBubble.locator('[data-slot="ai-bubble-avatar"]');
+    await expect(avatar).toBeVisible();
+    await expect(avatar.locator('svg')).toHaveCount(1);
+
+    const box = await avatar.evaluate((el) => el.getBoundingClientRect());
+    expect(box.width).toBe(32);
+    expect(box.height).toBe(32);
+
+    const radius = await avatar.evaluate((el) => getComputedStyle(el).borderRadius);
+    expect(radius).toBe('9999px');
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('welcome icon renders the Bot lucide preset instead of the literal "bot" text (D3)', async ({ page }) => {
+    await openWidgetsPage(page);
+
+    const icon = page.locator('[data-slot="ai-welcome-icon"]');
+    await expect(icon).toBeVisible();
+    await expect(icon.locator('svg')).toHaveCount(1);
+    expect((await icon.textContent()) ?? '').not.toBe('bot');
+
+    await assertTrackedPageErrors(page);
+  });
+
   test('beforeMessages area renders welcome before messages', async ({ page }) => {
     await openWidgetsPage(page);
 

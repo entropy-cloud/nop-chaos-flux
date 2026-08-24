@@ -30,6 +30,13 @@ export interface AiChatSchema extends BaseSchema {
    * `showTimestamp=false` when used standalone without the prop).
    */
   showTimestamp?: boolean;
+  /**
+   * D3 (product-spec §3.1): when true, every bubble in the message list
+   * renders its avatar (lucide `Bot`/`User` by role). Forwarded through
+   * `ai-message-list` to each `ai-bubble` (the bubble itself defaults to
+   * `showAvatar=false` when used standalone without the prop).
+   */
+  showAvatar?: boolean;
   initialMessages?: SchemaValue;
   /**
    * P6 (A6): host-injected rich-text extension for the embedded `ai-sender`.
@@ -111,6 +118,8 @@ export interface AiMessageListSchema extends BaseSchema {
   emptyRegion?: SchemaInput;
   /** A-4: when true, bubbles render their `metadata.createdAt` time footer. */
   showTimestamp?: boolean;
+  /** D3: when true, bubbles render their role-dispatched lucide avatar. */
+  showAvatar?: boolean;
 }
 
 export interface AiBubbleSchema extends BaseSchema {
@@ -120,6 +129,13 @@ export interface AiBubbleSchema extends BaseSchema {
   shape?: 'corner' | 'rounded' | 'none';
   showAvatar?: boolean;
   showTimestamp?: boolean;
+  /**
+   * D3 (product-spec §3.1): host-provided avatar override (expression
+   * resolving to a ReactNode, injected via `xui:imports` / programmatic use).
+   * Consumed by `AiBubbleRenderer` and forwarded to `AiBubbleView.avatar`;
+   * when absent the avatar renders lucide `Bot`/`User` dispatched by role.
+   */
+  avatar?: SchemaValue;
   /**
    * A-16 message branches: the host-managed branch set this message belongs to.
    * Each entry maps a branch id to a message id; the picker renders prev/next +
@@ -238,7 +254,19 @@ export interface AiWelcomeSchema extends BaseSchema {
   type: 'ai-welcome';
   title?: string;
   description?: string;
+  /**
+   * Icon value. A string hitting the D3 preset map (`bot` / `user` /
+   * `sparkles` / `chat` / `lightbulb` / `search`) renders the corresponding
+   * lucide component; any other non-empty string renders literally
+   * (backward-compatible fallback, product-spec §3.2).
+   */
   icon?: string;
+  /**
+   * D3 (product-spec §3.2): expression resolving to a host-injected lucide
+   * component reference (via `xui:imports`). Takes priority over the `icon`
+   * string when it resolves to a component.
+   */
+  iconLucide?: SchemaValue;
   align?: 'left' | 'center' | 'right';
   footer?: SchemaInput;
 }

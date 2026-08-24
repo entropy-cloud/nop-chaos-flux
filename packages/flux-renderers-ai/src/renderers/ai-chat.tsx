@@ -541,7 +541,11 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
       >
         {headerNode ? <header data-slot="ai-chat-header">{headerNode}</header> : null}
         {beforeNode ? <div data-slot="ai-chat-before">{beforeNode}</div> : null}
-        <AiMessageListView emptyNode={emptyNode} showTimestamp={resolved.showTimestamp === true} />
+        <AiMessageListView
+          emptyNode={emptyNode}
+          showTimestamp={resolved.showTimestamp === true}
+          showAvatar={resolved.showAvatar === true}
+        />
         {afterNode ? <div data-slot="ai-chat-after">{afterNode}</div> : null}
         <AiSenderView
           placeholder={resolved.placeholder}

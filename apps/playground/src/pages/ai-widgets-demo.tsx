@@ -30,6 +30,7 @@ const SCHEMA = {
       connector: '${$ai.connectors.mock}',
       placeholder: 'Ask me anything about weather, docs, or data…',
       submitType: 'enter',
+      showAvatar: true,
       className: 'flex flex-col h-[calc(100vh-57px)] max-w-3xl mx-auto',
       header: {
         type: 'flex',

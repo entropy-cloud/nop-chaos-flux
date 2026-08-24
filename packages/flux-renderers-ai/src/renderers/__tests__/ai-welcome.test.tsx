@@ -37,7 +37,11 @@ describe('ai-welcome — content rendering (C8.3)', () => {
   it('renders partial content (icon only) without crashing', () => {
     const props = makeProps({ props: { type: 'ai-welcome', icon: 'bot' } });
     const { container } = render(<Welcome {...props} />);
-    expect(container.querySelector('[data-slot="ai-welcome-icon"]')?.textContent).toBe('bot');
+    // D3 planned behavior change (plan 2026-08-24-2237-1 Phase 2): `bot` hits
+    // the lucide preset map → renders the Bot svg instead of the literal text.
+    const icon = container.querySelector('[data-slot="ai-welcome-icon"]')!;
+    expect(icon.querySelector('svg')).not.toBeNull();
+    expect(icon.textContent).not.toBe('bot');
     expect(container.querySelector('[data-slot="ai-welcome-title"]')).toBeNull();
     expect(container.querySelector('[data-slot="ai-welcome-description"]')).toBeNull();
   });
@@ -48,6 +52,36 @@ describe('ai-welcome — content rendering (C8.3)', () => {
     const root = container.querySelector('.nop-ai-welcome')!;
     expect(root.getAttribute('data-align')).toBe('center');
     expect(container.querySelector('[data-slot="ai-welcome-title"]')).toBeNull();
+  });
+});
+
+describe('ai-welcome — icon lucide dispatch (D3 / product-spec §3.2)', () => {
+  it('icon:"bot" maps to the Bot lucide preset (svg, not the literal string)', () => {
+    const props = makeProps({ props: { type: 'ai-welcome', icon: 'bot' } });
+    const { container } = render(<Welcome {...props} />);
+    const icon = container.querySelector('[data-slot="ai-welcome-icon"]')!;
+    expect(icon).not.toBeNull();
+    expect(icon.querySelector('svg')).not.toBeNull();
+    expect(icon.textContent).not.toBe('bot');
+  });
+
+  it('unmapped icon string falls back to the literal character rendering', () => {
+    const props = makeProps({ props: { type: 'ai-welcome', icon: '✨' } });
+    const { container } = render(<Welcome {...props} />);
+    const icon = container.querySelector('[data-slot="ai-welcome-icon"]')!;
+    expect(icon.querySelector('svg')).toBeNull();
+    expect(icon.textContent).toBe('✨');
+  });
+
+  it('iconLucide component takes priority over the icon string', () => {
+    const CustomIcon = () => <svg data-testid="custom-lucide" viewBox="0 0 24 24" />;
+    const props = makeProps({
+      props: { type: 'ai-welcome', icon: 'bot', iconLucide: CustomIcon } as never,
+    });
+    const { container } = render(<Welcome {...props} />);
+    const icon = container.querySelector('[data-slot="ai-welcome-icon"]')!;
+    expect(icon.querySelector('[data-testid="custom-lucide"]')).not.toBeNull();
+    expect(icon.textContent).not.toBe('bot');
   });
 });
 
