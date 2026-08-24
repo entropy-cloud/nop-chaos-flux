@@ -64,7 +64,7 @@ interface Increment {
  */
 export class Animator {
   private readonly playing = new Map<string, Map<ScadaAnimationKind, ActiveAnimation>>();
-  private readonly events = new EventHub<AnimatorEvents>();
+  private readonly hub = new EventHub<AnimatorEvents>();
   private readonly now: () => number;
   private readonly scheduleTick: TickScheduler;
   private readonly interval: number;
@@ -94,7 +94,7 @@ export class Animator {
         elapsed: 0,
         paused: false,
       });
-      this.events.emit('animation:start', { symbolId, kind: animation.kind });
+      this.hub.emit('animation:start', { symbolId, kind: animation.kind });
     }
     this.ensureClock();
   }
@@ -105,7 +105,7 @@ export class Animator {
     if (kind === undefined) {
       for (const active of [...byKind.values()]) {
         byKind.delete(active.kind);
-        this.events.emit('animation:stop', { symbolId, kind: active.kind });
+        this.hub.emit('animation:stop', { symbolId, kind: active.kind });
       }
       this.playing.delete(symbolId);
     } else {
@@ -113,7 +113,7 @@ export class Animator {
       if (!active) return;
       byKind.delete(kind);
       if (byKind.size === 0) this.playing.delete(symbolId);
-      this.events.emit('animation:stop', { symbolId, kind });
+      this.hub.emit('animation:stop', { symbolId, kind });
     }
     if (this.playing.size === 0) this.stopClock();
   }
@@ -153,18 +153,18 @@ export class Animator {
   }
 
   on(event: 'animation:start' | 'animation:stop', cb: (payload: AnimationStartStopEvent) => void): Unsubscribe {
-    return this.events.on(event, cb);
+    return this.hub.on(event, cb);
   }
 
   destroy(): void {
     for (const [symbolId, byKind] of this.playing) {
       for (const kind of [...byKind.keys()]) {
-        this.events.emit('animation:stop', { symbolId, kind });
+        this.hub.emit('animation:stop', { symbolId, kind });
       }
     }
     this.playing.clear();
     this.stopClock();
-    this.events.removeAll();
+    this.hub.removeAll();
   }
 
   private byKindOf(symbolId: string, create: true): Map<ScadaAnimationKind, ActiveAnimation>;
