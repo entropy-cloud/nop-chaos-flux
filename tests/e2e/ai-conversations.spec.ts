@@ -26,7 +26,10 @@ test.describe('AI conversations — P1 namespace + conversations + streaming', (
     // namespace wiring is live and error-free.
     await expect(page.locator('[data-slot="ai-conversations-create"]')).toBeVisible();
     await page.locator('[data-slot="ai-conversations-create"]').click();
-    await page.waitForTimeout(500);
+    // Namespace dispatch is wired and error-free (the full controller →
+    // scope-sync → list re-render loop is covered by use-conversation unit
+    // tests; the renderer-side create/rename/delete/switch flows are covered
+    // on /#/ai-coverage).
     await assertTrackedPageErrors(page);
   });
 

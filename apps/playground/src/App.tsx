@@ -52,6 +52,7 @@ import { M3LayoutDemoPage } from './pages/m3-layout-demo';
 import { M4DataDisplayDemoPage } from './pages/m4-data-display-demo';
 import { M5MobileShowcaseDemoPage } from './pages/m5-mobile-showcase-demo';
 import { GanttDemoPage } from './pages/gantt-demo';
+import { GanttStatesDemoPage } from './pages/gantt-states-demo';
 import { KanbanDemoPage } from './pages/kanban-demo';
 import { DiffDemoPage } from './pages/diff-demo';
 import { ScadaDemoPage } from './pages/scada-demo';
@@ -82,6 +83,7 @@ import { AiCitationsDemoPage } from './pages/ai-citations-demo';
 import { AiHitlDemoPage } from './pages/ai-hitl-demo';
 import { AiP4WidgetsDemoPage } from './pages/ai-p4-widgets-demo';
 import { AiLinkageDemoPage } from './pages/ai-linkage-demo';
+import { AiCoverageDemoPage } from './pages/ai-coverage-demo';
 import { AiWidgetsDemoPage } from './pages/ai-widgets-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
@@ -220,6 +222,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <FlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
         case 'gantt':
           return <GanttDemoPage onBack={goHome} />;
+        case 'gantt-states':
+          return <GanttStatesDemoPage onBack={goHome} />;
         case 'kanban':
           return <KanbanDemoPage onBack={goHome} />;
         case 'scheduling-calendar':
@@ -362,6 +366,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <AiP4WidgetsDemoPage onBack={goHome} />;
         case 'ai-linkage':
           return <AiLinkageDemoPage onBack={goHome} />;
+        case 'ai-coverage':
+          return <AiCoverageDemoPage onBack={goHome} />;
         case 'ai-rich-text':
           return <LazyAiRichTextDemoPage onBack={goHome} />;
         case 'ai-widgets':

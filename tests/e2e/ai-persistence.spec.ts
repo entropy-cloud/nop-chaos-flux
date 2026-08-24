@@ -37,7 +37,15 @@ test.describe('AI persistence — P3 localStorage end-to-end (via ai-chat)', () 
     // we reload. The stream ends with "...Streaming works." then finish_reason.
     const assistantBubble = page.locator('[data-slot="ai-bubble"][data-role="assistant"]');
     await expect(assistantBubble).toContainText('Streaming works', { timeout: 10_000 });
-    await page.waitForTimeout(500);
+    // Reactive autosave-flush signal: the snapshot lands in localStorage.
+    await page.waitForFunction(
+      (key: string) => {
+        const raw = localStorage.getItem(key);
+        return !!raw && raw.includes('persist-me');
+      },
+      STORAGE_KEY,
+      { timeout: 5_000 },
+    );
 
     // Refresh — the conversation list + messages must recover from storage.
     await page.reload({ waitUntil: 'commit' });
@@ -75,7 +83,11 @@ test.describe('AI persistence — P3 localStorage end-to-end (via ai-chat)', () 
       'Streaming works',
       { timeout: 10_000 },
     );
-    await page.waitForTimeout(500);
+    await page.waitForFunction(
+      (needle: string) => !!localStorage.getItem('nop-chaos-flux:ai-persistence-demo')?.includes(needle),
+      'msg-A',
+      { timeout: 5_000 },
+    );
 
     // Conversation B (prepended → becomes the first sidebar item).
     await page.locator('[data-testid="ai-persistence-create"]').click();
@@ -88,7 +100,11 @@ test.describe('AI persistence — P3 localStorage end-to-end (via ai-chat)', () 
       'Streaming works',
       { timeout: 10_000 },
     );
-    await page.waitForTimeout(500);
+    await page.waitForFunction(
+      (needle: string) => !!localStorage.getItem('nop-chaos-flux:ai-persistence-demo')?.includes(needle),
+      'msg-B',
+      { timeout: 5_000 },
+    );
 
     // Switch back to A (the second sidebar item) — its messages re-hydrate
     // through ai-chat (the engine-null switch is transient; the new engine

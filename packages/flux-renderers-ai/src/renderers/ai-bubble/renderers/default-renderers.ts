@@ -47,6 +47,10 @@ export const defaultBubbleContentRenderers: BubbleContentRendererMatch[] = [
   },
   {
     priority: BubbleRendererMatchPriority.CONTENT,
+    // messageLevel (P1-9 family): the renderer projects the WHOLE message's
+    // image_url parts as one grid. At slice level a mixed [text, image, image]
+    // message invoked it once per image slice and duplicated the entire grid.
+    messageLevel: true,
     find: imageMatcher,
     renderer: ImageContentRenderer,
   },
