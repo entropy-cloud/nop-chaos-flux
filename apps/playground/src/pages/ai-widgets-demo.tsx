@@ -28,6 +28,7 @@ const SCHEMA = {
   body: [
     {
       type: 'ai-chat',
+      componentId: 'ai-widgets-chat',
       connector: '${$ai.connectors.mock}',
       tools: '${$ai.tools}',
       toolExecutor: '${$ai.toolExecutor}',
@@ -89,8 +90,9 @@ const SCHEMA = {
             layout: 'wrap',
             size: 'sm',
             onSelect: {
-              action: 'showToast',
-              args: { level: 'info', message: 'Prompt selected: ${item.label}' },
+              action: 'component:setSenderDraft',
+              componentId: 'ai-widgets-chat',
+              args: { text: '${item.label}' },
             },
           },
         ],
@@ -114,8 +116,9 @@ const SCHEMA = {
             items: '${suggestionItems}',
             overflowMode: 'expand',
             onSelect: {
-              action: 'showToast',
-              args: { level: 'info', message: 'Suggestion tapped: ${item.text}' },
+              action: 'component:setSenderDraft',
+              componentId: 'ai-widgets-chat',
+              args: { text: '${item.text}' },
             },
           },
           {
@@ -127,8 +130,9 @@ const SCHEMA = {
                 type: 'ai-voice-input',
                 lang: 'en-US',
                 onResult: {
-                  action: 'showToast',
-                  args: { level: 'success', message: 'Voice transcript: ${transcript}' },
+                  action: 'component:setSenderDraft',
+                  componentId: 'ai-widgets-chat',
+                  args: { text: '${transcript}', mode: 'append' },
                 },
                 onError: {
                   action: 'showToast',
@@ -162,11 +166,11 @@ const PROMPT_ITEMS = [
 ];
 
 const SUGGESTION_ITEMS = [
-  { text: 'Summarize', icon: '✏️' },
-  { text: 'Translate', icon: '🌐' },
-  { text: 'Explain', icon: '💡' },
-  { text: 'Refine', icon: '✨' },
-  { text: 'Expand', icon: '➕' },
+  { text: 'Summarize', icon: 'pencil' },
+  { text: 'Translate', icon: 'languages' },
+  { text: 'Explain', icon: 'lightbulb' },
+  { text: 'Refine', icon: 'sparkles' },
+  { text: 'Expand', icon: 'plus' },
 ];
 
 const CITATION_MESSAGE: ChatMessage = {
@@ -218,7 +222,13 @@ export function AiWidgetsDemoPage({ onBack }: Props) {
       feedbackMsg: {
         id: 'm_fb_widgets',
         role: 'assistant',
-        content: 'AI Widgets Showcase — feedback widget wired to showToast so every action is visible.',
+        content: 'AI Widgets Showcase — feedback actions now have real side effects (vote metadata, regenerate, sources popover).',
+        metadata: {
+          sources: [
+            { label: 'design.md', url: 'https://github.com/nop-chaos/nop-chaos/blob/main/docs/components/flux-renderers-ai/design.md' },
+            { label: 'product-spec.md', url: 'https://github.com/nop-chaos/nop-chaos/blob/main/docs/components/flux-renderers-ai/product-spec.md' },
+          ],
+        },
       },
     }),
     [],

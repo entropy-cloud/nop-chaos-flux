@@ -154,3 +154,77 @@ describe('createAiActionProvider — namespace `ai` action surface (unit)', () =
     expect(result.ok).toBe(false);
   });
 });
+
+// ============================================================================
+// D4 (plan 2026-08-24-2317-1): `ai:regenerate` — delegates to
+// `engine.regenerate(branchId?)` with the same busy-guard / null-engine
+// rejection caliber as send/clear. Live engine semantics are truncate-rerun:
+// message count unchanged + a fresh branchId on the regenerated assistant.
+// ============================================================================
+
+describe('createAiActionProvider — D4 ai:regenerate', () => {
+  it('AI_NAMESPACE_ACTIONS is exactly the 8 literal actions incl. regenerate (drift-guard)', () => {
+    expect([...AI_NAMESPACE_ACTIONS]).toEqual([
+      'send',
+      'abort',
+      'clear',
+      'createConversation',
+      'switchConversation',
+      'deleteConversation',
+      'renameConversation',
+      'regenerate',
+    ]);
+  });
+
+  it('ai:regenerate delegates to the engine when idle (count unchanged + branchId stamped)', async () => {
+    const replies: AiConnectorChunk[][] = [
+      [{ delta: { content: 'first answer' } }, { finishReason: 'stop' }],
+      [{ delta: { content: 'second answer' } }, { finishReason: 'stop' }],
+    ];
+    let call = 0;
+    const connector: AiConnector = {
+      async stream() {
+        const chunks = replies[call++] ?? replies[1]!;
+        async function* gen() {
+          for (const c of chunks) yield c;
+        }
+        return gen();
+      },
+    };
+    const engine = createMessageEngine({ connector });
+    const provider = createAiActionProvider({ engine });
+    await engine.sendMessage('q');
+    const result = await provider.invoke('regenerate', undefined, {} as ActionContext);
+    expect(result.ok).toBe(true);
+    const msgs = engine.getState().messages;
+    expect(msgs).toHaveLength(2);
+    expect(msgs[1]!.content).toBe('second answer');
+    expect(msgs[1]!.metadata?.branchId).toBe('branch-1');
+  });
+
+  it('ai:regenerate forwards args.branchId to the engine', async () => {
+    const engine = createMessageEngine({ connector: mockConnector(okChunks) });
+    const provider = createAiActionProvider({ engine });
+    await engine.sendMessage('q');
+    const result = await provider.invoke('regenerate', { branchId: 'custom-branch' }, {} as ActionContext);
+    expect(result.ok).toBe(true);
+    expect(engine.getState().messages[1]!.metadata?.branchId).toBe('custom-branch');
+  });
+
+  it('ai:regenerate returns ok:false engine-busy while a turn is processing', async () => {
+    const engine = createMessageEngine({ connector: slowConnector(okChunks) });
+    const provider = createAiActionProvider({ engine });
+    const first = engine.sendMessage('first');
+    const result = await provider.invoke('regenerate', {}, {} as ActionContext);
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeInstanceOf(Error);
+    expect(String((result.error as Error).message)).toContain('busy');
+    await first;
+  });
+
+  it('ai:regenerate rejects explicitly during the null-engine window', async () => {
+    const provider = createAiActionProvider({ engine: null });
+    const result = await provider.invoke('regenerate', {}, {} as ActionContext);
+    expect(result.ok).toBe(false);
+  });
+});

@@ -5,6 +5,7 @@ import type {
   ComponentHandle,
 } from '@nop-chaos/flux-core';
 import type { ChatMessage, ChatMessageContentPart, MessageEngine } from '../engine/types.js';
+import type { AiSenderDraftStore } from './ai-chat-context.js';
 
 /** Logical method names exposed by the `ai-chat` ComponentHandle (design.md §14.3). */
 export const AI_COMPONENT_METHODS = [
@@ -14,6 +15,7 @@ export const AI_COMPONENT_METHODS = [
   'getMessages',
   'setMessages',
   'regenerate',
+  'setSenderDraft',
 ] as const;
 
 export type AiComponentMethod = (typeof AI_COMPONENT_METHODS)[number];
@@ -21,7 +23,7 @@ export type AiComponentMethod = (typeof AI_COMPONENT_METHODS)[number];
 /**
  * Build the Layer C `ComponentHandle` for an `ai-chat` instance. The handle
  * implements `ComponentCapabilities.invoke(method, payload, ctx)` and dispatches
- * to the engine's 6 logical methods (design.md §11.1/§14.3). Dispatch goes
+ * to the engine's 7 logical methods (design.md §11.1/§14.3). Dispatch goes
  * through the live `invoke` model (not flat methods) — the action system calls
  * `component:<method>` which routes here via `action-adapter.ts`.
  *
@@ -61,8 +63,15 @@ export function createAiComponentHandle(input: {
   engine: MessageEngine | null;
   id: string;
   name?: string;
+  /**
+   * D4 (plan 2026-08-24-2317-1): the per-chat sender draft channel backing
+   * `component:setSenderDraft`. Supplied by `ai-chat`; optional so callers
+   * that only need the engine methods keep working (a `setSenderDraft`
+   * dispatch on a handle without a channel rejects explicitly).
+   */
+  senderDraft?: AiSenderDraftStore | null;
 }): ComponentHandle {
-  const { engine, id, name } = input;
+  const { engine, id, name, senderDraft } = input;
   const capabilities: ComponentCapabilities = {
     async invoke(
       method: string,
@@ -140,6 +149,21 @@ export function createAiComponentHandle(input: {
             // A-16: optional explicit branch id; engine assigns one when omitted.
             const branchId = typeof payload?.branchId === 'string' ? payload.branchId : undefined;
             await engine.regenerate(branchId);
+            return { ok: true };
+          }
+          case 'setSenderDraft': {
+            const draftText = payload?.text;
+            if (typeof draftText !== 'string' || draftText.length === 0) {
+              return { ok: false, error: new Error('component:setSenderDraft requires { text: string }') };
+            }
+            if (!senderDraft) {
+              return {
+                ok: false,
+                error: new Error('component:setSenderDraft: no sender draft channel bound to this ai-chat'),
+              };
+            }
+            const mode = payload?.mode === 'replace' ? 'replace' : 'append';
+            senderDraft.apply(draftText, mode);
             return { ok: true };
           }
           default:

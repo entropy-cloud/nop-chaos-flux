@@ -7,8 +7,9 @@ import type { MessageEngine } from '../engine/types.js';
 import type { AiConversationController } from './ai-conversation-controller.js';
 
 /**
- * The 7 actions exposed by the `ai` ActionScope namespace (design.md §14.2).
- * Kept in sync with the spec table; tests assert the list to catch drift.
+ * The 8 actions exposed by the `ai` ActionScope namespace (design.md §14.2 +
+ * D4 `regenerate`). Kept in sync with the spec table; tests assert the list
+ * to catch drift.
  */
 export const AI_NAMESPACE_ACTIONS = [
   'send',
@@ -18,6 +19,7 @@ export const AI_NAMESPACE_ACTIONS = [
   'switchConversation',
   'deleteConversation',
   'renameConversation',
+  'regenerate',
 ] as const;
 
 export interface CreateAiActionProviderInput {
@@ -88,7 +90,7 @@ export function createAiActionProvider(input: CreateAiActionProviderInput): Acti
       // reject explicitly (no ghost writes into the hidden self-built engine);
       // conversation actions stay functional (controller-bound).
       if (!engine) {
-        const needsEngine = method === 'send' || method === 'abort' || method === 'clear';
+        const needsEngine = method === 'send' || method === 'abort' || method === 'clear' || method === 'regenerate';
         if (needsEngine) {
           return fail('ai-chat engine is not ready (external engine switch in progress)');
         }
@@ -173,6 +175,21 @@ export function createAiActionProvider(input: CreateAiActionProviderInput): Acti
             return fail('ai:renameConversation requires { id, title }');
           }
           await conversationController.renameConversation(args.id, args.title);
+          return ok();
+        }
+        case 'regenerate': {
+          if (!engine) {
+            return fail('ai-chat engine is not ready (external engine switch in progress)');
+          }
+          // D4 (plan 2026-08-24-2317-1): busy-guard caliber identical to
+          // send/clear — `engine.regenerate` silently no-ops while a turn is
+          // in-flight, so the command boundary reports the drop explicitly.
+          if (engine.getState().isProcessing) {
+            return engineBusy();
+          }
+          // Optional explicit branch id; the engine assigns one when omitted.
+          const branchId = typeof args.branchId === 'string' ? args.branchId : undefined;
+          await engine.regenerate(branchId);
           return ok();
         }
         default:
