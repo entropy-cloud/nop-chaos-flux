@@ -1,7 +1,7 @@
 # flux-renderers-ai 产品标准（`# /ai-widgets` showcase 目标态）
 
 > Status: active（`ai-widgets-product` roadmap D0 产物）
-> Last Reviewed: 2026-08-24
+> Last Reviewed: 2026-08-25
 > Source: `docs/backlog/ai-widgets-product-roadmap.md` D0；`docs/analysis/2026-08-23-ai-widgets-vs-tiny-robot-comparison.md` §6–§7（证据基线，本文引用不重写）
 > Mission: ai-widgets-product
 > 消费方: D1（§4 fixture 标准）、D2（§2 typography 决策与节奏表）、D3（§3 avatar / icon 规格）、D4（§3.3 pill icon 映射）、D5（§6 showcase 口径）、DV（§7 断言清单）
@@ -171,20 +171,32 @@ lucide `Bot` / `User` 为既有 peer dep（`lucide-react` 已声明于包 `packa
 | 10  | 表格       | GFM pipe table           | `… table`                                              |
 | 11  | 分隔线     | `---`                    | `… hr`                                                 |
 
-附加项口径：`img` / `strong` / `em` 为附加项——D2 须样式化（§2.4 已列）、fixture 可使用，但**不计入** 11 元素覆盖矩阵。LaTeX 公式源文本（`$...$` / `$$...$$`）不是 markdown 元素：formula preset 携带源定界符，D1 断言定界符文本存在，D6 后渲染为 `span.katex`。
+附加项口径：`img` / `strong` / `em` 为附加项——D2 须样式化（§2.4 已列）、fixture 可使用，但**不计入** 11 元素覆盖矩阵。LaTeX 公式源文本（`$...$` / `$$...$$`，及 2026-08-25-0440-2 追加的 `\( ... \)` 行内 paren 形式）不是 markdown 元素：formula preset 携带源定界符，D6 后渲染为 `span.katex`（paren 形式经 render-time 定界符映射，见 design.md §10.4）；同批追加的货币句（`$5 today and $10 tomorrow`）按货币消歧规则渲染为普通段落文本（无 `.katex`、金额字面可见）。
 
 ### 4.2 6 个 preset 内容大纲
 
-分发口径（D1 plan 已定，此处为契约引用）：关键词大小写不敏感、包含匹配；未命中回 default；`fixtures` option 默认 `false`（既有 13 处调用点行为按构造不变）。
+分发口径（D1 plan 已定 + 2026-08-25-0440-2 中文别名扩展，此处为契约引用）：关键词大小写不敏感、包含匹配；未命中回 default（含无任何关键词的中文输入）；`fixtures` option 默认 `false`（既有 13 处调用点行为按构造不变）。
 
-| preset    | 关键词         | 语义场景                                                               | 覆盖元素（编号对齐 §4.1）                     | 代表断言锚点                            |
-| --------- | -------------- | ---------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------- |
-| default   | （未命中回退） | 通用助手问候 + 能力总览：「Hello」开头的自我介绍，展示 markdown 基本面 | 1（h2+h3）、2、3、8、9、11（+strong/em 附加） | `h2` + `ul > li`；bubble 文本含 `Hello` |
-| weather   | `weather`      | 7 日天气预报：数据表格 + 出行建议                                      | 1、2、3、4、8、9、10                          | `table`                                 |
-| code      | `code`         | 排障帮助：问题定位 + 修复代码 + 步骤                                   | 1、2、4、7、8                                 | `[data-slot="ai-bubble-pre"]`           |
-| formula   | `formula`      | 数学/物理公式讲解：块级 + 行内公式 + 名言引用                          | 1、2、3、6（+ `$…$` / `$$…$$` 源定界符）      | `blockquote` + 文本含 `$$`              |
-| reasoning | `reasoning`    | 分步思维链：思考摘录 + 验证清单                                        | 1、2、3、5、6（+strong 附加）                 | `li input[type="checkbox"]`             |
-| citation  | `citation`     | 带参考来源的总结：要点 + 编号引用列表                                  | 1、2、4、6、8、9、11                          | `ol > li a`                             |
+中文别名表（2026-08-25-0440-2）：
+
+| preset    | 英文关键词  | 中文别名 | 语义                                                       |
+| --------- | ----------- | -------- | ---------------------------------------------------------- |
+| weather   | `weather`   | `天气`   | 天气预报提问                                               |
+| code      | `code`      | `代码`   | 代码排障提问                                               |
+| formula   | `formula`   | `公式`   | 公式讲解提问（§4.3 命名裁定不受影响，别名同样不用 `数学`） |
+| reasoning | `reasoning` | `推理`   | 推理过程提问                                               |
+| citation  | `citation`  | `引用`   | 引用文献提问                                               |
+
+别名分发语义：每个 preset 的关键词组 = 英文关键词 + 中文别名，任一别名包含命中即分发；多关键词（中英混出）命中时按 KEYWORD_ORDER 既定顺序（weather → code → formula → reasoning → citation）首个命中者胜，与英文分发的顺序语义一致；中文别名同样受 echo-collision 约束（不得出现在任何 preset / default 正文首句，fixture 正文保持英文天然满足）。
+
+| preset    | 关键词（英文 + 中文别名） | 语义场景                                                                                                                             | 覆盖元素（编号对齐 §4.1）                                          | 代表断言锚点                                   |
+| --------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | ---------------------------------------------- |
+| default   | （未命中回退）            | 通用助手问候 + 能力总览：「Hello」开头的自我介绍，展示 markdown 基本面                                                               | 1（h2+h3）、2、3、8、9、11（+strong/em 附加）                      | `h2` + `ul > li`；bubble 文本含 `Hello`        |
+| weather   | `weather` / `天气`        | 7 日天气预报：数据表格 + 出行建议                                                                                                    | 1、2、3、4、8、9、10                                               | `table`                                        |
+| code      | `code` / `代码`           | 排障帮助：问题定位 + 修复代码 + 步骤                                                                                                 | 1、2、4、7、8                                                      | `[data-slot="ai-bubble-pre"]`                  |
+| formula   | `formula` / `公式`        | 数学/物理公式讲解：块级 + 行内公式 + 名言引用 + 货币句（`$5`/`$10` 普通文本，不渲染 KaTeX）+ `\(...\)` 行内 paren 公式（渲染 KaTeX） | 1、2、3、6（+ `$…$` / `$$…$$` / `\(…\)` 源定界符 + 货币字面 `$5`） | `blockquote` + `span.katex` + `.katex-display` |
+| reasoning | `reasoning` / `推理`      | 分步思维链：思考摘录 + 验证清单                                                                                                      | 1、2、3、5、6（+strong 附加）                                      | `li input[type="checkbox"]`                    |
+| citation  | `citation` / `引用`       | 带参考来源的总结：要点 + 编号引用列表                                                                                                | 1、2、4、6、8、9、11                                               | `ol > li a`                                    |
 
 **覆盖矩阵核验（每元素在 6 preset 全集上 ≥ 1）**：
 

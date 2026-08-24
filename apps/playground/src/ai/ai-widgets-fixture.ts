@@ -3,7 +3,8 @@
  *
  * Content contract: `docs/components/flux-renderers-ai/product-spec.md` §4
  * (D0 product standard). Six presets dispatched by case-insensitive keyword
- * match on the last user message; no match falls back to `default`.
+ * match (English keywords + Chinese aliases, product-spec §4.2) on the last
+ * user message; no match falls back to `default`.
  *
  * 11-element coverage matrix (product-spec §4.2, "each element >= 1 across
  * the six presets"; numbers follow spec §4.1):
@@ -30,10 +31,13 @@
  *   ai-chat context does not re-render per chunk), so at 200ms/chunk the
  *   whole default preset must stream in well under 10s.
  * - Keywords never appear in the first sentence of any other preset or of
- *   `default` (echo-collision avoidance, product-spec §4.2).
+ *   `default` (echo-collision avoidance, product-spec §4.2). The Chinese
+ *   aliases (天气/代码/公式/推理/引用) follow the same rule: preset bodies
+ *   stay English, so no alias can collide with any preset content.
  * - The math preset keyword is `formula`, never `math` (product-spec §4.3);
- *   `formula` carries LaTeX SOURCE delimiters (`$...$` / `$$...$$`) which
- *   render as KaTeX only after D6.
+ *   `formula` carries LaTeX SOURCE delimiters (`$...$` / `$$...$$` plus the
+ *   `\( ... \)` inline paren form and a currency sentence, plan
+ *   2026-08-25-0440-2) which render as KaTeX only after D6.
  *
  * D5 structured extension (plan 2026-08-24-2237-2, Decision D-c): each new
  * widget capability gets exactly one dedicated trigger preset — `weather`
@@ -154,6 +158,10 @@ $$
 - Divide by $c^2$ to convert joules to kilograms
 
 > "Imagination is more important than knowledge." — Albert Einstein
+
+A premium plan costs $5 today and $10 tomorrow.
+
+In inline form, \\(E = mc^2\\) holds for every inertial frame.
 `,
   },
   reasoning: {
@@ -194,19 +202,26 @@ Each numbered point links to the section that supports it — check \`ref-3\` fo
   },
 };
 
-const KEYWORD_ORDER: ReadonlyArray<{ keyword: string; id: Exclude<AiWidgetsFixtureId, 'default'> }> = [
-  { keyword: 'weather', id: 'weather' },
-  { keyword: 'code', id: 'code' },
-  { keyword: 'formula', id: 'formula' },
-  { keyword: 'reasoning', id: 'reasoning' },
-  { keyword: 'citation', id: 'citation' },
+const KEYWORD_ORDER: ReadonlyArray<{
+  keywords: ReadonlyArray<string>;
+  id: Exclude<AiWidgetsFixtureId, 'default'>;
+}> = [
+  { keywords: ['weather', '天气'], id: 'weather' },
+  { keywords: ['code', '代码'], id: 'code' },
+  { keywords: ['formula', '公式'], id: 'formula' },
+  { keywords: ['reasoning', '推理'], id: 'reasoning' },
+  { keywords: ['citation', '引用'], id: 'citation' },
 ];
 
-/** Case-insensitive keyword dispatch; unmatched text falls back to `default`. */
+/**
+ * Case-insensitive keyword dispatch (English + Chinese aliases); unmatched
+ * text falls back to `default`. Entry order in `KEYWORD_ORDER` decides
+ * multi-keyword texts (first entry with any alias hit wins).
+ */
 export function pickAiWidgetsFixture(lastUserText: string): AiWidgetsFixture {
   const text = lastUserText.toLowerCase();
-  for (const { keyword, id } of KEYWORD_ORDER) {
-    if (text.includes(keyword)) return AI_WIDGETS_FIXTURES[id];
+  for (const { keywords, id } of KEYWORD_ORDER) {
+    if (keywords.some((keyword) => text.includes(keyword))) return AI_WIDGETS_FIXTURES[id];
   }
   return AI_WIDGETS_FIXTURES.default;
 }

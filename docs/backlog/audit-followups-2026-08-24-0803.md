@@ -18,4 +18,4 @@
 ## 备注
 
 - 本批 P2 均与 P1 remediation plan 的 closure surface（markdown math pipeline）不同源，无折叠项。
-- 审计"盲区自评"另登记一个非 finding 的下轮切入点：`pickAiWidgetsFixture` 仅英文 keyword，中文提问全部落入 default preset（见源审计末节），后续轮次可展开验证。
+- 审计"盲区自评"另登记一个非 finding 的下轮切入点：`pickAiWidgetsFixture` 仅英文 keyword，中文提问全部落入 default preset（见源审计末节），后续轮次可展开验证。**→ 已处置（2026-08-25，plan `docs/plans/2026-08-25-0440-2-fixture-zh-dispatch-e2e-math.md` completed）：中文别名分发落地（weather/天气、code/代码、formula/公式、reasoning/推理、citation/引用，unit 先红后绿）+ formula preset 货币/`\(` e2e 增强（0410 follow-up 收口）+ product-spec §4 中文别名表同步。**

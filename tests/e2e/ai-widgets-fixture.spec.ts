@@ -60,6 +60,30 @@ test.describe('AI widgets — rich markdown fixtures (D1)', () => {
     await expect(md.locator('span.katex').first()).toBeVisible({ timeout: 30_000 });
     await expect(md.locator('.katex-display')).toBeVisible();
 
+    // Plan 2026-08-25-0440-2: the currency sentence must stay plain prose —
+    // its paragraph owns no .katex and the dollar amount stays literal.
+    const currencyPara = md.locator('p', { hasText: 'A premium plan costs' });
+    await expect(currencyPara).toBeVisible({ timeout: 30_000 });
+    await expect(currencyPara.locator('.katex')).toHaveCount(0);
+    await expect(currencyPara).toContainText('$5');
+
+    // The \(E = mc^2\) inline paren math renders through KaTeX (delimiter
+    // mapping landed by the 0410 plan); inline paren produces no new display.
+    const parenPara = md.locator('p', { hasText: 'In inline form' });
+    await expect(parenPara).toBeVisible({ timeout: 30_000 });
+    await expect(parenPara.locator('span.katex').first()).toBeVisible();
+    await expect(md.locator('.katex-display')).toHaveCount(1);
+
+    await assertTrackedPageErrors(page);
+  });
+
+  test('Chinese formula keyword dispatches to the formula preset', async ({ page }) => {
+    await openWidgetsPage(page);
+    await sendUserMessage(page, '解释一下质能公式');
+
+    const md = page.locator(ASSISTANT_MD);
+    await expect(md.locator('blockquote')).toBeVisible({ timeout: 30_000 });
+
     await assertTrackedPageErrors(page);
   });
 
