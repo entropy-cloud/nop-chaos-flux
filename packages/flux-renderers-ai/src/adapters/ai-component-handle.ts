@@ -153,7 +153,7 @@ export function createAiComponentHandle(input: {
           }
           case 'setSenderDraft': {
             const draftText = payload?.text;
-            if (typeof draftText !== 'string' || draftText.length === 0) {
+            if (typeof draftText !== 'string') {
               return { ok: false, error: new Error('component:setSenderDraft requires { text: string }') };
             }
             if (!senderDraft) {
@@ -163,6 +163,17 @@ export function createAiComponentHandle(input: {
               };
             }
             const mode = payload?.mode === 'replace' ? 'replace' : 'append';
+            // P2-4 (2026-08-24 open-audit, plan 2026-08-25-0440-1): an empty
+            // string under `replace` is a legal "clear the draft" intent;
+            // under `append` it has no semantics and rejects explicitly.
+            if (draftText.length === 0 && mode !== 'replace') {
+              return {
+                ok: false,
+                error: new Error(
+                  'component:setSenderDraft cannot append an empty string (use { mode: "replace" } to clear the draft)',
+                ),
+              };
+            }
             senderDraft.apply(draftText, mode);
             return { ok: true };
           }

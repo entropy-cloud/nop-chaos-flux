@@ -195,12 +195,17 @@ const CITATION_SOURCES: AiCitationSource[] = [
 ];
 
 export function AiWidgetsDemoPage({ onBack }: Props) {
-  const env = useMemo(() => createMockAiEnv({ delayMs: 200, fixtures: true }), []);
+  // P2-5 adjudication (plan 2026-08-25-0440-1): the env factory and the
+  // import-loader pair are plain derivations — React Compiler covers every
+  // environment this page executes in (playground vite dev/build, see
+  // apps/playground/vite.config.ts reactCompilerPreset), so hand-written
+  // useMemos here were redundant and were removed.
+  const env = createMockAiEnv({ delayMs: 200, fixtures: true });
   const connector = useMemo(() => createMockAiConnector(env), [env]);
-  const { importLoader, resolveImportUrl } = useMemo(
-    () => createAiImportLoader(connector, { tools: mockToolSchemas, toolExecutor: mockToolExecutor }),
-    [connector],
-  );
+  const { importLoader, resolveImportUrl } = createAiImportLoader(connector, {
+    tools: mockToolSchemas,
+    toolExecutor: mockToolExecutor,
+  });
   const decoratedEnv = useMemo(
     () => ({ ...env, importLoader, resolveImportUrl }),
     [env, importLoader, resolveImportUrl],

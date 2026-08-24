@@ -260,6 +260,71 @@ describe('ai-feedback — open-audit P2-7 explicit no-action-bar', () => {
 // hint when absent).
 // ============================================================================
 
+// ============================================================================
+// P2-3 (2026-08-24 open-audit, plan 2026-08-25-0440-1): mount-time seeding —
+// a message whose metadata already carries a D4-persisted vote must render
+// in that voted state initially, so virtual-list recycling / branch-switch
+// remounts keep the visual state in sync with the persisted metadata.
+// ============================================================================
+
+describe('ai-feedback — P2-3 mount seeding from message.metadata.feedback', () => {
+  it('metadata.feedback "like" renders the like button active on mount', () => {
+    const message: ChatMessage = {
+      id: 'm-seed-like',
+      role: 'assistant',
+      content: 'hello',
+      metadata: { feedback: 'like' },
+    };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['like', 'dislike'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const like = container.querySelector('[data-slot="ai-feedback-like"]') as HTMLElement;
+    const dislike = container.querySelector('[data-slot="ai-feedback-dislike"]') as HTMLElement;
+
+    expect(like.getAttribute('data-active')).toBe('');
+    expect(like.getAttribute('aria-pressed')).toBe('true');
+    expect(dislike.hasAttribute('data-active')).toBe(false);
+    expect(dislike.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('metadata.feedback "dislike" renders the dislike button active on mount (symmetric)', () => {
+    const message: ChatMessage = {
+      id: 'm-seed-dislike',
+      role: 'assistant',
+      content: 'hello',
+      metadata: { feedback: 'dislike' },
+    };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['like', 'dislike'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const like = container.querySelector('[data-slot="ai-feedback-like"]') as HTMLElement;
+    const dislike = container.querySelector('[data-slot="ai-feedback-dislike"]') as HTMLElement;
+
+    expect(dislike.getAttribute('data-active')).toBe('');
+    expect(dislike.getAttribute('aria-pressed')).toBe('true');
+    expect(like.hasAttribute('data-active')).toBe(false);
+    expect(like.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('no metadata renders with no initial vote (zero regression)', () => {
+    const message: ChatMessage = { id: 'm-seed-none', role: 'assistant', content: 'hello' };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['like', 'dislike'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const like = container.querySelector('[data-slot="ai-feedback-like"]') as HTMLElement;
+    const dislike = container.querySelector('[data-slot="ai-feedback-dislike"]') as HTMLElement;
+
+    expect(like.hasAttribute('data-active')).toBe(false);
+    expect(dislike.hasAttribute('data-active')).toBe(false);
+  });
+});
+
 describe('ai-feedback — D4 metadata write + sources Popover', () => {
   it('like toggle writes message.metadata.feedback and mirrors aria-pressed + data-active', () => {
     const message: ChatMessage = { id: 'm-d4-like', role: 'assistant', content: 'hello' };

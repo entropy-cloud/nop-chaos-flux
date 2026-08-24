@@ -98,7 +98,14 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
   // action bar (cross-package contract).
   const disabled = props.meta.disabled === true;
   const ctx = useAiChatContext();
-  const [voted, setVoted] = useState<'like' | 'dislike' | null>(null);
+  // P2-3 (2026-08-24 open-audit, plan 2026-08-25-0440-1): seed the local vote
+  // mirror from the persisted `message.metadata.feedback` on mount (read
+  // once) so virtual-list recycling / branch-switch remounts keep the visual
+  // state in sync with the D4 metadata write. Same-mount message reference
+  // switches do NOT re-seed (documented limitation, renderers.md §8).
+  const [voted, setVoted] = useState<'like' | 'dislike' | null>(() =>
+    (message?.metadata as { feedback?: 'like' | 'dislike' } | undefined)?.feedback ?? null,
+  );
   const [copied, setCopied] = useState(false);
   // 2-20: the copied-reset timer must be cleared on unmount (no setState on
   // an unmounted component).

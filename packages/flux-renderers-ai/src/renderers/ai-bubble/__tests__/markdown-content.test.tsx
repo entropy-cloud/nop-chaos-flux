@@ -278,6 +278,38 @@ describe('MarkdownContentRenderer — rehype-raw XSS regression', () => {
 // ============================================================================
 const stylesCss = readFileSync('src/styles.css', 'utf8');
 
+/** Count non-overlapping substring occurrences in a haystack. */
+function occurrences(haystack: string, needle: string): number {
+  let count = 0;
+  let idx = haystack.indexOf(needle);
+  while (idx !== -1) {
+    count += 1;
+    idx = haystack.indexOf(needle, idx + needle.length);
+  }
+  return count;
+}
+
+/** Extract the inner text of every `@media (prefers-color-scheme: dark)` block. */
+function darkPrefersColorSchemeBlocks(css: string): string[] {
+  const marker = '@media (prefers-color-scheme: dark)';
+  const blocks: string[] = [];
+  let idx = css.indexOf(marker);
+  while (idx !== -1) {
+    const open = css.indexOf('{', idx);
+    if (open === -1) break;
+    let depth = 1;
+    let end = open + 1;
+    while (end < css.length && depth > 0) {
+      if (css[end] === '{') depth += 1;
+      else if (css[end] === '}') depth -= 1;
+      end += 1;
+    }
+    blocks.push(css.slice(open + 1, end - 1));
+    idx = css.indexOf(marker, end);
+  }
+  return blocks;
+}
+
 describe('MarkdownContentRenderer — D2 typography contract (G2)', () => {
   it('(a) container drops the dead prose family and keeps overflow utilities', () => {
     const message = makeMessage({ content: '# Title\n\nparagraph with `code`' });
@@ -334,6 +366,20 @@ describe('MarkdownContentRenderer — D2 typography contract (G2)', () => {
     expect(stylesCss).toContain('hsl(var(--foreground, 210 40% 98%))');
     expect(stylesCss).toContain('hsl(var(--muted-foreground, 215 25% 75%))');
     expect(stylesCss).toContain('hsl(var(--primary, 217 89% 63%))');
+    // P2-1 (2026-08-24 open-audit, plan 2026-08-25-0440-1): every
+    // prefers-color-scheme dark block must guard its inner selectors with
+    // `:root:not([data-mode='light'])` — otherwise a standalone host on a
+    // dark-OS with an explicit light mode resolves the literal dark fallbacks
+    // (near-invisible text on a light page). Exactly 3 media tracks exist
+    // (typography / avatar / welcome-icon).
+    const blocks = darkPrefersColorSchemeBlocks(stylesCss);
+    expect(blocks.length).toBe(3);
+    for (const [index, block] of blocks.entries()) {
+      const ruleCount = occurrences(block, '{');
+      const guardCount = occurrences(block, ":root:not([data-mode='light'])");
+      expect(guardCount, `dark media block #${index + 1} must guard every inner selector`).toBe(ruleCount);
+    }
+    expect(occurrences(stylesCss, ":root:not([data-mode='light'])")).toBe(3);
   });
 
   it('(c2) dark path — [data-mode] attribute trigger', () => {

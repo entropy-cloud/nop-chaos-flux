@@ -225,4 +225,66 @@ describe('createAiComponentHandle — D4 setSenderDraft', () => {
     const empty = await handle.capabilities.invoke('setSenderDraft', { text: '' }, ctx);
     expect(empty.ok).toBe(false);
   });
+
+  // ==========================================================================
+  // P2-4 (2026-08-24 open-audit, plan 2026-08-25-0440-1): `mode:'replace'` +
+  // empty `text` is a legal "clear the draft" intent — the host previously had
+  // no handle path to empty the sender input.
+  // ==========================================================================
+
+  it('P2-4: replace + empty string clears the draft (ok:true, channel receives "")', async () => {
+    const engine = mockEngine();
+    const senderDraft = createAiSenderDraftStore();
+    senderDraft.setLocal('stale draft');
+    const handle = createAiComponentHandle({ engine, id: 'chat1', senderDraft });
+    const result = await handle.capabilities.invoke(
+      'setSenderDraft',
+      { text: '', mode: 'replace' },
+      ctx,
+    );
+    expect(result.ok).toBe(true);
+    expect(senderDraft.get()).toBe('');
+  });
+
+  it('P2-4: append + empty string stays rejected (no semantics)', async () => {
+    const engine = mockEngine();
+    const senderDraft = createAiSenderDraftStore();
+    senderDraft.setLocal('keep me');
+    const handle = createAiComponentHandle({ engine, id: 'chat1', senderDraft });
+    const result = await handle.capabilities.invoke(
+      'setSenderDraft',
+      { text: '', mode: 'append' },
+      ctx,
+    );
+    expect(result.ok).toBe(false);
+    expect(senderDraft.get()).toBe('keep me');
+  });
+
+  it('P2-4 regression: replace with non-empty text still overwrites', async () => {
+    const engine = mockEngine();
+    const senderDraft = createAiSenderDraftStore();
+    senderDraft.setLocal('old');
+    const handle = createAiComponentHandle({ engine, id: 'chat1', senderDraft });
+    const result = await handle.capabilities.invoke(
+      'setSenderDraft',
+      { text: 'new', mode: 'replace' },
+      ctx,
+    );
+    expect(result.ok).toBe(true);
+    expect(senderDraft.get()).toBe('new');
+  });
+
+  it('P2-4 regression: append with non-empty text still appends', async () => {
+    const engine = mockEngine();
+    const senderDraft = createAiSenderDraftStore();
+    senderDraft.setLocal('base');
+    const handle = createAiComponentHandle({ engine, id: 'chat1', senderDraft });
+    const result = await handle.capabilities.invoke(
+      'setSenderDraft',
+      { text: 'more', mode: 'append' },
+      ctx,
+    );
+    expect(result.ok).toBe(true);
+    expect(senderDraft.get()).toBe('base\nmore');
+  });
 });

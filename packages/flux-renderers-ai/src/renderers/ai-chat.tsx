@@ -258,6 +258,12 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // renderer lifetime (created once), so the handle closure and the context
   // value below are not invalidated by draft writes (AI-31 discipline: the
   // context value must not rebuild per keystroke / per external write).
+  // P2-5 adjudication (plan 2026-08-25-0440-1): KEEP-WITH-REASON — the store
+  // identity feeds the componentHandle register-effect deps and the
+  // Provider-bound context value consumed by ai-sender; React Compiler only
+  // covers the playground vite build (workspace-alias src), while the package
+  // dist build (plain tsc) and vitest run uncompiled, so removing this memo
+  // would recreate the store per render there and lose draft text.
   const senderDraftStore = useMemo(() => createAiSenderDraftStore(), []);
   // AI-31: stabilize the handle so the register effect deps
   // `[componentRegistry, props.meta.cid, componentHandle]` do not change every

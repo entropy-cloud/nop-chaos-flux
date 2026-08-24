@@ -274,9 +274,13 @@
 [data-slot='ai-bubble-markdown'] em {
   font-style: italic;
 }
-/* Dark trigger 1: OS preference (standalone hosts without theme attributes). */
+/* Dark trigger 1: OS preference (standalone hosts without theme attributes).
+   P2-1 (2026-08-24 open-audit): every inner selector carries a
+   root-level "not explicit light" guard — an explicit light mode on the
+   root must win over the OS dark preference, or standalone hosts resolve
+   the literal dark fallbacks on a light page (near-invisible text). */
 @media (prefers-color-scheme: dark) {
-  [data-slot='ai-bubble-markdown'] {
+  :root:not([data-mode='light']) [data-slot='ai-bubble-markdown'] {
     --ai-md-fg: hsl(var(--foreground, 210 40% 98%));
     --ai-md-muted-fg: hsl(var(--muted-foreground, 215 25% 75%));
     --ai-md-muted: hsl(var(--muted, 217 33% 18%));
@@ -330,7 +334,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  [data-slot='ai-bubble-avatar'] {
+  :root:not([data-mode='light']) [data-slot='ai-bubble-avatar'] {
     background-color: hsl(var(--secondary-surface, 217 30% 20%));
     border-color: hsl(var(--border, 217 33% 27%));
     color: hsl(var(--muted-foreground, 215 25% 75%));
@@ -355,7 +359,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  [data-slot='ai-welcome-icon'] {
+  :root:not([data-mode='light']) [data-slot='ai-welcome-icon'] {
     color: hsl(var(--muted-foreground, 215 25% 75%));
   }
 }

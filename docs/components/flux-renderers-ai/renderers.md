@@ -388,6 +388,8 @@ export interface AiFeedbackSchema extends BaseSchema {
 }
 ```
 
+**mount 播种语义（P2-3，2026-08-24 open-audit）**：like/dislike 的本地视觉态在**挂载时**从 `message.metadata.feedback` 播种一次（惰性 `useState` 初始化）——虚拟列表回收 / 分支切换重挂载后，已持久化的投票（D4 `writeFeedbackMetadata` 写入）仍渲染为已投态（`data-active` / `aria-pressed` 口径）。限制：同一 mount 内 `message` 引用切换**不**重播种（播种只在 mount 读取一次；需要深度响应式同步的场景由 host 切换 key 重挂载表达）。
+
 ## 9. ai-attachments（Widget, P2）
 
 ### 9.1 Attachment 模型
@@ -664,7 +666,8 @@ export interface AiMcpManagerSchema extends BaseSchema {
 }
 ```
 
-- **args**：`{ text: string, mode?: 'append' | 'replace' }`，`mode` 缺省 `append`；`text` 缺失/空串 → `{ ok: false }` 显式拒绝。
+- **args**：`{ text: string, mode?: 'append' | 'replace' }`，`mode` 缺省 `append`；`text` 缺失/非字符串 → `{ ok: false }` 显式拒绝。
+- **清空契约（P2-4，2026-08-24 open-audit）**：`mode:'replace'` + `text:''` 是合法"清空草稿"意图 → `{ ok: true }`，draft 置空（host 经 handle 清空输入框的唯一路径）；`mode:'append'`（含缺省）+ 空串无语义 → `{ ok: false }`（错误文案与缺参拒绝可区分）。
 - **append 语义**（`AiSenderDraftStore.apply`，`ai-chat-context.tsx`）：基于**当前** draft 值计算（含用户键入）——空基直接写入；非空基以 `\n` join 追加（键入保留，不打断）。同一写入落在未变化的 draft 上被 **dedupe** 跳过。
 - **replace 语义**：整体覆盖草稿（不 join、不 dedupe）。
 - **cid 隔离**：draft 通道为 per-`ai-chat` 实例（`ai-chat` 创建、经 `AiChatContextValue.senderDraft` 下发；`ai-sender` 订阅合并进本地 draft，键入走 `setLocal` 写透防回环）。dispatch 按 `componentId` 寻址只影响目标 ai-chat；未绑定通道的 handle 显式拒绝。
