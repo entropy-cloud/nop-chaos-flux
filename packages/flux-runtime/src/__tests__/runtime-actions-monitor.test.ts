@@ -17,8 +17,7 @@ describe('createRendererRuntime', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { ok: true } as T,
       };
     };
@@ -105,8 +104,7 @@ describe('createRendererRuntime', () => {
             }
 
             return {
-              ok: true,
-              status: 200,
+              status: 0,
               data: { ok: true } as T,
             };
           },
@@ -224,8 +222,7 @@ describe('createRendererRuntime', () => {
 
   it('supports args as the recommended ajax api carrier', async () => {
     const fetcher = vi.fn(async <T>(api: ApiSchema, _ctx?: { signal?: AbortSignal }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url, method: api.method } as T,
     }));
     const runtime = createRendererRuntime({
@@ -265,8 +262,7 @@ describe('createRendererRuntime', () => {
 
   it('monitors the final executable ajax request after params canonicalization', async () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     });
     const fetcher = vi.fn(fetcherImpl);

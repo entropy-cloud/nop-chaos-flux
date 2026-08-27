@@ -15,8 +15,7 @@ const textRenderer: RendererDefinition = {
 
 const env: RendererEnv = {
   fetcher: async <T>() => ({
-    ok: true,
-    status: 200,
+    status: 0,
     data: {} as T,
   }),
   notify: () => undefined,
@@ -71,8 +70,7 @@ describe('explicit dependency roots', () => {
       void ctx;
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url } as T,
       };
     });

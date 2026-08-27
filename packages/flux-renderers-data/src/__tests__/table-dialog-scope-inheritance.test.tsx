@@ -9,7 +9,7 @@ import {
 } from '../test-support.js';
 
 const mockFetcher = vi.fn();
-mockFetcher.mockResolvedValue({ ok: true, status: 200, data: null });
+mockFetcher.mockResolvedValue({ status: 0, data: null });
 
 const testEnv = {
   ...baseEnv,

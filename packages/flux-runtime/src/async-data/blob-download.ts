@@ -78,7 +78,6 @@ export async function normalizeBlobResponse(
       const parsed = JSON.parse(text) as ApiResponse<unknown>;
       // Preserve status/msg from the parsed envelope when present.
       return {
-        ok: parsed.status === 0,
         status: parsed.status,
         data: parsed.data,
         code: parsed.code,
@@ -90,8 +89,7 @@ export async function normalizeBlobResponse(
       // body is not parseable JSON. Report the failure with full context instead
       // of falling through to a download or a synthetic success.
       return {
-        ok: false,
-        status: 0,
+        status: -1,
         data: null,
         msg:
           `Blob response declared JSON content-type (blob type: ${blob.type || 'unknown'}, ` +
@@ -107,8 +105,7 @@ export async function normalizeBlobResponse(
   if (!filename) {
     // No filename means no download could be started — do not fabricate success.
     return {
-      ok: false,
-      status: 0,
+      status: -1,
       data: null,
       msg:
         `Blob download failed: no filename resolved (content-disposition missing and ` +
@@ -121,7 +118,6 @@ export async function normalizeBlobResponse(
 
   // Synthetic success: the actual file download is delegated to the browser.
   return {
-    ok: true,
     status: 0,
     data: { msg: 'downloading' },
   };

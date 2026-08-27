@@ -142,7 +142,7 @@ export async function executeRequestWithControl<T>(input: {
   const shouldStop = (result: ApiResponse<T> | RequestTimeoutFailure) =>
     isRequestTimeoutFailure(result)
       ? false
-      : (input.shouldStop ? input.shouldStop(result) : Boolean(result.ok));
+      : (input.shouldStop ? input.shouldStop(result) : result.status === 0);
 
   const retryResult = await withRetry<ApiResponse<T> | RequestTimeoutFailure>(
     executeAttempt,
@@ -425,12 +425,10 @@ export async function executeApiSchema(
   });
   const response = execution.response;
 
-  // ApiResponse normalization: `ok` is a computed property mirroring the backend
-  // `ApiResponse.isOk()` (`status === 0`). Fetchers following the standard envelope
-  // return `{status, data}` without `ok`; legacy fetchers that set `ok` explicitly
-  // are respected. Computed here, before responseAdaptor, so every consumer reads a
-  // normalized `ok`.
-  const isOk = response.status === 0 || response.ok === true;
+  // ApiResponse normalization: success is determined by `status === 0`. The legacy
+  // `ok` field has been removed from the ApiResponse type; callers that need
+  // compatibility with old fetchers can detect via the runtime normalization layer.
+  const isOk = response.status === 0;
 
     if (!isOk) {
     let errorPayload = response.data;

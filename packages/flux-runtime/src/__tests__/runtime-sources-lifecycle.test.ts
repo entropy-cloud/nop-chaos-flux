@@ -21,8 +21,7 @@ function createFetcherRuntime(fetcherImpl: RendererEnv['fetcher']) {
 describe('data-source request-layer lifecycle (X4)', () => {
   it('sendOn truthy → refresh is issued and data lands in scope', async () => {
     const fetcher = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     }));
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -54,8 +53,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
 
   it('sendOn falsy → refresh is skipped and data stays undefined', async () => {
     const fetcher = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     }));
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -89,8 +87,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
 
   it('sendOn evaluation throws → treated as falsy (when semantics), refresh skipped', async () => {
     const fetcher = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     }));
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -125,8 +122,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
 
   it('initFetch: false → no auto fetch on mount, status stays idle', async () => {
     const fetcher = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     }));
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -164,8 +160,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
 
   it('initFetch: true (or omitted) → auto fetch on mount', async () => {
     const fetcher = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     }));
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -197,8 +192,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
 
   it('onSuccess → dispatched with { data, dataUpdatedAt } after a successful fetch', async () => {
     const fetcher = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     }));
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -279,8 +273,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
     vi.useFakeTimers();
     try {
       const fetcher = vi.fn(async <T>(api: { url: string }) => ({
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url, at: Date.now() } as T,
       }));
       const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -326,8 +319,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
 
   it('A19: refresh path returns {skipped:true} and issues no request when sendOn is falsy', async () => {
     const fetcher = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     }));
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -359,8 +351,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
 
   it('A19: sendOn evaluates against the lexical scope chain and can read an ancestor (cross-owner) value', async () => {
     const fetcher = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     }));
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -406,7 +397,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
       if (rejectNext) {
         return { ok: false, status: 500, data: null as T };
       }
-      return { ok: true, status: 200, data: { url: api.url, seq: fetcherCount } as T };
+      return { status: 0, data: { url: api.url, seq: fetcherCount } as T };
     });
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
     const page = runtime.createPageRuntime({});
@@ -460,8 +451,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
 
   it('R2.30: onSuccess with no handler does not throw', async () => {
     const fetcher = vi.fn(async <T>() => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { ok: true } as T,
     }));
     const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
@@ -500,7 +490,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
         if (fetcher.mock.calls.length === 1) {
           await firstPromise;
         }
-        return { ok: true, status: 200, data: { url: api.url } as T };
+        return { status: 0, data: { url: api.url } as T };
       });
       const runtime = createFetcherRuntime(fetcher as RendererEnv['fetcher']);
       const page = runtime.createPageRuntime({});

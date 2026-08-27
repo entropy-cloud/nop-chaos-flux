@@ -138,7 +138,7 @@ describe('executeRuntimeAjaxAction', () => {
     } as any;
     const preparedApi = { url: '/api/demo', method: 'get' };
     const executeApiRequest = Object.assign(
-      vi.fn().mockResolvedValue({ ok: true, status: 200, data: { next: 2 } }),
+      vi.fn().mockResolvedValue({ status: 0, data: { next: 2 } }),
       { dispose: vi.fn() },
     );
     const monitor = { onApiRequest: vi.fn() };
@@ -175,7 +175,7 @@ describe('executeRuntimeAjaxAction', () => {
 
   it('skips monitoring and page writes when those contexts are absent', async () => {
     const executeApiRequest = Object.assign(
-      vi.fn().mockResolvedValue({ ok: true, status: 200, data: { ok: true } }),
+      vi.fn().mockResolvedValue({ status: 0, data: { ok: true } }),
       { dispose: vi.fn() },
     );
 

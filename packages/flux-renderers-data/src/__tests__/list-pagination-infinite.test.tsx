@@ -440,7 +440,7 @@ describe('list/pagination schema event dispatch ctx (CX-10 / bug-83 family)', ()
     return {
       fetcher: async (api: { url?: string }) => {
         urls.push(api?.url ?? '');
-        return { ok: true, status: 200, data: null as never };
+        return { status: 0, data: null as never };
       },
       notify: () => undefined,
     };

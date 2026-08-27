@@ -10,9 +10,7 @@ describe('CRUD renderer request-owned baseline', () => {
     let responseCount = 0;
     const fetcherSpy = vi.fn(async () => {
       responseCount += 1;
-      return {
-        ok: true,
-        status: 200,
+      return { status: 0,
         data: {
           items: [{ id: String(responseCount), name: `User-${responseCount}` }],
           total: 40 + responseCount,
@@ -78,9 +76,7 @@ describe('CRUD renderer request-owned baseline', () => {
   it('keeps query submit local when clientMode.loadDataOnce is enabled', async () => {
     cleanup();
     const fetcherSpy = vi.fn(async () => {
-      return {
-        ok: true,
-        status: 200,
+      return { status: 0,
         data: {
           items: [
             { id: '1', name: 'Alice' },
@@ -149,9 +145,7 @@ describe('CRUD renderer request-owned baseline', () => {
     let responseCount = 0;
     const fetcherSpy = vi.fn(async () => {
       responseCount += 1;
-      return {
-        ok: true,
-        status: 200,
+      return { status: 0,
         data: {
           items: [{ id: String(responseCount), name: `User-${responseCount}` }],
           total: responseCount,

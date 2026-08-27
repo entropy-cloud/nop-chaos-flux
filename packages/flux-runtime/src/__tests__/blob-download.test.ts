@@ -103,7 +103,7 @@ describe('normalizeBlobResponse', () => {
     } as unknown as Blob;
     const result = await normalizeBlobResponse(blob, { url: '/dl' });
 
-    expect(result.ok).toBe(false);
+    expect(result.status).not.toBe(0);
     expect(result.status).toBe(500);
     expect(result.msg).toBe('导出失败');
   });
@@ -127,7 +127,7 @@ describe('normalizeBlobResponse', () => {
     const headers = new Headers({ 'content-disposition': 'attachment; filename="data.bin"' });
     const result = await normalizeBlobResponse(blob, { url: '/dl' }, headers);
 
-    expect(result.ok).toBe(true);
+    expect(result.status).toBe(0);
     expect(result.status).toBe(0);
     expect((result.data as { msg: string }).msg).toBe('downloading');
     expect((fakeAnchor as { download: string }).download).toBe('data.bin');
@@ -171,7 +171,7 @@ describe('normalizeBlobResponse', () => {
     } as unknown as Blob;
     const result = await normalizeBlobResponse(blob, { url: '/dl' });
 
-    expect(result.ok).toBe(false);
+    expect(result.status).not.toBe(0);
     expect(result.msg).toContain('application/json');
     expect(result.msg).toContain('/dl');
     expect(result.msg).toContain('JSON');
@@ -192,7 +192,7 @@ describe('normalizeBlobResponse', () => {
     const blob = { type: 'application/octet-stream' } as Blob;
     const result = await normalizeBlobResponse(blob, { url: '/dl' });
 
-    expect(result.ok).toBe(false);
+    expect(result.status).not.toBe(0);
     expect(result.msg).toContain('filename');
     expect(clickSpy).not.toHaveBeenCalled();
     expect(createUrlSpy).not.toHaveBeenCalled();

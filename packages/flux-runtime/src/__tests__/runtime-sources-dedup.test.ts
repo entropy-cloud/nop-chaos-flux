@@ -28,8 +28,7 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url } as T,
       };
     });
@@ -123,8 +122,7 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url } as T,
       };
     });
@@ -211,8 +209,7 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url } as T,
       };
     });
@@ -357,13 +354,11 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
 
   it('A15: two co-mounted runtime instances with the same source name are isolated — refresh hits only its own instance', async () => {
     const fetcherA = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url, from: 'A' } as T,
     }));
     const fetcherB = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url, from: 'B' } as T,
     }));
 

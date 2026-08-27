@@ -88,8 +88,7 @@ describe('audit-backed runtime fixes', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { valid: true } as T,
       };
     });

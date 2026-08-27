@@ -15,7 +15,7 @@ type Fetcher = (api: {
   url?: string;
   data?: Record<string, unknown>;
   params?: Record<string, unknown>;
-}) => Promise<{ ok: boolean; status: number; data: unknown }>;
+}) => Promise<{ status: number; data: unknown | null }>;
 
 describe('CRUD loadAction includeScope contract', () => {
   function renderCrudWithIncludeScope(includeScope: unknown, fetcher: ReturnType<typeof vi.fn<Fetcher>>) {
@@ -47,7 +47,6 @@ describe('CRUD loadAction includeScope contract', () => {
 
   it('extracts CRUD scope variables when includeScope is "*"', async () => {
     const fetcher = vi.fn<Fetcher>(async () => ({
-      ok: true,
       status: 0,
       data: { items: [{ id: '1', name: 'WildcardItem' }], total: 1 },
     }));
@@ -74,7 +73,6 @@ describe('CRUD loadAction includeScope contract', () => {
 
   it('extracts only the declared CRUD scope paths when includeScope is string[]', async () => {
     const fetcher = vi.fn<Fetcher>(async () => ({
-      ok: true,
       status: 0,
       data: { items: [{ id: '1', name: 'ScopedItem' }], total: 1 },
     }));

@@ -288,7 +288,7 @@ describe('dataRendererDefinitions table pagination and selection', () => {
     let responseCount = 0;
     const fetcherSpy = vi.fn(async () => {
       responseCount += 1;
-      return { ok: true, status: 200, data: { value: `refreshed-${responseCount}` } };
+      return { status: 0, data: { value: `refreshed-${responseCount}` } };
     });
     const fetcher = (async () => fetcherSpy()) as typeof env.fetcher;
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);

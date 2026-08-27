@@ -11,7 +11,6 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
   it('renders rows when ajax loadAction fetcher resolves with {items,total}', async () => {
     cleanup();
     const fetcher = vi.fn(async () => ({
-      ok: true,
       status: 0,
       data: {
         items: [
@@ -57,7 +56,6 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
   it('renders rows even without explicit rowKey (nop-entropy grid_crud scenario)', async () => {
     cleanup();
     const fetcher = vi.fn(async () => ({
-      ok: true,
       status: 0,
       data: {
         // nop PageBean 含大量额外字段
@@ -105,7 +103,6 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
   it('triggers ajax loadAction on mount WITHOUT dependsOn (nop-entropy grid_crud has none)', async () => {
     cleanup();
     const fetcher = vi.fn(async () => ({
-      ok: true,
       status: 0,
       data: { items: [{ id: '1', name: 'NoDepItem' }], total: 1 },
     })) as never;
@@ -144,7 +141,6 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
   it('renders rows with full env (loadDict/loadPage/navigate/confirm/locale) like nop-chaos-next', async () => {
     cleanup();
     const fetcher = vi.fn(async () => ({
-      ok: true,
       status: 0,
       data: {
         items: [
@@ -199,7 +195,6 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
   it('renders rows even when operation column has buttons with AMIS visibleOn (regression)', async () => {
     cleanup();
     const fetcher = vi.fn(async () => ({
-      ok: true,
       status: 0,
       data: {
         items: [
@@ -260,7 +255,6 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
   it('hides the table built-in pagination bar when footerToolbar has a pagination renderer (no double paginator)', async () => {
     cleanup();
     const fetcher = vi.fn(async () => ({
-      ok: true,
       status: 0,
       data: {
         items: [

@@ -10,8 +10,7 @@ const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 describe('createRendererRuntime', () => {
   it('registers data sources in a scope-local runtime registry and replaces same-id entries', async () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { value: api.url } as T,
     });
     const fetcher = vi.fn(fetcherImpl);
@@ -71,8 +70,7 @@ describe('createRendererRuntime', () => {
 
   it('executes ajax data-source producers through action dispatch', async () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: ApiSchema) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { value: api.url } as T,
     });
     const runtime = createRendererRuntime({
@@ -126,8 +124,7 @@ describe('createRendererRuntime', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { ok: true } as T,
       };
     };
@@ -216,7 +213,7 @@ describe('createRendererRuntime', () => {
       error: undefined,
     });
 
-    releaseRequest?.({ ok: true, status: 200, data: { value: 'loaded' } });
+    releaseRequest?.({ status: 0, data: { value: 'loaded' } });
 
     await vi.waitFor(() => {
       expect(page.scope.get('payload')).toEqual({ value: 'loaded' });
@@ -296,8 +293,7 @@ describe('createRendererRuntime', () => {
 
   it('reports publish failures after a successful api response instead of swallowing them', async () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>() => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { value: 'loaded' } as T,
     });
     const fetcher = vi.fn(fetcherImpl);
@@ -518,8 +514,7 @@ describe('createRendererRuntime', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { value: 'loaded' } as T,
       };
     };

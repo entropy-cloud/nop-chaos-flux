@@ -85,8 +85,7 @@ describe('createRendererRuntime', () => {
 
   it('auto-refreshes api sources when request dependencies change', async () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     });
     const fetcher = vi.fn(fetcherImpl);
@@ -135,8 +134,7 @@ describe('createRendererRuntime', () => {
 
   it('does not auto-refresh api sources without discovered dependencies on unrelated scope writes', async () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url } as T,
     });
     const fetcher = vi.fn(fetcherImpl);
@@ -202,8 +200,7 @@ describe('createRendererRuntime', () => {
       });
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url } as T,
       };
     });
@@ -266,8 +263,7 @@ describe('createRendererRuntime', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url } as T,
       };
     });

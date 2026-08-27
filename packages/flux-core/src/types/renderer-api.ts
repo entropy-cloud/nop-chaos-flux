@@ -14,14 +14,17 @@ export interface ApiRequestContext {
 
 export interface ApiResponse<T = unknown> {
   /**
-   * Computed property: `status === 0`, mirroring the backend
-   * `ApiResponse.isOk()`. Optional on the type because the raw envelope
-   * returned by fetchers does not contain `ok`; the runtime normalization
-   * layer sets it before any consumer reads it.
+   * RPC status code. Convention: `status === 0` means success (mirrors backend
+   * `ApiResponse.isOk()`); any other value is an error.
+   * Consumers should branch on `status` instead of a separate `ok` flag.
    */
-  ok?: boolean;
   status: number;
-  data: T;
+  /**
+   * Response payload. `T | null` because error/exception paths and
+   * successful responses without a data envelope both yield `null`.
+   * Callers should only read `data` when `status === 0`.
+   */
+  data: T | null;
   /** Error code (mirrors backend `ApiResponse.code`). */
   code?: string;
   /** Human-readable error message (mirrors backend `ApiResponse.msg`, a top-level field). */

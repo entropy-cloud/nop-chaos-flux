@@ -144,8 +144,7 @@ describe('createRendererRuntime', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { ok: true } as T,
       };
     });

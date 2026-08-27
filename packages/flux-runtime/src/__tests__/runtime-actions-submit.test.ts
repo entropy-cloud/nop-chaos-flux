@@ -12,8 +12,7 @@ import { textRenderer, env } from './test-fixtures.js';
 describe('createRendererRuntime', () => {
   it('uses the latest env fetcher without recreating runtime state', async () => {
     const firstFetcher = vi.fn(async <T>(api: ApiSchema) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { tick: api.headers?.['x-tick'], source: 'first' } as T,
     }));
     const runtime = createRendererRuntime({
@@ -47,8 +46,7 @@ describe('createRendererRuntime', () => {
     expect(firstResult).toMatchObject({ ok: true, data: { tick: '0', source: 'first' } });
 
     const secondFetcher = vi.fn(async <T>(api: ApiSchema) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { tick: api.headers?.['x-tick'], source: 'second' } as T,
     }));
     Object.assign(runtime.env, {
@@ -92,8 +90,7 @@ describe('createRendererRuntime', () => {
             resolveApi = resolve;
           });
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { saved: true } as T,
           };
         },
@@ -146,8 +143,7 @@ describe('createRendererRuntime', () => {
             resolveApi = resolve;
           });
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { saved: true } as T,
           };
         },
@@ -194,8 +190,7 @@ describe('createRendererRuntime', () => {
         fetcher: async <T>(api: ApiSchema) => {
           fetchCalls.push(api);
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: {
               payload: {
                 saved: true,
@@ -263,8 +258,7 @@ describe('createRendererRuntime', () => {
         fetcher: async <T>(api: ApiSchema) => {
           fetchCalls.push(api);
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { saved: true } as T,
           };
         },
@@ -313,8 +307,7 @@ describe('createRendererRuntime', () => {
           }
 
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { saved: true } as T,
           };
         },

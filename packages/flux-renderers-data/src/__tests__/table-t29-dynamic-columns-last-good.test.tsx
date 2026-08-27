@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 const testEnv = {
-  fetcher: vi.fn(async () => ({ ok: true, status: 200, data: [] })),
+  fetcher: vi.fn(async () => ({ status: 0, data: [] })),
   notify: vi.fn(),
 } as any;
 

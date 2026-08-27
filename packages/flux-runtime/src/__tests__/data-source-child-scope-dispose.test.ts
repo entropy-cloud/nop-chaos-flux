@@ -8,7 +8,7 @@ describe('data source child scope dispose (1-10)', () => {
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([]),
       env: {
-        fetcher: vi.fn(async () => ({ ok: true, status: 200, data: { value: 'ok' } })),
+        fetcher: vi.fn(async () => ({ status: 0, data: { value: 'ok' } })),
         notify: vi.fn(),
       } as unknown as RendererEnv,
     });
@@ -96,7 +96,7 @@ describe('data source child scope dispose (1-10)', () => {
       await new Promise<void>((resolve) => {
         resolveRequest = resolve;
       });
-      return { ok: true, status: 200, data: { done: true } };
+      return { status: 0, data: { done: true } };
     });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([]),

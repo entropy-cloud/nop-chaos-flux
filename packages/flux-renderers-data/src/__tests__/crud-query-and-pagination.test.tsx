@@ -344,11 +344,9 @@ describe('CRUD query and pagination', () => {
               });
             }
 
-            return new Promise<{ ok: boolean; data: Record<string, unknown> }>((resolve) => {
+            return new Promise<{ ok: boolean; data: Record<string, unknown>}>((resolve) => {
               getValuesResolvers.push(() =>
-                resolve({
-                  ok: true,
-                  data: { keyword: validateCallCount === 1 ? 'first' : 'second' },
+                resolve({ ok: true, data: { keyword: validateCallCount === 1 ? 'first' : 'second' },
                 }),
               );
             });

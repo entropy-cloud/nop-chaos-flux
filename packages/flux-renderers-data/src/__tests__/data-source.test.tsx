@@ -47,9 +47,7 @@ describe('dataRendererDefinitions data-source behavior', () => {
 
   it('fetches data and injects into scope', async () => {
     cleanup();
-    const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async () => ({ status: 0,
       data: { name: 'Alice' },
     })) as RendererEnv['fetcher'];
     const SchemaRenderer = createDataSchemaRenderer();
@@ -73,9 +71,7 @@ describe('dataRendererDefinitions data-source behavior', () => {
 
   it('uses initialData before fetch completes', async () => {
     cleanup();
-    const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async () => ({ status: 0,
       data: { name: 'Bob' },
     })) as RendererEnv['fetcher'];
     const SchemaRenderer = createDataSchemaRenderer();
@@ -188,7 +184,7 @@ describe('dataRendererDefinitions data-source behavior', () => {
     const fetcherSpy = vi.fn();
     const fetcher: RendererEnv['fetcher'] = async <T,>() => {
       fetcherSpy();
-      return { ok: true, status: 200, data: { value: 'cached' } as T };
+      return { status: 0, data: { value: 'cached' } as T };
     };
     const SchemaRenderer = createDataSchemaRenderer();
     const schema = {
@@ -229,9 +225,7 @@ describe('dataRendererDefinitions data-source behavior', () => {
 
   it('works under React.StrictMode double-mount', async () => {
     cleanup();
-    const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async () => ({ status: 0,
       data: { name: 'Alice' },
     })) as RendererEnv['fetcher'];
     const SchemaRenderer = createDataSchemaRenderer();

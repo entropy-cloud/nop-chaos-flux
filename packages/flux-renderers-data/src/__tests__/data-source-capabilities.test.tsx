@@ -11,9 +11,7 @@ afterEach(() => {
 
 describe('data-source component capabilities (X4)', () => {
   it('component:refresh triggers controller.refresh (fetcher called again)', async () => {
-    const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async () => ({ status: 0,
       data: { value: 'fresh' },
     })) as RendererEnv['fetcher'];
 
@@ -103,9 +101,7 @@ describe('data-source component capabilities (X4)', () => {
   });
 
   it('component:refresh is skipped (no request) when sendOn is falsy', async () => {
-    const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async () => ({ status: 0,
       data: { value: 'fresh' },
     })) as RendererEnv['fetcher'];
 

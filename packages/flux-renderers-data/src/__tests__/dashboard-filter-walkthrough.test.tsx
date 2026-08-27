@@ -18,9 +18,7 @@ describe('dashboard-filter 编排约定 — scope 联动走查', () => {
   });
 
   it('valuesPath 把筛选表单值发布到共享 filter.* 作用域（初始值即被消费端使用）', async () => {
-    const fetcher = vi.fn(async <T,>(_api: { url: string }) => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async <T,>(_api: { url: string }) => ({ status: 0,
       data: { region: _api.url.includes('region=east') ? 'east' : 'none' } as T,
     }));
     const SchemaRenderer = createDataSchemaRenderer();
@@ -64,9 +62,7 @@ describe('dashboard-filter 编排约定 — scope 联动走查', () => {
   });
 
   it('共享 scope 写入 → data-source 自动重载（不依赖手动 refresh）', async () => {
-    const fetcher = vi.fn(async <T,>(_api: { url: string }) => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async <T,>(_api: { url: string }) => ({ status: 0,
       data: {} as T,
     }));
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
@@ -110,9 +106,7 @@ describe('dashboard-filter 编排约定 — scope 联动走查', () => {
 
   it('key 失配时发出 dashboard-filter-no-link dev warn（report-once），正常链接不告警', async () => {
     // ── 失配场景：消费端引用 filter.product，表单写入 filter.region。──
-    const mismatchFetcher = vi.fn(async <T,>(_api: { url: string }) => ({
-      ok: true,
-      status: 200,
+    const mismatchFetcher = vi.fn(async <T,>(_api: { url: string }) => ({ status: 0,
       data: {} as T,
     }));
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -173,9 +167,7 @@ describe('dashboard-filter 编排约定 — scope 联动走查', () => {
     cleanup();
 
     // ── 正常链接场景：消费端引用 filter.region，表单写入 filter.region → 零告警。──
-    const linkedFetcher = vi.fn(async <T,>(_api: { url: string }) => ({
-      ok: true,
-      status: 200,
+    const linkedFetcher = vi.fn(async <T,>(_api: { url: string }) => ({ status: 0,
       data: {} as T,
     }));
     const warnSpy2 = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -218,9 +210,7 @@ describe('dashboard-filter 编排约定 — scope 联动走查', () => {
   });
 
   it('未发布任何筛选时消费端按空筛选渲染（等价未筛，无告警无报错）', async () => {
-    const fetcher = vi.fn(async <T,>(_api: { url: string }) => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async <T,>(_api: { url: string }) => ({ status: 0,
       data: { region: _api.url.includes('region=') ? 'filtered' : 'all' } as T,
     }));
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});

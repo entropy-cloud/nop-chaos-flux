@@ -191,7 +191,7 @@ describe('executeApiSchema error path', () => {
 
 describe('createApiRequestExecutor', () => {
   it('forwards pre-aborted signals to the fetcher path', async () => {
-    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: 'completed' }));
+    const fetcher = vi.fn(async () => ({ status: 0, data: 'completed' }));
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
@@ -203,7 +203,7 @@ describe('createApiRequestExecutor', () => {
       signal: controller.signal,
     });
 
-    expect(result.ok).toBe(true);
+    expect(result.status).toBe(0);
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
@@ -217,7 +217,7 @@ describe('createApiRequestExecutor', () => {
             return;
           }
 
-          resolve({ ok: true, status: 200, data: { page: 2 } });
+          resolve({ status: 0, data: { page: 2 } });
         }),
     );
     const env = { fetcher } as unknown as RendererEnv;
@@ -227,17 +227,16 @@ describe('createApiRequestExecutor', () => {
     const firstPromise = execute('ajax', { url: '/api/items', params: { page: 1 } }, scope);
     const secondPromise = execute('ajax', { url: '/api/items', params: { page: 2 } }, scope);
 
-    resolveFirst?.({ ok: true, status: 200, data: { page: 1 } });
+    resolveFirst?.({ status: 0, data: { page: 1 } });
 
-    await expect(firstPromise).resolves.toMatchObject({ ok: true, data: { page: 1 } });
-    await expect(secondPromise).resolves.toMatchObject({ ok: true, data: { page: 2 } });
+    await expect(firstPromise).resolves.toMatchObject({ status: 0, data: { page: 1 } });
+    await expect(secondPromise).resolves.toMatchObject({ status: 0, data: { page: 2 } });
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
   it('supports parallel dedup strategy without cancelling earlier requests', async () => {
     const fetcher = vi.fn(async (api: ApiSchema) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { requestId: api.data },
     }));
     const env = { fetcher } as unknown as RendererEnv;
@@ -255,9 +254,8 @@ describe('createApiRequestExecutor', () => {
       { control: { dedup: 'parallel' } },
     );
 
-    await expect(first).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 1 } } });
-    await expect(second).resolves.toMatchObject({
-      ok: true,
+    await expect(first).resolves.toMatchObject({ status: 0, data: { requestId: { requestId: 1 } } });
+    await expect(second).resolves.toMatchObject({ status: 0,
       data: { requestId: { requestId: 2 } },
     });
     expect(fetcher).toHaveBeenCalledTimes(2);
@@ -288,10 +286,10 @@ describe('createApiRequestExecutor', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(1);
 
-    resolveFirst?.({ ok: true, status: 200, data: { requestId: 1 } });
+    resolveFirst?.({ status: 0, data: { requestId: 1 } });
 
-    await expect(first).resolves.toMatchObject({ ok: true, data: { requestId: 1 } });
-    await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: 1 } });
+    await expect(first).resolves.toMatchObject({ status: 0, data: { requestId: 1 } });
+    await expect(second).resolves.toMatchObject({ status: 0, data: { requestId: 1 } });
   });
 
   it('does not reuse an aborted in-flight promise for ignore-new dedup strategy', async () => {
@@ -312,7 +310,7 @@ describe('createApiRequestExecutor', () => {
 
       return new Promise((resolve) => {
         resolveSecond = resolve;
-      }).then(() => ({ ok: true, status: 200, data: { requestId: api.data } }));
+      }).then(() => ({ status: 0, data: { requestId: api.data } }));
     });
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
@@ -345,9 +343,9 @@ describe('createApiRequestExecutor', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(2);
 
-    resolveSecond?.({ ok: true, status: 200, data: { requestId: 1 } });
+    resolveSecond?.({ status: 0, data: { requestId: 1 } });
 
-    await expect(second).resolves.toMatchObject({ ok: true, data: { requestId: { requestId: 1 } } });
+    await expect(second).resolves.toMatchObject({ status: 0, data: { requestId: { requestId: 1 } } });
     await expect(first).rejects.toMatchObject({ name: 'AbortError' });
   });
 
@@ -361,7 +359,7 @@ describe('createApiRequestExecutor', () => {
             return;
           }
 
-          resolve({ ok: true, status: 200, data: { page: 2 } });
+          resolve({ status: 0, data: { page: 2 } });
         }),
     );
     const env = { fetcher } as unknown as RendererEnv;
@@ -377,10 +375,10 @@ describe('createApiRequestExecutor', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(2);
 
-    resolvePageOne?.({ ok: true, status: 200, data: { page: 1 } });
+    resolvePageOne?.({ status: 0, data: { page: 1 } });
 
-    await expect(first).resolves.toMatchObject({ ok: true, data: { page: 1 } });
-    await expect(second).resolves.toMatchObject({ ok: true, data: { page: 2 } });
+    await expect(first).resolves.toMatchObject({ status: 0, data: { page: 1 } });
+    await expect(second).resolves.toMatchObject({ status: 0, data: { page: 2 } });
   });
 
   it('reuses the same in-flight fetch only for identical ignore-new request keys', async () => {
@@ -422,10 +420,10 @@ describe('createApiRequestExecutor', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(1);
 
-    release?.({ ok: true, status: 200, data: { ok: true } });
+    release?.({ status: 0, data: { ok: true } });
 
-    await expect(first).resolves.toMatchObject({ ok: true, data: { ok: true } });
-    await expect(second).resolves.toMatchObject({ ok: true, data: { ok: true } });
+    await expect(first).resolves.toMatchObject({ status: 0, data: { ok: true } });
+    await expect(second).resolves.toMatchObject({ status: 0, data: { ok: true } });
   });
 
   it('dedupes identical final executable requests after adaptor rewrites params into the url', async () => {
@@ -464,10 +462,10 @@ describe('createApiRequestExecutor', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(1);
 
-    release?.({ ok: true, status: 200, data: { ok: true } });
+    release?.({ status: 0, data: { ok: true } });
 
-    await expect(first).resolves.toMatchObject({ ok: true, data: { ok: true } });
-    await expect(second).resolves.toMatchObject({ ok: true, data: { ok: true } });
+    await expect(first).resolves.toMatchObject({ status: 0, data: { ok: true } });
+    await expect(second).resolves.toMatchObject({ status: 0, data: { ok: true } });
   });
 
   it('preserves retry metadata on ok:false request failures', async () => {
@@ -508,7 +506,7 @@ describe('createApiRequestExecutor', () => {
       if (ctx.signal?.aborted) {
         throw Object.assign(new Error('aborted'), { name: 'AbortError' });
       }
-      return { ok: true, status: 200, data: null };
+      return { status: 0, data: null };
     });
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
@@ -574,7 +572,7 @@ describe('createApiRequestExecutor', () => {
 
       return new Promise((resolve) => {
         resolveSecond = resolve;
-      }).then(() => ({ ok: true, status: 200, data: null }));
+      }).then(() => ({ status: 0, data: null }));
     });
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
@@ -586,7 +584,7 @@ describe('createApiRequestExecutor', () => {
     const second = execute('ajax', { url: '/api/test' }, scope);
     resolveSecond?.(undefined);
 
-    await expect(second).resolves.toMatchObject({ ok: true });
+    await expect(second).resolves.toMatchObject({ status: 0 });
     await expect(first).rejects.toMatchObject({
       name: 'AbortError',
       cause: expect.objectContaining({ reason: 'request-superseded' }),
@@ -634,7 +632,7 @@ describe('createApiRequestExecutor', () => {
     const addEventListener = vi.spyOn(AbortSignal.prototype, 'addEventListener');
     const removeEventListener = vi.spyOn(AbortSignal.prototype, 'removeEventListener');
     const env = {
-      fetcher: vi.fn(async () => ({ ok: true, status: 200, data: { ok: true } })),
+      fetcher: vi.fn(async () => ({ status: 0, data: { ok: true } })),
     } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
     const scope = createTestScope({});
@@ -643,7 +641,7 @@ describe('createApiRequestExecutor', () => {
     try {
       await expect(
         execute('ajax', { url: '/api/test' }, scope, undefined, { signal: parentController.signal }),
-      ).resolves.toMatchObject({ ok: true, data: { ok: true } });
+      ).resolves.toMatchObject({ status: 0, data: { ok: true } });
 
       expect(addEventListener).toHaveBeenCalledWith('abort', expect.any(Function), { once: true });
       expect(removeEventListener).toHaveBeenCalledWith('abort', expect.any(Function));
@@ -671,7 +669,7 @@ describe('createApiRequestExecutor', () => {
       }
       return new Promise((resolve) => {
         resolveSecond = resolve;
-      }).then(() => ({ ok: true, status: 200, data: null }));
+      }).then(() => ({ status: 0, data: null }));
     });
     const env = { fetcher } as unknown as RendererEnv;
     const execute = createApiRequestExecutor(() => env);
@@ -685,7 +683,7 @@ describe('createApiRequestExecutor', () => {
     expect(firstSignal?.aborted).toBe(true);
 
     resolveSecond?.(undefined);
-    await expect(second).resolves.toMatchObject({ ok: true });
+    await expect(second).resolves.toMatchObject({ status: 0 });
     await expect(first).rejects.toThrow('aborted');
   });
 });
