@@ -111,15 +111,14 @@ describe('controller helpers', () => {
           data: { username: 'alice', token: 'secret' },
         },
         response: {
-          status: 200,
+          status: 0,
           data: { items: [], total: 1 },
         },
       }),
     ).toMatchObject({
       method: 'POST',
       url: '/api/users',
-      status: 200,
-      ok: true,
+      status: 0,
       requestDataKeys: ['username', 'token'],
       responseDataKeys: ['items', 'total'],
       responseType: 'object',

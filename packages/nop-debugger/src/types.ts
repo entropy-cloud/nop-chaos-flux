@@ -102,7 +102,6 @@ export interface NopDebugEventNetworkSummary {
   method: string;
   url: string;
   status?: number;
-  ok?: boolean;
   aborted?: boolean;
   requestDataKeys?: string[];
   responseDataKeys?: string[];
