@@ -33,8 +33,11 @@ async function openRangePicker() {
 }
 
 function dayButton(popover: HTMLElement, day: number) {
+  // The grid renders adjacent-month trailing days; scope lookups to the
+  // current month or "29" resolves to last month's trailing day.
   return within(popover)
     .getAllByRole('button')
+    .filter((btn) => btn.closest('[data-outside]') === null)
     .find((btn) => btn.textContent === String(day)) as HTMLButtonElement;
 }
 
