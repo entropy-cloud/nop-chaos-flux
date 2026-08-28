@@ -9,7 +9,7 @@ describe('schema-fetch cross-subscriber dedup + cache (A11)', () => {
   const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
 
   it('dedupes concurrent identical schema-fetches across subscribers into a single in-flight request', async () => {
-    let release: ((value: { ok: boolean; status: number; data: unknown }) => void) | undefined;
+    let release: ((value: { status: number; data: unknown }) => void) | undefined;
     const fetcher = vi.fn(
       () =>
         new Promise((resolve) => {
