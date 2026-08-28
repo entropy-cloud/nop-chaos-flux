@@ -14,6 +14,13 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'gantt' },
     component: Gantt,
+    propContracts: {
+      showWeekends: { displayName: 'Show Weekends', shape: { kind: 'boolean' } },
+      showToday: { displayName: 'Show Today', shape: { kind: 'boolean' } },
+      draggable: { displayName: 'Draggable', shape: { kind: 'boolean' } },
+      editable: { displayName: 'Editable', shape: { kind: 'boolean' } },
+      linkable: { displayName: 'Linkable', shape: { kind: 'boolean' } },
+    },
     fields: [
       { key: 'tasks', kind: 'prop' },
       { key: 'links', kind: 'prop' },
@@ -29,11 +36,16 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'draggable', kind: 'prop' },
       { key: 'editable', kind: 'prop' },
       { key: 'linkable', kind: 'prop' },
-      { key: 'taskBar', kind: 'region', regionKey: 'taskBar' },
+      { key: 'taskBar', kind: 'region', regionKey: 'taskBar', params: ['task'] },
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
-      { key: 'editor', kind: 'region', regionKey: 'editor' },
+      { key: 'editor', kind: 'region', regionKey: 'editor', params: ['task', 'onSave', 'onCancel'] },
       { key: 'empty', kind: 'region', regionKey: 'empty' },
-      { key: 'loading', kind: 'region', regionKey: 'loading' },
+      { key: 'loading', kind: 'value-or-region', regionKey: 'loading' },
+      { key: 'text', kind: 'region', regionKey: 'text', params: ['task'] },
+      { key: 'start', kind: 'region', regionKey: 'start', params: ['task'] },
+      { key: 'end', kind: 'region', regionKey: 'end', params: ['task'] },
+      { key: 'duration', kind: 'region', regionKey: 'duration', params: ['task'] },
+      { key: 'predecessor', kind: 'region', regionKey: 'predecessor', params: ['task'] },
       { key: 'onTaskClick', kind: 'event' },
       { key: 'onTaskDoubleClick', kind: 'event' },
       { key: 'onTaskDragEnd', kind: 'event' },
@@ -62,6 +74,29 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'kanban' },
     component: KanbanBoard,
+    propContracts: {
+      collapsedOwnership: {
+        displayName: 'Collapsed Ownership',
+        shape: {
+          kind: 'union',
+          anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+      columnDraggable: { displayName: 'Column Draggable', shape: { kind: 'boolean' } },
+      draggable: { displayName: 'Draggable', shape: { kind: 'boolean' } },
+      wipStrict: { displayName: 'WIP Strict', shape: { kind: 'boolean' } },
+      kanbanOwnership: {
+        displayName: 'Kanban Ownership',
+        shape: {
+          kind: 'union',
+          anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+    },
     componentCapabilityContracts: [
       {
         handle: 'scrollToCard',
@@ -173,6 +208,51 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'calendar', view: 'month' },
     component: Calendar,
+    propContracts: {
+      view: {
+        displayName: 'View',
+        shape: {
+          kind: 'union',
+          anyOf: ['month', 'week', 'day'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'month',
+      },
+      firstDayOfWeek: {
+        displayName: 'First Day Of Week',
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 0 },
+            { kind: 'literal', value: 1 },
+          ],
+        },
+        editorType: 'select',
+        defaultValue: 0,
+      },
+      showWeekends: { displayName: 'Show Weekends', shape: { kind: 'boolean' } },
+      showCrossDayLines: { displayName: 'Show Cross Day Lines', shape: { kind: 'boolean' } },
+      timezoneSelector: { displayName: 'Timezone Selector', shape: { kind: 'boolean' } },
+      batchScheduling: { displayName: 'Batch Scheduling', shape: { kind: 'boolean' } },
+      viewOwnership: {
+        displayName: 'View Ownership',
+        shape: {
+          kind: 'union',
+          anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+      dateOwnership: {
+        displayName: 'Date Ownership',
+        shape: {
+          kind: 'union',
+          anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+    },
     fields: [
       { key: 'view', kind: 'prop' },
       { key: 'date', kind: 'prop' },

@@ -3,13 +3,14 @@ import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/fl
 import { useCurrentComponentRegistry, useStatusPathPublication } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, XIcon } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import type {
   WizardLastCommitStatus,
   WizardSchema,
   WizardStatusSummary,
 } from './schemas.js';
 import { CompiledWizardStep, WizardStepBody } from './wizard-step-body.js';
+import { WizardStepNavItem } from './wizard-step-nav.js';
 import {
   asReactNode,
   computeCanGoTo,
@@ -479,109 +480,23 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       // not rendered as disabled nav items.
       if (!isStepVisible(step)) return null;
 
-      const stepKey = resolveStepKey(step, index);
-      const isActive = index === currentStepIndex;
-      const isPast = index < currentStepIndex;
-      const reachable = computeCanGoTo(
-        steps,
-        index,
-        linear,
-        allowStepJump,
-        furthestReached,
-      );
-      const titleRegion =
-        typeof step.titleRegionKey === 'string' ? props.regions[step.titleRegionKey] : undefined;
-      const titleContent = titleRegion ? asReactNode(titleRegion.render()) : null;
-      const titleText =
-        (typeof step.title === 'string' ? step.title : null) ??
-        (typeof titleContent === 'string' ? titleContent : null) ??
-        toStepKeyString(stepKey);
-      const descText =
-        typeof step.description === 'string' ? step.description : null;
-
-      const stepStatus = isActive && currentStepHasError
-        ? 'error'
-        : isActive
-          ? 'process' as const
-          : isPast
-            ? 'finish' as const
-            : 'wait' as const;
-
-      const clickable = reachable && !isActive && !isStepDisabled(step);
-      const handleStepClick = clickable
-        ? (event: React.MouseEvent<HTMLButtonElement>) => {
-            event.preventDefault();
-            void goToStep(index);
-          }
-        : undefined;
-
       return (
-        <li
-          key={toStepKeyString(stepKey)}
-          data-slot="wizard-step-nav-item"
-          data-step-index={index}
-          data-status={stepStatus}
-        >
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            data-slot="wizard-step-nav-button"
-            data-step-index={index}
-            data-active={isActive || undefined}
-            data-past={isPast || undefined}
-            data-reachable={reachable || undefined}
-            data-disabled={isStepDisabled(step) || undefined}
-            data-status={stepStatus}
-            aria-current={isActive ? 'step' : undefined}
-            disabled={!clickable && !isActive}
-            onClick={handleStepClick}
-            className={cn(
-              'h-auto gap-1.5 px-3 py-2 text-sm',
-              isActive
-                ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
-                : stepStatus === 'error'
-                  ? 'text-destructive hover:bg-destructive/10'
-                  : reachable
-                    ? 'text-foreground hover:bg-muted'
-                    : 'text-muted-foreground cursor-not-allowed',
-              mode === 'vertical' && 'w-full justify-start',
-            )}
-          >
-            <span
-              data-slot="wizard-step-nav-marker"
-              className={cn(
-                'inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs',
-                stepStatus === 'process'
-                  ? 'bg-primary-foreground/20'
-                  : stepStatus === 'finish'
-                    ? 'bg-primary/20 text-primary'
-                    : stepStatus === 'error'
-                      ? 'bg-destructive/20 text-destructive'
-                      : 'bg-muted',
-              )}
-            >
-              {stepStatus === 'finish' ? (
-                <CheckIcon className="size-3" />
-              ) : stepStatus === 'error' ? (
-                <XIcon className="size-3" />
-              ) : (
-                index + 1
-              )}
-            </span>
-            <span className="flex flex-col items-start text-left">
-              <span data-slot="wizard-step-nav-title">{titleText}</span>
-              {descText ? (
-                <span
-                  data-slot="wizard-step-nav-description"
-                  className="text-xs font-normal opacity-70"
-                >
-                  {descText}
-                </span>
-              ) : null}
-            </span>
-          </Button>
-        </li>
+        <WizardStepNavItem
+          key={toStepKeyString(resolveStepKey(step, index))}
+          owner={props}
+          steps={steps}
+          step={step}
+          index={index}
+          currentStepIndex={currentStepIndex}
+          currentStepHasError={currentStepHasError}
+          mode={mode}
+          linear={linear}
+          allowStepJump={allowStepJump}
+          furthestReached={furthestReached}
+          onGoToStep={(target) => {
+            void goToStep(target);
+          }}
+        />
       );
     })
     .filter((node): node is React.ReactElement => node !== null);

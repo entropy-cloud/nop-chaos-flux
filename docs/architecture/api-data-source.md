@@ -761,14 +761,22 @@ Design intent:
 | `refreshSource` action         | By `targetId` (source name) | runtime-owned action API      | Cross-source refresh in action flows  |
 | `component:refresh` capability | By ComponentHandle id       | component capability contract | Interactive triggers (button onClick) |
 
-Both coexist and are not interchangeable. `component:refresh` returns `{ skipped: boolean }`, reflecting whether the sendOn gate suppressed the request.
+Both coexist and are not interchangeable.
+
+**`DataSourceController.refresh()` result contract** (`DataSourceRefreshResult`):
+
+- `{ skipped: true }` — no request cycle was attributable to this call: the `sendOn` gate evaluated falsy, or a dedup/supersede path (`ignore-new`, `cancel-previous` pending relaunch, stale-dropped) meant this call observed no completed request. A skipped refresh is neither a success nor a failure.
+- `{ skipped: false, ok: true }` — the request cycle completed and published.
+- `{ skipped: false, ok: false, error }` — the underlying request failed or was cancelled; `error` carries the failure details. Failures are no longer reported affirmatively as success.
+
+**`component:refresh` capability result**: `{ ok: true, data: { skipped } }` on success or skip; `{ ok: false, error }` when the underlying request failed (`data.skipped` reports the gate outcome). `refreshSource` uses the same failure semantics — not-found (`Source not found: <name>`) and request failure (`error` from the failed cycle) are distinguishable failure modes, both returning `{ ok: false }` so `then` chains do not run on failure.
 
 #### Component Handles
 
-| Handle    | Method              | Description                                                                |
-| --------- | ------------------- | -------------------------------------------------------------------------- |
-| `refresh` | `invoke('refresh')` | Trigger manual refresh, passes sendOn gate, returns `{ skipped: boolean }` |
-| `cancel`  | `invoke('cancel')`  | Cancel in-flight request, `statusPath` set to idle                         |
+| Handle    | Method              | Description                                                                                         |
+| --------- | ------------------- | --------------------------------------------------------------------------------------------------- |
+| `refresh` | `invoke('refresh')` | Trigger manual refresh, passes sendOn gate; returns `{ skipped }` data + ok/error failure semantics |
+| `cancel`  | `invoke('cancel')`  | Cancel in-flight request, `statusPath` set to idle                                                  |
 
 #### Lifecycle Events
 

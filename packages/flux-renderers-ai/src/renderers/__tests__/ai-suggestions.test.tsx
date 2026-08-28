@@ -152,3 +152,51 @@ describe('ai-suggestions — P2 unique keys for duplicate-text items (N-6)', () 
     expect(overflow?.textContent).toBe('+3');
   });
 });
+
+// ============================================================================
+// D4 / G9 (plan 2026-08-24-2317-1): suggestion pill icon lucide dispatch.
+// A preset string key (pencil / languages / lightbulb / sparkles / plus)
+// renders the lucide svg; any other non-empty string falls back to the
+// literal character (backward compatible — emoji keep working).
+// ============================================================================
+
+describe('ai-suggestions — D4/G9 icon lucide dispatch', () => {
+  it('icon:"pencil" renders the Pencil lucide svg instead of the literal string', () => {
+    const { container } = render(
+      <AiSuggestionsView items={[{ text: 'Summarize', icon: 'pencil' }]} overflowMode="expand" />,
+    );
+    const pill = container.querySelector('[data-slot="ai-suggestions-item"]') as HTMLElement;
+    expect(pill.querySelector('svg')).not.toBeNull();
+    expect(pill.textContent).toContain('Summarize');
+    expect(pill.textContent).not.toContain('pencil');
+  });
+
+  it('an unknown icon string falls back to the literal character (backward compatible)', () => {
+    const { container } = render(
+      <AiSuggestionsView items={[{ text: 'Summarize', icon: '✏️' }]} overflowMode="expand" />,
+    );
+    const pill = container.querySelector('[data-slot="ai-suggestions-item"]') as HTMLElement;
+    expect(pill.querySelector('svg')).toBeNull();
+    expect(pill.textContent).toContain('✏️');
+  });
+
+  it('popover overflow items dispatch icons through the same preset map', () => {
+    const items = [
+      { text: 'A', icon: 'pencil' },
+      { text: 'B', icon: 'sparkles' },
+      { text: 'C', icon: 'languages' },
+    ];
+    const { container } = render(
+      <AiSuggestionsView items={items} overflowMode="popover" maxVisible={1} />,
+    );
+    act(() => {
+      fireEvent.click(container.querySelector('[data-slot="ai-suggestions-overflow"]')!);
+    });
+    const overflowItem = document.querySelector(
+      '[data-slot="ai-suggestions-overflow-list"] [data-slot="ai-suggestions-item"]:first-child',
+    ) as HTMLElement;
+    expect(overflowItem).not.toBeNull();
+    expect(overflowItem.querySelector('svg')).not.toBeNull();
+    expect(overflowItem.textContent).toContain('B');
+  });
+});

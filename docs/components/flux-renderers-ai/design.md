@@ -165,7 +165,8 @@ packages/flux-renderers-ai/
     │   └── ai-bubble/
     │       ├── __tests__/           # bubble 渲染器单测（bubble-renderers / markdown-and-data-part / markdown-buffer / tool-call-and-content）
     │       ├── index.tsx            # AiBubbleRenderer 主组件
-    │       ├── markdown-buffer.ts   # 流式 markdown 缓冲（CJK / fence 安全）
+    │       ├── markdown-buffer.ts   # 流式 markdown 缓冲（CJK / fence 安全）+ code 区域掩码单一定义点（computeCodeRegionMask）
+    │       ├── math-delimiter-preprocess.ts # 渲染前数学定界符预处理（货币消歧 + \( \[ 映射，§10.4 语义表）
     │       ├── user-edit.tsx        # §4.7 用户消息编辑
     │       ├── types.ts             # BubbleContentRendererMatch / BubbleToolRendererMatch
     │       └── renderers/           # BubbleRenderers 注册制（参考 tiny-robot）
@@ -373,9 +374,24 @@ P2 增强：默认注册 `*` 通用 fallback；包内**不**提供任何专用�
 
 **P1 路径 C（推荐）**：在 `react-markdown` 外包一层轻量缓冲（~2KB gzip），仅处理 CJK 缓冲 + 代码 fence 缓冲；其他 Markdown 解析仍走现有 sanitize pipeline。
 
-**P2 评估路径 B（已裁定）**：评估 streamdown/core（~8KB gzip，排除 mermaid/shiki；CJK + code + math 完整支持）。**裁定结论：不引入**。当前路径 C 缓冲（`markdown-buffer.ts`，A2 落地）已覆盖流式安全核心问题（CJK 代理对拆分、未闭合 ```/~~~ fence、未闭合 `$$`/`\(`）。streamdown 的增量收益（完整 math 渲染）依赖 LaTeX 决策（见下，亦裁定不内置），引入 ~8KB 体积换取的边际收益不足以让所有 host 承担。保留路径 C；streamdown 列为 optimization candidate，移出 A3 scope（host 若需可经 `xui:imports`注入自定义`BubbleContentRenderer`）。
+**P2 评估路径 B（已裁定）**：评估 streamdown/core（~8KB gzip，排除 mermaid/shiki；CJK + code + math 完整支持）。**裁定结论：不引入**。当前路径 C 缓冲（`markdown-buffer.ts`，A2 落地）已覆盖流式安全核心问题（CJK 代理对拆分、未闭合 ```/~~~ fence、未闭合 `$$`/`\(`）。streamdown 的增量收益（完整 math 渲染）已被 LaTeX 决策内置覆盖（见下），引入 streamdown 仅 ~8KB 体积换取的边际收益不足以让所有 host 承担（LaTeX 已通过 remark-math/rehype-katex 直接获得 streamdown 的 math 插件能力）。保留路径 C；streamdown 列为 optimization candidate，移出 A3 scope（host 若需可经 `xui:imports`注入自定义`BubbleContentRenderer`）。
 
-**LaTeX / KaTeX（已裁定）**：评估 `remark-math` + `rehype-katex`（~20KB gzip + KaTeX CSS）。**裁定结论：不内置**。LaTeX 公式渲染为高频必需场景的证据不足；内置会让所有 host 承担 ~20KB 体积 + CSS。改为 out-of-scope improvement：host 经自定义 `BubbleContentRenderer`（pre-process content 走 remark-math+rehype-katex）或 `xui:imports` 注入。
+**LaTeX / KaTeX（**~~已裁定：不内置~~** 2026-08-23 重新决策：内置）**：评估 `remark-math` + `rehype-katex`（~20KB gzip + KaTeX CSS）。**2026-08-23 human gate 决策**：LaTeX 公式渲染为产品级 AI chat 实际应用必须能力（科学 / 工程 / 教育场景高频），不再视为 niche 场景。**新裁定结论**：内置 `remark-math@^6` + `rehype-katex@^7` + `katex@^0.16` 作为硬 peer deps（与现有 `react-markdown` / `rehype-raw` 风格一致），host 必须安装才能使用 `ai-bubble`。`ai-bubble/renderers/markdown.tsx` 在 ReactMarkdown 的 `remarkPlugins` / `rehypePlugins` 数组追加插件；`markdown-buffer.ts` 追踪 `\[` 块级公式边界（与 `$$` / `\(` 对齐，截断层语义），渲染层经 `math-delimiter-preprocess.ts` 把**配对成功**的 `\(...\)` / `\[...\]` 定界符映射为 `$...$` / `$$...$$` 后由 remark-math 解析（映射后渲染，非仅 buffer 边界——2026-08-25 remediation 收敛，见下语义表）；`styles.css` 增加 `.katex` / `.katex-display` 容器基础排版（**仅排版**，颜色 / 字体靠 host 必须 `import 'katex/dist/katex.min.css'`）。理由：(1) 实战必需，非 niche；(2) 与 `flux-renderers-content` 等包内同类依赖治理一致；(3) host 走 `peerDependencies` 自动安装无额外负担。**约束**：KaTeX CSS 仍由 host 显式 import（与现有 `dompurify` / 其他样式 import 治理一致），不内嵌到包 styles.css。**变更追溯**：原 2026-07 决策依据"高频证据不足"在 2026-08-23 由 human gate 重新评估为不成立；新决策文档化在 `docs/backlog/ai-widgets-product-roadmap.md` D6 phase（实现 plan：`docs/plans/2026-08-24-2237-3-d6-latex-code-highlight.md`）。
+
+**数学定界符语义表（2026-08-25 remediation，单一事实源）**：markdown 管线三层（buffer 截断层 `markdown-buffer.ts` / 渲染预处理层 `math-delimiter-preprocess.ts` / remark-math 语法层）对"什么算数学定界符 / 什么该被保护"共享同一张表。code 区域识别只有一个定义点（`computeCodeRegionMask`，fenced + inline code 掩码），三层消费同一掩码。预处理为**固定两遍顺序**：① 原文 `$` 货币转义 → ② 配对定界符映射（映射生成的 `$` 不回头参与 ①；顺序颠倒会把数字开头的 `\(...\)` 公式错误转义）。
+
+| 输入形态（非 code 区域，除非首行注明）             | buffer 截断层（`safeMarkdownSlice`）                                                               | 渲染预处理层（`preprocessMathDelimiters`）                                                                                                                                                                                                     | remark-math / KaTeX 层（最终渲染）                             |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| fenced / inline code 内的 `$` / `$$` / `\(` / `\[` | 掩码免疫：不参与 `$$` / `\[` / `\(` / 单 `$` 任何计数（bash `$$` PID、PHP `$$var` 完成态全文渲染） | 掩码免疫：不转义、不映射（字面）                                                                                                                                                                                                               | 字面（code 语法高亮归 lowlight）                               |
+| `$$...$$`（含数字开头 `$$5x + 1$$`）               | `$$` 奇偶追踪，未闭合截到安全前缀                                                                  | `$$`+ run 免疫货币转义（含数字开头公式）                                                                                                                                                                                                       | 块级 math（`.katex-display`）                                  |
+| `$...$`                                            | 单美元 open 守卫：`$` 后随空白 / 数字不开候选；`$$`-run / code / `\$` 免疫                         | **原文 `$` 后随数字（单 `$`、非 `$$`-run、非 `\$`、非 code）转义为 `\$`**：货币美元字面渲染，不开数学。差异注记：buffer 只约束 open 侧，本层对 close 侧 `$`+数字同样转义（`$x$5` 全字面）。**数字开头的行内公式用 `$$` 或 `\(...\)` 形态表达** | 配对成功的 `$...$` 为行内 math（`.katex`）；被转义的字面美元   |
+| `\(...\)`                                          | 未闭合 `\(` 截到安全前缀（掩码化计数）                                                             | 配对成功的映射为 `$...$`；孤立 `\)` 保持字面；映射生成的 `$` 不参与货币转义（`\(3 \times 10^8\)` 逃生口）                                                                                                                                      | 行内 math（`.katex`）                                          |
+| `\[...\]`                                          | 未闭合 `\[` 截到安全前缀（掩码化计数）                                                             | 配对成功的映射为 `$$...$$`；孤立 `\]` 保持字面（`a \] b` 渲染 `]`，CommonMark 反斜杠转义消耗 `\`）                                                                                                                                             | 块级 math（`.katex-display`）                                  |
+| `\$`                                               | 不当定界符（转义美元）                                                                             | 不二次转义                                                                                                                                                                                                                                     | 字面 `$`                                                       |
+| `\\(` / `\\[`（转义反斜杠 + 普通括号，退化类）     | 不当定界符（反斜杠转义优先）                                                                       | 不映射（偶数反斜杠 run，括号是普通字符）                                                                                                                                                                                                       | 字面 `\(` / `\[`（登记类，无 proof 用例）                      |
+| 闭合但非法的 LaTeX                                 | 不截断（定界符已配对）                                                                             | 不干预                                                                                                                                                                                                                                         | KaTeX in-band error（`throwOnError:false` 语义），其余内容正常 |
+
+fence 识别口径：截断扫描器与掩码扫描器统一认 CommonMark 的 ≤3 空格缩进 fence（`^ {0,3}`），截断下标把缩进计入 fence 起点。
 
 **不引入 mermaid / shiki**：体积过大（mermaid ~120KB / shiki ~50KB gzip），与 flux 纯前端渲染定位不符；如需，host 经 region 注入。详见 `improvement-analysis.md` §3.2、§6。
 
@@ -420,6 +436,18 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
 **Failure Paths**：`sender-extension-fallback`（未声明 → Textarea 降级）、`tiptap-not-installed`（host import 子路径但未装 Tiptap → host 侧 import error）、`extension-data-missing`（扩展启用但无数据源 → popup 为空不弹出）、`tiptap-submit-empty`（空内容禁用 submit）。
 
 **键盘拦截面（multi-audit P2-3，2026-08-10）**：`handleKeyDown` 在弹出层打开时拦截 ArrowDown/ArrowUp/Enter/Escape（导航/确认/关闭），IME 组合期（`isComposing`/keyCode 229）放行；**零匹配**（`popupItems.length === 0`）时弹出层不渲染且按键**全部放行**（Enter 落回 submit keymap，Arrow 落回默认光标移动）——消除"弹出层视觉消失但按键仍被吞"的键盘死区。长度经 `popupItemsLengthRef` 镜像（`useEditor` 闭包内不可直接读 memo 数组，防 stale）。
+
+### 10.7 ai-bubble-typography（Markdown 排版自定义 CSS）
+
+气泡 markdown 正文排版不走 `@tailwindcss/typography`（`prose`），而是**包内 scoped 自定义 CSS**：全部选择器以 `[data-slot='ai-bubble-markdown']` 为前缀，落在 `src/styles.css`（D2 落地，D2 增量 150 行贴红线；下述 D6 增量另行计入）。数值契约以 `product-spec.md` §2.4 排版节奏表为设计输入。
+
+- **方案**：`markdown.tsx` 容器只保留 `max-w-none break-words` 横向溢出防护工具类；排版规则覆盖 h1–h6 / p / ul / ol（含 GFM 任务列表 checkbox）/ blockquote / pre / 行内 code / a / table / hr / img / strong / em。基准语境 `0.875rem` / `line-height 1.7`；标题分级字号（h1 1.5rem → h4 1rem、h5/h6 0.875rem muted）。
+- **拒绝 `@tailwindcss/typography` 的体积依据**：实测 `@tailwindcss/typography@0.5.16` tarball ~25–30 KB / unpacked ~78 KB / gzip ~17 KB——渲染器包不引入仅为一组排版规则服务的大体积插件（违反包体积纪律）；且全仓 0 引入，引入反而是新依赖面。≤150 行自定义 CSS 即完整覆盖同等功能。
+- **双轨 token 实现**：`--ai-md-*` 包级自定义属性（fg / muted-fg / muted / line / primary / pre-bg / pre-border / code-bg + mono 字体栈），取值统一 `hsl(var(--token, 字面回退值))`——theme host 逐主题保真（主题变量优先），standalone host 无 attribute 时字面回退仍生效。
+- **dark 双触发**：`@media (prefers-color-scheme: dark)`（OS 偏好轨，standalone host）与 `[data-mode='dark']`（host 显式属性轨，theme host 的 operative 轨）两条路径都覆盖，fallback 字面值取 theme-tokens classic dark 轴。`[data-mode]` 单轴即足够：主题系统双轴为 `:root[data-theme][data-mode]`，ai-bubble 不感知 theme variant。**light guard（P2-1，2026-08-24 open-audit）**：media 轨内层 selector 一律加 `:root:not([data-mode='light'])` 前缀——显式 `data-mode='light'`（项目约定挂 root，`docs/architecture/theme-compatibility.md:165` 先例）下 OS dark 偏好让位给基线 light 值，standalone host 不再在浅色页面上解析出 literal dark fallback（typography / avatar / welcome-icon 三处 media 轨同口径，CSS 契约断言见 `markdown-content.test.tsx` (c1)）；显式 `[data-mode='dark']` 轨恒胜（两 dark 轨 token 值相同，无视觉影响）。
+- **scope 边界**：仅 ai-bubble markdown 公共路径。`rich-text/tiptap-sender.tsx` 的 `prose max-w-none` 属 opt-in 子路径独立 scope（A6/P6 lineage，host 显式 import 才进 bundle），不在本方案内。
+- **D6 增量**：(a) `.katex` / `.katex-display` 容器排版——`line-height: 1.2` 防 markdown 1.7 行距撑高堆叠公式、display 块居中 + `overflow-x: auto` 横向滚动守卫；**仅排版**，颜色字体靠 host 必须 `import 'katex/dist/katex.min.css'`（§10.4 LaTeX 决策：包不内嵌 katex 样式）。(b) fenced code 的 `.tok-key` / `.tok-str` / `.tok-num` / `.tok-bool` lowlight token 配色——与 AI-15 tool-call JSON 高亮同一语义调色板（theme var 驱动）；key/num 复用 `--ai-md-primary`（自动随 dark 双轨），str/bool 走 `--success` / `--destructive` 双轨。
+- **验证锚点**：单元层 CSS 源文本断言（`markdown-content.test.tsx`，jsdom 不加载包级 stylesheet 的 repo 先例）；computed-style 断言归 e2e（`tests/e2e/ai-widgets-demo.spec.ts` typography light/dark 两测试，product-spec §7）。
 
 ## 11. 与 flux 的集成策略
 

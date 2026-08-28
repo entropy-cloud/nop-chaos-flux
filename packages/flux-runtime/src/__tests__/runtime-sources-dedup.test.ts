@@ -28,8 +28,7 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url } as T,
       };
     });
@@ -123,8 +122,7 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url } as T,
       };
     });
@@ -211,8 +209,7 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
       }
 
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { url: api.url } as T,
       };
     });
@@ -330,7 +327,10 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
 
     secondScope.update('value', 11);
 
-    await expect(runtime.refreshDataSource({ name: 'derived', scope: secondScope })).resolves.toBe(true);
+    await expect(runtime.refreshDataSource({ name: 'derived', scope: secondScope })).resolves.toEqual({
+      found: true,
+      result: { skipped: false, ok: true },
+    });
 
     expect(firstScope.get('derived')).toBe(1);
     expect(secondScope.get('derived')).toBe(11);
@@ -347,18 +347,18 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
     });
     const page = runtime.createPageRuntime({});
 
-    await expect(runtime.refreshDataSource({ name: 'missing-source', scope: page.scope })).resolves.toBe(false);
+    await expect(
+      runtime.refreshDataSource({ name: 'missing-source', scope: page.scope }),
+    ).resolves.toEqual({ found: false });
   });
 
   it('A15: two co-mounted runtime instances with the same source name are isolated — refresh hits only its own instance', async () => {
     const fetcherA = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url, from: 'A' } as T,
     }));
     const fetcherB = vi.fn(async <T>(api: { url: string }) => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { url: api.url, from: 'B' } as T,
     }));
 
@@ -408,7 +408,7 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
     // refresh in runtime A must not touch runtime B
     await expect(
       runtimeA.refreshDataSource({ name: 'payload', scope: pageA.scope }),
-    ).resolves.toBe(true);
+    ).resolves.toEqual({ found: true, result: { skipped: false, ok: true } });
     await vi.waitFor(() => {
       expect(fetcherA).toHaveBeenCalledTimes(2);
     });
@@ -417,7 +417,7 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
     // refresh in runtime B touches only B
     await expect(
       runtimeB.refreshDataSource({ name: 'payload', scope: pageB.scope }),
-    ).resolves.toBe(true);
+    ).resolves.toEqual({ found: true, result: { skipped: false, ok: true } });
     await vi.waitFor(() => {
       expect(fetcherB).toHaveBeenCalledTimes(2);
     });

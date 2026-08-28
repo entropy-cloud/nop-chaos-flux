@@ -108,7 +108,6 @@ export interface ActionShapeFields {
   _targetTemplateId?: string;
   targetId?: string;
   componentId?: string;
-  componentName?: string;
   dialogId?: string;
   surfaceId?: string;
   args?: Record<string, SchemaValue>;

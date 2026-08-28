@@ -42,14 +42,14 @@ describe('dialog form submit → refreshNearest → CRUD reload', () => {
         console.log('[fetcher]', api.url, 'call#' + (api.url.includes('save') ? saveCallCount + 1 : findListCallCount + 1));
         if (api.url.includes('__save')) {
           saveCallCount++;
-          return { ok: true, data: { id: 'new-1' } };
+          return { ok: true, status: 0, data: { id: 'new-1' } };
         }
         if (api.url.includes('__findList') || api.url.includes('__findPage')) {
           findListCallCount++;
           const items = findListCallCount <= 1 ? [] : [{ id: 'new-1', name: 'Test Item' }];
-          return { ok: true, data: { items, total: items.length } };
+          return { ok: true, status: 0, data: { items, total: items.length } };
         }
-        return { ok: true, data: {} };
+        return { ok: true, status: 0, data: {} };
       }),
     } as unknown as typeof baseEnv;
 

@@ -206,7 +206,7 @@ export function useAutoScroll(
 | 消息操作       | P1   | assistant-ui ActionBarPrimitive                       | `ai-feedback` 已覆盖 P1；P2 增加编辑/重试按工具类型                                                                                                                     |
 | 引用渲染       | P3   | AI Elements InlineCitationCard                        | 检测 `[1], [2]` 模式，悬停显示引用详情；与 §5.1 `ai-citations` 渲染器为同一功能的不同实现层次                                                                           |
 
-**LaTeX/数学公式**：AI Elements（Streamdown math 插件）、VLLNT UI、Chat UI 均支持数学公式渲染（`$$...$$`, `\(...\)`）。当前设计使用 `react-markdown` + `remark-gfm` + `rehype-raw`，可通过添加 `remark-math` + `rehype-katex` 插件（~20KB gzip，含 KaTeX CSS）支持。因 KaTeX 体积较大且非核心场景，**建议在 P2 再评估**：若数学场景高频出现则引入，否则由 host 通过 BubbleContentRenderer 自定义注入。
+**LaTeX/数学公式**：AI Elements（Streamdown math 插件）、VLLNT UI、Chat UI 均支持数学公式渲染（`$$...$$`, `\(...\)`）。**2026-08-23 human gate 决策**：LaTeX 渲染为产品级 AI chat 实际应用必须能力（科学 / 工程 / 教育场景高频），不再视为 niche 场景。**新决策：内置 `remark-math@^6` + `rehype-katex@^7` + `katex@^0.16` 作为硬 peer deps**（与 `react-markdown` / `rehype-raw` 治理一致），`ai-bubble/renderers/markdown.tsx` 挂双插件，`markdown-buffer.ts` 扩 `\[` 边界，host 必须安装。**变更追溯**：原 2026-07 P2 评估"高频证据不足"在 2026-08-23 重新评估为不成立；新决策落地在 `docs/backlog/ai-widgets-product-roadmap.md` D6 phase。
 
 ### 4.3 ai-message-list（P0 → P2 渐变）
 

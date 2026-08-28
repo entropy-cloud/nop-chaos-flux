@@ -10,9 +10,7 @@ afterEach(() => {
 });
 
 const testEnv = {
-  fetcher: vi.fn(async () => ({
-    ok: true,
-    status: 200,
+  fetcher: vi.fn(async () => ({ status: 0,
     data: [],
   })),
   notify: vi.fn(),
@@ -68,9 +66,7 @@ describe('T11 tree-table lazy children', () => {
   });
 
   it('triggers lazy load when expanding a node with childrenSource', async () => {
-    const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async () => ({ status: 0,
       data: [{ id: '1-1', name: 'Lazy Child', __rowKey: '1-1' }],
     }));
 
@@ -109,7 +105,7 @@ describe('T11 tree-table lazy children', () => {
       await new Promise((resolve) => {
         resolveFetch = resolve;
       });
-      return { ok: true, status: 200, data: [] };
+      return { status: 0, data: [] };
     });
 
     const env = { ...testEnv, fetcher };
@@ -141,7 +137,7 @@ describe('T11 tree-table lazy children', () => {
       expect(spinning).not.toBeNull();
     });
 
-    resolveFetch!({ ok: true, status: 200, data: [] });
+    resolveFetch!({ status: 0, data: [] });
   });
 
   it('backward compatible: tree without childrenSource uses preloaded data', async () => {
@@ -174,10 +170,8 @@ describe('T11 tree-table lazy children', () => {
   it('P1-3: failed lazy load renders error state and retry reloads children', async () => {
     const fetcher = vi
       .fn()
-      .mockResolvedValueOnce({ ok: false, status: 500, error: 'boom' })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
+      .mockResolvedValueOnce({ status: 500, error: 'boom' })
+      .mockResolvedValueOnce({ status: 0,
         data: [{ id: '1-1', name: 'Retried Child', __rowKey: '1-1' }],
       });
 
@@ -229,10 +223,8 @@ describe('T11 tree-table lazy children', () => {
   it('P1-3: after a successful retry, collapse + re-expand reuses the cache (no refetch)', async () => {
     const fetcher = vi
       .fn()
-      .mockResolvedValueOnce({ ok: false, status: 500, error: 'boom' })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
+      .mockResolvedValueOnce({ status: 500, error: 'boom' })
+      .mockResolvedValueOnce({ status: 0,
         data: [{ id: '1-1', name: 'Retried Child', __rowKey: '1-1' }],
       });
 

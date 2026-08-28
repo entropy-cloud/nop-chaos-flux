@@ -121,10 +121,9 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
       await page.mouse.move(box.x + box.width / 2 + i * 15, box.y + box.height / 2, { steps: 2 });
     }
     await page.mouse.up();
-    await page.waitForTimeout(300);
-
-    const newLeft = await bar.evaluate((el) => parseFloat(el.style.left) || 0);
-    expect(newLeft).not.toBe(initialLeft);
+    await expect
+      .poll(async () => bar.evaluate((el) => parseFloat(el.style.left) || 0), { timeout: 5_000 })
+      .not.toBe(initialLeft);
 
     await assertTrackedPageErrors(page);
   });
@@ -147,10 +146,9 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
       await page.mouse.move(box.x + box.width - 3 + i * 10, box.y + box.height / 2, { steps: 2 });
     }
     await page.mouse.up();
-    await page.waitForTimeout(300);
-
-    const newWidth = await bar.evaluate((el) => parseFloat(el.style.width) || 0);
-    expect(newWidth).not.toBe(initialWidth);
+    await expect
+      .poll(async () => bar.evaluate((el) => parseFloat(el.style.width) || 0), { timeout: 5_000 })
+      .not.toBe(initialWidth);
 
     await assertTrackedPageErrors(page);
   });
@@ -161,7 +159,6 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
 
     const bar = page.locator('[data-slot="gantt-bar"]').first();
     await bar.hover();
-    await page.waitForTimeout(200);
 
     const handles = page.locator('[data-slot="gantt-bar-link-handle"]');
     await expect(handles.first()).toBeVisible({ timeout: 3_000 });
@@ -193,7 +190,6 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
 
     const linkClickArea = page.locator('[data-slot="gantt-link"] [aria-label^="Link"], [data-slot="gantt-link"] [aria-label^="链接"]').first();
     await linkClickArea.hover();
-    await page.waitForTimeout(200);
 
     const deleteBtn = page.locator('[data-slot="gantt-link"] [aria-label="Delete link"], [data-slot="gantt-link"] [aria-label="删除链接"]');
     await expect(deleteBtn).toBeVisible({ timeout: 3_000 });
@@ -221,16 +217,14 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
 
     const lastLink = linkSvg.locator('[aria-label^="Link"], [aria-label^="链接"]').last();
     await lastLink.hover();
-    await page.waitForTimeout(200);
 
     const deleteBtn = linkSvg.locator('[aria-label="Delete link"], [aria-label="删除链接"]');
     await expect(deleteBtn).toBeVisible({ timeout: 3_000 });
 
     await deleteBtn.click();
-    await page.waitForTimeout(300);
-
-    const afterCount = await linkSvg.evaluate((svg) => svg.querySelectorAll('.nop-gantt-link-line').length);
-    expect(afterCount).toBeLessThan(initialCount);
+    await expect
+      .poll(async () => linkSvg.evaluate((svg) => svg.querySelectorAll('.nop-gantt-link-line').length), { timeout: 5_000 })
+      .toBeLessThan(initialCount);
 
     await assertTrackedPageErrors(page);
   });

@@ -39,6 +39,10 @@ Always run `typecheck`, `build`, and `lint` after making **CODE** changes. Run t
 
 **NEVER** diagnose UI failures via screenshots. Use programmatic inspection: `page.evaluate()`, `page.locator().innerHTML()`, `getComputedStyle()`.
 
+### Temporary Debug Artifacts
+
+When you produce side artifacts during testing/debugging — Playwright screenshots, dumpPageSchemaToFile HTML/JSON dumps, `inspect*.mjs` probe scripts, copied DOM fragments, captured network traces — write them under `<repo>/_tmp/`, **never** under `/tmp/`, `tests/e2e/`, `scripts/`, or any tracked directory. `_tmp/` is `.gitignore`d (line 19). Naming convention: `<topic>-inspect*.{mjs,png,html,json}` or `<topic>-<date>/`. Before finishing a task, delete artifacts that no longer have a purpose; keep the directory itself. If a probe script is worth keeping as regression coverage, promote it into `tests/e2e/` or `scripts/__tests__/` with proper review — do not leave it under `_tmp/`.
+
 Whenever e2e tests and unit tests both pass completely (full green), you MUST record this in the daily dev log at `docs/logs/{year}/{month}-{day}.md` with test counts/package summary, include that full-green verification status explicitly in the git commit message, and then commit all current changes. This provides reliable "known-good" baselines for future debugging.
 
 ---

@@ -405,7 +405,7 @@ describe('CRUD loadAction', () => {
       expect(screen.getByText('Refreshing: yes')).toBeTruthy();
     });
 
-    resolveRefresh?.({ ok: true, data: makePageData(1, 10) });
+    resolveRefresh?.({ data: makePageData(1, 10) });
     await waitFor(() => {
       expect(screen.getByText('Refreshing: no')).toBeTruthy();
     });

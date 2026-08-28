@@ -4,6 +4,7 @@ import type { ComponentType } from 'react';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import { createMockRendererProps } from '../../test-support.js';
 import { AiFeedbackRenderer } from '../ai-feedback.js';
+import type { ChatMessage } from '../../engine/types.js';
 import type { AiFeedbackSchema } from '../../schemas.js';
 
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
@@ -249,5 +250,165 @@ describe('ai-feedback — open-audit P2-7 explicit no-action-bar', () => {
     const { container } = render(<Feedback {...props} />);
     const root = container.querySelector('[data-slot="ai-feedback"]') as HTMLElement;
     expect(root.querySelectorAll('button').length).toBe(0);
+  });
+});
+
+// ============================================================================
+// D4 (plan 2026-08-24-2317-1): real side effects — like/dislike write
+// `message.metadata.feedback` (+ aria-pressed mirror alongside data-active);
+// sources opens a Popover listing `message.metadata.sources` (empty-state
+// hint when absent).
+// ============================================================================
+
+// ============================================================================
+// P2-3 (2026-08-24 open-audit, plan 2026-08-25-0440-1): mount-time seeding —
+// a message whose metadata already carries a D4-persisted vote must render
+// in that voted state initially, so virtual-list recycling / branch-switch
+// remounts keep the visual state in sync with the persisted metadata.
+// ============================================================================
+
+describe('ai-feedback — P2-3 mount seeding from message.metadata.feedback', () => {
+  it('metadata.feedback "like" renders the like button active on mount', () => {
+    const message: ChatMessage = {
+      id: 'm-seed-like',
+      role: 'assistant',
+      content: 'hello',
+      metadata: { feedback: 'like' },
+    };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['like', 'dislike'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const like = container.querySelector('[data-slot="ai-feedback-like"]') as HTMLElement;
+    const dislike = container.querySelector('[data-slot="ai-feedback-dislike"]') as HTMLElement;
+
+    expect(like.getAttribute('data-active')).toBe('');
+    expect(like.getAttribute('aria-pressed')).toBe('true');
+    expect(dislike.hasAttribute('data-active')).toBe(false);
+    expect(dislike.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('metadata.feedback "dislike" renders the dislike button active on mount (symmetric)', () => {
+    const message: ChatMessage = {
+      id: 'm-seed-dislike',
+      role: 'assistant',
+      content: 'hello',
+      metadata: { feedback: 'dislike' },
+    };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['like', 'dislike'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const like = container.querySelector('[data-slot="ai-feedback-like"]') as HTMLElement;
+    const dislike = container.querySelector('[data-slot="ai-feedback-dislike"]') as HTMLElement;
+
+    expect(dislike.getAttribute('data-active')).toBe('');
+    expect(dislike.getAttribute('aria-pressed')).toBe('true');
+    expect(like.hasAttribute('data-active')).toBe(false);
+    expect(like.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('no metadata renders with no initial vote (zero regression)', () => {
+    const message: ChatMessage = { id: 'm-seed-none', role: 'assistant', content: 'hello' };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['like', 'dislike'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const like = container.querySelector('[data-slot="ai-feedback-like"]') as HTMLElement;
+    const dislike = container.querySelector('[data-slot="ai-feedback-dislike"]') as HTMLElement;
+
+    expect(like.hasAttribute('data-active')).toBe(false);
+    expect(dislike.hasAttribute('data-active')).toBe(false);
+  });
+});
+
+describe('ai-feedback — D4 metadata write + sources Popover', () => {
+  it('like toggle writes message.metadata.feedback and mirrors aria-pressed + data-active', () => {
+    const message: ChatMessage = { id: 'm-d4-like', role: 'assistant', content: 'hello' };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['like', 'dislike'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const like = container.querySelector('[data-slot="ai-feedback-like"]') as HTMLElement;
+
+    expect(like.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(like);
+    expect(like.getAttribute('aria-pressed')).toBe('true');
+    expect(like.getAttribute('data-active')).toBe('');
+    expect(message.metadata?.feedback).toBe('like');
+
+    // Un-vote clears the metadata write.
+    fireEvent.click(like);
+    expect(like.getAttribute('aria-pressed')).toBe('false');
+    expect(like.hasAttribute('data-active')).toBe(false);
+    expect(message.metadata?.feedback).toBeUndefined();
+  });
+
+  it('dislike writes metadata.feedback="dislike" and clears a prior like (mutual exclusivity)', () => {
+    const message: ChatMessage = { id: 'm-d4-dislike', role: 'assistant', content: 'hello' };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['like', 'dislike'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    const like = container.querySelector('[data-slot="ai-feedback-like"]') as HTMLElement;
+    const dislike = container.querySelector('[data-slot="ai-feedback-dislike"]') as HTMLElement;
+
+    fireEvent.click(like);
+    expect(message.metadata?.feedback).toBe('like');
+    fireEvent.click(dislike);
+    expect(dislike.getAttribute('aria-pressed')).toBe('true');
+    expect(like.getAttribute('aria-pressed')).toBe('false');
+    expect(message.metadata?.feedback).toBe('dislike');
+  });
+
+  it('sources opens a Popover listing message.metadata.sources entries', async () => {
+    const message: ChatMessage = {
+      id: 'm-d4-sources',
+      role: 'assistant',
+      content: 'hello',
+      metadata: {
+        sources: [
+          { label: 'design.md', url: 'https://example.com/design' },
+          { label: 'renderers.md', url: 'https://example.com/renderers' },
+        ],
+      },
+    };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['sources'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    fireEvent.click(container.querySelector('[data-slot="ai-feedback-sources"]')!);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const items = document.querySelectorAll('[data-slot="ai-feedback-source-item"]');
+    expect(items.length).toBe(2);
+    expect(items[0]!.textContent).toContain('design.md');
+    expect(items[1]!.textContent).toContain('renderers.md');
+    // The link surfaces the source url.
+    const link = items[0]!.querySelector('a');
+    expect(link?.getAttribute('href')).toBe('https://example.com/design');
+  });
+
+  it('sources with no metadata.sources shows the empty-state hint (no throw)', async () => {
+    const message: ChatMessage = { id: 'm-d4-sources-empty', role: 'assistant', content: 'hello' };
+    const props = makeProps({
+      props: { type: 'ai-feedback', actions: ['sources'], message: message as never },
+      events: { onAction: vi.fn() },
+    });
+    const { container } = render(<Feedback {...props} />);
+    fireEvent.click(container.querySelector('[data-slot="ai-feedback-sources"]')!);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const empty = document.querySelector('[data-slot="ai-feedback-sources-empty"]');
+    expect(empty).not.toBeNull();
+    expect(empty?.textContent).toBe('No source available.');
   });
 });

@@ -3,16 +3,6 @@
   "testid": "crud-demo-page",
   "body": [
     {
-      "type": "text",
-      "text": "用户管理（CRUD）",
-      "className": "text-2xl font-bold"
-    },
-    {
-      "type": "text",
-      "text": "完整增删改查示例：crud loadAction 按 nop 规范 /r/User__findPage + selection 取数 → edit 对话框 form loadAction 按 id 拉 /r/User__get 详情 → messages/confirmText 内置反馈 → component:refresh 刷新。字典字段(如 status)自动生成 status_label 扁平字段，列表列直接显示 status_label；角色字段为 relatedRoleList{roleName}。",
-      "className": "text-sm text-muted-foreground"
-    },
-    {
       "type": "crud",
       "id": "user-crud",
       "testid": "user-crud",

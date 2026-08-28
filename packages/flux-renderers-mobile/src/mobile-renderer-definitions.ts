@@ -20,6 +20,16 @@ export const mobileRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'pull-refresh', body: [] },
     component: PullRefreshRenderer,
+    propContracts: {
+      direction: {
+        displayName: 'Direction',
+        description: 'OA-14: locked to "down" (pull-up loading belongs to infinite-scroll).',
+        shape: { kind: 'literal', value: 'down' },
+        editorType: 'select',
+        defaultValue: 'down',
+      },
+      disabled: { displayName: 'Disabled', shape: { kind: 'boolean' } },
+    },
     eventContracts: {
       onRefresh: {
         displayName: 'On Refresh',
@@ -59,6 +69,12 @@ export const mobileRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'infinite-scroll', body: [] },
     component: InfiniteScrollRenderer,
+    propContracts: {
+      disabled: { displayName: 'Disabled', shape: { kind: 'boolean' } },
+      immediateCheck: { displayName: 'Immediate Check', shape: { kind: 'boolean' } },
+      hasMore: { displayName: 'Has More', shape: { kind: 'boolean' } },
+      loading: { displayName: 'Loading', shape: { kind: 'boolean' } },
+    },
     eventContracts: {
       onLoadMore: {
         displayName: 'On Load More',
@@ -94,6 +110,19 @@ export const mobileRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'swipe-cell', body: [] },
     component: SwipeCellRenderer,
+    propContracts: {
+      direction: {
+        displayName: 'Direction',
+        shape: {
+          kind: 'union',
+          anyOf: ['left', 'right', 'both'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'right',
+      },
+      disabled: { displayName: 'Disabled', shape: { kind: 'boolean' } },
+      closeOnOutside: { displayName: 'Close On Outside', shape: { kind: 'boolean' } },
+    },
     eventContracts: {
       onAction: {
         displayName: 'On Action',
@@ -152,6 +181,11 @@ export const mobileRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'countdown', time: 60_000 },
     component: CountdownRenderer,
+    propContracts: {
+      millisecond: { displayName: 'Millisecond', shape: { kind: 'boolean' } },
+      paused: { displayName: 'Paused', shape: { kind: 'boolean' } },
+      autoStart: { displayName: 'Auto Start', shape: { kind: 'boolean' } },
+    },
     eventContracts: {
       onFinish: {
         displayName: 'On Finish',
@@ -184,6 +218,32 @@ export const mobileRendererDefinitions: RendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'notice-bar', text: 'Notice' },
     component: NoticeBarRenderer,
+    propContracts: {
+      scrollable: { displayName: 'Scrollable', shape: { kind: 'boolean' } },
+      direction: {
+        displayName: 'Direction',
+        shape: {
+          kind: 'union',
+          anyOf: ['left', 'right'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'left',
+      },
+      loop: { displayName: 'Loop', shape: { kind: 'boolean' } },
+      closable: { displayName: 'Closable', shape: { kind: 'boolean' } },
+      variant: {
+        displayName: 'Variant',
+        shape: {
+          kind: 'union',
+          anyOf: ['info', 'warning', 'success', 'error'].map((v) => ({
+            kind: 'literal',
+            value: v,
+          })),
+        },
+        editorType: 'select',
+        defaultValue: 'info',
+      },
+    },
     fields: [
       { key: 'text', kind: 'prop' },
       { key: 'scrollable', kind: 'prop', valueType: 'boolean' },

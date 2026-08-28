@@ -8,7 +8,7 @@ import {
   useHostScope,
   useNamespaceRegistration,
 } from '@nop-chaos/flux-react';
-import { AiChatProvider } from '../adapters/ai-chat-context.js';
+import { AiChatProvider, createAiSenderDraftStore } from '../adapters/ai-chat-context.js';
 import { useMessage } from '../adapters/use-message.js';
 import { createAiActionProvider } from '../adapters/ai-action-provider.js';
 import { createAiComponentHandle } from '../adapters/ai-component-handle.js';
@@ -126,7 +126,7 @@ function eventCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefi
  * value → warn + self-built fallback) and `engine-null-switch` (null during a
  * conversation switch → render emptyState).
  *
- * P1 (Layer B): registers the `ai` ActionScope namespace (7 actions, see
+ * P1 (Layer B): registers the `ai` ActionScope namespace (8 actions, see
  * `createAiActionProvider`) when the host provides an ActionScope, and
  * projects engine state (`isProcessing`, `messages`, `activeConversationId`)
  * into a host scope so descendants can read it reactively. Capability check:
@@ -253,17 +253,35 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   const componentRegistry = useCurrentComponentRegistry();
   const componentIdResolved = (resolved.componentId as string | undefined) || props.meta.testid || props.id;
   const componentNameResolved = (resolved.componentName as string | undefined) ?? 'ai-chat';
+  // D4 (plan 2026-08-24-2317-1): per-chat sender draft external store backing
+  // `component:setSenderDraft`. The store object reference is stable for the
+  // renderer lifetime (created once), so the handle closure and the context
+  // value below are not invalidated by draft writes (AI-31 discipline: the
+  // context value must not rebuild per keystroke / per external write).
+  // P2-5 adjudication (plan 2026-08-25-0440-1): KEEP-WITH-REASON — the store
+  // identity feeds the componentHandle register-effect deps and the
+  // Provider-bound context value consumed by ai-sender; React Compiler only
+  // covers the playground vite build (workspace-alias src), while the package
+  // dist build (plain tsc) and vitest run uncompiled, so removing this memo
+  // would recreate the store per render there and lose draft text.
+  const senderDraftStore = useMemo(() => createAiSenderDraftStore(), []);
   // AI-31: stabilize the handle so the register effect deps
   // `[componentRegistry, props.meta.cid, componentHandle]` do not change every
   // render → register/unregister only fires when the engine or id changes.
   // P2-8: same null-engine binding as the action provider above — the handle
   // stays resolvable during the switch window but dispatch rejects explicitly.
   const componentHandle = useMemo(
-    () => createAiComponentHandle({ engine: boundEngine, id: componentIdResolved, name: componentNameResolved }),
+    () =>
+      createAiComponentHandle({
+        engine: boundEngine,
+        id: componentIdResolved,
+        name: componentNameResolved,
+        senderDraft: senderDraftStore,
+      }),
     // Rebuild when the engine reference or the resolved id/name strings change.
     // `props.id` is a stable renderer instance id; `props.meta.testid` is
     // schema-stable. The literal strings are stable across renders.
-    [boundEngine, componentIdResolved, componentNameResolved],
+    [boundEngine, componentIdResolved, componentNameResolved, senderDraftStore],
   );
   useEffect(() => {
     if (!componentRegistry) return;
@@ -480,8 +498,8 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // re-render problem across the Provider boundary.) Declared before the early
   // returns so the hook order is unconditional (rules-of-hooks).
   const chatContextValue = useMemo(
-    () => ({ engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange, onApproval }),
-    [engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, branches, activeBranchId, onBranchChange, onApproval],
+    () => ({ engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, senderDraft: senderDraftStore, branches, activeBranchId, onBranchChange, onApproval }),
+    [engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, senderDraftStore, branches, activeBranchId, onBranchChange, onApproval],
   );
 
   // engine-null-switch: the host injected `null` (activeEngine is null during
@@ -541,7 +559,11 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
       >
         {headerNode ? <header data-slot="ai-chat-header">{headerNode}</header> : null}
         {beforeNode ? <div data-slot="ai-chat-before">{beforeNode}</div> : null}
-        <AiMessageListView emptyNode={emptyNode} showTimestamp={resolved.showTimestamp === true} />
+        <AiMessageListView
+          emptyNode={emptyNode}
+          showTimestamp={resolved.showTimestamp === true}
+          showAvatar={resolved.showAvatar === true}
+        />
         {afterNode ? <div data-slot="ai-chat-after">{afterNode}</div> : null}
         <AiSenderView
           placeholder={resolved.placeholder}

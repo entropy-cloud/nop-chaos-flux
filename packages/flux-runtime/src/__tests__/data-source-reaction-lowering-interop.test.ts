@@ -18,8 +18,7 @@ describe('data-source and reaction lowering interop', () => {
 
   it('registers a reaction before data source fetch, reaction triggers when data populates scope', async () => {
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { items: [1, 2, 3] },
     }));
     const runtime = createRendererRuntime({
@@ -73,7 +72,7 @@ describe('data-source and reaction lowering interop', () => {
     let fetchCount = 0;
     const fetcher = vi.fn(async () => {
       fetchCount += 1;
-      return { ok: true, status: 200, data: { value: fetchCount } };
+      return { status: 0, data: { value: fetchCount } };
     });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([]),
@@ -123,8 +122,7 @@ describe('data-source and reaction lowering interop', () => {
 
   it('compiled data source with polling and reaction cleanup on dispose', async () => {
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { timestamp: Date.now() },
     }));
     const runtime = createRendererRuntime({
@@ -180,8 +178,7 @@ describe('data-source and reaction lowering interop', () => {
 
   it('reaction triggers after data source is set up by watching scope changes', async () => {
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { value: 'ready' },
     }));
     const runtime = createRendererRuntime({

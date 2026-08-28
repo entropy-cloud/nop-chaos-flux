@@ -87,6 +87,14 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
           // precedent (aria-label from a translated label).
           aria-label={t('flux.ai.editMessage')}
           onChange={(ev) => e.setMessageEditing(message.id, { active: true, draft: ev.target.value })}
+          onKeyDown={(ev) => {
+            // Escape cancels the edit and restores the original bubble
+            // (design.md §4.7 — matches the ai-sender Escape precedent).
+            if (ev.key === 'Escape') {
+              ev.preventDefault();
+              cancelEdit();
+            }
+          }}
           className="min-h-[60px]"
         />
         <div className="flex justify-end gap-2">

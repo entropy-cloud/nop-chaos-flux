@@ -13,8 +13,7 @@ describe('createDataSourceController', () => {
         fetcher: vi.fn(async () => {
           callCount += 1;
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { status: callCount >= 2 ? 'done' : 'running' },
           };
         }),
@@ -55,8 +54,7 @@ describe('createDataSourceController', () => {
         fetcher: vi.fn(async () => {
           callCount += 1;
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { status: 'running' },
           };
         }),
@@ -104,7 +102,7 @@ describe('createDataSourceController', () => {
         (error as Error & { name: string }).name = 'AbortError';
         throw error;
       }
-      return { ok: true, status: 200, data: { ok: true } };
+      return { status: 0, data: { ok: true } };
     });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([]),
@@ -136,13 +134,12 @@ describe('createDataSourceController', () => {
   it('can restart after stop and refresh after reset without leaving a fake started+stopped state', async () => {
     const fetcher = vi
       .fn(async () => ({
-        ok: true,
-        status: 200,
+        status: 0,
         data: { run: 1 },
       }))
-      .mockResolvedValueOnce({ ok: true, status: 200, data: { run: 1 } })
-      .mockResolvedValueOnce({ ok: true, status: 200, data: { run: 2 } })
-      .mockResolvedValueOnce({ ok: true, status: 200, data: { run: 3 } });
+      .mockResolvedValueOnce({ status: 0, data: { run: 1 } })
+      .mockResolvedValueOnce({ status: 0, data: { run: 2 } })
+      .mockResolvedValueOnce({ status: 0, data: { run: 3 } });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([]),
       env: {
@@ -208,8 +205,7 @@ describe('createDataSourceController', () => {
 
   it('reuses runtime-local cache across controller refreshes', async () => {
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { value: 'cached' },
     }));
     const runtime = createRendererRuntime({
@@ -254,7 +250,7 @@ describe('createDataSourceController', () => {
       env: {
         fetcher: vi.fn(async () => {
           callTimes.push(Date.now());
-          return { ok: true, status: 200, data: { ok: true } };
+          return { status: 0, data: { ok: true } };
         }),
         notify: vi.fn(),
       } as RendererEnv,
@@ -295,7 +291,7 @@ describe('createDataSourceController', () => {
       env: {
         fetcher: vi.fn(async () => {
           callTimes.push(Date.now());
-          return { ok: true, status: 200, data: { ok: true } };
+          return { status: 0, data: { ok: true } };
         }),
         notify: vi.fn(),
       } as RendererEnv,
@@ -333,7 +329,7 @@ describe('createDataSourceController', () => {
       env: {
         fetcher: vi.fn(async () => {
           callTimes.push(Date.now());
-          return { ok: true, status: 200, data: { ok: true } };
+          return { status: 0, data: { ok: true } };
         }),
         notify: vi.fn(),
       } as RendererEnv,
@@ -370,7 +366,7 @@ describe('createDataSourceController', () => {
       env: {
         fetcher: vi.fn(async () => {
           callTimes.push(Date.now());
-          return { ok: true, status: 200, data: { ok: true } };
+          return { status: 0, data: { ok: true } };
         }),
         notify: vi.fn(),
       } as RendererEnv,
@@ -401,8 +397,7 @@ describe('createDataSourceController', () => {
 
   it('reuses cache for equivalent final executable requests after params canonicalization', async () => {
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { value: 'cached' },
     }));
     const runtime = createRendererRuntime({

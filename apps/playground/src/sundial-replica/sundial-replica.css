@@ -12,7 +12,12 @@
 
 /* ── 1. Design tokens (light mode) ──────────────────────────────────────── */
 
-.sd-root {
+/* Tokens are declared on .sd-root AND .sd-dialog because dialogs are
+   rendered to a portal outside the .sd-root subtree, and sd-* utility
+   classes (e.g. .sd-btn-default { background: var(--sd-brand) }) need
+   the variables to resolve inside the dialog subtree. */
+.sd-root,
+.sd-dialog {
   --sd-bg: #f2f2f2;
   --sd-surface: #ffffff;
   --sd-surface-alt: #f7f7f5;
@@ -38,6 +43,9 @@
   --sd-list-green: #34c759;
   --sd-list-teal: #5ac8fa;
   --sd-list-purple: #af52de;
+}
+
+.sd-root {
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang SC',
     'Microsoft YaHei', sans-serif;
@@ -229,7 +237,7 @@
 
 .sd-nav-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   border-radius: 8px;
   padding: 9px 10px;

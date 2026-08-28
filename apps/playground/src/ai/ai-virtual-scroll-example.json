@@ -14,7 +14,7 @@
         "direction": "row",
         "align": "center",
         "justify": "between",
-        "className": "p-3 border-b",
+        "className": "p-3 border-b flex-wrap gap-2",
         "body": [
           { "type": "text", "text": "AI Virtual Scroll (A-8)" },
           {

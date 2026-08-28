@@ -13,7 +13,7 @@ describe('B3.3 T23 — table source bound to data-source refreshes rows via refr
     let responseCount = 0;
     const fetcherSpy = vi.fn(async () => {
       responseCount += 1;
-      return { ok: true, status: 200, data: { value: `refreshed-${responseCount}` } };
+      return { status: 0, data: { value: `refreshed-${responseCount}` } };
     });
     const fetcher = (async () => fetcherSpy()) as typeof env.fetcher;
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);

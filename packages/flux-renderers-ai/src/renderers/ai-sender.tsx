@@ -1,4 +1,4 @@
-import { useRef, useState, type ComponentType, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type ComponentType, type KeyboardEvent } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, Textarea, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -61,6 +61,17 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   // P2-5: node-level `meta.disabled` gates the whole interaction surface.
   const disabled = props.disabled === true;
   const ExtensionComponent = props.extensionComponent;
+  // D4 (plan 2026-08-24-2317-1): per-chat draft channel. External writes
+  // (component:setSenderDraft) notify here and merge into the local draft;
+  // typing goes through `setLocal` write-through (no notification — prevents
+  // a feedback loop) so `apply` computes appends on the real current value.
+  const senderDraft = ctx?.senderDraft;
+  useEffect(() => {
+    if (!senderDraft) return;
+    return senderDraft.subscribe(() => {
+      setDraft(senderDraft.get());
+    });
+  }, [senderDraft]);
 
   const overLimit = typeof maxLength === 'number' && draft.length > maxLength;
   const trimmedLength = draft.trim().length;
@@ -77,7 +88,12 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
     if (ctx?.isProcessing) return;
     if (props.onSubmit) props.onSubmit(text);
     else void ctx?.sendMessage(text);
-    if (clearOnSubmit) setDraft('');
+    if (clearOnSubmit) {
+      setDraft('');
+      // Keep the draft store base in sync — a stale non-empty base would
+      // make a later external append compute on the submitted text.
+      senderDraft?.setLocal('');
+    }
     // a11y: focus returns to the input so the user can immediately type the
     // next message (Phase 4 baseline; avoids the focus falling through to
     // the submit button or page body). Only applies to the Textarea path —
@@ -135,6 +151,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
             value={draft}
             onChange={(text) => {
               setDraft(text);
+              senderDraft?.setLocal(text);
               props.onChange?.(text);
             }}
             onSubmit={() => {
@@ -182,6 +199,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
           onChange={(e) => {
             const value = e.target.value;
             setDraft(value);
+            senderDraft?.setLocal(value);
             props.onChange?.(value);
           }}
           onKeyDown={handleKeyDown}

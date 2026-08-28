@@ -54,7 +54,16 @@ export function DataSourceRenderer(props: RendererComponentProps<DataSourceSchem
           if (method === 'refresh') {
             return controller
               .refresh()
-              .then((result) => ({ ok: true, data: { skipped: result.skipped } }))
+              .then((result) => {
+                if (!result.skipped && result.ok === false) {
+                  return {
+                    ok: false,
+                    data: { skipped: result.skipped },
+                    error: result.error ?? new Error('Data source refresh failed'),
+                  };
+                }
+                return { ok: true, data: { skipped: result.skipped } };
+              })
               .catch((error: unknown) => ({ ok: false, error }));
           }
 

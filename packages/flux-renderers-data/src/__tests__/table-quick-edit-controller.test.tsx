@@ -32,8 +32,7 @@ function createRowScope(record: Record<string, unknown>) {
 }
 
 function createHelpers(
-  dispatch: ReturnType<typeof vi.fn<() => Promise<{ ok: boolean }>>> = vi.fn(async () => ({
-    ok: true,
+  dispatch: ReturnType<typeof vi.fn<() => Promise<{}>>> = vi.fn(async () => ({
   })),
 ) {
   return {
@@ -92,7 +91,7 @@ function ControllerHarness(props: {
 describe('useTableQuickEditController', () => {
   it('tracks inline draft dirty state and saves through helpers.dispatch', async () => {
     cleanup();
-    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(async () => ({ ok: true }));
+    const dispatch = vi.fn<() => Promise<{}>>(async () => ({ ok: true }));
     const rowScope = createRowScope({ name: 'Alice' });
 
     render(
@@ -212,7 +211,7 @@ describe('useTableQuickEditController', () => {
   it('opens dialog with saved value and ignores close while saving', async () => {
     cleanup();
     let resolveSave: (() => void) | undefined;
-    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(
+    const dispatch = vi.fn<() => Promise<{}>>(
       () =>
         new Promise<{ ok: boolean }>((resolve) => {
           resolveSave = () => resolve({ ok: true });
@@ -252,7 +251,7 @@ describe('useTableQuickEditController', () => {
 
   it('exposes save failures through controller state', async () => {
     cleanup();
-    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(async () => {
+    const dispatch = vi.fn<() => Promise<{}>>(async () => {
       throw new Error('save failed');
     });
 
@@ -276,7 +275,7 @@ describe('useTableQuickEditController', () => {
 
   it('treats resolved ok=false results as save failures', async () => {
     cleanup();
-    const dispatch = vi.fn<() => Promise<{ ok: boolean; error: Error }>>(async () => ({
+    const dispatch = vi.fn<() => Promise<{ error: Error }>>(async () => ({
       ok: false,
       error: new Error('save rejected'),
     }));
@@ -304,7 +303,7 @@ describe('useTableQuickEditController', () => {
   it('guards duplicate same-tick save calls before React state updates flush', async () => {
     cleanup();
     let resolveSave: (() => void) | undefined;
-    const dispatch = vi.fn<() => Promise<{ ok: boolean }>>(
+    const dispatch = vi.fn<() => Promise<{}>>(
       () =>
         new Promise<{ ok: boolean }>((resolve) => {
           resolveSave = () => resolve({ ok: true });

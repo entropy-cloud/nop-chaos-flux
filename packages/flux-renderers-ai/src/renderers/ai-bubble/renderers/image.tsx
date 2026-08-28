@@ -12,11 +12,20 @@ import type { BubbleContentRendererProps } from '../types.js';
 export function ImageContentRenderer({ message }: BubbleContentRendererProps): React.ReactElement | null {
   const images = extractImages(message);
   if (images.length === 0) return null;
+  // The same URL can legitimately appear twice (host re-attached the same
+  // image) — occurrence-suffixed keys keep duplicates unique without falling
+  // back to array indices (stable across mid-list removals).
+  const occurrences = new Map<string, number>();
+  const keyFor = (url: string): string => {
+    const next = (occurrences.get(url) ?? 0) + 1;
+    occurrences.set(url, next);
+    return next > 1 ? `${url}#${next}` : url;
+  };
   return (
     <div data-slot="ai-bubble-image" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {images.map((img) => (
         <img
-          key={img.image_url.url}
+          key={keyFor(img.image_url.url)}
           src={img.image_url.url}
           alt=""
           loading="lazy"

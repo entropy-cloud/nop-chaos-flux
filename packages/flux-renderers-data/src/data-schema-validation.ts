@@ -10,6 +10,50 @@ import type { CrudSchema } from './crud-schema.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
 import type { TableSchema } from './schemas.js';
 
+// The form renderer recognizes these label position values:
+//   'normal'     → labels above inputs (default)
+//   'horizontal' → labels left of inputs (same row, labelWidth applies)
+//   'inline'     → labels and inputs on same line (compact)
+// 'vertical' is an alias for 'normal' (used in `layout`); we normalize it.
+const LABEL_POSITION_MODES = new Set(['normal', 'horizontal', 'inline']);
+const MODE_TO_FORM_MODE: Record<string, string> = {
+  horizontal: 'horizontal',
+  inline: 'inline',
+  normal: 'normal',
+  vertical: 'normal', // alias
+};
+
+/**
+ * Resolve the rendered form mode from `queryForm.mode` and `queryForm.layout`.
+ *
+ * Priority:
+ *   1. Explicit `mode` if it is a label position value ('normal' | 'horizontal'
+ *      | 'inline'). 'vertical' is accepted as an alias for 'normal' and
+ *      normalized — the form renderer only recognizes 'normal' for vertical
+ *      label stacking.
+ *   2. Fallback to `layout`-based derivation:
+ *        horizontal → horizontal, inline → inline, vertical/undefined → normal.
+ *
+ * The legacy `'manual' | 'auto'` mode values (autoGenerateQueryFilter behavior)
+ * never collide with label position values, so they fall through to the layout
+ * branch — preserving backwards compatibility for existing callers that use
+ * `mode: 'manual'` without a layout.
+ *
+ * Exported for unit testing.
+ */
+export function resolveFormMode(
+  layout: string | undefined,
+  mode: string | undefined,
+): string {
+  if (mode && (LABEL_POSITION_MODES.has(mode) || mode in MODE_TO_FORM_MODE)) {
+    return MODE_TO_FORM_MODE[mode];
+  }
+  if (layout && layout in MODE_TO_FORM_MODE) {
+    return MODE_TO_FORM_MODE[layout];
+  }
+  return 'normal';
+}
+
 function createCrudQueryFormRegion(schema: CrudSchema, path: string) {
   const queryForm = schema.queryForm;
   if (!queryForm?.body) {
@@ -20,7 +64,7 @@ function createCrudQueryFormRegion(schema: CrudSchema, path: string) {
     type: 'form',
     id: createCrudQueryFormId(createNodeId(path, schema), path),
     body: queryForm.body,
-    mode: queryForm.layout === 'horizontal' ? 'horizontal' : 'normal',
+    mode: resolveFormMode(queryForm.layout, queryForm.mode),
     actionsClassName: 'flex justify-end gap-2',
   };
 

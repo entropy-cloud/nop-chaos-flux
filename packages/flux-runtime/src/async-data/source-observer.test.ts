@@ -49,7 +49,7 @@ describe('createSourceObserver', () => {
             } else {
               secondResolve = resolve;
             }
-          }).then(() => ({ ok: true, status: 200, data: { run: callCount } as T }));
+          }).then(() => ({ status: 0, data: { run: callCount } as T }));
         },
       } as RendererEnv,
       expressionCompiler,

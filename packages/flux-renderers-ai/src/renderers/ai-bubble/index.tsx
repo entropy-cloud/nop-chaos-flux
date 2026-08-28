@@ -1,6 +1,8 @@
 import type { ActionContext, FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
+import { isValidElement } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { Bot, User } from 'lucide-react';
 import type { ChatMessage } from '../../engine/types.js';
 import type { AiBranch, AiBubbleSchema } from '../../schemas.js';
 import { useAiChatContext } from '../../adapters/ai-chat-context.js';
@@ -42,6 +44,13 @@ export interface AiBubbleViewProps {
    * can approve/reject. Falls back to the ai-chat context.
    */
   onApproval?: (action: 'approve' | 'reject') => void;
+  /**
+   * D3 (product-spec §3.1): host-provided avatar override. When omitted, the
+   * avatar renders a lucide icon dispatched by message role (assistant →
+   * `Bot`, user → `User`). Backward compatible — existing callers that never
+   * pass it keep the lucide default.
+   */
+  avatar?: React.ReactNode;
   className?: string;
   testid?: string;
   cid?: number;
@@ -131,7 +140,12 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
       data-cid={props.cid || undefined}
       data-testid={props.testid || undefined}
     >
-      {showAvatar ? <div data-slot="ai-bubble-avatar" aria-hidden="true" /> : null}
+      {showAvatar ? (
+        <div data-slot="ai-bubble-avatar" data-role={renderMessage.role} aria-hidden="true">
+          {props.avatar ??
+            (renderMessage.role === 'user' ? <User aria-hidden="true" /> : <Bot aria-hidden="true" />)}
+        </div>
+      ) : null}
       <div data-slot="ai-bubble-content" className="flex flex-col gap-2">
         {!(isUser && isEditing) ? (
           <>
@@ -300,6 +314,7 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
       shape={resolved.shape ?? 'rounded'}
       showAvatar={resolved.showAvatar === true}
       showTimestamp={resolved.showTimestamp === true}
+      avatar={isValidElement(resolved.avatar) ? resolved.avatar : undefined}
       branches={Array.isArray(resolved.branches) ? (resolved.branches as unknown as AiBranch[]) : undefined}
       activeBranchId={typeof resolved.activeBranchId === 'string' ? resolved.activeBranchId : undefined}
       onBranchChange={

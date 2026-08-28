@@ -86,6 +86,108 @@ function makeScope() {
   return { id: 'scope-1', path: '$', value: {} } as any;
 }
 
+describe('DialogHost stacked dialogs (E2f regression: nested dialog must not close parent)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.useCurrentPage.mockReturnValue({ modalContainer: 'page-modal' });
+  });
+
+  afterEach(() => cleanup());
+
+  // Bug fix: when an uncontrolled inner dialog (e.g. openDialog picker) is
+  // opened on top of a controlled outer dialog, an outside-press or escape
+  // triggered by Base UI on the OUTER should not close it. The user is
+  // interacting with whatever is on top; the outer's close handlers must be
+  // inert until the outer is topmost again.
+  it('does NOT close a non-topmost dialog on outside-press', () => {
+    const surfaceRuntime = makeSurfaceRuntime([
+      {
+        id: 'outer',
+        kind: 'dialog',
+        scope: makeScope(),
+        surface: { body: 'outer-body' },
+      },
+      {
+        id: 'inner',
+        kind: 'dialog',
+        scope: makeScope(),
+        surface: { body: 'inner-body' },
+      },
+    ]);
+    mocks.useCurrentSurfaceRuntime.mockReturnValue(surfaceRuntime);
+
+    render(<DialogHost />);
+    // Both dialogs render in DOM. Their outside-press buttons fire
+    // onOpenChange(false, { reason: 'outside-press' }) on each dialog.
+    // The outer (non-topmost) must NOT close; the inner (topmost) MUST close.
+    const outsideButtons = screen.getAllByTestId('dialog-outside-press');
+    expect(outsideButtons).toHaveLength(2);
+
+    // Simulate a click in the inner dialog — its own outside-press handler
+    // fires first; in real Base UI the inner is the topmost. We simulate
+    // the inner receiving the click event:
+    fireEvent.click(outsideButtons[1]);
+
+    expect(surfaceRuntime.close).toHaveBeenCalledWith('inner');
+    expect(surfaceRuntime.close).not.toHaveBeenCalledWith('outer');
+  });
+
+  it('does NOT close a non-topmost dialog on escape-key', () => {
+    const surfaceRuntime = makeSurfaceRuntime([
+      {
+        id: 'outer',
+        kind: 'dialog',
+        scope: makeScope(),
+        surface: { body: 'outer-body' },
+      },
+      {
+        id: 'inner',
+        kind: 'dialog',
+        scope: makeScope(),
+        surface: { body: 'inner-body' },
+      },
+    ]);
+    mocks.useCurrentSurfaceRuntime.mockReturnValue(surfaceRuntime);
+
+    render(<DialogHost />);
+    const escButtons = screen.getAllByTestId('dialog-escape-key');
+    expect(escButtons).toHaveLength(2);
+
+    fireEvent.click(escButtons[1]);
+
+    expect(surfaceRuntime.close).toHaveBeenCalledWith('inner');
+    expect(surfaceRuntime.close).not.toHaveBeenCalledWith('outer');
+  });
+
+  it('still closes the topmost dialog on outside-press / esc', () => {
+    const surfaceRuntime = makeSurfaceRuntime([
+      {
+        id: 'outer',
+        kind: 'dialog',
+        scope: makeScope(),
+        surface: { body: 'outer-body' },
+      },
+      {
+        id: 'inner',
+        kind: 'dialog',
+        scope: makeScope(),
+        surface: { body: 'inner-body' },
+      },
+    ]);
+    mocks.useCurrentSurfaceRuntime.mockReturnValue(surfaceRuntime);
+
+    render(<DialogHost />);
+
+    fireEvent.click(screen.getAllByTestId('dialog-outside-press')[1]);
+    expect(surfaceRuntime.close).toHaveBeenLastCalledWith('inner');
+    expect(surfaceRuntime.close).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getAllByTestId('dialog-escape-key')[1]);
+    expect(surfaceRuntime.close).toHaveBeenLastCalledWith('inner');
+    expect(surfaceRuntime.close).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('DialogHost closeOnOutside / closeOnEsc reason inspection (E2f)', () => {
   beforeEach(() => {
     vi.clearAllMocks();

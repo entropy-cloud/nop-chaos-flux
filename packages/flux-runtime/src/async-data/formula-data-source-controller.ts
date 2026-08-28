@@ -274,7 +274,7 @@ export function createFormulaDataSourceController(input: {
         }));
       }
       publish();
-      return { skipped: false };
+      return { skipped: false, ok: true };
     },
     reset() {
       started = false;

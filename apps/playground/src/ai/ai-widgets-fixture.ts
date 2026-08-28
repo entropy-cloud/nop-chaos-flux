@@ -1,0 +1,227 @@
+/**
+ * Rich markdown fixtures for the `# /ai-widgets` showcase (D1).
+ *
+ * Content contract: `docs/components/flux-renderers-ai/product-spec.md` §4
+ * (D0 product standard). Six presets dispatched by case-insensitive keyword
+ * match (English keywords + Chinese aliases, product-spec §4.2) on the last
+ * user message; no match falls back to `default`.
+ *
+ * 11-element coverage matrix (product-spec §4.2, "each element >= 1 across
+ * the six presets"; numbers follow spec §4.1):
+ *
+ * | element           | weather | code | formula | reasoning | citation | default |
+ * | ----------------- | ------- | ---- | ------- | --------- | -------- | ------- |
+ * | 1 heading         | y       | y    | y       | y         | y        | y       |
+ * | 2 paragraph       | y       | y    | y       | y         | y        | y       |
+ * | 3 bullet list     | y       | .    | y       | y         | .        | y       |
+ * | 4 ordered list    | y       | y    | .       | .         | y        | .       |
+ * | 5 task list (GFM) | .       | .    | .       | y         | .        | .       |
+ * | 6 blockquote      | .       | .    | y       | y         | y        | .       |
+ * | 7 fenced code     | .       | y    | .       | .         | .        | .       |
+ * | 8 inline code     | y       | y    | .       | .         | y        | y       |
+ * | 9 link            | y       | .    | .       | .         | y        | y       |
+ * | 10 table (GFM)    | y       | .    | .       | .         | .        | .       |
+ * | 11 horizontal rule| .       | .    | .       | .         | y        | y       |
+ *
+ * Constraints honored here:
+ * - `default` body starts with the word `Hello` (keeps the existing
+ *   `ai-widgets-demo.spec.ts` assertion `toContainText('Hello')` green) and
+ *   stays compact (<= ~42 chunks): that assertion allows 10s and the bubble
+ *   content currently lands when the stream finishes (see docs/bugs/166 —
+ *   ai-chat context does not re-render per chunk), so at 200ms/chunk the
+ *   whole default preset must stream in well under 10s.
+ * - Keywords never appear in the first sentence of any other preset or of
+ *   `default` (echo-collision avoidance, product-spec §4.2). The Chinese
+ *   aliases (天气/代码/公式/推理/引用) follow the same rule: preset bodies
+ *   stay English, so no alias can collide with any preset content.
+ * - The math preset keyword is `formula`, never `math` (product-spec §4.3);
+ *   `formula` carries LaTeX SOURCE delimiters (`$...$` / `$$...$$` plus the
+ *   `\( ... \)` inline paren form and a currency sentence, plan
+ *   2026-08-25-0440-2) which render as KaTeX only after D6.
+ *
+ * D5 structured extension (plan 2026-08-24-2237-2, Decision D-c): each new
+ * widget capability gets exactly one dedicated trigger preset — `weather`
+ * carries `toolRound` (agentic get_weather round before the content), the
+ * `reasoning` preset carries `reasoning` (leading `reasoning_content`), and
+ * `citation` embeds `[N]` / `[N,M]` markers in its content. `default` /
+ * `code` / `formula` stay PURE markdown (no structured fields → their chunk
+ * sequence is byte-identical to the D1 baseline; protects the default single-
+ * bubble + `Hello` 10s budget and the D6 assertion surface).
+ */
+
+export type AiWidgetsFixtureId = 'default' | 'weather' | 'code' | 'formula' | 'reasoning' | 'citation';
+
+export interface AiWidgetsFixture {
+  id: AiWidgetsFixtureId;
+  content: string;
+  /**
+   * D5 structured field: leading thinking text, streamed as
+   * `delta.reasoning_content` chunks before the content stream (renders the
+   * ai-bubble reasoning collapse panel).
+   */
+  reasoning?: string;
+  /**
+   * D5 structured field: first round emits a `get_weather` `delta.tool_calls`
+   * + `finish_reason:'tool_calls'` (arguments match the `tool-mock.ts`
+   * executor); the follow-up round (after the `role:'tool'` result message)
+   * streams `content` as usual.
+   */
+  toolRound?: boolean;
+}
+
+export const AI_WIDGETS_FIXTURES: Record<AiWidgetsFixtureId, AiWidgetsFixture> = {
+  default: {
+    id: 'default',
+    content: `Hello! I'm the Flux assistant.
+
+## What I can do
+
+- Stream **rich markdown** token by token
+- Format [links](https://example.com/docs) and \`inline code\`
+
+### Ask me
+
+- forecasts, walkthroughs, equations, or quotes
+
+---
+
+*Live from the mock connector.*
+`,
+  },
+  weather: {
+    id: 'weather',
+    toolRound: true,
+    content: `Here's the 7-day outlook for Hangzhou.
+
+## 7-Day Forecast
+
+| Day | Sky | High | Low | Rain |
+| --- | --- | --- | --- | --- |
+| Mon | Sunny | 32°C | 24°C | 10% |
+| Tue | Cloudy | 30°C | 23°C | 25% |
+| Wed | Showers | 28°C | 22°C | 70% |
+| Thu | Storms | 27°C | 21°C | 90% |
+
+### How to prepare
+
+- Umbrella from Wednesday onward
+- Hydrate early in the week
+
+1. Check the \`uv-index\` bulletin first.
+2. Radar maps: [city portal](https://example.com/weather).
+`,
+  },
+  code: {
+    id: 'code',
+    content: `Let's fix the stale-state bug in that counter component.
+
+## Root cause
+
+The interval callback captures \`count\` from the render where it was created, so every tick reads a stale snapshot and the display freezes at zero.
+
+## Fix
+
+\`\`\`tsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setCount((c) => c + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return <span>{count}</span>;
+}
+\`\`\`
+
+## Next steps
+
+1. Swap the direct read for the functional update.
+2. Re-run the component test suite.
+3. Ship it — the cleanup also plugs the leak you noticed.
+`,
+  },
+  formula: {
+    id: 'formula',
+    content: `Let's unpack mass–energy equivalence.
+
+## Block form
+
+$$
+E = mc^2
+$$
+
+## Where it shows up
+
+- Rest energy scales with mass via $E = mc^2$
+- The constant $c \\approx 3 \\times 10^8$ m/s sets the universal speed limit
+- Divide by $c^2$ to convert joules to kilograms
+
+> "Imagination is more important than knowledge." — Albert Einstein
+
+A premium plan costs $5 today and $10 tomorrow.
+
+In inline form, \\(E = mc^2\\) holds for every inertial frame.
+`,
+  },
+  reasoning: {
+    id: 'reasoning',
+    reasoning: `Preflight rejection points at custom headers; verify that before touching gateway routing rules.`,
+    content: `Working through the routing failure step by step.
+
+## Thought excerpt
+
+> First hypothesis: the request never left the browser. The network panel shows a preflight rejection, which points at custom headers rather than routing.
+
+## Verification checklist
+
+- [x] Reproduce with a minimal payload
+- [x] Confirm the failing request is the preflight call
+- [ ] Retry with the allowlist mock enabled
+- [ ] Inspect the gateway rules for the custom headers
+
+The **most likely cause** is a missing allowlist entry; the checklist above closes the remaining doubt.
+`,
+  },
+  citation: {
+    id: 'citation',
+    content: `Here's a synthesis of the three sources you shared.
+
+## Key findings
+
+1. Streaming parsers must hold back partial tokens [1] — see [Stream Parsing Patterns](https://example.com/papers/stream-parsing)
+2. Back-pressure keeps memory flat under burst [2] — see [Back-pressure Notes](https://example.com/papers/back-pressure)
+3. The same principles apply to UI buffers [1,2] — see [Rendering Streams](https://example.com/papers/rendering-streams)
+
+> "Latency is a product feature; buffers are how you buy it."
+
+---
+
+Each numbered point links to the section that supports it — check \`ref-3\` for the full argument.
+`,
+  },
+};
+
+const KEYWORD_ORDER: ReadonlyArray<{
+  keywords: ReadonlyArray<string>;
+  id: Exclude<AiWidgetsFixtureId, 'default'>;
+}> = [
+  { keywords: ['weather', '天气'], id: 'weather' },
+  { keywords: ['code', '代码'], id: 'code' },
+  { keywords: ['formula', '公式'], id: 'formula' },
+  { keywords: ['reasoning', '推理'], id: 'reasoning' },
+  { keywords: ['citation', '引用'], id: 'citation' },
+];
+
+/**
+ * Case-insensitive keyword dispatch (English + Chinese aliases); unmatched
+ * text falls back to `default`. Entry order in `KEYWORD_ORDER` decides
+ * multi-keyword texts (first entry with any alias hit wins).
+ */
+export function pickAiWidgetsFixture(lastUserText: string): AiWidgetsFixture {
+  const text = lastUserText.toLowerCase();
+  for (const { keywords, id } of KEYWORD_ORDER) {
+    if (keywords.some((keyword) => text.includes(keyword))) return AI_WIDGETS_FIXTURES[id];
+  }
+  return AI_WIDGETS_FIXTURES.default;
+}

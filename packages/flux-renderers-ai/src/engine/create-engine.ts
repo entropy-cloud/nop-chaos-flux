@@ -184,6 +184,8 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       const idx = draft.messages.findIndex((m) => m.id === messageId);
       if (idx < 0) return;
       const current = draft.messages[idx];
+      // Rebind the array ref — ai-chat keys its context on the array identity.
+      draft.messages = draft.messages.slice();
       draft.messages[idx] = {
         ...current,
         state: { ...current.state, editing: editing ?? undefined },

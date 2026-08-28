@@ -39,7 +39,7 @@ describe('schema-fetch cross-subscriber dedup + cache (A11)', () => {
       expect(fetcher).toHaveBeenCalledTimes(1);
     });
 
-    release?.({ ok: true, status: 200, data: { type: 'text', text: 'shared' } });
+    release?.({ status: 0, data: { type: 'text', text: 'shared' } });
 
     const [resultA, resultB] = await Promise.all([a, b]);
 
@@ -52,8 +52,7 @@ describe('schema-fetch cross-subscriber dedup + cache (A11)', () => {
 
   it('serves a repeated schema-fetch from the runtime cache without a new request', async () => {
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { type: 'text', text: 'cached-schema' },
     }));
 
@@ -80,8 +79,7 @@ describe('schema-fetch cross-subscriber dedup + cache (A11)', () => {
 
   it('does not dedupe requests with a different executable identity (negative)', async () => {
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { type: 'text', text: 'schema' },
     }));
 
@@ -117,8 +115,7 @@ describe('schema-fetch cross-subscriber dedup + cache (A11)', () => {
 
   it('does not share in-flight for non-safe methods even with cacheTTL', async () => {
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { type: 'text', text: 'created' },
     }));
 
@@ -166,7 +163,7 @@ describe('schema-fetch cross-subscriber dedup + cache (A11)', () => {
     const localPage = localRuntime.createPageRuntime({});
     const scope = localRuntime.createChildScope(localPage.scope, { tag: 'A' });
     const executeApiRequest = Object.assign(
-      vi.fn(async () => ({ ok: true, status: 200, data: { type: 'text', text: 'fresh' } })),
+      vi.fn(async () => ({ status: 0, data: { type: 'text', text: 'fresh' } })),
       { dispose: vi.fn() },
     ) as unknown as import('../async-data/request-runtime.js').ApiRequestExecutor;
 

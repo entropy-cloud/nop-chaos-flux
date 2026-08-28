@@ -31,15 +31,32 @@ export interface GanttHandle {
   scrollToTask: (taskId: string | number) => void;
 }
 
+/**
+ * 2026-07-25-2 e2e fix: the visible-task count must be a SUBSCRIBED value.
+ * Reading `store.getVisibleTasks().length` inline in the Gantt render was
+ * memoized by the React Compiler on the stable `store` identity, so the
+ * aria-live region kept the stale pre-collapse count. Extracting the read
+ * into a child whose `useSyncExternalStore` snapshot IS the count makes the
+ * compiler track it as a real render dependency.
+ */
+function GanttLiveRegion({ store }: { store: GanttStoreApi }) {
+  const count = useSyncExternalStore(store.subscribe, () => store.getVisibleTasks().length);
+  return (
+    <div aria-live="polite" aria-atomic="true" className="sr-only">
+      {t('scheduling.gantt.tasksVisible', { count })}
+    </div>
+  );
+}
+
 export function createInitialStore(resolved: Record<string, unknown>): GanttStoreApi {
   const s = createGanttStore({
     cellWidth: (resolved.cellWidth as number) ?? 40,
     defaultZoom: (resolved.defaultZoom as string) ?? 'week',
     taskBarHeight: (resolved.taskBarHeight as number) ?? 28,
     zoomLevels: (resolved.zoomLevels as any[]) ?? [
-      { key: 'day', label: t('scheduling.gantt.zoomDay'), minCellWidth: 40, scales: [{ unit: 'day', step: 1, format: 'MM/DD' }] },
-      { key: 'week', label: t('scheduling.gantt.zoomWeek'), minCellWidth: 80, scales: [{ unit: 'week', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
-      { key: 'month', label: t('scheduling.gantt.zoomMonth'), minCellWidth: 60, scales: [{ unit: 'month', step: 1, format: 'YYYY' }, { unit: 'day', step: 1, format: 'DD' }] },
+      { key: 'day', label: t('scheduling.gantt.zoomDay'), minCellWidth: 40, scales: [{ unit: 'day', step: 1, format: '%m/%d' }] },
+      { key: 'week', label: t('scheduling.gantt.zoomWeek'), minCellWidth: 80, scales: [{ unit: 'week', step: 1, format: '%Y' }, { unit: 'day', step: 1, format: '%d' }] },
+      { key: 'month', label: t('scheduling.gantt.zoomMonth'), minCellWidth: 60, scales: [{ unit: 'month', step: 1, format: '%Y' }, { unit: 'day', step: 1, format: '%d' }] },
     ],
   });
   const taskData = (resolved.tasks as any[]) ?? [];
@@ -476,9 +493,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     return (
       <div ref={containerRef} data-slot="gantt" className={cn('nop-gantt flex flex-col h-full', meta.className)} data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>
-        <div aria-live="polite" aria-atomic="true" className="sr-only">
-          {t('scheduling.gantt.tasksVisible', { count: store.getVisibleTasks().length })}
-        </div>
+        <GanttLiveRegion store={store} />
         <GanttHeader
           store={store}
           toolbarRegion={regions.toolbar as RenderRegionHandle}
@@ -490,7 +505,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         />
         <GanttLayout
           grid={
-            <div ref={gridRef} className="h-full">
+            <div className="h-full">
               <GanttGrid
                 store={store}
                 columns={columns}

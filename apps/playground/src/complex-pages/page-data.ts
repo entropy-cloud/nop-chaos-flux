@@ -69,6 +69,14 @@ PAGE_DATA['sundial-workbench'] = {
   // Interaction state (plan 457): sidebar nav + view selection
   activeSection: 'workbench',
   activeView: 'all',
+  // Interaction state: in-place task detail dialog (editable title/note + picker writeback)
+  taskDetailOpen: false,
+  taskDetailTitle: '撰写季度复盘报告',
+  taskDetailNote: '包含数据复盘和 OKR 回顾两部分',
+  taskDetailDate: '8/18',
+  taskDetailRecur: '每周',
+  taskDetailFlag: false,
+  taskDetailListLabel: '工作',
 };
 
 PAGE_DATA['sundial-detail'] = {

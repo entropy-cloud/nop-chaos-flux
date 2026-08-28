@@ -49,7 +49,6 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   workers: 2,
-  retries: 0,
   reporter: 'list',
   use: {
     baseURL: baseUrl,
@@ -57,6 +56,9 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
+  // 2026-07-25-2 Phase 3: one retry absorbs environment-level flakes
+  // (dev-server HMR reloads mid-suite) without masking real failures.
+  retries: 1,
   projects: [
     {
       // The supported workspace gate currently targets Chromium only.

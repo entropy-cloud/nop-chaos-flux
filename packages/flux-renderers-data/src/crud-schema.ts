@@ -15,7 +15,30 @@ export interface CrudQueryFormConfig extends SchemaObject {
   layout?: 'horizontal' | 'vertical' | 'inline';
   columnCount?: number;
   gap?: number | string;
-  mode?: 'manual' | 'auto';
+  /**
+   * Form mode controlling label position OR auto-generation behavior.
+   *
+   * **Label position values** (used directly as rendered form mode):
+   *   - 'normal'     → labels above inputs (default)
+   *   - 'horizontal' → labels left of inputs (same row, labelWidth applies)
+   *   - 'inline'     → labels and inputs on same line (compact)
+   *   - 'vertical'   → vertical stacking (alias of 'normal')
+   *
+   * **Auto-generation behavior** values (legacy, for autoGenerateQueryFilter):
+   *   - 'manual' → manual query form (authored explicitly)
+   *   - 'auto'   → auto-generated from filterable columns
+   *
+   * When this field is set to a label position value, it takes precedence over
+   * `layout` for determining the rendered form's mode. When unset or set to
+   * `'manual' | 'auto'`, the `layout` field determines the rendered form mode:
+   *   layout: 'horizontal' → mode: 'horizontal'
+   *   layout: 'inline'     → mode: 'inline'
+   *   layout: 'vertical'   → mode: 'normal'
+   *
+   * History: previously only `layout` was read by the validator, making `mode`
+   * a no-op for label position control; resolution lives in data-schema-validation.ts.
+   */
+  mode?: 'manual' | 'auto' | 'normal' | 'horizontal' | 'vertical' | 'inline';
   /** Reserved — URL state sync is not implemented (design §9); retained for authoring compatibility. */
   syncLocation?: boolean;
   defaultParams?: Record<string, SchemaValue>;

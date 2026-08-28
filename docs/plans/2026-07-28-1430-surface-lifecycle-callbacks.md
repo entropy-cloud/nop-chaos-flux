@@ -129,13 +129,15 @@ Targets: `packages/flux-core/src/types/runtime.ts`, `packages/flux-runtime/src/s
 
 - Item Types: `Fix | Decision`
 
-- [ ] **Decision**：lifecycle hook 字段命名与存储。现有 `OwnedSurfaceStateBase.onClose?: () => Promise<ActionResult> | ActionResult | void` 是 function 类型，已被 declarative surface 在 `packages/flux-renderers-basic/src/use-surface-renderer.ts:223/325/348` live 使用。**不能改其类型**。本 plan 决定：新增三个 `ActionNode[]` 字段 `onCloseNodes` / `onSubmitSuccessNodes` / `onSubmitErrorNodes`，与现有 function-based `onClose` / `onOpen` / `onConfirm` 共存。action-style openDialog/openDrawer 把 schema 的 `onClose` / `onSubmitSuccess` / `onSubmitError` 编译为 ActionNode[] 存到这三个新字段；declarative surface 继续走现有 function-based `onClose` 路径，不被本 plan 改动。这样 action-style 与 declarative 的 close 路径独立、互不干扰。
+（2026-08-24 补勾：以下各项经 live 核对均已落地，执行偏差见各项注记与本 phase 末尾摘要）
 
-- [ ] `OwnedSurfaceStateBase` 类型扩展（`packages/flux-core/src/types/runtime.ts:239-258`）：加 `onCloseNodes?: ActionNode[]`、`onSubmitSuccessNodes?: ActionNode[]`、`onSubmitErrorNodes?: ActionNode[]`、`ownerActionCtx?: Pick<ActionContext, 'runtime' | 'actionScope' | 'componentRegistry' | 'page' | 'surfaceRuntime' | 'evaluationBindings'>`
-- [ ] `SurfaceRuntimeOptions`（`open()` 的 `options` 字段，`packages/flux-core/src/types/runtime.ts:300-316`）扩展：加 `onCloseNodes` / `onSubmitSuccessNodes` / `onSubmitErrorNodes` / `ownerActionCtx`（类型与 OwnedSurfaceStateBase 对应）
-- [ ] `surfaceRuntime.open` 实现（`packages/flux-runtime/src/surface-runtime.ts:120-157`）：把 `options.onCloseNodes` / `options.onSubmitSuccessNodes` / `options.onSubmitErrorNodes` / `options.ownerActionCtx` 写入 entry（与现有 function-based `onClose` / `onOpen` / `onConfirm` 共存）
-- [ ] `action-adapter.ts:185-218` `openDialog` case：用 `actionProgramCompiler.compile` 把 `args.onClose` / `args.onSubmitSuccess` / `args.onSubmitError` 编译为 ActionNode[]，通过 `options.onCloseNodes` / `options.onSubmitSuccessNodes` / `options.onSubmitErrorNodes` 透传；同时把 caller ctx 存为 `options.ownerActionCtx`
-- [ ] `action-adapter.ts:243-279` `openDrawer` case：同上
+- [x] **Decision**：lifecycle hook 字段命名与存储。现有 `OwnedSurfaceStateBase.onClose?: () => Promise<ActionResult> | ActionResult | void` 是 function 类型，已被 declarative surface 在 `packages/flux-renderers-basic/src/use-surface-renderer.ts` live 使用。**不能改其类型**。本 plan 决定：新增三个 hook 节点字段 `onCloseNodes` / `onSubmitSuccessNodes` / `onSubmitErrorNodes`，与现有 function-based `onClose` / `onOpen` / `onConfirm` 共存。action-style openDialog/openDrawer 把 schema 的 `onClose` / `onSubmitSuccess` / `onSubmitError` 存到这三个新字段；declarative surface 继续走现有 function-based `onClose` 路径。（**执行偏差**：字段类型落地为 `ActionSchema | ActionSchema[]` 而非 `ActionNode[]`——运行时经 `runtime.dispatch` 编译执行，见 `flux-core/types/runtime.ts:275-277`；schema 透传形态，行为等价）
+
+- [x] `OwnedSurfaceStateBase` 类型扩展（`packages/flux-core/src/types/runtime.ts:239-258`）：加 `onCloseNodes` / `onSubmitSuccessNodes` / `onSubmitErrorNodes` / `ownerActionCtx`（live：runtime.ts:275-277/:297，与现有 function-based 字段共存）
+- [x] `SurfaceRuntimeOptions`（`open()` 的 `options` 字段）扩展：加 `onCloseNodes` / `onSubmitSuccessNodes` / `onSubmitErrorNodes` / `ownerActionCtx`（live：runtime.ts:354-363）
+- [x] `surfaceRuntime.open` 实现：把 hook 字段与 `ownerActionCtx` 写入 entry（live：surface-runtime.ts open 路径）
+- [x] `action-adapter.ts` `openDialog` case：hook schema 编译透传 + caller ctx 存为 `options.ownerActionCtx`（live：action-adapter.ts openDialog/openDrawer case）
+- [x] `action-adapter.ts` `openDrawer` case：同上
 
 Exit Criteria:
 
@@ -153,12 +155,12 @@ Targets: `packages/flux-runtime/src/component-handle-registry.ts`, `packages/flu
 
 - Item Types: `Fix`
 
-- [ ] `ComponentHandleRegistry.findFirstInScope(scope, predicate)` 实现（`packages/flux-runtime/src/component-handle-registry.ts`）：在指定 scope bucket 内按 predicate 找第一个匹配 component handle；找不到返回 undefined
-- [ ] `SourceRegistry.findFirstInScope(scope)` 实现（`packages/flux-runtime/src/async-data/source-registry.ts`）：在指定 scope bucket 内取第一个 source entry；找不到返回 undefined
-- [ ] 新增 `packages/flux-runtime/src/refresh-nearest.ts`：实现 `findNearestRefreshable(startScope, registry, sourceRegistry, targetType)` + `refreshNearest(ctx, args)`；找不到 target 时按 `args.notFound` 决定 silent / error 行为
-- [ ] `packages/flux-core/src/types/actions.ts` 加 `RefreshNearestActionSchema` 类型（已经在 `flux-guide/flux-types/common.d.ts` 写好，需同步到源码）
-- [ ] `packages/flux-action-core/src/action-dispatcher/built-in-actions.ts:42-297` 加 `case 'refreshNearest'`：构造 invocation
-- [ ] `packages/flux-runtime/src/action-adapter.ts:invokeBuiltInAction` switch 加 `case 'refreshNearest'`：调 `refreshNearest(ctx, args)`
+- [x] `ComponentHandleRegistry.findFirstInScope(scope, predicate)` 实现（live：`component-handle-registry.ts:248-260`，含 `handlesByScopeId` scope-id 索引）
+- [x] `SourceRegistry.findFirstInScope(scope)` 实现（live：`source-registry.ts:465-469`）
+- [x] 新增 `packages/flux-runtime/src/refresh-nearest.ts`：实现 `findNearestRefreshable` + `refreshNearest(ctx, args)`；找不到 target 时按 `args.notFound` 决定 silent / error 行为
+- [x] `packages/flux-core/src/types/actions.ts` 加 `RefreshNearestActionSchema` 类型
+- [x] `packages/flux-action-core/src/action-dispatcher/built-in-actions.ts` 加 `case 'refreshNearest'`：构造 invocation
+- [x] `packages/flux-runtime/src/action-adapter.ts:invokeBuiltInAction` switch 加 `case 'refreshNearest'`：调 `refreshNearest(ctx, args)`
 
 Exit Criteria:
 
@@ -176,13 +178,17 @@ Targets: `packages/flux-runtime/src/surface-hooks.ts` (new), `packages/flux-runt
 
 - Item Types: `Fix`
 
-- [ ] 新增 `packages/flux-runtime/src/surface-hooks.ts`：实现 `dispatchInOwner(entry, nodes, payload)`，构造 owner ctx（用 `entry.ownerActionCtx` + `entry.ownerScope` + `entry.ownerNodeInstance`），注入 `$formData` / `$result` / `$hook` evaluationBindings；ownerActionCtx 已 dispose（runtime.dispose 标记）时返回 `{ ok: false, error: new Error('ownerActionCtx already disposed') }`；hook 抛错被 try/catch 捕获并 `console.warn`，不阻塞调用方
-- [ ] `packages/flux-runtime/src/surface-runtime.ts:182-186` `close(surfaceId)` 改 async：**仅当 `entry.onCloseNodes` 存在时**调 `dispatchInOwner(entry, entry.onCloseNodes, { hookName: 'close' })`；hook 完成或抛错后再 `disposeEntry` + `republishActiveStatuses`；**不调** `entry.onClose`（function，declarative 专用，由 `use-surface-renderer.ts` 现有路径处理）
-- [ ] `packages/flux-runtime/src/surface-runtime.ts` 新增 `triggerHook(entry, hookName, payload)` 公共方法：内部调 `dispatchInOwner`；对外暴露给 form submit flow 调用
-- [ ] `packages/flux-runtime/src/form-runtime-submit-flow.ts:451-453`（`executeFormSubmit` 成功/失败分支）：当 `formSchema.submitScope === 'surface'` 且 `ctx.surfaceRuntime && ctx.dialogId` 时，取出 entry，根据 result.ok 调 `ctx.surfaceRuntime.triggerHook(entry, 'submit:success' | 'submit:error', { result, formData })`
-- [ ] `packages/flux-renderers-form/src/renderers/form.tsx`：把 schema 的 `submitScope` 字段传给 form runtime ctx；在 submit 完成时收集 `formData` snapshot（form 当前 values 的 plain object copy）传给 triggerHook
-- [ ] `packages/flux-react/src/dialog-host.tsx`：close 调用改 await（surfaceRuntime.close 现在 async 因可能触发 hook）；其他直接调 `surfaceRuntime.close` 的位置同步排查改 await
-- [ ] declarative surface 的 `onClose` (function) 路径**不动**：`packages/flux-renderers-basic/src/use-surface-renderer.ts:223/325/348` 现有调用保持不变；declarative surface 不通过本 plan 的 ActionNode 路径触发 close hook（其 onClose 由 React unmount 自然驱动）
+（2026-08-24 补勾：以下各项经 live 核对均已落地；close 相关两项按实际落地形态——**sync fire-and-forget**（`surface-runtime.ts:199-229`）——改写勾选，非原案的 async close）
+
+- [x] 新增 `packages/flux-runtime/src/surface-hooks.ts`：实现 `dispatchInOwner(entry, nodes, payload)`（live：surface-hooks.ts:25-54，owner ctx 重建 + `$formData`/`$result`/`$hook` 注入 + 永不抛错契约）
+- [x] `surfaceRuntime.close(surfaceId)`——**实际落地为 sync fire-and-forget 而非 async**（live：surface-runtime.ts:199-229）：先移除 entry 并 dispose（保持现有 sync close 契约），再异步 fire `onCloseNodes`（hook 失败经 `reportRuntimeHostIssue` warning 上报，不阻塞 close）；**不调** `entry.onClose`（function，declarative 专用，由 `use-surface-renderer.ts` 现有路径处理）。原案「close 改 async」被否决的理由见设计权衡：5 处调用方依赖 sync close 立即卸载语义，改 async 会引入 race（详见 `docs/architecture/surface-lifecycle-callbacks.md` §Close Hook 设计权衡）
+- [x] `surfaceRuntime.triggerHook(entry, hookName, payload)` 公共方法（live：surface-runtime.ts:266-297，含 closeOnSubmit 单点关闭决策）
+- [x] form submit 完成后触发 surface hook——**实际触发位置在 `form.tsx` setLifecycleHandlers 包装而非 `form-runtime-submit-flow.ts`**（live：form.tsx:139-170 `triggerSurfaceSubmitHook`；`submitScope === 'surface'` 过滤 + `$formData`/`$result` payload）
+- [x] `packages/flux-renderers-form/src/renderers/form.tsx`：`submitScope` 传给 form runtime ctx + submit 完成时收集 `formData` snapshot 传给 triggerHook（live：form.tsx `formData: { ...ownedForm.store.getState().values }`）
+- [x] `packages/flux-react/src/dialog-host.tsx`：**实际无需改 await**——close 落地为 sync fire-and-forget（hook 异步执行不阻塞 close），现有调用方零改动
+- [x] declarative surface 的 `onClose` (function) 路径**不动**（live：`use-surface-renderer.ts` onClose function 调用路径保持；declarative surface 不经 ActionNode 路径触发 close hook，其 onClose 由 React unmount 自然驱动）
+
+> **执行偏差摘要（2026-08-24 补记，P2-23）**：与原案的三处偏差——① hook 节点存储为 `ActionSchema | ActionSchema[]`（运行时经 `runtime.dispatch` 编译执行）而非预编译 `ActionNode[]`；② `close()` 保持 sync fire-and-forget（原案 async close 被设计权衡否决，见上）；③ submit hook 触发位置从 `form-runtime-submit-flow.ts`（纯函数层）移至 `form.tsx`（React context 层）。三处偏差均已在 Phase 3 末尾「实现微调记录」与 design doc §Close Hook / §Submit Hooks 设计权衡段落留痕，行为契约（hook 在 owner ctx 执行、close 立即生效、hook 失败不阻塞）与原案一致。
 
 Exit Criteria:
 

@@ -47,7 +47,7 @@ export class RefreshPipeline {
   private readonly resolver: BindResolver;
   private readonly scheduleTick: TickScheduler;
   private readonly maxExpressionIterations: number;
-  private readonly events = new EventHub<RefreshPipelineEvents>();
+  private readonly hub = new EventHub<RefreshPipelineEvents>();
   private readonly lastDeps = new Map<string, string[]>();
   // plan 2026-08-09-0121-2 Workstream A F8：表达式点依赖反向索引（depPointId → 依赖它的 exprPointId 集），
   // 使 recomputeExpressionPoints 由 O(n²) 线性扫描 lastDeps 降为 O(扇出) 查找。与 lastDeps 同步维护
@@ -85,7 +85,7 @@ export class RefreshPipeline {
 
   /** state:change 订阅（统一发射出口，I11 触发器体系评估的输入源）。 */
   on(event: 'state:change', cb: (payload: { symbolId: string; state: string }) => void): Unsubscribe {
-    return this.events.on(event, cb);
+    return this.hub.on(event, cb);
   }
 
   flushFrame(applyAttrs: ApplyAttrs): boolean {
@@ -420,7 +420,7 @@ export class RefreshPipeline {
       if (prev !== state) {
         this.lastState.set(symbolId, state);
         this.options.onStateChange?.({ symbolId, state });
-        this.events.emit('state:change', { symbolId, state });
+        this.hub.emit('state:change', { symbolId, state });
         this.applyAnimationLinkage(symbolId, declaration, prev, state);
       }
       const style = declaration.states[state]?.style as ScadaSymbolStylePatch | undefined;

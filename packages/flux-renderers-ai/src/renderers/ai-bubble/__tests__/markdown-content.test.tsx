@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { cleanup, render, fireEvent, act } from '@testing-library/react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -267,3 +268,124 @@ describe('MarkdownContentRenderer — rehype-raw XSS regression', () => {
     }
   });
 });
+
+// ============================================================================
+// D2 (G2): typography contract — dead `prose` classes removed, scoped custom
+// CSS in charge. jsdom does not load the package stylesheet, so the CSS side
+// is asserted as source text (repo precedent: packages/ui/src/mobile-styles.test.ts,
+// packages/theme-tokens/src/styles.test.ts); computed-style verification is
+// owned by the DV e2e layer (product-spec.md §7).
+// ============================================================================
+const stylesCss = readFileSync('src/styles.css', 'utf8');
+
+/** Count non-overlapping substring occurrences in a haystack. */
+function occurrences(haystack: string, needle: string): number {
+  let count = 0;
+  let idx = haystack.indexOf(needle);
+  while (idx !== -1) {
+    count += 1;
+    idx = haystack.indexOf(needle, idx + needle.length);
+  }
+  return count;
+}
+
+/** Extract the inner text of every `@media (prefers-color-scheme: dark)` block. */
+function darkPrefersColorSchemeBlocks(css: string): string[] {
+  const marker = '@media (prefers-color-scheme: dark)';
+  const blocks: string[] = [];
+  let idx = css.indexOf(marker);
+  while (idx !== -1) {
+    const open = css.indexOf('{', idx);
+    if (open === -1) break;
+    let depth = 1;
+    let end = open + 1;
+    while (end < css.length && depth > 0) {
+      if (css[end] === '{') depth += 1;
+      else if (css[end] === '}') depth -= 1;
+      end += 1;
+    }
+    blocks.push(css.slice(open + 1, end - 1));
+    idx = css.indexOf(marker, end);
+  }
+  return blocks;
+}
+
+describe('MarkdownContentRenderer — D2 typography contract (G2)', () => {
+  it('(a) container drops the dead prose family and keeps overflow utilities', () => {
+    const message = makeMessage({ content: '# Title\n\nparagraph with `code`' });
+    const { container } = render(
+      <MarkdownContentRenderer {...makeProps({ message, content: message.content })} />,
+    );
+    const markdown = container.querySelector('[data-slot="ai-bubble-markdown"]') as HTMLElement;
+    expect(markdown).toBeTruthy();
+    // @tailwindcss/typography is not a repo dependency — any prose-* class is a
+    // dead class pretending to style the bubble (G2).
+    expect(markdown.className).not.toMatch(/\bprose\b/);
+    expect(markdown.className).not.toMatch(/\bprose-[a-z-]+\b/);
+    // Horizontal overflow guard utilities stay (D2 Decision: unrelated to the
+    // dead plugin classes).
+    expect(markdown.className).toContain('max-w-none');
+    expect(markdown.className).toContain('break-words');
+  });
+
+  it('(b) styles.css covers the element matrix under the ai-bubble-markdown scope', () => {
+    const SCOPE = "\\[data-slot='ai-bubble-markdown'\\]";
+    const coverage: Array<[string, RegExp]> = [
+      ['headings', new RegExp(`${SCOPE} h[1-6][,\\s]`)],
+      ['paragraph', new RegExp(`${SCOPE} p[\\s,{]`)],
+      ['unordered list', new RegExp(`${SCOPE} ul[\\s,{]`)],
+      ['ordered list', new RegExp(`${SCOPE} ol[\\s,{]`)],
+      ['list marker', new RegExp(`${SCOPE} li::marker`)],
+      ['task-list checkbox', new RegExp(`${SCOPE} input\\[type='checkbox'\\]`)],
+      ['blockquote', new RegExp(`${SCOPE} blockquote[\\s,{]`)],
+      ['fenced code block', new RegExp(`${SCOPE} pre[\\s,{]`)],
+      ['inline code', new RegExp(`${SCOPE} :not\\(pre\\) > code[\\s,{]`)],
+      ['link', new RegExp(`${SCOPE} a[\\s,{:]`)],
+      ['table', new RegExp(`${SCOPE} table[\\s,{]`)],
+      ['table cell', new RegExp(`${SCOPE} (th|td)[\\s,{]`)],
+      ['hr', new RegExp(`${SCOPE} hr[\\s,{]`)],
+      ['img', new RegExp(`${SCOPE} img[\\s,{]`)],
+      ['strong', new RegExp(`${SCOPE} strong[\\s,{]`)],
+      ['em', new RegExp(`${SCOPE} em[\\s,{]`)],
+    ];
+    for (const [name, re] of coverage) {
+      expect(stylesCss, `missing scoped rule for ${name}`).toMatch(re);
+    }
+    // The scoped rules must consume theme variables via the package-level
+    // custom properties (colors must not be hardcoded-only).
+    expect(stylesCss).toContain(`[data-slot='ai-bubble-markdown'] {
+  --ai-md-fg: hsl(var(--foreground, 222 84% 5%));`);
+  });
+
+  it('(c1) dark path — prefers-color-scheme media query with literal dark fallbacks', () => {
+    expect(stylesCss).toMatch(
+      /@media\s*\(prefers-color-scheme:\s*dark\)\s*\{[\s\S]*?\[data-slot='ai-bubble-markdown'\]\s*\{/,
+    );
+    // Dual-track Decision: var() first (theme hosts), literal classic-dark
+    // fallback second (standalone hosts without theme attributes).
+    expect(stylesCss).toContain('hsl(var(--foreground, 210 40% 98%))');
+    expect(stylesCss).toContain('hsl(var(--muted-foreground, 215 25% 75%))');
+    expect(stylesCss).toContain('hsl(var(--primary, 217 89% 63%))');
+    // P2-1 (2026-08-24 open-audit, plan 2026-08-25-0440-1): every
+    // prefers-color-scheme dark block must guard its inner selectors with
+    // `:root:not([data-mode='light'])` — otherwise a standalone host on a
+    // dark-OS with an explicit light mode resolves the literal dark fallbacks
+    // (near-invisible text on a light page). Exactly 3 media tracks exist
+    // (typography / avatar / welcome-icon).
+    const blocks = darkPrefersColorSchemeBlocks(stylesCss);
+    expect(blocks.length).toBe(3);
+    for (const [index, block] of blocks.entries()) {
+      const ruleCount = occurrences(block, '{');
+      const guardCount = occurrences(block, ":root:not([data-mode='light'])");
+      expect(guardCount, `dark media block #${index + 1} must guard every inner selector`).toBe(ruleCount);
+    }
+    expect(occurrences(stylesCss, ":root:not([data-mode='light'])")).toBe(3);
+  });
+
+  it('(c2) dark path — [data-mode] attribute trigger', () => {
+    expect(stylesCss).toMatch(
+      /\[data-mode='dark'\]\s+\[data-slot='ai-bubble-markdown'\]\s*\{/,
+    );
+  });
+});
+

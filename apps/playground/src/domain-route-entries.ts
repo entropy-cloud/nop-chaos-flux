@@ -21,6 +21,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'Interactive Gantt chart with task grid, timeline, dependency links, drag-and-drop, zoom controls, and keyboard navigation.',
   },
   {
+    id: 'gantt-states',
+    title: 'Gantt States',
+    eyebrow: 'Scheduling',
+    description:
+      'Gantt edge-state coverage page: empty/loading states, baselines with deviation labels, custom toolbar/taskBar/column regions.',
+  },
+  {
     id: 'kanban',
     title: 'Kanban Board',
     eyebrow: 'Scheduling',
@@ -440,6 +447,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     eyebrow: 'AI Renderers',
     description:
       'Comprehensive showcase of all AI widget renderers: ai-welcome, ai-bubble, ai-sender, ai-prompts, ai-feedback, ai-tool-call, ai-attachments, ai-citations, ai-voice-input, ai-token-usage, and ai-suggestions.',
+  },
+  {
+    id: 'ai-coverage',
+    title: 'AI Coverage (states & edges)',
+    eyebrow: 'AI Renderers',
+    description:
+      'E2E coverage page for the gantt/ai e2e plan: deterministic slow/flaky/eof connectors, chat states (processing/error/empty/no-connector), bubble content gallery, sender modes and widget edge states.',
   },
   {
     id: 'dingtalk-flow-demo',

@@ -113,7 +113,7 @@ describe('action error notification chain propagation', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...baseEnv,
-        fetcher: async () => ({ ok: true, status: 200, data: { result: 'ok' } }),
+        fetcher: async () => ({ status: 0, data: { result: 'ok' } }),
         notify,
       } as unknown as RendererEnv,
     });

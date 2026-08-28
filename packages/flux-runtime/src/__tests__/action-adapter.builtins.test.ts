@@ -13,7 +13,10 @@ describe('createActionRuntimeAdapter direct branches', () => {
     const createChildScope = vi.fn(() =>
       createScopeRef({ id: 'drawer-scope', path: '$scope.drawer', initialData: {} }),
     );
-    const refreshDataSource = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const refreshDataSource = vi
+      .fn()
+      .mockResolvedValueOnce({ found: true, result: { skipped: false, ok: true } })
+      .mockResolvedValueOnce({ found: false });
     const adapter = createActionRuntimeAdapter({
       getEnv: () => ({ notify } as unknown as RendererEnv),
       expressionCompiler: {} as unknown as ExpressionCompiler,

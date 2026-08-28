@@ -165,7 +165,9 @@ test.describe('Gantt — Editor Dialog, Keyboard Nav & Undo', () => {
     const zoomOutBtn = page.locator('[data-slot="gantt"] button').filter({ hasText: '−' }).first();
     if (await zoomOutBtn.isVisible()) {
       await zoomOutBtn.click();
-      await page.waitForTimeout(200);
+      await expect
+        .poll(async () => page.locator('[data-weekend="true"]').count(), { timeout: 5_000 })
+        .toBeGreaterThanOrEqual(2);
     }
 
     const weekendCols = page.locator('[data-weekend="true"]');
@@ -221,7 +223,9 @@ test.describe('Gantt — Editor Dialog, Keyboard Nav & Undo', () => {
       const btn = document.querySelector('[aria-expanded="true"]') as HTMLButtonElement | null;
       if (btn) btn.click();
     });
-    await page.waitForTimeout(500);
+    await expect
+      .poll(async () => page.locator('[data-slot="gantt-grid-row"]').count(), { timeout: 5_000 })
+      .toBeLessThan(14);
 
     await expect(page.locator('[data-slot="gantt"]')).toBeVisible({ timeout: 5_000 });
     await expect(page.locator('[data-slot="gantt-bar"]').first()).toBeVisible({ timeout: 5_000 });

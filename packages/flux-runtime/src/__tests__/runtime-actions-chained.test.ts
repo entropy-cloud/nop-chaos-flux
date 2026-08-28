@@ -504,8 +504,7 @@ describe('createRendererRuntime', () => {
         fetcher: async <T>(api: ApiSchema, ctx: ApiRequestContext) => {
           fetchCalls.push({ api, scopeData: ctx.scope.readOwn() });
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { submitted: ctx.scope.readOwn() } as T,
           };
         },

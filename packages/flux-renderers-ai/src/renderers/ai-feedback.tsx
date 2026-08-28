@@ -5,14 +5,20 @@ import type {
   RendererRenderOutput,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { useAiChatContext } from '../adapters/ai-chat-context.js';
 import type { ChatMessage } from '../engine/types.js';
 import type { AiFeedbackSchema } from '../schemas.js';
 
 type FeedbackAction = 'copy' | 'refresh' | 'like' | 'dislike' | 'sources';
 
 const DEFAULT_ACTIONS: FeedbackAction[] = ['copy', 'refresh'];
+
+interface FeedbackSourceEntry {
+  label: string;
+  url?: string;
+}
 
 /**
  * C8.2 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
@@ -28,10 +34,61 @@ function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | und
 }
 
 /**
+ * D4 (plan 2026-08-24-2317-1): normalize `message.metadata.sources` entries
+ * for the sources Popover — tolerant of strings and `{ label | title, url }`
+ * objects. Unknown shapes are dropped (not rendered).
+ */
+function normalizeFeedbackSources(raw: unknown): FeedbackSourceEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const entries: FeedbackSourceEntry[] = [];
+  for (const item of raw) {
+    if (typeof item === 'string') {
+      if (item.length > 0) entries.push({ label: item });
+      continue;
+    }
+    if (typeof item === 'object' && item !== null) {
+      const obj = item as Record<string, unknown>;
+      const label =
+        typeof obj.label === 'string' && obj.label.length > 0
+          ? obj.label
+          : typeof obj.title === 'string' && obj.title.length > 0
+            ? obj.title
+            : typeof obj.url === 'string'
+              ? obj.url
+              : undefined;
+      const url = typeof obj.url === 'string' && obj.url.length > 0 ? obj.url : undefined;
+      if (label !== undefined) entries.push({ label, url });
+    }
+  }
+  return entries;
+}
+
+/**
+ * D4: write the vote into `message.metadata.feedback` (un-vote clears the
+ * key). Mutates the resolved message object in place — the host's data
+ * source (page data / engine message) observes the write.
+ */
+function writeFeedbackMetadata(message: ChatMessage | undefined, value: 'like' | 'dislike' | null) {
+  if (!message) return;
+  if (!message.metadata) message.metadata = {};
+  if (value === null) delete message.metadata.feedback;
+  else message.metadata.feedback = value;
+}
+
+/**
  * ai-feedback (Widget, P1): message footer action bar (copy / refresh / like /
  * dislike / sources). Marker `nop-ai-feedback`. Reads the message from
  * resolved props; all actions fire `onAction` with `{ action, message }`
  * (design.md §5.1, renderers.md §8).
+ *
+ * D4 (plan 2026-08-24-2317-1) real side effects: like/dislike write
+ * `message.metadata.feedback` (+ `aria-pressed` mirror alongside the
+ * existing `data-active`); refresh regenerates the latest assistant message
+ * via the ai-chat context engine (busy-safe — Decision D-refresh: a single
+ * onAction ActionSchema cannot dispatch per-action, so the renderer owns the
+ * default and the schema keeps the notification-only onAction); sources
+ * opens a Popover listing `message.metadata.sources` (empty-state hint when
+ * absent).
  */
 export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchema>): RendererRenderOutput {
   const resolved = props.props;
@@ -40,7 +97,15 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
   // P2-5 (2026-08-10 multi-audit): node-level `meta.disabled` disables the
   // action bar (cross-package contract).
   const disabled = props.meta.disabled === true;
-  const [voted, setVoted] = useState<'like' | 'dislike' | null>(null);
+  const ctx = useAiChatContext();
+  // P2-3 (2026-08-24 open-audit, plan 2026-08-25-0440-1): seed the local vote
+  // mirror from the persisted `message.metadata.feedback` on mount (read
+  // once) so virtual-list recycling / branch-switch remounts keep the visual
+  // state in sync with the D4 metadata write. Same-mount message reference
+  // switches do NOT re-seed (documented limitation, renderers.md §8).
+  const [voted, setVoted] = useState<'like' | 'dislike' | null>(() =>
+    (message?.metadata as { feedback?: 'like' | 'dislike' } | undefined)?.feedback ?? null,
+  );
   const [copied, setCopied] = useState(false);
   // 2-20: the copied-reset timer must be cleared on unmount (no setState on
   // an unmounted component).
@@ -71,10 +136,86 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
           // swallow: keep the button in its pre-copy state
         });
     } else if (action === 'like' || action === 'dislike') {
-      setVoted((prev) => (prev === action ? null : action));
+      const next = voted === action ? null : action;
+      setVoted(next);
+      writeFeedbackMetadata(message, next);
+    } else if (action === 'refresh') {
+      // D4 / Decision D-refresh: regenerate the latest assistant message
+      // through the chat engine. Busy → silent no-op (Failure Path
+      // `busy-regenerate`: the renderer path does not surface an error).
+      // Standalone (no ai-chat context) → notification-only, unchanged.
+      if (ctx && !ctx.isProcessing) {
+        void ctx.engine.regenerate();
+      }
     }
     const payload = { type: 'ai:feedback-action', action, message };
     void props.events.onAction?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+  }
+
+  const sources = message?.metadata?.sources;
+
+  function renderActionButton(action: FeedbackAction): React.ReactElement {
+    const common = {
+      type: 'button' as const,
+      variant: 'ghost' as const,
+      size: 'sm' as const,
+      'data-slot': `ai-feedback-${action}`,
+      'data-active':
+        (action === 'like' && voted === 'like') || (action === 'dislike' && voted === 'dislike')
+          ? ''
+          : undefined,
+      'aria-pressed': action === 'like' || action === 'dislike' ? voted === action : undefined,
+      'aria-label': labelFor(action),
+      disabled,
+      onClick: () => fire(action),
+    };
+    if (action === 'sources') {
+      return (
+        <Popover key={action}>
+          <PopoverTrigger
+            render={
+              <Button {...common}>
+                {labelVisible(action, { copied })}
+              </Button>
+            }
+          />
+          <PopoverContent align="start" className="w-72">
+            <div data-slot="ai-feedback-sources-list" className="flex flex-col gap-1">
+              {normalizeFeedbackSources(sources).length > 0 ? (
+                normalizeFeedbackSources(sources).map((source, index) => (
+                  // P2 (N-6) sibling: source entries have no stable id; the
+                  // appended index keeps duplicate labels unique as keys.
+                  // eslint-disable-next-line react/no-array-index-key
+                  <div key={`${source.label}#${index}`} data-slot="ai-feedback-source-item" className="flex min-w-0 flex-col gap-0.5 rounded-sm px-1 py-0.5 text-xs">
+                    {source.url ? (
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="truncate text-foreground underline-offset-2 hover:underline"
+                      >
+                        {source.label}
+                      </a>
+                    ) : (
+                      <span className="truncate">{source.label}</span>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div data-slot="ai-feedback-sources-empty" className="px-1 py-0.5 text-xs text-muted-foreground">
+                  {t('flux.ai.citationNoSource')}
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      );
+    }
+    return (
+      <Button key={action} {...common}>
+        {labelVisible(action, { copied })}
+      </Button>
+    );
   }
 
   return (
@@ -84,26 +225,7 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
       data-cid={props.meta.cid || undefined}
       data-testid={props.meta.testid || undefined}
     >
-      {actions.map((action) => (
-        <Button
-          key={action}
-          type="button"
-          variant="ghost"
-          size="sm"
-          data-slot={`ai-feedback-${action}`}
-          data-active={
-            (action === 'like' && voted === 'like') ||
-            (action === 'dislike' && voted === 'dislike')
-              ? ''
-              : undefined
-          }
-          aria-label={labelFor(action)}
-          disabled={disabled}
-          onClick={() => fire(action)}
-        >
-          {labelVisible(action, { copied })}
-        </Button>
-      ))}
+      {actions.map((action) => renderActionButton(action))}
     </div>
   );
 }

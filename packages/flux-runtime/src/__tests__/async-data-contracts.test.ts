@@ -16,8 +16,8 @@ describe('async data contracts', () => {
     it('allows start after reset', async () => {
       const fetcher = vi
         .fn()
-        .mockResolvedValueOnce({ ok: true, status: 200, data: { run: 1 } })
-        .mockResolvedValueOnce({ ok: true, status: 200, data: { run: 2 } });
+        .mockResolvedValueOnce({ status: 0, data: { run: 1 } })
+        .mockResolvedValueOnce({ status: 0, data: { run: 2 } });
       const runtime = createRendererRuntime({
         registry: createRendererRegistry([textRenderer]),
         env: {
@@ -88,8 +88,7 @@ describe('async data contracts', () => {
           releaseSecond = resolve;
         });
         return {
-          ok: true,
-          status: 200,
+          status: 0,
           data: { value: 'success' } as T,
         };
       });
@@ -168,8 +167,7 @@ describe('async data contracts', () => {
       const fetcher = vi.fn(async () => {
         callCount += 1;
         return {
-          ok: true,
-          status: 200,
+          status: 0,
           data: { status: callCount >= 2 ? 'done' : 'running' },
         };
       });

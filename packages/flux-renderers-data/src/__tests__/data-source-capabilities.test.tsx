@@ -11,9 +11,7 @@ afterEach(() => {
 
 describe('data-source component capabilities (X4)', () => {
   it('component:refresh triggers controller.refresh (fetcher called again)', async () => {
-    const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async () => ({ status: 0,
       data: { value: 'fresh' },
     })) as RendererEnv['fetcher'];
 
@@ -53,10 +51,57 @@ describe('data-source component capabilities (X4)', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
-  it('component:refresh is skipped (no request) when sendOn is falsy', async () => {
+  it('component:refresh reports { ok: false } when the underlying request fails (2026-08-11-1929-3 Phase 4)', async () => {
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      ok: false,
+      status: 500,
+      msg: 'backend exploded',
+      data: null,
+    })) as unknown as RendererEnv['fetcher'];
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/ds-refresh-failure"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'data-source',
+              id: 'ds',
+              action: 'ajax',
+              args: { url: '/api/failing' },
+              name: 'payload',
+              initFetch: false,
+            },
+            {
+              type: 'button',
+              label: 'Refresh',
+              onClick: {
+                action: 'component:refresh',
+                componentId: 'ds',
+                then: { action: 'setValue', args: { path: 'okFlag', value: 'then-ran' } },
+                onError: { action: 'setValue', args: { path: 'errFlag', value: 'error-ran' } },
+              },
+            },
+            { type: 'text', text: 'Then: ${okFlag ?? "none"} | Err: ${errFlag ?? "none"}' },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+
+    // failure surfaces through onError; the then chain must not run
+    await waitFor(() =>
+      expect(screen.getByText('Then: none | Err: error-ran')).toBeTruthy(),
+    );
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('component:refresh is skipped (no request) when sendOn is falsy', async () => {
+    const fetcher = vi.fn(async () => ({ status: 0,
       data: { value: 'fresh' },
     })) as RendererEnv['fetcher'];
 

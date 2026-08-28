@@ -51,13 +51,19 @@ describe('gantt field consumption verification', () => {
     }
   });
 
-  const ganttRegionFields = fields.filter(f => f.kind === 'region').map(f => f.key);
+  const ganttRegionFields = fields
+    .filter(f => f.kind === 'region' || f.kind === 'value-or-region')
+    .map(f => f.key);
   it('gantt region fields are rendered', () => {
     expect(ganttRegionFields).toContain('loading');
     expect(ganttRegionFields).toContain('empty');
     expect(ganttRegionFields).toContain('taskBar');
     expect(ganttRegionFields).toContain('toolbar');
     expect(ganttRegionFields).toContain('editor');
+    expect(ganttRegionFields).toContain('start');
+    expect(ganttRegionFields).toContain('end');
+    expect(ganttRegionFields).toContain('duration');
+    expect(ganttRegionFields).toContain('predecessor');
   });
 
   const ganttPropFields = fields.filter(f => f.kind === 'prop').map(f => f.key);

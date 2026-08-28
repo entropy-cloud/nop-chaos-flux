@@ -349,7 +349,7 @@ Runtime compiler ownership rule:
   - lexical namespaced-action lookup
   - scope-local namespace registration and debug snapshot ownership
 - `packages/flux-runtime/src/component-handle-registry.ts`
-  - lexical component-handle registration and lookup by `cid`, `componentId`, or `componentName`
+  - lexical component-handle registration and lookup by `cid` or `componentId`
   - debugger-facing handle debug-data ownership
 - `packages/flux-runtime/src/composite-field-handle.ts`
   - composite field (array-form) component handle creation (`addItem` / `removeItem` / `moveItem`)

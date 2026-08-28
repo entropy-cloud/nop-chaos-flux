@@ -41,9 +41,9 @@ describe('card 刷新约定（panel-chrome 组合支撑）— refreshSource 组�
 
   it('card header 内刷新按钮经 refreshSource 触发 data-source 重载', async () => {
     let callCount = 0;
-    const fetcher = vi.fn(async <T,>(_api: { url: string }): Promise<{ ok: boolean; status: number; data: T }> => {
+    const fetcher = vi.fn(async <T,>(_api: { url: string }): Promise<{ status: number; data: T | null }> => {
       callCount += 1;
-      return { ok: true, status: 200, data: { fetched: String(callCount) } as T };
+      return { status: 0, data: { fetched: String(callCount) } as T };
     });
     const SchemaRenderer = createDataSchemaRenderer(EXTRA);
     render(
@@ -89,9 +89,7 @@ describe('card 刷新约定（panel-chrome 组合支撑）— refreshSource 组�
   });
 
   it('刷新按钮与 dashboard-filter 联动示例可运行（筛选 → 卡片刷新 → 数据带筛选参数）', async () => {
-    const fetcher = vi.fn(async <T,>(_api: { url: string }) => ({
-      ok: true,
-      status: 200,
+    const fetcher = vi.fn(async <T,>(_api: { url: string }) => ({ status: 0,
       data: {} as T,
     }));
     const SchemaRenderer = createDataSchemaRenderer(EXTRA);

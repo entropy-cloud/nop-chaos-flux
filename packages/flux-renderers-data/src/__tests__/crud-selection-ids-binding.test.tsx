@@ -13,7 +13,7 @@ afterEach(cleanup);
 describe('CRUD selectionField (ids) binding for batch actions', () => {
   it('resolves ${ids} to selected row keys in the batch button ajax url', async () => {
     cleanup();
-    const fetcher = vi.fn(async <T,>(_api: unknown): Promise<{ ok: boolean; status: number; data: T }> => ({ ok: true, status: 0, data: {} as T }));
+    const fetcher = vi.fn(async <T,>(_api: unknown): Promise<{ status: number; data: T | null }> => ({ status: 0, data: {} as T }));
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
 
     render(
@@ -83,7 +83,7 @@ describe('CRUD selectionField (ids) binding for batch actions', () => {
 
   it('honors custom selectionField name', async () => {
     cleanup();
-    const fetcher = vi.fn(async <T,>(_api: unknown): Promise<{ ok: boolean; status: number; data: T }> => ({ ok: true, status: 0, data: {} as T }));
+    const fetcher = vi.fn(async <T,>(_api: unknown): Promise<{ status: number; data: T | null }> => ({ status: 0, data: {} as T }));
     const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
 
     render(

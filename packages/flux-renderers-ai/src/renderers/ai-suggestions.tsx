@@ -4,6 +4,8 @@ import type {
   RendererRenderOutput,
   ScopeRef,
 } from '@nop-chaos/flux-core';
+import { Languages, Lightbulb, Pencil, Plus, Sparkles } from 'lucide-react';
+import type { ComponentType } from 'react';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { AiSuggestionItem, AiSuggestionsSchema } from '../schemas.js';
@@ -19,6 +21,38 @@ function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | und
     evaluationBindings: payload,
     scope: nodeScope,
   };
+}
+
+/**
+ * D4 / G9 (plan 2026-08-24-2317-1, product-spec.md §3.3): preset string →
+ * lucide component map (same dispatch pattern as the D3 welcome icon). An
+ * `icon` value that hits this table renders the lucide icon; any other
+ * non-empty string falls back to the literal character rendering (backward
+ * compatible — emoji / custom glyphs keep working).
+ */
+const SUGGESTION_ICON_PRESETS: Record<string, ComponentType> = {
+  pencil: Pencil,
+  languages: Languages,
+  lightbulb: Lightbulb,
+  sparkles: Sparkles,
+  plus: Plus,
+};
+
+function SuggestionIcon({ icon }: { icon?: string }): React.ReactElement | null {
+  if (typeof icon !== 'string' || icon.length === 0) return null;
+  const Preset = SUGGESTION_ICON_PRESETS[icon];
+  if (Preset) {
+    return (
+      <span data-slot="ai-suggestions-item-icon" aria-hidden="true" className="inline-flex">
+        <Preset aria-hidden="true" />
+      </span>
+    );
+  }
+  return (
+    <span data-slot="ai-suggestions-item-icon" aria-hidden="true">
+      {icon}
+    </span>
+  );
 }
 
 function normalizeItems(items: unknown): AiSuggestionItem[] {
@@ -49,9 +83,7 @@ function SuggestionPill({
       disabled={disabled}
       onClick={() => onSelect?.(item, index)}
     >
-      {typeof item.icon === 'string' && item.icon.length > 0 ? (
-        <span aria-hidden="true">{item.icon}</span>
-      ) : null}
+      <SuggestionIcon icon={item.icon} />
       <span data-slot="ai-suggestions-item-text">{item.text}</span>
     </Button>
   );
@@ -152,11 +184,7 @@ export function AiSuggestionsView(props: {
                   disabled={disabled}
                   onClick={() => props.onSelect?.(item, maxVisible + i)}
                 >
-                  {typeof item.icon === 'string' && item.icon.length > 0 ? (
-                    <span aria-hidden="true" className="mr-1">
-                      {item.icon}
-                    </span>
-                  ) : null}
+                  <SuggestionIcon icon={item.icon} />
                   {item.text}
                 </Button>
               ))}

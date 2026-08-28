@@ -130,7 +130,10 @@ describe('Gantt listener mount timing (1-7): loading/empty first mount must not 
     });
     const gridEl = container.querySelector('[data-slot="gantt-grid"]') as HTMLElement;
     const timelineEl = container.querySelector('[data-slot="gantt-scale"]') as HTMLElement;
-    const gridScrollContainer = gridEl.parentElement as HTMLElement;
+    // The grid scroll container is the overflow-auto grid element itself
+    // (scrollContainerRef lands on it for the virtualizer); the timeline
+    // scroll container is the overflow-auto wrapper around the scale.
+    const gridScrollContainer = gridEl;
     const timelineScrollContainer = timelineEl.parentElement as HTMLElement;
     gridScrollContainer.scrollTop = 100;
     gridScrollContainer.dispatchEvent(new Event('scroll', { bubbles: true }));

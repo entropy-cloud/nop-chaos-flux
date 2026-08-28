@@ -111,8 +111,10 @@ Current host-facing release rules:
 - `@nop-chaos/flux` exports a stable JS entry and `./style.css`
 - host-owned singleton dependencies stay external and appear as facade peers: `react`, `react-dom`, `zustand`, `lucide-react`, and `@nop-chaos/ui`
 - any publishable host-facing or transitively shipped runtime package must model shared host-owned libraries as `peerDependencies` plus local `devDependencies` rather than ordinary `dependencies`; current singleton-sensitive libraries include `react`, `react-dom`, `zustand`, `lucide-react`, `i18next`, `react-i18next`, `recharts`, and `sonner`
+- the facade tarball must be self-contained: the runtime JS is fully inlined, and `dist/index.d.ts` is generated at build time (`scripts/prepare-flux-bundle-dist.mjs` bundles `types/public-types.d.ts` and its referenced `flux-core` type declarations) so a clean host install type-checks with `tsc --skipLibCheck false` and zero TS2307; `types/public-types.d.ts` remains the authored public-type source inside the workspace
+- `FluxSchemaRendererProps` forwards the full `SchemaRendererProps` surface to the underlying renderer — everything except the narrowed re-declarations (`schema`, `env`, `onActionError`) and the facade-owned `formulaCompiler`/`registry`; "passable through the public type" implies "forwarded at runtime" and this contract is pinned by `packages/flux-bundle/src/__tests__/index-props-forwarding.test.tsx`
 - the repo-owned tarball output convention is `dist-packages/`
-- `pnpm check:flux-bundle-pack` validates the real packed tarball shape, not only local `dist/`
+- `pnpm check:flux-bundle-pack` validates the real packed tarball shape, not only local `dist/`: manifest hygiene, required entries, and the `dist/index.d.ts` type face (every `@nop-chaos/*` reference must be declared as a facade peer, which for the self-contained facade means none may appear)
 
 Legacy sync workflow baseline:
 

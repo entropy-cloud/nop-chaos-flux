@@ -2,6 +2,7 @@ import type { GanttId, GanttTask, GanttTaskData, GanttLink, GanttLinkData, Gantt
 import { computeTaskLayout, computeLinkPolylines, pixelToDate, dateToPixel } from './utils/layout.js';
 import { computeScaleRange } from './utils/scale.js';
 import { CalendarManager, type WorkCalendar } from './utils/worktime.js';
+import { diffInDays } from './utils/date.js';
 import { createStore } from 'zustand/vanilla';
 import { flattenTasks, buildParentIndex, seedExpandedSet, getVisibleTasks, getVisibleDescendantCount, computeLevels, computeBranchInfo, computeSourceTarget, collectDescendantIds } from './gantt-tree-utils.js';
 
@@ -79,6 +80,11 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     store.setState({ tasks: tasksAfterSourceTarget });
     if (seedExpand) {
       const state = gs();
+      // The expandedSet change must invalidate the visible-tasks cache BEFORE
+      // the setState notification: a subscriber's getSnapshot re-reading
+      // getVisibleTasks() during the notification would otherwise reuse the
+      // pre-seed (all-collapsed) cache and pin it for every later consumer.
+      _visibleTasksCacheDirty = true;
       store.setState({ expandedSet: seedExpandedSet(state.tasks, state.expandedSet) });
     }
     recomputeVisualLayout();
@@ -99,6 +105,10 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     computeTaskLayout(clonedTasks, visibleIds, state.scaleRange, state.cellWidth, state.taskBarHeight, state.rowHeight);
     const newTasks = new Map(state.tasks);
     for (const task of clonedTasks) newTasks.set(task.id, task as GanttTask);
+    // The cloned tasks carry fresh $x/$y/$w/$h in the tasks map; the cached
+    // visible list still references the pre-layout objects. Invalidate BEFORE
+    // notifying so subscribers re-reading getVisibleTasks() see the layout.
+    _visibleTasksCacheDirty = true;
     store.setState({ tasks: newTasks });
   }
 
@@ -165,7 +175,19 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     parse(tasks: GanttTaskData[], links: GanttLinkData[], resources?: GanttResource[], assignments?: GanttAssignment[], calendars?: CalendarEntry[]): void {
       if (calendars) for (const e of calendars) calendarManager.registerCalendar(e.id, e.calendar);
       const newTasks = new Map<GanttId, GanttTask>();
-      for (const t of flattenTasks(tasks, null)) newTasks.set(t.id, { ...t, $x: 0, $y: 0, $w: 0, $h: 0, $level: 0, $branchSize: 0, $posInBranch: 0, $source: [], $target: [] });
+      for (const t of flattenTasks(tasks, null)) {
+        // Derive duration from start/end when the schema omits it, so the
+        // Days column and the editor duration field show a real initial value.
+        let duration = t.duration;
+        if (duration === undefined && t.start && t.end) {
+          const start = new Date(t.start);
+          const end = new Date(t.end);
+          if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+            duration = diffInDays(end, start);
+          }
+        }
+        newTasks.set(t.id, { ...t, duration, $x: 0, $y: 0, $w: 0, $h: 0, $level: 0, $branchSize: 0, $posInBranch: 0, $source: [], $target: [] });
+      }
       const newLinks = new Map<GanttId, GanttLink>();
       if (links) for (const l of links) newLinks.set(l.id, { ...l, type: normalizeLinkType(l.type), $p: '' });
       const newResources = new Map<GanttId, GanttResource>();
@@ -285,6 +307,12 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
       for (const deleteId of allIds) newTasks.delete(deleteId);
       store.setState({ tasks: newTasks, links: newLinks, revision: state.revision + 1, taskRevision: state.taskRevision + 1 });
       computeComputedPropertiesInternal();
+      // 2026-07-25-2 e2e: deleting a task changes the visible TREE — bump
+      // treeRevision + layoutRevision so grid/tree subscribers re-render even
+      // without a selection change (the redo path re-deletes with selection
+      // already null and previously left the grid stale).
+      const s1 = gs();
+      store.setState({ treeRevision: s1.treeRevision + 1, layoutRevision: s1.layoutRevision + 1 });
     },
 
     addLink(source: GanttId, target: GanttId, type: GanttLinkType): GanttLink {
@@ -344,6 +372,7 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
 
     destroy(): void {
       parentIndex.clear();
+      _visibleTasksCacheDirty = true;
       store.setState({ tasks: new Map(), links: new Map(), resources: new Map(), assignments: new Map(), expandedSet: new Set() });
     },
   };

@@ -570,6 +570,81 @@ interface PageRuntime {
 
 ---
 
+## `propContracts` enum/literal pattern (plan 462)
+
+Every renderer that has a finite enum / literal / boolean / number / string prop should register a `propContracts[key]` entry. Without it, the schema compiler's `validateFluxValueShape` early-returns and the typo silently reaches runtime. See `docs/architecture/renderer-runtime.md §propContracts Coverage Discipline` for the full checklist; canonical patterns below.
+
+```ts
+import type { RendererDefinition, FluxValueShape } from '@nop-chaos/flux-core';
+
+// 1. Union of string literals — most common (variant / mode / size / status)
+const VARIANT_SHAPE: FluxValueShape = {
+  kind: 'union',
+  anyOf: [
+    { kind: 'literal', value: 'default' },
+    { kind: 'literal', value: 'destructive' },
+    { kind: 'literal', value: 'outline' },
+    { kind: 'literal', value: 'secondary' },
+    { kind: 'literal', value: 'ghost' },
+    { kind: 'literal', value: 'link' },
+  ],
+};
+
+const definition: RendererDefinition = {
+  type: 'my-renderer',
+  component: MyRenderer,
+  propContracts: {
+    variant: {
+      displayName: 'Variant',
+      shape: VARIANT_SHAPE,
+      editorType: 'select',
+      defaultValue: 'default',
+    },
+    disabled: { displayName: 'Disabled', shape: { kind: 'boolean' }, editorType: 'switch' },
+    size: {
+      displayName: 'Size',
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'sm' },
+          { kind: 'literal', value: 'md' },
+          { kind: 'literal', value: 'lg' },
+        ],
+      },
+      editorType: 'select',
+    },
+  },
+  fields: [
+    { key: 'variant', kind: 'prop' },
+    { key: 'disabled', kind: 'prop', valueType: 'boolean' },
+    { key: 'size', kind: 'prop' },
+  ],
+};
+```
+
+After adding the contract, a schema with `my-renderer.variant: 'totally-bogus'` emits:
+
+```text
+invalid-property-value  Invalid value for property "variant" on renderer type "my-renderer".
+                       Expected "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+                       but received "totally-bogus".
+                       Option 1: Expected "default" but received "totally-bogus".
+                       Option 2: Expected "destructive" but received "totally-bogus".
+                       ... (each option listed with its own rejection reason)
+```
+
+The `kind: 'literal'` value can also be a number (`{ kind: 'literal', value: 0 }`) for things like `firstDayOfWeek: 0 | 1`. Mixed unions (e.g. `icon.size = number | 'sm' | 'md' | 'lg'`) put a bare `kind: 'number'` first, then each string literal:
+
+```ts
+shape: { kind: 'union', anyOf: [{ kind: 'number' }, { kind: 'literal', value: 'sm' }, { kind: 'literal', value: 'md' }, { kind: 'literal', value: 'lg' }] }
+```
+
+**Do NOT** register `regions` / `events` as `propContracts` — those are classified via `fields: { key, kind: 'region' | 'event' | 'reaction' | 'value-or-region' }` and validated through `validateActionShape` / `findSchemaDefinitionShape`. Adding a literal-shape contract to a region field would conflict with the action-shape validator and emit false `invalid-property-value` diagnostics on every action-bearing schema.
+
+**Shared fields across multiple renderers** (e.g. form inputs that all share `readOnly` / `required` / `labelAlign`): use a sibling array of `RendererPropContract` and spread it into each renderer's `propContracts` (see `packages/flux-renderers-form/src/field-utils/field-reading.tsx` for the `formFieldContracts` pattern).
+
+---
+
 ## Typical Renderer Component Pattern
 
 ```tsx

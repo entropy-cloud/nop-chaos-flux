@@ -39,6 +39,7 @@ import type {
 } from './renderer-definition-types.js';
 import type {
   DataSourceController,
+  DataSourceRefreshOutcome,
   DataSourceRegistration,
   FormLifecycleHandlers,
   FormRuntime,
@@ -396,7 +397,7 @@ export interface RendererRuntime {
     scope: ScopeRef;
     compiledSource: CompiledDataSource;
   }): DataSourceRegistration;
-  refreshDataSource(input: { name: string; scope?: ScopeRef }): Promise<boolean>;
+  refreshDataSource(input: { name: string; scope?: ScopeRef }): Promise<DataSourceRefreshOutcome>;
   /**
    * Returns the first registered source in the given scope's bucket (without
    * walking the parent scope chain). Used by `refreshNearest` to find the

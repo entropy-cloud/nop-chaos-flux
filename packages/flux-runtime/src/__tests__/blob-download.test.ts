@@ -103,7 +103,7 @@ describe('normalizeBlobResponse', () => {
     } as unknown as Blob;
     const result = await normalizeBlobResponse(blob, { url: '/dl' });
 
-    expect(result.ok).toBe(false);
+    expect(result.status).not.toBe(0);
     expect(result.status).toBe(500);
     expect(result.msg).toBe('导出失败');
   });
@@ -127,7 +127,7 @@ describe('normalizeBlobResponse', () => {
     const headers = new Headers({ 'content-disposition': 'attachment; filename="data.bin"' });
     const result = await normalizeBlobResponse(blob, { url: '/dl' }, headers);
 
-    expect(result.ok).toBe(true);
+    expect(result.status).toBe(0);
     expect(result.status).toBe(0);
     expect((result.data as { msg: string }).msg).toBe('downloading');
     expect((fakeAnchor as { download: string }).download).toBe('data.bin');
@@ -153,5 +153,48 @@ describe('normalizeBlobResponse', () => {
     await normalizeBlobResponse(blob, { downloadFileName: 'override.csv', url: '/dl' }, headers);
 
     expect((fakeAnchor as { download: string }).download).toBe('override.csv');
+  });
+
+  it('returns { ok: false } with diagnostics when JSON-in-blob body fails to parse (no synthetic success, no download)', async () => {
+    const createUrlSpy = vi.fn().mockReturnValue('blob:bad');
+    vi.stubGlobal('URL', { createObjectURL: createUrlSpy, revokeObjectURL: vi.fn() });
+    const clickSpy = vi.fn();
+    const fakeAnchor = { click: clickSpy } as unknown as HTMLAnchorElement;
+    vi.stubGlobal('document', {
+      createElement: vi.fn().mockReturnValue(fakeAnchor),
+      body: { appendChild: vi.fn(), removeChild: vi.fn() } as unknown as HTMLElement,
+    });
+
+    const blob = {
+      type: 'application/json',
+      text: async () => 'not-json{{broken',
+    } as unknown as Blob;
+    const result = await normalizeBlobResponse(blob, { url: '/dl' });
+
+    expect(result.status).not.toBe(0);
+    expect(result.msg).toContain('application/json');
+    expect(result.msg).toContain('/dl');
+    expect(result.msg).toContain('JSON');
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(createUrlSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns { ok: false } instead of a synthetic success when no filename can be resolved', async () => {
+    const createUrlSpy = vi.fn().mockReturnValue('blob:noname');
+    vi.stubGlobal('URL', { createObjectURL: createUrlSpy, revokeObjectURL: vi.fn() });
+    const clickSpy = vi.fn();
+    const fakeAnchor = { click: clickSpy } as unknown as HTMLAnchorElement;
+    vi.stubGlobal('document', {
+      createElement: vi.fn().mockReturnValue(fakeAnchor),
+      body: { appendChild: vi.fn(), removeChild: vi.fn() } as unknown as HTMLElement,
+    });
+
+    const blob = { type: 'application/octet-stream' } as Blob;
+    const result = await normalizeBlobResponse(blob, { url: '/dl' });
+
+    expect(result.status).not.toBe(0);
+    expect(result.msg).toContain('filename');
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(createUrlSpy).not.toHaveBeenCalled();
   });
 });

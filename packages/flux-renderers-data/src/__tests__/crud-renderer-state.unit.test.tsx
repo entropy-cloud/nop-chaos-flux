@@ -304,9 +304,7 @@ describe('useCrudHandle', () => {
     ]);
     await expect(handle.capabilities.invoke('refresh')).resolves.toEqual({ ok: true });
     expect(handleRefresh).toHaveBeenCalled();
-    await expect(handle.capabilities.invoke('getSelection')).resolves.toEqual({
-      ok: true,
-      data: ['r1'],
+    await expect(handle.capabilities.invoke('getSelection')).resolves.toEqual({ ok: true, data: ['r1'],
     });
     await expect(handle.capabilities.invoke('clearSelection')).resolves.toEqual({ ok: true });
     expect(clearSelection).toHaveBeenCalled();

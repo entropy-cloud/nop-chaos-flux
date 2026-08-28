@@ -421,8 +421,27 @@ export interface DataSourceController {
 }
 
 export interface DataSourceRefreshResult {
-  /** true when the refresh was skipped (e.g. sendOn gate evaluated falsy) */
+  /** true when the refresh was skipped (e.g. sendOn gate evaluated falsy, or a dedup/supersede path meant this call observed no completed request) */
   skipped: boolean;
+  /**
+   * Whether the observed refresh cycle completed successfully. Present when a
+   * request cycle was observed (`skipped: false`); `false` means the underlying
+   * request failed or was cancelled. Absent when skipped — a skipped refresh is
+   * neither a success nor a failure.
+   */
+  ok?: boolean;
+  /** Failure details when `ok` is false. */
+  error?: unknown;
+}
+
+/**
+ * Outcome of a named source refresh lookup: `found: false` means no registered
+ * source matched the name/scope pair (distinguishable from a found source whose
+ * request failed, which reports `found: true` with `result.ok === false`).
+ */
+export interface DataSourceRefreshOutcome {
+  found: boolean;
+  result?: DataSourceRefreshResult;
 }
 
 export type DataSourceStatus = 'idle' | 'pending' | 'success' | 'error';

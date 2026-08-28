@@ -206,18 +206,12 @@ describe('useTableHandle', () => {
       page: undefined,
       nodeInstance: undefined,
     };
-    expect(capturedHandle.capabilities.invoke('getSelection', undefined, ctx)).toEqual({
-      ok: true,
-      data: ['r1'],
+    expect(capturedHandle.capabilities.invoke('getSelection', undefined, ctx)).toEqual({ ok: true, data: ['r1'],
     });
-    expect(capturedHandle.capabilities.invoke('setSelection', ['r2'], ctx)).toEqual({
-      ok: true,
-      data: ['r2'],
+    expect(capturedHandle.capabilities.invoke('setSelection', ['r2'], ctx)).toEqual({ ok: true, data: ['r2'],
     });
     expect(setSelectionExternal).toHaveBeenCalled();
-    expect(capturedHandle.capabilities.invoke('refresh', undefined, ctx)).toEqual({
-      ok: true,
-      data: { page: 2, pageSize: 20 },
+    expect(capturedHandle.capabilities.invoke('refresh', undefined, ctx)).toEqual({ ok: true, data: { page: 2, pageSize: 20 },
     });
     expect(onRefresh).toHaveBeenCalled();
     expect(capturedHandle.capabilities.invoke('unsupported', undefined, ctx).ok).toBe(false);

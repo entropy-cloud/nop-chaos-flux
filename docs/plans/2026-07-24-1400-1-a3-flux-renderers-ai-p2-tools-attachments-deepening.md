@@ -241,8 +241,8 @@ Exit Criteria:
 
 > 本计划内可裁定的 Decision（A-7/LaTeX）在 Phase 5 裁定，不预置于此。仅记录执行中经裁定移出的优化项。
 
-- **A-7 Streamdown（裁定：不引入）**：当前路径 C 缓冲（`markdown-buffer.ts`）已覆盖流式安全核心（CJK 代理对拆分、未闭合 ```/~~~ fence、未闭合 `$$`/`\(`）。streamdown ~8KB 增量收益（完整 math）依赖 LaTeX 决策（亦不内置），边际收益不足。保留路径 C；streamdown 列为 optimization candidate，移出 scope（host 经自定义 `BubbleContentRenderer`/`xui:imports`注入）。结论已写入`design.md` §10.4。
-- **LaTeX / KaTeX（裁定：不内置）**：`remark-math` + `rehype-katex` ~20KB + CSS，高频必需证据不足，内置让所有 host 承担体积。out-of-scope improvement：host 经自定义 `BubbleContentRenderer`（pre-process content 走 remark-math+rehype-katex）或 `xui:imports` 注入。结论已写入 `design.md` §10.4。
+- **A-7 Streamdown（裁定：不引入）**：当前路径 C 缓冲（`markdown-buffer.ts`）已覆盖流式安全核心（CJK 代理对拆分、未闭合 ```/~~~ fence、未闭合 `$$`/`\(`）。streamdown ~8KB 增量收益（完整 math）依赖 LaTeX 决策（~~亦不内置~~ **2026-08-23 supersession**：LaTeX 决策已 human gate 重新评估为内置，见下条；streamdown 的 math 插件能力已被 LaTeX 内置路径覆盖，streamdown 仍维持不引入裁定），边际收益不足。保留路径 C；streamdown 列为 optimization candidate，移出 scope（host 经自定义 `BubbleContentRenderer`/`xui:imports`注入）。结论已写入`design.md` §10.4。
+- **LaTeX / KaTeX（**~~裁定：不内置~~** 2026-08-23 supersession：human gate 重新决策为内置）**：原裁定依据"高频必需证据不足"在 2026-08-23 由 human gate 重新评估为不成立——LaTeX 渲染为产品级 AI chat 实际应用必须能力（科学 / 工程 / 教育场景高频）。**新决策**：内置 `remark-math@^6` + `rehype-katex@^7` + `katex@^0.16` 作为硬 peer deps（与现有 `react-markdown` / `rehype-raw` 治理一致），host 必须安装才能使用 `ai-bubble`。落地计划见 `docs/backlog/ai-widgets-product-roadmap.md` D6 phase + 同步 plan `docs/plans/2026-08-23-0002-1-a7-d6-latex-impl.md`（待起草）。**结论已写入 `design.md` §10.4 与 `improvement-analysis.md` §4.2**（均 supersede 本条）。
 
 ## Non-Blocking Follow-ups
 

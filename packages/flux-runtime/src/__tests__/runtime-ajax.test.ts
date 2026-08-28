@@ -14,8 +14,7 @@ describe('createRendererRuntime', () => {
         fetcher: async <T>(api: ApiSchema) => {
           fetchCalls.push(api);
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: {
               items: [{ id: 1, name: 'Alice' }],
               total: 1,
@@ -74,8 +73,7 @@ describe('createRendererRuntime', () => {
         fetcher: async <T>(api: ApiSchema) => {
           fetchCalls.push(api);
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { ok: true } as T,
           };
         },
@@ -128,8 +126,7 @@ describe('createRendererRuntime', () => {
         fetcher: async <T>(api: ApiSchema) => {
           fetchCalls.push(api);
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { ok: true } as T,
           };
         },

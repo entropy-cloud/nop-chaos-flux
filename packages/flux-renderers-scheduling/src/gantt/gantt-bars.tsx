@@ -126,6 +126,16 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
               aria-label={task.text ? t('scheduling.gantt.taskBarLabel', { text: task.text }) : t('scheduling.gantt.barLabel')}
               className="absolute cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400"
               style={{ left: cx - size / 2, top: cy - size / 2, width: size, height: size }}
+              onClick={() => onBarClick?.(task.id)}
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Space') {
+                  e.preventDefault();
+                  onBarKeyAction?.(task.id, 'select');
+                } else if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onBarDoubleClick?.(task.id);
+                }
+              }}
             >
               <svg className="w-full h-full" style={{ display: 'block' }}>
                 <polygon
@@ -138,12 +148,12 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
               <div
                 data-slot="gantt-bar-link-handle"
                 data-handle-side="start"
-                className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+                className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
               />
               <div
                 data-slot="gantt-bar-link-handle"
                 data-handle-side="end"
-                className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+                className="absolute right-0 top-1/2 translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
               />
             </div>
           );
@@ -189,12 +199,12 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
             <div
               data-slot="gantt-bar-link-handle"
               data-handle-side="start"
-              className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+              className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
             />
             <div
               data-slot="gantt-bar-link-handle"
               data-handle-side="end"
-              className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+              className="absolute right-0 top-1/2 translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
             />
           </div>
         );

@@ -1,6 +1,7 @@
-import { copyFile, mkdir, readFile, writeFile } from 'fs/promises';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { generateDtsBundle } from 'dts-bundle-generator';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = path.join(__dirname, '..');
@@ -9,9 +10,27 @@ const distDir = path.join(packageDir, 'dist');
 const sourceTypesPath = path.join(packageDir, 'types', 'public-types.d.ts');
 const distTypesPath = path.join(distDir, 'index.d.ts');
 
+const externalTypeImportPattern = /(?:\bfrom\s*|\bimport\(\s*)['"](@nop-chaos\/[^'"]+)['"]/g;
+
+async function writeSelfContainedPublicTypes() {
+  const [bundledTypes] = generateDtsBundle([{ filePath: sourceTypesPath }]);
+
+  const undeclaredReferences = [...bundledTypes.matchAll(externalTypeImportPattern)].map(
+    (match) => match[1],
+  );
+  if (undeclaredReferences.length > 0) {
+    throw new Error(
+      `Bundled public types still reference internal packages: ${[...new Set(undeclaredReferences)].join(', ')}. ` +
+        'The facade tarball type face must be self-contained.',
+    );
+  }
+
+  await writeFile(distTypesPath, bundledTypes, 'utf8');
+}
+
 async function main() {
   await mkdir(distDir, { recursive: true });
-  await copyFile(sourceTypesPath, distTypesPath);
+  await writeSelfContainedPublicTypes();
 
   const packageJsonPath = path.join(packageDir, 'package.json');
   const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));

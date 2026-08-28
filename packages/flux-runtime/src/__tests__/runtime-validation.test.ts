@@ -20,8 +20,7 @@ describe('createRendererRuntime', () => {
 
           if (api.url === '/api/validate-username') {
             return {
-              ok: true,
-              status: 200,
+              status: 0,
               data: {
                 valid: false,
                 message: 'Username already exists',
@@ -30,8 +29,7 @@ describe('createRendererRuntime', () => {
           }
 
           return {
-            ok: true,
-            status: 200,
+            status: 0,
             data: { ok: true } as T,
           };
         },
@@ -162,8 +160,7 @@ describe('createRendererRuntime', () => {
     expect(form.isValidating('username')).toBe(true);
 
     resolveValidation?.({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { valid: true },
     });
 
@@ -240,8 +237,7 @@ describe('createRendererRuntime', () => {
     form.setValue('username', 'alice-2');
 
     resolveFirst?.({
-      ok: true,
-      status: 200,
+      status: 0,
       data: {
         valid: false,
         message: 'Username already exists',
@@ -269,8 +265,7 @@ describe('createRendererRuntime', () => {
 
     try {
       const fetcherMock = vi.fn(async () => ({
-        ok: true,
-        status: 200,
+        status: 0,
         data: { valid: true },
       }));
       const runtime = createRendererRuntime({
@@ -424,8 +419,7 @@ describe('createRendererRuntime', () => {
     expect(form.getAsyncOwnerDebugSnapshot?.()).toEqual({ owners: [] });
 
     resolveValidation?.({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { valid: true },
     });
     await expect(pendingValidation).resolves.toMatchObject({ ok: true, errors: [] });
@@ -433,8 +427,7 @@ describe('createRendererRuntime', () => {
     runtime.setEnv({
       ...env,
       fetcher: async <T>() => ({
-        ok: true,
-        status: 200,
+        status: 0,
         data: { valid: true } as T,
       }),
     });

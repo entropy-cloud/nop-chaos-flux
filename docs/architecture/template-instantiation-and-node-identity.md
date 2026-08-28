@@ -500,8 +500,7 @@ Removed indexes:
 interface ComponentTarget {
   _targetCid?: number; // preferred live target when already known
   instancePath?: readonly InstanceFrame[];
-  componentId?: string; // fallback author selector
-  componentName?: string; // fallback author selector
+  componentId?: string; // fallback author selector (resolves handle.id first, then handle.name)
 }
 ```
 

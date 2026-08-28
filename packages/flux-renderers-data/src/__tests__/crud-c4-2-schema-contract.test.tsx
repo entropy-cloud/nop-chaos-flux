@@ -61,9 +61,7 @@ describe('CRUD schema contract (c4-2)', () => {
     await waitFor(() => {
       expect(resolveLoad).toBeDefined();
     });
-    resolveLoad?.({
-      ok: true,
-      data: { items: [{ id: '1', name: 'TotalItem' }], rowCount: 42 },
+    resolveLoad?.({ ok: true, data: { items: [{ id: '1', name: 'TotalItem' }], rowCount: 42 },
     });
 
     await waitFor(() => {
@@ -209,9 +207,7 @@ describe('CRUD schema contract (c4-2)', () => {
     await waitFor(() => {
       expect(resolveLoad).toBeDefined();
     });
-    resolveLoad?.({
-      ok: true,
-      data: { items: [{ id: '1', name: 'LoadedRow' }], total: 1 },
+    resolveLoad?.({ ok: true, data: { items: [{ id: '1', name: 'LoadedRow' }], total: 1 },
     });
 
     await waitFor(() => {

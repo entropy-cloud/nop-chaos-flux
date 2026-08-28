@@ -2,11 +2,6 @@
   "type": "container",
   "body": [
     {
-      "type": "text",
-      "text": "远程标签页",
-      "className": "text-lg mb-2"
-    },
-    {
       "type": "tabs",
       "testid": "dynamic-tabs",
       "defaultValue": "overview",

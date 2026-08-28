@@ -17,6 +17,8 @@ export interface AiMessageListViewProps {
   cid?: number;
   /** A-4: forward to every bubble so `metadata.createdAt` renders as a time footer. */
   showTimestamp?: boolean;
+  /** D3: forward to every bubble so the role-dispatched lucide avatar renders. */
+  showAvatar?: boolean;
   /**
    * P2-4 (2026-08-10 multi-audit): HITL approval for the bubble path —
    * forwarded from the ai-chat context to every bubble so a pending tool-call
@@ -149,6 +151,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
                     message={message}
                     isError={inError && vi.index === messages.length - 1 && message.role === 'assistant'}
                     showTimestamp={props.showTimestamp}
+                    showAvatar={props.showAvatar}
                     branches={ctx?.branches}
                     activeBranchId={ctx?.activeBranchId}
                     onBranchChange={ctx?.onBranchChange}
@@ -169,6 +172,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
               message={message}
               isError={inError && idx === messages.length - 1 && message.role === 'assistant'}
               showTimestamp={props.showTimestamp}
+              showAvatar={props.showAvatar}
               branches={ctx?.branches}
               activeBranchId={ctx?.activeBranchId}
               onBranchChange={ctx?.onBranchChange}
@@ -196,6 +200,7 @@ export function AiMessageListRenderer(props: RendererComponentProps<AiMessageLis
       testid={props.meta.testid}
       cid={props.meta.cid}
       showTimestamp={resolved.showTimestamp === true}
+      showAvatar={resolved.showAvatar === true}
     />
   );
 }

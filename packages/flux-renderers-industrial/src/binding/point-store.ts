@@ -140,7 +140,7 @@ export interface PointStoreOptions {
 export class PointStore {
   private entries = new Map<string, PointEntry>();
   private subscribers = new Map<string, Set<PointChangeListener>>();
-  private readonly events = new EventHub<PointStoreEvents>();
+  private readonly hub = new EventHub<PointStoreEvents>();
   private dirtyPointIds = new Set<string>();
   private reportedSubscriberErrors = new Set<string>();
   private readonly onSubscriberError?: (pointId: string, error: unknown) => void;
@@ -175,7 +175,7 @@ export class PointStore {
     this.entries.clear();
     this.subscribers.clear();
     this.dirtyPointIds.clear();
-    this.events.removeAll();
+    this.hub.removeAll();
     this.reportedSubscriberErrors.clear();
     // 点集清空：快照必须重建（否则返回 stale 旧值）。
     this.generation++;
@@ -229,7 +229,7 @@ export class PointStore {
   }
 
   on(event: 'point:change', cb: (payload: ScadaPointChangeEvent) => void): Unsubscribe {
-    return this.events.on(event, cb);
+    return this.hub.on(event, cb);
   }
 
   drainDirtyPointIds(): string[] {
@@ -300,7 +300,7 @@ export class PointStore {
     const payload: ScadaPointChangeEvent = { pointId, value: next, prev };
     // plan 2026-08-05-0653-3 B5：用 emitWith 携 per-emit 闭包捕获当前 pointId，消除 re-entrant
     // setPointValue 下 lastNotifyPointId 可变字段被覆盖的归属竞态——错误始终归属正在派发的 pointId。
-    this.events.emitWith('point:change', (error) => this.reportSubscriberError(pointId, error), payload);
+    this.hub.emitWith('point:change', (error) => this.reportSubscriberError(pointId, error), payload);
     for (const cb of this.subscribers.get(pointId) ?? []) {
       try {
         cb(payload);

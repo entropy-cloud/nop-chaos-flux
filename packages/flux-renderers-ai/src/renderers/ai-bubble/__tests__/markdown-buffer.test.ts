@@ -94,3 +94,125 @@ describe('A-2 safeMarkdownSlice — math delimiter balance', () => {
     expect(safeMarkdownSlice('see \\(x + y')).toBe('see ');
   });
 });
+
+// ============================================================================
+// D6: single-`$` inline math boundary (Decision D-a anti-currency caliber) +
+// `\[` / `\]` block math boundary. The single-`$` scanner must be immune to
+// `$$` pairing, inline code spans, and fenced code; currency text
+// (`$5` / `$ 5` / `US$`) must never be truncated on complete text.
+// ============================================================================
+describe('D6 safeMarkdownSlice — \\[ block math boundary', () => {
+  it('holds back an unclosed \\[ block math', () => {
+    expect(safeMarkdownSlice('text \\[\nE = mc^2')).toBe('text ');
+  });
+
+  it('renders balanced \\[ \\] blocks fully', () => {
+    expect(safeMarkdownSlice('intro \\[ E = mc^2 \\] outro')).toBe('intro \\[ E = mc^2 \\] outro');
+  });
+
+  it('cuts at the LAST unclosed \\[ when several are balanced first', () => {
+    expect(safeMarkdownSlice('a \\[ x \\] b \\[ y')).toBe('a \\[ x \\] b ');
+  });
+});
+
+describe('D6 safeMarkdownSlice — single-$ inline math boundary (Decision D-a)', () => {
+  it('holds back an unclosed single-$ math candidate mid-stream', () => {
+    // Streaming prefix: `$\frac{1}{` opened but the closing `$` chunk has not
+    // arrived — cut at the `$` so no broken math half-renders.
+    expect(safeMarkdownSlice('text $\\frac{1}{')).toBe('text ');
+  });
+
+  it('restores the full render once the closing $ arrives (streaming semantics)', () => {
+    const streamed = 'text $\\frac{1}{2}$ done';
+    expect(safeMarkdownSlice(streamed)).toBe(streamed);
+  });
+
+  it('renders balanced single-$ inline math fully', () => {
+    expect(safeMarkdownSlice('value $E = mc^2$ here')).toBe('value $E = mc^2$ here');
+  });
+
+  it('does not truncate currency text ($5 / $ 5 / US$)', () => {
+    expect(safeMarkdownSlice('costs $5 today')).toBe('costs $5 today');
+    expect(safeMarkdownSlice('pay $ 5 now')).toBe('pay $ 5 now');
+    expect(safeMarkdownSlice('US$ and $5')).toBe('US$ and $5');
+  });
+
+  it('does not truncate a lone currency dollar in a longer sentence', () => {
+    expect(safeMarkdownSlice('the total is $5 today only')).toBe('the total is $5 today only');
+  });
+
+  it('is immune to $$ pairs (the single-$ scan skips $$ runs)', () => {
+    expect(safeMarkdownSlice('$$E$$ and $x$ tail')).toBe('$$E$$ and $x$ tail');
+  });
+
+  it('is immune to inline code span content', () => {
+    expect(safeMarkdownSlice('run `costs $ten` now')).toBe('run `costs $ten` now');
+  });
+
+  it('is immune to balanced fenced code containing dollars', () => {
+    const fenced = '```bash\necho $HOME is $USER\n```';
+    expect(safeMarkdownSlice(fenced)).toBe(fenced);
+  });
+
+  it('keeps the existing unclosed-fence cut when dollars are inside (regression)', () => {
+    expect(safeMarkdownSlice('intro\n```\necho $5')).toBe('intro\n');
+  });
+});
+
+// ============================================================================
+// P1-1 remediation (plan 2026-08-25-0410-1): the `$$` / `\[` / `\(` counters
+// in `findUnclosedMathCutoff` must share the `maskCodeRegions` code masking
+// with the single-`$` scanner — dollars and paren/bracket delimiters inside
+// fenced/inline code are literal and must not participate in math parity.
+// Fence recognition caliber is also converged: ≤3-space indented fences are
+// fences in BOTH the cut scanner and the mask scanner (CommonMark).
+// ============================================================================
+describe('P1-1 safeMarkdownSlice — code-masked $$ no longer truncates complete text', () => {
+  it('renders a completed message with $$ inside a fenced bash block fully (audit live-probe case)', () => {
+    const full =
+      'To see the current shell process id, run:\n\n```bash\necho "PID=$$"\n```\n\nThat is all.';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+
+  it('renders a completed message with PHP $$var inside a fenced block fully', () => {
+    const full = '```php\n$name = "key";\n$$name = "value";\n```\nafter the block';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+
+  it('renders inline-code `$$` literally without truncating (parity ignores masked matches)', () => {
+    const full = 'run `$$` in your shell now';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+
+  it('still truncates at an unclosed non-code $$ even when masked $$ exists earlier', () => {
+    // One `$$` inside the (balanced) fence is masked out of the parity count;
+    // the later unclosed non-code `$$` is the only unmasked occurrence → odd
+    // → cut at its index, everything before (including the fence) survives.
+    expect(safeMarkdownSlice('```bash\necho $$\n```\nthen $$\nunclosed tail')).toBe(
+      '```bash\necho $$\n```\nthen ',
+    );
+  });
+
+  it('masks \\( and \\[ inside fenced code out of the unclosed-delimiter counts', () => {
+    const full = '```ts\nconst re = /\\(/;\nconst re2 = /\\[/;\n```\nafter';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+});
+
+describe('P1-1 safeMarkdownSlice — indented fence caliber (cut scanner ≡ mask scanner)', () => {
+  it('holds back content after an unclosed ≤3-space indented fence', () => {
+    // The indented ``` is a fence in both scanners: the cut happens at the
+    // fence line start (indentation included in the fence start).
+    expect(safeMarkdownSlice('intro\n   ```\nthis is code')).toBe('intro\n');
+  });
+
+  it('renders balanced indented fences fully', () => {
+    const full = 'before\n   ```js\nconst x = 1;\n   ```\nafter';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+
+  it('renders $$ inside a balanced indented fence fully (both scanners agree)', () => {
+    const full = '   ```bash\necho $$\n   ```\ntail';
+    expect(safeMarkdownSlice(full)).toBe(full);
+  });
+});

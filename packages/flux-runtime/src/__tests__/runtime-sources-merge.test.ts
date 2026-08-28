@@ -14,8 +14,7 @@ describe('createRendererRuntime', () => {
       env: {
         ...env,
         fetcher: async <T>() => ({
-          ok: true,
-          status: 200,
+          status: 0,
           data: { items: [{ id: 'a-1', label: 'Alice' }], total: 1 } as T,
         }),
       },
@@ -125,8 +124,7 @@ describe('createRendererRuntime', () => {
       env: {
         ...env,
         fetcher: async <T>() => ({
-          ok: true,
-          status: 200,
+          status: 0,
           data: [1, 2] as T,
         }),
       },
@@ -232,8 +230,7 @@ describe('createRendererRuntime', () => {
 
   it('applies resultMapping before cached api-backed merge publication', async () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>() => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { items: [2, 3] } as T,
     });
     const fetcher = vi.fn(fetcherImpl);
@@ -341,7 +338,7 @@ describe('createRendererRuntime', () => {
       error: undefined,
     });
 
-    releaseRequest?.({ ok: true, status: 200, data: { value: 'loaded' } });
+    releaseRequest?.({ status: 0, data: { value: 'loaded' } });
 
     await vi.waitFor(() => {
       expect(page.scope.get('payloadStatus')).toMatchObject({
@@ -367,8 +364,7 @@ describe('createRendererRuntime', () => {
     const fetcherImpl: RendererEnv['fetcher'] = async <T>() => {
       callCount += 1;
       return {
-        ok: true,
-        status: 200,
+        status: 0,
         data: { value: 'same' } as T,
       };
     };

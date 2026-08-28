@@ -39,8 +39,7 @@ describe('data source poll timer dispose-race', () => {
   it('clears poll timer on stop while timer is pending', async () => {
     vi.useFakeTimers();
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { value: 'ok' },
     }));
     const runtime = createRendererRuntime({
@@ -79,7 +78,7 @@ describe('data source poll timer dispose-race', () => {
     let resolveRequest: (() => void) | undefined;
     const fetcher = vi.fn(async () => {
       await new Promise<void>((resolve) => { resolveRequest = resolve; });
-      return { ok: true, status: 200, data: { done: true } };
+      return { status: 0, data: { done: true } };
     });
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([]),
@@ -116,8 +115,7 @@ describe('data source poll timer dispose-race', () => {
   it('reset clears poll timer and aborts active request', async () => {
     vi.useFakeTimers();
     const fetcher = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { run: 1 },
     }));
     const runtime = createRendererRuntime({
