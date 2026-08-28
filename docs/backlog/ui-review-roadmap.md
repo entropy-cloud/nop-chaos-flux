@@ -1,6 +1,6 @@
 # UI Review Roadmap：对标分析 + 一致性审查 + 复杂页面构想 + 参考应用复刻
 
-> Last Updated: 2026-08-19
+> Last Updated: 2026-08-29（R2 `planned`→`done`：plan 2026-08-28-1701-1 全 Phase 执行完毕、closure audit 通过；产出 276 发现（273 保留/3 降级/0 驳回），P0–P3 清单与共性归类见产出文档）
 > Source: 用户目标指令（2026-08-19，四项要求：对标成熟框架的详尽分析 / 复杂页面构想验证承载力 / 线上调研参考应用并仿制页面与交互 / UI 一致性自查）；拟制流程按 `docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`；复刻方法论先例 `docs/analysis/sundial-ui-reproduction-analysis.md`
 > Mission: `missions/ui-review.json`
 > **分支纪律**：本 roadmap 全部工作在 worktree `nop-chaos-flux-ui-review`（分支 `ui-review`）执行，禁止直接落在 master 工作区；合并回 master 为人工门禁（见 Cross-Cutting §1）。
@@ -26,7 +26,7 @@
 
 - R0. UI 资产盘点与基线实测: `done`
 - R1. 成熟框架对标分析（美观度 × 完善度双维评分卡）: `done`
-- R2. 全量 UI 一致性审查（ux-design-pattern-audit 多轮递归）: `todo`
+- R2. 全量 UI 一致性审查（ux-design-pattern-audit 多轮递归）: `done`（plan `docs/plans/2026-08-28-1701-1-r2-consistency-audit.md`，2026-08-29 closure audit 通过；产出 `docs/analysis/ui-review/R2-consistency-audit.md`，276 发现 → 273 保留/3 降级/0 驳回，P0 5/P1 12/P2 172/P3 87）
 - R3. 一致性 P0/P1 修复与共性归类收口: `todo`
 - C1. 复杂页面构想清单与能力压力预判: `done`
 - C2. 能力差距汇总与分级裁决（滚动文档）: `done`（初版裁决收口；Pi-b 回写走追加区）

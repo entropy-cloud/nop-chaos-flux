@@ -45,4 +45,18 @@
 
 ## 3. 回写区（各 Pi-b closure 追加，勿动上方初版）
 
-_（空——首个回写将来自 P2b）_
+### 回写 ① — R2 一致性审查（2026-08-29，plan `2026-08-28-1701-1-r2-consistency-audit.md` Phase 5）
+
+> 首个回写。授权链: G-I 行"**R2 顺带**"（承接 R0 §3 "4 调色板 dark 逐变量对齐度留 R2 抽查"遗留）→ R2 plan Phase 5 义务产出。C2 状态不重开，本段仅追加证据与素材。
+
+**G-I 证据回写（dark token 对齐度抽查，HEAD `0f183874a`）**:
+
+- token 结构对称性: `packages/theme-tokens/src/styles.css` 四块（classic/glass × light/dark）逐变量完全对称——每块 56 变量，四个方向（classic L↔D、glass L↔D、classic↔glass 同 mode）均零缺失零多出（探针 `_tmp/dark-token-symmetry-inspect.mjs`）。
+- 值级抽查: 10 个关键语义变量（background/foreground/primary/danger/warning/success/info/border/muted/accent）在 dark 块均为调谐真暗色，无 light 照抄；`*-bg` 族 dark 为 `* 30% 20%` 暗底，gray 阶整体反转。模式无关常量（`--primary-foreground` 等白前景）为合理设计非照抄；glass 对的 `--secondary`（dark 下浅薰衣草作高亮前景）建议知会但可接受。
+- 复杂页暗色抽查（4 页抽样）: 2/4 合格——standard-crud 全 token 零硬编码、dashboard 6 处中间调强调色可接受；sundial-workbench / sundial-settings 为自述 light-only 的复刻页（`--sd-*` 硬编码 + schema 118/151 处裸色值），dark 不适配（属复刻页迭代范畴，非 token 层回归）。
+- **对 G-I 裁决的影响**: "暗色回归"的 token 层风险低于初判（结构已对齐），G-I 真实缺口收窄为 ①运行时主题切换入口缺失（L4 小项，playground `main.tsx:13-15` 硬编码 light）；②复刻页 light-only（L1）；③渲染器亮色假设散点（scheduling 固定白前景/kanban `bg-white`/`color-mix(...,white)` 等——已入 R2 发现清单 P2 路由修复，无需新增 C2 项）。
+
+**共性素材回写（供 D1 产品化排序参考）**:
+
+- R2 共性族"状态已发射、样式零消费"（button-group 选中态、TableRow 选中、calendar 拖拽悬停、notice-bar 变体等，276 条发现中的高频族）与 **G-F（option-row 原语）** 同源——schema 层无选中/hover 态表达通道、渲染器层有状态无样式，双向佐证 G-F 作 D1 首项的优先级。
+- R2 共性族"键盘等价路径缺失"（icon-picker 200+ Tab 停留点、dashboard 画布面板无方向键移动/缩放、page 侧栏拖拽把手不可聚焦）为 **G-B2（键盘导航框架，L4）** 追加实证面。
