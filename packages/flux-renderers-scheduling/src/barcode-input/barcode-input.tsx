@@ -205,7 +205,6 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         { scope, env, signal },
       );
       return {
-        ok: res.status >= 200 && res.status < 300,
         status: res.status,
         arrayBuffer: async () => {
           const data = res.data as unknown;

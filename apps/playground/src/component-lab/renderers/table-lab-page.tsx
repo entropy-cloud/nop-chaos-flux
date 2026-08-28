@@ -109,7 +109,7 @@ const tableHostEnv = {
     const url = api.url ?? '';
     if (url.includes('/api/c4/quick-save')) {
       (window as unknown as { __c4QuickEditProbe?: unknown }).__c4QuickEditProbe = api.data;
-      return { ok: true, status: 200, data: api.data as T };
+      return { status: 0, data: api.data as T };
     }
     if (url.includes('/api/c4/children')) {
       if (lazyFailFirst) {
@@ -122,12 +122,11 @@ const tableHostEnv = {
         } as unknown as T;
       }
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: [{ id: '1-1', name: 'Lazy Child', __rowKey: '1-1' }] as unknown as T,
       };
     }
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
 } as unknown as Partial<RendererEnv>;
 

@@ -62,7 +62,7 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
   const env = useMemo(
     () =>
       debuggerController.decorateEnv({
-        fetcher: async <T = unknown,>() => ({ ok: true, status: 200, data: null as unknown as T }),
+        fetcher: async <T = unknown,>() => ({ status: 0, data: null as unknown as T }),
         notify: () => {},
       }),
     [debuggerController],

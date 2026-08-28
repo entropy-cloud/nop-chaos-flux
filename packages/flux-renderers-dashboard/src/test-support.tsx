@@ -17,7 +17,7 @@ import type { DashboardLayoutSchema } from './schemas.js';
 
 const env: RendererEnv = {
   fetcher: async function <T>() {
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify: () => undefined,
 };

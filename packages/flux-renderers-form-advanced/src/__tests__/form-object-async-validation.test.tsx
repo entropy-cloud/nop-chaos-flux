@@ -141,8 +141,7 @@ describe('formRendererDefinitions - object validation, async validation, and fie
   it('waits for async validation debounce before calling the validator API', async () => {
     cleanup();
     const fetcherMock = vi.fn(async () => ({
-      ok: true,
-      status: 200,
+            status: 0,
       data: {
         valid: true,
         message: 'Username is available',

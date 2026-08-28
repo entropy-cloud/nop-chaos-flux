@@ -70,7 +70,7 @@ describe('G1: picker single-select keeps the current value on empty confirm', ()
           { type: 'form-state-probe', name: 'owner' },
         ],
       },
-      { fetcher: async function <T>() { return { ok: true, status: 200, data: null as T }; }, notify: () => undefined },
+      { fetcher: async function <T>() { return { status: 0, data: null as T }; }, notify: () => undefined },
     );
 
     await waitFor(() => expect(resolveFormState('form-state:owner')).toBe('alice'));
@@ -108,7 +108,7 @@ describe('G1: picker single-select keeps the current value on empty confirm', ()
           },
         ],
       },
-      { fetcher: async function <T>() { return { ok: true, status: 200, data: null as T }; }, notify: () => undefined },
+      { fetcher: async function <T>() { return { status: 0, data: null as T }; }, notify: () => undefined },
     );
 
     fireEvent.click(document.querySelector('[data-slot="picker-trigger"]')!);
@@ -124,9 +124,9 @@ describe('G1: picker single-select keeps the current value on empty confirm', ()
 // ============================================================
 
 function makeControllableUploadEnv() {
-  let resolveUpload: (value: { ok: true; status: number; data: unknown }) => void = () => undefined;
+  let resolveUpload: (value: { status: number; data: unknown }) => void = () => undefined;
   const fetcher = async function <T>(_api: unknown, ctx: ApiRequestContext) {
-    return new Promise<{ ok: true; status: number; data: T }>((resolve, reject) => {
+    return new Promise<{ status: number; data: T }>((resolve, reject) => {
       resolveUpload = resolve as typeof resolveUpload;
       // Observe the abort signal like a real fetch would (rejects with AbortError).
       ctx.signal?.addEventListener('abort', () => {
@@ -136,7 +136,7 @@ function makeControllableUploadEnv() {
   };
   return {
     env: { fetcher, notify: () => undefined } as RendererEnv,
-    resolveUpload: () => resolveUpload({ ok: true, status: 200, data: { url: 'https://cdn/x' } }),
+    resolveUpload: () => resolveUpload({ status: 0, data: { url: 'https://cdn/x' } }),
   };
 }
 

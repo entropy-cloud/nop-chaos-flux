@@ -85,10 +85,10 @@ export function createAiSchemaRenderer(extra: RendererDefinition[] = []) {
 
 export function mockStreamConnector(chunks: AiConnectorChunk[], delayMs = 0): AiConnector {
   const env: RendererEnv = {
-    fetcher: (async () => ({ ok: true, status: 200, data: null })) as RendererEnv['fetcher'],
+    fetcher: (async () => ({ status: 0, data: null })) as RendererEnv['fetcher'],
     notify: () => undefined,
     stream: async () => ({
-      response: { ok: true, status: 200, headers: {} },
+      response: { status: 200, headers: {} },
       chunks: (async function* gen() {
         for (const c of chunks) {
           if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
@@ -109,10 +109,10 @@ export function mockStreamConnector(chunks: AiConnectorChunk[], delayMs = 0): Ai
 
 export function aiMockEnv(): RendererEnv {
   return {
-    fetcher: (async () => ({ ok: true, status: 200, data: null })) as RendererEnv['fetcher'],
+    fetcher: (async () => ({ status: 0, data: null })) as RendererEnv['fetcher'],
     notify: () => undefined,
     stream: async () => ({
-      response: { ok: true, status: 200, headers: {} },
+      response: { status: 200, headers: {} },
       chunks: (async function* empty() {})(),
     }) as never,
   };

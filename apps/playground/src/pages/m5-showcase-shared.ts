@@ -65,16 +65,16 @@ export const SchemaRenderer = createSchemaRenderer();
 export const formulaCompiler = createFormulaCompiler();
 
 export function createMockFetcher() {
-  return async function fetcher<T>(request: { url: string; method?: string; data?: unknown }): Promise<{ ok: boolean; status: number; data: T }> {
+  return async function fetcher<T>(request: { url: string; method?: string; data?: unknown }): Promise<{ status: number; data: T }> {
     const url = request.url;
-    if (url.includes('/api/products')) return { ok: true, status: 200, data: MOCK_PRODUCTS as T };
-    if (url.includes('/api/categories')) return { ok: true, status: 200, data: MOCK_CATEGORIES as T };
-    if (url.includes('/api/cart')) return { ok: true, status: 200, data: MOCK_CART as T };
-    if (url.includes('/api/cart/add')) return { ok: true, status: 200, data: { success: true } as T };
-    if (url.includes('/api/profile')) return { ok: true, status: 200, data: MOCK_PROFILE as T };
-    if (url.includes('/api/orders')) return { ok: true, status: 200, data: MOCK_ORDERS as T };
-    if (url.includes('/api/order/submit')) return { ok: true, status: 200, data: { orderNo: 'NEW-' + Date.now() } as T };
-    return { ok: true, status: 200, data: null as T };
+    if (url.includes('/api/products')) return { status: 0, data: MOCK_PRODUCTS as T };
+    if (url.includes('/api/categories')) return { status: 0, data: MOCK_CATEGORIES as T };
+    if (url.includes('/api/cart')) return { status: 0, data: MOCK_CART as T };
+    if (url.includes('/api/cart/add')) return { status: 0, data: { success: true } as T };
+    if (url.includes('/api/profile')) return { status: 0, data: MOCK_PROFILE as T };
+    if (url.includes('/api/orders')) return { status: 0, data: MOCK_ORDERS as T };
+    if (url.includes('/api/order/submit')) return { status: 0, data: { orderNo: 'NEW-' + Date.now() } as T };
+    return { status: 0, data: null as T };
   };
 }
 

@@ -75,16 +75,15 @@ const editSubmitProbeFetcher = (async (api: { url?: string; data?: unknown }) =>
   const url = api.url ?? '';
   if (url.includes('Record__get')) {
     return {
-      ok: true,
-      status: 200,
+            status: 0,
       data: { userName: 'RowUser', status: 1, nickName: 'Original', email: 'old@x.com', phone: '111', remark: 'orig remark' },
     };
   }
   if (url.includes('Record__update')) {
     (window as unknown as { __editSubmitProbe?: unknown }).__editSubmitProbe = api.data;
-    return { ok: true, status: 200, data: api.data };
+    return { status: 0, data: api.data };
   }
-  return { ok: true, status: 200, data: null };
+  return { status: 0, data: null };
 }) as unknown as RendererEnv['fetcher'];
 
 // 异步 dict 加载（模拟真实后端 DictProvider 延迟）
@@ -190,14 +189,14 @@ const realSchemaFetcher = (async (api: { url?: string; data?: unknown }) => {
   // 模拟异步数据源成功加载（tree-select / picker），触发 form 重渲染
   if (url.includes('NopAuthDept__findList')) {
     await new Promise((r) => setTimeout(r, 400));
-    return { ok: true, status: 200, data: { items: [{ id: 'D1', deptName: 'Dev' }] } };
+    return { status: 0, data: { items: [{ id: 'D1', deptName: 'Dev' }] } };
   }
   if (url.includes('NopAuthPosition__findPage')) {
     await new Promise((r) => setTimeout(r, 400));
-    return { ok: true, status: 200, data: { total: 1, items: [{ id: 'P1', positionId: 'P1', name: 'Engineer' }] } };
+    return { status: 0, data: { total: 1, items: [{ id: 'P1', positionId: 'P1', name: 'Engineer' }] } };
   }
   if (url.includes('Record__get')) {
-    return { ok: true, status: 200, data: {
+    return { status: 0, data: {
       id: '1', userId: '1', userName: 'RowUser', status: 1, status_label: '1-正常',
       nickName: 'Original', deptId: null, dept: { deptName: 'Dev' }, avatar: null,
       userType: 1, userType_label: '1-普通用户', gender: 1, gender_label: '1-男',
@@ -208,16 +207,16 @@ const realSchemaFetcher = (async (api: { url?: string; data?: unknown }) => {
   }
   if (url.includes('Record__update')) {
     (window as unknown as { __editSubmitProbe?: unknown }).__editSubmitProbe = api.data;
-    return { ok: true, status: 200, data: api.data };
+    return { status: 0, data: api.data };
   }
-  return { ok: true, status: 200, data: null };
+  return { status: 0, data: null };
 }) as unknown as RendererEnv['fetcher'];
 
 
 const crudRowEditFetcher = (async (api: { url?: string; data?: unknown }) => {
   const url = api.url ?? '';
   if (url.includes('__get')) {
-    return { ok: true, status: 200, data: {
+    return { status: 0, data: {
       id: '1', userId: '1', userName: 'RowUser', status: 1, status_label: '1-正常',
       nickName: 'Original', deptId: null, dept: { deptName: 'Dev' }, avatar: null,
       userType: 1, userType_label: '1-普通用户', gender: 1, gender_label: '1-男',
@@ -228,12 +227,12 @@ const crudRowEditFetcher = (async (api: { url?: string; data?: unknown }) => {
   }
   if (url.includes('__update')) {
     (window as unknown as { __crudRowEditProbe?: unknown }).__crudRowEditProbe = api.data;
-    return { ok: true, status: 200, data: api.data };
+    return { status: 0, data: api.data };
   }
   if (url.includes('__findPage') || url.includes('__findList')) {
-    return { ok: true, status: 200, data: { total: 1, items: [{ id: '1' }] } };
+    return { status: 0, data: { total: 1, items: [{ id: '1' }] } };
   }
-  return { ok: true, status: 200, data: null };
+  return { status: 0, data: null };
 }) as unknown as RendererEnv['fetcher'];
 
 const crudRowEditDialog = {

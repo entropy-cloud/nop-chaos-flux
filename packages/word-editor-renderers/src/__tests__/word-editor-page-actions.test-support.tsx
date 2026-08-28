@@ -247,7 +247,7 @@ vi.mock('../hooks/use-word-editor-shortcuts.js', () => ({
 
 export function createEnv(notify: RendererEnv['notify'] = () => undefined): RendererEnv {
   return {
-    fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
+    fetcher: async <T,>() => ({ status: 0, data: null as T }),
     notify,
   };
 }

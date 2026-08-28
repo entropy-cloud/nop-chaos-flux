@@ -232,7 +232,6 @@ describe('createDefaultStream — fetch integration', () => {
       { env, scope: {} as never },
     );
     expect(result.response.status).toBe(200);
-    expect(result.response.ok).toBe(true);
     const out: unknown[] = [];
     for await (const c of result.chunks) out.push(c);
     expect(out).toEqual([{ a: 1 }, { a: 2 }]);
@@ -250,7 +249,6 @@ describe('createDefaultStream — fetch integration', () => {
       { url: '/api/secret', streamProtocol: 'sse' },
       { env, scope: {} as never },
     );
-    expect(result.response.ok).toBe(false);
     expect(result.response.status).toBe(401);
     expect(result.response.msg).toBe('Unauthorized');
     const out: unknown[] = [];

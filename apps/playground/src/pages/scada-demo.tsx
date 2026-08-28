@@ -372,8 +372,7 @@ function makeDemoEnv(): RendererEnv {
     fetcher: async <T,>(api: ExecutableApiRequest) => {
       console.log('[scada-demo] ajax', api.method ?? 'GET', api.url);
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: { value: 42 } as T,
       };
     },

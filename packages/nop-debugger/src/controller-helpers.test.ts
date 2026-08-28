@@ -111,7 +111,6 @@ describe('controller helpers', () => {
           data: { username: 'alice', token: 'secret' },
         },
         response: {
-          ok: true,
           status: 200,
           data: { items: [], total: 1 },
         },

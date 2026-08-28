@@ -19,8 +19,7 @@ const sharedFormulaCompiler = createFormulaCompiler();
 const env: RendererEnv = {
   fetcher: async function <T>(_api: ApiSchema, ctx: ApiRequestContext) {
     return {
-      ok: true,
-      status: 200,
+            status: 0,
       data: ctx.scope.readOwn() as T,
     };
   },

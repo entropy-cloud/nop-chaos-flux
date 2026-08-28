@@ -36,7 +36,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
 
   it('reads published data-source status summaries through useDataSourceStatus', async () => {
     let releaseRequest:
-      | ((value: { ok: boolean; status: number; data: { name: string } }) => void)
+      | ((value: { status: number; data: { name: string } }) => void)
       | undefined;
     const fetcher = vi.fn(
       async () =>
@@ -123,7 +123,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
       inFlightCount: 1,
     });
 
-    releaseRequest?.({ ok: true, status: 200, data: { name: 'Alice' } });
+    releaseRequest?.({ status: 0, data: { name: 'Alice' } });
 
     await waitFor(() => {
       expect(screen.getByTestId('status-probe').textContent).toBe('ready');
@@ -176,7 +176,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
   });
 
   it('rerenders sibling consumers after a renderer registers an api data source', async () => {
-    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: { name: 'Alice' } }));
+    const fetcher = vi.fn(async () => ({ status: 0, data: { name: 'Alice' } }));
     let capturedRuntime: ReturnType<typeof createRendererRuntime> | undefined;
     let capturedScope: import('@nop-chaos/flux-core').ScopeRef | undefined;
     const userProbeRenderer = {
@@ -249,8 +249,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
     });
 
     await expect(fetcher.mock.results[0]?.value).resolves.toMatchObject({
-      ok: true,
-      status: 200,
+      status: 0,
       data: { name: 'Alice' },
     });
 

@@ -100,7 +100,7 @@ export function EnvStreamDemoPage({ onBack }: Props) {
         { url: '/mock/stream', streamProtocol: protocol, streamChunkType: chunkType },
         { env, scope: {} as never, signal: controller.signal },
       );
-      setStatusLine(`response.status=${result.response.status} ok=${result.response.ok}`);
+      setStatusLine(`response.status=${result.response.status}`);
 
       let index = 0;
       try {

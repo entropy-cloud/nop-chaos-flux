@@ -13,7 +13,7 @@ initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 export const env: RendererEnv = {
   fetcher: async function <T>() {
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify: () => undefined,
 };
@@ -22,9 +22,9 @@ export function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
   return async function <T>(
     _api: unknown,
     ctx: ApiRequestContext,
-  ): Promise<{ ok: true; status: number; data: T }> {
+  ): Promise<{ status: number; data: T }> {
     submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-    return { ok: true, status: 200, data: null as unknown as T };
+    return { status: 0, data: null as unknown as T };
   };
 }
 

@@ -16,15 +16,13 @@ export function createDefaultEnv(input?: Partial<SchemaRendererProps['env']>) {
     fetcher: async function <T>(api: ExecutableApiRequest) {
       if (typeof api.url === 'string' && api.url.startsWith('/api/')) {
         return {
-          ok: true,
-          status: 200,
+                    status: 0,
           data: null as T,
         };
       }
 
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: null as T,
       };
     },

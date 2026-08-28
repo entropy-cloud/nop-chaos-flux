@@ -42,7 +42,7 @@ function wordsStream(words: string[], delayMs: number, abruptEof = false): Strea
         yield chunk('', 'stop');
       }
     }
-    return { response: { ok: true, status: 200, headers: {} }, chunks: generate() } as StreamFetchResult<unknown>;
+    return { response: { status: 200, headers: {} }, chunks: generate() } as StreamFetchResult<unknown>;
   };
   return fn as StreamFetcher;
 }
@@ -51,7 +51,7 @@ function flakyStream(failedOnce: { value: boolean }, delayMs: number): StreamFet
   const fn = async (api: StreamApiRequest, _ctx: ApiRequestContext): Promise<StreamFetchResult<unknown>> => {
     if (!failedOnce.value) {
       failedOnce.value = true;
-      return { response: { ok: false, status: 500, headers: {}, msg: 'coverage first-call failure' } } as StreamFetchResult<unknown>;
+      return { response: { status: 500, headers: {}, msg: 'coverage first-call failure' } } as StreamFetchResult<unknown>;
     }
     void api;
     async function* generate(): AsyncGenerator<unknown> {
@@ -61,7 +61,7 @@ function flakyStream(failedOnce: { value: boolean }, delayMs: number): StreamFet
       }
       yield chunk('', 'stop');
     }
-    return { response: { ok: true, status: 200, headers: {} }, chunks: generate() } as StreamFetchResult<unknown>;
+    return { response: { status: 200, headers: {} }, chunks: generate() } as StreamFetchResult<unknown>;
   };
   return fn as StreamFetcher;
 }
@@ -84,7 +84,7 @@ export function createCoverageConnectors(): { connectors: CoverageConnectors; en
   }) as StreamFetcher;
 
   const env: RendererEnv = {
-    fetcher: (async () => ({ ok: true, status: 200, data: null })) as RendererEnv['fetcher'],
+    fetcher: (async () => ({ status: 0, data: null })) as RendererEnv['fetcher'],
     stream,
     notify: (level, message) => {
       const text = typeof message === 'string' ? message : String(message ?? '');

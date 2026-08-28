@@ -146,7 +146,7 @@ const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();
 
 const pageEnv: RendererEnv = {
-  fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
+  fetcher: async <T,>() => ({ status: 0, data: null as T }),
   notify(level, message) {
     console.info(`[layout-family-enhancements-demo] ${level}: ${message}`);
   },

@@ -25,8 +25,8 @@ describe('WizardRenderer — commit navigation lock / key-match / stepError (P1-
   });
 
   function deferredFetcher() {
-    let resolveCommit!: (value: { ok: boolean; status: number; data: null }) => void;
-    const commitGate = new Promise<{ ok: boolean; status: number; data: null }>((res) => {
+    let resolveCommit!: (value: { status: number; data: null }) => void;
+    const commitGate = new Promise<{ status: number; data: null }>((res) => {
       resolveCommit = res;
     });
     const urls: string[] = [];
@@ -35,7 +35,7 @@ describe('WizardRenderer — commit navigation lock / key-match / stepError (P1-
         await commitGate;
       }
       urls.push(api?.url ?? '');
-      return { ok: true, status: 200, data: null as never };
+      return { status: 0, data: null as never };
     }) as unknown as RendererEnv['fetcher'];
     return { fetcher, urls, resolveCommit };
   }
@@ -80,7 +80,7 @@ describe('WizardRenderer — commit navigation lock / key-match / stepError (P1-
 
     // Resolve the commit → continuation advances from the committed step,
     // exactly once, and no stale jump back to a user-navigated step.
-    await act(async () => { resolveCommit({ ok: true, status: 200, data: null }); });
+    await act(async () => { resolveCommit({ status: 0, data: null }); });
     await waitFor(() => expect(wizardRoot().getAttribute('data-current-step-index')).toBe('1'));
     expect(urls).toContain('/commit-a');
     expect(urls).toContain('/change-b');
@@ -124,7 +124,7 @@ describe('WizardRenderer — commit navigation lock / key-match / stepError (P1-
     expect(wizardRoot().getAttribute('data-current-step-index')).toBe('1');
 
     // After resolution navigation resumes (Prev works again).
-    await act(async () => { resolveCommit({ ok: true, status: 200, data: null }); });
+    await act(async () => { resolveCommit({ status: 0, data: null }); });
     await waitFor(() => expect(wizardRoot().getAttribute('data-current-step-index')).toBe('2'));
   });
 
@@ -169,7 +169,7 @@ describe('WizardRenderer — commit navigation lock / key-match / stepError (P1-
 
     // Resolve: onComplete fires exactly once, for the committed step, while
     // the wizard still sits on the last step.
-    await act(async () => { resolveCommit({ ok: true, status: 200, data: null }); });
+    await act(async () => { resolveCommit({ status: 0, data: null }); });
     await waitFor(() => expect(urls).toContain('/complete-c'));
     expect(urls.filter((u) => u.startsWith('/complete-'))).toHaveLength(1);
     expect(wizardRoot().getAttribute('data-current-step-index')).toBe('2');

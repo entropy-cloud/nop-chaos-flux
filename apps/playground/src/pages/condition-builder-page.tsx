@@ -23,7 +23,7 @@ const pageFormulaCompiler = createFormulaCompiler();
 
 const pageEnv: RendererEnv = {
   async fetcher<T>() {
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify(level, message) {
     console.info(`[condition-builder-page] ${level}: ${message}`);

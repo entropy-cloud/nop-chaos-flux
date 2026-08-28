@@ -30,9 +30,9 @@ const dashboardFilterEnv = {
   fetcher: async <T,>(api: { url?: string }) => {
     const url = api.url ?? '';
     if (url.includes('/api/sales')) {
-      return { ok: true, status: 200, data: filterSalesByRegion(url) as T };
+      return { status: 0, data: filterSalesByRegion(url) as T };
     }
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
 };
 

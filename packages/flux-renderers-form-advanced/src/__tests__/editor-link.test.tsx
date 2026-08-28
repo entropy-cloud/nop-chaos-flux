@@ -144,7 +144,7 @@ describe('editor — toolbar config + render shell (render-level)', () => {
   ];
   const SchemaRenderer = createSchemaRenderer(allDefinitions);
   const env = {
-    fetcher: async () => ({ ok: true, status: 200, data: null }),
+    fetcher: async () => ({ status: 0, data: null }),
     notify: () => undefined,
   } as never;
 

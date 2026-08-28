@@ -12,7 +12,6 @@ describe('createFluxSchemaRenderer + loadAction crud', () => {
   it('renders rows via full flux registry + ajax loadAction + fetcher', async () => {
     cleanup();
     const fetcher = vi.fn(async () => ({
-      ok: true,
       status: 0,
       data: {
         items: [

@@ -16,7 +16,7 @@ const formulaCompiler = createFormulaCompiler();
 
 const env: RendererEnv = {
   fetcher: async function <T>(_req: { url: string }) {
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify: (level, msg) => console.log(`[${level}] ${msg}`),
 };

@@ -18,7 +18,7 @@ export const c4c3HostEnv = {
       ];
       (window as unknown as { __c4c3UsersProbe?: number }).__c4c3UsersProbe =
         c4c3UserFetchCount;
-      return { ok: true, status: 200, data: batch as T };
+      return { status: 0, data: batch as T };
     }
     if (url.includes('/api/c4c3/flaky')) {
       if (c4c3FlakyFailures < 2) {
@@ -31,12 +31,11 @@ export const c4c3HostEnv = {
         } as unknown as T;
       }
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: [{ id: 9, username: 'FlakyRecovered' }] as T,
       };
     }
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
 } as unknown as Partial<RendererEnv>;
 

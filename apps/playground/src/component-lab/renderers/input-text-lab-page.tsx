@@ -120,7 +120,7 @@ const suggestEnv = {
     const filtered = q
       ? SUGGEST_FRUITS.filter((item) => item.label.toLowerCase().includes(q))
       : SUGGEST_FRUITS;
-    return { ok: true, status: 200, data: filtered as T };
+    return { status: 0, data: filtered as T };
   },
 };
 

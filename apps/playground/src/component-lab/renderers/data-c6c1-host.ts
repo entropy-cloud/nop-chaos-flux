@@ -79,12 +79,12 @@ export const c6c1MarkdownSrcSchema = {
 export const c6c1MarkdownSrcFetcher = (async (api: { url?: string }) => {
   const url = api.url ?? '';
   if (url.includes('markdown-doc')) {
-    return { ok: true, status: 200, data: '# Fetched from env.fetcher' };
+    return { status: 0, data: '# Fetched from env.fetcher' };
   }
   if (url.includes('markdown-missing')) {
     return { ok: false, status: 404, data: null };
   }
-  return { ok: true, status: 200, data: null };
+  return { status: 0, data: null };
 }) as unknown as RendererEnv['fetcher'];
 
 export const c6c1HtmlSanitizeSchema = {

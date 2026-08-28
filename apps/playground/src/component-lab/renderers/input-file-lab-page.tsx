@@ -55,15 +55,14 @@ const hostUploadEnv = {
     if (url === '/api/upload-ok') {
       const file = body.__uploadFile ?? { name: 'demo.txt', size: 12 };
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: { url: `https://cdn.example.com/${file.name}`, name: file.name, size: file.size } as T,
       };
     }
     if (url === '/api/upload-fail') {
       return { ok: false, status: 500, data: { message: 'Upload rejected by host' } as T };
     }
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
 };
 

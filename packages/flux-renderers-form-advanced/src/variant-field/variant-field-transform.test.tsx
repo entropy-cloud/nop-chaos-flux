@@ -208,7 +208,7 @@ describe('variant-field renderer transform behavior', () => {
           ...baseEnv,
           fetcher: async function <T>(_api: unknown, ctx: any) {
             submitValues.push(ctx.scope.readOwn() as Record<string, unknown>);
-            return { ok: true, status: 200, data: null as T };
+            return { status: 0, data: null as T };
           },
         }}
         formulaCompiler={formulaCompiler}

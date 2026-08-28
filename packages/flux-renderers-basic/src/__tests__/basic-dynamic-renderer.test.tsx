@@ -55,8 +55,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
 
   it('replaces body with loaded schema on success', async () => {
     const fetcher = createMockFetcher(async () => ({
-      ok: true,
-      status: 200,
+            status: 0,
       data: { type: 'text', text: 'Dynamic content loaded' },
     }));
     const SchemaRenderer = createBasicSchemaRenderer();
@@ -112,8 +111,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
 
   it('shows an error when the action returns an invalid schema payload', async () => {
     const fetcher = createMockFetcher(async () => ({
-      ok: true,
-      status: 200,
+            status: 0,
       data: { text: 'Missing type field' },
     }));
     const SchemaRenderer = createBasicSchemaRenderer();
@@ -142,7 +140,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
 
   it('clears stale loaded schema while a new load is in flight', async () => {
     const pendingResolves: Array<
-      (value: { ok: boolean; status: number; data: { type: string; text: string } }) => void
+      (value: { status: number; data: { type: string; text: string } }) => void
     > = [];
     const fetcher = vi.fn(
       async () =>
@@ -172,7 +170,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
     );
 
     await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
-    pendingResolves.shift()?.({ ok: true, status: 200, data: { type: 'text', text: 'First schema' } });
+    pendingResolves.shift()?.({ status: 0, data: { type: 'text', text: 'First schema' } });
     await waitFor(() => expect(screen.getByText('First schema')).toBeTruthy());
 
     rerender(
@@ -188,7 +186,7 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
     await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
     expect(screen.queryByText('First schema')).toBeNull();
 
-    pendingResolves.shift()?.({ ok: true, status: 200, data: { type: 'text', text: 'Second schema' } });
+    pendingResolves.shift()?.({ status: 0, data: { type: 'text', text: 'Second schema' } });
     await waitFor(() => expect(screen.getByText('Second schema')).toBeTruthy());
     cleanup();
   });
@@ -198,15 +196,13 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
       const request = api as { url?: string };
       if (request.url === '/api/text') {
         return {
-          ok: true,
-          status: 200,
+                    status: 0,
           data: { type: 'text', text: 'Loaded text schema' },
         };
       }
 
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: { type: 'badge', text: 'Loaded badge schema', level: 'success' },
       };
     });
@@ -273,8 +269,7 @@ describe('basicRendererDefinitions dynamic-renderer autoLoad + component:refresh
 
   it('autoload-false-no-fire: autoLoad:false skips fetcher on mount and shows body region without spinner', () => {
     const fetcher = createMockFetcher(async () => ({
-      ok: true,
-      status: 200,
+            status: 0,
       data: { type: 'text', text: 'Should not load' },
     }));
     const SchemaRenderer = createBasicSchemaRenderer();
@@ -307,8 +302,7 @@ describe('basicRendererDefinitions dynamic-renderer autoLoad + component:refresh
 
   it('refresh-triggers-load: component:refresh triggers fetcher and schema replaces body', async () => {
     const fetcher = createMockFetcher(async () => ({
-      ok: true,
-      status: 200,
+            status: 0,
       data: { type: 'text', text: 'Refreshed schema' },
     }));
     const SchemaRenderer = createBasicSchemaRenderer();
@@ -348,8 +342,7 @@ describe('basicRendererDefinitions dynamic-renderer autoLoad + component:refresh
 
   it('refresh-no-loadaction: component:refresh without loadAction returns ok:false and does not change state', async () => {
     const fetcher = createMockFetcher(async () => ({
-      ok: true,
-      status: 200,
+            status: 0,
       data: { type: 'text', text: 'Should not load' },
     }));
     const SchemaRenderer = createBasicSchemaRenderer();
@@ -394,7 +387,7 @@ describe('basicRendererDefinitions dynamic-renderer autoLoad + component:refresh
   });
 
   it('refresh-while-loading: second refresh aborts the in-flight request and starts a new one', async () => {
-    const pendingResolves: Array<(value: { ok: boolean; status: number; data: { type: string; text: string } }) => void> =
+    const pendingResolves: Array<(value: { status: number; data: { type: string; text: string } }) => void> =
       [];
     const fetcher = vi.fn(
       async () =>
@@ -435,8 +428,8 @@ describe('basicRendererDefinitions dynamic-renderer autoLoad + component:refresh
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
 
-    pendingResolves.shift()?.({ ok: true, status: 200, data: { type: 'text', text: 'First schema' } });
-    pendingResolves.shift()?.({ ok: true, status: 200, data: { type: 'text', text: 'Second schema' } });
+    pendingResolves.shift()?.({ status: 0, data: { type: 'text', text: 'First schema' } });
+    pendingResolves.shift()?.({ status: 0, data: { type: 'text', text: 'Second schema' } });
 
     await waitFor(() => expect(screen.getByText('Second schema')).toBeTruthy());
     expect(screen.queryByText('First schema')).toBeNull();
@@ -492,8 +485,7 @@ describe('basicRendererDefinitions dynamic-renderer autoLoad + component:refresh
 
   it('default autoLoad:true keeps current behavior (regression guard)', async () => {
     const fetcher = createMockFetcher(async () => ({
-      ok: true,
-      status: 200,
+            status: 0,
       data: { type: 'text', text: 'Auto-loaded' },
     }));
     const SchemaRenderer = createBasicSchemaRenderer();
@@ -523,7 +515,7 @@ describe('basicRendererDefinitions dynamic-renderer autoLoad + component:refresh
 
 describe('basicRendererDefinitions dynamic-renderer schema-fetch dedup + cache (A11)', () => {
   it('two co-mounted dynamic-renderers with the same cacheable loadAction share one in-flight fetch', async () => {
-    let release: ((value: { ok: boolean; status: number; data: unknown }) => void) | undefined;
+    let release: ((value: { status: number; data: unknown }) => void) | undefined;
     const fetcher = vi.fn(
       () =>
         new Promise((resolve) => {
@@ -567,7 +559,7 @@ describe('basicRendererDefinitions dynamic-renderer schema-fetch dedup + cache (
 
     await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
 
-    release?.({ ok: true, status: 200, data: { type: 'text', text: 'Shared schema' } });
+    release?.({ status: 0, data: { type: 'text', text: 'Shared schema' } });
 
     await waitFor(() => expect(screen.getAllByText('Shared schema')).toHaveLength(2));
     expect(fetcher).toHaveBeenCalledTimes(1);

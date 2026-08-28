@@ -20,7 +20,7 @@ it('searchSource with params template dispatches (replicates lab schema)', async
   const calls: Array<{ url?: string; args?: unknown }> = [];
   const mockFetcher = vi.fn(async (api: { url?: string; args?: unknown }) => {
     calls.push({ url: api.url, args: api.args });
-    return { ok: true, status: 200, data: [{ label: 'Apple', value: 'apple' }] };
+    return { status: 0, data: [{ label: 'Apple', value: 'apple' }] };
   });
   const testEnv = { ...env, fetcher: mockFetcher as never };
 

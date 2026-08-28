@@ -46,8 +46,7 @@ function makeUploadEnv(options: UploadFetcherOptions = {}): RendererEnv {
           size: 0,
         };
         return {
-          ok: true,
-          status: 200,
+                    status: 0,
           data: {
             url: `https://cdn.example.com/${file.name}`,
             name: file.name,
@@ -57,7 +56,7 @@ function makeUploadEnv(options: UploadFetcherOptions = {}): RendererEnv {
       }
       // Submit action: capture scope.
       submitCalls.push(ctx.scope.readOwn() as Record<string, unknown>);
-      return { ok: true, status: 200, data: ctx.scope.readOwn() as T };
+      return { status: 0, data: ctx.scope.readOwn() as T };
     },
     notify: () => undefined,
   };
@@ -411,8 +410,7 @@ describe('input-file — schema event dispatch ctx (CX-10 / bug-83 family)', () 
         urls.push(api?.url ?? '');
         if (api?.url === '/api/upload') {
           return {
-            ok: true,
-            status: 200,
+                        status: 0,
             data: { url: 'https://cdn.example.com/a.txt', name: 'a.txt' } as T,
           };
         }
@@ -422,7 +420,7 @@ describe('input-file — schema event dispatch ctx (CX-10 / bug-83 family)', () 
         if (api?.url === '/api/delete-fail') {
           return { ok: false, status: 500, data: { message: 'gone' } as T };
         }
-        return { ok: true, status: 200, data: ctx.scope?.readOwn?.() as T };
+        return { status: 0, data: ctx.scope?.readOwn?.() as T };
       },
       notify: () => undefined,
     };

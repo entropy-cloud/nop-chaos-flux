@@ -47,7 +47,7 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
     env
       .fetcher<string>({ url: src, responseType: 'text' }, { scope, env, signal: controller.signal })
       .then((res) => {
-        if (res.ok !== true && res.status !== 0) {
+        if (res.status !== 0) {
           throw new Error(`HTTP ${res.status}`);
         }
         if (!controller.signal.aborted) {

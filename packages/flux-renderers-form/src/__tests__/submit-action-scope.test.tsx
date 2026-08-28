@@ -48,8 +48,7 @@ describe('submitAction resolution scope (row-context dialog form)', () => {
           });
           // loadAction 返回完整用户数据（26 字段，非行数据 7 列）
           return {
-            ok: true,
-            status: 200,
+                        status: 0,
             data: {
               id: '1',
               userId: '1',
@@ -88,9 +87,9 @@ describe('submitAction resolution scope (row-context dialog form)', () => {
             apiDataNickName: (api.data as Record<string, unknown> | undefined)?.nickName,
             apiDataKeys: Object.keys((api.data as Record<string, unknown>) ?? {}),
           });
-          return { ok: true, status: 200, data: { id: '1' } };
+          return { status: 0, data: { id: '1' } };
         }
-        return { ok: true, status: 200, data: null };
+        return { status: 0, data: null };
       },
     } as unknown as typeof baseEnv;
 

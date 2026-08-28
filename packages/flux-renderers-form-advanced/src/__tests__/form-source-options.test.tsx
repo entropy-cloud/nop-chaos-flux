@@ -85,7 +85,6 @@ describe('formRendererDefinitions - source-backed options', () => {
     cleanup();
     let resolveOptions:
       | ((value: {
-          ok: true;
           status: number;
           data: Array<{ label: string; value: string }>;
         }) => void)
@@ -126,8 +125,7 @@ describe('formRendererDefinitions - source-backed options', () => {
 
             submitCalls.push(ctx.scope.readOwn());
             return {
-              ok: true,
-              status: 200,
+                            status: 0,
               data: ctx.scope.readOwn() as T,
             };
           },
@@ -142,8 +140,7 @@ describe('formRendererDefinitions - source-backed options', () => {
     });
 
     resolveOptions?.({
-      ok: true,
-      status: 200,
+            status: 0,
       data: [
         { label: 'Admin', value: 'admin' },
         { label: 'Editor', value: 'editor' },
@@ -159,7 +156,6 @@ describe('formRendererDefinitions - source-backed options', () => {
     cleanup();
     let resolveOptions:
       | ((value: {
-          ok: true;
           status: number;
           data: Array<{ label: string; value: string }>;
         }) => void)
@@ -199,8 +195,7 @@ describe('formRendererDefinitions - source-backed options', () => {
             }
 
             return {
-              ok: true,
-              status: 200,
+                            status: 0,
               data: {} as T,
             };
           },
@@ -215,8 +210,7 @@ describe('formRendererDefinitions - source-backed options', () => {
     });
 
     resolveOptions?.({
-      ok: true,
-      status: 200,
+            status: 0,
       data: [
         { label: 'Draft', value: 'draft' },
         { label: 'Published', value: 'published' },
@@ -230,7 +224,6 @@ describe('formRendererDefinitions - source-backed options', () => {
     cleanup();
     let resolveOptions:
       | ((value: {
-          ok: true;
           status: number;
           data: Array<{ label: string; value: string }>;
         }) => void)
@@ -270,8 +263,7 @@ describe('formRendererDefinitions - source-backed options', () => {
             }
 
             return {
-              ok: true,
-              status: 200,
+                            status: 0,
               data: {} as T,
             };
           },
@@ -286,8 +278,7 @@ describe('formRendererDefinitions - source-backed options', () => {
     });
 
     resolveOptions?.({
-      ok: true,
-      status: 200,
+            status: 0,
       data: [
         { label: 'Stable', value: 'stable' },
         { label: 'Beta', value: 'beta' },
@@ -329,8 +320,7 @@ describe('formRendererDefinitions - source-backed options', () => {
             }
 
             return {
-              ok: true,
-              status: 200,
+                            status: 0,
               data: {} as T,
             };
           },
@@ -374,8 +364,7 @@ describe('formRendererDefinitions - source-backed options', () => {
             }
 
             return {
-              ok: true,
-              status: 200,
+                            status: 0,
               data: {} as T,
             };
           },
@@ -419,8 +408,7 @@ describe('formRendererDefinitions - source-backed options', () => {
             }
 
             return {
-              ok: true,
-              status: 200,
+                            status: 0,
               data: {} as T,
             };
           },

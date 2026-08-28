@@ -121,7 +121,7 @@ describe('surface family enhancements (E2f)', () => {
 
   describe('confirm', () => {
     it('auto-generates Cancel/Confirm buttons when confirm is truthy and actions is omitted', async () => {
-      const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: null })) as RendererEnv['fetcher'];
+      const fetcher = vi.fn(async () => ({ status: 0, data: null })) as RendererEnv['fetcher'];
       renderSchema(
         {
           type: 'dialog',

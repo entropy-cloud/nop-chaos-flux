@@ -8,7 +8,7 @@ import { formRendererDefinitions } from '../index.js';
 const SchemaRenderer = createSchemaRenderer([...formRendererDefinitions]);
 
 const env = {
-  fetcher: async <T,>() => ({ ok: true, status: 200, data: {} as T }),
+  fetcher: async <T,>() => ({ status: 0, data: {} as T }),
   notify: () => undefined,
 };
 

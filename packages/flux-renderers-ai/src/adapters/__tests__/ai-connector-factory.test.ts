@@ -28,7 +28,7 @@ function cannedStream(chunks: unknown[], status = 200): StreamFetcher {
     async function* gen() {
       for (const c of chunks) yield c;
     }
-    return { response: { ok: status === 200, status, headers: {} }, chunks: gen() };
+    return { response: { status, headers: {} }, chunks: gen() };
   };
   return fn as StreamFetcher;
 }
@@ -111,7 +111,7 @@ describe('createStreamBasedAiConnector', () => {
       async function* gen() {
         yield { choices: [{ delta: { content: 'ok' }, finish_reason: 'stop' }] };
       }
-      return { response: { ok: true, status: 200, headers: {} }, chunks: gen() };
+      return { response: { status: 200, headers: {} }, chunks: gen() };
     };
     const env = makeEnv(fn as unknown as StreamFetcher);
     const connector = createStreamBasedAiConnector({
@@ -131,7 +131,7 @@ describe('createStreamBasedAiConnector', () => {
       async function* gen() {
         throw new StreamChunkParseError({ chunkIndex: 0, rawChunk: 'not-json' });
       }
-      return { response: { ok: true, status: 200, headers: {} }, chunks: gen() };
+      return { response: { status: 200, headers: {} }, chunks: gen() };
     };
     const env = makeEnv(fn as unknown as StreamFetcher);
     const connector = createStreamBasedAiConnector({ env, buildRequest: () => buildReq('x', {}) });
@@ -154,7 +154,7 @@ describe('createStreamBasedAiConnector', () => {
         await new Promise((r) => setTimeout(r, 5));
         yield { choices: [{ delta: { content: 'c' }, finish_reason: null }] };
       }
-      return { response: { ok: true, status: 200, headers: {} }, chunks: slow() };
+      return { response: { status: 200, headers: {} }, chunks: slow() };
     };
     const env = makeEnv(fn as unknown as StreamFetcher);
     const connector = createStreamBasedAiConnector({ env, buildRequest: () => buildReq('x', {}) });

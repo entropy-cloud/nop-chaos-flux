@@ -17,7 +17,7 @@ const formulaCompiler = createFormulaCompiler();
 const env: RendererEnv = {
   fetcher: async function <T>(req: { url: string }) {
     console.log('[GANTT] fetcher:', req.url);
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify: (level, msg) => console.log(`[${level}] ${msg}`),
 };

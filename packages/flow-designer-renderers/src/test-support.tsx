@@ -4,7 +4,7 @@ import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 export type TestNotify = (level: string, message: string) => void;
 
 export interface RendererTestEnv {
-  fetcher: <T>() => Promise<{ ok: true; status: number; data: T | null }>;
+  fetcher: <T>() => Promise<{ status: number; data: T | null }>;
   notify: TestNotify;
 }
 
@@ -55,7 +55,7 @@ export function createTestConfig(): DesignerConfig {
 export function createRendererEnv(notify: TestNotify = vi.fn() as TestNotify): RendererTestEnv {
   return {
     fetcher: async function <T>() {
-      return { ok: true, status: 200, data: null as T };
+      return { status: 0, data: null as T };
     },
     notify,
   };

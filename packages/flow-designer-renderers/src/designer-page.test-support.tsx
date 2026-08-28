@@ -128,7 +128,7 @@ export function createGraphTestConfig(): DesignerConfig {
 export function createRendererEnv(notify = vi.fn()): RendererEnv {
   return {
     fetcher: async function <T>() {
-      return { ok: true, status: 200, data: null as T };
+      return { status: 0, data: null as T };
     },
     notify,
   };

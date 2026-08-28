@@ -81,7 +81,7 @@ const formulaCompiler = createFormulaCompiler();
 
 function makeDemoEnv(): RendererEnv {
   return {
-    fetcher: async <T,>() => ({ ok: true, status: 200, data: {} as T }),
+    fetcher: async <T,>() => ({ status: 0, data: {} as T }),
     notify: (_level, message) => console.log('[scada-editor-demo]', message),
     navigate: () => undefined,
   };

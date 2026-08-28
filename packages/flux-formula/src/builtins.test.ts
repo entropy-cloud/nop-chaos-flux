@@ -5,7 +5,7 @@ import { createFormulaCompiler, createFormulaRegistry } from './index.js';
 import { customEquals } from './builtins.js';
 
 const evalEnv: RendererEnv = {
-  fetcher: async <T>() => ({ ok: true, status: 200, data: null as T }),
+  fetcher: async <T>() => ({ status: 0, data: null as T }),
   notify: () => undefined,
 };
 

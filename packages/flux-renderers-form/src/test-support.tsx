@@ -177,8 +177,7 @@ export const env: RendererEnv = {
   fetcher: async function <T>(_api: ApiSchema, ctx: ApiRequestContext) {
     currentFormTestHarness.submitCalls.push(ctx.scope.readOwn());
     return {
-      ok: true,
-      status: 200,
+            status: 0,
       data: ctx.scope.readOwn() as T,
     };
   },

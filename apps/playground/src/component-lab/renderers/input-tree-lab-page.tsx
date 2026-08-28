@@ -78,8 +78,7 @@ const lazyEnv = {
     const parent = body.expandedNodeValue;
     if (url === '/api/lazy-ok') {
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: [
           { label: `Sub A of ${parent}`, value: `${parent}-a` },
           { label: `Sub B of ${parent}`, value: `${parent}-b` },
@@ -94,12 +93,11 @@ const lazyEnv = {
         return { ok: false, status: 500, data: { message: 'Lazy load failed (first attempt)' } as T };
       }
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: [{ label: `Retried child of ${parent}`, value: `${parent}-r` }] as T,
       };
     }
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
 };
 

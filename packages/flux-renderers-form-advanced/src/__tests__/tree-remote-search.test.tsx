@@ -19,7 +19,7 @@ function makeRemoteSearchEnv(respond: (searchQuery: string) => unknown[]): Rende
     fetcher: async function <T>(_api: unknown, ctx: ApiRequestContext) {
       const scopeData = ctx.scope.readVisible() as { searchQuery?: string };
       const query = String(scopeData?.searchQuery ?? '');
-      return { ok: true, status: 200, data: respond(query) as T };
+      return { status: 0, data: respond(query) as T };
     },
     notify: () => undefined,
   };

@@ -4,7 +4,6 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
 export interface WasmFetchResponse {
-  ok: boolean;
   status: number;
   arrayBuffer(): Promise<ArrayBuffer>;
 }
@@ -26,7 +25,7 @@ async function fetchWithRetry(
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
       const response = await fetcher(url, signal);
-      if (response.ok) return response;
+      if (response.status === 0) return response;
       lastErr = new Error(`HTTP ${response.status}`);
     } catch (err) {
       lastErr = err;

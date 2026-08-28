@@ -126,7 +126,7 @@ const pageEnv: RendererEnv = {
     const filtered = q
       ? ALL_FRUITS.filter((item) => item.label.toLowerCase().includes(q))
       : ALL_FRUITS;
-    return { ok: true, status: 200, data: filtered as T };
+    return { status: 0, data: filtered as T };
   },
   notify(level, message) {
     console.info(`[input-suggest-demo] ${level}: ${message}`);

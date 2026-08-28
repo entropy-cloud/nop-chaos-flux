@@ -9,8 +9,7 @@ const crudLabEnv = {
     if (api.url === '/api/mock/users') {
       requestOwnedFetchCount += 1;
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: {
           items: [
             {
@@ -28,8 +27,7 @@ const crudLabEnv = {
     if (api.url === '/api/mock/client-mode') {
       clientModeFetchCount += 1;
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: {
           items: [
             {
@@ -45,8 +43,7 @@ const crudLabEnv = {
     }
 
     return {
-      ok: true,
-      status: 200,
+            status: 0,
       data: null as T,
     };
   },

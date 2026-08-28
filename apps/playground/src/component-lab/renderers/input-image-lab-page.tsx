@@ -29,15 +29,14 @@ const hostImageEnv = {
     if (url === '/api/image-ok') {
       const file = body.__uploadFile ?? { name: 'demo.png', size: 12 };
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: { url: `https://cdn.example.com/${file.name}`, name: file.name, size: file.size } as T,
       };
     }
     if (url === '/api/image-fail') {
       return { ok: false, status: 500, data: { message: 'Image upload rejected' } as T };
     }
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
 };
 

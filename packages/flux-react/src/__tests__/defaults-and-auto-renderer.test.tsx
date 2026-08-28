@@ -20,8 +20,7 @@ describe('defaults and auto renderer', () => {
     expect(
       await env.fetcher<{ ok: true }>({ url: '/api/demo' } as ExecutableApiRequest, {} as any),
     ).toEqual({
-      ok: true,
-      status: 200,
+            status: 0,
       data: null,
     });
     expect(
@@ -29,7 +28,7 @@ describe('defaults and auto renderer', () => {
         { url: 'https://example.com' } as ExecutableApiRequest,
         {} as any,
       ),
-    ).toEqual({ ok: true, status: 200, data: null });
+    ).toEqual({ status: 0, data: null });
 
     env.notify?.('info', 'message');
     expect(notify).toHaveBeenCalledWith('info', 'message');

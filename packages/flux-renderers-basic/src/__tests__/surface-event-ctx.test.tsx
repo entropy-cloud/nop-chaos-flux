@@ -5,7 +5,7 @@ import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support
 
 describe('dialog/drawer surface event dispatch ctx (CX-10 / bug-83 family)', () => {
   it('resolves ${surfaceId} in dialog onConfirm action args via ctx evaluationBindings', async () => {
-    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: null })) as unknown as RendererEnv['fetcher'];
+    const fetcher = vi.fn(async () => ({ status: 0, data: null })) as unknown as RendererEnv['fetcher'];
     const fetcherMock = vi.mocked(fetcher);
     const SchemaRenderer = createBasicSchemaRenderer();
 
@@ -49,7 +49,7 @@ describe('dialog/drawer surface event dispatch ctx (CX-10 / bug-83 family)', () 
   });
 
   it('resolves the same ${surfaceId} in dialog onConfirm and onClose action args', async () => {
-    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: null })) as unknown as RendererEnv['fetcher'];
+    const fetcher = vi.fn(async () => ({ status: 0, data: null })) as unknown as RendererEnv['fetcher'];
     const fetcherMock = vi.mocked(fetcher);
     const SchemaRenderer = createBasicSchemaRenderer();
     const schema = {
@@ -108,7 +108,7 @@ describe('dialog/drawer surface event dispatch ctx (CX-10 / bug-83 family)', () 
   });
 
   it('resolves ${surfaceId} in drawer onClose action args via ctx evaluationBindings', async () => {
-    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: null })) as unknown as RendererEnv['fetcher'];
+    const fetcher = vi.fn(async () => ({ status: 0, data: null })) as unknown as RendererEnv['fetcher'];
     const fetcherMock = vi.mocked(fetcher);
     const SchemaRenderer = createBasicSchemaRenderer();
 

@@ -22,14 +22,14 @@ afterEach(() => {
 // own intentional abort, and renders a spurious error state.
 describe('dynamic-renderer refresh-while-loading race (F4): per-invocation abort controller', () => {
   it('dyn-refresh-while-loading: aborted run#1 renders no false error and the fresh run#2 schema wins', async () => {
-    type FetchResult = { ok: true; status: 200; data: { type: string; text: string } };
+    type FetchResult = { status: 0; data: { type: string; text: string } };
     const pendingRelease: Array<() => void> = [];
     const fetcher = vi.fn(
       (_api: unknown, context: unknown) =>
         new Promise<FetchResult>((resolve, reject) => {
           const signal = (context as { signal?: AbortSignal } | undefined)?.signal;
           const release = () =>
-            resolve({ ok: true, status: 200, data: { type: 'text', text: 'Fresh schema' } });
+            resolve({ status: 0, data: { type: 'text', text: 'Fresh schema' } });
           if (signal) {
             if (signal.aborted) {
               reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));

@@ -205,7 +205,7 @@ describe('refresh failure propagation (2026-08-11-1929-3 Phase 4)', () => {
 
   it('reports a runtime host issue and conservatively fetches when initFetch evaluation throws', async () => {
     const notify = vi.fn();
-    const fetcher = vi.fn(async <T>() => ({ ok: true as const, status: 200, data: null as T }));
+    const fetcher = vi.fn(async <T>() => ({ status: 0, data: null as T }));
     const runtime = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: {

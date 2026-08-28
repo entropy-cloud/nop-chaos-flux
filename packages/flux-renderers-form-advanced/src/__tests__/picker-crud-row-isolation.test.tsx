@@ -21,7 +21,7 @@ const OWNER_ROWS = [
 
 const pickerEnv: RendererEnv = {
   fetcher: async function <T>() {
-    return { ok: true, status: 200, data: { items: OWNER_ROWS, total: OWNER_ROWS.length } as T };
+    return { status: 0, data: { items: OWNER_ROWS, total: OWNER_ROWS.length } as T };
   },
   notify: () => undefined,
 };

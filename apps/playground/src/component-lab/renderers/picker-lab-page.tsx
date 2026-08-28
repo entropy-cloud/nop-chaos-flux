@@ -56,8 +56,7 @@ const reviewersPicker = {
 const crudPickerEnv = {
   fetcher: async function <T>() {
     return {
-      ok: true,
-      status: 200,
+            status: 0,
       data: {
         items: [
           { id: 'a0', title: 'Alpha' },

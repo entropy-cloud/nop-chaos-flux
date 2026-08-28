@@ -13,8 +13,7 @@ function makeFetcher(overrides?: (url: string) => Partial<WasmFetchResponse>): {
     calls.push(url);
     const ov = overrides?.(url) ?? {};
     return {
-      ok: true,
-      status: 200,
+      status: 0,
       arrayBuffer: async () => new ArrayBuffer(0),
       ...ov,
     };
@@ -76,7 +75,7 @@ describe('prepareWasm', () => {
   });
 
   it('should reject when the fetcher returns a non-ok response', async () => {
-    const { fetcher } = makeFetcher(() => ({ ok: false, status: 404 }));
+    const { fetcher } = makeFetcher(() => ({ status: 404 }));
     await expect(prepareWasm('https://example.com/missing.wasm', undefined, fetcher)).rejects.toThrow();
   });
 
@@ -84,7 +83,7 @@ describe('prepareWasm', () => {
     let attempts = 0;
     const fetcher: WasmFetcher = async () => {
       attempts += 1;
-      return { ok: false, status: 503, arrayBuffer: async () => new ArrayBuffer(0) };
+      return { status: 503, arrayBuffer: async () => new ArrayBuffer(0) };
     };
     await expect(prepareWasm('https://example.com/retry.wasm', undefined, fetcher)).rejects.toThrow();
     expect(attempts).toBeGreaterThan(1);

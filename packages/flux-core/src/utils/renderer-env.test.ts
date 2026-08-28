@@ -4,8 +4,7 @@ import { decorateRendererEnv } from './renderer-env.js';
 
 function createEnv(): RendererEnv {
   const fetcher: ApiFetcher = async <T>(api: unknown) => ({
-    ok: true,
-    status: 200,
+        status: 0,
     data: api as T,
   });
 

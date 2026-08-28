@@ -51,14 +51,12 @@ describe('picker: labelResolveAction retries after a failed dispatch (C3.1 P2-1)
         }
         if (attempts === 2) {
           return {
-            ok: true,
-            status: 200,
+                        status: 0,
             data: { items: [{ id: 'u2', title: 'Resolved U2' }] } as T,
           };
         }
         return {
-          ok: true,
-          status: 200,
+                    status: 0,
           data: { items: [{ id: 'u1', title: 'Resolved Alice' }] } as T,
         };
       },

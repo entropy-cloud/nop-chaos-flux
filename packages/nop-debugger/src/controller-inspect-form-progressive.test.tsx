@@ -12,19 +12,19 @@ import { createNopDebugger } from './index.js';
 const SchemaRenderer = createSchemaRenderer();
 
 const env = {
-  fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
+  fetcher: async <T,>() => ({ status: 0, data: null as T }),
   notify: () => undefined,
 };
 
 const richEnv = {
   fetcher: async <T,>(api?: { url?: string }) => {
     if (api?.url === '/api/search') {
-      return { ok: true, status: 200, data: { results: [] } as T };
+      return { status: 0, data: { results: [] } as T };
     }
     if (api?.url === '/api/validate-username') {
-      return { ok: true, status: 200, data: { valid: true } as T };
+      return { status: 0, data: { valid: true } as T };
     }
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify: () => undefined,
 };

@@ -11,7 +11,7 @@ export const c4c2HostEnv = {
     const url = api.url ?? '';
     if (url.includes('/api/c4c2/quick-save')) {
       (window as unknown as { __c4c2QuickEditProbe?: unknown }).__c4c2QuickEditProbe = api.data;
-      return { ok: true, status: 200, data: api.data as T };
+      return { status: 0, data: api.data as T };
     }
     if (url.includes('/api/c4c2/load')) {
       const data = (api.data ?? {}) as { keyword?: string };
@@ -23,8 +23,7 @@ export const c4c2HostEnv = {
         { data: api.data, params: api.params },
       ]);
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: {
           items: keyword
             ? [{ id: 'q1', name: `Found-${keyword}`, status: 'active' }]
@@ -37,8 +36,7 @@ export const c4c2HostEnv = {
       (window as unknown as { __c4c2IncludeScopeProbe?: unknown }).__c4c2IncludeScopeProbe =
         api.data;
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: { items: [{ id: 'i1', name: 'IncludeItem', status: 'active' }], total: 1 } as T,
       };
     }
@@ -53,12 +51,11 @@ export const c4c2HostEnv = {
         } as unknown as T;
       }
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: { items: [{ id: 'f1', name: 'RecoveredRow', status: 'active' }], total: 1 } as T,
       };
     }
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
 } as unknown as Partial<RendererEnv>;
 
