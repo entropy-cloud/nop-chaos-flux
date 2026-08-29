@@ -1,0 +1,249 @@
+{
+  "type": "page",
+  "testid": "antdpro-list-page",
+  "className": "adp-root",
+  "body": [
+    {
+      "type": "container",
+      "testid": "antdpro-page-header",
+      "className": "adp-page-header px-5 pt-4 pb-4 mb-4 rounded-lg",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 6,
+          "className": "items-center adp-breadcrumb",
+          "testid": "antdpro-breadcrumb",
+          "body": [
+            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "订单管理", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "订单列表" }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 8,
+          "className": "items-center justify-between mt-2",
+          "body": [
+            {
+              "type": "text",
+              "text": "订单列表",
+              "className": "adp-page-title",
+              "testid": "antdpro-page-title"
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center",
+              "body": [
+                {
+                  "type": "button",
+                  "label": "批量导出",
+                  "className": "adp-btn adp-btn-outline",
+                  "testid": "antdpro-list-export"
+                },
+                {
+                  "type": "button",
+                  "label": "新建订单",
+                  "className": "adp-btn adp-btn-primary",
+                  "testid": "antdpro-list-new"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "订单数据由模拟后端实时提供，可按关键字、状态与渠道筛选。",
+          "className": "adp-desc-label mt-1"
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-4",
+      "body": [
+        {
+          "type": "crud",
+          "id": "antdpro-list-crud",
+          "testid": "antdpro-list-crud",
+          "rowKey": "id",
+          "loadAction": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/AntdPro__orders",
+              "method": "get",
+              "selection": "id,orderNo,customer,channel,channelLabel,payType,amount,amountText,status,statusLabel,owner,createdAt",
+              "data": {
+                "keyword": "${query.keyword ?? ''}",
+                "status": "${query.status ?? ''}",
+                "channel": "${query.channel ?? ''}"
+              }
+            }
+          },
+          "selection": {},
+          "filterTogglable": { "defaultCollapsed": false },
+          "queryForm": {
+            "layout": "horizontal",
+            "labelWidth": 80,
+            "columnCount": 3,
+            "gap": "sm",
+            "body": [
+              {
+                "type": "input-text",
+                "name": "keyword",
+                "label": "关键字",
+                "placeholder": "订单号 / 客户名称",
+                "testid": "antdpro-query-keyword"
+              },
+              {
+                "type": "select",
+                "name": "status",
+                "label": "状态",
+                "clearable": true,
+                "placeholder": "全部状态",
+                "options": [
+                  { "label": "待付款", "value": "pending" },
+                  { "label": "备货中", "value": "processing" },
+                  { "label": "配送中", "value": "shipped" },
+                  { "label": "已完成", "value": "done" },
+                  { "label": "已关闭", "value": "cancelled" }
+                ],
+                "testid": "antdpro-query-status"
+              },
+              {
+                "type": "select",
+                "name": "channel",
+                "label": "渠道",
+                "clearable": true,
+                "placeholder": "全部渠道",
+                "options": [
+                  { "label": "官网", "value": "web" },
+                  { "label": "小程序", "value": "miniapp" },
+                  { "label": "门店", "value": "store" },
+                  { "label": "App", "value": "app" }
+                ],
+                "testid": "antdpro-query-channel"
+              }
+            ]
+          },
+          "toolbar": [
+            {
+              "type": "button",
+              "label": "刷新",
+              "icon": "rotate-cw",
+              "variant": "outline",
+              "testid": "antdpro-toolbar-refresh",
+              "onClick": { "action": "component:refresh", "componentId": "antdpro-list-crud" }
+            },
+            {
+              "type": "button",
+              "label": "密度",
+              "icon": "rows-3",
+              "variant": "outline",
+              "testid": "antdpro-toolbar-density"
+            },
+            {
+              "type": "button",
+              "label": "列设置",
+              "icon": "settings-2",
+              "variant": "outline",
+              "testid": "antdpro-toolbar-columns"
+            }
+          ],
+          "listActions": [
+            {
+              "type": "button",
+              "label": "批量删除",
+              "variant": "destructive",
+              "testid": "antdpro-list-bulk-delete",
+              "disabled": "${!$crud.hasSelection}"
+            }
+          ],
+          "columns": [
+            { "name": "orderNo", "label": "订单号", "width": 140, "sortable": true },
+            { "name": "customer", "label": "客户名称", "width": 200 },
+            { "name": "channelLabel", "label": "渠道", "width": 90 },
+            {
+              "name": "amountText",
+              "label": "订单金额",
+              "width": 120,
+              "align": "right",
+              "cell": {
+                "type": "text",
+                "text": "${amountText}",
+                "className": "adp-mono"
+              }
+            },
+            {
+              "name": "statusLabel",
+              "label": "状态",
+              "width": 100,
+              "cell": {
+                "type": "container",
+                "body": [
+                  {
+                    "type": "text",
+                    "text": "${statusLabel}",
+                    "className": "adp-tag adp-tag-success",
+                    "visible": "${status === 'done'}"
+                  },
+                  {
+                    "type": "text",
+                    "text": "${statusLabel}",
+                    "className": "adp-tag adp-tag-warning",
+                    "visible": "${status === 'pending'}"
+                  },
+                  {
+                    "type": "text",
+                    "text": "${statusLabel}",
+                    "className": "adp-tag adp-tag-processing",
+                    "visible": "${status === 'processing' || status === 'shipped'}"
+                  },
+                  {
+                    "type": "text",
+                    "text": "${statusLabel}",
+                    "className": "adp-tag adp-tag-default",
+                    "visible": "${status === 'cancelled'}"
+                  }
+                ]
+              }
+            },
+            { "name": "owner", "label": "销售负责人", "width": 110 },
+            { "name": "createdAt", "label": "下单时间", "width": 170, "sortable": true },
+            {
+              "type": "operation",
+              "label": "操作",
+              "fixed": "right",
+              "width": 160,
+              "buttons": [
+                {
+                  "type": "button",
+                  "label": "查看",
+                  "className": "adp-btn-link",
+                  "testid": "antdpro-op-view"
+                },
+                {
+                  "type": "button",
+                  "label": "编辑",
+                  "className": "adp-btn-link",
+                  "testid": "antdpro-op-edit"
+                },
+                {
+                  "type": "button",
+                  "label": "删除",
+                  "className": "adp-btn-danger-link",
+                  "testid": "antdpro-op-delete"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

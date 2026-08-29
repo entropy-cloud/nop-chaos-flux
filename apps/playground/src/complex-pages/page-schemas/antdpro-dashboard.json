@@ -1,0 +1,274 @@
+{
+  "type": "page",
+  "testid": "antdpro-dashboard-page",
+  "className": "adp-root",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "dashboard",
+      "action": "ajax",
+      "args": { "url": "/r/AntdPro__dashboard", "method": "get" }
+    },
+    {
+      "type": "container",
+      "testid": "antdpro-dashboard-header",
+      "className": "adp-page-header px-5 pt-4 pb-4 mb-4 rounded-lg",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 6,
+          "className": "items-center adp-breadcrumb",
+          "body": [
+            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "仪表盘", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "分析页" }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "分析页",
+          "className": "adp-page-title mt-2",
+          "testid": "antdpro-dashboard-title"
+        },
+        {
+          "type": "text",
+          "text": "运营核心指标概览，数据每 5 分钟自动汇总一次。",
+          "className": "adp-desc-label mt-1"
+        }
+      ]
+    },
+    {
+      "type": "flex",
+      "direction": "row",
+      "wrap": true,
+      "gap": 16,
+      "className": "mb-4 px-5",
+      "body": [
+        {
+          "type": "container",
+          "testid": "antdpro-kpi-today-sales",
+          "className": "adp-card flex-1 p-5 min-w-48",
+          "body": [
+            { "type": "text", "text": "今日销售额（元）", "className": "adp-desc-label" },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center justify-between mt-2",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "${dashboard?.kpi?.todaySales ?? 0}",
+                  "className": "adp-kpi-value",
+                  "testid": "antdpro-kpi-today-sales-value"
+                },
+                {
+                  "type": "container",
+                  "className": "rounded-full p-2 bg-[#e6f4ff]",
+                  "body": [{ "type": "icon", "icon": "wallet", "size": 18, "color": "#1677ff" }]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "testid": "antdpro-kpi-month-sales",
+          "className": "adp-card flex-1 p-5 min-w-48",
+          "body": [
+            { "type": "text", "text": "本月销售额（元）", "className": "adp-desc-label" },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center justify-between mt-2",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "${dashboard?.kpi?.monthSales ?? 0}",
+                  "className": "adp-kpi-value",
+                  "testid": "antdpro-kpi-month-sales-value"
+                },
+                {
+                  "type": "container",
+                  "className": "rounded-full p-2 bg-[#f6ffed]",
+                  "body": [
+                    { "type": "icon", "icon": "trending-up", "size": 18, "color": "#52c41a" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "testid": "antdpro-kpi-total-orders",
+          "className": "adp-card flex-1 p-5 min-w-48",
+          "body": [
+            { "type": "text", "text": "订单总数", "className": "adp-desc-label" },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center justify-between mt-2",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "${dashboard?.kpi?.totalOrders ?? 0}",
+                  "className": "adp-kpi-value",
+                  "testid": "antdpro-kpi-total-orders-value"
+                },
+                {
+                  "type": "container",
+                  "className": "rounded-full p-2 bg-[#fffbe6]",
+                  "body": [
+                    { "type": "icon", "icon": "shopping-cart", "size": 18, "color": "#faad14" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "testid": "antdpro-kpi-pending-orders",
+          "className": "adp-card flex-1 p-5 min-w-48",
+          "body": [
+            { "type": "text", "text": "待付款订单", "className": "adp-desc-label" },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center justify-between mt-2",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "${dashboard?.kpi?.pendingOrders ?? 0}",
+                  "className": "adp-kpi-value",
+                  "testid": "antdpro-kpi-pending-orders-value"
+                },
+                {
+                  "type": "container",
+                  "className": "rounded-full p-2 bg-[#fff2f0]",
+                  "body": [{ "type": "icon", "icon": "clock", "size": 18, "color": "#ff4d4f" }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "flex",
+      "direction": "row",
+      "gap": 16,
+      "className": "mb-4 px-5",
+      "body": [
+        {
+          "type": "container",
+          "className": "adp-card flex-[3] p-5",
+          "testid": "antdpro-dashboard-trend-card",
+          "body": [
+            { "type": "text", "text": "销售趋势", "className": "adp-card-title mb-3" },
+            {
+              "type": "chart",
+              "testid": "antdpro-dashboard-trend-chart",
+              "chartType": "line",
+              "source": "${dashboard?.trend}",
+              "height": 280,
+              "xAxis": { "dataKey": "date" },
+              "series": [
+                { "name": "销售额", "dataRegionKey": "sales" },
+                { "name": "订单数", "dataRegionKey": "orders" }
+              ],
+              "grid": true,
+              "legend": true
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "className": "adp-card flex-[2] p-5",
+          "testid": "antdpro-dashboard-channel-card",
+          "body": [
+            { "type": "text", "text": "渠道占比", "className": "adp-card-title mb-3" },
+            {
+              "type": "chart",
+              "testid": "antdpro-dashboard-channel-chart",
+              "chartType": "pie",
+              "source": "${dashboard?.channels}",
+              "height": 280,
+              "xAxis": { "dataKey": "name" },
+              "series": [{ "name": "订单数", "dataRegionKey": "value" }],
+              "legend": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-5 mx-5 mb-4",
+      "testid": "antdpro-dashboard-top-card",
+      "body": [
+        { "type": "text", "text": "热销商品 Top 10", "className": "adp-card-title mb-3" },
+        {
+          "type": "table",
+          "testid": "antdpro-dashboard-top-table",
+          "source": "${dashboard?.topProducts}",
+          "rowKey": "rank",
+          "pagination": { "enabled": false },
+          "empty": { "type": "text", "text": "暂无排行数据" },
+          "columns": [
+            {
+              "name": "rank",
+              "label": "排名",
+              "width": 80,
+              "cell": {
+                "type": "container",
+                "body": [
+                  {
+                    "type": "text",
+                    "text": "${rank}",
+                    "className": "adp-top-rank adp-top-rank-1",
+                    "visible": "${rank === 1}"
+                  },
+                  {
+                    "type": "text",
+                    "text": "${rank}",
+                    "className": "adp-top-rank adp-top-rank-2",
+                    "visible": "${rank === 2}"
+                  },
+                  {
+                    "type": "text",
+                    "text": "${rank}",
+                    "className": "adp-top-rank adp-top-rank-3",
+                    "visible": "${rank === 3}"
+                  },
+                  {
+                    "type": "text",
+                    "text": "${rank}",
+                    "className": "adp-top-rank",
+                    "visible": "${rank > 3}"
+                  }
+                ]
+              }
+            },
+            { "name": "name", "label": "商品名称" },
+            { "name": "category", "label": "类目", "width": 120 },
+            {
+              "name": "sales",
+              "label": "销售额（元）",
+              "width": 140,
+              "align": "right",
+              "cell": { "type": "text", "text": "${sales}", "className": "adp-mono" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

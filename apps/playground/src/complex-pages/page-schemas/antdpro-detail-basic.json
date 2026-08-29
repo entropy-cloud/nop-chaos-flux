@@ -1,0 +1,327 @@
+{
+  "type": "page",
+  "testid": "antdpro-detail-basic-page",
+  "className": "adp-root",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "detail",
+      "action": "ajax",
+      "args": { "url": "/r/AntdPro__orderDetail?id=A1001", "method": "get" }
+    },
+    {
+      "type": "container",
+      "testid": "antdpro-detail-basic-header",
+      "className": "adp-page-header px-5 pt-4 pb-4 mb-4 rounded-lg",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 6,
+          "className": "items-center adp-breadcrumb",
+          "body": [
+            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "订单管理", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "订单详情" }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "items-center justify-between mt-2",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 12,
+              "className": "items-center",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "订单详情",
+                  "className": "adp-page-title",
+                  "testid": "antdpro-detail-basic-title"
+                },
+                {
+                  "type": "container",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${detail?.statusLabel ?? '-'}",
+                      "className": "adp-tag adp-tag-success",
+                      "visible": "${detail?.status === 'done'}",
+                      "testid": "antdpro-detail-basic-status-done"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${detail?.statusLabel ?? '-'}",
+                      "className": "adp-tag adp-tag-warning",
+                      "visible": "${detail?.status === 'pending'}",
+                      "testid": "antdpro-detail-basic-status-pending"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${detail?.statusLabel ?? '-'}",
+                      "className": "adp-tag adp-tag-processing",
+                      "visible": "${detail?.status === 'processing' || detail?.status === 'shipped'}",
+                      "testid": "antdpro-detail-basic-status-processing"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${detail?.statusLabel ?? '-'}",
+                      "className": "adp-tag adp-tag-default",
+                      "visible": "${detail?.status === 'cancelled'}",
+                      "testid": "antdpro-detail-basic-status-cancelled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center",
+              "testid": "antdpro-detail-basic-actions",
+              "body": [
+                {
+                  "type": "button",
+                  "label": "打印",
+                  "className": "adp-btn adp-btn-outline",
+                  "testid": "antdpro-detail-basic-print"
+                },
+                {
+                  "type": "button",
+                  "label": "返回列表",
+                  "className": "adp-btn adp-btn-outline",
+                  "testid": "antdpro-detail-basic-back"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-6 max-w-4xl mx-auto",
+      "testid": "antdpro-detail-basic-card",
+      "body": [
+        {
+          "type": "text",
+          "text": "基本信息",
+          "className": "adp-card-title mb-2",
+          "testid": "antdpro-detail-basic-group-basic"
+        },
+        {
+          "type": "container",
+          "className": "flex flex-col mb-4",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "adp-desc-divider py-2.5",
+              "body": [
+                { "type": "text", "text": "订单号", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.basic?.orderNo ?? '-'}",
+                  "className": "adp-desc-value adp-mono",
+                  "testid": "antdpro-detail-basic-order-no"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "adp-desc-divider py-2.5",
+              "body": [
+                { "type": "text", "text": "订单渠道", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.basic?.channelLabel ?? '-'}",
+                  "className": "adp-desc-value"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "adp-desc-divider py-2.5",
+              "body": [
+                { "type": "text", "text": "支付方式", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.basic?.payType ?? '-'}",
+                  "className": "adp-desc-value"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "adp-desc-divider py-2.5",
+              "body": [
+                { "type": "text", "text": "下单时间", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.basic?.createdAt ?? '-'}",
+                  "className": "adp-desc-value"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "py-2.5",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "销售负责人",
+                  "className": "adp-desc-label w-28 shrink-0"
+                },
+                {
+                  "type": "text",
+                  "text": "${detail?.basic?.owner ?? '-'}",
+                  "className": "adp-desc-value"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "客户信息",
+          "className": "adp-card-title mb-2",
+          "testid": "antdpro-detail-basic-group-customer"
+        },
+        {
+          "type": "container",
+          "className": "flex flex-col mb-4",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "adp-desc-divider py-2.5",
+              "body": [
+                { "type": "text", "text": "客户名称", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.customer?.name ?? '-'}",
+                  "className": "adp-desc-value",
+                  "testid": "antdpro-detail-basic-customer"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "adp-desc-divider py-2.5",
+              "body": [
+                { "type": "text", "text": "联系人", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.customer?.contact ?? '-'}",
+                  "className": "adp-desc-value"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "adp-desc-divider py-2.5",
+              "body": [
+                { "type": "text", "text": "联系电话", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.customer?.phone ?? '-'}",
+                  "className": "adp-desc-value adp-mono"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "py-2.5",
+              "body": [
+                { "type": "text", "text": "所属大区", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.customer?.region ?? '-'}",
+                  "className": "adp-desc-value"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "结算信息",
+          "className": "adp-card-title mb-2",
+          "testid": "antdpro-detail-basic-group-payment"
+        },
+        {
+          "type": "container",
+          "className": "flex flex-col",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "adp-desc-divider py-2.5",
+              "body": [
+                { "type": "text", "text": "订单金额", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.amountText ?? '-'}",
+                  "className": "adp-desc-value adp-mono",
+                  "testid": "antdpro-detail-basic-amount"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "adp-desc-divider py-2.5",
+              "body": [
+                { "type": "text", "text": "付款时间", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.payment?.paidAt ?? '-'}",
+                  "className": "adp-desc-value"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "py-2.5",
+              "body": [
+                { "type": "text", "text": "发票抬头", "className": "adp-desc-label w-28 shrink-0" },
+                {
+                  "type": "text",
+                  "text": "${detail?.payment?.invoiceTitle ?? '-'}",
+                  "className": "adp-desc-value"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

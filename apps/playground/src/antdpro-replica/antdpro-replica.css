@@ -1,0 +1,270 @@
+/*
+ * Ant Design Pro replica styles (LIGHT MODE ONLY).
+ *
+ * Replicates the Ant Design Pro page-template family (dashboard / list /
+ * form / detail / result — see
+ * docs/analysis/ui-review/P1-reference-apps/ant-design-pro.md §2/§5/§6)
+ * via CSS tokens + marker classes on the playground layer only; no renderer
+ * internals are modified.
+ *
+ * Token deviation (plan 2026-08-29-1240-1 §差异声明): border radius 6px → 8px
+ * (--adp-radius) to satisfy the analysis §6.2 "change primary color OR radius"
+ * rule; the AntD enterprise-blue primary family (#1677ff) is kept as the
+ * semantic anchor. All copy and icons are original replacements (lucide
+ * approximations); no Ant Design brand assets are referenced.
+ *
+ * Consumed by page schemas complex-pages/page-schemas/antdpro-*.json through
+ * the `.adp-root` page scope and the `.adp-dialog` dialog portal scope;
+ * layout/spacing in schemas uses Tailwind utilities (dual-track rule).
+ */
+
+/* ── 1. Design tokens (light only) ──────────────────────────────────────── */
+
+/* Declared on .adp-root AND .adp-dialog because dialogs render through a
+   portal outside the .adp-root subtree (sundial-replica.css precedent). */
+.adp-root,
+.adp-dialog {
+  /* brand primary (kept from analysis §2.1) */
+  --adp-primary: #1677ff;
+  --adp-primary-hover: #4096ff;
+  --adp-primary-active: #0958d9;
+  --adp-primary-bg: #e6f4ff;
+  --adp-primary-border: #91caff;
+
+  /* semantic colors */
+  --adp-success: #52c41a;
+  --adp-success-bg: #f6ffed;
+  --adp-warning: #faad14;
+  --adp-warning-bg: #fffbe6;
+  --adp-error: #ff4d4f;
+  --adp-error-bg: #fff2f0;
+  --adp-info: #1677ff;
+  --adp-info-bg: #e6f4ff;
+
+  /* neutral grays */
+  --adp-text: rgba(0, 0, 0, 0.88);
+  --adp-text-secondary: rgba(0, 0, 0, 0.65);
+  --adp-text-tertiary: rgba(0, 0, 0, 0.45);
+  --adp-text-quaternary: rgba(0, 0, 0, 0.25);
+  --adp-bg-layout: #f5f5f5;
+  --adp-bg-container: #ffffff;
+  --adp-bg-hover: rgba(0, 0, 0, 0.04);
+  --adp-border: #d9d9d9;
+  --adp-split: rgba(5, 5, 5, 0.06);
+
+  /* shape / density — DEVIATION: radius 8px (AntD default is 6px) */
+  --adp-radius: 8px;
+  --adp-radius-sm: 4px;
+  --adp-radius-lg: 8px;
+  --adp-control-height: 32px;
+}
+
+.adp-root {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  line-height: 1.5714;
+  color: var(--adp-text);
+  background: var(--adp-bg-container);
+}
+
+.adp-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 2. Page header (PageContainer 形态：面包屑 + 标题 + extra) ─────────── */
+
+.adp-page-header {
+  background: var(--adp-bg-container);
+  border-bottom: 1px solid var(--adp-split);
+}
+
+.adp-breadcrumb {
+  color: var(--adp-text-tertiary);
+  font-size: 14px;
+}
+
+.adp-breadcrumb-link {
+  color: var(--adp-text-secondary);
+}
+
+.adp-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--adp-text);
+}
+
+/* ── 3. Buttons (控件高 32 / 圆角令牌 / 语义色) ─────────────────────────── */
+
+.adp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--adp-control-height);
+  padding: 0 15px;
+  border-radius: var(--adp-radius);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition:
+    color 0.1s ease,
+    background-color 0.1s ease,
+    border-color 0.1s ease;
+}
+
+.adp-btn-primary {
+  background: var(--adp-primary);
+  color: #ffffff;
+}
+
+.adp-btn-primary:hover {
+  background: var(--adp-primary-hover);
+}
+
+.adp-btn-primary:active {
+  background: var(--adp-primary-active);
+}
+
+.adp-btn-outline {
+  background: var(--adp-bg-container);
+  color: var(--adp-text);
+  border: 1px solid var(--adp-border);
+}
+
+.adp-btn-outline:hover {
+  color: var(--adp-primary);
+  border-color: var(--adp-primary);
+}
+
+.adp-btn-link {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  color: var(--adp-primary);
+}
+
+.adp-btn-link:hover {
+  color: var(--adp-primary-hover);
+}
+
+.adp-btn-danger-link {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  color: var(--adp-error);
+}
+
+.adp-btn-danger-link:hover {
+  color: #ff7875;
+}
+
+/* ── 4. Cards / query filter surface ────────────────────────────────────── */
+
+.adp-card {
+  background: var(--adp-bg-container);
+  border-radius: var(--adp-radius-lg);
+  border: 1px solid var(--adp-split);
+}
+
+.adp-card-head {
+  border-bottom: 1px solid var(--adp-split);
+}
+
+.adp-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--adp-text);
+}
+
+.adp-query-divider {
+  border-bottom: 1px solid var(--adp-split);
+}
+
+/* ── 5. Status tags (语义色浅底 pill) ───────────────────────────────────── */
+
+.adp-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: var(--adp-radius-sm);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.adp-tag-processing {
+  color: var(--adp-primary);
+  background: var(--adp-primary-bg);
+}
+
+.adp-tag-success {
+  color: var(--adp-success);
+  background: var(--adp-success-bg);
+}
+
+.adp-tag-warning {
+  color: var(--adp-warning);
+  background: var(--adp-warning-bg);
+}
+
+.adp-tag-error {
+  color: var(--adp-error);
+  background: var(--adp-error-bg);
+}
+
+.adp-tag-default {
+  color: var(--adp-text-secondary);
+  background: var(--adp-bg-layout);
+}
+
+/* ── 6. Descriptions (详情字段行：label 灰 + value) ─────────────────────── */
+
+.adp-desc-label {
+  color: var(--adp-text-tertiary);
+  font-size: 14px;
+}
+
+.adp-desc-value {
+  color: var(--adp-text);
+  font-size: 14px;
+}
+
+.adp-desc-divider {
+  border-bottom: 1px solid var(--adp-split);
+}
+
+/* ── 7. Result / KPI accents ────────────────────────────────────────────── */
+
+.adp-result-icon {
+  color: var(--adp-success);
+}
+
+.adp-kpi-value {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.21;
+  color: var(--adp-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.adp-top-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--adp-radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--adp-text-quaternary);
+  background: var(--adp-bg-layout);
+}
+
+.adp-top-rank-1,
+.adp-top-rank-2,
+.adp-top-rank-3 {
+  color: #ffffff;
+  background: var(--adp-primary);
+}

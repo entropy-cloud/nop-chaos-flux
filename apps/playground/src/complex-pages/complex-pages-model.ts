@@ -209,4 +209,76 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 Sundial 新建待办对话框：360dp 圆角对话框，标题输入（自动聚焦）+ 备注多行 + 日期字段行（badge+清除按钮）+ 旗标行 + 列表行（色点 + 名称）+ 取消/添加按钮，全部由 schema + openDialog 动作驱动。',
     features: ['复刻样式', '对话框', '表单字段', 'badge', 'openDialog'],
   },
+  {
+    id: 'antdpro-list',
+    title: 'AntD Pro 订单列表',
+    category: 'app-replica',
+    description:
+      '复刻 Ant Design Pro 标准查询列表页：PageHeader 页头（面包屑+标题+操作按钮）+ 查询区（关键字/状态下拉/渠道下拉+查询/重置+展开入口）+ crud 表格区（工具栏、选择列、金额/状态标签列、行操作列、分页），数据经 AntdPro__orders 端点分页流动。',
+    features: ['复刻样式', 'PageHeader', '查询区', 'crud 表格', 'AntdPro__orders'],
+  },
+  {
+    id: 'antdpro-form-basic',
+    title: 'AntD Pro 基础表单',
+    category: 'app-replica',
+    description:
+      '复刻 Ant Design Pro 基础表单页：整页单列表单（标题/时间段/目标描述等字段）+ 底部操作条（提交/重置），字段与操作条分离的经典单列布局。',
+    features: ['复刻样式', '单列表单', '底部操作条', '静态形态'],
+  },
+  {
+    id: 'antdpro-form-grouped',
+    title: 'AntD Pro 分组表单',
+    category: 'app-replica',
+    description:
+      '复刻 Ant Design Pro 分组表单页：区内分组（小标题 fieldset：入库编号/人员信息）与卡片分组（任务描述/责任人）双形态并存的分组布局。',
+    features: ['复刻样式', 'fieldset 分组', '卡片分组', '静态形态'],
+  },
+  {
+    id: 'antdpro-form-dialog',
+    title: 'AntD Pro 弹窗表单',
+    category: 'app-replica',
+    description:
+      '复刻 Ant Design Pro 列表上下文 ModalForm：页头触发按钮 + dialog 内嵌新建表单（静态形态，点击可打开弹窗断言内部结构），提交流转归 P2b。',
+    features: ['复刻样式', 'ModalForm 形态', 'dialog 内嵌表单', '可见可点'],
+  },
+  {
+    id: 'antdpro-form-step',
+    title: 'AntD Pro 分步表单',
+    category: 'app-replica',
+    description:
+      '复刻 Ant Design Pro 分步表单页：wizard 三步（填写转账信息/确认转账信息/完成）+ 步骤条 + 分步字段组，分步校验与数据暂存归 P2b。',
+    features: ['复刻样式', 'wizard 三步', '步骤条', '静态形态'],
+  },
+  {
+    id: 'antdpro-detail-basic',
+    title: 'AntD Pro 基础详情',
+    category: 'app-replica',
+    description:
+      '复刻 Ant Design Pro 基础详情页：单卡 Descriptions 形态（分组分割线 + 字段行 + 操作按钮组），数据经 AntdPro__orderDetail 端点拉取。',
+    features: ['复刻样式', 'Descriptions 卡', '分组分割线', 'AntdPro__orderDetail'],
+  },
+  {
+    id: 'antdpro-detail-advanced',
+    title: 'AntD Pro 高级详情',
+    category: 'app-replica',
+    description:
+      '复刻 Ant Design Pro 高级详情页：多卡 + steps 步骤条（进度态）+ tabs 分组（订单信息/客户信息/审批记录）+ 审批操作组，数据经 AntdPro__orderDetail 端点拉取。',
+    features: ['复刻样式', 'steps 步骤条', 'tabs 分组', '审批操作组'],
+  },
+  {
+    id: 'antdpro-dashboard',
+    title: 'AntD Pro 数据看板',
+    category: 'app-replica',
+    description:
+      '复刻 Ant Design Pro 分析仪表盘：KPI 卡×4（今日销售额/月销售额/订单总数/待付款订单）+ 销售趋势折线图 + 渠道占比饼图 + Top10 商品排行卡，数据经 AntdPro__dashboard 端点拉取。',
+    features: ['复刻样式', 'KPI 卡×4', '折线/饼图', 'Top10 排行', 'AntdPro__dashboard'],
+  },
+  {
+    id: 'antdpro-result',
+    title: 'AntD Pro 提交结果页',
+    category: 'app-replica',
+    description:
+      '复刻 Ant Design Pro result 成功页：lucide 自绘结果图形 + 成功标题与描述行 + 动作组（返回列表主按钮 + 再填一层次按钮），I13 静态形态。',
+    features: ['复刻样式', '结果图形', '描述行', '动作组'],
+  },
 ];

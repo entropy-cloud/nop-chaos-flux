@@ -19,6 +19,10 @@ import {
   type SundialTaskView,
   type UserRecord,
 } from './mock-backend';
+import {
+  createAntdProOrders,
+  createAntdProFetcherBranch,
+} from './mock-backend-antdpro';
 import { confirmBridge } from './confirm-bridge';
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -99,6 +103,8 @@ function sortRows<T extends Record<string, unknown>>(rows: T[], orderBy?: string
  */
 export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
   const db = createMockDatabase();
+  const antdproOrders = createAntdProOrders();
+  const handleAntdProBranch = createAntdProFetcherBranch(antdproOrders, clone);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {
     const url = api.url ?? '';
@@ -630,6 +636,14 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
           total: 4,
         }) as T,
       };
+    }
+
+    // ----- Ant Design Pro replica endpoints (plan 2026-08-29-1240-1 P2a;
+    // get-only read surface — writes belong to P2b). Branch bodies live in
+    // mock-backend-antdpro.ts to keep this file under the 700-line gate. -----
+    if (url.includes('/r/AntdPro__')) {
+      const handled = handleAntdProBranch<T>({ url, method, params, body });
+      if (handled) return handled;
     }
 
     return { status: 0, data: null as T };
