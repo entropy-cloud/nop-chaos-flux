@@ -1,0 +1,707 @@
+/*
+ * Notion-style multi-view database replica styles (LIGHT MODE ONLY).
+ *
+ * Replicates the "multi-view over one dataset" database surface (view tab
+ * bar + table/board/gallery/calendar/list views + view-settings panel +
+ * record peek + property-header type system — see
+ * docs/analysis/ui-review/P1-reference-apps/notion-database.md §2/§3/§5/§6)
+ * via CSS tokens + marker classes on the playground layer only; no renderer
+ * internals are modified.
+ *
+ * Token architecture (plan 2026-08-30-0040-2 §差异声明（P5a 裁定）):
+ * page canvas #FFFFFF / sidebar #FBFBFA / hover gray #F7F7F5-family, body
+ * text #37352F (community reverse-engineered; two coexisting values
+ * #37352F/#373530 — this replica adopts #37352F), primary action blue
+ * #2383E2, the full 10-color semantic palette ×3 sets (text/bg/icon)
+ * declared as 30 `--nt-c-*` variables, radius ladder 3·4·6·8px, ~33px
+ * table row density, hover-revealed row controls via pure CSS :hover.
+ * DEVIATIONS (analysis §6.2): all color values are community consensus /
+ * reverse-engineered approximations, not official tokens; the marketing
+ * brand purple #5645d4 is intentionally NOT part of this replica's tokens
+ * (it belongs to the marketing site, not the app UI); light-only (no dark
+ * mapping implemented); emoji page icons are native characters (open
+ * emoji-picker charset, license-free), never used as property icons.
+ *
+ * Consumed by the page schema complex-pages/page-schemas/notion-database.json
+ * through the `.nt-root` page scope and the `.nt-dialog` dialog/drawer
+ * portal scope; layout/spacing in the schema uses Tailwind utilities
+ * (dual-track rule).
+ */
+
+/* ── 1. Design tokens (light only) ──────────────────────────────────────── */
+
+/* Declared on .nt-root AND .nt-dialog because dialogs/drawers render through
+   a portal outside the .nt-root subtree (sundial-replica.css precedent). */
+.nt-root,
+.nt-dialog {
+  /* surfaces */
+  --nt-bg: #ffffff;
+  --nt-sidebar: #fbfbfa;
+  --nt-hover: #f7f7f5;
+  --nt-active: #f1f1ef;
+
+  /* text (body text adopts #37352F of the two coexisting reverse values) */
+  --nt-text: #37352f;
+  --nt-text-secondary: rgba(55, 53, 47, 0.65);
+  --nt-text-tertiary: rgba(55, 53, 47, 0.45);
+
+  /* borders (extremely light separators) */
+  --nt-border: rgba(55, 53, 47, 0.09);
+  --nt-border-strong: rgba(55, 53, 47, 0.16);
+
+  /* primary action blue */
+  --nt-blue: #2383e2;
+  --nt-blue-hover: #1b74ca;
+
+  /* 10-color semantic palette ×3 sets (text / bg / icon) — full set */
+  --nt-c-default-text: #37352f;
+  --nt-c-default-bg: #f1f1ef;
+  --nt-c-default-icon: #37352f;
+  --nt-c-gray-text: #787774;
+  --nt-c-gray-bg: #f1f1ef;
+  --nt-c-gray-icon: #9b9a97;
+  --nt-c-brown-text: #9f6b53;
+  --nt-c-brown-bg: #f4eeee;
+  --nt-c-brown-icon: #a97d61;
+  --nt-c-orange-text: #cc782f;
+  --nt-c-orange-bg: #f8ecdf;
+  --nt-c-orange-icon: #d87620;
+  --nt-c-yellow-text: #cb912f;
+  --nt-c-yellow-bg: #fbf3db;
+  --nt-c-yellow-icon: #dfab01;
+  --nt-c-green-text: #548164;
+  --nt-c-green-bg: #eef3ed;
+  --nt-c-green-icon: #448361;
+  --nt-c-blue-text: #487ca5;
+  --nt-c-blue-bg: #e9f3f7;
+  --nt-c-blue-icon: #337ea9;
+  --nt-c-purple-text: #9065b0;
+  --nt-c-purple-bg: #f6f3f9;
+  --nt-c-purple-icon: #8a67ab;
+  --nt-c-pink-text: #c14c8a;
+  --nt-c-pink-bg: #faf1f5;
+  --nt-c-pink-icon: #c14c8a;
+  --nt-c-red-text: #c4554d;
+  --nt-c-red-bg: #faecec;
+  --nt-c-red-icon: #d44c47;
+
+  /* radius ladder (labels/buttons 3–6px, cards 4–8px) */
+  --nt-radius-sm: 3px;
+  --nt-radius: 4px;
+  --nt-radius-lg: 6px;
+  --nt-radius-xl: 8px;
+
+  /* type */
+  --nt-font:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei',
+    'Helvetica Neue', sans-serif;
+
+  /* conditional color tints (row-level, low-saturation pastel) */
+  --nt-cond-red: #faecec;
+  --nt-cond-yellow: #fbf3db;
+}
+
+.nt-root {
+  font-family: var(--nt-font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--nt-text);
+  background: var(--nt-bg);
+  min-height: 100%;
+}
+
+.nt-dialog {
+  background: var(--nt-bg);
+  color: var(--nt-text);
+  border: 1px solid var(--nt-border-strong);
+}
+
+.nt-mono {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, 'SF Mono', Consolas, 'Liberation Mono', monospace;
+}
+
+/* ── 2. Title bar + view tab bar ────────────────────────────────────────── */
+
+.nt-db-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.nt-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--nt-text);
+}
+
+.nt-viewbar-actions {
+  position: absolute;
+  right: 12px;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--nt-bg);
+}
+
+/* Built-in tabs restyled into the Notion view-tab form (underline-free,
+   hover-gray, active = darker text on light gray pill). */
+.nt-tabs [data-slot='tabs-list'] {
+  background: transparent;
+  border: none;
+  height: auto;
+  gap: 2px;
+  padding: 0 44px 0 0;
+  border-radius: 0;
+}
+
+.nt-tabs [data-slot='tabs-trigger'] {
+  flex: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--nt-radius);
+  padding: 4px 8px;
+  height: 28px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--nt-text-secondary);
+  box-shadow: none;
+}
+
+.nt-tabs [data-slot='tabs-trigger']:hover {
+  background: var(--nt-hover);
+  color: var(--nt-text);
+}
+
+.nt-tabs [data-slot='tabs-trigger'][data-active],
+.nt-tabs [data-slot='tabs-trigger'][data-state='active'] {
+  background: var(--nt-active);
+  color: var(--nt-text);
+  font-weight: 500;
+}
+
+/* ── 3. Buttons / shared controls ───────────────────────────────────────── */
+
+.nt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--nt-radius);
+  font-size: 14px;
+  color: var(--nt-text-secondary);
+  cursor: pointer;
+}
+
+.nt-btn:hover {
+  background: var(--nt-hover);
+  color: var(--nt-text);
+}
+
+.nt-btn-primary {
+  background: var(--nt-blue);
+  color: #fff;
+  font-weight: 500;
+}
+
+.nt-btn-primary:hover {
+  background: var(--nt-blue-hover);
+  color: #fff;
+}
+
+.nt-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  font-size: 12px;
+  color: var(--nt-text-tertiary);
+}
+
+/* ── 4. Property chips / status dots / avatars ──────────────────────────── */
+
+.nt-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--nt-radius-sm);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.nt-chip-default {
+  color: var(--nt-c-default-text);
+  background: var(--nt-c-default-bg);
+}
+.nt-chip-gray {
+  color: var(--nt-c-gray-text);
+  background: var(--nt-c-gray-bg);
+}
+.nt-chip-brown {
+  color: var(--nt-c-brown-text);
+  background: var(--nt-c-brown-bg);
+}
+.nt-chip-orange {
+  color: var(--nt-c-orange-text);
+  background: var(--nt-c-orange-bg);
+}
+.nt-chip-yellow {
+  color: var(--nt-c-yellow-text);
+  background: var(--nt-c-yellow-bg);
+}
+.nt-chip-green {
+  color: var(--nt-c-green-text);
+  background: var(--nt-c-green-bg);
+}
+.nt-chip-blue {
+  color: var(--nt-c-blue-text);
+  background: var(--nt-c-blue-bg);
+}
+.nt-chip-purple {
+  color: var(--nt-c-purple-text);
+  background: var(--nt-c-purple-bg);
+}
+.nt-chip-pink {
+  color: var(--nt-c-pink-text);
+  background: var(--nt-c-pink-bg);
+}
+.nt-chip-red {
+  color: var(--nt-c-red-text);
+  background: var(--nt-c-red-bg);
+}
+
+.nt-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+}
+
+.nt-dot-gray {
+  background: var(--nt-c-gray-icon);
+}
+.nt-dot-blue {
+  background: var(--nt-c-blue-icon);
+}
+.nt-dot-yellow {
+  background: var(--nt-c-yellow-icon);
+}
+.nt-dot-green {
+  background: var(--nt-c-green-icon);
+}
+
+.nt-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  font-size: 11px;
+}
+
+.nt-avatar-blue {
+  background: var(--nt-c-blue-bg);
+  color: var(--nt-c-blue-icon);
+}
+.nt-avatar-green {
+  background: var(--nt-c-green-bg);
+  color: var(--nt-c-green-icon);
+}
+.nt-avatar-purple {
+  background: var(--nt-c-purple-bg);
+  color: var(--nt-c-purple-icon);
+}
+.nt-avatar-orange {
+  background: var(--nt-c-orange-bg);
+  color: var(--nt-c-orange-icon);
+}
+.nt-avatar-pink {
+  background: var(--nt-c-pink-bg);
+  color: var(--nt-c-pink-icon);
+}
+
+.nt-url {
+  color: var(--nt-blue);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.nt-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--nt-radius-sm);
+  border: 1px solid var(--nt-border-strong);
+  font-size: 12px;
+  line-height: 1;
+  color: transparent;
+}
+
+.nt-checkbox-on {
+  background: var(--nt-blue);
+  border-color: var(--nt-blue);
+  color: #fff;
+}
+
+/* Row conditional-color static samples (page background tint approximation) */
+.nt-cond-red {
+  box-shadow: inset 3px 0 0 var(--nt-c-red-icon);
+}
+.nt-cond-yellow {
+  box-shadow: inset 3px 0 0 var(--nt-c-yellow-icon);
+}
+
+/* ── 5. Table view (high-density ~33px rows + hover-revealed controls) ──── */
+
+.nt-table {
+  font-size: 14px;
+}
+
+.nt-table [data-slot='table-row'] {
+  height: 33px;
+}
+
+.nt-table [data-slot='table-row'] td {
+  padding: 4px 8px;
+}
+
+.nt-table [data-slot='table-row'] td {
+  border-bottom: 1px solid var(--nt-border);
+  color: var(--nt-text);
+}
+
+.nt-table [data-slot='table-head'] {
+  color: var(--nt-text-tertiary);
+  font-size: 12px;
+  font-weight: 400;
+  border-bottom: 1px solid var(--nt-border);
+}
+
+.nt-table [data-slot='table-row']:hover td {
+  background: var(--nt-hover);
+}
+
+.nt-row-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.nt-table [data-slot='table-row']:hover .nt-row-tools {
+  opacity: 1;
+}
+
+.nt-row-open {
+  height: 22px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--nt-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--nt-radius-sm);
+  cursor: pointer;
+}
+
+.nt-row-open:hover {
+  background: var(--nt-active);
+  color: var(--nt-text);
+}
+
+.nt-prop-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border-radius: var(--nt-radius-sm);
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+.nt-prop-head:hover {
+  background: var(--nt-hover);
+}
+
+.nt-new-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 33px;
+  padding: 0 8px;
+  font-size: 14px;
+  color: var(--nt-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--nt-radius-sm);
+}
+
+.nt-new-row:hover {
+  background: var(--nt-hover);
+  color: var(--nt-text-secondary);
+}
+
+/* ── 6. Board view ──────────────────────────────────────────────────────── */
+
+/* kanban 内建工具条（搜索/undo/活动日志）与标签过滤云是 scheduling 默认
+   chrome，非 Notion 看板形态 — 复刻层按稳定 id/class 隐藏（ln-replica
+   :has() 先例），不触碰 renderer 包。 */
+.nt-board .nop-kanban-tag-filter,
+.nt-board div:has(> #kanban-search) {
+  display: none;
+}
+
+.nt-board .nop-kanban-column {
+  background: var(--nt-sidebar);
+  border: none;
+  border-radius: var(--nt-radius-lg);
+}
+
+.nt-board [data-slot='kanban-column-header'] {
+  background: transparent;
+  border-bottom: none;
+}
+
+.nt-board .nop-kanban-card {
+  background: var(--nt-bg);
+  border: 1px solid var(--nt-border-strong);
+  border-radius: var(--nt-radius-lg);
+  box-shadow: 0 1px 2px rgba(55, 53, 47, 0.06);
+  font-size: 14px;
+}
+
+.nt-board .nop-kanban-card:hover {
+  border-color: var(--nt-border-strong);
+  box-shadow: 0 2px 6px rgba(55, 53, 47, 0.12);
+}
+
+.nt-board .nop-kanban-card .nop-kanban-card-content {
+  color: var(--nt-text);
+}
+
+.nt-aggregate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--nt-radius);
+  background: var(--nt-sidebar);
+  border: 1px solid var(--nt-border);
+  font-size: 12px;
+  color: var(--nt-text-secondary);
+  white-space: nowrap;
+}
+
+/* ── 7. Gallery view ────────────────────────────────────────────────────── */
+
+.nt-gallery-card {
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius-lg);
+  overflow: hidden;
+  background: var(--nt-bg);
+}
+
+.nt-gallery-card:hover {
+  box-shadow: 0 2px 8px rgba(55, 53, 47, 0.12);
+}
+
+.nt-cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96px;
+  font-size: 34px;
+}
+
+.nt-cover-blue {
+  background: var(--nt-c-blue-bg);
+}
+.nt-cover-green {
+  background: var(--nt-c-green-bg);
+}
+.nt-cover-purple {
+  background: var(--nt-c-purple-bg);
+}
+.nt-cover-orange {
+  background: var(--nt-c-orange-bg);
+}
+.nt-cover-pink {
+  background: var(--nt-c-pink-bg);
+}
+.nt-cover-yellow {
+  background: var(--nt-c-yellow-bg);
+}
+
+.nt-card-tools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.nt-gallery-card:hover .nt-card-tools {
+  opacity: 1;
+}
+
+.nt-gallery-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  border: 1px dashed var(--nt-border-strong);
+  border-radius: var(--nt-radius-lg);
+  color: var(--nt-text-tertiary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nt-gallery-new:hover {
+  background: var(--nt-hover);
+}
+
+/* ── 8. Calendar view (self-drawn 6-week vertical month grid) ───────────── */
+
+.nt-cal-head-cell {
+  text-align: right;
+  font-size: 12px;
+  color: var(--nt-text-tertiary);
+  padding: 4px 6px;
+}
+
+.nt-cal-day {
+  position: relative;
+  min-height: 88px;
+  border-right: 1px solid var(--nt-border);
+  border-bottom: 1px solid var(--nt-border);
+  padding: 4px;
+}
+
+.nt-cal-day-out {
+  background: var(--nt-sidebar);
+}
+
+.nt-cal-day-num {
+  align-self: flex-end;
+  font-size: 12px;
+  color: var(--nt-text-secondary);
+  text-align: center;
+  width: 20px;
+  border-radius: 9999px;
+}
+
+.nt-cal-today .nt-cal-day-num {
+  background: var(--nt-blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+.nt-cal-add {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  opacity: 0;
+  color: var(--nt-text-tertiary);
+  font-size: 14px;
+  transition: opacity 100ms ease;
+}
+
+.nt-cal-day:hover .nt-cal-add {
+  opacity: 1;
+}
+
+.nt-cal-event {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 4px;
+  border-radius: var(--nt-radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.nt-cal-event:hover {
+  filter: brightness(0.96);
+}
+
+/* ── 9. List view ───────────────────────────────────────────────────────── */
+
+.nt-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--nt-border);
+  cursor: pointer;
+}
+
+.nt-list-row:hover {
+  background: var(--nt-hover);
+}
+
+/* ── 10. Peek / settings panel shared forms ─────────────────────────────── */
+
+.nt-prop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  font-size: 14px;
+}
+
+.nt-prop-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 128px;
+  flex-shrink: 0;
+  color: var(--nt-text-tertiary);
+  font-size: 13px;
+}
+
+.nt-peek-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--nt-text);
+}
+
+.nt-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--nt-radius-sm);
+  font-size: 14px;
+  color: var(--nt-text);
+  cursor: pointer;
+}
+
+.nt-menu-item:hover {
+  background: var(--nt-hover);
+}
+
+.nt-note {
+  font-size: 12px;
+  color: var(--nt-text-tertiary);
+}
+
+.nt-section-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--nt-text-tertiary);
+  letter-spacing: 0.02em;
+}

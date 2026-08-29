@@ -353,4 +353,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻键盘优先 issue tracker 设置页：左侧子导航（工作区/偏好/通知/成员）+ 右侧表单区（工作区名/图标形态/偏好开关组 + tabs 分节），零写提交的静态形态。',
     features: ['复刻样式', '子导航', '偏好开关组', 'tabs 分节'],
   },
+  {
+    id: 'notion-database',
+    title: '多视图数据库 · 产品需求库',
+    category: 'app-replica',
+    description:
+      '复刻多视图数据库"同一数据集多套视图"形态：库名+视图 tab 条（内建切换，table/board/gallery/calendar/list 五视图分支）+ table 视图（属性行头类型系统 + 型别分派单元格 + 行 hover OPEN/把手 + 条件配色样本）+ board 看板（状态分组列 + 列头计数 + 聚合静态值）+ gallery 封面墙 + calendar 六周月历 + list 极简单列 + View settings 滑杆面板（布局/属性可见性/filter 构建器/sort/group/条件配色 + 每视图私有配置集展示）+ 记录展开 peek 双形态（side 抽屉/center 弹窗）+ 新建视图/新建记录/列头菜单/搜索静态浮层，数据经 Notion__records/Notion__record/Notion__viewConfigs 端点流动。',
+    features: ['复刻样式', '视图 tab 条', '五视图分支', 'peek 双形态'],
+  },
 ];

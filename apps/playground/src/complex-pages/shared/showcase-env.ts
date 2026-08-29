@@ -24,8 +24,11 @@ import {
   createAntdProFetcherBranch,
 } from './mock-backend-antdpro';
 import { createCalEventMeta, createCalFetcherBranch } from './mock-backend-cal';
-import { createLinearDatabase, createLinearFetcherBranch } from './mock-backend-linear';
+import { createLinearDatabase, createLinearFetcherBranch, type LinearFetcherBranchInput } from './mock-backend-linear';
+import { createNotionDatabase, createNotionFetcherBranch } from './mock-backend-notion';
 import { confirmBridge } from './confirm-bridge';
+
+type ReplicaFetcherBranch = <T>(input: LinearFetcherBranchInput) => { status: number; data: T } | null;
 
 function asRecord(value: unknown): Record<string, unknown> {
   return (value ?? {}) as Record<string, unknown>;
@@ -110,6 +113,13 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
   const calEvent = createCalEventMeta();
   const handleCalBranch = createCalFetcherBranch(calEvent, clone);
   const handleLinearBranch = createLinearFetcherBranch(createLinearDatabase(), clone);
+  const handleNotionBranch = createNotionFetcherBranch(createNotionDatabase(), clone);
+  const replicaBranches: Array<[string, ReplicaFetcherBranch]> = [
+    ['/r/AntdPro__', handleAntdProBranch],
+    ['/r/Cal__', handleCalBranch],
+    ['/r/Linear__', handleLinearBranch],
+    ['/r/Notion__', handleNotionBranch],
+  ];
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {
     const url = api.url ?? '';
@@ -643,26 +653,14 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       };
     }
 
-    // ----- Ant Design Pro replica endpoints (plan 2026-08-29-1240-1 P2a;
-    // get-only read surface — writes belong to P2b). Branch bodies live in
-    // mock-backend-antdpro.ts to keep this file under the 700-line gate. -----
-    if (url.includes('/r/AntdPro__')) {
-      const handled = handleAntdProBranch<T>({ url, method, params, body });
-      if (handled) return handled;
-    }
-
-    // ----- Cal.com replica endpoints (plan 2026-08-29-1413-2 P3a; get-only
-    // read surface — interaction wiring belongs to P3b). Branch body lives in
-    // mock-backend-cal.ts to keep this file under the 700-line gate. -----
-    if (url.includes('/r/Cal__')) {
-      const handled = handleCalBranch<T>({ url, method, params, body });
-      if (handled) return handled;
-    }
-
-    // ----- Linear replica endpoints (plan 2026-08-29-1819-2 P4a, get-only; body in mock-backend-linear.ts) -----
-    if (url.includes('/r/Linear__')) {
-      const handled = handleLinearBranch<T>({ url, method, params, body });
-      if (handled) return handled;
+    // ----- App-replica endpoints (P2a antdpro / P3a cal / P4a linear / P5a
+    // notion; get-only reads — writes belong to each Pi-b). Bodies live in
+    // the mock modules (700-line gate); delegation = [prefix, handler] loop. -----
+    for (const [prefix, handleReplicaBranch] of replicaBranches) {
+      if (url.includes(prefix)) {
+        const handled = handleReplicaBranch<T>({ url, method, params, body });
+        if (handled) return handled;
+      }
     }
 
     return { status: 0, data: null as T };

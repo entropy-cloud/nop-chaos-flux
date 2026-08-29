@@ -20,6 +20,7 @@
 @import './antdpro-replica/antdpro-replica.css';
 @import './cal-replica/cal-replica.css';
 @import './linear-replica/linear-replica.css';
+@import './notion-replica/notion-replica.css';
 @source "../../../packages";
 
 @theme inline {
