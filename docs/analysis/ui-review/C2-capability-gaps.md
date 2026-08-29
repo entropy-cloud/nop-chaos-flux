@@ -80,3 +80,30 @@
 - **素材行**: D1 立项新表面/新渲染器时，建议把"全写入通道门禁"作为 renderer 契约检查项（对应 R2 summary §建议的统一设计规范 #1），而非逐案例后补；form 族已有 `presentation.interactive` 收敛点可直接复用。
 
 **族 3/5/8/10 佐证**: surface 滚动契约（#3）、错误反馈三通道（#5）、确认顺序 `[secondary, primary]`（#8）、空态规范（#10）四条统一设计规范已由 R2 summary 沉淀；R3 修复补齐了 DrawerBody/Dialog 的 body 滚动不对称与会话删除确认两个 HIGH 样本，其余成员见 P2 候选池。
+
+### 回写 ③ — P2b AntD Pro 交互接线实测证据（2026-08-29，plan `2026-08-29-1413-1-p2b-antdpro-interaction-wiring-and-tests.md` Phase 5）
+
+> 授权链: roadmap Cross-Cutting 5（Pi-b closure 以追加方式回写 C2，不重开初版状态）→ 本 plan Phase 5。HEAD `2b3fa8d9a` 起算的 P2b 批次。初版裁决表零改动，本段仅追加实测证据与素材行。
+
+**G-B3 批量操作栏（L2~L3）实测证据（schema 层可达深度与降级点）**:
+
+- 可达面（`antdpro-list.json` 实证 + e2e 01/02 锁定）：`$crud.selectionCount`（toolbar 文案模板「已选择 N 项」）、`$crud.selectedRowKeys`（经 ajax `args.data` 透传写端点）、`$crud.hasSelection`（按钮 `disabled` 门控 + 反馈对 `visible`）、`component:clearSelection`（取消选择）。
+- 降级点：「批量栏 alert 包络」无语义件——表顶反馈条由 toolbar 文案节点 + 按钮 + `visible` 手工拼装；无「全选本页/跨页选择集」表达外的选择集持久化语义。产品化落点与初判一致（语义件 + 选择集 scope 契约），D1 排序素材 +1。
+- G-B3 关联实测（同列表页）：批量导出按钮 `antdpro-list-export` 静态保留——下载/导出归宿主能力（同 print 族，见下方素材行）。
+
+**G-E 高密度排版（L1 为主 + 密度档 L2）实测证据（I4 裁定结论）**:
+
+- **密度档 L2 缺口成立**：`flux-renderers-data`/`flux-renderers-basic` 源码 grep `density` 零命中（P2b 复测），无密度语义字段；复刻页 `antdpro-toolbar-density` 按钮静态保留（非接线遗漏，双渲染模拟已被 plan460 实测否决——维护成本高且本计划零新增 CSS 无法承载档位样式差异）。
+- **列显隐维度预测缺口被实测修正**：初版 C2 未单列，分析篇 §4 I4 预测「列设置 popover（勾选+拖拽排序+固定）缺承载」——实测 crud 原语已有 `columnSettings: { enabled: true }`（勾选显隐 + 上移/下移，overlay dropdown，`table-column-settings.tsx`），勾选显隐维度**原生可达**（e2e 07 锁定），复刻页静态 `antdpro-toolbar-columns` 重复按钮已裁决移除；**拖拽排序与固定列两个子维度仍无 schema 表达**，保留在 G-E/G-D 观察面。
+- 语义色状态/chip 筛选条两子项本页未触发新证据，维持初判。
+
+**ProLayout 三布局承载实测结论（分析篇 §7 预登记项的回写义务）**:
+
+- P2a/P2b 复刻范围不含框架 chrome（I16 框架顶栏 + ProLayout mix/side/top 布局壳，P2a Non-Goals 排除），实测未取得「schema 层无承载」的正反证据，按分析篇 §7 预登记口径**不新增行**；若未来 roadmap 结构性变更纳入框架壳复刻，届时按 D1 流程另评。
+
+**新增素材行（供 D1 排序参考，未分级）**:
+
+- **I3 查询分页不对称（renderer 级 finding）**：crud `submitQueryValues` 只更新 query 状态不重置分页，与 reset 分支（同步重置分页）不对称——本计划以 schema 级 `onQuerySubmit` + `setValue` 写 `$_crud.*.pagination` 补齐（e2e 09）。同源实测：分页/排序触发的 reactive loadAction 重派发在无 crud scope 投影上下文求值 `${query.keyword ?? ''}` 抛错（每次一条 action error，实际加载由 effect 派发完成，功能正确）；模板改写 optional-chaining 或任何可解析 `$_crud.*` 依赖会引发 reactive 派发 ↔ 分页回写无限循环。**建议 D1/deep-audit 候选**：loadAction 查询提交自动重置分页 + reactive 重派发的 scope 投影。
+- **wizard valuesPath 卸载清发布值**：form runtime dispose 时 `valuesPath` 发布回写 `undefined`（`form-runtime.ts` setupExternalPublication 清理分支），wizard 非 `mountOnEnter` 模式下离开步即丢数据——`mountOnEnter: true` 为分步数据暂存的必要声明。建议补入 `flux-guide/examples/wizard-values-path.md` 作显式注意点（文档项，非产品化项）。
+- **toast 生命周期与页面 host 绑定**：复杂页每页 host 各挂 `<Toaster/>`，跳转型动作链里 `messages.success` 存活 <100ms；本计划以 `control: {debounce}` 延迟 navigate 消解（对齐 AntD Pro「message → 延迟跳转」）。若 D1 沉淀「host 级常驻 toast 容器」约定，可消除该 schema 层补丁需求。
+- **打印 host 能力候选**：`RendererEnv` 无 print 通道（`window.print` 型），AntD Pro 详情页打印按钮在本复刻中静态保留；未分级，D1 输入池。

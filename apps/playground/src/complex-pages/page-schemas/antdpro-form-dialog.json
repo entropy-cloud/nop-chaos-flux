@@ -29,7 +29,7 @@
         },
         {
           "type": "text",
-          "text": "列表上下文 ModalForm 形态：点击下方按钮打开弹窗表单（提交流转归 P2b）。",
+          "text": "列表上下文 ModalForm 形态：点击下方按钮打开弹窗表单，提交写入模拟后端后自动关窗。",
           "className": "adp-desc-label mt-1"
         },
         {
@@ -43,11 +43,24 @@
               "title": "新建订单",
               "testid": "antdpro-form-dialog-surface",
               "className": "adp-dialog",
+              "closeOnSubmit": true,
               "body": [
                 {
                   "type": "form",
                   "id": "antdpro-dialog-form",
                   "testid": "antdpro-dialog-form",
+                  "submitScope": "surface",
+                  "submitAction": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/AntdPro__submitForm",
+                      "method": "post",
+                      "includeScope": "*"
+                    },
+                    "messages": {
+                      "success": "订单已创建"
+                    }
+                  },
                   "columnCount": 2,
                   "body": [
                     {
@@ -103,7 +116,10 @@
                       "type": "button",
                       "label": "确定",
                       "className": "adp-btn adp-btn-primary",
-                      "testid": "antdpro-dialog-confirm"
+                      "testid": "antdpro-dialog-confirm",
+                      "onClick": {
+                        "action": "submitForm"
+                      }
                     }
                   ]
                 }

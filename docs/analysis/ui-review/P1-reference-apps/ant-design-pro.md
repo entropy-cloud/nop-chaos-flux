@@ -94,6 +94,37 @@ Ant Design Pro 是基于 Ant Design 的企业中后台脚手架，R1 判定为"�
 | I17 | 校验反馈        | 失焦/提交                          | 红框+红字+帮助文案                                                            |
 | I18 | 键盘            | Esc/Tab                            | 关浮层；焦点环（**无 ⌘K 命令面板**）                                          |
 
+### 4.1 P2b 逐条处置对照：预测缺口 vs 实测缺口（2026-08-29 回写）
+
+> 授权链：P1 README §5（Pi-b 把"预测缺口 vs 实测缺口"对照记入分析篇）→ plan `2026-08-29-1413-1` Phase 5。终态判定 = 接线锁定（W）/ 内建锁定（B）/ 显式裁决（A）。e2e 锚点 = `tests/e2e/antdpro-replica-interactions.spec.ts` 用例号。
+
+| I#  | 预测（本篇 §4/§5 原判）                       | 实测结论（P2b）                                                                                                                                                                    | 终态              | e2e      |
+| --- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | -------- |
+| I1  | 查询区展开/收起，collapse 承载（G-A、G-F 注） | `filterTogglable` 原生可达                                                                                                                                                         | B                 | 08       |
+| I2  | 查询形态切换（LightFilter）                   | 9 页名单不含该形态，页内无 Segmented 承载——维持 out-of-scope（C2 回写 ③ 注记）                                                                                                     | A（out-of-scope） | —        |
+| I3  | 页码回 1 为查询内建行为                       | **预测修正**：`submitQueryValues` 不重置分页（与 reset 不对称）——schema 级 `onQuerySubmit` + `setValue` 补齐；同源发现两条 renderer 级 finding（记 C2 回写 ③，D1 候选）            | B+W               | 09       |
+| I4  | 工具栏密度/列设置缺承载（G-E 预测）           | **预测修正（列显隐维度）**：`columnSettings.enabled` 原生可达（勾选显隐），静态重复按钮已移除；密度档 L2 缺口成立（按钮静态保留）；拖拽排序/固定列仍缺；全屏：复刻名单未含，无义务 | B+W+A             | 07       |
+| I5  | 批量栏缺语义件（G-B3）                        | 选择集 scope 可达（selectionCount/selectedRowKeys/hasSelection/clearSelection），alert 包络手拼成立——G-B3 证据加厚；批量导出按钮静态保留（宿主下载能力，同 print 族）              | W                 | 01/02    |
+| I6  | 行操作列 link-button（高保真，无缺口）        | op-view 走 selectOrder 会话指针 + navigate（navigate 不支持查询参数，既有原语内裁定）；op-edit dialog 预填+保存；均成立                                                            | W                 | 03/04    |
+| I7  | 删除确认 Popconfirm/Modal → message + 刷新    | 确认 dialog + `[取消, 确认]` 序；取消/Esc 不删除                                                                                                                                   | W                 | 05       |
+| I8  | 分页重取数                                    | 内建可达                                                                                                                                                                           | B                 | 10       |
+| I9  | 列排序箭头高亮                                | `sortable` + `aria-sort` 内建可达                                                                                                                                                  | B                 | 11       |
+| I10 | 行展开/树形                                   | crud 无 expandable 通道（table schema 专属字段）且数据集无树形语义——维持 out-of-scope（C2 回写 ③ 注记）                                                                            | A（out-of-scope） | —        |
+| I11 | StepsForm 分步校验 + 数据暂存（预测高保真）   | **预测修正**：wizard 非 `mountOnEnter` 模式离开步即丢 valuesPath 发布值——须声明 `mountOnEnter: true`；校验闸（formId）与末步 `onComplete` 提交内建可达                             | W+B               | 15       |
+| I12 | 表单提交 message → result 页                  | form `submitAction`/`onSubmitSuccess` 全链可达；**实测补丁**：页级 host Toaster 随页卸载，navigate 需 `control.debounce` 延迟以保 message 可观察                                   | W                 | 12–14    |
+| I13 | Result 动作组（主/次按钮导航）                | navigate 原语直接承载                                                                                                                                                              | W                 | 21       |
+| I14 | ModalForm 成功关窗+刷新                       | `submitScope: 'surface'` + `closeOnSubmit` + `onSubmitSuccess` 链路可达（list 新建/编辑 + form-dialog 弹窗三处实证）                                                               | W                 | 04/06/16 |
+| I15 | PageContainer 缺预设（G-A 主证据）            | 无交互义务（P2a 静态结构证据）；G-A 维持                                                                                                                                           | —                 | —        |
+| I16 | 框架顶栏                                      | out-of-scope（P2a Non-Goals 已排除框架 chrome）                                                                                                                                    | A（out-of-scope） | —        |
+| I17 | 校验反馈红框+帮助文案                         | `data-field-invalid` + `[data-slot="field-error"]` 内建可达；空提交零写请求副作用（端点计数钩子断言）                                                                              | B                 | 13/17    |
+| I18 | Esc 关浮层；焦点环                            | Esc 关 dialog 内建可达（delete-confirm 与 form-dialog 两处）；焦点环不重复断言（R2/浏览器内建）                                                                                    | B                 | 05/18    |
+
+事实勘误行（对照本篇前文）：
+
+- §3 表「`/list/table-list`（CRUD 标杆）说明」预测「密度列设置多重 gap（G-A/G-B3/G-E）」——实测列**显隐**子项原生可达，缺口收窄为密度档 + 拖拽排序/固定列（详见 C2 回写 ③）。
+- §5 能力映射「ProTable 工具栏/密度/列设置 → 保真度中（G-E）」——列显隐维度上调为「高」，密度档维持「缺承载」。
+- §5「StepsForm 分步表单（高，form-wizard 先例）」——维持「高」，但补充 `mountOnEnter: true` 为数据暂存必要声明（否则离开步丢数据）。
+
 ## 5. 能力映射初稿
 
 | 参考元素                           | flux 原语（schema 落点）                       | 保真度预估           | C2 对照  |
@@ -134,6 +165,7 @@ Ant Design Pro 是基于 Ant Design 的企业中后台脚手架，R1 判定为"�
 ## 7. 转 C2 候选
 
 - 无新增行：本篇调研发现的能力缺口（页面模板层/批量栏/命令面板/键盘表达）均已在 C2 G-A/G-B1/G-B2/G-B3/G-E 登记并升级证据。ProLayout 的 `layout: mix/side/top` 三布局若 P2a 实测发现 schema 层无承载，届时经 P2b 回写追加（暂不登记）。
+- **P2b 回写结论（2026-08-29）**：P2a/P2b 复刻范围不含框架 chrome（ProLayout 布局壳 + 顶栏），未取得三布局承载性的实测证据，按上条预登记口径**不新增行、不回写**；I1–I18 逐条「预测 vs 实测」对照见 §4.1，renderer 级 finding 与素材行经 C2 回写 ③ 登记。
 
 ## 8. 调研来源
 

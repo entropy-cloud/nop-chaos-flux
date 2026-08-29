@@ -275,23 +275,175 @@ export interface AntdProFetcherBranchInput {
   body: Record<string, unknown>;
 }
 
+function asAntdProNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string' && value !== '' && !Number.isNaN(Number(value))) return Number(value);
+  return undefined;
+}
+
+function antdproNowStamp(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1, 2)}-${pad(now.getDate(), 2)} ${pad(now.getHours(), 2)}:${pad(now.getMinutes(), 2)}`;
+}
+
+export function nextAntdProOrderId(rows: AntdProOrder[]): string {
+  const max = rows.reduce((acc, row) => Math.max(acc, Number(row.id.slice(1)) || 0), 1000);
+  return `A${max + 1}`;
+}
+
+export function applyAntdProOrderPatch(order: AntdProOrder, input: Record<string, unknown>): void {
+  if (typeof input.customer === 'string' && input.customer) order.customer = input.customer;
+  if (typeof input.channel === 'string' && CHANNELS.includes(input.channel as AntdProChannel)) {
+    order.channel = input.channel as AntdProChannel;
+  }
+  if (typeof input.payType === 'string' && input.payType) order.payType = input.payType;
+  const amount = asAntdProNumber(input.amount);
+  if (amount !== undefined) order.amount = amount;
+  if (typeof input.owner === 'string' && input.owner) order.owner = input.owner;
+}
+
+export interface AntdProSaveResult {
+  ok: true;
+  id: string;
+  created: boolean;
+}
+
+export function saveAntdProOrder(rows: AntdProOrder[], input: Record<string, unknown>): AntdProSaveResult {
+  const id = typeof input.id === 'string' && input.id ? input.id : '';
+  const existing = id ? findAntdProOrder(rows, id) : null;
+  if (existing) {
+    applyAntdProOrderPatch(existing, input);
+    return { ok: true, id: existing.id, created: false };
+  }
+  const newId = id || nextAntdProOrderId(rows);
+  const order: AntdProOrder = {
+    id: newId,
+    orderNo: `SO202608${pad(Number(newId.slice(1)) % 10000, 4)}`,
+    customer: typeof input.customer === 'string' && input.customer ? input.customer : '未命名客户',
+    channel: typeof input.channel === 'string' && CHANNELS.includes(input.channel as AntdProChannel)
+      ? (input.channel as AntdProChannel)
+      : 'web',
+    payType: typeof input.payType === 'string' && input.payType ? input.payType : '在线支付',
+    amount: asAntdProNumber(input.amount) ?? 0,
+    status: 'pending',
+    owner: typeof input.owner === 'string' && input.owner ? input.owner : '陈立群',
+    createdAt: antdproNowStamp(),
+  };
+  rows.unshift(order);
+  return { ok: true, id: newId, created: true };
+}
+
+export function parseAntdProIds(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((v) => String(v)).filter((v) => v.length > 0);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value.split(',').map((v) => v.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+export function deleteAntdProOrders(rows: AntdProOrder[], ids: string[]): number {
+  const idSet = new Set(ids);
+  let deleted = 0;
+  for (let i = rows.length - 1; i >= 0; i -= 1) {
+    if (idSet.has(rows[i].id)) {
+      rows.splice(i, 1);
+      deleted += 1;
+    }
+  }
+  return deleted;
+}
+
+export type AntdProApprovalDecision = 'approve' | 'reject';
+
+const ANTDPRO_APPROVAL_TARGET: Record<AntdProApprovalDecision, AntdProOrderStatus> = {
+  approve: 'done',
+  reject: 'cancelled',
+};
+
+export interface AntdProApprovalResult {
+  ok: true;
+  id: string;
+  status: AntdProOrderStatus;
+}
+
+export function approveAntdProOrder(
+  rows: AntdProOrder[],
+  id: unknown,
+  decision: unknown,
+): AntdProApprovalResult | null {
+  if (typeof id !== 'string' || !id) return null;
+  if (decision !== 'approve' && decision !== 'reject') return null;
+  const order = findAntdProOrder(rows, id);
+  if (!order) return null;
+  order.status = ANTDPRO_APPROVAL_TARGET[decision];
+  return { ok: true, id: order.id, status: order.status };
+}
+
 /**
- * Build the get-only `/r/AntdPro__*` fetcher branch (plan 2026-08-29-1240-1
- * P2a). Kept here so `showcase-env.ts` stays under the 700-line hard gate:
- * the env wires this factory with a compact delegation instead of inlining
- * the branch bodies. Returns null when the request is not an AntdPro read.
+ * Full `/r/AntdPro__*` fetcher branch (plan 2026-08-29-1240-1 P2a reads;
+ * writes added by plan 2026-08-29-1413-1 P2b). Kept here so `showcase-env.ts`
+ * stays under the 700-line hard gate. Returns null when the request is not an
+ * AntdPro endpoint. Write operations mutate the in-memory orders db so they
+ * stay observable across pages within the same session; the selected-order
+ * pointer lets detail pages read the row a list action acted on.
  */
 export function createAntdProFetcherBranch(orders: AntdProOrder[], clone: <T>(value: T) => T) {
+  let currentOrderId: string | null = null;
+
   return function handleAntdProBranch<T>(input: AntdProFetcherBranchInput): { status: number; data: T } | null {
     const { url, method, params, body } = input;
-    if (!url.includes('/r/AntdPro__') || method !== 'get') {
+    if (!url.includes('/r/AntdPro__')) {
       return null;
     }
+    // Opt-in e2e observation hook: specs pre-create window.__antdproEndpointCalls
+    // via addInitScript; production never sets it, so this stays a no-op.
+    const counters = (globalThis as { __antdproEndpointCalls?: Record<string, number> }).__antdproEndpointCalls;
+    if (counters) {
+      const name = url.slice(url.indexOf('AntdPro__')).split('?')[0];
+      counters[name] = (counters[name] ?? 0) + 1;
+    }
+    const normalizedMethod = method.toLowerCase();
     const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
     const read = (key: string): string | undefined => {
       const value = params[key] ?? body[key] ?? qs.get(key);
       return value === undefined || value === null ? undefined : String(value);
     };
+
+    if (normalizedMethod === 'post') {
+      if (url.includes('/r/AntdPro__saveOrder')) {
+        return { status: 0, data: clone(saveAntdProOrder(orders, body)) as T };
+      }
+      if (url.includes('/r/AntdPro__deleteOrders')) {
+        const deleted = deleteAntdProOrders(orders, parseAntdProIds(body.ids));
+        return { status: 0, data: clone({ ok: true, deleted }) as T };
+      }
+      if (url.includes('/r/AntdPro__approveOrder')) {
+        const result = approveAntdProOrder(orders, body.id, body.decision);
+        if (!result) {
+          return { status: 1, data: clone({ ok: false, error: 'order not found' }) as T };
+        }
+        return { status: 0, data: clone(result) as T };
+      }
+      if (url.includes('/r/AntdPro__submitForm')) {
+        const id = typeof body.id === 'string' && body.id ? body.id : nextAntdProOrderId(orders);
+        return { status: 0, data: clone({ ok: true, id }) as T };
+      }
+      if (url.includes('/r/AntdPro__selectOrder')) {
+        const id = read('id') ?? '';
+        if (!id || !findAntdProOrder(orders, id)) {
+          return { status: 1, data: clone({ ok: false, error: 'order not found' }) as T };
+        }
+        currentOrderId = id;
+        return { status: 0, data: clone({ ok: true, id }) as T };
+      }
+      return null;
+    }
+
+    if (normalizedMethod !== 'get') {
+      return null;
+    }
     if (url.includes('/r/AntdPro__orders')) {
       const rows = filterAntdProOrders(orders, {
         keyword: read('keyword'),
@@ -302,7 +454,7 @@ export function createAntdProFetcherBranch(orders: AntdProOrder[], clone: <T>(va
       return { status: 0, data: clone(paged) as T };
     }
     if (url.includes('/r/AntdPro__orderDetail')) {
-      const id = read('id') ?? '';
+      const id = read('id') ?? currentOrderId ?? 'A1001';
       const order = id ? findAntdProOrder(orders, id) : null;
       return { status: 0, data: clone(order ? buildAntdProOrderDetail(order) : null) as T };
     }

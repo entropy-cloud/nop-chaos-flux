@@ -42,6 +42,26 @@
           "type": "form",
           "id": "antdpro-basic-form",
           "testid": "antdpro-basic-form",
+          "submitAction": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/AntdPro__submitForm",
+              "method": "post",
+              "includeScope": "*"
+            },
+            "messages": {
+              "success": "任务已提交，即将跳转"
+            }
+          },
+          "onSubmitSuccess": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/antdpro-result"
+            },
+            "control": {
+              "debounce": 1200
+            }
+          },
           "body": [
             {
               "type": "input-text",
@@ -62,7 +82,8 @@
               "name": "owner",
               "label": "负责人",
               "required": true,
-              "placeholder": "请输入负责人姓名"
+              "placeholder": "请输入负责人姓名",
+              "testid": "antdpro-basic-owner"
             },
             {
               "type": "input-number",
@@ -84,13 +105,20 @@
               "type": "button",
               "label": "重置",
               "className": "adp-btn adp-btn-outline",
-              "testid": "antdpro-basic-reset"
+              "testid": "antdpro-basic-reset",
+              "onClick": {
+                "action": "component:reset",
+                "componentId": "antdpro-basic-form"
+              }
             },
             {
               "type": "button",
               "label": "提交",
               "className": "adp-btn adp-btn-primary",
-              "testid": "antdpro-basic-submit"
+              "testid": "antdpro-basic-submit",
+              "onClick": {
+                "action": "submitForm"
+              }
             }
           ]
         }

@@ -75,13 +75,25 @@
               "type": "button",
               "label": "查看订单",
               "className": "adp-btn adp-btn-primary",
-              "testid": "antdpro-result-primary"
+              "testid": "antdpro-result-primary",
+              "onClick": {
+                "action": "navigate",
+                "args": {
+                  "url": "#/complex-pages/antdpro-list"
+                }
+              }
             },
             {
               "type": "button",
               "label": "再录一单",
               "className": "adp-btn adp-btn-outline",
-              "testid": "antdpro-result-secondary"
+              "testid": "antdpro-result-secondary",
+              "onClick": {
+                "action": "navigate",
+                "args": {
+                  "url": "#/complex-pages/antdpro-form-basic"
+                }
+              }
             }
           ]
         }

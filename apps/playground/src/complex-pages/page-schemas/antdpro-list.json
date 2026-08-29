@@ -15,11 +15,28 @@
           "className": "items-center adp-breadcrumb",
           "testid": "antdpro-breadcrumb",
           "body": [
-            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
-            { "type": "text", "text": "/" },
-            { "type": "text", "text": "订单管理", "className": "adp-breadcrumb-link" },
-            { "type": "text", "text": "/" },
-            { "type": "text", "text": "订单列表" }
+            {
+              "type": "text",
+              "text": "项目中心",
+              "className": "adp-breadcrumb-link"
+            },
+            {
+              "type": "text",
+              "text": "/"
+            },
+            {
+              "type": "text",
+              "text": "订单管理",
+              "className": "adp-breadcrumb-link"
+            },
+            {
+              "type": "text",
+              "text": "/"
+            },
+            {
+              "type": "text",
+              "text": "订单列表"
+            }
           ]
         },
         {
@@ -50,7 +67,107 @@
                   "type": "button",
                   "label": "新建订单",
                   "className": "adp-btn adp-btn-primary",
-                  "testid": "antdpro-list-new"
+                  "testid": "antdpro-list-new",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "新建订单",
+                      "testid": "antdpro-new-dialog",
+                      "className": "adp-dialog",
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "component:refresh",
+                        "componentId": "antdpro-list-crud"
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "antdpro-new-form",
+                          "testid": "antdpro-new-form",
+                          "submitScope": "surface",
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/AntdPro__saveOrder",
+                              "method": "post",
+                              "includeScope": "*"
+                            },
+                            "messages": {
+                              "success": "新建成功"
+                            }
+                          },
+                          "columnCount": 2,
+                          "body": [
+                            {
+                              "type": "input-text",
+                              "name": "customer",
+                              "label": "客户名称",
+                              "required": true,
+                              "placeholder": "请输入客户全称",
+                              "testid": "antdpro-new-customer"
+                            },
+                            {
+                              "type": "input-number",
+                              "name": "amount",
+                              "label": "订单金额",
+                              "min": 0,
+                              "placeholder": "单位：元"
+                            },
+                            {
+                              "type": "select",
+                              "name": "channel",
+                              "label": "订单渠道",
+                              "placeholder": "选择渠道",
+                              "options": [
+                                {
+                                  "label": "官网",
+                                  "value": "web"
+                                },
+                                {
+                                  "label": "小程序",
+                                  "value": "miniapp"
+                                },
+                                {
+                                  "label": "门店",
+                                  "value": "store"
+                                },
+                                {
+                                  "label": "App",
+                                  "value": "app"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "owner",
+                              "label": "销售负责人",
+                              "placeholder": "请输入负责人"
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "取消",
+                              "className": "adp-btn adp-btn-outline",
+                              "testid": "antdpro-new-cancel",
+                              "onClick": {
+                                "action": "closeSurface"
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "确定",
+                              "className": "adp-btn adp-btn-primary",
+                              "testid": "antdpro-new-confirm",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 }
               ]
             }
@@ -79,14 +196,16 @@
               "method": "get",
               "selection": "id,orderNo,customer,channel,channelLabel,payType,amount,amountText,status,statusLabel,owner,createdAt",
               "data": {
-                "keyword": "${query.keyword ?? ''}",
-                "status": "${query.status ?? ''}",
-                "channel": "${query.channel ?? ''}"
+                "keyword": "${query.keyword ?? \"\"}",
+                "status": "${query.status ?? \"\"}",
+                "channel": "${query.channel ?? \"\"}"
               }
             }
           },
           "selection": {},
-          "filterTogglable": { "defaultCollapsed": false },
+          "filterTogglable": {
+            "defaultCollapsed": false
+          },
           "queryForm": {
             "layout": "horizontal",
             "labelWidth": 80,
@@ -107,11 +226,26 @@
                 "clearable": true,
                 "placeholder": "全部状态",
                 "options": [
-                  { "label": "待付款", "value": "pending" },
-                  { "label": "备货中", "value": "processing" },
-                  { "label": "配送中", "value": "shipped" },
-                  { "label": "已完成", "value": "done" },
-                  { "label": "已关闭", "value": "cancelled" }
+                  {
+                    "label": "待付款",
+                    "value": "pending"
+                  },
+                  {
+                    "label": "备货中",
+                    "value": "processing"
+                  },
+                  {
+                    "label": "配送中",
+                    "value": "shipped"
+                  },
+                  {
+                    "label": "已完成",
+                    "value": "done"
+                  },
+                  {
+                    "label": "已关闭",
+                    "value": "cancelled"
+                  }
                 ],
                 "testid": "antdpro-query-status"
               },
@@ -122,10 +256,22 @@
                 "clearable": true,
                 "placeholder": "全部渠道",
                 "options": [
-                  { "label": "官网", "value": "web" },
-                  { "label": "小程序", "value": "miniapp" },
-                  { "label": "门店", "value": "store" },
-                  { "label": "App", "value": "app" }
+                  {
+                    "label": "官网",
+                    "value": "web"
+                  },
+                  {
+                    "label": "小程序",
+                    "value": "miniapp"
+                  },
+                  {
+                    "label": "门店",
+                    "value": "store"
+                  },
+                  {
+                    "label": "App",
+                    "value": "app"
+                  }
                 ],
                 "testid": "antdpro-query-channel"
               }
@@ -138,7 +284,10 @@
               "icon": "rotate-cw",
               "variant": "outline",
               "testid": "antdpro-toolbar-refresh",
-              "onClick": { "action": "component:refresh", "componentId": "antdpro-list-crud" }
+              "onClick": {
+                "action": "component:refresh",
+                "componentId": "antdpro-list-crud"
+              }
             },
             {
               "type": "button",
@@ -148,11 +297,22 @@
               "testid": "antdpro-toolbar-density"
             },
             {
+              "type": "text",
+              "text": "已选择 ${$crud.selectionCount} 项",
+              "className": "adp-desc-label",
+              "visible": "${$crud.hasSelection}",
+              "testid": "antdpro-list-selection-count"
+            },
+            {
               "type": "button",
-              "label": "列设置",
-              "icon": "settings-2",
-              "variant": "outline",
-              "testid": "antdpro-toolbar-columns"
+              "label": "取消选择",
+              "variant": "ghost",
+              "visible": "${$crud.hasSelection}",
+              "testid": "antdpro-list-clear-selection",
+              "onClick": {
+                "action": "component:clearSelection",
+                "componentId": "antdpro-list-crud"
+              }
             }
           ],
           "listActions": [
@@ -161,13 +321,43 @@
               "label": "批量删除",
               "variant": "destructive",
               "testid": "antdpro-list-bulk-delete",
-              "disabled": "${!$crud.hasSelection}"
+              "disabled": "${!$crud.hasSelection}",
+              "onClick": {
+                "action": "ajax",
+                "args": {
+                  "url": "/r/AntdPro__deleteOrders",
+                  "method": "post",
+                  "data": {
+                    "ids": "${$crud.selectedRowKeys}"
+                  }
+                },
+                "messages": {
+                  "success": "批量删除成功"
+                },
+                "then": {
+                  "action": "component:refresh",
+                  "componentId": "antdpro-list-crud"
+                }
+              }
             }
           ],
           "columns": [
-            { "name": "orderNo", "label": "订单号", "width": 140, "sortable": true },
-            { "name": "customer", "label": "客户名称", "width": 200 },
-            { "name": "channelLabel", "label": "渠道", "width": 90 },
+            {
+              "name": "orderNo",
+              "label": "订单号",
+              "width": 140,
+              "sortable": true
+            },
+            {
+              "name": "customer",
+              "label": "客户名称",
+              "width": 200
+            },
+            {
+              "name": "channelLabel",
+              "label": "渠道",
+              "width": 90
+            },
             {
               "name": "amountText",
               "label": "订单金额",
@@ -213,8 +403,17 @@
                 ]
               }
             },
-            { "name": "owner", "label": "销售负责人", "width": 110 },
-            { "name": "createdAt", "label": "下单时间", "width": 170, "sortable": true },
+            {
+              "name": "owner",
+              "label": "销售负责人",
+              "width": 110
+            },
+            {
+              "name": "createdAt",
+              "label": "下单时间",
+              "width": 170,
+              "sortable": true
+            },
             {
               "type": "operation",
               "label": "操作",
@@ -225,23 +424,222 @@
                   "type": "button",
                   "label": "查看",
                   "className": "adp-btn-link",
-                  "testid": "antdpro-op-view"
+                  "testid": "antdpro-op-view",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/AntdPro__selectOrder",
+                      "method": "post",
+                      "data": {
+                        "id": "${id}"
+                      }
+                    },
+                    "then": {
+                      "action": "navigate",
+                      "args": {
+                        "url": "#/complex-pages/antdpro-detail-basic"
+                      }
+                    }
+                  }
                 },
                 {
                   "type": "button",
                   "label": "编辑",
                   "className": "adp-btn-link",
-                  "testid": "antdpro-op-edit"
+                  "testid": "antdpro-op-edit",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "编辑订单",
+                      "testid": "antdpro-edit-dialog",
+                      "className": "adp-dialog",
+                      "data": {
+                        "id": "${id}",
+                        "customer": "${customer}",
+                        "amount": "${amount}",
+                        "channel": "${channel}",
+                        "owner": "${owner}"
+                      },
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "component:refresh",
+                        "componentId": "antdpro-list-crud"
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "antdpro-edit-form",
+                          "testid": "antdpro-edit-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "id": "${id}",
+                            "customer": "${customer}",
+                            "amount": "${amount}",
+                            "channel": "${channel}",
+                            "owner": "${owner}"
+                          },
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/AntdPro__saveOrder",
+                              "method": "post",
+                              "includeScope": "*"
+                            },
+                            "messages": {
+                              "success": "保存成功"
+                            }
+                          },
+                          "columnCount": 2,
+                          "body": [
+                            {
+                              "type": "input-text",
+                              "name": "customer",
+                              "label": "客户名称",
+                              "required": true,
+                              "testid": "antdpro-edit-customer"
+                            },
+                            {
+                              "type": "input-number",
+                              "name": "amount",
+                              "label": "订单金额",
+                              "min": 0
+                            },
+                            {
+                              "type": "select",
+                              "name": "channel",
+                              "label": "订单渠道",
+                              "options": [
+                                {
+                                  "label": "官网",
+                                  "value": "web"
+                                },
+                                {
+                                  "label": "小程序",
+                                  "value": "miniapp"
+                                },
+                                {
+                                  "label": "门店",
+                                  "value": "store"
+                                },
+                                {
+                                  "label": "App",
+                                  "value": "app"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "owner",
+                              "label": "销售负责人"
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "取消",
+                              "className": "adp-btn adp-btn-outline",
+                              "testid": "antdpro-edit-cancel",
+                              "onClick": {
+                                "action": "closeSurface"
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "保存",
+                              "className": "adp-btn adp-btn-primary",
+                              "testid": "antdpro-edit-confirm",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 },
                 {
                   "type": "button",
                   "label": "删除",
                   "className": "adp-btn-danger-link",
-                  "testid": "antdpro-op-delete"
+                  "testid": "antdpro-op-delete",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "删除确认",
+                      "testid": "antdpro-delete-dialog",
+                      "className": "adp-dialog",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "确定删除订单 ${orderNo}（${customer}）吗？删除后不可恢复。",
+                          "testid": "antdpro-delete-message"
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "className": "justify-end mt-4",
+                          "body": [
+                            {
+                              "type": "button",
+                              "label": "取消",
+                              "variant": "outline",
+                              "testid": "antdpro-delete-cancel",
+                              "onClick": {
+                                "action": "closeSurface"
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "确认删除",
+                              "variant": "destructive",
+                              "testid": "antdpro-delete-confirm",
+                              "onClick": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/AntdPro__deleteOrders",
+                                  "method": "post",
+                                  "data": {
+                                    "ids": "${id}"
+                                  }
+                                },
+                                "messages": {
+                                  "success": "删除成功"
+                                },
+                                "then": [
+                                  {
+                                    "action": "closeSurface"
+                                  },
+                                  {
+                                    "action": "component:refresh",
+                                    "componentId": "antdpro-list-crud"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 }
               ]
             }
-          ]
+          ],
+          "columnSettings": {
+            "enabled": true
+          },
+          "onQuerySubmit": {
+            "action": "setValue",
+            "args": {
+              "path": "$_crud.antdpro-list-crud.pagination",
+              "value": {
+                "currentPage": 1,
+                "pageSize": 10
+              }
+            }
+          }
         }
       ]
     }

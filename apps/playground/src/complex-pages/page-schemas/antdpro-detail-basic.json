@@ -7,7 +7,7 @@
       "type": "data-source",
       "name": "detail",
       "action": "ajax",
-      "args": { "url": "/r/AntdPro__orderDetail?id=A1001", "method": "get" }
+      "args": { "url": "/r/AntdPro__orderDetail", "method": "get" }
     },
     {
       "type": "container",
@@ -97,7 +97,13 @@
                   "type": "button",
                   "label": "返回列表",
                   "className": "adp-btn adp-btn-outline",
-                  "testid": "antdpro-detail-basic-back"
+                  "testid": "antdpro-detail-basic-back",
+                  "onClick": {
+                    "action": "navigate",
+                    "args": {
+                      "url": "#/complex-pages/antdpro-list"
+                    }
+                  }
                 }
               ]
             }

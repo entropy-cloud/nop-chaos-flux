@@ -29,7 +29,7 @@
         },
         {
           "type": "text",
-          "text": "分步表单：步骤条 + 分步字段组静态呈现（步进校验与数据暂存归 P2b）。",
+          "text": "分步表单：步骤校验通过才可前进，已填数据跨步保留，末步提交写入模拟后端。",
           "className": "adp-desc-label mt-1"
         }
       ]
@@ -41,6 +41,31 @@
         {
           "type": "wizard",
           "testid": "antdpro-step-wizard",
+          "mountOnEnter": true,
+          "onComplete": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/AntdPro__submitForm",
+              "method": "post",
+              "data": {
+                "payeeName": "${antdproStep.step1.payeeName ?? \"\"}",
+                "payeeAccount": "${antdproStep.step1.payeeAccount ?? \"\"}",
+                "amount": "${antdproStep.step1.amount ?? 0}"
+              }
+            },
+            "messages": {
+              "success": "结算单已提交，即将跳转"
+            },
+            "then": {
+              "action": "navigate",
+              "args": {
+                "url": "#/complex-pages/antdpro-result"
+              },
+              "control": {
+                "debounce": 1200
+              }
+            }
+          },
           "steps": [
             {
               "key": "payment",
@@ -67,7 +92,8 @@
                       "name": "payeeAccount",
                       "label": "收款账号",
                       "required": true,
-                      "placeholder": "请输入银行账号"
+                      "placeholder": "请输入银行账号",
+                      "testid": "antdpro-step1-account"
                     },
                     {
                       "type": "input-number",

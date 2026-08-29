@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ApiRequestContext } from '@nop-chaos/flux-core';
+import type { ApiRequestContext, SchemaValue } from '@nop-chaos/flux-core';
 import {
   ANTDPRO_CHANNEL_LABELS,
   ANTDPRO_STATUS_LABELS,
@@ -142,6 +142,172 @@ describe('AntdPro fetcher branches (get-only)', () => {
     const data = res.data as Record<string, unknown>;
     expect((data.kpi as Record<string, unknown>).totalOrders).toBe(36);
     expect((data.topProducts as unknown[]).length).toBe(10);
+  });
+});
+
+describe('AntdPro fetcher branches (write endpoints)', () => {
+  const fetchCtx = { scope: null } as unknown as ApiRequestContext;
+
+  type AntdProWritePayload = Record<string, unknown>;
+
+  interface AntdProDetailPayload {
+    orderNo?: string;
+    status?: string;
+    statusLabel?: string;
+    progressKey?: string;
+    basic?: { orderNo?: string };
+    customer?: { name?: string };
+  }
+
+  async function post<T extends AntdProWritePayload>(env: ReturnType<typeof createShowcaseEnv>['env'], url: string, data: Record<string, SchemaValue>) {
+    return env.fetcher!<T>({ url, method: 'post', data }, fetchCtx);
+  }
+
+  async function listTotal(env: ReturnType<typeof createShowcaseEnv>['env'], keyword?: string) {
+    const suffix = keyword ? `&keyword=${encodeURIComponent(keyword)}` : '';
+    const res = await env.fetcher!<Record<string, unknown>>({
+      url: `/r/AntdPro__orders?page=1&perPage=10${suffix}`,
+      method: 'get',
+    }, fetchCtx);
+    return res.data?.total as number;
+  }
+
+  async function detailOf(env: ReturnType<typeof createShowcaseEnv>['env'], id?: string) {
+    const res = await env.fetcher!<AntdProDetailPayload | null>({
+      url: id ? `/r/AntdPro__orderDetail?id=${id}` : '/r/AntdPro__orderDetail',
+      method: 'get',
+    }, fetchCtx);
+    return res.data ?? null;
+  }
+
+  it('AntdPro__saveOrder creates a new order without id (prepended, list-observable)', async () => {
+    const { env } = createShowcaseEnv();
+    const res = await post<Record<string, unknown>>(env, '/r/AntdPro__saveOrder', {
+      customer: '测试客户甲',
+      amount: 321,
+      channel: 'web',
+    });
+    expect(res.status).toBe(0);
+    expect(res.data?.ok).toBe(true);
+    expect(res.data?.created).toBe(true);
+    expect(String(res.data?.id)).toMatch(/^A\d+$/);
+    expect(await listTotal(env)).toBe(37);
+    expect(await listTotal(env, '测试客户甲')).toBe(1);
+    const page1 = await env.fetcher!<Record<string, unknown>>({
+      url: '/r/AntdPro__orders?page=1&perPage=10',
+      method: 'get',
+    }, fetchCtx);
+    expect(((page1.data?.items ?? []) as Array<Record<string, unknown>>)[0]?.customer).toBe('测试客户甲');
+  });
+
+  it('AntdPro__saveOrder updates an existing order in place (created:false, fields patched)', async () => {
+    const { env } = createShowcaseEnv();
+    const res = await post<Record<string, unknown>>(env, '/r/AntdPro__saveOrder', {
+      id: 'A1001',
+      customer: '改名客户乙',
+      amount: 999,
+    });
+    expect(res.data?.created).toBe(false);
+    expect(await listTotal(env, '改名客户乙')).toBe(1);
+    const detail = await detailOf(env, 'A1001');
+    expect(detail?.customer?.name).toBe('改名客户乙');
+    expect(detail?.basic?.orderNo).toBe('SO2026080100');
+  });
+
+  it('AntdPro__saveOrder with unknown id upserts as a new row (adp-save-miss ruling)', async () => {
+    const { env } = createShowcaseEnv();
+    const res = await post<Record<string, unknown>>(env, '/r/AntdPro__saveOrder', {
+      id: 'A9999',
+      customer: '落库新行丙',
+    });
+    expect(res.data?.created).toBe(true);
+    expect(res.data?.id).toBe('A9999');
+    expect(await listTotal(env)).toBe(37);
+    expect(await listTotal(env, '落库新行丙')).toBe(1);
+  });
+
+  it('AntdPro__deleteOrders removes rows observably within the session', async () => {
+    const { env } = createShowcaseEnv();
+    const res = await post<Record<string, unknown>>(env, '/r/AntdPro__deleteOrders', {
+      ids: ['A1001', 'A1002'],
+    });
+    expect(res.data?.deleted).toBe(2);
+    expect(await listTotal(env)).toBe(34);
+    expect(await detailOf(env, 'A1001')).toBeNull();
+    expect(await listTotal(env, 'SO2026080100')).toBe(0);
+  });
+
+  it('AntdPro__deleteOrders with empty ids deletes nothing (adp-del-empty); string ids accepted', async () => {
+    const { env } = createShowcaseEnv();
+    const empty = await post<Record<string, unknown>>(env, '/r/AntdPro__deleteOrders', {});
+    expect(empty.data?.deleted).toBe(0);
+    expect(await listTotal(env)).toBe(36);
+    const single = await post<Record<string, unknown>>(env, '/r/AntdPro__deleteOrders', { ids: 'A1001' });
+    expect(single.data?.deleted).toBe(1);
+    expect(await listTotal(env)).toBe(35);
+  });
+
+  it('AntdPro__approveOrder flips status (approve→done, reject→cancelled), detail reflects it', async () => {
+    const { env } = createShowcaseEnv();
+    const approve = await post<Record<string, unknown>>(env, '/r/AntdPro__approveOrder', {
+      id: 'A1002',
+      decision: 'approve',
+    });
+    expect(approve.data?.status).toBe('done');
+    const approved = await detailOf(env, 'A1002');
+    expect(approved?.status).toBe('done');
+    expect(approved?.statusLabel).toBe('已完成');
+    expect(approved?.progressKey).toBe('completed');
+
+    const reject = await post<Record<string, unknown>>(env, '/r/AntdPro__approveOrder', {
+      id: 'A1003',
+      decision: 'reject',
+    });
+    expect(reject.data?.status).toBe('cancelled');
+    const rejected = await detailOf(env, 'A1003');
+    expect(rejected?.status).toBe('cancelled');
+    expect(rejected?.statusLabel).toBe('已关闭');
+  });
+
+  it('AntdPro__approveOrder with missing id fails without flipping anything (adp-approve-miss)', async () => {
+    const { env } = createShowcaseEnv();
+    const miss = await post<Record<string, unknown>>(env, '/r/AntdPro__approveOrder', {
+      id: 'A9999',
+      decision: 'approve',
+    });
+    expect(miss.status).toBe(1);
+    expect(miss.data?.ok).toBe(false);
+    const invalid = await post<Record<string, unknown>>(env, '/r/AntdPro__approveOrder', {
+      id: 'A1002',
+      decision: 'nonsense',
+    });
+    expect(invalid.status).toBe(1);
+    expect((await detailOf(env, 'A1002'))?.status).toBe('processing');
+  });
+
+  it('AntdPro__submitForm accepts a generic payload and returns a generated id', async () => {
+    const { env } = createShowcaseEnv();
+    const res = await post<Record<string, unknown>>(env, '/r/AntdPro__submitForm', {
+      title: '季度目标',
+      owner: '林知夏',
+    });
+    expect(res.status).toBe(0);
+    expect(res.data?.ok).toBe(true);
+    expect(String(res.data?.id)).toMatch(/^A\d+$/);
+  });
+
+  it('AntdPro__selectOrder records the session pointer; orderDetail falls back to it (adp-select-miss keeps pointer)', async () => {
+    const { env } = createShowcaseEnv();
+    const fresh = await detailOf(env);
+    expect(fresh?.orderNo).toBe('SO2026080100');
+
+    const select = await post<Record<string, unknown>>(env, '/r/AntdPro__selectOrder', { id: 'A1002' });
+    expect(select.data?.ok).toBe(true);
+    expect((await detailOf(env))?.orderNo).toBe('SO2026080101');
+
+    const miss = await post<Record<string, unknown>>(env, '/r/AntdPro__selectOrder', { id: 'NOPE' });
+    expect(miss.status).toBe(1);
+    expect((await detailOf(env))?.orderNo).toBe('SO2026080101');
   });
 });
 

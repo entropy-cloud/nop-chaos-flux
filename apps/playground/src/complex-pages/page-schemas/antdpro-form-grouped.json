@@ -149,18 +149,40 @@
           "type": "form",
           "id": "antdpro-grouped-owner-form",
           "columnCount": 2,
+          "submitAction": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/AntdPro__submitForm",
+              "method": "post",
+              "includeScope": "*"
+            },
+            "messages": {
+              "success": "入库登记已提交，即将跳转"
+            }
+          },
+          "onSubmitSuccess": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/antdpro-result"
+            },
+            "control": {
+              "debounce": 1200
+            }
+          },
           "body": [
             {
               "type": "input-text",
               "name": "ownerDept",
               "label": "责任部门",
-              "placeholder": "如 仓储运营部"
+              "placeholder": "如 仓储运营部",
+              "testid": "antdpro-grouped-owner-dept"
             },
             {
               "type": "input-text",
               "name": "ownerPerson",
               "label": "责任人",
-              "placeholder": "请输入责任人"
+              "placeholder": "请输入责任人",
+              "testid": "antdpro-grouped-owner-person"
             }
           ],
           "actions": [
@@ -168,13 +190,20 @@
               "type": "button",
               "label": "重置",
               "className": "adp-btn adp-btn-outline",
-              "testid": "antdpro-grouped-reset"
+              "testid": "antdpro-grouped-reset",
+              "onClick": {
+                "action": "component:reset",
+                "componentId": "antdpro-grouped-owner-form"
+              }
             },
             {
               "type": "button",
               "label": "提交",
               "className": "adp-btn adp-btn-primary",
-              "testid": "antdpro-grouped-submit"
+              "testid": "antdpro-grouped-submit",
+              "onClick": {
+                "action": "submitForm"
+              }
             }
           ]
         }
