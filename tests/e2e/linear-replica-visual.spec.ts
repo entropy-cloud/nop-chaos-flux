@@ -66,22 +66,19 @@ test.describe('Linear replica — initial-screen structure', () => {
     await expect(table).toContainText('进行中');
     await expect(table).toContainText('已完成');
 
-    // 左缘 checkbox 浮出形态 + 选中行静态样本（品牌紫底）
-    expect(await page.getByTestId('linear-issues-row-check').count()).toBe(9);
-    const checkOn = page.getByTestId('linear-issues-row-check-on');
-    await expect(checkOn).toHaveCount(1);
-    expect(await checkOn.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
-    const selectedRow = page.locator('tr', { has: page.getByTestId('linear-issues-row-check-on') });
-    await expect(selectedRow).toHaveCount(1);
-    expect(await selectedRow.evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(
-      /94, 106, 210/,
-    );
+    // 内建选择列（P4b 接线：scope 契约选择集，初始零选中）+ 行 hover 形态
+    const selectColumn = table.locator('[data-slot="table-select-column"]');
+    await expect(selectColumn).toHaveCount(1);
+    await expect(selectColumn.locator('[data-slot="checkbox"]')).toHaveCount(1);
+    await expect(table.locator('[data-slot="table-select-cell"]').first()).toBeVisible();
+    expect(await table.locator('[data-slot="table-select-cell"]').count()).toBe(10);
 
-    // 底部批量操作栏静态形态（G-B3）
+    // 底部批量操作栏动态形态（G-B3 实测：计数绑选择集，无选择时动作钮禁用）
     const bulkBar = page.getByTestId('linear-issues-bulk-bar');
     await expect(bulkBar).toBeVisible();
-    await expect(page.getByTestId('linear-issues-bulk-count')).toContainText('已选 3 项');
+    await expect(page.getByTestId('linear-issues-bulk-count')).toContainText('已选 0 项');
     await expect(page.getByTestId('linear-issues-bulk-status')).toContainText('状态');
+    await expect(page.getByTestId('linear-issues-bulk-status')).toBeDisabled();
     await expect(page.getByTestId('linear-issues-bulk-priority')).toContainText('优先级');
     await expect(page.getByTestId('linear-issues-bulk-assignee')).toContainText('指派');
     await expect(page.getByTestId('linear-issues-bulk-label')).toContainText('标签');
@@ -190,8 +187,8 @@ test.describe('Linear replica — initial-screen structure', () => {
       /15, 16, 17/,
     );
 
-    // 拖拽不接线注记落字（P4b 边界）
-    await expect(page.getByTestId('linear-board-dnd-note')).toContainText('不可拖拽');
+    // 拖拽已接线注记（P4b Phase 3）：卡片可拖拽跨列
+    await expect(page.getByTestId('linear-board-dnd-note')).toContainText('拖拽已接线');
 
     // 零品牌资产
     const replicaText = await page.getByTestId('linear-board-main').innerText();

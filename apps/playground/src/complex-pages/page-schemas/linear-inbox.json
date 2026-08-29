@@ -5,6 +5,7 @@
   "body": [
     {
       "type": "data-source",
+      "id": "linear-inbox-source",
       "name": "inbox",
       "action": "ajax",
       "args": { "url": "/r/Linear__inbox", "method": "get" }
@@ -159,13 +160,45 @@
                       "type": "button",
                       "label": "全部标为已读",
                       "className": "ln-btn ln-btn-quiet h-7 px-3 text-xs",
-                      "testid": "linear-inbox-bulk-read"
+                      "testid": "linear-inbox-bulk-read",
+                      "onClick": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/Linear__inboxUpdate",
+                          "method": "post",
+                          "data": { "ids": [], "op": "read" }
+                        },
+                        "messages": {
+                          "success": "已全部标为已读",
+                          "failed": "没有可标记的通知"
+                        },
+                        "then": {
+                          "action": "component:refresh",
+                          "componentId": "linear-inbox-source"
+                        }
+                      }
                     },
                     {
                       "type": "button",
                       "label": "归档所选",
                       "className": "ln-btn ln-btn-ghost h-7 px-3 text-xs",
-                      "testid": "linear-inbox-bulk-archive"
+                      "testid": "linear-inbox-bulk-archive",
+                      "onClick": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/Linear__inboxUpdate",
+                          "method": "post",
+                          "data": { "ids": [], "op": "archive" }
+                        },
+                        "messages": {
+                          "success": "已归档全部通知",
+                          "failed": "没有可归档的通知"
+                        },
+                        "then": {
+                          "action": "component:refresh",
+                          "componentId": "linear-inbox-source"
+                        }
+                      }
                     }
                   ]
                 }
@@ -277,7 +310,23 @@
                                       "type": "button",
                                       "label": "已读归档",
                                       "className": "ln-btn ln-btn-ghost h-6 px-2 text-xs",
-                                      "testid": "linear-inbox-item-archive"
+                                      "testid": "linear-inbox-item-archive",
+                                      "onClick": {
+                                        "action": "ajax",
+                                        "args": {
+                                          "url": "/r/Linear__inboxUpdate",
+                                          "method": "post",
+                                          "data": { "ids": ["${$slot.item.id}"], "op": "archive" }
+                                        },
+                                        "messages": {
+                                          "success": "通知已归档",
+                                          "failed": "没有可归档的通知"
+                                        },
+                                        "then": {
+                                          "action": "component:refresh",
+                                          "componentId": "linear-inbox-source"
+                                        }
+                                      }
                                     }
                                   ]
                                 }

@@ -4,18 +4,24 @@ import {
   LINEAR_BOARD_COLUMNS,
   LINEAR_PRIORITY_LABELS,
   LINEAR_STATUS_LABELS,
+  archiveLinearIssues,
   buildLinearBoardData,
   buildLinearIssueDetail,
+  bulkUpdateLinearIssues,
   countLinearUnread,
   createLinearCommands,
   createLinearDatabase,
   createLinearFetcherBranch,
   createLinearInbox,
+  createLinearIssueRecord,
   createLinearIssues,
   createLinearProjects,
   filterLinearIssues,
+  moveLinearCard,
+  nextLinearIssueId,
   paginateLinear,
   toLinearIssueRow,
+  updateLinearInbox,
 } from '../shared/mock-backend-linear';
 import { createShowcaseEnv } from '../shared/showcase-env';
 import { COMPLEX_PAGE_ENTRIES } from '../complex-pages-model';
@@ -203,12 +209,16 @@ describe('Linear mock backend — projects + commands', () => {
   });
 });
 
-describe('Linear fetcher branch (get-only)', () => {
-  it('branch is get-only: post falls through unhandled; foreign prefixes return null', () => {
+describe('Linear fetcher branch (reads + writes)', () => {
+  it('foreign prefixes return null; unknown Linear write endpoints fail with status 1', () => {
     const branch = createLinearFetcherBranch(createLinearDatabase(), <T,>(v: T): T => v);
-    expect(branch({ url: '/r/Linear__issues', method: 'post', params: {}, body: {} })).toBeNull();
-    expect(branch({ url: '/r/Linear__issue?id=ENG-101', method: 'post', params: {}, body: {} })).toBeNull();
     expect(branch({ url: '/r/Other__issues', method: 'get', params: {}, body: {} })).toBeNull();
+    const unknownWrite = branch({ url: '/r/Linear__nope', method: 'post', params: {}, body: {} }) as {
+      status: number;
+      data: { ok: boolean };
+    };
+    expect(unknownWrite.status).toBe(1);
+    expect(unknownWrite.data.ok).toBe(false);
   });
 
   it('branch serves issues pagination, board view, inbox, detail, projects, commands', () => {
@@ -264,11 +274,252 @@ describe('Linear showcase env wiring', () => {
     expect((issues.data as { total: number }).total).toBeGreaterThanOrEqual(30);
   });
 
-  it('non-get requests to Linear endpoints fall through to the null default', async () => {
+  it('non-get requests to unknown Linear endpoints surface a handled failure, not the null default', async () => {
     const { env } = createShowcaseEnv();
     const res = await env.fetcher!<unknown>({ url: '/r/Linear__issues', method: 'post' }, fetchCtx);
+    expect(res.status).toBe(1);
+    expect(res.data).toEqual({ ok: false, error: 'unknown Linear write endpoint' });
+  });
+});
+
+describe('Linear write operations — bulkUpdate (ln-bulk-miss)', () => {
+  it('applies the patch to every matched id and reports the update count', () => {
+    const rows = createLinearIssues();
+    const result = bulkUpdateLinearIssues(rows, {
+      ids: ['ENG-101', 'ENG-102'],
+      patch: { status: 'done', priority: 'low' },
+    });
+    expect(result).toEqual({ ok: true, updated: 2 });
+    expect(rows.find((r) => r.id === 'ENG-101')!.status).toBe('done');
+    expect(rows.find((r) => r.id === 'ENG-102')!.priority).toBe('low');
+  });
+
+  it('accepts flat patch keys (dialog-form alias) and resolves assignee names', () => {
+    const rows = createLinearIssues();
+    const result = bulkUpdateLinearIssues(rows, { ids: ['ENG-101'], status: 'in_progress', assignee: '沈亦舟' });
+    expect(result.ok).toBe(true);
+    const row = rows.find((r) => r.id === 'ENG-101')!;
+    expect(row.status).toBe('in_progress');
+    expect(row.assignee).toEqual({ name: '沈亦舟', initials: '沈' });
+  });
+
+  it('skips unmatched ids, applies the valid subset, and fails when nothing matches', () => {
+    const rows = createLinearIssues();
+    const partial = bulkUpdateLinearIssues(rows, {
+      ids: ['ENG-101', 'ENG-9999'],
+      patch: { status: 'done' },
+    });
+    expect(partial).toEqual({ ok: true, updated: 1 });
+    expect(rows.find((r) => r.id === 'ENG-101')!.status).toBe('done');
+
+    const miss = bulkUpdateLinearIssues(rows, { ids: ['ENG-9999'], patch: { status: 'done' } });
+    expect(miss.ok).toBe(false);
+  });
+
+  it('rejects invalid patch values and empty id sets', () => {
+    const rows = createLinearIssues();
+    expect(bulkUpdateLinearIssues(rows, { ids: ['ENG-101'], patch: { status: 'nope' } }).ok).toBe(false);
+    expect(bulkUpdateLinearIssues(rows, { ids: ['ENG-101'], patch: { assignee: '不存在' } }).ok).toBe(false);
+    expect(bulkUpdateLinearIssues(rows, { ids: [], patch: { status: 'done' } }).ok).toBe(false);
+  });
+
+  it('session persistence: bulkUpdate results flow through the issues read endpoint', () => {
+    const db = createLinearDatabase();
+    bulkUpdateLinearIssues(db.issues, { ids: ['ENG-101', 'ENG-102'], patch: { status: 'done' } });
+    const branch = createLinearFetcherBranch(db, <T,>(v: T): T => v);
+    const res = branch({ url: '/r/Linear__issues?perPage=50', method: 'get', params: {}, body: {} }) as {
+      status: number;
+      data: { items: Array<{ id: string; status: string }> };
+    };
+    const first = res.data.items.find((i) => i.id === 'ENG-101')!;
+    const second = res.data.items.find((i) => i.id === 'ENG-102')!;
+    expect(first.status).toBe('done');
+    expect(second.status).toBe('done');
+  });
+});
+
+describe('Linear write operations — createIssue (ln-create-miss)', () => {
+  it('appends the next ENG- sequence record with defaults and observable fields', () => {
+    const rows = createLinearIssues();
+    expect(nextLinearIssueId(rows)).toBe('ENG-135');
+    const result = createLinearIssueRecord(rows, { title: '新问题样本', status: 'in_progress' });
+    expect(result.ok).toBe(true);
+    expect(result.id).toBe('ENG-135');
+    const created = rows.find((r) => r.id === 'ENG-135')!;
+    expect(created.title).toBe('新问题样本');
+    expect(created.status).toBe('in_progress');
+    expect(created.priority).toBe('none');
+    expect(created.assignee.name.length).toBeGreaterThan(0);
+    expect(rows).toHaveLength(35);
+  });
+
+  it('fails without a title (blank/missing) and never mutates the session set', () => {
+    const rows = createLinearIssues();
+    expect(createLinearIssueRecord(rows, {}).ok).toBe(false);
+    expect(createLinearIssueRecord(rows, { title: '   ' }).ok).toBe(false);
+    expect(rows).toHaveLength(34);
+  });
+
+  it('session persistence: created issues are served by the issues endpoint and detail builder', () => {
+    const db = createLinearDatabase();
+    createLinearIssueRecord(db.issues, { title: '链路验证问题' });
+    const branch = createLinearFetcherBranch(db, <T,>(v: T): T => v);
+    const list = branch({ url: '/r/Linear__issues?page=4&perPage=10', method: 'get', params: {}, body: {} }) as {
+      data: { items: Array<{ id: string; title: string }> };
+    };
+    expect(list.data.items.some((i) => i.id === 'ENG-135' && i.title === '链路验证问题')).toBe(true);
+    const detail = branch({ url: '/r/Linear__issue?id=ENG-135', method: 'get', params: {}, body: {} }) as {
+      data: { id: string; title: string };
+    };
+    expect(detail.data.title).toBe('链路验证问题');
+  });
+});
+
+describe('Linear write operations — archiveIssue (ln-archive-miss)', () => {
+  it('soft-archives matched ids and hides them from default list + board reads', () => {
+    const rows = createLinearIssues();
+    const result = archiveLinearIssues(rows, { ids: ['ENG-101', 'ENG-102'] });
+    expect(result).toEqual({ ok: true, updated: 2 });
+    expect(rows.filter((r) => r.archived).map((r) => r.id)).toEqual(['ENG-101', 'ENG-102']);
+    const visible = filterLinearIssues(rows, {});
+    expect(visible.some((r) => r.id === 'ENG-101')).toBe(false);
+    const board = buildLinearBoardData(filterLinearIssues(rows, {}));
+    const allCardIds = Object.values(board.board).flatMap((n) =>
+      (n as { type: string; children: string[] }).type === 'column' ? (n as { children: string[] }).children : [],
+    );
+    expect(allCardIds).not.toContain('card-ENG-101');
+  });
+
+  it('fails on zero match and is idempotent-safe for already archived ids', () => {
+    const rows = createLinearIssues();
+    expect(archiveLinearIssues(rows, { ids: ['ENG-9999'] }).ok).toBe(false);
+    expect(archiveLinearIssues(rows, { ids: [] }).ok).toBe(false);
+    archiveLinearIssues(rows, { ids: ['ENG-101'] });
+    expect(archiveLinearIssues(rows, { ids: ['ENG-101'] }).ok).toBe(false);
+  });
+});
+
+describe('Linear write operations — moveCard (ln-move-miss)', () => {
+  it('flips the status across columns tolerating card-/col- prefixes', () => {
+    const rows = createLinearIssues();
+    const result = moveLinearCard(rows, { id: 'card-ENG-101', toColumn: 'col-done' });
+    expect(result).toEqual({ ok: true, id: 'ENG-101', updated: 1 });
+    expect(rows.find((r) => r.id === 'ENG-101')!.status).toBe('done');
+  });
+
+  it('orders the card inside the target column when toIndex is provided', () => {
+    const rows = createLinearIssues();
+    moveLinearCard(rows, { id: 'ENG-101', toColumn: 'done', toIndex: 0 });
+    const doneOrder = rows.filter((r) => r.status === 'done').map((r) => r.id);
+    expect(doneOrder[0]).toBe('ENG-101');
+  });
+
+  it('fails on unknown column or unmatched card without mutating layout', () => {
+    const rows = createLinearIssues();
+    const before = rows.map((r) => `${r.id}:${r.status}`).join('|');
+    expect(moveLinearCard(rows, { id: 'ENG-101', toColumn: 'nope' }).ok).toBe(false);
+    expect(moveLinearCard(rows, { id: 'ENG-9999', toColumn: 'done' }).ok).toBe(false);
+    expect(rows.map((r) => `${r.id}:${r.status}`).join('|')).toBe(before);
+  });
+
+  it('session persistence: moveCard is observable through the board view payload', () => {
+    const db = createLinearDatabase();
+    moveLinearCard(db.issues, { id: 'ENG-101', toColumn: 'done' });
+    const branch = createLinearFetcherBranch(db, <T,>(v: T): T => v);
+    const board = branch({ url: '/r/Linear__issues?view=board', method: 'get', params: {}, body: {} }) as {
+      data: { board: Record<string, { type: string; children: string[] }> };
+    };
+    const doneColumn = board.data.board['col-done']!;
+    expect(doneColumn.children).toContain('card-ENG-101');
+    const todoColumn = board.data.board['col-todo']!;
+    expect(todoColumn.children).not.toContain('card-ENG-101');
+  });
+});
+
+describe('Linear write operations — inboxUpdate (ln-inbox-miss)', () => {
+  it('marks matched notifications read; empty ids targets all (bulk carrier)', () => {
+    const groups = createLinearInbox();
+    const single = updateLinearInbox(groups, { ids: ['ntf-1'], op: 'read' });
+    expect(single).toEqual({ ok: true, updated: 1 });
+    expect(groups[0]!.items.find((i) => i.id === 'ntf-1')!.unread).toBe(false);
+
+    const all = updateLinearInbox(groups, { ids: [], op: 'read' });
+    expect(all.ok).toBe(true);
+    expect(countLinearUnread(groups)).toBe(0);
+  });
+
+  it('archive op flags items so default inbox reads hide them', () => {
+    const groups = createLinearInbox();
+    const result = updateLinearInbox(groups, { ids: ['ntf-2'], op: 'archive' });
+    expect(result).toEqual({ ok: true, updated: 1 });
+    expect(groups[0]!.items.find((i) => i.id === 'ntf-2')!.archived).toBe(true);
+  });
+
+  it('fails on unknown op or zero match without flipping state', () => {
+    const groups = createLinearInbox();
+    expect(updateLinearInbox(groups, { ids: ['ntf-1'], op: 'nope' }).ok).toBe(false);
+    expect(updateLinearInbox(groups, { ids: ['ntf-999'], op: 'read' }).ok).toBe(false);
+    expect(groups[0]!.items.find((i) => i.id === 'ntf-1')!.unread).toBe(true);
+  });
+
+  it('session persistence: unreadCount and total drop through the inbox read endpoint', () => {
+    const db = createLinearDatabase();
+    updateLinearInbox(db.inbox, { ids: [], op: 'read' });
+    updateLinearInbox(db.inbox, { ids: ['ntf-1'], op: 'archive' });
+    const branch = createLinearFetcherBranch(db, <T,>(v: T): T => v);
+    const inbox = branch({ url: '/r/Linear__inbox', method: 'get', params: {}, body: {} }) as {
+      data: { unreadCount: number; total: number };
+    };
+    expect(inbox.data.unreadCount).toBe(0);
+    expect(inbox.data.total).toBe(8);
+  });
+});
+
+describe('Linear write operations — copyLink (ln-copy-noop) + env wiring', () => {
+  it('copyLink is a get no-op that always succeeds and echoes the id', () => {
+    const db = createLinearDatabase();
+    const issuesBefore = db.issues.length;
+    const branch = createLinearFetcherBranch(db, <T,>(v: T): T => v);
+    const res = branch({ url: '/r/Linear__copyLink?id=ENG-105', method: 'get', params: {}, body: {} }) as {
+      status: number;
+      data: { ok: boolean; id: string; url: string };
+    };
     expect(res.status).toBe(0);
-    expect(res.data).toBeNull();
+    expect(res.data.ok).toBe(true);
+    expect(res.data.id).toBe('ENG-105');
+    expect(res.data.url).toContain('ENG-105');
+    expect(db.issues).toHaveLength(issuesBefore);
+  });
+
+  it('all five write endpoints are reachable through the showcase fetcher with session state', async () => {
+    const { env } = createShowcaseEnv();
+    const post = (url: string, data: Record<string, unknown>) =>
+      env.fetcher!<Record<string, unknown>>({ url, method: 'post', data: data as never }, fetchCtx);
+
+    const bulk = await post('/r/Linear__bulkUpdate', { ids: ['ENG-101'], patch: { status: 'done' } });
+    expect(bulk.status).toBe(0);
+
+    const create = await post('/r/Linear__createIssue', { title: '环境链路问题' });
+    expect(create.status).toBe(0);
+    expect(create.data?.id).toBe('ENG-135');
+
+    const move = await post('/r/Linear__moveCard', { id: 'card-ENG-102', toColumn: 'col-in_progress' });
+    expect(move.status).toBe(0);
+
+    const inbox = await post('/r/Linear__inboxUpdate', { ids: ['ntf-1'], op: 'read' });
+    expect(inbox.status).toBe(0);
+
+    const archive = await post('/r/Linear__archiveIssue', { ids: ['ENG-103'] });
+    expect(archive.status).toBe(0);
+
+    const copy = await env.fetcher!<Record<string, unknown>>({ url: '/r/Linear__copyLink?id=ENG-101', method: 'get' }, fetchCtx);
+    expect(copy.status).toBe(0);
+
+    const issues = await env.fetcher!<Record<string, unknown>>({ url: '/r/Linear__issues?perPage=50', method: 'get' }, fetchCtx);
+    const items = (issues.data as { items: Array<{ id: string; status: string }> }).items;
+    expect(items.find((i) => i.id === 'ENG-101')!.status).toBe('done');
+    expect(items.some((i) => i.id === 'ENG-103')).toBe(false);
+    expect(items.some((i) => i.id === 'ENG-135')).toBe(true);
   });
 });
 

@@ -396,10 +396,10 @@
   color: var(--ln-brand-light);
 }
 
-/* ── 8. High-density issue rows (36–40px, hover + left-edge checkbox) ───── */
+/* ── 8. High-density issue rows (36–40px, hover + selection state) ──────── */
 
 /* Table-carried issue list (linear-issues): scope density + hover + selected
-   samples over the renderer's stable row markers (cal tabs precedent). */
+   rows over the renderer's stable row markers (cal tabs precedent). */
 .ln-issues-table [data-slot='table-row'] {
   height: 38px;
   border-bottom: 1px solid var(--ln-border-2);
@@ -429,12 +429,19 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* static selected-row sample: the row carrying the checked box sample */
-.ln-issues-table [data-slot='table-row']:has(.ln-row-check-on) {
+/* selected rows via the built-in scope-owned selection column (P4b L7):
+   the row carrying a checked row checkbox gets the brand tint */
+.ln-issues-table
+  [data-slot='table-row']:has(
+    [data-slot='table-select-cell'] [data-slot='checkbox'][data-checked]
+  ) {
   background: rgba(94, 106, 210, 0.12);
 }
 
-.ln-issues-table [data-slot='table-row']:has(.ln-row-check-on):hover {
+.ln-issues-table
+  [data-slot='table-row']:has(
+    [data-slot='table-select-cell'] [data-slot='checkbox'][data-checked]
+  ):hover {
   background: rgba(94, 106, 210, 0.16);
 }
 
@@ -460,41 +467,8 @@
   background: rgba(94, 106, 210, 0.16);
 }
 
-/* left-edge floating checkbox: hidden until row hover (static hover sample);
-   the `-on` variant is the checked/selected static sample */
-.ln-row-check {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  border: 1px solid var(--ln-text-4);
-  border-radius: var(--ln-radius-xs);
-  background: var(--ln-bg);
-  color: transparent;
-  font-size: 10px;
-  line-height: 1;
-  opacity: 0;
-  transition: opacity 120ms ease;
-  cursor: pointer;
-}
-
-.ln-issues-table [data-slot='table-row']:hover .ln-row-check,
-.ln-row:hover .ln-row-check {
-  opacity: 1;
-}
-
-.ln-row-check:hover {
-  border-color: var(--ln-brand);
-}
-
-.ln-row-check-on {
-  opacity: 1;
-  border-color: var(--ln-brand);
-  background: var(--ln-brand);
-  color: #ffffff;
-}
-
+/* left-edge floating checkbox markers retired in P4b: the selection column is
+   carried by the table renderer's built-in checkbox cell (scoped selection) */
 .ln-row-title {
   color: var(--ln-text-1);
   font-size: 14px;
@@ -588,16 +562,26 @@
   color: var(--ln-text-1);
 }
 
+/* disabled gate (P4b ln-bulk-empty): bulk action buttons with no selection */
+.ln-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ln-btn:disabled:hover {
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-2);
+}
+
 /* focus ring: layered indigo (100–150ms micro-interaction window) */
-.ln-btn:focus-visible,
-.ln-row-check:focus-visible {
+.ln-btn:focus-visible {
   outline: none;
   box-shadow:
     0 0 0 2px rgba(94, 106, 210, 0.4),
     0 0 0 4px rgba(94, 106, 210, 0.2);
 }
 
-/* ── 11. Command shell (⌘K dialog static form) ──────────────────────────── */
+/* ── 11. Command shell (⌘K dialog, filter + execution wired in P4b) ─────── */
 
 .ln-cmd-input {
   width: 100%;
@@ -1012,8 +996,8 @@
   background: var(--ln-bg);
 }
 
-.ln-root [data-slot='checkbox'][data-state='checked'],
-.ln-dialog [data-slot='checkbox'][data-state='checked'] {
+.ln-root [data-slot='checkbox'][data-checked],
+.ln-dialog [data-slot='checkbox'][data-checked] {
   background: var(--ln-brand);
   border-color: var(--ln-brand);
   color: #ffffff;
@@ -1025,8 +1009,8 @@
   border-color: var(--ln-border-3);
 }
 
-.ln-root [data-slot='switch'][data-state='checked'],
-.ln-dialog [data-slot='switch'][data-state='checked'] {
+.ln-root [data-slot='switch'][data-checked],
+.ln-dialog [data-slot='switch'][data-checked] {
   background: var(--ln-brand);
 }
 

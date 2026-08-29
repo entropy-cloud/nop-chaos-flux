@@ -5,6 +5,7 @@
   "body": [
     {
       "type": "data-source",
+      "id": "linear-board-source",
       "name": "board",
       "action": "ajax",
       "args": { "url": "/r/Linear__issues?view=board", "method": "get" }
@@ -172,19 +173,8 @@
                   "className": "items-center ml-auto",
                   "body": [
                     {
-                      "type": "flex",
-                      "direction": "row",
-                      "gap": 6,
-                      "className": "items-center ln-topbar-btn",
-                      "testid": "linear-board-filter-entry",
-                      "body": [
-                        { "type": "icon", "icon": "filter", "size": 14 },
-                        { "type": "text", "text": "筛选" }
-                      ]
-                    },
-                    {
                       "type": "text",
-                      "text": "拖拽重排属交互计划：本页为静态形态，卡片不可拖拽",
+                      "text": "拖拽已接线：卡片可拖拽跨列，状态与列计数随会话态更新",
                       "className": "ln-row-meta",
                       "testid": "linear-board-dnd-note"
                     }
@@ -201,8 +191,31 @@
                   "type": "kanban",
                   "testid": "linear-board-kanban",
                   "data": "${board?.board}",
-                  "draggable": false,
                   "columnWidth": 280,
+                  "onCardMove": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/Linear__moveCard",
+                      "method": "post",
+                      "data": {
+                        "id": "${cardId}",
+                        "toColumn": "${toColumnId}",
+                        "toIndex": "${toIndex}"
+                      }
+                    },
+                    "messages": {
+                      "success": "卡片已移动",
+                      "failed": "卡片移动失败"
+                    },
+                    "then": {
+                      "action": "component:refresh",
+                      "componentId": "linear-board-source"
+                    },
+                    "onError": {
+                      "action": "component:refresh",
+                      "componentId": "linear-board-source"
+                    }
+                  },
                   "empty": { "type": "text", "text": "该状态下暂无问题", "className": "ln-empty" }
                 }
               ]

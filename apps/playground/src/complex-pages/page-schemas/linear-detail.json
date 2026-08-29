@@ -5,6 +5,7 @@
   "body": [
     {
       "type": "data-source",
+      "id": "linear-detail-source",
       "name": "detail",
       "action": "ajax",
       "args": { "url": "/r/Linear__issue?id=ENG-105", "method": "get" }
@@ -112,13 +113,42 @@
                       "type": "button",
                       "label": "复制链接",
                       "className": "ln-btn ln-btn-quiet h-7 px-3 text-xs",
-                      "testid": "linear-detail-copy"
+                      "testid": "linear-detail-copy",
+                      "onClick": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/Linear__copyLink?id=${detail?.id}",
+                          "method": "get"
+                        },
+                        "messages": {
+                          "success": "链接已复制"
+                        }
+                      }
                     },
                     {
                       "type": "button",
                       "label": "归档",
                       "className": "ln-btn ln-btn-ghost h-7 px-3 text-xs",
-                      "testid": "linear-detail-archive"
+                      "testid": "linear-detail-archive",
+                      "onClick": [
+                        {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/Linear__archiveIssue",
+                            "method": "post",
+                            "data": { "ids": ["${detail?.id}"] }
+                          },
+                          "messages": {
+                            "success": "问题已归档",
+                            "failed": "没有可归档的问题"
+                          }
+                        },
+                        {
+                          "action": "navigate",
+                          "args": { "url": "#/complex-pages/linear-issues" },
+                          "control": { "debounce": 1200 }
+                        }
+                      ]
                     }
                   ]
                 }
@@ -355,13 +385,55 @@
                     {
                       "type": "container",
                       "testid": "linear-detail-prop-status",
-                      "className": "flex items-center justify-between",
+                      "className": "flex items-center justify-between gap-2",
                       "body": [
                         { "type": "text", "text": "状态", "className": "ln-prop-label" },
                         {
-                          "type": "text",
-                          "text": "${detail?.statusLabel}",
-                          "className": "${detail?.statusPillClass}"
+                          "type": "form",
+                          "testid": "linear-detail-status-form",
+                          "submitScope": "surface",
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/Linear__bulkUpdate",
+                              "method": "post",
+                              "includeScope": "*",
+                              "data": { "ids": ["${detail?.id}"] }
+                            },
+                            "messages": {
+                              "success": "状态已更新",
+                              "failed": "状态更新失败"
+                            },
+                            "then": {
+                              "action": "component:refresh",
+                              "componentId": "linear-detail-source"
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "select",
+                              "name": "status",
+                              "testid": "linear-detail-status-select",
+                              "clearable": false,
+                              "value": "${detail?.status}",
+                              "options": [
+                                { "label": "待定", "value": "backlog" },
+                                { "label": "待办", "value": "todo" },
+                                { "label": "进行中", "value": "in_progress" },
+                                { "label": "已完成", "value": "done" },
+                                { "label": "已取消", "value": "cancelled" }
+                              ]
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "应用",
+                              "className": "ln-btn ln-btn-quiet h-6 px-2 text-xs",
+                              "testid": "linear-detail-status-apply",
+                              "onClick": { "action": "submitForm" }
+                            }
+                          ]
                         }
                       ]
                     },
