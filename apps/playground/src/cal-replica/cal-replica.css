@@ -351,6 +351,17 @@
   color: var(--cal-text-emphasis);
 }
 
+/* Secondary dialog action (cancel-flow keep button). */
+.cal-btn-outline {
+  background: var(--cal-bg);
+  color: var(--cal-text);
+  border: 1px solid var(--cal-border);
+}
+
+.cal-btn-outline:hover {
+  border-color: var(--cal-text-subtle);
+}
+
 /* ── 10. Form field error form (invalid ring + error text) ──────────────── */
 
 .cal-field-invalid {

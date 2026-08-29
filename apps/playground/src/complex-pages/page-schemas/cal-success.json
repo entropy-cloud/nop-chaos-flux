@@ -10,6 +10,12 @@
       "args": { "url": "/r/Cal__event", "method": "get" }
     },
     {
+      "type": "data-source",
+      "name": "booking",
+      "action": "ajax",
+      "args": { "url": "/r/Cal__latestBooking", "method": "get" }
+    },
+    {
       "type": "container",
       "className": "max-w-2xl mx-auto px-6 py-12 flex flex-col gap-6",
       "testid": "cal-success-main",
@@ -39,9 +45,10 @@
             },
             {
               "type": "text",
-              "text": "待确认",
+              "text": "${booking?.status === 'cancelled' ? '已取消' : '待确认'}",
               "className": "cal-badge cal-badge-pending",
-              "testid": "cal-success-pending-badge"
+              "testid": "cal-success-pending-badge",
+              "visible": "${booking?.status !== 'confirmed'}"
             }
           ]
         },
@@ -89,7 +96,7 @@
                 { "type": "icon", "icon": "clock", "size": 14 },
                 {
                   "type": "text",
-                  "text": "${event?.defaultDuration} 分钟",
+                  "text": "${booking?.durationText ?? event?.preview?.durationText}",
                   "testid": "cal-success-summary-duration"
                 }
               ]
@@ -131,7 +138,7 @@
                 { "type": "icon", "icon": "calendar", "size": 14 },
                 {
                   "type": "text",
-                  "text": "${event?.preview?.dateText} ${event?.preview?.timeText}",
+                  "text": "${booking?.dateText ?? event?.preview?.dateText} ${booking?.timeText ?? event?.preview?.timeText}",
                   "testid": "cal-success-summary-time"
                 }
               ]
@@ -194,15 +201,16 @@
           "testid": "cal-success-actions",
           "body": [
             {
-              "type": "flex",
-              "direction": "row",
-              "gap": 6,
-              "className": "items-center cal-btn cal-btn-primary",
+              "type": "button",
+              "label": "复制链接",
+              "icon": "link",
+              "className": "cal-btn cal-btn-primary",
               "testid": "cal-success-copy-link",
-              "body": [
-                { "type": "icon", "icon": "link", "size": 15 },
-                { "type": "text", "text": "复制链接" }
-              ]
+              "onClick": {
+                "action": "ajax",
+                "args": { "url": "/r/Cal__shareLink", "method": "get" },
+                "messages": { "success": "链接已复制" }
+              }
             },
             {
               "type": "flex",
@@ -212,16 +220,79 @@
               "testid": "cal-success-rebook-links",
               "body": [
                 {
-                  "type": "text",
-                  "text": "重新安排",
+                  "type": "button",
+                  "label": "重新安排",
                   "className": "cal-btn cal-btn-link",
-                  "testid": "cal-success-reschedule"
+                  "testid": "cal-success-reschedule",
+                  "onClick": {
+                    "action": "navigate",
+                    "args": { "url": "#/complex-pages/cal-booking" }
+                  }
                 },
                 {
-                  "type": "text",
-                  "text": "取消预约",
+                  "type": "button",
+                  "label": "取消预约",
                   "className": "cal-btn cal-btn-link",
-                  "testid": "cal-success-cancel"
+                  "testid": "cal-success-cancel",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "取消预约",
+                      "testid": "cal-cancel-dialog",
+                      "className": "cal-dialog",
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": {
+                        "action": "navigate",
+                        "args": { "url": "#/complex-pages/cal-booking" },
+                        "control": { "debounce": 1200 }
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "cal-cancel-form",
+                          "testid": "cal-cancel-form",
+                          "submitScope": "surface",
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/Cal__cancelBooking",
+                              "method": "post",
+                              "includeScope": "*"
+                            },
+                            "messages": {
+                              "success": "预约已取消",
+                              "failed": "没有可取消的预约"
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "textarea",
+                              "name": "reason",
+                              "label": "取消原因（可选）",
+                              "placeholder": "告诉我们原因，帮助我们改进",
+                              "testid": "cal-cancel-reason"
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "保留预约",
+                              "className": "cal-btn cal-btn-outline",
+                              "testid": "cal-cancel-dialog-cancel",
+                              "onClick": { "action": "closeSurface" }
+                            },
+                            {
+                              "type": "button",
+                              "label": "确认取消",
+                              "className": "cal-btn cal-btn-primary",
+                              "testid": "cal-cancel-dialog-confirm",
+                              "onClick": { "action": "submitForm" }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 }
               ]
             }

@@ -107,3 +107,36 @@
 - **wizard valuesPath 卸载清发布值**：form runtime dispose 时 `valuesPath` 发布回写 `undefined`（`form-runtime.ts` setupExternalPublication 清理分支），wizard 非 `mountOnEnter` 模式下离开步即丢数据——`mountOnEnter: true` 为分步数据暂存的必要声明。建议补入 `flux-guide/examples/wizard-values-path.md` 作显式注意点（文档项，非产品化项）。
 - **toast 生命周期与页面 host 绑定**：复杂页每页 host 各挂 `<Toaster/>`，跳转型动作链里 `messages.success` 存活 <100ms；本计划以 `control: {debounce}` 延迟 navigate 消解（对齐 AntD Pro「message → 延迟跳转」）。若 D1 沉淀「host 级常驻 toast 容器」约定，可消除该 schema 层补丁需求。
 - **打印 host 能力候选**：`RendererEnv` 无 print 通道（`window.print` 型），AntD Pro 详情页打印按钮在本复刻中静态保留；未分级，D1 输入池。
+
+### 回写 ④ — P3b Cal.com 预约交互接线实测证据（2026-08-29，plan `2026-08-29-1819-1-p3b-cal-booking-interaction-wiring-and-tests.md` Phase 5）
+
+> 授权链: roadmap Cross-Cutting 5（Pi-b closure 以追加方式回写 C2，不重开初版状态）→ 本 plan Phase 5。初版裁决表零改动，本段仅追加实测证据与素材行。逐条「预测 vs 实测」对照见分析篇 `cal-booking.md` §4.1。
+
+**G-F（option-row 原语）实测证据（槽位三态联动链路）**:
+
+- 三态形态本身体可解（L1 已证，P3a 落 CSS）：`cal-slot-btn` 默认描边 / 选中黑底白字 / 失效灰字禁用，令牌抽查 e2e 锁定（`cal-replica-visual.spec.ts` 01，getComputedStyle 实证）。
+- **联动刷新链路成立（P3b 新证）**：scope 写入（calendar `dateOwnership`/tabs `valueStatePath`）→ data-source url 模板逐次物化（`date=${calDate}&duration=${calDuration}&timezone=${calTimezone}` + 显式 `dependsOn`）→ 内建自动刷新（`source-registry.ts` dedup/cascade 护栏），e2e 01/03/04 锁定数据结果。三态按钮的 onClick 动作链（selectSlot → navigate）与 visible 三分支双渲染均 schema 级可达。
+- **option-row 语义缺口维持**：三态/hover 仍靠 CSS 类 + visible 表达式模拟（每态一个兄弟节点，双渲染成本随状态数线性增长）；「点日期格选中」手势在 calendar 月视图无内建语义（见 G-C）。G-F 作 D1 首项的依据不变。
+
+**G-C（月/周多视图，L2）实测证据（Booker 月历形态差）**:
+
+- calendar 月视图为**资源时间轴横条**（`calendar-month-view.tsx`，资源行 × 日期列），非 Booker 式 6 周竖网格：无「点日期格」内建选中语义（仅长按拖拽创建事件）；今日强调、月份头 ←/→/Today 导航内建可达（e2e 02）。
+- P3b 降级承载：选日手势由内建月份导航触发日期变更（onDateChange → scope 写入 → 槽位 refetch，e2e 01）；移动端「点日期格开 day sheet」由触发按钮替代（e2e 06）。形态产品化（6 周竖网格视图档）归 D1。
+
+**分析篇 §7 两候选的终态回写**:
+
+- **候选 1「预约槽位联动容器」→ 降级组合技巧级（不新增 C2 行）**：P3a 预判 + P3b 接线实证——calendar scope 写入 + url 模板物化 + dependsOn 自动刷新即完整承载月历/时长/时区 ↔ 槽位联动，零新原语（e2e 01/03/04/05）。
+- **候选 2「slot 异步刷新策略」→ 裁定落字**：定时 refetch 由 data-source `interval` 内建承载（slots source `interval: 300000` 对齐 Booker 5 分钟实证，配置存在性由 schema 单测锁定）；**窗口聚焦 refetch 无内建支持，裁定不模拟**（`watch-only residual`，产品化归 D1 流程；Booker 语境下 interval 轮询已覆盖数据保鲜主语义）。
+
+**缺口注记引用（接线约束实测，初版已登记项）**:
+
+- input-phone：原生 tel 语义缺口维持（电话字段由 input-text 承载，`type="text"` 实证，visual 02 锁定）；timezoneSelector：声明未消费维持（时区选择器由独立 select 承载）。两缺口均未绕道 renderer 包改码。
+
+**I11 剪贴板能力（新素材行，未分级）**:
+
+- 无剪贴板类 action 词汇（ajax/navigate/openDialog/refreshSource/form submit/reset 之外无 navigator.clipboard 通道）。P3b 裁定语义模拟：copy-link 按钮 → `Cal__shareLink` 无副作用 get 端点 + `messages.success`「链接已复制」（e2e 13）；实际剪贴板写入不做。**D1 输入池候选**：`RendererEnv` clipboard 通道（同 print 族宿主能力候选）。
+
+**新素材行（P3b 执行期新撞见，供 D1/deep-audit 参考）**:
+
+- **refreshSource 的 scope 桶限定（renderer 级 finding）**：`refreshDataSource` 带 `ctx.scope` 时只查该 scope 自身桶、不走父链（`source-registry.ts`），form 内按钮对页面级 data-source 派发 `refreshSource` 必然 `Source not found`（本计划实测撞墙）；跨树刷新须走 `component:refresh` + `componentId`（data-source 节点显式 `id`，handle 注册 `refresh` 方法）。建议：①`flux-guide` 补 data-source 刷新姿势注意点（文档项）；②deep-audit 候选——scoped lookup 的父链回退语义。
+- **toast 生命周期素材行复现（回写 ③ 同源）**：P3b 提交/取消跳转链再次以 `control: {debounce: 1200}` 延迟 navigate 保 `messages.success` 可观察（e2e 09/15），与回写 ③ 裁定一致；「host 级常驻 toast 容器」候选维持。

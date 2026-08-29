@@ -77,6 +77,36 @@ Lucide 线性 16–20px、stroke 2（时长/地点/时区行前缀）——与 f
 | I14 | 移动端 day sheet | 小屏点日期格        | 槽位以底部 drawer 展开（窄屏单列）                                                 |
 | I15 | 日历叠加         | 登录访客开启        | 自有日历 busy 时段半透明覆盖槽位                                                   |
 
+### 4.1 P3b 逐条处置对照：预测缺口 vs 实测缺口（2026-08-29 回写）
+
+> 授权链：P1 README §5（Pi-b 把"预测缺口 vs 实测缺口"对照记入分析篇）→ plan `2026-08-29-1819-1` Phase 5。终态判定 = 接线锁定（W）/ 内建锁定（B）/ 显式裁决（A）。e2e 锚点 = `tests/e2e/cal-replica-interactions.spec.ts` 用例号（初屏结构 = `cal-replica-visual.spec.ts`）。
+
+| I#  | 预测（本篇 §4/§5 原判）                          | 实测结论（P3b）                                                                                                                                                                                                                                  | 终态              | e2e      |
+| --- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | -------- |
+| I1  | 时长 tab 切换；槽位按新时长 refetch + 骨架屏过渡 | tabs `valueStatePath: calDuration` + scope 依赖自动刷新可达；**骨架过渡裁定静态样本**（mock 即时返回下 loading 不可观察，以 refetch 结果断言承载）                                                                                               | W                 | 03       |
+| I2  | 选日刷新 + 窗口聚焦/5 分钟自动 refetch           | **点格手势受 G-C 限制**（月视图为资源时间轴横条，无点格选中语义）→ 内建月份导航承载日期变更；`interval: 300000` 配置接线（schema 单测锁定）；**聚焦刷新裁定不模拟**（无内建支持，C2 回写 ④）                                                     | W+B               | 01       |
+| I3  | 时区切换即时换算 + 12h/24h                       | select `name: calTimezone` + url 模板物化可达；12h/24h 为 schema 表达式（`${cal24h === false ? $slot.item.time : $slot.item.time24}`，mock 数据集双形态零改动）                                                                                  | W                 | 04       |
+| I4  | 月份导航 ←/→/Today                               | calendar 内建可达（月头翻页 + Today 回当月 + data-today 唯一）                                                                                                                                                                                   | B                 | 02       |
+| I5  | 选槽位 → slot reservation（10s 续约）→ 进确认    | reservation 锁 out-of-scope（P3a 裁定）；**会话指针机制**成立：`Cal__selectSlot` post → 确认页 data-source 无参读取，摘要三字段与所点槽位一致（e2e 断言）；expired 样本 disabled 不可点                                                          | W                 | 05       |
+| I6  | 嘉宾增删（form 重复字段组，中）                  | **预测修正**：guests 属 mock 会话态而非表单值——由 `Cal__addGuest/removeGuest` 会话端点 + loop 渲染 `${selected?.guests}`（`$slot.index` 删行）+ `component:refresh` 回读承载，上限 30 可达；保真度上调「高」                                     | W                 | 07       |
+| I7  | 必填/邮箱格式校验；红环 + text-error 文案        | `data-field-invalid` + `[data-slot="field-error"]` 内建可达；空提交零写请求副作用（端点计数钩子断言）；校验失败走 `onValidateError` 不触发 `onSubmitError`（留页关键）                                                                           | B                 | 08       |
+| I8  | 提交预约 loading → 成功态；需确认 = pending      | form `submitAction`（`Cal__book` + `includeScope: '*'`）→ `onSubmitSuccess` navigate 全链可达；navigate 需 `control.debounce` 延迟（回写 ③ 同源）；pending 变体 = 端点级 `requiresConfirmation` 单测承载 + 成功页徽章表达式兜底（UI 恒走确认态） | W                 | 09       |
+| I9  | 槽位失效 → Confirm 禁用 + 提示 + 回列表该槽变灰  | `messages.failed`（「选择其他时段」提示）+ `onSubmitError` navigate 回槽位视图可达；expired UI 样本不可点 → e2e 经 mock 强制失效路径（opt-in 端点同路径钩子）承载 cal-book-expired                                                               | W                 | 10       |
+| I10 | 加入日历新窗口外链 / ICS 下载                    | 四外链占位 href + 可点性内建锁定（真实日历端点拼接属宿主能力，href 断言不指向真实端点）                                                                                                                                                          | B                 | 12       |
+| I11 | 复制链接 = 剪贴板 + toast                        | **无剪贴板 action 词汇**——裁定语义模拟：`Cal__shareLink` 无副作用 get + `messages.success`「链接已复制」；实际剪贴板写入不做（C2 回写 ④ 素材行：RendererEnv clipboard 通道候选）                                                                 | W+A               | 13       |
+| I12 | 重排 = 回槽位预填 + 提示条；取消 = 确认框填原因  | reschedule → navigate 回 booking（会话指针预填时长/槽位，I13 同语义）；cancel → openDialog（reason textarea + `[secondary, primary]` 按钮序）→ `Cal__cancelBooking` → 状态翻转会话内可观察（成功页徽章「已取消」断言）；miss 分支 toast 兜底     | W                 | 14/15/16 |
+| I13 | 4 步全可回退，状态保留                           | 三页切分（P3a 裁定）+ navigate + 会话指针回填承载：回退/重排后时长档、选中日、选中槽位与离开前一致（e2e 断言）；时区回 PAGE_DATA 默认（scope 不跨页）                                                                                            | W                 | 11       |
+| I14 | 移动端 day sheet（底部 drawer 窄屏单列）         | `responsive` 双变体（max/min md）+ openDrawer `side: 'bottom'` 单列槽位列表可达；点格手势受限 → 触发按钮替代（C2 回写 ④）；桌面双栏零回归                                                                                                        | W                 | 06       |
+| I15 | 日历叠加（busy 覆盖）                            | out-of-scope 维持（P3a 同裁定，业务层语义未落盘）                                                                                                                                                                                                | A（out-of-scope） | —        |
+
+事实勘误行（对照本篇前文）：
+
+- §5「嘉宾增删行 → form 重复字段组（保真度中）」——实测 guests 在 mock 会话态而非表单值，由会话端点 + data-source loop 承载，保真度上调为「高」。
+- §5「分步流程与回退 → steps/wizard（中高）」——实测未用 wizard：三页切分 + navigate + 会话指针承载（P3a 页面切分裁定维持），入口页↔槽位页为同页双区非独立步。
+- §5「槽位异步数据 → data-source + focus/定时刷新策略（中）」——`interval` 内建接线成立（维持「中高」体感）；聚焦刷新维度确证无内建支持（C2 回写 ④）。
+- §4 I9 预测「Confirm 禁用 + 提示」——实测补充失败反馈通道：`messages.failed` toast + `onSubmitError` 返回槽位视图（e2e 10）。
+- §4 I5 预测「slot reservation 每 10s 续约」——P3a 已裁定 out-of-scope（业务层锁语义），复刻为会话指针无续约语义，维持差异声明。
+
 ## 5. 能力映射初稿
 
 | 参考元素                   | flux 原语（schema 落点）                                         | 保真度预估 | C2 对照            |
@@ -115,6 +145,7 @@ Lucide 线性 16–20px、stroke 2（时长/地点/时区行前缀）——与 f
 
 - **预约槽位联动容器**（月历选中态 ↔ 槽位列表联动 + 时区换算显示）：调研新撞见，C2 未登记；若 P3a 实测"calendar renderer + 表达式联动"可模拟则降级为组合技巧，否则转 C2 候选（P3b 回写时一并处理）。
 - **slot 异步刷新策略**（窗口聚焦/定时 refetch）：data-source 现有刷新语义待压测，同上随 P3b 判断。
+- **P3b 回写结论（2026-08-29）**：两候选均收口——候选 1 降级组合技巧级（scope 写入 + url 模板物化 + dependsOn 自动刷新完整承载，零新原语，不新增 C2 行）；候选 2 裁定落字（interval 内建接线、聚焦刷新不模拟，C2 回写 ④）。I1–I15 逐条「预测 vs 实测」对照见 §4.1，renderer 级 finding 与素材行（refreshSource scope 桶限定、clipboard 通道候选）经 C2 回写 ④ 登记。
 
 ## 8. 调研来源
 

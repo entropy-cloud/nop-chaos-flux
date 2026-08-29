@@ -11,12 +11,20 @@
     },
     {
       "type": "data-source",
+      "name": "selected",
+      "action": "ajax",
+      "args": { "url": "/r/Cal__selectedSlot", "method": "get" }
+    },
+    {
+      "type": "data-source",
       "name": "slots",
       "action": "ajax",
       "args": {
-        "url": "/r/Cal__slots?date=2026-09-03&duration=30&timezone=Asia/Shanghai",
+        "url": "/r/Cal__slots?date=${calDate ?? selected?.date ?? \"2026-09-03\"}&duration=${calDuration ?? selected?.duration ?? 30}&timezone=${calTimezone ?? selected?.timezone ?? \"Asia/Shanghai\"}",
         "method": "get"
-      }
+      },
+      "dependsOn": ["calDate", "calDuration", "calTimezone", "selected"],
+      "interval": 300000
     },
     {
       "type": "container",
@@ -115,6 +123,9 @@
           "testid": "cal-booking-duration",
           "className": "cal-duration-tabs",
           "defaultValue": "30",
+          "valueOwnership": "scope",
+          "valueStatePath": "calDuration",
+          "value": "${selected?.durationKey ?? \"30\"}",
           "items": [
             { "key": "15", "title": "15 分钟" },
             { "key": "30", "title": "30 分钟" },
@@ -138,6 +149,8 @@
                   "testid": "cal-booking-calendar",
                   "view": "month",
                   "firstDayOfWeek": 1,
+                  "dateOwnership": "scope",
+                  "dateStatePath": "calDate",
                   "resources": [{ "id": "booker", "title": "可预约" }]
                 },
                 {
@@ -192,137 +205,323 @@
               "className": "w-80 shrink-0 flex flex-col gap-4",
               "body": [
                 {
-                  "type": "container",
-                  "className": "flex flex-row items-center justify-between",
-                  "body": [
+                  "type": "responsive",
+                  "testid": "cal-booking-right-responsive",
+                  "variants": [
                     {
-                      "type": "text",
-                      "text": "${slots?.dateText}",
-                      "className": "font-semibold",
-                      "testid": "cal-booking-selected-date"
-                    },
-                    {
-                      "type": "text",
-                      "text": "${slots?.timezoneLabel}",
-                      "className": "cal-timezone-label",
-                      "testid": "cal-booking-slot-timezone"
-                    }
-                  ]
-                },
-                {
-                  "type": "container",
-                  "testid": "cal-booking-skeleton",
-                  "className": "flex flex-col gap-2",
-                  "body": [
-                    { "type": "container", "className": "cal-skeleton h-3 w-3/4" },
-                    { "type": "container", "className": "cal-skeleton h-3 w-1/2" },
-                    { "type": "container", "className": "cal-skeleton h-8 w-full" }
-                  ]
-                },
-                {
-                  "type": "loop",
-                  "testid": "cal-booking-slot-groups",
-                  "items": "${slots?.groups}",
-                  "body": [
-                    {
-                      "type": "container",
-                      "testid": "cal-booking-group",
-                      "className": "flex flex-col gap-2",
+                      "key": "mobile",
+                      "max": "md",
                       "body": [
                         {
-                          "type": "text",
-                          "text": "${$slot.item.label}",
-                          "className": "cal-slot-group-label",
-                          "testid": "cal-booking-group-label"
-                        },
+                          "type": "container",
+                          "testid": "cal-booking-day-sheet-area",
+                          "className": "flex flex-col gap-2",
+                          "body": [
+                            {
+                              "type": "container",
+                              "className": "flex flex-row items-center justify-between",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "${slots?.dateText}",
+                                  "className": "font-semibold",
+                                  "testid": "cal-booking-selected-date"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${slots?.timezoneLabel}",
+                                  "className": "cal-timezone-label",
+                                  "testid": "cal-booking-slot-timezone"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "button",
+                              "label": "${slots?.dateText ?? \"\"} · 查看可约时段",
+                              "className": "cal-btn cal-btn-primary",
+                              "testid": "cal-booking-day-sheet-trigger",
+                              "onClick": {
+                                "action": "openDrawer",
+                                "args": {
+                                  "title": "${slots?.dateText ?? \"\"} 可约时段",
+                                  "testid": "cal-booking-day-sheet",
+                                  "className": "cal-dialog",
+                                  "side": "bottom",
+                                  "body": [
+                                    {
+                                      "type": "loop",
+                                      "items": "${slots?.groups}",
+                                      "body": [
+                                        {
+                                          "type": "container",
+                                          "className": "flex flex-col gap-2",
+                                          "body": [
+                                            {
+                                              "type": "text",
+                                              "text": "${$slot.item.label}",
+                                              "className": "cal-slot-group-label"
+                                            },
+                                            {
+                                              "type": "container",
+                                              "visible": "${$slot.item.slots?.length === 0}",
+                                              "body": [
+                                                {
+                                                  "type": "text",
+                                                  "text": "该时段暂无可用预约",
+                                                  "className": "cal-slot-empty"
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "type": "container",
+                                              "visible": "${$slot.item.slots?.length > 0}",
+                                              "className": "grid grid-cols-1 gap-2",
+                                              "body": [
+                                                {
+                                                  "type": "loop",
+                                                  "items": "${$slot.item.slots}",
+                                                  "body": [
+                                                    {
+                                                      "type": "container",
+                                                      "visible": "${$slot.item.state !== 'expired'}",
+                                                      "body": [
+                                                        {
+                                                          "type": "button",
+                                                          "label": "${cal24h === false ? $slot.item.time : $slot.item.time24}",
+                                                          "className": "cal-slot-btn",
+                                                          "testid": "cal-booking-sheet-slot",
+                                                          "onClick": {
+                                                            "action": "ajax",
+                                                            "args": {
+                                                              "url": "/r/Cal__selectSlot",
+                                                              "method": "post",
+                                                              "data": {
+                                                                "slotId": "${$slot.item.slotId}",
+                                                                "timezone": "${calTimezone ?? \"Asia/Shanghai\"}"
+                                                              }
+                                                            },
+                                                            "then": {
+                                                              "action": "navigate",
+                                                              "args": {
+                                                                "url": "#/complex-pages/cal-confirm"
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            {
+                              "type": "text",
+                              "text": "点开查看当日上午、下午与晚上的可约时段。",
+                              "className": "cal-timezone-label"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "key": "desktop",
+                      "min": "md",
+                      "body": [
                         {
                           "type": "container",
-                          "testid": "cal-booking-group-empty",
-                          "visible": "${$slot.item.slots?.length === 0}",
+                          "className": "flex flex-row items-center justify-between",
                           "body": [
                             {
                               "type": "text",
-                              "text": "该时段暂无可用预约",
-                              "className": "cal-slot-empty"
+                              "text": "${slots?.dateText}",
+                              "className": "font-semibold",
+                              "testid": "cal-booking-selected-date"
+                            },
+                            {
+                              "type": "text",
+                              "text": "${slots?.durationText}",
+                              "className": "cal-timezone-label",
+                              "testid": "cal-booking-slot-duration"
+                            },
+                            {
+                              "type": "text",
+                              "text": "${slots?.timezoneLabel}",
+                              "className": "cal-timezone-label",
+                              "testid": "cal-booking-slot-timezone"
                             }
                           ]
                         },
                         {
                           "type": "container",
-                          "visible": "${$slot.item.slots?.length > 0}",
-                          "className": "grid grid-cols-2 gap-2",
-                          "testid": "cal-booking-slot-grid",
+                          "testid": "cal-booking-skeleton",
+                          "className": "flex flex-col gap-2",
+                          "body": [
+                            { "type": "container", "className": "cal-skeleton h-3 w-3/4" },
+                            { "type": "container", "className": "cal-skeleton h-3 w-1/2" },
+                            { "type": "container", "className": "cal-skeleton h-8 w-full" }
+                          ]
+                        },
+                        {
+                          "type": "loop",
+                          "testid": "cal-booking-slot-groups",
+                          "items": "${slots?.groups}",
                           "body": [
                             {
-                              "type": "loop",
-                              "items": "${$slot.item.slots}",
+                              "type": "container",
+                              "testid": "cal-booking-group",
+                              "className": "flex flex-col gap-2",
                               "body": [
                                 {
-                                  "type": "container",
-                                  "testid": "cal-booking-slot-item",
-                                  "visible": "${$slot.item.state === 'available' && $slot.item.selected !== true}",
-                                  "className": "flex flex-col gap-1",
-                                  "body": [
-                                    {
-                                      "type": "button",
-                                      "label": "${$slot.item.time24}",
-                                      "className": "cal-slot-btn",
-                                      "testid": "cal-booking-slot"
-                                    }
-                                  ]
+                                  "type": "text",
+                                  "text": "${$slot.item.label}",
+                                  "className": "cal-slot-group-label",
+                                  "testid": "cal-booking-group-label"
                                 },
                                 {
                                   "type": "container",
-                                  "testid": "cal-booking-slot-item-selected",
-                                  "visible": "${$slot.item.state === 'available' && $slot.item.selected === true}",
-                                  "className": "flex flex-col gap-1",
+                                  "testid": "cal-booking-group-empty",
+                                  "visible": "${$slot.item.slots?.length === 0}",
                                   "body": [
-                                    {
-                                      "type": "button",
-                                      "label": "${$slot.item.time24}",
-                                      "className": "cal-slot-btn cal-slot-btn-selected",
-                                      "testid": "cal-booking-slot-selected"
-                                    }
-                                  ]
-                                },
-                                {
-                                  "type": "container",
-                                  "testid": "cal-booking-slot-item-attention",
-                                  "visible": "${$slot.item.state === 'almost-full'}",
-                                  "className": "flex flex-col gap-1",
-                                  "body": [
-                                    {
-                                      "type": "button",
-                                      "label": "${$slot.item.time24}",
-                                      "className": "cal-slot-btn",
-                                      "testid": "cal-booking-slot"
-                                    },
                                     {
                                       "type": "text",
-                                      "text": "${$slot.item.stateLabel}",
-                                      "className": "cal-badge cal-badge-attention",
-                                      "testid": "cal-booking-slot-attention"
+                                      "text": "该时段暂无可用预约",
+                                      "className": "cal-slot-empty"
                                     }
                                   ]
                                 },
                                 {
                                   "type": "container",
-                                  "testid": "cal-booking-slot-item-expired",
-                                  "visible": "${$slot.item.state === 'expired'}",
-                                  "className": "flex flex-col gap-1",
+                                  "visible": "${$slot.item.slots?.length > 0}",
+                                  "className": "grid grid-cols-2 gap-2",
+                                  "testid": "cal-booking-slot-grid",
                                   "body": [
                                     {
-                                      "type": "button",
-                                      "label": "${$slot.item.time24}",
-                                      "className": "cal-slot-btn",
-                                      "disabled": true,
-                                      "testid": "cal-booking-slot-expired"
-                                    },
-                                    {
-                                      "type": "text",
-                                      "text": "${$slot.item.stateLabel}",
-                                      "className": "cal-badge cal-badge-muted",
-                                      "testid": "cal-booking-slot-expired-badge"
+                                      "type": "loop",
+                                      "items": "${$slot.item.slots}",
+                                      "body": [
+                                        {
+                                          "type": "container",
+                                          "testid": "cal-booking-slot-item",
+                                          "visible": "${$slot.item.state === 'available' && $slot.item.selected !== true}",
+                                          "className": "flex flex-col gap-1",
+                                          "body": [
+                                            {
+                                              "type": "button",
+                                              "label": "${cal24h === false ? $slot.item.time : $slot.item.time24}",
+                                              "className": "cal-slot-btn",
+                                              "testid": "cal-booking-slot",
+                                              "onClick": {
+                                                "action": "ajax",
+                                                "args": {
+                                                  "url": "/r/Cal__selectSlot",
+                                                  "method": "post",
+                                                  "data": {
+                                                    "slotId": "${$slot.item.slotId}",
+                                                    "timezone": "${calTimezone ?? \"Asia/Shanghai\"}"
+                                                  }
+                                                },
+                                                "then": {
+                                                  "action": "navigate",
+                                                  "args": { "url": "#/complex-pages/cal-confirm" }
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "container",
+                                          "testid": "cal-booking-slot-item-selected",
+                                          "visible": "${$slot.item.state === 'available' && $slot.item.selected === true}",
+                                          "className": "flex flex-col gap-1",
+                                          "body": [
+                                            {
+                                              "type": "button",
+                                              "label": "${cal24h === false ? $slot.item.time : $slot.item.time24}",
+                                              "className": "cal-slot-btn cal-slot-btn-selected",
+                                              "testid": "cal-booking-slot-selected",
+                                              "onClick": {
+                                                "action": "ajax",
+                                                "args": {
+                                                  "url": "/r/Cal__selectSlot",
+                                                  "method": "post",
+                                                  "data": {
+                                                    "slotId": "${$slot.item.slotId}",
+                                                    "timezone": "${calTimezone ?? \"Asia/Shanghai\"}"
+                                                  }
+                                                },
+                                                "then": {
+                                                  "action": "navigate",
+                                                  "args": { "url": "#/complex-pages/cal-confirm" }
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "container",
+                                          "testid": "cal-booking-slot-item-attention",
+                                          "visible": "${$slot.item.state === 'almost-full'}",
+                                          "className": "flex flex-col gap-1",
+                                          "body": [
+                                            {
+                                              "type": "button",
+                                              "label": "${cal24h === false ? $slot.item.time : $slot.item.time24}",
+                                              "className": "cal-slot-btn",
+                                              "testid": "cal-booking-slot",
+                                              "onClick": {
+                                                "action": "ajax",
+                                                "args": {
+                                                  "url": "/r/Cal__selectSlot",
+                                                  "method": "post",
+                                                  "data": {
+                                                    "slotId": "${$slot.item.slotId}",
+                                                    "timezone": "${calTimezone ?? \"Asia/Shanghai\"}"
+                                                  }
+                                                },
+                                                "then": {
+                                                  "action": "navigate",
+                                                  "args": { "url": "#/complex-pages/cal-confirm" }
+                                                }
+                                              }
+                                            },
+                                            {
+                                              "type": "text",
+                                              "text": "${$slot.item.stateLabel}",
+                                              "className": "cal-badge cal-badge-attention",
+                                              "testid": "cal-booking-slot-attention"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "container",
+                                          "testid": "cal-booking-slot-item-expired",
+                                          "visible": "${$slot.item.state === 'expired'}",
+                                          "className": "flex flex-col gap-1",
+                                          "body": [
+                                            {
+                                              "type": "button",
+                                              "label": "${cal24h === false ? $slot.item.time : $slot.item.time24}",
+                                              "className": "cal-slot-btn",
+                                              "disabled": true,
+                                              "testid": "cal-booking-slot-expired"
+                                            },
+                                            {
+                                              "type": "text",
+                                              "text": "${$slot.item.stateLabel}",
+                                              "className": "cal-badge cal-badge-muted",
+                                              "testid": "cal-booking-slot-expired-badge"
+                                            }
+                                          ]
+                                        }
+                                      ]
                                     }
                                   ]
                                 }
