@@ -1,0 +1,496 @@
+{
+  "type": "page",
+  "testid": "linear-detail-page",
+  "className": "ln-root",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "detail",
+      "action": "ajax",
+      "args": { "url": "/r/Linear__issue?id=ENG-105", "method": "get" }
+    },
+    {
+      "type": "container",
+      "testid": "linear-detail-main",
+      "className": "flex flex-row items-stretch min-h-screen",
+      "body": [
+        {
+          "type": "container",
+          "testid": "linear-detail-sidebar",
+          "className": "w-60 shrink-0 border-r flex flex-col py-3",
+          "body": [
+            {
+              "type": "container",
+              "className": "px-2 pb-2",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-workspace",
+                  "body": [
+                    {
+                      "type": "container",
+                      "className": "ln-avatar ln-avatar-brand",
+                      "body": [{ "type": "text", "text": "问" }]
+                    },
+                    { "type": "text", "text": "问题工作台" },
+                    { "type": "icon", "icon": "chevron-down", "size": 14 }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "testid": "linear-detail-nav",
+              "className": "flex flex-col",
+              "body": [
+                { "type": "text", "text": "导航", "className": "ln-side-group" },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    { "type": "icon", "icon": "inbox", "size": 15 },
+                    { "type": "text", "text": "收件箱" }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    { "type": "icon", "icon": "layers", "size": 15 },
+                    { "type": "text", "text": "活跃问题" }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    { "type": "icon", "icon": "kanban", "size": 15 },
+                    { "type": "text", "text": "看板视图" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "testid": "linear-detail-content",
+          "className": "flex-1 min-w-0 flex flex-col",
+          "body": [
+            {
+              "type": "container",
+              "testid": "linear-detail-topbar",
+              "className": "h-12 shrink-0 border-b flex items-center gap-3 px-6",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "${detail?.id}",
+                  "className": "ln-row-key ln-mono",
+                  "testid": "linear-detail-key"
+                },
+                {
+                  "type": "text",
+                  "text": "${detail?.statusLabel}",
+                  "className": "${detail?.statusPillClass}",
+                  "testid": "linear-detail-status"
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 6,
+                  "className": "items-center ml-auto",
+                  "body": [
+                    {
+                      "type": "button",
+                      "label": "复制链接",
+                      "className": "ln-btn ln-btn-quiet h-7 px-3 text-xs",
+                      "testid": "linear-detail-copy"
+                    },
+                    {
+                      "type": "button",
+                      "label": "归档",
+                      "className": "ln-btn ln-btn-ghost h-7 px-3 text-xs",
+                      "testid": "linear-detail-archive"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "className": "flex-1 min-w-0 items-stretch gap-8 px-6 py-6",
+              "testid": "linear-detail-columns",
+              "body": [
+                {
+                  "type": "container",
+                  "testid": "linear-detail-left",
+                  "className": "flex-1 min-w-0 flex flex-col gap-6",
+                  "body": [
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-title-area",
+                      "className": "flex flex-col gap-2",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "${detail?.title}",
+                          "className": "ln-detail-title",
+                          "testid": "linear-detail-title"
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "className": "items-center",
+                          "body": [
+                            {
+                              "type": "container",
+                              "className": "ln-avatar ln-avatar-sm",
+                              "body": [{ "type": "text", "text": "${detail?.assigneeInitials}" }]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${detail?.assignee?.name}",
+                              "className": "ln-prop-value"
+                            },
+                            {
+                              "type": "text",
+                              "text": "更新于 ${detail?.updatedAt}",
+                              "className": "ln-row-meta"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-description",
+                      "className": "flex flex-col gap-3",
+                      "body": [
+                        { "type": "text", "text": "描述", "className": "ln-prop-label" },
+                        {
+                          "type": "loop",
+                          "items": "${detail?.description}",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "${$slot.item}",
+                              "className": "ln-desc-block",
+                              "testid": "linear-detail-desc-block"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-sub-issues",
+                      "className": "flex flex-col gap-2",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "子问题（${detail?.subIssues?.length}）",
+                          "className": "ln-prop-label"
+                        },
+                        {
+                          "type": "loop",
+                          "items": "${detail?.subIssues}",
+                          "body": [
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 10,
+                              "className": "items-center ln-sub-issue-row",
+                              "testid": "linear-detail-sub-issue",
+                              "body": [
+                                {
+                                  "type": "container",
+                                  "className": "${$slot.item.statusDotClass}",
+                                  "testid": "linear-detail-sub-issue-dot"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${$slot.item.key}",
+                                  "className": "ln-row-key ln-mono"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${$slot.item.title}",
+                                  "className": "ln-row-title flex-1 min-w-0"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${$slot.item.statusLabel}",
+                                  "className": "ln-row-meta"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-relations",
+                      "className": "flex flex-col gap-2",
+                      "body": [
+                        { "type": "text", "text": "关系", "className": "ln-prop-label" },
+                        {
+                          "type": "loop",
+                          "items": "${detail?.relations}",
+                          "body": [
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 10,
+                              "className": "items-center ln-sub-issue-row",
+                              "testid": "linear-detail-relation",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "${$slot.item.typeLabel}",
+                                  "className": "ln-label-pill",
+                                  "testid": "linear-detail-relation-type"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${$slot.item.targetKey}",
+                                  "className": "ln-row-key ln-mono"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${$slot.item.targetTitle}",
+                                  "className": "ln-row-title flex-1 min-w-0"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-activity",
+                      "className": "flex flex-col gap-2",
+                      "body": [
+                        { "type": "text", "text": "活动流", "className": "ln-prop-label" },
+                        {
+                          "type": "loop",
+                          "items": "${detail?.activity}",
+                          "body": [
+                            {
+                              "type": "container",
+                              "className": "ln-activity-item",
+                              "testid": "linear-detail-activity-item",
+                              "body": [
+                                {
+                                  "type": "container",
+                                  "className": "ln-activity-line",
+                                  "body": [
+                                    {
+                                      "type": "container",
+                                      "className": "ln-avatar ln-avatar-sm",
+                                      "body": [{ "type": "text", "text": "${$slot.item.initials}" }]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "container",
+                                  "className": "flex-1 min-w-0 flex flex-col gap-0.5",
+                                  "body": [
+                                    {
+                                      "type": "flex",
+                                      "direction": "row",
+                                      "gap": 8,
+                                      "className": "items-center flex-wrap",
+                                      "body": [
+                                        {
+                                          "type": "text",
+                                          "text": "${$slot.item.actor}",
+                                          "className": "ln-prop-value"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "text": "${$slot.item.kindLabel}",
+                                          "className": "ln-row-meta"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "text": "${$slot.item.time}",
+                                          "className": "ln-row-meta"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "text",
+                                      "text": "${$slot.item.text}",
+                                      "className": "ln-desc-block",
+                                      "testid": "linear-detail-activity-text"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "testid": "linear-detail-props",
+                  "className": "w-64 shrink-0 border-l pl-5 flex flex-col gap-4",
+                  "body": [
+                    { "type": "text", "text": "属性", "className": "ln-prop-label" },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-prop-status",
+                      "className": "flex items-center justify-between",
+                      "body": [
+                        { "type": "text", "text": "状态", "className": "ln-prop-label" },
+                        {
+                          "type": "text",
+                          "text": "${detail?.statusLabel}",
+                          "className": "${detail?.statusPillClass}"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-prop-priority",
+                      "className": "flex items-center justify-between",
+                      "body": [
+                        { "type": "text", "text": "优先级", "className": "ln-prop-label" },
+                        {
+                          "type": "text",
+                          "text": "${detail?.priorityLabel}",
+                          "className": "${detail?.priorityPillClass}"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-prop-assignee",
+                      "className": "flex items-center justify-between",
+                      "body": [
+                        { "type": "text", "text": "指派", "className": "ln-prop-label" },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 6,
+                          "className": "items-center",
+                          "body": [
+                            {
+                              "type": "container",
+                              "className": "ln-avatar ln-avatar-sm",
+                              "body": [{ "type": "text", "text": "${detail?.assigneeInitials}" }]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${detail?.assignee?.name}",
+                              "className": "ln-prop-value"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-prop-labels",
+                      "className": "flex items-center justify-between gap-2",
+                      "body": [
+                        { "type": "text", "text": "标签", "className": "ln-prop-label" },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 4,
+                          "className": "items-center flex-wrap justify-end",
+                          "body": [
+                            {
+                              "type": "loop",
+                              "items": "${detail?.labels}",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "${$slot.item}",
+                                  "className": "ln-label-pill",
+                                  "testid": "linear-detail-prop-label"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-prop-cycle",
+                      "className": "flex items-center justify-between",
+                      "body": [
+                        { "type": "text", "text": "周期", "className": "ln-prop-label" },
+                        {
+                          "type": "text",
+                          "text": "${detail?.cycle === '' ? '—' : detail?.cycle}",
+                          "className": "ln-prop-value"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-prop-project",
+                      "className": "flex items-center justify-between",
+                      "body": [
+                        { "type": "text", "text": "项目", "className": "ln-prop-label" },
+                        {
+                          "type": "text",
+                          "text": "${detail?.project === '' ? '—' : detail?.project}",
+                          "className": "ln-prop-value"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-prop-estimate",
+                      "className": "flex items-center justify-between",
+                      "body": [
+                        { "type": "text", "text": "估算", "className": "ln-prop-label" },
+                        {
+                          "type": "text",
+                          "text": "${detail?.estimate} 点",
+                          "className": "ln-prop-value ln-mono"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "testid": "linear-detail-prop-due",
+                      "className": "flex items-center justify-between",
+                      "body": [
+                        { "type": "text", "text": "截止", "className": "ln-prop-label" },
+                        {
+                          "type": "text",
+                          "text": "${detail?.dueDate === '' ? '—' : detail?.dueDate}",
+                          "className": "ln-prop-value"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,345 @@
+{
+  "type": "page",
+  "testid": "linear-settings-page",
+  "className": "ln-root",
+  "body": [
+    {
+      "type": "container",
+      "testid": "linear-settings-main",
+      "className": "flex flex-row items-stretch min-h-screen",
+      "body": [
+        {
+          "type": "container",
+          "testid": "linear-settings-subnav",
+          "className": "w-56 shrink-0 border-r flex flex-col py-6 px-3 gap-1",
+          "body": [
+            {
+              "type": "text",
+              "text": "设置",
+              "className": "ln-detail-title px-2 pb-3",
+              "testid": "linear-settings-title"
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center ln-side-item ln-side-item-active",
+              "testid": "linear-settings-nav-workspace",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "layers",
+                  "size": 15
+                },
+                {
+                  "type": "text",
+                  "text": "工作区"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center ln-side-item",
+              "testid": "linear-settings-nav-preferences",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "settings",
+                  "size": 15
+                },
+                {
+                  "type": "text",
+                  "text": "偏好"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center ln-side-item",
+              "testid": "linear-settings-nav-notifications",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "inbox",
+                  "size": 15
+                },
+                {
+                  "type": "text",
+                  "text": "通知"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center ln-side-item",
+              "testid": "linear-settings-nav-members",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "user",
+                  "size": 15
+                },
+                {
+                  "type": "text",
+                  "text": "成员"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "testid": "linear-settings-content",
+          "className": "flex-1 min-w-0 px-10 py-8",
+          "body": [
+            {
+              "type": "tabs",
+              "testid": "linear-settings-tabs",
+              "className": "flex flex-col gap-5",
+              "defaultValue": "general",
+              "items": [
+                {
+                  "key": "general",
+                  "title": "常规",
+                  "body": [
+                    {
+                      "type": "form",
+                      "testid": "linear-settings-form",
+                      "className": "max-w-2xl flex flex-col gap-6",
+                      "body": [
+                        {
+                          "type": "fieldset",
+                          "title": "工作区信息",
+                          "testid": "linear-settings-fieldset-workspace",
+                          "body": [
+                            {
+                              "type": "container",
+                              "className": "flex flex-row items-center gap-4",
+                              "testid": "linear-settings-icon-row",
+                              "body": [
+                                {
+                                  "type": "container",
+                                  "className": "ln-avatar ln-avatar-brand",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "问"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "工作区图标为缩写圆形（无 avatar renderer 型别，Phase 1 裁定的替代承载）",
+                                  "className": "ln-row-meta"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "workspaceName",
+                              "label": "工作区名称",
+                              "testid": "linear-settings-workspace-name",
+                              "placeholder": "问题工作台"
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "workspaceSlug",
+                              "label": "工作区标识",
+                              "testid": "linear-settings-workspace-slug",
+                              "placeholder": "tracker-demo"
+                            },
+                            {
+                              "type": "textarea",
+                              "name": "workspaceDesc",
+                              "label": "工作区描述",
+                              "testid": "linear-settings-workspace-desc",
+                              "placeholder": "用于团队内介绍该工作区的用途"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "fieldset",
+                          "title": "偏好开关",
+                          "testid": "linear-settings-fieldset-preferences",
+                          "body": [
+                            {
+                              "type": "container",
+                              "testid": "linear-settings-switch-rows",
+                              "className": "flex flex-col",
+                              "body": [
+                                {
+                                  "type": "container",
+                                  "className": "ln-switch-row",
+                                  "body": [
+                                    {
+                                      "type": "container",
+                                      "className": "flex flex-col gap-0.5",
+                                      "body": [
+                                        {
+                                          "type": "text",
+                                          "text": "聚合通知",
+                                          "className": "ln-notif-title"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "text": "将短时间内的多条通知合并为一条摘要",
+                                          "className": "ln-row-meta"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "switch",
+                                      "name": "prefDigest",
+                                      "testid": "linear-settings-switch-digest"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "container",
+                                  "className": "ln-switch-row",
+                                  "body": [
+                                    {
+                                      "type": "container",
+                                      "className": "flex flex-col gap-0.5",
+                                      "body": [
+                                        {
+                                          "type": "text",
+                                          "text": "键盘提示",
+                                          "className": "ln-notif-title"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "text": "在可交互元素上展示快捷键提示角标",
+                                          "className": "ln-row-meta"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "switch",
+                                      "name": "prefKbdHints",
+                                      "testid": "linear-settings-switch-kbd",
+                                      "onValue": true
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "container",
+                                  "className": "ln-switch-row",
+                                  "body": [
+                                    {
+                                      "type": "container",
+                                      "className": "flex flex-col gap-0.5",
+                                      "body": [
+                                        {
+                                          "type": "text",
+                                          "text": "周末免打扰",
+                                          "className": "ln-notif-title"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "text": "周末不推送通知，周一汇总",
+                                          "className": "ln-row-meta"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "switch",
+                                      "name": "prefWeekendQuiet",
+                                      "testid": "linear-settings-switch-quiet"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "本页为零写提交的静态形态：表单不绑定提交动作，保存流转归后续交互计划。",
+                          "className": "ln-row-meta",
+                          "testid": "linear-settings-static-note"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "key": "appearance",
+                  "title": "外观",
+                  "body": [
+                    {
+                      "type": "container",
+                      "testid": "linear-settings-appearance",
+                      "className": "max-w-2xl flex flex-col gap-3",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "主题",
+                          "className": "ln-prop-label"
+                        },
+                        {
+                          "type": "text",
+                          "text": "复刻页为深色单主题（dark-only 裁定），浅色映射关系记录于差异声明。",
+                          "className": "ln-desc-block"
+                        },
+                        {
+                          "type": "text",
+                          "text": "密度",
+                          "className": "ln-prop-label"
+                        },
+                        {
+                          "type": "text",
+                          "text": "行高 36–40px 高密度排版为默认档（G-E 参照）。",
+                          "className": "ln-desc-block"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "key": "workflow",
+                  "title": "工作流",
+                  "body": [
+                    {
+                      "type": "container",
+                      "testid": "linear-settings-workflow",
+                      "className": "max-w-2xl flex flex-col gap-3",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "状态流转",
+                          "className": "ln-prop-label"
+                        },
+                        {
+                          "type": "text",
+                          "text": "待定 → 待办 → 进行中 → 已完成 / 已取消（通用状态词）。",
+                          "className": "ln-desc-block"
+                        },
+                        {
+                          "type": "text",
+                          "text": "估算刻度",
+                          "className": "ln-prop-label"
+                        },
+                        {
+                          "type": "text",
+                          "text": "0 / 1 / 2 / 3 / 5 / 8 六档点数。",
+                          "className": "ln-desc-block"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

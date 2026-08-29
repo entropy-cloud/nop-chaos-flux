@@ -19,6 +19,7 @@
 @import './sundial-replica/sundial-replica.css';
 @import './antdpro-replica/antdpro-replica.css';
 @import './cal-replica/cal-replica.css';
+@import './linear-replica/linear-replica.css';
 @source "../../../packages";
 
 @theme inline {

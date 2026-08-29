@@ -305,4 +305,52 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 Cal.com 预约成功态：大圆 ✓（success 令牌）+ 预约摘要卡 + Add to calendar 四外链（Google/Outlook/Office365/ICS 占位链接）+ Copy link 按钮 + Reschedule/Cancel 链接 + 「待确认」pending 徽章变体，摘要数据经 Cal__event 端点拉取。',
     features: ['复刻样式', '成功图形', '日历外链', 'pending 徽章'],
   },
+  {
+    id: 'linear-issues',
+    title: '问题追踪 · 列表视图',
+    category: 'app-replica',
+    description:
+      '复刻键盘优先 issue tracker 列视图：左侧边栏（工作区切换/导航组/收藏组）+ 顶栏（视图切换/筛选/Display 入口/⌘K 搜索条）+ 高密度问题表（状态点/标识符/标题/标签/优先级条/指派头像/日期，数据经 Linear__issues 端点分页流动）+ 底部批量操作栏 + Display 抽屉 + ⌘K 命令面板壳与问题 peek 静态浮层。',
+    features: ['复刻样式', '高密度行', '批量操作栏', '⌘K 壳', 'Linear__issues'],
+  },
+  {
+    id: 'linear-board',
+    title: '问题追踪 · 看板视图',
+    category: 'app-replica',
+    description:
+      '复刻键盘优先 issue tracker 看板视图：按状态分列（待定/待办/进行中/已完成/已取消，列头计数来自 mock）+ 问题卡片（标识符/标题/标签/优先级条/指派头像/估算），数据与列表同源经 Linear__issues?view=board 端点流动；拖拽不接线（静态形态）。',
+    features: ['复刻样式', '状态分列', '列头计数', 'kanban 卡片'],
+  },
+  {
+    id: 'linear-inbox',
+    title: '问题追踪 · 收件箱',
+    category: 'app-replica',
+    description:
+      '复刻键盘优先 issue tracker 收件箱：通知流分组（今天/本周/更早）+ 通知行（未读点/类型/标题/摘要/时间）+ 逐条已读归档按钮形态 + 批量已读栏形态，数据经 Linear__inbox 端点流动。',
+    features: ['复刻样式', '通知分组', '未读样本', 'Linear__inbox'],
+  },
+  {
+    id: 'linear-detail',
+    title: '问题追踪 · 问题详情',
+    category: 'app-replica',
+    description:
+      '复刻键盘优先 issue tracker 问题详情全页：标题区（标识符 + 状态 pill）+ 描述区（纯文本多段承载）+ 子问题列表 + 关系区（阻塞/关联）+ 活动流（创建/状态/指派/评论时间线）+ 属性侧栏（状态/优先级/指派/标签/周期/项目），数据经 Linear__issue 端点拉取。',
+    features: ['复刻样式', '子问题', '活动流', '属性侧栏'],
+  },
+  {
+    id: 'linear-projects',
+    title: '问题追踪 · 项目周期',
+    category: 'app-replica',
+    description:
+      '复刻键盘优先 issue tracker 项目与周期概览：项目卡（名称/负责人/进度条/时间窗/状态 pill/分组摘要）+ 周期概览行（周期名/时间窗/进度/状态 pill），数据经 Linear__projects 端点流动。',
+    features: ['复刻样式', '项目卡', '进度条', 'Linear__projects'],
+  },
+  {
+    id: 'linear-settings',
+    title: '问题追踪 · 设置',
+    category: 'app-replica',
+    description:
+      '复刻键盘优先 issue tracker 设置页：左侧子导航（工作区/偏好/通知/成员）+ 右侧表单区（工作区名/图标形态/偏好开关组 + tabs 分节），零写提交的静态形态。',
+    features: ['复刻样式', '子导航', '偏好开关组', 'tabs 分节'],
+  },
 ];

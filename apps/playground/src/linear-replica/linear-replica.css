@@ -1,0 +1,1047 @@
+/*
+ * Linear-style issue tracker replica styles (DARK MODE ONLY).
+ *
+ * Replicates the keyboard-first workbench layout (issue list / board / inbox /
+ * detail / projects / settings + command-shell & peek overlays — see
+ * docs/analysis/ui-review/P1-reference-apps/linear.md §2/§3/§5/§6) via CSS
+ * tokens + marker classes on the playground layer only; no renderer internals
+ * are modified.
+ *
+ * Token architecture (plan 2026-08-29-1819-2 §差异声明): 4-level elevation
+ * backgrounds, 4-level text, 3-tier brand purple, semantic pills in the
+ * rgba(bg,0.15)+same-color-text pattern (no border, full radius), 3-tier
+ * rgba borders, radius ladder 2·4·6·8·12·9999.
+ * DEVIATIONS (analysis §6.2): color values come from a third-party reverse-
+ * engineered source (DESIGN.md) cross-checked via web search, not official
+ * tokens; official priority colors are unpublished → equivalently drafted
+ * from the semantic palette with the same rgba(主色,0.15) pill pattern;
+ * Inter Variable signature weight 510 → static 500 approximation; Berkeley
+ * Mono → JetBrains Mono declared stack (no font files packaged); dark-only
+ * (light mapping recorded in the analysis §2.1, not implemented).
+ * All copy is original self-authored Chinese; no "Linear" name or trademark
+ * appears in any replica surface.
+ *
+ * Consumed by page schemas complex-pages/page-schemas/linear-*.json through
+ * the `.ln-root` page scope and the `.ln-dialog` dialog/drawer portal scope;
+ * layout/spacing in schemas uses Tailwind utilities (dual-track rule).
+ */
+
+/* ── 1. Design tokens (dark only) ───────────────────────────────────────── */
+
+/* Declared on .ln-root AND .ln-dialog because dialogs render through a
+   portal outside the .ln-root subtree (sundial-replica.css precedent). */
+.ln-root,
+.ln-dialog {
+  /* elevation backgrounds (brighter = higher layer) */
+  --ln-bg: #08090a;
+  --ln-bg-panel: #0f1011;
+  --ln-bg-float: #191a1b;
+  --ln-bg-secondary: #1f2023;
+
+  /* text 1..4 */
+  --ln-text-1: #f7f8f8;
+  --ln-text-2: #d0d6e0;
+  --ln-text-3: #8a8f98;
+  --ln-text-4: #62666d;
+
+  /* brand purple (only accent) */
+  --ln-brand: #5e6ad2;
+  --ln-brand-hover: #828fff;
+  --ln-brand-light: #a8b1ff;
+
+  /* semantic */
+  --ln-success: #27a644;
+  --ln-complete: #10b981;
+  --ln-warning: #f59e0b;
+  --ln-error: #e53935;
+
+  /* borders (micro separator / card stroke / standard separator) */
+  --ln-border-1: rgba(255, 255, 255, 0.02);
+  --ln-border-2: rgba(255, 255, 255, 0.05);
+  --ln-border-3: rgba(255, 255, 255, 0.08);
+
+  /* radius ladder */
+  --ln-radius-xs: 2px;
+  --ln-radius-sm: 4px;
+  --ln-radius: 6px;
+  --ln-radius-lg: 8px;
+  --ln-radius-xl: 12px;
+  --ln-radius-full: 9999px;
+
+  /* type stacks (510 → 500 static approximation; mono replacement) */
+  --ln-font-sans:
+    Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei',
+    sans-serif;
+  --ln-font-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+
+  /* overlay backdrop */
+  --ln-backdrop: rgba(0, 0, 0, 0.5);
+}
+
+.ln-root {
+  font-family: var(--ln-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ln-text-2);
+  background: var(--ln-bg);
+  min-height: 100%;
+}
+
+/* Surface-level dark theming for dialogs/drawers carrying .ln-dialog. */
+.ln-dialog {
+  background: var(--ln-bg-float);
+  color: var(--ln-text-2);
+  border: 1px solid var(--ln-border-3);
+}
+
+.ln-mono {
+  font-family: var(--ln-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 2. Sidebar navigation (workspace switcher + nav/favorite groups) ───── */
+
+.ln-workspace {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--ln-radius);
+  color: var(--ln-text-1);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ln-workspace:hover {
+  background: var(--ln-bg-secondary);
+}
+
+.ln-side-group {
+  padding: 8px 8px 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ln-text-4);
+}
+
+.ln-side-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  margin: 0 8px;
+  padding: 0 8px;
+  border-radius: var(--ln-radius);
+  color: var(--ln-text-3);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.ln-side-item:hover {
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-2);
+}
+
+.ln-side-item-active {
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-1);
+}
+
+/* ── 3. Top bar (view switch tabs + filter/display entries) ─────────────── */
+
+.ln-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--ln-radius);
+  color: var(--ln-text-3);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ln-tab:hover {
+  color: var(--ln-text-1);
+}
+
+.ln-tab-active,
+.ln-tab[data-active='true'] {
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-1);
+}
+
+.ln-topbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--ln-radius);
+  border: 1px solid transparent;
+  color: var(--ln-text-3);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ln-topbar-btn:hover {
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-1);
+}
+
+/* ⌘K search entry bar (command shell trigger, static form) */
+.ln-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 240px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--ln-border-3);
+  border-radius: var(--ln-radius);
+  background: var(--ln-bg-panel);
+  color: var(--ln-text-4);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ln-search-bar:hover {
+  border-color: var(--ln-border-3);
+  background: var(--ln-bg-secondary);
+}
+
+/* ── 4. Status dots + pills (rgba bg + same-color text, full radius) ────── */
+
+.ln-status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--ln-radius-full);
+  flex-shrink: 0;
+}
+
+.ln-status-backlog {
+  background: transparent;
+  border: 1.5px dashed var(--ln-text-4);
+}
+
+.ln-status-todo {
+  background: transparent;
+  border: 1.5px solid var(--ln-text-3);
+}
+
+.ln-status-in_progress {
+  background: var(--ln-warning);
+}
+
+.ln-status-done {
+  background: var(--ln-complete);
+}
+
+.ln-status-cancelled {
+  background: var(--ln-text-4);
+}
+
+.ln-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--ln-radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ln-pill-backlog {
+  color: var(--ln-text-3);
+  background: rgba(138, 143, 152, 0.15);
+}
+
+.ln-pill-todo {
+  color: var(--ln-text-2);
+  background: rgba(208, 214, 224, 0.12);
+}
+
+.ln-pill-in_progress {
+  color: var(--ln-warning);
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.ln-pill-done {
+  color: var(--ln-complete);
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.ln-pill-cancelled {
+  color: var(--ln-text-4);
+  background: rgba(98, 102, 109, 0.15);
+}
+
+/* priority pill variants (official colors unpublished → equivalently
+   drafted from the semantic palette, plan §差异声明) */
+.ln-pill-urgent {
+  color: var(--ln-error);
+  background: rgba(229, 57, 53, 0.15);
+}
+
+.ln-pill-high {
+  color: var(--ln-warning);
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.ln-pill-medium {
+  color: var(--ln-brand-light);
+  background: rgba(94, 106, 210, 0.2);
+}
+
+.ln-pill-low {
+  color: var(--ln-text-3);
+  background: rgba(138, 143, 152, 0.15);
+}
+
+.ln-pill-none {
+  color: var(--ln-text-4);
+  background: rgba(98, 102, 109, 0.15);
+}
+
+/* ── 5. Priority bars (1–3 ascending filled bars) ───────────────────────── */
+
+.ln-prio {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.ln-prio-bar {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--ln-border-3);
+}
+
+.ln-prio-bar:nth-child(1) {
+  height: 4px;
+}
+
+.ln-prio-bar:nth-child(2) {
+  height: 8px;
+}
+
+.ln-prio-bar:nth-child(3) {
+  height: 12px;
+}
+
+.ln-prio-urgent .ln-prio-bar {
+  background: var(--ln-error);
+}
+
+.ln-prio-high .ln-prio-bar:nth-child(-n + 3) {
+  background: var(--ln-warning);
+}
+
+.ln-prio-medium .ln-prio-bar:nth-child(-n + 2) {
+  background: var(--ln-brand);
+}
+
+.ln-prio-low .ln-prio-bar:nth-child(1) {
+  background: var(--ln-text-3);
+}
+
+/* ── 6. Label pills (small tag pills) ───────────────────────────────────── */
+
+.ln-label-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: var(--ln-radius-full);
+  border: 1px solid var(--ln-border-3);
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-3);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── 7. Avatars (container + initials circle; no avatar renderer type) ──── */
+
+.ln-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--ln-radius-full);
+  background: var(--ln-bg-secondary);
+  border: 1px solid var(--ln-border-3);
+  color: var(--ln-text-2);
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.ln-avatar-sm {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+}
+
+.ln-avatar-brand {
+  background: rgba(94, 106, 210, 0.25);
+  border-color: transparent;
+  color: var(--ln-brand-light);
+}
+
+/* ── 8. High-density issue rows (36–40px, hover + left-edge checkbox) ───── */
+
+/* Table-carried issue list (linear-issues): scope density + hover + selected
+   samples over the renderer's stable row markers (cal tabs precedent). */
+.ln-issues-table [data-slot='table-row'] {
+  height: 38px;
+  border-bottom: 1px solid var(--ln-border-2);
+  position: relative;
+}
+
+.ln-issues-table td {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.ln-issues-table th {
+  color: var(--ln-text-4);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--ln-bg);
+  border-bottom: 1px solid var(--ln-border-2);
+}
+
+.ln-issues-table [data-slot='table-row'] td {
+  border-bottom: none;
+  color: var(--ln-text-2);
+  background: transparent;
+}
+
+.ln-issues-table [data-slot='table-row']:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* static selected-row sample: the row carrying the checked box sample */
+.ln-issues-table [data-slot='table-row']:has(.ln-row-check-on) {
+  background: rgba(94, 106, 210, 0.12);
+}
+
+.ln-issues-table [data-slot='table-row']:has(.ln-row-check-on):hover {
+  background: rgba(94, 106, 210, 0.16);
+}
+
+.ln-row {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-height: 38px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--ln-border-2);
+  color: var(--ln-text-2);
+}
+
+.ln-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ln-row-selected {
+  background: rgba(94, 106, 210, 0.12);
+}
+
+.ln-row-selected:hover {
+  background: rgba(94, 106, 210, 0.16);
+}
+
+/* left-edge floating checkbox: hidden until row hover (static hover sample);
+   the `-on` variant is the checked/selected static sample */
+.ln-row-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--ln-text-4);
+  border-radius: var(--ln-radius-xs);
+  background: var(--ln-bg);
+  color: transparent;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  cursor: pointer;
+}
+
+.ln-issues-table [data-slot='table-row']:hover .ln-row-check,
+.ln-row:hover .ln-row-check {
+  opacity: 1;
+}
+
+.ln-row-check:hover {
+  border-color: var(--ln-brand);
+}
+
+.ln-row-check-on {
+  opacity: 1;
+  border-color: var(--ln-brand);
+  background: var(--ln-brand);
+  color: #ffffff;
+}
+
+.ln-row-title {
+  color: var(--ln-text-1);
+  font-size: 14px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ln-row-meta {
+  color: var(--ln-text-3);
+  font-size: 12px;
+}
+
+.ln-row-key {
+  color: var(--ln-text-4);
+  font-size: 12px;
+}
+
+/* ── 9. Bulk action bar (bottom floating bar, static form) ──────────────── */
+
+.ln-bulk-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--ln-border-3);
+  border-radius: var(--ln-radius-lg);
+  background: var(--ln-bg-float);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 20;
+  white-space: nowrap;
+}
+
+.ln-bulk-count {
+  color: var(--ln-text-1);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ── 10. Buttons (brand purple primary + quiet secondary) ───────────────── */
+
+.ln-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--ln-radius);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.ln-btn-primary {
+  background: var(--ln-brand);
+  color: #ffffff;
+}
+
+.ln-btn-primary:hover {
+  background: var(--ln-brand-hover);
+}
+
+.ln-btn-quiet {
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-2);
+}
+
+.ln-btn-quiet:hover {
+  background: var(--ln-bg-float);
+  color: var(--ln-text-1);
+}
+
+.ln-btn-ghost {
+  background: transparent;
+  color: var(--ln-text-3);
+}
+
+.ln-btn-ghost:hover {
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-1);
+}
+
+/* focus ring: layered indigo (100–150ms micro-interaction window) */
+.ln-btn:focus-visible,
+.ln-row-check:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(94, 106, 210, 0.4),
+    0 0 0 4px rgba(94, 106, 210, 0.2);
+}
+
+/* ── 11. Command shell (⌘K dialog static form) ──────────────────────────── */
+
+.ln-cmd-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-bottom: 1px solid var(--ln-border-3);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ln-text-1);
+  font-size: 14px;
+  outline: none;
+}
+
+.ln-cmd-input::placeholder {
+  color: var(--ln-text-4);
+}
+
+.ln-cmd-group {
+  padding: 8px 8px 2px;
+  color: var(--ln-text-4);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ln-cmd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  margin: 0 6px;
+  padding: 0 10px;
+  border-radius: var(--ln-radius);
+  color: var(--ln-text-2);
+  font-size: 13px;
+}
+
+.ln-cmd-item:hover,
+.ln-cmd-item-active {
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-1);
+}
+
+/* keyboard key sample (kbd chips in hints / bulk bar / help entry) */
+.ln-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--ln-border-3);
+  border-radius: var(--ln-radius-sm);
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-3);
+  font-family: var(--ln-font-mono);
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* ── 12. Cards (board cards / project cards / peek summary) ─────────────── */
+
+.ln-card {
+  border: 1px solid var(--ln-border-2);
+  border-radius: var(--ln-radius-lg);
+  background: var(--ln-bg-panel);
+}
+
+.ln-card-hover {
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.ln-card-hover:hover {
+  background: var(--ln-bg-secondary);
+  border-color: var(--ln-border-3);
+}
+
+/* board card fields (identifier / labels / meta strip) */
+.ln-board-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  margin: 0 0 8px;
+  border: 1px solid var(--ln-border-2);
+  border-radius: var(--ln-radius-lg);
+  background: var(--ln-bg-panel);
+}
+
+.ln-board-card:hover {
+  background: var(--ln-bg-secondary);
+  border-color: var(--ln-border-3);
+}
+
+/* Board view dark theming: the kanban renderer consumes published --color-*
+   theme variables through its stable nop-kanban-* classes; the replica scope
+   re-points them at the ln tokens (playground layer, no renderer edits). */
+.ln-board {
+  --color-background: var(--ln-bg);
+  --color-muted: var(--ln-bg-panel);
+  --color-border: var(--ln-border-2);
+  --color-foreground: var(--ln-text-2);
+  --color-muted-foreground: var(--ln-text-3);
+}
+
+.ln-board .nop-kanban {
+  background: var(--ln-bg);
+}
+
+.ln-board .nop-kanban-column {
+  background: var(--ln-bg-panel);
+  border-color: var(--ln-border-2);
+}
+
+.ln-board [data-slot='kanban-column-header'] {
+  border-bottom-color: var(--ln-border-2);
+}
+
+.ln-board [data-slot='kanban-column-header'] > span:first-of-type {
+  color: var(--ln-text-1);
+}
+
+.ln-board [data-slot='kanban-column-header'] > span + span {
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-3);
+  font-family: var(--ln-font-mono);
+}
+
+.ln-board [data-slot='kanban-column-header'] button {
+  color: var(--ln-text-4);
+}
+
+.ln-board [data-slot='kanban-column-empty'] {
+  color: var(--ln-text-4);
+  border-color: var(--ln-border-2);
+}
+
+/* default card face on the dark elevation (title / meta line / tags / member
+   initials) — scope selectors outrank the renderer's single utility classes */
+.ln-board .nop-kanban-card {
+  background: var(--ln-bg-panel);
+  border: 1px solid var(--ln-border-2);
+  border-radius: var(--ln-radius-lg);
+  padding: 10px 12px;
+}
+
+.ln-board .nop-kanban-card:hover {
+  background: var(--ln-bg-secondary);
+  border-color: var(--ln-border-3);
+}
+
+.ln-board .nop-kanban-card .nop-kanban-card-content {
+  color: var(--ln-text-1);
+  white-space: normal;
+}
+
+.ln-board .nop-kanban-card .nop-kanban-card-content.text-xs {
+  color: var(--ln-text-3);
+  font-family: var(--ln-font-mono);
+}
+
+.ln-board .nop-kanban-card-member {
+  background: var(--ln-bg-secondary);
+  border-color: var(--ln-border-3);
+  color: var(--ln-text-2);
+}
+
+/* ── 13. Progress (project / cycle progress) ────────────────────────────── */
+
+.ln-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.ln-progress-track {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--ln-radius-full);
+  background: var(--ln-bg-secondary);
+  overflow: hidden;
+}
+
+.ln-progress-fill {
+  height: 100%;
+  border-radius: var(--ln-radius-full);
+  background: var(--ln-brand);
+}
+
+.ln-progress-text {
+  color: var(--ln-text-3);
+  font-size: 12px;
+}
+
+/* ── 14. Inbox notification rows ────────────────────────────────────────── */
+
+.ln-notif-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--ln-border-2);
+}
+
+.ln-notif-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ln-notif-unread-dot {
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ln-radius-full);
+  background: var(--ln-brand);
+}
+
+.ln-notif-title {
+  color: var(--ln-text-1);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ln-notif-excerpt {
+  color: var(--ln-text-3);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 15. Detail page (description / sub-issues / activity / sidebar) ────── */
+
+.ln-detail-title {
+  color: var(--ln-text-1);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.ln-desc-block {
+  color: var(--ln-text-2);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.ln-sub-issue-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--ln-border-2);
+  border-radius: var(--ln-radius);
+  background: var(--ln-bg-panel);
+}
+
+.ln-sub-issue-row:hover {
+  background: var(--ln-bg-secondary);
+}
+
+.ln-activity-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.ln-activity-line {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  justify-content: center;
+  width: 24px;
+}
+
+.ln-activity-line::after {
+  content: '';
+  position: absolute;
+  top: 28px;
+  bottom: -8px;
+  width: 1px;
+  background: var(--ln-border-2);
+}
+
+.ln-activity-item:last-child .ln-activity-line::after {
+  display: none;
+}
+
+.ln-prop-label {
+  color: var(--ln-text-4);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ln-prop-value {
+  color: var(--ln-text-2);
+  font-size: 13px;
+}
+
+/* ── 16. Forms (settings / command input shells) ────────────────────────── */
+
+.ln-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--ln-border-3);
+  border-radius: var(--ln-radius);
+  background: var(--ln-bg-secondary);
+  color: var(--ln-text-1);
+  font-size: 13px;
+  outline: none;
+}
+
+.ln-input:focus {
+  border-color: var(--ln-brand);
+}
+
+.ln-input::placeholder {
+  color: var(--ln-text-4);
+}
+
+/* switch sample strip (settings preference rows, static form) */
+.ln-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ln-border-1);
+}
+
+/* ── 17. Empty states ───────────────────────────────────────────────────── */
+
+.ln-empty {
+  padding: 24px 16px;
+  color: var(--ln-text-4);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* info note strip (Display drawer manual-reorder precondition, etc.) */
+.ln-reschedule-note {
+  padding: 10px 12px;
+  border: 1px solid var(--ln-border-2);
+  border-radius: var(--ln-radius);
+  background: var(--ln-bg-secondary);
+}
+
+/* ── 18. Dialog backdrop dimming (modal backdrop token) ─────────────────── */
+
+.ln-dialog-backdrop {
+  background: var(--ln-backdrop);
+}
+
+/* ── 19. Control theming within the dark scopes ─────────────────────────── */
+
+/* The playground base theme is light; replica surfaces re-theme the shared
+   controls through their stable data-slot markers so forms/selections stay
+   readable on the dark elevation (playground-layer scope, no renderer edits). */
+.ln-root [data-slot='select-trigger'],
+.ln-dialog [data-slot='select-trigger'] {
+  background: var(--ln-bg-secondary);
+  border-color: var(--ln-border-3);
+  color: var(--ln-text-1);
+  border-radius: var(--ln-radius);
+  height: 32px;
+  font-size: 13px;
+}
+
+.ln-root [data-slot='select-content'],
+.ln-dialog [data-slot='select-content'] {
+  background: var(--ln-bg-float);
+  border-color: var(--ln-border-3);
+  color: var(--ln-text-1);
+}
+
+.ln-root [data-slot='select-item'],
+.ln-dialog [data-slot='select-item'] {
+  color: var(--ln-text-2);
+}
+
+.ln-root [data-slot='select-item'][data-highlighted],
+.ln-dialog [data-slot='select-item'][data-highlighted] {
+  background: rgba(94, 106, 210, 0.25);
+  color: var(--ln-text-1);
+}
+
+.ln-root [data-slot='input'],
+.ln-dialog [data-slot='input'] {
+  background: var(--ln-bg-secondary);
+  border-color: var(--ln-border-3);
+  color: var(--ln-text-1);
+  border-radius: var(--ln-radius);
+}
+
+.ln-root [data-slot='input']::placeholder,
+.ln-dialog [data-slot='input']::placeholder {
+  color: var(--ln-text-4);
+}
+
+.ln-root [data-slot='checkbox'],
+.ln-dialog [data-slot='checkbox'] {
+  border-color: var(--ln-text-4);
+  background: var(--ln-bg);
+}
+
+.ln-root [data-slot='checkbox'][data-state='checked'],
+.ln-dialog [data-slot='checkbox'][data-state='checked'] {
+  background: var(--ln-brand);
+  border-color: var(--ln-brand);
+  color: #ffffff;
+}
+
+.ln-root [data-slot='switch'],
+.ln-dialog [data-slot='switch'] {
+  background: var(--ln-bg-secondary);
+  border-color: var(--ln-border-3);
+}
+
+.ln-root [data-slot='switch'][data-state='checked'],
+.ln-dialog [data-slot='switch'][data-state='checked'] {
+  background: var(--ln-brand);
+}
+
+.ln-root label,
+.ln-dialog label {
+  color: var(--ln-text-3);
+}
+
+.ln-root .text-muted-foreground,
+.ln-dialog .text-muted-foreground {
+  color: var(--ln-text-4);
+}
+
+/* dialog / drawer surface chrome on the dark elevation */
+.ln-dialog [data-slot='dialog-header'] button,
+.ln-dialog [data-slot='drawer-header'] button {
+  color: var(--ln-text-3);
+}
