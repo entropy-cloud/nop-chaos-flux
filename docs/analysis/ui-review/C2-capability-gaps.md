@@ -140,3 +140,43 @@
 
 - **refreshSource 的 scope 桶限定（renderer 级 finding）**：`refreshDataSource` 带 `ctx.scope` 时只查该 scope 自身桶、不走父链（`source-registry.ts`），form 内按钮对页面级 data-source 派发 `refreshSource` 必然 `Source not found`（本计划实测撞墙）；跨树刷新须走 `component:refresh` + `componentId`（data-source 节点显式 `id`，handle 注册 `refresh` 方法）。建议：①`flux-guide` 补 data-source 刷新姿势注意点（文档项）；②deep-audit 候选——scoped lookup 的父链回退语义。
 - **toast 生命周期素材行复现（回写 ③ 同源）**：P3b 提交/取消跳转链再次以 `control: {debounce: 1200}` 延迟 navigate 保 `messages.success` 可观察（e2e 09/15），与回写 ③ 裁定一致；「host 级常驻 toast 容器」候选维持。
+
+### 回写 ⑤ — P4b Linear 交互接线实测证据（2026-08-30，plan `2026-08-30-0040-1-p4b-linear-interaction-wiring-and-tests.md` Phase 5）
+
+> 授权链: roadmap Cross-Cutting 5（Pi-b closure 以追加方式回写 C2，不重开初版状态）→ 本 plan Phase 5。初版裁决表零改动，本段仅追加实测证据与素材行。逐条「预测 vs 实测」对照见分析篇 `linear.md` §4.8。
+
+**G-B1 ⌘K 命令面板（L4）实测证据（模拟深度与手感缺口）**:
+
+- 过滤可达：dialog 继承页面 scope（P4a Decision 2）→ 裸 `input-text` 每键入 `scope.update`（`field-handlers.tsx` 无 form 分支实测）→ 命令清单 loop `items` 绑 `ARRAYFILTER+CONTAINS+LOWER` 公式内联过滤，零请求、空查询恒真显示全量（e2e 01 锁定三态：命中过滤/无命中清空/清空恢复）。
+- 执行可达：命令数据扩载 `href`（导航）/`act`（动作）双字段，条目 onClick 按 `when` 门控分流——navigate / openDialog / ajax 端点 / 静态帮助面板，e2e 02/03 锁定。
+- **手感缺口维持**：无焦点指针/键盘选择/模糊搜索/最近使用排序等 palette 语义；动作类命令呼出的浮层与面板堆叠（Esc 逐层退出，e2e 03），非原版「面板即关」。`ui command` 模块仍无 renderer type 包装，schema 级组装成本即为缺口本体。产品化归 D1（G-B1 依据不变）。
+
+**G-B2 键盘导航框架（L4）终态证据（chord/J·K/修饰键手势/⌥↑↓/Space hover 逐项不模拟裁定）**:
+
+- 不可绕道证据（P4b 全谱复核维持）：动作词汇无键盘序列监听通道（chord G/O/M、J/K 高亮指针）；table 选择列 checkbox 为普通 toggle，零 shift/meta 修饰键处理、无范围锚点逻辑（⇧click 范围选/⌘A chord/⇧↑↓ 扩展选择不可表达）；kanban 无 ⌥↑↓ 键盘重排 schema 通道（renderer 内部 `moveCardKeyboard` 存在但无 schema 事件面）；无 hover 保持计时事件（Space hover-peek）。禁 hack（全局 keydown 注入/焦点劫持）绕道。
+- 鼠标等价路径全部接线锁定（侧栏导航钮/行点选+表头全选/peek 按钮/拖拽），模板感治理底线不破。产品化归 D1，`watch-only residual` 维持。
+
+**G-B3 批量栏动态化实测（scope 选择集契约可达面）**:
+
+- table 页可达面（`linear-issues.json` 实证 + e2e 05/07 锁定）：`rowSelection` + `selectionOwnership:'scope'` + `selectionStatePath:'issueSelection'` → 批量栏计数 `${issueSelection?.length}` 表达式、动作钮 `disabled` 空集门控、批量写端点经 `data.ids` 透传、清选择走 `component:setSelection` 空集（table 句柄；`component:clearSelection` 仅为 crud 句柄——crud `$crud.*` scope 契约与 table scope 契约为**两套平行 API**，不可平移）。
+- 「批量栏 alert 包络」无语义件维持：计数/按钮/清空仍手工拼装。表头全选内建语义实测=**源数据全量进选择集**（34 行），客户端分页仅裁剪显示——「全选本页」子语义不可表达，并入 D1 选择集语义件候选。
+
+**G-A 关联实测（骨架族 renderer 侧 finding，P4b 执行期新撞见）**:
+
+- **cardTemplate region 无 params 绑定（P4a Phase 3 证据引用，供本回写的移交项落 C2）**：kanban `cardTemplate` region 渲染时不携带卡片 params/scope 绑定，schema 侧无法以 cardTemplate 承载每卡字段差异——P4a 实测后改用 kanban 默认卡面（title/description/color dot/tags/members）承载标识符·估算/标签 pill/指派首字圆/优先级色点（`mock-backend-linear-issues.ts` `buildLinearBoardData` 数据侧映射，`linear-replica-visual.spec.ts` 02 字段断言锁定）。该证据 P4a 执行期登记为「G-A 证据、供 C2 回写」，此处落 C2 终态：kanban 卡面自定义深度（region params 绑定）缺口成立，产品化归 D1（G-A 观察面）。
+- **kanban 拖拽源注册滞后（renderer 级 finding）**：卡片 dragstart 载荷（p-dnd `source.data.cardId`）在 React Compiler dev 双挂载下可滞后 reconciliation 一拍——同一卡片元素 `data-card-id` 与实际派发 cardId 不一致（抓 ENG-101 派发 ENG-119/111/105，随渲染时序浮动）。接线行为（onCardMove → 端点 → 会话态 → refresh）以 lastMove 钩子做数据一致性断言锁定（e2e 11/13）；注册时效本体归 D1/renderer 修复流程。
+- **container-body wrapper 布局语义（styling-system 侧 finding，P4a 形态的成因注记）**：container 渲染器将多子节点包进单 `container-body` wrapper（`flex: 0 1 auto`），schema 容器上的 `flex flex-row` 行向声明不透传 wrapper，多栏骨架在 shell 预画画布内呈纵排收缩（P4a 收口产物即此形态）。非本计划回归；D1 候选：container schema 布局类透传 body wrapper。
+
+**I11 剪贴板素材行追加（第二例，未分级）**:
+
+- `Linear__copyLink`（get、零副作用、恒成功 `{ok,id,url}`）沿 `Cal__shareLink` 语义模拟先例，两处消费（命令面板 copy 项 + peek/详情复制钮，e2e 03/06/16），`messages.success`「链接已复制」成对。实际剪贴板写入仍不做；`RendererEnv` clipboard 通道维持 D1 输入池候选。
+
+**分析篇 §7 两候选终态回写（P4a 移交 + P4b 收口）**:
+
+- **快捷键帮助面板 → 静态承载收口（不并入 G-B2 新行）**：`?` 呼出的帮助内容为纯静态文案（已接线清单 + 未模拟键位归因），openDialog 静态内容完整承载，经命令面板 `act=help` 与帮助条目呼出（e2e 03）；零键盘原语依赖，无需独立语义件，不构成 C2 新缺口。
+- **富文本描述编辑器 → 缺口维持（optimization candidate 确认）**：详情页描述区维持纯 text 多段静态承载，本计划零编辑义务；无对应原语为本体缺口，产品化归 D1 流程。
+
+**既有素材行复现注记**:
+
+- **toast 生命周期（回写 ③/④ 同源第三例）**：detail 归档跳转链以 `control: {debounce: 1200}` 延迟 navigate 保 toast 可观察（e2e 18）；「host 级常驻 toast 容器」候选维持。
+- **refreshSource scope 桶限定（回写 ④ 同源）**：跨树刷新一律 `component:refresh` + data-source 显式 `id`（本计划 4 张 schema 均落 `linear-*-source` id），未再撞 `Source not found`。
