@@ -1,9 +1,9 @@
 # R2 — 全量 UI 一致性审查（owner doc）
 
-> Last Updated: 2026-08-29（**R2 收口**：8 轮发现 + 独立复核 + 汇总全部完成；本文档为 R2 owner doc 终稿）
-> Mission: `missions/ui-review.json` · Roadmap: `docs/backlog/ui-review-roadmap.md`（R2 产出文档）
-> Plan: `docs/plans/2026-08-28-1701-1-r2-consistency-audit.md`
-> 工作文件目录: `docs/analysis/ui-review/r2-audit/`（round-NN.md / review.md / summary.md / dedup-baseline.md）
+> Last Updated: 2026-08-29（**R2 收口 + R3 修复收口**：8 轮发现 + 独立复核 + 汇总 + R3 P0/P1 修复与 P2/P3 裁决全部完成；本文档为 R2 owner doc 终稿）
+> Mission: `missions/ui-review.json` · Roadmap: `docs/backlog/ui-review-roadmap.md`（R2 产出文档 / R3 修复条目）
+> Plan: `docs/plans/2026-08-28-1701-1-r2-consistency-audit.md`（R2）· `docs/plans/2026-08-29-0419-1-r3-consistency-p0p1-remediation.md`（R3）
+> 工作文件目录: `docs/analysis/ui-review/r2-audit/`（round-NN.md / review.md / summary.md / dedup-baseline.md / r3-p2-adjudication.md）
 
 ## 口径声明（owner doc 头部义务，Phase 1 落盘）
 
@@ -126,3 +126,76 @@ HIGH→P0/P1（进 R3 预授权修复集）；MEDIUM→P2（裁决路由集）�
 4. **transfer 双面板无移动适配**（R3 G2，G-H 表象）: 固定 `grid-cols-[1fr_auto_1fr]`，是 form-advanced 包内除 picker 外最需要移动适配原语的消费方。
 5. **sundial workbench 移动端 stub**（R1 转出、R6 G7 复核维持，G-H 表象）。
 6. **chart legend 点击切换系列未实现**（R5 G3 备忘）: 能力缺失非缺陷，若 C2 认为 chart 交互完整性值得立项可并入。
+
+## R3 收口节（P0/P1 修复落点 + 回归测试 + P2/P3 裁决台账）
+
+> 由 plan `docs/plans/2026-08-29-0419-1-r3-consistency-p0p1-remediation.md` 产出，2026-08-29，HEAD `1129772fe`。17 条 P0/P1 全部修复（test-first 先红后绿），P2 172 条裁决台账全覆盖、P3 87 条登记终态。
+
+### 1. P0/P1 修复落点清单（17 条，批次①–⑨）
+
+| 批次 | 发现 ID                     | 修复落点                                                                                                                                                | 修复方式摘要                                                                                                                                                            |
+| ---- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ------------------------------------------------------------------------------------ |
+| ② P0 | [G2-R6-视角6-01]            | `ui/dirty-close-guard.tsx`（新原语 `useDirtyCloseGuard`）+ `detail-surface.tsx` + `detail-view.tsx` + `detail-field.tsx` + `detail-draft-controller.ts` | X/ESC/遮罩三通道统一经 `requestClose` 拦截；脏草稿弹 `AlertDialog`「放弃更改？」确认；`isDetailDraftDirty` 按打开时基线比对                                             |
+| ④ P0 | [G3-R3-视角4-01]            | `table-renderer/table-body-rows.tsx` VirtualBody                                                                                                        | 虚拟路径与非虚拟路径同款 RadioGroup 受控包裹（`render={<TableBody/>}`）                                                                                                 |
+| ④ P0 | [G3-R4-视角5-01]            | `table-renderer.tsx` 容器 ref 回调                                                                                                                      | 拆掉 if/else 互斥路由：autoFill 与虚拟滚动各自绑定同一容器元素                                                                                                          |
+| ⑥ P0 | [G5-视角10-01]              | `ai/renderers/ai-conversations.tsx`                                                                                                                     | 删除钮改 only arm `pendingDeleteId`；`AlertDialog` destructive 确认后才派发 `ai:conversation-delete`                                                                    |
+| ⑦ P0 | [G7-R2-视角11-01]           | `content/link.tsx` + `LinkSchema` + `crud-views-export.json`                                                                                            | link 渲染器 `download` 透传（true→`download=""`，字符串→文件名）；导出 schema 补 `"download": true`                                                                     |
+| ① P1 | [G2-R2-视角3-01]            | `form/renderers/date/stepper-button.tsx` + `input-time-renderer.tsx`                                                                                    | StepperButton 增 disabled 透传 + `stepField` 入口守卫（对齐 input-number 双层门禁）                                                                                     |
+| ① P1 | [G2-R3-视角3-01]            | `form/renderers/period-renderers.tsx`                                                                                                                   | 快捷钮 `disabled={!interactive}` + `applyShortcut` 入口守卫                                                                                                             |
+| ① P1 | [G4-R4-视角3-01]            | `scheduling/barcode-input/barcode-input.tsx`                                                                                                            | `locked = meta.disabled                                                                                                                                                 |     | readOnly` 收敛五通道（clear/scanOnFocus/scanClick/scanResult/scanNow）+ 两处渲染条件 |
+| ③ P1 | [G1-视角2-01]+[G7-视角2-01] | `ui/button.tsx` cva + `basic/schemas.ts` + `basic-renderer-definitions.ts`                                                                              | cva 补 `primary` 键（=default 实底权重）+ schema union/propContract union 补 `primary`（一处修复两处失效面；8 处 playground schema 由编译期剥离降级恢复为合法 primary） |
+| ⑤ P1 | [G3-视角5-01]               | `table-header-row.tsx` + `table-renderer.tsx` + `table-body-row-rendering.tsx`                                                                          | `__row_save_bar__` 补配对表头 th + colgroup col + columnCount 计入                                                                                                      |
+| ⑤ P1 | [G3-R3-视角8-01]            | 同上 + `fixed-columns.ts`                                                                                                                               | `__drag__` 补配对表头 th + colgroup col + `createFixedColumnLayout` 左固定条目 + body 拖拽 cell 消费 `getDragCellProps()`                                               |
+| ⑤ P1 | [G3-R4-视角8-01]            | `table-header-row.tsx`                                                                                                                                  | 非固定列表头 th 增加 `relative` 定位上下文，resize 手柄贴列边                                                                                                           |
+| ⑧ P1 | [G6-R2-视角6-01]            | `ui/drawer.tsx` DrawerBody                                                                                                                              | 补 `min-h-0 min-w-0 flex-1 overflow-y-auto`（对齐 DialogBody 契约）                                                                                                     |
+| ⑧ P1 | [G6-R3-视角6-01]            | `ui/drawer.tsx` DrawerContent + `useDrawerResize`                                                                                                       | resize 变量直接消费到 Popup 几何（width/height + maxWidth/Height + `--drawer-resize-size`）+ 90% 视口 max 钳制                                                          |
+| ⑨ P1 | [G1-视角3-02]               | `basic/button.tsx` 锚点分支                                                                                                                             | disabled/loading：`preventDefault` + href 置 undefined + `aria-disabled` + `pointer-events-none opacity-60`（对齐 link.tsx 基线）                                       |
+| ⑨ P1 | [G1-视角3-03]               | `layout/button-group-renderer.tsx`                                                                                                                      | selectionMode 项补 `data-selected:` 消费类（bg-accent/text-accent-foreground），状态发射与样式消费闭环                                                                  |
+
+### 2. 回归测试清单（测试名 ↔ 发现 ID，全部先红后绿）
+
+| 发现 ID                                         | 回归测试文件（包内路径省略 `src/`）                                                                                                  | 用例数 |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| [G2-R6-视角6-01]                                | `detail-view/detail-view-dirty-guard.test.tsx` "[G2-R6-视角6-01] detail draft dirty guard (dirty-guard-confirm)"                     | 7      |
+| [G3-R3-视角4-01]                                | `__tests__/table-virtual-radio.test.tsx` "[G3-R3-视角4-01] virtual body keeps radio selection inside a RadioGroup"                   | 2      |
+| [G3-R4-视角5-01]                                | `__tests__/table-virtual-autofill-scrollref.test.tsx` "[G3-R4-视角5-01] autoFillHeight × virtualization keeps the scroll ref alive"  | 2      |
+| [G5-视角10-01]                                  | `renderers/__tests__/ai-conversations-delete-confirm.test.tsx` "[G5-视角10-01] conversation delete requires confirmation"            | 5      |
+| [G7-R2-视角11-01]                               | `link-download.test.tsx` "[G7-R2-视角11-01] link download passthrough (export-no-response)"                                          | 4      |
+| [G2-R2-视角3-01]                                | `__tests__/input-time-steppers-disabled.test.tsx` "[G2-R2-视角3-01] input-time steppers honor the disabled gate"                     | 3      |
+| [G2-R3-视角3-01]                                | `__tests__/period-shortcut-disabled.test.tsx` "[G2-R3-视角3-01] period shortcut buttons honor the disabled gate"                     | 3      |
+| [G4-R4-视角3-01]                                | `barcode-input/barcode-input-disabled-channels.test.tsx` "[G4-R4-视角3-01] barcode-input secondary channels honor meta.disabled"     | 4      |
+| [G1-视角2-01]+[G7-视角2-01]                     | `__tests__/button-primary-and-anchor-disabled.test.tsx` "[G1-视角2-01][G7-视角2-01] variant:\"primary\" renders with primary weight" | 4      |
+| [G1-视角3-02]                                   | 同上文件 "[G1-视角3-02] href anchor branch honors disabled/loading"                                                                  | 2      |
+| [G3-视角5-01]+[G3-R3-视角8-01]+[G3-R4-视角8-01] | `__tests__/table-helper-column-pairing.test.tsx`（三个 describe 对应三条发现）                                                       | 7      |
+| [G6-R2-视角6-01]+[G6-R3-视角6-01]               | ui `drawer-body-scroll-resize.test.tsx`（两个 describe 对应两条发现）                                                                | 4      |
+| [G1-视角3-03]                                   | `__tests__/button-group-selected-visual.test.tsx` "[G1-视角3-03] button-group selection mode has a selected visual"                  | 2      |
+
+### 3. 类别清扫记录（grep 模式 + 命中清单 + 处置）
+
+| 批次            | grep 模式                                                                                  | 命中清单                                                                                                                                                                                                                         | 处置                                                   |
+| --------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| ② 脏态守卫      | `rg "DetailSurface\|closeDraft" packages`                                                  | 消费面仅 detail-view / detail-field（同一 DetailSurface 通道）；dispose 单点 `detail-draft-controller.closeDraft`                                                                                                                | 两消费方均已接线守卫；无新增命中                       |
+| ④ 虚拟化组合    | `rg "useVirtualizer\|virtualThreshold"` + `rg "RadioGroup\|RadioGroupItem"` 于全部命中文件 | kanban/gantt/calendar 虚拟器、ai-message-list、form 选项列表、tree-option-list、table-body-rows；RadioGroup 仅 `input-choice-renderers.tsx` RadioGroupRenderer（自包裹 group，无根因）；ref 互斥路由仅 `table-renderer.tsx` 一处 | 仅 table-body-rows/table-renderer 命中修复；无新增命中 |
+| ⑥ 删除确认      | `rg "conversation-delete"`                                                                 | 生产点唯一 `ai-conversations.tsx`                                                                                                                                                                                                | 已加确认层；无新增命中                                 |
+| ⑦ 下载链接      | `rg "data:text\|data:application"`                                                         | 唯一生成点 `showcase-env.ts:219`（对应 schema 已加 `download: true`）                                                                                                                                                            | 无新增命中                                             |
+| ① disabled 门禁 | `rg "readOnly\) return"` 全包 + `meta.disabled` 消费反查                                   | [G2-R4-视角3-01]（upload-field，P2 随批修）、[G5-R3-视角3-01]（scada 三面板，P2 随批修）、[G4-R5-视角3-02]（三 board 四分支根容器，P2 随批修）；同根因不同落点文件者（editor-renderer / ai-chat / collapse）登记候选             | 3 条 P2 随批修复 + 回归测试；其余记 Phase 3 台账       |
+| ⑤ 列配对        | body-only helper cell 清点（`data-slot="table-*"` 全集）+ `__index__` 检查                 | index 列为真实 columns 条目天然配对；孤儿列仅 `__drag__`/`__row_save_bar__` 两个                                                                                                                                                 | 两处均补配对；无新增命中                               |
+| ⑧⑨ 家族扫查     | `DrawerBody` 消费面（dialog-host / detail-surface）；`data-selected` 消费反查              | DrawerBody 两消费方直接受益于基类修复；button-group 选中态消费类已补                                                                                                                                                             | 无新增命中                                             |
+
+### 4. P2 172 条裁决台账（全覆盖）
+
+- **台账文件**: [`r2-audit/r3-p2-adjudication.md`](r2-audit/r3-p2-adjudication.md)（172 行，每行: 条目 / 落点首证据 / 族归属 / 裁决 / 回链；追溯链 = 台账行 → summary §MEDIUM 对应行 → round 原文 → 复核报告）。
+- **裁决规则**: `随批清扫修` 仅限与 Phase 1/2 批次同根因且同落点文件的实例；其余 `登记后续修复候选`（统一理由: 非本计划修复面、未命中批次同落点文件——Non-Goals 明确不做与批次不同落点的独立新修复，避免无界膨胀，归 successor plan 候选池）；无拒绝项。
+- **裁决结果**: `随批清扫修` 3 条（[G2-R4-视角3-01]、[G5-R3-视角3-01]、[G4-R5-视角3-02]，均批次①，均有回归测试）；`登记后续修复候选` 169 条。
+- **族分布**: 族1×9（3 随批修 + 6 候选）、族2×7、族3×6、族4×1、族5×12、族6×7、族7×5、族8×8、族9×17、族10×11、单点/跨族 89。
+- **共性族 1（disabled 门禁）P2 同根因实例逐条处置**: [G2-R4-视角3-01] 随批修✅；[G5-R3-视角3-01] 随批修✅；[G4-R5-视角3-02] 随批修✅；[G2-R2-视角4-02]（composite maxItems 静默）、[G2-R3-视角3-02]（editor disabled 同步）、[G5-R4-视角3-01]（ai-chat 半量门控）、[G1-R2-视角3-01]（collapse disabled 视觉）、[G3-R2-视角4-01]（maxSelectionLength 静默）、[G2-R7-视角4-01]（addGroup 绕上限）→ 候选（不同落点文件）。
+- **共性族 2（死状态）P2 同根因实例逐条处置**: [G4-R2-视角3-02]、[G6-R6-视角3-01]、[G6-R5-视角6-01]、[G4-R5-视角3-01]、[G5-R3-视角3-02]、[G1-R2-视角3-02]、[G4-R2-视角3-01] → 全部候选（族代表 [G1-视角3-03] 为 P1 已修于批次⑨；其余落点文件互不相同、互不覆盖）。
+
+### 5. P3 87 条登记声明
+
+LOW 87 条（`r2-audit/summary.md` §可暂缓项）登记即为终态，归属 roadmap backlog（`docs/backlog/ui-review-roadmap.md` backlog 区），不入 D2 门禁候选；修复归属后续独立裁决，本计划不展开（Non-Goals）。台账见 summary §可暂缓项，此处不再复制清单。
+
+### 6. 全量验证记录（R3 收口）
+
+- `pnpm typecheck` 37/37 / `pnpm build` 37/37 / `pnpm lint` 37/37 / `pnpm test` 68/68 任务全绿（2026-08-29，R3 修复后，R3 新增 15 个回归测试文件全部随包通过）；`pnpm check` exit 0 零新增命中。
+- 全量 e2e **1315 passed / 11 failed / 3 flaky / 43 skipped**（2026-08-29，20.3m），对比 08-25 登记 baseline red 14 条**零新增红**。11 条失败归属：barcode ×4（登记 ×5 之子集，`BarcodeDetector` 能力面既有缺陷）+ crud-demo ×6（登记同 6 条）+ scada-perf:155 fps 吞吐 ×1（stash 实证干净树 HEAD `1129772fe` 同红、R3 工作树通过——机器负载波动型既有红，与 08-15 登记「scada-perf 全量并行性能波动×1」同型；功能断言 TE-1 视口位移与指针路径 ≥45fps 均过）；登记清单中 sundial ×2 本次未触发、scada-edge-cases ×2 转 flaky 复跑过、watch-only gantt-perf ×2 / kanban-perf ×1 未触发；3 条 flaky 复跑全过与 R3 变更面无关。明细与归因过程见 daily log `docs/logs/2026/08-29.md` §R3 全量验证结果。

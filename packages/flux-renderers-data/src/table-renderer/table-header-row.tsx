@@ -56,6 +56,10 @@ interface TableHeaderRowProps {
   columnResize?: boolean;
   resizeApi?: ColumnResizeApi;
   affixHeader?: boolean;
+  /** [G3-R3-视角8-01] leading drag-handle column pairing. */
+  draggable?: boolean;
+  /** [G3-视角5-01] trailing row save-bar column pairing. */
+  rowDraftColumnEnabled?: boolean;
 }
 
 export function TableHeaderRow(props: TableHeaderRowProps) {
@@ -173,7 +177,7 @@ function renderLeafHeaderCell(
   return (
     <TableHead
       key={columnKey}
-      className={cn(cellProps.className, headerAlignClass)}
+      className={cn('relative', cellProps.className, headerAlignClass)}
       style={{
         ...(resolvedWidth
           ? { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
@@ -375,6 +379,8 @@ function FlatTableHeaderRow({
   columnResize,
   resizeApi,
   affixHeader,
+  draggable,
+  rowDraftColumnEnabled,
 }: TableHeaderRowProps) {
   const schemaProps = props.props as TableSchema;
   const isAffix = affixHeader === true;
@@ -395,6 +401,16 @@ function FlatTableHeaderRow({
           : undefined
       }
     >
+      {draggable ? (
+        <TableHead
+          data-slot="table-drag-column"
+          data-column-width-key="__drag__"
+          aria-label={t('flux.table.dragColumn')}
+          className={fixedColumnLayout.getDragCellProps().className}
+          style={fixedColumnLayout.getDragCellProps().style}
+        />
+      ) : null}
+
       {showExpandColumn ? (
         <TableHead
           data-slot="table-expand-column"
@@ -447,8 +463,18 @@ function FlatTableHeaderRow({
           columnResize,
           resizeApi,
           affixHeader,
+          draggable,
+          rowDraftColumnEnabled,
         }, leafCtx),
       )}
+
+      {rowDraftColumnEnabled ? (
+        <TableHead
+          data-slot="table-row-save-bar-column"
+          data-column-width-key="__row_save_bar__"
+          className="w-32"
+        />
+      ) : null}
     </TableRow>
   );
 }
@@ -474,6 +500,8 @@ function NestedTableHeaderRows({
   columnResize,
   resizeApi,
   affixHeader,
+  draggable,
+  rowDraftColumnEnabled,
 }: TableHeaderRowProps) {
   const schemaProps = props.props as TableSchema;
   const isAffix = affixHeader === true;
@@ -529,6 +557,16 @@ function NestedTableHeaderRows({
             )}
             style={stickyStyle}
           >
+            {rowIndex === 0 && draggable ? (
+              <TableHead
+                rowSpan={rows.length}
+                data-slot="table-drag-column"
+                data-column-width-key="__drag__"
+                aria-label={t('flux.table.dragColumn')}
+                className={fixedColumnLayout.getDragCellProps().className}
+                style={fixedColumnLayout.getDragCellProps().style}
+              />
+            ) : null}
             {rowIndex === 0 && showExpandColumn ? (
               <TableHead
                 rowSpan={rows.length}
@@ -567,6 +605,15 @@ function NestedTableHeaderRows({
                   renderLeafHeaderCell(column, leafIndex, headerCtx, leafCtx),
                 )
               : row.cells.map((cell) => renderGroupHeaderCell(cell, props))}
+
+            {rowIndex === 0 && rowDraftColumnEnabled ? (
+              <TableHead
+                rowSpan={rows.length}
+                data-slot="table-row-save-bar-column"
+                data-column-width-key="__row_save_bar__"
+                className="w-32"
+              />
+            ) : null}
           </TableRow>
         );
       })}

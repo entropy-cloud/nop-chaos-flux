@@ -230,6 +230,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
           kind: 'union',
           anyOf: [
             { kind: 'literal', value: 'default' },
+            { kind: 'literal', value: 'primary' },
             { kind: 'literal', value: 'destructive' },
             { kind: 'literal', value: 'outline' },
             { kind: 'literal', value: 'secondary' },

@@ -266,14 +266,14 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
     >
       {showLayoutBody
         ? asReactNode(toolbox?.render({ bindings: { selection } })) ?? (
-            <EditorToolboxPanel runtime={runtime} selection={selection} onError={handleError} />
+            <EditorToolboxPanel runtime={runtime} selection={selection} onError={handleError} disabled={disabled} />
           )
         : null}
       {/* plan 2026-08-08-0900-1 Phase 4 / P2 #40：body 行含 palette | canvas | inspector 三栏，
           toolbox（顶）/ statusBar（底）为列方向兄弟——避免 toolbox 宽按钮挤压缩 canvas 到 0。 */}
       <div className="nop-scada-editor-body">
         {showLayoutBody
-          ? asReactNode(palette?.render()) ?? <EditorPalettePanel runtime={runtime} onError={handleError} />
+          ? asReactNode(palette?.render()) ?? <EditorPalettePanel runtime={runtime} onError={handleError} disabled={disabled} />
           : null}
         <div
           ref={containerRef}
@@ -398,7 +398,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
       </div>
       {showLayoutBody
         ? asReactNode(inspector?.render({ bindings: { nodeId: selectedNodeId } })) ?? (
-            <EditorInspectorPanel runtime={runtime} selectedNodeId={selectedNodeId} onError={handleError} />
+            <EditorInspectorPanel runtime={runtime} selectedNodeId={selectedNodeId} onError={handleError} disabled={disabled} />
           )
         : null}
       </div>

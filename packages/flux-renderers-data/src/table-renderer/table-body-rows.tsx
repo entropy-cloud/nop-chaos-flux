@@ -336,6 +336,8 @@ function VirtualBody({
   const parentRef = scrollRef;
   const schemaProps = props.props as TableSchema;
   const helpers = props.helpers;
+  const radioSelectionValue =
+    schemaProps.rowSelection?.type === 'radio' ? Array.from(selectedRowKeys)[0] : undefined;
 
   const combinePlan: CombinePlan = React.useMemo(
     () =>
@@ -387,8 +389,12 @@ function VirtualBody({
     },
   });
 
-  return (
-    <TableBody>
+  // [G3-R3-视角4-01] the virtual body must keep RadioGroupItem cells inside a
+  // RadioGroup exactly like the non-virtual branch — without the group wrapper
+  // Base UI radios are context-less (checked reads `value === ''`, writes are
+  // NOOP) and single-select is completely dead under virtualization.
+  const bodyContent = (
+    <>
       {flattenedItems.length === 0 ? (
         <TableRow data-slot="table-empty-row">
           <TableCell colSpan={columnCount} data-slot="table-empty-cell">
@@ -473,6 +479,21 @@ function VirtualBody({
             })()}
         </>
       )}
-    </TableBody>
+    </>
   );
+
+  if (schemaProps.rowSelection?.type === 'radio') {
+    return (
+      <RadioGroup
+        render={<TableBody />}
+        className={undefined}
+        value={radioSelectionValue ?? ''}
+        onValueChange={(value) => onSelectRow(String(value), true)}
+      >
+        {bodyContent}
+      </RadioGroup>
+    );
+  }
+
+  return <TableBody>{bodyContent}</TableBody>;
 }

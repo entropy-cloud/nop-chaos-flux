@@ -76,6 +76,10 @@ export const enUS: Resource = {
       retry: 'Retry',
       newConversation: 'New conversation',
       deleteConversation: 'Delete',
+      deleteConversationConfirmTitle: 'Delete this conversation?',
+      deleteConversationConfirmBody:
+        'The conversation and its full message history will be permanently deleted. This cannot be undone.',
+      deleteConversationConfirm: 'Delete conversation',
       renameConversation: 'Rename',
       emptyConversationTitle: 'New chat',
       expand: 'Expand',
@@ -180,6 +184,7 @@ export const enUS: Resource = {
       collapse: 'Collapse',
       search: 'Search',
       resizeColumn: 'Resize Column',
+      dragColumn: 'Drag to reorder rows',
       viewDetails: 'View details',
       popoverEmpty: 'No content',
       loading: 'Loading',
@@ -364,6 +369,10 @@ export const enUS: Resource = {
       dragHandleRoleDescription: 'dialog drag handle',
       moveDialogInstructions:
         'Use the arrow keys to move the dialog. Hold Shift for larger steps. Press Home to reset the dialog position.',
+      unsavedChangesTitle: 'Discard changes?',
+      unsavedChangesBody: 'Your edits have not been saved. Closing now will discard them.',
+      unsavedChangesKeep: 'Keep editing',
+      unsavedChangesDiscard: 'Discard changes',
     },
     drawer: {
       close: 'Close',
@@ -1191,6 +1200,7 @@ export const enUS: Resource = {
         invalidPattern: 'Invalid pattern: {{pattern}}',
         cameraUnavailable: 'Camera unavailable',
         readOnlyField: 'Field is read-only',
+        disabledField: 'Field is disabled',
         clearButtonLabel: 'Clear value',
         cameraFeedLabel: 'Camera feed for barcode scanning',
         cameraPermissionDenied: 'Camera permission denied',

@@ -161,12 +161,7 @@ function DataRowView({
     }
     return cn(vAlignClass, typeof evaluated === 'string' && evaluated.length > 0 ? evaluated : undefined);
   };
-  const hasQuickEditColumns = columns.some((col) => {
-    const cfg = resolveTableQuickEditConfig(col);
-    return cfg && cfg.saveImmediately !== true && cfg.mode !== 'dialog';
-  });
-  const rowSaveAction = schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction;
-  const rowDraftEnabled = hasQuickEditColumns && Boolean(rowSaveAction);
+  const rowDraftEnabled = isRowDraftColumnEnabled(schemaProps, columns);
 
   const rowCheckboxDisabled =
     (isRowCheckable ? !isRowCheckable(rowKey) : false) ||
@@ -235,8 +230,15 @@ function DataRowView({
       {draggable && dragHandleProps ? (
         <TableCell
           data-slot="table-drag-cell"
-          className="w-10 text-center text-muted-foreground"
-          style={{ cursor: 'grab' }}
+          data-column-width-key="__drag__"
+          className={cn(
+            'w-10 text-center text-muted-foreground',
+            fixedColumnLayout.getDragCellProps?.().className,
+          )}
+          style={{
+            cursor: 'grab',
+            ...fixedColumnLayout.getDragCellProps?.().style,
+          }}
         >
           <span
             {...dragHandleProps}
@@ -549,6 +551,7 @@ function DataRowView({
         <TableCell
           key="__row_save_bar__"
           data-slot="table-row-save-bar-cell"
+          data-column-width-key="__row_save_bar__"
           className="w-32 whitespace-nowrap"
         >
           <RowQuickEditSaveBar rowDraft={rowDraft} />
@@ -616,6 +619,21 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.rowDragSortApi === next.rowDragSortApi
   );
 });
+
+
+/** [G3-视角5-01] whether the trailing row save-bar column renders on body rows —
+ * exported so header/colgroup can pair the column. */
+export function isRowDraftColumnEnabled(
+  schemaProps: TableSchema,
+  columns: TableColumnSchema[],
+): boolean {
+  const hasQuickEditColumns = columns.some((col) => {
+    const cfg = resolveTableQuickEditConfig(col);
+    return cfg && cfg.saveImmediately !== true && cfg.mode !== 'dialog';
+  });
+  const rowSaveAction = schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction;
+  return hasQuickEditColumns && Boolean(rowSaveAction);
+}
 
 export function renderDataRow(
   item: FlattenedRow,

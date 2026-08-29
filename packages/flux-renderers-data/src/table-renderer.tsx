@@ -8,15 +8,6 @@ import {
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
-  Button,
-  Checkbox,
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  Label,
   Table,
   TableBody,
   TableFooter,
@@ -31,9 +22,18 @@ import {
   serializeInstancePath,
 } from './table-renderer/table-data.js';
 import { TableBodyRows } from './table-renderer/table-body-rows.js';
-import { createFixedColumnLayout, getFixedColumnKey } from './table-renderer/fixed-columns.js';
+import {
+  createFixedColumnLayout,
+  getFixedColumnKey,
+  DRAG_COLUMN_KEY,
+  DRAG_COLUMN_WIDTH,
+  ROW_SAVE_BAR_COLUMN_KEY,
+  ROW_SAVE_BAR_COLUMN_WIDTH,
+} from './table-renderer/fixed-columns.js';
+import { isRowDraftColumnEnabled } from './table-renderer/table-body-row-rendering.js';
 import { useTableColumnWidths } from './table-renderer/column-width-measure.js';
 import { TableHeaderRow } from './table-renderer/table-header-row.js';
+import { TableColumnSettings } from './table-renderer/table-column-settings.js';
 import { TableSummaryRowView } from './table-renderer/table-summary-row.js';
 import { TableLoadingOverlay } from './table-renderer/table-loading-overlay.js';
 import { TablePaginationBar } from './table-renderer/table-pagination-bar.js';
@@ -139,7 +139,6 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     toggleColumn,
     moveColumn,
   } = useTableVisibleColumns(tableSchemaProps, columns);
-  const [inlineColumnSettingsOpen, setInlineColumnSettingsOpen] = useState(false);
   const { paginationEnabled, serverPaged, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
     useTablePagination(tableSchemaProps, props.events.onPageChange);
   const { sortState, sortEntries, handleSort } = useTableSort(
@@ -321,16 +320,30 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const fixedColumnLayout = useMemo(
     () =>
       createFixedColumnLayout(
-        { rowSelection: tableSchemaProps.rowSelection },
+        {
+          rowSelection: tableSchemaProps.rowSelection,
+          draggable: tableSchemaProps.draggable === true,
+        },
         mainColumns,
         showExpandColumn,
         measuredWidths,
       ),
-    [mainColumns, tableSchemaProps.rowSelection, showExpandColumn, measuredWidths],
+    [mainColumns, tableSchemaProps.rowSelection, tableSchemaProps.draggable, showExpandColumn, measuredWidths],
   );
+
+  // [G3-视角5-01]/[G3-R3-视角8-01] helper body columns must pair header th +
+  // colgroup col; derive the flags once and share them with header/count.
+  const rowDraftColumnEnabled = useMemo(
+    () => isRowDraftColumnEnabled(tableSchemaProps, mainColumns),
+    [tableSchemaProps, mainColumns],
+  );
+  const visibleColumnsSet = useMemo(() => new Set(visibleColumns), [visibleColumns]);
 
   const colgroupEntries = useMemo(() => {
     const entries: { key: string; width: number | undefined }[] = [];
+    if (schemaProps.draggable === true) {
+      entries.push({ key: DRAG_COLUMN_KEY, width: measuredWidths.get(DRAG_COLUMN_KEY) ?? DRAG_COLUMN_WIDTH });
+    }
     if (showExpandColumn) {
       entries.push({ key: '__expand__', width: measuredWidths.get('__expand__') });
     }
@@ -341,8 +354,14 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       const key = getFixedColumnKey(column, index);
       entries.push({ key, width: measuredWidths.get(key) });
     });
+    if (rowDraftColumnEnabled) {
+      entries.push({
+        key: ROW_SAVE_BAR_COLUMN_KEY,
+        width: measuredWidths.get(ROW_SAVE_BAR_COLUMN_KEY) ?? ROW_SAVE_BAR_COLUMN_WIDTH,
+      });
+    }
     return entries;
-  }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, showExpandColumn]);
+  }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, schemaProps.draggable, showExpandColumn, rowDraftColumnEnabled]);
 
   const rowDragSortApi = useRowDragSort({
     enabled: schemaProps.draggable === true,
@@ -378,41 +397,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     (nestedHeadersActive ? leafBodyColumns : mainColumns).length +
     (schemaProps.rowSelection ? 1 : 0) +
     (showExpandColumn ? 1 : 0) +
-    (schemaProps.draggable ? 1 : 0);
+    (schemaProps.draggable ? 1 : 0) +
+    (rowDraftColumnEnabled ? 1 : 0);
   const columnSettingsOverlay = schemaProps.columnSettings?.overlay !== false;
   const columnSettingsAlignmentClass =
     schemaProps.columnSettings?.align === 'left' ? 'items-start' : 'items-end';
-  const columnSettingsColumnsByKey = useMemo(
-    () => new Map(columns.map((column, index) => [column.name ?? `column-${index}`, column] as const)),
-    [columns],
-  );
-  const visibleColumnKeys = useMemo(() => new Set(visibleColumns), [visibleColumns]);
-  const orderedColumnKeyToIndex = useMemo(
-    () => new Map(orderedColumns.map((key, index) => [key, index] as const)),
-    [orderedColumns],
-  );
-  const columnSettingsItems = useMemo(
-    () =>
-      orderedColumns.flatMap((key) => {
-        const orderedIndex = orderedColumnKeyToIndex.get(key);
-        const column = columnSettingsColumnsByKey.get(key);
-
-        if (!column || orderedIndex == null) {
-          return [];
-        }
-
-        return [
-          {
-            key,
-            column,
-            orderedIndex,
-            label: typeof column.label === 'string' ? column.label : (column.name ?? key),
-            visible: visibleColumnKeys.has(key),
-          },
-        ];
-      }),
-    [columnSettingsColumnsByKey, orderedColumnKeyToIndex, orderedColumns, visibleColumnKeys],
-  );
 
   const virtualThreshold = schemaProps.virtualThreshold;
   const scrollHeight = schemaProps.scrollHeight;
@@ -434,125 +423,30 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       {hasRendererSlotContent(headerContent) ? (
         <div data-slot="table-header-region">{asReactNode(headerContent)}</div>
       ) : null}
-      {columnSettingsEnabled ? (
-        <div
-          className={cn('mb-2 flex flex-col', columnSettingsAlignmentClass)}
-          data-slot="table-column-settings"
-        >
-          {columnSettingsOverlay ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button variant="outline" size="sm">
-                    {t('flux.table.columns')}
-                  </Button>
-                }
-              />
-              <DropdownMenuContent>
-                {columnSettingsItems.map(({ key, label, orderedIndex, visible }) => {
-                  return (
-                    <div key={key} data-slot="table-column-settings-item">
-                      <DropdownMenuCheckboxItem
-                        checked={visible}
-                        onCheckedChange={(checked) => toggleColumn(key, checked)}
-                      >
-                        {label}
-                      </DropdownMenuCheckboxItem>
-                      <div
-                        className="flex gap-1 px-1.5 pb-1"
-                        data-slot="table-column-settings-actions"
-                      >
-                        <DropdownMenuItem
-                          aria-label={`${t('flux.table.moveUp')} ${label}`}
-                          disabled={orderedIndex === 0}
-                          onClick={() => moveColumn(key, 'up')}
-                        >
-                          {t('flux.table.moveUp')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          aria-label={`${t('flux.table.moveDown')} ${label}`}
-                          disabled={orderedIndex === orderedColumns.length - 1}
-                          onClick={() => moveColumn(key, 'down')}
-                        >
-                          {t('flux.table.moveDown')}
-                        </DropdownMenuItem>
-                      </div>
-                      {orderedIndex < orderedColumns.length - 1 ? <DropdownMenuSeparator /> : null}
-                    </div>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setInlineColumnSettingsOpen((value) => !value)}
-              >
-                {t('flux.table.columns')}
-              </Button>
-              {inlineColumnSettingsOpen ? (
-                <div
-                  className="mt-2 w-full max-w-sm rounded-md border bg-popover p-2 shadow-sm"
-                  data-slot="table-column-settings-inline"
-                >
-                  {columnSettingsItems.map(({ key, label, orderedIndex, visible }) => {
-                    const checkboxId = `table-column-settings-${props.id}-${key}`;
-
-                    return (
-                      <div
-                        key={key}
-                        className="flex items-center justify-between gap-3 px-2 py-1.5"
-                        data-slot="table-column-settings-item"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            id={checkboxId}
-                            checked={visible}
-                            onCheckedChange={(checked) => toggleColumn(key, Boolean(checked))}
-                          />
-                          <Label htmlFor={checkboxId}>{label}</Label>
-                        </div>
-                        <div className="flex gap-1" data-slot="table-column-settings-actions">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            aria-label={`${t('flux.table.moveUp')} ${label}`}
-                            disabled={orderedIndex === 0}
-                            onClick={() => moveColumn(key, 'up')}
-                          >
-                            {t('flux.table.moveUp')}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            aria-label={`${t('flux.table.moveDown')} ${label}`}
-                            disabled={orderedIndex === orderedColumns.length - 1}
-                            onClick={() => moveColumn(key, 'down')}
-                          >
-                            {t('flux.table.moveDown')}
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </>
-          )}
-        </div>
-      ) : null}
+      <TableColumnSettings
+        enabled={columnSettingsEnabled}
+        overlay={columnSettingsOverlay}
+        align={columnSettingsAlignmentClass === 'items-start' ? 'left' : 'right'}
+        columns={columns}
+        orderedColumns={orderedColumns}
+        visibleColumnKeys={visibleColumnsSet}
+        rendererId={props.id}
+        onToggle={toggleColumn}
+        onMove={moveColumn}
+      />
 
       <div
         ref={(element) => {
           measureRootRef.current = element;
+          // [G3-R4-视角5-01] autoFill and virtualization are independent consumers of the
+          // same scroll container — route the element to BOTH (an if/else here left
+          // scrollRef null under autoFillHeight × virtualThreshold and the body
+          // silently rendered zero rows).
           if (element && autoFillActive) {
             // eslint-disable-next-line react-hooks/immutability, react-compiler/react-compiler -- C1a 组合 ref 回调：同一元素路由到三个 ref（列宽测量 + autoFill + 虚拟滚动），hook 返回的 ref 对象由消费方赋 .current 是既有契约
             autoFill.containerRef.current = element;
-          } else if (element && virtualEnabled) {
+          }
+          if (element && virtualEnabled) {
             scrollRef.current = element;
           }
         }}
@@ -607,6 +501,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 columnResize={schemaProps.columnResize}
                 resizeApi={resizeApi}
                 affixHeader={schemaProps.affixHeader}
+                draggable={schemaProps.draggable === true}
+                rowDraftColumnEnabled={rowDraftColumnEnabled}
               />
             </TableHeader>
           ) : null}

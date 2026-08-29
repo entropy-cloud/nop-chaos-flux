@@ -558,7 +558,16 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const canRedoNow = canRedo(undoStackState);
 
   return (
-    <div ref={boardRef} data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}>
+    <div
+      ref={boardRef}
+      data-slot="kanban"
+      inert={meta.disabled === true || undefined}
+      aria-disabled={meta.disabled === true || undefined}
+      data-disabled={meta.disabled === true ? 'true' : undefined}
+      data-testid={meta.testid || undefined}
+      data-cid={meta.cid || undefined}
+      className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}
+    >
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {dndAnnouncement || t('scheduling.kanban.boardSummary', {
           columns: columns.length,

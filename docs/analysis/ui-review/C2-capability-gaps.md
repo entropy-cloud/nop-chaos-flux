@@ -60,3 +60,23 @@
 
 - R2 共性族"状态已发射、样式零消费"（button-group 选中态、TableRow 选中、calendar 拖拽悬停、notice-bar 变体等，276 条发现中的高频族）与 **G-F（option-row 原语）** 同源——schema 层无选中/hover 态表达通道、渲染器层有状态无样式，双向佐证 G-F 作 D1 首项的优先级。
 - R2 共性族"键盘等价路径缺失"（icon-picker 200+ Tab 停留点、dashboard 画布面板无方向键移动/缩放、page 侧栏拖拽把手不可聚焦）为 **G-B2（键盘导航框架，L4）** 追加实证面。
+
+### 回写 ② — R3 P0/P1 修复批次共性素材（2026-08-29，plan `2026-08-29-0419-1-r3-consistency-p0p1-remediation.md` Phase 4）
+
+> 授权链: roadmap Cross-Cutting 5（C2 滚动追加回写方式）→ R3 plan Phase 4。C2 状态不重开，仅追加证据与素材行。HEAD `1129772fe`。
+
+**族 2（状态已发射、样式零消费）佐证更新（G-F / option-row）**:
+
+- R3 批次⑨已修 button-group 选中态（`data-selected:` 消费类补齐）与 variant:"primary"（cva 补键 + union 合法化）——两条 HIGH 的修复共同点是"渲染器层补样式消费"，schema 层仍无选中/hover/按压态的表达通道。
+- 族 2 其余成员（TableRow 选中、gantt 任务条选中、ai-feedback 投票态、notice-bar 变体、calendar drop-target）已按 R3 裁决登记 successor 候选（台账 `r2-audit/r3-p2-adjudication.md`），修复面仍在渲染器层。**结论: G-F option-row 作 D1 首项的依据加厚——凡 schema 无法表达的状态，最终都要在渲染器层逐个补丁；option-row 原语可一次性消解该族。**
+
+**族 7（键盘等价路径缺失）佐证更新（G-B2 / 键盘导航框架）**:
+
+- R3 裁决后，icon-picker 漫游（[G2-R7-视角9-01]）、calendar 周/日惰性焦点（[G4-R3-视角9-01]）、键盘创建死路（[G4-R3-视角10-02]）、画布面板无方向键（[G3-R5-视角3-02]）均登记候选未修——键盘等价缺口的修复面全部落在"组件级 roving/方向键模型"，与 G-B2 的框架级能力（chord/peek/全局重排）仍按 R2 复核划线（单控件=一致性缺陷，框架=能力缺口）。**G-B2 证据面维持，D1 排序建议不变。**
+
+**族 1（disabled 全通道门禁）修复经验（新渲染器契约素材，供 D1 参考）**:
+
+- R3 批次①一次回溯了 input-time steppers、period 快捷钮、barcode 五通道、upload 完成写入/取消、scada 三面板、三 board 根容器共 6+ 条同根因实例——缺陷模式均为"主输入通道接了门禁、次要写入通道漏接"。
+- **素材行**: D1 立项新表面/新渲染器时，建议把"全写入通道门禁"作为 renderer 契约检查项（对应 R2 summary §建议的统一设计规范 #1），而非逐案例后补；form 族已有 `presentation.interactive` 收敛点可直接复用。
+
+**族 3/5/8/10 佐证**: surface 滚动契约（#3）、错误反馈三通道（#5）、确认顺序 `[secondary, primary]`（#8）、空态规范（#10）四条统一设计规范已由 R2 summary 沉淀；R3 修复补齐了 DrawerBody/Dialog 的 body 滚动不对称与会话删除确认两个 HIGH 样本，其余成员见 P2 候选池。

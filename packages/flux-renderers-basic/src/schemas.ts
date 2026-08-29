@@ -238,7 +238,7 @@ export interface TextSchema extends BaseSchema {
 export interface ButtonSchema extends BaseSchema {
   type: 'button';
   label?: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?: 'default' | 'primary' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon' | 'icon-xs' | 'icon-sm' | 'icon-lg';
   disabled?: boolean | string;
   icon?: string;

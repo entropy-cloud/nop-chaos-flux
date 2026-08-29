@@ -62,6 +62,30 @@ export function readDetailDraftValues(draftForm: FormRuntime) {
   };
 }
 
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(',')}]`;
+  }
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+      a < b ? -1 : a > b ? 1 : 0,
+    );
+    return `{${entries.map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
+/** [G2-R6-视角6-01] dirty comparison for the close guard: the draft is dirty when
+ * the current scope values differ (key-order-insensitive) from the values the
+ * draft was opened with. */
+export function isDetailDraftDirty(
+  draftForm: FormRuntime,
+  initialValues: Record<string, unknown>,
+): boolean {
+  const { draftValues } = readDetailDraftValues(draftForm);
+  return stableStringify(draftValues) !== stableStringify(initialValues);
+}
+
 export function useDetailAdaptationAction(input: {
   helpers: RendererComponentProps['helpers'];
   parentScope: RendererComponentProps['node']['scope'];

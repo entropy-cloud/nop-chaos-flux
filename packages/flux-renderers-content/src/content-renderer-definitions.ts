@@ -153,6 +153,7 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'href', kind: 'prop' },
       { key: 'target', kind: 'prop' },
       { key: 'rel', kind: 'prop' },
+      { key: 'download', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
     ],
   },

@@ -34,6 +34,16 @@ export function LinkRenderer(props: RendererComponentProps<LinkSchema>) {
       : undefined;
   const target = slotProps.target as LinkSchema['target'] | undefined;
   const rel = resolveRel(target, slotProps.rel);
+  // [G7-R2-视角11-01] download passthrough: data:/blob: export links are blocked
+  // as top-frame navigations by modern browsers unless the anchor carries the
+  // `download` attribute. true → download="" (browser-generated filename).
+  const rawDownload = slotProps.download;
+  const download =
+    typeof rawDownload === 'string' && rawDownload.length > 0
+      ? rawDownload
+      : rawDownload === true
+        ? ''
+        : undefined;
 
   const disabled = slotProps.disabled === true || props.meta.disabled === true;
 
@@ -60,6 +70,7 @@ export function LinkRenderer(props: RendererComponentProps<LinkSchema>) {
       href={disabled ? undefined : href}
       target={target}
       rel={rel}
+      download={download ?? undefined}
       onClick={needsHandler ? handleClick : undefined}
       aria-disabled={disabled || undefined}
       className={cn(

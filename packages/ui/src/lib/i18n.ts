@@ -7,6 +7,11 @@ const messages: Record<string, string> = {
   'flux.common.confirm': 'Confirm',
   'flux.common.cancel': 'Cancel',
   'flux.dialog.close': 'Close dialog',
+  'flux.dialog.unsavedChangesTitle': 'Discard changes?',
+  'flux.dialog.unsavedChangesBody':
+    'Your edits have not been saved. Closing now will discard them.',
+  'flux.dialog.unsavedChangesKeep': 'Keep editing',
+  'flux.dialog.unsavedChangesDiscard': 'Discard changes',
   'flux.drawer.close': 'Close drawer',
   'flux.drawer.resize': 'Resize drawer',
   'flux.page.asideResize': 'Resize aside',

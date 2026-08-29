@@ -27,6 +27,7 @@ import {
 import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface.js';
 import {
   buildDetailDraftInitialValues,
+  isDetailDraftDirty,
   readDetailDraftValues,
   useDetailAdaptationAction,
   useDetailChildValidationContract,
@@ -105,6 +106,8 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     openSequencer,
     confirmSequencer,
   } = useDetailDraftControllerState();
+  // [G2-R6-视角6-01] baseline the dirty check against the values the draft opened with.
+  const draftInitialValuesRef = React.useRef<Record<string, unknown>>({});
 
   const childOwnerId = React.useMemo(
     () => `detail-field:${props.id}:${name || 'value'}`,
@@ -194,6 +197,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
       if (!mountedRef.current) return;
 
       const initialValues = buildDetailDraftInitialValues(adaptedValue);
+      draftInitialValuesRef.current = initialValues;
 
       const newDraftForm = runtime.createFormRuntime({
         id: `detail-field-draft:${name}:${Date.now()}`,
@@ -312,6 +316,11 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     closeDraft();
   }
 
+  const isDraftDirty = React.useCallback(
+    () => (draftForm ? isDetailDraftDirty(draftForm, draftInitialValuesRef.current) : false),
+    [draftForm],
+  );
+
   const viewerContent = resolveRendererSlotContent(props, 'viewer');
   const editContent = resolveRendererSlotContent(props, 'content');
 
@@ -353,6 +362,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
         size={(schemaProps.surface as { size?: string } | undefined)?.size}
         placement={(schemaProps.surface as { placement?: string } | undefined)?.placement}
         onClose={handleCancel}
+        isDirty={readOnly ? undefined : isDraftDirty}
         footer={
           <DetailDraftFooter
             error={draftError}

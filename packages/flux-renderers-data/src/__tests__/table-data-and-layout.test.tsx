@@ -366,6 +366,7 @@ describe('table row rendering helpers', () => {
             {
               getExpandCellProps: () => ({ className: 'expand-cell', style: {} }),
               getSelectionCellProps: () => ({ className: 'select-cell', style: {} }),
+              getDragCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: 'data-cell', style: {}, fixed: undefined }),
               hasStickyColumns: false,
             } as FixedColumnLayout,
@@ -434,6 +435,7 @@ describe('table row rendering helpers', () => {
             {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
+              getDragCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
               hasStickyColumns: false,
             } as FixedColumnLayout,

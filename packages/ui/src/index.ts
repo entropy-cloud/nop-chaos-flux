@@ -16,6 +16,7 @@ export * from './components/ui/combobox.js';
 export * from './components/ui/command.js';
 export * from './components/ui/context-menu.js';
 export * from './components/ui/dialog.js';
+export * from './components/ui/dirty-close-guard.js';
 export * from './components/ui/direction.js';
 export * from './components/ui/drawer.js';
 export * from './components/ui/dropdown-menu.js';
