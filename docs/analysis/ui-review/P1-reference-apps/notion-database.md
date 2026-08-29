@@ -74,23 +74,23 @@ Notion database 是"多视图同一数据集"的品类标杆：一个数据源�
 
 ## 5. 能力映射初稿
 
-| 参考元素                     | flux 原语（schema 落点）      | 保真度预估                | C2 对照     |
-| ---------------------------- | ----------------------------- | ------------------------- | ----------- |
-| 视图 tab 条                  | tabs（拖拽重排需扩展）        | 高                        | **G-C**     |
-| 新建视图菜单                 | dialog + 表单                 | 高                        | G-C         |
-| table 视图                   | table + form 族行内编辑       | 中（冻结列/类型切换缺）   | G-D（边缘） |
-| board 视图                   | kanban（scheduling）          | 中高（分组聚合计算需补）  | G-D/G-C     |
-| gallery 视图                 | card 网格 + data-source       | 高                        | G-E         |
-| calendar 视图                | calendar（scheduling）        | 中（格内联建+拖改期需补） | G-C         |
-| list 视图                    | list                          | 高                        | G-E         |
-| filter 构建器                | condition-builder             | 高（嵌套 3 层求值需验证） | **G-C**     |
-| sort/搜索                    | data-source 查询参数          | 高                        | G-C         |
-| 记录展开（side/center 双态） | dialog/drawer 双形态 + 字段行 | 高                        | G-C         |
-| 属性 chip                    | badge + 10 色语义盘           | 高                        | G-E         |
-| hover 显控件（OPEN/⋮⋮/+）    | CSS hover / 双渲染            | 中                        | **G-F**     |
-| 右键/批量记录操作            | DropdownMenu + 批量栏         | 中                        | G-B3        |
-| 库名+图标+视图族页面骨架     | 页面组合 schema               | 中                        | G-A         |
-| 高密度行排版                 | 行高/字号 token               | 高                        | G-E         |
+| 参考元素                     | flux 原语（schema 落点）                                                                                                                                                                      | 保真度预估                | C2 对照     |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ----------- |
+| 视图 tab 条                  | tabs（拖拽重排需扩展）                                                                                                                                                                        | 高                        | **G-C**     |
+| 新建视图菜单                 | dialog + 表单                                                                                                                                                                                 | 高                        | G-C         |
+| table 视图                   | table + form 族行内编辑                                                                                                                                                                       | 中（冻结列/类型切换缺）   | G-D（边缘） |
+| board 视图                   | kanban（scheduling）                                                                                                                                                                          | 中高（分组聚合计算需补）  | G-D/G-C     |
+| gallery 视图                 | card 网格 + data-source                                                                                                                                                                       | 高                        | G-E         |
+| calendar 视图                | calendar（scheduling）（P5a 实测勘误 2026-08-30：calendar 月视图为资源时间轴横条形态，非 Notion 六周竖向月网格——原语直载形态不符，P5a 以 container grid + loop 自绘承载，原语复用度低于预估） | 中（格内联建+拖改期需补） | G-C         |
+| list 视图                    | list                                                                                                                                                                                          | 高                        | G-E         |
+| filter 构建器                | condition-builder                                                                                                                                                                             | 高（嵌套 3 层求值需验证） | **G-C**     |
+| sort/搜索                    | data-source 查询参数                                                                                                                                                                          | 高                        | G-C         |
+| 记录展开（side/center 双态） | dialog/drawer 双形态 + 字段行                                                                                                                                                                 | 高                        | G-C         |
+| 属性 chip                    | badge + 10 色语义盘                                                                                                                                                                           | 高                        | G-E         |
+| hover 显控件（OPEN/⋮⋮/+）    | CSS hover / 双渲染                                                                                                                                                                            | 中                        | **G-F**     |
+| 右键/批量记录操作            | DropdownMenu + 批量栏                                                                                                                                                                         | 中                        | G-B3        |
+| 库名+图标+视图族页面骨架     | 页面组合 schema                                                                                                                                                                               | 中                        | G-A         |
+| 高密度行排版                 | 行高/字号 token                                                                                                                                                                               | 高                        | G-E         |
 
 ### 视图切换状态机（G-C 主对照，拆到状态/迁移级）
 
