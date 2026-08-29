@@ -1,6 +1,6 @@
 # UI Review Roadmap：对标分析 + 一致性审查 + 复杂页面构想 + 参考应用复刻
 
-> Last Updated: 2026-08-29（R3 `planned`→`done`：plan 2026-08-29-0419-1 全 Phase 执行完毕、closure audit 通过（fresh session `ses_fb4589abaffeqrHt1MkZyRtBw7`，approved 零 Blocker/Major）；17 条 P0/P1 修复 + P2 172 条裁决（3 随批修/169 候选）+ P3 87 条登记，落点与台账见 `R2-consistency-audit.md` §R3 收口节；同日早前：R3/P1 `todo`→`planned` 两份 plan 转 active，R2 `planned`→`done`）
+> Last Updated: 2026-08-29（P1 `planned`→`done`：plan 2026-08-29-0419-2 全 Workstream 执行完毕、closure audit 通过（fresh session `ses_fb43c6d5bffeL4kz0gnJfK3aWM`，approved-with-minors）；产出 `docs/analysis/ui-review/P1-reference-apps/`（复刻工程规范 README + 6 篇应用分析篇，能力映射逐行 C2 对照 + 5 闭源应用差异声明）；同日早前：R3 `planned`→`done`：plan 2026-08-29-0419-1 全 Phase 执行完毕、closure audit 通过（fresh session `ses_fb4589abaffeqrHt1MkZyRtBw7`，approved 零 Blocker/Major）；17 条 P0/P1 修复 + P2 172 条裁决（3 随批修/169 候选）+ P3 87 条登记，落点与台账见 `R2-consistency-audit.md` §R3 收口节；R3/P1 `todo`→`planned` 两份 plan 转 active，R2 `planned`→`done`）
 > Source: 用户目标指令（2026-08-19，四项要求：对标成熟框架的详尽分析 / 复杂页面构想验证承载力 / 线上调研参考应用并仿制页面与交互 / UI 一致性自查）；拟制流程按 `docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`；复刻方法论先例 `docs/analysis/sundial-ui-reproduction-analysis.md`
 > Mission: `missions/ui-review.json`
 > **分支纪律**：本 roadmap 全部工作在 worktree `nop-chaos-flux-ui-review`（分支 `ui-review`）执行，禁止直接落在 master 工作区；合并回 master 为人工门禁（见 Cross-Cutting §1）。
@@ -30,7 +30,7 @@
 - R3. 一致性 P0/P1 修复与共性归类收口: `done`（plan `docs/plans/2026-08-29-0419-1-r3-consistency-p0p1-remediation.md`，2026-08-29 closure audit 通过；17 条 P0/P1 先红后绿修复 + P2 172 条裁决（随批修 3/候选 169/拒绝 0）+ P3 87 条登记终态；落点清单与裁决台账见 `docs/analysis/ui-review/R2-consistency-audit.md` §R3 收口节 + `r2-audit/r3-p2-adjudication.md`）
 - C1. 复杂页面构想清单与能力压力预判: `done`
 - C2. 能力差距汇总与分级裁决（滚动文档）: `done`（初版裁决收口；Pi-b 回写走追加区）
-- P1. 参考应用线上调研与复刻工程规范: `planned`（plan `docs/plans/2026-08-29-0419-2-p1-reference-app-research-and-replication-spec.md`，draft review 共识通过）
+- P1. 参考应用线上调研与复刻工程规范: `done`（plan `docs/plans/2026-08-29-0419-2-p1-reference-app-research-and-replication-spec.md`，2026-08-29 closure audit 通过（fresh session `ses_fb43c6d5bffeL4kz0gnJfK3aWM`，approved-with-minors，3 Minor 随收口修正）；产出 `docs/analysis/ui-review/P1-reference-apps/`：复刻工程规范 README（slug 分配表 / mock 与 e2e 模板 / 分析篇模板 / 验收维度）+ 6 篇应用分析篇（ant-design-pro / cal-booking / linear / notion-database / airtable-grid / stripe-dashboard），P2a–P7b 可凭 README 开工）
 - P2a. Ant Design Pro 页面模板族 — 分析与静态复刻: `todo`
 - P2b. Ant Design Pro 页面模板族 — 交互接线与测试: `todo`
 - P3a. Cal.com 预约流程复刻 — 分析与静态复刻: `todo`
