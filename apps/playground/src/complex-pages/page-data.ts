@@ -110,3 +110,9 @@ PAGE_DATA['sundial-settings'] = {
   mode: 'local',
   activeSection: 'sync',
 };
+
+// ── Cal.com replica: timezone selector + 12h/24h switch initial states ──
+PAGE_DATA['cal-booking'] = {
+  calTimezone: 'Asia/Shanghai',
+  cal24h: true,
+};

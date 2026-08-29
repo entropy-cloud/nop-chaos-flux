@@ -23,6 +23,7 @@ import {
   createAntdProOrders,
   createAntdProFetcherBranch,
 } from './mock-backend-antdpro';
+import { createCalEventMeta, createCalFetcherBranch } from './mock-backend-cal';
 import { confirmBridge } from './confirm-bridge';
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -105,6 +106,8 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
   const db = createMockDatabase();
   const antdproOrders = createAntdProOrders();
   const handleAntdProBranch = createAntdProFetcherBranch(antdproOrders, clone);
+  const calEvent = createCalEventMeta();
+  const handleCalBranch = createCalFetcherBranch(calEvent, clone);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {
     const url = api.url ?? '';
@@ -643,6 +646,14 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     // mock-backend-antdpro.ts to keep this file under the 700-line gate. -----
     if (url.includes('/r/AntdPro__')) {
       const handled = handleAntdProBranch<T>({ url, method, params, body });
+      if (handled) return handled;
+    }
+
+    // ----- Cal.com replica endpoints (plan 2026-08-29-1413-2 P3a; get-only
+    // read surface — interaction wiring belongs to P3b). Branch body lives in
+    // mock-backend-cal.ts to keep this file under the 700-line gate. -----
+    if (url.includes('/r/Cal__')) {
+      const handled = handleCalBranch<T>({ url, method, params, body });
       if (handled) return handled;
     }
 

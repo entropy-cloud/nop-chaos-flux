@@ -18,6 +18,7 @@
 @import './styles-theme-utilities.css';
 @import './sundial-replica/sundial-replica.css';
 @import './antdpro-replica/antdpro-replica.css';
+@import './cal-replica/cal-replica.css';
 @source "../../../packages";
 
 @theme inline {

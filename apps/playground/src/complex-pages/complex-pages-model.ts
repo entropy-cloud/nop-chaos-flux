@@ -281,4 +281,28 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 Ant Design Pro result 成功页：lucide 自绘结果图形 + 成功标题与描述行 + 动作组（返回列表主按钮 + 再填一层次按钮），I13 静态形态。',
     features: ['复刻样式', '结果图形', '描述行', '动作组'],
   },
+  {
+    id: 'cal-booking',
+    title: 'Cal 预约 · 选时段',
+    category: 'app-replica',
+    description:
+      '复刻 Cal.com 公开预约页（Booker）入口与槽位选择视图：活动头部（头像/标题/meta 行/描述/时长 tabs 15-60 分钟）+ 双栏（左月历 + 时区选择器 + 12h/24h 开关，右选中日槽位上午/下午/晚上分组三态按钮 + 骨架屏样本），数据经 Cal__event 与 Cal__slots 端点流动。',
+    features: ['复刻样式', '月历', '时长 tabs', '槽位三态', 'Cal__slots'],
+  },
+  {
+    id: 'cal-confirm',
+    title: 'Cal 预约 · 确认信息',
+    category: 'app-replica',
+    description:
+      '复刻 Cal.com 确认表单页：reschedule 提示条 + 左摘要卡（头像/标题/时长/地点/时区）+ 右表单（姓名/邮箱/电话/备注 + 嘉宾行形态 + 自定义问题字段族 select/radio/checkbox + 校验错误形态样本 + Confirm 黑按钮），摘要数据经 Cal__event 端点拉取。',
+    features: ['复刻样式', '摘要卡', '自定义问题', '校验样本', 'Cal__event'],
+  },
+  {
+    id: 'cal-success',
+    title: 'Cal 预约 · 预约成功',
+    category: 'app-replica',
+    description:
+      '复刻 Cal.com 预约成功态：大圆 ✓（success 令牌）+ 预约摘要卡 + Add to calendar 四外链（Google/Outlook/Office365/ICS 占位链接）+ Copy link 按钮 + Reschedule/Cancel 链接 + 「待确认」pending 徽章变体，摘要数据经 Cal__event 端点拉取。',
+    features: ['复刻样式', '成功图形', '日历外链', 'pending 徽章'],
+  },
 ];
