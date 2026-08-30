@@ -274,3 +274,16 @@
 - **form `submitAction` 求值域不可解析 select 字段名（P5b 口径按字段型别精化）**：`${filterStatus}`（select 字段名）在 submitAction 表达式域求值失败 → 该 setValue 静默不执行（live 探针：refetch 发生但参数为空）；`$formData` 在 dialog 级 `onSubmitSuccess` 域可解析且**携带 select 选中值**。终态姿势：submitAction 保留字面量写（保证成功链）+ 真实写入全部落 dialog `onSubmitSuccess` 链。P5b「可解析字段名」口径据此精化为**按字段型别/值注册路径而异**。
 - **table 内建 sorter 客户端排序可达（P7b I4 实测，与 P6b A5 会话端点变体互为备选）**：列 `sortable: true` + 列 name 对齐数据字段即可承载点击排序（asc→desc→null 内建循环 + 内建升降箭头 + `th[aria-sort]` 视觉态），`processTableData` 对全量 source 客户端排序在客户端分页形态下完整可达（金额列以 minor 单位数值序、日期列以 ISO 串字典序承载）。纯展示型部分列排序无需会话端点。
 - **`__stripeTestHooks.lastUrl` 观察 affordance**：端点计数钩子旁挂最后一次请求 url（notion `lastUpdate`/`lastMove` 同族第五例），e2e 排查「refetch 发生但参数未物化」类问题的关键探针——opt-in 钩子载荷观察从"写载荷"扩展到"读 url"，模式可沉淀为复刻接线规范条目。
+
+### 回写 ⑨ — D1 option-row 原语产品化终态（2026-08-30，plan `2026-08-30-1333-2-d1-gf-option-row-primitive.md`）
+
+> 授权链: roadmap Cross-Cutting 5（追加式回写，初版裁决表零改动）+ D1 work item 本体（G-F/G-F2 终态裁决由本 plan Phase 4 承载）。HEAD 见当日 dev log。
+
+**G-F（option-row 原语，L3）已产品化（本 plan）——终态证据**:
+
+- 契约落地：行类 renderer `optionRow` 语义字段族（`OptionRowConfig`：`value` 选中值绑定（owner scope SchemaValue、数组 any-match、失败兜底无选中）+ `valueField`（list 默认 keyField / table 默认 rowKey）+ `selectedClass` schema 消费类）+ `@nop-chaos/flux-react` 共享状态 helper（`getOptionRowStateAttributes`/`getOptionRowStateTokens`/`optionRowValueMatches`/`optionRowBindingEquals`）。marker 输出协议：`data-option-row` / `data-state`（token 集）/ `data-selected` / `aria-selected` / `aria-disabled`，hover 走 `[data-option-row]:hover` + `@media (hover: hover)` 门（触摸端协议级 no-op），未声明 optionRow 输出与现行为渲染快照等价。契约文档：`docs/references/renderer-interfaces.md` §Option-Row Interaction-State Contract；flux-guide `design-patterns/list.md` §3.1 + `design-patterns/table.md` §4.1。
+- 采纳面：list（`list-renderer.tsx`）+ table 行（`table-body-row-rendering.tsx` DataRowView，memo comparator 同步）+ 族2 成员 ai-feedback 投票态（经 `getOptionRowStateTokens` 接入标准通道，`data-active` 保留兼容）。先红后绿单测：`list-option-row.test.tsx`（12 条：兼容矩阵/属性类输出矩阵/绑定响应式/失败兜底/clash dev warn/无 JS hover 断言）+ `table-option-row.test.tsx`（7 条）+ `ai-feedback-option-row.test.tsx`（3 条）。
+- **族2（状态已发射、样式零消费）消解结论（回写 ② 实证闭环）**：TableRow 选中（改造前行级零选中 marker）与 ai-feedback 投票态（`data-active` 零消费）均经原语消解——修复模式从「逐个渲染器补丁」收敛为「schema 声明 + host CSS 消费标准 marker」。
+- **族2 余量成员终态登记（successor / 维持）**：notice-bar 变体——live 复核已被 MA-06 调色板消费（`styles.css` `[data-variant]` 四变体），不构成零消费样本，关闭；gantt 任务条选中——渲染器层已硬编码消费（`bg-blue-50`），即回写②「逐个补丁」在案样本，维持现状（按价值可后续采纳 `selectedClass` 通道）；calendar drop-target——`data-drop-target`/`data-drop-valid` DOM 直写零 CSS 消费，属拖拽瞬态语义非行选中态，option-row 通道不承载，留 CSS 消费 successor 候选（successor 登记即本回写条目，r3-p2 台账对应行不做回改——台账为历史执行记录）。
+- **G-F2（className 表达式绑定，L3）终态：关闭（被 G-F 吸收）**。依据：回写 ⑦ A9 实测表达式机制可用；其剩余缺口面（交互态状态源）由本原语承载；表达式 className 用法文档面由 flux-guide option-row 条目覆盖（`selectedClass` + 标准 marker 双通道）。
+- styling-system 核查结论：`data-state` marker 与既有「state 用 data-_/aria-_ 表达」规则兼容（map/code-editor 已有 `data-state` 先例），styling-system.md 零改动（无凑条目）。

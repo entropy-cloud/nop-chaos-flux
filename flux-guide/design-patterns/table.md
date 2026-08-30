@@ -121,6 +121,34 @@
 
 ---
 
+## 4.1 选中态 schema 表达（optionRow）
+
+`optionRow` 为表格行提供「选中值绑定 + 状态 marker 输出」通道：行元素输出 `data-option-row` / `data-state` / `data-selected` / `aria-selected`，选中态可纯 schema 声明驱动（无需渲染器逐案补丁）。
+
+```jsonc
+{
+  "type": "table",
+  "source": "${rows}",
+  "rowKey": "id",
+  "optionRow": {
+    "value": "${activeId}", // 选中值绑定（owner scope 表达式，数组 = 命中任意一项）
+    "valueField": "id", // 可选：参与比对的记录字段，默认 rowKey
+    "selectedClass": "row-on", // 可选：选中行追加的 schema 类
+  },
+  "columns": [{ "name": "name", "label": "姓名" }],
+}
+```
+
+host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='selected']`；hover 走 `[data-option-row]:hover` 并以 `@media (hover: hover)` 门控触摸端。
+
+**行为要点**：
+
+- `value` 求值失败/为空 → 兜底为无选中态，不中断渲染。
+- 未声明 `value` 时选中态复用 `rowSelection` 内部选择集；`value` 与 `rowSelection` 同时声明时绑定独占视觉标记（dev warn），checkbox 照常工作、`onSelectionChange` 照常派发。
+- 不声明 `optionRow` 时输出与旧版完全一致。
+
+---
+
 ## 5. 虚拟滚动（大数据量）
 
 ```jsonc

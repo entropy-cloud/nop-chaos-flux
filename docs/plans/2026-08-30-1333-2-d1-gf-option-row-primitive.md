@@ -1,6 +1,6 @@
 # D1-1 G-F option-row 通用原语产品化（含 G-F2 终态裁决）
 
-> Plan Status: active
+> Plan Status: completed（2026-08-30 四 Phase 全 completed + Closure Gates 全勾 + fresh session 独立子 agent closure audit APPROVED）
 > Mission: ui-review
 > Work Item: D1. 能力缺口产品化 plans —— G-F option-row 原语（C2 §2 预清单第 1 位，D1 首个产品化 plan）
 > Last Reviewed: 2026-08-30
@@ -81,76 +81,120 @@
 
 ### Phase 1 - 契约设计与采纳面裁定
 
-Status: planned
+Status: completed
 Targets: 本计划 Decision 注记、`docs/references/renderer-interfaces.md`（草案条目）
 
 - Item Types: `Decision | Proof`
 
-- [ ] Proof——消费面 inventory 实测落字：list/table/container 三类行载体的现状状态源与样式消费通道逐项登记（含 `use-table-selection.ts`/`list-renderer.tsx` 选中事件链、R2 族2 成员的「已发射状态」清单——以 r3-p2-adjudication 台账为底稿 live 复核）
-- [ ] Decision——契约形态裁定（候选 ①行类 renderer 新增 `optionRow` 语义字段族（list 先行，逐 renderer 采纳）；②共享语义 helper + 属性/类输出约定（`resolveSurfaceMeta` 先例模式）+ 最小字段面；③新 renderer type `option-row`（sundial G5 原文建议之一））——含字段命名、与 `check-renderer-definition-fields-only` 门禁的登记、是否触及 `ui/src/index.ts`（ask-first 则显式标注理由并停在门禁）
-- [ ] Decision——状态源机制裁定（候选 ①renderer 本地瞬态（hover/pressed）→ 语义 marker 类 + `data-*` 属性输出（CSS 可解，scope 零写入）；②选中态复用既有 scope 契约（list selection/table selectionStatePath）+ 行级表达式上下文补齐；③键盘 focus 态仅暴露状态源（消费归 G-B2 边界））——三项可组合，逐项断言口径落字
-- [ ] Decision——采纳面终集裁定：list（必选）+ table 行 + 族2 成员 ≥1（候选按「状态已发射、样式零消费」修复成本排序）+ container 裸行载体是否纳入（sundial 双渲染场景的代表消解，可延后至 Follow-up）——落字
-- [ ] Decision——共存与兼容语义裁定：与 list `selectionMode`/table `rowSelection` 的优先级、选中值绑定失败兜底、触摸 hover 降级（Failure Paths 表终态化）——落字
-- [ ] Decision——G-F2 终态裁决：基于回写 ⑦「表达式机制可用、缺口在状态源」精化口径，裁定 G-F2 关闭（被 G-F 吸收）或收窄为 flux-guide 文档项——落字（Phase 4 回写 C2 执行）
+- [x] Proof——消费面 inventory 实测落字：list/table/container 三类行载体的现状状态源与样式消费通道逐项登记（含 `use-table-selection.ts`/`list-renderer.tsx` 选中事件链、R2 族2 成员的「已发射状态」清单——以 r3-p2-adjudication 台账为底稿 live 复核）
+- [x] Decision——契约形态裁定（候选 ①行类 renderer 新增 `optionRow` 语义字段族（list 先行，逐 renderer 采纳）；②共享语义 helper + 属性/类输出约定（`resolveSurfaceMeta` 先例模式）+ 最小字段面；③新 renderer type `option-row`（sundial G5 原文建议之一））——含字段命名、与 `check-renderer-definition-fields-only` 门禁的登记、是否触及 `ui/src/index.ts`（ask-first 则显式标注理由并停在门禁）
+- [x] Decision——状态源机制裁定（候选 ①renderer 本地瞬态（hover/pressed）→ 语义 marker 类 + `data-*` 属性输出（CSS 可解，scope 零写入）；②选中态复用既有 scope 契约（list selection/table selectionStatePath）+ 行级表达式上下文补齐；③键盘 focus 态仅暴露状态源（消费归 G-B2 边界））——三项可组合，逐项断言口径落字
+- [x] Decision——采纳面终集裁定：list（必选）+ table 行 + 族2 成员 ≥1（候选按「状态已发射、样式零消费」修复成本排序）+ container 裸行载体是否纳入（sundial 双渲染场景的代表消解，可延后至 Follow-up）——落字
+- [x] Decision——共存与兼容语义裁定：与 list `selectionMode`/table `rowSelection` 的优先级、选中值绑定失败兜底、触摸 hover 降级（Failure Paths 表终态化）——落字
+- [x] Decision——G-F2 终态裁决：基于回写 ⑦「表达式机制可用、缺口在状态源」精化口径，裁定 G-F2 关闭（被 G-F 吸收）或收窄为 flux-guide 文档项——落字（Phase 4 回写 C2 执行）
+
+#### Phase 1 裁定记录（执行时落字，2026-08-30）
+
+**Proof——消费面 inventory 实测（live 复核 2026-08-30，以 r3-p2-adjudication 台账为底稿）**：
+
+| 行载体                                        | 状态源现状                                                                                                                                                                                                               | 样式消费通道现状                                                                                                                                                                                                                                                                                                                                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list-renderer.tsx`（477 行）                 | `selectionMode`（single/multiple/none）本地集 + G12 失效键驱逐；`data-selected`/`aria-current` 行级输出；`onItemClick`/`onSelectionChange` 事件链（CX-10 派发 ctx 约定）                                                 | 选中态硬编码 `bg-primary/10`；hover 硬编码 `hover:bg-muted`；schema 层零逐态表达通道                                                                                                                                                                                                                                                                                                   |
+| `table-renderer/table-body-row-rendering.tsx` | `isSelected`（`rowSelection` + `selectionOwnership`/`selectionStatePath` hooks）；行 keydown 中继在库（`onRowClick` 声明后 tabIndex=0 + Enter/Space）；`data-expanded`/`data-striped`/`data-interactive` 等 data-\* 输出 | **行级选中标记零输出**（`isSelected` 只驱动 checkbox `checked`，tr 无 `data-selected`/无选中样式）——族2「TableRow 选中」live 样本；cell 级 `classNameExpr`（try/catch + dev warn 先例）在库                                                                                                                                                                                            |
+| container 裸行                                | 零选中语义                                                                                                                                                                                                               | 仅 visible 双渲染 / CSS `.group:hover` 模拟（plan460/回写④口径）                                                                                                                                                                                                                                                                                                                       |
+| 族2 成员逐项（live 复核）                     | ai-feedback 投票态：`data-active` 已发射（`ai-feedback.tsx:163-166`）                                                                                                                                                    | 包 `styles.css` 零 `data-active` 消费——live 样本成立；notice-bar 变体：**已被 MA-06 调色板消费**（`styles.css` `[data-slot='notice-bar'][data-variant]` 四变体 bg/fg 全有），不再构成零消费样本；calendar drop-target：`data-drop-target`/`data-drop-valid` DOM 直写（`calendar.tsx:369-382`）零 CSS 消费；gantt 任务条选中：渲染器层已硬编码消费（`gantt-grid.tsx:132` `bg-blue-50`） |
+
+**Decision 1——契约形态**：候选 ①+② 组合采纳——行类 renderer 新增 `optionRow` 语义字段族（prop-kind 对象字段；list 先行，逐 renderer 采纳）+ `@nop-chaos/flux-react` 共享状态 helper（`getOptionRowStateAttributes` + `optionRowValueMatches`；flux-react 为 renderer 适配共享层，与 `resolveSurfaceMeta` 落 flux-runtime 同一「共享层放共享 helper」先例模式，且 flux-renderers-data 与 flux-renderers-ai 均已依赖 flux-react）。否决候选 ③ 新 renderer type `option-row`：option-row 是行的**交互态通道**而非独立结构节点（行内容仍由 `item` region / `columns` 承载），新增 type 会强迫作者重构结构且与 styling contract 冲突。**不触及 `ui/src/index.ts`**（helper 为纯逻辑无样式依赖，零 ui 公共导出新增——ask-first 门禁未触发，无需停门）。`check-renderer-definition-fields-only` 门禁实测仅守 legacy `regions:[...]` 模式，`fields`+`propContracts` 双侧登记（`data-renderer-definitions.ts`）不触发零红。
+
+**Decision 2——状态源机制**（三候选组合，逐项断言口径）：
+
+- ① 瞬态（hover/pressed）：CSS 伪类通道——`[data-option-row]:hover` / `:active` + `@media (hover: hover)` 触摸门；renderer **零 JS hover 状态**、零 scope 写入、零 mouseenter/leave 挂接。
+- ② 选中态：双源复用——`optionRow.value`（SchemaValue 表达式，如 `"${selectedId}"`；经编译器 propsProgram 求值 + 响应式订阅，与 `items` 同机制）为显式外部源，行匹配字段 `optionRow.valueField`（list 默认 `keyField`、table 默认 `rowKey`，数组绑定 any-match）；未声明 `value` 时复用既有内部源（list selectionMode 本地集 / table rowSelection 选择集）。
+- ③ 键盘 focus：仅暴露 `data-option-row` 标记 + 原生 `:focus-visible` CSS 通道；焦点管理框架归 G-B2（边界落字）。
+- disabled：owner 节点 `meta.disabled === true` → `data-state` 追加 `disabled` token + `aria-disabled="true"`（仅 optionRow 声明时输出，保兼容）。
+
+**Decision 3——采纳面终集**：list（必选，状态源最全主消费者）+ table 行（族2 代表，DataRowView）+ 族2 终集成员 **ai-feedback 投票态**（`flux-renderers-ai`，经共享 helper 接入标准 `data-state` 通道，`data-active` 保留向后兼容）；container 裸行载体 → 已有 Deferred 条目（sundial 双渲染场景，不阻塞）。族2 终集裁定依据（inventory 实测）：TableRow 选中由 table 接入消解；ai-feedback 为唯一仍成立的「已发射零消费」行/控件态样本；notice-bar 变体已被 MA-06 消费（移出终集，登记理由如上）；calendar drop-target 属拖拽瞬态语义非选中态，option-row 通道不承载，留 successor CSS 消费候选；gantt 选中已在渲染器层消费（即回写②「逐个补丁」在案样本，无需消解）。
+
+**Decision 4——共存与兼容语义**（Failure Paths 终态化）：
+
+- `opt-row-selection-clash`：`optionRow.value` 显式声明时，行选中标记（`data-state`/`data-selected`/`aria-selected`/`selectedClass`）**由绑定独占驱动**；内部选择集（selectionMode/rowSelection）继续工作并照常派发事件（事件契约零变化），视觉标记让位绑定。clash 组合（`value` + `selectionMode !== 'none'`，或 `value` + `rowSelection`）dev warn 一次（isDevRuntime 门）。
+- `opt-row-value-invalid`：绑定求值失败/undefined/null/空串 → 无选中态，不抛错中断渲染（propsProgram 求值错误走既有 renderer 错误约定；匹配层对空值恒 false）。
+- `opt-row-hover-touch`：hover 走 CSS `:hover` + `@media (hover: hover)` 门，触摸端自动 no-op（协议级 no-op，renderer 无 hover JS 可失效）。
+- `opt-row-compat`：未声明 `optionRow` → 零新增属性/类（全部输出以 optionRow 声明为门），渲染快照与现行为等价；list 既有 `data-selected`/`aria-current`、table 既有 data-\* 输出零变化。
+
+**契约断言矩阵（属性/类输出）**：
+
+| schema 声明                | `data-option-row` | `data-state`            | `data-selected`            | `aria-selected`                 | `selectedClass` | `aria-disabled`    |
+| -------------------------- | ----------------- | ----------------------- | -------------------------- | ------------------------------- | --------------- | ------------------ |
+| 无 `optionRow`             | 无                | 无（现状）              | 现状（list 有 / table 无） | 无（现状）                      | —               | 无                 |
+| `optionRow:{}`（无 value） | `"true"`          | 选中 token 按内部选择集 | 内部选中时                 | 选中时 `"true"`                 | 内部选中时      | `meta.disabled` 时 |
+| `optionRow:{value}`        | `"true"`          | 按绑定匹配              | 匹配行                     | 匹配行 `"true"`、其余 `"false"` | 匹配行          | `meta.disabled` 时 |
+
+**Decision 5——G-F2 终态裁决**：**关闭（被 G-F 吸收）**。依据：回写⑦ A9 实测 className 表达式机制本身可用（静态节点 className 表达式对 scope 变量响应成立）；G-F2 剩余缺口面恰为「交互态状态源」，由本 plan option-row 原语承载；表达式 className 用法的文档面由 Phase 4 flux-guide 条目顺带覆盖。C2 回写按追加式执行（Phase 4）。
 
 Exit Criteria:
 
-- [ ] 五项 Decision 与一项 Proof（消费面 inventory）全部落字本计划（契约断言清单可清单化：属性/类输出矩阵 + 兼容矩阵）
-- [ ] `docs/references/renderer-interfaces.md` 契约草案条目成形（Protected Areas owner evidence 就位）
-- [ ] 若触及 `ui/src/index.ts`：ask-first 理由已落字且未在门禁前改码
+- [x] 五项 Decision 与一项 Proof（消费面 inventory）全部落字本计划（契约断言清单可清单化：属性/类输出矩阵 + 兼容矩阵）
+- [x] `docs/references/renderer-interfaces.md` 契约草案条目成形（Protected Areas owner evidence 就位）
+- [x] 若触及 `ui/src/index.ts`：ask-first 理由已落字且未在门禁前改码（裁定：不触及，见 Decision 1）
 
 ### Phase 2 - 核心原语实现（list 先行，先红后绿）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/list-renderer.tsx`、共享 helper（Phase 1 裁定落点）、`__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof——契约断言清单测试先行（红）：无字段兼容矩阵 + list 接入后的属性/类输出矩阵 + 选中值绑定用例
-- [ ] Fix——list renderer 按裁定契约实现 option-row 语义（状态源接线 + marker/属性输出 + 失败兜底），共享 helper 同步落位
-- [ ] Fix——定义字段登记（`*-definitions.ts`/schema 校验同步，`check-renderer-definition-fields-only` 门禁零红）
+- [x] Proof——契约断言清单测试先行（红）：无字段兼容矩阵 + list 接入后的属性/类输出矩阵 + 选中值绑定用例
+- [x] Fix——list renderer 按裁定契约实现 option-row 语义（状态源接线 + marker/属性输出 + 失败兜底），共享 helper 同步落位
+- [x] Fix——定义字段登记（`*-definitions.ts`/schema 校验同步，`check-renderer-definition-fields-only` 门禁零红）
 
 Exit Criteria:
 
-- [ ] 先红后绿单测全绿（list 消费面全矩阵 + 兼容矩阵）
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data typecheck` + `pnpm --filter @nop-chaos/flux-renderers-data test` 通过（保证 Phase 3 可继续的局部验证）
-- [ ] `check-renderer-definition-fields-only` 门禁零新增红
+- [x] 先红后绿单测全绿（list 消费面全矩阵 + 兼容矩阵）
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data typecheck` + `pnpm --filter @nop-chaos/flux-renderers-data test` 通过（保证 Phase 3 可继续的局部验证）
+- [x] `check-renderer-definition-fields-only` 门禁零新增红
 
 ### Phase 3 - 采纳面扩展与族2 复用验证
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/table-renderer/table-body-row-rendering.tsx`、族2 终集成员所在包、`__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix——table 行按裁定契约接入（与 `rowSelection` 共存语义按 Phase 1 裁定），先红后绿单测
-- [ ] Fix——族2 终集成员（≥1，Phase 1 裁定）经原语消解改造，先红后绿单测（「状态已发射、样式零消费」样本的 schema 级表达验证）
-- [ ] Proof——消解验证结论落字：族2 成员经原语表达后渲染器层补丁是否可避免（回写 ② 裁决的实证闭环）
+- [x] Fix——table 行按裁定契约接入（与 `rowSelection` 共存语义按 Phase 1 裁定），先红后绿单测
+- [x] Fix——族2 终集成员（≥1，Phase 1 裁定）经原语消解改造，先红后绿单测（「状态已发射、样式零消费」样本的 schema 级表达验证）
+- [x] Proof——消解验证结论落字：族2 成员经原语表达后渲染器层补丁是否可避免（回写 ② 裁决的实证闭环）
+
+#### Phase 3 消解验证结论（执行时落字，2026-08-30）
+
+- **TableRow 选中（族2 代表，经 table `optionRow` 消解）**：改造前 `isSelected` 只驱动 checkbox `checked`，行级选中状态零 marker 输出、schema 层不可表达（inventory 实测）；接入后行元素输出标准 marker 集（`data-option-row`/`data-state~='selected'`/`data-selected`/`aria-selected`），选中态可用 `optionRow.value` 声明式驱动（owner scope 绑定 + 运行时响应式，先红后绿 `table-option-row.test.tsx` 7 条锁定）。渲染器层补丁**可避免**：修复动作 = schema 声明 + host CSS 消费标准 marker，零 per-use-case 渲染器代码。
+- **ai-feedback 投票态（族2 终集成员，经共享 helper 消解）**：改造前 `data-active` 已发射、包 styles.css 零消费（live 样本维持）；改造后投票态经 `getOptionRowStateTokens` 接入标准 `data-state="selected"` 通道（`data-active` 保留向后兼容，`aria-pressed` 不变，先红后绿 `ai-feedback-option-row.test.tsx` 3 条锁定）。渲染器层改动为一次性接入共享标准的机械动作，后续消费（复刻页/主题 CSS `[data-slot='ai-feedback-like'][data-state~='selected']`）全部落在 host/schema 层——族2「状态已发射、样式零消费」的修复模式从「逐个渲染器补丁」收敛为「标准通道 + CSS 消费」，回写 ② 裁决实证成立。：族2 成员经原语表达后渲染器层补丁是否可避免（回写 ② 裁决的实证闭环）
 
 Exit Criteria:
 
-- [ ] table + 族2 终集成员先红后绿单测全绿
-- [ ] 族2 消解验证结论落字本计划
-- [ ] 受影响包局部 typecheck/test 通过
+- [x] table + 族2 终集成员先红后绿单测全绿
+- [x] 族2 消解验证结论落字本计划（见 Phase 3 消解验证结论）
+- [x] 受影响包局部 typecheck/test 通过
 
 ### Phase 4 - 文档对齐与 C2 回写
 
-Status: planned
+Status: completed
 Targets: `docs/references/renderer-interfaces.md`、`flux-guide/`、`docs/architecture/styling-system.md`（核查制）、`docs/analysis/ui-review/C2-capability-gaps.md`、`docs/logs/`
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] `docs/references/renderer-interfaces.md` 契约条目终稿（与 live 行为逐项核对，区分「字段存在」与「语义落地」）
-- [ ] flux-guide schema 作者条目（option-row 用法样例，含选中值绑定与状态类消费示例）
-- [ ] `docs/architecture/styling-system.md` 核查：marker 输出约定若需补充则同步（无改动不写凑条目）
-- [ ] C2 回写（追加式）：G-F 行落「已产品化（本 plan）」终态证据 + G-F2 终态裁决 + 族2 消解结论 + 未纳入终集成员的 successor 登记
-- [ ] daily dev log 记录（`docs/logs/2026/08-30.md` 或实际执行日）
+- [x] `docs/references/renderer-interfaces.md` 契约条目终稿（与 live 行为逐项核对，区分「字段存在」与「语义落地」）
+- [x] flux-guide schema 作者条目（option-row 用法样例，含选中值绑定与状态类消费示例）
+- [x] `docs/architecture/styling-system.md` 核查：marker 输出约定若需补充则同步（无改动不写凑条目）
+- [x] C2 回写（追加式）：G-F 行落「已产品化（本 plan）」终态证据 + G-F2 终态裁决 + 族2 消解结论 + 未纳入终集成员的 successor 登记
+- [x] daily dev log 记录（`docs/logs/2026/08-30.md` 或实际执行日）
 
 Exit Criteria:
 
-- [ ] 三份 owner 文档落字/核查完成且与 live 行为一致
-- [ ] C2 回写完成（初版裁决表零改动，追加式）
-- [ ] daily log 已记录
+- [x] 三份 owner 文档落字/核查完成且与 live 行为一致
+- [x] C2 回写完成（初版裁决表零改动，追加式）
+- [x] daily log 已记录
 
 ## Draft Review Record
 
@@ -165,18 +209,18 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。全量验证归此处，Phase 内只做保证后续 Phase 能继续的局部验证。
 
-- [ ] option-row 契约已落地且 Phase 1 断言清单全项有先红后绿证明（属性/类输出矩阵 + 兼容矩阵）
-- [ ] 采纳面终集（list + table + 族2 终集成员）全部接入且单测全绿
-- [ ] 族2 消解验证结论落字（回写 ② 裁决的实证闭环）
-- [ ] G-F2 终态裁决已回写 C2（追加式）
-- [ ] `docs/references/renderer-interfaces.md` 对齐完成（Protected Areas owner evidence）；styling-system 核查完成
-- [ ] 无 in-scope live defect 或 contract drift 被静默降级（未纳入终集的族2 成员已显式登记 Follow-up）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增命中，红项仅限既有登记）
+- [x] option-row 契约已落地且 Phase 1 断言清单全项有先红后绿证明（属性/类输出矩阵 + 兼容矩阵）
+- [x] 采纳面终集（list + table + 族2 终集成员）全部接入且单测全绿
+- [x] 族2 消解验证结论落字（回写 ② 裁决的实证闭环）
+- [x] G-F2 终态裁决已回写 C2（追加式）
+- [x] `docs/references/renderer-interfaces.md` 对齐完成（Protected Areas owner evidence）；styling-system 核查完成
+- [x] 无 in-scope live defect 或 contract drift 被静默降级（未纳入终集的族2 成员已显式登记 Follow-up）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（见 Closure Audit Evidence）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新增命中，红项仅限既有登记）
 
 ## Deferred But Adjudicated
 
@@ -201,13 +245,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 2026-08-30 关闭。四 Phase 全部落地：G-F option-row 原语产品化（list + table 行 + 族2 成员 ai-feedback 投票态采纳，先红后绿 33 条单测锁定）；G-F2 终态裁定关闭（被 G-F 吸收）并随回写 ⑨ 落 C2；族2 消解结论实证闭环（回写 ② 裁决成立）；owner docs（renderer-interfaces.md / flux-guide list+table / styling-system 核查零改动）对齐；执行期 `table-body-row-rendering.tsx` 733 行触发 oversized MUST-split 新增红，经抽取 `table-row-option-state.ts` 收敛（681 行），`pnpm check` 复归 exit 0 零新增红（基线 stash 对照双口径确认）。全量验证 full-green：typecheck/build/lint 37/37、test 68/68、check exit 0。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: fresh session 独立子 agent `ses_fae13c0b9ffe0VipFysb4ADBpH`（1 轮）
+- Evidence: verdict **APPROVED** 零 Blocker/零 Major；2 Minor（C2 ⑨ 单测计数漂移 13/6→12/7、calendar drop-target successor 虚假台账交叉引用）+ 3 Trivial（dev warn 门手写 NODE_ENV 未用 isDevRuntime、list-renderer.tsx 554 行入 oversized WARN 桶未记日志、renderer-interfaces 空 binding 兜底措辞角例）——Minor 全部 + Trivial 3/5 已随收口修复，Trivial 4 以日志注记处置（WARN 桶为评估性非门禁红）。审计 8 项 checklist 全 Pass：plan 一致性/契约落地/语义实证（响应式绑定、clash、兜底全测）/红绿真实性/全量验证独立复跑（typecheck 37、test 68、lint 37、build 37、check exit 0 仅 2 注册豁免）/deferred 诚实性（notice-bar MA-06 已消费、gantt 已消费、calendar drop-target 拖拽瞬态三项 live 复核成立）/文档对齐（C2 ⑨ append-only diff 验证 +13/−0）/scope 纪律（flux-core、ui、playground 零触碰）。本 plan 关闭后 roadmap D1 条目其余候选（G-B1/G-A/G-B2/G-B3/G-C/G-D 语义件族等）按 C2 §2 排序继续。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- Non-blocking（与 Non-Blocking Follow-ups 区一致）：crud `$crud.*` 与 table selection scope 两套平行选中 API 统一治理；calendar drop-target CSS 消费 successor（C2 ⑨ 登记）；gantt 选中按价值采纳 `selectedClass` 通道；container 裸行复刻页 retrofit（Deferred 区）。无 confirmed live defect 遗留。

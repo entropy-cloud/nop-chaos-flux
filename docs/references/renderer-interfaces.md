@@ -357,6 +357,49 @@ Boundary inputs remain explicit:
 - `formulaCompiler`
 - optional `registry`, `plugins`, `pageStore`, `surfaceRuntime`, `moduleCache`, `parentScope`, `actionScope`, `componentRegistry`, `strictValidation`, `onRuntimeChange`, `onComponentRegistryChange`, `onActionScopeChange`, and `onActionError`
 
+## Option-Row Interaction-State Contract
+
+The `optionRow` semantic field family gives row-like renderers a schema-expressable
+channel for interactive state (selected / disabled) and a standard marker output
+that CSS can consume. Owner plan: `docs/plans/2026-08-30-1333-2-d1-gf-option-row-primitive.md`.
+
+Key contracts:
+
+- `OptionRowConfig` (schema field `optionRow` on `list`, `table`)
+- `getOptionRowStateAttributes` (shared helper, `@nop-chaos/flux-react`)
+- `optionRowValueMatches` (shared helper, `@nop-chaos/flux-react`)
+
+Role summary:
+
+- `optionRow.value` is a `SchemaValue` binding (e.g. `"${selectedId}"`) evaluated by the
+  compiled props program against the owner scope; a row is marked selected when its
+  `valueField` value (list default `keyField`, table default `rowKey`; array binding =
+  any-match) equals the resolved binding. A failed or empty binding resolution degrades
+  to the declared state source — the internal selection when one is co-declared,
+  otherwise no selection — and never crashes.
+- `optionRow.selectedClass` is a schema-authored class applied to rows in the selected
+  state (explicit override channel; baseline visual styling stays in CSS).
+- When `optionRow` is declared without `value`, the selected state source is the
+  renderer's existing internal selection (list `selectionMode`, table `rowSelection`).
+- When `optionRow.value` is declared alongside an internal selection configuration, the
+  binding exclusively drives the row state markers; the internal selection keeps working
+  and dispatching events (a dev warning is emitted for the clash).
+
+Marker output (only when `optionRow` is declared; absence = byte-identical legacy output):
+
+| Attribute                | When                                                |
+| ------------------------ | --------------------------------------------------- |
+| `data-option-row="true"` | always, on the row element                          |
+| `data-state`             | space-joined tokens: `selected`, `disabled`         |
+| `data-selected="true"`   | row is selected                                     |
+| `aria-selected`          | `"true"` on the selected row, `"false"` on the rest |
+| `aria-disabled="true"`   | owner node `meta.disabled` is true                  |
+
+Transient hover/pressed states are deliberately **not** JS state: CSS consumes
+`[data-option-row]:hover` / `:active` gated by `@media (hover: hover)` (touch-safe no-op).
+Keyboard focus exposes only the marker + native `:focus-visible`; focus-management
+frameworks are out of scope (G-B2).
+
 ## Recommended Reading Path
 
 For deeper design intent, continue with:
