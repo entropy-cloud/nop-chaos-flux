@@ -29,6 +29,8 @@ export type {
   CarouselItemSchema,
   QrCodeSchema,
   QrCodeLevel,
+  ResultSchema,
+  ResultStatus,
   DiffViewSchema,
   DiffFileMeta,
 } from './schemas.js';
@@ -51,6 +53,7 @@ export { AudioRenderer } from './audio.js';
 export { VideoRenderer } from './video.js';
 export { CarouselRenderer } from './carousel.js';
 export { QrCodeRenderer } from './qrcode.js';
+export { ResultRenderer } from './result.js';
 export { DiffViewRenderer } from './diff-view/diff-view-renderer.js';
 export { sanitizeHtml, type SanitizeOptions } from './sanitize.js';
 

@@ -88,6 +88,22 @@ export interface EmptySchema extends BaseSchema {
   actions?: SchemaInput;
 }
 
+export type ResultStatus = 'success' | 'error' | 'warning' | 'info';
+
+export interface ResultSchema extends BaseSchema {
+  type: 'result';
+  /** Final-state semantics mapping to the default icon and semantic color. Defaults to 'info'. */
+  status?: ResultStatus;
+  /** Custom icon (lucide icon name); overrides the status default. */
+  icon?: string;
+  /** Result title (value-or-region). */
+  title?: SchemaInput;
+  /** Result description (value-or-region). */
+  description?: SchemaInput;
+  /** Action area region. */
+  actions?: SchemaInput;
+}
+
 export type CardVariant = 'default' | 'sm';
 
 export interface CardSchema extends BaseSchema {

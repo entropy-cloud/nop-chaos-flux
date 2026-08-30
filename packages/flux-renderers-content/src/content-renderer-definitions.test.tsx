@@ -43,10 +43,11 @@ const TYPES = [
   'carousel',
   'qrcode',
   'diff-view',
+  'result',
 ] as const;
 
 describe('contentRendererDefinitions', () => {
-  it('declares 18 renderer definitions for the content family (W1a + W1b + W2a + W3c + W4a)', () => {
+  it('declares 19 renderer definitions for the content family (W1a + W1b + W2a + W3c + W4a + G-A result)', () => {
     expect(contentRendererDefinitions.map((d) => d.type).sort()).toEqual([...TYPES].sort());
   });
 
