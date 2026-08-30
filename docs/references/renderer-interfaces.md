@@ -473,6 +473,105 @@ markers (`command-input`, `command-list`, `command-group`, `command-item`,
 Keyboard selection (↑↓/Enter/Esc) and filter scoring are cmdk built-ins consumed
 through the wrapper — no keyboard framework is introduced here (G-B2 boundary).
 
+## Page Header Semantic Fields
+
+Status: landed (live-verified 2026-08-30, `page.tsx`). Every field below is both
+declared and consumed at render time — no declared-but-unwired entries.
+
+The `page` renderer carries page-header template semantics so enterprise pages
+do not hand-assemble breadcrumbs from text nodes (P2a evidence: 5-node text
+breadcrumb). Owner plan:
+`docs/plans/2026-08-30-1737-2-d1-ga-page-template-semantic-components.md`.
+
+Key contracts (carrier decision: `page` renderer semantic enhancement, L2,
+zero new type — C2 G-A row):
+
+- `breadcrumb?: SchemaValue` — expression-capable array of
+  `{ label: string; href?: string }` entries rendered above the title row as
+  `<nav data-slot="page-breadcrumb" aria-label>` with an `<ol>`/`<li>` list
+  (composed from the `@nop-chaos/ui` Breadcrumb family; the root
+  `data-slot` is overridden to `page-breadcrumb`).
+  Entries with `href` render anchors (`BreadcrumbLink`); others render text
+  (`BreadcrumbPage`). A chevron separator
+  sits between entries. Malformed entries (non-object, missing label) are
+  skipped — rendering never breaks.
+- `extra` region — action area rendered at the right end of the title row
+  (`data-slot="page-extra"`, `ml-auto` inside `page-heading`).
+- The semantic branch (breadcrumb nav + `page-heading` row wrapping
+  title/subTitle/remark/extra) renders when breadcrumb or extra content is
+  present; otherwise the legacy header structure renders byte-identical to
+  pre-enhancement behavior. The header block itself renders when any of
+  title / subTitle / remark / breadcrumb / extra (or the mobile aside toggle)
+  is present. The `header` region is orthogonal: it keeps rendering into
+  the `page-toolbar` slot (free-form content), never merged with the semantic
+  header fields.
+- Overflow: breadcrumb items truncate with ellipsis (`min-w-0 max-w-40
+truncate`) and expose a native `title` hint; deep hierarchies wrap, the
+  layout never overflows. Content tabs are deliberately NOT part of this
+  family — compose the existing `tabs` renderer in the page body.
+
+## Query Filter Semantic Component
+
+Status: landed (live-verified 2026-08-30, `query-filter.tsx` +
+`query-filter-definition.ts`). The standalone component's full field set is
+consumed; note the deliberate boundary below — crud's own
+`queryForm.defaultCollapsed` family stays deprecated-and-warned, not wired.
+
+The `query-filter` renderer type is a standalone query-region semantic
+component (search/reset built in, expand/collapse, grid layout) usable outside
+`crud` — crud keeps its own `queryForm` + `filterTogglable` channel unchanged.
+Owner plan:
+`docs/plans/2026-08-30-1737-2-d1-ga-page-template-semantic-components.md`.
+
+Key contracts:
+
+- `QueryFilterSchema` (`type: 'query-filter'`,
+  `packages/flux-renderers-data`) — `body` (query fields), `actions`
+  (custom action buttons replacing the defaults), `mode`/`layout`/
+  `columnCount`/`gap` (forwarded to the embedded form), `submitLabel`/
+  `resetLabel`, `togglable`, `onSubmit`/`onReset`.
+- Authoring transform lowers `body` into an embedded `{ type: 'form' }`
+  (region `filterForm`, crud `queryFormRegion` precedent). Default actions:
+  Search (`component:submit` on the embedded form; `onSubmit` is lowered to the
+  form's `submitAction` — validation then submit pipeline) and Reset
+  (`component:reset` + the `onReset` chain). Without declared chains, Search
+  dispatches nothing (no implicit fetch, no throw) and Reset only resets field
+  values.
+- `togglable: boolean | { defaultCollapsed?, collapsedLabel?, expandedLabel? }`
+  wraps the form in a collapse envelope (crud toggle shape). Collapsed shows
+  `collapsedLabel`; the expand control's label resolves `expandedLabel`.
+- No implicit host detection: `query-filter` and `crud.queryForm` are
+  independent channels with no runtime conflict surface; the crud-embedded
+  query region convention is `crud.queryForm` (documentation-level agreement,
+  no dev warn). crud-side dead config disposition (same plan): the
+  `queryForm.defaultCollapsed/collapsedLabel/expandedLabel` family is
+  `@deprecated` (use `filterTogglable`) and emits authoring warnings;
+  `filterTogglable.collapsedLabel/expandedLabel` IS wired into the crud
+  toggle envelope.
+
+## Result Semantic Component
+
+Status: landed (live-verified 2026-08-30, `result.tsx`). Every field below is
+both declared and consumed at render time.
+
+The `result` renderer type is an operation-final-state page block
+(`empty` sibling in `flux-renderers-content`). Owner plan:
+`docs/plans/2026-08-30-1737-2-d1-ga-page-template-semantic-components.md`.
+
+Key contracts:
+
+- `ResultSchema` (`type: 'result'`) — `status`
+  (`'success' | 'error' | 'warning' | 'info'`, default `info`), `icon`
+  (lucide override of the status default), `title`/`description`
+  (value-or-region), `actions` region (single action channel; the AntD `extra`
+  naming was rejected for in-package consistency with empty/card/alert).
+- Status mapping (alert precedent): success → check-circle + success color,
+  error → x-circle + destructive, warning → alert-triangle + warning, info →
+  info + info color. Invalid `status` degrades to `info` with a dev warn —
+  rendering never breaks.
+- Markers: root `nop-result`, `data-slot="result"`, `data-status`, plus the
+  standard `data-testid`/`data-cid`.
+
 ## Recommended Reading Path
 
 For deeper design intent, continue with:
