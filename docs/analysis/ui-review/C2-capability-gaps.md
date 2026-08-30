@@ -180,3 +180,35 @@
 
 - **toast 生命周期（回写 ③/④ 同源第三例）**：detail 归档跳转链以 `control: {debounce: 1200}` 延迟 navigate 保 toast 可观察（e2e 18）；「host 级常驻 toast 容器」候选维持。
 - **refreshSource scope 桶限定（回写 ④ 同源）**：跨树刷新一律 `component:refresh` + data-source 显式 `id`（本计划 4 张 schema 均落 `linear-*-source` id），未再撞 `Source not found`。
+
+### 回写 ⑥ — P5b Notion database 交互接线实测证据（2026-08-30，plan `2026-08-30-0614-1-p5b-notion-interaction-wiring-and-tests.md` Phase 4）
+
+> 授权链: roadmap Cross-Cutting 5（Pi-b closure 以追加方式回写 C2，不重开初版状态）→ 本 plan Phase 4。初版裁决表零改动，本段仅追加实测证据与素材行。逐条「预测 vs 实测」对照见分析篇 `notion-database.md` §4.1。
+
+**G-C 多视图数据库（L2，状态机 L4 风险）终态实测证据（本应用主对照行）**:
+
+- **视图状态机模拟深度终判（可达面）**：tab（`valueOwnership:'scope'` + `valueStatePath:'activeView'`）+ 五分支 keepMounted hidden 切换 + 会话 viewConfig 覆写（`Notion__updateViewConfig` per-viewId overrides）+ 读端点服务端预应用，可完整承载「视图集合 + activeViewId + 每视图私有配置集生效」三层状态机（interactions e2e 06/07/08/12 锁定：覆写按 viewId 隔离、切 tab 随动、他视图零影响）。**不可达面**：运行时新增视图分支（I2，静态 schema 无渲染分支，显式裁决）；视图 tab 拖拽重排/溢出收纳动态化/三态动态切换生效（I13，tabs 原语缺口）；配置集双层权限（仅我/所有人）真实化（需 schema 外偏好存储层）。
+- **嵌套 filter 求值可行性终判（P5a 静态对照③的实测义务）**：**服务端预应用姿势完整可达**——mock 端递归求值器（`evalNotionCondition`，组嵌套 maxDepth=3 与 builder 口径一致、and/or 递归、未知字段/操作符判不命中不抛错），单测覆盖嵌套/深度上限/not 组；e2e 07 端到端锁定（builder 构建规则 → 应用 → 视图过滤）。**客户端公式内联姿势不可达**：公式通道（ARRAYFILTER 等）无嵌套 group 递归展开能力——候选②机制否决理由落字 plan Phase 1。condition-builder 本体（builderMode full、and/or 切换、字段-操作符-值行组）schema 层可用，实测无阻。
+- **配置集双层权限与 peek 联动结论**：双层权限（个人 vs 共享）未模拟、缺口维持（L4 候选，见下候选 1 终态）；视图类型↔默认 peek 形态联动以「语境决定载体」静态表达维持（table/board/list→side、gallery/calendar→center，与 I10 规则一致），联动规则本体未建模（原语缺口，P5a 结论维持）。
+
+**分析篇 §7 两候选终态回写（P5a 移交 + P5b 收口）**:
+
+- **候选 1「个人视图偏好存储层」→ 缺口维持（optimization candidate 确认）**：activeViewId 已由 tabs `valueStatePath:'activeView'` 写页面 scope 承载（会话级"当前视图"语义成立）；display 三态"仅本人生效"维持静态样本（I13 原语缺口）。会话级 scope 模拟已可达主语义，跨会话偏好持久化需 schema 外存储层（localStorage/用户偏好层）——产品化归 D1 流程，不新增 C2 行。
+- **候选 2「board 列聚合计算」→ 端点动态化收口（语义件缺口维持）**：P5b 裁定 board 读载荷即端点重算（`buildNotionBoardData` 计数/Count/Percent 聚合随会话态刷新，拖拽/覆写后 e2e 09/12 锁定更新），mock 预计算静态条退役；**列头原生聚合（Sum/Avg/Min/Max + 列头内嵌形态）仍为 kanban 语义增强候选**——P5a 既有证据维持：kanban `columnHeader` region 全列共享无 per-column 绑定（G-A 观察面）。语义件产品化归 D1（L2）。
+
+**I11 剪贴板素材行追加（第四例，未分级）**:
+
+- `Notion__copyLink`（get、零副作用、恒成功 `{ok,id,url}`）沿 `Cal__shareLink`/`Linear__copyLink` 语义模拟先例，peek 内复制钮消费（interactions e2e 05），`messages.success`「链接已复制」成对。实际剪贴板写入仍不做；`RendererEnv` clipboard 通道维持 D1 输入池候选。
+
+**自绘 calendar 无事件面注记（I9 calendar 子项终态）**:
+
+- P5a D2⑥ 自绘六周竖网格（container grid + loop）无 renderer 事件面：拖拽改期无拖拽通道、不可模拟裁定维持。hover `+` 建条目以按钮面接线（container 载体 + openDialog 复用新建链路，interactions e2e 13；date 无 renderer 日期字段参数通道，日期预填不接线归 G-D 素材）。注：**text 节点无 onClick 分派面**（`flux-renderers-basic` text renderer 无事件处理），hover 控件接线需 container/button 载体——复刻页通用姿势素材。
+
+**condition-builder 求值边界素材（回写 ⑤ G-C 素材的本应用复现与扩展）**:
+
+- builder 输出（`{conjunction, children:[{left:{field},op,right}]}` 递归组）可由 schema 声明 `fields`（select/number/date）+ `builderMode:'full'` + `showAndOr` 承载；e2e 驱动路径 = 添加条件 → 字段 combobox（`combobox "条件字段"`）→ 值 select（`select-trigger`）。`includeScope:'*'` 合并面坑：表单 loadAction 载入数据会以同名键遮蔽编辑值——复刻页以 `ntPeek*` 规范键 + 端点别名优先级消解（单测锁定）；form 自身 `submitAction` 求值域**不可解析 `$formData`**（表达式求值失败实测），可解析字段名（`${keyword}`）；surface 级 `onSubmitSuccess` 链才可解析 `$formData`（P4b L12 姿势）。
+- **scope 写入通道边界（P5b 新证，I5 搜索机制修正）**：dialog 内裸 `input-text` 每键入写 **dialog 子 scope 自有 store**——页面级 data-source 的 `dependsOn` 订阅观察不到子 scope 写入（探针实测六源零重取）；跨树生效须 `setValue`（form `submitOnChange` + `submitAction` 或 surface `onSubmitSuccess` 链）落页面 scope。P4b ⌘K「裸 input scope 写入」的 reactive 面仅限**同 scope 内** loop/表达式绑定，不可跨树——两先例口径在此对齐。
+
+**kanban 拖拽本应用实测注记（回写 ⑤ 同源复现）**:
+
+- `onCardMove` payload `${cardId}`/`${toColumnId}`/`${toIndex}` 契约跨应用成立；拖拽源注册滞后（React Compiler dev 双挂载，P4b G-A finding）本应用同现——e2e 同以 lastMove 钩子数据一致性姿势锁定（interactions e2e 09/11/12），列计数 9→8/9→10 等分布断言随会话态回流成立；分组属性切换（status/category/person）后 moveCard 解码对应属性值翻转，端点契约单测覆盖。注册时效本体归 D1/renderer 修复流程（P4b 结论维持）。
