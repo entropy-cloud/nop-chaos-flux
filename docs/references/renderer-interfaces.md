@@ -572,6 +572,99 @@ Key contracts:
 - Markers: root `nop-result`, `data-slot="result"`, `data-status`, plus the
   standard `data-testid`/`data-cid`.
 
+## Keyboard Binding Contract
+
+Status: implemented and verified against live behavior (owner plan
+`docs/plans/2026-08-30-2312-1-d1-gb2-keyboard-navigation-framework.md`, Phase 4
+finalization 2026-08-31; red-first matrices in
+`packages/flux-renderers-basic/src/__tests__/keyboard-bindings.test.tsx` +
+`packages/flux-react/src/keyboard.test.ts`).
+
+The `keyboard` renderer type is an invisible logic renderer
+(`flux-renderers-basic`, `category: 'logic'`, `reaction` sibling) giving schema
+authors a keyboard-sequence → action binding channel: single key combos and
+chord sequences, with input-focus gating, surface-stack routing, and dual-track
+execution. It resolves the framework-level gap that renderer-local ad-hoc
+listeners (command-palette `hotkey`, kanban gesture handlers) could not express:
+chords, page-level bindings, and scope-local dispatch.
+
+Key contracts:
+
+- `KeyboardSchema` (`type: 'keyboard'`) — `bindings`
+  (`KeyboardBindingConfig[]`), `chordTimeout` (ms, default 1000), `onTrigger`
+  event.
+- `KeyboardBindingConfig` — `keys` (single combo `"mod+shift+s"` or
+  space-separated chord sequence `"g o"`), `when` (raw expression, no `${}`,
+  evaluated against the node scope per keypress — `checkableWhen` precedent),
+  `allowInInput` (default false), `preventDefault` (default true), `action`
+  (`ActionSchema | ActionSchema[]` static dispatch track).
+- Shared helpers (`@nop-chaos/flux-react`, `keyboard.ts`): `parseKeyCombo` /
+  `parseModifierHotkey` / `parseKeySequence` / `comboMatchesKey` /
+  `isEditableKeyboardTarget` / chord buffer matcher. The command palette
+  consumes `parseModifierHotkey` (behavior-identical single-combo contract that
+  requires ≥1 modifier).
+
+Matching semantics:
+
+- Token syntax: each `keys` token is `[(mod|ctrl|shift|alt)+]key` (`mod` =
+  meta‖ctrl); `event.key` compares lowercased, modifiers compare exactly
+  (`shiftKey === binding.shift`). `mod` + `ctrl` together is invalid.
+- Chord state machine: space-separated tokens buffer left-to-right. A token
+  that is both a complete binding and a longer sequence's prefix waits
+  (longest-match): continuation within `chordTimeout` dispatches the long
+  binding; timeout falls back to the short binding. A prefix-only token waits
+  silently. Mismatch or timeout resets the buffer; the mismatching key is then
+  re-evaluated from idle (overlapping starts work).
+- Input gating (kb-input-focus): bindings do not fire while the event target is
+  `input`/`textarea`/`select`/`contenteditable` unless `allowInInput: true`.
+- Built-in priority: the dispatcher skips events with
+  `event.defaultPrevented === true` — earlier-registered built-in handlers that
+  consume a key (palette hotkey, kanban undo) win. Authors must not declare
+  bindings on built-in-owned keys (no cross-tree runtime detection).
+- Conflicts (kb-conflict): duplicate normalized sequences inside one node →
+  registration order wins + one mount-time dev warn.
+- Surface routing (kb-surface-stack): when the SurfaceRuntime stack is
+  non-empty, a `keyboard` node stays active only if its scope is the top
+  surface's scope or a descendant of it; page-level bindings pause while a
+  dialog/drawer/sheet is open and resume on close.
+- Execution: static track (`binding.action` via `helpers.dispatch`, CX-10 ctx:
+  normalized event + evaluation bindings = the hit payload `{ keys, index,
+nativeEvent }` + node scope + nodeInstance) fires first, then the `onTrigger`
+  event with the same payload. Dispatch errors follow the existing action
+  error convention (dev warn); the listener never unbinds on errors.
+- The component renders `null` — zero DOM, zero markers (styling-system
+  no-op). Listener lifecycle is React effect mount/cleanup (strict-mode safe).
+
+## Table Modifier Selection Contract
+
+Status: implemented and verified against live behavior (owner plan
+`docs/plans/2026-08-30-2312-1-d1-gb2-keyboard-navigation-framework.md`, Phase 4
+finalization 2026-08-31; red-first matrices in
+`packages/flux-renderers-data/src/__tests__/table-modifier-select-hook.test.tsx`
+
+- `packages/flux-renderers-data/src/__tests__/table-modifier-select.test.tsx`).
+
+`rowSelection.modifierSelect?: boolean` (default false, checkbox mode only —
+inert under `radio`) enables modifier-key selection gestures on `table`:
+
+- Anchor: every unmodified selection change (checkbox toggle, row toggle,
+  select-all) sets the range anchor to the acted row; `setSelectionExternal`
+  never moves it.
+- ⇧click range select (additive union): selection := current ∪ view-order range
+  [anchor..clicked] (no anchor → clicked row). Non-checkable rows
+  (`checkableWhen`) are skipped; `maxSelectionLength` truncates in view order
+  (same rule as select-all). Shift-click never deselects. `keepOnPageChange`
+  retained cross-page keys are preserved (retainedKnown parity).
+- ⌘/ctrl-click: independent toggle of that row (existing checkbox / row-toggle
+  behavior — contract restated, no new code).
+- ⌘/ctrl+A: with focus inside the table container and a non-editable target,
+  select-all within the current view (reuse of `handleSelectAll(true)` +
+  preventDefault). Editable targets (inputs inside the table) keep native
+  select-all.
+- All modifier changes dispatch the same `table:selection-change` payload via
+  `onSelectionChange`. With `modifierSelect` absent/false, ⇧click behaves
+  exactly as today (compat parity).
+
 ## Recommended Reading Path
 
 For deeper design intent, continue with:
