@@ -6,6 +6,7 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
+import { getOptionRowStateTokens } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
 import type { ChatMessage } from '../engine/types.js';
@@ -155,6 +156,7 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
   const sources = message?.metadata?.sources;
 
   function renderActionButton(action: FeedbackAction): React.ReactElement {
+    const isVote = action === 'like' || action === 'dislike';
     const common = {
       type: 'button' as const,
       variant: 'ghost' as const,
@@ -164,7 +166,13 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
         (action === 'like' && voted === 'like') || (action === 'dislike' && voted === 'dislike')
           ? ''
           : undefined,
-      'aria-pressed': action === 'like' || action === 'dislike' ? voted === action : undefined,
+      // D1 option-row standard state channel (族2 ai-feedback 投票态消解):
+      // vote state is additionally exposed as `data-state="selected"` so hosts
+      // consume one uniform selector; the legacy data-active marker is kept.
+      'data-state': isVote
+        ? getOptionRowStateTokens({ selected: voted === action })
+        : undefined,
+      'aria-pressed': isVote ? voted === action : undefined,
       'aria-label': labelFor(action),
       disabled,
       onClick: () => fire(action),
