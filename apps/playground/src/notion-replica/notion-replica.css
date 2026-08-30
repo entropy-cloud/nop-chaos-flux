@@ -705,3 +705,14 @@
   color: var(--nt-text-tertiary);
   letter-spacing: 0.02em;
 }
+
+/* P5b Phase 2: peek edit section (I6/I10 wiring) — form fields converge the
+   record editing state into the peek form (cell-direct-edit adjudicated G-D). */
+.nt-peek-edit {
+  border-top: 1px solid var(--nt-border);
+  padding-top: 12px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

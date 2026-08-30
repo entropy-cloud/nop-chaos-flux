@@ -183,7 +183,8 @@ test.describe('Notion replica — initial-screen structure', () => {
     await expect(page.getByTestId('notion-settings-props')).toContainText('属性可见性');
     await expect(page.getByTestId('notion-settings-filter')).toContainText('筛选');
     await expect(page.getByTestId('notion-settings-filter-builder')).toBeVisible();
-    await expect(page.getByTestId('notion-settings-filter-note')).toContainText('不生效');
+    // P5b 接线后注记：筛选经会话配置服务端预应用（替代 P5a「不生效」静态注记）
+    await expect(page.getByTestId('notion-settings-filter-note')).toContainText('已接线');
     await expect(page.getByTestId('notion-settings-sort')).toContainText('排序');
     await expect(page.getByTestId('notion-settings-group-section')).toContainText('分组');
     await expect(page.getByTestId('notion-settings-cond')).toContainText('条件配色');
@@ -251,8 +252,8 @@ test.describe('Notion replica — initial-screen structure', () => {
     // 聚合静态条（Count/Percent 来自 mock 预计算）
     await expect(page.getByTestId('notion-board-aggregate')).toHaveCount(4);
     await expect(page.getByTestId('notion-board-aggregate').first()).toContainText('Count');
-    // draggable:false 显式声明 + 静态注记
-    await expect(page.getByTestId('notion-board-dnd-note')).toContainText('draggable: false');
+    // P5b 接线后注记：拖拽已接线（替代 P5a「draggable: false」静态注记）
+    await expect(page.getByTestId('notion-board-dnd-note')).toContainText('拖拽已接线');
 
     // 切到 gallery 分支（board 分支保持挂载、table 分支不回归）
     await openViewTab(page, '封面墙', 'notion-views-gallery');

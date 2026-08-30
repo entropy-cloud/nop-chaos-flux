@@ -9,9 +9,10 @@
       "name": "tableData",
       "action": "ajax",
       "args": {
-        "url": "/r/Notion__records?view=table&perPage=100",
+        "url": "/r/Notion__records?view=table&perPage=100&keyword=${ntSearchKeyword ?? ''}",
         "method": "get"
-      }
+      },
+      "dependsOn": ["ntSearchKeyword"]
     },
     {
       "type": "data-source",
@@ -19,9 +20,10 @@
       "name": "boardData",
       "action": "ajax",
       "args": {
-        "url": "/r/Notion__records?view=board",
+        "url": "/r/Notion__records?view=board&keyword=${ntSearchKeyword ?? ''}",
         "method": "get"
-      }
+      },
+      "dependsOn": ["ntSearchKeyword"]
     },
     {
       "type": "data-source",
@@ -29,9 +31,10 @@
       "name": "galleryData",
       "action": "ajax",
       "args": {
-        "url": "/r/Notion__records?view=gallery",
+        "url": "/r/Notion__records?view=gallery&keyword=${ntSearchKeyword ?? ''}",
         "method": "get"
-      }
+      },
+      "dependsOn": ["ntSearchKeyword"]
     },
     {
       "type": "data-source",
@@ -39,9 +42,10 @@
       "name": "calendarData",
       "action": "ajax",
       "args": {
-        "url": "/r/Notion__records?view=calendar",
+        "url": "/r/Notion__records?view=calendar&keyword=${ntSearchKeyword ?? ''}",
         "method": "get"
-      }
+      },
+      "dependsOn": ["ntSearchKeyword"]
     },
     {
       "type": "data-source",
@@ -49,9 +53,10 @@
       "name": "listData",
       "action": "ajax",
       "args": {
-        "url": "/r/Notion__records?view=list",
+        "url": "/r/Notion__records?view=list&keyword=${ntSearchKeyword ?? ''}",
         "method": "get"
-      }
+      },
+      "dependsOn": ["ntSearchKeyword"]
     },
     {
       "type": "data-source",
@@ -267,7 +272,7 @@
                                       },
                                       {
                                         "type": "text",
-                                        "text": "列头菜单为静态形态（I7）：改名/换型别/冻结等接线归交互段与 D1 流程。",
+                                        "text": "列头菜单条目为静态形态（I7 裁定）：按列筛选/排序的重复入口由 View settings 承载（已接线）；动态列模型（改名/换型别/冻结/插列）归 G-D，D1 流程。",
                                         "className": "nt-note mt-2"
                                       }
                                     ]
@@ -880,15 +885,155 @@
                                                     ]
                                                   },
                                                   {
+                                                    "type": "container",
+                                                    "className": "nt-peek-edit",
+                                                    "testid": "notion-peek-edit",
+                                                    "direction": "column",
+                                                    "gap": 8,
+                                                    "body": [
+                                                      {
+                                                        "type": "text",
+                                                        "text": "编辑属性",
+                                                        "className": "nt-section-label"
+                                                      },
+                                                      {
+                                                        "type": "input-text",
+                                                        "name": "ntPeekTitle",
+                                                        "label": "名称",
+                                                        "required": true,
+                                                        "value": "${title}",
+                                                        "testid": "notion-peek-edit-title"
+                                                      },
+                                                      {
+                                                        "type": "select",
+                                                        "name": "ntPeekStatus",
+                                                        "label": "状态",
+                                                        "clearable": false,
+                                                        "value": "${status}",
+                                                        "testid": "notion-peek-edit-status",
+                                                        "options": [
+                                                          {
+                                                            "label": "未开始",
+                                                            "value": "not_started"
+                                                          },
+                                                          {
+                                                            "label": "进行中",
+                                                            "value": "in_progress"
+                                                          },
+                                                          {
+                                                            "label": "评审中",
+                                                            "value": "review"
+                                                          },
+                                                          {
+                                                            "label": "已完成",
+                                                            "value": "done"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "select",
+                                                        "name": "ntPeekCategory",
+                                                        "label": "分类",
+                                                        "clearable": false,
+                                                        "value": "${category}",
+                                                        "testid": "notion-peek-edit-category",
+                                                        "options": [
+                                                          {
+                                                            "label": "产品需求",
+                                                            "value": "产品需求"
+                                                          },
+                                                          {
+                                                            "label": "技术优化",
+                                                            "value": "技术优化"
+                                                          },
+                                                          {
+                                                            "label": "体验改进",
+                                                            "value": "体验改进"
+                                                          },
+                                                          {
+                                                            "label": "调研探索",
+                                                            "value": "调研探索"
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
                                                     "type": "text",
                                                     "text": "自由块区（页面内容编辑区）不在复刻清单内（分析篇 §6.2 裁剪），静态注记占位。",
                                                     "className": "nt-note",
                                                     "testid": "notion-peek-blocks-note"
                                                   }
+                                                ],
+                                                "submitScope": "surface",
+                                                "submitAction": {
+                                                  "action": "ajax",
+                                                  "args": {
+                                                    "url": "/r/Notion__updateRecord",
+                                                    "method": "post",
+                                                    "includeScope": "*",
+                                                    "data": {
+                                                      "id": "${id}"
+                                                    }
+                                                  },
+                                                  "messages": {
+                                                    "success": "属性已保存",
+                                                    "failed": "属性保存失败"
+                                                  }
+                                                },
+                                                "actions": [
+                                                  {
+                                                    "type": "button",
+                                                    "label": "保存",
+                                                    "className": "nt-btn nt-btn-primary",
+                                                    "testid": "notion-peek-save",
+                                                    "onClick": {
+                                                      "action": "submitForm"
+                                                    }
+                                                  },
+                                                  {
+                                                    "type": "button",
+                                                    "label": "复制链接",
+                                                    "className": "nt-btn",
+                                                    "testid": "notion-peek-copy",
+                                                    "onClick": {
+                                                      "action": "ajax",
+                                                      "args": {
+                                                        "url": "/r/Notion__copyLink?id=${id}",
+                                                        "method": "get"
+                                                      },
+                                                      "messages": {
+                                                        "success": "链接已复制"
+                                                      }
+                                                    }
+                                                  }
                                                 ]
                                               }
                                             ],
-                                            "side": "right"
+                                            "side": "right",
+                                            "closeOnSubmit": true,
+                                            "onSubmitSuccess": [
+                                              {
+                                                "action": "component:refresh",
+                                                "componentId": "notion-source-table"
+                                              },
+                                              {
+                                                "action": "component:refresh",
+                                                "componentId": "notion-source-board"
+                                              },
+                                              {
+                                                "action": "component:refresh",
+                                                "componentId": "notion-source-gallery"
+                                              },
+                                              {
+                                                "action": "component:refresh",
+                                                "componentId": "notion-source-calendar"
+                                              },
+                                              {
+                                                "action": "component:refresh",
+                                                "componentId": "notion-source-list"
+                                              }
+                                            ]
                                           }
                                         }
                                       }
@@ -1034,7 +1179,7 @@
                                       },
                                       {
                                         "type": "text",
-                                        "text": "列头菜单为静态形态（I7）：改名/换型别/冻结等接线归交互段与 D1 流程。",
+                                        "text": "列头菜单条目为静态形态（I7 裁定）：按列筛选/排序的重复入口由 View settings 承载（已接线）；动态列模型（改名/换型别/冻结/插列）归 G-D，D1 流程。",
                                         "className": "nt-note mt-2"
                                       }
                                     ]
@@ -1195,7 +1340,7 @@
                                       },
                                       {
                                         "type": "text",
-                                        "text": "列头菜单为静态形态（I7）：改名/换型别/冻结等接线归交互段与 D1 流程。",
+                                        "text": "列头菜单条目为静态形态（I7 裁定）：按列筛选/排序的重复入口由 View settings 承载（已接线）；动态列模型（改名/换型别/冻结/插列）归 G-D，D1 流程。",
                                         "className": "nt-note mt-2"
                                       }
                                     ]
@@ -1369,7 +1514,7 @@
                                       },
                                       {
                                         "type": "text",
-                                        "text": "列头菜单为静态形态（I7）：改名/换型别/冻结等接线归交互段与 D1 流程。",
+                                        "text": "列头菜单条目为静态形态（I7 裁定）：按列筛选/排序的重复入口由 View settings 承载（已接线）；动态列模型（改名/换型别/冻结/插列）归 G-D，D1 流程。",
                                         "className": "nt-note mt-2"
                                       }
                                     ]
@@ -1548,7 +1693,7 @@
                                       },
                                       {
                                         "type": "text",
-                                        "text": "列头菜单为静态形态（I7）：改名/换型别/冻结等接线归交互段与 D1 流程。",
+                                        "text": "列头菜单条目为静态形态（I7 裁定）：按列筛选/排序的重复入口由 View settings 承载（已接线）；动态列模型（改名/换型别/冻结/插列）归 G-D，D1 流程。",
                                         "className": "nt-note mt-2"
                                       }
                                     ]
@@ -1709,7 +1854,7 @@
                                       },
                                       {
                                         "type": "text",
-                                        "text": "列头菜单为静态形态（I7）：改名/换型别/冻结等接线归交互段与 D1 流程。",
+                                        "text": "列头菜单条目为静态形态（I7 裁定）：按列筛选/排序的重复入口由 View settings 承载（已接线）；动态列模型（改名/换型别/冻结/插列）归 G-D，D1 流程。",
                                         "className": "nt-note mt-2"
                                       }
                                     ]
@@ -1885,7 +2030,7 @@
                                       },
                                       {
                                         "type": "text",
-                                        "text": "列头菜单为静态形态（I7）：改名/换型别/冻结等接线归交互段与 D1 流程。",
+                                        "text": "列头菜单条目为静态形态（I7 裁定）：按列筛选/排序的重复入口由 View settings 承载（已接线）；动态列模型（改名/换型别/冻结/插列）归 G-D，D1 流程。",
                                         "className": "nt-note mt-2"
                                       }
                                     ]
@@ -2046,7 +2191,7 @@
                                       },
                                       {
                                         "type": "text",
-                                        "text": "列头菜单为静态形态（I7）：改名/换型别/冻结等接线归交互段与 D1 流程。",
+                                        "text": "列头菜单条目为静态形态（I7 裁定）：按列筛选/排序的重复入口由 View settings 承载（已接线）；动态列模型（改名/换型别/冻结/插列）归 G-D，D1 流程。",
                                         "className": "nt-note mt-2"
                                       }
                                     ]
@@ -2222,7 +2367,7 @@
                                       },
                                       {
                                         "type": "text",
-                                        "text": "列头菜单为静态形态（I7）：改名/换型别/冻结等接线归交互段与 D1 流程。",
+                                        "text": "列头菜单条目为静态形态（I7 裁定）：按列筛选/排序的重复入口由 View settings 承载（已接线）；动态列模型（改名/换型别/冻结/插列）归 G-D，D1 流程。",
                                         "className": "nt-note mt-2"
                                       }
                                     ]
@@ -2334,13 +2479,60 @@
                                         }
                                       ]
                                     }
+                                  ],
+                                  "submitScope": "surface",
+                                  "submitAction": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/Notion__createRecord",
+                                      "method": "post",
+                                      "includeScope": "*"
+                                    },
+                                    "messages": {
+                                      "success": "记录已创建",
+                                      "failed": "记录创建失败"
+                                    }
+                                  },
+                                  "actions": [
+                                    {
+                                      "type": "button",
+                                      "label": "创建",
+                                      "className": "nt-btn nt-btn-primary",
+                                      "testid": "notion-record-submit",
+                                      "onClick": {
+                                        "action": "submitForm"
+                                      }
+                                    }
                                   ]
                                 },
                                 {
                                   "type": "text",
-                                  "text": "新建行并插入表格聚焦标题为交互段义务（I8）；此为新建入口静态形态。",
+                                  "text": "新建已接线（I8）：提交写 Notion__createRecord 会话库并在表尾插行；行内聚焦标题为 G-D 缺口维持。",
                                   "className": "nt-note",
                                   "testid": "notion-record-note"
+                                }
+                              ],
+                              "closeOnSubmit": true,
+                              "onSubmitSuccess": [
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-table"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-board"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-gallery"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-calendar"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-list"
                                 }
                               ]
                             }
@@ -2363,7 +2555,7 @@
                         },
                         {
                           "type": "text",
-                          "text": "底部 New 行与右上“新建”同为 I8 静态形态：插行并聚焦标题的接线归交互段（P5b）。",
+                          "text": "底部 New 行与右上「新建」同一新建链路（I8 已接线）：提交写会话库并在表尾插行；行内聚焦标题为 G-D 缺口维持。",
                           "className": "nt-note mt-1",
                           "testid": "notion-table-new-note"
                         }
@@ -2390,7 +2582,7 @@
                           "body": [
                             {
                               "type": "text",
-                              "text": "看板聚合（Count/Percent 为 mock 预计算静态值 — 列头原生聚合为语义缺口，分析篇 §7 候选）",
+                              "text": "看板聚合 Count/Percent 随会话态刷新（P5b 裁定：board 读载荷即端点重算）；列头原生聚合语义缺口维持（分析篇 §7 候选终态随 C2 回写）。",
                               "className": "nt-note"
                             },
                             {
@@ -2438,7 +2630,7 @@
                         },
                         {
                           "type": "text",
-                          "text": "拖拽不接线（draggable: false 显式声明，静态形态）— 拖拽改分组值归交互段（I9）。",
+                          "text": "拖拽已接线（I9）：卡片跨列 = 改分组属性值（Notion__moveCard + 会话态刷新，失败分支卡片回原列）。",
                           "className": "nt-note",
                           "testid": "notion-board-dnd-note"
                         },
@@ -2448,7 +2640,6 @@
                           "className": "nt-board flex-1",
                           "data": "${boardData?.board}",
                           "columnWidth": 264,
-                          "draggable": false,
                           "onCardClick": {
                             "action": "openDrawer",
                             "args": {
@@ -3011,21 +3202,185 @@
                                       ]
                                     },
                                     {
+                                      "type": "container",
+                                      "className": "nt-peek-edit",
+                                      "testid": "notion-peek-edit",
+                                      "direction": "column",
+                                      "gap": 8,
+                                      "body": [
+                                        {
+                                          "type": "text",
+                                          "text": "编辑属性",
+                                          "className": "nt-section-label"
+                                        },
+                                        {
+                                          "type": "input-text",
+                                          "name": "ntPeekTitle",
+                                          "label": "名称",
+                                          "required": true,
+                                          "value": "${title}",
+                                          "testid": "notion-peek-edit-title"
+                                        },
+                                        {
+                                          "type": "select",
+                                          "name": "ntPeekStatus",
+                                          "label": "状态",
+                                          "clearable": false,
+                                          "value": "${status}",
+                                          "testid": "notion-peek-edit-status",
+                                          "options": [
+                                            {
+                                              "label": "未开始",
+                                              "value": "not_started"
+                                            },
+                                            {
+                                              "label": "进行中",
+                                              "value": "in_progress"
+                                            },
+                                            {
+                                              "label": "评审中",
+                                              "value": "review"
+                                            },
+                                            {
+                                              "label": "已完成",
+                                              "value": "done"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "select",
+                                          "name": "ntPeekCategory",
+                                          "label": "分类",
+                                          "clearable": false,
+                                          "value": "${category}",
+                                          "testid": "notion-peek-edit-category",
+                                          "options": [
+                                            {
+                                              "label": "产品需求",
+                                              "value": "产品需求"
+                                            },
+                                            {
+                                              "label": "技术优化",
+                                              "value": "技术优化"
+                                            },
+                                            {
+                                              "label": "体验改进",
+                                              "value": "体验改进"
+                                            },
+                                            {
+                                              "label": "调研探索",
+                                              "value": "调研探索"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
                                       "type": "text",
                                       "text": "自由块区（页面内容编辑区）不在复刻清单内（分析篇 §6.2 裁剪），静态注记占位。",
                                       "className": "nt-note",
                                       "testid": "notion-peek-blocks-note"
                                     }
+                                  ],
+                                  "submitScope": "surface",
+                                  "submitAction": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/Notion__updateRecord",
+                                      "method": "post",
+                                      "includeScope": "*",
+                                      "data": {
+                                        "id": "${id}"
+                                      }
+                                    },
+                                    "messages": {
+                                      "success": "属性已保存",
+                                      "failed": "属性保存失败"
+                                    }
+                                  },
+                                  "actions": [
+                                    {
+                                      "type": "button",
+                                      "label": "保存",
+                                      "className": "nt-btn nt-btn-primary",
+                                      "testid": "notion-peek-save",
+                                      "onClick": {
+                                        "action": "submitForm"
+                                      }
+                                    },
+                                    {
+                                      "type": "button",
+                                      "label": "复制链接",
+                                      "className": "nt-btn",
+                                      "testid": "notion-peek-copy",
+                                      "onClick": {
+                                        "action": "ajax",
+                                        "args": {
+                                          "url": "/r/Notion__copyLink?id=${id}",
+                                          "method": "get"
+                                        },
+                                        "messages": {
+                                          "success": "链接已复制"
+                                        }
+                                      }
+                                    }
                                   ]
                                 }
                               ],
-                              "side": "right"
+                              "side": "right",
+                              "closeOnSubmit": true,
+                              "onSubmitSuccess": [
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-table"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-board"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-gallery"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-calendar"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-list"
+                                }
+                              ]
                             }
                           },
                           "empty": {
                             "type": "text",
                             "text": "该分组下暂无记录",
                             "className": "nt-note"
+                          },
+                          "onCardMove": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/Notion__moveCard",
+                              "method": "post",
+                              "data": {
+                                "id": "${cardId}",
+                                "toColumn": "${toColumnId}",
+                                "toIndex": "${toIndex}"
+                              }
+                            },
+                            "messages": {
+                              "success": "卡片已移动",
+                              "failed": "卡片移动失败"
+                            },
+                            "then": {
+                              "action": "component:refresh",
+                              "componentId": "notion-source-board"
+                            },
+                            "onError": {
+                              "action": "component:refresh",
+                              "componentId": "notion-source-board"
+                            }
                           }
                         }
                       ]
@@ -3649,12 +4004,152 @@
                                                       ]
                                                     },
                                                     {
+                                                      "type": "container",
+                                                      "className": "nt-peek-edit",
+                                                      "testid": "notion-peek-edit",
+                                                      "direction": "column",
+                                                      "gap": 8,
+                                                      "body": [
+                                                        {
+                                                          "type": "text",
+                                                          "text": "编辑属性",
+                                                          "className": "nt-section-label"
+                                                        },
+                                                        {
+                                                          "type": "input-text",
+                                                          "name": "ntPeekTitle",
+                                                          "label": "名称",
+                                                          "required": true,
+                                                          "value": "${title}",
+                                                          "testid": "notion-peek-edit-title"
+                                                        },
+                                                        {
+                                                          "type": "select",
+                                                          "name": "ntPeekStatus",
+                                                          "label": "状态",
+                                                          "clearable": false,
+                                                          "value": "${status}",
+                                                          "testid": "notion-peek-edit-status",
+                                                          "options": [
+                                                            {
+                                                              "label": "未开始",
+                                                              "value": "not_started"
+                                                            },
+                                                            {
+                                                              "label": "进行中",
+                                                              "value": "in_progress"
+                                                            },
+                                                            {
+                                                              "label": "评审中",
+                                                              "value": "review"
+                                                            },
+                                                            {
+                                                              "label": "已完成",
+                                                              "value": "done"
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "type": "select",
+                                                          "name": "ntPeekCategory",
+                                                          "label": "分类",
+                                                          "clearable": false,
+                                                          "value": "${category}",
+                                                          "testid": "notion-peek-edit-category",
+                                                          "options": [
+                                                            {
+                                                              "label": "产品需求",
+                                                              "value": "产品需求"
+                                                            },
+                                                            {
+                                                              "label": "技术优化",
+                                                              "value": "技术优化"
+                                                            },
+                                                            {
+                                                              "label": "体验改进",
+                                                              "value": "体验改进"
+                                                            },
+                                                            {
+                                                              "label": "调研探索",
+                                                              "value": "调研探索"
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
                                                       "type": "text",
                                                       "text": "自由块区（页面内容编辑区）不在复刻清单内（分析篇 §6.2 裁剪），静态注记占位。",
                                                       "className": "nt-note",
                                                       "testid": "notion-peek-blocks-note"
                                                     }
+                                                  ],
+                                                  "submitScope": "surface",
+                                                  "submitAction": {
+                                                    "action": "ajax",
+                                                    "args": {
+                                                      "url": "/r/Notion__updateRecord",
+                                                      "method": "post",
+                                                      "includeScope": "*",
+                                                      "data": {
+                                                        "id": "${id}"
+                                                      }
+                                                    },
+                                                    "messages": {
+                                                      "success": "属性已保存",
+                                                      "failed": "属性保存失败"
+                                                    }
+                                                  },
+                                                  "actions": [
+                                                    {
+                                                      "type": "button",
+                                                      "label": "保存",
+                                                      "className": "nt-btn nt-btn-primary",
+                                                      "testid": "notion-peek-save",
+                                                      "onClick": {
+                                                        "action": "submitForm"
+                                                      }
+                                                    },
+                                                    {
+                                                      "type": "button",
+                                                      "label": "复制链接",
+                                                      "className": "nt-btn",
+                                                      "testid": "notion-peek-copy",
+                                                      "onClick": {
+                                                        "action": "ajax",
+                                                        "args": {
+                                                          "url": "/r/Notion__copyLink?id=${id}",
+                                                          "method": "get"
+                                                        },
+                                                        "messages": {
+                                                          "success": "链接已复制"
+                                                        }
+                                                      }
+                                                    }
                                                   ]
+                                                }
+                                              ],
+                                              "closeOnSubmit": true,
+                                              "onSubmitSuccess": [
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-table"
+                                                },
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-board"
+                                                },
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-gallery"
+                                                },
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-calendar"
+                                                },
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-list"
                                                 }
                                               ]
                                             }
@@ -3782,13 +4277,60 @@
                                             }
                                           ]
                                         }
+                                      ],
+                                      "submitScope": "surface",
+                                      "submitAction": {
+                                        "action": "ajax",
+                                        "args": {
+                                          "url": "/r/Notion__createRecord",
+                                          "method": "post",
+                                          "includeScope": "*"
+                                        },
+                                        "messages": {
+                                          "success": "记录已创建",
+                                          "failed": "记录创建失败"
+                                        }
+                                      },
+                                      "actions": [
+                                        {
+                                          "type": "button",
+                                          "label": "创建",
+                                          "className": "nt-btn nt-btn-primary",
+                                          "testid": "notion-record-submit",
+                                          "onClick": {
+                                            "action": "submitForm"
+                                          }
+                                        }
                                       ]
                                     },
                                     {
                                       "type": "text",
-                                      "text": "新建行并插入表格聚焦标题为交互段义务（I8）；此为新建入口静态形态。",
+                                      "text": "新建已接线（I8）：提交写 Notion__createRecord 会话库并在表尾插行；行内聚焦标题为 G-D 缺口维持。",
                                       "className": "nt-note",
                                       "testid": "notion-record-note"
+                                    }
+                                  ],
+                                  "closeOnSubmit": true,
+                                  "onSubmitSuccess": [
+                                    {
+                                      "action": "component:refresh",
+                                      "componentId": "notion-source-table"
+                                    },
+                                    {
+                                      "action": "component:refresh",
+                                      "componentId": "notion-source-board"
+                                    },
+                                    {
+                                      "action": "component:refresh",
+                                      "componentId": "notion-source-gallery"
+                                    },
+                                    {
+                                      "action": "component:refresh",
+                                      "componentId": "notion-source-calendar"
+                                    },
+                                    {
+                                      "action": "component:refresh",
+                                      "componentId": "notion-source-list"
                                     }
                                   ]
                                 }
@@ -3893,10 +4435,148 @@
                                       "direction": "column",
                                       "body": [
                                         {
-                                          "type": "text",
+                                          "type": "container",
                                           "text": "+",
                                           "className": "nt-cal-add",
-                                          "testid": "notion-cal-add"
+                                          "testid": "notion-cal-add",
+                                          "onClick": {
+                                            "action": "openDialog",
+                                            "args": {
+                                              "title": "新建记录",
+                                              "testid": "notion-record-dialog",
+                                              "className": "nt-dialog",
+                                              "body": [
+                                                {
+                                                  "type": "form",
+                                                  "testid": "notion-record-form",
+                                                  "className": "flex flex-col gap-3",
+                                                  "body": [
+                                                    {
+                                                      "type": "input-text",
+                                                      "name": "title",
+                                                      "label": "名称",
+                                                      "required": true,
+                                                      "placeholder": "记录名称",
+                                                      "testid": "notion-record-input-title"
+                                                    },
+                                                    {
+                                                      "type": "select",
+                                                      "name": "category",
+                                                      "label": "分类",
+                                                      "clearable": false,
+                                                      "defaultValue": "产品需求",
+                                                      "testid": "notion-record-select-category",
+                                                      "options": [
+                                                        {
+                                                          "label": "产品需求",
+                                                          "value": "产品需求"
+                                                        },
+                                                        {
+                                                          "label": "技术优化",
+                                                          "value": "技术优化"
+                                                        },
+                                                        {
+                                                          "label": "体验改进",
+                                                          "value": "体验改进"
+                                                        },
+                                                        {
+                                                          "label": "调研探索",
+                                                          "value": "调研探索"
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "type": "select",
+                                                      "name": "status",
+                                                      "label": "状态",
+                                                      "clearable": false,
+                                                      "defaultValue": "未开始",
+                                                      "testid": "notion-record-select-status",
+                                                      "options": [
+                                                        {
+                                                          "label": "未开始",
+                                                          "value": "未开始"
+                                                        },
+                                                        {
+                                                          "label": "进行中",
+                                                          "value": "进行中"
+                                                        },
+                                                        {
+                                                          "label": "评审中",
+                                                          "value": "评审中"
+                                                        },
+                                                        {
+                                                          "label": "已完成",
+                                                          "value": "已完成"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ],
+                                                  "submitScope": "surface",
+                                                  "submitAction": {
+                                                    "action": "ajax",
+                                                    "args": {
+                                                      "url": "/r/Notion__createRecord",
+                                                      "method": "post",
+                                                      "includeScope": "*"
+                                                    },
+                                                    "messages": {
+                                                      "success": "记录已创建",
+                                                      "failed": "记录创建失败"
+                                                    }
+                                                  },
+                                                  "actions": [
+                                                    {
+                                                      "type": "button",
+                                                      "label": "创建",
+                                                      "className": "nt-btn nt-btn-primary",
+                                                      "testid": "notion-record-submit",
+                                                      "onClick": {
+                                                        "action": "submitForm"
+                                                      }
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "text",
+                                                  "text": "新建已接线（I8）：提交写 Notion__createRecord 会话库并在表尾插行；行内聚焦标题为 G-D 缺口维持。",
+                                                  "className": "nt-note",
+                                                  "testid": "notion-record-note"
+                                                }
+                                              ],
+                                              "closeOnSubmit": true,
+                                              "onSubmitSuccess": [
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-table"
+                                                },
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-board"
+                                                },
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-gallery"
+                                                },
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-calendar"
+                                                },
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "notion-source-list"
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          "direction": "row",
+                                          "align": "center",
+                                          "body": [
+                                            {
+                                              "type": "text",
+                                              "text": "+"
+                                            }
+                                          ]
                                         },
                                         {
                                           "type": "text",
@@ -4486,12 +5166,152 @@
                                                           ]
                                                         },
                                                         {
+                                                          "type": "container",
+                                                          "className": "nt-peek-edit",
+                                                          "testid": "notion-peek-edit",
+                                                          "direction": "column",
+                                                          "gap": 8,
+                                                          "body": [
+                                                            {
+                                                              "type": "text",
+                                                              "text": "编辑属性",
+                                                              "className": "nt-section-label"
+                                                            },
+                                                            {
+                                                              "type": "input-text",
+                                                              "name": "ntPeekTitle",
+                                                              "label": "名称",
+                                                              "required": true,
+                                                              "value": "${title}",
+                                                              "testid": "notion-peek-edit-title"
+                                                            },
+                                                            {
+                                                              "type": "select",
+                                                              "name": "ntPeekStatus",
+                                                              "label": "状态",
+                                                              "clearable": false,
+                                                              "value": "${status}",
+                                                              "testid": "notion-peek-edit-status",
+                                                              "options": [
+                                                                {
+                                                                  "label": "未开始",
+                                                                  "value": "not_started"
+                                                                },
+                                                                {
+                                                                  "label": "进行中",
+                                                                  "value": "in_progress"
+                                                                },
+                                                                {
+                                                                  "label": "评审中",
+                                                                  "value": "review"
+                                                                },
+                                                                {
+                                                                  "label": "已完成",
+                                                                  "value": "done"
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "type": "select",
+                                                              "name": "ntPeekCategory",
+                                                              "label": "分类",
+                                                              "clearable": false,
+                                                              "value": "${category}",
+                                                              "testid": "notion-peek-edit-category",
+                                                              "options": [
+                                                                {
+                                                                  "label": "产品需求",
+                                                                  "value": "产品需求"
+                                                                },
+                                                                {
+                                                                  "label": "技术优化",
+                                                                  "value": "技术优化"
+                                                                },
+                                                                {
+                                                                  "label": "体验改进",
+                                                                  "value": "体验改进"
+                                                                },
+                                                                {
+                                                                  "label": "调研探索",
+                                                                  "value": "调研探索"
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
                                                           "type": "text",
                                                           "text": "自由块区（页面内容编辑区）不在复刻清单内（分析篇 §6.2 裁剪），静态注记占位。",
                                                           "className": "nt-note",
                                                           "testid": "notion-peek-blocks-note"
                                                         }
+                                                      ],
+                                                      "submitScope": "surface",
+                                                      "submitAction": {
+                                                        "action": "ajax",
+                                                        "args": {
+                                                          "url": "/r/Notion__updateRecord",
+                                                          "method": "post",
+                                                          "includeScope": "*",
+                                                          "data": {
+                                                            "id": "${id}"
+                                                          }
+                                                        },
+                                                        "messages": {
+                                                          "success": "属性已保存",
+                                                          "failed": "属性保存失败"
+                                                        }
+                                                      },
+                                                      "actions": [
+                                                        {
+                                                          "type": "button",
+                                                          "label": "保存",
+                                                          "className": "nt-btn nt-btn-primary",
+                                                          "testid": "notion-peek-save",
+                                                          "onClick": {
+                                                            "action": "submitForm"
+                                                          }
+                                                        },
+                                                        {
+                                                          "type": "button",
+                                                          "label": "复制链接",
+                                                          "className": "nt-btn",
+                                                          "testid": "notion-peek-copy",
+                                                          "onClick": {
+                                                            "action": "ajax",
+                                                            "args": {
+                                                              "url": "/r/Notion__copyLink?id=${id}",
+                                                              "method": "get"
+                                                            },
+                                                            "messages": {
+                                                              "success": "链接已复制"
+                                                            }
+                                                          }
+                                                        }
                                                       ]
+                                                    }
+                                                  ],
+                                                  "closeOnSubmit": true,
+                                                  "onSubmitSuccess": [
+                                                    {
+                                                      "action": "component:refresh",
+                                                      "componentId": "notion-source-table"
+                                                    },
+                                                    {
+                                                      "action": "component:refresh",
+                                                      "componentId": "notion-source-board"
+                                                    },
+                                                    {
+                                                      "action": "component:refresh",
+                                                      "componentId": "notion-source-gallery"
+                                                    },
+                                                    {
+                                                      "action": "component:refresh",
+                                                      "componentId": "notion-source-calendar"
+                                                    },
+                                                    {
+                                                      "action": "component:refresh",
+                                                      "componentId": "notion-source-list"
                                                     }
                                                   ]
                                                 }
@@ -5114,15 +5934,155 @@
                                               ]
                                             },
                                             {
+                                              "type": "container",
+                                              "className": "nt-peek-edit",
+                                              "testid": "notion-peek-edit",
+                                              "direction": "column",
+                                              "gap": 8,
+                                              "body": [
+                                                {
+                                                  "type": "text",
+                                                  "text": "编辑属性",
+                                                  "className": "nt-section-label"
+                                                },
+                                                {
+                                                  "type": "input-text",
+                                                  "name": "ntPeekTitle",
+                                                  "label": "名称",
+                                                  "required": true,
+                                                  "value": "${title}",
+                                                  "testid": "notion-peek-edit-title"
+                                                },
+                                                {
+                                                  "type": "select",
+                                                  "name": "ntPeekStatus",
+                                                  "label": "状态",
+                                                  "clearable": false,
+                                                  "value": "${status}",
+                                                  "testid": "notion-peek-edit-status",
+                                                  "options": [
+                                                    {
+                                                      "label": "未开始",
+                                                      "value": "not_started"
+                                                    },
+                                                    {
+                                                      "label": "进行中",
+                                                      "value": "in_progress"
+                                                    },
+                                                    {
+                                                      "label": "评审中",
+                                                      "value": "review"
+                                                    },
+                                                    {
+                                                      "label": "已完成",
+                                                      "value": "done"
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "select",
+                                                  "name": "ntPeekCategory",
+                                                  "label": "分类",
+                                                  "clearable": false,
+                                                  "value": "${category}",
+                                                  "testid": "notion-peek-edit-category",
+                                                  "options": [
+                                                    {
+                                                      "label": "产品需求",
+                                                      "value": "产品需求"
+                                                    },
+                                                    {
+                                                      "label": "技术优化",
+                                                      "value": "技术优化"
+                                                    },
+                                                    {
+                                                      "label": "体验改进",
+                                                      "value": "体验改进"
+                                                    },
+                                                    {
+                                                      "label": "调研探索",
+                                                      "value": "调研探索"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
                                               "type": "text",
                                               "text": "自由块区（页面内容编辑区）不在复刻清单内（分析篇 §6.2 裁剪），静态注记占位。",
                                               "className": "nt-note",
                                               "testid": "notion-peek-blocks-note"
                                             }
+                                          ],
+                                          "submitScope": "surface",
+                                          "submitAction": {
+                                            "action": "ajax",
+                                            "args": {
+                                              "url": "/r/Notion__updateRecord",
+                                              "method": "post",
+                                              "includeScope": "*",
+                                              "data": {
+                                                "id": "${id}"
+                                              }
+                                            },
+                                            "messages": {
+                                              "success": "属性已保存",
+                                              "failed": "属性保存失败"
+                                            }
+                                          },
+                                          "actions": [
+                                            {
+                                              "type": "button",
+                                              "label": "保存",
+                                              "className": "nt-btn nt-btn-primary",
+                                              "testid": "notion-peek-save",
+                                              "onClick": {
+                                                "action": "submitForm"
+                                              }
+                                            },
+                                            {
+                                              "type": "button",
+                                              "label": "复制链接",
+                                              "className": "nt-btn",
+                                              "testid": "notion-peek-copy",
+                                              "onClick": {
+                                                "action": "ajax",
+                                                "args": {
+                                                  "url": "/r/Notion__copyLink?id=${id}",
+                                                  "method": "get"
+                                                },
+                                                "messages": {
+                                                  "success": "链接已复制"
+                                                }
+                                              }
+                                            }
                                           ]
                                         }
                                       ],
-                                      "side": "right"
+                                      "side": "right",
+                                      "closeOnSubmit": true,
+                                      "onSubmitSuccess": [
+                                        {
+                                          "action": "component:refresh",
+                                          "componentId": "notion-source-table"
+                                        },
+                                        {
+                                          "action": "component:refresh",
+                                          "componentId": "notion-source-board"
+                                        },
+                                        {
+                                          "action": "component:refresh",
+                                          "componentId": "notion-source-gallery"
+                                        },
+                                        {
+                                          "action": "component:refresh",
+                                          "componentId": "notion-source-calendar"
+                                        },
+                                        {
+                                          "action": "component:refresh",
+                                          "componentId": "notion-source-list"
+                                        }
+                                      ]
                                     }
                                   },
                                   "direction": "row",
@@ -5242,13 +6202,60 @@
                                         }
                                       ]
                                     }
+                                  ],
+                                  "submitScope": "surface",
+                                  "submitAction": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/Notion__createRecord",
+                                      "method": "post",
+                                      "includeScope": "*"
+                                    },
+                                    "messages": {
+                                      "success": "记录已创建",
+                                      "failed": "记录创建失败"
+                                    }
+                                  },
+                                  "actions": [
+                                    {
+                                      "type": "button",
+                                      "label": "创建",
+                                      "className": "nt-btn nt-btn-primary",
+                                      "testid": "notion-record-submit",
+                                      "onClick": {
+                                        "action": "submitForm"
+                                      }
+                                    }
                                   ]
                                 },
                                 {
                                   "type": "text",
-                                  "text": "新建行并插入表格聚焦标题为交互段义务（I8）；此为新建入口静态形态。",
+                                  "text": "新建已接线（I8）：提交写 Notion__createRecord 会话库并在表尾插行；行内聚焦标题为 G-D 缺口维持。",
                                   "className": "nt-note",
                                   "testid": "notion-record-note"
+                                }
+                              ],
+                              "closeOnSubmit": true,
+                              "onSubmitSuccess": [
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-table"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-board"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-gallery"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-calendar"
+                                },
+                                {
+                                  "action": "component:refresh",
+                                  "componentId": "notion-source-list"
                                 }
                               ]
                             }
@@ -5394,7 +6401,7 @@
                         },
                         {
                           "type": "text",
-                          "text": "新建视图 → 命名 → 进入为交互段义务（I2）；此为类型选择静态形态。",
+                          "text": "新建视图为静态类型清单（I2 显式裁决）：五视图渲染分支为静态 schema，运行时新增视图分支不可达（G-C），真实新建归 D1 流程。",
                           "className": "nt-note mt-2",
                           "testid": "notion-new-view-note"
                         }
@@ -5444,16 +6451,56 @@
                       "className": "nt-dialog",
                       "body": [
                         {
-                          "type": "input-text",
-                          "name": "ntSearchKeyword",
-                          "testid": "notion-search-input",
-                          "placeholder": "搜索标题与属性值…"
+                          "type": "form",
+                          "testid": "notion-search-form",
+                          "className": "flex flex-col gap-2",
+                          "submitScope": "surface",
+                          "data": {
+                            "keyword": "${ntSearchKeyword ?? ''}"
+                          },
+                          "body": [
+                            {
+                              "type": "input-text",
+                              "name": "keyword",
+                              "testid": "notion-search-input",
+                              "placeholder": "搜索标题与属性值…"
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "搜索",
+                              "className": "nt-btn nt-btn-primary",
+                              "testid": "notion-search-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ],
+                          "submitOnChange": true,
+                          "submitAction": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "ntSearchKeyword",
+                              "value": "${keyword ?? ''}"
+                            }
+                          }
                         },
                         {
                           "type": "text",
-                          "text": "即时过滤（匹配标题 + 属性值）为交互段义务（I5）；此为搜索入口静态形态。",
+                          "text": "搜索已接线（I5）：确认后输入即过滤，匹配标题 + 属性值（url 参数物化 + dependsOn 自动刷新）。",
                           "className": "nt-note mt-2",
                           "testid": "notion-search-note"
+                        }
+                      ],
+                      "closeOnSubmit": false,
+                      "onSubmitSuccess": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "ntSearchKeyword",
+                            "value": "${$formData.keyword ?? ''}"
+                          }
                         }
                       ]
                     }
@@ -5727,7 +6774,7 @@
                                 },
                                 {
                                   "type": "text",
-                                  "text": "筛选为静态形态（不生效）：过滤生效接线归交互段（I3，P5b）。",
+                                  "text": "筛选已接线（I3）：构建器条件经会话配置由 mock 服务端预应用（嵌套 ≤3 层 and/or）；点击「应用视图配置」生效。",
                                   "className": "nt-note",
                                   "testid": "notion-settings-filter-note"
                                 }
@@ -5746,56 +6793,38 @@
                                   "className": "nt-section-label"
                                 },
                                 {
-                                  "type": "container",
-                                  "className": "nt-menu-item",
-                                  "direction": "row",
-                                  "align": "center",
-                                  "gap": 8,
-                                  "body": [
+                                  "type": "select",
+                                  "name": "ntSort",
+                                  "label": "排序方式",
+                                  "clearable": false,
+                                  "defaultValue": "none",
+                                  "testid": "notion-settings-sort-select",
+                                  "options": [
                                     {
-                                      "type": "icon",
-                                      "icon": "arrow-down",
-                                      "size": 14
+                                      "label": "默认（按录入序）",
+                                      "value": "none"
                                     },
                                     {
-                                      "type": "text",
-                                      "text": "最后编辑",
-                                      "testid": "notion-settings-sort-row"
+                                      "label": "工作量升序",
+                                      "value": "number:asc"
                                     },
                                     {
-                                      "type": "text",
-                                      "text": "降序",
-                                      "className": "nt-chip nt-chip-gray"
-                                    }
-                                  ]
-                                },
-                                {
-                                  "type": "container",
-                                  "className": "nt-menu-item",
-                                  "direction": "row",
-                                  "align": "center",
-                                  "gap": 8,
-                                  "body": [
-                                    {
-                                      "type": "icon",
-                                      "icon": "arrow-down",
-                                      "size": 14
+                                      "label": "工作量降序",
+                                      "value": "number:desc"
                                     },
                                     {
-                                      "type": "text",
-                                      "text": "工作量",
-                                      "testid": "notion-settings-sort-row"
+                                      "label": "标题升序",
+                                      "value": "title:asc"
                                     },
                                     {
-                                      "type": "text",
-                                      "text": "降序",
-                                      "className": "nt-chip nt-chip-gray"
+                                      "label": "日期升序",
+                                      "value": "date:asc"
                                     }
                                   ]
                                 },
                                 {
                                   "type": "text",
-                                  "text": "多键排序拖改优先级为静态形态（I4）。",
+                                  "text": "单键排序已接线（I4），经「应用视图配置」生效；多键拖改优先级为 G-D 缺口维持。",
                                   "className": "nt-note"
                                 }
                               ]
@@ -5829,8 +6858,8 @@
                                       "value": "category"
                                     },
                                     {
-                                      "label": "无分组",
-                                      "value": "none"
+                                      "label": "按负责人",
+                                      "value": "person"
                                     }
                                   ]
                                 }
@@ -5941,7 +6970,56 @@
                                 }
                               ]
                             }
+                          ],
+                          "submitScope": "surface",
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/Notion__updateViewConfig",
+                              "method": "post",
+                              "includeScope": "*",
+                              "data": {
+                                "viewId": "${activeView ?? 'table'}"
+                              }
+                            },
+                            "messages": {
+                              "success": "视图配置已应用",
+                              "failed": "视图配置应用失败"
+                            }
+                          },
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "应用视图配置",
+                              "className": "nt-btn nt-btn-primary",
+                              "testid": "notion-settings-apply",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
                           ]
+                        }
+                      ],
+                      "onSubmitSuccess": [
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-table"
+                        },
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-board"
+                        },
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-gallery"
+                        },
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-calendar"
+                        },
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-list"
                         }
                       ]
                     }
@@ -6038,13 +7116,60 @@
                                 }
                               ]
                             }
+                          ],
+                          "submitScope": "surface",
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/Notion__createRecord",
+                              "method": "post",
+                              "includeScope": "*"
+                            },
+                            "messages": {
+                              "success": "记录已创建",
+                              "failed": "记录创建失败"
+                            }
+                          },
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "创建",
+                              "className": "nt-btn nt-btn-primary",
+                              "testid": "notion-record-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
                           ]
                         },
                         {
                           "type": "text",
-                          "text": "新建行并插入表格聚焦标题为交互段义务（I8）；此为新建入口静态形态。",
+                          "text": "新建已接线（I8）：提交写 Notion__createRecord 会话库并在表尾插行；行内聚焦标题为 G-D 缺口维持。",
                           "className": "nt-note",
                           "testid": "notion-record-note"
+                        }
+                      ],
+                      "closeOnSubmit": true,
+                      "onSubmitSuccess": [
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-table"
+                        },
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-board"
+                        },
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-gallery"
+                        },
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-calendar"
+                        },
+                        {
+                          "action": "component:refresh",
+                          "componentId": "notion-source-list"
                         }
                       ]
                     }
