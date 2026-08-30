@@ -202,14 +202,34 @@ export function isStStatus(value: string | undefined): value is StPaymentStatus 
   return value === 'succeeded' || value === 'pending' || value === 'failed' || value === 'refunded';
 }
 
+/**
+ * st-range（P7b I2）：样本数据月 = 2026-08 = 复刻语义「上月」（与导出 dialog
+ * 「上月（8月1日 - 8月31日）」文案一致）；`prev`/`mtd` 落在数据月之外 → 空集，
+ * 其余值（含未知值 st-filter-unknown 口径）全量兜底。
+ */
+export function isStEmptyRange(range: string | undefined): boolean {
+  return range === 'prev' || range === 'mtd';
+}
+
+function stAmountMajor(record: StPayment): number {
+  return record.amountMinor / 10 ** ST_CURRENCY_META[record.currency].decimals;
+}
+
 export function filterStPayments(
   records: StPayment[],
   keyword?: string,
   status?: string,
+  minAmount?: string,
+  range?: string,
 ): StPayment[] {
+  if (isStEmptyRange(range)) return [];
   let rows = records;
   if (isStStatus(status)) {
     rows = rows.filter((r) => r.status === status);
+  }
+  const min = Number(minAmount);
+  if (minAmount !== undefined && minAmount !== '' && !Number.isNaN(min)) {
+    rows = rows.filter((r) => stAmountMajor(r) >= min);
   }
   const key = keyword?.trim().toLowerCase() ?? '';
   if (!key) return rows;

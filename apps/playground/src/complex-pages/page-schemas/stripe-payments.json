@@ -9,9 +9,10 @@
       "name": "stripeData",
       "action": "ajax",
       "args": {
-        "url": "/r/Stripe__payments?perPage=100",
+        "url": "/r/Stripe__payments?perPage=100&keyword=${stKeyword ?? ''}&status=${stStatusFilter ?? ''}&minAmount=${stMinAmount ?? ''}&range=${stDateRange ?? 'lastmonth'}",
         "method": "get"
-      }
+      },
+      "dependsOn": ["stKeyword", "stStatusFilter", "stMinAmount", "stDateRange"]
     },
     {
       "type": "data-source",
@@ -19,9 +20,10 @@
       "name": "overviewData",
       "action": "ajax",
       "args": {
-        "url": "/r/Stripe__overview",
+        "url": "/r/Stripe__overview?range=${stDateRange ?? 'lastmonth'}",
         "method": "get"
-      }
+      },
+      "dependsOn": ["stDateRange"]
     },
     {
       "type": "container",
@@ -260,34 +262,50 @@
                   "body": [
                     {
                       "type": "container",
-                      "className": "st-seg-item",
+                      "className": "${(stDateRange ?? 'lastmonth') === 'prev' ? 'st-seg-item st-seg-item-active' : 'st-seg-item'}",
                       "direction": "row",
                       "align": "center",
                       "testid": "stripe-daterange-prev",
+                      "onClick": {
+                        "action": "setValue",
+                        "args": { "path": "stDateRange", "value": "prev" }
+                      },
                       "body": [{ "type": "text", "text": "此前各月" }]
                     },
                     {
                       "type": "container",
-                      "className": "st-seg-item st-seg-item-active",
+                      "className": "${(stDateRange ?? 'lastmonth') === 'lastmonth' ? 'st-seg-item st-seg-item-active' : 'st-seg-item'}",
                       "direction": "row",
                       "align": "center",
                       "testid": "stripe-daterange-lastmonth",
+                      "onClick": {
+                        "action": "setValue",
+                        "args": { "path": "stDateRange", "value": "lastmonth" }
+                      },
                       "body": [{ "type": "text", "text": "上月" }]
                     },
                     {
                       "type": "container",
-                      "className": "st-seg-item",
+                      "className": "${(stDateRange ?? 'lastmonth') === 'mtd' ? 'st-seg-item st-seg-item-active' : 'st-seg-item'}",
                       "direction": "row",
                       "align": "center",
                       "testid": "stripe-daterange-mtd",
+                      "onClick": {
+                        "action": "setValue",
+                        "args": { "path": "stDateRange", "value": "mtd" }
+                      },
                       "body": [{ "type": "text", "text": "本月至今" }]
                     },
                     {
                       "type": "container",
-                      "className": "st-seg-item",
+                      "className": "${(stDateRange ?? 'lastmonth') === 'custom' ? 'st-seg-item st-seg-item-active' : 'st-seg-item'}",
                       "direction": "row",
                       "align": "center",
                       "testid": "stripe-daterange-custom",
+                      "onClick": {
+                        "action": "setValue",
+                        "args": { "path": "stDateRange", "value": "custom" }
+                      },
                       "body": [
                         { "type": "icon", "icon": "calendar", "size": 12 },
                         { "type": "text", "text": "自定义" }
@@ -307,11 +325,20 @@
                       "title": "导出交易",
                       "testid": "stripe-export-dialog",
                       "className": "st-dialog",
+                      "closeOnSubmit": true,
                       "body": [
                         {
                           "type": "form",
                           "testid": "stripe-export-form",
                           "className": "flex flex-col gap-4",
+                          "submitScope": "surface",
+                          "data": {
+                            "colAmount": true,
+                            "colDate": true,
+                            "colStatus": true,
+                            "colCustomer": false,
+                            "colMethod": false
+                          },
                           "body": [
                             {
                               "type": "text",
@@ -359,87 +386,41 @@
                                   "className": "st-section-label pb-1"
                                 },
                                 {
-                                  "type": "container",
-                                  "className": "st-check",
-                                  "direction": "row",
-                                  "align": "center",
+                                  "type": "checkbox",
+                                  "name": "colAmount",
                                   "testid": "stripe-export-col-amount",
-                                  "body": [
-                                    {
-                                      "type": "container",
-                                      "className": "st-check-box st-check-box-on",
-                                      "direction": "row",
-                                      "align": "center",
-                                      "body": [{ "type": "text", "text": "✓" }]
-                                    },
-                                    { "type": "text", "text": "金额" }
-                                  ]
+                                  "className": "st-check",
+                                  "option": { "label": "金额" }
                                 },
                                 {
-                                  "type": "container",
-                                  "className": "st-check",
-                                  "direction": "row",
-                                  "align": "center",
+                                  "type": "checkbox",
+                                  "name": "colDate",
                                   "testid": "stripe-export-col-date",
-                                  "body": [
-                                    {
-                                      "type": "container",
-                                      "className": "st-check-box st-check-box-on",
-                                      "direction": "row",
-                                      "align": "center",
-                                      "body": [{ "type": "text", "text": "✓" }]
-                                    },
-                                    { "type": "text", "text": "日期" }
-                                  ]
+                                  "className": "st-check",
+                                  "option": { "label": "日期" }
                                 },
                                 {
-                                  "type": "container",
-                                  "className": "st-check",
-                                  "direction": "row",
-                                  "align": "center",
+                                  "type": "checkbox",
+                                  "name": "colStatus",
                                   "testid": "stripe-export-col-status",
-                                  "body": [
-                                    {
-                                      "type": "container",
-                                      "className": "st-check-box st-check-box-on",
-                                      "direction": "row",
-                                      "align": "center",
-                                      "body": [{ "type": "text", "text": "✓" }]
-                                    },
-                                    { "type": "text", "text": "状态" }
-                                  ]
+                                  "className": "st-check",
+                                  "option": { "label": "状态" }
                                 },
                                 {
-                                  "type": "container",
-                                  "className": "st-check",
-                                  "direction": "row",
-                                  "align": "center",
+                                  "type": "checkbox",
+                                  "name": "colCustomer",
                                   "testid": "stripe-export-col-customer",
-                                  "body": [
-                                    {
-                                      "type": "container",
-                                      "className": "st-check-box",
-                                      "direction": "row",
-                                      "align": "center"
-                                    },
-                                    { "type": "text", "text": "客户邮箱" }
-                                  ]
+                                  "className": "st-check",
+                                  "option": { "label": "客户邮箱" },
+                                  "defaultValue": false
                                 },
                                 {
-                                  "type": "container",
-                                  "className": "st-check",
-                                  "direction": "row",
-                                  "align": "center",
+                                  "type": "checkbox",
+                                  "name": "colMethod",
                                   "testid": "stripe-export-col-method",
-                                  "body": [
-                                    {
-                                      "type": "container",
-                                      "className": "st-check-box",
-                                      "direction": "row",
-                                      "align": "center"
-                                    },
-                                    { "type": "text", "text": "支付方式" }
-                                  ]
+                                  "className": "st-check",
+                                  "option": { "label": "支付方式" },
+                                  "defaultValue": false
                                 }
                               ]
                             },
@@ -450,22 +431,34 @@
                               "gap": 8,
                               "body": [
                                 {
-                                  "type": "container",
+                                  "type": "button",
+                                  "label": "导出",
+                                  "variant": "ghost",
                                   "className": "st-btn st-btn-primary",
-                                  "direction": "row",
-                                  "align": "center",
                                   "testid": "stripe-export-confirm",
-                                  "body": [{ "type": "text", "text": "导出" }]
+                                  "onClick": { "action": "submitForm" }
                                 },
                                 {
                                   "type": "text",
-                                  "text": "CSV 下载与完成通知零生效（I9 归 P7b）；时区/日期/列勾选为静态形态",
+                                  "text": "导出已接线（I9 P7b）：确认即创建导出任务（语义模拟 + 通知），空列勾选拦截提示；真实 CSV 下载通道为显式裁决缺口（宿主无 download 通道，归 D1）",
                                   "className": "st-note",
                                   "testid": "stripe-export-note"
                                 }
                               ]
                             }
-                          ]
+                          ],
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/Stripe__exportPayments",
+                              "method": "post",
+                              "includeScope": "*"
+                            },
+                            "messages": {
+                              "success": "导出任务已创建",
+                              "failed": "导出失败：请至少勾选一列"
+                            }
+                          }
                         }
                       ]
                     }
@@ -487,6 +480,7 @@
                   "direction": "row",
                   "align": "center",
                   "testid": "stripe-chip-status",
+                  "visible": "${(stChipStatus ?? 'on') === 'on'}",
                   "body": [
                     { "type": "text", "text": "支付状态：已成功" },
                     {
@@ -495,6 +489,10 @@
                       "direction": "row",
                       "align": "center",
                       "testid": "stripe-chip-status-remove",
+                      "onClick": [
+                        { "action": "setValue", "args": { "path": "stChipStatus", "value": "" } },
+                        { "action": "setValue", "args": { "path": "stStatusFilter", "value": "" } }
+                      ],
                       "body": [{ "type": "icon", "icon": "x", "size": 10 }]
                     }
                   ]
@@ -505,6 +503,7 @@
                   "direction": "row",
                   "align": "center",
                   "testid": "stripe-chip-amount",
+                  "visible": "${(stChipAmount ?? 'on') === 'on'}",
                   "body": [
                     { "type": "text", "text": "金额：≥ CN¥100.00" },
                     {
@@ -513,6 +512,10 @@
                       "direction": "row",
                       "align": "center",
                       "testid": "stripe-chip-amount-remove",
+                      "onClick": [
+                        { "action": "setValue", "args": { "path": "stChipAmount", "value": "" } },
+                        { "action": "setValue", "args": { "path": "stMinAmount", "value": "" } }
+                      ],
                       "body": [{ "type": "icon", "icon": "x", "size": 10 }]
                     }
                   ]
@@ -524,6 +527,106 @@
                   "align": "center",
                   "gap": 6,
                   "testid": "stripe-filter-button",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "筛选交易",
+                      "testid": "stripe-filter-dialog",
+                      "className": "st-dialog",
+                      "closeOnSubmit": true,
+                      "body": [
+                        {
+                          "type": "form",
+                          "testid": "stripe-filter-form",
+                          "className": "flex flex-col gap-4",
+                          "submitScope": "surface",
+                          "data": {
+                            "filterStatus": "${stStatusFilter ? stStatusFilter : 'all'}",
+                            "filterMin": "${stMinAmount ?? ''}"
+                          },
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "组合筛选会叠加收窄列表；状态选「不限」或金额留空表示该维度不筛选。",
+                              "className": "st-note"
+                            },
+                            {
+                              "type": "select",
+                              "name": "filterStatus",
+                              "label": "支付状态",
+                              "clearable": false,
+                              "defaultValue": "all",
+                              "testid": "stripe-filter-status",
+                              "options": [
+                                { "label": "不限", "value": "all" },
+                                { "label": "已成功", "value": "succeeded" },
+                                { "label": "待处理", "value": "pending" },
+                                { "label": "已失败", "value": "failed" },
+                                { "label": "已退款", "value": "refunded" }
+                              ]
+                            },
+                            {
+                              "type": "input-number",
+                              "name": "filterMin",
+                              "label": "金额下限",
+                              "placeholder": "与交易金额同单位",
+                              "testid": "stripe-filter-min"
+                            }
+                          ],
+                          "submitAction": {
+                            "action": "setValue",
+                            "args": { "path": "stStatusFilter", "value": "" }
+                          },
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "应用筛选",
+                              "variant": "ghost",
+                              "className": "st-btn st-btn-primary",
+                              "testid": "stripe-filter-submit",
+                              "onClick": { "action": "submitForm" }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "筛选已接线（I1）：应用后按值重固定 chip，组合叠加收窄，移除 chip 解除对应维度；筛选状态写入 URL 可书签为显式裁决缺口（runtime 能力候选，归 D1）。",
+                          "className": "st-note mt-2",
+                          "testid": "stripe-filter-note"
+                        }
+                      ],
+                      "onSubmitSuccess": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "stStatusFilter",
+                            "value": "${$formData.filterStatus === 'all' ? '' : ($formData.filterStatus ?? '')}"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "stMinAmount",
+                            "value": "${$formData.filterMin ?? ''}"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "stChipStatus",
+                            "value": "${$formData.filterStatus && $formData.filterStatus !== 'all' ? 'on' : ''}"
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "stChipAmount",
+                            "value": "${$formData.filterMin ? 'on' : ''}"
+                          }
+                        }
+                      ]
+                    }
+                  },
                   "body": [
                     { "type": "icon", "icon": "list-filter", "size": 13 },
                     { "type": "text", "text": "筛选" }
@@ -536,6 +639,67 @@
                   "align": "center",
                   "gap": 6,
                   "testid": "stripe-search",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "搜索交易",
+                      "testid": "stripe-search-dialog",
+                      "className": "st-dialog",
+                      "closeOnSubmit": false,
+                      "body": [
+                        {
+                          "type": "form",
+                          "testid": "stripe-search-form",
+                          "className": "flex flex-col gap-2",
+                          "submitScope": "surface",
+                          "data": {
+                            "keyword": "${stKeyword ?? ''}"
+                          },
+                          "body": [
+                            {
+                              "type": "input-text",
+                              "name": "keyword",
+                              "testid": "stripe-search-input",
+                              "placeholder": "搜索客户、邮箱、单号、描述或品牌…"
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "搜索",
+                              "variant": "ghost",
+                              "className": "st-btn st-btn-primary",
+                              "testid": "stripe-search-submit",
+                              "onClick": { "action": "submitForm" }
+                            }
+                          ],
+                          "submitOnChange": true,
+                          "submitAction": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "stKeyword",
+                              "value": "${keyword ?? ''}"
+                            }
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "text": "搜索已接线（I3）：输入即过滤（keyword url 物化 + dependsOn 自动刷新）；语法搜索解析器为降级差异（§6.2 维持），产品化候选归 D1。",
+                          "className": "st-note mt-2",
+                          "testid": "stripe-search-note"
+                        }
+                      ],
+                      "onSubmitSuccess": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "stKeyword",
+                            "value": "${$formData.keyword ?? ''}"
+                          }
+                        }
+                      ]
+                    }
+                  },
                   "body": [
                     { "type": "icon", "icon": "magnifier", "size": 13 },
                     {
@@ -546,7 +710,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "chip 增删/组合收窄/搜索参数化零生效（I1/I3 归 P7b）",
+                  "text": "chip 增删/组合收窄已接线（I1 P7b）：初始双 chip 为已固定维度样本（值经筛选 dialog 应用），移除即解除；搜索已参数化（I3）",
                   "className": "st-note",
                   "testid": "stripe-chip-note"
                 }
@@ -566,6 +730,7 @@
                   "direction": "column",
                   "gap": 4,
                   "testid": "stripe-kpi-netvolume",
+                  "visible": "${(stWidgetChart ?? 'on') === 'on'}",
                   "body": [
                     { "type": "text", "text": "净额（本月）", "className": "st-kpi-label" },
                     {
@@ -588,6 +753,7 @@
                   "direction": "column",
                   "gap": 4,
                   "testid": "stripe-kpi-charges",
+                  "visible": "${(stWidgetCharges ?? 'on') === 'on'}",
                   "body": [
                     { "type": "text", "text": "交易笔数", "className": "st-kpi-label" },
                     {
@@ -610,6 +776,7 @@
                   "direction": "column",
                   "gap": 4,
                   "testid": "stripe-kpi-avg",
+                  "visible": "${(stWidgetAvg ?? 'on') === 'on'}",
                   "body": [
                     { "type": "text", "text": "平均交易额", "className": "st-kpi-label" },
                     {
@@ -626,6 +793,7 @@
                   "direction": "column",
                   "gap": 4,
                   "testid": "stripe-kpi-refunds",
+                  "visible": "${(stWidgetRefunds ?? 'on') === 'on'}",
                   "body": [
                     { "type": "text", "text": "退款总额", "className": "st-kpi-label" },
                     {
@@ -670,11 +838,21 @@
                           "title": "添加 widget",
                           "testid": "stripe-widget-dialog",
                           "className": "st-dialog",
+                          "closeOnSubmit": true,
                           "body": [
                             {
                               "type": "form",
                               "testid": "stripe-widget-form",
                               "className": "flex flex-col gap-3",
+                              "submitScope": "surface",
+                              "data": {
+                                "widgetChart": "${(stWidgetChart ?? 'on') === 'on'}",
+                                "widgetCharges": "${(stWidgetCharges ?? 'on') === 'on'}",
+                                "widgetAvg": "${(stWidgetAvg ?? 'on') === 'on'}",
+                                "widgetRefunds": "${(stWidgetRefunds ?? 'on') === 'on'}",
+                                "widgetBalance": false,
+                                "widgetPayouts": false
+                              },
                               "body": [
                                 {
                                   "type": "text",
@@ -687,103 +865,46 @@
                                   "testid": "stripe-widget-list",
                                   "body": [
                                     {
-                                      "type": "container",
-                                      "className": "st-check",
-                                      "direction": "row",
-                                      "align": "center",
+                                      "type": "checkbox",
+                                      "name": "widgetChart",
                                       "testid": "stripe-widget-item-netvolume",
-                                      "body": [
-                                        {
-                                          "type": "container",
-                                          "className": "st-check-box st-check-box-on",
-                                          "direction": "row",
-                                          "align": "center",
-                                          "body": [{ "type": "text", "text": "✓" }]
-                                        },
-                                        { "type": "text", "text": "净额走势" }
-                                      ]
+                                      "className": "st-check",
+                                      "option": { "label": "净额走势" }
                                     },
                                     {
-                                      "type": "container",
-                                      "className": "st-check",
-                                      "direction": "row",
-                                      "align": "center",
+                                      "type": "checkbox",
+                                      "name": "widgetCharges",
                                       "testid": "stripe-widget-item-charges",
-                                      "body": [
-                                        {
-                                          "type": "container",
-                                          "className": "st-check-box st-check-box-on",
-                                          "direction": "row",
-                                          "align": "center",
-                                          "body": [{ "type": "text", "text": "✓" }]
-                                        },
-                                        { "type": "text", "text": "交易笔数" }
-                                      ]
+                                      "className": "st-check",
+                                      "option": { "label": "交易笔数" }
                                     },
                                     {
-                                      "type": "container",
-                                      "className": "st-check",
-                                      "direction": "row",
-                                      "align": "center",
+                                      "type": "checkbox",
+                                      "name": "widgetAvg",
                                       "testid": "stripe-widget-item-avg",
-                                      "body": [
-                                        {
-                                          "type": "container",
-                                          "className": "st-check-box st-check-box-on",
-                                          "direction": "row",
-                                          "align": "center",
-                                          "body": [{ "type": "text", "text": "✓" }]
-                                        },
-                                        { "type": "text", "text": "平均交易额" }
-                                      ]
+                                      "className": "st-check",
+                                      "option": { "label": "平均交易额" }
                                     },
                                     {
-                                      "type": "container",
-                                      "className": "st-check",
-                                      "direction": "row",
-                                      "align": "center",
+                                      "type": "checkbox",
+                                      "name": "widgetRefunds",
                                       "testid": "stripe-widget-item-refunds",
-                                      "body": [
-                                        {
-                                          "type": "container",
-                                          "className": "st-check-box",
-                                          "direction": "row",
-                                          "align": "center"
-                                        },
-                                        { "type": "text", "text": "退款总额" }
-                                      ]
+                                      "className": "st-check",
+                                      "option": { "label": "退款总额" }
                                     },
                                     {
-                                      "type": "container",
-                                      "className": "st-check",
-                                      "direction": "row",
-                                      "align": "center",
+                                      "type": "checkbox",
+                                      "name": "widgetBalance",
                                       "testid": "stripe-widget-item-balance",
-                                      "body": [
-                                        {
-                                          "type": "container",
-                                          "className": "st-check-box",
-                                          "direction": "row",
-                                          "align": "center"
-                                        },
-                                        { "type": "text", "text": "客户余额" }
-                                      ]
+                                      "className": "st-check",
+                                      "option": { "label": "客户余额" }
                                     },
                                     {
-                                      "type": "container",
-                                      "className": "st-check",
-                                      "direction": "row",
-                                      "align": "center",
+                                      "type": "checkbox",
+                                      "name": "widgetPayouts",
                                       "testid": "stripe-widget-item-payouts",
-                                      "body": [
-                                        {
-                                          "type": "container",
-                                          "className": "st-check-box",
-                                          "direction": "row",
-                                          "align": "center"
-                                        },
-                                        { "type": "text", "text": "入账记录" }
-                                      ]
+                                      "className": "st-check",
+                                      "option": { "label": "入账记录" }
                                     }
                                   ]
                                 },
@@ -794,12 +915,12 @@
                                   "gap": 8,
                                   "body": [
                                     {
-                                      "type": "container",
+                                      "type": "button",
+                                      "label": "Apply",
+                                      "variant": "ghost",
                                       "className": "st-btn st-btn-primary",
-                                      "direction": "row",
-                                      "align": "center",
                                       "testid": "stripe-widget-apply",
-                                      "body": [{ "type": "text", "text": "Apply" }]
+                                      "onClick": { "action": "submitForm" }
                                     },
                                     {
                                       "type": "container",
@@ -811,13 +932,47 @@
                                     },
                                     {
                                       "type": "text",
-                                      "text": "widget 增删生效零生效（I10/分析篇 §3 归 P7b）",
+                                      "text": "widget 勾选已接线（P7b 近似增删）：Apply 后 visible 表达式驱动预置区块显隐（非真重组——客户余额/入账记录两项无预置区块）；Edit 维持形态",
                                       "className": "st-note",
                                       "testid": "stripe-widget-note"
                                     }
                                   ]
                                 }
-                              ]
+                              ],
+                              "submitAction": {
+                                "action": "setValue",
+                                "args": { "path": "stWidgetChart", "value": "" }
+                              }
+                            }
+                          ],
+                          "onSubmitSuccess": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "stWidgetChart",
+                                "value": "${$formData.widgetChart ? 'on' : ''}"
+                              }
+                            },
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "stWidgetCharges",
+                                "value": "${$formData.widgetCharges ? 'on' : ''}"
+                              }
+                            },
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "stWidgetAvg",
+                                "value": "${$formData.widgetAvg ? 'on' : ''}"
+                              }
+                            },
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "stWidgetRefunds",
+                                "value": "${$formData.widgetRefunds ? 'on' : ''}"
+                              }
                             }
                           ]
                         }
@@ -826,18 +981,26 @@
                   ]
                 },
                 {
-                  "type": "chart",
-                  "testid": "stripe-netvolume-chart",
-                  "chartType": "line",
-                  "source": "${overviewData?.curve}",
-                  "height": 220,
-                  "xAxis": { "dataKey": "label" },
-                  "series": [
-                    { "name": "本期", "dataRegionKey": "net", "color": "#635bff" },
-                    { "name": "上期", "dataRegionKey": "prev", "color": "#b3b0ff" }
-                  ],
-                  "grid": true,
-                  "legend": true
+                  "type": "container",
+                  "direction": "column",
+                  "visible": "${(stWidgetChart ?? 'on') === 'on'}",
+                  "testid": "stripe-chart-wrap",
+                  "body": [
+                    {
+                      "type": "chart",
+                      "testid": "stripe-netvolume-chart",
+                      "chartType": "line",
+                      "source": "${overviewData?.curve}",
+                      "height": 220,
+                      "xAxis": { "dataKey": "label" },
+                      "series": [
+                        { "name": "本期", "dataRegionKey": "net", "color": "#635bff" },
+                        { "name": "上期", "dataRegionKey": "prev", "color": "#b3b0ff" }
+                      ],
+                      "grid": true,
+                      "legend": true
+                    }
+                  ]
                 }
               ]
             },
@@ -862,7 +1025,8 @@
                   },
                   "columns": [
                     {
-                      "name": "amountLabel",
+                      "name": "amountMinor",
+                      "sortable": true,
                       "label": {
                         "type": "container",
                         "direction": "row",
@@ -870,10 +1034,7 @@
                         "gap": 4,
                         "className": "st-sort-head",
                         "testid": "stripe-sort-amount",
-                        "body": [
-                          { "type": "text", "text": "金额" },
-                          { "type": "icon", "icon": "chevrons-up-down", "size": 12 }
-                        ]
+                        "body": [{ "type": "text", "text": "金额" }]
                       },
                       "width": 150,
                       "align": "right",
@@ -885,7 +1046,8 @@
                       }
                     },
                     {
-                      "name": "dateLabel",
+                      "name": "createdAt",
+                      "sortable": true,
                       "label": {
                         "type": "container",
                         "direction": "row",
@@ -893,10 +1055,7 @@
                         "gap": 4,
                         "className": "st-sort-head",
                         "testid": "stripe-sort-date",
-                        "body": [
-                          { "type": "text", "text": "日期" },
-                          { "type": "icon", "icon": "chevrons-up-down", "size": 12 }
-                        ]
+                        "body": [{ "type": "text", "text": "日期" }]
                       },
                       "width": 150,
                       "cell": {
@@ -1118,6 +1277,25 @@
                                             "direction": "row",
                                             "align": "center",
                                             "testid": "stripe-detail-refund",
+                                            "onClick": {
+                                              "action": "ajax",
+                                              "args": {
+                                                "url": "/r/Stripe__refundPayment",
+                                                "method": "post",
+                                                "data": { "id": "${id}" }
+                                              },
+                                              "messages": {
+                                                "success": "退款任务已创建",
+                                                "failed": "退款失败：交易不存在"
+                                              },
+                                              "then": [
+                                                {
+                                                  "action": "component:refresh",
+                                                  "componentId": "stripe-source-payments"
+                                                },
+                                                { "action": "closeDialog" }
+                                              ]
+                                            },
                                             "body": [{ "type": "text", "text": "退款" }]
                                           },
                                           {
@@ -1138,7 +1316,7 @@
                                           },
                                           {
                                             "type": "text",
-                                            "text": "退款/业务操作零生效（静态演示差异声明 §6.2）",
+                                            "text": "退款已接线（P7b 语义模拟）：点击创建退款任务并刷新列表；再次收款/发送收据零生效",
                                             "className": "st-note",
                                             "testid": "stripe-detail-actions-note"
                                           }
@@ -1281,7 +1459,7 @@
                   "body": [
                     {
                       "type": "text",
-                      "text": "金额/日期列头 chevron 为排序形态样本，排序生效归 P7b（I4）；默认密度档 ≈40px（--st-row-default）",
+                      "text": "金额/日期列内建排序已接线（I4 P7b）：点击列头升/降/清除，方向箭头与 aria-sort 随动；默认密度档 ≈40px（--st-row-default）",
                       "className": "st-note",
                       "testid": "stripe-sort-note"
                     },

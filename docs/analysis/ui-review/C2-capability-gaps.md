@@ -245,3 +245,32 @@
 - **表达式 className 状态驱动成立（G-F/G-F2 既有口径精化）**：静态节点 className 表达式对 scope 变量的响应性实测成立（行高分段控件 setValue → 网格 wrapper className `${'at-density-live-' + (atRowDensity ?? 'short')}` → 行高随动，e2e 04）。回写 ③–⑥「schema 层无选中/hover 态表达通道」的口径据此精化：**表达式机制本身可用，缺口在交互态状态源**（选中集/键盘焦点/hover 等状态无 schema 承载）——G-F option-row 原语 D1 首项依据不变，G-F2 缺口面收窄。
 - **columns 显隐 scope 通道在库（较初判乐观的事实修正）**：table `columnSettings:{enabled:true}` + `toggledStatePath` 已支持 scope 驱动列显隐（`use-table-visible-columns.ts:44-80`，回写 ③「勾选显隐原生可达」的 plain-table 对应物）；P6b 不接线裁决基于 chrome 副作用（启用即挂设置按钮）与 20-toggle 表达式数组手术成本（A6），非机制缺失。
 - **includeScope 载荷遮蔽坑第五例**：`atEdit*` 编辑面规范键 + 端点别名优先级消解（`ntPeek*` 先例第五处复用：cal/linear/notion/antdpro 后），模式已稳定可沉淀为接线规范条目。
+
+### 回写 ⑧ — P7b Stripe dashboard 交互接线实测证据（2026-08-30，plan `2026-08-30-1333-1-p7b-stripe-interaction-wiring-and-tests.md` Phase 4）
+
+> 授权链: roadmap Cross-Cutting 5（Pi-b closure 以追加方式回写 C2，不重开初版状态）→ 本 plan Phase 4。初版裁决表零改动，本段仅追加实测证据与素材行。逐条「预测 vs 实测」对照见分析篇 `stripe-dashboard.md` §4.1。
+
+**G-E 高密度排版/金融表格（L2，本应用主对照行）终态实测证据（P7a 静态 + P7b 接线后复核）**:
+
+- **密度档证据链闭环（切换不接线裁定 + 机制证据引用）**：参照值三档 32/40/48px 实测锁定（P7a §1，e2e getComputedStyle ±2px）维持；档位**切换不接线**为本计划显式裁决——Stripe 原版无密度切换控件（分析篇 I8「密度档为拟定补充」），且 className 表达式状态驱动的切换机制可用性已由 P6b A9 实测承载（回写 ⑦ 素材行）——G-E 密度档缺口证据链就此闭环：**参照值实测在库 + 切换机制可达在库 + 原版无控件故复刻不发明**，密度档语义字段（按档渲染行高的语义承载）产品化归 D1 输入池。
+- **金额等宽排版承载终判维持**：mock 预计算轨（`formatStAmount` 币种注册表 + 千分位）+ cell `className` 复刻类（`.st-money` tabular-nums + 右对齐）为终态承载；schema 表达式轨 `toFixed` 边界维持（无千分位/按币种小数位需分支，单测对照锁定）——**`formatCurrency` registry 函数候选维持 D1 输入池**。
+- **语义状态 pill 型别候选维持**：四语义色阶对 pill 以 mock 预计算 `statusPillClass` 投影 className 承载（P5a notion `statusChipClass` 同源第二例），renderer 无内建语义 pill 型别缺口维持，产品化归 D1。
+
+**G-B3 批量操作栏「无批量栏」对照终态（P7a 素材行收口）**:
+
+- **Stripe 原生无批量栏**（分析篇 I11 调研结论）跨 P7a/P7b 两段维持：复刻页零选择集列、零批量栏（e2e `stripe-no-batch-note` 注记断言锁定）——「参考应用无此件，复刻无需新增」终态收口。
+- **flux 侧通道现状对照维持**：批量选择集 + 批量动作为 crud 域内建（回写 ⑤ scope 选择集契约），table 复刻面不自带——P7b 接线未产生新批量缺口证据，G-B3 行零扩充。
+
+**分析篇 §7 两候选归属裁决（P7a 移交 + P7b 收口）**:
+
+- **候选 1「筛选状态 URL 同步」（chip/日期/搜索词入 URL 可书签）→ runtime/页面壳层能力候选（D1 输入池，不新增 C2 行）**：schema 层验证了筛选状态集的**会话内**承载完整可达（页面 scope 变量 + url 参数物化 + `dependsOn` 自动刷新，interactions e2e 01–03 锁定）；**路由 query ↔ 筛选状态双向绑定**零通道维持（无路由参数读写 action 词汇/数据源 URL 回写通道），G-B2 同族口径（页面壳层状态面），产品化归 D1。禁 hack（hash 手工拼装绕道）维持。
+- **候选 2「语法搜索解析器」（`amount:>100`/`is:refunded` 类）→ 自研解析器候选（D1 输入池，复刻维持降级）**：P7b 搜索接线止步于 keyword 参数化（mock `keyword=` 过滤 + 空态兜底，e2e 01）；语法解析→数据源查询参数语义的反哺潜力维持分析篇 §7 初判，产品化归 D1，§6.2 降级声明维持。
+
+**D1 输入池素材行汇总（P7b 登记，全部未分级）**：①`formatCurrency` registry 函数（金额格式化——千分位 + 按币种小数位 + locale）；②语义状态 pill 型别（colorLadder 语义字段）；③密度档语义字段（行高档位语义承载）；④download/print 宿主通道（`RendererEnv` 缺口，回写 ③ 同源第五例——导出确认载荷语义模拟为现役替代）；⑤筛选状态 URL 同步（runtime/页面壳层）；⑥语法搜索解析（自研解析器 + data-source 查询语义反哺）。
+
+**新素材行（P7b 执行期发现，供 D1/deep-audit 参考，未分级）**:
+
+- **checkbox 字段 `defaultValue` 不生效，form 级 `data` 预填为可达通道**：checkbox 字段 `defaultValue: true` 对 `aria-checked` 零效果（live 探针，`useDefaultValuePush` 管线未触达 boolean 型默认）；**form `data` 预填可达**且支持绑定页面 scope 表达式（`"data": {"widgetRefunds": "${(stWidgetRefunds ?? 'on') === 'on'}"}`）实现**重开浮层预填当前会话态**（搜索 keyword 回显同款机制的第二用例）。select/`input-number` 的 `defaultValue` 正常（P6b A10 先例）——默认值通道按字段型别分裂。
+- **form `submitAction` 求值域不可解析 select 字段名（P5b 口径按字段型别精化）**：`${filterStatus}`（select 字段名）在 submitAction 表达式域求值失败 → 该 setValue 静默不执行（live 探针：refetch 发生但参数为空）；`$formData` 在 dialog 级 `onSubmitSuccess` 域可解析且**携带 select 选中值**。终态姿势：submitAction 保留字面量写（保证成功链）+ 真实写入全部落 dialog `onSubmitSuccess` 链。P5b「可解析字段名」口径据此精化为**按字段型别/值注册路径而异**。
+- **table 内建 sorter 客户端排序可达（P7b I4 实测，与 P6b A5 会话端点变体互为备选）**：列 `sortable: true` + 列 name 对齐数据字段即可承载点击排序（asc→desc→null 内建循环 + 内建升降箭头 + `th[aria-sort]` 视觉态），`processTableData` 对全量 source 客户端排序在客户端分页形态下完整可达（金额列以 minor 单位数值序、日期列以 ISO 串字典序承载）。纯展示型部分列排序无需会话端点。
+- **`__stripeTestHooks.lastUrl` 观察 affordance**：端点计数钩子旁挂最后一次请求 url（notion `lastUpdate`/`lastMove` 同族第五例），e2e 排查「refetch 发生但参数未物化」类问题的关键探针——opt-in 钩子载荷观察从"写载荷"扩展到"读 url"，模式可沉淀为复刻接线规范条目。

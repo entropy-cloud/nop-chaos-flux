@@ -258,11 +258,14 @@ test.describe('Stripe replica — chart card area + overlay walkthrough', () => 
   }) => {
     await openPage(page, 'stripe-payments', '金融数据面板 · 支付流水');
 
-    // chip 区 → 日期范围 → 搜索（静态形态走查，零生效不崩）
+    // chip 区 → 日期范围 → 搜索（走查：搜索框点击打开搜索浮层 → Esc 关闭）
     await expect(page.getByTestId('stripe-chip-status')).toBeVisible();
     await page.getByTestId('stripe-chip-status-remove').click();
     await page.getByTestId('stripe-daterange-lastmonth').click();
     await page.getByTestId('stripe-search').click();
+    await expect(page.getByTestId('stripe-search-dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('stripe-search-dialog')).not.toBeVisible();
 
     // 导出模态 → Esc 关闭
     await page.getByTestId('stripe-export-trigger').click();
