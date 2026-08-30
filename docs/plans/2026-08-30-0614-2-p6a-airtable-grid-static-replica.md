@@ -300,3 +300,17 @@ Exit Criteria:
 - `Airtable__` mock 数据集若在 P6b 接线中发现状态样本不足（编辑中间态/插行/fill 序列样本），在 `mock-backend-airtable.ts` 内补样本属 P6b Fix 范围（P5a follow-up 惯例沿袭）
 - 28 型别 glyph 全套自绘的深化（本计划仅裁剪清单内型别近似）：不入本计划
 - `--at-*` 变量架构共享复刻基建抽取（P3a/P4a/P5a follow-up 沿袭）：不入本计划
+
+## Closure
+
+Status Note: 三个 Phase 全部 `completed`、Exit Criteria 全勾：静态复刻结果面成立（单页 `page-schemas/airtable-grid.json` 落盘注册可达、`airtable-replica.css`、mock 四件 + `Airtable__` get-only 端点、`COMPLEX_PAGE_ENTRIES` 注册、单测 13 条、目标 e2e 6/6）；G-D 静态实测结论六节落字供 P6b 起点与 C2 回写携带；Closure Gates 全部通过（`pnpm typecheck`/`build`/`lint` 37/37、`pnpm test` 68/68 任务含 playground 32 文件 313 用例、`pnpm check` 零新增命中）；deferred 项全部为 P6b 既定范围（两段式边界）或 D1/P6b 产品化候选，无 in-scope live defect 或 contract drift 被降级。
+
+Closure Audit Evidence:
+
+- Auditor / Agent: independent sub-agent fresh session ×2——R1 `ses_fafb62ebdffeubGr72pTIkBsrh`（全量审计）、R2 `ses_fafaea25effeFLo6S4feG0t0qs`（scoped re-audit）
+- Evidence: R1 verdict `issues`（1 Major：plan/dev log 行数记录为中间态未刷新——CSS 记 601 实 725、mock 四件记 122/174/216/46 实 123/191/243/48；3 Minor：showcase-env 门禁切分口径未双口径记录、`tests/e2e/artifacts/airtable-replica/` 缺出变更面记录、plan 重复 Status 块）→ 执行 session 全部修复 → R2 verdict `APPROVED` 零 finding（5/5 项 live 复核通过：行数记录/重复块/dev log 数字/artifacts 变更面/无新解释外 diff）；审计并独立复核：三 Phase 全 `[x]`+`completed`、contract 抽查（schema testid/className/端点、get-only、CSS `.at-root,.at-dialog` 双作用域、@import 先于 `@source`、注册惯例、roadmap P6a `planned`→`done`）、playground 313 用例复跑绿、目标 e2e 6/6 复跑绿、变更面仅 In Scope 且 `packages/` 零改动；收口记录见 `docs/logs/2026/08-30.md`（P6a closure audit 条目，unit + e2e 双全绿）
+
+Follow-up:
+
+- `Airtable__` mock 数据集在 P6b 接线中发现状态样本不足时补样本（P6b Fix 范围）
+- 28 型别 glyph 全套自绘深化与 `--at-*` 复刻基建抽取（见 Non-Blocking Follow-ups）；除此之外 no remaining plan-owned work
