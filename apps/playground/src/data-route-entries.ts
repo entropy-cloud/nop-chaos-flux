@@ -2,6 +2,14 @@ import type { RendererRouteEntry } from './route-model.js';
 
 export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
   {
+    id: 'query-filter',
+    title: 'Query Filter',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description:
+      'Standalone query-region semantic component: embedded form with search/reset built in, grid layout, and optional expand/collapse (usable outside crud).',
+  },
+  {
     id: 'crud',
     title: 'Crud',
     category: 'data',
