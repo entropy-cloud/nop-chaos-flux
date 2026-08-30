@@ -13,7 +13,7 @@ import { RecurseRenderer } from './recurse.js';
 import { ScopeDebugRenderer } from './scope-debug.js';
 import { TabsRenderer } from './tabs.js';
 import { TextRenderer } from './text.js';
-import { dialogRendererDefinition, drawerRendererDefinition } from './surface-renderer-definitions.js';
+import { dialogRendererDefinition, drawerRendererDefinition, commandPaletteRendererDefinition } from './surface-renderer-definitions.js';
 import {
   badgeContracts,
   containerContracts,
@@ -483,6 +483,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
   },
   dialogRendererDefinition,
   drawerRendererDefinition,
+  commandPaletteRendererDefinition,
   {
     type: 'tabs',
     displayName: 'Tabs',

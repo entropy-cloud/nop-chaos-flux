@@ -1,4 +1,9 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type {
+  FieldCompileContext,
+  RendererDefinition,
+  SchemaFieldRule,
+} from '@nop-chaos/flux-core';
+import { CommandPaletteRenderer, OPEN_BINDING_KIND } from './command-palette.js';
 import { DialogRenderer } from './dialog.js';
 import { DrawerRenderer } from './drawer.js';
 
@@ -245,4 +250,114 @@ export const drawerRendererDefinition: RendererDefinition = {
     { key: 'closeOnOutside', kind: 'prop' as const, valueType: 'boolean' as const },
     { key: 'resizable', kind: 'prop' as const, valueType: 'boolean' as const },
   ]),
+};
+
+/**
+ * Compile-time capture of the controlled `open` binding. A simple `${path}`
+ * expression records its scope path so user-initiated closes can write `false`
+ * back (dialog plan-459 reopen parity) WITHOUT a runtime raw-schema read
+ * (compile-once: the raw value is only ever seen by this compile hook).
+ */
+const compileOpenBinding: SchemaFieldRule = {
+  key: 'open',
+  kind: 'prop',
+  compile: (value: unknown, context: FieldCompileContext) => {
+    let path: string | undefined;
+    if (typeof value === 'string') {
+      const match = value.trim().match(/^\$\{([a-zA-Z_$][\w$]*(\.[a-zA-Z_$][\w$]*)*)\}$/);
+      path = match?.[1];
+    }
+    return {
+      kind: OPEN_BINDING_KIND,
+      path,
+      value: context.compileValue(value),
+    };
+  },
+};
+
+const commandPaletteEventContracts = {
+  onOpen: surfaceEventContracts.onOpen,
+  onClose: surfaceEventContracts.onClose,
+  onCommand: {
+    displayName: 'Command',
+    description:
+      'Runs when a command item is executed, after the palette closes (close-then-dispatch).',
+    payload: {
+      kind: 'object' as const,
+      fields: {
+        id: { kind: 'string' as const },
+        item: { kind: 'unknown' as const },
+        groupId: { kind: 'string' as const },
+      },
+    },
+  },
+};
+
+export const commandPaletteRendererDefinition: RendererDefinition = {
+  type: 'command-palette',
+  displayName: 'Command Palette',
+  category: 'layout',
+  sourcePackage: '@nop-chaos/flux-renderers-basic',
+  defaultSchema: { type: 'command-palette', items: [] },
+  component: CommandPaletteRenderer,
+  propContracts: {
+    placeholder: stringPropContract(
+      'Placeholder',
+      'Search input placeholder text. Defaults to the i18n "search" message.',
+    ),
+    shouldFilter: booleanPropContract(
+      'Should Filter',
+      'cmdk built-in query filtering. Disable to drive items with schema expressions (external filtering). Defaults to true.',
+    ),
+    emptyText: stringPropContract(
+      'Empty text',
+      'Empty state copy shown when no items match. Defaults to the i18n "no results" message.',
+    ),
+    hotkey: stringPropContract(
+      'Hotkey',
+      'Local invocation key binding, e.g. "mod+k". No-op on controlled palettes (open prop); no conflict arbitration — global keybindings are G-B2 scope.',
+    ),
+    closeOnEsc: booleanPropContract(
+      'Close on Esc',
+      'Closes the palette when the Escape key is pressed. Defaults to true.',
+    ),
+    closeOnOutsideClick: booleanPropContract(
+      'Close on outside click',
+      'Closes the palette when the overlay or outside area is pressed. Defaults to true.',
+    ),
+    showMask: booleanPropContract(
+      'Show mask',
+      'Renders the overlay mask. Defaults to true.',
+    ),
+  },
+  eventContracts: commandPaletteEventContracts,
+  componentCapabilityContracts: surfaceHandleCapabilityContracts,
+  fields: [
+    { key: 'items', kind: 'prop' as const },
+    { key: 'groups', kind: 'prop' as const },
+    {
+      key: 'source',
+      kind: 'prop' as const,
+      allowSource: true,
+      // Loading/error transient state lands on props so the source-prop
+      // controller's snapshot changes even when the fetched value is
+      // unchanged — a failing source must re-render (to the empty state),
+      // not freeze the node's prop bag. tree-controls precedent.
+      sourceStateKey: 'sourceState',
+    },
+    { key: 'placeholder', kind: 'prop' as const },
+    { key: 'shouldFilter', kind: 'prop' as const, valueType: 'boolean' as const },
+    { key: 'emptyText', kind: 'prop' as const },
+    { key: 'hotkey', kind: 'prop' as const },
+    compileOpenBinding,
+    { key: 'defaultOpen', kind: 'prop' as const, valueType: 'boolean' as const },
+    { key: 'statusPath', kind: 'prop' as const },
+    { key: 'container', kind: 'prop' as const },
+    { key: 'closeOnEsc', kind: 'prop' as const, valueType: 'boolean' as const },
+    { key: 'closeOnOutsideClick', kind: 'prop' as const, valueType: 'boolean' as const },
+    { key: 'showMask', kind: 'prop' as const, valueType: 'boolean' as const },
+    { key: 'onOpen', kind: 'event' as const },
+    { key: 'onClose', kind: 'event' as const },
+    { key: 'onCommand', kind: 'event' as const },
+  ],
 };

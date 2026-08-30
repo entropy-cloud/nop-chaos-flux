@@ -303,6 +303,65 @@ export interface FlexSchema extends BaseSchema {
   onClick?: ActionSchema | ActionSchema[];
 }
 
+export interface CommandPaletteItemSchema extends SchemaObject {
+  id?: string;
+  label?: string;
+  description?: string;
+  /** Lucide icon name rendered before the label. */
+  icon?: string;
+  /** Keyboard hint rendered on the right edge (e.g. "⌘N"). */
+  shortcut?: string;
+  /** Group heading; flat items sharing a group cluster under one heading. */
+  group?: string;
+  disabled?: boolean | string;
+  /** Static execution track: dispatched after the palette closes (close-then-dispatch). */
+  action?: ActionSchema | ActionSchema[];
+}
+
+export interface CommandPaletteGroupSchema extends SchemaObject {
+  label?: string;
+  items?: CommandPaletteItemSchema[];
+}
+
+export interface CommandPaletteSchema extends BaseSchema {
+  type: 'command-palette';
+  /** Flat static command items (expression-capable). */
+  items?: SchemaValue;
+  /** Explicit labelled sections, rendered before flat `items` (expression-capable). */
+  groups?: SchemaValue;
+  /** Dynamic items track: SourceSchema (fetched) or expression/array. Appended after static sections. */
+  source?: SchemaValue;
+  /** Search input placeholder. Defaults to the i18n "search" message. */
+  placeholder?: string;
+  /** cmdk built-in filtering. Disable to drive items with schema expressions (external filtering). */
+  shouldFilter?: boolean | string;
+  /** Empty state copy. Defaults to the i18n "no results" message. */
+  emptyText?: string;
+  /**
+   * Local invocation key binding (e.g. "mod+k"). Renderer-scoped window keydown
+   * listener with unmount cleanup. No-op on controlled palettes (`open` prop).
+   * No conflict arbitration — global keybindings are G-B2 scope.
+   */
+  hotkey?: string;
+  /**
+   * Controlled open. A simple `${path}` expression is written back to `false`
+   * on user-initiated closes (dialog plan-459 parity) so idempotent
+   * setValue(path, true) can reopen; other expressions keep pure-latch semantics.
+   */
+  open?: boolean | string;
+  defaultOpen?: boolean | string;
+  /** Publishes `{ id, kind: 'command-palette', open }` into the owner scope. */
+  statusPath?: string;
+  container?: string;
+  closeOnEsc?: boolean | string;
+  closeOnOutsideClick?: boolean | string;
+  showMask?: boolean | string;
+  onOpen?: ActionSchema | ActionSchema[];
+  onClose?: ActionSchema | ActionSchema[];
+  /** Fired on command execution with payload `{ id, item, groupId }` (after close). */
+  onCommand?: ActionSchema | ActionSchema[];
+}
+
 export interface ScopeDebugSchema extends BaseSchema {
   type: 'scope-debug';
   title?: string;

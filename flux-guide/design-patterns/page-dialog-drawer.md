@@ -396,3 +396,80 @@ dialog 内可能有多个 form（搜索 form + 编辑 form / 主 form + 子 form
 | 关闭方式 | 导航          | `closeSurface`     | `closeSurface`   |
 | 适用场景 | 主页面        | 表单编辑、确认操作 | 详情查看、长表单 |
 | 数据传递 | `data` 初始化 | `args.data` 传入   | `args.data` 传入 |
+
+---
+
+## 8. Command Palette 命令面板（⌘K）
+
+`command-palette` 是键盘优先的命令面板 surface（注册于 `@nop-chaos/flux-renderers-basic`，dialog/drawer 同族）：搜索过滤、分组清单、键盘选择（↑↓/Enter/Esc，cmdk 内建）、命令执行后**面板即关**（先关后派发）。空查询/无命中显示空态文案，不抛错。
+
+```jsonc
+{
+  "type": "command-palette",
+  "id": "appPalette",
+  "testid": "app-palette",
+  "placeholder": "输入命令或搜索…",
+  "emptyText": "没有匹配的命令",
+  "groups": [
+    {
+      "label": "导航",
+      "items": [
+        {
+          "id": "go-issues",
+          "label": "前往问题列表",
+          "shortcut": "G I",
+          "action": { "action": "navigate", "args": { "url": "/issues" } },
+        },
+        {
+          "id": "go-board",
+          "label": "前往看板",
+          "action": { "action": "navigate", "args": { "url": "/board" } },
+        },
+      ],
+    },
+  ],
+  "items": [
+    {
+      "id": "new-issue",
+      "label": "新建问题",
+      "group": "操作",
+      "icon": "plus",
+      "action": { "action": "openDialog", "args": { "title": "新建问题", "body": [] } },
+    },
+  ],
+  "onCommand": [{ "action": "setValue", "args": { "path": "lastCommand", "value": "${id}" } }],
+}
+```
+
+**命令执行双轨**：
+
+| 轨道   | 声明位置                 | 触发时机                                                                                  |
+| ------ | ------------------------ | ----------------------------------------------------------------------------------------- |
+| 事件轨 | palette `onCommand` 事件 | 每次执行恒派发，payload `{ id, item, groupId }`（args 模板可解析 `${id}`/`${item.href}`） |
+| 静态轨 | 条目 `action`            | 执行该条目时派发（`ActionSchema \| ActionSchema[]`），先于 `onCommand`                    |
+
+两轨可并存（作者显式组合）。执行序列：**先关面板（onClose 派发）→ 条目 `action` 派发 → `onCommand` 派发**；派发失败走既有 action 错误约定，面板不回滚。
+
+**动态条目轨**：`source` 接受 `SourceSchema`（自动取数）或表达式/数组，就绪条目追加在静态段之后；加载中/失败/为空均落空态：
+
+```jsonc
+// 形态一：表达式引用页面内数据（如 data-source 结果）
+{ "type": "command-palette", "source": "${remoteCommands}" }
+
+// 形态二：SourceSchema 自动取数
+{
+  "type": "command-palette",
+  "source": { "type": "source", "action": "ajax", "args": { "url": "/api/commands" } }
+}
+```
+
+**开合接线**：
+
+- 未声明 `open`：`defaultOpen` + 句柄 `component:open` / `component:close` / `component:toggle`（`componentId` 寻址，外控时 no-op `{ok:true, skipped:true}`）。
+- 声明 `open`（受控）：外部值优先，句柄与 hotkey 均 no-op；简单路径表达式（`"open": "${paletteOpen}"`）在用户关闭（Esc/外部点击/执行）时自动写回 `false`，幂等 `setValue(paletteOpen, true)` 可重开（dialog plan-459 同语义）。
+- `hotkey`：单键位呼出（如 `"mod+k"`，`mod` = meta‖ctrl），renderer 局部监听、卸载清理；不做键位冲突仲裁——全局键位注册归 G-B2。
+- `statusPath`：向 scope 发布 `{ id, kind: 'command-palette', open }` 摘要。
+
+**条目形态**：`{ id?, label?, description?, shortcut?, group?, icon?, disabled?, action? }`——`icon` 为 lucide 图标名；扁平 `items` 按 `group` 首现顺序聚类成组；缺 `label` 回退 `id`、缺 `id` 用合成键，条目降级不中断清单。`shouldFilter: false` 关闭 cmdk 内建过滤（外置过滤候选：用表达式自行过滤 `items`）。
+
+CSS 消费：面板根 marker `nop-command-palette`（`className` 可叠加），内部区域为 ui `data-slot="command*"` 标记；选中态为 cmdk `data-selected` / `aria-selected`。契约详情见 `docs/references/renderer-interfaces.md` §Command Palette Surface Contract。

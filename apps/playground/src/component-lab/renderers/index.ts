@@ -4,6 +4,7 @@ export { FragmentLabPage } from './fragment-lab-page';
 export { FlexLabPage } from './flex-lab-page';
 export { DialogLabPage } from './dialog-lab-page';
 export { DrawerLabPage } from './drawer-lab-page';
+export { CommandPaletteLabPage } from './command-palette-lab-page';
 export { TabsLabPage } from './tabs-lab-page';
 export { LoopLabPage } from './loop-lab-page';
 export { RecurseLabPage } from './recurse-lab-page';

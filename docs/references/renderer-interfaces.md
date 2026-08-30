@@ -400,6 +400,79 @@ Transient hover/pressed states are deliberately **not** JS state: CSS consumes
 Keyboard focus exposes only the marker + native `:focus-visible`; focus-management
 frameworks are out of scope (G-B2).
 
+## Command Palette Surface Contract
+
+The `command-palette` renderer type packages the `@nop-chaos/ui` Command family
+(cmdk) as a schema-expressable overlay surface: search filtering, grouped command
+list, keyboard selection, command execution, and close-after-execute. Owner plan:
+`docs/plans/2026-08-30-1737-1-d1-gb1-command-palette-renderer-primitive.md`.
+
+Key contracts:
+
+- `CommandPaletteSchema` (schema type, `type: 'command-palette'`)
+- `CommandPaletteItemSchema` / `CommandPaletteGroupSchema` (item shapes)
+- `commandPaletteRendererDefinition` (`packages/flux-renderers-basic/src/surface-renderer-definitions.ts`)
+- `CommandPaletteRenderer` (`packages/flux-renderers-basic/src/command-palette.tsx`)
+- `registerBasicRenderers` registration; rendered self-contained (not a `SurfaceRuntime` stack entry)
+
+Role summary:
+
+- Items data is dual-track; `items`, `groups`, and `source` are expression-capable
+  `SchemaValue` fields. Static: `items` (flat list; per-item `group` clusters
+  under headings in first-seen order) and `groups` (`[{ label?, items }]`
+  sections, rendered first). Dynamic: `source` (`kind: 'prop'` with
+  `allowSource: true` + `sourceStateKey: 'sourceState'` — a `SourceSchema`
+  fetched by the source-prop controller, or an expression/array). Source items
+  append after static sections; loading/empty/error degrades to the empty state
+  (`palette-empty`: the transient `sourceState` patch guarantees the failing
+  source re-renders instead of freezing the node's prop bag).
+- Item shape: `{ id?, label?, description?, shortcut?, group?, icon?, disabled?, action? }`.
+  Missing `label` falls back to `id` then `''`; missing `id` falls back to a
+  synthetic `item-${index}` key; non-object entries are skipped — degraded items
+  render, the list never breaks (`palette-item-invalid`).
+- Search: `placeholder` (default i18n `flux.common.search`) and `shouldFilter`
+  (default `true` = cmdk built-in filter; `false` = schema-driven external
+  filtering). Empty state: `emptyText` (default i18n `flux.common.noResults`)
+  rendered through `CommandEmpty` only when nothing matches. Keyboard selection
+  (↑↓/Enter/Esc), filter scoring, and the `data-selected` focus pointer are
+  cmdk built-ins consumed through the wrapper; they require the ui composition
+  `CommandDialog > Command > CommandInput + CommandList > groups/items +
+CommandEmpty` (items outside `CommandList` lose selection/empty semantics).
+- Open/close semantics mirror the dialog surface family: `open` (controlled,
+  external value wins; a simple `${path}` expression is written back to `false`
+  on user-initiated closes so idempotent `setValue(path, true)` reopens —
+  dialog plan-459 parity, captured at compile time via the field `compile` hook
+  with no runtime raw-schema read), `defaultOpen` (synced after async prop
+  resolution), `closeOnEsc` (default true), `closeOnOutsideClick` (default
+  true), `showMask`, `container` (portal container), `statusPath` (publishes
+  `{ id, kind: 'command-palette', open }`), events `onOpen`/`onClose` with
+  payload `{ surfaceId, kind: 'command-palette', open }` (payload keys
+  resolvable in action args via evaluation bindings).
+- Handles `component:open` / `component:close` / `component:toggle` (addressed
+  by the palette node's schema `id`) follow the surface handle contract: no-op
+  `{ ok: true, skipped: true }` when already in the target state or when
+  externally controlled via the `open` prop.
+- Command execution is dual-track. Event track: `onCommand` fires on every
+  execution with payload `{ id, item, groupId }`. Static track: an item-level
+  `action` (`ActionSchema | ActionSchema[]`) dispatches on execution. Both
+  channels may be combined (static dispatch first). Execution order is
+  close-then-dispatch: the palette closes first (onClose fires), then `action`
+  dispatches, then `onCommand` fires — "面板即关". Dispatch failures follow the
+  existing action error convention; the palette does not reopen.
+- `hotkey` (e.g. `"mod+k"`) binds one local invocation key: renderer-scoped
+  `window` keydown listener with unmount cleanup. `mod` = meta‖ctrl; `ctrl`/
+  `shift`/`alt` modifiers supported. No-op (dev warn) on controlled palettes —
+  the `open` channel belongs to the author expression. No chord sequences, no
+  modifier range selection, no global keybinding registry or conflict
+  arbitration (G-B2 scope).
+
+Marker output: the palette panel root carries the `nop-command-palette` marker
+class plus `data-testid`/`data-cid`; inner regions use the ui `data-slot="command*"`
+markers (`command-input`, `command-list`, `command-group`, `command-item`,
+`command-empty`, `command-shortcut`) and cmdk's `data-selected` focus pointer.
+Keyboard selection (↑↓/Enter/Esc) and filter scoring are cmdk built-ins consumed
+through the wrapper — no keyboard framework is introduced here (G-B2 boundary).
+
 ## Recommended Reading Path
 
 For deeper design intent, continue with:
