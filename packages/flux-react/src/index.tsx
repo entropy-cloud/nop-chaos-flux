@@ -115,3 +115,23 @@ export {
   unwrapBooleanLiteral,
 } from './preserve-literal.js';
 export { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
+export {
+  comboMatchesKey,
+  createChordMatcher,
+  isEditableKeyboardTarget,
+  keySequenceSignature,
+  parseKeyCombo,
+  parseKeySequence,
+  parseModifierHotkey,
+} from './keyboard.js';
+export type {
+  ChordMatcher,
+  ChordSequenceEntry,
+  KeyCombo,
+  KeyEventLike,
+} from './keyboard.js';
+export { useKeyboardBindings } from './use-keyboard-bindings.js';
+export type {
+  KeyboardBindingSpec,
+  UseKeyboardBindingsOptions,
+} from './use-keyboard-bindings.js';
