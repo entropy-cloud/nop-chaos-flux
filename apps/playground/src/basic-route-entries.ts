@@ -123,4 +123,12 @@ export const BASIC_RENDERER_ROUTES: RendererRouteEntry[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     description: 'Side-effect trigger: fires actions when watched scope values change.',
   },
+  {
+    id: 'keyboard',
+    title: 'Keyboard',
+    category: 'logic',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description:
+      'Invisible keyboard binding channel: single combos and chord sequences dispatch schema actions.',
+  },
 ];

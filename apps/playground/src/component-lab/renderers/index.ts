@@ -15,6 +15,7 @@ export { ButtonLabPage } from './button-lab-page';
 export { ScopeDebugLabPage } from './scope-debug-lab-page';
 export { DynamicRendererLabPage } from './dynamic-renderer-lab-page';
 export { ReactionLabPage } from './reaction-lab-page';
+export { KeyboardLabPage } from './keyboard-lab-page';
 export { FormLabPage } from './form-lab-page';
 export { InputTextLabPage } from './input-text-lab-page';
 export { InputEmailLabPage } from './input-email-lab-page';
