@@ -207,6 +207,15 @@ export interface TableSchema extends BaseSchema {
      * Default false.
      */
     modifierSelect?: boolean;
+    /**
+     * Header select-all scope (D1 G-B3). 'all' (default) = the full row set
+     * (existing behavior, zero regression). 'page' = the current display page
+     * for client-paged tables (check/uncheck-all-visible: union with the
+     * existing selection / remove the page rows); server-paged tables keep the
+     * flowed-in row set as the select-all scope. Inert under radio (no header
+     * select-all shape).
+     */
+    selectAllMode?: 'all' | 'page';
   };
   /** Interaction-state channel: selected-value binding + state marker output. */
   optionRow?: OptionRowConfig;
@@ -323,6 +332,42 @@ export interface ListSchema extends BaseSchema {
 }
 
 // ───────────────────────────── W2a 数据组合组 ─────────────────────────────
+
+/**
+ * Batch-operation bar semantic component (D1 G-B3). Selection-set-driven
+ * envelope: count template + action area + built-in clear + built-in non-empty
+ * visibility gate. Contract:
+ * `docs/references/renderer-interfaces.md` §Batch Bar Semantic Component.
+ */
+export interface BatchBarSchema extends BaseSchema {
+  type: 'batch-bar';
+  /**
+   * Raw scope path (no `${}`) of the selection string array. Crud host: nest
+   * the bar in `toolbar`/`listActions`/`footerToolbar` and bind
+   * `$crud.selectedRowKeys`; table host: the table's `selectionStatePath`
+   * (e.g. `issueSelection`). Required.
+   */
+  selectionPath?: string;
+  /**
+   * Count label template evaluated against a child scope
+   * `{ count, selectedRowKeys }` (e.g. `'已选择 ${count} 项'`). Defaults to
+   * the i18n selected-count message. Evaluation failure falls back to the raw
+   * count with a dev warn; the envelope never breaks.
+   */
+  countTemplate?: string;
+  /**
+   * Component id of the owning crud/table. Declaring it renders the built-in
+   * clear button: resolution prefers the crud `clearSelection` handle, then
+   * the table `setSelection` handle with an empty set. Missing target →
+   * no-op + one-time dev warn (`batch-bar-target-invalid`).
+   */
+  clearTarget?: string;
+  /** Label of the built-in clear button (defaults to the i18n message). */
+  clearLabel?: string;
+  /** Batch actions rendered between the count text and the clear button. */
+  actions?: SchemaInput;
+}
+
 
 export type PaginationMode = 'simple' | 'with-page-size';
 

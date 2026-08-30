@@ -6,7 +6,7 @@ import {
   type RendererSchemaValidationContext,
 } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import type { CrudSchema } from './crud-schema.js';
+import type { CrudSchema, CrudSelectionConfig } from './crud-schema.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
 import type { TableSchema } from './schemas.js';
 
@@ -234,6 +234,18 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
   }
 
   if (
+    schema.rowSelection?.selectAllMode !== undefined &&
+    schema.rowSelection.selectAllMode !== 'all' &&
+    schema.rowSelection.selectAllMode !== 'page'
+  ) {
+    emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(path, 'rowSelection', 'selectAllMode'),
+      message: 'table.rowSelection.selectAllMode must be "all" or "page" when provided.',
+    });
+  }
+
+  if (
     schema.expandable?.expandedRowKeys !== undefined &&
     !validateStringArray(schema.expandable.expandedRowKeys)
   ) {
@@ -302,6 +314,21 @@ export function validateCrudSchema(context: RendererSchemaValidationContext<Base
       code: 'missing-required-field',
       path: toJsonPointer(path, 'filterStatePath'),
       message: 'crud.filterStatePath is required when filterOwnership is "scope".',
+    });
+  }
+
+  if (
+    typeof schema.selection === 'object' &&
+    schema.selection !== null &&
+    !Array.isArray(schema.selection) &&
+    (schema.selection as CrudSelectionConfig).selectAllMode !== undefined &&
+    (schema.selection as CrudSelectionConfig).selectAllMode !== 'all' &&
+    (schema.selection as CrudSelectionConfig).selectAllMode !== 'page'
+  ) {
+    emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(path, 'selection', 'selectAllMode'),
+      message: 'crud.selection.selectAllMode must be "all" or "page" when provided.',
     });
   }
 }

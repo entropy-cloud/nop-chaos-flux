@@ -14,8 +14,10 @@ export { StatTileRenderer } from './stat-tile-renderer.js';
 export { SparklineRenderer } from './sparkline-renderer.js';
 export { CrudRenderer } from './crud-renderer.js';
 export { QueryFilterRenderer } from './query-filter.js';
+export { BatchBarRenderer } from './batch-bar.js';
 export { createCrudNormalizedSourceContext } from './crud-renderer-state.js';
 export {
+  batchBarRendererDefinition,
   crudRendererDefinition,
   dataRendererDefinitions,
   queryFilterRendererDefinition,

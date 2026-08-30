@@ -149,6 +149,10 @@ export const zhCN: Resource = {
       loadedAll: '已加载全部 ({{count}})',
       loadingMore: '加载更多...',
     },
+    batchBar: {
+      selectedCount: '已选择 {{count}} 项',
+      clearSelection: '取消选择',
+    },
     list: {
       loadingMore: '加载更多...',
       noMore: '没有更多了',

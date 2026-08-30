@@ -665,6 +665,92 @@ inert under `radio`) enables modifier-key selection gestures on `table`:
   `onSelectionChange`. With `modifierSelect` absent/false, ⇧click behaves
   exactly as today (compat parity).
 
+## Table Select-All Mode Contract
+
+Status: landed (live-verified 2026-08-31; owner plan
+`docs/plans/2026-08-30-2312-2-d1-gb3-batch-bar-semantic-component.md`; red-first
+matrix in `packages/flux-renderers-data/src/__tests__/table-select-all-mode.test.tsx`).
+
+`rowSelection.selectAllMode?: 'all' | 'page'` (default `'all'` — zero
+regression) scopes the header select-all and the header checkbox state on
+`table` (adopted symmetrically by `crud` via `selection.selectAllMode`
+pass-through to the internal table carrier):
+
+- `'all'` — header select-all acts on the full row set (existing behavior;
+  deselect clears the entire selection).
+- `'page'` — header select-all acts on the **current display page**
+  (client-paged tables: the `paginateTableData` slice; server-paged tables:
+  the flowed-in row set — same source as `handleSelectAll`'s rows, no
+  invented accumulation). Semantics = check/uncheck-all-visible, mirroring
+  manual row-check semantics: check unions the page rows into the existing
+  selection (`maxSelectionLength` truncates along page row order); deselect
+  removes the page rows and keeps other-page keys. The header checkbox checked
+  state follows the page scope (checked = every checkable page row selected;
+  indeterminate otherwise when part of the page scope is selected).
+- `checkableWhen` filters non-checkable rows within the page slice;
+  `modifierSelect` composes (⌘/ctrl+A reuses `handleSelectAll(true)` and thus
+  the page scope; ⇧click ranges stay view-order, unchanged); inert under
+  `radio` (no header select-all shape).
+- Invalid `selectAllMode` values emit `invalid-property-shape` diagnostics on
+  both hosts (`data-schema-validation.ts`).
+
+## Batch Bar Semantic Component
+
+Status: landed (live-verified 2026-08-31, `batch-bar.tsx` +
+`batch-bar-definition.ts`; owner plan
+`docs/plans/2026-08-30-2312-2-d1-gb3-batch-bar-semantic-component.md`, Phase 1
+Decision Record + Phase 2/3 implementation records). Every field below is both
+declared and consumed at render time.
+
+The `batch-bar` renderer type is a selection-set-driven batch-operation bar
+(count template + action area + built-in clear + built-in non-empty visibility
+gate). It dissolves the hand-assembled "toolbar text node + buttons + visible
+gate" alert-envelope gap registered twice in C2 write-backs ③ (AntD Pro) and ⑤
+(Linear). Owner plan: see above; naming deliberately avoids the dead
+`crud.bulkActions` config surface (normalization drop + validation error stay
+untouched).
+
+Key contracts:
+
+- `BatchBarSchema` (`type: 'batch-bar'`, `packages/flux-renderers-data`) —
+  `selectionPath` (raw scope path, no `${}`, to the `string[]` selection;
+  required), `countTemplate` (string template; default i18n
+  `flux.batchBar.selectedCount`), `actions` region (rendered between count
+  and clear), `clearTarget` (componentId of the owning crud/table; declaring
+  it renders the clear button), `clearLabel` (override of i18n
+  `flux.batchBar.clearSelection`).
+- `selectionPath` is a raw scope path (no `${}`) and reactive through the
+  scope store: empty selection / missing path / failed resolution → the
+  envelope renders null and never throws.
+- `countTemplate` is compiled via `lazyEval` into `structuralFields` and
+  evaluated at render time against a child scope `{ count, selectedRowKeys }`
+  (the props pipeline would otherwise evaluate the template before the bar can
+  inject `count`). A genuine evaluation failure falls back to the raw count
+  with a one-time dev warn (`batch-bar-count-expr`); templates the formula
+  compiler cannot compile degrade to static strings platform-wide, unchanged.
+  Template expressions may also reference ambient scope (`$crud.*` resolves
+  for a crud-nested bar) through the child scope's parent chain.
+- Dual-host binding boundary (the two selection APIs stay parallel, unmerged):
+  crud host nests the bar in `toolbar`/`listActions`/`footerToolbar` and binds
+  `selectionPath: "$crud.selectedRowKeys"`; table host places the bar as a
+  sibling and binds the same scope path as `selectionStatePath` (e.g.
+  `"selectionPath": "issueSelection"`).
+- Built-in clear = unified handle resolution facade inside the component:
+  resolve `clearTarget` through the component registry, prefer the crud
+  `clearSelection` method, else invoke table `setSelection` with
+  `{ selectedRowKeys: [] }`. Missing target / neither method → no-op + one-time
+  dev warn (`batch-bar-target-invalid`).
+- Visibility: the built-in non-empty gate (empty selection / missing path /
+  failed evaluation → renders null, no placeholder) ANDs with schema-level
+  `visible` — authors may narrow further but cannot defeat the non-empty gate.
+  Count-template evaluation failure falls back to the raw count + dev warn
+  (`batch-bar-count-expr`); the envelope never breaks.
+- Marker output: root `nop-batch-bar` + `data-slot="batch-bar"` + standard
+  `data-testid`/`data-cid` + `data-count`; inner slots `batch-bar-count`,
+  `batch-bar-actions`, `batch-bar-clear`. Empty selection renders nothing
+  (zero DOM, zero markers). Widget renderer, self-styled; zero `@nop-chaos/ui`
+  export changes.
+
 ## Recommended Reading Path
 
 For deeper design intent, continue with:

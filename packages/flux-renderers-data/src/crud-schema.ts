@@ -173,6 +173,12 @@ export interface CrudSelectionConfig extends SchemaObject {
   toggleOnRowClick?: boolean;
   /** Display template for selected items (e.g. summary chips). amis: labelTpl. */
   labelTpl?: string;
+  /**
+   * Header select-all scope (D1 G-B3, passed through to the internal table's
+   * `rowSelection.selectAllMode`). 'all' (default) = full row set; 'page' =
+   * current display page (check/uncheck-all-visible). Inert under radio.
+   */
+  selectAllMode?: 'all' | 'page';
 }
 
 /**

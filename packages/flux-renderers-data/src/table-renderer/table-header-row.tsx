@@ -45,6 +45,10 @@ interface TableHeaderRowProps {
   filterState: FilterState;
   allSelected: boolean;
   selectedRowCount: number;
+  /** Resolved header select-all checked state (D1 G-B3). Falls back to the legacy allSelected formula when omitted. */
+  selectAllChecked?: boolean;
+  /** Resolved header select-all indeterminate state (D1 G-B3). Falls back to the legacy formula when omitted. */
+  selectAllIndeterminate?: boolean;
   fixedColumnLayout: FixedColumnLayout;
   showExpandColumn: boolean;
   onSort: (column: string, multiKey?: boolean) => void;
@@ -375,6 +379,8 @@ function FlatTableHeaderRow({
   onSearch,
   onClearFilters,
   onSelectAll,
+  selectAllChecked,
+  selectAllIndeterminate,
   selectAllDisabled,
   columnResize,
   resizeApi,
@@ -431,8 +437,11 @@ function FlatTableHeaderRow({
         >
           {schemaProps.rowSelection.type === 'checkbox' && (
             <Checkbox
-              checked={allSelected && selectedRowCount === sourceLength && sourceLength > 0}
-              indeterminate={!allSelected && selectedRowCount > 0}
+              checked={
+                selectAllChecked ??
+                (allSelected && selectedRowCount === sourceLength && sourceLength > 0)
+              }
+              indeterminate={selectAllIndeterminate ?? (!allSelected && selectedRowCount > 0)}
               disabled={selectAllDisabled || undefined}
               onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
               aria-label={t('flux.table.selectAll')}

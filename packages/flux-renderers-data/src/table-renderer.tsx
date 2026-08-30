@@ -251,36 +251,6 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     refreshNode(rowKey);
     loadChildren(rowKey, row.record);
   };
-  const {
-    selectedRowKeys,
-    allSelected,
-    handleSelectAll,
-    handleSelectRow,
-    setSelectionExternal,
-    isRowCheckable,
-    isAtMaxSelection,
-  } = useTableSelection(tableSchemaProps, treeFlattenedData, props.events.onSelectionChange, helpers);
-
-  // D1 G-B2 Decision 3: ⌘/ctrl+A selects all checkable rows of the current view.
-  // Trigger domain = focus inside the table container (container-level React
-  // onKeyDown bubble); editable targets (inputs) keep the native select-all.
-  const modifierSelectEnabled =
-    tableSchemaProps.rowSelection?.modifierSelect === true &&
-    tableSchemaProps.rowSelection?.type !== 'radio';
-  const handleContainerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!modifierSelectEnabled) {
-      return;
-    }
-    if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'a') {
-      return;
-    }
-    if (isEditableKeyboardTarget(event.target)) {
-      return;
-    }
-    event.preventDefault();
-    handleSelectAll(true);
-  };
-
   const paginationTotal = schemaProps.pagination?.total;
   const effectiveTotalRows =
     serverPaged && typeof paginationTotal === 'number' && Number.isFinite(paginationTotal)
@@ -308,6 +278,61 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     () => paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, resolvedCurrentPage, pageSize),
     [treeFlattenedData, paginationEnabled, serverPaged, resolvedCurrentPage, pageSize],
   );
+
+  // D1 G-B3: 'page' selectAllMode scopes the header select-all (and the header
+  // checkbox state) to the current display page. Server-paged tables keep the
+  // flowed-in row set (processedData is the unsliced array there).
+  const selectAllMode =
+    tableSchemaProps.rowSelection?.selectAllMode === 'page' &&
+    tableSchemaProps.rowSelection?.type !== 'radio'
+      ? 'page'
+      : 'all';
+  const selectAllRows = useMemo(
+    () => (selectAllMode === 'page' ? processedData : undefined),
+    [selectAllMode, processedData],
+  );
+
+  const {
+    selectedRowKeys,
+    allSelected,
+    selectAllScopeSelectedCount,
+    handleSelectAll,
+    handleSelectRow,
+    setSelectionExternal,
+    isRowCheckable,
+    isAtMaxSelection,
+  } = useTableSelection(tableSchemaProps, treeFlattenedData, props.events.onSelectionChange, helpers, {
+    selectAllRows,
+  });
+
+  // Page-aware header select-all state. The legacy formula (all mode) is kept
+  // byte-identical; the page mode scopes it to the select-all slice.
+  const headerSelectAllChecked = selectAllRows
+    ? allSelected
+    : allSelected && selectedRowKeys.size === filteredData.length && filteredData.length > 0;
+  const headerSelectAllIndeterminate = !headerSelectAllChecked && selectAllRows
+    ? selectAllScopeSelectedCount > 0
+    : !headerSelectAllChecked && selectedRowKeys.size > 0;
+
+  // D1 G-B2 Decision 3: ⌘/ctrl+A selects all checkable rows of the current view.
+  // Trigger domain = focus inside the table container (container-level React
+  // onKeyDown bubble); editable targets (inputs) keep the native select-all.
+  const modifierSelectEnabled =
+    tableSchemaProps.rowSelection?.modifierSelect === true &&
+    tableSchemaProps.rowSelection?.type !== 'radio';
+  const handleContainerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!modifierSelectEnabled) {
+      return;
+    }
+    if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'a') {
+      return;
+    }
+    if (isEditableKeyboardTarget(event.target)) {
+      return;
+    }
+    event.preventDefault();
+    handleSelectAll(true);
+  };
   // H10: `createFixedColumnLayout` only reads `schemaProps.rowSelection` + the
   // columns' `fixed`/`width` + `showExpandColumn`. Memoizing on those specific
   // values (instead of the whole `tableSchemaProps`, whose identity churns every
@@ -538,6 +563,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 filterState={filterState}
                 allSelected={allSelected}
                 selectedRowCount={selectedRowKeys.size}
+                selectAllChecked={headerSelectAllChecked}
+                selectAllIndeterminate={headerSelectAllIndeterminate}
                 fixedColumnLayout={fixedColumnLayout}
                 showExpandColumn={showExpandColumn}
                 onSort={handleSort}

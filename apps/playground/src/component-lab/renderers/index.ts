@@ -48,6 +48,7 @@ export { DetailFieldLabPage } from './detail-field-lab-page';
 export { DetailViewLabPage } from './detail-view-lab-page';
 export { CrudLabPage } from './crud-lab-page';
 export { QueryFilterLabPage } from './query-filter-lab-page';
+export { BatchBarLabPage } from './batch-bar-lab-page';
 export { TableLabPage } from './table-lab-page';
 export { TreeLabPage } from './tree-lab-page';
 export { DataSourceLabPage } from './data-source-lab-page';

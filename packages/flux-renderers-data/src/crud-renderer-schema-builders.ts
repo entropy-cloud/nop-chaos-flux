@@ -107,6 +107,7 @@ export function buildCrudTableSchema(input: {
       maxSelectionLength: selection.maxSelectionLength,
       checkableWhen: selection.checkableWhen,
       toggleOnRowClick: selection.toggleOnRowClick,
+      selectAllMode: selection.selectAllMode,
     };
   }
 

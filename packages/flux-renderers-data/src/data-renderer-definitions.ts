@@ -7,6 +7,7 @@ import { TableRenderer } from './table-renderer.js';
 import { TreeRenderer } from './tree-renderer.js';
 import { crudRendererDefinition } from './crud-renderer-definition.js';
 import { queryFilterRendererDefinition } from './query-filter-definition.js';
+import { batchBarRendererDefinition } from './batch-bar-definition.js';
 import { w2aDataCompositionDefinitions } from './w2a-data-composition-definitions.js';
 import { statTileRendererDefinition } from './stat-tile-renderer-definition.js';
 import { sparklineRendererDefinition } from './sparkline-renderer-definition.js';
@@ -18,6 +19,7 @@ const LazyChartRenderer = createLazyRendererComponent<ChartSchema>(
 
 export { crudRendererDefinition } from './crud-renderer-definition.js';
 export { queryFilterRendererDefinition } from './query-filter-definition.js';
+export { batchBarRendererDefinition } from './batch-bar-definition.js';
 export { sparklineRendererDefinition } from './sparkline-renderer-definition.js';
 
 export const dataRendererDefinitions: RendererDefinition[] = [
@@ -115,7 +117,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         shape: { kind: 'object', fields: {} },
         displayName: 'Row Selection',
         description:
-          'Selection configuration for checkbox/radio row selection. `modifierSelect` (checkbox mode only, default false) enables modifier gestures: shift-click additive range from the last acted row (anchor), meta/ctrl-click independent toggle, ⌘/ctrl+A select-all inside the table.',
+          'Selection configuration for checkbox/radio row selection. `modifierSelect` (checkbox mode only, default false) enables modifier gestures: shift-click additive range from the last acted row (anchor), meta/ctrl-click independent toggle, ⌘/ctrl+A select-all inside the table. `selectAllMode` ("all" default | "page") scopes the header select-all and its checkbox state to the current display page (server-paged tables keep the flowed-in row set).',
         editorType: 'object',
       },
       optionRow: {
@@ -623,5 +625,6 @@ export const dataRendererDefinitions: RendererDefinition[] = [
   statTileRendererDefinition,
   sparklineRendererDefinition,
   queryFilterRendererDefinition,
+  batchBarRendererDefinition,
   crudRendererDefinition,
 ];

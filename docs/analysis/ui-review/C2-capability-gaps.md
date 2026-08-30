@@ -331,3 +331,18 @@
 - 契约文档：`docs/references/renderer-interfaces.md` §Keyboard Binding Contract + §Table Modifier Selection Contract（终稿，live 行为逐项核对 + landed 状态标注）；flux-guide `07-structural-nodes.md` §Keyboard Bindings（键位绑定 + chord 用法 + J/K 指针组合样例）+ `design-patterns/table.md` §4 `modifierSelect` 条目。
 - 先红后绿单测汇总：flux-react `keyboard.test.ts` 20 条（纯逻辑 helper + chord 状态机）+ flux-renderers-basic `keyboard-bindings.test.tsx` 20 条（定义契约/键位派发矩阵/chord 时序矩阵/输入门控/内建优先/冲突 dev warn/when 门控/非法 keys/surface 路由/卸载清理）+ data 包 19 条（选区修饰键 + J/K 组合）。
 - styling-system 核查结论：`keyboard` 恒渲染 null（零 DOM 零 marker）；选区修饰键复用既有 `table-select-cell` slot 与 checkbox 通道，零新增 marker/CSS 面——styling-system.md 零改动（无凑条目）。
+
+### 回写 ⑬ — D1 G-B3 批量操作栏语义件产品化终态（2026-08-31，plan `2026-08-30-2312-2-d1-gb3-batch-bar-semantic-component.md`）
+
+> 授权链: roadmap Cross-Cutting 5（追加式回写，初版裁决表零改动）+ D1 work item 本体（G-B3 终态由本 plan Phase 4 承载）。HEAD 见当日 dev log。执行顺序约束履行：本 plan（N=2）于 G-B2 plan（N=1）收口后执行，共写面 `use-table-selection.ts`/`data-renderer-definitions.ts` 冲突消除。
+
+**G-B3（批量操作栏语义：选择集绑定 + 批量动作，L2~L3——级别锚定以初版裁决表 L2~L3 为准）已产品化（本 plan）——终态证据**:
+
+- **批量栏语义件契约落地**：新 renderer type `batch-bar` 落 `@nop-chaos/flux-renderers-data`（QueryFilter/Result 先例；命名与 dead `bulkActions` 零共享词元，dead 状态维持原样零复活）。字段族：`selectionPath`（raw scope path 反应式绑定，双宿主通用：crud 嵌套 `$crud.selectedRowKeys` / table 页面级 `selectionStatePath` 同源路径）+ `countTemplate`（`lazyEval` 编译进 structuralFields，渲染期在 `{count, selectedRowKeys}` 子作用域求值——loop `itemData` 先例；缺省 i18n）+ `actions` region + `clearTarget`/`clearLabel`（内建清空：registry 解析 → crud `clearSelection` 优先 → table `setSelection` 空集兜底的统一句柄解析 facade）。**内建非空可见门控**：选择集空/路径缺失/求值失败 → 包络渲染 null（batch-bar-empty），与 schema 级 `visible` 取 AND（不可绕过）。**回写 ③⑤「批量栏 alert 包络无语义件、toolbar 文案节点 + 按钮 + visible 手工拼装」缺口就此消解**。
+- **「全选本页」选择语义收口（回写 ⑤ 登记的子语义缺口）**：`rowSelection.selectAllMode: 'all' | 'page'`（缺省 'all' 零回归）双侧采纳（crud `selection.selectAllMode` 经 `buildCrudTableSchema` 透传内部 table 载体）。'page' 语义 = check/uncheck-all-visible（勾选 = 既有选择集 ∪ 页行集、取消 = 移除页行集保留他页键），与手动逐行勾选语义同构；服务端分页下与 'all' 同源（已流入行集，回写 ⑤ 34 行实证口径）；表头勾选态跟随页作用域；`maxSelectionLength`/`checkableWhen`/`modifierSelect`（G-B2）共存矩阵锁定，radio 惰性。
+- **双选择集契约对接边界落字（Goal 3）**：语义件以「读 = 显式 scope path 反应式绑定；写（清空）= 组件句柄解析 facade」的边界与 crud `$crud.*`、table scope 两套平行 API 对接——两套 API 本体零改动、不合并不平移（统一治理维持 Follow-up 登记，`Non-Blocking Follow-ups` 区）。
+- 失败路径全落字：batch-bar-empty（空集/路径缺失/求值失败 → 静默 null）/ batch-bar-target-invalid（清空目标缺失 → no-op + 一次性 dev warn）/ batch-bar-count-expr（模板求值失败 → 原始计数回退 + dev warn）/ batch-bar-clash（读路径权威，按空集处理）/ selectall-page-server / compat（缺省行为渲染等价）。
+- **参考应用形态对照终态**：AntD Pro alert 包络手工拼装（回写 ③）与 Linear 容器批量栏（回写 ⑤）两形态均被语义件等价表达（双宿主对接用例先红后绿锁定）；Stripe 无批量栏（回写 ⑧）维持零扩充——本 plan 零复刻页 retrofit（`Deferred But Adjudicated` 区登记，复刻页迭代时采纳）。
+- 先红后绿单测：`batch-bar.test.tsx` 13 条（可见性/计数模板/清空句柄/动作区/校验矩阵）+ `batch-bar-hosts.test.tsx` 2 条（双宿主对接）+ `table-select-all-mode.test.tsx` 11 条（缺省零回归/page 语义/服务端/max+checkable 共存/crud 透传/校验）共 26 条；连带面 playground route-matrix + lab page 三场景登记。
+- 契约文档：`docs/references/renderer-interfaces.md` §Batch Bar Semantic Component + §Table Select-All Mode Contract（终稿，live 行为逐项核对）；flux-guide `design-patterns/crud.md` §4a（crud 宿主 + table 宿主双样例 + selectAllMode 说明）+ `design-patterns/table.md` §4 rowSelection 字段表 selectAllMode 条目；styling-system 核查零改动（根 marker + data-slot + data-count 状态属性符合既有规则，widget renderer 自样式，无凑条目）。
+- **观察面余量登记**：范围选区/fill handle 编辑器选区模型归 G-B2 plan 专项 Decision 的 successor 登记（本 plan Non-Goal 边界确认，零改动）；G-C 多视图状态机 / G-D 网格编辑语义件族（C2 §2 #6 其余成员）拆分后续独立 plan（G-D 依赖 G-B2 + 本计划双前置，两前置均已就位）。

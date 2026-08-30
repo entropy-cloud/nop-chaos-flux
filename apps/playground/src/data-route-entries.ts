@@ -2,6 +2,14 @@ import type { RendererRouteEntry } from './route-model.js';
 
 export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
   {
+    id: 'batch-bar',
+    title: 'Batch Bar',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description:
+      'Selection-set-driven batch-operation bar semantic component: count template, action area, built-in clear (crud clearSelection / table setSelection facade), and a built-in non-empty visibility gate.',
+  },
+  {
     id: 'query-filter',
     title: 'Query Filter',
     category: 'data',

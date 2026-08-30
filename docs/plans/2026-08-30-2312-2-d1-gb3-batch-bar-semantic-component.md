@@ -1,6 +1,6 @@
 # D1-6 G-B3 批量操作栏语义件产品化（含「全选本页」选择语义收口）
 
-> Plan Status: active（2026-08-30 draft review 通过：fresh session 独立子 agent R1 `revised` 1 Major + 4 Minor → 全部修复 → R2 scoped re-check 零 Blocker/零 Major，2 Minor residual 随共识修复，共识达成）
+> Plan Status: completed（2026-08-31 执行完毕并经独立 closure audit 通过后收口；draft review 通过：fresh session 独立子 agent R1 `revised` 1 Major + 4 Minor → 全部修复 → R2 scoped re-check 零 Blocker/零 Major，2 Minor residual 随共识修复，共识达成）
 > Mission: ui-review
 > Work Item: D1. 能力缺口产品化 plans —— G-B3 批量操作栏语义（C2 §2 预清单第 6 位「G-B3/G-C/G-D 语义件族」首个成员；P5/P6 回写已完成故定形条件满足；G-C/G-D 归后续独立 plan）
 > Last Reviewed: 2026-08-30
@@ -83,76 +83,125 @@
 
 ### Phase 1 - 契约设计与采纳面裁定
 
-Status: planned
+Status: completed
 Targets: 本计划 Decision 注记、`docs/references/renderer-interfaces.md`（草案条目）
 
 - Item Types: `Decision | Proof`
 
-- [ ] Proof——批量栏面 inventory 实测落字：回写 ③⑤⑦⑧ 素材 live 复核（`$crud.*` 投影/句柄、table selection hooks、`bulkActions` 死状态、Alert 底座）+ 参考应用形态对照（AntD Pro alert 包络（P2a/P2b 复刻页实证）vs Linear 批量栏（P4b 实证）vs Stripe/Airtable 无批量栏（P7b/P6b 对照终态））——语义件承载的形态谱系落字
-- [ ] Decision——形态裁定（候选 ①新 renderer type（落点/命名/与 dead `bulkActions` 命名区隔）；②crud 语义字段族 + table 语义字段族分轨；③crud `toolbarLayout` block 复活变体——预期否决理由落字）——含 propContract 精确 union 预防（`filterTogglable` boolean 静默丢弃在库 bug 先例）与 `check:renderer-definition-fields-only` 登记口径
-- [ ] Decision——字段族裁定：选择集绑定（`target` componentId vs 直接 path 表达式）、计数模板、`actions` region、内建清空（双句柄解析语义：crud `component:clearSelection` / table `component:setSelection` 空集 / 统一句柄解析三候选）、可见性门控与 `visible` 的叠加语义——Failure Paths 终态化
-- [ ] Decision——`selectAllMode` 语义裁定：命名、缺省值（'all' = 现行为零回归）、'page' 精确语义（当前页行集/keepOnPageChange 交互）、crud/table 采纳面（双侧或单侧 + 理由）、服务端分页形态落字
-- [ ] Decision——marker/data-slot 输出裁定（styling-system Renderer Styling Contract 对齐：root marker + `data-slot` + `data-*` 状态属性；widget renderer 自样式）
-- [ ] Decision——ui 包零改动确认（预期零新增导出；若契约需新增 ui 公共导出则 ask-first 理由显式落字且未在门禁前改码）
+- [x] Proof——批量栏面 inventory 实测落字：回写 ③⑤⑦⑧ 素材 live 复核（`$crud.*` 投影/句柄、table selection hooks、`bulkActions` 死状态、Alert 底座）+ 参考应用形态对照（AntD Pro alert 包络（P2a/P2b 复刻页实证）vs Linear 批量栏（P4b 实证）vs Stripe/Airtable 无批量栏（P7b/P6b 对照终态））——语义件承载的形态谱系落字
+- [x] Decision——形态裁定（候选 ①新 renderer type（落点/命名/与 dead `bulkActions` 命名区隔）；②crud 语义字段族 + table 语义字段族分轨；③crud `toolbarLayout` block 复活变体——预期否决理由落字）——含 propContract 精确 union 预防（`filterTogglable` boolean 静默丢弃在库 bug 先例）与 `check:renderer-definition-fields-only` 登记口径
+- [x] Decision——字段族裁定：选择集绑定（`target` componentId vs 直接 path 表达式）、计数模板、`actions` region、内建清空（双句柄解析语义：crud `component:clearSelection` / table `component:setSelection` 空集 / 统一句柄解析三候选）、可见性门控与 `visible` 的叠加语义——Failure Paths 终态化
+- [x] Decision——`selectAllMode` 语义裁定：命名、缺省值（'all' = 现行为零回归）、'page' 精确语义（当前页行集/keepOnPageChange 交互）、crud/table 采纳面（双侧或单侧 + 理由）、服务端分页形态落字
+- [x] Decision——marker/data-slot 输出裁定（styling-system Renderer Styling Contract 对齐：root marker + `data-slot` + `data-*` 状态属性；widget renderer 自样式）
+- [x] Decision——ui 包零改动确认（预期零新增导出；若契约需新增 ui 公共导出则 ask-first 理由显式落字且未在门禁前改码）
 
 Exit Criteria:
 
-- [ ] 五项 Decision 与一项 Proof 全部落字本计划（契约断言清单可清单化：可见性/计数/清空/selectAllMode/兼容五矩阵）
-- [ ] `docs/references/renderer-interfaces.md` 契约草案条目成形（Protected Areas owner evidence 就位）
-- [ ] 若触 `ui/src/index.ts`：ask-first 理由已落字且未在门禁前改码
+- [x] 五项 Decision 与一项 Proof 全部落字本计划（契约断言清单可清单化：可见性/计数/清空/selectAllMode/兼容五矩阵）
+- [x] `docs/references/renderer-interfaces.md` 契约草案条目成形（Protected Areas owner evidence 就位）
+- [x] 若触 `ui/src/index.ts`：ask-first 理由已落字且未在门禁前改码（未触发——零 ui 改动确认，见 Decision 5）
+
+#### Phase 1 Decision Record（2026-08-31 执行时落字，全部行号经 live 复核）
+
+**Proof——inventory live 复核（HEAD `345f034fa`）**：
+
+- crud 选择集投影与句柄在库：`CrudStatusSummary.hasSelection/selectionCount/selectedRowKeys`（`crud-schema.ts:309-311`）；`$crud` readonly 绑定挂 crud 自身 scope（`crud-renderer.tsx:232-235`），`toolbar`/`listActions`/`footerToolbar` 三 region 均经 `crudScope` 渲染（`crud-renderer.tsx:390-392`）——嵌套批量栏读 `$crud.selectedRowKeys` 具备反应性（读通道 = `useScopeSelector` 经 projected scope store，`crud-renderer-state.ts:427-431` 的 selection 写入触发重通知）；`clearSelection`/`toggleSelection` 句柄（`crud-renderer-state.ts:347-353`）。
+- table 选择集 hooks 在库：`use-table-selection.ts`——`handleSelectAll`（:178-269，H21 retainedKnown 剪枝 + `maxSelectionLength` 沿行序截断 + `keepOnPageChange` 双分支）、`handleSelectRow`（:271-369，G-B2 修饰键语义零改动）、`setSelectionExternal`（:371-399）；table 句柄 `setSelection`（`use-table-handle.ts:51-55`）。选择 hooks 接收**全量行集**（`treeFlattenedData`），显示分页切片在 `table-renderer.tsx:307-310`（`paginateTableData`）——「全选本页」需把页切片作为 select-all 作用域传入 hooks。
+- `bulkActions` 死状态维持：归一化丢弃（`crud-renderer-toolbar.tsx:25-27,33-35`）+ authoring 报错（`data-schema-validation.ts:367-373`），双态均有测试锁定（`data-package-units.test.tsx:56` / `schema-validator.test.ts:168,191`）。
+- `@nop-chaos/ui` Alert/Badge/Button 在库（`ui/src/components/ui/alert.tsx`、`ui/src/index.ts:2-6`）——底座零新导出。
+- 参考应用形态谱系：AntD Pro = alert 包络手工拼装（`antdpro-list.json` toolbar：text `${$crud.selectionCount}` + `visible: "${$crud.hasSelection}"` + 清空按钮 `component:clearSelection`）；Linear = 容器批量栏手工拼装（`linear-issues.json`：container + 计数 text `${issueSelection?.length ?? 0}` + `disabled` 空集门控按钮 + `component:setSelection` 空集）；Stripe/Airtable 无批量栏（P7b/P6b 对照终态维持）。→ 语义件须承载「计数文案 + 空集隐藏 + 动作区 + 内建清空」四要素、双宿主可达。
+
+**Decision 1——形态：新 renderer type `batch-bar`，落 `@nop-chaos/flux-renderers-data`**（候选 ①采纳；②③否决）：
+
+- 候选 ②（crud/table 双字段族）否决理由：批量栏是**独立包络语义件**（QueryFilter/Result 先例），字段族方案把同一契约在两宿主各复制一份且只能作为宿主内嵌 block——回写 ③⑤ 登记的缺口是两宿主共有的「包络手工拼装」，独立 type 一次消解双宿主。
+- 候选 ③（`toolbarLayout` block 复活变体）否决理由：`bulkActions` block 类型死状态由归一化丢弃 + 校验报错双门锁定，复活即 legacy 命名复生（G-A dead config 处置先例），且仅覆盖 crud 宿主。
+- 命名 `batch-bar` 与 dead `bulkActions` 零共享词元（不复用、不别名）；marker 根类 `nop-batch-bar`。
+- propContract 预防：新字段全部登记精确 shape（string 用 `{ kind: 'string' }`，region 字段不进 propContracts——quick-reference 门禁口径）；fields-only 门禁（`check:renderer-definition-fields-only`）零新增红口径 = 只用 `fields` 数组登记、不写 legacy `regions` 字面量。
+
+**Decision 2——字段族（Failure Paths 终态化）**：
+
+- 选择集绑定 = **直接 path 表达式**（`selectionPath`，raw scope path 无 `${}`；必填，缺失报 `missing-required-field`）。`target` componentId 反应式读否决理由：`ComponentHandleRegistry` 句柄是命令式 invoke 通道（`component-handle-core.ts:36-43`），无反应式读面；scope path 是原生反应通道且与两宿主契约天然对接（crud 嵌套 `$crud.selectedRowKeys` / table 页面级 `selectionStatePath` 同源路径）。
+- 计数模板 = `countTemplate`（string，`${count}`/`selectedRowKeys` 经 `helpers.evaluate` + 临时子 scope 求值；`checkableWhen` 包装先例）；缺省走 i18n `flux.batchBar.selectedCount`。求值失败回退原始计数 + dev warn（batch-bar-count-expr）。
+- 动作区 = `actions` region（`kind: 'region'`），渲染于计数与清空之间。
+- 内建清空 = **候选 ③统一句柄解析**：`clearTarget`（componentId）声明才渲染清空按钮；点击时 registry `resolve({ componentId })` → `clearSelection` 方法优先（crud 句柄）、不支持则 `setSelection` + `{ selectedRowKeys: [] }`（table 句柄）。**该解析面是语义件内部 facade，两套选择集 API 本体不合并不平移**（Non-Goal 第 3 条维持——语义件不新增 `$crud.*` 或 table scope 投影）。`clearLabel` 覆盖缺省文案（i18n `flux.batchBar.clearSelection`）。目标缺失/句柄双方法皆缺 → no-op + 一次性 dev warn（batch-bar-target-invalid，isDevRuntime 门 + ref latch）。
+- 可见性门控叠加语义 = **AND**：内建非空门控（选择集空/路径缺失/求值失败 → 包络渲染 null，batch-bar-empty，零占位不抛错）与 schema 级 `visible`（meta 管线）各自独立生效、结果取交——作者可用 `visible` 进一步收窄可见条件，但无法绕过内建非空门控。
+- batch-bar-clash 终态：读路径权威——target 指向未启用选择的组件时 `selectionPath` 解析为空 → 包络隐藏（即「按空集处理」）；无独立 clash warn（crud 句柄在 selection 未启用时仍注册 `clearSelection`，clash 探测误报面大于收益），诊断由 batch-bar-target-invalid 覆盖。
+
+**Decision 3——`selectAllMode`**：
+
+- 命名 `selectAllMode: 'all' | 'page'`；缺省 `'all'` = 现行为零回归（既有全量进选择集语义，P4b 34 行实证的行为面）。
+- 采纳面 = **双侧**：table `rowSelection.selectAllMode` + crud `selection.selectAllMode`（`buildCrudTableSchema` 透传）。理由：crud 缺省 table 载体与 table 共享 `useTableSelection` 同一实现，单侧采纳会把同一子语义缺口留在 crud 侧；crud cards/list 载体自持选择、无表头全选形态，不受影响。
+- `'page'` 精确语义：表头全选作用域 = **当前显示页行集**（客户端分页 = `paginateTableData` 切片；服务端分页 = 已流入行集，与 `handleSelectAll` 传入 rows 同源——Failure Path selectall-page-server 落字，不发明跨页累积）；表头 checkbox 勾选态（`allSelected`）同跟随页作用域。
+  - 语义终态（执行期定稿，先红后绿锁定）：'page' 全选 = **check/uncheck-all-visible**——勾选 = 既有选择集 ∪ 页行集（`maxSelectionLength` 沿页行序截断）；取消 = 选择集 \\ 页行集（他页键保留）。**与手动逐行勾选语义完全同构**（行勾选本就跨页累积），`keepOnPageChange` 不改变 select-all 行为、继续治理行级变更的保留/剪枝——不发明第三种累积通道。
+  - 共存矩阵：`maxSelectionLength` 截断沿页行序；`checkableWhen` 过滤页内不可选行（可选择性按全量行集计算，页内过滤应用）；`modifierSelect`（G-B2）⌘A 走 `handleSelectAll(true)` 即页作用域、⇧click 范围保持视图行序零变化、select-all 锚点移至页首行（既有规则）；radio 无表头全选形态（既有），`selectAllMode` 惰性。
+- 实现口径：`useTableSelection` 新增可选 `options.selectAllRows` 作用域参数（缺省 undefined = `rows`，'all' 路径字节等价）+ 返回 `selectAllScopeSelectedCount`（页感知表头 indeterminate 态）；table-renderer 以页感知 `selectAllChecked`/`selectAllIndeterminate` 传给表头（'all' 模式回退 legacy 公式零变化）；`handleSelectRow`/`setSelectionExternal`/修饰键语义零改动。
+
+**Decision 4——marker/data-slot 输出**（styling-system Renderer Styling Contract 对齐）：
+
+- 根：`nop-batch-bar` marker 类 + `data-slot="batch-bar"` + 标准 `data-testid`/`data-cid`；状态属性 `data-count`（计数字符串）。
+- 内部 slot：`batch-bar-count`（计数文案）、`batch-bar-actions`（动作区）、`batch-bar-clear`（内建清空按钮）。
+- 形态分类 = widget renderer 自样式（包络视觉类随组件走，零 CSS-only 布局 marker）；空集不渲染（零 DOM 零 marker）。
+
+**Decision 5——ui 包零改动确认**：Alert/Badge/Button 均为 `ui/src/index.ts` 既有导出面（:2-6），batch-bar 以自身包络类 + ui `Button` 组合，**零新增 ui 导出，ask-first 门禁未触发**。
+
+**契约断言清单（五矩阵，Phase 2/3 先红后绿载体）**：①可见性门控矩阵（空集/非空/路径缺失/求值失败/`visible` 叠加）；②计数模板矩阵（缺省 i18n/`${count}` 插值/求值失败回退）；③清空句柄解析矩阵（未声明/ crud `clearSelection`/table `setSelection` 空集/目标缺失 no-op+warn）；④selectAllMode 矩阵（缺省等价/page 客户端分页/page+keepOnPageChange/page 服务端分页/共存 max+checkable+modifier/radio 惰性）；⑤兼容矩阵（未声明新字段族 schema 渲染等价 + crud/table 双宿主对接用例）。
 
 ### Phase 2 - 批量栏语义件实现（先红后绿）
 
-Status: planned
+Status: completed
 Targets: 语义件实现落点（Phase 1 裁定）、`data-renderer-definitions.ts`、`__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof——契约断言清单测试先行（红）：可见性门控矩阵（空集/非空/路径缺失/求值失败）+ 计数模板矩阵（正常/失败回退）+ 清空句柄解析矩阵（crud 句柄/table 句柄/target 无效）+ 无声明兼容矩阵
-- [ ] Fix——语义件按裁定契约实现（选择集绑定 + 计数模板 + actions region + 内建清空 + marker 输出）+ 定义字段登记与 schema 校验同步（`check:renderer-definition-fields-only` 门禁零红；propContract union 预防断言）
-- [ ] Proof——crud 与 table 双宿主对接验证（P2b antdpro-list 手工拼装场景的语义件等价表达用例 + P4b linear 批量栏场景等价表达用例，先红后绿）
+- [x] Proof——契约断言清单测试先行（红）：可见性门控矩阵（空集/非空/路径缺失/求值失败）+ 计数模板矩阵（正常/失败回退）+ 清空句柄解析矩阵（crud 句柄/table 句柄/target 无效）+ 无声明兼容矩阵
+- [x] Fix——语义件按裁定契约实现（选择集绑定 + 计数模板 + actions region + 内建清空 + marker 输出）+ 定义字段登记与 schema 校验同步（`check:renderer-definition-fields-only` 门禁零红；propContract union 预防断言）
+- [x] Proof——crud 与 table 双宿主对接验证（P2b antdpro-list 手工拼装场景的语义件等价表达用例 + P4b linear 批量栏场景等价表达用例，先红后绿）
 
 Exit Criteria:
 
-- [ ] 先红后绿单测全绿（五矩阵 + 双宿主对接用例）
-- [ ] 受影响包局部 typecheck/test 通过（保证 Phase 3 可继续）
-- [ ] `check:renderer-definition-fields-only`（`scripts/check-renderer-definition-fields-only.mjs`）与 `check:audit-event-dispatch-ctx` 门禁零新增红
+- [x] 先红后绿单测全绿（五矩阵 + 双宿主对接用例）
+- [x] 受影响包局部 typecheck/test 通过（保证 Phase 3 可继续）
+- [x] `check:renderer-definition-fields-only`（`scripts/check-renderer-definition-fields-only.mjs`）与 `check:audit-event-dispatch-ctx` 门禁零新增红
+
+实现记录（2026-08-31）：新文件 `batch-bar.tsx`（组件）+ `batch-bar-definition.ts`（definition + `validateBatchBarSchema`）；`BatchBarSchema` 落 `schemas.ts`；注册面 `data-renderer-definitions.ts` + `index.tsx` 导出；i18n 新键 `flux.batchBar.selectedCount`/`clearSelection`（en-US + zh-CN 对称）。测试 15 条先红后绿（`batch-bar.test.tsx` 13 + `batch-bar-hosts.test.tsx` 2）。执行期契约级发现：`countTemplate` 若按普通 prop 字段声明，props 解析管线会在节点渲染前对模板字符串求值（`${count}` 在节点 scope 无解 → 抛错或静默降级为静态串）——改用 `SchemaFieldRule.lazyEval: true`（loop `itemData` 先例）编译进 `structuralFields`，由渲染器在 `{ count, selectedRowKeys }` 子作用域经 `evaluateCompiled` 求值，失败回退原始计数 + dev warn。连带面：playground route-matrix 门禁要求每个注册 renderer type 有路由 + lab page——新增 `data-route-entries.ts` batch-bar 条目 + `batch-bar-lab-page.tsx`（三场景：crud 宿主/table 宿主/缺省计数文案）+ lab registry 登记。
 
 ### Phase 3 - selectAllMode 实现 + 共存回归
 
-Status: planned
+Status: completed
 Targets: `use-table-selection.ts`、crud 选择集对接面（采纳面按 Phase 1 裁定）、`__tests__/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix——`selectAllMode` 按裁定语义实现（'page' 模式行集计算 + 与 `keepOnPageChange`/`maxSelectionLength`/`checkableWhen` 共存矩阵），先红后绿单测
-- [ ] Proof——全选语义回归锁定：缺省（'all'）行为渲染与选择集快照等价（P4b「全量进选择集」现状用例回归全绿）；'page' 模式服务端分页语义用例（Failure Path selectall-page-server 断言）
-- [ ] Proof——双选择集契约对接边界结论落字（语义件对 `$crud.*`/table scope 的对接方式 + 统一治理 Follow-up 登记确认）
+- [x] Fix——`selectAllMode` 按裁定语义实现（'page' 模式行集计算 + 与 `keepOnPageChange`/`maxSelectionLength`/`checkableWhen` 共存矩阵），先红后绿单测
+- [x] Proof——全选语义回归锁定：缺省（'all'）行为渲染与选择集快照等价（P4b「全量进选择集」现状用例回归全绿）；'page' 模式服务端分页语义用例（Failure Path selectall-page-server 断言）
+- [x] Proof——双选择集契约对接边界结论落字（语义件对 `$crud.*`/table scope 的对接方式 + 统一治理 Follow-up 登记确认）
 
 Exit Criteria:
 
-- [ ] selectAllMode 先红后绿单测全绿（含共存矩阵与服务端语义断言）
-- [ ] 缺省行为零回归（兼容快照断言全绿）
-- [ ] 对接边界结论落字本计划；受影响包局部 typecheck/test 通过
+- [x] selectAllMode 先红后绿单测全绿（含共存矩阵与服务端语义断言）
+- [x] 缺省行为零回归（兼容快照断言全绿）
+- [x] 对接边界结论落字本计划；受影响包局部 typecheck/test 通过
+
+实现记录（2026-08-31）：`rowSelection.selectAllMode` 落 `schemas.ts` + `CrudSelectionConfig.selectAllMode`（`buildCrudTableSchema` 透传，双侧采纳）；`useTableSelection` 新增 `options.selectAllRows`（select-all/allSelected 作用域）+ `selectAllScopeSelectedCount` 返回值；table-renderer 将页计算块上移、页切片经 `selectAllRows` 传入 hook，表头 checkbox 态经 `selectAllChecked`/`selectAllIndeterminate` 页感知（'all' 模式 legacy 公式零变化）；双宿主校验（table/crud）`selectAllMode` 联合门禁。测试 11 条先红后绿（`table-select-all-mode.test.tsx`：缺省零回归 2 + page 语义 3 + 服务端 1 + max/checkable 共存 2 + crud 透传 1 + 校验 2）；连带登记 `crud-selection-drift-deletion.test.ts` 字段清单 6→7（契约有意增长，drift 防护意图保留）。执行顺序约束履行：G-B2 plan（N=1）已于 2026-08-31 收口后本计划（N=2）执行，共写面 `use-table-selection.ts` 冲突消除（本计划 `handleSelectRow`/修饰键语义零改动实测维持）。
 
 ### Phase 4 - 文档对齐与 C2 回写
 
-Status: planned
+Status: completed
 Targets: `docs/references/renderer-interfaces.md`、`flux-guide/`、`docs/architecture/styling-system.md`（核查制）、`docs/analysis/ui-review/C2-capability-gaps.md`、`docs/logs/`
 
 - Item Types: `Proof | Follow-up`
 
-- [ ] `docs/references/renderer-interfaces.md` 契约条目终稿（与 live 行为逐项核对，区分「字段存在」与「语义落地」）
-- [ ] flux-guide schema 作者条目（批量栏语义件用法样例：crud 宿主 + table 宿主双样例 + selectAllMode 说明）
-- [ ] `docs/architecture/styling-system.md` 核查：marker 输出约定若需补充则同步（无改动不写凑条目）
-- [ ] C2 回写 ⑬（追加式）：G-B3 行落「已产品化（本 plan）」终态证据 + 观察面余量登记（范围选区归 G-B2 专项 Decision 的边界确认）+ G-C/G-D 拆分后续 plan 登记 + 初版裁决表零改动
-- [ ] daily dev log 记录（`docs/logs/2026/08-30.md` 或实际执行日）
+- [x] `docs/references/renderer-interfaces.md` 契约条目终稿（与 live 行为逐项核对，区分「字段存在」与「语义落地」）
+- [x] flux-guide schema 作者条目（批量栏语义件用法样例：crud 宿主 + table 宿主双样例 + selectAllMode 说明）
+- [x] `docs/architecture/styling-system.md` 核查：marker 输出约定若需补充则同步（无改动不写凑条目）
+- [x] C2 回写 ⑬（追加式）：G-B3 行落「已产品化（本 plan）」终态证据 + 观察面余量登记（范围选区归 G-B2 专项 Decision 的边界确认）+ G-C/G-D 拆分后续 plan 登记 + 初版裁决表零改动
+- [x] daily dev log 记录（`docs/logs/2026/08-30.md` 或实际执行日）
 
 Exit Criteria:
 
-- [ ] owner 文档落字/核查完成且与 live 行为一致
-- [ ] C2 回写完成（追加式，初版裁决表零改动）
-- [ ] daily log 已记录
+- [x] owner 文档落字/核查完成且与 live 行为一致
+- [x] C2 回写完成（追加式，初版裁决表零改动）
+- [x] daily log 已记录
 
 ## Draft Review Record
 
@@ -167,17 +216,17 @@ Exit Criteria:
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。全量验证归此处，Phase 内只做保证后续 Phase 能继续的局部验证。
 
-- [ ] 批量栏语义件契约已落地且 Phase 1 断言清单全项有先红后绿证明（五矩阵）
-- [ ] `selectAllMode` 语义落地且缺省行为零回归（兼容快照断言全绿）
-- [ ] 双选择集契约对接边界落字；无 in-scope live defect 或 contract drift 被静默降级
-- [ ] `docs/references/renderer-interfaces.md` 对齐完成（Protected Areas owner evidence）；styling-system 核查完成（或零改动落字）
-- [ ] C2 回写 ⑬ 完成（追加式，初版裁决表零改动）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增命中，红项仅限既有登记）
+- [x] 批量栏语义件契约已落地且 Phase 1 断言清单全项有先红后绿证明（五矩阵）
+- [x] `selectAllMode` 语义落地且缺省行为零回归（兼容快照断言全绿）
+- [x] 双选择集契约对接边界落字；无 in-scope live defect 或 contract drift 被静默降级
+- [x] `docs/references/renderer-interfaces.md` 对齐完成（Protected Areas owner evidence）；styling-system 核查完成（或零改动落字）
+- [x] C2 回写 ⑬ 完成（追加式，初版裁决表零改动）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新增命中，红项仅限既有登记）
 
 ## Deferred But Adjudicated
 
@@ -199,13 +248,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 本 plan 已关闭（2026-08-31）。G-B3 批量操作栏语义件按 Phase 1 裁定落地：新 renderer type `batch-bar`（flux-renderers-data）+ `selectAllMode` 选择语义（crud/table 双侧采纳），先红后绿单测 26 条（batch-bar 13 + 双宿主对接 2 + selectAllMode 11），双宿主（P2b/P4b 手工拼装等价表达）用例锁定；`renderer-interfaces.md` 两节终稿 + flux-guide 双条目 + C2 回写 ⑬（追加式）+ styling-system 核查零改动。全量验证 full-green verification：`pnpm typecheck` 37/37、`pnpm build` 37/37、`pnpm lint` 37/37、`pnpm test` 68/68 任务、`pnpm check` exit 0（195W/2E 均为既有登记基线，HEAD 与工作树双口径一致，零新增命中）；执行期连带面（route-matrix 门禁 route+lab page、drift 字段清单 6→7）均已登记处置。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: fresh session 独立子 agent `ses_fab111b38ffea7Ucu87GF2KOLb`（1 轮）
+- Evidence: VERDICT **APPROVED** 零 Blocker/零 Major/零 Minor。审计独立核对 A–E 五域：A 各 Phase 落地面逐项 file:line 核实（batch-bar.tsx/definition、selectAllMode 全链、注册面、i18n 对称、四文档、C2 ⑬ append-only 0 删行、bulkActions 死状态未动）；B 独立重跑三份测试文件 26/26 全绿并确认五矩阵先红后绿设计；C plan 文本内部一致（Phase 1–4 全 completed、无 Closure Gates 外残留 `[ ]`）；D deferred/follow-up 分类诚实（retrofit = optimization candidate；共写面 `use-table-selection.ts` diff 确认 G-B2 修饰键路径零触碰）；E `git status` 无 out-of-scope 改动（零 flux-core/ui 改动，Decision 5 兑现）。证据原文见审计 task 记录与 `docs/logs/2026/08-31.md`。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- 见 `## Non-Blocking Follow-ups` 区（复刻页 retrofit / 两套选择集 API 统一治理 / G-C、G-D 后续 plan / D1 输入池候选）；无 remaining plan-owned work。

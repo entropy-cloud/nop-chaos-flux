@@ -149,6 +149,10 @@ export const enUS: Resource = {
       loadedAll: 'Loaded all ({{count}})',
       loadingMore: 'Loading more...',
     },
+    batchBar: {
+      selectedCount: '{{count}} selected',
+      clearSelection: 'Clear selection',
+    },
     list: {
       loadingMore: 'Loading more...',
       noMore: 'No more data',

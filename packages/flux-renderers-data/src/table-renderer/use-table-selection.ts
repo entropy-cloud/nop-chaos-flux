@@ -13,11 +13,20 @@ export interface RowSelectionModifiers {
   ctrlKey?: boolean;
 }
 
+export interface UseTableSelectionOptions {
+  /**
+   * Row set the header select-all / allSelected state applies to (D1 G-B3
+   * `selectAllMode: 'page'`). Defaults to `rows` — the 'all' path is untouched.
+   */
+  selectAllRows?: TableRowEntry[];
+}
+
 export function useTableSelection(
   schemaProps: TableSchema,
   rows: TableRowEntry[],
   onSelectionChange: RendererComponentProps<TableSchema>['events']['onSelectionChange'],
   helpers: RendererComponentProps<TableSchema>['helpers'],
+  options?: UseTableSelectionOptions,
 ) {
   const renderScope = useRenderScope();
   const selectionOwnership = schemaProps.selectionOwnership ?? 'local';
@@ -38,6 +47,11 @@ export function useTableSelection(
   // D1 G-B2 Decision 3: modifier-key selection gestures (shift range / meta
   // toggle / ⌘A select-all) — checkbox mode only, inert under radio.
   const modifierSelect = rowSelection?.modifierSelect === true && !isRadio;
+  // D1 G-B3: header select-all scope. 'all' (default) = full row set;
+  // 'page' = the caller-provided current-page slice (checkbox header shape
+  // only — inert under radio).
+  const selectAllMode = rowSelection?.selectAllMode === 'page' && !isRadio ? 'page' : 'all';
+  const selectAllScopeRows = selectAllMode === 'page' ? (options?.selectAllRows ?? rows) : rows;
 
   const [localSelectedRowKeys, setLocalSelectedRowKeys] = useState<Set<string>>(
     new Set(rowSelection?.selectedRowKeys ?? []),
@@ -167,35 +181,35 @@ export function useTableSelection(
 
   const allSelected = useMemo(() => {
     const selectableRows = checkableRowKeys
-      ? normalizedRows.filter((row) => checkableRowKeys.has(row.rowKey))
-      : normalizedRows;
+      ? selectAllScopeRows.filter((row) => checkableRowKeys.has(row.rowKey))
+      : selectAllScopeRows;
     return (
       selectableRows.length > 0 &&
       selectableRows.every((row) => selectedRowKeys.has(row.rowKey))
     );
-  }, [normalizedRows, selectedRowKeys, checkableRowKeys]);
+  }, [selectAllScopeRows, selectedRowKeys, checkableRowKeys]);
+
+  // Selected keys within the select-all scope (page-aware header state, D1 G-B3).
+  const selectAllScopeSelectedCount = useMemo(
+    () => selectAllScopeRows.filter((row) => selectedRowKeys.has(row.rowKey)).length,
+    [selectAllScopeRows, selectedRowKeys],
+  );
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
-      const currentRowKeys = (
-        checkableRowKeys
-          ? normalizedRows.filter((row) => checkableRowKeys.has(row.rowKey))
-          : normalizedRows
-      ).map((row) => row.rowKey);
+      const scopeRows = checkableRowKeys
+        ? selectAllScopeRows.filter((row) => checkableRowKeys.has(row.rowKey))
+        : selectAllScopeRows;
+      const currentRowKeys = scopeRows.map((row) => row.rowKey);
 
       let nextKeys: Set<string>;
 
-      // H21: under keepOnPageChange, retained cross-page keys can include phantom
-      // keys for rows that were since deleted. Prune those against the full known
-      // dataset (currentRowKeySet) so they never survive into the payload, then
-      // apply the add/remove of the current rows.
-      const retainedKnown = keepOnPageChange
-        ? new Set(Array.from(selectedRowKeys).filter((key) => currentRowKeySet.has(key)))
-        : null;
-
-      if (checked) {
-        if (keepOnPageChange) {
-          nextKeys = new Set(retainedKnown);
+      if (selectAllMode === 'page') {
+        // 'page' select-all = check/uncheck-all-visible on the current page
+        // (mirrors manual row-check semantics: union on check, remove the page
+        // rows on deselect; other-page keys survive).
+        if (checked) {
+          nextKeys = new Set(selectedRowKeys);
           for (const key of currentRowKeys) {
             if (maxSelectionLength && nextKeys.size >= maxSelectionLength) {
               break;
@@ -203,22 +217,47 @@ export function useTableSelection(
             nextKeys.add(key);
           }
         } else {
-          nextKeys = new Set<string>();
-          for (const key of currentRowKeys) {
-            if (maxSelectionLength && nextKeys.size >= maxSelectionLength) {
-              break;
-            }
-            nextKeys.add(key);
-          }
+          const pageSet = new Set(currentRowKeys);
+          nextKeys = new Set(
+            Array.from(selectedRowKeys).filter((key) => !pageSet.has(key)),
+          );
         }
       } else {
-        if (keepOnPageChange) {
-          const currentPageSet = new Set(currentRowKeys);
-          nextKeys = new Set(
-            Array.from(retainedKnown!).filter((key) => !currentPageSet.has(key)),
-          );
+        // H21: under keepOnPageChange, retained cross-page keys can include phantom
+        // keys for rows that were since deleted. Prune those against the full known
+        // dataset (currentRowKeySet) so they never survive into the payload, then
+        // apply the add/remove of the current rows.
+        const retainedKnown = keepOnPageChange
+          ? new Set(Array.from(selectedRowKeys).filter((key) => currentRowKeySet.has(key)))
+          : null;
+
+        if (checked) {
+          if (keepOnPageChange) {
+            nextKeys = new Set(retainedKnown);
+            for (const key of currentRowKeys) {
+              if (maxSelectionLength && nextKeys.size >= maxSelectionLength) {
+                break;
+              }
+              nextKeys.add(key);
+            }
+          } else {
+            nextKeys = new Set<string>();
+            for (const key of currentRowKeys) {
+              if (maxSelectionLength && nextKeys.size >= maxSelectionLength) {
+                break;
+              }
+              nextKeys.add(key);
+            }
+          }
         } else {
-          nextKeys = new Set<string>();
+          if (keepOnPageChange) {
+            const currentPageSet = new Set(currentRowKeys);
+            nextKeys = new Set(
+              Array.from(retainedKnown!).filter((key) => !currentPageSet.has(key)),
+            );
+          } else {
+            nextKeys = new Set<string>();
+          }
         }
       }
 
@@ -254,7 +293,8 @@ export function useTableSelection(
       );
     },
     [
-      normalizedRows,
+      selectAllScopeRows,
+      selectAllMode,
       onSelectionChange,
       renderScope,
       selectionOwnership,
@@ -401,6 +441,7 @@ export function useTableSelection(
   return {
     selectedRowKeys,
     allSelected,
+    selectAllScopeSelectedCount,
     handleSelectAll,
     handleSelectRow,
     setSelectionExternal,
