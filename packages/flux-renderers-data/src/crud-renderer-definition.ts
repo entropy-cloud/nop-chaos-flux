@@ -263,7 +263,10 @@ export const crudRendererDefinition: RendererDefinition = {
       editorType: 'object',
     },
     filterTogglable: {
-      shape: { kind: 'object', fields: {} },
+      shape: {
+        kind: 'union',
+        anyOf: [{ kind: 'boolean' }, { kind: 'object', fields: {} }],
+      },
       displayName: 'Filter Togglable',
       description:
         'Collapsible query region configuration; when truthy the queryForm region renders inside a collapse container with a toggle button.',

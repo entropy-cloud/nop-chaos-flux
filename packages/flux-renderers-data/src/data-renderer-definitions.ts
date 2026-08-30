@@ -6,6 +6,7 @@ import { ListRenderer } from './list-renderer.js';
 import { TableRenderer } from './table-renderer.js';
 import { TreeRenderer } from './tree-renderer.js';
 import { crudRendererDefinition } from './crud-renderer-definition.js';
+import { queryFilterRendererDefinition } from './query-filter-definition.js';
 import { w2aDataCompositionDefinitions } from './w2a-data-composition-definitions.js';
 import { statTileRendererDefinition } from './stat-tile-renderer-definition.js';
 import { sparklineRendererDefinition } from './sparkline-renderer-definition.js';
@@ -16,6 +17,7 @@ const LazyChartRenderer = createLazyRendererComponent<ChartSchema>(
 );
 
 export { crudRendererDefinition } from './crud-renderer-definition.js';
+export { queryFilterRendererDefinition } from './query-filter-definition.js';
 export { sparklineRendererDefinition } from './sparkline-renderer-definition.js';
 
 export const dataRendererDefinitions: RendererDefinition[] = [
@@ -619,5 +621,6 @@ export const dataRendererDefinitions: RendererDefinition[] = [
   ...w2aDataCompositionDefinitions,
   statTileRendererDefinition,
   sparklineRendererDefinition,
+  queryFilterRendererDefinition,
   crudRendererDefinition,
 ];

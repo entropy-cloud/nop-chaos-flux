@@ -387,3 +387,48 @@ export interface StatTileSchema extends BaseSchema {
 
 export * from './chart-schemas.js';
 export * from './sparkline-schemas.js';
+
+export interface QueryFilterToggleConfig extends SchemaObject {
+  defaultCollapsed?: boolean;
+  /** Label shown in the collapsed state summary (defaults to the i18n expand hint). */
+  collapsedLabel?: string;
+  /** Label of the collapse control while expanded (defaults to the i18n collapse hint). */
+  expandedLabel?: string;
+}
+
+export interface QueryFilterSchema extends BaseSchema {
+  type: 'query-filter';
+  /**
+   * Query fields rendered through the embedded form (region carrier). The
+   * authoring transform lowers this into a nested `{ type: 'form' }` on the
+   * `filterForm` region (crud `queryFormRegion` precedent).
+   */
+  body?: SchemaInput;
+  /** Custom action buttons; replaces the default Search/Reset pair. */
+  actions?: SchemaInput;
+  /** Label position forwarded to the embedded form (same resolution as crud queryForm). */
+  mode?: 'normal' | 'horizontal' | 'vertical' | 'inline';
+  /** Label position alias resolved by `mode` when both are declared. */
+  layout?: 'horizontal' | 'vertical' | 'inline';
+  /** Grid columns forwarded to the embedded form. */
+  columnCount?: number;
+  /** Grid gap forwarded to the embedded form. */
+  gap?: number | string;
+  /** Label of the default Search button (defaults to the i18n search message). */
+  submitLabel?: string;
+  /** Label of the default Reset button (defaults to the i18n reset message). */
+  resetLabel?: string;
+  /**
+   * Expand/collapse semantics: `true` or a config object enables the toggle
+   * envelope around the embedded form.
+   */
+  togglable?: boolean | QueryFilterToggleConfig;
+  /**
+   * Query chain dispatched through the embedded form's submit pipeline
+   * (validation then submit). Consumed by the authoring transform — declared
+   * as a prop, not an event contract (the renderer never reads props.events).
+   */
+  onSubmit?: ActionSchema | ActionSchema[];
+  /** Reset chain dispatched after the embedded form resets. Consumed by the authoring transform. */
+  onReset?: ActionSchema | ActionSchema[];
+}

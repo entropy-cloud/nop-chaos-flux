@@ -99,6 +99,10 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     });
 
   const filterToggle = useCrudFilterToggle(normalizedSchema, queryState);
+  const filterToggleConfig =
+    typeof normalizedSchema.filterTogglable === 'object' && normalizedSchema.filterTogglable !== null
+      ? normalizedSchema.filterTogglable
+      : undefined;
 
   useEffect(() => {
     if (!scope) {
@@ -565,9 +569,10 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
             >
               {filterToggle.collapsed ? (
                 <span className="text-sm text-muted-foreground">
-                  {filterToggle.activeFilterCount > 0
-                    ? t('flux.crud.activeFilters', { count: filterToggle.activeFilterCount })
-                    : t('flux.crud.collapseQuery')}
+                  {filterToggleConfig?.collapsedLabel ??
+                    (filterToggle.activeFilterCount > 0
+                      ? t('flux.crud.activeFilters', { count: filterToggle.activeFilterCount })
+                      : t('flux.crud.collapseQuery'))}
                 </span>
               ) : null}
               <Button
@@ -575,7 +580,11 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
                 size="icon-sm"
                 onClick={() => filterToggle.setCollapsed(!filterToggle.collapsed)}
                 aria-expanded={!filterToggle.collapsed}
-                aria-label={filterToggle.collapsed ? t('flux.crud.expandQuery') : t('flux.crud.collapseQuery')}
+                aria-label={
+                  filterToggle.collapsed
+                    ? t('flux.crud.expandQuery')
+                    : (filterToggleConfig?.expandedLabel ?? t('flux.crud.collapseQuery'))
+                }
               >
                 <ChevronDownIcon
                   className={cn('size-4 transition-transform', !filterToggle.collapsed && 'rotate-180')}

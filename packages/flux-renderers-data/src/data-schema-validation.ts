@@ -295,6 +295,12 @@ export function validateCrudSchema(context: RendererSchemaValidationContext<Base
   }
 }
 
+const QUERY_FORM_DEAD_TOGGLE_FIELDS = [
+  'defaultCollapsed',
+  'collapsedLabel',
+  'expandedLabel',
+] as const;
+
 export function transformCrudAuthoringSchema(
   context: import('@nop-chaos/flux-core').RendererAuthoringTransformContext<BaseSchema>,
 ) {
@@ -308,6 +314,20 @@ export function transformCrudAuthoringSchema(
     primaryField?: unknown;
     perPageField?: unknown;
   };
+
+  const queryFormConfig = schema.queryForm;
+  if (queryFormConfig) {
+    for (const key of QUERY_FORM_DEAD_TOGGLE_FIELDS) {
+      if ((queryFormConfig as Record<string, unknown>)[key] !== undefined) {
+        context.emit({
+          code: 'unknown-property',
+          severity: 'warning',
+          path: toJsonPointer(context.path, 'queryForm', key),
+          message: `crud.queryForm.${key} is dead config (declared but never consumed); the collapse toggle is owned by crud.filterTogglable — use filterTogglable.${key} instead.`,
+        });
+      }
+    }
+  }
 
   if (schema.filter !== undefined) {
     context.emit({

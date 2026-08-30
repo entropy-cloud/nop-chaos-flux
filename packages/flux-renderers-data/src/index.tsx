@@ -13,10 +13,12 @@ export { StatisticsRenderer } from './statistics-renderer.js';
 export { StatTileRenderer } from './stat-tile-renderer.js';
 export { SparklineRenderer } from './sparkline-renderer.js';
 export { CrudRenderer } from './crud-renderer.js';
+export { QueryFilterRenderer } from './query-filter.js';
 export { createCrudNormalizedSourceContext } from './crud-renderer-state.js';
 export {
   crudRendererDefinition,
   dataRendererDefinitions,
+  queryFilterRendererDefinition,
   sparklineRendererDefinition,
 } from './data-renderer-definitions.js';
 
