@@ -99,6 +99,13 @@ export { useSourceValue } from './use-source-value.js';
 export { useStatusPathPublication } from './status-path.js';
 export { usePublishedFormStatus, usePublishedFormValues } from './form-publication.js';
 export { StructuralLoopProvider } from './structural-loop-provider.js';
+export {
+  getOptionRowStateAttributes,
+  getOptionRowStateTokens,
+  optionRowBindingEquals,
+  optionRowValueMatches,
+} from './option-row.js';
+export type { OptionRowStateAttributes, OptionRowStateInput } from './option-row.js';
 export { createFormComponentHandle, createReadonlyScopeBinding } from '@nop-chaos/flux-runtime';
 export type { SourceTransientState } from './use-node-source-props.js';
 export type { WorkbenchShellProps } from './workbench/index.js';
