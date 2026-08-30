@@ -212,3 +212,36 @@
 **kanban 拖拽本应用实测注记（回写 ⑤ 同源复现）**:
 
 - `onCardMove` payload `${cardId}`/`${toColumnId}`/`${toIndex}` 契约跨应用成立；拖拽源注册滞后（React Compiler dev 双挂载，P4b G-A finding）本应用同现——e2e 同以 lastMove 钩子数据一致性姿势锁定（interactions e2e 09/11/12），列计数 9→8/9→10 等分布断言随会话态回流成立；分组属性切换（status/category/person）后 moveCard 解码对应属性值翻转，端点契约单测覆盖。注册时效本体归 D1/renderer 修复流程（P4b 结论维持）。
+
+### 回写 ⑦ — P6b Airtable grid 交互接线实测证据（2026-08-30，plan `2026-08-30-0953-1-p6b-airtable-interaction-wiring-and-tests.md` Phase 4）
+
+> 授权链: roadmap Cross-Cutting 5（Pi-b closure 以追加方式回写 C2，不重开初版状态）→ 本 plan Phase 4。初版裁决表零改动，本段仅追加实测证据与素材行。逐条「预测 vs 实测」对照见分析篇 `airtable-grid.md` §4.1。
+
+**G-D 网格编辑深度（L2，本应用主对照行）终态实测证据（P6a 静态 + P6b 接线后复核）**:
+
+- **可达面（接线锁定，interactions e2e 01–10）**：读端点流动 + 型别分派 + 客户端分页维持高承载（P6a）；接线新增可达面——记录编辑保存（record modal 15 字段编辑子集 → `Airtable__updateRecord` 会话库，atEdit\* 规范键消解 includeScope 遮蔽）、底部插行（`createRecord` 表尾插行 + required 拦截）、列头菜单排序（会话 viewConfig + 服务端预应用）、分组切换（group url 物化 + 泛化分组 category/owner/done）、行高四档切换（className 表达式状态驱动）、搜索参数化（keyword url 物化）、prev/next 导航（dialog 内数据重载）。summary/组内计数随会话刷新（端点重算）。
+- **零承载面（终判维持）**：单元格原位编辑与同格双态（导航态/编辑态空间分离近似维持）、动态列模型（隐藏/换型别/插删列运行时变更）、范围选区、fill handle、键盘导航层——键盘十五键位终态见下。产品化归 D1（G-D 语义件族 + G-B2/G-B3 依赖）。
+
+**G-B2/G-B3 键盘/批量终态（十五键位终态表 + 分组态补充键位，P6b 处置表 A15/A16）**:
+
+- **G-B2 正面素材（新发现）**：table renderer 行 keydown 中继**在库**——声明 `onRowClick` 事件后行 `tabIndex=0` 且 Enter/Space 内建中继派发行动作（`table-body-row-rendering.tsx:196-227`，a11y 语义）。G-B2「键盘导航框架 L4」缺口据此精确化：**单点键盘中继已有 renderer 层先例，缺口收敛在框架层**（焦点管理/roving/chord/修饰键/选区扩展），非键盘事件通道完全缺失。P6b 因 modal 体复制成本与单击行语义冲突未激活该通道（A13 显式裁决，注记锁定 e2e 07），通道本身可复用。
+- **G-B3 维持**：范围选区/⌘ 多选/⌘C·X·V/⌘Z·Y/fill handle 全部零通道（回写 ⑤ P4b 口径跨应用维持）；批量操作栏未启用（Airtable grid 无常驻批量栏形态，同 P5b N14 裁定姿势——选区语义件候选维持 D1）。
+
+**分析篇 §7 两候选终态回写（P6a 移交 + P6b 收口）**:
+
+- **候选 1「grid 分组聚合语义」→ 并入 G-D 行（不新增 C2 行）**：`group=` 参数化分组 + 组内计数 + 组内 summary 由「mock 服务端预聚合 + 读端点重算」完整承载（分组切换 e2e 03、写后随会话刷新 e2e 06/08）；table renderer 无内建分组/聚合渲染语义维持为 G-D 子能力缺口（初判 L2 维持，产品化随 G-D 语义件族）。
+- **候选 2「范围选区 + fill handle 编辑模型」→ 并入 G-B3 观察面（不新增行，行语义扩注）**：实测确认其超出"批量操作栏"语义——是**编辑器选区模型**（选区锚点 + 等差填充拖拽原语 + 键盘选区扩展），与 G-B2 键盘选区同根；P6b 零承载实测维持。G-B3 行的"批量操作栏语义件"之外追加此选区模型维度，产品化归 D1。
+
+**P6a Deferred 三项终态（本计划收口）**:
+
+1. **交互接线全谱** → 收口：处置表 A1–A16 全部落终态（接线锁定 8 / 显式裁决 8 复合计，无静默跳过），每条接线锁定项 ≥1 条先红后绿 e2e。
+2. **键盘双态模型/fill handle/范围选区/⌘ 多选/Space 展开** → 十五键位终态表落字（内建锁定 1 / 按钮面接线 + 键盘裁决复合 4 / 纯显式裁决 14）；Space 通道发现见 G-B2 正面素材。
+3. **rating/collaborator 选人/grid 分组聚合/范围选区归属** → rating 原语缺口维持（★ 序列近似承载 + 编辑子集 input-number(1–5)）；collaborator 选人原语缺口维持（自绘头像 + 不进编辑子集）；分组聚合并入 G-D（候选 1）；范围选区+fill handle 并入 G-B3 观察面（候选 2）。
+
+**新素材行（P6b 执行期发现，供 D1/deep-audit 参考，未分级）**:
+
+- **`component:<method>` 通用组件动作 + form 句柄 = dialog 内数据重载通道（G-L 关联正面证据）**：form 组件句柄注册 `refresh` 方法（重跑 loadAction），`{action:'component:refresh', componentId:<form id>}` 可在 dialog 内实现「setValue 换参 → form 数据重载」（P6b prev/next 导航即此通道，e2e 10）——**无需嵌套浮层、无需跨树写 scope**。与 G-L「dialog 影子写限制」观察项对齐：dialog 内需要改"自身数据源"时，组件句柄方法是 scope 限制的合法绕道；跨树改页面 scope 的限制本身维持（见下条）。
+- **dialog 开启位置决定 surface form 写入域（回写 ⑥ scope 通道边界的精化）**：回写 ⑥ 已证「dialog 内裸 input 写子 scope 不可跨树」；P6b 追加精化——**form `submitScope:'surface'` 的 setValue 写入域 = 打开 dialog 时捕获的 owner scope**：入口在 page body（视图栏）→ 落页面 scope（搜索 A1 可用）；入口在 table 列头/行内 → 落 table 局部子 scope，页面级 dependsOn 不可观察（排序 A5 候选① 由此实测否决，改走会话写端点）。deep-audit 候选：surface 写入域与开启位置的耦合语义。
+- **表达式 className 状态驱动成立（G-F/G-F2 既有口径精化）**：静态节点 className 表达式对 scope 变量的响应性实测成立（行高分段控件 setValue → 网格 wrapper className `${'at-density-live-' + (atRowDensity ?? 'short')}` → 行高随动，e2e 04）。回写 ③–⑥「schema 层无选中/hover 态表达通道」的口径据此精化：**表达式机制本身可用，缺口在交互态状态源**（选中集/键盘焦点/hover 等状态无 schema 承载）——G-F option-row 原语 D1 首项依据不变，G-F2 缺口面收窄。
+- **columns 显隐 scope 通道在库（较初判乐观的事实修正）**：table `columnSettings:{enabled:true}` + `toggledStatePath` 已支持 scope 驱动列显隐（`use-table-visible-columns.ts:44-80`，回写 ③「勾选显隐原生可达」的 plain-table 对应物）；P6b 不接线裁决基于 chrome 副作用（启用即挂设置按钮）与 20-toggle 表达式数组手术成本（A6），非机制缺失。
+- **includeScope 载荷遮蔽坑第五例**：`atEdit*` 编辑面规范键 + 端点别名优先级消解（`ntPeek*` 先例第五处复用：cal/linear/notion/antdpro 后），模式已稳定可沉淀为接线规范条目。

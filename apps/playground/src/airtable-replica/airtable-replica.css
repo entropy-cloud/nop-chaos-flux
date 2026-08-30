@@ -723,3 +723,74 @@
   color: var(--at-text-tertiary);
   font-size: 12px;
 }
+
+/* ── 9. Live density switching (P6b A9 wiring: seg control setValue →
+      className expression on the grid scroll wrapper → row-height var) ── */
+
+.at-density-live-short .at-grid [data-slot='table-row'] {
+  height: var(--at-row-short);
+}
+
+.at-density-live-medium .at-grid [data-slot='table-row'] {
+  height: var(--at-row-medium);
+}
+
+.at-density-live-tall .at-grid [data-slot='table-row'] {
+  height: var(--at-row-tall);
+}
+
+.at-density-live-extra .at-grid [data-slot='table-row'] {
+  height: var(--at-row-extra);
+}
+
+/* ── 10. Column-menu sort items carried by mini-forms (P6b A5 wiring:
+      form submitScope surface + submitAction setValue crosses the dialog
+      sub-scope boundary; the actions wrapper is neutralized so the button
+      reads as a plain menu row) ─────────────────────────────────────────── */
+
+.at-menu-form {
+  padding: 0 8px;
+  margin: 0;
+}
+
+.at-menu-form [data-slot='form-actions'] {
+  display: contents;
+}
+
+.at-menu-item-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--at-text);
+  cursor: pointer;
+}
+
+.at-menu-item-btn:hover {
+  background: transparent;
+  color: var(--at-blue);
+}
+
+/* ── 11. Record modal editing (P6b A11a/A11b wiring) ────────────────────── */
+
+/* boundary-disabled nav button (prevId/nextId missing at first/last record) */
+.at-btn-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* two-per-row edit field grid inside the record modal edit area */
+.at-edit-grid {
+  align-items: flex-start;
+}
+
+.at-edit-field {
+  flex: 1 1 42%;
+  min-width: 42%;
+}

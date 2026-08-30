@@ -112,6 +112,8 @@ export interface AtGroupsPayload {
 
 export interface AirtableDatabase {
   records: AtRecord[];
+  /** Session view config (P6b: in-table sort via updateViewConfig; null = default order). */
+  viewConfig: { sort?: string | null };
 }
 
 /** Field-metadata projection served alongside the grid payload (hide-fields

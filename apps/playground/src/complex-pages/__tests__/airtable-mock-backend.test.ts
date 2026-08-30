@@ -11,6 +11,7 @@ import {
   filterAirtableRecords,
   groupAirtableRecords,
   paginateAirtable,
+  sortAirtableRecords,
   summarizeAirtable,
   toAirtableRecordRow,
 } from '../shared/mock-backend-airtable';
@@ -222,6 +223,194 @@ describe('Airtable fetcher branch (get-only)', () => {
     expect(res.data?.items).toHaveLength(33);
     const grouped = await env.fetcher!<{ groups: unknown[] }>({ url: '/r/Airtable__records?group=category', method: 'get' }, fetchCtx);
     expect(grouped.data?.groups).toHaveLength(4);
+  });
+});
+
+describe('Airtable mock backend — write operations (P6b session state)', () => {
+  const db = createAirtableDatabase();
+  const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+  const branch = createAirtableFetcherBranch(db, clone);
+
+  function call(url: string, method = 'get', body: Record<string, unknown> = {}): { status: number; data: unknown } | null {
+    return branch({ url, method, params: {}, body });
+  }
+
+  it('at-update-miss + success: updateRecord patches the session row; summary follows the session', () => {
+    const miss = call('/r/Airtable__updateRecord', 'post', { id: 'AT-999', patch: { title: '无' } });
+    expect(miss?.status).toBe(1);
+    const before = call('/r/Airtable__records?perPage=100')?.data as {
+      summary: { amountSum: number; doneCount: number };
+      items: Array<{ id: string; title: string; done: boolean; amount: number }>;
+    };
+    const ok = call('/r/Airtable__updateRecord', 'post', {
+      id: 'AT-101',
+      patch: { title: '编辑保存后的标题样本', amount: 999, done: true },
+    });
+    expect(ok?.status).toBe(0);
+    // 会话内持久性：records 端点返回新值且 summary 随动
+    const after = call('/r/Airtable__records?perPage=100')?.data as {
+      summary: { amountSum: number; doneCount: number };
+      items: Array<{ id: string; title: string; amountLabel: string }>;
+    };
+    const row = after.items.find((r) => r.id === 'AT-101');
+    expect(row?.title).toBe('编辑保存后的标题样本');
+    expect(row?.amountLabel).toContain('999');
+    expect(after.summary.amountSum).toBeCloseTo(before.summary.amountSum - before.items[0].amount + 999, 6);
+    expect(after.summary.doneCount).toBe(before.summary.doneCount + (before.items[0].done ? 0 : 1));
+    // 分组源同会话可观察（跨源一致：组内计数/金额随动）
+    const grouped = call('/r/Airtable__records?group=category')?.data as {
+      groups: Array<{ key: string; amountSum: number }>;
+    };
+    const gridGroup = grouped.groups.find((g) => g.key === '需求评审');
+    expect(gridGroup).toBeDefined();
+  });
+
+  it('atEdit* canonical edit keys take precedence over includeScope ride-along record keys', () => {
+    const shadowed = call('/r/Airtable__updateRecord', 'post', {
+      id: 'AT-102',
+      title: '载荷残留旧标题',
+      atEditTitle: '编辑面新标题',
+      atEditCategory: '验收发布',
+    });
+    expect(shadowed?.status).toBe(0);
+    const row = call('/r/Airtable__record?id=AT-102')?.data as { title: string; category: string };
+    expect(row.title).toBe('编辑面新标题');
+    expect(row.category).toBe('验收发布');
+    // 平铺原始键（无 atEdit* 时）等价接受（P5b 平铺别名口径）
+    const flat = call('/r/Airtable__updateRecord', 'post', { id: 'AT-103', notes: '平铺键更新说明样本' });
+    expect(flat?.status).toBe(0);
+    expect((call('/r/Airtable__record?id=AT-103')?.data as { notes: string }).notes).toBe('平铺键更新说明样本');
+  });
+
+  it('at-write-readonly: readonly keys are ignored; an all-readonly patch fails with empty patch', () => {
+    const ignored = call('/r/Airtable__updateRecord', 'post', {
+      id: 'AT-104',
+      autoNo: 999,
+      createdAt: '2000-01-01 00:00',
+      modifiedAt: '2000-01-01 00:00',
+      atEditTitle: '只读忽略伴随更新',
+    });
+    expect(ignored?.status).toBe(0);
+    const row = call('/r/Airtable__record?id=AT-104')?.data as {
+      title: string;
+      autoNo: number;
+      createdAt: string;
+    };
+    expect(row.title).toBe('只读忽略伴随更新');
+    expect(row.autoNo).not.toBe(999);
+    expect(row.createdAt).not.toContain('2000');
+    const onlyReadonly = call('/r/Airtable__updateRecord', 'post', {
+      id: 'AT-105',
+      autoNo: 888,
+    });
+    expect(onlyReadonly?.status).toBe(1);
+  });
+
+  it('at-create-miss + success: createRecord appends AT-134 at the tail; title required; defaults land', () => {
+    const miss = call('/r/Airtable__createRecord', 'post', { title: '   ' });
+    expect(miss?.status).toBe(1);
+    const badField = call('/r/Airtable__createRecord', 'post', { title: '样本', category: '不存在的阶段' });
+    expect(badField?.status).toBe(1);
+    const ok = call('/r/Airtable__createRecord', 'post', { title: '链路验证新建记录样本', category: '开发进行' });
+    expect(ok?.status).toBe(0);
+    expect((ok?.data as { id?: string }).id).toBe('AT-134');
+    // 插行位次=表尾（行数 +1、新行 keyword 检索可达、默认值落库）
+    const grid = call('/r/Airtable__records?perPage=100')?.data as {
+      total: number;
+      summary: { count: number };
+      items: Array<{ id: string; title: string; category: string; barcode: string; autoNo: number }>;
+    };
+    expect(grid.total).toBe(34);
+    expect(grid.summary.count).toBe(34);
+    expect(grid.items[grid.items.length - 1].id).toBe('AT-134');
+    expect(grid.items[grid.items.length - 1].autoNo).toBe(34);
+    expect(grid.items[grid.items.length - 1].barcode).toMatch(/^AT-\d{4}-\d{5}$/);
+    const search = call('/r/Airtable__records?perPage=100&keyword=链路验证新建')?.data as { total: number };
+    expect(search.total).toBe(1);
+    // 新行进入分组源（组内计数随会话 +1：开发进行 8 种子 + 1 新建）
+    const grouped = call('/r/Airtable__records?group=category')?.data as {
+      groups: Array<{ key: string; count: number }>;
+      total: number;
+    };
+    expect(grouped.total).toBe(34);
+    expect(grouped.groups.find((g) => g.key === '开发进行')?.count).toBe(9);
+  });
+
+  it('at-sort-unknown: unknown sort field/dir falls back to original order; known fields sort', () => {
+    const rows = createAirtableRecords();
+    expect(sortAirtableRecords(rows, 'bogus:asc').map((r) => r.id)).toEqual(rows.map((r) => r.id));
+    expect(sortAirtableRecords(rows, 'amount:bogus').map((r) => r.id)).toEqual(rows.map((r) => r.id));
+    expect(sortAirtableRecords(rows, undefined)).toHaveLength(rows.length);
+    const asc = sortAirtableRecords(rows, 'amount:asc');
+    const desc = sortAirtableRecords(rows, 'amount:desc');
+    expect(asc[0].amount).toBeLessThanOrEqual(asc[1].amount);
+    expect(desc[0].amount).toBeGreaterThanOrEqual(desc[1].amount);
+    const byOwner = sortAirtableRecords(rows, 'owner:asc');
+    expect(byOwner[0].owner.name.length).toBeGreaterThan(0);
+  });
+
+  it('generalized grouping: owner and done fields produce counts + summary; unknown stays flat', () => {
+    const rows = createAirtableRecords();
+    const byOwner = groupAirtableRecords(rows, 'owner');
+    expect(byOwner.total).toBe(rows.length);
+    expect(byOwner.groups.length).toBeGreaterThanOrEqual(5);
+    expect(byOwner.groups.reduce((s, g) => s + g.count, 0)).toBe(rows.length);
+    for (const group of byOwner.groups) {
+      const members = rows.filter((r) => r.owner.name === group.key);
+      expect(group.count).toBe(members.length);
+      expect(group.amountSum).toBeCloseTo(members.reduce((s, r) => s + r.amount, 0), 6);
+    }
+    const byDone = groupAirtableRecords(rows, 'done');
+    expect(byDone.groups.map((g) => g.key).sort()).toEqual(['已交付', '未交付'].sort());
+    expect(groupAirtableRecords(rows, 'bogus').groups).toHaveLength(0);
+    expect(groupAirtableRecords(rows, 'category').groups).toHaveLength(4);
+  });
+
+  it('post contract: unknown Airtable write endpoints fail; read endpoints stay get-only', () => {
+    expect(call('/r/Airtable__nope', 'post')?.status).toBe(1);
+    expect(call('/r/Airtable__records', 'post')?.status).toBe(1);
+    expect(call('/r/User__findPage')).toBeNull();
+  });
+
+  it('at-viewcfg-miss + session sort: updateViewConfig pre-applies on subsequent reads; null clears', () => {
+    // 未知 viewId → 失败（at-viewcfg-miss）
+    const miss = call('/r/Airtable__updateViewConfig', 'post', { viewId: 'bogus', patch: { sort: 'amount:desc' } });
+    expect(miss?.status).toBe(1);
+    // 会话排序生效：设置后 records 读按 sort 预应用
+    const ok = call('/r/Airtable__updateViewConfig', 'post', { viewId: 'grid', patch: { sort: 'amount:desc' } });
+    expect(ok?.status).toBe(0);
+    const after = call('/r/Airtable__records?perPage=100')?.data as {
+      items: Array<{ amount: number }>;
+    };
+    for (let i = 1; i < after.items.length; i += 1) {
+      expect(after.items[i - 1].amount).toBeGreaterThanOrEqual(after.items[i].amount);
+    }
+    // url sort= 参数优先于会话配置（显式 asc 覆盖会话 desc）
+    const overridden = call('/r/Airtable__records?perPage=100&sort=amount:asc')?.data as {
+      items: Array<{ amount: number }>;
+    };
+    expect(overridden.items[0].amount).toBeLessThanOrEqual(overridden.items[1].amount);
+    // null 清除会话排序 → 回默认序
+    expect(call('/r/Airtable__updateViewConfig', 'post', { viewId: 'grid', patch: { sort: null } })?.status).toBe(0);
+    const cleared = call('/r/Airtable__records?perPage=100')?.data as { items: Array<{ id: string }> };
+    expect(cleared.items[0].id).toBe('AT-101');
+    // 非法 sort 载荷 → 失败
+    const bad = call('/r/Airtable__updateViewConfig', 'post', { viewId: 'grid', patch: { sort: 42 } });
+    expect(bad?.status).toBe(1);
+  });
+
+  it('routes writes through createShowcaseEnv (session state observable across pages)', async () => {
+    const { env } = createShowcaseEnv();
+    const res = await env.fetcher!<{ ok: boolean }>(
+      { url: '/r/Airtable__updateRecord', method: 'post', data: { id: 'AT-106', patch: { score: 9 } } },
+      fetchCtx,
+    );
+    expect(res.status).toBe(0);
+    const grid = await env.fetcher!<{ items: Array<{ id: string; score: number }> }>(
+      { url: '/r/Airtable__records?perPage=100', method: 'get' },
+      fetchCtx,
+    );
+    expect(grid.data?.items.find((r) => r.id === 'AT-106')?.score).toBe(9);
   });
 });
 

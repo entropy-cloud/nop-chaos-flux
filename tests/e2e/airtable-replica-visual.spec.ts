@@ -176,9 +176,10 @@ test.describe('Airtable replica — initial-screen structure', () => {
     await openPage(page, 'airtable-grid', '网格任务跟踪 · 电子表格网格');
 
     // 分组态样本（group= 参数化）：4 组头 = 分组值 chip + 组内计数 + 折叠形态 + 组内 summary
+    // （注记更新类微调，沿 P5b visual 02 先例：分组切换已接线 → 断言随注记更新）
     const section = page.getByTestId('airtable-group-section');
     await expect(section).toBeVisible();
-    await expect(page.getByTestId('airtable-group-note')).toContainText('归 P6b');
+    await expect(page.getByTestId('airtable-group-note')).toContainText('已接线');
     const heads = page.getByTestId('airtable-group-head');
     await expect(heads).toHaveCount(4);
     await expect(page.getByTestId('airtable-group-chip').first()).toContainText('需求评审');

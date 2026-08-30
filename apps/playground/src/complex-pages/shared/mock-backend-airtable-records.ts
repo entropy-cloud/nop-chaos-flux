@@ -21,7 +21,6 @@ import {
   type AtRecordRow,
   type AtSummary,
 } from './mock-backend-airtable-types';
-
 const TITLES = [
   '首页信息流卡片双列布局切换',
   '会员结算页金额精度对齐',
@@ -194,8 +193,61 @@ export function filterAirtableRecords(records: AtRecord[], keyword?: string): At
       r.notes.toLowerCase().includes(key) ||
       r.category.toLowerCase().includes(key) ||
       r.id.toLowerCase().includes(key) ||
-      r.owner.name.toLowerCase().includes(key),
+      r.owner.name.toLowerCase().includes(key) ||
+      r.email.toLowerCase().includes(key) ||
+      r.tags.some((t) => t.toLowerCase().includes(key)),
   );
+}
+
+/** Session write stamp (deterministic sample time; notion write-stamp precedent). */
+export function airtableWriteStamp(): string {
+  return '2026-08-30 14:00';
+}
+
+const AT_SORT_ACCESSORS: Record<string, (r: AtRecord) => string | number> = {
+  autoNo: (r) => r.autoNo,
+  title: (r) => r.title,
+  notes: (r) => r.notes,
+  category: (r) => String(AT_CATEGORY_LABELS.findIndex((c) => c.label === r.category)),
+  tags: (r) => r.tags.join(','),
+  date: (r) => r.date,
+  amount: (r) => r.amount,
+  score: (r) => r.score,
+  progress: (r) => r.progress,
+  done: (r) => (r.done ? 1 : 0),
+  owner: (r) => r.owner.name,
+  email: (r) => r.email,
+  site: (r) => r.site,
+  phone: (r) => r.phone,
+  durationSeconds: (r) => r.durationSeconds,
+  rating: (r) => r.rating,
+  barcode: (r) => r.barcode,
+  createdAt: (r) => r.createdAt,
+  modifiedAt: (r) => r.modifiedAt,
+};
+
+/**
+ * Session sort by the `sort=<field>:<asc|desc>` url parameter (P6b A5).
+ * Unknown field/dir fall back to the original order (at-sort-unknown).
+ */
+export function sortAirtableRecords(rows: AtRecord[], sort?: string): AtRecord[] {
+  if (!sort) return rows;
+  const separator = sort.indexOf(':');
+  const field = separator < 0 ? sort : sort.slice(0, separator);
+  const dirRaw = separator < 0 ? 'asc' : sort.slice(separator + 1);
+  const accessor = AT_SORT_ACCESSORS[field];
+  if (!accessor || (dirRaw !== 'asc' && dirRaw !== 'desc')) return rows;
+  const dir = dirRaw === 'desc' ? -1 : 1;
+  return rows.slice().sort((a, b) => {
+    const av = accessor(a);
+    const bv = accessor(b);
+    if (av === bv) return 0;
+    const cmp =
+      typeof av === 'number' && typeof bv === 'number'
+        ? av - bv
+        : String(av).localeCompare(String(bv), 'zh');
+    return cmp * dir;
+  });
 }
 
 export function paginateAirtable(rows: AtRecord[], page: number, perPage: number): {
