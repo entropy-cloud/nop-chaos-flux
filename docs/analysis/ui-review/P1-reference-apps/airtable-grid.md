@@ -108,30 +108,30 @@ Airtable grid 是"电子表格体验的关系型网格"：**导航态/编辑态�
 
 ## 5. 能力映射初稿
 
-| 参考元素                                | flux 原语（schema 落点）                                        | 保真度预估                                     | C2 对照        |
-| --------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------- | -------------- |
-| 网格底座（虚拟滚动+双态+选区+键盘模型） | `input-table` / `inline-edit-table`                             | **中**（需补双态/范围选区/fill handle/键盘层） | **G-D 核心行** |
-| 单行/长文本编辑                         | `input-text`（长文本→textarea/浮层）                            | 高                                             | G-D 矩阵       |
-| 数字/货币/百分比                        | `input-number` + 格式配置                                       | 高                                             | G-D 矩阵       |
-| Date + 日历 widget                      | `input-date`（popover 月历已落地 ⚡）                           | 高                                             | G-D 矩阵       |
-| Single/Multiple select 彩色 chip        | `select` + badge/chip 渲染                                      | 中高（需 chip 色盘 token）                     | G-D 矩阵       |
-| Checkbox                                | `checkbox`                                                      | 高                                             | G-D 矩阵       |
-| Attachment 缩略图墙+粘贴                | `upload`                                                        | 中（缩略图行高联动）                           | G-D 矩阵       |
-| Rating 星级                             | form 族 rating 原语存疑——P6a 实测确认，无则以 badge/select 模拟 | 中 / 缺口                                      | G-D 矩阵       |
-| Collaborator avatar 选人                | **缺口**（无 avatar select）                                    | 缺口                                           | G-D 矩阵       |
-| Email/URL/Phone/Duration                | `input-text` + 校验/格式化                                      | 中高                                           | G-D 矩阵       |
-| Barcode 编辑器                          | scheduling 包 `BarcodeInput`（⚡ 已注册）                       | 中高                                           | G-D 矩阵       |
-| Formula/Lookup/Rollup 只读列            | `table` 计算列 / 表达式求值                                     | 中高                                           | G-D 矩阵       |
-| Linked record chip + 搜索浮层           | select 远程源 / `data-source` + dialog                          | 中                                             | G-D 矩阵       |
-| Button 字段                             | action 系统（action-scope-and-imports）                         | 高                                             | G-D 矩阵       |
-| 列头菜单/字段增删改                     | context menu + 字段配置 dialog                                  | 中（动态改列模型）                             | **G-D 列菜单** |
-| Group by + 折叠 + summary bar           | table 分组聚合（现无则大缺口）                                  | 缺口~中                                        | **G-D 分组**   |
-| 行高四档                                | inline-edit-table 密度 prop（纯样式）                           | 中高                                           | **G-E** 密度档 |
-| hover/选中态                            | CSS 令牌                                                        | 高                                             | **G-F**        |
-| 键盘导航模型（双态+方向键+Enter/Esc）   | input-table 键盘层（需自建）                                    | 缺口~中                                        | **G-B2**       |
-| 批量选区 + fill handle                  | input-table 选区层（需自建）                                    | 缺口                                           | **G-B3**       |
-| Record 展开 modal                       | `dialog`/`drawer` + form 族                                     | 高（形态拼装）                                 | G-D            |
-| 条件过滤                                | `condition-builder`                                             | 高（天然对应）                                 | G-D            |
+| 参考元素                                | flux 原语（schema 落点）                                                                                                                     | 保真度预估                                     | C2 对照        |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------- |
+| 网格底座（虚拟滚动+双态+选区+键盘模型） | `input-table` / `inline-edit-table`                                                                                                          | **中**（需补双态/范围选区/fill handle/键盘层） | **G-D 核心行** |
+| 单行/长文本编辑                         | `input-text`（长文本→textarea/浮层）                                                                                                         | 高                                             | G-D 矩阵       |
+| 数字/货币/百分比                        | `input-number` + 格式配置                                                                                                                    | 高                                             | G-D 矩阵       |
+| Date + 日历 widget                      | `input-date`（popover 月历已落地 ⚡）                                                                                                        | 高                                             | G-D 矩阵       |
+| Single/Multiple select 彩色 chip        | `select` + badge/chip 渲染                                                                                                                   | 中高（需 chip 色盘 token）                     | G-D 矩阵       |
+| Checkbox                                | `checkbox`                                                                                                                                   | 高                                             | G-D 矩阵       |
+| Attachment 缩略图墙+粘贴                | ~~`upload`~~（P6a 实测勘误：`upload` 型别名全仓零命中）→ 编辑器承载为 form-advanced `input-file`/`input-image`，网格静态形态以自绘缩略块近似 | 中（缩略图行高联动）                           | G-D 矩阵       |
+| Rating 星级                             | form 族 rating 原语存疑——P6a 实测确认：零 renderer（全仓 grep 无命中），已以 ★/☆ 字符序列近似承载                                            | 中 / 缺口                                      | G-D 矩阵       |
+| Collaborator avatar 选人                | **缺口**（无 avatar select）                                                                                                                 | 缺口                                           | G-D 矩阵       |
+| Email/URL/Phone/Duration                | `input-text` + 校验/格式化                                                                                                                   | 中高                                           | G-D 矩阵       |
+| Barcode 编辑器                          | scheduling 包 `BarcodeInput`（⚡ 已注册）                                                                                                    | 中高                                           | G-D 矩阵       |
+| Formula/Lookup/Rollup 只读列            | `table` 计算列 / 表达式求值                                                                                                                  | 中高                                           | G-D 矩阵       |
+| Linked record chip + 搜索浮层           | select 远程源 / `data-source` + dialog                                                                                                       | 中                                             | G-D 矩阵       |
+| Button 字段                             | action 系统（action-scope-and-imports）                                                                                                      | 高                                             | G-D 矩阵       |
+| 列头菜单/字段增删改                     | context menu + 字段配置 dialog                                                                                                               | 中（动态改列模型）                             | **G-D 列菜单** |
+| Group by + 折叠 + summary bar           | table 分组聚合（现无则大缺口）                                                                                                               | 缺口~中                                        | **G-D 分组**   |
+| 行高四档                                | inline-edit-table 密度 prop（纯样式）                                                                                                        | 中高                                           | **G-E** 密度档 |
+| hover/选中态                            | CSS 令牌                                                                                                                                     | 高                                             | **G-F**        |
+| 键盘导航模型（双态+方向键+Enter/Esc）   | input-table 键盘层（需自建）                                                                                                                 | 缺口~中                                        | **G-B2**       |
+| 批量选区 + fill handle                  | input-table 选区层（需自建）                                                                                                                 | 缺口                                           | **G-B3**       |
+| Record 展开 modal                       | `dialog`/`drawer` + form 族                                                                                                                  | 高（形态拼装）                                 | G-D            |
+| 条件过滤                                | `condition-builder`                                                                                                                          | 高（天然对应）                                 | G-D            |
 
 **矩阵缺口初判（本篇判断，终判归 P6a 实测）**：flux 编辑器矩阵基本盘厚（文本/数字/日期/select/checkbox/upload 均有原生对应，barcode 可用 scheduling BarcodeInput），缺口集中在六处——① collaborator avatar 选人；② rating（存疑）；③ 分组折叠 + summary bar；④ fill handle/范围选区/导航态键盘模型；⑤ 富文本单元格浮层编辑器（@mention）；⑥ 列头"动态改列 schema"菜单语义。①~⑥ 中属渲染器语义增强/新原语的部分按 C2 裁决级别走 D1 流程，P6a 只做 style-equivalent 模拟并记录。
 

@@ -361,4 +361,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻多视图数据库"同一数据集多套视图"形态：库名+视图 tab 条（内建切换，table/board/gallery/calendar/list 五视图分支）+ table 视图（属性行头类型系统 + 型别分派单元格 + 行 hover OPEN/把手 + 条件配色样本）+ board 看板（状态分组列 + 列头计数 + 聚合静态值）+ gallery 封面墙 + calendar 六周月历 + list 极简单列 + View settings 滑杆面板（布局/属性可见性/filter 构建器/sort/group/条件配色 + 每视图私有配置集展示）+ 记录展开 peek 双形态（side 抽屉/center 弹窗）+ 新建视图/新建记录/列头菜单/搜索静态浮层，数据经 Notion__records/Notion__record/Notion__viewConfigs 端点流动。',
     features: ['复刻样式', '视图 tab 条', '五视图分支', 'peek 双形态'],
   },
+  {
+    id: 'airtable-grid',
+    title: '网格任务跟踪 · 电子表格网格',
+    category: 'app-replica',
+    description:
+      '复刻电子表格体验的关系型网格：工具栏+视图栏（视图 switcher 选中态/Hide fields 入口/行高四档控件形态/搜索筛选入口）+ 高密度网格主视图（行号列 + 20 字段型别分派静态样本 + 行 hover 展开入口 + 选中单元格蓝框静态样本 + 底部插行形态）+ summary bar（计数+按型别聚合预计算）+ 分组态样本（group= 参数化：组头计数+折叠形态+组内 summary 行）+ 行高四档密度样本（32/48/80/160px）+ 列头菜单 dialog + Hide fields 抽屉（主字段不可隐藏注记）+ 记录展开 modal（全字段分区+上一条/下一条导航），数据经 Airtable__records/Airtable__record 端点流动。',
+    features: ['复刻样式', '型别分派网格', 'summary bar', '分组样本'],
+  },
 ];

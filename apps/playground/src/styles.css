@@ -21,6 +21,7 @@
 @import './cal-replica/cal-replica.css';
 @import './linear-replica/linear-replica.css';
 @import './notion-replica/notion-replica.css';
+@import './airtable-replica/airtable-replica.css';
 @source "../../../packages";
 
 @theme inline {
