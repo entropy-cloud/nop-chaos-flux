@@ -22,6 +22,7 @@
 @import './linear-replica/linear-replica.css';
 @import './notion-replica/notion-replica.css';
 @import './airtable-replica/airtable-replica.css';
+@import './stripe-replica/stripe-replica.css';
 @source "../../../packages";
 
 @theme inline {

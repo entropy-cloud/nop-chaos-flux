@@ -369,4 +369,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻电子表格体验的关系型网格：工具栏+视图栏（视图 switcher 选中态/Hide fields 入口/行高四档控件形态/搜索筛选入口）+ 高密度网格主视图（行号列 + 20 字段型别分派静态样本 + 行 hover 展开入口 + 选中单元格蓝框静态样本 + 底部插行形态）+ summary bar（计数+按型别聚合预计算）+ 分组态样本（group= 参数化：组头计数+折叠形态+组内 summary 行）+ 行高四档密度样本（32/48/80/160px）+ 列头菜单 dialog + Hide fields 抽屉（主字段不可隐藏注记）+ 记录展开 modal（全字段分区+上一条/下一条导航），数据经 Airtable__records/Airtable__record 端点流动。',
     features: ['复刻样式', '型别分派网格', 'summary bar', '分组样本'],
   },
+  {
+    id: 'stripe-payments',
+    title: '金融数据面板 · 支付流水',
+    category: 'app-replica',
+    description:
+      '复刻金融数据面板风格支付流水页（密度与排版标杆）：分组导航 shell（总览/资金/交易分组 + 快捷入口/最近/产品分组 + More 收纳 + blurple 选中态样本）+ 筛选 chip 条与日期范围预设档/关键词搜索降级形态（零生效）+ 高密度交易表格（36 行 mock 流动/客户端分页 ≥3 页/状态 pill 四语义色阶对/金额等宽右对齐/部分列排序 chevron 形态）+ 交易明细抽屉（摘要/时间线/元数据分区 + 操作按钮形态零生效）+ 导出模态与添加 widget 勾选列表 dialog + 图表卡区（KPI 卡 ×4 + 净额双曲线），数据经 Stripe__payments/Stripe__payment/Stripe__overview 端点流动。',
+    features: ['复刻样式', '高密度表格', '状态色阶对', '明细抽屉'],
+  },
 ];
