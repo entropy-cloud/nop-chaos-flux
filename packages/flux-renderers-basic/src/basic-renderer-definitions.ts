@@ -35,12 +35,23 @@ export const basicRendererDefinitions: RendererDefinition[] = [
         kind: 'injected-local',
       },
     },
+    propContracts: {
+      breadcrumb: {
+        shape: { kind: 'array', item: { kind: 'unknown' } },
+        displayName: 'Breadcrumb',
+        description:
+          'Page-header breadcrumb entries ({ label, href? }); accepts an array or an expression resolving to one. Rendered above the title row; malformed entries are skipped.',
+        editorType: 'expression',
+      },
+    },
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'header', kind: 'region', regionKey: 'header' },
       { key: 'footer', kind: 'region', regionKey: 'footer' },
       { key: 'aside', kind: 'region', regionKey: 'aside' },
+      { key: 'extra', kind: 'region', regionKey: 'extra' },
+      { key: 'breadcrumb', kind: 'prop' },
       { key: 'data', kind: 'prop' },
       { key: 'subTitle', kind: 'prop' },
       { key: 'remark', kind: 'prop' },

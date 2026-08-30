@@ -23,11 +23,24 @@ export type ResponsiveContainerDirection = Partial<Record<ResponsiveBreakpoint, 
 
 export type ResponsiveWrap = Partial<Record<ResponsiveBreakpoint, boolean>>;
 
+export interface PageBreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
 export interface PageSchema extends BaseSchema {
   type: 'page';
   title?: string;
   subTitle?: string;
   remark?: string;
+  /**
+   * Page-header breadcrumb entries (`{ label, href? }`), an array or an
+   * expression resolving to one. Rendered above the title row as a nav;
+   * malformed entries are skipped.
+   */
+  breadcrumb?: SchemaValue;
+  /** Action area rendered at the right end of the title row (region). */
+  extra?: BaseSchema[];
   data?: SchemaValue;
   statusPath?: string;
   body?: BaseSchema[];
