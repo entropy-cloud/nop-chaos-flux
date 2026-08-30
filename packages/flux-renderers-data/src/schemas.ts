@@ -201,6 +201,8 @@ export interface TableSchema extends BaseSchema {
     /** Click a row (outside interactive controls) to toggle its selection. amis: checkOnItemClick. */
     toggleOnRowClick?: boolean;
   };
+  /** Interaction-state channel: selected-value binding + state marker output. */
+  optionRow?: OptionRowConfig;
   expandable?: {
     expandedRowKeys?: string[];
     expandRowByClick?: boolean;
@@ -254,6 +256,21 @@ export type ListPaginationOwnership = 'local' | 'controlled' | 'scope';
 
 export type ListPaginationMode = 'page' | 'infinite';
 
+/**
+ * Option-row interaction-state contract (D1 G-F primitive). Shared by row-like
+ * renderers (`list`, `table`). Marker output protocol:
+ * `docs/references/renderer-interfaces.md` §Option-Row Interaction-State Contract.
+ */
+export interface OptionRowConfig extends SchemaObject {
+  /** Selected-value binding evaluated against the owner scope (e.g. `"${selectedId}"`).
+   * Array bindings use any-match. Failed/empty resolution degrades to no selection. */
+  value?: SchemaValue;
+  /** Item field compared against `value`. Defaults to the renderer's row key field. */
+  valueField?: string;
+  /** Extra class applied to rows in the selected state (schema-level consumption channel). */
+  selectedClass?: string;
+}
+
 export interface ListPaginationConfig extends SchemaObject {
   /** Opt-in gate. When falsy, list renders all items (no slicing). */
   enabled?: boolean;
@@ -280,6 +297,8 @@ export interface ListSchema extends BaseSchema {
   empty?: SchemaInput | string;
   selectionMode?: ListSelectionMode;
   keyField?: string;
+  /** Interaction-state channel: selected-value binding + state marker output. */
+  optionRow?: OptionRowConfig;
   /** Pagination / infinite-scroll configuration. Opt-in via `pagination.enabled`. */
   pagination?: ListPaginationConfig;
   /** Where pagination interaction state lives. Defaults to 'local'. */

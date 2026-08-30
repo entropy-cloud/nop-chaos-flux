@@ -222,6 +222,25 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     prevExpandedRef.current = next;
   }, [treeMode, tableSchemaProps, expandedTreeRowKeys, lazyChildrenMap, filteredData, loadChildren]);
 
+  // opt-row-selection-clash: an explicit optionRow.value binding exclusively
+  // drives the row state markers; warn once in dev when it coexists with
+  // rowSelection so the override is visible to authors.
+  useEffect(() => {
+    const optionRow = tableSchemaProps.optionRow;
+    const binding = optionRow && typeof optionRow === 'object' ? optionRow.value : undefined;
+    if (binding === undefined || binding === null || binding === '' || !tableSchemaProps.rowSelection) {
+      return;
+    }
+    if (!isDevRuntime()) {
+      return;
+    }
+    console.warn(
+      '[flux:table] optionRow.value overrides rowSelection for row state markers. ' +
+        'Row selection checkboxes keep working and dispatch onSelectionChange, but visual ' +
+        'selected markers follow the binding.',
+    );
+  }, [tableSchemaProps]);
+
   // P1-3: retry path for a failed lazy load. refreshNode clears the error state
   // (so the auto-trigger effect above can re-run) and loadChildren re-fetches
   // with the same row scope; used by the error-state tree toggle.

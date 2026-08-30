@@ -16,13 +16,15 @@ import {
   useRenderScope,
 } from '@nop-chaos/flux-react';
 import { cn, useIsMobile } from '@nop-chaos/ui';
-import type { ListSchema, ListSelectionMode } from './schemas.js';
+import { getOptionRowStateAttributes, optionRowValueMatches } from '@nop-chaos/flux-react';
+import type { ListSchema, ListSelectionMode, OptionRowConfig } from './schemas.js';
 import {
   resolveListPaginationOwnership,
   useListPagination,
   type ResolvedListPagination,
 } from './list-pagination.js';
 import { useInfiniteScroll } from './use-infinite-scroll.js';
+import { isDevRuntime } from './table-renderer/use-table-tree.js';
 
 const DEFAULT_LIST_KEY_FIELD = 'id';
 const EMPTY_SET: ReadonlySet<string> = new Set();
@@ -52,6 +54,22 @@ function resolveSelectionMode(value: unknown): ListSelectionMode {
   return value === 'single' || value === 'multiple' ? value : 'none';
 }
 
+function resolveOptionRowConfig(value: unknown): OptionRowConfig | undefined {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as OptionRowConfig)
+    : undefined;
+}
+
+function optionRowBindingValue(binding: unknown): unknown {
+  return binding === undefined || binding === null || binding === '' ? undefined : binding;
+}
+
+interface ListItemOptionRowState {
+  selected: boolean;
+  disabled: boolean;
+  selectedClass?: string;
+}
+
 function createListRepeatedTemplateId(ownerId: string): string {
   return `list-item:${ownerId}`;
 }
@@ -67,12 +85,19 @@ interface ListItemViewProps {
   onSelect: (key: string) => void;
   isLast: boolean;
   isMobile: boolean;
+  /** D1 option-row contract; undefined = not declared (legacy output). */
+  optionRow?: ListItemOptionRowState;
 }
 
 function ListItemView(props: ListItemViewProps) {
-  const { owner, item, index, itemKey, instancePath, selectionMode, selected, onSelect, isLast, isMobile } = props;
+  const { owner, item, index, itemKey, instancePath, selectionMode, selected, onSelect, isLast, isMobile, optionRow } = props;
   const helpers = owner.helpers;
   const [itemScope] = useState<ScopeRef>(() => helpers.createScope({ item, index }));
+
+  const optionRowActive = optionRow !== undefined;
+  const optionRowState = optionRowActive
+    ? getOptionRowStateAttributes({ selected: optionRow.selected, disabled: optionRow.disabled })
+    : undefined;
 
   useEffect(() => {
     itemScope.merge({ item, index });
@@ -132,8 +157,12 @@ function ListItemView(props: ListItemViewProps) {
     <div
       data-slot="list-item"
       data-item-key={itemKey}
+      data-option-row={optionRowActive ? 'true' : undefined}
+      data-state={optionRowState?.['data-state']}
       data-selected={selected || undefined}
       role="listitem"
+      aria-selected={optionRowState?.['aria-selected']}
+      aria-disabled={optionRowState?.['aria-disabled']}
       aria-current={selectionMode !== 'none' ? (selected ? 'true' : undefined) : undefined}
       tabIndex={interactive ? 0 : undefined}
       className={cn(
@@ -144,6 +173,7 @@ function ListItemView(props: ListItemViewProps) {
         !isLast ? 'nop-hairline nop-hairline-bottom' : null,
         interactive ? 'cursor-pointer hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none' : null,
         selected ? 'bg-primary/10' : null,
+        optionRowActive && selected ? optionRow?.selectedClass : null,
       )}
       onClick={interactive ? handleClick : undefined}
       onKeyDown={interactive ? handleKeyDown : undefined}
@@ -233,6 +263,19 @@ export function ListRenderer(props: ListOwner) {
     typeof schemaProps.keyField === 'string' && schemaProps.keyField
       ? schemaProps.keyField
       : DEFAULT_LIST_KEY_FIELD;
+  const optionRowConfig = resolveOptionRowConfig(schemaProps.optionRow);
+  const optionRowActive = optionRowConfig !== undefined;
+  const optionRowBinding = optionRowActive ? optionRowBindingValue(optionRowConfig.value) : undefined;
+  const optionRowHasBinding = optionRowBinding !== undefined;
+  const optionRowValueField =
+    optionRowActive && typeof optionRowConfig.valueField === 'string' && optionRowConfig.valueField
+      ? optionRowConfig.valueField
+      : keyField;
+  const optionRowSelectedClass =
+    optionRowActive && typeof optionRowConfig.selectedClass === 'string'
+      ? optionRowConfig.selectedClass
+      : undefined;
+  const listDisabled = props.meta.disabled === true;
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
     fallback: t('flux.common.noData'),
   });
@@ -254,6 +297,23 @@ export function ListRenderer(props: ListOwner) {
 
   const visibleItems = computeVisibleItems(items, pagination);
   const lastDispatchedPageRef = useRef<number>(pagination.currentPage);
+
+  // opt-row-selection-clash: an explicit optionRow.value binding exclusively
+  // drives the row state markers; warn once in dev when it coexists with the
+  // internal selectionMode so the override is visible to authors.
+  useEffect(() => {
+    if (!optionRowActive || !optionRowHasBinding || selectionMode === 'none') {
+      return;
+    }
+    if (!isDevRuntime()) {
+      return;
+    }
+    console.warn(
+      '[flux:list] optionRow.value overrides selectionMode for row state markers. ' +
+        'Internal selection still updates and dispatches onSelectionChange, but visual ' +
+        'selected markers follow the binding.',
+    );
+  }, [optionRowActive, optionRowHasBinding, selectionMode]);
 
   // G12: derive the effective selection by evicting keys that no longer exist in
   // the current data set, so stale keys never leak into onSelectionChange or the
@@ -448,6 +508,13 @@ export function ListRenderer(props: ListOwner) {
           ...(parentInstancePath ?? []),
           { repeatedTemplateId, instanceKey: itemKey },
         ];
+        // D1 option-row marker driver: explicit binding > internal selection.
+        // Without the contract this reduces to the legacy internal-selection value.
+        const markedSelected = optionRowActive
+          ? optionRowHasBinding
+            ? optionRowValueMatches(getIn(item as Record<string, unknown>, optionRowValueField), optionRowBinding)
+            : effectiveSelectedKeys.has(itemKey)
+          : effectiveSelectedKeys.has(itemKey);
         return (
           <ListItemView
             key={itemKey}
@@ -457,10 +524,19 @@ export function ListRenderer(props: ListOwner) {
             itemKey={itemKey}
             instancePath={instancePath}
             selectionMode={selectionMode}
-            selected={effectiveSelectedKeys.has(itemKey)}
+            selected={markedSelected}
             onSelect={handleSelect}
             isLast={index === visibleItems.length - 1}
             isMobile={isMobile}
+            optionRow={
+              optionRowActive
+                ? {
+                    selected: markedSelected,
+                    disabled: listDisabled,
+                    selectedClass: optionRowSelectedClass,
+                  }
+                : undefined
+            }
           />
         );
       })}

@@ -1,5 +1,11 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import {
+  isClickOnInput,
+  optionRowConfigEquals,
+  resolveTableRowOptionState,
+  tableRowOptionRowProps,
+} from './table-row-option-state.js';
 import { Button, Checkbox, RadioGroupItem, TableCell, TableRow, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon, GripVerticalIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -25,36 +31,6 @@ import {
 export type { FlattenedItem, FlattenedRow, FlattenedExpandedRow } from './table-flattened-items.js';
 export { buildFlattenedItems } from './table-flattened-items.js';
 export { renderExpandedRow } from './table-expanded-row.js';
-
-/**
- * Whether a row click landed on an interactive control and therefore must NOT
- * trigger selection toggle. Mirrors amis `isClickOnInput`.
- */
-function isClickOnInput(event: React.MouseEvent): boolean {
-  const target = event.target as HTMLElement | null;
-  if (!target) return false;
-  const tag = target.tagName;
-  if (
-    tag === 'INPUT' ||
-    tag === 'TEXTAREA' ||
-    tag === 'SELECT' ||
-    tag === 'BUTTON' ||
-    tag === 'A'
-  ) {
-    return true;
-  }
-  // Checkbox/Switch/Radio rendered as role-based widgets.
-  const role = target.getAttribute('role');
-  if (role === 'checkbox' || role === 'switch' || role === 'radio') {
-    return true;
-  }
-  // Closest interactive ancestor covers icon spans nested inside buttons.
-  if (target.closest('button, a, input, textarea, select, [role="checkbox"], [role="switch"], [role="radio"]')) {
-    return true;
-  }
-  return false;
-}
-
 
 type DataRowRenderProps = {
   item: FlattenedRow;
@@ -112,6 +88,15 @@ function DataRowView({
   const hasRowClickHandler = Boolean(parentProps.events.onRowClick);
   const toggleOnRowClick = schemaProps.rowSelection?.toggleOnRowClick === true;
   const isRowClickable = hasRowClickHandler || expandRowByClick || toggleOnRowClick;
+
+  // D1 option-row marker driver: explicit binding > internal selection. Without
+  // the contract nothing below emits (opt-row-compat: legacy output unchanged).
+  const optionRowState = resolveTableRowOptionState({
+    schemaProps,
+    record: entry.record,
+    isSelected,
+    ownerDisabled: parentProps.meta.disabled === true,
+  });
 
   const treeEntry = treeMode ? (entry as TreeRowEntry) : undefined;
   const treeLevel = treeEntry?.level ?? 0;
@@ -211,6 +196,7 @@ function DataRowView({
 
   const rowContent = (
     <TableRow
+      {...tableRowOptionRowProps(optionRowState)}
       data-slot="table-row"
       data-row-toggleable={toggleOnRowClick || undefined}
       data-interactive={isRowClickable || undefined}
@@ -225,7 +211,10 @@ function DataRowView({
       onClick={isRowClickable ? handleRowClick : undefined}
       onKeyDown={isRowClickable ? handleRowKeyDown : undefined}
       tabIndex={isRowClickable ? 0 : -1}
-      className={isRowClickable ? 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none' : undefined}
+      className={cn(
+        isRowClickable ? 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none' : undefined,
+        optionRowState.active && optionRowState.selected ? optionRowState.selectedClass : undefined,
+      )}
     >
       {draggable && dragHandleProps ? (
         <TableCell
@@ -596,6 +585,8 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.schemaProps.rowSelection?.toggleOnRowClick === next.schemaProps.rowSelection?.toggleOnRowClick &&
     prev.schemaProps.quickSaveAction === next.schemaProps.quickSaveAction &&
     prev.schemaProps.quickSaveItemAction === next.schemaProps.quickSaveItemAction &&
+    prev.parentProps.meta.disabled === next.parentProps.meta.disabled &&
+    optionRowConfigEquals(prev.schemaProps.optionRow, next.schemaProps.optionRow) &&
     prev.combinePlan === next.combinePlan &&
     prev.rowIndex === next.rowIndex &&
     prev.indexColumnOffset === next.indexColumnOffset &&

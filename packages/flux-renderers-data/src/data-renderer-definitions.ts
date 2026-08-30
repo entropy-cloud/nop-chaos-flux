@@ -115,6 +115,13 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         description: 'Selection configuration for checkbox/radio row selection.',
         editorType: 'object',
       },
+      optionRow: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Option Row',
+        description:
+          'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default rowKey), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers on the row; absent optionRow keeps legacy output.',
+        editorType: 'object',
+      },
       expandable: {
         shape: {
           kind: 'schema-definition',
@@ -258,6 +265,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'multiSort', kind: 'prop', valueType: 'boolean' },
       { key: 'pagination', kind: 'prop' },
       { key: 'rowSelection', kind: 'prop' },
+      { key: 'optionRow', kind: 'prop' },
       { key: 'expandable', kind: 'prop' },
       { key: 'quickSaveAction', kind: 'prop' },
       { key: 'quickSaveItemAction', kind: 'prop' },
@@ -497,6 +505,13 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         description: 'Optional separate scope path for pageSize (scope ownership).',
         editorType: 'expression',
       },
+      optionRow: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Option Row',
+        description:
+          'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default keyField), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers; absent optionRow keeps legacy output.',
+        editorType: 'object',
+      },
     },
     eventContracts: {
       onItemClick: {
@@ -588,6 +603,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'items', kind: 'prop' },
       { key: 'selectionMode', kind: 'prop' },
       { key: 'keyField', kind: 'prop' },
+      { key: 'optionRow', kind: 'prop' },
       { key: 'pagination', kind: 'prop' },
       { key: 'paginationOwnership', kind: 'prop' },
       { key: 'paginationStatePath', kind: 'prop' },
