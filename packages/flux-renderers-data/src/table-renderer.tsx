@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
+  isEditableKeyboardTarget,
   resolveRendererSlotContent,
   useRendererRuntime,
   useSchemaProps,
@@ -260,6 +261,26 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     isAtMaxSelection,
   } = useTableSelection(tableSchemaProps, treeFlattenedData, props.events.onSelectionChange, helpers);
 
+  // D1 G-B2 Decision 3: ⌘/ctrl+A selects all checkable rows of the current view.
+  // Trigger domain = focus inside the table container (container-level React
+  // onKeyDown bubble); editable targets (inputs) keep the native select-all.
+  const modifierSelectEnabled =
+    tableSchemaProps.rowSelection?.modifierSelect === true &&
+    tableSchemaProps.rowSelection?.type !== 'radio';
+  const handleContainerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!modifierSelectEnabled) {
+      return;
+    }
+    if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'a') {
+      return;
+    }
+    if (isEditableKeyboardTarget(event.target)) {
+      return;
+    }
+    event.preventDefault();
+    handleSelectAll(true);
+  };
+
   const paginationTotal = schemaProps.pagination?.total;
   const effectiveTotalRows =
     serverPaged && typeof paginationTotal === 'number' && Number.isFinite(paginationTotal)
@@ -432,12 +453,20 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Container-level keydown relay for rowSelection.modifierSelect (cmd/ctrl+A
+  // select-all). Spread as interaction props: the container is not itself an
+  // interactive element, so the static-element a11y rule does not apply.
+  const containerInteractions = modifierSelectEnabled
+    ? { onKeyDown: handleContainerKeyDown }
+    : {};
+
   return (
     <div
       className={cn('nop-table', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-responsive-expand={responsiveExpandActive ? 'true' : undefined}
+      {...containerInteractions}
     >
       {hasRendererSlotContent(headerContent) ? (
         <div data-slot="table-header-region">{asReactNode(headerContent)}</div>

@@ -391,7 +391,7 @@ describe('table internal components', () => {
     expect(checkboxes[1].getAttribute('aria-checked')).toBe('true');
 
     fireEvent.click(checkboxes[0]);
-    expect(onSelectRow).toHaveBeenCalledWith('1', true);
+    expect(onSelectRow).toHaveBeenCalledWith('1', true, undefined);
   });
 
   it('renders data rows with shared radio selection cells', () => {

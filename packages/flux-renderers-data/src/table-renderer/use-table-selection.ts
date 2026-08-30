@@ -1,10 +1,17 @@
-import { startTransition, useCallback, useMemo, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { toStringArray } from './table-data.js';
 import { createTableEventContext } from './table-event-context.js';
 import type { TableRowEntry } from './types.js';
+
+/** Modifier keys captured at gesture time (mousedown/click) and handed to selection handlers. */
+export interface RowSelectionModifiers {
+  shiftKey?: boolean;
+  metaKey?: boolean;
+  ctrlKey?: boolean;
+}
 
 export function useTableSelection(
   schemaProps: TableSchema,
@@ -28,10 +35,26 @@ export function useTableSelection(
       ? rowSelection.checkableWhen
       : undefined;
   const isRadio = rowSelection?.type === 'radio';
+  // D1 G-B2 Decision 3: modifier-key selection gestures (shift range / meta
+  // toggle / ⌘A select-all) — checkbox mode only, inert under radio.
+  const modifierSelect = rowSelection?.modifierSelect === true && !isRadio;
 
   const [localSelectedRowKeys, setLocalSelectedRowKeys] = useState<Set<string>>(
     new Set(rowSelection?.selectedRowKeys ?? []),
   );
+  // Range anchor for shift-click: moved by every UNMODIFIED selection change
+  // (checkbox toggle / row toggle / header select-all); setSelectionExternal
+  // never moves it. Only tracked when modifierSelect is on (flag-off behavior
+  // stays byte-identical to the legacy path). A ref — never rendered from — so
+  // the selection callbacks keep a stable identity (row memo locality, H10).
+  const selectionAnchorRef = useRef<string | null>(null);
+  // View-order rows for range resolution. Ref-mirrored for the same locality
+  // reason: `rows` identity churns with data, and putting it in the selection
+  // callbacks' deps would re-render every row on any table re-render.
+  const rowsRef = useRef<TableRowEntry[]>(rows);
+  useEffect(() => {
+    rowsRef.current = rows;
+  });
 
   const controlledSelectedRowKeys = useMemo(
     () => new Set(toStringArray(rowSelection?.selectedRowKeys)),
@@ -199,6 +222,12 @@ export function useTableSelection(
         }
       }
 
+      // Modifier-select anchor: select-all is an unmodified change — the acted
+      // rows start at the first view-order row. Deselect keeps the anchor.
+      if (modifierSelect && checked && currentRowKeys.length > 0) {
+        selectionAnchorRef.current = currentRowKeys[0];
+      }
+
       startTransition(() => {
         if (selectionOwnership === 'local') {
           setLocalSelectedRowKeys(nextKeys);
@@ -235,11 +264,12 @@ export function useTableSelection(
       selectedRowKeys,
       checkableRowKeys,
       currentRowKeySet,
+      modifierSelect,
     ],
   );
 
   const handleSelectRow = useCallback(
-    (rowKey: string, checked: boolean) => {
+    (rowKey: string, checked: boolean, modifiers?: RowSelectionModifiers) => {
       if (checked && checkableRowKeys && !checkableRowKeys.has(rowKey)) {
         return;
       }
@@ -251,10 +281,37 @@ export function useTableSelection(
       // into the payload, and the clean set is what gets written to local state
       // so subsequent renders stop allocating fresh Sets (M-01 / G7).
       const baseSet = selectedRowKeys;
+      const shiftHeld = modifiers?.shiftKey === true;
 
       let newSet: Set<string>;
       if (isRadio) {
         newSet = checked ? new Set([rowKey]) : new Set<string>();
+      } else if (modifierSelect && shiftHeld) {
+        // D1 G-B2 Decision 3: ⇧click is an ADDITIVE range union — selection :=
+        // current ∪ [anchor..clicked] over the current view order. Non-checkable
+        // rows are skipped; maxSelectionLength truncates along view order
+        // (select-all parity); shift never deselects. The anchor does not move.
+        const viewRows = rowsRef.current;
+        const anchor = selectionAnchorRef.current ?? rowKey;
+        const anchorIndex = viewRows.findIndex((row) => row.rowKey === anchor);
+        const targetIndex = viewRows.findIndex((row) => row.rowKey === rowKey);
+        newSet = new Set(baseSet);
+        if (anchorIndex >= 0 && targetIndex >= 0) {
+          const [from, to] =
+            anchorIndex <= targetIndex ? [anchorIndex, targetIndex] : [targetIndex, anchorIndex];
+          for (let index = from; index <= to; index += 1) {
+            const candidate = viewRows[index].rowKey;
+            if (checkableRowKeys && !checkableRowKeys.has(candidate)) {
+              continue;
+            }
+            if (maxSelectionLength && newSet.size >= maxSelectionLength) {
+              break;
+            }
+            newSet.add(candidate);
+          }
+        } else {
+          newSet.add(rowKey);
+        }
       } else {
         if (checked && maxSelectionLength && baseSet.size >= maxSelectionLength) {
           return;
@@ -265,6 +322,12 @@ export function useTableSelection(
         } else {
           newSet.delete(rowKey);
         }
+      }
+
+      // Anchor rule (modifierSelect on): every UNMODIFIED selection change moves
+      // the anchor to the acted row; shift ranges and meta/ctrl toggles keep it.
+      if (modifierSelect && !shiftHeld && !modifiers?.metaKey && !modifiers?.ctrlKey) {
+        selectionAnchorRef.current = rowKey;
       }
 
       startTransition(() => {
@@ -301,6 +364,7 @@ export function useTableSelection(
       selectionStatePath,
       checkableRowKeys,
       maxSelectionLength,
+      modifierSelect,
     ],
   );
 

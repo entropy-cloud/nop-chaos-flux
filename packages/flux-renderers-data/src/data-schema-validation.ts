@@ -223,6 +223,17 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
   }
 
   if (
+    schema.rowSelection?.modifierSelect !== undefined &&
+    typeof schema.rowSelection.modifierSelect !== 'boolean'
+  ) {
+    emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(path, 'rowSelection', 'modifierSelect'),
+      message: 'table.rowSelection.modifierSelect must be a boolean when provided.',
+    });
+  }
+
+  if (
     schema.expandable?.expandedRowKeys !== undefined &&
     !validateStringArray(schema.expandable.expandedRowKeys)
   ) {

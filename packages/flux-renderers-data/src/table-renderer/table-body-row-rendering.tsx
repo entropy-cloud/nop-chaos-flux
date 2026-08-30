@@ -6,11 +6,13 @@ import {
   resolveTableRowOptionState,
   tableRowOptionRowProps,
 } from './table-row-option-state.js';
-import { Button, Checkbox, RadioGroupItem, TableCell, TableRow, cn } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronRightIcon, GripVerticalIcon } from 'lucide-react';
+import { Button, TableCell, TableRow, cn } from '@nop-chaos/ui';
+import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema, TableColumnSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
+import type { RowSelectionModifiers } from './use-table-selection.js';
+import { TableDragCell, TableExpandCell, TableSelectCell } from './table-row-leading-cells.js';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell.js';
 import type { TreeRowEntry } from './use-table-tree.js';
 import type { LazyChildrenState } from './use-table-lazy-children.js';
@@ -42,7 +44,7 @@ type DataRowRenderProps = {
   showExpandColumn: boolean;
   expandRowByClick: boolean;
   onToggleExpand: (rowKey: string) => void;
-  onSelectRow: (rowKey: string, checked: boolean) => void;
+  onSelectRow: (rowKey: string, checked: boolean, modifiers?: RowSelectionModifiers) => void;
   isStriped: boolean;
   isRowCheckable?: (rowKey: string) => boolean;
   isAtMaxSelection?: boolean;
@@ -152,6 +154,12 @@ function DataRowView({
     (isRowCheckable ? !isRowCheckable(rowKey) : false) ||
     (isAtMaxSelection === true && !isSelected);
 
+  // D1 G-B2: the checkbox click gesture carries modifier keys. base-ui fires
+  // onCheckedChange from the click on the checkbox itself, so the modifiers are
+  // captured at mousedown on the select cell (mousedown always precedes click)
+  // and consumed + cleared by the next onCheckedChange. The ref lives inside
+  // TableSelectCell (per-row instance).
+
   const handleRowClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
     // Selection toggle chain (toggleOnRowClick): skip clicks on interactive controls,
     // respect maxSelectionLength, then preventDefault only when a toggle actually happened
@@ -160,7 +168,11 @@ function DataRowView({
     if (toggleOnRowClick && !isClickOnInput(event)) {
       const atMax = isAtMaxSelection === true && !isSelected;
       if (!atMax) {
-        onSelectRow(rowKey, !isSelected);
+        onSelectRow(rowKey, !isSelected, {
+          shiftKey: event.shiftKey,
+          metaKey: event.metaKey,
+          ctrlKey: event.ctrlKey,
+        });
         toggled = true;
       }
     }
@@ -217,93 +229,31 @@ function DataRowView({
       )}
     >
       {draggable && dragHandleProps ? (
-        <TableCell
-          data-slot="table-drag-cell"
-          data-column-width-key="__drag__"
-          className={cn(
-            'w-10 text-center text-muted-foreground',
-            fixedColumnLayout.getDragCellProps?.().className,
-          )}
-          style={{
-            cursor: 'grab',
-            ...fixedColumnLayout.getDragCellProps?.().style,
-          }}
-        >
-          <span
-            {...dragHandleProps}
-            className="inline-flex h-6 w-6 items-center justify-center rounded hover:bg-accent"
-          >
-            <GripVerticalIcon className="size-4" />
-          </span>
-        </TableCell>
+        <TableDragCell dragHandleProps={dragHandleProps} fixedColumnLayout={fixedColumnLayout} />
       ) : null}
 
       {showExpandColumn && !treeMode ? (
-        <TableCell
-          data-slot="table-expand-cell"
-          className={fixedColumnLayout.getExpandCellProps().className}
-          style={fixedColumnLayout.getExpandCellProps().style}
-        >
-          {(() => {
-            // expandableWhen: a raw expression (no `${}`) evaluated per-row. Falsy → no toggle button.
-            const expandableWhenExpr = schemaProps.expandable?.expandableWhen;
-            let canExpand = true;
-            if (typeof expandableWhenExpr === 'string' && expandableWhenExpr.length > 0) {
-              try {
-                const wrapped = `\${${expandableWhenExpr}}`;
-                canExpand = Boolean(helpers.evaluate(wrapped, rowScope));
-              } catch {
-                // expr-eval-error Failure Path: degrade to expandable (do not block rendering).
-                canExpand = true;
-              }
-            }
-            if (!canExpand) return null;
-            return (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleExpand(rowKey);
-                }}
-                className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
-                aria-label={isExpanded ? t('flux.table.collapse') : t('flux.table.expand')}
-                aria-expanded={isExpanded}
-              >
-                {isExpanded ? (
-                  <ChevronDownIcon className="size-4" />
-                ) : (
-                  <ChevronRightIcon className="size-4" />
-                )}
-              </Button>
-            );
-          })()}
-        </TableCell>
+        <TableExpandCell
+          schemaProps={schemaProps}
+          helpers={helpers}
+          rowScope={rowScope}
+          rowKey={rowKey}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          fixedColumnLayout={fixedColumnLayout}
+        />
       ) : null}
 
       {schemaProps.rowSelection ? (
-        <TableCell
-          data-slot="table-select-cell"
-          className={fixedColumnLayout.getSelectionCellProps().className}
-          style={fixedColumnLayout.getSelectionCellProps().style}
-          onClick={(event) => event.stopPropagation()}
-        >
-          {schemaProps.rowSelection.type === 'radio' ? (
-            <RadioGroupItem
-              value={rowKey}
-              disabled={isRowCheckable ? !isRowCheckable(rowKey) : undefined}
-              aria-label={t('flux.table.selectRow')}
-            />
-          ) : (
-            <Checkbox
-              checked={isSelected}
-              disabled={rowCheckboxDisabled || undefined}
-              onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))}
-              aria-label={t('flux.table.selectRow')}
-            />
-          )}
-        </TableCell>
+        <TableSelectCell
+          schemaProps={schemaProps}
+          rowKey={rowKey}
+          isSelected={isSelected}
+          isRowCheckable={isRowCheckable}
+          rowCheckboxDisabled={rowCheckboxDisabled}
+          onSelectRow={onSelectRow}
+          fixedColumnLayout={fixedColumnLayout}
+        />
       ) : null}
 
       {columns.map((column, columnIndex) => {
@@ -583,6 +533,7 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     Boolean(prev.schemaProps.rowSelection) === Boolean(next.schemaProps.rowSelection) &&
     prev.schemaProps.rowSelection?.type === next.schemaProps.rowSelection?.type &&
     prev.schemaProps.rowSelection?.toggleOnRowClick === next.schemaProps.rowSelection?.toggleOnRowClick &&
+    prev.schemaProps.rowSelection?.modifierSelect === next.schemaProps.rowSelection?.modifierSelect &&
     prev.schemaProps.quickSaveAction === next.schemaProps.quickSaveAction &&
     prev.schemaProps.quickSaveItemAction === next.schemaProps.quickSaveItemAction &&
     prev.parentProps.meta.disabled === next.parentProps.meta.disabled &&
@@ -636,7 +587,7 @@ export function renderDataRow(
   showExpandColumn: boolean,
   expandRowByClick: boolean,
   onToggleExpand: (rowKey: string) => void,
-  onSelectRow: (rowKey: string, checked: boolean) => void,
+  onSelectRow: (rowKey: string, checked: boolean, modifiers?: RowSelectionModifiers) => void,
   isStriped: boolean,
   isRowCheckable?: (rowKey: string) => boolean,
   isAtMaxSelection?: boolean,

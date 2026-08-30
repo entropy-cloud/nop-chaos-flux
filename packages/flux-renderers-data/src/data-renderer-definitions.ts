@@ -114,7 +114,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       rowSelection: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Row Selection',
-        description: 'Selection configuration for checkbox/radio row selection.',
+        description:
+          'Selection configuration for checkbox/radio row selection. `modifierSelect` (checkbox mode only, default false) enables modifier gestures: shift-click additive range from the last acted row (anchor), meta/ctrl-click independent toggle, ⌘/ctrl+A select-all inside the table.',
         editorType: 'object',
       },
       optionRow: {

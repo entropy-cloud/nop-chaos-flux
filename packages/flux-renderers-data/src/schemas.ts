@@ -200,6 +200,13 @@ export interface TableSchema extends BaseSchema {
     checkableWhen?: string;
     /** Click a row (outside interactive controls) to toggle its selection. amis: checkOnItemClick. */
     toggleOnRowClick?: boolean;
+    /**
+     * Modifier-key selection gestures (D1 G-B2, checkbox mode only — inert
+     * under radio): shift-click additive range from the last acted row (anchor),
+     * meta/ctrl-click independent toggle, ⌘/ctrl+A select-all within the table.
+     * Default false.
+     */
+    modifierSelect?: boolean;
   };
   /** Interaction-state channel: selected-value binding + state marker output. */
   optionRow?: OptionRowConfig;

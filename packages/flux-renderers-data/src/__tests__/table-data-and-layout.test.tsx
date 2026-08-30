@@ -385,7 +385,7 @@ describe('table row rendering helpers', () => {
     fireEvent.click(screen.getByText('Alice'));
 
     expect(onToggleExpand).toHaveBeenCalledWith('r1');
-    expect(onSelectRow).toHaveBeenCalledWith('r1', false);
+    expect(onSelectRow).toHaveBeenCalledWith('r1', false, undefined);
     expect(parentProps.events.onRowClick).toHaveBeenCalled();
     expect(screen.getByTestId('button-region')).toBeTruthy();
   });
