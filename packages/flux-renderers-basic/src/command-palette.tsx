@@ -4,7 +4,9 @@ import type {
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
 import {
+  comboMatchesKey,
   createNormalizedActionEvent,
+  parseModifierHotkey,
   useCurrentComponentRegistry,
   useCurrentPage,
 } from '@nop-chaos/flux-react';
@@ -141,52 +143,6 @@ function buildSections(resolved: Record<string, unknown>): CommandSection[] {
   }
 
   return sections;
-}
-
-interface HotkeyBinding {
-  mod: boolean;
-  ctrl: boolean;
-  shift: boolean;
-  alt: boolean;
-  key: string;
-}
-
-function parseHotkey(raw: string): HotkeyBinding | undefined {
-  const tokens = raw.split('+').map((token) => token.trim().toLowerCase());
-  if (tokens.length < 2 || tokens.some((token) => token.length === 0)) {
-    return undefined;
-  }
-  const modifierNames = new Set(['mod', 'ctrl', 'shift', 'alt']);
-  const key = tokens[tokens.length - 1];
-  if (modifierNames.has(key)) {
-    return undefined;
-  }
-  const binding: HotkeyBinding = { mod: false, ctrl: false, shift: false, alt: false, key };
-  for (const modifier of tokens.slice(0, -1)) {
-    if (modifier === 'mod') binding.mod = true;
-    else if (modifier === 'ctrl') binding.ctrl = true;
-    else if (modifier === 'shift') binding.shift = true;
-    else if (modifier === 'alt') binding.alt = true;
-    else return undefined;
-  }
-  if (binding.mod && binding.ctrl) {
-    return undefined;
-  }
-  return binding;
-}
-
-function matchesHotkey(binding: HotkeyBinding, event: KeyboardEvent): boolean {
-  const meta = event.metaKey;
-  const ctrl = event.ctrlKey;
-  const modSatisfied = binding.mod ? meta || ctrl : !meta && !ctrl;
-  const ctrlSatisfied = binding.ctrl ? ctrl : true;
-  return (
-    modSatisfied &&
-    ctrlSatisfied &&
-    event.shiftKey === binding.shift &&
-    event.altKey === binding.alt &&
-    event.key.toLowerCase() === binding.key
-  );
 }
 
 function useCommandPaletteHandle(input: {
@@ -385,7 +341,7 @@ export function CommandPaletteRenderer(props: RendererComponentProps<CommandPale
       );
       return;
     }
-    const binding = parseHotkey(hotkeyRaw);
+    const binding = parseModifierHotkey(hotkeyRaw);
     if (!binding) {
       console.warn(
         `[command-palette] invalid hotkey "${hotkeyRaw}" on palette "${id}" — expected a single key with optional mod/ctrl/shift/alt modifiers (e.g. "mod+k").`,
@@ -396,7 +352,7 @@ export function CommandPaletteRenderer(props: RendererComponentProps<CommandPale
       if (stateRef.current.open) {
         return;
       }
-      if (!matchesHotkey(binding, event)) {
+      if (!comboMatchesKey(binding, event)) {
         return;
       }
       event.preventDefault();

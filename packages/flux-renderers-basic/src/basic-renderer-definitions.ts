@@ -6,6 +6,7 @@ import { DynamicRenderer } from './dynamic-renderer.js';
 import { FlexRenderer } from './flex.js';
 import { FragmentRenderer } from './fragment.js';
 import { IconRenderer } from './icon.js';
+import { KeyboardRenderer } from './keyboard.js';
 import { LoopRenderer } from './loop.js';
 import { PageRenderer } from './page.js';
 import { ReactionRenderer } from './reaction.js';
@@ -490,6 +491,50 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'debounce', kind: 'prop' },
       { key: 'once', kind: 'prop' },
       { key: 'actions', kind: 'prop' },
+    ],
+  },
+  {
+    type: 'keyboard',
+    displayName: 'Keyboard',
+    category: 'logic',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    defaultSchema: { type: 'keyboard', bindings: [] },
+    component: KeyboardRenderer,
+    propContracts: {
+      chordTimeout: {
+        shape: { kind: 'number' },
+        displayName: 'Chord Timeout',
+        description:
+          'Chord window in ms. A token after the first must arrive within this window to continue a sequence; on timeout the buffer resets (falling back to a complete prefix binding when one exists). Default 1000.',
+        editorType: 'number',
+      },
+      bindings: {
+        shape: { kind: 'array', item: { kind: 'unknown' } },
+        displayName: 'Bindings',
+        description:
+          'Keyboard bindings: `keys` (single combo "mod+shift+s" or space-separated chord "g o"), optional `when` (raw expression, no ${}), `allowInInput` (default false), `preventDefault` (default true), `action` (static dispatch track).',
+        editorType: 'object-array',
+      },
+    },
+    eventContracts: {
+      onTrigger: {
+        displayName: 'Trigger',
+        description: 'Runs on every binding hit, after the static action track.',
+        payload: {
+          kind: 'object',
+          fields: {
+            keys: { kind: 'string' },
+            index: { kind: 'number' },
+            nativeEvent: { kind: 'unknown' },
+          },
+          optional: ['nativeEvent'],
+        },
+      },
+    },
+    fields: [
+      { key: 'bindings', kind: 'prop' },
+      { key: 'chordTimeout', kind: 'prop' },
+      { key: 'onTrigger', kind: 'event' },
     ],
   },
   dialogRendererDefinition,

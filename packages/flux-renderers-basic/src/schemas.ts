@@ -381,4 +381,40 @@ export interface ScopeDebugSchema extends BaseSchema {
   defaultExpand?: boolean;
   dataPaths?: string[];
 }
+
+/**
+ * One keyboard binding of the `keyboard` renderer (D1 G-B2). `keys` is a single
+ * key combo (`"mod+shift+s"`) or a space-separated chord sequence (`"g o"`);
+ * every token is `[(mod|ctrl|shift|alt)+]key`.
+ */
+export interface KeyboardBindingConfig extends SchemaObject {
+  /** Single key combo or space-separated chord sequence. */
+  keys?: string;
+  /** Raw boolean expression (no `${}`) evaluated against the node scope per keypress. */
+  when?: string;
+  /** Allow triggering while focus is in input/textarea/select/contenteditable (default false). */
+  allowInInput?: boolean | string;
+  /** Prevent the default browser behavior when the binding hits (default true). */
+  preventDefault?: boolean | string;
+  /** Static execution track: dispatched when the binding hits. */
+  action?: ActionSchema | ActionSchema[];
+}
+
+/**
+ * Invisible logic renderer (`reaction` sibling): schema-level keyboard binding
+ * channel. Zero DOM output. Contract:
+ * `docs/references/renderer-interfaces.md` §Keyboard Binding Contract.
+ */
+export interface KeyboardSchema extends BaseSchema {
+  type: 'keyboard';
+  /**
+   * Chord window in ms. A token after the first must arrive within this window
+   * to continue a sequence; on timeout the buffer resets (falling back to a
+   * complete prefix binding when one exists). Default 1000.
+   */
+  chordTimeout?: number | string;
+  bindings?: KeyboardBindingConfig[];
+  /** Fired on every hit with payload `{ keys, index, nativeEvent }`. */
+  onTrigger?: ActionSchema | ActionSchema[];
+}
 export type { DynamicRendererSchema };
