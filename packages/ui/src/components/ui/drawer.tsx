@@ -248,6 +248,15 @@ function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerRe
     startSize: number;
     target: HTMLElement | null;
   } | null>(null);
+  // 06-01: the active drag's teardown, so an unmount mid-drag can detach the
+  // window listeners (same leak guard as use-dialog-drag's cleanup effect).
+  const teardownRef = React.useRef<(() => void) | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      teardownRef.current?.();
+    };
+  }, []);
 
   const onPointerDown = React.useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -275,9 +284,39 @@ function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerRe
         // ignore — pointer capture is best-effort
       }
 
+      const releaseCapture = (pointerEvent: PointerEvent) => {
+        try {
+          const target = pointerEvent.target as Element | null;
+          target?.releasePointerCapture?.(pointerEvent.pointerId);
+        } catch {
+          // ignore
+        }
+      };
+
+      // 06-01: single teardown shared by pointerup / pointercancel /
+      // lostpointercapture (use-dialog-drag hygiene) — a cancelled drag must
+      // not leave a ghost-resize window where stray pointermove events keep
+      // driving the size.
+      const teardown = () => {
+        dragStateRef.current = null;
+        teardownRef.current = null;
+        window.removeEventListener('pointermove', handleMove);
+        window.removeEventListener('pointerup', handleEnd);
+        window.removeEventListener('pointercancel', handleEnd);
+        window.removeEventListener('lostpointercapture', handleEnd);
+      };
+
       const handleMove = (moveEvent: PointerEvent) => {
         const state = dragStateRef.current;
         if (!state || !state.target) {
+          return;
+        }
+        // Button-press validation (use-dialog-drag hygiene): a pointermove
+        // with no pressed button means the press was lost — stop resizing
+        // instead of ghost-following the pointer.
+        if (moveEvent.buttons === 0) {
+          releaseCapture(moveEvent);
+          teardown();
           return;
         }
         const delta =
@@ -298,20 +337,16 @@ function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerRe
         setSize(next);
       };
 
-      const handleUp = (event: PointerEvent) => {
-        dragStateRef.current = null;
-        window.removeEventListener('pointermove', handleMove);
-        window.removeEventListener('pointerup', handleUp);
-        try {
-          const target = event.target as Element | null;
-          target?.releasePointerCapture?.(event.pointerId);
-        } catch {
-          // ignore
-        }
+      const handleEnd = (pointerEvent: PointerEvent) => {
+        releaseCapture(pointerEvent);
+        teardown();
       };
 
+      teardownRef.current = teardown;
       window.addEventListener('pointermove', handleMove);
-      window.addEventListener('pointerup', handleUp);
+      window.addEventListener('pointerup', handleEnd);
+      window.addEventListener('pointercancel', handleEnd);
+      window.addEventListener('lostpointercapture', handleEnd);
     },
     [direction, enabled],
   );

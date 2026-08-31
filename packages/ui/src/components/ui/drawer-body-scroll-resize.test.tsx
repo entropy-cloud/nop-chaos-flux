@@ -64,7 +64,7 @@ describe('[G6-R3-视角6-01] Drawer resize handle drives geometry', () => {
     // direction=right docks the drawer on the right edge — its handle sits on
     // the LEFT side, so growing means dragging towards negative clientX.
     fireEvent.pointerDown(handle, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
-    fireEvent.pointerMove(window, { clientX: -400, clientY: 0, pointerId: 1 });
+    fireEvent.pointerMove(window, { clientX: -400, clientY: 0, pointerId: 1, buttons: 1 });
     fireEvent.pointerUp(window, { clientX: -400, clientY: 0, pointerId: 1 });
 
     const popup = document.querySelector('[data-slot="drawer-popup"]') as HTMLElement;
@@ -87,7 +87,7 @@ describe('[G6-R3-视角6-01] Drawer resize handle drives geometry', () => {
     // direction=bottom docks at the bottom edge — its handle sits on TOP, so
     // growing means dragging towards negative clientY.
     fireEvent.pointerDown(handle, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
-    fireEvent.pointerMove(window, { clientX: 0, clientY: -300, pointerId: 1 });
+    fireEvent.pointerMove(window, { clientX: 0, clientY: -300, pointerId: 1, buttons: 1 });
     fireEvent.pointerUp(window, { clientX: 0, clientY: -300, pointerId: 1 });
 
     const popup = document.querySelector('[data-slot="drawer-popup"]') as HTMLElement;
@@ -108,10 +108,36 @@ describe('[G6-R3-视角6-01] Drawer resize handle drives geometry', () => {
 
     const handle = document.querySelector('[data-slot="drawer-resize-handle"]') as HTMLElement;
     fireEvent.pointerDown(handle, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
-    fireEvent.pointerMove(window, { clientX: -250, clientY: 0, pointerId: 1 });
+    fireEvent.pointerMove(window, { clientX: -250, clientY: 0, pointerId: 1, buttons: 1 });
     fireEvent.pointerUp(window, { clientX: -250, clientY: 0, pointerId: 1 });
 
     const popup = document.querySelector('[data-slot="drawer-popup"]') as HTMLElement;
     expect(popup.style.getPropertyValue('--drawer-resize-size')).toBe('250px');
+  });
+
+  it('pointercancel mid-drag stops resizing — later button-less moves do not ghost-resize', () => {
+    render(
+      <Drawer open direction="right" onOpenChange={() => {}}>
+        <DrawerContent resizable>
+          <DrawerBody>
+            <div>Body</div>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>,
+    );
+
+    const handle = document.querySelector('[data-slot="drawer-resize-handle"]') as HTMLElement;
+    fireEvent.pointerDown(handle, { clientX: 0, clientY: 0, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(window, { clientX: -400, clientY: 0, pointerId: 1, buttons: 1 });
+
+    const popup = document.querySelector('[data-slot="drawer-popup"]') as HTMLElement;
+    expect(popup.style.width).toBe('400px');
+
+    // The browser cancels the drag (touch gesture takeover, alt-tab, ...).
+    fireEvent.pointerCancel(window, { clientX: -400, clientY: 0, pointerId: 1 });
+
+    // After the cancel the press is gone: button-less moves must not resize.
+    fireEvent.pointerMove(window, { clientX: -800, clientY: 0, pointerId: 1, buttons: 0 });
+    expect(popup.style.width).toBe('400px');
   });
 });
