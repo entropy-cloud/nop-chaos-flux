@@ -201,6 +201,7 @@ Review stats: 43 candidates初审 → 26 retained (3 P1 + 20 P2 verified real), 
 - File: `packages/flux-renderers-basic/src/__tests__/command-palette-items-execute.test.tsx:301-340` (default stub fetcher from `test-support.tsx:7-12`); target branch `command-palette.tsx:288-299` — reviewer traced assertion-by-assertion: deleting :291-299 keeps every test green; e2e has zero command-palette coverage.
 - Fix: inject a fetcher spy and assert `url === '/r/Executed?id=nav'` (proves `${id}` resolution); lock close-then-dispatch ordering via call-order if it is contract.
 - Review: retained P1 (strongest P0 candidate under the driver's literal wording — kept P1 because live behavior is correct and the defect is purely test protection; flagged for main-reviewer awareness).
+- **回写（2026-09-01，plan 批次三 Phase 4）**：上述"live behavior is correct"结论被测试保护推翻——fetcher spy 用例首跑即暴露真实缺陷：静态条目经 prop-kind 编译在渲染期对渲染 scope 求值，`action.args` 内 `${id}` 模板被预烘焙为空串（`/r/Executed?id=`），dispatch 期 bindings 永远看不到模板。已修（command-palette.tsx 静态轨道 raw-action 保真，模板存活至 dispatch 期由 payload bindings 解析；mutation self-check：删派发分支 → 恰 2 用例红）；姊妹缺陷 keyboard.tsx `bindings` 登记 plan Non-Blocking Follow-ups。证据：`docs/plans/2026-08-31-1941-3-ui-review-p1-a11y-and-test-protection.md` Phase 4。
 
 [P1] **23-02 command-palette "skipped no-op" open test has zero discriminating power over the documented skip contract**
 

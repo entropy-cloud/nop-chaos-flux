@@ -1,5 +1,6 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import React from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import { cn, resolveLucideIconStrict } from '@nop-chaos/ui';
 import { CheckCircle2Icon, InfoIcon, TriangleAlertIcon, XCircleIcon } from 'lucide-react';
@@ -10,6 +11,13 @@ const STATUS_ICON_CLASS: Record<ResultStatus, string> = {
   error: 'text-destructive',
   warning: 'text-warning',
   info: 'text-info',
+};
+
+const STATUS_ARIA_LABEL_KEY: Record<ResultStatus, string> = {
+  success: 'flux.result.statusSuccess',
+  error: 'flux.result.statusError',
+  warning: 'flux.result.statusWarning',
+  info: 'flux.result.statusInfo',
 };
 
 const warnedStatuses = new Set<unknown>();
@@ -65,6 +73,12 @@ export function ResultRenderer(props: RendererComponentProps<ResultSchema>) {
         props.meta.className,
       )}
     >
+      {/* 20-10: data-status is invisible to assistive tech and the title slot
+          is optional — the sr-only status word is the standing non-visual
+          channel for the component's core semantics. */}
+      <span data-slot="result-status-sr" className="sr-only">
+        {t(STATUS_ARIA_LABEL_KEY[status])}
+      </span>
       <div
         data-slot="result-icon"
         className={cn('flex size-12 items-center justify-center', STATUS_ICON_CLASS[status])}

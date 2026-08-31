@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
@@ -180,6 +180,10 @@ export function TableEditableCell(props: TableEditableCellProps) {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
   const [saving, setSaving] = useState(false);
+  // 20-04: stable association between both editor branches and the error span
+  // (aria-describedby needs a real id — the error text alone is a visual-only
+  // channel otherwise).
+  const errorId = useId();
   // Local display override after a successful commit — the default cell reads
   // the (identity-stable) record object, so the committed value must be kept
   // here for the navigation state to render the new value.
@@ -469,6 +473,8 @@ export function TableEditableCell(props: TableEditableCellProps) {
         // eslint-disable-next-line jsx-a11y/no-autofocus -- entering the edit state must land focus in the editor (two-state machine contract)
         autoFocus
         aria-label={typeof column.label === 'string' ? column.label : field}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => void commit()}
         onKeyDown={handleEditorKeyDown}
@@ -490,6 +496,7 @@ export function TableEditableCell(props: TableEditableCellProps) {
         autoFocus
         aria-label={typeof column.label === 'string' ? column.label : field}
         aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => void commit()}
         onKeyDown={handleEditorKeyDown}
@@ -520,6 +527,7 @@ export function TableEditableCell(props: TableEditableCellProps) {
       {error ? (
         <span
           data-slot="table-editable-error"
+          id={errorId}
           role="alert"
           className="ml-1 text-xs text-destructive"
         >

@@ -299,32 +299,36 @@ describe('command-palette filter, keyboard, and empty state', () => {
 
 describe('command-palette execution contract (dual-track, close-then-dispatch)', () => {
   it('clicking an item closes first (onClose), then dispatches item.action with ${id} resolved, then fires onCommand with the payload', async () => {
-    renderSchema({
-      type: 'page',
-      data: { executedId: '', closedSeen: '' },
-      body: [
-        {
-          type: 'command-palette',
-          id: 'exec-palette',
-          testid: 'cmdk',
-          defaultOpen: true,
-          onClose: [{ action: 'setValue', args: { path: 'closedSeen', value: 'closed' } }],
-          items: [
-            {
-              id: 'nav',
-              label: 'Navigate Item',
-              action: { action: 'ajax', args: { url: '/r/Executed?id=${id}' } },
-            },
-          ],
-          onCommand: [{ action: 'setValue', args: { path: 'executedId', value: '${id}' } }],
-        },
-        {
-          type: 'text',
-          text: 'executed=${executedId} closed=${closedSeen}',
-          testid: 'probe',
-        },
-      ],
-    });
+    const fetcher = vi.fn(async () => ({ status: 0, data: null })) as unknown as RendererEnv['fetcher'];
+    renderSchema(
+      {
+        type: 'page',
+        data: { executedId: '', closedSeen: '' },
+        body: [
+          {
+            type: 'command-palette',
+            id: 'exec-palette',
+            testid: 'cmdk',
+            defaultOpen: true,
+            onClose: [{ action: 'setValue', args: { path: 'closedSeen', value: 'closed' } }],
+            items: [
+              {
+                id: 'nav',
+                label: 'Navigate Item',
+                action: { action: 'ajax', args: { url: '/r/Executed?id=${id}' } },
+              },
+            ],
+            onCommand: [{ action: 'setValue', args: { path: 'executedId', value: '${id}' } }],
+          },
+          {
+            type: 'text',
+            text: 'executed=${executedId} closed=${closedSeen}',
+            testid: 'probe',
+          },
+        ],
+      },
+      { fetcher },
+    );
 
     await waitFor(() => expect(queryItems()).toHaveLength(1));
     fireEvent.click(queryItems()[0]!);
@@ -337,6 +341,52 @@ describe('command-palette execution contract (dual-track, close-then-dispatch)',
     await waitFor(() =>
       expect(screen.getByTestId('probe').textContent).toContain('executed=nav'),
     );
+    // …and the item.action ajax branch really dispatched through the fetcher
+    // with the ${id} template resolved (23-01: this assertion dies if the
+    // dispatch branch is deleted).
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    expect((vi.mocked(fetcher).mock.calls[0]?.[0] as { url?: string }).url).toBe(
+      '/r/Executed?id=nav',
+    );
+  });
+
+  it('locks the close-then-dispatch order: onClose ajax → item.action ajax (${id} resolved) → onCommand ajax', async () => {
+    const fetcher = vi.fn(async () => ({ status: 0, data: null })) as unknown as RendererEnv['fetcher'];
+    renderSchema(
+      {
+        type: 'page',
+        body: [
+          {
+            type: 'command-palette',
+            id: 'exec-order-palette',
+            testid: 'cmdk',
+            defaultOpen: true,
+            onClose: [{ action: 'ajax', args: { url: '/r/Closed' } }],
+            items: [
+              {
+                id: 'nav',
+                label: 'Navigate Item',
+                action: { action: 'ajax', args: { url: '/r/Executed?id=${id}' } },
+              },
+            ],
+            onCommand: [{ action: 'ajax', args: { url: '/r/Command?id=${id}' } }],
+          },
+        ],
+      },
+      { fetcher },
+    );
+
+    await waitFor(() => expect(queryItems()).toHaveLength(1));
+    fireEvent.click(queryItems()[0]!);
+
+    // All three channels ride the same fetcher spy, so a single array
+    // equality locks the documented close-then-dispatch order.
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(3));
+    const urls = vi
+      .mocked(fetcher)
+      .mock.calls.map((call) => (call[0] as { url?: string }).url);
+    console.log('DEBUG-URLS', JSON.stringify(urls));
+    expect(urls).toEqual(['/r/Closed', '/r/Executed?id=nav', '/r/Command?id=nav']);
   });
 
   it('an item without static action still fires onCommand; groupId carries the section heading', async () => {

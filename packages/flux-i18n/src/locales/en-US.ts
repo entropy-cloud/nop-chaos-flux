@@ -419,6 +419,16 @@ export const enUS: Resource = {
       description: 'Displays the mobile sidebar.',
       toggle: 'Toggle Sidebar',
     },
+    command: {
+      title: 'Command Palette',
+      searchPlaceholder: 'Search for a command to run...',
+    },
+    result: {
+      statusSuccess: 'Success',
+      statusError: 'Error',
+      statusWarning: 'Warning',
+      statusInfo: 'Info',
+    },
     breadcrumb: {
       more: 'More',
     },
@@ -1103,6 +1113,7 @@ export const enUS: Resource = {
         searchCards: 'Search cards...',
         newCard: 'New Card',
         newColumn: 'New Column',
+        wipExceeded: 'WIP limit exceeded',
         filterError: 'Filter error: {{message}}',
         pickedUpCard: 'Picked up card: {{title}}. Use arrow keys to move, Escape to cancel.',
         cardMovedTo: 'Card moved to column: {{title}}',

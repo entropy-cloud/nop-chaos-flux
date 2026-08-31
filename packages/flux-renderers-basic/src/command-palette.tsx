@@ -40,6 +40,17 @@ interface CommandPaletteOpenBinding {
 
 interface CommandEntry {
   item: Record<string, unknown>;
+  /**
+   * 23-01 fix: action value from the RAW schema item (static tracks only).
+   * Prop-kind compilation resolves `items` against the render scope, which
+   * bakes `${id}`-style templates in a static item's `action` args to empty
+   * (or worse, to an unrelated same-named scope value) before the dispatch
+   * bindings ever see them. The raw counterpart keeps the templates intact so
+   * they resolve at dispatch time against the command payload, matching the
+   * onCommand event channel. Expression/`source`-track items are runtime data
+   * (never template-baked) and need no counterpart.
+   */
+  rawAction?: unknown;
   key: string;
   groupId: string;
 }
@@ -79,7 +90,10 @@ function isItemDisabled(item: Record<string, unknown>): boolean {
   return item.disabled === true || item.disabled === 'true';
 }
 
-function buildSections(resolved: Record<string, unknown>): CommandSection[] {
+function buildSections(
+  resolved: Record<string, unknown>,
+  rawSchema?: Record<string, unknown>,
+): CommandSection[] {
   const sections: CommandSection[] = [];
   let runningIndex = 0;
   const sectionKeyCounts = new Map<string, number>();
@@ -90,52 +104,101 @@ function buildSections(resolved: Record<string, unknown>): CommandSection[] {
     return seen === 0 ? base : `${base}-${seen + 1}`;
   };
 
-  const pushItems = (items: Record<string, unknown>[], groupId: string) => {
-    return items.map((item) => {
+  // Raw counterpart of a static track: only array-shaped raw values pair with
+  // the resolved track (expression-shaped raw values mean the track is
+  // data-driven and needs no template preservation).
+  const rawTrack = (value: unknown): Record<string, unknown>[] | undefined => {
+    if (!rawSchema || !Array.isArray(rawSchema[value as string])) {
+      return undefined;
+    }
+    const rawFiltered = toItemRecords(rawSchema[value as string]);
+    const resolvedFiltered = toItemRecords(resolved[value as string]);
+    return rawFiltered.length === resolvedFiltered.length ? rawFiltered : undefined;
+  };
+  const rawGroupsTrack = rawTrack('groups');
+  const rawItemsTrack = rawTrack('items');
+
+  const pushItems = (
+    items: Record<string, unknown>[],
+    groupId: string,
+    rawItems?: Record<string, unknown>[],
+  ) => {
+    return items.map((item, index) => {
       const explicitId = item.id;
       const key =
         typeof explicitId === 'string' && explicitId.length > 0
           ? explicitId
           : `item-${runningIndex++}`;
-      return { item, key, groupId };
+      const rawItem = rawItems?.[index];
+      return {
+        item,
+        rawAction: rawItem && typeof rawItem === 'object' ? rawItem.action : undefined,
+        key,
+        groupId,
+      };
     });
   };
 
   let groupOrdinal = 0;
+  let groupIndex = -1;
   for (const raw of toItemRecords(resolved.groups)) {
     groupOrdinal += 1;
+    groupIndex += 1;
     const heading = typeof raw.label === 'string' ? raw.label : undefined;
+    const resolvedGroupItems = toItemRecords(raw.items);
+    const rawGroup = rawGroupsTrack?.[groupIndex];
+    const rawGroupItems =
+      rawGroup && Array.isArray(rawGroup.items) ? toItemRecords(rawGroup.items) : undefined;
     sections.push({
       key: sectionKey(`group-${heading ?? groupOrdinal}`),
       heading,
-      items: pushItems(toItemRecords(raw.items), heading ?? ''),
+      items: pushItems(
+        resolvedGroupItems,
+        heading ?? '',
+        rawGroupItems && rawGroupItems.length === resolvedGroupItems.length
+          ? rawGroupItems
+          : undefined,
+      ),
     });
   }
 
   const flatByGroup = new Map<string, Record<string, unknown>[]>();
+  const flatRawByGroup = new Map<string, Record<string, unknown>[]>();
   const groupOrder: string[] = [];
   const ungrouped: Record<string, unknown>[] = [];
-  for (const item of toItemRecords(resolved.items)) {
+  const ungroupedRaw: Record<string, unknown>[] = [];
+  const resolvedItems = toItemRecords(resolved.items);
+  for (let index = 0; index < resolvedItems.length; index += 1) {
+    const item = resolvedItems[index];
+    const rawItem = rawItemsTrack?.[index];
     const group = typeof item.group === 'string' && item.group.length > 0 ? item.group : undefined;
     if (!group) {
       ungrouped.push(item);
+      ungroupedRaw.push(rawItem ?? (undefined as unknown as Record<string, unknown>));
       continue;
     }
     if (!flatByGroup.has(group)) {
       flatByGroup.set(group, []);
+      flatRawByGroup.set(group, []);
       groupOrder.push(group);
     }
     flatByGroup.get(group)!.push(item);
+    flatRawByGroup.get(group)!.push(rawItem ?? (undefined as unknown as Record<string, unknown>));
   }
+  const rawAligned = (raw: Record<string, unknown>[], resolved: Record<string, unknown>[]) =>
+    raw.length === resolved.length ? raw : undefined;
   for (const group of groupOrder) {
     sections.push({
       key: sectionKey(`flat-${group}`),
       heading: group,
-      items: pushItems(flatByGroup.get(group)!, group),
+      items: pushItems(flatByGroup.get(group)!, group, rawAligned(flatRawByGroup.get(group)!, flatByGroup.get(group)!)),
     });
   }
   if (ungrouped.length > 0) {
-    sections.push({ key: sectionKey('flat'), items: pushItems(ungrouped, '') });
+    sections.push({
+      key: sectionKey('flat'),
+      items: pushItems(ungrouped, '', rawAligned(ungroupedRaw, ungrouped)),
+    });
   }
 
   const sourceItems = toItemRecords(resolved.source);
@@ -289,7 +352,13 @@ export function CommandPaletteRenderer(props: RendererComponentProps<CommandPale
   function executeCommand(entry: CommandEntry) {
     publishOpenChange(false);
     const payload = { id: entry.key, item: entry.item, groupId: entry.groupId };
-    const action = entry.item.action as ActionSchema | ActionSchema[] | undefined;
+    // 23-01 fix: prefer the raw-schema action so `${id}`-style templates in a
+    // static item's args resolve at dispatch time against the command payload
+    // (prop-kind compilation pre-bakes them against the render scope otherwise).
+    const action = (entry.rawAction ?? entry.item.action) as
+      | ActionSchema
+      | ActionSchema[]
+      | undefined;
     if (action && (!Array.isArray(action) || action.length > 0)) {
       void helpers.dispatch(action, {
         event: createNormalizedActionEvent(payload),
@@ -392,7 +461,10 @@ export function CommandPaletteRenderer(props: RendererComponentProps<CommandPale
     publishOpenChange(false);
   };
 
-  const sections = buildSections(resolved);
+  const sections = buildSections(
+    resolved,
+    props.templateNode?.schema as Record<string, unknown> | undefined,
+  );
 
   return (
     <CommandDialog

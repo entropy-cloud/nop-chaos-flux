@@ -133,6 +133,10 @@ export function KanbanColumnHeader({
         wipWarning ? 'bg-red-100 text-red-600 font-bold' : 'text-gray-400 bg-gray-100',
       )}>
         {wipText ?? cardCount}
+        {/* 20-07: the two badge states share the same visible text and differ
+            only in color — the sr-only suffix is the non-color channel that
+            makes the exceeded state perceivable without vision. */}
+        {wipWarning ? <span className="sr-only">{t('scheduling.kanban.wipExceeded')}</span> : null}
       </span>
       <Button
         variant="ghost"

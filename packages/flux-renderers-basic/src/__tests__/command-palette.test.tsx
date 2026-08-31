@@ -171,29 +171,54 @@ describe('command-palette open/close matrix', () => {
     await waitFor(() => expect(queryPalette()).toBeNull());
   });
 
-  it('handle open on an already-open palette is a skipped no-op', async () => {
-    renderSchema({
-      type: 'page',
-      body: [
-        {
-          type: 'command-palette',
-          id: 'idem-palette',
-          testid: 'cmdk',
-          defaultOpen: true,
-          items: [{ id: 'a', label: 'Alpha' }],
-        },
-        {
-          type: 'button',
-          label: 'OpenBtn',
-          testid: 'open-btn',
-          onClick: { action: 'component:open', componentId: 'idem-palette' },
-        },
-      ],
-    });
+  it('handle open on an already-open palette is a skipped no-op: onOpen does not re-dispatch', async () => {
+    const fetcher = vi.fn(async () => ({ status: 0, data: null })) as unknown as RendererEnv['fetcher'];
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://command-palette#skip-noop"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'command-palette',
+              id: 'idem-palette',
+              testid: 'cmdk',
+              defaultOpen: true,
+              onOpen: [{ action: 'ajax', args: { url: '/r/Opened' } }],
+              items: [{ id: 'a', label: 'Alpha' }],
+            },
+            {
+              type: 'button',
+              label: 'OpenBtn',
+              testid: 'open-btn',
+              onClick: { action: 'component:open', componentId: 'idem-palette' },
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
     await waitFor(() => expect(queryItems()).toHaveLength(1));
-    // Skipped open keeps the palette open (still exactly one list).
+    // defaultOpen mounts without dispatching onOpen.
+    expect(fetcher).not.toHaveBeenCalled();
+
+    // Skipped open keeps the palette open AND must not re-dispatch onOpen —
+    // an unconditional reopen would fire the ajax action here (23-02: this
+    // call-count assertion is what separates skip from reopen).
     fireEvent.click(screen.getByTestId('open-btn'));
     await waitFor(() => expect(queryItems()).toHaveLength(1));
+    expect(fetcher).not.toHaveBeenCalled();
+
+    // Positive control: once the palette is closed, the same button genuinely
+    // dispatches onOpen — proving the probe above was observing a real skip.
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await waitFor(() => expect(queryPalette()).toBeNull());
+    fireEvent.click(screen.getByTestId('open-btn'));
+    await waitFor(() => expect(queryPalette()).not.toBeNull());
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    expect((vi.mocked(fetcher).mock.calls[0]?.[0] as { url?: string }).url).toBe('/r/Opened');
   });
 
   it('open expression (controlled) drives open and close; external value wins over handles', async () => {

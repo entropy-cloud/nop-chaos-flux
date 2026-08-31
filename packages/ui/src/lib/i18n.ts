@@ -3,6 +3,8 @@ const messages: Record<string, string> = {
   'flux.carousel.label': 'Carousel',
   'flux.carousel.previous': 'Previous slide',
   'flux.carousel.next': 'Next slide',
+  'flux.command.title': 'Command Palette',
+  'flux.command.searchPlaceholder': 'Search for a command to run...',
   'flux.common.close': 'Close',
   'flux.common.confirm': 'Confirm',
   'flux.common.cancel': 'Cancel',

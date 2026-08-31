@@ -408,3 +408,78 @@ describe('TableEditableCell — action save channel (CX-10)', () => {
     expect(helpers.dispatch).not.toHaveBeenCalled();
   });
 });
+
+describe('TableEditableCell — error-state aria wiring (a11y 20-04)', () => {
+  beforeEach(() => {
+    cleanup();
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  });
+
+  function renderSelectCell() {
+    return renderCell({
+      rowScope: createRowScope({ status: '' }),
+      record: { status: '' },
+      column: {
+        name: 'status',
+        label: 'Status',
+        editable: {
+          editor: 'select',
+          options: [
+            { label: 'Active', value: 'active' },
+            { label: 'Archived', value: 'archived' },
+          ],
+          required: true,
+        },
+      },
+    });
+  }
+
+  it('select editor: a blocked required commit sets aria-invalid and aria-describedby pointing at the error span id', () => {
+    renderSelectCell();
+
+    fireEvent.click(navCell());
+    const select = screen.getByRole('combobox', { name: 'Status' }) as HTMLSelectElement;
+    expect(select.getAttribute('aria-invalid')).toBeNull();
+
+    fireEvent.keyDown(select, { key: 'Enter' });
+
+    const errorSpan = document.querySelector(
+      '[data-slot="table-editable-error"]',
+    ) as HTMLElement | null;
+    expect(errorSpan).toBeTruthy();
+    expect(errorSpan!.id).not.toBe('');
+    expect(select.getAttribute('aria-invalid')).toBe('true');
+    expect(select.getAttribute('aria-describedby')).toBe(errorSpan!.id);
+
+    // Stable id: a second failed commit re-renders with the same association.
+    fireEvent.keyDown(select, { key: 'Enter' });
+    const errorSpanAgain = document.querySelector(
+      '[data-slot="table-editable-error"]',
+    ) as HTMLElement | null;
+    expect(errorSpanAgain!.id).toBe(errorSpan!.id);
+    expect(select.getAttribute('aria-describedby')).toBe(errorSpanAgain!.id);
+  });
+
+  it('input editor: aria-describedby joins aria-invalid and points at the same error span id', () => {
+    renderCell({
+      rowScope: createRowScope({ name: 'Alice' }),
+      record: { name: 'Alice' },
+      column: { name: 'name', label: 'Name', editable: { required: true } },
+    });
+
+    fireEvent.click(navCell());
+    const input = screen.getByRole('textbox', { name: 'Name' }) as HTMLInputElement;
+    expect(input.getAttribute('aria-invalid')).toBeNull();
+
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    const errorSpan = document.querySelector(
+      '[data-slot="table-editable-error"]',
+    ) as HTMLElement | null;
+    expect(errorSpan).toBeTruthy();
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    expect(input.getAttribute('aria-describedby')).toBe(errorSpan!.id);
+  });
+});

@@ -158,6 +158,10 @@ export function BatchBarRenderer(props: RendererComponentProps<BatchBarSchema>) 
         'nop-batch-bar flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm',
         props.meta.className,
       )}
+      // 20-03: the bar is its own live region — mount/unmount (the empty-gate
+      // flip) and count changes are announced politely to assistive tech.
+      role="status"
+      aria-live="polite"
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="batch-bar"

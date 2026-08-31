@@ -417,6 +417,16 @@ export const zhCN: Resource = {
       description: '显示移动端侧边栏。',
       toggle: '切换侧边栏',
     },
+    command: {
+      title: '命令面板',
+      searchPlaceholder: '搜索要运行的命令…',
+    },
+    result: {
+      statusSuccess: '成功',
+      statusError: '错误',
+      statusWarning: '警告',
+      statusInfo: '提示',
+    },
     breadcrumb: {
       more: '更多',
     },
@@ -1101,6 +1111,7 @@ export const zhCN: Resource = {
         searchCards: '搜索卡片...',
         newCard: '新卡片',
         newColumn: '新列',
+        wipExceeded: '超出 WIP 上限',
         filterError: '筛选错误：{{message}}',
         pickedUpCard: '已拾取卡片：{{title}}。使用方向键移动，Escape 取消。',
         cardMovedTo: '卡片已移动到列：{{title}}',

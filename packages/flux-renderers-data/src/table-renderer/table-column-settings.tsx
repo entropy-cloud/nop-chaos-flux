@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   Button,
@@ -43,6 +43,9 @@ export interface TableColumnSettingsProps {
  */
 export function TableColumnSettings(props: TableColumnSettingsProps) {
   const [inlineOpen, setInlineOpen] = useState(false);
+  // 20-05: the inline form is a hand-rolled disclosure — expose the expanded
+  // state and the controlled panel through aria-expanded/aria-controls.
+  const inlinePanelId = useId();
 
   const columnSettingsColumnsByKey = useMemo(
     () => new Map(props.columns.map((column, index) => [column.name ?? `column-${index}`, column] as const)),
@@ -176,12 +179,15 @@ export function TableColumnSettings(props: TableColumnSettingsProps) {
           <Button
             variant="outline"
             size="sm"
+            aria-expanded={inlineOpen}
+            aria-controls={inlineOpen ? inlinePanelId : undefined}
             onClick={() => setInlineOpen((value) => !value)}
           >
             {t('flux.table.columns')}
           </Button>
           {inlineOpen ? (
             <div
+              id={inlinePanelId}
               className="mt-2 w-full max-w-sm rounded-md border bg-popover p-2 shadow-sm"
               data-slot="table-column-settings-inline"
             >

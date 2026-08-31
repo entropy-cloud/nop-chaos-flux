@@ -458,7 +458,12 @@ CommandEmpty` (items outside `CommandList` lose selection/empty semantics).
   channels may be combined (static dispatch first). Execution order is
   close-then-dispatch: the palette closes first (onClose fires), then `action`
   dispatches, then `onCommand` fires — "面板即关". Dispatch failures follow the
-  existing action error convention; the palette does not reopen.
+  existing action error convention; the palette does not reopen. Static-track
+  `action` args resolve templates against the same command payload at dispatch
+  time (e.g. `url: '/r/Executed?id=${id}'` sees the executed item's key) —
+  static items keep their raw action until dispatch, so render-scope
+  pre-evaluation cannot bake payload templates (23-01 fix; source/expression
+  items are runtime data and behave identically).
 - `hotkey` (e.g. `"mod+k"`) binds one local invocation key: renderer-scoped
   `window` keydown listener with unmount cleanup. `mod` = meta‖ctrl; `ctrl`/
   `shift`/`alt` modifiers supported. No-op (dev warn) on controlled palettes —

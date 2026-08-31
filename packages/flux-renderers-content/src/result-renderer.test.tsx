@@ -1,8 +1,9 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import React from 'react';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { contentRendererDefinitions } from './content-renderer-definitions.js';
 
@@ -196,5 +197,45 @@ describe('result content regions', () => {
     expect(root?.className).toContain('nop-result');
     expect(root?.className).toContain('my-result');
     expect(root?.getAttribute('data-cid')).not.toBeNull();
+  });
+});
+
+describe('result status a11y channel (20-10)', () => {
+  beforeEach(() => {
+    // The singleton may already be auto-initialized (zh default) by earlier
+    // describes in this file — reset first so en-US actually applies.
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  });
+
+  afterEach(() => {
+    resetFluxI18n();
+  });
+
+  it('status-only config exposes the status word to the a11y tree via sr-only text', () => {
+    renderSchema({ type: 'page', body: [{ type: 'result', status: 'success' }] });
+    const root = queryResult() as HTMLElement;
+    expect(root.querySelector('[data-slot="result-title"]')).toBeNull();
+    const srOnly = root.querySelector('.sr-only');
+    expect(srOnly?.textContent).toBe('Success');
+  });
+
+  it('maps every status to its sr-only word, including the omitted-status info default', () => {
+    const cases: Array<[string | undefined, string]> = [
+      ['success', 'Success'],
+      ['error', 'Error'],
+      ['warning', 'Warning'],
+      ['info', 'Info'],
+      [undefined, 'Info'],
+    ];
+    for (const [status, expected] of cases) {
+      renderSchema({
+        type: 'page',
+        body: [{ type: 'result', ...(status ? { status } : {}) }],
+      });
+      const root = queryResult() as HTMLElement;
+      expect(root.querySelector('.sr-only')?.textContent).toBe(expected);
+      cleanup();
+    }
   });
 });

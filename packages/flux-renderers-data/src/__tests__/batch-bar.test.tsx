@@ -292,3 +292,40 @@ describe('batch-bar schema validation', () => {
     ]);
   });
 });
+
+describe('batch-bar live region (a11y 20-03)', () => {
+  it('announces appearance and count changes through role="status" + aria-live="polite" on the bar root', async () => {
+    renderCrudWithBatchBar();
+
+    // Null gate semantics stay: not rendered → nothing announced.
+    expect(screen.queryByTestId('bar')).toBeNull();
+
+    selectRow(0);
+    const bar = await waitFor(() => {
+      const el = screen.getByTestId('bar');
+      expect(el.getAttribute('role')).toBe('status');
+      expect(el.getAttribute('aria-live')).toBe('polite');
+      return el;
+    });
+    // The count text rides inside the live region, so the announcement content
+    // tracks selection changes.
+    expect(bar.querySelector('[data-slot="batch-bar-count"]')?.textContent).toBe('1 selected');
+
+    selectRow(1);
+    await waitFor(() => {
+      const el = screen.getByTestId('bar');
+      expect(el.getAttribute('data-count')).toBe('2');
+      expect(el.querySelector('[data-slot="batch-bar-count"]')?.textContent).toBe('2 selected');
+    });
+  });
+
+  it('unmounts the live region again when the selection returns to empty', async () => {
+    renderCrudWithBatchBar();
+
+    selectRow(0);
+    await waitFor(() => expect(screen.getByTestId('bar').getAttribute('role')).toBe('status'));
+
+    selectRow(0);
+    await waitFor(() => expect(screen.queryByTestId('bar')).toBeNull());
+  });
+});
