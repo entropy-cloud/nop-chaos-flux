@@ -12,7 +12,7 @@ import { PageRenderer } from './page.js';
 import { ReactionRenderer } from './reaction.js';
 import { RecurseRenderer } from './recurse.js';
 import { ScopeDebugRenderer } from './scope-debug.js';
-import { TabsRenderer } from './tabs.js';
+import { tabsRendererDefinition } from './tabs-renderer-definition.js';
 import { TextRenderer } from './text.js';
 import { dialogRendererDefinition, drawerRendererDefinition, commandPaletteRendererDefinition } from './surface-renderer-definitions.js';
 import {
@@ -540,107 +540,5 @@ export const basicRendererDefinitions: RendererDefinition[] = [
   dialogRendererDefinition,
   drawerRendererDefinition,
   commandPaletteRendererDefinition,
-  {
-    type: 'tabs',
-    displayName: 'Tabs',
-    category: 'layout',
-    sourcePackage: '@nop-chaos/flux-renderers-basic',
-    component: TabsRenderer,
-    propContracts: {
-      items: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'schema-definition',
-            fieldRules: {
-              title: {
-                kind: 'value-or-region',
-                regionKey: 'titleRegionKey',
-                params: ['item', 'index', 'key'],
-              },
-              body: {
-                kind: 'region',
-                regionKey: 'bodyRegionKey',
-                params: ['item', 'index', 'key'],
-              },
-              toolbar: {
-                kind: 'region',
-                regionKey: 'toolbarRegionKey',
-                params: ['item', 'index', 'key'],
-              },
-              disabled: 'value',
-            },
-          },
-        },
-        displayName: 'Items',
-        description:
-          'Tab item collection. Each item carries title (value-or-region) / body / toolbar regions plus key/disabled flags.',
-        editorType: 'object-array',
-      },
-      orientation: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'horizontal' },
-            { kind: 'literal', value: 'vertical' },
-          ],
-        },
-        displayName: 'Orientation',
-        editorType: 'select',
-        defaultValue: 'horizontal',
-      },
-      variant: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'default' },
-            { kind: 'literal', value: 'line' },
-          ],
-        },
-        displayName: 'Variant',
-        editorType: 'select',
-        defaultValue: 'default',
-      },
-    },
-    componentCapabilityContracts: [
-      {
-        handle: 'setValue',
-        displayName: 'Set Value',
-        description: 'Set the active tab value on the current tabs instance.',
-        args: {
-          kind: 'object',
-          fields: {
-            value: { kind: 'unknown' },
-          },
-          optional: ['value'],
-        },
-        result: { kind: 'unknown' },
-      },
-      {
-        handle: 'getValue',
-        displayName: 'Get Value',
-        description: 'Read the current active tab value.',
-        result: { kind: 'string' },
-      },
-    ],
-    fields: [
-      { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
-      { key: 'onChange', kind: 'event' },
-      { key: 'items', kind: 'prop' },
-      { key: 'value', kind: 'prop' },
-      { key: 'defaultValue', kind: 'prop' },
-      { key: 'valueOwnership', kind: 'prop' },
-      { key: 'valueStatePath', kind: 'prop' },
-      { key: 'statusPath', kind: 'prop' },
-      { key: 'orientation', kind: 'prop' },
-      { key: 'variant', kind: 'prop' },
-      { key: 'tabsMode', kind: 'prop' },
-      { key: 'sidePosition', kind: 'prop' },
-      { key: 'closable', kind: 'prop', valueType: 'boolean' },
-      { key: 'draggable', kind: 'prop', valueType: 'boolean' },
-      { key: 'addable', kind: 'prop', valueType: 'boolean' },
-      { key: 'contentClassName', kind: 'prop' },
-      { key: 'toolbarClassName', kind: 'prop' },
-    ],
-  },
+  tabsRendererDefinition,
 ];

@@ -3,6 +3,7 @@ import { cn, Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RendererHelpers } from '@nop-chaos/flux-core';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
+import { computeColumnAggregate, type KanbanColumnAggregateConfig } from './kanban-aggregate.js';
 import { KanbanColumnHeader } from './kanban-column-header.js';
 import { KanbanCard } from './kanban-card.js';
 import { useKanbanVirtualizer } from './hooks/use-kanban-virtualizer.js';
@@ -45,6 +46,8 @@ export interface KanbanColumnProps {
   registerBoardDropZone?: (el: HTMLElement, columnIndex: number) => () => void;
   registerCard?: (el: HTMLElement, cardId: string, columnId: string, index: number) => () => void;
   registerColumnHeader?: (el: HTMLElement, columnId: string) => () => void;
+  columnAggregate?: KanbanColumnAggregateConfig;
+  onAggregateFallback?: () => void;
 }
 
 export function KanbanColumn({
@@ -85,6 +88,8 @@ export function KanbanColumn({
   registerBoardDropZone,
   registerCard,
   registerColumnHeader,
+  columnAggregate,
+  onAggregateFallback,
 }: KanbanColumnProps) {
   const columnRef = useRef<HTMLDivElement>(null);
 
@@ -151,6 +156,18 @@ export function KanbanColumn({
   }
 
   const columnTitle = (column.title || column.data?.title || '') as string;
+
+  const aggregate = (() => {
+    if (!columnAggregate) return undefined;
+    const result = computeColumnAggregate(filteredCards, columnAggregate);
+    if (result.value === '-' && columnAggregate.fn !== 'count') {
+      onAggregateFallback?.();
+    }
+    return {
+      label: columnAggregate.label ?? columnAggregate.fn,
+      display: String(result.value),
+    };
+  })();
 
   // 1-11: roving 焦点以 card id 追踪（而非显示索引）——过滤态下 displayCards
   // 索引与 data-card-index（真实 board 索引）错位，索引查询会落空。
@@ -229,6 +246,7 @@ export function KanbanColumn({
         onDragHandleKeyDown={onDragHandleKeyDown}
         onClick={() => onColumnClick?.(column.id)}
         className={columnHeaderClassName}
+        aggregate={aggregate}
         registerColumnHeader={registerColumnHeader}
       />
 

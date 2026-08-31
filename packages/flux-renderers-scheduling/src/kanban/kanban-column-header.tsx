@@ -23,6 +23,7 @@ export interface KanbanColumnHeaderProps {
   wipWarning?: boolean;
   wipText?: string;
   registerColumnHeader?: (el: HTMLElement, columnId: string) => () => void;
+  aggregate?: { label: string; display: string };
 }
 
 export function KanbanColumnHeader({
@@ -44,6 +45,7 @@ export function KanbanColumnHeader({
   wipWarning,
   wipText,
   registerColumnHeader,
+  aggregate,
 }: KanbanColumnHeaderProps) {
   const headerRef = React.useRef<HTMLDivElement>(null);
 
@@ -121,6 +123,11 @@ export function KanbanColumnHeader({
         <GripVertical className="w-4 h-4" />
       </Button>
       <span className="font-semibold text-sm flex-1 truncate">{title}</span>
+      {aggregate && (
+        <span data-slot="kanban-column-aggregate" className="text-xs text-gray-500 whitespace-nowrap">
+          {aggregate.label}: {aggregate.display}
+        </span>
+      )}
       <span className={cn(
         'text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center',
         wipWarning ? 'bg-red-100 text-red-600 font-bold' : 'text-gray-400 bg-gray-100',

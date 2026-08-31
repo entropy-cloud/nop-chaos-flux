@@ -18,7 +18,7 @@ const checks = [
   {
     file: 'packages/flux-renderers-basic/src/schemas.ts',
     schemaPattern: /export interface TabsSchema[\s\S]*?variant\?:\s*'default'\s*\|\s*'line'/,
-    contractFile: 'packages/flux-renderers-basic/src/basic-renderer-definitions.ts',
+    contractFile: 'packages/flux-renderers-basic/src/tabs-renderer-definition.ts',
     contractPattern: /type:\s*'tabs'[\s\S]*?propContracts:\s*\{[\s\S]*?orientation:\s*\{[\s\S]*?editorType:\s*'select'[\s\S]*?variant:\s*\{[\s\S]*?editorType:\s*'select'/,
     label: 'tabs.variant',
   },

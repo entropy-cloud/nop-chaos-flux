@@ -1,4 +1,5 @@
 import type { BaseSchema, SchemaInput, SchemaObject, ActionSchema } from '@nop-chaos/flux-core';
+import type { KanbanColumnAggregateConfig } from './kanban-aggregate.js';
 
 export interface BoardItem extends SchemaObject {
   id: string;
@@ -51,6 +52,13 @@ export interface KanbanSchema extends BaseSchema {
   columnFooter?: SchemaInput;
   empty?: SchemaInput;
   loading?: SchemaInput;
+  /**
+   * Board-level per-column header aggregate (G-C): one declaration, each
+   * column aggregates its own filtered card set into the default header
+   * (`data-slot="kanban-column-aggregate"`). A `columnHeader` region override
+   * takes the whole header and suppresses the aggregate.
+   */
+  columnAggregate?: KanbanColumnAggregateConfig;
   filterText?: string;
   filterCard?: string;
   filterTags?: string[];

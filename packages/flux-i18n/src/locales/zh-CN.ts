@@ -381,6 +381,9 @@ export const zhCN: Resource = {
       close: '关闭',
       resize: '调整大小',
     },
+    tabs: {
+      newTab: '新视图',
+    },
     page: {
       asideResize: '调整侧栏宽度',
       asideToggle: '切换侧栏',

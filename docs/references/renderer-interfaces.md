@@ -751,6 +751,105 @@ Key contracts:
   (zero DOM, zero markers). Widget renderer, self-styled; zero `@nop-chaos/ui`
   export changes.
 
+## Tabs View Collection Management Contract
+
+Status: landed (live-verified 2026-08-31; owner plan
+`docs/plans/2026-08-31-0721-1-d1-gc-multiview-database-semantic-components.md`,
+Phase 1 Decision Record + Phase 2 implementation record; red-first matrix in
+`packages/flux-renderers-basic/src/__tests__/tabs-view-management.test.tsx`).
+
+The `tabs` renderer grows a view-collection management surface (C2 G-C 多视图
+数据库语义件第二成员): runtime add / close / rename / reorder of tab items,
+resolving the write-back-⑥ unreachable surfaces (runtime view-branch addition
+I2, tab drag reorder + overflow dynamization I13) and wiring the three dead
+declarations (`closable`/`draggable`/`addable` at `TabsSchema`) that were
+declared + registered but never implemented (guide Rule 11 boundary — G-A dead
+config disposition precedent, "wire" track).
+
+Key contracts:
+
+- Collection ownership axis (kanban `kanbanOwnership` naming precedent):
+  `itemsOwnership?: 'local' | 'controlled' | 'scope'` (default `'local'`) +
+  `itemsStatePath?: string` (scope read/write path for the `'scope'` track).
+  Without management activity (all three flags falsy, zero handle calls) the
+  render source is the resolved `items` verbatim — zero regression. First
+  management mutation (UI affordance or handle) clones the then-current items
+  into a managed collection; `'local'` owns it in component session state (no
+  re-seed from later schema items — expression items re-evaluate per render and
+  reference-compare re-seeds would wipe user management), `'scope'` writes each
+  mutation back to `itemsStatePath`, `'controlled'` drops mutations (handles
+  return `{ok:false}`, affordances inert, no events — kanban controlled
+  mutation-drop precedent).
+- Handles (kanban handle precedent): `addTab({ item, index? })` (auto value
+  `tab-<ts>` when absent; out-of-range index appends), `removeTab({ value })`,
+  `renameTab({ value, title })`, `moveTab({ value, toIndex })` (index clamped).
+  Failure paths: unknown value → `{ok:false}`; removing the last remaining tab
+  is refused (`gc-tab-remove-last` adjudicated as 禁止删空兜底 — an empty
+  collection would dangle the `valueStatePath` active pointer; expression-cleared
+  items keep candidate-fix semantics, the guard only guards the component's own
+  remove channel).
+- Active pointer migration (`gc-tab-remove-active`): removing the active tab
+  migrates the active value through the existing `resolveCandidateValue` rule
+  (nearest-right → nearest-left) via the same `valueStatePath` write chain; add
+  / rename / move never touch the active value.
+- Events (CX-10 ctx compliant, kanban `eventCtx` payload precedent):
+  `onTabAdd` `{ type:'tabs:tab-add', item, index }`, `onTabClose`
+  `{ type:'tabs:tab-close', value, index, item, nextActiveValue }`, `onTabRename`
+  `{ type:'tabs:tab-rename', value, index, title, item }`, `onTabMove`
+  `{ type:'tabs:tab-move', value, fromIndex, toIndex }`. UI affordances and
+  handles share one mutation channel (kanban 22-12 precedent).
+- UI affordances (all gated by their flag; zero flags → zero affordance):
+  `closable` (tabs-level default + item-level override) renders a close ✕
+  inside each trigger (`data-slot="tabs-trigger-close"`, click stopPropagation,
+  mouse affordance kept `aria-hidden` so tab-list keyboard roving stays
+  intact; keyboard/programmatic close runs through the `removeTab` handle).
+  The ✕ is hidden on the last remaining tab (the remove guard's UI face);
+  `draggable` enables native HTML5 tab drag reorder (drop → `moveTab`);
+  `addable` renders a trailing `+` trigger (`data-slot="tabs-trigger-add"`,
+  default title i18n `flux.tabs.newTab`, does not auto-activate). No built-in
+  destructive confirm (AMIS parity — authors compose confirmation via
+  `onTabClose` chains + host confirm action).
+- Overflow dynamization (I13 residual): adjudicated `Deferred But Adjudicated`
+  (`optimization candidate`) — horizontal scroll + mobile scrollIntoView
+  already keep the active tab reachable; successor registered (DropdownMenu
+  overflow menu, triggered by a real consuming page).
+
+## Kanban Column Aggregate Contract
+
+Status: landed (live-verified 2026-08-31; owner plan
+`docs/plans/2026-08-31-0721-1-d1-gc-multiview-database-semantic-components.md`,
+Phase 1 Decision Record + Phase 3 implementation record; red-first matrices in
+`packages/flux-renderers-scheduling/src/kanban/kanban-aggregate.test.ts` +
+`kanban-column-aggregate.test.tsx`).
+
+The `kanban` renderer grows a per-column header aggregate semantic
+(C2 回写 ⑥ 候选 2 residual: "列头原生聚合（Sum/Avg/Min/Max/Count + 列头内嵌
+形态）仍为 kanban 语义增强候选"): a board-level declaration, evaluated per
+column over that column's own cards — one declaration, per-column values,
+resolving the "per-column binding missing" gap (G-A observation surface) via
+evaluation instead of region parameterization.
+
+Key contracts:
+
+- `KanbanSchema.columnAggregate?: { field?: string; fn: 'sum' | 'avg' | 'min' | 'max' | 'count'; label?: string }`
+  (board-level, single declaration). Rendered inside the default column header
+  as `{label ?? fn}: {value}` (`data-slot="kanban-column-aggregate"`, beside
+  the count badge). A `columnHeader` region override takes the whole header
+  (existing behavior) and suppresses the aggregate (no double rendering).
+- Data source: client-side, the column's current filtered-visible card set
+  (same source as the header count badge — filter semantics stay consistent).
+  `count` ignores `field` and always equals the card count (empty column →
+  `0`, `gc-aggregate-empty-column`); sum/avg/min/max read `card.data[field]`,
+  coerce via `Number()`, skip missing/`NaN` values; an empty valid-value set
+  renders the `'-'` fallback + board-level one-time dev warn
+  (`gc-aggregate-missing-field`) — never `NaN`, never throws.
+- Server-passthrough boundary: deliberately not built (aggregation is a
+  client-side presentation semantic; server pre-computation remains reachable
+  through data endpoints — replica-page mock precedent). No `flux-core`
+  changes; pure helper `computeColumnAggregate` extracted for unit coverage.
+- Zero-regression: without a `columnAggregate` declaration the header renders
+  byte-identical to pre-enhancement behavior.
+
 ## Recommended Reading Path
 
 For deeper design intent, continue with:

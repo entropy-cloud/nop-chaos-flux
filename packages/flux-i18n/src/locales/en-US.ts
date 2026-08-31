@@ -382,6 +382,9 @@ export const enUS: Resource = {
       close: 'Close',
       resize: 'Resize',
     },
+    tabs: {
+      newTab: 'New View',
+    },
     page: {
       asideResize: 'Resize aside',
       asideToggle: 'Toggle aside',

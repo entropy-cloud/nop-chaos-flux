@@ -134,7 +134,11 @@ export interface TabsItemSchema extends SchemaObject {
   icon?: string;
   mountOnEnter?: boolean;
   unmountOnExit?: boolean;
-  /** Whether this tab can be closed (removed). amis closable. */
+  /**
+   * Per-item override of the tabs-level `closable`: renders a close affordance
+   * and removes the item through the removeTab channel when activated
+   * (amis closable; defaults to the tabs-level value when omitted).
+   */
   closable?: boolean;
   titleRegionKey?: string;
   bodyRegionKey?: string;
@@ -166,14 +170,39 @@ export interface TabsSchema extends BaseSchema {
   variant?: 'default' | 'line';
   tabsMode?: TabsMode;
   sidePosition?: 'left' | 'right';
-  /** Whether tabs can be closed (removed). amis closable. */
+  /**
+   * View-collection close affordance: per-tab close ✕ removes the item through
+   * the `removeTab` channel (per-item override via `TabsItemSchema.closable`).
+   * The last remaining tab is guarded against removal (amis closable).
+   */
   closable?: boolean;
-  /** Whether tabs can be reordered via drag. amis draggable. */
+  /** Tab drag-reorder affordance; drop reorders through the `moveTab` channel (amis draggable). */
   draggable?: boolean;
-  /** Whether new tabs can be added. amis addable. */
+  /**
+   * Trailing add affordance; click appends an item through the `addTab`
+   * channel (default title i18n `flux.tabs.newTab`, value auto-generated,
+   * no auto-activation) (amis addable).
+   */
   addable?: boolean;
+  /**
+   * Collection ownership axis for view management (kanbanOwnership precedent).
+   * 'local' (default): first management mutation seeds a component-session
+   * collection (no re-seed from later schema items). 'scope': mutations write
+   * back to `itemsStatePath`. 'controlled': mutations are refused.
+   */
+  itemsOwnership?: 'local' | 'controlled' | 'scope';
+  /** Scope read/write path for the collection under `itemsOwnership: 'scope'`. */
+  itemsStatePath?: string;
   contentClassName?: string;
   toolbarClassName?: string;
+  /** Fired after an item is added with payload `{ type, item, index }`. */
+  onTabAdd?: ActionSchema | ActionSchema[];
+  /** Fired after an item is closed with payload `{ type, value, index, item, nextActiveValue }`. */
+  onTabClose?: ActionSchema | ActionSchema[];
+  /** Fired after an item is renamed with payload `{ type, value, index, title, item }`. */
+  onTabRename?: ActionSchema | ActionSchema[];
+  /** Fired after an item is moved with payload `{ type, value, fromIndex, toIndex }`. */
+  onTabMove?: ActionSchema | ActionSchema[];
 }
 
 export interface ContainerSchema extends BaseSchema {
