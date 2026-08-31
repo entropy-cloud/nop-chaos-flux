@@ -401,13 +401,38 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       Object.keys(writes).map((path) => [path, readCurrentValueAtPath(path)]),
     );
 
-    applyCommittedWrites(writes);
+    // 19-01: the apply→validate→rollback chain must converge on rollback even
+    // when applying the writes or the parent validation throws (validation
+    // actions rethrow through the validateSubtree seam). Without this guard
+    // the committed writes stay in the parent scope while the caller only
+    // sees the "confirm failed" notification — ghost writes with a failed
+    // confirm. Behavior mirrors the explicit !settled / !draftValid branches:
+    // restore previousValues, then let the error escape.
+    try {
+      applyCommittedWrites(writes);
 
-    if (parentForm) {
-      const settled = await settleParentValidation();
-      if (!settled) {
-        await rollbackCommittedWrites(previousValues);
-        return false;
+      if (parentForm) {
+        const settled = await settleParentValidation();
+        if (!settled) {
+          await rollbackCommittedWrites(previousValues);
+          return false;
+        }
+
+        const draftValid = await validateCommittedDraftLocally(draftValues);
+        if (!draftValid) {
+          await rollbackCommittedWrites(previousValues);
+          return false;
+        }
+
+        return true;
+      }
+
+      if (hasUsableParentValidationOwner()) {
+        const settled = await settleParentValidation();
+        if (!settled) {
+          await rollbackCommittedWrites(previousValues);
+          return false;
+        }
       }
 
       const draftValid = await validateCommittedDraftLocally(draftValues);
@@ -417,23 +442,10 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       }
 
       return true;
-    }
-
-    if (hasUsableParentValidationOwner()) {
-      const settled = await settleParentValidation();
-      if (!settled) {
-        await rollbackCommittedWrites(previousValues);
-        return false;
-      }
-    }
-
-    const draftValid = await validateCommittedDraftLocally(draftValues);
-    if (!draftValid) {
+    } catch (error) {
       await rollbackCommittedWrites(previousValues);
-      return false;
+      throw error;
     }
-
-    return true;
   }
 
   async function handleConfirm() {
