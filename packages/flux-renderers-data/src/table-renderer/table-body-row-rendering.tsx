@@ -14,6 +14,8 @@ import type { FixedColumnLayout } from './fixed-columns.js';
 import type { RowSelectionModifiers } from './use-table-selection.js';
 import { TableDragCell, TableExpandCell, TableSelectCell } from './table-row-leading-cells.js';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell.js';
+import { TableEditableCell, resolveTableEditableConfig } from './table-editable-cell.js';
+import { warnOnce } from './warn-once.js';
 import type { TreeRowEntry } from './use-table-tree.js';
 import type { LazyChildrenState } from './use-table-lazy-children.js';
 import type { RowDragSortApi } from './use-row-drag-sort.js';
@@ -218,6 +220,7 @@ function DataRowView({
       data-level={treeMode ? treeLevel : undefined}
       data-tree-expanded={treeMode && isTreeExpanded ? true : undefined}
       data-draggable={draggable || undefined}
+      data-row-group={item.groupKey || undefined}
       data-dragging={rowDragSortApi?.draggingRowKey === rowKey || undefined}
       data-drag-over={rowDragSortApi?.dragOverRowKey === rowKey || undefined}
       onClick={isRowClickable ? handleRowClick : undefined}
@@ -422,6 +425,49 @@ function DataRowView({
         }
 
         const quickEditConfig = resolveTableQuickEditConfig(column);
+        // D1 G-D: editable declares the cell-level two-state machine and takes
+        // precedence over quickEdit (no double controls — gd-cell-edit-quickedit-coexist).
+        const editableDeclared = column.editable !== undefined && column.editable !== false;
+        if (editableDeclared) {
+          if (quickEditConfig && isDevRuntime()) {
+            warnOnce(
+              'gd-cell-edit-quickedit-coexist',
+              '[flux:table] gd-cell-edit-quickedit-coexist: both editable and quickEdit are declared on this column; editable takes precedence and the quickEdit control is not rendered.',
+            );
+          }
+          const editableConfig = resolveTableEditableConfig(column);
+          if (editableConfig && column.name) {
+            return (
+              <TableCell
+                key={`${column.name ?? columnIndex}`}
+                className={cn(
+                  resolveCellChromeClass(column, columnIndex),
+                  fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
+                )}
+                style={{
+                  ...(column.width ? { width: column.width } : undefined),
+                  ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+                  ...treeIndentStyle,
+                }}
+                rowSpan={rowSpan}
+                data-fixed={
+                  fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
+                }
+              >
+                {treeToggle}
+                {treeSpacer}
+                <TableEditableCell
+                  column={column}
+                  rowScope={rowScope}
+                  record={entry.record}
+                  helpers={helpers}
+                  quickSaveAction={schemaProps.quickSaveAction}
+                  quickSaveItemAction={schemaProps.quickSaveItemAction}
+                />
+              </TableCell>
+            );
+          }
+        }
         if (quickEditConfig && column.name) {
           return (
             <TableCell
@@ -530,6 +576,7 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.item.isExpanded === next.item.isExpanded &&
     prev.item.isSelected === next.item.isSelected &&
     prev.item.isEven === next.item.isEven &&
+    prev.item.groupKey === next.item.groupKey &&
     Boolean(prev.schemaProps.rowSelection) === Boolean(next.schemaProps.rowSelection) &&
     prev.schemaProps.rowSelection?.type === next.schemaProps.rowSelection?.type &&
     prev.schemaProps.rowSelection?.toggleOnRowClick === next.schemaProps.rowSelection?.toggleOnRowClick &&

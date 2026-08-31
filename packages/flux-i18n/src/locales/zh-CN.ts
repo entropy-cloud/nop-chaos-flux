@@ -199,6 +199,8 @@ export const zhCN: Resource = {
       dragToReorder: '拖拽调整行顺序',
       loadChildrenFailed: '子节点加载失败',
       index: '序号',
+      editableRequired: '该字段必填',
+      editableInvalidNumber: '请输入有效数字',
     },
     form: {
       required: '必填',

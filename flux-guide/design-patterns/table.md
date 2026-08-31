@@ -415,6 +415,67 @@ host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='
 - 合计行单元格渲染语义：`value` 为字符串时按表达式求值（非 `${...}` 的普通字符串原样展示），对象（`SchemaInput`）时以 helpers 求值
 - `affixRow`/`prefixRow` 都支持，可同时使用（表头下一条 + 表尾一条）
 
+## 13. 分组与聚合（group）
+
+> `group` 在排序/过滤后的行集上做客户端全量分组：组头行整行铺满（折叠按钮 + 组名 + 成员数 + 聚合值），组顺序按数据首现序（稳定）。聚合按组内**全量成员**求值（与分页无关）。
+
+```jsonc
+{
+  "type": "table",
+  "source": "${orders}",
+  "rowKey": "id",
+  "group": {
+    "field": "category",
+    "aggregates": [{ "fn": "sum", "field": "amount", "label": "金额合计" }, { "fn": "count" }],
+    "missingLabel": "未分类",
+  },
+  "columns": [
+    { "name": "category", "label": "分类" },
+    { "name": "amount", "label": "金额" },
+  ],
+}
+```
+
+- `field` 必填（声明即启用分组）；字段缺失/null/空串的行归入 `missingLabel`（默认 `-`）兜底组，行不丢
+- `aggregates[].fn` ∈ `sum | avg | min | max | count`；非 count 聚合必须给 `field`；无有效数值时渲染 `-`
+- 组头行折叠态按分组键记忆，数据刷新后同键组保持折叠
+- 兼容边界：treeMode 下 group 惰性（树优先）；`draggable` 与 group 同声明时 group 优先（拖拽排序不施加）；`rowSelection.selectAllMode:'page'` 的页全选只作用于当页组员行
+
+## 14. 单元格原位编辑双态（editable）
+
+> `editable` 在单元格级承载「导航态 ↔ 编辑态」双态状态机，与 `quickEdit` 共存分层：`quickEdit` 是常驻编辑控件/弹窗，`editable` 是按格进入/提交/取消。同列同时声明时 `editable` 优先。
+
+```jsonc
+{
+  "type": "table",
+  "source": "${tasks}",
+  "rowKey": "id",
+  "quickSaveItemAction": { "action": "ajax", "args": { "url": "/api/task/${id}" } },
+  "columns": [
+    { "name": "title", "label": "标题", "editable": true },
+    { "name": "score", "label": "评分", "editable": { "editor": "number", "required": true } },
+    {
+      "name": "level",
+      "label": "级别",
+      "editable": {
+        "editor": "select",
+        "options": [
+          { "label": "高", "value": "high" },
+          { "label": "低", "value": "low" },
+        ],
+      },
+    },
+    { "name": "done", "label": "完成", "editable": { "editor": "checkbox" } },
+  ],
+}
+```
+
+- 双态键位：导航态 `Enter`/`F2`/点击进入编辑；编辑态 `Enter` 提交、`Esc` 取消（值回滚零写入）、失焦且值变化时提交
+- `editor` ∈ `text | number | select | date | checkbox`（缺省 `text`）；`required` 拦截空值提交，编辑态保持不丢值
+- 写入通道：表级 `quickSaveItemAction ?? quickSaveAction` 在场时提交即派发保存动作（失败 notify + 编辑态保持）；不在场时走纯客户端 scope 写入（零派发）
+- `editable: true` 等价 `{ "editor": "text" }`；checkbox 编辑器「toggle 即提交」；未知 editor 值该列回退只读
+- 可编辑格的点击/键盘不冒泡到行（不触发行点击/行选中 toggle/行展开）
+
 ---
 
 ## table vs crud 选型

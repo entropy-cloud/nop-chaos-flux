@@ -850,6 +850,110 @@ Key contracts:
 - Zero-regression: without a `columnAggregate` declaration the header renders
   byte-identical to pre-enhancement behavior.
 
+## Table Group And Aggregate Contract
+
+Status: landed (live-verified 2026-08-31; owner plan
+`docs/plans/2026-08-31-0721-2-d1-gd-grid-editing-semantic-components.md`, Phase 1
+Decision 1 + Phase 2 implementation record; red-first matrices in
+`packages/flux-renderers-data/src/__tests__/table-grouping.test.ts` +
+`table-group-render.test.tsx`).
+
+The `table` renderer grows client-side grouping/aggregate semantics (C2 G-D
+first leg), retiring the replica-page "mock server-side pre-aggregation +
+schema loop" posture to a retrofit candidate:
+
+- `TableSchema.group?: TableGroupConfig` — `field` (record path; declaring a
+  valid one enables grouping), `aggregates?: Array<{ fn: 'sum'|'avg'|'min'|'max'|'count'; field?: string; label?: string }>`,
+  `missingLabel?` (fallback group label, default `'-'`). Grouping acts on the
+  sorted/filtered row set in first-appearance group order (stable, never
+  re-sorted); aggregates evaluate per group over the **full member set**
+  (never the page slice). `count` ignores `field`; numeric aggregates skip
+  missing/non-finite values and render `'-'` + a one-time dev warn
+  (`gd-aggregate-no-valid-values`) when no valid member remains.
+- Header row shape: full-width `colSpan=columnCount` row with
+  `data-slot="table-group-header"` + `data-group-key` + `data-collapsed`,
+  containing a chevron toggle button (`aria-expanded`, i18n-labelled), the
+  group label, the member count, and the aggregate text
+  (`{label ?? fn}: {value}`, `·`-joined). Member rows carry
+  `data-row-group="<key>"`.
+- Collapse: renderer-local state keyed by group key — survives data refreshes
+  for surviving keys, evaporates with vanished groups. No schema state
+  persistence channel (Follow-up pool).
+- Pagination: slices the interleaved header+member display sequence (headers
+  consume page slots; a page-leading header may render with zero members);
+  `totalPages` derives from the sequence length while the pagination bar keeps
+  reporting the row count. `selectAllMode: 'page'` select-all acts on the
+  current page's member rows (headers not counted).
+- Compatibility matrix: no `group` → byte-identical render (zero regression);
+  `group` × treeMode → tree precedence, group inert + one-time warn
+  (`gd-group-tree-clash`); `group` × `draggable` → group precedence (drag-sort
+  affordances + ordering suppressed) + one-time warn (`gd-group-drag-clash`);
+  `group` × `rowSelection` → headers are not selectable/render no checkbox,
+  member rows select normally; `group` × `combineNum` → combine suppressed
+  while grouped (merges must not cross group boundaries); `group` ×
+  `optionRow` → member-row state markers unchanged.
+- Fallback: missing/`null`/`undefined`/`''` field values route into the
+  `missingLabel ?? '-'` group + one-time dev warn (`gd-group-missing-field`);
+  rows are never dropped. Server-side pre-grouped contracts stay a data
+  endpoint responsibility (kanban aggregate boundary — client expression
+  semantics, server pre-computation reachable).
+- Validation (`data-schema-validation.ts`): `group` requires `field`
+  (`missing-required-field`); aggregate `fn` restricted to the five-value set
+  and non-count aggregates require `field` (`invalid-property-shape`).
+
+## Table Cell In-Place Edit Contract
+
+Status: landed (live-verified 2026-08-31; owner plan
+`docs/plans/2026-08-31-0721-2-d1-gd-grid-editing-semantic-components.md`, Phase 1
+Decision 2/6 + Phase 3 implementation record; red-first matrices in
+`packages/flux-renderers-data/src/__tests__/table-editable-cell.unit.test.tsx` +
+`table-cell-edit-render.test.tsx`).
+
+The `table` renderer grows cell-level in-place editing as a **layered channel
+beside (not instead of) `quickEdit`** (C2 G-D second leg): a per-cell
+navigation↔editing two-state machine with a type-dispatched editor matrix.
+
+- `TableColumnSchema.editable?: boolean | TableCellEditableConfig` — `editor?: 'text'|'number'|'select'|'date'|'checkbox'`
+  (default `'text'`, mapped onto the existing input-family widgets — zero
+  `@nop-chaos/ui` export changes), `options?` (select editor), `required?`.
+- Two-state machine: navigation state renders the same display text as a plain
+  cell (`tabIndex=0`); click / Enter / F2 enter editing (editor mounted,
+  auto-focused); Enter / blur (on change) commit; Esc cancels with zero writes
+  and zero dispatches (`gd-cell-edit-cancel`). Validation failure
+  (`required` empty / non-finite number) blocks the commit, surfaces
+  `data-slot="table-editable-error"`, and keeps the editing state without
+  losing focus or the draft (`gd-cell-edit-invalid`). Checkbox editor
+  specializes: the toggle gesture IS edit+commit (two-state collapse, no
+  persistent editing state).
+- Write channels (CX-10 compliant): with `quickSaveItemAction ?? quickSaveAction`
+  present, commit dispatches the save action on a field-override draft row
+  scope (`field`/`$slot.record` overrides — `createDraftScopeStore` shared with
+  the quickEdit controller), guarded by a save-generation counter and a record
+  snapshot; success merges into the row scope, explicit `ok:false` or a throw
+  notifies and keeps the draft + editing state (`gd-cell-edit-save-fail`).
+  Absent actions, commit takes the pure client scope-write channel
+  (`rowScope.update(field, value)` — zero dispatch, zero events). Editable
+  cells never join the row-draft (`__row_save_bar__`) channel.
+- Precedence and fallbacks: `editable` + `quickEdit` on one column → editable
+  wins, the quickEdit control does not render, one-time dev warn
+  (`gd-cell-edit-quickedit-coexist`, no double controls); unknown `editor`
+  → read-only fallback + one-time warn (`gd-cell-edit-no-editor`); `editable`
+  without a column `name` → read-only + one-time warn
+  (`gd-cell-edit-no-name`). Without an `editable` declaration the cell renders
+  byte-identical to before (zero regression).
+- Row gesture isolation: the editable cell stops click/keydown propagation —
+  an edit intent never triggers row click / `toggleOnRowClick` selection /
+  row expand; cell-level Enter/F2 wins over the row-level Enter/Space relay by
+  target.
+- Keyboard (Decision 6 landed leg): Enter/F2 enter, Enter commit, Esc cancel,
+  blur commit. Arrow-key cell roaming is `Deferred But Adjudicated` (needs a
+  grid coordinate model; zero consuming pages — P6b fifteen-key table records
+  the gap, not demand); the roving-helper extraction stays not-adopted
+  (G-B2 Decision 5① conditional branch).
+- Validation (`data-schema-validation.ts`): `editable` accepts boolean or the
+  config object; `editor` restricted to the five-value set, `options` an
+  array of objects, `required` boolean (`invalid-property-shape`).
+
 ## Recommended Reading Path
 
 For deeper design intent, continue with:

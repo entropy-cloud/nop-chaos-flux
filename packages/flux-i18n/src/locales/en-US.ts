@@ -199,6 +199,8 @@ export const enUS: Resource = {
       dragToReorder: 'Drag to reorder row',
       loadChildrenFailed: 'Failed to load children.',
       index: 'Index',
+      editableRequired: 'This field is required',
+      editableInvalidNumber: 'Please enter a valid number',
     },
     form: {
       required: 'Required',

@@ -1,4 +1,10 @@
 import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type {
+  TableCellEditableConfig,
+  TableGroupConfig,
+} from './table-group-schemas.js';
+
+export type * from './table-group-schemas.js';
 
 export interface TableColumnFilterOption extends SchemaObject {
   label: string;
@@ -87,6 +93,8 @@ export interface TableColumnSchema extends BaseSchema {
   filterable?: boolean | TableColumnFilterConfig;
   filterOptions?: TableColumnFilterOption[];
   quickEdit?: boolean | TableColumnQuickEditConfig;
+  /** Cell-level in-place edit two-state machine (D1 G-D). Takes precedence over quickEdit. */
+  editable?: boolean | TableCellEditableConfig;
   resizable?: boolean;
   minWidth?: number;
   maxWidth?: number;
@@ -229,6 +237,8 @@ export interface TableSchema extends BaseSchema {
   };
   quickSaveAction?: ActionSchema;
   quickSaveItemAction?: ActionSchema;
+  /** Client-side grouping/aggregate declaration (D1 G-D). Inert without a valid `field`. */
+  group?: TableGroupConfig;
   onSortChange?: BaseSchema;
   onFilterChange?: BaseSchema;
   onPageChange?: BaseSchema;

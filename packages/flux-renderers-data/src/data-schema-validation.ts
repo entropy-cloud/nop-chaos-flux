@@ -9,6 +9,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import type { CrudSchema, CrudSelectionConfig } from './crud-schema.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
 import type { TableSchema } from './schemas.js';
+import { validateColumnEditableConfig, validateTableGroupConfig } from './table-schema-validation.js';
 
 // The form renderer recognizes these label position values:
 //   'normal'     → labels above inputs (default)
@@ -164,7 +165,14 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
           path: toJsonPointer(path, 'columns', index),
           message: 'table.columns entries must be objects.',
         });
+        return;
       }
+      validateColumnEditableConfig(
+        (column as unknown as Record<string, unknown>).editable,
+        path,
+        index,
+        emit,
+      );
     });
   }
 
@@ -255,6 +263,8 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
       message: 'table.expandable.expandedRowKeys must be an array of strings.',
     });
   }
+
+  validateTableGroupConfig(schema, path, emit);
 }
 
 export function validateCrudSchema(context: RendererSchemaValidationContext<BaseSchema>) {

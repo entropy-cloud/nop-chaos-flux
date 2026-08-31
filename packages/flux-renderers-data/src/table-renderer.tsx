@@ -22,6 +22,7 @@ import {
   processTableData,
   serializeInstancePath,
 } from './table-renderer/table-data.js';
+import { useGroupedPageData, useTableGrouping } from './table-renderer/use-table-grouping.js';
 import { TableBodyRows } from './table-renderer/table-body-rows.js';
 import {
   createFixedColumnLayout,
@@ -223,6 +224,16 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     prevExpandedRef.current = next;
   }, [treeMode, tableSchemaProps, expandedTreeRowKeys, lazyChildrenMap, filteredData, loadChildren]);
 
+  // D1 G-D: client-side grouping model (resolution/collapse/dev-warns live in
+  // use-table-grouping.ts). Group precedence: inert under tree mode; drag-sort
+  // ordering suppressed while grouped.
+  const { dragSortActive, groupedDisplayItems, handleToggleGroupCollapse } = useTableGrouping({
+    tableSchemaProps,
+    draggable: schemaProps.draggable === true,
+    treeMode,
+    treeFlattenedData,
+  });
+
   // opt-row-selection-clash: an explicit optionRow.value binding exclusively
   // drives the row state markers; warn once in dev when it coexists with
   // rowSelection so the override is visible to authors.
@@ -259,8 +270,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const totalPages = useMemo(() => {
     if (!paginationEnabled) return 1;
-    return Math.max(1, Math.ceil(effectiveTotalRows / pageSize));
-  }, [effectiveTotalRows, pageSize, paginationEnabled]);
+    // Grouping interleaves group headers into the display sequence — page math
+    // slices that sequence, so its length drives totalPages (the pagination bar
+    // keeps reporting the row count).
+    const base = groupedDisplayItems ? groupedDisplayItems.length : effectiveTotalRows;
+    return Math.max(1, Math.ceil(base / pageSize));
+  }, [effectiveTotalRows, groupedDisplayItems, pageSize, paginationEnabled]);
 
   // Render-time currentPage clamp mirrors list-pagination
   // (currentPage = enabled ? clampPage(resolvedPage, totalPages) : 1). This prevents an
@@ -274,10 +289,24 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   // index 列（序号列）跨页累计偏移：(currentPage-1)*pageSize，对齐 AMIS __index 的 offset 语义。
   const indexColumnOffset = paginationEnabled ? (resolvedCurrentPage - 1) * pageSize : 0;
 
+  // D1 G-D: with grouping, the pagination slice covers the interleaved display
+  // sequence (headers + member rows); rows-only view feeds selection/index math.
+  const pagedGroupData = useGroupedPageData({
+    groupedDisplayItems,
+    paginationEnabled,
+    serverPaged,
+    resolvedCurrentPage,
+    pageSize,
+  });
+
   const processedData = useMemo(
-    () => paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, resolvedCurrentPage, pageSize),
-    [treeFlattenedData, paginationEnabled, serverPaged, resolvedCurrentPage, pageSize],
+    () =>
+      pagedGroupData
+        ? pagedGroupData.rows
+        : paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, resolvedCurrentPage, pageSize),
+    [pagedGroupData, treeFlattenedData, paginationEnabled, serverPaged, resolvedCurrentPage, pageSize],
   );
+  const groupedPageItems = pagedGroupData ? pagedGroupData.items : null;
 
   // D1 G-B3: 'page' selectAllMode scopes the header select-all (and the header
   // checkbox state) to the current display page. Server-paged tables keep the
@@ -387,13 +416,13 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       createFixedColumnLayout(
         {
           rowSelection: tableSchemaProps.rowSelection,
-          draggable: tableSchemaProps.draggable === true,
+          draggable: dragSortActive,
         },
         mainColumns,
         showExpandColumn,
         measuredWidths,
       ),
-    [mainColumns, tableSchemaProps.rowSelection, tableSchemaProps.draggable, showExpandColumn, measuredWidths],
+    [mainColumns, tableSchemaProps.rowSelection, dragSortActive, showExpandColumn, measuredWidths],
   );
 
   // [G3-视角5-01]/[G3-R3-视角8-01] helper body columns must pair header th +
@@ -406,7 +435,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const colgroupEntries = useMemo(() => {
     const entries: { key: string; width: number | undefined }[] = [];
-    if (schemaProps.draggable === true) {
+    if (dragSortActive) {
       entries.push({ key: DRAG_COLUMN_KEY, width: measuredWidths.get(DRAG_COLUMN_KEY) ?? DRAG_COLUMN_WIDTH });
     }
     if (showExpandColumn) {
@@ -426,10 +455,10 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       });
     }
     return entries;
-  }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, schemaProps.draggable, showExpandColumn, rowDraftColumnEnabled]);
+  }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, dragSortActive, showExpandColumn, rowDraftColumnEnabled]);
 
   const rowDragSortApi = useRowDragSort({
-    enabled: schemaProps.draggable === true,
+    enabled: dragSortActive,
     orderField: schemaProps.orderField,
     statePath: schemaProps.orderStatePath,
     ownership: schemaProps.orderOwnership ?? 'local',
@@ -462,7 +491,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     (nestedHeadersActive ? leafBodyColumns : mainColumns).length +
     (schemaProps.rowSelection ? 1 : 0) +
     (showExpandColumn ? 1 : 0) +
-    (schemaProps.draggable ? 1 : 0) +
+    (dragSortActive ? 1 : 0) +
     (rowDraftColumnEnabled ? 1 : 0);
   const columnSettingsOverlay = schemaProps.columnSettings?.overlay !== false;
   const columnSettingsAlignmentClass =
@@ -576,7 +605,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 columnResize={schemaProps.columnResize}
                 resizeApi={resizeApi}
                 affixHeader={schemaProps.affixHeader}
-                draggable={schemaProps.draggable === true}
+                draggable={dragSortActive}
                 rowDraftColumnEnabled={rowDraftColumnEnabled}
               />
             </TableHeader>
@@ -626,7 +655,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             onRetryTreeLoad={handleRetryTreeLoad}
             lazyChildrenMap={lazyChildrenMap}
             rowDragSortApi={rowDragSortApi}
-            draggable={schemaProps.draggable === true}
+            draggable={dragSortActive}
+            groupedPageItems={groupedPageItems}
+            onToggleGroupCollapse={handleToggleGroupCollapse}
             indexColumnOffset={indexColumnOffset}
           />
 

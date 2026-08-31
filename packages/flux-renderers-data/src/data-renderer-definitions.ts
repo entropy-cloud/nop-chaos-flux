@@ -127,6 +127,13 @@ export const dataRendererDefinitions: RendererDefinition[] = [
           'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default rowKey), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers on the row; absent optionRow keeps legacy output.',
         editorType: 'object',
       },
+      group: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Group',
+        description:
+          'Client-side grouping over the sorted/filtered row set (D1 G-D). `field` groups rows by first-appearance order (declaring it enables grouping); `aggregates` renders per-group `fn` (sum/avg/min/max/count) values in the header; `missingLabel` names the fallback group for missing/null/empty values. Group headers are rows with data-slot="table-group-header" and collapse via the chevron toggle; collapsed state survives data refreshes keyed by group. Inert under tree mode (tree precedence); suppresses drag-sort ordering while active.',
+        editorType: 'object',
+      },
       expandable: {
         shape: {
           kind: 'schema-definition',
@@ -271,6 +278,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'pagination', kind: 'prop' },
       { key: 'rowSelection', kind: 'prop' },
       { key: 'optionRow', kind: 'prop' },
+      { key: 'group', kind: 'prop' },
       { key: 'expandable', kind: 'prop' },
       { key: 'quickSaveAction', kind: 'prop' },
       { key: 'quickSaveItemAction', kind: 'prop' },
