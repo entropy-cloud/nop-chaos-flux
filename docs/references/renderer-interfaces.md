@@ -781,9 +781,13 @@ Key contracts:
   return `{ok:false}`, affordances inert, no events — kanban controlled
   mutation-drop precedent).
 - Handles (kanban handle precedent): `addTab({ item, index? })` (auto value
-  `tab-<ts>` when absent; out-of-range index appends), `removeTab({ value })`,
+  `tab-<n>` from a monotonic counter when absent — never collides across
+  same-tick invokes; out-of-range index appends), `removeTab({ value })`,
   `renameTab({ value, title })`, `moveTab({ value, toIndex })` (index clamped).
-  Failure paths: unknown value → `{ok:false}`; removing the last remaining tab
+  Failure paths: unknown value → `{ok:false}`; `addTab` with a value that
+  already exists in the collection is refused (`{ok:false}` + dev warn
+  `tabs-add-duplicate-value`, 22-05 — duplicate values would break trigger
+  keying and `findIndex` addressing); removing the last remaining tab
   is refused (`gc-tab-remove-last` adjudicated as 禁止删空兜底 — an empty
   collection would dangle the `valueStatePath` active pointer; expression-cleared
   items keep candidate-fix semantics, the guard only guards the component's own
