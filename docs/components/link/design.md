@@ -54,4 +54,4 @@
 ## 12. 风险、取舍与后续阶段
 
 - 需要清楚区分 `link` 与 `button`：前者偏导航文本，后者偏动作触发。
-- **URL 协议校验（安全红线）**：`href` 在进入 `<a href>` 前经 `isSafeNavigationUrl` 白名单校验（`sanitize.ts`）——放行 `http/https/mailto/tel/data:` 与无 scheme 相对 URL；`javascript:`/`vbscript:`/`blob:`/`file:` 等 scheme 一律视为无 href（label 仍渲染，链接不可导航）。`href` 可绑定数据源记录（`${item.link}`），不做此校验即构成点击在当前页面上下文执行脚本的 XSS 面；该姿态与 html/markdown sanitize 门禁剥除 `javascript:` URI 一致。`data:` 为既有下载链路保留（CRUD export 写入 `data:text/csv` href）——data: 导航打开 opaque origin 文档，不触达 opener（C6.1 link P0-1）。
+- **URL 协议校验（安全红线）**：`href` 在进入 `<a href>` 前经 `isSafeNavigationUrl` 白名单校验（`sanitize.ts` 再导出自 flux-core）——放行 `http/https/mailto/tel/data:` 与无 scheme 相对 URL；`javascript:`/`vbscript:`/`blob:`/`file:` 等 scheme 一律视为无 href（label 仍渲染，链接不可导航）。`href` 可绑定数据源记录（`${item.link}`），不做此校验即构成点击在当前页面上下文执行脚本的 XSS 面；该姿态与 html/markdown sanitize 门禁剥除 `javascript:` URI 一致。`data:` 为既有下载链路保留（CRUD export 写入 `data:text/csv` href）——data: 导航打开 opaque origin 文档，不触达 opener（C6.1 link P0-1）。`blob:` 例外（ui-review 审计 15-02）：仅在设置 `download` 时放行（同源 object-URL 导出链接，经 `download` 属性以文件形式交付）；未设置 `download` 的 `blob:` 维持清空（保守 fail-safe）。

@@ -139,7 +139,8 @@ export interface LinkSchema extends BaseSchema {
   /** rel 属性，缺省时 target=_blank 自动补 noopener/noreferrer */
   rel?: string;
   /** [G7-R2-视角11-01] 下载语义：true 渲染 download=""（浏览器生成文件名），字符串作为保存文件名。
-   * 对 data:/blob: 同源导出链接必须设置，否则现代浏览器拦截顶层导航导致"点击下载"无响应。 */
+   * 对 data:/blob: 同源导出链接必须设置，否则现代浏览器拦截顶层导航导致"点击下载"无响应；
+   * blob: 链接仅在设置 download 时 href 才通过安全守卫（未设置则 href 被清空、链接不可导航）。 */
   download?: boolean | string;
   /** 禁用态（与 meta.disabled 语义一致） */
   disabled?: boolean | string;

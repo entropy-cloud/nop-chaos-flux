@@ -92,4 +92,16 @@ describe('isSafeNavigationUrl — URL protocol allowlist for navigation hrefs', 
     expect(isSafeNavigationUrl('blob:https://example.com/abc')).toBe(false);
     expect(isSafeNavigationUrl('file:///etc/passwd')).toBe(false);
   });
+
+  it('allows blob: only when the download option is set (15-02 export-link contract)', () => {
+    const blob = 'blob:https://example.com/7c0f1c1f-2a1f-4c0f-8b0f-0f0f0f0f0f0f';
+    expect(isSafeNavigationUrl(blob, { download: true })).toBe(true);
+    // without download the conservative fail-safe holds: blob: stays rejected
+    expect(isSafeNavigationUrl(blob)).toBe(false);
+    expect(isSafeNavigationUrl(blob, {})).toBe(false);
+    expect(isSafeNavigationUrl(blob, { download: false })).toBe(false);
+    // the download channel never unlocks script-execution schemes
+    expect(isSafeNavigationUrl('javascript:alert(1)', { download: true })).toBe(false);
+    expect(isSafeNavigationUrl('file:///etc/passwd', { download: true })).toBe(false);
+  });
 });

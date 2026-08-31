@@ -51,3 +51,38 @@ describe('[G7-R2-视角11-01] link download passthrough (export-no-response)', (
     expect(onClick).toHaveBeenCalled();
   });
 });
+
+// 15-02 (ui-review audit group B): the author docs promise blob:+download export
+// links work, but the scheme allowlist silently cleared blob: hrefs — the
+// documented path reproduced the exact "click does nothing" symptom.
+describe('15-02 blob: download contract (safe only with the download attribute)', () => {
+  it('keeps a blob: href when download is set (download semantics reachable)', () => {
+    const blobHref = 'blob:https://example.com/7c0f1c1f-2a1f-4c0f-8b0f-0f0f0f0f0f0f';
+    const { container } = renderLink({ href: blobHref, download: 'export.csv' });
+    const anchor = container.querySelector('a')!;
+    expect(anchor.getAttribute('href')).toBe(blobHref);
+    expect(anchor.getAttribute('download')).toBe('export.csv');
+  });
+
+  it('keeps a blob: href with download: true (download="" passthrough)', () => {
+    const blobHref = 'blob:https://example.com/abc';
+    const { container } = renderLink({ href: blobHref, download: true });
+    const anchor = container.querySelector('a')!;
+    expect(anchor.getAttribute('href')).toBe(blobHref);
+    expect(anchor.getAttribute('download')).toBe('');
+  });
+
+  it('still clears a blob: href without download (conservative fail-safe)', () => {
+    const { container } = renderLink({ href: 'blob:https://example.com/abc' });
+    const anchor = container.querySelector('a')!;
+    expect(anchor.getAttribute('href')).toBeNull();
+    // href was the only text fallback — cleared href renders an empty anchor
+    expect(anchor.textContent).toBe('');
+  });
+
+  it("tops up noopener for a whitespace-only rel (' ') with target=_blank (trim before judging)", () => {
+    const { container } = renderLink({ href: 'https://example.com', target: '_blank', rel: ' ' });
+    const anchor = container.querySelector('a')!;
+    expect(anchor.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+});
