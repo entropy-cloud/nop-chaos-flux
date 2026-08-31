@@ -3,6 +3,7 @@ import type {
   RendererEventHandler,
   ScopeRef,
 } from '@nop-chaos/flux-core';
+import { getIn } from '@nop-chaos/flux-core';
 import type { TabsItemSchema } from './schemas.js';
 import { getItemValue, isDevTabsRuntime, resolveCandidateValue } from './tabs-utils.js';
 
@@ -24,7 +25,13 @@ export interface TabsViewOpsInput {
   scopeItemsActive: boolean;
   itemsStatePath?: string;
   renderScope: ScopeRef;
-  seedManagedCollection: (next: TabsItemSchema[]) => void;
+  seedManagedCollection: (
+    next:
+      | TabsItemSchema[]
+      | ((prev: TabsItemSchema[] | null) => TabsItemSchema[]),
+  ) => void;
+  /** Schema-level base collection (fallback when the live state is unset). */
+  readBaseCollection: () => TabsItemSchema[];
   getActiveValue: () => string;
   setActiveValue: (value: string) => void;
   events: Readonly<Partial<Record<'onTabAdd' | 'onTabClose' | 'onTabRename' | 'onTabMove', RendererEventHandler>>>;
@@ -33,6 +40,10 @@ export interface TabsViewOpsInput {
 }
 
 const removeLastWarnedKeys = new Set<string>();
+
+// 13-03: monotonic generated-value counter — `Date.now()` collides when two
+// addTab invokes land in the same tick (or the same millisecond).
+let tabValueSequence = 0;
 
 function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
   const { items, isControlledItems, events, eventScope } = input;
@@ -43,15 +54,16 @@ function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
     scope: eventScope,
   });
 
-  const commitCollection = (next: TabsItemSchema[]) => {
-    if (input.scopeItemsActive && input.itemsStatePath) {
-      input.renderScope.update(input.itemsStatePath, next);
-      return;
-    }
-    input.seedManagedCollection(next);
-  };
+  const collectionHasValue = (collection: TabsItemSchema[], value: string) =>
+    collection.some((item, i) => getItemValue(item, i) === value);
 
-  const generateTabValue = (): string => `tab-${Date.now()}`;
+  const generateTabValue = (existing: TabsItemSchema[]): string => {
+    let candidate: string;
+    do {
+      candidate = `tab-${++tabValueSequence}`;
+    } while (collectionHasValue(existing, candidate));
+    return candidate;
+  };
 
   const warnRemoveLast = () => {
     if (!isDevTabsRuntime() || removeLastWarnedKeys.has(input.warnKey)) {
@@ -60,6 +72,42 @@ function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
     removeLastWarnedKeys.add(input.warnKey);
     console.warn(
       '[TabsRenderer] tabs-remove-last: the last remaining tab cannot be removed; an empty view collection would dangle the active pointer.',
+    );
+  };
+
+  const warnAddDuplicate = (value: string) => {
+    if (!isDevTabsRuntime()) {
+      return;
+    }
+    console.warn(
+      `[TabsRenderer] tabs-add-duplicate-value: addTab refused — value "${value}" already exists in the collection.`,
+    );
+  };
+
+  // 13-03 (scope branch): read the collection truth from the scope at
+  // invocation time instead of trusting a render-closure snapshot.
+  const readScopeCollection = (): TabsItemSchema[] | undefined => {
+    if (!input.scopeItemsActive || !input.itemsStatePath) {
+      return undefined;
+    }
+    const snapshot = (input.renderScope.store?.getSnapshot() ??
+      input.renderScope.readVisible()) as Record<string, unknown>;
+    const found = getIn(snapshot, input.itemsStatePath);
+    return Array.isArray(found) ? (found as TabsItemSchema[]) : undefined;
+  };
+
+  // 13-03: every mutation is expressed as (prev) => next and resolved against
+  // the live collection at commit time — a render-closure snapshot committed
+  // as an absolute value would drop same-tick sibling mutations.
+  const commitCollection = (updater: (prev: TabsItemSchema[]) => TabsItemSchema[]) => {
+    if (input.scopeItemsActive && input.itemsStatePath) {
+      const prev = readScopeCollection() ?? input.readBaseCollection();
+      const next = updater(prev);
+      input.renderScope.update(input.itemsStatePath, next);
+      return;
+    }
+    input.seedManagedCollection((prev) =>
+      updater(Array.isArray(prev) ? prev : input.readBaseCollection()),
     );
   };
 
@@ -73,20 +121,39 @@ function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
     if (item.title == null && item.label == null) {
       return { ok: false };
     }
-    const source = items;
     const rawValue = item.value ?? item.key;
-    const value = rawValue != null ? String(rawValue) : generateTabValue();
-    const entry: TabsItemSchema = { ...item, value };
-    const insertAt =
-      typeof index === 'number' && Number.isFinite(index) && index >= 0 && index <= source.length
-        ? Math.trunc(index)
-        : source.length;
-    const next = [...source.map((it) => ({ ...it }))];
-    next.splice(insertAt, 0, entry);
-    commitCollection(next);
-    const payload = { type: 'tabs:tab-add', item: entry, index: insertAt };
+    const requestedValue = rawValue != null ? String(rawValue) : undefined;
+    // 22-05: refuse a duplicate value up front (remove/rename guard precedent)
+    // — duplicate React keys / duplicate trigger values break tab addressing.
+    if (requestedValue !== undefined && collectionHasValue(items, requestedValue)) {
+      warnAddDuplicate(requestedValue);
+      return { ok: false };
+    }
+    const entryValue = requestedValue ?? generateTabValue(items);
+    // 22-05 invariant (belt-and-braces for batched same-tick adds): if the
+    // value still exists in the live prev, keep the collection unchanged.
+    let outcome: { value: string; index: number } | null = null;
+    commitCollection((prev) => {
+      const base = prev.map((it) => ({ ...it }));
+      if (collectionHasValue(base, entryValue)) {
+        return prev;
+      }
+      const insertAt =
+        typeof index === 'number' && Number.isFinite(index) && index >= 0 && index <= base.length
+          ? Math.trunc(index)
+          : base.length;
+      base.splice(insertAt, 0, { ...item, value: entryValue });
+      outcome = { value: entryValue, index: insertAt };
+      return base;
+    });
+    const committed = outcome as { value: string; index: number } | null;
+    if (!committed) {
+      return { ok: false };
+    }
+    const entry: TabsItemSchema = { ...item, value: committed.value };
+    const payload = { type: 'tabs:tab-add', item: entry, index: committed.index };
     void events.onTabAdd?.(payload, eventDispatchCtx(payload));
-    return { ok: true, value, index: insertAt };
+    return { ok: true, value: committed.value, index: committed.index };
   };
 
   const runRemoveTab = (value: string): { ok: boolean; nextActiveValue?: string } => {
@@ -113,7 +180,7 @@ function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
         nextActiveValue = candidate;
       }
     }
-    commitCollection(next);
+    commitCollection(() => next);
     const closePayload = {
       type: 'tabs:tab-close',
       value,
@@ -136,7 +203,7 @@ function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
       return { ok: false };
     }
     const next = source.map((item, i) => (i === index ? { ...item, title: normalized } : item));
-    commitCollection(next);
+    commitCollection(() => next);
     const renamePayload = {
       type: 'tabs:tab-rename',
       value,
@@ -161,7 +228,7 @@ function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
     const next = [...source];
     const [moved] = next.splice(fromIndex, 1);
     next.splice(clamped, 0, moved!);
-    commitCollection(next);
+    commitCollection(() => next);
     const movePayload = { type: 'tabs:tab-move', value, fromIndex, toIndex: clamped };
     void events.onTabMove?.(movePayload, eventDispatchCtx(movePayload));
     return { ok: true, toIndex: clamped };

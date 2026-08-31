@@ -120,6 +120,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     itemsStatePath,
     renderScope,
     seedManagedCollection: setManagedItems,
+    readBaseCollection: () => baseItems,
     getActiveValue: () => ownedAxis.value,
     setActiveValue: (value: string) => ownedAxis.setValue(value),
     events: props.events,
