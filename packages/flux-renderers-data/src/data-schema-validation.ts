@@ -93,7 +93,7 @@ function createCrudQueryFormRegion(schema: CrudSchema, path: string) {
         {
           type: 'button',
           label: t('flux.common.search'),
-          variant: 'primary',
+          variant: 'default',
           onClick: { action: 'component:querySubmit', componentId: String(crudComponentId) },
         },
         {

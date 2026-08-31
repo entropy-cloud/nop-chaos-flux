@@ -11,58 +11,32 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname, relative, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { buildRegistry } from './shared.mjs';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
 
-// ─── Real Flux imports (from dist) ──────────────────────────────────────────
+// ─── Real Flux registry (from dist) ─────────────────────────────────────────
+// Historical 9-package set, preserved so this script's validation results stay
+// comparable over time. Newer renderer families (scheduling, ai) are validated
+// by validate-pages.mjs via buildFullRegistry().
 
-const { createRendererRegistry, registerRendererDefinitions } = await import(
-  resolve(REPO_ROOT, 'packages/flux-core/dist/index.js')
-);
+const VALIDATE_PACKAGES = [
+  { pkg: 'flux-renderers-basic', fn: 'registerBasicRenderers' },
+  { pkg: 'flux-renderers-layout', fn: 'registerLayoutRenderers' },
+  { pkg: 'flux-renderers-form', fn: 'registerFormRenderers' },
+  { pkg: 'flux-renderers-form-advanced', fn: 'registerFormAdvancedRenderers' },
+  { pkg: 'flux-renderers-data', fn: 'registerDataRenderers' },
+  { pkg: 'flux-renderers-content', fn: 'registerContentRenderers' },
+  { pkg: 'flux-renderers-mobile', fn: 'registerMobileRenderers' },
+  { pkg: 'flux-code-editor', fn: 'registerCodeEditorRenderers' },
+  { pkg: 'flux-renderers-industrial', fn: 'registerScadaRenderers' },
+];
+
+const registry = await buildRegistry(VALIDATE_PACKAGES);
 const { validateSchema } = await import(
   resolve(REPO_ROOT, 'packages/flux-compiler/dist/index.js')
 );
-
-const { registerBasicRenderers } = await import(
-  resolve(REPO_ROOT, 'packages/flux-renderers-basic/dist/index.js')
-);
-const { registerLayoutRenderers } = await import(
-  resolve(REPO_ROOT, 'packages/flux-renderers-layout/dist/index.js')
-);
-const { registerFormRenderers } = await import(
-  resolve(REPO_ROOT, 'packages/flux-renderers-form/dist/index.js')
-);
-const { registerFormAdvancedRenderers } = await import(
-  resolve(REPO_ROOT, 'packages/flux-renderers-form-advanced/dist/index.js')
-);
-const { registerDataRenderers } = await import(
-  resolve(REPO_ROOT, 'packages/flux-renderers-data/dist/index.js')
-);
-const { registerContentRenderers } = await import(
-  resolve(REPO_ROOT, 'packages/flux-renderers-content/dist/index.js')
-);
-const { registerMobileRenderers } = await import(
-  resolve(REPO_ROOT, 'packages/flux-renderers-mobile/dist/index.js')
-);
-const { registerCodeEditorRenderers } = await import(
-  resolve(REPO_ROOT, 'packages/flux-code-editor/dist/index.js')
-);
-const { registerScadaRenderers } = await import(
-  resolve(REPO_ROOT, 'packages/flux-renderers-industrial/dist/index.js')
-);
-
-// ─── Setup full registry ────────────────────────────────────────────────────
-
-const registry = createRendererRegistry();
-registerBasicRenderers(registry);
-registerLayoutRenderers(registry);
-registerFormRenderers(registry);
-registerFormAdvancedRenderers(registry);
-registerDataRenderers(registry);
-registerContentRenderers(registry);
-registerMobileRenderers(registry);
-registerCodeEditorRenderers(registry);
-registerScadaRenderers(registry);
 
 // ─── JSONC → JSON (comments, single quotes, trailing commas, unquoted keys) ─
 

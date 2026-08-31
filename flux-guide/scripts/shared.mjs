@@ -34,11 +34,11 @@ export const REGISTER_PACKAGES = [
  * Note: importing renderer dist pulls in `.css` imports; run under the
  * `scripts/css-stub.mjs` loader (see package.json `generate-types` script).
  */
-export async function loadRegisteredDefinitions() {
+export async function buildRegistry(packages = REGISTER_PACKAGES) {
   const core = await import(`${REPO_ROOT}/packages/flux-core/dist/index.js`);
   const registry = core.createRendererRegistry();
 
-  for (const { pkg, fn } of REGISTER_PACKAGES) {
+  for (const { pkg, fn } of packages) {
     let mod;
     try {
       mod = await import(`${REPO_ROOT}/packages/${pkg}/dist/index.js`);
@@ -53,6 +53,15 @@ export async function loadRegisteredDefinitions() {
     mod[fn](registry);
   }
 
+  return registry;
+}
+
+export function buildFullRegistry() {
+  return buildRegistry();
+}
+
+export async function loadRegisteredDefinitions() {
+  const registry = await buildFullRegistry();
   return registry.list();
 }
 
