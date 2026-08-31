@@ -37,7 +37,7 @@ describe('array-field schema coverage', () => {
     ]);
     const env: RendererEnv = {
       fetcher: async function <T>() {
-        return { ok: true, status: 200, data: null as T };
+        return { status: 0, data: null as T };
       },
       notify: () => undefined,
     };
@@ -76,7 +76,7 @@ describe('array-field schema coverage', () => {
     ]);
     const env: RendererEnv = {
       fetcher: async function <T>() {
-        return { ok: true, status: 200, data: null as T };
+        return { status: 0, data: null as T };
       },
       notify: () => undefined,
     };

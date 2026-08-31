@@ -20,9 +20,9 @@ describe('form input onChange', () => {
       fetcher: vi.fn(async (api: { url: string; data?: unknown }) => {
         if (api.url.includes('__save')) {
           savedData = api.data as Record<string, unknown>;
-          return { ok: true, data: { id: '1' } };
+          return { status: 0, data: { id: '1' } };
         }
-        return { ok: true, data: {} };
+        return { status: 0, data: {} };
       }),
     } as unknown as typeof baseEnv;
 

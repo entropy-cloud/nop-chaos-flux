@@ -28,13 +28,13 @@ describe('submitAction lazy execution contract', () => {
       ...baseEnv,
       fetcher: vi.fn(async (api: { url: string; data?: unknown }) => {
         if (api.url.includes('__get')) {
-          return { ok: true, data: { nickName: 'OldNick' } };
+          return { status: 0, data: { nickName: 'OldNick' } };
         }
         if (api.url.includes('__update')) {
           savedData = api.data as Record<string, unknown>;
-          return { ok: true, data: { id: '1' } };
+          return { status: 0, data: { id: '1' } };
         }
-        return { ok: true, data: {} };
+        return { status: 0, data: {} };
       }),
     } as unknown as typeof baseEnv;
 

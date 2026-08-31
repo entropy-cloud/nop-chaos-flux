@@ -166,7 +166,7 @@ describe('createRendererRuntime', () => {
 
   it('exposes source state for api-backed sources across loading and success', async () => {
     let releaseRequest:
-      | ((value: { ok: boolean; status: number; data: { value: string } }) => void)
+      | ((value: { status: number; data: { value: string } | null }) => void)
       | undefined;
     const fetcherImpl: RendererEnv['fetcher'] = async () =>
       new Promise((resolve) => {

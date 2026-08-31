@@ -77,6 +77,9 @@ export const zhCN: Resource = {
       retry: '重试',
       newConversation: '新建会话',
       deleteConversation: '删除',
+      deleteConversationConfirmTitle: '删除此会话？',
+      deleteConversationConfirmBody: '该会话及其全部消息历史将被永久删除，且无法恢复。',
+      deleteConversationConfirm: '删除会话',
       renameConversation: '重命名',
       emptyConversationTitle: '新对话',
       expand: '展开',
@@ -146,6 +149,10 @@ export const zhCN: Resource = {
       loadedAll: '已加载全部 ({{count}})',
       loadingMore: '加载更多...',
     },
+    batchBar: {
+      selectedCount: '已选择 {{count}} 项',
+      clearSelection: '取消选择',
+    },
     list: {
       loadingMore: '加载更多...',
       noMore: '没有更多了',
@@ -181,6 +188,7 @@ export const zhCN: Resource = {
       collapse: '收起',
       search: '搜索',
       resizeColumn: '调整列宽',
+      dragColumn: '拖拽调整行顺序',
       viewDetails: '查看详情',
       popoverEmpty: '暂无内容',
       loading: '加载中',
@@ -191,6 +199,8 @@ export const zhCN: Resource = {
       dragToReorder: '拖拽调整行顺序',
       loadChildrenFailed: '子节点加载失败',
       index: '序号',
+      editableRequired: '该字段必填',
+      editableInvalidNumber: '请输入有效数字',
     },
     form: {
       required: '必填',
@@ -364,10 +374,17 @@ export const zhCN: Resource = {
       moveDialog: '移动对话框',
       dragHandleRoleDescription: '对话框拖动把手',
       moveDialogInstructions: '使用方向键移动对话框。按住 Shift 可进行更大步长移动。按 Home 可重置对话框位置。',
+      unsavedChangesTitle: '放弃更改？',
+      unsavedChangesBody: '你的编辑尚未保存，关闭后将丢失这些更改。',
+      unsavedChangesKeep: '继续编辑',
+      unsavedChangesDiscard: '放弃更改',
     },
     drawer: {
       close: '关闭',
       resize: '调整大小',
+    },
+    tabs: {
+      newTab: '新视图',
     },
     page: {
       asideResize: '调整侧栏宽度',
@@ -399,6 +416,16 @@ export const zhCN: Resource = {
       title: '侧边栏',
       description: '显示移动端侧边栏。',
       toggle: '切换侧边栏',
+    },
+    command: {
+      title: '命令面板',
+      searchPlaceholder: '搜索要运行的命令…',
+    },
+    result: {
+      statusSuccess: '成功',
+      statusError: '错误',
+      statusWarning: '警告',
+      statusInfo: '提示',
     },
     breadcrumb: {
       more: '更多',
@@ -1084,6 +1111,7 @@ export const zhCN: Resource = {
         searchCards: '搜索卡片...',
         newCard: '新卡片',
         newColumn: '新列',
+        wipExceeded: '超出 WIP 上限',
         filterError: '筛选错误：{{message}}',
         pickedUpCard: '已拾取卡片：{{title}}。使用方向键移动，Escape 取消。',
         cardMovedTo: '卡片已移动到列：{{title}}',
@@ -1190,6 +1218,7 @@ export const zhCN: Resource = {
         invalidPattern: '无效模式：{{pattern}}',
         cameraUnavailable: '摄像头不可用',
         readOnlyField: '字段为只读',
+        disabledField: '字段已禁用',
         clearButtonLabel: '清除值',
         cameraFeedLabel: '条码扫描摄像头画面',
         cameraPermissionDenied: '摄像头权限被拒绝',

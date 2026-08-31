@@ -462,10 +462,29 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     if (resolved.loading) {
       const loadingRegion = regions.loading;
       if (loadingRegion) {
-        return <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>{loadingRegion.render() as React.ReactNode}</div>;
+        return (
+          <div
+            data-slot="gantt"
+            inert={meta.disabled === true || undefined}
+            aria-disabled={meta.disabled === true || undefined}
+            data-disabled={meta.disabled === true ? 'true' : undefined}
+            data-testid={meta.testid || undefined}
+            data-cid={meta.cid || undefined}
+          >
+            {loadingRegion.render() as React.ReactNode}
+          </div>
+        );
       }
       return (
-        <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-gantt flex flex-col h-full', meta.className)}>
+        <div
+          data-slot="gantt"
+          inert={meta.disabled === true || undefined}
+          aria-disabled={meta.disabled === true || undefined}
+          data-disabled={meta.disabled === true ? 'true' : undefined}
+          data-testid={meta.testid || undefined}
+          data-cid={meta.cid || undefined}
+          className={cn('nop-gantt flex flex-col h-full', meta.className)}
+        >
           <div className="flex gap-2 p-2"><Skeleton className="h-8 w-32" /><Skeleton className="h-8 w-24" /></div>
           <Skeleton className="flex-1 m-2" />
         </div>
@@ -476,10 +495,30 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     if (!resolved.loading && totalTaskCount === 0) {
       const emptyRegion = regions.empty;
       if (emptyRegion) {
-        return <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn(meta.className, resolved.emptyClassName as string | undefined)}>{emptyRegion.render() as React.ReactNode}</div>;
+        return (
+          <div
+            data-slot="gantt"
+            inert={meta.disabled === true || undefined}
+            aria-disabled={meta.disabled === true || undefined}
+            data-disabled={meta.disabled === true ? 'true' : undefined}
+            data-testid={meta.testid || undefined}
+            data-cid={meta.cid || undefined}
+            className={cn(meta.className, resolved.emptyClassName as string | undefined)}
+          >
+            {emptyRegion.render() as React.ReactNode}
+          </div>
+        );
       }
       return (
-        <div data-slot="gantt" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-gantt', meta.className)} />
+        <div
+          data-slot="gantt"
+          inert={meta.disabled === true || undefined}
+          aria-disabled={meta.disabled === true || undefined}
+          data-disabled={meta.disabled === true ? 'true' : undefined}
+          data-testid={meta.testid || undefined}
+          data-cid={meta.cid || undefined}
+          className={cn('nop-gantt', meta.className)}
+        />
       );
     }
 
@@ -492,7 +531,16 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     );
 
     return (
-      <div ref={containerRef} data-slot="gantt" className={cn('nop-gantt flex flex-col h-full', meta.className)} data-testid={meta.testid || undefined} data-cid={meta.cid || undefined}>
+      <div
+      ref={containerRef}
+      data-slot="gantt"
+      inert={meta.disabled === true || undefined}
+      aria-disabled={meta.disabled === true || undefined}
+      data-disabled={meta.disabled === true ? 'true' : undefined}
+      className={cn('nop-gantt flex flex-col h-full', meta.className)}
+      data-testid={meta.testid || undefined}
+      data-cid={meta.cid || undefined}
+    >
         <GanttLiveRegion store={store} />
         <GanttHeader
           store={store}

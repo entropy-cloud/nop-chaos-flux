@@ -6,14 +6,15 @@ import { DynamicRenderer } from './dynamic-renderer.js';
 import { FlexRenderer } from './flex.js';
 import { FragmentRenderer } from './fragment.js';
 import { IconRenderer } from './icon.js';
+import { KeyboardRenderer } from './keyboard.js';
 import { LoopRenderer } from './loop.js';
 import { PageRenderer } from './page.js';
 import { ReactionRenderer } from './reaction.js';
 import { RecurseRenderer } from './recurse.js';
 import { ScopeDebugRenderer } from './scope-debug.js';
-import { TabsRenderer } from './tabs.js';
+import { tabsRendererDefinition } from './tabs-renderer-definition.js';
 import { TextRenderer } from './text.js';
-import { dialogRendererDefinition, drawerRendererDefinition } from './surface-renderer-definitions.js';
+import { dialogRendererDefinition, drawerRendererDefinition, commandPaletteRendererDefinition } from './surface-renderer-definitions.js';
 import {
   badgeContracts,
   containerContracts,
@@ -35,12 +36,23 @@ export const basicRendererDefinitions: RendererDefinition[] = [
         kind: 'injected-local',
       },
     },
+    propContracts: {
+      breadcrumb: {
+        shape: { kind: 'array', item: { kind: 'unknown' } },
+        displayName: 'Breadcrumb',
+        description:
+          'Page-header breadcrumb entries ({ label, href? }); accepts an array or an expression resolving to one. Rendered above the title row; malformed entries are skipped.',
+        editorType: 'expression',
+      },
+    },
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'header', kind: 'region', regionKey: 'header' },
       { key: 'footer', kind: 'region', regionKey: 'footer' },
       { key: 'aside', kind: 'region', regionKey: 'aside' },
+      { key: 'extra', kind: 'region', regionKey: 'extra' },
+      { key: 'breadcrumb', kind: 'prop' },
       { key: 'data', kind: 'prop' },
       { key: 'subTitle', kind: 'prop' },
       { key: 'remark', kind: 'prop' },
@@ -230,6 +242,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
           kind: 'union',
           anyOf: [
             { kind: 'literal', value: 'default' },
+            { kind: 'literal', value: 'primary' },
             { kind: 'literal', value: 'destructive' },
             { kind: 'literal', value: 'outline' },
             { kind: 'literal', value: 'secondary' },
@@ -480,109 +493,52 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'actions', kind: 'prop' },
     ],
   },
-  dialogRendererDefinition,
-  drawerRendererDefinition,
   {
-    type: 'tabs',
-    displayName: 'Tabs',
-    category: 'layout',
+    type: 'keyboard',
+    displayName: 'Keyboard',
+    category: 'logic',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
-    component: TabsRenderer,
+    defaultSchema: { type: 'keyboard', bindings: [] },
+    component: KeyboardRenderer,
     propContracts: {
-      items: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'schema-definition',
-            fieldRules: {
-              title: {
-                kind: 'value-or-region',
-                regionKey: 'titleRegionKey',
-                params: ['item', 'index', 'key'],
-              },
-              body: {
-                kind: 'region',
-                regionKey: 'bodyRegionKey',
-                params: ['item', 'index', 'key'],
-              },
-              toolbar: {
-                kind: 'region',
-                regionKey: 'toolbarRegionKey',
-                params: ['item', 'index', 'key'],
-              },
-              disabled: 'value',
-            },
-          },
-        },
-        displayName: 'Items',
+      chordTimeout: {
+        shape: { kind: 'number' },
+        displayName: 'Chord Timeout',
         description:
-          'Tab item collection. Each item carries title (value-or-region) / body / toolbar regions plus key/disabled flags.',
+          'Chord window in ms. A token after the first must arrive within this window to continue a sequence; on timeout the buffer resets (falling back to a complete prefix binding when one exists). Default 1000.',
+        editorType: 'number',
+      },
+      bindings: {
+        shape: { kind: 'array', item: { kind: 'unknown' } },
+        displayName: 'Bindings',
+        description:
+          'Keyboard bindings: `keys` (single combo "mod+shift+s" or space-separated chord "g o"), optional `when` (raw expression, no ${}), `allowInInput` (default false), `preventDefault` (default true), `action` (static dispatch track).',
         editorType: 'object-array',
       },
-      orientation: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'horizontal' },
-            { kind: 'literal', value: 'vertical' },
-          ],
-        },
-        displayName: 'Orientation',
-        editorType: 'select',
-        defaultValue: 'horizontal',
-      },
-      variant: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'default' },
-            { kind: 'literal', value: 'line' },
-          ],
-        },
-        displayName: 'Variant',
-        editorType: 'select',
-        defaultValue: 'default',
-      },
     },
-    componentCapabilityContracts: [
-      {
-        handle: 'setValue',
-        displayName: 'Set Value',
-        description: 'Set the active tab value on the current tabs instance.',
-        args: {
+    eventContracts: {
+      onTrigger: {
+        displayName: 'Trigger',
+        description: 'Runs on every binding hit, after the static action track.',
+        payload: {
           kind: 'object',
           fields: {
-            value: { kind: 'unknown' },
+            keys: { kind: 'string' },
+            index: { kind: 'number' },
+            nativeEvent: { kind: 'unknown' },
           },
-          optional: ['value'],
+          optional: ['nativeEvent'],
         },
-        result: { kind: 'unknown' },
       },
-      {
-        handle: 'getValue',
-        displayName: 'Get Value',
-        description: 'Read the current active tab value.',
-        result: { kind: 'string' },
-      },
-    ],
+    },
     fields: [
-      { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
-      { key: 'onChange', kind: 'event' },
-      { key: 'items', kind: 'prop' },
-      { key: 'value', kind: 'prop' },
-      { key: 'defaultValue', kind: 'prop' },
-      { key: 'valueOwnership', kind: 'prop' },
-      { key: 'valueStatePath', kind: 'prop' },
-      { key: 'statusPath', kind: 'prop' },
-      { key: 'orientation', kind: 'prop' },
-      { key: 'variant', kind: 'prop' },
-      { key: 'tabsMode', kind: 'prop' },
-      { key: 'sidePosition', kind: 'prop' },
-      { key: 'closable', kind: 'prop', valueType: 'boolean' },
-      { key: 'draggable', kind: 'prop', valueType: 'boolean' },
-      { key: 'addable', kind: 'prop', valueType: 'boolean' },
-      { key: 'contentClassName', kind: 'prop' },
-      { key: 'toolbarClassName', kind: 'prop' },
+      { key: 'bindings', kind: 'prop' },
+      { key: 'chordTimeout', kind: 'prop' },
+      { key: 'onTrigger', kind: 'event' },
     ],
   },
+  dialogRendererDefinition,
+  drawerRendererDefinition,
+  commandPaletteRendererDefinition,
+  tabsRendererDefinition,
 ];

@@ -8,6 +8,12 @@ import {
 } from '@nop-chaos/flux-react';
 import {
   Button,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
   cn,
   resolveLucideIconStrict,
   Sheet,
@@ -18,7 +24,7 @@ import {
   TooltipTrigger,
   useIsMobile,
 } from '@nop-chaos/ui';
-import type { PageSchema } from './schemas.js';
+import type { PageBreadcrumbItem, PageSchema } from './schemas.js';
 import { useStatusPathPublication } from './status-hooks.js';
 import { asReactNode } from './utils.js';
 import { useFixedFooterVisualViewport } from './use-fixed-footer-visual-viewport.js';
@@ -33,6 +39,58 @@ function resolveAsideSize(value: number | string | undefined, fallback: number):
     if (Number.isFinite(parsed)) return parsed;
   }
   return fallback;
+}
+
+export function normalizeBreadcrumbItems(value: unknown): PageBreadcrumbItem[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const items: PageBreadcrumbItem[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      continue;
+    }
+    const label = (entry as { label?: unknown }).label;
+    if (typeof label !== 'string' || label.length === 0) {
+      continue;
+    }
+    const href = (entry as { href?: unknown }).href;
+    items.push(
+      typeof href === 'string' && href.length > 0 ? { label, href } : { label },
+    );
+  }
+  return items;
+}
+
+// 10-01: slot layout baselines (breadcrumb item truncation, page-heading row,
+// page-extra right cluster) live in the package-level @layer base CSS behind
+// `[data-slot]` selectors (`src/styles.css`) — marker-only component output,
+// theme-tunable via CSS variables. See docs/architecture/styling-system.md.
+
+function PageBreadcrumbNav({ items }: { items: PageBreadcrumbItem[] }) {
+  return (
+    <Breadcrumb data-slot="page-breadcrumb" className="min-w-0">
+      <BreadcrumbList>
+        {items.map((item, index) => {
+          const crumbKey = `crumb-${item.label}-${item.href ?? ''}`;
+          return (
+            <React.Fragment key={crumbKey}>
+              <BreadcrumbItem className="min-w-0">
+                {item.href ? (
+                  <BreadcrumbLink href={item.href} title={item.label}>
+                    {item.label}
+                  </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage title={item.label}>{item.label}</BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+              {index < items.length - 1 ? <BreadcrumbSeparator /> : null}
+            </React.Fragment>
+          );
+        })}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
 }
 
 export function PageRenderer(props: RendererComponentProps<PageSchema>) {
@@ -74,6 +132,25 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
     typeof slotProps.remark === 'string' && slotProps.remark.length > 0
       ? slotProps.remark
       : undefined;
+  const crumbs = normalizeBreadcrumbItems(slotProps.breadcrumb);
+  const extraContent = resolveRendererSlotContent(props, 'extra');
+  const hasExtra = hasRendererSlotContent(extraContent);
+  const hasTitleContent = hasRendererSlotContent(titleContent);
+  const hasSemanticHeader = crumbs.length > 0 || hasExtra;
+  const remarkNode = remark ? (
+    <Tooltip>
+      <TooltipTrigger
+        data-slot="page-remark"
+        aria-label={t('flux.page.remark')}
+        className="inline-flex size-4 items-center justify-center align-middle text-muted-foreground hover:text-foreground"
+      >
+        {InfoIcon ? (
+          <InfoIcon size={14} strokeWidth={1.8} aria-hidden="true" focusable="false" />
+        ) : null}
+      </TooltipTrigger>
+      <TooltipContent>{remark}</TooltipContent>
+    </Tooltip>
+  ) : null;
   const asidePosition = slotProps.asidePosition === 'right' ? 'right' : 'left';
   // C-11: detect the aside via the compiled region handle rather than the raw schema
   // fragment. An empty `aside: []` compiles to an empty template-node array, so check
@@ -175,39 +252,41 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
     >
-      {hasRendererSlotContent(titleContent) || subTitle || remark ? (
-        <header data-slot="page-header" className={cn(slotProps.headerClassName)}>
-          <h2>{titleContent}</h2>
-          {subTitle ? <span data-slot="page-subtitle">{subTitle}</span> : null}
-          {remark ? (
-            <Tooltip>
-              <TooltipTrigger
-                data-slot="page-remark"
-                aria-label={t('flux.page.remark')}
-                className="inline-flex size-4 items-center justify-center align-middle text-muted-foreground hover:text-foreground"
-              >
-                {InfoIcon ? (
-                  <InfoIcon size={14} strokeWidth={1.8} aria-hidden="true" focusable="false" />
+      {hasTitleContent || subTitle || remark || hasSemanticHeader || showMobileAsideToggle ? (
+        <header data-slot="page-header" className={slotProps.headerClassName || undefined}>
+          {hasSemanticHeader ? (
+            <>
+              {crumbs.length > 0 ? <PageBreadcrumbNav items={crumbs} /> : null}
+              <div data-slot="page-heading">
+                {hasTitleContent ? <h2>{titleContent}</h2> : null}
+                {subTitle ? <span data-slot="page-subtitle">{subTitle}</span> : null}
+                {remarkNode}
+                {hasExtra ? (
+                  <div data-slot="page-extra">{extraContent}</div>
                 ) : null}
-              </TooltipTrigger>
-              <TooltipContent>{remark}</TooltipContent>
-            </Tooltip>
-          ) : null}
-          {showMobileAsideToggle ? (
-            <PageAsideToggle
-              asideContent={asideContent}
-              asidePosition={asidePosition}
-              asideClassName={slotProps.asideClassName}
-            />
-          ) : null}
-        </header>
-      ) : showMobileAsideToggle ? (
-        <header data-slot="page-header">
-          <PageAsideToggle
-            asideContent={asideContent}
-            asidePosition={asidePosition}
-            asideClassName={slotProps.asideClassName}
-          />
+                {showMobileAsideToggle ? (
+                  <PageAsideToggle
+                    asideContent={asideContent}
+                    asidePosition={asidePosition}
+                    asideClassName={slotProps.asideClassName}
+                  />
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <>
+              <h2>{titleContent}</h2>
+              {subTitle ? <span data-slot="page-subtitle">{subTitle}</span> : null}
+              {remarkNode}
+              {showMobileAsideToggle ? (
+                <PageAsideToggle
+                  asideContent={asideContent}
+                  asidePosition={asidePosition}
+                  asideClassName={slotProps.asideClassName}
+                />
+              ) : null}
+            </>
+          )}
         </header>
       ) : null}
       {hasRendererSlotContent(headerContent) ? (

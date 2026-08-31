@@ -6,9 +6,10 @@ import {
   type RendererSchemaValidationContext,
 } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import type { CrudSchema } from './crud-schema.js';
+import type { CrudSchema, CrudSelectionConfig } from './crud-schema.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
 import type { TableSchema } from './schemas.js';
+import { validateColumnEditableConfig, validateTableGroupConfig } from './table-schema-validation.js';
 
 // The form renderer recognizes these label position values:
 //   'normal'     → labels above inputs (default)
@@ -164,7 +165,14 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
           path: toJsonPointer(path, 'columns', index),
           message: 'table.columns entries must be objects.',
         });
+        return;
       }
+      validateColumnEditableConfig(
+        (column as unknown as Record<string, unknown>).editable,
+        path,
+        index,
+        emit,
+      );
     });
   }
 
@@ -223,6 +231,29 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
   }
 
   if (
+    schema.rowSelection?.modifierSelect !== undefined &&
+    typeof schema.rowSelection.modifierSelect !== 'boolean'
+  ) {
+    emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(path, 'rowSelection', 'modifierSelect'),
+      message: 'table.rowSelection.modifierSelect must be a boolean when provided.',
+    });
+  }
+
+  if (
+    schema.rowSelection?.selectAllMode !== undefined &&
+    schema.rowSelection.selectAllMode !== 'all' &&
+    schema.rowSelection.selectAllMode !== 'page'
+  ) {
+    emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(path, 'rowSelection', 'selectAllMode'),
+      message: 'table.rowSelection.selectAllMode must be "all" or "page" when provided.',
+    });
+  }
+
+  if (
     schema.expandable?.expandedRowKeys !== undefined &&
     !validateStringArray(schema.expandable.expandedRowKeys)
   ) {
@@ -232,6 +263,8 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
       message: 'table.expandable.expandedRowKeys must be an array of strings.',
     });
   }
+
+  validateTableGroupConfig(schema, path, emit);
 }
 
 export function validateCrudSchema(context: RendererSchemaValidationContext<BaseSchema>) {
@@ -293,7 +326,28 @@ export function validateCrudSchema(context: RendererSchemaValidationContext<Base
       message: 'crud.filterStatePath is required when filterOwnership is "scope".',
     });
   }
+
+  if (
+    typeof schema.selection === 'object' &&
+    schema.selection !== null &&
+    !Array.isArray(schema.selection) &&
+    (schema.selection as CrudSelectionConfig).selectAllMode !== undefined &&
+    (schema.selection as CrudSelectionConfig).selectAllMode !== 'all' &&
+    (schema.selection as CrudSelectionConfig).selectAllMode !== 'page'
+  ) {
+    emit({
+      code: 'invalid-property-shape',
+      path: toJsonPointer(path, 'selection', 'selectAllMode'),
+      message: 'crud.selection.selectAllMode must be "all" or "page" when provided.',
+    });
+  }
 }
+
+const QUERY_FORM_DEAD_TOGGLE_FIELDS = [
+  'defaultCollapsed',
+  'collapsedLabel',
+  'expandedLabel',
+] as const;
 
 export function transformCrudAuthoringSchema(
   context: import('@nop-chaos/flux-core').RendererAuthoringTransformContext<BaseSchema>,
@@ -308,6 +362,20 @@ export function transformCrudAuthoringSchema(
     primaryField?: unknown;
     perPageField?: unknown;
   };
+
+  const queryFormConfig = schema.queryForm;
+  if (queryFormConfig) {
+    for (const key of QUERY_FORM_DEAD_TOGGLE_FIELDS) {
+      if ((queryFormConfig as Record<string, unknown>)[key] !== undefined) {
+        context.emit({
+          code: 'unknown-property',
+          severity: 'warning',
+          path: toJsonPointer(context.path, 'queryForm', key),
+          message: `crud.queryForm.${key} is dead config (declared but never consumed); the collapse toggle is owned by crud.filterTogglable — use filterTogglable.${key} instead.`,
+        });
+      }
+    }
+  }
 
   if (schema.filter !== undefined) {
     context.emit({

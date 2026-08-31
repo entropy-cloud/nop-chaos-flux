@@ -18,6 +18,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   Spinner,
+  useDirtyCloseGuard,
 } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
 
@@ -32,6 +33,9 @@ export interface DetailSurfaceProps {
   /** P1-2: drawer placement ('left' | 'right' | 'top' | 'bottom'), unknown values fall back to 'bottom'. */
   placement?: string;
   onClose: () => void;
+  /** [G2-R6-视角6-01] when provided (and not readOnly), implicit close channels (X/ESC/outside)
+   * are intercepted and only close after an explicit discard confirmation. */
+  isDirty?: () => boolean;
   children: React.ReactNode;
   footer: React.ReactNode;
 }
@@ -114,6 +118,10 @@ const DRAWER_DIRECTIONS = ['left', 'right', 'top', 'bottom'] as const;
 export function DetailSurface(props: DetailSurfaceProps) {
   const mode = props.mode ?? 'dialog';
   const footer = props.readOnly ? <DetailReadonlyFooter onClose={props.onClose} /> : props.footer;
+  const { requestClose, guardDialog } = useDirtyCloseGuard({
+    isDirty: props.isDirty ?? (() => false),
+    onClose: props.onClose,
+  });
 
   if (mode === 'drawer') {
     const direction = DRAWER_DIRECTIONS.includes(props.placement as (typeof DRAWER_DIRECTIONS)[number])
@@ -121,30 +129,33 @@ export function DetailSurface(props: DetailSurfaceProps) {
       : 'bottom';
 
     return (
-      <Drawer
-        open={props.open}
-        onOpenChange={(next) => {
-          if (!next) props.onClose();
-        }}
-        direction={direction}
-      >
-        <DrawerContent showCloseButton={false}>
-          <DrawerHeader className="flex-row items-start justify-between gap-3">
-            <DrawerTitle>{props.title}</DrawerTitle>
-            <DrawerClose
-              render={
-                <Button type="button" variant="ghost" size="icon-sm" aria-label={t('flux.common.close')} />
-              }
-            >
-              <XIcon className="size-4" />
-            </DrawerClose>
-          </DrawerHeader>
-          <DrawerBody>
-            <div data-slot={props.bodySlot}>{props.children}</div>
-          </DrawerBody>
-          <DrawerFooter>{footer}</DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+      <>
+        <Drawer
+          open={props.open}
+          onOpenChange={(next) => {
+            if (!next) requestClose();
+          }}
+          direction={direction}
+        >
+          <DrawerContent showCloseButton={false}>
+            <DrawerHeader className="flex-row items-start justify-between gap-3">
+              <DrawerTitle>{props.title}</DrawerTitle>
+              <DrawerClose
+                render={
+                  <Button type="button" variant="ghost" size="icon-sm" aria-label={t('flux.common.close')} />
+                }
+              >
+                <XIcon className="size-4" />
+              </DrawerClose>
+            </DrawerHeader>
+            <DrawerBody>
+              <div data-slot={props.bodySlot}>{props.children}</div>
+            </DrawerBody>
+            <DrawerFooter>{footer}</DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+        {guardDialog}
+      </>
     );
   }
 
@@ -153,21 +164,24 @@ export function DetailSurface(props: DetailSurfaceProps) {
     : 'default';
 
   return (
-    <Dialog
-      open={props.open}
-      onOpenChange={(next) => {
-        if (!next) props.onClose();
-      }}
-    >
-      <DialogContent size={dialogSize}>
-        <DialogHeader>
-          <DialogTitle>{props.title}</DialogTitle>
-        </DialogHeader>
-        <DialogBody>
-          <div data-slot={props.bodySlot}>{props.children}</div>
-        </DialogBody>
-        <DialogFooter>{footer}</DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog
+        open={props.open}
+        onOpenChange={(next) => {
+          if (!next) requestClose();
+        }}
+      >
+        <DialogContent size={dialogSize}>
+          <DialogHeader>
+            <DialogTitle>{props.title}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div data-slot={props.bodySlot}>{props.children}</div>
+          </DialogBody>
+          <DialogFooter>{footer}</DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {guardDialog}
+    </>
   );
 }

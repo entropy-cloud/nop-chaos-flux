@@ -1,11 +1,21 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { Button, Checkbox, RadioGroupItem, TableCell, TableRow, cn } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronRightIcon, GripVerticalIcon } from 'lucide-react';
+import {
+  isClickOnInput,
+  optionRowConfigEquals,
+  resolveTableRowOptionState,
+  tableRowOptionRowProps,
+} from './table-row-option-state.js';
+import { Button, TableCell, TableRow, cn } from '@nop-chaos/ui';
+import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema, TableColumnSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
+import type { RowSelectionModifiers } from './use-table-selection.js';
+import { TableDragCell, TableExpandCell, TableSelectCell } from './table-row-leading-cells.js';
 import { TableQuickEditCell, resolveTableQuickEditConfig } from './table-quick-edit-cell.js';
+import { TableEditableCell, resolveTableEditableConfig } from './table-editable-cell.js';
+import { warnOnce } from './warn-once.js';
 import type { TreeRowEntry } from './use-table-tree.js';
 import type { LazyChildrenState } from './use-table-lazy-children.js';
 import type { RowDragSortApi } from './use-row-drag-sort.js';
@@ -26,36 +36,6 @@ export type { FlattenedItem, FlattenedRow, FlattenedExpandedRow } from './table-
 export { buildFlattenedItems } from './table-flattened-items.js';
 export { renderExpandedRow } from './table-expanded-row.js';
 
-/**
- * Whether a row click landed on an interactive control and therefore must NOT
- * trigger selection toggle. Mirrors amis `isClickOnInput`.
- */
-function isClickOnInput(event: React.MouseEvent): boolean {
-  const target = event.target as HTMLElement | null;
-  if (!target) return false;
-  const tag = target.tagName;
-  if (
-    tag === 'INPUT' ||
-    tag === 'TEXTAREA' ||
-    tag === 'SELECT' ||
-    tag === 'BUTTON' ||
-    tag === 'A'
-  ) {
-    return true;
-  }
-  // Checkbox/Switch/Radio rendered as role-based widgets.
-  const role = target.getAttribute('role');
-  if (role === 'checkbox' || role === 'switch' || role === 'radio') {
-    return true;
-  }
-  // Closest interactive ancestor covers icon spans nested inside buttons.
-  if (target.closest('button, a, input, textarea, select, [role="checkbox"], [role="switch"], [role="radio"]')) {
-    return true;
-  }
-  return false;
-}
-
-
 type DataRowRenderProps = {
   item: FlattenedRow;
   schemaProps: TableSchema;
@@ -66,7 +46,7 @@ type DataRowRenderProps = {
   showExpandColumn: boolean;
   expandRowByClick: boolean;
   onToggleExpand: (rowKey: string) => void;
-  onSelectRow: (rowKey: string, checked: boolean) => void;
+  onSelectRow: (rowKey: string, checked: boolean, modifiers?: RowSelectionModifiers) => void;
   isStriped: boolean;
   isRowCheckable?: (rowKey: string) => boolean;
   isAtMaxSelection?: boolean;
@@ -80,6 +60,8 @@ type DataRowRenderProps = {
   lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>;
   draggable?: boolean;
   rowDragSortApi?: RowDragSortApi | null;
+  /** 15-03: virtual-body measurement wiring (`virtualizer.measureElement`). */
+  measureRef?: React.Ref<HTMLTableRowElement>;
 };
 
 function DataRowView({
@@ -106,12 +88,22 @@ function DataRowView({
   lazyChildrenMap,
   draggable,
   rowDragSortApi,
+  measureRef,
 }: DataRowRenderProps) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
   const viewIndex = entry.viewIndex ?? rowIndex;
   const hasRowClickHandler = Boolean(parentProps.events.onRowClick);
   const toggleOnRowClick = schemaProps.rowSelection?.toggleOnRowClick === true;
   const isRowClickable = hasRowClickHandler || expandRowByClick || toggleOnRowClick;
+
+  // D1 option-row marker driver: explicit binding > internal selection. Without
+  // the contract nothing below emits (opt-row-compat: legacy output unchanged).
+  const optionRowState = resolveTableRowOptionState({
+    schemaProps,
+    record: entry.record,
+    isSelected,
+    ownerDisabled: parentProps.meta.disabled === true,
+  });
 
   const treeEntry = treeMode ? (entry as TreeRowEntry) : undefined;
   const treeLevel = treeEntry?.level ?? 0;
@@ -161,16 +153,17 @@ function DataRowView({
     }
     return cn(vAlignClass, typeof evaluated === 'string' && evaluated.length > 0 ? evaluated : undefined);
   };
-  const hasQuickEditColumns = columns.some((col) => {
-    const cfg = resolveTableQuickEditConfig(col);
-    return cfg && cfg.saveImmediately !== true && cfg.mode !== 'dialog';
-  });
-  const rowSaveAction = schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction;
-  const rowDraftEnabled = hasQuickEditColumns && Boolean(rowSaveAction);
+  const rowDraftEnabled = isRowDraftColumnEnabled(schemaProps, columns);
 
   const rowCheckboxDisabled =
     (isRowCheckable ? !isRowCheckable(rowKey) : false) ||
     (isAtMaxSelection === true && !isSelected);
+
+  // D1 G-B2: the checkbox click gesture carries modifier keys. base-ui fires
+  // onCheckedChange from the click on the checkbox itself, so the modifiers are
+  // captured at mousedown on the select cell (mousedown always precedes click)
+  // and consumed + cleared by the next onCheckedChange. The ref lives inside
+  // TableSelectCell (per-row instance).
 
   const handleRowClick = (event: React.MouseEvent<HTMLTableRowElement>) => {
     // Selection toggle chain (toggleOnRowClick): skip clicks on interactive controls,
@@ -180,7 +173,11 @@ function DataRowView({
     if (toggleOnRowClick && !isClickOnInput(event)) {
       const atMax = isAtMaxSelection === true && !isSelected;
       if (!atMax) {
-        onSelectRow(rowKey, !isSelected);
+        onSelectRow(rowKey, !isSelected, {
+          shiftKey: event.shiftKey,
+          metaKey: event.metaKey,
+          ctrlKey: event.ctrlKey,
+        });
         toggled = true;
       }
     }
@@ -216,6 +213,9 @@ function DataRowView({
 
   const rowContent = (
     <TableRow
+      {...tableRowOptionRowProps(optionRowState)}
+      ref={measureRef}
+      data-index={measureRef ? rowIndex : undefined}
       data-slot="table-row"
       data-row-toggleable={toggleOnRowClick || undefined}
       data-interactive={isRowClickable || undefined}
@@ -225,94 +225,43 @@ function DataRowView({
       data-level={treeMode ? treeLevel : undefined}
       data-tree-expanded={treeMode && isTreeExpanded ? true : undefined}
       data-draggable={draggable || undefined}
+      data-row-group={item.groupKey || undefined}
       data-dragging={rowDragSortApi?.draggingRowKey === rowKey || undefined}
       data-drag-over={rowDragSortApi?.dragOverRowKey === rowKey || undefined}
       onClick={isRowClickable ? handleRowClick : undefined}
       onKeyDown={isRowClickable ? handleRowKeyDown : undefined}
       tabIndex={isRowClickable ? 0 : -1}
-      className={isRowClickable ? 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none' : undefined}
+      className={cn(
+        isRowClickable ? 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none' : undefined,
+        optionRowState.active && optionRowState.selected ? optionRowState.selectedClass : undefined,
+      )}
     >
       {draggable && dragHandleProps ? (
-        <TableCell
-          data-slot="table-drag-cell"
-          className="w-10 text-center text-muted-foreground"
-          style={{ cursor: 'grab' }}
-        >
-          <span
-            {...dragHandleProps}
-            className="inline-flex h-6 w-6 items-center justify-center rounded hover:bg-accent"
-          >
-            <GripVerticalIcon className="size-4" />
-          </span>
-        </TableCell>
+        <TableDragCell dragHandleProps={dragHandleProps} fixedColumnLayout={fixedColumnLayout} />
       ) : null}
 
       {showExpandColumn && !treeMode ? (
-        <TableCell
-          data-slot="table-expand-cell"
-          className={fixedColumnLayout.getExpandCellProps().className}
-          style={fixedColumnLayout.getExpandCellProps().style}
-        >
-          {(() => {
-            // expandableWhen: a raw expression (no `${}`) evaluated per-row. Falsy → no toggle button.
-            const expandableWhenExpr = schemaProps.expandable?.expandableWhen;
-            let canExpand = true;
-            if (typeof expandableWhenExpr === 'string' && expandableWhenExpr.length > 0) {
-              try {
-                const wrapped = `\${${expandableWhenExpr}}`;
-                canExpand = Boolean(helpers.evaluate(wrapped, rowScope));
-              } catch {
-                // expr-eval-error Failure Path: degrade to expandable (do not block rendering).
-                canExpand = true;
-              }
-            }
-            if (!canExpand) return null;
-            return (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleExpand(rowKey);
-                }}
-                className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded"
-                aria-label={isExpanded ? t('flux.table.collapse') : t('flux.table.expand')}
-                aria-expanded={isExpanded}
-              >
-                {isExpanded ? (
-                  <ChevronDownIcon className="size-4" />
-                ) : (
-                  <ChevronRightIcon className="size-4" />
-                )}
-              </Button>
-            );
-          })()}
-        </TableCell>
+        <TableExpandCell
+          schemaProps={schemaProps}
+          helpers={helpers}
+          rowScope={rowScope}
+          rowKey={rowKey}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          fixedColumnLayout={fixedColumnLayout}
+        />
       ) : null}
 
       {schemaProps.rowSelection ? (
-        <TableCell
-          data-slot="table-select-cell"
-          className={fixedColumnLayout.getSelectionCellProps().className}
-          style={fixedColumnLayout.getSelectionCellProps().style}
-          onClick={(event) => event.stopPropagation()}
-        >
-          {schemaProps.rowSelection.type === 'radio' ? (
-            <RadioGroupItem
-              value={rowKey}
-              disabled={isRowCheckable ? !isRowCheckable(rowKey) : undefined}
-              aria-label={t('flux.table.selectRow')}
-            />
-          ) : (
-            <Checkbox
-              checked={isSelected}
-              disabled={rowCheckboxDisabled || undefined}
-              onCheckedChange={(checked) => onSelectRow(rowKey, Boolean(checked))}
-              aria-label={t('flux.table.selectRow')}
-            />
-          )}
-        </TableCell>
+        <TableSelectCell
+          schemaProps={schemaProps}
+          rowKey={rowKey}
+          isSelected={isSelected}
+          isRowCheckable={isRowCheckable}
+          rowCheckboxDisabled={rowCheckboxDisabled}
+          onSelectRow={onSelectRow}
+          fixedColumnLayout={fixedColumnLayout}
+        />
       ) : null}
 
       {columns.map((column, columnIndex) => {
@@ -481,6 +430,49 @@ function DataRowView({
         }
 
         const quickEditConfig = resolveTableQuickEditConfig(column);
+        // D1 G-D: editable declares the cell-level two-state machine and takes
+        // precedence over quickEdit (no double controls — gd-cell-edit-quickedit-coexist).
+        const editableDeclared = column.editable !== undefined && column.editable !== false;
+        if (editableDeclared) {
+          if (quickEditConfig && isDevRuntime()) {
+            warnOnce(
+              'gd-cell-edit-quickedit-coexist',
+              '[flux:table] gd-cell-edit-quickedit-coexist: both editable and quickEdit are declared on this column; editable takes precedence and the quickEdit control is not rendered.',
+            );
+          }
+          const editableConfig = resolveTableEditableConfig(column);
+          if (editableConfig && column.name) {
+            return (
+              <TableCell
+                key={`${column.name ?? columnIndex}`}
+                className={cn(
+                  resolveCellChromeClass(column, columnIndex),
+                  fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
+                )}
+                style={{
+                  ...(column.width ? { width: column.width } : undefined),
+                  ...fixedColumnLayout.getColumnCellProps(column, columnIndex).style,
+                  ...treeIndentStyle,
+                }}
+                rowSpan={rowSpan}
+                data-fixed={
+                  fixedColumnLayout.getColumnCellProps(column, columnIndex).fixed || undefined
+                }
+              >
+                {treeToggle}
+                {treeSpacer}
+                <TableEditableCell
+                  column={column}
+                  rowScope={rowScope}
+                  record={entry.record}
+                  helpers={helpers}
+                  quickSaveAction={schemaProps.quickSaveAction}
+                  quickSaveItemAction={schemaProps.quickSaveItemAction}
+                />
+              </TableCell>
+            );
+          }
+        }
         if (quickEditConfig && column.name) {
           return (
             <TableCell
@@ -549,6 +541,7 @@ function DataRowView({
         <TableCell
           key="__row_save_bar__"
           data-slot="table-row-save-bar-cell"
+          data-column-width-key="__row_save_bar__"
           className="w-32 whitespace-nowrap"
         >
           <RowQuickEditSaveBar rowDraft={rowDraft} />
@@ -588,11 +581,15 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.item.isExpanded === next.item.isExpanded &&
     prev.item.isSelected === next.item.isSelected &&
     prev.item.isEven === next.item.isEven &&
+    prev.item.groupKey === next.item.groupKey &&
     Boolean(prev.schemaProps.rowSelection) === Boolean(next.schemaProps.rowSelection) &&
     prev.schemaProps.rowSelection?.type === next.schemaProps.rowSelection?.type &&
     prev.schemaProps.rowSelection?.toggleOnRowClick === next.schemaProps.rowSelection?.toggleOnRowClick &&
+    prev.schemaProps.rowSelection?.modifierSelect === next.schemaProps.rowSelection?.modifierSelect &&
     prev.schemaProps.quickSaveAction === next.schemaProps.quickSaveAction &&
     prev.schemaProps.quickSaveItemAction === next.schemaProps.quickSaveItemAction &&
+    prev.parentProps.meta.disabled === next.parentProps.meta.disabled &&
+    optionRowConfigEquals(prev.schemaProps.optionRow, next.schemaProps.optionRow) &&
     prev.combinePlan === next.combinePlan &&
     prev.rowIndex === next.rowIndex &&
     prev.indexColumnOffset === next.indexColumnOffset &&
@@ -613,9 +610,25 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.onToggleTreeExpand === next.onToggleTreeExpand &&
     prev.lazyChildrenMap === next.lazyChildrenMap &&
     prev.draggable === next.draggable &&
-    prev.rowDragSortApi === next.rowDragSortApi
+    prev.rowDragSortApi === next.rowDragSortApi &&
+    prev.measureRef === next.measureRef
   );
 });
+
+
+/** [G3-视角5-01] whether the trailing row save-bar column renders on body rows —
+ * exported so header/colgroup can pair the column. */
+export function isRowDraftColumnEnabled(
+  schemaProps: TableSchema,
+  columns: TableColumnSchema[],
+): boolean {
+  const hasQuickEditColumns = columns.some((col) => {
+    const cfg = resolveTableQuickEditConfig(col);
+    return cfg && cfg.saveImmediately !== true && cfg.mode !== 'dialog';
+  });
+  const rowSaveAction = schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction;
+  return hasQuickEditColumns && Boolean(rowSaveAction);
+}
 
 export function renderDataRow(
   item: FlattenedRow,
@@ -627,7 +640,7 @@ export function renderDataRow(
   showExpandColumn: boolean,
   expandRowByClick: boolean,
   onToggleExpand: (rowKey: string) => void,
-  onSelectRow: (rowKey: string, checked: boolean) => void,
+  onSelectRow: (rowKey: string, checked: boolean, modifiers?: RowSelectionModifiers) => void,
   isStriped: boolean,
   isRowCheckable?: (rowKey: string) => boolean,
   isAtMaxSelection?: boolean,
@@ -641,6 +654,7 @@ export function renderDataRow(
   draggable?: boolean,
   rowDragSortApi?: RowDragSortApi | null,
   indexColumnOffset?: number,
+  measureRef?: React.Ref<HTMLTableRowElement>,
 ) {
   return (
     <MemoizedDataRow
@@ -667,6 +681,7 @@ export function renderDataRow(
       draggable={draggable}
       rowDragSortApi={rowDragSortApi}
       indexColumnOffset={indexColumnOffset}
+      measureRef={measureRef}
     />
   );
 }

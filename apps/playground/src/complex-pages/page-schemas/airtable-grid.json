@@ -1,0 +1,3769 @@
+{
+  "type": "page",
+  "testid": "airtable-grid-page",
+  "className": "at-root",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "airtable-source-grid",
+      "name": "gridData",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Airtable__records?perPage=100&keyword=${atSearchKeyword ?? ''}",
+        "method": "get"
+      },
+      "dependsOn": ["atSearchKeyword"]
+    },
+    {
+      "type": "data-source",
+      "id": "airtable-source-group",
+      "name": "groupData",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Airtable__records?group=${atGroupBy ?? 'category'}",
+        "method": "get"
+      },
+      "dependsOn": ["atGroupBy"]
+    },
+    {
+      "type": "container",
+      "className": "min-h-screen",
+      "testid": "airtable-page",
+      "body": [
+        {
+          "type": "container",
+          "className": "flex-none px-8 pt-6",
+          "testid": "airtable-toolbar",
+          "body": [
+            {
+              "type": "container",
+              "direction": "row",
+              "align": "center",
+              "gap": 12,
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "layout-grid",
+                  "size": 16
+                },
+                {
+                  "type": "text",
+                  "text": "任务清单",
+                  "className": "text-lg font-semibold",
+                  "testid": "airtable-table-title"
+                },
+                {
+                  "type": "text",
+                  "text": "发布跟踪表 · 网格编辑复刻（搜索/排序/分组/行高/插行/记录编辑已接线；筛选入口与列模型动作维持形态注记）",
+                  "className": "at-note",
+                  "testid": "airtable-toolbar-note"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "className": "flex-none px-8 pb-2 border-b",
+          "direction": "row",
+          "align": "center",
+          "gap": 8,
+          "testid": "airtable-viewbar",
+          "body": [
+            {
+              "type": "container",
+              "className": "at-pill at-pill-active",
+              "direction": "row",
+              "align": "center",
+              "gap": 5,
+              "testid": "airtable-view-pill-grid",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "table",
+                  "size": 13
+                },
+                {
+                  "type": "text",
+                  "text": "网格视图"
+                }
+              ]
+            },
+            {
+              "type": "button",
+              "label": "隐藏字段",
+              "variant": "ghost",
+              "className": "at-btn ml-auto",
+              "testid": "airtable-hide-fields-trigger",
+              "onClick": {
+                "action": "openDrawer",
+                "args": {
+                  "title": "隐藏字段",
+                  "testid": "airtable-hide-fields-drawer",
+                  "className": "at-dialog",
+                  "side": "right",
+                  "body": [
+                    {
+                      "type": "form",
+                      "testid": "airtable-hide-fields-form",
+                      "className": "flex flex-col gap-3",
+                      "body": [
+                        {
+                          "type": "input-text",
+                          "name": "fieldKeyword",
+                          "testid": "airtable-hide-fields-search",
+                          "placeholder": "查找字段…"
+                        },
+                        {
+                          "type": "container",
+                          "direction": "row",
+                          "align": "center",
+                          "gap": 8,
+                          "body": [
+                            {
+                              "type": "button",
+                              "label": "全部隐藏",
+                              "variant": "ghost",
+                              "className": "at-btn",
+                              "testid": "airtable-hide-fields-hideall"
+                            },
+                            {
+                              "type": "button",
+                              "label": "全部显示",
+                              "variant": "ghost",
+                              "className": "at-btn",
+                              "testid": "airtable-hide-fields-showall"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "字段显隐与全部隐藏/显示为显式裁决（A6/A14：columnSettings+toggledStatePath 机制在库、drawer 域 setValue 可达，但启用将引入表格设置按钮 chrome 且 20 toggle 需表达式数组手术，保真度不成比例——动态列模型缺口归 G-D）；主字段不可隐藏（🌐 官方证实）",
+                          "className": "at-note",
+                          "testid": "airtable-hide-fields-note"
+                        },
+                        {
+                          "type": "loop",
+                          "items": "${gridData?.fields}",
+                          "body": [
+                            {
+                              "type": "container",
+                              "direction": "row",
+                              "align": "center",
+                              "gap": 8,
+                              "className": "at-field-row",
+                              "testid": "airtable-field-row",
+                              "body": [
+                                {
+                                  "type": "container",
+                                  "direction": "row",
+                                  "align": "center",
+                                  "gap": 8,
+                                  "body": [
+                                    {
+                                      "type": "container",
+                                      "className": "${$slot.item.glyphClass}",
+                                      "direction": "row",
+                                      "align": "center",
+                                      "body": [
+                                        {
+                                          "type": "text",
+                                          "text": "${$slot.item.glyph}"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "container",
+                                      "body": [
+                                        {
+                                          "type": "text",
+                                          "text": "${$slot.item.label}",
+                                          "className": "text-[13px]",
+                                          "testid": "airtable-field-label"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "text": "${$slot.item.typeLabel}",
+                                          "className": "at-note",
+                                          "testid": "airtable-field-type"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "container",
+                                  "direction": "row",
+                                  "align": "center",
+                                  "gap": 8,
+                                  "className": "ml-auto",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "${$slot.item.lockNote ?? ''}",
+                                      "className": "at-note",
+                                      "testid": "airtable-field-lock"
+                                    },
+                                    {
+                                      "type": "container",
+                                      "className": "at-toggle",
+                                      "direction": "row",
+                                      "align": "center",
+                                      "testid": "airtable-field-toggle",
+                                      "body": [
+                                        {
+                                          "type": "container",
+                                          "className": "at-toggle-knob"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "container",
+              "className": "at-seg",
+              "direction": "row",
+              "align": "center",
+              "testid": "airtable-rowheight-control",
+              "body": [
+                {
+                  "type": "container",
+                  "className": "${(atRowDensity ?? 'short') === 'short' ? 'at-seg-item at-seg-item-active' : 'at-seg-item'}",
+                  "direction": "row",
+                  "align": "center",
+                  "testid": "airtable-rowheight-short",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "atRowDensity",
+                      "value": "short"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "短"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "className": "${(atRowDensity ?? 'short') === 'medium' ? 'at-seg-item at-seg-item-active' : 'at-seg-item'}",
+                  "direction": "row",
+                  "align": "center",
+                  "testid": "airtable-rowheight-medium",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "atRowDensity",
+                      "value": "medium"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "中"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "className": "${(atRowDensity ?? 'short') === 'tall' ? 'at-seg-item at-seg-item-active' : 'at-seg-item'}",
+                  "direction": "row",
+                  "align": "center",
+                  "testid": "airtable-rowheight-tall",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "atRowDensity",
+                      "value": "tall"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "高"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "className": "${(atRowDensity ?? 'short') === 'extra' ? 'at-seg-item at-seg-item-active' : 'at-seg-item'}",
+                  "direction": "row",
+                  "align": "center",
+                  "testid": "airtable-rowheight-extra",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "atRowDensity",
+                      "value": "extra"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "超高"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "at-seg",
+              "direction": "row",
+              "align": "center",
+              "testid": "airtable-group-control",
+              "body": [
+                {
+                  "type": "container",
+                  "className": "${(atGroupBy ?? 'category') === 'category' ? 'at-seg-item at-seg-item-active' : 'at-seg-item'}",
+                  "direction": "row",
+                  "align": "center",
+                  "testid": "airtable-group-by-category",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "atGroupBy",
+                      "value": "category"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "按阶段"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "className": "${(atGroupBy ?? 'category') === 'owner' ? 'at-seg-item at-seg-item-active' : 'at-seg-item'}",
+                  "direction": "row",
+                  "align": "center",
+                  "testid": "airtable-group-by-owner",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "atGroupBy",
+                      "value": "owner"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "按负责人"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "className": "${(atGroupBy ?? 'category') === 'done' ? 'at-seg-item at-seg-item-active' : 'at-seg-item'}",
+                  "direction": "row",
+                  "align": "center",
+                  "testid": "airtable-group-by-done",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "atGroupBy",
+                      "value": "done"
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "按交付"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "button",
+              "label": "搜索",
+              "variant": "ghost",
+              "className": "at-btn",
+              "testid": "airtable-search-entry",
+              "onClick": {
+                "action": "openDialog",
+                "args": {
+                  "title": "搜索记录",
+                  "testid": "airtable-search-dialog",
+                  "className": "at-dialog",
+                  "closeOnSubmit": false,
+                  "body": [
+                    {
+                      "type": "form",
+                      "testid": "airtable-search-form",
+                      "className": "flex flex-col gap-2",
+                      "submitScope": "surface",
+                      "data": {
+                        "keyword": "${atSearchKeyword ?? ''}"
+                      },
+                      "body": [
+                        {
+                          "type": "input-text",
+                          "name": "keyword",
+                          "testid": "airtable-search-input",
+                          "placeholder": "搜索标题、说明、标签、负责人、邮箱…"
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "搜索",
+                          "variant": "ghost",
+                          "className": "at-btn at-btn-primary",
+                          "testid": "airtable-search-submit",
+                          "onClick": {
+                            "action": "submitForm"
+                          }
+                        }
+                      ],
+                      "submitOnChange": true,
+                      "submitAction": {
+                        "action": "setValue",
+                        "args": {
+                          "path": "atSearchKeyword",
+                          "value": "${keyword ?? ''}"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "text": "搜索已接线（A1 / ⌘F 入口）：输入即过滤，匹配标题 + 属性值（url 参数物化 + dependsOn 自动刷新）；匹配域不含附件与协作人原文（缺口归 G-D）。",
+                      "className": "at-note mt-2",
+                      "testid": "airtable-search-note"
+                    }
+                  ],
+                  "onSubmitSuccess": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "atSearchKeyword",
+                        "value": "${$formData.keyword ?? ''}"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "button",
+              "label": "筛选",
+              "variant": "ghost",
+              "className": "at-btn",
+              "testid": "airtable-filter-entry"
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "className": "flex-none px-8",
+          "testid": "airtable-grid-section",
+          "body": [
+            {
+              "type": "container",
+              "className": "overflow-x-auto ${'at-density-live-' + (atRowDensity ?? 'short')}",
+              "testid": "airtable-grid-scroll",
+              "body": [
+                {
+                  "type": "table",
+                  "testid": "airtable-grid",
+                  "className": "at-grid",
+                  "source": "${gridData?.items}",
+                  "rowKey": "id",
+                  "pagination": {
+                    "enabled": true,
+                    "pageSize": 10
+                  },
+                  "empty": {
+                    "type": "text",
+                    "text": "当前筛选条件下没有记录",
+                    "className": "at-note"
+                  },
+                  "columns": [
+                    {
+                      "name": "autoNo",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-autoNo",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-gray",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "Nº"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "自动编号"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 84,
+                      "cell": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 4,
+                        "body": [
+                          {
+                            "type": "text",
+                            "text": "${autoNo}",
+                            "className": "at-rownum at-mono",
+                            "testid": "airtable-rowno"
+                          },
+                          {
+                            "type": "container",
+                            "className": "at-row-tools",
+                            "body": [
+                              {
+                                "type": "button",
+                                "label": "⤢ 展开",
+                                "variant": "ghost",
+                                "className": "at-cell-open",
+                                "testid": "airtable-row-expand",
+                                "onClick": {
+                                  "action": "openDialog",
+                                  "args": {
+                                    "title": "记录详情",
+                                    "testid": "airtable-record-modal",
+                                    "className": "at-dialog",
+                                    "closeOnSubmit": true,
+                                    "data": {
+                                      "id": "${id}"
+                                    },
+                                    "body": [
+                                      {
+                                        "type": "form",
+                                        "id": "airtable-record-form-component",
+                                        "testid": "airtable-record-form",
+                                        "className": "flex flex-col gap-4",
+                                        "submitScope": "surface",
+                                        "loadAction": {
+                                          "action": "ajax",
+                                          "args": {
+                                            "url": "/r/Airtable__record?id=${id}",
+                                            "method": "get"
+                                          }
+                                        },
+                                        "submitAction": {
+                                          "action": "ajax",
+                                          "args": {
+                                            "url": "/r/Airtable__updateRecord",
+                                            "method": "post",
+                                            "includeScope": "*",
+                                            "data": {
+                                              "id": "${id}"
+                                            }
+                                          },
+                                          "messages": {
+                                            "success": "记录已保存",
+                                            "failed": "记录保存失败"
+                                          }
+                                        },
+                                        "actions": [
+                                          {
+                                            "type": "button",
+                                            "label": "保存修改",
+                                            "variant": "ghost",
+                                            "className": "at-btn at-btn-primary",
+                                            "testid": "airtable-record-save",
+                                            "onClick": {
+                                              "action": "submitForm"
+                                            }
+                                          }
+                                        ],
+                                        "body": [
+                                          {
+                                            "type": "container",
+                                            "direction": "row",
+                                            "align": "center",
+                                            "gap": 8,
+                                            "testid": "airtable-record-nav",
+                                            "body": [
+                                              {
+                                                "type": "container",
+                                                "className": "${prevId ? 'at-btn' : 'at-btn at-btn-disabled'}",
+                                                "testid": "airtable-record-prev",
+                                                "onClick": [
+                                                  {
+                                                    "action": "setValue",
+                                                    "args": {
+                                                      "path": "id",
+                                                      "value": "${prevId}"
+                                                    }
+                                                  },
+                                                  {
+                                                    "action": "component:refresh",
+                                                    "componentId": "airtable-record-form-component"
+                                                  }
+                                                ],
+                                                "body": [
+                                                  {
+                                                    "type": "text",
+                                                    "text": "← 上一条"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "text",
+                                                "text": "上一条/下一条已接线（A11b：setValue 换 id + form loadAction 重取，dialog 内数据重载通道）；键盘导航 ⌘⇧>/< 为缺口（G-B2）显式裁决",
+                                                "className": "at-note ml-auto",
+                                                "testid": "airtable-record-kbd-note"
+                                              },
+                                              {
+                                                "type": "container",
+                                                "className": "${nextId ? 'at-btn' : 'at-btn at-btn-disabled'}",
+                                                "testid": "airtable-record-next",
+                                                "onClick": [
+                                                  {
+                                                    "action": "setValue",
+                                                    "args": {
+                                                      "path": "id",
+                                                      "value": "${nextId}"
+                                                    }
+                                                  },
+                                                  {
+                                                    "action": "component:refresh",
+                                                    "componentId": "airtable-record-form-component"
+                                                  }
+                                                ],
+                                                "body": [
+                                                  {
+                                                    "type": "text",
+                                                    "text": "下一条 →"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "container",
+                                            "className": "flex flex-col gap-2",
+                                            "testid": "airtable-record-edit",
+                                            "body": [
+                                              {
+                                                "type": "text",
+                                                "text": "编辑字段（A11a · 保存写更新端点会话库，网格与 summary 随动）",
+                                                "className": "at-record-section"
+                                              },
+                                              {
+                                                "type": "input-text",
+                                                "name": "atEditTitle",
+                                                "label": "任务名称",
+                                                "required": true,
+                                                "value": "${title}",
+                                                "testid": "airtable-record-edit-title"
+                                              },
+                                              {
+                                                "type": "textarea",
+                                                "name": "atEditNotes",
+                                                "label": "进展说明",
+                                                "value": "${notes}",
+                                                "testid": "airtable-record-edit-notes"
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "wrap": true,
+                                                "gap": 12,
+                                                "className": "at-edit-grid",
+                                                "body": [
+                                                  {
+                                                    "type": "select",
+                                                    "name": "atEditCategory",
+                                                    "label": "阶段",
+                                                    "clearable": false,
+                                                    "value": "${category}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-category",
+                                                    "options": [
+                                                      { "label": "需求评审", "value": "需求评审" },
+                                                      { "label": "设计排期", "value": "设计排期" },
+                                                      { "label": "开发进行", "value": "开发进行" },
+                                                      { "label": "验收发布", "value": "验收发布" }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "select",
+                                                    "name": "atEditTags",
+                                                    "label": "标签（多选）",
+                                                    "multiple": true,
+                                                    "value": "${tags}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-tags",
+                                                    "options": [
+                                                      { "label": "客户端", "value": "客户端" },
+                                                      { "label": "服务端", "value": "服务端" },
+                                                      { "label": "体验", "value": "体验" },
+                                                      { "label": "性能", "value": "性能" },
+                                                      { "label": "安全", "value": "安全" },
+                                                      { "label": "文档", "value": "文档" }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "input-date",
+                                                    "name": "atEditDate",
+                                                    "label": "截止日期",
+                                                    "value": "${date}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-date"
+                                                  },
+                                                  {
+                                                    "type": "input-number",
+                                                    "name": "atEditAmount",
+                                                    "label": "预算",
+                                                    "value": "${amount}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-amount"
+                                                  },
+                                                  {
+                                                    "type": "input-number",
+                                                    "name": "atEditScore",
+                                                    "label": "工作量",
+                                                    "value": "${score}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-score"
+                                                  },
+                                                  {
+                                                    "type": "input-number",
+                                                    "name": "atEditProgress",
+                                                    "label": "完成度（0–1）",
+                                                    "value": "${progress}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-progress"
+                                                  },
+                                                  {
+                                                    "type": "checkbox",
+                                                    "name": "atEditDone",
+                                                    "label": "已交付",
+                                                    "value": "${done}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-done"
+                                                  },
+                                                  {
+                                                    "type": "input-email",
+                                                    "name": "atEditEmail",
+                                                    "label": "联系邮箱",
+                                                    "value": "${email}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-email"
+                                                  },
+                                                  {
+                                                    "type": "input-text",
+                                                    "name": "atEditSite",
+                                                    "label": "相关链接",
+                                                    "value": "${site}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-site"
+                                                  },
+                                                  {
+                                                    "type": "input-text",
+                                                    "name": "atEditPhone",
+                                                    "label": "联系电话",
+                                                    "value": "${phone}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-phone"
+                                                  },
+                                                  {
+                                                    "type": "input-number",
+                                                    "name": "atEditDurationSeconds",
+                                                    "label": "累计工时（秒）",
+                                                    "value": "${durationSeconds}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-duration"
+                                                  },
+                                                  {
+                                                    "type": "input-number",
+                                                    "name": "atEditRating",
+                                                    "label": "优先评分（1–5）",
+                                                    "value": "${rating}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-rating"
+                                                  },
+                                                  {
+                                                    "type": "input-text",
+                                                    "name": "atEditBarcode",
+                                                    "label": "资产条码",
+                                                    "value": "${barcode}",
+                                                    "className": "at-edit-field",
+                                                    "testid": "airtable-record-edit-barcode"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "text",
+                                                "text": "协作人与附件不在编辑子集（选人/上传原语缺口，D1）；自动编号与创建/修改时间为只读自动字段（at-write-readonly）",
+                                                "className": "at-note",
+                                                "testid": "airtable-record-edit-note"
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "container",
+                                            "className": "flex flex-col gap-1",
+                                            "testid": "airtable-record-section-basic",
+                                            "body": [
+                                              {
+                                                "type": "text",
+                                                "text": "基本信息",
+                                                "className": "at-record-section"
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-gray",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "A"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "任务名称"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${title}",
+                                                    "testid": "airtable-record-value-title"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-teal",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "≡"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "进展说明"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${notes}",
+                                                    "className": "at-cell-wrap max-w-md",
+                                                    "testid": "airtable-record-value-notes"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-yellow",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "◉"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "阶段"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${category}",
+                                                    "className": "${categoryChipClass}",
+                                                    "testid": "airtable-record-value-category"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-orange",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "❰❱"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "标签"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "loop",
+                                                    "items": "${tagChips}",
+                                                    "body": [
+                                                      {
+                                                        "type": "text",
+                                                        "text": "${$slot.item.text}",
+                                                        "className": "${$slot.item.chipClass}",
+                                                        "testid": "airtable-record-value-tag"
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-pink",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "▦"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "截止日期"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${dateLabel}",
+                                                    "testid": "airtable-record-value-date"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "container",
+                                            "className": "flex flex-col gap-1",
+                                            "testid": "airtable-record-section-numeric",
+                                            "body": [
+                                              {
+                                                "type": "text",
+                                                "text": "数值与进度",
+                                                "className": "at-record-section"
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-green",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "¥"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "预算"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${amountLabel}",
+                                                    "className": "at-num",
+                                                    "testid": "airtable-record-value-amount"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-gray",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "#"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "工作量"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${score}",
+                                                    "className": "at-num",
+                                                    "testid": "airtable-record-value-score"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-teal",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "%"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "完成度"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${progressLabel}",
+                                                    "className": "at-num",
+                                                    "testid": "airtable-record-value-progress"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-orange",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "⏱"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "累计工时"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${durationLabel}",
+                                                    "className": "at-mono",
+                                                    "testid": "airtable-record-value-duration"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-yellow",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "★"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "优先评分"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "container",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 4,
+                                                    "body": [
+                                                      {
+                                                        "type": "text",
+                                                        "text": "${ratingStars}",
+                                                        "className": "at-rating",
+                                                        "testid": "airtable-record-rating"
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "${ratingOffStars}",
+                                                        "className": "at-rating at-rating-off"
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "container",
+                                            "className": "flex flex-col gap-1",
+                                            "testid": "airtable-record-section-people",
+                                            "body": [
+                                              {
+                                                "type": "text",
+                                                "text": "人员与联系",
+                                                "className": "at-record-section"
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-red",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "☺"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "负责人"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "container",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 8,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "${ownerAvatarClass}",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "testid": "airtable-record-avatar",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "${owner.initials}"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "${owner.name}",
+                                                        "testid": "airtable-record-value-owner"
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-blue",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "@"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "联系邮箱"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${email}",
+                                                    "className": "at-link",
+                                                    "testid": "airtable-record-value-email"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-teal",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "⇗"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "相关链接"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${site}",
+                                                    "className": "at-link",
+                                                    "testid": "airtable-record-value-site"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-green",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "☏"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "联系电话"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${phone}",
+                                                    "testid": "airtable-record-value-phone"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-purple",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "⌘"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "附件"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "container",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 4,
+                                                    "body": [
+                                                      {
+                                                        "type": "loop",
+                                                        "items": "${attachmentThumbs}",
+                                                        "body": [
+                                                          {
+                                                            "type": "container",
+                                                            "className": "${$slot.item.toneClass}",
+                                                            "direction": "row",
+                                                            "align": "center",
+                                                            "testid": "airtable-record-thumb",
+                                                            "body": [
+                                                              {
+                                                                "type": "text",
+                                                                "text": "▣"
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "${attachmentExtra > 0 ? '+' + attachmentExtra : ''}",
+                                                        "className": "at-note"
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "type": "container",
+                                            "className": "flex flex-col gap-1",
+                                            "testid": "airtable-record-section-system",
+                                            "body": [
+                                              {
+                                                "type": "text",
+                                                "text": "系统字段（只读灰显）",
+                                                "className": "at-record-section"
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-gray",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "⦀"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "资产条码"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${barcode}",
+                                                    "className": "at-barcode",
+                                                    "testid": "airtable-record-value-barcode"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-gray",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "Nº"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "自动编号"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${autoNo}",
+                                                    "className": "at-readonly at-num",
+                                                    "testid": "airtable-record-value-autono"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-gray",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "◷"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "创建时间"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${createdLabel}",
+                                                    "className": "at-readonly",
+                                                    "testid": "airtable-record-value-created"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "container",
+                                                "direction": "row",
+                                                "align": "center",
+                                                "gap": 8,
+                                                "className": "at-prop-row",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "at-prop-label",
+                                                    "direction": "row",
+                                                    "align": "center",
+                                                    "gap": 6,
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "at-glyph at-glyph-gray",
+                                                        "direction": "row",
+                                                        "align": "center",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "🕥"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "最后修改"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${modifiedLabel}",
+                                                    "className": "at-readonly",
+                                                    "testid": "airtable-record-value-modified"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    "onSubmitSuccess": [
+                                      {
+                                        "action": "component:refresh",
+                                        "componentId": "airtable-source-grid"
+                                      },
+                                      {
+                                        "action": "component:refresh",
+                                        "componentId": "airtable-source-group"
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "title",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-title",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-gray",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "A"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "任务名称"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ],
+                        "onClick": {
+                          "action": "openDialog",
+                          "args": {
+                            "title": "字段菜单 · 任务名称",
+                            "testid": "airtable-column-menu",
+                            "closeOnSubmit": true,
+                            "className": "at-dialog",
+                            "onSubmitSuccess": [
+                              {
+                                "action": "component:refresh",
+                                "componentId": "airtable-source-grid"
+                              },
+                              {
+                                "action": "component:refresh",
+                                "componentId": "airtable-source-group"
+                              }
+                            ],
+                            "body": [
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "隐藏字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "编辑字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "换型别"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-field-row",
+                                "testid": "airtable-column-menu-type",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "当前型别",
+                                    "className": "at-note"
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "单行文本",
+                                    "className": "at-chip at-chip-gray"
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "换型别生效 = 动态改列 schema，G-D 列菜单缺口（型别清单只读形态）",
+                                    "className": "at-note"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "form",
+                                "testid": "airtable-column-menu-item",
+                                "className": "at-menu-item at-menu-form",
+                                "submitScope": "surface",
+                                "submitAction": {
+                                  "action": "ajax",
+                                  "args": {
+                                    "url": "/r/Airtable__updateViewConfig",
+                                    "method": "post",
+                                    "data": {
+                                      "viewId": "grid",
+                                      "patch": {
+                                        "sort": "title:asc"
+                                      }
+                                    }
+                                  },
+                                  "messages": {
+                                    "success": "排序已应用",
+                                    "failed": "排序应用失败"
+                                  }
+                                },
+                                "actions": [
+                                  {
+                                    "type": "button",
+                                    "label": "按该字段排序 A→Z",
+                                    "variant": "ghost",
+                                    "className": "at-menu-item-btn",
+                                    "testid": "airtable-menu-sort-title-asc",
+                                    "onClick": {
+                                      "action": "submitForm"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "form",
+                                "testid": "airtable-column-menu-item",
+                                "className": "at-menu-item at-menu-form",
+                                "submitScope": "surface",
+                                "submitAction": {
+                                  "action": "ajax",
+                                  "args": {
+                                    "url": "/r/Airtable__updateViewConfig",
+                                    "method": "post",
+                                    "data": {
+                                      "viewId": "grid",
+                                      "patch": {
+                                        "sort": "title:desc"
+                                      }
+                                    }
+                                  },
+                                  "messages": {
+                                    "success": "排序已应用",
+                                    "failed": "排序应用失败"
+                                  }
+                                },
+                                "actions": [
+                                  {
+                                    "type": "button",
+                                    "label": "按该字段排序 Z→A",
+                                    "variant": "ghost",
+                                    "className": "at-menu-item-btn",
+                                    "testid": "airtable-menu-sort-title-desc",
+                                    "onClick": {
+                                      "action": "submitForm"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "向左插入字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "向右插入字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item at-menu-item-danger",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "删除字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "条目裁剪注记：无 popover 原语，菜单以 dialog 承载（P5a D2 先例）；隐藏字段为 🌐 官方证实条目，其余为 📊 标准项；排序 A→Z/Z→A 已接线（A5，url sort= 物化）；隐藏字段随 Hide fields 抽屉裁定（A6）；编辑字段/换型别/插入/删除为动态列模型缺口（G-D）显式裁决",
+                                "className": "at-note",
+                                "testid": "airtable-column-menu-note"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "width": 240,
+                      "cell": {
+                        "type": "container",
+                        "className": "${id === 'AT-101' ? 'at-cell-selected' : ''}",
+                        "direction": "row",
+                        "align": "center",
+                        "testid": "airtable-cell-title",
+                        "body": [
+                          {
+                            "type": "text",
+                            "text": "${title}"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "notes",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-notes",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-teal",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "≡"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "进展说明"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 200,
+                      "cell": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 4,
+                        "body": [
+                          {
+                            "type": "text",
+                            "text": "${notes}",
+                            "className": "at-longtext-text"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "maximize-2",
+                            "size": 11,
+                            "testid": "airtable-cell-notes-expand"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "category",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-category",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-yellow",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "◉"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "阶段"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ],
+                        "onClick": {
+                          "action": "openDialog",
+                          "args": {
+                            "title": "字段菜单 · 阶段",
+                            "testid": "airtable-column-menu",
+                            "closeOnSubmit": true,
+                            "className": "at-dialog",
+                            "onSubmitSuccess": [
+                              {
+                                "action": "component:refresh",
+                                "componentId": "airtable-source-grid"
+                              },
+                              {
+                                "action": "component:refresh",
+                                "componentId": "airtable-source-group"
+                              }
+                            ],
+                            "body": [
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "隐藏字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "编辑字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "换型别"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-field-row",
+                                "testid": "airtable-column-menu-type",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "当前型别",
+                                    "className": "at-note"
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "单选",
+                                    "className": "at-chip at-chip-yellow"
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "换型别生效 = 动态改列 schema，G-D 列菜单缺口（型别清单只读形态）",
+                                    "className": "at-note"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "form",
+                                "testid": "airtable-column-menu-item",
+                                "className": "at-menu-item at-menu-form",
+                                "submitScope": "surface",
+                                "submitAction": {
+                                  "action": "ajax",
+                                  "args": {
+                                    "url": "/r/Airtable__updateViewConfig",
+                                    "method": "post",
+                                    "data": {
+                                      "viewId": "grid",
+                                      "patch": {
+                                        "sort": "category:asc"
+                                      }
+                                    }
+                                  },
+                                  "messages": {
+                                    "success": "排序已应用",
+                                    "failed": "排序应用失败"
+                                  }
+                                },
+                                "actions": [
+                                  {
+                                    "type": "button",
+                                    "label": "按该字段排序 A→Z",
+                                    "variant": "ghost",
+                                    "className": "at-menu-item-btn",
+                                    "testid": "airtable-menu-sort-category-asc",
+                                    "onClick": {
+                                      "action": "submitForm"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "form",
+                                "testid": "airtable-column-menu-item",
+                                "className": "at-menu-item at-menu-form",
+                                "submitScope": "surface",
+                                "submitAction": {
+                                  "action": "ajax",
+                                  "args": {
+                                    "url": "/r/Airtable__updateViewConfig",
+                                    "method": "post",
+                                    "data": {
+                                      "viewId": "grid",
+                                      "patch": {
+                                        "sort": "category:desc"
+                                      }
+                                    }
+                                  },
+                                  "messages": {
+                                    "success": "排序已应用",
+                                    "failed": "排序应用失败"
+                                  }
+                                },
+                                "actions": [
+                                  {
+                                    "type": "button",
+                                    "label": "按该字段排序 Z→A",
+                                    "variant": "ghost",
+                                    "className": "at-menu-item-btn",
+                                    "testid": "airtable-menu-sort-category-desc",
+                                    "onClick": {
+                                      "action": "submitForm"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "向左插入字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "向右插入字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item at-menu-item-danger",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "删除字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "条目裁剪注记：无 popover 原语，菜单以 dialog 承载（P5a D2 先例）；隐藏字段为 🌐 官方证实条目，其余为 📊 标准项；排序 A→Z/Z→A 已接线（A5，url sort= 物化）；隐藏字段随 Hide fields 抽屉裁定（A6）；编辑字段/换型别/插入/删除为动态列模型缺口（G-D）显式裁决",
+                                "className": "at-note",
+                                "testid": "airtable-column-menu-note"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "width": 110,
+                      "cell": {
+                        "type": "text",
+                        "text": "${category}",
+                        "className": "${categoryChipClass}",
+                        "testid": "airtable-cell-category"
+                      }
+                    },
+                    {
+                      "name": "tags",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-tags",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-orange",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "❰❱"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "标签"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 190,
+                      "cell": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 4,
+                        "wrap": true,
+                        "className": "at-cell-wrap",
+                        "body": [
+                          {
+                            "type": "loop",
+                            "items": "${tagChips}",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "${$slot.item.text}",
+                                "className": "${$slot.item.chipClass}",
+                                "testid": "airtable-cell-tag"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "date",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-date",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-pink",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "▦"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "截止日期"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 130,
+                      "cell": {
+                        "type": "text",
+                        "text": "${dateLabel}",
+                        "testid": "airtable-cell-date"
+                      }
+                    },
+                    {
+                      "name": "amount",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-amount",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-green",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "¥"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "预算"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ],
+                        "onClick": {
+                          "action": "openDialog",
+                          "args": {
+                            "title": "字段菜单 · 预算",
+                            "testid": "airtable-column-menu",
+                            "closeOnSubmit": true,
+                            "className": "at-dialog",
+                            "onSubmitSuccess": [
+                              {
+                                "action": "component:refresh",
+                                "componentId": "airtable-source-grid"
+                              },
+                              {
+                                "action": "component:refresh",
+                                "componentId": "airtable-source-group"
+                              }
+                            ],
+                            "body": [
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "隐藏字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "编辑字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "换型别"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-field-row",
+                                "testid": "airtable-column-menu-type",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "当前型别",
+                                    "className": "at-note"
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "货币",
+                                    "className": "at-chip at-chip-green"
+                                  },
+                                  {
+                                    "type": "text",
+                                    "text": "换型别生效 = 动态改列 schema，G-D 列菜单缺口（型别清单只读形态）",
+                                    "className": "at-note"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "form",
+                                "testid": "airtable-column-menu-item",
+                                "className": "at-menu-item at-menu-form",
+                                "submitScope": "surface",
+                                "submitAction": {
+                                  "action": "ajax",
+                                  "args": {
+                                    "url": "/r/Airtable__updateViewConfig",
+                                    "method": "post",
+                                    "data": {
+                                      "viewId": "grid",
+                                      "patch": {
+                                        "sort": "amount:asc"
+                                      }
+                                    }
+                                  },
+                                  "messages": {
+                                    "success": "排序已应用",
+                                    "failed": "排序应用失败"
+                                  }
+                                },
+                                "actions": [
+                                  {
+                                    "type": "button",
+                                    "label": "按该字段排序 A→Z",
+                                    "variant": "ghost",
+                                    "className": "at-menu-item-btn",
+                                    "testid": "airtable-menu-sort-amount-asc",
+                                    "onClick": {
+                                      "action": "submitForm"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "form",
+                                "testid": "airtable-column-menu-item",
+                                "className": "at-menu-item at-menu-form",
+                                "submitScope": "surface",
+                                "submitAction": {
+                                  "action": "ajax",
+                                  "args": {
+                                    "url": "/r/Airtable__updateViewConfig",
+                                    "method": "post",
+                                    "data": {
+                                      "viewId": "grid",
+                                      "patch": {
+                                        "sort": "amount:desc"
+                                      }
+                                    }
+                                  },
+                                  "messages": {
+                                    "success": "排序已应用",
+                                    "failed": "排序应用失败"
+                                  }
+                                },
+                                "actions": [
+                                  {
+                                    "type": "button",
+                                    "label": "按该字段排序 Z→A",
+                                    "variant": "ghost",
+                                    "className": "at-menu-item-btn",
+                                    "testid": "airtable-menu-sort-amount-desc",
+                                    "onClick": {
+                                      "action": "submitForm"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "向左插入字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "向右插入字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "container",
+                                "direction": "row",
+                                "align": "center",
+                                "gap": 8,
+                                "className": "at-menu-item at-menu-item-danger",
+                                "testid": "airtable-column-menu-item",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "删除字段"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "text",
+                                "text": "条目裁剪注记：无 popover 原语，菜单以 dialog 承载（P5a D2 先例）；隐藏字段为 🌐 官方证实条目，其余为 📊 标准项；排序 A→Z/Z→A 已接线（A5，url sort= 物化）；隐藏字段随 Hide fields 抽屉裁定（A6）；编辑字段/换型别/插入/删除为动态列模型缺口（G-D）显式裁决",
+                                "className": "at-note",
+                                "testid": "airtable-column-menu-note"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "width": 130,
+                      "cell": {
+                        "type": "text",
+                        "text": "${amountLabel}",
+                        "className": "at-num",
+                        "testid": "airtable-cell-amount"
+                      }
+                    },
+                    {
+                      "name": "score",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-score",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-gray",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "#"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "工作量"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 84,
+                      "cell": {
+                        "type": "text",
+                        "text": "${score}",
+                        "className": "at-num",
+                        "testid": "airtable-cell-score"
+                      }
+                    },
+                    {
+                      "name": "progress",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-progress",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-teal",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "%"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "完成度"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 92,
+                      "cell": {
+                        "type": "text",
+                        "text": "${progressLabel}",
+                        "className": "at-num",
+                        "testid": "airtable-cell-progress"
+                      }
+                    },
+                    {
+                      "name": "done",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-done",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-blue",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "✓"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "已交付"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 88,
+                      "cell": {
+                        "type": "container",
+                        "className": "at-check ${done ? 'at-check-on' : ''}",
+                        "direction": "row",
+                        "align": "center",
+                        "testid": "airtable-cell-done",
+                        "body": [
+                          {
+                            "type": "text",
+                            "text": "✓"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "attachments",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-attachments",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-purple",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "⌘"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "附件"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 120,
+                      "cell": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 4,
+                        "body": [
+                          {
+                            "type": "loop",
+                            "items": "${attachmentThumbs}",
+                            "body": [
+                              {
+                                "type": "container",
+                                "className": "${$slot.item.toneClass}",
+                                "direction": "row",
+                                "align": "center",
+                                "testid": "airtable-cell-thumb",
+                                "body": [
+                                  {
+                                    "type": "text",
+                                    "text": "▣"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "${attachmentExtra > 0 ? '+' + attachmentExtra : ''}",
+                            "className": "at-chip at-thumb-more",
+                            "testid": "airtable-cell-thumb-more"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "owner",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-owner",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-red",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "☺"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "负责人"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 130,
+                      "cell": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 8,
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "${ownerAvatarClass}",
+                            "direction": "row",
+                            "align": "center",
+                            "testid": "airtable-cell-avatar",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "${owner.initials}"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "${owner.name}"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "email",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-email",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-blue",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "@"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "联系邮箱"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 210,
+                      "cell": {
+                        "type": "text",
+                        "text": "${email}",
+                        "className": "at-link",
+                        "testid": "airtable-cell-email"
+                      }
+                    },
+                    {
+                      "name": "site",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-site",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-teal",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "⇗"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "相关链接"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 210,
+                      "cell": {
+                        "type": "text",
+                        "text": "${site}",
+                        "className": "at-link",
+                        "testid": "airtable-cell-site"
+                      }
+                    },
+                    {
+                      "name": "phone",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-phone",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-green",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "☏"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "联系电话"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 140,
+                      "cell": {
+                        "type": "text",
+                        "text": "${phone}",
+                        "className": "at-mono",
+                        "testid": "airtable-cell-phone"
+                      }
+                    },
+                    {
+                      "name": "duration",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-duration",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-orange",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "⏱"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "累计工时"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 100,
+                      "cell": {
+                        "type": "text",
+                        "text": "${durationLabel}",
+                        "className": "at-mono",
+                        "testid": "airtable-cell-duration"
+                      }
+                    },
+                    {
+                      "name": "rating",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-rating",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-yellow",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "★"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "优先评分"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 110,
+                      "cell": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 4,
+                        "body": [
+                          {
+                            "type": "text",
+                            "text": "${ratingStars}",
+                            "className": "at-rating",
+                            "testid": "airtable-cell-rating"
+                          },
+                          {
+                            "type": "text",
+                            "text": "${ratingOffStars}",
+                            "className": "at-rating at-rating-off"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "barcode",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-barcode",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-gray",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "⦀"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "资产条码"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 160,
+                      "cell": {
+                        "type": "text",
+                        "text": "${barcode}",
+                        "className": "at-barcode",
+                        "testid": "airtable-cell-barcode"
+                      }
+                    },
+                    {
+                      "name": "createdAt",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-createdAt",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-gray",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "◷"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "创建时间"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 150,
+                      "cell": {
+                        "type": "text",
+                        "text": "${createdLabel}",
+                        "className": "at-readonly",
+                        "testid": "airtable-cell-created"
+                      }
+                    },
+                    {
+                      "name": "modifiedAt",
+                      "label": {
+                        "type": "container",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 6,
+                        "className": "at-field-head",
+                        "testid": "airtable-colhead-modifiedAt",
+                        "body": [
+                          {
+                            "type": "container",
+                            "className": "at-glyph at-glyph-gray",
+                            "direction": "row",
+                            "align": "center",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "🕥"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "最后修改"
+                          },
+                          {
+                            "type": "icon",
+                            "icon": "chevron-down",
+                            "size": 12
+                          }
+                        ]
+                      },
+                      "width": 150,
+                      "cell": {
+                        "type": "text",
+                        "text": "${modifiedLabel}",
+                        "className": "at-readonly",
+                        "testid": "airtable-cell-modified"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "direction": "row",
+              "align": "center",
+              "gap": 6,
+              "className": "h-9 px-2",
+              "testid": "airtable-grid-new-row",
+              "onClick": {
+                "action": "openDialog",
+                "args": {
+                  "title": "新增记录",
+                  "testid": "airtable-new-record-dialog",
+                  "className": "at-dialog",
+                  "closeOnSubmit": true,
+                  "body": [
+                    {
+                      "type": "form",
+                      "testid": "airtable-new-record-form",
+                      "className": "flex flex-col gap-3",
+                      "submitScope": "surface",
+                      "body": [
+                        {
+                          "type": "input-text",
+                          "name": "title",
+                          "label": "任务名称",
+                          "required": true,
+                          "placeholder": "必填主字段",
+                          "testid": "airtable-new-record-input-title"
+                        },
+                        {
+                          "type": "select",
+                          "name": "category",
+                          "label": "阶段",
+                          "clearable": false,
+                          "defaultValue": "需求评审",
+                          "testid": "airtable-new-record-select-category",
+                          "options": [
+                            {
+                              "label": "需求评审",
+                              "value": "需求评审"
+                            },
+                            {
+                              "label": "设计排期",
+                              "value": "设计排期"
+                            },
+                            {
+                              "label": "开发进行",
+                              "value": "开发进行"
+                            },
+                            {
+                              "label": "验收发布",
+                              "value": "验收发布"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "input-number",
+                          "name": "amount",
+                          "label": "预算",
+                          "defaultValue": 1000,
+                          "testid": "airtable-new-record-input-amount"
+                        }
+                      ],
+                      "submitAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/Airtable__createRecord",
+                          "method": "post",
+                          "includeScope": "*"
+                        },
+                        "messages": {
+                          "success": "记录已创建",
+                          "failed": "记录创建失败"
+                        }
+                      },
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "创建",
+                          "variant": "ghost",
+                          "className": "at-btn at-btn-primary",
+                          "testid": "airtable-new-record-submit",
+                          "onClick": {
+                            "action": "submitForm"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "插行已接线（A10）：提交写新建端点会话库并在表尾插行；⇧Enter/⌘⇧Enter 键盘插行为缺口（G-B2）显式裁决。",
+                      "className": "at-note mt-2",
+                      "testid": "airtable-new-record-note"
+                    }
+                  ],
+                  "onSubmitSuccess": [
+                    {
+                      "action": "component:refresh",
+                      "componentId": "airtable-source-grid"
+                    },
+                    {
+                      "action": "component:refresh",
+                      "componentId": "airtable-source-group"
+                    }
+                  ]
+                }
+              },
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "plus",
+                  "size": 13
+                },
+                {
+                  "type": "text",
+                  "text": "新增记录（已接线 A10 · ⇧Enter/⌘⇧Enter 键盘缺口 G-B2）",
+                  "className": "at-note"
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "at-summary",
+              "direction": "row",
+              "align": "center",
+              "gap": 12,
+              "testid": "airtable-summary",
+              "body": [
+                {
+                  "type": "container",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 4,
+                  "className": "at-summary-item",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "hash",
+                      "size": 12
+                    },
+                    {
+                      "type": "text",
+                      "text": "共 ${gridData?.summary?.count} 条记录",
+                      "testid": "airtable-summary-count"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 4,
+                  "className": "at-summary-item",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "预算合计",
+                      "className": "at-note"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${gridData?.summary?.amountSumLabel}",
+                      "testid": "airtable-summary-amount"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 4,
+                  "className": "at-summary-item",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "平均完成度",
+                      "className": "at-note"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${gridData?.summary?.progressAvgLabel}",
+                      "testid": "airtable-summary-progress"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 4,
+                  "className": "at-summary-item",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "已交付",
+                      "className": "at-note"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${gridData?.summary?.doneCount}",
+                      "testid": "airtable-summary-done"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 4,
+                  "className": "at-summary-item",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "平均评分",
+                      "className": "at-note"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${gridData?.summary?.ratingAvgLabel}",
+                      "testid": "airtable-summary-rating"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "summary 为 mock 端点实时计算（A12：写操作后随源刷新重算，计数/合计/均值随会话更新）；per-column 聚合语义件缺口维持（§7 候选）",
+                  "className": "at-note ml-auto"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "行 hover 铺底与选中单元格蓝框为纯 CSS 静态样本（G-F 口径沿 P5a）；首行任务名称为选中态样本；Space 展开记录为显式裁决（G-B2）：renderer 行 keydown 中继通道实测存在（onRowClick a11y 面），激活需整份复制 modal 体且单击行语义与「单击=格选中」冲突，不接线",
+              "className": "at-note",
+              "testid": "airtable-grid-note"
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "className": "flex-none px-8 flex flex-col gap-3",
+          "testid": "airtable-group-section",
+          "body": [
+            {
+              "type": "container",
+              "direction": "row",
+              "align": "center",
+              "gap": 12,
+              "body": [
+                {
+                  "type": "text",
+                  "text": "分组态样本（按阶段 · group= 参数化）",
+                  "className": "at-section-label"
+                },
+                {
+                  "type": "text",
+                  "text": "组头 = 分组值 + 组内计数 + 折叠形态 + 组内 summary 行；分组切换已接线（A8 视图栏控件，组内计数/summary 随会话刷新）；组头折叠与 ⌘⇧+D/Enter 全折叠展开为缺口（G-B2）形态样本",
+                  "className": "at-note",
+                  "testid": "airtable-group-note"
+                }
+              ]
+            },
+            {
+              "type": "loop",
+              "items": "${groupData?.groups}",
+              "body": [
+                {
+                  "type": "container",
+                  "className": "at-group-head",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 8,
+                  "testid": "airtable-group-head",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "chevron-right",
+                      "size": 13,
+                      "testid": "airtable-group-chevron"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${$slot.item.label}",
+                      "className": "${$slot.item.chipClass}",
+                      "testid": "airtable-group-chip"
+                    },
+                    {
+                      "type": "text",
+                      "text": "${$slot.item.count} 条",
+                      "className": "at-note",
+                      "testid": "airtable-group-count"
+                    },
+                    {
+                      "type": "text",
+                      "text": "折叠为零动作静态形态",
+                      "className": "at-note ml-auto"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "className": "at-group-summary",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 12,
+                  "testid": "airtable-group-summary",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "预算合计 ${$slot.item.amountSumLabel}",
+                      "testid": "airtable-group-amount"
+                    },
+                    {
+                      "type": "text",
+                      "text": "已交付 ${$slot.item.doneCount} 条",
+                      "testid": "airtable-group-done"
+                    }
+                  ]
+                },
+                {
+                  "type": "loop",
+                  "items": "${$slot.item.sample}",
+                  "body": {
+                    "type": "container",
+                    "direction": "row",
+                    "align": "center",
+                    "gap": 12,
+                    "className": "h-8 px-2 border-b",
+                    "testid": "airtable-group-row",
+                    "body": [
+                      {
+                        "type": "text",
+                        "text": "${$slot.item.id}",
+                        "className": "at-rownum at-mono text-xs"
+                      },
+                      {
+                        "type": "text",
+                        "text": "${$slot.item.title}",
+                        "className": "at-truncate flex-1 min-w-0",
+                        "testid": "airtable-group-row-title"
+                      },
+                      {
+                        "type": "container",
+                        "className": "${$slot.item.ownerAvatarClass}",
+                        "direction": "row",
+                        "align": "center",
+                        "body": [
+                          {
+                            "type": "text",
+                            "text": "${$slot.item.owner.initials}"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "text",
+                        "text": "${$slot.item.amountLabel}",
+                        "className": "at-num text-xs"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "className": "flex-none px-8 flex flex-col gap-2",
+          "testid": "airtable-density-section",
+          "body": [
+            {
+              "type": "container",
+              "direction": "row",
+              "align": "center",
+              "gap": 12,
+              "body": [
+                {
+                  "type": "text",
+                  "text": "行高四档密度样本（📊 社区口径）",
+                  "className": "at-section-label"
+                },
+                {
+                  "type": "text",
+                  "text": "行高四档切换已接线（A9：分段控件 setValue + className 表达式状态驱动——G-E/G-F2「交互态驱动缺口」的实测证据，网格行随档位变化）",
+                  "className": "at-note",
+                  "testid": "airtable-density-note"
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "border rounded-md overflow-hidden",
+              "body": [
+                {
+                  "type": "container",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 8,
+                  "className": "at-density-row at-density-short",
+                  "testid": "airtable-density-short",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "Short",
+                      "className": "at-chip at-chip-blue w-20 justify-center"
+                    },
+                    {
+                      "type": "text",
+                      "text": "≈32px",
+                      "className": "at-mono at-note w-16"
+                    },
+                    {
+                      "type": "container",
+                      "className": "at-avatar at-avatar-blue",
+                      "direction": "row",
+                      "align": "center",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "样"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "单行文本 + 小附件缩略图",
+                      "className": "at-truncate flex-1 min-w-0"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 8,
+                  "className": "at-density-row at-density-medium",
+                  "testid": "airtable-density-medium",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "Medium",
+                      "className": "at-chip at-chip-blue w-20 justify-center"
+                    },
+                    {
+                      "type": "text",
+                      "text": "≈48px",
+                      "className": "at-mono at-note w-16"
+                    },
+                    {
+                      "type": "container",
+                      "className": "at-avatar at-avatar-green",
+                      "direction": "row",
+                      "align": "center",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "样"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "多行文本 / select 标签换行",
+                      "className": "at-truncate flex-1 min-w-0"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 8,
+                  "className": "at-density-row at-density-tall",
+                  "testid": "airtable-density-tall",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "Tall",
+                      "className": "at-chip at-chip-blue w-20 justify-center"
+                    },
+                    {
+                      "type": "text",
+                      "text": "≈80px",
+                      "className": "at-mono at-note w-16"
+                    },
+                    {
+                      "type": "container",
+                      "className": "at-avatar at-avatar-purple",
+                      "direction": "row",
+                      "align": "center",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "样"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "更大图片、更多行数",
+                      "className": "at-truncate flex-1 min-w-0"
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "direction": "row",
+                  "align": "center",
+                  "gap": 8,
+                  "className": "at-density-row at-density-extra",
+                  "testid": "airtable-density-extra",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "Extra Tall",
+                      "className": "at-chip at-chip-blue w-20 justify-center"
+                    },
+                    {
+                      "type": "text",
+                      "text": "≈160px",
+                      "className": "at-mono at-note w-16"
+                    },
+                    {
+                      "type": "container",
+                      "className": "at-avatar at-avatar-orange",
+                      "direction": "row",
+                      "align": "center",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "样"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "最大图片、最多行数",
+                      "className": "at-truncate flex-1 min-w-0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

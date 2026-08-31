@@ -14,6 +14,7 @@ import { MappingRenderer } from './mapping.js';
 import { MarkdownRenderer } from './markdown.js';
 import { ProgressRenderer } from './progress.js';
 import { QrCodeRenderer } from './qrcode.js';
+import { ResultRenderer } from './result.js';
 import { SeparatorRenderer } from './separator.js';
 import { SpinnerRenderer } from './spinner.js';
 import { StatusRenderer } from './status.js';
@@ -34,6 +35,7 @@ import type {
   MarkdownSchema,
   ProgressSchema,
   QrCodeSchema,
+  ResultSchema,
   SeparatorSchema,
   SpinnerSchema,
   StatusSchema,
@@ -109,6 +111,37 @@ export const contentRendererDefinitions: RendererDefinition[] = [
     ],
   },
   {
+    type: 'result',
+    displayName: 'Result',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    defaultSchema: { type: 'result' },
+    component: ResultRenderer,
+    propContracts: {
+      status: {
+        shape: { kind: 'string' },
+        displayName: 'Status',
+        description:
+          "Final-state semantics mapping to the default icon and semantic color. Defaults to 'info'; unknown values degrade to info with a dev warning (validated at render, not by the shape gate, so authoring mistakes stay visible).",
+        editorType: 'select',
+        defaultValue: 'info',
+      },
+      icon: {
+        shape: { kind: 'string' },
+        displayName: 'Icon',
+        description: 'Optional lucide icon name; overrides the status default icon.',
+        editorType: 'expression',
+      },
+    },
+    fields: [
+      { key: 'status', kind: 'prop' },
+      { key: 'icon', kind: 'prop' },
+      { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+      { key: 'description', kind: 'value-or-region', regionKey: 'description' },
+      { key: 'actions', kind: 'region', regionKey: 'actions' },
+    ],
+  },
+  {
     type: 'card',
     displayName: 'Card',
     category: 'layout',
@@ -153,6 +186,7 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'href', kind: 'prop' },
       { key: 'target', kind: 'prop' },
       { key: 'rel', kind: 'prop' },
+      { key: 'download', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
     ],
   },
@@ -624,4 +658,5 @@ export type ContentRendererSchema =
   | VideoSchema
   | CarouselSchema
   | QrCodeSchema
+  | ResultSchema
   | DiffViewSchema;

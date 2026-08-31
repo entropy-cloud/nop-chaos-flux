@@ -13,6 +13,7 @@ export { DynamicRenderer } from './dynamic-renderer.js';
 export { ReactionRenderer } from './reaction.js';
 export { DialogRenderer } from './dialog.js';
 export { DrawerRenderer } from './drawer.js';
+export { CommandPaletteRenderer } from './command-palette.js';
 export { TabsRenderer } from './tabs.js';
 export { FragmentRenderer } from './fragment.js';
 export { LoopRenderer } from './loop.js';

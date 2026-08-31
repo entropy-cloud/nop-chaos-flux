@@ -366,6 +366,7 @@ describe('table row rendering helpers', () => {
             {
               getExpandCellProps: () => ({ className: 'expand-cell', style: {} }),
               getSelectionCellProps: () => ({ className: 'select-cell', style: {} }),
+              getDragCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: 'data-cell', style: {}, fixed: undefined }),
               hasStickyColumns: false,
             } as FixedColumnLayout,
@@ -384,7 +385,7 @@ describe('table row rendering helpers', () => {
     fireEvent.click(screen.getByText('Alice'));
 
     expect(onToggleExpand).toHaveBeenCalledWith('r1');
-    expect(onSelectRow).toHaveBeenCalledWith('r1', false);
+    expect(onSelectRow).toHaveBeenCalledWith('r1', false, undefined);
     expect(parentProps.events.onRowClick).toHaveBeenCalled();
     expect(screen.getByTestId('button-region')).toBeTruthy();
   });
@@ -434,6 +435,7 @@ describe('table row rendering helpers', () => {
             {
               getExpandCellProps: () => ({ className: '', style: {} }),
               getSelectionCellProps: () => ({ className: '', style: {} }),
+              getDragCellProps: () => ({ className: '', style: {} }),
               getColumnCellProps: () => ({ className: '', style: {}, fixed: undefined }),
               hasStickyColumns: false,
             } as FixedColumnLayout,

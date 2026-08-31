@@ -26,8 +26,8 @@ const MOCK = [
 const env: RendererEnv = {
   fetcher: async function <T>(req: { url: string }) {
     console.log('[VERIFY] fetcher called:', req.url);
-    if (req.url === '/api/users') return { ok: true, status: 200, data: MOCK as T };
-    return { ok: true, status: 200, data: null as T };
+    if (req.url === '/api/users') return { status: 0, data: MOCK as T };
+    return { status: 0, data: null as T };
   },
   notify: (level, msg) => toast.info(String(msg)),
 };

@@ -96,6 +96,23 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
         editorType: 'select',
         defaultValue: 'local',
       },
+      columnAggregate: {
+        displayName: 'Column Aggregate',
+        description:
+          'Board-level per-column header aggregate: each column aggregates its own filtered card set into the default header. fn count ignores field; sum/avg/min/max read card data[field] and skip non-numeric values ("-" fallback when none).',
+        shape: {
+          kind: 'object',
+          fields: {
+            fn: {
+              kind: 'union',
+              anyOf: ['sum', 'avg', 'min', 'max', 'count'].map((v) => ({ kind: 'literal', value: v })),
+            },
+            field: { kind: 'string' },
+            label: { kind: 'string' },
+          },
+          optional: ['field', 'label'],
+        },
+      },
     },
     componentCapabilityContracts: [
       {
@@ -165,6 +182,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'columnsConfig', kind: 'prop' },
       { key: 'columnHeader', kind: 'region', regionKey: 'columnHeader' },
       { key: 'columnHeaderToolbar', kind: 'region', regionKey: 'columnHeaderToolbar' },
+      { key: 'columnAggregate', kind: 'prop' },
       { key: 'cardTemplate', kind: 'region', regionKey: 'cardTemplate' },
       { key: 'columnFooter', kind: 'region', regionKey: 'columnFooter' },
       { key: 'empty', kind: 'region', regionKey: 'empty' },

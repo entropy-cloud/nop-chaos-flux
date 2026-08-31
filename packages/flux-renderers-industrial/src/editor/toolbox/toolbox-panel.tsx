@@ -11,6 +11,8 @@ export interface EditorToolboxPanelProps {
   /** 当前选区（reactive，从 canvas state 传入；用于 disabled 判定）。 */
   selection: string[];
   onError: (code: string, message: string) => void;
+  /** [G5-R3-视角3-01] meta.disabled 门禁：整个工具箱通道（按钮/导入弹层）inert。 */
+  disabled?: boolean;
 }
 
 /**
@@ -156,7 +158,13 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
   );
 
   return (
-    <div data-slot="scada-editor-toolbox" className={cn('nop-scada-editor-toolbox')}>
+    <div
+      data-slot="scada-editor-toolbox"
+      className={cn('nop-scada-editor-toolbox')}
+      inert={props.disabled || undefined}
+      aria-disabled={props.disabled || undefined}
+      data-disabled={props.disabled ? 'true' : undefined}
+    >
       <ButtonGroup>
         {btn(labelOr('industrial.scada.editor.toolbox.label.delete', 'Del'), handleDelete, !hasSelection, t('industrial.scada.editor.toolbox.delete'), 'toolbox-btn-delete')}
         {btn(labelOr('industrial.scada.editor.toolbox.label.group', 'Group'), handleGroup, selection.length < 2, t('industrial.scada.editor.toolbox.group'), 'toolbox-btn-group')}

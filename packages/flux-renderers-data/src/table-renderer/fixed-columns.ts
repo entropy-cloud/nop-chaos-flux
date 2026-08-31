@@ -3,6 +3,12 @@ import type { TableColumnSchema, TableSchema } from '../schemas.js';
 
 const CONTROL_COLUMN_WIDTH = 40;
 const DEFAULT_FIXED_COLUMN_WIDTH = 160;
+// [G3-R3-视角8-01] leading drag-handle column (body cell uses w-10).
+export const DRAG_COLUMN_WIDTH = 40;
+// [G3-视角5-01] trailing row save-bar column (body cell uses w-32).
+export const ROW_SAVE_BAR_COLUMN_WIDTH = 128;
+export const ROW_SAVE_BAR_COLUMN_KEY = '__row_save_bar__';
+export const DRAG_COLUMN_KEY = '__drag__';
 
 export interface FixedCellProps {
   className?: string;
@@ -59,13 +65,19 @@ export function getFixedColumnKey(column: TableColumnSchema, index: number) {
 }
 
 export function createFixedColumnLayout(
-  schemaProps: Pick<TableSchema, 'rowSelection' | 'expandable'>,
+  schemaProps: Pick<TableSchema, 'rowSelection' | 'expandable' | 'draggable'>,
   columns: TableColumnSchema[],
   showExpandColumn = Boolean(schemaProps.expandable),
   measuredWidths?: ReadonlyMap<string, number>,
 ) {
   const hasLeftFixedDataColumn = columns.some((column) => column.fixed === 'left');
   const entries: FixedColumnEntry[] = [];
+
+  // [G3-R3-视角8-01] the drag column is the leftmost body cell — it must join
+  // the sticky layout (and offsets) exactly like expand/selection do.
+  if (schemaProps.draggable === true && hasLeftFixedDataColumn) {
+    entries.push({ key: DRAG_COLUMN_KEY, fixed: 'left', width: DRAG_COLUMN_WIDTH });
+  }
 
   if (showExpandColumn && hasLeftFixedDataColumn) {
     entries.push({ key: '__expand__', fixed: 'left', width: CONTROL_COLUMN_WIDTH });
@@ -159,7 +171,7 @@ export function createFixedColumnLayout(
     }
 
     // 控制列在无 fixed 数据列（非 sticky）时也要封顶（P1-02）。
-    if (key === '__selection__' || key === '__expand__') {
+    if (key === '__selection__' || key === '__expand__' || key === DRAG_COLUMN_KEY) {
       return { style: createControlColumnStyle(width ?? CONTROL_COLUMN_WIDTH) };
     }
 
@@ -173,6 +185,9 @@ export function createFixedColumnLayout(
     },
     getSelectionCellProps() {
       return resolveEntry('__selection__', CONTROL_COLUMN_WIDTH);
+    },
+    getDragCellProps() {
+      return resolveEntry(DRAG_COLUMN_KEY, DRAG_COLUMN_WIDTH);
     },
     getColumnCellProps(column: TableColumnSchema, index: number) {
       return resolveEntry(

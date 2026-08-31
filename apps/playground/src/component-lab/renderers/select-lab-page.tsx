@@ -259,7 +259,7 @@ const remoteSearchEnv = {
       throw { code: 'E_NET' };
     }
     const filtered = REMOTE_LANGUAGES.filter((item) => item.label.toLowerCase().includes(q));
-    return { ok: true, status: 200, data: filtered as T };
+    return { status: 0, data: filtered as T };
   },
 };
 

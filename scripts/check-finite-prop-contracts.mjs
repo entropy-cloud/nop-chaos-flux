@@ -9,7 +9,7 @@ const checks = [
   {
     file: 'packages/flux-renderers-basic/src/schemas.ts',
     schemaPattern:
-      /export interface ButtonSchema[\s\S]*?variant\?:\s*'default'\s*\|\s*'destructive'\s*\|\s*'outline'\s*\|\s*'secondary'\s*\|\s*'ghost'\s*\|\s*'link'[\s\S]*?size\?:\s*'default'\s*\|\s*'xs'\s*\|\s*'sm'\s*\|\s*'lg'\s*\|\s*'icon'\s*\|\s*'icon-xs'\s*\|\s*'icon-sm'\s*\|\s*'icon-lg'/,
+      /export interface ButtonSchema[\s\S]*?variant\?:\s*'default'\s*\|\s*'primary'\s*\|\s*'destructive'\s*\|\s*'outline'\s*\|\s*'secondary'\s*\|\s*'ghost'\s*\|\s*'link'[\s\S]*?size\?:\s*'default'\s*\|\s*'xs'\s*\|\s*'sm'\s*\|\s*'lg'\s*\|\s*'icon'\s*\|\s*'icon-xs'\s*\|\s*'icon-sm'\s*\|\s*'icon-lg'/,
     contractFile: 'packages/flux-renderers-basic/src/basic-renderer-definitions.ts',
     contractPattern:
       /type:\s*'button'[\s\S]*?propContracts:\s*\{[\s\S]*?variant:\s*\{[\s\S]*?editorType:\s*'select'[\s\S]*?size:\s*\{[\s\S]*?editorType:\s*'select'/,
@@ -18,7 +18,7 @@ const checks = [
   {
     file: 'packages/flux-renderers-basic/src/schemas.ts',
     schemaPattern: /export interface TabsSchema[\s\S]*?variant\?:\s*'default'\s*\|\s*'line'/,
-    contractFile: 'packages/flux-renderers-basic/src/basic-renderer-definitions.ts',
+    contractFile: 'packages/flux-renderers-basic/src/tabs-renderer-definition.ts',
     contractPattern: /type:\s*'tabs'[\s\S]*?propContracts:\s*\{[\s\S]*?orientation:\s*\{[\s\S]*?editorType:\s*'select'[\s\S]*?variant:\s*\{[\s\S]*?editorType:\s*'select'/,
     label: 'tabs.variant',
   },

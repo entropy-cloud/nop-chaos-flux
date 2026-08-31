@@ -7,6 +7,8 @@ import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js
 interface EditorPalettePanelProps {
   runtime: EditorEngineRuntime;
   onError: (code: string, message: string) => void;
+  /** [G5-R3-视角3-01] meta.disabled 门禁：图元库拖入/点击添加通道 inert。 */
+  disabled?: boolean;
 }
 
 /**
@@ -49,7 +51,13 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
   };
 
   return (
-    <aside data-slot="scada-editor-palette" className="nop-scada-editor-palette">
+    <aside
+      data-slot="scada-editor-palette"
+      className="nop-scada-editor-palette"
+      inert={props.disabled || undefined}
+      aria-disabled={props.disabled || undefined}
+      data-disabled={props.disabled ? 'true' : undefined}
+    >
       {symbols.map((def) => {
         const name = resolveName(def.type, def.name);
         return (

@@ -1,0 +1,181 @@
+{
+  "type": "page",
+  "testid": "antdpro-form-step-page",
+  "className": "adp-root",
+  "body": [
+    {
+      "type": "container",
+      "testid": "antdpro-form-step-header",
+      "className": "adp-page-header px-5 pt-4 pb-4 mb-4 rounded-lg",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 6,
+          "className": "items-center adp-breadcrumb",
+          "body": [
+            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "结算管理", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "分步录入" }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "供应商结算单分步录入",
+          "className": "adp-page-title mt-2",
+          "testid": "antdpro-form-step-title"
+        },
+        {
+          "type": "text",
+          "text": "分步表单：步骤校验通过才可前进，已填数据跨步保留，末步提交写入模拟后端。",
+          "className": "adp-desc-label mt-1"
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-6 max-w-3xl mx-auto",
+      "body": [
+        {
+          "type": "wizard",
+          "testid": "antdpro-step-wizard",
+          "mountOnEnter": true,
+          "onComplete": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/AntdPro__submitForm",
+              "method": "post",
+              "data": {
+                "payeeName": "${antdproStep.step1.payeeName ?? \"\"}",
+                "payeeAccount": "${antdproStep.step1.payeeAccount ?? \"\"}",
+                "amount": "${antdproStep.step1.amount ?? 0}"
+              }
+            },
+            "messages": {
+              "success": "结算单已提交，即将跳转"
+            },
+            "then": {
+              "action": "navigate",
+              "args": {
+                "url": "#/complex-pages/antdpro-result"
+              },
+              "control": {
+                "debounce": 1200
+              }
+            }
+          },
+          "steps": [
+            {
+              "key": "payment",
+              "title": "填写付款信息",
+              "description": "录入收款账户与金额",
+              "formId": "antdpro-step1-form",
+              "body": [
+                {
+                  "type": "form",
+                  "id": "antdpro-step1-form",
+                  "testid": "antdpro-step1-form",
+                  "valuesPath": "antdproStep.step1",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "payeeName",
+                      "label": "收款账户名",
+                      "required": true,
+                      "placeholder": "与银行开户名一致",
+                      "testid": "antdpro-step1-payee"
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "payeeAccount",
+                      "label": "收款账号",
+                      "required": true,
+                      "placeholder": "请输入银行账号",
+                      "testid": "antdpro-step1-account"
+                    },
+                    {
+                      "type": "input-number",
+                      "name": "amount",
+                      "label": "付款金额（元）",
+                      "min": 0,
+                      "placeholder": "请输入金额"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "key": "confirm",
+              "title": "确认付款信息",
+              "description": "核对无误后提交",
+              "formId": "antdpro-step2-form",
+              "body": [
+                {
+                  "type": "form",
+                  "id": "antdpro-step2-form",
+                  "testid": "antdpro-step2-form",
+                  "body": [
+                    {
+                      "type": "fieldset",
+                      "title": "信息核对",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "收款账户名：${antdproStep.step1.payeeName || \"-\"}",
+                          "className": "adp-desc-value"
+                        },
+                        {
+                          "type": "text",
+                          "text": "收款账号：${antdproStep.step1.payeeAccount || \"-\"}",
+                          "className": "adp-desc-value"
+                        },
+                        {
+                          "type": "text",
+                          "text": "付款金额：${antdproStep.step1.amount ?? 0} 元",
+                          "className": "adp-desc-value adp-mono"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "alert",
+                      "level": "info",
+                      "body": "请仔细核对收款信息，确认后进入完成步骤。",
+                      "className": "mt-2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "key": "done",
+              "title": "完成",
+              "description": "结算单已提交",
+              "body": [
+                {
+                  "type": "container",
+                  "className": "flex flex-col items-center py-8 gap-2",
+                  "testid": "antdpro-step-done",
+                  "body": [
+                    { "type": "icon", "icon": "circle-check", "size": 48, "color": "#52c41a" },
+                    {
+                      "type": "text",
+                      "text": "结算单已提交财务复核",
+                      "className": "text-base font-medium"
+                    },
+                    {
+                      "type": "text",
+                      "text": "预计 1 个工作日内完成复核，结果将同步给责任人。",
+                      "className": "adp-desc-label"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -6,6 +6,8 @@ import { ListRenderer } from './list-renderer.js';
 import { TableRenderer } from './table-renderer.js';
 import { TreeRenderer } from './tree-renderer.js';
 import { crudRendererDefinition } from './crud-renderer-definition.js';
+import { queryFilterRendererDefinition } from './query-filter-definition.js';
+import { batchBarRendererDefinition } from './batch-bar-definition.js';
 import { w2aDataCompositionDefinitions } from './w2a-data-composition-definitions.js';
 import { statTileRendererDefinition } from './stat-tile-renderer-definition.js';
 import { sparklineRendererDefinition } from './sparkline-renderer-definition.js';
@@ -16,6 +18,8 @@ const LazyChartRenderer = createLazyRendererComponent<ChartSchema>(
 );
 
 export { crudRendererDefinition } from './crud-renderer-definition.js';
+export { queryFilterRendererDefinition } from './query-filter-definition.js';
+export { batchBarRendererDefinition } from './batch-bar-definition.js';
 export { sparklineRendererDefinition } from './sparkline-renderer-definition.js';
 
 export const dataRendererDefinitions: RendererDefinition[] = [
@@ -112,7 +116,22 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       rowSelection: {
         shape: { kind: 'object', fields: {} },
         displayName: 'Row Selection',
-        description: 'Selection configuration for checkbox/radio row selection.',
+        description:
+          'Selection configuration for checkbox/radio row selection. `modifierSelect` (checkbox mode only, default false) enables modifier gestures: shift-click additive range from the last acted row (anchor), meta/ctrl-click independent toggle, ⌘/ctrl+A select-all inside the table. `selectAllMode` ("all" default | "page") scopes the header select-all and its checkbox state to the current display page (server-paged tables keep the flowed-in row set).',
+        editorType: 'object',
+      },
+      optionRow: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Option Row',
+        description:
+          'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default rowKey), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers on the row; absent optionRow keeps legacy output.',
+        editorType: 'object',
+      },
+      group: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Group',
+        description:
+          'Client-side grouping over the sorted/filtered row set (D1 G-D). `field` groups rows by first-appearance order (declaring it enables grouping); `aggregates` renders per-group `fn` (sum/avg/min/max/count) values in the header; `missingLabel` names the fallback group for missing/null/empty values. Group headers are rows with data-slot="table-group-header" and collapse via the chevron toggle; collapsed state survives data refreshes keyed by group. Inert under tree mode (tree precedence); suppresses drag-sort ordering while active.',
         editorType: 'object',
       },
       expandable: {
@@ -258,6 +277,8 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'multiSort', kind: 'prop', valueType: 'boolean' },
       { key: 'pagination', kind: 'prop' },
       { key: 'rowSelection', kind: 'prop' },
+      { key: 'optionRow', kind: 'prop' },
+      { key: 'group', kind: 'prop' },
       { key: 'expandable', kind: 'prop' },
       { key: 'quickSaveAction', kind: 'prop' },
       { key: 'quickSaveItemAction', kind: 'prop' },
@@ -497,6 +518,13 @@ export const dataRendererDefinitions: RendererDefinition[] = [
         description: 'Optional separate scope path for pageSize (scope ownership).',
         editorType: 'expression',
       },
+      optionRow: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Option Row',
+        description:
+          'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default keyField), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers; absent optionRow keeps legacy output.',
+        editorType: 'object',
+      },
     },
     eventContracts: {
       onItemClick: {
@@ -588,6 +616,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'items', kind: 'prop' },
       { key: 'selectionMode', kind: 'prop' },
       { key: 'keyField', kind: 'prop' },
+      { key: 'optionRow', kind: 'prop' },
       { key: 'pagination', kind: 'prop' },
       { key: 'paginationOwnership', kind: 'prop' },
       { key: 'paginationStatePath', kind: 'prop' },
@@ -603,5 +632,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
   ...w2aDataCompositionDefinitions,
   statTileRendererDefinition,
   sparklineRendererDefinition,
+  queryFilterRendererDefinition,
+  batchBarRendererDefinition,
   crudRendererDefinition,
 ];

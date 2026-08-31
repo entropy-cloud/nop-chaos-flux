@@ -997,16 +997,14 @@
                   "testid": "sundial-settings-save",
                   "onClick": [
                     {
-                      "action": "setValue",
+                      "action": "ajax",
                       "args": {
-                        "path": "savedAt",
-                        "value": "刚刚"
-                      }
-                    },
-                    {
-                      "action": "showToast",
-                      "args": {
-                        "message": "保存成功（模式已写入演示状态）"
+                        "url": "/r/Sundial__updateSettings",
+                        "method": "post",
+                        "includeScope": ["mode"]
+                      },
+                      "messages": {
+                        "success": "保存成功（已写入演示后端）"
                       }
                     }
                   ]

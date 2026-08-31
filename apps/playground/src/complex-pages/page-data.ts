@@ -74,9 +74,9 @@ PAGE_DATA['sundial-workbench'] = {
   taskDetailTitle: '撰写季度复盘报告',
   taskDetailNote: '包含数据复盘和 OKR 回顾两部分',
   taskDetailDate: '8/18',
-  taskDetailRecur: 'weekly',
+  taskDetailRecur: '每周',
   taskDetailFlag: false,
-  taskDetailList: 'work',
+  taskDetailListLabel: '工作',
 };
 
 PAGE_DATA['sundial-detail'] = {
@@ -109,4 +109,10 @@ PAGE_DATA['sundial-settings'] = {
   // Interaction state (plan 457): mode card + rail selection
   mode: 'local',
   activeSection: 'sync',
+};
+
+// ── Cal.com replica: timezone selector + 12h/24h switch initial states ──
+PAGE_DATA['cal-booking'] = {
+  calTimezone: 'Asia/Shanghai',
+  cal24h: true,
 };

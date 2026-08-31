@@ -36,7 +36,7 @@ describe('MarkdownRenderer — DD9 remote src fetch via env.fetcher (INV-1)', ()
       fetcher: async function <T>(api: { url?: string; responseType?: string }) {
         expect(api.url).toBe('https://example.com/doc.md');
         expect(api.responseType).toBe('text');
-        return { ok: true, status: 200, data: '# Hello from remote' as T };
+        return { status: 0, data: '# Hello from remote' as T };
       },
       notify: () => undefined,
     } as unknown as RendererEnv;

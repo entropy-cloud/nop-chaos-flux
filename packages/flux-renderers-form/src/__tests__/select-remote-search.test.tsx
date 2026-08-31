@@ -36,8 +36,7 @@ function typeAndSearch(label: string, query: string) {
 
 function renderRemoteEchoForm(mode: 'append' | 'replace') {
   const mockFetcher = vi.fn(async () => ({
-    ok: true as const,
-    status: 200 as const,
+    status: 0 as const,
     data: [{ label: 'RemoteOnly', value: 'remote-1' }],
   }));
   const fetcher = mockFetcher as unknown as ApiFetcher;
@@ -145,8 +144,7 @@ describe('select remote search (S4)', () => {
 
   it('dispatches search action on user input', async () => {
     const mockFetcher = vi.fn(async () => ({
-      ok: true as const,
-      status: 200 as const,
+      status: 0 as const,
       data: [] as never[],
     }));
     const fetcher = mockFetcher as unknown as ApiFetcher;
@@ -183,8 +181,7 @@ describe('select remote search (S4)', () => {
 
   it('replaces options when searchMergeMode is replace', async () => {
     const mockFetcher = vi.fn(async () => ({
-      ok: true as const,
-      status: 200 as const,
+      status: 0 as const,
       data: [{ label: 'RemoteOnly', value: 'remote' }],
     }));
     const fetcher = mockFetcher as unknown as ApiFetcher;
@@ -232,8 +229,7 @@ describe('select remote search (S4)', () => {
     AbortController.prototype.abort = abortSpy;
 
     const mockFetcher = vi.fn(async () => ({
-      ok: true as const,
-      status: 200 as const,
+      status: 0 as const,
       data: [{ label: 'Remote', value: 'remote' }],
     }));
     const fetcher = mockFetcher as unknown as ApiFetcher;
@@ -269,8 +265,7 @@ describe('select remote search (S4)', () => {
 
   it('returns to local options when search query is cleared', async () => {
     const mockFetcher = vi.fn(async () => ({
-      ok: true as const,
-      status: 200 as const,
+      status: 0 as const,
       data: [{ label: 'RemoteOnly', value: 'remote' }],
     }));
     const fetcher = mockFetcher as unknown as ApiFetcher;

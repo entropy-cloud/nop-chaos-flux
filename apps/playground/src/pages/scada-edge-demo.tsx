@@ -107,7 +107,7 @@ export function ScadaEdgeDemoPage({ onBack }: ScadaEdgeDemoPageProps) {
 
   const env = useMemo<RendererEnv>(
     () => ({
-      fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
+      fetcher: async <T,>() => ({ status: 0, data: null as T }),
       notify: (_level, message) => {
         setNotifyMessage(String(message));
       },

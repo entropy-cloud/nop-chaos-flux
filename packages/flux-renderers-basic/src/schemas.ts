@@ -23,11 +23,24 @@ export type ResponsiveContainerDirection = Partial<Record<ResponsiveBreakpoint, 
 
 export type ResponsiveWrap = Partial<Record<ResponsiveBreakpoint, boolean>>;
 
+export interface PageBreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
 export interface PageSchema extends BaseSchema {
   type: 'page';
   title?: string;
   subTitle?: string;
   remark?: string;
+  /**
+   * Page-header breadcrumb entries (`{ label, href? }`), an array or an
+   * expression resolving to one. Rendered above the title row as a nav;
+   * malformed entries are skipped.
+   */
+  breadcrumb?: SchemaValue;
+  /** Action area rendered at the right end of the title row (region). */
+  extra?: BaseSchema[];
   data?: SchemaValue;
   statusPath?: string;
   body?: BaseSchema[];
@@ -121,7 +134,11 @@ export interface TabsItemSchema extends SchemaObject {
   icon?: string;
   mountOnEnter?: boolean;
   unmountOnExit?: boolean;
-  /** Whether this tab can be closed (removed). amis closable. */
+  /**
+   * Per-item override of the tabs-level `closable`: renders a close affordance
+   * and removes the item through the removeTab channel when activated
+   * (amis closable; defaults to the tabs-level value when omitted).
+   */
   closable?: boolean;
   titleRegionKey?: string;
   bodyRegionKey?: string;
@@ -153,14 +170,39 @@ export interface TabsSchema extends BaseSchema {
   variant?: 'default' | 'line';
   tabsMode?: TabsMode;
   sidePosition?: 'left' | 'right';
-  /** Whether tabs can be closed (removed). amis closable. */
+  /**
+   * View-collection close affordance: per-tab close ✕ removes the item through
+   * the `removeTab` channel (per-item override via `TabsItemSchema.closable`).
+   * The last remaining tab is guarded against removal (amis closable).
+   */
   closable?: boolean;
-  /** Whether tabs can be reordered via drag. amis draggable. */
+  /** Tab drag-reorder affordance; drop reorders through the `moveTab` channel (amis draggable). */
   draggable?: boolean;
-  /** Whether new tabs can be added. amis addable. */
+  /**
+   * Trailing add affordance; click appends an item through the `addTab`
+   * channel (default title i18n `flux.tabs.newTab`, value auto-generated,
+   * no auto-activation) (amis addable).
+   */
   addable?: boolean;
+  /**
+   * Collection ownership axis for view management (kanbanOwnership precedent).
+   * 'local' (default): first management mutation seeds a component-session
+   * collection (no re-seed from later schema items). 'scope': mutations write
+   * back to `itemsStatePath`. 'controlled': mutations are refused.
+   */
+  itemsOwnership?: 'local' | 'controlled' | 'scope';
+  /** Scope read/write path for the collection under `itemsOwnership: 'scope'`. */
+  itemsStatePath?: string;
   contentClassName?: string;
   toolbarClassName?: string;
+  /** Fired after an item is added with payload `{ type, item, index }`. */
+  onTabAdd?: ActionSchema | ActionSchema[];
+  /** Fired after an item is closed with payload `{ type, value, index, item, nextActiveValue }`. */
+  onTabClose?: ActionSchema | ActionSchema[];
+  /** Fired after an item is renamed with payload `{ type, value, index, title, item }`. */
+  onTabRename?: ActionSchema | ActionSchema[];
+  /** Fired after an item is moved with payload `{ type, value, fromIndex, toIndex }`. */
+  onTabMove?: ActionSchema | ActionSchema[];
 }
 
 export interface ContainerSchema extends BaseSchema {
@@ -238,7 +280,7 @@ export interface TextSchema extends BaseSchema {
 export interface ButtonSchema extends BaseSchema {
   type: 'button';
   label?: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?: 'default' | 'primary' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon' | 'icon-xs' | 'icon-sm' | 'icon-lg';
   disabled?: boolean | string;
   icon?: string;
@@ -303,10 +345,105 @@ export interface FlexSchema extends BaseSchema {
   onClick?: ActionSchema | ActionSchema[];
 }
 
+export interface CommandPaletteItemSchema extends SchemaObject {
+  id?: string;
+  label?: string;
+  description?: string;
+  /** Lucide icon name rendered before the label. */
+  icon?: string;
+  /** Keyboard hint rendered on the right edge (e.g. "⌘N"). */
+  shortcut?: string;
+  /** Group heading; flat items sharing a group cluster under one heading. */
+  group?: string;
+  disabled?: boolean | string;
+  /** Static execution track: dispatched after the palette closes (close-then-dispatch). */
+  action?: ActionSchema | ActionSchema[];
+}
+
+export interface CommandPaletteGroupSchema extends SchemaObject {
+  label?: string;
+  items?: CommandPaletteItemSchema[];
+}
+
+export interface CommandPaletteSchema extends BaseSchema {
+  type: 'command-palette';
+  /** Flat static command items (expression-capable). */
+  items?: SchemaValue;
+  /** Explicit labelled sections, rendered before flat `items` (expression-capable). */
+  groups?: SchemaValue;
+  /** Dynamic items track: SourceSchema (fetched) or expression/array. Appended after static sections. */
+  source?: SchemaValue;
+  /** Search input placeholder. Defaults to the i18n "search" message. */
+  placeholder?: string;
+  /** cmdk built-in filtering. Disable to drive items with schema expressions (external filtering). */
+  shouldFilter?: boolean | string;
+  /** Empty state copy. Defaults to the i18n "no results" message. */
+  emptyText?: string;
+  /**
+   * Local invocation key binding (e.g. "mod+k"). Renderer-scoped window keydown
+   * listener with unmount cleanup. No-op on controlled palettes (`open` prop).
+   * No conflict arbitration — global keybindings are G-B2 scope.
+   */
+  hotkey?: string;
+  /**
+   * Controlled open. A simple `${path}` expression is written back to `false`
+   * on user-initiated closes (dialog plan-459 parity) so idempotent
+   * setValue(path, true) can reopen; other expressions keep pure-latch semantics.
+   */
+  open?: boolean | string;
+  defaultOpen?: boolean | string;
+  /** Publishes `{ id, kind: 'command-palette', open }` into the owner scope. */
+  statusPath?: string;
+  container?: string;
+  closeOnEsc?: boolean | string;
+  closeOnOutsideClick?: boolean | string;
+  showMask?: boolean | string;
+  onOpen?: ActionSchema | ActionSchema[];
+  onClose?: ActionSchema | ActionSchema[];
+  /** Fired on command execution with payload `{ id, item, groupId }` (after close). */
+  onCommand?: ActionSchema | ActionSchema[];
+}
+
 export interface ScopeDebugSchema extends BaseSchema {
   type: 'scope-debug';
   title?: string;
   defaultExpand?: boolean;
   dataPaths?: string[];
+}
+
+/**
+ * One keyboard binding of the `keyboard` renderer (D1 G-B2). `keys` is a single
+ * key combo (`"mod+shift+s"`) or a space-separated chord sequence (`"g o"`);
+ * every token is `[(mod|ctrl|shift|alt)+]key`.
+ */
+export interface KeyboardBindingConfig extends SchemaObject {
+  /** Single key combo or space-separated chord sequence. */
+  keys?: string;
+  /** Raw boolean expression (no `${}`) evaluated against the node scope per keypress. */
+  when?: string;
+  /** Allow triggering while focus is in input/textarea/select/contenteditable (default false). */
+  allowInInput?: boolean | string;
+  /** Prevent the default browser behavior when the binding hits (default true). */
+  preventDefault?: boolean | string;
+  /** Static execution track: dispatched when the binding hits. */
+  action?: ActionSchema | ActionSchema[];
+}
+
+/**
+ * Invisible logic renderer (`reaction` sibling): schema-level keyboard binding
+ * channel. Zero DOM output. Contract:
+ * `docs/references/renderer-interfaces.md` §Keyboard Binding Contract.
+ */
+export interface KeyboardSchema extends BaseSchema {
+  type: 'keyboard';
+  /**
+   * Chord window in ms. A token after the first must arrive within this window
+   * to continue a sequence; on timeout the buffer resets (falling back to a
+   * complete prefix binding when one exists). Default 1000.
+   */
+  chordTimeout?: number | string;
+  bindings?: KeyboardBindingConfig[];
+  /** Fired on every hit with payload `{ keys, index, nativeEvent }`. */
+  onTrigger?: ActionSchema | ActionSchema[];
 }
 export type { DynamicRendererSchema };

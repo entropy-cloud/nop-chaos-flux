@@ -353,7 +353,7 @@ describe('createRendererRuntime', () => {
             },
             { once: true },
           );
-        }) as Promise<{ ok: true; status: number; data: T }>;
+        }) as Promise<{ status: number; data: T }>;
       };
       const runtime = createRendererRuntime({
         registry: createRendererRegistry([textRenderer]),
@@ -422,7 +422,7 @@ describe('createRendererRuntime', () => {
             },
             { once: true },
           );
-        }) as Promise<{ ok: true; status: number; data: T }>;
+        }) as Promise<{ status: number; data: T }>;
       };
       const fetcher = vi.fn(fetcherImpl);
       const runtime = createRendererRuntime({
@@ -478,7 +478,7 @@ describe('createRendererRuntime', () => {
           },
           { once: true },
         );
-      }) as Promise<{ ok: true; status: number; data: T }>;
+      }) as Promise<{ status: number; data: T }>;
     };
     const fetcher = vi.fn(fetcherImpl);
     const runtime = createRendererRuntime({

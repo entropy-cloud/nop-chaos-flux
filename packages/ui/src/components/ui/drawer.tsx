@@ -141,12 +141,19 @@ function DrawerContent({
   );
 
   const resolvedStyle = typeof style === 'function' ? undefined : style;
-  const resizeStyle: React.CSSProperties = resizeController.sizeVar
-    ? ({
+  // [G6-R3-视角6-01] the resize handle wrote `--drawer-resize-size` onto Content
+  // while the width/height classes live on Popup — the variable had zero
+  // consumers, so dragging changed nothing. Consume it directly on the Popup
+  // geometry (inline width/height + the CSS var as a stable consumer marker).
+  const isHorizontalResize = direction === 'left' || direction === 'right';
+  const popupResizeStyle: React.CSSProperties | undefined = resizeController.sizeVar
+    ? {
         ['--drawer-resize-size' as string]: resizeController.sizeVar,
-        ...resolvedStyle,
-      } as React.CSSProperties)
-    : resolvedStyle ?? {};
+        ...(isHorizontalResize
+          ? { width: resizeController.sizeVar, maxWidth: resizeController.sizeVar }
+          : { height: resizeController.sizeVar, maxHeight: resizeController.sizeVar }),
+      }
+    : undefined;
 
   const layers = (
     <DrawerZIndexContext.Provider value={zIndex}>
@@ -169,14 +176,14 @@ function DrawerContent({
             'data-[swipe-direction=right]:inset-y-0 data-[swipe-direction=right]:right-0 data-[swipe-direction=right]:w-3/4 data-[swipe-direction=right]:rounded-l-xl data-[swipe-direction=right]:border-l data-[swipe-direction=right]:sm:max-w-sm data-[swipe-direction=right]:translate-x-[var(--drawer-swipe-movement-x,0px)] data-[swipe-direction=right]:data-starting-style:translate-x-full data-[swipe-direction=right]:data-ending-style:translate-x-full',
             'duration-300 data-open:animate-in data-closed:animate-out',
           )}
-          style={{ ['--drawer-direction' as string]: direction }}
+          style={{ ['--drawer-direction' as string]: direction, ...popupResizeStyle }}
         >
           <DrawerPrimitive.Content
             data-slot="drawer-content"
             data-direction={direction}
             data-resizable={resizable ? 'true' : undefined}
             className={cn('group/drawer-content flex h-full flex-col', className)}
-            style={resizeStyle}
+            style={resolvedStyle}
             {...props}
           >
             <div className="mx-auto mt-4 hidden h-1 w-[100px] shrink-0 rounded-full bg-muted group-data-[direction=bottom]/drawer-content:block" />
@@ -241,6 +248,15 @@ function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerRe
     startSize: number;
     target: HTMLElement | null;
   } | null>(null);
+  // 06-01: the active drag's teardown, so an unmount mid-drag can detach the
+  // window listeners (same leak guard as use-dialog-drag's cleanup effect).
+  const teardownRef = React.useRef<(() => void) | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      teardownRef.current?.();
+    };
+  }, []);
 
   const onPointerDown = React.useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -268,9 +284,39 @@ function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerRe
         // ignore — pointer capture is best-effort
       }
 
+      const releaseCapture = (pointerEvent: PointerEvent) => {
+        try {
+          const target = pointerEvent.target as Element | null;
+          target?.releasePointerCapture?.(pointerEvent.pointerId);
+        } catch {
+          // ignore
+        }
+      };
+
+      // 06-01: single teardown shared by pointerup / pointercancel /
+      // lostpointercapture (use-dialog-drag hygiene) — a cancelled drag must
+      // not leave a ghost-resize window where stray pointermove events keep
+      // driving the size.
+      const teardown = () => {
+        dragStateRef.current = null;
+        teardownRef.current = null;
+        window.removeEventListener('pointermove', handleMove);
+        window.removeEventListener('pointerup', handleEnd);
+        window.removeEventListener('pointercancel', handleEnd);
+        window.removeEventListener('lostpointercapture', handleEnd);
+      };
+
       const handleMove = (moveEvent: PointerEvent) => {
         const state = dragStateRef.current;
         if (!state || !state.target) {
+          return;
+        }
+        // Button-press validation (use-dialog-drag hygiene): a pointermove
+        // with no pressed button means the press was lost — stop resizing
+        // instead of ghost-following the pointer.
+        if (moveEvent.buttons === 0) {
+          releaseCapture(moveEvent);
+          teardown();
           return;
         }
         const delta =
@@ -281,24 +327,26 @@ function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerRe
               : direction === 'top'
                 ? moveEvent.clientY - state.startY
                 : state.startY - moveEvent.clientY;
-        const next = Math.max(160, state.startSize + delta);
+        // Min/Max clamp (G6-R3-视角6-01): keep the drawer usable on both ends —
+        // never smaller than 160px, never larger than 90% of the viewport axis.
+        const viewportMax =
+          (direction === 'left' || direction === 'right'
+            ? window.innerWidth
+            : window.innerHeight) * 0.9;
+        const next = Math.min(Math.max(160, state.startSize + delta), viewportMax);
         setSize(next);
       };
 
-      const handleUp = (event: PointerEvent) => {
-        dragStateRef.current = null;
-        window.removeEventListener('pointermove', handleMove);
-        window.removeEventListener('pointerup', handleUp);
-        try {
-          const target = event.target as Element | null;
-          target?.releasePointerCapture?.(event.pointerId);
-        } catch {
-          // ignore
-        }
+      const handleEnd = (pointerEvent: PointerEvent) => {
+        releaseCapture(pointerEvent);
+        teardown();
       };
 
+      teardownRef.current = teardown;
       window.addEventListener('pointermove', handleMove);
-      window.addEventListener('pointerup', handleUp);
+      window.addEventListener('pointerup', handleEnd);
+      window.addEventListener('pointercancel', handleEnd);
+      window.addEventListener('lostpointercapture', handleEnd);
     },
     [direction, enabled],
   );
@@ -341,8 +389,15 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function DrawerBody({ className, ...props }: React.ComponentProps<'div'>) {
+  // [G6-R2-视角6-01] body scroll contract — same shape as DialogBody: flex-1 +
+  // min-h-0 + overflow-y-auto so long content scrolls inside the drawer instead
+  // of overflowing past max-h-[80vh]/h-full.
   return (
-    <div data-slot="drawer-body" className={cn('flex flex-col gap-4 p-4', className)} {...props} />
+    <div
+      data-slot="drawer-body"
+      className={cn('flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4', className)}
+      {...props}
+    />
   );
 }
 

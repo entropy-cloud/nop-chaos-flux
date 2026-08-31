@@ -76,6 +76,24 @@
 
 > `filterCard` 是**表达式**（作用域 `{ card, text }`），如 `"${card.title}"` 或 `"${card.data.title}"`——注意它不是属性路径字符串。
 
+## 列头聚合（columnAggregate）
+
+一条板级声明，每列在默认列头内嵌各自的聚合值（`data-slot="kanban-column-aggregate"`，如 `sum: 30`）：
+
+```json
+{
+  "type": "kanban",
+  "columnAggregate": { "fn": "sum", "field": "points", "label": "分数" },
+  "data": {}
+}
+```
+
+- `fn`：`sum | avg | min | max | count`；`count` 忽略 `field`，恒等于卡片数（空列为 `0`）
+- `field`：卡片 `data` 中的数值字段；sum/avg/min/max 聚合时跳过缺失/非数值，全部无效时显示 `-`（开发态一次性 dev warn），不抛错
+- `label`：列头文案，缺省用 `fn` 词元；`avg` 保留两位小数
+- 聚合与列头计数徽章同源（当前过滤可见卡片集），过滤联动一致
+- 声明 `columnHeader` region 时整头被 region 接管，聚合不再渲染
+
 ## 状态所有权
 
 ```json
@@ -96,26 +114,27 @@
 
 ## 字段参考
 
-| 字段                    | 类型                                 | 说明                                                                                     |
-| ----------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `data`                  | `Record<string, BoardItem>`          | 看板数据（root/column/card/divider 图结构；列标题与 cardLimit/wipStrict 在列 `data` 中） |
-| `configMap`             | `Record<string, any>`                | 额外配置映射                                                                             |
-| `columnsConfig`         | `Record<string, KanbanColumnConfig>` | 列配置（仅 controlled 模式的 `collapsed` 生效）                                          |
-| `filterText`            | `string`                             | 按文本过滤                                                                               |
-| `filterCard`            | `string`                             | 过滤表达式（作用域 `{card, text}`）                                                      |
-| `filterTags`            | `string[]`                           | 按标签过滤                                                                               |
-| `columnWidth`           | `number \| 'auto' \| 'equal'`        | 列宽                                                                                     |
-| `columnDraggable`       | `boolean`                            | 列可拖拽                                                                                 |
-| `draggable`             | `boolean`                            | 卡片可拖拽                                                                               |
-| `wipStrict`             | `boolean`                            | 全局 WIP 严格模式（超限禁入；列级可覆盖）                                                |
-| `collapsedOwnership`    | `'local' \| 'controlled' \| 'scope'` | 折叠状态所有权                                                                           |
-| `collapsedStatePath`    | `string`                             | 折叠状态存储路径                                                                         |
-| `kanbanOwnership`       | `'local' \| 'controlled' \| 'scope'` | 整板数据所有权                                                                           |
-| `kanbanStatePath`       | `string`                             | 整板数据存储路径                                                                         |
-| `statusPath`            | `string`                             | 业务状态字段路径（已注册，未接线）                                                       |
-| `columnHeaderClassName` | `string`                             | 列头类名                                                                                 |
-| `cardClassName`         | `string`                             | 卡片类名                                                                                 |
-| `columnFooterClassName` | `string`                             | 列底部类名                                                                               |
+| 字段                    | 类型                                 | 说明                                                                                         |
+| ----------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `data`                  | `Record<string, BoardItem>`          | 看板数据（root/column/card/divider 图结构；列标题与 cardLimit/wipStrict 在列 `data` 中）     |
+| `configMap`             | `Record<string, any>`                | 额外配置映射                                                                                 |
+| `columnsConfig`         | `Record<string, KanbanColumnConfig>` | 列配置（仅 controlled 模式的 `collapsed` 生效）                                              |
+| `filterText`            | `string`                             | 按文本过滤                                                                                   |
+| `filterCard`            | `string`                             | 过滤表达式（作用域 `{card, text}`）                                                          |
+| `filterTags`            | `string[]`                           | 按标签过滤                                                                                   |
+| `columnWidth`           | `number \| 'auto' \| 'equal'`        | 列宽                                                                                         |
+| `columnDraggable`       | `boolean`                            | 列可拖拽                                                                                     |
+| `draggable`             | `boolean`                            | 卡片可拖拽                                                                                   |
+| `wipStrict`             | `boolean`                            | 全局 WIP 严格模式（超限禁入；列级可覆盖）                                                    |
+| `collapsedOwnership`    | `'local' \| 'controlled' \| 'scope'` | 折叠状态所有权                                                                               |
+| `collapsedStatePath`    | `string`                             | 折叠状态存储路径                                                                             |
+| `kanbanOwnership`       | `'local' \| 'controlled' \| 'scope'` | 整板数据所有权                                                                               |
+| `kanbanStatePath`       | `string`                             | 整板数据存储路径                                                                             |
+| `columnAggregate`       | `{ fn, field?, label? }`             | 列头聚合（板级声明，每列各自聚合自身可见卡片；fn = sum/avg/min/max/count，count 忽略 field） |
+| `statusPath`            | `string`                             | 业务状态字段路径（已注册，未接线）                                                           |
+| `columnHeaderClassName` | `string`                             | 列头类名                                                                                     |
+| `cardClassName`         | `string`                             | 卡片类名                                                                                     |
+| `columnFooterClassName` | `string`                             | 列底部类名                                                                                   |
 
 ### Events
 

@@ -1,0 +1,385 @@
+{
+  "type": "page",
+  "testid": "cal-confirm-page",
+  "className": "cal-root",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "event",
+      "action": "ajax",
+      "args": { "url": "/r/Cal__event", "method": "get" }
+    },
+    {
+      "type": "data-source",
+      "id": "cal-selected-source",
+      "name": "selected",
+      "action": "ajax",
+      "args": { "url": "/r/Cal__selectedSlot", "method": "get" }
+    },
+    {
+      "type": "container",
+      "className": "max-w-5xl mx-auto px-6 py-10 flex flex-col gap-6",
+      "testid": "cal-confirm-main",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 8,
+          "className": "items-center cal-reschedule-bar",
+          "testid": "cal-confirm-reschedule",
+          "body": [
+            { "type": "icon", "icon": "history", "size": 16 },
+            {
+              "type": "text",
+              "text": "你正在重新安排这次预约：原时间为 2026年9月3日 周四 10:00 – 10:30，请确认新的预约信息。"
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "className": "items-start gap-8",
+          "testid": "cal-confirm-columns",
+          "body": [
+            {
+              "type": "container",
+              "testid": "cal-confirm-summary",
+              "className": "w-72 shrink-0 cal-summary-card flex flex-col gap-2",
+              "body": [
+                {
+                  "type": "container",
+                  "className": "cal-summary-host",
+                  "body": [
+                    {
+                      "type": "container",
+                      "className": "cal-avatar",
+                      "testid": "cal-confirm-avatar",
+                      "body": [{ "type": "text", "text": "${event?.hostInitials}" }]
+                    },
+                    {
+                      "type": "container",
+                      "className": "flex flex-col",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "${event?.hostName}",
+                          "className": "font-medium"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${event?.username}",
+                          "className": "cal-summary-label"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "${event?.title}",
+                  "className": "cal-summary-value",
+                  "testid": "cal-confirm-summary-title"
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 6,
+                  "className": "items-center cal-meta-row",
+                  "body": [
+                    { "type": "icon", "icon": "clock", "size": 14 },
+                    {
+                      "type": "text",
+                      "text": "${selected?.durationText ?? \"30 分钟\"}",
+                      "testid": "cal-confirm-summary-duration"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 6,
+                  "className": "items-center cal-meta-row",
+                  "body": [
+                    { "type": "icon", "icon": "video", "size": 14 },
+                    {
+                      "type": "text",
+                      "text": "${event?.location}",
+                      "testid": "cal-confirm-summary-location"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 6,
+                  "className": "items-center cal-meta-row",
+                  "body": [
+                    { "type": "icon", "icon": "globe", "size": 14 },
+                    {
+                      "type": "text",
+                      "text": "${event?.timezoneLabel}",
+                      "testid": "cal-confirm-summary-timezone"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 6,
+                  "className": "items-center cal-meta-row",
+                  "body": [
+                    { "type": "icon", "icon": "calendar", "size": 14 },
+                    {
+                      "type": "text",
+                      "text": "${selected?.dateText ?? event?.preview?.dateText} ${selected?.timeText ?? event?.preview?.timeText}",
+                      "testid": "cal-confirm-summary-time"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "testid": "cal-confirm-form-area",
+              "className": "flex-1 min-w-0 flex flex-col gap-6",
+              "body": [
+                {
+                  "type": "form",
+                  "id": "cal-confirm-form",
+                  "testid": "cal-confirm-form",
+                  "submitAction": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/Cal__book",
+                      "method": "post",
+                      "includeScope": "*"
+                    },
+                    "messages": {
+                      "success": "预约提交成功",
+                      "failed": "该时段已失效，请选择其他时段"
+                    }
+                  },
+                  "onSubmitSuccess": {
+                    "action": "navigate",
+                    "args": { "url": "#/complex-pages/cal-success" },
+                    "control": { "debounce": 1200 }
+                  },
+                  "onSubmitError": {
+                    "action": "navigate",
+                    "args": { "url": "#/complex-pages/cal-booking" },
+                    "control": { "debounce": 1200 }
+                  },
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "name",
+                      "label": "您的姓名",
+                      "required": true,
+                      "placeholder": "请输入您的姓名",
+                      "testid": "cal-confirm-name"
+                    },
+                    {
+                      "type": "input-email",
+                      "name": "email",
+                      "label": "邮箱",
+                      "required": true,
+                      "placeholder": "用于接收预约通知",
+                      "testid": "cal-confirm-email"
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "phone",
+                      "label": "联系电话（可选）",
+                      "placeholder": "便于会前联络",
+                      "testid": "cal-confirm-phone"
+                    },
+                    {
+                      "type": "textarea",
+                      "name": "notes",
+                      "label": "备注",
+                      "placeholder": "想重点讨论的方向、背景信息等",
+                      "testid": "cal-confirm-notes"
+                    },
+                    {
+                      "type": "container",
+                      "testid": "cal-confirm-guests",
+                      "className": "flex flex-col gap-2",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "className": "items-center justify-between",
+                          "body": [
+                            { "type": "text", "text": "嘉宾", "className": "cal-summary-value" },
+                            {
+                              "type": "button",
+                              "label": "添加嘉宾",
+                              "icon": "plus",
+                              "variant": "link",
+                              "testid": "cal-confirm-guest-add",
+                              "onClick": {
+                                "action": "ajax",
+                                "args": { "url": "/r/Cal__addGuest", "method": "post" },
+                                "then": {
+                                  "action": "component:refresh",
+                                  "componentId": "cal-selected-source"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "loop",
+                          "testid": "cal-confirm-guest-list",
+                          "items": "${selected?.guests}",
+                          "body": [
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 8,
+                              "className": "items-center justify-between cal-guest-row",
+                              "testid": "cal-confirm-guest-row",
+                              "body": [
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 6,
+                                  "className": "items-center cal-guest-chip",
+                                  "testid": "cal-confirm-guest-chip",
+                                  "body": [
+                                    { "type": "icon", "icon": "user", "size": 13 },
+                                    { "type": "text", "text": "${$slot.item}" }
+                                  ]
+                                },
+                                {
+                                  "type": "button",
+                                  "label": "",
+                                  "icon": "trash-2",
+                                  "variant": "ghost",
+                                  "size": "icon-sm",
+                                  "testid": "cal-confirm-guest-remove",
+                                  "onClick": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/Cal__removeGuest",
+                                      "method": "post",
+                                      "data": { "index": "${$slot.index}" }
+                                    },
+                                    "then": {
+                                      "action": "component:refresh",
+                                      "componentId": "cal-selected-source"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "select",
+                      "name": "companySize",
+                      "label": "团队规模",
+                      "required": true,
+                      "placeholder": "请选择团队规模",
+                      "options": [
+                        { "label": "1-10 人", "value": "s" },
+                        { "label": "11-50 人", "value": "m" },
+                        { "label": "51-200 人", "value": "l" },
+                        { "label": "200 人以上", "value": "xl" }
+                      ],
+                      "testid": "cal-confirm-q-select"
+                    },
+                    {
+                      "type": "radio-group",
+                      "name": "focusArea",
+                      "label": "最想解决的问题",
+                      "required": true,
+                      "options": [
+                        { "label": "预约流程提效", "value": "booking" },
+                        { "label": "内部工具整合", "value": "integration" },
+                        { "label": "数据可视化", "value": "visualization" },
+                        { "label": "其他（请在备注说明）", "value": "other" }
+                      ],
+                      "testid": "cal-confirm-q-radio"
+                    },
+                    {
+                      "type": "checkbox-group",
+                      "name": "channels",
+                      "label": "了解我们的渠道",
+                      "options": [
+                        { "label": "同事推荐", "value": "referral" },
+                        { "label": "技术社区", "value": "community" },
+                        { "label": "搜索引擎", "value": "search" }
+                      ],
+                      "testid": "cal-confirm-q-checkbox"
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 12,
+                      "className": "items-center",
+                      "testid": "cal-confirm-actions",
+                      "body": [
+                        {
+                          "type": "button",
+                          "label": "确认预约",
+                          "className": "cal-btn cal-btn-primary",
+                          "testid": "cal-confirm-submit",
+                          "onClick": { "action": "submitForm" }
+                        },
+                        {
+                          "type": "button",
+                          "label": "返回上一步",
+                          "className": "cal-btn cal-btn-link",
+                          "testid": "cal-confirm-back",
+                          "onClick": {
+                            "action": "navigate",
+                            "args": { "url": "#/complex-pages/cal-booking" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "testid": "cal-confirm-error-sample",
+                  "className": "flex flex-col gap-1",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 4,
+                      "className": "items-center",
+                      "body": [
+                        { "type": "text", "text": "电话号码", "className": "cal-summary-value" },
+                        { "type": "text", "text": "*", "className": "cal-required-star" }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "className": "cal-field-invalid",
+                      "testid": "cal-confirm-error-field",
+                      "body": [{ "type": "text", "text": "未填写" }]
+                    },
+                    {
+                      "type": "text",
+                      "text": "请输入联系电话（校验形态静态样本，实机校验在必填字段留空提交时触发）",
+                      "className": "cal-field-error",
+                      "testid": "cal-confirm-error-text"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

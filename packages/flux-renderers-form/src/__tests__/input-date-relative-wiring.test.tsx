@@ -33,8 +33,11 @@ async function openRangePicker() {
 }
 
 function dayButton(popover: HTMLElement, day: number) {
+  // The grid renders adjacent-month trailing days; scope lookups to the
+  // current month or "29" resolves to last month's trailing day.
   return within(popover)
     .getAllByRole('button')
+    .filter((btn) => btn.closest('[data-outside]') === null)
     .find((btn) => btn.textContent === String(day)) as HTMLButtonElement;
 }
 
@@ -60,10 +63,21 @@ describe('relative date expressions — renderer wiring (P1-05)', () => {
   });
 
   describe('calendar constraints (minDate/maxDate)', () => {
+    // The popover opens on the VALUE's month, and the assertions below look up
+    // days by their real-clock day number — so the value must stay anchored to
+    // the current month. The original fixed `2026-08-11` values inverted every
+    // assertion at the September rollover (day "1" resolved to August 1).
+    const currentMonthDay = (day: number) => {
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(day).padStart(2, '0');
+      return `${now.getFullYear()}-${mm}-${dd}`;
+    };
+
     it('input-date minDate:"now" disables past days in the calendar', async () => {
       renderSchema({
         type: 'form',
-        data: { when: '2026-08-11' },
+        data: { when: currentMonthDay(11) },
         body: [
           { type: 'input-date', name: 'when', label: 'When', minDate: 'now' },
         ],
@@ -81,7 +95,7 @@ describe('relative date expressions — renderer wiring (P1-05)', () => {
     it('input-date maxDate:"now-1d" disables today (past max bound)', async () => {
       renderSchema({
         type: 'form',
-        data: { when: '2026-08-11' },
+        data: { when: currentMonthDay(11) },
         body: [
           { type: 'input-date', name: 'when', label: 'When', maxDate: 'now-1d' },
         ],
@@ -96,7 +110,7 @@ describe('relative date expressions — renderer wiring (P1-05)', () => {
     it('input-datetime minDate:"now" disables past days in the calendar', async () => {
       renderSchema({
         type: 'form',
-        data: { when: '2026-08-11 10:00' },
+        data: { when: `${currentMonthDay(11)} 10:00` },
         body: [
           { type: 'input-datetime', name: 'when', label: 'When', minDate: 'now' },
         ],
@@ -113,7 +127,7 @@ describe('relative date expressions — renderer wiring (P1-05)', () => {
     it('date-range minDate:"now" disables past days in the calendar', async () => {
       renderSchema({
         type: 'form',
-        data: { range: '2026-08-11,2026-08-15' },
+        data: { range: `${currentMonthDay(11)},${currentMonthDay(15)}` },
         body: [
           { type: 'date-range', name: 'range', label: 'Range', minDate: 'now' },
         ],

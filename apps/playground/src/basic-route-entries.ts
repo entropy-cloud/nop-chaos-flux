@@ -44,6 +44,14 @@ export const BASIC_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Side-panel drawer with body and actions regions.',
   },
   {
+    id: 'command-palette',
+    title: 'Command Palette',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description:
+      'Keyboard-first command palette (⌘K): grouped items, built-in filtering, keyboard selection, close-after-execute.',
+  },
+  {
     id: 'tabs',
     title: 'Tabs',
     category: 'layout',
@@ -114,5 +122,13 @@ export const BASIC_RENDERER_ROUTES: RendererRouteEntry[] = [
     category: 'logic',
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     description: 'Side-effect trigger: fires actions when watched scope values change.',
+  },
+  {
+    id: 'keyboard',
+    title: 'Keyboard',
+    category: 'logic',
+    sourcePackage: '@nop-chaos/flux-renderers-basic',
+    description:
+      'Invisible keyboard binding channel: single combos and chord sequences dispatch schema actions.',
   },
 ];

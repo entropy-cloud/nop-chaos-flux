@@ -39,8 +39,7 @@ function makeUploadEnv(fail = false): RendererEnv {
           size: 0,
         };
         return {
-          ok: true,
-          status: 200,
+                    status: 0,
           data: {
             url: `https://cdn.example.com/${file.name}`,
             name: file.name,
@@ -49,7 +48,7 @@ function makeUploadEnv(fail = false): RendererEnv {
         };
       }
       submitCalls.push(ctx.scope.readOwn() as Record<string, unknown>);
-      return { ok: true, status: 200, data: ctx.scope.readOwn() as T };
+      return { status: 0, data: ctx.scope.readOwn() as T };
     },
     notify: () => undefined,
   };

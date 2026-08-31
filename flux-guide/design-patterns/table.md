@@ -113,11 +113,41 @@
 
 **rowSelection 配置**：
 
-| 字段                 | 说明                           |
-| -------------------- | ------------------------------ |
-| `type`               | `checkbox` 多选 / `radio` 单选 |
-| `keepOnPageChange`   | 翻页时保留选中状态             |
-| `maxSelectionLength` | 最大可选数量                   |
+| 字段                 | 说明                                                                                                                                                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `type`               | `checkbox` 多选 / `radio` 单选                                                                                                                                                                                                                                                 |
+| `keepOnPageChange`   | 翻页时保留选中状态                                                                                                                                                                                                                                                             |
+| `maxSelectionLength` | 最大可选数量                                                                                                                                                                                                                                                                   |
+| `selectAllMode`      | 表头全选作用域（缺省 `'all'` = 零回归全量进选择集）：`'page'` = 当前显示页 check/uncheck-all-visible（勾选 = 既有选择集 ∪ 页行集、上限沿页行序截断；取消 = 移除页行集、他页键保留；表头勾选态跟随页作用域）。服务端分页下 `'page'` 与 `'all'` 同源（已流入行集）。radio 下惰性 |
+| `modifierSelect`     | 修饰键选区手势（checkbox 模式有效，radio 下惰性；缺省 false）：⇧click 从最近操作行（锚点）加法并集范围选（范围内不可选行跳过、上限截断、永不取消）、meta/ctrl-click 独立增补切换、⌘/ctrl+A 表内全选（焦点在表内且目标非输入框时生效）。缺省时 ⇧click 保持普通 toggle 行为      |
+
+---
+
+## 4.1 选中态 schema 表达（optionRow）
+
+`optionRow` 为表格行提供「选中值绑定 + 状态 marker 输出」通道：行元素输出 `data-option-row` / `data-state` / `data-selected` / `aria-selected`，选中态可纯 schema 声明驱动（无需渲染器逐案补丁）。
+
+```jsonc
+{
+  "type": "table",
+  "source": "${rows}",
+  "rowKey": "id",
+  "optionRow": {
+    "value": "${activeId}", // 选中值绑定（owner scope 表达式，数组 = 命中任意一项）
+    "valueField": "id", // 可选：参与比对的记录字段，默认 rowKey
+    "selectedClass": "row-on", // 可选：选中行追加的 schema 类
+  },
+  "columns": [{ "name": "name", "label": "姓名" }],
+}
+```
+
+host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='selected']`；hover 走 `[data-option-row]:hover` 并以 `@media (hover: hover)` 门控触摸端。
+
+**行为要点**：
+
+- `value` 求值失败/为空 → 兜底为无选中态，不中断渲染。
+- 未声明 `value` 时选中态复用 `rowSelection` 内部选择集；`value` 与 `rowSelection` 同时声明时绑定独占视觉标记（dev warn），checkbox 照常工作、`onSelectionChange` 照常派发。
+- 不声明 `optionRow` 时输出与旧版完全一致。
 
 ---
 
@@ -384,6 +414,67 @@
 - 未配置 `cells` 对应列时该列单元格留空；`align` 缺省不设显式对齐（单元格默认左对齐）
 - 合计行单元格渲染语义：`value` 为字符串时按表达式求值（非 `${...}` 的普通字符串原样展示），对象（`SchemaInput`）时以 helpers 求值
 - `affixRow`/`prefixRow` 都支持，可同时使用（表头下一条 + 表尾一条）
+
+## 13. 分组与聚合（group）
+
+> `group` 在排序/过滤后的行集上做客户端全量分组：组头行整行铺满（折叠按钮 + 组名 + 成员数 + 聚合值），组顺序按数据首现序（稳定）。聚合按组内**全量成员**求值（与分页无关）。
+
+```jsonc
+{
+  "type": "table",
+  "source": "${orders}",
+  "rowKey": "id",
+  "group": {
+    "field": "category",
+    "aggregates": [{ "fn": "sum", "field": "amount", "label": "金额合计" }, { "fn": "count" }],
+    "missingLabel": "未分类",
+  },
+  "columns": [
+    { "name": "category", "label": "分类" },
+    { "name": "amount", "label": "金额" },
+  ],
+}
+```
+
+- `field` 必填（声明即启用分组）；字段缺失/null/空串的行归入 `missingLabel`（默认 `-`）兜底组，行不丢
+- `aggregates[].fn` ∈ `sum | avg | min | max | count`；非 count 聚合必须给 `field`；无有效数值时渲染 `-`
+- 组头行折叠态按分组键记忆，数据刷新后同键组保持折叠
+- 兼容边界：treeMode 下 group 惰性（树优先）；`draggable` 与 group 同声明时 group 优先（拖拽排序不施加）；`rowSelection.selectAllMode:'page'` 的页全选只作用于当页组员行
+
+## 14. 单元格原位编辑双态（editable）
+
+> `editable` 在单元格级承载「导航态 ↔ 编辑态」双态状态机，与 `quickEdit` 共存分层：`quickEdit` 是常驻编辑控件/弹窗，`editable` 是按格进入/提交/取消。同列同时声明时 `editable` 优先。
+
+```jsonc
+{
+  "type": "table",
+  "source": "${tasks}",
+  "rowKey": "id",
+  "quickSaveItemAction": { "action": "ajax", "args": { "url": "/api/task/${id}" } },
+  "columns": [
+    { "name": "title", "label": "标题", "editable": true },
+    { "name": "score", "label": "评分", "editable": { "editor": "number", "required": true } },
+    {
+      "name": "level",
+      "label": "级别",
+      "editable": {
+        "editor": "select",
+        "options": [
+          { "label": "高", "value": "high" },
+          { "label": "低", "value": "low" },
+        ],
+      },
+    },
+    { "name": "done", "label": "完成", "editable": { "editor": "checkbox" } },
+  ],
+}
+```
+
+- 双态键位：导航态 `Enter`/`F2`/点击进入编辑；编辑态 `Enter` 提交、`Esc` 取消（值回滚零写入）、失焦且值变化时提交
+- `editor` ∈ `text | number | select | date | checkbox`（缺省 `text`）；`required` 拦截空值提交，编辑态保持不丢值
+- 写入通道：表级 `quickSaveItemAction ?? quickSaveAction` 在场时提交即派发保存动作（失败 notify + 编辑态保持）；不在场时走纯客户端 scope 写入（零派发）
+- `editable: true` 等价 `{ "editor": "text" }`；checkbox 编辑器「toggle 即提交」；未知 editor 值该列回退只读
+- 可编辑格的点击/键盘不冒泡到行（不触发行点击/行选中 toggle/行展开）
 
 ---
 

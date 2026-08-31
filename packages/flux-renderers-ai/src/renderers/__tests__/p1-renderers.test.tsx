@@ -113,7 +113,7 @@ describe('ai-conversations (Widget)', () => {
     expect(onCreate).toHaveBeenCalled();
   });
 
-  it('delete button fires onItemDelete with id', () => {
+  it('delete requires confirmation, then fires onItemDelete with id', () => {
     const onItemDelete = vi.fn();
     const conversations: AiConversationInfo[] = [
       { id: 'c1', title: 'First', createdAt: 1, updatedAt: 1 },
@@ -124,6 +124,9 @@ describe('ai-conversations (Widget)', () => {
     });
     const { container } = render(<Conversations {...props} />);
     fireEvent.click(container.querySelector('[data-slot="ai-conversations-delete"]')!);
+    // [G5-视角10-01] the click arms the destructive confirmation only.
+    expect(onItemDelete).not.toHaveBeenCalled();
+    fireEvent.click(document.querySelector('[data-slot="alert-dialog-action"]')!);
     // C8.1 P1: payload + dispatch ctx (payload keys → evaluationBindings).
     expect(onItemDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }), expect.anything());
   });

@@ -32,6 +32,7 @@ import { createUndoStack, pushCommand as pushUndoCommand, undo as undoStackOp, r
 import type { UndoStack, UndoCommandType } from './utils/kanban-undo-stack.js';
 import { addCard, removeCard, moveCard, moveColumn, getColumns, collectAllTags } from './kanban-helpers.js';
 import { registerKanbanHandle, type KanbanHandleSurface } from './kanban-handle.js';
+import { useKanbanColumnAggregate } from './hooks/use-kanban-column-aggregate.js';
 
 const EMPTY_BOARD = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
 
@@ -43,6 +44,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const rawData = resolved.data as BoardData | undefined;
   const configMap = resolved.configMap as Record<string, KanbanCardConfig> | undefined;
   const columnsConfig = resolved.columnsConfig as Record<string, any> | undefined;
+  const { columnAggregate, warnAggregateFallback } = useKanbanColumnAggregate(resolved.columnAggregate);
   const draggable = resolved.draggable !== false;
   const columnDraggable = resolved.columnDraggable !== false;
   const columnWidthMode = resolved.columnWidth;
@@ -558,7 +560,16 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const canRedoNow = canRedo(undoStackState);
 
   return (
-    <div ref={boardRef} data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}>
+    <div
+      ref={boardRef}
+      data-slot="kanban"
+      inert={meta.disabled === true || undefined}
+      aria-disabled={meta.disabled === true || undefined}
+      data-disabled={meta.disabled === true ? 'true' : undefined}
+      data-testid={meta.testid || undefined}
+      data-cid={meta.cid || undefined}
+      className={cn('nop-kanban flex flex-col h-full min-h-0', meta.className)}
+    >
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {dndAnnouncement || t('scheduling.kanban.boardSummary', {
           columns: columns.length,
@@ -624,6 +635,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
                 columnHeaderClassName={columnHeaderClassName}
                 cardClassName={cardClassName}
                 columnFooterClassName={columnFooterClassName}
+                columnAggregate={columnAggregate}
+                onAggregateFallback={warnAggregateFallback}
                 columnHeaderRegion={regions.columnHeader as any}
                 columnHeaderToolbarRegion={regions.columnHeaderToolbar as any}
                 cardTemplateRegion={regions.cardTemplate as any}

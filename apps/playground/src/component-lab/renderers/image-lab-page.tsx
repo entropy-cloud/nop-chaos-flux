@@ -40,9 +40,9 @@ const fetcherImage = {
 
 const protectedImageFetcher = (async (api: { url?: string }) => {
   if ((api.url ?? '').includes('protected-image')) {
-    return { ok: true, status: 200, data: { url: DATA_URI_IMAGE } };
+    return { status: 0, data: { url: DATA_URI_IMAGE } };
   }
-  return { ok: true, status: 200, data: null };
+  return { status: 0, data: null };
 }) as unknown as RendererEnv['fetcher'];
 
 export function ImageLabPage() {

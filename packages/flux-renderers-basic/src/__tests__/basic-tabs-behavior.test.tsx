@@ -210,7 +210,7 @@ describe('basicRendererDefinitions tabs onChange type namespace + ctx (CX-10 / 0
     const urls: string[] = [];
     const fetcher = vi.fn(async (api: { url?: string }) => {
       urls.push(api?.url ?? '');
-      return { ok: true, status: 200, data: null as never };
+      return { status: 0, data: null as never };
     }) as unknown as RendererEnv['fetcher'];
     const SchemaRenderer = createBasicSchemaRenderer();
     render(

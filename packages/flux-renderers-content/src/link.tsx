@@ -8,8 +8,11 @@ function resolveRel(
   target: unknown,
   rel: unknown,
 ): string | undefined {
-  if (typeof rel === 'string' && rel.length > 0) {
-    return rel;
+  // Trim before judging (15-02): a whitespace-only string would otherwise pass
+  // the length check and suppress the target=_blank noopener top-up.
+  const trimmedRel = typeof rel === 'string' ? rel.trim() : '';
+  if (trimmedRel.length > 0) {
+    return trimmedRel;
   }
   if (target === '_blank') {
     return 'noopener noreferrer';
@@ -22,14 +25,28 @@ export function LinkRenderer(props: RendererComponentProps<LinkSchema>) {
   const labelContent = resolveRendererSlotContent(props, 'label');
   const hasLabel = hasRendererSlotContent(labelContent);
 
+  // [G7-R2-视角11-01] download passthrough: data:/blob: export links are blocked
+  // as top-frame navigations by modern browsers unless the anchor carries the
+  // `download` attribute. true → download="" (browser-generated filename).
+  const rawDownload = slotProps.download;
+  const download =
+    typeof rawDownload === 'string' && rawDownload.length > 0
+      ? rawDownload
+      : rawDownload === true
+        ? ''
+        : undefined;
+
   // URL protocol guard: a javascript:/data:/vbscript: href would execute on
   // click, and href may be data-bound (`${item.link}`). Unsafe hrefs degrade to
   // a non-navigable link (label still renders) — fail-safe, matching the
   // javascript: URI stripping done by the html/markdown sanitize gate.
+  // 15-02: a `blob:` href is safe only when the anchor carries `download`
+  // (same-origin object-URL export links, per the schema contract) — without
+  // `download` it stays cleared (conservative fail-safe).
   const href =
     typeof slotProps.href === 'string' &&
     slotProps.href.length > 0 &&
-    isSafeNavigationUrl(slotProps.href)
+    isSafeNavigationUrl(slotProps.href, { download: download !== undefined })
       ? slotProps.href
       : undefined;
   const target = slotProps.target as LinkSchema['target'] | undefined;
@@ -60,6 +77,7 @@ export function LinkRenderer(props: RendererComponentProps<LinkSchema>) {
       href={disabled ? undefined : href}
       target={target}
       rel={rel}
+      download={download ?? undefined}
       onClick={needsHandler ? handleClick : undefined}
       aria-disabled={disabled || undefined}
       className={cn(

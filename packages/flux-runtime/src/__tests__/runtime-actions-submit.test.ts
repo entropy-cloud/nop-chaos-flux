@@ -359,7 +359,7 @@ describe('createRendererRuntime', () => {
               },
               { once: true },
             );
-          }) as Promise<{ ok: true; status: number; data: T }>;
+          }) as Promise<{ status: number; data: T }>;
         },
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
@@ -413,7 +413,7 @@ describe('createRendererRuntime', () => {
               },
               { once: true },
             );
-          }) as Promise<{ ok: true; status: number; data: T }>;
+          }) as Promise<{ status: number; data: T }>;
         },
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),

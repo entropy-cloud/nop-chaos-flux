@@ -37,7 +37,7 @@ Always run `typecheck`, `build`, and `lint` after making **CODE** changes. Run t
 2. Fix individually: `npx playwright test "path/to/test.spec.ts:42" --reporter=list` or `pnpm --filter @nop-chaos/flux-runtime test -- --grep "test name"`.
 3. Run full suite after all fixes pass.
 
-**NEVER** diagnose UI failures via screenshots. Use programmatic inspection: `page.evaluate()`, `page.locator().innerHTML()`, `getComputedStyle()`.
+**UI failure diagnosis may use page snapshots/screenshots for visual review** — multimodal models can read snapshot images directly (esp. the `ui-review` mission, 2026-08-28 policy change; the former blanket "NEVER screenshots" rule is lifted). Pass/fail verification MUST still be programmatic: `page.evaluate()`, `page.locator().innerHTML()`, `getComputedStyle()`. A screenshot alone is never test proof.
 
 ### Temporary Debug Artifacts
 

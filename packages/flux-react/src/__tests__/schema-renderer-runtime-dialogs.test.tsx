@@ -438,7 +438,7 @@ describe('createSchemaRenderer dialog and provider behavior', () => {
   });
 
   it('stops dialog-scoped polling data sources after closing the dialog', async () => {
-    const fetcherSpy = vi.fn(async () => ({ ok: true, status: 200, data: { value: 'polled' } }));
+    const fetcherSpy = vi.fn(async () => ({ status: 0, data: { value: 'polled' } }));
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
       textRenderer,

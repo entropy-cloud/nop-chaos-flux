@@ -11,8 +11,7 @@ const windowStub = {} as Window & typeof globalThis;
 const baseEnv: RendererEnv = {
   async fetcher<T>(api: ApiSchema) {
     return {
-      ok: true,
-      status: 200,
+      status: 0,
       data: {
         url: api.url,
         method: api.method ?? 'get',
@@ -95,7 +94,7 @@ describe('nop-debugger automation api', () => {
     expect(latestApi?.network).toMatchObject({
       method: 'POST',
       url: '/api/users',
-      status: 200,
+      status: 0,
       responseType: 'object',
     });
     expect(latestApi?.network?.requestDataKeys).toEqual(['username', 'role']);

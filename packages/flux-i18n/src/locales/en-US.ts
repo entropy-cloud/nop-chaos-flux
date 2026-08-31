@@ -76,6 +76,10 @@ export const enUS: Resource = {
       retry: 'Retry',
       newConversation: 'New conversation',
       deleteConversation: 'Delete',
+      deleteConversationConfirmTitle: 'Delete this conversation?',
+      deleteConversationConfirmBody:
+        'The conversation and its full message history will be permanently deleted. This cannot be undone.',
+      deleteConversationConfirm: 'Delete conversation',
       renameConversation: 'Rename',
       emptyConversationTitle: 'New chat',
       expand: 'Expand',
@@ -145,6 +149,10 @@ export const enUS: Resource = {
       loadedAll: 'Loaded all ({{count}})',
       loadingMore: 'Loading more...',
     },
+    batchBar: {
+      selectedCount: '{{count}} selected',
+      clearSelection: 'Clear selection',
+    },
     list: {
       loadingMore: 'Loading more...',
       noMore: 'No more data',
@@ -180,6 +188,7 @@ export const enUS: Resource = {
       collapse: 'Collapse',
       search: 'Search',
       resizeColumn: 'Resize Column',
+      dragColumn: 'Drag to reorder rows',
       viewDetails: 'View details',
       popoverEmpty: 'No content',
       loading: 'Loading',
@@ -190,6 +199,8 @@ export const enUS: Resource = {
       dragToReorder: 'Drag to reorder row',
       loadChildrenFailed: 'Failed to load children.',
       index: 'Index',
+      editableRequired: 'This field is required',
+      editableInvalidNumber: 'Please enter a valid number',
     },
     form: {
       required: 'Required',
@@ -364,10 +375,17 @@ export const enUS: Resource = {
       dragHandleRoleDescription: 'dialog drag handle',
       moveDialogInstructions:
         'Use the arrow keys to move the dialog. Hold Shift for larger steps. Press Home to reset the dialog position.',
+      unsavedChangesTitle: 'Discard changes?',
+      unsavedChangesBody: 'Your edits have not been saved. Closing now will discard them.',
+      unsavedChangesKeep: 'Keep editing',
+      unsavedChangesDiscard: 'Discard changes',
     },
     drawer: {
       close: 'Close',
       resize: 'Resize',
+    },
+    tabs: {
+      newTab: 'New View',
     },
     page: {
       asideResize: 'Resize aside',
@@ -400,6 +418,16 @@ export const enUS: Resource = {
       title: 'Sidebar',
       description: 'Displays the mobile sidebar.',
       toggle: 'Toggle Sidebar',
+    },
+    command: {
+      title: 'Command Palette',
+      searchPlaceholder: 'Search for a command to run...',
+    },
+    result: {
+      statusSuccess: 'Success',
+      statusError: 'Error',
+      statusWarning: 'Warning',
+      statusInfo: 'Info',
     },
     breadcrumb: {
       more: 'More',
@@ -1085,6 +1113,7 @@ export const enUS: Resource = {
         searchCards: 'Search cards...',
         newCard: 'New Card',
         newColumn: 'New Column',
+        wipExceeded: 'WIP limit exceeded',
         filterError: 'Filter error: {{message}}',
         pickedUpCard: 'Picked up card: {{title}}. Use arrow keys to move, Escape to cancel.',
         cardMovedTo: 'Card moved to column: {{title}}',
@@ -1191,6 +1220,7 @@ export const enUS: Resource = {
         invalidPattern: 'Invalid pattern: {{pattern}}',
         cameraUnavailable: 'Camera unavailable',
         readOnlyField: 'Field is read-only',
+        disabledField: 'Field is disabled',
         clearButtonLabel: 'Clear value',
         cameraFeedLabel: 'Camera feed for barcode scanning',
         cameraPermissionDenied: 'Camera permission denied',

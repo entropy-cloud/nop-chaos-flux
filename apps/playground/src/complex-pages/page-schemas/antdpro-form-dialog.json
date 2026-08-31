@@ -1,0 +1,133 @@
+{
+  "type": "page",
+  "testid": "antdpro-form-dialog-page",
+  "className": "adp-root",
+  "body": [
+    {
+      "type": "container",
+      "testid": "antdpro-form-dialog-header",
+      "className": "adp-page-header px-5 pt-4 pb-4 mb-4 rounded-lg",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 6,
+          "className": "items-center adp-breadcrumb",
+          "body": [
+            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "订单管理", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "新建订单" }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "新建订单",
+          "className": "adp-page-title mt-2",
+          "testid": "antdpro-form-dialog-title"
+        },
+        {
+          "type": "text",
+          "text": "列表上下文 ModalForm 形态：点击下方按钮打开弹窗表单，提交写入模拟后端后自动关窗。",
+          "className": "adp-desc-label mt-1"
+        },
+        {
+          "type": "button",
+          "label": "新建订单",
+          "className": "adp-btn adp-btn-primary mt-4 self-start",
+          "testid": "antdpro-dialog-open",
+          "onClick": {
+            "action": "openDialog",
+            "args": {
+              "title": "新建订单",
+              "testid": "antdpro-form-dialog-surface",
+              "className": "adp-dialog",
+              "closeOnSubmit": true,
+              "body": [
+                {
+                  "type": "form",
+                  "id": "antdpro-dialog-form",
+                  "testid": "antdpro-dialog-form",
+                  "submitScope": "surface",
+                  "submitAction": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/AntdPro__submitForm",
+                      "method": "post",
+                      "includeScope": "*"
+                    },
+                    "messages": {
+                      "success": "订单已创建"
+                    }
+                  },
+                  "columnCount": 2,
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "customer",
+                      "label": "客户名称",
+                      "required": true,
+                      "placeholder": "请输入客户全称",
+                      "testid": "antdpro-dialog-customer"
+                    },
+                    {
+                      "type": "input-number",
+                      "name": "amount",
+                      "label": "订单金额",
+                      "min": 0,
+                      "placeholder": "单位：元"
+                    },
+                    {
+                      "type": "select",
+                      "name": "channel",
+                      "label": "订单渠道",
+                      "placeholder": "选择渠道",
+                      "options": [
+                        { "label": "官网", "value": "web" },
+                        { "label": "小程序", "value": "miniapp" },
+                        { "label": "门店", "value": "store" },
+                        { "label": "App", "value": "app" }
+                      ]
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "follower",
+                      "label": "跟进人",
+                      "placeholder": "请输入跟进人"
+                    },
+                    {
+                      "type": "textarea",
+                      "name": "remark",
+                      "label": "备注",
+                      "className": "col-span-2",
+                      "placeholder": "选填"
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "button",
+                      "label": "取消",
+                      "className": "adp-btn adp-btn-outline",
+                      "testid": "antdpro-dialog-cancel",
+                      "onClick": { "action": "closeSurface" }
+                    },
+                    {
+                      "type": "button",
+                      "label": "确定",
+                      "className": "adp-btn adp-btn-primary",
+                      "testid": "antdpro-dialog-confirm",
+                      "onClick": {
+                        "action": "submitForm"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

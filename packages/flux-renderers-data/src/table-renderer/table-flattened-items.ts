@@ -1,6 +1,7 @@
 import type { InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { TableSchema, TableColumnSchema } from '../schemas.js';
 import type { TableRowEntry } from './types.js';
+import type { GroupedDisplayItem } from './table-grouping.js';
 
 export interface FlattenedRow {
   kind: 'data';
@@ -11,6 +12,8 @@ export interface FlattenedRow {
   isExpanded: boolean;
   isSelected: boolean;
   isEven: boolean;
+  /** D1 G-D: owning group key when the row renders under grouping. */
+  groupKey?: string;
 }
 
 export interface FlattenedExpandedRow {
@@ -19,7 +22,12 @@ export interface FlattenedExpandedRow {
   columnCount: number;
 }
 
-export type FlattenedItem = FlattenedRow | FlattenedExpandedRow;
+export interface FlattenedGroupRow {
+  kind: 'group';
+  item: Extract<GroupedDisplayItem, { kind: 'group' }>;
+}
+
+export type FlattenedItem = FlattenedRow | FlattenedExpandedRow | FlattenedGroupRow;
 
 export function buildFlattenedItems(
   processedData: TableRowEntry[],
@@ -67,6 +75,58 @@ export function buildFlattenedItems(
   return items;
 }
 
+export function buildGroupedFlattenedItems(
+  groupedItems: GroupedDisplayItem[],
+  rowScopeCache: Map<string, ScopeRef>,
+  expandedRowKeys: Set<string>,
+  selectedRowKeys: Set<string>,
+  columnCount: number,
+  parentProps: RendererComponentProps<TableSchema>,
+  rowRepeatedTemplateId: string,
+  expandAllByDefault = false,
+): FlattenedItem[] {
+  const items: FlattenedItem[] = [];
+
+  for (const grouped of groupedItems) {
+    if (grouped.kind === 'group') {
+      items.push({ kind: 'group', item: grouped });
+      continue;
+    }
+
+    const entry = grouped.entry;
+    const cacheKey = entry.cacheKey ?? entry.rowKey;
+    const rowScope = rowScopeCache.get(cacheKey);
+    if (!rowScope) continue;
+
+    const rowKey = cacheKey;
+    const rowInstancePath: InstanceFrame[] = [
+      ...(parentProps.node.instancePath ?? []),
+      { repeatedTemplateId: rowRepeatedTemplateId, instanceKey: rowKey },
+    ];
+    const isExpanded = expandAllByDefault
+      ? !expandedRowKeys.has(rowKey)
+      : expandedRowKeys.has(rowKey);
+
+    items.push({
+      kind: 'data',
+      entry,
+      rowScope,
+      rowKey,
+      rowInstancePath,
+      isExpanded,
+      isSelected: selectedRowKeys.has(rowKey),
+      isEven: entry.sourceIndex % 2 === 0,
+      groupKey: grouped.groupKey,
+    });
+
+    if (isExpanded) {
+      items.push({ kind: 'expanded', rowKey, columnCount });
+    }
+  }
+
+  return items;
+}
+
 export function areColumnsRenderEquivalent(
   prev: TableColumnSchema[],
   next: TableColumnSchema[],
@@ -95,13 +155,16 @@ export function areColumnsRenderEquivalent(
         column.buttonsRegionKey === nextColumn.buttonsRegionKey &&
         column.labelRegionKey === nextColumn.labelRegionKey &&
         column.popOver === nextColumn.popOver &&
-        // G6: these fields drive cell chrome (quick-edit control, copy button).
-        // Omitting them left the comparator blind to schema changes that only
-        // toggled edit/copy, so MemoizedDataRow skipped re-rendering and the
-        // chrome went stale.
+        // G6: these fields drive cell chrome (quick-edit control, copy button,
+        // editable cell machine). Omitting them left the comparator blind to
+        // schema changes that only toggled edit/copy, so MemoizedDataRow
+        // skipped re-rendering and the chrome went stale. `editable` belongs
+        // in the same set (13-02): dynamic-column schema updates that only
+        // toggle `editable` must re-render the row's edit chrome.
         column.quickEdit === nextColumn.quickEdit &&
         column.quickEditBodyRegionKey === nextColumn.quickEditBodyRegionKey &&
-        column.copyable === nextColumn.copyable)
+        column.copyable === nextColumn.copyable &&
+        column.editable === nextColumn.editable)
     );
   });
 }

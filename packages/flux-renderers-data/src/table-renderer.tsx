@@ -2,21 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
+  isEditableKeyboardTarget,
   resolveRendererSlotContent,
   useRendererRuntime,
   useSchemaProps,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
-  Button,
-  Checkbox,
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  Label,
   Table,
   TableBody,
   TableFooter,
@@ -30,10 +22,20 @@ import {
   processTableData,
   serializeInstancePath,
 } from './table-renderer/table-data.js';
+import { useGroupedPageData, useTableGrouping } from './table-renderer/use-table-grouping.js';
 import { TableBodyRows } from './table-renderer/table-body-rows.js';
-import { createFixedColumnLayout, getFixedColumnKey } from './table-renderer/fixed-columns.js';
+import {
+  createFixedColumnLayout,
+  getFixedColumnKey,
+  DRAG_COLUMN_KEY,
+  DRAG_COLUMN_WIDTH,
+  ROW_SAVE_BAR_COLUMN_KEY,
+  ROW_SAVE_BAR_COLUMN_WIDTH,
+} from './table-renderer/fixed-columns.js';
+import { isRowDraftColumnEnabled } from './table-renderer/table-body-row-rendering.js';
 import { useTableColumnWidths } from './table-renderer/column-width-measure.js';
 import { TableHeaderRow } from './table-renderer/table-header-row.js';
+import { TableColumnSettings } from './table-renderer/table-column-settings.js';
 import { TableSummaryRowView } from './table-renderer/table-summary-row.js';
 import { TableLoadingOverlay } from './table-renderer/table-loading-overlay.js';
 import { TablePaginationBar } from './table-renderer/table-pagination-bar.js';
@@ -139,7 +141,6 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     toggleColumn,
     moveColumn,
   } = useTableVisibleColumns(tableSchemaProps, columns);
-  const [inlineColumnSettingsOpen, setInlineColumnSettingsOpen] = useState(false);
   const { paginationEnabled, serverPaged, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
     useTablePagination(tableSchemaProps, props.events.onPageChange);
   const { sortState, sortEntries, handleSort } = useTableSort(
@@ -223,6 +224,35 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     prevExpandedRef.current = next;
   }, [treeMode, tableSchemaProps, expandedTreeRowKeys, lazyChildrenMap, filteredData, loadChildren]);
 
+  // D1 G-D: client-side grouping model (resolution/collapse/dev-warns live in
+  // use-table-grouping.ts). Group precedence: inert under tree mode; drag-sort
+  // ordering suppressed while grouped.
+  const { dragSortActive, groupedDisplayItems, handleToggleGroupCollapse } = useTableGrouping({
+    tableSchemaProps,
+    draggable: schemaProps.draggable === true,
+    treeMode,
+    treeFlattenedData,
+  });
+
+  // opt-row-selection-clash: an explicit optionRow.value binding exclusively
+  // drives the row state markers; warn once in dev when it coexists with
+  // rowSelection so the override is visible to authors.
+  useEffect(() => {
+    const optionRow = tableSchemaProps.optionRow;
+    const binding = optionRow && typeof optionRow === 'object' ? optionRow.value : undefined;
+    if (binding === undefined || binding === null || binding === '' || !tableSchemaProps.rowSelection) {
+      return;
+    }
+    if (!isDevRuntime()) {
+      return;
+    }
+    console.warn(
+      '[flux:table] optionRow.value overrides rowSelection for row state markers. ' +
+        'Row selection checkboxes keep working and dispatch onSelectionChange, but visual ' +
+        'selected markers follow the binding.',
+    );
+  }, [tableSchemaProps]);
+
   // P1-3: retry path for a failed lazy load. refreshNode clears the error state
   // (so the auto-trigger effect above can re-run) and loadChildren re-fetches
   // with the same row scope; used by the error-state tree toggle.
@@ -232,16 +262,6 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     refreshNode(rowKey);
     loadChildren(rowKey, row.record);
   };
-  const {
-    selectedRowKeys,
-    allSelected,
-    handleSelectAll,
-    handleSelectRow,
-    setSelectionExternal,
-    isRowCheckable,
-    isAtMaxSelection,
-  } = useTableSelection(tableSchemaProps, treeFlattenedData, props.events.onSelectionChange, helpers);
-
   const paginationTotal = schemaProps.pagination?.total;
   const effectiveTotalRows =
     serverPaged && typeof paginationTotal === 'number' && Number.isFinite(paginationTotal)
@@ -250,8 +270,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const totalPages = useMemo(() => {
     if (!paginationEnabled) return 1;
-    return Math.max(1, Math.ceil(effectiveTotalRows / pageSize));
-  }, [effectiveTotalRows, pageSize, paginationEnabled]);
+    // Grouping interleaves group headers into the display sequence — page math
+    // slices that sequence, so its length drives totalPages (the pagination bar
+    // keeps reporting the row count).
+    const base = groupedDisplayItems ? groupedDisplayItems.length : effectiveTotalRows;
+    return Math.max(1, Math.ceil(base / pageSize));
+  }, [effectiveTotalRows, groupedDisplayItems, pageSize, paginationEnabled]);
 
   // Render-time currentPage clamp mirrors list-pagination
   // (currentPage = enabled ? clampPage(resolvedPage, totalPages) : 1). This prevents an
@@ -265,10 +289,79 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   // index 列（序号列）跨页累计偏移：(currentPage-1)*pageSize，对齐 AMIS __index 的 offset 语义。
   const indexColumnOffset = paginationEnabled ? (resolvedCurrentPage - 1) * pageSize : 0;
 
+  // D1 G-D: with grouping, the pagination slice covers the interleaved display
+  // sequence (headers + member rows); rows-only view feeds selection/index math.
+  const pagedGroupData = useGroupedPageData({
+    groupedDisplayItems,
+    paginationEnabled,
+    serverPaged,
+    resolvedCurrentPage,
+    pageSize,
+  });
+
   const processedData = useMemo(
-    () => paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, resolvedCurrentPage, pageSize),
-    [treeFlattenedData, paginationEnabled, serverPaged, resolvedCurrentPage, pageSize],
+    () =>
+      pagedGroupData
+        ? pagedGroupData.rows
+        : paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, resolvedCurrentPage, pageSize),
+    [pagedGroupData, treeFlattenedData, paginationEnabled, serverPaged, resolvedCurrentPage, pageSize],
   );
+  const groupedPageItems = pagedGroupData ? pagedGroupData.items : null;
+
+  // D1 G-B3: 'page' selectAllMode scopes the header select-all (and the header
+  // checkbox state) to the current display page. Server-paged tables keep the
+  // flowed-in row set (processedData is the unsliced array there).
+  const selectAllMode =
+    tableSchemaProps.rowSelection?.selectAllMode === 'page' &&
+    tableSchemaProps.rowSelection?.type !== 'radio'
+      ? 'page'
+      : 'all';
+  const selectAllRows = useMemo(
+    () => (selectAllMode === 'page' ? processedData : undefined),
+    [selectAllMode, processedData],
+  );
+
+  const {
+    selectedRowKeys,
+    allSelected,
+    selectAllScopeSelectedCount,
+    handleSelectAll,
+    handleSelectRow,
+    setSelectionExternal,
+    isRowCheckable,
+    isAtMaxSelection,
+  } = useTableSelection(tableSchemaProps, treeFlattenedData, props.events.onSelectionChange, helpers, {
+    selectAllRows,
+  });
+
+  // Page-aware header select-all state. The legacy formula (all mode) is kept
+  // byte-identical; the page mode scopes it to the select-all slice.
+  const headerSelectAllChecked = selectAllRows
+    ? allSelected
+    : allSelected && selectedRowKeys.size === filteredData.length && filteredData.length > 0;
+  const headerSelectAllIndeterminate = !headerSelectAllChecked && selectAllRows
+    ? selectAllScopeSelectedCount > 0
+    : !headerSelectAllChecked && selectedRowKeys.size > 0;
+
+  // D1 G-B2 Decision 3: ⌘/ctrl+A selects all checkable rows of the current view.
+  // Trigger domain = focus inside the table container (container-level React
+  // onKeyDown bubble); editable targets (inputs) keep the native select-all.
+  const modifierSelectEnabled =
+    tableSchemaProps.rowSelection?.modifierSelect === true &&
+    tableSchemaProps.rowSelection?.type !== 'radio';
+  const handleContainerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!modifierSelectEnabled) {
+      return;
+    }
+    if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'a') {
+      return;
+    }
+    if (isEditableKeyboardTarget(event.target)) {
+      return;
+    }
+    event.preventDefault();
+    handleSelectAll(true);
+  };
   // H10: `createFixedColumnLayout` only reads `schemaProps.rowSelection` + the
   // columns' `fixed`/`width` + `showExpandColumn`. Memoizing on those specific
   // values (instead of the whole `tableSchemaProps`, whose identity churns every
@@ -321,16 +414,30 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const fixedColumnLayout = useMemo(
     () =>
       createFixedColumnLayout(
-        { rowSelection: tableSchemaProps.rowSelection },
+        {
+          rowSelection: tableSchemaProps.rowSelection,
+          draggable: dragSortActive,
+        },
         mainColumns,
         showExpandColumn,
         measuredWidths,
       ),
-    [mainColumns, tableSchemaProps.rowSelection, showExpandColumn, measuredWidths],
+    [mainColumns, tableSchemaProps.rowSelection, dragSortActive, showExpandColumn, measuredWidths],
   );
+
+  // [G3-视角5-01]/[G3-R3-视角8-01] helper body columns must pair header th +
+  // colgroup col; derive the flags once and share them with header/count.
+  const rowDraftColumnEnabled = useMemo(
+    () => isRowDraftColumnEnabled(tableSchemaProps, mainColumns),
+    [tableSchemaProps, mainColumns],
+  );
+  const visibleColumnsSet = useMemo(() => new Set(visibleColumns), [visibleColumns]);
 
   const colgroupEntries = useMemo(() => {
     const entries: { key: string; width: number | undefined }[] = [];
+    if (dragSortActive) {
+      entries.push({ key: DRAG_COLUMN_KEY, width: measuredWidths.get(DRAG_COLUMN_KEY) ?? DRAG_COLUMN_WIDTH });
+    }
     if (showExpandColumn) {
       entries.push({ key: '__expand__', width: measuredWidths.get('__expand__') });
     }
@@ -341,11 +448,17 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       const key = getFixedColumnKey(column, index);
       entries.push({ key, width: measuredWidths.get(key) });
     });
+    if (rowDraftColumnEnabled) {
+      entries.push({
+        key: ROW_SAVE_BAR_COLUMN_KEY,
+        width: measuredWidths.get(ROW_SAVE_BAR_COLUMN_KEY) ?? ROW_SAVE_BAR_COLUMN_WIDTH,
+      });
+    }
     return entries;
-  }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, showExpandColumn]);
+  }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, dragSortActive, showExpandColumn, rowDraftColumnEnabled]);
 
   const rowDragSortApi = useRowDragSort({
-    enabled: schemaProps.draggable === true,
+    enabled: dragSortActive,
     orderField: schemaProps.orderField,
     statePath: schemaProps.orderStatePath,
     ownership: schemaProps.orderOwnership ?? 'local',
@@ -378,41 +491,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     (nestedHeadersActive ? leafBodyColumns : mainColumns).length +
     (schemaProps.rowSelection ? 1 : 0) +
     (showExpandColumn ? 1 : 0) +
-    (schemaProps.draggable ? 1 : 0);
+    (dragSortActive ? 1 : 0) +
+    (rowDraftColumnEnabled ? 1 : 0);
   const columnSettingsOverlay = schemaProps.columnSettings?.overlay !== false;
   const columnSettingsAlignmentClass =
     schemaProps.columnSettings?.align === 'left' ? 'items-start' : 'items-end';
-  const columnSettingsColumnsByKey = useMemo(
-    () => new Map(columns.map((column, index) => [column.name ?? `column-${index}`, column] as const)),
-    [columns],
-  );
-  const visibleColumnKeys = useMemo(() => new Set(visibleColumns), [visibleColumns]);
-  const orderedColumnKeyToIndex = useMemo(
-    () => new Map(orderedColumns.map((key, index) => [key, index] as const)),
-    [orderedColumns],
-  );
-  const columnSettingsItems = useMemo(
-    () =>
-      orderedColumns.flatMap((key) => {
-        const orderedIndex = orderedColumnKeyToIndex.get(key);
-        const column = columnSettingsColumnsByKey.get(key);
-
-        if (!column || orderedIndex == null) {
-          return [];
-        }
-
-        return [
-          {
-            key,
-            column,
-            orderedIndex,
-            label: typeof column.label === 'string' ? column.label : (column.name ?? key),
-            visible: visibleColumnKeys.has(key),
-          },
-        ];
-      }),
-    [columnSettingsColumnsByKey, orderedColumnKeyToIndex, orderedColumns, visibleColumnKeys],
-  );
 
   const virtualThreshold = schemaProps.virtualThreshold;
   const scrollHeight = schemaProps.scrollHeight;
@@ -424,135 +507,48 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Container-level keydown relay for rowSelection.modifierSelect (cmd/ctrl+A
+  // select-all). Spread as interaction props: the container is not itself an
+  // interactive element, so the static-element a11y rule does not apply.
+  const containerInteractions = modifierSelectEnabled
+    ? { onKeyDown: handleContainerKeyDown }
+    : {};
+
   return (
     <div
       className={cn('nop-table', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-responsive-expand={responsiveExpandActive ? 'true' : undefined}
+      {...containerInteractions}
     >
       {hasRendererSlotContent(headerContent) ? (
         <div data-slot="table-header-region">{asReactNode(headerContent)}</div>
       ) : null}
-      {columnSettingsEnabled ? (
-        <div
-          className={cn('mb-2 flex flex-col', columnSettingsAlignmentClass)}
-          data-slot="table-column-settings"
-        >
-          {columnSettingsOverlay ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button variant="outline" size="sm">
-                    {t('flux.table.columns')}
-                  </Button>
-                }
-              />
-              <DropdownMenuContent>
-                {columnSettingsItems.map(({ key, label, orderedIndex, visible }) => {
-                  return (
-                    <div key={key} data-slot="table-column-settings-item">
-                      <DropdownMenuCheckboxItem
-                        checked={visible}
-                        onCheckedChange={(checked) => toggleColumn(key, checked)}
-                      >
-                        {label}
-                      </DropdownMenuCheckboxItem>
-                      <div
-                        className="flex gap-1 px-1.5 pb-1"
-                        data-slot="table-column-settings-actions"
-                      >
-                        <DropdownMenuItem
-                          aria-label={`${t('flux.table.moveUp')} ${label}`}
-                          disabled={orderedIndex === 0}
-                          onClick={() => moveColumn(key, 'up')}
-                        >
-                          {t('flux.table.moveUp')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          aria-label={`${t('flux.table.moveDown')} ${label}`}
-                          disabled={orderedIndex === orderedColumns.length - 1}
-                          onClick={() => moveColumn(key, 'down')}
-                        >
-                          {t('flux.table.moveDown')}
-                        </DropdownMenuItem>
-                      </div>
-                      {orderedIndex < orderedColumns.length - 1 ? <DropdownMenuSeparator /> : null}
-                    </div>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setInlineColumnSettingsOpen((value) => !value)}
-              >
-                {t('flux.table.columns')}
-              </Button>
-              {inlineColumnSettingsOpen ? (
-                <div
-                  className="mt-2 w-full max-w-sm rounded-md border bg-popover p-2 shadow-sm"
-                  data-slot="table-column-settings-inline"
-                >
-                  {columnSettingsItems.map(({ key, label, orderedIndex, visible }) => {
-                    const checkboxId = `table-column-settings-${props.id}-${key}`;
-
-                    return (
-                      <div
-                        key={key}
-                        className="flex items-center justify-between gap-3 px-2 py-1.5"
-                        data-slot="table-column-settings-item"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            id={checkboxId}
-                            checked={visible}
-                            onCheckedChange={(checked) => toggleColumn(key, Boolean(checked))}
-                          />
-                          <Label htmlFor={checkboxId}>{label}</Label>
-                        </div>
-                        <div className="flex gap-1" data-slot="table-column-settings-actions">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            aria-label={`${t('flux.table.moveUp')} ${label}`}
-                            disabled={orderedIndex === 0}
-                            onClick={() => moveColumn(key, 'up')}
-                          >
-                            {t('flux.table.moveUp')}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            aria-label={`${t('flux.table.moveDown')} ${label}`}
-                            disabled={orderedIndex === orderedColumns.length - 1}
-                            onClick={() => moveColumn(key, 'down')}
-                          >
-                            {t('flux.table.moveDown')}
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </>
-          )}
-        </div>
-      ) : null}
+      <TableColumnSettings
+        enabled={columnSettingsEnabled}
+        overlay={columnSettingsOverlay}
+        align={columnSettingsAlignmentClass === 'items-start' ? 'left' : 'right'}
+        columns={columns}
+        orderedColumns={orderedColumns}
+        visibleColumnKeys={visibleColumnsSet}
+        rendererId={props.id}
+        onToggle={toggleColumn}
+        onMove={moveColumn}
+      />
 
       <div
         ref={(element) => {
           measureRootRef.current = element;
+          // [G3-R4-视角5-01] autoFill and virtualization are independent consumers of the
+          // same scroll container — route the element to BOTH (an if/else here left
+          // scrollRef null under autoFillHeight × virtualThreshold and the body
+          // silently rendered zero rows).
           if (element && autoFillActive) {
             // eslint-disable-next-line react-hooks/immutability, react-compiler/react-compiler -- C1a 组合 ref 回调：同一元素路由到三个 ref（列宽测量 + autoFill + 虚拟滚动），hook 返回的 ref 对象由消费方赋 .current 是既有契约
             autoFill.containerRef.current = element;
-          } else if (element && virtualEnabled) {
+          }
+          if (element && virtualEnabled) {
             scrollRef.current = element;
           }
         }}
@@ -596,6 +592,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 filterState={filterState}
                 allSelected={allSelected}
                 selectedRowCount={selectedRowKeys.size}
+                selectAllChecked={headerSelectAllChecked}
+                selectAllIndeterminate={headerSelectAllIndeterminate}
                 fixedColumnLayout={fixedColumnLayout}
                 showExpandColumn={showExpandColumn}
                 onSort={handleSort}
@@ -607,6 +605,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 columnResize={schemaProps.columnResize}
                 resizeApi={resizeApi}
                 affixHeader={schemaProps.affixHeader}
+                draggable={dragSortActive}
+                rowDraftColumnEnabled={rowDraftColumnEnabled}
               />
             </TableHeader>
           ) : null}
@@ -655,7 +655,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
             onRetryTreeLoad={handleRetryTreeLoad}
             lazyChildrenMap={lazyChildrenMap}
             rowDragSortApi={rowDragSortApi}
-            draggable={schemaProps.draggable === true}
+            draggable={dragSortActive}
+            groupedPageItems={groupedPageItems}
+            onToggleGroupCollapse={handleToggleGroupCollapse}
             indexColumnOffset={indexColumnOffset}
           />
 

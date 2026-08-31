@@ -108,8 +108,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
         setSearchResults(results);
 
         return {
-          ok: true,
-          status: 200,
+                    status: 0,
           data: {
             results,
             total: results.length,
@@ -144,8 +143,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
         });
 
         return {
-          ok: true,
-          status: 200,
+                    status: 0,
           data: {
             user: createdUser,
             total: totalUsers,
@@ -165,8 +163,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
         );
 
         return {
-          ok: true,
-          status: 200,
+                    status: 0,
           data: {
             valid: !exists,
             message: exists ? 'Username is already-taken' : 'Username is available',
@@ -177,8 +174,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
 
       if (api.method?.toLowerCase() === 'post') {
         return {
-          ok: true,
-          status: 200,
+                    status: 0,
           data: {
             success: true,
             payload: ctx.scope.readOwn(),
@@ -187,8 +183,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
       }
 
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: null as T,
       };
     },

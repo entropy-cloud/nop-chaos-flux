@@ -5,8 +5,7 @@ const dynamicRendererEnv = {
   fetcher: async <T,>(api: { url?: string; params?: { schemaType?: string } }) => {
     if (api.url === '/api/component-lab/dynamic-renderer/static-schema') {
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: {
           type: 'badge',
           text: 'Rendered from loadAction',
@@ -17,8 +16,7 @@ const dynamicRendererEnv = {
 
     if (api.url === '/api/component-lab/dynamic-renderer/by-type') {
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: {
           type: 'badge',
           text: 'Dynamically rendered badge',
@@ -29,24 +27,21 @@ const dynamicRendererEnv = {
 
     if (api.url === '/api/component-lab/dynamic-renderer/by-type/text') {
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: { type: 'text', text: 'Dynamically rendered text content.' } as T,
       };
     }
 
     if (api.url === '/api/component-lab/dynamic-renderer/by-type/button') {
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: { type: 'button', label: 'A button from dynamic schema', variant: 'secondary' } as T,
       };
     }
 
     if (api.url === '/api/component-lab/dynamic-renderer/manual-schema') {
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: {
           type: 'badge',
           text: 'Loaded via component:refresh',
@@ -56,8 +51,7 @@ const dynamicRendererEnv = {
     }
 
     return {
-      ok: true,
-      status: 200,
+            status: 0,
       data: null as T,
     };
   },

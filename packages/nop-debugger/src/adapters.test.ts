@@ -63,8 +63,7 @@ describe('debugger adapters', () => {
     const env: RendererEnv = {
       async fetcher<T>(api: ApiSchema) {
         return {
-          ok: true,
-          status: 200,
+          status: 0,
           data: {
             echoedUrl: api.url,
             token: 'server-secret',
@@ -114,7 +113,7 @@ describe('debugger adapters', () => {
     expect(apiEndEvent?.exportedData).toMatchObject({ echoedUrl: '/api/demo', token: '[MASKED]' });
     expect(apiEndEvent?.network).toMatchObject({
       method: 'POST',
-      status: 200,
+      status: 0,
       responseType: 'object',
     });
     expect(notifyEvent).toMatchObject({ summary: 'warning: watch out' });
@@ -124,7 +123,7 @@ describe('debugger adapters', () => {
     const store = createStore();
     const env: RendererEnv = {
       async fetcher<T>() {
-        return { ok: true, status: 200, data: undefined as T };
+        return { status: 0, data: undefined as T };
       },
       notify() {
         return undefined;

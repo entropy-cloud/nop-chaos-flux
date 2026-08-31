@@ -1,0 +1,9 @@
+.replica-hit-card {
+  color: #ff0000;
+  background: hsl(0, 0%, 50%);
+  border-color: rgb(1, 2, 3);
+}
+
+.replica-hit-mix {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, white);
+}

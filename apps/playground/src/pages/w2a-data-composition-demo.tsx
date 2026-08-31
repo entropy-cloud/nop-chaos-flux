@@ -33,8 +33,7 @@ const env: RendererEnv = {
     // so the service + data-source request-sink demo is observable without a server.
     if (api.url.includes('/api/tasks')) {
       return {
-        ok: true,
-        status: 200,
+                status: 0,
         data: {
           items: [
             { id: 1, title: 'Design schema contract', status: 'done' },
@@ -44,7 +43,7 @@ const env: RendererEnv = {
         } as T,
       };
     }
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify: (level, message) => {
     const text = typeof message === 'string' ? message : String(message ?? '');

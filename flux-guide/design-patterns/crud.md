@@ -312,7 +312,61 @@ CRUD 把只读摘要发布到 scope 的 `$crud`，可在任意子节点表达式
 - `listActions` 里的按钮可用 `${$crud.hasSelection}` 控制禁用态。
 - 跨页选择保留：`keepOnPageChange: true`。
 - 按行可勾选条件：`selection.checkableWhen`（raw 表达式，行 scope 求值）。
+- 表头全选作用域：`selection.selectAllMode`（缺省 `'all'` = 全量进选择集；`'page'` = 仅当前页，语义 = check/uncheck-all-visible，详见 `design-patterns/table.md` §4）。
 - **批量操作参数映射（AMIS 兼容）**：CRUD 把选中行键以 `selectionField` 指定的名字（默认 `ids`）发布到按钮 action scope，后端生成的 `@mutation:X__batchDelete?ids=${ids}` 可直接解析。与 `pageField`/`pageSizeField` 同一参数名映射模式；自定义名用 `selectionField: "selectedPositionIds"` 并写 `${selectedPositionIds}`。
+
+---
+
+## 4a. 批量操作栏语义件（batch-bar）
+
+`batch-bar` 是选择集驱动的批量操作栏包络：**计数文案 + 动作区 + 内建清空 + 内建非空可见门控**（选择集为空时整条不渲染，零占位）。替代「toolbar 文案节点 + 按钮 + visible 门控」的手工拼装。
+
+**crud 宿主**（嵌在 `toolbar` / `listActions` / `footerToolbar`，绑定 `$crud` 投影）：
+
+```jsonc
+{
+  "type": "batch-bar",
+  "testid": "list-bulk-bar",
+  "selectionPath": "$crud.selectedRowKeys", // 必填：选择集数组的 raw scope path（无 ${}）
+  "countTemplate": "已选择 ${count} 项", // 可选：${count} 在子作用域插值；缺省走 i18n 文案
+  "clearTarget": "sel-crud", // 声明才渲染内建清空按钮（解析 crud clearSelection 句柄）
+  "clearLabel": "取消选择", // 可选：清空按钮文案
+  "actions": [
+    // 可选：动作区（选择集非空时随包络出现）
+    {
+      "type": "button",
+      "label": "批量删除",
+      "disabled": "${!$crud.hasSelection}",
+      "onClick": { "action": "confirm", "args": { "message": "确认删除？" } },
+    },
+  ],
+}
+```
+
+**table 宿主**（页面 body 中作为 table 的兄弟节点，绑定 table 的 `selectionStatePath`）：
+
+```jsonc
+{
+  "type": "batch-bar",
+  "selectionPath": "issueSelection", // 与 table.selectionStatePath 同一 scope path
+  "clearTarget": "issue-table", // 解析 table setSelection 句柄（空集）
+  "actions": [
+    {
+      "type": "button",
+      "label": "批量关闭",
+      "disabled": "${!issueSelection || issueSelection.length === 0}",
+    },
+  ],
+}
+```
+
+**行为要点**：
+
+- 可见性 = 内建非空门控 **AND** schema 级 `visible`——`visible` 只能进一步收窄，不能绕过非空门控。
+- `clearTarget` 缺失/句柄不匹配 → 清空按钮 no-op + 一次性 dev warn（`batch-bar-target-invalid`）；`countTemplate` 求值失败 → 回退原始计数 + dev warn（`batch-bar-count-expr`），包络不中断。
+- 内建清空是语义件内部的统一句柄解析（crud `clearSelection` 优先，table `setSelection` 空集兜底）；`$crud.*` 与 table scope 两套选择集 API 本体不变、不合并不平移。
+- marker：根 `nop-batch-bar` + `data-slot="batch-bar"` + `data-count`；内部 `batch-bar-count` / `batch-bar-actions` / `batch-bar-clear`。
+- 不复用/不复活 legacy `crud.bulkActions`（该字段维持死状态：authoring 报错 + toolbar block 丢弃）。
 
 ---
 

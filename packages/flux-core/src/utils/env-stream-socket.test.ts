@@ -12,8 +12,7 @@ import {
 
 function createEnv(overrides?: Partial<RendererEnv>): RendererEnv {
   const fetcher: ApiFetcher = async <T>(api: unknown) => ({
-    ok: true,
-    status: 200,
+        status: 0,
     data: api as T,
   });
 

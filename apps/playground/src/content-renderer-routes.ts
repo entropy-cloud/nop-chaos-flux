@@ -80,6 +80,14 @@ export const CONTENT_RENDERER_ROUTES: RendererRouteEntry[] = [
       'Empty state shell: title/description (value-or-region), optional icon, and an actions CTA region.',
   },
   {
+    id: 'result',
+    title: 'Result',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    description:
+      'Operation-final-state block: status semantics (success/error/warning/info) with default icon + semantic color, title/description (value-or-region) and an actions region.',
+  },
+  {
     id: 'progress',
     title: 'Progress',
     category: 'content',

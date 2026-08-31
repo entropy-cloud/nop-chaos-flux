@@ -433,7 +433,9 @@ describe('CRUD filterTogglable (E1d)', () => {
     expect(expandButton).toBeTruthy();
 
     const keywordInput = screen.queryByLabelText('Keyword');
-    expect(keywordInput).toBeNull();
+    // 22-04 keep-mounted: collapsed hides the form instead of unmounting it.
+    expect(keywordInput).toBeTruthy();
+    expect((keywordInput as HTMLElement).closest('div[hidden]')).toBeTruthy();
   });
 
   it('expands the query region when the toggle button is clicked', async () => {
@@ -464,7 +466,9 @@ describe('CRUD filterTogglable (E1d)', () => {
       expect(document.querySelector('[data-slot="crud-query-collapse"]')).toBeTruthy();
     });
 
-    expect(screen.queryByLabelText('Keyword')).toBeNull();
+    const keywordInputCollapsed = screen.queryByLabelText('Keyword');
+    expect(keywordInputCollapsed).toBeTruthy();
+    expect((keywordInputCollapsed as HTMLElement).closest('div[hidden]')).toBeTruthy();
 
     const expandButton = screen.getByRole('button', { name: t('flux.crud.expandQuery') });
     await act(async () => {

@@ -11,6 +11,8 @@ interface EditorInspectorPanelProps {
   runtime: EditorEngineRuntime;
   selectedNodeId: string | undefined;
   onError: (code: string, message: string) => void;
+  /** [G5-R3-视角3-01] meta.disabled 门禁：属性面板写入通道 inert。 */
+  disabled?: boolean;
 }
 
 /**
@@ -41,7 +43,13 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
       runtime.updateWorkingNode(selectedNodeId!, { [field.key]: value } as Partial<ScadaSymbolNode>);
     };
     return (
-      <aside data-slot="scada-editor-inspector" className="nop-scada-editor-inspector">
+      <aside
+        data-slot="scada-editor-inspector"
+        className="nop-scada-editor-inspector"
+        inert={props.disabled || undefined}
+        aria-disabled={props.disabled || undefined}
+        data-disabled={props.disabled ? 'true' : undefined}
+      >
         <span className="nop-scada-editor-group-label">{t('industrial.scada.editor.inspector.title')}</span>
         <div className="text-xs opacity-60">{t('industrial.scada.editor.inspector.id')}: {node.id}</div>
         <div className="text-xs opacity-60">{t('industrial.scada.editor.inspector.type')}: {node.type}</div>
@@ -67,7 +75,13 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
   }
 
   return (
-    <aside data-slot="scada-editor-inspector" className="nop-scada-editor-inspector">
+    <aside
+      data-slot="scada-editor-inspector"
+      className="nop-scada-editor-inspector"
+      inert={props.disabled || undefined}
+      aria-disabled={props.disabled || undefined}
+      data-disabled={props.disabled ? 'true' : undefined}
+    >
       <span className="nop-scada-editor-group-label">{t('industrial.scada.editor.inspector.title')}</span>
       <div className="text-xs opacity-60">{t('industrial.scada.editor.inspector.noSelection')}</div>
     </aside>

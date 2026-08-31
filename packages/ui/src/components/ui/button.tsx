@@ -9,6 +9,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
+        // [G1-视角2-01][G7-视角2-01]: `primary` is the schema-facing main-action
+        // convention (styling-system.md) — resolve it to the same filled weight
+        // instead of falling out of the cva table as bare text.
+        primary: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
         outline:
           'border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
         secondary:

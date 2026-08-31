@@ -1,0 +1,606 @@
+/*
+ * Financial-dashboard replica styles (LIGHT MODE ONLY).
+ *
+ * Replicates the "finance data-panel density & typography" surface
+ * (grouped nav shell + filter chip bar + date-range presets + high-density
+ * payments table + status-pill ladder pairs + tabular-nums money column +
+ * detail drawer + KPI/chart card area — see
+ * docs/analysis/ui-review/P1-reference-apps/stripe-dashboard.md §2/§3/§5/§6)
+ * via CSS tokens + marker classes on the playground layer only; no renderer
+ * internals are modified.
+ *
+ * Token architecture (plan 2026-08-30-0953-2 §差异声明（P7a 裁定） D3):
+ * brand blurple #635bff (📊 third-party multi-source) and Downriver deep
+ * blue-gray #0a2540 (📊) kept as independent replica tokens (--st-blue /
+ * --st-text), intentionally NOT mapped onto flux --primary; page canvas
+ * #f6f9fc / card #ffffff / cool border #e3e8ee / slate secondary #425466 are
+ * style-equivalent proposals (拟定); status pills follow the ladder-pair
+ * structure (🌐 official badge rule: background one shade up, text two shades
+ * up — concrete hex 拟定); row-density ladder 32/40/48px (拟定); money cells
+ * tabular-nums + right-aligned (hard constraint, §2.2); body text 13px
+ * high-density. DEVIATIONS (analysis §6.2): proprietary font Söhne
+ * approximated with the Inter stack (declared non-original); light-only (no
+ * dark mapping implemented); zero brand assets — logo/wordmark/Söhne never
+ * copied, all copy is original self-authored Chinese.
+ *
+ * Consumed by the page schema complex-pages/page-schemas/stripe-payments.json
+ * through the `.st-root` page scope and the `.st-dialog` dialog/drawer portal
+ * scope; layout/spacing in the schema uses Tailwind utilities (dual-track
+ * rule).
+ */
+
+/* ── 1. Design tokens (light only) ──────────────────────────────────────── */
+
+/* Declared on .st-root AND .st-dialog because dialogs/drawers render through
+   a portal outside the .st-root subtree (sundial-replica.css precedent). */
+.st-root,
+.st-dialog {
+  /* surfaces (canvas/border/slate 拟定) */
+  --st-canvas: #f6f9fc;
+  --st-card: #ffffff;
+  --st-border: #e3e8ee;
+  --st-row-hover: #f6f8fa;
+  --st-active: #edeff2;
+
+  /* text */
+  --st-text: #0a2540;
+  --st-text-secondary: #425466;
+  --st-text-tertiary: #6b7c93;
+  --st-text-faint: #8792a2;
+
+  /* brand blurple (📊 third-party multi-source; style-reference token) */
+  --st-blue: #635bff;
+  --st-blue-hover: #534ce5;
+  --st-blue-soft: #f0efff;
+
+  /* status pill ladder pairs — structure 🌐 (bg one shade up, text two up),
+     hex 拟定 per semantics: succeeded / pending / failed / refunded */
+  --st-ok-bg: #d6f5df;
+  --st-ok-text: #0e6245;
+  --st-ok-dot: #1f9d61;
+  --st-pending-bg: #fceecb;
+  --st-pending-text: #7d5c0a;
+  --st-pending-dot: #d9a514;
+  --st-failed-bg: #fcd9d7;
+  --st-failed-text: #9e2c20;
+  --st-failed-dot: #df5245;
+  --st-refunded-bg: #e9edf2;
+  --st-refunded-text: #52606d;
+  --st-refunded-dot: #8792a2;
+
+  /* risk chips (拟定, slate ladder + elevated/high warm shift) */
+  --st-risk-normal-bg: #e9edf2;
+  --st-risk-normal-text: #52606d;
+  --st-risk-elevated-bg: #fceecb;
+  --st-risk-elevated-text: #7d5c0a;
+  --st-risk-high-bg: #fcd9d7;
+  --st-risk-high-text: #9e2c20;
+
+  /* radius ladder (拟定: controls 4–6px, cards 8px) */
+  --st-radius: 4px;
+  --st-radius-lg: 6px;
+  --st-radius-xl: 8px;
+
+  /* row-density ladder (拟定, G-E 参照值): compact / default / relaxed */
+  --st-row-compact: 32px;
+  --st-row-default: 40px;
+  --st-row-relaxed: 48px;
+
+  /* type — Söhne → Inter stack (declared non-original, §6.2) */
+  --st-font:
+    Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+}
+
+.st-root {
+  font-family: var(--st-font);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--st-text);
+  background: var(--st-canvas);
+  min-height: 100%;
+}
+
+.st-dialog {
+  background: var(--st-card);
+  color: var(--st-text);
+  border-radius: var(--st-radius-xl);
+}
+
+/* 金额等宽排版（金融表格硬约束，§2.2）：tabular figures + 右对齐 */
+.st-money {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.st-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.st-note {
+  font-size: 12px;
+  color: var(--st-text-tertiary);
+}
+
+.st-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--st-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* ── 2. Nav shell (grouped sidebar, static sample) ──────────────────────── */
+
+.st-nav {
+  width: 240px;
+  background: var(--st-card);
+  border-right: 1px solid var(--st-border);
+  font-size: 13px;
+  color: var(--st-text-secondary);
+}
+
+.st-nav-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--st-radius);
+  background: var(--st-blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.st-nav-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--st-text-faint);
+  text-transform: uppercase;
+}
+
+.st-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--st-radius);
+  color: var(--st-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.st-nav-item:hover {
+  background: var(--st-row-hover);
+  color: var(--st-text);
+}
+
+/* blurple 选中态样本（静态：仅「交易」项挂此类） */
+.st-nav-item-active {
+  background: var(--st-blue-soft);
+  color: var(--st-blue);
+  font-weight: 600;
+}
+
+.st-nav-item-active:hover {
+  background: var(--st-blue-soft);
+  color: var(--st-blue);
+}
+
+/* ── 3. Shared controls (buttons / chips / segments / search) ───────────── */
+
+.st-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--st-radius);
+  border: 1px solid var(--st-border);
+  background: var(--st-card);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--st-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.st-btn:hover {
+  background: var(--st-row-hover);
+  color: var(--st-text);
+}
+
+.st-btn-primary {
+  border-color: var(--st-blue);
+  background: var(--st-blue);
+  color: #fff;
+}
+
+.st-btn-primary:hover {
+  background: var(--st-blue-hover);
+  color: #fff;
+}
+
+.st-link {
+  color: var(--st-blue);
+  cursor: pointer;
+}
+
+.st-link:hover {
+  text-decoration: underline;
+}
+
+/* 筛选 chip 条（手写 chip 形态，原语缺失自研——P7a 静态样本） */
+.st-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--st-border);
+  background: var(--st-card);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--st-text-secondary);
+  white-space: nowrap;
+}
+
+.st-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--st-text-faint);
+  cursor: pointer;
+}
+
+.st-chip-remove:hover {
+  background: var(--st-active);
+  color: var(--st-text);
+}
+
+.st-chip-risk {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.st-chip-risk-normal {
+  background: var(--st-risk-normal-bg);
+  color: var(--st-risk-normal-text);
+}
+
+.st-chip-risk-elevated {
+  background: var(--st-risk-elevated-bg);
+  color: var(--st-risk-elevated-text);
+}
+
+.st-chip-risk-high {
+  background: var(--st-risk-high-bg);
+  color: var(--st-risk-high-text);
+}
+
+/* 日期范围预设档分段控件形态（上月默认选中样本） */
+.st-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--st-radius-lg);
+  border: 1px solid var(--st-border);
+  background: var(--st-card);
+}
+
+.st-seg-item {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--st-radius);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--st-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.st-seg-item:hover {
+  background: var(--st-row-hover);
+  color: var(--st-text);
+}
+
+.st-seg-item-active {
+  background: var(--st-blue-soft);
+  color: var(--st-blue);
+  font-weight: 600;
+}
+
+.st-seg-item-active:hover {
+  background: var(--st-blue-soft);
+  color: var(--st-blue);
+}
+
+.st-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--st-radius);
+  border: 1px solid var(--st-border);
+  background: var(--st-card);
+  color: var(--st-text-faint);
+  font-size: 13px;
+}
+
+/* ── 4. Payments table (high density + pills + money) ───────────────────── */
+
+.st-table {
+  background: var(--st-card);
+  border: 1px solid var(--st-border);
+  border-radius: var(--st-radius-xl);
+  font-size: 13px;
+}
+
+.st-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.st-table thead th {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--st-text-secondary);
+  background: var(--st-card);
+  border-bottom: 1px solid var(--st-border);
+  white-space: nowrap;
+}
+
+.st-table tbody td {
+  height: var(--st-row-default);
+  padding: 0 12px;
+  border-bottom: 1px solid var(--st-border);
+  color: var(--st-text);
+  white-space: nowrap;
+}
+
+.st-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 行 hover 浅灰铺底（§2.4 交互习惯） */
+.st-table tbody tr:hover td {
+  background: var(--st-row-hover);
+}
+
+.st-sort-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--st-text-secondary);
+  cursor: pointer;
+}
+
+/* 密度三档样本类（32/40/48px，G-E 参照值实测落点） */
+.st-density-sample {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  background: var(--st-card);
+  border: 1px solid var(--st-border);
+  border-radius: var(--st-radius);
+  font-size: 13px;
+  color: var(--st-text-secondary);
+}
+
+.st-density-compact {
+  height: var(--st-row-compact);
+}
+
+.st-density-default {
+  height: var(--st-row-default);
+}
+
+.st-density-relaxed {
+  height: var(--st-row-relaxed);
+}
+
+/* ── 5. Status pill ladder pairs (four semantics) ───────────────────────── */
+
+.st-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.st-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+}
+
+.st-pill-ok {
+  background: var(--st-ok-bg);
+  color: var(--st-ok-text);
+}
+
+.st-pill-ok .st-pill-dot {
+  background: var(--st-ok-dot);
+}
+
+.st-pill-pending {
+  background: var(--st-pending-bg);
+  color: var(--st-pending-text);
+}
+
+.st-pill-pending .st-pill-dot {
+  background: var(--st-pending-dot);
+}
+
+.st-pill-failed {
+  background: var(--st-failed-bg);
+  color: var(--st-failed-text);
+}
+
+.st-pill-failed .st-pill-dot {
+  background: var(--st-failed-dot);
+}
+
+.st-pill-refunded {
+  background: var(--st-refunded-bg);
+  color: var(--st-refunded-text);
+}
+
+.st-pill-refunded .st-pill-dot {
+  background: var(--st-refunded-dot);
+}
+
+/* ── 6. KPI cards + chart card area ─────────────────────────────────────── */
+
+.st-card {
+  background: var(--st-card);
+  border: 1px solid var(--st-border);
+  border-radius: var(--st-radius-xl);
+}
+
+.st-kpi-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--st-text-secondary);
+}
+
+.st-kpi-value {
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--st-text);
+  letter-spacing: -0.01em;
+}
+
+.st-kpi-delta {
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: #1f9d61;
+}
+
+.st-kpi-delta-down {
+  color: var(--st-failed-text);
+}
+
+/* ── 7. Detail drawer (summary / timeline / metadata) ───────────────────── */
+
+.st-detail-amount {
+  font-size: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--st-text);
+}
+
+.st-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.st-timeline-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.st-timeline-dot {
+  width: 9px;
+  height: 9px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: var(--st-refunded-dot);
+  flex: none;
+}
+
+.st-timeline-event-done .st-timeline-dot {
+  background: var(--st-ok-dot);
+}
+
+.st-timeline-event-pending .st-timeline-dot {
+  background: var(--st-pending-dot);
+}
+
+.st-timeline-event-failed .st-timeline-dot {
+  background: var(--st-failed-dot);
+}
+
+.st-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--st-border);
+  font-size: 13px;
+}
+
+.st-meta-row:last-child {
+  border-bottom: none;
+}
+
+.st-meta-label {
+  color: var(--st-text-secondary);
+}
+
+.st-meta-value {
+  color: var(--st-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* checkbox 静态勾选形态（导出列勾选 / 添加 widget 勾选列表） */
+.st-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  font-size: 13px;
+  color: var(--st-text-secondary);
+  cursor: pointer;
+}
+
+.st-check-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--st-text-faint);
+  background: var(--st-card);
+  font-size: 10px;
+  line-height: 1;
+  color: transparent;
+}
+
+.st-check-box-on {
+  background: var(--st-blue);
+  border-color: var(--st-blue);
+  color: #fff;
+}

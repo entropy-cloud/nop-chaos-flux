@@ -75,7 +75,6 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
     cleanup();
     let resolveValidation:
       | ((value: {
-          ok: boolean;
           status: number;
           data: { valid: boolean; message?: string };
         }) => void)
@@ -119,8 +118,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
 
             submitCalls.push(ctx.scope.readOwn());
             return {
-              ok: true,
-              status: 200,
+                            status: 0,
               data: ctx.scope.readOwn() as T,
             };
           },
@@ -135,8 +133,7 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
     expect(await screen.findByText('Validating...')).toBeTruthy();
 
     resolveValidation?.({
-      ok: true,
-      status: 200,
+            status: 0,
       data: {
         valid: false,
         message: 'Username already exists',

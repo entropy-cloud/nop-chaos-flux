@@ -19,12 +19,16 @@ describe('basic renderer static contracts', () => {
     expect(tabs?.propContracts?.orientation?.shape.kind).toBe('union');
   });
 
-  it('publishes tabs component capability contracts for setValue and getValue', () => {
+  it('publishes tabs component capability contracts for the view-management handle family', () => {
     const tabs = basicRendererDefinitions.find((definition) => definition.type === 'tabs');
 
     expect(tabs?.componentCapabilityContracts?.map((item) => item.handle)).toEqual([
       'setValue',
       'getValue',
+      'addTab',
+      'removeTab',
+      'renameTab',
+      'moveTab',
     ]);
     expect(tabs?.componentCapabilityContracts?.[0]?.args?.kind).toBe('object');
     expect(tabs?.componentCapabilityContracts?.[1]?.result?.kind).toBe('string');

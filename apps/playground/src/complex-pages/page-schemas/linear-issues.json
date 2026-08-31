@@ -1,0 +1,2497 @@
+{
+  "type": "page",
+  "testid": "linear-issues-page",
+  "className": "ln-root",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "issues",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Linear__issues?perPage=50&keyword=${filterKeyword ?? \"\"}&status=${filterStatus ?? \"\"}&priority=${filterPriority ?? \"\"}",
+        "method": "get"
+      },
+      "id": "linear-issues-source",
+      "dependsOn": ["filterKeyword", "filterStatus", "filterPriority"]
+    },
+    {
+      "type": "data-source",
+      "name": "commands",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Linear__commands",
+        "method": "get"
+      }
+    },
+    {
+      "type": "container",
+      "testid": "linear-issues-main",
+      "className": "flex flex-row items-stretch min-h-screen",
+      "body": [
+        {
+          "type": "container",
+          "testid": "linear-issues-sidebar",
+          "className": "w-60 shrink-0 border-r flex flex-col py-3",
+          "body": [
+            {
+              "type": "container",
+              "testid": "linear-issues-workspace",
+              "className": "px-2 pb-2",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-workspace",
+                  "body": [
+                    {
+                      "type": "container",
+                      "className": "ln-avatar ln-avatar-brand",
+                      "testid": "linear-issues-workspace-avatar",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "问"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "问题工作台"
+                    },
+                    {
+                      "type": "icon",
+                      "icon": "chevron-down",
+                      "size": 14
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "testid": "linear-issues-cmdk-trigger",
+                  "className": "ln-search-bar mt-2",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "命令面板",
+                      "testid": "linear-issues-cmdk",
+                      "className": "ln-dialog",
+                      "body": [
+                        {
+                          "type": "input-text",
+                          "name": "cmdkQuery",
+                          "testid": "linear-issues-cmdk-input",
+                          "placeholder": "输入命令或搜索问题…",
+                          "className": "ln-cmd-input"
+                        },
+                        {
+                          "type": "loop",
+                          "testid": "linear-issues-cmdk-groups",
+                          "items": "${ARRAYFILTER(commands?.groups ?? [], g => LEN(ARRAYFILTER(g?.items ?? [], i => CONTAINS(LOWER(i?.label ?? ''), LOWER(cmdkQuery ?? '')))) > 0)}",
+                          "body": [
+                            {
+                              "type": "container",
+                              "testid": "linear-issues-cmdk-group",
+                              "className": "flex flex-col py-1",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "${$slot.item.label}",
+                                  "className": "ln-cmd-group px-3",
+                                  "testid": "linear-issues-cmdk-group-label"
+                                },
+                                {
+                                  "type": "loop",
+                                  "items": "${ARRAYFILTER($slot.item.items ?? [], i => CONTAINS(LOWER(i?.label ?? ''), LOWER(cmdkQuery ?? '')))}",
+                                  "body": [
+                                    {
+                                      "type": "flex",
+                                      "direction": "row",
+                                      "gap": 10,
+                                      "className": "items-center ln-cmd-item",
+                                      "testid": "linear-issues-cmdk-item",
+                                      "onClick": [
+                                        {
+                                          "action": "navigate",
+                                          "args": {
+                                            "url": "${$slot.item.href ?? ''}"
+                                          },
+                                          "when": "${$slot.item.href !== undefined}"
+                                        },
+                                        {
+                                          "action": "openDialog",
+                                          "args": {
+                                            "title": "新建问题",
+                                            "testid": "linear-issues-create-dialog",
+                                            "className": "ln-dialog",
+                                            "closeOnSubmit": true,
+                                            "onSubmitSuccess": [
+                                              {
+                                                "action": "component:refresh",
+                                                "componentId": "linear-issues-source"
+                                              }
+                                            ],
+                                            "body": [
+                                              {
+                                                "type": "form",
+                                                "testid": "linear-issues-create-form",
+                                                "submitScope": "surface",
+                                                "submitAction": {
+                                                  "action": "ajax",
+                                                  "args": {
+                                                    "url": "/r/Linear__createIssue",
+                                                    "method": "post",
+                                                    "includeScope": "*"
+                                                  },
+                                                  "messages": {
+                                                    "success": "问题已创建"
+                                                  }
+                                                },
+                                                "body": [
+                                                  {
+                                                    "type": "input-text",
+                                                    "name": "title",
+                                                    "label": "标题",
+                                                    "required": true,
+                                                    "placeholder": "问题标题",
+                                                    "testid": "linear-issues-create-title"
+                                                  },
+                                                  {
+                                                    "type": "select",
+                                                    "name": "status",
+                                                    "label": "状态",
+                                                    "clearable": false,
+                                                    "defaultValue": "todo",
+                                                    "options": [
+                                                      {
+                                                        "label": "待定",
+                                                        "value": "backlog"
+                                                      },
+                                                      {
+                                                        "label": "待办",
+                                                        "value": "todo"
+                                                      },
+                                                      {
+                                                        "label": "进行中",
+                                                        "value": "in_progress"
+                                                      },
+                                                      {
+                                                        "label": "已完成",
+                                                        "value": "done"
+                                                      },
+                                                      {
+                                                        "label": "已取消",
+                                                        "value": "cancelled"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "select",
+                                                    "name": "priority",
+                                                    "label": "优先级",
+                                                    "clearable": false,
+                                                    "defaultValue": "none",
+                                                    "options": [
+                                                      {
+                                                        "label": "紧急",
+                                                        "value": "urgent"
+                                                      },
+                                                      {
+                                                        "label": "高",
+                                                        "value": "high"
+                                                      },
+                                                      {
+                                                        "label": "中",
+                                                        "value": "medium"
+                                                      },
+                                                      {
+                                                        "label": "低",
+                                                        "value": "low"
+                                                      },
+                                                      {
+                                                        "label": "无优先级",
+                                                        "value": "none"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "select",
+                                                    "name": "assignee",
+                                                    "label": "指派",
+                                                    "clearable": true,
+                                                    "placeholder": "暂不指派",
+                                                    "options": [
+                                                      {
+                                                        "label": "林晚晴",
+                                                        "value": "林晚晴"
+                                                      },
+                                                      {
+                                                        "label": "沈亦舟",
+                                                        "value": "沈亦舟"
+                                                      },
+                                                      {
+                                                        "label": "顾北辰",
+                                                        "value": "顾北辰"
+                                                      },
+                                                      {
+                                                        "label": "苏婉清",
+                                                        "value": "苏婉清"
+                                                      },
+                                                      {
+                                                        "label": "周砚秋",
+                                                        "value": "周砚秋"
+                                                      }
+                                                    ]
+                                                  }
+                                                ],
+                                                "actions": [
+                                                  {
+                                                    "type": "button",
+                                                    "label": "创建",
+                                                    "className": "ln-btn ln-btn-primary",
+                                                    "testid": "linear-issues-create-submit",
+                                                    "onClick": {
+                                                      "action": "submitForm"
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          "when": "${$slot.item.act === 'create'}"
+                                        },
+                                        {
+                                          "action": "openDialog",
+                                          "args": {
+                                            "title": "筛选",
+                                            "testid": "linear-issues-filter-dialog",
+                                            "className": "ln-dialog",
+                                            "closeOnSubmit": true,
+                                            "onSubmitSuccess": [
+                                              {
+                                                "action": "setValue",
+                                                "args": {
+                                                  "path": "filterKeyword",
+                                                  "value": "${$formData.keyword ?? \"\"}"
+                                                }
+                                              },
+                                              {
+                                                "action": "setValue",
+                                                "args": {
+                                                  "path": "filterStatus",
+                                                  "value": "${$formData.status ?? \"\"}"
+                                                }
+                                              },
+                                              {
+                                                "action": "setValue",
+                                                "args": {
+                                                  "path": "filterPriority",
+                                                  "value": "${$formData.priority ?? \"\"}"
+                                                }
+                                              }
+                                            ],
+                                            "body": [
+                                              {
+                                                "type": "form",
+                                                "id": "linear-issues-filter-form",
+                                                "testid": "linear-issues-filter-form",
+                                                "submitScope": "surface",
+                                                "data": {
+                                                  "keyword": "${filterKeyword ?? \"\"}",
+                                                  "status": "${filterStatus ?? \"\"}",
+                                                  "priority": "${filterPriority ?? \"\"}"
+                                                },
+                                                "body": [
+                                                  {
+                                                    "type": "input-text",
+                                                    "name": "keyword",
+                                                    "label": "关键词",
+                                                    "placeholder": "标题或 ENG- 序号",
+                                                    "testid": "linear-issues-filter-keyword"
+                                                  },
+                                                  {
+                                                    "type": "select",
+                                                    "name": "status",
+                                                    "label": "状态",
+                                                    "clearable": true,
+                                                    "placeholder": "全部状态",
+                                                    "options": [
+                                                      {
+                                                        "label": "待定",
+                                                        "value": "backlog"
+                                                      },
+                                                      {
+                                                        "label": "待办",
+                                                        "value": "todo"
+                                                      },
+                                                      {
+                                                        "label": "进行中",
+                                                        "value": "in_progress"
+                                                      },
+                                                      {
+                                                        "label": "已完成",
+                                                        "value": "done"
+                                                      },
+                                                      {
+                                                        "label": "已取消",
+                                                        "value": "cancelled"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "select",
+                                                    "name": "priority",
+                                                    "label": "优先级",
+                                                    "clearable": true,
+                                                    "placeholder": "全部优先级",
+                                                    "options": [
+                                                      {
+                                                        "label": "紧急",
+                                                        "value": "urgent"
+                                                      },
+                                                      {
+                                                        "label": "高",
+                                                        "value": "high"
+                                                      },
+                                                      {
+                                                        "label": "中",
+                                                        "value": "medium"
+                                                      },
+                                                      {
+                                                        "label": "低",
+                                                        "value": "low"
+                                                      },
+                                                      {
+                                                        "label": "无优先级",
+                                                        "value": "none"
+                                                      }
+                                                    ]
+                                                  }
+                                                ],
+                                                "actions": [
+                                                  {
+                                                    "type": "button",
+                                                    "label": "清空条件",
+                                                    "className": "ln-btn ln-btn-ghost",
+                                                    "testid": "linear-issues-filter-clear",
+                                                    "onClick": [
+                                                      {
+                                                        "action": "component:reset",
+                                                        "componentId": "linear-issues-filter-form",
+                                                        "args": {
+                                                          "values": {
+                                                            "keyword": "",
+                                                            "status": "",
+                                                            "priority": ""
+                                                          }
+                                                        }
+                                                      },
+                                                      {
+                                                        "action": "submitForm"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "button",
+                                                    "label": "查询",
+                                                    "className": "ln-btn ln-btn-primary",
+                                                    "testid": "linear-issues-filter-apply",
+                                                    "onClick": {
+                                                      "action": "submitForm"
+                                                    }
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          "when": "${$slot.item.act === 'filter'}"
+                                        },
+                                        {
+                                          "action": "ajax",
+                                          "args": {
+                                            "url": "/r/Linear__copyLink?id=${issueSelection?.[0] ?? ''}",
+                                            "method": "get"
+                                          },
+                                          "messages": {
+                                            "success": "链接已复制"
+                                          },
+                                          "when": "${$slot.item.act === 'copy'}"
+                                        },
+                                        {
+                                          "action": "ajax",
+                                          "args": {
+                                            "url": "/r/Linear__archiveIssue",
+                                            "method": "post",
+                                            "data": {
+                                              "ids": "${issueSelection}"
+                                            }
+                                          },
+                                          "messages": {
+                                            "success": "已归档所选问题",
+                                            "failed": "没有可归档的问题"
+                                          },
+                                          "then": {
+                                            "action": "component:refresh",
+                                            "componentId": "linear-issues-source"
+                                          },
+                                          "when": "${$slot.item.act === 'archive'}"
+                                        },
+                                        {
+                                          "action": "openDialog",
+                                          "args": {
+                                            "title": "快捷键帮助",
+                                            "testid": "linear-issues-help-dialog",
+                                            "className": "ln-dialog",
+                                            "body": [
+                                              {
+                                                "type": "container",
+                                                "testid": "linear-issues-help-body",
+                                                "className": "flex flex-col gap-4 w-100",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "className": "flex flex-col gap-2",
+                                                    "body": [
+                                                      {
+                                                        "type": "text",
+                                                        "text": "本复刻已接线（按钮 / 命令面板等价入口）",
+                                                        "className": "ln-cmd-group"
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "⌘K 命令菜单 · C 新建问题 · F 筛选 · # 归档所选 · ⇧⌘, 复制链接 · ⌘B 列表/看板切换（顶栏页签） · Esc 关闭浮层",
+                                                        "className": "ln-desc-block"
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "container",
+                                                    "className": "flex flex-col gap-2",
+                                                    "body": [
+                                                      {
+                                                        "type": "text",
+                                                        "text": "原版键盘原语（复刻未模拟，鼠标等价路径可用）",
+                                                        "className": "ln-cmd-group"
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "G/O chord 导航 · J/K 高亮移动 · X 单键多选 · ⇧click 范围选 · ⌘A 全选 · ⌥↑↓ 键盘重排 · Space 悬停预览",
+                                                        "className": "ln-desc-block"
+                                                      },
+                                                      {
+                                                        "type": "container",
+                                                        "testid": "linear-issues-help-note",
+                                                        "className": "ln-reschedule-note",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "键盘序列监听与修饰键手势属运行时能力缺口（G-B2），复刻页以按钮面与命令面板承载等价行为。",
+                                                            "className": "ln-row-meta"
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          "when": "${$slot.item.act === 'help'}"
+                                        },
+                                        {
+                                          "action": "closeSurface",
+                                          "when": "${$slot.item.act === undefined || $slot.item.act === 'copy' || $slot.item.act === 'archive'}"
+                                        }
+                                      ],
+                                      "body": [
+                                        {
+                                          "type": "text",
+                                          "text": "${$slot.item.label}",
+                                          "className": "flex-1"
+                                        },
+                                        {
+                                          "type": "container",
+                                          "visible": "${$slot.item.kbd !== undefined}",
+                                          "body": [
+                                            {
+                                              "type": "text",
+                                              "text": "${$slot.item.kbd}",
+                                              "className": "ln-kbd",
+                                              "testid": "linear-issues-cmdk-kbd"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "search",
+                      "size": 14
+                    },
+                    {
+                      "type": "text",
+                      "text": "搜索或跳转…"
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 2,
+                      "className": "items-center ml-auto",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "⌘",
+                          "className": "ln-kbd"
+                        },
+                        {
+                          "type": "text",
+                          "text": "K",
+                          "className": "ln-kbd"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "testid": "linear-issues-nav",
+              "className": "flex flex-col",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "导航",
+                  "className": "ln-side-group"
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "inbox",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "收件箱"
+                    },
+                    {
+                      "type": "text",
+                      "text": "4",
+                      "className": "ln-row-meta ml-auto"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "user",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "我的问题"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item ln-side-item-active",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "layers",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "活跃问题"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "kanban",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "看板视图"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "repeat",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "周期"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "folder",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "项目"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "settings",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "设置"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "testid": "linear-issues-fav-group",
+              "className": "flex flex-col mt-3",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "收藏",
+                  "className": "ln-side-group"
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    {
+                      "type": "container",
+                      "className": "ln-status-dot ln-status-in_progress"
+                    },
+                    {
+                      "type": "text",
+                      "text": "平台重构"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center ln-side-item",
+                  "body": [
+                    {
+                      "type": "container",
+                      "className": "ln-status-dot ln-status-done"
+                    },
+                    {
+                      "type": "text",
+                      "text": "性能专项"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "testid": "linear-issues-content",
+          "className": "flex-1 min-w-0 flex flex-col relative",
+          "body": [
+            {
+              "type": "container",
+              "testid": "linear-issues-topbar",
+              "className": "h-12 shrink-0 border-b flex items-center gap-2 px-4",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 4,
+                  "className": "items-center",
+                  "testid": "linear-issues-view-tabs",
+                  "body": [
+                    {
+                      "type": "container",
+                      "className": "ln-tab ln-tab-active",
+                      "testid": "linear-issues-tab-list",
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "list",
+                          "size": 14
+                        },
+                        {
+                          "type": "text",
+                          "text": "列表"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 4,
+                      "className": "items-center ln-tab",
+                      "testid": "linear-issues-tab-board",
+                      "onClick": {
+                        "action": "navigate",
+                        "args": {
+                          "url": "#/complex-pages/linear-board"
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "kanban",
+                          "size": 14
+                        },
+                        {
+                          "type": "text",
+                          "text": "看板"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 6,
+                  "className": "items-center ml-auto",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 6,
+                      "className": "items-center ln-topbar-btn",
+                      "testid": "linear-issues-filter-entry",
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "filter",
+                          "size": 14
+                        },
+                        {
+                          "type": "text",
+                          "text": "筛选"
+                        }
+                      ],
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "筛选",
+                          "testid": "linear-issues-filter-dialog",
+                          "className": "ln-dialog",
+                          "closeOnSubmit": true,
+                          "onSubmitSuccess": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "filterKeyword",
+                                "value": "${$formData.keyword ?? \"\"}"
+                              }
+                            },
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "filterStatus",
+                                "value": "${$formData.status ?? \"\"}"
+                              }
+                            },
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "filterPriority",
+                                "value": "${$formData.priority ?? \"\"}"
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "form",
+                              "id": "linear-issues-filter-form",
+                              "testid": "linear-issues-filter-form",
+                              "submitScope": "surface",
+                              "data": {
+                                "keyword": "${filterKeyword ?? \"\"}",
+                                "status": "${filterStatus ?? \"\"}",
+                                "priority": "${filterPriority ?? \"\"}"
+                              },
+                              "body": [
+                                {
+                                  "type": "input-text",
+                                  "name": "keyword",
+                                  "label": "关键词",
+                                  "placeholder": "标题或 ENG- 序号",
+                                  "testid": "linear-issues-filter-keyword"
+                                },
+                                {
+                                  "type": "select",
+                                  "name": "status",
+                                  "label": "状态",
+                                  "clearable": true,
+                                  "placeholder": "全部状态",
+                                  "options": [
+                                    {
+                                      "label": "待定",
+                                      "value": "backlog"
+                                    },
+                                    {
+                                      "label": "待办",
+                                      "value": "todo"
+                                    },
+                                    {
+                                      "label": "进行中",
+                                      "value": "in_progress"
+                                    },
+                                    {
+                                      "label": "已完成",
+                                      "value": "done"
+                                    },
+                                    {
+                                      "label": "已取消",
+                                      "value": "cancelled"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "select",
+                                  "name": "priority",
+                                  "label": "优先级",
+                                  "clearable": true,
+                                  "placeholder": "全部优先级",
+                                  "options": [
+                                    {
+                                      "label": "紧急",
+                                      "value": "urgent"
+                                    },
+                                    {
+                                      "label": "高",
+                                      "value": "high"
+                                    },
+                                    {
+                                      "label": "中",
+                                      "value": "medium"
+                                    },
+                                    {
+                                      "label": "低",
+                                      "value": "low"
+                                    },
+                                    {
+                                      "label": "无优先级",
+                                      "value": "none"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "清空条件",
+                                  "className": "ln-btn ln-btn-ghost",
+                                  "testid": "linear-issues-filter-clear",
+                                  "onClick": [
+                                    {
+                                      "action": "component:reset",
+                                      "componentId": "linear-issues-filter-form",
+                                      "args": {
+                                        "values": {
+                                          "keyword": "",
+                                          "status": "",
+                                          "priority": ""
+                                        }
+                                      }
+                                    },
+                                    {
+                                      "action": "submitForm"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "button",
+                                  "label": "查询",
+                                  "className": "ln-btn ln-btn-primary",
+                                  "testid": "linear-issues-filter-apply",
+                                  "onClick": {
+                                    "action": "submitForm"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 6,
+                      "className": "items-center ln-topbar-btn",
+                      "testid": "linear-issues-display-trigger",
+                      "onClick": {
+                        "action": "openDrawer",
+                        "args": {
+                          "title": "显示选项",
+                          "testid": "linear-issues-display-drawer",
+                          "className": "ln-dialog",
+                          "side": "right",
+                          "body": [
+                            {
+                              "type": "container",
+                              "testid": "linear-issues-display-body",
+                              "className": "flex flex-col gap-5 p-1",
+                              "body": [
+                                {
+                                  "type": "container",
+                                  "className": "flex flex-col gap-2",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "分组",
+                                      "className": "ln-prop-label"
+                                    },
+                                    {
+                                      "type": "select",
+                                      "name": "displayGrouping",
+                                      "testid": "linear-issues-display-grouping",
+                                      "clearable": false,
+                                      "defaultValue": "status",
+                                      "options": [
+                                        {
+                                          "label": "无分组",
+                                          "value": "none"
+                                        },
+                                        {
+                                          "label": "按状态",
+                                          "value": "status"
+                                        },
+                                        {
+                                          "label": "按指派人",
+                                          "value": "assignee"
+                                        },
+                                        {
+                                          "label": "按优先级",
+                                          "value": "priority"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "container",
+                                  "className": "flex flex-col gap-2",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "排序",
+                                      "className": "ln-prop-label"
+                                    },
+                                    {
+                                      "type": "select",
+                                      "name": "displayOrdering",
+                                      "testid": "linear-issues-display-ordering",
+                                      "clearable": false,
+                                      "defaultValue": "manual",
+                                      "options": [
+                                        {
+                                          "label": "手动（支持键盘重排）",
+                                          "value": "manual"
+                                        },
+                                        {
+                                          "label": "按优先级",
+                                          "value": "priority"
+                                        },
+                                        {
+                                          "label": "按更新时间",
+                                          "value": "updated"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "container",
+                                  "testid": "linear-issues-display-manual-note",
+                                  "className": "ln-reschedule-note",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "手动排序为键盘重排（⌥↑↓ / ⌥⇧↑↓）的前置条件：分组需为「无分组」且排序为「手动」。键盘重排接线属后续交互计划。",
+                                      "className": "ln-row-meta"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "sliders-horizontal",
+                          "size": 14
+                        },
+                        {
+                          "type": "text",
+                          "text": "显示"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 6,
+                      "className": "items-center ln-btn ln-btn-primary h-7 px-3 text-xs",
+                      "testid": "linear-issues-create",
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "新建问题",
+                          "testid": "linear-issues-create-dialog",
+                          "className": "ln-dialog",
+                          "closeOnSubmit": true,
+                          "onSubmitSuccess": [
+                            {
+                              "action": "component:refresh",
+                              "componentId": "linear-issues-source"
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "form",
+                              "testid": "linear-issues-create-form",
+                              "submitScope": "surface",
+                              "submitAction": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/Linear__createIssue",
+                                  "method": "post",
+                                  "includeScope": "*"
+                                },
+                                "messages": {
+                                  "success": "问题已创建"
+                                }
+                              },
+                              "body": [
+                                {
+                                  "type": "input-text",
+                                  "name": "title",
+                                  "label": "标题",
+                                  "required": true,
+                                  "placeholder": "问题标题",
+                                  "testid": "linear-issues-create-title"
+                                },
+                                {
+                                  "type": "select",
+                                  "name": "status",
+                                  "label": "状态",
+                                  "clearable": false,
+                                  "defaultValue": "todo",
+                                  "options": [
+                                    {
+                                      "label": "待定",
+                                      "value": "backlog"
+                                    },
+                                    {
+                                      "label": "待办",
+                                      "value": "todo"
+                                    },
+                                    {
+                                      "label": "进行中",
+                                      "value": "in_progress"
+                                    },
+                                    {
+                                      "label": "已完成",
+                                      "value": "done"
+                                    },
+                                    {
+                                      "label": "已取消",
+                                      "value": "cancelled"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "select",
+                                  "name": "priority",
+                                  "label": "优先级",
+                                  "clearable": false,
+                                  "defaultValue": "none",
+                                  "options": [
+                                    {
+                                      "label": "紧急",
+                                      "value": "urgent"
+                                    },
+                                    {
+                                      "label": "高",
+                                      "value": "high"
+                                    },
+                                    {
+                                      "label": "中",
+                                      "value": "medium"
+                                    },
+                                    {
+                                      "label": "低",
+                                      "value": "low"
+                                    },
+                                    {
+                                      "label": "无优先级",
+                                      "value": "none"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "select",
+                                  "name": "assignee",
+                                  "label": "指派",
+                                  "clearable": true,
+                                  "placeholder": "暂不指派",
+                                  "options": [
+                                    {
+                                      "label": "林晚晴",
+                                      "value": "林晚晴"
+                                    },
+                                    {
+                                      "label": "沈亦舟",
+                                      "value": "沈亦舟"
+                                    },
+                                    {
+                                      "label": "顾北辰",
+                                      "value": "顾北辰"
+                                    },
+                                    {
+                                      "label": "苏婉清",
+                                      "value": "苏婉清"
+                                    },
+                                    {
+                                      "label": "周砚秋",
+                                      "value": "周砚秋"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "创建",
+                                  "className": "ln-btn ln-btn-primary",
+                                  "testid": "linear-issues-create-submit",
+                                  "onClick": {
+                                    "action": "submitForm"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "plus",
+                          "size": 13
+                        },
+                        {
+                          "type": "text",
+                          "text": "新建"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 6,
+                      "className": "items-center ln-btn ln-btn-primary h-7 px-3 text-xs",
+                      "testid": "linear-issues-cmdk-button",
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "命令面板",
+                          "testid": "linear-issues-cmdk",
+                          "className": "ln-dialog",
+                          "body": [
+                            {
+                              "type": "input-text",
+                              "name": "cmdkQuery",
+                              "testid": "linear-issues-cmdk-input",
+                              "placeholder": "输入命令或搜索问题…",
+                              "className": "ln-cmd-input"
+                            },
+                            {
+                              "type": "loop",
+                              "testid": "linear-issues-cmdk-groups",
+                              "items": "${ARRAYFILTER(commands?.groups ?? [], g => LEN(ARRAYFILTER(g?.items ?? [], i => CONTAINS(LOWER(i?.label ?? ''), LOWER(cmdkQuery ?? '')))) > 0)}",
+                              "body": [
+                                {
+                                  "type": "container",
+                                  "testid": "linear-issues-cmdk-group",
+                                  "className": "flex flex-col py-1",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "${$slot.item.label}",
+                                      "className": "ln-cmd-group px-3",
+                                      "testid": "linear-issues-cmdk-group-label"
+                                    },
+                                    {
+                                      "type": "loop",
+                                      "items": "${ARRAYFILTER($slot.item.items ?? [], i => CONTAINS(LOWER(i?.label ?? ''), LOWER(cmdkQuery ?? '')))}",
+                                      "body": [
+                                        {
+                                          "type": "flex",
+                                          "direction": "row",
+                                          "gap": 10,
+                                          "className": "items-center ln-cmd-item",
+                                          "testid": "linear-issues-cmdk-item",
+                                          "onClick": [
+                                            {
+                                              "action": "navigate",
+                                              "args": {
+                                                "url": "${$slot.item.href ?? ''}"
+                                              },
+                                              "when": "${$slot.item.href !== undefined}"
+                                            },
+                                            {
+                                              "action": "openDialog",
+                                              "args": {
+                                                "title": "新建问题",
+                                                "testid": "linear-issues-create-dialog",
+                                                "className": "ln-dialog",
+                                                "closeOnSubmit": true,
+                                                "onSubmitSuccess": [
+                                                  {
+                                                    "action": "component:refresh",
+                                                    "componentId": "linear-issues-source"
+                                                  }
+                                                ],
+                                                "body": [
+                                                  {
+                                                    "type": "form",
+                                                    "testid": "linear-issues-create-form",
+                                                    "submitScope": "surface",
+                                                    "submitAction": {
+                                                      "action": "ajax",
+                                                      "args": {
+                                                        "url": "/r/Linear__createIssue",
+                                                        "method": "post",
+                                                        "includeScope": "*"
+                                                      },
+                                                      "messages": {
+                                                        "success": "问题已创建"
+                                                      }
+                                                    },
+                                                    "body": [
+                                                      {
+                                                        "type": "input-text",
+                                                        "name": "title",
+                                                        "label": "标题",
+                                                        "required": true,
+                                                        "placeholder": "问题标题",
+                                                        "testid": "linear-issues-create-title"
+                                                      },
+                                                      {
+                                                        "type": "select",
+                                                        "name": "status",
+                                                        "label": "状态",
+                                                        "clearable": false,
+                                                        "defaultValue": "todo",
+                                                        "options": [
+                                                          {
+                                                            "label": "待定",
+                                                            "value": "backlog"
+                                                          },
+                                                          {
+                                                            "label": "待办",
+                                                            "value": "todo"
+                                                          },
+                                                          {
+                                                            "label": "进行中",
+                                                            "value": "in_progress"
+                                                          },
+                                                          {
+                                                            "label": "已完成",
+                                                            "value": "done"
+                                                          },
+                                                          {
+                                                            "label": "已取消",
+                                                            "value": "cancelled"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "select",
+                                                        "name": "priority",
+                                                        "label": "优先级",
+                                                        "clearable": false,
+                                                        "defaultValue": "none",
+                                                        "options": [
+                                                          {
+                                                            "label": "紧急",
+                                                            "value": "urgent"
+                                                          },
+                                                          {
+                                                            "label": "高",
+                                                            "value": "high"
+                                                          },
+                                                          {
+                                                            "label": "中",
+                                                            "value": "medium"
+                                                          },
+                                                          {
+                                                            "label": "低",
+                                                            "value": "low"
+                                                          },
+                                                          {
+                                                            "label": "无优先级",
+                                                            "value": "none"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "select",
+                                                        "name": "assignee",
+                                                        "label": "指派",
+                                                        "clearable": true,
+                                                        "placeholder": "暂不指派",
+                                                        "options": [
+                                                          {
+                                                            "label": "林晚晴",
+                                                            "value": "林晚晴"
+                                                          },
+                                                          {
+                                                            "label": "沈亦舟",
+                                                            "value": "沈亦舟"
+                                                          },
+                                                          {
+                                                            "label": "顾北辰",
+                                                            "value": "顾北辰"
+                                                          },
+                                                          {
+                                                            "label": "苏婉清",
+                                                            "value": "苏婉清"
+                                                          },
+                                                          {
+                                                            "label": "周砚秋",
+                                                            "value": "周砚秋"
+                                                          }
+                                                        ]
+                                                      }
+                                                    ],
+                                                    "actions": [
+                                                      {
+                                                        "type": "button",
+                                                        "label": "创建",
+                                                        "className": "ln-btn ln-btn-primary",
+                                                        "testid": "linear-issues-create-submit",
+                                                        "onClick": {
+                                                          "action": "submitForm"
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              "when": "${$slot.item.act === 'create'}"
+                                            },
+                                            {
+                                              "action": "openDialog",
+                                              "args": {
+                                                "title": "筛选",
+                                                "testid": "linear-issues-filter-dialog",
+                                                "className": "ln-dialog",
+                                                "closeOnSubmit": true,
+                                                "onSubmitSuccess": [
+                                                  {
+                                                    "action": "setValue",
+                                                    "args": {
+                                                      "path": "filterKeyword",
+                                                      "value": "${$formData.keyword ?? \"\"}"
+                                                    }
+                                                  },
+                                                  {
+                                                    "action": "setValue",
+                                                    "args": {
+                                                      "path": "filterStatus",
+                                                      "value": "${$formData.status ?? \"\"}"
+                                                    }
+                                                  },
+                                                  {
+                                                    "action": "setValue",
+                                                    "args": {
+                                                      "path": "filterPriority",
+                                                      "value": "${$formData.priority ?? \"\"}"
+                                                    }
+                                                  }
+                                                ],
+                                                "body": [
+                                                  {
+                                                    "type": "form",
+                                                    "id": "linear-issues-filter-form",
+                                                    "testid": "linear-issues-filter-form",
+                                                    "submitScope": "surface",
+                                                    "data": {
+                                                      "keyword": "${filterKeyword ?? \"\"}",
+                                                      "status": "${filterStatus ?? \"\"}",
+                                                      "priority": "${filterPriority ?? \"\"}"
+                                                    },
+                                                    "body": [
+                                                      {
+                                                        "type": "input-text",
+                                                        "name": "keyword",
+                                                        "label": "关键词",
+                                                        "placeholder": "标题或 ENG- 序号",
+                                                        "testid": "linear-issues-filter-keyword"
+                                                      },
+                                                      {
+                                                        "type": "select",
+                                                        "name": "status",
+                                                        "label": "状态",
+                                                        "clearable": true,
+                                                        "placeholder": "全部状态",
+                                                        "options": [
+                                                          {
+                                                            "label": "待定",
+                                                            "value": "backlog"
+                                                          },
+                                                          {
+                                                            "label": "待办",
+                                                            "value": "todo"
+                                                          },
+                                                          {
+                                                            "label": "进行中",
+                                                            "value": "in_progress"
+                                                          },
+                                                          {
+                                                            "label": "已完成",
+                                                            "value": "done"
+                                                          },
+                                                          {
+                                                            "label": "已取消",
+                                                            "value": "cancelled"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "select",
+                                                        "name": "priority",
+                                                        "label": "优先级",
+                                                        "clearable": true,
+                                                        "placeholder": "全部优先级",
+                                                        "options": [
+                                                          {
+                                                            "label": "紧急",
+                                                            "value": "urgent"
+                                                          },
+                                                          {
+                                                            "label": "高",
+                                                            "value": "high"
+                                                          },
+                                                          {
+                                                            "label": "中",
+                                                            "value": "medium"
+                                                          },
+                                                          {
+                                                            "label": "低",
+                                                            "value": "low"
+                                                          },
+                                                          {
+                                                            "label": "无优先级",
+                                                            "value": "none"
+                                                          }
+                                                        ]
+                                                      }
+                                                    ],
+                                                    "actions": [
+                                                      {
+                                                        "type": "button",
+                                                        "label": "清空条件",
+                                                        "className": "ln-btn ln-btn-ghost",
+                                                        "testid": "linear-issues-filter-clear",
+                                                        "onClick": [
+                                                          {
+                                                            "action": "component:reset",
+                                                            "componentId": "linear-issues-filter-form",
+                                                            "args": {
+                                                              "values": {
+                                                                "keyword": "",
+                                                                "status": "",
+                                                                "priority": ""
+                                                              }
+                                                            }
+                                                          },
+                                                          {
+                                                            "action": "submitForm"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "button",
+                                                        "label": "查询",
+                                                        "className": "ln-btn ln-btn-primary",
+                                                        "testid": "linear-issues-filter-apply",
+                                                        "onClick": {
+                                                          "action": "submitForm"
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              "when": "${$slot.item.act === 'filter'}"
+                                            },
+                                            {
+                                              "action": "ajax",
+                                              "args": {
+                                                "url": "/r/Linear__copyLink?id=${issueSelection?.[0] ?? ''}",
+                                                "method": "get"
+                                              },
+                                              "messages": {
+                                                "success": "链接已复制"
+                                              },
+                                              "when": "${$slot.item.act === 'copy'}"
+                                            },
+                                            {
+                                              "action": "ajax",
+                                              "args": {
+                                                "url": "/r/Linear__archiveIssue",
+                                                "method": "post",
+                                                "data": {
+                                                  "ids": "${issueSelection}"
+                                                }
+                                              },
+                                              "messages": {
+                                                "success": "已归档所选问题",
+                                                "failed": "没有可归档的问题"
+                                              },
+                                              "then": {
+                                                "action": "component:refresh",
+                                                "componentId": "linear-issues-source"
+                                              },
+                                              "when": "${$slot.item.act === 'archive'}"
+                                            },
+                                            {
+                                              "action": "openDialog",
+                                              "args": {
+                                                "title": "快捷键帮助",
+                                                "testid": "linear-issues-help-dialog",
+                                                "className": "ln-dialog",
+                                                "body": [
+                                                  {
+                                                    "type": "container",
+                                                    "testid": "linear-issues-help-body",
+                                                    "className": "flex flex-col gap-4 w-100",
+                                                    "body": [
+                                                      {
+                                                        "type": "container",
+                                                        "className": "flex flex-col gap-2",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "本复刻已接线（按钮 / 命令面板等价入口）",
+                                                            "className": "ln-cmd-group"
+                                                          },
+                                                          {
+                                                            "type": "text",
+                                                            "text": "⌘K 命令菜单 · C 新建问题 · F 筛选 · # 归档所选 · ⇧⌘, 复制链接 · ⌘B 列表/看板切换（顶栏页签） · Esc 关闭浮层",
+                                                            "className": "ln-desc-block"
+                                                          }
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "container",
+                                                        "className": "flex flex-col gap-2",
+                                                        "body": [
+                                                          {
+                                                            "type": "text",
+                                                            "text": "原版键盘原语（复刻未模拟，鼠标等价路径可用）",
+                                                            "className": "ln-cmd-group"
+                                                          },
+                                                          {
+                                                            "type": "text",
+                                                            "text": "G/O chord 导航 · J/K 高亮移动 · X 单键多选 · ⇧click 范围选 · ⌘A 全选 · ⌥↑↓ 键盘重排 · Space 悬停预览",
+                                                            "className": "ln-desc-block"
+                                                          },
+                                                          {
+                                                            "type": "container",
+                                                            "testid": "linear-issues-help-note",
+                                                            "className": "ln-reschedule-note",
+                                                            "body": [
+                                                              {
+                                                                "type": "text",
+                                                                "text": "键盘序列监听与修饰键手势属运行时能力缺口（G-B2），复刻页以按钮面与命令面板承载等价行为。",
+                                                                "className": "ln-row-meta"
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              "when": "${$slot.item.act === 'help'}"
+                                            },
+                                            {
+                                              "action": "closeSurface",
+                                              "when": "${$slot.item.act === undefined || $slot.item.act === 'copy' || $slot.item.act === 'archive'}"
+                                            }
+                                          ],
+                                          "body": [
+                                            {
+                                              "type": "text",
+                                              "text": "${$slot.item.label}",
+                                              "className": "flex-1"
+                                            },
+                                            {
+                                              "type": "container",
+                                              "visible": "${$slot.item.kbd !== undefined}",
+                                              "body": [
+                                                {
+                                                  "type": "text",
+                                                  "text": "${$slot.item.kbd}",
+                                                  "className": "ln-kbd",
+                                                  "testid": "linear-issues-cmdk-kbd"
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "command",
+                          "size": 13
+                        },
+                        {
+                          "type": "text",
+                          "text": "命令"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "table",
+              "testid": "linear-issues-table",
+              "className": "ln-issues-table flex-1",
+              "source": "${issues?.items}",
+              "rowKey": "id",
+              "pagination": {
+                "enabled": true,
+                "pageSize": 10
+              },
+              "empty": {
+                "type": "text",
+                "text": "当前筛选条件下没有问题",
+                "className": "ln-empty"
+              },
+              "columns": [
+                {
+                  "name": "status",
+                  "label": "状态",
+                  "width": 110,
+                  "cell": {
+                    "type": "container",
+                    "className": "flex items-center gap-2",
+                    "body": [
+                      {
+                        "type": "container",
+                        "className": "${statusDotClass}",
+                        "testid": "linear-issues-status-dot"
+                      },
+                      {
+                        "type": "text",
+                        "text": "${statusLabel}",
+                        "className": "ln-row-meta"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "title",
+                  "label": "问题",
+                  "cell": {
+                    "type": "container",
+                    "className": "flex items-center gap-3 min-w-0",
+                    "body": [
+                      {
+                        "type": "text",
+                        "text": "${id}",
+                        "className": "ln-row-key ln-mono shrink-0",
+                        "testid": "linear-issues-row-key"
+                      },
+                      {
+                        "type": "text",
+                        "text": "${title}",
+                        "className": "ln-row-title flex-1 min-w-0",
+                        "testid": "linear-issues-row-title"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "labels",
+                  "label": "标签",
+                  "width": 150,
+                  "cell": {
+                    "type": "container",
+                    "className": "flex items-center gap-1 flex-wrap",
+                    "body": [
+                      {
+                        "type": "loop",
+                        "items": "${labels}",
+                        "body": [
+                          {
+                            "type": "text",
+                            "text": "${$slot.item}",
+                            "className": "ln-label-pill",
+                            "testid": "linear-issues-label-pill"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "priority",
+                  "label": "优先级",
+                  "width": 76,
+                  "cell": {
+                    "type": "container",
+                    "className": "${prioClass}",
+                    "testid": "linear-issues-prio",
+                    "body": [
+                      {
+                        "type": "container",
+                        "className": "ln-prio-bar"
+                      },
+                      {
+                        "type": "container",
+                        "className": "ln-prio-bar"
+                      },
+                      {
+                        "type": "container",
+                        "className": "ln-prio-bar"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "assignee",
+                  "label": "指派",
+                  "width": 64,
+                  "cell": {
+                    "type": "container",
+                    "className": "ln-avatar ln-avatar-sm",
+                    "testid": "linear-issues-assignee",
+                    "body": [
+                      {
+                        "type": "text",
+                        "text": "${assigneeInitials}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "dueDate",
+                  "label": "截止",
+                  "width": 96,
+                  "cell": {
+                    "type": "text",
+                    "text": "${dueDate === '' ? '—' : dueDate}",
+                    "className": "ln-row-meta",
+                    "testid": "linear-issues-due"
+                  }
+                },
+                {
+                  "name": "ops",
+                  "label": "",
+                  "width": 76,
+                  "cell": {
+                    "type": "button",
+                    "label": "打开",
+                    "className": "ln-btn ln-btn-ghost h-6 px-2 text-xs",
+                    "testid": "linear-issues-peek-trigger",
+                    "onClick": {
+                      "action": "openDialog",
+                      "args": {
+                        "title": "问题预览",
+                        "testid": "linear-issues-peek",
+                        "className": "ln-dialog",
+                        "data": {
+                          "id": "${id}"
+                        },
+                        "body": [
+                          {
+                            "type": "form",
+                            "testid": "linear-issues-peek-form",
+                            "loadAction": {
+                              "action": "ajax",
+                              "args": {
+                                "url": "/r/Linear__issue?id=${id}",
+                                "method": "get"
+                              }
+                            },
+                            "body": [
+                              {
+                                "type": "container",
+                                "testid": "linear-issues-peek-body",
+                                "className": "flex flex-row gap-4 min-w-100",
+                                "body": [
+                                  {
+                                    "type": "container",
+                                    "className": "flex-1 min-w-0 flex flex-col gap-3",
+                                    "body": [
+                                      {
+                                        "type": "flex",
+                                        "direction": "row",
+                                        "gap": 8,
+                                        "className": "items-center",
+                                        "body": [
+                                          {
+                                            "type": "text",
+                                            "text": "${id}",
+                                            "className": "ln-row-key ln-mono",
+                                            "testid": "linear-issues-peek-key"
+                                          },
+                                          {
+                                            "type": "text",
+                                            "text": "${statusLabel}",
+                                            "className": "${statusPillClass}",
+                                            "testid": "linear-issues-peek-status"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "type": "text",
+                                        "text": "${title}",
+                                        "className": "ln-detail-title",
+                                        "testid": "linear-issues-peek-title"
+                                      },
+                                      {
+                                        "type": "container",
+                                        "className": "flex flex-col gap-2",
+                                        "testid": "linear-issues-peek-desc",
+                                        "body": [
+                                          {
+                                            "type": "loop",
+                                            "items": "${description}",
+                                            "body": [
+                                              {
+                                                "type": "text",
+                                                "text": "${$slot.item}",
+                                                "className": "ln-desc-block"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "type": "button",
+                                        "label": "复制链接",
+                                        "className": "ln-btn ln-btn-ghost h-7 px-3 text-xs self-start",
+                                        "testid": "linear-issues-peek-copy",
+                                        "onClick": {
+                                          "action": "ajax",
+                                          "args": {
+                                            "url": "/r/Linear__copyLink?id=${id}",
+                                            "method": "get"
+                                          },
+                                          "messages": {
+                                            "success": "链接已复制"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "container",
+                                    "className": "w-44 shrink-0 border-l pl-4 flex flex-col gap-3",
+                                    "testid": "linear-issues-peek-props",
+                                    "body": [
+                                      {
+                                        "type": "container",
+                                        "className": "flex items-center justify-between",
+                                        "body": [
+                                          {
+                                            "type": "text",
+                                            "text": "优先级",
+                                            "className": "ln-prop-label"
+                                          },
+                                          {
+                                            "type": "text",
+                                            "text": "${priorityLabel}",
+                                            "className": "${priorityPillClass}"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "type": "container",
+                                        "className": "flex items-center justify-between",
+                                        "body": [
+                                          {
+                                            "type": "text",
+                                            "text": "指派",
+                                            "className": "ln-prop-label"
+                                          },
+                                          {
+                                            "type": "flex",
+                                            "direction": "row",
+                                            "gap": 6,
+                                            "className": "items-center",
+                                            "body": [
+                                              {
+                                                "type": "container",
+                                                "className": "ln-avatar ln-avatar-sm",
+                                                "body": [
+                                                  {
+                                                    "type": "text",
+                                                    "text": "${assigneeInitials}"
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "type": "text",
+                                                "text": "${assignee?.name}",
+                                                "className": "ln-prop-value"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "type": "container",
+                                        "className": "flex items-center justify-between",
+                                        "body": [
+                                          {
+                                            "type": "text",
+                                            "text": "周期",
+                                            "className": "ln-prop-label"
+                                          },
+                                          {
+                                            "type": "text",
+                                            "text": "${cycle === '' ? '—' : cycle}",
+                                            "className": "ln-prop-value"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "type": "container",
+                                        "className": "flex items-center justify-between",
+                                        "body": [
+                                          {
+                                            "type": "text",
+                                            "text": "项目",
+                                            "className": "ln-prop-label"
+                                          },
+                                          {
+                                            "type": "text",
+                                            "text": "${project === '' ? '—' : project}",
+                                            "className": "ln-prop-value"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ],
+              "id": "linear-issues-table",
+              "rowSelection": {
+                "type": "checkbox",
+                "selectedRowKeys": []
+              },
+              "selectionOwnership": "scope",
+              "selectionStatePath": "issueSelection"
+            },
+            {
+              "type": "container",
+              "testid": "linear-issues-bulk-bar",
+              "className": "ln-bulk-bar",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "已选 ${issueSelection?.length ?? 0} 项",
+                  "className": "ln-bulk-count",
+                  "testid": "linear-issues-bulk-count"
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 6,
+                  "className": "items-center",
+                  "body": [
+                    {
+                      "type": "button",
+                      "label": "状态",
+                      "className": "ln-btn ln-btn-quiet h-7 px-3 text-xs",
+                      "testid": "linear-issues-bulk-status",
+                      "disabled": "${!issueSelection || issueSelection.length === 0}",
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "批量修改状态",
+                          "testid": "linear-issues-bulk-status-dialog",
+                          "className": "ln-dialog",
+                          "closeOnSubmit": true,
+                          "onSubmitSuccess": [
+                            {
+                              "action": "component:refresh",
+                              "componentId": "linear-issues-source"
+                            },
+                            {
+                              "action": "component:setSelection",
+                              "componentId": "linear-issues-table",
+                              "args": {
+                                "selectedRowKeys": []
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "form",
+                              "testid": "linear-issues-bulk-status-form",
+                              "submitScope": "surface",
+                              "submitAction": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/Linear__bulkUpdate",
+                                  "method": "post",
+                                  "includeScope": "*",
+                                  "data": {
+                                    "ids": "${issueSelection}"
+                                  }
+                                },
+                                "messages": {
+                                  "success": "已批量修改状态"
+                                }
+                              },
+                              "body": [
+                                {
+                                  "type": "select",
+                                  "name": "status",
+                                  "label": "目标状态",
+                                  "required": true,
+                                  "clearable": false,
+                                  "placeholder": "选择状态",
+                                  "testid": "linear-issues-bulk-status-select",
+                                  "options": [
+                                    {
+                                      "label": "待定",
+                                      "value": "backlog"
+                                    },
+                                    {
+                                      "label": "待办",
+                                      "value": "todo"
+                                    },
+                                    {
+                                      "label": "进行中",
+                                      "value": "in_progress"
+                                    },
+                                    {
+                                      "label": "已完成",
+                                      "value": "done"
+                                    },
+                                    {
+                                      "label": "已取消",
+                                      "value": "cancelled"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "应用",
+                                  "className": "ln-btn ln-btn-primary",
+                                  "testid": "linear-issues-bulk-status-apply",
+                                  "onClick": {
+                                    "action": "submitForm"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "label": "优先级",
+                      "className": "ln-btn ln-btn-quiet h-7 px-3 text-xs",
+                      "testid": "linear-issues-bulk-priority",
+                      "disabled": "${!issueSelection || issueSelection.length === 0}",
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "批量修改优先级",
+                          "testid": "linear-issues-bulk-priority-dialog",
+                          "className": "ln-dialog",
+                          "closeOnSubmit": true,
+                          "onSubmitSuccess": [
+                            {
+                              "action": "component:refresh",
+                              "componentId": "linear-issues-source"
+                            },
+                            {
+                              "action": "component:setSelection",
+                              "componentId": "linear-issues-table",
+                              "args": {
+                                "selectedRowKeys": []
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "form",
+                              "testid": "linear-issues-bulk-priority-form",
+                              "submitScope": "surface",
+                              "submitAction": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/Linear__bulkUpdate",
+                                  "method": "post",
+                                  "includeScope": "*",
+                                  "data": {
+                                    "ids": "${issueSelection}"
+                                  }
+                                },
+                                "messages": {
+                                  "success": "已批量修改优先级"
+                                }
+                              },
+                              "body": [
+                                {
+                                  "type": "select",
+                                  "name": "priority",
+                                  "label": "目标优先级",
+                                  "required": true,
+                                  "clearable": false,
+                                  "placeholder": "选择优先级",
+                                  "testid": "linear-issues-bulk-priority-select",
+                                  "options": [
+                                    {
+                                      "label": "紧急",
+                                      "value": "urgent"
+                                    },
+                                    {
+                                      "label": "高",
+                                      "value": "high"
+                                    },
+                                    {
+                                      "label": "中",
+                                      "value": "medium"
+                                    },
+                                    {
+                                      "label": "低",
+                                      "value": "low"
+                                    },
+                                    {
+                                      "label": "无优先级",
+                                      "value": "none"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "应用",
+                                  "className": "ln-btn ln-btn-primary",
+                                  "testid": "linear-issues-bulk-priority-apply",
+                                  "onClick": {
+                                    "action": "submitForm"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "label": "指派",
+                      "className": "ln-btn ln-btn-quiet h-7 px-3 text-xs",
+                      "testid": "linear-issues-bulk-assignee",
+                      "disabled": "${!issueSelection || issueSelection.length === 0}",
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "批量修改指派",
+                          "testid": "linear-issues-bulk-assignee-dialog",
+                          "className": "ln-dialog",
+                          "closeOnSubmit": true,
+                          "onSubmitSuccess": [
+                            {
+                              "action": "component:refresh",
+                              "componentId": "linear-issues-source"
+                            },
+                            {
+                              "action": "component:setSelection",
+                              "componentId": "linear-issues-table",
+                              "args": {
+                                "selectedRowKeys": []
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "form",
+                              "testid": "linear-issues-bulk-assignee-form",
+                              "submitScope": "surface",
+                              "submitAction": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/Linear__bulkUpdate",
+                                  "method": "post",
+                                  "includeScope": "*",
+                                  "data": {
+                                    "ids": "${issueSelection}"
+                                  }
+                                },
+                                "messages": {
+                                  "success": "已批量修改指派"
+                                }
+                              },
+                              "body": [
+                                {
+                                  "type": "select",
+                                  "name": "assignee",
+                                  "label": "目标指派",
+                                  "required": true,
+                                  "clearable": false,
+                                  "placeholder": "选择指派",
+                                  "testid": "linear-issues-bulk-assignee-select",
+                                  "options": [
+                                    {
+                                      "label": "林晚晴",
+                                      "value": "林晚晴"
+                                    },
+                                    {
+                                      "label": "沈亦舟",
+                                      "value": "沈亦舟"
+                                    },
+                                    {
+                                      "label": "顾北辰",
+                                      "value": "顾北辰"
+                                    },
+                                    {
+                                      "label": "苏婉清",
+                                      "value": "苏婉清"
+                                    },
+                                    {
+                                      "label": "周砚秋",
+                                      "value": "周砚秋"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "应用",
+                                  "className": "ln-btn ln-btn-primary",
+                                  "testid": "linear-issues-bulk-assignee-apply",
+                                  "onClick": {
+                                    "action": "submitForm"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "label": "标签",
+                      "className": "ln-btn ln-btn-quiet h-7 px-3 text-xs",
+                      "testid": "linear-issues-bulk-label",
+                      "disabled": "${!issueSelection || issueSelection.length === 0}",
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "批量设置标签",
+                          "testid": "linear-issues-bulk-labels-dialog",
+                          "className": "ln-dialog",
+                          "closeOnSubmit": true,
+                          "onSubmitSuccess": [
+                            {
+                              "action": "component:refresh",
+                              "componentId": "linear-issues-source"
+                            },
+                            {
+                              "action": "component:setSelection",
+                              "componentId": "linear-issues-table",
+                              "args": {
+                                "selectedRowKeys": []
+                              }
+                            }
+                          ],
+                          "body": [
+                            {
+                              "type": "form",
+                              "testid": "linear-issues-bulk-labels-form",
+                              "submitScope": "surface",
+                              "submitAction": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/Linear__bulkUpdate",
+                                  "method": "post",
+                                  "includeScope": "*",
+                                  "data": {
+                                    "ids": "${issueSelection}"
+                                  }
+                                },
+                                "messages": {
+                                  "success": "已批量修改标签"
+                                }
+                              },
+                              "body": [
+                                {
+                                  "type": "select",
+                                  "name": "labels",
+                                  "label": "目标标签",
+                                  "required": true,
+                                  "clearable": false,
+                                  "placeholder": "选择标签",
+                                  "testid": "linear-issues-bulk-labels-select",
+                                  "options": [
+                                    {
+                                      "label": "前端",
+                                      "value": "前端"
+                                    },
+                                    {
+                                      "label": "后端",
+                                      "value": "后端"
+                                    },
+                                    {
+                                      "label": "设计",
+                                      "value": "设计"
+                                    },
+                                    {
+                                      "label": "性能",
+                                      "value": "性能"
+                                    },
+                                    {
+                                      "label": "缺陷",
+                                      "value": "缺陷"
+                                    },
+                                    {
+                                      "label": "文档",
+                                      "value": "文档"
+                                    }
+                                  ],
+                                  "multiple": true
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "应用",
+                                  "className": "ln-btn ln-btn-primary",
+                                  "testid": "linear-issues-bulk-labels-apply",
+                                  "onClick": {
+                                    "action": "submitForm"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "label": "取消选择",
+                      "className": "ln-btn ln-btn-ghost h-7 px-3 text-xs",
+                      "testid": "linear-issues-bulk-clear",
+                      "onClick": {
+                        "action": "component:setSelection",
+                        "componentId": "linear-issues-table",
+                        "args": {
+                          "selectedRowKeys": []
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

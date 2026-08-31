@@ -161,7 +161,7 @@ export function decorateDebuggerEnv(input: {
       input.store.append({
         kind: 'api:end',
         group: 'api',
-        level: response.ok ? 'success' : 'error',
+        level: response.status === 0 ? 'success' : 'error',
         source: 'fetcher',
         summary: `${summarizeApi(api)} -> ${response.status}`,
         detail:

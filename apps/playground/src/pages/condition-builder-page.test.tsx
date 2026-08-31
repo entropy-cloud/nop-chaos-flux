@@ -23,7 +23,7 @@ describe('ConditionBuilderPage schema', () => {
 
   const env = {
     async fetcher() {
-      return { ok: true, status: 200, data: null };
+      return { status: 0, data: null };
     },
     notify() {},
   };

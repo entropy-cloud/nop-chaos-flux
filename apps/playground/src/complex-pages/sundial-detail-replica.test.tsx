@@ -11,7 +11,7 @@ afterEach(() => cleanup());
  * docs/analysis/sundial-ui-reproduction-analysis.md and plan 460 B-series).
  */
 describe('Sundial replica — detail inspector', () => {
-  const { env } = createShowcaseEnv();
+  const { env, db } = createShowcaseEnv();
 
   it('renders status row, field rows, subtasks and footer buttons', async () => {
     render(<SchemaPage pageId="sundial-detail" env={env} />);
@@ -174,15 +174,17 @@ describe('Sundial replica — detail inspector', () => {
   it('wires button/icon actions with toast feedback (plan 457 C4/C5/C13/C15/C6)', async () => {
     render(<SchemaPage pageId="sundial-detail" env={env} />);
 
-    // C15: status row close (icon-only button)
+    // C15 + plan 460 P10: status row close navigates back to workbench
     fireEvent.click(screen.getByTestId('sundial-detail-close'));
-    await screen.findByText('关闭详情');
+    await waitFor(() => {
+      expect(window.location.hash).toBe('#/complex-pages/sundial-workbench');
+    });
 
     // C4: clear date
     fireEvent.click(screen.getByTestId('sundial-detail-clear-date'));
     await screen.findByText('日期已清除');
 
-    // C5 + plan 460 P9: move-list opens the same list picker dialog; trash sets taskTrashed
+    // C5 + plan 460 P9: move-list posts to the mock backend; trash posts + banner
     fireEvent.click(screen.getByTestId('sundial-detail-move-list'));
     await waitFor(() => {
       expect(screen.getByTestId('sundial-list-cancel')).toBeTruthy();
@@ -194,13 +196,17 @@ describe('Sundial replica — detail inspector', () => {
     );
     fireEvent.click(familyOpt!);
     fireEvent.click(screen.getByTestId('sundial-list-submit'));
+    await waitFor(() => {
+      expect(db.sundialTasks.find((t) => t.id === 1)?.list).toBe('family');
+    });
     fireEvent.click(screen.getByTestId('sundial-detail-trash'));
     await screen.findByText('已移到垃圾箱');
     await waitFor(() => {
       expect(screen.getByTestId('sundial-trashed-banner')).toBeTruthy();
     });
+    expect(db.sundialTasks.find((t) => t.id === 1)?.trashed).toBe(true);
 
-    // C6 + plan 460 P8: subtask chevron opens the subtask dialog; delete hides the row
+    // C6 + plan 460 P8: subtask chevron opens the subtask dialog; delete hides the row + backend
     fireEvent.click(screen.getByTestId('sundial-subtask-open-1'));
     await waitFor(() => {
       expect(screen.getByTestId('sundial-subtask-dialog')).toBeTruthy();
@@ -212,6 +218,23 @@ describe('Sundial replica — detail inspector', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('sundial-detail-subtask-1')).toBeNull();
     });
+    expect(db.sundialSubtasks.find((s) => s.id === 1)).toBeUndefined();
+  });
+
+  it('subtask dialog delete writes the mock backend and closes (plan 460 P8)', async () => {
+    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    fireEvent.click(screen.getByTestId('sundial-subtask-open-2'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-subtask-dialog')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId('sundial-subtask-dialog-delete'));
+    await screen.findByText('子任务已删除');
+    await waitFor(() => {
+      expect(screen.queryByTestId('sundial-subtask-dialog')).toBeNull();
+    });
+    // Row hiding stays driven by the row-level trash buttons (page scope);
+    // a declarative dialog body cannot write page-scope vars (G5-class gap).
+    expect(db.sundialSubtasks.find((s) => s.id === 2)).toBeUndefined();
   });
 
   it('clears the datetime via the picker clear button (plan 457 C13 + plan 460 B6)', async () => {

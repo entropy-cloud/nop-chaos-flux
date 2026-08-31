@@ -134,7 +134,13 @@ test.describe('AI coverage — conversations lifecycle', () => {
     await expect(convs.locator('[data-id="cc3"]')).toHaveAttribute('data-active', '');
     await expect(activeItem).not.toHaveAttribute('data-active');
 
+    // [G5-视角10-01] delete arms a destructive confirmation; only the explicit
+    // confirm dispatches the conversation-delete event.
     await convs.locator('[data-id="cc3"] [data-slot="ai-conversations-delete"]').click();
+    const confirmDialog = page.locator('[data-slot="ai-conversations-delete-confirm"]');
+    await expect(confirmDialog).toBeVisible({ timeout: 5_000 });
+    await expect(byTestid(page, 'cov-probe-conv-delete')).not.toContainText('CONVDELETE:fired');
+    await confirmDialog.locator('[data-slot="alert-dialog-action"]').click();
     await expect(byTestid(page, 'cov-probe-conv-delete')).toContainText('CONVDELETE:fired', { timeout: 5_000 });
 
     await convs.locator('[data-slot="ai-conversations-create"]').click();

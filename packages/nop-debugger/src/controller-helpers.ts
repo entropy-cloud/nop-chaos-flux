@@ -166,7 +166,6 @@ export function buildNetworkSummary(input: {
     method: String(input.api.method ?? 'get').toUpperCase(),
     url: input.api.url,
     status: input.response?.status,
-    ok: input.response?.ok,
     aborted: input.aborted,
     requestDataKeys: requestShape.keys,
     responseDataKeys: responseShape.keys,

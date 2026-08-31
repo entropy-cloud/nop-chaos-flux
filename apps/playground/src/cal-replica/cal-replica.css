@@ -1,0 +1,481 @@
+/*
+ * Cal.com replica styles (LIGHT MODE ONLY).
+ *
+ * Replicates the Cal.com public booking flow (Booker: duration entry →
+ * month/slot picker → confirm form → success — see
+ * docs/analysis/ui-review/P1-reference-apps/cal-booking.md §2/§3/§5/§6)
+ * via CSS tokens + marker classes on the playground layer only; no renderer
+ * internals are modified.
+ *
+ * Token architecture (plan 2026-08-29-1413-2 §差异声明): the official embed
+ * variable architecture is preserved — 8 semantic groups (bg / text / status
+ * colors / border) plus the radius+spacing dual basis; official docs confirm
+ * the base radius default is 10px, so no radius adjustment is applied.
+ * DEVIATION: the brand-black semantic is renamed --cal-brand* → --cal-action*
+ * (#111827 family) per the analysis §6.2 rename rule; Cal Sans is replaced by
+ * Inter/system stack (visible glyph difference); light-only (no dark tokens).
+ * All copy and icons are original replacements (lucide approximations); no
+ * Cal.com brand assets are referenced.
+ *
+ * Consumed by page schemas complex-pages/page-schemas/cal-*.json through the
+ * `.cal-root` page scope and the `.cal-dialog` dialog portal scope;
+ * layout/spacing in schemas uses Tailwind utilities (dual-track rule).
+ */
+
+/* ── 1. Design tokens (light only) ──────────────────────────────────────── */
+
+/* Declared on .cal-root AND .cal-dialog because dialogs render through a
+   portal outside the .cal-root subtree (sundial-replica.css precedent). */
+.cal-root,
+.cal-dialog {
+  /* backgrounds */
+  --cal-bg: #ffffff;
+  --cal-bg-emphasis: #e5e7eb;
+  --cal-bg-subtle: #f3f4f6;
+  --cal-bg-muted: #f9fafb;
+  --cal-bg-inverted: #111827;
+  --cal-bg-attention: #fff3e0;
+
+  /* text */
+  --cal-text-emphasis: #111827;
+  --cal-text: #374151;
+  --cal-text-subtle: #6b7280;
+  --cal-text-muted: #9ca3af;
+  --cal-text-inverted: #ffffff;
+
+  /* action surface (DEVIATION: renamed from --cal-brand* per §6.2) */
+  --cal-action: #111827;
+  --cal-action-hover: #374151;
+  --cal-action-text: #ffffff;
+
+  /* borders */
+  --cal-border: #e5e7eb;
+  --cal-border-subtle: #f3f4f6;
+  --cal-border-emphasis: #111827;
+  --cal-border-error: #fca5a5;
+
+  /* status colors */
+  --cal-text-error: #dc2626;
+  --cal-text-success: #059669;
+  --cal-text-attention: #d97706;
+  --cal-text-info: #2563eb;
+
+  /* dual basis — radius/spacing (official docs: default radius 10px) */
+  --cal-radius: 10px;
+  --cal-radius-sm: 6px;
+  --cal-radius-md: 8px;
+  --cal-radius-lg: 14px;
+  --cal-radius-xl: 18px;
+  --cal-radius-full: 9999px;
+  --cal-spacing: 8px;
+}
+
+.cal-root {
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cal-text);
+  background: var(--cal-bg);
+}
+
+.cal-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 2. Event entry header (avatar + title + meta rows) ─────────────────── */
+
+.cal-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--cal-radius-full);
+  background: var(--cal-bg-inverted);
+  color: var(--cal-text-inverted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cal-username-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  height: 20px;
+  border-radius: var(--cal-radius-sm);
+  background: var(--cal-bg-subtle);
+  color: var(--cal-text-subtle);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.cal-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--cal-text-emphasis);
+}
+
+.cal-meta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cal-text-subtle);
+  font-size: 14px;
+}
+
+.cal-desc {
+  color: var(--cal-text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── 3. Duration tabs (segmented picker on top of the two-column view) ──── */
+
+/* The tabs renderer supplies trigger + panel slots; the replica only shapes
+   the segmented look and hides the empty panel (booker has no tab panel). */
+.cal-duration-tabs [data-slot='tabs-list'] {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid var(--cal-border);
+  border-radius: var(--cal-radius);
+  background: var(--cal-bg);
+}
+
+.cal-duration-tabs [data-slot='tabs-trigger'] {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--cal-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cal-text-subtle);
+}
+
+.cal-duration-tabs [data-slot='tabs-trigger'][data-active='true'] {
+  background: var(--cal-action);
+  color: var(--cal-action-text);
+}
+
+.cal-duration-tabs [data-slot='tabs-trigger']:hover:not([data-active='true']) {
+  background: var(--cal-bg-subtle);
+  color: var(--cal-text);
+}
+
+.cal-duration-tabs [data-slot='tabs-content'] {
+  display: none;
+}
+
+/* ── 4. Slot buttons (option-row three states: outlined → hover → selected) ── */
+
+.cal-slot-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--cal-border);
+  border-radius: var(--cal-radius);
+  background: var(--cal-bg);
+  color: var(--cal-action);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.cal-slot-btn:hover:not(:disabled) {
+  background: var(--cal-bg-subtle);
+  border-color: var(--cal-border);
+}
+
+.cal-slot-btn-selected,
+.cal-slot-btn[data-selected='true'] {
+  background: var(--cal-action);
+  border-color: var(--cal-action);
+  color: var(--cal-action-text);
+}
+
+.cal-slot-btn-selected:hover,
+.cal-slot-btn[data-selected='true']:hover {
+  background: var(--cal-action-hover);
+}
+
+.cal-slot-btn:disabled {
+  background: var(--cal-bg-muted);
+  border-color: var(--cal-border-subtle);
+  color: var(--cal-text-muted);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* ── 5. Badges (attention / muted / pending / success / info) ───────────── */
+
+.cal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 1px 8px;
+  border-radius: var(--cal-radius-full);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.cal-badge-attention {
+  color: var(--cal-text-attention);
+  background: var(--cal-bg-attention);
+}
+
+.cal-badge-muted {
+  color: var(--cal-text-muted);
+  background: var(--cal-bg-muted);
+}
+
+.cal-badge-pending {
+  color: var(--cal-text-attention);
+  background: var(--cal-bg-attention);
+  border: 1px solid var(--cal-text-attention);
+}
+
+.cal-badge-success {
+  color: var(--cal-text-success);
+  background: color-mix(in srgb, var(--cal-text-success) 12%, var(--cal-bg));
+}
+
+.cal-badge-info {
+  color: var(--cal-text-info);
+  background: color-mix(in srgb, var(--cal-text-info) 10%, var(--cal-bg));
+}
+
+/* ── 6. Slot list column (group labels + grid) ──────────────────────────── */
+
+.cal-slot-group-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cal-text-subtle);
+}
+
+.cal-slot-empty {
+  color: var(--cal-text-subtle);
+  font-size: 14px;
+}
+
+/* ── 7. Timezone bar (left column footer: select + clock-format switch) ─── */
+
+.cal-timezone-bar {
+  border-top: 1px solid var(--cal-border-subtle);
+  padding-top: 12px;
+  color: var(--cal-text-subtle);
+  font-size: 12px;
+}
+
+.cal-timezone-label {
+  font-size: 12px;
+  color: var(--cal-text-subtle);
+}
+
+/* ── 8. Skeleton (loading pulse on bg-muted) ────────────────────────────── */
+
+.cal-skeleton {
+  border-radius: var(--cal-radius-sm);
+  background: var(--cal-bg-muted);
+  animation: cal-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cal-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ── 9. Buttons (Confirm black + link) ──────────────────────────────────── */
+
+.cal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--cal-radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.cal-btn-primary {
+  background: var(--cal-action);
+  color: var(--cal-action-text);
+}
+
+.cal-btn-primary:hover {
+  background: var(--cal-action-hover);
+}
+
+.cal-btn-link {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  color: var(--cal-text-subtle);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cal-btn-link:hover {
+  color: var(--cal-text-emphasis);
+}
+
+/* Secondary dialog action (cancel-flow keep button). */
+.cal-btn-outline {
+  background: var(--cal-bg);
+  color: var(--cal-text);
+  border: 1px solid var(--cal-border);
+}
+
+.cal-btn-outline:hover {
+  border-color: var(--cal-text-subtle);
+}
+
+/* ── 10. Form field error form (invalid ring + error text) ──────────────── */
+
+.cal-field-invalid {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--cal-border-error);
+  border-radius: var(--cal-radius);
+  color: var(--cal-text-muted);
+  font-size: 14px;
+}
+
+.cal-field-error {
+  color: var(--cal-text-error);
+  font-size: 13px;
+}
+
+.cal-required-star {
+  color: var(--cal-text-error);
+}
+
+/* ── 11. Summary card (confirm/success left column) ─────────────────────── */
+
+.cal-summary-card {
+  border: 1px solid var(--cal-border);
+  border-radius: var(--cal-radius-lg);
+  background: var(--cal-bg);
+  padding: 16px;
+}
+
+.cal-summary-label {
+  color: var(--cal-text-subtle);
+  font-size: 12px;
+}
+
+.cal-summary-value {
+  color: var(--cal-text-emphasis);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cal-summary-host {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--cal-border-subtle);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+/* ── 12. Reschedule notice bar ──────────────────────────────────────────── */
+
+.cal-reschedule-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--cal-text-info) 25%, var(--cal-bg));
+  border-radius: var(--cal-radius);
+  background: color-mix(in srgb, var(--cal-text-info) 6%, var(--cal-bg));
+  color: var(--cal-text-info);
+  font-size: 13px;
+}
+
+/* ── 13. Guest row (static add/delete form) ─────────────────────────────── */
+
+.cal-guest-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-guest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--cal-border);
+  border-radius: var(--cal-radius-full);
+  background: var(--cal-bg-subtle);
+  color: var(--cal-text);
+  font-size: 13px;
+}
+
+/* ── 14. Success state ──────────────────────────────────────────────────── */
+
+.cal-check-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--cal-radius-full);
+  background: color-mix(in srgb, var(--cal-text-success) 12%, var(--cal-bg));
+  color: var(--cal-text-success);
+}
+
+.cal-cal-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--cal-border);
+  border-radius: var(--cal-radius);
+  background: var(--cal-bg);
+  color: var(--cal-action);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.cal-cal-link-row:hover {
+  background: var(--cal-bg-subtle);
+}

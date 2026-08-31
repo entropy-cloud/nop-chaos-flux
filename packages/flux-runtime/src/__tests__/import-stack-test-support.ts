@@ -75,7 +75,7 @@ export function createMockRuntime(): RendererRuntime {
 
 export function createMockEnv(): RendererEnv {
   return {
-    fetcher: async <T>() => ({ ok: true as const, status: 200, data: null as T }),
+    fetcher: async <T>() => ({ status: 0, data: null as T }),
     notify: () => {},
   };
 }

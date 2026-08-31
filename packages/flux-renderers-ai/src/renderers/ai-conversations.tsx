@@ -1,6 +1,18 @@
 import { useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { Button, Input, cn } from '@nop-chaos/ui';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+  Input,
+  cn,
+} from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { ActionContext, FluxActionEvent, ScopeRef } from '@nop-chaos/flux-core';
 import type { AiConversationInfo } from '../engine/types.js';
@@ -25,6 +37,10 @@ export function AiConversationsRenderer(
   const disabled = props.meta.disabled === true;
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState('');
+  // [G5-视角10-01] conversation delete is an irreversible storage-level delete —
+  // the click only arms a destructive confirmation; the event dispatches after
+  // explicit confirmation (session-delete-confirm).
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // C8.1 P1 (bug 83 family convention): pass `{ event, evaluationBindings,
   // scope }` as the second dispatch arg so action-args templates can read the
@@ -142,10 +158,7 @@ export function AiConversationsRenderer(
                     data-slot="ai-conversations-delete"
                     aria-label={t('flux.ai.deleteConversation')}
                     disabled={disabled}
-                    onClick={() => {
-                      const payload = { type: 'ai:conversation-delete', id: conv.id };
-                      void props.events.onItemDelete?.(payload, dispatchCtx(payload));
-                    }}
+                    onClick={() => setPendingDeleteId(conv.id)}
                   >
                     ×
                   </Button>
@@ -155,6 +168,38 @@ export function AiConversationsRenderer(
           );
         })}
       </ul>
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPendingDeleteId(null);
+        }}
+      >
+        <AlertDialogContent data-slot="ai-conversations-delete-confirm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('flux.ai.deleteConversationConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('flux.ai.deleteConversationConfirmBody')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingDeleteId(null)}>
+              {t('flux.common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={disabled}
+              onClick={() => {
+                if (disabled || pendingDeleteId === null) return;
+                const payload = { type: 'ai:conversation-delete', id: pendingDeleteId };
+                void props.events.onItemDelete?.(payload, dispatchCtx(payload));
+                setPendingDeleteId(null);
+              }}
+            >
+              {t('flux.ai.deleteConversationConfirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }

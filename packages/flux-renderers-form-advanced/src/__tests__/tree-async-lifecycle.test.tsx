@@ -16,7 +16,7 @@ function searchEnv(respond: (q: string) => unknown[]): RendererEnv {
     fetcher: async function <T>(_api: unknown, ctx: ApiRequestContext) {
       const scopeData = ctx.scope.readVisible() as { searchQuery?: string };
       const query = String(scopeData?.searchQuery ?? '');
-      return { ok: true, status: 200, data: respond(query) as T };
+      return { status: 0, data: respond(query) as T };
     },
     notify: () => undefined,
   };
@@ -30,7 +30,7 @@ function lazyEnv(
     fetcher: async function <T>(_api: unknown, ctx: ApiRequestContext) {
       const scopeData = ctx.scope.readVisible() as { expandedNodeValue?: unknown };
       calls.push({ expandedNodeValue: scopeData?.expandedNodeValue, signal: ctx.signal });
-      return { ok: true, status: 200, data: respond(scopeData?.expandedNodeValue) as T };
+      return { status: 0, data: respond(scopeData?.expandedNodeValue) as T };
     },
     notify: () => undefined,
   };

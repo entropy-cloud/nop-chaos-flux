@@ -4,157 +4,74 @@ import type {
   RendererComponentProps,
   TabsStatusSummary,
 } from '@nop-chaos/flux-core';
+import { getIn } from '@nop-chaos/flux-core';
 import {
   resolveRendererSlotContent,
   unwrapBooleanLiteral,
   useCurrentComponentRegistry,
+  useRenderScope,
   useSchemaProps,
+  useScopeSelector,
 } from '@nop-chaos/flux-react';
 import {
-  Badge,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   cn,
-  resolveLucideIcon,
   useIsMobile,
 } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import type { TabsItemSchema, TabsSchema } from './schemas.js';
 import { useOwnedAxisValue } from './interaction-owner.js';
 import { useStatusPathPublication } from './status-hooks.js';
 import { asReactNode } from './utils.js';
-
-const EMPTY_ITEMS: TabsItemSchema[] = [];
-
-const TABS_SWIPE_THRESHOLD = 50;
-const TABS_SWIPE_DIRECTION_THRESHOLD = 10;
-
-function isTabDisabled(input: unknown): boolean {
-  return unwrapBooleanLiteral(input);
-}
-
-function getItemValue(item: TabsItemSchema, index: number): string {
-  const candidate = item.value ?? item.key;
-  return String(candidate ?? index);
-}
-
-// design.md §10 candidate-fix: when the active value vanishes from `items`,
-// correct it instead of leaving a stale value (which would render no panel).
-// Rule: keep → nearest-right (item now at the removed index) → nearest-left
-// (previous item) → empty. Returns `undefined` when no correction is needed
-// (active value still present, or items empty with no candidate). This is the
-// trigger+idempotency guard: once corrected, the value matches `items` and the
-// effect no longer writes back.
-function resolveCandidateValue(
-  items: TabsItemSchema[],
-  currentValue: string,
-  prevItems: TabsItemSchema[],
-): string | undefined {
-  if (items.some((item, index) => getItemValue(item, index) === currentValue)) {
-    return undefined;
-  }
-
-  const prevIndex = prevItems.findIndex(
-    (item, index) => getItemValue(item, index) === currentValue,
-  );
-
-  if (prevIndex >= 0) {
-    if (prevIndex < items.length) {
-      return getItemValue(items[prevIndex]!, prevIndex);
-    }
-    if (items.length > 0) {
-      return getItemValue(items[items.length - 1]!, items.length - 1);
-    }
-    return undefined;
-  }
-
-  if (items.length > 0) {
-    return getItemValue(items[0]!, 0);
-  }
-
-  return undefined;
-}
-
-function resolveTabsVariant(tabsMode?: string): 'default' | 'line' {
-  if (tabsMode === 'line' || tabsMode === 'simple' || tabsMode === 'strong') return 'line';
-  return 'default';
-}
-
-function resolveTabsOrientation(
-  tabsMode?: string,
-  fallback?: 'horizontal' | 'vertical',
-): 'horizontal' | 'vertical' {
-  if (tabsMode === 'vertical' || tabsMode === 'sidebar') return 'vertical';
-  return fallback ?? 'horizontal';
-}
-
-function createTabRegionOptions(item: TabsItemSchema, index: number) {
-  const value = getItemValue(item, index);
-  return {
-    bindings: {
-      item,
-      index,
-      key: value,
-    },
-    pathSuffix: `items.${index}`,
-    scopeKey: `tabs:item:${value}`,
-  };
-}
-
-function createTabsChangePayload(items: TabsItemSchema[], nextValue: string) {
-  const nextIndex = items.findIndex((item, index) => getItemValue(item, index) === nextValue);
-  return {
-    type: 'tabs:change',
-    value: nextValue,
-    activeValue: nextValue,
-    index: nextIndex,
-    activeIndex: nextIndex,
-    item: nextIndex >= 0 ? items[nextIndex] : undefined,
-  };
-}
-
-function resolveTabBadge(badge: TabsItemSchema['badge']): React.ReactNode {
-  if (badge === undefined || badge === null) {
-    return null;
-  }
-  return <Badge variant="default">{String(badge)}</Badge>;
-}
-
-function resolveTabIcon(icon: TabsItemSchema['icon']): React.ReactNode {
-  if (typeof icon !== 'string' || icon.length === 0) {
-    return null;
-  }
-  const IconComp = resolveLucideIcon(icon) as React.ComponentType<Record<string, unknown>>;
-  return <IconComp size={14} strokeWidth={1.8} aria-hidden="true" focusable="false" />;
-}
-
-function resolveTabKeepMounted(input: {
-  mountOnEnter: boolean;
-  unmountOnExit: boolean;
-  isActive: boolean;
-  activatedOnce: boolean;
-}): boolean {
-  const { mountOnEnter, unmountOnExit, isActive, activatedOnce } = input;
-  if (mountOnEnter) {
-    if (!activatedOnce) {
-      return false;
-    }
-    if (unmountOnExit && !isActive) {
-      return false;
-    }
-    return true;
-  }
-  if (unmountOnExit && !isActive) {
-    return false;
-  }
-  return true;
-}
+import {
+  EMPTY_ITEMS,
+  TABS_SWIPE_DIRECTION_THRESHOLD,
+  TABS_SWIPE_THRESHOLD,
+  createTabRegionOptions,
+  createTabsChangePayload,
+  getItemValue,
+  isTabDisabled,
+  resolveCandidateValue,
+  resolveTabBadge,
+  resolveTabIcon,
+  resolveTabKeepMounted,
+  resolveTabsOrientation,
+  resolveTabsVariant,
+} from './tabs-utils.js';
+import {
+  createTabsViewCapabilities,
+  createTabsViewOps,
+  type TabsViewOps,
+} from './tabs-view-management.js';
 
 export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const schemaProps = useSchemaProps(props);
-  const items = Array.isArray(schemaProps.items) ? schemaProps.items : EMPTY_ITEMS;
+  const renderScope = useRenderScope();
+  const rawItems = Array.isArray(schemaProps.items) ? schemaProps.items : EMPTY_ITEMS;
+  const itemsOwnership = schemaProps.itemsOwnership ?? 'local';
+  const itemsStatePath = schemaProps.itemsStatePath;
+  const scopeItemsActive = itemsOwnership === 'scope' && typeof itemsStatePath === 'string' && itemsStatePath.length > 0;
+  const isControlledItems = itemsOwnership === 'controlled';
+
+  const scopeItems = useScopeSelector<TabsItemSchema[] | undefined, TabsItemSchema[] | undefined>(
+    scopeItemsActive && itemsStatePath
+      ? (scopeData) => getIn(scopeData, itemsStatePath) as TabsItemSchema[] | undefined
+      : () => undefined,
+    Object.is,
+    {
+      enabled: scopeItemsActive,
+      fallback: undefined,
+      paths: scopeItemsActive && itemsStatePath ? [itemsStatePath] : undefined,
+    },
+  );
+
+  const [managedItems, setManagedItems] = useState<TabsItemSchema[] | null>(null);
+  const baseItems = scopeItemsActive && scopeItems ? scopeItems : rawItems;
+  const items = managedItems ?? baseItems;
   const toolbarContent = resolveRendererSlotContent(props, 'toolbar');
   const firstValue = getItemValue(items[0] ?? {}, 0);
   const ownedAxis = useOwnedAxisValue<string>({
@@ -192,6 +109,32 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const orientation = resolveTabsOrientation(tabsMode, schemaProps.orientation);
   const variant = resolveTabsVariant(tabsMode);
 
+  const tabsClosable = unwrapBooleanLiteral(schemaProps.closable);
+  const tabsAddable = unwrapBooleanLiteral(schemaProps.addable);
+  const tabsDraggable = unwrapBooleanLiteral(schemaProps.draggable);
+
+  const viewOps = createTabsViewOps({
+    items,
+    isControlledItems,
+    scopeItemsActive,
+    itemsStatePath,
+    renderScope,
+    seedManagedCollection: setManagedItems,
+    readBaseCollection: () => baseItems,
+    getActiveValue: () => ownedAxis.value,
+    setActiveValue: (value: string) => ownedAxis.setValue(value),
+    events: props.events,
+    eventScope: props.node.scope,
+    warnKey: props.id,
+  });
+
+  const viewOpsRef = useRef<TabsViewOps | null>(null);
+  useEffect(() => {
+    viewOpsRef.current = viewOps;
+  });
+
+  const dragValueRef = useRef<string | null>(null);
+
   const activeIndex = Math.max(
     0,
     items.findIndex((item, index) => getItemValue(item, index) === ownedAxis.value),
@@ -211,28 +154,21 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     summary,
   );
 
-  const tabsHandle = useMemo<ComponentHandle>(
-    () => ({
+  useEffect(() => {
+    if (!componentRegistry) {
+      return;
+    }
+
+    const tabsHandle: ComponentHandle = {
       id: props.id,
       type: 'tabs',
       capabilities: {
-        invoke(method, payload) {
-          switch (method) {
-            case 'setValue':
-              ownedAxis.setValue(String(payload?.value ?? firstValue));
-              return { ok: true, data: payload?.value };
-            case 'getValue':
-              return { ok: true, data: ownedAxis.value };
-            default:
-              return { ok: false, error: new Error(`Unsupported tabs method: ${method}`) };
-          }
-        },
-        hasMethod(method) {
-          return method === 'setValue' || method === 'getValue';
-        },
-        listMethods() {
-          return ['setValue', 'getValue'];
-        },
+        ...createTabsViewCapabilities({
+          getOps: () => viewOpsRef.current,
+          getActiveValue: () => ownedAxis.value,
+          setActiveValue: (value: string) => ownedAxis.setValue(value),
+          fallbackValue: firstValue,
+        }),
         getDebugData() {
           return {
             activeValue: summary.activeValue,
@@ -241,19 +177,12 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           };
         },
       },
-    }),
-    [firstValue, ownedAxis, props.id, summary],
-  );
-
-  useEffect(() => {
-    if (!componentRegistry) {
-      return;
-    }
+    };
 
     return componentRegistry.register(tabsHandle, {
       cid: props.meta.cid,
     });
-  }, [componentRegistry, props.meta.cid, tabsHandle]);
+  }, [componentRegistry, firstValue, ownedAxis, props.id, props.meta.cid, summary]);
 
   useEffect(() => {
     if (!isMobile || !tabsListRef.current) {
@@ -336,8 +265,46 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
           asReactNode(titleRegion?.render(regionOptions)) ?? item.title ?? item.label ?? value;
         const badgeContent = resolveTabBadge(item.badge);
         const iconComp = resolveTabIcon(item.icon);
+        const itemClosable =
+          item.closable == null ? tabsClosable : unwrapBooleanLiteral(item.closable);
+        const isLastItem = index === items.length - 1;
+        const showClose = itemClosable && !isLastItem;
         return (
-          <TabsTrigger key={value} value={value} disabled={isTabDisabled(item.disabled)}>
+          <TabsTrigger
+            key={value}
+            value={value}
+            disabled={isTabDisabled(item.disabled)}
+            data-tab-value={value}
+            draggable={tabsDraggable || undefined}
+            onDragStart={(event) => {
+              if (!tabsDraggable) {
+                return;
+              }
+              dragValueRef.current = value;
+              event.dataTransfer?.setData('text/plain', value);
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+              }
+            }}
+            onDragOver={(event) => {
+              if (!tabsDraggable || dragValueRef.current == null) {
+                return;
+              }
+              event.preventDefault();
+            }}
+            onDrop={(event) => {
+              if (!tabsDraggable) {
+                return;
+              }
+              event.preventDefault();
+              const fromValue = dragValueRef.current;
+              dragValueRef.current = null;
+              if (fromValue == null || fromValue === value) {
+                return;
+              }
+              viewOps.runMoveTab(fromValue, index);
+            }}
+          >
             {iconComp ? (
               <span data-slot="tab-icon" className="inline-flex shrink-0">
                 {iconComp}
@@ -349,9 +316,46 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
                 {badgeContent}
               </span>
             ) : null}
+            {showClose ? (
+              <span
+                data-slot="tabs-trigger-close"
+                aria-hidden="true"
+                title={String(item.title ?? item.label ?? value)}
+                className="ml-0.5 inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-sm text-[11px] leading-none text-muted-foreground/70 hover:bg-muted hover:text-foreground"
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  viewOps.runRemoveTab(value);
+                }}
+              >
+                ×
+              </span>
+            ) : null}
           </TabsTrigger>
         );
       })}
+      {tabsAddable ? (
+        <span
+          data-slot="tabs-trigger-add"
+          role="button"
+          tabIndex={0}
+          aria-label={t('flux.tabs.newTab')}
+          className="ml-1 inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-base leading-none text-muted-foreground hover:bg-muted hover:text-foreground"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              viewOps.runAddTab({ title: t('flux.tabs.newTab') });
+            }
+          }}
+          onClick={(event) => {
+            event.stopPropagation();
+            viewOps.runAddTab({ title: t('flux.tabs.newTab') });
+          }}
+        >
+          +
+        </span>
+      ) : null}
     </TabsList>
   );
 

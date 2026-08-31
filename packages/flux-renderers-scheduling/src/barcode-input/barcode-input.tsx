@@ -58,13 +58,19 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const autoSubmit = resolved.autoSubmit === true;
   const scanOnFocus = resolved.scanOnFocus === true;
 
-  const showScanButton = scanButton && (cameraAvailable !== false);
+  // [G4-R4-视角3-01] every secondary write channel (scan click / scan-on-focus /
+  // scan completion / clear / programmatic scanNow) must honor the same gate as
+  // the input element itself — meta.disabled on the input alone left all of
+  // them writable.
+  const locked = meta.disabled === true || resolved.readOnly === true;
+
+  const showScanButton = scanButton && !locked && (cameraAvailable !== false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const scanOnFocusOpenedRef = useRef(false);
 
   const handleClear = () => {
-    if (resolved.readOnly) return;
+    if (locked) return;
     if (name && form) {
       form.setValue(name, '');
     }
@@ -78,7 +84,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   }, []);
 
   const handleFocus = () => {
-    if (resolved.readOnly) return;
+    if (locked) return;
     if (!scanOnFocus || overlayOpen) return;
     scanOnFocusOpenedRef.current = true;
     if (cameraAvailable === null) {
@@ -103,7 +109,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   const scanAbortRef = useRef<AbortController | null>(null);
 
   const handleScanClick = async () => {
-    if (resolved.readOnly) return;
+    if (locked) return;
     scanOnFocusOpenedRef.current = false;
     scanAbortRef.current?.abort();
     setScannerError(null);
@@ -171,7 +177,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   };
 
   const handleScanResult = (result: BarcodeDetectResult) => {
-    if (resolved.readOnly) return;
+    if (locked) return;
     const val = result.barcode;
     const error = validateScanResult(val);
     if (error) {
@@ -205,7 +211,6 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         { scope, env, signal },
       );
       return {
-        ok: res.status >= 200 && res.status < 300,
         status: res.status,
         arrayBuffer: async () => {
           const data = res.data as unknown;
@@ -240,8 +245,14 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       return { fellBackToDefault: true };
     },
     scanNow: () => {
-      if (resolved.readOnly) {
-        return { success: false, error: t('flux.barcode.readOnlyField') };
+      if (locked) {
+        return {
+          success: false,
+          error:
+            meta.disabled === true
+              ? t('flux.barcode.disabledField')
+              : t('flux.barcode.readOnlyField'),
+        };
       }
       scanOnFocusOpenedRef.current = false;
       setScannerError(null);
@@ -273,7 +284,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
 
   if (!meta.visible) return null;
 
-  const showClearButton = resolved.clearable && !resolved.readOnly && inputValue.length > 0;
+  const showClearButton = resolved.clearable && !locked && inputValue.length > 0;
   const inputId = `${props.id || name}-input`;
 
   const displayError = validationError ?? formError?.message;

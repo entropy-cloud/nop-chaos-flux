@@ -12,7 +12,7 @@ function evaluateStaticAst(
 ): { static: true; value: unknown } | { static: false } {
   const symbolTable = options?.symbolTable;
   const staticEnv: RendererEnv = {
-    fetcher: async <T>() => ({ ok: true, status: 200, data: undefined as T }),
+    fetcher: async <T>() => ({ status: 0, data: undefined as T }),
     notify: () => undefined,
   };
   const staticContext = toEvalContext({});

@@ -21,7 +21,7 @@ function makeLazyChildrenEnv(
       const scopeData = ctx.scope.readVisible() as { expandedNodeValue?: unknown };
       const parentValue = scopeData?.expandedNodeValue;
       calls.push({ expandedNodeValue: parentValue });
-      return { ok: true, status: 200, data: respond(parentValue) as T };
+      return { status: 0, data: respond(parentValue) as T };
     },
     notify: () => undefined,
   };
@@ -142,7 +142,7 @@ describe('tree controls - async lazy loading (E2d childrenSource)', () => {
         if (shouldFail) {
           return { ok: false, status: 500, data: null as never };
         }
-        return { ok: true, status: 200, data: [{ label: 'Loaded Child', value: 'loaded' }] as T };
+        return { status: 0, data: [{ label: 'Loaded Child', value: 'loaded' }] as T };
       },
       notify: () => undefined,
     };

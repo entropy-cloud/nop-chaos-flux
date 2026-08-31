@@ -1,23 +1,21 @@
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { toast } from '@nop-chaos/ui';
 import {
-  buildDeptTreeOptions,
-  clone,
-  collectDeptSubtree,
-  createMockDatabase,
-  filterSundialTasks,
-  MOCK_DICTS,
-  nowStamp,
-  toOrderListRecord,
-  toUserListRecord,
-  updateSundialTask,
-  type FetcherApi,
-  type MockDatabase,
-  type SundialTask,
-  type SundialTaskView,
-  type UserRecord,
+  buildDeptTreeOptions, clone, collectDeptSubtree, createMockDatabase,
+  deleteSundialSubtask, filterSundialTasks, MOCK_DICTS, nowStamp,
+  toOrderListRecord, toUserListRecord, updateSundialTask,
+  type FetcherApi, type MockDatabase, type SundialSettings, type SundialTask,
+  type SundialTaskView, type UserRecord,
 } from './mock-backend';
+import { createAntdProOrders, createAntdProFetcherBranch } from './mock-backend-antdpro';
+import { createCalEventMeta, createCalFetcherBranch } from './mock-backend-cal';
+import { createLinearDatabase, createLinearFetcherBranch, type LinearFetcherBranchInput } from './mock-backend-linear';
+import { createNotionDatabase, createNotionFetcherBranch } from './mock-backend-notion';
+import { createAirtableDatabase, createAirtableFetcherBranch } from './mock-backend-airtable';
+import { createStripeDatabase, createStripeFetcherBranch } from './mock-backend-stripe';
 import { confirmBridge } from './confirm-bridge';
+
+type ReplicaFetcherBranch = <T>(input: LinearFetcherBranchInput) => { status: number; data: T } | null;
 
 function asRecord(value: unknown): Record<string, unknown> {
   return (value ?? {}) as Record<string, unknown>;
@@ -97,6 +95,20 @@ function sortRows<T extends Record<string, unknown>>(rows: T[], orderBy?: string
  */
 export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
   const db = createMockDatabase();
+  const antdproOrders = createAntdProOrders();
+  const handleAntdProBranch = createAntdProFetcherBranch(antdproOrders, clone);
+  const calEvent = createCalEventMeta();
+  const handleCalBranch = createCalFetcherBranch(calEvent, clone);
+  const handleLinearBranch = createLinearFetcherBranch(createLinearDatabase(), clone);
+  const handleNotionBranch = createNotionFetcherBranch(createNotionDatabase(), clone);
+  const replicaBranches: Array<[string, ReplicaFetcherBranch]> = [
+    ['/r/AntdPro__', handleAntdProBranch],
+    ['/r/Cal__', handleCalBranch],
+    ['/r/Linear__', handleLinearBranch],
+    ['/r/Notion__', handleNotionBranch],
+    ['/r/Airtable__', createAirtableFetcherBranch(createAirtableDatabase(), clone)],
+    ['/r/Stripe__', createStripeFetcherBranch(createStripeDatabase(), clone)],
+  ];
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {
     const url = api.url ?? '';
@@ -594,6 +606,27 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       const items = db.sundialSubtasks.filter((st) => st.taskId === taskId);
       return { status: 0, data: clone({ items, total: items.length }) as T };
     }
+    if (url.includes('/r/Sundial__deleteSubtask') && method === 'post') {
+      const id = asNumber(body.id);
+      if (id === undefined) {
+        return { status: 1, data: clone({ ok: false, error: 'missing id' }) as T };
+      }
+      const deleted = deleteSundialSubtask(db.sundialSubtasks, id);
+      if (!deleted) {
+        return { status: 1, data: clone({ ok: false, error: 'subtask not found' }) as T };
+      }
+      return { status: 0, data: clone({ ok: true, id }) as T };
+    }
+    if (url.includes('/r/Sundial__updateSettings') && method === 'post') {
+      const mode = body.mode;
+      const validModes: SundialSettings['mode'][] = ['local', 'supabase', 'selfhost'];
+      if (typeof mode !== 'string' || !validModes.includes(mode as SundialSettings['mode'])) {
+        return { status: 1, data: clone({ ok: false, error: 'invalid mode' }) as T };
+      }
+      db.sundialSettings.mode = mode as SundialSettings['mode'];
+      db.sundialSettings.savedAt = '刚刚';
+      return { status: 0, data: clone({ ok: true, ...db.sundialSettings }) as T };
+    }
     if (url.includes('/r/Sundial__todayTasks') && method === 'get') {
       return {
         status: 0,
@@ -607,6 +640,17 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
           total: 4,
         }) as T,
       };
+    }
+
+    // ----- App-replica endpoints (P2a antdpro / P3a cal / P4a linear / P5a
+    // notion / P6a airtable / P7a stripe; get-only reads — writes belong to
+    // each Pi-b). Bodies live in mock modules (700-line gate); [prefix,
+    // handler] loop. -----
+    for (const [prefix, handleReplicaBranch] of replicaBranches) {
+      if (url.includes(prefix)) {
+        const handled = handleReplicaBranch<T>({ url, method, params, body });
+        if (handled) return handled;
+      }
     }
 
     return { status: 0, data: null as T };

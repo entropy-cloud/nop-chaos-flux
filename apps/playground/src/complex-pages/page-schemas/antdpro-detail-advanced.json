@@ -1,0 +1,315 @@
+{
+  "type": "page",
+  "testid": "antdpro-detail-advanced-page",
+  "className": "adp-root",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "detail",
+      "action": "ajax",
+      "args": { "url": "/r/AntdPro__orderDetail", "method": "get" }
+    },
+    {
+      "type": "container",
+      "testid": "antdpro-detail-advanced-header",
+      "className": "adp-page-header px-5 pt-4 pb-4 mb-4 rounded-lg",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 6,
+          "className": "items-center adp-breadcrumb",
+          "body": [
+            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "订单管理", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "高级详情" }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "items-center justify-between mt-2",
+          "body": [
+            {
+              "type": "text",
+              "text": "订单详情（高级）",
+              "className": "adp-page-title",
+              "testid": "antdpro-detail-advanced-title"
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "items-center",
+              "testid": "antdpro-detail-approve-group",
+              "body": [
+                {
+                  "type": "button",
+                  "label": "驳回",
+                  "className": "adp-btn adp-btn-outline",
+                  "testid": "antdpro-approve-reject",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/AntdPro__approveOrder",
+                      "method": "post",
+                      "data": {
+                        "id": "${detail?.id ?? \"\"}",
+                        "decision": "reject"
+                      }
+                    },
+                    "messages": {
+                      "success": "已驳回，订单关闭"
+                    },
+                    "then": {
+                      "action": "refreshSource",
+                      "targetId": "detail"
+                    }
+                  }
+                },
+                {
+                  "type": "button",
+                  "label": "通过",
+                  "className": "adp-btn adp-btn-primary",
+                  "testid": "antdpro-approve-approve",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/AntdPro__approveOrder",
+                      "method": "post",
+                      "data": {
+                        "id": "${detail?.id ?? \"\"}",
+                        "decision": "approve"
+                      }
+                    },
+                    "messages": {
+                      "success": "审批通过"
+                    },
+                    "then": {
+                      "action": "refreshSource",
+                      "targetId": "detail"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-6 mb-4 max-w-5xl mx-auto",
+      "testid": "antdpro-detail-advanced-progress-card",
+      "body": [
+        { "type": "text", "text": "执行进度", "className": "adp-card-title mb-4" },
+        {
+          "type": "steps",
+          "testid": "antdpro-detail-steps",
+          "valueOwnership": "controlled",
+          "value": "${detail?.progressKey ?? 'created'}",
+          "items": [
+            { "value": "created", "title": "创建订单", "description": "订单创建并风控校验" },
+            { "value": "confirmed", "title": "财务确认", "description": "收款确认完成" },
+            { "value": "shipped", "title": "仓库发货", "description": "物流揽收发出" },
+            { "value": "completed", "title": "客户签收", "description": "订单完成闭环" }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-6 mb-4 max-w-5xl mx-auto",
+      "testid": "antdpro-detail-advanced-tabs-card",
+      "body": [
+        {
+          "type": "tabs",
+          "testid": "antdpro-detail-tabs",
+          "items": [
+            {
+              "key": "order",
+              "title": "订单信息",
+              "body": [
+                {
+                  "type": "container",
+                  "className": "flex flex-col",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "adp-desc-divider py-2.5",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "订单号",
+                          "className": "adp-desc-label w-28 shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${detail?.basic?.orderNo ?? '-'}",
+                          "className": "adp-desc-value adp-mono",
+                          "testid": "antdpro-detail-advanced-order-no"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "adp-desc-divider py-2.5",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "订单金额",
+                          "className": "adp-desc-label w-28 shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${detail?.amountText ?? '-'}",
+                          "className": "adp-desc-value adp-mono"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "py-2.5",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "物流单号",
+                          "className": "adp-desc-label w-28 shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${detail?.shipment?.trackingNo ?? '-'}",
+                          "className": "adp-desc-value adp-mono"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "key": "customer",
+              "title": "客户信息",
+              "body": [
+                {
+                  "type": "container",
+                  "className": "flex flex-col",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "adp-desc-divider py-2.5",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "客户名称",
+                          "className": "adp-desc-label w-28 shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${detail?.customer?.name ?? '-'}",
+                          "className": "adp-desc-value",
+                          "testid": "antdpro-detail-advanced-customer"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "py-2.5",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "收货地址",
+                          "className": "adp-desc-label w-28 shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${detail?.shipment?.address ?? '-'}",
+                          "className": "adp-desc-value"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "key": "approval",
+              "title": "审批记录",
+              "body": [
+                {
+                  "type": "container",
+                  "className": "flex flex-col mb-3",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "adp-desc-divider py-2.5",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "审批人",
+                          "className": "adp-desc-label w-28 shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${detail?.approval?.approver ?? '-'}",
+                          "className": "adp-desc-value",
+                          "testid": "antdpro-detail-advanced-approver"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "py-2.5",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "审批意见",
+                          "className": "adp-desc-label w-28 shrink-0"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${detail?.approval?.comment ?? '-'}",
+                          "className": "adp-desc-value"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "table",
+                  "testid": "antdpro-detail-timeline-table",
+                  "source": "${detail?.timeline}",
+                  "rowKey": "time",
+                  "pagination": { "enabled": false },
+                  "empty": { "type": "text", "text": "暂无流转记录" },
+                  "columns": [
+                    { "name": "time", "label": "时间", "width": 180 },
+                    { "name": "action", "label": "动作", "width": 200 },
+                    { "name": "operator", "label": "操作人", "width": 140 }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

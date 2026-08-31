@@ -209,7 +209,12 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
   const displayLabel = countDownActive && countDownLabel ? countDownLabel : label ? String(label) : null;
 
   const handleClick = async (event: React.MouseEvent) => {
-    if (effectiveDisabled) return;
+    if (effectiveDisabled) {
+      // [G1-视角3-02] the anchor branch is a real <a>: without preventDefault the
+      // browser default navigation runs even while disabled/loading.
+      event.preventDefault();
+      return;
+    }
     // Start the countdown only after the onClick action resolves on its success
     // branch (the action runtime rejects on error). This matches the design's
     // "action 成功分支后触发" semantics — a rejecting action does NOT start the
@@ -252,10 +257,12 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
   const button = renderAsAnchor ? (
     <a
       ref={anchorRef}
-      href={href}
+      href={effectiveDisabled ? undefined : href}
       target={props.props.target}
+      aria-disabled={effectiveDisabled || undefined}
       {...commonProps}
       onClick={(event) => void handleClick(event)}
+      className={cn(commonProps.className, effectiveDisabled && 'pointer-events-none opacity-60')}
     >
       {leadingSlot}
       {displayLabel}

@@ -199,9 +199,9 @@ const tabsSurfaceProbeFetcher = (async (api: { url?: string; data?: unknown }) =
   if (url.includes('Note__save')) {
     (window as unknown as { __tabsSurfaceSubmitProbe?: unknown }).__tabsSurfaceSubmitProbe =
       api.data;
-    return { ok: true, status: 200, data: api.data };
+    return { status: 0, data: api.data };
   }
-  return { ok: true, status: 200, data: null };
+  return { status: 0, data: null };
 }) as unknown as RendererEnv['fetcher'];
 
 const tabsWithSurfaces = {

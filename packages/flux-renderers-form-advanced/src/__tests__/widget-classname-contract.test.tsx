@@ -12,7 +12,7 @@ const SchemaRenderer = createSchemaRenderer([
 ]);
 
 const env = {
-  fetcher: async <T,>() => ({ ok: true, status: 200, data: {} as T }),
+  fetcher: async <T,>() => ({ status: 0, data: {} as T }),
   notify: () => undefined,
 };
 

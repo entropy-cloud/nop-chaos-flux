@@ -142,7 +142,7 @@ export function createMockAiStream(delayMs = 15, fixtures = false): StreamFetche
     }
 
     return {
-      response: { ok: true, status: 200, headers: {} },
+      response: { status: 200, headers: {} },
       chunks: generate(),
     } as StreamFetchResult<unknown>;
   };

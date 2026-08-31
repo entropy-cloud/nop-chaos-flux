@@ -161,7 +161,7 @@ export const crudRendererDefinition: RendererDefinition = {
       shape: { kind: 'unknown' },
       displayName: 'Selection',
       description:
-        'Row selection enablement & config: true / "multiple" (checkbox), "single" (radio), or a config object. Setting it (truthy) enables the selection column; omit to disable.',
+        'Row selection enablement & config: true / "multiple" (checkbox), "single" (radio), or a config object. Setting it (truthy) enables the selection column; omit to disable. Config fields include keepOnPageChange, maxSelectionLength, checkableWhen, toggleOnRowClick, and selectAllMode ("all" default | "page" — scopes the header select-all to the current page).',
       editorType: 'object',
     },
     selectionStatePath: {
@@ -263,7 +263,10 @@ export const crudRendererDefinition: RendererDefinition = {
       editorType: 'object',
     },
     filterTogglable: {
-      shape: { kind: 'object', fields: {} },
+      shape: {
+        kind: 'union',
+        anyOf: [{ kind: 'boolean' }, { kind: 'object', fields: {} }],
+      },
       displayName: 'Filter Togglable',
       description:
         'Collapsible query region configuration; when truthy the queryForm region renders inside a collapse container with a toggle button.',

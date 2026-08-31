@@ -77,7 +77,7 @@ function defaultSuggestionsFetcher() {
       { label: 'Banana', value: 'banana' },
       { label: 'Apricot', value: 'apricot' },
     ];
-    return { ok: true, status: 200, data: all as T };
+    return { status: 0, data: all as T };
   };
 }
 
@@ -275,7 +275,7 @@ describe('input-text suggest — select writeback', () => {
 describe('input-text suggest — empty / error state', () => {
   it('shows suggestEmpty state when suggestions array is empty', async () => {
     const fetcher = async function <T>() {
-      return { ok: true, status: 200, data: [] as T };
+      return { status: 0, data: [] as T };
     };
     renderForm(
       {

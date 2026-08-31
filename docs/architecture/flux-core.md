@@ -467,7 +467,7 @@ Priority order:
 
 `packages/flux-core/src/utils/url.ts` hosts the shared schema-driven `href` safety gate:
 
-- **`isSafeNavigationUrl(url)`** — allowlist check for navigation hrefs (`http:`/`https:`/`mailto:`/`tel:`/`data:`; scheme-less relative strings are safe; `javascript:`/`vbscript:`/`file:`/`blob:` are rejected). Promoted here as the root-cause location for the shared href-protocol gap (content `link` + basic `button` were each guarding or leaking independently); `flux-renderers-content/src/sanitize.ts` re-exports it so existing content-package consumers keep a stable import path.
+- **`isSafeNavigationUrl(url, options?)`** — allowlist check for navigation hrefs (`http:`/`https:`/`mailto:`/`tel:`/`data:`; scheme-less relative strings are safe; `javascript:`/`vbscript:`/`file:`/`blob:` are rejected). `options.download: true` unlocks `blob:` only (same-origin object-URL export links, delivered as downloads via the anchor's `download` attribute — ui-review audit 15-02); without it `blob:` stays rejected, and script-execution schemes stay rejected regardless. Promoted here as the root-cause location for the shared href-protocol gap (content `link` + basic `button` were each guarding or leaking independently); `flux-renderers-content/src/sanitize.ts` re-exports it so existing content-package consumers keep a stable import path.
 
 ## Designs No Longer Preferred
 

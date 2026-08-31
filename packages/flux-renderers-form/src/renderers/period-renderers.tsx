@@ -141,6 +141,9 @@ export function PeriodRenderer(
   }
 
   function applyShortcut(shortcut: PeriodShortcut) {
+    // [G2-R3-视角3-01] entry guard (double layer with the button disabled attr):
+    // a locked field cannot be rewritten through the shortcut channel.
+    if (!interactive) return;
     if (selectionMode === 'range') {
       commitRange(shortcut.start, shortcut.end);
       return;
@@ -236,6 +239,7 @@ export function PeriodRenderer(
               variant="outline"
               size="sm"
               data-testid={`period-shortcut-${kind}`}
+              disabled={!interactive}
               onClick={() => applyShortcut(shortcut)}
             >
               {shortcut.label}

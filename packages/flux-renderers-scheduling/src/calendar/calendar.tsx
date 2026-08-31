@@ -441,13 +441,28 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const bodyRegion = regions.body;
   if (bodyRegion) {
-    return <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-calendar flex flex-col', meta.className)}>{bodyRegion.render() as React.ReactNode}</div>;
+    return (
+    <div
+      data-slot="calendar"
+      inert={meta.disabled === true || undefined}
+      aria-disabled={meta.disabled === true || undefined}
+      data-disabled={meta.disabled === true ? 'true' : undefined}
+      data-testid={meta.testid || undefined}
+      data-cid={meta.cid || undefined}
+      className={cn('nop-calendar flex flex-col', meta.className)}
+    >
+      {bodyRegion.render() as React.ReactNode}
+    </div>
+  );
   }
 
   return (
     <div
       ref={calendarRef}
       data-slot="calendar"
+      inert={meta.disabled === true || undefined}
+      aria-disabled={meta.disabled === true || undefined}
+      data-disabled={meta.disabled === true ? 'true' : undefined}
       className={cn('nop-calendar flex flex-col', meta.className, resolved.emptyClassName as string | undefined)}
       data-view={activeView}
       data-date={currentDate.toISOString().split('T')[0]}

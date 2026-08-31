@@ -302,7 +302,7 @@ export function readDebuggerSessionSummary(input: {
 export const performanceEnv: RendererEnv = {
   async fetcher<T>(_api: ExecutableApiRequest) {
     void _api;
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify(level, message) {
     console.info(`[performance-table-page] ${level}: ${message}`);

@@ -99,6 +99,13 @@ export { useSourceValue } from './use-source-value.js';
 export { useStatusPathPublication } from './status-path.js';
 export { usePublishedFormStatus, usePublishedFormValues } from './form-publication.js';
 export { StructuralLoopProvider } from './structural-loop-provider.js';
+export {
+  getOptionRowStateAttributes,
+  getOptionRowStateTokens,
+  optionRowBindingEquals,
+  optionRowValueMatches,
+} from './option-row.js';
+export type { OptionRowStateAttributes, OptionRowStateInput } from './option-row.js';
 export { createFormComponentHandle, createReadonlyScopeBinding } from '@nop-chaos/flux-runtime';
 export type { SourceTransientState } from './use-node-source-props.js';
 export type { WorkbenchShellProps } from './workbench/index.js';
@@ -108,3 +115,23 @@ export {
   unwrapBooleanLiteral,
 } from './preserve-literal.js';
 export { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
+export {
+  comboMatchesKey,
+  createChordMatcher,
+  isEditableKeyboardTarget,
+  keySequenceSignature,
+  parseKeyCombo,
+  parseKeySequence,
+  parseModifierHotkey,
+} from './keyboard.js';
+export type {
+  ChordMatcher,
+  ChordSequenceEntry,
+  KeyCombo,
+  KeyEventLike,
+} from './keyboard.js';
+export { useKeyboardBindings } from './use-keyboard-bindings.js';
+export type {
+  KeyboardBindingSpec,
+  UseKeyboardBindingsOptions,
+} from './use-keyboard-bindings.js';

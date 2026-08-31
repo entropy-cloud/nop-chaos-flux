@@ -1,0 +1,103 @@
+{
+  "type": "page",
+  "testid": "antdpro-result-page",
+  "className": "adp-root",
+  "body": [
+    {
+      "type": "container",
+      "testid": "antdpro-result-header",
+      "className": "adp-page-header px-5 pt-4 pb-4 mb-4 rounded-lg",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 6,
+          "className": "items-center adp-breadcrumb",
+          "body": [
+            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "订单管理", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "提交结果" }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "提交结果",
+          "className": "adp-page-title mt-2",
+          "testid": "antdpro-result-title"
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-10 max-w-2xl mx-auto",
+      "testid": "antdpro-result-card",
+      "body": [
+        {
+          "type": "container",
+          "className": "flex flex-col items-center text-center gap-3",
+          "body": [
+            {
+              "type": "container",
+              "className": "rounded-full p-4 bg-[#f6ffed]",
+              "testid": "antdpro-result-icon-wrap",
+              "body": [
+                {
+                  "type": "icon",
+                  "icon": "circle-check",
+                  "size": 48,
+                  "color": "#52c41a",
+                  "className": "adp-result-icon"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "订单提交成功",
+              "className": "text-xl font-semibold",
+              "testid": "antdpro-result-success-title"
+            },
+            {
+              "type": "text",
+              "text": "订单编号 SO2026080136 已进入备货流程，预计 48 小时内发出，物流信息将以短信通知联系人。",
+              "className": "adp-desc-label",
+              "testid": "antdpro-result-description"
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "className": "adp-desc-divider mt-6 pt-5 flex justify-center gap-3",
+          "testid": "antdpro-result-actions",
+          "body": [
+            {
+              "type": "button",
+              "label": "查看订单",
+              "className": "adp-btn adp-btn-primary",
+              "testid": "antdpro-result-primary",
+              "onClick": {
+                "action": "navigate",
+                "args": {
+                  "url": "#/complex-pages/antdpro-list"
+                }
+              }
+            },
+            {
+              "type": "button",
+              "label": "再录一单",
+              "className": "adp-btn adp-btn-outline",
+              "testid": "antdpro-result-secondary",
+              "onClick": {
+                "action": "navigate",
+                "args": {
+                  "url": "#/complex-pages/antdpro-form-basic"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

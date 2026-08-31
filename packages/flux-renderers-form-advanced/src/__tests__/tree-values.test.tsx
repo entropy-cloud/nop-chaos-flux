@@ -159,8 +159,7 @@ describe('tree controls - value handling and form integration', () => {
             }
 
             return {
-              ok: true,
-              status: 200,
+                            status: 0,
               data: {} as T,
             };
           },

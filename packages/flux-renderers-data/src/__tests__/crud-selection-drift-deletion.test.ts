@@ -12,7 +12,7 @@ describe('CRUD selection drift — maxKeepSelectionLength removed from schema so
     expect(crudSchemaSource).toContain('checkableWhen');
   });
 
-  it('CrudSelectionConfig declares exactly 6 documented selection fields', () => {
+  it('CrudSelectionConfig declares exactly 7 documented selection fields', () => {
     const selectionBlockMatch = crudSchemaSource.match(
       /export interface CrudSelectionConfig[\s\S]*?\n}/,
     );
@@ -29,6 +29,7 @@ describe('CRUD selection drift — maxKeepSelectionLength removed from schema so
       'checkableWhen',
       'toggleOnRowClick',
       'labelTpl',
+      'selectAllMode',
     ]);
     expect(fieldLines).not.toContain('maxKeepSelectionLength');
   });

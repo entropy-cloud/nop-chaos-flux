@@ -127,6 +127,14 @@ export function ButtonGroupRenderer(props: RendererComponentProps<ButtonGroupSch
             data-selected={selected || undefined}
             data-disabled={disabled || undefined}
             aria-pressed={selectionMode !== 'none' ? selected : undefined}
+            // [G1-视角3-03] selectionMode items must consume the data-selected
+            // state they emit — without this selector the selected item had zero
+            // visual feedback.
+            className={
+              selectionMode !== 'none'
+                ? 'data-selected:bg-accent data-selected:text-accent-foreground data-selected:hover:bg-accent data-selected:aria-expanded:bg-accent data-selected:aria-expanded:text-accent-foreground dark:data-selected:bg-accent/60'
+                : undefined
+            }
             onClick={() => handleClick(item, index, disabled)}
           >
             {item.label ?? key}

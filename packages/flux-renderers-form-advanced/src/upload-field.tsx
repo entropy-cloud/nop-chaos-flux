@@ -188,6 +188,10 @@ export function UploadFieldRenderer(
   // Mirror handlers so useInputComponentHandle stays stable without re-creating it.
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
+  // [G2-R4-视角3-01] the async completion path needs the CURRENT gate state,
+  // not the render-time value from upload start.
+  const interactiveRef = useRef(interactive);
+  interactiveRef.current = interactive;
 
   // The field value is the source of truth, but parallel uploads must not race
   // on the reactive `value` closure. We mirror the latest committed value into
@@ -263,6 +267,13 @@ export function UploadFieldRenderer(
       const item = readResultItem(result);
       if (!item) {
         throw new Error(t('flux.form.uploadNoResult'));
+      }
+      // [G2-R4-视角3-01] the field turned disabled while this upload was in
+      // flight — discard the finished result instead of silently rewriting the
+      // locked field's value.
+      if (!interactiveRef.current) {
+        setItems((prev) => prev.filter((entry) => entry.id !== id));
+        return;
       }
       const successItems = multiple ? [...committedItems(), item] : [item];
       setItems((prev) =>
@@ -556,6 +567,7 @@ export function UploadFieldRenderer(
                       aria-label={t('flux.form.cancel', { defaultValue: `Cancel ${entry.name}` })}
                       data-testid={`${options.marker}-cancel-${entry.id}`}
                       data-slot="upload-cancel"
+                      disabled={!interactive}
                       onClick={() => cancelUpload(entry.id)}
                     >
                       <XIcon className="size-3.5" />

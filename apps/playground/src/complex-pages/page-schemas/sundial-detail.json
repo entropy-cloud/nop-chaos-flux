@@ -70,9 +70,9 @@
                   "className": "sd-btn-icon",
                   "testid": "sundial-detail-close",
                   "onClick": {
-                    "action": "showToast",
+                    "action": "navigate",
                     "args": {
-                      "message": "关闭详情"
+                      "url": "#/complex-pages/sundial-workbench"
                     }
                   }
                 }
@@ -603,6 +603,14 @@
                       "testid": "sundial-subtask-delete-1",
                       "onClick": [
                         {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/Sundial__deleteSubtask",
+                            "method": "post",
+                            "data": { "id": 1 }
+                          }
+                        },
+                        {
                           "action": "setValue",
                           "args": {
                             "path": "subtaskDeleted1",
@@ -676,6 +684,14 @@
                       "className": "sd-btn-icon",
                       "testid": "sundial-subtask-delete-2",
                       "onClick": [
+                        {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/Sundial__deleteSubtask",
+                            "method": "post",
+                            "data": { "id": 2 }
+                          }
+                        },
                         {
                           "action": "setValue",
                           "args": {
@@ -751,6 +767,14 @@
                       "testid": "sundial-subtask-delete-3",
                       "onClick": [
                         {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/Sundial__deleteSubtask",
+                            "method": "post",
+                            "data": { "id": 3 }
+                          }
+                        },
+                        {
                           "action": "setValue",
                           "args": {
                             "path": "subtaskDeleted3",
@@ -801,13 +825,26 @@
                       "className": "sd-dialog",
                       "testid": "sundial-list-dialog",
                       "closeOnSubmit": true,
-                      "onSubmitSuccess": {
-                        "action": "setValue",
-                        "args": {
-                          "path": "list",
-                          "value": "${$formData.list}"
+                      "onSubmitSuccess": [
+                        {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/Sundial__updateTodoItem",
+                            "method": "post",
+                            "data": {
+                              "id": 1,
+                              "list": "${$formData.list}"
+                            }
+                          }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "list",
+                            "value": "${$formData.list}"
+                          }
                         }
-                      },
+                      ],
                       "body": [
                         {
                           "type": "form",
@@ -872,6 +909,17 @@
                   "className": "sd-btn sd-btn-danger flex-1",
                   "testid": "sundial-detail-trash",
                   "onClick": [
+                    {
+                      "action": "ajax",
+                      "args": {
+                        "url": "/r/Sundial__updateTodoItem",
+                        "method": "post",
+                        "data": {
+                          "id": 1,
+                          "trashed": true
+                        }
+                      }
+                    },
                     {
                       "action": "setValue",
                       "args": {
@@ -1230,32 +1278,18 @@
                   "testid": "sundial-subtask-dialog-delete",
                   "onClick": [
                     {
-                      "action": "setValue",
+                      "action": "ajax",
                       "args": {
-                        "path": "subtaskDeleted1",
-                        "value": "${activeSubtask === 1 ? true : subtaskDeleted1}"
+                        "url": "/r/Sundial__deleteSubtask",
+                        "method": "post",
+                        "data": {
+                          "id": "${activeSubtask}"
+                        }
                       }
                     },
                     {
-                      "action": "setValue",
-                      "args": {
-                        "path": "subtaskDeleted2",
-                        "value": "${activeSubtask === 2 ? true : subtaskDeleted2}"
-                      }
-                    },
-                    {
-                      "action": "setValue",
-                      "args": {
-                        "path": "subtaskDeleted3",
-                        "value": "${activeSubtask === 3 ? true : subtaskDeleted3}"
-                      }
-                    },
-                    {
-                      "action": "setValue",
-                      "args": {
-                        "path": "subtaskOpen",
-                        "value": false
-                      }
+                      "action": "closeDialog",
+                      "surfaceId": "sundial-subtask-dialog"
                     },
                     {
                       "action": "showToast",
@@ -1272,11 +1306,8 @@
                   "className": "sd-btn sd-btn-default",
                   "testid": "sundial-subtask-dialog-close",
                   "onClick": {
-                    "action": "setValue",
-                    "args": {
-                      "path": "subtaskOpen",
-                      "value": false
-                    }
+                    "action": "closeDialog",
+                    "surfaceId": "sundial-subtask-dialog"
                   }
                 }
               ]

@@ -116,7 +116,7 @@ describe('closeOnSubmit — dialog/drawer auto-close after submit', () => {
     } as SchemaInput;
   }
 
-  function makeEnv(saveResponse: () => { ok: boolean; data?: unknown; error?: Error }) {
+  function makeEnv(saveResponse: () => { status: number; data?: unknown; error?: Error }) {
     return {
       ...baseEnv,
       notify: vi.fn(),
@@ -124,14 +124,14 @@ describe('closeOnSubmit — dialog/drawer auto-close after submit', () => {
         if (api.url.includes('__save')) {
           return saveResponse();
         }
-        return { ok: true, data: {} };
+        return { status: 0, data: {} };
       }),
     } as unknown as typeof baseEnv;
   }
 
   it('closes the dialog after button submit when closeOnSubmit is true', async () => {
     cleanup();
-    const env = makeEnv(() => ({ ok: true, data: { id: 'new-1' } }));
+    const env = makeEnv(() => ({ status: 0, data: { id: 'new-1' } }));
     renderPage(env, openDialogSchema({ closeOnSubmit: true }));
 
     fireEvent.click(screen.getByText('Add'));
@@ -147,7 +147,7 @@ describe('closeOnSubmit — dialog/drawer auto-close after submit', () => {
 
   it('closes the dialog after Enter-key submit when closeOnSubmit is true', async () => {
     cleanup();
-    const env = makeEnv(() => ({ ok: true, data: { id: 'new-1' } }));
+    const env = makeEnv(() => ({ status: 0, data: { id: 'new-1' } }));
     renderPage(env, openDialogSchema({ closeOnSubmit: true }));
 
     fireEvent.click(screen.getByText('Add'));
@@ -163,7 +163,7 @@ describe('closeOnSubmit — dialog/drawer auto-close after submit', () => {
 
   it('closes the drawer after submit when closeOnSubmit is true', async () => {
     cleanup();
-    const env = makeEnv(() => ({ ok: true, data: { id: 'new-1' } }));
+    const env = makeEnv(() => ({ status: 0, data: { id: 'new-1' } }));
     renderPage(env, openDrawerSchema({ closeOnSubmit: true }));
 
     fireEvent.click(screen.getByText('Open Drawer'));
@@ -177,7 +177,7 @@ describe('closeOnSubmit — dialog/drawer auto-close after submit', () => {
 
   it('keeps the dialog open after submit when closeOnSubmit is absent', async () => {
     cleanup();
-    const env = makeEnv(() => ({ ok: true, data: { id: 'new-1' } }));
+    const env = makeEnv(() => ({ status: 0, data: { id: 'new-1' } }));
     renderPage(env, openDialogSchema({}));
 
     fireEvent.click(screen.getByText('Add'));
@@ -192,7 +192,7 @@ describe('closeOnSubmit — dialog/drawer auto-close after submit', () => {
 
   it('keeps the dialog open when submit fails even with closeOnSubmit', async () => {
     cleanup();
-    const env = makeEnv(() => ({ ok: false, error: new Error('boom') }));
+    const env = makeEnv(() => ({ status: 500, error: new Error('boom') }));
     renderPage(
       env,
       openDialogSchema({

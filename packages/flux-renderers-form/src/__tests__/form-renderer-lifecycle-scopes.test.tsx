@@ -143,7 +143,7 @@ describe('FormRenderer lifecycle wiring — scope publication and runtime reuse'
       signal: 'signal-1',
     });
 
-    const successResult = { ok: true, data: { username: 'Alice' } };
+    const successResult = { status: 0, data: { username: 'Alice' } };
     await handlers.onSubmitSuccess(successResult, {
       interactionId: 'submit-2',
       signal: 'signal-2',
@@ -260,7 +260,7 @@ describe('FormRenderer lifecycle wiring — scope publication and runtime reuse'
       throw new Error('Expected lifecycle handlers to be registered');
     }
     await handlers.submitAction({});
-    await handlers.onSubmitSuccess({ ok: true, data: {} }, {});
+    await handlers.onSubmitSuccess({ status: 0, data: {} }, {});
 
     const plainSubmitCall = submitAction.mock.calls[0];
     const plainSuccessCall = onSubmitSuccess.mock.calls[0];

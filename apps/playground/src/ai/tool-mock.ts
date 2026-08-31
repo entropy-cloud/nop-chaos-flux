@@ -74,7 +74,7 @@ export function createMockToolStream(delayMs = 10): StreamFetcher {
     }
 
     return {
-      response: { ok: true, status: 200, headers: {} },
+      response: { status: 200, headers: {} },
       chunks: generate(),
     } as StreamFetchResult<unknown>;
   };

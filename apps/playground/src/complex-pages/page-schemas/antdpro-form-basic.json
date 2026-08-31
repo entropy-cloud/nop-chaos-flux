@@ -1,0 +1,128 @@
+{
+  "type": "page",
+  "testid": "antdpro-form-basic-page",
+  "className": "adp-root",
+  "body": [
+    {
+      "type": "container",
+      "testid": "antdpro-form-basic-header",
+      "className": "adp-page-header px-5 pt-4 pb-4 mb-4 rounded-lg",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 6,
+          "className": "items-center adp-breadcrumb",
+          "body": [
+            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "任务管理", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "新建任务" }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "新建任务",
+          "className": "adp-page-title mt-2",
+          "testid": "antdpro-form-basic-title"
+        },
+        {
+          "type": "text",
+          "text": "整页单列表单：字段纵向排列，操作条固定于表单底部。",
+          "className": "adp-desc-label mt-1"
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-6 max-w-2xl mx-auto",
+      "body": [
+        {
+          "type": "form",
+          "id": "antdpro-basic-form",
+          "testid": "antdpro-basic-form",
+          "submitAction": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/AntdPro__submitForm",
+              "method": "post",
+              "includeScope": "*"
+            },
+            "messages": {
+              "success": "任务已提交，即将跳转"
+            }
+          },
+          "onSubmitSuccess": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/antdpro-result"
+            },
+            "control": {
+              "debounce": 1200
+            }
+          },
+          "body": [
+            {
+              "type": "input-text",
+              "name": "title",
+              "label": "任务名称",
+              "required": true,
+              "placeholder": "请输入任务名称",
+              "testid": "antdpro-basic-title-input"
+            },
+            {
+              "type": "date-range",
+              "name": "period",
+              "label": "执行时间段",
+              "placeholder": "选择起止日期"
+            },
+            {
+              "type": "input-text",
+              "name": "owner",
+              "label": "负责人",
+              "required": true,
+              "placeholder": "请输入负责人姓名",
+              "testid": "antdpro-basic-owner"
+            },
+            {
+              "type": "input-number",
+              "name": "weight",
+              "label": "目标权重（%）",
+              "min": 0,
+              "max": 100,
+              "placeholder": "0 - 100"
+            },
+            {
+              "type": "textarea",
+              "name": "description",
+              "label": "目标描述",
+              "placeholder": "请输入任务目标与验收标准"
+            }
+          ],
+          "actions": [
+            {
+              "type": "button",
+              "label": "重置",
+              "className": "adp-btn adp-btn-outline",
+              "testid": "antdpro-basic-reset",
+              "onClick": {
+                "action": "component:reset",
+                "componentId": "antdpro-basic-form"
+              }
+            },
+            {
+              "type": "button",
+              "label": "提交",
+              "className": "adp-btn adp-btn-primary",
+              "testid": "antdpro-basic-submit",
+              "onClick": {
+                "action": "submitForm"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

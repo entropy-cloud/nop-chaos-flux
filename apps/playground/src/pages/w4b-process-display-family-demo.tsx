@@ -28,7 +28,7 @@ const formulaCompiler = createFormulaCompiler();
 
 const env: RendererEnv = {
   fetcher: async function <T>(_api: ApiSchema, _ctx: ApiRequestContext) {
-    return { ok: true, status: 200, data: null as T };
+    return { status: 0, data: null as T };
   },
   notify: (level, message) => {
     const text = typeof message === 'string' ? message : String(message ?? '');

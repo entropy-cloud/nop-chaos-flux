@@ -233,9 +233,8 @@ export function createDefaultStream(options: CreateStreamOptions = {}): NonNulla
     } catch (err) {
       // 连接级错误：DNS 失败 / 网络错误 → 经 response 字段报告，不抛出
       return {
-        response: {
+          response: {
           status: 0,
-          ok: false,
           code: 'network-error',
           msg: err instanceof Error ? err.message : String(err),
         },
@@ -255,7 +254,6 @@ export function createDefaultStream(options: CreateStreamOptions = {}): NonNulla
       return {
         response: {
           status: response.status,
-          ok: false,
           code: String(response.status),
           msg: response.statusText,
           headers: responseHeaders,
@@ -270,7 +268,7 @@ export function createDefaultStream(options: CreateStreamOptions = {}): NonNulla
     if (!reader) {
       // 无 body 流（理论上 2xx 但无 body）：返回空迭代
       return {
-        response: { status: response.status, ok: true, headers: responseHeaders, raw: response },
+        response: { status: response.status, headers: responseHeaders, raw: response },
         chunks: (async function* () {
           /* empty iterator */
         })(),
@@ -304,7 +302,7 @@ export function createDefaultStream(options: CreateStreamOptions = {}): NonNulla
     });
 
     return {
-      response: { status: response.status, ok: true, headers: responseHeaders, raw: response },
+      response: { status: response.status, headers: responseHeaders, raw: response },
       chunks,
     };
   };

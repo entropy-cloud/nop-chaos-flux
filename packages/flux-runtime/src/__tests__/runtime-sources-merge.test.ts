@@ -290,7 +290,7 @@ describe('createRendererRuntime', () => {
 
   it('publishes data-source status summaries through statusPath', async () => {
     let releaseRequest:
-      | ((value: { ok: boolean; status: number; data: { value: string } }) => void)
+      | ((value: { status: number; data: { value: string } | null }) => void)
       | undefined;
     const fetcherImpl: RendererEnv['fetcher'] = async () =>
       new Promise((resolve) => {

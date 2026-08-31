@@ -10,7 +10,7 @@ import { createNopDebugger } from './index.js';
 const SchemaRenderer = createSchemaRenderer();
 
 const env = {
-  fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
+  fetcher: async <T,>() => ({ status: 0, data: null as T }),
   notify: () => undefined,
 };
 

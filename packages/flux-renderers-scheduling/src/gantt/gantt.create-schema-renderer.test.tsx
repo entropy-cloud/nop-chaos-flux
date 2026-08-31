@@ -19,7 +19,7 @@ const SchemaRenderer = createSchemaRenderer([
 ] as never);
 
 const env: RendererEnv = {
-  fetcher: async function <T>() { return { ok: true, status: 200, data: null as T }; },
+  fetcher: async function <T>() { return { status: 0, data: null as T }; },
   notify: () => undefined,
 };
 const formulaCompiler = createFormulaCompiler();

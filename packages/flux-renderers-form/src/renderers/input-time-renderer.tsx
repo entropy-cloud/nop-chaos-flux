@@ -121,6 +121,10 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
   }
 
   function stepField(field: 'hours' | 'minutes', delta: number) {
+    // [G2-R2-视角3-01] entry guard (double layer with the button disabled attr,
+    // same contract as input-number's commitStep guard): a locked field cannot
+    // be rewritten through the stepper channels.
+    if (!presentation.interactive) return;
     const current = parseDate(storedValue, valueFormat) ?? new Date(2000, 0, 1, 0, 0, 0);
     const next = new Date(current);
     if (field === 'hours') {
@@ -141,6 +145,8 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
 
   if (steppers) {
     // Sundial-style stepper layout: [hour -/+] HH : MM [+/- minute].
+    // [G2-R2-视角3-01] all four steppers consume the disabled/readOnly gate.
+    const stepperLocked = !presentation.interactive;
     const displayValue = storedValue
       ? convertValueFormat(storedValue, valueFormat, timeInputFormat)
       : undefined;
@@ -150,6 +156,8 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
       <div
         className={cn('nop-input-time', 'flex items-center gap-1', props.meta.className)}
         data-steppers="true"
+        data-disabled={stepperLocked || undefined}
+        aria-disabled={stepperLocked || undefined}
       >
         <div className="flex flex-col">
           <StepperButton
@@ -157,12 +165,14 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
             label={`+${hourStep} ${t('flux.date.hour')}`}
             testid={`${baseTestId}hour-up`}
             onClick={stepHourUp}
+            disabled={stepperLocked}
           />
           <StepperButton
             direction="down"
             label={`-${hourStep} ${t('flux.date.hour')}`}
             testid={`${baseTestId}hour-down`}
             onClick={stepHourDown}
+            disabled={stepperLocked}
           />
         </div>
         <span
@@ -177,12 +187,14 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
             label={`+${minuteStep} ${t('flux.date.minute')}`}
             testid={`${baseTestId}minute-up`}
             onClick={stepMinuteUp}
+            disabled={stepperLocked}
           />
           <StepperButton
             direction="down"
             label={`-${minuteStep} ${t('flux.date.minute')}`}
             testid={`${baseTestId}minute-down`}
             onClick={stepMinuteDown}
+            disabled={stepperLocked}
           />
         </div>
       </div>

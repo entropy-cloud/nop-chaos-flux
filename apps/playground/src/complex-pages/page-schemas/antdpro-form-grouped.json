@@ -1,0 +1,213 @@
+{
+  "type": "page",
+  "testid": "antdpro-form-grouped-page",
+  "className": "adp-root",
+  "body": [
+    {
+      "type": "container",
+      "testid": "antdpro-form-grouped-header",
+      "className": "adp-page-header px-5 pt-4 pb-4 mb-4 rounded-lg",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 6,
+          "className": "items-center adp-breadcrumb",
+          "body": [
+            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "仓储管理", "className": "adp-breadcrumb-link" },
+            { "type": "text", "text": "/" },
+            { "type": "text", "text": "入库登记" }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "入库登记",
+          "className": "adp-page-title mt-2",
+          "testid": "antdpro-form-grouped-title"
+        },
+        {
+          "type": "text",
+          "text": "分组表单双形态：区内小标题分组（fieldset）与卡片分组并存。",
+          "className": "adp-desc-label mt-1"
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-6 mb-4",
+      "body": [
+        {
+          "type": "form",
+          "id": "antdpro-grouped-inline-form",
+          "testid": "antdpro-grouped-inline-form",
+          "columnCount": 2,
+          "body": [
+            {
+              "type": "fieldset",
+              "title": "入库基信",
+              "className": "col-span-2",
+              "body": [
+                {
+                  "type": "input-text",
+                  "name": "entryNo",
+                  "label": "入库编号",
+                  "required": true,
+                  "placeholder": "如 RK202608290001"
+                },
+                {
+                  "type": "input-text",
+                  "name": "entryOperator",
+                  "label": "经手人",
+                  "required": true,
+                  "placeholder": "请输入经手人"
+                },
+                {
+                  "type": "input-date",
+                  "name": "entryDate",
+                  "label": "入库日期"
+                },
+                {
+                  "type": "select",
+                  "name": "warehouse",
+                  "label": "入库仓库",
+                  "placeholder": "选择仓库",
+                  "options": [
+                    { "label": "华东一号仓", "value": "wh-east-1" },
+                    { "label": "华东二号仓", "value": "wh-east-2" },
+                    { "label": "华南主仓", "value": "wh-south-1" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "fieldset",
+              "title": "人员信息",
+              "className": "col-span-2",
+              "body": [
+                {
+                  "type": "input-text",
+                  "name": "supervisor",
+                  "label": "监交人",
+                  "placeholder": "请输入监交人"
+                },
+                {
+                  "type": "input-text",
+                  "name": "carrier",
+                  "label": "承运人",
+                  "placeholder": "请输入承运人"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-6 mb-4",
+      "testid": "antdpro-grouped-card-desc",
+      "body": [
+        {
+          "type": "text",
+          "text": "任务描述",
+          "className": "adp-card-title mb-3",
+          "testid": "antdpro-grouped-card-desc-title"
+        },
+        {
+          "type": "form",
+          "id": "antdpro-grouped-desc-form",
+          "body": [
+            {
+              "type": "textarea",
+              "name": "remark",
+              "label": "货物备注",
+              "placeholder": "请输入本批货物的说明信息"
+            },
+            {
+              "type": "switch",
+              "name": "needReview",
+              "label": "入库后需质检复核"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "className": "adp-card p-6 mb-4",
+      "testid": "antdpro-grouped-card-owner",
+      "body": [
+        {
+          "type": "text",
+          "text": "责任信息",
+          "className": "adp-card-title mb-3",
+          "testid": "antdpro-grouped-card-owner-title"
+        },
+        {
+          "type": "form",
+          "id": "antdpro-grouped-owner-form",
+          "columnCount": 2,
+          "submitAction": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/AntdPro__submitForm",
+              "method": "post",
+              "includeScope": "*"
+            },
+            "messages": {
+              "success": "入库登记已提交，即将跳转"
+            }
+          },
+          "onSubmitSuccess": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/antdpro-result"
+            },
+            "control": {
+              "debounce": 1200
+            }
+          },
+          "body": [
+            {
+              "type": "input-text",
+              "name": "ownerDept",
+              "label": "责任部门",
+              "placeholder": "如 仓储运营部",
+              "testid": "antdpro-grouped-owner-dept"
+            },
+            {
+              "type": "input-text",
+              "name": "ownerPerson",
+              "label": "责任人",
+              "placeholder": "请输入责任人",
+              "testid": "antdpro-grouped-owner-person"
+            }
+          ],
+          "actions": [
+            {
+              "type": "button",
+              "label": "重置",
+              "className": "adp-btn adp-btn-outline",
+              "testid": "antdpro-grouped-reset",
+              "onClick": {
+                "action": "component:reset",
+                "componentId": "antdpro-grouped-owner-form"
+              }
+            },
+            {
+              "type": "button",
+              "label": "提交",
+              "className": "adp-btn adp-btn-primary",
+              "testid": "antdpro-grouped-submit",
+              "onClick": {
+                "action": "submitForm"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -94,7 +94,7 @@ const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();
 
 const demoEnv: RendererEnv = {
-  fetcher: async <T,>() => ({ ok: true, status: 200, data: null as T }),
+  fetcher: async <T,>() => ({ status: 0, data: null as T }),
   notify: (level, message) => {
     console.log(`[event-prevention-demo notify:${level}] ${message}`);
   },

@@ -51,7 +51,7 @@ export function createStreamBasedAiConnector(
 
       const { response, chunks } = await env.stream<OpenAIChatCompletionChunk>(api, ctx);
 
-      if (response.status !== 200 && !(response.status === 0 && response.ok)) {
+      if (response.status !== 200 && response.status !== 0) {
         const detail = response.msg ? ` ${response.msg}` : '';
         throw new Error(`AI stream request failed: HTTP ${response.status}${detail}`);
       }

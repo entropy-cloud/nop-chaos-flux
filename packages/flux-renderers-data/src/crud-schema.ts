@@ -48,8 +48,16 @@ export interface CrudQueryFormConfig extends SchemaObject {
         enable?: boolean;
         types?: Array<'boolean' | 'number'>;
       };
+  /**
+   * @deprecated Dead config — declared but never consumed (D1 G-A plan
+   * Decision 4). The collapse toggle is owned by crud-level `filterTogglable`;
+   * use `filterTogglable.defaultCollapsed` instead. Authoring emits a
+   * `unknown-property` warning diagnostic when set.
+   */
   defaultCollapsed?: boolean;
+  /** @deprecated Dead config — use `filterTogglable.collapsedLabel` (consumed). */
   collapsedLabel?: string;
+  /** @deprecated Dead config — use `filterTogglable.expandedLabel` (consumed). */
   expandedLabel?: string;
 }
 
@@ -69,8 +77,11 @@ export interface CrudPollingConfig extends SchemaObject {
 }
 
 export interface CrudFilterToggleConfig extends SchemaObject {
+  /** Collapse the query region on first render (mobile always starts collapsed). */
   defaultCollapsed?: boolean;
+  /** Label shown in the collapsed state summary (overrides the active-filter/i18n default). */
   collapsedLabel?: string;
+  /** Label of the collapse control while expanded (overrides the i18n default). */
   expandedLabel?: string;
 }
 
@@ -162,6 +173,12 @@ export interface CrudSelectionConfig extends SchemaObject {
   toggleOnRowClick?: boolean;
   /** Display template for selected items (e.g. summary chips). amis: labelTpl. */
   labelTpl?: string;
+  /**
+   * Header select-all scope (D1 G-B3, passed through to the internal table's
+   * `rowSelection.selectAllMode`). 'all' (default) = full row set; 'page' =
+   * current display page (check/uncheck-all-visible). Inert under radio.
+   */
+  selectAllMode?: 'all' | 'page';
 }
 
 /**

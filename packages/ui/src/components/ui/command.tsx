@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Command as CommandPrimitive } from 'cmdk';
 
 import { cn } from '../../lib/utils.js';
+import { t } from '../../lib/i18n.js';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './dialog.js';
 import { InputGroup, InputGroupAddon } from './input-group.js';
 import { SearchIcon, CheckIcon } from 'lucide-react';
@@ -20,8 +21,8 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
 }
 
 function CommandDialog({
-  title = 'Command Palette',
-  description = 'Search for a command to run...',
+  title = t('flux.command.title'),
+  description = t('flux.command.searchPlaceholder'),
   children,
   className,
   showCloseButton = false,
@@ -87,6 +88,7 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
 
 function CommandEmpty({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Empty>) {
   return (
@@ -94,7 +96,12 @@ function CommandEmpty({
       data-slot="command-empty"
       className={cn('nop-command ','py-6 text-center text-sm', className)}
       {...props}
-    />
+    >
+      {/* cmdk hardcodes role="presentation" after its props spread, so the live
+          semantics ride on an inner node: role="status" (implicit polite live
+          region) makes "no results" perceivable to assistive tech (20-02). */}
+      <span role="status" aria-live="polite">{children}</span>
+    </CommandPrimitive.Empty>
   );
 }
 

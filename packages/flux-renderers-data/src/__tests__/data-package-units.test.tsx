@@ -30,12 +30,15 @@ describe('data package units', () => {
       'statistics',
       'stat-tile',
       'sparkline',
+      'query-filter',
+      'batch-bar',
       'crud',
     ]);
     expect(registry.get('table')?.type).toBe('table');
     expect(registry.get('list')?.type).toBe('list');
     expect(registry.get('crud')?.type).toBe('crud');
     expect(registry.get('pagination')?.type).toBe('pagination');
+    expect(registry.get('batch-bar')?.type).toBe('batch-bar');
   });
 
   it('normalizes toolbar block layouts and ignores unsupported values', () => {

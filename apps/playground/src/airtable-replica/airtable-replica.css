@@ -1,0 +1,796 @@
+/*
+ * Grid-tracker replica styles (LIGHT MODE ONLY).
+ *
+ * Replicates the "spreadsheet-grade relational grid" surface (toolbar + view
+ * bar + high-density grid with typed cells + summary bar + grouped sample +
+ * field menu / hide-fields panel / record modal — see
+ * docs/analysis/ui-review/P1-reference-apps/airtable-grid.md §2/§3/§5/§6)
+ * via CSS tokens + marker classes on the playground layer only; no renderer
+ * internals are modified.
+ *
+ * Token architecture (plan 2026-08-30-0614-2 §差异声明（P6a 裁定）):
+ * page canvas #FFFFFF / toolbar & header panel #F7F7F8-family / row hover
+ * #F5F5F5, grid body text 13px, primary blue #2d7ff9, 9-color field palette
+ * ×3 sets (text/bg/icon) declared as `--at-c-*` variables, chip radius 4px,
+ * button radius 4–6px, record modal radius 8px, row-height density ladder
+ * 32/48/80/160px, hover-revealed row controls via pure CSS :hover.
+ * DEVIATIONS (analysis §6.2): ALL color values and px sizes are community
+ * consensus / reverse-engineered approximations (📊 口径), not official
+ * tokens; the primary blue is a style reference kept as an independent
+ * replica token (--at-blue), intentionally NOT mapped onto flux --primary;
+ * proprietary font (Colfax-class) approximated with the Inter stack;
+ * field-type glyphs are self-drawn colored squares with semantic characters
+ * (original artwork never copied); light-only (no dark mapping implemented).
+ *
+ * Consumed by the page schema complex-pages/page-schemas/airtable-grid.json
+ * through the `.at-root` page scope and the `.at-dialog` dialog/drawer
+ * portal scope; layout/spacing in the schema uses Tailwind utilities
+ * (dual-track rule).
+ */
+
+/* ── 1. Design tokens (light only) ──────────────────────────────────────── */
+
+/* Declared on .at-root AND .at-dialog because dialogs/drawers render through
+   a portal outside the .at-root subtree (sundial-replica.css precedent). */
+.at-root,
+.at-dialog {
+  /* surfaces */
+  --at-bg: #ffffff;
+  --at-panel: #f7f7f8;
+  --at-hover: #f5f5f5;
+  --at-active: #ececec;
+
+  /* text */
+  --at-text: #333333;
+  --at-text-secondary: #6b6b6b;
+  --at-text-tertiary: #9d9d9d;
+
+  /* borders (light row separators) */
+  --at-border: #e5e5e5;
+  --at-border-strong: #d0d0d0;
+
+  /* primary blue (📊 community value, style-reference positioning) */
+  --at-blue: #2d7ff9;
+  --at-blue-hover: #1a6fe8;
+  --at-blue-soft: #e3eefe;
+
+  /* rating star gold (📊) */
+  --at-star: #eeb902;
+
+  /* 9-color field palette ×3 sets (text / bg / icon) — full set */
+  --at-c-gray-text: #6b6967;
+  --at-c-gray-bg: #eeedec;
+  --at-c-gray-icon: #908e8b;
+  --at-c-red-text: #cf2f2f;
+  --at-c-red-bg: #fbe4e4;
+  --at-c-red-icon: #d93a3a;
+  --at-c-orange-text: #d75a00;
+  --at-c-orange-bg: #fee9d9;
+  --at-c-orange-icon: #ee6b00;
+  --at-c-yellow-text: #9a7d00;
+  --at-c-yellow-bg: #fdf6d8;
+  --at-c-yellow-icon: #d9ae00;
+  --at-c-green-text: #228e22;
+  --at-c-green-bg: #dbeadb;
+  --at-c-green-icon: #2d9f2d;
+  --at-c-teal-text: #0a8f8f;
+  --at-c-teal-bg: #d6efee;
+  --at-c-teal-icon: #12a5a5;
+  --at-c-blue-text: #1d6ff2;
+  --at-c-blue-bg: #dbe8fc;
+  --at-c-blue-icon: #2d7ff9;
+  --at-c-purple-text: #7f35d0;
+  --at-c-purple-bg: #e9e1f9;
+  --at-c-purple-icon: #8f4be8;
+  --at-c-pink-text: #d53ca8;
+  --at-c-pink-bg: #f9e3f2;
+  --at-c-pink-icon: #e041b0;
+
+  /* radius ladder (chips 4px, buttons 4–6px, record modal 8px) */
+  --at-radius-sm: 3px;
+  --at-radius: 4px;
+  --at-radius-lg: 6px;
+  --at-radius-xl: 8px;
+
+  /* row-height density ladder (📊 community values) */
+  --at-row-short: 32px;
+  --at-row-medium: 48px;
+  --at-row-tall: 80px;
+  --at-row-extra: 160px;
+
+  /* type */
+  --at-font:
+    Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+}
+
+.at-root {
+  font-family: var(--at-font);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--at-text);
+  background: var(--at-bg);
+  min-height: 100%;
+}
+
+.at-dialog {
+  background: var(--at-bg);
+  color: var(--at-text);
+  border-radius: var(--at-radius-xl);
+}
+
+.at-mono {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, 'SF Mono', Consolas, 'Liberation Mono', monospace;
+}
+
+.at-note {
+  font-size: 12px;
+  color: var(--at-text-tertiary);
+}
+
+.at-section-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--at-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* ── 2. Toolbar / view bar shared controls ──────────────────────────────── */
+
+.at-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: var(--at-radius);
+  font-size: 13px;
+  color: var(--at-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.at-btn:hover {
+  background: var(--at-hover);
+  color: var(--at-text);
+}
+
+.at-btn-primary {
+  background: var(--at-blue);
+  color: #fff;
+  font-weight: 500;
+}
+
+.at-btn-primary:hover {
+  background: var(--at-blue-hover);
+  color: #fff;
+}
+
+.at-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: var(--at-radius);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--at-text-secondary);
+  cursor: pointer;
+}
+
+.at-pill:hover {
+  background: var(--at-hover);
+}
+
+.at-pill-active {
+  background: var(--at-active);
+  color: var(--at-text);
+}
+
+.at-seg {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--at-border-strong);
+  border-radius: var(--at-radius);
+  overflow: hidden;
+}
+
+.at-seg-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--at-text-secondary);
+  cursor: pointer;
+  border-right: 1px solid var(--at-border-strong);
+}
+
+.at-seg-item:last-child {
+  border-right: none;
+}
+
+.at-seg-item:hover {
+  background: var(--at-hover);
+}
+
+.at-seg-item-active {
+  background: var(--at-blue-soft);
+  color: var(--at-blue);
+  font-weight: 500;
+}
+
+/* ── 3. Grid (table renderer restyle, 13px high-density) ────────────────── */
+
+.at-grid {
+  font-size: 13px;
+}
+
+/* 20 typed columns × natural width — the grid scrolls horizontally inside
+   the schema's overflow-x-auto wrapper instead of squeezing cells (Short
+   32px rows must not wrap their cell content). `.at-grid` sits on the table
+   element itself (nop-table at-grid). */
+.at-grid {
+  min-width: max-content;
+}
+
+.at-grid [data-slot='table-head'] {
+  background: var(--at-panel);
+  color: var(--at-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  border-bottom: 1px solid var(--at-border);
+  white-space: nowrap;
+}
+
+.at-grid [data-slot='table-row'] td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--at-border);
+  color: var(--at-text);
+  white-space: nowrap;
+}
+
+.at-grid [data-slot='table-row']:hover td {
+  background: var(--at-hover);
+}
+
+/* default grid density = Short (≈32px, 📊) */
+.at-grid [data-slot='table-row'] {
+  height: var(--at-row-short);
+}
+
+.at-cell-wrap {
+  white-space: normal !important;
+}
+
+.at-rownum {
+  color: var(--at-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.at-rownum:hover {
+  background: var(--at-active);
+  color: var(--at-text-secondary);
+  border-radius: var(--at-radius-sm);
+}
+
+/* static selected-cell blue frame sample (G-F: selection state via CSS only) */
+.at-cell-selected {
+  box-shadow: inset 0 0 0 2px var(--at-blue);
+  border-radius: 1px;
+  background: var(--at-blue-soft);
+}
+
+/* hover-revealed row tools (grid soul approximation: expand / cell-zoom) */
+.at-row-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.at-grid [data-slot='table-row']:hover .at-row-tools {
+  opacity: 1;
+}
+
+.at-cell-open {
+  height: 22px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--at-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--at-radius-sm);
+  cursor: pointer;
+}
+
+.at-cell-open:hover {
+  background: var(--at-active);
+  color: var(--at-text);
+}
+
+/* ── 4. Field-type glyphs (self-drawn colored squares, no original art) ─── */
+
+.at-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+}
+
+.at-glyph-gray {
+  background: var(--at-c-gray-icon);
+}
+.at-glyph-red {
+  background: var(--at-c-red-icon);
+}
+.at-glyph-orange {
+  background: var(--at-c-orange-icon);
+}
+.at-glyph-yellow {
+  background: var(--at-c-yellow-icon);
+}
+.at-glyph-green {
+  background: var(--at-c-green-icon);
+}
+.at-glyph-teal {
+  background: var(--at-c-teal-icon);
+}
+.at-glyph-blue {
+  background: var(--at-c-blue-icon);
+}
+.at-glyph-purple {
+  background: var(--at-c-purple-icon);
+}
+.at-glyph-pink {
+  background: var(--at-c-pink-icon);
+}
+
+.at-field-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── 5. Chips / avatars / links / numeric cells ─────────────────────────── */
+
+.at-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--at-radius);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.at-chip-gray {
+  color: var(--at-c-gray-text);
+  background: var(--at-c-gray-bg);
+}
+.at-chip-red {
+  color: var(--at-c-red-text);
+  background: var(--at-c-red-bg);
+}
+.at-chip-orange {
+  color: var(--at-c-orange-text);
+  background: var(--at-c-orange-bg);
+}
+.at-chip-yellow {
+  color: var(--at-c-yellow-text);
+  background: var(--at-c-yellow-bg);
+}
+.at-chip-green {
+  color: var(--at-c-green-text);
+  background: var(--at-c-green-bg);
+}
+.at-chip-teal {
+  color: var(--at-c-teal-text);
+  background: var(--at-c-teal-bg);
+}
+.at-chip-blue {
+  color: var(--at-c-blue-text);
+  background: var(--at-c-blue-bg);
+}
+.at-chip-purple {
+  color: var(--at-c-purple-text);
+  background: var(--at-c-purple-bg);
+}
+.at-chip-pink {
+  color: var(--at-c-pink-text);
+  background: var(--at-c-pink-bg);
+}
+
+.at-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  font-size: 11px;
+}
+
+.at-avatar-gray {
+  background: var(--at-c-gray-bg);
+  color: var(--at-c-gray-icon);
+}
+.at-avatar-red {
+  background: var(--at-c-red-bg);
+  color: var(--at-c-red-icon);
+}
+.at-avatar-orange {
+  background: var(--at-c-orange-bg);
+  color: var(--at-c-orange-icon);
+}
+.at-avatar-yellow {
+  background: var(--at-c-yellow-bg);
+  color: var(--at-c-yellow-icon);
+}
+.at-avatar-green {
+  background: var(--at-c-green-bg);
+  color: var(--at-c-green-icon);
+}
+.at-avatar-teal {
+  background: var(--at-c-teal-bg);
+  color: var(--at-c-teal-icon);
+}
+.at-avatar-blue {
+  background: var(--at-c-blue-bg);
+  color: var(--at-c-blue-icon);
+}
+.at-avatar-purple {
+  background: var(--at-c-purple-bg);
+  color: var(--at-c-purple-icon);
+}
+.at-avatar-pink {
+  background: var(--at-c-pink-bg);
+  color: var(--at-c-pink-icon);
+}
+
+.at-link {
+  color: var(--at-blue);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.at-link:hover {
+  text-decoration: underline;
+}
+
+.at-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.at-readonly {
+  color: var(--at-text-tertiary);
+}
+
+.at-rating {
+  color: var(--at-star);
+  font-size: 13px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.at-rating-off {
+  color: var(--at-border-strong);
+}
+
+.at-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--at-radius-sm);
+  font-size: 10px;
+  color: #fff;
+}
+
+.at-thumb-gray {
+  background: var(--at-c-gray-icon);
+}
+.at-thumb-red {
+  background: var(--at-c-red-icon);
+}
+.at-thumb-orange {
+  background: var(--at-c-orange-icon);
+}
+.at-thumb-yellow {
+  background: var(--at-c-yellow-icon);
+}
+.at-thumb-green {
+  background: var(--at-c-green-icon);
+}
+.at-thumb-teal {
+  background: var(--at-c-teal-icon);
+}
+.at-thumb-blue {
+  background: var(--at-c-blue-icon);
+}
+.at-thumb-purple {
+  background: var(--at-c-purple-icon);
+}
+.at-thumb-pink {
+  background: var(--at-c-pink-icon);
+}
+
+.at-thumb-more {
+  background: var(--at-panel);
+  border: 1px solid var(--at-border-strong);
+  color: var(--at-text-secondary);
+}
+
+.at-barcode {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--at-text-secondary);
+}
+
+.at-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--at-radius-sm);
+  border: 1px solid var(--at-border-strong);
+  font-size: 12px;
+  line-height: 1;
+  color: transparent;
+  background: var(--at-bg);
+}
+
+.at-check-on {
+  background: var(--at-blue);
+  border-color: var(--at-blue);
+  color: #fff;
+}
+
+/* long-text cell truncation + expand entry (cell expand 🌐) */
+.at-longtext-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 168px;
+}
+
+/* single-line truncation helper for flex children (group rows / density rows) */
+.at-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 6. Row-height density ladder static samples ────────────────────────── */
+
+.at-density-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--at-border);
+  overflow: hidden;
+}
+
+.at-density-short {
+  height: var(--at-row-short);
+}
+.at-density-medium {
+  height: var(--at-row-medium);
+}
+.at-density-tall {
+  height: var(--at-row-tall);
+}
+.at-density-extra {
+  height: var(--at-row-extra);
+}
+
+/* ── 7. Summary bar + grouped sample ────────────────────────────────────── */
+
+.at-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--at-border);
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--at-text-secondary);
+  background: var(--at-bg);
+}
+
+.at-summary-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.at-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 8px;
+  background: var(--at-panel);
+  border-bottom: 1px solid var(--at-border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--at-text);
+}
+
+.at-group-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 28px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--at-border);
+  font-size: 12px;
+  color: var(--at-text-secondary);
+}
+
+/* ── 8. Field menu / hide-fields panel shared forms ─────────────────────── */
+
+.at-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--at-radius);
+  font-size: 13px;
+  color: var(--at-text);
+  cursor: pointer;
+}
+
+.at-menu-item:hover {
+  background: var(--at-hover);
+}
+
+.at-menu-item-danger {
+  color: var(--at-c-red-text);
+}
+
+.at-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 2px 6px;
+  border-radius: var(--at-radius);
+}
+
+.at-field-row:hover {
+  background: var(--at-hover);
+}
+
+/* hide-fields toggle static form (zero-effect; wiring belongs to Pi-b) */
+.at-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--at-blue);
+}
+
+.at-toggle-knob {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: #fff;
+}
+
+.at-record-section {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--at-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.at-prop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.at-prop-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 132px;
+  flex-shrink: 0;
+  color: var(--at-text-tertiary);
+  font-size: 12px;
+}
+
+/* ── 9. Live density switching (P6b A9 wiring: seg control setValue →
+      className expression on the grid scroll wrapper → row-height var) ── */
+
+.at-density-live-short .at-grid [data-slot='table-row'] {
+  height: var(--at-row-short);
+}
+
+.at-density-live-medium .at-grid [data-slot='table-row'] {
+  height: var(--at-row-medium);
+}
+
+.at-density-live-tall .at-grid [data-slot='table-row'] {
+  height: var(--at-row-tall);
+}
+
+.at-density-live-extra .at-grid [data-slot='table-row'] {
+  height: var(--at-row-extra);
+}
+
+/* ── 10. Column-menu sort items carried by mini-forms (P6b A5 wiring:
+      form submitScope surface + submitAction setValue crosses the dialog
+      sub-scope boundary; the actions wrapper is neutralized so the button
+      reads as a plain menu row) ─────────────────────────────────────────── */
+
+.at-menu-form {
+  padding: 0 8px;
+  margin: 0;
+}
+
+.at-menu-form [data-slot='form-actions'] {
+  display: contents;
+}
+
+.at-menu-item-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--at-text);
+  cursor: pointer;
+}
+
+.at-menu-item-btn:hover {
+  background: transparent;
+  color: var(--at-blue);
+}
+
+/* ── 11. Record modal editing (P6b A11a/A11b wiring) ────────────────────── */
+
+/* boundary-disabled nav button (prevId/nextId missing at first/last record) */
+.at-btn-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* two-per-row edit field grid inside the record modal edit area */
+.at-edit-grid {
+  align-items: flex-start;
+}
+
+.at-edit-field {
+  flex: 1 1 42%;
+  min-width: 42%;
+}

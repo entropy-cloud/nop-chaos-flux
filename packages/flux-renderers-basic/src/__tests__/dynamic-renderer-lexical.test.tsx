@@ -33,8 +33,7 @@ afterEach(() => {
 describe('dynamic-renderer — lexical / per-instance scope isolation (DD13)', () => {
   it('(a) reads its child (row) scope, not the page root', async () => {
     const fetcher = createMockFetcher(async () => ({
-      ok: true,
-      status: 200,
+            status: 0,
       data: { type: 'text', text: 'name=${name}' },
     }));
     const SchemaRenderer = createBasicSchemaRenderer();
@@ -72,8 +71,7 @@ describe('dynamic-renderer — lexical / per-instance scope isolation (DD13)', (
 
   it('(b) two same-schema instances in different scopes never collide', async () => {
     const fetcher = createMockFetcher(async () => ({
-      ok: true,
-      status: 200,
+            status: 0,
       data: { type: 'text', text: 'Hi ${name}' },
     }));
     const SchemaRenderer = createBasicSchemaRenderer();

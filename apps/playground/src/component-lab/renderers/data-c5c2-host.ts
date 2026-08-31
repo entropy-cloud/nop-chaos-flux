@@ -275,14 +275,14 @@ export const c5c2CrudRowFetcher = (async (api: { url?: string; data?: unknown })
   const url = api.url ?? '';
   if (url.includes('__get')) {
     const id = new URLSearchParams(url.split('?')[1] ?? '').get('id') ?? '1';
-    return { ok: true, status: 200, data: rowGetResponses[id] ?? null };
+    return { status: 0, data: rowGetResponses[id] ?? null };
   }
   if (url.includes('__update')) {
     (window as unknown as { __c5c2RowEditProbe?: unknown }).__c5c2RowEditProbe = api.data;
-    return { ok: true, status: 200, data: api.data };
+    return { status: 0, data: api.data };
   }
   if (url.includes('__findPage') || url.includes('__findList')) {
-    return { ok: true, status: 200, data: { total: 0, items: [] } };
+    return { status: 0, data: { total: 0, items: [] } };
   }
-  return { ok: true, status: 200, data: null };
+  return { status: 0, data: null };
 }) as unknown as RendererEnv['fetcher'];

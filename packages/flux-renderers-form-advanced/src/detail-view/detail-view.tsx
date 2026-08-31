@@ -30,6 +30,7 @@ import {
 import { DetailDraftBody, DetailDraftFooter, DetailSurface } from './detail-surface.js';
 import {
   buildDetailDraftInitialValues,
+  isDetailDraftDirty,
   readDetailDraftValues,
   useDetailAdaptationAction,
   useDetailChildValidationContract,
@@ -124,6 +125,8 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     confirmSequencer,
   } = useDetailDraftControllerState();
   const [, bumpViewerRevision] = React.useReducer((value: number) => value + 1, 0);
+  // [G2-R6-视角6-01] baseline the dirty check against the values the draft opened with.
+  const draftInitialValuesRef = React.useRef<Record<string, unknown>>({});
 
   const childOwnerId = React.useMemo(
     () => `detail-view:${props.id}:${scopePath ?? 'root'}`,
@@ -347,6 +350,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       );
 
       const initialValues = buildDetailDraftInitialValues(adaptedValue, getInitialValues());
+      draftInitialValuesRef.current = initialValues;
 
       const newDraftForm = runtime.createFormRuntime({
         id: `detail-view-draft:${scopePath ?? 'static'}:${Date.now()}`,
@@ -397,13 +401,38 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       Object.keys(writes).map((path) => [path, readCurrentValueAtPath(path)]),
     );
 
-    applyCommittedWrites(writes);
+    // 19-01: the apply→validate→rollback chain must converge on rollback even
+    // when applying the writes or the parent validation throws (validation
+    // actions rethrow through the validateSubtree seam). Without this guard
+    // the committed writes stay in the parent scope while the caller only
+    // sees the "confirm failed" notification — ghost writes with a failed
+    // confirm. Behavior mirrors the explicit !settled / !draftValid branches:
+    // restore previousValues, then let the error escape.
+    try {
+      applyCommittedWrites(writes);
 
-    if (parentForm) {
-      const settled = await settleParentValidation();
-      if (!settled) {
-        await rollbackCommittedWrites(previousValues);
-        return false;
+      if (parentForm) {
+        const settled = await settleParentValidation();
+        if (!settled) {
+          await rollbackCommittedWrites(previousValues);
+          return false;
+        }
+
+        const draftValid = await validateCommittedDraftLocally(draftValues);
+        if (!draftValid) {
+          await rollbackCommittedWrites(previousValues);
+          return false;
+        }
+
+        return true;
+      }
+
+      if (hasUsableParentValidationOwner()) {
+        const settled = await settleParentValidation();
+        if (!settled) {
+          await rollbackCommittedWrites(previousValues);
+          return false;
+        }
       }
 
       const draftValid = await validateCommittedDraftLocally(draftValues);
@@ -413,23 +442,10 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
       }
 
       return true;
-    }
-
-    if (hasUsableParentValidationOwner()) {
-      const settled = await settleParentValidation();
-      if (!settled) {
-        await rollbackCommittedWrites(previousValues);
-        return false;
-      }
-    }
-
-    const draftValid = await validateCommittedDraftLocally(draftValues);
-    if (!draftValid) {
+    } catch (error) {
       await rollbackCommittedWrites(previousValues);
-      return false;
+      throw error;
     }
-
-    return true;
   }
 
   async function handleConfirm() {
@@ -517,6 +533,11 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
     closeDraft();
   }
 
+  const isDraftDirty = React.useCallback(
+    () => (draftForm ? isDetailDraftDirty(draftForm, draftInitialValuesRef.current) : false),
+    [draftForm],
+  );
+
   const viewerContent = resolveRendererSlotContent(props, 'viewer');
   const editContent = resolveRendererSlotContent(props, 'content');
   return (
@@ -553,6 +574,7 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
         size={(schemaProps.surface as { size?: string } | undefined)?.size}
         placement={(schemaProps.surface as { placement?: string } | undefined)?.placement}
         onClose={handleCancel}
+        isDirty={readOnly ? undefined : isDraftDirty}
         footer={
           <DetailDraftFooter
             error={draftError}

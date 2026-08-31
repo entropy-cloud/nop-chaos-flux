@@ -13,9 +13,9 @@ const loopRowEditFetcher = (async (api: { url?: string; data?: unknown }) => {
   const url = api.url ?? '';
   if (url.includes('Row__save')) {
     (window as unknown as { __loopRowEditProbe?: unknown }).__loopRowEditProbe = api.data;
-    return { ok: true, status: 200, data: api.data };
+    return { status: 0, data: api.data };
   }
-  return { ok: true, status: 200, data: null };
+  return { status: 0, data: null };
 }) as unknown as RendererEnv['fetcher'];
 
 const loopRowEdit = {
