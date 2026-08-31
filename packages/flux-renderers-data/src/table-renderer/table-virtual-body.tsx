@@ -125,6 +125,11 @@ export function VirtualBody({
     },
   });
 
+  // 15-03: row heights are measured, not trusted — the 44px/120px estimates are
+  // only seeds, so wrapping content (or tall expanded bodies) cannot drift the
+  // scroll spacers (same wiring as ai-message-list / kanban virtualizer).
+  const measureRef = rowVirtualizer.measureElement;
+
   // [G3-R3-视角4-01] the virtual body must keep RadioGroupItem cells inside a
   // RadioGroup exactly like the non-virtual branch — without the group wrapper
   // Base UI radios are context-less (checked reads `value === ''`, writes are
@@ -202,6 +207,7 @@ export function VirtualBody({
                     draggable,
                     rowDragSortApi,
                     indexColumnOffset,
+                    measureRef,
                   )}
                 </React.Fragment>
               );
@@ -217,6 +223,8 @@ export function VirtualBody({
                   rowScopeCache,
                   rowRepeatedTemplateId,
                   responsiveHiddenColumns,
+                  measureRef,
+                  virtualRow.index,
                 )}
               </React.Fragment>
             );

@@ -277,7 +277,9 @@ describe('query-filter render behavior', () => {
     });
     const root = queryFilterRoot() as HTMLElement;
     expect(root?.getAttribute('data-collapsed')).toBe('true');
-    expect(screen.queryByTestId('qf-kw')).toBeNull();
+    // 22-04 keep-mounted: the form is hidden, not unmounted.
+    const collapsedInput = screen.getByTestId('qf-kw');
+    expect(collapsedInput.closest('div[hidden]')).toBeTruthy();
     const summary = root?.querySelector('[data-slot="query-filter-summary"]');
     expect(summary?.textContent).toBe('Custom collapsed summary');
     const toggleBtn = root?.querySelector('[data-slot="query-filter-collapse"] button');
@@ -311,7 +313,8 @@ describe('query-filter render behavior', () => {
 
     fireEvent.click(toggleBtn);
     expect((queryFilterRoot() as HTMLElement).getAttribute('data-collapsed')).toBe('true');
-    expect(screen.queryByTestId('qf-kw')).toBeNull();
+    // 22-04 keep-mounted: collapsed hides the form instead of unmounting it.
+    expect(screen.getByTestId('qf-kw').closest('div[hidden]')).toBeTruthy();
     expect(
       (queryFilterRoot() as HTMLElement).querySelector(
         '[data-slot="query-filter-summary"]',

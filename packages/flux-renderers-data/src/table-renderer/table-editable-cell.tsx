@@ -349,6 +349,12 @@ export function TableEditableCell(props: TableEditableCellProps) {
   };
 
   const toggleCheckbox = (checked: boolean) => {
+    // 22-01: the checkbox editor shares the sibling editors' `disabled={saving}`
+    // in-flight gate — a second toggle (rapid click / keydown repeat) while a
+    // save is pending must not dispatch a second save.
+    if (saving) {
+      return;
+    }
     const commitToggle = async () => {
       if (!saveAction) {
         rowScope.update(field, checked);
@@ -423,6 +429,7 @@ export function TableEditableCell(props: TableEditableCellProps) {
           aria-label={typeof column.label === 'string' ? column.label : field}
           onCheckedChange={(checked) => toggleCheckbox(checked === true)}
           onClick={(event) => event.stopPropagation()}
+          disabled={saving}
         />
       </span>
     );

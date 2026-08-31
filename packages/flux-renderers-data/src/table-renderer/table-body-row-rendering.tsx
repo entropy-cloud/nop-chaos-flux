@@ -60,6 +60,8 @@ type DataRowRenderProps = {
   lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>;
   draggable?: boolean;
   rowDragSortApi?: RowDragSortApi | null;
+  /** 15-03: virtual-body measurement wiring (`virtualizer.measureElement`). */
+  measureRef?: React.Ref<HTMLTableRowElement>;
 };
 
 function DataRowView({
@@ -86,6 +88,7 @@ function DataRowView({
   lazyChildrenMap,
   draggable,
   rowDragSortApi,
+  measureRef,
 }: DataRowRenderProps) {
   const { rowKey, rowInstancePath, isExpanded, isSelected, isEven, entry, rowScope } = item;
   const viewIndex = entry.viewIndex ?? rowIndex;
@@ -211,6 +214,8 @@ function DataRowView({
   const rowContent = (
     <TableRow
       {...tableRowOptionRowProps(optionRowState)}
+      ref={measureRef}
+      data-index={measureRef ? rowIndex : undefined}
       data-slot="table-row"
       data-row-toggleable={toggleOnRowClick || undefined}
       data-interactive={isRowClickable || undefined}
@@ -605,7 +610,8 @@ const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
     prev.onToggleTreeExpand === next.onToggleTreeExpand &&
     prev.lazyChildrenMap === next.lazyChildrenMap &&
     prev.draggable === next.draggable &&
-    prev.rowDragSortApi === next.rowDragSortApi
+    prev.rowDragSortApi === next.rowDragSortApi &&
+    prev.measureRef === next.measureRef
   );
 });
 
@@ -648,6 +654,7 @@ export function renderDataRow(
   draggable?: boolean,
   rowDragSortApi?: RowDragSortApi | null,
   indexColumnOffset?: number,
+  measureRef?: React.Ref<HTMLTableRowElement>,
 ) {
   return (
     <MemoizedDataRow
@@ -674,6 +681,7 @@ export function renderDataRow(
       draggable={draggable}
       rowDragSortApi={rowDragSortApi}
       indexColumnOffset={indexColumnOffset}
+      measureRef={measureRef}
     />
   );
 }

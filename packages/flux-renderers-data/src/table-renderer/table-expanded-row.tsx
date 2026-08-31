@@ -1,5 +1,6 @@
 import type { InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
+import type { Ref } from 'react';
 import { TableCell, TableRow } from '@nop-chaos/ui';
 import type { TableSchema, TableColumnSchema } from '../schemas.js';
 import { asReactNode } from './table-cell-chrome.js';
@@ -13,6 +14,8 @@ export function renderExpandedRow(
   rowScopeCache: Map<string, ScopeRef>,
   rowRepeatedTemplateId: string,
   responsiveHiddenColumns: TableColumnSchema[],
+  measureRef?: Ref<HTMLTableRowElement>,
+  virtualIndex?: number,
 ) {
   const regionKey = schemaProps.expandable?.expandedRowRegionKey;
   const hasResponsiveHiddenColumns = responsiveHiddenColumns.length > 0;
@@ -27,7 +30,11 @@ export function renderExpandedRow(
   ];
 
   return (
-    <TableRow data-slot="table-expanded-row">
+    <TableRow
+      ref={measureRef}
+      data-index={measureRef && virtualIndex !== undefined ? virtualIndex : undefined}
+      data-slot="table-expanded-row"
+    >
       <TableCell colSpan={item.columnCount} data-slot="table-expanded-cell">
         {hasResponsiveHiddenColumns ? (
           <div

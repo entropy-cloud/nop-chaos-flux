@@ -136,7 +136,9 @@ describe('CRUD responsive — query region default collapsed on mobile (M4a)', (
 
     const expandButton = screen.queryByRole('button', { name: t('flux.crud.expandQuery') });
     expect(expandButton).toBeTruthy();
-    expect(screen.queryByLabelText('Keyword')).toBeNull();
+    // 22-04 keep-mounted: collapsed hides the form instead of unmounting it.
+    const collapsedInput = screen.getByLabelText('Keyword');
+    expect(collapsedInput.closest('div[hidden]')).toBeTruthy();
   });
 
   it('can expand the mobile-collapsed query region by clicking the toggle', async () => {
@@ -146,7 +148,7 @@ describe('CRUD responsive — query region default collapsed on mobile (M4a)', (
       expect(document.querySelector('[data-slot="crud-query-collapse"]')).toBeTruthy();
     });
 
-    expect(screen.queryByLabelText('Keyword')).toBeNull();
+    expect(screen.getByLabelText('Keyword').closest('div[hidden]')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: t('flux.crud.expandQuery') }));
 
     await waitFor(() => {

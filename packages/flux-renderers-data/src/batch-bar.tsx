@@ -39,7 +39,9 @@ export function BatchBarRenderer(props: RendererComponentProps<BatchBarSchema>) 
   const selection = useScopeSelector(
     (scopeData) => toStringArray(getIn(scopeData, selectionPath)),
     areStringArraysEqual,
-    { enabled: selectionPath.length > 0 },
+    // 05-02: the disabled branch (no selectionPath) must resolve to `[]` so the
+    // "never throws" promise in the comment below actually holds.
+    { enabled: selectionPath.length > 0, fallback: [] },
   );
 
   // Built-in non-empty gate (batch-bar-empty): empty selection / missing path /

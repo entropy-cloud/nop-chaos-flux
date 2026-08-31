@@ -43,6 +43,7 @@ import { resolvePaginationMode, isAtLastPage, regionHasRendererType } from './cr
 import { useInfiniteScroll } from './use-infinite-scroll.js';
 import { asReactNode, delegateTableRendererProps, resolveCrudSlotContent } from './crud-renderer-delegate.js';
 import { useCrudFilterToggle } from './use-crud-filter-toggle.js';
+import { useCrudQueryFormScope } from './use-crud-query-form-scope.js';
 import { CrudListPagination } from './crud-list-pagination.js';
 import { CrudInfiniteScrollArea } from './crud-infinite-scroll-area.js';
 
@@ -229,10 +230,13 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     filters: filterState,
     visibleColumnNames,
   };
+  const selectionField = normalizedSchema.selectionField ?? 'ids';
   const crudScope = createReadonlyScopeBinding(scope, '$crud', () => summary, () => ({
     // AMIS 兼容：批量操作 URL 模板 ${ids}（或 selectionField 自定义名）解析到选中行键
-    [normalizedSchema.selectionField ?? 'ids']: selectedRowKeys,
+    [selectionField]: selectedRowKeys,
   }));
+  // 22-04: identity-stable $crud binding for the embedded query form (keeps the draft alive across crud re-renders).
+  const queryFormScope = useCrudQueryFormScope(scope, selectionField, summary, selectedRowKeys);
 
   const handleRefresh = (ctx?: CrudRefreshContext): Promise<unknown> | void => {
     if (normalizedSchema.autoClearSelectionOnRefresh) {
@@ -592,16 +596,14 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
               </Button>
             </div>
           ) : null}
-          {!filterToggle.collapsed || !filterToggle.enabled ? (
-            <div className={filterToggle.enabled ? 'mt-3' : ''}>
-              {asReactNode(
-                props.regions.queryFormRegion?.render({
-                  pathSuffix: 'queryForm',
-                  scope: crudScope,
-                }),
-              )}
-            </div>
-          ) : null}
+          <div
+            className={filterToggle.enabled ? 'mt-3' : ''}
+            hidden={filterToggle.enabled && filterToggle.collapsed ? true : undefined}
+          >
+            {asReactNode(
+              props.regions.queryFormRegion?.render({ pathSuffix: 'queryForm', scope: queryFormScope }),
+            )}
+          </div>
         </div>
       ) : null}
 

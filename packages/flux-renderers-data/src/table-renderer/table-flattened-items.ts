@@ -155,13 +155,16 @@ export function areColumnsRenderEquivalent(
         column.buttonsRegionKey === nextColumn.buttonsRegionKey &&
         column.labelRegionKey === nextColumn.labelRegionKey &&
         column.popOver === nextColumn.popOver &&
-        // G6: these fields drive cell chrome (quick-edit control, copy button).
-        // Omitting them left the comparator blind to schema changes that only
-        // toggled edit/copy, so MemoizedDataRow skipped re-rendering and the
-        // chrome went stale.
+        // G6: these fields drive cell chrome (quick-edit control, copy button,
+        // editable cell machine). Omitting them left the comparator blind to
+        // schema changes that only toggled edit/copy, so MemoizedDataRow
+        // skipped re-rendering and the chrome went stale. `editable` belongs
+        // in the same set (13-02): dynamic-column schema updates that only
+        // toggle `editable` must re-render the row's edit chrome.
         column.quickEdit === nextColumn.quickEdit &&
         column.quickEditBodyRegionKey === nextColumn.quickEditBodyRegionKey &&
-        column.copyable === nextColumn.copyable)
+        column.copyable === nextColumn.copyable &&
+        column.editable === nextColumn.editable)
     );
   });
 }

@@ -59,7 +59,18 @@ export function QueryFilterRenderer(props: RendererComponentProps<QueryFilterSch
           </Button>
         </div>
       ) : null}
-      {!collapsed || !enabled ? <div className={enabled ? 'mt-3' : ''}>{formContent}</div> : null}
+      {/* 22-04: the embedded form stays mounted while collapsed (hidden, not
+          unmounted) — a draft typed into the query form must survive
+          collapse/expand instead of being dropped with the disposed form
+          runtime. */}
+      {!collapsed || !enabled || formContent ? (
+        <div
+          className={enabled ? 'mt-3' : ''}
+          hidden={enabled && collapsed ? true : undefined}
+        >
+          {formContent}
+        </div>
+      ) : null}
     </div>
   );
 }
