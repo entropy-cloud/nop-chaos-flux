@@ -1,8 +1,47 @@
 # 内容展示组件
 
-> `icon`、`badge`、`link`、`image`、`html`、`json-view`、`markdown`、`statistics`、`empty`、`spinner`、`progress` 是轻量级展示组件。
+> `text`、`icon`、`badge`、`link`、`image`、`html`、`json-view`、`markdown`、`statistics`、`empty`、`spinner`、`progress` 是轻量级展示组件。
 >
 > 所有字段定义见 `flux-types/schema.d.ts`。
+
+---
+
+## 0. Text 文本
+
+```jsonc
+{
+  "type": "text",
+  "text": "Hello World",
+  "tag": "h3",
+  "className": "text-primary font-bold",
+}
+```
+
+**tag**：`'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'label' | 'div'`，指定渲染的 HTML 标签。
+
+**className**：CSS 类名，用于样式控制（如 `text-muted`、`text-success`、`font-bold` 等）。
+
+**text**：纯文本内容（不支持 HTML 标签）。如需渲染 HTML，请使用 `type: html`。
+
+**KPI 卡片示例**：
+
+```jsonc
+{
+  "type": "card",
+  "className": "border rounded p-3",
+  "body": [
+    { "type": "text", "tag": "div", "className": "text-muted", "text": "本期收入" },
+    {
+      "type": "text",
+      "tag": "h3",
+      "className": "text-success",
+      "text": "¥${kpiData?.revenue ?? 0}",
+    },
+  ],
+}
+```
+
+> **注意**：`text` 组件渲染纯文本，不解析 HTML。如需渲染 HTML 内容（如 `<span class='text-danger'>`），请使用 `type: html`（有安全风险，需信任来源）。
 
 ---
 
