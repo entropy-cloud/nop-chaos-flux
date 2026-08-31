@@ -189,5 +189,11 @@ export function useKeyboardBindings(options: UseKeyboardBindingsOptions): void {
       window.removeEventListener('keydown', handler);
       disarm();
     };
-  }, [signature, surfaceState]);
+    // 06-02: `enabled` must (re)run the attach effect — the attach-time gate
+    // reads the frozen optionsRef snapshot, so a binding mounted with
+    // enabled:false never attached when enabled later flipped true. Keeping
+    // `enabled` out of `signature` avoids a redundant remount on unrelated
+    // binding reshuffles. true→false detach stays handled by both the effect
+    // cleanup and the per-event optionsRef gate.
+  }, [signature, surfaceState, enabled]);
 }
