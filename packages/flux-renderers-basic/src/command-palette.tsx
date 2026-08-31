@@ -22,6 +22,7 @@ import {
   CommandItem,
   CommandList,
   CommandShortcut,
+  cn,
   resolveLucideIcon,
 } from '@nop-chaos/ui';
 import type { CommandPaletteSchema } from './schemas.js';
@@ -404,7 +405,7 @@ export function CommandPaletteRenderer(props: RendererComponentProps<CommandPale
       <Command
         data-testid={meta.testid || undefined}
         data-cid={meta.cid ?? undefined}
-        className="nop-command-palette"
+        className={cn('nop-command-palette', meta.className)}
         shouldFilter={shouldFilter}
       >
         <CommandInput placeholder={placeholder} />

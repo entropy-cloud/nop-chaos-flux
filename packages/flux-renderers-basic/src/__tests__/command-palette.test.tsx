@@ -461,3 +461,25 @@ describe('command-palette open/close matrix', () => {
     );
   });
 });
+
+describe('command-palette schema className merge (10-02)', () => {
+  it('merges meta.className into the nop-command-palette root (sibling parity)', async () => {
+    renderSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'command-palette',
+          id: 'styled-palette',
+          testid: 'cmdk',
+          className: 'consumer-palette-class',
+          defaultOpen: true,
+          items: [{ id: 'a', label: 'Alpha' }],
+        },
+      ],
+    });
+    await waitFor(() => expect(queryPalette()).not.toBeNull());
+    const palette = queryPalette()!;
+    expect(palette.className).toContain('nop-command-palette');
+    expect(palette.className).toContain('consumer-palette-class');
+  });
+});

@@ -1,0 +1,34 @@
+/* Page renderer slot layout baselines (10-01).
+ *
+ * Page is an explicit layout renderer: marker-only component output, slot
+ * layout rules live here in @layer base behind `[data-slot]` selectors so
+ * hosts can retune spacing/sizing via CSS variables or override the rules
+ * entirely (layer order: base < utilities < host css). Mirrors the
+ * flux-react/default-spacing.css channel. See docs/architecture/styling-system.md.
+ */
+@layer base {
+  .nop-page [data-slot='page-heading'] {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-page-heading-gap, 0.5rem);
+  }
+
+  .nop-page [data-slot='page-extra'] {
+    margin-left: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-page-heading-gap, 0.5rem);
+  }
+
+  .nop-page [data-slot='page-breadcrumb'] [data-slot='breadcrumb-link'],
+  .nop-page [data-slot='page-breadcrumb'] [data-slot='breadcrumb-page'] {
+    min-width: 0;
+    max-width: var(--space-page-breadcrumb-max, 10rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

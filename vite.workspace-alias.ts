@@ -43,6 +43,9 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux': fileURLToPath(
     new URL('./packages/flux-bundle/src/index.tsx', import.meta.url),
   ),
+  '@nop-chaos/flux-renderers-basic/styles.css': fileURLToPath(
+    new URL('./packages/flux-renderers-basic/src/styles.css', import.meta.url),
+  ),
   '@nop-chaos/flux-renderers-basic': fileURLToPath(
     new URL('./packages/flux-renderers-basic/src/index.tsx', import.meta.url),
   ),

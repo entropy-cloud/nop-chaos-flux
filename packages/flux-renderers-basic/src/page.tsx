@@ -62,7 +62,10 @@ export function normalizeBreadcrumbItems(value: unknown): PageBreadcrumbItem[] {
   return items;
 }
 
-const BREADCRUMB_ITEM_CLASS = 'min-w-0 max-w-40 truncate';
+// 10-01: slot layout baselines (breadcrumb item truncation, page-heading row,
+// page-extra right cluster) live in the package-level @layer base CSS behind
+// `[data-slot]` selectors (`src/styles.css`) — marker-only component output,
+// theme-tunable via CSS variables. See docs/architecture/styling-system.md.
 
 function PageBreadcrumbNav({ items }: { items: PageBreadcrumbItem[] }) {
   return (
@@ -74,17 +77,11 @@ function PageBreadcrumbNav({ items }: { items: PageBreadcrumbItem[] }) {
             <React.Fragment key={crumbKey}>
               <BreadcrumbItem className="min-w-0">
                 {item.href ? (
-                  <BreadcrumbLink
-                    href={item.href}
-                    title={item.label}
-                    className={BREADCRUMB_ITEM_CLASS}
-                  >
+                  <BreadcrumbLink href={item.href} title={item.label}>
                     {item.label}
                   </BreadcrumbLink>
                 ) : (
-                  <BreadcrumbPage title={item.label} className={BREADCRUMB_ITEM_CLASS}>
-                    {item.label}
-                  </BreadcrumbPage>
+                  <BreadcrumbPage title={item.label}>{item.label}</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
               {index < items.length - 1 ? <BreadcrumbSeparator /> : null}
@@ -260,20 +257,12 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
           {hasSemanticHeader ? (
             <>
               {crumbs.length > 0 ? <PageBreadcrumbNav items={crumbs} /> : null}
-              <div
-                data-slot="page-heading"
-                className="flex min-w-0 flex-wrap items-center gap-2"
-              >
+              <div data-slot="page-heading">
                 {hasTitleContent ? <h2>{titleContent}</h2> : null}
                 {subTitle ? <span data-slot="page-subtitle">{subTitle}</span> : null}
                 {remarkNode}
                 {hasExtra ? (
-                  <div
-                    data-slot="page-extra"
-                    className="ml-auto flex flex-wrap items-center gap-2"
-                  >
-                    {extraContent}
-                  </div>
+                  <div data-slot="page-extra">{extraContent}</div>
                 ) : null}
                 {showMobileAsideToggle ? (
                   <PageAsideToggle

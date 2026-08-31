@@ -120,7 +120,10 @@ describe('page-header breadcrumb output matrix', () => {
     });
     const link = queryBreadcrumbLinks()[0] as HTMLElement;
     expect(link).toBeTruthy();
-    expect(link.className).toContain('truncate');
+    // 10-01 marker-only migration: truncation moved from code-side utility
+    // classes to the package CSS `[data-slot]` baseline — the DOM keeps the
+    // native title hint and zero layout utilities.
+    expect(link.className).not.toContain('truncate');
     expect(link.getAttribute('title')).toBe('A very long breadcrumb level label');
   });
 });
