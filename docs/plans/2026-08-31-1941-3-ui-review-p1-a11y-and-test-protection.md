@@ -1,7 +1,7 @@
 # 3 ui-review 审计 P1 可访问性批次 + command-palette 测试保护（批次三：ui / data / scheduling / content / basic 九项）
 
-> Plan Status: active（2026-08-31 独立子 agent fresh session 两轮 review 达成共识：零 Blocker / 零 Major，证据见 Draft Review Record）
-> Last Reviewed: 2026-08-31
+> Plan Status: completed（2026-09-01 执行完毕：Phase 1–4 全部 completed，7 条 a11y 先红后绿 + 2 条测试保护补齐区分度；23-01 Proof 推翻审计 live 结论并修复真实缺陷（静态条目 action 模板渲染期预烘焙）；closure audit 通过——fresh session `ses_fa6f8b998ffelATdGnV6XGaIKQ` 1 轮 APPROVED 零 Blocker/零 Major/1 Minor（已随收口修复），见 Closure Audit Evidence）
+> Last Reviewed: 2026-09-01
 > Source: `docs/audits/2026-08-28-1659-multi-audit-ui-review.md`（P1 组 C「Accessibility」全部 7 条：20-01/02/03/04/05/07/10 + 组 D「Test protection」全部 2 条：23-01/23-02，均为独立 review 后 retained）
 > Mission: ui-review
 > Related: `docs/plans/2026-08-31-1941-1-ui-review-p1-interaction-behavior-remediation.md`（批次一）、`docs/plans/2026-08-31-1941-2-ui-review-p1-contract-styling-drift-remediation.md`（批次二）
@@ -157,17 +157,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 全部 9 条 in-scope P1（7 a11y + 2 test protection）已收敛（finding ID 逐条对应测试证据）
-- [ ] 不适用：无独立 contract drift 收口项（20-01 的 i18n key 登记即契约面，随 Phase 1 验收）
-- [ ] 行为/契约结果已达成（Failure Paths 表 9 行全部有对应用例且绿）
-- [ ] 必要 focused verification 已完成（先红后绿证据落 Phase Exit Criteria）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步到 live baseline（renderer-interfaces.md 的 command-palette/skip 契约若与测试锁定口径有出入则同步一句；a11y 项无既有契约文档改动义务则落字 No owner-doc update required）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 全部 9 条 in-scope P1（7 a11y + 2 test protection）已收敛（finding ID 逐条对应测试证据）——逐条证据见各 Phase 勾选注记；closure auditor 独立重跑 5 包目标测试全绿并逐条核对其"删修复即红"性质
+- [x] 不适用：无独立 contract drift 收口项（20-01 的 i18n key 登记即契约面，随 Phase 1 验收）
+- [x] 行为/契约结果已达成（Failure Paths 表 9 行全部有对应用例且绿）
+- [x] 必要 focused verification 已完成（先红后绿证据落 Phase Exit Criteria）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（执行期发现的 23-01 真实缺陷已在 in-scope 内修复；keyboard.tsx 姊妹缺陷为 out-of-scope 新发现，登记 Non-Blocking Follow-ups 并回写审计）
+- [x] 受影响的 owner docs 已同步到 live baseline（`docs/references/renderer-interfaces.md` command-palette dual-track 条目补静态轨道 dispatch 期模板解析契约一句；a11y 项无既有契约文档改动义务，不写凑数条目）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`（37/37）
+- [x] `pnpm build`（37/37）
+- [x] `pnpm lint`（37/37）
+- [x] `pnpm test`（68/68 任务 exit 0；含 drive-by 修复 input-date-relative-wiring 月度时间炸弹 4 例——披露于 docs/logs/2026/09-01.md；e2e 13 failed 经 pristine 基线复跑逐条证实为既有环境/基线失败，与本计划无关，据实披露不称 full e2e green）
 
 ## Deferred But Adjudicated
 
@@ -181,12 +181,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成或关闭时填写>>
+Status Note: 2026-09-01 执行收口。9 条 in-scope P1 全部收敛（7 a11y 先红后绿修复 + 2 测试保护补齐"删实现即红"区分度，双 mutation self-check 落证）。执行期增量：①23-01 fetcher-spy 用例首跑推翻审计"live 行为正确"结论——静态条目 action 模板被渲染期预烘焙（`${id}` 烘焙为空串），已以 raw-action 保真方案修复并通过 mutation 验证，审计 23-01 条目已回写，姊妹缺陷 keyboard.tsx 登记 follow-up；②drive-by 修复 input-date-relative-wiring 月度时间炸弹（与本计划无关的既有测试缺陷，阻断 full-green，测试侧 value 锚定当前月，语义不变）；③e2e 13 failed 经基线复跑证实全部为既有环境/基线失败（barcode BarcodeDetector 环境缺口 + crud-demo/cal/m4 基线同败），据实披露。验证：typecheck/build/lint 37/37、test 68/68 exit 0、check exit 0 零新增红（详见 docs/logs/2026/09-01.md）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立审计者或独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent fresh session `ses_fa6f8b998ffelATdGnV6XGaIKQ`（input 仅三件套：task plan + diff summary + verification output；live 树 @ 7d68d8f81 clean）
+- Evidence: VERDICT **APPROVED** 1 轮，零 Blocker / 零 Major / 1 Minor / 3 Informational。Auditor 独立重跑：ui 4/4、data 33/33、scheduling 3/3、content 12/12、basic 33/33（全包 600/600@60 文件）、`check:i18n-keys` ✅、`pnpm check` exit 0（恰 2 exempt locale 基线红线）；双侧 key 登记 grep 实证（en-US.ts:422-431/1116、zh-CN.ts:420-429/1114、ui 内置兜底 i18n.ts:6-7）；9 条 finding 逐条核对实现证据 + 测试"删修复即红"性质（23-01/23-02 mutation 红态静态推演一致）；23-01 raw-action 修复契约面审查（close-then-dispatch 保持、dual-track 语义保持、source 轨道正确免配对、长度不齐回退 = 原行为）；scope/docs/honesty 三项过（23 文件全在 scope 或已披露；plan 勾选与现实一致；commit 标题据实标注 unit full-green 而非 e2e）。1 Minor（测试文件残留 DEBUG-URLS console.log）已随收口删除并复跑绿。
 
 Follow-up:
 

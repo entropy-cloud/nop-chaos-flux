@@ -1,4 +1,4 @@
-> Audit Status: planned（原 open → 2026-08-31 mission-driver 起草轮：0 P0 / 23 P1 全部路由三份 plans——组 A 交互/行为 10 条 → `docs/plans/2026-08-31-1941-1-ui-review-p1-interaction-behavior-remediation.md`；组 B 契约/样式漂移 4 条 → `docs/plans/2026-08-31-1941-2-ui-review-p1-contract-styling-drift-remediation.md`；组 C a11y 7 条 + 组 D 测试保护 2 条 → `docs/plans/2026-08-31-1941-3-ui-review-p1-a11y-and-test-protection.md`；16 条 P2 + 3 条 P2 观察已移入 `docs/backlog/audit-followups-2026-08-28-1659.md` Follow-up Backlog）
+> Audit Status: closed（open → 2026-08-31 起草轮 planned：23 条 P1 全部路由三份 plans；2026-09-01 三批次全部执行收口——批次一/二/三 plan 均 completed 且各自 closure audit 通过，23 条 P1 finding ID 逐条对应测试证据，见各 plan 与 `docs/logs/2026/08-31.md`/`docs/logs/2026/09-01.md`；16 条 P2 + 3 条 P2 观察留存 `docs/backlog/audit-followups-2026-08-28-1659.md`。执行期增量：批次三 23-01 测试保护推翻"live 行为正确"结论并修复真实缺陷，回写见该 audit 23-01 条目）
 > Audit Type: multi-dimensional
 > Mission: ui-review
 

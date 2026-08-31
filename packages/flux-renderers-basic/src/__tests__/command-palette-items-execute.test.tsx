@@ -385,7 +385,6 @@ describe('command-palette execution contract (dual-track, close-then-dispatch)',
     const urls = vi
       .mocked(fetcher)
       .mock.calls.map((call) => (call[0] as { url?: string }).url);
-    console.log('DEBUG-URLS', JSON.stringify(urls));
     expect(urls).toEqual(['/r/Closed', '/r/Executed?id=nav', '/r/Command?id=nav']);
   });
 
