@@ -1,9 +1,9 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
-import { useCurrentComponentRegistry, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentComponentRegistry, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { BatchBarSchema } from './schemas.js';
 import { toStringArray } from './table-renderer/table-data.js';
 import { isDevRuntime } from './table-renderer/use-table-tree.js';
@@ -35,6 +35,8 @@ export function BatchBarRenderer(props: RendererComponentProps<BatchBarSchema>) 
 
   const targetWarnedRef = useRef(false);
   const countWarnedRef = useRef(false);
+  const pathWarnedRef = useRef(false);
+  const renderScope = useRenderScope();
 
   const selection = useScopeSelector(
     (scopeData) => toStringArray(getIn(scopeData, selectionPath)),
@@ -43,6 +45,41 @@ export function BatchBarRenderer(props: RendererComponentProps<BatchBarSchema>) 
     // "never throws" promise in the comment below actually holds.
     { enabled: selectionPath.length > 0, fallback: [] },
   );
+
+  // 22-02: one-shot dev diagnostic for "bar wired to a scope path that is never
+  // written" — under the table default selectionOwnership:'local' the bound
+  // selectionStatePath renders nothing, indistinguishable from "nothing
+  // selected". Indirect ownership inference: the bar has no channel to read
+  // the table's `selectionOwnership`, but a written key is visible in the
+  // scope snapshot (crud hosts project `$crud.selectedRowKeys`; scope-owned
+  // tables write `selectionStatePath` on every selection gesture), while the
+  // default 'local' ownership never touches the path.
+  // The check is deferred past the mount settle (macrotask timer): page `data`
+  // init patches and crud `$crud` status publication flush in React effects,
+  // so a first-render snapshot would misread an about-to-be-initialized path
+  // as "never written". Dev-only: zero timers and zero noise in production.
+  useEffect(() => {
+    if (!isDevRuntime() || selectionPath.length === 0 || pathWarnedRef.current) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (pathWarnedRef.current) {
+        return;
+      }
+      const snapshot = (renderScope.store?.getSnapshot() ??
+        renderScope.readVisible()) as Record<string, unknown>;
+      if (getIn(snapshot, selectionPath) !== undefined) {
+        return;
+      }
+      pathWarnedRef.current = true;
+      console.warn(
+        `[flux:batch-bar] batch-bar-selection-path-unwritten: selectionPath "${selectionPath}" was never written in this scope, so the bar renders nothing — indistinguishable from an empty selection. Table host: the default selectionOwnership:'local' never writes this path; binding it requires selectionOwnership:'scope'. A written empty array is the normal hidden state and does not warn.`,
+      );
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [selectionPath, renderScope]);
 
   // Built-in non-empty gate (batch-bar-empty): empty selection / missing path /
   // failed evaluation all resolve to an empty array — the envelope renders

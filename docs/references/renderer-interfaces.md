@@ -734,7 +734,11 @@ Key contracts:
   crud host nests the bar in `toolbar`/`listActions`/`footerToolbar` and binds
   `selectionPath: "$crud.selectedRowKeys"`; table host places the bar as a
   sibling and binds the same scope path as `selectionStatePath` (e.g.
-  `"selectionPath": "issueSelection"`).
+  `"selectionPath": "issueSelection"`). Table-host prerequisite: the table
+  writes `selectionStatePath` only under `selectionOwnership: 'scope'` — the
+  default `'local'` ownership never touches the path, so the bar renders
+  nothing (a one-time dev warn `batch-bar-selection-path-unwritten` flags a
+  never-written path; a written empty array is the normal hidden state).
 - Built-in clear = unified handle resolution facade inside the component:
   resolve `clearTarget` through the component registry, prefer the crud
   `clearSelection` method, else invoke table `setSelection` with

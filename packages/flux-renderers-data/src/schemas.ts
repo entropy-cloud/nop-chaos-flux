@@ -355,7 +355,9 @@ export interface BatchBarSchema extends BaseSchema {
    * Raw scope path (no `${}`) of the selection string array. Crud host: nest
    * the bar in `toolbar`/`listActions`/`footerToolbar` and bind
    * `$crud.selectedRowKeys`; table host: the table's `selectionStatePath`
-   * (e.g. `issueSelection`). Required.
+   * (e.g. `issueSelection`) — the table only writes that path under
+   * `selectionOwnership: 'scope'` (the default `'local'` never touches it, so
+   * the bar renders nothing with a one-time dev warn). Required.
    */
   selectionPath?: string;
   /**

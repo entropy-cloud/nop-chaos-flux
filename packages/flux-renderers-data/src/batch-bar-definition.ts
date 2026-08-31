@@ -82,7 +82,7 @@ export const batchBarRendererDefinition: RendererDefinition = {
       shape: { kind: 'string' },
       displayName: 'Selection Path',
       description:
-        'Raw scope path (no ${}) of the selection string array. Crud host: "$crud.selectedRowKeys" inside toolbar/listActions/footerToolbar; table host: the table selectionStatePath (e.g. "issueSelection").',
+        'Raw scope path (no ${}) of the selection string array. Crud host: "$crud.selectedRowKeys" inside toolbar/listActions/footerToolbar; table host: the table selectionStatePath (e.g. "issueSelection") — the table writes it only under selectionOwnership:"scope" (the default "local" never writes it, so the bar renders nothing with a one-time dev warn).',
       editorType: 'path',
     },
     countTemplate: {
