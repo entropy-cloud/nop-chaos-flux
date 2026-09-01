@@ -66,31 +66,71 @@ function createZxingDetector(formats?: BarcodeFormat[]): {
   };
 }
 
+/**
+ * Canonical (ZXing-style) name -> native BarcodeDetector enum name.
+ * The W3C Shape Detection API spells PDF417 as `pdf417` (no underscore);
+ * passing `pdf_417` throws a TypeError at construction time.
+ */
+export const BARCODE_FORMAT_TO_NATIVE: Record<string, string> = {
+  aztec: 'aztec',
+  code_39: 'code_39',
+  code_93: 'code_93',
+  code_128: 'code_128',
+  data_matrix: 'data_matrix',
+  ean_8: 'ean_8',
+  ean_13: 'ean_13',
+  itf: 'itf',
+  pdf_417: 'pdf417',
+  qr_code: 'qr_code',
+  upc_a: 'upc_a',
+  upc_e: 'upc_e',
+};
+
+const NATIVE_TO_CANONICAL_FORMAT: Record<string, string> = Object.fromEntries(
+  Object.entries(BARCODE_FORMAT_TO_NATIVE).map(([canonical, native]) => [native, canonical]),
+);
+
+const DEFAULT_FORMATS: BarcodeFormat[] = [
+  'qr_code', 'code_128', 'code_39', 'code_93',
+  'ean_8', 'ean_13', 'upc_a', 'upc_e',
+  'data_matrix', 'aztec', 'itf', 'pdf_417',
+];
+
 export function createBarcodeDetector(formats?: BarcodeFormat[]): {
   detect: (source: HTMLVideoElement | HTMLCanvasElement) => Promise<BarcodeDetectResult[]>;
   supportsSkewRetry: boolean;
 } {
-  const hasNativeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
+  const NativeDetector = typeof window !== 'undefined' ? (window as any).BarcodeDetector : undefined;
+  const requested = formats ?? DEFAULT_FORMATS;
 
-  if (hasNativeDetector) {
-    const detector = new (window as any).BarcodeDetector({
-      formats: formats ?? [
-        'qr_code', 'code_128', 'code_39', 'code_93',
-        'ean_8', 'ean_13', 'upc_a', 'upc_e',
-        'data_matrix', 'aztec', 'itf', 'pdf_417',
-      ],
-    });
+  if (typeof NativeDetector === 'function') {
+    let detector: any = null;
+    try {
+      detector = new NativeDetector({
+        formats: requested.map((f) => BARCODE_FORMAT_TO_NATIVE[f] ?? f),
+      });
+    } catch {
+      // Capability variance (e.g. a build without some formats): retry unrestricted,
+      // then fall through to the ZXing ponyfill if native construction is unusable.
+      try {
+        detector = new NativeDetector();
+      } catch {
+        detector = null;
+      }
+    }
 
-    return {
-      detect: async (source) => {
-        const results = await detector.detect(source);
-        return results.map((r: any) => ({
-          barcode: r.rawValue,
-          format: r.format,
-        }));
-      },
-      supportsSkewRetry: true,
-    };
+    if (detector) {
+      return {
+        detect: async (source) => {
+          const results = await detector.detect(source);
+          return results.map((r: any) => ({
+            barcode: r.rawValue,
+            format: NATIVE_TO_CANONICAL_FORMAT[r.format] ?? r.format,
+          }));
+        },
+        supportsSkewRetry: true,
+      };
+    }
   }
 
   const zxingFallback = createZxingDetector(formats);

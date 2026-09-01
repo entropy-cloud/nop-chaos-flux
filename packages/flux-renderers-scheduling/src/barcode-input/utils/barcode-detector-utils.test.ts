@@ -68,6 +68,44 @@ describe('createBarcodeDetector', () => {
     const result = await detector.detect(canvas);
     expect(result).toEqual([{ barcode: '12345', format: 'qr_code' }]);
   });
+
+  it('should map pdf_417 to the spec enum pdf417 when constructing the native detector', () => {
+    const ctorFormats: string[][] = [];
+    vi.stubGlobal('BarcodeDetector', function BarcodeDetectorMock(options?: { formats?: string[] }) {
+      ctorFormats.push(options?.formats ?? []);
+      return { detect: vi.fn().mockResolvedValue([]) };
+    });
+
+    createBarcodeDetector(['qr_code', 'pdf_417']);
+    expect(ctorFormats[0]).toEqual(['qr_code', 'pdf417']);
+  });
+
+  it('should map pdf417 back from the default format list instead of throwing at construction', () => {
+    const ctorFormats: string[][] = [];
+    vi.stubGlobal('BarcodeDetector', function BarcodeDetectorMock(options?: { formats?: string[] }) {
+      ctorFormats.push(options?.formats ?? []);
+      return { detect: vi.fn().mockResolvedValue([]) };
+    });
+
+    createBarcodeDetector();
+    expect(ctorFormats[0]).toContain('pdf417');
+    expect(ctorFormats[0]).not.toContain('pdf_417');
+  });
+
+  it('should fall back to zxing when native construction fails even unrestricted', async () => {
+    zxingMock.setDecodeFn(() => Promise.resolve({
+      getText: () => 'zxing-native-threw',
+      getBarcodeFormat: () => 'QR_CODE',
+    }));
+    vi.stubGlobal('BarcodeDetector', function ThrowingBarcodeDetectorMock() {
+      throw new TypeError('Failed to construct');
+    });
+
+    const detector = createBarcodeDetector(['pdf_417']);
+    const canvas = document.createElement('canvas');
+    const result = await detector.detect(canvas);
+    expect(result).toEqual([{ barcode: 'zxing-native-threw', format: 'qr_code' }]);
+  });
 });
 
 describe('zxing ponyfill fallback', () => {

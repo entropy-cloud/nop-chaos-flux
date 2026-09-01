@@ -3,8 +3,9 @@ import { expect, test } from './fixtures.js';
 async function openCrudDemo(page: import('@playwright/test').Page) {
   await page.goto('#/complex-pages/standard-crud', { waitUntil: 'commit' });
   await expect(
-    page.getByText('用户管理（CRUD）'),
-  ).toBeVisible({ timeout: 15_000 });
+    page.getByTestId('complex-page-title'),
+  ).toContainText('标准增删改查', { timeout: 15_000 });
+  await expect(page.getByTestId('user-crud')).toBeVisible({ timeout: 15_000 });
 }
 
 function bodyRows(page: import('@playwright/test').Page) {
@@ -21,7 +22,7 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
 
     await expect(page.getByText('张三').first()).toBeVisible({ timeout: 10_000 });
     await expect(bodyRows(page)).toHaveCount(10);
-    await expect(page.getByText('1-10 of 33')).toBeVisible();
+    await expect(page.getByText('第 1-10 条，共 33 条')).toBeVisible();
   });
 
   test('filters rows by keyword and resets back to the full list', async ({ page }) => {
@@ -58,7 +59,7 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
 
     await expect(page.getByText('新增成功')).toBeVisible({ timeout: 10_000 });
     await expect(dialog).toHaveCount(0);
-    await expect(page.getByText('1-10 of 34')).toBeVisible();
+    await expect(page.getByText('第 1-10 条，共 34 条')).toBeVisible();
   });
 
   test('edits a row through the edit dialog with prefilled values', async ({ page }) => {
@@ -102,7 +103,7 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
 
     await expect(page.getByText('删除成功')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText('张三', { exact: true })).toHaveCount(0);
-    await expect(page.getByText('1-10 of 32')).toBeVisible();
+    await expect(page.getByText('第 1-10 条，共 32 条')).toBeVisible();
   });
 
   test('bulk-deletes selected rows after confirming', async ({ page }) => {
@@ -125,6 +126,6 @@ test.describe('Standard CRUD demo (#/crud-demo)', () => {
     await confirmDialog.getByRole('button', { name: '确认' }).click();
 
     await expect(page.getByText('批量删除成功')).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText('1-10 of 31')).toBeVisible();
+    await expect(page.getByText('第 1-10 条，共 31 条')).toBeVisible();
   });
 });

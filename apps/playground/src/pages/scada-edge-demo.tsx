@@ -40,7 +40,9 @@ const INVALID_JSON = '{ not-valid-json';
 const LINE_POLYGON_CONFIG: ScadaConfig = {
   version: 1,
   symbols: [
-    { id: 'edge-line', type: 'scada-line', x: 80, y: 240, width: 240, height: 0, stroke: '#78909c', strokeWidth: 3 },
+    // y=200（内容包围盒内部，2026-09-01）：y=240 与 polygon 底尖共线贴内容底边——height-limited
+    // contain fit 下垂直 letterbox 归零，line 恰映射到 canvas 底边缘（DOM 指针边界外）→ 永不命中。
+    { id: 'edge-line', type: 'scada-line', x: 80, y: 200, width: 240, height: 0, stroke: '#78909c', strokeWidth: 3 },
     { id: 'edge-poly', type: 'scada-polygon', x: 400, y: 120, custom: { points: [0, 0, 160, 0, 160, 90, 80, 120, 0, 90] }, fill: '#2e7d32' },
   ],
 };

@@ -53,7 +53,8 @@ test.describe('M4 data display — mobile viewport (390x844)', () => {
       collapse.evaluate((el) => el.getAttribute('data-collapsed')),
     ).resolves.not.toBeNull();
 
-    await expect(crudRoot.getByLabel('Name')).toHaveCount(0);
+    // 22-04 keep-mounted: collapsed hides the query form instead of unmounting it.
+    await expect(crudRoot.getByLabel('Name')).toBeHidden();
 
     const expandToggle = crudRoot.getByRole('button', { name: /展开|Expand/ }).first();
     await expandToggle.click();

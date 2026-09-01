@@ -26,6 +26,12 @@ async function getScadaCid(page: Page): Promise<string> {
 }
 
   async function hoverSymbolAtWorld(page: Page, cid: string, worldX: number, worldY: number): Promise<void> {
+    const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
+    expect(box).toBeTruthy();
+    // 先移开再落点（2026-09-01）：合成同坐标 mousemove 会被浏览器输入管线去重——首试 move 可能
+    // 早于事件桥/场景就绪被消费，之后重复同坐标 move 不再产生 pointer.move（I15.1 flaky 根因）。
+    // 移开一步保证随后的落点 move 恒产生真实位移事件，hover enter 语义可重放。
+    await page.mouse.move(box!.x + 2, box!.y + 2);
     const viewportPoint = await page.evaluate(
       ({ key, x, y }) => {
         const handle = (window as unknown as Record<string, unknown>)[key] as {
@@ -35,8 +41,6 @@ async function getScadaCid(page: Page): Promise<string> {
       },
       { key: `__flux_scada_${cid}`, x: worldX, y: worldY },
     );
-    const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
-    expect(box).toBeTruthy();
     await page.mouse.move(box!.x + viewportPoint.x, box!.y + viewportPoint.y);
     await page.waitForTimeout(50);
   }
@@ -133,10 +137,17 @@ test.describe('Scada Edge Cases (I15.1)', () => {
     await page.getByTestId('scada-edge-line-poly').click();
     const cid = await getScadaCid(page);
 
-    // 线图元：x=80,y=240,width=240,height=0 → points 包围盒 (0,0)-(240,0) → 覆盖物 240×8（最小框兜底）
-    await hoverSymbolAtWorld(page, cid, 200, 240);
+    // 线图元：x=80,y=200,width=240,height=0（y 从 240 上移避开内容底边死区） → points 包围盒 (0,0)-(240,0) → 覆盖物 240×8（最小框兜底）。
+    // poll 内重发 hover（2026-09-01）：ready 后容器驱动 re-fit 晚到会换算出过时的指针落点 →
+    // hover-miss 无覆盖物（full-suite 负载下复现为 flaky）；每轮用最新视口重算落点即免疫。
     await expect
-      .poll(async () => readOverlayRects(page, cid), { timeout: 5_000, intervals: [200, 200, 200] })
+      .poll(
+        async () => {
+          await hoverSymbolAtWorld(page, cid, 200, 200);
+          return readOverlayRects(page, cid);
+        },
+        { timeout: 10_000, intervals: [250, 250, 250] },
+      )
       .toHaveLength(1);
     const lineRects = await readOverlayRects(page, cid);
     expect(lineRects[0].width).toBeGreaterThan(0);
@@ -153,32 +164,66 @@ test.describe('Scada Edge Cases (I15.1)', () => {
     // 多边形图元：x=400,y=120,points (0,0)-(160,0)-(160,90)-(80,120)-(0,90) → 包围盒 160×120。
     // 覆盖物以 screen 坐标绘制（P1-7）：页面 viewport: {fit:'contain'} 非恒等 → 断言按
     // screen = (world - vx)·s 换算（旧断言 400/120/160×120 是世界坐标，掩蔽了覆盖物未对齐缺陷）。
-    const viewport = await page.evaluate(
-      (key) => ((window as unknown as Record<string, unknown>)[key] as ScadaTestHandleShape).engine.getViewport(),
+    await expect
+      .poll(
+        async () => {
+          await hoverSymbolAtWorld(page, cid, 480, 180);
+          return readOverlayRects(page, cid);
+        },
+        { timeout: 10_000, intervals: [250, 250, 250] },
+      )
+      .toHaveLength(1);
+    // 视口与覆盖物同拍读取（2026-09-01）：ready 后容器驱动 re-fit 可能晚到，先读视口再读
+    // 覆盖物会跨过一次 fit（实测 2.4→2.529）→ 期望值用过时 scale 换算而误报。同一次
+    // evaluate 内快照两者，断言的不变式「覆盖物 == 包围盒 × 当前 scale」在任何瞬间成立。
+    const snapshot = await page.evaluate(
+      (key) => {
+        const handle = (window as unknown as Record<string, unknown>)[key] as {
+          engine: { getViewport(): { x: number; y: number; scale: number } };
+          app: {
+            sky: {
+              children?: Array<{
+                name?: string;
+                children?: Array<{ x: number; y: number; width: number; height: number }>;
+              }>;
+            };
+          };
+        };
+        const sky = handle.app.sky;
+        const group = (sky.children ?? []).find((child) => child.name === 'scada-interaction-overlay');
+        return {
+          viewport: handle.engine.getViewport(),
+          rects: (group?.children ?? []).map((rect) => ({
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
+          })),
+        };
+      },
       `__flux_scada_${cid}`,
     );
-    const expectScreen = (worldX: number, worldY: number, width: number, height: number) => ({
-      x: (worldX - viewport.x) * viewport.scale,
-      y: (worldY - viewport.y) * viewport.scale,
-      width: width * viewport.scale,
-      height: height * viewport.scale,
-    });
-
-    await hoverSymbolAtWorld(page, cid, 480, 180);
-    await expect
-      .poll(async () => readOverlayRects(page, cid), { timeout: 5_000, intervals: [200, 200, 200] })
-      .toHaveLength(1);
-    const polyRects = await readOverlayRects(page, cid);
-    const expected = expectScreen(400, 120, 160, 120);
+    const polyRects = snapshot.rects;
+    const expected = {
+      x: (400 - snapshot.viewport.x) * snapshot.viewport.scale,
+      y: (120 - snapshot.viewport.y) * snapshot.viewport.scale,
+      width: 160 * snapshot.viewport.scale,
+      height: 120 * snapshot.viewport.scale,
+    };
     expect(polyRects[0].width).toBeCloseTo(expected.width, 1);
     expect(polyRects[0].height).toBeCloseTo(expected.height, 1);
     expect(polyRects[0].x).toBeCloseTo(expected.x, 1);
     expect(polyRects[0].y).toBeCloseTo(expected.y, 1);
 
-    // A→B 切换：移动到线图元 → 覆盖物数量保持 1 且位置切换
-    await hoverSymbolAtWorld(page, cid, 200, 240);
+    // A→B 切换：移动到线图元 → 覆盖物数量保持 1 且位置切换（同样 poll 内重发 hover 抗 re-fit）
     await expect
-      .poll(async () => readOverlayRects(page, cid), { timeout: 5_000, intervals: [200, 200, 200] })
+      .poll(
+        async () => {
+          await hoverSymbolAtWorld(page, cid, 200, 200);
+          return readOverlayRects(page, cid);
+        },
+        { timeout: 10_000, intervals: [250, 250, 250] },
+      )
       .toHaveLength(1);
 
     // 移到空白区（世界包围盒外）→ hover-miss → 覆盖物清除
