@@ -21,6 +21,15 @@ _tmp/
 .sisyphus/
 graphify-out/
 
+# Visual regression / Playwright screenshot artifacts.
+# `*-visual.spec.ts` files write reproducible PNG snapshots under tests/e2e/artifacts/.
+# These are regenerated on every run and MUST NOT be tracked — committing them bloats
+# the repository and the diff against remote by tens of MB.
+tests/e2e/artifacts/
+
+# Same rationale for any other tests/**/artifacts/ directory produced by spec helpers.
+tests/**/artifacts/
+
 # Prevent TypeScript build artifacts from leaking into src/ directories.
 # All compiled output must go to dist/ via tsconfig.build.json (outDir: "dist").
 packages/*/src/**/*.js

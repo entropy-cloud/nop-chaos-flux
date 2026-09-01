@@ -43,6 +43,24 @@ Always run `typecheck`, `build`, and `lint` after making **CODE** changes. Run t
 
 When you produce side artifacts during testing/debugging — Playwright screenshots, dumpPageSchemaToFile HTML/JSON dumps, `inspect*.mjs` probe scripts, copied DOM fragments, captured network traces — write them under `<repo>/_tmp/`, **never** under `/tmp/`, `tests/e2e/`, `scripts/`, or any tracked directory. `_tmp/` is `.gitignore`d (line 19). Naming convention: `<topic>-inspect*.{mjs,png,html,json}` or `<topic>-<date>/`. Before finishing a task, delete artifacts that no longer have a purpose; keep the directory itself. If a probe script is worth keeping as regression coverage, promote it into `tests/e2e/` or `scripts/__tests__/` with proper review — do not leave it under `_tmp/`.
 
+### Generated Visual Regression Artifacts
+
+The `*-visual.spec.ts` files under `tests/e2e/` (e.g. `airtable-replica-visual`, `notion-replica-visual`, `sundial-replica-visual`, etc.) write reproducible PNG snapshots into `tests/e2e/artifacts/<replica-name>/*.png` via `page.screenshot({ path: ... })`. **These snapshots are generated artifacts, not source — they MUST NEVER be committed.**
+
+Rationale:
+
+- They are regenerated on every `pnpm test:e2e` run, so committing them only adds noise.
+- Each replica subdirectory easily grows to several MB of binary data. The historical incident on 2026-09-01 showed 83 PNGs in `tests/e2e/artifacts/` totaling ~25 MB, which inflated a single diff against `origin/master` to 30+ MB and broke the export workflow.
+- Binary diffs are not reviewable; reviewers cannot tell from a PR whether a screenshot change is intentional without opening the image.
+
+Required behavior:
+
+1. `tests/e2e/artifacts/` is `.gitignore`d (top-level `.gitignore`). Treat any attempt to `git add` files inside that directory as a mistake — abort the add, do not bypass with `git add -f`.
+2. If a spec legitimately needs a baseline image for `toHaveScreenshot()` / `toMatchSnapshot()` style comparison, put the baseline under `tests/e2e/__snapshots__/` (which itself stays in `.gitignore`) or under `_tmp/baselines/` for ad-hoc local work, and configure the visual spec to regenerate baselines on demand.
+3. If a screenshot needs to be shared with a reviewer or a downstream consumer, upload it to the team object store / OSS bucket and reference the URL in the PR description — do not paste binary files into the commit.
+4. Pre-commit hygiene: before `git commit`, run `git status -s tests/e2e/artifacts/` and confirm there are no `A` / `M` entries. If there are, either delete the local file (preferred) or move it under `_tmp/`.
+5. If you discover historically committed PNGs under `tests/e2e/artifacts/` (e.g. from a previous session that bypassed `.gitignore`), untrack them with `git rm -r --cached tests/e2e/artifacts/` AND delete the files from disk (`rm -rf tests/e2e/artifacts/`) — the visual specs will regenerate the PNGs on their next run, so leaving them on disk serves no purpose. Commit the untrack + deletion as a forward-only commit. Do **not** rewrite history with `git filter-repo` / BFG / interactive rebase unless the affected commits are still local-only (i.e., never pushed to `origin`), and even then prefer the forward-only untrack approach to avoid disrupting other contributors who may already have those commits locally.
+
 Whenever e2e tests and unit tests both pass completely (full green), you MUST record this in the daily dev log at `docs/logs/{year}/{month}-{day}.md` with test counts/package summary, include that full-green verification status explicitly in the git commit message, and then commit all current changes. This provides reliable "known-good" baselines for future debugging.
 
 ---
