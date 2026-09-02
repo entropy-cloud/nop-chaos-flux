@@ -122,7 +122,7 @@ AMIS 的 `actionType` + `api`/`dialog`/`drawer` 组合在 Flux 中被转换为�
 
 AMIS picker 弹出一个 CRUD 表格页面供用户选择。`pickerSchema` 定义了弹出页面的 CRUD schema。
 
-**v3.2 落地状态（2026-09-02 计划完成）**：Flux picker 已完成职责分离重写。picker 不再重复实现 CRUD 多选/分页保留等机制（已下放给 CRUD 原生 rowSelection）。picker 通过 React Context 注入统一选择累积，所有 pickerSchema（包括 CRUD）通过显式 `pick` action 提交选择。
+**v3.3/v3.4 落地状态（2026-09-02 计划完成，2026-09-03 收尾）**：Flux picker 已完成职责分离重写。picker 不再重复实现 CRUD 多选/分页保留等机制（已下放给 CRUD 原生 `selection`）。picker 与内容的绑定通道有且仅有两条：①scope 发布通道（内容控件经自己的 `selectionStatePath`/`dataStatePath` 发布到弹层固定名 `$_picker.selection`/`$_picker.rows`，picker Confirm 读固定名）；②`pick` builtin action 通道（按钮驱动内容经 `{action:'pick', args:{value,rows}}` 提交，adapter 委托 ambient `ctx.picker` 回调）。
 
 在 Flux v3 中，picker 的结构是：
 
@@ -134,7 +134,10 @@ AMIS picker 弹出一个 CRUD 表格页面供用户选择。`pickerSchema` 定�
     "type": "crud",
     "loadAction": { ... },
     "columns": [ ... ],
-    "rowSelection": { "type": "checkbox", "keepOnPageChange": true }   // 多选由 CRUD 原生支持
+    "selection": { "type": "checkbox", "keepOnPageChange": true },   // 多选由 CRUD 原生支持
+    "selectionOwnership": "scope",
+    "selectionStatePath": "$_picker.selection",  // 发布指向 picker 固定名（转换器/作者接线）
+    "dataStatePath": "$_picker.rows"
   },
   "valueField": "id",                          // 值字段
   "labelField": "name",                        // 标签字段
@@ -145,33 +148,34 @@ AMIS picker 弹出一个 CRUD 表格页面供用户选择。`pickerSchema` 定�
 
 **v3 转换规则（已落地）**：
 
-| AMIS 属性            | Flux 属性             | 说明                                                       |
-| -------------------- | --------------------- | ---------------------------------------------------------- |
-| `valueField`         | `valueField`          | 直接对应（**改名**：原 Flux `valueKey` → `valueField`）    |
-| `labelField`         | `labelField`          | 直接对应（**改名**：原 Flux `labelKey` → `labelField`）    |
-| `labelTpl`           | `labelTpl`            | 复合模板显示已选标签                                       |
-| `pickerSchema`       | `pickerSchema`        | 直接对应（任意 BaseSchema）                                |
-| `modalMode`          | `pickerPopup.type`    | 直接对应（`dialog` / `drawer` / `popover`）                |
-| `modalSize`          | `pickerPopup.size`    | 直接对应（`xs` / `sm` / `default` / `lg` / `xl` / `full`） |
-| `modalTitle`         | `pickerPopup.title`   | 直接对应                                                   |
-| `pickerDialog`       | `pickerPopup`         | 重命名（`pickerDialog` → `pickerPopup`）                   |
-| `delimiter`          | `delimiter`           | 多选分隔符（默认 `,`）                                     |
-| `overflowConfig`     | `overflowConfig`      | 多选标签溢出（`maxTagCount` + `overflowTagPopover`）       |
-| `itemClearable`      | `itemClearable`       | 单标签可清除                                               |
-| `clearable`          | `clearable`           | 整体可清除                                                 |
-| `onEvent.itemClick`  | `onItemClick`         | 点击已选标签动作                                           |
-| `resetValue`         | `resetValue`          | 清除重置值                                                 |
-| `embed`              | `embed`               | 内嵌模式                                                   |
-| `options` / `source` | `pickerSchema.source` | 移入 `pickerSchema`（list/tree/source 类型）               |
-| `multiple`           | `multiple`            | 直接对应                                                   |
-| `placeholder`        | `placeholder`         | 直接对应                                                   |
+| AMIS 属性            | Flux 属性                 | 说明                                                                   |
+| -------------------- | ------------------------- | ---------------------------------------------------------------------- |
+| `valueField`         | `valueField`              | 直接对应（**改名**：原 Flux `valueKey` → `valueField`）                |
+| `labelField`         | `labelField`              | 直接对应（**改名**：原 Flux `labelKey` → `labelField`）                |
+| `labelTpl`           | `labelTpl`                | 复合模板显示已选标签                                                   |
+| `pickerSchema`       | `pickerSchema`            | 直接对应（任意 BaseSchema）                                            |
+| `modalMode`          | `pickerPopup.type`        | 直接对应（`dialog` / `drawer` / `popover`）                            |
+| `modalSize`          | `pickerPopup.size`        | 直接对应（`xs` / `sm` / `default` / `lg` / `xl` / `full`）             |
+| `modalTitle`         | `pickerPopup.title`       | 直接对应                                                               |
+| `pickerDialog`       | `pickerPopup`             | 重命名（`pickerDialog` → `pickerPopup`）                               |
+| `delimiter`          | `delimiter`               | 多选分隔符（默认 `,`）                                                 |
+| `overflowConfig`     | `overflowConfig`          | 多选标签溢出（`maxTagCount` + `overflowTagPopover`）                   |
+| `itemClearable`      | `itemClearable`           | 单标签可清除                                                           |
+| `clearable`          | `clearable`               | 整体可清除                                                             |
+| `onEvent.itemClick`  | `onItemClick`             | 点击已选标签动作                                                       |
+| `resetValue`         | `resetValue`              | 清除重置值                                                             |
+| `embed`              | `embed`                   | 内嵌模式                                                               |
+| `options` / `source` | `pickerSchema` 内对应字段 | 移入 `pickerSchema`（CRUD→`loadAction`；list→`items`），不保留顶层简写 |
+| `multiple`           | `multiple`                | 直接对应                                                               |
+| `placeholder`        | `placeholder`             | 直接对应                                                               |
 
-**v3 选择提交机制（picker 上下文 + pick action）**：
+> **标签 UI 未落地（Deferred，successor: picker 标签 UI plan）**：`labelTpl` / `delimiter` / `overflowConfig` / `itemClearable` / `onItemClick` 已进入 PickerSchema 契约（声明保留），但多选标签 UI 尚未实现——当前多选展示为触发按钮上的逗号拼接 label，值为数组通道；`resetValue` 已实现。
 
-1. picker 渲染 pickerSchema 时包裹 `PickerContext.Provider`，暴露 `{ pickerId, pick, unpick, clear, selection }`
-2. pickerSchema 内的按钮通过 `{ action: 'pick', args: { value, rows } }` 累积选择
-3. 行选择（checkbox / row click）只是视觉反馈，picker 不读取 CRUD selectionStatePath
-4. 用户点 picker 确认 → picker 从 `PickerContext.selection` 读取累积值 → 写表单
+**v3 选择提交机制（单一 scope 发布 + builtin pick action）**：
+
+1. **scope 发布通道**：内容控件（CRUD 等）通过**自己的** `selectionStatePath` / `dataStatePath` 配置发布到弹层固定名 `$_picker.selection` / `$_picker.rows`（转换器 `grid_crud.xpl` / `flux-control.xlib` 或作者负责指向）
+2. **`pick` builtin action 通道**：内容元素以 `{ action: 'pick', args: { value, rows } }` 触发提交，adapter 经 ambient `ctx.picker` 回调到达 picker
+3. picker Confirm 只读固定变量：single 即提交 / multiple 累积后 Confirm 一次性提交；值经 `valueField`/`labelField` 映射写回表单字段并关窗；空 Confirm 不清值（G1）
 
 **已移除字段**（破坏性变更）：`valueKey` / `labelKey` / `pickerDialog` / 顶层 `options` / 顶层 `loadAction` / 顶层 `columns` / 顶层 `searchable` / 顶层 `source`。调用方需迁移至 v3 schema。
 
@@ -333,10 +337,10 @@ AMIS `level` 与 Flux `variant` 的对应关系：
 
 所有转换在 `nop-frontend-support/nop-web/src/main/resources/_vfs/nop/web/xlib/flux-web.xlib` 中实现：
 
-| 转换函数            | 职责                                                                        |
-| ------------------- | --------------------------------------------------------------------------- |
-| `GenFormSimpleCell` | 表单字段属性转换（level→variant, visibleOn→visible, validations→字段属性）  |
-| `GenGridCol`        | 表格列属性转换（visibleOn→visible, disabledOn→disabled）                    |
-| `NormalizeAction`   | 动作属性转换（actionType→action, api→ajax, dialog→openDialog 等）           |
-| `page_picker.xpl`   | Picker 页面结构（valueKey/labelKey 转换）                                   |
-| `grid_crud.xpl`     | CRUD/Picker 表格结构（source→loadAction, size/modalSize→pickerDialog.size） |
+| 转换函数            | 职责                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `GenFormSimpleCell` | 表单字段属性转换（level→variant, visibleOn→visible, validations→字段属性）                                    |
+| `GenGridCol`        | 表格列属性转换（visibleOn→visible, disabledOn→disabled）                                                      |
+| `NormalizeAction`   | 动作属性转换（actionType→action, api→ajax, dialog→openDialog 等）                                             |
+| `page_picker.xpl`   | Picker 页面结构（valueField/labelField 转换）                                                                 |
+| `grid_crud.xpl`     | CRUD/Picker 表格结构（picker 模式输出 pickerPopup + pickerSchema CRUD 子树，selection 发布指向 `$_picker.*`） |

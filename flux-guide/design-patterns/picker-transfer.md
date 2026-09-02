@@ -17,7 +17,7 @@ Picker 弹出的内容本质上是**任意可交互 schema**——可以是简�
 
 1. **pickerSchema 是规范定义**：所有 picker 弹窗内容统一定义在 `pickerSchema`，不再使用散落的 `columns`/`loadAction`/`options`/`valueKey`/`labelKey` 直接属性
 2. **pickerPopup 是弹出层规范定义**：picker 不应耦合到特定 surface 类型，由 `pickerPopup.type` 选择
-3. **职责分离**：CRUD 多选/分页选择/行点击等机制属于 CRUD 自身能力（`rowSelection` / `keepOnPageChange` / `toggleOnRowClick`）；picker 不重复实现
+3. **职责分离**：CRUD 多选/分页选择/行点击等机制属于 CRUD 自身能力（`selection` / `keepOnPageChange` / `toggleOnRowClick`）；picker 不重复实现
 4. **picker 只关注 picker 级 UX**：`labelTpl` / `overflowConfig` / `delimiter` / `valueField` / `labelField` / `autoFill` / `onPick` 是 picker 独有
 5. **选择通过 CRUD 内置机制**：当 pickerSchema 是 CRUD 时，复用 CRUD 的 `selection` 机制（`selectionOwnership: 'scope'` + `selectionStatePath`）；picker 仅在 confirm 时读取并映射
 6. **与 AMIS 对齐但不弱于 AMIS**：命名向 AMIS 看齐（`valueField`/`labelField` 而非 `valueKey`/`labelKey`）
@@ -37,86 +37,53 @@ Picker 弹出的内容本质上是**任意可交互 schema**——可以是简�
 | `embed`                                     | picker          | 内嵌模式                               |
 | `labelTpl`                                  | picker          | 选中项显示模板（复合展示）             |
 | `overflowConfig`                            | picker          | 多选标签溢出配置                       |
-| `rowSelection.keepOnPageChange`             | **CRUD**        | 分页切换保留已选项                     |
-| `rowSelection.toggleOnRowClick`             | **CRUD**        | 行点击即选                             |
-| `rowSelection.modifierSelect`               | **CRUD**        | 修饰键多选手势                         |
-| `rowSelection.selectAllMode`                | **CRUD**        | 全选范围                               |
+| `selection.keepOnPageChange`                | **CRUD**        | 分页切换保留已选项                     |
+| `selection.toggleOnRowClick`                | **CRUD**        | 行点击即选                             |
+| `selection.modifierSelect`                  | **CRUD**        | 修饰键多选手势                         |
+| `selection.selectAllMode`                   | **CRUD**        | 全选范围                               |
 | `selectionOwnership` / `selectionStatePath` | **CRUD**        | 选中状态归属/scope 路径                |
 | `autoClearSelectionOnRefresh`               | **CRUD**        | 刷新时清空选择                         |
 | `queryForm`                                 | **CRUD**        | 查询表单（搜索/过滤）                  |
 
-## 选择提交机制（v3.2 统一 picker 上下文 + 显式 pick action）
+## 选择提交机制（v3.3/v3.4 单一 scope 发布 + builtin pick action）
 
-v3.2 起，picker **不直接读取 pickerSchema 内部状态**（包括 CRUD 的 `selectionStatePath`），而是通过 React Context 注入统一的「picker 上下文」，由 pickerSchema 内的元素显式调用 `pick` action 提交选择。
+picker 与内容控件之间的绑定通道有且仅有两条（通用机制、零组件 id、零类型嗅探）：
 
-### Picker 上下文
+### 1. scope 发布通道（CRUD 等自发布内容）
 
-```typescript
-// picker-context.tsx（plan 落地新增）
-interface PickerContextValue {
-  pickerId: string;
-  multiple: boolean;
-  selection: PickerValue[];
-  rows: Map<PickerValue, { label: string; row: Record<string, unknown> }>;
-  pick: (value: PickerValue, row?: Record<string, unknown>, label?: string) => void;
-  unpick: (value: PickerValue) => void;
-  clear: () => void;
+内容控件通过**自己的** `selectionStatePath` / `dataStatePath` 配置，把选中键与已加载行数据发布到 popup 局域 scope 的固定名；转换器（`grid_crud.xpl` / `flux-control.xlib`）或作者负责把内容配置指向这些固定名：
+
+```jsonc
+{
+  "type": "crud",
+  "loadAction": { "...": "..." },
+  "columns": [ "...": "..." ],
+  "selection": { "type": "checkbox", "keepOnPageChange": true, "toggleOnRowClick": true },
+  "selectionOwnership": "scope",
+  "selectionStatePath": "$_picker.selection",
+  "dataStatePath": "$_picker.rows",
+  "autoClearSelectionOnRefresh": false
 }
 ```
 
-picker 渲染 pickerSchema 时包裹 `PickerContext.Provider`。pickerSchema 内的任意 schema（包括 CRUD / tree / list / form）通过 `useCurrentPicker()` 拿到上下文。
+picker Confirm 只读 `$_picker.selection`（选中行键）与 `$_picker.rows`（行数据）两个固定变量：值经 `valueField`/`labelField` 映射写回表单字段并关窗。实例隔离由弹层局域 scope（渲染 pathSuffix）提供——固定名不随实例变化，无动态 key 路径（v1 的 `$_picker.<id>.selection` 动态拼接已废除）。
 
-### 「pick」action（v3.2 统一机制，所有 pickerSchema 类型通用）
+### 2. `pick` builtin action 通道（按钮驱动内容）
+
+内容元素以 `{ action: 'pick', args: { value, rows } }` 触发提交。`pick` 注册为 Flux builtin action（BUILT_IN_ACTION_REGISTRY，无组件 id 假定），action adapter 委托给 ambient `ctx.picker` 回调（镜像 `ctx.form` / `onSubmitSuccess` 先例，adapter 零 picker 知识）：single 即提交；multiple 累积（用 ref，避免 popup 内容 fragment-scope 未提交窗口内重渲染破坏 region 行绑定），Confirm 一次性提交；空 Confirm 不清值（G1）。
 
 ```jsonc
 {
   "type": "button",
   "label": "选择",
   "onClick": {
-    "action": "pick", // ← picker 内置 action（无需 componentId）
+    "action": "pick", // ← Flux builtin action（无需 componentId）
     "args": { "value": "${item.id}", "rows": "${item}" },
   },
 }
 ```
 
-### picker 与 pickerSchema 的接线
-
-```
-1. picker 打开 popup，渲染 pickerSchema
-2. picker 包裹 PickerContext.Provider，pickerSchema 内元素可消费
-3. 用户操作 pickerSchema 内的元素（点行/勾选/显式按钮）
-   - 行 checkbox / row click 只是视觉选中，picker 不读取（不耦合）
-   - 显式 pick 按钮调用 {action: 'pick'} 累积到 PickerContext
-4. 用户点击 picker 的「确认」按钮
-5. picker 从 PickerContext.selection 读取已选项
-6. picker 通过 valueField/labelField 映射（可选：拉取完整 row 数据用于 autoFill）
-7. picker 写回表单字段、关闭 popup
-```
-
-### CRUD pickerSchema 的使用方式
-
-CRUD pickerSchema 必须**显式**在操作列或事件中提供 pick 触发点（picker 不自动注入）：
-
-```jsonc
-{
-  "type": "crud",
-  "loadAction": {...},
-  "columns": [
-    { "name": "id", "label": "ID" },
-    { "name": "name", "label": "Name" },
-    { "type": "operation", "buttons": [
-      { "label": "选择", "onClick": { "action": "pick", "args": { "value": "${item.id}", "rows": "${item}" } } }
-    ] }
-  ],
-  "rowSelection": { "type": "checkbox" }   // 仅视觉反馈
-}
-```
-
-> **职责完全分离**：CRUD 不知道 picker 存在，picker 不知道 pickerSchema 是 CRUD。双方通过 pick action 这个**通用接口**协作。
-
-### 非 CRUD pickerSchema（tree / list / form / container）
-
-pickerSchema 内的任意按钮通过 `{ action: 'pick', args: { value, rows } }` 提交。picker 不感知 pickerSchema 类型。
+> **职责完全分离**：CRUD 不知道 picker 存在，picker 不知道 pickerSchema 是 CRUD（renderer 内零 `type === 'crud'` / `type === 'list'` 分发）。发布路径由内容控件**自己的**配置声明，指向固定名只是作者/转换器的接线决定。
 
 ## 字段参考（Flux PickerSchema v3）
 
@@ -262,50 +229,50 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
 
 ## 与 AMIS picker 的对比
 
-| 维度         | AMIS Picker                                 | Flux Picker v3                                           |
-| ------------ | ------------------------------------------- | -------------------------------------------------------- |
-| 弹窗内容定义 | `pickerSchema: any`（实际只支持 CRUD-like） | `pickerSchema: BaseSchema`（**任意**）                   |
-| 多选机制     | 内置 CRUD selection                         | **复用** CRUD selection（不重复实现）                    |
-| 行点击即选   | `checkOnItemClick`                          | `pickerSchema.rowSelection.toggleOnRowClick`             |
-| 分页保留已选 | `keepItemSelectionOnPageChange`             | `pickerSchema.rowSelection.keepOnPageChange`             |
-| 弹出层类型   | `modalMode: 'dialog' \| 'drawer'`           | `pickerPopup.type: 'dialog' \| 'drawer' \| 'popover'`    |
-| 弹出层大小   | `xs/sm/md/lg/xl/full`（6 档）               | `xs/sm/default/lg/xl/full`（**6 档对齐**）               |
-| 值字段       | `valueField: string`                        | `valueField: string`（对齐）                             |
-| 标签字段     | `labelField: string`                        | `labelField: string`（对齐）                             |
-| 标签模板     | `labelTpl: SchemaTpl`                       | `labelTpl: SchemaTpl`（对齐）                            |
-| 多选分隔符   | `delimiter: string`                         | `delimiter: string`（对齐）                              |
-| 标签溢出     | `overflowConfig`                            | `overflowConfig`（对齐）                                 |
-| 清除行为     | `clearable` + `itemClearable`               | `clearable` + `itemClearable`（对齐）                    |
-| 选中动作     | `onChange`（隐式）                          | `onPick: ActionSchema[]`（命令式 action）                |
-| 已选标签点击 | `onEvent.itemClick`                         | `onItemClick: ActionSchema[]`（对齐）                    |
-| 清除重置值   | `resetValue`                                | `resetValue`（对齐）                                     |
-| 简写数据源   | `options` / `source`                        | ❌（强制走 `pickerSchema`，不保留简写）                  |
-| 默认内容     | `pickerSchema: {mode: 'list'}`              | 缺省时由 Flux runtime 提供最小 CRUD（复用 rowSelection） |
-| 表达式       | `${expr}` 字符串                            | `${expr}` 编译期预编译（更强）                           |
-| 反应式选中   | ❌                                          | ✅（CRUD 内置 + reaction）                               |
-| label 解析   | mobx reaction                               | Flux reaction（更强）                                    |
+| 维度         | AMIS Picker                                 | Flux Picker v3                                                                  |
+| ------------ | ------------------------------------------- | ------------------------------------------------------------------------------- |
+| 弹窗内容定义 | `pickerSchema: any`（实际只支持 CRUD-like） | `pickerSchema: BaseSchema`（**任意**）                                          |
+| 多选机制     | 内置 CRUD selection                         | **复用** CRUD selection（不重复实现）                                           |
+| 行点击即选   | `checkOnItemClick`                          | `pickerSchema.selection.toggleOnRowClick`                                       |
+| 分页保留已选 | `keepItemSelectionOnPageChange`             | `pickerSchema.selection.keepOnPageChange`                                       |
+| 弹出层类型   | `modalMode: 'dialog' \| 'drawer'`           | `pickerPopup.type: 'dialog' \| 'drawer' \| 'popover'`                           |
+| 弹出层大小   | `xs/sm/md/lg/xl/full`（6 档）               | `xs/sm/default/lg/xl/full`（**6 档对齐**）                                      |
+| 值字段       | `valueField: string`                        | `valueField: string`（对齐）                                                    |
+| 标签字段     | `labelField: string`                        | `labelField: string`（对齐）                                                    |
+| 标签模板     | `labelTpl: SchemaTpl`                       | `labelTpl: SchemaTpl`（对齐）                                                   |
+| 多选分隔符   | `delimiter: string`                         | `delimiter: string`（对齐）                                                     |
+| 标签溢出     | `overflowConfig`                            | `overflowConfig`（对齐）                                                        |
+| 清除行为     | `clearable` + `itemClearable`               | `clearable` + `itemClearable`（对齐）                                           |
+| 选中动作     | `onChange`（隐式）                          | `onPick: ActionSchema[]`（命令式 action）                                       |
+| 已选标签点击 | `onEvent.itemClick`                         | `onItemClick: ActionSchema[]`（对齐）                                           |
+| 清除重置值   | `resetValue`                                | `resetValue`（对齐）                                                            |
+| 简写数据源   | `options` / `source`                        | ❌（强制走 `pickerSchema`，不保留简写）                                         |
+| 默认内容     | `pickerSchema: {mode: 'list'}`              | ❌（无缺省内容构建：内容由转换器/作者经 pickerSchema 提供，缺配置时打开仅警告） |
+| 表达式       | `${expr}` 字符串                            | `${expr}` 编译期预编译（更强）                                                  |
+| 反应式选中   | ❌                                          | ✅（CRUD 内置 + reaction）                                                      |
+| label 解析   | mobx reaction                               | Flux reaction（更强）                                                           |
 
 ## 转换规则（AMIS → Flux）
 
-| AMIS 属性                               | Flux 属性                                    | 处理                                                                         |
-| --------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------- |
-| `valueField`                            | `valueField`                                 | 直接对应（**改名**：原 Flux `valueKey` → `valueField`）                      |
-| `labelField`                            | `labelField`                                 | 直接对应（**改名**：原 Flux `labelKey` → `labelField`）                      |
-| `labelTpl`                              | `labelTpl`                                   | 直接对应                                                                     |
-| `pickerSchema`                          | `pickerSchema`                               | 直接对应（核心保留）                                                         |
-| `modalMode`                             | `pickerPopup.type`                           | 直接对应                                                                     |
-| `modalSize`                             | `pickerPopup.size`                           | 直接对应（xs/sm/md/lg/xl/full 已对齐）                                       |
-| `modalTitle`                            | `pickerPopup.title`                          | 直接对应                                                                     |
-| `delimiter`                             | `delimiter`                                  | 直接对应                                                                     |
-| `overflowConfig`                        | `overflowConfig`                             | 直接对应                                                                     |
-| `clearable`                             | `clearable`                                  | 直接对应（拆分自 itemClearable）                                             |
-| `itemClearable`                         | `itemClearable`                              | 直接对应                                                                     |
-| `onEvent.itemClick`                     | `onItemClick`                                | 直接对应                                                                     |
-| `resetValue`                            | `resetValue`                                 | 直接对应                                                                     |
-| `options` + `source`                    | `pickerSchema`                               | 移入 `pickerSchema.loadAction`（AMIS 简写也强制走 pickerSchema，不保留简写） |
-| `embed`                                 | `embed`                                      | 直接对应                                                                     |
-| CRUD 内 `keepItemSelectionOnPageChange` | `pickerSchema.rowSelection.keepOnPageChange` | 直接对应（已在 CRUD）                                                        |
-| CRUD 内 `checkOnItemClick`              | `pickerSchema.rowSelection.toggleOnRowClick` | 直接对应（已在 CRUD）                                                        |
+| AMIS 属性                               | Flux 属性                                 | 处理                                                                         |
+| --------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------- |
+| `valueField`                            | `valueField`                              | 直接对应（**改名**：原 Flux `valueKey` → `valueField`）                      |
+| `labelField`                            | `labelField`                              | 直接对应（**改名**：原 Flux `labelKey` → `labelField`）                      |
+| `labelTpl`                              | `labelTpl`                                | 直接对应                                                                     |
+| `pickerSchema`                          | `pickerSchema`                            | 直接对应（核心保留）                                                         |
+| `modalMode`                             | `pickerPopup.type`                        | 直接对应                                                                     |
+| `modalSize`                             | `pickerPopup.size`                        | 直接对应（xs/sm/md/lg/xl/full 已对齐）                                       |
+| `modalTitle`                            | `pickerPopup.title`                       | 直接对应                                                                     |
+| `delimiter`                             | `delimiter`                               | 直接对应                                                                     |
+| `overflowConfig`                        | `overflowConfig`                          | 直接对应                                                                     |
+| `clearable`                             | `clearable`                               | 直接对应（拆分自 itemClearable）                                             |
+| `itemClearable`                         | `itemClearable`                           | 直接对应                                                                     |
+| `onEvent.itemClick`                     | `onItemClick`                             | 直接对应                                                                     |
+| `resetValue`                            | `resetValue`                              | 直接对应                                                                     |
+| `options` + `source`                    | `pickerSchema`                            | 移入 `pickerSchema.loadAction`（AMIS 简写也强制走 pickerSchema，不保留简写） |
+| `embed`                                 | `embed`                                   | 直接对应                                                                     |
+| CRUD 内 `keepItemSelectionOnPageChange` | `pickerSchema.selection.keepOnPageChange` | 直接对应（已在 CRUD）                                                        |
+| CRUD 内 `checkOnItemClick`              | `pickerSchema.selection.toggleOnRowClick` | 直接对应（已在 CRUD）                                                        |
 
 > AMIS `pickerSchema` 内的 CRUD 配置（如 `columns`/`headerToolbar`）直接对应 Flux `pickerSchema`，无需特殊处理。
 
@@ -343,7 +310,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
 
 ## 示例
 
-### 示例 1：单选用户（CRUD pickerSchema，复用 rowSelection）
+### 示例 1：单选用户（CRUD pickerSchema，复用 selection）
 
 ```jsonc
 {
@@ -370,7 +337,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
       { "name": "userName", "label": "用户名", "sortable": true },
       { "name": "displayName", "label": "显示名" },
     ],
-    "rowSelection": {
+    "selection": {
       "type": "radio", // ← 单选
       "toggleOnRowClick": true, // ← 行点击即选（AMIS checkOnItemClick）
     },
@@ -378,7 +345,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
 }
 ```
 
-> CRUD 自带 `rowSelection`，picker 无需额外机制。
+> CRUD 自带 `selection`，picker 无需额外机制。
 
 ### 示例 2：多选订单（CRUD pickerSchema，跨页保留）
 
@@ -415,7 +382,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
       { "name": "customer", "label": "客户", "toggled": true },
       { "name": "amount", "label": "金额", "align": "right", "toggled": true },
     ],
-    "rowSelection": {
+    "selection": {
       "type": "checkbox", // ← 多选
       "keepOnPageChange": true, // ← 跨页保留（AMIS keepItemSelectionOnPageChange）
       "toggleOnRowClick": true, // ← 行点击即选
@@ -454,7 +421,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
       { "name": "name", "label": "名称" },
       { "name": "creditLevelName", "label": "信用等级" }
     ],
-    "rowSelection": { "type": "radio", "toggleOnRowClick": true }
+    "selection": { "type": "radio", "toggleOnRowClick": true }
   }
 }
 ```
@@ -485,7 +452,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
       { "name": "name", "label": "名称" },
       { "name": "address", "label": "地址" },
     ],
-    "rowSelection": { "type": "radio", "toggleOnRowClick": true },
+    "selection": { "type": "radio", "toggleOnRowClick": true },
   },
 }
 ```
@@ -579,17 +546,12 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
 }
 ```
 
-## 当前状态（2026-09-02 v3.2 落地）
+## 当前状态（2026-09-03 计划收尾）
 
-✅ **`pickerSchema` 属性已在 Flux PickerSchema 中声明**（`composite-schemas.ts` PickerSchema v3）
-✅ **`pickerPopup` 重命名完成**（`pickerDialog` 已彻底移除，不保留别名）
-✅ **picker 上下文机制落地**（`picker-context.tsx` + PickerContextProvider 包裹）
-✅ **职责分离**：picker 不再重复实现 CRUD 多选/分页保留等机制；CRUD `selectionStatePath` 不再被 picker 读取
-✅ **label 反应式解析机制实现**：picker mount 时通过 `loadAction` 或 `labelResolveAction` 拉取已选 value 的 label
-✅ **AMIS 字段补齐**：`labelTpl` / `overflowConfig` / `delimiter` / `itemClearable` / `onItemClick` / `resetValue` / `embed` / `pickerPopup.type`
-✅ **转换层 `flux-web/grid_crud.xpl` 改造完成**：picker 模式输出嵌套 `picker > pickerSchema > crud` 结构
-✅ **业务侧 5 个 view.xml 同步迁移**：`ErpSalDelivery` / `ErpSalInvoice` / `ErpPurReceive` / `ErpPurInvoice` / `ErpFinVoucherLine`
-⏳ **测试用例**:6 个现有测试已迁移字段名(`valueKey` → `valueField` 等);5 个新测试文件待 Phase 3 收尾(plan 范围内)
-✅ **`pick` action 注册**:已注册为 Flux builtin action(BUILT_IN_ACTION_REGISTRY/DEFINITIONS + dispatcher case + adapter 委托 `ctx.picker` ambient 回调),无组件 id 假定
+✅ **v3.3/v3.4 最终契约全量落地**（计划 `2026-09-02-2028-1-flux-picker-schema-override.md` Closure Gates 全过）：
 
-**已知 partial 状态**:Phase 1-2 + Phase 2.5 + Phase 4 已完成;Phase 3(测试)与 Phase 5(全量验证)收尾中。具体状态见 `docs/plans/2026-09-02-2028-1-flux-picker-schema-override.md` Closure Gates。
+- `pickerSchema`（region）+ `pickerPopup` 为唯一内容/弹层声明；旧字段（`valueKey` / `labelKey` / `pickerDialog` / 顶层 `options` / `loadAction` / `columns` / `searchable` / `source`）彻底移除
+- 单一 scope 发布协议 + builtin `pick` action（见本文件头部 v3.3 最终协议）
+- 转换层 `flux-web/grid_crud.xpl` + `page_picker.xpl`（nop-entropy）与 `flux-control.xlib` delta（nop-app-erp）输出 v3 契约：`pickerPopup` + `valueField`/`labelField` + `pickerSchema` CRUD 子树，selection 发布指向 `$_picker.selection` / `$_picker.rows`
+- 测试：现有 6 文件字段名迁移 + 新增 5 文件 18 用例（picker-schema-override / picker-popup-types / picker-label-parse / picker-overflow-config / picker-amis-fields）；form-advanced 143 文件 1081 用例全绿
+- Deferred（successor: picker 标签 UI plan）：已选标签 UI——`labelTpl` 复合模板渲染、`delimiter`/`joinValues` 值拼接、`overflowConfig` 折叠、`itemClearable` 单标签清除、`onItemClick`（声明保留、行为待标签 UI）
