@@ -142,13 +142,13 @@ describe('picker: reactive label resolution from stored values', () => {
     expect(selectedLabel()).toBe('u1');
   });
 
-  it('labelTpl is accepted as a declared prop; the trigger label falls back to labelField text (tag-template UI deferred per plan v3.4)', async () => {
+  it('labelTpl renders a compound template from the resolved row', async () => {
     renderSchema(
       {
         type: 'form',
         id: 'f',
         data: { owner: 'u1' },
-        body: pickerBody({ labelTpl: '${title} ★' }),
+        body: pickerBody({ labelTpl: '${row.title} ★' }),
       },
       {
         fetcher: async function <T>() {
@@ -159,9 +159,8 @@ describe('picker: reactive label resolution from stored values', () => {
     );
 
     await waitFor(() => {
-      expect(selectedLabel()).toBe('Resolved Alice');
+      expect(selectedLabel()).toBe('Resolved Alice ★');
     });
-    expect(selectedLabel()).not.toContain('★');
   });
 });
 

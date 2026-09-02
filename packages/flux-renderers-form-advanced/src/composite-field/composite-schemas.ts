@@ -221,28 +221,28 @@ export interface PickerSchema extends BoundFieldSchemaBase {
   labelField?: string;
   /** Compound label template (overrides labelField when provided). */
   labelTpl?: SchemaTpl;
+  /** Per-tag clearable (multi-select). Default: true. */
+  itemClearable?: boolean;
+  /** Join multi-select values into a delimiter-separated string. Default: false. */
+  joinValues?: boolean;
+  /** Delimiter used when joinValues=true. Default: ','. */
+  delimiter?: string;
+  /** Extract value from selected row (false = write the whole row object). Default: true. */
+  extractValue?: boolean;
+  /** Multi-select tag overflow configuration. */
+  overflowConfig?: OverflowConfig;
+  /** Embed mode: render popup content inline without trigger/popup. */
+  embed?: boolean;
   /** Multi-select mode. Default: false. */
   multiple?: boolean;
   /** Overall clearable. Default: true. */
   clearable?: boolean;
-  /** Per-tag clearable (multi-select). Default: true. */
-  itemClearable?: boolean;
-  /** Join multi-select values into a delimiter-separated string. Default: true. */
-  joinValues?: boolean;
-  /** Delimiter used when joinValues=true. Default: ','. */
-  delimiter?: string;
-  /** Extract value from nested object (e.g. when labelField resolves to {value, label}). Default: true. */
-  extractValue?: boolean;
-  /** Multi-select tag overflow configuration. */
-  overflowConfig?: OverflowConfig;
   /** Auto-fill sibling form fields from selected row. */
   autoFill?: Record<string, string>;
   /** Action invoked after a successful pick. */
   onPick?: ActionSchema | ActionSchema[];
   /** Action invoked when an already-selected tag is clicked. */
   onItemClick?: ActionSchema | ActionSchema[];
-  /** Embed mode (no popup). */
-  embed?: boolean;
   /** Value written on clear. */
   resetValue?: SchemaValue;
 }

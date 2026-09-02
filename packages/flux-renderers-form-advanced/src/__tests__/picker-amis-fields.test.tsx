@@ -68,7 +68,7 @@ function resolveFormState(testId: string): unknown {
 }
 
 describe('picker: AMIS-aligned value/label fields', () => {
-  it('delimiter is declared-inert: multiple selection stays on the array value channel', async () => {
+  it('delimiter + joinValues join the multiple selection into a delimited string', async () => {
     renderSchema({
       type: 'form',
       id: 'f',
@@ -96,7 +96,7 @@ describe('picker: AMIS-aligned value/label fields', () => {
     fireEvent.click(document.querySelector('[data-slot="picker-confirm"]')!);
 
     await waitFor(() => {
-      expect(resolveFormState('form-state:owners')).toEqual(['alice', 'bob']);
+      expect(resolveFormState('form-state:owners')).toBe('alice|bob');
     });
   });
 

@@ -68,6 +68,15 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   const multiple = schemaProps.multiple === true;
   const valueField = typeof schemaProps.valueField === 'string' ? schemaProps.valueField : undefined;
   const labelField = typeof schemaProps.labelField === 'string' ? schemaProps.labelField : undefined;
+  const itemClearable = schemaProps.itemClearable !== false;
+  const joinValues = schemaProps.joinValues === true;
+  const delimiter = schemaProps.delimiter ?? ',';
+  const extractValue = schemaProps.extractValue !== false;
+  const labelTplProgram = props.templateNode.structuralFields?.labelTpl as
+    | CompiledRuntimeValue<string>
+    | undefined;
+  const maxTagCount = typeof schemaProps.overflowConfig?.maxTagCount === 'number' ? schemaProps.overflowConfig.maxTagCount : undefined;
+  const embed = schemaProps.embed === true;
   const pickerPopupConfig = schemaProps.pickerPopup;
   const hasPickerPopup = pickerPopupConfig !== undefined && pickerPopupConfig !== false;
   const popupConfig = (hasPickerPopup && typeof pickerPopupConfig === 'object' ? pickerPopupConfig : {}) as {
@@ -156,6 +165,28 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     | CompiledRuntimeValue<Record<string, unknown>>
     | undefined;
 
+  // labelTpl: pre-evaluated per selected value in an effect (render-time
+  // createScope/evaluate is illegal — autoFill evaluates in callbacks only).
+  const [tplHtml, setTplHtml] = React.useState<Record<string, string>>({});
+  React.useEffect(() => {
+    if (!labelTplProgram || selectedValues.length === 0) {
+      setTplHtml({});
+      return;
+    }
+    const next: Record<string, string> = {};
+    for (const value of selectedValues) {
+      const row = selectionRows.get(value)?.row;
+      if (!row) continue;
+      const rowScope = props.helpers.createScope({ row });
+      try {
+        next[String(value)] = String(props.helpers.evaluateCompiled(labelTplProgram, rowScope) ?? '');
+      } finally {
+        props.helpers.disposeScope(rowScope.id);
+      }
+    }
+    setTplHtml(next);
+  }, [labelTplProgram, props.helpers, selectedValues, selectionRows]);
+
   const selectedLabel = React.useMemo(() => {
     if (!multiple && isRecord(rawFieldValue) && labelField) {
       const rawLabel = rawFieldValue[labelField];
@@ -171,6 +202,13 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
         .map(String);
       if (rawLabels.length > 0) return rawLabels.join(', ');
     }
+    if (labelTplProgram && selectedValues.length > 0) {
+      const key2 = String(selectedValues[0]);
+      if (Object.prototype.hasOwnProperty.call(tplHtml, key2)) {
+        const html = tplHtml[key2];
+        return html || resolvedLabelCache[key2] || selectedValues[0];
+      }
+    }
     const cachedLabels = selectedValues.map((value) => resolvedLabelCache[String(value)]);
     if (cachedLabels.some((value) => value)) {
       return cachedLabels.filter((value): value is string => Boolean(value)).join(', ');
@@ -180,7 +218,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       [],
       t('flux.picker.placeholder', { defaultValue: 'Not selected' }),
     );
-  }, [labelField, multiple, rawFieldValue, resolvedLabelCache, selectedValues]);
+  }, [labelField, labelTplProgram, multiple, rawFieldValue, resolvedLabelCache, selectedValues, tplHtml]);
 
   const writeValue = React.useCallback(
     (next: unknown) => {
@@ -351,10 +389,14 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       ? rows.get(finalValues[0])?.row
       : undefined;
     applyAutoFill(firstSelected);
-    writeValue(multiple ? finalValues : finalValues[0]);
+    const baseValue = multiple ? finalValues : finalValues[0];
+    const writeVal = !extractValue && firstSelected
+      ? (multiple ? finalValues.map((v) => rows.get(v)?.row ?? v) : firstSelected)
+      : baseValue;
+    writeValue(joinValues && multiple ? (finalValues as PickerValue[]).join(delimiter) : writeVal);
     setOpen(false);
     void props.events.onPick?.();
-  }, [applyAutoFill, labelField, multiple, props.events, scope, selectionRows, valueField, writeValue]);
+  }, [applyAutoFill, extractValue, joinValues, delimiter, labelField, multiple, props.events, scope, selectionRows, valueField, writeValue]);
 
   useInputComponentHandle({
     id: props.id,
@@ -371,10 +413,10 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
 
   const contentNode = React.useMemo(
     () =>
-      open && pickerSchemaRegion
+      (embed || open) && pickerSchemaRegion
         ? (pickerSchemaRegion.render({ pathSuffix: 'pickerContent' }) as React.ReactNode)
         : null,
-    [open, pickerSchemaRegion],
+    [embed, open, pickerSchemaRegion],
   );
 
   // `pick` action callback (ambient handle for the popup subtree). Pick is the
@@ -413,12 +455,12 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
           : [...pickedRef.current, value as PickerValue];
         return { ok: true, data: value };
       }
-      writeValue(value);
+      writeValue(extractValue ? value : rowList[0] ?? value);
       setOpen(false);
       void props.events.onPick?.();
       return { ok: true, data: value };
     },
-    [applyAutoFill, labelField, multiple, props.events, valueField, writeValue],
+    [applyAutoFill, extractValue, labelField, multiple, props.events, valueField, writeValue],
   );
 
   const pickerRuntimeValue = React.useMemo(() => ({ pick: handlePick }), [handlePick]);
@@ -427,12 +469,34 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     <PickerRuntimeContext.Provider value={pickerRuntimeValue}>{contentNode}</PickerRuntimeContext.Provider>
   ) : null;
 
+  // Labels for committed selected values (tags + labelTpl), resolved from the
+  // pick/label caches — never from content-structure assumptions.
+  const selectionLabels = React.useMemo(
+    () =>
+      selectedValues.map((value) => {
+        const entry = selectionRows.get(value);
+        const label = resolvedLabelCache[String(value)] ?? (entry?.label ?? String(value));
+        const row = entry?.row;
+        const html = labelTplProgram ? (tplHtml[String(value)] ?? '') : '';
+        return { value, label, row, html };
+      }),
+    [labelTplProgram, resolvedLabelCache, selectionRows, selectedValues, tplHtml],
+  );
+
   if (!props.meta.visible) {
     return null;
   }
 
   const confirmDisabled =
     !multiple && publishedSelection.length === 0 && pickedRef.current.length === 0;
+
+  if (embed) {
+    return (
+      <div className={cn('nop-picker nop-picker-embed', 'flex flex-col gap-2', props.meta.className)}>
+        {wrappedContent}
+      </div>
+    );
+  }
 
   return (
     <div className={cn('nop-picker', 'flex items-center gap-2', props.meta.className)}>
@@ -468,6 +532,52 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
         value={JSON.stringify(multiple ? selectedValues : selectedValues[0] ?? '')}
         readOnly
       />
+
+      {multiple && selectedValues.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1" data-slot="picker-tags">
+          {selectionLabels.slice(0, maxTagCount != null && maxTagCount >= 0 ? maxTagCount : undefined).map(
+            ({ value, label }) => (
+              <span
+                key={String(value)}
+                className="inline-flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-xs"
+                data-slot="picker-tag"
+              >
+                <button
+                  type="button"
+                  className="truncate"
+                  onClick={() => void props.events.onItemClick?.()}
+                >
+                  {selectionLabels.find((s2) => String(s2.value) === String(value))?.html || label}
+                </button>
+                {itemClearable && !interactionDisabled && (
+                  <button
+                    type="button"
+                    aria-label={t('flux.picker.remove', { defaultValue: 'Remove' })}
+                    data-slot="picker-tag-remove"
+                    onClick={() =>
+                      writeValue(
+                        joinValues
+                          ? selectedValues.filter((v) => v !== value).join(delimiter)
+                          : selectedValues.filter((v) => v !== value),
+                      )
+                    }
+                  >
+                    <XIcon className="size-3" />
+                  </button>
+                )}
+              </span>
+            ),
+          )}
+          {maxTagCount != null && maxTagCount >= 0 && selectionLabels.length > maxTagCount && (
+            <span
+              className="inline-flex items-center rounded bg-accent px-1.5 py-0.5 text-xs"
+              data-slot="picker-tag-overflow"
+            >
+              +{selectionLabels.length - maxTagCount}
+            </span>
+          )}
+        </div>
+      )}
 
       <PickerDropdown
         open={open}
@@ -512,7 +622,7 @@ export const pickerRendererDefinition: RendererDefinition = {
     { key: 'pickerPopup', kind: 'prop' },
     { key: 'valueField', kind: 'prop' },
     { key: 'labelField', kind: 'prop' },
-    { key: 'labelTpl', kind: 'prop' },
+    { key: 'labelTpl', kind: 'prop', lazyEval: true, params: ['row'] },
     { key: 'delimiter', kind: 'prop' },
     { key: 'overflowConfig', kind: 'prop' },
     { key: 'itemClearable', kind: 'prop', valueType: 'boolean' },
