@@ -62,9 +62,18 @@ const crudPickerItem = [
     name: 'owner',
     label: 'Owner',
     pickerPopup: { title: 'Pick owner', size: 'lg' },
-    loadAction: { action: 'ajax', args: { url: '/api/owners' } },
     valueField: 'id',
     labelField: 'title',
+    pickerSchema: {
+      type: 'crud',
+      loadAction: { action: 'ajax', args: { url: '/api/owners' } },
+      columns: [{ name: 'title', label: 'Title' }],
+      selection: { type: 'radio' },
+      selectionOwnership: 'scope',
+      selectionStatePath: '$_picker.selection',
+      dataStatePath: '$_picker.rows',
+      autoClearSelectionOnRefresh: false,
+    },
   },
 ];
 

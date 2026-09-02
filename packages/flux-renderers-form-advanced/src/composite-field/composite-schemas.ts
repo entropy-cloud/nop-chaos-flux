@@ -2,7 +2,6 @@ import type {
   ActionSchema,
   BaseSchema,
   BoundFieldSchemaBase,
-  ReactiveActionSchema,
   SchemaObject,
   SchemaValue,
 } from '@nop-chaos/flux-core';
@@ -203,17 +202,15 @@ export interface PickerSchema extends BoundFieldSchemaBase {
   type: 'picker';
   /** Popup surface configuration. */
   pickerPopup?: PickerPopupConfig | boolean;
-  /** Popup content schema (any BaseSchema: crud / tree / list / form / container). */
-  pickerSchema?: BaseSchema;
   /**
-   * On-demand option load action. Used for label reactive resolution: when
-   * the field has a value but no matching cached label, picker dispatches
-   * this action to fetch the corresponding row(s). When pickerSchema is a
-   * CRUD with its own loadAction, picker falls back to pickerSchema.loadAction
-   * if this is omitted.
+   * Popup content schema — the sole content definition. `crud` content renders
+   * the CRUD renderer (which publishes its selection to its declared
+   * `selectionStatePath` scope variable; picker reads that path at confirm).
+   * Other content types render inside the PickerContext; they submit via the
+   * `pick` action whose payload travels through `args`.
    */
-  loadAction?: ReactiveActionSchema;
-  /** Action that resolves stored values into display labels. */
+  pickerSchema?: BaseSchema;
+  /** Action that resolves stored values into display labels (picker-level concern). */
   labelResolveAction?: ActionSchema | ActionSchema[];
   /** Field path on the selected option row used as value. */
   valueField?: string;
@@ -235,6 +232,8 @@ export interface PickerSchema extends BoundFieldSchemaBase {
   extractValue?: boolean;
   /** Multi-select tag overflow configuration. */
   overflowConfig?: OverflowConfig;
+  /** Show keyword search input in the built-in lightweight list popup. Default: true. */
+  searchable?: boolean;
   /** Auto-fill sibling form fields from selected row. */
   autoFill?: Record<string, string>;
   /** Action invoked after a successful pick. */

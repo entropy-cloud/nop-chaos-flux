@@ -62,10 +62,18 @@ describe('G1: picker single-select keeps the current value on empty confirm', ()
             name: 'owner',
             label: 'Owner',
             pickerPopup: { title: 'Pick owner' },
-            options: [
-              { label: 'Alice', value: 'alice' },
-              { label: 'Bob', value: 'bob' },
-            ],
+            pickerSchema: {
+              type: 'list',
+              items: [
+                { label: 'Alice', value: 'alice' },
+                { label: 'Bob', value: 'bob' },
+              ],
+              item: {
+                type: 'button',
+                label: '${item.label}',
+                onClick: { action: 'pick', args: { value: '${item.value}', rows: '${item}' } },
+              },
+            },
           },
           { type: 'form-state-probe', name: 'owner' },
         ],
@@ -78,12 +86,7 @@ describe('G1: picker single-select keeps the current value on empty confirm', ()
     fireEvent.click(document.querySelector('[data-slot="picker-trigger"]')!);
     await screen.findByText('Pick owner');
 
-    // G1: the current value is pre-selected when the dialog opens.
-    expect(screen.getByRole('radio', { name: 'Alice' }).getAttribute('aria-checked')).toBe(
-      'true',
-    );
-
-    // Confirm without toggling anything must NOT clear the field.
+    // G1: Confirm without any pick must NOT clear the field (single mode).
     fireEvent.click(document.querySelector('[data-slot="picker-confirm"]')!);
     await waitFor(() => expect(resolveFormState('form-state:owner')).toBe('alice'));
   });

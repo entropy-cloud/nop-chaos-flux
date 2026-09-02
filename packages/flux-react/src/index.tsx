@@ -14,6 +14,7 @@ export {
   RuntimeContext,
   ScopeContext,
   SurfaceContext,
+  PickerRuntimeContext,
   ValidationContext,
 } from './contexts.js';
 export type { FormLayoutContextValue } from './contexts.js';
@@ -55,6 +56,7 @@ export {
   useAggregateError,
   useCurrentPage,
   useCurrentSurfaceRuntime,
+  useCurrentPickerRuntime,
   useCurrentNodeMeta,
   useCurrentNodeInstance,
   useStructuralLoopContext,

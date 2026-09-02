@@ -4,7 +4,12 @@
 > Source: `flux-guide/09-amis-migration.md` Picker 节、`packages/flux-renderers-form-advanced/src/composite-field/composite-schemas.ts`
 > Related: AMIS `packages/amis/src/renderers/Form/Picker.tsx`、`docs/plans/2026-09-02-2028-1-flux-picker-schema-override.md`
 
-> **v3.2 关键架构调整（2026-09-02）**：原计划"复用 CRUD `selectionStatePath` 让 picker 确认"已修正为**统一 picker 上下文 + 显式 pick action**。行选择（checkbox / row click）只是视觉反馈，不触发选择累积；picker 通过 `PickerContext.Provider` 注入 `{ pickerId, pick, unpick, clear, selection }`，pickerSchema 内的按钮通过 `{ action: 'pick', args: { value, rows } }` 显式提交。picker 不读取 CRUD `selectionStatePath`，职责完全分离。
+> **v3.3 最终协议（2026-09-02 定稿）**：picker 与内容控件之间的绑定通道有且仅有两条，均为**通用机制、零组件 id、零类型嗅探**：
+>
+> 1. **scope 发布通道**：内容控件（CRUD 等）通过**自己的** `selectionStatePath` 配置把选中状态发布到 popup 局域 scope 的固定名 `$_picker.selection` / `$_picker.rows`（转换器/作者负责指向）；picker Confirm 读固定名做跨 scope 提交（值经 valueField/labelField 映射写入表单字段并关窗）。
+> 2. **`pick` builtin action 通道**：内容元素以 `{ action: 'pick', args: { value, rows } }` 触发提交——注册为 Flux builtin action（无 id 假定），adapter 委托给 ambient `ctx.picker` 回调（镜像 `ctx.form` / `onSubmitSuccess` 先例）；picker 侧回调完成 valueField 映射 + 表单写回 + 关窗（single 即提交；multiple 累积、Confirm 一次性提交，累积用 ref 以免 popup 内容 fragment-scope 未提交窗口内重渲染破坏 region 行绑定）。
+>
+> 演进史：v3.1 读 CRUD selectionStatePath（越界）→ v3.2 PickerContext + pick action（React 上下文反向耦合，废弃）→ v3.3 纯 scope 发布 + builtin pick 回调（定稿）。全过程与机制层教训见 `nop-app-erp/docs/lessons/18-schema-contract-redesign-no-type-sniffing-no-sugar.md`。
 
 ## 设计原则
 
@@ -585,6 +590,6 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
 ✅ **转换层 `flux-web/grid_crud.xpl` 改造完成**：picker 模式输出嵌套 `picker > pickerSchema > crud` 结构
 ✅ **业务侧 5 个 view.xml 同步迁移**：`ErpSalDelivery` / `ErpSalInvoice` / `ErpPurReceive` / `ErpPurInvoice` / `ErpFinVoucherLine`
 ⏳ **测试用例**:6 个现有测试已迁移字段名(`valueKey` → `valueField` 等);5 个新测试文件待 Phase 3 收尾(plan 范围内)
-⏳ **`pick` action 注册**:picker 上下文已落地,但 `pick` action 通过 Flux action system 的注册路径仍待 Phase 3 收尾(目前通过 PickerContext.pick 函数直接调用,需后续 plan 实现 Flux action system 集成)
+✅ **`pick` action 注册**:已注册为 Flux builtin action(BUILT_IN_ACTION_REGISTRY/DEFINITIONS + dispatcher case + adapter 委托 `ctx.picker` ambient 回调),无组件 id 假定
 
 **已知 partial 状态**:Phase 1-2 + Phase 2.5 + Phase 4 已完成;Phase 3(测试)与 Phase 5(全量验证)收尾中。具体状态见 `docs/plans/2026-09-02-2028-1-flux-picker-schema-override.md` Closure Gates。

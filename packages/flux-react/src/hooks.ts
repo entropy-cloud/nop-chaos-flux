@@ -18,6 +18,7 @@ import {
   useCurrentPage,
   useRenderInstancePath,
   useCurrentSurfaceRuntime,
+  useCurrentPickerRuntime,
   useStructuralLoopContext,
 } from './context-hooks.js';
 import { useRenderScopeContext, useRendererRuntimeContext } from './runtime-context-hooks.js';
@@ -30,6 +31,7 @@ export {
   useCurrentPage,
   useRenderInstancePath,
   useCurrentSurfaceRuntime,
+  useCurrentPickerRuntime,
   useStructuralLoopContext,
 } from './context-hooks.js';
 import {
@@ -207,6 +209,7 @@ export const rendererHooks = {
   useAggregateError,
   useCurrentPage,
   useCurrentSurfaceRuntime,
+  useCurrentPickerRuntime,
   useCurrentNodeMeta,
   useCurrentNodeInstance,
   useStructuralLoopContext,

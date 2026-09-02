@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import type {
+  ActionContextPicker,
   ActionScope,
   ComponentHandleRegistry,
   InstanceFrame,
@@ -15,6 +16,7 @@ import {
   ImportFrameContext,
   NodeMetaContext,
   PageContext,
+  PickerRuntimeContext,
   RenderInstancePathContext,
   StructuralLoopContext,
   SurfaceContext,
@@ -43,6 +45,10 @@ export function useCurrentPage(): PageRuntime | undefined {
 
 export function useCurrentSurfaceRuntime(): SurfaceRuntime | undefined {
   return useContext(SurfaceContext);
+}
+
+export function useCurrentPickerRuntime(): ActionContextPicker | undefined {
+  return useContext(PickerRuntimeContext);
 }
 
 export function useCurrentNodeMeta(): RenderNodeMeta {

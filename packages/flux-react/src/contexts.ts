@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { Context } from 'react';
 import type {
+  ActionContextPicker,
   ActionScope,
   ComponentHandleRegistry,
   ImportFrame,
@@ -40,6 +41,7 @@ export const ComponentRegistryContext = createContext<ComponentHandleRegistry | 
 );
 export const ImportFrameContext = createContext<ImportFrame | undefined>(undefined);
 export const FormContext = createContext<FormRuntime | undefined>(undefined);
+export const PickerRuntimeContext = createContext<ActionContextPicker | undefined>(undefined);
 export const ValidationContext = createContext<ValidationContextValue>(undefined);
 export const PageContext = createContext<PageRuntime | undefined>(undefined);
 export const SurfaceContext = createContext<SurfaceRuntime | undefined>(undefined);

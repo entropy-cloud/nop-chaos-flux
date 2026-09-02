@@ -51,6 +51,7 @@ export const BUILT_IN_ACTION_REGISTRY = {
   navigate: { canonicalName: 'navigate' },
   confirm: { canonicalName: 'confirm' },
   alert: { canonicalName: 'alert' },
+  pick: { canonicalName: 'pick' },
 } as const satisfies Readonly<Record<string, BuiltInActionDescriptor>>;
 
 const builtInActionDescriptors = Object.values(BUILT_IN_ACTION_REGISTRY) as readonly BuiltInActionDescriptor[];
@@ -182,6 +183,18 @@ export const BUILT_IN_ACTION_DEFINITIONS: Readonly<Record<string, BuiltInActionD
     fieldRules: {
       level: 'value',
       message: 'value',
+    },
+  },
+  /**
+   * `pick` — id-free selection trigger for picker popup content. Args carry
+   * the selected value/rows; the handler records them into the ambient
+   * (popup-local) scope at the well-known publish paths. Cross-scope commit
+   * to the form field is the host picker Confirm's job (it knows both sides).
+   */
+  pick: {
+    fieldRules: {
+      value: 'value',
+      rows: 'value',
     },
   },
 };

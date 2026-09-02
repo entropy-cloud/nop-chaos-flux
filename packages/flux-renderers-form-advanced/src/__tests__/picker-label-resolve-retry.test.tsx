@@ -75,7 +75,15 @@ describe('picker: labelResolveAction retries after a failed dispatch (C3.1 P2-1)
             name: 'owner',
             label: 'Owner',
             pickerPopup: { title: 'Pick owner' },
-            options: [{ label: 'Alice', value: 'alice' }],
+            pickerSchema: {
+              type: 'list',
+              items: [{ label: 'Alice', value: 'alice' }],
+              item: {
+                type: 'button',
+                label: '${item.label}',
+                onClick: { action: 'pick', args: { value: '${item.value}', rows: '${item}' } },
+              },
+            },
             valueField: 'id',
             labelField: 'title',
             labelResolveAction: { action: 'ajax', args: { url: '/api/owners' } },

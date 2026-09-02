@@ -29,6 +29,7 @@ import { ClassAliasesContext } from './contexts.js';
 import {
   useCurrentPage,
   useCurrentSurfaceRuntime,
+  useCurrentPickerRuntime,
   useRenderInstancePath,
 } from './context-hooks.js';
 import { useCurrentForm, useCurrentValidationScope } from './hooks/use-form-hooks.js';
@@ -70,6 +71,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const currentValidationScope = useCurrentValidationScope();
   const currentPage = useCurrentPage();
   const currentSurfaceRuntime = useCurrentSurfaceRuntime();
+  const currentPickerRuntime = useCurrentPickerRuntime();
   const mountedCid = props.mountedCid;
   const instanceStateKey = useMemo(
     () => (instancePath ?? []).map((f) => `${f.repeatedTemplateId}:${f.instanceKey}`).join('/'),
@@ -215,6 +217,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
           form: currentForm,
           page: currentPage,
           surfaceRuntime: currentSurfaceRuntime,
+          picker: currentPickerRuntime,
           nodeInstance,
         },
         (renderInput, options) =>
@@ -231,6 +234,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
       currentForm,
       currentPage,
       currentSurfaceRuntime,
+      currentPickerRuntime,
       nodeInstance,
       renderFragment,
     ],

@@ -4,6 +4,7 @@ import type { RendererRuntime } from '@nop-chaos/flux-core';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { env, formulaCompiler, formStateProbeRenderer } from '../test-support.js';
 import { installFormAdvancedTestHooks } from '../test-support.js';
@@ -23,6 +24,7 @@ describe('picker autoFill — one-shot scope pairing (09-02)', () => {
     const SchemaRenderer = createSchemaRenderer([
       ...basicRendererDefinitions,
       ...allFormDefs,
+      ...dataRendererDefinitions,
       formStateProbeRenderer,
     ]);
 
@@ -41,7 +43,15 @@ describe('picker autoFill — one-shot scope pairing (09-02)', () => {
                 name: 'owner',
                 label: 'Owner',
                 pickerPopup: { title: 'Pick owner' },
-                options: [{ label: 'Alice', value: 'alice' }],
+                pickerSchema: {
+                  type: 'list',
+                  items: [{ label: 'Alice', value: 'alice' }],
+                  item: {
+                    type: 'button',
+                    label: '${item.label}',
+                    onClick: { action: 'pick', args: { value: '${item.value}', rows: '${item}' } },
+                  },
+                },
                 autoFill: { copied: '${row.label}' },
               },
               { type: 'form-state-probe', name: 'owner' },
@@ -73,8 +83,7 @@ describe('picker autoFill — one-shot scope pairing (09-02)', () => {
       }) as never);
     const disposeSpy = vi.spyOn(runtime, 'disposeScope');
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Alice' }));
-    fireEvent.click(document.querySelector('[data-slot="picker-confirm"]')!);
+    fireEvent.click(await screen.findByRole('button', { name: 'Alice' }));
 
     await waitFor(() => {
       expect(JSON.parse(screen.getByTestId('form-state:owner').textContent ?? 'null')).toBe(

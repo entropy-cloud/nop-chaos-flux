@@ -122,16 +122,15 @@ export function inferColumns(options: NormalizedOption[]): CrudColumnSchema[] {
 
 /**
  * Build a default CRUD schema for picker when user has not provided an explicit
- * `pickerSchema`. v3.2 (responsibility-split):
- *  - Picker never reads CRUD's selection state. CRUD keeps its own
- *    `rowSelection` purely for visual feedback (checkbox / row highlight).
- *  - Selection is accumulated in picker's React Context via the built-in
- *    `pick` action (see PickerContext). CRUD pickerSchema is wrapped in a
- *    PickerContext provider; CRUD row click / checkbox toggle (if configured)
- *    emits a `pick` action through the helper row click action.
- *  - The picker renders the default CRUD as a thin convenience: just enough
- *    shape to give the user something selectable when `pickerSchema` is
- *    omitted. It does NOT inject picker-specific state paths.
+ * `pickerSchema`. v3 semantics:
+ *  - CRUD keeps its own `rowSelection` for visual feedback (checkbox / row
+ *    highlight / keepOnPageChange) — picker does not re-implement these.
+ *  - Row selection is visual only; the picker's Confirm reads the CRUD-managed
+ *    `selectionStatePath` once and commits all selected rows to the form field
+ *    (user adjudication 2026-09-02: "行选择并不提交，最后是有一个确定才将选择
+ *    的所有内容提交到下方").
+ *  - The per-instance `selectionStatePath` (`$_picker.${pickerId}.selection`)
+ *    keeps repeated combo / input-table row instances isolated (bug 73 pattern).
  */
 export function buildDefaultPickerSchema(args: {
   pickerId: string;
@@ -149,6 +148,14 @@ export function buildDefaultPickerSchema(args: {
     queryForm: {
       body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
     },
+    selection: {
+      type: args.multiple ? 'checkbox' : 'radio',
+      keepOnPageChange: true,
+    },
+    selectionOwnership: 'scope',
+    selectionStatePath: `$_picker.${args.pickerId}.selection`,
+    dataStatePath: `$_picker.${args.pickerId}.rows`,
+    autoClearSelectionOnRefresh: false,
   };
 }
 

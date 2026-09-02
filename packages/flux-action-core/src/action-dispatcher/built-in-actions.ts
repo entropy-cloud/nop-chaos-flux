@@ -279,6 +279,20 @@ export async function runBuiltInAction(
       };
       break;
     }
+    case 'pick': {
+      const payload = evaluateActionArgs(action, ctx, internals.evaluator);
+      invocation = {
+        action: 'pick',
+        args: {
+          value: payload && typeof payload === 'object' && 'value' in payload ? (payload as { value?: unknown }).value : undefined,
+          rows: payload && typeof payload === 'object' && 'rows' in payload ? (payload as { rows?: unknown }).rows : undefined,
+        },
+        targeting: action.targeting,
+        actionNode: action,
+        signal,
+      };
+      break;
+    }
     case 'submit':
     case 'submitForm': {
       // Always create the invocation. When ctx.form is null (e.g. dialog footer

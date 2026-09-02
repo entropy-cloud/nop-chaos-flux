@@ -1,5 +1,6 @@
 import type {
   ActionContext,
+  ActionContextPicker,
   ActionScope,
   CompiledActionNode,
   CompiledActionProgram,
@@ -69,6 +70,7 @@ export function mergeActionContext(
     form?: FormRuntime;
     page?: PageRuntime;
     surfaceRuntime?: SurfaceRuntime;
+    picker?: ActionContextPicker;
     nodeInstance?: NodeInstance;
     dialogId?: string;
   },
@@ -88,6 +90,7 @@ export function mergeActionContext(
     form: partial?.form ?? base.form,
     page: partial?.page ?? base.page,
     surfaceRuntime: partial?.surfaceRuntime ?? base.surfaceRuntime,
+    picker: partial?.picker ?? base.picker,
     event: normalizeActionEvent(rawEvent),
     dialogId: partial?.dialogId ?? base.dialogId,
     prevResult: partial?.prevResult,
@@ -245,6 +248,7 @@ export function createRendererHelpers(
     form?: FormRuntime;
     page?: PageRuntime;
     surfaceRuntime?: SurfaceRuntime;
+    picker?: ActionContextPicker;
     nodeInstance?: NodeInstance;
     dialogId?: string;
   },

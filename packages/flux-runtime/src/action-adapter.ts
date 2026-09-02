@@ -146,8 +146,7 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           return { ok: true, data: value };
         }
 
-        case 'setValues': {
-          const values = (invocation.args?.values as Record<string, unknown> | undefined) ?? {};
+        case 'setValues': {          const values = (invocation.args?.values as Record<string, unknown> | undefined) ?? {};
           if (Object.keys(values).length === 0) {
             return { ok: true, data: values };
           }
@@ -178,6 +177,24 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           }
 
           return { ok: true, data: values };
+        }
+
+        case 'pick': {
+          // Id-free selection trigger: delegate to the ambient picker handle
+          // registered by the enclosing picker popup. The host picker performs
+          // the cross-scope commit (valueField/labelField mapping, form
+          // write-back, popup close) — this adapter knows nothing about the
+          // picker beyond the callback contract.
+          if (!ctx.picker) {
+            return { ok: false, error: new Error('pick requires an enclosing picker context') };
+          }
+          return ctx.picker.pick(
+            {
+              value: invocation.args?.value,
+              rows: invocation.args?.rows,
+            },
+            ctx,
+          );
         }
 
         case 'ajax': {

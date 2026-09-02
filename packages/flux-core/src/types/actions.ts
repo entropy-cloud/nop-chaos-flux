@@ -43,6 +43,16 @@ type ActionContextForm = {
   submit(options?: { interactionId?: string; signal?: AbortSignal }): Promise<ActionResult>;
 };
 
+export type ActionContextPicker = {
+  /**
+   * Called when popup content fires the id-free `pick` builtin action. The
+   * host picker implements the cross-scope commit (valueField/labelField
+   * mapping, form write-back, popup close) — the action layer knows nothing
+   * about the picker beyond this callback.
+   */
+  pick(args: { value?: unknown; rows?: unknown }, ctx: ActionContext): Promise<ActionResult> | ActionResult;
+};
+
 type ActionContextPage = {
   refresh(): void;
   store: {
@@ -330,6 +340,8 @@ export interface ActionContext {
   form?: ActionContextForm;
   page?: ActionContextPage;
   surfaceRuntime?: ActionContextSurfaceRuntime;
+  /** Ambient handle registered by the enclosing picker popup for its content. */
+  picker?: ActionContextPicker;
   dialogId?: string;
   prevResult?: ActionResult;
   evaluationBindings?: Record<string, unknown>;
