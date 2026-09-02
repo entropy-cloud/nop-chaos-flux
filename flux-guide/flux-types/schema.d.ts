@@ -24,6 +24,8 @@ export interface PageSchema extends BaseSchema {
   header?: SchemaInput;
   footer?: SchemaInput;
   aside?: SchemaInput;
+  extra?: SchemaInput;
+  breadcrumb?: unknown[];
   subTitle?: SchemaValue;
   remark?: SchemaValue;
   asidePosition?: SchemaValue;
@@ -45,15 +47,16 @@ export interface ContainerSchema extends BaseSchema {
   body?: SchemaInput;
   header?: SchemaInput;
   footer?: SchemaInput;
-  direction?: SchemaValue;
+  direction?: "row" | "column";
   wrap?: boolean;
-  align?: SchemaValue;
+  align?: "start" | "center" | "end" | "stretch";
   gap?: SchemaValue;
   responsiveDirection?: SchemaValue;
   responsiveWrap?: SchemaValue;
   bodyClassName?: SchemaValue;
   headerClassName?: SchemaValue;
   footerClassName?: SchemaValue;
+  onClick?: ActionSchema | ActionSchema[];
 }
 
 export interface FragmentSchema extends BaseSchema {
@@ -89,29 +92,32 @@ export interface FlexSchema extends BaseSchema {
   type: 'flex';
   body?: SchemaInput;
   items?: SchemaInput;
-  direction?: SchemaValue;
+  direction?: "row" | "column" | "row-reverse" | "column-reverse";
   wrap?: boolean;
-  align?: SchemaValue;
-  justify?: SchemaValue;
-  alignContent?: SchemaValue;
+  align?: "start" | "center" | "end" | "stretch" | "baseline";
+  justify?: "start" | "center" | "end" | "between" | "around" | "evenly";
+  alignContent?: "start" | "center" | "end" | "between" | "around" | "evenly" | "stretch";
   gap?: SchemaValue;
   responsiveDirection?: SchemaValue;
   responsiveWrap?: SchemaValue;
+  onClick?: ActionSchema | ActionSchema[];
 }
 
 export interface TextSchema extends BaseSchema {
   type: 'text';
   text?: SchemaValue;
   body?: SchemaValue;
-  tag?: SchemaValue;
+  tag?: "span" | "p" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "label" | "div";
   copyable?: boolean;
   maxLine?: SchemaValue;
   maxLineToggle?: boolean;
+  required?: boolean;
+  readOnly?: boolean;
 }
 
 export interface ButtonSchema extends BaseSchema {
   type: 'button';
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  variant?: "default" | "primary" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "info" | "success" | "warning" | "danger" | "light" | "dark";
   size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
   loading?: boolean;
   onClick?: ActionSchema | ActionSchema[];
@@ -131,15 +137,15 @@ export interface ButtonSchema extends BaseSchema {
 
 export interface IconSchema extends BaseSchema {
   type: 'icon';
-  icon?: SchemaValue;
-  size?: SchemaValue;
+  icon?: string;
+  size?: number | "sm" | "md" | "lg";
   color?: SchemaValue;
 }
 
 export interface BadgeSchema extends BaseSchema {
   type: 'badge';
   text?: SchemaValue;
-  level?: SchemaValue;
+  level?: "info" | "success" | "warning" | "danger";
 }
 
 export interface ScopeDebugSchema extends BaseSchema {
@@ -163,6 +169,13 @@ export interface ReactionSchema extends BaseSchema {
   debounce?: SchemaValue;
   once?: SchemaValue;
   actions?: SchemaValue;
+}
+
+export interface KeyboardSchema extends BaseSchema {
+  type: 'keyboard';
+  bindings?: unknown[];
+  chordTimeout?: number;
+  onTrigger?: ActionSchema | ActionSchema[];
 }
 
 export interface DialogSchema extends BaseSchema {
@@ -223,6 +236,27 @@ export interface DrawerSchema extends BaseSchema {
   resizable?: boolean;
 }
 
+export interface CommandPaletteSchema extends BaseSchema {
+  type: 'command-palette';
+  items?: SchemaValue;
+  groups?: SchemaValue;
+  source?: SchemaValue;
+  placeholder?: string;
+  shouldFilter?: boolean;
+  emptyText?: string;
+  hotkey?: string;
+  open?: SchemaValue;
+  defaultOpen?: boolean;
+  statusPath?: SchemaValue;
+  container?: SchemaValue;
+  closeOnEsc?: boolean;
+  closeOnOutsideClick?: boolean;
+  showMask?: boolean;
+  onOpen?: ActionSchema | ActionSchema[];
+  onClose?: ActionSchema | ActionSchema[];
+  onCommand?: ActionSchema | ActionSchema[];
+}
+
 export interface TabsSchema extends BaseSchema {
   type: 'tabs';
   toolbar?: SchemaInput;
@@ -240,8 +274,14 @@ export interface TabsSchema extends BaseSchema {
   closable?: boolean;
   draggable?: boolean;
   addable?: boolean;
+  itemsOwnership?: "local" | "controlled" | "scope";
+  itemsStatePath?: string;
   contentClassName?: SchemaValue;
   toolbarClassName?: SchemaValue;
+  onTabAdd?: ActionSchema | ActionSchema[];
+  onTabClose?: ActionSchema | ActionSchema[];
+  onTabRename?: ActionSchema | ActionSchema[];
+  onTabMove?: ActionSchema | ActionSchema[];
 }
 
 // ============================================================================
@@ -326,9 +366,19 @@ export interface StepsSchema extends BaseSchema {
 export interface TimelineSchema extends BaseSchema {
   type: 'timeline';
   items?: unknown[];
+  value?: string | number;
+  defaultValue?: string | number;
+  valueOwnership?: "local" | "controlled" | "scope";
+  valueStatePath?: string;
   mode?: "left" | "right" | "alternate";
   orientation?: "horizontal" | "vertical";
   reverse?: boolean;
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+export interface ResponsiveSchema extends BaseSchema {
+  type: 'responsive';
+  variants?: unknown[];
 }
 
 // ============================================================================
@@ -486,7 +536,7 @@ export interface SelectSchema extends BoundFieldSchemaBase {
   virtual?: boolean;
   optionTemplate?: SchemaInput;
   searchSource?: unknown;
-  searchMergeMode?: SchemaValue;
+  searchMergeMode?: "append" | "replace";
   validate?: {
     action?: unknown;
     debounce?: number;
@@ -521,6 +571,7 @@ export interface CheckboxSchema extends BoundFieldSchemaBase {
   option?: SchemaValue;
   trueValue?: SchemaValue;
   falseValue?: SchemaValue;
+  shape?: "square" | "circle";
 }
 
 export interface SwitchSchema extends BoundFieldSchemaBase {
@@ -535,7 +586,7 @@ export interface RadioGroupSchema extends BoundFieldSchemaBase {
   type: 'radio-group';
   value?: SchemaValue;
   options?: SchemaValue;
-  direction?: SchemaValue;
+  direction?: "horizontal" | "vertical";
 }
 
 export interface CheckboxGroupSchema extends BoundFieldSchemaBase {
@@ -545,7 +596,7 @@ export interface CheckboxGroupSchema extends BoundFieldSchemaBase {
   checkAll?: boolean;
   maxSelected?: SchemaValue;
   minSelected?: SchemaValue;
-  direction?: SchemaValue;
+  direction?: "horizontal" | "vertical";
 }
 
 export interface ButtonGroupSelectSchema extends BoundFieldSchemaBase {
@@ -553,14 +604,15 @@ export interface ButtonGroupSelectSchema extends BoundFieldSchemaBase {
   value?: SchemaValue;
   options?: SchemaValue;
   multiple?: boolean;
-  direction?: SchemaValue;
+  direction?: "horizontal" | "vertical";
   dict?: SchemaValue;
 }
 
 export interface InputNumberSchema extends BoundFieldSchemaBase {
   type: 'input-number';
   value?: SchemaValue;
-  precisionMode?: SchemaValue;
+  precision?: number;
+  precisionMode?: "round" | "truncate" | "ceil" | "floor";
 }
 
 export interface InputDateSchema extends BoundFieldSchemaBase {
@@ -597,6 +649,9 @@ export interface InputTimeSchema extends BoundFieldSchemaBase {
   placeholder?: SchemaValue;
   minTime?: SchemaValue;
   maxTime?: SchemaValue;
+  steppers?: boolean;
+  hourStep?: SchemaValue;
+  minuteStep?: SchemaValue;
 }
 
 export interface DateRangeSchema extends BoundFieldSchemaBase {
@@ -612,6 +667,7 @@ export interface DateRangeSchema extends BoundFieldSchemaBase {
   minDate?: SchemaValue;
   maxDate?: SchemaValue;
   shortcuts?: SchemaValue;
+  presets?: SchemaValue;
 }
 
 export interface InputMonthSchema extends BoundFieldSchemaBase {
@@ -832,6 +888,8 @@ export interface InputFileSchema extends BoundFieldSchemaBase {
   onDelete?: ActionSchema | ActionSchema[];
   onDeleteSuccess?: ActionSchema | ActionSchema[];
   onDeleteFail?: ActionSchema | ActionSchema[];
+  onUploadSuccess?: ActionSchema | ActionSchema[];
+  onUploadError?: ActionSchema | ActionSchema[];
 }
 
 export interface InputImageSchema extends BoundFieldSchemaBase {
@@ -850,6 +908,8 @@ export interface InputImageSchema extends BoundFieldSchemaBase {
   onDelete?: ActionSchema | ActionSchema[];
   onDeleteSuccess?: ActionSchema | ActionSchema[];
   onDeleteFail?: ActionSchema | ActionSchema[];
+  onUploadSuccess?: ActionSchema | ActionSchema[];
+  onUploadError?: ActionSchema | ActionSchema[];
   previewMode?: SchemaValue;
   crop?: SchemaValue;
 }
@@ -882,6 +942,7 @@ export interface InputTableSchema extends BoundFieldSchemaBase {
   minItems?: SchemaValue;
   maxItems?: SchemaValue;
   removeWhen?: SchemaValue;
+  footer?: SchemaValue | SchemaInput;
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];
   onReorder?: ActionSchema | ActionSchema[];
@@ -918,7 +979,7 @@ export interface PickerSchema extends BoundFieldSchemaBase {
   valueKey?: SchemaValue;
   labelKey?: SchemaValue;
   columns?: SchemaValue;
-  searchable?: SchemaValue;
+  searchable?: boolean;
   autoFill?: SchemaValue;
   pickerDialog?: SchemaValue;
   multiple?: boolean;
@@ -984,6 +1045,8 @@ export interface TableSchema extends BaseSchema {
   multiSort?: boolean;
   pagination?: Record<string, unknown>;
   rowSelection?: Record<string, unknown>;
+  optionRow?: Record<string, unknown>;
+  group?: Record<string, unknown>;
   expandable?: unknown;
   quickSaveAction?: unknown;
   quickSaveItemAction?: unknown;
@@ -1035,6 +1098,7 @@ export interface ChartSchema extends BaseSchema {
   referenceLines?: SchemaValue;
   band?: SchemaValue;
   markers?: SchemaValue;
+  brush?: SchemaValue;
   componentId?: SchemaValue;
   onClick?: ActionSchema | ActionSchema[];
   onHover?: ActionSchema | ActionSchema[];
@@ -1062,6 +1126,7 @@ export interface ListSchema extends BaseSchema {
   items?: unknown[];
   selectionMode?: "none" | "single" | "multiple";
   keyField?: string;
+  optionRow?: Record<string, unknown>;
   pagination?: Record<string, unknown>;
   paginationOwnership?: "local" | "controlled" | "scope";
   paginationStatePath?: string;
@@ -1091,6 +1156,62 @@ export interface StatisticsSchema extends BaseSchema {
   total?: number;
 }
 
+export interface StatTileSchema extends BaseSchema {
+  type: 'stat-tile';
+  value?: unknown;
+  prefix?: SchemaValue;
+  suffix?: SchemaValue;
+  delta?: number | {
+    value: number;
+    label: string;
+    direction: "up" | "down" | "neutral";
+  };
+  sparkline?: number[];
+  formatter?: {
+    thousands: boolean;
+    decimals: number;
+  };
+  status?: "up" | "down" | "neutral";
+}
+
+export interface SparklineSchema extends BaseSchema {
+  type: 'sparkline';
+  width?: number;
+  height?: number;
+  color?: string | {
+    status: "up" | "down" | "neutral";
+  };
+  fill?: boolean;
+  smooth?: boolean;
+  min?: number;
+  max?: number;
+}
+
+export interface QueryFilterSchema extends BaseSchema {
+  type: 'query-filter';
+  body?: unknown;
+  actions?: SchemaValue;
+  filterForm?: SchemaInput;
+  mode?: SchemaValue;
+  layout?: SchemaValue;
+  columnCount?: SchemaValue;
+  gap?: SchemaValue;
+  submitLabel?: string;
+  resetLabel?: string;
+  togglable?: boolean | Record<string, unknown>;
+  onSubmit?: unknown;
+  onReset?: unknown;
+}
+
+export interface BatchBarSchema extends BaseSchema {
+  type: 'batch-bar';
+  selectionPath?: string;
+  countTemplate?: string;
+  clearTarget?: string;
+  clearLabel?: string;
+  actions?: SchemaInput;
+}
+
 export interface CrudSchema extends BaseSchema {
   type: 'crud';
   statusPath?: string;
@@ -1100,7 +1221,7 @@ export interface CrudSchema extends BaseSchema {
   card?: SchemaInput;
   item?: SchemaInput;
   rowKey?: string;
-  selection?: Record<string, unknown>;
+  selection?: unknown;
   selectionOwnership?: "local" | "controlled" | "scope";
   selectionStatePath?: string;
   paginationOwnership?: "local" | "controlled" | "scope";
@@ -1119,7 +1240,7 @@ export interface CrudSchema extends BaseSchema {
   autoGenerateQueryForm?: SchemaValue;
   clientMode?: SchemaValue;
   polling?: Record<string, unknown>;
-  filterTogglable?: Record<string, unknown>;
+  filterTogglable?: boolean | Record<string, unknown>;
   pagination?: {
     mode: "pages" | "infinite";
   };
@@ -1137,6 +1258,8 @@ export interface CrudSchema extends BaseSchema {
   listActions?: SchemaInput;
   footerToolbar?: SchemaInput;
   empty?: SchemaValue | SchemaInput;
+  headerClassName?: SchemaValue;
+  bodyClassName?: SchemaValue;
   onQuerySubmit?: ActionSchema | ActionSchema[];
   onQueryReset?: ActionSchema | ActionSchema[];
   onRowClick?: ActionSchema | ActionSchema[];
@@ -1152,7 +1275,7 @@ export interface CrudSchema extends BaseSchema {
 
 export interface SeparatorSchema extends BaseSchema {
   type: 'separator';
-  orientation?: SchemaValue;
+  orientation?: "horizontal" | "vertical";
   decorative?: boolean;
 }
 
@@ -1176,6 +1299,14 @@ export interface EmptySchema extends BaseSchema {
   actions?: SchemaInput;
 }
 
+export interface ResultSchema extends BaseSchema {
+  type: 'result';
+  status?: string;
+  icon?: string;
+  description?: SchemaValue | SchemaInput;
+  actions?: SchemaInput;
+}
+
 export interface CardSchema extends BaseSchema {
   type: 'card';
   header?: SchemaInput;
@@ -1191,8 +1322,9 @@ export interface CardSchema extends BaseSchema {
 export interface LinkSchema extends BaseSchema {
   type: 'link';
   href?: SchemaValue;
-  target?: SchemaValue;
+  target?: "_self" | "_blank" | "_parent" | "_top";
   rel?: SchemaValue;
+  download?: SchemaValue;
   onClick?: ActionSchema | ActionSchema[];
 }
 
@@ -1268,9 +1400,9 @@ export interface MappingSchema extends BaseSchema {
 export interface StatusSchema extends BaseSchema {
   type: 'status';
   value?: unknown;
-  labelMap?: Record<string, string>;
-  levelMap?: Record<string, string>;
-  iconMap?: Record<string, string>;
+  labelMap?: Record<string, unknown>;
+  levelMap?: Record<string, unknown>;
+  iconMap?: Record<string, unknown>;
   placeholder?: string;
 }
 
@@ -1326,7 +1458,7 @@ export interface DiffViewSchema extends BaseSchema {
   files?: SchemaValue;
   activeFileIndex?: SchemaValue;
   language?: SchemaValue;
-  viewType?: SchemaValue;
+  viewType?: "split" | "unified";
   showLineNumbers?: boolean;
   showInlineDiff?: boolean;
   defaultCollapsedLines?: SchemaValue;
@@ -1346,7 +1478,7 @@ export interface DiffViewSchema extends BaseSchema {
 export interface PullRefreshSchema extends BaseSchema {
   type: 'pull-refresh';
   body?: SchemaInput;
-  direction?: SchemaValue;
+  direction?: "down";
   threshold?: SchemaValue;
   loadingText?: SchemaValue;
   pullingText?: SchemaValue;
@@ -1377,7 +1509,7 @@ export interface SwipeCellSchema extends BaseSchema {
   left?: SchemaInput;
   right?: SchemaInput;
   threshold?: SchemaValue;
-  direction?: SchemaValue;
+  direction?: "left" | "right" | "both";
   closeOnOutside?: boolean;
   onAction?: ActionSchema | ActionSchema[];
   onOpen?: ActionSchema | ActionSchema[];
@@ -1402,11 +1534,11 @@ export interface NoticeBarSchema extends BaseSchema {
   text?: SchemaValue;
   scrollable?: boolean;
   speed?: SchemaValue;
-  direction?: SchemaValue;
+  direction?: "left" | "right";
   loop?: boolean;
   closable?: boolean;
   icon?: SchemaValue;
-  variant?: SchemaValue;
+  variant?: "info" | "warning" | "success" | "error";
   onClick?: ActionSchema | ActionSchema[];
   onClose?: ActionSchema | ActionSchema[];
 }
@@ -1462,19 +1594,25 @@ export interface GanttSchema extends BaseSchema {
   defaultZoom?: SchemaValue;
   cellWidth?: SchemaValue;
   taskBarHeight?: SchemaValue;
-  showWeekends?: SchemaValue;
-  showToday?: SchemaValue;
-  draggable?: SchemaValue;
-  editable?: SchemaValue;
-  linkable?: SchemaValue;
+  showWeekends?: boolean;
+  showToday?: boolean;
+  draggable?: boolean;
+  editable?: boolean;
+  linkable?: boolean;
   taskBar?: SchemaInput;
   toolbar?: SchemaInput;
   editor?: SchemaInput;
   empty?: SchemaInput;
-  loading?: SchemaInput;
+  loading?: SchemaValue | SchemaInput;
+  text?: SchemaInput;
+  start?: SchemaInput;
+  end?: SchemaInput;
+  duration?: SchemaInput;
+  predecessor?: SchemaInput;
   onTaskClick?: ActionSchema | ActionSchema[];
   onTaskDoubleClick?: ActionSchema | ActionSchema[];
   onTaskDragEnd?: ActionSchema | ActionSchema[];
+  onTaskEdit?: ActionSchema | ActionSchema[];
   onLinkClick?: ActionSchema | ActionSchema[];
   onLinkDragEnd?: ActionSchema | ActionSchema[];
   onEmptyCellClick?: ActionSchema | ActionSchema[];
@@ -1496,6 +1634,11 @@ export interface KanbanSchema extends BaseSchema {
   columnsConfig?: SchemaValue;
   columnHeader?: SchemaInput;
   columnHeaderToolbar?: SchemaInput;
+  columnAggregate?: {
+    fn: "sum" | "avg" | "min" | "max" | "count";
+    field?: string;
+    label?: string;
+  };
   cardTemplate?: SchemaInput;
   columnFooter?: SchemaInput;
   empty?: SchemaInput;
@@ -1504,15 +1647,15 @@ export interface KanbanSchema extends BaseSchema {
   filterCard?: SchemaValue;
   filterTags?: SchemaValue;
   columnWidth?: SchemaValue;
-  columnDraggable?: SchemaValue;
-  draggable?: SchemaValue;
-  wipStrict?: SchemaValue;
+  columnDraggable?: boolean;
+  draggable?: boolean;
+  wipStrict?: boolean;
   collapsedStatePath?: SchemaValue;
-  collapsedOwnership?: SchemaValue;
+  collapsedOwnership?: "local" | "controlled" | "scope";
   columnHeaderClassName?: SchemaValue;
   cardClassName?: SchemaValue;
   columnFooterClassName?: SchemaValue;
-  kanbanOwnership?: SchemaValue;
+  kanbanOwnership?: "local" | "controlled" | "scope";
   kanbanStatePath?: SchemaValue;
   statusPath?: SchemaValue;
   onCardMove?: ActionSchema | ActionSchema[];
@@ -1526,12 +1669,12 @@ export interface KanbanSchema extends BaseSchema {
 
 export interface CalendarSchema extends BaseSchema {
   type: 'calendar';
-  view?: SchemaValue;
+  view?: "month" | "week" | "day";
   date?: SchemaValue;
   events?: SchemaValue;
   resources?: SchemaValue;
-  firstDayOfWeek?: SchemaValue;
-  showWeekends?: SchemaValue;
+  firstDayOfWeek?: 0 | 1;
+  showWeekends?: boolean;
   maxConcurrent?: SchemaValue;
   eventTemplate?: SchemaInput;
   loading?: SchemaInput;
@@ -1550,14 +1693,14 @@ export interface CalendarSchema extends BaseSchema {
   onImportError?: ActionSchema | ActionSchema[];
   onTimezoneChange?: ActionSchema | ActionSchema[];
   onGroupToggle?: ActionSchema | ActionSchema[];
-  showCrossDayLines?: SchemaValue;
-  timezoneSelector?: SchemaValue;
-  batchScheduling?: SchemaValue;
+  showCrossDayLines?: boolean;
+  timezoneSelector?: boolean;
+  batchScheduling?: boolean;
   "resources[].resources"?: SchemaValue;
   "resources[].open"?: SchemaValue;
-  viewOwnership?: SchemaValue;
+  viewOwnership?: "local" | "controlled" | "scope";
   viewStatePath?: SchemaValue;
-  dateOwnership?: SchemaValue;
+  dateOwnership?: "local" | "controlled" | "scope";
   dateStatePath?: SchemaValue;
   locale?: SchemaValue;
   statusPath?: SchemaValue;
@@ -1602,9 +1745,11 @@ export interface AiChatSchema extends BaseSchema {
   connector?: SchemaValue;
   placeholder?: SchemaValue;
   systemPrompt?: SchemaValue;
-  submitType?: SchemaValue;
+  submitType?: "enter" | "ctrlEnter" | "shiftEnter";
   maxLength?: SchemaValue;
   showWordLimit?: boolean;
+  showTimestamp?: boolean;
+  showAvatar?: boolean;
   initialMessages?: SchemaValue;
   senderExtensions?: SchemaValue;
   conversationController?: SchemaValue;
@@ -1627,24 +1772,29 @@ export interface AiChatSchema extends BaseSchema {
   branches?: SchemaValue;
   activeBranchId?: SchemaValue;
   onBranchChange?: ActionSchema | ActionSchema[];
+  onApproval?: ActionSchema | ActionSchema[];
 }
 
 export interface AiMessageListSchema extends BaseSchema {
   type: 'ai-message-list';
   autoScroll?: boolean;
+  showTimestamp?: boolean;
+  showAvatar?: boolean;
   emptyRegion?: SchemaValue | SchemaInput;
 }
 
 export interface AiBubbleSchema extends BaseSchema {
   type: 'ai-bubble';
   message?: SchemaValue;
-  placement?: SchemaValue;
-  shape?: SchemaValue;
+  placement?: "start" | "end" | "auto";
+  shape?: "corner" | "rounded" | "none";
   showAvatar?: boolean;
   showTimestamp?: boolean;
+  avatar?: SchemaValue;
   branches?: SchemaValue;
   activeBranchId?: SchemaValue;
   onBranchChange?: ActionSchema | ActionSchema[];
+  onApproval?: ActionSchema | ActionSchema[];
 }
 
 export interface AiSenderSchema extends BaseSchema {
@@ -1653,7 +1803,7 @@ export interface AiSenderSchema extends BaseSchema {
   loading?: SchemaValue;
   maxLength?: SchemaValue;
   showWordLimit?: boolean;
-  submitType?: SchemaValue;
+  submitType?: "enter" | "ctrlEnter" | "shiftEnter";
   clearOnSubmit?: boolean;
   senderExtensions?: SchemaValue;
   onSubmit?: ActionSchema | ActionSchema[];
@@ -1676,22 +1826,23 @@ export interface AiWelcomeSchema extends BaseSchema {
   type: 'ai-welcome';
   description?: SchemaValue;
   icon?: SchemaValue;
-  align?: SchemaValue;
+  iconLucide?: SchemaValue;
+  align?: "left" | "center" | "right";
   footer?: SchemaValue | SchemaInput;
 }
 
 export interface AiPromptsSchema extends BaseSchema {
   type: 'ai-prompts';
   items?: SchemaValue;
-  layout?: SchemaValue;
-  size?: SchemaValue;
+  layout?: "vertical" | "horizontal" | "wrap";
+  size?: "sm" | "md" | "lg";
   onSelect?: ActionSchema | ActionSchema[];
 }
 
 export interface AiFeedbackSchema extends BaseSchema {
   type: 'ai-feedback';
   message?: SchemaValue;
-  actions?: SchemaValue;
+  actions?: "copy" | "refresh" | "like" | "dislike" | "sources"[];
   onAction?: ActionSchema | ActionSchema[];
 }
 
@@ -1706,7 +1857,7 @@ export interface AiToolCallSchema extends BaseSchema {
 export interface AiAttachmentsSchema extends BaseSchema {
   type: 'ai-attachments';
   value?: SchemaValue;
-  mode?: SchemaValue;
+  mode?: "image" | "card" | "auto";
   accept?: SchemaValue;
   multiple?: boolean;
   maxSize?: SchemaValue;
@@ -1721,7 +1872,7 @@ export interface AiCitationsSchema extends BaseSchema {
   type: 'ai-citations';
   message?: SchemaValue;
   sources?: SchemaValue;
-  mode?: SchemaValue;
+  mode?: "inline" | "list";
   onSourceClick?: ActionSchema | ActionSchema[];
 }
 
@@ -1746,7 +1897,30 @@ export interface AiTokenUsageSchema extends BaseSchema {
 export interface AiSuggestionsSchema extends BaseSchema {
   type: 'ai-suggestions';
   items?: SchemaValue;
-  overflowMode?: SchemaValue;
+  overflowMode?: "expand" | "scroll" | "popover";
   maxVisible?: SchemaValue;
   onSelect?: ActionSchema | ActionSchema[];
+}
+
+// ============================================================================
+// Industrial — flux-renderers-industrial
+// ============================================================================
+
+export interface ScadaCanvasSchema extends BaseSchema {
+  type: 'scada-canvas';
+  config?: unknown;
+  width?: number;
+  height?: number;
+  viewport?: {
+    fit?: "contain" | "fill";
+    center?: boolean;
+  };
+  events?: unknown;
+  loading?: SchemaInput;
+  empty?: SchemaInput;
+  onSymbolClick?: ActionSchema | ActionSchema[];
+  onSymbolDblClick?: ActionSchema | ActionSchema[];
+  onSymbolHover?: ActionSchema | ActionSchema[];
+  onReady?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
 }

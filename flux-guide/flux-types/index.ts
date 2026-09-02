@@ -22,6 +22,7 @@ import type {
   AudioSchema,
   BadgeSchema,
   BarcodeInputSchema,
+  BatchBarSchema,
   ButtonGroupSchema,
   ButtonGroupSelectSchema,
   ButtonSchema,
@@ -35,6 +36,7 @@ import type {
   CodeEditorSchema,
   CollapseSchema,
   ComboSchema,
+  CommandPaletteSchema,
   ConditionBuilderSchema,
   ContainerSchema,
   CountdownSchema,
@@ -79,6 +81,7 @@ import type {
   JsonViewSchema,
   KanbanSchema,
   KeyValueSchema,
+  KeyboardSchema,
   LinkSchema,
   ListSchema,
   LoopSchema,
@@ -93,14 +96,19 @@ import type {
   ProgressSchema,
   PullRefreshSchema,
   QrCodeSchema,
+  QueryFilterSchema,
   RadioGroupSchema,
   ReactionSchema,
   RecurseSchema,
+  ResponsiveSchema,
+  ResultSchema,
   ScadaCanvasSchema,
   ScopeDebugSchema,
   SelectSchema,
   SeparatorSchema,
+  SparklineSchema,
   SpinnerSchema,
+  StatTileSchema,
   StatisticsSchema,
   StatusSchema,
   StepsSchema,
@@ -134,8 +142,10 @@ export type FluxSchema =
   | ScopeDebugSchema
   | DynamicRendererSchema
   | ReactionSchema
+  | KeyboardSchema
   | DialogSchema
   | DrawerSchema
+  | CommandPaletteSchema
   | TabsSchema
   | WizardSchema
   | GridSchema
@@ -144,6 +154,7 @@ export type FluxSchema =
   | DropdownButtonSchema
   | StepsSchema
   | TimelineSchema
+  | ResponsiveSchema
   | FormSchema
   | FieldsetSchema
   | HiddenSchema
@@ -192,11 +203,16 @@ export type FluxSchema =
   | ListSchema
   | PaginationSchema
   | StatisticsSchema
+  | StatTileSchema
+  | SparklineSchema
+  | QueryFilterSchema
+  | BatchBarSchema
   | CrudSchema
   | SeparatorSchema
   | SpinnerSchema
   | ProgressSchema
   | EmptySchema
+  | ResultSchema
   | CardSchema
   | LinkSchema
   | ImageSchema
@@ -252,8 +268,10 @@ export interface FluxSchemaByType {
   'scope-debug': ScopeDebugSchema;
   'dynamic-renderer': DynamicRendererSchema;
   'reaction': ReactionSchema;
+  'keyboard': KeyboardSchema;
   'dialog': DialogSchema;
   'drawer': DrawerSchema;
+  'command-palette': CommandPaletteSchema;
   'tabs': TabsSchema;
   'wizard': WizardSchema;
   'grid': GridSchema;
@@ -262,6 +280,7 @@ export interface FluxSchemaByType {
   'dropdown-button': DropdownButtonSchema;
   'steps': StepsSchema;
   'timeline': TimelineSchema;
+  'responsive': ResponsiveSchema;
   'form': FormSchema;
   'fieldset': FieldsetSchema;
   'hidden': HiddenSchema;
@@ -310,11 +329,16 @@ export interface FluxSchemaByType {
   'list': ListSchema;
   'pagination': PaginationSchema;
   'statistics': StatisticsSchema;
+  'stat-tile': StatTileSchema;
+  'sparkline': SparklineSchema;
+  'query-filter': QueryFilterSchema;
+  'batch-bar': BatchBarSchema;
   'crud': CrudSchema;
   'separator': SeparatorSchema;
   'spinner': SpinnerSchema;
   'progress': ProgressSchema;
   'empty': EmptySchema;
+  'result': ResultSchema;
   'card': CardSchema;
   'link': LinkSchema;
   'image': ImageSchema;
@@ -378,6 +402,7 @@ export type {
   AudioSchema,
   BadgeSchema,
   BarcodeInputSchema,
+  BatchBarSchema,
   ButtonGroupSchema,
   ButtonGroupSelectSchema,
   ButtonSchema,
@@ -391,6 +416,7 @@ export type {
   CodeEditorSchema,
   CollapseSchema,
   ComboSchema,
+  CommandPaletteSchema,
   ConditionBuilderSchema,
   ContainerSchema,
   CountdownSchema,
@@ -435,6 +461,7 @@ export type {
   JsonViewSchema,
   KanbanSchema,
   KeyValueSchema,
+  KeyboardSchema,
   LinkSchema,
   ListSchema,
   LoopSchema,
@@ -449,14 +476,19 @@ export type {
   ProgressSchema,
   PullRefreshSchema,
   QrCodeSchema,
+  QueryFilterSchema,
   RadioGroupSchema,
   ReactionSchema,
   RecurseSchema,
+  ResponsiveSchema,
+  ResultSchema,
   ScadaCanvasSchema,
   ScopeDebugSchema,
   SelectSchema,
   SeparatorSchema,
+  SparklineSchema,
   SpinnerSchema,
+  StatTileSchema,
   StatisticsSchema,
   StatusSchema,
   StepsSchema,

@@ -100,32 +100,43 @@ Not allowed as a general assumption:
 { "type": "any-component", "variant": "primary" }
 ```
 
-### 2. Keep Public Button Variants shadcn-Compatible
+### 2. Button Variants: AMIS Compatibility Set
 
-For public `button.variant`, use the shadcn-compatible vocabulary:
+For public `button.variant`, the full AMIS-compatible vocabulary is supported:
 
 ```ts
-type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+type ButtonVariant =
+  | 'default'
+  | 'primary'
+  | 'destructive'
+  | 'outline'
+  | 'secondary'
+  | 'ghost'
+  | 'link'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'light'
+  | 'dark';
 ```
 
-Do not add `primary`, `danger`, `warning`, or `success` to `button.variant`.
+This provides 1:1 mapping from AMIS `level` values:
 
-If a schema author means a primary action, the direct shadcn-compatible Button form is:
+| AMIS `level` | Flux `variant` | Visual            |
+| ------------ | -------------- | ----------------- |
+| `primary`    | `primary`      | Blue filled       |
+| `secondary`  | `secondary`    | Gray filled       |
+| `info`       | `info`         | Blue info filled  |
+| `success`    | `success`      | Green filled      |
+| `warning`    | `warning`      | Orange filled     |
+| `danger`     | `danger`       | Red filled        |
+| `light`      | `light`        | Light/transparent |
+| `dark`       | `dark`         | Dark background   |
+| `default`    | `default`      | Default filled    |
+| `link`       | `link`         | Link style        |
 
-```json
-{ "type": "button", "label": "Save", "variant": "default" }
-```
-
-If a higher-level toolbar wants semantic authoring, expose `intent` and map it internally:
-
-| `intent`  | Suggested Button mapping                     | Notes                                                |
-| --------- | -------------------------------------------- | ---------------------------------------------------- |
-| `primary` | `variant="default"`                          | Filled primary action                                |
-| `neutral` | `variant="outline"` or `variant="secondary"` | Context decides weight                               |
-| `danger`  | `variant="destructive"`                      | Flux semantic word maps to shadcn destructive visual |
-| `warning` | custom classes or component-specific mapping | Not a standard shadcn Button variant                 |
-| `success` | custom classes or component-specific mapping | Not a standard shadcn Button variant                 |
-| `info`    | custom classes or component-specific mapping | Not a standard shadcn Button variant                 |
+For new schema authoring, prefer semantic `intent` over `variant` when expressing action purpose. For migration from AMIS, use `variant` directly for 1:1 compatibility.
 
 ### 3. Use `intent` For New Toolbar Action Contracts
 

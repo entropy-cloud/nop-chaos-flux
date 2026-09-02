@@ -198,6 +198,27 @@
 }
 ```
 
+**precision 与 precisionMode**
+
+`precision` 定义小数位数，`precisionMode` 定义舍入模式：
+
+| precisionMode   | 说明     | 示例（precision: 1） |
+| --------------- | -------- | -------------------- |
+| `round`（默认） | 四舍五入 | 1.25 → 1.3           |
+| `truncate`      | 截断     | 1.25 → 1.2           |
+| `ceil`          | 向上取整 | 1.21 → 1.3           |
+| `floor`         | 向下取整 | 1.29 → 1.2           |
+
+```jsonc
+{
+  "type": "input-number",
+  "name": "price",
+  "label": "价格",
+  "precision": 2,
+  "precisionMode": "floor",
+}
+```
+
 **值类型**：`number`
 
 ---
