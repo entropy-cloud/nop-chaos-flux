@@ -5,7 +5,7 @@ import type {
   ValidationError,
   ValidationRule,
 } from '@nop-chaos/flux-core';
-import { getIn, resolveRelativePath } from '@nop-chaos/flux-core';
+import { formatRegistry, getIn, resolveRelativePath } from '@nop-chaos/flux-core';
 import { createValidationError } from './errors.js';
 import { buildValidationMessage } from './message.js';
 
@@ -204,6 +204,37 @@ export const builtInValidators: SyncValidatorMap = {
     return typeof input.value === 'string' && input.value !== '' && !emailPattern.test(input.value)
       ? createBuiltInError(input)
       : undefined;
+  },
+  url(input) {
+    const urlPattern = /^https?:\/\/.+/;
+    return typeof input.value === 'string' && input.value !== '' && !urlPattern.test(input.value)
+      ? createBuiltInError(input)
+      : undefined;
+  },
+  integer(input) {
+    const integerPattern = /^-?\d+$/;
+    return typeof input.value === 'string' && input.value !== '' && !integerPattern.test(input.value)
+      ? createBuiltInError(input)
+      : undefined;
+  },
+  format(input) {
+    const formatName = input.rule.value;
+    const formatValidator = formatRegistry.get(formatName);
+
+    if (!formatValidator) {
+      // Format not registered, skip validation
+      return undefined;
+    }
+
+    if (!formatValidator.validate(input.value)) {
+      // Use the rule's message if provided, otherwise use the validator's default message
+      const message = input.rule.message || formatValidator.defaultMessage;
+      return createBuiltInError(input, {
+        message,
+      });
+    }
+
+    return undefined;
   },
   equalsField(input) {
     const targetPath = input.rule.path?.startsWith('../')

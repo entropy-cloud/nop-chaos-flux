@@ -183,6 +183,8 @@ export interface BoundFieldSchemaBase extends BaseSchema {
   inputClassName?: string;
   /** className applied to the description element. amis: descriptionClassName. */
   descriptionClassName?: string;
+  /** Value format validation: 'email', 'url', 'integer', etc. */
+  format?: 'email' | 'url' | 'integer';
 }
 
 export interface SchemaFieldRule {

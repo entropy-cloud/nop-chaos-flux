@@ -60,6 +60,19 @@ export const formFieldContracts: Record<string, RendererPropContract> = {
     editorType: 'select',
     defaultValue: 'left',
   },
+  format: {
+    displayName: 'Format',
+    description: 'Value format validation rule (email, url, integer).',
+    shape: {
+      kind: 'union',
+      anyOf: [
+        { kind: 'literal', value: 'email' },
+        { kind: 'literal', value: 'url' },
+        { kind: 'literal', value: 'integer' },
+      ],
+    },
+    editorType: 'select',
+  },
 };
 
 export const formFieldRules: SchemaFieldRule[] = [

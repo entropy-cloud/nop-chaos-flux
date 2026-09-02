@@ -10,6 +10,13 @@ export const META_FIELDS = new Set([
   'frameWrap',
 ]);
 
+/** BaseSchema 基础属性：所有渲染器都接受的通用字段 */
+export const BASE_SCHEMA_FIELDS = new Set([
+  'name',
+  'label',
+  'title',
+]);
+
 /** 通用事件词表：值控件（表单字段）统一可用的事件。renderer 特有事件在 renderer.fields 声明。 */
 export const COMMON_EVENT_FIELDS = new Set([
   'onChange', // 值变化（字段联动主事件）

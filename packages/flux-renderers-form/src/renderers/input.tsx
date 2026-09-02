@@ -396,6 +396,9 @@ export function createFieldValidation(
     collectRules(schema: InputSchema) {
       const rules: Array<
         | { kind: 'email' }
+        | { kind: 'url' }
+        | { kind: 'integer' }
+        | { kind: 'format'; value: string }
         | {
             kind: 'async';
             action: import('@nop-chaos/flux-core').ActionSchema;
@@ -403,6 +406,12 @@ export function createFieldValidation(
             message?: string;
           }
       > = email ? [{ kind: 'email' }] : [];
+
+      // Support format property for validation
+      const format = (schema as { format?: string }).format;
+      if (format) {
+        rules.push({ kind: 'format', value: format });
+      }
 
       if (schema.validate?.action) {
         rules.push({
@@ -640,6 +649,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     },
     fields: [
       ...formFieldRules,
+      { key: 'precision', kind: 'prop' },
       { key: 'precisionMode', kind: 'prop' },
     ],
     validation: createFieldValidation(),

@@ -19,6 +19,9 @@ export type ValidationRule =
   | { kind: 'atLeastOneOf'; paths: string[]; message?: string }
   | { kind: 'pattern'; value: string; message?: string }
   | { kind: 'email'; message?: string }
+  | { kind: 'url'; message?: string }
+  | { kind: 'integer'; message?: string }
+  | { kind: 'format'; value: string; message?: string }
   | { kind: 'equalsField'; path: string; message?: string }
   | { kind: 'notEqualsField'; path: string; message?: string }
   | { kind: 'requiredWhen'; path: string; equals: unknown; message?: string }

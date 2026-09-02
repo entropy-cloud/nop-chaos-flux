@@ -1,5 +1,5 @@
 import type { CompiledFormValidationField, ValidationRule } from '@nop-chaos/flux-core';
-import { getMessageFormatter } from '@nop-chaos/flux-core';
+import { formatRegistry, getMessageFormatter } from '@nop-chaos/flux-core';
 
 export function buildValidationMessage(
   rule: ValidationRule,
@@ -33,6 +33,18 @@ export function buildValidationMessage(
       return rule.message ?? t('validation.pattern', { label });
     case 'email':
       return rule.message ?? t('validation.email', { label });
+    case 'url':
+      return rule.message ?? t('validation.url', { label });
+    case 'integer':
+      return rule.message ?? t('validation.integer', { label });
+    case 'format': {
+      // Look up format message from registry using i18n key
+      const formatValidator = formatRegistry.get(rule.value);
+      if (formatValidator) {
+        return rule.message ?? t(formatValidator.messageKey, { label });
+      }
+      return rule.message ?? t('validation.format', { label, format: rule.value });
+    }
     case 'equalsField':
       return rule.message ?? t('validation.equalsField', { label, field: rule.path });
     case 'notEqualsField':

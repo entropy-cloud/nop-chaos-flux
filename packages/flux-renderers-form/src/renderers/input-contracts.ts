@@ -79,6 +79,12 @@ export const buttonGroupSelectSpecificContracts: Record<string, RendererPropCont
 };
 
 export const inputNumberSpecificContracts: Record<string, RendererPropContract> = {
+  precision: {
+    displayName: 'Precision',
+    shape: { kind: 'number' },
+    description: 'Number of decimal places to display.',
+    editorType: 'number',
+  },
   precisionMode: {
     displayName: 'Precision Mode',
     shape: {

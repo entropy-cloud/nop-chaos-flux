@@ -5,6 +5,7 @@ export * from './constants.js';
 export * from './compiled-cid.js';
 export * from './value-adapter.js';
 export * from './registry.js';
+export * from './format-registry.js';
 
 export {
   clampArrayIndex,
