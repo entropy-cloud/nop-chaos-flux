@@ -157,10 +157,13 @@ export interface TransferSchema extends BoundFieldSchemaBase {
  *
  * Responsibilities split:
  *  - Picker concerns: popup config, value/label mapping, label template,
- *    overflow config, autoFill, onPick/onItemClick actions.
- *  - CRUD concerns (via pickerSchema.rowSelection): multi-select type,
+ *    overflow config, autoFill, onPick actions.
+ *  - CRUD concerns (via pickerSchema.selection): multi-select type,
  *    keepOnPageChange, toggleOnRowClick, modifierSelect, selectAllMode.
- *  - Non-CRUD pickerSchema: use built-in `pick` action for submission.
+ *  - Binding: CRUD publishes selection/rows to the popup's fixed scope names
+ *    ($_picker.selection / $_picker.rows) via its own selectionStatePath /
+ *    dataStatePath config; non-publishing content submits via the built-in
+ *    `pick` action.
  *
  * popup surface configured by `pickerPopup.type`. Popup content (any BaseSchema)
  * lives in `pickerSchema`. valueField/labelField map selection values to the
@@ -232,8 +235,6 @@ export interface PickerSchema extends BoundFieldSchemaBase {
   extractValue?: boolean;
   /** Multi-select tag overflow configuration. */
   overflowConfig?: OverflowConfig;
-  /** Show keyword search input in the built-in lightweight list popup. Default: true. */
-  searchable?: boolean;
   /** Auto-fill sibling form fields from selected row. */
   autoFill?: Record<string, string>;
   /** Action invoked after a successful pick. */

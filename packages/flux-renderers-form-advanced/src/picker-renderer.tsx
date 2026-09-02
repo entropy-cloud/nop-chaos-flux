@@ -42,6 +42,21 @@ import {
 } from './picker-helpers.js';
 import { PickerDropdown } from './picker-dropdown.js';
 
+/**
+ * Picker field. v3 design:
+ *  - `pickerSchema` (region) is the sole popup content definition — any
+ *    BaseSchema (CRUD / list / tree / form). The picker never inspects what
+ *    the content is.
+ *  - `pickerPopup` is the popup surface config (dialog / drawer / popover).
+ *  - Binding protocol is a single channel: the popup surface's fixed scope
+ *    variables (`$_picker.selection` / `$_picker.rows`). Content publishes
+ *    via its OWN config (e.g. CRUD `selectionStatePath`) pointed at these
+ *    names by the schema author or converter; instance isolation comes from
+ *    scope locality, not dynamic path mangling.
+ *  - Non-publishing content (buttons etc.) submits through the built-in
+ *    `pick` action, delivered via the ambient picker runtime handle.
+ *  - `valueField`/`labelField` map selection rows to the form-bound field.
+ */
 export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   const schemaProps = useSchemaProps(props) as PickerSchema;
   const scope = useRenderScope();
