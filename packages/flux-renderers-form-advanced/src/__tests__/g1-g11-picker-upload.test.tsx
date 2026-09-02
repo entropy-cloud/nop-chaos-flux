@@ -61,7 +61,7 @@ describe('G1: picker single-select keeps the current value on empty confirm', ()
             id: 'pk',
             name: 'owner',
             label: 'Owner',
-            pickerDialog: { title: 'Pick owner' },
+            pickerPopup: { title: 'Pick owner' },
             options: [
               { label: 'Alice', value: 'alice' },
               { label: 'Bob', value: 'bob' },
@@ -100,7 +100,7 @@ describe('G1: picker single-select keeps the current value on empty confirm', ()
             id: 'pk',
             name: 'owner',
             label: 'Owner',
-            pickerDialog: { title: 'Pick owner' },
+            pickerPopup: { title: 'Pick owner' },
             options: [
               { label: 'Alice', value: 'alice' },
               { label: 'Bob', value: 'bob' },

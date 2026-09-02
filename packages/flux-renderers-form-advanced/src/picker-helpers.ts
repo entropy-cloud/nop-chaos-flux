@@ -120,11 +120,45 @@ export function inferColumns(options: NormalizedOption[]): CrudColumnSchema[] {
     .map((key) => ({ name: key, label: key }));
 }
 
-export function createNormalizedPickerSource(options: NormalizedOption[]): CrudSchema['source'] {
-  const items = options.map((option) => rowToRecord(option));
-  return { items, total: items.length } as unknown as CrudSchema['source'];
+/**
+ * Build a default CRUD schema for picker when user has not provided an explicit
+ * `pickerSchema`. v3.2 (responsibility-split):
+ *  - Picker never reads CRUD's selection state. CRUD keeps its own
+ *    `rowSelection` purely for visual feedback (checkbox / row highlight).
+ *  - Selection is accumulated in picker's React Context via the built-in
+ *    `pick` action (see PickerContext). CRUD pickerSchema is wrapped in a
+ *    PickerContext provider; CRUD row click / checkbox toggle (if configured)
+ *    emits a `pick` action through the helper row click action.
+ *  - The picker renders the default CRUD as a thin convenience: just enough
+ *    shape to give the user something selectable when `pickerSchema` is
+ *    omitted. It does NOT inject picker-specific state paths.
+ */
+export function buildDefaultPickerSchema(args: {
+  pickerId: string;
+  loadAction: ActionSchema | ActionSchema[] | undefined;
+  multiple: boolean;
+  valueField: string | undefined;
+}): CrudSchema {
+  return {
+    type: 'crud',
+    id: `${args.pickerId}-picker-crud`,
+    loadAction: args.loadAction as ReactiveActionSchema | undefined,
+    rowKey: args.valueField ?? 'value',
+    loadAllData: false,
+    columns: [{ name: 'label', label: 'Label' }],
+    queryForm: {
+      body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
+    },
+  };
 }
 
+/**
+ * @deprecated v3: caller should pass `pickerSchema` directly. This thin wrapper
+ * is kept for source-compatibility during the migration window. Behaviour
+ * matches the v1 implementation: synthesize a source + columns from static
+ * options, then forward to `buildDefaultPickerSchema`. v3.2: no picker-specific
+ * state paths are injected; selection lives in the picker's React Context.
+ */
 export function createPickerCrudSchema(args: {
   pickerId: string;
   loadAction: ActionSchema | ActionSchema[] | undefined;
@@ -135,28 +169,23 @@ export function createPickerCrudSchema(args: {
   labelKey: string | undefined;
   multiple: boolean;
 }): CrudSchema {
-  const normalizedSource = createNormalizedPickerSource(args.options);
-
-  return {
-    type: 'crud',
-    id: `${args.pickerId}-picker-crud`,
-    loadAction: args.loadAction as ReactiveActionSchema | undefined,
-    source: args.loadAction ? undefined : normalizedSource,
-    rowKey: args.valueKey ?? 'value',
-    loadAllData: false,
-    columns: args.columns && args.columns.length > 0 ? args.columns : inferColumns(args.options),
-    queryForm: args.searchable
-      ? {
-          body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
-        }
-      : undefined,
-    selection: {
-      type: args.multiple ? 'checkbox' : 'radio',
-      keepOnPageChange: true,
-    },
-    selectionOwnership: 'scope',
-    selectionStatePath: `$_picker.${args.pickerId}.selection`,
-    dataStatePath: `$_picker.${args.pickerId}.rows`,
-    autoClearSelectionOnRefresh: false,
-  };
+  const base = buildDefaultPickerSchema({
+    pickerId: args.pickerId,
+    loadAction: args.loadAction,
+    multiple: args.multiple,
+    valueField: args.valueKey,
+  });
+  if (args.columns && args.columns.length > 0) {
+    base.columns = args.columns;
+  } else if (args.options.length > 0) {
+    base.columns = inferColumns(args.options);
+  }
+  if (args.searchable === false) {
+    base.queryForm = undefined;
+  }
+  if (!args.loadAction) {
+    const items = args.options.map((option) => rowToRecord(option));
+    base.source = { items, total: items.length } as unknown as CrudSchema['source'];
+  }
+  return base;
 }

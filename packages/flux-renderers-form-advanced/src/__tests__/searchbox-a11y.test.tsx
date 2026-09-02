@@ -40,7 +40,7 @@ describe('searchbox accessible names (a11y Phase 2)', () => {
           type: 'picker',
           name: 'owner',
           label: 'Owner',
-          pickerDialog: { title: 'Pick owner' },
+          pickerPopup: { title: 'Pick owner' },
           options: [{ label: 'Alice', value: 'alice' }],
         },
       ],

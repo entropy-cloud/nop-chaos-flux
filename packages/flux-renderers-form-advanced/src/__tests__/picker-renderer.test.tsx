@@ -55,7 +55,7 @@ describe('picker: open → select → writeback + clear + handle', () => {
           id: 'pk',
           name: 'owner',
           label: 'Owner',
-          pickerDialog: { title: 'Pick owner' },
+          pickerPopup: { title: 'Pick owner' },
           options: [
             { label: 'Alice', value: 'alice' },
             { label: 'Bob', value: 'bob' },
@@ -88,7 +88,7 @@ describe('picker: open → select → writeback + clear + handle', () => {
           name: 'owners',
           label: 'Owners',
           multiple: true,
-          pickerDialog: { title: 'Pick owners' },
+          pickerPopup: { title: 'Pick owners' },
           options: [
             { label: 'Alice', value: 'alice' },
             { label: 'Bob', value: 'bob' },
@@ -121,7 +121,7 @@ describe('picker: open → select → writeback + clear + handle', () => {
           id: 'pk',
           name: 'owner',
           label: 'Owner',
-          pickerDialog: { title: 'Pick owner' },
+          pickerPopup: { title: 'Pick owner' },
           options: [{ label: 'Alice', value: 'alice' }],
         },
         { type: 'form-state-probe', name: 'owner' },
@@ -135,7 +135,7 @@ describe('picker: open → select → writeback + clear + handle', () => {
     });
   });
 
-  it('valueKey/labelKey normalization maps arbitrary option records', async () => {
+  it('valueField/labelField normalization maps arbitrary option records', async () => {
     renderSchema({
       type: 'form',
       id: 'f',
@@ -146,9 +146,9 @@ describe('picker: open → select → writeback + clear + handle', () => {
           id: 'pk',
           name: 'owner',
           label: 'Owner',
-          valueKey: 'id',
-          labelKey: 'title',
-          pickerDialog: { title: 'Pick owner' },
+          valueField: 'id',
+          labelField: 'title',
+          pickerPopup: { title: 'Pick owner' },
           options: [{ id: 'u1', title: 'Alice' }],
         },
         { type: 'form-state-probe', name: 'owner' },
@@ -177,7 +177,7 @@ describe('picker: open → select → writeback + clear + handle', () => {
           id: 'pk',
           name: 'owner',
           label: 'Owner',
-          pickerDialog: { title: 'Pick owner' },
+          pickerPopup: { title: 'Pick owner' },
           options: [{ label: 'Alice', value: 'alice' }],
         },
         { type: 'button', label: 'OpenBtn', onClick: { action: 'component:open', componentId: 'pk' } },
@@ -200,7 +200,7 @@ describe('picker: open → select → writeback + clear + handle', () => {
           id: 'pk',
           name: 'owner',
           label: 'Owner',
-          pickerDialog: { title: 'Pick owner' },
+          pickerPopup: { title: 'Pick owner' },
           options: [{ label: 'Alice', value: 'alice' }],
         },
         { type: 'button', label: 'ClearBtn', onClick: { action: 'component:clear', componentId: 'pk' } },
@@ -225,7 +225,7 @@ describe('picker: open → select → writeback + clear + handle', () => {
           id: 'pk',
           name: 'owner',
           label: 'Owner',
-          pickerDialog: { title: 'Pick owner' },
+          pickerPopup: { title: 'Pick owner' },
           options: [{ label: 'Alice', value: 'alice' }],
         },
       ],

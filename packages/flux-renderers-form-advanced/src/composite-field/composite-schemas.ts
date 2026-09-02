@@ -6,7 +6,6 @@ import type {
   SchemaObject,
   SchemaValue,
 } from '@nop-chaos/flux-core';
-import type { CrudColumnSchema } from '@nop-chaos/flux-renderers-data';
 
 export type SchemaInput = BaseSchema | BaseSchema[];
 
@@ -155,29 +154,97 @@ export interface TransferSchema extends BoundFieldSchemaBase {
 }
 
 /**
- * W4c — picker: dialog-layer selection field. `pickerDialog` configures the
- * dialog surface (title/placement/size); selection inside the dialog writes back
- * through valueKey/labelKey normalization.
+ * W4c — picker v3: popup-layer selection field.
+ *
+ * Responsibilities split:
+ *  - Picker concerns: popup config, value/label mapping, label template,
+ *    overflow config, autoFill, onPick/onItemClick actions.
+ *  - CRUD concerns (via pickerSchema.rowSelection): multi-select type,
+ *    keepOnPageChange, toggleOnRowClick, modifierSelect, selectAllMode.
+ *  - Non-CRUD pickerSchema: use built-in `pick` action for submission.
+ *
+ * popup surface configured by `pickerPopup.type`. Popup content (any BaseSchema)
+ * lives in `pickerSchema`. valueField/labelField map selection values to the
+ * form-bound field. labelTpl renders a compound display; overflowConfig
+ * controls multi-select tag collapse behavior.
  */
-export interface PickerDialogConfig extends SchemaObject {
+export interface PickerPopupConfig extends SchemaObject {
+  /** Surface type. Default: 'dialog'. */
+  type?: 'dialog' | 'drawer' | 'popover';
   title?: string;
-  size?: 'sm' | 'default' | 'lg' | 'xl';
-  placement?: string;
+  /** Size preset aligned with AMIS. Default: 'default'. */
+  size?: 'xs' | 'sm' | 'default' | 'lg' | 'xl' | 'full';
+  /** Placement for drawer/popover surfaces. Default: 'right' for drawer, 'bottom' for popover. */
+  placement?: 'left' | 'right' | 'top' | 'bottom';
+  /** Explicit width override (drawer/popover). */
+  width?: string | number;
+  /** Explicit height override (drawer/popover). */
+  height?: string | number;
+  closeOnEsc?: boolean;
+  closeOnOutside?: boolean;
+  /** Show mask overlay. Default: true for dialog/drawer, false for popover. */
+  showMask?: boolean;
+  showCloseButton?: boolean;
+  confirmText?: string;
+  cancelText?: string;
 }
+
+export interface OverflowConfig extends SchemaObject {
+  /** Maximum number of tags shown. -1 (default) = no limit. */
+  maxTagCount?: number;
+  /** Popover config for collapsed tags. */
+  overflowTagPopover?: SchemaObject;
+}
+
+/** Minimal template binding type (string template or object form). */
+export type SchemaTpl = string | SchemaObject;
 
 export interface PickerSchema extends BoundFieldSchemaBase {
   type: 'picker';
-  options?: SchemaValue;
+  /** Popup surface configuration. */
+  pickerPopup?: PickerPopupConfig | boolean;
+  /** Popup content schema (any BaseSchema: crud / tree / list / form / container). */
+  pickerSchema?: BaseSchema;
+  /**
+   * On-demand option load action. Used for label reactive resolution: when
+   * the field has a value but no matching cached label, picker dispatches
+   * this action to fetch the corresponding row(s). When pickerSchema is a
+   * CRUD with its own loadAction, picker falls back to pickerSchema.loadAction
+   * if this is omitted.
+   */
   loadAction?: ReactiveActionSchema;
+  /** Action that resolves stored values into display labels. */
   labelResolveAction?: ActionSchema | ActionSchema[];
-  valueKey?: string;
-  labelKey?: string;
+  /** Field path on the selected option row used as value. */
+  valueField?: string;
+  /** Field path on the selected option row used as label. */
+  labelField?: string;
+  /** Compound label template (overrides labelField when provided). */
+  labelTpl?: SchemaTpl;
+  /** Multi-select mode. Default: false. */
   multiple?: boolean;
-  columns?: CrudColumnSchema[];
-  searchable?: boolean;
+  /** Overall clearable. Default: true. */
+  clearable?: boolean;
+  /** Per-tag clearable (multi-select). Default: true. */
+  itemClearable?: boolean;
+  /** Join multi-select values into a delimiter-separated string. Default: true. */
+  joinValues?: boolean;
+  /** Delimiter used when joinValues=true. Default: ','. */
+  delimiter?: string;
+  /** Extract value from nested object (e.g. when labelField resolves to {value, label}). Default: true. */
+  extractValue?: boolean;
+  /** Multi-select tag overflow configuration. */
+  overflowConfig?: OverflowConfig;
+  /** Auto-fill sibling form fields from selected row. */
   autoFill?: Record<string, string>;
-  pickerDialog?: PickerDialogConfig | boolean;
+  /** Action invoked after a successful pick. */
   onPick?: ActionSchema | ActionSchema[];
+  /** Action invoked when an already-selected tag is clicked. */
+  onItemClick?: ActionSchema | ActionSchema[];
+  /** Embed mode (no popup). */
+  embed?: boolean;
+  /** Value written on clear. */
+  resetValue?: SchemaValue;
 }
 
 export interface DetailViewSchema extends BaseSchema {

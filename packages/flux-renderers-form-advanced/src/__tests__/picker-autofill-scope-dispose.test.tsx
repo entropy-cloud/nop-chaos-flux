@@ -40,7 +40,7 @@ describe('picker autoFill — one-shot scope pairing (09-02)', () => {
                 id: 'pk',
                 name: 'owner',
                 label: 'Owner',
-                pickerDialog: { title: 'Pick owner' },
+                pickerPopup: { title: 'Pick owner' },
                 options: [{ label: 'Alice', value: 'alice' }],
                 autoFill: { copied: '${row.label}' },
               },

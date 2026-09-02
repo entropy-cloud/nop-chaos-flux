@@ -11,6 +11,7 @@ import { getIn, isRecord } from '@nop-chaos/flux-core';
 import {
   useCurrentForm,
   useCurrentFormState,
+  useCurrentValidationScope,
   useInputComponentHandle,
   useRenderScope,
   useRendererEnv,
@@ -31,16 +32,16 @@ import {
   shouldValidateOn,
   useFieldPresentation,
 } from '@nop-chaos/flux-renderers-form';
-import { useCurrentValidationScope } from '@nop-chaos/flux-react';
+import {
+  PickerContextProvider,
+  type PickerContextValue,
+} from './picker-context.js';
 import {
   normalizeFieldValues,
-  getOptionLabelMap,
   type PickerValue,
   extractRowsFromActionResult,
   mapSelectionRows,
-  selectionToRowKeys,
-  rowToRecord,
-  createPickerCrudSchema,
+  buildDefaultPickerSchema,
 } from './picker-helpers.js';
 import { PickerDropdown } from './picker-dropdown.js';
 
@@ -53,19 +54,29 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   const name = String(schemaProps.name ?? '');
   const hasName = name.length > 0;
   const multiple = schemaProps.multiple === true;
-  const valueKey = typeof schemaProps.valueKey === 'string' ? schemaProps.valueKey : undefined;
-  const labelKey = typeof schemaProps.labelKey === 'string' ? schemaProps.labelKey : undefined;
-  const pickerDialog = schemaProps.pickerDialog;
-  const hasPickerDialog = pickerDialog !== undefined && pickerDialog !== false;
-  const dialogConfig = (hasPickerDialog && typeof pickerDialog === 'object' ? pickerDialog : {}) as {
+  const valueField = typeof schemaProps.valueField === 'string' ? schemaProps.valueField : undefined;
+  const labelField = typeof schemaProps.labelField === 'string' ? schemaProps.labelField : undefined;
+  const pickerPopupConfig = schemaProps.pickerPopup;
+  const hasPickerPopup = pickerPopupConfig !== undefined && pickerPopupConfig !== false;
+  const popupConfig = (hasPickerPopup && typeof pickerPopupConfig === 'object' ? pickerPopupConfig : {}) as {
+    type?: 'dialog' | 'drawer' | 'popover';
     title?: string;
-    size?: 'sm' | 'default' | 'lg' | 'xl';
+    size?: 'xs' | 'sm' | 'default' | 'lg' | 'xl' | 'full';
+    placement?: 'left' | 'right' | 'top' | 'bottom';
+    width?: string | number;
+    height?: string | number;
+    showMask?: boolean;
+    confirmText?: string;
+    cancelText?: string;
   };
-  const dialogTitle = dialogConfig.title ?? t('flux.picker.select', { defaultValue: 'Select' });
+  const surfaceType = popupConfig.type ?? 'dialog';
+  const surfaceSize = popupConfig.size ?? 'default';
+  const placement: 'left' | 'right' | 'top' | 'bottom' =
+    popupConfig.placement ?? (surfaceType === 'drawer' ? 'right' : surfaceType === 'popover' ? 'bottom' : 'right');
+  const popupTitle = popupConfig.title ?? t('flux.picker.select', { defaultValue: 'Select' });
 
   const loadAction = schemaProps.loadAction;
-  const crudMode = Boolean(loadAction);
-  const dialogSize = dialogConfig.size ?? (crudMode ? 'xl' : 'default');
+  const hasCustomSchema = schemaProps.pickerSchema !== undefined;
 
   const presentation = useFieldPresentation(name, validationOwner, {
     disabled: schemaProps.disabled === true,
@@ -84,107 +95,45 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     { enabled: Boolean(!currentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
   );
   const rawFieldValue = currentForm ? formValue : scopeValue;
-  // Instance-unique key for the CRUD-mode `$_picker.*` selection/data state
-  // paths. Repeated instances of the same template node (combo item / input
-  // table row / CRUD row) share `props.id`; keying by the mounted cid keeps
-  // each instance's dialog selection isolated (bug 73 pattern: row-scope
-  // pollution — two rows opening their dialogs must not clobber each other).
+  // Instance-unique key for picker state. Repeated instances of the same
+  // template node (combo item / input-table row / CRUD row) share props.id;
+  // keying by mounted cid keeps each instance's picker context isolated
+  // (bug 73 pattern: row-scope pollution — two rows must not clobber each
+  // other).
   const pickerStateKey = props.meta.cid != null ? String(props.meta.cid) : props.id;
-  const crudSelection = useScopeSelector(
-    (scopeData) => {
-      const raw = getIn(scopeData, `$_picker.${pickerStateKey}.selection`);
-      return Array.isArray(raw) ? raw : [];
-    },
-    (a, b) =>
-      Array.isArray(a) &&
-      Array.isArray(b) &&
-      a.length === b.length &&
-      a.every((v, i) => v === b[i]),
-    {
-      enabled: crudMode,
-      fallback: [],
-      paths: crudMode ? [`$_picker.${pickerStateKey}.selection`] : undefined,
-    },
-  );
 
-  const options = React.useMemo<NormalizedOption[]>(
-    () => normalizeOptions(schemaProps.options, valueKey, labelKey),
-    [schemaProps.options, valueKey, labelKey],
-  );
-  const selectedValues = React.useMemo(
-    () => normalizeFieldValues(rawFieldValue, valueKey),
-    [rawFieldValue, valueKey],
-  );
-  const optionLabelMap = React.useMemo(() => getOptionLabelMap(options), [options]);
-
-  const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState('');
-  const [pending, setPending] = React.useState<Set<PickerValue>>(() => new Set());
-  const [resolvedLabelCache, setResolvedLabelCache] = React.useState<Record<string, string>>({});
-  const [selectionRows, setSelectionRows] = React.useState<
-    Map<PickerValue, { label: string; row: Record<string, unknown> }>
-  >(() => new Map());
-  const triggerRef = React.useRef<HTMLButtonElement>(null);
-  const labelResolveRequestedRef = React.useRef<string | null>(null);
-
-  const interactionDisabled = presentation.effectiveDisabled || presentation.readOnly;
   const labelResolveAction = schemaProps.labelResolveAction;
-  const searchable = schemaProps.searchable !== false;
   const autoFillProgram = props.templateNode.structuralFields?.autoFill as
     | CompiledRuntimeValue<Record<string, unknown>>
     | undefined;
 
-  const selectedLabel = React.useMemo(() => {
-    if (!multiple && isRecord(rawFieldValue) && labelKey) {
-      const rawLabel = rawFieldValue[labelKey];
-      if (typeof rawLabel === 'string' || typeof rawLabel === 'number') {
-        return String(rawLabel);
-      }
+  // Static options: synthesize from pickerSchema if it has a `source` array
+  // (legacy v1 behaviour). v3 prefers user-supplied pickerSchema; this is a
+  // fallback when pickerSchema is omitted and only a flat options list exists.
+  const staticOptions = React.useMemo<NormalizedOption[]>(() => {
+    const sourceSchema = schemaProps.pickerSchema as { source?: unknown } | undefined;
+    if (Array.isArray(sourceSchema?.source)) {
+      return normalizeOptions(sourceSchema?.source, valueField, labelField);
     }
-    if (multiple && Array.isArray(rawFieldValue)) {
-      const rawLabels = rawFieldValue
-        .filter(isRecord)
-        .map((item) => item[labelKey ?? 'name'])
-        .filter((v): v is string | number => typeof v === 'string' || typeof v === 'number')
-        .map(String);
-      if (rawLabels.length > 0) return rawLabels.join(', ');
-    }
-    const cachedValues = selectedValues.map(
-      (value) => resolvedLabelCache[String(value)] ?? optionLabelMap.get(value),
-    );
-    if (cachedValues.some((value) => value)) {
-      const labels = cachedValues.filter((value): value is string => Boolean(value));
-      return labels.length > 0
-        ? labels.join(', ')
-        : resolveSelectedLabel(
-            multiple ? selectedValues : selectedValues[0],
-            options,
-            t('flux.picker.placeholder', { defaultValue: 'Not selected' }),
-          );
-    }
-    return resolveSelectedLabel(
-      multiple ? selectedValues : selectedValues[0],
-      options,
-      t('flux.picker.placeholder', { defaultValue: 'Not selected' }),
-    );
-  }, [labelKey, multiple, optionLabelMap, options, rawFieldValue, resolvedLabelCache, selectedValues]);
+    return [];
+  }, [schemaProps.pickerSchema, valueField, labelField]);
 
-  const writeValue = React.useCallback(
-    (next: unknown) => {
-      if (currentForm && name) {
-        if (!currentForm.isTouched(name)) {
-          currentForm.touchField(name);
-        }
-        currentForm.setValue(name, next);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
-        return;
-      }
-      scope.update(name, next);
-    },
-    [currentForm, name, scope],
+  const selectedValues = React.useMemo(
+    () => normalizeFieldValues(rawFieldValue, valueField),
+    [rawFieldValue, valueField],
   );
+
+  const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const [selection, setSelection] = React.useState<PickerValue[]>([]);
+  const [selectionRows, setSelectionRows] = React.useState<
+    Map<PickerValue, { label: string; row: Record<string, unknown> }>
+  >(() => new Map());
+  const [resolvedLabelCache, setResolvedLabelCache] = React.useState<Record<string, string>>({});
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const labelResolveRequestedRef = React.useRef<string | null>(null);
+
+  const interactionDisabled = presentation.effectiveDisabled || presentation.readOnly;
 
   const applyAutoFill = React.useCallback(
     (row: Record<string, unknown> | undefined) => {
@@ -228,7 +177,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       return;
     }
     const uncached = selectedValues.filter(
-      (value) => !resolvedLabelCache[String(value)] && !optionLabelMap.get(value),
+      (value) => !resolvedLabelCache[String(value)] && !staticOptions.some((o) => o.value === value),
     );
     if (uncached.length === 0) {
       return;
@@ -249,12 +198,9 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       .then((result) => {
         if (result.ok && !result.cancelled) {
           const rows = extractRowsFromActionResult(result.data);
-          const rowMap = mapSelectionRows({ rows, valueKey, labelKey });
+          const rowMap = mapSelectionRows({ rows, valueKey: valueField, labelKey: labelField });
           cacheLabelsForValues(rowMap);
         } else {
-          // Failed/cancelled dispatch: clear the request marker so the same
-          // value can be retried on a later trigger (re-open / external value
-          // change). A sticky marker would otherwise skip re-resolution forever.
           labelResolveRequestedRef.current = null;
         }
       })
@@ -263,142 +209,165 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       });
   }, [
     cacheLabelsForValues,
-    labelKey,
+    labelField,
     labelResolveAction,
     loadAction,
     multiple,
-    optionLabelMap,
     props.helpers,
     resolvedLabelCache,
     scope,
     selectedValues,
-    valueKey,
+    staticOptions,
+    valueField,
   ]);
 
   const filteredOptions = React.useMemo(() => {
     if (query.trim() === '') {
-      return options;
+      return staticOptions;
     }
     const q = query.trim().toLowerCase();
-    return options.filter((option) => option.label.toLowerCase().includes(q));
-  }, [options, query]);
+    return staticOptions.filter((option) => option.label.toLowerCase().includes(q));
+  }, [staticOptions, query]);
 
-  const togglePending = React.useCallback((value: PickerValue) => {
-    setPending((current) => {
-      const next = new Set(current);
-      if (next.has(value)) {
-        next.delete(value);
-      } else {
-        next.add(value);
+  const pickIntoContext = React.useCallback(
+    (value: PickerValue, row?: Record<string, unknown>, label?: string) => {
+      const v = String(value);
+      setSelection((current) => {
+        if (current.some((existing) => String(existing) === v)) {
+          return multiple ? current : current.filter((x) => String(x) !== v);
+        }
+        return multiple ? [...current, value] : [value];
+      });
+      if (row) {
+        const labelText = label ?? (labelField ? String(row[labelField] ?? '') : '');
+        setSelectionRows((current) => {
+          const next = new Map(current);
+          next.set(value, { label: labelText, row });
+          return next;
+        });
+        setResolvedLabelCache((current) => ({ ...current, [v]: labelText }));
       }
-      return next;
-    });
-  }, []);
-
-  const handleSetPending = React.useCallback((values: PickerValue[]) => {
-    setPending(new Set(values));
-  }, []);
-
-  const pickerCrudSchema = React.useMemo(
-    () =>
-      createPickerCrudSchema({
-        pickerId: pickerStateKey,
-        loadAction,
-        options,
-        columns: schemaProps.columns,
-        searchable,
-        valueKey,
-        labelKey,
-        multiple,
-      }),
-    [labelKey, loadAction, multiple, options, pickerStateKey, schemaProps.columns, searchable, valueKey],
+    },
+    [labelField, multiple],
   );
 
-  React.useEffect(() => {
-    if (!open || !crudMode) {
-      return;
+  const unpickFromContext = React.useCallback(
+    (value: PickerValue) => {
+      const v = String(value);
+      setSelection((current) => current.filter((existing) => String(existing) !== v));
+      setSelectionRows((current) => {
+        const next = new Map(current);
+        next.delete(value);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const clearPickerSelection = React.useCallback(() => {
+    setSelection([]);
+    setSelectionRows(new Map());
+  }, []);
+
+  const pickerContextValue = React.useMemo<PickerContextValue>(
+    () => ({
+      pickerId: pickerStateKey,
+      multiple,
+      selection,
+      rows: selectionRows,
+      pick: pickIntoContext,
+      unpick: unpickFromContext,
+      clear: clearPickerSelection,
+    }),
+    [clearPickerSelection, multiple, pickerStateKey, pickIntoContext, selection, selectionRows, unpickFromContext],
+  );
+
+  const defaultSchema = React.useMemo(
+    () =>
+      buildDefaultPickerSchema({
+        pickerId: pickerStateKey,
+        loadAction,
+        multiple,
+        valueField,
+      }),
+    [loadAction, multiple, pickerStateKey, valueField],
+  );
+  const schemaToRender = schemaProps.pickerSchema ?? defaultSchema;
+
+  const writeValue = React.useCallback(
+    (next: unknown) => {
+      if (currentForm && name) {
+        if (!currentForm.isTouched(name)) {
+          currentForm.touchField(name);
+        }
+        currentForm.setValue(name, next);
+        if (shouldValidateOn(name, currentForm, 'change')) {
+          void currentForm.validateField(name, 'change');
+        }
+        return;
+      }
+      scope.update(name, next);
+    },
+    [currentForm, name, scope],
+  );
+
+  const selectedLabel = React.useMemo(() => {
+    if (!multiple && isRecord(rawFieldValue) && labelField) {
+      const rawLabel = rawFieldValue[labelField];
+      if (typeof rawLabel === 'string' || typeof rawLabel === 'number') {
+        return String(rawLabel);
+      }
     }
-    scope?.update(`$_picker.${pickerStateKey}.selection`, selectionToRowKeys(selectedValues));
-  }, [crudMode, open, pickerStateKey, scope, selectedValues]);
+    if (multiple && Array.isArray(rawFieldValue)) {
+      const rawLabels = rawFieldValue
+        .filter(isRecord)
+        .map((item) => item[labelField ?? 'name'])
+        .filter((v): v is string | number => typeof v === 'string' || typeof v === 'number')
+        .map(String);
+      if (rawLabels.length > 0) return rawLabels.join(', ');
+    }
+    const cachedValues = selectedValues.map(
+      (value) => resolvedLabelCache[String(value)] ?? staticOptions.find((o) => o.value === value)?.label,
+    );
+    if (cachedValues.some((value) => value)) {
+      const labels = cachedValues.filter((value): value is string => Boolean(value));
+      return labels.length > 0
+        ? labels.join(', ')
+        : resolveSelectedLabel(
+            multiple ? selectedValues : selectedValues[0],
+            staticOptions,
+            t('flux.picker.placeholder', { defaultValue: 'Not selected' }),
+          );
+    }
+    return resolveSelectedLabel(
+      multiple ? selectedValues : selectedValues[0],
+      staticOptions,
+      t('flux.picker.placeholder', { defaultValue: 'Not selected' }),
+    );
+  }, [labelField, multiple, rawFieldValue, resolvedLabelCache, selectedValues, staticOptions]);
 
   const openDialog = React.useCallback(() => {
-    if (!hasPickerDialog && options.length === 0 && !crudMode) {
+    if (!hasPickerPopup && !hasCustomSchema && staticOptions.length === 0) {
       env?.notify?.('warning', t('flux.picker.configMissing', { defaultValue: 'Picker dialog is not configured' }));
       return;
     }
-    if (!crudMode) {
-      // G1: seed pending with the current value so single-select opens with the
-      // current selection pre-highlighted, and an empty Confirm never silently
-      // clears the field.
-      setPending(new Set(multiple ? selectedValues : selectedValues.slice(0, 1)));
-      setQuery('');
-    }
+    setSelection(selectedValues);
+    setQuery('');
     setOpen(true);
-  }, [crudMode, env, hasPickerDialog, multiple, options.length, selectedValues]);
+  }, [env, hasCustomSchema, hasPickerPopup, selectedValues, staticOptions.length]);
 
   const clearValue = React.useCallback(() => {
     if (interactionDisabled) {
       return;
     }
-    writeValue(multiple ? [] : undefined);
+    writeValue(schemaProps.resetValue ?? (multiple ? [] : undefined));
+    clearPickerSelection();
     void props.events.onPick?.();
-  }, [interactionDisabled, multiple, props.events, writeValue]);
+  }, [clearPickerSelection, interactionDisabled, multiple, props.events, schemaProps.resetValue, writeValue]);
 
-  const confirmListSelection = React.useCallback(() => {
-    const chosen = Array.from(pending);
-    const rows = new Map<PickerValue, { label: string; row: Record<string, unknown> }>();
-    for (const value of chosen) {
-      const optionMatch = options.find((option) => option.value === value);
-      if (optionMatch) {
-        rows.set(value, { label: optionMatch.label, row: rowToRecord(optionMatch) });
-      }
-    }
-    cacheLabelsForValues(rows);
-    const first = rows.values().next().value as { row: Record<string, unknown> } | undefined;
-    applyAutoFill(first?.row);
-    writeValue(multiple ? chosen : chosen[chosen.length - 1]);
-    setOpen(false);
-    void props.events.onPick?.();
-  }, [applyAutoFill, cacheLabelsForValues, multiple, options, pending, props.events, writeValue]);
-
-  const confirmCrudSelection = React.useCallback(() => {
-    const rawSelection = scope?.get?.(`$_picker.${pickerStateKey}.selection`);
-    const selectedKeys = Array.isArray(rawSelection)
-      ? rawSelection.map((value) => String(value))
-      : [];
-    const loadedRows = extractRowsFromActionResult(scope?.get?.(`$_picker.${pickerStateKey}.rows`));
-    const loadedRowMap = mapSelectionRows({ rows: loadedRows, valueKey, labelKey });
-    const rows = new Map<PickerValue, { label: string; row: Record<string, unknown> }>(selectionRows);
-    const nextValues: PickerValue[] = [];
-
-    for (const key of selectedKeys) {
-      const optionMatch = options.find((option) => String(option.value) === key);
-      if (optionMatch) {
-        nextValues.push(optionMatch.value);
-        rows.set(optionMatch.value, {
-          label: optionMatch.label,
-          row: rowToRecord(optionMatch),
-        });
-        continue;
-      }
-      const cached = Array.from(selectionRows.entries()).find(([value]) => String(value) === key);
-      if (cached) {
-        nextValues.push(cached[0]);
-        rows.set(cached[0], cached[1]);
-        continue;
-      }
-      const loaded = Array.from(loadedRowMap.entries()).find(
-        ([value]) => String(value) === key,
-      );
-      if (loaded) {
-        nextValues.push(loaded[0]);
-        rows.set(loaded[0], loaded[1]);
-        continue;
-      }
-      nextValues.push(key as PickerValue);
-    }
-
-    const finalValues = multiple ? nextValues : nextValues.slice(0, 1);
+  const confirmSelection = React.useCallback(() => {
+    const rows = new Map(selectionRows);
+    const finalValues = multiple ? selection : selection.slice(0, 1);
     cacheLabelsForValues(rows);
     const firstSelected = finalValues.length > 0
       ? rows.get(finalValues[0])?.row
@@ -407,19 +376,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     writeValue(multiple ? finalValues : finalValues[0]);
     setOpen(false);
     void props.events.onPick?.();
-  }, [
-    applyAutoFill,
-    cacheLabelsForValues,
-    labelKey,
-    multiple,
-    options,
-    pickerStateKey,
-    props.events,
-    scope,
-    selectionRows,
-    valueKey,
-    writeValue,
-  ]);
+  }, [applyAutoFill, cacheLabelsForValues, multiple, props.events, selection, selectionRows, writeValue]);
 
   useInputComponentHandle({
     id: props.id,
@@ -438,11 +395,14 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
     return null;
   }
 
-  const crudContent = crudMode && open
-    ? (props.helpers.render(pickerCrudSchema, { pathSuffix: 'pickerCrud' }) as React.ReactNode)
+  const pickerContent = open
+    ? (props.helpers.render(schemaToRender, { pathSuffix: 'pickerContent' }) as React.ReactNode)
     : null;
-  const confirmDisabled = crudMode ? !multiple && crudSelection.length === 0 : !multiple && pending.size === 0;
-  const confirmSelection = crudMode ? confirmCrudSelection : confirmListSelection;
+  const confirmDisabled = !multiple && selection.length === 0;
+
+  const wrappedContent = open ? (
+    <PickerContextProvider value={pickerContextValue}>{pickerContent}</PickerContextProvider>
+  ) : null;
 
   return (
     <div className={cn('nop-picker', 'flex items-center gap-2', props.meta.className)}>
@@ -482,20 +442,32 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
       <PickerDropdown
         open={open}
         onOpenChange={setOpen}
-        dialogSize={dialogSize}
-        dialogTitle={dialogTitle}
-        crudMode={crudMode}
-        crudContent={crudContent}
+        surfaceType={surfaceType}
+        surfaceSize={surfaceSize}
+        placement={placement}
+        width={popupConfig.width}
+        height={popupConfig.height}
+        showMask={popupConfig.showMask}
+        title={popupTitle}
+        crudMode={hasCustomSchema}
+        crudContent={wrappedContent}
         query={query}
         onQueryChange={setQuery}
         filteredOptions={filteredOptions}
-        pending={pending}
+        pending={new Set(selection)}
         multiple={multiple}
-        onTogglePending={togglePending}
-        onSetPending={handleSetPending}
+        onTogglePending={pickIntoContext}
+        onSetPending={(values) => {
+          clearPickerSelection();
+          for (const v of values) {
+            pickIntoContext(v);
+          }
+        }}
         confirmDisabled={confirmDisabled}
         onConfirm={confirmSelection}
         onCancel={() => setOpen(false)}
+        confirmText={popupConfig.confirmText}
+        cancelText={popupConfig.cancelText}
       />
     </div>
   );
@@ -521,20 +493,30 @@ export const pickerRendererDefinition: RendererDefinition = {
       description:
         'Action that resolves stored values into display labels (ActionSchema). Template-preserved.',
     },
+    autoFill: {
+      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+      displayName: 'Auto Fill',
+      description: 'Auto-fill sibling form fields from selected row.',
+    },
   },
   fields: [
     { key: 'name', kind: 'prop' },
     ...formFieldRules,
-    { key: 'options', kind: 'prop' },
-    { key: 'loadAction', kind: 'prop' },
-    { key: 'labelResolveAction', kind: 'prop' },
-    { key: 'valueKey', kind: 'prop' },
-    { key: 'labelKey', kind: 'prop' },
-    { key: 'columns', kind: 'prop' },
-    { key: 'searchable', kind: 'prop', valueType: 'boolean' },
-    { key: 'autoFill', kind: 'prop', lazyEval: true, params: ['row'] },
-    { key: 'pickerDialog', kind: 'prop' },
+    { key: 'pickerSchema', kind: 'prop' },
+    { key: 'pickerPopup', kind: 'prop' },
+    { key: 'valueField', kind: 'prop' },
+    { key: 'labelField', kind: 'prop' },
+    { key: 'labelTpl', kind: 'prop' },
+    { key: 'delimiter', kind: 'prop' },
+    { key: 'overflowConfig', kind: 'prop' },
+    { key: 'itemClearable', kind: 'prop', valueType: 'boolean' },
+    { key: 'onItemClick', kind: 'event' },
+    { key: 'resetValue', kind: 'prop' },
     { key: 'multiple', kind: 'prop', valueType: 'boolean' },
+    { key: 'clearable', kind: 'prop', valueType: 'boolean' },
+    { key: 'joinValues', kind: 'prop', valueType: 'boolean' },
+    { key: 'extractValue', kind: 'prop', valueType: 'boolean' },
+    { key: 'embed', kind: 'prop', valueType: 'boolean' },
     { key: 'readOnly', kind: 'prop' },
     { key: 'onPick', kind: 'event' },
   ],

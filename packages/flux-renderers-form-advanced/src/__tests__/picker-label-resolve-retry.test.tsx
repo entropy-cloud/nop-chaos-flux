@@ -74,10 +74,10 @@ describe('picker: labelResolveAction retries after a failed dispatch (C3.1 P2-1)
             id: 'pk',
             name: 'owner',
             label: 'Owner',
-            pickerDialog: { title: 'Pick owner' },
+            pickerPopup: { title: 'Pick owner' },
             options: [{ label: 'Alice', value: 'alice' }],
-            valueKey: 'id',
-            labelKey: 'title',
+            valueField: 'id',
+            labelField: 'title',
             labelResolveAction: { action: 'ajax', args: { url: '/api/owners' } },
           },
           {

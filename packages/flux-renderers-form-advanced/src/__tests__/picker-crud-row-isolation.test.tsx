@@ -61,10 +61,10 @@ const crudPickerItem = [
     type: 'picker',
     name: 'owner',
     label: 'Owner',
-    pickerDialog: { title: 'Pick owner', size: 'lg' },
+    pickerPopup: { title: 'Pick owner', size: 'lg' },
     loadAction: { action: 'ajax', args: { url: '/api/owners' } },
-    valueKey: 'id',
-    labelKey: 'title',
+    valueField: 'id',
+    labelField: 'title',
   },
 ];
 
