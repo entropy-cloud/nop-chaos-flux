@@ -49,6 +49,11 @@ const baseThemeExtension: TailwindThemeExtension = {
       DEFAULT: 'hsl(var(--destructive, var(--danger)))',
       foreground: 'hsl(var(--destructive-foreground, var(--primary-foreground)))',
     },
+    danger: {
+      DEFAULT: 'hsl(var(--danger, var(--destructive)))',
+      foreground: 'hsl(var(--primary-foreground))',
+    },
+    info: 'hsl(var(--info))',
     success: 'hsl(var(--success))',
     warning: 'hsl(var(--warning))',
   },

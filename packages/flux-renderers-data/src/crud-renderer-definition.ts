@@ -441,6 +441,8 @@ export const crudRendererDefinition: RendererDefinition = {
     { key: 'listActions', kind: 'region' },
     { key: 'footerToolbar', kind: 'region' },
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+    { key: 'headerClassName', kind: 'prop' },
+    { key: 'bodyClassName', kind: 'prop' },
     { key: 'onQuerySubmit', kind: 'event' },
     { key: 'onQueryReset', kind: 'event' },
     { key: 'onRowClick', kind: 'event' },
