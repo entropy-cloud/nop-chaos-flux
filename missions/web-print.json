@@ -1,7 +1,7 @@
 {
   "name": "web-print",
   "description": "实现 Web 打印功能：基于本项目现有设计器框架和 flux-json 体系，设计并实现完整的打印模板设计器和渲染器。支持可视化拖拽设计打印模板、数据绑定、浏览器打印、PDF 导出。调研 ~/sources/print/ 中的 8 个开源项目，提取最佳实践，在 playground 中添加演示入口，编写 e2e 测试。",
-  "roadmapPath": "docs/plans/2026-09-05-web-print-roadmap.md",
+  "roadmapPath": "docs/backlog/web-print-roadmap.md",
   "plansDir": "docs/plans",
   "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
   "auditsDir": "docs/audits",
