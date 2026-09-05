@@ -3,6 +3,7 @@
 > 最后更新：2026-09-05
 > 来源：`~/sources/print/` 调研项目
 > Mission：`missions/web-print.json`
+> 目标：基于本项目现有设计器框架和 flux-json 体系，实现完整的 Web 打印功能
 
 ## Purpose
 
@@ -23,6 +24,25 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **P3. 打印渲染器** (`todo`)
 - **P4. Playground 集成与 E2E 测试** (`todo`)
 
+## Framework / Platform Reuse
+
+> 本项目已有的可复用能力，避免重复构建。
+
+| 能力 | 来源包 | 复用方式 |
+|------|--------|----------|
+| 设计器核心框架（core + renderers 分包模式） | `flow-designer-core`, `flow-designer-renderers` | 参考包结构和模块划分 |
+| 编辑器核心（undo/redo、命令模式） | `editor-core` | 复用 `UndoCommandStack` |
+| 属性面板框架 | `flow-designer-renderers/designer-inspector.tsx` | 参考属性面板设计 |
+| 拖拽交互 | `flow-designer-renderers/designer-canvas.tsx` | 参考拖拽和吸附逻辑 |
+| Canvas 渲染 | `flux-renderers-graph/xyflow-canvas.tsx` | 参考 canvas 适配器模式 |
+| 数据绑定和表达式 | `flux-formula` | 复用公式引擎 |
+| Schema 编译 | `flux-compiler/schema-compiler.ts` | 参考 schema 编译流程 |
+| React 组件模式 | `flux-react` | 复用 hooks 和组件模式 |
+| UI 组件库 | `@nop-chaos/ui` | 直接使用 Button, Input, Dialog 等 |
+| Zustand 状态管理 | 全项目通用 | 复用 store 模式 |
+| 测试框架 | Vitest + Playwright | 复用测试基础设施 |
+| 打印已有实现 | `flux-renderers-scheduling/calendar` | 参考 `use-calendar-export.ts` 和 `calendar-print.css` |
+
 ## Current Baseline
 
 ### 已有基础
@@ -34,56 +54,71 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### 调研项目
 
-已下载 8 个 Web 打印开源项目到 `~/sources/print/`
+已下载 8 个 Web 打印开源项目到 `~/sources/print/`（详见调研项目清单）
 
-## Phases
+---
 
-| Phase | 状态 | 交付范围 | 依赖 | Owner Doc |
-|-------|------|----------|------|-----------|
-| P0. 调研与设计 | `todo` | 调研报告 + flux-json schema 设计 | 无 | 本文 |
-| P1. 基础设施搭建 | `todo` | flux-print-core + flux-print-renderers 包 | P0 | 本文 |
-| P2. 打印设计器 | `todo` | 画布、组件面板、属性面板、预览 | P1 | 本文 |
-| P3. 打印渲染器 | `todo` | 浏览器打印、PDF 导出 | P1 | 本文 |
-| P4. Playground 集成与 E2E 测试 | `todo` | 演示页面、路由入口、e2e 测试 | P2, P3 | 本文 |
+## Work Items
 
-## Phase Details
+### P0 — 调研与设计
 
-### P0. 调研与设计
+| ID   | Status | 内容 | 设计文档 | 依赖 |
+| ---- | ------ | ---- | -------- | ---- |
+| P0.1 | todo   | 阅读 `~/sources/print/` 中所有项目的 README 和核心代码 | — | — |
+| P0.2 | todo   | 提取各项目的技术栈、架构设计、核心功能对比 | 调研报告 | P0.1 |
+| P0.3 | todo   | 分析本项目现有设计器框架可复用的部分 | 调研报告 | P0.2 |
+| P0.4 | todo   | 设计 flux-json 打印模板 schema | `docs/components/print/design.md` | P0.3 |
+| P0.5 | todo   | 编写调研报告文档 | `docs/analysis/web-print-research.md` | P0.2 |
 
-- 阅读 `~/sources/print/` 中所有项目的 README 和核心代码
-- 提取各项目的技术栈、架构设计、核心功能对比
-- 分析本项目现有设计器框架可复用的部分
-- 设计 flux-json 打印模板 schema
-- 编写调研报告文档
+### P1 — 基础设施搭建
 
-### P1. 基础设施搭建
+| ID   | Status | 内容 | 设计文档 | 依赖 |
+| ---- | ------ | ---- | -------- | ---- |
+| P1.1 | todo   | 创建 `flux-print-core` 包（package.json、tsconfig、vitest、schemas.ts、index.ts） | — | P0.4 |
+| P1.2 | todo   | 创建 `flux-print-renderers` 包（package.json、tsconfig、vitest、schemas.ts、renderer-definitions.ts、index.ts） | — | P1.1 |
+| P1.3 | todo   | 配置包依赖和构建，注册到 workspace | — | P1.2 |
+| P1.4 | todo   | 实现打印模板 schema 编译器 | `docs/components/print/design.md` | P1.1 |
 
-- 创建 `flux-print-core` 包（schema 定义、类型）
-- 创建 `flux-print-renderers` 包（渲染器组件）
-- 配置包依赖和构建
-- 实现打印模板 schema 编译器
+### P2 — 打印设计器
 
-### P2. 打印设计器
+| ID   | Status | 内容 | 设计文档 | 依赖 |
+| ---- | ------ | ---- | -------- | ---- |
+| P2.1 | todo   | 实现打印设计器画布组件（纸张、标尺、网格） | `docs/components/print/design.md` | P1.2 |
+| P2.2 | todo   | 实现组件面板（文本、图片、表格、条码、二维码） | `docs/components/print/design.md` | P2.1 |
+| P2.3 | todo   | 实现属性面板（位置、尺寸、样式、数据绑定） | `docs/components/print/design.md` | P2.1 |
+| P2.4 | todo   | 实现打印预览功能 | `docs/components/print/design.md` | P2.2, P2.3 |
+| P2.5 | todo   | 实现撤销/重做（复用 editor-core） | — | P2.1 |
 
-- 实现打印设计器画布组件
-- 实现组件面板（文本、图片、表格、条码等）
-- 实现属性面板
-- 实现打印预览功能
-- 集成到 playground
+### P3 — 打印渲染器
 
-### P3. 打印渲染器
+| ID   | Status | 内容 | 设计文档 | 依赖 |
+| ---- | ------ | ---- | -------- | ---- |
+| P3.1 | todo   | 实现打印渲染器（模板 + 数据 → HTML） | `docs/components/print/design.md` | P1.2 |
+| P3.2 | todo   | 实现浏览器打印 API 调用 | — | P3.1 |
+| P3.3 | todo   | 实现 PDF 导出功能（html2canvas + jspdf） | — | P3.1 |
+| P3.4 | todo   | 支持分页和表格分组 | `docs/components/print/design.md` | P3.1 |
 
-- 实现打印渲染器（模板 + 数据 → HTML）
-- 实现浏览器打印 API 调用
-- 实现 PDF 导出功能
-- 支持分页和表格分组
+### P4 — Playground 集成与 E2E 测试
 
-### P4. Playground 集成与 E2E 测试
+| ID   | Status | 内容 | 设计文档 | 依赖 |
+| ---- | ------ | ---- | -------- | ---- |
+| P4.1 | todo   | 创建打印设计器演示页面 | — | P2.4, P3.2 |
+| P4.2 | todo   | 添加路由入口到 playground | — | P4.1 |
+| P4.3 | todo   | 编写 e2e 测试用例 | — | P4.2 |
+| P4.4 | todo   | 运行测试验证，确保全量通过 | — | P4.3 |
 
-- 创建打印设计器演示页面
-- 添加路由入口
-- 编写 e2e 测试用例
-- 运行测试验证
+---
+
+## Dependency Graph
+
+```mermaid
+graph TD
+    P0[P0. 调研与设计] --> P1[P1. 基础设施搭建]
+    P1 --> P2[P2. 打印设计器]
+    P1 --> P3[P3. 打印渲染器]
+    P2 --> P4[P4. Playground 集成与 E2E 测试]
+    P3 --> P4
+```
 
 ## 调研项目清单
 
@@ -121,25 +156,16 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 5. **设计器交互**：从 fastprint-designer（木兰宽松）提取拖拽、吸附、属性面板设计
 6. **数据绑定机制**：分析各项目的变量绑定、表达式求值方案
 
-## Dependency Graph
-
-```mermaid
-graph TD
-    P0[P0. 调研与设计] --> P1[P1. 基础设施搭建]
-    P1 --> P2[P2. 打印设计器]
-    P1 --> P3[P3. 打印渲染器]
-    P2 --> P4[P4. Playground 集成与 E2E 测试]
-    P3 --> P4
-```
-
 ## Cross-Cutting
 
 - **协议合规**：AGPL 项目仅参考设计思想，不可拷贝代码；无 LICENSE 项目谨慎使用
 - **技术选型**：基于本项目 React 19 + Zustand + TypeScript 技术栈
 - **架构复用**：复用现有设计器框架（core + renderers 分包模式）
+- **调研驱动**：P0 调研完成后，根据实际结果调整 P1-P4 的具体设计
 
 ## Rule
 
 1. 每个工作项对应一个 execution plan
-2. 状态流转由 plan 生命周期驱动
+2. 状态流转由 plan 生命周期驱动（`todo` → `planned` → `done`）
 3. 调研完成后根据实际结果调整后续 phases
+4. AI 不得跳过 P0 直接进入实现阶段
