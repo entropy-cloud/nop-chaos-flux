@@ -311,6 +311,7 @@ export const enUS: Resource = {
       search: 'Search',
       noCandidates: 'No candidates',
       configMissing: 'Picker dialog is not configured',
+      remove: 'Remove',
     },
     conditionBuilder: {
       conditionLabel: 'Condition',
@@ -1173,6 +1174,9 @@ export const enUS: Resource = {
       atLeastOneOf: '{{label}} must fill at least one related field',
       pattern: '{{label}} format is invalid',
       email: '{{label}} must be a valid email address',
+      url: '{{label}} must be a valid URL',
+      integer: '{{label}} must be an integer',
+      format: '{{label}} format is invalid ({{format}})',
       equalsField: '{{label}} must match {{field}}',
       notEqualsField: '{{label}} must not match {{field}}',
       async: '{{label}} failed async validation',

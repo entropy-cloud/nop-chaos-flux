@@ -311,6 +311,7 @@ export const zhCN: Resource = {
       search: '搜索',
       noCandidates: '暂无候选项',
       configMissing: '未配置 picker 弹层',
+      remove: '移除',
     },
     conditionBuilder: {
       conditionLabel: '条件',
@@ -1171,6 +1172,9 @@ export const zhCN: Resource = {
       atLeastOneOf: '{{label}}至少需要填写一个关联字段',
       pattern: '{{label}}格式不正确',
       email: '{{label}}必须是有效的邮箱地址',
+      url: '{{label}}必须是有效的 URL',
+      integer: '{{label}}必须是整数',
+      format: '{{label}}格式不正确（{{format}}）',
       equalsField: '{{label}}必须与{{field}}相同',
       notEqualsField: '{{label}}不能与{{field}}相同',
       async: '{{label}}异步验证失败',

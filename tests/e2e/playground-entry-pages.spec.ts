@@ -471,6 +471,10 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       timeout: 30_000,
     });
   },
+  'print-designer': async (page) => {
+    await expect(page.getByTestId('print-designer-demo')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('print-designer-canvas')).toBeVisible({ timeout: 30_000 });
+  },
   'spreadsheet': async (page) => {
     await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-slot="spreadsheet-toolbar"]')).toBeVisible({ timeout: 15_000 });
