@@ -25,7 +25,7 @@
 3. **命名标准化 + shadcn/ui 对齐** — 新字段用 shadcn 命名（`variant` 非 `level`、option `{label,value}`、`clearable`/`searchable` 明确布尔）
 4. **请求下沉** — 不在组件开 `api`/`initFetch`/`interval` 短路径；请求走 data-source + action
 5. **前端不做导出** — CSV/Excel 是后台职责
-6. **chart 用 recharts** — echarts 过大，不采纳 echarts config 透传/扩展/geo
+6. **chart 用 recharts，扩展图表用 echarts** — 普通图表用 `chart`（recharts）；扩展/复杂自定义图表新增 `echarts` 渲染器（双渲染器并存，2026-09-06 裁决更新，见 `docs/backlog/echarts-integration-roadmap.md`、`docs/references/naming-conventions.md`）
 
 明确不采纳清单见分析报告 §5。
 

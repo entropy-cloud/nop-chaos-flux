@@ -1,0 +1,208 @@
+{
+  "name": "echarts-integration",
+  "description": "nop-chaos-flux ECharts 图表库集成",
+  "version": "1.0.0",
+  "status": "active",
+  "startDate": "2026-09-06",
+  "targetDate": "2026-10-31",
+  "owner": "nop-chaos-flux",
+  "milestones": [
+    {
+      "id": "M1",
+      "name": "基础设施",
+      "targetDate": "2026-09-13",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "T1.1",
+          "name": "安装 ECharts 依赖",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T1.2",
+          "name": "创建 echarts-renderer.tsx 基础组件",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T1.3",
+          "name": "创建 echarts-schema.ts 类型定义",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T1.4",
+          "name": "创建 echarts-schema-validator.ts 验证器",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T1.5",
+          "name": "注册 echarts 渲染器",
+          "status": "pending",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "核心图表",
+      "targetDate": "2026-09-27",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "T2.1",
+          "name": "实现数据映射逻辑",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T2.2",
+          "name": "支持基础图表 (bar/line/pie/scatter)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T2.3",
+          "name": "实现 source 数据绑定",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T2.4",
+          "name": "添加 tooltip/legend 交互",
+          "status": "pending",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M3",
+      "name": "高级图表",
+      "targetDate": "2026-10-11",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "T3.1",
+          "name": "桑基图 (sankey)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T3.2",
+          "name": "树图 (treemap/tree)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T3.3",
+          "name": "箱线图 (boxplot)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T3.4",
+          "name": "仪表盘 (gauge)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T3.5",
+          "name": "漏斗图 (funnel)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T3.6",
+          "name": "雷达图 (radar)",
+          "status": "pending",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M4",
+      "name": "完整功能",
+      "targetDate": "2026-10-25",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "T4.1",
+          "name": "地理图 (map) + GeoJSON",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T4.2",
+          "name": "K线图 (candlestick)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T4.3",
+          "name": "力导向图 (graph)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T4.4",
+          "name": "旭日图 (sunburst)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T4.5",
+          "name": "主题河流 (themeRiver)",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T4.6",
+          "name": "自定义图表 (custom)",
+          "status": "pending",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M5",
+      "name": "集成优化",
+      "targetDate": "2026-10-31",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "T5.1",
+          "name": "与 nop-datav 集成",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T5.2",
+          "name": "性能优化（按需引入）",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T5.3",
+          "name": "文档和示例",
+          "status": "pending",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T5.4",
+          "name": "测试覆盖",
+          "status": "pending",
+          "assignee": "unassigned"
+        }
+      ]
+    }
+  ],
+  "exitCriteria": [
+    "24+ 图表类型可用",
+    "TypeScript 类型完整",
+    "Schema 验证通过",
+    "性能测试达标",
+    "文档完整"
+  ]
+}
