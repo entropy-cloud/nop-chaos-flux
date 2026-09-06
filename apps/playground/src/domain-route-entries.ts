@@ -70,6 +70,12 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'VTable PivotTable wrapper: row/column dimensions, indicators with aggregation, row/column grand+sub totals, sort/filter rules, corner title, theme linkage, empty state.',
   },
   {
+    id: 'print-designer',
+    title: 'Print Designer',
+    description: '拖拽设计打印模板（A4 单据 / 80mm 小票），支持数据绑定、分页预览、浏览器打印与 PDF 导出。',
+    eyebrow: 'Web Print',
+  },
+  {
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',

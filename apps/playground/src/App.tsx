@@ -61,6 +61,7 @@ import { ScadaPerfScaleDemoPage } from './pages/scada-perf-scale-demo';
 import { ScadaEdgeDemoPage } from './pages/scada-edge-demo';
 import { ScadaEditorDemoPage } from './pages/scada-editor-demo';
 import { DashboardDemoPage } from './pages/dashboard-demo';
+import { PrintDesignerDemoPage } from './pages/print-designer-demo';
 import { CalendarDemoPage } from './pages/calendar-demo';
 import { BarcodeDemoPage } from './pages/barcode-demo';
 import { GraphDemoPage } from './pages/graph-demo';
@@ -330,6 +331,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <ScadaEdgeDemoPage onBack={goHome} />;
         case 'scada-editor-demo':
           return <ScadaEditorDemoPage onBack={goHome} />;
+        case 'print-designer':
+          return <PrintDesignerDemoPage />;
         case 'dashboard-demo':
           return <DashboardDemoPage onBack={goHome} />;
         case 'calendar-perf-scale':
