@@ -1,10 +1,20 @@
 # nop-chaos-flux ECharts 集成分析报告
 
-> Status: open
+> Status: closed
 > Date: 2026-09-06
-> Revision: 2 (after review)
+> Revision: 3 (adjudications landed)
 > Scope: nop-chaos-flux 图表渲染器
-> Conclusion: open
+> Conclusion: closed（双渲染器架构裁定；遗留 2 项 Open Question 移交 E1/E2 plan 输入）
+
+## Adjudications (Rev 3)
+
+2026-09-06 用户裁决落地，修正 rev 2 与项目架构契约的三处不一致：
+
+| # | 主题 | 裁决 |
+| - | ---- | ---- |
+| A1 | 验证体系 | **删除 XDef 验证**，使用前端自己的验证体系：结构验证 = TS 类型 + flux-compiler schema-compiler（`createSchemaCompiler().validate()`，见 `docs/architecture/schema-file-validator.md`）；运行时语义验证 = renderer 防御性校验（沿用 chart 的 `sanitizeSeries`/`isChartDatum` 模式） |
+| A2 | 数据绑定 | chart 数据由**外部获取**（data-source 加载到 scope），通过**表达式绑定**提供给内部；renderer 不做任何数据请求。除非 echarts 有**内置加载机制**（如 map 的 GeoJSON 注册、自定义资源加载），才需要桥接外部 data-source 等定义；一般场景表达式绑定即可 |
+| A3 | 事件机制 | echarts 事件**桥接到 flux 事件响应体系**：`events.*` declarative action 通道（`on*` 命名 → action graph），不发明平行命名（见 `docs/references/naming-conventions.md` §4.4） |
 
 ## Context
 
@@ -12,7 +22,7 @@
 
 **核心设计目标**：
 1. **保留现有 chart 渲染器**（recharts），零迁移成本
-2. **新增 echarts 渲染器**，支持 24+ 种图表
+2. **新增 echarts 渲染器**，支持 22 种图表
 3. 保持 ECharts 的原生 JSON 风格和语法
 4. 数据驱动绑定（ECharts dataset 模式）
 5. 编译期验证 JSON 格式正确性
@@ -26,7 +36,7 @@
 
 | 维度 | recharts (当前) | ECharts (新增) |
 |------|----------------|----------------|
-| 图表类型 | 6 | 24+ |
+| 图表类型 | 6 | 22 |
 | 包大小 | ~50KB gzip | ~200KB gzip (核心), ~800KB (完整) |
 | 渲染方式 | React 组件 | Canvas (默认) / SVG (可选) |
 | TypeScript | 良好 | 完整 (深度类型定义) |
@@ -38,10 +48,11 @@
 **recharts 支持**（6种，保留）：
 - ✅ bar, line, pie, scatter, area, heatmap
 
-**ECharts 支持**（24种，新增）：
+**ECharts 支持**（22 种 series 类型，官方全量）：
 - 基础：line, bar, scatter, pie, gauge, funnel, radar
 - 高级：sankey, treemap, tree, boxplot, candlestick, graph, sunburst, themeRiver, parallel, pictorialBar, effectScatter, lines, custom
 - 地理：map (需注册 GeoJSON)
+- 交集：heatmap 双渲染器共有（chart 自绘 SVG 实现，echarts 原生支持）
 - 注意：chord 是 ECharts 2.x 遗留，不推荐使用
 
 ---
@@ -57,7 +68,7 @@
 │  type: 'chart'        │  type: 'echarts'                    │
 │  (recharts)           │  (ECharts)                         │
 │  - 轻量级 (~50KB)     │  - 按需引入 (~200KB起)              │
-│  - 6种基础图表        │  - 24+种图表                        │
+│  - 6种基础图表        │  - 22种图表                         │
 │  - 简单场景           │  - 复杂交互场景                     │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -109,9 +120,10 @@ interface EChartsSchema extends BaseSchema {
   // ECharts option (原生结构，直接复用 ECharts 文档)
   option: EChartsOption | Expression;
   
-  // 数据源 (可选，用于动态数据绑定)
+  // 数据源 (可选，用于动态数据绑定；数据由外部 data-source 加载到 scope，此处仅消费)
+  // 裁决 A2：一般场景表达式绑定即可；echarts 内置加载机制（GeoJSON 等）才需桥接外部定义
   dataset?: {
-    source: Expression;           // 数据源表达式
+    source: Expression;           // 数据源表达式（scope 读取，renderer 不做请求）
     dimensions?: string[];        // 维度名称
     transform?: Transform[];      // 数据转换
   };
@@ -130,11 +142,15 @@ interface EChartsSchema extends BaseSchema {
   notMerge?: boolean;             // 是否替换而非合并 option
   lazyUpdate?: boolean;           // 是否延迟更新
   
-  // 事件绑定
-  events?: Record<string, Expression>;
+  // 事件绑定 (裁决 A3：桥接 flux events.* 通道，on* 命名 → declarative action)
+  // 键 = flux on* 事件名（进入 events.* 通道），值 = declarative action 对象（{ action, args, ... }）
+  // ECharts 原生事件映射：onClick→click, onDblClick→dblclick, onMouseOver→mouseover,
+  // onMouseOut→mouseout, onMouseDown→mousedown, onMouseUp→mouseup, onContextMenu→contextmenu,
+  // onDataZoom→dataZoom, onLegendSelectChanged→legendselectchanged 等
+  events?: Record<string, ActionSchema>;
   
   // 尺寸
-  height?: string;  // 与 XDef 保持一致，渲染器解析为数字
+  height?: string;  // 高度，渲染器解析为数字
 }
 ```
 
@@ -157,7 +173,7 @@ interface EChartsSchema extends BaseSchema {
 {
   "type": "echarts",
   "dataset": {
-    "source": "{{salesData}}",
+    "source": "${salesData}",
     "dimensions": ["product", "2015", "2016"]
   },
   "option": {
@@ -190,7 +206,7 @@ interface EChartsSchema extends BaseSchema {
 }
 ```
 
-**示例4：带主题和交互**
+**示例4：带主题和交互（裁决 A3：事件走 flux events.* 通道，on* 命名 + declarative action）**
 ```json
 {
   "type": "echarts",
@@ -198,23 +214,28 @@ interface EChartsSchema extends BaseSchema {
   "renderer": "svg",
   "option": { "..." },
   "events": {
-    "click": "{{handleChartClick}}"
+    "onClick": {
+      "action": "toast",
+      "args": { "msg": "chart clicked" }
+    },
+    "onDataZoom": {
+      "action": "setValue",
+      "args": { "path": "zoomRange", "value": "${event.params}" }
+    }
   }
 }
 ```
 
 ### 3.3 数据映射机制
 
-采用 ECharts 原生的 `dataset` + `encode` 模式：
+采用 ECharts 原生的 `dataset` + `encode` 模式。**schema 级 `dataset.source` 一律为表达式绑定**（裁决 A2，数据由外部 data-source 加载到 scope）；静态内联示例数据（如直接抄写 ECharts 文档示例）放 `option.dataset`（echarts 原生位置），不经 schema 级 dataset：
 
 ```json
 {
   "type": "echarts",
   "dataset": {
-    "source": [
-      { "product": "Matcha", "2015": 43.3, "2016": 85.8 },
-      { "product": "Milk", "2015": 83.1, "2016": 73.4 }
-    ]
+    "source": "${salesData}",
+    "dimensions": ["product", "2015", "2016"]
   },
   "option": {
     "xAxis": { "type": "category" },
@@ -236,7 +257,7 @@ interface EChartsSchema extends BaseSchema {
 
 ### 3.4 数据流
 
-当 schema 定义了 `dataset` 时，渲染器执行以下流程：
+数据由外部 data-source 加载到 scope，渲染器通过表达式绑定消费（裁决 A2），不发起任何数据请求：
 
 ```typescript
 // echarts-renderer.tsx
@@ -251,6 +272,11 @@ const finalOption = {
 chart.setOption(finalOption, schema.notMerge);
 ```
 
+**例外（内置加载机制桥接）**：仅当 echarts 能力本身需要外部资源时才桥接外部定义，例如：
+
+- map 类型的 GeoJSON 注册：`registerMap` 所需地图数据经 scope / `xui:imports` 或宿主环境提供，不走组件级请求
+- 其他 echarts 内置的异步加载能力：逐项评估后经 data-source / action 桥接，renderer 不直接 fetch
+
 ### 3.5 生命周期
 
 ```typescript
@@ -264,15 +290,24 @@ useEffect(() => {
   return () => observer.disconnect();
 }, []);
 
-// 事件绑定
+// 事件绑定（裁决 A3：桥接 flux events.* 通道）
+// on* 键 → 映射 ECharts 原生事件名 → 经 flux 事件通道 dispatch declarative action
 useEffect(() => {
   if (schema.events) {
-    Object.entries(schema.events).forEach(([event, handler]) => {
-      chart.on(event, handler);
+    const NATIVE_EVENT: Record<string, string> = {
+      onClick: 'click', onDblClick: 'dblclick', onMouseOver: 'mouseover',
+      onMouseOut: 'mouseout', onMouseDown: 'mousedown', onMouseUp: 'mouseup',
+      onContextMenu: 'contextmenu', onDataZoom: 'dataZoom',
+      onLegendSelectChanged: 'legendselectchanged'
+    };
+    Object.entries(schema.events).forEach(([fluxEvent, action]) => {
+      const native = NATIVE_EVENT[fluxEvent];
+      if (native) chart.on(native, (params) => props.events[fluxEvent]?.dispatch(action, { params }));
     });
     return () => {
-      Object.keys(schema.events).forEach(event => {
-        chart.off(event);
+      Object.keys(schema.events).forEach(fluxEvent => {
+        const native = NATIVE_EVENT[fluxEvent];
+        if (native) chart.off(native);
       });
     };
   }
@@ -292,42 +327,33 @@ useEffect(() => {
 
 | 层级 | 验证内容 | 实现方式 | 时机 |
 |------|---------|---------|------|
-| **结构验证** | 顶层字段存在性和类型 | XDef schema | 编译期 |
+| **结构验证** | 顶层字段存在性和类型 | TS 类型（`EChartsSchema`）+ flux-compiler schema-compiler | 编译期 |
 | **类型验证** | TypeScript 类型检查 | IDE/TS | 开发时 |
-| **语义验证** | option 合法性 | 运行时 validator | 运行时 |
+| **语义验证** | option 合法性 | 运行时 validator（防御性校验） | 运行时 |
 
-### 4.2 结构验证（XDef）
+### 4.2 结构验证（前端验证体系，裁决 A1）
 
-```xml
-<xdef name="io.nop.flux.echarts">
-  <root>
-    <prop name="type" required="true" constant="echarts"/>
-    <prop name="option" type="object" required="true"/>
-    <prop name="dataset" type="object">
-      <prop name="source" type="expression" required="true"/>
-      <prop name="dimensions" type="array" itemType="string"/>
-      <prop name="transform" type="array"/>
-    </prop>
-    <prop name="renderer" type="string" enum="canvas,svg"/>
-    <prop name="initOptions" type="object"/>
-    <prop name="theme" type="string"/>
-    <prop name="notMerge" type="boolean"/>
-    <prop name="lazyUpdate" type="boolean"/>
-    <prop name="events" type="object"/>
-    <prop name="height" type="string"/>
-  </root>
-</xdef>
-```
+**删除 XDef XML 方案**（XDef 是 Nop 后端框架概念，本项目为纯前端 TS 栈）。改用：
+
+1. **TS 类型**：`EChartsSchema` 类型定义承载顶层结构约束（type/option/dataset/renderer/initOptions/theme/notMerge/lazyUpdate/events/height）。
+2. **flux-compiler schema-compiler**：`createSchemaCompiler().validate(...)` 复用编译器自有分析 pass 做结构验证与诊断（见 `docs/architecture/schema-file-validator.md`，不维护第二个验证引擎）。
+3. **schema 编译**：`option`/`dataset.source` 等表达式字段经 flux-formula 编译，非法表达式在编译期报诊断。
 
 ### 4.3 语义验证（运行时）
+
+**ECharts 官方无内置 option 验证器**（apache/echarts issue #19046，2023 提出至今 open，核心开发者确认 "There is not such checker"；官网示例编辑器的校验为 try-catch 模拟）；npm 无成熟社区验证包（`echarts-validator` 不存在）。因此运行时语义验证必须自写，但**只做轻量防御，不做全量 schema 校验**：
+
+- `option` 字段的编译期验证由官方 `ComposeOption<SeriesOption | ComponentOption>` TS 类型体系承担（按需注册组件后类型精确到 series/component 级）
+- 运行时 validator 沿用 chart 渲染器的 `sanitizeSeries`/`isChartDatum` 模式：畸形 option/dataset 被过滤或降级为空态，**显式空态永不抛错**（与 chart DD1 硬契约同构）；校验范围聚焦决定渲染成败的关键结构（series 存在性/类型、dimensions/encode 一致性）
 
 ```typescript
 export function validateEChartsOption(option: any, dataset?: any): ValidationResult {
   const errors: string[] = [];
+  const isEmpty = !option.series || !Array.isArray(option.series) || option.series.length === 0;
   
-  // 验证 series 存在且为非空数组
-  if (!option.series || !Array.isArray(option.series) || option.series.length === 0) {
-    errors.push('option.series must be a non-empty array');
+  // 空 series 是合法空态（DD1 显式空态契约）：返回 empty 信号，渲染器降级空态而非抛错
+  if (isEmpty) {
+    return { valid: true, errors: [], empty: true };
   }
   
   // 验证 series 类型有效
@@ -433,22 +459,27 @@ export function validateEChartsOption(option: any, dataset?: any): ValidationRes
 
 **推荐方案：双渲染器架构（新增，非迁移）**
 - **保留** `chart` 渲染器（recharts）：简单图表、轻量场景
-- **新增** `echarts` 渲染器：复杂图表、24+ 种类型
+- **新增** `echarts` 渲染器：复杂图表、22 种类型
 
 **预期收益**：
 - 零迁移成本
-- 图表类型从 6 种扩展到 24+ 种
+- 图表类型从 6 种扩展到 22 种
 - 按需引入，不增加简单场景包大小
 - 与 Metabase/Superset 图表能力对齐
 - 原生 ECharts JSON，复用生态和文档
+
+**Rev 3 落地裁决**（详见文件头 Adjudications）：
+- A1：删除 XDef 验证，结构验证走 TS 类型 + flux-compiler schema-compiler，运行时语义验证自写轻量防御性校验（官方无内置验证器，事实依据见 §4.3）
+- A2：数据由外部 data-source 加载到 scope，表达式绑定消费；仅 echarts 内置加载机制（GeoJSON 等）才桥接外部定义
+- A3：事件桥接 flux `events.*` declarative action 通道，`on*` 命名，不发明平行命名
 
 ---
 
 ## Open Questions
 
-- [ ] 统一主题 token 系统如何设计？
-- [ ] 按需引入的粒度（按图表类型 or 按功能模块）？
-- [ ] nop-datav 的 panel 如何指定使用哪个渲染器？
+- [x] 渲染器选择策略 → **resolved**（rev 2 已定双渲染器原则；nop-datav panel 指定渲染器的**机制**归 E5 集成评估，roadmap E5.2）
+- [ ] 按需引入的粒度（按图表类型 or 按功能模块）→ **移交 E1 plan 裁决**（决定依赖安装与注册方式，见 roadmap E1）
+- [ ] 统一主题 token 系统如何设计 → **移交 E2 plan 裁决**（recharts CSS 变量体系与 ECharts 主题的映射方案）
 
 ---
 

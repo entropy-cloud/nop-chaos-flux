@@ -1,7 +1,7 @@
 # ECharts 图表集成 Roadmap
 
 > 最后更新：2026-09-06
-> 来源：`analysis/echarts-migration-analysis.md`（分析报告 rev 2）
+> 来源：`analysis/echarts-migration-analysis.md`（分析报告 rev 3，closed）
 > Mission：`missions/echarts-integration.json`
 
 ## Purpose
@@ -17,7 +17,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 > **全文件唯一的动态状态区。**
 > 状态流转：`todo` → `planned`（draft review 通过）→ `done`（closure audit 通过）
 
-- **E0. 分析定稿** (`todo`)
+- **E0. 分析定稿** (`done`)
 - **E1. 基础设施** (`todo`)
 - **E2. 核心图表** (`todo`)
 - **E3. 高级图表** (`todo`)
@@ -45,7 +45,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### 主要缺口
 
-- recharts 不支持桑基图、树图、箱线图、漏斗图、雷达图、K 线图、地理图等 24+ 种扩展图表。
+- recharts 不支持桑基图、树图、箱线图、漏斗图、雷达图、K 线图、地理图等 22 种扩展图表。
 - 复杂交互（brush/dataZoom）与自定义图表（custom series）超出 chart 表现层定位。
 
 ---
@@ -56,19 +56,19 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 | ID   | Status | 内容                                                          | 设计文档                                                      | 依赖 |
 | ---- | ------ | ------------------------------------------------------------- | ------------------------------------------------------------- | ---- |
-| E0.1 | todo   | 收敛 `analysis/echarts-migration-analysis.md` rev 2 的三个 Open Questions（主题 token 方案、按需引入粒度、渲染器选择策略），结论从 open 转 closed | `analysis/echarts-migration-analysis.md` | —    |
+| E0.1 | done    | 分析定稿已执行：三项裁决落地（A1 删除 XDef 验证改用前端验证体系 / A2 外部获取+表达式绑定、内置加载机制才桥接 / A3 事件桥接 flux events.* 通道）；Open Questions 收敛（渲染器选择 resolved，按需引入粒度移交 E1、主题 token 移交 E2）；结论 closed（closure audit fresh session R2 APPROVED，见 analysis rev 3） | `analysis/echarts-migration-analysis.md`（rev 3） | —    |
 
 ### E1 — 基础设施
 
 | ID   | Status | 内容                                                                                       | 设计文档                                                      | 依赖 |
 | ---- | ------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ---- |
-| E1.1 | todo   | `echarts` 渲染器骨架：基础组件（init/setOption/resize/dispose 生命周期）、schema 类型定义、结构验证、渲染器注册（与 `chart` 并存）；ECharts 作为可选依赖按需引入 | `analysis/echarts-migration-analysis.md`（§二/§三/§四）        | E0.1 |
+| E1.1 | todo   | `echarts` 渲染器骨架：基础组件（init/setOption/resize/dispose 生命周期）、schema 类型定义、结构验证、渲染器注册（与 `chart` 并存）；ECharts 作为可选依赖按需引入。**决策输入：按需引入粒度（按图表类型 or 按功能模块）由本工作项裁决**（analysis Open Question 移交） | `analysis/echarts-migration-analysis.md`（§二/§三/§四）        | E0.1 |
 
 ### E2 — 核心图表
 
 | ID   | Status | 内容                                                                                       | 设计文档                                                      | 依赖 |
 | ---- | ------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ---- |
-| E2.1 | todo   | dataset + encode 数据映射（对象数组 / 列式 / 二维数组），基础图表（bar/line/pie/scatter）落地，tooltip/legend 交互与主题配置 | `analysis/echarts-migration-analysis.md`（§三/§四）            | E1.1 |
+| E2.1 | todo   | dataset + encode 数据映射（对象数组 / 列式 / 二维数组），基础图表（bar/line/pie/scatter）落地，tooltip/legend 交互与主题配置。**决策输入：统一主题 token 方案（recharts CSS 变量体系与 ECharts 主题映射）由本工作项裁决**（analysis Open Question 移交） | `analysis/echarts-migration-analysis.md`（§三/§四）            | E1.1 |
 
 ### E3 — 高级图表
 
@@ -86,8 +86,8 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 | ID   | Status | 内容                                                                                       | 设计文档                                                      | 依赖 |
 | ---- | ------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ---- |
-| E5.1 | todo   | 按需引入（按图表类型粒度，控制包大小）、文档和示例、测试覆盖                                | `analysis/echarts-migration-analysis.md`（§五 Phase 5）        | E3.1, E4.1 |
-| E5.2 | todo   | nop-datav 集成评估                                                                         | `analysis/echarts-migration-analysis.md`（§五 Phase 5）        | E5.1 |
+| E5.1 | todo   | 按需引入（粒度由 E1.1 裁决结果延续，控制包大小）、文档和示例、测试覆盖                                | `analysis/echarts-migration-analysis.md`（§五 Phase 5）        | E3.1, E4.1 |
+| E5.2 | todo   | nop-datav 集成评估（panel 指定渲染器的机制，analysis Open Question 移交）                              | `analysis/echarts-migration-analysis.md`（§五 Phase 5）        | E5.1 |
 
 ---
 
@@ -106,7 +106,7 @@ graph TD
 ## Cross-Cutting
 
 - **包大小**：ECharts 作为可选依赖、按需引入的决策在 E1 定型，影响 E2–E5 的每个图表类型落地方式
-- **主题一致性**：recharts（CSS 变量 + Tailwind token）与 ECharts 主题体系并存，视觉一致性方案在 E0 裁决
+- **主题一致性**：recharts（CSS 变量 + Tailwind token）与 ECharts 主题体系并存，视觉一致性方案移交 **E2.1 裁决**（analysis Open Question）
 - **渲染器共存契约**：`chart`（recharts）零迁移，`echarts` 不污染 chart schema，边界在 E1 落地并贯穿后续 phase
 - **事件系统**：echarts 事件（click/hover）经 events.* 通道接入 Flux action graph，不发明平行事件命名
 
