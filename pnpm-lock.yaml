@@ -173,6 +173,12 @@ importers:
       '@nop-chaos/flux-i18n':
         specifier: workspace:*
         version: link:../../packages/flux-i18n
+      '@nop-chaos/flux-print-core':
+        specifier: workspace:*
+        version: link:../../packages/flux-print-core
+      '@nop-chaos/flux-print-renderers':
+        specifier: workspace:*
+        version: link:../../packages/flux-print-renderers
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../../packages/flux-react
@@ -531,6 +537,56 @@ importers:
       react-i18next:
         specifier: ^17.0.4
         version: 17.0.4(i18next@26.0.5(typescript@6.0.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.3)
+
+  packages/flux-print-core:
+    dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
+      html2canvas:
+        specifier: ^1.4.1
+        version: 1.4.1
+      jsbarcode:
+        specifier: ^3.12.1
+        version: 3.12.3
+      jspdf:
+        specifier: ^2.5.2
+        version: 2.5.2
+      qrcode:
+        specifier: ^1.5.4
+        version: 1.5.4
+    devDependencies:
+      '@types/qrcode':
+        specifier: ^1.5.5
+        version: 1.5.6
+
+  packages/flux-print-renderers:
+    dependencies:
+      '@nop-chaos/editor-core':
+        specifier: workspace:*
+        version: link:../editor-core
+      '@nop-chaos/flux-i18n':
+        specifier: workspace:*
+        version: link:../flux-i18n
+      '@nop-chaos/flux-print-core':
+        specifier: workspace:*
+        version: link:../flux-print-core
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
 
   packages/flux-react:
     dependencies:
@@ -5251,6 +5307,9 @@ packages:
   js-yaml@4.1.1:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
+
+  jsbarcode@3.12.3:
+    resolution: {integrity: sha512-CuHU9hC6dPsHF5oVFMo8NW76uQVjH4L22CsP4hW+dNnGywJHC/B0ThA1CTDVLnxKLrrpYdicBLnd2xsgTfRnvg==}
 
   jscpd-sarif-reporter@4.0.7:
     resolution: {integrity: sha512-Q/VlfTI/Nbjc8dZ/2pDVIf1aRi2bM2CTYujcAoeYr7brRnS4o5ZeW86W8q7MM7cQu40gezlNckl+E9wKFSMFiA==}
@@ -11449,6 +11508,8 @@ snapshots:
   js-yaml@4.1.1:
     dependencies:
       argparse: 2.0.1
+
+  jsbarcode@3.12.3: {}
 
   jscpd-sarif-reporter@4.0.7:
     dependencies:

@@ -1,0 +1,33 @@
+{
+  "name": "@nop-chaos/flux-print-core",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
+    "html2canvas": "^1.4.1",
+    "jsbarcode": "^3.12.1",
+    "jspdf": "^2.5.2",
+    "qrcode": "^1.5.4"
+  },
+  "description": "Pure TypeScript print engine: print template schemas, unit conversion, validation diagnostics, and formula binding",
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5"
+  }
+}

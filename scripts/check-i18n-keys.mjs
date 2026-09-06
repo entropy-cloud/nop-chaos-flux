@@ -37,6 +37,10 @@ const DYNAMIC_KEY_MAPS = [
     fileSuffix: 'packages/flux-renderers-form-advanced/src/condition-builder/operators.ts',
     exportName: 'OPERATOR_LABEL_KEYS',
   },
+  {
+    fileSuffix: 'packages/flux-print-renderers/src/print-palette.tsx',
+    exportName: 'ELEMENT_LABEL_KEYS',
+  },
 ];
 
 function normalizeUsedTranslationKey(key) {

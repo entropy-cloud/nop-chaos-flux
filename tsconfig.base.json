@@ -22,6 +22,8 @@
       "@nop-chaos/flux-action-core": ["./packages/flux-action-core/src/index.ts"],
       "@nop-chaos/flux-compiler": ["./packages/flux-compiler/src/index.ts"],
       "@nop-chaos/flux-formula": ["./packages/flux-formula/src/index.ts"],
+      "@nop-chaos/flux-print-core": ["./packages/flux-print-core/src/index.ts"],
+      "@nop-chaos/flux-print-renderers": ["./packages/flux-print-renderers/src/index.ts"],
       "@nop-chaos/flux-i18n": ["./packages/flux-i18n/src/index.ts"],
       "@nop-chaos/flux-i18n/locales/zh-CN": ["./packages/flux-i18n/src/locales/zh-CN.ts"],
       "@nop-chaos/flux-i18n/locales/en-US": ["./packages/flux-i18n/src/locales/en-US.ts"],

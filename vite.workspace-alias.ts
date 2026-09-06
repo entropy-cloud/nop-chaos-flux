@@ -16,6 +16,12 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-i18n': fileURLToPath(
     new URL('./packages/flux-i18n/src/index.ts', import.meta.url),
   ),
+  '@nop-chaos/flux-print-core': fileURLToPath(
+    new URL('./packages/flux-print-core/src/index.ts', import.meta.url),
+  ),
+  '@nop-chaos/flux-print-renderers': fileURLToPath(
+    new URL('./packages/flux-print-renderers/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-i18n/locales/zh-CN': fileURLToPath(
     new URL('./packages/flux-i18n/src/locales/zh-CN.ts', import.meta.url),
   ),
