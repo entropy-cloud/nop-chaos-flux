@@ -51,6 +51,21 @@ export function createFormulaDataSourceController(input: {
   let state = createInitialDataSourceState(input.initialData);
   const asyncOwnerId = input.ownerId;
 
+  /**
+   * Matches "member access on a scope variable that has not been published
+   * yet" — the same sentinel tolerated by the stopWhen evaluation precedent
+   * (api-data-source-controller-state). The wrapped error comes from the
+   * formula compiler (`Expression evaluation failed for: …`, cause = the
+   * evaluator's null/undefined member access error).
+   */
+  function isUnpopulatedScopeError(error: unknown): boolean {
+    return (
+      error instanceof Error &&
+      error.cause instanceof Error &&
+      error.cause.message === 'Cannot access member of null or undefined'
+    );
+  }
+
   function reportPublishFailure(error: unknown) {
     reportRuntimeHostIssue({
       env: input.runtime.env,
@@ -195,6 +210,37 @@ export function createFormulaDataSourceController(input: {
         updateState((current) => current);
       }
     } catch (error) {
+      if (isUnpopulatedScopeError(error)) {
+        // Scope not yet populated (upstream data source has not published).
+        // Stay pending instead of erroring, keep the partially-collected
+        // dependencies so the scope subscription re-fires on publication,
+        // and do not surface a host error — mirrors the stopWhen tolerance
+        // precedent ("scope may not yet have data").
+        if (
+          (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !==
+          'production'
+        ) {
+          console.warn(
+            `[formula-data-source] null-member access during evaluation (scope may not yet have data): ${
+              asyncOwnerId ?? input.targetPath ?? 'unknown'
+            }`,
+          );
+        }
+        if (run && input.asyncGovernance) {
+          input.asyncGovernance.settleRun(run, { outcome: 'succeeded' });
+        }
+        updateState((current) => ({
+          ...current,
+          status: typeof current.data === 'undefined' ? 'pending' : current.status,
+          fetchStatus: 'idle',
+          error: undefined,
+        }));
+        const partialDependencies = collectRuntimeDependencies(runtimeState);
+        if (partialDependencies && partialDependencies.paths.length > 0) {
+          input.onDependenciesChange?.(partialDependencies);
+        }
+        return;
+      }
       input.onDependenciesChange?.(undefined);
       reportPublishFailure(error);
       settleFailure(run, error);

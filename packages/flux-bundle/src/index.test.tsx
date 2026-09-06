@@ -45,6 +45,10 @@ describe('@nop-chaos/flux public entry contract', () => {
     expect(registry.has('array-field')).toBe(true);
     expect(registry.has('separator')).toBe(true);
     expect(registry.has('grid')).toBe(true);
+    expect(registry.has('kanban')).toBe(true);
+    expect(registry.has('calendar')).toBe(true);
+    expect(registry.has('gantt')).toBe(true);
+    expect(registry.has('barcode-input')).toBe(true);
     expect(registerDefaultFluxRenderers(registry)).toBe(registry);
   });
 
@@ -86,6 +90,7 @@ describe('@nop-chaos/flux public entry contract', () => {
     expect(styles).toContain("@import '@nop-chaos/flux-renderers-form/form-renderers.css';");
     expect(styles).toContain("@import '@nop-chaos/flux-renderers-content/styles.css';");
     expect(styles).toContain("@import '@nop-chaos/flux-renderers-layout/styles.css';");
+    expect(styles).toContain("@import '@nop-chaos/flux-renderers-scheduling/styles.css';");
     expect(defaultSpacingStyles).toContain(".nop-field [data-slot='field-label']");
     expect(defaultSpacingStyles).toContain(".nop-schema-root-fallback[data-mode='loading']");
     expect(defaultSpacingStyles).toContain(".nop-schema-root-fallback [data-slot='schema-root-fallback-message']");

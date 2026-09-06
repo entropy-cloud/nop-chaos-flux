@@ -50,7 +50,7 @@ The exhibit validates three claims:
 
 2. **Schema loader** (`schema-page.tsx`): Vite build-time `import.meta.glob('./page-schemas/*.json', { eager: true })` cache. `page-schemas/` is _not_ inside `src/` — JSON files are loaded from the colocated directory. The schema is passed to `ShowcaseSchemaHost` for rendering.
 
-3. **Render host** (`render-host.tsx`): wraps the schema in a full Flux renderer environment — registers all renderer packages (basic, form, form-advanced, data, content, layout), installs the formula compiler (including the `$Arr` aggregation namespace), and mounts `Toaster`/`ConfirmHost` for the mock env.
+3. **Render host** (`render-host.tsx`): wraps the schema in a full Flux renderer environment — registers all renderer packages (basic, form, form-advanced, data, content, layout, scheduling), installs the formula compiler (including the `$Arr` aggregation namespace), and mounts `Toaster`/`ConfirmHost` for the mock env.
 
 4. **Renderer env** (`showcase-env.tsx`): a `RendererEnv` object with:
    - **fetcher** — routes `/r/...` URLs to `MockDatabase` methods via an `if/else` chain

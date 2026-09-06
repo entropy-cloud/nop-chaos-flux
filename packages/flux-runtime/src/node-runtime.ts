@@ -73,6 +73,30 @@ const WILDCARD_DEPENDENCIES: ScopeDependencySet = {
   broadAccess: true,
 };
 
+/**
+ * Reference-stable empty-props fallback for the unpopulated-scope tolerance
+ * in `resolveNodeProps`. A module-level frozen object keeps the equality gate
+ * in node-renderer-resolved (`prev.resolvedProps.value === next.resolvedProps.value`)
+ * satisfied across pending re-resolutions, avoiding child re-render churn.
+ */
+const EMPTY_NODE_PROPS: Record<string, unknown> = Object.freeze({});
+
+/**
+ * Matches "member access on a scope variable that has not been published
+ * yet" — the same sentinel tolerated by the stopWhen evaluation precedent
+ * (api-data-source-controller-state). The wrapped error comes from the
+ * formula compiler (`Expression evaluation failed for: …` /
+ * `Template evaluation failed for: …`, cause = the evaluator's null/undefined
+ * member access error).
+ */
+function isUnpopulatedScopeError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    error.cause instanceof Error &&
+    error.cause.message === 'Cannot access member of null or undefined'
+  );
+}
+
 function evaluateCompiledValue<T>(
   compiler: ExpressionCompiler,
   value: CompiledRuntimeValue<T> | undefined,
@@ -84,8 +108,22 @@ function evaluateCompiledValue<T>(
     return undefined;
   }
 
-  // Safe: evaluateValue returns a value conforming to T by construction.
-  return compiler.evaluateValue(value, scope, env, state) as T | undefined;
+  try {
+    // Safe: evaluateValue returns a value conforming to T by construction.
+    return compiler.evaluateValue(value, scope, env, state) as T | undefined;
+  } catch (error) {
+    if (!isUnpopulatedScopeError(error)) {
+      throw error;
+    }
+    // Meta expressions (when/visible/className/...) evaluated before their
+    // data-source variable is published: resolve to undefined so renderer
+    // defaults apply (visible→true, hidden→false, ...). The partially
+    // collected dependencies (F1) keep the meta subscription armed, so the
+    // meta re-resolves once the variable is published. Mirrors the stopWhen
+    // tolerance precedent. No dev warn here: meta fires per node per pass and
+    // the props-level tolerance already logs the mount-order signal.
+    return undefined;
+  }
 }
 
 export function collectRuntimeDependencies(
@@ -258,20 +296,64 @@ export function createNodeRuntime(input: {
   ): ResolvedNodeProps {
     const env = input.getEnv();
     const propsProgram = node.propsProgram;
-    const execution =
-      propsProgram.kind === 'static'
-        ? // Safe: object literal matches ResolvedNodeProps shape; _staticPropsResult is already typed.
-          ((state?._staticPropsResult ?? {
-            value: propsProgram.value,
+    let execution: ResolvedNodeProps;
+    if (propsProgram.kind === 'static') {
+      // Safe: object literal matches ResolvedNodeProps shape; _staticPropsResult is already typed.
+      execution = (state?._staticPropsResult ?? {
+        value: propsProgram.value,
+        changed: false,
+        reusedReference: true,
+      }) as ResolvedNodeProps;
+    } else {
+      try {
+        execution = input.expressionCompiler.evaluateWithState(
+          propsProgram,
+          scope,
+          env,
+          state?.props ?? propsProgram.createState(),
+        );
+      } catch (error) {
+        if (!isUnpopulatedScopeError(error)) {
+          throw error;
+        }
+        // Scope not yet populated (upstream data source has not published).
+        // Fall back to a reference-stable pending result instead of throwing
+        // through React render (which would latch NodeErrorBoundary). The
+        // partial dependencies collected before the throw (recorded by the
+        // evaluator even on failure) are written back to propsDependencies so
+        // the node re-resolves once the variable is published. Mirrors the
+        // stopWhen tolerance precedent.
+        if (
+          (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !==
+          'production'
+        ) {
+          console.warn(
+            `[node-runtime] null-member access during props resolution (scope may not yet have data): node=${
+              node.id ?? 'unknown'
+            }`,
+          );
+        }
+        if (!state) {
+          return { value: EMPTY_NODE_PROPS, changed: false, reusedReference: true };
+        }
+        if (!state._pendingPropsResult) {
+          // Last successfully resolved props win (graceful degradation);
+          // otherwise the shared frozen empty object keeps references stable.
+          state._pendingPropsResult = {
+            value: state.resolvedProps ?? EMPTY_NODE_PROPS,
             changed: false,
             reusedReference: true,
-          }) as ResolvedNodeProps)
-        : input.expressionCompiler.evaluateWithState(
-            propsProgram,
-            scope,
-            env,
-            state?.props ?? propsProgram.createState(),
-          );
+          };
+        }
+        state.propsDependencies = mergeDependencySets([
+          collectRuntimeDependencies(state.props),
+          ...Object.values(node.structuralFields ?? {}).map((f) =>
+            f.kind === 'dynamic' ? WILDCARD_DEPENDENCIES : undefined,
+          ),
+        ]);
+        return state._pendingPropsResult;
+      }
+    }
 
     if (propsProgram.kind === 'static' && state && !state._staticPropsResult) {
       state._staticPropsResult = execution;

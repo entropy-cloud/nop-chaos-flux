@@ -99,6 +99,8 @@ export interface NodeRuntimeState {
   resolvedProps?: Readonly<Record<string, unknown>>;
   _staticPropsResult?: ResolvedNodeProps;
   _lastPropsResult?: ResolvedNodeProps;
+  /** Cached reference-stable result for the unpublished-scope pending path (see resolveNodeProps). */
+  _pendingPropsResult?: ResolvedNodeProps;
 }
 
 export type NodeMetaProgram = {

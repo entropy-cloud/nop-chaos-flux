@@ -187,4 +187,26 @@ describe('dependency tracking', () => {
       broadAccess: false,
     });
   });
+
+  it('records leaf dependencies even when evaluation throws on an unpublished scope variable', () => {
+    const formulaCompiler = createFormulaCompiler();
+    const node = {
+      kind: 'expression-node' as const,
+      source: '${(rawData.items ?? []).map(a => a)}',
+      compiled: formulaCompiler.compileExpression<string>('${(rawData.items ?? []).map(a => a)}'),
+    };
+    const state = createStateFromNode(node);
+
+    // rawData is absent from the scope: member access throws before `??` applies.
+    expect(() => evaluateNode(node, createEvalContext(makeScope({})), env, state.root)).toThrow();
+
+    // The traversed root path must survive the throw so downstream consumers
+    // can stay subscribed and re-evaluate once the variable is published.
+    expect(state.root.kind).toBe('leaf-state');
+    expect(state.root.kind === 'leaf-state' ? state.root.dependencies : undefined).toEqual({
+      paths: ['rawData'],
+      wildcard: false,
+      broadAccess: false,
+    });
+  });
 });

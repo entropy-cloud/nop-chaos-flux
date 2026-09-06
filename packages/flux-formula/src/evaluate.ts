@@ -100,8 +100,14 @@ function evaluateLeaf<T>(
     }
   } finally {
     context.collector = prevCollector;
+    // Dependencies are recorded even when exec throws: the traversed scope
+    // paths (recorded before the throwing member access) let downstream
+    // consumers stay subscribed and re-evaluate once the missing scope
+    // variable is published. finalize() is a pure read, safe to call here
+    // and again below on the success path.
+    stateNode.dependencies = finalize();
   }
-  const dependencies = finalize();
+  const dependencies = stateNode.dependencies;
 
   if (stateNode.initialized && Object.is(stateNode.lastValue, value)) {
     stateNode.dependencies = dependencies;

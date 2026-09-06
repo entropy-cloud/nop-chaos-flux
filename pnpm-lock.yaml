@@ -383,6 +383,9 @@ importers:
       '@nop-chaos/flux-renderers-layout':
         specifier: workspace:*
         version: link:../flux-renderers-layout
+      '@nop-chaos/flux-renderers-scheduling':
+        specifier: workspace:*
+        version: link:../flux-renderers-scheduling
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui

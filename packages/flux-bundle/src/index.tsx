@@ -8,6 +8,7 @@ import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form/definitions';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
+import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import './style.css';
 
 import type {
@@ -40,6 +41,7 @@ export function registerDefaultFluxRenderers(registry: FluxRendererRegistry): Fl
   registerDataRenderers(registry);
   registerContentRenderers(registry);
   registerLayoutRenderers(registry);
+  registerSchedulingRenderers(registry);
   return registry;
 }
 

@@ -566,6 +566,10 @@ Workbench host families that publish namespaced providers through `ActionScope` 
 
 `spreadsheet-renderers` and `report-designer-renderers` now follow this baseline through package-local host action providers, matching the established flow/word host family pattern.
 
+## Bundle Default Registration Face (2026-09-06)
+
+`@nop-chaos/flux` (flux-bundle) default facade face changed: `registerDefaultFluxRenderers` now registers **7 renderer families** — basic, form, form-advanced, data, content, layout, **scheduling** (kanban/calendar/gantt/barcode-input, via `@nop-chaos/flux-renderers-scheduling` workspace dep + `registerSchedulingRenderers`). The bundle `style.css` re-exports the scheduling package styles via `@import`; the `mobile`, `ai`, and `graph` families remain host-registered on demand. The scheduling package stays a devDependency of flux-bundle and is bundled (not externalized) — it introduces no new runtime package boundary for hosts; hosts embedding the facade get scheduling renderers by default and must register the other families explicitly.
+
 ## Related Documents
 
 - `docs/references/terminology.md`
