@@ -138,3 +138,12 @@ editor-core 是领域适配层，测试/示例/多实例场景允许重注册以
 
 - React：`useSyncExternalStore(core.subscribe, core.getState)`（见 `flux-renderers-dashboard` editor）。
 - 非 React：直接 `core.subscribe`/`core.getState`/`core.update`。
+
+## StrictMode 宿主不得在 effect cleanup 中 dispose 会话（P5 注记）
+
+`EditorCore.dispose()` 是不可恢复操作（清空监听/栈并置 disposed）。React 19 StrictMode 在 dev 下对每个组件执行 mount → cleanup → remount 模拟：若宿主在 `useEffect` cleanup 中调用 dispose（如 `useEffect(() => () => controller.dispose(), [])`），remount 后复用的 controller 已死，全部 `update/undo/redo` 静默 no-op。既有消费者裁定：
+
+- `flux-renderers-dashboard`：effect cleanup 中 dispose（其页面无 StrictMode 包裹或接受 dev 降级）。
+- `flux-print-renderers`（P5 裁定）：**不在卸载 effect 中 dispose**；controller 随组件引用由 GC 回收，dispose 仅供测试显式调用（见 `print-designer.tsx` 注释与 `tests/e2e/print-designer.spec.ts` 回归守卫）。
+
+新消费者应在 StrictMode 宿主中采用 print 侧裁定。
