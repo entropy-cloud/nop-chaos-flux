@@ -41,6 +41,13 @@ fi
 rm -rf "$dst"
 cp -R "$src" "$dst"
 rm -rf "$dst/node_modules"
+# Mirror runtime source only: tests live upstream (they depend on upstream
+# devDependencies and playground fixtures) and must not leak into consumers.
+# Known consumer-side delta (applied by the consumer after sync, NOT here):
+#   flux-lib/ui package.json "test" script keeps --passWithNoTests because
+#   the mirrored tree intentionally contains no test files.
+find "$dst" -type f \( -name "*.test.ts" -o -name "*.test.tsx" \) -delete
+find "$dst" -type d -name "__tests__" -exec rm -rf {} +
 # NOTE: keep dst/src — flux-lib/ui is a FULL SOURCE mirror of packages/ui.
 # Removing src here used to break the host's ui build/lint (their scripts
 # reference src) and forced hand-merging on every sync. Contract: host-side
