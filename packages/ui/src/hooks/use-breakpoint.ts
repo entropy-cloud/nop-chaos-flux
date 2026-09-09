@@ -23,9 +23,15 @@ export function useBreakpoint(query: string): boolean | null {
       setMatches(event.matches);
     };
 
-    setMatches(mql.matches);
+    // Sync to the latest value without a synchronous setState in the effect
+    // body (the initializer already covers first render; this handles query
+    // changes mid-session).
+    const identity = requestAnimationFrame(() => setMatches(mql.matches));
     mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
+    return () => {
+      cancelAnimationFrame(identity);
+      mql.removeEventListener('change', onChange);
+    };
   }, [query]);
 
   return matches;

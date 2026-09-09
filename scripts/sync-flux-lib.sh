@@ -40,8 +40,11 @@ fi
 
 rm -rf "$dst"
 cp -R "$src" "$dst"
-rm -rf "$dst/src"
 rm -rf "$dst/node_modules"
+# NOTE: keep dst/src — flux-lib/ui is a FULL SOURCE mirror of packages/ui.
+# Removing src here used to break the host's ui build/lint (their scripts
+# reference src) and forced hand-merging on every sync. Contract: host-side
+# changes to mirrored files must land upstream FIRST, then re-sync.
 
 echo "OK: ui"
 
