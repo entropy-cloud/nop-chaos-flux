@@ -39,7 +39,9 @@ describe('Table', () => {
     const [headerGroup, bodyGroup] = screen.getAllByRole('rowgroup');
     expect(headerGroup.getAttribute('data-slot')).toBe('table-header');
     expect(bodyGroup.getAttribute('data-slot')).toBe('table-body');
-    expect(screen.getByText('Alice').closest('[data-slot="table-row"]')?.className).toContain('cursor-pointer');
+    expect(screen.getByText('Alice').closest('[data-slot="table-row"]')?.className).toContain(
+      'cursor-pointer',
+    );
     expect(screen.getByText('Quarterly revenue').getAttribute('data-slot')).toBe('table-caption');
   });
 });

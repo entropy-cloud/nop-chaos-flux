@@ -205,11 +205,7 @@ function DrawerContent({
               <DrawerPrimitive.Close
                 data-slot="drawer-close"
                 render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="absolute top-2 right-2 z-30"
-                  />
+                  <Button variant="ghost" size="icon-sm" className="absolute top-2 right-2 z-30" />
                 }
               >
                 <XIcon />
@@ -270,8 +266,7 @@ function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerRe
       event.preventDefault();
       event.stopPropagation();
       const rect = popup.getBoundingClientRect();
-      const startSize =
-        direction === 'left' || direction === 'right' ? rect.width : rect.height;
+      const startSize = direction === 'left' || direction === 'right' ? rect.width : rect.height;
       dragStateRef.current = {
         startX: event.clientX,
         startY: event.clientY,
@@ -330,9 +325,8 @@ function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerRe
         // Min/Max clamp (G6-R3-视角6-01): keep the drawer usable on both ends —
         // never smaller than 160px, never larger than 90% of the viewport axis.
         const viewportMax =
-          (direction === 'left' || direction === 'right'
-            ? window.innerWidth
-            : window.innerHeight) * 0.9;
+          (direction === 'left' || direction === 'right' ? window.innerWidth : window.innerHeight) *
+          0.9;
         const next = Math.min(Math.max(160, state.startSize + delta), viewportMax);
         setSize(next);
       };

@@ -3,10 +3,7 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Popover, PopoverContent, PopoverTrigger } from './popover.js';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip.js';
-import {
-  GLOBAL_Z_INDEX_BASELINE_VALUE,
-  setGlobalZIndex,
-} from '../../hooks/use-global-z-index.js';
+import { GLOBAL_Z_INDEX_BASELINE_VALUE, setGlobalZIndex } from '../../hooks/use-global-z-index.js';
 
 function readInlineZIndex(el: Element | null | undefined): number {
   if (!el) return NaN;

@@ -94,7 +94,8 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
-      className={cn('nop-dialog ',
+      className={cn(
+        'nop-dialog ',
         'isolate bg-[var(--dialog-overlay-bg)] duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
         isContained ? 'absolute inset-0' : 'fixed inset-0',
         className,
@@ -174,11 +175,16 @@ const DialogContent = React.forwardRef<
           ref={contentRef}
           data-slot="dialog-content"
           data-size={size}
-          className={cn('nop-dialog ',
+          className={cn(
+            'nop-dialog ',
             'flex w-full max-w-[calc(100%-2rem)] flex-col rounded-[var(--dialog-content-border-radius)] bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
             'max-h-[calc(100dvh-2rem)]',
             isContained ? 'absolute' : 'fixed',
-            noCenter ? '' : topAnchored ? 'top-[var(--dialog-top-offset)] left-[50%]' : 'top-[50%] left-[50%]',
+            noCenter
+              ? ''
+              : topAnchored
+                ? 'top-[var(--dialog-top-offset)] left-[50%]'
+                : 'top-[50%] left-[50%]',
             !draggable &&
               !noCenter &&
               (topAnchored
@@ -189,7 +195,12 @@ const DialogContent = React.forwardRef<
           {...props}
           style={
             draggable
-              ? { transform: noCenter ? undefined : effectiveBaseTransform, zIndex, width: sizeVar, ...props.style }
+              ? {
+                  transform: noCenter ? undefined : effectiveBaseTransform,
+                  zIndex,
+                  width: sizeVar,
+                  ...props.style,
+                }
               : { zIndex, width: sizeVar, ...props.style }
           }
           onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
@@ -227,7 +238,9 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   const { draggable } = React.useContext(DialogContext);
   const dragContext = React.useContext(DialogDragContext);
   const { onKeyDown, ...restProps } = props;
-  const forwardedOnKeyDown = onKeyDown as ((event: React.KeyboardEvent<HTMLElement>) => void) | undefined;
+  const forwardedOnKeyDown = onKeyDown as
+    | ((event: React.KeyboardEvent<HTMLElement>) => void)
+    | undefined;
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
     forwardedOnKeyDown?.(event);
@@ -266,7 +279,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- the header doubles as the drag surface (AMIS parity: handle=`.Modal-header` on a plain div); it is not a button — clicks pass through to children, only focus+arrows reposition.
     <div
       data-slot="dialog-header"
-      className={cn('nop-dialog ',
+      className={cn(
         'relative flex shrink-0 flex-col gap-2 p-4 pb-0',
         // AMIS parity: the whole header is the drag surface (no dedicated
         // grip icon — a floating icon collides with the title in narrow
@@ -293,7 +306,14 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
 
 function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div data-slot="dialog-body" className={cn('nop-dialog ','flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-[var(--dialog-body-padding-x)] py-4', className)} {...props} />
+    <div
+      data-slot="dialog-body"
+      className={cn(
+        'flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-[var(--dialog-body-padding-x)] py-4',
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
@@ -308,7 +328,7 @@ function DialogFooter({
   return (
     <div
       data-slot="dialog-footer"
-      className={cn('nop-dialog ',
+      className={cn(
         'mt-auto flex shrink-0 flex-col-reverse gap-[var(--dialog-footer-gap)] p-4 [&_button]:min-w-[var(--dialog-footer-button-min-width)] sm:flex-row sm:justify-end',
         className,
       )}
@@ -328,7 +348,10 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('nop-dialog ','font-heading text-[length:var(--dialog-title-font-size)] leading-none font-medium', className)}
+      className={cn(
+        'font-heading text-[length:var(--dialog-title-font-size)] leading-none font-medium',
+        className,
+      )}
       {...props}
     />
   );
@@ -338,7 +361,7 @@ function DialogDescription({ className, ...props }: DialogPrimitive.Description.
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn('nop-dialog ',
+      className={cn(
         'text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground',
         className,
       )}

@@ -108,9 +108,7 @@ describe('Dialog', () => {
         </Dialog>,
       );
 
-      const popup = document.querySelector(
-        '[data-slot="dialog-content"]',
-      ) as HTMLDivElement | null;
+      const popup = document.querySelector('[data-slot="dialog-content"]') as HTMLDivElement | null;
       expect(popup).toBeTruthy();
       expect(popup!.style.width).toBe(widthVar);
       expect(popup!.getAttribute('data-size')).toBe(size);

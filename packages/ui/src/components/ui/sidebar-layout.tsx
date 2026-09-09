@@ -30,7 +30,8 @@ export function Sidebar({
     return (
       <div
         data-slot="sidebar"
-        className={cn('nop-sidebar ',
+        className={cn(
+          'nop-sidebar ',
           'flex h-full w-(--sidebar-width) flex-col bg-sidebar text-sidebar-foreground',
           className,
         )}
@@ -78,7 +79,8 @@ export function Sidebar({
     >
       <div
         data-slot="sidebar-gap"
-        className={cn('nop-sidebar ',
+        className={cn(
+          'nop-sidebar ',
           'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear',
           'group-data-[collapsible=offcanvas]:w-0',
           'group-data-[side=right]:rotate-180',
@@ -90,7 +92,8 @@ export function Sidebar({
       <div
         data-slot="sidebar-container"
         data-side={side}
-        className={cn('nop-sidebar ',
+        className={cn(
+          'nop-sidebar ',
           'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex',
           variant === 'floating' || variant === 'inset'
             ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]'
@@ -124,7 +127,7 @@ export function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon-sm"
-      className={cn('nop-sidebar ',className)}
+      className={cn('nop-sidebar ', className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
@@ -149,7 +152,7 @@ export function SidebarRail({ className, ...props }: React.ComponentProps<'butto
       tabIndex={-1}
       onClick={toggleSidebar}
       title="Toggle Sidebar"
-      className={cn('nop-sidebar ',
+      className={cn(
         'absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:start-1/2 after:w-[2px] hover:after:bg-sidebar-border sm:flex ltr:-translate-x-1/2 rtl:-translate-x-1/2',
         'in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize',
         '[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize',
@@ -167,7 +170,8 @@ export function SidebarInset({ className, ...props }: React.ComponentProps<'main
   return (
     <main
       data-slot="sidebar-inset"
-      className={cn('nop-sidebar ',
+      className={cn(
+        'nop-sidebar ',
         'relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
         className,
       )}
@@ -181,7 +185,7 @@ export function SidebarInput({ className, ...props }: React.ComponentProps<typeo
     <Input
       data-slot="sidebar-input"
       data-sidebar="input"
-      className={cn('nop-sidebar ','h-8 w-full bg-background shadow-none', className)}
+      className={cn('h-8 w-full bg-background shadow-none', className)}
       {...props}
     />
   );
@@ -192,7 +196,7 @@ export function SidebarHeader({ className, ...props }: React.ComponentProps<'div
     <div
       data-slot="sidebar-header"
       data-sidebar="header"
-      className={cn('nop-sidebar ','flex flex-col gap-2 p-2', className)}
+      className={cn('flex flex-col gap-2 p-2', className)}
       {...props}
     />
   );
@@ -203,7 +207,7 @@ export function SidebarFooter({ className, ...props }: React.ComponentProps<'div
     <div
       data-slot="sidebar-footer"
       data-sidebar="footer"
-      className={cn('nop-sidebar ','flex flex-col gap-2 p-2', className)}
+      className={cn('flex flex-col gap-2 p-2', className)}
       {...props}
     />
   );
@@ -214,7 +218,7 @@ export function SidebarSeparator({ className, ...props }: React.ComponentProps<t
     <Separator
       data-slot="sidebar-separator"
       data-sidebar="separator"
-      className={cn('nop-sidebar ','mx-2 w-auto bg-sidebar-border', className)}
+      className={cn('mx-2 w-auto bg-sidebar-border', className)}
       {...props}
     />
   );
@@ -225,7 +229,7 @@ export function SidebarContent({ className, ...props }: React.ComponentProps<'di
     <div
       data-slot="sidebar-content"
       data-sidebar="content"
-      className={cn('nop-sidebar ',
+      className={cn(
         'no-scrollbar flex min-h-0 flex-1 flex-col gap-0 overflow-auto group-data-[collapsible=icon]:overflow-hidden',
         className,
       )}
@@ -239,7 +243,7 @@ export function SidebarGroup({ className, ...props }: React.ComponentProps<'div'
     <div
       data-slot="sidebar-group"
       data-sidebar="group"
-      className={cn('nop-sidebar ','relative flex w-full min-w-0 flex-col p-2', className)}
+      className={cn('relative flex w-full min-w-0 flex-col p-2', className)}
       {...props}
     />
   );
@@ -298,7 +302,7 @@ export function SidebarGroupContent({ className, ...props }: React.ComponentProp
     <div
       data-slot="sidebar-group-content"
       data-sidebar="group-content"
-      className={cn('nop-sidebar ','w-full text-sm', className)}
+      className={cn('w-full text-sm', className)}
       {...props}
     />
   );

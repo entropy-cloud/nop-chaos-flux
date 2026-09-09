@@ -26,7 +26,9 @@ describe('Accordion', () => {
 
     await waitFor(() => {
       expect(trigger.getAttribute('aria-expanded')).toBe('true');
-      expect(screen.getByText('Section 1 body').closest('[data-slot="accordion-content"]')).toBeTruthy();
+      expect(
+        screen.getByText('Section 1 body').closest('[data-slot="accordion-content"]'),
+      ).toBeTruthy();
     });
   });
 });

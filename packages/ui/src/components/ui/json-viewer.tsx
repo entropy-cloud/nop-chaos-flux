@@ -12,12 +12,7 @@ type JsonViewerProps = {
   className?: string;
 };
 
-function JsonViewer({
-  data,
-  defaultExpand = true,
-  expandLevel,
-  className,
-}: JsonViewerProps) {
+function JsonViewer({ data, defaultExpand = true, expandLevel, className }: JsonViewerProps) {
   const shouldExpandNode =
     typeof expandLevel === 'number'
       ? (level: number) => level < expandLevel
@@ -26,11 +21,7 @@ function JsonViewer({
         : (level: number) => level === 0;
   return (
     <div className={cn('nop-json-viewer json-viewer', className)}>
-      <JsonView
-        data={data}
-        shouldExpandNode={shouldExpandNode as never}
-        style={defaultStyles}
-      />
+      <JsonView data={data} shouldExpandNode={shouldExpandNode as never} style={defaultStyles} />
     </div>
   );
 }
