@@ -20,6 +20,54 @@ const ECHARTS_HEIGHT_SHAPE: FluxValueShape = {
   anyOf: [{ kind: 'number' }, { kind: 'string' }],
 };
 
+const ECHARTS_EVENT_CONTRACTS = {
+  onClick: {
+    displayName: 'On Click',
+    description: 'ECharts native click event; payload is the echarts event params.',
+    payload: { kind: 'unknown' },
+  },
+  onDblClick: {
+    displayName: 'On Double Click',
+    description: 'ECharts native dblclick event; payload is the echarts event params.',
+    payload: { kind: 'unknown' },
+  },
+  onMouseOver: {
+    displayName: 'On Mouse Over',
+    description: 'ECharts native mouseover event; payload is the echarts event params.',
+    payload: { kind: 'unknown' },
+  },
+  onMouseOut: {
+    displayName: 'On Mouse Out',
+    description: 'ECharts native mouseout event; payload is the echarts event params.',
+    payload: { kind: 'unknown' },
+  },
+  onMouseDown: {
+    displayName: 'On Mouse Down',
+    description: 'ECharts native mousedown event; payload is the echarts event params.',
+    payload: { kind: 'unknown' },
+  },
+  onMouseUp: {
+    displayName: 'On Mouse Up',
+    description: 'ECharts native mouseup event; payload is the echarts event params.',
+    payload: { kind: 'unknown' },
+  },
+  onContextMenu: {
+    displayName: 'On Context Menu',
+    description: 'ECharts native contextmenu event; payload is the echarts event params.',
+    payload: { kind: 'unknown' },
+  },
+  onDataZoom: {
+    displayName: 'On Data Zoom',
+    description: 'ECharts native dataZoom event; payload is the echarts event params.',
+    payload: { kind: 'unknown' },
+  },
+  onLegendSelectChanged: {
+    displayName: 'On Legend Select Changed',
+    description: 'ECharts native legendselectchanged event; payload is the echarts event params.',
+    payload: { kind: 'unknown' },
+  },
+} as const;
+
 export const echartsRendererDefinition: RendererDefinition = {
   type: 'echarts',
   displayName: 'ECharts',
@@ -49,7 +97,15 @@ export const echartsRendererDefinition: RendererDefinition = {
       shape: ECHARTS_HEIGHT_SHAPE,
       editorType: 'expression',
     },
+    events: {
+      displayName: 'Events',
+      shape: { kind: 'object', fields: {} },
+      description:
+        'ECharts event bindings keyed by flux on* names (onClick, onDataZoom, onLegendSelectChanged, ...); values are action schemas dispatched with the normalized echarts event params.',
+      editorType: 'object',
+    },
   },
+  eventContracts: ECHARTS_EVENT_CONTRACTS,
   componentCapabilityContracts: [
     {
       handle: 'resize',
@@ -67,5 +123,7 @@ export const echartsRendererDefinition: RendererDefinition = {
     { key: 'lazyUpdate', kind: 'prop', valueType: 'boolean' },
     { key: 'height', kind: 'prop' },
     { key: 'componentId', kind: 'prop' },
+    { key: 'events', kind: 'prop' },
+    { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
   ],
 };

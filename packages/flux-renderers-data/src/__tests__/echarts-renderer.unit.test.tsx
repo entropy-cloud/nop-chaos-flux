@@ -24,6 +24,12 @@ vi.mock('../echarts-setup.js', () => ({
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentComponentRegistry: () => mockState.currentRegistry,
+  useRenderScope: () => undefined,
+  createNormalizedActionEvent: (event: unknown) => event,
+  hasRendererSlotContent: (content: unknown) =>
+    content !== null && content !== undefined && content !== false,
+  resolveRendererSlotContent: (props: any, key: string, options: { fallback: string }) =>
+    props.regions?.[key]?.render?.() ?? props.props[key] ?? options?.fallback,
 }));
 
 vi.mock('@nop-chaos/ui', () => ({
@@ -96,7 +102,7 @@ describe('EChartsRenderer lifecycle', () => {
     expect(container.contains(initDom)).toBe(true);
     const initTheme = mockInit.mock.calls[0][1];
     const initOpts = mockInit.mock.calls[0][2] as Record<string, unknown>;
-    expect(initTheme).toBeUndefined();
+    expect(initTheme).toBe('flux');
     expect(initOpts.renderer).toBe('canvas');
   });
 

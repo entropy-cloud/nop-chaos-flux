@@ -15,7 +15,7 @@ describe('echarts renderer definition contracts', () => {
     expect(dataRendererDefinitions.some((def) => def.type === 'echarts')).toBe(true);
   });
 
-  it('declares skeleton fields as prop channel with no event contracts (events land in E2.1)', () => {
+  it('declares skeleton fields plus E2.1 events/empty channels', () => {
     const fieldKinds = Object.fromEntries(
       (echartsRendererDefinition.fields ?? []).map((field) => [field.key, field.kind]),
     );
@@ -32,8 +32,29 @@ describe('echarts renderer definition contracts', () => {
     ]) {
       expect(fieldKinds[key]).toBe('prop');
     }
-    expect(echartsRendererDefinition.eventContracts).toBeUndefined();
-    expect(echartsRendererDefinition.fields?.some((field) => field.kind === 'event')).toBe(false);
+    expect(fieldKinds.events).toBe('prop');
+    expect(fieldKinds.empty).toBe('value-or-region');
+  });
+
+  it('publishes event contracts for the nine native echarts event keys', () => {
+    const contracts = echartsRendererDefinition.eventContracts ?? {};
+    const expected = [
+      'onClick',
+      'onDblClick',
+      'onMouseOver',
+      'onMouseOut',
+      'onMouseDown',
+      'onMouseUp',
+      'onContextMenu',
+      'onDataZoom',
+      'onLegendSelectChanged',
+    ];
+    expect(Object.keys(contracts).sort()).toEqual([...expected].sort());
+    for (const key of expected) {
+      expect((contracts as Record<string, { payload?: unknown }>)[key]?.payload).toEqual({
+        kind: 'unknown',
+      });
+    }
   });
 
   it('publishes the resize capability and enum/boolean prop contracts', () => {

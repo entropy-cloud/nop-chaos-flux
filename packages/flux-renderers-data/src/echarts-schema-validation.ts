@@ -21,7 +21,8 @@ function isStringArray(value: unknown): value is string[] {
  * 只做顶层字段形态防御；option 内部合法性由 TS 类型 + ECharts 运行时自身
  * 承担，渲染路径上的畸形数据降级为显式空态，不抛错。
  *
- * `events` 字段随 E2.1 事件桥接一起引入，骨架阶段不校验、不声明通道。
+ * `events` 键名合法性（on* → native 映射）由渲染器运行时裁决，此处只校验
+ * map 形态与 action 值对象形态。
  */
 export function validateEChartsSchema(context: RendererSchemaValidationContext): void {
   if (context.schema.type !== 'echarts') {
@@ -55,7 +56,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
         message: 'echarts.dataset must be an object when provided.',
       });
     } else {
-      const { source, dimensions } = schema.dataset;
+      const { source, dimensions, transform } = schema.dataset;
       if (typeof source !== 'string' && !Array.isArray(source)) {
         emit({
           code: 'invalid-property-shape',
@@ -70,6 +71,33 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
           path: toJsonPointer(path, 'dataset', 'dimensions'),
           message: 'echarts.dataset.dimensions must be an array of dimension names when provided.',
         });
+      }
+      if (transform !== undefined && !Array.isArray(transform)) {
+        emit({
+          code: 'invalid-property-shape',
+          path: toJsonPointer(path, 'dataset', 'transform'),
+          message: 'echarts.dataset.transform must be an array of transform entries when provided.',
+        });
+      }
+    }
+  }
+
+  if (schema.events !== undefined) {
+    if (!isPlainObject(schema.events)) {
+      emit({
+        code: 'invalid-property-shape',
+        path: toJsonPointer(path, 'events'),
+        message: 'echarts.events must be an object keyed by on* event names when provided.',
+      });
+    } else {
+      for (const [key, value] of Object.entries(schema.events)) {
+        if (!isPlainObject(value)) {
+          emit({
+            code: 'invalid-property-shape',
+            path: toJsonPointer(path, 'events', key),
+            message: `echarts.events.${key} must be an action schema object when provided.`,
+          });
+        }
       }
     }
   }

@@ -12,6 +12,12 @@ const mockInit = vi.fn(() => ({
 
 vi.mock('@nop-chaos/flux-react', () => ({
   useCurrentComponentRegistry: () => undefined,
+  useRenderScope: () => undefined,
+  createNormalizedActionEvent: (event: unknown) => event,
+  hasRendererSlotContent: (content: unknown) =>
+    content !== null && content !== undefined && content !== false,
+  resolveRendererSlotContent: (props: any, key: string, options: { fallback: string }) =>
+    props.regions?.[key]?.render?.() ?? props.props[key] ?? options?.fallback,
 }));
 
 vi.mock('@nop-chaos/ui', () => ({

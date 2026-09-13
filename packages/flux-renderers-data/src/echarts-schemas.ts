@@ -32,4 +32,7 @@ export interface EChartsSchema extends BaseSchema {
   notMerge?: boolean;
   lazyUpdate?: boolean;
   height?: number | string;
+  /** 事件映射（on* 命名 → ECharts 原生事件），值为 ActionSchema；经 SchemaValue 宽化满足索引签名。 */
+  events?: Record<string, SchemaValue>;
+  empty?: BaseSchema | BaseSchema[] | string;
 }

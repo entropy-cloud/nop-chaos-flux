@@ -514,7 +514,7 @@ export function validateEChartsOption(option: any, dataset?: any): ValidationRes
 
 - [x] 渲染器选择策略 → **resolved**（rev 2 已定双渲染器原则；nop-datav panel 指定渲染器的**机制**归 E5 集成评估，roadmap E5.2）
 - [x] 按需引入的粒度（按图表类型 or 按功能模块）→ **resolved**（2026-09-13，E1.1 plan 裁决：**按功能模块**——统一经 `echarts/core` + `echarts/charts` + `echarts/components` + `echarts/renderers` 官方 tree-shaking 入口，集中注册于 `flux-renderers-data/src/echarts-setup.ts` 单一模块；渲染器组件动态 import 使 echarts 全量位于懒 chunk，未挂载 `echarts` 渲染器的宿主零加载；E5.1 在该单一模块收窄注册清单做包体控制。证据：`docs/plans/2026-09-13-2343-echarts-e1-1-renderer-skeleton-plan.md` Phase 1 Decision）
-- [ ] 统一主题 token 系统如何设计 → **移交 E2 plan 裁决**（recharts CSS 变量体系与 ECharts 主题的映射方案）
+- [x] 统一主题 token 系统如何设计 → **resolved**（2026-09-13，E2.1 plan 裁决：**CSS 变量 → `flux` 注册主题**——`resolveFluxEChartsTheme()` 读取 `--chart-1..5`（hsl 包装）与 `--foreground`/`--muted-foreground`/`--border`/`--popover`/`--popover-foreground` 构建 ECharts 主题对象，经 `registerTheme('flux', ...)` 注册；renderer 在 `theme` 未指定时默认应用 `'flux'`，指定时透传；CSS 变量缺失（SSR/jsdom）回退静态调色板；主题 init 时解析，运行时切换需重挂载。证据：`docs/plans/2026-09-13-2350-echarts-e2-1-dataset-binding-theme-plan.md` Phase 1）
 
 ---
 

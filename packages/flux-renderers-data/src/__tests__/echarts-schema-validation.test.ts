@@ -193,7 +193,43 @@ describe('validateEChartsSchema', () => {
     expect(codesOf(diagnostics)).toContain('invalid-property-shape');
   });
 
-  it('does not validate an events field in the skeleton plan (deferred to E2.1)', () => {
+  it('emits a diagnostic when dataset.transform is not an array', () => {
+    const { context, diagnostics } = createValidationContext({
+      type: 'echarts',
+      option: { series: [] },
+      dataset: { source: '${rows}', transform: 'sort' },
+    });
+    validateEChartsSchema(context);
+    expect(codesOf(diagnostics)).toContain('invalid-property-shape');
+  });
+
+  it('validates the events map shape (values must be action objects)', () => {
+    const bad = createValidationContext({
+      type: 'echarts',
+      option: { series: [] },
+      events: { onClick: 'toast' },
+    });
+    validateEChartsSchema(bad.context);
+    expect(codesOf(bad.diagnostics)).toContain('invalid-property-shape');
+
+    const nonObject = createValidationContext({
+      type: 'echarts',
+      option: { series: [] },
+      events: 'click me',
+    });
+    validateEChartsSchema(nonObject.context);
+    expect(codesOf(nonObject.diagnostics)).toContain('invalid-property-shape');
+
+    const good = createValidationContext({
+      type: 'echarts',
+      option: { series: [] },
+      events: { onClick: { action: 'showToast', args: { message: 'hi' } } },
+    });
+    validateEChartsSchema(good.context);
+    expect(good.diagnostics).toEqual([]);
+  });
+
+  it('accepts a well-formed events map (E2.1 events validation landed)', () => {
     const { context, diagnostics } = createValidationContext({
       type: 'echarts',
       option: { series: [] },

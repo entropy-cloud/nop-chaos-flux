@@ -2,8 +2,10 @@ import {
   use as registerEChartsModules,
   init,
   dispose,
+  registerTheme,
   type EChartsType,
 } from 'echarts/core';
+import { resolveFluxEChartsTheme } from './echarts-theme.js';
 import {
   LineChart,
   BarChart,
@@ -53,6 +55,8 @@ import {
   CalendarComponent,
 } from 'echarts/components';
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers';
+
+registerTheme('flux', resolveFluxEChartsTheme());
 
 registerEChartsModules([
   LineChart,
