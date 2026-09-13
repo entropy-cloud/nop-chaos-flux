@@ -21,6 +21,8 @@ export { crudRendererDefinition } from './crud-renderer-definition.js';
 export { queryFilterRendererDefinition } from './query-filter-definition.js';
 export { batchBarRendererDefinition } from './batch-bar-definition.js';
 export { sparklineRendererDefinition } from './sparkline-renderer-definition.js';
+export { echartsRendererDefinition } from './echarts-renderer-definition.js';
+import { echartsRendererDefinition } from './echarts-renderer-definition.js';
 
 export const dataRendererDefinitions: RendererDefinition[] = [
   {
@@ -632,6 +634,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
   ...w2aDataCompositionDefinitions,
   statTileRendererDefinition,
   sparklineRendererDefinition,
+  echartsRendererDefinition,
   queryFilterRendererDefinition,
   batchBarRendererDefinition,
   crudRendererDefinition,

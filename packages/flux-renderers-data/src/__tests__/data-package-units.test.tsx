@@ -30,6 +30,7 @@ describe('data package units', () => {
       'statistics',
       'stat-tile',
       'sparkline',
+      'echarts',
       'query-filter',
       'batch-bar',
       'crud',
@@ -39,6 +40,7 @@ describe('data package units', () => {
     expect(registry.get('crud')?.type).toBe('crud');
     expect(registry.get('pagination')?.type).toBe('pagination');
     expect(registry.get('batch-bar')?.type).toBe('batch-bar');
+    expect(registry.get('echarts')?.type).toBe('echarts');
   });
 
   it('normalizes toolbar block layouts and ignores unsupported values', () => {

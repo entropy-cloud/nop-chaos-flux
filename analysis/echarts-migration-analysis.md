@@ -10,17 +10,18 @@
 
 2026-09-06 用户裁决落地，修正 rev 2 与项目架构契约的三处不一致：
 
-| # | 主题 | 裁决 |
-| - | ---- | ---- |
-| A1 | 验证体系 | **删除 XDef 验证**，使用前端自己的验证体系：结构验证 = TS 类型 + flux-compiler schema-compiler（`createSchemaCompiler().validate()`，见 `docs/architecture/schema-file-validator.md`）；运行时语义验证 = renderer 防御性校验（沿用 chart 的 `sanitizeSeries`/`isChartDatum` 模式） |
-| A2 | 数据绑定 | chart 数据由**外部获取**（data-source 加载到 scope），通过**表达式绑定**提供给内部；renderer 不做任何数据请求。除非 echarts 有**内置加载机制**（如 map 的 GeoJSON 注册、自定义资源加载），才需要桥接外部 data-source 等定义；一般场景表达式绑定即可 |
-| A3 | 事件机制 | echarts 事件**桥接到 flux 事件响应体系**：`events.*` declarative action 通道（`on*` 命名 → action graph），不发明平行命名（见 `docs/references/naming-conventions.md` §4.4） |
+| #   | 主题     | 裁决                                                                                                                                                                                                                                                                               |
+| --- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1  | 验证体系 | **删除 XDef 验证**，使用前端自己的验证体系：结构验证 = TS 类型 + flux-compiler schema-compiler（`createSchemaCompiler().validate()`，见 `docs/architecture/schema-file-validator.md`）；运行时语义验证 = renderer 防御性校验（沿用 chart 的 `sanitizeSeries`/`isChartDatum` 模式） |
+| A2  | 数据绑定 | chart 数据由**外部获取**（data-source 加载到 scope），通过**表达式绑定**提供给内部；renderer 不做任何数据请求。除非 echarts 有**内置加载机制**（如 map 的 GeoJSON 注册、自定义资源加载），才需要桥接外部 data-source 等定义；一般场景表达式绑定即可                                |
+| A3  | 事件机制 | echarts 事件**桥接到 flux 事件响应体系**：`events.*` declarative action 通道（`on*` 命名 → action graph），不发明平行命名（见 `docs/references/naming-conventions.md` §4.4）                                                                                                       |
 
 ## Context
 
 当前 nop-chaos-flux 使用 recharts 作为图表库，仅支持 6 种图表类型。为支持更多图表类型（桑基图、树图、箱线图、瀑布图等），需要新增 ECharts 渲染器。
 
 **核心设计目标**：
+
 1. **保留现有 chart 渲染器**（recharts），零迁移成本
 2. **新增 echarts 渲染器**，支持 22 种图表
 3. 保持 ECharts 的原生 JSON 风格和语法
@@ -34,21 +35,23 @@
 
 ### 1.1 图表库对比
 
-| 维度 | recharts (当前) | ECharts (新增) |
-|------|----------------|----------------|
-| 图表类型 | 6 | 22 |
-| 包大小 | ~50KB gzip | ~200KB gzip (核心), ~800KB (完整) |
-| 渲染方式 | React 组件 | Canvas (默认) / SVG (可选) |
-| TypeScript | 良好 | 完整 (深度类型定义) |
-| 数据绑定 | React props | dataset + encode + transform |
-| 交互系统 | 基础 (onClick/onHover) | 丰富 (dispatchAction + 事件系统) |
+| 维度       | recharts (当前)        | ECharts (新增)                    |
+| ---------- | ---------------------- | --------------------------------- |
+| 图表类型   | 6                      | 22                                |
+| 包大小     | ~50KB gzip             | ~200KB gzip (核心), ~800KB (完整) |
+| 渲染方式   | React 组件             | Canvas (默认) / SVG (可选)        |
+| TypeScript | 良好                   | 完整 (深度类型定义)               |
+| 数据绑定   | React props            | dataset + encode + transform      |
+| 交互系统   | 基础 (onClick/onHover) | 丰富 (dispatchAction + 事件系统)  |
 
 ### 1.2 支持的图表类型
 
 **recharts 支持**（6种，保留）：
+
 - ✅ bar, line, pie, scatter, area, heatmap
 
 **ECharts 支持**（22 种 series 类型，官方全量）：
+
 - 基础：line, bar, scatter, pie, gauge, funnel, radar
 - 高级：sankey, treemap, tree, boxplot, candlestick, graph, sunburst, themeRiver, parallel, pictorialBar, effectScatter, lines, custom
 - 地理：map (需注册 GeoJSON)
@@ -75,13 +78,13 @@
 
 ### 2.2 渲染器选择策略
 
-| 场景 | 推荐渲染器 | 原因 |
-|------|-----------|------|
-| 简单柱状图/折线图 | `chart` | 轻量、快速 |
-| 桑基图/树图/箱线图 | `echarts` | recharts 不支持 |
-| 丰富交互 (brush/dataZoom) | `echarts` | 交互系统更强 |
-| 与 Metabase/Superset 一致 | `echarts` | 相同图表库 |
-| 包大小敏感 | `chart` | 更小 |
+| 场景                      | 推荐渲染器 | 原因            |
+| ------------------------- | ---------- | --------------- |
+| 简单柱状图/折线图         | `chart`    | 轻量、快速      |
+| 桑基图/树图/箱线图        | `echarts`  | recharts 不支持 |
+| 丰富交互 (brush/dataZoom) | `echarts`  | 交互系统更强    |
+| 与 Metabase/Superset 一致 | `echarts`  | 相同图表库      |
+| 包大小敏感                | `chart`    | 更小            |
 
 ### 2.3 现有架构（保留不变）
 
@@ -116,47 +119,49 @@ Canvas (默认) / SVG (可选) 渲染
 ```typescript
 interface EChartsSchema extends BaseSchema {
   type: 'echarts';
-  
+
   // ECharts option (原生结构，直接复用 ECharts 文档)
   option: EChartsOption | Expression;
-  
+
   // 数据源 (可选，用于动态数据绑定；数据由外部 data-source 加载到 scope，此处仅消费)
   // 裁决 A2：一般场景表达式绑定即可；echarts 内置加载机制（GeoJSON 等）才需桥接外部定义
   dataset?: {
-    source: Expression;           // 数据源表达式（scope 读取，renderer 不做请求）
-    dimensions?: string[];        // 维度名称
-    transform?: Transform[];      // 数据转换
+    source: Expression; // 数据源表达式（scope 读取，renderer 不做请求）
+    dimensions?: string[]; // 维度名称
+    transform?: Transform[]; // 数据转换
   };
-  
+
   // 渲染配置
-  renderer?: 'canvas' | 'svg';   // 渲染方式
-  initOptions?: {                 // echarts.init() 参数
+  renderer?: 'canvas' | 'svg'; // 渲染方式
+  initOptions?: {
+    // echarts.init() 参数
     width?: number | string;
     height?: number | string;
     devicePixelRatio?: number;
     useDirtyRect?: boolean;
   };
-  theme?: string | object;        // 主题
-  
+  theme?: string | object; // 主题
+
   // 更新策略
-  notMerge?: boolean;             // 是否替换而非合并 option
-  lazyUpdate?: boolean;           // 是否延迟更新
-  
+  notMerge?: boolean; // 是否替换而非合并 option
+  lazyUpdate?: boolean; // 是否延迟更新
+
   // 事件绑定 (裁决 A3：桥接 flux events.* 通道，on* 命名 → declarative action)
   // 键 = flux on* 事件名（进入 events.* 通道），值 = declarative action 对象（{ action, args, ... }）
   // ECharts 原生事件映射：onClick→click, onDblClick→dblclick, onMouseOver→mouseover,
   // onMouseOut→mouseout, onMouseDown→mousedown, onMouseUp→mouseup, onContextMenu→contextmenu,
   // onDataZoom→dataZoom, onLegendSelectChanged→legendselectchanged 等
   events?: Record<string, ActionSchema>;
-  
+
   // 尺寸
-  height?: string;  // 高度，渲染器解析为数字
+  height?: string; // 高度，渲染器解析为数字
 }
 ```
 
 ### 3.2 JSON 示例
 
 **示例1：直接使用 ECharts JSON**
+
 ```json
 {
   "type": "echarts",
@@ -169,6 +174,7 @@ interface EChartsSchema extends BaseSchema {
 ```
 
 **示例2：使用 dataset 数据绑定**
+
 ```json
 {
   "type": "echarts",
@@ -188,25 +194,24 @@ interface EChartsSchema extends BaseSchema {
 ```
 
 **示例3：桑基图**
+
 ```json
 {
   "type": "echarts",
   "option": {
-    "series": [{
-      "type": "sankey",
-      "data": [
-        { "name": "Source A" },
-        { "name": "Target B" }
-      ],
-      "links": [
-        { "source": "Source A", "target": "Target B", "value": 10 }
-      ]
-    }]
+    "series": [
+      {
+        "type": "sankey",
+        "data": [{ "name": "Source A" }, { "name": "Target B" }],
+        "links": [{ "source": "Source A", "target": "Target B", "value": 10 }]
+      }
+    ]
   }
 }
 ```
 
-**示例4：带主题和交互（裁决 A3：事件走 flux events.* 通道，on* 命名 + declarative action）**
+**示例4：带主题和交互（裁决 A3：事件走 flux events._ 通道，on_ 命名 + declarative action）**
+
 ```json
 {
   "type": "echarts",
@@ -251,6 +256,7 @@ interface EChartsSchema extends BaseSchema {
 **注意**：`encode` 只能放在 `series` 上，不能放在 `xAxis`/`yAxis` 上。
 
 **支持的数据格式**：
+
 - 对象数组（推荐）：`[{ product: "A", value: 100 }]`
 - 列式数据：`{ product: ["A", "B"], value: [100, 200] }`
 - 二维数组：`[["A", 100], ["B", 200]]`
@@ -266,8 +272,8 @@ const finalOption = {
   ...schema.option,
   dataset: {
     ...schema.dataset,
-    source: resolvedData
-  }
+    source: resolvedData,
+  },
 };
 chart.setOption(finalOption, schema.notMerge);
 ```
@@ -295,17 +301,23 @@ useEffect(() => {
 useEffect(() => {
   if (schema.events) {
     const NATIVE_EVENT: Record<string, string> = {
-      onClick: 'click', onDblClick: 'dblclick', onMouseOver: 'mouseover',
-      onMouseOut: 'mouseout', onMouseDown: 'mousedown', onMouseUp: 'mouseup',
-      onContextMenu: 'contextmenu', onDataZoom: 'dataZoom',
-      onLegendSelectChanged: 'legendselectchanged'
+      onClick: 'click',
+      onDblClick: 'dblclick',
+      onMouseOver: 'mouseover',
+      onMouseOut: 'mouseout',
+      onMouseDown: 'mousedown',
+      onMouseUp: 'mouseup',
+      onContextMenu: 'contextmenu',
+      onDataZoom: 'dataZoom',
+      onLegendSelectChanged: 'legendselectchanged',
     };
     Object.entries(schema.events).forEach(([fluxEvent, action]) => {
       const native = NATIVE_EVENT[fluxEvent];
-      if (native) chart.on(native, (params) => props.events[fluxEvent]?.dispatch(action, { params }));
+      if (native)
+        chart.on(native, (params) => props.events[fluxEvent]?.dispatch(action, { params }));
     });
     return () => {
-      Object.keys(schema.events).forEach(fluxEvent => {
+      Object.keys(schema.events).forEach((fluxEvent) => {
         const native = NATIVE_EVENT[fluxEvent];
         if (native) chart.off(native);
       });
@@ -325,11 +337,11 @@ useEffect(() => {
 
 ### 4.1 验证层级
 
-| 层级 | 验证内容 | 实现方式 | 时机 |
-|------|---------|---------|------|
+| 层级         | 验证内容             | 实现方式                                                  | 时机   |
+| ------------ | -------------------- | --------------------------------------------------------- | ------ |
 | **结构验证** | 顶层字段存在性和类型 | TS 类型（`EChartsSchema`）+ flux-compiler schema-compiler | 编译期 |
-| **类型验证** | TypeScript 类型检查 | IDE/TS | 开发时 |
-| **语义验证** | option 合法性 | 运行时 validator（防御性校验） | 运行时 |
+| **类型验证** | TypeScript 类型检查  | IDE/TS                                                    | 开发时 |
+| **语义验证** | option 合法性        | 运行时 validator（防御性校验）                            | 运行时 |
 
 ### 4.2 结构验证（前端验证体系，裁决 A1）
 
@@ -350,18 +362,38 @@ useEffect(() => {
 export function validateEChartsOption(option: any, dataset?: any): ValidationResult {
   const errors: string[] = [];
   const isEmpty = !option.series || !Array.isArray(option.series) || option.series.length === 0;
-  
+
   // 空 series 是合法空态（DD1 显式空态契约）：返回 empty 信号，渲染器降级空态而非抛错
   if (isEmpty) {
     return { valid: true, errors: [], empty: true };
   }
-  
+
   // 验证 series 类型有效
-  const validTypes = ['line', 'bar', 'scatter', 'pie', 'gauge', 'funnel', 
-    'radar', 'sankey', 'treemap', 'tree', 'boxplot', 'candlestick', 
-    'graph', 'sunburst', 'themeRiver', 'parallel', 'heatmap', 'map',
-    'effectScatter', 'lines', 'pictorialBar', 'custom'];
-  
+  const validTypes = [
+    'line',
+    'bar',
+    'scatter',
+    'pie',
+    'gauge',
+    'funnel',
+    'radar',
+    'sankey',
+    'treemap',
+    'tree',
+    'boxplot',
+    'candlestick',
+    'graph',
+    'sunburst',
+    'themeRiver',
+    'parallel',
+    'heatmap',
+    'map',
+    'effectScatter',
+    'lines',
+    'pictorialBar',
+    'custom',
+  ];
+
   // 验证 dimensions 一致性
   if (dataset?.dimensions && dataset?.source) {
     const source = dataset.source;
@@ -377,7 +409,7 @@ export function validateEChartsOption(option: any, dataset?: any): ValidationRes
       }
     }
   }
-  
+
   // 验证 encode 引用有效
   if (dataset?.dimensions && option.series) {
     for (const s of option.series) {
@@ -390,7 +422,7 @@ export function validateEChartsOption(option: any, dataset?: any): ValidationRes
       }
     }
   }
-  
+
   return { valid: errors.length === 0, errors };
 }
 ```
@@ -443,25 +475,27 @@ export function validateEChartsOption(option: any, dataset?: any): ValidationRes
 
 ## 六、风险与缓解
 
-| 风险 | 描述 | 缓解措施 |
-|------|------|---------|
-| **包大小** | ECharts 完整包 ~800KB | 作为可选依赖，按需引入核心图表 |
-| **主题一致性** | recharts 和 ECharts 主题不统一 | 设计统一的主题 token 系统 |
-| **API 稳定性** | ECharts 版本升级可能有 breaking changes | 锁定版本，定期评估升级 |
-| **无障碍性** | Canvas 渲染对屏幕阅读器不友好 | 使用 SVG 渲染器或添加 ARIA 标签 |
-| **SSR/SEO** | Canvas 无法 SSR 渲染 | 提供静态图片回退方案 |
-| **内存泄漏** | 未调用 dispose() 导致内存泄漏 | 组件卸载时确保调用 dispose() |
-| **动态尺寸** | initOptions 宽高为一次性 | 使用 ResizeObserver 响应式调整 |
+| 风险           | 描述                                    | 缓解措施                        |
+| -------------- | --------------------------------------- | ------------------------------- |
+| **包大小**     | ECharts 完整包 ~800KB                   | 作为可选依赖，按需引入核心图表  |
+| **主题一致性** | recharts 和 ECharts 主题不统一          | 设计统一的主题 token 系统       |
+| **API 稳定性** | ECharts 版本升级可能有 breaking changes | 锁定版本，定期评估升级          |
+| **无障碍性**   | Canvas 渲染对屏幕阅读器不友好           | 使用 SVG 渲染器或添加 ARIA 标签 |
+| **SSR/SEO**    | Canvas 无法 SSR 渲染                    | 提供静态图片回退方案            |
+| **内存泄漏**   | 未调用 dispose() 导致内存泄漏           | 组件卸载时确保调用 dispose()    |
+| **动态尺寸**   | initOptions 宽高为一次性                | 使用 ResizeObserver 响应式调整  |
 
 ---
 
 ## 七、结论
 
 **推荐方案：双渲染器架构（新增，非迁移）**
+
 - **保留** `chart` 渲染器（recharts）：简单图表、轻量场景
 - **新增** `echarts` 渲染器：复杂图表、22 种类型
 
 **预期收益**：
+
 - 零迁移成本
 - 图表类型从 6 种扩展到 22 种
 - 按需引入，不增加简单场景包大小
@@ -469,6 +503,7 @@ export function validateEChartsOption(option: any, dataset?: any): ValidationRes
 - 原生 ECharts JSON，复用生态和文档
 
 **Rev 3 落地裁决**（详见文件头 Adjudications）：
+
 - A1：删除 XDef 验证，结构验证走 TS 类型 + flux-compiler schema-compiler，运行时语义验证自写轻量防御性校验（官方无内置验证器，事实依据见 §4.3）
 - A2：数据由外部 data-source 加载到 scope，表达式绑定消费；仅 echarts 内置加载机制（GeoJSON 等）才桥接外部定义
 - A3：事件桥接 flux `events.*` declarative action 通道，`on*` 命名，不发明平行命名
@@ -478,7 +513,7 @@ export function validateEChartsOption(option: any, dataset?: any): ValidationRes
 ## Open Questions
 
 - [x] 渲染器选择策略 → **resolved**（rev 2 已定双渲染器原则；nop-datav panel 指定渲染器的**机制**归 E5 集成评估，roadmap E5.2）
-- [ ] 按需引入的粒度（按图表类型 or 按功能模块）→ **移交 E1 plan 裁决**（决定依赖安装与注册方式，见 roadmap E1）
+- [x] 按需引入的粒度（按图表类型 or 按功能模块）→ **resolved**（2026-09-13，E1.1 plan 裁决：**按功能模块**——统一经 `echarts/core` + `echarts/charts` + `echarts/components` + `echarts/renderers` 官方 tree-shaking 入口，集中注册于 `flux-renderers-data/src/echarts-setup.ts` 单一模块；渲染器组件动态 import 使 echarts 全量位于懒 chunk，未挂载 `echarts` 渲染器的宿主零加载；E5.1 在该单一模块收窄注册清单做包体控制。证据：`docs/plans/2026-09-13-2343-echarts-e1-1-renderer-skeleton-plan.md` Phase 1 Decision）
 - [ ] 统一主题 token 系统如何设计 → **移交 E2 plan 裁决**（recharts CSS 变量体系与 ECharts 主题的映射方案）
 
 ---
@@ -487,5 +522,5 @@ export function validateEChartsOption(option: any, dataset?: any): ValidationRes
 
 - ECharts 源码: ~/sources/echarts
 - ECharts 文档: https://echarts.apache.org/
-- 当前图表实现: flux-renderers-data/src/chart-*.tsx
+- 当前图表实现: flux-renderers-data/src/chart-\*.tsx
 - ECharts 类型定义: echarts/types/dist/

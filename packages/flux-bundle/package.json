@@ -25,6 +25,7 @@
   },
   "peerDependencies": {
     "@nop-chaos/ui": "workspace:*",
+    "echarts": "^6.0.0",
     "i18next": "^26.0.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
@@ -32,6 +33,11 @@
     "react-i18next": "^17.0.0",
     "recharts": "^3.8.0",
     "zustand": "^5.0.12"
+  },
+  "peerDependenciesMeta": {
+    "echarts": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
@@ -46,6 +52,7 @@
     "@nop-chaos/flux-renderers-form-advanced": "workspace:*",
     "@nop-chaos/flux-renderers-layout": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
+    "echarts": "^6.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "lucide-react": "^1.17.0",

@@ -21,9 +21,15 @@
     "@tanstack/react-virtual": "^3.13.24"
   },
   "peerDependencies": {
+    "echarts": "^6.0.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "recharts": "^3.8.1"
+  },
+  "peerDependenciesMeta": {
+    "echarts": {
+      "optional": true
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -32,10 +38,11 @@
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
   "devDependencies": {
-    "@nop-chaos/flux-formula": "workspace:*",
-    "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/flux-compiler": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",
+    "@nop-chaos/flux-runtime": "workspace:*",
+    "echarts": "^6.0.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "recharts": "^3.8.1"

@@ -53,6 +53,7 @@ export { TableLabPage } from './table-lab-page';
 export { TreeLabPage } from './tree-lab-page';
 export { DataSourceLabPage } from './data-source-lab-page';
 export { ChartLabPage } from './chart-lab-page';
+export { EChartsLabPage } from './echarts-lab-page';
 export { ListLabPage } from './list-lab-page';
 export { PaginationLabPage } from './pagination-lab-page';
 export { StatisticsLabPage } from './statistics-lab-page';
