@@ -1,7 +1,7 @@
 # three-canvas AI 场景生成设计（v5）
 
 > 分册：`docs/components/threejs-integration/design.md` §5 索引 | 版本 5.0（2026-09-13）
-> 消费者：I4.1。边界：本册冻结**接口面与验证门禁**；提示模板终稿与 Gemini API 集成规范在 I4.1 计划内细化（plan 464 Deferred 已裁定）。
+> 消费者：I4.1。边界：本册冻结**接口面与验证门禁**；I4.1 交付了 provider 注入面与验证门禁（plan 468）；提示模板终稿与 Gemini API 适配在有真实消费时按 `LlmProvider` 面实现（plan 468 Deferred 再裁定为 out-of-scope improvement）。
 
 ## 1. 生成管线与验证门禁
 
@@ -20,7 +20,7 @@
 以 `ThreeCanvasSchema` TS 类型为单一事实源生成/维护（I4.1 落地为包内 `src/ai/threejs-schema.json`，构建期用 `resolveJsonModule` 引入）。约束要点承 v4 §6.1 并与 v5 类型对齐：
 
 - `type` const `three-canvas`；`scene` 必填（camera.position 三元数组、lights 数组、models 数组）。
-- `ModelConfig.id` pattern `^[a-zA-Z][a-zA-Z0-9_-]*$`；`url` string（format: uri）。
+- `ModelConfig.id` pattern `^[a-zA-Z][a-zA-Z0-9_-]*$`；`url` string（I4.1 回写：不强制 format: uri——生成器输出相对路径 `/models/<kind>.glb`）。
 - `rotation`/`position`/`scale` 均三元 number 数组（Euler.set z 必填的 API 约束传导到 schema minItems/maxItems）。
 - `bindings[].source.expression` 描述标注 `${expr}` 平台语法（AI 生成提示据此产出正确形态）。
 - `events.*` 为 ActionSchema 对象（自由结构 + 描述，验证从简——渲染侧 helpers.dispatch 契约兜底）。
@@ -80,7 +80,7 @@ export interface LlmProvider {
 - I4.1 实现回写：kind 命中图元六类 → primitive 模型（无外链 GLB），未知 kind → url 回退 `/models/<kind>.glb`；无模型时不生成 bindings（target 悬挂必被 validator 拒绝）。
 - `generateSchema` 确定性生成的绑定表达式形态：`${sceneState.<dataPoint.name>}`（与 v4 一致，scope 根 `sceneState` 为文档化约定）。
 - id 派生与归属规则：`models[].name` → id 经 slug 化（trim + 空白转 `-` + 小写 + 去非法字符，保证命中 `^[a-zA-Z][a-zA-Z0-9_-]*$`，冲突时追加序号）；**slug 结果为空或非字母开头（如纯中文输入「阀门」）时回退 `model-<序号>`**；`dataPoints` 生成的 binding 一律归属 `models[0]`（首个模型），布尔点映射 `visible`、数值点映射 `material.color` + range——使「generateSchema 输出过自身 validator 即绿」可确定地验收。
-- `generateFromPrompt` 的 provider 注入使 Gemini/OpenAI/本地模型可替换；I4.1 提供 Gemini 适配与提示模板。
+- `generateFromPrompt` 的 provider 注入使 Gemini/OpenAI/本地模型可替换；I4.1 交付 provider 注入面与验证门禁（Gemini 适配与提示模板终稿按 Deferred 留待有真实消费时实现）。
 
 ## 5. 验证策略（I4.1 test tier：必须自动化）
 

@@ -1,6 +1,6 @@
 # 468 Three.js 集成 I4.1 AI 场景生成计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-13
 > Source: `docs/backlog/threejs-integration-roadmap.md`（I4.1）、`docs/components/threejs-integration/design-ai-generation.md`（v5）
 > Related: 前置 plan 463–467（closed）；消费 I2.1/I2.2 的 schemas（ModelConfig 判别联合、TransformConfig/AnimationConfig）
@@ -75,7 +75,7 @@ Exit Criteria:
 ### Phase 2 - 确定性生成与 LLM 修正回路（Proof 先行）
 
 Status: completed
-Targets: `src/ai/schema-generator.ts`, `src/ai/llm-provider.ts`
+Targets: `src/ai/schema-generator.ts`（LlmProvider 接口落位于此）
 
 - Item Types: `Proof | Fix`
 
@@ -118,7 +118,7 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成（Phase 1–2 focused tests，先红后绿）
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
 - [x] 受影响的 owner docs 已同步（design-ai-generation.md 漂移回写；`docs/logs/`）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（approved，3 Minor 已在 closure pass 修复，见 Closure Audit Evidence）
 - [x] `pnpm typecheck` 40/40
 - [x] `pnpm build` 40/40
 - [x] `pnpm lint` 40/40
@@ -141,12 +141,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待关闭时填写
+Status Note: I4.1 交付（JSON Schema 资产 + SchemaValidator 双层门禁 + 确定性/LLM 双路径生成器）经独立审计 approved；Deferred 义务 (a)(b) 已执行（design §4 措辞更正、roadmap 状态与行内容差异标记人工评审）。roadmap I4.1 → done。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待 closure audit
-- Evidence: 待定
+- Auditor / Agent: independent sub-agent（general-purpose fresh session）
+- Evidence: 审计 live 重跑——schema-validator 11/11、schema-generator 8/8、3d 包 177/177、覆盖率 94.43/90.85/93.2/96.29 逐位复现、typecheck 40/40、test 73/73、check exit 0；行为抽查（双空拒/双源容、errors 回喂断言、generateSchema 不变式）真实成立；getSchema 与 TS 抽查 12+ 处一致。Findings：0B/0M/3 Minor（llm-provider.ts 文件落点文本、§2 url format uri 残留、摘要计数 5+4 实为 5+3）——均在 closure pass 修复（plan 文本更正、design-ai-generation.md §2 回写、义务 (a)(b) 执行）。
 
 Follow-up:
 
