@@ -93,6 +93,7 @@ Exit Criteria:
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
+- [ ] `pnpm check`（workspace-manifest-deps 过链；既有 i18n 4 键红之外零新增）
 
 ## Deferred But Adjudicated
 
