@@ -21,7 +21,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **I1. 设计** (`done`，plan: `docs/plans/464-threejs-i1-design-review-plan.md`)
 - **I2. 核心引擎** (`done`：I2.1 plan `docs/plans/465-threejs-i2-renderer-plan.md`；I2.2 plan `docs/plans/466-threejs-i2-primitives-transform-plan.md`)
 - **I3. 工业协议** (`done`，plan: `docs/plans/467-threejs-i3-protocol-plan.md`)
-- **I4. AI 生成** (`todo`)
+- **I4. AI 生成** (`planned`，plan: `docs/plans/468-threejs-i4-ai-generation-plan.md`)
 
 ## Framework / Platform Reuse
 
@@ -80,9 +80,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### I4 — AI 生成
 
-| ID   | Status | 内容                                                            | 设计文档                                                      | 依赖 |
-| ---- | ------ | --------------------------------------------------------------- | ------------------------------------------------------------- | ---- |
-| I4.1 | todo   | JSON Schema 验证、自然语言 → Three.js 场景转换、Gemini API 集成 | `docs/components/threejs-integration/design-ai-generation.md` | I2.2 |
+| ID   | Status  | 内容                                                            | 设计文档                                                      | 依赖 |
+| ---- | ------- | --------------------------------------------------------------- | ------------------------------------------------------------- | ---- |
+| I4.1 | planned | JSON Schema 验证、自然语言 → Three.js 场景转换、Gemini API 集成 | `docs/components/threejs-integration/design-ai-generation.md` | I2.2 |
 
 ---
 
