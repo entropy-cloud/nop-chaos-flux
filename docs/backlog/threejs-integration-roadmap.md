@@ -20,7 +20,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **I0. 调研** (`done`，plan: `docs/plans/463-threejs-i0-research-plan.md`)
 - **I1. 设计** (`done`，plan: `docs/plans/464-threejs-i1-design-review-plan.md`)
 - **I2. 核心引擎** (`done`：I2.1 plan `docs/plans/465-threejs-i2-renderer-plan.md`；I2.2 plan `docs/plans/466-threejs-i2-primitives-transform-plan.md`)
-- **I3. 工业协议** (`planned`，plan: `docs/plans/467-threejs-i3-protocol-plan.md`)
+- **I3. 工业协议** (`done`，plan: `docs/plans/467-threejs-i3-protocol-plan.md`)
 - **I4. AI 生成** (`todo`)
 
 ## Framework / Platform Reuse
@@ -74,9 +74,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### I3 — 工业协议
 
-| ID   | Status  | 内容                                                                    | 设计文档                                                 | 依赖 |
-| ---- | ------- | ----------------------------------------------------------------------- | -------------------------------------------------------- | ---- |
-| I3.1 | planned | ReconnectionManager 实现、Socket.IO/WebSocket 数据桥接、FUXA 协议适配器 | `docs/components/threejs-integration/design-protocol.md` | I2.2 |
+| ID   | Status | 内容                                                                    | 设计文档                                                 | 依赖 |
+| ---- | ------ | ----------------------------------------------------------------------- | -------------------------------------------------------- | ---- |
+| I3.1 | done   | ReconnectionManager 实现、Socket.IO/WebSocket 数据桥接、FUXA 协议适配器 | `docs/components/threejs-integration/design-protocol.md` | I2.2 |
 
 ### I4 — AI 生成
 

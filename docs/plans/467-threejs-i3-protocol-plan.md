@@ -1,6 +1,6 @@
 # 467 Three.js 集成 I3.1 工业协议接入计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-13
 > Source: `docs/backlog/threejs-integration-roadmap.md`（I3.1）、`docs/components/threejs-integration/design-protocol.md`（v5）
 > Related: 前置 plan 465/466（closed）；消费 `RendererEnv.openSocket` 契约（`renderer-api.ts:136-167`）
@@ -122,7 +122,7 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成（Phase 1–2 focused tests，先红后绿）
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
 - [x] 受影响的 owner docs 已同步（design-protocol.md 漂移回写；`docs/logs/`）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（两轮：R1 issues → 修复 commit faff10b7d → R2 approved，见 Closure Audit Evidence）
 - [x] `pnpm typecheck` 40/40
 - [x] `pnpm build` 40/40
 - [x] `pnpm lint` 40/40
@@ -155,8 +155,10 @@ Status Note: 待关闭时填写
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待 closure audit
-- Evidence: 待定
+- Auditor / Agent: independent sub-agent（general-purpose fresh session），2 轮
+- Evidence: R1 `issues`（1 Major：§3/§4 漂移回写仅落 1/3 而三处声明已完成——onGiveUp/random/pending 幂等/双触发缺失；1 Minor：socket-connect-failed 去重粒度三方不对齐）→ 修复 commit `faff10b7d`（§3 config 两字段 + scheduleReconnect pending 幂等契约 + §4 错误行双触发语义与 connect-failed 粒度声明，daily log 诚实更正）→ R2 `approved`。Evidence：live grep/sed 核对 §3:33-47、§4:75-84；data-source 14/14、3d 包 158/158 live 绿；覆盖率 95.34/91.34/92.7/97.59；roadmap I3.1 审计期间保持 `planned`（2026-09-13，`docs/logs/2026/09-13.md`）。
+
+Status Note: I3.1 交付（ReconnectionManager 退避/幂等/耗尽诊断 + IndustrialAdapter 契约级可用：capability check/subscribe/数据帧→scope/重连抑制）经两轮独立审计关闭；组件接线与 schema surface 归后继（Deferred 显式裁定）。roadmap I3.1 → done。
 
 Follow-up:
 
