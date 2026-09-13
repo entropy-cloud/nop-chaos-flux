@@ -448,7 +448,7 @@ const bindings: SceneBinding[] = [
 
 ### 9.3 几何与材质
 
-- 内置几何（`BufferGeometry` 子类）：`BoxGeometry` / `SphereGeometry` / `CylinderGeometry` / `PlaneGeometry` 等；基类 `BufferGeometry` 用后需 `dispose()`（`BufferGeometry.d.ts:179,532`）。
+- 内置几何（`BufferGeometry` 子类）：`BoxGeometry` / `SphereGeometry` / `CylinderGeometry` / `PlaneGeometry` 等；基类 `BufferGeometry` 用后需 `dispose()`（`BufferGeometry.d.ts:179,441`）。
 - 常用材质（`MeshStandardMaterial` 为 PBR 默认选择）：`MeshBasicMaterial`（无光照）/ `MeshLambertMaterial` / `MeshPhongMaterial` / `MeshStandardMaterial` / `MeshPhysicalMaterial`；`Material.dispose()`（`Material.d.ts:649`）；`transparent` + `opacity` 控制透明度。
 - 资源释放链（组件卸载）：`object.traverse(child => { child.geometry?.dispose(); 材质单/数组分别 dispose() })`。
 

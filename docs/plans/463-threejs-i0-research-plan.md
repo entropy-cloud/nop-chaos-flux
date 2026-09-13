@@ -1,6 +1,6 @@
 # 463 Three.js 集成 I0.1 调研收口计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-13
 > Source: `docs/backlog/threejs-integration-roadmap.md`（I0.1）、`docs/components/threejs-integration/design.md`（v4）、`docs/analysis/threejs-integration-analysis.md`
 > Related: 后续 I1.1（设计共识审查，本计划产出是其直接输入）
@@ -118,7 +118,7 @@ Exit Criteria:
 - [x] 基准脚本可复跑，基线数据已记录
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
 - [x] 受影响的 owner docs 已同步（本计划即改 owner doc `docs/analysis/threejs-integration-analysis.md`，无其他 drift）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（verdict: approved，见 Closure Audit Evidence）
 - [x] `pnpm typecheck` 39/39
 - [x] `pnpm build` 39/39
 - [x] `pnpm lint` 39/39
@@ -140,12 +140,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待关闭时填写
+Status Note: I0.1 三块交付（调研文档 §7–§10、bench 脚本 + 基线、根 devDeps three）全部落地；独立子 agent closure audit 判定 approved（3 项文档级回修已随 closure commit 落地：§9.3 行号引用更正、roadmap I0 状态与 socket 勘误同步、本节证据填写）。roadmap I0 → done。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待 closure audit
-- Evidence: 待定
+- Auditor / Agent: independent sub-agent（general-purpose fresh session）
+- Evidence: 审计对 live repo 独立抽查——§7 file:line 引用 12 处全中（flux-eval.ts / use-scada-points-bridge.ts / renderer-api.ts / socket-impl.ts）；§8 ❌/⚠️/✅ 条目对照 design.md 5 条全成立；§9 对照 `@types/three` 0.186.0 抽查 10 处（9 精确，1 处行号引用错误 `BufferGeometry.d.ts:532→:441` 已更正）；bench 脚本两轮实跑通过、§10.3 基线同量级；plan/log/roadmap 文本一致性核对通过。验证输出：typecheck 39/39、build 39/39、lint 39/39、test 72 任务 12,185 passed / 0 failed、check exit 0（2026-09-13，`docs/logs/2026/09-13.md`）。
 
 Follow-up:
 

@@ -1,6 +1,6 @@
 # Three.js 3D Rendering Integration Roadmap
 
-> 最后更新：2026-09-06
+> 最后更新：2026-09-13
 > 来源：`docs/components/threejs-integration/design.md`（设计文档 v4）、`docs/analysis/threejs-integration-analysis.md`（调研）
 > Mission：`missions/threejs-integration.json`
 
@@ -17,7 +17,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 > **全文件唯一的动态状态区。**
 > 状态流转：`todo` → `planned`（draft review 通过）→ `done`（closure audit 通过）
 
-- **I0. 调研** (`planned`)
+- **I0. 调研** (`done`，plan: `docs/plans/463-threejs-i0-research-plan.md`)
 - **I1. 设计** (`todo`)
 - **I2. 核心引擎** (`todo`)
 - **I3. 工业协议** (`todo`)
@@ -27,14 +27,14 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 > 本项目已有的可复用能力，避免重复构建。
 
-| 能力        | 来源包         | 复用方式                             |
-| ----------- | -------------- | ------------------------------------ |
-| 表达式编译  | `flux-core`    | analyzeBindingSubscriptions          |
-| Scope 订阅  | `flux-react`   | useScopeSelector + paths             |
-| 动作分发    | `flux-react`   | useActionDispatcher                  |
-| WebSocket   | RendererEnv    | env.openSocket                       |
-| Zustand     | zustand        | vanilla store + useSyncExternalStore |
-| Socket 模式 | industrial-hmi | 复用 scada 的 socket 数据桥接模式    |
+| 能力        | 来源包                   | 复用方式                                                                                                                                                                           |
+| ----------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 表达式编译  | `flux-core`              | analyzeBindingSubscriptions                                                                                                                                                        |
+| Scope 订阅  | `flux-react`             | useScopeSelector + paths                                                                                                                                                           |
+| 动作分发    | `flux-react`             | useActionDispatcher                                                                                                                                                                |
+| WebSocket   | RendererEnv              | env.openSocket                                                                                                                                                                     |
+| Zustand     | zustand                  | vanilla store + useSyncExternalStore                                                                                                                                               |
+| Socket 契约 | `flux-core` + playground | `RendererEnv.openSocket` 契约（`renderer-api.ts`）+ host 实现（`apps/playground/src/env/socket-impl.ts`）；scada 可复用的是其数据合帧模式，非 socket 代码（勘误详见调研文档 §7.3） |
 
 ## Current Baseline
 
@@ -42,7 +42,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 - 设计文档 v4 已产出（`docs/components/threejs-integration/design.md`）：`three-canvas` 渲染器 schema、TransformEngine、表达式桥接、工业协议集成、AI 场景生成的完整设计。
 - 调研产物：`docs/analysis/threejs-integration-analysis.md` + v2/v3 设计迭代。
-- industrial-hmi 已落地 scada-canvas + socket 数据桥接，是 I3 的直接复用源。
+- industrial-hmi 已落地 scada-canvas + 点表/表达式数据合帧桥接（PointStore/RefreshPipeline/useScopeSelector paths）；socket 侧 `openSocket` 契约与 host 实现分别在 `flux-core` 与 playground（industrial 包内无 socket 调用，勘误见调研文档 §7.3）。
 
 ### 主要缺口
 
@@ -55,9 +55,9 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### I0 — 调研
 
-| ID   | Status | 内容                                                                                                      | 设计文档                                        | 依赖 |
-| ---- | ------ | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ---- |
-| I0.1 | todo   | Three.js 核心 API 深度分析（场景/渲染器/几何/材质/灯光）、industrial-hmi 复用点确认、性能基准测试框架搭建 | `docs/analysis/threejs-integration-analysis.md` | —    |
+| ID   | Status | 内容                                                                                                                                                            | 设计文档                                               | 依赖 |
+| ---- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ---- |
+| I0.1 | done   | Three.js 核心 API 深度分析（场景/渲染器/几何/材质/灯光）、industrial-hmi 复用点确认、性能基准测试框架搭建（plan: `docs/plans/463-threejs-i0-research-plan.md`） | `docs/analysis/threejs-integration-analysis.md` §7–§10 | —    |
 
 ### I1 — 设计
 
@@ -99,7 +99,7 @@ graph TD
 
 ## Cross-Cutting
 
-- **工业协议复用**：I3 复用 industrial-hmi 的 socket 数据桥接模式，不另起协议栈
+- **工业协议复用**：I3 复用 industrial-hmi 的数据合帧桥接模式（点表→scope），socket 走 `RendererEnv.openSocket` 契约 + 自建重连，不另起协议栈
 - **AI 生成安全**：I4 的 AI 生成输出必须有 JSON Schema 验证兜底
 - **表达式桥接**：I2 的 analyzeBindingSubscriptions 集成方案在 I1 定稿，贯穿后续 phase
 
