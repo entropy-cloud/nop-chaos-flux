@@ -159,3 +159,45 @@ describe('SceneManager keyframe clip integration (plan 466 Phase 4)', () => {
     manager.dispose();
   });
 });
+
+describe('event-triggered clips (plan 466 Phase 4 audit fix F2)', () => {
+  it('notifyEvent starts clips whose trigger.source matches the normalized event type', async () => {
+    const { manager, group, clock } = makeManager();
+    manager.init();
+    await manager.loadModels();
+    manager.registerClips([
+      {
+        id: 'onClickSpin',
+        trigger: { type: 'event', source: 'object:click' },
+        target: { modelId: 'valve', property: 'rotation.y' },
+        keyframes: [
+          { time: 0, value: 0 },
+          { time: 1000, value: 1 },
+        ],
+      },
+      {
+        id: 'onHoverClip',
+        trigger: { type: 'event', source: 'object:hover' },
+        target: { modelId: 'valve', property: 'position.y' },
+        keyframes: [
+          { time: 0, value: 0 },
+          { time: 1000, value: 2 },
+        ],
+      },
+    ]);
+    // 未触发前不动
+    clock.advance(2000);
+    expect(group.rotation.y).toBe(0);
+    expect(group.position.y).toBe(0);
+    // hover 事件只启动匹配 source 的 clip
+    manager.notifyEvent('object:hover');
+    clock.advance(500);
+    expect(group.position.y).toBeCloseTo(1, 1);
+    expect(group.rotation.y).toBe(0);
+    // click 事件启动 click clip
+    manager.notifyEvent('object:click');
+    clock.advance(1000);
+    expect(group.rotation.y).toBe(1);
+    manager.dispose();
+  });
+});

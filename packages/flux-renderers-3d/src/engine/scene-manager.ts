@@ -209,6 +209,13 @@ export class SceneManager {
     for (const modelConfig of pending) {
       const resolved = resolvePrimitiveModel(modelConfig);
       if (resolved.kind === 'primitive') {
+        if (typeof modelConfig.url === 'string' && modelConfig.url.length > 0) {
+          // 双源（url + primitive）：primitive 优先，url 忽略 + 一次性诊断（Failure Paths 契约）
+          onError?.({
+            code: 'primitive-dual-source',
+            message: `Model '${modelConfig.id}' declares both url and primitive; the primitive config takes precedence`,
+          });
+        }
         const mesh = createPrimitiveMesh(resolved.config);
         if (!mesh) {
           this.dropPendingForModel(modelConfig.id);
@@ -459,6 +466,7 @@ export class SceneManager {
         this.updateProperty(update.modelId, update.path, update.value, update.animation);
       }
     }
+    // 帧序契约：transition tween 先推进、关键帧 clip 后应用——同一 target 属性上 clip 优先
     this.tweenRegistry.advance();
     const frameNow = this.clipNow();
     for (const clip of this.clips.values()) {

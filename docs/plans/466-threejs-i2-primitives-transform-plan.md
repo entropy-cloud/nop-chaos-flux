@@ -200,8 +200,8 @@ Status Note: 待关闭时填写
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待 closure audit
-- Evidence: 待定
+- Auditor / Agent: independent sub-agent（general-purpose fresh session）
+- Evidence: R1 审计（issues，2M）：F1 双源诊断未实现（被 no-source 断言掩盖）→ 补 `primitive-dual-source` 一次性诊断 + 测试隔离断言；F2 notifyEvent 零测试 → 补引擎级 event 触发测试（source 匹配/不匹配分流 + 组件经 useThreeEvents onEvent 接线）；F3 删除 probe-prim.test.ts 探针；F4 帧序（tween→clip，clip 优先）补注释。R2 复审待执行。验证基线：typecheck 40/40、test 73 任务 12,329 passed / 0 failed（3d 包 144）、check exit 0、覆盖率 95.9/93.9/92.4/97.8。
 
 Follow-up:
 

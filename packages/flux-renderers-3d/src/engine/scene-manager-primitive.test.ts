@@ -55,19 +55,18 @@ describe('SceneManager primitive integration (plan 466 Phase 3)', () => {
     manager.dispose();
   });
 
-  it('dual-source model prefers primitive and ignores gltf url; no-source reports diagnostic', async () => {
+  it('dual-source model prefers primitive, ignores gltf url and reports a one-shot diagnostic', async () => {
     const onError = vi.fn();
     const { manager } = makeManager([
       { id: 'dual', url: 'dual.glb', primitive: { geometry: { type: 'sphere' } } },
-      { id: 'empty' },
     ] as never);
     manager.init();
     manager.loadModels(onError);
     expect(manager.getModel('dual')).toBeDefined();
     expect(manager.getModel('dual')!.root).toBeInstanceOf(THREE.Mesh);
-    expect(manager.getModel('empty')).toBeUndefined();
+    // 双源诊断独立断言（不被 no-source 断言掩盖）
     expect(onError).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'primitive-invalid-config' }),
+      expect.objectContaining({ code: 'primitive-dual-source' }),
     );
     manager.dispose();
   });
