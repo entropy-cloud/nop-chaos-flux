@@ -93,7 +93,7 @@ const emptyState = {
 export function EChartsLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Apache ECharts renderer with native option passthrough for advanced chart types (sankey, treemap, boxplot, gauge, map, custom, ...). E2 scope: dataset/encode expression binding to scope data, flux events.* action bridge, and the automatic flux theme mapped from CSS variables. ECharts loads as an optional lazy chunk only when an echarts renderer instance mounts; the recharts `chart` renderer stays the default for basic chart scenarios."
+      introDescription="Apache ECharts renderer with native option passthrough. Advanced types verified here: sankey, treemap, tree, boxplot, gauge, funnel, radar. E2 scope: dataset/encode expression binding to scope data, flux events.* action bridge, and the automatic flux theme mapped from CSS variables. ECharts loads as an optional lazy chunk only when an echarts renderer instance mounts; the recharts `chart` renderer stays the default for basic chart scenarios."
       scenarios={[
         {
           title: 'Dataset binding with a data swap button',
@@ -122,6 +122,170 @@ export function EChartsLabPage() {
             'theme:"dark" is passed to echarts.init; without a theme prop the renderer applies the automatic flux theme mapped from CSS variables (--chart-1..5, axis/legend/tooltip tokens).',
           schema: darkThemePieChart,
           data: { monthRows },
+        },
+        {
+          title: 'Sankey — flow graph (nodes + links)',
+          description:
+            'Graph-structured series declare data/links inline in the option (dataset+encode does not apply to sankey by native semantics).',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            option: {
+              series: [
+                {
+                  type: 'sankey',
+                  data: [{ name: 'Visit' }, { name: 'Signup' }, { name: 'Trial' }, { name: 'Paid' }],
+                  links: [
+                    { source: 'Visit', target: 'Signup', value: 60 },
+                    { source: 'Signup', target: 'Trial', value: 35 },
+                    { source: 'Trial', target: 'Paid', value: 18 },
+                  ],
+                },
+              ],
+            },
+          },
+          data: {},
+        },
+        {
+          title: 'Treemap — hierarchical tiles',
+          description:
+            'Treemap consumes a value hierarchy via series.data children; a click drilldown can be wired through events.onDblClick if needed.',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            option: {
+              series: [
+                {
+                  type: 'treemap',
+                  data: [
+                    { name: 'Frontend', value: 42, children: [{ name: 'react', value: 30 }, { name: 'vue', value: 12 }] },
+                    { name: 'Backend', value: 28 },
+                    { name: 'Infra', value: 18 },
+                  ],
+                },
+              ],
+            },
+          },
+          data: {},
+        },
+        {
+          title: 'Tree — collapsible hierarchy',
+          description:
+            'Tree series render parent/children hierarchies with orient and initial expansion from native option.',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            option: {
+              series: [
+                {
+                  type: 'tree',
+                  orient: 'LR',
+                  data: [
+                    {
+                      name: 'root',
+                      children: [
+                        { name: 'team-a', children: [{ name: 'alice' }, { name: 'bob' }] },
+                        { name: 'team-b', children: [{ name: 'carol' }] },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          data: {},
+        },
+        {
+          title: 'Boxplot — precomputed five-number summaries via 2D dataset',
+          description:
+            'Boxplot rows are precomputed [min, Q1, median, Q3, max] statistics bound through a 2D array dataset (the dataset.transform path stays available for raw observations).',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            dataset: {
+              source: '${boxStats}',
+              dimensions: ['min', 'q1', 'median', 'q3', 'max'],
+            },
+            option: {
+              tooltip: {},
+              xAxis: { type: 'category' },
+              yAxis: { type: 'value' },
+              series: [{ type: 'boxplot' }],
+            },
+          },
+          data: { boxStats: [[620, 680, 694, 712, 760], [650, 700, 718, 736, 790], [600, 660, 690, 705, 740]] },
+        },
+        {
+          title: 'Gauge — scalar dial with click event',
+          description:
+            'Gauge renders a scalar value per data entry; events.onClick dispatches a flux action with the normalized echarts params.',
+          schema: {
+            type: 'echarts',
+            height: 300,
+            option: {
+              series: [{ type: 'gauge', data: [{ value: 68, name: 'cpu' }] }],
+            },
+            events: {
+              onClick: {
+                action: 'showToast',
+                args: { level: 'info', message: 'gauge clicked' },
+              },
+            },
+          },
+          data: {},
+        },
+        {
+          title: 'Funnel — staged values',
+          description:
+            'Funnel stages are labeled scalar data entries sorted by value.',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            option: {
+              tooltip: {},
+              series: [
+                {
+                  type: 'funnel',
+                  data: [
+                    { name: 'visit', value: 100 },
+                    { name: 'signup', value: 60 },
+                    { name: 'paid', value: 25 },
+                  ],
+                },
+              ],
+            },
+          },
+          data: {},
+        },
+        {
+          title: 'Radar — option-level radar coordinate + indicators',
+          description:
+            'Radar needs the option-level radar coordinate (indicator list); series data entries hold one value array per entity.',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            option: {
+              tooltip: {},
+              legend: { bottom: 0 },
+              radar: {
+                indicator: [
+                  { name: 'sales', max: 100 },
+                  { name: 'cost', max: 100 },
+                  { name: 'quality', max: 100 },
+                ],
+              },
+              series: [
+                {
+                  type: 'radar',
+                  data: [
+                    { value: [85, 40, 90], name: 'product A' },
+                    { value: [60, 70, 65], name: 'product B' },
+                  ],
+                },
+              ],
+            },
+          },
+          data: {},
         },
         {
           title: 'Explicit empty state',

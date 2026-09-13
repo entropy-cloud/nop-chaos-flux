@@ -20,7 +20,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **E0. 分析定稿** (`done`)
 - **E1. 基础设施** (`done`)
 - **E2. 核心图表** (`done`)
-- **E3. 高级图表** (`todo`)
+- **E3. 高级图表** (`done`)
 - **E4. 完整功能** (`todo`)
 - **E5. 集成优化** (`todo`)
 
@@ -74,7 +74,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 | ID   | Status | 内容                                                                                                    | 设计文档                                                | 依赖 |
 | ---- | ------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---- |
-| E3.1 | todo   | 桑基图 (sankey)、树图 (treemap/tree)、箱线图 (boxplot)、仪表盘 (gauge)、漏斗图 (funnel)、雷达图 (radar) | `analysis/echarts-migration-analysis.md`（§五 Phase 3） | E2.1 |
+| E3.1 | done   | 桑基图 (sankey)、树图 (treemap/tree)、箱线图 (boxplot)、仪表盘 (gauge)、漏斗图 (funnel)、雷达图 (radar) | `analysis/echarts-migration-analysis.md`（§五 Phase 3） | E2.1 |
 
 ### E4 — 完整功能
 
