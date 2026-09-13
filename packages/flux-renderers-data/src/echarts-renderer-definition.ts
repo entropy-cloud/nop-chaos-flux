@@ -123,7 +123,10 @@ export const echartsRendererDefinition: RendererDefinition = {
     { key: 'lazyUpdate', kind: 'prop', valueType: 'boolean' },
     { key: 'height', kind: 'prop' },
     { key: 'componentId', kind: 'prop' },
-    { key: 'events', kind: 'prop' },
+    // events 保持 raw schema（ignored = 跳过编译期深求值）：args 里的 `${event.*}`
+    // 模板必须在 dispatch 期结合 normalized event 求值（对齐 button onClick 语义），
+    // 渲染期求值会在 event 不存在时抛错。
+    { key: 'events', kind: 'ignored' },
     { key: 'map', kind: 'prop' },
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
   ],

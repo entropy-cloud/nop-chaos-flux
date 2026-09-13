@@ -84,10 +84,10 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### E5 — 集成优化
 
-| ID   | Status  | 内容                                                                      | 设计文档                                                | 依赖       |
-| ---- | ------- | ------------------------------------------------------------------------- | ------------------------------------------------------- | ---------- |
-| E5.1 | planned | 按需引入（粒度由 E1.1 裁决结果延续，控制包大小）、文档和示例、测试覆盖    | `analysis/echarts-migration-analysis.md`（§五 Phase 5） | E3.1, E4.1 |
-| E5.2 | todo    | nop-datav 集成评估（panel 指定渲染器的机制，analysis Open Question 移交） | `analysis/echarts-migration-analysis.md`（§五 Phase 5） | E5.1       |
+| ID   | Status | 内容                                                                      | 设计文档                                                | 依赖       |
+| ---- | ------ | ------------------------------------------------------------------------- | ------------------------------------------------------- | ---------- |
+| E5.1 | done   | 按需引入（粒度由 E1.1 裁决结果延续，控制包大小）、文档和示例、测试覆盖    | `analysis/echarts-migration-analysis.md`（§五 Phase 5） | E3.1, E4.1 |
+| E5.2 | todo   | nop-datav 集成评估（panel 指定渲染器的机制，analysis Open Question 移交） | `analysis/echarts-migration-analysis.md`（§五 Phase 5） | E5.1       |
 
 ---
 

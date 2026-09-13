@@ -186,6 +186,28 @@ describe('echarts events bridge (A3)', () => {
     expect(console.warn).toHaveBeenCalled();
   });
 
+  it('reads events from the raw schema so arg templates survive to dispatch (no render-time evaluation)', async () => {
+    const templatedAction = {
+      action: 'showToast',
+      args: { message: 'clicked: ${event.name}' },
+    };
+    const props = createProps({ option: { series: [] } });
+    // 模拟 definition 的 ignored 字段：events 只在 raw schema 上，编译器不深求值
+    (props.schema as EChartsSchema).events = { onClick: templatedAction };
+    delete (props.props as Record<string, unknown>).events;
+
+    render(<EChartsRenderer {...props} />);
+    await vi.waitFor(() => expect(mockChart.on).toHaveBeenCalledTimes(1));
+    const [, handler] = mockChart.on.mock.calls[0];
+    handler({ name: 'Jan' });
+    await vi.waitFor(() => {
+      expect(props.helpers.dispatch).toHaveBeenCalledWith(templatedAction, {
+        event: expect.objectContaining({ type: 'click', name: 'Jan' }),
+        scope: fakeScope,
+      });
+    });
+  });
+
   it('dispatches dataZoom events with their params payload', async () => {
     const props = createProps({
       option: { series: [] },

@@ -1,6 +1,6 @@
 # E5.1 — ECharts 集成优化（按需引入包体、文档和示例、测试覆盖）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-13
 > Source: `docs/backlog/echarts-integration-roadmap.md`（E5.1）, `analysis/echarts-migration-analysis.md`（rev 3, §六 风险与缓解）
 > Related: 前置 E1.1（按需引入粒度裁决）～E4.1（均 completed）
@@ -58,36 +58,36 @@
 
 ### Phase 1 - 隔离守卫与包体实测
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/__tests__/echarts-import-isolation.test.ts`, `docs/components/echarts/design.md`（「按需引入与包体」节，含自包含 harness）, `_tmp/echarts-size-*`（build 输出产物，用后即清；harness 源码内嵌 design.md）
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：隔离守卫测试对当前代码为绿；红侧有效性以临时植入违规 import 单独验证（注入→红→移除，证据记 daily log）。
-- [ ] Fix：`echarts-import-isolation.test.ts` 守卫规则落地（白名单 = echarts-setup.ts 全量 + echarts-renderer.tsx 的 type-only 与动态 import）。
-- [ ] Proof：包体实测——最小入口 vite 构建产物 min/gzip 体积记录于 design.md「按需引入与包体」节，**该节内嵌 harness 完整源码（最小入口 + vite config，约 20 行）使命令自包含可复现**，并记录 echarts 版本与构建工具版本、注明「同 setup 注册清单下的代理实测：宿主懒 chunk 还含渲染器组件小 chunk，echarts 部分与实测一致」的可比性口径；`_tmp/` 下的 build 输出产物用后即清。
+- [x] Proof：隔离守卫测试对当前代码为绿；红侧有效性以临时植入违规 import 单独验证（注入→红→移除，证据记 daily log）。（已验证：注入 `import { registerMap } from 'echarts/core'` 至 echarts-schemas.ts → 守卫红；移除 → 绿）
+- [x] Fix：`echarts-import-isolation.test.ts` 守卫规则落地（白名单 = echarts-setup.ts 全量 + echarts-renderer.tsx 的 type-only 与动态 import）。
+- [x] Proof：包体实测——最小入口 vite 构建产物 min/gzip 体积记录于 design.md「按需引入与包体」节，**该节内嵌 harness 完整源码（最小入口 + vite config，约 20 行）使命令自包含可复现**，并记录 echarts 版本与构建工具版本、注明「同 setup 注册清单下的代理实测：宿主懒 chunk 还含渲染器组件小 chunk，echarts 部分与实测一致」的可比性口径；`_tmp/` 下的 build 输出产物用后即清。（实测：echarts-setup 懒 chunk 1,418.99 kB min / 399.79 kB gzip）
 
 Exit Criteria:
 
-- [ ] 隔离守卫测试全绿且红侧有效性已验证（临时违规注入会红，证据记 daily log）。
-- [ ] design.md 含实测体积数字与自包含 harness（命令无需 plan 外文件即可复现）。
+- [x] 隔离守卫测试全绿且红侧有效性已验证（临时违规注入会红，证据记 daily log）。
+- [x] design.md 含实测体积数字与自包含 harness（命令无需 plan 外文件即可复现）。
 
 ### Phase 2 - 文档、示例与 e2e
 
-Status: planned
+Status: completed
 Targets: `docs/components/echarts/design.md`, `docs/components/echarts/example.json`, `docs/index.md`, `tests/e2e/component-lab/echarts-lab.spec.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] Fix：`docs/components/echarts/design.md`（最终态：双渲染器边界、schema 字段契约表、dataset/事件/主题/map 桥接、Failure Paths 表、验证锚点）+ `example.json`（静态 option、dataset 绑定、事件、map 四类示例）+ `docs/index.md` 路由行更新 + `docs/components/index.md` 清单补 `echarts`。
-- [ ] Proof（先红→绿）：`echarts-lab.spec.ts` e2e（test 取自 `../fixtures.js`，assertTrackedPageErrors 校验 fixture 管理的 page）——bar 场景 `[data-slot="echarts-canvas"] canvas` 存在且 boundingBox 非零；dataset 切换场景点击后 `data-slot="echarts-empty"` 不出现且容器无 `data-empty="true"`、无页面错误。
-- [ ] Proof：覆盖率核验——`pnpm --filter @nop-chaos/flux-renderers-data exec vitest run --coverage`，从 json-summary 逐文件核对 echarts 系文件 ≥ 80% 四阈值（包级聚合 fail-fast 之外的逐文件人工读数；不达标即补测）。
+- [x] Fix：`docs/components/echarts/design.md`（最终态：双渲染器边界、schema 字段契约表、dataset/事件/主题/map 桥接、Failure Paths 表、验证锚点）+ `example.json`（静态 option、dataset 绑定、事件、map 四类示例）+ `docs/index.md` 路由行更新 + `docs/components/index.md` 清单补 `echarts`。
+- [x] Proof（先红→绿）：`echarts-lab.spec.ts` e2e（test 取自 `../fixtures.js`，assertTrackedPageErrors 校验 fixture 管理的 page）——canvas 场景 `[data-slot="echarts-canvas"] canvas` 存在且 boundingBox 非零；dataset 切换场景点击后 `data-slot="echarts-empty"` 不出现且容器无 `data-empty="true"`、无页面错误。（2/2 全绿；e2e 首轮实证并修复一个 E2.1 遗留 live defect，见 Status Note）
+- [x] Proof：覆盖率核验——`pnpm --filter @nop-chaos/flux-renderers-data exec vitest run --coverage`，从 json-summary 逐文件核对 echarts 系文件 ≥ 80% 四阈值（echarts-setup 0% → 补真实加载测试 `echarts-setup.test.ts` 后 100%；全部 echarts 文件达标）。
 
 Exit Criteria:
 
-- [ ] design.md/example.json/index.md 落地且与 live 代码一致（字段、Failure Paths、诊断码逐项可对上）。
-- [ ] e2e spec 全绿（真实浏览器）。
-- [ ] echarts 文件覆盖率 ≥ 80% 或豁免理由记录在案。
+- [x] design.md/example.json/index.md 落地且与 live 代码一致（字段、Failure Paths、诊断码逐项可对上）。
+- [x] e2e spec 全绿（真实浏览器）。
+- [x] echarts 文件覆盖率 ≥ 80%（renderer 94.4 / theme 94.1 / setup 100 / validation 100 / schemas 100 / definition 100）。
 
 ## Draft Review Record
 
@@ -100,17 +100,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope 项已落地：隔离守卫、包体实测记录、文档示例、e2e、覆盖率核验
-- [ ] 行为/契约结果已达成：守卫规则与 white list 与 E1.1 类型隔离约束一致
-- [ ] 必要 focused verification 已完成：隔离守卫/e2e/coverage 全绿
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步（design.md/example.json/index.md、roadmap E5.1 → done、daily log 收口记录）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`（单元全量）+ `npx playwright test tests/e2e/component-lab/echarts-lab.spec.ts`（e2e 范围仅此 spec，非全量 e2e）
-- [ ] `pnpm check`（既有 i18n 4 键红之外零新增）
+- [x] 所有 in-scope 项已落地：隔离守卫、包体实测记录、文档示例、e2e、覆盖率核验
+- [x] 行为/契约结果已达成：守卫规则与 white list 与 E1.1 类型隔离约束一致
+- [x] 必要 focused verification 已完成：隔离守卫/e2e/coverage 全绿
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（e2e 实证的 events 渲染期深求值 live defect 已在本次修复并锁死，见 Status Note）
+- [x] 受影响的 owner docs 已同步（design.md/example.json/index.md、roadmap E5.1 → done、daily log 收口记录）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（audit verdict: approved）
+- [x] `pnpm typecheck`（37/37）
+- [x] `pnpm build`（37/37）
+- [x] `pnpm lint`（turbo eslint 37/37）
+- [x] `pnpm test`（单元全量 68/68 tasks，11,550 tests / 0 failed）+ `npx playwright test tests/e2e/component-lab/echarts-lab.spec.ts`（e2e 范围仅此 spec 2/2，非全量 e2e）
+- [x] `pnpm check`（既有 i18n 4 键红之外零新增）
 
 ## Deferred But Adjudicated
 
@@ -124,13 +124,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （收口时填写）
+Status Note: 2026-09-13 收口。按需引入包体（隔离守卫 + 实测 1,418.99 kB min / 399.79 kB gzip + 自包含 harness 文档化）、文档和示例（design.md/example.json/index 路由）、测试覆盖（真实浏览器 e2e 2/2 + echarts 文件覆盖率全 ≥80%）全部落地。**e2e 实证并修复一个 E2.1 遗留 live defect**：events 以普通 prop 声明导致编译器渲染期深求值 args 模板（`${event.name}` 每帧抛错，e2e 捕获 104 条 console.error）——修复为 definition `ignored` + 渲染器直读 raw schema + dispatch 期结合 normalized event 求值（对齐 button onClick 语义），四处锁死（definition/renderer/design.md/测试）。仓库级验证：typecheck 37/37、build 37/37、turbo eslint 37/37、test 68/68 tasks（11,550 tests / 0 failed）、echarts e2e 2/2、coverage 全达标、check 零新增命中。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent closure audit
-- Evidence: 待定
+- Auditor / Agent: 独立子 agent（fresh session，2026-09-13）
+- Evidence: verdict `approved`。独立实跑：4 个 echarts 测试文件 18/18；playwright echarts spec 2/2（webServer 自起）；coverage json-summary 逐文件读数与 plan 记录一致（renderer 94.4 / theme 94.1 / setup 100 / validation 100 / schemas 100 / definition 100）。行为抽查：design.md 包体节（数字/内嵌 harness/版本口径）、守卫三形态 regex 与白名单、events 修复四条腿完整（definition ignored → renderer raw schema → design.md 语义 → 测试锁死；grep 无 `props.props.events` 残留消费）、docs 路由两处、example 四类示例。文本一致性核对发现 Closure Gates 未勾为预收口状态（本段即收口终态）；E5 组头与 E5.1 状态的遗留 drift 已在 roadmap 收口时对齐。
 
 Follow-up:
 
-- （待收口时填写）
+- e2e 全场景矩阵 / coverage-manifest 与 examples.manifest 登记 / 注册清单收窄 → out-of-scope improvement（Non-Blocking Follow-ups 同项）。
+- no remaining plan-owned work

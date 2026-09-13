@@ -80,8 +80,10 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
   const [chartInstance, setChartInstance] = useState<EChartsType | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
-  const eventsMap = isPlainObject(props.props.events)
-    ? (props.props.events as Record<string, unknown>)
+  // events 读 raw schema（definition 中为 ignored 字段）：args 模板在 dispatch 期
+  // 结合 normalized event 求值，不经编译期深求值。
+  const eventsMap = isPlainObject(props.schema?.events)
+    ? (props.schema.events as Record<string, unknown>)
     : undefined;
 
   const option = props.props.option;

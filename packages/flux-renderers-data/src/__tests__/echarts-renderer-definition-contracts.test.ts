@@ -32,8 +32,17 @@ describe('echarts renderer definition contracts', () => {
     ]) {
       expect(fieldKinds[key]).toBe('prop');
     }
-    expect(fieldKinds.events).toBe('prop');
+    expect(fieldKinds.events).toBe('ignored');
     expect(fieldKinds.empty).toBe('value-or-region');
+  });
+
+  it('keeps events as an ignored field so arg templates survive to dispatch-time evaluation', () => {
+    // events 若声明为 prop，编译器会在渲染期深求值 args 模板，而 event 上下文
+    // 此时不存在（E5.1 e2e 实证的 console.error 风暴）。ignored + 渲染器直读
+    // raw schema 使 `${event.*}` 在 dispatch 期求值（对齐 button onClick 语义）。
+    expect(echartsRendererDefinition.fields?.find((f) => f.key === 'events')?.kind).toBe(
+      'ignored',
+    );
   });
 
   it('publishes event contracts for the nine native echarts event keys', () => {
