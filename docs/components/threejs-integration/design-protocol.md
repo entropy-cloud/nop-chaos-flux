@@ -34,15 +34,17 @@ openSocket?: (url: string, options?: WebSocketOptions, ctx?: ApiRequestContext) 
 
 ```typescript
 export interface ReconnectionManagerConfig {
-  maxRetries: number; // 默认 10
-  baseDelay: number; // ms，默认 500（保证「检测断开→首试启动 <1s」指标在 ±25% 抖动下成立）
-  maxDelay: number; // ms，默认 30000
+  maxRetries?: number; // 默认 10
+  baseDelay?: number; // ms，默认 500（保证「检测断开→首试启动 <1s」指标在 ±25% 抖动下成立）
+  maxDelay?: number; // ms，默认 30000
   onReconnect: () => void;
+  onGiveUp?: (code: string, message: string) => void; // 耗尽诊断（I3.1 实现回写）
   timer?: (cb: () => void, ms: number) => unknown; // 可注入（测试）
+  random?: () => number; // 抖动随机源可注入（测试确定性；I3.1 实现回写）
 }
 ```
 
-- `scheduleReconnect()`：指数退避 `baseDelay * 2^retryCount` + ±25% 随机抖动（防惊群），clamp 到 `maxDelay`；超过 `maxRetries` 给出并上报 `reconnect-give-up`。
+- `scheduleReconnect()`：指数退避 `baseDelay * 2^retryCount` + ±25% 随机抖动（防惊群），clamp 到 `maxDelay`；**pending 幂等——已有待触发 timer 时不重复调度（onerror+onclose 双触发只产生一次重连，I3.1 实现回写）**；超过 `maxRetries` 上报 `reconnect-give-up` 且不再调度。
 - `cancel()`：置 cancelled + 清 timer（幂等）。
 - `reset()`：连接成功（`onopen`）后调用，retryCount 归零、恢复可调度。
 - 可测性：timer 注入使退避序列可用 vitest fake timers 断言（I3.1「必须自动化」proof）。
@@ -77,7 +79,7 @@ export class IndustrialAdapter {
 | 建连             | `env.openSocket(url)` 同步返回（此刻 readyState 为 `connecting`，不可 send）；`onopen` → `reconnection.reset()` → 发送 subscribe 帧。`socket-unavailable` 诊断按 **adapter 实例生命周期** 去重（I3.1 实现回写）                                        |
 | 数据帧           | `onmessage` 属性赋值；`JSON.parse` 失败 → 上报 `socket-message-parse`（去重）；`type === 'data'` → 按 `address → tag` 映射做类型转换（bool→Boolean、int16→parseInt、float32→parseFloat，NaN 丢弃）→ `scope.update(\`dataSources.${tag.name}\`, value)` |
 | 断开             | `onclose` → `scheduleReconnect()`（主动 disconnect 除外——unsub 顺序：先置状态再 close，避免主动关闭触发重连）                                                                                                                                          |
-| 错误             | `onerror` → 上报 + `scheduleReconnect()`                                                                                                                                                                                                               |
+| 错误             | `onerror` → 上报（`socket-connect-failed`，每次连接事件一次）+ `scheduleReconnect()`（pending 幂等，双触发只一次）                                                                                                                                     |
 | 卸载             | `disconnectAll()`：close + `cancel()` 重连                                                                                                                                                                                                             |
 
 **scope 写入路径**：tag 值写入 `dataSources.<name>` 成员；three-canvas 绑定表达式以 `${dataSources.VALVE_001.position}` 消费——socket 数据与页面数据在 scope 层汇合，绑定桥接无需感知数据来源（design-data-binding.md §4 数据流起点）。
