@@ -144,6 +144,7 @@ export default defineConfig({
 - 单元：`packages/flux-renderers-data/src/__tests__/echarts-*.test.ts(x)`（theme/dataset-binding/events-bridge/advanced-charts/full-features/schema-validation/renderer/load-failure/import-isolation/definition-contracts）
 - 契约守卫：`contract-honesty.test.ts`（events?.<key> 字面引用）+ import isolation 守卫
 - 真实浏览器：`tests/e2e/component-lab/echarts-lab.spec.ts`
+- nop-datav 集成：`integration-nop-datav.md`（dashboard panel 机制评估 + 边界）与 `packages/flux-renderers-dashboard/src/dashboard-echarts-panel*.test.tsx`（机制/边界/降级隔离证明）
 - lab 场景：playground Renderer Lab → ECharts（dataset 切换/事件/主题/六类完整功能/七类高级图表）
 
 ## 原则审计

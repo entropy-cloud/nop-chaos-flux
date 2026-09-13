@@ -383,6 +383,9 @@ importers:
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      echarts:
+        specifier: ^6.0.0
+        version: 6.1.0
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)
@@ -740,6 +743,9 @@ importers:
       '@nop-chaos/flux-formula':
         specifier: workspace:*
         version: link:../flux-formula
+      '@nop-chaos/flux-renderers-data':
+        specifier: workspace:*
+        version: link:../flux-renderers-data
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)

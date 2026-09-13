@@ -1,6 +1,6 @@
 # ECharts 图表集成 Roadmap
 
-> 最后更新：2026-09-06
+> 最后更新：2026-09-13
 > 来源：`analysis/echarts-migration-analysis.md`（分析报告 rev 3，closed）
 > Mission：`missions/echarts-integration.json`
 
@@ -22,7 +22,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **E2. 核心图表** (`done`)
 - **E3. 高级图表** (`done`)
 - **E4. 完整功能** (`done`)
-- **E5. 集成优化** (`todo`)
+- **E5. 集成优化** (`done`)
 
 ## Framework / Platform Reuse
 
@@ -84,10 +84,10 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### E5 — 集成优化
 
-| ID   | Status  | 内容                                                                      | 设计文档                                                | 依赖       |
-| ---- | ------- | ------------------------------------------------------------------------- | ------------------------------------------------------- | ---------- |
-| E5.1 | done    | 按需引入（粒度由 E1.1 裁决结果延续，控制包大小）、文档和示例、测试覆盖    | `analysis/echarts-migration-analysis.md`（§五 Phase 5） | E3.1, E4.1 |
-| E5.2 | planned | nop-datav 集成评估（panel 指定渲染器的机制，analysis Open Question 移交） | `analysis/echarts-migration-analysis.md`（§五 Phase 5） | E5.1       |
+| ID   | Status | 内容                                                                      | 设计文档                                                | 依赖       |
+| ---- | ------ | ------------------------------------------------------------------------- | ------------------------------------------------------- | ---------- |
+| E5.1 | done   | 按需引入（粒度由 E1.1 裁决结果延续，控制包大小）、文档和示例、测试覆盖    | `analysis/echarts-migration-analysis.md`（§五 Phase 5） | E3.1, E4.1 |
+| E5.2 | done   | nop-datav 集成评估（panel 指定渲染器的机制，analysis Open Question 移交） | `analysis/echarts-migration-analysis.md`（§五 Phase 5） | E5.1       |
 
 ---
 
