@@ -481,6 +481,9 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('[data-testid="leafer-example-canvas"]')).toHaveCount(4, { timeout: 10_000 });
   },
+  'print-designer': async (page) => {
+    await expect(page.locator('[data-testid="print-designer-demo"]')).toBeVisible({ timeout: 15_000 });
+  },
   // DV (plan 2026-08-25-0215-1 Phase 2): the five routes below were registered
   // in DOMAIN_RENDERER_ROUTES without ROUTE_ASSERTIONS entries, so their
   // loop-generated smoke tests were no-ops and the :490 inventory test was red.

@@ -392,4 +392,46 @@ describe('ChartRenderer heatmap (self-drawn SVG grid)', () => {
     const equivalent = document.querySelector('[data-slot="chart-data-equivalent"]');
     expect(equivalent?.textContent).toContain('Mon/A: 10');
   });
+
+  it('renders visible axis labels and per-cell titles for the heatmap grid', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'heatmap',
+            source: [
+              { x: 'Mon', y: 'A', value: 10 },
+              { x: 'Tue', y: 'B', value: 20 },
+            ],
+          },
+        })}
+      />,
+    );
+
+    const heatmap = document.querySelector('[data-slot="chart-heatmap"]') as HTMLElement;
+    const labels = heatmap.querySelectorAll('text');
+    const labelTexts = Array.from(labels).map((label) => label.textContent);
+    expect(labelTexts).toEqual(expect.arrayContaining(['Mon', 'Tue', 'A', 'B']));
+    // 每格原生 title tooltip：坐标 + 数值。
+    const titles = heatmap.querySelectorAll('rect title');
+    expect(titles).toHaveLength(2);
+    expect(titles[0]?.textContent).toContain('Mon / A: 10');
+  });
+
+  it('localizes the heatmap aria label', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            title: 'Heat',
+            chartType: 'heatmap',
+            source: [{ x: 'Mon', y: 'A', value: 10 }],
+          },
+        })}
+      />,
+    );
+
+    const heatmap = document.querySelector('[data-slot="chart-heatmap"]') as HTMLElement;
+    expect(heatmap.getAttribute('aria-label')).toBe('Heat heatmap');
+  });
 });

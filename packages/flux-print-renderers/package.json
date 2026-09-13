@@ -2,7 +2,9 @@
   "name": "@nop-chaos/flux-print-renderers",
   "version": "0.1.0",
   "private": true,
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,10 +12,13 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./print-designer.css": {
+      "default": "./dist/print-designer.css"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/print-designer.css dist/print-designer.css",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

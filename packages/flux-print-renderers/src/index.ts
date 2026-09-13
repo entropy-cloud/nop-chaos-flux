@@ -1,3 +1,5 @@
+import './print-designer.css';
+
 export * from './schemas.js';
 export {
   PRINT_ELEMENT_RENDERERS,

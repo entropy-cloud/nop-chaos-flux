@@ -124,7 +124,23 @@ export function PrintInspector({ controller, className }: PrintInspectorProps) {
           <SelectField
             label={t('flux.print.inspector.paper')}
             value={template.page.paperName ?? 'custom'}
-            onChange={(value) => controller.updatePage({ paperName: value } as never)}
+            onChange={(value) => {
+              const preset = value === 'custom' ? undefined : PAPER_SIZE_PRESETS[value];
+              if (!preset) {
+                controller.updatePage({ paperName: undefined });
+                return;
+              }
+              // 预设是纵向基准尺寸；横向纸张交换宽高，保持 direction 元数据一致。
+              const landscape = paper.direction === 'horizontal';
+              controller.updatePage({
+                paperName: value,
+                paper: {
+                  ...paper,
+                  width: landscape ? preset.height : preset.width,
+                  height: landscape ? preset.width : preset.height,
+                },
+              });
+            }}
             options={[
               ...Object.keys(PAPER_SIZE_PRESETS).map((value) => ({ value, label: value.toUpperCase() })),
               { value: 'custom', label: t('flux.print.inspector.paperCustom') },
@@ -135,7 +151,14 @@ export function PrintInspector({ controller, className }: PrintInspectorProps) {
           <SelectField
             label={t('flux.print.inspector.direction')}
             value={paper.direction}
-            onChange={(value) => patchPaper({ direction: value as 'vertical' | 'horizontal' })}
+            onChange={(value) => {
+              const direction = value as 'vertical' | 'horizontal';
+              if (direction === paper.direction) return;
+              // 切向/横向时交换宽高，纸张字面尺寸始终就是版面尺寸。
+              controller.updatePage({
+                paper: { ...paper, direction, width: paper.height, height: paper.width },
+              });
+            }}
             options={[
               { value: 'vertical', label: t('flux.print.inspector.vertical') },
               { value: 'horizontal', label: t('flux.print.inspector.horizontal') },

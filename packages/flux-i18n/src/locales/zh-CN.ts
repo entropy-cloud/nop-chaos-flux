@@ -47,6 +47,11 @@ export const zhCN: Resource = {
       unsaved: '未保存',
       retry: '重试',
     },
+    chart: {
+      value: '数值',
+      references: '参考线: ',
+      heatmapAria: '{{name}} 热力图',
+    },
     pagination: {
       morePages: '更多页',
       rowsPerPage: '每页行数:',

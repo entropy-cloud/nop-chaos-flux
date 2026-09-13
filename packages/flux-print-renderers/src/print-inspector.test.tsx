@@ -149,11 +149,34 @@ const TEXT_LABELS: Record<string, string> = {
   printDate: '打印时间',
 };
 
-describe('16b-1 (P2): paper name preset select exists in the template section', () => {
-  it('red: inspector exposes a paperName preset select', () => {
+describe('paper preset and direction controls', () => {
+  it('exposes a paperName preset select and applies the preset dimensions', () => {
     const controller = makeController();
     render(<PrintInspector controller={controller} />);
-    // 当前实现：无纸张预设下拉，仅数值宽高 → 必红
     expect(screen.getByLabelText('纸张')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('纸张'), { target: { value: 'a5' } });
+    expect(controller.getTemplate().page.paperName).toBe('a5');
+    expect(controller.getTemplate().page.paper.width).toBe(148);
+    expect(controller.getTemplate().page.paper.height).toBe(210);
+  });
+
+  it('swaps width and height when direction changes', () => {
+    const controller = makeController();
+    render(<PrintInspector controller={controller} />);
+    fireEvent.change(screen.getByLabelText('方向'), { target: { value: 'horizontal' } });
+    const paper = controller.getTemplate().page.paper;
+    expect(paper.direction).toBe('horizontal');
+    expect(paper.width).toBe(297);
+    expect(paper.height).toBe(210);
+  });
+
+  it('applies portrait-basis presets swapped when the paper is landscape', () => {
+    const controller = makeController();
+    render(<PrintInspector controller={controller} />);
+    fireEvent.change(screen.getByLabelText('方向'), { target: { value: 'horizontal' } });
+    fireEvent.change(screen.getByLabelText('纸张'), { target: { value: 'a4' } });
+    const paper = controller.getTemplate().page.paper;
+    expect(paper.width).toBe(297);
+    expect(paper.height).toBe(210);
   });
 });

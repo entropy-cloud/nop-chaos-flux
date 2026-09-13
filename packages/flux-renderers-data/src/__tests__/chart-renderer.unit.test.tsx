@@ -142,6 +142,14 @@ describe('ChartRenderer', () => {
     expect(document.querySelector('[data-slot="chart-canvas"]')).toBeNull();
   });
 
+  it('shows the loading state (not the empty state) on a first async load with no data yet', () => {
+    render(<ChartRenderer {...makeProps({ props: { loading: true, source: [] } })} />);
+
+    expect(document.querySelector('[data-slot="chart-loading"]')).toBeTruthy();
+    expect(screen.getByTestId('spinner')).toBeTruthy();
+    expect(document.querySelector('[data-slot="chart-empty"]')).toBeNull();
+  });
+
   // DD1 "explicit empty state, never error" hard contract: every empty-ish
   // source shape ([], undefined, null) resolves to the empty branch instead of
   // throwing, and malformed series never throws (sanitizeSeries/isChartDatum

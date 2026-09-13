@@ -58,7 +58,7 @@ export function PrintPreview({ controller, open, onOpenChange }: PrintPreviewPro
                     // eslint-disable-next-line react/no-array-index-key -- 诊断无稳定 id，列表仅展示不重排
                     key={index}
                     className={
-                      diagnostic.level === 'error' ? 'text-xs text-destructive' : 'text-xs text-amber-600'
+                      diagnostic.level === 'error' ? 'text-xs text-destructive' : 'text-xs text-amber-600 dark:text-amber-400'
                     }
                   >
                     [{diagnostic.code}] {diagnostic.message}

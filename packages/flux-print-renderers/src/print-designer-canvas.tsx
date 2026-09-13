@@ -203,10 +203,10 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
           height: heightPx,
           marginLeft: RULER_SIZE_PX,
           marginTop: -heightPx,
-          backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.06) 1px, transparent 1px)`,
-          backgroundSize: `${gridSize}px ${gridSize}px`,
           background: template.page.background,
           backgroundColor: template.page.background ?? '#ffffff',
+          backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.06) 1px, transparent 1px)`,
+          backgroundSize: `${gridSize}px ${gridSize}px`,
         }}
         onPointerMove={handlePaperPointerMove}
         onPointerUp={handlePaperPointerUp}
@@ -268,6 +268,15 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
                 transform: element.rotate ? `rotate(${element.rotate}deg)` : undefined,
                 zIndex: element.zIndex,
                 cursor: 'move',
+                fontSize: element.style.fontSize ? `${element.style.fontSize}px` : undefined,
+                fontFamily: element.style.fontFamily,
+                fontWeight: element.style.fontWeight,
+                fontStyle: element.style.fontStyle,
+                textAlign: element.style.textAlign,
+                lineHeight: element.style.lineHeight,
+                color: element.style.color,
+                backgroundColor: element.style.backgroundColor,
+                opacity: element.style.opacity,
               }}
               onPointerDown={(event) => handleElementPointerDown(event, element)}
             >

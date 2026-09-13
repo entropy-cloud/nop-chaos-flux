@@ -65,4 +65,28 @@ describe('ChartLegendContent keys (S-6)', () => {
     // Two legend rows => two colored indicator squares must render.
     expect(container.querySelectorAll('[class~="shrink-0"]')).toHaveLength(2);
   });
+
+  it('falls back to payload value / dataKey when the config lookup misses (no blank labels)', () => {
+    // Pie-style payload: slice name arrives in `value`, config has no matching key.
+    const piePayload = [
+      { type: 'square', value: 'Direct', color: 'hsl(var(--chart-1))', dataKey: 'value' },
+    ] as never;
+    const { container: pieContainer } = render(
+      <ChartContainer id="legend-pie-fallback" config={{}}>
+        <ChartLegendContent payload={piePayload} />
+      </ChartContainer>,
+    );
+    expect(pieContainer.textContent).toContain('Direct');
+
+    // Cartesian-style payload: dataKey carries the series key, config keyed elsewhere.
+    const cartesianPayload = [
+      { type: 'rect', value: 12, color: 'hsl(var(--chart-2))', dataKey: 'revenue' },
+    ] as never;
+    const { container: cartesianContainer } = render(
+      <ChartContainer id="legend-cartesian-fallback" config={{}}>
+        <ChartLegendContent payload={cartesianPayload} />
+      </ChartContainer>,
+    );
+    expect(cartesianContainer.textContent).toContain('revenue');
+  });
 });

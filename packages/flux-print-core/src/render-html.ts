@@ -147,11 +147,8 @@ export function renderPrintTemplateToHtml(
 ): string {
   const { pages } = layoutPrintTemplate(template, data, options);
   const paper = template.page.paper;
-  const width = paper.width;
-  const height = paper.height;
-  const landscape = paper.direction === 'horizontal';
-  const pageWidth = landscape ? height : width;
-  const pageHeight = landscape ? width : height;
+  // paper.width/height 即字面页面尺寸（横向纸张由设计器交换宽高写入，direction 仅作元数据），
+  // @page 与 .fmt-page 必须同源，否则打印几何与版面几何错位。
   const body = pages.map((page, index) => renderPage(page, template, index, pages.length)).join('\n');
   return `<!doctype html>
 <html>
@@ -159,7 +156,7 @@ export function renderPrintTemplateToHtml(
 <meta charset="utf-8"/>
 <title>${escapeHtml(template.name)}</title>
 <style>
-@page { size: ${pageWidth}mm ${pageHeight}mm; margin: 0; }
+@page { size: ${paper.width}mm ${paper.height}mm; margin: 0; }
 html, body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .fmt-page { box-sizing: border-box; overflow: hidden; }
 .fmt-el { box-sizing: border-box; overflow: hidden; }

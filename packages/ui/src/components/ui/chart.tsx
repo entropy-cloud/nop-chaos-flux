@@ -310,6 +310,15 @@ function ChartLegendContent({
         .map((item) => {
           const key = `${nameKey ?? item.dataKey ?? 'value'}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
+          // Fallback chain keeps the legend readable when config only covers
+          // other key shapes: pie payloads carry the slice name in `value`,
+          // cartesian payloads expose the raw dataKey.
+          const fallbackLabel =
+            typeof item.value === 'string' && item.value.length > 0
+              ? item.value
+              : typeof item.dataKey === 'string'
+                ? item.dataKey
+                : undefined;
 
           return (
             <div
@@ -328,7 +337,7 @@ function ChartLegendContent({
                   }}
                 />
               )}
-              {itemConfig?.label}
+              {itemConfig?.label ?? fallbackLabel}
             </div>
           );
         })}

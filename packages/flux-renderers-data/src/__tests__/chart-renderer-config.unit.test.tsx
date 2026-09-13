@@ -638,4 +638,28 @@ describe('ChartRenderer SPC enhancement (referenceLines / band / markers)', () =
     const equivalent = document.querySelector('[data-slot="chart-data-equivalent"]');
     expect(equivalent?.textContent).toContain('References: UCL: 13, LCL: 7');
   });
+
+  it('keys the legend config by dataRegionKey so legend lookups match the recharts payload dataKey', () => {
+    render(
+      <ChartRenderer
+        {...makeProps({
+          props: {
+            chartType: 'bar',
+            xAxis: { dataKey: 'month' },
+            source: [
+              { month: 'Jan', revenue: 12 },
+              { month: 'Feb', revenue: 15 },
+            ],
+            series: [{ name: 'Revenue', dataRegionKey: 'revenue' }],
+          },
+        })}
+      />,
+    );
+
+    const containerProps = screen.getByTestId('ChartContainer').getAttribute('data-props') ?? '';
+    // dataRegionKey 键（recharts legend payload 的 dataKey）与 name 别名都必须存在，
+    // 否则 legend 查找落空只剩色点（2026-09-13 实机确认的空白标签缺陷）。
+    expect(containerProps).toContain('"revenue"');
+    expect(containerProps).toContain('"Revenue"');
+  });
 });

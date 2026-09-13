@@ -83,17 +83,24 @@ export function buildHeatmapGrid(rows: HeatmapRow[]): HeatmapGridModel {
   };
 }
 
-export function HeatmapGrid(props: { grid: HeatmapGridModel; accessibleName: string }) {
-  const { grid, accessibleName } = props;
+// 轴标签留白（viewBox 坐标）：左侧 y 标签列宽 + 底部 x 标签行高。
+const LABEL_GUTTER_X = 56;
+const LABEL_GUTTER_Y = 18;
+const LABEL_FONT_SIZE = 9;
+
+export function HeatmapGrid(props: { grid: HeatmapGridModel; ariaLabel: string }) {
+  const { grid, ariaLabel } = props;
+  const totalWidth = LABEL_GUTTER_X + grid.width;
+  const totalHeight = grid.height + LABEL_GUTTER_Y;
   return (
     <svg
       data-slot="chart-heatmap"
       data-x-labels={grid.xLabels.join(',')}
       data-y-labels={grid.yLabels.join(',')}
-      viewBox={`0 0 ${grid.width} ${grid.height}`}
+      viewBox={`0 0 ${totalWidth} ${totalHeight}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label={`${accessibleName} heatmap`}
+      aria-label={ariaLabel}
       className="h-full w-full"
     >
       {grid.cells.map((cell) => (
@@ -102,14 +109,41 @@ export function HeatmapGrid(props: { grid: HeatmapGridModel; accessibleName: str
           data-cell-x={String(grid.xLabels[cell.x])}
           data-cell-y={String(grid.yLabels[cell.y])}
           data-cell-value={String(cell.value)}
-          x={cell.x * HEATMAP_CELL_SIZE}
+          x={LABEL_GUTTER_X + cell.x * HEATMAP_CELL_SIZE}
           y={cell.y * HEATMAP_CELL_SIZE}
           width={HEATMAP_CELL_SIZE - 1}
           height={HEATMAP_CELL_SIZE - 1}
           rx={2}
           fill="hsl(var(--chart-1))"
           fillOpacity={cell.opacity}
-        />
+        >
+          <title>{`${grid.xLabels[cell.x]} / ${grid.yLabels[cell.y]}: ${cell.value}`}</title>
+        </rect>
+      ))}
+      {grid.xLabels.map((label, index) => (
+        <text
+          key={`heatmap-x-label-${label}`}
+          x={LABEL_GUTTER_X + index * HEATMAP_CELL_SIZE + HEATMAP_CELL_SIZE / 2}
+          y={grid.height + LABEL_FONT_SIZE + 3}
+          textAnchor="middle"
+          fontSize={LABEL_FONT_SIZE}
+          fill="hsl(var(--muted-foreground))"
+        >
+          {label}
+        </text>
+      ))}
+      {grid.yLabels.map((label, index) => (
+        <text
+          key={`heatmap-y-label-${label}`}
+          x={LABEL_GUTTER_X - 4}
+          y={index * HEATMAP_CELL_SIZE + HEATMAP_CELL_SIZE / 2}
+          textAnchor="end"
+          dominantBaseline="middle"
+          fontSize={LABEL_FONT_SIZE}
+          fill="hsl(var(--muted-foreground))"
+        >
+          {label}
+        </text>
       ))}
     </svg>
   );

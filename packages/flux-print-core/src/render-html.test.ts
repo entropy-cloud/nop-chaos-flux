@@ -48,6 +48,17 @@ describe('renderPrintTemplateToHtml', () => {
     expect(html).toContain('出库单');
   });
 
+  it('keeps @page, .fmt-page and pdf page geometry identical for landscape paper (width/height are literal)', () => {
+    const template = makeTemplate([el({ type: 'text', id: 't1', text: '横向' })]);
+    template.page.paper = { ...template.page.paper, width: 297, height: 210, direction: 'horizontal' };
+    const html = renderPrintTemplateToHtml(template, {});
+    expect(html).toContain('@page { size: 297mm 210mm; margin: 0; }');
+    expect(html).toContain('width:297mm');
+    expect(html).toContain('height:210mm');
+    const pages = renderPrintPages(template, {});
+    expect(pages[0]).toMatchObject({ widthMm: 297, heightMm: 210 });
+  });
+
   it('positions elements in absolute page coordinates', () => {
     const html = renderPrintTemplateToHtml(makeTemplate([el({ type: 'rect', id: 'r', left: 5, top: 6 })]), {});
     // 默认模板边距 15mm：body 原点 (15,15) + 元素 (5,6)

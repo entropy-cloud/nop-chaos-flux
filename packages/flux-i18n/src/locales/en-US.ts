@@ -46,6 +46,11 @@ export const enUS: Resource = {
       unsaved: 'Unsaved',
       retry: 'Retry',
     },
+    chart: {
+      value: 'Value',
+      references: 'References: ',
+      heatmapAria: '{{name}} heatmap',
+    },
     pagination: {
       morePages: 'More pages',
       rowsPerPage: 'Rows per page:',

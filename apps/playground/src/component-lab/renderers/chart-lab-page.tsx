@@ -122,6 +122,36 @@ const stackedData = [
   { month: 'Jun', newUsers: 1900, returning: 2600 },
 ];
 
+const heatmapChart = {
+  type: 'page',
+  body: [
+    {
+      type: 'chart',
+      chartType: 'heatmap',
+      title: 'Deployment load',
+      source: '${heatmapData}',
+    },
+  ],
+};
+
+const heatmapData = [
+  { x: 'Mon', y: 'api', value: 12 },
+  { x: 'Tue', y: 'api', value: 28 },
+  { x: 'Wed', y: 'api', value: 19 },
+  { x: 'Thu', y: 'api', value: 34 },
+  { x: 'Fri', y: 'api', value: 22 },
+  { x: 'Mon', y: 'web', value: 8 },
+  { x: 'Tue', y: 'web', value: 15 },
+  { x: 'Wed', y: 'web', value: 11 },
+  { x: 'Thu', y: 'web', value: 17 },
+  { x: 'Fri', y: 'web', value: 26 },
+  { x: 'Mon', y: 'worker', value: 21 },
+  { x: 'Tue', y: 'worker', value: 9 },
+  { x: 'Wed', y: 'worker', value: 30 },
+  { x: 'Thu', y: 'worker', value: 14 },
+  { x: 'Fri', y: 'worker', value: 18 },
+];
+
 export function ChartLabPage() {
   return (
     <MultiScenarioLabPage
@@ -168,6 +198,13 @@ export function ChartLabPage() {
             'legend:true forces the legend to render even for a single series (default heuristic hides it for one series).',
           schema: legendToggleChart,
           data: { chartData },
+        },
+        {
+          title: 'Heatmap — self-drawn grid with axis labels and cell tooltips',
+          description:
+            'chartType:"heatmap" renders a self-drawn SVG grid from {x, y, value} rows. Axis labels and per-cell native tooltips are built in.',
+          schema: heatmapChart,
+          data: { heatmapData },
         },
         {
           title: 'Host chart data flow and empty state (C4.3 Phase 3)',

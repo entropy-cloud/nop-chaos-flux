@@ -1,0 +1,216 @@
+/*
+ * Print designer visual layer (canvas chrome + design-surface affordances).
+ * Theme chrome (rulers/selection/handles/guides) uses design tokens so dark hosts adapt;
+ * paper-surface styles mirror the print output's ink semantics (#999 borders, #fff paper).
+ */
+
+.nop-print-canvas {
+  position: relative;
+  display: flow-root;
+}
+
+/* ---- rulers ---------------------------------------------------------- */
+
+.nop-print-canvas-ruler-corner {
+  background: hsl(var(--muted) / 0.6);
+  border-right: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.nop-print-canvas-ruler-top,
+.nop-print-canvas-ruler-left {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--muted) / 0.35);
+  color: hsl(var(--muted-foreground));
+  font-size: 9px;
+  line-height: 1;
+  user-select: none;
+}
+
+.nop-print-canvas-ruler-top {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.nop-print-canvas-ruler-left {
+  border-right: 1px solid hsl(var(--border));
+}
+
+.nop-print-canvas-ruler-tick {
+  position: absolute;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+
+.nop-print-canvas-ruler-top .nop-print-canvas-ruler-tick {
+  top: 3px;
+  padding-left: 2px;
+  border-left: 1px solid hsl(var(--border));
+  height: 6px;
+}
+
+.nop-print-canvas-ruler-left .nop-print-canvas-ruler-tick {
+  left: 2px;
+  padding-top: 2px;
+  border-top: 1px solid hsl(var(--border));
+  width: 6px;
+}
+
+/* ---- paper ------------------------------------------------------------ */
+
+.nop-print-paper {
+  box-shadow:
+    0 0 0 1px hsl(var(--border)),
+    0 2px 8px rgb(0 0 0 / 0.06),
+    0 12px 32px rgb(0 0 0 / 0.12);
+  touch-action: none;
+}
+
+/* Region guides: header/footer boundaries + body margin box. Pointer events
+   stay on the paper so clicks/drag keep working through the overlays. */
+.nop-print-region-body {
+  border: 1px dashed hsl(var(--border));
+  pointer-events: none;
+}
+
+.nop-print-region-header {
+  border-bottom: 1px dashed hsl(var(--border));
+  pointer-events: none;
+}
+
+.nop-print-region-footer {
+  border-top: 1px dashed hsl(var(--border));
+  pointer-events: none;
+}
+
+/* ---- element selection affordances ------------------------------------ */
+
+.nop-print-element {
+  cursor: move;
+}
+
+.nop-print-element-selected {
+  outline: 1.5px solid hsl(var(--primary));
+}
+
+.nop-print-element-handle {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--primary));
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.nop-print-element-handle[data-resize-handle='nw'],
+.nop-print-element-handle[data-resize-handle='se'] {
+  cursor: nwse-resize;
+}
+
+.nop-print-element-handle[data-resize-handle='ne'],
+.nop-print-element-handle[data-resize-handle='sw'] {
+  cursor: nesw-resize;
+}
+
+.nop-print-element-handle[data-resize-handle='n'],
+.nop-print-element-handle[data-resize-handle='s'] {
+  cursor: ns-resize;
+}
+
+.nop-print-element-handle[data-resize-handle='e'],
+.nop-print-element-handle[data-resize-handle='w'] {
+  cursor: ew-resize;
+}
+
+.nop-print-element-rotate-handle {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--primary));
+  border-radius: 9999px;
+  box-sizing: border-box;
+  cursor: grab;
+}
+
+.nop-print-element-rotate-handle:active {
+  cursor: grabbing;
+}
+
+/* ---- palette ------------------------------------------------------------ */
+
+.nop-print-palette-item {
+  cursor: grab;
+}
+
+.nop-print-palette-item:active {
+  cursor: grabbing;
+}
+
+/* ---- design-surface element previews ----------------------------------- */
+
+.fmt-design-text,
+.fmt-design-pagenumber,
+.fmt-design-printdate,
+.fmt-design-unknown {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  word-break: break-all;
+}
+
+.fmt-design-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fmt-design-table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.fmt-design-table th,
+.fmt-design-table td {
+  border: 1px solid #999;
+  padding: 0 2px;
+  font-size: 12px;
+  font-weight: normal;
+  text-align: left;
+  overflow: hidden;
+}
+
+.fmt-design-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border: 1px dashed #999;
+  color: #999;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.fmt-design-line {
+  display: block;
+}
+
+.fmt-design-line[data-line-direction='vertical'] {
+  width: 0;
+  height: 100%;
+  border-left: 1px solid #999;
+}
+
+.fmt-design-line[data-line-direction='horizontal'],
+.fmt-design-line:not([data-line-direction='vertical']) {
+  width: 100%;
+  height: 0;
+  border-top: 1px solid #999;
+}
+
+.fmt-design-rect {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #999;
+}

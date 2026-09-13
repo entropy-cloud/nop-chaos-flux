@@ -130,12 +130,15 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const chartConfig: ChartConfig = (() => {
     const config: ChartConfig = {};
     series.forEach((s, i) => {
-      if (s.name) {
-        config[s.name] = { label: s.name, color: palette[i % palette.length] };
-      }
+      if (!s.name && !s.dataRegionKey) return;
+      const entry = { label: s.name ?? s.dataRegionKey!, color: palette[i % palette.length] };
+      // Legend/tooltip 查找键是 recharts payload 的 dataKey（= dataRegionKey），
+      // 同时保留 name 别名，两种查找路径都能命中标签。
+      if (s.dataRegionKey) config[s.dataRegionKey] = entry;
+      if (s.name) config[s.name] = entry;
     });
     if (Object.keys(config).length === 0) {
-      config.value = { label: titleText ?? 'Value', color: palette[0] };
+      config.value = { label: titleText ?? t('flux.chart.value'), color: palette[0] };
     }
     return config;
   })();
@@ -261,7 +264,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   })();
   const referenceSummary =
     referenceLines.length > 0
-      ? `References: ${referenceLines
+      ? `${t('flux.chart.references')}${referenceLines
           .map((line) => `${line.label ?? 'reference'}: ${line.value}`)
           .join(', ')}`
       : undefined;
@@ -359,7 +362,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
   const renderChart = () => {
     if (isHeatmap) {
-      return <HeatmapGrid grid={heatmapGrid} accessibleName={chartAccessibleName} />;
+      return <HeatmapGrid grid={heatmapGrid} ariaLabel={t('flux.chart.heatmapAria', { name: chartAccessibleName })} />;
     }
 
     if (resolvedChartType === 'pie') {
@@ -564,7 +567,8 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       data-responsive-supported={responsiveSupported ? 'true' : undefined}
     >
       {hasTitleContent ? <div data-slot="chart-title" id={titleId}>{titleContent}</div> : null}
-      {isEmpty ? (
+      {/* loading 优先于空态：首次异步加载（source 尚空）显示 loading 而非"暂无数据"。 */}
+      {isEmpty && !loading ? (
         <div data-slot="chart-empty">{emptyContent}</div>
       ) : (
         <div
@@ -596,6 +600,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           </div>
           {loading ? (
             <div
+              data-slot="chart-loading"
               role="status"
               aria-live="polite"
               style={{

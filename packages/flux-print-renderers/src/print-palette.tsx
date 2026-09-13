@@ -1,5 +1,5 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import React from 'react';
 import { PRINT_ELEMENT_TYPES, type PrintElementType } from '@nop-chaos/flux-print-core';
 import type { PrintEditorController } from './editor/use-print-editor.js';
@@ -37,17 +37,18 @@ export function PrintPalette({ controller, className }: PrintPaletteProps) {
       <div className="text-sm font-medium text-foreground px-2 py-1">{t('flux.print.palette.title')}</div>
       <div className="grid grid-cols-2 gap-1 p-1">
         {PRINT_ELEMENT_TYPES.map((type) => (
-          <button
+          <Button
             key={type}
             type="button"
-            className="nop-print-palette-item flex flex-col items-center gap-1 rounded-md border border-border px-2 py-3 text-xs text-foreground hover:bg-accent"
+            variant="outline"
+            className="nop-print-palette-item flex flex-col items-center gap-1 px-2 py-3 text-xs"
             draggable
             onDragStart={(event) => handleDropIntoCanvas(event, type)}
             onClick={() => controller.addElement(type)}
             data-palette-type={type}
           >
             <span>{t(ELEMENT_LABEL_KEYS[type])}</span>
-          </button>
+          </Button>
         ))}
       </div>
     </div>
