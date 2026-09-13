@@ -3,14 +3,20 @@ import { t } from '../../lib/i18n.js';
 
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
-import { ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon, MoreHorizontalIcon } from 'lucide-react';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
+  MoreHorizontalIcon,
+} from 'lucide-react';
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
   return (
     <nav
       aria-label="pagination"
       data-slot="pagination"
-      className={cn('nop-pagination ','mx-auto flex w-full justify-center', className)}
+      className={cn('nop-pagination ', 'mx-auto flex w-full justify-center', className)}
       {...props}
     />
   );
@@ -20,7 +26,7 @@ function PaginationContent({ className, ...props }: React.ComponentProps<'ul'>) 
   return (
     <ul
       data-slot="pagination-content"
-      className={cn('nop-pagination ','flex items-center gap-0.5', className)}
+      className={cn('flex items-center gap-0.5', className)}
       {...props}
     />
   );
@@ -40,7 +46,7 @@ function PaginationLink({ className, isActive, size = 'icon', ...props }: Pagina
     <Button
       variant={isActive ? 'outline' : 'ghost'}
       size={size}
-      className={cn('nop-pagination ',className)}
+      className={cn(className)}
       nativeButton={false}
       render={
         <a
@@ -65,7 +71,7 @@ function PaginationPrevious({
       aria-label={text}
       title={title ?? text}
       size="default"
-      className={cn('nop-pagination ','pl-1.5!', className)}
+      className={cn('pl-1.5!', className)}
       {...props}
     >
       <ChevronLeftIcon data-icon="inline-start" />
@@ -84,7 +90,7 @@ function PaginationFirst({
       aria-label={text}
       title={title ?? text}
       size="default"
-      className={cn('nop-pagination ','pl-1.5!', className)}
+      className={cn('pl-1.5!', className)}
       {...props}
     >
       <ChevronsLeftIcon data-icon="inline-start" />
@@ -103,7 +109,7 @@ function PaginationLast({
       aria-label={text}
       title={title ?? text}
       size="default"
-      className={cn('nop-pagination ','pr-1.5!', className)}
+      className={cn('pr-1.5!', className)}
       {...props}
     >
       <ChevronsRightIcon data-icon="inline-end" />
@@ -122,7 +128,7 @@ function PaginationNext({
       aria-label={text}
       title={title ?? text}
       size="default"
-      className={cn('nop-pagination ','pr-1.5!', className)}
+      className={cn('pr-1.5!', className)}
       {...props}
     >
       <ChevronRightIcon data-icon="inline-end" />
@@ -135,7 +141,7 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<'span'
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn('nop-pagination ',
+      className={cn(
         "flex size-8 items-center justify-center [&_svg:not([class*='size-'])]:size-4",
         className,
       )}

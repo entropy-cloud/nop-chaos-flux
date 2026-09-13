@@ -41,10 +41,7 @@ describe('Toaster imperative API — StrictMode safety (B6.2: T2)', () => {
 
     // 双跑 effect 的风险点：若 Flux wrapper 在 effect 里创建 toast，StrictMode 会双发 → 这里会拿到 2。
     // wrapper 无 effect → 恰好一条。
-    await expect.poll(
-      () => countRenderedToasts(),
-      { timeout: 1000 },
-    ).toBe(1);
+    await expect.poll(() => countRenderedToasts(), { timeout: 1000 }).toBe(1);
 
     // store 层面也断言只有一条在册 toast（sonner 暴露的同步视图）。
     expect(toast.getToasts()).toHaveLength(1);
@@ -61,9 +58,6 @@ describe('Toaster imperative API — StrictMode safety (B6.2: T2)', () => {
       toast.error('err-once');
     });
 
-    await expect.poll(
-      () => countRenderedToasts(),
-      { timeout: 1000 },
-    ).toBe(1);
+    await expect.poll(() => countRenderedToasts(), { timeout: 1000 }).toBe(1);
   });
 });

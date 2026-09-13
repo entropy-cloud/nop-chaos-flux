@@ -27,7 +27,7 @@ describe('scheduleDebounce', () => {
     const secondPromise = scheduleDebounce(map, 'key', 10, () => 'second');
 
     await secondPromise;
-    expect(secondPromise).resolves.toBe('second');
+    await expect(secondPromise).resolves.toBe('second');
 
     await vi.waitFor(() => {
       expect(firstResolve).toHaveBeenCalledWith(undefined);

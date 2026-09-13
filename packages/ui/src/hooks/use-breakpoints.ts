@@ -29,7 +29,6 @@ export function useBreakpoints(queries: string[]): Array<boolean | null> {
   React.useEffect(() => {
     const qs = queriesKey ? queriesKey.split('|||') : [];
     if (!hasMatchMedia()) {
-      setMatches(qs.map(() => null));
       return;
     }
 
@@ -38,9 +37,15 @@ export function useBreakpoints(queries: string[]): Array<boolean | null> {
       setMatches(mqls.map((mql) => mql.matches));
     };
 
-    update();
+    // Sync to the latest values without a synchronous setState in the effect
+    // body (the state initializer already covers first render; this handles
+    // query-list changes mid-session).
+    const identity = requestAnimationFrame(update);
     mqls.forEach((mql) => mql.addEventListener('change', update));
-    return () => mqls.forEach((mql) => mql.removeEventListener('change', update));
+    return () => {
+      cancelAnimationFrame(identity);
+      mqls.forEach((mql) => mql.removeEventListener('change', update));
+    };
   }, [queriesKey]);
 
   return matches;

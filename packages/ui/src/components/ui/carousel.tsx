@@ -99,11 +99,15 @@ function Carousel({
 
   React.useEffect(() => {
     if (!api) return;
-    onSelect(api);
+    // Defer the initial state sync by one frame: calling onSelect (which
+    // setState) synchronously in the effect body triggers a cascading render
+    // (react-hooks/set-state-in-effect); the frame delay is imperceptible.
+    const identity = requestAnimationFrame(() => onSelect(api));
     api.on('reInit', onSelect);
     api.on('select', onSelect);
 
     return () => {
+      cancelAnimationFrame(identity);
       api?.off('reInit', onSelect);
       api?.off('select', onSelect);
     };
@@ -127,7 +131,7 @@ function Carousel({
     <CarouselContext.Provider value={contextValue}>
       <div
         onKeyDownCapture={handleKeyDown}
-        className={cn('nop-carousel ','relative', className)}
+        className={cn('nop-carousel ', 'relative', className)}
         role="region"
         aria-roledescription="carousel"
         aria-label={label ?? t('flux.carousel.label')}
@@ -146,7 +150,7 @@ function CarouselContent({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div ref={carouselRef} className="overflow-hidden" data-slot="carousel-content">
       <div
-        className={cn('nop-carousel ','flex', orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col', className)}
+        className={cn('flex', orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col', className)}
         {...props}
       />
     </div>
@@ -161,7 +165,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<'div'>) {
       role="group"
       aria-roledescription="slide"
       data-slot="carousel-item"
-      className={cn('nop-carousel ',
+      className={cn(
         'min-w-0 shrink-0 grow-0 basis-full',
         orientation === 'horizontal' ? 'pl-4' : 'pt-4',
         className,
@@ -184,7 +188,7 @@ function CarouselPrevious({
       data-slot="carousel-previous"
       variant={variant}
       size={size}
-      className={cn('nop-carousel ',
+      className={cn(
         'absolute touch-manipulation rounded-full',
         orientation === 'horizontal'
           ? 'top-1/2 -left-12 -translate-y-1/2'
@@ -214,7 +218,7 @@ function CarouselNext({
       data-slot="carousel-next"
       variant={variant}
       size={size}
-      className={cn('nop-carousel ',
+      className={cn(
         'absolute touch-manipulation rounded-full',
         orientation === 'horizontal'
           ? 'top-1/2 -right-12 -translate-y-1/2'
