@@ -81,3 +81,24 @@ describe('useThreeEvents (plan 465 Phase 5)', () => {
     expect(unsubHover).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('useThreeEvents onEvent forwarding (plan 466)', () => {
+  it('invokes onEvent for engine events even without declared actions', () => {
+    const onEvent = vi.fn();
+    const pickListeners: Array<(e: { modelId: string; point: { x: number; y: number; z: number } }) => void> = [];
+    const engine = {
+      onPick: (cb: (e: { modelId: string; point: { x: number; y: number; z: number } }) => void) => {
+        pickListeners.push(cb);
+        return () => undefined;
+      },
+      onHover: () => () => undefined,
+    } as unknown as SceneManager;
+    const Probe = () => {
+      useThreeEvents({ events: {}, helpers: { dispatch: vi.fn() } as unknown as RendererHelpers, engine, onEvent });
+      return null;
+    };
+    render(<Probe />);
+    pickListeners[0]({ modelId: 'm', point: { x: 0, y: 0, z: 0 } });
+    expect(onEvent).toHaveBeenCalledWith('object:click', { modelId: 'm', point: { x: 0, y: 0, z: 0 } });
+  });
+});

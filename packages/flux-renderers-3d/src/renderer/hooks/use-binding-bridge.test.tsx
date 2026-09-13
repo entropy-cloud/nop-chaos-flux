@@ -201,3 +201,33 @@ describe('useBindingBridge (plan 465 Phase 5, real compiler + controlled scope, 
     expect(fakeB.latestQueue().drain()).toEqual([]);
   });
 });
+
+describe('useBindingBridge branch supplement (plan 466 coverage policy)', () => {
+  it('static compiled binding is skipped without enqueueing', async () => {
+    const fake = makeFakeEngine();
+    // 纯常量表达式：平台折叠为 static → 桥接 continue（不入队）
+    renderBridge([valueBinding('${1 + 1}')], fake.engine);
+    await flushMicrotasks();
+    expect(fake.latestQueue().drain()).toEqual([]);
+  });
+
+  it('reports String(error) for non-Error evaluate failures', async () => {
+    const fake = makeFakeEngine();
+    const onError = vi.fn();
+    const environment = createThreeTestEnvironment([], { sceneState: { valve1: 5 } });
+    const evalSpy = vi.spyOn(environment.expressionCompiler, 'evaluateValue').mockImplementation(() => {
+      throw 'plain failure';
+    });
+    renderWithThreeEnvironment(
+      <BindingProbe
+        bindings={[valueBinding('${sceneState.valve1}')]}
+        engine={fake.engine}
+        onError={onError}
+      />,
+      environment,
+    );
+    await flushMicrotasks();
+    expect(onError).toHaveBeenCalledWith('flux-evaluate-failed', 'plain failure', 'plain failure');
+    evalSpy.mockRestore();
+  });
+});

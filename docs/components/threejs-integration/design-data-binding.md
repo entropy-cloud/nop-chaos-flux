@@ -97,7 +97,12 @@ bindings + compiler + env
 
 ```typescript
 export class TransformEngine {
-  constructor(compiler: ExpressionCompiler, env: RendererEnv);
+  constructor(
+    compiler: ExpressionCompiler,
+    env: RendererEnv,
+    onError?: (code, message, error?) => void,
+  );
+  setErrorHandler(handler?): void; // 诊断通道延迟接线（hook effect 注入）
   apply(binding: DataBinding, value: unknown): unknown;
 }
 ```

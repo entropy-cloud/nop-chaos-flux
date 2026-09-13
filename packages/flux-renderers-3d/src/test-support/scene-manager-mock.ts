@@ -33,6 +33,9 @@ export class SceneManager {
     return () => undefined;
   });
   updateProperty = vi.fn();
+  registerClips = vi.fn();
+  startClip = vi.fn();
+  notifyEvent = vi.fn();
   dispose = vi.fn();
   getScene = vi.fn(() => new THREE.Scene());
   resize = vi.fn();

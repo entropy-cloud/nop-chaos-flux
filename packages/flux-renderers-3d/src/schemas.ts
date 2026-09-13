@@ -59,11 +59,38 @@ export interface FogConfig {
   far: number;
 }
 
+export type PrimitiveGeometryType = 'box' | 'sphere' | 'cylinder' | 'plane' | 'cone' | 'torus';
+
+export interface PrimitiveGeometryConfig {
+  type: PrimitiveGeometryType;
+  /** 几何参数（按 type 约定：box width/height/depth；sphere radius/widthSegments/heightSegments 等） */
+  args?: Record<string, number>;
+}
+
+export type PrimitiveMaterialType = 'standard' | 'basic' | 'lambert' | 'phong';
+
+export interface PrimitiveMaterialConfig {
+  type?: PrimitiveMaterialType;
+  color?: string;
+  opacity?: number;
+  transparent?: boolean;
+  wireframe?: boolean;
+  flatShading?: boolean;
+}
+
+/** 声明式图元（无 GLB）：geometry 必填，material 缺省 MeshStandardMaterial */
+export interface PrimitiveModelConfig {
+  geometry: PrimitiveGeometryConfig;
+  material?: PrimitiveMaterialConfig;
+}
+
 export interface ModelConfig {
   /** 唯一 id，绑定引用键；加载后 mesh.name = id */
   id: string;
-  /** GLTF/GLB 资源地址 */
-  url: string;
+  /** GLTF/GLB 资源地址（与 primitive 互斥：url XOR primitive，双源 primitive 优先） */
+  url?: string;
+  /** 声明式图元：给定时同步注册（即时就绪，不经 loader） */
+  primitive?: PrimitiveModelConfig;
   position?: [number, number, number];
   /** 弧度；Euler.set 要求三元（z 必填） */
   rotation?: [number, number, number];

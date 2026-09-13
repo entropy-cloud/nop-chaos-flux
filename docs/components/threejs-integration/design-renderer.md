@@ -35,9 +35,31 @@ export interface ThreeSceneConfig {
   models: ModelConfig[];
 }
 
+export interface PrimitiveGeometryConfig {
+  type: 'box' | 'sphere' | 'cylinder' | 'plane' | 'cone' | 'torus';
+  args?: Record<string, number>; // 按 type 约定（box width/height/depth；sphere radius/... ）
+}
+
+export type PrimitiveMaterialType = 'standard' | 'basic' | 'lambert' | 'phong';
+
+export interface PrimitiveMaterialConfig {
+  type?: PrimitiveMaterialType;
+  color?: string;
+  opacity?: number;
+  transparent?: boolean;
+  wireframe?: boolean;
+  flatShading?: boolean;
+}
+
+export interface PrimitiveModelConfig {
+  geometry: PrimitiveGeometryConfig;
+  material?: PrimitiveMaterialConfig; // 缺省 MeshStandardMaterial
+}
+
 export interface ModelConfig {
   id: string; // 唯一，绑定引用键
-  url: string; // GLTF/GLB
+  url?: string; // GLTF/GLB（与 primitive 互斥：url XOR primitive，双源 primitive 优先；I2.2 实现回写）
+  primitive?: PrimitiveModelConfig; // 声明式图元：同步注册、即时就绪（I2.2 实现回写）
   position?: [number, number, number];
   rotation?: [number, number, number]; // 弧度；Euler.set 要求三元（z 必填）
   scale?: [number, number, number];

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { ExpressionCompiler, RendererEnv } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { analyzeBindingSubscriptions, createPrivateEvalScope, normalizeBindingExpression } from '../../binding/flux-eval.js';
+import { TransformEngine } from '../../binding/transform-engine.js';
 import type { DataBinding } from '../../schemas.js';
 import type { SceneManager } from '../../engine/scene-manager.js';
 
@@ -13,7 +14,7 @@ export interface UseBindingBridgeArgs {
   /** 非升级诊断通道：(code, message, error?)，调用方做 (表达式, code) 去重外的展示 */
   onError?: (code: string, message: string, error?: unknown) => void;
   /**
-   * 值转换接缝（I2.2 TransformEngine 落位前为 identity 直通，plan 465 Non-Goals）。
+   * 值转换覆写（缺省使用 TransformEngine：range→convert→condition，design-data-binding §5）。
    */
   transform?: (binding: DataBinding, value: unknown) => unknown;
 }
@@ -45,6 +46,13 @@ export function useBindingBridge(args: UseBindingBridgeArgs): void {
   useEffect(() => {
     latest.current = { transform, onError };
   });
+  // TransformEngine 默认转换核（随 compiler/env 身份创建；诊断通道经 effect 延迟接线）
+  const transformEngine = useMemo(() => new TransformEngine(expressionCompiler, env), [expressionCompiler, env]);
+  useEffect(() => {
+    transformEngine.setErrorHandler((code, message, error) => {
+      latest.current.onError?.(code, message, error);
+    });
+  }, [transformEngine]);
 
   const { paths, depsEmptyExpressions } = useMemo(
     () => analyzeBindingSubscriptions(bindings ?? [], { compiler: expressionCompiler, env }),
@@ -125,14 +133,14 @@ export function useBindingBridge(args: UseBindingBridgeArgs): void {
       lastValuesRef.current.set(binding.id, value);
       const transformed = latest.current.transform
         ? latest.current.transform(binding, value)
-        : value;
+        : transformEngine.apply(binding, value);
       pendingRef.current.push({
         modelId: binding.target.modelId,
         path: binding.target.path,
         value: transformed,
       });
     }
-  }, [scopeData, bindings, expressionCompiler, env, paths]);
+  }, [scopeData, bindings, expressionCompiler, env, paths, transformEngine]);
 
   // 队列注册：bindings + sceneManager identity 双依赖（引擎重建后新实例必须重新注册）；
   // 仅在实例或绑定真正变更（重挂/重建）时丢弃 pending 与 lastValues（防 stale 写入），

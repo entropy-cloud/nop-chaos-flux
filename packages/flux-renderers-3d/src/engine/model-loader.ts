@@ -2,11 +2,11 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { ModelConfig } from '../schemas.js';
 
 export interface LoadedModel {
-  scene: import('three').Group;
+  scene: import('three').Object3D;
   animations: import('three').AnimationClip[];
 }
 
-export type GltfLike = { scene: import('three').Group; animations: import('three').AnimationClip[] };
+export type GltfLike = { scene: import('three').Object3D; animations: import('three').AnimationClip[] };
 
 export type LoaderFactory = () => { loadAsync(url: string): Promise<GltfLike> };
 
@@ -22,7 +22,7 @@ export class ModelLoader {
   /* v8 ignore next */
   constructor(private loaderFactory: LoaderFactory = () => new GLTFLoader()) {}
 
-  async load(config: ModelConfig, onLoaded: (gltf: LoadedModel) => void, onError?: (error: unknown) => void): Promise<void> {
+  async load(config: ModelConfig & { url: string }, onLoaded: (gltf: LoadedModel) => void, onError?: (error: unknown) => void): Promise<void> {
     const gen = this.generation;
     try {
       const gltf = await this.loaderFactory().loadAsync(config.url);

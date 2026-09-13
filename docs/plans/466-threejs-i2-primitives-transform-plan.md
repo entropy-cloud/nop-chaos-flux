@@ -73,82 +73,82 @@
 
 ### Phase 1 - TransformEngine 确定性转换核（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/binding/transform-engine.ts`, `src/renderer/hooks/use-binding-bridge.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红）：range 线性映射 + clamp + input 零宽防除零；convert 注入 `value` 变量（真实 flux-formula compiler，私有求值 scope）；condition 真值二选一；处理顺序 range→convert→condition；单项失败回退原值 + 去重上报；编译缓存。
-- [ ] 实现 `TransformEngine` 类（`apply(binding, value): unknown`，compiler/env 注入，`reportOnce` 复用桥接通道或独立去重）。
-- [ ] 桥接接缝替换：`useBindingBridge` 默认 transform 由 identity 换为 TransformEngine 实例（随 compiler/env memo 化）；现有接缝测试（transform seam ×2）语义保持。
+- [x] 先写失败测试（红）：range 线性映射 + clamp + input 零宽防除零；convert 注入 `value` 变量（真实 flux-formula compiler，私有求值 scope）；condition 真值二选一；处理顺序 range→convert→condition；单项失败回退原值 + 去重上报；编译缓存。
+- [x] 实现 `TransformEngine` 类（`apply(binding, value): unknown`，compiler/env 注入，`reportOnce` 复用桥接通道或独立去重）。
+- [x] 桥接接缝替换：`useBindingBridge` 默认 transform 由 identity 换为 TransformEngine 实例（随 compiler/env memo 化）；现有接缝测试（transform seam ×2）语义保持。
 
 Exit Criteria:
 
-- [ ] transform-engine 单测全绿（先红后绿；真实 compiler 参与 convert/condition 用例）。
-- [ ] 桥接现有测试全绿（identity 相关断言更新为 TransformEngine 语义后不回归）。
+- [x] transform-engine 单测全绿（先红后绿；真实 compiler 参与 convert/condition 用例）。
+- [x] 桥接现有测试全绿（identity 相关断言更新为 TransformEngine 语义后不回归）。
 
 ### Phase 2 - 过渡动画（tween/step/spring）引擎插值（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/engine/tween-registry.ts`, `src/engine/scene-manager.ts`, `src/renderer/hooks/use-binding-bridge.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红）：FrameUpdate 增可选 `animation`；数值目标 tween 过 duration 后精确到目标值（fake 帧推进断言中间值单调）；step 到期瞬移；spring 阻尼收敛到目标；三维向量与 hex 颜色插值；新目标覆盖进行中 tween（从当前值续走）；dispose 清理。
-- [ ] 实现 `TweenRegistry`（每 `modelId::path` 单活跃 tween；easing：linear/easeIn/easeOut/easeInOut cubic；spring 为默认参数阻尼谐振近似）；SceneManager 帧循环推进 + `updateProperty` 第四参（可选动画配置）；桥接把 `binding.transform?.animation` 随 FrameUpdate 传递。
-- [ ] 无动画配置的更新保持 I2.1 即时写语义（现有引擎测试不回归）。
-- [ ] 显式裁定（红测断言之一）：pending buffer 回放**不携带动画**——buffer 条目不存 animation 配置，回放经 `applyUpdate` 即时落值（与 I2.1「初值不丢失、即时应用」一致，初值不做过渡）。
+- [x] 先写失败测试（红）：FrameUpdate 增可选 `animation`；数值目标 tween 过 duration 后精确到目标值（fake 帧推进断言中间值单调）；step 到期瞬移；spring 阻尼收敛到目标；三维向量与 hex 颜色插值；新目标覆盖进行中 tween（从当前值续走）；dispose 清理。
+- [x] 实现 `TweenRegistry`（每 `modelId::path` 单活跃 tween；easing：linear/easeIn/easeOut/easeInOut cubic；spring 为默认参数阻尼谐振近似）；SceneManager 帧循环推进 + `updateProperty` 第四参（可选动画配置）；桥接把 `binding.transform?.animation` 随 FrameUpdate 传递。
+- [x] 无动画配置的更新保持 I2.1 即时写语义（现有引擎测试不回归）。
+- [x] 显式裁定（红测断言之一）：pending buffer 回放**不携带动画**——buffer 条目不存 animation 配置，回放经 `applyUpdate` 即时落值（与 I2.1「初值不丢失、即时应用」一致，初值不做过渡）。
 
 Exit Criteria:
 
-- [ ] tween-registry + 引擎集成测试全绿（先红后绿；fake 帧时钟驱动）。
-- [ ] I2.1 引擎测试（即时写语义）无回归。
+- [x] tween-registry + 引擎集成测试全绿（先红后绿；fake 帧时钟驱动）。
+- [x] I2.1 引擎测试（即时写语义）无回归。
 
 ### Phase 3 - 基础几何/材质图元库（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/schemas.ts`, `src/engine/primitive-factory.ts`, `src/engine/scene-manager.ts`, `src/engine/model-loader.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红）：判别联合解析（url XOR primitive；双源 → primitive 优先 + 诊断）；六种几何创建与参数映射（box/sphere/cylinder/plane/cone/torus）；四种材质 + color/opacity/transparent/wireframe/flatShading；图元模型 `loadModels` 同步注册（即时 ready，不经 loader）；绑定 `updateProperty` 对图元生效（material.color 等）。
-- [ ] schemas：`ModelConfig` 扩展 `primitive?: PrimitiveModelConfig`（geometry + material），`url` 改可选；新增 ModelConfig 判别校验（落点 primitive-factory：url XOR primitive，双源 primitive 优先 + 诊断，双空拒绝）；`ModelLoader.load` 入参收窄为 GLTF 变体（url 必 string），`loadModels` 先判别分流——图元同步注册、GLTF 才进 loader。
-- [ ] 实现 `PrimitiveFactory`（几何/材质工厂 + THREE 对象构造）与 SceneManager 集成（primitive 配置同步 `registerModel`，跳过 loader；pending buffer 回放对其即时生效）。
+- [x] 先写失败测试（红）：判别联合解析（url XOR primitive；双源 → primitive 优先 + 诊断）；六种几何创建与参数映射（box/sphere/cylinder/plane/cone/torus）；四种材质 + color/opacity/transparent/wireframe/flatShading；图元模型 `loadModels` 同步注册（即时 ready，不经 loader）；绑定 `updateProperty` 对图元生效（material.color 等）。
+- [x] schemas：`ModelConfig` 扩展 `primitive?: PrimitiveModelConfig`（geometry + material），`url` 改可选；新增 ModelConfig 判别校验（落点 primitive-factory：url XOR primitive，双源 primitive 优先 + 诊断，双空拒绝）；`ModelLoader.load` 入参收窄为 GLTF 变体（url 必 string），`loadModels` 先判别分流——图元同步注册、GLTF 才进 loader。
+- [x] 实现 `PrimitiveFactory`（几何/材质工厂 + THREE 对象构造）与 SceneManager 集成（primitive 配置同步 `registerModel`，跳过 loader；pending buffer 回放对其即时生效）。
 
 Exit Criteria:
 
-- [ ] primitive-factory + 引擎集成测试全绿（先红后绿）。
-- [ ] 无 GLB 的纯图元场景可被 SceneManager 组装且 onReady 即发（测试断言）。
+- [x] primitive-factory + 引擎集成测试全绿（先红后绿）。
+- [x] 无 GLB 的纯图元场景可被 SceneManager 组装且 onReady 即发（测试断言）。
 
 ### Phase 4 - AnimationConfig 关键帧播放（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/binding/keyframes.ts`, `src/engine/scene-manager.ts`, `src/renderer/hooks/use-animation-clips.ts`（新）
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红）：time 触发（挂载即播，帧时钟推进，逐关键帧 easing 插值，播完停在末帧）；loop（循环 count 次）/pingpong（往复）；state 触发（scope 路径匹配 trigger.value 时启动）；event 触发（normalized event type 匹配 source 时启动）；clip target 模型未就绪时等待、就绪后可播。
-- [ ] 实现 `KeyframeClip` 播放器（纯逻辑：时钟推进 + 插值求值）与 SceneManager 集成（clips 注册 + 帧推进 + `updateProperty` 应用）；新增 `use-animation-clips` hook：state 触发订阅合并全部 `trigger.source` paths 去重后**单次** `useScopeSelector`（防 rules-of-hooks 违规），event 触发接入 `useThreeEvents` 派发链；`animations` prop 在 `ThreeCanvasSchema` 顶层（非 scene 内），传递路径：props.props.animations → hook → engine clips 注册。
-- [ ] 与 TweenRegistry 互斥语义：同一 target 属性上 clip 优先于 transition tween（文档化于代码注释）。
+- [x] 先写失败测试（红）：time 触发（挂载即播，帧时钟推进，逐关键帧 easing 插值，播完停在末帧）；loop（循环 count 次）/pingpong（往复）；state 触发（scope 路径匹配 trigger.value 时启动）；event 触发（normalized event type 匹配 source 时启动）；clip target 模型未就绪时等待、就绪后可播。
+- [x] 实现 `KeyframeClip` 播放器（纯逻辑：时钟推进 + 插值求值）与 SceneManager 集成（clips 注册 + 帧推进 + `updateProperty` 应用）；新增 `use-animation-clips` hook：state 触发订阅合并全部 `trigger.source` paths 去重后**单次** `useScopeSelector`（防 rules-of-hooks 违规），event 触发接入 `useThreeEvents` 派发链；`animations` prop 在 `ThreeCanvasSchema` 顶层（非 scene 内），传递路径：props.props.animations → hook → engine clips 注册。
+- [x] 与 TweenRegistry 互斥语义：同一 target 属性上 clip 优先于 transition tween（文档化于代码注释）。
 
 Exit Criteria:
 
-- [ ] keyframes 播放器 + 触发测试全绿（先红后绿；fake 帧时钟 + 受控 scope）。
-- [ ] 包级覆盖率四维 ≥90 维持。
+- [x] keyframes 播放器 + 触发测试全绿（先红后绿；fake 帧时钟 + 受控 scope）。
+- [x] 包级覆盖率四维 ≥90 维持。
 
 ### Phase 5 - 全量验证与收尾
 
-Status: planned
+Status: completed
 Targets: 仓库级
 
 - Item Types: `Proof`
 
-- [ ] 根 `pnpm typecheck`/`build`/`lint`/`test`/`check` 全绿。
-- [ ] 设计分册漂移回写核对（ModelConfig 判别联合、TransformEngine 接缝位置）+ `docs/logs/` 记录。
+- [x] 根 `pnpm typecheck`/`build`/`lint`/`test`/`check` 全绿。
+- [x] 设计分册漂移回写核对（ModelConfig 判别联合、TransformEngine 接缝位置）+ `docs/logs/` 记录。
 
 Exit Criteria:
 
-- [ ] 五项根验证全绿；漂移记录在案。
+- [x] 五项根验证全绿；漂移记录在案。
 
 ## Draft Review Record
 
@@ -161,18 +161,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复
-- [ ] 所有 in-scope confirmed contract drifts 已收敛（实现 vs v5 分册漂移已回写）
-- [ ] 行为/契约结果已达成（TransformEngine 接管转换、图元场景可组装、过渡与关键帧动画可播放）
-- [ ] 必要 focused verification 已完成（Phase 1–4 focused tests，先红后绿）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（design-data-binding.md §5/§6 与 design-renderer.md §1 的实现回写；`docs/logs/`）
+- [x] 所有 in-scope confirmed live defects 已修复
+- [x] 所有 in-scope confirmed contract drifts 已收敛（ModelConfig 判别联合 + TransformEngine onError 已回写分册）
+- [x] 行为/契约结果已达成（TransformEngine 接管转换、图元场景可组装、过渡与关键帧动画可播放）
+- [x] 必要 focused verification 已完成（Phase 1–4 focused tests，先红后绿）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步（design-data-binding.md §5 与 design-renderer.md §1 回写；`docs/logs/`）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check` 零新增 red hit（新增 hit 须先注册）
+- [x] `pnpm typecheck` 40/40
+- [x] `pnpm build` 40/40
+- [x] `pnpm lint` 40/40
+- [x] `pnpm test` 73/73 任务 12,329 passed / 0 failed（3d 包 144 测试）
+- [x] `pnpm check` exit 0
 
 ## Deferred But Adjudicated
 

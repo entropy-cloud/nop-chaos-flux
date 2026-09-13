@@ -9,6 +9,8 @@ export interface UseThreeEventsArgs {
   helpers: RendererHelpers;
   scope?: ScopeRef;
   engine: SceneManager | null;
+  /** 每个引擎事件（无论是否声明 action）都会回调；event 触发 clip 经此转发 */
+  onEvent?: (type: string, payload: Record<string, unknown>) => void;
 }
 
 /**
@@ -18,9 +20,9 @@ export interface UseThreeEventsArgs {
  */
 export function useThreeEvents(args: UseThreeEventsArgs): void {
   const { events, helpers, scope, engine } = args;
-  const latest = useRef({ events, helpers, scope });
+  const latest = useRef({ events, helpers, scope, onEvent: args.onEvent });
   useEffect(() => {
-    latest.current = { events, helpers, scope };
+    latest.current = { events, helpers, scope, onEvent: args.onEvent };
   });
 
   useEffect(() => {
@@ -36,16 +38,16 @@ export function useThreeEvents(args: UseThreeEventsArgs): void {
     };
     unsubs.push(
       engine.onPick((e) => {
-        dispatch(
-          'object:click',
-          { modelId: e.modelId, point: { x: e.point.x, y: e.point.y, z: e.point.z } },
-          latest.current.events?.onObjectClick,
-        );
+        const payload = { modelId: e.modelId, point: { x: e.point.x, y: e.point.y, z: e.point.z } };
+        latest.current.onEvent?.('object:click', payload);
+        dispatch('object:click', payload, latest.current.events?.onObjectClick);
       }),
     );
     unsubs.push(
       engine.onHover((e) => {
-        dispatch('object:hover', { modelId: e.modelId, hovered: e.hovered }, latest.current.events?.onObjectHover);
+        const payload = { modelId: e.modelId, hovered: e.hovered };
+        latest.current.onEvent?.('object:hover', payload);
+        dispatch('object:hover', payload, latest.current.events?.onObjectHover);
       }),
     );
     return () => {
