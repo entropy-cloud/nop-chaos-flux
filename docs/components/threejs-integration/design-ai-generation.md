@@ -44,6 +44,7 @@ export class SchemaValidator {
 ```
 
 - 错误聚合：全部错误一次返回（不 fail-fast），`path` 用 JSON Pointer 风格（`scene.models[2].url`），供修正回路精确定位。
+- 校验机制（I4.1 实现回写）：`validate()` 为手写结构+语义检查（确定性错误码与 JSON Pointer 精确度所需）；`threejs-schema.json` 经 `getSchema()` 供编辑器/AI 提示消费；一致性由常驻测试守卫（generateSchema 输出过 validator + getSchema 与 TS 抽查）。判别口径与 live renderer 一致：仅拒双空，双源容忍（primitive 优先）。
 - 语义校验（结构之外的补充，逐条给出确定性错误码）：`bindings[].target.modelId` 必须存在于 `scene.models[].id`；`models[].id` 无重复；`camera.position` 为三元数值。
 
 ## 4. AISchemaGenerator 接口
@@ -76,6 +77,7 @@ export interface LlmProvider {
 }
 ```
 
+- I4.1 实现回写：kind 命中图元六类 → primitive 模型（无外链 GLB），未知 kind → url 回退 `/models/<kind>.glb`；无模型时不生成 bindings（target 悬挂必被 validator 拒绝）。
 - `generateSchema` 确定性生成的绑定表达式形态：`${sceneState.<dataPoint.name>}`（与 v4 一致，scope 根 `sceneState` 为文档化约定）。
 - id 派生与归属规则：`models[].name` → id 经 slug 化（trim + 空白转 `-` + 小写 + 去非法字符，保证命中 `^[a-zA-Z][a-zA-Z0-9_-]*$`，冲突时追加序号）；**slug 结果为空或非字母开头（如纯中文输入「阀门」）时回退 `model-<序号>`**；`dataPoints` 生成的 binding 一律归属 `models[0]`（首个模型），布尔点映射 `visible`、数值点映射 `material.color` + range——使「generateSchema 输出过自身 validator 即绿」可确定地验收。
 - `generateFromPrompt` 的 provider 注入使 Gemini/OpenAI/本地模型可替换；I4.1 提供 Gemini 适配与提示模板。

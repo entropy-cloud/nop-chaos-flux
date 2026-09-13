@@ -58,48 +58,48 @@
 
 ### Phase 1 - JSON Schema 资产与 SchemaValidator（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/ai/threejs-schema.json`, `src/ai/schema-validator.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红，表驱动）：合法最小配置通过；缺 scene/type 错 → 聚合 path；camera.position 非三元 → `camera-position-invalid`；models id 重复 → `model-id-duplicate`；binding target.modelId 悬挂 → `binding-target-missing`；id pattern 违例；rotation 二元数组；双空（无 url 无 primitive）→ 结构违规；双源（url+primitive）→ 合法（沿用 renderer primitive 优先语义）；**models 空数组为结构合法**（渲染空态，design §5 用例语义显式化）。
-- [ ] 撰写 `threejs-schema.json`（draft-07，覆盖 v5 形状：primitive 判别、groundColor、transform/condition、events 自由对象）。
-- [ ] 实现 SchemaValidator（validate 聚合 + getSchema）。**校验机制声明**：validate() 为手写结构检查（确定性错误码与 JSON Pointer 精确度所需）；threejs-schema.json 经 getSchema() 供编辑器/AI 提示消费；两者一致性由常驻测试守卫（generateSchema 类型化输出过 validator + getSchema 与 TS 抽查）。
+- [x] 先写失败测试（红，表驱动）：合法最小配置通过；缺 scene/type 错 → 聚合 path；camera.position 非三元 → `camera-position-invalid`；models id 重复 → `model-id-duplicate`；binding target.modelId 悬挂 → `binding-target-missing`；id pattern 违例；rotation 二元数组；双空（无 url 无 primitive）→ 结构违规；双源（url+primitive）→ 合法（沿用 renderer primitive 优先语义）；**models 空数组为结构合法**（渲染空态，design §5 用例语义显式化）。
+- [x] 撰写 `threejs-schema.json`（draft-07，覆盖 v5 形状：primitive 判别、groundColor、transform/condition、events 自由对象）。
+- [x] 实现 SchemaValidator（validate 聚合 + getSchema）。**校验机制声明**：validate() 为手写结构检查（确定性错误码与 JSON Pointer 精确度所需）；threejs-schema.json 经 getSchema() 供编辑器/AI 提示消费；两者一致性由常驻测试守卫（generateSchema 类型化输出过 validator + getSchema 与 TS 抽查）。
 
 Exit Criteria:
 
-- [ ] schema-validator 单测全绿（先红后绿；表驱动含全部语义错误码）。
-- [ ] getSchema 返回的 JSON Schema 与 TS 类型抽查一致（≥5 处字段）。
+- [x] schema-validator 单测全绿（先红后绿；表驱动含全部语义错误码）。
+- [x] getSchema 返回的 JSON Schema 与 TS 类型抽查一致（≥5 处字段）。
 
 ### Phase 2 - 确定性生成与 LLM 修正回路（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/ai/schema-generator.ts`, `src/ai/llm-provider.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红）：generateSchema——slug 派生（含纯中文名回退 `model-<序号>`）、dataPoints 绑定归属 models[0]（布尔→visible、数值→material.color+range）、空 models 输入 → 空场景（无 bindings）过自身 validator；输出过自身 validator 即绿；generateFromPrompt——mock provider 返回合法 JSON / 围栏包裹合法 JSON / 持续非法（修正轮耗尽 reject 聚合错误）/ 首轮非法次轮合法（修正回路生效，**捕获第二轮 prompt 断言含首轮错误 path/message——errors 确实回喂**）。
-- [ ] 实现 `LlmProvider` 接口、`AISchemaGenerator.generateSchema/generateFromPrompt`（围栏剥离 + validate + errors 回喂修正）。
+- [x] 先写失败测试（红）：generateSchema——slug 派生（含纯中文名回退 `model-<序号>`）、dataPoints 绑定归属 models[0]（布尔→visible、数值→material.color+range）、空 models 输入 → 空场景（无 bindings）过自身 validator；输出过自身 validator 即绿；generateFromPrompt——mock provider 返回合法 JSON / 围栏包裹合法 JSON / 持续非法（修正轮耗尽 reject 聚合错误）/ 首轮非法次轮合法（修正回路生效，**捕获第二轮 prompt 断言含首轮错误 path/message——errors 确实回喂**）。
+- [x] 实现 `LlmProvider` 接口、`AISchemaGenerator.generateSchema/generateFromPrompt`（围栏剥离 + validate + errors 回喂修正）。
 
 Exit Criteria:
 
-- [ ] schema-generator 单测全绿（先红后绿；含纯中文 slug 回退用例）。
-- [ ] generateSchema 输出过 SchemaValidator（不变式断言）。
+- [x] schema-generator 单测全绿（先红后绿；含纯中文 slug 回退用例）。
+- [x] generateSchema 输出过 SchemaValidator（不变式断言）。
 
 ### Phase 3 - 全量验证与收尾
 
-Status: planned
+Status: completed
 Targets: 仓库级
 
 - Item Types: `Proof`
 
-- [ ] 根 `pnpm typecheck`/`build`/`lint`/`test`/`check` 全绿（断言归 Closure Gates，此处为执行动作）。
-- [ ] design-ai-generation.md 漂移回写核对 + `docs/logs/` 记录 + roadmap I4.1 状态随 plan 生命周期同步。
+- [x] 根 `pnpm typecheck`/`build`/`lint`/`test`/`check` 全绿（断言归 Closure Gates，此处为执行动作）。
+- [x] design-ai-generation.md 漂移回写核对 + `docs/logs/` 记录 + roadmap I4.1 状态随 plan 生命周期同步。
 
 Exit Criteria:
 
-- [ ] 漂移回写（或无漂移声明）与 `docs/logs/` 记录在案；roadmap 状态同步。
+- [x] 漂移回写（或无漂移声明）与 `docs/logs/` 记录在案；roadmap 状态同步。
 
 ## Draft Review Record
 
@@ -112,18 +112,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复
-- [ ] 所有 in-scope confirmed contract drifts 已收敛
-- [ ] 行为/契约结果已达成（validator 门禁 + 确定性生成过自身门禁 + LLM 修正回路可用）
-- [ ] 必要 focused verification 已完成（Phase 1–2 focused tests，先红后绿）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（design-ai-generation.md 漂移回写；`docs/logs/`）
+- [x] 所有 in-scope confirmed live defects 已修复
+- [x] 所有 in-scope confirmed contract drifts 已收敛（校验机制声明 + generateSchema primitive 回写已入分册）
+- [x] 行为/契约结果已达成（validator 门禁 + 确定性生成过自身门禁 + LLM 修正回路可用）
+- [x] 必要 focused verification 已完成（Phase 1–2 focused tests，先红后绿）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步（design-ai-generation.md 漂移回写；`docs/logs/`）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check` 零新增 red hit
+- [x] `pnpm typecheck` 40/40
+- [x] `pnpm build` 40/40
+- [x] `pnpm lint` 40/40
+- [x] `pnpm test` 73/73 任务 12,329 passed / 0 failed（3d 包 177 测试）
+- [x] `pnpm check` exit 0
 
 ## Deferred But Adjudicated
 
