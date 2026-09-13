@@ -2,6 +2,7 @@ import {
   use as registerEChartsModules,
   init,
   dispose,
+  registerMap,
   registerTheme,
   type EChartsType,
 } from 'echarts/core';
@@ -108,7 +109,7 @@ registerEChartsModules([
 ]);
 
 export function getECharts() {
-  return { init, dispose };
+  return { init, dispose, registerMap };
 }
 
 export type { EChartsType };

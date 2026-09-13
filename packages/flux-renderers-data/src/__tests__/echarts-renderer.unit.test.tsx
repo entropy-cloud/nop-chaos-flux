@@ -17,9 +17,10 @@ const mockChart = {
 };
 
 const mockInit = vi.fn((..._args: unknown[]) => mockChart);
+const mockRegisterMap = vi.fn();
 
 vi.mock('../echarts-setup.js', () => ({
-  getECharts: () => ({ init: mockInit, dispose: vi.fn() }),
+  getECharts: () => ({ init: mockInit, dispose: vi.fn(), registerMap: mockRegisterMap }),
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
@@ -60,18 +61,20 @@ class MockResizeObserver {
 }
 
 function createProps(overrides: Record<string, unknown>): RendererComponentProps<EChartsSchema> {
+  const { helpers, ...rest } = overrides as { helpers?: unknown } & Record<string, unknown>;
   return {
     id: 'echarts-1',
     path: '$',
-    schema: { type: 'echarts', ...overrides } as unknown as EChartsSchema,
+    schema: { type: 'echarts', ...rest } as unknown as EChartsSchema,
     templateNode: {} as RendererComponentProps<EChartsSchema>['templateNode'],
     node: {} as RendererComponentProps<EChartsSchema>['node'],
-    props: { ...overrides } as RendererComponentProps<EChartsSchema>['props'],
+    props: { ...rest } as RendererComponentProps<EChartsSchema>['props'],
     meta: { cid: 7 } as RendererComponentProps<EChartsSchema>['meta'],
     regions: {},
     events: {},
     reactions: {},
-    helpers: {} as RendererComponentProps<EChartsSchema>['helpers'],
+    helpers: (helpers as RendererComponentProps<EChartsSchema>['helpers']) ??
+      ({ evaluate: (value: unknown) => value } as RendererComponentProps<EChartsSchema>['helpers']),
   } as unknown as RendererComponentProps<EChartsSchema>;
 }
 
@@ -79,6 +82,7 @@ const barOption = { xAxis: { type: 'category' }, series: [{ type: 'bar', data: [
 
 beforeEach(() => {
   mockInit.mockClear();
+  mockRegisterMap.mockClear();
   mockChart.setOption.mockClear();
   mockChart.resize.mockClear();
   mockChart.dispose.mockClear();
@@ -202,6 +206,66 @@ describe('EChartsRenderer lifecycle', () => {
     );
     expect((container.firstElementChild as HTMLElement).style.height).toBe('50vh');
     await waitFor(() => expect(mockInit).toHaveBeenCalled());
+  });
+});
+
+describe('EChartsRenderer map binding (A2 exception: registerMap bridge)', () => {
+  const mapSeriesOption = { series: [{ type: 'map', map: 'world' }] };
+
+  it('resolves the geoJson expression and registers the map before init', async () => {
+    const geoJson = { type: 'FeatureCollection', features: [] };
+    render(
+      <EChartsRenderer
+        {...createProps({
+          option: mapSeriesOption,
+          map: { name: 'world', geoJson: '${worldGeo}' },
+          helpers: { evaluate: (expr: string) => (expr === '${worldGeo}' ? geoJson : undefined) },
+        })}
+      />,
+    );
+    await waitFor(() => expect(mockInit).toHaveBeenCalledTimes(1));
+    expect(mockRegisterMap).toHaveBeenCalledWith('world', geoJson);
+    expect(mockRegisterMap.mock.invocationCallOrder[0]).toBeLessThan(
+      mockInit.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('renders the explicit empty state and skips init when the geoJson is unavailable', async () => {
+    const { container } = render(
+      <EChartsRenderer
+        {...createProps({
+          option: mapSeriesOption,
+          map: { name: 'world', geoJson: '${missingGeo}' },
+          helpers: { evaluate: () => undefined },
+        })}
+      />,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(container.querySelector('[data-slot="echarts-empty"]')).not.toBeNull();
+    expect(mockRegisterMap).not.toHaveBeenCalled();
+    expect(mockInit).not.toHaveBeenCalled();
+  });
+
+  it('re-runs init when a late-arriving geoJson resolves (init gating includes map info)', async () => {
+    const geoJson = { type: 'FeatureCollection', features: [] };
+    const evaluate = vi.fn((): unknown => undefined);
+    const props = createProps({
+      option: mapSeriesOption,
+      map: { name: 'world', geoJson: '${worldGeo}' },
+      helpers: { evaluate },
+    });
+    const { rerender } = render(<EChartsRenderer {...props} />);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mockInit).not.toHaveBeenCalled();
+
+    evaluate.mockReturnValue(geoJson);
+    rerender(<EChartsRenderer {...createProps({
+      option: mapSeriesOption,
+      map: { name: 'world', geoJson: '${worldGeo}' },
+      helpers: { evaluate },
+    })} />);
+    await waitFor(() => expect(mockInit).toHaveBeenCalledTimes(1));
+    expect(mockRegisterMap).toHaveBeenCalledWith('world', geoJson);
   });
 });
 

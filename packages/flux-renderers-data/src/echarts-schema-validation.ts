@@ -110,6 +110,31 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
     });
   }
 
+  if (schema.map !== undefined) {
+    if (!isPlainObject(schema.map)) {
+      emit({
+        code: 'invalid-property-shape',
+        path: toJsonPointer(path, 'map'),
+        message: 'echarts.map must be an object ({ name, geoJson }) when provided.',
+      });
+    } else {
+      if (typeof schema.map.name !== 'string') {
+        emit({
+          code: 'invalid-property-shape',
+          path: toJsonPointer(path, 'map', 'name'),
+          message: 'echarts.map.name must be a string when provided.',
+        });
+      }
+      if (schema.map.geoJson === undefined) {
+        emit({
+          code: 'invalid-property-shape',
+          path: toJsonPointer(path, 'map', 'geoJson'),
+          message: 'echarts.map.geoJson is required when echarts.map is provided.',
+        });
+      }
+    }
+  }
+
   if (schema.initOptions !== undefined && !isPlainObject(schema.initOptions)) {
     emit({
       code: 'invalid-property-shape',

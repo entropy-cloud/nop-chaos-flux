@@ -52,6 +52,11 @@ interface ResolvedDatasetBinding {
   raw: Record<string, unknown>;
 }
 
+interface ResolvedMapBinding {
+  name: string;
+  geoJson: Record<string, unknown>;
+}
+
 type EChartsSetupModule = typeof import('./echarts-setup.js');
 
 let echartsSetupPromise: Promise<EChartsSetupModule> | null = null;
@@ -84,6 +89,7 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
   const series = optionIsObject ? option.series : undefined;
   const hasSeries = Array.isArray(series) && series.length > 0;
   const datasetBinding = props.props.dataset;
+  const mapBinding = props.props.map;
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
     fallback: t('flux.common.noData'),
   });
@@ -116,6 +122,31 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
 
   const datasetEmpty =
     datasetInfo !== null && Array.isArray(datasetInfo.source) && datasetInfo.source.length === 0;
+
+  const mapInfo = useMemo((): ResolvedMapBinding | null => {
+    if (!isPlainObject(mapBinding)) {
+      return null;
+    }
+    const raw = mapBinding;
+    let geoJson: unknown = raw.geoJson;
+    if (typeof geoJson === 'string') {
+      try {
+        geoJson = props.helpers.evaluate(geoJson);
+      } catch (error) {
+        console.warn('[flux-echarts] map.geoJson expression evaluation failed:', error);
+        return null;
+      }
+    }
+    if (typeof raw.name !== 'string' || !isPlainObject(geoJson)) {
+      console.warn(
+        '[flux-echarts] map binding requires a string name and a resolved geoJson object; ignoring the map binding.',
+      );
+      return null;
+    }
+    return { name: raw.name, geoJson };
+  }, [mapBinding, props.helpers]);
+
+  const mapUnavailable = isPlainObject(mapBinding) && mapInfo === null;
 
   const composedOption = useMemo((): unknown => {
     if (!optionIsObject || !datasetInfo) {
@@ -180,7 +211,7 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
     typeof height === 'number' ? `${height}px` : height ? height : '400px';
 
   useEffect(() => {
-    if (!optionIsObject) {
+    if (!optionIsObject || mapUnavailable) {
       return;
     }
     let cancelled = false;
@@ -195,9 +226,13 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
         if (!container) {
           return;
         }
+        const { init, registerMap } = getECharts();
+        if (mapInfo) {
+          registerMap(mapInfo.name, mapInfo.geoJson as never);
+        }
         const themeArg =
           typeof theme === 'string' || isPlainObject(theme) ? theme : 'flux';
-        instance = getECharts().init(container, themeArg as string, {
+        instance = init(container, themeArg as string, {
           renderer: rendererMode,
           ...initOptions,
         });
@@ -219,7 +254,7 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
       chartRef.current = null;
       setChartInstance(null);
     };
-  }, [optionIsObject, rendererMode, theme, initOptions]);
+  }, [optionIsObject, mapUnavailable, mapInfo, rendererMode, theme, initOptions]);
 
   useEffect(() => {
     const instance = chartRef.current;
@@ -328,7 +363,7 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
     return componentRegistry.register(chartHandle, { cid: props.meta.cid });
   }, [chartHandle, componentRegistry, props.meta.cid]);
 
-  const isEmpty = !optionIsObject || datasetEmpty;
+  const isEmpty = !optionIsObject || datasetEmpty || mapUnavailable;
 
   return (
     <div

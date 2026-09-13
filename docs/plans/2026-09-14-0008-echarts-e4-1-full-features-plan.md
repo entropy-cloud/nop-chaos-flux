@@ -1,6 +1,6 @@
 # E4.1 — ECharts 完整功能（map+GeoJSON/candlestick/graph/sunburst/themeRiver/custom）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-13
 > Source: `docs/backlog/echarts-integration-roadmap.md`（E4.1）, `analysis/echarts-migration-analysis.md`（rev 3, §3.4 内置加载机制桥接例外, §1.2）
 > Related: 前置 E1.1/E2.1/E3.1（均 completed）；后续 E5.1/E5.2
@@ -60,35 +60,35 @@
 
 ### Phase 1 - map GeoJSON 桥接（唯一代码面）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/echarts-setup.ts`, `packages/flux-renderers-data/src/echarts-schemas.ts`, `packages/flux-renderers-data/src/echarts-schema-validation.ts`, `packages/flux-renderers-data/src/echarts-renderer-definition.ts`, `packages/flux-renderers-data/src/echarts-renderer.tsx`, `packages/flux-renderers-data/src/__tests__/echarts-schema-validation.test.ts`, `packages/flux-renderers-data/src/__tests__/echarts-renderer.unit.test.tsx`
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof（先红）：validator map 形态诊断 + 渲染器 registerMap 桥接的 mocked 单测（geoJson 表达式求值 → registerMap 调用；未就绪 → 空态且零 init）先写先红。
-- [ ] Fix：setup `getECharts()` 增加 `registerMap`；schema/validator/定义/渲染器按 Scope 落地；既有单测回归（默认无 map 行为不变）。
-- [ ] Proof（转绿）：新增与既有 echarts 单测全绿。
+- [x] Proof（先红）：validator map 形态诊断 + 渲染器 registerMap 桥接的 mocked 单测（geoJson 表达式求值 → registerMap 调用；未就绪 → 空态且零 init）先写先红。（4 用例先红确认）
+- [x] Fix：setup `getECharts()` 增加 `registerMap`；schema/validator/定义/渲染器按 Scope 落地；既有单测回归（默认无 map 行为不变）。
+- [x] Proof（转绿）：新增与既有 echarts 单测全绿。
 
 Exit Criteria:
 
-- [ ] map 桥接有 mocked 单测证明（registerMap 幂等调用 + 降级路径），validator 诊断有断言。
-- [ ] 既有 echarts 单测全绿（无回归）。
+- [x] map 桥接有 mocked 单测证明（registerMap 先于 init 调用 + geoJson 未就绪空态降级 + 晚到 geoJson 重走 init），validator 诊断有断言。
+- [x] 既有 echarts 单测全绿（无回归）。
 
 ### Phase 2 - 六类型 fixture 与 lab 场景
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/__tests__/echarts-full-features.test.tsx`, `apps/playground/src/component-lab/renderers/echarts-lab-page.tsx`
 
 - Item Types: `Proof`
 
-- [ ] Proof（先红）：`echarts-full-features.test.tsx` 覆盖 map（表达式绑定 GeoJSON + registerMap 断言 + map series）、candlestick（OHLC 二维数组 dataset）、graph（nodes/links/categories）、sunburst（层级 data）、themeRiver（点集 + singleAxis）、custom（`${boundOption}` 表达式绑定 option，宿主提供 renderItem）各至少一例。
-- [ ] Proof：lab page 新增 6 场景（map 场景经 scenario data 表达式绑定极小 GeoJSON）。
-- [ ] Proof（转绿）：fixture 全绿；playground 测试全绿。
+- [x] Proof（先红）：`echarts-full-features.test.tsx` 覆盖 map（表达式绑定 GeoJSON + registerMap 断言 + map series）、candlestick（OHLC 二维数组 dataset）、graph（nodes/links/categories）、sunburst（层级 data）、themeRiver（点集 + singleAxis）、custom（`${customOption}` 表达式绑定 option，宿主提供 renderItem——review 探针已证明函数经真实编译链保真）各至少一例。（验证型交付：proof 工件为新增，6/6 一次转绿，无渲染器代码缺陷触发）
+- [x] Proof：lab page 新增 6 场景（map 场景经 scenario data 表达式绑定极小 GeoJSON）。
+- [x] Proof（转绿）：fixture 全绿；playground 测试全绿（33 files / 347 tests）。
 
 Exit Criteria:
 
-- [ ] 6 类型各有真实编译链 setOption 结构断言且全绿；map 场景覆盖表达式绑定 GeoJSON。
-- [ ] lab page 场景可用且 playground 测试全绿。
+- [x] 6 类型各有真实编译链 setOption 结构断言且全绿；map 场景覆盖表达式绑定 GeoJSON。
+- [x] lab page 场景可用且 playground 测试全绿。
 
 ## Draft Review Record
 
@@ -101,16 +101,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope 项已落地：map GeoJSON 桥接 + 六类型 fixture + lab 场景
-- [ ] 行为/契约结果已达成：Failure Paths 2 条行为有单测证明；六类型 setOption 结构断言全绿
-- [ ] 必要 focused verification 已完成：full-features fixture / map 桥接 / validator 诊断全绿
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步（roadmap E4.1 → done、daily log 收口记录）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope 项已落地：map GeoJSON 桥接 + 六类型 fixture + lab 场景
+- [x] 行为/契约结果已达成：Failure Paths 2 条行为有单测证明；六类型 setOption 结构断言全绿
+- [x] 必要 focused verification 已完成：full-features fixture（6）/ map 桥接（3）/ validator 诊断（4）全绿；包级 152 files / 1124 tests 全绿
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步（roadmap E4.1 → done、daily log 收口记录）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（audit verdict: approved，1 Minor 为收口序列说明，已按其执行）
+- [x] `pnpm typecheck`（37/37）
+- [x] `pnpm build`（37/37）
+- [x] `pnpm lint`（turbo eslint 37/37；i18n 既有 4 键红同前，零新增）
+- [x] `pnpm test`（68/68 tasks，约 11,544 tests / 0 failed）
 
 ## Deferred But Adjudicated
 
@@ -123,13 +123,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （收口时填写）
+Status Note: 2026-09-13 收口。map GeoJSON 桥接（A2 例外条款代码化：表达式绑定 + registerMap 先于 init + init gating + 降级空态）与六类型（candlestick/graph/sunburst/themeRiver/custom-renderItem 保真）fixture 全部落地。仓库级验证：typecheck 37/37、build 37/37、turbo eslint 37/37、test 68/68 tasks（约 11,544 tests / 0 failed）。audit Minor（gate 前瞻勾选的收口序列）已按其执行——本段即收口终态。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent closure audit
-- Evidence: 待定
+- Auditor / Agent: 独立子 agent（fresh session，2026-09-13）
+- Evidence: verdict `approved`。独立实跑：full-features + renderer.unit + schema-validation 3 files / 40 tests 全绿（map 桥接 3 + validator map 4 + 六类型 6 含其中）；renderer.tsx 行为抽查（mapInfo 求值/init gating/registerMap 先于 init 的 invocationCallOrder 断言/晚到 geoJson 重走 init）；六类型结构断言逐个核对；lab 六场景确认；daily log 与 roadmap planned 状态核对；deferred 分类诚实。
 
 Follow-up:
 
-- （待收口时填写）
+- GeoJSON 宿主侧缓存策略（out-of-scope improvement）；custom renderItem schema 糖（out-of-scope improvement）——与 Non-Blocking Follow-ups 同项。
+- no remaining plan-owned work

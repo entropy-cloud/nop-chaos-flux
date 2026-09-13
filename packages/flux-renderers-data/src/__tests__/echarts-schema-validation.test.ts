@@ -229,6 +229,40 @@ describe('validateEChartsSchema', () => {
     expect(good.diagnostics).toEqual([]);
   });
 
+  it('validates the map binding shape (name string + geoJson present)', () => {
+    const missingGeo = createValidationContext({
+      type: 'echarts',
+      option: { series: [] },
+      map: { name: 'world' },
+    });
+    validateEChartsSchema(missingGeo.context);
+    expect(codesOf(missingGeo.diagnostics)).toContain('invalid-property-shape');
+
+    const badName = createValidationContext({
+      type: 'echarts',
+      option: { series: [] },
+      map: { name: 42, geoJson: { features: [] } },
+    });
+    validateEChartsSchema(badName.context);
+    expect(codesOf(badName.diagnostics)).toContain('invalid-property-shape');
+
+    const nonObject = createValidationContext({
+      type: 'echarts',
+      option: { series: [] },
+      map: 'world',
+    });
+    validateEChartsSchema(nonObject.context);
+    expect(codesOf(nonObject.diagnostics)).toContain('invalid-property-shape');
+
+    const good = createValidationContext({
+      type: 'echarts',
+      option: { series: [] },
+      map: { name: 'world', geoJson: '${worldGeo}' },
+    });
+    validateEChartsSchema(good.context);
+    expect(good.diagnostics).toEqual([]);
+  });
+
   it('accepts a well-formed events map (E2.1 events validation landed)', () => {
     const { context, diagnostics } = createValidationContext({
       type: 'echarts',

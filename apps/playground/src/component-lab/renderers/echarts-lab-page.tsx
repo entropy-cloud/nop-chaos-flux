@@ -93,7 +93,7 @@ const emptyState = {
 export function EChartsLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Apache ECharts renderer with native option passthrough. Advanced types verified here: sankey, treemap, tree, boxplot, gauge, funnel, radar. E2 scope: dataset/encode expression binding to scope data, flux events.* action bridge, and the automatic flux theme mapped from CSS variables. ECharts loads as an optional lazy chunk only when an echarts renderer instance mounts; the recharts `chart` renderer stays the default for basic chart scenarios."
+      introDescription="Apache ECharts renderer with native option passthrough. Advanced types verified here: sankey, treemap, tree, boxplot, gauge, funnel, radar; full-feature types: map (GeoJSON registerMap bridge), candlestick, graph, sunburst, themeRiver, custom (expression-bound option with host renderItem). E2 scope: dataset/encode expression binding to scope data, flux events.* action bridge, and the automatic flux theme mapped from CSS variables. ECharts loads as an optional lazy chunk only when an echarts renderer instance mounts; the recharts `chart` renderer stays the default for basic chart scenarios."
       scenarios={[
         {
           title: 'Dataset binding with a data swap button',
@@ -286,6 +286,147 @@ export function EChartsLabPage() {
             },
           },
           data: {},
+        },
+        {
+          title: 'Map — GeoJSON bound from scope (registerMap bridge)',
+          description:
+            'map.geoJson binds the region GeoJSON from scope (host loads it via data-source); the renderer registers it with echarts.registerMap before init. option.series[].map references the same name — the map field only registers data.',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            map: { name: 'lab-geo', geoJson: '${regionGeo}' },
+            option: {
+              tooltip: {},
+              series: [{ type: 'map', map: 'lab-geo' }],
+            },
+          },
+          data: { regionGeo: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { name: 'Alpha' }, geometry: { type: 'Polygon', coordinates: [[[0, 0], [2, 0], [2, 2], [0, 2], [0, 0]]] } }, { type: 'Feature', properties: { name: 'Beta' }, geometry: { type: 'Polygon', coordinates: [[[3, 0], [5, 0], [5, 2], [3, 2], [3, 0]]] } }] } },
+        },
+        {
+          title: 'Candlestick — OHLC rows via 2D dataset',
+          description:
+            'Candlestick consumes [open, close, low, high] rows bound through a 2D array dataset.',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            dataset: { source: '${ohlc}' },
+            option: {
+              tooltip: {},
+              xAxis: { type: 'category' },
+              yAxis: { type: 'value' },
+              series: [{ type: 'candlestick' }],
+            },
+          },
+          data: { ohlc: [['2026-01-02', 20, 34, 10, 38], ['2026-01-03', 40, 15, 5, 42], ['2026-01-06', 36, 45, 30, 48]] },
+        },
+        {
+          title: 'Graph — force layout with categories',
+          description:
+            'Graph declares nodes/links/categories inline in the series (graph structures are not dataset+encode territory).',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            option: {
+              tooltip: {},
+              series: [
+                {
+                  type: 'graph',
+                  layout: 'force',
+                  roam: true,
+                  categories: [{ name: 'core' }, { name: 'service' }],
+                  data: [
+                    { name: 'gateway', category: 0 },
+                    { name: 'auth', category: 1 },
+                    { name: 'billing', category: 1 },
+                  ],
+                  links: [
+                    { source: 'gateway', target: 'auth' },
+                    { source: 'gateway', target: 'billing' },
+                  ],
+                },
+              ],
+            },
+          },
+          data: {},
+        },
+        {
+          title: 'Sunburst — radial hierarchy',
+          description:
+            'Sunburst renders radial hierarchy from series.data children with per-level values.',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            option: {
+              series: [
+                {
+                  type: 'sunburst',
+                  data: [
+                    {
+                      name: 'platform',
+                      children: [
+                        { name: 'web', value: 40 },
+                        { name: 'mobile', value: 25 },
+                      ],
+                    },
+                    { name: 'ops', value: 15 },
+                  ],
+                },
+              ],
+            },
+          },
+          data: {},
+        },
+        {
+          title: 'ThemeRiver — time stream over singleAxis',
+          description:
+            'ThemeRiver consumes [date, value, name] point triples and needs the option-level singleAxis coordinate.',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            option: {
+              tooltip: {},
+              legend: { bottom: 0 },
+              singleAxis: { type: 'time' },
+              series: [
+                {
+                  type: 'themeRiver',
+                  data: [
+                    ['2026-01-01', 10, 'alpha'],
+                    ['2026-01-02', 20, 'alpha'],
+                    ['2026-01-01', 5, 'beta'],
+                    ['2026-01-02', 12, 'beta'],
+                  ],
+                },
+              ],
+            },
+          },
+          data: {},
+        },
+        {
+          title: 'Custom — host-provided renderItem via expression-bound option',
+          description:
+            'renderItem is a function and cannot be written in JSON: bind the whole option from a host-provided builder (xui:imports) — the expression result keeps function references.',
+          schema: {
+            type: 'echarts',
+            height: 320,
+            option: '${customOption}',
+          },
+          data: {
+            customOption: {
+              xAxis: { type: 'category', data: ['a', 'b'] },
+              yAxis: {},
+              series: [
+                {
+                  type: 'custom',
+                  renderItem: (params: unknown, api: { value: (index: number) => number }) => {
+                    const style = { text: String(api.value(0)) };
+                    return { type: 'text', style };
+                  },
+                  data: [1, 2],
+                },
+              ],
+            },
+          },
         },
         {
           title: 'Explicit empty state',

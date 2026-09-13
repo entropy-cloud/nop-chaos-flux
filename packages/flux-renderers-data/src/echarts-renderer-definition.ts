@@ -124,6 +124,7 @@ export const echartsRendererDefinition: RendererDefinition = {
     { key: 'height', kind: 'prop' },
     { key: 'componentId', kind: 'prop' },
     { key: 'events', kind: 'prop' },
+    { key: 'map', kind: 'prop' },
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
   ],
 };
