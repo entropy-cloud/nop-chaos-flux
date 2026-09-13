@@ -17,7 +17,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 > **全文件唯一的动态状态区。**
 > 状态流转：`todo` → `planned`（draft review 通过）→ `done`（closure audit 通过）
 
-- **I0. 调研** (`todo`)
+- **I0. 调研** (`planned`)
 - **I1. 设计** (`todo`)
 - **I2. 核心引擎** (`todo`)
 - **I3. 工业协议** (`todo`)
@@ -27,14 +27,14 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 > 本项目已有的可复用能力，避免重复构建。
 
-| 能力         | 来源包        | 复用方式                                    |
-| ------------ | ------------- | ------------------------------------------- |
-| 表达式编译   | `flux-core`   | analyzeBindingSubscriptions                 |
-| Scope 订阅   | `flux-react`  | useScopeSelector + paths                    |
-| 动作分发     | `flux-react`  | useActionDispatcher                         |
-| WebSocket    | RendererEnv   | env.openSocket                              |
-| Zustand      | zustand       | vanilla store + useSyncExternalStore        |
-| Socket 模式  | industrial-hmi | 复用 scada 的 socket 数据桥接模式           |
+| 能力        | 来源包         | 复用方式                             |
+| ----------- | -------------- | ------------------------------------ |
+| 表达式编译  | `flux-core`    | analyzeBindingSubscriptions          |
+| Scope 订阅  | `flux-react`   | useScopeSelector + paths             |
+| 动作分发    | `flux-react`   | useActionDispatcher                  |
+| WebSocket   | RendererEnv    | env.openSocket                       |
+| Zustand     | zustand        | vanilla store + useSyncExternalStore |
+| Socket 模式 | industrial-hmi | 复用 scada 的 socket 数据桥接模式    |
 
 ## Current Baseline
 
@@ -55,34 +55,34 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### I0 — 调研
 
-| ID   | Status | 内容                                                                        | 设计文档                                                | 依赖 |
-| ---- | ------ | --------------------------------------------------------------------------- | ------------------------------------------------------- | ---- |
-| I0.1 | todo   | Three.js 核心 API 深度分析（场景/渲染器/几何/材质/灯光）、industrial-hmi 复用点确认、性能基准测试框架搭建 | `docs/analysis/threejs-integration-analysis.md`          | —    |
+| ID   | Status | 内容                                                                                                      | 设计文档                                        | 依赖 |
+| ---- | ------ | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ---- |
+| I0.1 | todo   | Three.js 核心 API 深度分析（场景/渲染器/几何/材质/灯光）、industrial-hmi 复用点确认、性能基准测试框架搭建 | `docs/analysis/threejs-integration-analysis.md` | —    |
 
 ### I1 — 设计
 
-| ID   | Status | 内容                                                                        | 设计文档                                                | 依赖 |
-| ---- | ------ | --------------------------------------------------------------------------- | ------------------------------------------------------- | ---- |
-| I1.1 | todo   | 设计 v4 共识审查（3 轮 sub-agent）、Flux 表达式桥接方案确认、工业协议集成方案确认 | `docs/components/threejs-integration/design.md`          | I0.1 |
+| ID   | Status | 内容                                                                              | 设计文档                                        | 依赖 |
+| ---- | ------ | --------------------------------------------------------------------------------- | ----------------------------------------------- | ---- |
+| I1.1 | todo   | 设计 v4 共识审查（3 轮 sub-agent）、Flux 表达式桥接方案确认、工业协议集成方案确认 | `docs/components/threejs-integration/design.md` | I0.1 |
 
 ### I2 — 核心引擎
 
-| ID   | Status | 内容                                                                        | 设计文档                                                | 依赖 |
-| ---- | ------ | --------------------------------------------------------------------------- | ------------------------------------------------------- | ---- |
-| I2.1 | todo   | `three-canvas` 渲染器组件实现 + Flux 表达式编译器集成（analyzeBindingSubscriptions） | `docs/components/threejs-integration/design.md`          | I1.1 |
-| I2.2 | todo   | TransformEngine 实现 + 基础几何/材质图元库                                   | `docs/components/threejs-integration/design.md`          | I2.1 |
+| ID   | Status | 内容                                                                                 | 设计文档                                        | 依赖 |
+| ---- | ------ | ------------------------------------------------------------------------------------ | ----------------------------------------------- | ---- |
+| I2.1 | todo   | `three-canvas` 渲染器组件实现 + Flux 表达式编译器集成（analyzeBindingSubscriptions） | `docs/components/threejs-integration/design.md` | I1.1 |
+| I2.2 | todo   | TransformEngine 实现 + 基础几何/材质图元库                                           | `docs/components/threejs-integration/design.md` | I2.1 |
 
 ### I3 — 工业协议
 
-| ID   | Status | 内容                                                                        | 设计文档                                                | 依赖 |
-| ---- | ------ | --------------------------------------------------------------------------- | ------------------------------------------------------- | ---- |
-| I3.1 | todo   | ReconnectionManager 实现、Socket.IO/WebSocket 数据桥接、FUXA 协议适配器      | `docs/components/threejs-integration/design.md`          | I2.2 |
+| ID   | Status | 内容                                                                    | 设计文档                                        | 依赖 |
+| ---- | ------ | ----------------------------------------------------------------------- | ----------------------------------------------- | ---- |
+| I3.1 | todo   | ReconnectionManager 实现、Socket.IO/WebSocket 数据桥接、FUXA 协议适配器 | `docs/components/threejs-integration/design.md` | I2.2 |
 
 ### I4 — AI 生成
 
-| ID   | Status | 内容                                                                        | 设计文档                                                | 依赖 |
-| ---- | ------ | --------------------------------------------------------------------------- | ------------------------------------------------------- | ---- |
-| I4.1 | todo   | JSON Schema 验证、自然语言 → Three.js 场景转换、Gemini API 集成              | `docs/components/threejs-integration/design.md`          | I2.2 |
+| ID   | Status | 内容                                                            | 设计文档                                        | 依赖 |
+| ---- | ------ | --------------------------------------------------------------- | ----------------------------------------------- | ---- |
+| I4.1 | todo   | JSON Schema 验证、自然语言 → Three.js 场景转换、Gemini API 集成 | `docs/components/threejs-integration/design.md` | I2.2 |
 
 ---
 
