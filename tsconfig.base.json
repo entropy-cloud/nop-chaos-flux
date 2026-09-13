@@ -74,6 +74,7 @@
       "@nop-chaos/flux-renderers-pivot/styles.css": [
         "./packages/flux-renderers-pivot/src/styles.css"
       ],
+      "@nop-chaos/flux-renderers-3d": ["./packages/flux-renderers-3d/src/index.ts"],
       "@nop-chaos/flux-renderers-industrial": ["./packages/flux-renderers-industrial/src/index.ts"],
       "@nop-chaos/flux-renderers-industrial/editor": [
         "./packages/flux-renderers-industrial/src/editor/index.ts"

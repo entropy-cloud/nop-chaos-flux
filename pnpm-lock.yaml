@@ -628,6 +628,37 @@ importers:
         specifier: ^19.0.0
         version: 19.2.4
 
+  packages/flux-renderers-3d:
+    dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
+      '@nop-chaos/flux-react':
+        specifier: workspace:*
+        version: link:../flux-react
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
+      three:
+        specifier: 0.186.0
+        version: 0.186.0
+    devDependencies:
+      '@nop-chaos/flux-formula':
+        specifier: workspace:*
+        version: link:../flux-formula
+      '@nop-chaos/flux-runtime':
+        specifier: workspace:*
+        version: link:../flux-runtime
+      '@types/three':
+        specifier: 0.186.0
+        version: 0.186.0
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
+
   packages/flux-renderers-ai:
     dependencies:
       '@nop-chaos/flux-core':
