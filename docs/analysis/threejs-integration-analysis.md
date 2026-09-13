@@ -494,13 +494,13 @@ const bindings: SceneBinding[] = [
 
 | 场景                                                       | median ops/s   | 单次成本 |
 | ---------------------------------------------------------- | -------------- | -------- |
-| geometry-material: Box+MeshStandardMaterial 构建+dispose   | ~255,000       | ~3.9µs   |
-| geometry-material: Sphere(32,16)+MeshPhong+dispose         | ~39,600        | ~25µs    |
+| geometry-material: Box+MeshStandardMaterial 构建+dispose   | ~255,000       | ~3.9us   |
+| geometry-material: Sphere(32,16)+MeshPhong+dispose         | ~39,600        | ~25us    |
 | property-write: 位置导航+Vector3.set (position)            | ~185,000,000   | ~5.4ns   |
 | property-write: 旋转 Euler.set (rotation, z 必填)          | ~57,000,000    | ~17.5ns  |
 | property-write: 材质颜色 Color.set hex 串 (material.color) | ~5,400,000     | ~185ns   |
 | property-write: visible 布尔直赋                           | ~2,400,000,000 | ~0.4ns   |
-| scene-assembly: Scene+fog+5 灯+10 网格+清理                | ~16,600        | ~60µs    |
+| scene-assembly: Scene+fog+5 灯+10 网格+清理                | ~16,600        | ~60us    |
 
 结论：绑定热路径（求值 + 属性写入）单次成本在 ns 量级，16ms 帧预算可容纳 10⁴–10⁵ 次属性写入——「状态更新→渲染延迟 <16ms」的 CPU 段对常规场景（<10² 绑定数）余量充足；瓶颈在 GPU 渲染帧率（10.4 挂接 e2e 后验证）。
 

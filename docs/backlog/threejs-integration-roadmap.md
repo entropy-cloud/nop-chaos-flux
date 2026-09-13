@@ -1,7 +1,7 @@
 # Three.js 3D Rendering Integration Roadmap
 
 > 最后更新：2026-09-13
-> 来源：`docs/components/threejs-integration/design.md`（设计文档 v4）、`docs/analysis/threejs-integration-analysis.md`（调研）
+> 来源：`docs/components/threejs-integration/design.md`（设计文档集 v5，含分册）、`docs/analysis/threejs-integration-analysis.md`（调研）
 > Mission：`missions/threejs-integration.json`
 
 ## Purpose
@@ -18,7 +18,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 > 状态流转：`todo` → `planned`（draft review 通过）→ `done`（closure audit 通过）
 
 - **I0. 调研** (`done`，plan: `docs/plans/463-threejs-i0-research-plan.md`)
-- **I1. 设计** (`planned`，plan: `docs/plans/464-threejs-i1-design-review-plan.md`)
+- **I1. 设计** (`done`，plan: `docs/plans/464-threejs-i1-design-review-plan.md`)
 - **I2. 核心引擎** (`todo`)
 - **I3. 工业协议** (`todo`)
 - **I4. AI 生成** (`todo`)
@@ -40,14 +40,14 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### 已有基础
 
-- 设计文档 v4 已产出（`docs/components/threejs-integration/design.md`）：`three-canvas` 渲染器 schema、TransformEngine、表达式桥接、工业协议集成、AI 场景生成的完整设计。
+- 设计文档集 v5 已定稿（`docs/components/threejs-integration/`，design.md 总览 + renderer/data-binding/protocol/ai-generation 分册）：经 3 轮独立 sub-agent 共识审查（plan 464），六项决策 D1–D6 落纸。
 - 调研产物：`docs/analysis/threejs-integration-analysis.md` + v2/v3 设计迭代。
 - industrial-hmi 已落地 scada-canvas + 点表/表达式数据合帧桥接（PointStore/RefreshPipeline/useScopeSelector paths）；socket 侧 `openSocket` 契约与 host 实现分别在 `flux-core` 与 playground（industrial 包内无 socket 调用，勘误见调研文档 §7.3）。
 
 ### 主要缺口
 
 - 无任何实现代码：`three-canvas` 渲染器、TransformEngine、图元库、协议适配器均为空白。
-- 设计 v4 尚未做共识审查，表达式桥接与协议集成方案未定稿。
+- 实现代码为零（表达式桥接与协议集成方案已随 v5 定稿，缺口只在实现）。
 
 ---
 
@@ -61,28 +61,28 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### I1 — 设计
 
-| ID   | Status | 内容                                                                              | 设计文档                                        | 依赖 |
-| ---- | ------ | --------------------------------------------------------------------------------- | ----------------------------------------------- | ---- |
-| I1.1 | todo   | 设计 v4 共识审查（3 轮 sub-agent）、Flux 表达式桥接方案确认、工业协议集成方案确认 | `docs/components/threejs-integration/design.md` | I0.1 |
+| ID   | Status | 内容                                                                              | 设计文档                                                     | 依赖 |
+| ---- | ------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------ | ---- |
+| I1.1 | done   | 设计 v4 共识审查（3 轮 sub-agent）、Flux 表达式桥接方案确认、工业协议集成方案确认 | `docs/components/threejs-integration/design.md`（v5 文档集） | I0.1 |
 
 ### I2 — 核心引擎
 
-| ID   | Status | 内容                                                                                 | 设计文档                                        | 依赖 |
-| ---- | ------ | ------------------------------------------------------------------------------------ | ----------------------------------------------- | ---- |
-| I2.1 | todo   | `three-canvas` 渲染器组件实现 + Flux 表达式编译器集成（analyzeBindingSubscriptions） | `docs/components/threejs-integration/design.md` | I1.1 |
-| I2.2 | todo   | TransformEngine 实现 + 基础几何/材质图元库                                           | `docs/components/threejs-integration/design.md` | I2.1 |
+| ID   | Status | 内容                                                                                 | 设计文档                                                                            | 依赖 |
+| ---- | ------ | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | ---- |
+| I2.1 | todo   | `three-canvas` 渲染器组件实现 + Flux 表达式编译器集成（analyzeBindingSubscriptions） | `docs/components/threejs-integration/design-renderer.md` + `design-data-binding.md` | I1.1 |
+| I2.2 | todo   | TransformEngine 实现 + 基础几何/材质图元库                                           | `docs/components/threejs-integration/design-data-binding.md` §5-§6                  | I2.1 |
 
 ### I3 — 工业协议
 
-| ID   | Status | 内容                                                                    | 设计文档                                        | 依赖 |
-| ---- | ------ | ----------------------------------------------------------------------- | ----------------------------------------------- | ---- |
-| I3.1 | todo   | ReconnectionManager 实现、Socket.IO/WebSocket 数据桥接、FUXA 协议适配器 | `docs/components/threejs-integration/design.md` | I2.2 |
+| ID   | Status | 内容                                                                    | 设计文档                                                 | 依赖 |
+| ---- | ------ | ----------------------------------------------------------------------- | -------------------------------------------------------- | ---- |
+| I3.1 | todo   | ReconnectionManager 实现、Socket.IO/WebSocket 数据桥接、FUXA 协议适配器 | `docs/components/threejs-integration/design-protocol.md` | I2.2 |
 
 ### I4 — AI 生成
 
-| ID   | Status | 内容                                                            | 设计文档                                        | 依赖 |
-| ---- | ------ | --------------------------------------------------------------- | ----------------------------------------------- | ---- |
-| I4.1 | todo   | JSON Schema 验证、自然语言 → Three.js 场景转换、Gemini API 集成 | `docs/components/threejs-integration/design.md` | I2.2 |
+| ID   | Status | 内容                                                            | 设计文档                                                      | 依赖 |
+| ---- | ------ | --------------------------------------------------------------- | ------------------------------------------------------------- | ---- |
+| I4.1 | todo   | JSON Schema 验证、自然语言 → Three.js 场景转换、Gemini API 集成 | `docs/components/threejs-integration/design-ai-generation.md` | I2.2 |
 
 ---
 

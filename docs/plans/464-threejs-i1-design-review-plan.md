@@ -1,6 +1,6 @@
 # 464 Three.js 集成 I1.1 设计共识审查计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-13
 > Source: `docs/backlog/threejs-integration-roadmap.md`（I1.1）、`docs/components/threejs-integration/design.md`（v4）、`docs/analysis/threejs-integration-analysis.md` §7–§8（plan 463 产出）
 > Related: 前置 plan 463（I0.1 调研，closed）；后续 I2.1/I2.2/I3.1/I4.1 以本计划产出的 v5 文档集为 owner doc
@@ -62,60 +62,96 @@
 
 ### Phase 1 - v5 设计文档集起草
 
-Status: planned
+Status: completed
 Targets: `docs/components/threejs-integration/`
 
 - Item Types: `Fix | Decision`
 
-- [ ] 裁定分歧 (a) 渲染技术路线并写入 design.md 决策节（含理由与被拒替代方案）。
-- [ ] 裁定分歧 (b) 包落点并写入 design.md（含包结构、依赖声明、与 `vite.workspace-alias.ts`/`tsconfig.base.json`/root `tsconfig.json` project references 的接入清单——仅文档记录，不改配置）。
-- [ ] 修正 v4 全部 ❌ 项：表达式编译路径改 `compileValue()`/`evaluateValue()`；`loadAsync` 取消语义改 generation-guard；`extractExpressionDepsViaProbe` 按 industrial live 语义（宽容 Proxy scope + 五态判别）描述。
-- [ ] 裁定 events 处理（v4 `kind: 'prop'` vs 平台 `kind: 'event'`）并修订 renderer definition 章节。
-- [ ] 表达式桥接方案定稿（design-data-binding.md）：`analyzeBindingSubscriptions` 对齐 `analyzeFluxSubscriptions`（仅认 `${expr}`、纯路径直取、复杂表达式 probe、deps-empty 嫌疑上报）、编译缓存随 config 清空、pendingUpdates 缓存 + rAF flush 合帧、错误去重上报。
-- [ ] 工业协议方案定稿（design-protocol.md）：`openSocket` capability check、同步返回、`onmessage` 属性赋值、ReconnectionManager（指数退避 + ±25% 抖动 + maxRetries + reset 语义）、tag→scope 写入路径。
-- [ ] v4 单文件拆分为五册，每册头部标注版本 v5 与状态，design.md 保留总览 + 架构图 + 决策记录 + 分册索引；v4 的历史迭代叙事不迁入（符合 owner doc 只写最终态原则）。
+- [x] 裁定分歧 (a) 渲染技术路线并写入 design.md 决策节（含理由与被拒替代方案）。
+- [x] 裁定分歧 (b) 包落点并写入 design.md（含包结构、依赖声明、与 `vite.workspace-alias.ts`/`tsconfig.base.json`/root `tsconfig.json` project references 的接入清单——仅文档记录，不改配置）。
+- [x] 修正 v4 全部 ❌ 项：表达式编译路径改 `compileValue()`/`evaluateValue()`；`loadAsync` 取消语义改 generation-guard；`extractExpressionDepsViaProbe` 按 industrial live 语义（宽容 Proxy scope + 五态判别）描述。
+- [x] 裁定 events 处理（v4 `kind: 'prop'` vs 平台 `kind: 'event'`）并修订 renderer definition 章节。
+- [x] 表达式桥接方案定稿（design-data-binding.md）：`analyzeBindingSubscriptions` 对齐 `analyzeFluxSubscriptions`（仅认 `${expr}`、纯路径直取、复杂表达式 probe、deps-empty 嫌疑上报）、编译缓存随 config 清空、pendingUpdates 缓存 + rAF flush 合帧、错误去重上报。
+- [x] 工业协议方案定稿（design-protocol.md）：`openSocket` capability check、同步返回、`onmessage` 属性赋值、ReconnectionManager（指数退避 + ±25% 抖动 + maxRetries + reset 语义）、tag→scope 写入路径。
+- [x] v4 单文件拆分为五册，每册头部标注版本 v5 与状态，design.md 保留总览 + 架构图 + 决策记录 + 分册索引；v4 的历史迭代叙事不迁入（符合 owner doc 只写最终态原则）。
 
 Exit Criteria:
 
-- [ ] 五册文档存在于 `docs/components/threejs-integration/`，单册 ≤ 40 KB，互相引用闭合（无断链）。
-- [ ] §8.1 核对表 10 条在 v5 中逐条可追溯（2 ❌ + 2 ⚠️ 各有对应修正文本；6 ✅ 无回归）。
-- [ ] 两项分歧的裁定节包含「决策 + 理由 + 被拒替代方案 + live 证据引用」。
+- [x] 五册文档存在于 `docs/components/threejs-integration/`，单册 ≤ 40 KB，互相引用闭合（无断链）。
+- [x] §8.1 核对表 10 条在 v5 中逐条可追溯（2 ❌ + 2 ⚠️ 各有对应修正文本；6 ✅ 无回归）。
+- [x] 两项分歧的裁定节包含「决策 + 理由 + 被拒替代方案 + live 证据引用」。
 
 ### Phase 2 - 3 轮独立 sub-agent 共识审查
 
-Status: planned
+Status: completed
 Targets: `docs/plans/464-threejs-i1-design-review-plan.md`（审查记录在本 plan 的 Review Rounds 节）
 
 - Item Types: `Proof | Fix`
 
-- [ ] Round 1：fresh sub-agent 按 guide 四项（可想象性分析/格式完整性/内容稳健性/引用准确性；对设计文档，「内容稳健性」含方案与 live 契约的一致性）审查 v5 文档集，产出 findings；起草者修订。
-- [ ] Round 2：fresh sub-agent 复审（重点：上轮 Blocker/Major 是否真修复 + 新 gap）；起草者修订。
-- [ ] Round 3：fresh sub-agent 终审（零 Blocker/Major 判定）；如仍有 Blocker/Major 未收敛，按 roadmap 规则升级人工并在 plan 记录。
-- [ ] 每轮审查 verdict、findings 摘要、处理结果记录于本 plan「Review Rounds」节。
+- [x] Round 1：fresh sub-agent 按 guide 四项（可想象性分析/格式完整性/内容稳健性/引用准确性；对设计文档，「内容稳健性」含方案与 live 契约的一致性）审查 v5 文档集，产出 findings；起草者修订。
+- [x] Round 2：fresh sub-agent 复审（重点：上轮 Blocker/Major 是否真修复 + 新 gap）；起草者修订。
+- [x] Round 3：fresh sub-agent 终审（零 Blocker/Major 判定）；如仍有 Blocker/Major 未收敛，按 roadmap 规则升级人工并在 plan 记录。
+- [x] 每轮审查 verdict、findings 摘要、处理结果记录于本 plan「Review Rounds」节。
 
 Exit Criteria:
 
-- [ ] 3 轮审查记录完整（轮次/agent/verdict/findings→处理映射）。
-- [ ] 终审轮 verdict 为零 Blocker / 零 Major（或已记录升级人工）。
+- [x] 3 轮审查记录完整（轮次/agent/verdict/findings→处理映射）。
+- [x] 终审轮 verdict 为零 Blocker / 零 Major（或已记录升级人工）。
 
 ### Phase 3 - 收尾同步
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/threejs-integration-roadmap.md`, `docs/logs/<实际完成日>.md`
 
 - Item Types: `Proof`
 
-- [ ] 核对 roadmap I1 状态与本 plan 生命周期一致（`planned` 已在 draft review 通过时置位，见 Draft Review Record；closure audit 通过时由收尾环节置 `done`，见 Closure 节）。
-- [ ] roadmap I2.1/I2.2/I3.1/I4.1 四行「设计文档」列由 v4 单文件改指 v5 文档集对应分册。
-- [ ] 实际完成日的 daily log（`docs/logs/YYYY/MM-DD.md`）记录 v5 定稿与审查结论。
+- [x] 核对 roadmap I1 状态与本 plan 生命周期一致（`planned` 已在 draft review 通过时置位，见 Draft Review Record；closure audit 通过时由收尾环节置 `done`，见 Closure 节）。
+- [x] roadmap I2.1/I2.2/I3.1/I4.1 四行「设计文档」列由 v4 单文件改指 v5 文档集对应分册。
+- [x] 实际完成日的 daily log（`docs/logs/YYYY/MM-DD.md`）记录 v5 定稿与审查结论。
 
 Exit Criteria:
 
-- [ ] roadmap Phase Status / Work Items 表 / 设计文档列与本 plan 及 v5 文档集一致；daily log 含审查轮次与结论。
+- [x] roadmap Phase Status / Work Items 表 / 设计文档列与本 plan 及 v5 文档集一致；daily log 含审查轮次与结论。
 
 ## Review Rounds
 
 > Phase 2 执行时填写。
+
+### Round 1（2026-09-13）
+
+- Agent: independent sub-agent（general-purpose fresh session）
+- Verdict: fail（0 Blocker / 3 Major / 7 Minor；19 处 live 引用抽查全过）
+- Findings → 处理：
+  - M1 SceneManager 缺 hook 接线接口 → §5 契约表增 `setFrameUpdateQueue(queue)` + `onPick(cb)`/`onHover(cb)` 订阅面，data-binding §3 增接线说明。
+  - M2 绑定初值在模型加载完成前丢失（无重放）→ `updateProperty` 契约改为 pending buffer（按 modelId 缓存、模型就绪回放）。
+  - M3 v4 四项能力（skybox/postProcessing/render-optimizer/memory-manager）砍除/吸收零记录 → design-renderer §8 差异清单增 #6/#7 行。
+  - m1 `${Math.PI}` 措辞与 live 启发式不符 → 改为「排除纯字面量/纯运算符；全局名按 live 判真（可接受误报）」。
+  - m2 subscribe 帧在 connecting 态发送必错 → 契约改「onopen → reset → 发送 subscribe」。
+  - m3 ModelLoader `load()` 内自增 generation 违反 D5 → generation 仅 cancel/重建 bump，load 只读当前代。
+  - m4 「错误恢复 <1s」与 baseDelay 1000ms 不自洽 → baseDelay 默认 500ms + design.md 指标口径改「断开检测→首试启动 <1s」。
+  - m5 design.md 头部预写「定稿/3 轮通过」→ 改「共识审查中（Phase 2）」，通过后才更新。
+  - m6 确定性生成 id 派生/归属规则缺失 → design-ai-generation §4 补 slug 规则 + dataPoints 归属 models[0]。
+  - m7 契约表来源引用含糊 → 改指调研文档 §7.1 + bridge 具体行号。
+
+### Round 2（2026-09-13）
+
+- Agent: independent sub-agent（general-purpose fresh session，定向复核 + 可想象性重走）
+- Verdict: pass-with-minors（0 Blocker / 0 Major / 5 Minor / 2 Nit；R1 修复全部判定落地，平台契约引用全部属实）
+- Findings → 处理（全部随修订落地）：
+  - F1 pending buffer 键粒度歧义 → 改 `modelId::path` 键 + 插入序回放。
+  - F2 失效 modelId 的 buffer 无清理出口 → model-load-failed/移除时丢弃 + 上报，回放仅注册时。
+  - F3 queue 换绑缺 sceneManager identity 依赖（重建后更新滞留）→ 注册 effect 双依赖 + 重建时 hook 侧队列/lastValues 清理。
+  - F4 slug 纯 CJK 不闭合 → 空串/非字母开头回退 `model-<序号>` + 中文用例。
+  - F5 deps-empty 上报与 enabled:false 旁路矛盾 → 上报定界在 analyze/config 期，不受 enabled 影响。
+  - F6 visible 切换引擎生命周期未定义 → visible 入参 useSceneManager，true→false dispose、false→true init。
+  - F7/Nit D5「并 dispose」措辞 → 判弃点无 GPU 上传直接丢弃，已注册资源走 dispose 链。
+  - F8/Nit 「唯一队列」措辞 → 「hook 侧唯一帧级队列」+ 指明引擎 buffer 分工。
+
+### Round 3（2026-09-13，终审）
+
+- Agent: independent sub-agent（general-purpose fresh session）
+- Verdict: pass-with-minors（零 Blocker / 零 Major；1 Minor + 2 Nit，均随手修订）
+- Findings → 处理：M1 §3 组件速写 `useSceneManager` 补 visible 入参与 §7 权威契约同步；N1 data-binding §3#5 清空清单补 pendingUpdatesRef（引擎重建同理）；N2 protocol §2 参数名 context→ctx 对齐 live。R2 八项修复 8/8 复核落地、15 处 live 引用抽查零漂移、D1–D6 与分册全量一致。终审通过，design.md 头部更新为定稿。
 
 ## Draft Review Record
 
@@ -130,14 +166,14 @@ Exit Criteria:
 
 > 纯文档计划（仅 `docs/` 变更）：按 plan guide 模板说明删除 `pnpm typecheck`/`build`/`test` 条目；保留 `pnpm lint`（lint 链含 check-active-doc-code-anchors 文档锚点门禁）、`pnpm check` 与 `pnpm check:docs-garbled`（独立 script，文档乱码门禁——对纯文档计划最相关）。
 
-- [ ] Phase 1–3 全部 Exit Criteria 勾选完毕
-- [ ] v5 文档集与 live repo 契约一致（审查终审确认）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（v5 文档集即 owner doc；roadmap 已同步）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm lint`
-- [ ] `pnpm check` 零新增 red hit
-- [ ] `pnpm check:docs-garbled`
+- [x] Phase 1–3 全部 Exit Criteria 勾选完毕
+- [x] v5 文档集与 live repo 契约一致（审查终审确认）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步（v5 文档集即 owner doc；roadmap 已同步，含来源行/Baseline 叙事/设计文档列）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（verdict: approved，见 Closure Audit Evidence）
+- [x] `pnpm lint` 39/39
+- [x] `pnpm check` exit 0
+- [x] `pnpm check:docs-garbled` 零新增命中（18→17，唯一新增 µ 命中已改 us）
 
 ## Deferred But Adjudicated
 
@@ -156,12 +192,12 @@ Exit Criteria:
 
 > closure audit 通过时，收尾环节同步 roadmap I1 `planned` → `done`（roadmap Rule：不得提前标 done）。
 
-Status Note: 待关闭时填写
+Status Note: v5 设计文档集定稿并经 3 轮独立 sub-agent 共识审查通过（R1 fail→修订、R2 0B/0M、R3 终审 0B/0M）；表达式桥接（D4）与工业协议（protocol 分册）两方案确认落地，D1/D2 分歧裁定留痕；roadmap I1 → done。closure audit 独立复验 approved（4 findings 均已随收尾落地：roadmap 叙事更新、gates 勾选、D6 补被拒替代、字节数口径更正）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待 closure audit
-- Evidence: 待定
+- Auditor / Agent: independent sub-agent（general-purpose fresh session）
+- Evidence: 审计独立复验——五册字节实测（5,376/5,828/7,443/10,798/12,274，均 ≤40KB）且无断链；§8.1 抽查 ❌#1→D4、❌#3→D5、⚠️#7→D3（classifyField 顶层精确匹配，`flux-compiler/src/schema-compiler/fields.ts:29-53`）、✅#5→protocol §2 逐条 live 属实；Review Rounds 三轮留痕与抽查的 R1-M1/M2、R2-F3/F5 落地确认；门禁独立复跑 `pnpm lint` 39/39、`pnpm check` exit 0、`pnpm check:docs-garbled` 零 threejs 命中；`git status` 零 packages/ 变更（纯 docs plan 无越界）。2026-09-13，`docs/logs/2026/09-13.md`。
 
 Follow-up:
 
