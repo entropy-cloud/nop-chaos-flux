@@ -51,6 +51,7 @@ export interface LightConfig {
   intensity?: number;
   position?: [number, number, number];
   target?: [number, number, number]; // directional 专用；target 需 scene.add(light.target)
+  groundColor?: string; // hemisphere 专用：地面色（I2.1 实现回写）
   castShadow?: boolean;
 }
 
