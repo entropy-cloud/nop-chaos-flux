@@ -19,7 +19,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 - **I0. 调研** (`done`，plan: `docs/plans/463-threejs-i0-research-plan.md`)
 - **I1. 设计** (`done`，plan: `docs/plans/464-threejs-i1-design-review-plan.md`)
-- **I2. 核心引擎** (I2.1 `planned`，plan: `docs/plans/465-threejs-i2-renderer-plan.md`；I2.2 `todo`)
+- **I2. 核心引擎** (I2.1 `done`，plan: `docs/plans/465-threejs-i2-renderer-plan.md`；I2.2 `todo`)
 - **I3. 工业协议** (`todo`)
 - **I4. AI 生成** (`todo`)
 
@@ -69,7 +69,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 | ID   | Status | 内容                                                                                 | 设计文档                                                                            | 依赖 |
 | ---- | ------ | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | ---- |
-| I2.1 | todo   | `three-canvas` 渲染器组件实现 + Flux 表达式编译器集成（analyzeBindingSubscriptions） | `docs/components/threejs-integration/design-renderer.md` + `design-data-binding.md` | I1.1 |
+| I2.1 | done   | `three-canvas` 渲染器组件实现 + Flux 表达式编译器集成（analyzeBindingSubscriptions） | `docs/components/threejs-integration/design-renderer.md` + `design-data-binding.md` | I1.1 |
 | I2.2 | todo   | TransformEngine 实现 + 基础几何/材质图元库                                           | `docs/components/threejs-integration/design-data-binding.md` §5-§6                  | I2.1 |
 
 ### I3 — 工业协议

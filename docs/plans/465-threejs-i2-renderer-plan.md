@@ -1,6 +1,6 @@
 # 465 Three.js 集成 I2.1 three-canvas 渲染器实现计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-13
 > Source: `docs/backlog/threejs-integration-roadmap.md`（I2.1）、`docs/components/threejs-integration/design-renderer.md` + `design-data-binding.md`（v5，plan 464 定稿）、`docs/analysis/threejs-integration-analysis.md` §7/§10
 > Related: 前置 plan 463/464（closed）；后继 I2.2（TransformEngine + 图元库，本计划留接缝）
@@ -177,7 +177,7 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成（Phase 3/4/5 focused tests，先红后绿）
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
 - [x] 受影响的 owner docs 已同步（design 分册漂移回写：groundColor；`docs/logs/` 记录）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（两轮：首轮 issues → 修复 → 复审 approved，见 Closure Audit Evidence）
 - [x] `pnpm typecheck` 40/40
 - [x] `pnpm build` 40/40（--force 全量）
 - [x] `pnpm lint` 40/40（--force 全量）
@@ -206,12 +206,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待关闭时填写
+Status Note: I2.1 全部交付落地：`@nop-chaos/flux-renderers-3d` 包（schema/definition/flux-eval/engine/hooks/组件）+ workspace 四点注册 + check 豁免登记；Proof 先行（先红后绿）83 包级测试，覆盖率四维 ≥90；测试驱动修复 3 个真 bug（replay 复合键、updateMatrixWorld、dispose 竞态悬挂承诺）。closure audit 两轮（首轮 issues：groundColor owner-doc 回写假勾 → 补写 commit `a242798a0` → 复审 approved）。roadmap I2.1 → done。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待 closure audit
-- Evidence: 待定
+- Auditor / Agent: independent sub-agent（general-purpose fresh session）
+- Evidence: 首轮审计 live 重跑全部测试（未采信执行者输出）——registry/flux-eval(18)/engine(41)/renderer(19) 逐文件复跑通过；mutation 实验（注释 `camera.updateMatrixWorld()` → 3 测试失败）证明行为被测试网覆盖；coverage 96.7/92.68/94.89/99.56 逐位复现；四处注册点、EXEMPTIONS 合规（reason+source+industrial 判例）、Deferred 分类诚实。首轮唯一 Major：groundColor owner-doc 回写假完成声称 → 退回补写（commit `a242798a0`）→ 复审 approved（2026-09-13，`docs/logs/2026/09-13.md`）。
 
 Follow-up:
 
