@@ -113,17 +113,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1–3 全部 Exit Criteria 勾选完毕
-- [ ] 调研文档三节齐全且与 live repo / 安装的 `@types/three` 事实一致
-- [ ] 基准脚本可复跑，基线数据已记录
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（本计划即改 owner doc `docs/analysis/threejs-integration-analysis.md`，无其他 drift）
+- [x] Phase 1–3 全部 Exit Criteria 勾选完毕
+- [x] 调研文档三节齐全且与 live repo / 安装的 `@types/three` 事实一致
+- [x] 基准脚本可复跑，基线数据已记录
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步（本计划即改 owner doc `docs/analysis/threejs-integration-analysis.md`，无其他 drift）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check` 零新增 red hit（新增 hit 须先在 `docs/logs/` 注册）
+- [x] `pnpm typecheck` 39/39
+- [x] `pnpm build` 39/39
+- [x] `pnpm lint` 39/39
+- [x] `pnpm test` 72/72 任务 12,185 passed / 0 failed
+- [x] `pnpm check` exit 0 零新增 red hit（新增 hit 须先在 `docs/logs/` 注册）
 
 ## Deferred But Adjudicated
 
