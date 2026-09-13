@@ -63,47 +63,47 @@
 
 ### Phase 1 - ReconnectionManager（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/data-source/reconnection-manager.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红，fake timers）：退避时刻序列 baseDelay×2^n ±25% 抖动且 clamp maxDelay；onReconnect 触发；**重复 scheduleReconnect 只保留一个 pending timer**；maxRetries 耗尽后 give-up 诊断且不再调度；cancel 幂等（pending 不触发）；reset 归零后续调度从头计。
-- [ ] 实现 ReconnectionManager（构造注入 timer、随机源、onGiveUp 诊断通道——均显式接口面；onGiveUp 缺省转发 onError 诊断通道，timer/随机源缺省 setTimeout/Math.random；Phase 3 有意回写 design-protocol.md §3）。
+- [x] 先写失败测试（红，fake timers）：退避时刻序列 baseDelay×2^n ±25% 抖动且 clamp maxDelay；onReconnect 触发；**重复 scheduleReconnect 只保留一个 pending timer**；maxRetries 耗尽后 give-up 诊断且不再调度；cancel 幂等（pending 不触发）；reset 归零后续调度从头计。
+- [x] 实现 ReconnectionManager（构造注入 timer、随机源、onGiveUp 诊断通道——均显式接口面；onGiveUp 缺省转发 onError 诊断通道，timer/随机源缺省 setTimeout/Math.random；Phase 3 有意回写 design-protocol.md §3）。
 
 Exit Criteria:
 
-- [ ] reconnection-manager 单测全绿（先红后绿；退避时刻逐点断言）。
+- [x] reconnection-manager 单测全绿（先红后绿；退避时刻逐点断言）。
 
 ### Phase 2 - IndustrialAdapter（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/data-source/industrial-adapter.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红，mock openSocket）：capability check 缺失 → `socket-unavailable` 一次且不重试（按 adapter 实例生命周期去重）；onerror 紧接 onclose 只产生一次重连调度（双触发幂等联合用例）；onopen → reset + 发送 subscribe 帧（含 tags address 与 polling）；数据帧 address→tag 映射 + 三类类型转换 + NaN 丢弃 + `scope.update('dataSources.<name>', v)`；JSON.parse 失败 → `socket-message-parse` 去重；onclose/onerror → 调度重连（pending 幂等去重）且主动 disconnect 不触发；connect 同 id 重入先 disconnect。
-- [ ] 实现 IndustrialAdapter（契约见 design-protocol.md §4；scope 写入经注入 ScopeRef）。
+- [x] 先写失败测试（红，mock openSocket）：capability check 缺失 → `socket-unavailable` 一次且不重试（按 adapter 实例生命周期去重）；onerror 紧接 onclose 只产生一次重连调度（双触发幂等联合用例）；onopen → reset + 发送 subscribe 帧（含 tags address 与 polling）；数据帧 address→tag 映射 + 三类类型转换 + NaN 丢弃 + `scope.update('dataSources.<name>', v)`；JSON.parse 失败 → `socket-message-parse` 去重；onclose/onerror → 调度重连（pending 幂等去重）且主动 disconnect 不触发；connect 同 id 重入先 disconnect。
+- [x] 实现 IndustrialAdapter（契约见 design-protocol.md §4；scope 写入经注入 ScopeRef）。
 
 Exit Criteria:
 
-- [ ] industrial-adapter 单测全绿（先红后绿；Failure Paths 表五行逐行覆盖）。
-- [ ] 包级覆盖率四维 ≥90 维持。
+- [x] industrial-adapter 单测全绿（先红后绿；Failure Paths 表五行逐行覆盖）。
+- [x] 包级覆盖率四维 ≥90 维持。
 
 ### Phase 3 - 全量验证与收尾
 
-Status: planned
+Status: completed
 Targets: 仓库级
 
 - Item Types: `Proof`
 
-- [ ] 根 `pnpm typecheck`/`build`/`lint`/`test`/`check` 全绿（断言归 Closure Gates，此处为执行动作）。
-- [ ] design-protocol.md 有意回写：§3 ReconnectionManager 增 onGiveUp/随机源/timer 注入与 schedule pending 幂等契约、§4 增双触发幂等语义 + `socket-unavailable` 去重粒度（adapter 实例生命周期）；`docs/logs/` 记录。
+- [x] 根 `pnpm typecheck`/`build`/`lint`/`test`/`check` 全绿（断言归 Closure Gates，此处为执行动作）。
+- [x] design-protocol.md 有意回写：§3 ReconnectionManager 增 onGiveUp/随机源/timer 注入与 schedule pending 幂等契约、§4 增双触发幂等语义 + `socket-unavailable` 去重粒度（adapter 实例生命周期）；`docs/logs/` 记录。
 
 Exit Criteria:
 
-- [ ] design-protocol.md 漂移回写完成（§3/§4 有意扩展在案）；`docs/logs/` 记录 I3.1 完成。
-- [ ] roadmap I3.1 状态随 plan 生命周期同步（draft review 通过 → `planned`；closure audit 通过 → `done`）。
+- [x] design-protocol.md 漂移回写完成（§3/§4 有意扩展在案）；`docs/logs/` 记录 I3.1 完成。
+- [x] roadmap I3.1 状态随 plan 生命周期同步（draft review 通过 → `planned`；closure audit 通过 → `done`）。
 
 ## Draft Review Record
 
@@ -116,18 +116,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复
-- [ ] 所有 in-scope confirmed contract drifts 已收敛
-- [ ] 行为/契约结果已达成（openSocket 消费 + 重连 + 数据帧→scope 写入，**契约级可用（mock 链路）**）
-- [ ] 必要 focused verification 已完成（Phase 1–2 focused tests，先红后绿）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（design-protocol.md 漂移回写；`docs/logs/`）
+- [x] 所有 in-scope confirmed live defects 已修复
+- [x] 所有 in-scope confirmed contract drifts 已收敛（§3/§4 有意扩展已回写分册）
+- [x] 行为/契约结果已达成（openSocket 消费 + 重连 + 数据帧→scope 写入，**契约级可用（mock 链路）**）
+- [x] 必要 focused verification 已完成（Phase 1–2 focused tests，先红后绿）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步（design-protocol.md 漂移回写；`docs/logs/`）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check` 零新增 red hit
+- [x] `pnpm typecheck` 40/40
+- [x] `pnpm build` 40/40
+- [x] `pnpm lint` 40/40
+- [x] `pnpm test` 73/73 任务 12,329 passed / 0 failed（3d 包 158 测试）
+- [x] `pnpm check` exit 0
 
 ## Deferred But Adjudicated
 
