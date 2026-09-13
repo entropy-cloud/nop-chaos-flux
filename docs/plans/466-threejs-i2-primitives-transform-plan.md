@@ -1,6 +1,6 @@
 # 466 Three.js 集成 I2.2 TransformEngine 与图元库计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-13
 > Source: `docs/backlog/threejs-integration-roadmap.md`（I2.2）、`docs/components/threejs-integration/design-data-binding.md` §5–§6、`design-renderer.md` §1（ModelConfig 扩展）
 > Related: 前置 plan 465（I2.1，closed）；I3.1/I4.1 依赖本计划的图元库（无外链 GLB 的可构建场景）
@@ -167,7 +167,7 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成（Phase 1–4 focused tests，先红后绿）
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
 - [x] 受影响的 owner docs 已同步（design-data-binding.md §5 与 design-renderer.md §1 回写；`docs/logs/`）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（两轮：R1 issues 2M → 修复 → R2 approved，见 Closure Audit Evidence）
 - [x] `pnpm typecheck` 40/40
 - [x] `pnpm build` 40/40
 - [x] `pnpm lint` 40/40
@@ -196,12 +196,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待关闭时填写
+Status Note: I2.2 四块交付全部落地并经独立审计（R1 issues 2M → 修复 → R2 approved）：TransformEngine 接管转换（identity 接缝移除）、TweenRegistry 过渡动画（tween/step/spring）、图元库（url XOR primitive 判别、同步注册即时就绪）、KeyframeClip 关键帧播放（time/state/event 触发）。roadmap I2.2 → done。
 
 Closure Audit Evidence:
 
 - Auditor / Agent: independent sub-agent（general-purpose fresh session）
-- Evidence: R1 审计（issues，2M）：F1 双源诊断未实现（被 no-source 断言掩盖）→ 补 `primitive-dual-source` 一次性诊断 + 测试隔离断言；F2 notifyEvent 零测试 → 补引擎级 event 触发测试（source 匹配/不匹配分流 + 组件经 useThreeEvents onEvent 接线）；F3 删除 probe-prim.test.ts 探针；F4 帧序（tween→clip，clip 优先）补注释。R2 复审待执行。验证基线：typecheck 40/40、test 73 任务 12,329 passed / 0 failed（3d 包 144）、check exit 0、覆盖率 95.9/93.9/92.4/97.8。
+- Evidence: R1 审计（issues，2M）：F1 双源诊断未实现（被 no-source 断言掩盖）→ 补 `primitive-dual-source` 一次性诊断 + 测试隔离断言；F2 notifyEvent 零测试 → 补引擎级 event 触发测试（source 匹配/不匹配分流 + 组件经 useThreeEvents onEvent 接线）；F3 删除 probe-prim.test.ts 探针；F4 帧序（tween→clip，clip 优先）补注释。R2 复审 approved（F1–F4 闭环：primitive-dual-source 诊断 + 测试去掩盖、notifyEvent 引擎级测试补全（覆盖空洞 342-345 消除）、probe 探针删除、帧序注释补齐；复审实跑 3d 包 144/144 + 覆盖率逐位复现 + typecheck 40/40 + check exit 0）。
+
+Status Note: I2.2 四块交付全部落地并经独立审计（R1 issues → 修复 → R2 approved）：TransformEngine 接管转换、TweenRegistry 过渡动画、图元库（url XOR primitive 判别）、KeyframeClip 关键帧播放。roadmap I2.2 → done。
 
 Follow-up:
 
