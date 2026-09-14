@@ -188,6 +188,9 @@ importers:
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../../packages/flux-react
+      '@nop-chaos/flux-renderers-3d':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-3d
       '@nop-chaos/flux-renderers-ai':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-ai
@@ -643,6 +646,9 @@ importers:
         specifier: 0.186.0
         version: 0.186.0
     devDependencies:
+      '@nop-chaos/flux-compiler':
+        specifier: workspace:*
+        version: link:../flux-compiler
       '@nop-chaos/flux-formula':
         specifier: workspace:*
         version: link:../flux-formula

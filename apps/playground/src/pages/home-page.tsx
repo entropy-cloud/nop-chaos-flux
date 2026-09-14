@@ -18,6 +18,7 @@ type NavigationTarget =
   | 'word-editor'
   | 'performance-table'
   | 'scada-demo'
+  | 'three-canvas-demo'
   | 'scada-pressure-demo'
   | 'scada-edge-cases'
   | 'm5-showcase'
@@ -165,6 +166,13 @@ const NAV_CARDS: NavCard[] = [
     eyebrow: 'Industrial HMI',
     description:
       'I13.1 工艺流程组态演示：设备图元 + 管道 + 仪表，点表模拟数据定时刷新（双轨），单击设备弹出详情，双击跳转，按钮触发数据请求。',
+  },
+  {
+    id: 'three-canvas-demo',
+    title: 'Three Canvas Demo',
+    eyebrow: '3D Rendering',
+    description:
+      'plan 469 three-canvas 演示：声明式图元 + 表达式绑定（tween/range/condition）+ 循环关键帧 + 对象点击，10Hz 模拟数据驱动绑定热路径。',
   },
   {
     id: 'scada-pressure-demo',

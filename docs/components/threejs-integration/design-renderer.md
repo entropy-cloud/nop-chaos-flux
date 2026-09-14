@@ -213,6 +213,7 @@ export class ModelLoader {
 - `loading` / `empty` region：`props.regions.loading?.render()`；模型全部就绪前若声明了 loading region 则渲染之（默认占位 `data-testid="three-canvas-loading"`）。
 - `meta.visible === false` 时不挂容器、不创建 WebGL 上下文；`visible` 作为 `useSceneManager` 的参数参与引擎生命周期：true→false 走完整 `dispose()`，false→true 重新 init（ref 赋值不触发 effect，故 visible 必须显式入参）。
 - 诊断埋点：`data-three-scene-state`（`empty | loading | ready | error`）供 e2e 断言。
+- **ready 闩语义（plan 469 Fix）**：`emitReady` 为一次性闩（`readyEmitted` 置位），晚于发射的 `onReady` 订阅立即重放。纯图元场景 `loadModels` 在挂载 effect 内**同步**完成注册并 emitReady，而 React 壳的 onReady 订阅 effect 晚一个 render——不重放则 ready 事件被确定性错过，场景已渲染但状态永久停留 loading。
 
 ## 8. 与 v4 差异清单
 

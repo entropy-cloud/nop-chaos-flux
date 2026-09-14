@@ -513,6 +513,16 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       page.getByRole('heading', { name: 'dashboard-editor 演示页', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
   },
+  // plan 469：three-canvas 演示页冒烟断言（懒加载 chunk 到位 + 页面骨架渲染）。
+  'three-canvas-demo': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'three-canvas 数据驱动 3D 场景演示页', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  // 既有清单补漏（21817b134 加路由时缺断言，plan 469 全量 e2e 发现）：print 页无 h1，断言根 testid。
+  'print-designer': async (page) => {
+    await expect(page.getByTestId('print-designer-demo')).toBeVisible({ timeout: 15_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

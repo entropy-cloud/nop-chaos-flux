@@ -13,7 +13,20 @@ export const threeCanvasRendererDefinition: RendererDefinition = {
       editorType: 'code',
     },
     bindings: {
-      shape: { kind: 'unknown' },
+      shape: {
+        kind: 'array',
+        item: {
+          kind: 'schema-definition',
+          fieldRules: {
+            // 字面量保留位（plan 469 Fix）：表达式字符串（${expr}/convert）必须原样到达绑定桥
+            // （design-data-binding.md §1，求值入口在 useBindingBridge，不在 props 编译层）。
+            // 编译器包 preserve-literal 信封，渲染器经 binding-literals.ts 解包。
+            source: { kind: 'literal', sourceKey: 'expression' },
+            condition: { kind: 'literal', sourceKey: 'expression' },
+            transform: { kind: 'literal', sourceKey: 'convert' },
+          },
+        },
+      },
       displayName: 'Data Bindings',
       description:
         'DataBinding[]: scope expression → model property with optional transform/condition (I2.2). See design-data-binding.md §1.',

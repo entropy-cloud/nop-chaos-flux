@@ -59,7 +59,7 @@ evaluateValue(compiled, evalScope, env)  →  value
 ## 3. 绑定桥接 hook（`useBindingBridge`）
 
 ```
-bindings + compiler + env
+bindings（入口先经 normalizePreservedBindings 解包 literal 信封）
    → analyzeBindingSubscriptions（useMemo，随 config/compiler/env）
    → useScopeSelector(snapshot, Object.is, { enabled: paths.length > 0, fallback: {}, paths })
    → selector 触发时：逐 binding 编译求值 → 与 lastValue（useRef Map）比较
@@ -68,6 +68,16 @@ bindings + compiler + env
        （hook 经 sceneManager.setFrameUpdateQueue 注册队列句柄，bindings 变更时换绑；
          模型未就绪的更新由引擎 pending buffer 缓存、模型就绪后回放——design-renderer.md §5）
 ```
+
+**字面量保留位（plan 469 Fix）**：schema 面-authored 的 `bindings` 含表达式字符串
+（`source.expression` / `condition.expression` / `transform.convert`），而平台 schema 编译器
+默认对 prop 树内 `${...}` 字符串做 props 表达式求值——表达式会在 props 层被吃掉、到不了绑定桥
+（props 求值机制与绑定桥双入口冲突）。因此 renderer-definitions 的 `bindings` propContract
+声明为 `schema-definition` + literal fieldRules（上述三位点，sourceKey 信封），编译器将三点包成
+`{ __nopPreserveLiteral: true, value }` 静态信封；`useBindingBridge` 入口经
+`binding-literals.ts` 的 `normalizePreservedBindings` 统一解包（非信封值原样透传——JS 直调
+与 hook 级单测不受影响），analyze/求值/换绑 identity 全走 normalized 结果。表达式求值的唯一
+入口仍是绑定桥（D4/I18 一元化）。
 
 契约要点（每条对应 v4 缺陷修复或 scada 已验证模式）：
 

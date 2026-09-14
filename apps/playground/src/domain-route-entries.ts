@@ -475,6 +475,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'I13.1 工艺流程组态演示：设备图元 + 管道 + 仪表，点表模拟数据定时刷新（flux 桥接轨 + component:setPointValue 句柄轨双演示），单击设备弹出详情（I11 三链路并入）。',
   },
   {
+    id: 'three-canvas-demo',
+    title: 'Three Canvas Demo',
+    eyebrow: '3D Rendering',
+    description:
+      'plan 469 three-canvas 演示：声明式图元 + 表达式绑定（tween/range/condition）+ 循环关键帧 + 对象点击，10Hz 模拟数据驱动绑定热路径（fps e2e 基准演示场景）。',
+  },
+  {
     id: 'scada-pressure-demo',
     title: 'Scada Pressure Demo',
     eyebrow: 'Industrial HMI',

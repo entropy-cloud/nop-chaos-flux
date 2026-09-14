@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { ExpressionCompiler, RendererEnv } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
+import { normalizePreservedBindings } from '../../binding/binding-literals.js';
 import { analyzeBindingSubscriptions, createPrivateEvalScope, normalizeBindingExpression } from '../../binding/flux-eval.js';
 import { TransformEngine } from '../../binding/transform-engine.js';
 import type { DataBinding } from '../../schemas.js';
@@ -37,6 +38,10 @@ interface CompiledBinding {
 export function useBindingBridge(args: UseBindingBridgeArgs): void {
   const { bindings, sceneManager, expressionCompiler, env, onError, transform } = args;
 
+  // schema 面 literal 保留位解包（plan 469 Fix）：source/condition/transform 的表达式字符串
+  // 经编译器 preserve-literal 信封到达此处，求值前统一解包（JS 直调无信封原样透传）。
+  const normalizedBindings = useMemo(() => normalizePreservedBindings(bindings), [bindings]);
+
   const compiledBindingsRef = useRef<CompiledBinding[]>([]);
   const compiledCacheRef = useRef(new Map<string, CompiledBinding>());
   const lastValuesRef = useRef(new Map<string, unknown>());
@@ -55,8 +60,8 @@ export function useBindingBridge(args: UseBindingBridgeArgs): void {
   }, [transformEngine]);
 
   const { paths, depsEmptyExpressions } = useMemo(
-    () => analyzeBindingSubscriptions(bindings ?? [], { compiler: expressionCompiler, env }),
-    [bindings, expressionCompiler, env],
+    () => analyzeBindingSubscriptions(normalizedBindings ?? [], { compiler: expressionCompiler, env }),
+    [normalizedBindings, expressionCompiler, env],
   );
 
   // 编译缓存随 bindings/compiler 变更清空（WD-3 防无界增长 + 换 compiler 重产 compiled）
@@ -64,7 +69,7 @@ export function useBindingBridge(args: UseBindingBridgeArgs): void {
     compiledCacheRef.current.clear();
     compiledBindingsRef.current = [];
     lastReportedRef.current.clear();
-  }, [bindings, expressionCompiler]);
+  }, [normalizedBindings, expressionCompiler]);
 
   // deps-empty 诊断（analyze/config 期，不受 enabled 影响；一次性）
   const reportedDepsEmptyRef = useRef(new Set<string>());
@@ -91,7 +96,7 @@ export function useBindingBridge(args: UseBindingBridgeArgs): void {
 
   // scope 变化 → 全量重算绑定 → 与 lastValues 比较 → pending 队列（帧边界批量应用）
   useEffect(() => {
-    if (paths.length === 0 || !bindings) return;
+    if (paths.length === 0 || !normalizedBindings) return;
     const reportOnce = (bindingKey: string, code: string, error: unknown) => {
       const dedupKey = `${bindingKey}::${code}`;
       if (lastReportedRef.current.get(dedupKey) === code) return;
@@ -115,7 +120,7 @@ export function useBindingBridge(args: UseBindingBridgeArgs): void {
       }
     };
     const evalScope = createPrivateEvalScope({ ...scopeData });
-    for (const binding of bindings) {
+    for (const binding of normalizedBindings) {
       const entry = getCompiled(binding);
       if (!entry) continue;
       if (entry.compiled.kind !== 'dynamic') continue;
@@ -140,7 +145,7 @@ export function useBindingBridge(args: UseBindingBridgeArgs): void {
         value: transformed,
       });
     }
-  }, [scopeData, bindings, expressionCompiler, env, paths, transformEngine]);
+  }, [scopeData, normalizedBindings, expressionCompiler, env, paths, transformEngine]);
 
   // 队列注册：bindings + sceneManager identity 双依赖（引擎重建后新实例必须重新注册）；
   // 仅在实例或绑定真正变更（重挂/重建）时丢弃 pending 与 lastValues（防 stale 写入），
@@ -150,13 +155,13 @@ export function useBindingBridge(args: UseBindingBridgeArgs): void {
     if (!sceneManager) return;
     const registered = registeredForRef.current;
     // 首次挂载不清（挂载期已求值的初值就在 pending 里）；仅真正换绑/引擎重建时丢弃 stale
-    if (registered && (registered.engine !== sceneManager || registered.bindings !== bindings)) {
+    if (registered && (registered.engine !== sceneManager || registered.bindings !== normalizedBindings)) {
       pendingRef.current = [];
       lastValuesRef.current.clear();
     }
-    registeredForRef.current = { engine: sceneManager, bindings };
+    registeredForRef.current = { engine: sceneManager, bindings: normalizedBindings };
     sceneManager.setFrameUpdateQueue({
       drain: () => pendingRef.current.splice(0),
     });
-  }, [bindings, sceneManager]);
+  }, [normalizedBindings, sceneManager]);
 }

@@ -27,7 +27,7 @@
 
 ## Non-Goals
 
-- `flux-renderers-3d` 库代码零改动：渲染器、SceneManager、绑定管线、AI 模块均不动（渲染证据经既有 `data-three-scene-state` 埋点与页面级探针获取）。
+- 执行期修订（记录在案的 scope 修订，见 Phase 2）：起草时本条为「`flux-renderers-3d` 库代码零改动」；联调暴露两处**已确认 live defect**（schema 面 bindings 表达式被 props 编译层求值吞掉；纯图元场景 ready 事件同步发射早于 React 订阅），按反偷懒规则必须 Fix——两者均为 demo 页作为首个 schema 级/真实浏览器级消费方才可暴露的契约缺陷，不修则本计划交付物（fps e2e）无法成立。除该两处 Fix 外，渲染器行为面不改。
 - Gemini 适配、per-primitive 事件、spring 物理参数化、数据帧批量化（均已在 465–468 裁定为 out-of-scope improvement，无 successor 义务）。
 - 工业协议（Socket.IO/WebSocket）演示：I3 适配器已有单测覆盖，演示页不接真实 socket（openSocket 契约演示属潜在后续工作，本计划不扩）。
 - GPU 级性能调优：SwiftShader 软渲染口径的 fps 只作「渲染循环健康」基线，不代表目标硬件吞吐。
@@ -36,15 +36,17 @@
 
 ### In Scope
 
-- `apps/playground/src/pages/three-canvas-demo.tsx`（含 schema 模块，如 `three-canvas-demo-schema.ts`）及路由接线：`App.tsx`（懒加载 + domain case）、`domain-route-entries.ts`、`pages/home-page.tsx`、`pages/index.ts`。
+- `apps/playground/src/pages/three-canvas-demo.tsx`（含 schema 模块 `three-canvas-demo-schema.ts`）及路由接线：`App.tsx`（懒加载 + domain case）、`domain-route-entries.ts`、`pages/home-page.tsx`、`pages/index.ts`。
 - `apps/playground/package.json` 增加 `@nop-chaos/flux-renderers-3d: workspace:*`。
+- 执行期扩入（Phase 2 两处 confirmed live defect 的 Fix）：`packages/flux-renderers-3d/src/renderer-definitions.ts`（bindings propContract literal 保留位声明）、`src/binding/binding-literals.ts` + 测试（信封解包）、`src/renderer/hooks/use-binding-bridge.ts`（入口解包接线）、`src/engine/scene-manager.ts`（ready 闩语义）、`src/engine/scene-manager.ready-latch.test.ts`（回归）、3d 包 devDep `@nop-chaos/flux-compiler`（契约测试用，basic/data/form 包同款先例）。
 - `tests/e2e/three-canvas-perf.spec.ts`（含页内探针逻辑；如需 helper 则落 `tests/e2e/helpers/`）。
 - `docs/backlog/threejs-integration-roadmap.md` Baseline 过期描述修正。
+- design 分册漂移回写（bindings 字面量保留位契约 + ready 闩语义，Phase 4）。
 - `docs/logs/2026/09-15.md` 记录。
 
 ### Out Of Scope
 
-- `packages/flux-renderers-3d/` 源码、其他 renderer 包、flux-react/core 运行时。
+- 其他 renderer 包、flux-react/core 运行时（Phase 2 的 3d 包 Fix 除外，已扩入 In Scope）。
 - 视觉回归基线（不写 `*-visual.spec`，不留截图基线）。
 
 ## Failure Paths
@@ -66,53 +68,72 @@
 
 ### Phase 1 - 演示页与路由接线
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/pages/three-canvas-demo*.tsx`、`App.tsx`、`domain-route-entries.ts`、`pages/home-page.tsx`、`pages/index.ts`、`apps/playground/package.json`
 
 - Item Types: `Proof | Fix`
 
-- [ ] playground 依赖接线：`package.json` 增加 `@nop-chaos/flux-renderers-3d: workspace:*` 并 `pnpm install`。
-- [ ] 演示页 `three-canvas-demo.tsx`（+ schema 模块）：页面内自建 registry（`createSchemaRenderer` + `createDefaultRegistry` + `registerThreeRenderers` + 页面骨架所需 basic renderers），three.js 经懒加载入口隔离（App 层 `import()` 动态引入，主 bundle 与 App 单测不加载 three）。
-- [ ] 演示场景：≥5 种 primitive 图元 + 相机/灯光/环境背景 + 绑定（setInterval 模拟点表 → rotation 持续旋转 + material.color 经 range 映射 + tween 动画）+ time 触发 loop 关键帧动画 + interactive 模型 `onObjectClick` 事件。
-- [ ] 路由接线 4 点：`domain-route-entries.ts` 条目（eyebrow `3D Rendering`）、`home-page.tsx` NavigationTarget 联合 + NavCard、`App.tsx` 懒加载 const + `case 'three-canvas-demo'`、`pages/index.ts` 导出。
-- [ ] Proof：`#/three-canvas-demo` 在 playground 可打开、场景 ready（该验证随 Phase 2 e2e 程序化固化）。
+- [x] playground 依赖接线：`package.json` 增加 `@nop-chaos/flux-renderers-3d: workspace:*` 并 `pnpm install`。
+- [x] 演示页 `three-canvas-demo.tsx`（+ schema 模块）：页面内自建 registry（`createSchemaRenderer` + `createDefaultRegistry` + `registerThreeRenderers` + 页面骨架所需 basic renderers），three.js 经懒加载入口隔离（App 层 `import()` 动态引入，主 bundle 与 App 单测不加载 three）。
+- [x] 演示场景：≥5 种 primitive 图元 + 相机/灯光/环境背景 + 绑定（setInterval 模拟点表 → rotation 持续旋转 + material.color 经 range 映射 + tween 动画）+ time 触发 loop 关键帧动画 + interactive 模型 `onObjectClick` 事件。
+- [x] 路由接线 4 点：`domain-route-entries.ts` 条目（eyebrow `3D Rendering`）、`home-page.tsx` NavigationTarget 联合 + NavCard、`App.tsx` 懒加载 const + `case 'three-canvas-demo'`、`pages/index.ts` 导出。
+- [x] Proof：`#/three-canvas-demo` 在 playground 可打开、场景 ready（该验证随 Phase 2 e2e 程序化固化）。
 
 Exit Criteria:
 
-- [ ] `pnpm --filter @nop-chaos/flux-playground typecheck`/`build` 通过；主 bundle 不含 three（机械化抽查：grep `apps/playground/dist/assets/` 产物 chunk 无 three 源码特征，如 `WebGLRenderer` 类体）。
-- [ ] 既有 playground 单测（App/route-matrix/home-page 相关）全绿。
+- [x] `pnpm --filter @nop-chaos/flux-playground typecheck`/`build` 通过；主 bundle 不含 three（机械化抽查：grep `apps/playground/dist/assets/` 产物 chunk 无 three 源码特征，如 `WebGLRenderer` 类体——实测 `WebGLRenderer` 仅存在于懒加载 chunk `three-canvas-demo-*.js`）。
+- [x] 既有 playground 单测（App/route-matrix/home-page 相关）全绿（33 文件 / 347 测试）。
 
-### Phase 2 - 浏览器侧 fps e2e 基准
+### Phase 2 - 两处 confirmed live defect 的 Fix（Proof 先行）
 
-Status: planned
-Targets: `tests/e2e/three-canvas-perf.spec.ts`（+ 可选 `tests/e2e/helpers/three-canvas-assert.ts`）
+Status: completed
+Targets: `packages/flux-renderers-3d/src/renderer-definitions.ts`、`src/binding/binding-literals.ts(+test)`、`src/renderer/hooks/use-binding-bridge.ts`、`src/engine/scene-manager.ts`、`src/engine/scene-manager.ready-latch.test.ts`
+
+- Item Types: `Fix | Proof`
+
+- [x] Fix（binding-expression-swallowed）：`bindings` propContract 声明 schema-definition + literal fieldRules（`source.expression` / `condition.expression` / `transform.convert`，sourceKey 信封），编译器 preserve-literal 信封使表达式字符串原样到达绑定桥；`binding-literals.ts` `normalizePreservedBinding(s)` 解包（非信封值透传），`useBindingBridge` 入口统一解包（analyze/求值/换绑 identity 全走 normalized）。
+- [x] Proof：`binding-literals.test.ts` 先红（propsProgram `kind=dynamic`，表达式被吃）后绿（信封存活 + 解包为原始字符串 + 无信封透传）。
+- [x] Fix（ready-latch race）：真实 SceneManager 补 `readyEmitted` 闩——`emitReady` 置位、晚到的 `onReady` 订阅立即重放。纯图元场景 `loadModels` 在挂载 effect 内同步 emitReady，而 React 壳订阅 effect 晚一个 render，不重放则 ready 被确定性错过（test-support mock 早已建模该语义，live 实现缺失——mock/real 漂移由本计划 e2e 首次暴露）。
+- [x] Proof：`scene-manager.ready-latch.test.ts`（真实 SceneManager）：同步 emit 后晚订阅立即重放 + 先订阅后 emit 正常通知再闩住。
+
+Exit Criteria:
+
+- [x] binding-literals 2/2、ready-latch 2/2 全绿（先红后绿）；3d 包全量 24 文件 / 179 测试全绿（177 存量 + 4 新增用例中 2 文件 4 用例），覆盖率四维维持 ≥90 口径。
+- [x] e2e 链路证据：修复前 demo 页 `data-three-scene-state` 停留 loading（或崩溃 error boundary），修复后 ready（见 Phase 3 e2e）。
+
+### Phase 3 - 浏览器侧 fps e2e 基准
+
+Status: completed
+Targets: `tests/e2e/three-canvas-perf.spec.ts`
 
 - Item Types: `Proof`
 
-- [ ] 先行固化断言口径（红/绿语义在 spec 注释声明，镜像 scada-perf 注释风格）：硬门禁——`[data-three-scene-state]` 容器存在、canvas 元素尺寸非 0、`data-three-scene-state="ready"`、rAF 帧推进计数 > 0。
-- [ ] 像素探测：页内 rAF 回调中对 WebGL 上下文 readPixels 多帧采样（≥30 帧窗口），任一非零样本 → `pixel-confirmed`；非空场景全零 → 判败（preserveDrawingBuffer 缺失下单帧读取有竞态，多帧伯努利采样消除；镜像 scada-canvas-assert T5 口径并在注释声明）。**执行注意**：若观察到确定性全零，先按探针机制问题排查（帧序：读回调需在该帧 three render 之后；可调采样时序），确认探针机制正确后才可判场景回归。
-- [ ] fps 测量：固定窗口（≥2s）rAF 计数，3 采样取最大（scada-perf headless 帧钟口径），断言宽容下限（评估结论随 Phase 3 落盘）；实测 fps 数值 `console.log` 输出并记录到 plan/log。
-- [ ] binding 活性负载确认：模拟点表 interval 运行中（页面可见状态或 DOM 侧读数变化），fps 测量在绑定驱动场景下进行（旋转/变色进行中）。
+- [x] 先行固化断言口径（红/绿语义在 spec 注释声明，镜像 scada-perf 注释风格）：硬门禁——`[data-three-scene-state]` 容器存在、canvas 元素尺寸非 0、`data-three-scene-state="ready"`、rAF 帧推进计数 > 0。
+- [x] 像素探测：页内 rAF 回调中对 WebGL 上下文 readPixels 多帧采样（40 帧窗口，5 采样点/帧），任一非零样本 → `pixel-confirmed`；非空场景全零 → 判败（SceneManager 帧循环连续 rAF 自续且先于探针注册，同帧回调序恒为「three render → 探针读」；多帧采样兜底帧序假设；镜像 scada-canvas-assert T5 口径并在注释声明）。
+- [x] fps 测量：2s 窗口 rAF 计数，3 采样取最大（scada-perf headless 帧钟口径），下限 5 fps（评估结论见 Phase 4）；实测值 `console.log` 输出。
+- [x] binding 活性负载确认：10Hz setInterval 注入 spin/heat/heatColor，fps 测量在绑定驱动场景（自旋/浮沉/变色进行中）下进行。
 
 Exit Criteria:
 
-- [ ] `npx playwright test three-canvas-perf` 本地全绿（先红后绿：硬门禁与像素路径各复现一次失败——硬门禁如临时指向不存在状态值、像素路径如临时隐藏全部 mesh，验证后还原）；正向证据记录 `pixel-confirmed` 观察值。
-- [ ] fps 实测值与采样口径已记录（spec 输出 + plan Closure 引用）。
+- [x] `npx playwright test three-canvas-perf` 本地全绿（先红后绿双向复现：硬门禁红——临时注入双空模型 `primitive-invalid-config` → error 态 → ready 门禁失败；像素路径红——临时去背景 + 全部 mesh 移出视锥 → `fallback-all-zero`（sampled:40, nonZero:0）判败，硬门禁保持通过；验证后还原，绿态复跑通过）。
+- [x] fps 实测值与采样口径已记录：3 采样 88.4 / 85.7 / 90.1（首绿）与 94.2 / 85.8 / 90.1（还原后复跑），max 90.1 / 94.2，远超下限 5（SwiftShader 软渲染，简单图元场景）。
 
-### Phase 3 - 评估结论、roadmap 同步与收尾
+### Phase 4 - 评估结论、roadmap 同步与收尾
 
-Status: planned
-Targets: 本 plan、`docs/backlog/threejs-integration-roadmap.md`、`docs/logs/2026/09-15.md`
+Status: completed
+Targets: 本 plan、`docs/backlog/threejs-integration-roadmap.md`、design 分册、`docs/logs/2026/09-15.md`、`tests/e2e/playground-entry-pages.spec.ts`
 
 - Item Types: `Decision | Fix | Proof`
 
-- [ ] Decision：落盘 plan 465「I2.2 关闭后评估」结论——fps 门禁阈值及依据（SwiftShader 软渲染口径）、采样口径、环境固有失败时 watch-only 注册边界（对齐 DV 基线 watch-only 清单流程）；本条写入 Closure Status Note。
-- [ ] Fix：roadmap「Current Baseline → 主要缺口」过期描述修正（「无任何实现代码：three-canvas 渲染器、TransformEngine、图元库、协议适配器均为空白」「实现代码为零」→ live 实况：I0–I4 已交付 + 本计划 fps e2e）；不触碰 Phase Status（全 done，无状态变更）与 I4.1 行人工评审标记（Rule 5，维持现状）。
-- [ ] Proof：`docs/logs/2026/09-15.md` 记录（fps 实测、e2e 计数、全量验证结果）。
+- [x] Decision：落盘 plan 465「I2.2 关闭后评估」结论——fps 门禁阈值及依据（SwiftShader 软渲染口径）、采样口径、环境固有失败时 watch-only 注册边界（对齐 DV 基线 watch-only 清单流程）；本条写入 Closure Status Note。
+- [x] Fix：roadmap「Current Baseline → 主要缺口」过期描述修正（「无任何实现代码：three-canvas 渲染器、TransformEngine、图元库、协议适配器均为空白」「实现代码为零」→ live 实况：I0–I4 已交付 + 本计划 fps e2e）；不触碰 Phase Status（全 done，无状态变更）与 I4.1 行人工评审标记（Rule 5，维持现状）。
+- [x] Fix：design 分册漂移回写——design-data-binding.md 补 bindings 字面量保留位契约（schema-definition fieldRules + 渲染器解包）；design-renderer.md 补 ready 闩语义（晚订阅重放）。
+- [x] Fix：`playground-entry-pages.spec.ts` ROUTE_ASSERTIONS 补 `three-canvas-demo` 冒烟断言（本计划新增 domain 条目的清单义务）；顺带补漏 `print-designer`（21817b134 加路由时缺断言的既有红灯，全量 e2e 暴露，inventory 测试随之转绿）。
+- [x] Proof：`docs/logs/2026/09-15.md` 记录（fps 实测、e2e 计数、全量验证结果）。
 
 Exit Criteria:
 
-- [ ] 评估结论在本 plan Closure 可查；roadmap Baseline 描述与 live repo 一致；`docs/logs/` 记录在案。
+- [x] 评估结论在本 plan Closure 可查；roadmap Baseline 描述与 live repo 一致；design 分册回写完成；`docs/logs/` 记录在案。
 
 ## Draft Review Record
 
@@ -125,12 +146,12 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复
-- [ ] 所有 in-scope confirmed contract drifts 已收敛
+- [ ] 所有 in-scope confirmed live defects 已修复（binding-expression-swallowed + ready-latch race，见 Phase 2）
+- [ ] 所有 in-scope confirmed contract drifts 已收敛（bindings 字面量保留位契约 + design 分册回写）
 - [ ] 行为/契约结果已达成（演示页可开 + fps e2e 硬门禁/像素探测/基准测量可用）
-- [ ] 必要 focused verification 已完成（Phase 1 playground typecheck/build + 既有单测；Phase 2 e2e 先红后绿）
+- [ ] 必要 focused verification 已完成（Phase 1 playground typecheck/build + 既有单测；Phase 2 focused 红绿；Phase 3 e2e 先红后绿）
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（roadmap Baseline 修正 + `docs/logs/`；flux-renderers-3d 无代码改动无 owner-doc 义务）
+- [ ] 受影响的 owner docs 已同步（roadmap Baseline 修正 + design 分册回写 + `docs/logs/`）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`

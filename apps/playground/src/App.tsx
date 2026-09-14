@@ -124,6 +124,12 @@ const LazyAiRichTextDemoPage = lazy(() =>
 const LazyLeaferExamplesDemoPage = lazy(() =>
   import('./pages/leafer-examples-demo').then((m) => ({ default: m.LeaferExamplesDemoPage })),
 );
+// Lazy-loaded: pulls in three.js WebGL runtime (~heavy, requires browser WebGLRenderingContext) —
+// only loaded when the user navigates to #/three-canvas-demo. Keeps the main bundle + App unit tests
+// three-free (mirrors report-designer / debugger-lab / leafer-examples lazy isolation).
+const LazyThreeCanvasDemoPage = lazy(() =>
+  import('./pages/three-canvas-demo').then((m) => ({ default: m.ThreeCanvasDemoPage })),
+);
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
 registerFormRenderers(registry);
@@ -327,6 +333,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <ScadaPerfScaleDemoPage onBack={goHome} />;
         case 'leafer-examples':
           return <LazyLeaferExamplesDemoPage onBack={goHome} />;
+        case 'three-canvas-demo':
+          return <LazyThreeCanvasDemoPage onBack={goHome} />;
         case 'scada-edge-cases':
           return <ScadaEdgeDemoPage onBack={goHome} />;
         case 'scada-editor-demo':

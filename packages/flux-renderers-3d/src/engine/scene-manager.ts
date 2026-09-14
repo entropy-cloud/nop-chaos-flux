@@ -82,6 +82,7 @@ export class SceneManager {
   private loadSettlers: Array<() => void> = [];
   private hoverListeners = new Set<(e: HoverEvent) => void>();
   private readyListeners = new Set<() => void>();
+  private readyEmitted = false;
   private downPoint: { x: number; y: number } | null = null;
   private lastHovered: string | null = null;
   private raycaster = new THREE.Raycaster();
@@ -365,11 +366,19 @@ export class SceneManager {
   }
 
   onReady(listener: () => void): () => void {
+    // ready 铃铛为闩语义（plan 469 Fix）：纯图元场景 loadModels 在挂载 effect 内同步
+    // emitReady，而 React 侧 onReady 订阅 effect 在下一次 render 才挂上——不重放则
+    // ready 事件被确定性错过（场景已渲染但状态永远停在 loading）。
+    if (this.readyEmitted) {
+      listener();
+      return () => this.readyListeners.delete(listener);
+    }
     this.readyListeners.add(listener);
     return () => this.readyListeners.delete(listener);
   }
 
   private emitReady(): void {
+    this.readyEmitted = true;
     for (const listener of [...this.readyListeners]) listener();
   }
 

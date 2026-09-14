@@ -1,6 +1,6 @@
 # Three.js 3D Rendering Integration Roadmap
 
-> 最后更新：2026-09-13
+> 最后更新：2026-09-15
 > 来源：`docs/components/threejs-integration/design.md`（设计文档集 v5，含分册）、`docs/analysis/threejs-integration-analysis.md`（调研）
 > Mission：`missions/threejs-integration.json`
 
@@ -46,8 +46,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### 主要缺口
 
-- 无任何实现代码：`three-canvas` 渲染器、TransformEngine、图元库、协议适配器均为空白。
-- 实现代码为零（表达式桥接与协议集成方案已随 v5 定稿，缺口只在实现）。
+- 无（原「无任何实现代码：`three-canvas` 渲染器、TransformEngine、图元库、协议适配器均为空白」「实现代码为零」的缺口已随 I0–I4 交付闭合：`flux-renderers-3d` 完整落地，演示场景与浏览器侧 fps e2e 基准随 plan 469 挂入 playground）。
 
 ---
 
