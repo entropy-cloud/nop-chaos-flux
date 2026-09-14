@@ -1,6 +1,6 @@
 # 469 Three.js I2 后继收口 — three-canvas 演示场景与浏览器侧 fps e2e 基准
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-15
 > Source: `docs/plans/465-threejs-i2-renderer-plan.md` Deferred But Adjudicated「浏览器侧 fps e2e 基准」（Successor Required: yes）、`docs/backlog/threejs-integration-roadmap.md`（I2）
 > Related: 前置 plan 465/466/467/468（closed）；本计划是 threejs-integration roadmap 全部 work item done 后的最后一条已裁定后继义务
@@ -98,7 +98,7 @@ Targets: `packages/flux-renderers-3d/src/renderer-definitions.ts`、`src/binding
 
 Exit Criteria:
 
-- [x] binding-literals 2/2、ready-latch 2/2 全绿（先红后绿）；3d 包全量 24 文件 / 179 测试全绿（177 存量 + 4 新增用例中 2 文件 4 用例），覆盖率四维维持 ≥90 口径。
+- [x] binding-literals 2/2、ready-latch 2/2 全绿（先红后绿）；3d 包全量 25 文件 / 181 测试全绿（177 存量 + 4 新增），覆盖率四维维持 ≥90 口径。
 - [x] e2e 链路证据：修复前 demo 页 `data-three-scene-state` 停留 loading（或崩溃 error boundary），修复后 ready（见 Phase 3 e2e）。
 
 ### Phase 3 - 浏览器侧 fps e2e 基准
@@ -146,19 +146,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复（binding-expression-swallowed + ready-latch race，见 Phase 2）
-- [ ] 所有 in-scope confirmed contract drifts 已收敛（bindings 字面量保留位契约 + design 分册回写）
-- [ ] 行为/契约结果已达成（演示页可开 + fps e2e 硬门禁/像素探测/基准测量可用）
-- [ ] 必要 focused verification 已完成（Phase 1 playground typecheck/build + 既有单测；Phase 2 focused 红绿；Phase 3 e2e 先红后绿）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（roadmap Baseline 修正 + design 分册回写 + `docs/logs/`）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
-- [ ] `pnpm test:e2e`（three-canvas-perf 全绿；既有 watch-only 终态清单不因本计划扩大）
+- [x] 所有 in-scope confirmed live defects 已修复（binding-expression-swallowed + ready-latch race，见 Phase 2）
+- [x] 所有 in-scope confirmed contract drifts 已收敛（bindings 字面量保留位契约 + design 分册回写）
+- [x] 行为/契约结果已达成（演示页可开 + fps e2e 硬门禁/像素探测/基准测量可用）
+- [x] 必要 focused verification 已完成（Phase 1 playground typecheck/build + 既有单测；Phase 2 focused 红绿；Phase 3 e2e 先红后绿）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步（roadmap Baseline 修正 + design 分册回写 + `docs/logs/`）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`（40/40）
+- [x] `pnpm build`（40/40）
+- [x] `pnpm lint`（40/40）
+- [x] `pnpm test`（74 任务全绿；3d 包 25 文件/181 测试、playground 33 文件/347 测试）
+- [x] `pnpm check`（exit 0）
+- [x] `pnpm test:e2e`（three-canvas-perf 两轮全量均 2/2 全绿；全量残留在案 4 条组件实验室交互 spec 孤立复跑全绿、跨轮次集合不重合，负载性 flake 建议.owner 按 watch-only 核认，旧 watch-only gantt/kanban perf 两轮均通过——清单未扩大）
 
 ## Deferred But Adjudicated
 
@@ -170,13 +170,19 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待 closure audit 通过后填写。
+Status Note: plan 465 Deferred「浏览器侧 fps e2e 基准」的 successor 义务兑现，threejs-integration 链路（roadmap I0–I4 + 全部已裁定后继义务）收口。
+
+**评估结论（plan 465 要求的「I2.2 关闭后评估」Decision，落盘于 Closure）**：
+
+- fps 门禁口径：2s 窗口 rAF 计数 × 3 采样取最大（scada-perf headless 帧钟波动先例口径），下限 5 fps——SwiftShader 软渲染下「渲染循环未被挂起」的健康门禁，不代表 GPU 吞吐基线；实测 85–94 fps（简单图元场景 + 绑定热路径负载），余量充足。
+- watch-only 边界：环境固有失败（无 WebGL / 慢机持续低于下限）不静默放宽阈值，按 DV 基线 watch-only 终态清单流程注册。
+- 评估附带产出：执行期暴露并修复两处 confirmed live defect（schema 面 bindings 表达式被 props 编译层吞掉；纯图元场景 ready 闩缺失）——首个 schema 级/真实浏览器级消费方才可暴露的契约缺陷，印证该 successor 义务的价值。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待填
-- Evidence: 待填
+- Auditor / Agent: independent sub-agent（general-purpose fresh session）
+- Evidence: 独立 live 重跑——3d 包 25 文件/181 测试、three-canvas-perf 2/2（fps 91.3/89.6/86.3，pixel-confirmed）、playground typecheck + 347 测试，全部复现；语义级抽查（propContracts literal 三位点、binding bridge 全 normalized 链路、ready 闩重放、e2e 五类断言）逐项通过；scope 修订诚实性核查属实（binding-literals.test 为 3d 包唯一 schema 编译级测试；mock 早建模闩语义而 live 缺失）；findings 0 Blocker / 0 Major / 2 Minor（logs 行文自相矛盾、Phase 2 计数陈旧），均在 closure pass 修复。
 
 Follow-up:
 
-- 无
+- 无（全量 e2e 残留 4 条组件实验室交互 spec 负载性 flake 已在 `docs/logs/2026/09-15.md` 在案并建议 owner 按 watch-only 流程核认，非本计划 plan-owned work；roadmap I4.1 行「Gemini API 集成」人工评审标记维持，待人工裁定）
