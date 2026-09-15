@@ -1,6 +1,6 @@
 # 470 Three.js I3.2 数据源 Schema Surface 与 three-canvas 组件接线计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-16
 > Source: `docs/backlog/threejs-integration-roadmap.md`（I3.2，2026-09-16 人工指令新增——兑现 plan 467 Deferred「renderer/host 组件接线与 schema surface」successor 义务）、`docs/components/threejs-integration/design-protocol.md` §2/§4（v5）
 > Related: 前置 plan 463–469（closed）；消费 plan 467 交付的 IndustrialAdapter/ReconnectionManager 与 plan 468 交付的 schema 资产
@@ -97,7 +97,7 @@ Targets: `src/renderer/hooks/use-data-sources.ts`（新建）、`src/renderer/ho
 - Item Types: `Proof | Fix`
 
 - [x] 先写失败测试（红，renderer test harness：`createThreeTestEnvironment` + 手工 props 注入 `dataSources` + mock `env.openSocket`，mock 引擎沿 three-canvas.test.tsx 先例）：声明 dataSources + env.openSocket 存在 → socket 以 cfg.url 建立；onopen 后 subscribe 帧发出（tags 为 address 数组、polling 透传）；数据帧 `{type:'data',payload:{address:value}}` → `scope.update('dataSources.<tag.name>', 转换后值)`（bool/float32 各一，经真 scope.get 断言实写）；unmount → 每连接 close 被调（disconnectAll）；env.openSocket 缺失 → helpers.dispatch 收到 `datasource:error`（code 'socket-unavailable'）且 scene 状态埋点不翻转 error；未声明 dataSources → openSocket 从未被调；dataSources identity 变更 → 旧连接 close + 新连接建立；connect-failed 透传（mock socket onclose 触发 → helpers.dispatch 收到 `datasource:error` code 'socket-connect-failed'）；dataSources 非数组（防御式）→ openSocket 从未被调、不崩。——红实测 6 failed / 2 trivially-green（未声明与非数组防御在实现前即空接线语义），实现后 8/8 全绿。
-- [x] 实现 `useDataSources` hook：adapter 实例随 env/scope 身份创建（useMemo，mount 级稳定）；onError 经 latest-ref 接线（捕获最新 events/helpers，use-binding-bridge.ts:50-53 先例）；effect 以 dataSources identity 为依赖逐 cfg connect，cleanup disconnectAll；非数组输入防御式忽略。
+- [x] 实现 `useDataSources` hook：adapter 实例在接线 effect 内随 env/scope 身份惰性创建（ref 持有，mount 级稳定；useMemo 形态因 `react-hooks/refs`/`immutability` lint 调整为 use-scene-manager 同款 effect+ref 写法，语义不变）；onError 经 latest ref 接线（捕获最新 events/helpers）；effect 以 dataSources identity 为依赖逐 cfg connect，cleanup disconnectAll；非数组输入防御式忽略。
 - [x] `three-canvas.tsx` 接线：读取 `props.props.dataSources`，调用 hook（传 env/scope/events/helpers.dispatch）。
 - [x] Proof：`datasource:error` dispatch payload 断言（type/code/message 三字段经 JSON 序列化包含断言，createNormalizedActionEvent 桥接先例一致）。
 
@@ -108,19 +108,19 @@ Exit Criteria:
 
 ### Phase 3 - 设计分册回写、roadmap 同步与收尾
 
-Status: in progress
+Status: completed
 Targets: `docs/components/threejs-integration/design-renderer.md`、`docs/components/threejs-integration/design-protocol.md`、`docs/backlog/threejs-integration-roadmap.md`、`docs/logs/2026/09-16.md`
 
 - Item Types: `Fix | Decision | Proof`
 
 - [x] Fix：`design-renderer.md` §1 ThreeCanvasSchema 形状补 `dataSources` 字段（静态配置面、IndustrialTagConfig 引用）。
 - [x] Fix：`design-protocol.md` §4 补 schema surface 与接线契约小节（§4.1）——`dataSources` 字段语义、useDataSources 接线所有权（mount 级 adapter、identity 变更重连、unmount disconnectAll）、`datasource:error` 事件通道（不翻转 scene 状态机的裁定理由：数据通道独立于场景渲染，§5 用户可见面 = onError 诊断）。
-- [ ] Proof：`docs/logs/2026/09-16.md` 记录（交付面、focused 测试计数、全量验证结果）。
-- [ ] Decision：roadmap I3.2 状态随 plan 生命周期同步（closure audit 通过后 `planned` → `done`，本 plan 执行期保持 `planned`）。
+- [x] Proof：`docs/logs/2026/09-16.md` 记录（交付面、focused 测试计数、全量验证结果；closure pass 追加审计记录）。
+- [x] Decision：roadmap I3.2 状态随 plan 生命周期同步（closure audit 通过后 `planned` → `done`）。
 
 Exit Criteria:
 
-- [ ] 两分册回写与 live 实况一致（抽查：字段形状、接线语义、事件通道三处可对照代码验证）；`docs/logs/` 记录在案。
+- [x] 两分册回写与 live 实况一致（closure audit 抽查通过：字段形状、接线语义、事件通道三处对照代码验证一致）；`docs/logs/` 记录在案。
 
 ## Draft Review Record
 
@@ -133,18 +133,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复
-- [ ] 所有 in-scope confirmed contract drifts 已收敛（AI 资产 + 两设计分册与 live 一致）
-- [ ] 行为/契约结果已达成（schema 作者可经 `dataSources` 字段声明式接线工业数据源：connect/subscribe/数据帧→scope/重连/卸载全链路经组件级 mock 链路证明）
-- [ ] 必要 focused verification 已完成（Phase 1–2 focused tests，先红后绿）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响的 owner docs 已同步（design-renderer.md §1、design-protocol.md §4、roadmap、`docs/logs/`）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（exit 0，零新增超注册红线）
+- [x] 所有 in-scope confirmed live defects 已修复（执行期无 in-scope live defect；lint 适配为非缺陷形态调整，已在 daily log 在案）
+- [x] 所有 in-scope confirmed contract drifts 已收敛（AI 资产 + 两设计分册与 live 一致，closure audit 逐处抽查通过）
+- [x] 行为/契约结果已达成（schema 作者可经 `dataSources` 字段声明式接线工业数据源：connect/subscribe/数据帧→scope/重连/卸载全链路经组件级 mock 链路证明）
+- [x] 必要 focused verification 已完成（Phase 1–2 focused tests，先红后绿：validator 6 红→绿、wiring 6 红→绿）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响的 owner docs 已同步（design-renderer.md §1、design-protocol.md §4.1、roadmap I3.2 → done、`docs/logs/`）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（approved，1 Minor 已在 closure pass 修复，见 Closure Audit Evidence）；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`（40/40）
+- [x] `pnpm build`（40/40）
+- [x] `pnpm lint`（40/40）
+- [x] `pnpm test`（74/74 任务全绿；3d 包 26 文件/197 测试、覆盖率四维 94.58/91.45/93.18/96.33）
+- [x] `pnpm check`（exit 0，零新增超注册红线）
 
 ## Deferred But Adjudicated
 
@@ -156,13 +156,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待关闭时填写
+Status Note: plan 467 Deferred「renderer/host 组件接线与 schema surface」successor 义务（roadmap I3.2）兑现——`ThreeCanvasSchema.dataSources` 声明式数据源 schema surface + `useDataSources` 组件接线（env.openSocket → IndustrialAdapter → scope 写入）+ AI schema 资产同步 + 两设计分册回写。closure audit approved 后 roadmap I3.2 → done；threejs-integration roadmap 全部 work item 与全部已裁定后继义务收口（I4.1 行「Gemini API 集成」人工评审标记维持，待人工裁定——非本计划 scope）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立审计（fresh session）
-- Evidence: 待审计后填写
+- Auditor / Agent: independent sub-agent（general-purpose fresh session）
+- Evidence: 审计 live 重跑——3d 包 26 文件/197 测试全绿、覆盖率四维 94.58/91.45/93.18/96.33（use-data-sources.ts 四维 100%）逐位复现；repo `pnpm typecheck` exit 0；`git show 8091a793f --stat` 13 个 in-scope 文件无多无少。语义级抽查（schema→propContract→props.props→hook→adapter→scope.update 全链、8 条 wiring 测试实质断言含真 scope.get 实写与状态机不翻转、validator JSON Pointer 路径、generateSchema 不变式、getSchema dataSources 抽查、AI 资产与 TS 类型一致、两分册回写对照 live）逐项通过；roadmap I3.2 审计期间保持 `planned`（无提前 done）；deferred 诚实性核查属实（467 其余 Deferred 项上游已裁定、I4.1 Gemini 标记先于本计划）。Findings：0 Blocker / 0 Major / 1 Minor（plan Phase 2 措辞「useMemo」与落地 effect+ref 形态偏差）——已在 closure pass 修复（Minimum Rule 20 文本对齐）。
 
 Follow-up:
 
-- 待关闭时填写（或明确写 no remaining plan-owned work）
+- no remaining plan-owned work（roadmap I4.1「Gemini API 集成」行人工评审标记为全链路遗留人工裁定项，非 plan-owned work）

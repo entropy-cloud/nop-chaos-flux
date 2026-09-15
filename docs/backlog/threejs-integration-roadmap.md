@@ -21,7 +21,7 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 - **I1. 设计** (`done`，plan: `docs/plans/464-threejs-i1-design-review-plan.md`)
 - **I2. 核心引擎** (`done`：I2.1 plan `docs/plans/465-threejs-i2-renderer-plan.md`；I2.2 plan `docs/plans/466-threejs-i2-primitives-transform-plan.md`)
 - **I3. 工业协议** (`done`，plan: `docs/plans/467-threejs-i3-protocol-plan.md`)
-- **I3.2. 数据源 schema surface 与组件接线** (`planned`，plan: `docs/plans/470-threejs-i3-datasource-schema-wiring-plan.md`；⚠️ 新增 work item，2026-09-16 人工指令「执行 roadmap 直至结束」授权——兑现 plan 467 Deferred「renderer/host 组件接线与 schema surface」successor 义务，Rule 5 人工评审输入在案)
+- **I3.2. 数据源 schema surface 与组件接线** (`done`，plan: `docs/plans/470-threejs-i3-datasource-schema-wiring-plan.md`；新增裁定 2026-09-16 人工指令「执行 roadmap 直至结束」授权——兑现 plan 467 Deferred「renderer/host 组件接线与 schema surface」successor 义务，Rule 5 人工评审输入在案)
 - **I4. AI 生成** (`done`，plan: `docs/plans/468-threejs-i4-ai-generation-plan.md`；⚠️ 行内容「Gemini API 集成」未随本 work item 交付——provider 注入面已交付、Gemini 适配经 plan 468 Deferred 再裁定归后继，此差异**标记人工评审**（roadmap Rule 5）)
 
 ## Framework / Platform Reuse
@@ -74,10 +74,10 @@ AI 或维护者读完本文即知哪些工作项未开始（`todo`）、已计�
 
 ### I3 — 工业协议
 
-| ID   | Status  | 内容                                                                                                                                                                                                                                     | 设计文档                                                                                 | 依赖 |
-| ---- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---- |
-| I3.1 | done    | ReconnectionManager 实现、Socket.IO/WebSocket 数据桥接、FUXA 协议适配器                                                                                                                                                                  | `docs/components/threejs-integration/design-protocol.md`                                 | I2.2 |
-| I3.2 | planned | 数据源 schema surface（`ThreeCanvasSchema.dataSources`）与 three-canvas 组件接线（声明式数据源 → env.openSocket → IndustrialAdapter → scope 写入）、AI schema 资产同步（2026-09-16 人工指令新增，兑现 plan 467 Deferred successor 义务） | `docs/components/threejs-integration/design-protocol.md` §2/§4 + `design-renderer.md` §1 | I3.1 |
+| ID   | Status | 内容                                                                                                                                                                                                                                     | 设计文档                                                                                 | 依赖 |
+| ---- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---- |
+| I3.1 | done   | ReconnectionManager 实现、Socket.IO/WebSocket 数据桥接、FUXA 协议适配器                                                                                                                                                                  | `docs/components/threejs-integration/design-protocol.md`                                 | I2.2 |
+| I3.2 | done   | 数据源 schema surface（`ThreeCanvasSchema.dataSources`）与 three-canvas 组件接线（声明式数据源 → env.openSocket → IndustrialAdapter → scope 写入）、AI schema 资产同步（2026-09-16 人工指令新增，兑现 plan 467 Deferred successor 义务） | `docs/components/threejs-integration/design-protocol.md` §2/§4 + `design-renderer.md` §1 | I3.1 |
 
 ### I4 — AI 生成
 
