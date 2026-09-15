@@ -64,7 +64,7 @@
                   "valueKey": "id",
                   "labelKey": "name",
                   "searchable": true,
-                  "pickerDialog": { "title": "选择部门" },
+                  "pickerPopup": { "title": "选择部门" },
                   "loadAction": {
                     "action": "ajax",
                     "args": {

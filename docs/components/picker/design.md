@@ -4,7 +4,8 @@
 
 - `picker` 是弹层选择字段 renderer，用来通过内嵌表单、列表或局部页面选择最终值。
 - 它是 advanced form family 的选择壳，不是通用 dialog 或 table 的别名。
-- **边界裁定（W4c 收敛）**：picker 是**字段值选择壳**：值 owner = 表单字段；打开态 = 复用既有 dialog/drawer surface owner（首版 pickerDialog 为配置对象，非自由 region）。picker 复用 transfer 新建的 valueKey/labelKey 归一化 helper + dialog surface，通过 handle 对外（`open`/`clear` 经 `useInputComponentHandle` 的 `openMenu`/`clearValue` slot），不重造与 dialog/table/list 平行的子系统协议。
+- **边界裁定（W4c 收敛）**：picker 是**字段值选择壳**：值 owner = 表单字段；打开态 = 复用既有 dialog/drawer surface owner。弹层配置经 `pickerPopup`（type/size/title 等），弹层内容 = `pickerSchema` region（唯一内容定义）；picker 通过 handle 对外（`open`/`clear` 经 `useInputComponentHandle` 的 `openMenu`/`clearValue` slot），不重造与 dialog/table/list 平行的子系统协议。
+- **v3 契约（plan-2026-09-02-2028）**：AMIS 风格的 `pickerDialog` / `valueKey` / `labelKey` / 顶层 `options` / 顶层 `loadAction` 已移除，调用方迁移至 `pickerPopup` / `valueField` / `labelField` / `pickerSchema`（对照 `flux-guide/09-amis-migration.md`）。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
@@ -18,17 +19,18 @@
 
 ## 4. schema 设计
 
-- 建议正式字段为 `name`、`label`、`options`、`valueKey`、`labelKey`、`pickerDialog`、`multiple`、`required`。
+- 核心字段为 `name`、`label`、`pickerPopup`（弹层配置对象或 boolean）、`pickerSchema`（弹层内容，任意 schema）、`valueField`、`labelField`、`multiple`、`required`，辅以 `labelTpl`、`overflowConfig`、`delimiter`、`itemClearable`、`resetValue`、`clearable`、`joinValues`、`extractValue`、`embed`、`labelResolveAction`、`autoFill`、`readOnly`。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `name`、`options`、`valueKey`、`labelKey`、`pickerDialog`、`multiple`、`required`: `value`
+- `name`、`pickerPopup`、`valueField`、`labelField`、`multiple`、`required`: `value`
+- `pickerSchema`: `region`（regionKey `pickerSchema`，唯一弹层内容定义）
 - `onPick`: `event`
 
 ## 6. regions 与 slot 约定
 
-- 首版 `pickerDialog` 为配置对象（引用 dialog schema：title/size/placement），不开放自由 region（自由 region successor）。
+- `pickerSchema` region 是唯一内容定义（G1 裁决：无 `pickerSchema` 则无默认内容构建——popup-only 打开空弹层，Confirm 为 no-op close；选择写回语义由 `pickerSchema` 内容经 `selectionStatePath`/`pick` action 承载）。
 
 ## 7. 运行期状态归属
 

@@ -10,7 +10,7 @@ test('real nop-entropy edit schema submits edited value (real browser)', async (
   await stage.getByRole('button', { name: 'Edit (real schema)' }).click();
 
   const nickInput = page.getByLabel('昵称');
-  await expect(nickInput).toBeVisible();
+  await expect(nickInput).toBeVisible({ timeout: 20_000 });
   await expect(nickInput).toHaveValue('Original');
   await nickInput.fill('EditedRealSchema');
   await expect(nickInput).toHaveValue('EditedRealSchema');

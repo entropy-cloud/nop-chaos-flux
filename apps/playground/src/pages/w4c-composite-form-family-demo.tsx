@@ -150,28 +150,16 @@ export function W4cCompositeFormFamilyDemoPage({ onBack }: W4cCompositeFormFamil
                   type: 'picker',
                   name: 'owner',
                   label: 'Owner (picker, single)',
-                  pickerDialog: { title: 'Pick owner' },
-                  valueKey: 'id',
-                  labelKey: 'title',
+                  pickerPopup: { title: 'Pick owner' },
                   testid: 'demo-picker',
-                  options: [
-                    { id: 'u1', title: 'Alice' },
-                    { id: 'u2', title: 'Bob' },
-                    { id: 'u3', title: 'Carol' },
-                  ],
                 },
                 {
                   type: 'picker',
                   name: 'reviewers',
                   label: 'Reviewers (picker, multiple)',
                   multiple: true,
-                  pickerDialog: { title: 'Pick reviewers' },
+                  pickerPopup: { title: 'Pick reviewers' },
                   testid: 'demo-picker-multi',
-                  options: [
-                    { label: 'Alice', value: 'alice' },
-                    { label: 'Bob', value: 'bob' },
-                    { label: 'Carol', value: 'carol' },
-                  ],
                 },
                 { type: 'text', testid: 'picker-owner-report', text: 'owner:${owner ?? "—"}' },
               ],
@@ -241,7 +229,8 @@ export function W4cCompositeFormFamilyDemoPage({ onBack }: W4cCompositeFormFamil
                 <strong>transfer</strong> — 双栏穿梭选择字段；valueKey/labelKey 归一化 + 搜索。
               </li>
               <li>
-                <strong>picker</strong> — 弹层选择字段；dialog surface + valueKey/labelKey，
+                <strong>picker</strong> — 弹层选择字段；<code>pickerPopup</code> 弹层 +{" "}
+                <code>pickerSchema</code> 内容（v3：无 pickerSchema 时空弹层，Confirm 仅关闭），
                 open/clear 经 <code>useInputComponentHandle</code>。
               </li>
             </ul>

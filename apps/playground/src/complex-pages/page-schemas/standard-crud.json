@@ -108,7 +108,7 @@
                       "labelKey": "name",
                       "multiple": false,
                       "searchable": true,
-                      "pickerDialog": { "title": "选择部门" },
+                      "pickerPopup": { "title": "选择部门" },
                       "loadAction": {
                         "action": "ajax",
                         "args": {
@@ -131,7 +131,7 @@
                       "labelKey": "name",
                       "multiple": true,
                       "searchable": true,
-                      "pickerDialog": { "title": "选择标签" },
+                      "pickerPopup": { "title": "选择标签" },
                       "loadAction": {
                         "action": "ajax",
                         "args": {
@@ -267,7 +267,7 @@
                           "labelKey": "name",
                           "multiple": false,
                           "searchable": true,
-                          "pickerDialog": { "title": "选择部门" },
+                          "pickerPopup": { "title": "选择部门" },
                           "loadAction": {
                             "action": "ajax",
                             "args": {
@@ -290,7 +290,7 @@
                           "labelKey": "name",
                           "multiple": true,
                           "searchable": true,
-                          "pickerDialog": { "title": "选择标签" },
+                          "pickerPopup": { "title": "选择标签" },
                           "loadAction": {
                             "action": "ajax",
                             "args": {

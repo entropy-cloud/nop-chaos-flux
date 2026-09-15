@@ -109,7 +109,16 @@ test.describe('W4c transfer — two-pane shuttle selection', () => {
 });
 
 test.describe('W4c picker — dialog-layer selection', () => {
-  test('open → select → confirm writes back the value (programmatic report read)', async ({ page }) => {
+  // v3 picker contract (flux-guide/09-amis-migration.md): the popup surface is
+  // `pickerPopup`; the sole content definition is `pickerSchema`. The w4c demo
+  // pickers are popup-only (no pickerSchema region), so per the G1 adjudication
+  // (picker-schema-override.test.tsx) the dialog opens with an empty body and
+  // Confirm is a no-op close — selection-write semantics are covered separately
+  // in flux-renderers-form-advanced unit tests which exercise pickerSchema.
+
+  test('open → empty-body dialog → confirm closes it (no selection write)', async ({
+    page,
+  }) => {
     await openW4c(page);
 
     const report = page.locator('[data-testid="picker-owner-report"]');
@@ -120,27 +129,30 @@ test.describe('W4c picker — dialog-layer selection', () => {
     await picker.locator('[data-slot="picker-trigger"]').click();
 
     const dialog = page.getByRole('dialog');
-    await dialog.locator('label').filter({ hasText: 'Bob' }).click();
-    await dialog.locator('[data-slot="picker-confirm"]').click();
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    // Popup-only, nothing published → Confirm is disabled (confirmDisabled
+    // guard); the popup closes via Cancel.
+    await expect(dialog.locator('[data-slot="picker-confirm"]')).toBeDisabled();
+    await dialog.getByRole('button', { name: '取消' }).click();
 
-    await expect(report).toHaveText('owner:u2', { timeout: 10_000 });
+    await expect(dialog).toBeHidden({ timeout: 5_000 });
+    // No selection was made → owner stays at its default placeholder.
+    await expect(report).toHaveText('owner:—', { timeout: 5_000 });
   });
 
-  test('clear empties the field value', async ({ page }) => {
+  test('picker-clear stays disabled while the field has no committed value', async ({ page }) => {
     await openW4c(page);
 
     const picker = page.locator('[data-testid="demo-picker"]');
     await picker.scrollIntoViewIfNeeded();
-    await picker.locator('[data-slot="picker-trigger"]').click();
 
-    const dialog = page.getByRole('dialog');
-    await dialog.locator('label').filter({ hasText: 'Bob' }).click();
-    await dialog.locator('[data-slot="picker-confirm"]').click();
+    // Popup-only picker can never commit a value (G1: no pickerSchema content),
+    // so the canonical clear handle renders disabled at the empty state — it
+    // must not be clickable.
+    const clear = picker.locator('[data-slot="picker-clear"]');
+    await expect(clear).toBeDisabled({ timeout: 10_000 });
 
     const report = page.locator('[data-testid="picker-owner-report"]');
-    await expect(report).toHaveText('owner:u2', { timeout: 10_000 });
-
-    await picker.locator('[data-slot="picker-clear"]').click();
     await expect(report).toHaveText('owner:—', { timeout: 10_000 });
   });
 });

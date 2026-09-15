@@ -1,5 +1,34 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
 
+const candidateEnv = {
+  fetcher: async function <T>() {
+    return {
+      status: 0,
+      data: {
+        items: [
+          { id: 'u1', title: 'Alice' },
+          { id: 'u2', title: 'Bob' },
+          { id: 'u3', title: 'Carol' },
+        ],
+        total: 3,
+      } as T,
+    };
+  },
+};
+
+function candidatesPickerSchema(selectionType: 'radio' | 'checkbox') {
+  return {
+    type: 'crud',
+    loadAction: { action: 'ajax', args: { url: '/api/candidates' } },
+    columns: [{ name: 'title', label: 'Title' }],
+    selection: { type: selectionType },
+    selectionOwnership: 'scope',
+    selectionStatePath: '$_picker.selection',
+    dataStatePath: '$_picker.rows',
+    autoClearSelectionOnRefresh: false,
+  };
+}
+
 const ownerPicker = {
   type: 'page',
   body: [
@@ -12,14 +41,10 @@ const ownerPicker = {
           type: 'picker',
           name: 'owner',
           label: 'Owner',
-          pickerDialog: { title: 'Pick owner' },
-          valueKey: 'id',
-          labelKey: 'title',
-          options: [
-            { id: 'u1', title: 'Alice' },
-            { id: 'u2', title: 'Bob' },
-            { id: 'u3', title: 'Carol' },
-          ],
+          pickerPopup: { title: 'Pick owner' },
+          valueField: 'id',
+          labelField: 'title',
+          pickerSchema: candidatesPickerSchema('radio'),
         },
       ],
       actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
@@ -40,12 +65,10 @@ const reviewersPicker = {
           name: 'reviewers',
           label: 'Reviewers',
           multiple: true,
-          pickerDialog: { title: 'Pick reviewers' },
-          options: [
-            { label: 'Alice', value: 'alice' },
-            { label: 'Bob', value: 'bob' },
-            { label: 'Carol', value: 'carol' },
-          ],
+          pickerPopup: { title: 'Pick reviewers' },
+          valueField: 'id',
+          labelField: 'title',
+          pickerSchema: candidatesPickerSchema('checkbox'),
         },
       ],
       actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
@@ -90,10 +113,19 @@ const crudRowIsolation = {
               type: 'picker',
               name: 'owner',
               label: 'Owner',
-              pickerDialog: { title: 'Pick owner', size: 'lg' },
-              loadAction: { action: 'ajax', args: { url: '/api/owners' } },
-              valueKey: 'id',
-              labelKey: 'title',
+              pickerPopup: { title: 'Pick owner', size: 'lg' },
+              valueField: 'id',
+              labelField: 'title',
+              pickerSchema: {
+                type: 'crud',
+                loadAction: { action: 'ajax', args: { url: '/api/owners' } },
+                columns: [{ name: 'title', label: 'Title' }],
+                selection: { type: 'radio' },
+                selectionOwnership: 'scope',
+                selectionStatePath: '$_picker.selection',
+                dataStatePath: '$_picker.rows',
+                autoClearSelectionOnRefresh: false,
+              },
             },
           ],
         },
@@ -107,22 +139,26 @@ const crudRowIsolation = {
 export function PickerLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Dialog-layer selection field. Reuses dialog surface + valueKey/labelKey normalization; open/clear via the useInputComponentHandle slot."
+      introDescription="Dialog-layer selection field. Popup surface via pickerPopup, content via pickerSchema (the sole content definition); open/clear via the useInputComponentHandle slot."
       scenarios={[
         {
           title: 'Single owner pick',
-          description: 'Open the dialog, pick one candidate, confirm. valueKey/labelKey map the option record.',
+          description:
+            'Open the dialog, pick one candidate, confirm. valueField/labelField map the picked record onto the form value.',
           schema: ownerPicker,
+          env: candidateEnv,
         },
         {
           title: 'Multiple reviewers pick',
-          description: 'multiple: true writes an array. clear empties the field via the canonical clear handle.',
+          description:
+            'multiple: true accumulates rows and Confirm commits the set as an array. clear empties the field via the canonical clear handle.',
           schema: reviewersPicker,
+          env: candidateEnv,
         },
         {
           title: 'CRUD-mode picker per-row isolation (bug 73 pattern)',
           description:
-            'Two combo rows each host a CRUD-mode picker (loadAction). Opening row 1 while row 0 selection is pending must not clobber row 0; each confirm writes back to its own row.',
+            'Two combo rows each host a CRUD-mode picker (pickerSchema crud). Opening row 1 while row 0 selection is pending must not clobber row 0; each confirm writes back to its own row.',
           schema: crudRowIsolation,
           env: crudPickerEnv,
         },
