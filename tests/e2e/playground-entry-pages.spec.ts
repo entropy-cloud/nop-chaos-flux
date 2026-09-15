@@ -516,6 +516,12 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       page.getByRole('heading', { name: 'dashboard-editor 演示页', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
   },
+  // plan 469：three-canvas 演示页冒烟断言（懒加载 chunk 到位 + 页面骨架渲染）。
+  'three-canvas-demo': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'three-canvas 数据驱动 3D 场景演示页', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

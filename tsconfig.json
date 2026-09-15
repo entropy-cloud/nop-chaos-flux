@@ -20,6 +20,7 @@
     { "path": "./packages/flux-renderers-scheduling" },
     { "path": "./packages/flux-renderers-graph" },
     { "path": "./packages/flux-renderers-map" },
+    { "path": "./packages/flux-renderers-3d" },
     { "path": "./packages/flux-renderers-industrial" },
     { "path": "./packages/flux-renderers-pivot" },
     { "path": "./packages/flux-code-editor" },

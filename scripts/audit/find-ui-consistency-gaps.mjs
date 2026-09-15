@@ -80,6 +80,14 @@ const EXEMPTIONS = [
     source:
       'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记（R2 G5 组静态口径）；scada-editor-canvas 为 D2 候选 C 规格点名实例',
   },
+  // --- 3d（three 渲染域字面色 + 结构化诊断通道）---------------------------
+  {
+    path: 'packages/flux-renderers-3d/src/',
+    reason:
+      'three-canvas 引擎域：THREE 灯光默认色（ColorRepresentation hex，非 UI 样式）+ 结构化诊断 message 载荷（useBindingBridge/SceneManager onError 三参通道，scada §8.1 非升级诊断契约对齐，plan 464 D6）——plan 465 登记',
+    source:
+      'plan 465 Phase 6 closure（industrial 域豁免同款判例：canvas 引擎字面色 + scada-errors 结构化诊断）',
+  },
   // --- map（candidate A 域 + candidate C 单文件）---------------------------
   {
     path: 'packages/flux-renderers-map/src/',

@@ -1,0 +1,238 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nop-chaos.org/schemas/three-canvas.json",
+  "title": "Three.js Canvas Schema",
+  "description": "Three.js 3D scene config for AI generation and data-driven rendering. Source of truth: packages/flux-renderers-3d/src/schemas.ts. ModelConfig source discipline: url XOR primitive preferred, but dual-source is tolerated at render time (primitive takes precedence) — validators must only reject dual-empty.",
+  "type": "object",
+  "required": ["type", "scene"],
+  "properties": {
+    "type": { "const": "three-canvas" },
+    "scene": { "$ref": "#/definitions/ThreeSceneConfig" },
+    "bindings": { "type": "array", "items": { "$ref": "#/definitions/DataBinding" } },
+    "animations": { "type": "array", "items": { "$ref": "#/definitions/AnimationConfig" } },
+    "events": { "type": "object" },
+    "loading": {},
+    "empty": {}
+  },
+  "definitions": {
+    "ThreeSceneConfig": {
+      "type": "object",
+      "required": ["camera", "lights", "models"],
+      "properties": {
+        "camera": {
+          "type": "object",
+          "required": ["position"],
+          "properties": {
+            "position": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "fov": { "type": "number", "minimum": 1, "maximum": 180 },
+            "near": { "type": "number", "minimum": 0 },
+            "far": { "type": "number", "minimum": 0 }
+          }
+        },
+        "lights": { "type": "array", "items": { "$ref": "#/definitions/LightConfig" } },
+        "environment": {
+          "type": "object",
+          "properties": {
+            "background": { "type": "string" },
+            "fog": {
+              "type": "object",
+              "required": ["color", "near", "far"],
+              "properties": {
+                "color": { "type": "string" },
+                "near": { "type": "number" },
+                "far": { "type": "number" }
+              }
+            }
+          }
+        },
+        "models": { "type": "array", "items": { "$ref": "#/definitions/ModelConfig" } }
+      }
+    },
+    "ModelConfig": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$" },
+        "url": {
+          "type": "string",
+          "description": "GLTF/GLB asset. XOR primitive preferred; dual-source tolerated (primitive wins)."
+        },
+        "primitive": { "$ref": "#/definitions/PrimitiveModelConfig" },
+        "position": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "rotation": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "scale": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+        "interactive": { "type": "boolean" },
+        "initialAnimation": { "type": "string" }
+      },
+      "description": "Source discipline: url XOR primitive preferred; dual-empty is invalid, dual-source tolerated with primitive precedence."
+    },
+    "PrimitiveModelConfig": {
+      "type": "object",
+      "required": ["geometry"],
+      "properties": {
+        "geometry": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "enum": ["box", "sphere", "cylinder", "plane", "cone", "torus"] },
+            "args": { "type": "object", "additionalProperties": { "type": "number" } }
+          }
+        },
+        "material": {
+          "type": "object",
+          "properties": {
+            "type": { "enum": ["standard", "basic", "lambert", "phong"] },
+            "color": { "type": "string" },
+            "opacity": { "type": "number" },
+            "transparent": { "type": "boolean" },
+            "wireframe": { "type": "boolean" },
+            "flatShading": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "LightConfig": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["ambient", "directional", "point", "spot", "hemisphere"] },
+        "color": { "type": "string" },
+        "intensity": { "type": "number" },
+        "position": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "target": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+        "groundColor": { "type": "string" },
+        "castShadow": { "type": "boolean" }
+      }
+    },
+    "DataBinding": {
+      "type": "object",
+      "required": ["id", "target", "source"],
+      "properties": {
+        "id": { "type": "string" },
+        "target": {
+          "type": "object",
+          "required": ["modelId", "path", "type"],
+          "properties": {
+            "modelId": { "type": "string" },
+            "path": { "type": "string" },
+            "type": { "enum": ["position", "rotation", "scale", "material", "visible", "custom"] }
+          }
+        },
+        "source": {
+          "type": "object",
+          "required": ["expression"],
+          "properties": {
+            "expression": { "type": "string", "description": "Flux ${expr} syntax" },
+            "scope": { "type": "string" }
+          }
+        },
+        "transform": {
+          "type": "object",
+          "properties": {
+            "convert": { "type": "string" },
+            "range": {
+              "type": "object",
+              "required": ["input", "output"],
+              "properties": {
+                "input": {
+                  "type": "array",
+                  "items": { "type": "number" },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "output": {
+                  "type": "array",
+                  "items": { "type": "number" },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            },
+            "animation": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": { "enum": ["tween", "spring", "step"] },
+                "duration": { "type": "number", "minimum": 0 },
+                "easing": { "type": "string" }
+              }
+            }
+          }
+        },
+        "condition": {
+          "type": "object",
+          "required": ["expression", "trueValue", "falseValue"],
+          "properties": {
+            "expression": { "type": "string" },
+            "trueValue": {},
+            "falseValue": {}
+          }
+        }
+      }
+    },
+    "AnimationConfig": {
+      "type": "object",
+      "required": ["id", "trigger", "target", "keyframes"],
+      "properties": {
+        "id": { "type": "string" },
+        "trigger": {
+          "type": "object",
+          "required": ["type", "source"],
+          "properties": {
+            "type": { "enum": ["state", "event", "time"] },
+            "source": { "type": "string" },
+            "value": {}
+          }
+        },
+        "target": {
+          "type": "object",
+          "required": ["modelId", "property"],
+          "properties": {
+            "modelId": { "type": "string" },
+            "property": { "type": "string" }
+          }
+        },
+        "keyframes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["time", "value"],
+            "properties": {
+              "time": { "type": "number", "minimum": 0 },
+              "value": {},
+              "easing": { "type": "string" }
+            }
+          }
+        },
+        "loop": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "enum": ["once", "loop", "pingpong"] },
+            "count": { "type": "number", "minimum": 1 }
+          }
+        }
+      }
+    }
+  }
+}
