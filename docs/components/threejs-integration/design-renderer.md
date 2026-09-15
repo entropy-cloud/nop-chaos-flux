@@ -14,6 +14,11 @@ export interface ThreeCanvasSchema extends BaseSchema {
   scene: ThreeSceneConfig;
   bindings?: DataBinding[];
   animations?: AnimationConfig[];
+  /**
+   * 声明式工业数据源（design-protocol.md §4）：条目与 IndustrialAdapter.connect(cfg) 一一对应，
+   * 静态配置面（url/tags 不走 ${} 求值）；渲染器经 useDataSources 接线 env.openSocket。
+   */
+  dataSources?: IndustrialTagConfig[];
   /** events 对象整体作为 prop（design.md D3），渲染器内经 helpers.dispatch 桥接 */
   events?: ThreeCanvasEvents;
   loading?: SchemaInput;

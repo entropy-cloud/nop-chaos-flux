@@ -1,4 +1,5 @@
 import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject } from '@nop-chaos/flux-core';
+import type { IndustrialTagConfig } from './data-source/industrial-adapter.js';
 
 /**
  * three-canvas 渲染器 schema（design-renderer.md §1，v5）。
@@ -24,6 +25,12 @@ export interface ThreeCanvasSchema extends BaseSchema {
   scene: ThreeSceneConfig & SchemaObject;
   bindings?: (DataBinding & SchemaObject)[];
   animations?: (AnimationConfig & SchemaObject)[];
+  /**
+   * 声明式工业数据源（design-protocol.md §4 schema surface，I3.2）：条目与 IndustrialAdapter.connect(cfg)
+   * 一一对应；静态配置面（url/tags 不走 ${} 求值）。渲染器经 useDataSources 接线：
+   * env.openSocket → subscribe → 数据帧 → scope.update('dataSources.<name>')。
+   */
+  dataSources?: (IndustrialTagConfig & SchemaObject)[];
   /**
    * events 对象整体注册为 kind: 'prop'（design.md D3）：平台 classifyField 仅按顶层 key
    * 精确分类、无点号路径（industrial renderer-definitions.ts:37-38 先例）；

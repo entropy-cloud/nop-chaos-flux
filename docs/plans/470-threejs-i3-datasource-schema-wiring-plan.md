@@ -71,50 +71,50 @@
 
 ### Phase 1 - Schema surface 与 AI 资产同步（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/schemas.ts`、`src/renderer-definitions.ts`、`src/renderer-definitions.test.ts`、`src/ai/threejs-schema.json`、`src/ai/schema-validator.ts`、`src/ai/schema-validator.test.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红，schema-validator.test.ts 表驱动扩展）：含合法 dataSources 的配置通过；dataSources 非数组 → 结构错误；条目缺 url → `dataSources[<i>].url` 聚合 path；条目缺 tags/tags 非数组 → 结构错误；tag.type 非法（非 bool/int16/float32）→ 结构错误；tag 缺 name/address → 结构错误；polling 非数值 → 结构错误；不含 dataSources 的既有合法配置仍通过（向后兼容）。
-- [ ] `schemas.ts`：`ThreeCanvasSchema` 增 `dataSources?: (IndustrialTagConfig & SchemaObject)[]`（type-only import 自 `./data-source/industrial-adapter.js`，无运行时环），JSDoc 声明静态配置面与 adapter connect 一一对应。
-- [ ] `renderer-definitions.ts`：propContracts 增 `dataSources`（shape kind 'unknown'，description 指向 design-protocol.md §4）+ fields 增 `{ key: 'dataSources', kind: 'prop' }`。
-- [ ] `threejs-schema.json`：properties 增 `dataSources`（array of `$ref: #/definitions/IndustrialTagConfig`）+ definitions 增 IndustrialTagConfig（id/url/tags required；tag type enum bool/int16/float32；polling number）。
-- [ ] `schema-validator.ts`：validate() 增 dataSources 结构校验（错误一次聚合、JSON Pointer path `dataSources[<i>]...`），未知顶层字段仍不拒绝（draft-07 口径不变）。
-- [ ] Proof：`renderer-definitions.test.ts` 增 dataSources 注册断言（fields 含 key 且 kind 'prop'、propContract 存在）；**既有严格 keys 断言（renderer-definitions.test.ts:41 `Object.keys(contracts).sort()` 全等断言）同步扩展纳入 dataSources**——该测试必然需要编辑，非仅保持绿。
-- [ ] Proof：schema-validator 既有不变式维持绿——generateSchema 输出过自身 validator；getSchema 与 TS 抽查守卫补 dataSources 一处（getSchema().properties.dataSources 存在且指向 IndustrialTagConfig definition）。
+- [x] 先写失败测试（红，schema-validator.test.ts 表驱动扩展）：含合法 dataSources 的配置通过；dataSources 非数组 → 结构错误；条目缺 url → `dataSources[<i>].url` 聚合 path；条目缺 tags/tags 非数组 → 结构错误；tag.type 非法（非 bool/int16/float32）→ 结构错误；tag 缺 name/address → 结构错误；polling 非数值 → 结构错误；不含 dataSources 的既有合法配置仍通过（向后兼容）。——红实测 6 failed / 2 trivially-green（向后兼容与 getSchema 未实现前场景），实现后全绿。
+- [x] `schemas.ts`：`ThreeCanvasSchema` 增 `dataSources?: (IndustrialTagConfig & SchemaObject)[]`（type-only import 自 `./data-source/industrial-adapter.js`，无运行时环），JSDoc 声明静态配置面与 adapter connect 一一对应。
+- [x] `renderer-definitions.ts`：propContracts 增 `dataSources`（shape kind 'unknown'，description 指向 design-protocol.md §4）+ fields 增 `{ key: 'dataSources', kind: 'prop' }`。
+- [x] `threejs-schema.json`：properties 增 `dataSources`（array of `$ref: #/definitions/IndustrialTagConfig`）+ definitions 增 IndustrialTagConfig（id/url/tags required；tag type enum bool/int16/float32；polling number）。
+- [x] `schema-validator.ts`：validate() 增 dataSources 结构校验（错误一次聚合、JSON Pointer path `dataSources[<i>]...`），未知顶层字段仍不拒绝（draft-07 口径不变）。
+- [x] Proof：`renderer-definitions.test.ts` 增 dataSources 注册断言（fields 含 key 且 kind 'prop'）；**既有严格 keys 断言（renderer-definitions.test.ts:41 `Object.keys(contracts).sort()` 全等断言）同步扩展纳入 dataSources**——该测试必然需要编辑，非仅保持绿。
+- [x] Proof：schema-validator 既有不变式维持绿——generateSchema 输出过自身 validator；getSchema 与 TS 抽查守卫补 dataSources 一处（getSchema().properties.dataSources 存在且指向 IndustrialTagConfig definition）。
 
 Exit Criteria:
 
-- [ ] schema-validator 扩展单测全绿（先红后绿；表驱动含全部结构错误路径）。
-- [ ] renderer-definitions 注册断言绿；3d 包既有测试无回归（focused：schemas/validator/definitions 相关文件）。
+- [x] schema-validator 扩展单测全绿（先红后绿；表驱动含全部结构错误路径）。
+- [x] renderer-definitions 注册断言绿；3d 包既有测试无回归（focused：schemas/validator/definitions 相关文件；包级 25 文件/189 测试全绿）。
 
 ### Phase 2 - useDataSources 组件接线（Proof 先行）
 
-Status: planned
+Status: completed
 Targets: `src/renderer/hooks/use-data-sources.ts`（新建）、`src/renderer/hooks/use-data-sources.test.tsx`（新建）、`src/renderer/three-canvas.tsx`
 
 - Item Types: `Proof | Fix`
 
-- [ ] 先写失败测试（红，renderer test harness：`createThreeTestEnvironment` + 手工 props 注入 `dataSources` + mock `env.openSocket`，mock 引擎沿 three-canvas.test.tsx 先例）：声明 dataSources + env.openSocket 存在 → socket 以 cfg.url 建立；onopen 后 subscribe 帧发出（tags 为 address 数组、polling 透传）；数据帧 `{type:'data',payload:{address:value}}` → `scope.update('dataSources.<tag.name>', 转换后值)`（bool/float32 各一）；unmount → 每连接 close 被调（disconnectAll）；env.openSocket 缺失 → helpers.dispatch 收到 `datasource:error`（code 'socket-unavailable'）且 scene 状态埋点不翻转 error；未声明 dataSources → openSocket 从未被调；dataSources identity 变更 → 旧连接 close + 新连接建立；connect-failed 透传（mock socket onclose 触发 → helpers.dispatch 收到 `datasource:error` code 'socket-connect-failed'）；dataSources 非数组（防御式）→ openSocket 从未被调、不崩。
-- [ ] 实现 `useDataSources` hook：adapter 实例 mount 级一次（useRef）；onError 经 latest-ref 接线（捕获最新 events/helpers）；effect 以 dataSources identity 为依赖逐 cfg connect，cleanup disconnectAll；非数组输入防御式忽略。
-- [ ] `three-canvas.tsx` 接线：读取 `props.props.dataSources`，调用 hook（传 env/scope/events/helpers.dispatch）。
-- [ ] Proof：`datasource:error` dispatch payload 断言（type/code/message 三字段，createNormalizedActionEvent 桥接先例一致）。
+- [x] 先写失败测试（红，renderer test harness：`createThreeTestEnvironment` + 手工 props 注入 `dataSources` + mock `env.openSocket`，mock 引擎沿 three-canvas.test.tsx 先例）：声明 dataSources + env.openSocket 存在 → socket 以 cfg.url 建立；onopen 后 subscribe 帧发出（tags 为 address 数组、polling 透传）；数据帧 `{type:'data',payload:{address:value}}` → `scope.update('dataSources.<tag.name>', 转换后值)`（bool/float32 各一，经真 scope.get 断言实写）；unmount → 每连接 close 被调（disconnectAll）；env.openSocket 缺失 → helpers.dispatch 收到 `datasource:error`（code 'socket-unavailable'）且 scene 状态埋点不翻转 error；未声明 dataSources → openSocket 从未被调；dataSources identity 变更 → 旧连接 close + 新连接建立；connect-failed 透传（mock socket onclose 触发 → helpers.dispatch 收到 `datasource:error` code 'socket-connect-failed'）；dataSources 非数组（防御式）→ openSocket 从未被调、不崩。——红实测 6 failed / 2 trivially-green（未声明与非数组防御在实现前即空接线语义），实现后 8/8 全绿。
+- [x] 实现 `useDataSources` hook：adapter 实例随 env/scope 身份创建（useMemo，mount 级稳定）；onError 经 latest-ref 接线（捕获最新 events/helpers，use-binding-bridge.ts:50-53 先例）；effect 以 dataSources identity 为依赖逐 cfg connect，cleanup disconnectAll；非数组输入防御式忽略。
+- [x] `three-canvas.tsx` 接线：读取 `props.props.dataSources`，调用 hook（传 env/scope/events/helpers.dispatch）。
+- [x] Proof：`datasource:error` dispatch payload 断言（type/code/message 三字段经 JSON 序列化包含断言，createNormalizedActionEvent 桥接先例一致）。
 
 Exit Criteria:
 
-- [ ] use-data-sources 单测全绿（先红后绿；覆盖 Failure Paths 全部四行）。
-- [ ] three-canvas 既有组件测试无回归（mock 引擎先例文件全绿）。
+- [x] use-data-sources 单测全绿（先红后绿；覆盖 Failure Paths 全部四行：socket-unavailable/connect-failed 透传/防御式忽略/identity 变更重连）。
+- [x] three-canvas 既有组件测试无回归（mock 引擎先例文件全绿；包级 26 文件/197 测试全绿）。
 
 ### Phase 3 - 设计分册回写、roadmap 同步与收尾
 
-Status: planned
+Status: in progress
 Targets: `docs/components/threejs-integration/design-renderer.md`、`docs/components/threejs-integration/design-protocol.md`、`docs/backlog/threejs-integration-roadmap.md`、`docs/logs/2026/09-16.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Fix：`design-renderer.md` §1 ThreeCanvasSchema 形状补 `dataSources` 字段（静态配置面、IndustrialTagConfig 引用）。
-- [ ] Fix：`design-protocol.md` §4 补 schema surface 与接线契约小节——`dataSources` 字段语义、useDataSources 接线所有权（mount 级 adapter、identity 变更重连、unmount disconnectAll）、`datasource:error` 事件通道（不翻转 scene 状态机的裁定理由：数据通道独立于场景渲染，§5 用户可见面 = onError 诊断）。
+- [x] Fix：`design-renderer.md` §1 ThreeCanvasSchema 形状补 `dataSources` 字段（静态配置面、IndustrialTagConfig 引用）。
+- [x] Fix：`design-protocol.md` §4 补 schema surface 与接线契约小节（§4.1）——`dataSources` 字段语义、useDataSources 接线所有权（mount 级 adapter、identity 变更重连、unmount disconnectAll）、`datasource:error` 事件通道（不翻转 scene 状态机的裁定理由：数据通道独立于场景渲染，§5 用户可见面 = onError 诊断）。
 - [ ] Proof：`docs/logs/2026/09-16.md` 记录（交付面、focused 测试计数、全量验证结果）。
 - [ ] Decision：roadmap I3.2 状态随 plan 生命周期同步（closure audit 通过后 `planned` → `done`，本 plan 执行期保持 `planned`）。
 

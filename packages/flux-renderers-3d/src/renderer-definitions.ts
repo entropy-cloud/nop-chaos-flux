@@ -38,6 +38,13 @@ export const threeCanvasRendererDefinition: RendererDefinition = {
       description: 'AnimationConfig[] keyframe animations (consumed from I2.2).',
       editorType: 'code',
     },
+    dataSources: {
+      shape: { kind: 'unknown' },
+      displayName: 'Data Sources',
+      description:
+        'IndustrialTagConfig[] declarative industrial data sources (id/url/tags/polling), wired to env.openSocket via IndustrialAdapter. See docs/components/threejs-integration/design-protocol.md §4. Static config — no ${} expressions.',
+      editorType: 'code',
+    },
     events: {
       // events 对象整体 prop（design.md D3）：classifyField 仅顶层 key 精确匹配、无点号路径，
       // 子键无法注册为 event 字段（industrial renderer-definitions.ts:37-38 先例）。
@@ -53,6 +60,7 @@ export const threeCanvasRendererDefinition: RendererDefinition = {
     { key: 'scene', kind: 'prop' },
     { key: 'bindings', kind: 'prop' },
     { key: 'animations', kind: 'prop' },
+    { key: 'dataSources', kind: 'prop' },
     { key: 'events', kind: 'prop' },
     { key: 'loading', kind: 'region', regionKey: 'loading' },
     { key: 'empty', kind: 'region', regionKey: 'empty' },

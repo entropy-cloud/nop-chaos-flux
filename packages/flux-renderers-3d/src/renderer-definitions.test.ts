@@ -23,6 +23,7 @@ describe('three-canvas renderer definition (plan 465 Phase 2)', () => {
     expect(kindOf('scene')).toBe('prop');
     expect(kindOf('bindings')).toBe('prop');
     expect(kindOf('animations')).toBe('prop');
+    expect(kindOf('dataSources')).toBe('prop');
     expect(kindOf('events')).toBe('prop');
   });
 
@@ -36,9 +37,9 @@ describe('three-canvas renderer definition (plan 465 Phase 2)', () => {
     expect(empty && 'regionKey' in empty && empty.regionKey).toBe('empty');
   });
 
-  it('exposes propContracts for the four source-enabled props', () => {
+  it('exposes propContracts for the source-enabled props', () => {
     const contracts = threeCanvasRendererDefinition.propContracts ?? {};
-    expect(Object.keys(contracts).sort()).toEqual(['animations', 'bindings', 'events', 'scene']);
+    expect(Object.keys(contracts).sort()).toEqual(['animations', 'bindings', 'dataSources', 'events', 'scene']);
     for (const contract of Object.values(contracts)) {
       expect(contract.editorType).toBe('code');
     }

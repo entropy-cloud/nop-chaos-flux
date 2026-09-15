@@ -8,11 +8,13 @@ import {
 } from '@nop-chaos/flux-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { AnimationConfig, DataBinding, ThreeCanvasSchema, ThreeSceneConfig } from '../schemas.js';
+import type { IndustrialTagConfig } from '../data-source/industrial-adapter.js';
 import type { SceneManager } from '../engine/scene-manager.js';
 import { useSceneManager } from './hooks/use-scene-manager.js';
 import { useBindingBridge } from './hooks/use-binding-bridge.js';
 import { useThreeEvents } from './hooks/use-three-events.js';
 import { useAnimationClips } from './hooks/use-animation-clips.js';
+import { useDataSources } from './hooks/use-data-sources.js';
 
 type SceneLifecycleState = 'empty' | 'loading' | 'ready' | 'error';
 
@@ -22,7 +24,7 @@ type SceneLifecycleState = 'empty' | 'loading' | 'ready' | 'error';
  * loading/empty region 分别在加载中/无模型时渲染。
  */
 export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSchema>) {
-  const { scene, bindings, events, animations } = props.props;
+  const { scene, bindings, events, animations, dataSources } = props.props;
   const { visible, className } = props.meta;
   const testid = props.meta.testid as string | undefined;
   const runtime = useRendererRuntime();
@@ -79,6 +81,23 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
   useAnimationClips({
     animations: animations as AnimationConfig[] | undefined,
     engine,
+  });
+
+  useDataSources({
+    dataSources: dataSources as IndustrialTagConfig[] | undefined,
+    env,
+    scope,
+    onError: (code, message) => {
+      if (events?.onError && typeof events.onError === 'object') {
+        void props.helpers.dispatch(events.onError, {
+          event: createNormalizedActionEvent({
+            type: 'datasource:error',
+            code,
+            message,
+          }),
+        });
+      }
+    },
   });
 
   useEffect(() => {

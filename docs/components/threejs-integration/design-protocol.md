@@ -84,6 +84,18 @@ export class IndustrialAdapter {
 
 **scope 写入路径**：tag 值写入 `dataSources.<name>` 成员；three-canvas 绑定表达式以 `${dataSources.VALVE_001.position}` 消费——socket 数据与页面数据在 scope 层汇合，绑定桥接无需感知数据来源（design-data-binding.md §4 数据流起点）。
 
+### 4.1 Schema surface 与组件接线（声明式数据源）
+
+`ThreeCanvasSchema.dataSources?: IndustrialTagConfig[]`（schema 字段与 §4 `IndustrialTagConfig` 同形，静态配置面：url/tags 不走 `${}` 求值；条目与 `connect(cfg)` 一一对应）。渲染器经 `useDataSources` hook 接线，schema 作者无需直接构造 adapter：
+
+| 关注点         | 契约                                                                                                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| adapter 所有权 | mount 级单实例（随 env/scope 身份创建）；`socket-unavailable` 去重按 adapter 实例生命周期（§4 行为契约表）                                                                                 |
+| 建连/重连      | effect 以 dataSources 数组 identity 为依赖：挂载逐条 `connect(cfg)`；identity 变更旧连接全断（`disconnectAll()`）后逐条重连（同 id 重入先断旧再建连）；卸载 `disconnectAll()`              |
+| 诊断通道       | adapter `onError` → `events.onError` dispatch（`createNormalizedActionEvent({ type: 'datasource:error', code, message })`）                                                                |
+| 场景状态独立   | 数据通道故障**不翻转** three-canvas 状态机（empty/loading/ready/error）：场景渲染与数据可用性正交，§5 用户可见面 = onError 诊断；`error` 仍为渲染管线挂载周期终态（design-renderer.md §3） |
+| 无 dataSources | 不触达 `env.openSocket`（零开销空接线）；非数组输入防御式忽略                                                                                                                              |
+
 ## 5. 失败路径表
 
 | 触发                  | 行为                               | 可重试                 | 用户可见                                 |

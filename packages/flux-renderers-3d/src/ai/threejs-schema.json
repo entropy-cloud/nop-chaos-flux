@@ -10,6 +10,7 @@
     "scene": { "$ref": "#/definitions/ThreeSceneConfig" },
     "bindings": { "type": "array", "items": { "$ref": "#/definitions/DataBinding" } },
     "animations": { "type": "array", "items": { "$ref": "#/definitions/AnimationConfig" } },
+    "dataSources": { "type": "array", "items": { "$ref": "#/definitions/IndustrialTagConfig" } },
     "events": { "type": "object" },
     "loading": {},
     "empty": {}
@@ -189,6 +190,28 @@
           }
         }
       }
+    },
+    "IndustrialTagConfig": {
+      "type": "object",
+      "required": ["id", "url", "tags"],
+      "properties": {
+        "id": { "type": "string" },
+        "url": { "type": "string", "description": "ws(s) industrial gateway address" },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "address", "type"],
+            "properties": {
+              "name": { "type": "string", "description": "scope member under dataSources.<name>" },
+              "address": { "type": "string", "description": "gateway-side tag address" },
+              "type": { "enum": ["bool", "int16", "float32"] }
+            }
+          }
+        },
+        "polling": { "type": "number", "minimum": 0 }
+      },
+      "description": "Declarative industrial data source (design-protocol.md §4); entries map 1:1 to IndustrialAdapter.connect(cfg). Static config — no ${} expressions."
     },
     "AnimationConfig": {
       "type": "object",
