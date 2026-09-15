@@ -161,6 +161,12 @@ const EXEMPTIONS = [
     source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记',
   },
   {
+    path: 'packages/flux-renderers-data/src/echarts-theme.ts',
+    rule: 'hardcoded-literal-color',
+    reason: 'echarts flux 主题 CSS 变量不可用时的静态回退调色板（数据可视化域常量，同 chart-renderer 域）',
+    source: 'docs/logs/2026/09-15.md 收口核查豁免登记',
+  },
+  {
     path: 'packages/flux-renderers-data/src/stat-tile-renderer.tsx',
     rule: 'hardcoded-literal-color',
     reason: 'stat-tile 趋势色（R2 stat-tile 域）',

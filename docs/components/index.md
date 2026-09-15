@@ -316,7 +316,7 @@ UI primitive 对齐补充规则：
 
 **数据（`flux-renderers-data`）**
 
-- `table`、`tree`、`list`、`data-source`、`pagination`、`chart`、`crud`、`statistics`、`stat-tile`、`sparkline`
+- `table`、`tree`、`list`、`data-source`、`pagination`、`chart`、`echarts`（独立设计文档，双渲染器并存）、`crud`、`statistics`、`stat-tile`、`sparkline`
 
 > **`service` removed** — AMIS `service` 的"数据加载 + body/empty/error/loading 状态切换"能力，在 Flux 中由 `data-source`（负责数据请求与状态发布）+ `container`/`dynamic-renderer`（负责条件渲染）组合替代。Flux 不提供 `type:'service'` 组件（口径与 `docs/components/amis-baseline-matrix.md` 一致）。
 
@@ -482,6 +482,7 @@ UI primitive 对齐补充规则：
 - `pagination/`
 - `tree/`
 - `chart/`
+- `echarts/`
 - `statistics/`
 - `graph/`
 

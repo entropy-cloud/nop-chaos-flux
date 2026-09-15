@@ -1,0 +1,64 @@
+{
+  "$comment": "ECharts 渲染器 schema 示例集（四类：静态 option / dataset 绑定 / 事件 / map GeoJSON 桥接）。完整契约见 docs/components/echarts/design.md。每个示例为独立可用的节点定义。",
+  "staticOption": {
+    "type": "echarts",
+    "height": 360,
+    "option": {
+      "tooltip": {},
+      "legend": { "bottom": 0 },
+      "xAxis": { "type": "category", "data": ["Jan", "Feb", "Mar"] },
+      "yAxis": { "type": "value" },
+      "series": [
+        { "type": "bar", "name": "Revenue", "data": [4200, 5100, 4800] },
+        { "type": "bar", "name": "Expenses", "data": [2800, 3100, 2600] }
+      ]
+    }
+  },
+  "datasetBinding": {
+    "type": "echarts",
+    "height": 360,
+    "dataset": {
+      "source": "${salesRows}",
+      "dimensions": ["month", "revenue", "expenses"]
+    },
+    "option": {
+      "tooltip": { "trigger": "axis" },
+      "legend": { "bottom": 0 },
+      "xAxis": { "type": "category" },
+      "yAxis": { "type": "value" },
+      "series": [
+        { "type": "bar", "name": "Revenue", "encode": { "x": "month", "y": "revenue" } },
+        { "type": "bar", "name": "Expenses", "encode": { "x": "month", "y": "expenses" } }
+      ]
+    }
+  },
+  "withEvents": {
+    "type": "echarts",
+    "height": 320,
+    "renderer": "svg",
+    "dataset": { "source": "${funnelRows}" },
+    "option": {
+      "tooltip": {},
+      "series": [{ "type": "funnel" }]
+    },
+    "events": {
+      "onClick": {
+        "action": "showToast",
+        "args": { "level": "info", "message": "clicked: ${event.name}" }
+      },
+      "onLegendSelectChanged": {
+        "action": "setValue",
+        "args": { "path": "legendSelection", "value": "${event.selected}" }
+      }
+    }
+  },
+  "mapWithGeoJson": {
+    "type": "echarts",
+    "height": 360,
+    "map": { "name": "world", "geoJson": "${worldGeo}" },
+    "option": {
+      "tooltip": {},
+      "series": [{ "type": "map", "map": "world" }]
+    }
+  }
+}

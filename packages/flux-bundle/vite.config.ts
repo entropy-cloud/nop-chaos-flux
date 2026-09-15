@@ -17,6 +17,7 @@ const hostOwnedExternal = [
   /^zustand(\/.*)?$/,
   /^lucide-react(\/.*)?$/,
   /^recharts(\/.*)?$/,
+  /^echarts(\/.*)?$/,
   /^i18next(\/.*)?$/,
   /^react-i18next(\/.*)?$/,
   /^@nop-chaos\/ui(\/.*)?$/,

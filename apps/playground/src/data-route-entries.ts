@@ -69,6 +69,14 @@ export const DATA_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Recharts-based chart driven by source data, configured axes, and series.',
   },
   {
+    id: 'echarts',
+    title: 'ECharts',
+    category: 'data',
+    sourcePackage: '@nop-chaos/flux-renderers-data',
+    description:
+      'Apache ECharts renderer for advanced chart types (sankey, treemap, boxplot, gauge, map, custom, ...) with native option passthrough; echarts loads as an optional lazy chunk.',
+  },
+  {
     id: 'statistics',
     title: 'Statistics',
     category: 'data',

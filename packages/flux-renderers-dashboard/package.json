@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-renderers-data": "workspace:*",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },

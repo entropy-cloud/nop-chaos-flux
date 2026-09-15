@@ -6,6 +6,7 @@ export * from './crud-schema.js';
 export { TableRenderer } from './table-renderer.js';
 export { DataSourceRenderer } from './data-source-renderer.js';
 export { ChartRenderer } from './chart-renderer.js';
+export { EChartsRenderer } from './echarts-renderer.js';
 export { TreeRenderer } from './tree-renderer.js';
 export { ListRenderer } from './list-renderer.js';
 export { PaginationRenderer } from './pagination-renderer.js';
@@ -20,6 +21,7 @@ export {
   batchBarRendererDefinition,
   crudRendererDefinition,
   dataRendererDefinitions,
+  echartsRendererDefinition,
   queryFilterRendererDefinition,
   sparklineRendererDefinition,
 } from './data-renderer-definitions.js';
