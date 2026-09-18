@@ -17,6 +17,7 @@ import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial';
 // `@leafer-in/editor` stays out of the runtime `scada-canvas` bundle (design-architecture.md §4.4.1).
 import { registerScadaEditorRenderers } from '@nop-chaos/flux-renderers-industrial/editor';
 import { HomePage } from './pages/home-page';
+import { ThemeSwitcher } from './theme-switcher';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
 import { ComplexPagesShowcase } from './complex-pages';
@@ -395,6 +396,7 @@ export function App() {
   return (
     <div className="nop-theme-root">
       <Suspense fallback={<PageFallback />}>{renderPage(route, navigate)}</Suspense>
+      <ThemeSwitcher />
       <NopDebuggerPanel controller={debuggerController} />
     </div>
   );

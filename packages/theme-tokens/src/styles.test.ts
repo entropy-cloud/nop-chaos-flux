@@ -106,4 +106,53 @@ describe('@nop-chaos/theme-tokens styles contract', () => {
       expect(blockText).not.toContain('--host-');
     }
   });
+
+  it('falls back the semantic status colors on bare :root (plan 471 V1-F1)', () => {
+    const rootStart = styles.indexOf(':root {');
+    const rootEnd = styles.indexOf('}', rootStart);
+    const rootBlock = styles.slice(rootStart, rootEnd);
+    for (const token of [
+      '--success:',
+      '--success-bg:',
+      '--warning:',
+      '--warning-bg:',
+      '--info:',
+      '--danger:',
+      '--danger-bg:',
+    ]) {
+      expect(rootBlock).toContain(token);
+    }
+    expect(rootBlock).toContain('--success: 160 84% 39%;');
+    expect(rootBlock).toContain('--danger: 0 84% 60%;');
+    expect(rootBlock).toContain('--warning: 38 92% 50%;');
+    expect(rootBlock).toContain('--info: 199 89% 48%;');
+  });
+
+  it('keeps theme blocks overriding the status colors over the bare :root fallback (specificity contract)', () => {
+    const themeBlocks = [
+      ":root[data-theme='classic'][data-mode='light']",
+      ":root[data-theme='classic'][data-mode='dark']",
+      ":root[data-theme='glass'][data-mode='light']",
+      ":root[data-theme='glass'][data-mode='dark']",
+    ];
+    for (const block of themeBlocks) {
+      const start = styles.indexOf(block);
+      const end = styles.indexOf('}', start);
+      const blockText = styles.slice(start, end);
+      for (const token of [
+        '--success:',
+        '--success-bg:',
+        '--warning:',
+        '--warning-bg:',
+        '--info:',
+        '--danger:',
+        '--danger-bg:',
+      ]) {
+        expect(blockText).toContain(token);
+      }
+    }
+    const darkStart = styles.indexOf(":root[data-theme='classic'][data-mode='dark']");
+    const darkBlock = styles.slice(darkStart, styles.indexOf('}', darkStart));
+    expect(darkBlock).toContain('--success: 160 70% 50%;');
+  });
 });

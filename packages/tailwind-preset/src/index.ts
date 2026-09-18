@@ -136,7 +136,10 @@ export function createNopTailwindPreset(
   extension?: HostTailwindThemeExtension,
 ): Partial<Config> {
   return {
-    darkMode: ['class', '.dark'],
+    // Single dark trigger for the whole repo: the data-mode attribute set by
+    // theme-tokens consumers (plan 471 V1-F2). The former ['.dark'] class
+    // trigger was never activated by any host code path.
+    darkMode: ['selector', '[data-mode="dark"]'],
     theme: {
       extend: mergeThemeExtension(baseThemeExtension, extension),
     },

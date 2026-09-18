@@ -44,13 +44,15 @@ test.describe('Pivot Table Demo', () => {
     await expect(pivots.locator('[data-slot="pivot-canvas"] canvas')).toHaveCount(2, {
       timeout: 20_000,
     });
+    // Mechanism migrated to the data-mode attribute trigger (plan 471 V1-F2);
+    // the former html.dark class toggle was never read by any token block.
     await page.getByRole('button', { name: '暗色' }).click();
-    await expect(page.locator('html.dark')).toHaveCount(1);
+    await expect(page.locator("html[data-mode='dark']")).toHaveCount(1);
     await expect(pivots.locator('[data-slot="pivot-canvas"] canvas')).toHaveCount(2, {
       timeout: 20_000,
     });
     await page.getByRole('button', { name: '亮色' }).click();
-    await expect(page.locator('html.dark')).toHaveCount(0);
+    await expect(page.locator("html[data-mode='dark']")).toHaveCount(0);
     await expect(pivots.locator('[data-slot="pivot-canvas"] canvas')).toHaveCount(2, {
       timeout: 20_000,
     });

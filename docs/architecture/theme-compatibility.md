@@ -153,6 +153,29 @@ Example host-authored alias pattern:
 }
 ```
 
+## Dark Mode Contract (plan 471 / visual-quality V1)
+
+Dark mode is attribute-driven with a **single trigger: the `data-mode` attribute** on `document.documentElement`.
+
+### Trigger
+
+- Tokens: `packages/theme-tokens/src/styles.css` declares values on `:root[data-theme=…][data-mode=…]` blocks (classic/glass × light/dark). The bare `:root` block carries light-value fallbacks for the seven semantic status colors (`--success/--success-bg/--warning/--warning-bg/--info/--danger/--danger-bg`) so bare hosts resolve them; every themed block re-declares those names and wins by specificity.
+- Tailwind `dark:` variants: the preset (`packages/tailwind-preset/src/index.ts`) sets `darkMode: ['selector', '[data-mode="dark"]']`, so `dark:` utilities compile to `:where([data-mode="dark"], [data-mode="dark"] *)` selectors and activate from the same attribute. The former `['class', '.dark']` trigger is retired — no host code ever added the class.
+- One attribute (`data-mode='dark'`) therefore flips tokens and `dark:` utilities together. Do not introduce `.dark` classes, `prefers-color-scheme` media blocks without a data-mode gate, or other ad-hoc triggers in package CSS.
+
+### Host integration
+
+1. Import `@nop-chaos/theme-tokens/styles.css` once.
+2. Set `document.documentElement.setAttribute('data-theme', …)` and `setAttribute('data-mode', …)` before first render (bare-host fallbacks: unset attributes still resolve light fallbacks for the semantic status colors).
+3. Optional: a runtime switcher mutates the two attributes and persists them (playground reference implementation: `apps/playground/src/theme.ts` + `theme-switcher.tsx`, storage key `flux.theme`).
+
+### Package adaptation rules
+
+- Renderer packages add dark visuals either through preset `dark:` utilities or through `[data-mode='dark']` descendant selectors. No other trigger may be hand-written.
+- Gated system-preference fallback is the sanctioned pattern for optional dark polish: `@media (prefers-color-scheme: dark)` **plus** a `:root:not([data-mode='light'])` gate so an explicit attribute always wins (reference: `packages/flux-renderers-ai/src/styles.css` notice-bar fallbacks).
+- Legacy dual-trigger selectors (`.dark .x, [data-mode='dark'] .x`) still work; the `.dark` half is redundant and may be dropped when the file is next touched for other reasons (watch-only note: `packages/flux-renderers-mobile/src/styles.css`).
+- Per-component dark adaptation work is owned by the visual-quality roadmap domain work items (V5–V11b), not by the foundation.
+
 ## Host Integration Model
 
 Hosts may integrate at CSS level only.

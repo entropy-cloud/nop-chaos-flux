@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { createNopTailwindPreset, nopTailwindPreset } from './index';
 
 describe('nopTailwindPreset', () => {
-  it('defines the repo dark mode baseline', () => {
-    expect(nopTailwindPreset.darkMode).toEqual(['class', '.dark']);
+  it('defines the repo dark mode baseline (data-mode attribute as the single trigger, plan 471 V1-F2)', () => {
+    expect(nopTailwindPreset.darkMode).toEqual(['selector', '[data-mode="dark"]']);
   });
 
   it('exports key semantic color mappings', () => {

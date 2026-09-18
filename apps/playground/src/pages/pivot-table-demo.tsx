@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Button, Card, CardContent, CardHeader, cn } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import { registerPivotRenderers } from '@nop-chaos/flux-renderers-pivot';
@@ -7,6 +7,7 @@ import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { ArrowLeft, Moon, Sun } from 'lucide-react';
+import { getThemeState, setThemeMode, subscribeTheme } from '../theme';
 
 interface PivotTableDemoPageProps {
   onBack: () => void;
@@ -144,16 +145,13 @@ function DemoSchemaCard(props: {
 }
 
 export function PivotTableDemoPage({ onBack }: PivotTableDemoPageProps) {
-  const [dark, setDark] = useState(() =>
-    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false,
-  );
+  // Derive from the global theme state (single source of truth: data-mode
+  // attribute + flux.theme persistence, plan 471 V1-F2 migration).
+  const mode = useSyncExternalStore(subscribeTheme, () => getThemeState().mode);
+  const dark = mode === 'dark';
 
   const toggleTheme = () => {
-    const next = !dark;
-    setDark(next);
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark', next);
-    }
+    setThemeMode(dark ? 'light' : 'dark');
   };
 
   return (

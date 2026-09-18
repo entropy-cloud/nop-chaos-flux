@@ -178,6 +178,48 @@
   box-sizing: border-box;
 }
 
+/* Playground shell dark overrides (plan 471 V1-F3): the shell vars above are
+ * light-only; data-mode='dark' retunes the app background/text/surfaces so the
+ * four-state theme switch reads visually. Component-level colors come from
+ * theme-tokens classic-dark blocks, not from here. */
+:root[data-mode='dark'] {
+  color-scheme: dark;
+}
+
+[data-mode='dark'] .nop-theme-root {
+  --nop-app-bg:
+    radial-gradient(circle at top left, #232f3d 0, transparent 35%),
+    radial-gradient(circle at top right, #1c2a3a 0, transparent 32%),
+    linear-gradient(180deg, #10151c 0%, #0d1218 100%);
+  --nop-app-text: #e6ecf3;
+  --nop-hero-bg: rgba(23, 31, 41, 0.86);
+  --nop-hero-border: rgba(148, 178, 209, 0.14);
+  --nop-hero-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  --nop-eyebrow: #e0a35c;
+  --nop-body-copy: #b7c5d4;
+  --nop-playground-stage-bg: linear-gradient(
+    180deg,
+    rgba(21, 29, 39, 0.96),
+    rgba(15, 21, 29, 0.96)
+  );
+  --nop-playground-stage-border: rgba(148, 178, 209, 0.12);
+  --nop-accent: #d89446;
+  --nop-accent-strong: #e5ab63;
+  --nop-accent-muted: #c07f3d;
+  --nop-accent-soft: #e0a35c;
+  --nop-text-strong: #f1f5f9;
+  --nop-surface: rgba(22, 30, 40, 0.96);
+  --nop-surface-soft: rgba(22, 30, 40, 0.9);
+  --nop-surface-card: rgba(26, 35, 46, 0.84);
+  --nop-border: rgba(148, 178, 209, 0.2);
+  --nop-border-soft: rgba(148, 178, 209, 0.12);
+  --nop-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --nop-field-error: #ef8a7c;
+  --nop-nav-surface: rgba(21, 29, 39, 0.94);
+  --nop-nav-border: rgba(148, 178, 209, 0.14);
+  --nop-nav-hover-border: rgba(216, 148, 70, 0.4);
+}
+
 body {
   margin: 0;
   min-height: 100vh;

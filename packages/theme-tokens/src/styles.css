@@ -50,6 +50,16 @@
   --ring: 217 89% 53%;
   --primary: 217 89% 53%;
   --primary-foreground: 0 0% 100%;
+  /* Semantic status-color fallbacks for bare hosts (no data-theme/data-mode
+   * attribute set). Values mirror the classic-light theme block; every themed
+   * block re-declares these names and wins by specificity (plan 471 V1-F1). */
+  --success: 160 84% 39%;
+  --success-bg: 160 84% 95%;
+  --warning: 38 92% 50%;
+  --warning-bg: 38 92% 95%;
+  --info: 199 89% 48%;
+  --danger: 0 84% 60%;
+  --danger-bg: 0 84% 95%;
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);

@@ -2,17 +2,17 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import { App } from './App';
+import { applyTheme, readStoredTheme } from './theme';
 import '@nop-chaos/ui/styles.css';
 import './styles.css';
 
 // Initialize i18n before rendering
 initFluxI18n();
 
-// Mount theme attributes so theme-tokens data-theme selectors resolve
-// (provides --success / --warning / --info defaults used by Tailwind bg-* classes).
-// Tech debt: dark mode toggle is a separate plan; this only sets the default.
-document.documentElement.setAttribute('data-theme', 'classic');
-document.documentElement.setAttribute('data-mode', 'light');
+// Mount theme attributes before render so theme-tokens data-theme/data-mode
+// selectors resolve. The persisted (or default classic/light) state comes from
+// the runtime theme switcher in App (G-I, plan 471 V1-F3).
+applyTheme(readStoredTheme());
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
