@@ -1,0 +1,31 @@
+{
+  "name": "visual-quality",
+  "status": "active",
+  "startDate": "2026-09-15",
+  "description": "nop-chaos-flux 视觉质量深度修复 mission：控件显示效果深水区调研并修复。范围（roadmap work items V0–V12c）：①V0 视觉质量基线与视觉回归守护基建（程序化视觉断言工具链落 tests/e2e/helpers/ + 证据卡目录 docs/audits/visual-quality/ + 豁免基线快照 413/121/32，判据必须程序化，快照基线永不入库）；②V1 主题与暗色横切地基（:root 兜底语义色、darkMode 触发器统一、运行时主题切换 G-I）；③V2 AI 会话组件（bug 166 流式渲染修复、气泡视觉层 data-shape/data-placement 落地、滚动到底/气泡操作条/lightbox 等交互补齐）；④V3 3D 渲染（真 hover+高亮、shadowMap 启用、容器 400px 解硬编码——resize 链路已存在、加载进度/错误 UI、AI 生成出口）；⑤V4 SCADA（I17 已 done，只核 I17 后残余视觉问题；background.grid 消费裁决；报警/趋势组件裁决）；⑥V5 Flow Designer（框选/多选——参照 flux-renderers-graph 先例、吸附辅助线、边中点、节点实测尺寸 bugs/11、主题化）；⑦V6 Spreadsheet 令牌化（29 处 hex）与 dark；⑧V7 Report Designer（解硬编码 30×10、带区语义视觉、codec 方向裁决）；⑨V8a Print 设计器（09-13 遗留①–⑩、吸附辅助线渲染、undo 面板、诊断 i18n）/ V8b Word（字体/字号自定义、页眉页脚 UI 裁决）；⑩V9 Debugger 令牌化 + 代码编辑器查找替换/括号/活动行；⑪V10 Tiptap 扩展（子集显式裁决）与 Markdown 编辑器增强；⑫V11a Scheduling 族（gantt 关键路径、calendar 视图、kanban 拖拽视觉核对——链路已接通非 defect、任务条硬编码）/ V11b Dashboard/Map/Graph（canvasWidth 解硬编码、heatmap/轨迹、G-K 数据驱动着色裁决）；⑬V12a 豁免治理与 followups 处置（前缀豁免收紧文件级、error.message 双轨）/ V12b 一致性 P2 池 169 条按族消化 / V12c P3 池 87 条裁决消化。工作流（每个 work item 固定四步）：逐项深挖研究报告（docs/analysis/visual-quality/）→ 独立子 agent（fresh session）核实 findings 真实可改进（零 Blocker/Major）→ 按 plan guide 拟 execution plan（draft review 独立通过）→ 修复 + 视觉证据 + closure audit（独立子 agent）。test-first：确认的 live defect 先红后绿 + 类别清扫。范围排除：G-H 移动端族扩容、公式引擎/协同、hucre 真实集成、3D 后处理/天空盒恢复、D2 台账剩余项（G-J、D1 输入池、G-L/G-M）；保护区域（ui/src/index.ts 公共导出、renderer 定义字段、样式契约、flux-core 内核）按 ai-autonomy-policy.md 分级，触及走独立 plan + 人工确认。与在途 mission 的活跃 plan 冲突时以在途为准并顺延。",
+  "model": "glm-5.3-flash",
+  "variant": "max",
+  "multimodal": "执行模型 glm-5.3-flash 为多模态，可直接读取页面快照图片；视觉缺陷诊断与美观度评审可用快照目视 + 程序化断言双轨（AGENTS.md 2026-08-28 快照政策：快照可用于诊断/评审，测试通过判据仍须程序化；截图基线入 tests/e2e/__snapshots__/ 或 _tmp/baselines/，永不入库）",
+  "roadmapPath": "docs/backlog/visual-quality-roadmap.md",
+  "surveyReport": "docs/analysis/2026-09-15-visual-quality-deep-survey.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "roadmapGuide": "docs/backlog/00-roadmap-authoring-guide.md",
+  "auditsDir": "docs/audits/visual-quality",
+  "analysisDir": "docs/analysis/visual-quality",
+  "contextDir": "docs/context",
+  "moduleDir": ".",
+  "commands": {
+    "test": "pnpm test",
+    "test:e2e": "pnpm test:e2e",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck",
+    "check": "pnpm check"
+  },
+  "prompts": {
+    "uxAudit": "docs/skills/ux-design-pattern-audit-prompt.md",
+    "multiAudit": "docs/skills/deep-audit-prompts.md"
+  },
+  "commitFormat": "feat(visual-quality): <description>"
+}

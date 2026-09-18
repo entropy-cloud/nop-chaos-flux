@@ -30,6 +30,11 @@ tests/e2e/artifacts/
 # Same rationale for any other tests/**/artifacts/ directory produced by spec helpers.
 tests/**/artifacts/
 
+# Screenshot baselines are never committed (AGENTS.md 2026-08-28 snapshot policy).
+# toHaveScreenshot/toMatchSnapshot baselines live here locally only; ad-hoc
+# manual baselines go under _tmp/baselines/.
+tests/e2e/__snapshots__/
+
 # Prevent TypeScript build artifacts from leaking into src/ directories.
 # All compiled output must go to dist/ via tsconfig.build.json (outDir: "dist").
 packages/*/src/**/*.js

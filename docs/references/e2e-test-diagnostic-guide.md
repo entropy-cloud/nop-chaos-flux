@@ -89,6 +89,20 @@ Based on analysis of 997 test runs across 118 sessions:
 | `layout-content.spec.ts`               | 53   | 60.4%     | Fragment/tabs/recurse rendering race        |
 | `performance-table.spec.ts`            | 62   | 59.7%     | Scenario mode switching; timeout            |
 
+## Visual Assertion Helpers (visual-quality V0)
+
+Programmatic visual assertion toolchain (plan 470, visual-quality roadmap V0). Pass/fail criteria must stay programmatic; screenshots are diagnostic-only artifacts (AGENTS.md 2026-08-28 snapshot policy).
+
+| Helper                                                                                                                        | File                                       | Use for                                                                                                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getComputedStyleValue` / `expectComputedStyle` / `expectComputedStyleNot` / `expectCssVarResolves` / `captureVisualEvidence` | `tests/e2e/helpers/visual-assert.ts`       | Computed-style assertions (L3): token resolution (`--background` etc.), literal-color bans for dark adaptation, diagnostic screenshots to `tests/e2e/artifacts/`                                          |
+| `probeCanvasPixels` / `expectCanvasPainted`                                                                                   | `tests/e2e/helpers/canvas-pixel-probe.ts`  | Canvas paint proof (L4): 2d getImageData + webgl readPixels block sampling. WebGL canvases with `preserveDrawingBuffer: false` (three.js default) must be probed in the same task that triggers the frame |
+| `assertScadaCanvasRendered`                                                                                                   | `tests/e2e/helpers/scada-canvas-assert.ts` | SCADA-specific layered gate (TE-3 precedent: DOM + frame count + pixel probe)                                                                                                                             |
+
+- Smoke proof / usage examples: `tests/e2e/visual-assert-helpers.spec.ts`.
+- Domain-by-domain visual assertion gap inventory: `docs/analysis/visual-quality/V0-visual-regression-infra.md` §2.
+- Screenshot baselines are never committed: `tests/e2e/__snapshots__/` and `tests/e2e/artifacts/` are gitignored; ad-hoc manual baselines go under `_tmp/baselines/`.
+
 ## Project-Specific Verification Levels
 
 In addition to the generic layered strategy:

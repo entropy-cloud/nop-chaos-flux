@@ -196,4 +196,50 @@ describe('find-ui-consistency-gaps', () => {
     const { stdout } = await runGate();
     expect(stdout).toContain('No new unregistered UI consistency gap');
   });
+
+  describe('--json machine-readable output (plan 470 visual-quality V0)', () => {
+    function runGateWithArgs(args: string[]) {
+      return execFileAsync(process.execPath, [scriptPath, ...args], {
+        cwd: rootDir,
+        env: { ...process.env, FLUX_AUDIT_SCAN_ROOT: scanRoot },
+      });
+    }
+
+    it('emits deterministic parseable JSON with totals/byRule/byFile for exempt hits', async () => {
+      await stageFixture(
+        'packages/flux-renderers-industrial/src/symbols/json-exempt.fixture.ts',
+        'color-exempt.fixture.ts',
+      );
+      await stageFixture(
+        'packages/flux-renderers-scheduling/src/json-exempt.fixture.ts',
+        'color-exempt.fixture.ts',
+      );
+      const { stdout } = await runGateWithArgs(['--json']);
+      const payload = JSON.parse(stdout);
+      expect(payload.snapshot).toBe('v0');
+      expect(payload.generatedFrom).toContain('find-ui-consistency-gaps.mjs --json');
+      // color-exempt fixture carries two literal-color lines → 2 instances/file
+      expect(payload.totals).toMatchObject({ instances: 4, files: 2 });
+      expect(payload.totals.entries).toBeGreaterThan(0);
+      expect(payload.byRule['hardcoded-literal-color']).toMatchObject({ instances: 4, files: 2 });
+      expect(payload.byFile).toEqual(
+        [...payload.byFile].sort((a, b) =>
+          `${a.file}|${a.rule}`.localeCompare(`${b.file}|${b.rule}`),
+        ),
+      );
+      expect(payload.byFile.map((entry: { file: string }) => entry.file)).toEqual([
+        'packages/flux-renderers-industrial/src/symbols/json-exempt.fixture.ts',
+        'packages/flux-renderers-scheduling/src/json-exempt.fixture.ts',
+      ]);
+      expect(payload.newHits).toEqual([]);
+    });
+
+    it('reports zero-state totals as valid JSON when the scan is clean', async () => {
+      await stageFixture('packages/flux-renderers-basic/src/json-clean.fixture.ts', 'all-clean.fixture.ts');
+      const { stdout } = await runGateWithArgs(['--json']);
+      const payload = JSON.parse(stdout);
+      expect(payload.totals).toMatchObject({ instances: 0, files: 0 });
+      expect(payload.byFile).toEqual([]);
+    });
+  });
 });

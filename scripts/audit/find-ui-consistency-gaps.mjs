@@ -53,6 +53,11 @@ const scanRoot = process.env.FLUX_AUDIT_SCAN_ROOT
   ? path.resolve(process.env.FLUX_AUDIT_SCAN_ROOT)
   : rootDir;
 
+// plan 470 (visual-quality V0): `--json` switches the report channel to a
+// deterministic machine-readable payload (sorted byRule/byFile, no timestamp)
+// so the exempt baseline can be snapshotted and diffed by V12 governance.
+const jsonMode = process.argv.includes('--json');
+
 function toScanRelativePath(filePath) {
   return path.relative(scanRoot, filePath).split(path.sep).join('/');
 }
@@ -477,6 +482,51 @@ async function main() {
     } else {
       newHits.push(hit);
     }
+  }
+
+  if (jsonMode) {
+    const byRule = {};
+    for (const hit of exemptHits) {
+      const entry = byRule[hit.ruleId] ?? (byRule[hit.ruleId] = { instances: 0, files: new Set() });
+      entry.instances += 1;
+      entry.files.add(hit.filePath);
+    }
+    const byFileMap = new Map();
+    for (const hit of exemptHits) {
+      const key = `${hit.filePath}|${hit.ruleId}`;
+      const entry = byFileMap.get(key) ?? { file: hit.filePath, rule: hit.ruleId, instances: 0 };
+      entry.instances += 1;
+      byFileMap.set(key, entry);
+    }
+    const payload = {
+      snapshot: 'v0',
+      generatedFrom: 'node scripts/audit/find-ui-consistency-gaps.mjs --json',
+      totals: {
+        instances: exemptHits.length,
+        // Same pair semantics as the human line's "across N file(s)":
+        // unique (rule, file) pairs — the granularity exemptions are scoped
+        // and historically tracked at (D2 series 399/116/30 → 413/121/32).
+        files: byFileMap.size,
+        entries: EXEMPTIONS.length,
+      },
+      byRule: Object.fromEntries(
+        Object.keys(byRule)
+          .sort()
+          .map((ruleId) => [
+            ruleId,
+            { instances: byRule[ruleId].instances, files: byRule[ruleId].files.size },
+          ]),
+      ),
+      byFile: [...byFileMap.values()].sort((a, b) =>
+        `${a.file}|${a.rule}`.localeCompare(`${b.file}|${b.rule}`),
+      ),
+      newHits: newHits.map((hit) => ({ rule: hit.ruleId, file: hit.filePath, line: hit.line })),
+    };
+    console.log(JSON.stringify(payload, null, 2));
+    if (newHits.length > 0) {
+      process.exit(1);
+    }
+    return;
   }
 
   if (exemptHits.length > 0) {
