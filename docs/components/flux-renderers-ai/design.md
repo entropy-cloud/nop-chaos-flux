@@ -649,7 +649,22 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
 - `ai-bubble` 用户消息编辑态 Textarea 补 `aria-label`（P2-18，对齐 `ai-sender` Textarea 先例；WCAG 4.1.2）。
 - `ai-voice-input` 双击守卫（P2-6，2026-08-10）：`handleStart` 经专用 in-flight ref 拦截同 tick 二次启动（`status` state 守卫异步）；`onend` / stop 分支 / `start()` 抛错三处清位，正常 stop 后可重启——杜绝 `continuous:true` 首实例持 mic 至页面卸载的双实例泄漏。
 
-### 13.4 不引入新 token 命名空间
+### 13.4 气泡视觉层与流式信号（plan 472 / visual-quality V2）
+
+**气泡视觉层**：`ai-bubble` 输出的 `data-role` / `data-placement` / `data-shape` 由包内 `styles.css` 消费——`[data-slot='ai-bubble']` 卡片面（底色/边框/圆角/内边距/`fit-content` + max-width）、`data-role='user'` 区分底色、`data-placement='end'` 右对齐、`data-shape='corner'|'none'` 圆角降级。暗色按包内三块模式（基础 fallback + `prefers-color-scheme` 门控 + `[data-mode='dark']`）。
+
+**流式信号（bug 166 修复，编译态安全的两层机制）**：
+
+- **逐 chunk 渐进渲染**：`useEngineContentTick(engine)`（`use-engine-view.ts`）经 `useSyncExternalStore` 返回末条消息内容长度 tick，`ai-message-list` 将其作为 `streamSignature` prop 传给流式 bubble——**tick 必须在渲染输出中被读取**（prop），这使它进入 React Compiler 的 memo 缓存键（编译器按"渲染期实际读取的值"做数据流分析、无视 deps 数组），从而在编译构建下每 chunk 强制 bubble 子树重渲染、markdown 读到累积内容。context 层（AI-31 memo）另带 `streamSignature: streamFingerprint(messages)`（content/reasoning/tool-args 三面指纹）供非编译消费方使用；引擎快照身份等"仅出现在 deps 数组"的信号在编译构建下会被冻结，不作为逐 chunk 机制（执行期实测教训）。
+- **流式光标**：`message.loading` 在首 chunk 即被引擎清除，不能作为光标依据。显示级信号 = `ai-message-list` 派生的 `isProcessing && 末条 assistant`（经 `streaming` prop 下传 bubble → `data-streaming` 与 markdown 光标）；message-level 渲染器门控（tools/reasoning 卡）保持 `message.loading` 不变（流中实时增长）。standalone bubble 无 prop 时回退 `message.loading`。
+
+**滚动到底**：`useAutoScroll` 的 pinned 带响应式镜像（`pinned` state）；`ai-message-list` 外层 `ai-message-list-wrap`（relative）内挂 `ai-scroll-to-bottom` 悬浮按钮，unpinned 时显示、点击 `scrollToBottom`。
+
+**assistant 操作条**：每个 assistant 气泡默认挂载 copy（复用 markdown `clipboardAdapter` 通道，INV-1 裁决内）；retry（`engine.regenerate()`）只挂**末条** assistant 气泡（regenerate 无 per-message 入参、截断到最后一条 user 轮次），`isProcessing` 时 disabled，standalone（无 context）不挂。不新增 schema props。
+
+**高亮 palette**：4-token（key/str/num/bool）+ `tok-comment`（plan 472 A5：comment 全语法通用，弱化灰；`punctuation` scope 在 hljs common 主力语言无输出，不设 token）。
+
+### 13.5 不引入新 token 命名空间
 
 tiny-robot 用 `--tr-*` 前缀。flux-renderers-ai **不引入** `--tr-*` 或 `--ai-*` token，全部复用 flux 现有 token + Tailwind utility classes（如 `bg-muted`, `text-foreground`, `rounded-lg`）。若未来确需 AI 专属视觉 token，由 `theme-tokens` 包统一加，不由本包私自加。
 

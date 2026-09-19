@@ -239,10 +239,14 @@ export interface BubbleToolRendererMatch {
     </div>
   </div>
   <div data-slot="ai-bubble-feedback">...</div>
+  <div data-slot="ai-assistant-actions">          (plan 472: assistant 专享；copy 全挂 + retry 仅末条)
+    <button data-slot="ai-action-copy" aria-label="复制">
+    <button data-slot="ai-action-retry" aria-label="重试"?   (有 engine 且非末条不挂)
+  </div>
 </article>
 ```
 
-> 状态属性 presence-only：`data-streaming` 在 `msg.loading` 为 true 时输出 `=""`，否则省略。
+> 状态属性 presence-only：`data-streaming` 在显示级流式信号为 true 时输出 `=""`（plan 472：`ai-message-list` 派生 `isProcessing && 末条 assistant`，经 `streaming` prop 下传；standalone 回退 `msg.loading`），否则省略。
 
 ## 4. ai-sender（Widget, P0）
 
@@ -784,14 +788,15 @@ export interface AiMcpManagerSchema extends BaseSchema {
 ai-chat-root (data-state=idle|processing|completed|aborted|error|empty)
 ├── ai-chat-header?                        (header region)
 ├── ai-chat-before?                        (beforeMessages region)
-├── ai-message-list
-│   └── ai-bubble (data-role, data-placement, data-shape, data-streaming?, data-error?, data-editing?)
+├── ai-message-list-wrap                   (plan 472: relative wrapper)
+│   ├── ai-message-list
+│   │   └── ai-bubble (data-role, data-placement, data-shape, data-streaming?, data-error?, data-editing?)
 │       ├── ai-bubble-avatar?
 │       └── ai-bubble-content
 │           ├── [content renderer，按 §3.3 注册制每 slice 一个]
 │           │   ├── ai-bubble-loading
 │           │   ├── ai-bubble-markdown
-│           │   │   ├── ai-bubble-cursor?              (流式光标)
+│           │   │   ├── ai-bubble-cursor?              (流式光标，挂显示级 streaming 信号)
 │           │   │   ├── ai-bubble-pre > ai-bubble-code (代码块)
 │           │   │   └── ai-bubble-copy-code?           (代码复制按钮)
 │           │   ├── ai-bubble-reasoning (data-open)
@@ -820,6 +825,7 @@ ai-chat-root (data-state=idle|processing|completed|aborted|error|empty)
 │               ├── ai-bubble-edit-input
 │               ├── ai-bubble-edit-submit
 │               └── ai-bubble-edit-cancel
+├── ai-scroll-to-bottom?                   (plan 472: unpinned 时显示，点击回底)
 ├── ai-chat-after?                         (afterMessages region)
 ├── ai-sender (data-extension?，根元素 <div>)
 │   ├── ai-sender-input

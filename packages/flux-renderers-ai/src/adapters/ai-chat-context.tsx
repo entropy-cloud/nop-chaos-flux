@@ -66,6 +66,14 @@ export function createAiSenderDraftStore(): AiSenderDraftStore {
 export interface AiChatContextValue {
   engine: MessageEngine;
   messages: ChatMessage[];
+  /**
+   * bug 166 (plan 472 V2): streaming accumulation fingerprint of `messages`.
+   * Changes per content/reasoning/tool-args chunk during a stream and stays
+   * stable otherwise — consumers may key effects on it; the memo dep that
+   * invalidates the context value per chunk is the same signal. Optional:
+   * test fixtures that hand-build a context value omit it.
+   */
+  streamSignature?: string;
   requestState: RequestState;
   processingState?: RequestProcessingState;
   isProcessing: boolean;

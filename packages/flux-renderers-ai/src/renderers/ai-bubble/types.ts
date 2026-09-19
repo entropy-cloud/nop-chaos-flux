@@ -14,6 +14,12 @@ export interface BubbleContentRendererProps {
    * other renderers ignore it.
    */
   onApproval?: (action: 'approve' | 'reject') => void;
+  /**
+   * bug 166 (plan 472 V2): resolved streaming display signal threaded from
+   * `AiBubbleView` (explicit prop > `message.loading` fallback). The markdown
+   * renderer drives the A-11 cursor from it; other renderers ignore it.
+   */
+  streaming?: boolean;
 }
 
 export interface BubbleContentRendererMatch {
@@ -86,6 +92,12 @@ export interface BubbleToolRendererProps {
    * buttons (unchanged standalone behavior). Additive optional field.
    */
   onApproval?: (action: 'approve' | 'reject') => void;
+  /**
+   * bug 166 (plan 472 V2): resolved streaming display signal threaded from
+   * `AiBubbleView` (explicit prop > `message.loading` fallback). The markdown
+   * renderer drives the A-11 cursor from it; other renderers ignore it.
+   */
+  streaming?: boolean;
 }
 
 /**

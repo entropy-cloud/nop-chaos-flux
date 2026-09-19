@@ -39,13 +39,16 @@ import { preprocessMathDelimiters } from '../math-delimiter-preprocess.js';
  *   `\[...\]` delimiters to `$`/`$$` so mainstream LLM formula forms render
  *   as math (design.md §10.4 delimiter semantic table).
  */
-export function MarkdownContentRenderer({ message, content }: BubbleContentRendererProps) {
+export function MarkdownContentRenderer({ message, content, streaming: streamingProp }: BubbleContentRendererProps) {
   const raw = extractContentText(content);
   const source = preprocessMathDelimiters(safeMarkdownSlice(raw));
   if (source.length === 0) return null;
 
   // A-11: append a blinking cursor while the assistant message is streaming.
-  const streaming = message?.loading === true;
+  // bug 166 (plan 472 V2): prefer the chat-level streaming signal threaded by
+  // `AiBubbleView` — the engine clears `message.loading` at the first chunk,
+  // so the loading flag alone never covers the accumulation window.
+  const streaming = streamingProp ?? message?.loading === true;
 
   // Security gate: sanitize first, then let rehype-raw render the safe subset.
   const safe = sanitizeHtml(source);
@@ -124,6 +127,11 @@ const lowlight = createLowlight(common);
  * size discipline).
  */
 const HLJS_SCOPE_TO_TOK: Readonly<Record<string, string>> = {
+  // plan 472 V2 (A5): comments are the largest unstyled visual mass in real
+  // code blocks; tok-comment mutes them instead of leaving inherited body
+  // color. `punctuation` was adjudicated out — the scope is absent from the
+  // hljs common grammar set (dead-token pattern).
+  comment: 'tok-comment',
   keyword: 'tok-key',
   'selector-tag': 'tok-key',
   'selector-class': 'tok-key',

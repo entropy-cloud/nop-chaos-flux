@@ -122,6 +122,7 @@ The interval callback captures \`count\` from the render where it was created, s
 ## Fix
 
 \`\`\`tsx
+// Stale closure: the interval reads count from its creation render.
 function Counter() {
   const [count, setCount] = useState(0);
 

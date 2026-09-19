@@ -10,6 +10,14 @@ import type {
 
 export interface UseEngineViewReturn {
   messages: ChatMessage[];
+  /**
+   * bug 166 (plan 472 V2): the raw engine state snapshot object. The React
+   * message adapter rebuilds it per committed mutation (every stream chunk),
+   * so its IDENTITY is a compiler-respectful per-chunk invalidation signal —
+   * unlike `messages` (stable ref by no-clone design) whose mutated contents
+   * are invisible to React Compiler's pure-input memoization.
+   */
+  snapshot: MessageEngineState;
   requestState: RequestState;
   processingState?: RequestProcessingState;
   isProcessing: boolean;
@@ -97,6 +105,7 @@ export function useEngineView(engine: MessageEngine): UseEngineViewReturn {
   const state = useSyncExternalStore(engine.subscribe, getSnapshot, getSnapshot) as MessageEngineState;
   return {
     engine,
+    snapshot: state,
     messages: state.messages,
     requestState: state.requestState,
     processingState: state.processingState,
@@ -105,4 +114,31 @@ export function useEngineView(engine: MessageEngine): UseEngineViewReturn {
     send: engine.send,
     abortRequest: engine.abort,
   };
+}
+
+const noopSubscribe = () => () => undefined;
+
+/**
+ * bug 166 (plan 472 V2): per-chunk render tick for stream consumers.
+ *
+ * Returns the accumulated content length of the last message (0 when idle or
+ * engine-less), read through `useSyncExternalStore` so the calling component
+ * re-renders on every committed engine mutation. The returned number MUST be
+ * read in the caller's render output (threaded as a prop) — React Compiler
+ * builds its memo cache keys from values actually read during render, which
+ * is exactly why deps-array-only signals (snapshot identity never referenced
+ * in JSX) stay frozen in compiled builds.
+ */
+export function useEngineContentTick(engine?: MessageEngine): number {
+  const getTick = (): number => {
+    if (!engine || typeof engine.getState !== 'function') return 0;
+    const state = engine.getState();
+    const last = state.messages[state.messages.length - 1];
+    if (!last) return 0;
+    if (typeof last.content === 'string') return last.content.length;
+    return last.content.reduce((sum, part) => sum + (part.type === 'text' ? part.text.length : 0), 0);
+  };
+  const subscribe =
+    engine && typeof engine.subscribe === 'function' ? engine.subscribe : noopSubscribe;
+  return useSyncExternalStore(subscribe, getTick, getTick);
 }

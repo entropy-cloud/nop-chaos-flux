@@ -1,6 +1,6 @@
 # 166 — ai-chat streaming chunks render only at stream end (context value not invalidated per chunk)
 
-> Status: open (registered 2026-08-24 during D1 fixture work; fix routed to `ai-widgets-product` successor scope — `packages/flux-renderers-ai` is out of D1 plan scope)
+> Status: fixed (2026-09-19, plan `docs/plans/472-visual-quality-v2-ai-conversation-visuals-plan.md` Phase 1; visual-quality roadmap V2. 先红后绿回归：单测 `ai-chat-streaming-context.test.tsx`（context 身份先红）+ e2e `ai-widgets-fixture.spec.ts` streaming 渐进用例（stash 修复后真实红态取证）)
 > Discovered by: D1 plan `2026-08-24-1045-2` Phase 3 dev spot check (`_tmp` probe, headless Chromium against real playground dev server)
 
 ## Symptom
@@ -51,3 +51,15 @@ Both need regression coverage: a DOM-level test asserting the bubble text grows 
 ## Protection today
 
 `tests/e2e/ai-widgets-fixture.spec.ts` (D1) pins the end-state content of all six fixtures; it does NOT (and cannot, while this bug is open) assert mid-stream growth. The compact-default constraint is documented in `apps/playground/src/ai/ai-widgets-fixture.ts`.
+
+## Fix record (plan 472, 2026-09-19)
+
+Two-layer fix in the render layer (engine/adapter no-clone discipline untouched):
+
+1. **Per-chunk DOM invalidation — `useEngineContentTick` (the primary mechanism)**: `ai-message-list` subscribes to the engine via the new `useEngineContentTick` hook (`useSyncExternalStore`, returns the last message's accumulated content length) and threads the tick into the streaming bubble as a `streamSignature` prop that is READ in render output. This matters because execution-phase instrumentation proved that **React Compiler keys its memo cache on values actually read during render and ignores `useMemo` deps arrays** — with the compiler enabled, deps-only signals (snapshot identity, content fingerprints) stay frozen for the whole stream (browser probe: zero list renders between submit and stream end; 238 per-chunk renders with the compiler disabled). Reading the tick as a prop puts it inside the compiler's cache keys, forcing the bubble subtree to re-render per chunk in compiled builds.
+2. **Context-level fingerprint (non-compiled consumers)**: the AI-31 context memo computes `streamSignature: streamFingerprint(messages)` inside the callback (last message id + content length [string|parts] + reasoning_content length + tool_call arguments total length). The array reference stays stable by design; metadata/finishReason-only chunks intentionally do not flip anything (terminal deps drive that render switch).
+3. **Streaming cursor signal**: the cursor previously keyed on `message.loading`, which the engine clears at the FIRST chunk (and the empty-content markdown early-return prevented mounting it before) — it never rendered. The display-level signal is now derived in `ai-message-list` (`isProcessing && last message && role==='assistant'`), threaded via `streaming` props to the bubble (`data-streaming`) and the markdown cursor. Message-level renderer gating (tools/reasoning cards) keeps using `message.loading` so cards keep growing mid-stream. Standalone bubbles fall back to `message.loading`.
+
+Verification: unit `ai-chat-streaming-context.test.tsx` (context identity per chunk, red before fix) + e2e `ai-widgets-fixture.spec.ts` "content grows per chunk with a visible cursor" (red with fix stashed, green restored) + AI-family e2e regression 133/133.
+
+Known scope notes: the D1 fixture ≤~42-chunks constraint note and the `ai-widgets-demo.spec.ts:111` 10s `Hello` budget can now be relaxed (not required); the coverage `slow` connector gained a 900ms pre-first-chunk gap so the loading placeholder is observable now that it correctly exists only during that window.

@@ -26,6 +26,49 @@ async function sendUserMessage(page: import('@playwright/test').Page, text: stri
   await page.locator('[data-slot="ai-sender-submit"]').click();
 }
 
+test.describe('AI widgets — streaming progression (bug 166, plan 472)', () => {
+  // ~19s stream + up to 30s first-paint anchor under full-suite parallel load.
+  test.setTimeout(90_000);
+
+  test('content grows per chunk with a visible cursor during the stream', async ({ page }) => {
+    await openWidgetsPage(page);
+    await sendUserMessage(page, 'Help me debug this code');
+
+    const md = page.locator(ASSISTANT_MD);
+    await expect(md.first()).toBeVisible({ timeout: 30_000 });
+
+    // Sample the assistant markdown during the accumulation window (~19s for
+    // the code preset at delayMs=200): text length must grow across distinct
+    // sample points (progressive rendering) and the A-11 cursor must be
+    // visible mid-stream. Before the bug-166 fix both assertions failed
+    // (content popped once at stream end; the cursor never rendered because
+    // message.loading clears at the first chunk).
+    const samples: number[] = [];
+    let sawCursor = false;
+    let streamEnded = false;
+    for (let i = 0; i < 26 && !streamEnded; i += 1) {
+      samples.push(await md.evaluate((el) => el.textContent?.length ?? 0));
+      if ((await page.locator('[data-slot="ai-bubble-cursor"]').count()) > 0) {
+        sawCursor = true;
+      }
+      const streaming = await page
+        .locator('[data-slot="ai-bubble"][data-role="assistant"]')
+        .last()
+        .getAttribute('data-streaming');
+      if (streaming === null && i > 0) {
+        streamEnded = true;
+      }
+      await page.waitForTimeout(1_500);
+    }
+
+    const growthPoints = samples.filter((v, i) => i > 0 && v > samples[i - 1]).length;
+    expect(growthPoints, `content samples should grow progressively, got: ${samples.join(',')}`).toBeGreaterThanOrEqual(3);
+    expect(sawCursor, 'streaming cursor should appear during accumulation').toBe(true);
+
+    await assertTrackedPageErrors(page);
+  });
+});
+
 test.describe('AI widgets — rich markdown fixtures (D1)', () => {
   test('weather keyword renders a forecast table', async ({ page }) => {
     await openWidgetsPage(page);

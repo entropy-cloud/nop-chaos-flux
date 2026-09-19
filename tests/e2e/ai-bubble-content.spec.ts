@@ -179,10 +179,23 @@ test.describe('AI bubble — content renderer gallery', () => {
     });
 
     const list = chat.locator('[data-slot="ai-message-list"]');
+
+    // Plan 472: with the bubble visual layer landed, two short turns can fit
+    // the fixed-height panel exactly (no overflow) — then "scrolling up" is a
+    // no-op and the pin never releases, so the pause contract below would be
+    // exercised vacuously. Shrink the panel first so the scroll-up is real.
+    await chat.evaluate((el) => {
+      el.style.height = '160px';
+    });
+    await expect.poll(async () => list.evaluate((el) => el.scrollHeight > el.clientHeight), { timeout: 5_000 })
+      .toBe(true);
+
     await list.evaluate((el) => {
       el.scrollTop = 0;
       el.dispatchEvent(new Event('scroll', { bubbles: true }));
     });
+    // The unpinned state is observable: the scroll-to-bottom affordance shows.
+    await expect(chat.locator('[data-slot="ai-scroll-to-bottom"]')).toBeVisible();
 
     await chat.locator('[data-slot="ai-sender-input"] textarea').fill('second turn');
     await chat.locator('[data-slot="ai-sender-submit"]').click();

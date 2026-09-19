@@ -188,8 +188,10 @@ test.describe('AI widgets — D6 LaTeX rendering + code highlight', () => {
     const katex = md.locator('span.katex');
     await expect(katex.first()).toBeVisible({ timeout: 30_000 });
     // The formula preset carries one $$...$$ block form plus several $...$
-    // inline forms; both must render through KaTeX.
-    expect(await katex.count()).toBeGreaterThanOrEqual(2);
+    // inline forms; both must render through KaTeX. With per-chunk streaming
+    // (bug 166 fixed) the first span appears as soon as its segment arrives —
+    // poll for the remaining segments instead of counting at first-visible.
+    await expect.poll(async () => katex.count(), { timeout: 30_000 }).toBeGreaterThanOrEqual(2);
     await expect(md.locator('.katex-display')).toBeVisible();
 
     await assertTrackedPageErrors(page);

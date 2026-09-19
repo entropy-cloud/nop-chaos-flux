@@ -370,16 +370,18 @@ describe('MarkdownContentRenderer — D2 typography contract (G2)', () => {
     // prefers-color-scheme dark block must guard its inner selectors with
     // `:root:not([data-mode='light'])` — otherwise a standalone host on a
     // dark-OS with an explicit light mode resolves the literal dark fallbacks
-    // (near-invisible text on a light page). Exactly 3 media tracks exist
-    // (typography / avatar / welcome-icon).
+    // (near-invisible text on a light page). Track census: typography /
+    // avatar / welcome-icon (D2 baseline) + bubble surface / scroll-to-bottom
+    // / assistant actions (plan 472 V2) = 6 media tracks; the bubble-surface
+    // and actions tracks each carry two guarded selectors → 8 guards total.
     const blocks = darkPrefersColorSchemeBlocks(stylesCss);
-    expect(blocks.length).toBe(3);
+    expect(blocks.length).toBe(6);
     for (const [index, block] of blocks.entries()) {
       const ruleCount = occurrences(block, '{');
       const guardCount = occurrences(block, ":root:not([data-mode='light'])");
       expect(guardCount, `dark media block #${index + 1} must guard every inner selector`).toBe(ruleCount);
     }
-    expect(occurrences(stylesCss, ":root:not([data-mode='light'])")).toBe(3);
+    expect(occurrences(stylesCss, ":root:not([data-mode='light'])")).toBe(8);
   });
 
   it('(c2) dark path — [data-mode] attribute trigger', () => {

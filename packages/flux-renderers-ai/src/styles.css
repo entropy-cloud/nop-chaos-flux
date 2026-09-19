@@ -89,6 +89,51 @@
   overflow: auto;
 }
 
+/* Plan 472 V2: relative wrapper hosting the scroll-to-bottom affordance. */
+[data-slot='ai-message-list-wrap'] {
+  position: relative;
+  min-height: 0;
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scroll-to-bottom affordance (survey §1.4): appears when the viewport is
+   unpinned, scrolls back on click. Floating card look, token-first. */
+[data-slot='ai-scroll-to-bottom'] {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background-color: hsl(var(--card, 0 0% 100%));
+  border: 1px solid hsl(var(--border, 214 32% 91%));
+  color: hsl(var(--foreground, 222 84% 5%));
+  box-shadow: 0 4px 12px hsl(var(--foreground, 222 84% 5%) / 0.14);
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode='light']) [data-slot='ai-scroll-to-bottom'] {
+    background-color: hsl(var(--card, 222 47% 11%));
+    border-color: hsl(var(--border, 217 33% 27%));
+    color: hsl(var(--foreground, 210 40% 98%));
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.45);
+  }
+}
+
+[data-mode='dark'] [data-slot='ai-scroll-to-bottom'] {
+  background-color: hsl(var(--card, 222 47% 11%));
+  border-color: hsl(var(--border, 217 33% 27%));
+  color: hsl(var(--foreground, 210 40% 98%));
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.45);
+}
+
 /* AI-16: ai-chat fallback visual states (moved out of JSX className). */
 [data-slot='ai-chat-empty'] {
   padding: 1rem;
@@ -328,6 +373,121 @@
   color: hsl(var(--muted-foreground, 215 19% 35%));
 }
 
+/* --- Bubble visual layer (plan 472 V2 / survey §1.2) -----------------------
+ * The bubble has always emitted data-role / data-placement / data-shape, but
+ * no CSS consumed them: bubbles rendered as bare text with no surface, and
+ * user messages never right-aligned. Surfaces live on the bubble article (the
+ * avatar row is part of the bubble); `fit-content` + max-width keeps bubbles
+ * hug-content so placement='end' right-alignment is visible in the column.
+ * Token-first + literal-fallback, dark via the package's three-block pattern
+ * (theme vars swap automatically for themed hosts; the dark blocks re-declare
+ * the bare-host fallbacks). */
+[data-slot='ai-bubble'] {
+  width: fit-content;
+  max-width: min(100%, 52rem);
+  background-color: hsl(var(--card, 0 0% 100%));
+  border: 1px solid hsl(var(--border, 214 32% 91%));
+  border-radius: var(--radius-lg, 16px);
+  padding: 0.625rem 0.875rem;
+}
+
+[data-slot='ai-bubble'][data-role='user'] {
+  background-color: hsl(var(--secondary-surface, 217 89% 96%));
+}
+
+[data-slot='ai-bubble'][data-placement='end'] {
+  margin-inline-start: auto;
+}
+
+[data-slot='ai-bubble'][data-shape='corner'] {
+  border-radius: var(--radius-sm, 8px);
+}
+
+[data-slot='ai-bubble'][data-shape='none'] {
+  border-radius: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode='light']) [data-slot='ai-bubble'] {
+    background-color: hsl(var(--card, 222 47% 11%));
+    border-color: hsl(var(--border, 217 33% 27%));
+  }
+
+  :root:not([data-mode='light']) [data-slot='ai-bubble'][data-role='user'] {
+    background-color: hsl(var(--secondary-surface, 217 30% 20%));
+  }
+}
+
+[data-mode='dark'] [data-slot='ai-bubble'] {
+  background-color: hsl(var(--card, 222 47% 11%));
+  border-color: hsl(var(--border, 217 33% 27%));
+}
+
+[data-mode='dark'] [data-slot='ai-bubble'][data-role='user'] {
+  background-color: hsl(var(--secondary-surface, 217 30% 20%));
+}
+
+/* Assistant action bar (plan 472 V2): copy on every assistant bubble, retry
+   only on the last one (regenerate truncates to the final user turn). */
+[data-slot='ai-assistant-actions'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.375rem;
+}
+
+[data-slot='ai-assistant-actions'] button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm, 8px);
+  color: hsl(var(--muted-foreground, 215 19% 35%));
+  cursor: pointer;
+}
+
+[data-slot='ai-assistant-actions'] button:hover {
+  background-color: hsl(var(--muted, 210 40% 96%));
+  color: hsl(var(--foreground, 222 84% 5%));
+}
+
+[data-slot='ai-assistant-actions'] button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+[data-slot='ai-assistant-actions'] button[data-slot='ai-action-copy'],
+[data-slot='ai-assistant-actions'] button[data-slot='ai-action-retry'] {
+  border: none;
+  background: transparent;
+}
+
+[data-slot='ai-assistant-actions'] svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode='light']) [data-slot='ai-assistant-actions'] button {
+    color: hsl(var(--muted-foreground, 215 25% 75%));
+  }
+
+  :root:not([data-mode='light']) [data-slot='ai-assistant-actions'] button:hover {
+    background-color: hsl(var(--muted, 217 33% 26%));
+    color: hsl(var(--foreground, 210 40% 98%));
+  }
+}
+
+[data-mode='dark'] [data-slot='ai-assistant-actions'] button {
+  color: hsl(var(--muted-foreground, 215 25% 75%));
+}
+
+[data-mode='dark'] [data-slot='ai-assistant-actions'] button:hover {
+  background-color: hsl(var(--muted, 217 33% 26%));
+  color: hsl(var(--foreground, 210 40% 98%));
+}
+
 [data-slot='ai-bubble-avatar'] svg {
   width: 16px;
   height: 16px;
@@ -403,4 +563,11 @@
 
 [data-slot='ai-bubble-markdown'] .tok-bool {
   color: hsl(var(--destructive, 0 84% 60%));
+}
+
+/* plan 472 V2 (A5): muted comments — muted-foreground swaps with the theme
+   (theme-tokens), literal fallback for bare hosts; same single-rule pattern as
+   the tok-str/tok-bool neighbours (no separate dark blocks needed). */
+[data-slot='ai-bubble-markdown'] .tok-comment {
+  color: hsl(var(--muted-foreground, 215 19% 35%));
 }

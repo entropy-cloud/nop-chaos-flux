@@ -31,9 +31,20 @@ function chunk(word: string, finish: string | null = null): unknown {
   return { model: 'flux-coverage', choices: [{ index: 0, delta: finish ? {} : { content: `${word} ` }, finish_reason: finish }] };
 }
 
-function wordsStream(words: string[], delayMs: number, abruptEof = false): StreamFetcher {
+function wordsStream(
+  words: string[],
+  delayMs: number,
+  abruptEof = false,
+  initialDelayMs = 0,
+): StreamFetcher {
   const fn = async (_api: StreamApiRequest, _ctx: ApiRequestContext): Promise<StreamFetchResult<unknown>> => {
     async function* generate(): AsyncGenerator<unknown> {
+      // Optional pre-first-chunk gap so the message.loading placeholder is
+      // observable (plan 472: with per-chunk rendering fixed, the placeholder
+      // only exists during this window).
+      if (initialDelayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, initialDelayMs));
+      }
       for (const word of words) {
         yield chunk(word);
         await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -77,7 +88,7 @@ export function createCoverageConnectors(): { connectors: CoverageConnectors; en
   const failedOnce = { value: false };
   const stream: StreamFetcher = (async (api: StreamApiRequest, ctx: ApiRequestContext) => {
     const url = api.url as string;
-    if (url.includes('slow')) return wordsStream(WORDS_SLOW, 300)(api, ctx);
+    if (url.includes('slow')) return wordsStream(WORDS_SLOW, 300, false, 900)(api, ctx);
     if (url.includes('flaky')) return flakyStream(failedOnce, 60)(api, ctx);
     if (url.includes('eof')) return wordsStream(WORDS_EOF, 60, true)(api, ctx);
     return wordsStream(WORDS_FAST, 20)(api, ctx);

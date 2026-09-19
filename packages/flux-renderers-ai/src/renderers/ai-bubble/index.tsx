@@ -3,7 +3,7 @@ import { isValidElement } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Bot, User } from 'lucide-react';
-import type { ChatMessage } from '../../engine/types.js';
+import type { ChatMessage, MessageEngine } from '../../engine/types.js';
 import type { AiBranch, AiBubbleSchema } from '../../schemas.js';
 import { useAiChatContext } from '../../adapters/ai-chat-context.js';
 import {
@@ -14,6 +14,7 @@ import {
 import { defaultBubbleContentRenderers } from './renderers/default-renderers.js';
 import { TimestampContentRenderer } from './renderers/timestamp.js';
 import { UserMessageActions } from './user-edit.js';
+import { AssistantActions } from './assistant-actions.js';
 
 export interface AiBubbleViewProps {
   message: ChatMessage;
@@ -29,6 +30,32 @@ export interface AiBubbleViewProps {
    * `message.metadata.isError`.
    */
   isError?: boolean;
+  /**
+   * bug 166 (plan 472 V2): resolved streaming display signal. `ai-message-list`
+   * passes `isProcessing && last message && role==='assistant'` so the cursor
+   * and `data-streaming` stay visible during the whole content accumulation
+   * window (the engine clears `message.loading` at the first chunk). Omitted →
+   * falls back to `message.loading` (standalone bubbles keep their contract).
+   * NOT used for the message-level renderer gate — tools/reasoning cards must
+   * keep growing during the stream, which the loading gate provides.
+   */
+  streaming?: boolean;
+  /**
+   * Plan 472 V2: the chat engine, passed ONLY for the last assistant bubble so
+   * `AssistantActions` mounts the retry button there (regenerate truncates to
+   * the last user turn — retrying an older bubble would target the wrong
+   * turn). Omitted on other bubbles and standalone usage → copy-only bar.
+   */
+  actionsEngine?: MessageEngine;
+  /**
+   * bug 166 (plan 472 V2): per-chunk invalidation primitive for the streaming
+   * bubble. React Compiler memoizes this component on prop identities; the
+   * context-level identity change alone does not re-render it (same mutated
+   * `message` object), so the list threads the changing stream signature here
+   * — a new primitive prop forces the bubble subtree to re-render and read the
+   * accumulated content. Undefined on non-streaming bubbles (stable props).
+   */
+  streamSignature?: string;
   /**
    * A-16 message branches: the host-managed sibling set this message belongs
    * to. When non-empty and the current message id appears in the set, a
@@ -80,7 +107,10 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
   } = props;
   const renderers = contentRenderers ?? defaultBubbleContentRenderers;
   const effectivePlacement = resolvePlacement(message, placement);
-  const isStreaming = message.loading === true;
+  // bug 166 (plan 472 V2): display-level streaming signal (explicit prop from
+  // the message list > engine loading fallback) vs the engine loading gate.
+  const isStreaming = props.streaming ?? message.loading === true;
+  const isLoading = message.loading === true;
   // A-5 error state: bind to engine error state via the explicit `isError`
   // prop (passed by `ai-message-list` when `requestState==='error'` for the
   // in-flight assistant placeholder), or fall back to a metadata flag already
@@ -149,7 +179,7 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
       <div data-slot="ai-bubble-content" className="flex flex-col gap-2">
         {!(isUser && isEditing) ? (
           <>
-            {!isStreaming
+            {!isLoading
               ? messageLevelRenderers.map((match) => {
                   if (!tryMatch(match, renderMessage, '', -1)) return null;
                   const Renderer = match.renderer;
@@ -174,6 +204,7 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
                   message={renderMessage}
                   content={slice.content}
                   contentIndex={slice.index}
+                  streaming={isStreaming}
                 />
               );
             })}
@@ -190,6 +221,9 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
           />
         ) : null}
         {isUser ? <UserMessageActions message={renderMessage} /> : null}
+        {!isUser ? (
+          <AssistantActions message={renderMessage} engine={props.actionsEngine} busy={ctx?.isProcessing} />
+        ) : null}
       </div>
     </article>
   );

@@ -1,9 +1,11 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { ArrowDown } from 'lucide-react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
 import { useAutoScroll } from '../adapters/use-auto-scroll.js';
+import { useEngineContentTick } from '../adapters/use-engine-view.js';
 import type { ChatMessage } from '../engine/types.js';
 import { AiBubbleView } from './ai-bubble/index.js';
 import { ListErrorBanner } from './ai-bubble/renderers/error.js';
@@ -65,6 +67,15 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
   const messages = ctx?.messages ?? [];
   const autoScrollEnabled = props.autoScroll !== false;
   const inError = ctx?.requestState === 'error';
+  // bug 166 (plan 472 V2): display-level streaming window = engine processing
+  // && the bubble is the last message && it is the assistant reply being
+  // accumulated. Drives bubble `data-streaming` + the markdown cursor through
+  // the whole accumulation window (message.loading clears at the first chunk).
+  const inStreamingTurn = ctx?.isProcessing === true;
+  // bug 166 (plan 472 V2): the tick is READ in render output (the streaming
+  // bubble's streamSignature prop), which keeps it in the React Compiler memo
+  // cache keys — the list re-renders per chunk under compiled builds.
+  const streamTick = useEngineContentTick(ctx?.engine ?? undefined);
   const cid = props.cid;
 
   const lastMessage = messages[messages.length - 1];
@@ -87,7 +98,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
   const showListErrorBanner =
     inError && messages.length > 0 && lastMessage?.role !== 'assistant';
   const trigger = `${messages.length}:${lastMessage ? messageContentSignature(lastMessage).length : 0}:${loopLimitReached ? 1 : 0}`;
-  const { containerRef, onScroll } = useAutoScroll(autoScrollEnabled ? trigger : null);
+  const { containerRef, onScroll, scrollToBottom, pinned } = useAutoScroll(autoScrollEnabled ? trigger : null);
 
   const enableVirtual = messages.length > VIRTUAL_SCROLL_THRESHOLD;
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual returns non-memoizable functions; React Compiler auto-skips this component
@@ -116,7 +127,11 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
     );
   }
 
+  // Plan 472 V2: relative wrapper hosts the scroll-to-bottom affordance
+  // (absolutely positioned over the scrollport); the scroll container itself
+  // keeps the ai-message-list contract slot.
   return (
+    <div className="relative flex min-h-0 flex-1 flex-col" data-slot="ai-message-list-wrap">
     <div
       ref={containerRef}
       className={cn('nop-ai-message-list', props.className)}
@@ -150,6 +165,9 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
                   <AiBubbleView
                     message={message}
                     isError={inError && vi.index === messages.length - 1 && message.role === 'assistant'}
+                    streaming={inStreamingTurn && vi.index === messages.length - 1 && message.role === 'assistant'}
+                    streamSignature={inStreamingTurn && vi.index === messages.length - 1 && message.role === 'assistant' ? `tick:${streamTick}` : undefined}
+                    actionsEngine={vi.index === messages.length - 1 && message.role === 'assistant' ? ctx?.engine : undefined}
                     showTimestamp={props.showTimestamp}
                     showAvatar={props.showAvatar}
                     branches={ctx?.branches}
@@ -171,6 +189,9 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
               key={message.id}
               message={message}
               isError={inError && idx === messages.length - 1 && message.role === 'assistant'}
+              streaming={inStreamingTurn && idx === messages.length - 1 && message.role === 'assistant'}
+              streamSignature={inStreamingTurn && idx === messages.length - 1 && message.role === 'assistant' ? `tick:${streamTick}` : undefined}
+              actionsEngine={idx === messages.length - 1 && message.role === 'assistant' ? ctx?.engine : undefined}
               showTimestamp={props.showTimestamp}
               showAvatar={props.showAvatar}
               branches={ctx?.branches}
@@ -183,6 +204,17 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
           {showListErrorBanner ? <ListErrorBanner messages={messages} sendMessage={ctx?.sendMessage} /> : null}
         </>
       )}
+    </div>
+      {!pinned ? (
+        <button
+          type="button"
+          data-slot="ai-scroll-to-bottom"
+          aria-label={t('flux.ai.scrollToBottom')}
+          onClick={scrollToBottom}
+        >
+          <ArrowDown aria-hidden="true" />
+        </button>
+      ) : null}
     </div>
   );
 }

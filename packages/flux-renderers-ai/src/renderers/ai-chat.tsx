@@ -96,6 +96,33 @@ function messageSetFingerprint(messages: ChatMessage[]): string {
 }
 
 /**
+ * bug 166 (plan 472 V2): per-chunk invalidation signal for the AI-31 context
+ * memo. The engine keeps the `messages` array reference stable while streaming
+ * (no-clone discipline), so array-identity deps freeze the context for the
+ * whole stream and context consumers bail out until stream end. This
+ * fingerprint grows with the three streaming-accumulation surfaces — content,
+ * reasoning_content, and tool_call arguments — so each accumulation chunk
+ * flips it while idle re-renders (same array, same last message) leave it
+ * unchanged. Metadata/finishReason-only chunks intentionally do not flip it:
+ * the terminal deps (requestState/isProcessing) already drive that render
+ * switch.
+ */
+function streamFingerprint(messages: ChatMessage[]): string {
+  const last = messages[messages.length - 1];
+  if (!last) return '';
+  const contentLength =
+    typeof last.content === 'string'
+      ? last.content.length
+      : last.content.reduce((sum, part) => sum + (part.type === 'text' ? part.text.length : 0), 0);
+  const reasoningLength = last.reasoning_content?.length ?? 0;
+  const toolArgsLength = (last.tool_calls ?? []).reduce(
+    (sum, call) => sum + call.function.arguments.length,
+    0,
+  );
+  return `${last.id}|${contentLength}|${reasoningLength}|${toolArgsLength}`;
+}
+
+/**
  * P1 (C8.1): build the dispatch ctx for a schema event so action-args templates
  * can read the payload keys (bug 83 / diff-view P1-10 family convention — the
  * runtime only resolves `evaluationBindings` + scope, never a bare `event`
@@ -175,7 +202,8 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // emptyState instead of the message list after the hooks resolve.
   const engineNullSwitch = rawEngine === null;
 
-  const { messages, requestState, processingState, isProcessing, sendMessage, abortRequest, engine } = useMessage({
+  const view = useMessage({
+
     engine: externalEngine,
     connector: connector ?? null,
     systemPrompt,
@@ -184,6 +212,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
     toolExecutor,
     maxToolRounds,
   });
+  const { messages, requestState, processingState, isProcessing, sendMessage, abortRequest, engine } = view;
 
   // AI-12/AI-31 (latest-ref): the runtime builds a fresh `props.events`
   // object every render. Read it through a ref so callbacks/effects that need
@@ -497,8 +526,15 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // exception to the "prefer plain derivation" guidance: solves a concrete
   // re-render problem across the Provider boundary.) Declared before the early
   // returns so the hook order is unconditional (rules-of-hooks).
+  // bug 166 (plan 472 V2): the memo dep is the ENGINE SNAPSHOT IDENTITY — a
+  // useSyncExternalStore-produced value the compiler treats as reactive — not
+  // the fingerprint itself. Computing the fingerprint during render would be
+  // frozen by React Compiler's pure-input memoization (same stable `messages`
+  // reference → skipped recompute), which is exactly the bug-166 freeze it is
+  // meant to break. Inside the callback it re-runs per chunk and AI-31's
+  // between-chunks stability guarantee is unchanged.
   const chatContextValue = useMemo(
-    () => ({ engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, senderDraft: senderDraftStore, branches, activeBranchId, onBranchChange, onApproval }),
+    () => ({ engine, messages, streamSignature: streamFingerprint(messages), requestState, processingState, isProcessing, sendMessage, abortRequest, senderDraft: senderDraftStore, branches, activeBranchId, onBranchChange, onApproval }),
     [engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, senderDraftStore, branches, activeBranchId, onBranchChange, onApproval],
   );
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface UseAutoScrollOptions {
   /** Distance from bottom (px) within which auto-scroll stays "pinned". */
@@ -11,6 +11,12 @@ export interface UseAutoScrollReturn {
   scrollToBottom: () => void;
   /** Whether the viewport is currently pinned at the bottom. */
   isAtBottom: () => boolean;
+  /**
+   * Reactive mirror of `isAtBottom()` (plan 472 V2): lets consumers render the
+   * "scroll to bottom" affordance without polling. Same value, two channels —
+   * the imperative one for effects, this one for render output.
+   */
+  pinned: boolean;
 }
 
 /**
@@ -30,13 +36,18 @@ export interface UseAutoScrollReturn {
 export function useAutoScroll(trigger: unknown, options?: UseAutoScrollOptions): UseAutoScrollReturn {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pinnedRef = useRef(true);
+  const [pinned, setPinned] = useState(true);
   const threshold = options?.threshold ?? 80;
 
   function onScroll() {
     const el = containerRef.current;
     if (!el) return;
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    pinnedRef.current = distanceFromBottom < threshold;
+    const next = distanceFromBottom < threshold;
+    if (pinnedRef.current !== next) {
+      pinnedRef.current = next;
+      setPinned(next);
+    }
   }
 
   function scrollToBottom() {
@@ -44,6 +55,7 @@ export function useAutoScroll(trigger: unknown, options?: UseAutoScrollOptions):
     if (!el) return;
     el.scrollTop = el.scrollHeight;
     pinnedRef.current = true;
+    setPinned(true);
   }
 
   function isAtBottom() {
@@ -62,5 +74,6 @@ export function useAutoScroll(trigger: unknown, options?: UseAutoScrollOptions):
     onScroll,
     scrollToBottom,
     isAtBottom,
+    pinned,
   };
 }
