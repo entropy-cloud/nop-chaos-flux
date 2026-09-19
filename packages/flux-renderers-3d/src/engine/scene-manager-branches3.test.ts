@@ -172,7 +172,7 @@ describe('branch supplement round 3 (plan 465 coverage policy)', () => {
     manager.dispose();
   });
 
-  it('emitPickAt with no hit and no camera paths stay silent', async () => {
+  it('pointer pick path with no hit and no camera stays silent (via PointerHoverController)', async () => {
     const listeners: Record<string, Array<(e: unknown) => void>> = {};
     const domElement = {
       addEventListener: (type: string, cb: (e: unknown) => void) => {

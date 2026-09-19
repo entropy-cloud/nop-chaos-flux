@@ -2,6 +2,14 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ModelLoader, type LoadedModel, type LoaderFactory } from './model-loader.js';
 import { TweenRegistry } from './tween-registry.js';
+import { HoverHighlighter } from './hover-highlight.js';
+import { PointerHoverController } from './pointer-hover.js';
+import {
+  applyMeshShadowFlags,
+  configureDirectionalShadows,
+  enableRendererShadows,
+  hasShadowCastingLights,
+} from './shadow-setup.js';
 import { createPrimitiveMesh, resolvePrimitiveModel } from './primitive-factory.js';
 import { KeyframeClip } from '../binding/keyframes.js';
 import type { AnimationConfig } from '../schemas.js';
@@ -83,8 +91,8 @@ export class SceneManager {
   private hoverListeners = new Set<(e: HoverEvent) => void>();
   private readyListeners = new Set<() => void>();
   private readyEmitted = false;
-  private downPoint: { x: number; y: number } | null = null;
-  private lastHovered: string | null = null;
+  private highlighter = new HoverHighlighter();
+  private pointer: PointerHoverController | null = null;
   private raycaster = new THREE.Raycaster();
   private frameHandle: (() => void) | null = null;
   private disposed = false;
@@ -151,8 +159,19 @@ export class SceneManager {
     const scene = new THREE.Scene();
     this.scene = scene;
     this.assembleEnvironment(scene);
+    // plan 473 (V3-F2): enable shadow rendering when any light casts — must be
+    // set before the first render for depth maps to be produced.
+    if (hasShadowCastingLights(this.config.lights)) {
+      enableRendererShadows(renderer);
+    }
     for (const light of this.config.lights) {
-      scene.add(this.createLight(light));
+      const lightObj = this.createLight(light);
+      scene.add(lightObj);
+      if (lightObj instanceof THREE.DirectionalLight && lightObj.castShadow) {
+        // three ignores light.target positioning unless the target is in the
+        // scene graph
+        scene.add(lightObj.target);
+      }
     }
     this.controls = this.controlsFactory(camera, renderer.domElement as unknown as HTMLElement);
     this.bindPointerHandlers(renderer.domElement as unknown as HTMLElement);
@@ -178,7 +197,9 @@ export class SceneManager {
         const light = new THREE.DirectionalLight(color, intensity);
         if (config.position) light.position.set(...config.position);
         if (config.target) light.target.position.set(...config.target);
-        if (config.castShadow) light.castShadow = true;
+        if (config.castShadow) {
+          configureDirectionalShadows(light);
+        }
         return light;
       }
       case 'point': {
@@ -198,7 +219,7 @@ export class SceneManager {
     }
   }
 
-  loadModels(onError?: (e: DiagnosticEvent) => void): Promise<void> {
+  loadModels(onError?: (e: DiagnosticEvent) => void, onProgress?: (ratio: number | null) => void): Promise<void> {
     if (this.disposed) return Promise.resolve();
     const pending = [...this.config.models];
     if (pending.length === 0) {
@@ -257,6 +278,7 @@ export class SceneManager {
           (gltf) => {
             if (this.disposed) return resolve();
             this.registerModel(modelConfig, gltf);
+            onProgress?.(1);
             settle();
           },
           (error) => {
@@ -264,6 +286,12 @@ export class SceneManager {
             this.dropPendingForModel(modelConfig.id);
             onError?.({ code: 'model-load-failed', message: `Failed to load model ${modelConfig.url}`, error });
             settle();
+          },
+          (event) => {
+            if (this.disposed) return;
+            const total = (event as { total?: number }).total ?? 0;
+            const loaded = (event as { loaded?: number }).loaded ?? 0;
+            onProgress?.(total > 0 ? Math.min(1, loaded / total) : null);
           },
         );
       }
@@ -274,6 +302,7 @@ export class SceneManager {
     if (!this.scene) return;
     const root = gltf.scene;
     root.name = config.id;
+    applyMeshShadowFlags(root, config);
     if (config.position) root.position.set(...config.position);
     if (config.rotation) root.rotation.set(...config.rotation);
     if (config.scale) root.scale.set(...config.scale);
@@ -448,6 +477,11 @@ export class SceneManager {
     container[leaf] = value;
   }
 
+  /** plan 473 (V3-F4): dev/e2e 观测通道（shadowMap.enabled 等渲染器状态断言）。 */
+  getRenderer(): THREE.WebGLRenderer | null {
+    return this.renderer;
+  }
+
   getScene(): THREE.Scene {
     if (!this.scene) throw new Error('SceneManager not initialized');
     return this.scene;
@@ -492,45 +526,25 @@ export class SceneManager {
   }
 
   private bindPointerHandlers(domElement: HTMLElement): void {
-    const listeners = domElement as unknown as {
-      addEventListener?: (type: string, cb: (e: unknown) => void) => void;
-      removeEventListener?: (type: string, cb: (e: unknown) => void) => void;
-    };
-    if (typeof listeners.addEventListener !== 'function') return;
-    const pointerHandler = (type: 'down' | 'up') => (rawEvent: unknown) => {
-      const event = rawEvent as { clientX: number; clientY: number };
-      const rect = (domElement as unknown as { getBoundingClientRect?: () => DOMRect }).getBoundingClientRect?.();
-      const width = rect?.width ?? 1;
-      const height = rect?.height ?? 1;
-      const left = rect?.left ?? 0;
-      const top = rect?.top ?? 0;
-      const ndcX = ((event.clientX - left) / width) * 2 - 1;
-      const ndcY = -((event.clientY - top) / height) * 2 + 1;
-      if (type === 'down') {
-        this.downPoint = { x: ndcX, y: ndcY };
-        this.emitHoverAt(ndcX, ndcY, true);
-        return;
-      }
-      const start = this.downPoint;
-      this.downPoint = null;
-      this.emitHoverAt(ndcX, ndcY, false);
-      if (!start) return;
-      const dx = ndcX - start.x;
-      const dy = ndcY - start.y;
-      if (dx * dx + dy * dy > 0.000625) return; // 拖拽（>2.5% 视口位移）不算点击
-      this.emitPickAt(ndcX, ndcY);
-    };
-    const downHandler = pointerHandler('down');
-    const upHandler = pointerHandler('up');
-    listeners.addEventListener('pointerdown', downHandler);
-    listeners.addEventListener('pointerup', upHandler);
-    this.pointerCleanup = () => {
-      listeners.removeEventListener?.('pointerdown', downHandler);
-      listeners.removeEventListener?.('pointerup', upHandler);
-    };
+    this.pointer = new PointerHoverController(domElement, {
+      resolveHit: (ndc) => this.pickAt(ndc.x, ndc.y),
+      onHoverChange: (modelId, previous) => {
+        if (previous) {
+          this.highlighter.revert();
+          for (const listener of [...this.hoverListeners]) listener({ modelId: previous, hovered: false });
+        }
+        if (modelId) {
+          const model = this.models.get(modelId);
+          if (model) this.highlighter.apply(model.root);
+          for (const listener of [...this.hoverListeners]) listener({ modelId, hovered: true });
+        }
+      },
+      onPick: (hit) => {
+        for (const listener of [...this.pickListeners]) listener(hit);
+      },
+    }, this.scheduleFrame);
+    this.pointer.bind();
   }
-
-  private pointerCleanup: (() => void) | null = null;
 
   private pickAt(ndcX: number, ndcY: number): { modelId: string; point: THREE.Vector3 } | undefined {
     if (!this.camera) return undefined;
@@ -541,25 +555,6 @@ export class SceneManager {
       if (hits.length > 0) return { modelId, point: hits[0].point };
     }
     return undefined;
-  }
-
-  private emitPickAt(ndcX: number, ndcY: number): void {
-    const hit = this.pickAt(ndcX, ndcY);
-    if (!hit) return;
-    for (const listener of [...this.pickListeners]) listener(hit);
-  }
-
-  private emitHoverAt(ndcX: number, ndcY: number, entered: boolean): void {
-    const hit = this.pickAt(ndcX, ndcY);
-    const modelId = hit?.modelId ?? null;
-    if (modelId === this.lastHovered) return;
-    if (this.lastHovered) {
-      for (const listener of [...this.hoverListeners]) listener({ modelId: this.lastHovered, hovered: false });
-    }
-    this.lastHovered = modelId;
-    if (modelId && entered) {
-      for (const listener of [...this.hoverListeners]) listener({ modelId, hovered: true });
-    }
   }
 
   private resizeToContainer(): void {
@@ -581,6 +576,9 @@ export class SceneManager {
     this.disposed = true;
     this.frameHandle?.();
     this.frameHandle = null;
+    this.pointer?.dispose();
+    this.pointer = null;
+    this.highlighter.revert();
     this.loader.cancel();
     this.tweenRegistry.clear();
     for (const clip of this.clips.values()) clip.stop();
@@ -589,8 +587,6 @@ export class SceneManager {
     // 在途 loadModels 承诺落定（dispose 竞态下悬挂即泄漏）
     const settlers = this.loadSettlers.splice(0);
     for (const settle of settlers) settle();
-    this.pointerCleanup?.();
-    this.pointerCleanup = null;
     for (const model of this.models.values()) {
       model.actions.forEach((action) => action.stop());
       model.mixer?.uncacheRoot(model.mixer.getRoot());

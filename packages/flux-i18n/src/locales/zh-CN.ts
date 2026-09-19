@@ -135,6 +135,13 @@ export const zhCN: Resource = {
       closeSuggestions: '关闭建议',
       insertTemplate: '插入模板',
     },
+    three: {
+      loading: '场景加载中…',
+      loadingProgress: '场景加载中… {{percent}}%',
+      error: '3D 场景加载失败。',
+      retry: '重试',
+      empty: '当前场景未配置模型。',
+    },
     wizard: {
       previous: '上一步',
       next: '下一步',

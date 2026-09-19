@@ -77,6 +77,12 @@ export interface LightConfig {
   castShadow?: boolean;
 }
 
+export interface ModelShadowFlags {
+  /** plan 473 (V3-F2)：模型级阴影标记，应用到全部子 mesh。 */
+  castShadow?: boolean;
+  receiveShadow?: boolean;
+}
+
 export interface ThreeCanvasEvents {
   onObjectClick?: ActionSchema; // payload: { modelId, point: {x,y,z} }
   onObjectHover?: ActionSchema; // payload: { modelId, hovered }
@@ -167,6 +173,7 @@ const dispatchEvent = (type: string, payload: Record<string, unknown>, action: u
 };
 // 对象点击 → dispatchEvent('object:click', { modelId, point }, events.onObjectClick)
 // hover    → dispatchEvent('object:hover', { modelId, hovered }, events.onObjectHover)
+//             plan 473: pointermove（rAF 节流）驱动连续 hover 进入/离开；pointerdown 强制 enter（触屏无 move）；hover 高亮 = MeshStandardMaterial emissive 临时提亮（按材质记录原始值，离开/卸载还原；MeshBasicMaterial 无 emissive 跳过）；非 interactive 模型不参与
 ```
 
 射线拾取：`renderer.domElement` pointer 事件 → `Raycaster.intersectObjects(models, true)` → 命中回溯到 modelId（`object.userData.modelId` 或向上遍历至 `mesh.name === config.id` 的注册根）。`interactive: false` 的模型不参与拾取。
@@ -210,7 +217,9 @@ export class ModelLoader {
 
 ## 7. 加载/空态与 meta 契约
 
-- `loading` / `empty` region：`props.regions.loading?.render()`；模型全部就绪前若声明了 loading region 则渲染之（默认占位 `data-testid="three-canvas-loading"`）。
+- `loading` / `empty` region：`props.regions.loading?.render()`；模型全部就绪前若声明了 loading region 则渲染之。**宿主 region 缺省时渲染内建 UI（plan 473 V3-F4）**：loading = spinner + 进度文本（GLTF 场景经 `loadModels(onError, onProgress)` 透传 three `ProgressEvent`，rAF 合流后显示百分比；图元/无 total 为不确定态；`onProgress` 经 ModelLoader generation guard——cancel 后迟到进度丢弃）、error = `data-slot="three-canvas-error"`（文案 + Retry 按钮触发 `reloadKey` 重建引擎）、empty = `data-slot="three-canvas-empty"`。宿主 region 永远优先于内建 UI。
+- **容器高度（plan 473 V3-F4）**：schema `height`（CSS 值，默认 `'400px'` 向后兼容）；demo 场景以 `min(62vh, 560px)` 撑满可用区。
+- **观测句柄（plan 473 V3-F4）**：schema `testid` 非空时引擎实例挂 `window.__flux_three_handles[testid]`（`getScene()`/`getRenderer()`），卸载时清理；testid 非空即注册（生产构建同样存在），仅供 e2e/调试程序化断言，勿放敏感数据。
 - `meta.visible === false` 时不挂容器、不创建 WebGL 上下文；`visible` 作为 `useSceneManager` 的参数参与引擎生命周期：true→false 走完整 `dispose()`，false→true 重新 init（ref 赋值不触发 effect，故 visible 必须显式入参）。
 - 诊断埋点：`data-three-scene-state`（`empty | loading | ready | error`）供 e2e 断言。
 - **ready 闩语义（plan 469 Fix）**：`emitReady` 为一次性闩（`readyEmitted` 置位），晚于发射的 `onReady` 订阅立即重放。纯图元场景 `loadModels` 在挂载 effect 内**同步**完成注册并 emitReady，而 React 壳的 onReady 订阅 effect 晚一个 render——不重放则 ready 事件被确定性错过，场景已渲染但状态永久停留 loading。

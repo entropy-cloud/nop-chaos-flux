@@ -38,9 +38,13 @@ describe('three-canvas renderer definition (plan 465 Phase 2)', () => {
 
   it('exposes propContracts for the four source-enabled props', () => {
     const contracts = threeCanvasRendererDefinition.propContracts ?? {};
-    expect(Object.keys(contracts).sort()).toEqual(['animations', 'bindings', 'events', 'scene']);
-    for (const contract of Object.values(contracts)) {
-      expect(contract.editorType).toBe('code');
+    expect(Object.keys(contracts).sort()).toEqual(['animations', 'bindings', 'events', 'height', 'scene']);
+    // plan 473: height joins as a plain string prop (editorType text); the
+    // four structured props keep the source-enabled code editor
+    for (const key of ['animations', 'bindings', 'events', 'scene']) {
+      expect(contracts[key]?.editorType).toBe('code');
     }
+    expect(contracts.height?.editorType).toBe('text');
+    expect(contracts.height?.defaultValue).toBe('400px');
   });
 });

@@ -19,11 +19,16 @@ export class SceneManager {
   static instances = instances;
 
   attach = vi.fn();
-  init = vi.fn();
-  loadModels = vi.fn(() => {
+  init = vi.fn((onError?: (e: MockDiagnostic) => void) => {
+    this.initOnError = onError ?? null;
+  });
+  initOnError: ((e: MockDiagnostic) => void) | null = null;
+  loadModels = vi.fn((onError?: unknown, onProgress?: (ratio: number | null) => void) => {
+    this.loadOnProgress = onProgress ?? null;
     this.readyEmitted = true;
     return Promise.resolve();
   });
+  loadOnProgress: ((ratio: number | null) => void) | null = null;
   setFrameUpdateQueue = vi.fn();
   onPick = vi.fn(() => () => undefined);
   onHover = vi.fn(() => () => undefined);
@@ -38,6 +43,7 @@ export class SceneManager {
   notifyEvent = vi.fn();
   dispose = vi.fn();
   getScene = vi.fn(() => new THREE.Scene());
+  getRenderer = vi.fn(() => ({ shadowMap: { enabled: true } }));
   resize = vi.fn();
 
   readyEmitted = false;
@@ -45,6 +51,16 @@ export class SceneManager {
 
   constructor(public config: unknown, public options?: unknown) {
     instances.push(this);
+  }
+
+  /** 测试驱动：触发 onError 诊断（error 终态 + 内建 UI 断言用）。 */
+  simulateError(code = 'model-load-failed'): void {
+    this.initOnError?.({ code, message: 'mock failure' });
+  }
+
+  /** 测试驱动：触发进度回调（进度 UI 断言用）。 */
+  simulateProgress(ratio: number | null): void {
+    this.loadOnProgress?.(ratio);
   }
 }
 

@@ -8,7 +8,10 @@ export interface LoadedModel {
 
 export type GltfLike = { scene: import('three').Object3D; animations: import('three').AnimationClip[] };
 
-export type LoaderFactory = () => { loadAsync(url: string): Promise<GltfLike> };
+export type LoadProgressCallback = (event: ProgressEvent) => void;
+export type LoaderFactory = () => {
+  loadAsync(url: string, onProgress?: LoadProgressCallback): Promise<GltfLike>;
+};
 
 /**
  * GLTF 加载器（design-renderer.md §6，D5）：
@@ -22,10 +25,21 @@ export class ModelLoader {
   /* v8 ignore next */
   constructor(private loaderFactory: LoaderFactory = () => new GLTFLoader()) {}
 
-  async load(config: ModelConfig & { url: string }, onLoaded: (gltf: LoadedModel) => void, onError?: (error: unknown) => void): Promise<void> {
+  async load(
+    config: ModelConfig & { url: string },
+    onLoaded: (gltf: LoadedModel) => void,
+    onError?: (error: unknown) => void,
+    onProgress?: LoadProgressCallback,
+  ): Promise<void> {
     const gen = this.generation;
     try {
-      const gltf = await this.loaderFactory().loadAsync(config.url);
+      const gltf = await this.loaderFactory().loadAsync(
+        config.url,
+        (event) => {
+          if (gen !== this.generation) return;
+          onProgress?.(event);
+        },
+      );
       if (gen !== this.generation) return;
       onLoaded({ scene: gltf.scene, animations: gltf.animations ?? [] });
     } catch (error) {

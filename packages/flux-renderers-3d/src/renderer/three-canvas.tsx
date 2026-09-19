@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { cn } from '@nop-chaos/ui';
+import { cn, Spinner } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   createNormalizedActionEvent,
   useRendererEnv,
@@ -29,7 +30,12 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
   const scope = useRenderScope();
   const env = useRendererEnv();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [sceneState, setSceneState] = useState<SceneLifecycleState>('loading');
+  // plan 473 (V3-F4): GLTF 加载进度（0..1 | null 不确定态），rAF 合流防 onProgress 高频重渲
+  const [progress, setProgress] = useState<number | null>(null);
+  const progressRef = useRef<number | null>(null);
+  const progressFrameRef = useRef<number | null>(null);
 
   const models = (scene as ThreeSceneConfig | undefined)?.models;
   const isEmpty = !Array.isArray(models) || models.length === 0;
@@ -44,6 +50,8 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
     containerRef,
     visible: visible !== false,
     options: engineOptions,
+    reloadKey: retryKey,
+    debugHandleKey: testid,
     onError: (event) => {
       setSceneState('error');
       if (events?.onError && typeof events.onError === 'object') {
@@ -58,6 +66,14 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
     },
     onStateChange: (state) => {
       setSceneState((current) => (current === 'error' ? current : state));
+    },
+    onProgress: (ratio) => {
+      progressRef.current = ratio;
+      if (progressFrameRef.current !== null) return;
+      progressFrameRef.current = requestAnimationFrame(() => {
+        progressFrameRef.current = null;
+        setProgress(progressRef.current);
+      });
     },
   });
 
@@ -89,20 +105,66 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
 
   if (visible === false) return null;
 
+  const height = (props.props as { height?: string }).height ?? '400px';
+  const hasHostLoading = props.regions.loading != null;
+  const hasHostEmpty = props.regions.empty != null;
+
   return (
     <div
       ref={containerRef}
       className={cn('three-canvas', className)}
       data-testid={testid}
       data-three-scene-state={isEmpty ? 'empty' : sceneState}
-      style={{ width: '100%', height: '400px', position: 'relative' }}
+      style={{ width: '100%', height, position: 'relative' }}
     >
-      {!isEmpty && sceneState === 'loading' && props.regions.loading
-        ? (props.regions.loading.render() as React.ReactNode)
+      {!isEmpty && sceneState === 'loading' && hasHostLoading
+        ? (props.regions.loading!.render() as React.ReactNode)
         : null}
-      {isEmpty && props.regions.empty
-        ? (props.regions.empty.render() as React.ReactNode)
+      {isEmpty && hasHostEmpty
+        ? (props.regions.empty!.render() as React.ReactNode)
         : null}
+      {/* plan 473 (V3-F4): built-in lifecycle defaults — host regions take precedence */}
+      {!isEmpty && sceneState === 'loading' && !hasHostLoading ? (
+        <div
+          data-slot="three-canvas-loading"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground"
+        >
+          <Spinner className="size-5" />
+          <span>
+            {progress === null
+              ? t('flux.three.loading')
+              : t('flux.three.loadingProgress', { percent: String(Math.round(progress * 100)) })}
+          </span>
+        </div>
+      ) : null}
+      {!isEmpty && sceneState === 'error' ? (
+        <div
+          data-slot="three-canvas-error"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-destructive"
+        >
+          <span>{t('flux.three.error')}</span>
+          <button
+            type="button"
+            data-slot="three-canvas-retry"
+            className="rounded-md border px-3 py-1 text-xs hover:bg-muted"
+            onClick={() => {
+              setSceneState('loading');
+              setProgress(null);
+              setRetryKey((k) => k + 1);
+            }}
+          >
+            {t('flux.three.retry')}
+          </button>
+        </div>
+      ) : null}
+      {isEmpty && !hasHostEmpty ? (
+        <div
+          data-slot="three-canvas-empty"
+          className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground"
+        >
+          {t('flux.three.empty')}
+        </div>
+      ) : null}
     </div>
   );
 }

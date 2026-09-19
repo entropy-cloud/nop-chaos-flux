@@ -135,6 +135,13 @@ export const enUS: Resource = {
       closeSuggestions: 'Close suggestions',
       insertTemplate: 'Insert template',
     },
+    three: {
+      loading: 'Loading scene…',
+      loadingProgress: 'Loading scene… {{percent}}%',
+      error: 'Failed to load the 3D scene.',
+      retry: 'Retry',
+      empty: 'No models configured for this scene.',
+    },
     wizard: {
       previous: 'Previous',
       next: 'Next',

@@ -32,6 +32,12 @@ export interface ThreeCanvasSchema extends BaseSchema {
   events?: ThreeCanvasEvents;
   loading?: SchemaInput;
   empty?: SchemaInput;
+  /**
+   * plan 473 (V3-F4): 容器高度（CSS 值）。默认 '400px' 向后兼容；容器样式属性，
+   * 不参与场景语义（renderer definition fields 保护区触碰已按 plan-first 评估，
+   * 见 docs/analysis/visual-quality/V3-threejs-visuals.md §2）。
+   */
+  height?: string;
 }
 
 export interface ThreeSceneConfig {
@@ -97,6 +103,9 @@ export interface ModelConfig {
   scale?: [number, number, number];
   /** false 的模型不参与射线拾取（默认 false） */
   interactive?: boolean;
+  /** plan 473 (V3-F2): mesh-level shadow flags (applied to all child meshes). */
+  castShadow?: boolean;
+  receiveShadow?: boolean;
   initialAnimation?: string;
 }
 

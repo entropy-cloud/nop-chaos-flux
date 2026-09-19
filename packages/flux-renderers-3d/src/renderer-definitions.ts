@@ -48,12 +48,21 @@ export const threeCanvasRendererDefinition: RendererDefinition = {
         'Schema-level event hooks (onObjectClick/onObjectHover/onReady/onError). Dispatched via createNormalizedActionEvent + helpers.dispatch.',
       editorType: 'code',
     },
+    height: {
+      shape: { kind: 'string' },
+      displayName: 'Height',
+      description:
+        "Container height (CSS value, plan 473 V3-F4). Default '400px'. Pure container styling — not scene semantics.",
+      editorType: 'text',
+      defaultValue: '400px',
+    },
   },
   fields: [
     { key: 'scene', kind: 'prop' },
     { key: 'bindings', kind: 'prop' },
     { key: 'animations', kind: 'prop' },
     { key: 'events', kind: 'prop' },
+    { key: 'height', kind: 'prop' },
     { key: 'loading', kind: 'region', regionKey: 'loading' },
     { key: 'empty', kind: 'region', regionKey: 'empty' },
   ],

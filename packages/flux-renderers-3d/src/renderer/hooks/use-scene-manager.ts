@@ -10,6 +10,16 @@ export interface UseSceneManagerArgs {
   options?: SceneManagerOptions;
   onError?: (e: DiagnosticEvent) => void;
   onStateChange?: (state: 'empty' | 'loading' | 'ready' | 'error') => void;
+  /** plan 473 (V3-F4): GLTF 加载进度比例（0..1）；null = 不确定态（图元/无 total）。 */
+  onProgress?: (ratio: number | null) => void;
+  /** plan 473 (V3-F4): 递增强制重建引擎实例（error 态 Retry 按钮）。 */
+  reloadKey?: number;
+  /**
+   * plan 473 (V3-F4): 观测句柄键。设置后把 manager 挂到
+   * `window.__flux_three_handles[key]`（getScene/getRenderer），供 e2e/自动化
+   * 程序化断言；testid 非空即注册，生产构建同样存在——勿放敏感数据。
+   */
+  debugHandleKey?: string;
 }
 
 /**
@@ -19,7 +29,7 @@ export interface UseSceneManagerArgs {
  * 诊断/状态回调经 latest ref 取最新（scada use-scada-engine 同款，react-compiler 友好）。
  */
 export function useSceneManager(args: UseSceneManagerArgs): SceneManager | null {
-  const { config, containerRef, visible } = args;
+  const { config, containerRef, visible, reloadKey } = args;
   const latest = useRef(args);
   useEffect(() => {
     latest.current = args;
@@ -41,8 +51,15 @@ export function useSceneManager(args: UseSceneManagerArgs): SceneManager | null 
       latest.current.onError?.(event);
     });
     setInstance(manager);
+    const g = globalThis as typeof globalThis & { __flux_three_handles?: Record<string, SceneManager> };
+    if (args.debugHandleKey) {
+      g.__flux_three_handles ??= {};
+      g.__flux_three_handles[args.debugHandleKey] = manager;
+    }
     void manager.loadModels((event) => {
       latest.current.onError?.(event);
+    }, (ratio) => {
+      latest.current.onProgress?.(ratio);
     });
     let observer: ResizeObserver | undefined;
     if (container && typeof ResizeObserver !== 'undefined') {
@@ -51,10 +68,14 @@ export function useSceneManager(args: UseSceneManagerArgs): SceneManager | null 
     }
     return () => {
       observer?.disconnect();
+      const g = globalThis as typeof globalThis & { __flux_three_handles?: Record<string, SceneManager> };
+      if (args.debugHandleKey && g.__flux_three_handles?.[args.debugHandleKey] === manager) {
+        delete g.__flux_three_handles[args.debugHandleKey];
+      }
       manager.dispose();
       setInstance(null);
     };
-  }, [active, config, containerRef]);
+  }, [active, config, containerRef, reloadKey, args.debugHandleKey]);
 
   return instance;
 }

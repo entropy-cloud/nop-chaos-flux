@@ -24,13 +24,14 @@ export const threeCanvasDemoSchema = {
     {
       type: 'three-canvas',
       testid: 'three-demo-canvas',
-      className: 'flex-1 min-h-0 rounded-2xl overflow-hidden border border-[var(--nop-nav-border)]',
+      height: 'min(62vh, 560px)',
+      className: 'rounded-2xl overflow-hidden border border-[var(--nop-nav-border)]',
       scene: {
         camera: { position: [7, 5.5, 9], fov: 50 },
         environment: { background: '#0b1220' },
         lights: [
           { type: 'ambient', color: '#8aa3c4', intensity: 0.6 },
-          { type: 'directional', color: '#ffffff', intensity: 1.4, position: [6, 10, 4] },
+          { type: 'directional', color: '#ffffff', intensity: 1.4, position: [6, 10, 4], castShadow: true, target: [0, 0, 0] },
           { type: 'point', color: '#2dd4bf', intensity: 40, position: [-5, 4, -3] },
           { type: 'hemisphere', color: '#c5d3e8', groundColor: '#16233a', intensity: 0.5 },
         ],
@@ -40,6 +41,7 @@ export const threeCanvasDemoSchema = {
             primitive: { geometry: { type: 'plane', args: { width: 16, height: 16 } }, material: { type: 'standard', color: '#16233a' } },
             position: [0, -1.5, 0],
             rotation: [-90 * RAD, 0, 0],
+            receiveShadow: true,
           },
           {
             id: 'pedestal',
@@ -51,12 +53,14 @@ export const threeCanvasDemoSchema = {
             primitive: { geometry: { type: 'box', args: { width: 1.6, height: 1.6, depth: 1.6 } }, material: { type: 'standard', color: '#3d5a80' } },
             position: [-2.4, 0.7, 0],
             interactive: true,
+            castShadow: true,
           },
           {
             id: 'orb',
             primitive: { geometry: { type: 'sphere', args: { radius: 0.9 } }, material: { type: 'standard', color: '#2dd4bf' } },
             position: [2.4, 0.6, 0],
             interactive: true,
+            castShadow: true,
           },
           {
             id: 'pyramid',
@@ -72,6 +76,21 @@ export const threeCanvasDemoSchema = {
         ],
       } satisfies ThreeCanvasSchema['scene'],
       bindings: [
+        {
+          id: 'pedestal-spring',
+          target: { modelId: 'pedestal', path: 'position.y', type: 'position' },
+          source: { expression: '${heat}' },
+          transform: {
+            range: { input: [0, 100], output: [-0.1, 0.2] },
+            animation: { type: 'spring', stiffness: 120, damping: 14 },
+          },
+        },
+        {
+          id: 'pyramid-step',
+          target: { modelId: 'pyramid', path: 'rotation.y', type: 'rotation' },
+          source: { expression: '${spin}' },
+          transform: { animation: { type: 'step' } },
+        },
         {
           id: 'cube-spin',
           target: { modelId: 'cube', path: 'rotation.y', type: 'rotation' },
@@ -111,11 +130,33 @@ export const threeCanvasDemoSchema = {
           ],
           loop: { type: 'loop' },
         },
+        {
+          // plan 473 (V3-F6): event 触发 clip——单击 orb 转一圈
+          id: 'orb-spin-on-click',
+          trigger: { type: 'event', source: 'object:click' },
+          target: { modelId: 'orb', property: 'rotation.y' },
+          keyframes: [
+            { time: 0, value: 0 },
+            { time: 700, value: Math.PI * 2, easing: 'easeOut' },
+          ],
+        },
+        {
+          // plan 473 (V3-F6): state 触发 clip——heat>70 时 ring 跳动一次
+          id: 'ring-pulse-on-hot',
+          trigger: { type: 'state', source: 'heat', value: 70 },
+          target: { modelId: 'ring', property: 'position.y' },
+          keyframes: [
+            { time: 0, value: 2.6 },
+            { time: 350, value: 3.4, easing: 'easeOut' },
+            { time: 700, value: 2.6, easing: 'easeInOut' },
+          ],
+        },
       ],
       events: {
         onReady: { action: 'showToast', args: { message: 'three-canvas-demo 场景就绪' } },
         onError: { action: 'showToast', args: { message: 'three-canvas 场景错误（见 console）' } },
         onObjectClick: { action: 'showToast', args: { message: '点击了 3D 模型（cube/orb 可交互）' } },
+        onObjectHover: { action: 'showToast', args: { message: '悬停 3D 模型（plan 473 真 hover + emissive 高亮）' } },
       },
       loading: { type: 'text', text: '3D 场景加载中…' },
       empty: { type: 'text', text: '3D 场景为空' },
@@ -125,7 +166,8 @@ export const threeCanvasDemoSchema = {
       direction: 'row',
       className: 'flex-wrap gap-x-5 gap-y-1 text-sm text-[var(--nop-body-copy)]',
       body: [
-        { type: 'text', text: '绑定负载：spin→cube.rotation.y（tween）· heat→orb.position.y（range+tween）· heatColor→cube 材质色 · heat>70→ring 显隐（condition）' },
+        { type: 'text', text: '绑定负载：spin→cube.rotation.y（tween）· heat→orb（range+tween）· heat→pedestal（spring）· spin→pyramid（step）· heatColor→cube 材质色 · heat>70→ring 显隐（condition）' },
+        { type: 'text', text: '阴影：directional castShadow + ground receiveShadow + cube/orb castShadow（plan 473）· 悬停 cube/orb 触发真 hover（pointermove + emissive 高亮）' },
         { type: 'text', text: '关键帧：pyramid position.y 循环浮动（time 触发）· 单击 cube/orb 触发 onObjectClick toast' },
       ],
     },
