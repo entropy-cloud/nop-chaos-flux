@@ -28,4 +28,35 @@ describe('useXyflowSync', () => {
     expect(nodes[0]?.selected).toBe(true);
     expect(lastCommittedPositions.size).toBe(0);
   });
+
+  it('preserves live measured dimensions across snapshot merges (plan 475 Phase 2)', () => {
+    const currentNodes: Node[] = [
+      {
+        id: 'node-1',
+        position: { x: 10, y: 20 },
+        data: { label: 'Live' },
+        selected: false,
+        type: 'task',
+        measured: { width: 180, height: 60 },
+      },
+    ];
+    const lastCommittedPositions = new Map([['node-1', '10:20']]);
+
+    const nodes = syncLocalNodesWithSnapshot(
+      currentNodes,
+      [
+        {
+          id: 'node-1',
+          position: { x: 10, y: 20 },
+          data: { label: 'Snapshot' },
+          selected: false,
+          type: 'task',
+          measured: { width: 220, height: 80 },
+        },
+      ],
+      lastCommittedPositions,
+    );
+
+    expect(nodes[0]?.measured).toEqual({ width: 180, height: 60 });
+  });
 });

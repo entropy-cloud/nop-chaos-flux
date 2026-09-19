@@ -41,8 +41,7 @@ export interface UseXyflowInteractionsParams {
     viewport: { x: number; y: number; zoom: number },
     event?: React.MouseEvent,
   ): void;
-  onNodeSelect(nodeId: string, event?: React.MouseEvent): void;
-  onEdgeSelect(edgeId: string, event?: React.MouseEvent): void;
+  onSelectionReport(nodeIds: string[], edgeIds: string[]): void;
   onPaneClick(): void;
 }
 
@@ -68,8 +67,7 @@ export function useXyflowInteractions({
   onStartReconnect,
   onCompleteReconnect,
   onViewportChange,
-  onNodeSelect,
-  onEdgeSelect,
+  onSelectionReport,
   onPaneClick,
 }: UseXyflowInteractionsParams): UseXyflowInteractionsResult {
   const handleNodesChange = useCallback(
@@ -162,34 +160,25 @@ export function useXyflowInteractions({
     [onStartReconnect, onCompleteReconnect],
   );
 
-  const lastSelectionRef = useRef<{ nodeId: string | null; edgeId: string | null }>({
-    nodeId: null,
-    edgeId: null,
-  });
+  // plan 475 Phase 1（M-3 单一写入方）：onSelectionChange 是画布选择的唯一写入口，
+  // 全量上报节点+边；单节点写入由 RF 选择变化自然覆盖，不再走 selectNode/[0] 截断。
+  // hadSelectionRef 只做「有→无」转换检测：RF 在每次 store nodes 更新后都会重发空 selection
+  // 事件（新节点对象身份），无守卫的 onPaneClick 会形成 setNodes→空事件→dispatch 风暴。
+  const hadSelectionRef = useRef(false);
 
   function handleSelectionChange(selection: OnSelectionChangeParams) {
-    if (selection.nodes.length > 0) {
-      const nodeId = selection.nodes[0].id;
-      if (lastSelectionRef.current.nodeId !== nodeId) {
-        lastSelectionRef.current = { nodeId, edgeId: null };
-        onNodeSelect(nodeId, undefined);
+    if (selection.nodes.length === 0 && selection.edges.length === 0) {
+      if (hadSelectionRef.current) {
+        hadSelectionRef.current = false;
+        onPaneClick();
       }
       return;
     }
-
-    if (selection.edges.length > 0) {
-      const edgeId = selection.edges[0].id;
-      if (lastSelectionRef.current.edgeId !== edgeId) {
-        lastSelectionRef.current = { nodeId: null, edgeId };
-        onEdgeSelect(edgeId, undefined);
-      }
-      return;
-    }
-
-    if (lastSelectionRef.current.nodeId || lastSelectionRef.current.edgeId) {
-      lastSelectionRef.current = { nodeId: null, edgeId: null };
-      onPaneClick();
-    }
+    hadSelectionRef.current = true;
+    onSelectionReport(
+      selection.nodes.map((node) => node.id),
+      selection.edges.map((edge) => edge.id),
+    );
   }
 
   return {

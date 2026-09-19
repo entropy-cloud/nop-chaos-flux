@@ -8,6 +8,9 @@ function mergeSnapshotNode(localNode: Node, snapshotNode: Node): Node {
     ...snapshotNode,
     position: localNode.position,
     dragging: localNode.dragging,
+    // plan 475 Phase 2：measured 是 RF 的实测值（真实 DOM 尺寸），快照上的只是预填估计——
+    // 保留实测，否则每次快照同步都会把节点尺寸冲回假值（bugs/11 的持续化形态）。
+    measured: localNode.measured ?? snapshotNode.measured,
   };
 }
 

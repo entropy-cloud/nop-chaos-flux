@@ -31,6 +31,7 @@ export const DESIGNER_PALETTE_NODE_MIME = 'application/x-flow-designer-node-type
 export interface DesignerXyflowCanvasProps {
   snapshot: DesignerSnapshot;
   canvasConfig?: CanvasConfig;
+  features?: import('@nop-chaos/flow-designer-core').DesignerFeatures;
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>;
   nodeTypeMap?: Map<string, import('@nop-chaos/flow-designer-core').NodeTypeConfig>;
   pendingConnectionSourceId: string | null;
@@ -41,6 +42,7 @@ export interface DesignerXyflowCanvasProps {
   onPaneClick(): void;
   onNodeSelect(nodeId: string, event?: React.MouseEvent): void;
   onEdgeSelect(edgeId: string, event?: React.MouseEvent): void;
+  onSelectionReport(nodeIds: string[], edgeIds: string[]): void;
   onStartConnection(nodeId: string, event?: React.MouseEvent, sourcePort?: string): void;
   onCancelConnection(nodeId: string, event?: React.MouseEvent): void;
   onCompleteConnection(
@@ -201,6 +203,8 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
         : BackgroundVariant.Lines;
   const showBackground = props.snapshot.gridEnabled && backgroundType !== 'none';
   const onViewportChange = props.onViewportChange;
+  // plan 475 Phase 1：multiSelect 死开关转真消费——驱动框选/修饰键多选接线（默认开）
+  const multiSelectEnabled = props.features?.multiSelect !== false;
 
   useMinimapNavigation({ surfaceRef, viewport, showMinimap, onViewportChange });
 
@@ -227,8 +231,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     onStartReconnect: props.onStartReconnect,
     onCompleteReconnect: props.onCompleteReconnect,
     onViewportChange,
-    onNodeSelect: props.onNodeSelect,
-    onEdgeSelect: props.onEdgeSelect,
+    onSelectionReport: props.onSelectionReport,
     onPaneClick: props.onPaneClick,
   });
   const portConnectionA11yValue = useMemo(
@@ -286,7 +289,9 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           nodesConnectable={!isTreeMode}
           elementsSelectable
           nodesDraggable={!isTreeMode}
-          panOnDrag={pannable}
+          selectionOnDrag={multiSelectEnabled}
+          panOnDrag={multiSelectEnabled ? (pannable ? [1, 2] : false) : pannable}
+          multiSelectionKeyCode={multiSelectEnabled ? undefined : null}
           panOnScroll={pannable}
           zoomOnScroll={zoomable}
           zoomOnPinch={zoomable}
@@ -309,8 +314,14 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           onNodesChange={handleNodesChange}
           onEdgesChange={handleEdgesChange}
           onSelectionChange={handleSelectionChange}
-          onNodeClick={(_event, node) => props.onNodeSelect(node.id, undefined)}
-          onEdgeClick={(_event, edge) => props.onEdgeSelect(edge.id, undefined)}
+          onNodeClick={(event, node) => {
+            if (multiSelectEnabled && (event.ctrlKey || event.metaKey || event.shiftKey)) return;
+            props.onNodeSelect(node.id, undefined);
+          }}
+          onEdgeClick={(event, edge) => {
+            if (multiSelectEnabled && (event.ctrlKey || event.metaKey || event.shiftKey)) return;
+            props.onEdgeSelect(edge.id, undefined);
+          }}
           proOptions={{ hideAttribution: true }}
           onNodeMouseEnter={(_e, node) => {
             if (hoverTimeoutRef.current) {

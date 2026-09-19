@@ -270,6 +270,9 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
       case 'selectNode':
         core.selectNode(command.nodeId);
         return createSuccess(core);
+      case 'setSelection':
+        core.setSelection(command.nodeIds, command.edgeIds);
+        return createSuccess(core);
       case 'toggleGrid':
         core.toggleGrid();
         return createSuccess(core);

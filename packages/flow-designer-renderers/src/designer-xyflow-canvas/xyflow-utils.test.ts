@@ -95,3 +95,16 @@ describe('xyflow branch focus mapping', () => {
     expect(edges[0]?.targetHandle).toBe('tree-in');
   });
 });
+
+describe('xyflow measured prefill (plan 475 Phase 2)', () => {
+  it('prefills measured in both graph and tree modes', () => {
+    const graphNodes = createXyflowNodes(createSnapshot(), undefined, 'graph');
+    const treeNodes = createXyflowNodes(createSnapshot(), undefined, 'tree');
+
+    for (const node of [...graphNodes, ...treeNodes]) {
+      expect(node.measured).toBeTruthy();
+      expect(node.measured?.width).toBeGreaterThan(0);
+      expect(node.measured?.height).toBeGreaterThan(0);
+    }
+  });
+});

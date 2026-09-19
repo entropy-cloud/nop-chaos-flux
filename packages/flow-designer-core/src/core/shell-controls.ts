@@ -39,15 +39,16 @@ export function createShellControls(args: {
   shellConfig?: DesignerShellConfig;
   getTransactionDepth: () => number;
 }) {
-  function copySelection(activeNodeId: string | null) {
-    if (!activeNodeId) {
+  function copySelection(nodeIds: string[]) {
+    if (nodeIds.length === 0) {
       return;
     }
 
-    const node = args.getDocument().nodes.find((entry) => entry.id === activeNodeId);
-    if (node) {
-      setShellClipboard(args.shellState, node);
-    }
+    const nodesById = new Map(args.getDocument().nodes.map((node) => [node.id, node]));
+    const nodes = nodeIds
+      .map((nodeId) => nodesById.get(nodeId))
+      .filter((node): node is NonNullable<typeof node> => node !== undefined);
+    setShellClipboard(args.shellState, nodes);
   }
 
   function pasteClipboard(
@@ -57,18 +58,20 @@ export function createShellControls(args: {
       data?: Record<string, unknown>,
     ) => unknown,
   ) {
-    if (!args.shellState.clipboard) {
+    if (args.shellState.clipboard.length === 0) {
       return;
     }
 
-    addNode(
-      args.shellState.clipboard.type,
-      {
-        x: args.shellState.clipboard.position.x + 48,
-        y: args.shellState.clipboard.position.y + 48,
-      },
-      args.shellState.clipboard.data,
-    );
+    for (const node of args.shellState.clipboard) {
+      addNode(
+        node.type,
+        {
+          x: node.position.x + 48,
+          y: node.position.y + 48,
+        },
+        node.data,
+      );
+    }
   }
 
   function toggleGrid() {

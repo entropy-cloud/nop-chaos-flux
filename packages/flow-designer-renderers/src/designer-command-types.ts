@@ -61,6 +61,7 @@ export type DesignerCommand =
   | { type: 'selectBranch'; nodeId: string; branchId: string | null }
   | { type: 'selectEdge'; edgeId: string | null }
   | { type: 'selectNode'; nodeId: string | null }
+  | { type: 'setSelection'; nodeIds: string[]; edgeIds: string[] }
   | { type: 'setViewport'; viewport: { x: number; y: number; zoom: number } }
   | { type: 'setPanelWidths'; paletteWidth?: number; inspectorWidth?: number }
   | { type: 'toggleGrid' }

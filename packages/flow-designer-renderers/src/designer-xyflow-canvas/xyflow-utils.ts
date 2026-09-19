@@ -55,6 +55,9 @@ export function createXyflowNodes(
 ): Node[] {
   const branchFocusedNodeId = snapshot.activeBranch?.childId;
   const isTreeMode = documentMode === 'tree';
+  // plan 475 Phase 1（M-2）：selected 由全量 selectedNodeIds 映射（不再取 activeNodeId[0]），
+  // 否则多选在下一次快照同步时被坍缩回单选。
+  const selectedNodeIds = new Set(snapshot.selection.selectedNodeIds);
   return snapshot.doc.nodes.map((node) => {
     const nodeType = nodeTypeMap?.get(node.type);
     const resolved = resolveNodeSize(node, nodeTypeSizeMap?.get(node.type), nodeType, isTreeMode);
@@ -63,6 +66,8 @@ export function createXyflowNodes(
         ? {
             width: resolved.width,
             height: resolved.height,
+            // plan 475 Phase 2：树分支同样预填 measured，消除 bugs/11 error#015 的残留风险面
+            measured: { width: resolved.width, height: resolved.height },
           }
         : {
             width: resolved.width,
@@ -72,7 +77,7 @@ export function createXyflowNodes(
       id: node.id,
       type: 'designerNode',
       position: { ...node.position },
-      selected: snapshot.selection.activeNodeId === node.id,
+      selected: selectedNodeIds.has(node.id),
       data: {
         ...(node.data ?? {}),
         label: String(node.data.label ?? node.id),
@@ -93,6 +98,7 @@ export function createXyflowEdges(
 ): Edge[] {
   const edgeType = documentMode === 'tree' ? 'dingflowEdge' : 'designerEdge';
   const branchFocusedNodeId = snapshot.activeBranch?.childId;
+  const selectedEdgeIds = new Set(snapshot.selection.selectedEdgeIds);
   return snapshot.doc.edges.map((edge) => ({
     id: edge.id,
     type: edgeType,
@@ -109,7 +115,7 @@ export function createXyflowEdges(
         branchFocusedNodeId != null &&
         (edge.source === branchFocusedNodeId || edge.target === branchFocusedNodeId),
     } satisfies DesignerFlowEdgeData,
-    selected: snapshot.selection.activeEdgeId === edge.id,
+    selected: selectedEdgeIds.has(edge.id),
   }));
 }
 

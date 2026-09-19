@@ -354,7 +354,7 @@ function createDesignerCoreInternal(
 
   function copySelection(): void {
     if (assertReadonly('copySelection')) return;
-    shellControls.copySelection(selectionState.selectedNodeIds[0] ?? null);
+    shellControls.copySelection(selectionState.selectedNodeIds);
   }
 
   function pasteClipboard(): void {
@@ -363,7 +363,12 @@ function createDesignerCoreInternal(
       return;
     }
     if (assertReadonly('pasteClipboard')) return;
+    if (shellState.clipboard.length === 0) {
+      return;
+    }
+    const transactionId = beginTransaction('paste-selection');
     shellControls.pasteClipboard(addNode);
+    commitTransaction(transactionId);
   }
 
   function toggleGrid(): void {

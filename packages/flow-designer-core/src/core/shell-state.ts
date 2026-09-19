@@ -8,7 +8,7 @@ import { cloneNode } from './clone.js';
 import { normalizeViewport, normalizeViewportInput, viewportsEqual } from './viewport.js';
 
 export interface DesignerShellState {
-  clipboard: GraphNode | null;
+  clipboard: GraphNode[];
   gridEnabled: boolean;
   paletteCollapsed: boolean;
   inspectorCollapsed: boolean;
@@ -40,7 +40,7 @@ export function createDesignerShellState(
   shellConfig?: DesignerShellConfig,
 ): DesignerShellState {
   return {
-    clipboard: null,
+    clipboard: [],
     gridEnabled: true,
     paletteCollapsed: false,
     inspectorCollapsed: false,
@@ -68,6 +68,6 @@ export function resetShellViewportFromDocument(shell: DesignerShellState, doc: G
   shell.viewport = normalizeViewport(doc.viewport);
 }
 
-export function setShellClipboard(shell: DesignerShellState, node: GraphNode | null) {
-  shell.clipboard = node ? cloneNode(node) : null;
+export function setShellClipboard(shell: DesignerShellState, nodes: GraphNode[] | null) {
+  shell.clipboard = nodes && nodes.length > 0 ? nodes.map((node) => cloneNode(node)) : [];
 }

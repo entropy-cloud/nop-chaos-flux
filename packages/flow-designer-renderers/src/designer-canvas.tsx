@@ -252,9 +252,28 @@ export function DesignerCanvasContent(props: {
     return core.getConfig().nodeTypes;
   }, [core]);
 
+  const handleSelectionReport = useCallback(
+    (nodeIds: string[], edgeIds: string[]) => {
+      // plan 475 Phase 1：内容等价守卫——RF 会在每次 store nodes 更新后重发 selection 事件，
+      // 相同选择回写会翻新快照身份（新节点对象 → RF setNodes → 再发事件）造成更新风暴。
+      const current = snapshot.selection;
+      if (
+        current.selectedNodeIds.length === nodeIds.length &&
+        current.selectedEdgeIds.length === edgeIds.length &&
+        current.selectedNodeIds.every((id) => nodeIds.includes(id)) &&
+        current.selectedEdgeIds.every((id) => edgeIds.includes(id))
+      ) {
+        return;
+      }
+      dispatch({ type: 'setSelection', nodeIds, edgeIds });
+    },
+    [dispatch, snapshot],
+  );
+
   const canvas = renderDesignerCanvasBridge({
     snapshot,
     canvasConfig: config.canvas,
+    features: config.features,
     nodeTypeSizeMap,
     nodeTypeMap,
     pendingConnectionSourceId,
@@ -263,6 +282,7 @@ export function DesignerCanvasContent(props: {
     onPaneClick: handlePaneClick,
     onNodeSelect: handleNodeClick,
     onEdgeSelect: handleEdgeClick,
+    onSelectionReport: handleSelectionReport,
     onStartConnection: (nodeId: string, event?: React.MouseEvent, sourcePort?: string) => {
       if (config.documentMode === 'tree') {
         return;

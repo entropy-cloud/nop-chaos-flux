@@ -33,7 +33,7 @@ export function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfi
       floatingToolbar: true,
       clipboard: true,
       autoLayout: false,
-      multiSelect: false,
+      multiSelect: true,
       ...config.features,
     },
     rules: {
