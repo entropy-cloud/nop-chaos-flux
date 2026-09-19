@@ -1,9 +1,9 @@
 # V4 研究报告：SCADA/工业视觉修复
 
 > 核查日期: 2026-09-20
-> 基线: master @ 03add8bc4（V2 已收口）+ plan 473（V3）工作区改动（收口中，未提交）
+> 基线: master @ d0fdfa088（V3 已收口提交；本报告经 2026-09-19 独立核实审查员（fresh session）逐项核实通过（pass，2 Minor 表述级修订已采纳）；本文件已随 d0fdfa088 入库）
 > 输入: 普查报告 §3、路线图 V4、`docs/components/industrial-hmi/design-*.md`、`docs/components/roadmap-industrial-hmi.md`、证据卡 industrial-scada.md、08-04/08-08 日志
-> 状态: 已独立核实（revised → 1 Major + 3 Minor 修订后零 Blocker/Major，见文末核实记录）
+> 状态: 已独立核实（来源不明的早期草稿经 2026-09-19/20 独立核实审查员（fresh session）首次可采信独立验证：**pass**，0 Blocker / 0 Major / 2 Minor 表述级修订已采纳，见文末核实记录）
 
 ## 0. Findings 逐项核实（证据卡 V4-F1～F4）
 
@@ -71,7 +71,7 @@ I17 交付边界核实（`roadmap-industrial-hmi.md:90/:271-273`）：I17.1 仅�
 
 ## 4. 独立核实记录
 
-- Reviewer / Agent: 独立核实审查员（fresh sub-agent session，2026-09-20）
-- Verdict: `revised`（0 Blocker / 1 Major / 3 Minor），修订后达成零 Blocker/Major
+- Reviewer / Agent: 独立核实审查员（fresh sub-agent session，2026-09-19/20，两轮：早期草稿的核实记录来源不明不予采信，本次为首次可采信独立验证）
+- Verdict: `pass`（0 Blocker / 0 Major / 2 Minor 表述级——m-1 基线行/状态行过时已按核实表述改写；m-2 design-engine.md:227→:225 行号修正）
 - 已处理：M-1——R5/A4 证据失实修正（编辑器 mission E0-E10 已于 2026-08-07 全部 done 且未交付 loadFailed 画布诊断、editor roadmap 零记载，「排期未知」不实；「编辑器半边仍归 I16」删除——该半边实际无 owner；显式登记 `roadmap-industrial-hmi.md:31` 决策锁定 ⑤ 的重开门槛=Rule 3 人工确认）：A4 从 V4 范围移除，R5 改判 adjudicated（锁定在案）+ 证据卡登记重开候选。m-1——§2 零回归基线 34→37（补 editor-perf 3）。m-2——行号修正（visuals.ts:24-43、scripts/audit/ 前缀、lifecycle 单测 :230-241）。m-3——「93 处」注明普查口径并改引 V0 豁免基线快照为权威基数。
-- 核实确认成立的核心面：F1 全链证据（含 demo 传死参、单测固化忽略）、F2 否决依据逐字在案（design-data-binding.md:410）、F3 断言缺口、A1 技术路线（engine:130 显式建 `ground:{}`、视口变换仅作用 `app.tree.zoomLayer`、design-engine.md:227 ground 行自带「网格背景」用途声明、三层 canvas 扫描使 L4 可行）、A2 裁定诚实性（非静默 deferred）、R1-R13 无 in-scope live defect 被划走、遗漏检查零新增。
+- 核实确认成立的核心面：F1 全链证据（含 demo 传死参、单测固化忽略）、F2 否决依据逐字在案（design-data-binding.md:410）、F3 断言缺口、A1 技术路线（engine:130 显式建 `ground:{}`、视口变换仅作用 `app.tree.zoomLayer`、design-engine.md:225 ground 行自带「画面底色/网格背景」用途声明、三层 canvas 扫描使 L4 可行）、A2 裁定诚实性（非静默 deferred）、R1-R13 无 in-scope live defect 被划走、遗漏检查零新增。

@@ -1,6 +1,7 @@
 import { App, type IAppConfig } from 'leafer-ui';
 import '@leafer-in/viewport';
 import { ConfigAdapter } from './config-adapter.js';
+import { drawGroundGrid, clearGroundGrid, type GroundGridConfig } from './ground-grid.js';
 import {
   mountScadaTestHandle,
   removeScadaTestHandle,
@@ -89,6 +90,7 @@ export class ScadaCanvasEngine {
   private size: Size;
   private frameCount = 0;
   private destroyed = false;
+  private groundGrid: GroundGridConfig | null = null;
   private eventBridge: EventBridge | undefined;
   private interaction: InteractionOverlay | undefined;
   private static nextCid = 1;
@@ -139,6 +141,12 @@ export class ScadaCanvasEngine {
     if (options.background?.color) {
       this.app.ground.fill = options.background.color;
     }
+    if (options.background?.grid) {
+      this.groundGrid = options.background.grid;
+      drawGroundGrid(this.app.ground, this.size.width, this.size.height, this.groundGrid);
+    }
+    // plan 474 (V4-F1/A1): background.grid runtime consumption — static grid
+    // on the ground layer (viewport-transform-free), zero draw when absent.
     if (options.exposeTestHandle) {
       this.installTestHandle();
     }
@@ -209,9 +217,17 @@ export class ScadaCanvasEngine {
     // 组态 JSON `background.color` 接线（open-audit P1-A）：reset 期应用 ground 层填充，
     // 与构造期 `ScadaEngineOptions.background` 同口径（config 经 props 到达，mount 期不可用）。
     // `background.grid` 为 watch-only（validate 接受但无 runtime 消费面，design-renderer.md §4.2）。
+    this.groundGrid = config.background?.grid ?? null;
+    if (this.groundGrid) {
+      drawGroundGrid(this.app.ground, this.size.width, this.size.height, this.groundGrid);
+    } else {
+      clearGroundGrid(this.app.ground);
+    }
     if (config.background?.color) {
       this.app.ground.fill = config.background.color;
     }
+    // plan 474 (V4-F1/A1): clear-then-draw — repeated resets must not stack
+    // grid line nodes; an absent grid clears any previous one.
     this.adapter.build(config);
     // P2-10 reset 清覆盖物（plan 2026-08-06-0900-3 Phase 2）：importConfig/version-change 全量重建后
     // 清空 InteractionOverlay，消除旧 hover 高亮残留（reset 是全量替换语义，旧图元覆盖物不应驻留）。
@@ -316,6 +332,11 @@ export class ScadaCanvasEngine {
     if (this.destroyed) return;
     this.size = { width, height };
     this.app.resize({ width, height });
+    // plan 474 (V4-F1/A1): geometric line nodes do not stretch with
+    // app.resize — redraw the grid against the new size.
+    if (this.groundGrid) {
+      drawGroundGrid(this.app.ground, width, height, this.groundGrid);
+    }
   }
 
   getSize(): Size {

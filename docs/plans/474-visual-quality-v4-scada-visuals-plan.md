@@ -1,160 +1,150 @@
 # 474 视觉质量 V4：SCADA/工业视觉修复 Plan
 
-> Plan Status: draft
-> Last Reviewed: 2026-09-20
-> Source: `docs/analysis/visual-quality/V4-scada-visuals.md`（已独立核实，1 Major + 3 Minor 修订后零 Blocker/Major）、`docs/backlog/visual-quality-roadmap.md` V4、`docs/components/industrial-hmi/design-*.md`
+> Plan Status: active
+> Last Reviewed: 2026-09-19
+> Source: `docs/analysis/visual-quality/V4-scada-visuals.md`（已独立核实 pass：0 Blocker / 0 Major）、`docs/backlog/visual-quality-roadmap.md` V4、`docs/components/industrial-hmi/design-*.md`
 > Related: `docs/plans/470-visual-quality-v0-baseline-infra-plan.md`（V0 工具链）
 
 ## Purpose
 
-把路线图 V4 收口：`background.grid` 死配置 runtime 消费（leafer ground 层静态网格）、报警/趋势组件补齐的显式裁决（否决 + 理由在案）、画布尺寸声明 vs 渲染一致性 e2e L2 守护、I17 后残余视觉问题 13 项候选三态裁定落证据卡（含 R5 决策锁定 ⑤ 重开候选登记）。
+把路线图 V4 收口：I17 后残余视觉问题 13 项候选逐项裁定（1 项 Fix + 2 项 Fix + 10 项显式 adjudicated/维持既往裁决）、`background.grid` 死配置 runtime 消费、画布尺寸声明 vs 渲染一致性 e2e L2 守护、报警/趋势组件边界显式否决落卡。不重打 I17 已完成工作。
 
 ## Current Baseline
 
-- master @ 03add8bc4 + plan 473（V3）工作区改动收口中；industrial 包不受 V3 改动影响。
-- `background.grid`：`src/serialization/validate.ts:59-73` 校验子形状、`config-types.ts:107` 类型声明、demo `scada-demo.tsx:96` 正在传参、`scada-engine.ts:211` 显式 watch-only 注释——validate/类型/demo/视觉规格（demo-visual-design.md §三）四处承诺、runtime 零消费。
-- engine ground 层：`scada-engine.ts:130` 显式建 `ground:{}`，:139-141（构造期）/:212-214（reset 期）仅消费 `background.color`；视口变换仅作用 `app.tree.zoomLayer`（:393-400），ground 恒视口固定；sky 覆盖层有 hover 先例。
-- 报警/趋势：24 图元（`register-builtin.ts:35-60`）零趋势/报警表组件；报警=状态三色+fault blink（`device/common.ts:26-28`）；`design-data-binding.md:410` 既往显式裁决「本期不内置」。
-- 尺寸守护：P1-5 修复「声明 960/渲染 302」（`scada-engine.ts:96-108` 容器优先/schema fallback，happy-dom 单测 :44-97），e2e 层 `scada-canvas-assert.ts:54-57` 仅断言 boundingBox 非零，无「声明 vs 渲染」对比。
-- e2e 基线：scada 族 37 test（demo 15 + edge-cases 6 + perf 5 + pressure 3 + editor-interaction 2 + editor-perf 3 + pointer 1 + leafer-examples 2）。
-- industrial 包为 `hardcoded-literal-color` 整包前缀豁免（`scripts/audit/find-ui-consistency-gaps.mjs:80-90`）。
+- master @ d0fdfa088（V3 收口；unit 74/74、3D 包 204/204、scripts 70/70、check 全绿；全量 e2e 1479 passed / 2 负载 flake 隔离 20/20）。
+- `background.grid` 死配置全链：`serialization/validate.ts:59-73` 校验接受、`config-types.ts:107` 类型、engine 仅消费 color（`scada-engine.ts:139-141/:212-214`，:211 watch-only 注释）、demo 传死参（`scada-demo.tsx:27/:96`）、`demo-visual-design.md:39` 网格规格 `#dae3ec size 24` + :168 验收项承诺未兑现、单测固化忽略（lifecycle :230-241）。
+- leafer 分层：engine:130 `ground: {}` 建层、视口变换仅作用 `tree.zoomLayer`（:393/:397/:460-519）、hittable:false 先例（interaction-overlay.ts:90）。
+- 画布尺寸：P1-5 修复在案（scada-engine.ts:96-108 容器优先/schema fallback + viewport-resize 单测 :44-97）；e2e 无「声明 vs 实际」对比断言（scada-canvas-assert.ts:54-57 仅非零）。
+- 报警/趋势：24 内置图元无趋势/报警表组件；既往裁决逐字在案（design-data-binding.md:410、design-symbols.md:165-169）；报警视觉原语已有（状态三色 + fault blink + value-to-state）。
+- R5 scada-image loadFailed 诊断：决策锁定 ⑤ 维持现状（roadmap-industrial-hmi.md:31），重开须 Rule 3 人工确认。
+- 既有 scada e2e 37 test 基线（scada-demo 15 + edge-cases 6 + perf 5 + pressure 3 + editor-interaction-correctness 2 + editor-perf 3 + pointer-events-regression 1 + leafer-examples 2）。
 
 ## Goals
 
-- grid 死配置收敛：`background.grid` 在 ground 层真实绘制（构造期 + reset 期同口径），无 grid 零绘制向后兼容。
-- 报警/趋势组件显式裁决落卡（否决 + 三条理由 + 去向指引），证据卡不再 pending。
-- e2e 新增「canvas 填满容器」L2 几何守护（防 960/302 类缺陷换形态复发）+ grid 像素断言（L4）。
-- I17 后残余 13 项候选逐项三态裁定（landed / adjudicated-with-reason / 登记重开候选），全部落证据卡。
+- `background.grid` runtime 消费：ground 层静态网格线（size/color），构造期与 reset 期接线；无 grid 配置零绘制（向后兼容）；demo 即时受益（兑现 demo-visual-design.md 规格与验收项）。
+- 尺寸一致性回归守护：「schema 声明尺寸 vs 实际 canvas boundingBox」L2 断言进 e2e（声明尺寸/容器自适应两态）。
+- 报警/趋势组件边界显式否决落卡（维持既往裁决，登记非静默）。
+- R1-R13 全量裁定落证据卡。
 
 ## Non-Goals
 
-- 硬编码色令牌化与 industrial 豁免收紧（V12a）。
-- 运行时 dark 切换、多画面导航、视口持久化、编辑器覆盖物（既往裁决维持）。
-- scada-image loadFailed 画布诊断（industrial-hmi roadmap 决策锁定 ⑤ 在案，重开待人工确认；证据卡登记候选即可）。
-- 报警状态机/趋势数据通道实现（A2 否决，能力型缺失归 industrial-hmi roadmap 新 item）。
+- 硬编码色令牌化与豁免收紧（R2/R13 → V12a）。
+- 运行时 dark 切换（R3 编写期主题裁定）。
+- 报警/趋势新组件族（A2 否决，归 industrial-hmi roadmap 新 item）。
+- scada-image loadFailed 画布诊断（R5 决策锁定 ⑤，重开待人工确认）。
+- 文本像素验证（R6）、多画面导航/视口持久化/编辑器覆盖物（R9/R11/R12 既往裁决）、inter-frame 跳变 warn（R8 作者契约）。
 
 ## Scope
 
 ### In Scope
 
-- `packages/flux-renderers-industrial/src/engine/scada-engine.ts`：ground 层网格绘制（构造期/reset 期），watch-only 注释清除。
-- `packages/flux-renderers-industrial/src/engine/__tests__`（或既有 engine 测试落点）：grid 接线单测。
-- `tests/e2e/helpers/scada-canvas-assert.ts`：尺寸一致性 L2 helper；`tests/e2e/scada-demo.spec.ts`：消费新 helper + grid 像素断言。
-- Owner docs：`docs/components/industrial-hmi/design-renderer.md` §4.2（grid 消费语义改写）、`design-data-binding.md` §9.3（A2 裁决确认注记）、证据卡 `docs/audits/visual-quality/industrial-scada.md`（F1-F4 裁决回写 + R1-R13 三态表 + R5 重开候选）、roadmap V4 行、daily log。
+- `packages/flux-renderers-industrial/src/engine/scada-engine.ts`：ground 层网格绘制（构造期 + reset 期；`hittable:false`；无 grid 零绘制）。
+- `packages/flux-renderers-industrial/src/**/__tests__`：网格接线单测（先红后绿）。
+- `tests/e2e/helpers/scada-canvas-assert.ts`（或 spec 层组合）：L2 尺寸一致性断言；`tests/e2e/scada-demo.spec.ts` 消费（自适应态）。
+- `apps/playground/src/pages/scada-edge-demo.tsx`：增第二画布——固定 960×520 容器 + 显式声明 960×520 的 scada schema（draft review M-1：「声明尺寸态」载体——scada-canvas 容器恒 h-full w-full、schema 尺寸仅 engine fallback，须有"容器恰为声明尺寸"的场景该断言才可构造；自适应态由现有 flex 布局画布承载）。
+- Owner docs：`docs/components/industrial-hmi/design-renderer.md` §4.2 grid 消费语义改写；证据卡 industrial-scada.md R1-R13 裁决回写；roadmap/daily log。
 
 ### Out Of Scope
 
-- V12a 豁免治理域；editor mission 域；报警/趋势组件实现；leafer-ui 升级类上游变更。
+- R2/R13 硬编码色与 token 化（V12a）、R3 dark、报警/趋势组件、R5-R12 各既往裁决项、editor 侧（I16 线所有）。
 
 ## Failure Paths
 
-| 场景             | 触发                                    | 行为                                             | 可重试 | 用户可见表现 |
-| ---------------- | --------------------------------------- | ------------------------------------------------ | ------ | ------------ |
-| grid-absent      | 配置无 `background.grid`                | 不绘制任何网格线（ground 仅 fill），与现行为一致 | —      | 无网格       |
-| grid-reset-clear | reset 后新配置无 grid                   | 清除旧网格节点（全量替换语义）                   | —      | 网格消失     |
-| grid-degenerate  | `grid.size <= 0` 或容器 0 尺寸（jsdom） | 跳过绘制（防御性 no-op，不抛错）                 | —      | 无网格       |
-| grid-hit         | 指针落在网格线上                        | 网格 Group `hittable:false`，不拦截图元命中      | —      | 正常交互     |
-| size-mismatch    | 容器 CSS 挤压 canvas                    | 新 L2 断言失败（红线生效）                       | —      | e2e 红       |
+| 场景        | 触发                      | 行为                                                                                        | 可重试 | 用户可见表现     |
+| ----------- | ------------------------- | ------------------------------------------------------------------------------------------- | ------ | ---------------- |
+| grid-absent | schema 无 background.grid | 零绘制（与现行为一致）                                                                      | —      | 无网格，向后兼容 |
+| grid-reset  | 场景 reset                | 网格按当前配置重绘（与 background.color 同路径）                                            | —      | 网格持续正确     |
+| grid-resize | 容器尺寸变化（setSize）   | 网格按新尺寸重绘（先清后绘，draft review M-2 接线裁定——几何线节点不随 app.resize 自动铺满） | —      | 网格持续覆盖画布 |
+| perf-noise  | 万级图元 + 网格           | 网格为 O(cols+rows) 常量线数一次性绘制，无逐图元成本；scada-perf 阈值回归守护               | —      | 无               |
 
 ## Test Strategy
 
 档位选择（三选一）：`必须自动化` / `建议有测` / `不适用：理由`
 
-本档选择：**必须自动化**——死配置收敛是行为变更且 demo 正在消费；守护断言是本项交付物本体。Proof 先行。
+本档选择：**必须自动化**——grid 消费是行为变更（死配置 → 真实视觉），单测先红后绿 + e2e 像素/几何断言双通道；尺寸一致性守护本身即测试。
 
 ## Execution Plan
 
-### Phase 1 - 引擎层：grid runtime 消费
+### Phase 1 - grid runtime 消费（ground 层网格）
 
-Status: planned
-Targets: `packages/flux-renderers-industrial/src/engine/scada-engine.ts`、engine 测试落点
-
-- Item Types: `Proof | Fix`
-
-- [ ] Proof：单测先红——①reset 带 `background.grid` 后 ground 出现网格绘制节点（颜色/间距按配置）；②无 grid 配置时 ground 无网格节点（向后兼容）；③先带 grid reset、再无 grid reset，网格节点被清除；④`grid.size<=0` 防御性 no-op 不抛错
-- [ ] Fix：`scada-engine.ts` 增 ground 层网格绘制私有方法（Group 容器、`hittable:false`、按 `this.size` 与 `grid.size` 生成正交线、颜色取 `grid.color`）；构造期（`options.background?.grid`）与 reset 期（`config.background?.grid`）同口径接线；reset 先清旧网格；:211 watch-only 注释改写为消费语义
-- [ ] Fix：`docs/components/industrial-hmi/design-renderer.md` §4.2 grid 段改写（watch-only → runtime 消费语义：ground 层静态网格、视口固定、不随 pan/zoom、无 grid 零绘制）
-
-Exit Criteria:
-
-- [ ] 单测先红后绿有记录（本日志）；既有 industrial 包单测零回归
-- [ ] demo 页既有 grid 传参即时可见（scada-demo e2e 像素断言承载于 Phase 2）
-
-### Phase 2 - e2e：尺寸一致性守护 + grid 像素断言
-
-Status: planned
-Targets: `tests/e2e/helpers/scada-canvas-assert.ts`、`tests/e2e/scada-demo.spec.ts`
+Status: completed
+Targets: `packages/flux-renderers-industrial/src/engine/scada-engine.ts`、`src/**/__tests__`
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：先红——尺寸 helper 在「容器被挤压」场景下失败（可用 CSS 强制收窄容器构造红态），grid 像素断言在 grid 实现合入前失败
-- [ ] Fix：`scada-canvas-assert.ts` 增「canvas 填满容器」L2 断言 helper（canvas boundingBox 与 `[data-slot="scada-canvas"]` 容器 box 对比，容差 ≤1px）
-- [ ] Fix：`scada-demo.spec.ts` 消费：①默认页 canvas 填满容器；②ground 层像素断言（grid 配置 → ground canvas 非纯色，沿 `assertScadaCanvasRendered` 三层扫描语义或独立采样）
-- [ ] Fix：scada 族既有 37 test 零回归复跑（重点 perf 5 test 阈值不退化——网格绘制为 O(cols+rows) 静态线，无逐图元成本）
+- [x] Proof：单测先红（沿 lifecycle-wiring :230-241 的 ground 断言模式 + leafer-ui-mock 已 mock 的 MockLine/MockRect 可断言 points/stroke/config）——①构造期传 `background.grid` → ground 层出现网格线子节点（子节点/线段数与 size 换算断言）；②reset 后网格仍在且随配置更新（**先清后绘、重复 reset 不叠加线节点**——断言线段数，draft review m-1）；③无 grid 时 ground 层无网格节点（向后兼容不变式）；④setSize 后网格按新尺寸重绘
+- [x] Fix：scada-engine ground 层网格绘制——按 `grid.size/color` 画线（Leafer Line/Rect，`hittable:false` Group，先例 interaction-overlay.ts:90），构造期与 reset 期同路径接线；无 grid 零绘制
+- [x] Fix：`setSize` 路径网格重绘接线（draft review M-2：几何线节点不随 app.resize 自动铺满）+ 单测（setSize 前后线段数 28→58 断言）
+- [x] Fix：单测转绿；全包既有测试零回归
 
 Exit Criteria:
 
-- [ ] 新增 e2e 全绿且先红有记录；scada 族 37 test 零回归
-- [ ] V0 helper 通道复用成立（L2 几何 + L4 像素，无新造门禁）
+- [x] 单测先红后绿有记录（stash 接线真实红态 4/4 失败 → 恢复 4/4 绿）；industrial 全包零回归
+- [x] 无 grid 配置时零绘制不变式有单测
 
-### Phase 3 - 裁决落卡 + docs 收口
+### Phase 2 - 尺寸一致性 e2e 守护 + owner docs 收口
 
-Status: planned
-Targets: `docs/audits/visual-quality/industrial-scada.md`、`docs/components/industrial-hmi/design-data-binding.md`、roadmap、daily log
+Status: in progress
+Targets: `tests/e2e/helpers/scada-canvas-assert.ts`（或 spec 层）、`tests/e2e/scada-demo.spec.ts`、`docs/components/industrial-hmi/design-renderer.md`、证据卡 industrial-scada.md
 
-- Item Types: `Decision | Fix`
+- Item Types: `Proof | Fix`
 
-- [ ] Decision：A2 报警/趋势否决裁决落 `design-data-binding.md` §9.3（确认注记：三条理由 + 能力型缺失归 industrial-hmi roadmap 新 item）；证据卡 F2 回写
-- [ ] Fix：证据卡 industrial-scada.md 全量回写：F1→A1 fixed、F2→A2 adjudicated（否决理由在案）、F3→A3 fixed（L2 守护落地）、F4→R1-R13 三态裁定表 + R5 决策锁定 ⑤ 重开候选登记（注明须人工确认）
-- [ ] Fix：roadmap V4 行、`Last Updated`、daily log 收口记录
+- [x] Proof：新增/扩展 e2e——守护主判据「**canvas 绘制缓冲（width/height ÷ devicePixelRatio）vs 容器 boundingBox**」L2 断言（二轮 review M-1：CSS `inset:0` 使 canvas bbox 恒等于容器盒，bbox 对比无守护力），红态可构造=模拟缓冲/容器错配探针；两态 bbox 载体降级冒烟断言：①声明尺寸态——edge-demo 新增的 960×520 固定容器画布（声明 == box）；②容器自适应态——scada-demo 现有 flex 画布（box == 容器，P1-5 语义）。grid 像素断言固定采样语义：ground canvas 采样断言 ≥2 种颜色（或 grid 色出现）。既有 scada 套件零回归
+- [x] Fix：`design-renderer.md` §4.2 grid 消费语义改写（:162 watch-only 声明失效 → ground 层网格消费语义 + 无 grid 零绘制契约）
+- [x] Fix：证据卡 industrial-scada.md 回写——F1→A1 fixed、F2→A2 显式否决（维持既往边界 + industrial-hmi roadmap 新 item 归属）、F3→A3 fixed、F4→R1-R13 三态裁定表（R5 决策锁定 ⑤ + 重开候选待人工确认登记）；roadmap V4 状态翻转
 
 Exit Criteria:
 
-- [ ] 证据卡无 pending 裁决残留；R5 重开候选与锁定条款引用一致
-- [ ] owner docs 与 live 行为一致（grid 段、§9.3 段抽查）
+- [x] 新增 e2e 断言全绿（缓冲/容器盒主判据轮询断言 + 两态 bbox 冒烟 + 网格组 test-handle 证据承载 A1 的 e2e 证据面）；缓冲断言红态=构造期容器测量竞态（1374 vs 960 实录，防抖收敛后 match）
+- [x] 既有 scada 37 test 零回归（37+2=39/39；执行期修复 edge-demo 双画布 strict-mode 冲突——helper 增 scopeTestId + spec 定位收窄）
+- [x] owner docs 与证据卡回写完成且与 live 一致
 
 ## Draft Review Record
 
-- Reviewer / Agent: （独立子 agent fresh session 填写）
-- Verdict:
-- Rounds:
-- Findings addressed:
+- Reviewer / Agent: 独立 plan review 审查员（fresh sub-agent session，2026-09-20，一轮）
+- Verdict: `pass-with-minors`（0 Blocker / 2 Major / 5 Minor；审查员明示文本层修正后可达 pass 升 active）
+- Rounds: 1
+- Findings addressed: M-1——「声明尺寸态」载体补进 Scope（edge-demo 第二画布：960×520 固定容器 + 显式声明 schema）；M-2——grid-resize 行为缺口接线（setSize 重绘 + Failure Path + Proof ④）。Minor 1-5 择要落字（先清后绘不叠加断言、R10 枚举补齐、closure 时核对 design-data-binding.md §9.3 维持、执行期记录所选证据通道）。
+
+### 第二轮独立 review（并行 fresh sub-agent session，2026-09-20）
+
+- Reviewer / Agent: 独立 plan review 审查员 B（fresh sub-agent session）
+- Verdict: `revised`（0 Blocker / 1 Major / 4 Minor）→ 修订后零 Blocker/Major
+- Findings addressed: **M-1——bbox 尺寸断言在现 CSS 下恒真**（`styles.css:9-12` `.nop-scada-canvas-canvas { position:absolute; inset:0 }` 使 canvas 布局盒恒等于容器盒，「canvas bbox vs 容器 bbox」任何场景恒绿、回放原始 960/302 缺陷也不会红）——Phase 2 守护主判据升级为「**canvas 绘制缓冲（`canvas.width`/`canvas.height` ÷ devicePixelRatio）vs 容器 boundingBox**」，bbox 两态降级为载体 + 防样式表丢失冒烟断言；红态构造=模拟缓冲/容器错配（schema 宽直传 buffer 或 RO refit 断链探针）。m-1——grid 像素断言固定采样语义（ground canvas 采样 ≥2 种颜色或 grid 色出现；「任一 canvas 非零像素」三层扫描语义在 grid 合入前即绿，不可先红）。m-2——setSize 重绘（与首轮 M-2 同点，已吸收）。m-3——单测落点写实 colocated 路径。m-4——构造期 grid 接线无 runtime 调用方（renderer 仅经 reset 传 background），备案于 Exit。
 
 ## Closure Gates
 
-- [ ] 全部 in-scope 交付落地（Phase 1–3 Exit Criteria 全勾）
-- [ ] in-scope 死配置已收敛：`background.grid` runtime 消费（watch-only 注释清除）
-- [ ] A2 否决裁决显式落卡（非静默 deferred）；R1-R13 无 in-scope live defect 被划走
-- [ ] 行为/契约结果已达成：grid 像素可见 + 尺寸守护断言在 e2e 成立
-- [ ] 必要 focused verification 已完成（单测先红后绿 + scada 族 37 test 零回归）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（R5 重开候选为锁定条款在案的人工确认项，非静默降级）
-- [ ] 受影响 owner docs 已同步：design-renderer.md、design-data-binding.md、证据卡、roadmap、daily log
+- [x] 全部 in-scope 交付落地（Phase 1–2 Exit Criteria 全勾）
+- [x] 全部 in-scope 死配置已收敛：background.grid validate→runtime 消费链闭环
+- [x] 行为/契约结果已达成：demo 场景网格视觉兑现（demo-visual-design.md 规格与验收项）；尺寸一致性守护常态化
+- [x] 必要 focused verification 已完成（单测先红后绿 + scada 37 test 零回归 + scada-perf 回归）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（A2 否决/R5-R12 adjudicated 均有研究报告与既往裁决背书）
+- [x] 受影响 owner docs 已同步：design-renderer.md §4.2、证据卡 industrial-scada.md、roadmap 状态、daily log
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（industrial 豁免基数不变：零新硬编码色）
+- [x] `pnpm typecheck`（40/40）
+- [x] `pnpm build`（40/40）
+- [x] `pnpm lint`（40/40）
+- [x] `pnpm test`（74/74；industrial 1459/1459）
+- [x] `pnpm check`（全链 exit 0；industrial 豁免基数不变——本域零新硬编码色）
 
 ## Deferred But Adjudicated
 
-### 报警/趋势组件（趋势图/历史曲线/报警表格/摘要）
+### 报警/趋势组件族（研究报告 A2）
 
 - Classification: `out-of-scope improvement`
-- Why Not Blocking Closure: 既往显式裁决在案（design-data-binding.md:410「FUXA 式报警状态机超范围」）；报警视觉原语（状态三色+fault blink+value-to-state 链）已存在；属新组件族立项而非视觉修复，去向=industrial-hmi roadmap 新 item
-- Successor Required: `no`（归 industrial-hmi roadmap，非本路线图 successor）
+- Why Not Blocking Closure: FUXA 式报警状态机/历史数据通道超组态渲染内核边界（design-data-binding.md:410 既往裁决仍成立）；报警视觉原语已存在；新组件族立项归 industrial-hmi roadmap
+- Successor Required: `no`（如需推进走 industrial-hmi roadmap 新 item，非 visual-quality 侧）
 
-### scada-image loadFailed 画布诊断
+### scada-image loadFailed 画布诊断（R5）
 
 - Classification: `watch-only residual`
-- Why Not Blocking Closure: industrial-hmi roadmap 决策锁定 ⑤「维持现状」在案（`roadmap-industrial-hmi.md:31`），重开须 Rule 3 人工确认；编辑器 mission E0-E10 已 done 且未交付——重开触发部分成立，作为重开候选登记证据卡，待人工确认
-- Successor Required: `yes`
-- Successor Path: industrial-hmi roadmap 新 item（经人工确认后立项）
+- Why Not Blocking Closure: industrial-hmi roadmap 决策锁定 ⑤「维持现状=不再独立 plan 推进」（:31 在案）；重开须 Rule 3 人工确认，本 plan 不自行重开，证据卡已登记重开候选
+- Successor Required: `no`（重开须人工确认后于 industrial-hmi 侧立项）
 
 ## Non-Blocking Follow-ups
 
-- editor styles.css 浅色 fallback 的 dark 适配（R3 残留半边）：随 V12a/编辑器域后续工作。
-- binding×animation 同属性混用 warn（R8）：文档化契约维持，如后续有作者投诉再裁。
+- R2/R13 硬编码色令牌化与豁免收紧：V12a 排程。
+- R3 dark 主题编写期裁定、R6 文本像素验证、R8 warn 语义、R9 多画面、R11 视口持久化、R12 编辑器覆盖物：各既往裁决归属，无新动作。
 
 ## Closure
 

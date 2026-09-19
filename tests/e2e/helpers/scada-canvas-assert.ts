@@ -17,6 +17,8 @@ import { expect, type Page } from '@playwright/test';
  */
 
 export interface CanvasAssertionOptions {
+  /** plan 474: scope the canvas lookup to this testid's subtree (multi-canvas pages). */
+  scopeTestId?: string;
   /** 当 toDataURL/getImageData 命中 SecurityError 时的预期原因标记（诊断用）。 */
   notes?: string;
   /**
@@ -47,7 +49,11 @@ export async function assertScadaCanvasRendered(
   options: CanvasAssertionOptions = {},
 ): Promise<CanvasAssertionResult> {
   // ① DOM canvas 元素存在（Phase 1 已把 data-slot 落到真实 leafer <canvas>）+ 尺寸非 0
-  const canvas = page.locator('[data-slot="scada-canvas-canvas"]');
+  // plan 474: scope by testid subtree — pages may host multiple scada canvases
+  const root = options.scopeTestId
+    ? page.getByTestId(options.scopeTestId).locator('[data-slot="scada-canvas"]')
+    : page.locator('[data-slot="scada-canvas"]');
+  const canvas = root.locator('[data-slot="scada-canvas-canvas"]');
   await expect(canvas).toBeVisible({ timeout: 15_000 });
   const tagName = await canvas.evaluate((el) => el.tagName);
   expect(tagName, 'scada-canvas-canvas slot 必须落在真实 <canvas> DOM 元素上').toBe('CANVAS');
@@ -105,8 +111,9 @@ export async function assertScadaCanvasRendered(
   // leafer App 三层模型（ground/tree/sky）各持独立 <canvas>——`data-slot` 落在 `querySelector('canvas')`
   // 返回的首个 canvas（ground 背景层，常透明）。仅探测单一 canvas 会把透明背景层判为全零、漏掉 tree 层
   // 已绘内容。故扫描 `[data-slot="scada-canvas"]` 容器内**全部** canvas，任一命中非零像素即「confirmed」。
-  const pixelProbe = await page.locator('[data-slot="scada-canvas"]').evaluate((root) => {
-    const canvases = Array.from(root.querySelectorAll<HTMLCanvasElement>('canvas'));
+  const pixelProbe = await root.evaluate((el) => {
+    const rootEl = el;
+    const canvases = Array.from(rootEl.querySelectorAll<HTMLCanvasElement>('canvas'));
     if (canvases.length === 0) return 'fallback-all-zero' as const;
     let sawSecurityError = false;
     for (const canvasEl of canvases) {

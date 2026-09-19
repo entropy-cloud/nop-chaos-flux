@@ -17,7 +17,8 @@ import { assertScadaCanvasRendered } from './helpers/scada-canvas-assert.js';
 // 超大画面复用既有载体（10k pressure / 100k perf-scale），不新增重复载体。
 
 async function getScadaCid(page: Page): Promise<string> {
-  const canvas = page.locator('[data-slot="scada-canvas"]');
+  // scope to the tab-driven canvas (plan 474 added a second declared-size canvas)
+  const canvas = page.getByTestId('scada-edge-main').locator('[data-slot="scada-canvas"]');
   await expect(canvas).toBeVisible({ timeout: 15_000 });
   await expect(canvas).toHaveAttribute('data-status', 'ready', { timeout: 15_000 });
   const cid = await canvas.getAttribute('data-cid');
@@ -26,7 +27,7 @@ async function getScadaCid(page: Page): Promise<string> {
 }
 
   async function hoverSymbolAtWorld(page: Page, cid: string, worldX: number, worldY: number): Promise<void> {
-    const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
+    const box = await page.getByTestId('scada-edge-main').locator('[data-slot="scada-canvas"]').boundingBox();
     expect(box).toBeTruthy();
     // 先移开再落点（2026-09-01）：合成同坐标 mousemove 会被浏览器输入管线去重——首试 move 可能
     // 早于事件桥/场景就绪被消费，之后重复同坐标 move 不再产生 pointer.move（I15.1 flaky 根因）。
@@ -91,10 +92,10 @@ test.describe('Scada Edge Cases (I15.1)', () => {
     );
     expect(handle).toBeTruthy();
 
-    await expect(page.locator('[data-slot="scada-canvas-error"]')).toHaveCount(0);
+    await expect(page.getByTestId('scada-edge-main').locator('[data-slot="scada-canvas-error"]')).toHaveCount(0);
     await expect(page.getByText('scada 场景构建失败（config 非法）')).toHaveCount(0);
     // TE-3 canvas 存在性断言（minimal 场景：单 rect 非空，像素探测应 confirmed 或 fallback）
-    await assertScadaCanvasRendered(page, cid, { notes: 'edge minimal scene' });
+    await assertScadaCanvasRendered(page, cid, { notes: 'edge minimal scene', scopeTestId: 'scada-edge-main' });
     await assertTrackedPageErrors(page);
   });
 
@@ -112,9 +113,9 @@ test.describe('Scada Edge Cases (I15.1)', () => {
     );
     expect(count).toBe(0);
 
-    await expect(page.locator('[data-slot="scada-canvas-error"]')).toHaveCount(0);
+    await expect(page.getByTestId('scada-edge-main').locator('[data-slot="scada-canvas-error"]')).toHaveCount(0);
     // TE-3 canvas 存在性断言（empty scene：合法空画面，像素探测全零 → fallback，帧计数硬门禁）
-    await assertScadaCanvasRendered(page, cid, { notes: 'edge empty scene (all-zero pixel fallback expected)' });
+    await assertScadaCanvasRendered(page, cid, { notes: 'edge empty scene (all-zero pixel fallback expected)', scopeTestId: 'scada-edge-main' });
     await assertTrackedPageErrors(page);
   });
 
@@ -122,7 +123,8 @@ test.describe('Scada Edge Cases (I15.1)', () => {
     await page.goto('/#/scada-edge-cases', { waitUntil: 'load' });
     await page.getByTestId('scada-edge-invalid').click();
 
-    const canvas = page.locator('[data-slot="scada-canvas"]');
+    // scope to the tab-driven canvas (plan 474 added a second declared-size canvas)
+  const canvas = page.getByTestId('scada-edge-main').locator('[data-slot="scada-canvas"]');
     await expect(canvas).toHaveAttribute('data-status', 'error', { timeout: 15_000 });
 
     // empty region 可见（页面提供 empty 模板，design-renderer.md §6 区域语义）
@@ -227,7 +229,7 @@ test.describe('Scada Edge Cases (I15.1)', () => {
       .toHaveLength(1);
 
     // 移到空白区（世界包围盒外）→ hover-miss → 覆盖物清除
-    const box = await page.locator('[data-slot="scada-canvas"]').boundingBox();
+    const box = await page.getByTestId('scada-edge-main').locator('[data-slot="scada-canvas"]').boundingBox();
     expect(box).toBeTruthy();
     await page.mouse.move(box!.x + 5, box!.y + 5);
     await expect

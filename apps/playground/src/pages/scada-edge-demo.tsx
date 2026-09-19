@@ -185,11 +185,45 @@ export function ScadaEdgeDemoPage({ onBack }: ScadaEdgeDemoPageProps) {
           边界断言入口：`tests/e2e/scada-edge-cases.spec.ts`（空画面/非法 JSON/非矩形图元 hover 覆盖物）
         </div>
       </div>
-      <div className="flex-1 min-h-0 rounded-xl border border-[var(--nop-nav-border)] bg-[#0b1220] overflow-hidden">
+      <div
+        data-testid="scada-edge-main"
+        className="flex-1 min-h-0 rounded-xl border border-[var(--nop-nav-border)] bg-[#0b1220] overflow-hidden"
+      >
         <SchemaRenderer
           key={screen}
           schemaUrl="playground://pages/scada-edge-cases"
           schema={schema}
+          env={env}
+          registry={registry as never}
+          formulaCompiler={formulaCompiler}
+        />
+      </div>
+      {/*
+        plan 474 (V4-F3/A3)：「声明尺寸态」载体——容器恰为 960×520，scada schema 显式
+        声明同尺寸，e2e 可断言「schema 声明尺寸 == 实际 canvas boundingBox」。
+      */}
+      <div
+        data-testid="scada-edge-declared-size"
+        style={{ width: 960, height: 520 }}
+        className="shrink-0 rounded-xl border border-[var(--nop-nav-border)] bg-[#0b1220] overflow-hidden"
+      >
+        <SchemaRenderer
+          schemaUrl="playground://pages/scada-edge-cases-declared"
+          schema={{
+            type: 'page',
+            className: 'h-full flex flex-col',
+            bodyClassName: 'flex-1 min-h-0 p-0',
+            body: [
+              {
+                type: 'scada-canvas',
+                id: 'scada-edge-declared-canvas',
+                width: 960,
+                height: 520,
+                viewport: { fit: 'contain' as const },
+                config: MINIMAL_CONFIG as never,
+              },
+            ],
+          }}
           env={env}
           registry={registry as never}
           formulaCompiler={formulaCompiler}

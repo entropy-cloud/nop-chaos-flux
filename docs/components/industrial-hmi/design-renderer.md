@@ -159,7 +159,7 @@ interface ScadaSymbolNode {
 > **视图配置接线契约（2026-08-04 plan `{2}` Phase 3 落地）**：
 >
 > - `background.color` **已接线**：full/reset 路径（`engine.reset(config)`）应用到 ground 层填充，与构造期 `ScadaEngineOptions.background` 同口径，reset 覆盖构造值（config 经 props 到达，mount 期不可用，接线点在 reset/同步期而非 options 透传）。
-> - `background.grid` **未接线（watch-only）**：validate 接受但无任何 runtime 消费面（v1 无兼容负担）；author 不应依赖 grid 底纹，后续图元样式轮或需求触发时再接线（roadmap Follow-up Backlog 登记）。
+> - `background.grid` **已接线（plan 474 / visual-quality V4-F1）**：ground 层静态网格——按 `grid.size/color` 绘制竖/横发丝线（`hittable:false` Group，视口平移缩放不动 ground 层），构造期与 reset 期同路径（**先清后绘**，重复 reset 不叠加；无 grid 配置零绘制，向后兼容），`setSize` 重绘对齐新尺寸（几何线节点不随 `app.resize` 铺满）。实现：`engine/ground-grid.ts`。
 > - `viewport {x,y,scale}` **已接线（组态默认）**：full/reset 路径（含 importConfig）存在且无 props `viewport` policy 时作为初始视口经 `engine.setViewport` 应用；props `viewport` policy（fit/center）为**显式首选项**，两者都无时保持现状。diff 增量路径不重应用（用户画布平移/缩放不被重置，gate-4-review m-B）。
 
 ### 4.3 校验/序列化/反序列化/增量 diff
