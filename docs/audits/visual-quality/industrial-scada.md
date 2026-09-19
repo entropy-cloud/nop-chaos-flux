@@ -17,7 +17,7 @@ I17 视觉重设计已 done（2026-08-06 closure approved，`roadmap-industrial-
   - 状态: fixed
 - [V4-F2] 图元库报警/趋势组件不足
   - 证据: 普查 §3.3；既往裁决逐字在案（design-data-binding.md:410、design-symbols.md:165-169）；报警视觉原语已存在（状态三色+fault blink+value-to-state）
-  - 裁决: adjudicated（plan 474 A2 显式否决：报警状态机/历史数据通道超组态渲染内核边界，无新需求证据；新组件族立项归 industrial-hmi roadmap，非 visual-quality 侧。design-renderer §9.3 维持声明核对无改动）
+  - 裁决: adjudicated（plan 474 A2 显式否决：报警状态机/历史数据通道超组态渲染内核边界，无新需求证据；新组件族立项归 industrial-hmi roadmap，非 visual-quality 侧。design-data-binding.md §9.3（:348 报警/趋势本期不内置）与 :410 既往裁决维持，核对无改动）
   - 状态: adjudicated
 - [V4-F3] 画布尺寸声明与渲染一致性缺回归守护
   - 证据: 普查 §3.4、`docs/logs/2026/08-08.md:301`；P1-5 修复在案（scada-engine.ts:96-108 + viewport-resize 单测）

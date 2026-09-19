@@ -216,7 +216,7 @@ export class ScadaCanvasEngine {
     if (this.destroyed) return;
     // 组态 JSON `background.color` 接线（open-audit P1-A）：reset 期应用 ground 层填充，
     // 与构造期 `ScadaEngineOptions.background` 同口径（config 经 props 到达，mount 期不可用）。
-    // `background.grid` 为 watch-only（validate 接受但无 runtime 消费面，design-renderer.md §4.2）。
+    // `background.grid` 已接线（plan 474 V4-F1）：ground 层网格，先清后绘（ground-grid.ts）。
     this.groundGrid = config.background?.grid ?? null;
     if (this.groundGrid) {
       drawGroundGrid(this.app.ground, this.size.width, this.size.height, this.groundGrid);

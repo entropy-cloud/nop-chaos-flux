@@ -1,6 +1,6 @@
 # 474 视觉质量 V4：SCADA/工业视觉修复 Plan
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-19
 > Source: `docs/analysis/visual-quality/V4-scada-visuals.md`（已独立核实 pass：0 Blocker / 0 Major）、`docs/backlog/visual-quality-roadmap.md` V4、`docs/components/industrial-hmi/design-*.md`
 > Related: `docs/plans/470-visual-quality-v0-baseline-infra-plan.md`（V0 工具链）
@@ -84,7 +84,7 @@ Exit Criteria:
 
 ### Phase 2 - 尺寸一致性 e2e 守护 + owner docs 收口
 
-Status: in progress
+Status: completed
 Targets: `tests/e2e/helpers/scada-canvas-assert.ts`（或 spec 层）、`tests/e2e/scada-demo.spec.ts`、`docs/components/industrial-hmi/design-renderer.md`、证据卡 industrial-scada.md
 
 - Item Types: `Proof | Fix`
@@ -120,11 +120,11 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成（单测先红后绿 + scada 37 test 零回归 + scada-perf 回归）
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（A2 否决/R5-R12 adjudicated 均有研究报告与既往裁决背书）
 - [x] 受影响 owner docs 已同步：design-renderer.md §4.2、证据卡 industrial-scada.md、roadmap 状态、daily log
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（closure audit：`issues`——1 Major 全量 e2e 证据悬空 + 5 Minor；修正含 V4 树上全新全量 e2e 补跑与文本更正后达标。审计明示"修正后可直接进入完成标记"）
 - [x] `pnpm typecheck`（40/40）
 - [x] `pnpm build`（40/40）
 - [x] `pnpm lint`（40/40）
-- [x] `pnpm test`（74/74；industrial 1459/1459）
+- [x] `pnpm test`（74/74；industrial 1455/1455 含 ground-grid 4 用例）
 - [x] `pnpm check`（全链 exit 0；industrial 豁免基数不变——本域零新硬编码色）
 
 ## Deferred But Adjudicated
@@ -148,13 +148,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （closure audit 通过后填写）
+Status Note: 两 Phase 全 completed；closure audit（fresh session）实跑 industrial 单测 1455/1455、size-consistency 2/2、build/check 绿，机制抽查（先清后绘/三路径接线/scopeTestId/零绘制守卫）与 owner docs 逐点吻合；1 Major（全量 e2e 证据悬空——执行者误引 V3 树数字）与 5 Minor 修正后达标。特别记录：全量 e2e 的 flow-designer 无限渲染失败系并行会话在途 V5 代码（未入库）所致，已如实归因，V4 域内证据面完整。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立子 agent fresh session 填写）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: 独立 closure auditor（fresh sub-agent session，2026-09-20）
+- Evidence: 实跑 industrial 1455/1455、size-consistency 2/2、build/check 绿；M-1 修正=V4 树全新全量 e2e 补跑（1478 passed / 5 failed，失败逐项归因：flow-designer ×2 系并行在途代码、ai-attachments ×2 与 gantt-perf ×1 隔离复绿）+ log/commit 口径更正；Minor-1 计数 1455 如实、Minor-2 Phase 2 completed、Minor-3 陈旧注释清除、Minor-4 §9.3 交叉引用更正、Minor-5 V5 行登记。
 
 Follow-up:
 
-- （closure 时填写，或写 no remaining plan-owned work）
+- no remaining plan-owned work（R2/R13 归 V12a；R5 重开候选待人工确认；报警/趋势组件族归 industrial-hmi roadmap）
