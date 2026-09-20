@@ -1,3 +1,103 @@
+/* --ss-* token definitions (plan 476)
+ * 发布于 :root（文件内大量历史裸选择器无统一包裹根，scope 化定义无法覆盖全部
+ * 消费点；--ss- 前缀避免宿主命名空间冲突）。[data-mode='dark'] 挂 :root，
+ * 与 theme-tokens 单一触发器一致。消费点一律 var()；字面值只允许出现在本块。 */
+:root {
+  --ss-gridline: rgb(212, 212, 212);
+  --ss-frozen-line: rgb(153, 153, 153);
+  --ss-separator: rgb(206, 206, 206);
+  --ss-cell-bg: rgb(255, 255, 255);
+  --ss-toolbar-bg: rgb(246, 247, 250);
+  --ss-header-border: rgb(215, 224, 238);
+  --ss-row-header-border: rgb(226, 232, 240);
+  --ss-header-bg: linear-gradient(180deg, rgb(248, 251, 255) 0%, rgb(241, 246, 255) 100%);
+  --ss-corner-bg: linear-gradient(135deg, rgb(248, 251, 255) 0%, rgb(232, 240, 255) 100%);
+  --ss-muted-bg: rgb(241, 245, 249);
+  --ss-secondary-text: rgb(71, 85, 105);
+  --ss-strong-text: rgb(30, 41, 59);
+  --ss-accent: rgb(26, 115, 232);
+  --ss-accent-strong: rgb(29, 78, 216);
+  --ss-accent-soft: rgb(219, 234, 254);
+  --ss-accent-border-soft: rgb(191, 219, 254);
+  --ss-accent-chip-bg: linear-gradient(180deg, rgb(232, 244, 255) 0%, rgb(219, 234, 254) 100%);
+  --ss-resize-handle: rgb(59, 130, 246);
+  --ss-grid-halo-bg: linear-gradient(180deg, rgb(240, 245, 252) 0%, rgb(235, 244, 255) 100%);
+  --ss-grid-halo-ring: rgba(59, 130, 246, 0.28);
+  --ss-panel-shadow: rgba(15, 23, 42, 0.08);
+  --ss-active: rgb(15, 157, 88);
+  --ss-selected-overlay: rgba(41, 98, 255, 0.08);
+  --ss-range-overlay: rgba(41, 98, 255, 0.1);
+  --ss-fill-preview: rgba(25, 118, 210, 0.15);
+  --ss-bound-bg: rgb(240, 248, 255);
+  --ss-bound-outline: rgb(148, 163, 184);
+  --ss-comment: rgb(249, 115, 22);
+  --ss-frozen-bg: rgb(232, 244, 254);
+  --ss-frozen-accent: rgb(33, 150, 243);
+  --ss-merge-bg: rgb(255, 248, 225);
+  --ss-merge-border: rgb(255, 193, 7);
+  --ss-drop-bg: rgb(227, 242, 253);
+  --ss-warn-bg: rgb(254, 243, 199);
+  --ss-ok-bg: rgb(220, 252, 231);
+  --ss-warn-text: rgb(180, 83, 9);
+  --ss-danger-text: rgb(185, 28, 28);
+  --ss-danger-accent: rgb(220, 38, 38);
+  --ss-chip-shadow: rgba(0, 0, 0, 0.05);
+  --ss-pop-shadow: rgba(0, 0, 0, 0.1);
+  --ss-focus-halo-soft: hsl(223 64% 48% / 0.15);
+  --ss-focus-halo-strong: hsl(223 64% 48% / 0.25);
+}
+
+:root[data-mode='dark'] {
+  --ss-gridline: rgb(51, 65, 85);
+  --ss-frozen-line: rgb(100, 116, 139);
+  --ss-separator: rgb(51, 65, 85);
+  --ss-cell-bg: rgb(15, 23, 42);
+  --ss-toolbar-bg: rgb(15, 23, 42);
+  --ss-header-border: rgb(51, 65, 85);
+  --ss-row-header-border: rgb(51, 65, 85);
+  --ss-header-bg: linear-gradient(180deg, rgb(15, 23, 42) 0%, rgb(20, 30, 48) 100%);
+  --ss-corner-bg: linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(23, 34, 56) 100%);
+  --ss-muted-bg: rgb(30, 41, 59);
+  --ss-secondary-text: rgb(148, 163, 184);
+  --ss-strong-text: rgb(226, 232, 240);
+  --ss-accent: rgb(138, 180, 248);
+  --ss-accent-strong: rgb(138, 180, 248);
+  --ss-accent-soft: rgba(59, 130, 246, 0.25);
+  --ss-accent-border-soft: rgb(51, 65, 85);
+  --ss-accent-chip-bg: linear-gradient(
+    180deg,
+    rgba(59, 130, 246, 0.18) 0%,
+    rgba(59, 130, 246, 0.28) 100%
+  );
+  --ss-resize-handle: rgb(96, 165, 250);
+  --ss-grid-halo-bg: linear-gradient(180deg, rgb(15, 23, 42) 0%, rgb(23, 34, 56) 100%);
+  --ss-grid-halo-ring: rgba(96, 165, 250, 0.35);
+  --ss-panel-shadow: rgba(0, 0, 0, 0.5);
+  --ss-active: rgb(52, 211, 153);
+  --ss-selected-overlay: rgba(96, 165, 250, 0.16);
+  --ss-range-overlay: rgba(96, 165, 250, 0.2);
+  --ss-fill-preview: rgba(96, 165, 250, 0.25);
+  --ss-bound-bg: rgba(59, 130, 246, 0.12);
+  --ss-bound-outline: rgb(100, 116, 139);
+  --ss-comment: rgb(251, 146, 60);
+  --ss-frozen-bg: rgba(59, 130, 246, 0.1);
+  --ss-frozen-accent: rgb(96, 165, 250);
+  --ss-merge-bg: rgba(217, 119, 6, 0.15);
+  --ss-merge-border: rgb(217, 119, 6);
+  --ss-drop-bg: rgba(59, 130, 246, 0.14);
+  --ss-warn-bg: rgba(217, 119, 6, 0.2);
+  --ss-ok-bg: rgba(22, 163, 74, 0.18);
+  --ss-warn-text: rgb(251, 191, 36);
+  --ss-danger-text: rgb(248, 113, 113);
+  --ss-danger-accent: rgb(248, 113, 113);
+  --ss-chip-shadow: rgba(0, 0, 0, 0.4);
+  --ss-pop-shadow: rgba(0, 0, 0, 0.5);
+  --ss-focus-halo-soft: hsl(217 91% 60% / 0.2);
+  --ss-focus-halo-strong: hsl(217 91% 60% / 0.32);
+}
+
+/* --ss-* definitions end */
+
 /*
  * Spreadsheet Canvas Styles
  *
@@ -19,19 +119,6 @@
  * See docs/architecture/report-designer/spreadsheet-canvas-css.md for full design rationale.
  */
 
-.ss-grid {
-  display: grid;
-  position: relative;
-  overflow: auto;
-  border-collapse: collapse;
-  font-family: Calibri, Arial, sans-serif;
-  font-size: 11pt;
-  color: #1a1a1a;
-  background-color: #ffffff;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
 .nop-spreadsheet-page [data-slot='spreadsheet-grid'],
 [data-slot='report-designer-spreadsheet-canvas'] [data-slot='spreadsheet-grid'] {
   flex: 1;
@@ -39,12 +126,8 @@
   overflow: auto;
   border: 1px solid var(--nop-border);
   border-radius: 14px;
-  background: linear-gradient(
-    180deg,
-    var(--nop-background) 0%,
-    color-mix(in srgb, var(--nop-background) 92%, rgb(235, 244, 255)) 100%
-  );
-  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
+  background: var(--ss-grid-halo-bg);
+  box-shadow: 0 12px 36px var(--ss-panel-shadow);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -59,8 +142,8 @@
 [data-slot='report-designer-spreadsheet-canvas']
   [data-slot='spreadsheet-grid'][data-sheet-filtered] {
   box-shadow:
-    0 12px 36px rgba(15, 23, 42, 0.08),
-    inset 0 0 0 1px rgba(59, 130, 246, 0.28);
+    0 12px 36px var(--ss-panel-shadow),
+    inset 0 0 0 1px var(--ss-grid-halo-ring);
 }
 
 .nop-spreadsheet-page [data-slot='spreadsheet-grid'][data-fill-dragging] .ss-cell,
@@ -77,9 +160,9 @@
   bottom: -4px;
   width: 7px;
   height: 7px;
-  background-color: #0f9d58;
+  background-color: var(--ss-active);
   cursor: crosshair;
-  z-index: 5;
+  z-index: 7; /* R7: 高于冻结分隔线 z6，冻结边界填充柄可拖拽 */
 }
 
 .nop-spreadsheet-page [data-slot='spreadsheet-grid'] table,
@@ -89,7 +172,7 @@
   table-layout: fixed;
   font-size: 13px;
   width: max-content;
-  background: white;
+  background: var(--ss-cell-bg);
 }
 
 .nop-spreadsheet-page [data-slot='spreadsheet-grid'] thead,
@@ -124,10 +207,10 @@
   vertical-align: middle;
   font-size: 12px;
   font-weight: 600;
-  color: rgb(71, 85, 105);
-  border-bottom: 1px solid rgb(215, 224, 238);
-  border-right: 1px solid rgb(215, 224, 238);
-  background: linear-gradient(180deg, rgb(248, 251, 255) 0%, rgb(241, 246, 255) 100%);
+  color: var(--ss-secondary-text);
+  border-bottom: 1px solid var(--ss-header-border);
+  border-right: 1px solid var(--ss-header-border);
+  background: var(--ss-header-bg);
   user-select: none;
   padding: 0;
 }
@@ -166,7 +249,7 @@
   width: 36px;
   min-width: 36px;
   height: 22px;
-  background: linear-gradient(135deg, rgb(248, 251, 255) 0%, rgb(232, 240, 255) 100%);
+  background: var(--ss-corner-bg);
 }
 
 .nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-column-header']:hover,
@@ -181,7 +264,7 @@
 [data-slot='report-designer-spreadsheet-canvas']
   [data-slot='spreadsheet-grid']
   [data-slot='spreadsheet-corner-header']:hover {
-  background: rgb(241, 245, 249);
+  background: var(--ss-muted-bg);
 }
 
 .nop-spreadsheet-page
@@ -202,8 +285,8 @@
 [data-slot='report-designer-spreadsheet-canvas']
   [data-slot='spreadsheet-grid']
   [data-slot='spreadsheet-corner-header'][data-sheet-header-active] {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--ss-accent-soft);
+  color: var(--ss-accent-strong);
 }
 
 .nop-spreadsheet-page
@@ -212,8 +295,8 @@
 [data-slot='report-designer-spreadsheet-canvas']
   [data-slot='spreadsheet-grid']
   [data-slot='spreadsheet-column-header'][data-col-filtered] {
-  color: rgb(29, 78, 216);
-  background: linear-gradient(180deg, rgb(232, 244, 255) 0%, rgb(219, 234, 254) 100%);
+  color: var(--ss-accent-strong);
+  background: var(--ss-accent-chip-bg);
 }
 
 .nop-spreadsheet-page
@@ -254,7 +337,7 @@
 [data-slot='report-designer-spreadsheet-canvas']
   [data-slot='spreadsheet-grid']
   [data-slot='spreadsheet-column-resize-handle']:hover {
-  background: rgb(59, 130, 246);
+  background: var(--ss-resize-handle);
 }
 
 .nop-spreadsheet-page [data-slot='spreadsheet-grid'] [data-slot='spreadsheet-row-resize-handle'],
@@ -277,7 +360,7 @@
 [data-slot='report-designer-spreadsheet-canvas']
   [data-slot='spreadsheet-grid']
   [data-slot='spreadsheet-row-resize-handle']:hover {
-  background: rgb(59, 130, 246);
+  background: var(--ss-resize-handle);
 }
 
 .ss-row-header-button {
@@ -313,7 +396,7 @@
   font: inherit;
   font-size: inherit;
   line-height: inherit;
-  color: rgb(30, 41, 59);
+  color: var(--ss-strong-text);
   background: transparent;
   box-sizing: border-box;
   border-radius: 0;
@@ -334,15 +417,15 @@
 [data-slot='spreadsheet-edit-status'] {
   margin-top: 8px;
   font-size: 12px;
-  color: rgb(71, 85, 105);
+  color: var(--ss-secondary-text);
 }
 
 [data-slot='spreadsheet-edit-status'][data-status='failed'] {
-  color: rgb(185, 28, 28);
+  color: var(--ss-danger-text);
 }
 
 [data-slot='spreadsheet-edit-status'][data-status='cancelled'] {
-  color: rgb(180, 83, 9);
+  color: var(--ss-warn-text);
 }
 
 [data-slot='spreadsheet-toolbar'] {
@@ -350,8 +433,8 @@
   align-items: center;
   gap: 2px;
   padding: 4px 8px;
-  background: #f6f7fa;
-  border-bottom: 1px solid rgb(226, 232, 240);
+  background: var(--ss-toolbar-bg);
+  border-bottom: 1px solid var(--ss-row-header-border);
   min-height: 45px;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -369,7 +452,7 @@
   display: inline-block;
   width: 0;
   height: 18px;
-  border-right: 1px solid #cecece;
+  border-right: 1px solid var(--ss-separator);
   margin: 0 4px;
   flex-shrink: 0;
 }
@@ -386,7 +469,7 @@
 [data-slot='spreadsheet-toolbar-cell-address'] {
   font-size: 12px;
   font-weight: 500;
-  color: rgb(71, 85, 105);
+  color: var(--ss-secondary-text);
   min-width: 40px;
   text-align: right;
 }
@@ -395,12 +478,12 @@
   font-size: 10px;
   padding: 1px 6px;
   border-radius: 3px;
-  background: rgb(219, 234, 254);
-  color: rgb(29, 78, 216);
+  background: var(--ss-accent-soft);
+  color: var(--ss-accent-strong);
 }
 
 [data-slot='spreadsheet-toolbar'] [data-toolbar-active] {
-  background-color: #e0e7ff;
+  background-color: var(--ss-accent-soft);
 }
 
 .ss-style-swatch {
@@ -409,7 +492,7 @@
   justify-content: center;
   min-width: 20px;
   min-height: 20px;
-  border: 1px solid rgb(226, 232, 240);
+  border: 1px solid var(--ss-row-header-border);
   border-radius: 4px;
   transition:
     border-color 120ms ease,
@@ -417,24 +500,24 @@
 }
 
 .ss-style-swatch:hover {
-  border-color: rgb(191, 219, 254);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-color: var(--ss-accent-border-soft);
+  box-shadow: 0 1px 2px var(--ss-chip-shadow);
 }
 
 .ss-style-swatch-bg-yellow {
-  background: rgb(254, 243, 199);
+  background: var(--ss-warn-bg);
 }
 
 .ss-style-swatch-bg-green {
-  background: rgb(220, 252, 231);
+  background: var(--ss-ok-bg);
 }
 
 .ss-style-swatch-bg-blue {
-  background: rgb(219, 234, 254);
+  background: var(--ss-accent-soft);
 }
 
 .ss-style-swatch-bg-none {
-  background: rgb(255, 255, 255);
+  background: var(--ss-cell-bg);
 }
 
 .ss-style-swatch-font-red,
@@ -445,15 +528,15 @@
 }
 
 .ss-style-swatch-font-red {
-  color: rgb(220, 38, 38);
+  color: var(--ss-danger-accent);
 }
 
 .ss-style-swatch-font-blue {
-  color: rgb(37, 99, 235);
+  color: var(--ss-accent);
 }
 
 .ss-style-swatch-font-black {
-  color: rgb(0, 0, 0);
+  color: var(--ss-strong-text);
 }
 
 [data-slot='spreadsheet-default-toolbar'] [data-slot='spreadsheet-find-replace-panel'],
@@ -470,8 +553,8 @@
   border-radius: 8px;
   background: var(--nop-surface);
   box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    0 10px 25px -5px var(--ss-pop-shadow),
+    0 8px 10px -6px var(--ss-pop-shadow);
   z-index: 100;
 }
 
@@ -519,8 +602,8 @@
   height: 22px;
   min-height: 22px;
   padding: 1px 4px;
-  border-right: 1px solid #d4d4d4;
-  border-bottom: 1px solid #d4d4d4;
+  border-right: 1px solid var(--ss-gridline);
+  border-bottom: 1px solid var(--ss-gridline);
   font-family: Calibri, Arial, sans-serif;
   font-size: 11pt;
   font-weight: normal;
@@ -558,6 +641,15 @@
 }
 .ss-align-right {
   text-align: right;
+}
+
+.ss-type-date {
+  font-variant-numeric: tabular-nums;
+  color: var(--ss-secondary-text);
+}
+
+.ss-type-number {
+  font-variant-numeric: tabular-nums;
 }
 
 .ss-valign-top {
@@ -603,13 +695,13 @@
 }
 
 .ss-cell[data-cell-active] {
-  outline: 2px solid #0f9d58;
+  outline: 2px solid var(--ss-active);
   outline-offset: -1px;
   z-index: 1;
 }
 
 .ss-cell[data-cell-selected] {
-  background-color: rgba(41, 98, 255, 0.08);
+  background-color: var(--ss-selected-overlay);
 }
 
 .ss-cell:has(.ss-fill-handle) {
@@ -617,7 +709,7 @@
 }
 
 .ss-cell[data-cell-editing] {
-  outline: 2px solid #1a73e8;
+  outline: 2px solid var(--ss-accent);
   outline-offset: -1px;
   z-index: 2;
   overflow: visible;
@@ -625,13 +717,13 @@
 }
 
 .ss-cell[data-range-highlight] {
-  background-color: rgba(41, 98, 255, 0.1);
+  background-color: var(--ss-range-overlay);
 }
 
 .ss-cell[data-cell-bound] {
-  background-color: #f0f8ff;
+  background-color: var(--ss-bound-bg);
   position: relative;
-  outline: 1px dashed #94a3b8;
+  outline: 1px dashed var(--ss-bound-outline);
   outline-offset: -2px;
 }
 
@@ -643,7 +735,7 @@
   line-height: 1;
   font-weight: 700;
   text-transform: lowercase;
-  color: #1d4ed8;
+  color: var(--ss-accent-strong);
   pointer-events: none;
 }
 
@@ -659,63 +751,51 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #f97316;
+  background-color: var(--ss-comment);
   pointer-events: none;
 }
 
 .ss-cell[data-cell-frozen] {
-  background-color: #e8f4fd;
-  border-bottom: 2px solid #2196f3;
+  background-color: var(--ss-frozen-bg);
+  border-bottom: 2px solid var(--ss-frozen-accent);
+}
+
+/* plan 476 R2：frozen-row 视觉表达——冻结行尾随一条冻结色底边（原 frozen-row 类
+ * 零规则，渲染端已改为 data-frozen-row 属性选择器；沿 .ss-cell 全局类惯例） */
+[data-frozen-row] > .ss-cell {
+  box-shadow: inset 0 -2px 0 var(--ss-frozen-accent);
 }
 
 .ss-cell[data-cell-merged] {
-  background-color: #fff8e1;
-  border: 2px solid #ffc107;
+  background-color: var(--ss-merge-bg);
+  border: 2px solid var(--ss-merge-border);
 }
 
 .ss-cell[data-cell-drop-target] {
-  background-color: #e3f2fd !important;
-  outline: 2px dashed #0f9d58;
+  background-color: var(--ss-drop-bg) !important;
+  outline: 2px dashed var(--ss-active);
   outline-offset: -2px;
 }
 
 .ss-cell[data-cell-fill-preview] {
-  background-color: rgba(25, 118, 210, 0.15) !important;
+  background-color: var(--ss-fill-preview) !important;
 }
 
 .ss-cell[data-col-header-active] {
-  background-color: #d3e3fd;
-  border-bottom-color: #1a73e8;
+  background-color: var(--ss-accent-soft);
+  border-bottom-color: var(--ss-accent);
 }
 
 .ss-cell[data-row-header-active] {
-  background-color: #d3e3fd;
-  border-right-color: #1a73e8;
+  background-color: var(--ss-accent-soft);
+  border-right-color: var(--ss-accent);
 }
 
 .ss-selection-border {
   position: absolute;
-  border: 2px solid #0f9d58;
+  border: 2px solid var(--ss-active);
   pointer-events: none;
   z-index: 4;
-}
-
-.ss-frozen-separator-col {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background-color: #999999;
-  z-index: 6;
-}
-
-.ss-frozen-separator-row {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background-color: #999999;
-  z-index: 6;
 }
 
 /* Sheet Tab Bar */
@@ -818,19 +898,19 @@
 [data-slot='spreadsheet-sheet-tab-rename'] {
   font-size: 12px;
   padding: 3px 6px;
-  border: 2px solid var(--nop-ring);
+  border: 2px solid var(--ss-accent);
   border-radius: 2px;
   outline: none;
-  background-color: var(--nop-background);
+  background-color: var(--ss-cell-bg);
   color: var(--nop-text-strong);
   min-width: 80px;
   height: 20px;
   box-sizing: border-box;
-  box-shadow: 0 0 0 3px hsl(223 64% 48% / 0.15);
+  box-shadow: 0 0 0 3px var(--ss-focus-halo-soft);
 }
 
 [data-slot='spreadsheet-sheet-tab-rename']:focus {
-  box-shadow: 0 0 0 3px hsl(223 64% 48% / 0.25);
+  box-shadow: 0 0 0 3px var(--ss-focus-halo-strong);
 }
 
 [data-slot='spreadsheet-sheet-tab-close'] {
@@ -859,12 +939,12 @@
 }
 
 [data-slot='spreadsheet-sheet-tab-close']:hover {
-  background-color: color-mix(in srgb, var(--nop-destructive) 15%, transparent);
-  color: var(--nop-destructive);
+  background-color: color-mix(in srgb, var(--ss-danger-accent) 15%, transparent);
+  color: var(--ss-danger-accent);
 }
 
 [data-slot='spreadsheet-sheet-tab-close']:active {
-  background-color: color-mix(in srgb, var(--nop-destructive) 25%, transparent);
+  background-color: color-mix(in srgb, var(--ss-danger-accent) 25%, transparent);
 }
 
 [data-slot='spreadsheet-sheet-add'] {

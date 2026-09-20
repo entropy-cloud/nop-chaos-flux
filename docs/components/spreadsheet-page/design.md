@@ -135,6 +135,7 @@ This section defines the intended user-visible spreadsheet interaction model. Wh
 
 - 最大风险是把 canvas 内部性能敏感实现和外壳层普通 Tailwind 风格混在一起。
 - 工作台扩展区域需要在不破坏核心壳层的前提下分阶段增加。
+- plan 476 后：canvas 内部颜色全部走 `--ss-*` 令牌（`:root` 发布 + dark 变体）与宿主 `--nop-*`（无 fallback），外壳与画布的样式载体仍分属「宿主 Tailwind 扫描 + 包内 canvas-styles.css」两层；新增视觉一律走令牌（`canvas-styles.test.ts` 守卫拦截裸色值），混用面不再扩大。
 
 ## 13. 相关文档
 

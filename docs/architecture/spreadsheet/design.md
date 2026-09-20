@@ -72,6 +72,6 @@
 ## 9. 已知登记（P3 卡内记录汇总）
 
 - 硬编码英文：resize dialog aria-label（overlay-controls.tsx:106）、选区/编辑/查找日志消息（默认宿主无 onLog 消费，非用户可见）；用户可见类（编辑保存状态/页头状态/查找结果）已路由 DR-3/DR-5/DR-6。
-- 死 CSS：ss-frozen-separator-col/row、ss-selection-border。
+- 死 CSS：ss-selection-border（ss-frozen-separator-col/row 已于 plan 476 删除）。
 - Home/End/PageUp/PageDown 与 Shift+方向键选区扩展缺失。
 - 详见 `docs/audits/host-surface/ss-{1..10}-*.md` 各卡 P3 清单与 `docs/audits/round2-dr-adjudication.md`。

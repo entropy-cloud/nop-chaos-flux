@@ -293,7 +293,6 @@ export function SpreadsheetGrid({
     <ContextMenu>
       <ContextMenuTrigger
         ref={scrollRef}
-        className="ss-grid-shell"
         data-slot="spreadsheet-grid"
         data-fill-dragging={fillHandleState.isFilling || undefined}
         style={{ overflow: 'auto', position: 'relative' }}

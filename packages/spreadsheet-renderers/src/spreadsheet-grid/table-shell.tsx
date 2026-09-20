@@ -2,7 +2,7 @@ import { cellAddress } from '@nop-chaos/spreadsheet-core';
 import type { CSSProperties } from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
-import { mapCellStyle } from '../cell-style-map.js';
+import { mapCellStyle, resolveCellTypeDisplay } from '../cell-style-map.js';
 import {
   DEFAULT_COL_WIDTH,
   DEFAULT_ROW_HEIGHT,
@@ -171,7 +171,13 @@ function SpreadsheetGridCell({
   const isEditing = editingCell?.row === row && editingCell?.col === col;
   const isDropTarget = dropTargetCell?.row === row && dropTargetCell?.col === col && !!draggingField;
   const isFillHandleCell = selectedRange && row === selectedRange.endRow && col === selectedRange.endCol && !isEditing;
-  const cellValueText = cell?.value != null ? String(cell.value) : '';
+  // plan 476 Phase 2：值类型视觉分派——数值右对齐 + numberFormat 基础应用、日期格式化；
+  // 显式 textAlign 优先于类型对齐推断。
+  const cellTypeDisplay = resolveCellTypeDisplay(
+    { value: cell?.value, type: cell?.type, numberFormat: cell?.numberFormat },
+    { hasExplicitTextAlign: cell?.style?.textAlign != null },
+  );
+  const cellValueText = cell?.value != null ? cellTypeDisplay.text : '';
   const boundCellAriaLabel =
     boundFieldLabel == null
       ? undefined
@@ -192,6 +198,7 @@ function SpreadsheetGridCell({
     ...cellStyle.style,
     width: columnWidths[col] ?? DEFAULT_COL_WIDTH,
   };
+  const typeClassName = cellTypeDisplay.className;
 
   const frozenColCount = (frozen?.col ?? 0) > 0 ? (frozen?.col ?? 0) : 0;
   const isFrozenColCell = frozenColCount > 0 && col < frozenColCount;
@@ -208,7 +215,12 @@ function SpreadsheetGridCell({
       aria-rowindex={row + 1}
       aria-colindex={col + 1}
       aria-label={boundCellAriaLabel}
-      className={cellStyle.className}
+      className={[
+        cellStyle.className,
+        typeClassName,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       style={style}
       tabIndex={isSelected ? 0 : -1}
       aria-selected={isSelected || inRange || undefined}
@@ -435,7 +447,7 @@ export function SpreadsheetGridTableShell({
                     }
                   : {}),
               }}
-              className={isFrozenRow ? 'frozen-row' : ''}
+              data-frozen-row={isFrozenRow || undefined}
             >
               <td
                 data-slot="spreadsheet-row-header"

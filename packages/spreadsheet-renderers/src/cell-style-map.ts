@@ -5,6 +5,14 @@ export interface CellStyleResult {
   style: Record<string, string>;
 }
 
+/** plan 476 Phase 2：值类型视觉最小实现的渲染端分派输入（零 schema 变更——
+ * 只消费 CellDocument 既有 type/numberFormat/value 字段）。 */
+export interface CellValueDispatchInput {
+  value?: unknown;
+  type?: string;
+  numberFormat?: string;
+}
+
 const SS_CELL = 'ss-cell';
 
 const FONT_WEIGHT_MAP: Record<string, string> = {
@@ -126,6 +134,100 @@ export function mapCellStyle(style: CellStyle | undefined): CellStyleResult {
     className: classes.join(' '),
     style: inlineStyle,
   };
+}
+
+/** 数值判据：运行时 number，或作者声明了 numberFormat（字符串数字按格式化对待）。 */
+function isNumericCell(input: CellValueDispatchInput): boolean {
+  return typeof input.value === 'number' || input.numberFormat != null;
+}
+
+const DATE_TYPE_VALUES = new Set(['date', 'datetime']);
+
+/** 日期判据：作者显式 type 声明，或值为 Date / ISO 日期串。 */
+function isDateCell(input: CellValueDispatchInput): boolean {
+  if (input.type != null && DATE_TYPE_VALUES.has(input.type)) {
+    return true;
+  }
+  if (input.value instanceof Date) {
+    return true;
+  }
+  if (typeof input.value === 'string' && input.value.length >= 8) {
+    return /^\d{4}-\d{2}-\d{2}([T ]|$)/.test(input.value);
+  }
+  return false;
+}
+
+/**
+ * plan 476 Phase 2：值类型 → 类名/文本分派（独立于 mapCellStyle——后者保持纯
+ * CellStyle 入参）。返回追加类名与最终展示文本；显式 textAlign 优先级高于类型
+ * 对齐（由调用方保证：有显式 textAlign 时不追加 ss-type-number 的右对齐类）。
+ */
+export function resolveCellTypeDisplay(
+  input: CellValueDispatchInput,
+  options?: { hasExplicitTextAlign?: boolean },
+): { className: string; text: string } {
+  const classes: string[] = [];
+  const text = input.value == null ? '' : String(input.value);
+
+  if (input.value == null) {
+    return { className: '', text };
+  }
+
+  if (isDateCell(input)) {
+    classes.push('ss-type-date');
+    return { className: classes.join(' '), text: formatDate(input.value) };
+  }
+
+  if (isNumericCell(input)) {
+    classes.push('ss-type-number');
+    if (!options?.hasExplicitTextAlign) {
+      classes.push('ss-align-right');
+    }
+    return { className: classes.join(' '), text: formatNumber(input.value, input.numberFormat) };
+  }
+
+  return { className: classes.join(' '), text };
+}
+
+function formatDate(value: unknown): string {
+  const date = value instanceof Date ? value : new Date(String(value));
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+  return date.toLocaleDateString();
+}
+
+/** numberFormat 基础应用：仅支持 `0.00`/`#,##0`/`0%`/`#,##0.00` 形态的子集；
+ * 不支持的格式原样输出，不抛错。 */
+/** numberFormat 基础应用（plan 476 Phase 2 最小子集）：`0`、`0.00`、`#,##0`、
+ * `#,##0.00`、`0%`、`0.00%`；其余格式原样输出不抛错。 */
+export function formatNumber(value: unknown, numberFormat?: string): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return String(value);
+  }
+
+  switch (numberFormat) {
+    case undefined:
+    case '':
+      return String(value);
+    case '0%':
+      return `${Math.round(value * 100)}%`;
+    case '0.00%':
+      return `${(value * 100).toFixed(2)}%`;
+    case '0':
+      return String(Math.round(value));
+    case '0.00':
+      return value.toFixed(2);
+    case '#,##0':
+      return value.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    case '#,##0.00':
+      return value.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    default:
+      return String(value);
+  }
 }
 
 interface BorderLineStyle {

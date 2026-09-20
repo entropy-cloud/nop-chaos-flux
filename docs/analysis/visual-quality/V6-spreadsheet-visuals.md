@@ -3,11 +3,11 @@
 > 核查日期: 2026-09-20
 > 基线: master @ 0f926abbe（V4 已收口）+ V5（plan 475）工作区在途（flow-designer 域，与本域零交集）
 > 输入: 普查报告 §5、路线图 V6、`docs/components/spreadsheet-page/design.md`、`docs/architecture/report-designer/spreadsheet-canvas-css.md`、证据卡 spreadsheet.md
-> 状态: 待独立核实
+> 状态: 已独立核实通过（pass，4 项轻微勘误已回写）
 
 ## 0. 勘误与域定位
 
-- **包名勘误**：实际包为 `packages/spreadsheet-renderers` 与 `packages/spreadsheet-core`（普查所写 `flux-renderers-spreadsheet` 不存在）。
+- **包名勘误**：实际包为 `packages/spreadsheet-renderers` 与 `packages/spreadsheet-core`（普查以域泛称指代 spreadsheet 域，`flux-renderers-spreadsheet` 字样不存在于普查原文；勘误实质 = 以实际包名为准）。
 - 证据卡所称 `canvas-styles.css`（894 行）**29 处浅色 hex 计数准确**，`#1a1a1a/#ffffff/#0f9d58/#1a73e8` 等值与行号逐一命中。
 - 消费点 4 处：`spreadsheet-renderers/src/renderers.tsx:1`、**`report-designer-renderers/src/report-spreadsheet-canvas.tsx:2`（report 画布共用点）**、playground `spreadsheet-demo.tsx:2`、`report-designer-demo.tsx:2`。共用隔离机制 = 双 scope 选择器（`.nop-spreadsheet-page [...]` 与 `[data-slot='report-designer-spreadsheet-canvas'] [...]`，design.md §10 :123-125 明文禁止裸 data-slot 泄漏）。
 
@@ -15,7 +15,7 @@
 
 ### F1 29 处浅色 hex（成立，分布已清点）
 
-分类：画布结构 7（`#ffffff` 背景 :30、`#f6f7fa` 工具栏 :353、`#cecece` 分隔线 :372、`#d4d4d4` 网格线 :522-523、`#999999` 冻结线 :708/:717、`#1a1a1a` 文字 :29）、选中态 12（`#0f9d58` 填充柄 :80/active outline :606/选区边 :698/拖放框 :678、`#1a73e8` 编辑框 :620/表头 active :688/:693、`#dbeafe/:205`、`#1d4ed8` :206、`#d3e3fd` :687/:692、`#e0e7ff` :403）、语义色 10（绑定 `#f0f8ff/#94a3b8/#1d4ed8` :632-646、评论 `#f97316` :662、冻结 `#e8f4fd/#2196f3` :667-668、合并 `#fff8e1/#ffc107` :672-673、拖放 `#e3f2fd` :677）。
+分类：画布结构 8（`#ffffff` 背景 :30、`#f6f7fa` 工具栏 :353、`#cecece` 分隔线 :372、`#d4d4d4` 网格线 :522-523、`#999999` 冻结线 :708/:717、`#1a1a1a` 文字 :29）、选中态 12（`#0f9d58` 填充柄 :80/active outline :606/选区边 :698/拖放框 :678、`#1a73e8` 编辑框 :620/表头 active :688/:693、`#dbeafe/:205`、`#1d4ed8` :206、`#d3e3fd` :687/:692、`#e0e7ff` :403）、语义色 9（绑定 `#f0f8ff/#94a3b8/#1d4ed8` :632-646、评论 `#f97316` :662、冻结 `#e8f4fd/#2196f3` :667-668、合并 `#fff8e1/#ffc107` :672-673、拖放 `#e3f2fd` :677）。
 
 ### F2 dark 零支持（成立，且发现 3 个未定义令牌缺陷）
 
@@ -80,6 +80,6 @@
 
 ## 6. 独立核实记录
 
-- Reviewer / Agent: （独立子 agent fresh session 填写）
-- Verdict:
-- 已处理:
+- Reviewer / Agent: 独立核实审查员（fresh sub-agent session，2026-09-21，只读 live 验证）
+- Verdict: **pass**（可进入 plan draft；4 项轻微勘误：①F1 分类计数 8/12/9 已修正；②R5 第三引用 :683 移出归 R4 集，已修正；③§0 出处措辞改为「普查以域泛称指代」，已修正；④行号微漂——playground dark 块起点实为 :185/:189、cell-operations 实路径含 core/ 段、rgb()/rgba() 全量约 39 处——plan 阶段须做全量清单，不以「约 15/约 20」为交付口径）
+- 已处理: 全部 Findings（F1-F5）、残余候选（R2/R3/R5/R7/R4 抽查）、A1 可行性（theme-tokens 语义变量齐备、hsl() 包裹与 --fd-\* 同构先例）、门禁定位（spreadsheet-renderers 在 RENDERER_PACKAGE_SCOPE 扫描集外）均经 live 证据确认

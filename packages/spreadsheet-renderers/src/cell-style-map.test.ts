@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapCellStyle } from './cell-style-map.js';
+import { mapCellStyle, resolveCellTypeDisplay } from './cell-style-map.js';
 import type { CellStyle } from '@nop-chaos/spreadsheet-core';
 
 describe('mapCellStyle', () => {
@@ -148,5 +148,56 @@ describe('mapCellStyle', () => {
       fontColor: 'red',
     });
     expect(result.className).toContain('ss-cell');
+  });
+});
+
+describe('resolveCellTypeDisplay (plan 476 Phase 2)', () => {
+  it('dispatches numeric cells to right-aligned number class with raw number text', () => {
+    const result = resolveCellTypeDisplay({ value: 42 });
+    expect(result.className).toContain('ss-type-number');
+    expect(result.className).toContain('ss-align-right');
+    expect(result.text).toBe('42');
+  });
+
+  it('applies the numberFormat minimal subset', () => {
+    expect(resolveCellTypeDisplay({ value: 1234.5, numberFormat: '#,##0.00' }).text).toBe('1,234.50');
+    expect(resolveCellTypeDisplay({ value: 0.42, numberFormat: '0%' }).text).toBe('42%');
+    expect(resolveCellTypeDisplay({ value: 3.141, numberFormat: '0.00' }).text).toBe('3.14');
+  });
+
+  it('treats a string value with numberFormat as a number cell (formatted path)', () => {
+    const result = resolveCellTypeDisplay({ value: '1234.5', numberFormat: '#,##0.00' });
+    expect(result.className).toContain('ss-type-number');
+    // 字符串值不参与数值格式化，原样展示（最小实现边界）
+    expect(result.text).toBe('1234.5');
+  });
+
+  it('dispatches date-typed cells and formats via toLocaleDateString', () => {
+    const result = resolveCellTypeDisplay({ value: '2026-03-08', type: 'date' });
+    expect(result.className).toContain('ss-type-date');
+    expect(result.text).toBe(new Date('2026-03-08').toLocaleDateString());
+  });
+
+  it('keeps explicit textAlign precedence over the numeric right-align inference', () => {
+    const result = resolveCellTypeDisplay({ value: 42 }, { hasExplicitTextAlign: true });
+    expect(result.className).toContain('ss-type-number');
+    expect(result.className).not.toContain('ss-align-right');
+  });
+
+  it('returns empty class and text for empty cells', () => {
+    const result = resolveCellTypeDisplay({});
+    expect(result.className).toBe('');
+    expect(result.text).toBe('');
+  });
+
+  it('never throws on unsupported numberFormat values', () => {
+    const result = resolveCellTypeDisplay({ value: 7, numberFormat: '[$-409]mmmm d, yyyy;;' });
+    expect(result.className).toContain('ss-type-number');
+    expect(result.text).toBe('7');
+  });
+
+  it('keeps mapCellStyle signature pure (style only)', () => {
+    const mapped = mapCellStyle({ textAlign: 'right' });
+    expect(mapped.className).toBe('ss-cell ss-align-right');
   });
 });

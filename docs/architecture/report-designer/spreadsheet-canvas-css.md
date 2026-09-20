@@ -75,13 +75,13 @@ CSS 通过属性选择器响应：
 
 ```css
 .ss-cell[data-cell-active] {
-  outline: 2px solid #1a73e8;
+  outline: 2px solid var(--ss-accent);
 }
 .ss-cell[data-cell-selected] {
-  background-color: #e8f0fe;
+  background-color: var(--ss-selected-overlay);
 }
 .ss-cell[data-cell-editing] {
-  outline: 2px solid #1a73e8;
+  outline: 2px solid var(--ss-accent);
   overflow: visible;
 }
 ```
@@ -92,7 +92,7 @@ CSS 通过属性选择器响应：
 
 使用 `ss-` 前缀（Spreadsheet 缩写），避免与 `nop-` 语义标记和 Tailwind 工具类冲突。
 
-### 3.2 默认 Excel 单元格样式
+### 3.2 默认 Excel 单元格样式（plan 476 令牌化基线）
 
 `ss-cell` 提供完整的 Excel 默认单元格样式作为基线，包括：
 
@@ -104,6 +104,8 @@ CSS 通过属性选择器响应：
 - 单元格高度（22px — Excel 默认行高）
 
 当 `CellStyle` 的某个属性为 `undefined` 时，`ss-cell` 的默认值生效。只有显式设置了非默认值的属性才会触发额外的 CSS class 或 inline style。
+
+**plan 476 契约修订**：基线的颜色/阴影不再硬编码——全部经 `--ss-*` 私有令牌族发布（`:root` 定义 + `:root[data-mode='dark']` dark 变体，消费点一律 `var()`）。结构色（文字/边框/表面）优先消费宿主发布的 `--nop-*`（无 fallback 契约维持，dark 由宿主主题翻转）；画布专属色（网格线/选中叠加/冻结/合并/填充柄/编辑框等）走 `--ss-*`。`canvas-styles.test.ts` 以守卫单测固定：全文件禁 hex 字面量、彩色 rgb()/rgba()/hsl() 只允许出现在 --ss-\* 定义块、禁 dangling `--nop-background/--nop-ring/--nop-destructive` 消费。值类型视觉：数值单元格（`typeof value === 'number'` 或存在 `numberFormat`）追加 `ss-type-number` 右对齐；`type: 'date'` 追加 `ss-type-date`（`resolveCellTypeDisplay` 分派，显式 `textAlign` 优先）。
 
 ### 3.3 完整 CSS class 清单
 
@@ -141,14 +143,12 @@ React 中的用法：
 
 ### 3.5 辅助结构 class
 
-| class                     | 用途         |
-| ------------------------- | ------------ |
-| `ss-col-resize-handle`    | 列宽调整手柄 |
-| `ss-row-resize-handle`    | 行高调整手柄 |
-| `ss-selection-border`     | 选区边框     |
-| `ss-fill-handle`          | 填充柄       |
-| `ss-frozen-separator-col` | 冻结列分隔线 |
-| `ss-frozen-separator-row` | 冻结行分隔线 |
+| class                  | 用途         |
+| ---------------------- | ------------ |
+| `ss-col-resize-handle` | 列宽调整手柄 |
+| `ss-row-resize-handle` | 行高调整手柄 |
+| `ss-selection-border`  | 选区边框     |
+| `ss-fill-handle`       | 填充柄       |
 
 ## 4. style-to-class 映射模块
 
