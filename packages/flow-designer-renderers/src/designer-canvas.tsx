@@ -254,8 +254,8 @@ export function DesignerCanvasContent(props: {
 
   const handleSelectionReport = useCallback(
     (nodeIds: string[], edgeIds: string[]) => {
-      // plan 475 Phase 1：内容等价守卫——RF 会在每次 store nodes 更新后重发 selection 事件，
-      // 相同选择回写会翻新快照身份（新节点对象 → RF setNodes → 再发事件）造成更新风暴。
+      // plan 475 Phase 1：内容等价守卫——用户 select 变更与 core 已有选择一致时不回写，
+      // 避免翻新快照身份（新节点对象 → RF setNodes → 再发事件）造成更新风暴。
       const current = snapshot.selection;
       if (
         current.selectedNodeIds.length === nodeIds.length &&

@@ -97,7 +97,7 @@ function DingFlowEdgeInner({ sourceX, sourceY, targetX, targetY, data, type }: E
         <EdgeLabelRenderer>
           <div
             aria-hidden="true"
-            className="pointer-events-none nopan nodrag absolute z-[4] flex max-w-[160px] items-center truncate rounded-full border border-[#15bc83] bg-white px-2.5 py-0.5 text-[11px] leading-4 text-[#15bc83]"
+            className="fd-branch-label nopan nodrag truncate"
             style={{
               transform: `translate(${labelX}px, ${labelY}px) translate(-50%, -50%)`,
               maxWidth: BRANCH_LABEL_MAX_WIDTH,

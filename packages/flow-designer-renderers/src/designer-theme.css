@@ -1,31 +1,122 @@
+/* plan 475 Phase 3：--fd-* 令牌面激活。
+ *
+ * 契约（theme-compatibility.md「Flow Designer scoped tokens」节同步修订）：
+ * - 包在 .nop-designer 作用域发布 --fd-* 定义；消费点保留 var(--fd-x, fallback)
+ *   形式，fallback 仅为裸宿主（无 .nop-designer 装配路径）兜底。
+ * - 宿主覆盖 --fd-* 须命中 .nop-designer 内层元素或更高优先级选择器（原
+ *   「包不在 .fd-theme-root/.nop-designer 再发布」禁令自 475 起解除）。
+ * - 模式相关令牌在 [data-mode='dark'] 后代块重声明（data-mode 挂载于 :root，
+ *   触发器与 theme-tokens 单一事实源一致）；身份色 --fd-node-accent-* 不随模式翻转。
+ * - 优先引用 theme-tokens 语义面（--surface-*、--shadow-*），缺失时回退到字面值。
+ */
+
 .nop-designer {
-  background: var(
-    --fd-page-bg,
-    linear-gradient(
-      135deg,
-      rgba(167, 243, 208, 0.15) 0%,
-      rgba(196, 181, 253, 0.12) 50%,
-      rgba(153, 246, 228, 0.1) 100%
-    )
+  --fd-page-bg: linear-gradient(
+    135deg,
+    rgba(167, 243, 208, 0.15) 0%,
+    rgba(196, 181, 253, 0.12) 50%,
+    rgba(153, 246, 228, 0.1) 100%
   );
+  --fd-toolbar-bg: var(--surface-highlight, rgba(255, 255, 255, 0.78));
+  --fd-toolbar-shadow: var(--shadow-xs, 0 1px 2px rgba(15, 23, 42, 0.08));
+  --fd-panel-bg: var(--surface-secondary, rgba(255, 255, 255, 0.4));
+  --fd-panel-accent: hsl(var(--primary));
+  --fd-palette-accent: hsl(var(--primary));
+  --fd-canvas-bg:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.1), transparent 30%),
+    var(--surface-highlight, rgba(255, 255, 255, 0.78));
+  --fd-edge-label-bg: var(--surface-highlight, rgba(255, 255, 255, 0.78));
+  --fd-edge-actions-bg: var(--surface-highlight, rgba(255, 255, 255, 0.94));
+  --fd-edge-actions-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  --fd-grid-color: rgba(148, 163, 184, 0.26);
+  --fd-minimap-bg: rgba(219, 234, 254, 0.5);
+  --fd-minimap-node: rgba(15, 23, 42, 0.92);
+  --fd-minimap-mask: rgba(255, 255, 255, 0.55);
+  --fd-edge-stroke: #cacaca;
+  --fd-primary: #3296fa;
+  --fd-success-border: #b3e19d;
+  --fd-success-bg: rgba(255, 255, 255, 0.78);
+  --fd-success-text: #67c23a;
+  --fd-alignment-guide: rgba(59, 130, 246, 0.85);
+
+  /* 节点身份色（dingtalk demo parity，light 值与 e2e hex 合同一致）。
+   * 身份色不随模式翻转；暗色块不重声明。dt-* 与同义通用键色值不同，逐键独立。 */
+  --fd-node-accent-dt-initiator: #576a95;
+  --fd-node-accent-dt-approval: #ff943e;
+  --fd-node-accent-dt-cc: #3296fa;
+  --fd-node-accent-dt-condition: #15bc83;
+  --fd-node-accent-dt-parallel: #6366f1;
+  --fd-node-accent-dt-subprocess: #8b5cf6;
+  --fd-node-accent-dt-end: #94a3b8;
+  --fd-node-accent-action-entry: #10b981;
+  --fd-node-accent-action-step: #3b82f6;
+  --fd-node-accent-action-end: #94a3b8;
+  --fd-node-accent-start: #10b981;
+  --fd-node-accent-end: #ef4444;
+  --fd-node-accent-task: #3b82f6;
+  --fd-node-accent-condition: #f59e0b;
+  --fd-node-accent-parallel: #8b5cf6;
+  --fd-node-accent-loop: #ec4899;
+}
+
+[data-mode='dark'] .nop-designer {
+  --fd-page-bg: linear-gradient(
+    135deg,
+    rgba(30, 41, 59, 0.5) 0%,
+    rgba(49, 46, 129, 0.32) 50%,
+    rgba(15, 23, 42, 0.5) 100%
+  );
+  --fd-toolbar-bg: var(--surface-primary, rgba(15, 23, 42, 0.55));
+  --fd-toolbar-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --fd-panel-bg: var(--surface-secondary, rgba(15, 23, 42, 0.4));
+  --fd-canvas-bg:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.08), transparent 30%),
+    var(--surface-primary, rgba(15, 23, 42, 0.55));
+  --fd-edge-label-bg: rgba(15, 23, 42, 0.78);
+  --fd-edge-actions-bg: rgba(15, 23, 42, 0.82);
+  --fd-edge-actions-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --fd-grid-color: rgba(148, 163, 184, 0.14);
+  --fd-minimap-bg: rgba(30, 41, 59, 0.6);
+  --fd-minimap-node: rgba(226, 232, 240, 0.85);
+  --fd-minimap-mask: rgba(15, 23, 42, 0.6);
+  --fd-edge-stroke: #475569;
+  --fd-success-bg: rgba(15, 23, 42, 0.6);
+  --fd-alignment-guide: rgba(96, 165, 250, 0.9);
+
+  /* --xy-* 库变量 dark 最小集：Controls、框选、选中连线、连接点。 */
+  --xy-controls-button-background-color: rgba(15, 23, 42, 0.85);
+  --xy-controls-button-background-color-hover: rgba(30, 41, 59, 0.95);
+  --xy-controls-button-color: #e2e8f0;
+  --xy-selection-background-color: rgba(59, 130, 246, 0.12);
+  --xy-selection-border: 1px dashed rgba(96, 165, 250, 0.8);
+  --xy-edge-stroke: #475569;
+  --xy-edge-stroke-selected: #60a5fa;
+  --xy-handle-background-color: #60a5fa;
+  --xy-handle-border-color: #0f172a;
+}
+
+.nop-designer {
+  background: var(--fd-page-bg);
 }
 
 .nop-designer-toolbar {
-  background: var(--fd-toolbar-bg, rgba(255, 255, 255, 0.78));
+  background: var(--fd-toolbar-bg);
   backdrop-filter: blur(20px);
-  box-shadow: var(--fd-toolbar-shadow, 0 1px 2px rgba(15, 23, 42, 0.08));
+  box-shadow: var(--fd-toolbar-shadow);
 }
 
 .fd-panel-card {
-  background: var(--fd-panel-bg, rgba(255, 255, 255, 0.4));
+  background: var(--fd-panel-bg);
 }
 
 .fd-panel-caption {
-  color: var(--fd-panel-accent, hsl(var(--primary)));
+  color: var(--fd-panel-accent);
 }
 
 .fd-palette-item {
-  background: var(--fd-toolbar-bg, rgba(255, 255, 255, 0.78));
+  background: var(--fd-toolbar-bg);
 }
 
 .fd-palette-swatch {
@@ -37,25 +128,54 @@
 }
 
 .fd-xyflow-surface {
-  background: var(
-    --fd-canvas-bg,
-    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.1), transparent 30%),
-    rgba(255, 255, 255, 0.78)
-  );
+  background: var(--fd-canvas-bg);
 }
 
 .fd-edge-label {
-  background: var(--fd-edge-label-bg, rgba(255, 255, 255, 0.78));
+  background: var(--fd-edge-label-bg);
   backdrop-filter: blur(20px);
 }
 
 .fd-edge-actions {
-  background: var(--fd-edge-actions-bg, rgba(255, 255, 255, 0.94));
-  box-shadow: var(--fd-edge-actions-shadow, 0 2px 8px rgba(15, 23, 42, 0.08));
+  background: var(--fd-edge-actions-bg);
+  box-shadow: var(--fd-edge-actions-shadow);
 }
 
 .fd-tree-node-shell {
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+}
+
+[data-mode='dark'] .fd-tree-node-shell {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+}
+
+.fd-alignment-guide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  background: var(--fd-alignment-guide);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.fd-branch-label {
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  max-width: 160px;
+  align-items: center;
+  border: 1px solid var(--fd-node-accent-dt-condition, #15bc83);
+  background: var(--fd-edge-label-bg, rgba(255, 255, 255, 0.78));
+  color: var(--fd-node-accent-dt-condition, #15bc83);
+  border-radius: 9999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  line-height: 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
 }

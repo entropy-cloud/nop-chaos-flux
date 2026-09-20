@@ -333,7 +333,8 @@ describe('flow designer controls', () => {
       position: { x: 180, y: 120 },
     });
     expect(document.querySelector('[data-type="task"]')?.className).toContain('fd-palette-swatch');
-    expect((document.querySelector('[data-type="task"]') as HTMLElement | null)?.style.getPropertyValue('--fd-palette-accent')).toBe('#3b82f6');
+    // plan 475 Phase 3：accent 走 --fd-node-accent-* 令牌（var 引用 + hex fallback）。
+    expect((document.querySelector('[data-type="task"]') as HTMLElement | null)?.style.getPropertyValue('--fd-palette-accent')).toBe('var(--fd-node-accent-task, #3b82f6)');
     expect(screen.getByText('拖拽放置，或点击在当前选择附近添加')).toBeTruthy();
     expect(screen.getByRole('button', { name: '添加Task' })).toBeTruthy();
   });

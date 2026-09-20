@@ -682,3 +682,15 @@ Tree Mode 当前实现的范围和约束：
 - projected edge delete 反向猜测成 TreeDocument mutation
 
 当 `DesignerConfig.documentMode` 设置为 `'tree'` 时，Flow Designer 进入 Tree Mode 视图：`createTreeDesignerCore` 唯一构造 tree core，graph 工厂收到 tree 模式时抛 `tree-core-factory-required`。
+
+## 18. 设计器外观类的宿主扫描契约（plan 475 A8）
+
+Tree/graph 设计器的外观由「包内令牌 + 宿主 CSS」双层承载（见 `theme-compatibility.md` 的 Flow Designer scoped tokens 节）。schema 作者在设计器节点的 body/卡片内写的 utility 类（如 `min-w-[192px]`）能否生效，取决于**宿主的 Tailwind content/safelist 扫描面**是否覆盖该类字符串——这是设计器-宿主契约，不是包内可修复的缺陷：
+
+- 宿主义务：宿主样式层必须把 designer schema 可能出现的 utility 类纳入 Tailwind `content` 扫描或 `safelist`（playground 的 `tailwind.config.ts` content 数组含 `apps/playground/src/**/*.{ts,tsx,json}`，schema JSON 中的类因此生效）。
+- 任意值类（`bg-[#22c55e]` 形态）依赖同名类字符串出现在扫描面内；缺失时静默不生效，不报错。排查路径：先在宿主 `tailwind.config.ts` content/safelist 核对，再查包内 shim。
+- 包内 `designer-theme.css` 发布的 `--fd-*` 令牌与 utility shim 无关，宿主扫描面变化不影响令牌族。
+
+### §17.7 核对注记（plan 475）
+
+475 执行时复核：树模式的框选/多选/剪贴板能力边界不变——框选与修饰键多选仅 graph 模式生效（canvas props 按 `documentMode` 门控），paste 在树模式维持拒绝路径（`clipboard-selection.test.ts` 直测覆盖），树布局几何常量（BTN_DIAMETER/HANDLE_SIZE 等）已收敛为 core 单源（`tree-projection.ts` 导出，renderers re-import）。17.7 非目标清单全部维持。

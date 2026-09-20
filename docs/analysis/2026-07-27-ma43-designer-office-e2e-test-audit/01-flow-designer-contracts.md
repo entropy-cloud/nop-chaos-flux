@@ -208,7 +208,7 @@
 
 ### 3.4 Duplicate / Consolidation Observations
 
-- **core.test.ts** and ****tests**/core-graph.test.ts** are ~90% identical tests. Unique content in core-graph: `replaceDocumentFromHost`, `selectBranch`, nested transaction commit. These could be consolidated.
+- **core.test.ts** and \***\*tests**/core-graph.test.ts\*\* are ~90% identical tests. Unique content in core-graph: `replaceDocumentFromHost`, `selectBranch`, nested transaction commit. These could be consolidated.
 - **designer-page.tree.test.tsx** and **designer-page.tree-history.test.tsx** share setup patterns but test distinct behaviors.
 
 ### 3.5 Key Strengths
@@ -229,3 +229,5 @@
 | flow-designer-core      | 9          | 2,445       |
 | flow-designer-renderers | 28         | 6,808       |
 | **Combined**            | **37**     | **9,253**   |
+
+> **勘误（2026-09-21，plan 475）**：FDC-GAP-04 的「never invoked」表述已过时——`packages/flow-designer-core/src/clipboard-selection.test.ts`（plan 475 Phase 1）现在直接测试 `selectAllNodes` / `copySelection` / `pasteClipboard`（7 用例，含多节点粘贴、簇保形偏移、单次 undo 事务粒度、树模式 paste 拒绝）。FDC-GAP-01 的 `createDesignerStoreAdapter` 亦已有 `designer-store-adapter.test.ts` 直接测试。原文保留作历史记录，缺口以本勘误为准收口。

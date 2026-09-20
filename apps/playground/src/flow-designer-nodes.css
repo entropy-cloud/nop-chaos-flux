@@ -11,15 +11,15 @@
   }
 
   [data-slot='dt-node'][data-node-variant='initiator'] [data-slot='dt-node-header'] {
-    background: #576a95;
+    background: var(--fd-node-accent-dt-initiator, #576a95);
   }
 
   [data-slot='dt-node'][data-node-variant='approval'] [data-slot='dt-node-header'] {
-    background: #ff943e;
+    background: var(--fd-node-accent-dt-approval, #ff943e);
   }
 
   [data-slot='dt-node'][data-node-variant='cc'] [data-slot='dt-node-header'] {
-    background: #3296fa;
+    background: var(--fd-node-accent-dt-cc, #3296fa);
   }
 
   [data-slot='dt-node'][data-node-variant='condition'] {
@@ -34,28 +34,28 @@
   }
 
   [data-slot='dt-node'][data-node-variant='condition'] [data-slot='dt-node-title'] {
-    color: #15bc83;
+    color: var(--fd-node-accent-dt-condition, #15bc83);
     font-weight: 600;
     font-size: 13px;
   }
 
   [data-slot='dt-node'][data-node-variant='condition'] [data-slot='dt-node-badge'] {
     font-size: 12px;
-    color: #999;
+    color: var(--dt-node-muted, hsl(var(--muted-foreground)));
   }
 
   [data-slot='dt-node'][data-node-variant='condition'] [data-slot='dt-node-description'] {
-    color: #666;
+    color: var(--dt-node-text, #666);
     font-size: 13px;
     padding-top: 10px;
   }
 
   [data-slot='dt-node'][data-node-variant='parallel'] [data-slot='dt-node-header'] {
-    background: #6366f1;
+    background: var(--fd-node-accent-dt-parallel, #6366f1);
   }
 
   [data-slot='dt-node'][data-node-variant='subprocess'] [data-slot='dt-node-header'] {
-    background: #8b5cf6;
+    background: var(--fd-node-accent-dt-subprocess, #8b5cf6);
   }
 
   [data-slot='dt-node'][data-node-variant='end'] {
@@ -112,7 +112,7 @@
 
   [data-slot='dt-node-subtitle'] {
     padding: 15px;
-    color: #666;
+    color: var(--dt-node-text, #666);
     font-size: 13px;
     line-height: 1.4;
   }
@@ -129,11 +129,11 @@
   }
 
   [data-slot='af-node'][data-node-variant='entry'] [data-slot='af-node-header'] {
-    background: #10b981;
+    background: var(--fd-node-accent-start, #10b981);
   }
 
   [data-slot='af-node'][data-node-variant='step'] [data-slot='af-node-header'] {
-    background: #3b82f6;
+    background: var(--fd-node-accent-task, #3b82f6);
   }
 
   [data-slot='af-node'][data-node-variant='end'] {
@@ -191,7 +191,7 @@
   [data-slot='af-node-subtitle'] {
     padding: 15px;
     font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
-    color: #666;
+    color: var(--dt-node-text, #666);
     font-size: 13px;
     line-height: 1.4;
   }
@@ -204,16 +204,43 @@
 
   [data-slot='af-node-meta'] {
     padding: 0 15px;
-    color: #999;
+    color: var(--dt-node-muted, hsl(var(--muted-foreground)));
     font-size: 11px;
     line-height: 1.4;
   }
 
   [data-slot='af-node-meta'][data-meta-variant='when'] {
-    color: #f59e0b;
+    color: var(--fd-node-accent-condition, #f59e0b);
   }
 
   [data-slot='af-node-meta'][data-meta-variant='timeout'] {
-    color: #ef4444;
+    color: var(--fd-node-accent-end, #ef4444);
+  }
+
+  /* plan 475 Phase 3：demo dark 最小面——卡片表面/文本灰阶随 data-mode 翻转，
+   * 身份色（header accent）沿用 --fd-node-accent-*（不随模式翻转）。 */
+  [data-mode='dark'] [data-slot='dt-node']:not([data-node-variant='end']) {
+    background: var(--surface-primary, rgba(30, 41, 59, 0.82));
+  }
+
+  [data-mode='dark'] [data-slot='af-node'] {
+    background: var(--surface-primary, rgba(30, 41, 59, 0.82));
+  }
+
+  [data-mode='dark'] [data-slot='dt-node'] [data-slot='dt-node-title'],
+  [data-mode='dark'] [data-slot='dt-node'] [data-slot='dt-node-icon'],
+  [data-mode='dark'] [data-slot='af-node'] [data-slot='af-node-title'],
+  [data-mode='dark'] [data-slot='af-node'] [data-slot='af-node-icon'] {
+    color: #e2e8f0;
+  }
+
+  [data-mode='dark'] [data-slot='dt-node-header'],
+  [data-mode='dark'] [data-slot='af-node-header'] {
+    color: #f8fafc;
+  }
+
+  [data-mode='dark'] {
+    --dt-node-text: #94a3b8;
+    --dt-node-muted: #64748b;
   }
 }

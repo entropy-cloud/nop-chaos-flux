@@ -4,8 +4,8 @@ import { createSharedVitestConfig } from '../../vitest.shared';
 // regression. Raising branches to ≥70% is tracked as a Non-Blocking Follow-up
 // (core.ts and elk-layout.ts have uncovered edge-command branches that require
 // additional integration tests). Type-only files (`types.ts`,
-// `designer-core-types.ts`) and the untested `core-shell-commands.ts` are
-// excluded so the threshold reflects actually-exercised runtime code.
+// `designer-core-types.ts`) are excluded so the threshold reflects
+// actually-exercised runtime code (dead `core-shell-commands.ts` deleted in plan 475).
 export default createSharedVitestConfig({
   environment: 'node',
   coverage: {

@@ -34,17 +34,22 @@ import type {
   TreeEdgeRuntimeGeometry,
 } from './types.js';
 
-const BTN_CENTER_DIST = 36;
-const BTN_DIAMETER = 28;
-const HANDLE_SIZE = 12;
-const CONTROL_CLEARANCE = 4;
-const CONNECTOR_CLEARANCE = 8;
+// plan 475 Phase 3：树模式几何常量单源——renderers 的 dingflow-constants.ts 自此处
+// re-import 消费（此前两包各持一份手工同步副本）。OVERLAY_MAIN_* 即分支按钮 overlay
+// 的主轴尺寸，SPLIT_HALF_GAP_* 公式消费同一来源。
+export const BTN_CENTER_DIST = 36;
+export const BTN_DIAMETER = 28;
+export const HANDLE_SIZE = 12;
+export const CONTROL_CLEARANCE = 4;
+export const CONNECTOR_CLEARANCE = 8;
+export const OVERLAY_MAIN_TB = 26;
+export const OVERLAY_MAIN_LR = 96;
 const FOCUSED_STROKE_WIDTH = 3;
 export const MIN_CHAIN_GAP = BTN_CENTER_DIST + BTN_DIAMETER / 2 + HANDLE_SIZE / 2 + CONTROL_CLEARANCE;
 export const SPLIT_HALF_GAP_MIN_TB =
-  BTN_CENTER_DIST + BTN_DIAMETER / 2 + 26 / 2 + CONTROL_CLEARANCE;
+  BTN_CENTER_DIST + BTN_DIAMETER / 2 + OVERLAY_MAIN_TB / 2 + CONTROL_CLEARANCE;
 export const SPLIT_HALF_GAP_MIN_LR =
-  BTN_CENTER_DIST + BTN_DIAMETER / 2 + 96 / 2 + CONTROL_CLEARANCE;
+  BTN_CENTER_DIST + BTN_DIAMETER / 2 + OVERLAY_MAIN_LR / 2 + CONTROL_CLEARANCE;
 export const MIN_SPLIT_GAP_TB = 2 * SPLIT_HALF_GAP_MIN_TB;
 export const MIN_SPLIT_GAP_LR = 2 * SPLIT_HALF_GAP_MIN_LR;
 export const MERGE_HALF_GAP_MIN =

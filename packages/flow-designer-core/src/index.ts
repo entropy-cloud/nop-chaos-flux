@@ -22,6 +22,13 @@ export {
   SPLIT_HALF_GAP_MIN_TB,
   SPLIT_HALF_GAP_MIN_LR,
   MERGE_HALF_GAP_MIN,
+  BTN_CENTER_DIST,
+  BTN_DIAMETER,
+  HANDLE_SIZE,
+  CONTROL_CLEARANCE,
+  CONNECTOR_CLEARANCE,
+  OVERLAY_MAIN_TB,
+  OVERLAY_MAIN_LR,
 } from './tree-projection.js';
 export {
   registerTreeDomainAdapter,

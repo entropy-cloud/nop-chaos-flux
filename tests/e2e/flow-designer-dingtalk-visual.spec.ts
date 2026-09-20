@@ -1,5 +1,9 @@
 import { expect, test, assertTrackedPageErrors } from './fixtures.js';
 
+// plan 475 Phase 3 hex 合同：dt-node header 的身份色自本 spec 起由 --fd-node-accent-*
+// 令牌背书（定义值 = 本文件钉住的 hex，light 模式计算样式不变；宿主 schema appearance
+// 优先级更高，仍可逐节点覆盖）。改色必须同步本文件与 designer-theme.css 两处。
+
 async function openDingtalkDesigner(page: import('@playwright/test').Page) {
   await page.goto('/');
 

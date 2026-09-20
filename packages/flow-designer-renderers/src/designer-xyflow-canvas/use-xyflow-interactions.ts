@@ -1,10 +1,9 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type {
   Connection,
   EdgeChange,
   NodeChange,
   OnReconnect,
-  OnSelectionChangeParams,
 } from '@xyflow/react';
 import {
   normalizePositionSignature,
@@ -41,8 +40,6 @@ export interface UseXyflowInteractionsParams {
     viewport: { x: number; y: number; zoom: number },
     event?: React.MouseEvent,
   ): void;
-  onSelectionReport(nodeIds: string[], edgeIds: string[]): void;
-  onPaneClick(): void;
 }
 
 export interface UseXyflowInteractionsResult {
@@ -51,7 +48,6 @@ export interface UseXyflowInteractionsResult {
   handleViewportChange(nextViewport: XyflowViewportChange): void;
   handleConnect(connection: Connection): void;
   handleReconnect: NonNullable<OnReconnect>;
-  handleSelectionChange(selection: OnSelectionChangeParams): void;
 }
 
 export function useXyflowInteractions({
@@ -67,8 +63,6 @@ export function useXyflowInteractions({
   onStartReconnect,
   onCompleteReconnect,
   onViewportChange,
-  onSelectionReport,
-  onPaneClick,
 }: UseXyflowInteractionsParams): UseXyflowInteractionsResult {
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -160,33 +154,77 @@ export function useXyflowInteractions({
     [onStartReconnect, onCompleteReconnect],
   );
 
-  // plan 475 Phase 1（M-3 单一写入方）：onSelectionChange 是画布选择的唯一写入口，
-  // 全量上报节点+边；单节点写入由 RF 选择变化自然覆盖，不再走 selectNode/[0] 截断。
-  // hadSelectionRef 只做「有→无」转换检测：RF 在每次 store nodes 更新后都会重发空 selection
-  // 事件（新节点对象身份），无守卫的 onPaneClick 会形成 setNodes→空事件→dispatch 风暴。
-  const hadSelectionRef = useRef(false);
-
-  function handleSelectionChange(selection: OnSelectionChangeParams) {
-    if (selection.nodes.length === 0 && selection.edges.length === 0) {
-      if (hadSelectionRef.current) {
-        hadSelectionRef.current = false;
-        onPaneClick();
-      }
-      return;
-    }
-    hadSelectionRef.current = true;
-    onSelectionReport(
-      selection.nodes.map((node) => node.id),
-      selection.edges.map((edge) => edge.id),
-    );
-  }
-
   return {
     handleNodesChange,
     handleEdgesChange,
     handleViewportChange,
     handleConnect,
     handleReconnect,
-    handleSelectionChange,
   };
+}
+
+export interface SelectionToggle {
+  id: string;
+  selected: boolean;
+}
+
+/**
+ * plan 475 Phase 1（M-3 单一写入方）：画布选择只由 RF 的用户交互（select 类 change）
+ * 上报回 core；core → RF 方向经 sync 推送 selected 旗标。不用 onSelectionChange 做上报
+ * ——它的参数是上一提交周期的滞后回声，与 core 互相覆盖会形成乒乓（designer-summary
+ * selectNode 的 Maximum update depth 根因）。
+ *
+ * 镜像 ref 由本 hook 内部创建：sync 推送时整写（trackPushedSelection），用户 select
+ * 变更时增量翻转（applyNodeToggles/applyEdgeToggles）后整报。
+ */
+export function useRfSelectionBridge(params: {
+  onSelectionReport(nodeIds: string[], edgeIds: string[]): void;
+}) {
+  const rfSelectionRef = useRef<{ nodes: Set<string>; edges: Set<string> }>({
+    nodes: new Set(),
+    edges: new Set(),
+  });
+  const reportRef = useRef(params.onSelectionReport);
+  useEffect(() => {
+    reportRef.current = params.onSelectionReport;
+  });
+
+  const trackPushedSelection = useCallback((nodeIds: string[], edgeIds: string[]) => {
+    rfSelectionRef.current = {
+      nodes: new Set(nodeIds),
+      edges: new Set(edgeIds),
+    };
+  }, []);
+
+  const applyToggles = useCallback((toggles: SelectionToggle[], kind: 'nodes' | 'edges') => {
+    if (toggles.length === 0) {
+      return;
+    }
+
+    const next = {
+      nodes: new Set(rfSelectionRef.current.nodes),
+      edges: new Set(rfSelectionRef.current.edges),
+    };
+    for (const toggle of toggles) {
+      if (toggle.selected) {
+        next[kind].add(toggle.id);
+      } else {
+        next[kind].delete(toggle.id);
+      }
+    }
+    rfSelectionRef.current = next;
+    reportRef.current([...next.nodes], [...next.edges]);
+  }, []);
+
+  return { trackPushedSelection, applyToggles };
+}
+
+export function collectSelectToggles(changes: (NodeChange | EdgeChange)[]): SelectionToggle[] {
+  const toggles: SelectionToggle[] = [];
+  for (const change of changes) {
+    if (change.type === 'select') {
+      toggles.push({ id: change.id, selected: change.selected });
+    }
+  }
+  return toggles;
 }

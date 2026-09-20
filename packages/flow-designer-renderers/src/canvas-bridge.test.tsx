@@ -117,7 +117,9 @@ describe('DesignerXyflowCanvasBridge', () => {
     expect(mockState.latestReactFlowProps.onNodesChange).toBeTruthy();
     expect(mockState.latestReactFlowProps.onEdgesChange).toBeTruthy();
     expect(mockState.latestReactFlowProps.onMoveEnd).toBeTruthy();
-    expect(mockState.latestReactFlowProps.onSelectionChange).toBeTruthy();
+    // 选择上报走 select 类 change（onNodesChange/onEdgesChange），不接 RF 的
+    // onSelectionChange——其滞后回声曾与 core 互相覆盖造成更新风暴。
+    expect(mockState.latestReactFlowProps.onSelectionChange).toBeUndefined();
 
     const mockConnection = {
       source: 'node-1',
@@ -155,6 +157,36 @@ describe('DesignerXyflowCanvasBridge', () => {
     expect(onMoveNode).toHaveBeenCalledWith('node-1', undefined, { x: 50, y: 50 });
   });
 
+  it('reports user select changes through onSelectionReport with the full selection mirror', () => {
+    const onSelectionReport = vi.fn();
+
+    renderBridge({ onSelectionReport });
+
+    expect(mockState.latestReactFlowProps.onSelectionChange).toBeUndefined();
+
+    // createSnapshot 自带 node-1/edge-1 选中态：初始 sync 推送后镜像即持有它们。
+    mockState.latestReactFlowProps.onNodesChange([
+      { id: 'node-1', type: 'select', selected: true },
+    ]);
+    expect(onSelectionReport).toHaveBeenLastCalledWith(['node-1'], ['edge-1']);
+
+    mockState.latestReactFlowProps.onEdgesChange([
+      { id: 'edge-1', type: 'select', selected: true },
+    ]);
+    expect(onSelectionReport).toHaveBeenLastCalledWith(['node-1'], ['edge-1']);
+
+    mockState.latestReactFlowProps.onNodesChange([
+      { id: 'node-2', type: 'select', selected: true },
+      { id: 'node-1', type: 'select', selected: false },
+    ]);
+    expect(onSelectionReport).toHaveBeenLastCalledWith(['node-2'], ['edge-1']);
+
+    mockState.latestReactFlowProps.onEdgesChange([
+      { id: 'edge-1', type: 'select', selected: false },
+    ]);
+    expect(onSelectionReport).toHaveBeenLastCalledWith(['node-2'], []);
+  });
+
   it('disables free connect and node dragging in tree mode', () => {
     renderBridge({ documentMode: 'tree' });
 
@@ -162,6 +194,19 @@ describe('DesignerXyflowCanvasBridge', () => {
     expect(mockState.latestReactFlowProps.nodesDraggable).toBe(false);
     expect(mockState.latestReactFlowProps.onConnect).toBeUndefined();
     expect(mockState.latestReactFlowProps.onReconnect).toBeUndefined();
+  });
+
+  it('keeps tree mode on pan/single-select semantics (no box-select, no multi key)', () => {
+    // plan 475 m-4：框选/修饰键多选仅 graph 模式；树模式左键平移、修饰键点击走单选。
+    renderBridge({ documentMode: 'tree' });
+
+    expect(mockState.latestReactFlowProps.selectionOnDrag).toBe(false);
+    expect(mockState.latestReactFlowProps.multiSelectionKeyCode).toBeNull();
+    expect(mockState.latestReactFlowProps.panOnDrag).toBe(true);
+
+    renderBridge({});
+    expect(mockState.latestReactFlowProps.selectionOnDrag).toBe(true);
+    expect(mockState.latestReactFlowProps.multiSelectionKeyCode).toEqual(['Meta', 'Control']);
   });
 
   it('publishes stable accessible node name and selected state', () => {

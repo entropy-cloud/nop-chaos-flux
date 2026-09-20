@@ -1,7 +1,7 @@
 # 475 视觉质量 V5：Flow Designer 交互补齐与主题化 Plan
 
-> Plan Status: active
-> Last Reviewed: 2026-09-20
+> Plan Status: completed
+> Last Reviewed: 2026-09-21
 > Source: `docs/analysis/visual-quality/V5-flow-designer.md`（已独立核实，2 Major + 8 Minor 修订后零 Blocker/Major）、`docs/backlog/visual-quality-roadmap.md` V5、`docs/architecture/flow-designer/design.md`
 > Related: `docs/plans/471-visual-quality-v1-theme-darkmode-foundation-plan.md`（V1 dark 触发器契约）、`docs/plans/474-visual-quality-v4-scada-visuals-plan.md`（并行在途，industrial 域零交集）
 
@@ -77,7 +77,7 @@
 
 ### Phase 1 - 选择体系：框选 + 多选 + 多节点剪贴板
 
-Status: in progress
+Status: completed
 Targets: `flow-designer-core/src/core/shell-controls.ts`、`core/shell-state.ts`（clipboard 状态形状）、`core.ts`、`core-shell-commands.ts`（死代码裁决）、`flow-designer-renderers/src/designer-xyflow-canvas`、`use-xyflow-interactions.ts`、`xyflow-utils.ts`（selected 映射）、core 直测
 
 - Item Types: `Proof | Fix | Decision`
@@ -86,65 +86,66 @@ Targets: `flow-designer-core/src/core/shell-controls.ts`、`core/shell-state.ts`
 - [x] Fix：剪贴板多节点——`shell-state.ts` `clipboard: GraphNode | null` → 数组形态；`shell-controls.ts` copy/paste 数组化（簇保形偏移：每节点各自 +48,+48，保持相对几何——修正 plan 初稿的 `+48*i` 阶梯措辞，阶梯会扭曲簇形状）；`core.ts` 传全量 + `beginTransaction('paste-selection')`/`commitTransaction` 单次 undo。**Decision：死文件 `core-shell-commands.ts` 已删除**（无生产消费方、vitest.config 排除注释在案；vitest.config.ts 注释同步清理）
 - [x] Fix：**选择回写全量化**（防 sync 坍缩，review M-2）：`xyflow-utils.ts` `selected` 改由全量 `selectedNodeIds`/`selectedEdgeIds` Set 映射；Proof「多选经快照同步不坍缩」断言随 clipboard-selection 用例覆盖（selection 状态经 sync 重映射后保持）
 - [x] Fix：renderers 接线——`selectionOnDrag` + `panOnDrag={[1,2]}`（pannable 门控）+ `multiSelectionKeyCode`（feature 关闭时显式 null）；`handleSelectionChange` 全量上报为**唯一选择写入口**：`onNodeClick/onEdgeClick` 修饰键抑制、`lastSelectionRef` 退役（review M-3）。**执行期发现并修复：hadSelectionRef 转换守卫承重**——RF 在每次 store nodes 更新后重发空 selection 事件（新节点对象身份），无「有→无」转换守卫的 onPaneClick 会形成 setNodes→空事件→dispatch 无限风暴（tree-history 测试以 Maximum update depth 暴露）；另在 handleSelectionReport 入口加内容等价守卫防相同选择回写
+- [x] Fix：**已知问题修复（designer-summary selectNode/selectEdge Maximum update depth）**——根因为 RF `onSelectionChange` 的参数是滞后一个提交周期的回声：外部命令（摘要卡/工具条）改 core 后 sync 推送 selected 旗标，滞后的回声事件与 core 当前选择内容不等 → 守卫放行 → dispatch 反向覆盖 core → 再推送 → 再回声，乒乓成风暴（用例逐周期插桩证实 DOM 选中集与推送内容恒错位一个周期）。修复：**上报只走 RF 用户交互专用的 select 类 change**（`onNodesChange`/`onEdgesChange` 的 `type:'select'`，prop 驱动推送不产生此类 change，故天然排除回声），`rfSelectionRef` 镜像记录 RF 当前选择集（sync 推送时整写 `trackPushedSelection`，用户 select 变更时增量翻转后整报），`onSelectionChange`/`hadSelectionRef`/interactions 层 onPaneClick 通路整体退役（pane 点击清选由 ReactFlow `onPaneClick` prop 直达 designer-canvas）。回归测试 `designer-page.selection-regression.test.tsx`（外部命令序列不断言风暴 + 节点选择翻转）+ `canvas-bridge.test.tsx` 新契约断言（onSelectionChange 不接线 + select change 全量上报镜像）；designer-summary-renderers e2e 3/3 绿、flow 族 e2e 41 绿
 - [x] Fix：`multiSelect` 死开关**转真消费**（review m-3）：默认值翻 `true`（config.ts），`features.multiSelect` 驱动画布接线；designer-canvas 新增 `handleSelectionReport`（dispatch setSelection 命令）+ `features` 传递；delete/undo 多选作用面核对（多删除已单事务在案）
 - [x] Fix：树模式适用面钉死（review m-4）：框选/多选仅 graph 模式行为差异经 RF props 门控；paste 拒绝维持（直测覆盖）；tree deleteSelection 多节点已就绪
 
 Exit Criteria:
 
-- [ ] core 直测先红后绿有记录（含 undo 粒度与 sync 不坍缩断言）；flow-designer-core 包既有测试零回归
-- [ ] 死文件 `core-shell-commands.ts` 删除后无残留引用（grep 证）；e2e：框选矩形几何（L2）+ ctrl 点击多选不坍缩 + 多选后批量 delete 断言（新用例，断言代码本 Phase 落、跑绿后置 Phase 4）
+- [x] core 直测先红后绿有记录（含 undo 粒度与 sync 不坍缩断言）；flow-designer-core 包既有测试零回归（clipboard-selection.test.ts 7 用例，core 包 187/187 绿）
+- [x] 死文件 `core-shell-commands.ts` 删除后无残留引用（grep 证：全仓 0 消费点，vitest.config.ts 排除注释同步清理）；e2e `flow-designer-selection.spec.ts` 已落且跑绿：框选矩形几何（L2，拖拽矩形 × 节点包围盒求交，`SelectionMode.Partial` 显式化）+ 修饰键点击多选不坍缩 + 多选后批量 delete 单次 undo（`deleteKeyCode=null` 禁 RF 内建删除旁路，统一走 deleteSelection 单事务；`multiSelectionKeyCode=['Meta','Control']` 显式双键解 UA 探测失配）。执行期附带修复：designer-summary selectNode/selectEdge Maximum update depth（详见上 Fix 条）
 
 ### Phase 2 - 画布交互：对齐辅助线 + 实测尺寸
 
-Status: in progress
+Status: completed
 Targets: `designer-xyflow-canvas`（辅助线层）、`use-xyflow-sync.ts`、`xyflow-utils.ts`、bugs/11 回归测试
 
 - Item Types: `Proof | Fix`
 
 - [x] Proof：单测先红——①`mergeSnapshotNode` 合并后 `measured` 保全（构造带实测值的 RF 节点经 sync 不丢，use-xyflow-sync.test 先红后绿）；②树分支预填 `measured` 存在（xyflow-utils.test）
 - [x] Fix：`use-xyflow-sync.ts` merge 保全 `measured`（local 节点层，core 文档态不承载 DOM 值）；`xyflow-utils.ts` 树分支补预填（`resolveNodeSize` 同链）
-- [ ] Fix：对齐辅助线最小实现——拖拽期兄弟节点 left/center/right × top/middle/bottom 候选线、6px 阈值吸附、ViewportPortal 渲染 1px 参考线（包内在库先例 canvas:106-128）；`snapToGrid` 共存（对齐线优先）
-- [ ] Fix：bugs/11 回归测试（拖拽初始化无 error#015：预填 + 保全双路径断言补齐拖拽语义面）
+- [x] Fix：对齐辅助线最小实现——`use-alignment-guides.ts`（纯函数 `computeAlignmentGuides`：兄弟节点 left/center/right × top/middle/bottom 候选线、6px 阈值、最近候选优先；多选拖拽不吸附，最小实现显式化）+ canvas `onNodeDrag/onNodeDragStop` 接线 + ViewportPortal 1px 参考线（`data-testid="fd-alignment-guide-v/-h"`）；吸附位置经 position change（dragging 中）回写本地节点层、不触发 moveNode 提交，与 `snapToGrid` 共存（对齐位移在网格舍入后叠加，对齐线优先）。5 个纯函数单测 + 2 个 e2e（对齐出现/松手清除、远离不出现）全绿
+- [x] Fix：bugs/11 回归测试（拖拽初始化无 error#015：预填 + 保全双路径断言补齐拖拽语义面）——先红暴露真实缺口：位置变化同步路径（纯选择/外部移动）整体替换节点把实测 measured 冲回预填值；修复为 `adoptSnapshotPosition`（位置/数据取文档、dragging/measured 保本地），回归测试转绿
 
 Exit Criteria:
 
-- [ ] 单测先红后绿；`use-xyflow-sync` 既有测试零回归
-- [ ] e2e：拖拽节点贴近兄弟节点时辅助线可见断言（L1/L4；后置 Phase 4 统一跑绿）
+- [x] 单测先红后绿；`use-xyflow-sync` 既有测试零回归（renderers 255/255）
+- [x] e2e：拖拽节点贴近兄弟节点时辅助线可见断言（`flow-designer-alignment.spec.ts` 2/2 绿，提前于 Phase 4 落地跑绿）
 
 ### Phase 3 - 令牌化 + dark + 常量单源
 
-Status: planned
+Status: completed
 Targets: `designer-theme.css`、`designer-theme.test.ts`、`designer-node-appearance.ts`、`ding-flow-edge.tsx`、`designer-xyflow-canvas.tsx`（MiniMap/--xy-\*）、`dingflow-constants.ts`/`tree-projection.ts`、`designer-inspector/palette/canvas` 消费点、宿主两 css
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：`designer-theme.test.ts` 先红——新契约（`--fd-*` 作用域化定义存在 + `[data-mode='dark']` 块重声明 + 消费点无新增裸 hex/rgba 断言）
-- [ ] Fix：`designer-theme.css` 定义 `--fd-*` 族（`.nop-designer` 祖先块接 theme-tokens 语义值 + `[data-mode='dark']` 后代块；`--fd-node-accent-*` light/dark 双值）；玻璃拟态 7 处 → `--surface-*`
-- [ ] Fix：消费点迁移——accent 6 点、`ding-flow-edge.tsx:100` 三类、MiniMap 四色、`--xy-*` dark 最小集（Controls/选框/选中色）
-- [ ] Fix：树常量单源（core 导出、`dingflow-constants.ts` re-import + 同源单测）；宿主 `flow-designer-nodes.css`/`styles-theme-utilities.css` 同令牌化（fallback 保宿主覆盖优先级）
-- [ ] Fix：`theme-compatibility.md` 契约段同步修订——**范围 :91-103 全段**（含 :97 防遮蔽条款改述、:103 「不在 `.nop-designer` 再发布」禁令的显式解除与新宿主覆盖方式重述：命中 `.nop-designer` 内层或更高优先级 + dark 块层叠关系）；dingtalk-visual spec hex 合同核对/同步改写
+- [x] Proof：`designer-theme.test.ts` 先红——新契约（4 断言先红：`.nop-designer` 作用域 `--fd-*` 定义存在、`[data-mode='dark']` 块重声明面、`--fd-node-accent-*` 族、`.fd-branch-label` 令牌类；改用 import.meta.url 锚定修复单文件运行 cwd 依赖）
+- [x] Fix：`designer-theme.css` 定义 `--fd-*` 族（`.nop-designer` 作用域定义 + `[data-mode='dark']` 后代块；表面族优先引用 `--surface-*`/`--shadow-*` 语义值带字面 fallback，light 值与原 fallback 等值或玻璃族内等价迁移）；`--fd-node-accent-*` 逐键独立定义（dt-_ 与同义通用键色值不同不得合并——执行期修正了一次错误合并），身份色不随 dark 翻转（裁决：identity hue 非 mode-dependent surface，dark 块重声明面 = 表面族 + --xy-_ 最小集）
+- [x] Fix：消费点迁移——accent 源头 `designer-node-appearance.ts`（5 消费点经 `resolveNodeTypeAccent` 自动获得令牌引用）、`ding-flow-edge.tsx` branch label 三类（border/bg/text → `.fd-branch-label` 令牌类）、MiniMap 四色（var 消费已在，定义补齐）、`--xy-*` dark 最小集（Controls 背景/悬停/前景、选框背景/边框、连线选中、连接点）；glass 表面 → `--surface-highlight/secondary`（alpha 漂移 ≤0.04，dingtalk-visual 不钉表面故无合同冲突）
+- [x] Fix：树常量单源（core `tree-projection.ts` 导出 7 常量 + `OVERLAY_MAIN_*` 显式化替换公式内 26/96 字面量、core index re-export、`dingflow-constants.ts` re-import + 同源单测 2 用例）；死常量 CARD_W/CARD_H/TITLE_H 删除（零消费方）；宿主 `flow-designer-nodes.css`（accent/grays → 令牌 + demo dark 最小面）、`styles-theme-utilities.css`（`.nop-glass-card` → `--surface-*`；死规则 `.dark .nop-glass-card` 改挂 `[data-mode='dark']`——tailwind-preset V1 统一触发器后 `.dark` 类从未被挂载）
+- [x] Fix：`theme-compatibility.md` `.fd-theme-root` 契约段改写（:103 禁令显式解除、宿主覆盖新方式重述：命中 `.nop-designer` 内层/更高特异性 + dark 块层叠关系、--surface-\* 语义引用说明）；dingtalk-visual spec 头部补 hex 合同双处同步要求注释，6/6 全绿验证 light 计算样式不变
 
 Exit Criteria:
 
-- [ ] 单测先红后绿（新契约测试 + 同源单测）；两包既有测试零回归（锁死值断言同步后）
-- [ ] e2e：dark 模式计算样式断言（L3，V0 helper：切 dark 后画布面/节点 accent 解析值变化）；dingtalk-visual 全绿
+- [x] 单测先红后绿（新契约测试 4 红转绿 + 同源单测 2 用例）；两包既有测试零回归（renderers 260/260、core 187/187；designer-controls 一处锁死值断言按新契约同步）
+- [x] e2e：dark 模式计算样式断言（`flow-designer-dark.spec.ts` 2/2 绿：dark 切换后画布/工具条解析值变化 + `--fd-grid-color` dark 值生效 + 身份色不翻转；`--fd-*` 族定义存在性）；dingtalk-visual 全绿（6/6）
 
 ### Phase 4 - FDC-GAP 收尾 + docs 落卡 + 全量验证
 
-Status: planned
+Status: completed
 Targets: core 直测收尾、证据卡 flow-designer.md、design.md、ma43 审计文档、roadmap、daily log
 
 - Item Types: `Proof | Decision | Fix`
 
-- [ ] Proof：flow 族既有 e2e 全量回归（dingtalk-visual 同步后全绿）；新增 Phase 1-3 e2e 用例统一跑绿（框选/多选 delete/辅助线/dark）
-- [ ] Decision：A3 边中点插入否决 + C3 hideAttribution 待人工确认，双双落证据卡（含理由与去向）
-- [ ] Fix：证据卡 flow-designer.md 全量回写（F1-F6 + C1-C7 三态裁定）；design.md 补宿主扫描契约段（A8）+ §17.7 核对注记；ma43 文档「never invoked」勘误；roadmap V5 行、`Last Updated`、daily log
-- [ ] Fix：全仓验证链（typecheck/build/lint/test/check——flow 两包零新 hit 核对）
+- [x] Proof：flow 族既有 e2e 全量回归（dingtalk-visual 同步后全绿）；新增 Phase 1-3 e2e 用例统一跑绿（框选/多选 delete/辅助线/dark——全量 e2e 1496 passed / 0 failed / 43 skipped / 1 flaky 重试通过）
+- [x] Decision：A3 边中点插入否决 + C3 hideAttribution 待人工确认，双双落证据卡（含理由与去向；A3 → Deferred But Adjudicated + 登记候选，C3 → Deferred But Adjudicated 待人工确认）
+- [x] Fix：证据卡 flow-designer.md 全量回写（F1-F6 + C1-C7 三态裁定）；design.md 补宿主扫描契约段（A8 §18）+ §17.7 核对注记；ma43 文档「never invoked」勘误；roadmap V5 行（closure audit 后翻 `done`）、`Last Updated`、daily log
+- [x] Fix：全仓验证链（typecheck/build/lint/test/check 全绿——lint 修 react-compiler 3 errors（useRfSelectionBridge 重构）后复绿；check 零新 hit）
 
 Exit Criteria:
 
-- [ ] flow 族 e2e 全绿（含改写后 dingtalk-visual）；全仓验证链绿
-- [ ] 证据卡无 pending 裁决残留；owner docs 与 live 一致
+- [x] flow 族 e2e 全绿（含改写后 dingtalk-visual）；全仓验证链绿
+- [x] 证据卡无 pending 裁决残留；owner docs 与 live 一致
 
 ## Draft Review Record
 
@@ -155,19 +156,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 全部 in-scope 交付落地（Phase 1–4 Exit Criteria 全勾）
-- [ ] in-scope contract drift 已收敛：multiSelect 死开关、剪贴板单节点、假 measured 持续冲掉、`--fd-*` 死令牌面、树常量双份
-- [ ] A3/C3 显式裁决落卡（非静默 deferred）；C4/C6 watch-only 有据
-- [ ] 行为/契约结果已达成：框选/多选/多节点粘贴、辅助线、dark 画布在 e2e 成立
-- [ ] 必要 focused verification 已完成（core 直测先红后绿 + theme 契约测试 + flow 族 e2e 全量）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（A3/A8 为显式裁决，C3 待人工确认事项已登记）
-- [ ] 受影响 owner docs 已同步：design.md、theme-compatibility.md、ma43 勘误、证据卡、roadmap、daily log
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新 hit）
+- [x] 全部 in-scope 交付落地（Phase 1–4 Exit Criteria 全勾）
+- [x] in-scope contract drift 已收敛：multiSelect 死开关、剪贴板单节点、假 measured 持续冲掉、`--fd-*` 死令牌面、树常量双份
+- [x] A3/C3 显式裁决落卡（非静默 deferred）；C4/C6 watch-only 有据
+- [x] 行为/契约结果已达成：框选/多选/多节点粘贴、辅助线、dark 画布在 e2e 成立
+- [x] 必要 focused verification 已完成（core 直测先红后绿 + theme 契约测试 + flow 族 e2e 全量）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（A3/A8 为显式裁决，C3 待人工确认事项已登记）
+- [x] 受影响 owner docs 已同步：design.md、theme-compatibility.md、ma43 勘误、证据卡、roadmap、daily log
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新 hit）
 
 ## Deferred But Adjudicated
 
@@ -186,7 +187,7 @@ Exit Criteria:
 ### xyflow hideAttribution 授权合规（C3）
 
 - Classification: `watch-only residual`
-- Why Not Blocking Closure: 授权合规事项非视觉修复，需人工确认订阅/许可状态后方可处置（两处在案：designer-xyflow-canvas.tsx:314、graph xyflow-canvas.tsx:120）
+- Why Not Blocking Closure: 授权合规事项非视觉修复，需人工确认订阅/许可状态后方可处置（两处在案：designer-xyflow-canvas.tsx:363、graph xyflow-canvas.tsx:120）
 - Successor Required: `yes`
 - Successor Path: 人工确认后独立处置（移除或合规）
 
@@ -197,13 +198,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （closure audit 通过后填写）
+Status Note: 2026-09-21 closure audit 通过（首轮 verdict `issues`：2 Major + 4 Minor——Major-1 树模式 documentMode 门控缺失、Major-2 theme-compatibility.md:286 旧 baseline 句未同步；Minor 裸 hex 断言静默收窄、A3 候选登记未兑现、Closure Gates 未补勾、C3 行号漂移——全部当轮修复：树模式 props 门控 + bridge 断言、:286 改写、no-raw-hex 契约断言补齐、roadmap A3 候选登记、Gates 补勾、行号订正），修复后达成共识关闭。工程交付面（选择体系/辅助线/measured 保全/令牌化+dark/常量单源/三 e2e spec）经独立抽查与复跑全部成立。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立子 agent fresh session 填写）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: 独立 closure auditor（fresh sub-agent session，2026-09-21，输入=plan+diff 摘要+验证输出三件套，只读审计）
+- Evidence: 审计报告 verdict `issues`（2 Major / 4 Minor，全部带 文件:行 证据）：Major-1 树模式框选门控与 §17.7 注记声称不符（live 仅 features 门控）→ 修复=canvas props 补 `!isTreeMode` 门控 + `canvas-bridge.test.tsx` 树模式断言（selectionOnDrag false / multiSelectionKeyCode null / panOnDrag true，graph 模式对照）；Major-2 theme-compatibility.md:286「no longer publishes --fd-\*」与 :101 新契约自相矛盾 → 改写为 475 后契约；Minor-1 补 designer-theme.test.ts「accent 表无裸 hex + branch label 无任意值 hex 类」断言；Minor-2 A3 候选登记兑现（visual-quality roadmap V5 Phase Details 执行后登记行）；Minor-3 本 Gates 补勾（audit 证据背书）；Minor-4 C3 行号订正 :314→:363。修复后复跑：flow-designer-renderers 262/262（新增 2 断言用例）等验证绿。daily log：`docs/logs/2026/09-21.md`。
 
 Follow-up:
 
-- （closure 时填写，或写 no remaining plan-owned work）
+- C3 hideAttribution 授权合规：待人工确认订阅/许可状态后独立处置（Deferred But Adjudicated 承接，非本 plan scope）。
+- e2e 批量 delete undo 用例在全量负载下出现一次 flaky（重试通过、单跑稳定）；daily log 已披露，后续若复现可对按键时序加固。

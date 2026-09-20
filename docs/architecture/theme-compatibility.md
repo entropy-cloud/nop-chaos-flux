@@ -88,19 +88,22 @@ The renderer tree must work in all three cases.
 
 ### `.fd-theme-root`
 
-`.fd-theme-root` remains an optional Flow Designer specialization marker, but it is no longer the owner of default `--fd-*` token publication.
+`.fd-theme-root` remains an optional Flow Designer specialization marker. It is not the owner of default `--fd-*` token publication.
 
 Responsibilities:
 
 - identify Flow Designer subtrees that want local Flow-specific overrides
 - provide an optional stable hook for host-authored Flow Designer-only token aliases
-- avoid blocking ancestor token overrides by re-declaring package defaults on the mounted Flow root itself
+- keep host-authored aliases on the mounted Flow root without fighting the package defaults below
 
-Current live baseline:
+Current live baseline (plan 475 Phase 3 contract change):
 
-- Flow Designer package CSS reads `--fd-*` tokens with fallback values at each usage site
-- hosts may still override `--fd-*` from `.fd-theme-root`, `.nop-theme-root`, or any ancestor scope
-- package defaults do not re-publish those tokens on `.fd-theme-root` or `.nop-designer`
+- the Flow Designer package publishes the `--fd-*` token family on the `.nop-designer` scope in `designer-theme.css` (surface tokens, grid/minimap colors, node accent identity colors, alignment guides)
+- consumption sites keep the `var(--fd-x, fallback)` form; the fallback only serves bare hosts that mount designer markup without the `.nop-designer` assembly
+- mode-dependent tokens are re-declared in a `[data-mode='dark']` descendant block; `data-mode` lives on `:root`, matching the theme-tokens dark trigger (single source of truth). Node accent identity colors (`--fd-node-accent-*`) do not flip between modes
+- where possible the published values reference theme-tokens semantic surfaces (`--surface-*`, `--shadow-*`) with literal fallbacks, so classic/glass theme blocks retune designer chrome without extra selectors
+- hosts may override `--fd-*` from any ancestor scope; to beat the package defaults a host override must target the `.nop-designer` scope itself (inner element or higher-specificity selector) and, for mode-dependent tokens, re-declare in its own `[data-mode='dark']` block — the dark block appears later in the package stylesheet, so same-specificity host declarations in an earlier stylesheet lose to the package dark block
+- the former prohibition ("package defaults do not re-publish those tokens on `.fd-theme-root` or `.nop-designer`") is explicitly lifted as of plan 475: the dead token surface (fallback reads with no definitions anywhere) made per-package dark support impossible
 
 ## Token Layers
 
@@ -280,7 +283,7 @@ Current live baseline for in-scope workbench packages:
 - `apps/playground/src/styles.css` consumes the public `@nop-chaos/ui/base.css` entry instead of importing `packages/ui/src/*` directly
 - `@nop-chaos/word-editor-renderers` ships its default `--nop-*` fallback tokens from `packages/word-editor-renderers/src/styles.css`, so standalone word-editor surfaces do not rely on playground CSS to define `--nop-app-bg`, `--nop-border`, or `--nop-playground-stage-bg`
 - `@nop-chaos/ui` `Toaster` now maps Sonner `--normal-*` variables through valid theme color functions instead of handing Sonner bare HSL fragment tokens, so toast chrome stays compatible with public `--popover*` and `--border` token publication
-- `@nop-chaos/flow-designer-renderers` no longer publishes package default `--fd-*` values on `.fd-theme-root` / `.nop-designer`; shared Flow defaults now live as fallback reads at the concrete component surfaces, and palette chrome derives from config-driven/node-type accent data instead of hardcoded `nodeType.id -> css class -> hex gradient` tables
+- `@nop-chaos/flow-designer-renderers` publishes the `--fd-*` token family on the `.nop-designer` scope (plan 475 Phase 3 — see the `.fd-theme-root` section above for the full contract): mode-dependent tokens re-declare under `[data-mode='dark']`, node accent identity colors ride `--fd-node-accent-*` instead of hardcoded `nodeType.id -> hex` tables, and consumption sites keep `var(--fd-x, fallback)` reads so bare-host mounts still resolve
 - `@nop-chaos/flux-code-editor` default chrome now derives from shared semantic theme tokens rather than light-only package-local rgba/hex defaults, so the editor follows host theme variables even when `editorTheme` stays on its default path
 - `@nop-chaos/nop-debugger` runtime CSS no longer writes debugger defaults onto `.nop-theme-root`; debugger and launcher surfaces read `var(--nop-debugger-*, fallback)` locally, and internal `.ndbg-*` selectors stay anchored under debugger-owned roots
 - shared sidebar defaults now publish raw HSL fragments in `@nop-chaos/theme-tokens`, while `@nop-chaos/tailwind-preset` maps sidebar utilities back through `hsl(var(--sidebar...))` color functions so default-theme roots stay valid without host-only theme attributes

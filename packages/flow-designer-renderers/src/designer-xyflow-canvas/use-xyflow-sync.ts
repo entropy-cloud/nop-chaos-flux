@@ -14,6 +14,16 @@ function mergeSnapshotNode(localNode: Node, snapshotNode: Node): Node {
   };
 }
 
+// 位置变化同步路径：位置/数据取文档值，dragging/measured 保留本地——文档位置变化
+// （外部移动/自动布局）要生效，但 RF 已实测的尺寸不能被预填估计冲掉。
+function adoptSnapshotPosition(localNode: Node, snapshotNode: Node): Node {
+  return {
+    ...snapshotNode,
+    dragging: localNode.dragging,
+    measured: localNode.measured ?? snapshotNode.measured,
+  };
+}
+
 export function syncLocalNodesWithSnapshot(
   currentNodes: Node[],
   snapshotNodes: Node[],
@@ -44,7 +54,7 @@ export function syncLocalNodesWithSnapshot(
         lastCommittedPositions.delete(snapshotNode.id);
         return mergeSnapshotNode(localNode, snapshotNode);
       }
-      return snapshotNode;
+      return adoptSnapshotPosition(localNode, snapshotNode);
     });
   }
 
@@ -64,7 +74,7 @@ export function syncLocalNodesWithSnapshot(
       return mergedNode;
     }
     changed = true;
-    return snapNode;
+    return adoptSnapshotPosition(localNode, snapNode);
   });
   return changed ? merged : currentNodes;
 }
@@ -73,6 +83,7 @@ export interface UseXyflowSyncParams {
   snapshotNodes: Node[];
   snapshotEdges: Edge[];
   hoveredEdgeId: string | null;
+  onSelectionPushed?(nodeIds: string[], edgeIds: string[]): void;
 }
 
 export interface UseXyflowSyncResult {
@@ -83,10 +94,15 @@ export interface UseXyflowSyncResult {
   lastCommittedPositionsRef: React.MutableRefObject<Map<string, string>>;
 }
 
+function collectSelectedIds(items: { id: string; selected?: boolean }[]): string[] {
+  return items.filter((item) => item.selected === true).map((item) => item.id);
+}
+
 export function useXyflowSync({
   snapshotNodes,
   snapshotEdges,
   hoveredEdgeId,
+  onSelectionPushed,
 }: UseXyflowSyncParams): UseXyflowSyncResult {
   const lastCommittedPositionsRef = useRef<Map<string, string>>(new Map());
 
@@ -101,7 +117,10 @@ export function useXyflowSync({
         lastCommittedPositionsRef.current,
       );
     });
-  }, [snapshotNodes, setLocalNodes]);
+    // 本 hook 的推送结果恒等于快照的 selected 旗标（sync 各返回路径都取快照 selected），
+    // 据此整写 RF 选择集镜像，供 select 类 change 增量上报使用。
+    onSelectionPushed?.(collectSelectedIds(snapshotNodes), collectSelectedIds(snapshotEdges));
+  }, [snapshotNodes, snapshotEdges, setLocalNodes, onSelectionPushed]);
 
   const renderedEdges = useMemo<Edge[]>(
     () =>

@@ -16,6 +16,7 @@ vi.mock('@xyflow/react', () => ({
   },
   MiniMap: () => null,
   Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
+  SelectionMode: { Partial: 'partial', Full: 'full' },
   BaseEdge: ({ children }: { children: React.ReactNode }) => children,
   EdgeLabelRenderer: ({ children }: { children: React.ReactNode }) => children,
   NodeToolbar: ({ children, isVisible }: { children: React.ReactNode; isVisible?: boolean }) =>

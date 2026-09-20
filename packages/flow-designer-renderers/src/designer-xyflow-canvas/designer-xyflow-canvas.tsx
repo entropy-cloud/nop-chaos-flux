@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Background,
   BackgroundVariant,
@@ -6,9 +6,10 @@ import {
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
+  SelectionMode,
   ViewportPortal,
 } from '@xyflow/react';
-import type { ReactFlowInstance } from '@xyflow/react';
+import type { EdgeChange, NodeChange, ReactFlowInstance } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { DesignerXyflowNode } from './designer-xyflow-node.js';
 import { DesignerXyflowEdge } from './designer-xyflow-edge.js';
@@ -23,7 +24,8 @@ import type { XyflowViewportChange } from './types.js';
 import type { CanvasConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { useMinimapNavigation } from './use-minimap-navigation.js';
 import { useXyflowSync } from './use-xyflow-sync.js';
-import { useXyflowInteractions } from './use-xyflow-interactions.js';
+import { useXyflowInteractions, useRfSelectionBridge, collectSelectToggles } from './use-xyflow-interactions.js';
+import { useAlignmentGuides } from './use-alignment-guides.js';
 import { PortConnectionA11yContext } from './port-connection-a11y-context.js';
 
 export const DESIGNER_PALETTE_NODE_MIME = 'application/x-flow-designer-node-type';
@@ -208,17 +210,21 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
 
   useMinimapNavigation({ surfaceRef, viewport, showMinimap, onViewportChange });
 
-  const { localNodes, renderedEdges, onNodesChangeInternal, onEdgesChangeInternal, lastCommittedPositionsRef } =
-    useXyflowSync({ snapshotNodes, snapshotEdges, hoveredEdgeId });
+  // plan 475 Phase 1（M-3 单一写入方）：RF 选择集镜像由 useRfSelectionBridge 内部持有——
+  // core → RF 经 sync 推送（trackPushedSelection 整写镜像），RF → core 经 select 类
+  // change 增量翻转镜像后整报。不用 onSelectionChange：其参数是滞后一个提交周期的
+  // 回声，会造成 core/RF 互相覆盖的乒乓（designer-summary Maximum update depth 根因）。
+  const rfSelectionBridge = useRfSelectionBridge({ onSelectionReport: props.onSelectionReport });
 
-  const {
-    handleNodesChange,
-    handleEdgesChange,
-    handleViewportChange,
-    handleConnect,
-    handleReconnect,
-    handleSelectionChange,
-  } = useXyflowInteractions({
+  const { localNodes, renderedEdges, onNodesChangeInternal, onEdgesChangeInternal, lastCommittedPositionsRef } =
+    useXyflowSync({
+      snapshotNodes,
+      snapshotEdges,
+      hoveredEdgeId,
+      onSelectionPushed: rfSelectionBridge.trackPushedSelection,
+    });
+
+  const interactions = useXyflowInteractions({
     viewport,
     onNodesChangeInternal,
     onEdgesChangeInternal,
@@ -231,8 +237,30 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     onStartReconnect: props.onStartReconnect,
     onCompleteReconnect: props.onCompleteReconnect,
     onViewportChange,
-    onSelectionReport: props.onSelectionReport,
-    onPaneClick: props.onPaneClick,
+  });
+
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      interactions.handleNodesChange(changes);
+      rfSelectionBridge.applyToggles(collectSelectToggles(changes), 'nodes');
+    },
+    [interactions, rfSelectionBridge],
+  );
+  const handleEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      interactions.handleEdgesChange(changes);
+      rfSelectionBridge.applyToggles(collectSelectToggles(changes), 'edges');
+    },
+    [interactions, rfSelectionBridge],
+  );
+  const { handleViewportChange, handleConnect, handleReconnect } = interactions;
+
+  // plan 475 Phase 2：拖拽对齐辅助线——吸附位置经 position change（dragging 中）回写
+  // 本地节点层，不触发 moveNode 提交；网格吸附共存时对齐线优先（对齐后位置覆盖网格舍入）。
+  const alignment = useAlignmentGuides({
+    getNodes: () => localNodes,
+    applyPosition: (id, position) =>
+      onNodesChangeInternal([{ id, type: 'position', position, dragging: true }]),
   });
   const portConnectionA11yValue = useMemo(
     () => ({
@@ -289,9 +317,15 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           nodesConnectable={!isTreeMode}
           elementsSelectable
           nodesDraggable={!isTreeMode}
-          selectionOnDrag={multiSelectEnabled}
-          panOnDrag={multiSelectEnabled ? (pannable ? [1, 2] : false) : pannable}
-          multiSelectionKeyCode={multiSelectEnabled ? undefined : null}
+          // plan 475 m-4 树模式适用面：框选/修饰键多选仅 graph 模式——树模式保持
+          // 左键平移 + 单选语义（§17.7 非目标：不把树暴露成多选 graph 编辑器）。
+          selectionOnDrag={!isTreeMode && multiSelectEnabled}
+          panOnDrag={!isTreeMode && multiSelectEnabled ? (pannable ? [1, 2] : false) : pannable}
+          // 部分相交即入选，对齐常见流程设计器的框选手感（RF 默认 Full 要求完整包含）。
+          selectionMode={SelectionMode.Partial}
+          // 显式双键：RF 默认键位经 isMacOs()（UA 探测）取 Meta/Control 之一，
+          // UA 被宿主/自动化覆盖时会落到不可用组合；designer 场景直接双键通吃。
+          multiSelectionKeyCode={!isTreeMode && multiSelectEnabled ? ['Meta', 'Control'] : null}
           panOnScroll={pannable}
           zoomOnScroll={zoomable}
           zoomOnPinch={zoomable}
@@ -311,15 +345,19 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           }}
           onConnect={isTreeMode ? undefined : handleConnect}
           onReconnect={isTreeMode ? undefined : handleReconnect}
+          // Delete/Backspace 由 use-designer-shortcuts 统一路由到 deleteSelection
+          // （多选单事务）；禁掉 RF 内建删除，避免其逐节点 remove 旁路事务粒度。
+          deleteKeyCode={null}
           onNodesChange={handleNodesChange}
           onEdgesChange={handleEdgesChange}
-          onSelectionChange={handleSelectionChange}
+          onNodeDrag={alignment.onNodeDrag}
+          onNodeDragStop={alignment.onNodeDragStop}
           onNodeClick={(event, node) => {
-            if (multiSelectEnabled && (event.ctrlKey || event.metaKey || event.shiftKey)) return;
+            if (!isTreeMode && multiSelectEnabled && (event.ctrlKey || event.metaKey || event.shiftKey)) return;
             props.onNodeSelect(node.id, undefined);
           }}
           onEdgeClick={(event, edge) => {
-            if (multiSelectEnabled && (event.ctrlKey || event.metaKey || event.shiftKey)) return;
+            if (!isTreeMode && multiSelectEnabled && (event.ctrlKey || event.metaKey || event.shiftKey)) return;
             props.onEdgeSelect(edge.id, undefined);
           }}
           proOptions={{ hideAttribution: true }}
@@ -399,6 +437,24 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               nodeTypeSizeMap={props.nodeTypeSizeMap}
               onPlusButtonClick={props.onPlusButtonClick}
             />
+          )}
+          {alignment.guides.vertical != null && (
+            <ViewportPortal>
+              <div
+                data-testid="fd-alignment-guide-v"
+                className="fd-alignment-guide fd-alignment-guide--v"
+                style={{ transform: `translate(${alignment.guides.vertical}px, -10000px)`, height: 20000 }}
+              />
+            </ViewportPortal>
+          )}
+          {alignment.guides.horizontal != null && (
+            <ViewportPortal>
+              <div
+                data-testid="fd-alignment-guide-h"
+                className="fd-alignment-guide fd-alignment-guide--h"
+                style={{ transform: `translate(-10000px, ${alignment.guides.horizontal}px)`, width: 20000 }}
+              />
+            </ViewportPortal>
           )}
           </ReactFlow>
         </div>

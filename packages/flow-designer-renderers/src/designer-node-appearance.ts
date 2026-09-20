@@ -20,23 +20,27 @@ const DEFAULT_NODE_TYPE_META: Record<string, { labelKey: string; icon?: string }
   loop: { labelKey: 'flux.flowDesigner.nodeType.loop', icon: 'repeat' },
 };
 
+// plan 475 Phase 3：accent 身份色走 --fd-node-accent-* 令牌（.nop-designer 作用域定义，
+// light 值与 dingtalk demo parity 的 e2e hex 合同一致；身份色不随 dark 翻转）。
+// fallback 保留 hex 供裸宿主兜底。dt-* 与同义通用键色值不同（如 dt-condition 绿 vs
+// condition 琥珀），各持独立令牌，不得合并。
 const DEFAULT_NODE_TYPE_COLORS: Record<string, string> = {
-  'dt-initiator': '#576a95',
-  'dt-approval': '#ff943e',
-  'dt-cc': '#3296fa',
-  'dt-condition': '#15bc83',
-  'dt-parallel': '#6366f1',
-  'dt-subprocess': '#8b5cf6',
-  'dt-end': '#94a3b8',
-  'action-entry': '#10b981',
-  'action-step': '#3b82f6',
-  'action-end': '#94a3b8',
-  start: '#10b981',
-  end: '#ef4444',
-  task: '#3b82f6',
-  condition: '#f59e0b',
-  parallel: '#8b5cf6',
-  loop: '#ec4899',
+  'dt-initiator': 'var(--fd-node-accent-dt-initiator, #576a95)',
+  'dt-approval': 'var(--fd-node-accent-dt-approval, #ff943e)',
+  'dt-cc': 'var(--fd-node-accent-dt-cc, #3296fa)',
+  'dt-condition': 'var(--fd-node-accent-dt-condition, #15bc83)',
+  'dt-parallel': 'var(--fd-node-accent-dt-parallel, #6366f1)',
+  'dt-subprocess': 'var(--fd-node-accent-dt-subprocess, #8b5cf6)',
+  'dt-end': 'var(--fd-node-accent-dt-end, #94a3b8)',
+  'action-entry': 'var(--fd-node-accent-action-entry, #10b981)',
+  'action-step': 'var(--fd-node-accent-action-step, #3b82f6)',
+  'action-end': 'var(--fd-node-accent-action-end, #94a3b8)',
+  start: 'var(--fd-node-accent-start, #10b981)',
+  end: 'var(--fd-node-accent-end, #ef4444)',
+  task: 'var(--fd-node-accent-task, #3b82f6)',
+  condition: 'var(--fd-node-accent-condition, #f59e0b)',
+  parallel: 'var(--fd-node-accent-parallel, #8b5cf6)',
+  loop: 'var(--fd-node-accent-loop, #ec4899)',
 };
 
 const DEFAULT_TREE_MENU_PRIORITY: Record<string, number> = {

@@ -76,8 +76,9 @@
   }
 
   .nop-glass-card {
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    /* plan 475 Phase 3：表面走 theme-tokens --surface-*（data-mode 翻转），fallback 保原值。 */
+    background: var(--surface-highlight, rgba(255, 255, 255, 0.78));
+    border: 1px solid var(--surface-secondary, rgba(255, 255, 255, 0.4));
     backdrop-filter: blur(20px);
   }
 
@@ -104,9 +105,11 @@
       0 4px 6px -4px rgba(0, 0, 0, 0.1);
   }
 
-  .dark .nop-glass-card {
-    background: rgba(30, 41, 59, 0.78);
-    border-color: rgba(148, 163, 184, 0.16);
+  /* 原 `.dark` 类选择器是死规则——tailwind-preset/V1 统一 dark 触发器为 data-mode，
+   * playground 只挂 data-mode 不挂 .dark 类。改挂 data-mode 使暗色真正生效。 */
+  [data-mode='dark'] .nop-glass-card {
+    background: var(--surface-primary, rgba(30, 41, 59, 0.78));
+    border-color: var(--border-surface, rgba(148, 163, 184, 0.16));
   }
 
   .react-flow__controls {

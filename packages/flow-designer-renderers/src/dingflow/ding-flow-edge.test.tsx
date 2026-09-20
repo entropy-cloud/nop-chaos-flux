@@ -136,7 +136,7 @@ describe('DingFlowEdge branch label', () => {
     expect(pill).toBeTruthy();
     expect(pill?.textContent).toBe('长期请假');
     expect(pill?.getAttribute('style')).toContain('translate(50px, 40px)');
-    expect(pill?.classList.contains('pointer-events-none')).toBe(true);
+    expect(pill?.classList.contains('fd-branch-label')).toBe(true);
   });
 
   it('renders the label on the LR split line at the main axis', () => {
