@@ -1,4 +1,5 @@
 import { createStore } from 'zustand/vanilla';
+import type { EditorZone } from './canvas-editor-types.js';
 import type { CanvasEditorBridge } from './canvas-editor-bridge.js';
 import type { PaperSettings } from './paper-settings.js';
 import { DEFAULT_PAPER_SETTINGS } from './paper-settings.js';
@@ -50,6 +51,7 @@ export interface EditorState {
   pageMode: string;
   paperSettings: PaperSettings;
   selection: EditorSelectionState;
+  activeZone: EditorZone;
   currentPage: number;
   totalPages: number;
   scale: number;
@@ -63,6 +65,7 @@ const initialState: EditorState = {
   pageMode: 'paging',
   paperSettings: { ...DEFAULT_PAPER_SETTINGS },
   selection: { ...DEFAULT_SELECTION },
+  activeZone: 'main' as EditorZone,
   currentPage: 0,
   totalPages: 0,
   scale: 1,
@@ -112,6 +115,10 @@ export function createEditorStore() {
       store.setState((state) => ({
         selection: { ...state.selection, ...selection },
       }));
+    },
+
+    setActiveZone(zone: EditorZone) {
+      store.setState({ activeZone: zone });
     },
 
     setWordCount(wordCount: number) {

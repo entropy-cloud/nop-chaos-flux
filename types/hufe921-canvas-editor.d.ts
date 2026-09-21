@@ -5,6 +5,19 @@ export type ListStyleValue = string;
 export type PageModeValue = 'paging' | 'continuity';
 export type PaperDirectionValue = 'vertical' | 'horizontal';
 
+export type EditorZone = 'header' | 'main' | 'footer';
+
+export declare const EditorZone: {
+  readonly HEADER: EditorZone;
+  readonly MAIN: EditorZone;
+  readonly FOOTER: EditorZone;
+};
+
+export interface IEditorOption {
+  locale?: string;
+  [key: string]: unknown;
+}
+
 export declare const RowFlex: {
   readonly LEFT: RowFlexValue;
   readonly CENTER: RowFlexValue;
@@ -114,6 +127,7 @@ export interface EditorCommand {
   executeHyperlink(payload: { valueList: Array<{ value: string }>; url: string }): void;
   executeForceUpdate(): void;
   executeLocationCatalog(id: string): void;
+  executeSetZone(zone: EditorZone): void;
   [key: string]: any;
 }
 
@@ -122,11 +136,12 @@ export interface EditorListener {
   rangeStyleChange?: (payload: IRangeStyle) => void;
   pageSizeChange?: (payload: number) => void;
   pageScaleChange?: (payload: number) => void;
+  zoneChange?: (zone: EditorZone) => void;
   [key: string]: any;
 }
 
 export default class Editor {
-  constructor(container: HTMLDivElement, data: IEditorData);
+  constructor(container: HTMLDivElement, data: IEditorData | IElement[], options?: IEditorOption);
 
   command: EditorCommand;
   listener: EditorListener;

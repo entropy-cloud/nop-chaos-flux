@@ -1,5 +1,6 @@
 export type { WordEditorHostStatusSummary } from './host-status.js';
 export {
+  EditorZone,
   RowFlex,
   TitleLevel,
   ListType,
@@ -8,6 +9,7 @@ export {
   PaperDirection,
 } from './canvas-editor-types.js';
 export type {
+  IEditorOption,
   WordEditorCatalog,
   WordEditorCatalogItem,
   WordEditorData,

@@ -1,10 +1,14 @@
 import { useRef, useEffect, useId } from 'react';
-import { t } from '@nop-chaos/flux-i18n';
+import { getCurrentLanguage, t } from '@nop-chaos/flux-i18n';
 import type { WordEditorData } from '@nop-chaos/word-editor-core';
 import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import { captureDocumentSnapshot, createSavedDocumentData, DEFAULT_PAPER_SETTINGS } from '@nop-chaos/word-editor-core';
 import type { PaperSettings, SavedDocumentData, WordDocument } from '@nop-chaos/word-editor-core';
+
+function toCanvasEditorLocale(language: string): 'zhCN' | 'en' {
+  return language.toLowerCase().startsWith('zh') ? 'zhCN' : 'en';
+}
 
 export interface EditorCanvasProps {
   editorStore: EditorStoreApi;
@@ -118,6 +122,10 @@ export function EditorCanvas({
         onPageScaleChange: (payload) => {
           editorStore.setScale(payload);
         },
+        onZoneChange: (zone) => {
+          editorStore.setActiveZone(zone);
+        },
+        locale: toCanvasEditorLocale(getCurrentLanguage()),
       },
       paperSettings,
     );

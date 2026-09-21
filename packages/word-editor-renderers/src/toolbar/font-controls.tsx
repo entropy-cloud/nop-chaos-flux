@@ -1,3 +1,4 @@
+import { useMemo, useRef } from 'react';
 import {
   Bold,
   Italic,
@@ -12,7 +13,16 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import type { EditorSelectionState } from '@nop-chaos/word-editor-core';
-import { Input, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  Input,
+  cn,
+} from '@nop-chaos/ui';
 import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js';
 
 interface FontControlsProps {
@@ -23,6 +33,10 @@ interface FontControlsProps {
 const FONTS = ['Microsoft YaHei', 'SimSun', 'SimHei', 'Arial', 'Times New Roman', 'Courier New'];
 const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
 
+const MIN_FONT_SIZE = 5;
+const MAX_FONT_SIZE = 72;
+const DEFAULT_FONT = FONTS[0];
+
 function runCommand(action: () => void) {
   try {
     action();
@@ -31,8 +45,53 @@ function runCommand(action: () => void) {
   }
 }
 
+function clampFontSize(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (trimmed === '') {
+    return null;
+  }
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  return Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Math.round(parsed)));
+}
+
+function withCurrentValueAsFreeValue<T>(options: T[], current: T): T[] {
+  return options.includes(current) ? options : [...options, current];
+}
+
 export function FontControls({ bridge, selection }: FontControlsProps) {
   const command = bridge?.command;
+  const highlightedItemRef = useRef<string | number | null>(null);
+
+  const currentFont = selection.font || DEFAULT_FONT;
+  const fontItems = useMemo(() => withCurrentValueAsFreeValue(FONTS, currentFont), [currentFont]);
+
+  const currentSize = selection.size;
+  const sizeItems = useMemo(() => withCurrentValueAsFreeValue(FONT_SIZES, currentSize), [currentSize]);
+
+  const commitFontInput = (raw: string) => {
+    if (highlightedItemRef.current != null) {
+      return;
+    }
+    const trimmed = raw.trim();
+    if (trimmed === '' || trimmed === currentFont) {
+      return;
+    }
+    runCommand(() => command?.executeFont(trimmed));
+  };
+
+  const commitSizeInput = (raw: string) => {
+    if (highlightedItemRef.current != null) {
+      return;
+    }
+    const clamped = clampFontSize(raw);
+    if (clamped == null || clamped === currentSize) {
+      return;
+    }
+    runCommand(() => command?.executeSize(clamped));
+  };
 
   return (
     <ToolbarGroup>
@@ -57,32 +116,80 @@ export function FontControls({ bridge, selection }: FontControlsProps) {
         title="flux.wordEditor.formatPainter"
       />
       <ToolbarSeparator />
-      <NativeSelect
-        value={selection.font || 'Microsoft YaHei'}
-        onChange={(e) => runCommand(() => command?.executeFont(e.target.value))}
-        title={t('flux.wordEditor.font')}
-        size="xs"
-        className="flex-shrink-0 max-w-[130px]"
+      <Combobox
+        items={fontItems}
+        value={currentFont}
+        onValueChange={(item) => {
+          highlightedItemRef.current = null;
+          if (typeof item === 'string') {
+            runCommand(() => command?.executeFont(item));
+          }
+        }}
+        onItemHighlighted={(item) => {
+          highlightedItemRef.current = typeof item === 'string' ? item : null;
+        }}
       >
-        {FONTS.map((font) => (
-          <NativeSelectOption key={font} value={font}>
-            {font}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
-      <NativeSelect
-        value={selection.size}
-        onChange={(e) => runCommand(() => command?.executeSize(Number(e.target.value)))}
-        title={t('flux.wordEditor.fontSize')}
-        size="xs"
-        className="flex-shrink-0 w-14"
+        <ComboboxInput
+          data-testid="toolbar-font-input"
+          aria-label={t('flux.wordEditor.font')}
+          title={t('flux.wordEditor.font')}
+          className="h-7 text-xs min-w-[110px] max-w-[150px] flex-shrink-0"
+          showClear={false}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              commitFontInput((event.target as HTMLInputElement).value);
+            }
+          }}
+          onBlur={(event) => commitFontInput((event.target as HTMLInputElement).value)}
+        />
+        <ComboboxContent className="w-auto min-w-[180px]">
+          <ComboboxEmpty>{t('flux.wordEditor.noMatchFont')}</ComboboxEmpty>
+          <ComboboxList>
+            {(font: string) => (
+              <ComboboxItem key={font} value={font}>
+                <span style={{ fontFamily: font }}>{font}</span>
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+      <Combobox
+        items={sizeItems}
+        value={currentSize}
+        onValueChange={(item) => {
+          highlightedItemRef.current = null;
+          if (typeof item === 'number') {
+            runCommand(() => command?.executeSize(item));
+          }
+        }}
+        onItemHighlighted={(item) => {
+          highlightedItemRef.current = typeof item === 'number' ? item : null;
+        }}
       >
-        {FONT_SIZES.map((size) => (
-          <NativeSelectOption key={size} value={size}>
-            {size}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
+        <ComboboxInput
+          data-testid="toolbar-size-input"
+          aria-label={t('flux.wordEditor.fontSize')}
+          title={t('flux.wordEditor.fontSize')}
+          className="h-7 text-xs w-14 flex-shrink-0"
+          showClear={false}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              commitSizeInput((event.target as HTMLInputElement).value);
+            }
+          }}
+          onBlur={(event) => commitSizeInput((event.target as HTMLInputElement).value)}
+        />
+        <ComboboxContent className="w-auto min-w-[80px]">
+          <ComboboxEmpty>{t('flux.wordEditor.noMatchFontSize')}</ComboboxEmpty>
+          <ComboboxList>
+            {(size: number) => (
+              <ComboboxItem key={size} value={size}>
+                <span className="tabular-nums">{size}</span>
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
       <ToolbarButton
         icon={Bold}
         onClick={() => runCommand(() => command?.executeBold())}

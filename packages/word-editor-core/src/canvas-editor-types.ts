@@ -1,4 +1,5 @@
 import {
+  EditorZone,
   ListStyle,
   ListType,
   PageMode,
@@ -10,6 +11,7 @@ import type {
   ICatalog,
   ICatalogItem,
   IEditorData,
+  IEditorOption,
   IEditorResult,
   IElement,
   IRangeStyle,
@@ -17,6 +19,7 @@ import type {
 } from '@hufe921/canvas-editor';
 
 export {
+  EditorZone,
   RowFlex,
   TitleLevel,
   ListType,
@@ -32,3 +35,4 @@ export type WordEditorRangeStyle = IRangeStyle;
 export type WordEditorWatermark = IWatermark;
 export type WordEditorCatalog = ICatalog;
 export type WordEditorCatalogItem = ICatalogItem;
+export type { IEditorOption };

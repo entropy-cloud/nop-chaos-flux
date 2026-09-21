@@ -1,5 +1,6 @@
 import Editor from '@hufe921/canvas-editor';
 import { PaperDirection } from '@hufe921/canvas-editor';
+import type { EditorZone } from './canvas-editor-types.js';
 import type { WordEditorData, WordEditorRangeStyle, WordEditorResult } from './canvas-editor-types.js';
 import type { PaperSettings } from './paper-settings.js';
 import type { TemplateExpr } from './template-expr.js';
@@ -12,7 +13,14 @@ export interface CanvasEditorBridgeOptions {
   onRangeStyleChange?: (payload: WordEditorRangeStyle) => void;
   onPageSizeChange?: (payload: number) => void;
   onPageScaleChange?: (payload: number) => void;
+  onZoneChange?: (zone: EditorZone) => void;
   readonly?: boolean;
+  /**
+   * canvas-editor built-in tip locale key ('zhCN' | 'en').
+   * Consumed once at Editor construction; switching the host language
+   * afterwards needs a remount (registered watch-only residual).
+   */
+  locale?: string;
 }
 
 export type { WordEditorRangeStyle };
@@ -52,7 +60,11 @@ export class CanvasEditorBridge {
       this.unmount();
     }
 
-    this.instance = new Editor(container, data);
+    this.instance = new Editor(
+      container,
+      data,
+      options?.locale ? { locale: options.locale } : undefined,
+    );
     this.setupListeners(options);
 
     if (paperSettings) {
@@ -96,6 +108,9 @@ export class CanvasEditorBridge {
     }
     if (options?.onPageScaleChange) {
       this.instance.listener.pageScaleChange = options.onPageScaleChange;
+    }
+    if (options?.onZoneChange) {
+      this.instance.listener.zoneChange = options.onZoneChange;
     }
   }
 

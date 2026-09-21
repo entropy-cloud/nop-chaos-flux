@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createEditorStore } from '../editor-store.js';
 import { DEFAULT_PAPER_SETTINGS } from '../paper-settings.js';
+import type { EditorZone } from '../canvas-editor-types.js';
 
 describe('createEditorStore', () => {
   it('has correct initial state', () => {
@@ -165,6 +166,33 @@ describe('createEditorStore', () => {
     store.setBridge(mockBridge);
     expect(store.getState().bridge).toBe(mockBridge);
     expect(store.getState().isReady).toBe(false);
+  });
+
+  it('starts with the main document zone active', () => {
+    const store = createEditorStore();
+    expect(store.getState().activeZone).toBe('main');
+  });
+
+  it('setActiveZone updates the active zone for the header/footer indicator', () => {
+    const store = createEditorStore();
+
+    store.setActiveZone('header' as EditorZone);
+    expect(store.getState().activeZone).toBe('header');
+
+    store.setActiveZone('footer' as EditorZone);
+    expect(store.getState().activeZone).toBe('footer');
+
+    store.setActiveZone('main' as EditorZone);
+    expect(store.getState().activeZone).toBe('main');
+  });
+
+  it('reset returns the active zone to the main document', () => {
+    const store = createEditorStore();
+    store.setActiveZone('footer' as EditorZone);
+
+    store.reset();
+
+    expect(store.getState().activeZone).toBe('main');
   });
 
   it('subscribe receives state updates', () => {

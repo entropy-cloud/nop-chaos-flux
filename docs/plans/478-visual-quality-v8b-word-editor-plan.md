@@ -1,6 +1,6 @@
 # 478 视觉质量 V8b：Word 编辑器视觉补齐 Plan
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-21
 > Source: `docs/analysis/visual-quality/V8b-word-editor.md`（独立核实 revised → 勘误回写后 pass）、`docs/backlog/visual-quality-roadmap.md` V8b、`docs/components/word-editor-page/design.md`、`docs/architecture/word-editor/design.md`
 > Related: `docs/plans/476-visual-quality-v6-spreadsheet-tokenization-plan.md`（V0 helper 双态断言先例）
@@ -56,51 +56,51 @@
 
 ### Phase 1 - 字体/字号 Combobox + 回显修复
 
-Status: planned
+Status: completed
 Targets: `font-controls.tsx`、单测
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：单测先红——①受控 value 为枚举外字号（15）时输入框显示 15（现状空白）；②枚举外字体（「楷体」）同理；③自由输入提交后 executeSize 收到钳制后 payload（5-72；store 回显走 rangeStyleChange 通道）
-- [ ] Fix：font/size 控件升级为 ui Combobox（可自由输入 + 预设列表；自由文本需显式 Enter/blur 提交路径——onValueChange 仅列表项触发；枚举外回显沿 field-select buildItems 注入先例）；字体项逐项 fontFamily 预览（ComboboxItem children 注入 style）；回显 fallback（当前值不在预设集时作为自由值显示）；size 输入钳制 [5,72]
-- [ ] Fix：单测转绿 + 既有 toolbar 单测零回归
+- [x] Proof：单测先红——①受控 value 为枚举外字号（15）时输入框显示 15（现状空白）；②枚举外字体（「楷体」）同理；③自由输入提交后 executeSize 收到钳制后 payload（5-72；store 回显走 rangeStyleChange 通道）
+- [x] Fix：font/size 控件升级为 ui Combobox（可自由输入 + 预设列表；自由文本需显式 Enter/blur 提交路径——onValueChange 仅列表项触发；枚举外回显沿 field-select buildItems 注入先例）；字体项逐项 fontFamily 预览（ComboboxItem children 注入 style）；回显 fallback（当前值不在预设集时作为自由值显示）；size 输入钳制 [5,72]
+- [x] Fix：单测转绿 + 既有 toolbar 单测零回归
 
 Exit Criteria:
 
-- [ ] 单测先红后绿有记录（回显/钳制/预览断言在）；word-editor-renderers 既有测试零回归
-- [ ] font-controls.tsx 无原生 select 残留（grep 证 NativeSelect 移除）
+- [x] 单测先红后绿有记录（回显/钳制/预览断言在）；word-editor-renderers 既有测试零回归
+- [x] font-controls.tsx 无原生 select 残留（grep 证 NativeSelect 移除）
 
 ### Phase 2 - 页眉页脚最小 zone UI
 
-Status: planned
+Status: completed
 Targets: `word-editor-page.tsx`（或页面级宿主组件）、`canvas-editor-bridge.ts`、单测
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：单测先红——zone 切换 UI 渲染三档（页眉/主文档/页脚）、点击翻转激活态、且 zoneChange 事件驱动指示器同步（canvas 双击切 zone 后指示器不失同步）
-- [ ] Fix：zone 切换按钮组（调 executeSetZone；API 缺失时禁用态）+ 激活指示——**listener.zoneChange 订阅为必需状态源**（点击仅作乐观更新；否则 canvas-editor 内建双击切 zone 后指示器失同步），zone 状态归宿 = word-editor-core editor-store 扩展字段（沿研究硬约束，EditorZone/IEditorOption 经 core 再导出——renderers 无 canvas-editor 直接依赖）；bridge options 透传 locale（宿主 i18n 语言）；i18n 键新增（zh/en 对称）
+- [x] Proof：单测先红——zone 切换 UI 渲染三档（页眉/主文档/页脚）、点击翻转激活态、且 zoneChange 事件驱动指示器同步（canvas 双击切 zone 后指示器不失同步）
+- [x] Fix：zone 切换按钮组（调 executeSetZone；API 缺失时禁用态）+ 激活指示——**listener.zoneChange 订阅为必需状态源**（点击仅作乐观更新；否则 canvas-editor 内建双击切 zone 后指示器失同步），zone 状态归宿 = word-editor-core editor-store 扩展字段（沿研究硬约束，EditorZone/IEditorOption 经 core 再导出——renderers 无 canvas-editor 直接依赖）；bridge options 透传 locale（宿主 i18n 语言）；i18n 键新增（zh/en 对称）
 
 Exit Criteria:
 
-- [ ] 单测先红后绿；zone API 缺失降级路径有断言；zoneChange 驱动同步有断言
-- [ ] 页眉页脚 tip 语言跟随宿主（代码走查 + 单测断言 options 传递）
+- [x] 单测先红后绿；zone API 缺失降级路径有断言；zoneChange 驱动同步有断言
+- [x] 页眉页脚 tip 语言跟随宿主（代码走查 + 单测断言 options 传递）
 
 ### Phase 3 - e2e 断言 + 边界落卡 + docs
 
-Status: planned
+Status: completed
 Targets: e2e、owner docs、证据卡、roadmap、daily log
 
 - Item Types: `Proof | Decision | Fix`
 
-- [ ] Proof：e2e 扩展——字体值回显（设置枚举外字号后工具栏显示）、zone 切换指示、双态（light/dark）工具条计算样式（V0 helper + data-mode 切换）
-- [ ] Decision：A3 皮肤边界核对结论落 owner doc（`.ce-*` 不轻动、IEditorOption 唯一通道、纸张白底语义、locale 热更 watch-only）
-- [ ] Fix：owner docs——word-editor-page/design.md（zone UI 契约）、word-editor/design.md（bridge options 契约）、证据卡 word.md 回写、roadmap、daily log
-- [ ] Fix：全仓验证链核对（归 Closure Gates）
+- [x] Proof：e2e 扩展——字体值回显（设置枚举外字号后工具栏显示）、zone 切换指示、双态（light/dark）工具条计算样式（V0 helper + data-mode 切换）
+- [x] Decision：A3 皮肤边界核对结论落 owner doc（`.ce-*` 不轻动、IEditorOption 唯一通道、纸张白底语义、locale 热更 watch-only）
+- [x] Fix：owner docs——word-editor-page/design.md（zone UI 契约）、word-editor/design.md（bridge options 契约）、证据卡 word.md 回写、roadmap、daily log
+- [x] Fix：全仓验证链核对（归 Closure Gates——收口会话最终链全绿，见 daily log 收口会话节）
 
 Exit Criteria:
 
-- [ ] e2e 新断言绿；既有 word spec 32 test 零回归
-- [ ] 裁决落卡无 pending；owner docs 与 live 一致
+- [x] e2e 新断言绿；既有 word spec 32 test 零回归
+- [x] 裁决落卡无 pending；owner docs 与 live 一致
 
 ## Draft Review Record
 
@@ -111,19 +111,19 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 全部 in-scope 交付落地（Phase 1–3 Exit Criteria 全勾）
-- [ ] in-scope contract drift 已收敛：枚举外值静默空白、页眉页脚 UI 缺失、locale 不受控
-- [ ] A3 边界裁决显式落卡；扩展 zone 能力 deferred 有据
-- [ ] 行为/契约结果已达成：回显/钳制/zone 切换在单测与 e2e 成立
-- [ ] 必要 focused verification 已完成（单测先红后绿 + e2e 断言）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响 owner docs 已同步：word-editor-page/design.md、word-editor/design.md、证据卡、roadmap、daily log
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新 hit）
+- [x] 全部 in-scope 交付落地（Phase 1–3 Exit Criteria 全勾）
+- [x] in-scope contract drift 已收敛：枚举外值静默空白、页眉页脚 UI 缺失、locale 不受控
+- [x] A3 边界裁决显式落卡；扩展 zone 能力 deferred 有据
+- [x] 行为/契约结果已达成：回显/钳制/zone 切换在单测与 e2e 成立
+- [x] 必要 focused verification 已完成（单测先红后绿 + e2e 断言）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响 owner docs 已同步：word-editor-page/design.md、word-editor/design.md、证据卡、roadmap、daily log
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新 hit）
 
 ## Deferred But Adjudicated
 
@@ -148,12 +148,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （closure audit 通过后填写）
+Status Note: 三 Phase 全部落地且独立 closure audit 通过（approved，0 Blocker / 0 Major / 3 Minor）：Phase 1–3 exit criteria 逐条 live 核对确认（Combobox 自由输入+钳制+枚举外回显注入、zone 三档切换+bridge locale/zoneChange+就绪降级、e2e 全程序化断言、A3 边界四要素落卡、证据卡 F1–F5 closed）；M-1 簿记（roadmap 翻 done、证据卡 Closure 回写、Closure Gates 填写）已由收口会话完成；M-2（e2e 就绪门 zh 标签耦合）登记为测试健壮性备注不阻塞；M-3 全仓链数字以收口会话最终链记录为准（typecheck 40/40、build、lint、test 74/74、check exit 0）。
 
 Closure Audit Evidence:
 
 - Auditor / Agent: （独立子 agent fresh session 填写）
-- Evidence: （task id / daily log link / findings 摘要）
+- Evidence: verdict `approved`——两 focused 套件独立复跑 core 272/272、renderers 163/163；Phase 1 Combobox 行为级核对（withCurrentValueAsFreeValue 注入回显/clampFontSize/预览 span）；Phase 2 store/bridge/page 全链行号核对；Phase 3 e2e 3 用例程序化判据确认；daily log `docs/logs/2026/09-21.md` plan 478 节与收口会话节。
 
 Follow-up:
 

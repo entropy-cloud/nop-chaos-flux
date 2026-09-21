@@ -63,6 +63,7 @@ function createEditorStoreSnapshot() {
     currentPage: 1,
     totalPages: 1,
     scale: 1,
+    activeZone: 'main',
     selection: {
       bold: false,
       italic: false,
@@ -105,6 +106,13 @@ export const editorStore = {
         ...editorStoreState.selection,
         ...selection,
       },
+    };
+    for (const listener of editorListeners) listener();
+  }),
+  setActiveZone: vi.fn((zone: string) => {
+    editorStoreState = {
+      ...editorStoreState,
+      activeZone: zone,
     };
     for (const listener of editorListeners) listener();
   }),
@@ -161,6 +169,7 @@ export function resetWordEditorActionMocks() {
   editorStoreState = createEditorStoreSnapshot();
   editorStore.setDirty.mockClear();
   editorStore.setSelection.mockClear();
+  editorStore.setActiveZone.mockClear();
   mockedCore.captureDocumentSnapshotMock.mockClear();
   mockedCore.persistSavedDocumentMock.mockClear();
   mockedCore.saveDatasetsMock.mockClear();
@@ -177,7 +186,11 @@ export function resetWordEditorActionMocks() {
 
 vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@nop-chaos/word-editor-core')>();
-  class CanvasEditorBridge {}
+  class CanvasEditorBridge {
+    command = {
+      executeSetZone: vi.fn(),
+    };
+  }
   return {
     ...actual,
     CanvasEditorBridge,

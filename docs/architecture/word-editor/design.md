@@ -1,7 +1,7 @@
 # Word Editor Architecture
 
 > Owner Doc Status: Active
-> Last Updated: 2026-05-25
+> Last Updated: 2026-09-21
 
 ## Overview
 
@@ -99,6 +99,32 @@ Notes:
 - the canonical public vocabulary is `Dataset*`
 - the live document model does not currently expose `watermark`
 - `document` in host scope is the persisted/autosaved document snapshot, not the realtime in-memory editor internals
+
+## Canvas Editor Bridge Contract
+
+`CanvasEditorBridge.mount(container, data, options, paperSettings)` is the single integration surface to the `@hufe921/canvas-editor` instance:
+
+| Option                                                                              | Type                         | Semantics                                                                                                                                                                                                                                                                                                    |
+| ----------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onContentChange` / `onRangeStyleChange` / `onPageSizeChange` / `onPageScaleChange` | callbacks                    | Existing listener wiring (`listener.contentChange`, `listener.rangeStyleChange`, `listener.pageSizeChange`, `listener.pageScaleChange`).                                                                                                                                                                     |
+| `onZoneChange`                                                                      | `(zone: EditorZone) => void` | Wired to `listener.zoneChange`. This subscription is the **required state source** for the active-zone indicator: canvas-driven switches (built-in header/footer double-click editing) reach the host only through it. Toolbar clicks are optimistic updates and must not be treated as the source of truth. |
+| `locale`                                                                            | `string` (`'zhCN'            | 'en'`)                                                                                                                                                                                                                                                                                                       | Passed as the third `Editor` constructor argument and consumed **once at construction**. `EditorCanvas` derives it from the host i18n language (`getCurrentLanguage()`, `zh* → 'zhCN'`, otherwise `'en'`). Switching the host language afterwards requires a remount — registered as a watch-only residual (locale hot-update), not a supported hot path. |
+
+Zone state ownership:
+
+- `editor-store` carries `activeZone: EditorZone` (default `EditorZone.MAIN`, i.e. `'main'`) plus `setActiveZone(zone)`.
+- `EditorCanvas` forwards `onZoneChange` into `editorStore.setActiveZone`; the page subscribes `activeZone` and passes it to the toolbar `ZoneControls` switcher (header / main document / footer buttons calling `command.executeSetZone`).
+- When `executeSetZone` is absent (older canvas-editor builds) or the bridge is not ready, the switcher renders in a disabled state with a title hint and never throws.
+- `EditorZone` and `IEditorOption` are re-exported from `@nop-chaos/word-editor-core`; renderer packages must not depend on `@hufe921/canvas-editor` directly. The repo also pins a local ambient declaration (`types/hufe921__canvas-editor.d.ts`, wired through `tsconfig.base.json` paths) as the compile-time canvas-editor contract surface.
+
+### Skin Tokenization Boundary (A3 adjudication)
+
+The visual boundary between our own CSS and the third-party canvas-editor skin is adjudicated as follows:
+
+- **Third-party `.ce-*` skin is not touched.** The canvas-editor injected stylesheet carries ~67 `.ce-*` classes with internal hex colors; restyling them would fork third-party internals that change across canvas-editor upgrades.
+- **`IEditorOption` is the only legitimate recolor channel** (`defaultColor`, `rangeColor`, `searchMatchColor`, etc.). Any future theming work must go through bridge options, not CSS overrides.
+- **The white paper background is correct document semantics** (a page of paper), not an untokenized surface; it intentionally does not flip in dark mode.
+- Our own editor chrome CSS stays minimal (word-editor-renderers `styles.css`, `--nop-*` token consumers only); dark mode flips automatically through the shared token chain.
 
 ## Template Expression System
 

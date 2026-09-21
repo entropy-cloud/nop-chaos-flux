@@ -40,7 +40,7 @@ export function RibbonToolbar({
   );
 
   return (
-    <div className="border-b bg-background/95">
+    <div className="border-b bg-background/95" data-testid="word-ribbon-toolbar">
       <div className="flex flex-row gap-1 p-2 items-center overflow-x-auto">
         <FontControls bridge={bridge} selection={selection} />
         <ToolbarSeparator />

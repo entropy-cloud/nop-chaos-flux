@@ -178,6 +178,53 @@ describe('EditorCanvas', () => {
     );
   });
 
+  it('forwards host locale and subscribes canvas zone changes into the editor store', () => {
+    let callbacks:
+      | {
+          onZoneChange?: (zone: string) => void;
+        }
+      | undefined;
+    const bridge = {
+      mount: vi.fn((_container, _editorData, nextCallbacks) => {
+        callbacks = nextCallbacks;
+      }),
+      unmount: vi.fn(),
+      getValue: vi.fn(() => ({ data: { header: [], main: [], footer: [] } })),
+      getPaperSettings: vi.fn(() => null),
+      getWordCount: vi.fn(() => Promise.resolve(0)),
+    };
+    const editorStore = {
+      setDirty: vi.fn(),
+      setBridge: vi.fn(),
+      setReady: vi.fn(),
+      setPaperSettings: vi.fn(),
+      setWordCount: vi.fn(),
+      setSelection: vi.fn(),
+      setActiveZone: vi.fn(),
+      setTotalPages: vi.fn(),
+      setScale: vi.fn(),
+      getState: vi.fn(() => ({
+        paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
+      })),
+    };
+
+    render(<EditorCanvas editorStore={editorStore as any} bridge={bridge as any} />);
+
+    expect(bridge.mount).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.any(Object),
+      expect.objectContaining({
+        locale: 'en',
+        onZoneChange: expect.any(Function),
+      }),
+      expect.anything(),
+    );
+
+    const zoneChange = (callbacks as { onZoneChange?: (zone: string) => void }).onZoneChange;
+    zoneChange?.('header');
+    expect(editorStore.setActiveZone).toHaveBeenCalledWith('header');
+  });
+
   it('prefers recovered persisted documents over schema initialDocument', () => {
     const bridge = {
       mount: vi.fn(),

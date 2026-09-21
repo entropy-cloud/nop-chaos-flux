@@ -129,6 +129,13 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
     (state) => state.selection,
   );
 
+  const activeZone = useSyncExternalStoreWithSelector(
+    editorStore.subscribe,
+    editorStore.getState,
+    editorStore.getState,
+    (state) => state.activeZone,
+  );
+
   const editorRuntime = useSyncExternalStoreWithSelector(
     editorStore.subscribe,
     editorStore.getState,
@@ -265,6 +272,7 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
     isDirty,
     wordCount,
     selection,
+    activeZone,
     editorRuntime,
     datasets,
     hostScope,

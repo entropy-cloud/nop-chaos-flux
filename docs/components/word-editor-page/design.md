@@ -109,6 +109,8 @@ interface WordEditorConfig {
 - 页边距对话框以 `editor-store.paperSettings` 为 owner truth：打开时从当前 paper settings hydrate，确认时同时回写 store 与 canvas bridge 的 `executeSetPaperMargin(...)` 路径。
 - hyperlink 与 page margins dialog 输入当前都要求稳定程序化标签：不得仅依赖 placeholder 或相邻视觉文本。当前 live baseline 至少固定了 hyperlink display/url 与四个 margin 输入的 accessible name。
 - `EditorCanvas` host wrapper 必须显式发布可访问边界：当前支持基线是带稳定名称与说明文本的 focusable `region`，用于标记文档编辑区域并在第三方 canvas surface 无法完整暴露给辅助技术时提供责任边界与 fallback guidance。
+- **字体/字号控件（toolbar/font-controls）**：font 与 size 均为 ui Combobox（非原生 select）。size 提交钳制到 `[5, 72]`（与 canvas-editor `minSize`/`maxSize` 一致）；font 接受任意非空 trim 字符串；空串不提交（保持原值）。自由文本走**显式 Enter / blur 提交路径**（Combobox `onValueChange` 仅在选中列表项时触发；Enter 提交在高亮项存在时让位给列表选择，避免双重提交）。当前值不在预设集时（枚举外字号如 15、枚举外字体如「楷体」）作为自由值注入 items 回显，不再静默空白。字体列表项逐项以 `font-family` 内联样式预览。store 回显唯一通道是 canvas `rangeStyleChange` payload → `editor-store.selection`。
+- **Zone 切换 UI（toolbar/zone-controls）**：页眉/主文档/页脚三档按钮组，挂载在页面头部预览条（仅非 readOnly）。激活指示以 `editor-store.activeZone` 为唯一受控状态；`listener.zoneChange` 订阅（经 `EditorCanvas` → `editorStore.setActiveZone`）是**必需状态源**——canvas 内建双击切 zone 后指示器不失同步；按钮点击只做乐观更新 + `command.executeSetZone(zone)`。bridge 未 ready 或 `executeSetZone` 缺失时整组禁用并给出 title 提示（zone-api-absent 降级路径），不抛错。页眉页脚内建 tip 语言经 bridge `locale` option（构造期一次性传入，zh\* → `'zhCN'`，其余 → `'en'`）跟随宿主 i18n；语言热更是登记在案的 watch-only residual。
 
 ### 7.1 Host Projection Contract
 

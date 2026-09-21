@@ -11,6 +11,7 @@ import type { SavedDocumentData } from '@nop-chaos/word-editor-core';
 import { persistSavedDocument } from '@nop-chaos/word-editor-core';
 import { EditorCanvas } from './editor-canvas.js';
 import { RibbonToolbar } from './toolbar/ribbon-toolbar.js';
+import { ZoneControls } from './toolbar/zone-controls.js';
 import { OutlinePanel } from './panels/outline-panel.js';
 import { DatasetPanel } from './panels/dataset-panel.js';
 import { FieldList } from './panels/field-list.js';
@@ -48,12 +49,14 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     actionProvider,
     actionScope,
     activePanel,
+    activeZone,
     bridge,
     datasetDialogOpen,
     datasetStore,
     editingDataset,
     editingDatasetId,
     editorStore,
+    editorRuntime,
     env,
     hostScope,
     initialDocument,
@@ -154,6 +157,16 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         )}
       </div>
       <div className="flex items-center justify-between gap-3 border-b border-border/70 bg-[var(--nop-nav-surface)] px-4 py-2 text-xs text-muted-foreground">
+        {readOnly ? null : (
+          <div className="shrink-0">
+            <ZoneControls
+              bridge={bridge}
+              editorStore={editorStore}
+              activeZone={activeZone}
+              isReady={editorRuntime.ready}
+            />
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <span className="font-medium text-foreground">{t('flux.wordEditor.documentPreview')}</span>
           <span className="ml-2 truncate" data-testid="word-editor-saved-preview">
