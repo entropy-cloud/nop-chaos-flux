@@ -206,7 +206,7 @@ export function CalendarMonthView({
                     data-date={dateStr}
                     data-resource={resource.id}
                     data-empty="true"
-                    className="flex-1 min-w-0 bg-gray-50"
+                    className="flex-1 min-w-0 bg-[var(--color-muted)]"
                   />
                 );
               }
@@ -235,8 +235,7 @@ export function CalendarMonthView({
                   data-today={todayAttr}
                   className={cn(
                     'flex-1 min-w-0 relative border-r last:border-r-0',
-                    today && 'bg-blue-50 ring-2 ring-inset ring-blue-400 font-semibold',
-                    weekend && 'bg-gray-50/50',
+                    today && 'font-semibold',
                   )}
                   onPointerDown={(pe) => handleCellPointerDown(dateStr, resource.id, pe)}
                   onKeyDown={(e) => handleDateCellKeyDown(e, dateStr, resource.id)}
@@ -348,7 +347,7 @@ export function CalendarMonthView({
                   key={line.eventId}
                   d={createSVGPath(line)}
                   fill="none"
-                  stroke={line.color}
+                  stroke={line.color || undefined}
                   strokeWidth={2}
                   strokeDasharray="4 2"
                   opacity={0.6}

@@ -436,6 +436,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const timelineHeight = visibleTasks.length > 0
       ? visibleTasks.reduce((max, t) => Math.max(max, (t.$y ?? 0) + (t.$h ?? 0)), 400)
       : 400;
+    // CPM 派生（design.md §12.6）：store 只读纯函数，渲染期直接调用。
+    const criticalTaskIds = new Set(store.getCriticalPath());
 
     const handleTaskClick = (taskId: string | number) => {
       store.selectTask(taskId);
@@ -578,6 +580,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
                 <GanttCellGrid store={store} showWeekends={showWeekends} />
                 <GanttBars
                   store={store}
+                  selectedTaskId={selectedTaskId}
+                  criticalTaskIds={criticalTaskIds}
                   onBarPointerDown={draggable ? onDragPointerDown : undefined}
                   onLinkHandlePointerDown={linkable ? onLinkHandlePointerDown : undefined}
                   onBarDoubleClick={openEditor}
@@ -608,6 +612,12 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           }
           header={null}
         />
+        {criticalTaskIds.size > 0 && (
+          <div data-slot="gantt-legend" className="nop-gantt-legend" role="list" aria-label={t('scheduling.gantt.criticalPathLegend')}>
+            <span className="nop-gantt-legend-critical-marker" aria-hidden="true" />
+            <span role="listitem">{t('scheduling.gantt.criticalPathLegend')}</span>
+          </div>
+        )}
         <GanttEditor
           store={store}
           editorRegion={regions.editor as RenderRegionHandle}

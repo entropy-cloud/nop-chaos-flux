@@ -28,7 +28,7 @@ export function KanbanColumnAdder({
   return (
     <div className="nop-kanban-adder shrink-0 self-start mt-2 min-w-[280px]">
       {adding ? (
-        <div className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-blue-400 rounded-lg bg-blue-50">
+        <div className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-primary/60 rounded-lg bg-primary/10">
           <Input
             ref={inputRef}
             type="text"
@@ -53,7 +53,7 @@ export function KanbanColumnAdder({
             size="sm"
             type="button"
             onClick={onConfirm}
-            className="text-xs text-blue-600 hover:text-blue-800 px-1"
+            className="text-xs text-primary hover:text-primary/80 px-1"
           >
             {t('flux.common.confirm')}
           </Button>
@@ -62,7 +62,7 @@ export function KanbanColumnAdder({
             size="sm"
             type="button"
             onClick={onCancel}
-            className="text-xs text-gray-500 hover:text-gray-700 px-1"
+            className="text-xs text-muted-foreground hover:text-foreground px-1"
           >
             {t('flux.common.cancel')}
           </Button>
@@ -73,7 +73,7 @@ export function KanbanColumnAdder({
           size="sm"
           type="button"
           onClick={onStartAdd}
-          className="w-full flex items-center gap-1 px-3 py-2 text-sm text-gray-400 rounded-lg border-2 border-dashed border-gray-300 justify-center hover:text-gray-600 hover:border-gray-400"
+          className="w-full flex items-center gap-1 px-3 py-2 text-sm text-muted-foreground rounded-lg border-2 border-dashed border-border justify-center hover:text-foreground hover:border-muted-foreground"
         >
           {t('scheduling.kanban.addColumn')}
         </Button>

@@ -16,18 +16,7 @@ export interface CalendarEventBlockProps {
   className?: string;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  shift: 'var(--color-calendar-shift, #4ade80)',
-  leave: 'var(--color-calendar-leave, #f87171)',
-  appointment: 'var(--color-calendar-appointment, #60a5fa)',
-  maintenance: 'var(--color-calendar-maintenance, #fbbf24)',
-};
-
-function resolveColor(event: CalendarEvent): string {
-  if (event.color) return event.color;
-  if (event.type && TYPE_COLORS[event.type]) return TYPE_COLORS[event.type];
-  return 'var(--color-muted-foreground, #94a3b8)';
-}
+const KNOWN_EVENT_TYPES = new Set(['shift', 'leave', 'appointment', 'maintenance']);
 
 export function CalendarEventBlock({
   positionedEvent,
@@ -40,8 +29,11 @@ export function CalendarEventBlock({
   className: eventClassName,
 }: CalendarEventBlockProps) {
   const { event, left, width, top, height, isSplit, concurrentIndex, maxConcurrent, overlap } = positionedEvent;
-  const color = resolveColor(event);
-  const eventTypeLabel = event.type ? TYPE_COLORS[event.type] ? event.type : null : null;
+  // N2/R2 双轨消解（plan 481）：默认路径的底色/文字色由 calendar.css 的
+  // [data-event-type] 语义 token 规则与 :not([data-event-type]) fallback 规则
+  // 提供（dark 自适应）；仅 event.color 显式覆盖仍走 inline 通道。
+  const explicitColor = event.color;
+  const eventTypeLabel = event.type && KNOWN_EVENT_TYPES.has(event.type) ? event.type : null;
 
   const handleClick = () => {
     onEventClick?.({ event, resource, date: dateStr });
@@ -85,7 +77,7 @@ export function CalendarEventBlock({
           title={overlap ? t('scheduling.calendar.timeConflict') : undefined}
         >
           {overlap && (
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white" aria-label={t('scheduling.calendar.timeConflict')} />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-[var(--color-destructive)] rounded-full border border-[var(--color-background)]" aria-label={t('scheduling.calendar.timeConflict')} />
           )}
           {eventTypeLabel && (
             <span className="sr-only">{eventTypeLabel}</span>
@@ -105,8 +97,7 @@ export function CalendarEventBlock({
       role="button"
       tabIndex={0}
       className={cn(
-        'absolute rounded px-1 text-xs truncate cursor-pointer border border-white/20',
-        overlap && 'ring-2 ring-red-500',
+        'absolute rounded px-1 text-xs truncate cursor-pointer border',
         isSplit && 'is-split',
         eventClassName,
       )}
@@ -115,8 +106,7 @@ export function CalendarEventBlock({
         width: `${width}%`,
         top: top !== undefined ? `${top}%` : '2px',
         height: height !== undefined ? `${height}%` : 'calc(100% - 4px)',
-        backgroundColor: color,
-        color: 'var(--color-primary-foreground)',
+        ...(explicitColor ? { backgroundColor: explicitColor } : {}),
       }}
       onClick={handleClick}
       onPointerDown={(e) => {
@@ -127,7 +117,7 @@ export function CalendarEventBlock({
       title={overlap ? t('scheduling.calendar.timeConflict') : event.title}
     >
       {overlap && (
-        <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white" aria-label={t('scheduling.calendar.timeConflict')} />
+        <span className="absolute top-0 right-0 w-2 h-2 bg-[var(--color-destructive)] rounded-full border border-[var(--color-background)]" aria-label={t('scheduling.calendar.timeConflict')} />
       )}
       {eventTypeLabel && (
         <span className="sr-only">{eventTypeLabel}</span>

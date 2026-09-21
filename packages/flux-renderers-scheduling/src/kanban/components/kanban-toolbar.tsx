@@ -31,7 +31,7 @@ export function KanbanToolbar({
         onChange={(e) => onFilterChange(e.target.value)}
         placeholder={t('scheduling.kanban.searchCards')}
         aria-label={t('scheduling.kanban.searchCards')}
-        className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-48"
+        className="px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring w-48"
       />
       <div className="flex items-center gap-1 ml-auto">
         <Button

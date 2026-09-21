@@ -85,11 +85,11 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
   ) : (
     <>
       <KanbanCardTags color={color} tags={tags} members={members} />
-      <div className="nop-kanban-card-content text-sm font-medium text-gray-900 truncate mt-1">
+      <div className="nop-kanban-card-content text-sm font-medium truncate mt-1">
         {title}
       </div>
       {description && (
-        <div className="nop-kanban-card-content text-xs text-gray-500 mt-1 line-clamp-2">
+        <div className="nop-kanban-card-content text-xs mt-1 line-clamp-2">
           {description}
         </div>
       )}
@@ -100,7 +100,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
     ? cn('nop-kanban-card group relative', config.className, className)
     : cardTemplateRegion
       ? cn('nop-kanban-card group relative', className)
-      : cn('nop-kanban-card group relative bg-white rounded-lg border border-gray-200 p-3', className);
+      : cn('nop-kanban-card group relative rounded-lg p-3', className);
 
   return (
     <div ref={cardRef} {...sharedAttributes} className={cardClass}>
@@ -111,7 +111,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
           type="button"
           onClick={(e) => { e.stopPropagation(); removeFn(); }}
           aria-label={t('scheduling.kanban.removeCardLabel')}
-          className="h-5 w-5 p-0 text-gray-400 hover:text-red-500"
+          className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
         >
           <X className="w-3 h-3" />
         </Button>

@@ -44,7 +44,9 @@ export function computeCrossDayLines(
 
       if (!fromPos || !toPos) continue;
 
-      const color = from.originalEvent.color || '#94a3b8';
+      // plan 481: 无显式 color 时回空串，默认描边由 calendar.css
+      // .nop-calendar-cross-day-lines path 的 token 规则提供（dark 自适应）。
+      const color = from.originalEvent.color || '';
 
       lines.push({
         eventId: from.eventId,

@@ -43,11 +43,14 @@ export interface CalendarHandle {
   exportToPrint?: () => void;
 }
 
+// N2/R2（plan 481 review Major-1）：未定义 calendar 色变量第三消费点消除——
+// 拖拽创建类型选择器与新建事件的 color 注入改走语义 token（与 calendar.css
+// [data-event-type] 规则同映射，dark 自适应）。
 const DEFAULT_SHIFT_TYPES = [
-  { type: 'shift', label: t('scheduling.calendar.morningShift'), color: 'var(--color-calendar-shift, #4ade80)' },
-  { type: 'leave', label: t('scheduling.calendar.leave'), color: 'var(--color-calendar-leave, #f87171)' },
-  { type: 'appointment', label: t('scheduling.calendar.appointment'), color: 'var(--color-calendar-appointment, #60a5fa)' },
-  { type: 'maintenance', label: t('scheduling.calendar.maintenance'), color: 'var(--color-calendar-maintenance, #fbbf24)' },
+  { type: 'shift', label: t('scheduling.calendar.morningShift'), color: 'var(--color-success)' },
+  { type: 'leave', label: t('scheduling.calendar.leave'), color: 'var(--color-destructive)' },
+  { type: 'appointment', label: t('scheduling.calendar.appointment'), color: 'var(--color-primary)' },
+  { type: 'maintenance', label: t('scheduling.calendar.maintenance'), color: 'var(--color-warning)' },
 ];
 
 export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?: React.Ref<CalendarHandle> }) {

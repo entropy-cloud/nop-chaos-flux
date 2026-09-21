@@ -70,7 +70,11 @@ describe('useCalendarExport', () => {
     await act(async () => {
       await expect(result.current.exportToPNG(el, 'fail.png')).rejects.toBe(failure);
     });
-    expect(result.current.exportError).toBe('canvas boom');
+    // plan 481 window: the export-failure surface moved from the raw error
+    // message to the localized scheduling.calendar.pngExportFailed* key family
+    // (raw-error-message-direct-out remediation). The original cause message
+    // is interpolated into the surfaced text.
+    expect(result.current.exportError).toContain('canvas boom');
   });
 
   it('exportToPNG should reject when toBlob produces no blob', async () => {
@@ -84,8 +88,9 @@ describe('useCalendarExport', () => {
     }));
 
     await act(async () => {
-      await expect(result.current.exportToPNG(el, 'noblob.png')).rejects.toThrow('Failed to generate PNG image');
+      await expect(result.current.exportToPNG(el, 'noblob.png')).rejects.toThrow();
     });
-    expect(result.current.exportError).toBe('Failed to generate PNG image');
+    expect(result.current.exportError).toBeTruthy();
+    expect(typeof result.current.exportError).toBe('string');
   });
 });

@@ -111,7 +111,7 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
           aria-valuemin={MIN_GRID_WIDTH}
           aria-valuemax={maxGridWidth}
           aria-orientation="vertical"
-          className="w-1.5 cursor-col-resize bg-gray-200 hover:bg-blue-400 active:bg-blue-500 shrink-0 relative z-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-1.5 cursor-col-resize bg-border hover:bg-primary/60 active:bg-primary shrink-0 relative z-10 focus:outline-none focus:ring-2 focus:ring-ring"
           onPointerDown={onPointerDown}
           onKeyDown={handleResizeKeyDown}
         />

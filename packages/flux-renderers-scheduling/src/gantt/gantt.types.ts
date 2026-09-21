@@ -141,6 +141,8 @@ export interface GanttStoreApi {
   expandAll: () => void;
   collapseAll: () => void;
   getVisibleDescendantCount: (taskId: GanttId) => number;
+  /** CPM 派生（design.md §12.6）：浮动为零的任务 id 集；空 links/环输入安全返回。 */
+  getCriticalPath: () => GanttId[];
   deleteTask: (id: GanttId) => void;
   addLink: (source: GanttId, target: GanttId, type: GanttLinkType) => GanttLink;
   removeLink: (id: GanttId) => void;

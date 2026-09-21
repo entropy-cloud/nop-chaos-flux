@@ -649,6 +649,13 @@ function calculateCriticalPath(tasks: GanttTask[], links: GanttLink[]): string[]
 
 基线数据通过 data-source 加载，字段 `baseStart/baseEnd/baseDuration`。关键路径算法 DFS 遍历依赖树，`getCriticalPath()` 返回 critical task id 数组。参考 DHTMLX baselines + critical_path 源码。
 
+**关键路径实现细则（plan 481 V11a 落地，2026-09-21）**：
+
+- 派生位置：`gantt/cpm.ts` 纯函数 `calculateCriticalPath(tasks, links)`——Kahn 拓扑排序 → 正向最早开始（最长路，ES 下限 0）→ 反向最晚开始 → 浮动为零集。store 经 `getCriticalPath()` 只读暴露，不占 schema/parse 通道。四种 link 类型折算为对后继 ES 的最小间隔权重（FS=dur(src)、SS=0、FF=dur(src)-dur(dst)、SF=-dur(dst)）。
+- 失败路径：links 为空或无有效边 → 返回空集（无高亮渲染）；links 含环 → 环上任务及其下游不进拓扑序、不入关键集，零抛错。
+- 渲染：`GanttBars` 按 `data-critical='true'` 打标，`gantt.css` `::before` 2px 顶部标记 `var(--color-destructive)`（本域落定「红色顶部标记」分支）；关键集非空时底部图例（`[data-slot="gantt-legend"]`，token 驱动，i18n `scheduling.gantt.criticalPathLegend`）。
+- e2e 锁定：`tests/e2e/scheduling-visual-tokens.spec.ts` 对顶标做 light/dark 双态计算样式断言。
+
 ### 12.7 自动排程设计要点（Phase 3，Flux 侧仅展示）
 
 自动排程算法由后端实现，Flux 侧负责排程约束的视觉配置和排程结果的渲染。

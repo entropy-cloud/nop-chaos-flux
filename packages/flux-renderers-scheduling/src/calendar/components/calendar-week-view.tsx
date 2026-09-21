@@ -86,9 +86,10 @@ export function CalendarWeekView({
               aria-current={today ? 'date' : undefined}
               data-slot="calendar-cell"
               data-date={toISODateString(day)}
+              data-today={today ? 'true' : undefined}
               className={cn(
                 'flex-1 text-center text-xs font-medium py-1 border-r last:border-r-0',
-                today && 'bg-blue-50 font-bold',
+                today && 'font-bold',
               )}
             >
               <div>{day.getUTCDate()}</div>

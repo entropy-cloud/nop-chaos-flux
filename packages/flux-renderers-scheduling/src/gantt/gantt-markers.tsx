@@ -30,10 +30,10 @@ export function GanttMarkers({ store, showToday = true, className }: GanttMarker
       {showToday && todayX >= 0 && (
         <div
           data-slot="gantt-today"
-          className="absolute top-0 w-px bg-red-400 z-20"
+          className="absolute top-0 w-px z-20"
           style={{ left: todayX, height: Math.max(totalHeight, 100) }}
         >
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] text-red-500 whitespace-nowrap">
+          <div data-slot="gantt-today-label" className="absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] whitespace-nowrap">
             {t('scheduling.today')}
           </div>
         </div>

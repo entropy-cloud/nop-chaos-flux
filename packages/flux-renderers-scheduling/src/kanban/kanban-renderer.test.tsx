@@ -130,7 +130,7 @@ describe('KanbanBoard', () => {
     };
     render(<KanbanBoard {...defaultProps} props={{ ...defaultProps.props, data: boardWithLimit, wipStrict: true }} />);
     const colEl = document.querySelector('[data-column-id="col1"]');
-    expect(colEl?.className).toContain('border-red-400');
+    expect(colEl?.className).toContain('border-destructive');
   });
 });
 

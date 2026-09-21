@@ -1,5 +1,4 @@
 import React from 'react';
-import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
@@ -65,11 +64,9 @@ export function CalendarDayView({
         role="rowheader"
         data-slot="calendar-cell"
         data-date={dateStr}
+        data-today={today ? 'true' : undefined}
         aria-current={today ? 'date' : undefined}
-        className={cn(
-          'sticky top-0 bg-background z-10 text-center text-sm font-medium py-2 border-b',
-          today && 'bg-blue-50',
-        )}
+        className="sticky top-0 bg-background z-10 text-center text-sm font-medium py-2 border-b"
       >
         {currentDate.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}
       </div>

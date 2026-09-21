@@ -18,6 +18,10 @@
   background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
 }
 
+.nop-gantt-grid [data-slot='gantt-grid-row'][data-selected='true'] {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
 .nop-gantt-grid [data-slot='gantt-grid-cell'] {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -38,6 +42,11 @@
 
 .nop-gantt [data-slot='gantt-today'] {
   z-index: 20;
+  background-color: var(--color-destructive);
+}
+
+.nop-gantt [data-slot='gantt-today-label'] {
+  color: var(--color-destructive);
 }
 
 .nop-gantt [data-slot='gantt-link']:hover polyline {
@@ -49,6 +58,44 @@
   transition:
     left 300ms ease,
     width 300ms ease;
+}
+
+/* CPM 关键路径顶标（design.md §12.6）：2px destructive 顶条。 */
+.nop-gantt [data-critical='true']::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-destructive);
+  border-radius: 1px;
+  z-index: 1;
+}
+
+/* 任务条最小选中视觉。 */
+.nop-gantt [data-slot='gantt-bar'][data-selected='true'],
+.nop-gantt [data-bar-type='milestone'][data-selected='true'] {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.nop-gantt-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--color-muted-foreground);
+}
+
+.nop-gantt-legend-critical-marker {
+  display: inline-block;
+  width: 1rem;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--color-destructive);
 }
 
 .nop-gantt .overflow-auto {
@@ -96,6 +143,7 @@
 
 .nop-gantt-bar-milestone-fill {
   fill: var(--color-warning);
+  stroke: var(--color-warning);
 }
 
 .nop-gantt-bar-progress {

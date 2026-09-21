@@ -33,10 +33,7 @@ export function GanttCellGrid({ store, showWeekends = true, className }: GanttCe
         return (
           <div
             key={`cell-${cell.start.getTime()}`}
-            className={cn(
-              'absolute top-0 h-full border-r border-gray-100',
-              isWeekend && 'bg-gray-50/50',
-            )}
+            className="absolute top-0 h-full border-r border-border"
             style={{
               left: cell.x,
               width: cell.width,

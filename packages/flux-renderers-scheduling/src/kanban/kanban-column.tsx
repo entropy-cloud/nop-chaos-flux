@@ -221,9 +221,9 @@ export function KanbanColumn({
       role="region"
       aria-label={t('scheduling.kanban.columnLabel', { title: columnTitle })}
       className={cn(
-        'nop-kanban-column flex flex-col bg-gray-50 rounded-lg border border-gray-200 flex-1 min-w-[200px]',
+        'nop-kanban-column flex flex-col rounded-lg border flex-1 min-w-[200px]',
         collapsed && 'nop-kanban-column-collapsed',
-        wipWarning && 'border-red-400',
+        wipWarning && 'border-destructive',
         className,
       )}
       style={columnStyle}

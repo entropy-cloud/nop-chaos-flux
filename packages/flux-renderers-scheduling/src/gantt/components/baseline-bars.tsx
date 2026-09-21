@@ -39,8 +39,12 @@ export function BaselineBars({ task, scaleRange, cellWidth, taskBarHeight }: Bas
               y={by}
               width={bw}
               height={taskBarHeight * 0.6}
-              fill="rgba(156, 163, 175, 0.4)"
-              stroke="rgba(107, 114, 128, 0.6)"
+              style={{
+                fill: 'var(--color-muted-foreground)',
+                fillOpacity: 0.4,
+                stroke: 'var(--color-muted-foreground)',
+                strokeOpacity: 0.6,
+              }}
               strokeWidth={1}
               rx={2}
               data-slot="gantt-baseline-bar"
@@ -53,16 +57,17 @@ export function BaselineBars({ task, scaleRange, cellWidth, taskBarHeight }: Bas
                   y1={task.$y + taskBarHeight / 2}
                   x2={bx + bw / 2}
                   y2={by + taskBarHeight * 0.3}
-                  stroke={deviationDays > 0 ? '#ef4444' : '#f59e0b'}
+                  style={{ stroke: deviationDays > 0 ? 'var(--color-destructive)' : 'var(--color-warning)' }}
                   strokeWidth={1}
                   strokeDasharray="4 2"
                   data-slot="gantt-baseline-deviation"
+                  data-deviation={deviationDays > 0 ? 'late' : 'early'}
                 />
                 <text
                   x={(task.$x + task.$w / 2 + bx + bw / 2) / 2}
                   y={Math.max(Math.min(task.$y, by) - 4, 8)}
                   textAnchor="middle"
-                  fill={deviationDays > 0 ? '#ef4444' : '#f59e0b'}
+                  style={{ fill: deviationDays > 0 ? 'var(--color-destructive)' : 'var(--color-warning)' }}
                   fontSize={9}
                   data-slot="gantt-baseline-label"
                 >

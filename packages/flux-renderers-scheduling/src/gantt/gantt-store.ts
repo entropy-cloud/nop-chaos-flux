@@ -5,6 +5,7 @@ import { CalendarManager, type WorkCalendar } from './utils/worktime.js';
 import { diffInDays } from './utils/date.js';
 import { createStore } from 'zustand/vanilla';
 import { flattenTasks, buildParentIndex, seedExpandedSet, getVisibleTasks, getVisibleDescendantCount, computeLevels, computeBranchInfo, computeSourceTarget, collectDescendantIds } from './gantt-tree-utils.js';
+import { calculateCriticalPath } from './cpm.js';
 
 interface CalendarEntry { id: string; calendar: WorkCalendar; }
 
@@ -292,6 +293,11 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     },
 
     getVisibleDescendantCount(taskId: GanttId): number { return getVisibleDescendantCount(taskId, parentIndex); },
+
+    getCriticalPath(): GanttId[] {
+      const state = gs();
+      return calculateCriticalPath(state.tasks, state.links);
+    },
 
     deleteTask(id: GanttId): void {
       const state = gs();

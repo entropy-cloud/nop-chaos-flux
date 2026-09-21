@@ -35,7 +35,7 @@ export function useGanttDrag(
     if (!el) {
       el = document.createElement('div');
       el.className = 'gantt-drop-indicator';
-      el.style.cssText = 'position:fixed;height:2px;background:#3b82f6;pointer-events:none;z-index:999;display:none;';
+      el.style.cssText = 'position:fixed;height:2px;background:var(--color-primary);pointer-events:none;z-index:999;display:none;';
       document.body.appendChild(el);
       dropIndicatorRef.current = el;
     }

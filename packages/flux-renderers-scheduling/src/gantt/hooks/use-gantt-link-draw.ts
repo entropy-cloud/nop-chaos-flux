@@ -46,7 +46,7 @@ export function useGanttLinkDraw(
     if (!task || !svgRef.current) return;
 
     const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    tempLine.setAttribute('stroke', '#3b82f6');
+    tempLine.style.stroke = 'var(--color-primary)';
     tempLine.setAttribute('stroke-width', '2');
     tempLine.setAttribute('stroke-dasharray', '5,3');
     tempLine.setAttribute('pointer-events', 'none');
@@ -126,7 +126,7 @@ export function useGanttLinkDraw(
     if (!task || !svgRef.current) return;
 
     const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    tempLine.setAttribute('stroke', '#3b82f6');
+    tempLine.style.stroke = 'var(--color-primary)';
     tempLine.setAttribute('stroke-width', '2');
     tempLine.setAttribute('stroke-dasharray', '5,3');
     tempLine.setAttribute('pointer-events', 'none');

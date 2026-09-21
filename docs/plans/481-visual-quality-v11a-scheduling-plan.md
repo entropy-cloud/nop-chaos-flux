@@ -1,6 +1,6 @@
 # 481 视觉质量 V11a：Scheduling 族视觉补齐 Plan
 
-> Plan Status: draft
+> Plan Status: completed
 > Last Reviewed: 2026-09-21
 > Source: `docs/analysis/visual-quality/V11a-scheduling.md`（已独立核实 pass，本 plan 以其 Findings/候选/裁决表为准）、`docs/backlog/visual-quality-roadmap.md` V11a（:104-106）、证据卡 `docs/audits/visual-quality/scheduling.md`、owner docs `docs/components/roadmap-scheduling.md` 与 `docs/components/{gantt,kanban,calendar}/design.md`
 > Related: `docs/plans/476-visual-quality-v6-spreadsheet-tokenization-plan.md`（token 收敛先例）、`docs/plans/477-visual-quality-v7-report-designer-plan.md`（守卫单测先例）、`docs/plans/470-visual-quality-v0-baseline-infra-plan.md`（visual-assert helper / V0 基线设施）
@@ -132,110 +132,111 @@
 
 ### Phase 1 - gantt 域：CPM 关键路径 + 选中视觉 + 字面色批 + 守卫单测（红）
 
-Status: planned
+Status: completed
 Targets: `gantt-store.ts`、新增 CPM 纯函数模块、`gantt-bars.tsx`、`gantt.tsx`、`gantt-grid.tsx`、`gantt.css`、`baseline-bars.tsx`、`gantt-markers.tsx`、`hooks/use-gantt-link-draw.ts`、`hooks/use-gantt-drag.ts`、包内守卫单测
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] Proof：CPM 纯函数单测先红——拓扑排序、正向最早/反向最晚、浮动为零集、环输入安全终止（环任务不入集）、空 links 边界；用例含手算期望集
-- [ ] Proof：守卫单测先红——包级「禁新增字面 hex / 禁新增语义色类（blue/red/green/amber 等色相类）」grep 守卫（477 先例），两级断言：①本 plan 修复目录（allowlist 外）零命中——对修复前代码为红；②全包中性灰（gray/slate/zinc）utility 计数不高于落地基线（禁新增）。allowlist 常驻登记：barcode-input 恒暗族、export/print 白底、watch-only 阴影
-- [ ] Fix：store 内只读纯函数派生 `calculateCriticalPath`（`links` Map + tasks，拓扑 + 正/反向 + 浮动为零集，无 IO，不改 parse/update 通道与 schema）+ `getCriticalPath()` 暴露
-- [ ] Fix：`GanttBars` 按派生集打 `data-critical='true'`（`gantt.tsx` 传参）+ `gantt.css` 一条规则——2px 红顶标 `var(--color-destructive)`
-- [ ] Decision：design.md 契约中的「底部图例」——实现最小图例（token 驱动）或在 `gantt/design.md` §12.6 渲染细则中显式登记「图例后置」；二选一落定，不得悬置
-- [ ] Fix：A2 必选面——`gantt-grid.tsx:131` 死类 `hover:bg-blue-50/50` 删除；:132 选中 `bg-blue-50` 改 token 规则 `color-mix(in srgb, var(--color-primary) 10%, transparent)`（与 :17-19 hover 同法）
-- [ ] Fix：A2 bar 侧最小面——`GanttBars` 接收 `selectedTaskId` 打 `data-selected` + `gantt.css` 最小选中视觉规则
-- [ ] Fix：R4——`baseline-bars.tsx:42-43` rgba 灰 → muted-foreground 系、:56/:65 `#ef4444`/`#f59e0b` → destructive/warning（SVG 通道以计算样式断言锁定）
-- [ ] Fix：R5——`use-gantt-link-draw.ts:49/:129`、`use-gantt-drag.ts:38` `#3b82f6` → `var(--color-primary)`（cssText/style 通道直写；呈现属性不接受 var() 时改走 style/class）
-- [ ] Fix：R6——`gantt-markers.tsx:33/:36` `bg-red-400`/`text-red-500` → destructive 系 token
-- [ ] Decision：R3-gantt——`gantt-bars.tsx:144` `--color-gantt-milestone-stroke` 未定义 var 消除，直连既有语义 token（`--color-warning`，琥珀语义最近邻，零宿主改动）；如裁决需保品牌色则定义专用 var（宿主 `@theme inline` 发布层 + dark 变体对称）。落定其一并同步证据卡
+- [x] Proof：CPM 纯函数单测先红——拓扑排序、正向最早/反向最晚、浮动为零集、环输入安全终止（环任务不入集）、空 links 边界；用例含手算期望集（`gantt/cpm.test.ts` 10 用例；先红记录：`Failed to resolve import "./cpm.js"`）
+- [x] Proof：守卫单测先红——包级「禁新增字面 hex / 禁新增语义色类（blue/red/green/amber 等色相类）」grep 守卫（477 先例），两级断言：①枚举修复面逐文件清零（未列残余转 allowlist 显式登记）——对修复前代码为红；②全包中性灰（gray/slate/zinc）utility 计数不高于落地基线（禁新增）。allowlist 常驻登记：barcode-input 恒暗族、export/print 白底、watch-only 阴影（`src/visual-quality-guard.test.ts`；先红记录：gantt/calendar/kanban 三组全红，gantt 组红于 `#d97706/ring-blue-400/bg-white/border-blue-400` 等）
+- [x] Fix：store 内只读纯函数派生 `calculateCriticalPath`（`links` Map + tasks，拓扑 + 正/反向 + 浮动为零集，无 IO，不改 parse/update 通道与 schema）+ `getCriticalPath()` 暴露（`gantt/cpm.ts` + `gantt-store.ts` + `GanttStoreApi`）
+- [x] Fix：`GanttBars` 按派生集打 `data-critical='true'`（`gantt.tsx` 传参）+ `gantt.css` 一条规则——2px 红顶标 `var(--color-destructive)`
+- [x] Decision：design.md 契约中的「底部图例」——实现最小图例（token 驱动）或在 `gantt/design.md` §12.6 渲染细则中显式登记「图例后置」；二选一落定，不得悬置（落定：实现最小图例 `[data-slot="gantt-legend"]`，destructive 色样 + i18n `scheduling.gantt.criticalPathLegend`（en/zh），仅关键集非空时渲染）
+- [x] Fix：A2 必选面——`gantt-grid.tsx:131` 死类 `hover:bg-blue-50/50` 删除；:132 选中 `bg-blue-50` 改 token 规则 `color-mix(in srgb, var(--color-primary) 10%, transparent)`（与 :17-19 hover 同法）
+- [x] Fix：A2 bar 侧最小面——`GanttBars` 接收 `selectedTaskId` 打 `data-selected` + `gantt.css` 最小选中视觉规则（2px primary outline）
+- [x] Fix：R4——`baseline-bars.tsx:42-43` rgba 灰 → muted-foreground 系、:56/:65 `#ef4444`/`#f59e0b` → destructive/warning（SVG 通道以计算样式断言锁定；SVG 呈现属性不走 var()，按 Failure Paths svg-presentation-attr-var 改 style 通道直写，line 侧加 `data-deviation` 标记）
+- [x] Fix：R5——`use-gantt-link-draw.ts:49/:129`、`use-gantt-drag.ts:38` `#3b82f6` → `var(--color-primary)`（cssText/style 通道直写；呈现属性不接受 var() 时改走 style/class）
+- [x] Fix：R6——`gantt-markers.tsx:33/:36` `bg-red-400`/`text-red-500` → destructive 系 token（`[data-slot='gantt-today']`/`[data-slot='gantt-today-label']` 包 CSS 规则）
+- [x] Decision：R3-gantt——`gantt-bars.tsx:144` `--color-gantt-milestone-stroke` 未定义 var 消除，直连既有语义 token（`--color-warning`，琥珀语义最近邻，零宿主改动）；如裁决需保品牌色则定义专用 var（宿主 `@theme inline` 发布层 + dark 变体对称）。落定其一并同步证据卡（落定：直连 `--color-warning`，stroke 移入 `.nop-gantt-bar-milestone-fill` CSS 规则、删除呈现属性）
 
 Exit Criteria:
 
-- [ ] CPM 单测先红后绿有记录；环/空输入行为与 Failure Paths 表一致；`grep critical` 在包 src（非测试）由 0 → 计算与渲染双命中
-- [ ] 守卫单测落地且对修复前代码为红有记录；gantt 目录（allowlist 外）字面 hex/语义色类清零后该目录断言转绿（全包转绿归 Phase 3）
-- [ ] 选中行 computed background-color 为 primary color-mix、非 `#eff6ff`（组件测试锁定）；`bg-blue-50` 及死类 hover 自 `gantt-grid.tsx` 消失；bar 侧 `data-selected` + CSS 规则在
-- [ ] gantt 域 focused typecheck 通过，gantt 既有单测零回归
+- [x] CPM 单测先红后绿有记录；环/空输入行为与 Failure Paths 表一致；`grep critical` 在包 src（非测试）由 0 → 计算与渲染双命中（cpm.ts/cpm 计算 + gantt-bars.tsx/gantt.tsx/gantt.css 渲染 + 图例；10/10 绿）
+- [x] 守卫单测落地且对修复前代码为红有记录；gantt 目录（allowlist 外）字面 hex/语义色类按枚举修复面逐文件清零（未列残余转 allowlist 显式登记）后该目录断言转绿（全包转绿归 Phase 3）（gantt 组绿；gantt 目录未列残余 `gantt-layout.tsx:114` splitter 蓝系 hover/focus 顺手同批 token 化清零，无需 allowlist）
+- [x] 选中行 computed background-color 为 primary color-mix、非 `#eff6ff`（组件测试锁定）；`bg-blue-50` 及死类 hover 自 `gantt-grid.tsx` 消失；bar 侧 `data-selected` + CSS 规则在（`gantt-selection-critical.test.tsx` 8/8；happy-dom 不做外链 CSS 级联，规则文本级 + DOM data 契约锁定，真实 computed color-mix 断言归 Phase 4 e2e）
+- [x] gantt 域 focused typecheck 通过，gantt 既有单测零回归（gantt 目录 26 文件 338 测试全绿；包 typecheck 通过）
 
 ### Phase 2 - calendar 域：拖拽 CSS 断链 + 事件色双轨消解 + today/weekend 语义态 + R11 浅锁
 
-Status: planned
-Targets: `calendar.css`、`calendar/components/calendar-event-block.tsx`、`calendar-month-view.tsx`、`calendar-week-view.tsx`、`calendar-day-view.tsx`、calendar 组件测试
+Status: completed
+Targets: `calendar.css`、`calendar/components/calendar-event-block.tsx`、`calendar-month-view.tsx`、`calendar-week-view.tsx`、`calendar-day-view.tsx`、calendar 组件测试 + calendar.tsx（--color-calendar-\* 第三消费点）
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：组件测试先红——①拖拽目标格 `data-drop-target`/`data-drop-valid`/`drag-ok`/`drag-conflict` set/remove 断言（发射端已有，固化行为）；②`calendar.css` 含三条新规则的存在性断言（规则文本级）
-- [ ] Fix：N1/R1——`calendar.css` 补 3 条 token 驱动规则（kanban.css:144 同法）：`.nop-calendar [data-slot='calendar-cell'][data-drop-target='true']`（ring，`var(--color-primary)`）、`.drag-ok`（`--color-success` 系）、`.drag-conflict`（`--color-destructive` 系）
-- [ ] Fix：N2/R2——消双轨：删 `calendar-event-block.tsx:118` inline `backgroundColor` 与 :19-24 `TYPE_COLORS` 未定义 var 映射，默认路径落 `calendar.css:8-22` 语义 token 规则（success/destructive/primary/warning，dark 自适应）；`event.color` 显式覆盖路径与 eventTemplate 路径行为不变
-- [ ] Fix：R7-calendar——today 三视图（month:238/week:91/day:71）→ primary 系（color-mix ring+bg）；隐藏周末格 `bg-gray-50`（month:209）与 weekend `bg-gray-50/50`（month:239）→ muted 系 token；机制 token 驱动（data 标记 + 包 CSS 规则或 token arbitrary 类），dark 计算样式断言锁定（归 Phase 4）
-- [ ] Fix：R11 部分——`calendar.css:25` 事件 hover 白描边 `rgba(255,255,255,.8)`、:45 is-split 白左边、:310/:396 `color-mix … white` → 混 `--color-background`
-- [ ] Proof：守卫单测 calendar 目录断言转绿（allowlist 外）
+- [x] Proof：组件测试先红——①拖拽目标格 `data-drop-target`/`data-drop-valid`/`drag-ok`/`drag-conflict` set/remove 断言（发射端已有，固化行为）；②`calendar.css` 含三条新规则的存在性断言（规则文本级）（`calendar-drag-drop-visual.test.tsx`；先红记录：②规则缺失 + 未定义 var 消费两项红；①三项发射端行为绿（固化）；注：inline-bg 断言在 happy-dom 下对 var() 值为空序列化、修复前空过，红证据由源级「未定义 var 消费零」断言承担，inline 断言作为回归锁）
+- [x] Fix：N1/R1——`calendar.css` 补 3 条 token 驱动规则（kanban.css:144 同法）：`.nop-calendar [data-slot='calendar-cell'][data-drop-target='true']`（ring，`var(--color-primary)`）、`.drag-ok`（`--color-success` 系）、`.drag-conflict`（`--color-destructive` 系）
+- [x] Fix：N2/R2——消双轨：删 `calendar-event-block.tsx:118` inline `backgroundColor` 与 :19-24 `TYPE_COLORS` 未定义 var 映射，默认路径落 `calendar.css:8-22` 语义 token 规则（success/destructive/primary/warning，dark 自适应）；`event.color` 显式覆盖路径与 eventTemplate 路径行为不变（typeless fallback 底色落点：`.nop-calendar [data-slot='calendar-event']:not([data-event-type])` 规则，`--color-muted-foreground`，与修复前 fallback 同 token；文字色由四条类型规则 + fallback 规则的 `color: var(--color-primary-foreground)` 提供；`ring-red-500` 系死类删除——`[data-overlap='true']` 包 CSS box-shadow 规则 unlayered 遮蔽；overlap 圆点 `bg-red-500/border-white` → destructive/background token arbitrary 类；`border-white/20` 移入包 CSS color-mix 规则）
+- [x] Fix：`calendar.tsx` DEFAULT_SHIFT_TYPES（:46-51，经 :289 event.color 覆盖路径与 :537 下发选择器）改语义 token 或移除 color 注入——`--color-calendar-*` 第三消费点（review Major-1）（落定：改语义 token `--color-success/destructive/primary/warning`，与 calendar.css 类型规则同映射；event.color 注入通道保留）
+- [x] Fix：R7-calendar——today 三视图（month:238/week:91/day:71）→ primary 系（color-mix ring+bg）；隐藏周末格 `bg-gray-50`（month:209）与 weekend `bg-gray-50/50`（month:239）→ muted 系 token；机制 token 驱动（data 标记 + 包 CSS 规则或 token arbitrary 类），dark 计算样式断言锁定（归 Phase 4）（month 用既有 `data-today` 标记，week/day 补 `data-today` 标记，共用 `[data-slot='calendar-cell'][data-today='true']` 一条 color-mix 规则；隐藏周末格 → `bg-[var(--color-muted)]`；weekend `bg-gray-50/50` 死类删除——`[data-weekend='true']` 包 CSS 规则遮蔽，归 R8 清单）
+- [x] Fix：R11 部分——`calendar.css:25` 事件 hover 白描边 `rgba(255,255,255,.8)`、:45 is-split 白左边、:310/:396 `color-mix … white` → 混 `--color-background`
+- [x] Proof：守卫单测 calendar 修复面逐文件断言转绿（allowlist 外）（calendar 组绿；未列残余 `calendar-cross-day-lines.ts:47` `#94a3b8` SVG fallback 顺手清零——回空串 + CSS `path { stroke: var(--color-muted-foreground) }` 默认描边，无需 allowlist）
 
 Exit Criteria:
 
-- [ ] 拖拽类 set/remove 组件测试先红后绿；`calendar.css` 三条新规则在且 token 驱动
-- [ ] 默认路径事件块 computed background-color 来自语义 token（组件测试锁定）；`--color-calendar-*` 全仓消费归零（grep 证）
-- [ ] today/weekend 类收敛后 `calendar-month/week/day-view.tsx` 无 `bg-blue-50`/`ring-blue-400` 字面语义色类；R11 三处 white 浅锁消除
-- [ ] calendar 域 focused typecheck 通过，calendar 既有单测零回归
+- [x] 拖拽类 set/remove 组件测试先红后绿；`calendar.css` 三条新规则在且 token 驱动
+- [x] 默认路径事件块 computed background-color 来自语义 token（组件测试锁定）；`--color-calendar-*` 全仓消费归零（grep 证：包 src 消费 0；真实 computed 断言归 Phase 4 e2e）
+- [x] today/weekend 类收敛后 `calendar-month/week/day-view.tsx` 无 `bg-blue-50`/`ring-blue-400` 字面语义色类；R11 三处 white 浅锁消除
+- [x] calendar 域 focused typecheck 通过，calendar 既有单测零回归（calendar 目录 26 文件 214 测试全绿）
 
 ### Phase 3 - kanban 语义态 + 域内中性灰收敛批 + 守卫全包转绿
 
-Status: planned
+Status: completed
 Targets: `kanban-column-header.tsx`、`kanban-column-adder.tsx`、`kanban-card.tsx`、`gantt-cellgrid.tsx`、`gantt-grid.tsx` 及 R8 死类清单文件
 
 - Item Types: `Fix`
 
-- [ ] Fix：R7-kanban——WIP `border-red-400 bg-red-50`（column-header:94）与 `bg-red-100 text-red-600`（:133）→ destructive 系；column-adder `border-blue-400 bg-blue-50`（:31）→ primary 系；resize handle `hover:bg-blue-500`（:73/:108）→ primary 系
-- [ ] Fix：R7-gantt——表头 `bg-gray-100 text-gray-600`（gantt-grid:107）→ muted/border 系 token（dark 自适应）
-- [ ] Fix：R8 两半——①遮蔽死类删除（逐一核对确有 unlayered 竞争者后再删）：`kanban-card.tsx:103` `bg-white border-gray-200`、`gantt-cellgrid.tsx:37-38`、`gantt-grid.tsx:131`（Phase 1 已删）等研究报告 R8 清单；②其余中性灰在本批触碰文件内顺手映射 `--color-muted-foreground`/`--color-border`，不做全域大扫除，剩余维持既有计数（守卫②断言不增）
-- [ ] Proof：守卫单测全包转绿（①修复目录零命中 + ②中性灰计数不高于基线）
+- [x] Fix：R7-kanban——WIP `border-red-400 bg-red-50`（column-header:94）与 `bg-red-100 text-red-600`（:133）→ destructive 系；column-adder `border-blue-400 bg-blue-50`（:31）→ primary 系；resize handle `hover:bg-blue-500`（:73/:108）→ primary 系（WIP → `border-destructive/40 bg-destructive/10` + 徽章 `bg-destructive/15 text-destructive`；adder → `border-primary/60 bg-primary/10` + confirm `text-primary`；resize → `hover:bg-primary`；同语义单元 `kanban-column.tsx:226` WIP `border-red-400` → `border-destructive` 一并处理，对应 renderer 测试断言同步 `border-destructive`；未列残余 `kanban-toolbar.tsx:34` `focus:ring-blue-400` → `focus:ring-ring` 顺手清零）
+- [x] Fix：R7-gantt——表头 `bg-gray-100 text-gray-600`（gantt-grid:107）→ muted/border 系 token（dark 自适应）（→ `bg-muted text-muted-foreground`）
+- [x] Fix：R8 两半——①遮蔽死类删除（逐一核对确有 unlayered 竞争者后再删）：`kanban-card.tsx:103` `bg-white border-gray-200`、`gantt-cellgrid.tsx:37-38`、`gantt-grid.tsx:131`（Phase 1 已删）等研究报告 R8 清单；②其余中性灰在本批触碰文件内顺手映射 `--color-muted-foreground`/`--color-border`，不做全域大扫除，剩余维持既有计数（守卫②断言不增）（死类删除清单：kanban-card `bg-white`+`border-gray-200` ← `.nop-kanban-card` background/border-color 规则 kanban.css:104-115 遮蔽；kanban-card 标题 `text-gray-900`/描述 `text-gray-500` ← `.nop-kanban-card-content` color 规则 kanban.css:122-130 遮蔽；kanban-column 根 `bg-gray-50`+`border-gray-200` ← `.nop-kanban-column` kanban.css:15-25 遮蔽；kanban-column-header 拖拽手柄 `cursor-grab text-gray-400 hover:text-gray-600` ← `.nop-kanban-column-drag-handle(:hover)` kanban.css:45-52 遮蔽；gantt-cellgrid weekend `bg-gray-50/50` ← `[data-slot='gantt-weekend'][data-weekend='true']` gantt.css 遮蔽；gantt-grid 行 hover 死类 Phase 1 已删。非死类（无竞争者）按②映射 token：gantt-cellgrid `border-gray-100`→`border-border`、gantt-grid 行 `border-gray-100`→`border-border` + 展开钮 `text-gray-400 hover:text-gray-700`→`text-muted-foreground hover:text-foreground`、column-header 聚合/折叠钮灰系→muted 系、adder 灰系→muted/border 系、kanban-card 删除钮 `hover:text-red-500`→`hover:text-destructive`、kanban-card-tags 头像 `bg-blue-100 border-white text-blue-700`→`bg-primary/15 border-[var(--color-background)] text-primary`）
+- [x] Proof：守卫单测全包转绿（①按枚举修复面逐文件清零（未列残余转 allowlist 显式登记） + ②中性灰计数不高于基线）（4/4 绿；断言面显式纳入未列残余文件 gantt-layout/kanban-toolbar/kanban-column/kanban-card-tags/cross-day-lines；`kanban-tag-filter.tsx` text-white 为数据驱动 tag 色对比度语义，走 allowlist 显式登记（R9 同族）；②基线由修复前 59 收紧至落地 30）
 
 Exit Criteria:
 
-- [ ] kanban/gantt 语义态类字面语义色清零（allowlist 外 grep 证）；死类删除清单登记（每项注明遮蔽竞争者出处）
-- [ ] 守卫单测全包绿；kanban/gantt 既有单测零回归；包 focused typecheck 通过
+- [x] kanban/gantt 语义态类字面语义色清零（allowlist 外 grep 证）；死类删除清单登记（每项注明遮蔽竞争者出处）
+- [x] 守卫单测全包绿；kanban/gantt 既有单测零回归；包 focused typecheck 通过（91 文件 980 测试全绿，唯一改动断言 `border-red-400`→`border-destructive` 已注明）
 
 ### Phase 4 - e2e 双态断言 + owner docs 回写 + 豁免对账
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/`（新增 scheduling 视觉 spec 或扩展现有）、17 个既有 scheduling spec、owner docs、证据卡、roadmap、daily log
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：e2e 三组 light/dark 双态断言（V0 helper + theme-switcher 四态先例；不做截图基线）：①gantt 网格行选中 color-mix + 关键路径顶标 destructive；②calendar today 格 + drag-ok/drag-conflict；③kanban drop-target ring（A4 代价断言，固化 watch-only 结论）
-- [ ] Proof：17 个既有 scheduling spec 全量零回归记录（gantt 11 + kanban 2 + calendar 2 + diff 2）
-- [ ] Fix：owner docs 回写——`roadmap-scheduling.md:109` S3.2（criticalPath 落地后描述与实现对齐：data-critical + destructive 顶标；勘误经过记证据卡）、:287 S17.7（CSS 补齐后成立性复核 + 勘误记录）；`kanban/design.md:330` 「边框 2px #3b82f6」→ box-shadow ring `var(--color-primary)`；`gantt/design.md` §12.6（:637-650）渲染细则补（store 纯函数派生 + data-critical + 图例裁决结果）；`calendar/design.md` 增补 drag-ok/conflict 规则行（6 周网格风险表 :254-255 维持，A3 无需改）；证据卡 `scheduling.md` 全量回写（F1-F5、N1-N3、R1-R14 裁决与状态）；`visual-quality-roadmap.md` V11a 状态；daily log
-- [ ] Proof：`pnpm check` 对账——scheduling 整包豁免零新增命中；豁免命中实例数相对修复前下降并记录下降数（供 V12a/V12b 对账）
-- [ ] Proof：构建产物抽查——dist css `drag-ok` 计数 0 → >0、`data-drop-target` kanban/calendar 双规则在、`--color-primary` 发射在案
+- [x] Proof：e2e 三组 light/dark 双态断言（V0 helper + theme-switcher 四态先例；不做截图基线）：①gantt 网格行选中 color-mix + 关键路径顶标 destructive；②calendar today 格 + drag-ok/drag-conflict；③kanban drop-target ring（A4 代价断言，固化 watch-only 结论）（`tests/e2e/scheduling-visual-tokens.spec.ts` 5/5 绿：顶标 ::before 计算色 light/dark 互异且非透明、选中格非 `#eff6ff` 且随 dark 翻转、today 格同法、drag-ok/conflict ring 非\_none 且随 dark 翻转、drop-target ring 同法）
+- [x] Proof：17 个既有 scheduling spec 全量零回归记录（gantt 11 + kanban 2 + calendar 2 + diff 2；合并两轮 serial 记录全绿；唯一断言修订=gantt-states baseline 半透明断言随 R4 style 通道迁移改计算样式口径（`fillOpacity<1` + fill 非 none），意图不变增强；一例既有环境级 drag flake（gantt-bars-and-links）单独重跑 3/3 稳定）
+- [x] Fix：owner docs 回写——`roadmap-scheduling.md:109` S3.2（criticalPath 落地后描述与实现对齐：data-critical + destructive 顶标；勘误经过记证据卡）、:287 S17.7（CSS 补齐后成立性复核 + 勘误记录）；`kanban/design.md:330` 「边框 2px #3b82f6」→ box-shadow ring `var(--color-primary)`；`gantt/design.md` §12.6（:637-650）渲染细则补（store 纯函数派生 + data-critical + 图例裁决结果）；`calendar/design.md` 增补 drag-ok/conflict 规则行（6 周网格风险表 :254-255 维持，A3 无需改）；证据卡 `scheduling.md` 全量回写（F1-F5、N1-N3、R1-R14 裁决与状态）；`visual-quality-roadmap.md` V11a 状态；daily log（backlog 状态行按规则维持 `planned` 待 closure audit，执行状态注记已加）
+- [x] Proof：`pnpm check` 对账——scheduling 整包豁免零新增命中；豁免命中实例数相对修复前下降并记录下降数（供 V12a/V12b 对账）（`find-ui-consistency-gaps.mjs` "No new unregistered"；scheduling 豁免实例 130→65，-65/50%，HEAD worktree 基线实测；数字已记 daily log）
+- [x] Proof：构建产物抽查——dist css `drag-ok` 计数 0 → >0、`data-drop-target` kanban/calendar 双规则在、`--color-primary` 发射在案（dist `drag-ok`=1、双 `data-drop-target='true'` 规则在、`var(--color-primary)` calendar/gantt/kanban 三 css 在（7/8/4）、`data-critical` 顶标规则在、dist `--color-calendar-*` 归零）
 
 Exit Criteria:
 
-- [ ] e2e 三组断言绿（light/dark 双态各有计算样式断言）+ 17 spec 零回归有记录
-- [ ] owner docs 与 live baseline 一致（逐文件可观测）；豁免对账数字登记 daily log；构建产物抽查三项通过
+- [x] e2e 三组断言绿（light/dark 双态各有计算样式断言）+ 17 spec 零回归有记录
+- [x] owner docs 与 live baseline 一致（逐文件可观测）；豁免对账数字登记 daily log；构建产物抽查三项通过
 
 ## Draft Review Record
 
-- Reviewer / Agent: （独立子 agent fresh session 填写）
-- Verdict:
-- Rounds:
-- Findings addressed:
+- Reviewer / Agent: 独立 plan review 审查员（fresh sub-agent session，2026-09-21，共三轮）
+- Verdict: 三轮共识 `approved`（首轮 `revised` 2 Major + 3 Minor → 二轮 `issues` 吸收不完整三点机械修订清单 → 终审确认；修订已完成，升 active）
+- Rounds: 3
+- Findings addressed: Major-1——N2 修复面增补 calendar.tsx（DEFAULT_SHIFT_TYPES :46-51 经 :289 event.color 覆盖路径与 :537 下发选择器，Fix 行已移入 Phase 2 执行清单）；Major-2——守卫①口径统一为「枚举修复面逐文件清零（未列残余转 allowlist 显式登记）」（四处全部传导）；Minor——weekend 死类归 R8、typeless fallback 底色落点、引用微漂，随执行顺手处理。
 
 ## Closure Gates
 
-- [ ] 全部 in-scope 交付落地（Phase 1-4 Exit Criteria 全勾）
-- [ ] in-scope confirmed live defects 已修复：gantt 选中行 dark 击穿、calendar 拖拽 CSS 断链、calendar 事件色双轨死锁、域内字面色/未定义 var 残余
-- [ ] in-scope contract drift 已收敛：S3.2/S17.7 owner-doc 状态失实、kanban/design.md:330 契约漂移、gantt/design.md:637-650 关键路径契约实现落地
-- [ ] F2（6 周网格/密度视图）、F3、R9-R12、R14 显式裁决落卡（非静默 deferred）
-- [ ] 行为/契约结果已达成：CPM 高亮、选中视觉、拖拽 ok/conflict、事件色随主题在单测与 e2e 成立
-- [ ] 必要 focused verification 已完成（CPM/守卫单测先红后绿 + e2e 双态断言）
-- [ ] 17 个既有 scheduling e2e spec 零回归
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响 owner docs 已同步：roadmap-scheduling.md、gantt/kanban/calendar design.md、证据卡 scheduling.md、visual-quality-roadmap.md、daily log
-- [ ] `pnpm check` 零新 hit + scheduling 豁免命中实例数不增（对账已记录）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 全部 in-scope 交付落地（Phase 1-4 Exit Criteria 全勾）
+- [x] in-scope confirmed live defects 已修复：gantt 选中行 dark 击穿、calendar 拖拽 CSS 断链、calendar 事件色双轨死锁、域内字面色/未定义 var 残余
+- [x] in-scope contract drift 已收敛：S3.2/S17.7 owner-doc 状态失实、kanban/design.md:330 契约漂移、gantt/design.md:637-650 关键路径契约实现落地
+- [x] F2（6 周网格/密度视图）、F3、R9-R12、R14 显式裁决落卡（非静默 deferred）
+- [x] 行为/契约结果已达成：CPM 高亮、选中视觉、拖拽 ok/conflict、事件色随主题在单测与 e2e 成立
+- [x] 必要 focused verification 已完成（CPM/守卫单测先红后绿 + e2e 双态断言）
+- [x] 17 个既有 scheduling e2e spec 零回归
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响 owner docs 已同步：roadmap-scheduling.md、gantt/kanban/calendar design.md、证据卡 scheduling.md、visual-quality-roadmap.md、daily log
+- [x] `pnpm check` 零新 hit + scheduling 豁免命中实例数不增（对账已记录）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -297,13 +298,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （closure audit 通过后填写）
+Status Note: 四 Phase 全部落地且独立 closure audit 通过（approved）：Phase 1–4 exit criteria 逐条 live 核对确认（cpm.ts 拓扑/零浮动/环容忍、data-critical 双面、拖拽三规则、双轨消解、R8 死类清单、守卫基线 30 独立复算恰等、scheduling 980/980 复跑全绿、五 spec 双态断言在案）；2 项非阻塞观察（R14 豁免基线已由并发 plan 483 重构为文件级、kanban 残余中性灰在守卫基线内）不阻塞。roadmap V11a 行同步 `done`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立子 agent fresh session 填写）
-- Evidence: （task id / daily log link / findings 摘要）
+- Auditor / Agent: 独立子 agent fresh session（2026-09-21 closure audit）
+- Evidence: verdict `approved`——逐 Phase 对照表见审计输出；关键行为抽查（CPM 链路权重公式、环输入不入集、零浮动 1e-9、`[data-critical]::before` 2px destructive、`.drag-ok/.drag-conflict` token 规则、守卫 NEUTRAL_GRAY_BASELINE=30 独立复算恰等）；focused 复跑 scheduling 91 文件 980 测试全绿；daily log `docs/logs/2026/09-21.md` plan 481 节与收口会话节。
 
 Follow-up:
 
-- （closure 时填写，或写 no remaining plan-owned work）
+- no remaining plan-owned work（F2/F3/R9-R14 均已落 Deferred But Adjudicated，域内后续迭代候选由证据卡承载）

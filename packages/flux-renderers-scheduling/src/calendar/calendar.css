@@ -7,22 +7,37 @@
 
 .nop-calendar [data-event-type='shift'] {
   background-color: var(--color-success);
+  color: var(--color-primary-foreground);
 }
 
 .nop-calendar [data-event-type='leave'] {
   background-color: var(--color-destructive);
+  color: var(--color-primary-foreground);
 }
 
 .nop-calendar [data-event-type='appointment'] {
   background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
 }
 
 .nop-calendar [data-event-type='maintenance'] {
   background-color: var(--color-warning);
+  color: var(--color-primary-foreground);
+}
+
+/* N2/R2 双轨消解：无类型事件的默认底色落点（此前为 inline fallback）。 */
+.nop-calendar [data-slot='calendar-event']:not([data-event-type]) {
+  background-color: var(--color-muted-foreground);
+  color: var(--color-primary-foreground);
+}
+
+/* 事件块边框（原白色 20% 半透明描边），随主题翻转。 */
+.nop-calendar [data-slot='calendar-event'] {
+  border-color: color-mix(in srgb, var(--color-background) 20%, transparent);
 }
 
 .nop-calendar [data-slot='calendar-event']:hover {
-  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline: 2px solid color-mix(in srgb, var(--color-background) 80%, transparent);
   outline-offset: -2px;
   filter: brightness(1.1);
   cursor: pointer;
@@ -42,7 +57,7 @@
 
 .nop-calendar [data-slot='calendar-event'].is-split {
   border-left-width: 2px;
-  border-left-color: rgba(255, 255, 255, 0.4);
+  border-left-color: color-mix(in srgb, var(--color-background) 40%, transparent);
 }
 
 .nop-calendar [data-slot='calendar-cell'][data-empty='true'] {
@@ -51,6 +66,27 @@
 
 .nop-calendar [data-slot='calendar-cell'][data-weekend='true'] {
   background-color: var(--color-muted);
+}
+
+/* N1/R1：拖拽悬停目标格视觉（kanban.css data-drop-target 同法，token 驱动）。 */
+.nop-calendar [data-slot='calendar-cell'][data-drop-target='true'] {
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.nop-calendar [data-slot='calendar-cell'].drag-ok {
+  box-shadow: 0 0 0 2px var(--color-success);
+  background-color: color-mix(in srgb, var(--color-success) 12%, transparent);
+}
+
+.nop-calendar [data-slot='calendar-cell'].drag-conflict {
+  box-shadow: 0 0 0 2px var(--color-destructive);
+  background-color: color-mix(in srgb, var(--color-destructive) 12%, transparent);
+}
+
+/* R7-calendar：今日格 primary 系（month/week/day 三视图共用 data-today 标记）。 */
+.nop-calendar [data-slot='calendar-cell'][data-today='true'] {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  box-shadow: inset 0 0 0 2px var(--color-primary);
 }
 
 .nop-calendar-drag-ghost {
@@ -75,6 +111,7 @@
 
 .nop-calendar-cross-day-lines path {
   fill: none;
+  stroke: var(--color-muted-foreground);
   stroke-width: 2;
   stroke-linecap: round;
   opacity: 0.4;
@@ -307,7 +344,7 @@
 }
 
 .nop-batch-scheduler-preview-cell.conflict {
-  background-color: color-mix(in srgb, var(--color-destructive) 10%, white);
+  background-color: color-mix(in srgb, var(--color-destructive) 10%, var(--color-background));
   color: var(--color-destructive);
 }
 
@@ -393,7 +430,7 @@
 }
 
 .nop-timezone-option.selected {
-  background-color: color-mix(in srgb, var(--color-primary) 10%, white);
+  background-color: color-mix(in srgb, var(--color-primary) 10%, var(--color-background));
   color: var(--color-primary);
 }
 

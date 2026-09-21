@@ -104,7 +104,7 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
             {resolvedColumns.map((col) => (
               <th
                 key={col.name}
-                className="sticky top-0 z-10 bg-gray-100 border-b border-r px-2 py-1.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                className="sticky top-0 z-10 bg-muted border-b border-r px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                 style={{ width: getColumnWidth(col), minWidth: col.minWidth ?? 50 }}
                 data-slot="gantt-grid-header-cell"
               >
@@ -121,16 +121,14 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
                 data-task-id={String(task.id)}
                 data-depth={task.$level}
                 data-slot="gantt-grid-row"
+                data-selected={selectedTaskId === task.id || undefined}
                 role="row"
                 aria-level={task.$level + 1}
                 aria-setsize={task.$branchSize}
                 aria-posinset={task.$posInBranch}
                 aria-selected={selectedTaskId === task.id}
                 tabIndex={selectedTaskId === task.id ? 0 : -1}
-                className={cn(
-                  'border-b border-gray-100 hover:bg-blue-50/50',
-                  selectedTaskId === task.id && 'bg-blue-50',
-                )}
+                className="border-b border-border"
                 style={{ height: rowHeight }}
                 onClick={() => handleCellClick(task.id, 'text')}
                 onDoubleClick={() => handleCellDoubleClick(task.id, 'text')}
@@ -151,7 +149,7 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
                             size="sm"
                             aria-expanded={store.isOpen(task.id)}
                             aria-label={store.isOpen(task.id) ? t('scheduling.gantt.collapseTask', { text: task.text }) : t('scheduling.gantt.expandTask', { text: task.text })}
-                            className="w-4 h-4 p-0 text-gray-400 hover:text-gray-700 text-xs"
+                            className="w-4 h-4 p-0 text-muted-foreground hover:text-foreground text-xs"
                             onClick={(e) => { e.stopPropagation(); handleToggle(task.id); }}
                           >
                             {'>'}

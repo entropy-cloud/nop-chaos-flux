@@ -66,7 +66,7 @@ export function KanbanCardTags({
             {members.slice(0, maxVisibleMembers).map((member) => (
               <div
                 key={member.id}
-                className="nop-kanban-card-member w-5 h-5 rounded-full bg-blue-100 border border-white flex items-center justify-center text-[8px] font-medium text-blue-700 overflow-hidden"
+                className="nop-kanban-card-member w-5 h-5 rounded-full bg-primary/15 border border-[var(--color-background)] flex items-center justify-center text-[8px] font-medium text-primary overflow-hidden"
                 title={member.name}
               >
                 {member.avatar ? (

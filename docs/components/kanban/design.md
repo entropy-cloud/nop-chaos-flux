@@ -327,7 +327,7 @@ interface KanbanEvents {
   > `className`、`classAliases` 继承自 BaseSchema，用于覆写根节点样式。`classAliases` 短名→Tailwind 串映射由宿主应用配置。
 
 - 列间距 12px，背景色通过 CSS 变量 `--kanban-column-bg` 控制。
-- 拖拽时卡片从原位置以 0.5 透明度 + scale(0.95) 缩小，跟随光标渲染带 shadow（box-shadow: 0 4px 12px rgba(0,0,0,0.15)）的 ghost 副本。放置目标列边框高亮 2px #3b82f6，目标卡片间隙显示 2px 蓝色指示线。
+- 拖拽时卡片从原位置以 0.5 透明度 + scale(0.95) 缩小，跟随光标渲染带 shadow（box-shadow: 0 4px 12px rgba(0,0,0,0.15)）的 ghost 副本。放置目标列以 box-shadow ring（`0 0 0 2px var(--color-primary)`，`kanban.css` `[data-drop-target='true']` 规则）高亮，目标卡片间隙显示 2px 蓝色指示线。（plan 481 勘误：本行原文「放置目标列边框高亮 2px #3b82f6」与实现不符——实现自始为 box-shadow ring + 语义 token，随回写订正。）
 - Test anchor 优先顺序：getByRole > data-slot > .nop-\* > data-testid。
 
 ## 11. 实现拆分建议

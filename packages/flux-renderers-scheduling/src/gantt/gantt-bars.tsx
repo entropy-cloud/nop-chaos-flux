@@ -7,6 +7,8 @@ import type { GanttStoreApi } from './gantt.types.js';
 interface GanttBarsProps {
   store: GanttStoreApi;
   className?: string;
+  selectedTaskId?: string | number | null;
+  criticalTaskIds?: Set<string | number>;
   onBarPointerDown?: (e: PointerEvent, taskId: string | number, mode: 'move' | 'resize-start' | 'resize-end', barElement: HTMLElement) => void;
   onLinkHandlePointerDown?: (e: PointerEvent, taskId: string | number, side: 'start' | 'end') => void;
   onBarDoubleClick?: (taskId: string | number) => void;
@@ -18,7 +20,7 @@ interface GanttBarsProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction, taskBarRegion, onBarClick, onBarDoubleClickEvent, taskBarClassName, scrollContainerRef }: GanttBarsProps) {
+export function GanttBars({ store, className, selectedTaskId, criticalTaskIds, onBarPointerDown, onLinkHandlePointerDown, onBarDoubleClick, onBarKeyAction, taskBarRegion, onBarClick, onBarDoubleClickEvent, taskBarClassName, scrollContainerRef }: GanttBarsProps) {
   useSyncExternalStore(store.subscribe, () => store.taskRevision);
   useSyncExternalStore(store.subscribe, () => store.layoutRevision);
   useSyncExternalStore(store.subscribe, () => store.treeRevision);
@@ -111,6 +113,8 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
       {visibleTasks.map((task) => {
         const isMilestone = task.type === 'milestone';
         const isProject = task.type === 'project';
+        const isSelected = selectedTaskId === task.id;
+        const isCritical = criticalTaskIds?.has(task.id) ?? false;
 
         if (isMilestone) {
           const size = 12;
@@ -121,10 +125,12 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
               key={String(task.id)}
               data-task-id={String(task.id)}
               data-bar-type="milestone"
+              data-critical={isCritical || undefined}
+              data-selected={isSelected || undefined}
               tabIndex={0}
               role="button"
               aria-label={task.text ? t('scheduling.gantt.taskBarLabel', { text: task.text }) : t('scheduling.gantt.barLabel')}
-              className="absolute cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="absolute cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
               style={{ left: cx - size / 2, top: cy - size / 2, width: size, height: size }}
               onClick={() => onBarClick?.(task.id)}
               onKeyDown={(e) => {
@@ -141,19 +147,18 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
                 <polygon
                   points={`${size / 2},0 ${size},${size / 2} ${size / 2},${size} 0,${size / 2}`}
                   className="nop-gantt-bar-milestone-fill"
-                  stroke="var(--color-gantt-milestone-stroke, #d97706)"
                   strokeWidth={1}
                 />
               </svg>
               <div
                 data-slot="gantt-bar-link-handle"
                 data-handle-side="start"
-                className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+                className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-background border border-primary opacity-0 group-hover:opacity-100 cursor-crosshair"
               />
               <div
                 data-slot="gantt-bar-link-handle"
                 data-handle-side="end"
-                className="absolute right-0 top-1/2 translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+                className="absolute right-0 top-1/2 translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-background border border-primary opacity-0 group-hover:opacity-100 cursor-crosshair"
               />
             </div>
           );
@@ -165,12 +170,14 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
             data-task-id={String(task.id)}
             data-bar-type={task.type ?? 'task'}
             data-slot="gantt-bar"
+            data-critical={isCritical || undefined}
+            data-selected={isSelected || undefined}
             tabIndex={0}
             role="button"
             aria-label={task.text ? t('scheduling.gantt.taskBarLabel', { text: task.text }) : t('scheduling.gantt.barLabel')}
             aria-roledescription="gantt bar"
             className={cn(
-              'absolute rounded-sm group cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400',
+              'absolute rounded-sm group cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring',
               isProject ? 'nop-gantt-bar-project' : 'nop-gantt-bar-task',
               taskBarClassName,
             )}
@@ -199,12 +206,12 @@ export function GanttBars({ store, className, onBarPointerDown, onLinkHandlePoin
             <div
               data-slot="gantt-bar-link-handle"
               data-handle-side="start"
-              className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+              className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-background border border-primary opacity-0 group-hover:opacity-100 cursor-crosshair"
             />
             <div
               data-slot="gantt-bar-link-handle"
               data-handle-side="end"
-              className="absolute right-0 top-1/2 translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-white border border-blue-400 opacity-0 group-hover:opacity-100 cursor-crosshair"
+              className="absolute right-0 top-1/2 translate-x-full -translate-y-1/2 w-2 h-2 rounded-full bg-background border border-primary opacity-0 group-hover:opacity-100 cursor-crosshair"
             />
           </div>
         );

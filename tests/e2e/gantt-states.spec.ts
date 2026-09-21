@@ -42,8 +42,15 @@ test.describe('Gantt States — empty / loading / baselines / regions', () => {
     const baselines = page.locator('[data-testid="gantt-baselines"] [data-slot="gantt-baseline-bar"]');
     await expect(baselines.first()).toBeVisible({ timeout: 10_000 });
     await expect(baselines).toHaveCount(3);
-    const fill = await baselines.first().getAttribute('fill');
-    expect(fill).toContain('rgba(');
+    // plan 481 R4: fill/stroke moved from presentation attributes (which do
+    // not accept var()) to the style channel — assert the computed paint is a
+    // real token-resolved color at partial opacity (translucency contract).
+    const paint = await baselines.first().evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { fill: cs.fill, fillOpacity: cs.fillOpacity };
+    });
+    expect(paint.fill).not.toBe('none');
+    expect(Number(paint.fillOpacity)).toBeLessThan(1);
     await assertTrackedPageErrors(page);
   });
 

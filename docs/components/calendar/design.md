@@ -277,6 +277,8 @@ CalendarState 使用 scope-level state path 存储 `view` 和 `date`，允许外
 
 **冲突检测**：目标单元格已被其他事件占满（超过 `maxConcurrent`）时，显示禁止标记且无法放置。冲突检测钩子可配置为允许覆盖（替换原有事件，通过二次确认 dialog 确认）或严格阻止。
 
+**拖拽视觉规则（plan 481 V11a 落地，2026-09-21）**：拖拽悬停目标格由发射端（`calendar.tsx` dragState effect）打 `data-drop-target='true'`/`data-drop-valid` + `drag-ok`/`drag-conflict` 类，`calendar.css` 以 token 驱动规则消费：drop-target ring（`var(--color-primary)`）、drag-ok（`var(--color-success)` 系 color-mix 底 + ring）、drag-conflict（`var(--color-destructive)` 系），dark 随 `[data-mode="dark"]` 翻转；e2e 锁定见 `tests/e2e/scheduling-visual-tokens.spec.ts`。事件块默认底色亦由 `[data-event-type]` 语义 token 规则（success/destructive/primary/warning）提供，`event.color` 显式覆盖走 inline 通道；无类型事件 fallback 为 `--color-muted-foreground`。
+
 **实现参考**：参考 Schedule-X 闭源 DnD 接口的事件选取-拖拽-放置生命周期 + Nop SourceRequest 模式用于最终提交。拖拽过程中的坐标转换：鼠标像素坐标 → 日历矩阵行列索引 → 目标 resourceId + date。
 
 > 这些事件/句柄应在实施前补充到 §8 事件表和组件句柄表中。
