@@ -143,6 +143,7 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     expect(runtime.allCalls.zoomView[1][0]).toBeCloseTo(1 / 1.2, 5);
     // 副作用可观测：status 消息反映 viewport（证明 handler 跑完整路径 + 读 getViewport）
     const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
+    expect(status?.getAttribute('role')).toBe('status');
     expect(status?.textContent).toContain('视口');
     expect(status?.textContent).toContain('@1.00x');
   });

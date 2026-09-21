@@ -89,3 +89,7 @@
 - Link 工具条反馈通道：`editor-toolbar-config.ts` 的 link run 返回 `ToolbarRunFeedback`；unsafe scheme（`isSafeLinkUrl` 拒绝）不再静默丢弃，`editor-renderer.tsx` 经 `data-slot="editor-toolbar-feedback"` 渲染 inline `role="status"` destructive 提示（`flux.editor.unsafeLink`）。URL 输入维持 window.prompt（plan 480 Image 同先例；prompt→popover 为后续设计升级候选）。
 - 外部值同步（G2-R4-视角5-01）：编辑器聚焦期间到达的外部 value 变更入 pending 队列（仅保留最新），blur 时应用；非聚焦期即时应用。渲染期禁止 ref 写入，经 effect 镜像转发（react-compiler 契约）。
 - 工具条文案/几何 i18n 化（`flux.editor.*`、面板键 `flux.dashboard.editor.*` 属 dashboard-editor 面）。
+
+## V12e 行为契约补记（plan 487）
+
+- readOnly/interactive 合并门控：sync effect 以合并 readOnly（`readOnly || !interactive`）比较并同步 `setEditable`（修正常比较反演）；interactive 翻转即时生效。

@@ -189,10 +189,9 @@
                           "data-selected": "true",
                           "visible": "${activeSection === 'lists'}",
                           "onClick": {
-                            "action": "setValue",
+                            "action": "navigate",
                             "args": {
-                              "path": "activeSection",
-                              "value": "lists"
+                              "url": "#/complex-pages/sundial-settings"
                             }
                           },
                           "body": [
@@ -223,10 +222,9 @@
                           "data-selected": "false",
                           "visible": "${activeSection !== 'lists'}",
                           "onClick": {
-                            "action": "setValue",
+                            "action": "navigate",
                             "args": {
-                              "path": "activeSection",
-                              "value": "lists"
+                              "url": "#/complex-pages/sundial-settings"
                             }
                           },
                           "body": [
@@ -257,10 +255,9 @@
                           "data-selected": "true",
                           "visible": "${activeSection === 'analytics'}",
                           "onClick": {
-                            "action": "setValue",
+                            "action": "navigate",
                             "args": {
-                              "path": "activeSection",
-                              "value": "analytics"
+                              "url": "#/complex-pages/sundial-analytics"
                             }
                           },
                           "body": [
@@ -286,10 +283,9 @@
                           "data-selected": "false",
                           "visible": "${activeSection !== 'analytics'}",
                           "onClick": {
-                            "action": "setValue",
+                            "action": "navigate",
                             "args": {
-                              "path": "activeSection",
-                              "value": "analytics"
+                              "url": "#/complex-pages/sundial-analytics"
                             }
                           },
                           "body": [
@@ -1533,60 +1529,42 @@
                           "className": "sd-card p-4 flex flex-col gap-2",
                           "body": [
                             {
-                              "type": "flex",
-                              "direction": "row",
-                              "gap": 10,
-                              "className": "sd-task-row items-center",
-                              "testid": "sundial-task-completed-7",
+                              "type": "loop",
+                              "items": "${todosDone?.items ?? []}",
+                              "testid": "sundial-completed-rows",
                               "body": [
                                 {
-                                  "type": "checkbox",
-                                  "name": "t7",
-                                  "shape": "circle",
-                                  "className": "sd-checkbox",
-                                  "testid": "sundial-cb-t7"
-                                },
-                                {
-                                  "type": "text",
-                                  "text": "更新团队共享日历",
-                                  "className": "flex-1 min-w-0 text-sm text-[#636363] line-through truncate"
-                                },
-                                {
-                                  "type": "text",
-                                  "text": "今天",
-                                  "className": "sd-badge sd-badge-brand"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "flex",
-                              "direction": "row",
-                              "gap": 10,
-                              "className": "sd-task-row items-center",
-                              "testid": "sundial-task-completed-8",
-                              "body": [
-                                {
-                                  "type": "checkbox",
-                                  "name": "t8",
-                                  "shape": "circle",
-                                  "className": "sd-checkbox",
-                                  "testid": "sundial-cb-t8"
-                                },
-                                {
-                                  "type": "text",
-                                  "text": "采购办公耗材",
-                                  "className": "flex-1 min-w-0 text-sm text-[#636363] line-through truncate"
-                                },
-                                {
-                                  "type": "text",
-                                  "text": "昨天",
-                                  "className": "sd-badge sd-badge-error"
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 10,
+                                  "className": "sd-task-row items-center",
+                                  "testid": "sundial-task-completed-row",
+                                  "body": [
+                                    {
+                                      "type": "checkbox",
+                                      "shape": "circle",
+                                      "className": "sd-checkbox",
+                                      "testid": "sundial-cb-completed",
+                                      "disabled": true,
+                                      "value": true
+                                    },
+                                    {
+                                      "type": "text",
+                                      "text": "${$slot.item.title}",
+                                      "className": "flex-1 min-w-0 text-sm text-[#636363] line-through truncate"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "text": "${$slot.item.dueLabel ?? ''}",
+                                      "className": "${$slot.item.dueTone === 'overdue' ? 'sd-badge sd-badge-error' : 'sd-badge sd-badge-brand'}"
+                                    }
+                                  ]
                                 }
                               ]
                             },
                             {
                               "type": "text",
-                              "text": "共 2 条已完成任务",
+                              "text": "共 ${todosDone?.total ?? 0} 条已完成任务",
                               "className": "text-[10px] text-[#636363] mt-2",
                               "testid": "sundial-completed-count"
                             }
@@ -1630,32 +1608,39 @@
                           "className": "sd-card p-4 flex flex-col gap-2",
                           "body": [
                             {
-                              "type": "flex",
-                              "direction": "row",
-                              "gap": 10,
-                              "className": "sd-task-row items-center",
-                              "testid": "sundial-task-trashed-9",
+                              "type": "loop",
+                              "items": "${todosTrash?.items ?? []}",
+                              "testid": "sundial-trash-rows",
                               "body": [
                                 {
-                                  "type": "text",
-                                  "text": "已删除",
-                                  "className": "sd-badge sd-badge-error"
-                                },
-                                {
-                                  "type": "text",
-                                  "text": "回复客户邮件",
-                                  "className": "flex-1 min-w-0 text-sm text-[#636363] line-through truncate"
-                                },
-                                {
-                                  "type": "text",
-                                  "text": "8/10",
-                                  "className": "text-xs text-[#636363] sd-mono"
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 10,
+                                  "className": "sd-task-row items-center",
+                                  "testid": "sundial-task-trashed-row",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "已删除",
+                                      "className": "sd-badge sd-badge-error"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "text": "${$slot.item.title}",
+                                      "className": "flex-1 min-w-0 text-sm text-[#636363] line-through truncate"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "text": "${$slot.item.dueLabel ?? ''}",
+                                      "className": "text-xs text-[#636363] sd-mono"
+                                    }
+                                  ]
                                 }
                               ]
                             },
                             {
                               "type": "text",
-                              "text": "1 条任务在垃圾箱里",
+                              "text": "${todosTrash?.total ?? 0} 条任务在垃圾箱里",
                               "className": "text-[10px] text-[#636363] mt-2",
                               "testid": "sundial-trash-count"
                             }
@@ -1670,6 +1655,28 @@
           ]
         }
       ]
+    },
+    {
+      "type": "data-source",
+      "name": "todosDone",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__todos?view=done",
+        "method": "get"
+      },
+      "dependsOn": ["sundialTodosRev"],
+      "testid": "sundial-todos-done-source"
+    },
+    {
+      "type": "data-source",
+      "name": "todosTrash",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__todos?view=trash",
+        "method": "get"
+      },
+      "dependsOn": ["sundialTodosRev"],
+      "testid": "sundial-todos-trash-source"
     },
     {
       "type": "dialog",
@@ -1692,7 +1699,8 @@
               "name": "title",
               "className": "sd-input",
               "placeholder": "标题",
-              "testid": "sundial-workbench-todo-title"
+              "testid": "sundial-workbench-todo-title",
+              "required": true
             },
             {
               "type": "textarea",
@@ -1719,7 +1727,33 @@
               "className": "sd-btn sd-btn-default",
               "testid": "sundial-workbench-todo-submit",
               "onClick": {
-                "action": "closeSurface"
+                "action": "submitForm"
+              }
+            }
+          ],
+          "submitAction": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/Sundial__addTodoItem",
+              "method": "post",
+              "includeScope": "*"
+            }
+          },
+          "onSubmitSuccess": [
+            {
+              "action": "setValue",
+              "args": {
+                "path": "sundialTodosRev",
+                "value": "${(sundialTodosRev ?? 0) + 1}"
+              }
+            },
+            {
+              "action": "closeSurface"
+            },
+            {
+              "action": "showToast",
+              "args": {
+                "message": "待办已添加"
               }
             }
           ]
@@ -1735,6 +1769,17 @@
       "closeOnOutsideClick": false,
       "testid": "sundial-task-detail-dialog",
       "body": [
+        {
+          "type": "data-source",
+          "name": "taskDetail",
+          "action": "ajax",
+          "args": {
+            "url": "/r/Sundial__todoDetail?id=${activeTaskId ?? 1}",
+            "method": "get"
+          },
+          "dependsOn": ["activeTaskId"],
+          "testid": "sundial-taskdetail-source"
+        },
         {
           "type": "container",
           "className": "p-1 flex flex-col gap-3",
@@ -1753,7 +1798,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "撰写季度复盘报告",
+                  "text": "${taskDetail?.title ?? '撰写季度复盘报告'}",
                   "className": "text-sm font-medium text-[#0d0d0d]",
                   "testid": "sundial-detail-title-text"
                 }
@@ -1761,7 +1806,7 @@
             },
             {
               "type": "text",
-              "text": "包含数据复盘和 OKR 回顾两部分",
+              "text": "${taskDetail?.note ?? '包含数据复盘和 OKR 回顾两部分'}",
               "className": "text-xs text-[#636363]",
               "testid": "sundial-detail-note-text"
             },
@@ -1823,10 +1868,22 @@
                               "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
-                                { "label": "今天", "value": "今天" },
-                                { "label": "明天", "value": "明天" },
-                                { "label": "下周", "value": "下周" },
-                                { "label": "无日期", "value": "无日期" }
+                                {
+                                  "label": "今天",
+                                  "value": "今天"
+                                },
+                                {
+                                  "label": "明天",
+                                  "value": "明天"
+                                },
+                                {
+                                  "label": "下周",
+                                  "value": "下周"
+                                },
+                                {
+                                  "label": "无日期",
+                                  "value": "无日期"
+                                }
                               ]
                             }
                           ],
@@ -1911,10 +1968,22 @@
                               "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
-                                { "label": "不重复", "value": "不重复" },
-                                { "label": "每天", "value": "每天" },
-                                { "label": "每周", "value": "每周" },
-                                { "label": "每月", "value": "每月" }
+                                {
+                                  "label": "不重复",
+                                  "value": "不重复"
+                                },
+                                {
+                                  "label": "每天",
+                                  "value": "每天"
+                                },
+                                {
+                                  "label": "每周",
+                                  "value": "每周"
+                                },
+                                {
+                                  "label": "每月",
+                                  "value": "每月"
+                                }
                               ]
                             }
                           ],
@@ -2040,9 +2109,18 @@
                               "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
-                                { "label": "工作", "value": "工作" },
-                                { "label": "家庭", "value": "家庭" },
-                                { "label": "收件箱", "value": "收件箱" }
+                                {
+                                  "label": "工作",
+                                  "value": "工作"
+                                },
+                                {
+                                  "label": "家庭",
+                                  "value": "家庭"
+                                },
+                                {
+                                  "label": "收件箱",
+                                  "value": "收件箱"
+                                }
                               ]
                             }
                           ],
@@ -2119,6 +2197,13 @@
                           "args": {
                             "message": "已移到列表"
                           }
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "sundialTodosRev",
+                            "value": "${(sundialTodosRev ?? 0) + 1}"
+                          }
                         }
                       ],
                       "body": [
@@ -2137,9 +2222,18 @@
                               "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
-                                { "label": "工作", "value": "work" },
-                                { "label": "家庭", "value": "family" },
-                                { "label": "收件箱", "value": "inbox" }
+                                {
+                                  "label": "工作",
+                                  "value": "work"
+                                },
+                                {
+                                  "label": "家庭",
+                                  "value": "family"
+                                },
+                                {
+                                  "label": "收件箱",
+                                  "value": "inbox"
+                                }
                               ]
                             }
                           ],
@@ -2196,6 +2290,13 @@
                       "action": "showToast",
                       "args": {
                         "message": "已移到垃圾箱"
+                      }
+                    },
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "sundialTodosRev",
+                        "value": "${(sundialTodosRev ?? 0) + 1}"
                       }
                     }
                   ]

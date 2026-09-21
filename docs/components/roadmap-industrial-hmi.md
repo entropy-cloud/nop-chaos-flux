@@ -611,3 +611,7 @@ flowchart TD
 3. AI 不得重新仲裁优先级、跳序或新增 work item；结构性调整（新增/删除/重排）标记人工确认。
 4. 每个 review gate 的修正项必须**回写本 roadmap**（涉及范围/顺序变化时），保持编排层与设计层一致。
 5. AI 编写的**所有文档**必须经独立子 agent（fresh session）反复审查改进直到达成共识（判据/裁决/轮次上限见 Cross-Cutting「文档共识审查」）；达成共识前文档不得作为下游工作的输入依据。
+
+## V12e 行为契约补记（plan 487）
+
+- 预览态消费：scada-editor-canvas `data-mode` 绑定 live session mode；`[data-mode='preview']` 样式消费；`editingBlockedInPreview()` 门控全部 8 个写入口 mutator（read/selection/mode/save/load 保留）；toolbox 状态 span `role="status"` + 令牌样式。

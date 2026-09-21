@@ -280,7 +280,9 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
           data-cid={cidAttr}
           data-slot="scada-editor-canvas"
           data-status={effectiveStatus}
-          data-mode={props.props.mode ?? 'edit'}
+          // V12e 族2 (G5-R2-视角3-03)：data-mode 必须反映 LIVE 会话模式——此前
+          // 绑定 schema prop（静态），switchMode 后 emitted 状态滞留 edit。
+          data-mode={runtime ? runtime.session.mode : (props.props.mode ?? 'edit')}
           className="nop-scada-editor-canvas nop-scada-editor-layout-canvas"
           tabIndex={0}
           role="application"

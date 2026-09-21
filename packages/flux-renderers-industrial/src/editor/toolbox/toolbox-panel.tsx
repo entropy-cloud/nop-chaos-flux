@@ -216,7 +216,11 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
         }, false, t('industrial.scada.editor.toolbox.import'), 'toolbox-btn-import')}
       </ButtonGroup>
       {statusMessage ? (
-        <span className="nop-scada-editor-toolbox-status" data-slot="scada-editor-toolbox-status">
+        <span
+          className="nop-scada-editor-toolbox-status"
+          data-slot="scada-editor-toolbox-status"
+          role="status"
+        >
           {statusMessage}
         </span>
       ) : null}

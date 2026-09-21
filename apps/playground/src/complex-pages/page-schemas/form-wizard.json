@@ -64,7 +64,9 @@
                   "valueKey": "id",
                   "labelKey": "name",
                   "searchable": true,
-                  "pickerPopup": { "title": "选择部门" },
+                  "pickerPopup": {
+                    "title": "选择部门"
+                  },
                   "loadAction": {
                     "action": "ajax",
                     "args": {
@@ -74,8 +76,16 @@
                     }
                   },
                   "columns": [
-                    { "name": "id", "label": "编码", "width": 120 },
-                    { "name": "name", "label": "部门名称", "width": 200 }
+                    {
+                      "name": "id",
+                      "label": "编码",
+                      "width": 120
+                    },
+                    {
+                      "name": "name",
+                      "label": "部门名称",
+                      "width": 200
+                    }
                   ]
                 },
                 {
@@ -119,6 +129,11 @@
                 },
                 {
                   "type": "text",
+                  "text": "部门 ID：${wizardData.step2.deptId ?? \"-\"}",
+                  "className": "text-sm"
+                },
+                {
+                  "type": "text",
                   "text": "预算：${wizardData.step2.budget ?? 0} 万",
                   "className": "text-sm"
                 },
@@ -147,12 +162,23 @@
             "name": "${wizardData.step1.name}",
             "email": "${wizardData.step1.email}",
             "role": "${wizardData.step2.role}",
+            "deptId": "${wizardData.step2.deptId}",
             "budget": "${wizardData.step2.budget ?? 0}",
             "notify": "${wizardData.step2.notify ?? false}"
           }
         },
-        "messages": { "success": "提交成功" },
-        "then": [{ "action": "setValue", "args": { "path": "wizardSubmitted", "value": true } }]
+        "messages": {
+          "success": "提交成功"
+        },
+        "then": [
+          {
+            "action": "setValue",
+            "args": {
+              "path": "wizardSubmitted",
+              "value": true
+            }
+          }
+        ]
       }
     },
     {

@@ -213,8 +213,14 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
     if (!editor) {
       return;
     }
-    if (presentation.readOnly !== editor.isEditable) {
-      editor.setEditable(!presentation.readOnly);
+    // [G2-R3-视角3-02] compare on the MERGED readOnly (schema readOnly OR
+    // !interactive, e.g. a runtime `disabled` flip). The comparison must be
+    // against the DESIRED editable state (!readOnly): the previous
+    // `readOnly !== editor.isEditable` form was inverted — it re-fired on the
+    // already-in-sync mount (true !== true vs false) and SKIPPED the actual
+    // flip (readOnly=true, stale isEditable=true → equal → no call).
+    if (editor.isEditable !== !readOnly) {
+      editor.setEditable(!readOnly);
     }
     if (value === lastCommittedRef.current) {
       return;
@@ -226,7 +232,7 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
     }
     pendingSyncRef.current = null;
     applyExternalValueRef.current(value);
-  }, [editor, value, outputFormat, presentation.readOnly]);
+  }, [editor, value, outputFormat, readOnly]);
 
   useEffect(() => {
     return () => {

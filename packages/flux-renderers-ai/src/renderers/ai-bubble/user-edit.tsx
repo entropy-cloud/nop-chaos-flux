@@ -39,12 +39,19 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
   const editing = editingState?.active === true;
   const draft = editingState?.draft ?? '';
 
+  // V12e 族1 (G5-R4-视角3-01): the chat-level disabled gate must reach the
+  // user-edit channel — previously only the embedded sender was gated, so a
+  // disabled chat still allowed the pencil to open the editor and resubmit to
+  // truncate + re-send the conversation.
+  const chatDisabled = ctx?.chatDisabled === true;
+
   const engine: MessageEngine | undefined = ctx?.engine;
   if (!engine) return null;
   // Explicitly-typed alias so nested closures keep the non-undefined type.
   const e: MessageEngine = engine;
 
   function startEdit() {
+    if (chatDisabled) return;
     e.setMessageEditing(message.id, { active: true, draft: extractText(message) });
   }
 
@@ -53,6 +60,7 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
   }
 
   async function resubmit() {
+    if (chatDisabled) return;
     // P1-1: never re-send while a turn is streaming — the engine would drop
     // the request silently (runTurn's isProcessing guard). Keep the editor
     // open + draft intact so nothing is lost (Failure Path FP-3). The pencil
@@ -82,6 +90,7 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
           data-slot="ai-bubble-edit-input"
           value={draft}
           rows={2}
+          disabled={chatDisabled}
           // P2-18 (2026-08-10 multi-audit): the edit-mode Textarea had no
           // accessible name (WCAG 4.1.2) — align with the ai-sender Textarea
           // precedent (aria-label from a translated label).
@@ -98,10 +107,10 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
           className="min-h-[60px]"
         />
         <div className="flex justify-end gap-2">
-          <Button size="sm" variant="ghost" data-slot="ai-bubble-edit-cancel" onClick={cancelEdit}>
+          <Button size="sm" variant="ghost" data-slot="ai-bubble-edit-cancel" onClick={cancelEdit} disabled={chatDisabled}>
             {t('flux.common.cancel')}
           </Button>
-          <Button size="sm" data-slot="ai-bubble-edit-submit" onClick={() => void resubmit()}>
+          <Button size="sm" data-slot="ai-bubble-edit-submit" onClick={() => void resubmit()} disabled={chatDisabled}>
             <Check className="h-3 w-3" />
             {t('flux.ai.send')}
           </Button>
@@ -117,7 +126,7 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
       className="self-end opacity-60 hover:opacity-100"
       data-slot="ai-bubble-edit-toggle"
       aria-label={t('flux.ai.editMessage')}
-      disabled={ctx?.isProcessing ?? false}
+      disabled={chatDisabled || (ctx?.isProcessing ?? false)}
       onClick={startEdit}
     >
       <Pencil className="h-3 w-3" />

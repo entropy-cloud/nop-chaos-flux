@@ -32,6 +32,12 @@
   - 裁决: pending
   - 状态: open
 
+[V12e-D3] P2 候选池批三消化（族1+族2+族6 17 条，行为类）
+
+- 证据: `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md` §4 族1/2/6 + plan 487
+- 裁决: 17/17 landed（门禁贯穿×5、死状态消费×5、写后同步×7——⑦ 部分落地残差转 V12f）；六处先红后绿；ui button cva 增 aria-pressed/data-active 消费分支（attribute-gated 零回退）
+- 状态: closed（V12e 面）；V12f 与 V12c P3 池残余 open
+
 [V12d-D2] P2 候选池批二消化（族10+族8+顺带 21 条）
 
 - 证据: `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md` §4 族10/族8 + plan 486

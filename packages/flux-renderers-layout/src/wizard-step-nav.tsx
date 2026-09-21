@@ -19,6 +19,8 @@ interface WizardStepNavItemProps {
   index: number;
   currentStepIndex: number;
   currentStepHasError: boolean;
+  /** G1-R3-视角3-01: a step commit in flight locks step-nav clicks. */
+  committing: boolean;
   mode: 'horizontal' | 'vertical';
   linear: boolean;
   allowStepJump: boolean;
@@ -39,6 +41,7 @@ export function WizardStepNavItem(props: WizardStepNavItemProps) {
     index,
     currentStepIndex,
     currentStepHasError,
+    committing,
     mode,
     linear,
     allowStepJump,
@@ -74,7 +77,9 @@ export function WizardStepNavItem(props: WizardStepNavItemProps) {
         ? 'finish' as const
         : 'wait' as const;
 
-  const clickable = reachable && !isActive && !isStepDisabled(step);
+  // G1-R3-视角3-01: committing locks step-nav — the click path already
+  // no-ops (goToStep guard), this renders the lock on the button.
+  const clickable = reachable && !isActive && !isStepDisabled(step) && !committing;
   const handleStepClick = clickable
     ? (event: ReactMouseEvent<HTMLButtonElement>) => {
         event.preventDefault();

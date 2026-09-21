@@ -803,6 +803,7 @@
                       "className": "sd-choice-row sd-choice-selected",
                       "testid": "sundial-mode-selfhost",
                       "data-selected": "true",
+                      "disabled": true,
                       "visible": "${mode === 'selfhost'}",
                       "onClick": {
                         "action": "setValue",
@@ -874,6 +875,7 @@
                       "className": "sd-choice-row",
                       "testid": "sundial-mode-selfhost",
                       "data-selected": "false",
+                      "disabled": true,
                       "visible": "${mode !== 'selfhost'}",
                       "onClick": {
                         "action": "setValue",

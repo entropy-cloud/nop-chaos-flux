@@ -60,7 +60,12 @@ export function resolveTableRowOptionState(input: {
   const { schemaProps, record, isSelected, ownerDisabled } = input;
   const optionRow = schemaProps.optionRow;
   if (optionRow === null || typeof optionRow !== 'object') {
-    return { active: false, selected: false, state: undefined };
+    // V12e 族2 (G6-R6-视角3-01): the plain selection path (rowSelection
+    // checkbox / toggleOnRowClick) emits the standard `selected` token too —
+    // previously `data-[state=selected]` consumers had no producer here. The
+    // contract attributes (data-option-row/data-selected/aria-selected) stay
+    // optionRow-gated (opt-row-compat: legacy output unchanged).
+    return { active: false, selected: isSelected, state: undefined };
   }
   const binding = optionRow.value;
   const hasBinding = binding !== undefined && binding !== null && binding !== '';
@@ -82,7 +87,9 @@ export function resolveTableRowOptionState(input: {
 /** Spread-ready option-row attributes for a TableRow element. */
 export function tableRowOptionRowProps(state: TableRowOptionState): Record<string, string | undefined> {
   if (!state.active) {
-    return {};
+    return {
+      'data-state': state.selected ? 'selected' : undefined,
+    };
   }
   return {
     'data-option-row': 'true',

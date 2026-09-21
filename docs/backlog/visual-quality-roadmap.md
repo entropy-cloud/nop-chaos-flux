@@ -33,7 +33,7 @@
 | V12b. 一致性 P2 候选池按族消化——首批（族9+族5+V12a 转入 4 子项，30 条）                                                       | `done` | `docs/analysis/ui-review/r2-audit.md`、`r3-p2-adjudication.md`                                                                                 | V0、V12a     | —                                                                    |
 | V12c. 一致性 P3 候选池裁决与消化（87 条：修复/显式 adjudicated 逐条裁定）                                                     | `todo` | `docs/analysis/ui-review/r3-p2-adjudication.md`                                                                                                | V0、V12b     | —                                                                    |
 | V12d. P2 批二：族10（空态/加载态）+ 族8（按钮序/语义）类别清扫（报告 §3.2；V12b 行预授权滚动拆分）                            | `done` | `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`                                                                                | V12b         | —                                                                    |
-| V12e. P2 批三：族1（门禁穿透）+ 族2（死状态）+ 族6（写后同步）类别清扫（报告 §3.2）                                           | `todo` | `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`                                                                                | V12d         | —                                                                    |
+| V12e. P2 批三：族1（门禁穿透）+ 族2（死状态）+ 族6（写后同步）类别清扫（报告 §3.2）                                           | `done` | `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`                                                                                | V12d         | —                                                                    |
 | V12f. P2 批四：族3+族4+族7+单点/跨族收尾（权威枚举回读 r3 台账；报告 §3.2/§5）                                                | `todo` | `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`                                                                                | V12e、V12c   | —                                                                    |
 
 ## Framework / Platform Reuse
@@ -139,6 +139,10 @@
 ### V12d. P2 批二（执行状态）
 
 执行状态（2026-09-21）：plan `486`（draft review revised 2 Major 覆盖缺口吸收后 active）→ 21/21 landed（族10×11 加载 Spinner 化/空态 muted 面、族8×8 [次要,主要] 序与语义统一、sundial「确认」统一、族9 残两项顺带）；三处先红后绿锚点；i18n 5 新键 zh/en 对称；`check:audit-ui-consistency-gaps` 219/64/69（相对 223/66/69 下降）、newHits=0。状态行维持 `planned` 待独立 closure audit。
+
+### V12e. P2 批三（执行状态）
+
+执行状态（2026-09-21）：plan `487`（draft review pass-with-minors 吸收后 active）→ 17/17 landed（族1 门禁贯穿×5——含 ai-sender 门控反转与 flex disabled 通道延伸、族2 死状态消费×5——scada preview 全量选项 live mode + mutator 门控、族6 写后同步×7——⑦ 部分落地残差显式转 V12f）；六处先红后绿；i18n 1 新键 zh/en 对称。状态行维持 `planned` 待独立 closure audit。
 
 ### V12c. 一致性 P3 候选池裁决与消化
 

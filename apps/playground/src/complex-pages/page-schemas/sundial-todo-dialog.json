@@ -286,7 +286,8 @@
               "name": "title",
               "className": "sd-input",
               "placeholder": "标题",
-              "testid": "sundial-todo-title"
+              "testid": "sundial-todo-title",
+              "required": true
             },
             {
               "type": "textarea",
@@ -313,7 +314,33 @@
               "className": "sd-btn sd-btn-default",
               "testid": "sundial-todo-submit",
               "onClick": {
-                "action": "closeSurface"
+                "action": "submitForm"
+              }
+            }
+          ],
+          "submitAction": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/Sundial__addTodoItem",
+              "method": "post",
+              "includeScope": "*"
+            }
+          },
+          "onSubmitSuccess": [
+            {
+              "action": "setValue",
+              "args": {
+                "path": "sundialTodosRev",
+                "value": "${(sundialTodosRev ?? 0) + 1}"
+              }
+            },
+            {
+              "action": "closeSurface"
+            },
+            {
+              "action": "showToast",
+              "args": {
+                "message": "待办已添加"
               }
             }
           ]

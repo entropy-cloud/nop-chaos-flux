@@ -46,10 +46,17 @@ export interface EditorRuntimeMutators {
 export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMutators {
   const { engine, session, undoRedo, latest, synced, notifySession, setSessionSelection, syncWorkingCopy, reconcileEditorTargets } = ctx;
 
+  // V12e 族2 (G5-R2-视角3-03)：preview 态只读——写入口 mutator 全部 no-op。
+  // 交互层（InteractionOverlay）已挡住手势通道；此处闭合程序化通道
+  // （test handle / component handle / clipboard paste / undo-redo 句柄）。
+  // 读/选择/模式/存取通道（setSelection/clearSelection/switchMode/save/load）不门控。
+  const editingBlockedInPreview = (): boolean => session.mode === 'preview';
+
   const writeConnection = (
     junctionId: string,
     connections: ConnectionWriteResult['connections'],
   ) => {
+    if (editingBlockedInPreview()) return;
     const junctionNode = findNodeInWorking(session.workingConfig.symbols, junctionId);
     if (!junctionNode) return;
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
@@ -62,6 +69,7 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
   };
 
   const updateWorkingNode = (nodeId: string, patch: Partial<ScadaSymbolNode>) => {
+    if (editingBlockedInPreview()) return;
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
     applyPatchToWorkingNode(session, nodeId, patch);
     // 图元移动联动（design-connection.md §4.4 + §4.5）：仅当几何字段变更时重算指向该节点 / 该节点持有的 connection.x/y。
@@ -75,6 +83,7 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
   };
 
   const addWorkingSymbol = (node: ScadaSymbolNode) => {
+    if (editingBlockedInPreview()) return;
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
     // plan 2026-08-08-1809-2 Phase 1 / F3：拖拽落点 / palette 点击的 id 由组件内不重置的 idCounter 生成，
     // 与 working copy 已装入图元碰撞 → tree-registry last-write-wins 静默覆盖。此处把去重收敛进单一 owner
@@ -96,6 +105,7 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     // 与 transform-move 拖拽的事务式单 push（runtime-factories.ts handleTransformEnd）同形。
     const ids = Array.isArray(nodeId) ? nodeId : [nodeId];
     if (ids.length === 0) return;
+    if (editingBlockedInPreview()) return;
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
     // plan 2026-08-08-1809-3 Phase 2 / P1-4：递归解链——detachNodesRecursive 从任意深度（顶层或
     // group.children）批量解链匹配节点（与 collectAllSymbols 解析嵌套 id 的纪律对称，CV-delete-nested）。
@@ -168,16 +178,19 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
   };
 
   const undo = () => {
+    if (editingBlockedInPreview()) return;
     const diff = undoRedo.peekUndoDiff();
     if (diff) applyUndoRedoDiff(diff, () => undoRedo.commitUndo());
   };
 
   const redo = () => {
+    if (editingBlockedInPreview()) return;
     const diff = undoRedo.peekRedoDiff();
     if (diff) applyUndoRedoDiff(diff, () => undoRedo.commitRedo());
   };
 
   const groupSymbols = (nodeIds: string[]) => {
+    if (editingBlockedInPreview()) return;
     // design-undo-redo.md §4.3：group 结构 diff（removed=子图元 id / added=新 Group 节点含 children）。
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
     const childSet = new Set(nodeIds);
@@ -226,6 +239,7 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     // 多 id 批量解组在单次 snapshot/push 内完成，使 N 元解组产 1 undo entry（一次 undo 全恢复）。
     const ids = Array.isArray(groupId) ? groupId : [groupId];
     if (ids.length === 0) return;
+    if (editingBlockedInPreview()) return;
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
     let symbols = session.workingConfig.symbols;
     const allPromoted: string[] = [];

@@ -469,3 +469,7 @@ remark 和 labelRemark 默认渲染为：
 ## V12d 行为契约补记（plan 486）
 
 - 表单 busy 通道：`form-load-action` 暴露 loading（autoLoad/refresh 双通道，请求守卫防串），form 渲染面 `[data-slot="form-busy"]`（Spinner + `flux.form.submitting`，role=status）；行内快捷编辑保存条顺序契约 = [Cancel(secondary), Save(primary)]。
+
+## V12e 行为契约补记（plan 487）
+
+- （接 V12d 补记）wizard committing 阻断 prev（含 step-nav clickable）；fieldset 等容器 disabled 语义经 meta.disabled 贯穿（flex clickable 路径 aria-disabled/data-disabled/tabindex=-1）。

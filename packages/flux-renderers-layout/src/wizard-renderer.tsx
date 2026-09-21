@@ -492,6 +492,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           index={index}
           currentStepIndex={currentStepIndex}
           currentStepHasError={currentStepHasError}
+          committing={lifecycle.committing}
           mode={mode}
           linear={linear}
           allowStepJump={allowStepJump}
@@ -579,7 +580,9 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
               data-testid="wizard-prev"
               data-slot="wizard-prev-button"
               onClick={goPrev}
-              disabled={!canGoPrev}
+              // G1-R3-视角3-01: committing blocks prev — not just in the
+              // handler, but on the button (a11y + visual lock).
+              disabled={!canGoPrev || lifecycle.committing}
             >
               <ChevronLeftIcon className="size-4" />
               <span>{prevLabel}</span>

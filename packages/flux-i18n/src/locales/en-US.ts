@@ -76,6 +76,7 @@ export const enUS: Resource = {
       retryMessage: 'Retry',
       scrollToBottom: 'Scroll to bottom',
       placeholder: 'Send a message…',
+      streamingHint: 'Reply in progress — you can keep typing',
       messageInput: 'Message',
       connectorMissing: 'AI connector is not configured.',
       requestFailed: 'AI request failed',

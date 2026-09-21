@@ -168,3 +168,19 @@
   margin-top: 8px;
   margin-bottom: 2px;
 }
+
+/* V12e 族2 (G5-R2-视角3-02)：toolbox 状态回显 span 的样式消费（此前零规则）。
+   令牌驱动，沿用状态栏的字号/颜色口径；role="status" 由组件侧发射。 */
+.nop-scada-editor-toolbox-status {
+  font-size: 11px;
+  color: var(--nop-body-copy, hsl(var(--muted-foreground)));
+  white-space: nowrap;
+}
+
+/* V12e 族2 (G5-R2-视角3-03)：preview 态样式消费——data-mode=preview 时编辑面
+   恢复中性光标并以令牌描边提示非编辑态（此前属性零消费，状态不可见）。 */
+.nop-scada-editor-canvas[data-mode='preview'] {
+  cursor: default;
+  outline: 1px dashed var(--nop-border, hsl(var(--border)));
+  outline-offset: -1px;
+}

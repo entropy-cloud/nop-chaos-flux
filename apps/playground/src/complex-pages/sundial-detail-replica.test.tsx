@@ -180,9 +180,16 @@ describe('Sundial replica — detail inspector', () => {
       expect(window.location.hash).toBe('#/complex-pages/sundial-workbench');
     });
 
-    // C4: clear date
+    // C4: clear date — V12e 族6 (G7-视角11-13): 清除 writes the badge's real
+    // target (pickedDateTime/pickedDateLabel) and the toast is now CONDITIONAL
+    // on an actual date being present. With nothing picked, no toast fires.
+    // (The positive branch — picked date → toast — needs a real browser: the
+    // custom input-datetime cannot deliver a value into $formData under jsdom,
+    // so the write-target chain is pinned by source assertions in
+    // sundial-v12e-family6-dataflow.test.ts instead.)
     fireEvent.click(screen.getByTestId('sundial-detail-clear-date'));
-    await screen.findByText('日期已清除');
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(screen.queryByText('日期已清除')).toBeNull();
 
     // C5 + plan 460 P9: move-list posts to the mock backend; trash posts + banner
     fireEvent.click(screen.getByTestId('sundial-detail-move-list'));

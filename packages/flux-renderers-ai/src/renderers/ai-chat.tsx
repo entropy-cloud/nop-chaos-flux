@@ -534,8 +534,8 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // meant to break. Inside the callback it re-runs per chunk and AI-31's
   // between-chunks stability guarantee is unchanged.
   const chatContextValue = useMemo(
-    () => ({ engine, messages, streamSignature: streamFingerprint(messages), requestState, processingState, isProcessing, sendMessage, abortRequest, senderDraft: senderDraftStore, branches, activeBranchId, onBranchChange, onApproval }),
-    [engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, senderDraftStore, branches, activeBranchId, onBranchChange, onApproval],
+    () => ({ engine, messages, streamSignature: streamFingerprint(messages), requestState, processingState, isProcessing, sendMessage, abortRequest, senderDraft: senderDraftStore, branches, activeBranchId, onBranchChange, onApproval, chatDisabled: props.meta.disabled === true }),
+    [engine, messages, requestState, processingState, isProcessing, sendMessage, abortRequest, senderDraftStore, branches, activeBranchId, onBranchChange, onApproval, props.meta.disabled],
   );
 
   // engine-null-switch: the host injected `null` (activeEngine is null during

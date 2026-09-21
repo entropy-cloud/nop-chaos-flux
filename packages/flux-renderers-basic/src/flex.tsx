@@ -61,12 +61,19 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
   const dataAttrs = collectDataAttrs(props.props);
 
   const isClickable = props.events.onClick != null;
+  // V12e 族1 (G7-R5-视角11-06): a `meta.disabled` clickable flex row is a
+  // disabled control — the click/keyboard channels stop dispatching and the
+  // state is emitted as `data-disabled` + `aria-disabled` markers (layout
+  // renderers stay visually unstyled; hosts/schema CSS consume the marker).
+  const disabled = props.meta.disabled === true;
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (disabled) return;
     void props.events.onClick?.(event);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       void props.events.onClick?.(event);
@@ -108,7 +115,9 @@ export function FlexRenderer(props: RendererComponentProps<FlexSchema>) {
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       role="button"
-      tabIndex={0}
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled || undefined}
+      data-disabled={disabled || undefined}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
     >

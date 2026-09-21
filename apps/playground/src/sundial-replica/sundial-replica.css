@@ -536,6 +536,15 @@
   background: var(--sd-row-hover);
 }
 
+.sd-choice-row[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.sd-choice-row[aria-disabled='true']:hover {
+  background: var(--sd-surface);
+}
+
 .sd-choice-row.sd-choice-selected {
   background: var(--sd-brand-subtle);
   border-color: rgba(234, 122, 42, 0.35);

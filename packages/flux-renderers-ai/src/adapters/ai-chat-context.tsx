@@ -103,6 +103,14 @@ export interface AiChatContextValue {
    * disables the buttons (unchanged standalone behavior).
    */
   onApproval?: (action: 'approve' | 'reject') => void;
+  /**
+   * V12e 族1 (G5-R4-视角3-01): the chat-level `meta.disabled` gate. `ai-chat`
+   * projects it here so every interaction surface inside the chat — including
+   * the user-message edit affordance, which is NOT the embedded sender — can
+   * gate its write channel. Standalone bubbles (no `ai-chat` wrapper) keep
+   * their own disabled contract (undefined → not gated).
+   */
+  chatDisabled?: boolean;
 }
 
 const AiChatContext = createContext<AiChatContextValue | null>(null);

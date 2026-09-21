@@ -77,7 +77,11 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   const trimmedLength = draft.trim().length;
 
   function commit(text: string) {
-    if (disabled) return;
+    // V12e 族1 (G5-视角3-01): text-gating — while a turn is streaming the
+    // author can keep typing, but the commit channel stays gated (the
+    // engine's isProcessing guard would silently swallow it). The draft is
+    // kept intact; the send button communicates the gated state.
+    if (disabled || loading) return;
     // P2 silent-drop guard (FP `sender-commit-stream`): host `senderExtensions`
     // components are responsible for their own disabled state, but if they
     // don't gate on `loading` (or fire onSubmit imperatively), Enter-driven
@@ -137,6 +141,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
         size="sm"
         onClick={handleSubmit}
         disabled={loading || trimmedLength === 0 || overLimit || disabled}
+        title={loading ? t('flux.ai.streamingHint') : undefined}
       >
         {t('flux.ai.send')}
       </Button>
@@ -193,7 +198,12 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
           value={draft}
           placeholder={props.placeholder ?? t('flux.ai.placeholder')}
           aria-label={props.placeholder ?? t('flux.ai.messageInput')}
-          disabled={loading || disabled}
+          // V12e 族1 (G5-视角3-01) text-gating: the textarea stays enabled
+          // while a turn streams (the author composes the next message); the
+          // commit channel is gated instead. Only the node-level `disabled`
+          // gate disables the input itself. The extension path keeps handing
+          // `loading` to the extension component (its own contract).
+          disabled={disabled}
           rows={1}
           maxLength={maxLength}
           onChange={(e) => {

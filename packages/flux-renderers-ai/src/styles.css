@@ -672,3 +672,20 @@
 [data-slot='ai-bubble-markdown'] .tok-comment {
   color: hsl(var(--muted-foreground, 215 19% 35%));
 }
+
+/* V12e 族2 (G5-R3-视角3-02): the ai-feedback vote state channel finally has a
+   consumer — `data-state~='selected'` is the D1 option-row standard token
+   (ai-feedback.tsx emits it alongside the legacy data-active marker). The
+   selected vote tints with the primary token and holds it against the ghost
+   hover; token-driven with a literal fallback, matching the tok-str pattern
+   (no separate dark blocks needed). */
+[data-slot='ai-feedback-like'][data-state~='selected'],
+[data-slot='ai-feedback-dislike'][data-state~='selected'] {
+  background-color: hsl(var(--primary, 221 83% 53%) / 0.12);
+  color: hsl(var(--primary, 221 83% 53%));
+}
+
+[data-slot='ai-feedback-like'][data-state~='selected']:hover,
+[data-slot='ai-feedback-dislike'][data-state~='selected']:hover {
+  background-color: hsl(var(--primary, 221 83% 53%) / 0.18);
+}

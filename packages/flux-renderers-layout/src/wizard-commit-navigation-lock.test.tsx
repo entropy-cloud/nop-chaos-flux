@@ -128,6 +128,55 @@ describe('WizardRenderer — commit navigation lock / key-match / stepError (P1-
     await waitFor(() => expect(wizardRoot().getAttribute('data-current-step-index')).toBe('2'));
   });
 
+  // G1-R3-视角3-01 (V12e plan 487 族1, proof-first): while the commit is in
+  // flight the Prev button and the step-nav items must be DISABLED (a11y +
+  // visual lock), not merely no-op'd by the handler guard.
+  it('renders Prev and step-nav buttons disabled while committing (G1-R3-视角3-01)', async () => {
+    const { fetcher, resolveCommit } = deferredFetcher();
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/wizard-committing-disabled"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'wizard',
+              allowStepJump: true,
+              defaultValue: 1,
+              steps: [
+                { key: 'a', title: 'A', body: [{ type: 'text', text: 'A' }] },
+                { key: 'b', title: 'B', body: [{ type: 'text', text: 'B' }] },
+                { key: 'c', title: 'C', body: [{ type: 'text', text: 'C' }] },
+              ],
+              onStepCommit: { action: 'ajax', args: { url: '/commit-${currentStepKey}' } },
+            },
+          ],
+        }}
+        data={{}}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(wizardRoot().getAttribute('data-current-step-index')).toBe('1');
+    // Before commit: Prev enabled, step 0 nav reachable.
+    expect((screen.getByTestId('wizard-prev') as HTMLButtonElement).disabled).toBe(false);
+    expect(stepNavButton(0).disabled).toBe(false);
+
+    fireEvent.click(screen.getByTestId('wizard-next'));
+    await waitFor(() => expect(wizardRoot().getAttribute('data-committing')).toBe('true'));
+
+    // While committing: Prev AND step-nav buttons render disabled.
+    expect((screen.getByTestId('wizard-prev') as HTMLButtonElement).disabled).toBe(true);
+    expect(stepNavButton(0).disabled).toBe(true);
+    expect(stepNavButton(2).disabled).toBe(true);
+
+    // After resolution the lock releases.
+    await act(async () => { resolveCommit({ status: 0, data: null }); });
+    await waitFor(() => expect((screen.getByTestId('wizard-prev') as HTMLButtonElement).disabled).toBe(false));
+  });
+
   it('last-step commit pending → no onComplete, no navigation; resolve → onComplete fires once (P1-03)', async () => {
     const { fetcher, urls, resolveCommit } = deferredFetcher();
     const SchemaRenderer = createLayoutSchemaRenderer();

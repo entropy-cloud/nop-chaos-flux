@@ -783,3 +783,7 @@ v1→v2 变更摘要（§4）、第 1 轮 fresh-session 复审记录（§5）、
 ## V12d 行为契约补记（plan 486）
 
 - 对话动作顺序契约：危险/次要操作在左（outline），主要确认在右（solid）；user-edit 取消使用独立 `flux.common.cancel` 键（不再复用 stop）。
+
+## V12e 行为契约补记（plan 487）
+
+- 门禁贯穿：chat 级 `meta.disabled` 经 AiChatContext `chatDisabled` 通道贯穿 UserMessageActions（编辑/重发全链禁用）；ai-sender 流式期为「文本门控」——textarea 保持可输入、发送禁用 + `flux.ai.streamingHint` 提示。

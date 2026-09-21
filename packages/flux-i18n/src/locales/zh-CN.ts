@@ -77,6 +77,7 @@ export const zhCN: Resource = {
       retryMessage: '重试',
       scrollToBottom: '回到底部',
       placeholder: '发送消息…',
+      streamingHint: '回复生成中，可继续输入',
       messageInput: '消息',
       connectorMissing: '未配置 AI 连接器。',
       requestFailed: 'AI 请求失败',
