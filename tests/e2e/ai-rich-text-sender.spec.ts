@@ -1,4 +1,5 @@
 import { expect, test, assertTrackedPageErrors } from './fixtures.js';
+import { getComputedStyleValue } from './helpers/visual-assert.js';
 
 async function openRichTextDemo(page: import('@playwright/test').Page) {
   await page.goto('/#/ai-rich-text', { waitUntil: 'commit' });
@@ -79,3 +80,65 @@ test.describe('AI Rich Text Sender — P6 (A6) end-to-end', () => {
     await assertTrackedPageErrors(page);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Plan 480 (visual quality V10, A5/A6/A7): computed-style contract for the
+// tiptap sender face — toolbar geometry, placeholder visibility, dark flip.
+// ---------------------------------------------------------------------------
+test.describe('AI Rich Text Sender — plan 480 computed-style contract', () => {
+  test('template bar buttons carry the unified ghost geometry (h-7)', async ({ page }) => {
+    await openRichTextDemo(page);
+
+    const templateButton = page.locator('[data-testid="ai-sender-template-Greeting"]');
+    await expect(templateButton).toBeVisible();
+    await expectComputedHeight(templateButton, 28);
+    await assertTrackedPageErrors(page);
+  });
+
+  test('placeholder is visible on the empty tiptap surface (decorated ::before)', async ({
+    page,
+  }) => {
+    await openRichTextDemo(page);
+
+    const content = page.locator('[data-slot="ai-sender-tiptap-content"]');
+    await expect(content).toBeVisible();
+
+    const pseudo = await content.evaluate((root) => {
+      const p = root.querySelector('p.is-editor-empty');
+      if (!p) {
+        return null;
+      }
+      const style = getComputedStyle(p, '::before');
+      return { content: style.getPropertyValue('content'), color: style.getPropertyValue('color') };
+    });
+    // The Placeholder extension decorates the empty paragraph; the package CSS
+    // renders the label through attr(data-placeholder).
+    expect(pseudo).not.toBeNull();
+    expect(pseudo?.content).toContain('Type a message');
+    expect(pseudo?.color).not.toBe('rgba(0, 0, 0, 0)');
+    await assertTrackedPageErrors(page);
+  });
+
+  test('light↔dark flip re-resolves the content token color (dual-track)', async ({ page }) => {
+    await openRichTextDemo(page);
+
+    const content = page.locator('[data-slot="ai-sender-tiptap-content"]');
+    await expect(content).toBeVisible();
+
+    const readColor = () => getComputedStyleValue(content, 'color');
+    const lightColor = await readColor();
+
+    await page.evaluate(() => document.documentElement.setAttribute('data-mode', 'dark'));
+    const darkColor = await readColor();
+    expect(darkColor).not.toBe(lightColor);
+
+    await page.evaluate(() => document.documentElement.setAttribute('data-mode', 'light'));
+    expect(await readColor()).toBe(lightColor);
+    await assertTrackedPageErrors(page);
+  });
+});
+
+async function expectComputedHeight(locator: import('@playwright/test').Locator, px: number) {
+  const height = await locator.evaluate((el) => el.getBoundingClientRect().height);
+  expect(height).toBe(px);
+}

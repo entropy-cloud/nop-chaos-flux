@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Extension } from '@tiptap/core';
+import { Placeholder } from '@tiptap/extensions';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { AiSenderExtensionProps } from '../schemas.js';
@@ -145,6 +146,14 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
     {
       extensions: [
         StarterKit,
+        // R4 fix (plan 480): the placeholder is rendered by the shared
+        // Placeholder extension — it decorates the empty paragraph with
+        // `data-placeholder` + `is-editor-empty`, which the package CSS
+        // consumes (`src/styles.css`). The old `:empty::before` rule was a
+        // dead face: a ProseMirror root always has a `<p>` child.
+        Placeholder.configure({
+          placeholder: placeholder ?? t('flux.ai.placeholder'),
+        }),
         // Custom keymap: maps Enter/Ctrl+Enter/Shift+Enter to submit per the
         // ai-sender `submitType` mode. Reads the latest mode + handler from
         // `callbacksRef.current` (deferred — only invoked on keyboard events).
@@ -216,9 +225,8 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
       immediatelyRender: true,
       editorProps: {
         attributes: {
-          class: 'prose max-w-none focus:outline-none',
+          class: 'focus:outline-none',
           'data-slot': 'ai-sender-tiptap-content',
-          'data-placeholder': placeholder ?? t('flux.ai.placeholder'),
           'aria-label': placeholder ?? t('flux.ai.placeholder'),
           'aria-multiline': 'true',
           role: 'textbox',

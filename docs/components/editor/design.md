@@ -27,7 +27,8 @@
 
 - 建议正式字段为 `name`、`label`、`placeholder`、`toolbar`、`outputFormat`、`readOnly`、`required`。
 - `outputFormat`：`html`（默认）或 `json`（TipTap JSON）。
-- `toolbar`：工具栏配置，控制显示哪些格式按钮。
+- `toolbar`：工具栏配置；`false` 隐藏，数组白名单，缺省/`true` 显示全部。按钮 id：`bold`、`italic`、`underline`、`strike`、`h1`、`h2`、`bulletList`、`orderedList`、`code`、`blockquote`、`link`、`image`、`highlight`、`undo`、`redo`。
+- `placeholder`：透传给 `@tiptap/extensions` 的 `Placeholder` 扩展；扩展在空段落上挂 `data-placeholder` + `is-editor-empty` 装饰，由包级 `styles.css` 的 `::before` 规则渲染（未配置时不挂扩展、无占位符）。
 
 ## 5. 字段分类
 
@@ -58,7 +59,9 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点输出 `nop-editor` marker。
-- TipTap 的 ProseMirror DOM 需要通过 CSS 变量对齐 `@nop-chaos/ui` 主题。
+- 内容根挂 `nop-editor-content`；TipTap 的 ProseMirror DOM 通过 CSS 变量对齐 `@nop-chaos/ui` 主题。
+- 内容排版由包级 `styles.css` 的 `.nop-editor-content` scope CSS 承接（最小元素矩阵 h1-h3/ul/ol/blockquote/code/a/img + 段落/代码块节奏；令牌驱动 + 双 dark 触发，沿 ai-bubble-markdown 先例），不引 `@tailwindcss/typography`；`img` 有 `max-width: 100%` 兜底。
+- 工具栏按钮规格与 markdown-editor 工具条、ai template-bar 三面统一：`ghost` + `h-7 min-w-7 px-1.5` + 图标 `size-4`；不带 `role="toolbar"` 组合角色（同 markdown-editor 20-07 Decision），激活态用 `aria-pressed` + `data-active` + `bg-accent` token。
 
 ## 11. 实现拆分建议
 
@@ -76,5 +79,7 @@
 - `outputFormat: html`（默认）时，进入编辑器的存储 HTML 先经 `sanitizeHtml` 受控（白名单裁剪危险标签/事件处理器/`javascript:` URI），ProseMirror 再按自身 schema 解析；`outputFormat: json` 存 TipTap JSON，不需 sanitize。
 - 工具栏 bridge 复用 `@nop-chaos/ui`；工具栏按钮 `onMouseDown` preventDefault，避免抢占焦点导致选区丢失。
 - 受控渲染边界：编辑器输出（getHTML）只含 ProseMirror schema 允许的安全子集，永不泄漏 `<script>`（见 sanitize Failure Path）。
-- TipTap 高级扩展（图片上传节点 / 表格编辑 / 协同 / mentions）归 successor，按 design §12 渐进引入，首版不实现。
+- Link scheme 白名单（`protocols` + `validate: isSafeLinkUrl`）经 StarterKit v3 的 `link` 子配置透传（单一装配点；独立 `Link.configure` 会与 StarterKit 内建 Link 同名重复装配并触发运行期 dedupe 警告）。`javascript:` 类 href 在 set/ paste 双向被拒（`editor-link.test.tsx` 红线）。
+- 扩展子集裁决（plan 480）：Underline、Image、Highlight 已落地——Underline 走 StarterKit 内建扩展；Image 只开 URL prompt 通道（src 经 `isSafeImageUrl` 守卫：http(s)/`data:image`/相对路径放行，`javascript:`/`data:text/html` 等拒绝；上传通道不开放）；Highlight 一键切换；`<u>/<mark>/<img>` 经 DOMPurify round-trip 白名单断言 pin（onerror 剥离、标签保留）。Table/TextAlign 否决：表格编辑 UI 面成本不成比例（且 `markdown-editor` 工具栏已覆盖表格源码场景），TextAlign 以 inline `style` 落盘与 token 驱动 styling contract 冲突——两者按 successor 路径按需再立项。
+- 占位符：`placeholder` schema 值委托 `@tiptap/extensions` Placeholder 扩展（空段落装饰 `data-placeholder` + `is-editor-empty`），包级 `styles.css` 消费装饰渲染 `::before`；不再手写根节点 `data-placeholder` 属性。
 - 与 `code-editor` 职责分离清晰：`editor` 是富文本 WYSIWYG，`code-editor` 是代码编辑。

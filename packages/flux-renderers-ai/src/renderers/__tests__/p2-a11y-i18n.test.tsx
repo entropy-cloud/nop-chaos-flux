@@ -305,10 +305,14 @@ describe('P2-4 — rich-text components aria-labels use translations', () => {
     expect(closeBtn.getAttribute('aria-label')).toBe('Close suggestions');
   });
 
-  it('template-bar toolbar aria-label is the insertTemplate translation', () => {
+  it('template-bar carries no composite role (plan 480 R5 / 20-07 decision)', () => {
     const { container } = render(<TemplateBar templates={[]} editor={null} />);
     const toolbar = container.querySelector('[data-slot="ai-sender-tiptap-templates"]') as HTMLElement;
     expect(toolbar).toBeTruthy();
-    expect(toolbar.getAttribute('aria-label')).toBe('Insert template');
+    // APG toolbar requires roving tabindex; every template button is an
+    // independent tab stop, so the composite role + group aria-label are
+    // dropped (same adjudication as the markdown-editor toolbar).
+    expect(toolbar.getAttribute('role')).toBeNull();
+    expect(toolbar.getAttribute('aria-label')).toBeNull();
   });
 });

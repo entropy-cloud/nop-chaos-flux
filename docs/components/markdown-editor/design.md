@@ -38,10 +38,10 @@
 
 自建，约 150-300 行：
 
-- **编辑区**：`@nop-chaos/ui` Textarea
+- **编辑区**：`@nop-chaos/ui` Textarea，autoGrow 自适应——源码每次变化时高度跟随内容（`height = scrollHeight` 夹紧），下限为 `rows={8}` 渲染基线（初始/最小高度语义保持 `rows=8`），上限 480px；触顶后编辑区内部滚动，不撑破分屏布局（`field-sizing-content` 因 Safari 支持缺口不取，JS 方案先行）。
 - **预览区**：复用 `flux-renderers-content` 的 `markdown` renderer 渲染逻辑
-- **工具栏**（可选）：粗体/斜体/标题/链接/代码块按钮，在 Textarea 光标位置插入 markdown 语法
-- **滚动同步**：编辑区与预览区可选滚动联动
+- **工具栏**（可选）：粗体/斜体/标题/链接/代码块按钮，在 Textarea 光标位置插入 markdown 语法；按钮规格与 editor 工具栏、ai template-bar 三面统一（`ghost` + `h-7 min-w-7 px-1.5` + 图标 `size-4`，无状态面不带激活态）
+- **滚动同步**：无。已裁定为 adjudicated-deferred（plan 480：收益面仅 ≥768px 桌面分屏，仓库内零需求证据、零反馈记录；真实使用反馈或 W3d 分屏使用量证据出现再立项）
 
 ### 预览复用机制（W3d 裁定）
 
@@ -64,6 +64,7 @@ flux 的组合模型是 **scope-bound**：传给子节点的字面量 prop 值�
 
 - 根节点输出 `nop-markdown-editor` marker。
 - 编辑区 `nop-markdown-editor-input`，预览区 `nop-markdown-editor-preview`。
+- 预览区内容排版由 `form-renderers.css` 的 `.nop-markdown` scope CSS 承接（最小元素矩阵 h1-h3/ul/ol/blockquote/code/a/img；令牌驱动 + 双 dark 触发，沿 ai-bubble-markdown 先例），不引 `@tailwindcss/typography`。
 - 预览区挂 `aria-live="polite"`（被动更新场景，向辅助技术播报预览内容变化）。
 - 工具栏 `data-slot="markdown-editor-toolbar"` 不带 `role="toolbar"` 组合角色（20-07 Decision：APG toolbar 需 roving tabindex + 方向键导航，而本工具栏 12 个按钮已是独立 tab stop、全部键盘可达——无 WCAG 2.1.1 失败；含分组分隔符的布局使 roving 模式收益低。去掉组合角色消除「读屏播报工具栏但无方向键导航」的结构失配，各按钮 aria-label 保留）。
 

@@ -69,3 +69,119 @@
   font-size: 0.875rem;
   color: hsl(var(--destructive));
 }
+
+/* Plan 480 A6: markdown-editor preview typography — scoped custom CSS for the
+   `.nop-markdown` surface the preview composes through the runtime registry.
+   Minimal element matrix (h1-h3 / ul / ol / blockquote / code / a / img).
+   Dual-track colors follow the `[data-slot='ai-bubble-markdown']` precedent:
+   theme var first, literal fallback second (light in the base block,
+   classic-dark in dark blocks). */
+.nop-markdown {
+  --flux-md-fg: hsl(var(--foreground, 222 84% 5%));
+  --flux-md-muted-fg: hsl(var(--muted-foreground, 215 19% 35%));
+  --flux-md-muted: hsl(var(--muted, 210 40% 96%));
+  --flux-md-line: hsl(var(--border, 214 32% 91%));
+  --flux-md-primary: hsl(var(--primary, 221 83% 53%));
+  --flux-md-code-bg: hsl(var(--muted, 210 40% 96%));
+  --flux-md-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  color: var(--flux-md-fg);
+}
+
+.nop-markdown > :first-child {
+  margin-top: 0;
+}
+
+.nop-markdown h1,
+.nop-markdown h2,
+.nop-markdown h3 {
+  margin: 1em 0 0.4em;
+  font-weight: 600;
+  color: var(--flux-md-fg);
+}
+.nop-markdown h1 {
+  font-size: 1.5rem;
+}
+.nop-markdown h2 {
+  font-size: 1.25rem;
+}
+.nop-markdown h3 {
+  font-size: 1.125rem;
+}
+
+.nop-markdown p {
+  margin: 0.5em 0;
+}
+
+.nop-markdown ul,
+.nop-markdown ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+.nop-markdown li {
+  margin: 0.25em 0;
+}
+.nop-markdown li::marker {
+  color: var(--flux-md-muted-fg);
+}
+
+.nop-markdown blockquote {
+  margin: 0.75em 0;
+  padding: 0.25em 0.9em;
+  border-left: 3px solid var(--flux-md-line);
+  background-color: var(--flux-md-muted);
+  color: var(--flux-md-muted-fg);
+}
+
+.nop-markdown pre {
+  margin: 0.75em 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--flux-md-line);
+  border-radius: var(--radius-sm, 8px);
+  background-color: var(--flux-md-code-bg);
+  font-family: var(--flux-md-mono);
+  font-size: 0.8125rem;
+  overflow-x: auto;
+}
+
+.nop-markdown :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background-color: var(--flux-md-code-bg);
+  color: var(--flux-md-fg);
+  font-family: var(--flux-md-mono);
+  font-size: 0.85em;
+}
+
+.nop-markdown a {
+  color: var(--flux-md-primary);
+  text-decoration-line: underline;
+  text-underline-offset: 2px;
+}
+
+.nop-markdown img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm, 8px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode='light']) .nop-markdown {
+    --flux-md-fg: hsl(var(--foreground, 210 40% 98%));
+    --flux-md-muted-fg: hsl(var(--muted-foreground, 215 25% 75%));
+    --flux-md-muted: hsl(var(--muted, 217 33% 18%));
+    --flux-md-line: hsl(var(--border, 217 33% 27%));
+    --flux-md-primary: hsl(var(--primary, 217 89% 63%));
+    --flux-md-code-bg: hsl(var(--muted, 217 33% 26%));
+  }
+}
+
+[data-mode='dark'] .nop-markdown {
+  --flux-md-fg: hsl(var(--foreground, 210 40% 98%));
+  --flux-md-muted-fg: hsl(var(--muted-foreground, 215 25% 75%));
+  --flux-md-muted: hsl(var(--muted, 217 33% 18%));
+  --flux-md-line: hsl(var(--border, 217 33% 27%));
+  --flux-md-primary: hsl(var(--primary, 217 89% 63%));
+  --flux-md-code-bg: hsl(var(--muted, 217 33% 26%));
+}

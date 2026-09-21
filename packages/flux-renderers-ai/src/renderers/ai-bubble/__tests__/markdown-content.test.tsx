@@ -372,16 +372,17 @@ describe('MarkdownContentRenderer — D2 typography contract (G2)', () => {
     // dark-OS with an explicit light mode resolves the literal dark fallbacks
     // (near-invisible text on a light page). Track census: typography /
     // avatar / welcome-icon (D2 baseline) + bubble surface / scroll-to-bottom
-    // / assistant actions (plan 472 V2) = 6 media tracks; the bubble-surface
-    // and actions tracks each carry two guarded selectors → 8 guards total.
+    // / assistant actions (plan 472 V2) + tiptap sender content (plan 480 A6)
+    // = 7 media tracks; the bubble-surface and actions tracks each carry two
+    // guarded selectors → 9 guards total.
     const blocks = darkPrefersColorSchemeBlocks(stylesCss);
-    expect(blocks.length).toBe(6);
+    expect(blocks.length).toBe(7);
     for (const [index, block] of blocks.entries()) {
       const ruleCount = occurrences(block, '{');
       const guardCount = occurrences(block, ":root:not([data-mode='light'])");
       expect(guardCount, `dark media block #${index + 1} must guard every inner selector`).toBe(ruleCount);
     }
-    expect(occurrences(stylesCss, ":root:not([data-mode='light'])")).toBe(8);
+    expect(occurrences(stylesCss, ":root:not([data-mode='light'])")).toBe(9);
   });
 
   it('(c2) dark path — [data-mode] attribute trigger', () => {

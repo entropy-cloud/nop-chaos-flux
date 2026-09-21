@@ -37,6 +37,25 @@ describe('sanitizeHtml — controlled HTML sanitization gate', () => {
     expect(out).toContain('link');
   });
 
+  it('keeps <u> underline marks through the round-trip (plan 480 editor Underline contract pin)', () => {
+    const out = sanitizeHtml('<p><u>underlined</u></p>');
+    expect(out).toContain('<u>');
+    expect(out).toContain('underlined');
+  });
+
+  it('keeps <mark> highlight marks through the round-trip (plan 480 Highlight contract pin)', () => {
+    const out = sanitizeHtml('<p><mark>highlighted</mark></p>');
+    expect(out).toContain('<mark>');
+    expect(out).toContain('highlighted');
+  });
+
+  it('keeps <img> tags while stripping inline handlers (plan 480 Image contract pin)', () => {
+    const out = sanitizeHtml('<img src="https://safe.example/x.png" onerror="alert(1)" alt="x">');
+    expect(out).toContain('<img');
+    expect(out).toContain('https://safe.example/x.png');
+    expect(out.toLowerCase()).not.toContain('onerror');
+  });
+
   it('passes content through unchanged when sanitize is explicitly false (trusted)', () => {
     const payload = '<script>alert(1)</script><b>raw</b>';
     expect(sanitizeHtml(payload, { sanitize: false })).toBe(payload);

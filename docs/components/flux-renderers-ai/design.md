@@ -437,6 +437,8 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
 
 **键盘拦截面（multi-audit P2-3，2026-08-10）**：`handleKeyDown` 在弹出层打开时拦截 ArrowDown/ArrowUp/Enter/Escape（导航/确认/关闭），IME 组合期（`isComposing`/keyCode 229）放行；**零匹配**（`popupItems.length === 0`）时弹出层不渲染且按键**全部放行**（Enter 落回 submit keymap，Arrow 落回默认光标移动）——消除"弹出层视觉消失但按键仍被吞"的键盘死区。长度经 `popupItemsLengthRef` 镜像（`useEditor` 闭包内不可直接读 memo 数组，防 stale）。
 
+**占位符与内容排版（plan 480）**：占位符由 `@tiptap/extensions` 的 `Placeholder` 扩展渲染——扩展在空段落上挂 `data-placeholder` + `is-editor-empty` 装饰，`src/styles.css` 的 `[data-slot='ai-sender-tiptap-content'] p.is-editor-empty::before` 规则消费装饰（旧的 `[data-placeholder]:empty::before` 是死规则：ProseMirror 根恒有 `<p>` 子节点，`:empty` 永不命中）。内容排版由同 scope 的自定义 CSS 承接（最小元素矩阵 h1-h3/ul/ol/blockquote/code/a/img；令牌驱动 + 双 dark 触发，沿 §10.7 ai-bubble-markdown 先例），紧凑的聊天输入段落节奏（`p { margin: 0 }`）保留；`prose` 死类已移除。template-bar 按钮规格与 editor / markdown-editor 工具条三面统一（`ghost` + `h-7 min-w-7 px-1.5` + 文本键 `text-xs`），且不带 toolbar 组合角色（同 20-07 Decision）。
+
 ### 10.7 ai-bubble-typography（Markdown 排版自定义 CSS）
 
 气泡 markdown 正文排版不走 `@tailwindcss/typography`（`prose`），而是**包内 scoped 自定义 CSS**：全部选择器以 `[data-slot='ai-bubble-markdown']` 为前缀，落在 `src/styles.css`（D2 落地，D2 增量 150 行贴红线；下述 D6 增量另行计入）。数值契约以 `product-spec.md` §2.4 排版节奏表为设计输入。

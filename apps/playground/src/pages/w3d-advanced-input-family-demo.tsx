@@ -164,6 +164,7 @@ export function W3dAdvancedInputFamilyDemoPage({ onBack }: W3dAdvancedInputFamil
                   name: 'rich2',
                   label: 'Editor — scratchpad (empty start)',
                   outputFormat: 'html',
+                  placeholder: 'Type here…',
                   testid: 'demo-editor-scratch',
                 },
                 {

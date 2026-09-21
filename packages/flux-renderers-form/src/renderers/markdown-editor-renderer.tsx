@@ -30,6 +30,15 @@ import { createFieldValidation, validateInputFieldSchema } from './input.js';
 const stringValueAdapter = stringAdapter();
 const MARKDOWN_EDITOR_METHODS = ['clear', 'focus'] as const;
 
+/**
+ * A3 (plan 480): autoGrow clamp. The textarea starts at its `rows={8}` height
+ * (measured on first resize and used as the minimum), grows with the content,
+ * and clamps here — beyond it the textarea scrolls internally instead of
+ * stretching the split layout. `field-sizing-content` was adjudicated out
+ * (Safari support gap).
+ */
+const MARKDOWN_TEXTAREA_MAX_HEIGHT_PX = 480;
+
 export const markdownEditorFieldRules: SchemaFieldRule[] = [
   { key: 'placeholder', kind: 'prop' },
   { key: 'viewMode', kind: 'prop' },
@@ -159,6 +168,9 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const pendingSelectionRef = useRef<{ start: number; end: number } | null>(null);
+  // A3: the rows={8} rendered height, captured once before the first resize,
+  // doubles as the minimum height (initial/min semantics stay with rows=8).
+  const minHeightRef = useRef<number | null>(null);
   const viewMode =
     props.props.viewMode === 'edit' || props.props.viewMode === 'preview'
       ? props.props.viewMode
@@ -203,6 +215,26 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
   const showEdit = viewMode !== 'preview';
   const showPreview = viewMode !== 'edit';
 
+  // A3 (plan 480): autoGrow — on every source change the textarea height
+  // tracks the content, clamped between the captured rows=8 baseline and
+  // MARKDOWN_TEXTAREA_MAX_HEIGHT_PX (overflow scrolls internally at the
+  // clamp, so the split layout never stretches).
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el || !showEdit) {
+      return;
+    }
+    if (minHeightRef.current === null) {
+      minHeightRef.current = el.offsetHeight;
+    }
+    el.style.height = 'auto';
+    const next = Math.max(
+      Math.min(el.scrollHeight, MARKDOWN_TEXTAREA_MAX_HEIGHT_PX),
+      minHeightRef.current,
+    );
+    el.style.height = `${next}px`;
+  }, [source, showEdit]);
+
   // The preview composes the registered `markdown` renderer through the runtime
   // registry. Flux composition is scope-bound: a literal `content` value would
   // be resolved once and not refresh as the source changes. We therefore feed
@@ -236,12 +268,12 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
                 <Button
                   key={action.id}
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   title={t(action.titleKey)}
                   aria-label={t(action.titleKey)}
                   data-testid={`md-toolbar-${action.id}`}
-                  className="size-8 p-0"
+                  className="h-7 min-w-7 px-1.5"
                   onClick={() => runToolbarAction(action)}
                 >
                   {action.icon}

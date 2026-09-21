@@ -149,14 +149,17 @@
 }
 
 /* P6 (A6): Tiptap rich-text sender — opt-in via `./rich-text` subpath.
-   The placeholder pseudo-element is driven by the `data-placeholder`
-   attribute the editor sets on its contenteditable root (mirrors the
-   `editor-renderer.tsx` convention). AI-29: visual rules keyed off
-   [data-slot] to keep the .nop- marker pure. */
-[data-slot='ai-sender-tiptap-content'][data-placeholder]:empty::before {
+   The placeholder is rendered by the shared Placeholder extension: it
+   decorates the empty paragraph with `data-placeholder` + `is-editor-empty`
+   (plan 480 R4 — the previous `[data-placeholder]:empty::before` rule was a
+   dead face because a ProseMirror root always contains a `<p>` child).
+   AI-29: visual rules keyed off [data-slot] to keep the .nop- marker pure. */
+[data-slot='ai-sender-tiptap-content'] p.is-editor-empty::before {
   content: attr(data-placeholder);
-  color: var(--muted-foreground, currentColor);
+  color: hsl(var(--muted-foreground, 215 19% 35%));
   opacity: 0.7;
+  float: left;
+  height: 0;
   pointer-events: none;
 }
 
@@ -168,6 +171,104 @@
 
 [data-slot='ai-sender-tiptap-content'] p {
   margin: 0;
+}
+
+/* Plan 480 A6: sender content typography — scoped custom CSS replacing the
+   dead `prose max-w-none` classes (no @tailwindcss/typography in repo).
+   Minimal element matrix (h1-h3 / ul / ol / blockquote / code / a / img).
+   The tight chat-input paragraph rhythm above is kept; the matrix only styles
+   the structural elements StarterKit can produce. Dual-track colors follow
+   the ai-bubble-markdown precedent (theme var first, literal fallback second,
+   classic-dark in dark blocks). */
+[data-slot='ai-sender-tiptap-content'] {
+  --ai-sender-fg: hsl(var(--foreground, 222 84% 5%));
+  --ai-sender-muted-fg: hsl(var(--muted-foreground, 215 19% 35%));
+  --ai-sender-muted: hsl(var(--muted, 210 40% 96%));
+  --ai-sender-line: hsl(var(--border, 214 32% 91%));
+  --ai-sender-primary: hsl(var(--primary, 221 83% 53%));
+  --ai-sender-code-bg: hsl(var(--muted, 210 40% 96%));
+  --ai-sender-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  color: var(--ai-sender-fg);
+}
+
+[data-slot='ai-sender-tiptap-content'] h1,
+[data-slot='ai-sender-tiptap-content'] h2,
+[data-slot='ai-sender-tiptap-content'] h3 {
+  margin: 0.75em 0 0.25em;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--ai-sender-fg);
+}
+
+[data-slot='ai-sender-tiptap-content'] ul,
+[data-slot='ai-sender-tiptap-content'] ol {
+  margin: 0.25em 0;
+  padding-left: 1.5em;
+}
+[data-slot='ai-sender-tiptap-content'] li {
+  margin: 0.125em 0;
+}
+[data-slot='ai-sender-tiptap-content'] li::marker {
+  color: var(--ai-sender-muted-fg);
+}
+
+[data-slot='ai-sender-tiptap-content'] blockquote {
+  margin: 0.5em 0;
+  padding: 0.15em 0.75em;
+  border-left: 3px solid var(--ai-sender-line);
+  background-color: var(--ai-sender-muted);
+  color: var(--ai-sender-muted-fg);
+}
+
+[data-slot='ai-sender-tiptap-content'] pre {
+  margin: 0.5em 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ai-sender-line);
+  border-radius: var(--radius-sm, 8px);
+  background-color: var(--ai-sender-code-bg);
+  font-family: var(--ai-sender-mono);
+  font-size: 0.8125rem;
+  overflow-x: auto;
+}
+
+[data-slot='ai-sender-tiptap-content'] :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background-color: var(--ai-sender-code-bg);
+  font-family: var(--ai-sender-mono);
+  font-size: 0.85em;
+}
+
+[data-slot='ai-sender-tiptap-content'] a {
+  color: var(--ai-sender-primary);
+  text-decoration-line: underline;
+  text-underline-offset: 2px;
+}
+
+[data-slot='ai-sender-tiptap-content'] img {
+  max-width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode='light']) [data-slot='ai-sender-tiptap-content'] {
+    --ai-sender-fg: hsl(var(--foreground, 210 40% 98%));
+    --ai-sender-muted-fg: hsl(var(--muted-foreground, 215 25% 75%));
+    --ai-sender-muted: hsl(var(--muted, 217 33% 18%));
+    --ai-sender-line: hsl(var(--border, 217 33% 27%));
+    --ai-sender-primary: hsl(var(--primary, 217 89% 63%));
+    --ai-sender-code-bg: hsl(var(--muted, 217 33% 26%));
+  }
+}
+
+[data-mode='dark'] [data-slot='ai-sender-tiptap-content'] {
+  --ai-sender-fg: hsl(var(--foreground, 210 40% 98%));
+  --ai-sender-muted-fg: hsl(var(--muted-foreground, 215 25% 75%));
+  --ai-sender-muted: hsl(var(--muted, 217 33% 18%));
+  --ai-sender-line: hsl(var(--border, 217 33% 27%));
+  --ai-sender-primary: hsl(var(--primary, 217 89% 63%));
+  --ai-sender-code-bg: hsl(var(--muted, 217 33% 26%));
 }
 
 /* D2 (G2): ai-bubble markdown typography — scoped custom CSS replacing the

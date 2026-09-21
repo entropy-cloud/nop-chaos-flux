@@ -1,12 +1,16 @@
 import type { Editor } from '@tiptap/react';
 import { Button } from '@nop-chaos/ui';
-import { t } from '@nop-chaos/flux-i18n';
 import type { TiptapTemplateItem } from '../types.js';
 import { insertTemplate } from '../extensions/template.js';
 
 /**
  * Template insertion toolbar — renders one button per `TiptapTemplateItem`.
  * Clicking inserts the template's `content` at the caret.
+ *
+ * Plan 480 (R5/A5): no toolbar composite role (20-07 decision — APG toolbar
+ * requires roving tabindex; every button is already an independent tab stop)
+ * and the unified Button spec (ghost + h-7 min-w-7 px-1.5; text label keys
+ * keep `text-xs`).
  */
 export function TemplateBar({
   templates,
@@ -19,8 +23,6 @@ export function TemplateBar({
     <div
       className="nop-ai-sender-tiptap-templates flex flex-wrap gap-1 pb-1"
       data-slot="ai-sender-tiptap-templates"
-      role="toolbar"
-      aria-label={t('flux.ai.insertTemplate')}
     >
       {templates.map((tpl) => (
         <Button
@@ -31,7 +33,7 @@ export function TemplateBar({
           data-testid={`ai-sender-template-${tpl.label}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => insertTemplate(editor, tpl)}
-          className="h-6 text-xs"
+          className="h-7 min-w-7 px-1.5 text-xs"
         >
           {tpl.label}
         </Button>
