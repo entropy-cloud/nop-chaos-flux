@@ -267,4 +267,34 @@ describe('fieldset collapsible interaction', () => {
       expect(fieldset.getAttribute('data-collapsed')).toBeNull();
     });
   });
+
+  // [G2-R5-视角4-02] reveal-on-attach: a field that is already aria-invalid
+  // when the fieldset mounts collapsed (or is collapsed over) never mutates
+  // again, so the P2-18 mutation observer alone keeps the submit-blocking
+  // error hidden behind display:none.
+  it('auto-expands on attach when an inner field is already aria-invalid', async () => {
+    cleanup();
+    const props = makeProps({
+      title: 'Hidden Validations',
+      collapsible: true,
+      collapsed: true,
+    });
+    (props as any).regions = {
+      body: {
+        render: () => <input data-testid="inner-field" aria-invalid="true" readOnly />,
+      },
+    };
+
+    render(
+      wrapWithProviders(
+        <FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />,
+      ),
+    );
+
+    const fieldset = document.querySelector('[data-testid="fieldset-test"]') as HTMLElement;
+
+    await waitFor(() => {
+      expect(fieldset.getAttribute('data-collapsed')).toBeNull();
+    });
+  });
 });

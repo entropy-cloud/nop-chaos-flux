@@ -1,8 +1,8 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import * as fluxReact from '@nop-chaos/flux-react';
 import {
   isClickOnInput,
-  optionRowConfigEquals,
   resolveTableRowOptionState,
   tableRowOptionRowProps,
 } from './table-row-option-state.js';
@@ -22,10 +22,7 @@ import type { RowDragSortApi } from './use-row-drag-sort.js';
 import { getCellRowSpan, type CombinePlan } from './combine-cells.js';
 import { isDevRuntime } from './use-table-tree.js';
 import { asReactNode, indentStyle, CellContentWithPopOver } from './table-cell-chrome.js';
-import {
-  areColumnsRenderEquivalent,
-  type FlattenedRow,
-} from './table-flattened-items.js';
+import { type FlattenedRow } from './table-flattened-items.js';
 import {
   RowQuickEditDraftContext,
   RowQuickEditSaveBar,
@@ -35,6 +32,36 @@ import {
 export type { FlattenedItem, FlattenedRow, FlattenedExpandedRow } from './table-flattened-items.js';
 export { buildFlattenedItems } from './table-flattened-items.js';
 export { renderExpandedRow } from './table-expanded-row.js';
+
+/**
+ * Optional RendererRuntime context for row-level failure feedback ([G3-R3-视角5-01]).
+ * Namespace access (not a named import) + module-level fallback keeps bare
+ * DataRowView harnesses and partial `@nop-chaos/flux-react` mocks renderable —
+ * no runtime, no notify.
+ */
+const MissingRuntimeContext = React.createContext<
+  { env: { notify?: (level: string, message: string) => void } } | null
+>(null);
+const RuntimeContextOrNull = (() => {
+  try {
+    // A partial module mock throws on unknown exports — treat that as "absent".
+    return (
+      (fluxReact as {
+        RuntimeContext?: React.Context<
+          { env: { notify?: (level: string, message: string) => void } } | null
+        >;
+      }).RuntimeContext ?? MissingRuntimeContext
+    );
+  } catch {
+    return MissingRuntimeContext;
+  }
+})();
+
+function useFluxReactRuntime(): {
+  env: { notify?: (level: string, message: string) => void };
+} | null {
+  return React.useContext(RuntimeContextOrNull);
+}
 
 type DataRowRenderProps = {
   item: FlattenedRow;
@@ -64,7 +91,7 @@ type DataRowRenderProps = {
   measureRef?: React.Ref<HTMLTableRowElement>;
 };
 
-function DataRowView({
+export function DataRowView({
   item,
   schemaProps,
   columns,
@@ -110,15 +137,35 @@ function DataRowView({
   const treeHasChildren = treeEntry?.hasChildren ?? false;
   const isTreeExpanded = treeEntry ? expandedTreeRowKeys?.has(rowKey) === true : false;
   const lazyState = lazyChildrenMap?.get(rowKey);
+  // [G3-R4-视角4-01] the drag/reorder domain is the DATA-ROW order (orderedKeys
+  // in use-row-drag-sort is built from processedData). rowIndex is the index in
+  // the flattened render sequence (virtual window: expanded detail rows count),
+  // so an expanded row above shifts every drop/arrow-key target by one.
+  const reorderIndex = entry.viewIndex ?? rowIndex;
   const dragHandleProps = draggable && rowDragSortApi
-    ? rowDragSortApi.dragHandleProps(rowKey, rowIndex)
+    ? rowDragSortApi.dragHandleProps(rowKey, reorderIndex)
     : null;
 
+  // [G3-R3-视角5-01] a failed row-level save used to reset `saving` silently;
+  // report through the same env.notify channel the cell-level quick-edit uses.
+  // Tolerant context read (namespace access + null fallback): DataRowView must
+  // stay renderable in bare harnesses / partial flux-react mocks — there the
+  // notify channel is simply absent.
+  const runtime = useFluxReactRuntime();
+  const notifySaveError = (error: unknown) => {
+    runtime?.env.notify?.(
+      'warning',
+      error instanceof Error
+        ? t('flux.common.saveFailedDetail', { message: error.message })
+        : t('flux.common.saveFailed'),
+    );
+  };
   const rowDraft = useRowQuickEditDraft({
     record: entry.record,
     rowScope,
     helpers,
     saveAction: schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction,
+    onSaveError: notifySaveError,
   });
 
   // P1-1: per-cell className expression (raw, no `${}`) + vertical alignment.
@@ -201,6 +248,21 @@ function DataRowView({
     }
 
     event.preventDefault();
+
+    // [G3-R2-视角3-01] keyboard parity for the toggleOnRowClick chain: the row
+    // itself is the activation target (tabIndex=0), so Enter/Space must run the
+    // same selection toggle as the click gesture — including the
+    // maxSelectionLength clamp — otherwise keyboard users cannot select rows.
+    if (toggleOnRowClick) {
+      const atMax = isAtMaxSelection === true && !isSelected;
+      if (!atMax) {
+        onSelectRow(rowKey, !isSelected, {
+          shiftKey: event.shiftKey,
+          metaKey: event.metaKey,
+          ctrlKey: event.ctrlKey,
+        });
+      }
+    }
 
     if (hasRowClickHandler) {
       void parentProps.events.onRowClick?.(event, { scope: rowScope });
@@ -561,127 +623,9 @@ function DataRowView({
   return rowContent;
 }
 
-// H10: row-level bailout is load-bearing for the table single-row locality
-// contract (a change to one row must not re-render sibling rows — see the
-// playground `performance-table-page` diagnostic; the React Compiler is not
-// active in the test environment, so an explicit memo is required there). All
-// `fixedColumnLayout` content inputs are covered BY CONTENT: columns via
-// `areColumnsRenderEquivalent` (fixed/width included), `rowSelection` and
-// `showExpandColumn` compared directly — so a content-equal layout cannot
-// render stale sticky offsets. A direct `fixedColumnLayout` identity check is
-// deliberately NOT in the comparator: the layout object identity churns with
-// render-derived inputs (e.g. measured-width state), which would re-render
-// every row on every table render and break the locality diagnostic (sibling
-// probe delta 0 → 2, verified 2026-08-09).
-const MemoizedDataRow = React.memo(DataRowView, (prev, next) => {
-  return (
-    prev.item.entry.record === next.item.entry.record &&
-    prev.item.rowScope === next.item.rowScope &&
-    prev.item.rowKey === next.item.rowKey &&
-    prev.item.isExpanded === next.item.isExpanded &&
-    prev.item.isSelected === next.item.isSelected &&
-    prev.item.isEven === next.item.isEven &&
-    prev.item.groupKey === next.item.groupKey &&
-    Boolean(prev.schemaProps.rowSelection) === Boolean(next.schemaProps.rowSelection) &&
-    prev.schemaProps.rowSelection?.type === next.schemaProps.rowSelection?.type &&
-    prev.schemaProps.rowSelection?.toggleOnRowClick === next.schemaProps.rowSelection?.toggleOnRowClick &&
-    prev.schemaProps.rowSelection?.modifierSelect === next.schemaProps.rowSelection?.modifierSelect &&
-    prev.schemaProps.quickSaveAction === next.schemaProps.quickSaveAction &&
-    prev.schemaProps.quickSaveItemAction === next.schemaProps.quickSaveItemAction &&
-    prev.parentProps.meta.disabled === next.parentProps.meta.disabled &&
-    optionRowConfigEquals(prev.schemaProps.optionRow, next.schemaProps.optionRow) &&
-    prev.combinePlan === next.combinePlan &&
-    prev.rowIndex === next.rowIndex &&
-    prev.indexColumnOffset === next.indexColumnOffset &&
-    areColumnsRenderEquivalent(prev.columns, next.columns) &&
-    prev.helpers === next.helpers &&
-    prev.parentProps.events.onRowClick === next.parentProps.events.onRowClick &&
-    prev.parentProps.regions === next.parentProps.regions &&
-    prev.parentProps.node.instancePath === next.parentProps.node.instancePath &&
-    prev.showExpandColumn === next.showExpandColumn &&
-    prev.expandRowByClick === next.expandRowByClick &&
-    prev.onToggleExpand === next.onToggleExpand &&
-    prev.onSelectRow === next.onSelectRow &&
-    prev.isStriped === next.isStriped &&
-    prev.isRowCheckable === next.isRowCheckable &&
-    prev.isAtMaxSelection === next.isAtMaxSelection &&
-    prev.treeMode === next.treeMode &&
-    prev.expandedTreeRowKeys === next.expandedTreeRowKeys &&
-    prev.onToggleTreeExpand === next.onToggleTreeExpand &&
-    prev.lazyChildrenMap === next.lazyChildrenMap &&
-    prev.draggable === next.draggable &&
-    prev.rowDragSortApi === next.rowDragSortApi &&
-    prev.measureRef === next.measureRef
-  );
-});
-
-
-/** [G3-视角5-01] whether the trailing row save-bar column renders on body rows —
- * exported so header/colgroup can pair the column. */
-export function isRowDraftColumnEnabled(
-  schemaProps: TableSchema,
-  columns: TableColumnSchema[],
-): boolean {
-  const hasQuickEditColumns = columns.some((col) => {
-    const cfg = resolveTableQuickEditConfig(col);
-    return cfg && cfg.saveImmediately !== true && cfg.mode !== 'dialog';
-  });
-  const rowSaveAction = schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction;
-  return hasQuickEditColumns && Boolean(rowSaveAction);
-}
-
-export function renderDataRow(
-  item: FlattenedRow,
-  schemaProps: TableSchema,
-  columns: TableColumnSchema[],
-  helpers: RendererComponentProps<TableSchema>['helpers'],
-  parentProps: RendererComponentProps<TableSchema>,
-  fixedColumnLayout: FixedColumnLayout,
-  showExpandColumn: boolean,
-  expandRowByClick: boolean,
-  onToggleExpand: (rowKey: string) => void,
-  onSelectRow: (rowKey: string, checked: boolean, modifiers?: RowSelectionModifiers) => void,
-  isStriped: boolean,
-  isRowCheckable?: (rowKey: string) => boolean,
-  isAtMaxSelection?: boolean,
-  combinePlan?: CombinePlan,
-  rowIndex: number = 0,
-  treeMode?: boolean,
-  expandedTreeRowKeys?: Set<string>,
-  onToggleTreeExpand?: (rowKey: string) => void,
-  onRetryTreeLoad?: (rowKey: string) => void,
-  lazyChildrenMap?: ReadonlyMap<string, LazyChildrenState>,
-  draggable?: boolean,
-  rowDragSortApi?: RowDragSortApi | null,
-  indexColumnOffset?: number,
-  measureRef?: React.Ref<HTMLTableRowElement>,
-) {
-  return (
-    <MemoizedDataRow
-      item={item}
-      schemaProps={schemaProps}
-      columns={columns}
-      helpers={helpers}
-      parentProps={parentProps}
-      fixedColumnLayout={fixedColumnLayout}
-      showExpandColumn={showExpandColumn}
-      expandRowByClick={expandRowByClick}
-      onToggleExpand={onToggleExpand}
-      onSelectRow={onSelectRow}
-      isStriped={isStriped}
-      isRowCheckable={isRowCheckable}
-      isAtMaxSelection={isAtMaxSelection}
-      combinePlan={combinePlan}
-      rowIndex={rowIndex}
-      treeMode={treeMode}
-      expandedTreeRowKeys={expandedTreeRowKeys}
-      onToggleTreeExpand={onToggleTreeExpand}
-      onRetryTreeLoad={onRetryTreeLoad}
-      lazyChildrenMap={lazyChildrenMap}
-      draggable={draggable}
-      rowDragSortApi={rowDragSortApi}
-      indexColumnOffset={indexColumnOffset}
-      measureRef={measureRef}
-    />
-  );
-}
+// [G3-R4-视角4-01 batch] row rendering entry points moved to
+// table-data-row-render.tsx (oversized-file governance: the file crossed the
+// 700-line gate); DataRowView stays here. Compatibility re-exports keep the
+// existing `table-body-row-rendering.js` import paths stable for consumers.
+import { isRowDraftColumnEnabled } from './table-data-row-render.js';
+export { renderDataRow, isRowDraftColumnEnabled } from './table-data-row-render.js';

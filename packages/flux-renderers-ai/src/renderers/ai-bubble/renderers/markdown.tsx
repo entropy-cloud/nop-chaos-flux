@@ -267,12 +267,16 @@ function CodeBlock({
   }
 
   return (
-    <code className={cn('relative block', className)} data-slot="ai-bubble-code">
+    // [G5-R5-视角8-01] the copy button is absolutely positioned over the first
+    // line — reserve the button row (pt-8 = top-1 + h-7) so the first code line
+    // renders below it, and give the button an opaque chip so code scrolling
+    // under its right edge stays legible.
+    <code className={cn('relative block pt-8', className)} data-slot="ai-bubble-code">
       <Button
         type="button"
         variant="ghost"
         size="sm"
-        className="absolute right-1 top-1 opacity-70 hover:opacity-100"
+        className="absolute right-1 top-1 bg-background/90 opacity-90 hover:opacity-100"
         data-slot="ai-bubble-copy-code"
         aria-label={t('flux.ai.copyCode')}
         onClick={handleCopy}

@@ -310,11 +310,18 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
               data-active={index === activeIndex ? 'true' : undefined}
               aria-label={t('flux.carousel.goToSlide', { index: index + 1 })}
               onClick={() => api?.scrollTo(index)}
-              className={cn(
-                'h-2 w-2 rounded-full p-0',
-                index === activeIndex ? 'bg-primary' : 'bg-muted-foreground/30',
-              )}
-            />
+              // [G1-视角8-06] the button is the touch target (24px, WCAG
+              // 2.5.8); the 8px dot is only the inner visual.
+              className="h-6 w-6 rounded-full p-0"
+            >
+              <span
+                data-slot="carousel-indicator-dot"
+                className={cn(
+                  'size-2 rounded-full',
+                  index === activeIndex ? 'bg-primary' : 'bg-muted-foreground/30',
+                )}
+              />
+            </Button>
           ))}
         </div>
       ) : null}

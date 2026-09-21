@@ -26,6 +26,19 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
   const { t } = useFluxTranslation();
   const working = core.getState().working;
   const selectedPanel = selection.length === 1 ? working.panels.find((p) => p.id === selection[0]) : undefined;
+  // [G3-R2-视角4-02] one id per primary control so every InspectorField Label
+  // is programmatically associated (htmlFor/id) instead of being loose text.
+  const id = {
+    panelId: React.useId(),
+    panelType: React.useId(),
+    panelTitle: React.useId(),
+    posX: React.useId(),
+    posY: React.useId(),
+    width: React.useId(),
+    height: React.useId(),
+    source: React.useId(),
+    props: React.useId(),
+  };
 
   if (!selectedPanel) {
     return (
@@ -42,13 +55,14 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
       data-slot="dashboard-editor-inspector"
       className="flex h-full flex-col gap-3 overflow-y-auto p-3"
     >
-      <InspectorField label={t('flux.dashboard.editor.panelId')}>
-        <Input readOnly value={selectedPanel.id} data-testid="inspector-id" />
+      <InspectorField label={t('flux.dashboard.editor.panelId')} htmlFor={id.panelId}>
+        <Input readOnly value={selectedPanel.id} data-testid="inspector-id" id={id.panelId} />
       </InspectorField>
-      <InspectorField label={t('flux.dashboard.editor.panelType')}>
+      <InspectorField label={t('flux.dashboard.editor.panelType')} htmlFor={id.panelType}>
         <NativeSelect
           value={selectedPanel.type}
           data-testid="inspector-type"
+          id={id.panelType}
           onChange={(event) => updatePanel(core, selectedPanel.id, { type: event.target.value })}
         >
           {DASHBOARD_PALETTE_TYPES.filter((entry) => runtime.registry.has(entry.type)).map(
@@ -60,47 +74,57 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
           )}
         </NativeSelect>
       </InspectorField>
-      <InspectorField label={t('flux.dashboard.editor.panelTitle')}>
+      <InspectorField label={t('flux.dashboard.editor.panelTitle')} htmlFor={id.panelTitle}>
         <Input
           value={selectedPanel.title ?? ''}
           data-testid="inspector-title"
+          id={id.panelTitle}
           onChange={(event) => updatePanel(core, selectedPanel.id, { title: event.target.value })}
         />
       </InspectorField>
       <div className="grid grid-cols-2 gap-2">
-        <InspectorField label={t('flux.dashboard.editor.posX')}>
+        <InspectorField label={t('flux.dashboard.editor.posX')} htmlFor={id.posX}>
           <NumberInput
             testId="inspector-x"
+            inputId={id.posX}
             value={selectedPanel.x}
+            min={0}
             onChange={(value) => updatePanel(core, selectedPanel.id, { x: value })}
           />
         </InspectorField>
-        <InspectorField label={t('flux.dashboard.editor.posY')}>
+        <InspectorField label={t('flux.dashboard.editor.posY')} htmlFor={id.posY}>
           <NumberInput
             testId="inspector-y"
+            inputId={id.posY}
             value={selectedPanel.y}
+            min={0}
             onChange={(value) => updatePanel(core, selectedPanel.id, { y: value })}
           />
         </InspectorField>
-        <InspectorField label={t('flux.dashboard.editor.width')}>
+        <InspectorField label={t('flux.dashboard.editor.width')} htmlFor={id.width}>
           <NumberInput
             testId="inspector-w"
+            inputId={id.width}
             value={selectedPanel.w}
+            min={1}
             onChange={(value) => updatePanel(core, selectedPanel.id, { w: value })}
           />
         </InspectorField>
-        <InspectorField label={t('flux.dashboard.editor.height')}>
+        <InspectorField label={t('flux.dashboard.editor.height')} htmlFor={id.height}>
           <NumberInput
             testId="inspector-h"
+            inputId={id.height}
             value={selectedPanel.h}
+            min={1}
             onChange={(value) => updatePanel(core, selectedPanel.id, { h: value })}
           />
         </InspectorField>
       </div>
-      <InspectorField label={t('flux.dashboard.editor.source')}>
+      <InspectorField label={t('flux.dashboard.editor.source')} htmlFor={id.source}>
         <Input
           value={typeof selectedPanel.source === 'string' ? selectedPanel.source : ''}
           data-testid="inspector-source"
+          id={id.source}
           placeholder="${sales}"
           onChange={(event) =>
             updatePanel(core, selectedPanel.id, {
@@ -109,9 +133,10 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
           }
         />
       </InspectorField>
-      <InspectorField label={t('flux.dashboard.editor.props')}>
+      <InspectorField label={t('flux.dashboard.editor.props')} htmlFor={id.props}>
         <JsonPropsEditor
           value={selectedPanel.props}
+          textareaId={id.props}
           onChange={(props) => updatePanel(core, selectedPanel.id, { props })}
         />
       </InspectorField>
@@ -119,10 +144,21 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
   );
 }
 
-function InspectorField({ label, children }: { label: string; children: React.ReactNode }) {
+function InspectorField({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  /** [G3-R2-视角4-02] id of the field's primary control — Label ↔ control association. */
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-xs text-muted-foreground" htmlFor={htmlFor}>
+        {label}
+      </Label>
       {children}
     </div>
   );
@@ -132,22 +168,31 @@ function NumberInput({
   value,
   onChange,
   testId,
+  inputId,
+  min = 0,
 }: {
   value: number;
   onChange: (value: number) => void;
   testId: string;
+  inputId?: string;
+  /** [G3-R5-视角4-01] geometric floor — x/y ≥ 0, w/h ≥ 1. Values below are
+   * clamped on entry (not silently written), so the inspector can never
+   * produce a negative or zero-size panel the canvas math has to repair. */
+  min?: number;
 }) {
   const [draft, setDraft] = useState(String(value));
-  const effectiveValue = Number.isFinite(value) ? value : 0;
+  const effectiveValue = Number.isFinite(value) ? Math.max(min, value) : min;
   return (
     <Input
       type="number"
       data-testid={testId}
+      id={inputId}
       value={draft}
+      min={min}
       onChange={(event) => {
         setDraft(event.target.value);
         const parsed = Number(event.target.value);
-        if (Number.isFinite(parsed)) onChange(parsed);
+        if (Number.isFinite(parsed)) onChange(Math.max(min, Math.trunc(parsed)));
       }}
       onBlur={() => setDraft(String(effectiveValue))}
     />
@@ -156,9 +201,11 @@ function NumberInput({
 
 function JsonPropsEditor({
   value,
+  textareaId,
   onChange,
 }: {
   value: unknown;
+  textareaId?: string;
   onChange: (value: SchemaValue | undefined) => void;
 }) {
   const { t } = useFluxTranslation();
@@ -171,6 +218,7 @@ function JsonPropsEditor({
     <>
       <Textarea
         data-testid="inspector-props"
+        id={textareaId}
         rows={6}
         aria-invalid={invalid || undefined}
         value={current}

@@ -195,6 +195,17 @@ export function useTableSelection(
     [selectAllScopeRows, selectedRowKeys],
   );
 
+  // [G3-R3-视角4-02] selectable row count of the select-all scope. In tree mode
+  // the scope is the FLATTENED row set (parents + children); the header checkbox
+  // state must compare against this count, not the top-level row count.
+  const selectAllScopeRowCount = useMemo(
+    () =>
+      checkableRowKeys
+        ? selectAllScopeRows.filter((row) => checkableRowKeys.has(row.rowKey)).length
+        : selectAllScopeRows.length,
+    [selectAllScopeRows, checkableRowKeys],
+  );
+
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       const scopeRows = checkableRowKeys
@@ -442,6 +453,8 @@ export function useTableSelection(
     selectedRowKeys,
     allSelected,
     selectAllScopeSelectedCount,
+    selectAllScopeRowCount,
+    selectionCapMax: maxSelectionLength,
     handleSelectAll,
     handleSelectRow,
     setSelectionExternal,

@@ -37,10 +37,20 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
   useEffect(() => {
     const host = fieldsetRef.current;
     if (!collapsible || !collapsed || !host || typeof MutationObserver === 'undefined') return;
+    // [G2-R5-视角4-02] a field that is already aria-invalid at attach time
+    // never mutates again — reveal it now instead of waiting for a mutation.
+    // Deferred one microtask: a synchronous setCollapsed here triggers a
+    // cascading render in the effect body (react-hooks/set-state-in-effect).
+    if (host.querySelector('[aria-invalid="true"]')) {
+      queueMicrotask(() => setCollapsed(false));
+      return;
+    }
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if ((mutation.target as Element | null)?.getAttribute?.('aria-invalid') === 'true') {
-          setCollapsed(false);
+          // observer callbacks already run as microtasks — the microtask hop
+          // just makes that explicit to the react-compiler set-state-in-effect rule
+          queueMicrotask(() => setCollapsed(false));
           return;
         }
       }

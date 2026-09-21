@@ -20,7 +20,16 @@
         "action": "ajax",
         "args": { "url": "/r/PurchaseOrder__save", "method": "post", "includeScope": "*" },
         "messages": { "success": "采购单已提交" },
-        "then": [{ "action": "setValue", "args": { "path": "orderSaved", "value": true } }]
+        "then": [
+          { "action": "setValue", "args": { "path": "orderSaved", "value": true } },
+          {
+            "action": "setValue",
+            "args": {
+              "path": "orderSavedSnapshot",
+              "value": "${ CONCATENATE(supplier ?? '', orderDate ?? '', discountRate ?? '', taxRate ?? '', $JSON.stringify(items ?? [])) }"
+            }
+          }
+        ]
       },
       "body": [
         {
@@ -113,7 +122,7 @@
         {
           "type": "text",
           "testid": "order-save-report",
-          "text": "提交状态：${orderSaved ? \"已提交 ✓\" : \"未提交\"}",
+          "text": "提交状态：${ !orderSaved ? \"未提交\" : (CONCATENATE(supplier ?? '', orderDate ?? '', discountRate ?? '', taxRate ?? '', $JSON.stringify(items ?? [])) === (orderSavedSnapshot ?? '') ? \"已提交 ✓\" : \"已修改，未重新提交\") }",
           "className": "text-sm"
         }
       ],

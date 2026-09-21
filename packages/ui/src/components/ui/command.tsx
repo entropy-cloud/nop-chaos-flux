@@ -63,7 +63,11 @@ function CommandInput({
     <div data-slot="command-input-wrapper" className="p-1 pb-0">
       <InputGroup className="h-8! rounded-lg! border-input/30 bg-input/30 shadow-none! *:data-[slot=input-group-addon]:pl-2!">
         <CommandPrimitive.Input
-          data-slot="command-input"
+          // [G6-R4-视角3-01] slot fix: the group-level focus ring matches
+          // [data-slot=input-group-control]:focus-visible — the previous
+          // "command-input" marker never matched, so keyboard focus was
+          // invisible inside the ⌘K palette.
+          data-slot="input-group-control"
           className={cn(
             'w-full text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50',
             className,

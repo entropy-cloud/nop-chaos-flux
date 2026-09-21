@@ -4,6 +4,7 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
+import { XIcon } from 'lucide-react';
 import { useFormFieldFromProps } from '../field-utils.js';
 import type { InputTimeSchema } from '../schemas.js';
 import {
@@ -235,7 +236,8 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
           className="absolute right-1"
           onClick={() => handlers.onChange(undefined)}
         >
-          ✕
+          {/* [G2-视角1-01] icon family contract — was the raw '✕' text glyph. */}
+          <XIcon className="size-3" aria-hidden="true" />
         </Button>
       ) : null}
     </div>

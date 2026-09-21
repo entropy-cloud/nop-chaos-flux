@@ -97,6 +97,9 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [visibleCount, setVisibleCount] = React.useState(VISIBLE_STEP);
+  // [G2-R7-视角9-01] roving tabindex cursor: exactly one option is a tab stop,
+  // arrow keys move both the cursor and the DOM focus.
+  const [activeIndex, setActiveIndex] = React.useState(0);
 
   const interactionDisabled = presentation.effectiveDisabled || presentation.readOnly;
 
@@ -152,8 +155,29 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
     if (!nextOpen) {
       setQuery('');
       setVisibleCount(VISIBLE_STEP);
+      setActiveIndex(0);
     }
   }, []);
+
+  const handleOptionKeyDown = React.useCallback(
+    (event: React.KeyboardEvent, index: number) => {
+      const deltas: Record<string, number> = {
+        ArrowDown: 1,
+        ArrowUp: -1,
+        ArrowRight: 1,
+        ArrowLeft: -1,
+      };
+      const delta = deltas[event.key];
+      if (delta === undefined) return;
+      event.preventDefault();
+      const next = Math.min(Math.max(index + delta, 0), visibleIcons.length - 1);
+      setActiveIndex(next);
+      const listbox = event.currentTarget.closest('[role="listbox"]');
+      const options = listbox?.querySelectorAll<HTMLElement>('[role="option"]');
+      options?.[next]?.focus();
+    },
+    [visibleIcons.length],
+  );
 
   if (!props.meta.visible) {
     return null;
@@ -205,6 +229,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
                   onChange={(e) => {
                     setQuery(e.target.value);
                     setVisibleCount(VISIBLE_STEP);
+                    setActiveIndex(0);
                   }}
                 />
               </div>
@@ -220,7 +245,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
                 {t('flux.common.noResults')}
               </div>
             ) : (
-              visibleIcons.map((iconName) => {
+              visibleIcons.map((iconName, index) => {
                 const IconComp = resolveLucideIcon(iconName);
                 const isSelected = matchIcon(currentValue, iconName);
                 return (
@@ -230,6 +255,8 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
                     role="option"
                     aria-selected={isSelected}
                     aria-label={iconName}
+                    tabIndex={index === activeIndex ? 0 : -1}
+                    onKeyDown={(event) => handleOptionKeyDown(event, index)}
                     className={cn(
                       'size-8',
                       isSelected && 'bg-accent text-accent-foreground ring-1 ring-primary',

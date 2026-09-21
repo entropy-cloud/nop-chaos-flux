@@ -75,7 +75,7 @@ describe('Dialog', () => {
     expect(popup!.style.transform).toBe('translate(-50%, -50%)');
   });
 
-  it('uses token-backed overlay chrome instead of hardcoded black alpha', () => {
+  it('uses the unified surface-overlay token (V12f G6-视角7-02 single-track)', () => {
     render(
       <Dialog modal={false} open>
         <DialogContent showCloseButton={false}>Overlay contract</DialogContent>
@@ -83,8 +83,8 @@ describe('Dialog', () => {
     );
 
     const overlay = document.body.querySelector('[data-slot="dialog-overlay"]');
-    expect(overlay?.className).toContain('bg-[var(--dialog-overlay-bg)]');
-    expect(overlay?.className).not.toContain('bg-surface-overlay');
+    expect(overlay?.className).toContain('bg-surface-overlay');
+    expect(overlay?.className).not.toContain('bg-[var(--dialog-overlay-bg)]');
     expect(overlay?.className).not.toContain('bg-black/10');
   });
 

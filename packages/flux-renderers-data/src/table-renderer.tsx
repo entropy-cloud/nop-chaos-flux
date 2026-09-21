@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
-  isEditableKeyboardTarget,
   resolveRendererSlotContent,
   useRendererRuntime,
   useSchemaProps,
@@ -51,6 +50,7 @@ import { useTableHandle } from './table-renderer/use-table-handle.js';
 import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache.js';
 import { useColumnResize } from './table-renderer/use-column-resize.js';
 import { isDevRuntime, readChildren, useTableTree } from './table-renderer/use-table-tree.js';
+import { createSelectAllKeyDownHandler, warnDevOptionRowValueOverride } from './table-renderer/table-selection-feedback.js';
 import { useTableLazyChildren } from './table-renderer/use-table-lazy-children.js';
 import { useRowDragSort } from './table-renderer/use-row-drag-sort.js';
 import { useAutoFillHeight } from './table-renderer/use-auto-fill-height.js';
@@ -238,19 +238,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   // drives the row state markers; warn once in dev when it coexists with
   // rowSelection so the override is visible to authors.
   useEffect(() => {
-    const optionRow = tableSchemaProps.optionRow;
-    const binding = optionRow && typeof optionRow === 'object' ? optionRow.value : undefined;
-    if (binding === undefined || binding === null || binding === '' || !tableSchemaProps.rowSelection) {
-      return;
-    }
-    if (!isDevRuntime()) {
-      return;
-    }
-    console.warn(
-      '[flux:table] optionRow.value overrides rowSelection for row state markers. ' +
-        'Row selection checkboxes keep working and dispatch onSelectionChange, but visual ' +
-        'selected markers follow the binding.',
-    );
+    warnDevOptionRowValueOverride(tableSchemaProps);
   }, [tableSchemaProps]);
 
   // P1-3: retry path for a failed lazy load. refreshNode clears the error state
@@ -325,43 +313,43 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     selectedRowKeys,
     allSelected,
     selectAllScopeSelectedCount,
+    selectAllScopeRowCount,
     handleSelectAll,
     handleSelectRow,
     setSelectionExternal,
     isRowCheckable,
     isAtMaxSelection,
+    selectionCapMax,
   } = useTableSelection(tableSchemaProps, treeFlattenedData, props.events.onSelectionChange, helpers, {
     selectAllRows,
   });
 
-  // Page-aware header select-all state. The legacy formula (all mode) is kept
-  // byte-identical; the page mode scopes it to the select-all slice.
+  // Page-aware header select-all state. The 'page' mode scopes to the page
+  // slice; [G3-R3-视角4-02] the 'all' mode scopes to the FLATTENED select-all
+  // row set (tree mode: parents + children) via the hook — the legacy
+  // `selectedRowKeys.size === filteredData.length` cross-check compared a
+  // flattened selection count against the top-level row count and pinned the
+  // header checkbox to unchecked whenever any child row existed.
   const headerSelectAllChecked = selectAllRows
     ? allSelected
-    : allSelected && selectedRowKeys.size === filteredData.length && filteredData.length > 0;
-  const headerSelectAllIndeterminate = !headerSelectAllChecked && selectAllRows
-    ? selectAllScopeSelectedCount > 0
+    : allSelected && selectAllScopeRowCount > 0;
+  const headerSelectAllIndeterminate = selectAllRows
+    ? !headerSelectAllChecked && selectAllScopeSelectedCount > 0
     : !headerSelectAllChecked && selectedRowKeys.size > 0;
 
+  // [G3-R2-视角4-01] selection cap surfaced as countable feedback (container
+  // markers + a header live-region hint, see TableHeaderRow).
+  const selectionMax = selectionCapMax;
+  const selectionCapped = isAtMaxSelection && selectionCapMax !== undefined;
+
   // D1 G-B2 Decision 3: ⌘/ctrl+A selects all checkable rows of the current view.
-  // Trigger domain = focus inside the table container (container-level React
-  // onKeyDown bubble); editable targets (inputs) keep the native select-all.
   const modifierSelectEnabled =
     tableSchemaProps.rowSelection?.modifierSelect === true &&
     tableSchemaProps.rowSelection?.type !== 'radio';
-  const handleContainerKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!modifierSelectEnabled) {
-      return;
-    }
-    if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'a') {
-      return;
-    }
-    if (isEditableKeyboardTarget(event.target)) {
-      return;
-    }
-    event.preventDefault();
-    handleSelectAll(true);
-  };
+  const handleContainerKeyDown = createSelectAllKeyDownHandler({
+    enabled: modifierSelectEnabled,
+    onSelectAll: () => handleSelectAll(true),
+  });
   // H10: `createFixedColumnLayout` only reads `schemaProps.rowSelection` + the
   // columns' `fixed`/`width` + `showExpandColumn`. Memoizing on those specific
   // values (instead of the whole `tableSchemaProps`, whose identity churns every
@@ -520,6 +508,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-responsive-expand={responsiveExpandActive ? 'true' : undefined}
+      data-selection-capped={selectionCapped ? 'true' : undefined}
+      data-selection-count={selectionMax !== undefined ? selectedRowKeys.size : undefined}
+      data-selection-max={selectionMax}
       {...containerInteractions}
     >
       {hasRendererSlotContent(headerContent) ? (
@@ -602,6 +593,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
                 onClearFilters={clearFilters}
                 onSelectAll={handleSelectAll}
                 selectAllDisabled={isAtMaxSelection && !allSelected}
+                selectionCapped={selectionCapped}
+                selectedCount={selectedRowKeys.size}
+                selectionMax={selectionMax}
                 columnResize={schemaProps.columnResize}
                 resizeApi={resizeApi}
                 affixHeader={schemaProps.affixHeader}

@@ -213,8 +213,10 @@ describe('table C4.1 standalone searchable region (P1-5)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: t('flux.table.filter') }));
 
+    // [G3-视角4-01] the search input lives in a Popover (not a dropdown menu —
+    // Base UI open-menu typeahead swallowed keystrokes inside menus).
     const searchPopup = document.querySelector(
-      '[data-slot="dropdown-menu-content"]',
+      '[data-slot="popover-content"]',
     ) as HTMLElement | null;
     expect(searchPopup).not.toBeNull();
 

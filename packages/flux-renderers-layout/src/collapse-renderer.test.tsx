@@ -291,6 +291,43 @@ describe('CollapseRenderer (W3a — collapsible content group)', () => {
     expect(screen.getByText('changed:yes')).toBeTruthy();
   });
 
+  it('[G1-R2-视角3-01] disabled trigger carries a visual disabled contract (dimmed, hover suppressed)', () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/collapse-disabled-visual"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'collapse',
+              items: [
+                { key: 'a', title: 'A', body: [{ type: 'text', text: 'body-A' }] },
+                { key: 'b', title: 'B', disabled: true, body: [{ type: 'text', text: 'body-B' }] },
+              ],
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const enabledTrigger = triggers()[0] as HTMLElement;
+    const disabledTrigger = triggers()[1] as HTMLElement;
+    // Base UI emits aria-disabled (no native disabled attr), so the disabled
+    // state must be styled through the aria-disabled variants: dimmed and with
+    // pointer events off so the enabled-only hover:bg-muted feedback cannot fire.
+    expect(disabledTrigger.getAttribute('aria-disabled')).toBe('true');
+    expect(disabledTrigger.className).toContain('aria-disabled:opacity-50');
+    expect(disabledTrigger.className).toContain('aria-disabled:pointer-events-none');
+    // Enabled sibling: Base UI emits aria-disabled="false", which the
+    // `[aria-disabled='true']` variants do not match — hover feedback and full
+    // opacity stay intact.
+    expect(enabledTrigger.getAttribute('aria-disabled')).not.toBe('true');
+  });
+
   it('degrades scope ownership without valueStatePath to local controlled with a dev warning', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const SchemaRenderer = createLayoutSchemaRenderer();

@@ -125,12 +125,13 @@ export function CrudToolbarBlocks(props: {
             data-slot={`${slot}-toolbar-pagination`}
             className="flex items-center gap-2"
           >
+            {/* [G3-视角10-01] disabled state rides aria-disabled, consumed by the
+                ui pagination primitive — no per-call-site class copies. */}
             <PaginationPrevious
               onClick={() => {
                 if (pagination.currentPage <= 1) return;
                 onPageChange(pagination.currentPage - 1);
               }}
-              className={pagination.currentPage <= 1 ? 'pointer-events-none opacity-50' : undefined}
               aria-disabled={pagination.currentPage <= 1 ? true : undefined}
             />
             <span className="text-sm text-muted-foreground">
@@ -141,11 +142,6 @@ export function CrudToolbarBlocks(props: {
             </span>
             <PaginationNext
               onClick={() => onPageChange(pagination.currentPage + 1)}
-              className={
-                summary.total != null && pagination.currentPage >= Math.ceil(summary.total / pagination.pageSize)
-                  ? 'pointer-events-none opacity-50'
-                  : undefined
-              }
               aria-disabled={
                 summary.total != null && pagination.currentPage >= Math.ceil(summary.total / pagination.pageSize)
                   ? true

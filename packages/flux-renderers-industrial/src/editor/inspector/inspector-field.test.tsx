@@ -212,3 +212,56 @@ describe('InspectorField widget rendering', () => {
     expect(container.querySelector('input')).toBeTruthy();
   });
 });
+
+// [G5-视角4-01] scada 属性面板 Label 未与控件关联（无 htmlFor/id），Switch 标签不可点击。
+// 协议③：属性断言钉住 label[for] ↔ 控件 id 关联（switch/select/text/json-editor 四分支）。
+describe('[G5-视角4-01] inspector Label ↔ control association (htmlFor/id)', () => {
+  function associatedControl(container: HTMLElement): HTMLElement | null {
+    const label = container.querySelector('label');
+    expect(label).toBeTruthy();
+    const forId = label!.getAttribute('for');
+    expect(forId).toBeTruthy();
+    return forId ? container.querySelector(`[id="${forId}"]`) : null;
+  }
+
+  it('switch widget label points at the Switch form control (label click toggles)', () => {
+    // Base UI Switch renders the htmlFor 目标为其视觉隐藏的原生 checkbox input（form 关联控件），
+    // 可见 role="switch" span 经 aria-labelledby 关联；label 点击经该 input 驱动开关（见下方行为断言）。
+    const field = makeField({ type: 'boolean', widget: 'switch' });
+    const { container } = render(<InspectorField field={field} value={true} onChange={() => undefined} />);
+    const control = associatedControl(container);
+    expect(control?.tagName).toBe('INPUT');
+    expect(control?.getAttribute('type')).toBe('checkbox');
+    expect(container.querySelector('[role="switch"]')).toBeTruthy();
+  });
+
+  it('select widget label points at the native select', () => {
+    const field = makeField({ type: 'string', widget: 'select', enum: ['a', 'b'] });
+    const { container } = render(<InspectorField field={field} value="a" onChange={() => undefined} />);
+    const control = associatedControl(container);
+    expect(control?.tagName).toBe('SELECT');
+  });
+
+  it('text-input widget label points at the input', () => {
+    const field = makeField({ type: 'string', widget: 'text-input' });
+    const { container } = render(<InspectorField field={field} value="x" onChange={() => undefined} />);
+    const control = associatedControl(container);
+    expect(control?.tagName).toBe('INPUT');
+  });
+
+  it('json-editor widget label points at the textarea', () => {
+    const field = makeField({ type: 'object', widget: 'json-editor' });
+    const { container } = render(<InspectorField field={field} value={{ a: 1 }} onChange={() => undefined} />);
+    const control = associatedControl(container);
+    expect(control?.tagName).toBe('TEXTAREA');
+  });
+
+  it('clicking the switch label toggles the switch (label activation reaches the control)', () => {
+    const field = makeField({ type: 'boolean', widget: 'switch' });
+    let captured: unknown = true;
+    const { container } = render(<InspectorField field={field} value={true} onChange={(v) => { captured = v; }} />);
+    const label = container.querySelector('label') as HTMLLabelElement;
+    fireEvent.click(label);
+    expect(captured).toBe(false);
+  });
+});

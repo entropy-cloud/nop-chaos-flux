@@ -1,6 +1,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { resetLeaferMock } from '../../test-support/leafer-ui-mock.js';
 import { registerBuiltinScadaSymbols } from '../../symbols/register-builtin.js';
@@ -455,5 +456,39 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     // raw key 不应泄漏（证明显式未命中检测生效，非 `||` 短路）。
     expect(buttonByTestId(container, 'toolbox-btn-fit').textContent).not.toContain('industrial.scada.editor.toolbox.label.fit');
     expect(buttonByTestId(container, 'toolbox-btn-align-left').textContent).not.toContain('industrial.scada.editor.toolbox.label.alignLeft');
+  });
+});
+
+// [G5-R3-视角8-01] 工具箱 7 组 ButtonGroup 约 28 个按钮单行排布，窄容器下尾部按钮（撤销/重做/
+// 导出/导入）被祖先 overflow:hidden 裁剪且无替代入口。协议③：以样式契约断言钉住——工具箱容器
+// 规则必须允许换行（flex-wrap: wrap），组内按钮亦可在极窄容器换行，且工具箱自身不得 overflow:hidden。
+// 样式源断言沿用 v12e-family2-scada-state.test.tsx 的 editor-styles readFileSync 先例。
+const editorStylesSource = readFileSync('src/editor/styles.css', 'utf8');
+
+describe('[G5-R3-视角8-01] toolbox single-row overflow → wrap contract', () => {
+  function toolboxRuleBody(): string {
+    const rule = editorStylesSource.match(/\.nop-scada-editor-toolbox\s*\{([^}]*)\}/);
+    if (!rule) throw new Error('.nop-scada-editor-toolbox rule not found in editor styles');
+    return rule[1];
+  }
+
+  it('toolbox container rule allows wrapping (trailing buttons reachable when narrow)', () => {
+    expect(toolboxRuleBody()).toMatch(/flex-wrap:\s*wrap/);
+  });
+
+  it('toolbox container rule does not hide overflow (no unreachable buttons)', () => {
+    expect(toolboxRuleBody()).not.toMatch(/overflow:\s*hidden/);
+  });
+
+  it('button groups inside the toolbox wrap as units when very narrow', () => {
+    expect(editorStylesSource).toMatch(
+      /\.nop-scada-editor-toolbox\s+\[data-slot='button-group'\]\s*\{[^}]*flex-wrap:\s*wrap/,
+    );
+  });
+
+  it('the rendered toolbox root carries the marker class the wrap rule keys on', () => {
+    const { container } = renderPanel([]);
+    const root = container.querySelector('[data-slot="scada-editor-toolbox"]') as HTMLElement;
+    expect(root.classList.contains('nop-scada-editor-toolbox')).toBe(true);
   });
 });

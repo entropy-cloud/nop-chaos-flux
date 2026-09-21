@@ -41,6 +41,7 @@
                   "valueField": "value",
                   "labelField": "label",
                   "childrenKey": "children",
+                  "clearable": true,
                   "placeholder": "选择部门筛选"
                 }
               ]

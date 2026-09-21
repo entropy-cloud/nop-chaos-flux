@@ -105,7 +105,7 @@ describe('condition-builder config integration display behavior', () => {
       expect(screen.queryAllByText('Add condition').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('hides add condition button when at limit but keeps add group', () => {
+    it('hides both add buttons when at limit (V12f G2-R7-视角4-01: Add-Group gated too)', () => {
       const value = {
         id: 'g1',
         conjunction: 'and' as const,
@@ -126,7 +126,8 @@ describe('condition-builder config integration display behavior', () => {
       };
       renderGroup({ maxItemsPerGroup: 2, builderMode: 'full' }, value);
       expect(screen.queryAllByText('Add condition')).toHaveLength(0);
-      expect(screen.queryAllByText('Add group').length).toBeGreaterThanOrEqual(1);
+      // A nested group is a child of the group too — the cap gates it as well.
+      expect(screen.queryAllByText('Add group')).toHaveLength(0);
     });
 
     it('hides all add buttons when at limit and in simple mode', () => {

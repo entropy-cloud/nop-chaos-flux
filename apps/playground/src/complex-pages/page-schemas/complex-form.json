@@ -24,9 +24,30 @@
       },
       "submitAction": {
         "action": "ajax",
-        "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
-        "messages": { "success": "保存成功" },
-        "then": [{ "action": "setValue", "args": { "path": "formSaved", "value": true } }]
+        "args": {
+          "url": "/r/User__save",
+          "method": "post",
+          "includeScope": "*"
+        },
+        "messages": {
+          "success": "保存成功"
+        },
+        "then": [
+          {
+            "action": "setValue",
+            "args": {
+              "path": "formSaved",
+              "value": true
+            }
+          },
+          {
+            "action": "setValue",
+            "args": {
+              "path": "complexFormSavedSnapshot",
+              "value": "${ CONCATENATE(name ?? '', email ?? '', userType ?? '', notify ?? '', phone ?? '', company ?? '', taxId ?? '', province ?? '', city ?? '', advanced ?? '', budget ?? '', remark ?? '', agreed ?? '') }"
+            }
+          }
+        ]
       },
       "body": [
         {
@@ -52,8 +73,14 @@
               "name": "userType",
               "label": "用户类型",
               "options": [
-                { "label": "个人", "value": "personal" },
-                { "label": "企业", "value": "enterprise" }
+                {
+                  "label": "个人",
+                  "value": "personal"
+                },
+                {
+                  "label": "企业",
+                  "value": "enterprise"
+                }
               ]
             },
             {
@@ -138,9 +165,26 @@
           ]
         },
         {
+          "type": "reaction",
+          "id": "complex-form-province-clear-city",
+          "testid": "complex-form-province-clear-city",
+          "watch": "${province}",
+          "actions": [
+            {
+              "action": "setValues",
+              "args": {
+                "values": {
+                  "city": ""
+                }
+              },
+              "when": "${!!city}"
+            }
+          ]
+        },
+        {
           "type": "text",
           "testid": "complex-form-report",
-          "text": "保存状态：${formSaved ? \"已保存 ✓\" : \"未保存\"}",
+          "text": "保存状态：${ !formSaved ? \"未保存\" : (CONCATENATE(name ?? '', email ?? '', userType ?? '', notify ?? '', phone ?? '', company ?? '', taxId ?? '', province ?? '', city ?? '', advanced ?? '', budget ?? '', remark ?? '', agreed ?? '') === (complexFormSavedSnapshot ?? '') ? \"已保存 ✓\" : \"已修改，未重新保存\") }",
           "className": "text-sm col-span-2"
         }
       ],
@@ -151,7 +195,9 @@
           "variant": "primary",
           "testid": "complex-form-submit",
           "disabled": "${!agreed}",
-          "onClick": { "action": "submitForm" }
+          "onClick": {
+            "action": "submitForm"
+          }
         }
       ]
     }

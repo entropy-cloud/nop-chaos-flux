@@ -358,7 +358,10 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       if (action) { e.preventDefault(); action(); }
     } else if (e.key === ' ' || e.key === 'Space') {
       e.preventDefault();
-      dragSwap.startKeyboardDrag(event);
+      // [G4-R2-视角10-01] anchor the keyboard drag ghost at the source
+      // event's on-screen position instead of the viewport corner.
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      dragSwap.startKeyboardDrag(event, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
       setKeyboardDragEventId(event.id);
     }
   };
@@ -499,6 +502,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
             maxConcurrent={maxConcurrent} eventTemplate={regions.eventTemplate ?? undefined}
             onEventClick={onEventClick} virtualItems={virtualItems} totalSize={totalSize}
             onDragStart={dragSwap.startDrag} onCellDragStart={dragCreate.startCellDrag}
+            onCellKeyboardCreate={dragCreate.startKeyboardCreate}
             showCrossDayLines={showCrossDayLines} onEventKeyDown={handleEventKeyDown}
             eventClassName={resolved.eventClassName as string | undefined} locale={locale}
           />
@@ -512,6 +516,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           dayStartHour={dayStartHour} dayEndHour={dayEndHour}
           eventTemplate={regions.eventTemplate ?? undefined} onEventClick={onEventClick}
           onDragStart={dragSwap.startDrag} onEventKeyDown={handleEventKeyDown} locale={locale}
+          onCellDragStart={dragCreate.startCellDrag} onCellKeyboardCreate={dragCreate.startKeyboardCreate}
         />
       )}
 
@@ -521,6 +526,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           maxConcurrent={maxConcurrent} dayStartHour={dayStartHour} dayEndHour={dayEndHour}
           eventTemplate={regions.eventTemplate ?? undefined} onEventClick={onEventClick}
           onDragStart={dragSwap.startDrag} onEventKeyDown={handleEventKeyDown} locale={locale}
+          onCellDragStart={dragCreate.startCellDrag} onCellKeyboardCreate={dragCreate.startKeyboardCreate}
         />
       )}
 
@@ -571,6 +577,17 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
       {confirmDialog && (
         <CalendarConfirmDialog
           confirmDialog={confirmDialog}
+          resourceLabel={(() => {
+            // [G4-R4-视角11-01] resolve the display name instead of leaking
+            // internal ids (res-*) or the empty-resource placeholder
+            // (_default) into the dialog copy.
+            const res = displayResources.find((r) => r.id === confirmDialog.targetResource);
+            const label = res?.title || res?.text || '';
+            if (label) return label;
+            return confirmDialog.targetResource === '_default'
+              ? t('scheduling.calendar.defaultResource')
+              : confirmDialog.targetResource;
+          })()}
           onCancel={cancelSwap}
           onConfirm={executeSwap}
         />

@@ -32,6 +32,7 @@ const LINK_SHORT_TO_LONG: Record<string, GanttLinkType> = {
   FF: 'finish_to_finish',
   SF: 'start_to_finish',
 };
+const MS_PER_DAY = 86400000;
 const LINK_LONG_TO_SHORT: Record<string, string> = {
   finish_to_start: 'FS',
   start_to_start: 'SS',
@@ -143,6 +144,10 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     setCellWidth: (v: number) => { store.setState({ cellWidth: v }); },
     setTaskBarHeight: (v: number) => { store.setState({ taskBarHeight: v }); },
     setZoomLevels: (v: Map<string, GanttZoomLevel>) => { store.setState({ zoomLevels: v }); },
+    // [G4-R3-视角10-01] 锚定生产端方法形式（属性 setter 的 React-compiler
+    // 安全形态，gantt.tsx 滚动回调消费）。
+    setScrollLeft: (v: number) => { _scrollLeft = v; },
+    setContainerWidth: (v: number) => { store.setState({ containerWidth: v }); },
     get rowHeight(): number { return gs().rowHeight; },
     get containerWidth(): number { return gs().containerWidth; },
     set containerWidth(v: number) { store.setState({ containerWidth: v }); },
@@ -375,6 +380,37 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     },
 
     getAvailableZooms(): GanttZoomLevel[] { return Array.from(gs().zoomLevels.values()); },
+
+    // [G4-R3-视角11-01] "适应" must perform a real fit computation, not jump
+    // to the middle zoom slot: pick the largest minCellWidth whose task-span
+    // width fits the container, then park the viewport on the span start.
+    zoomToFit(): string | null {
+      const state = gs();
+      const zooms = Array.from(state.zoomLevels.values());
+      if (zooms.length === 0 || state.tasks.size === 0) return null;
+      let minStart = Number.POSITIVE_INFINITY;
+      let maxEnd = Number.NEGATIVE_INFINITY;
+      for (const task of state.tasks.values()) {
+        const s = new Date(task.start).getTime();
+        const e = new Date(task.end).getTime();
+        if (Number.isFinite(s) && s < minStart) minStart = s;
+        if (Number.isFinite(e) && e > maxEnd) maxEnd = e;
+      }
+      if (!Number.isFinite(minStart) || !Number.isFinite(maxEnd)) return null;
+      const spanDays = Math.max(1, Math.round((maxEnd - minStart) / MS_PER_DAY) + 1);
+      const byCellWidth = [...zooms].sort((a, b) => (a.minCellWidth ?? 0) - (b.minCellWidth ?? 0));
+      const smallest = byCellWidth[0];
+      if (!smallest) return null;
+      const containerWidth = Math.max(1, state.containerWidth);
+      let fit: GanttZoomLevel = smallest;
+      for (const z of byCellWidth) {
+        if (spanDays * (z.minCellWidth ?? state.cellWidth) <= containerWidth) fit = z;
+      }
+      api.setZoom(fit.key);
+      const fitState = gs();
+      _scrollLeft = Math.max(0, dateToPixel(new Date(minStart), fitState.scaleRange, fitState.cellWidth) - fitState.cellWidth);
+      return fit.key;
+    },
 
     destroy(): void {
       parentIndex.clear();

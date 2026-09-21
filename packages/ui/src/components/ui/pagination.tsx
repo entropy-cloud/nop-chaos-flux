@@ -38,15 +38,25 @@ function PaginationItem({ ...props }: React.ComponentProps<'li'>) {
 
 type PaginationLinkProps = {
   isActive?: boolean;
+  disabled?: boolean;
 } & Pick<React.ComponentProps<typeof Button>, 'size'> &
   React.ComponentProps<'a'>;
 
-function PaginationLink({ className, isActive, size = 'icon', ...props }: PaginationLinkProps) {
+function PaginationLink({
+  className,
+  isActive,
+  size = 'icon',
+  disabled,
+  ...props
+}: PaginationLinkProps) {
   return (
     <Button
       variant={isActive ? 'outline' : 'ghost'}
       size={size}
-      className={cn(className)}
+      // [G6] disabled pagination consumption: anchors have no :disabled pseudo,
+      // so the disabled state is exposed as aria-disabled and consumed here.
+      aria-disabled={disabled || undefined}
+      className={cn('aria-disabled:pointer-events-none aria-disabled:opacity-50', className)}
       nativeButton={false}
       render={
         <a

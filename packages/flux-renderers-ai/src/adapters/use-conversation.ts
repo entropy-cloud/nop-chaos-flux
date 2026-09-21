@@ -5,65 +5,18 @@ import { createReactMessageAdapter } from './react-adapter.js';
 import { attachAutoSave } from './use-conversation-autosave.js';
 import { hydrateConversationsFromStorage } from './use-conversation-bootstrap.js';
 import type {
-  AiConnector,
   AiConversationInfo,
   ChatMessage,
   MessageEngine,
   MessageEnginePlugin,
 } from '../engine/types.js';
-import type { UseMessageOptions } from './use-message.js';
 import type { ConversationStorageStrategy } from '../storage/types.js';
-
-export interface UseConversationOptions {
-  connector: AiConnector;
-  /**
-   * Engine-construction options forwarded to the hook's SELF-BUILT engines.
-   * `connector` and `engine` are excluded: the connector flows through the
-   * hot-swap path (open P2-1) and `engine` would be silently dropped by
-   * `buildEngine` (open P2-2 — the type contract rejects it at compile time).
-   */
-  createEngineOptions?: Omit<UseMessageOptions, 'connector' | 'engine'>;
-  storage?: ConversationStorageStrategy;
-  autoSaveMessages?: boolean;
-  /** Initial conversations to seed the list (ignored when `storage` is provided). */
-  initialConversations?: AiConversationInfo[];
-  /**
-   * AI-28: host callback invoked when a storage operation fails. Storage
-   * failures remain non-fatal (the engine and conversation list are
-   * unaffected), but the host can now observe them to toast / retry / log —
-   * instead of the previous silent `console.warn`. Receives the failing
-   * phase, the optional conversation id, and the caught error.
-   */
-  onStorageError?: (event: ConversationStorageErrorEvent) => void;
-}
-
-export interface ConversationStorageErrorEvent {
-  /** Which storage operation failed. */
-  phase:
-    | 'loadConversations'
-    | 'loadMessages'
-    | 'saveConversation'
-    | 'saveMessages'
-    | 'deleteConversation';
-  /** Conversation id when applicable (absent for list-level operations). */
-  conversationId?: string;
-  /** The caught error (typed `unknown` to avoid assuming an Error subclass). */
-  error: unknown;
-}
-
-export interface UseConversationReturn {
-  conversations: AiConversationInfo[];
-  activeConversationId: string | null;
-  /** Engine for the active conversation (null before the first switch/create). */
-  activeEngine: MessageEngine | null;
-  createConversation(params?: { title?: string; metadata?: Record<string, unknown> }): AiConversationInfo;
-  switchConversation(id: string): Promise<void>;
-  deleteConversation(id: string): Promise<void>;
-  renameConversation(id: string, title: string): void;
-  clearAll(): void;
-  /** Bind this as the `conversationController` prop on `ai-chat` (Layer B bridge). */
-  controller: AiConversationControllerBridge;
-}
+import type {
+  AiConversationControllerBridge,
+  ConversationStorageErrorEvent,
+  UseConversationOptions,
+  UseConversationReturn,
+} from './use-conversation-contracts.js';
 
 /**
  * Host-side conversation manager (engine.md §8.6, design.md §11.5).
@@ -86,6 +39,12 @@ export interface UseConversationReturn {
  * renderers. `ai-conversations` reads `conversations` / `activeConversationId`
  * from schema expressions (scope-owned, host-managed).
  */
+export type {
+  AiConversationControllerBridge,
+  ConversationStorageErrorEvent,
+  UseConversationOptions,
+  UseConversationReturn,
+} from './use-conversation-contracts.js';
 export function useConversation(options: UseConversationOptions): UseConversationReturn {
   const { connector, createEngineOptions, storage, autoSaveMessages = false, initialConversations, onStorageError } = options;
   const connectorRef = useRef(connector);
@@ -175,6 +134,11 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   // updates don't trigger re-renders (the engine is read via subscribe).
   const [engineCache] = useState(() => new Map<string, MessageEngine>());
   const [activeEngine, setActiveEngine] = useState<MessageEngine | null>(null);
+  // [G5-R4-视角5-01] conversation switch hydration state: the id whose engine is
+  // currently being loaded (null when settled). Hosts can show a loading afford
+  // instead of the lag window where the previous engine's messages still render
+  // under the new conversation.
+  const [switchingId, setSwitchingId] = useState<string | null>(null);
 
   // open P2-1 (2026-08-10): connector hot-swap fan-out. `buildEngine` captures
   // `connectorRef.current` at build time; without this fan-out a host swapping
@@ -449,6 +413,12 @@ export function useConversation(options: UseConversationOptions): UseConversatio
       engine = buildEngineFor(id);
       engineCache.set(id, engine);
       if (storage) {
+        // [G5-R4-视角5-01] the hydration await below is the lag window: drop the
+        // previous engine NOW so the chat surface shows its switch state
+        // (engine-null-switch → empty/loading) instead of the old conversation's
+        // messages under the new active id.
+        setActiveEngine(null);
+        setSwitchingId(id);
         try {
           const stored = await storage.loadMessages(id);
           // P1-3 + K-⑥ (Cycle 2 / I4): a newer switch supersedes this one only
@@ -457,6 +427,9 @@ export function useConversation(options: UseConversationOptions): UseConversatio
           // one (Failure Path FP-5). A same-id fast re-switch must NOT drop
           // this hydration wholesale.
           if (switchVersionRef.current !== myVersion && switchTargetRef.current !== id) {
+            // Displacement without a successor hydration (delete/clear) must
+            // not strand the loading marker on the dead target.
+            setSwitchingId((current) => (current === id ? null : current));
             return;
           }
           if (stored.length > 0) {
@@ -469,8 +442,12 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     }
     // P1-3 + K-⑥: a newer switch (different target) owns the active slot now —
     // do not promote this (possibly stale) engine to activeEngine.
-    if (switchVersionRef.current !== myVersion && switchTargetRef.current !== id) return;
+    if (switchVersionRef.current !== myVersion && switchTargetRef.current !== id) {
+      setSwitchingId((current) => (current === id ? null : current));
+      return;
+    }
     setActiveEngine(engine);
+    setSwitchingId((current) => (current === id ? null : current));
 
     // P1-3: evict against the CURRENT active id (activeIdRef.current), not the
     // closure-captured `id` — a createConversation between the await and here
@@ -508,6 +485,8 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     // K-⑥ (Cycle 2 / I4): displacement — invalidate any in-flight switch.
     ++switchVersionRef.current;
     switchTargetRef.current = null;
+    // [G5-R4-视角5-01] a delete also cancels any loading marker for that id.
+    setSwitchingId((current) => (current === id ? null : current));
     const removed = engineCache.get(id);
     detachEngine(id);
     engineCache.delete(id);
@@ -631,6 +610,8 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     setActiveId(null);
     activeIdRef.current = null;
     setActiveEngine(null);
+    // [G5-R4-视角5-01] nothing survives clearAll — the loading marker doesn't.
+    setSwitchingId(null);
     // K3: drain every conversation's in-flight save chain, then clear
     // storage. clearAll keeps its sync signature `(): void` (public API
     // contract) — the storage clear is chained behind the drain so the
@@ -674,6 +655,8 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     conversations,
     activeConversationId: activeId,
     activeEngine,
+    // [G5-R4-视角5-01] non-null while a switch's storage hydration is in flight.
+    switchingId,
     createConversation,
     switchConversation,
     deleteConversation,
@@ -689,11 +672,4 @@ export function useConversation(options: UseConversationOptions): UseConversatio
  * (ai-conversation-controller.ts) — keep members lockstep (FIND-19
  * adjudication, plan `2026-08-11-0335-3`).
  */
-export interface AiConversationControllerBridge {
-  createConversation(params?: { title?: string; metadata?: Record<string, unknown> }): AiConversationInfo | Promise<AiConversationInfo>;
-  switchConversation(id: string): void | Promise<void>;
-  deleteConversation(id: string): void | Promise<void>;
-  renameConversation(id: string, title: string): void;
-}
-
 export type { ChatMessage, ConversationStorageStrategy };

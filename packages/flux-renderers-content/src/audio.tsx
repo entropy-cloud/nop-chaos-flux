@@ -44,7 +44,17 @@ export function AudioRenderer(props: RendererComponentProps<AudioSchema>) {
         {poster ? (
           <img src={poster} alt="" data-slot="audio-poster" className="max-w-full rounded-md" />
         ) : null}
-        <figcaption data-slot="audio-fallback" aria-live="polite" className="text-xs text-muted-foreground">
+        <figcaption
+          data-slot="audio-fallback"
+          aria-live="polite"
+          className={cn(
+            'text-xs',
+            // [G1-R2-视角5-01] failure is destructive-styled, distinct from the muted empty state.
+            errored
+              ? 'rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive'
+              : 'text-muted-foreground',
+          )}
+        >
           {errored ? t('flux.common.loadFailed') : t('flux.common.noSource')}
         </figcaption>
       </figure>

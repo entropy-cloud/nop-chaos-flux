@@ -149,3 +149,27 @@ describe('MarkdownRenderer — fenced code block verbatim preservation (sanitize
     expect(text).toContain(`"a" + 'b'`);
   });
 });
+
+describe('[G1-R5-视角8-01] markdown container overflow contract', () => {
+  it('scrolls wide GFM tables and code blocks instead of blowing out the host layout', () => {
+    const props = createMockRendererProps<MarkdownSchema>({
+      schema: { type: 'markdown' },
+      props: {
+        content: '| a | b |\n| --- | --- |\n| 1 | 2 |\n\n```js\nconst x = 1;\n```',
+      },
+    });
+    const runtime = createTestRuntime();
+    const { container } = render(
+      <TestRuntimeProvider runtime={runtime}>
+        <MarkdownRenderer {...props} />
+      </TestRuntimeProvider>,
+    );
+    const root = rootOf(container);
+    // Matches the in-repo markdown-consumer overflow baselines
+    // (ui json-viewer, markdown-editor preview): the render container owns the overflow.
+    expect(root.className).toContain('overflow-x-auto');
+    expect(root.className).toContain('max-w-full');
+    expect(root.querySelector('table')).toBeTruthy();
+    expect(root.querySelector('pre')).toBeTruthy();
+  });
+});

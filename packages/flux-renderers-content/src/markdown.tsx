@@ -132,7 +132,10 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
       data-slot="markdown"
       data-allow-html={allowHtml ? 'true' : undefined}
       data-src-loaded={src && raw.length === 0 ? 'true' : undefined}
-      className={cn('nop-markdown', props.meta.className)}
+      // [G1-R5-视角8-01] overflow contract on the render container (same
+      // baseline as the ui json-viewer and the markdown-editor preview): wide
+      // GFM tables and code blocks scroll instead of blowing out the layout.
+      className={cn('nop-markdown max-w-full overflow-x-auto', props.meta.className)}
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={rehypePlugins}>
         {source}

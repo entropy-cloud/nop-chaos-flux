@@ -142,3 +142,28 @@ describe('AudioRenderer', () => {
     expect(poster.getAttribute('src')).toBe('/cover.png');
   });
 });
+
+describe('[G1-R2-视角5-01] audio error state destructive semantics', () => {
+  it('styles the error fallback destructive and keeps the empty fallback muted', () => {
+    const emptyProps = createMockRendererProps<AudioSchema>({
+      schema: { type: 'audio' },
+      props: {},
+    });
+    const { container, rerender } = render(<AudioRenderer {...emptyProps} />);
+    const emptyFallback = container.querySelector('[data-slot="audio-fallback"]') as HTMLElement;
+    expect(emptyFallback.className).toContain('text-muted-foreground');
+    expect(emptyFallback.className).not.toContain('text-destructive');
+
+    const errorProps = createMockRendererProps<AudioSchema>({
+      schema: { type: 'audio' },
+      props: { src: '/missing.mp3' },
+    });
+    rerender(<AudioRenderer {...errorProps} />);
+    fireEvent.error(container.querySelector('[data-slot="audio-media"]') as HTMLAudioElement);
+    const errorFallback = container.querySelector('[data-slot="audio-fallback"]') as HTMLElement;
+    expect(errorFallback.className).toContain('text-destructive');
+    expect(errorFallback.className).not.toContain('text-muted-foreground');
+    expect(errorFallback.className).toContain('border-destructive');
+    expect(errorFallback.className).toContain('bg-destructive');
+  });
+});

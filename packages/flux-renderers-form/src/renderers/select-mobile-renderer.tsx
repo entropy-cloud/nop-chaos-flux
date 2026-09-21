@@ -71,8 +71,12 @@ export function renderMobileOptionRow(
     >
       <span
         aria-hidden="true"
+        data-shape={ctx.multiple ? 'square' : 'circle'}
         className={cn(
-          'flex size-5 shrink-0 items-center justify-center rounded-full border',
+          'flex size-5 shrink-0 items-center justify-center border',
+          // [G2-R2-视角4-01] multi-select rows speak the square-checkbox
+          // language (tree-select mobile sheet); the circle stays single-select.
+          ctx.multiple ? 'rounded-[4px]' : 'rounded-full',
           ctx.selected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40',
         )}
       >

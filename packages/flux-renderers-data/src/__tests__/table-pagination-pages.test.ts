@@ -1,75 +1,90 @@
 import { describe, it, expect } from 'vitest';
-import { computeWindowRange } from '../table-renderer/table-pagination-bar.js';
+import {
+  buildPageWindow,
+  shouldShowFirstPage,
+  shouldShowLastPage,
+  shouldShowLeadingEllipsis,
+  shouldShowTrailingEllipsis,
+} from '../pagination-window.js';
 
-describe('computeWindowRange', () => {
-  it('returns [1, 0] for 0 pages', () => {
-    expect(computeWindowRange(1, 0)).toEqual([1, 0]);
+/**
+ * [G3-视角10-01] unified pagination window contract. Supersedes the former
+ * `computeWindowRange` spec (table-pagination-bar's private [start, end]
+ * algorithm): the bar now renders the SAME window shape as the standalone
+ * pagination renderer via the shared `buildPageWindow`, so this suite pins the
+ * unified behavior with equivalent coverage (show-all threshold, containment,
+ * no duplicate with first/last, boundary windows).
+ */
+describe('buildPageWindow (unified pagination window)', () => {
+  it('returns [1] for 0 pages', () => {
+    expect(buildPageWindow(1, 0)).toEqual([1]);
   });
 
-  it('returns [1, 1] for 1 page', () => {
-    expect(computeWindowRange(1, 1)).toEqual([1, 1]);
+  it('returns [1] for 1 page', () => {
+    expect(buildPageWindow(1, 1)).toEqual([1]);
   });
 
   it('returns [1, 2] for 2 pages', () => {
-    expect(computeWindowRange(1, 2)).toEqual([1, 2]);
-    expect(computeWindowRange(2, 2)).toEqual([1, 2]);
+    expect(buildPageWindow(1, 2)).toEqual([1, 2]);
+    expect(buildPageWindow(2, 2)).toEqual([1, 2]);
   });
 
-  it('returns [1, n] for totalPages <= 7 (show all)', () => {
-    expect(computeWindowRange(1, 3)).toEqual([1, 3]);
-    expect(computeWindowRange(2, 5)).toEqual([1, 5]);
-    expect(computeWindowRange(4, 7)).toEqual([1, 7]);
+  it('returns all pages for totalPages <= windowSize + 2 (show all)', () => {
+    expect(buildPageWindow(1, 3)).toEqual([1, 2, 3]);
+    expect(buildPageWindow(2, 5)).toEqual([1, 2, 3, 4, 5]);
+    expect(buildPageWindow(4, 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
   });
 
   it('window always contains currentPage', () => {
     for (let tp = 8; tp <= 30; tp += 7) {
       for (let cp = 1; cp <= tp; cp++) {
-        const [s, e] = computeWindowRange(cp, tp);
-        expect(s).toBeLessThanOrEqual(cp);
-        expect(e).toBeGreaterThanOrEqual(cp);
+        const pages = buildPageWindow(cp, tp);
+        expect(pages).toContain(cp);
       }
     }
   });
 
-  it('window never produces duplicates with first/last page', () => {
+  it('window never duplicates the first/last page', () => {
     const tp = 20;
     for (let cp = 1; cp <= tp; cp++) {
-      const [s, e] = computeWindowRange(cp, tp);
-      if (s === 1 || e === tp) continue;
-      expect(s).toBeGreaterThan(1);
-      expect(e).toBeLessThan(tp);
+      const pages = buildPageWindow(cp, tp);
+      expect(new Set(pages).size).toBe(pages.length);
+      if (shouldShowFirstPage(pages)) {
+        expect(pages).not.toContain(1);
+      }
+      if (shouldShowLastPage(pages, tp)) {
+        expect(pages).not.toContain(tp);
+      }
     }
   });
 
-  it('page 1 of 20: window is [1, 3]', () => {
-    expect(computeWindowRange(1, 20)).toEqual([1, 3]);
+  it('page 1 of 20: window is [1..5], no leading ellipsis, first page hidden', () => {
+    expect(buildPageWindow(1, 20)).toEqual([1, 2, 3, 4, 5]);
+    expect(shouldShowFirstPage(buildPageWindow(1, 20))).toBe(false);
+    expect(shouldShowLeadingEllipsis(buildPageWindow(1, 20))).toBe(false);
+    expect(shouldShowLastPage(buildPageWindow(1, 20), 20)).toBe(true);
+    expect(shouldShowTrailingEllipsis(buildPageWindow(1, 20), 20)).toBe(true);
   });
 
-  it('page 2 of 20: window is [1, 3]', () => {
-    expect(computeWindowRange(2, 20)).toEqual([1, 3]);
+  it('page 3 of 20: window is [1..5] (clamped start)', () => {
+    expect(buildPageWindow(3, 20)).toEqual([1, 2, 3, 4, 5]);
   });
 
-  it('page 3 of 20: window is [2, 4]', () => {
-    expect(computeWindowRange(3, 20)).toEqual([2, 4]);
+  it('page 10 of 20: window is [8..12] with first/last + both ellipses', () => {
+    const pages = buildPageWindow(10, 20);
+    expect(pages).toEqual([8, 9, 10, 11, 12]);
+    expect(shouldShowFirstPage(pages)).toBe(true);
+    expect(shouldShowLeadingEllipsis(pages)).toBe(true);
+    expect(shouldShowTrailingEllipsis(pages, 20)).toBe(true);
+    expect(shouldShowLastPage(pages, 20)).toBe(true);
   });
 
-  it('page 10 of 20: window is [9, 11]', () => {
-    expect(computeWindowRange(10, 20)).toEqual([9, 11]);
-  });
-
-  it('page 19 of 20: window is [18, 20]', () => {
-    expect(computeWindowRange(19, 20)).toEqual([18, 20]);
-  });
-
-  it('page 20 of 20: window is [18, 20]', () => {
-    expect(computeWindowRange(20, 20)).toEqual([18, 20]);
-  });
-
-  it('page 1 of 8: window is [1, 3]', () => {
-    expect(computeWindowRange(1, 8)).toEqual([1, 3]);
-  });
-
-  it('page 8 of 8: window is [6, 8]', () => {
-    expect(computeWindowRange(8, 8)).toEqual([6, 8]);
+  it('page 20 of 20: window is [16..20], trailing ellipsis hidden, last hidden', () => {
+    const pages = buildPageWindow(20, 20);
+    expect(pages).toEqual([16, 17, 18, 19, 20]);
+    expect(shouldShowFirstPage(pages)).toBe(true);
+    expect(shouldShowLeadingEllipsis(pages)).toBe(true);
+    expect(shouldShowTrailingEllipsis(pages, 20)).toBe(false);
+    expect(shouldShowLastPage(pages, 20)).toBe(false);
   });
 });

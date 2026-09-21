@@ -65,7 +65,9 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
     'data-card-id': card.id,
     'data-column-id': column.id,
     'data-card-index': index,
-    role: 'button',
+    // [G4-视角9-01][G4-视角9-02] listitem 而非 button——根节点内含真实移除
+    // 按钮，交互角色不得嵌套；列表结构层由 listitem 承担，点击/键盘行为保留。
+    role: 'listitem',
     tabIndex,
     'aria-label': cardLabel,
     onClick: clickFn,

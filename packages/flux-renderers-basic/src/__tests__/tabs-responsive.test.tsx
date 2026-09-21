@@ -56,7 +56,7 @@ describe('tabs renderer — responsive (M1d)', () => {
     expect(tabsList.className).toContain('overflow-x-auto');
   });
 
-  it('does not add horizontal scroll classes on desktop', () => {
+  it('desktop TabsList scrolls horizontally without hiding the scrollbar (V12f G1-R6-视角8-01)', () => {
     mobileState.isMobile = false;
     renderTabs({
       type: 'tabs',
@@ -64,7 +64,10 @@ describe('tabs renderer — responsive (M1d)', () => {
     });
 
     const tabsList = document.querySelector('[data-slot="tabs-list"]') as HTMLElement;
-    expect(tabsList.className).not.toContain('overflow-x-auto');
+    // Desktop shares the horizontal overflow contract (plan 488 Phase 1);
+    // only the scrollbar-hide treatment stays mobile-only.
+    expect(tabsList.className).toContain('overflow-x-auto');
+    expect(tabsList.className).not.toContain('nop-scrollbar-hide');
   });
 
   it('renders the swipe panels wrapper on mobile only', () => {

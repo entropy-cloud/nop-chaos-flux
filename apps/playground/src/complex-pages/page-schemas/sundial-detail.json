@@ -434,7 +434,7 @@
                   "body": [
                     {
                       "type": "icon",
-                      "icon": "tray",
+                      "icon": "inbox",
                       "size": 14,
                       "color": "#636363"
                     },
@@ -445,17 +445,12 @@
                     },
                     {
                       "type": "text",
-                      "text": "${list === 'work' ? '工作' : list === 'family' ? '家庭' : '收件箱'}",
-                      "className": "flex-1"
-                    },
-                    {
-                      "type": "text",
                       "text": "",
-                      "className": "block w-2.5 h-2.5 rounded-full sd-list-dot-blue"
+                      "className": "${ list === 'work' ? 'block w-2.5 h-2.5 rounded-full sd-list-dot-blue' : list === 'family' ? 'block w-2.5 h-2.5 rounded-full sd-list-dot-orange' : 'block w-2.5 h-2.5 rounded-full sd-list-dot-neutral' }"
                     },
                     {
                       "type": "text",
-                      "text": "工作",
+                      "text": "${ list === 'work' ? '工作' : list === 'family' ? '家庭' : '收件箱' }",
                       "className": "text-xs text-[#0d0d0d]"
                     }
                   ],
@@ -620,7 +615,8 @@
                             "data": {
                               "id": 1
                             }
-                          }
+                          },
+                          "confirmText": "确认删除该子任务？"
                         },
                         {
                           "action": "setValue",
@@ -704,7 +700,8 @@
                             "data": {
                               "id": 2
                             }
-                          }
+                          },
+                          "confirmText": "确认删除该子任务？"
                         },
                         {
                           "action": "setValue",
@@ -788,7 +785,8 @@
                             "data": {
                               "id": 3
                             }
-                          }
+                          },
+                          "confirmText": "确认删除该子任务？"
                         },
                         {
                           "action": "setValue",
@@ -811,11 +809,69 @@
               ]
             },
             {
-              "type": "input-text",
-              "name": "subtask-add",
-              "className": "sd-input",
-              "placeholder": "添加子任务…",
-              "testid": "sundial-detail-subtask-add"
+              "type": "form",
+              "id": "sundial-subtask-add-form",
+              "testid": "sundial-subtask-add-form",
+              "bodyClassName": "p-0 mt-1 flex flex-col gap-2",
+              "data": {
+                "subtaskAddTitle": ""
+              },
+              "body": [
+                {
+                  "type": "input-text",
+                  "name": "subtaskAddTitle",
+                  "className": "sd-input",
+                  "placeholder": "添加子任务…",
+                  "testid": "sundial-detail-subtask-add",
+                  "required": true
+                }
+              ],
+              "actions": [
+                {
+                  "type": "button",
+                  "label": "添加子任务",
+                  "variant": "ghost",
+                  "className": "sd-btn sd-btn-ghost self-start",
+                  "testid": "sundial-detail-subtask-add-submit",
+                  "onClick": {
+                    "action": "submitForm"
+                  }
+                }
+              ],
+              "submitAction": {
+                "action": "ajax",
+                "args": {
+                  "url": "/r/Sundial__addSubtask",
+                  "method": "post",
+                  "data": {
+                    "taskId": 1,
+                    "title": "${subtaskAddTitle}"
+                  }
+                }
+              },
+              "onSubmitSuccess": [
+                {
+                  "action": "setValues",
+                  "args": {
+                    "values": {
+                      "subtaskAddTitle": ""
+                    }
+                  }
+                },
+                {
+                  "action": "setValue",
+                  "args": {
+                    "path": "subtasksRev",
+                    "value": "${(subtasksRev ?? 0) + 1}"
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "message": "子任务已添加"
+                  }
+                }
+              ]
             },
             {
               "type": "text",
@@ -934,7 +990,8 @@
                           "id": 1,
                           "trashed": true
                         }
-                      }
+                      },
+                      "confirmText": "确认移到垃圾箱？"
                     },
                     {
                       "action": "setValue",
@@ -1243,6 +1300,17 @@
       ]
     },
     {
+      "type": "data-source",
+      "name": "subtasksAll",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__subtasks",
+        "method": "get"
+      },
+      "dependsOn": ["subtasksRev"],
+      "testid": "sundial-subtasks-source"
+    },
+    {
       "type": "dialog",
       "id": "sundial-subtask-dialog",
       "title": "子任务详情",
@@ -1269,7 +1337,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "${activeSubtask === 1 ? \"收集销售数据\" : activeSubtask === 2 ? \"整理发票\" : \"撰写结论部分\"}",
+                  "text": "${ ARRAYFIND(subtasksAll?.items ?? [], st => st?.id === activeSubtask)?.title ?? '收集销售数据' }",
                   "className": "text-sm font-medium text-[#0d0d0d]",
                   "testid": "sundial-subtask-title-text"
                 }
@@ -1277,7 +1345,7 @@
             },
             {
               "type": "text",
-              "text": "子任务属于\"整理季度报税材料\"，完成后自动计入进度。",
+              "text": "子任务属于\"撰写季度复盘报告\"，完成后自动计入进度。",
               "className": "text-xs text-[#636363]"
             },
             {
@@ -1301,7 +1369,8 @@
                         "data": {
                           "id": "${activeSubtask}"
                         }
-                      }
+                      },
+                      "confirmText": "确认删除该子任务？"
                     },
                     {
                       "action": "setValue",

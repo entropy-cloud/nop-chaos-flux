@@ -14,9 +14,12 @@ interface GanttHeaderProps {
   onZoomOut?: () => void;
   /** Fired from the Today button (scroll + schema scrollToToday reaction). */
   onTodayClick?: () => void;
+  /** [G4-R3-视角11-01] Fired from the Fit button — the parent performs the
+   *  real fit computation (store.zoomToFit) so the copy's promise holds. */
+  onZoomToFit?: () => void;
 }
 
-export function GanttHeader({ store, toolbarRegion, className, onZoomChange, onZoomIn, onZoomOut, onTodayClick }: GanttHeaderProps) {
+export function GanttHeader({ store, toolbarRegion, className, onZoomIn, onZoomOut, onTodayClick, onZoomToFit }: GanttHeaderProps) {
   const handleZoomIn = () => {
     const zooms = store.getAvailableZooms();
     const idx = zooms.findIndex((z) => z.key === store.currentZoom);
@@ -36,12 +39,9 @@ export function GanttHeader({ store, toolbarRegion, className, onZoomChange, onZ
   };
 
   const handleZoomToFit = () => {
-    const zooms = store.getAvailableZooms();
-    if (zooms.length > 0) {
-      const fit = zooms[Math.floor(zooms.length / 2)];
-      store.setZoom(fit.key);
-      onZoomChange?.(fit.key);
-    }
+    // [G4-R3-视角11-01] single driver (22-01): the parent runs the real fit
+    // (store.zoomToFit) + dispatch — no fake middle-zoom-slot jump here.
+    onZoomToFit?.();
   };
 
   const handleScrollToToday = () => {

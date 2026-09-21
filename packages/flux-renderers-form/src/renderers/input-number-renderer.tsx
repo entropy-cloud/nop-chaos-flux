@@ -215,6 +215,14 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
     }
   }
 
+  // [G2-视角4-01] the stepper rail occupies right-1 + w-6 = 1.75rem from the
+  // right edge; a suffix pinned at right-3 (0.75rem) rendered underneath it.
+  // Park the suffix past the rail (right-8 = 2rem) when both are shown, and
+  // derive the input padding from the outermost overlay instead of stacking
+  // overwriting paddingRight declarations.
+  const suffixOffsetClass = showStepper ? 'right-8' : 'right-3';
+  const inputPaddingRight = showStepper ? '4rem' : suffix ? '2rem' : undefined;
+
   return (
     <div
       className={cn('nop-input-number', props.meta.className)}
@@ -245,8 +253,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           step={step}
           style={{
             ...(prefix ? { paddingLeft: '2rem' } : {}),
-            ...(suffix ? { paddingRight: '2rem' } : {}),
-            ...(showStepper ? { paddingRight: '4rem' } : {}),
+            ...(inputPaddingRight ? { paddingRight: inputPaddingRight } : {}),
           }}
           onFocus={() => {
             handlers.onFocus();
@@ -276,7 +283,10 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           onKeyDown={handleKeyDown}
         />
         {suffix ? (
-          <span data-slot="suffix" className="pointer-events-none absolute right-3 text-sm text-muted-foreground">
+          <span
+            data-slot="suffix"
+            className={cn('pointer-events-none absolute text-sm text-muted-foreground', suffixOffsetClass)}
+          >
             {suffix}
           </span>
         ) : null}

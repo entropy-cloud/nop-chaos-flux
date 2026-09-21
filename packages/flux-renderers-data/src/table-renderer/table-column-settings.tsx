@@ -96,7 +96,10 @@ export function TableColumnSettings(props: TableColumnSettingsProps) {
             className="flex gap-1 px-1.5 pb-1"
             data-slot="table-column-settings-actions"
           >
+            {/* [G3-R2-视角6-01] Base UI MenuItem closes on click by default — a
+                move is one of several moves, so keep the menu open. */}
             <DropdownMenuItem
+              closeOnClick={false}
               aria-label={`${t('flux.table.moveUp')} ${label}`}
               disabled={orderedIndex === 0}
               onClick={() => props.onMove(key, 'up')}
@@ -104,6 +107,7 @@ export function TableColumnSettings(props: TableColumnSettingsProps) {
               {t('flux.table.moveUp')}
             </DropdownMenuItem>
             <DropdownMenuItem
+              closeOnClick={false}
               aria-label={`${t('flux.table.moveDown')} ${label}`}
               disabled={orderedIndex === props.orderedColumns.length - 1}
               onClick={() => props.onMove(key, 'down')}

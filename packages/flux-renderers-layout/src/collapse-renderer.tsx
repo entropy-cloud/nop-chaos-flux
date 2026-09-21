@@ -210,6 +210,10 @@ export function CollapseRenderer(props: RendererComponentProps<CollapseSchema>) 
               onClick={() => handleToggle(key, disabled)}
               className={cn(
                 'flex w-full items-center justify-between rounded-lg border border-border px-4 py-3 text-left text-sm font-medium transition-colors hover:bg-muted',
+                // [G1-R2-视角3-01] Base UI emits aria-disabled (no native disabled
+                // attr): dim the item and drop pointer events so the enabled-only
+                // hover:bg-muted feedback cannot fire on a locked trigger.
+                'aria-disabled:pointer-events-none aria-disabled:opacity-50',
                 isOpen && 'bg-muted',
               )}
             >

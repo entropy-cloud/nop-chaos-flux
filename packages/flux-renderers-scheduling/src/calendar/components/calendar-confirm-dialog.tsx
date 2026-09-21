@@ -10,11 +10,14 @@ interface CalendarConfirmDialogProps {
     targetDate: string;
     targetResource: string;
   };
+  /** [G4-R4-视角11-01] 宿主侧解析出的资源显示名——正文不再暴露内部 ID
+   *  或空资源占位符（_default）。缺省回退原始 ID。 */
+  resourceLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 }
 
-export function CalendarConfirmDialog({ confirmDialog, onCancel, onConfirm }: CalendarConfirmDialogProps) {
+export function CalendarConfirmDialog({ confirmDialog, resourceLabel, onCancel, onConfirm }: CalendarConfirmDialogProps) {
   return (
     <CalendarOverlay
       onEscape={onCancel}
@@ -34,7 +37,7 @@ export function CalendarConfirmDialog({ confirmDialog, onCancel, onConfirm }: Ca
           {t('scheduling.calendar.moveConfirm', {
             title: confirmDialog.event.title,
             date: confirmDialog.targetDate,
-            resource: confirmDialog.targetResource,
+            resource: resourceLabel || confirmDialog.targetResource,
           })}
         </div>
         <div className="nop-calendar-confirm-actions">

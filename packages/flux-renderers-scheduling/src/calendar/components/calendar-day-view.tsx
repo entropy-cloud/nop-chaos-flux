@@ -16,6 +16,9 @@ export interface CalendarDayViewProps {
   eventTemplate?: RenderRegionHandle;
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
   onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
+  /** [G4-R3-视角11-02] 长按/键盘创建入口——与月/周视图同能力。 */
+  onCellDragStart?: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
+  onCellKeyboardCreate?: (date: string, resourceId: string) => void;
   onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
   locale?: string;
 }
@@ -32,6 +35,8 @@ export function CalendarDayView({
   eventTemplate,
   onEventClick,
   onDragStart,
+  onCellDragStart,
+  onCellKeyboardCreate,
   onEventKeyDown,
   locale = 'en-US',
 }: CalendarDayViewProps) {
@@ -57,6 +62,40 @@ export function CalendarDayView({
     }
     return map;
   })();
+
+  // [G4-R3-视角9-01] focusable hour gridcells previously had zero onKeyDown.
+  // Up/Down walk hours within a resource row; Left/Right walk resource rows.
+  const handleHourCellKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    const grid = e.currentTarget.closest('[role="grid"]');
+    if (!grid) return;
+    const cells = Array.from(grid.querySelectorAll<HTMLElement>('[role="gridcell"]'));
+    const currentIdx = cells.indexOf(e.currentTarget);
+    if (currentIdx < 0) return;
+    let nextIdx = currentIdx;
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        nextIdx = Math.min(currentIdx + 1, cells.length - 1);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        nextIdx = Math.max(currentIdx - 1, 0);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        nextIdx = Math.min(currentIdx + totalHours, cells.length - 1);
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        nextIdx = Math.max(currentIdx - totalHours, 0);
+        break;
+      default:
+        return;
+    }
+    if (nextIdx !== currentIdx) {
+      cells[nextIdx]?.focus();
+    }
+  };
 
   return (
     <div data-slot="calendar-matrix" role="grid" aria-label={t('scheduling.calendar.dayViewLabel')} className="flex flex-col overflow-auto">
@@ -107,8 +146,25 @@ export function CalendarDayView({
                     role="gridcell"
                     tabIndex={0}
                     aria-label={`${String(hour).padStart(2, '0')}:00 for ${resource.title || resource.text}`}
+                    // [G4-R3-视角11-02] data-slot/date/resource 使
+                    // getCellFromPoint 在日视图长按拖拽创建会话中可解析格子。
+                    data-slot="calendar-cell"
+                    data-date={dateStr}
+                    data-resource={resource.id}
                     className="border-b border-gray-50"
                     style={{ height: `${HOUR_HEIGHT}px` }}
+                    onPointerDown={(pe) => {
+                      if (pe.button !== 0) return;
+                      onCellDragStart?.(dateStr, resource.id, pe);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onCellKeyboardCreate?.(dateStr, resource.id);
+                        return;
+                      }
+                      handleHourCellKeyDown(e);
+                    }}
                   />
                 ))}
                 {positioned.map((pe) => (

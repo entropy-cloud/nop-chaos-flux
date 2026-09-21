@@ -211,8 +211,16 @@ function NonVirtualBody({
         : computeCombinePlan(processedData, columns, combineNum, {
             virtualEnabled: false,
             combineFromIndex,
+            // [G3-R6-视角8-01] expanded detail rows interleave in this body —
+            // close merge spans at their boundary (rowSpan spans physical rows).
+            isRowExpanded: (row) => {
+              const key = row.cacheKey ?? row.rowKey;
+              return expandAllByDefault
+                ? !expandedRowKeys.has(key)
+                : expandedRowKeys.has(key);
+            },
           }),
-    [groupedPageItems, processedData, columns, combineNum, combineFromIndex],
+    [groupedPageItems, processedData, columns, combineNum, combineFromIndex, expandedRowKeys, expandAllByDefault],
   );
 
   const groupedFlattenedItems = React.useMemo(

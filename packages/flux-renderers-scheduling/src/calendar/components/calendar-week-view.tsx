@@ -19,6 +19,9 @@ export interface CalendarWeekViewProps {
   eventTemplate?: RenderRegionHandle;
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
   onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
+  /** [G4-R3-视角11-02] 长 按/键盘创建入口——与月视图同能力，三视图一致。 */
+  onCellDragStart?: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
+  onCellKeyboardCreate?: (date: string, resourceId: string) => void;
   onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
 }
 
@@ -36,6 +39,8 @@ export function CalendarWeekView({
   eventTemplate,
   onEventClick,
   onDragStart,
+  onCellDragStart,
+  onCellKeyboardCreate,
   onEventKeyDown,
   locale = 'en-US',
 }: CalendarWeekViewProps & { locale?: string }) {
@@ -71,6 +76,53 @@ export function CalendarWeekView({
   const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
   const weekdayLabels = Array.from({ length: 7 }, (_, i) => formatter.format(new Date(2026, 0, 4 + i)));
   const displayDays = showWeekends ? days : days.filter((d) => d.getUTCDay() !== 0 && d.getUTCDay() !== 6);
+
+  // [G4-R3-视角9-01] gridcell keyboard model (mirrors the month view): the
+  // focusable cells previously had zero onKeyDown, so keyboard users could
+  // reach a cell but never move between them. Left/Right walk days, Up/Down
+  // walk resource rows.
+  const handleCellKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    const grid = e.currentTarget.closest('[role="grid"]');
+    if (!grid) return;
+    const cells = Array.from(
+      grid.querySelectorAll<HTMLElement>('[role="gridcell"][data-slot="calendar-cell"]'),
+    );
+    const currentIdx = cells.indexOf(e.currentTarget);
+    if (currentIdx < 0) return;
+    let nextIdx = currentIdx;
+    switch (e.key) {
+      case 'ArrowRight':
+        e.preventDefault();
+        nextIdx = Math.min(currentIdx + 1, cells.length - 1);
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        nextIdx = Math.max(currentIdx - 1, 0);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        nextIdx = Math.min(currentIdx + displayDays.length, cells.length - 1);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        nextIdx = Math.max(currentIdx - displayDays.length, 0);
+        break;
+      case 'Enter':
+      case ' ':
+        // [G4-R3-视角11-02] 键盘创建直接进入创建会话，不经长按定时器。
+        e.preventDefault();
+        onCellKeyboardCreate?.(
+          e.currentTarget.getAttribute('data-date') ?? '',
+          e.currentTarget.getAttribute('data-resource') ?? '',
+        );
+        return;
+      default:
+        return;
+    }
+    if (nextIdx !== currentIdx) {
+      cells[nextIdx]?.focus();
+    }
+  };
 
   return (
     <div data-slot="calendar-matrix" role="grid" aria-label={t('scheduling.calendar.weekViewLabel')} className="flex flex-col overflow-auto">
@@ -134,6 +186,12 @@ export function CalendarWeekView({
                   data-date={dateStr}
                   data-resource={resource.id}
                   className="flex-1 relative border-r last:border-r-0"
+                  onPointerDown={(pe) => {
+                    // [G4-R3-视角11-02] 空格长按创建入口（与月视图 onCellDragStart 同通道）。
+                    if (pe.button !== 0) return;
+                    onCellDragStart?.(dateStr, resource.id, pe);
+                  }}
+                  onKeyDown={handleCellKeyDown}
                 >
                   {hours.map((hour) => (
                     <div

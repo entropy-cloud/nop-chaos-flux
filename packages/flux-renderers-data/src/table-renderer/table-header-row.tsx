@@ -1,14 +1,13 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { useLayoutEffect, useRef } from 'react';
 import {
   Button,
   Checkbox,
   cn,
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
   Input,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   TableHead,
   TableRow,
 } from '@nop-chaos/ui';
@@ -19,6 +18,7 @@ import { getFixedColumnKey } from './fixed-columns.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import type { FilterState, MultiSortState, SortEntry, SortState } from './types.js';
 import {
+  createColumnResizeHandleProps,
   isColumnResizable,
   type ColumnResizeApi,
 } from './use-column-resize.js';
@@ -32,8 +32,6 @@ import {
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
-
-const COLUMN_RESIZE_KEYBOARD_STEP = 10;
 
 interface TableHeaderRowProps {
   props: RendererComponentProps<TableSchema>;
@@ -57,6 +55,10 @@ interface TableHeaderRowProps {
   onClearFilters: (column: string) => void;
   onSelectAll: (checked: boolean) => void;
   selectAllDisabled?: boolean;
+  /** [G3-R2-视角4-01] maxSelectionLength cap reached — render count/reason feedback. */
+  selectionCapped?: boolean;
+  selectedCount?: number;
+  selectionMax?: number;
   columnResize?: boolean;
   resizeApi?: ColumnResizeApi;
   affixHeader?: boolean;
@@ -142,33 +144,12 @@ function renderLeafHeaderCell(
     (typeof column.label === 'string' ? column.label : undefined) ??
     `column-${index}`;
   const resizable = isColumnResizable(column, columnResize);
-  const resizeStart = (event: React.PointerEvent<HTMLSpanElement>) => {
-    if (!resizable || !resizeApi) return;
-    event.preventDefault();
-    event.stopPropagation();
-    resizeApi.startResize(column, index, event.clientX);
-  };
-  // Keyboard resize (WCAG 2.1 SC 2.1.1): the handle is a focusable separator,
-  // so ArrowLeft/ArrowRight step the column width along the same commit path as
-  // a pointer drag (mirrors use-row-drag-sort H6).
-  const resizeKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
-    if (!resizable || !resizeApi) return;
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-    event.preventDefault();
-    event.stopPropagation();
-    resizeApi.stepResize(column, index, event.key === 'ArrowLeft' ? -COLUMN_RESIZE_KEYBOARD_STEP : COLUMN_RESIZE_KEYBOARD_STEP);
-  };
-  const resizeHandleProps = {
-    'data-slot': 'table-column-resize-handle' as const,
-    'aria-label': t('flux.table.resizeColumn'),
-    role: 'separator' as const,
-    'aria-orientation': 'vertical' as const,
-    tabIndex: 0,
-    onPointerDown: resizeStart,
-    onKeyDown: resizeKeyDown,
-    className: 'absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-primary/40',
-    style: { touchAction: 'none' },
-  };
+  const resizeHandleProps = createColumnResizeHandleProps({
+    column,
+    index,
+    resizable,
+    resizeApi,
+  });
   const resolvedWidth = resizeApi?.getColumnWidth(column, index) ?? column.width;
   const cellProps = fixedColumnLayout.getColumnCellProps(column, index);
   const headerAlignClass =
@@ -239,8 +220,13 @@ function renderLeafHeaderCell(
           )}
 
           {(isFilterable || isSearchable) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
+            // [G3-视角4-01] the keyword search Input must not live inside a
+            // DropdownMenuContent: Base UI's open-menu typeahead stopEvents all
+            // single-character keys regardless of target, so typing was
+            // swallowed. A Popover hosts the input + filter options without the
+            // menu typeahead (AntD/shadcn column-filter pattern).
+            <Popover>
+              <PopoverTrigger
                 render={
                   <Button
                     type="button"
@@ -261,9 +247,9 @@ function renderLeafHeaderCell(
                   </Button>
                 }
               />
-              <DropdownMenuContent>
+              <PopoverContent align="start" className="w-56 p-1">
                 {isSearchable && column.name ? (
-                  <div className="p-2">
+                  <div className="p-1 pb-2">
                     {searchableRegion ? (
                       asReactNode(searchableRegion.render())
                     ) : (
@@ -289,20 +275,24 @@ function renderLeafHeaderCell(
                 ) : null}
                 {isFilterable
                   ? filterOptions!.map((option) => (
-                      <DropdownMenuCheckboxItem
+                      <label
                         key={option.value}
-                        checked={activeFilters.has(option.value)}
-                        onCheckedChange={(checked) =>
-                          column.name && onFilter(column.name, option.value, checked)
-                        }
+                        className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                        data-slot="table-filter-option"
                       >
+                        <Checkbox
+                          checked={activeFilters.has(option.value)}
+                          onCheckedChange={(checked) =>
+                            column.name && onFilter(column.name, option.value, checked === true)
+                        }
+                        />
                         {option.label}
-                      </DropdownMenuCheckboxItem>
+                      </label>
                     ))
                   : null}
                 {column.name && hasActiveFilterState ? (
                   <>
-                    <DropdownMenuSeparator />
+                    <div className="my-1 h-px bg-border" />
                     <div className="p-1">
                       <Button
                         type="button"
@@ -316,8 +306,8 @@ function renderLeafHeaderCell(
                     </div>
                   </>
                 ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </PopoverContent>
+            </Popover>
           )}
           {resizable ? (
             <span {...resizeHandleProps} />
@@ -382,6 +372,9 @@ function FlatTableHeaderRow({
   selectAllChecked,
   selectAllIndeterminate,
   selectAllDisabled,
+  selectionCapped,
+  selectedCount,
+  selectionMax,
   columnResize,
   resizeApi,
   affixHeader,
@@ -436,16 +429,40 @@ function FlatTableHeaderRow({
           style={fixedColumnLayout.getSelectionCellProps().style}
         >
           {schemaProps.rowSelection.type === 'checkbox' && (
-            <Checkbox
-              checked={
-                selectAllChecked ??
-                (allSelected && selectedRowCount === sourceLength && sourceLength > 0)
-              }
-              indeterminate={selectAllIndeterminate ?? (!allSelected && selectedRowCount > 0)}
-              disabled={selectAllDisabled || undefined}
-              onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
-              aria-label={t('flux.table.selectAll')}
-            />
+            <>
+              <Checkbox
+                checked={
+                  selectAllChecked ??
+                  (allSelected && selectedRowCount === sourceLength && sourceLength > 0)
+                }
+                indeterminate={selectAllIndeterminate ?? (!allSelected && selectedRowCount > 0)}
+                disabled={selectAllDisabled || undefined}
+                onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
+                aria-label={t('flux.table.selectAll')}
+                title={
+                  selectionCapped && selectionMax !== undefined
+                    ? t('flux.table.selectionCapReached', {
+                        selected: selectedCount ?? 0,
+                        max: selectionMax,
+                      })
+                    : undefined
+                }
+              />
+              {/* [G3-R2-视角4-01] the cap silently grays unchecked rows; announce
+                  the count/reason so the state is perceivable without hover. */}
+              {selectionCapped && selectionMax !== undefined ? (
+                <span
+                  role="status"
+                  data-slot="table-selection-cap"
+                  className="sr-only"
+                >
+                  {t('flux.table.selectionCapReached', {
+                    selected: selectedCount ?? 0,
+                    max: selectionMax,
+                  })}
+                </span>
+              ) : null}
+            </>
           )}
         </TableHead>
       ) : null}
@@ -505,7 +522,12 @@ function NestedTableHeaderRows({
   onSearch,
   onClearFilters,
   onSelectAll,
+  selectAllChecked,
+  selectAllIndeterminate,
   selectAllDisabled,
+  selectionCapped,
+  selectedCount,
+  selectionMax,
   columnResize,
   resizeApi,
   affixHeader,
@@ -546,9 +568,28 @@ function NestedTableHeaderRows({
     affixHeader,
   };
 
-  const stickyStyle = isAffix
-    ? { position: 'sticky' as const, top: 0, zIndex: 3, background: 'var(--table-header-bg)' }
+  const stickyBase = isAffix
+    ? { position: 'sticky' as const, background: 'var(--table-header-bg)' }
     : undefined;
+
+  // [G3-R4-视角8-02] nested + affixHeader: every header row sharing `top: 0`
+  // collapses the header into one visual row on scroll (group rows are fully
+  // covered by the leaf row). Each row instead sticks at the cumulative height
+  // of the rows above it, measured post-layout and written straight to the DOM
+  // (no state mirror — React 19 set-state-in-effect hygiene); the group row
+  // layers above the leaf row so a transient overlap still paints the outer
+  // group header.
+  const rowRefs = useRef<Array<HTMLTableRowElement | null>>([]);
+  useLayoutEffect(() => {
+    if (!isAffix) return;
+    let acc = 0;
+    for (const rowEl of rowRefs.current) {
+      if (rowEl) {
+        rowEl.style.top = `${acc}px`;
+      }
+      acc += rowEl?.getBoundingClientRect().height ?? 0;
+    }
+  });
 
   return (
     <>
@@ -557,9 +598,18 @@ function NestedTableHeaderRows({
         const rowKey = isLeafRow
           ? 'header-leaf-row'
           : `header-group-row-${row.cells.map((c) => c.column.name ?? c.leafIndex).join('-')}`;
+        const stickyStyle = stickyBase
+          ? {
+              ...stickyBase,
+              zIndex: 3 + (rows.length - 1 - rowIndex),
+            }
+        : undefined;
         return (
           <TableRow
             key={rowKey}
+            ref={(el: HTMLTableRowElement | null) => {
+              rowRefs.current[rowIndex] = el;
+            }}
             className={cn(
               isAffix ? 'nop-table-header-sticky' : undefined,
               isLeafRow ? 'nop-table-header-leaf' : 'nop-table-header-group',
@@ -596,15 +646,31 @@ function NestedTableHeaderRows({
                 style={fixedColumnLayout.getSelectionCellProps().style}
               >
                 {schemaProps.rowSelection.type === 'checkbox' && (
-                  <Checkbox
-                    checked={
-                      allSelected && selectedRowCount === sourceLength && sourceLength > 0
-                    }
-                    indeterminate={!allSelected && selectedRowCount > 0}
-                    disabled={selectAllDisabled || undefined}
-                    onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
-                    aria-label={t('flux.table.selectAll')}
-                  />
+                  <>
+                    <Checkbox
+                      checked={selectAllChecked ?? allSelected}
+                      indeterminate={selectAllIndeterminate ?? (!allSelected && selectedRowCount > 0)}
+                      disabled={selectAllDisabled || undefined}
+                      onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
+                      aria-label={t('flux.table.selectAll')}
+                      title={
+                        selectionCapped && selectionMax !== undefined
+                          ? t('flux.table.selectionCapReached', {
+                              selected: selectedCount ?? 0,
+                              max: selectionMax,
+                            })
+                          : undefined
+                      }
+                    />
+                    {selectionCapped && selectionMax !== undefined ? (
+                      <span role="status" data-slot="table-selection-cap" className="sr-only">
+                        {t('flux.table.selectionCapReached', {
+                          selected: selectedCount ?? 0,
+                          max: selectionMax,
+                        })}
+                      </span>
+                    ) : null}
+                  </>
                 )}
               </TableHead>
             ) : null}

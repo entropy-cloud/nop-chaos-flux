@@ -211,6 +211,7 @@
                             },
                             {
                               "label": "删除",
+                              "variant": "destructive",
                               "testid": "btn-delete-item",
                               "onClick": {
                                 "action": "ajax",
@@ -219,7 +220,7 @@
                                   "method": "post",
                                   "data": { "id": "${record?.id}" }
                                 },
-                                "confirmText": "确定删除该明细？",
+                                "confirmText": "确认删除该明细？",
                                 "messages": { "success": "删除成功" },
                                 "then": [
                                   { "action": "component:refresh", "componentId": "md-items-crud" }
@@ -235,6 +236,7 @@
                           "label": "新增",
                           "testid": "btn-add-item",
                           "variant": "default",
+                          "disabled": "${!mdFilter?.orderId}",
                           "onClick": {
                             "action": "openDialog",
                             "args": {

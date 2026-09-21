@@ -207,6 +207,8 @@ describe('Sundial replica — detail inspector', () => {
       expect(db.sundialTasks.find((t) => t.id === 1)?.list).toBe('family');
     });
     fireEvent.click(screen.getByTestId('sundial-detail-trash'));
+    // V12f P4 (G7-视角10-07): destructive trash now requires a confirm step
+    fireEvent.click(await screen.findByRole('button', { name: '确认' }));
     await screen.findByText('已移到垃圾箱');
     await waitFor(() => {
       expect(screen.getByTestId('sundial-trashed-banner')).toBeTruthy();
@@ -221,6 +223,8 @@ describe('Sundial replica — detail inspector', () => {
     expect(screen.getByTestId('sundial-subtask-title-text').textContent).toMatch(/收集销售数据/);
     fireEvent.click(screen.getByTestId('sundial-subtask-dialog-close'));
     fireEvent.click(screen.getByTestId('sundial-subtask-delete-1'));
+    // V12f P4 (G7-视角10-07): subtask hard delete requires a confirm step
+    fireEvent.click(await screen.findByRole('button', { name: '确认' }));
     await screen.findByText('子任务已删除');
     await waitFor(() => {
       expect(screen.queryByTestId('sundial-detail-subtask-1')).toBeNull();
@@ -235,6 +239,8 @@ describe('Sundial replica — detail inspector', () => {
       expect(screen.getByTestId('sundial-subtask-dialog')).toBeTruthy();
     });
     fireEvent.click(screen.getByTestId('sundial-subtask-dialog-delete'));
+    // V12f P4 (G7-视角10-07): dialog delete requires the same confirm step
+    fireEvent.click(await screen.findByRole('button', { name: '确认' }));
     await screen.findByText('子任务已删除');
     await waitFor(() => {
       expect(screen.queryByTestId('sundial-subtask-dialog')).toBeNull();

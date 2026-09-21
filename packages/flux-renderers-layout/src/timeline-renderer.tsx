@@ -304,10 +304,13 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
               />
             )}
             {orientation === 'horizontal' && index > 0 && (
+              // [G1-R4-视角8-01] the segment is a flex child of a
+              // `flex-col items-center` row; `w-full` is its only width source —
+              // without it the connector collapses to 0px and becomes invisible.
               <span
                 aria-hidden="true"
                 data-slot="timeline-axis"
-                className="h-px self-center bg-border"
+                className="h-px w-full self-center bg-border"
               />
             )}
 

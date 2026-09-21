@@ -136,6 +136,30 @@ export function findOverlappingPanels(
 }
 
 /**
+ * [G3-R4-视角11-01] 新面板落点的 first-fit 空位查找：自网格左上起逐格扫描，
+ * 返回第一个与既有面板不重叠的 (x, y)。无空位（网格满）→ 落到最低面板底部。
+ */
+export function findFreePosition(
+  panels: readonly DashboardPanelSchema[],
+  size: { w: number; h: number },
+  options: { cols: number },
+): { x: number; y: number } {
+  const cols = resolveCols(options.cols);
+  const w = clamp(Math.floor(size.w) || 1, 1, cols);
+  const h = Math.max(1, Math.floor(size.h) || 1);
+  const lowestBottom = panels.reduce((max, p) => Math.max(max, p.y + p.h), 0);
+  for (let y = 0; y <= lowestBottom; y += 1) {
+    for (let x = 0; x + w <= cols; x += 1) {
+      const candidate: PanelRect = { x, y, w, h };
+      if (!panels.some((p) => rectsOverlap(candidate, toPanelRect(p)))) {
+        return { x, y };
+      }
+    }
+  }
+  return { x: 0, y: lowestBottom };
+}
+
+/**
  * 拖拽面板（纯函数）：把 `id` 面板移动到吸附后的网格坐标 (x, y)，
  * 越界 clamp 到画布边界内；返回新 panels 数组（无变更时返回原数组引用）。
  */

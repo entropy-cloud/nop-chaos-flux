@@ -65,20 +65,25 @@ export function createSundialFetcherBranch(db: MockDatabase, cloneFn: <T>(value:
       };
     }
     if (url.includes('/r/Sundial__pressure') && method === 'get') {
+      // V12f P4 (G7-R3-视角11-01): pressure buckets derive from the live task
+      // DB (same source as /r/Sundial__todos views) so the workbench legend,
+      // sidebar counts and the analytics chart stay mutually consistent.
+      const active = db.sundialTasks.filter((t) => !t.trashed && !t.done);
+      const count = (tone: SundialTask['dueTone']) => active.filter((t) => t.dueTone === tone).length;
       return {
         status: 0,
         data: clone({
           items: [
-            { bucket: '逾期', count: 3, tone: '#d25151' },
-            { bucket: '今天', count: 5, tone: '#ea7a2a' },
-            { bucket: '未来 7 天', count: 4, tone: '#3c83f6' },
-            { bucket: '无日期', count: 2, tone: '#636363' },
+            { bucket: '逾期', count: count('overdue'), tone: '#d25151' },
+            { bucket: '今天', count: count('today'), tone: '#ea7a2a' },
+            { bucket: '未来 7 天', count: count('future'), tone: '#3c83f6' },
+            { bucket: '无日期', count: count('none'), tone: '#636363' },
           ],
-          count_overdue: 3,
-          count_today: 5,
-          count_future: 4,
-          count_none: 2,
-          total: 14,
+          count_overdue: count('overdue'),
+          count_today: count('today'),
+          count_future: count('future'),
+          count_none: count('none'),
+          total: active.length,
         }) as T,
       };
     }
@@ -133,8 +138,23 @@ export function createSundialFetcherBranch(db: MockDatabase, cloneFn: <T>(value:
     }
     if (url.includes('/r/Sundial__subtasks') && method === 'get') {
       const taskId = asNumber(body.taskId ?? params.taskId);
-      const items = db.sundialSubtasks.filter((st) => st.taskId === taskId);
+      // V12f P4 (G7-视角11-14): no taskId filter returns the whole subtask
+      // list so the detail-page rows can be rendered from this endpoint.
+      const items = taskId === undefined
+        ? [...db.sundialSubtasks]
+        : db.sundialSubtasks.filter((st) => st.taskId === taskId);
       return { status: 0, data: clone({ items, total: items.length }) as T };
+    }
+    if (url.includes('/r/Sundial__addSubtask') && method === 'post') {
+      const title = typeof body.title === 'string' ? body.title.trim() : '';
+      if (title === '') {
+        return { status: 1, data: clone({ ok: false, error: 'missing title' }) as T };
+      }
+      const taskId = asNumber(body.taskId) ?? 1;
+      const nextId = db.sundialSubtasks.reduce((max, st) => Math.max(max, st.id), 0) + 1;
+      const subtask = { id: nextId, taskId, title, done: false };
+      db.sundialSubtasks.push(subtask);
+      return { status: 0, data: clone({ ok: true, subtask }) as T };
     }
     if (url.includes('/r/Sundial__deleteSubtask') && method === 'post') {
       const id = asNumber(body.id);

@@ -286,7 +286,7 @@
                   "body": [
                     {
                       "type": "icon",
-                      "icon": "tray",
+                      "icon": "database",
                       "size": 18,
                       "color": "#ea7a2a"
                     },
@@ -334,7 +334,7 @@
                   "body": [
                     {
                       "type": "icon",
-                      "icon": "tray",
+                      "icon": "database",
                       "size": 18,
                       "color": "#636363"
                     },
@@ -970,17 +970,12 @@
                       "className": "items-center mt-1.5",
                       "body": [
                         {
-                          "type": "input-text",
+                          "type": "input-password",
                           "name": "supabase-key",
-                          "className": "sd-input flex-1",
+                          "className": "sd-input w-full",
                           "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0",
+                          "revealPassword": true,
                           "testid": "sundial-supabase-key"
-                        },
-                        {
-                          "type": "icon",
-                          "icon": "eye",
-                          "size": 14,
-                          "color": "#636363"
                         }
                       ]
                     },
@@ -1003,7 +998,7 @@
                       "args": {
                         "url": "/r/Sundial__updateSettings",
                         "method": "post",
-                        "includeScope": ["mode"]
+                        "includeScope": ["mode", "supabase-url", "supabase-key"]
                       },
                       "messages": {
                         "success": "保存成功（已写入演示后端）"
@@ -1019,6 +1014,7 @@
                 {
                   "type": "container",
                   "testid": "sundial-status-card",
+                  "visible": "${mode === 'supabase'}",
                   "className": "bg-[#ffffff] rounded-lg border border-[#d9d9d9] p-3 flex flex-col",
                   "body": [
                     {
@@ -1085,6 +1081,100 @@
                               "type": "text",
                               "text": "刚刚",
                               "className": "text-xs text-[#333333]"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "justify-between",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "错误",
+                              "className": "text-xs text-[#636363]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "无",
+                              "className": "text-xs text-[#333333]"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "container",
+                  "testid": "sundial-status-card",
+                  "visible": "${mode !== 'supabase'}",
+                  "className": "bg-[#ffffff] rounded-lg border border-[#d9d9d9] p-3 flex flex-col",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "laptop",
+                          "size": 12,
+                          "color": "#636363"
+                        },
+                        {
+                          "type": "text",
+                          "text": "未连接",
+                          "className": "text-xs font-semibold text-[#636363]"
+                        },
+                        {
+                          "type": "text",
+                          "text": "",
+                          "className": "flex-1"
+                        },
+                        {
+                          "type": "text",
+                          "text": "本地模式",
+                          "className": "sd-badge sd-badge-neutral"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "container",
+                      "className": "border-t border-[#eae7e2] mt-2.5 pt-2.5 flex flex-col gap-1.5",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "justify-between",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "待同步",
+                              "className": "text-xs text-[#636363]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "不适用",
+                              "className": "text-xs text-[#636363]"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "justify-between",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "上次同步",
+                              "className": "text-xs text-[#636363]"
+                            },
+                            {
+                              "type": "text",
+                              "text": "不适用",
+                              "className": "text-xs text-[#636363]"
                             }
                           ]
                         },
@@ -1463,7 +1553,7 @@
                         },
                         {
                           "type": "text",
-                          "text": "本地模式：不适用",
+                          "text": "${ mode === 'local' ? '本地模式：不适用' : '刚刚' }",
                           "className": "text-xs text-[#636363]"
                         }
                       ]

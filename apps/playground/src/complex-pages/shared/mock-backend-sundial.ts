@@ -48,7 +48,7 @@ export function createSundialTasks(): SundialTask[] {
 export function createSundialSubtasks(): SundialSubtask[] {
   return [
     { id: 1, taskId: 1, title: '收集销售数据', done: true },
-    { id: 2, taskId: 1, title: '整理发票', done: false },
+    { id: 2, taskId: 1, title: '整理 OKR 回顾', done: false },
     { id: 3, taskId: 6, title: '撰写结论部分', done: false },
   ];
 }

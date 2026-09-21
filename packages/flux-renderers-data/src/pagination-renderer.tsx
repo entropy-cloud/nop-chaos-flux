@@ -14,6 +14,13 @@ import {
 } from '@nop-chaos/ui';
 import { useStatusPathPublication } from '@nop-chaos/flux-react';
 import type { PaginationMode, PaginationSchema } from './schemas.js';
+import {
+  buildPageWindow,
+  shouldShowFirstPage,
+  shouldShowLastPage,
+  shouldShowLeadingEllipsis,
+  shouldShowTrailingEllipsis,
+} from './pagination-window.js';
 
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZE_OPTIONS: readonly number[] = [10, 20, 50, 100];
@@ -63,46 +70,14 @@ function resolveMode(value: unknown): PaginationMode {
   return value === 'with-page-size' ? 'with-page-size' : 'simple';
 }
 
-function buildPageWindow(current: number, totalPages: number, windowSize = 5): number[] {
-  if (totalPages <= 0) {
-    return [1];
-  }
-  if (totalPages <= windowSize + 2) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  const half = Math.floor(windowSize / 2);
-  let start = current - half;
-  let end = current + half;
-  if (start < 1) {
-    start = 1;
-    end = Math.min(totalPages, windowSize);
-  }
-  if (end > totalPages) {
-    end = totalPages;
-    start = Math.max(1, totalPages - windowSize + 1);
-  }
-  const pages: number[] = [];
-  for (let i = start; i <= end; i += 1) {
-    pages.push(i);
-  }
-  return pages;
-}
-
-function shouldShowLeadingEllipsis(pages: number[]): boolean {
-  return pages.length > 0 && pages[0] > 2;
-}
-
-function shouldShowTrailingEllipsis(pages: number[], totalPages: number): boolean {
-  return pages.length > 0 && pages[pages.length - 1] < totalPages - 1;
-}
-
-function shouldShowFirstPage(pages: number[]): boolean {
-  return pages.length > 0 && pages[0] > 1;
-}
-
-function shouldShowLastPage(pages: number[], totalPages: number): boolean {
-  return pages.length > 0 && pages[pages.length - 1] < totalPages;
-}
+// [G3-视角10-01] window math shared with table-pagination-bar (moved verbatim).
+export {
+  buildPageWindow,
+  shouldShowFirstPage,
+  shouldShowLastPage,
+  shouldShowLeadingEllipsis,
+  shouldShowTrailingEllipsis,
+} from './pagination-window.js';
 
 export function PaginationRenderer(props: RendererComponentProps<PaginationSchema>) {
   const schemaProps = props.props;

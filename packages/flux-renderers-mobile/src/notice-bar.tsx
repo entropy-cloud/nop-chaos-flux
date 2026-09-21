@@ -227,18 +227,19 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
   const animationDirection = direction === 'left' ? 'reverse' : 'normal';
 
   // OA-04: a notice bar is advisory, not an alert. Split the semantics by use:
-  // when onClick is bound the bar is an operable control (role=button, in tab
-  // order, keyboard-activatable); otherwise it is a polite status region that
-  // screen readers announce without making it focusable. Mixing role=alert
-  // with tabIndex=0 on the same element conflated assertive announcement with
-  // operability.
+  // when onClick is bound the bar is an operable control, otherwise it is a
+  // polite status region that screen readers announce without making it
+  // focusable. [G4-R2-视角9-01] the operable role/button semantics live on the
+  // content action surface (notice-bar-action), NOT on the root: the root also
+  // hosts the real close <Button>, and interactive content nested inside a
+  // role=button surface is an a11y violation (kanban same-disease sibling).
   const interactiveProps = hasClick
     ? { role: 'button' as const, tabIndex: 0 as const, onClick: handleClick, onKeyDown: handleKeyDown }
-    : { role: 'status' as const };
+    : {};
 
   return (
     <div
-      {...interactiveProps}
+      {...(hasClick ? {} : { role: 'status' as const })}
       ref={rootRef}
       className={cn(
         'nop-notice-bar flex items-center gap-2 overflow-hidden px-3 py-2',
@@ -250,36 +251,42 @@ export function NoticeBarRenderer(props: RendererComponentProps<NoticeBarSchema>
       data-variant={variant}
       data-scrollable={shouldScroll ? 'true' : 'false'}
     >
-      <span data-slot="notice-bar-icon">
-        {iconComp ? (() => {
-          const IconComp = iconComp;
-          return <IconComp className="size-4" aria-hidden="true" />;
-        })() : null}
-      </span>
       <div
-        ref={contentRef}
-        data-slot="notice-bar-content"
-        className="relative flex-1 overflow-hidden"
+        data-slot="notice-bar-action"
+        className="flex flex-1 items-center gap-2 overflow-hidden"
+        {...interactiveProps}
       >
-        <span
-          ref={textRef}
-          data-slot="notice-bar-text"
-          className="inline-block whitespace-nowrap"
-          style={
-            shouldScroll
-              ? {
-                  animationName: 'nop-notice-bar-marquee',
-                  animationDuration: `${animationDuration}s`,
-                  animationTimingFunction: 'linear',
-                  animationIterationCount: loop ? 'infinite' : '1',
-                  animationDirection,
-                  animationPlayState: interactionPaused ? 'paused' : undefined,
-                }
-              : undefined
-          }
-        >
-          {activeText}
+        <span data-slot="notice-bar-icon">
+          {iconComp ? (() => {
+            const IconComp = iconComp;
+            return <IconComp className="size-4" aria-hidden="true" />;
+          })() : null}
         </span>
+        <div
+          ref={contentRef}
+          data-slot="notice-bar-content"
+          className="relative flex-1 overflow-hidden"
+        >
+          <span
+            ref={textRef}
+            data-slot="notice-bar-text"
+            className="inline-block whitespace-nowrap"
+            style={
+              shouldScroll
+                ? {
+                    animationName: 'nop-notice-bar-marquee',
+                    animationDuration: `${animationDuration}s`,
+                    animationTimingFunction: 'linear',
+                    animationIterationCount: loop ? 'infinite' : '1',
+                    animationDirection,
+                    animationPlayState: interactionPaused ? 'paused' : undefined,
+                  }
+                : undefined
+            }
+          >
+            {activeText}
+          </span>
+        </div>
       </div>
       {closable ? (
         <Button

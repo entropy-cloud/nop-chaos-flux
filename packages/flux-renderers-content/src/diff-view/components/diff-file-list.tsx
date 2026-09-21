@@ -83,7 +83,13 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
   ];
 
   return (
-    <div className="nop-diff-file-list" data-slot="diff-file-list" style={{ width: 240, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--nop-border)', overflow: 'hidden' }}>
+    // [G1-R2-视角8-02] the sidebar width is owned by `.nop-diff-file-list`
+    // (container-relative clamp) instead of a fixed inline 240px.
+    <div
+      className="nop-diff-file-list"
+      data-slot="diff-file-list"
+      style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--nop-border)', overflow: 'hidden' }}
+    >
       <div style={{ padding: '8px', borderBottom: '1px solid var(--nop-border)' }}>
         <Input
           type="search"

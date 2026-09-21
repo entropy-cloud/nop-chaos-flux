@@ -57,6 +57,7 @@
             "type": "date-range",
             "name": "dateRange",
             "label": "创建时间",
+            "clearable": true,
             "placeholder": "选择日期范围"
           },
           {

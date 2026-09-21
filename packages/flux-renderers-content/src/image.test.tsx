@@ -98,6 +98,34 @@ describe('ImageRenderer', () => {
     expect(empty).toBeTruthy();
   });
 
+  it('styles the error fallback destructive and keeps the empty fallback muted [G1-R2-视角5-01]', () => {
+    const emptyProps = createMockRendererProps<ImageSchema>({
+      schema: { type: 'image' },
+      props: { alt: 'nothing' },
+    });
+    const { container, rerender } = render(<ImageRenderer {...emptyProps} />);
+    const emptyFallback = container.querySelector(
+      '[data-slot="image"][data-state="empty"]',
+    ) as HTMLElement;
+    expect(emptyFallback.className).toContain('text-muted-foreground');
+    expect(emptyFallback.className).not.toContain('text-destructive');
+
+    const errorProps = createMockRendererProps<ImageSchema>({
+      schema: { type: 'image' },
+      props: { src: '/missing.png', alt: 'broken' },
+    });
+    rerender(<ImageRenderer {...errorProps} />);
+    fireEvent.error(container.querySelector('[data-slot="image"]') as HTMLImageElement);
+    const errorFallback = container.querySelector(
+      '[data-slot="image"][data-state="error"]',
+    ) as HTMLElement;
+    expect(errorFallback).toBeTruthy();
+    expect(errorFallback.className).toContain('text-destructive');
+    expect(errorFallback.className).not.toContain('text-muted-foreground');
+    expect(errorFallback.className).toContain('border-destructive');
+    expect(errorFallback.className).toContain('bg-destructive');
+  });
+
   it('clears the error state and retries when src changes after a load failure', () => {
     const failed = createMockRendererProps<ImageSchema>({
       schema: { type: 'image' },

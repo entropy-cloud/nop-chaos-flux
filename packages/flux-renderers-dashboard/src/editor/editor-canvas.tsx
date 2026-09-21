@@ -4,7 +4,7 @@ import { Button, cn } from '@nop-chaos/ui';
 import { GripVertical, X } from 'lucide-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import type { DashboardDocument } from './dashboard-domain-adapter.js';
-import { buildPalettePanel } from './editor-palette.js';
+import { buildPalettePanel, resolvePanelDisplayName } from './editor-palette.js';
 import type { DashboardPanelSchema } from '../schemas.js';
 import { useCanvasWidth } from '../use-canvas-width.js';
 import {
@@ -212,7 +212,9 @@ export function EditorCanvas({
               data-selected={selected ? 'true' : undefined}
               role="button"
               tabIndex={0}
-              aria-label={t('flux.dashboard.editor.panelLabel', { id: panel.id })}
+              aria-label={t('flux.dashboard.editor.panelLabel', {
+                name: resolvePanelDisplayName(panel, (key) => t(key)),
+              })}
               className={cn(
                 'group absolute flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm',
                 selected
@@ -233,7 +235,9 @@ export function EditorCanvas({
                       type="button"
                       variant="ghost"
                       size="icon-xs"
-                      aria-label={t('flux.dashboard.editor.removePanel', { id: panel.id })}
+                      aria-label={t('flux.dashboard.editor.removePanel', {
+                        name: resolvePanelDisplayName(panel, (key) => t(key)),
+                      })}
                       className="rounded-full border border-border bg-background text-muted-foreground hover:text-destructive"
                       onClick={(event) => {
                         event.stopPropagation();

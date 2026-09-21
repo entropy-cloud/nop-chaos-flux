@@ -23,6 +23,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
+import { PlusIcon } from 'lucide-react';
 import { cn } from '@nop-chaos/ui';
 import type { ArrayFieldSchema } from './composite-schemas.js';
 import { formFieldRules, shouldValidateOn, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
@@ -545,6 +546,8 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
         })}
         {addable && !readOnly && !presentation.effectiveDisabled && (
           <WrappedFieldAction variant="outline" size="sm" onClick={handleAdd}>
+            {/* [G2-视角10-01] Add joins the composite family's PlusIcon contract. */}
+            <PlusIcon className="size-4" />
             {t('flux.form.addItem')}
           </WrappedFieldAction>
         )}

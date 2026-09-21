@@ -141,7 +141,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "14",
+                              "text": "${todosAll?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -175,7 +175,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "14",
+                              "text": "${todosAll?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -197,7 +197,7 @@
                           "body": [
                             {
                               "type": "icon",
-                              "icon": "tray",
+                              "icon": "inbox",
                               "size": 18,
                               "color": "#ea7a2a"
                             },
@@ -230,7 +230,7 @@
                           "body": [
                             {
                               "type": "icon",
-                              "icon": "tray",
+                              "icon": "inbox",
                               "size": 18,
                               "color": "#636363"
                             },
@@ -350,7 +350,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "14",
+                              "text": "${todosAll?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -392,7 +392,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "14",
+                              "text": "${todosAll?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -434,7 +434,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "5",
+                              "text": "${todosToday?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -476,7 +476,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "5",
+                              "text": "${todosToday?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -518,7 +518,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "4",
+                              "text": "${todosScheduled?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -560,7 +560,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "4",
+                              "text": "${todosScheduled?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -602,7 +602,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "6",
+                              "text": "${todosDone?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -644,7 +644,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "6",
+                              "text": "${todosDone?.total ?? 0}",
                               "className": "ml-auto text-xs text-[#636363] sd-mono"
                             }
                           ]
@@ -877,7 +877,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "text": "3",
+                                      "text": "${pressure?.count_overdue ?? 0}",
                                       "className": "text-[10px] text-[#d25151] sd-mono"
                                     }
                                   ]
@@ -900,7 +900,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "text": "5",
+                                      "text": "${pressure?.count_today ?? 0}",
                                       "className": "text-[10px] text-[#ea7a2a] sd-mono"
                                     }
                                   ]
@@ -923,7 +923,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "text": "4",
+                                      "text": "${pressure?.count_future ?? 0}",
                                       "className": "text-[10px] text-[#3c83f6] sd-mono"
                                     }
                                   ]
@@ -946,7 +946,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "text": "2",
+                                      "text": "${pressure?.count_none ?? 0}",
                                       "className": "text-[10px] text-[#636363] sd-mono"
                                     }
                                   ]
@@ -964,7 +964,7 @@
                                     },
                                     {
                                       "type": "text",
-                                      "text": "14",
+                                      "text": "${pressure?.total ?? 0}",
                                       "className": "text-[10px] text-[#0d0d0d] sd-mono"
                                     }
                                   ]
@@ -1045,12 +1045,13 @@
                                         "size": 14,
                                         "color": "#db7706"
                                       }
-                                    ]
+                                    ],
+                                    "visible": "${ ISEMPTY(search ?? '') || CONTAINS('整理季度报税材料', search ?? '') }"
                                   }
                                 ]
                               },
                               "tone": "danger",
-                              "count": "1"
+                              "count": "${ (ISEMPTY(search ?? '') || CONTAINS('整理季度报税材料', search ?? '')) ? 1 : 0 }"
                             }
                           ],
                           "visible": "${activeView === 'all' || activeView === 'scheduled'}"
@@ -1107,11 +1108,11 @@
                                           {
                                             "type": "text",
                                             "text": "给项目经理回电话",
-                                            "className": "text-sm font-medium text-[#636363] line-through truncate"
+                                            "className": "text-sm font-medium text-[#0d0d0d] truncate"
                                           },
                                           {
                                             "type": "text",
-                                            "text": "已完成 8/16",
+                                            "text": "讨论上线时间",
                                             "className": "text-xs text-[#636363] truncate"
                                           }
                                         ]
@@ -1127,7 +1128,8 @@
                                         "size": 14,
                                         "color": "#636363"
                                       }
-                                    ]
+                                    ],
+                                    "visible": "${ ISEMPTY(search ?? '') || CONTAINS('给项目经理回电话', search ?? '') }"
                                   },
                                   {
                                     "type": "flex",
@@ -1186,12 +1188,13 @@
                                         "size": 14,
                                         "color": "#636363"
                                       }
-                                    ]
+                                    ],
+                                    "visible": "${ ISEMPTY(search ?? '') || CONTAINS('整理收件箱里的票据', search ?? '') }"
                                   }
                                 ]
                               },
                               "tone": "brand",
-                              "count": "2"
+                              "count": "${ ((ISEMPTY(search ?? '') || CONTAINS('给项目经理回电话', search ?? '')) ? 1 : 0) + ((ISEMPTY(search ?? '') || CONTAINS('整理收件箱里的票据', search ?? '')) ? 1 : 0) }"
                             }
                           ],
                           "visible": "${activeView === 'all' || activeView === 'today'}"
@@ -1268,7 +1271,8 @@
                                         "size": 14,
                                         "color": "#636363"
                                       }
-                                    ]
+                                    ],
+                                    "visible": "${ ISEMPTY(search ?? '') || CONTAINS('预约牙医检查', search ?? '') }"
                                   },
                                   {
                                     "type": "flex",
@@ -1327,12 +1331,13 @@
                                         "size": 14,
                                         "color": "#636363"
                                       }
-                                    ]
+                                    ],
+                                    "visible": "${ ISEMPTY(search ?? '') || CONTAINS('撰写周报', search ?? '') }"
                                   }
                                 ]
                               },
                               "tone": "info",
-                              "count": "2"
+                              "count": "${ ((ISEMPTY(search ?? '') || CONTAINS('预约牙医检查', search ?? '')) ? 1 : 0) + ((ISEMPTY(search ?? '') || CONTAINS('撰写周报', search ?? '')) ? 1 : 0) }"
                             }
                           ],
                           "visible": "${activeView === 'all' || activeView === 'scheduled'}"
@@ -1404,12 +1409,13 @@
                                         "size": 14,
                                         "color": "#db7706"
                                       }
-                                    ]
+                                    ],
+                                    "visible": "${ ISEMPTY(search ?? '') || CONTAINS('读完《设计中的设计》', search ?? '') }"
                                   }
                                 ]
                               },
                               "tone": "neutral",
-                              "count": "1"
+                              "count": "${ (ISEMPTY(search ?? '') || CONTAINS('读完《设计中的设计》', search ?? '')) ? 1 : 0 }"
                             }
                           ],
                           "visible": "${activeView === 'all'}"
@@ -1435,22 +1441,6 @@
                                     "gap": 10,
                                     "className": "sd-task-row",
                                     "testid": "sundial-task-organize-1",
-                                    "onClick": [
-                                      {
-                                        "action": "setValue",
-                                        "args": {
-                                          "path": "activeTaskId",
-                                          "value": 10
-                                        }
-                                      },
-                                      {
-                                        "action": "setValue",
-                                        "args": {
-                                          "path": "taskDetailOpen",
-                                          "value": true
-                                        }
-                                      }
-                                    ],
                                     "body": [
                                       {
                                         "type": "checkbox",
@@ -1481,7 +1471,8 @@
                                         "size": 14,
                                         "color": "#636363"
                                       }
-                                    ]
+                                    ],
+                                    "visible": "${ ISEMPTY(search ?? '') || CONTAINS('把会议纪要归档到项目文件夹', search ?? '') }"
                                   }
                                 ]
                               },
@@ -1677,6 +1668,50 @@
       },
       "dependsOn": ["sundialTodosRev"],
       "testid": "sundial-todos-trash-source"
+    },
+    {
+      "type": "data-source",
+      "name": "todosAll",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__todos?view=all",
+        "method": "get"
+      },
+      "dependsOn": ["sundialTodosRev"],
+      "testid": "sundial-todos-todosAll-source"
+    },
+    {
+      "type": "data-source",
+      "name": "todosToday",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__todos?view=today",
+        "method": "get"
+      },
+      "dependsOn": ["sundialTodosRev"],
+      "testid": "sundial-todos-todosToday-source"
+    },
+    {
+      "type": "data-source",
+      "name": "todosScheduled",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__todos?view=scheduled",
+        "method": "get"
+      },
+      "dependsOn": ["sundialTodosRev"],
+      "testid": "sundial-todos-todosScheduled-source"
+    },
+    {
+      "type": "data-source",
+      "name": "pressure",
+      "action": "ajax",
+      "args": {
+        "url": "/r/Sundial__pressure",
+        "method": "get"
+      },
+      "dependsOn": ["sundialTodosRev"],
+      "testid": "sundial-pressure-source"
     },
     {
       "type": "dialog",
@@ -2064,7 +2099,7 @@
                   "body": [
                     {
                       "type": "icon",
-                      "icon": "tray",
+                      "icon": "inbox",
                       "size": 14,
                       "color": "#636363"
                     },
@@ -2174,7 +2209,7 @@
                       "closeOnSubmit": true,
                       "data": {
                         "taskId": "${activeTaskId}",
-                        "list": "work"
+                        "list": "${taskDetail?.list ?? 'work'}"
                       },
                       "onSubmitSuccess": [
                         {
@@ -2212,8 +2247,8 @@
                           "id": "sundial-taskdetail-move-form",
                           "submitScope": "surface",
                           "data": {
-                            "taskId": "${taskId}",
-                            "list": "${list ?? \"work\"}"
+                            "taskId": "${activeTaskId}",
+                            "list": "${taskDetail?.list ?? 'work'}"
                           },
                           "body": [
                             {
@@ -2280,7 +2315,8 @@
                           "id": "${activeTaskId}",
                           "trashed": true
                         }
-                      }
+                      },
+                      "confirmText": "确认移到垃圾箱？"
                     },
                     {
                       "action": "closeDialog",

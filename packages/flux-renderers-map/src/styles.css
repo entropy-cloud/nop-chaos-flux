@@ -58,3 +58,9 @@
   color: hsl(var(--muted-foreground));
   background: hsl(var(--background));
 }
+
+/* [G5-R2-视角5-02] the error state is a failure surface — destructive semantic
+   instead of the neutral loading/empty gray (ai error banner parity). */
+.nop-map [data-slot='map-error'] {
+  color: hsl(var(--destructive));
+}

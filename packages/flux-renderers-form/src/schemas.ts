@@ -194,6 +194,12 @@ export interface InputTreeSchema extends InputSchema {
   enableNodePath?: boolean;
   pathSeparator?: string;
   /**
+   * Show a clear affordance next to the tree while a selection exists.
+   * Single-select clears to `undefined`, multi-select to `[]`.
+   * Mirrors `TreeSelectSchema.clearable` (opt-in).
+   */
+  clearable?: boolean;
+  /**
    * Number of visible (flattened) tree options at which to switch from full
    * rendering to virtualised rendering via `@tanstack/react-virtual`. Defaults
    * to `100` (matching `select`). Set to `0` to disable virtualisation.

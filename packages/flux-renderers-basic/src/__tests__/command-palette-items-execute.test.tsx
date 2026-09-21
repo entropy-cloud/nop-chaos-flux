@@ -240,7 +240,7 @@ describe('command-palette filter, keyboard, and empty state', () => {
   it('built-in filter narrows by label, shows the empty state on no match, and restores on clear', async () => {
     renderSchema({ type: 'page', body: [FILTERED] });
     await waitFor(() => expect(queryItems()).toHaveLength(3));
-    const input = document.querySelector('input[data-slot="command-input"]') as HTMLInputElement;
+    const input = document.querySelector('input[data-slot="input-group-control"]') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'alp' } });
     await waitFor(() => expect(itemLabels()).toEqual(['Alpha', 'Alphabet']));
     fireEvent.change(input, { target: { value: 'zzz' } });
@@ -263,7 +263,7 @@ describe('command-palette filter, keyboard, and empty state', () => {
       body: [{ ...OPEN_PALETTE, placeholder: 'Type a command…', items: [] }],
     });
     await waitFor(() => expect(queryPalette()).not.toBeNull());
-    const input = document.querySelector('input[data-slot="command-input"]') as HTMLInputElement;
+    const input = document.querySelector('input[data-slot="input-group-control"]') as HTMLInputElement;
     expect(input.getAttribute('placeholder')).toBe('Type a command…');
   });
 
@@ -273,7 +273,7 @@ describe('command-palette filter, keyboard, and empty state', () => {
       body: [FILTERED],
     });
     await waitFor(() => expect(queryItems()).toHaveLength(3));
-    const input = document.querySelector('input[data-slot="command-input"]') as HTMLInputElement;
+    const input = document.querySelector('input[data-slot="input-group-control"]') as HTMLInputElement;
     const selected = () => document.querySelector('[cmdk-item][data-selected="true"]');
     expect(selected()?.textContent).toContain('Alpha');
     fireEvent.keyDown(input, { key: 'ArrowDown' });
@@ -291,7 +291,7 @@ describe('command-palette filter, keyboard, and empty state', () => {
       body: [{ ...FILTERED, shouldFilter: false }],
     });
     await waitFor(() => expect(queryItems()).toHaveLength(3));
-    const input = document.querySelector('input[data-slot="command-input"]') as HTMLInputElement;
+    const input = document.querySelector('input[data-slot="input-group-control"]') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'zzz' } });
     await waitFor(() => expect(queryItems()).toHaveLength(3));
   });
@@ -449,7 +449,7 @@ describe('command-palette execution contract (dual-track, close-then-dispatch)',
     });
 
     await waitFor(() => expect(queryItems()).toHaveLength(2));
-    const input = document.querySelector('input[data-slot="command-input"]') as HTMLInputElement;
+    const input = document.querySelector('input[data-slot="input-group-control"]') as HTMLInputElement;
     fireEvent.keyDown(input, { key: 'ArrowDown' });
     await waitFor(() => {
       const selected = document.querySelector('[cmdk-item][data-selected="true"]');
@@ -489,7 +489,7 @@ describe('command-palette execution contract (dual-track, close-then-dispatch)',
     await waitFor(() => expect(queryPalette()).not.toBeNull());
     expect(screen.getByTestId('probe').textContent).toBe('executed=');
 
-    const input = document.querySelector('input[data-slot="command-input"]') as HTMLInputElement;
+    const input = document.querySelector('input[data-slot="input-group-control"]') as HTMLInputElement;
     fireEvent.keyDown(input, { key: 'ArrowDown' });
     await waitFor(() => {
       const selected = document.querySelector('[cmdk-item][data-selected="true"]');

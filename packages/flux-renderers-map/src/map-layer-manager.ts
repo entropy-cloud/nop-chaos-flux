@@ -166,14 +166,20 @@ export function createMapLayerManager(input: {
     return (feature: HitFeatureLike) => {
       const members = feature.get('features') as HitFeatureLike[] | undefined;
       const count = members?.length ?? 1;
+      // [G5-R5-视角3-01] hover parity with regions: the highlight branch makes
+      // pointermove feedback visible on pins and clusters too.
+      const isHighlighted = feature === highlighted;
       if (count === 1) {
         const member = members?.[0] ?? feature;
         const value = member.get('value') as number | undefined;
         return new api.Style({
           image: new api.Circle({
-            radius: 6,
+            radius: isHighlighted ? 8 : 6,
             fill: new api.Fill({ color: scale.color(value) }),
-            stroke: new api.Stroke({ color: theme.background, width: 2 }),
+            stroke: new api.Stroke({
+              color: isHighlighted ? theme.accent : theme.background,
+              width: isHighlighted ? 3 : 2,
+            }),
           }),
         });
       }
@@ -181,7 +187,10 @@ export function createMapLayerManager(input: {
         image: new api.Circle({
           radius: 12 + Math.min(count, 20),
           fill: new api.Fill({ color: withAlpha(theme.accent, 0.65) }),
-          stroke: new api.Stroke({ color: theme.border, width: 1 }),
+          stroke: new api.Stroke({
+            color: isHighlighted ? theme.accent : theme.border,
+            width: isHighlighted ? 3 : 1,
+          }),
         }),
         text: new api.Text({
           text: String(count),
@@ -194,11 +203,16 @@ export function createMapLayerManager(input: {
   function buildPinStyle(scale: MapColorScale) {
     return (feature: HitFeatureLike) => {
       const value = feature.get('value') as number | undefined;
+      // [G5-R5-视角3-01] highlight branch — without it pointermove never paints.
+      const isHighlighted = feature === highlighted;
       return new api.Style({
         image: new api.Circle({
-          radius: 6,
+          radius: isHighlighted ? 8 : 6,
           fill: new api.Fill({ color: scale.color(value) }),
-          stroke: new api.Stroke({ color: theme.background, width: 2 }),
+          stroke: new api.Stroke({
+            color: isHighlighted ? theme.accent : theme.background,
+            width: isHighlighted ? 3 : 2,
+          }),
         }),
       });
     };

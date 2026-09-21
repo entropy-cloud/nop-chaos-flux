@@ -95,3 +95,25 @@ export function buildPalettePanel(
     h: base.defaultH,
   };
 }
+
+/**
+ * [G3-视角9-01] readable display name for aria-labels: panel title → localized
+ * palette type label → internal id (last resort only). Exposes "Chart" /
+ * "销售面板" instead of the internal "panel-3" identifier.
+ */
+export function resolvePanelDisplayName(
+  panel: { id: string; type: string; title?: string },
+  translate: (key: string) => string,
+): string {
+  if (panel.title && panel.title.trim().length > 0) {
+    return panel.title.trim();
+  }
+  const entry = DASHBOARD_PALETTE_TYPES.find((e) => e.type === panel.type);
+  if (entry) {
+    const label = translate(entry.labelKey);
+    if (label && label !== entry.labelKey) {
+      return label;
+    }
+  }
+  return panel.id;
+}

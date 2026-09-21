@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef, type CSSProperties } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
@@ -149,15 +149,9 @@ function SingleFileDiff({
     );
   }
 
-  const viewTransitionStyle: CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: viewType === 'split' ? '1fr 1fr' : '1fr',
-    transition: 'grid-template-columns 150ms ease-out',
-    overflow: 'hidden',
-    minHeight: 0,
-    flex: 1,
-  };
-
+  // [G1-R2-视角8-02] the split/unified pane grid lives in diff-view.css
+  // (`.nop-diff-view-panes`) so the max-width:640px media query can collapse it
+  // to one column — an inline grid-template-columns here would defeat that.
   return (
     <div
       data-slot="diff-view"
@@ -177,7 +171,7 @@ function SingleFileDiff({
         onPrevFile={onPrevFile}
         onNextFile={onNextFile}
       />
-      <div style={viewTransitionStyle}>
+      <div className="nop-diff-view-panes" data-panes={viewType}>
         {viewType === 'split' ? (
           <DiffSplitView
             file={file}

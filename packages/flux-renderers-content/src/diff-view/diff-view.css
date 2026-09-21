@@ -141,6 +141,28 @@
 
 /* ─── View panel / layout components ─── */
 
+/* [G1-R2-视角8-02] cross-file sidebar: container-relative clamp instead of a
+   fixed 240px, so narrow containers shrink it before the diff area collapses. */
+.nop-diff-file-list {
+  width: clamp(140px, 26%, 240px);
+  flex-shrink: 0;
+}
+
+/* [G1-R2-视角8-02] pane grid owns the split/unified columns in the stylesheet
+   (previously inline, which defeated the mobile media query below). */
+.nop-diff-view-panes {
+  display: grid;
+  grid-template-columns: 1fr;
+  transition: grid-template-columns 150ms ease-out;
+  overflow: hidden;
+  min-height: 0;
+  flex: 1;
+}
+
+.nop-diff-view-panes[data-panes='split'] {
+  grid-template-columns: 1fr 1fr;
+}
+
 .nop-diff-split-view {
   display: contents;
 }
@@ -585,6 +607,12 @@
     /* Force switch to unified-like single column */
   }
 
+  /* [G1-R2-视角8-02] collapse the pane grid to one column so the split
+     panes stack full-width instead of being squeezed into the first track. */
+  .nop-diff-view-panes[data-panes='split'] {
+    grid-template-columns: 1fr;
+  }
+
   .nop-diff-view[data-view='split'] .nop-diff-split-view {
     display: block;
   }
@@ -615,5 +643,9 @@
   .nop-diff-gutter-cell {
     min-width: 36px;
     padding: 0 4px;
+  }
+
+  .nop-diff-file-list {
+    width: 128px;
   }
 }

@@ -286,6 +286,14 @@ export function UploadFieldRenderer(
         setItems((prev) => prev.filter((entry) => entry.id !== id));
         return;
       }
+      // [G2-R4-视角5-02] completion-time cap recheck: the remaining quota may
+      // have been consumed by later selections while this upload was in flight.
+      if (multiple && maxFiles !== undefined && committedItems().length >= maxFiles) {
+        setItems((prev) => prev.filter((entry) => entry.id !== id));
+        setRejectionNotice(t('flux.form.maxFilesExceeded', { max: maxFiles }));
+        rejectFile(file, t('flux.form.maxFilesExceeded', { max: maxFiles }));
+        return;
+      }
       const successItems = multiple ? [...committedItems(), item] : [item];
       setItems((prev) =>
         prev.map((entry) =>
@@ -392,7 +400,12 @@ export function UploadFieldRenderer(
       abortControllersRef.current.clear();
       setItems([]);
     } else if (maxFiles) {
-      const remaining = Math.max(0, maxFiles - committedItems().length);
+      // [G2-R4-视角5-02] the remaining slice must count in-flight uploads too —
+      // committedItems() alone lets a concurrent selection burst exceed maxFiles.
+      const remaining = Math.max(
+        0,
+        maxFiles - committedItems().length - abortControllersRef.current.size,
+      );
       if (selected.length > remaining) {
         notices.push(t('flux.form.maxFilesExceeded', { max: maxFiles }));
         for (const file of selected.slice(remaining)) {

@@ -22,7 +22,7 @@ import { EditorInspector } from './editor-inspector.js';
 import { EditorPalette } from './editor-palette.js';
 import { useDashboardEditorHandles } from './use-dashboard-editor-handles.js';
 import { useEditorCoreSession } from './editor-session-hook.js';
-import { resolveCols, resolveGapPx, resolveRowHeight } from '../layout-math.js';
+import { resolveCols, resolveGapPx, resolveRowHeight, findFreePosition } from '../layout-math.js';
 
 export interface DashboardEditorSchema extends BaseSchema {
   type: 'dashboard-editor';
@@ -172,7 +172,13 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       index += 1;
       id = `panel-${index}`;
     }
-    const panel = { id, type, title: type, x: 0, y: 0, w: Math.min(4, cols), h: 2 };
+    // [G3-R4-视角11-01] the new panel claims the first grid slot that overlaps
+    // nothing (first-fit) instead of the fixed (0,0) — a click-add on a busy
+    // canvas no longer stacks a new panel on top of the first one.
+    const w = Math.min(4, cols);
+    const h = 2;
+    const { x, y } = findFreePosition(working.panels, { w, h }, { cols });
+    const panel = { id, type, title: type, x, y, w, h };
     core.update((doc) => ({ panels: [...doc.panels, panel] }));
     core.setSelection([panel.id]);
   };
@@ -214,45 +220,55 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       <span className="mr-2 text-sm font-medium text-foreground">
         {t('flux.dashboard.editor.headerTitle')}
       </span>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="editor-undo"
-        disabled={!session.canUndo}
-        onClick={() => core.undo()}
-      >
-        <Undo2 className="size-3.5" />
-        {t('flux.dashboard.editor.undo')}
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="editor-redo"
-        disabled={!session.canRedo}
-        onClick={() => core.redo()}
-      >
-        <Redo2 className="size-3.5" />
-        {t('flux.dashboard.editor.redo')}
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="editor-delete"
-        disabled={selection.length === 0}
-        onClick={() => {
-          const removed = new Set(selection);
-          core.update((doc) => ({
-            panels: doc.panels.filter((p) => !removed.has(p.id)),
-          }));
-          core.setSelection([]);
-        }}
-      >
-        <Trash2 className="size-3.5" />
-        {t('flux.dashboard.editor.delete')}
-      </Button>
+      {/*
+        [G3-R5-视角3-01] preview mode renders no EditorCanvas: undo/redo/delete
+        only act on the (hidden) edit canvas, so they stay edit-mode-only —
+        previously the header kept offering Delete against a canvas it cannot
+        show.
+      */}
+      {mode === 'edit' ? (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="editor-undo"
+            disabled={!session.canUndo}
+            onClick={() => core.undo()}
+          >
+            <Undo2 className="size-3.5" />
+            {t('flux.dashboard.editor.undo')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="editor-redo"
+            disabled={!session.canRedo}
+            onClick={() => core.redo()}
+          >
+            <Redo2 className="size-3.5" />
+            {t('flux.dashboard.editor.redo')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="editor-delete"
+            disabled={selection.length === 0}
+            onClick={() => {
+              const removed = new Set(selection);
+              core.update((doc) => ({
+                panels: doc.panels.filter((p) => !removed.has(p.id)),
+              }));
+              core.setSelection([]);
+            }}
+          >
+            <Trash2 className="size-3.5" />
+            {t('flux.dashboard.editor.delete')}
+          </Button>
+        </>
+      ) : null}
       <Button
         type="button"
         variant="outline"
@@ -282,7 +298,17 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
           variant={mode === 'edit' ? 'default' : 'outline'}
           size="sm"
           data-testid="editor-mode-toggle"
-          onClick={() => core.setMode(mode === 'edit' ? 'preview' : 'edit')}
+          onClick={() => {
+            // [G3-R5-视角3-01] entering preview drops the selection: the canvas
+            // that displayed it is unmounted, so a stale selection would leave
+            // Delete/arm hidden state with no visible carrier. (Root cause sits
+            // in editor-core setMode, which keeps selection; cleared here at the
+            // dashboard renderer boundary.)
+            if (mode === 'edit') {
+              core.setSelection([]);
+            }
+            core.setMode(mode === 'edit' ? 'preview' : 'edit');
+          }}
         >
           {mode === 'edit' ? <Eye className="size-3.5" /> : <Pencil className="size-3.5" />}
           {mode === 'edit'

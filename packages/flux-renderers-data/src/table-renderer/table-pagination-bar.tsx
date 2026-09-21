@@ -10,24 +10,13 @@ import {
   PaginationPrevious,
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-
-export function computeWindowRange(currentPage: number, totalPages: number): [number, number] {
-  if (totalPages <= 7) return [1, totalPages];
-
-  let start = currentPage - 1;
-  let end = currentPage + 1;
-
-  if (start < 1) {
-    end += 1 - start;
-    start = 1;
-  }
-  if (end > totalPages) {
-    start -= end - totalPages;
-    end = totalPages;
-  }
-
-  return [Math.max(1, start), Math.min(totalPages, end)];
-}
+import {
+  buildPageWindow,
+  shouldShowFirstPage,
+  shouldShowLastPage,
+  shouldShowLeadingEllipsis,
+  shouldShowTrailingEllipsis,
+} from '../pagination-window.js';
 
 interface TablePaginationBarProps {
   currentPage: number;
@@ -48,7 +37,12 @@ export function TablePaginationBar({
   onPageChange,
   onPageSizeChange,
 }: TablePaginationBarProps) {
-  const [winStart, winEnd] = computeWindowRange(currentPage, totalPages);
+  // [G3-视角10-01] same window algorithm as the standalone pagination renderer.
+  const pages = buildPageWindow(currentPage, totalPages);
+  const showFirst = shouldShowFirstPage(pages);
+  const showLeadingEllipsis = shouldShowLeadingEllipsis(pages);
+  const showTrailingEllipsis = shouldShowTrailingEllipsis(pages, totalPages);
+  const showLast = shouldShowLastPage(pages, totalPages);
   const pageSizeLabelId = 'table-pagination-page-size-label';
 
   return (
@@ -77,26 +71,36 @@ export function TablePaginationBar({
 
       <Pagination>
         <PaginationContent>
+          {/* [G3-视角10-01] disabled state rides aria-disabled — consumed by the
+              ui pagination primitive (aria-disabled:opacity-50 +
+              pointer-events-none); no per-call-site class duplication. */}
           <PaginationItem>
             <PaginationPrevious
-              onClick={(event) => currentPage > 1 && onPageChange(currentPage - 1, event)}
-              aria-disabled={currentPage === 1}
-              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              aria-disabled={currentPage <= 1}
+              onClick={(event) => {
+                event.preventDefault();
+                if (currentPage > 1) {
+                  onPageChange(currentPage - 1, event);
+                }
+              }}
             />
           </PaginationItem>
 
-          {winStart > 1 && (
+          {showFirst && (
             <>
               <PaginationItem>
                 <PaginationLink
-                  onClick={(event) => onPageChange(1, event)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    onPageChange(1, event);
+                  }}
                   isActive={currentPage === 1}
                   className="cursor-pointer"
                 >
                   1
                 </PaginationLink>
               </PaginationItem>
-              {winStart > 2 && (
+              {showLeadingEllipsis && (
                 <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
@@ -104,10 +108,13 @@ export function TablePaginationBar({
             </>
           )}
 
-          {Array.from({ length: winEnd - winStart + 1 }, (_, i) => winStart + i).map((page) => (
+          {pages.map((page) => (
             <PaginationItem key={page}>
               <PaginationLink
-                onClick={(event) => onPageChange(page, event)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onPageChange(page, event);
+                }}
                 isActive={page === currentPage}
                 className="cursor-pointer"
               >
@@ -116,16 +123,19 @@ export function TablePaginationBar({
             </PaginationItem>
           ))}
 
-          {winEnd < totalPages && (
+          {showLast && (
             <>
-              {winEnd < totalPages - 1 && (
+              {showTrailingEllipsis && (
                 <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
               )}
               <PaginationItem>
                 <PaginationLink
-                  onClick={(event) => onPageChange(totalPages, event)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    onPageChange(totalPages, event);
+                  }}
                   isActive={currentPage === totalPages}
                   className="cursor-pointer"
                 >
@@ -137,11 +147,13 @@ export function TablePaginationBar({
 
           <PaginationItem>
             <PaginationNext
-              onClick={(event) => currentPage < totalPages && onPageChange(currentPage + 1, event)}
-              aria-disabled={currentPage === totalPages}
-              className={
-                currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'
-              }
+              aria-disabled={currentPage >= totalPages}
+              onClick={(event) => {
+                event.preventDefault();
+                if (currentPage < totalPages) {
+                  onPageChange(currentPage + 1, event);
+                }
+              }}
             />
           </PaginationItem>
         </PaginationContent>

@@ -20,6 +20,8 @@ export function InspectorField(props: InspectorFieldProps) {
   const { t } = useFluxTranslation();
   const widget = field.entry.widget ?? 'text-input';
   const label = field.entry.label ?? field.key;
+  // [G5-视角4-01] Label ↔ 控件关联：label[for] 指向控件 id（button/labelable 元素点击 label 可达控件）。
+  const fieldId = `nop-scada-inspector-${field.key.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 
   const errorEl = error ? <div className="nop-scada-editor-field-error">{error}</div> : null;
 
@@ -38,8 +40,8 @@ export function InspectorField(props: InspectorFieldProps) {
   if (widget === 'switch') {
     return (
       <div className="flex items-center gap-2">
-        <Switch checked={Boolean(value)} onCheckedChange={(v) => onChange(v)} />
-        <Label className="text-xs">{t(label)}</Label>
+        <Switch id={fieldId} checked={Boolean(value)} onCheckedChange={(v) => onChange(v)} />
+        <Label htmlFor={fieldId} className="text-xs">{t(label)}</Label>
         {errorEl}
       </div>
     );
@@ -48,8 +50,9 @@ export function InspectorField(props: InspectorFieldProps) {
   if (widget === 'select' && field.entry.enum) {
     return (
       <div>
-        <Label className="text-xs">{t(label)}</Label>
+        <Label htmlFor={fieldId} className="text-xs">{t(label)}</Label>
         <NativeSelect
+          id={fieldId}
           size="xs"
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
@@ -70,8 +73,9 @@ export function InspectorField(props: InspectorFieldProps) {
 
   return (
     <div>
-      <Label className="text-xs">{t(label)}</Label>
+      <Label htmlFor={fieldId} className="text-xs">{t(label)}</Label>
       <Input
+        id={fieldId}
         type={inputType}
         className="text-xs"
         min={field.entry.min}
@@ -138,10 +142,12 @@ function JsonEditorField(props: { field: PanelField; value: unknown; error?: str
   };
 
   const showError = parseError ?? error;
+  // [G5-视角4-01] json-editor 分支同样补 Label htmlFor ↔ Textarea id 关联。
+  const fieldId = `nop-scada-inspector-${field.key.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   return (
     <div>
-      <Label className="text-xs">{t(label)}</Label>
-      <Textarea className="text-xs font-mono" rows={3} value={draft} onChange={handleChange} />
+      <Label htmlFor={fieldId} className="text-xs">{t(label)}</Label>
+      <Textarea id={fieldId} className="text-xs font-mono" rows={3} value={draft} onChange={handleChange} />
       {showError ? <div className="nop-scada-editor-field-error">{showError}</div> : null}
     </div>
   );

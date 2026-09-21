@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getIn } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import type { TableColumnSchema } from '../schemas.js';
 
 const DEFAULT_MIN_WIDTH = 40;
@@ -379,4 +380,55 @@ export function useColumnResize(
     stepResize,
     persistWidth,
   } as ColumnResizeApi & { persistWidth: (next: Record<string, number>) => void };
+}
+
+export const COLUMN_RESIZE_KEYBOARD_STEP = 10;
+
+/**
+ * Column-resize separator props ([oversized-file governance]: moved verbatim
+ * from table-header-row.tsx). Keyboard resize (WCAG 2.1 SC 2.1.1): the handle
+ * is a focusable separator, so ArrowLeft/ArrowRight step the column width
+ * along the same commit path as a pointer drag (mirrors use-row-drag-sort H6).
+ */
+export function createColumnResizeHandleProps(options: {
+  column: TableColumnSchema;
+  index: number;
+  resizable: boolean;
+  resizeApi?: ColumnResizeApi;
+}): {
+  'data-slot': 'table-column-resize-handle';
+  'aria-label': string;
+  role: 'separator';
+  'aria-orientation': 'vertical';
+  tabIndex: number;
+  onPointerDown: (event: React.PointerEvent<HTMLSpanElement>) => void;
+  onKeyDown: (event: React.KeyboardEvent<HTMLSpanElement>) => void;
+  className: string;
+  style: { touchAction: 'none' };
+} {
+  const { column, index, resizable, resizeApi } = options;
+  const resizeStart = (event: React.PointerEvent<HTMLSpanElement>) => {
+    if (!resizable || !resizeApi) return;
+    event.preventDefault();
+    event.stopPropagation();
+    resizeApi.startResize(column, index, event.clientX);
+  };
+  const resizeKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (!resizable || !resizeApi) return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    event.stopPropagation();
+    resizeApi.stepResize(column, index, event.key === 'ArrowLeft' ? -COLUMN_RESIZE_KEYBOARD_STEP : COLUMN_RESIZE_KEYBOARD_STEP);
+  };
+  return {
+    'data-slot': 'table-column-resize-handle',
+    'aria-label': t('flux.table.resizeColumn'),
+    role: 'separator',
+    'aria-orientation': 'vertical',
+    tabIndex: 0,
+    onPointerDown: resizeStart,
+    onKeyDown: resizeKeyDown,
+    className: 'absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-primary/40',
+    style: { touchAction: 'none' },
+  };
 }

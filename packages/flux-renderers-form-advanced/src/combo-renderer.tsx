@@ -552,18 +552,26 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
         />
       ))}
       {addable && !interactionDisabled && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          data-slot="combo-add"
-          disabled={atMaxItems}
-          className="w-fit"
-          onClick={handleAdd}
-        >
-          <PlusIcon className="size-4" />
-          {t('flux.form.addItem')}
-        </Button>
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-slot="combo-add"
+            disabled={atMaxItems}
+            className="w-fit"
+            onClick={handleAdd}
+          >
+            <PlusIcon className="size-4" />
+            {t('flux.form.addItem')}
+          </Button>
+          {atMaxItems && maxItems !== undefined ? (
+            // [G2-R2-视角4-02] the cap disabled Add silently; announce count/cap.
+            <span role="status" data-slot="combo-max-items" className="text-xs text-muted-foreground">
+              {t('flux.form.maxItemsReached', { count: itemsArray.length, max: maxItems })}
+            </span>
+          ) : null}
+        </>
       )}
     </div>
   );

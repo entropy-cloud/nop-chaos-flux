@@ -32,6 +32,12 @@
   - 裁决: pending
   - 状态: open
 
+[V12f-D4] P2 候选池批四消化（named 10 + 单点收尾 89，P2 池清零）
+
+- 证据: `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md` 附录清单（plan 488 Appendix A）+ 四波执行报告
+- 裁决: 99 = landed 87 + FIXED_SINCE 4 + Decision→V12c 8（分页结构性合并、kanban activity-log 两死类型、sundial organize 区、supabase 统计卡、t10 覆盖缺口、V12e-⑦ IA 深面等）；对账三方一致
+- 状态: closed（V12f 面，P2 池清零）；Decision 8 项归 V12c 台账，P3 池 87 条 open（V12c）
+
 [V12e-D3] P2 候选池批三消化（族1+族2+族6 17 条，行为类）
 
 - 证据: `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md` §4 族1/2/6 + plan 487

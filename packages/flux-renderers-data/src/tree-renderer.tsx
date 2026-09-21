@@ -90,6 +90,9 @@ function TreeNodeRenderer(props: {
   showIcon: boolean;
   iconField: string | undefined;
   showGuideLine: boolean;
+  /** [G3-视角9-03] multiple: selected node keys (undefined = single mode). */
+  selectedKeys?: ReadonlySet<string>;
+  onToggleSelect?: (nodeKey: string) => void;
 }) {
   const {
     owner,
@@ -115,6 +118,8 @@ function TreeNodeRenderer(props: {
     showIcon,
     iconField,
     showGuideLine,
+    selectedKeys,
+    onToggleSelect,
   } = props;
   const nodeKey = toNodeKey(node, keyField, index);
   const treeNodeId = createTreeNodeId(parentTreeNodeId, nodeKey);
@@ -217,6 +222,10 @@ function TreeNodeRenderer(props: {
     : depth * TREE_INDENT_PX + TREE_BASE_PADDING_PX;
   const labelString = String(label ?? nodeKey);
   const hasCustomNodeContent = hasRendererSlotContent(asReactNode(nodeContent));
+  // [G3-视角9-03] multiple: aria-selected carries the REAL selection state
+  // (click/Enter/Space toggle membership); single mode keeps the legacy
+  // focus-mirroring shape.
+  const isSelected = selectedKeys ? selectedKeys.has(nodeKey) : undefined;
 
   return (
     <div data-slot="tree-node" data-depth={depth} data-node-key={nodeKey} data-tree-node-id={treeNodeId}>
@@ -270,11 +279,15 @@ function TreeNodeRenderer(props: {
           )}
 
           <div
-            className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className={cn(
+              'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+              isSelected ? 'bg-accent' : undefined,
+            )}
             role="treeitem"
             aria-expanded={hasChildren ? effectiveOpen : undefined}
             aria-level={depth + 1}
-            aria-selected={isTabbable}
+            aria-selected={selectedKeys ? isSelected === true : isTabbable}
+            data-selected={isSelected || undefined}
             data-depth={depth}
             data-tree-node-id={treeNodeId}
             tabIndex={isTabbable ? 0 : -1}
@@ -284,6 +297,7 @@ function TreeNodeRenderer(props: {
             onClick={() => {
               setActiveNodeId(treeNodeId);
               toggleFromTreeItem();
+              onToggleSelect?.(nodeKey);
             }}
             onKeyDown={(e) => {
               if (
@@ -331,6 +345,15 @@ function TreeNodeRenderer(props: {
               if ((e.key === 'Enter' || e.key === ' ') && hasChildren) {
                 e.preventDefault();
                 handleOpenChange(effectiveOpen ? false : true);
+                onToggleSelect?.(nodeKey);
+                return;
+              }
+
+              // [G3-视角9-03] keyboard parity for the multiple toggle: leaf nodes
+              // have no expand gesture to shadow, so Enter/Space only toggle.
+              if ((e.key === 'Enter' || e.key === ' ') && selectedKeys) {
+                e.preventDefault();
+                onToggleSelect?.(nodeKey);
               }
             }}
           >
@@ -376,6 +399,8 @@ function TreeNodeRenderer(props: {
                   showIcon={showIcon}
                   iconField={iconField}
                   showGuideLine={showGuideLine}
+                  selectedKeys={selectedKeys}
+                  onToggleSelect={onToggleSelect}
                 />
               ))}
               {effectiveOpen && childRenderCount < childNodes.length ? (
@@ -429,6 +454,21 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const [activeNodeId, setActiveNodeId] = useState<string | undefined>(() => {
     return firstRootNodeId;
   });
+  // [G3-视角9-03] multiple: backing store for the multi-select contract the
+  // schema advertises via aria-multiselectable. Internal (DOM-observable via
+  // aria-selected/data-selected); single mode leaves it disengaged.
+  const [selectedNodeKeys, setSelectedNodeKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const toggleNodeSelected = (nodeKey: string) => {
+    setSelectedNodeKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeKey)) {
+        next.delete(nodeKey);
+      } else {
+        next.add(nodeKey);
+      }
+      return next;
+    });
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const searchState = searchable
     ? computeTreeSearch(data, searchQuery, childrenKey, labelField, keyField)
@@ -613,6 +653,8 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
           showIcon={showIcon}
           iconField={iconField}
           showGuideLine={showGuideLine}
+          selectedKeys={multiple ? selectedNodeKeys : undefined}
+          onToggleSelect={multiple ? toggleNodeSelected : undefined}
         />
       ))}
     </div>

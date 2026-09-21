@@ -185,7 +185,10 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   }, [componentRegistry, firstValue, ownedAxis, props.id, props.meta.cid, summary]);
 
   useEffect(() => {
-    if (!isMobile || !tabsListRef.current) {
+    // [G1-R6-视角8-01] active-trigger scrollIntoView is not mobile-only: the
+    // desktop scroll contract (overflow-x-auto TabsList) needs the same
+    // keep-active-visible behavior.
+    if (!tabsListRef.current) {
       return;
     }
     const activeTrigger = tabsListRef.current.querySelector<HTMLElement>(
@@ -194,7 +197,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     if (activeTrigger && typeof activeTrigger.scrollIntoView === 'function') {
       activeTrigger.scrollIntoView({ inline: 'nearest', block: 'nearest' });
     }
-  }, [isMobile, ownedAxis.value, items.length]);
+  }, [ownedAxis.value, items.length]);
 
   const [activated, setActivated] = useState<ReadonlySet<string>>(() => new Set());
   const currentActiveValue = ownedAxis.value;
@@ -251,8 +254,12 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
       ref={tabsListRef as React.Ref<HTMLDivElement>}
       variant={schemaProps.variant ?? variant}
       className={cn(
-        isMobile && orientation === 'horizontal'
-          ? 'nop-scrollbar-hide overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+        orientation === 'horizontal'
+          ? isMobile
+            ? 'nop-scrollbar-hide overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+            : // [G1-R6-视角8-01] desktop shares the horizontal overflow contract:
+              // a w-fit TabsList in a narrow container must scroll, not clip.
+              'overflow-x-auto whitespace-nowrap'
           : undefined,
       )}
     >

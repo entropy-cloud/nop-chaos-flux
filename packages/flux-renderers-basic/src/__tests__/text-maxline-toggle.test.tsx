@@ -195,6 +195,44 @@ describe('text renderer - maxLineToggle', () => {
     }
   });
 
+  it('[G1-视角4-10] toggle renders as a text-capable button, not a fixed 20px icon box', () => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      get: () => 200,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      get: () => 50,
+    });
+    try {
+      const { container } = renderInPage({
+        type: 'text',
+        text: 'A'.repeat(400),
+        maxLine: 2,
+        maxLineToggle: true,
+      });
+      const toggle = container.querySelector(
+        '[data-slot="text-maxline-toggle"]',
+      ) as HTMLButtonElement;
+      expect(toggle.textContent).toContain('Expand');
+      // The toggle carries a visible word label: it must not be squeezed into a
+      // fixed square icon box (text would overflow the button boundary).
+      expect(toggle.className).not.toMatch(/(?:^|\s)(?:h-5|w-5|size-5)(?:\s|$)/);
+      // Text-capable geometry survives the cn merge (xs size: height + inline padding).
+      expect(toggle.className).toContain('h-6');
+      expect(toggle.className).toContain('px-2');
+    } finally {
+      Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+        configurable: true,
+        get: () => 0,
+      });
+      Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+        configurable: true,
+        get: () => 0,
+      });
+    }
+  });
+
   it('toggle button exposes aria-controls matching the controlled content id', () => {
     Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
       configurable: true,

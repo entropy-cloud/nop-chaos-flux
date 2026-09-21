@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { BaseSchema } from '@nop-chaos/flux-core';
 
 const mobileState = vi.hoisted(() => ({ isMobile: false }));
@@ -116,6 +118,35 @@ describe('page renderer — responsive aside (M3a)', () => {
       body: [{ type: 'text', text: 'MAIN BODY' }],
     } as BaseSchema);
     expect(container.querySelector('[data-slot="page-aside-toggle"]')).toBeNull();
+  });
+});
+
+describe('[G1-R4-视角6-01] mobile aside sheet scroll contract', () => {
+  it('aside inside the opened sheet is a dedicated scroll region (content stays reachable)', async () => {
+    mobileState.isMobile = true;
+    const { container } = renderPage({
+      type: 'page',
+      title: 'T',
+      body: [{ type: 'text', text: 'MAIN BODY' }],
+      aside: [{ type: 'text', text: 'ASIDE CONTENT' }],
+    } as BaseSchema);
+    const toggle = container.querySelector('[data-slot="page-aside-toggle"]') as HTMLElement;
+    fireEvent.click(toggle);
+    await waitFor(() => {
+      expect(document.querySelector('[data-page-aside-sheet="true"]')).toBeTruthy();
+    });
+    const sheet = document.querySelector('[data-page-aside-sheet="true"]') as HTMLElement;
+    const aside = sheet.querySelector('[data-slot="page-aside"]') as HTMLElement;
+    expect(aside).toBeTruthy();
+    expect(aside.textContent).toContain('ASIDE CONTENT');
+  });
+
+  it('package styles.css pins the scroll contract behind the sheet marker (long content scrolls, not overflows)', () => {
+    const cssPath = join(import.meta.dirname, '..', 'styles.css');
+    const css = readFileSync(cssPath, 'utf8');
+    expect(css).toMatch(/\[data-page-aside-sheet[^\]]*\]\s+\[data-slot='page-aside'\]/);
+    expect(css).toMatch(/min-height:\s*0/);
+    expect(css).toMatch(/overflow-y:\s*auto/);
   });
 });
 

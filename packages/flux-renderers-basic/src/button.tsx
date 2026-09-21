@@ -4,6 +4,7 @@ import { isSafeNavigationUrl } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import {
   Button,
+  buttonVariants,
   cn,
   resolveLucideIconStrict,
   Spinner,
@@ -277,7 +278,13 @@ function resolveRel(target: unknown, rel: unknown): string | undefined {
       aria-disabled={effectiveDisabled || undefined}
       {...commonProps}
       onClick={(event) => void handleClick(event)}
-      className={cn(commonProps.className, effectiveDisabled && 'pointer-events-none opacity-60')}
+      className={cn(
+        // [G1-R2-视角2-01] the anchor branch keeps the button visual contract
+        // (variant weight + size geometry); schema meta classes stay appended.
+        buttonVariants({ variant, size }),
+        commonProps.className,
+        effectiveDisabled && 'pointer-events-none opacity-60',
+      )}
     >
       {leadingSlot}
       {displayLabel}

@@ -40,14 +40,21 @@
   border-left: 1px solid var(--nop-border, #e2e8f0);
 }
 
-/* 工具箱（E9.1 占位）。 */
+/* 工具箱（E9.1）。[G5-R3-视角8-01] flex-wrap：窄容器下按钮组换行而非被祖先
+   overflow:hidden 裁剪（此前 7 组约 28 按钮单行排布，尾部按钮不可达）。 */
 .nop-scada-editor-toolbox {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
   background: var(--nop-surface, #ffffff);
   border-bottom: 1px solid var(--nop-border, #e2e8f0);
+}
+
+/* [G5-R3-视角8-01] 极窄容器下组内按钮亦可换行（ButtonGroup 默认单行 inline-flex）。 */
+.nop-scada-editor-toolbox [data-slot='button-group'] {
+  flex-wrap: wrap;
 }
 
 /* 状态栏（含 undo/redo 边界提示，M1 占位）。 */

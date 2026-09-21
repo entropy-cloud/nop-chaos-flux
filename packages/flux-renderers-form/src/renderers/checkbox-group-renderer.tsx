@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle, type SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -61,6 +61,13 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
   const selectedCount = selectedValues.length;
   const maxReached = maxSelected !== undefined && selectedCount >= maxSelected;
 
+  // [G2-视角4-02] user-visible feedback for the max/min caps: blocked toggles
+  // set a transient hint; while the cap is reached the hint is proactive so
+  // the capped/disabled options are self-explanatory.
+  const [limitHint, setLimitHint] = useState<string | null>(null);
+  const capHint = maxReached ? t('flux.form.checkboxMaxSelected', { max: maxSelected }) : null;
+  const activeLimitHint = limitHint ?? capHint;
+
   const isSelected = (option: ChoiceOption) =>
     selectedValues.some((candidate: unknown) => Object.is(candidate, option.value));
 
@@ -78,13 +85,20 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
     }
     if (nextChecked) {
       if (maxSelected !== undefined && selectedValues.length >= maxSelected) {
+        // [G2-视角4-02] the cap rejected the request — say so instead of a
+        // silent return.
+        setLimitHint(t('flux.form.checkboxMaxSelected', { max: maxSelected }));
         return;
       }
+      setLimitHint(null);
       commit([...selectedValues, option.value]);
     } else {
       if (minSelected !== undefined && selectedValues.length - 1 < minSelected) {
+        // [G2-视角4-02] blocked uncheck below the minimum — announce the floor.
+        setLimitHint(t('flux.form.checkboxMinSelected', { min: minSelected }));
         return;
       }
+      setLimitHint(null);
       commit(selectedValues.filter((candidate: unknown) => !Object.is(candidate, option.value)));
     }
   }
@@ -96,8 +110,16 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
     if (nextChecked) {
       const target = selectableOptions.map((option) => option.value);
       const clamped = maxSelected !== undefined ? target.slice(0, maxSelected) : target;
+      // [G2-视角4-02] a clamped check-all silently picked fewer options than
+      // requested — explain the clamp.
+      setLimitHint(
+        maxSelected !== undefined && target.length > clamped.length
+          ? t('flux.form.checkboxMaxSelected', { max: maxSelected })
+          : null,
+      );
       commit(clamped);
     } else {
+      setLimitHint(null);
       commit([]);
     }
   }
@@ -193,6 +215,11 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
           </Label>
         );
       })}
+      {activeLimitHint && presentation.interactive ? (
+        <span data-slot="checkbox-group-limit-hint" role="status" className="text-xs text-muted-foreground">
+          {activeLimitHint}
+        </span>
+      ) : null}
       {errorMessage ? (
         <span id={errorId} data-slot="checkbox-group-error" role="alert">
           {errorMessage}

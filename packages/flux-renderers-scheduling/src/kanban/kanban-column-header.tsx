@@ -58,7 +58,9 @@ export function KanbanColumnHeader({
 
   if (columnHeaderRegion) {
     return (
-      <div ref={headerRef} data-slot="kanban-column-header" data-dnd-column-header={dndEnabled || undefined} data-column-id={column.id} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }} className={cn('nop-kanban-column-header', className)}>
+      // [G4-视角9-01] group 而非 button——头内含真实拖拽/折叠按钮，交互角色
+      // 不得嵌套；点击选择列的行为保留在可聚焦的 group 上。
+      <div ref={headerRef} data-slot="kanban-column-header" data-dnd-column-header={dndEnabled || undefined} data-column-id={column.id} onClick={onClick} role="group" aria-label={title} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }} className={cn('nop-kanban-column-header', className)}>
         {columnHeaderRegion.render()}
         {onResizeStart && (
           <div
@@ -86,7 +88,8 @@ export function KanbanColumnHeader({
       data-dnd-column-header={dndEnabled || undefined}
       data-column-id={column.id}
       onClick={onClick}
-      role="button"
+      role="group"
+      aria-label={title}
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
       className={cn(

@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { resetLeaferMock } from '../../test-support/leafer-ui-mock.js';
@@ -72,5 +72,40 @@ describe('EditorPalettePanel i18n (plan 2026-08-09-0648-2 Phase 2)', () => {
     expect(
       findButtonByText(container, 'industrial.scada.symbol.scada-test-fallback-no-key'),
     ).toBeUndefined();
+  });
+});
+
+// [G5-R4-视角11-01] 图元库"点击添加"固定落点 (50,50)：连续点击产生完全重叠的图元栈，与已修复的
+// "拖拽落点在指针处"（scada-editor-canvas.tsx drop 路径）同源不同路径。点击路径无指针目标，
+// 最小修复为级联落点：连续点击的落点坐标必须互不重合。
+describe('[G5-R4-视角11-01] palette click-add placement cascade', () => {
+  function recordingRuntime(calls: Array<{ id: string; x: number; y: number }>): EditorEngineRuntime {
+    return {
+      addWorkingSymbol: (symbol: { id: string; x: number; y: number }) => {
+        calls.push({ id: symbol.id, x: symbol.x, y: symbol.y });
+      },
+    } as unknown as EditorEngineRuntime;
+  }
+
+  it('consecutive click-adds of the same type land at distinct coordinates (no stacked duplicates)', () => {
+    const calls: Array<{ id: string; x: number; y: number }> = [];
+    const { container } = render(<EditorPalettePanel runtime={recordingRuntime(calls)} onError={() => undefined} />);
+    const rectBtn = findButtonByText(container, '矩形');
+    expect(rectBtn).toBeDefined();
+    fireEvent.click(rectBtn!);
+    fireEvent.click(rectBtn!);
+    fireEvent.click(rectBtn!);
+    expect(calls).toHaveLength(3);
+    const distinctPlacements = new Set(calls.map((c) => `${c.x},${c.y}`));
+    expect(distinctPlacements.size).toBe(3);
+  });
+
+  it('click-add ids stay unique across consecutive adds', () => {
+    const calls: Array<{ id: string; x: number; y: number }> = [];
+    const { container } = render(<EditorPalettePanel runtime={recordingRuntime(calls)} onError={() => undefined} />);
+    const rectBtn = findButtonByText(container, '矩形');
+    fireEvent.click(rectBtn!);
+    fireEvent.click(rectBtn!);
+    expect(new Set(calls.map((c) => c.id)).size).toBe(2);
   });
 });

@@ -31,4 +31,13 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  /* [G1-R4-视角6-01] Mobile aside sheet: the sheet popup is a full-height flex
+   * column, so the aside must own the scroll (shrinkable + overflow-y) or long
+   * sidebar content overflows the viewport and becomes unreachable. */
+  [data-page-aside-sheet='true'] [data-slot='page-aside'] {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+  }
 }

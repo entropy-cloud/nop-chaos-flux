@@ -401,18 +401,26 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
         </Table>
       </div>
       {addable && !interactionDisabled && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          data-slot="input-table-add"
-          disabled={atMaxItems}
-          className="w-fit"
-          onClick={handleAdd}
-        >
-          <PlusIcon className="size-4" />
-          {t('flux.form.addRow', { defaultValue: 'Add row' })}
-        </Button>
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-slot="input-table-add"
+            disabled={atMaxItems}
+            className="w-fit"
+            onClick={handleAdd}
+          >
+            <PlusIcon className="size-4" />
+            {t('flux.form.addRow', { defaultValue: 'Add row' })}
+          </Button>
+          {atMaxItems && maxItems !== undefined ? (
+            // [G2-R2-视角4-02] the cap disabled Add silently; announce count/cap.
+            <span role="status" data-slot="input-table-max-items" className="text-xs text-muted-foreground">
+              {t('flux.form.maxItemsReached', { count: itemsArray.length, max: maxItems })}
+            </span>
+          ) : null}
+        </>
       )}
       {hasRendererSlotContent(footerContent) ? (
         <div data-slot="input-table-footer">{asReactNode(footerContent)}</div>

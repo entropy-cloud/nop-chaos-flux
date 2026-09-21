@@ -46,7 +46,7 @@ describe('CRUD renderer header forwarding', () => {
       screen.getAllByRole('button', { name: t('flux.table.filter') })[0] as HTMLElement,
     );
     const searchPopup = document.querySelector(
-      '[data-slot="dropdown-menu-content"]',
+      '[data-slot="popover-content"]',
     ) as HTMLElement | null;
     expect(searchPopup).toBeTruthy();
     fireEvent.change(within(searchPopup!).getByRole('textbox'), { target: { value: 'Alp' } });
@@ -58,7 +58,7 @@ describe('CRUD renderer header forwarding', () => {
 
     expect(screen.getByRole('button', { name: t('flux.table.filterActive') })).toBeTruthy();
     const activePopup = document.querySelector(
-      '[data-slot="dropdown-menu-content"]',
+      '[data-slot="popover-content"]',
     ) as HTMLElement | null;
     expect(activePopup).toBeTruthy();
     fireEvent.click(
@@ -111,7 +111,7 @@ describe('CRUD renderer header forwarding', () => {
       screen.getAllByRole('button', { name: t('flux.table.filter') })[0] as HTMLElement,
     );
     const searchPopup = document.querySelector(
-      '[data-slot="dropdown-menu-content"]',
+      '[data-slot="popover-content"]',
     ) as HTMLElement | null;
     expect(searchPopup).toBeTruthy();
 

@@ -37,12 +37,22 @@ function valuesEqual(a: unknown, b: unknown): boolean {
  * (because rows outside the window would never render the cell that should be
  * merged). In that case, we degrade to per-row planning where each row is its
  * own span of 1 (no merging).
+ *
+ * [G3-R6-视角8-01] the non-virtual body interleaves expanded detail <tr>s
+ * between data rows. An HTML rowSpan spans PHYSICAL rows, so a span crossing a
+ * row that renders an inline expanded detail row would swallow that detail row
+ * and desynchronize every covered cell. `isRowExpanded` marks such rows: the
+ * plan closes any span at their boundary (they never merge with the next row).
  */
 export function computeCombinePlan(
   rows: TableRowEntry[],
   columns: TableColumnSchema[],
   combineNum: number | undefined,
-  options: { virtualEnabled?: boolean; combineFromIndex?: number } = {},
+  options: {
+    virtualEnabled?: boolean;
+    combineFromIndex?: number;
+    isRowExpanded?: (row: TableRowEntry) => boolean;
+  } = {},
 ): CombinePlan {
   if (typeof combineNum !== 'number' || combineNum <= 0 || rows.length === 0) {
     return EMPTY_COMBINE_PLAN;
@@ -77,7 +87,13 @@ export function computeCombinePlan(
         continue;
       }
 
-      if (valuesEqual(getCellValue(current.record, column), getCellValue(previous.record, column))) {
+      // A row rendering an inline expanded detail row physically splits the
+      // table body — no span may cross it.
+      const expandedBreak = options.isRowExpanded?.(previous) === true;
+      if (
+        !expandedBreak &&
+        valuesEqual(getCellValue(current.record, column), getCellValue(previous.record, column))
+      ) {
         spanLength += 1;
         plan[index]![key] = 0;
       } else {

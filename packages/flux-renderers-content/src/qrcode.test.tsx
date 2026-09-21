@@ -232,3 +232,31 @@ describe('QrCodeRenderer', () => {
     expect(onLoadError).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('[G1-R2-视角5-01] qrcode error state destructive semantics', () => {
+  it('styles the error fallback destructive and keeps the empty fallback muted', async () => {
+    const emptyProps = createMockRendererProps<QrCodeSchema>({
+      schema: { type: 'qrcode' },
+      props: {},
+    });
+    const { container, rerender } = render(<QrCodeRenderer {...emptyProps} />);
+    const emptyFallback = container.querySelector('[data-slot="qrcode-fallback"]') as HTMLElement;
+    expect(emptyFallback.className).toContain('text-muted-foreground');
+    expect(emptyFallback.className).not.toContain('text-destructive');
+
+    qrMock.failGeneration = true;
+    const errorProps = createMockRendererProps<QrCodeSchema>({
+      schema: { type: 'qrcode' },
+      props: { value: 'fail-me' },
+    });
+    rerender(<QrCodeRenderer {...errorProps} />);
+    await waitFor(() => {
+      expect(container.querySelector('[data-slot="qrcode"][data-state="error"]')).toBeTruthy();
+    });
+    const errorFallback = container.querySelector('[data-slot="qrcode-fallback"]') as HTMLElement;
+    expect(errorFallback.className).toContain('text-destructive');
+    expect(errorFallback.className).not.toContain('text-muted-foreground');
+    expect(errorFallback.className).toContain('border-destructive');
+    expect(errorFallback.className).toContain('bg-destructive');
+  });
+});

@@ -355,6 +355,10 @@ export function MapRenderer(props: RendererComponentProps<MapSchema>) {
     fallback: t('flux.common.noData'),
   });
   const retryAvailable = Boolean(resolved.geojsonSource);
+  // [G5-视角9-01] accessible name for the interactive viewport.
+  const viewportLabel = String(
+    resolved.label || resolved.title || props.id || t('flux.map.viewport'),
+  );
 
   return (
     <div
@@ -367,7 +371,16 @@ export function MapRenderer(props: RendererComponentProps<MapSchema>) {
       style={{ height }}
     >
       {mapVisible ? (
-        <div ref={containerRef} data-slot="map-viewport" className="h-full w-full" />
+        // [G5-视角9-01] the viewport hosts pan/zoom/click interactions injected
+        // by OL — role="application" + an accessible name (schema label/title →
+        // renderer id → generic key) instead of an anonymous div.
+        <div
+          ref={containerRef}
+          data-slot="map-viewport"
+          className="h-full w-full"
+          role="application"
+          aria-label={viewportLabel}
+        />
       ) : null}
       {showLoading ? (
         <div role="status" aria-live="polite" data-slot="map-loading">

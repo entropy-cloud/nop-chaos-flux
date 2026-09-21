@@ -40,11 +40,14 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
   const handleAddDefault = (type: string) => {
     idCounter.current += 1;
     const id = `${type}-${idCounter.current}`;
+    // [G5-R4-视角11-01] 点击路径无指针落点（拖拽路径已在 canvas 用 getWorldPoint 落在指针处），
+    // 连续点击按 16px 步级联落点（8 步一循环），不再全部堆叠在 (50,50) 产生完全重叠的图元栈。
+    const cascadeStep = (idCounter.current - 1) % 8;
     props.runtime.addWorkingSymbol({
       id,
       type,
-      x: 50,
-      y: 50,
+      x: 50 + cascadeStep * 16,
+      y: 50 + cascadeStep * 16,
       width: 100,
       height: 100,
     });

@@ -228,7 +228,10 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
             data-current={isCurrent || undefined}
             data-disabled={disabled || undefined}
             className={cn(
-              'flex',
+              // [G1-R2-视角8-01] `relative` makes the li the containing block for
+              // the absolutely-positioned horizontal connector — without it the
+              // line resolves against the nearest positioned ancestor.
+              'relative flex',
               orientation === 'vertical'
                 ? 'flex-row gap-3 pb-6 last:pb-0'
                 : 'flex-1 flex-col items-center text-center',

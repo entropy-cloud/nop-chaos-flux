@@ -26,6 +26,25 @@ import { createFormLifecycleScope, resolveLifecycleWriteScope } from './form-lif
 import { useFormInitAction } from './form-init-action.js';
 import { useFormLoadAction } from './form-load-action.js';
 
+const FOCUSABLE_ERROR_TARGET_SELECTOR =
+  'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+
+// [G2-R5-视角4-01] the first [aria-invalid="true"] match is frequently a
+// container (field-control wrapper, radio-group, button-group-select) that
+// cannot be a real focus target — resolve the innermost focusable control and
+// only then fall back to making the container itself focusable.
+function resolveErrorFocusTarget(element: HTMLElement): HTMLElement {
+  if (element.matches(FOCUSABLE_ERROR_TARGET_SELECTOR)) {
+    return element;
+  }
+  const inner = element.querySelector<HTMLElement>(FOCUSABLE_ERROR_TARGET_SELECTOR);
+  if (inner) {
+    return inner;
+  }
+  element.tabIndex = -1;
+  return element;
+}
+
 export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   'use no memo';
   const runtime = useRendererRuntime();
@@ -338,18 +357,29 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
           (fs) => fs.errors && fs.errors.length > 0,
         );
         if (hasFieldErrors) {
-          requestAnimationFrame(() => {
+          // [G2-R5-视角4-02] the first invalid control may still be hidden
+          // while a collapsed fieldset's auto-reveal render settles — retry a
+          // bounded number of frames until the target actually takes focus.
+          let attempts = 0;
+          const tryFocusFirstInvalid = () => {
             const firstInvalid = sectionRef.current?.querySelector('[aria-invalid="true"]');
-            if (firstInvalid instanceof HTMLElement) {
-              firstInvalid.focus();
-              if (scrollToFirstError) {
-                firstInvalid.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'center',
-                });
-              }
+            if (!(firstInvalid instanceof HTMLElement)) {
+              return;
             }
-          });
+            const target = resolveErrorFocusTarget(firstInvalid);
+            target.focus();
+            if (scrollToFirstError) {
+              target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+              });
+            }
+            if (document.activeElement !== target && attempts < 2) {
+              attempts += 1;
+              requestAnimationFrame(tryFocusFirstInvalid);
+            }
+          };
+          requestAnimationFrame(tryFocusFirstInvalid);
         }
       }
     });

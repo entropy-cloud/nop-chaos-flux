@@ -298,7 +298,9 @@ export function KanbanColumn({
               {displayCards.map((card, idx) => (
                 <React.Fragment key={card.id}>
                   {dropTargetCardIndex === idx && dropClosestEdge === 'before' && (
-                    <div className="nop-kanban-drop-indicator" />
+                    // [G4-视角9-02] list 的子项只能是 listitem——视觉占位条
+                    // 以 role="none" 透明化，不破坏列表结构层。
+                    <div role="none" className="nop-kanban-drop-indicator" />
                   )}
                   <KanbanCard
                     card={card}
@@ -316,12 +318,12 @@ export function KanbanColumn({
                     onRovingKeyDown={(e) => handleCardKeyDown(e, idx)}
                   />
                   {dropTargetCardIndex === idx && dropClosestEdge === 'after' && (
-                    <div className="nop-kanban-drop-indicator" />
+                    <div role="none" className="nop-kanban-drop-indicator" />
                   )}
                 </React.Fragment>
               ))}
               {dropTargetCardIndex === displayCards.length && dropClosestEdge === 'after' && (
-                <div className="nop-kanban-drop-indicator" />
+                <div role="none" className="nop-kanban-drop-indicator" />
               )}
             </div>
           )}

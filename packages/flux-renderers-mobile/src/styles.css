@@ -8,8 +8,10 @@
  * of injecting them into document.head at runtime (MA-05) or pinning literal
  * Tailwind palette classes without dark variants (MA-06).
  *
- * Scoped under .nop-mobile so bare [data-slot]/:root selectors do not leak
- * outside the mobile context (MA3-P2-F2+F3). */
+ * [G4-R5-视角3-01] Selectors are scoped to the notice-bar element contract
+ * (`[data-slot='notice-bar']`) — the slot/attribute combination only matches
+ * what the renderer emits, so nothing leaks outside the mobile renderers
+ * without relying on a scope class no renderer or host ever produced. */
 
 /* MA-05: marquee keyframes previously injected into document.head by
  * ensureMarqueeKeyframes(). Moving them here removes the runtime style
@@ -32,7 +34,7 @@
  * contract that the renderer already emits. The fixed hsl values let
  * standalone usage (without a host theme) still render; hosts that want
  * brand-specific colors override the variables at `:root` or a wrapper. */
-.nop-mobile {
+[data-slot='notice-bar'] {
   --nop-notice-bar-info-bg: hsl(217 89% 96%);
   --nop-notice-bar-info-fg: hsl(217 89% 35%);
   --nop-notice-bar-warning-bg: hsl(38 92% 95%);
@@ -46,8 +48,8 @@
 /* Dark overrides: also fixed hsl literals, gated by the host's dark-mode
  * strategy (`.dark` Tailwind class and/or `:root[data-mode='dark']`).
  * Override `--nop-notice-bar-*` at these selectors (or your own) to retune. */
-.dark .nop-mobile,
-[data-mode='dark'] .nop-mobile {
+.dark [data-slot='notice-bar'],
+[data-mode='dark'] [data-slot='notice-bar'] {
   --nop-notice-bar-info-bg: hsl(217 30% 20%);
   --nop-notice-bar-info-fg: hsl(217 89% 82%);
   --nop-notice-bar-warning-bg: hsl(38 30% 20%);
@@ -58,22 +60,22 @@
   --nop-notice-bar-error-fg: hsl(0 70% 78%);
 }
 
-.nop-mobile [data-slot='notice-bar'][data-variant='info'] {
+[data-slot='notice-bar'][data-variant='info'] {
   background-color: var(--nop-notice-bar-info-bg);
   color: var(--nop-notice-bar-info-fg);
 }
 
-.nop-mobile [data-slot='notice-bar'][data-variant='warning'] {
+[data-slot='notice-bar'][data-variant='warning'] {
   background-color: var(--nop-notice-bar-warning-bg);
   color: var(--nop-notice-bar-warning-fg);
 }
 
-.nop-mobile [data-slot='notice-bar'][data-variant='success'] {
+[data-slot='notice-bar'][data-variant='success'] {
   background-color: var(--nop-notice-bar-success-bg);
   color: var(--nop-notice-bar-success-fg);
 }
 
-.nop-mobile [data-slot='notice-bar'][data-variant='error'] {
+[data-slot='notice-bar'][data-variant='error'] {
   background-color: var(--nop-notice-bar-error-bg);
   color: var(--nop-notice-bar-error-fg);
 }

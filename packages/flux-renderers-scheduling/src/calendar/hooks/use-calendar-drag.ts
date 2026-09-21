@@ -34,7 +34,7 @@ export interface UseCalendarDragResult {
   startDrag: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
   cancelDrag: () => void;
   confirmDrop: () => void;
-  startKeyboardDrag: (event: CalendarEvent) => void;
+  startKeyboardDrag: (event: CalendarEvent, origin?: { x: number; y: number }) => void;
   moveKeyboardDrag: (direction: 'up' | 'down' | 'left' | 'right') => void;
   cancelKeyboardDrag: () => void;
   confirmKeyboardDrop: () => void;
@@ -189,7 +189,7 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
     });
   };
 
-  const startKeyboardDrag = (event: CalendarEvent) => {
+  const startKeyboardDrag = (event: CalendarEvent, origin?: { x: number; y: number }) => {
     keyboardActiveRef.current = true;
     sourceEventRef.current = { ...event };
     pendingTargetRef.current = {
@@ -197,13 +197,17 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
       resourceId: event.resourceId ?? '',
     };
 
+    // [G4-R2-视角10-01] anchor the ghost at the source event's on-screen
+    // position — hardcoding (0,0) pinned it to the viewport corner.
+    const originX = origin?.x ?? 0;
+    const originY = origin?.y ?? 0;
     setDragState({
       active: true,
       sourceEvent: event,
-      startX: 0,
-      startY: 0,
-      currentX: 0,
-      currentY: 0,
+      startX: originX,
+      startY: originY,
+      currentX: originX,
+      currentY: originY,
       targetDate: event.start.split('T')[0] ?? event.start,
       targetResource: event.resourceId ?? '',
     });
@@ -220,6 +224,15 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
   };
 
   const confirmKeyboardDrop = () => {
+    // [G4-R2-视角10-01] keyboard moves dispatch live per keypress
+    // (moveKeyboardDrag → onKeyboardMoveEvent), so Enter only finalizes the
+    // session. Running the pointer confirmDrop path here would re-dispatch
+    // the seeded origin target — sending the already-moved event back to its
+    // original date/resource.
+    if (keyboardActiveRef.current) {
+      cancelDrag();
+      return;
+    }
     confirmDrop();
   };
 

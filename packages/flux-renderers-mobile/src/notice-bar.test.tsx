@@ -61,11 +61,15 @@ describe('NoticeBarRenderer', () => {
     );
   });
 
-  it('exposes role=button and tabindex when onClick is bound (OA-04)', () => {
+  it('exposes role=button + tabindex on the action surface when onClick is bound (OA-04, [G4-R2-视角9-01])', () => {
     const { view } = renderNoticeBar({ text: 'clickable', onClick: () => undefined });
     const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
-    expect(root.getAttribute('role')).toBe('button');
-    expect(root.getAttribute('tabindex')).toBe('0');
+    const action = view.container.querySelector('[data-slot="notice-bar-action"]') as HTMLElement;
+    // The operable semantics moved off the root so the close Button is never
+    // nested inside the role=button surface.
+    expect(action.getAttribute('role')).toBe('button');
+    expect(action.getAttribute('tabindex')).toBe('0');
+    expect(root.getAttribute('role')).toBeNull();
   });
 
   it('publishes the variant via the data-variant protocol (MA-06/MA-21)', () => {
@@ -232,10 +236,10 @@ describe('NoticeBarRenderer', () => {
     expect(view.container.querySelector('[data-slot="notice-bar-close"]')).toBeNull();
   });
 
-  it('fires onClick when bar is clicked', () => {
+  it('fires onClick when the bar action surface is clicked ([G4-R2-视角9-01] contract)', () => {
     const { view, onClick } = renderNoticeBar({ text: 'clickable', onClick: () => undefined });
-    const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
-    fireEvent.click(root);
+    const action = view.container.querySelector('[data-slot="notice-bar-action"]') as HTMLElement;
+    fireEvent.click(action);
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
@@ -534,7 +538,7 @@ describe('NoticeBarRenderer', () => {
     expect(iconSlot?.querySelector('svg') || iconSlot?.firstElementChild).toBeTruthy();
   });
 
-  it('forwards the native click event to onClick (MA-04)', () => {
+  it('forwards the native click event to onClick (MA-04, action surface)', () => {
     let capturedType = '';
     let capturedCurrentTarget: Element | null = null;
     const { view } = renderNoticeBar({
@@ -545,10 +549,10 @@ describe('NoticeBarRenderer', () => {
         capturedCurrentTarget = e?.currentTarget ?? null;
       },
     });
-    const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
-    fireEvent.click(root);
+    const action = view.container.querySelector('[data-slot="notice-bar-action"]') as HTMLElement;
+    fireEvent.click(action);
     expect(capturedType).toBe('click');
-    expect(capturedCurrentTarget).toBe(root);
+    expect(capturedCurrentTarget).toBe(action);
   });
 
   it('forwards the native click event to onClose on close button (MA-04)', () => {
@@ -569,5 +573,55 @@ describe('NoticeBarRenderer', () => {
     fireEvent.click(closeBtn);
     expect(capturedType).toBe('click');
     expect(capturedCurrentTarget).toBe(closeBtn);
+  });
+});
+
+// [G4-R2-视角9-01] notice-bar 绑定 onClick 时 role="button" 容器内嵌真实关闭 Button
+// （kanban 同病兄弟实例）：交互内容不得嵌在 role=button 表面内。修复契约 = role=button/
+// tabIndex/键盘激活收敛到内容操作面（notice-bar-action），关闭 Button 成为其兄弟控件。
+describe('[G4-R2-视角9-01] role=button surface must not nest the real close Button', () => {
+  it('the [role=button] element contains no nested button (close control is a sibling)', () => {
+    const { view } = renderNoticeBar({ text: 'x', onClick: () => undefined, closable: true });
+    const clickable = view.container.querySelector('[role="button"]') as HTMLElement;
+    expect(clickable).toBeTruthy();
+    expect(clickable.querySelector('button')).toBeNull();
+    // close control lives outside the clickable surface
+    expect(clickable.contains(view.container.querySelector('[data-slot="notice-bar-close"]'))).toBe(
+      false,
+    );
+  });
+
+  it('the action surface (not the root) carries role=button + tabindex and fires onClick', () => {
+    const { view, onClick } = renderNoticeBar({ text: 'x', onClick: () => undefined });
+    const root = view.container.querySelector('[data-slot="notice-bar"]') as HTMLElement;
+    const action = view.container.querySelector('[data-slot="notice-bar-action"]') as HTMLElement;
+    expect(action.getAttribute('role')).toBe('button');
+    expect(action.getAttribute('tabindex')).toBe('0');
+    expect(root.getAttribute('role')).toBeNull();
+    fireEvent.click(action);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('keyboard Enter/Space on the action surface still fires onClick (OA-04 keyboard path)', () => {
+    const { view, onClick } = renderNoticeBar({ text: 'x', onClick: () => undefined });
+    const action = view.container.querySelector('[data-slot="notice-bar-action"]') as HTMLElement;
+    fireEvent.keyDown(action, { key: 'Enter' });
+    fireEvent.keyDown(action, { key: ' ' });
+    expect(onClick).toHaveBeenCalledTimes(2);
+  });
+
+  it('close button still closes without triggering the bar onClick (sibling isolation)', () => {
+    const { view, onClick, onClose } = renderNoticeBar({
+      text: 'both',
+      closable: true,
+      onClick: () => undefined,
+    });
+    const closeBtn = view.container.querySelector(
+      '[data-slot="notice-bar-close"]',
+    ) as HTMLButtonElement;
+    fireEvent.click(closeBtn);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClick).not.toHaveBeenCalled();
+    expect(view.container.querySelector('[data-slot="notice-bar"]')).toBeNull();
   });
 });

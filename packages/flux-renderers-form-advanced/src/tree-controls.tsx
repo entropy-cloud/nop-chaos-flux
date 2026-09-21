@@ -45,6 +45,12 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const multiple = isMultipleMode(props.props.treeMode);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const enableNodePath = props.props.enableNodePath === true;
+  // [G7-R2-视角4-01] schema `clearable` exposure for input-tree — the clear
+  // affordance was previously reachable only through the component handle.
+  const clearableEnabled = (props.props as InputTreeSchema).clearable === true;
+  const hasSelection = multiple
+    ? Array.isArray(value) && value.length > 0
+    : value !== undefined && value !== null && value !== '';
   const {
     childrenKey,
     labelField,
@@ -145,6 +151,21 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
       data-slot="input-tree-control"
     >
       <div data-slot="input-tree-options">
+        {clearableEnabled && hasSelection && !presentation.readOnly ? (
+          <div className="flex justify-end" data-slot="input-tree-clear-row">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label={t('flux.common.clear')}
+              disabled={presentation.effectiveDisabled}
+              onClick={() => handlers.onChange(multiple ? [] : undefined)}
+              data-slot="input-tree-clear"
+            >
+              <XIcon className="size-4" />
+            </Button>
+          </div>
+        ) : null}
         <TreeOptionList
           options={options}
           value={value}
@@ -525,6 +546,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
       { key: 'searchable', kind: 'prop', valueType: 'boolean' },
       { key: 'onlyLeaf', kind: 'prop', valueType: 'boolean' },
       { key: 'showPathLabel', kind: 'prop', valueType: 'boolean' },
+      { key: 'clearable', kind: 'prop', valueType: 'boolean' },
       { key: 'virtualThreshold', kind: 'prop' },
       { key: 'childrenSource', kind: 'prop' },
       { key: 'searchSource', kind: 'prop' },

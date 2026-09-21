@@ -417,7 +417,7 @@ export function TiptapSender(props: TiptapSenderComponentProps): React.ReactElem
   return (
     <div className={cn('nop-ai-sender-tiptap-wrapper')} data-slot="ai-sender-tiptap-wrapper">
       {templateEnabled && templates.length > 0 ? (
-        <TemplateBar templates={templates} editor={editor} />
+        <TemplateBar templates={templates} editor={editor} locked={disabled || loading} />
       ) : null}
       <TiptapSenderSurface editor={editor} />
       {popupState.kind !== 'none' && popupItems.length > 0 ? (

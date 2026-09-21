@@ -82,7 +82,13 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
         <div
           data-slot="qrcode-fallback"
           style={{ width: size, height: size }}
-          className="flex items-center justify-center rounded-md bg-muted text-xs text-muted-foreground"
+          className={cn(
+            'flex items-center justify-center rounded-md text-xs',
+            // [G1-R2-视角5-01] failure is destructive-styled, distinct from the muted empty state.
+            failed
+              ? 'border border-destructive/40 bg-destructive/10 text-destructive'
+              : 'bg-muted text-muted-foreground',
+          )}
         >
           {failed ? t('flux.common.loadFailed') : t('flux.common.noValue')}
         </div>

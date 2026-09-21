@@ -34,6 +34,10 @@ export interface UseCalendarDragCreateResult {
   showTypeSelector: boolean;
   selectType: (type: string) => void;
   dismissTypeSelector: () => void;
+  /** [G4-R3-视角10-02] keyboard Enter/Space entry: completes the drag-create
+   *  session directly (active + type selector) without arming the 500ms
+   *  long-press timer — a keyboard session has no pointerup to release it. */
+  startKeyboardCreate: (date: string, resourceId: string) => void;
 }
 
 export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): UseCalendarDragCreateResult {
@@ -190,6 +194,31 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
     }, longPressMs);
   };
 
+  const startKeyboardCreate = (date: string, resourceId: string) => {
+    // G4-R3-视角10-02: the keyboard path must NOT route through startCellDrag —
+    // that arms longPressTimer and attaches pointer listeners, but a keyboard
+    // session never produces a pointerup, so the selector never shows and the
+    // armed session lingers. Enter the active session directly instead.
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    activeRef.current = true;
+    startInfoRef.current = { date, resourceId };
+    currentDragRef.current = { date, resourceId };
+    pointerDownPos.current = null;
+    setDragCreateState({
+      active: true,
+      startDate: date,
+      startResource: resourceId,
+      currentDate: date,
+      currentResource: resourceId,
+      currentX: 0,
+      currentY: 0,
+    });
+    setShowTypeSelector(true);
+  };
+
   const cancelCreate = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -256,5 +285,6 @@ export function useCalendarDragCreate(options: UseCalendarDragCreateOptions): Us
     showTypeSelector,
     selectType,
     dismissTypeSelector,
+    startKeyboardCreate,
   };
 }

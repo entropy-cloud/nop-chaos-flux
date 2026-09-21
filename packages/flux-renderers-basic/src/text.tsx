@@ -156,12 +156,13 @@ export function TextRenderer(props: RendererComponentProps<TextSchema>) {
       {resolvedText}
       {copyable ? <TextCopyButton value={resolvedText} /> : null}
       {showToggle ? (
+        // [G1-视角4-10] word label needs a text-capable size; the icon-xs box clipped it.
         <Button
           type="button"
           variant="ghost"
-          size="icon-xs"
+          size="xs"
           data-slot="text-maxline-toggle"
-          className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-primary"
+          className="ml-1 rounded text-muted-foreground hover:bg-accent hover:text-primary"
           aria-expanded={expanded}
           aria-controls={toggleId}
           onClick={(event) => {

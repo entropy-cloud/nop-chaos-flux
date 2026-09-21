@@ -183,7 +183,7 @@
               "body": [
                 {
                   "type": "icon",
-                  "icon": "tray",
+                  "icon": "inbox",
                   "size": 14,
                   "color": "#636363"
                 },

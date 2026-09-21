@@ -139,7 +139,13 @@ export function ConditionGroup({
     [value, onChange],
   );
 
+  // [G2-R7-视角4-01] the cap gates BOTH add actions: a nested group is a
+  // child of the group as well, so an at-limit group must not offer
+  // Add-Group (runtime guard + UI gate below).
+  const atMaxItems = maxItemsPerGroup != null && value.children.length >= maxItemsPerGroup;
+
   const handleAddCondition = useCallback(() => {
+    if (atMaxItems) return;
     const firstField = fields.find((f) => f.type !== 'group');
     const fieldName = firstField?.name ?? '';
     const fieldType = firstField?.type ?? 'text';
@@ -156,16 +162,17 @@ export function ConditionGroup({
       right: formulaSeed,
     };
     onChange({ ...value, children: [...value.children, newItem] });
-  }, [fields, onChange, operatorsOverride, value, formulas]);
+  }, [fields, onChange, operatorsOverride, value, formulas, atMaxItems]);
 
   const handleAddGroup = useCallback(() => {
+    if (atMaxItems) return;
     const newGroup: ConditionGroupValue = {
       id: genId('group'),
       conjunction: 'and',
       children: [],
     };
     onChange({ ...value, children: [...value.children, newGroup] });
-  }, [value, onChange]);
+  }, [value, onChange, atMaxItems]);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -182,8 +189,6 @@ export function ConditionGroup({
     },
     [value, onChange],
   );
-
-  const atMaxItems = maxItemsPerGroup != null && value.children.length >= maxItemsPerGroup;
 
   const conjunctionLabel =
     value.conjunction === 'and' ? t('conditionBuilder.and') : t('conditionBuilder.or');
@@ -408,21 +413,21 @@ export function ConditionGroup({
 
         <div className="flex flex-col gap-1.5 p-3">{childrenList}</div>
 
-        {(!atMaxItems || canNest) && (
+        {/* [G2-R7-视角4-01] at the cap both add actions are gated (Add-Group
+            included — a nested group counts toward maxItemsPerGroup). */}
+        {!atMaxItems && (
           <div className="flex items-center gap-1.5 px-3 pb-3">
-            {!atMaxItems && (
-              <WrappedFieldAction
-                variant="ghost"
-                size="xs"
-                className="text-xs text-muted-foreground hover:text-primary"
-                onClick={handleAddCondition}
-                disabled={disabled}
-              >
-                <PlusIcon className="size-3 mr-1" />
-                {addConditionLabel}
-              </WrappedFieldAction>
-            )}
-            {canNest && !atMaxItems && <span className="text-muted-foreground/40 text-xs">|</span>}
+            <WrappedFieldAction
+              variant="ghost"
+              size="xs"
+              className="text-xs text-muted-foreground hover:text-primary"
+              onClick={handleAddCondition}
+              disabled={disabled}
+            >
+              <PlusIcon className="size-3 mr-1" />
+              {addConditionLabel}
+            </WrappedFieldAction>
+            {canNest && <span className="text-muted-foreground/40 text-xs">|</span>}
             {canNest && (
               <WrappedFieldAction
                 variant="ghost"

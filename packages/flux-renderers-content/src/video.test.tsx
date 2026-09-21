@@ -92,6 +92,29 @@ describe('VideoRenderer', () => {
     expect(fallback?.getAttribute('aria-live')).toBe('polite');
   });
 
+  it('styles the error fallback destructive and keeps the empty fallback muted [G1-R2-视角5-01]', () => {
+    const emptyProps = createMockRendererProps<VideoSchema>({
+      schema: { type: 'video' },
+      props: {},
+    });
+    const { container, rerender } = render(<VideoRenderer {...emptyProps} />);
+    const emptyFallback = container.querySelector('[data-slot="video-fallback"]') as HTMLElement;
+    expect(emptyFallback.className).toContain('text-muted-foreground');
+    expect(emptyFallback.className).not.toContain('text-destructive');
+
+    const errorProps = createMockRendererProps<VideoSchema>({
+      schema: { type: 'video' },
+      props: { src: '/missing.mp4' },
+    });
+    rerender(<VideoRenderer {...errorProps} />);
+    fireEvent.error(videoOf(container));
+    const errorFallback = container.querySelector('[data-slot="video-fallback"]') as HTMLElement;
+    expect(errorFallback.className).toContain('text-destructive');
+    expect(errorFallback.className).not.toContain('text-muted-foreground');
+    expect(errorFallback.className).toContain('border-destructive');
+    expect(errorFallback.className).toContain('bg-destructive');
+  });
+
   it('renders the title region when provided', () => {
     const props = createMockRendererProps<VideoSchema>({
       schema: { type: 'video' },

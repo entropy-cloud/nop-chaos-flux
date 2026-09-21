@@ -26,6 +26,9 @@ export interface KanbanActivityLogProps {
   filterType?: string;
   className?: string;
   locale?: string;
+  /** [G4-R4-视角11-02] Real column names from the board — primary lookup for
+   *  rendering; action-borne ids remain the fallback (back-compat). */
+  columnNames?: Record<string, string>;
 }
 
 function formatActionDescription(action: KanbanAction, columnNames: Record<string, string>): string {
@@ -74,6 +77,7 @@ export function KanbanActivityLog({
   filterType,
   className,
   locale,
+  columnNames: boardColumnNames,
 }: KanbanActivityLogProps) {
   const filtered = actions.filter((a) => {
     if (filterColumnId && a.detail.fromColumnId !== filterColumnId && a.detail.toColumnId !== filterColumnId) return false;
@@ -81,10 +85,15 @@ export function KanbanActivityLog({
     return true;
   });
 
+  // [G4-R4-视角11-02] real names first, action-borne ids as fallback — the
+  // previous identity map (id→id) rendered raw column ids forever.
   const columnNames: Record<string, string> = {};
   for (const a of actions) {
     if (a.detail.fromColumnId) columnNames[a.detail.fromColumnId] = a.detail.fromColumnId;
     if (a.detail.toColumnId) columnNames[a.detail.toColumnId] = a.detail.toColumnId;
+  }
+  for (const [id, name] of Object.entries(boardColumnNames ?? {})) {
+    if (name) columnNames[id] = name;
   }
 
   return (

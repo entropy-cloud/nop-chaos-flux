@@ -117,6 +117,9 @@ export interface GanttStoreApi {
   setCellWidth: (v: number) => void;
   setTaskBarHeight: (v: number) => void;
   setZoomLevels: (v: Map<string, GanttZoomLevel>) => void;
+  /** [G4-R3-视角10-01] 滚动锚定生产端方法形式（组件滚动回调使用）。 */
+  setScrollLeft: (v: number) => void;
+  setContainerWidth: (v: number) => void;
   containerWidth: number;
   revision: number;
   taskRevision: number;
@@ -148,6 +151,8 @@ export interface GanttStoreApi {
   removeLink: (id: GanttId) => void;
   restoreSubtree: (tasks: GanttTaskData[], links: GanttLinkData[]) => void;
   setZoom: (zoomKey: string, anchorScrollLeft?: number, anchorContainerWidth?: number) => void;
+  /** [G4-R3-视角11-01] 真实适配计算：返回命中的 zoom key；空数据返回 null。 */
+  zoomToFit: () => string | null;
   getAvailableZooms: () => GanttZoomLevel[];
   destroy: () => void;
 }

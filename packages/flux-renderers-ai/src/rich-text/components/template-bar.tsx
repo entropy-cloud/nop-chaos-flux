@@ -15,9 +15,14 @@ import { insertTemplate } from '../extensions/template.js';
 export function TemplateBar({
   templates,
   editor,
+  locked = false,
 }: {
   templates: TiptapTemplateItem[];
   editor: Editor | null;
+  /** [G5-R5-视角3-02] disabled/loading lock: inserting a template is a WRITE —
+   * gate it like the editor's own editable flag instead of letting commands
+   * bypass it. */
+  locked?: boolean;
 }): React.ReactElement {
   return (
     <div
@@ -31,6 +36,7 @@ export function TemplateBar({
           variant="ghost"
           size="sm"
           data-testid={`ai-sender-template-${tpl.label}`}
+          disabled={locked || !editor || !editor.isEditable}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => insertTemplate(editor, tpl)}
           className="h-7 min-w-7 px-1.5 text-xs"

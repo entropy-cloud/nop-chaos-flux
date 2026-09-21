@@ -4,6 +4,7 @@ import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/f
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Alert,
+  AlertAction,
   AlertDescription,
   AlertTitle,
   Button,
@@ -102,17 +103,22 @@ export function AlertRenderer(props: RendererComponentProps<AlertSchema>) {
         </div>
       ) : null}
       {closable ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="absolute top-1.5 right-1.5 size-6"
-          aria-label={t('flux.common.close')}
-          data-testid="alert-close"
-          onClick={handleClose}
-        >
-          <XIcon className="size-3.5" />
-        </Button>
+        // [G1-R6-视角8-02] the close action rides the AlertAction slot so the ui
+        // Alert pr-18 content-reservation contract applies — a self-drawn
+        // absolute button made long text collide with the close hit area.
+        <AlertAction>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-6"
+            aria-label={t('flux.common.close')}
+            data-testid="alert-close"
+            onClick={handleClose}
+          >
+            <XIcon className="size-3.5" />
+          </Button>
+        </AlertAction>
       ) : null}
     </Alert>
   );

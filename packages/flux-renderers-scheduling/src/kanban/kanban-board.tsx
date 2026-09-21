@@ -9,7 +9,7 @@
  * Gantt uses Zustand + Context (deeper tree, more inter-component subscriptions).
  * Calendar uses custom hooks (view state localized to scroll/navigation hooks).
  */
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
@@ -21,6 +21,7 @@ import { KanbanColumn } from './kanban-column.js';
 import { useKanbanDnd } from './hooks/use-kanban-dnd.js';
 import { useColumnDnd } from './hooks/use-column-dnd.js';
 import { useKanbanFilter } from './hooks/use-kanban-filter.js';
+import { useKanbanFilterCard } from './hooks/use-kanban-filter-card.js';
 import { useKanbanColumnResize } from './hooks/use-kanban-column-resize.js';
 import { KanbanTagFilter } from './components/kanban-tag-filter.js';
 import { useKanbanBoardEffects } from './hooks/use-kanban-board-effects.js';
@@ -35,6 +36,13 @@ import { registerKanbanHandle, type KanbanHandleSurface } from './kanban-handle.
 import { useKanbanColumnAggregate } from './hooks/use-kanban-column-aggregate.js';
 
 const EMPTY_BOARD = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
+
+// Event-time id factories (never called during render): Date.now() is impure,
+// so the react-compiler purity rule requires these to live at module scope.
+let boardIdCounter = 0;
+const nextActionId = () => `act-${Date.now()}-${++boardIdCounter}`;
+const nextCardId = () => `card-${Date.now()}-${++boardIdCounter}`;
+const nextColumnId = () => `col-${Date.now()}-${++boardIdCounter}`;
 
 export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const { props: resolved, meta, regions, events, helpers } = props;
@@ -107,15 +115,15 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   // 22-03: re-seed local board state when the schema data prop changes at
   // runtime (async data-source arrive, scope-driven refresh). New data wins
   // over local edits — same semantics as the gantt re-seed precedent. The
-  // first render is skipped (ref equals the initial value); every later
+  // first render is skipped (state equals the initial value); every later
   // reference change, including the first undefined→data arrival, re-seeds.
-  const lastRawDataRef = useRef(rawData);
-  useEffect(() => {
-    if (kanbanOwnership !== 'local') return;
-    if (lastRawDataRef.current === rawData) return;
-    lastRawDataRef.current = rawData;
+  // React's adjust-state-during-render pattern: an effect+setState here would
+  // cascade (react-hooks/set-state-in-effect).
+  const [lastRawData, setLastRawData] = useState(rawData);
+  if (kanbanOwnership === 'local' && lastRawData !== rawData) {
+    setLastRawData(rawData);
     setLocalBoardData(rawData ?? EMPTY_BOARD);
-  }, [rawData, kanbanOwnership, setLocalBoardData]);
+  }
 
   const columns = getColumns(boardData);
 
@@ -178,15 +186,12 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const [activityLogOpen, setActivityLogOpen] = useState(false);
   const [addingColumn, setAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
-  const [filterError, setFilterError] = useState<string | null>(null);
   const [actions, setActions] = useState<KanbanAction[]>([]);
-  const actionCounterRef = useRef(0);
 
   const recordAction = (action: Omit<KanbanAction, 'id' | 'timestamp'>) => {
-    actionCounterRef.current += 1;
     const entry: KanbanAction = {
       ...action,
-      id: `act-${Date.now()}-${actionCounterRef.current}`,
+      id: nextActionId(),
       timestamp: new Date().toISOString(),
     };
     setActions((prev) => [entry, ...prev].slice(0, 500));
@@ -225,42 +230,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const allTags = collectAllTags(boardData, columns);
 
-  const filterCompileErrorRef = useRef<string | null>(null);
-
-  const filterCardFn = useMemo(() => {
-    const raw = resolved.filterCard;
-    if (!raw) return undefined;
-    if (typeof raw === 'function') return raw as (card: Record<string, any>, text: string) => boolean;
-    if (typeof raw === 'string') {
-      try {
-        const compiled = runtime.expressionCompiler.compileValue(raw);
-        filterCompileErrorRef.current = null;
-        if (compiled) {
-          return (cardData: Record<string, any>, text: string) => {
-            const evalScope = runtime.createChildScope(rootScope, { card: cardData, text });
-            try {
-              return !!(runtime.evaluateCompiled(compiled, evalScope));
-            } finally {
-              runtime.disposeScope(evalScope.id);
-            }
-          };
-        }
-      } catch (err) {
-        // Compile failure is reported via the effect below (never setState
-        // during render).
-        const msg =
-          err instanceof Error
-            ? t('flux.scheduling.kanban.filterCompileFailedDetail', { message: err.message })
-            : t('flux.scheduling.kanban.filterCompileFailed');
-        filterCompileErrorRef.current = msg;
-      }
-    }
-    return undefined;
-  }, [resolved.filterCard, runtime, rootScope]);
-
-  useEffect(() => {
-    setFilterError(filterCompileErrorRef.current);
-  }, [resolved.filterCard]);
+  const { filterCardFn, filterError, clearFilterError } = useKanbanFilterCard(resolved.filterCard, runtime, rootScope);
 
   const filter = useKanbanFilter({ filterText: resolved.filterText as string | undefined, filterCard: filterCardFn });
 
@@ -356,7 +326,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   // 丢弃时返回 false（契约注释 :52-55 语义）。
   const handleCardAddAt = (columnId: string, cardData?: Record<string, any>, index?: number): boolean => {
     if (isControlled) return false;
-    const cardId = (cardData?.id as string) || `card-${Date.now()}`;
+    const cardId = (cardData?.id as string) || nextCardId();
     const newCard = { id: cardId, title: cardData?.title || t('scheduling.kanban.newCard'), ...cardData };
     const newBoard = addCard(boardData, columnId, newCard, index);
     lastCommandTypeRef.current = 'addCard';
@@ -364,6 +334,12 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const addPayload = { cardId, columnId, index: index ?? -1, card: newCard };
     if (!isControlled) {
       void events.onCardAdd?.(addPayload, eventCtx(addPayload));
+      // [G4-R4-视角11-03] cardCreate 从既有加卡通道产出活动记录。
+      recordAction({
+        type: 'cardCreate',
+        actor: { id: 'local', name: t('scheduling.kanban.currentUser') },
+        detail: { cardId: (newCard.title as string) || cardId, toColumnId: columnId },
+      });
     }
     return true;
   };
@@ -380,6 +356,13 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     const removePayload = { cardId, columnId, index, card };
     if (!isControlled) {
       void events.onCardRemove?.(removePayload, eventCtx(removePayload));
+      // [G4-R4-视角11-03] cardDelete 从既有删卡通道产出活动记录——此前删除
+      // 卡片后日志毫无痕迹。
+      recordAction({
+        type: 'cardDelete',
+        actor: { id: 'local', name: t('scheduling.kanban.currentUser') },
+        detail: { cardId: ((card?.data?.title as string) || cardId), fromColumnId: columnId },
+      });
     }
   };
 
@@ -423,7 +406,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const confirmAddColumn = () => {
     const title = newColumnTitle.trim() || t('scheduling.kanban.newColumn');
-    const columnId = `col-${Date.now()}`;
+    const columnId = nextColumnId();
     const rootChildren = boardData['root']?.children ? [...boardData['root'].children] : [];
     const newBoard = structuredClone(boardData);
     newBoard[columnId] = { id: columnId, title, children: [], data: { title }, meta: {}, type: 'column' };
@@ -435,6 +418,12 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     // （对齐同文件 :285/:308/:330/:353/:366 守卫先例）。
     if (!isControlled) {
       void events.onColumnAdd?.(colAddPayload, eventCtx(colAddPayload));
+      // [G4-R4-视角11-03] columnCreate 从既有建列通道产出活动记录。
+      recordAction({
+        type: 'columnCreate',
+        actor: { id: 'local', name: t('scheduling.kanban.currentUser') },
+        detail: { toColumnId: columnId },
+      });
     }
     setAddingColumn(false);
     setNewColumnTitle('');
@@ -593,7 +582,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       {filterError && (
         <div className="px-4 py-1 text-xs text-destructive bg-destructive/10" role="alert">
           {t('scheduling.kanban.filterError', { message: filterError })}
-          <Button variant="link" size="sm" onClick={() => setFilterError(null)}>{t('flux.common.dismiss')}</Button>
+          <Button variant="link" size="sm" onClick={clearFilterError}>{t('flux.common.dismiss')}</Button>
         </div>
       )}
 
@@ -671,6 +660,15 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
         actions={actions}
         open={activityLogOpen}
         onClose={() => setActivityLogOpen(false)}
+        columnNames={(() => {
+          // [G4-R4-视角11-02] board 内真实列名 → 日志渲染消费，杜绝恒等映射。
+          const names: Record<string, string> = {};
+          for (const col of columns) {
+            const colData = boardData[col.id];
+            names[col.id] = ((colData?.title as string) || (colData?.data?.title as string) || col.id);
+          }
+          return names;
+        })()}
       />
     </div>
   );

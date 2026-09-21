@@ -215,6 +215,10 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
     const parts = buildImageContentParts(attachments);
     if (parts.length > 0 && ctx) {
       await ctx.sendMessage(parts);
+      // G5-R3-视角5-01: close the send loop — a completed send clears the
+      // list (ai-sender clearOnSubmit precedent) so the same batch cannot be
+      // silently re-sent.
+      reportChange([]);
     }
   }
 
@@ -225,6 +229,11 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   // zone keeps drop/paste handlers only; the Pick button is the keyboard entry
   // point.
   const effectiveMode = mode === 'auto' ? detectMode(attachments) : mode;
+  // G5-R3-视角5-01: non-image attachments are never sent (multimodal
+  // image_url parts only) — previously the send click silently no-op'd.
+  // Gate the send button and surface a visible explanation instead.
+  const sendableCount = buildImageContentParts(attachments).length;
+  const sendBlocked = attachments.length > 0 && sendableCount === 0;
 
   return (
     <div
@@ -267,13 +276,22 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
             type="button"
             size="sm"
             data-slot="ai-attachments-upload"
-            disabled={disabled || (ctx?.isProcessing ?? false)}
+            disabled={disabled || (ctx?.isProcessing ?? false) || sendableCount === 0}
             onClick={handleUpload}
           >
             {t('flux.ai.send')}
           </Button>
         ) : null}
       </div>
+      {sendBlocked ? (
+        <div
+          data-slot="ai-attachments-send-blocked"
+          role="alert"
+          className="mt-2 text-xs text-destructive"
+        >
+          {t('flux.ai.noSendableFiles')}
+        </div>
+      ) : null}
       {rejectionNote ? (
         <div
           data-slot="ai-attachments-rejection"

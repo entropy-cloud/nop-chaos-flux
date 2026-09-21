@@ -214,4 +214,32 @@ describe('AlertRenderer (W2a — content package inline feedback)', () => {
 
     expect(screen.getByTestId('demo-alert').getAttribute('data-level')).toBe('info');
   });
+
+  it('[G1-R6-视角8-02] routes the close button through the AlertAction slot so content is reserved right padding', () => {
+    const SchemaRenderer = createContentSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://content/alert-close-action-slot"
+        schema={{
+          type: 'page',
+          body: [{ type: 'alert', testid: 'demo-alert', title: 'Closable', closable: true }],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const alert = screen.getByTestId('demo-alert');
+    const actionSlot = alert.querySelector('[data-slot="alert-action"]');
+    expect(actionSlot, 'close action must live in the AlertAction slot').toBeTruthy();
+    const closeBtn = actionSlot?.querySelector('[data-testid="alert-close"]') as HTMLElement;
+    expect(closeBtn).toBeTruthy();
+    // Positioning is owned by the AlertAction primitive — the renderer must not
+    // self-draw an absolutely positioned button that bypasses the pr-18 contract.
+    expect(closeBtn.className).not.toContain('absolute');
+    expect(closeBtn.className).not.toContain('right-1.5');
+    // The ui Alert base carries the content-reservation contract for the slot.
+    expect(alert.className).toContain('has-data-[slot=alert-action]:pr-18');
+  });
 });

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Button } from '@nop-chaos/ui';
+import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffStats } from '../utils.js';
 
@@ -51,7 +52,7 @@ export const DiffHeader = memo(function DiffHeader({
             aria-label={t('flux.diff.prevFile')}
             title={t('flux.diff.prevFile')}
           >
-            ↑
+            <ArrowUpIcon className="size-4" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
@@ -61,7 +62,7 @@ export const DiffHeader = memo(function DiffHeader({
             aria-label={t('flux.diff.nextFile')}
             title={t('flux.diff.nextFile')}
           >
-            ↓
+            <ArrowDownIcon className="size-4" aria-hidden="true" />
           </Button>
         </div>
       )}

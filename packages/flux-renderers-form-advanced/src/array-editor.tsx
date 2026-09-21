@@ -595,6 +595,12 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
         <PlusIcon className="size-4" />
         {t('flux.form.addItem')}
       </Button>
+      {atMaxItems && maxItems !== undefined ? (
+        // [G2-R2-视角4-02] the cap disabled Add silently; announce count/cap.
+        <span role="status" data-slot="array-editor-max-items" className="text-xs text-muted-foreground">
+          {t('flux.form.maxItemsReached', { count: items.length, max: maxItems })}
+        </span>
+      ) : null}
     </div>
   );
 }

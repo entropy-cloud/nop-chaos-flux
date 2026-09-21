@@ -23,6 +23,9 @@ export interface CalendarMonthViewProps {
   totalSize?: number;
   onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
   onCellDragStart?: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
+  /** [G4-R3-视角10-02] keyboard Enter/Space create entry — bypasses the
+   *  long-press timer that the pointer path (onCellDragStart) arms. */
+  onCellKeyboardCreate?: (date: string, resourceId: string) => void;
   showCrossDayLines?: boolean;
   onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
   eventClassName?: string;
@@ -54,6 +57,7 @@ export function CalendarMonthView({
   totalSize,
   onDragStart,
   onCellDragStart,
+  onCellKeyboardCreate,
   showCrossDayLines = true,
   onEventKeyDown,
   eventClassName,
@@ -81,6 +85,26 @@ export function CalendarMonthView({
 
   const weekdayLabels = getWeekdayLabels(locale, firstDayOfWeek);
   const [focusedCell, setFocusedCell] = useState<{ resourceId: string; dateStr: string } | null>(null);
+
+  // [G4-视角11-01] 溢出指示「+N 更多」的可点击样式必须有真实行为：点击展开
+  // 该格子的隐藏事件（可逐一点击、可收起），修复前被隐藏的事件永远不可达。
+  const [expandedCells, setExpandedCells] = useState<Set<string>>(() => new Set());
+
+  const toggleCellExpansion = (cellKey: string) => {
+    setExpandedCells((prev) => {
+      const next = new Set(prev);
+      if (next.has(cellKey)) {
+        next.delete(cellKey);
+      } else {
+        next.add(cellKey);
+      }
+      return next;
+    });
+  };
+
+  const uncappedPositionedMap = expandedCells.size > 0
+    ? positionEventsInMonth({ events, resources, dateRange, maxConcurrent: 0 })
+    : null;
 
   const handleDateCellKeyDown = (e: React.KeyboardEvent, dateStr: string, resourceId: string) => {
     if (!showWeekends && isWeekend(new Date(dateStr))) return;
@@ -113,14 +137,10 @@ export function CalendarMonthView({
       case 'Enter':
       case ' ':
         e.preventDefault();
-        {
-          const target = e.currentTarget as HTMLElement;
-          const rect = target.getBoundingClientRect();
-          const centerX = rect.left + rect.width / 2;
-          const centerY = rect.top + rect.height / 2;
-          const syntheticEvent = { clientX: centerX, clientY: centerY, button: 0 } as React.PointerEvent;
-          onCellDragStart?.(dateStr, resourceId, syntheticEvent);
-        }
+        // G4-R3-视角10-02: keyboard create completes directly — a synthetic
+        // pointer event here would arm the 500ms long-press timer that no
+        // keyboard session can release.
+        onCellKeyboardCreate?.(dateStr, resourceId);
         return;
       default:
         return;
@@ -190,7 +210,18 @@ export function CalendarMonthView({
           <div data-slot="calendar-cells" className="flex flex-1">
             {days.map((day) => {
               const dateStr = toISODateString(day);
+              const cellKey = `${resource.id}:${dateStr}`;
+              const isExpanded = expandedCells.has(cellKey);
               const dayEvents = positionedMap.get(resource.id)?.get(dateStr) ?? [];
+              const uncappedDayEvents = isExpanded && uncappedPositionedMap
+                ? (uncappedPositionedMap.get(resource.id)?.get(dateStr) ?? []).filter((pe) => !pe.overflowCount)
+                : [];
+              const expandedEventIds = new Set<string>();
+              const expandedEvents = uncappedDayEvents.filter((pe) => {
+                if (expandedEventIds.has(pe.eventId)) return false;
+                expandedEventIds.add(pe.eventId);
+                return true;
+              });
               const isCurrentMonth = day.getUTCMonth() === currentDate.getUTCMonth();
               const weekend = isWeekend(day);
               const today = isToday(day);
@@ -240,7 +271,34 @@ export function CalendarMonthView({
                   onPointerDown={(pe) => handleCellPointerDown(dateStr, resource.id, pe)}
                   onKeyDown={(e) => handleDateCellKeyDown(e, dateStr, resource.id)}
                 >
-                  {dayEvents.length === 0 || (dayEvents.length === 1 && dayEvents[0].overflowCount) ? (
+                  {isExpanded ? (
+                    <div
+                      data-slot="calendar-cell-expanded"
+                      className="absolute inset-0 z-10 overflow-y-auto rounded-md border bg-background shadow-sm"
+                    >
+                      {expandedEvents.map((pe) => (
+                        <button
+                          key={pe.eventId}
+                          type="button"
+                          data-slot="calendar-cell-expanded-event"
+                          data-event-id={pe.eventId}
+                          className="block w-full truncate px-1 py-0.5 text-left text-[10px] hover:bg-muted"
+                          onClick={() => onEventClick?.({ event: pe.event, resource, date: dateStr })}
+                        >
+                          {pe.event.title}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        data-slot="calendar-event-overflow"
+                        aria-expanded="true"
+                        className="w-full text-center text-[10px] text-muted-foreground hover:underline"
+                        onClick={() => toggleCellExpansion(cellKey)}
+                      >
+                        {t('scheduling.calendar.less')}
+                      </button>
+                    </div>
+                  ) : dayEvents.length === 0 || (dayEvents.length === 1 && dayEvents[0].overflowCount) ? (
                     <div className="text-[10px] text-gray-300 flex items-center justify-center h-full">
                     </div>
                   ) : (
@@ -262,14 +320,17 @@ export function CalendarMonthView({
                         />
                       ))}
                       {dayEvents.filter(pe => pe.overflowCount).map((pe) => (
-                        <div
+                        <button
                           key={`overflow-${dateStr}`}
+                          type="button"
                           data-slot="calendar-event-overflow"
-                          className="absolute bottom-0 left-0 right-0 text-[10px] text-muted-foreground text-center cursor-pointer hover:underline"
+                          aria-expanded="false"
+                          className="absolute bottom-0 left-0 right-0 text-[10px] text-muted-foreground text-center hover:underline"
                           style={{ bottom: 0 }}
+                          onClick={() => toggleCellExpansion(cellKey)}
                         >
                           +{pe.overflowCount} {t('scheduling.calendar.more')}
-                        </div>
+                        </button>
                       ))}
                     </>
                   )}

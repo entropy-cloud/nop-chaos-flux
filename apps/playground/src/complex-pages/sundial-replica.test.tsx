@@ -18,10 +18,16 @@ describe('Sundial replica — settings', () => {
     expect(screen.getByTestId('sundial-mode-selfhost').textContent).toMatch(/自建服务器/);
     expect(screen.getByTestId('sundial-mode-selfhost').textContent).toMatch(/即将推出/);
 
-    // Status card stats
-    expect(screen.getByTestId('sundial-status-card').textContent).toMatch(/已连接/);
-    expect(screen.getByTestId('sundial-status-card').textContent).toMatch(/2 条/);
-    expect(screen.getByTestId('sundial-status-card').textContent).toMatch(/刚刚/);
+    // Status card stats — V12f P4 (G7-视角11-12): the card follows the sync
+    // mode; the seeded default is 本地模式, so it renders the local variant.
+    expect(screen.getByTestId('sundial-status-card').textContent).toMatch(/本地模式/);
+    expect(screen.getByTestId('sundial-status-card').textContent).toMatch(/不适用/);
+    fireEvent.click(screen.getByTestId('sundial-mode-supabase'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sundial-status-card').textContent).toMatch(/已连接/);
+      expect(screen.getByTestId('sundial-status-card').textContent).toMatch(/2 条/);
+      expect(screen.getByTestId('sundial-status-card').textContent).toMatch(/刚刚/);
+    });
   });
 
   it('wires settings rail back and save with toast feedback (plan 457 C9/C16)', async () => {
@@ -333,6 +339,8 @@ describe('Sundial replica — workbench task detail dialog (plan 460 Phase 3/P4/
       expect(screen.getByTestId('sundial-task-detail-dialog')).toBeTruthy();
     });
     fireEvent.click(screen.getByTestId('sundial-task-detail-trash'));
+    // V12f P4 (G7-视角10-07): destructive trash now requires a confirm step
+    fireEvent.click(await screen.findByRole('button', { name: '确认' }));
     await screen.findByText(/已移到垃圾箱/);
     await waitFor(() => {
       expect(screen.queryByTestId('sundial-task-detail-dialog')).toBeNull();

@@ -290,8 +290,7 @@ describe('PivotTableRenderer - loading 态', () => {
   });
 });
 
-describe('PivotTableRenderer - 事件桥接', () => {
-  it.each([
+describe('PivotTableRenderer - 事件桥接', () => {  it.each([
     ['click_cell', 'onCellClick', 'pivot:cell-click'],
     ['selected_cell', 'onSelectionChange', 'pivot:selection-change'],
     ['sort_click', 'onSort', 'pivot:sort-click'],
@@ -330,5 +329,28 @@ describe('PivotTableRenderer - 事件桥接', () => {
     const instance = pivotMockInstances[0];
     expect(() => instance.emit('click_cell', { col: 0, row: 0 })).not.toThrow();
     expect(() => instance.emit('drillmenu_click', {})).not.toThrow();
+  });
+});
+
+// [G3-R2-视角9-01] pivot-table 画布包装层无 role/aria-label，违反画布表面 a11y 契约
+// （map viewport [G5-视角9-01] 同型契约：role="application" + 可访问名）。
+describe('PivotTableRenderer - 画布 a11y ([G3-R2-视角9-01])', () => {
+  it('canvas wrapper carries role=application + accessible name (map viewport contract)', () => {
+    render(<PivotTableRenderer {...makeProps()} />);
+    const canvas = document.querySelector('[data-slot="pivot-canvas"]') as HTMLElement;
+    expect(canvas.getAttribute('role')).toBe('application');
+    expect(canvas.getAttribute('aria-label')).toBe('pivot-node');
+  });
+
+  it('schema label wins over the node id as the accessible name', () => {
+    render(<PivotTableRenderer {...makeProps({ props: { label: '销售透视' } })} />);
+    const canvas = document.querySelector('[data-slot="pivot-canvas"]') as HTMLElement;
+    expect(canvas.getAttribute('aria-label')).toBe('销售透视');
+  });
+
+  it('falls back to the generic i18n label when schema label and id are absent', () => {
+    render(<PivotTableRenderer {...makeProps({ id: '' })} />);
+    const canvas = document.querySelector('[data-slot="pivot-canvas"]') as HTMLElement;
+    expect(canvas.getAttribute('aria-label')).toBe('t:flux.pivot.canvasLabel');
   });
 });

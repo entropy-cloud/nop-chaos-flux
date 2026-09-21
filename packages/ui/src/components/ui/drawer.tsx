@@ -133,7 +133,9 @@ function DrawerContent({
   const zIndex = useGlobalZIndex();
 
   const handleClassName = cn(
-    'pointer-events-auto absolute z-20 flex items-center justify-center bg-transparent transition-colors hover:bg-muted/40',
+    // [G6-视角3-03] keyboard-reachable separator: visible focus state rides on
+    // the same handle element that carries the pointer + arrow-key resize.
+    'pointer-events-auto absolute z-20 flex items-center justify-center bg-transparent transition-colors hover:bg-muted/40 focus-visible:bg-muted/60 focus-visible:outline-1 focus-visible:outline-ring',
     direction === 'left' && 'right-0 top-0 h-full w-1 cursor-ew-resize',
     direction === 'right' && 'left-0 top-0 h-full w-1 cursor-ew-resize',
     direction === 'top' && 'bottom-0 left-0 w-full h-1 cursor-ns-resize',
@@ -193,7 +195,9 @@ function DrawerContent({
                 data-direction={direction}
                 className={handleClassName}
                 onPointerDown={resizeController.onPointerDown}
+                onKeyDown={resizeController.onKeyDown}
                 role="separator"
+                tabIndex={0}
                 aria-orientation={
                   direction === 'left' || direction === 'right' ? 'vertical' : 'horizontal'
                 }
@@ -234,6 +238,26 @@ function DrawerContent({
 interface DrawerResizeController {
   sizeVar: string | null;
   onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
+  /** [G6-视角3-03] keyboard parity for the resize handle. */
+  onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
+}
+
+const DRAWER_RESIZE_GROW_KEY: Record<DrawerDirection, string> = {
+  left: 'ArrowRight',
+  right: 'ArrowLeft',
+  top: 'ArrowDown',
+  bottom: 'ArrowUp',
+};
+
+const DRAWER_RESIZE_SHRINK_KEY: Record<DrawerDirection, string> = {
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+  top: 'ArrowUp',
+  bottom: 'ArrowDown',
+};
+
+function clampDrawerResizeSize(size: number, viewportMax: number): number {
+  return Math.min(Math.max(160, size), viewportMax);
 }
 
 function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerResizeController {
@@ -352,7 +376,35 @@ function useDrawerResize(direction: DrawerDirection, enabled: boolean): DrawerRe
     return `${size}px`;
   }, [size]);
 
-  return { sizeVar, onPointerDown };
+  // [G6-视角3-03] the resize handle previously answered pointers only; a
+  // keyboard user could focus nothing and resize never. Arrow keys grow/shrink
+  // along the same clamped path as the pointer drag (Shift = larger step).
+  const onKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!enabled) {
+        return;
+      }
+      if (event.key !== DRAWER_RESIZE_GROW_KEY[direction] && event.key !== DRAWER_RESIZE_SHRINK_KEY[direction]) {
+        return;
+      }
+      const popup = event.currentTarget.closest('[data-slot="drawer-popup"]') as HTMLElement | null;
+      if (!popup) {
+        return;
+      }
+      event.preventDefault();
+      const rect = popup.getBoundingClientRect();
+      const horizontal = direction === 'left' || direction === 'right';
+      const current = horizontal ? rect.width : rect.height;
+      const step = event.shiftKey ? 48 : 16;
+      const delta = event.key === DRAWER_RESIZE_GROW_KEY[direction] ? step : -step;
+      const viewportMax =
+        (horizontal ? window.innerWidth : window.innerHeight) * 0.9;
+      setSize(clampDrawerResizeSize(current + delta, viewportMax));
+    },
+    [direction, enabled],
+  );
+
+  return { sizeVar, onPointerDown, onKeyDown };
 }
 
 function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {

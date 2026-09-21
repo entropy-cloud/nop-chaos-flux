@@ -198,3 +198,45 @@ describe('CarouselRenderer', () => {
     expect(src).toMatch(/IntersectionObserver/);
   });
 });
+
+describe('[G1-视角8-06] carousel indicator touch target', () => {
+  it('gives each indicator a 24px-class hit area with the 8px dot as an inner visual', () => {
+    const props = createMockRendererProps<CarouselSchema>({
+      schema: { type: 'carousel' },
+      props: { items: [{ image: '/a.png' }, { image: '/b.png' }] },
+    });
+    const { container } = render(<CarouselRenderer {...props} />);
+    const dots = container.querySelectorAll('[data-slot="carousel-indicator"]');
+    expect(dots.length).toBe(2);
+
+    const hitArea = dots[0] as HTMLElement;
+    expect(hitArea.className).toContain('h-6');
+    expect(hitArea.className).toContain('w-6');
+    expect(hitArea.className).not.toContain('h-2');
+    expect(hitArea.className).not.toContain('w-2');
+
+    const activeVisual = hitArea.querySelector('[data-slot="carousel-indicator-dot"]') as HTMLElement;
+    expect(activeVisual).toBeTruthy();
+    expect(activeVisual.className).toContain('size-2');
+    expect(activeVisual.className).toContain('bg-primary');
+
+    const inactiveVisual = dots[1]!.querySelector(
+      '[data-slot="carousel-indicator-dot"]',
+    ) as HTMLElement;
+    expect(inactiveVisual).toBeTruthy();
+    expect(inactiveVisual.className).toContain('bg-muted-foreground/30');
+    expect(inactiveVisual.className).not.toContain('bg-primary');
+  });
+
+  it('keeps the active-state attribute and click-to-scroll behavior on the hit-area button', () => {
+    const props = createMockRendererProps<CarouselSchema>({
+      schema: { type: 'carousel' },
+      props: { items: [{ image: '/a.png' }, { image: '/b.png' }] },
+    });
+    const { container } = render(<CarouselRenderer {...props} />);
+    const active = container.querySelector('[data-slot="carousel-indicator"][data-active="true"]');
+    expect(active).toBeTruthy();
+    expect(active?.getAttribute('data-index')).toBe('0');
+    expect(active?.getAttribute('aria-label')).toBe(t('flux.carousel.goToSlide', { index: 1 }));
+  });
+});

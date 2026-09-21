@@ -13,8 +13,12 @@ import type { TiptapTemplateItem } from '../types.js';
 /**
  * Insert a template's `content` at the current caret position. If the editor
  * is not focused, it focuses first (so the caret lands in the editor).
+ *
+ * [G5-R5-视角3-02] a locked editor (disabled/loading → `editable: false`) is a
+ * hard write boundary: Tiptap commands bypass editability, so the guard here
+ * (plus the disabled insert buttons) is what keeps the lock honest.
  */
 export function insertTemplate(editor: Editor | null, template: TiptapTemplateItem): void {
-  if (!editor) return;
+  if (!editor || !editor.isEditable) return;
   editor.chain().focus().insertContent(template.content).run();
 }

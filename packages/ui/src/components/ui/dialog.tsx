@@ -96,7 +96,10 @@ function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) 
       data-slot="dialog-overlay"
       className={cn(
         'nop-dialog ',
-        'isolate bg-[var(--dialog-overlay-bg)] duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+        // [G6-视角7-02] single overlay token track: Sheet/Drawer/AlertDialog all
+        // consume --surface-overlay; Dialog now does too (was the lone
+        // --dialog-overlay-bg consumer with a 70% black mask).
+        'isolate bg-surface-overlay duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
         isContained ? 'absolute inset-0' : 'fixed inset-0',
         className,
       )}
@@ -285,7 +288,8 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
         // grip icon — a floating icon collides with the title in narrow
         // dialogs); `cursor-grab` is the only drag affordance. Keyboard moves
         // (arrows/Home) stay available when the header itself is focused.
-        draggable && 'cursor-grab select-none',
+        // [G6-R2-视角3-01] a focusable (tabIndex=0) surface must show focus.
+        draggable && 'cursor-grab select-none focus-visible:outline-1 focus-visible:outline-ring',
         className,
       )}
       role={dragContext.enabled ? 'toolbar' : undefined}

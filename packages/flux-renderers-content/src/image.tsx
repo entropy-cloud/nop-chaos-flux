@@ -202,7 +202,11 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
         data-state={errored ? 'error' : 'empty'}
         style={sizeStyle}
         className={cn(
-          'nop-image nop-image-fallback inline-flex items-center justify-center bg-muted text-xs text-muted-foreground',
+          'nop-image nop-image-fallback inline-flex items-center justify-center text-xs',
+          // [G1-R2-视角5-01] failure is destructive-styled, distinct from the muted empty state.
+          errored
+            ? 'border border-destructive/40 bg-destructive/10 text-destructive'
+            : 'bg-muted text-muted-foreground',
           props.meta.className,
         )}
       >

@@ -262,7 +262,17 @@ export function PivotTableRenderer(props: RendererComponentProps<PivotTableSchem
 
   return (
     <div {...commonProps} style={{ height }}>
-      <div ref={containerRef} data-slot="pivot-canvas" className="nop-pivot-canvas" />
+      {/* [G3-R2-视角9-01] 画布包装层 a11y 契约（map viewport 同型）：role="application" +
+          可访问名（schema label → 节点 id → 通用 i18n 键），不再是匿名 div。 */}
+      <div
+        ref={containerRef}
+        data-slot="pivot-canvas"
+        className="nop-pivot-canvas"
+        role="application"
+        aria-label={
+          resolved.label || props.id || t('flux.pivot.canvasLabel')
+        }
+      />
     </div>
   );
 }

@@ -214,6 +214,14 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const { onPointerDown: onDragPointerDown } = useGanttDrag(store, containerRef, draggable ? handleTaskDragCommit : undefined, undoStack);
     const { onLinkHandlePointerDown } = useGanttLinkDraw(store, svgRef, linkable ? handleLinkDragCommit : undefined, linkable, undoStack);
     useGanttScroll(gridRef, timelineRef, (scrollLeft, scrollTop) => {
+      // [G4-R3-视角10-01] producer side of the zoom anchor: store.scrollLeft
+      // previously had no writer, so setZoom's center-anchor branch never
+      // fired and the visible date window jumped on every zoom change.
+      store.setScrollLeft(scrollLeft);
+      const timelineEl = timelineRef.current;
+      if (timelineEl && timelineEl.clientWidth > 0 && store.containerWidth !== timelineEl.clientWidth) {
+        store.setContainerWidth(timelineEl.clientWidth);
+      }
       const payload = { scrollLeft, scrollTop };
       void eventsRef.current.onScroll?.(payload, eventCtx(payload));
     }, ganttReady);
@@ -340,23 +348,45 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       void eventsRef.current.onZoomChange?.(payload, eventCtx(payload));
     }, [eventCtx]);
 
+    // [G4-R3-视角10-01] consumer side of the zoom anchor: setZoom stores the
+    // anchored scrollLeft, but the DOM container only follows after the
+    // re-render settles — apply it on the next frame.
+    const applyZoomScroll = useCallback(() => {
+      const container = timelineRef.current;
+      if (!container) return;
+      const target = store.scrollLeft;
+      requestAnimationFrame(() => { container.scrollLeft = target; });
+    }, [store]);
+
     const doZoomIn = useCallback(() => {
       const zooms = store.getAvailableZooms();
       const idx = zooms.findIndex((z) => z.key === store.currentZoom);
       if (idx < zooms.length - 1) {
         store.setZoom(zooms[idx + 1].key);
+        applyZoomScroll();
         handleZoomChange(zooms[idx + 1].key);
       }
-    }, [store, handleZoomChange]);
+    }, [store, handleZoomChange, applyZoomScroll]);
 
     const doZoomOut = useCallback(() => {
       const zooms = store.getAvailableZooms();
       const idx = zooms.findIndex((z) => z.key === store.currentZoom);
       if (idx > 0) {
         store.setZoom(zooms[idx - 1].key);
+        applyZoomScroll();
         handleZoomChange(zooms[idx - 1].key);
       }
-    }, [store, handleZoomChange]);
+    }, [store, handleZoomChange, applyZoomScroll]);
+
+    const [zoomFitAnnouncement, setZoomFitAnnouncement] = useState('');
+    const doZoomToFit = useCallback(() => {
+      const fitKey = store.zoomToFit();
+      if (!fitKey) return;
+      const fitLabel = store.getAvailableZooms().find((z) => z.key === fitKey)?.label ?? fitKey;
+      setZoomFitAnnouncement(t('scheduling.gantt.zoomFitApplied', { zoom: fitLabel }));
+      applyZoomScroll();
+      handleZoomChange(fitKey);
+    }, [store, handleZoomChange, applyZoomScroll]);
 
     useImperativeHandle(
       ref,
@@ -550,6 +580,9 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       data-cid={meta.cid || undefined}
     >
         <GanttLiveRegion store={store} />
+        <div aria-live="polite" aria-atomic="true" className="sr-only" data-slot="gantt-zoom-fit-announcement">
+          {zoomFitAnnouncement}
+        </div>
         <GanttHeader
           store={store}
           toolbarRegion={regions.toolbar as RenderRegionHandle}
@@ -558,6 +591,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           onZoomIn={() => { doZoomIn(); void props.reactions.zoomIn?.dispatch(); }}
           onZoomOut={() => { doZoomOut(); void props.reactions.zoomOut?.dispatch(); }}
           onTodayClick={() => { scrollToToday(); void props.reactions.scrollToToday?.dispatch(); }}
+          onZoomToFit={doZoomToFit}
         />
         <GanttLayout
           grid={

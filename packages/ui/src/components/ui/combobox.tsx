@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Combobox as ComboboxPrimitive } from '@base-ui/react';
 
 import { cn } from '../../lib/utils.js';
+import { t } from '../../lib/i18n.js';
 import { Button } from './button.js';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from './input-group.js';
 import { ChevronDownIcon, XIcon, CheckIcon } from 'lucide-react';
@@ -36,6 +37,8 @@ function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
   return (
     <ComboboxPrimitive.Clear
       data-slot="combobox-clear"
+      // [G6-R2-视角9-01] icon-only controls carry their accessible name.
+      aria-label={t('flux.combobox.clear')}
       render={<InputGroupButton variant="ghost" size="icon-xs" />}
       className={cn('nop-combobox ', className)}
       {...props}
@@ -66,6 +69,8 @@ function ComboboxInput({
             variant="ghost"
             render={<ComboboxTrigger />}
             data-slot="input-group-button"
+            // [G6-R2-视角9-01] embedded dropdown affordance names itself.
+            aria-label={t('flux.combobox.toggleDropdown')}
             className="group-has-data-[slot=combobox-clear]/input-group:hidden data-pressed:bg-transparent"
             disabled={disabled}
           />
@@ -234,6 +239,8 @@ function ComboboxChip({
           render={<Button variant="ghost" size="icon-xs" />}
           className="-ml-1 opacity-50 hover:opacity-100"
           data-slot="combobox-chip-remove"
+          // [G6-R2-视角9-01] chip removal is announced with its target context.
+          aria-label={t('flux.combobox.removeChip')}
         >
           <XIcon className="pointer-events-none" />
         </ComboboxPrimitive.ChipRemove>

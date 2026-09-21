@@ -177,6 +177,13 @@
               "path": "wizardSubmitted",
               "value": true
             }
+          },
+          {
+            "action": "setValue",
+            "args": {
+              "path": "wizardSubmittedSnapshot",
+              "value": "${$JSON.stringify(wizardData ?? {})}"
+            }
           }
         ]
       }
@@ -184,7 +191,7 @@
     {
       "type": "text",
       "testid": "wizard-submit-report",
-      "text": "提交状态：${wizardSubmitted ? \"已完成 ✓\" : \"未提交\"}",
+      "text": "提交状态：${ !wizardSubmitted ? \"未提交\" : ($JSON.stringify(wizardData ?? {}) === (wizardSubmittedSnapshot ?? '') ? \"已完成 ✓\" : \"已修改，未重新提交\") }",
       "className": "text-sm mt-3"
     }
   ]

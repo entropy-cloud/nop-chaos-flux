@@ -16,7 +16,16 @@
         "action": "ajax",
         "args": { "url": "/r/User__save", "method": "post", "includeScope": "*" },
         "messages": { "success": "联系人已保存" },
-        "then": [{ "action": "setValue", "args": { "path": "contactsSaved", "value": true } }]
+        "then": [
+          { "action": "setValue", "args": { "path": "contactsSaved", "value": true } },
+          {
+            "action": "setValue",
+            "args": {
+              "path": "contactsSavedSnapshot",
+              "value": "${$JSON.stringify(contacts ?? [])}"
+            }
+          }
+        ]
       },
       "body": [
         {
@@ -60,7 +69,7 @@
         {
           "type": "text",
           "testid": "contacts-save-report",
-          "text": "保存状态：${contactsSaved ? \"已保存 ✓\" : \"未保存\"}（共 ${$Arr.count(contacts)} 位）",
+          "text": "保存状态：${ !contactsSaved ? \"未保存\" : ($JSON.stringify(contacts ?? []) === (contactsSavedSnapshot ?? '') ? \"已保存 ✓\" : \"已修改，未重新保存\") }（共 ${$Arr.count(contacts)} 位）",
           "className": "text-sm"
         }
       ],

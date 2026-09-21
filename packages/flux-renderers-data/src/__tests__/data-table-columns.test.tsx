@@ -144,7 +144,7 @@ describe('dataRendererDefinitions table columns', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: t('flux.table.filter') }));
     const input = document.querySelector(
-      '[data-slot="dropdown-menu-content"] input',
+      '[data-slot="popover-content"] input',
     ) as HTMLInputElement | null;
     expect(input).toBeTruthy();
     fireEvent.change(input!, { target: { value: 'Ali' } });
@@ -192,11 +192,11 @@ describe('dataRendererDefinitions table columns', () => {
 
     fireEvent.click(screen.getByRole('button', { name: t('flux.table.filter') }));
     const popup = document.querySelector(
-      '[data-slot="dropdown-menu-content"]',
+      '[data-slot="popover-content"]',
     ) as HTMLElement | null;
     expect(popup).toBeTruthy();
     fireEvent.change(within(popup!).getByRole('textbox'), { target: { value: 'Ali' } });
-    fireEvent.click(within(popup!).getByRole('menuitemcheckbox', { name: 'Alice' }));
+    fireEvent.click(within(popup!).getByRole('checkbox', { name: 'Alice' }));
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: t('flux.table.filterActive') })).toBeTruthy();
@@ -205,7 +205,7 @@ describe('dataRendererDefinitions table columns', () => {
     });
 
     const activePopup = document.querySelector(
-      '[data-slot="dropdown-menu-content"]',
+      '[data-slot="popover-content"]',
     ) as HTMLElement | null;
     expect(activePopup).toBeTruthy();
     fireEvent.click(
