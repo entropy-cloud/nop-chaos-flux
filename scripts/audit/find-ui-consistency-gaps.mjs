@@ -42,6 +42,7 @@ import {
   isTestFile,
   rootDir,
 } from './shared.mjs';
+import { EXEMPTIONS } from './ui-consistency-exemptions.mjs';
 
 const LABEL = 'find-ui-consistency-gaps';
 
@@ -68,224 +69,55 @@ function toScanRelativePath(filePath) {
 // rules. Every entry must cite its R2/R3 adjudication ledger row or the D2
 // plan registration decision. Red line: zero NEW unregistered instances.
 // ---------------------------------------------------------------------------
-const EXEMPTIONS = [
-  // --- scheduling (candidate A 调度域字面色族 + candidate C 错误消息双轨) ---
-  {
-    path: 'packages/flux-renderers-scheduling/src/',
-    reason:
-      'R2 族9 调度域字面色/字面 Tailwind 色类族（gantt/kanban/calendar/barcode hex、red-400、bg-white、color-mix white）+ 族5 错误状态消息双轨（calendar 渲染错误/导出失败、kanban 通知、barcode decode 错误）——全部 P2 登记候选，修复归候选池',
-    source:
-      'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池',
-  },
-  // --- industrial（candidate A canvas 绘图域 + candidate C 结构化诊断）------
-  {
-    path: 'packages/flux-renderers-industrial/src/',
-    reason:
-      'SCADA leafer canvas 绘图域字面色（符号/引擎 overlay/探针/绑定 fixtures）+ editor CSS 变量回退 hex + 结构化诊断 message 载荷（scada-errors/refresh-pipeline/point-store/parse/event-bridge/config-sync/scada-canvas/scada-editor-canvas）——R2 industrial 静态口径审查域，零色值发现',
-    source:
-      'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记（R2 G5 组静态口径）；scada-editor-canvas 为 D2 候选 C 规格点名实例',
-  },
-  // --- 3d（three 渲染域字面色 + 结构化诊断通道）---------------------------
-  {
-    path: 'packages/flux-renderers-3d/src/',
-    reason:
-      'three-canvas 引擎域：THREE 灯光默认色（ColorRepresentation hex，非 UI 样式）+ 结构化诊断 message 载荷（useBindingBridge/SceneManager onError 三参通道，scada §8.1 非升级诊断契约对齐，plan 464 D6）——plan 465 登记',
-    source:
-      'plan 465 Phase 6 closure（industrial 域豁免同款判例：canvas 引擎字面色 + scada-errors 结构化诊断）',
-  },
-  // --- map（candidate A 域 + candidate C 单文件）---------------------------
-  {
-    path: 'packages/flux-renderers-map/src/',
-    rule: 'hardcoded-literal-color',
-    reason: 'R2 族9 map 域字面色（buildPinStyle/buildClusterStyle、map-color 工具、styles.css）',
-    source: 'r2-audit/r3-p2-adjudication.md #98 [G5-R2-视角5-02] / #49 [G5-视角9-01]',
-  },
-  {
-    path: 'packages/flux-renderers-map/src/use-map-geojson.ts',
-    rule: 'raw-error-message-direct-out',
-    reason: 'region 加载错误状态消息（族5 候选池登记）',
-    source: 'r2-audit/r3-p2-adjudication.md 族5 候选池（#98 邻域）',
-  },
-  {
-    path: 'packages/flux-renderers-map/src/map-renderer.tsx',
-    rule: 'raw-error-message-direct-out',
-    reason:
-      'R2 族9 已裁决登记的 map 错误直出实例（本地化回退双轨 `error instanceof Error ? error.message : t(...)`），修复归 P2 候选池',
-    source: 'r2-audit/r3-p2-adjudication.md #98 [G5-R2-视角5-02]',
-  },
-  // --- graph ----------------------------------------------------------------
-  {
-    path: 'packages/flux-renderers-graph/src/styles.css',
-    rule: 'hardcoded-literal-color',
-    reason: 'graph HSL 字面量族',
-    source: 'r2-audit/r3-p2-adjudication.md #100 [G5-R2-视角7-01]',
-  },
-  // --- ai -------------------------------------------------------------------
-  {
-    path: 'packages/flux-renderers-ai/src/styles.css',
-    rule: 'hardcoded-literal-color',
-    reason: 'AI 包样式色值（R2 G5 组静态审查域）',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记（R2 G5 组）',
-  },
-  {
-    path: 'packages/flux-renderers-ai/src/renderers/ai-tool-call.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: '工具调用成功态 text-white 字面（R2 ai-tool-call 域）',
-    source: 'r2-audit/r3-p2-adjudication.md #99 [G5-R2-视角6-01]（邻域）',
-  },
-  {
-    path: 'packages/flux-renderers-ai/src/engine/tool-execution.ts',
-    rule: 'raw-error-message-direct-out',
-    reason: 'AI 引擎工具结果文本（结构化 tool result 返回引擎，非 JSX 直出）',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记',
-  },
-  // --- mobile ---------------------------------------------------------------
-  {
-    path: 'packages/flux-renderers-mobile/src/styles.css',
-    rule: 'hardcoded-literal-color',
-    reason: 'mobile 样式色值（notice-bar 变体等域）',
-    source: 'r2-audit/r3-p2-adjudication.md #158 [G4-R5-视角3-01]（邻域）',
-  },
-  // --- data（chart palette 域 + crud/table 错误消息双轨）---------------------
-  {
-    path: 'packages/flux-renderers-data/src/chart-renderer.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'chart 默认调色板（数据可视化域常量）',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记',
-  },
-  {
-    path: 'packages/flux-renderers-data/src/sparkline-renderer.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'sparkline 默认色（数据可视化域常量）',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记',
-  },
-  {
-    path: 'packages/flux-renderers-data/src/chart-heatmap.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'heatmap 默认色带（数据可视化域常量）',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记',
-  },
-  {
-    path: 'packages/flux-renderers-data/src/echarts-theme.ts',
-    rule: 'hardcoded-literal-color',
-    reason: 'echarts flux 主题 CSS 变量不可用时的静态回退调色板（数据可视化域常量，同 chart-renderer 域）',
-    source: 'docs/logs/2026/09-15.md 收口核查豁免登记',
-  },
-  {
-    path: 'packages/flux-renderers-data/src/stat-tile-renderer.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'stat-tile 趋势色（R2 stat-tile 域）',
-    source: 'r2-audit/r3-p2-adjudication.md #29 [G3-视角9-01]',
-  },
-  {
-    path: 'packages/flux-renderers-data/src/crud-renderer-load.ts',
-    rule: 'raw-error-message-direct-out',
-    reason: 'env.notify 错误通道透传（族5 候选池登记）',
-    source: 'r2-audit/r3-p2-adjudication.md 族5 候选池',
-  },
-  {
-    path: 'packages/flux-renderers-data/src/crud-renderer.tsx',
-    rule: 'raw-error-message-direct-out',
-    reason: 'crud 保存错误状态消息双轨（族5 候选池登记）',
-    source: 'r2-audit/r3-p2-adjudication.md 族5 候选池',
-  },
-  {
-    path: 'packages/flux-renderers-data/src/table-renderer/table-quick-edit-cell.tsx',
-    rule: 'raw-error-message-direct-out',
-    reason: 'quick-edit 保存错误消息本地化回退双轨（族5 候选池登记）',
-    source: 'r2-audit/r3-p2-adjudication.md 族5 候选池',
-  },
-  {
-    path: 'packages/flux-renderers-data/src/table-renderer/use-table-lazy-children.ts',
-    rule: 'raw-error-message-direct-out',
-    reason: 'lazy children 加载错误消息本地化回退双轨（族5 候选池登记）',
-    source: 'r2-audit/r3-p2-adjudication.md 族5 候选池',
-  },
-  // --- form-advanced（candidate C 表单域错误消息双轨族）----------------------
-  {
-    path: 'packages/flux-renderers-form-advanced/src/',
-    rule: 'raw-error-message-direct-out',
-    reason:
-      '表单域错误消息本地化回退双轨/结构化 message 状态（tree-control-sources/object-field/upload-field/detail-view 族）——族5 候选池',
-    source:
-      'r2-audit/r3-p2-adjudication.md 族5 候选池（#13/#14/#80 upload-field、detail-view 族）',
-  },
-  // --- form -------------------------------------------------------------------
-  {
-    path: 'packages/flux-renderers-form/src/form-renderers.css',
-    rule: 'hardcoded-literal-color',
-    reason: 'form 渲染器 CSS 色值（族9 域）',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记',
-  },
-  {
-    path: 'packages/flux-renderers-form/src/renderers/select-combobox-lists.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'combobox 高亮 bg-yellow-200 字面类',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记',
-  },
-  {
-    path: 'packages/flux-renderers-form/src/field-utils/field-handlers.tsx',
-    rule: 'raw-error-message-direct-out',
-    reason: '字段更新失败消息回退（族5 候选池登记）',
-    source: 'r2-audit/r3-p2-adjudication.md 族5 候选池',
-  },
-  {
-    path: 'packages/flux-renderers-form/src/renderers/use-select-remote-search.ts',
-    rule: 'raw-error-message-direct-out',
-    reason: '远程搜索错误消息状态（族5 候选池登记）',
-    source: 'r2-audit/r3-p2-adjudication.md 族5 候选池',
-  },
-  // --- content ----------------------------------------------------------------
-  {
-    path: 'packages/flux-renderers-content/src/',
-    rule: 'hardcoded-literal-color',
-    reason:
-      'content 包字面色（qrcode 暗模块、carousel 渐变 text-white、diff-view bg-gray-50）',
-    source:
-      'r2-audit/r3-p2-adjudication.md #5 [G1-视角7-08] / #6 [G1-视角7-09]（diff/content 域）；qrcode 为 D2 登记域',
-  },
-  // --- pivot --------------------------------------------------------------------
-  {
-    path: 'packages/flux-renderers-pivot/src/pivot-option.ts',
-    rule: 'hardcoded-literal-color',
-    reason: 'VTable 主题映射层默认色（映射域数据）',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记',
-  },
-  {
-    path: 'packages/flux-renderers-pivot/src/pivot-renderer.tsx',
-    rule: 'raw-error-message-direct-out',
-    reason: 'pivot 初始化错误状态（族5 候选池登记）',
-    source: 'r2-audit/r3-p2-adjudication.md 族5 候选池',
-  },
-  // --- layout --------------------------------------------------------------------
-  {
-    path: 'packages/flux-renderers-layout/src/timeline-renderer.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'timeline 图标 text-white 字面（R2 timeline 域）',
-    source: 'r2-audit/r3-p2-adjudication.md #132 [G1-R4-视角8-01]（邻域）',
-  },
-  {
-    path: 'packages/flux-renderers-layout/src/wizard-renderer.tsx',
-    rule: 'raw-error-message-direct-out',
-    reason: 'wizard stepError 状态消息（D2 候选 C 规格点名实例，族5 候选池）',
-    source: 'D2 plan 2026-08-31-1522-1 候选 C 规格；族5 候选池',
-  },
-  // --- basic ----------------------------------------------------------------------
-  {
-    path: 'packages/flux-renderers-basic/src/dynamic-renderer.tsx',
-    rule: 'raw-error-message-direct-out',
-    reason: 'dynamic 渲染错误 JSX 展示面',
-    source: 'r2-audit/r3-p2-adjudication.md #2 [G1-视角5-05]',
-  },
-  // --- candidate D: data-blob-href-without-download ------------------------
-  {
-    path: 'apps/playground/src/complex-pages/shared/showcase-env.ts',
-    rule: 'data-blob-href-without-download',
-    reason:
-      'CSV 导出 data URL 唯一生成点；schema 侧已补 download: true 经 link 渲染器透传（R3 ⑦ 修复），生成点本身无 download 语义可表达',
-    source: 'R2 owner doc §R3 收口节 §3 批次⑦ + [G7-R2-视角11-01] link-download.test.tsx',
-  },
-];
+// Exemption baseline lives in `./ui-consistency-exemptions.mjs` (plan 483 A1
+// phase-4 split: pure data module; every entry carries reason + adjudication
+// source; path-shape guard below enforces file-level paths or explicit
+// isPrefix markers).
+
+
+// plan 483 A3 adjudication: these engine/bridge/parse-layer files route
+// `error.message` into structured diagnostic payloads (onError three-arg
+// engine channel, diagnostic tuple builders, tool-result text back to the
+// engine) and never into user-visible UI state/JSX. They are the permanent
+// structured-channel register — lines here are filtered from the
+// raw-error-message-direct-out rule BEFORE exemption accounting, so they do
+// not consume EXEMPTIONS entries. New entries must cite their adjudication.
+const STRUCTURED_ERROR_CHANNEL_FILES = new Set([
+  // industrial (11): scada §8.1 non-escalating diagnostic contract, D2 候选 C
+  'packages/flux-renderers-industrial/src/binding/point-store.ts',
+  'packages/flux-renderers-industrial/src/binding/refresh-pipeline.ts',
+  'packages/flux-renderers-industrial/src/editor/scada-editor-canvas.tsx',
+  'packages/flux-renderers-industrial/src/engine/event-bridge.ts',
+  'packages/flux-renderers-industrial/src/renderer/hooks/use-scada-config-sync.ts',
+  'packages/flux-renderers-industrial/src/renderer/scada-canvas.tsx',
+  'packages/flux-renderers-industrial/src/renderer/scada-errors.ts',
+  'packages/flux-renderers-industrial/src/serialization/parse.ts',
+  // 3d (4): onError three-arg engine channel (plan 464/465 判例)
+  'packages/flux-renderers-3d/src/ai/schema-generator.ts',
+  'packages/flux-renderers-3d/src/binding/transform-engine.ts',
+  'packages/flux-renderers-3d/src/renderer/hooks/use-binding-bridge.ts',
+  // ai (1): tool result text back to the engine
+  'packages/flux-renderers-ai/src/engine/tool-execution.ts',
+  // form-advanced (1): upload onUploadError event payload `error` field is the
+  // schema-action machine channel (CX-10 / bug-83 family — `${error}` in action
+  // args resolves to the server's raw message, pinned by the upload-field
+  // `${error}` dispatch test since before plan 483). User-visible text in the
+  // same file goes through the `t(key, { message })` channel. plan 483 A3
+  // closing-session adjudication.
+  'packages/flux-renderers-form-advanced/src/upload-field.tsx',
+]);
+
+// plan 483 A1 path-shape guard: a directory-prefix exemption silently
+// auto-exempts every new instance added anywhere under it (the V12a-F1
+// local-gate-degradation finding). Fail fast unless the entry is a real file
+// path or carries an explicit `isPrefix: true` adjudication marker.
+for (const entry of EXEMPTIONS) {
+  if (!/\.(?:ts|tsx|css)$/.test(entry.path) && !entry.isPrefix) {
+    throw new Error(
+      `[find-ui-consistency-gaps] EXEMPTIONS path-shape guard (plan 483 A1): '${entry.path}' must end with .ts/.tsx/.css or carry an explicit isPrefix: true marker`,
+    );
+  }
+}
 
 const RENDERER_PACKAGE_SCOPE = /^packages\/flux-renderers-[^/]+\//;
 
@@ -311,7 +143,9 @@ const RULES = [
     },
     patterns: [
       /#[0-9a-fA-F]{3,8}\b/g,
-      /\b(?:hsl|hsla|rgb|rgba)\s*\(/g,
+      // `hsl(var(--x))` 是 token 引用而非字面色，不计入（plan 482 R2：graph styles.css
+      // 豁免摘除后该文件须凭 token 化转绿；V0 快照里该文件 8 实例中有 6 例本就是 token 引用被过宽匹配）。
+      /\b(?:hsl|hsla|rgb|rgba)\s*\(\s*(?!var\()/g,
       /\b(?:bg|text|border|ring|fill|stroke|from|to|via|outline|decoration|divide|accent|caret)-(?:white|black|(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)(?:-\d{2,3})?)\b/g,
       /color-mix\(\s*[^;]*\b(?:white|black)\b/g,
     ],
@@ -366,13 +200,18 @@ const RULES = [
       );
     },
     patterns: [/\b(?:error|err)\.message\b/g],
-    filterLine(codeText, lines, lineIndex) {
+    filterLine(codeText, lines, lineIndex, filePath) {
       // Dev diagnostic receivers are not user-visible output.
       if (/\b(?:console\.(?:log|warn|error|info|debug)|devWarn|warnOnce)\s*\(/.test(codeText)) {
         return true;
       }
       const previousLine = lines[lineIndex - 1] ?? '';
       if (DEV_RECEIVER_AT_EOL.test(previousLine.trim())) {
+        return true;
+      }
+      // plan 483 A3: adjudicated structured diagnostic channels (register
+      // above) are non-UI exits and never hit the rule.
+      if (STRUCTURED_ERROR_CHANNEL_FILES.has(filePath)) {
         return true;
       }
       // `t(key, { message })` i18n interpolation: a localized template carries
@@ -404,13 +243,13 @@ const RULES = [
   },
 ];
 
-function matchRuleLine(rule, codeText, lines, lineIndex) {
+function matchRuleLine(rule, codeText, lines, lineIndex, filePath) {
   const matches = [];
   for (const pattern of rule.patterns) {
     const regex = new RegExp(pattern.source, pattern.flags);
     let match;
     while ((match = regex.exec(codeText)) !== null) {
-      if (rule.filterLine && rule.filterLine(codeText, lines, lineIndex)) {
+      if (rule.filterLine && rule.filterLine(codeText, lines, lineIndex, filePath)) {
         break;
       }
       matches.push(match[0]);
@@ -458,7 +297,7 @@ async function main() {
         if (!codeText.trim()) {
           continue;
         }
-        const matches = matchRuleLine(rule, codeText, lines, lineIndex);
+        const matches = matchRuleLine(rule, codeText, lines, lineIndex, relativePath);
         for (const matchText of matches) {
           hits.push({
             ruleId: rule.id,

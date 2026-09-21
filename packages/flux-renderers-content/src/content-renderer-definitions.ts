@@ -119,6 +119,10 @@ export const contentRendererDefinitions: RendererDefinition[] = [
     component: ResultRenderer,
     propContracts: {
       status: {
+        // 09-01 (plan 483 Phase 7 batch c) adjudicated as an open string:
+        // a closed union here makes the runtime strip unknown values before
+        // render, which defeats the render-visible dev-warn contract below
+        // and the result-status-invalid regression test.
         shape: { kind: 'string' },
         displayName: 'Status',
         description:

@@ -1,0 +1,9 @@
+.replica-var-fallback {
+  color: hsl(var(--flux-primary, 214 32% 91%));
+  background: rgb(var(--flux-surface, 255 255 255));
+}
+
+.replica-real-literal {
+  color: hsl(120, 50%, 40%);
+  outline-color: rgb(0 0 0 / 0.45);
+}

@@ -171,8 +171,10 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
   const showInlineAside = hasAside && !isMobile;
   const showMobileAsideToggle = hasAside && isMobile;
 
-  const footerClassName = typeof slotProps.footerClassName === 'string' ? slotProps.footerClassName : '';
-  const footerIsFixed = footerClassName.includes('fixed');
+  // P2-25 (plan 483 A5): fixed-footer geometry is owned by the explicit
+  // `footerFixed` schema prop — never inferred from the author-facing
+  // footerClassName string.
+  const footerIsFixed = slotProps.footerFixed === true;
   const footerOffset = useFixedFooterVisualViewport(
     isMobile && footerIsFixed && hasRendererSlotContent(footerContent),
   );
@@ -303,6 +305,7 @@ export function PageRenderer(props: RendererComponentProps<PageSchema>) {
         <footer
           data-slot="page-footer"
           className={cn(slotProps.footerClassName)}
+          data-footer-fixed={footerIsFixed || undefined}
           style={footerStyle}
           data-keyboard-offset={footerOffset > 0 ? String(footerOffset) : undefined}
         >

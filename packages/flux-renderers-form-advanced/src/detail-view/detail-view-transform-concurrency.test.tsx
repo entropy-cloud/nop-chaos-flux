@@ -131,7 +131,7 @@ describe('detail-view renderer concurrency behavior', () => {
     await waitFor(() =>
       expect(notify).toHaveBeenCalledWith(
         'warning',
-        '[flux] transformIn failed: detail open failed',
+        'Save failed: [flux] transformIn failed: detail open failed',
       ),
     );
     expect(screen.queryByLabelText('Name')).toBeNull();
@@ -288,9 +288,9 @@ describe('detail-view renderer concurrency behavior', () => {
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith(
         'warning',
-        '[flux] transformOut failed: detail view confirm failed',
+        'Save failed: [flux] transformOut failed: detail view confirm failed',
       );
-      expect(screen.getByText('[flux] transformOut failed: detail view confirm failed')).toBeTruthy();
+      expect(screen.getByText(/Save failed: \[flux\] transformOut failed: detail view confirm failed/)).toBeTruthy();
       expect(screen.getByLabelText('Name')).toBeTruthy();
     });
   });

@@ -203,16 +203,30 @@ describe('createChordMatcher', () => {
     expect(matcher.pendingFallback()).toBeUndefined();
   });
 
-  it('supports a per-feed filter (gating) that keeps unrelated progress alive', () => {
+  it('collapses the buffer to idle when the filter gates out every continuation candidate', () => {
     const matcher = createChordMatcher([
       { id: 0, tokens: [g, o] },
       { id: 1, tokens: [g, x] },
     ]);
     expect(matcher.feed(keyEvent({ key: 'g' }))).toEqual({ status: 'pending' });
-    // 'o' allowed only for binding 1 → binding 0 dies, 1 keeps waiting via 'o'? no —
-    // continuation requires the NEXT token to match; 'o' does not continue binding 1.
-    // So nothing continues, but the filter also blocks the restart evaluation for 0.
+    // 'o' allowed only for binding 1 → binding 0 (the only 'o' continuation)
+    // is gated out; nothing continues, and the re-feed from idle also finds no
+    // binding starting with 'o' → idle.
     expect(matcher.feed(keyEvent({ key: 'o' }), (entry) => entry.id === 1)).toEqual({ status: 'idle' });
+  });
+
+  // 23-03 (plan 483 Phase 7 batch b): positive counterpart — the filter keeps
+  // the gated-in binding alive to completion and excludes the other.
+  it('filter keeps the allowed binding alive to a match while gating the sibling out', () => {
+    const matcher = createChordMatcher([
+      { id: 0, tokens: [g, o] },
+      { id: 1, tokens: [g, o] },
+    ]);
+    expect(matcher.feed(keyEvent({ key: 'g' }))).toEqual({ status: 'pending' });
+    expect(matcher.feed(keyEvent({ key: 'o' }), (entry) => entry.id === 1)).toEqual({
+      status: 'match',
+      id: 1,
+    });
   });
 
   it('re-feeds a mismatching key into idle when not filtered out', () => {

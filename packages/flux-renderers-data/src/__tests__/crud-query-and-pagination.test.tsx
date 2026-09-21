@@ -318,7 +318,12 @@ describe('CRUD query and pagination', () => {
     );
 
     await waitFor(() => {
-      expect(notify).toHaveBeenCalledWith('warning', 'Query submit failed');
+      // plan 483 Phase 3 A3: the notify payload is the unified category key
+      // with the raw message interpolated as a parameter.
+      expect(notify).toHaveBeenCalledWith(
+        'warning',
+        expect.stringContaining('Query submit failed'),
+      );
     });
   });
 

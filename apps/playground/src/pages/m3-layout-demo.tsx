@@ -43,6 +43,7 @@ const TABBAR_SCHEMA = {
       body: [{ type: 'text', text: 'Tabbar 模式：底部路由导航（≠ tabs 内容切换）。点击下方按钮触发 navigate action。' }],
     },
   ],
+  footerFixed: true,
   footerClassName: 'nop-tabbar fixed bottom-0 inset-x-0 nop-safe-bottom bg-background border-t',
   footer: {
     type: 'flex',
@@ -115,6 +116,7 @@ const ACTIONBAR_SCHEMA = {
       body: [{ type: 'text', text: 'ActionBar 模式：底部图标按钮组 + 大号 CTA。' }],
     },
   ],
+  footerFixed: true,
   footerClassName: 'nop-action-bar fixed bottom-0 inset-x-0 h-14 nop-safe-bottom bg-background border-t',
   footer: {
     type: 'flex',
@@ -167,6 +169,7 @@ const SUBMITBAR_SCHEMA = {
       body: [{ type: 'text', text: 'SubmitBar 模式：全选复选 + 价格展示 + 结算 CTA。' }],
     },
   ],
+  footerFixed: true,
   footerClassName: 'nop-submit-bar fixed bottom-0 inset-x-0 h-14 nop-safe-bottom bg-background border-t px-3',
   footer: {
     type: 'flex',

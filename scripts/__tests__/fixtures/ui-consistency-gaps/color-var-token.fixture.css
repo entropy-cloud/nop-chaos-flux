@@ -1,0 +1,5 @@
+.replica-token-consumer {
+  color: hsl(var(--flux-primary, 214 32% 91%));
+  border-color: hsl(var(--flux-border));
+  background: rgb(var(--flux-surface, 255 255 255));
+}

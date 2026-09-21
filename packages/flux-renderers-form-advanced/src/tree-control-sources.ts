@@ -8,6 +8,7 @@ import {
   type TreeOptionConfig,
   type TreeOptionMeta,
 } from './tree-options.js';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface TreeRemoteSearchResult {
   remoteOptions: TreeOptionMeta[] | null;
@@ -121,10 +122,10 @@ export function useTreeRemoteSearch(input: {
           } else {
             setError(
               typeof result.error === 'string' && result.error
-                ? result.error
+                ? t('flux.tree.remoteSearchFailedDetail', { message: result.error })
                 : result.error instanceof Error
-                  ? result.error.message
-                  : 'Search failed.',
+                  ? t('flux.tree.remoteSearchFailedDetail', { message: result.error.message })
+                  : t('flux.tree.remoteSearchFailed'),
             );
             setRemoteOptions([]);
           }
@@ -133,7 +134,11 @@ export function useTreeRemoteSearch(input: {
           if (controller.signal.aborted) {
             return;
           }
-          setError(err instanceof Error ? err.message : 'Search failed.');
+          setError(
+            err instanceof Error
+              ? t('flux.tree.remoteSearchFailedDetail', { message: err.message })
+              : t('flux.tree.remoteSearchFailed'),
+          );
           setRemoteOptions([]);
         })
         .finally(() => {
@@ -245,11 +250,11 @@ export function useTreeLazyChildren(input: {
             });
           } else {
             const message =
-              typeof result.error === 'string'
-                ? result.error
+              typeof result.error === 'string' && result.error
+                ? t('flux.table.loadChildrenFailedDetail', { message: result.error })
                 : result.error instanceof Error
-                  ? result.error.message
-                  : 'Failed to load children.';
+                  ? t('flux.table.loadChildrenFailedDetail', { message: result.error.message })
+                  : t('flux.table.loadChildrenFailed');
             setNodeStates((prev) => {
               const next = new Map(prev);
               next.set(option.valueKey, { loading: false, error: message });
@@ -261,7 +266,10 @@ export function useTreeLazyChildren(input: {
           if (!mountedRef.current || generationRef.current !== generation) {
             return;
           }
-          const message = err instanceof Error ? err.message : 'Failed to load children.';
+          const message =
+            err instanceof Error
+              ? t('flux.table.loadChildrenFailedDetail', { message: err.message })
+              : t('flux.table.loadChildrenFailed');
           setNodeStates((prev) => {
             const next = new Map(prev);
             next.set(option.valueKey, { loading: false, error: message });

@@ -96,6 +96,11 @@ export function KeyboardRenderer(props: RendererComponentProps<KeyboardSchema>) 
               try {
                 return Boolean(helpers.evaluate(`\${${binding.when}}`, scope));
               } catch {
+                // 19-02 (plan 483 Phase 7 batch a): fail-closed stays, but the
+                // silent swallow gets a one-shot dev warn (same-file standard).
+                warnOnce(
+                  `[flux:keyboard] when evaluation failed for "${binding.keys}", binding stays inactive.`,
+                );
                 return false;
               }
             }

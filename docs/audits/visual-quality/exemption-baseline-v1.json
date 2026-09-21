@@ -1,0 +1,362 @@
+{
+  "snapshot": "v0",
+  "generatedFrom": "node scripts/audit/find-ui-consistency-gaps.mjs --json",
+  "totals": {
+    "instances": 225,
+    "files": 68,
+    "entries": 69
+  },
+  "byRule": {
+    "data-blob-href-without-download": {
+      "instances": 1,
+      "files": 1
+    },
+    "hardcoded-literal-color": {
+      "instances": 224,
+      "files": 67
+    }
+  },
+  "byFile": [
+    {
+      "file": "apps/playground/src/complex-pages/shared/showcase-env.ts",
+      "rule": "data-blob-href-without-download",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-3d/src/engine/scene-manager.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-ai/src/renderers/ai-tool-call.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-ai/src/styles.css",
+      "rule": "hardcoded-literal-color",
+      "instances": 6
+    },
+    {
+      "file": "packages/flux-renderers-content/src/carousel.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-content/src/diff-view/components/diff-three-column-view.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-content/src/qrcode.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-data/src/chart-renderer.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-data/src/echarts-theme.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 6
+    },
+    {
+      "file": "packages/flux-renderers-data/src/stat-tile-renderer.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-form/src/renderers/select-combobox-lists.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/binding/refresh-pipeline-fixtures.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/editor/connection/connection-overlay-renderer.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 3
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/editor/styles.css",
+      "rule": "hardcoded-literal-color",
+      "instances": 15
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/engine/batch-add-probe.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/engine/interaction-overlay.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 4
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/styles.css",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/arrow.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/ellipse.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/image.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/line.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/pipe.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/polygon.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/rect.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/round-rect.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/text.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/base-shapes/video.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/device/common.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 5
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/device/fan.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/device/motor.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/device/pump.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 4
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/device/valve.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 3
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/instrument/dial.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/instrument/gauge.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 5
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/instrument/level.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 4
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/instrument/progress.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 4
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/instrument/thermometer.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 5
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/pipe/pipe-junction.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/sensor-control/button.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 5
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/sensor-control/common.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 5
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/sensor-control/indicator.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 4
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/sensor-control/sensor.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/sensor-control/switch.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-industrial/src/symbols/visuals.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 20
+    },
+    {
+      "file": "packages/flux-renderers-layout/src/timeline-renderer.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-map/src/map-color.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-map/src/map-renderer.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 6
+    },
+    {
+      "file": "packages/flux-renderers-mobile/src/styles.css",
+      "rule": "hardcoded-literal-color",
+      "instances": 16
+    },
+    {
+      "file": "packages/flux-renderers-pivot/src/pivot-option.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 5
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/barcode-input/barcode-scanner-overlay.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 20
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/calendar/calendar.css",
+      "rule": "hardcoded-literal-color",
+      "instances": 7
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/calendar/components/calendar-day-view.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/calendar/components/calendar-header.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 3
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/calendar/components/calendar-month-view.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/calendar/components/calendar-week-view.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/calendar/hooks/use-calendar-export.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/calendar/utils/calendar-print.css",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/gantt/gantt-header.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/gantt/gantt-timescale.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/gantt/gantt.css",
+      "rule": "hardcoded-literal-color",
+      "instances": 4
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/gantt/hooks/use-gantt-drag.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/kanban/components/kanban-activity-log.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 5
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/kanban/components/kanban-card-tags.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/kanban/components/kanban-tag-filter.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 4
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 2
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/kanban/kanban-column.tsx",
+      "rule": "hardcoded-literal-color",
+      "instances": 3
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/kanban/kanban.css",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    },
+    {
+      "file": "packages/flux-renderers-scheduling/src/kanban/utils/kanban-export.ts",
+      "rule": "hardcoded-literal-color",
+      "instances": 1
+    }
+  ],
+  "newHits": []
+}

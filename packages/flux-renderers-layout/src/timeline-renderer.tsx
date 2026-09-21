@@ -188,6 +188,10 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
 
   const ordered = reverse ? [...items].reverse() : items;
   const rootDisabled = props.meta.disabled === true;
+  // P2-13 (plan 483 A5): a root-disabled timeline must not present its items
+  // as interactive (inert-but-focusable) — seek stays blocked and the items
+  // advertise aria-disabled instead of a button affordance.
+  const itemInteractive = clickable && !rootDisabled;
 
   if (ordered.length === 0) {
     return (
@@ -265,13 +269,14 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
             data-level={level}
             data-side={side}
             data-state={isActive ? 'active' : undefined}
-            data-clickable={clickable || undefined}
-            tabIndex={clickable ? 0 : undefined}
-            role={clickable ? 'button' : undefined}
+            data-clickable={itemInteractive || undefined}
+            aria-disabled={rootDisabled || undefined}
+            tabIndex={itemInteractive ? 0 : undefined}
+            role={itemInteractive ? 'button' : undefined}
             aria-current={isActive ? 'time' : undefined}
-            onClick={clickable ? () => handleSeek(item, logicalIndex) : undefined}
+            onClick={itemInteractive ? () => handleSeek(item, logicalIndex) : undefined}
             onKeyDown={
-              clickable
+              itemInteractive
                 ? (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
@@ -285,7 +290,7 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
               orientation === 'vertical'
                 ? 'w-full'
                 : 'flex-col items-center',
-              clickable && 'cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+              itemInteractive && 'cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
             )}
           >
             {orientation === 'vertical' && (

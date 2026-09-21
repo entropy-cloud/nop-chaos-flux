@@ -16,21 +16,24 @@ import { attachPivotEvents } from './pivot-events.js';
 
 const DEFAULT_HEIGHT = 320;
 
-/** 模块级 warn-once（避免 render 期读写 ref，react-hooks/refs 纪律）。 */
-const warnedGlobalKeys = new Set<string>();
-
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
 }
 
+function isDevRuntime() {
+  const importMeta = import.meta as ImportMeta & { env?: { DEV?: boolean } };
+  return importMeta.env?.DEV === true;
+}
+
+const warnedKeys = new Set<string>();
+
 function warnOnce(key: string, message: string): void {
-  if (warnedGlobalKeys.has(key)) {
+  // 15-01 (plan 483 Phase 7 batch a): dev-gated, repo-wide warnOnce convention.
+  if (!isDevRuntime() || warnedKeys.has(key)) {
     return;
   }
-  warnedGlobalKeys.add(key);
-  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-    console.warn(`[pivot-table] ${message}`);
-  }
+  warnedKeys.add(key);
+  console.warn(message);
 }
 
 /** records/source 双入口：source 优先，二者同设 dev warn（chart series/source 裁定延续）。 */

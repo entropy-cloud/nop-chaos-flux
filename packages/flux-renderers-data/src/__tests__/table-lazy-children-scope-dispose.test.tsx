@@ -74,7 +74,9 @@ describe('useTableLazyChildren — dispatch-time scope pairing (09-02)', () => {
     await waitFor(() => {
       expect(disposeScope).toHaveBeenCalledWith('lazy-scope-r');
     });
-    expect(result.current.lazyChildrenMap.get('r1')?.error).toBe('network down');
+    // plan 483 Phase 3 A3: unified category key with the raw message as an
+    // interpolation parameter.
+    expect(result.current.lazyChildrenMap.get('r1')?.error).toContain('network down');
   });
 
   it('does not create a scope when childrenSource is absent', () => {

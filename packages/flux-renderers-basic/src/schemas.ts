@@ -62,6 +62,8 @@ export interface PageSchema extends BaseSchema {
   footerClassName?: string;
   asideClassName?: string;
   toolbarClassName?: string;
+  /** Fixed-footer geometry signal (viewport-offset compensation on mobile). Owns the behavior the old footerClassName substring sniff guessed at. */
+  footerFixed?: boolean;
 }
 
 export interface DialogSchema extends BaseSchema {
@@ -311,6 +313,8 @@ export interface ButtonSchema extends BaseSchema {
   href?: string;
   /** Anchor target attribute (used with `href`). */
   target?: string;
+  /** Anchor rel attribute. `target="_blank"` defaults to `noopener noreferrer` when absent. */
+  rel?: string;
 }
 
 export interface IconSchema extends BaseSchema {

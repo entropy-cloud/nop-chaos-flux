@@ -81,9 +81,10 @@ describe('detail-view commit rollback on parent validation crash (19-01)', () =>
     fireEvent.click(screen.getByText('Confirm'));
 
     // The confirm must converge on the visible failure path (the caller's
-    // `.catch` reports the escaped validation crash).
+    // `.catch` reports the escaped validation crash). The notify text is the
+    // localized category label + raw detail (A3, plan 483).
     await waitFor(() => {
-      expect(notify).toHaveBeenCalledWith('warning', 'validation-service-down');
+      expect(notify).toHaveBeenCalledWith('warning', 'Save failed: validation-service-down');
     });
 
     // ...and the parent scope must not keep the committed write (19-01): the

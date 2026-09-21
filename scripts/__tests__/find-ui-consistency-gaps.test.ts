@@ -75,14 +75,51 @@ describe('find-ui-consistency-gaps', () => {
       expect(stdout).not.toContain('color-clean.fixture.tsx');
     });
 
-    it('prints industrial symbol-drawing colors as [exempt] without flipping the exit code', async () => {
+    it('passes pure hsl(var(--x, fallback)) token consumption through without a hit (plan 483 A2)', async () => {
       await stageFixture(
-        'packages/flux-renderers-industrial/src/symbols/color-exempt.fixture.ts',
+        'packages/flux-renderers-basic/src/color-var-token.fixture.css',
+        'color-var-token.fixture.css',
+      );
+      const { stdout } = await runGate();
+      expect(stdout).not.toContain('color-var-token.fixture.css');
+    });
+
+    it('excludes token-fallback shapes but keeps real hsl/rgb literals as hits (plan 483 A2)', async () => {
+      await stageFixture(
+        'packages/flux-renderers-basic/src/color-var-fallback.fixture.css',
+        'color-var-fallback.fixture.css',
+      );
+      const rejection = await runGate().then(
+        () => null,
+        (error: { stdout: string }) => error,
+      );
+      expect(rejection).not.toBeNull();
+      // Real literals still hit…
+      expect(rejection?.stdout).toContain('hsl(120, 50%, 40%)');
+      expect(rejection?.stdout).toContain('rgb(0 0 0 / 0.45)');
+      // …while `hsl(var(--x, fallback))` / `rgb(var(--x, fallback))` token consumption does not.
+      expect(rejection?.stdout).not.toContain('hsl(var(--flux-primary');
+      expect(rejection?.stdout).not.toContain('rgb(var(--flux-surface');
+      expect(rejection?.stdout).not.toContain('replica-var-fallback');
+    });
+
+    it('keeps real hardcoded literals in ai styles.css counted as [exempt] under the retained file-level entry (plan 483 A2 ③)', async () => {
+      await stageFixture('packages/flux-renderers-ai/src/styles.css', 'ai-styles-real-literal.fixture.css');
+      const { stdout } = await runGate();
+      expect(stdout).toContain('[exempt]');
+      expect(stdout).toContain('packages/flux-renderers-ai/src/styles.css');
+    });
+
+    it('prints industrial symbol-drawing colors as [exempt] without flipping the exit code', async () => {
+      // plan 483 A1: the industrial package prefix entry was expanded to
+      // per-(file,rule) entries — stage under a registered real file path.
+      await stageFixture(
+        'packages/flux-renderers-industrial/src/symbols/visuals.ts',
         'color-exempt.fixture.ts',
       );
       const { stdout } = await runGate();
       expect(stdout).toContain('[exempt]');
-      expect(stdout).toContain('color-exempt.fixture.ts');
+      expect(stdout).toContain('symbols/visuals.ts');
     });
   });
 
@@ -154,14 +191,38 @@ describe('find-ui-consistency-gaps', () => {
       expect(stdout).not.toContain('error-message-console.fixture.ts');
     });
 
-    it('prints adjudicated raw-message diagnostic sinks as [exempt] without failing', async () => {
+    it('treats a raw error.message in the unified map-renderer as an unregistered new hit (plan 483 A3: exemption removed after unification)', async () => {
       await stageFixture(
         'packages/flux-renderers-map/src/map-renderer.tsx',
         'error-message-exempt.fixture.ts',
       );
+      // plan 483 A3 unified this file to the t(key, { message }) channel and
+      // removed its exemption entry: a raw error.message here is now exactly
+      // the regression the gate must catch.
+      await expect(runGate()).rejects.toMatchObject({
+        stdout: expect.stringContaining('packages/flux-renderers-map/src/map-renderer.tsx'),
+      });
+    });
+
+    it('filters adjudicated structured diagnostic channels out of the rule entirely (plan 483 A3 non-UI-exit filter)', async () => {
+      await stageFixture(
+        'packages/flux-renderers-industrial/src/renderer/scada-errors.ts',
+        'structured-diagnostic-hit.fixture.ts',
+      );
+      await stageFixture(
+        'packages/flux-renderers-3d/src/binding/transform-engine.ts',
+        'ai-tool-result-hit.fixture.ts',
+      );
+      await stageFixture(
+        'packages/flux-renderers-ai/src/engine/tool-execution.ts',
+        'ai-tool-result-hit.fixture.ts',
+      );
       const { stdout } = await runGate();
-      expect(stdout).toContain('[exempt]');
-      expect(stdout).toContain('packages/flux-renderers-map/src/map-renderer.tsx');
+      // Structured channel files produce neither newHits nor [exempt] listings:
+      // the rule-level non-UI-exit filter removes them before exemption accounting.
+      expect(stdout).not.toContain('scada-errors.ts');
+      expect(stdout).not.toContain('transform-engine.ts');
+      expect(stdout).not.toContain('tool-execution.ts');
     });
   });
 
@@ -197,6 +258,20 @@ describe('find-ui-consistency-gaps', () => {
     expect(stdout).toContain('No new unregistered UI consistency gap');
   });
 
+  it('keeps the EXEMPTIONS path-shape guard in place and the table guard-compliant (plan 483 A1)', async () => {
+    // Two-sided canary: the fail-fast validation must stay in the gate script,
+    // and the live table must stay compliant. Dropping the guard fails the
+    // source assertion; reintroducing an unmarked prefix entry makes every
+    // gate invocation fail closed with the guard error.
+    const scriptSource = await readFile(scriptPath, 'utf8');
+    expect(scriptSource).toContain('path-shape guard');
+    expect(scriptSource).toMatch(/isPrefix/);
+
+    await stageFixture('packages/flux-renderers-basic/src/all-clean.fixture.ts', 'all-clean.fixture.ts');
+    const { stdout } = await runGate();
+    expect(stdout).toContain('No new unregistered UI consistency gap');
+  });
+
   describe('--json machine-readable output (plan 470 visual-quality V0)', () => {
     function runGateWithArgs(args: string[]) {
       return execFileAsync(process.execPath, [scriptPath, ...args], {
@@ -206,12 +281,14 @@ describe('find-ui-consistency-gaps', () => {
     }
 
     it('emits deterministic parseable JSON with totals/byRule/byFile for exempt hits', async () => {
+      // plan 483 A1: stage under registered real file paths (prefix entries
+      // were expanded to per-(file,rule) entries).
       await stageFixture(
-        'packages/flux-renderers-industrial/src/symbols/json-exempt.fixture.ts',
+        'packages/flux-renderers-industrial/src/symbols/visuals.ts',
         'color-exempt.fixture.ts',
       );
       await stageFixture(
-        'packages/flux-renderers-scheduling/src/json-exempt.fixture.ts',
+        'packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx',
         'color-exempt.fixture.ts',
       );
       const { stdout } = await runGateWithArgs(['--json']);
@@ -228,8 +305,8 @@ describe('find-ui-consistency-gaps', () => {
         ),
       );
       expect(payload.byFile.map((entry: { file: string }) => entry.file)).toEqual([
-        'packages/flux-renderers-industrial/src/symbols/json-exempt.fixture.ts',
-        'packages/flux-renderers-scheduling/src/json-exempt.fixture.ts',
+        'packages/flux-renderers-industrial/src/symbols/visuals.ts',
+        'packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx',
       ]);
       expect(payload.newHits).toEqual([]);
     });

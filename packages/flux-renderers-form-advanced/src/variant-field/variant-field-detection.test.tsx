@@ -576,7 +576,7 @@ describe('variant-field renderer detection behavior', () => {
     );
 
     await waitFor(() => {
-      expect(notify).toHaveBeenCalledWith('warning', 'variant detect failed');
+      expect(notify).toHaveBeenCalledWith('warning', 'Variant field update failed: variant detect failed');
       const container = document.querySelector('[data-active-variant]');
       expect(container?.getAttribute('data-active-variant')).toBe('first');
     });

@@ -13,25 +13,25 @@
 
 > **全文件唯一的动态状态区。** 状态流转：研究报告核实通过且 plan draft review 通过 → `todo` 改 `planned`；closure audit 通过 → `planned` 改 `done`（不得提前）。一个 work item = 一个 execution plan 的交付范围（plan guide Rule 26：同组件族多能力合成一个 owner plan 内多 Phase）。带字母后缀的行（V8a/V8b、V11a/V11b、V12a/V12b/V12c）是同一域内彼此独立的 closure 单元，各自携状态。
 
-| Work Item                                                                                                                     | Status    | Owner Doc                                                                                                   | Dependencies | Plan                                                                 |
-| ----------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
-| V0. 视觉质量基线与视觉回归守护基建（各域证据卡 + 程序化视觉断言工具链 + 豁免基线快照）                                        | `done`    | `docs/references/e2e-test-diagnostic-guide.md`                                                              | —            | `docs/plans/470-visual-quality-v0-baseline-infra-plan.md`            |
-| V1. 主题与暗色横切地基（`:root` 兜底语义色、darkMode 触发器统一、运行时主题切换 G-I、playground 暴露）                        | `done`    | `docs/architecture/styling-system.md`、`docs/architecture/theme-compatibility.md`                           | V0           | `docs/plans/471-visual-quality-v1-theme-darkmode-foundation-plan.md` |
-| V2. AI 会话组件视觉修复（bug 166 流式、气泡视觉层、交互细节、AI 视觉断言）                                                    | `done`    | `docs/components/flux-renderers-ai/design.md`、`renderers.md`                                               | V0           | `docs/plans/472-visual-quality-v2-ai-conversation-visuals-plan.md`   |
-| V3. 3D 渲染视觉与交互修复（真 hover+高亮、阴影启用、容器高度解硬编码、加载/错误 UI、AI 生成出口、演示补齐）                   | `done`    | `docs/components/threejs-integration/design*.md`                                                            | V0           | `docs/plans/473-visual-quality-v3-threejs-visuals-plan.md`           |
-| V4. SCADA/工业视觉修复（I17 后残余视觉问题核实立项、grid 背景消费裁决、报警/趋势组件裁决）                                    | `done`    | `docs/components/industrial-hmi/design-*.md`、`docs/components/roadmap-industrial-hmi.md`                   | V0           | `docs/plans/474-visual-quality-v4-scada-visuals-plan.md`             |
-| V5. Flow Designer 交互补齐与主题化（框选/多选、吸附辅助线、边中点、节点实测尺寸 bugs/11、dark）                               | `done`    | `docs/architecture/flow-designer/design.md`                                                                 | V0、V1       | `docs/plans/475-visual-quality-v5-flow-designer-plan.md`             |
-| V6. Spreadsheet 视觉令牌化（canvas-styles 29 处 hex 收敛、dark 变体、值类型视觉）                                             | `done`    | `docs/components/spreadsheet-page/design.md`、`docs/architecture/report-designer/spreadsheet-canvas-css.md` | V0、V1       | —                                                                    |
-| V7. Report Designer 视觉与结构（画布解硬编码 30×10、带区/分组语义视觉、fallback 壳、codec 方向裁决）                          | `done`    | `docs/architecture/report-designer/design.md`、`codec-design.md`                                            | V0、V6       | —                                                                    |
-| V8a. Print 设计器视觉修复（09-13 遗留①–⑩、吸附辅助线渲染、多选/微移/undo 面板/参考线、诊断 i18n）                             | `todo`    | `docs/components/print/design.md`                                                                           | V0、V1       | —                                                                    |
-| V8b. Word 编辑器视觉补齐（字体/字号自定义输入、页眉页脚编辑 UI 裁决、皮肤令牌化核对）                                         | `planned` | `docs/components/word-editor-page/design.md`                                                                | V0、V1       | —                                                                    |
-| V9. Debugger 与代码编辑器（令牌化亮色适配、查找替换/括号自动闭合/活动行高亮）                                                 | `todo`    | `docs/components/code-editor/`（debugger 域无现成 design.md，owner doc 由研究报告确认/补齐）                | V0、V1       | —                                                                    |
-| V10. 富文本/Markdown 编辑器增强（Tiptap 扩展补齐、图标化工具条、滚动同步、autoGrow）                                          | `todo`    | `docs/components/editor/`、`docs/components/markdown-editor/`（design.md）                                  | V0           | —                                                                    |
-| V11a. Scheduling 族视觉补齐（gantt 关键路径、calendar 视图、kanban 拖拽视觉核对、任务条硬编码）                               | `todo`    | `docs/components/roadmap-scheduling.md`、`docs/components/{gantt,kanban,calendar}/design.md`                | V0、V1       | —                                                                    |
-| V11b. Dashboard/Map/Graph 补齐与裁决（canvasWidth 解硬编码、画布键盘导航、map heatmap/轨迹、graph G-K 数据驱动着色）          | `todo`    | `docs/components/{dashboard-filter,dashboard-editor,map,graph}/design.md`                                   | V0、V1       | —                                                                    |
-| V12a. 一致性豁免治理与 followups 处置（整包前缀豁免收紧为文件级、error.message 双轨统一、audit-followups 08-11/08-28 批处置） | `todo`    | `scripts/audit/find-ui-consistency-gaps.mjs`、`docs/backlog/audit-followups-*.md`                           | V0           | —                                                                    |
-| V12b. 一致性 P2 候选池按族消化（169 条，研究报告按组件族划批，类别清扫收口，豁免基数对照 V0 快照下降）                        | `todo`    | `docs/analysis/ui-review/r2-audit.md`、`r3-p2-adjudication.md`                                              | V0、V12a     | —                                                                    |
-| V12c. 一致性 P3 候选池裁决与消化（87 条：修复/显式 adjudicated 逐条裁定）                                                     | `todo`    | `docs/analysis/ui-review/r3-p2-adjudication.md`                                                             | V0、V12b     | —                                                                    |
+| Work Item                                                                                                                     | Status | Owner Doc                                                                                                                                      | Dependencies | Plan                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
+| V0. 视觉质量基线与视觉回归守护基建（各域证据卡 + 程序化视觉断言工具链 + 豁免基线快照）                                        | `done` | `docs/references/e2e-test-diagnostic-guide.md`                                                                                                 | —            | `docs/plans/470-visual-quality-v0-baseline-infra-plan.md`            |
+| V1. 主题与暗色横切地基（`:root` 兜底语义色、darkMode 触发器统一、运行时主题切换 G-I、playground 暴露）                        | `done` | `docs/architecture/styling-system.md`、`docs/architecture/theme-compatibility.md`                                                              | V0           | `docs/plans/471-visual-quality-v1-theme-darkmode-foundation-plan.md` |
+| V2. AI 会话组件视觉修复（bug 166 流式、气泡视觉层、交互细节、AI 视觉断言）                                                    | `done` | `docs/components/flux-renderers-ai/design.md`、`renderers.md`                                                                                  | V0           | `docs/plans/472-visual-quality-v2-ai-conversation-visuals-plan.md`   |
+| V3. 3D 渲染视觉与交互修复（真 hover+高亮、阴影启用、容器高度解硬编码、加载/错误 UI、AI 生成出口、演示补齐）                   | `done` | `docs/components/threejs-integration/design*.md`                                                                                               | V0           | `docs/plans/473-visual-quality-v3-threejs-visuals-plan.md`           |
+| V4. SCADA/工业视觉修复（I17 后残余视觉问题核实立项、grid 背景消费裁决、报警/趋势组件裁决）                                    | `done` | `docs/components/industrial-hmi/design-*.md`、`docs/components/roadmap-industrial-hmi.md`                                                      | V0           | `docs/plans/474-visual-quality-v4-scada-visuals-plan.md`             |
+| V5. Flow Designer 交互补齐与主题化（框选/多选、吸附辅助线、边中点、节点实测尺寸 bugs/11、dark）                               | `done` | `docs/architecture/flow-designer/design.md`                                                                                                    | V0、V1       | `docs/plans/475-visual-quality-v5-flow-designer-plan.md`             |
+| V6. Spreadsheet 视觉令牌化（canvas-styles 29 处 hex 收敛、dark 变体、值类型视觉）                                             | `done` | `docs/components/spreadsheet-page/design.md`、`docs/architecture/report-designer/spreadsheet-canvas-css.md`                                    | V0、V1       | —                                                                    |
+| V7. Report Designer 视觉与结构（画布解硬编码 30×10、带区/分组语义视觉、fallback 壳、codec 方向裁决）                          | `done` | `docs/architecture/report-designer/design.md`、`codec-design.md`                                                                               | V0、V6       | —                                                                    |
+| V8a. Print 设计器视觉修复（09-13 遗留①–⑩、吸附辅助线渲染、多选/微移/undo 面板/参考线、诊断 i18n）                             | `done` | `docs/components/print/design.md`、`docs/audits/visual-quality/print.md`                                                                       | V0、V1       | `docs/plans/479-visual-quality-v8a-print-designer-plan.md`           |
+| V8b. Word 编辑器视觉补齐（字体/字号自定义输入、页眉页脚编辑 UI 裁决、皮肤令牌化核对）                                         | `done` | `docs/components/word-editor-page/design.md`、`docs/audits/visual-quality/word.md`                                                             | V0、V1       | `docs/plans/478-visual-quality-v8b-word-editor-plan.md`              |
+| V9. Debugger 与代码编辑器（令牌化亮色适配、查找替换/括号自动闭合/活动行高亮）                                                 | `done` | `docs/components/code-editor/design.md`、`docs/components/debugger/design.md`（V9 新建）、`docs/audits/visual-quality/debugger-code-editor.md` | V0、V1       | `docs/plans/484-visual-quality-v9-debugger-code-editor-plan.md`      |
+| V10. 富文本/Markdown 编辑器增强（Tiptap 扩展子集裁决落地、三面工具条一致性、autoGrow；两处 Tiptap 面 + markdown Textarea 面） | `done` | `docs/components/editor/`、`docs/components/markdown-editor/`、`docs/components/flux-renderers-ai/`（design.md）                               | V0           | `docs/plans/480-visual-quality-v10-rich-text-markdown-plan.md`       |
+| V11a. Scheduling 族视觉补齐（gantt 关键路径、calendar 视图、kanban 拖拽视觉核对、任务条硬编码）                               | `done` | `docs/components/roadmap-scheduling.md`、`docs/components/{gantt,kanban,calendar}/design.md`                                                   | V0、V1       | —                                                                    |
+| V11b. Dashboard/Map/Graph 补齐与裁决（canvasWidth 解硬编码、画布键盘导航、map heatmap/轨迹、graph G-K 数据驱动着色）          | `done` | `docs/components/{dashboard-filter,dashboard-editor,map,graph}/design.md`                                                                      | V0、V1       | `docs/plans/482-visual-quality-v11b-dashboard-map-graph-plan.md`     |
+| V12a. 一致性豁免治理与 followups 处置（整包前缀豁免收紧为文件级、error.message 双轨统一、audit-followups 08-11/08-28 批处置） | `done` | `scripts/audit/find-ui-consistency-gaps.mjs`、`docs/backlog/audit-followups-*.md`                                                              | V0           | —                                                                    |
+| V12b. 一致性 P2 候选池按族消化（169 条，研究报告按组件族划批，类别清扫收口，豁免基数对照 V0 快照下降）                        | `todo` | `docs/analysis/ui-review/r2-audit.md`、`r3-p2-adjudication.md`                                                                                 | V0、V12a     | —                                                                    |
+| V12c. 一致性 P3 候选池裁决与消化（87 条：修复/显式 adjudicated 逐条裁定）                                                     | `todo` | `docs/analysis/ui-review/r3-p2-adjudication.md`                                                                                                | V0、V12b     | —                                                                    |
 
 ## Framework / Platform Reuse
 
@@ -91,9 +91,13 @@
 
 交付：09-13 登记遗留①–⑩逐项修复或显式裁决（吸附辅助线渲染为最高性价比项：`canvas-math.ts` 已算出、`print-designer-canvas.tsx:130` 消费即可）；多选/方向键微移/undo 面板/标尺拖动参考线按对标缺口裁决落地；诊断消息 i18n 接管（88 键已备）；print e2e 视觉断言补齐。
 
+执行注记（2026-09-21，plan 479 Phase 1–3 落地，closure audit 待独立执行）：①–⑩ 全部修复或显式裁决——旋转 AABB（R10）v1 契约显式化落 design.md；autoGrow 尾片实测/`printDate` 单次 now/设计态 fit/barrel 收敛/iframe 10s 兜底代码面修复；PDF 切 PNG 实测 2 页 27.2 MiB 膨胀，按 plan 备选条款回退 JPEG 0.98 提档（0.294 MiB，实测数入 daily log）。诊断 i18n 实为 17 code×2 locale（88 系当时误计，勘误见 plan 479 Current Baseline）。方向键微移勘误为已实现；marquee/标尺参考线/undo 面板/图层树显式 deferred（plan「Deferred But Adjudicated」）。dark 画布内联环境色 `--print-*` 令牌化（纸面墨水语义恒白维持）。e2e 8 → 12 test：testid 化 + 选中/手柄/辅助线/标尺计算样式断言 + light/dark 双态。
+
 ### V8b. Word 编辑器视觉补齐
 
 交付：字体/字号自定义输入（解 `toolbar/font-controls.tsx` 硬编码枚举）+ 中文字体族预览核对；页眉页脚编辑 UI 裁决（bridge 已透传数据、缺 UI）；15 行自有 CSS 与 canvas-editor 默认皮肤的令牌化边界核对；word e2e 视觉断言补齐。
+
+执行注记（2026-09-21，plan 478 Phase 1–3 落地，closure audit 待独立执行）：字体/字号升 ui Combobox——自由输入（size 钳制 [5,72]、空串不提交）+ 枚举外值回显修复（原 NativeSelect 静默空白缺陷）+ 逐项 fontFamily 预览；页眉页脚最小 zone UI 落地（三档切换 + `listener.zoneChange` 为必需状态源的激活指示 + API 缺失禁用降级，zone 高度拖拽/结构化编辑维持 deferred）；A3 皮肤边界裁决落 `docs/architecture/word-editor/design.md`（`.ce-*` 不轻动、IEditorOption 唯一调色通道、纸张白底语义、locale 热更 watch-only）；bridge options 透传 locale（宿主 i18n，构造期一次性）。word e2e 32 → 35 test：枚举外回显/zone 指示/light-dark 工具条计算样式（V0 helper）。
 
 ### V9. Debugger 与代码编辑器
 
@@ -101,15 +105,21 @@
 
 ### V10. 富文本/Markdown 编辑器增强
 
-交付：Tiptap 扩展补齐（Image/Table/Underline/TextAlign/Highlight/Placeholder 中取哪个子集在研究报告中显式裁决，含否决理由）；B/I/S 文本字母按钮图标化；markdown 编辑器 autoGrow + 编辑/预览滚动同步裁决；三处 Tiptap 消费（form editor / ai tiptap-sender / markdown）工具条一致性核对。
+交付：Tiptap 扩展子集显式裁决落地（Underline/Placeholder 零新下载先行；Image/Highlight 各 +1 依赖；Table/TextAlign 否决登记 Deferred But Adjudicated）；R3/R4 占位符死面与 R6 Link 重复装配修复；R7 死 fallback label 清理（图标化本身已由 plan-0718 落地）；markdown 编辑器 autoGrow + 滚动同步裁决（adjudicated-deferred）；三处富文本编辑面（form editor / ai tiptap-sender / markdown-editor——注意仅前两处是 Tiptap）工具条一致性收敛；三面内容排版 scope CSS；e2e 计算样式断言补齐。
+
+执行注记（2026-09-21，plan 480 Phase 1–4 落地，closure audit 待独立执行）：详见 `docs/plans/480-visual-quality-v10-rich-text-markdown-plan.md` 与证据卡勘误（F1「无 Underline」不成立、F2「未图标化」已失实、F4「三处 Tiptap」措辞不准）。
 
 ### V11a. Scheduling 族视觉补齐
 
 交付：gantt 关键路径高亮裁决；calendar 6 周网格月视图/密度视图裁决；kanban 拖拽悬停高亮实际视觉/dark 表现核对（链路已接通：发射端 `use-kanban-board-effects.ts:135-136` → CSS `kanban.css:144`，非 confirmed defect；核对发现问题才立项修复，否则显式 adjudicated 为 watch-only）；gantt 任务条选中 `bg-blue-50` 硬编码修复；scheduling e2e 视觉断言补齐。
 
+执行状态（2026-09-21）：plan `481-visual-quality-v11a-scheduling-plan.md` 四 Phase 执行完毕（CPM 落地 + 图例、选中双面修复、拖拽 CSS 断链补齐、事件色双轨消解、未定义 var 清零、R4-R8 token 收敛 + 守卫单测、e2e 三组双态断言 + 17 spec 零回归）；F2/F3/R9-R14 裁决已落卡 `docs/audits/visual-quality/scheduling.md`。状态行维持 `planned`，待独立 closure audit 通过后改 `done`。
+
 ### V11b. Dashboard/Map/Graph 补齐与裁决
 
 交付：dashboard `canvasWidth=1200` 解硬编码 + 画布键盘导航裁决；map heatmap/轨迹 schema 通道裁决；graph G-K 数据驱动着色 schema 通道裁决（落地的进本 plan，否决的进 Deferred But Adjudicated）。
+
+执行状态（2026-09-21，plan 482 四 Phase 落地，closure audit 待独立执行）：A1 共享测量 hook（编辑/运行同构，实测容器宽 + 回退 1200）+ A2 编辑态方向键移动（dragPanel clamp、单 undo 步）落地；R1 map dark 触发器修复（data-theme/data-mode 双属性）+ R5 loading 注释勘误 + R2 graph 语义色令牌化 + R3 死类摘除 + 门禁豁免摘除（检测模式收窄 var() 引用，基数 413→295 可归因）落地；A3（map heatmap/轨迹/围栏）与 A4（graph 边着色）显式裁决落 `docs/audits/visual-quality/dashboard-map-graph.md`；三域 e2e 断言补齐（dashboard 4 test、graph +1、map 1 test，92/92 绿）。状态行维持 `planned`，待独立 closure audit 通过后改 `done`。
 
 ### V12a. 一致性豁免治理与 followups 处置
 

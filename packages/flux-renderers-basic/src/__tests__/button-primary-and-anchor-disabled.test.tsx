@@ -80,7 +80,12 @@ describe("[G1-视角3-02] href anchor branch honors disabled/loading", () => {
         onActionScopeChange={(scope: any) => {
           scope?.registerNamespace('probe', {
             kind: 'host',
-            invoke: () => ({ ok: true, data: null }),
+            // 23-04 (plan 483 Phase 7 batch b): wire the spy so the
+            // "onClick not called" assertions below carry weight.
+            invoke: () => {
+              onClick();
+              return { ok: true, data: null };
+            },
           });
         }}
       />,

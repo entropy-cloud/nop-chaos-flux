@@ -441,12 +441,13 @@ export function TableEditableCell(props: TableEditableCellProps) {
 
   if (!editing) {
     return (
-      // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- navigation-state cell: span is keyboard-reachable (tabIndex=0) with Enter/F2 click-equivalent handlers; role stays generic until the edit state mounts the native editor control
+      // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- navigation-state cell: span is keyboard-reachable (tabIndex=0) with Enter/F2 click-equivalent handlers; role stays generic until the edit state mounts the native editor control. 20-06 (plan 483 Phase 7 fix-lite): aria-keyshortcuts exposes the activation keys to AT without remapping the role (Decision 6 tradeoff kept).
       <span
         ref={containerRef}
         data-slot="table-editable-cell"
         data-editor={config.editor}
         tabIndex={0}
+        aria-keyshortcuts="Enter F2"
         aria-label={typeof column.label === 'string' ? column.label : field}
         onClick={(event) => {
           event.stopPropagation();

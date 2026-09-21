@@ -241,7 +241,21 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
     'data-countdown': countDownActive ? String(countDownLeft) : undefined,
   };
 
-  // URL protocol guard (shared contract with content link renderer,
+  // P2-14 (plan 483 A5): anchor rel contract, same semantics as the content
+// link renderer's resolveRel (link.tsx precedent): an author rel wins; a
+// `target="_blank"` anchor without one is topped up to `noopener noreferrer`.
+function resolveRel(target: unknown, rel: unknown): string | undefined {
+  const trimmedRel = typeof rel === 'string' ? rel.trim() : '';
+  if (trimmedRel.length > 0) {
+    return trimmedRel;
+  }
+  if (target === '_blank') {
+    return 'noopener noreferrer';
+  }
+  return undefined;
+}
+
+// URL protocol guard (shared contract with content link renderer,
   // `isSafeNavigationUrl` from flux-core): href may be data-bound
   // (`${item.link}`), and an unsafe scheme (javascript:/vbscript:/…)
   // would execute on click. Unsafe hrefs degrade to a non-navigable
@@ -259,6 +273,7 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
       ref={anchorRef}
       href={effectiveDisabled ? undefined : href}
       target={props.props.target}
+      rel={resolveRel(props.props.target, props.props.rel)}
       aria-disabled={effectiveDisabled || undefined}
       {...commonProps}
       onClick={(event) => void handleClick(event)}

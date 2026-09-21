@@ -68,6 +68,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'headerClassName', kind: 'prop' },
       { key: 'footerClassName', kind: 'prop' },
       { key: 'toolbarClassName', kind: 'prop' },
+      { key: 'footerFixed', kind: 'prop', valueType: 'boolean' },
     ],
     validationDefaults: {
       collectDescendantValidation: true,
@@ -372,6 +373,7 @@ export const basicRendererDefinitions: RendererDefinition[] = [
       { key: 'countDownStorage', kind: 'prop' },
       { key: 'href', kind: 'prop' },
       { key: 'target', kind: 'prop' },
+      { key: 'rel', kind: 'prop' },
       { key: 'block', kind: 'prop', valueType: 'boolean' },
       { key: 'active', kind: 'prop', valueType: 'boolean' },
     ],

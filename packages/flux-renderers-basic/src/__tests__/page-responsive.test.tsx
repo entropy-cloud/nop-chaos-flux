@@ -180,6 +180,7 @@ describe('page renderer — fixed footer VisualViewport hook (M3a)', () => {
       title: 'T',
       body: [{ type: 'text', text: 'B' }],
       footer: [{ type: 'button', label: 'Submit' }],
+      footerFixed: true,
       footerClassName: 'fixed bottom-0 inset-x-0 nop-safe-bottom',
     } as BaseSchema);
     const footer = container.querySelector('[data-slot="page-footer"]') as HTMLElement;
@@ -195,6 +196,7 @@ describe('page renderer — fixed footer VisualViewport hook (M3a)', () => {
       title: 'T',
       body: [{ type: 'text', text: 'B' }],
       footer: [{ type: 'button', label: 'Submit' }],
+      footerFixed: true,
       footerClassName: 'fixed bottom-0 inset-x-0 nop-safe-bottom',
     } as BaseSchema);
     const footer = container.querySelector('[data-slot="page-footer"]') as HTMLElement;
@@ -219,6 +221,7 @@ describe('page renderer — fixed footer VisualViewport hook (M3a)', () => {
       title: 'T',
       body: [{ type: 'text', text: 'B' }],
       footer: [{ type: 'button', label: 'Submit' }],
+      footerFixed: true,
       footerClassName: 'fixed bottom-0 inset-x-0 nop-safe-bottom',
     } as BaseSchema);
     const footer = container.querySelector('[data-slot="page-footer"]') as HTMLElement;

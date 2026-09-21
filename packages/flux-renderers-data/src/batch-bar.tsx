@@ -43,7 +43,10 @@ export function BatchBarRenderer(props: RendererComponentProps<BatchBarSchema>) 
     areStringArraysEqual,
     // 05-02: the disabled branch (no selectionPath) must resolve to `[]` so the
     // "never throws" promise in the comment below actually holds.
-    { enabled: selectionPath.length > 0, fallback: [] },
+    // 05-01 (plan 483 Phase 7 batch c): subscribe with explicit `paths` so the
+    // bar re-runs its selector only on writes to the bound path (sibling hooks
+    // convention), not on every scope write.
+    { enabled: selectionPath.length > 0, fallback: [], paths: [selectionPath] },
   );
 
   // 22-02: one-shot dev diagnostic for "bar wired to a scope path that is never
@@ -132,13 +135,30 @@ export function BatchBarRenderer(props: RendererComponentProps<BatchBarSchema>) 
     const hasClearSelection = handle.capabilities.hasMethod?.('clearSelection') ?? false;
     const hasSetSelection = handle.capabilities.hasMethod?.('setSelection') ?? false;
 
+    // 19-03 (plan 483 Phase 7 batch a): capability failures are currently
+    // unreachable (known targets always report ok), but a dropped `void` would
+    // silently hide future failures — surface them as a one-shot dev warn.
     if (hasClearSelection) {
-      void handle.capabilities.invoke('clearSelection', undefined, {});
+      void Promise.resolve(handle.capabilities.invoke('clearSelection', undefined, {})).then((result) => {
+        if (isDevRuntime() && result?.ok === false && !targetWarnedRef.current) {
+          targetWarnedRef.current = true;
+          console.warn(
+            '[flux:batch-bar] batch-bar-clear-failed: clearSelection capability returned ok:false; selection was not cleared.',
+          );
+        }
+      });
       return;
     }
 
     if (hasSetSelection) {
-      void handle.capabilities.invoke('setSelection', { selectedRowKeys: [] }, {});
+      void Promise.resolve(handle.capabilities.invoke('setSelection', { selectedRowKeys: [] }, {})).then((result) => {
+        if (isDevRuntime() && result?.ok === false && !targetWarnedRef.current) {
+          targetWarnedRef.current = true;
+          console.warn(
+            '[flux:batch-bar] batch-bar-clear-failed: setSelection capability returned ok:false; selection was not cleared.',
+          );
+        }
+      });
       return;
     }
 

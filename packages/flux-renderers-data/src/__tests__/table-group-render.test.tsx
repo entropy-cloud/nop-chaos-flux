@@ -187,24 +187,28 @@ describe('table group — collapse semantics (gd-group-collapse-persist)', () =>
 
 describe('table group — fallback group (gd-group-missing-field)', () => {
   it('routes missing/null/empty field values into the missingLabel group with a dev warn', () => {
+    // 14-04 (plan 483 Phase 7 batch b): restore in finally (spy-leak hygiene).
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    renderGroupTable({
-      group: { field: 'category', missingLabel: 'N/A' },
-      rows: [
-        { id: '1', category: 'A' },
-        { id: '2' },
-        { id: '3', category: null },
-        { id: '4', category: '' },
-      ],
-    });
+    try {
+      renderGroupTable({
+        group: { field: 'category', missingLabel: 'N/A' },
+        rows: [
+          { id: '1', category: 'A' },
+          { id: '2' },
+          { id: '3', category: null },
+          { id: '4', category: '' },
+        ],
+      });
 
-    const headers = groupHeaders();
-    expect(headers).toHaveLength(2);
-    expect(headers[1].getAttribute('data-group-key')).toBe('__missing__');
-    expect(headers[1].querySelector('[data-slot="table-group-label"]')!.textContent).toBe('N/A');
-    expect(headers[1].querySelector('[data-slot="table-group-count"]')!.textContent).toBe('(3)');
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('gd-group-missing-field'));
-    warn.mockRestore();
+      const headers = groupHeaders();
+      expect(headers).toHaveLength(2);
+      expect(headers[1].getAttribute('data-group-key')).toBe('__missing__');
+      expect(headers[1].querySelector('[data-slot="table-group-label"]')!.textContent).toBe('N/A');
+      expect(headers[1].querySelector('[data-slot="table-group-count"]')!.textContent).toBe('(3)');
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('gd-group-missing-field'));
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
 

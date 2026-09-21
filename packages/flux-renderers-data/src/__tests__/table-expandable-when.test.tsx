@@ -58,4 +58,18 @@ describe('Table expandable.expandableWhen', () => {
     expect(expandCells[0].querySelector('button')).toBeTruthy();
     expect(expandCells[1].querySelector('button')).toBeTruthy();
   });
+
+  // 14-02 (plan 483 Phase 7 batch b): the catch branch in
+  // table-row-leading-cells degrades to expandable on evaluation errors
+  // (expr-eval-error Failure Path) — pin it so a refactor cannot flip the
+  // degradation direction.
+  it('degrades to expandable (toggle shown) when expandableWhen throws at evaluation', () => {
+    const { container } = renderTable({
+      expandable: { expandableWhen: 'nonexistent.function(unknownRef' },
+    });
+    const expandCells = container.querySelectorAll('[data-slot="table-expand-cell"]');
+    expect(expandCells.length).toBe(2);
+    expect(expandCells[0].querySelector('button')).toBeTruthy();
+    expect(expandCells[1].querySelector('button')).toBeTruthy();
+  });
 });

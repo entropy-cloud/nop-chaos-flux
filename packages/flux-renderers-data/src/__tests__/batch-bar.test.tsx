@@ -122,11 +122,21 @@ describe('batch-bar count template matrix', () => {
   });
 
   it('falls back to the raw count and warns once when the template fails to evaluate', async () => {
+    // 14-04 (plan 483 Phase 7 batch b): restore in finally so a failing expect
+    // cannot leak the console.warn spy into sibling suites (keyboard-bindings
+    // test precedent).
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    renderCrudWithBatchBar({
-      countTemplate: '${count.x.y} items',
-      clearTarget: undefined,
-    });
+    try {
+      await runAssertions();
+    } finally {
+      warnSpy.mockRestore();
+    }
+
+    async function runAssertions() {
+      renderCrudWithBatchBar({
+        countTemplate: '${count.x.y} items',
+        clearTarget: undefined,
+      });
 
     selectRow(0);
     await waitFor(() => expect(screen.getByTestId('bar')).toBeTruthy());
@@ -146,8 +156,8 @@ describe('batch-bar count template matrix', () => {
     const templateWarnsAfter = warnSpy.mock.calls.filter((call) =>
       String(call[0]).includes('batch-bar-count-expr'),
     );
-    expect(templateWarnsAfter.length).toBe(1);
-    warnSpy.mockRestore();
+      expect(templateWarnsAfter.length).toBe(1);
+    }
   });
 });
 

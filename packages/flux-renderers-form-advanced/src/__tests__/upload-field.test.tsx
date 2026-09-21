@@ -272,11 +272,12 @@ describe('input-file — upload failure & error handling', () => {
     setFiles(input, [new File(['x'], 'bad.txt')]);
 
     // The server responds { data: { message: 'rejected' } }; that message must
-    // propagate to the user-visible error (and is the same string carried by the
-    // onUploadError event payload's `error` field via toUploadError).
+    // reach the user-visible error behind the localized category label (A3,
+    // plan 483), while the onUploadError payload's `error` field carries the
+    // raw message (CX-10 contract — asserted by the ${error} dispatch test).
     await waitFor(() => {
       const errorSlot = document.querySelector('[data-slot="upload-error"]');
-      expect(errorSlot?.textContent).toBe('rejected');
+      expect(errorSlot?.textContent).toBe('Upload failed: rejected');
     });
   });
 

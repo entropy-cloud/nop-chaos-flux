@@ -54,12 +54,16 @@
 
 V12 三个 work item 闭环单位独立、证据同源，共用 #14 一张卡，卡内 findings 标注归属 work item。
 
-## 豁免基线快照（V12 对照起点）
+## 豁免基线快照（V12 对照起点，对照协议 v1）
 
-- 文件：`exemption-baseline-v0.json`（plan 470 Phase 1 生成，入库文本资产）
-- 生成：`node scripts/audit/find-ui-consistency-gaps.mjs --json > docs/audits/visual-quality/exemption-baseline-v0.json`
-- v0 数字：**413 instances / 121 (rule,file) pairs / 32 exemption entries**（2026-09-19；与门禁人读输出同口径，(rule,file) 对为豁免作用域粒度，与 D2 历史 399/116/30 序列可比）
-- **V12 对照协议**：V12a/b/c closure 时复跑 `--json` 与 v0 快照 diff——①`totals.entries`（32）不得增加；②`totals.instances` 相对 413 的下降量须可归因到 V12 各批次修复/adjudication 记录。输出含排序确定性保证（byFile 按 file+rule、byRule 按键名），可作字节级 diff。
+> 协议 v1 修订（2026-09-21，plan `docs/plans/483-visual-quality-v12a-consistency-governance-plan.md` Phase 1）：引入快照版本化与「结构性重基线」条款，取代下方 v0 口径的对照协议；其余章节不受本修订影响。
+
+- 快照版本化：`exemption-baseline-v0.json`（plan 470 Phase 1 生成，入库文本资产）**保留为历史对照点**，不再承载现行红线；现行基线为 **v1**：`exemption-baseline-v1.json`（plan 483 Phase 5 一次性落定，唯一新建快照资产）。
+- 生成：`node scripts/audit/find-ui-consistency-gaps.mjs --json > docs/audits/visual-quality/exemption-baseline-v1.json`（输出含排序确定性保证：byFile 按 file+rule、byRule 按键名，可作字节级 diff；`totals.files` 为唯一 (rule,file) 对数，非文件数）
+- v0 数字（历史对照点）：**413 instances / 121 (rule,file) pairs / 32 exemption entries**（2026-09-19；与门禁人读输出同口径，(rule,file) 对为豁免作用域粒度，与 D2 历史 399/116/30 序列可比）
+- **结构性重基线条款（一次性，仅 V12a）**：四包前缀豁免收紧为文件级属协议事件，允许 `totals.entries` 32 → 至多 117（四包 (file,rule) 对展开上界 89，实收以 A2/A3 落地后余量为准、终值见下）；`totals.instances` 一次性出清——A2 `hsl(var(…))` 假阳性出清按执行前重算清单（研究测算 ~105）、A3 结构化 16 例裁定为永久结构化通道 + UI 直出 31 例统一。v0→v1 的每条变动须归因到 plan 483 的 Phase 2/3/4 记录，一次性入账。
+- **V12 对照协议 v1 红线（自 v1 快照落定起对 v1 生效）**：V12a/b/c closure 时复跑 `--json` 与 v1 快照 diff——①`totals.entries` 相对 v1 不得增加；②`totals.instances` 相对 v1 重基线值单调不增，每次变动须可归因到 V12 各批次修复/adjudication 记录；③`newHits` 持续为 0。
+- v1 数字（plan 483 Phase 5 回填，2026-09-21）：**225 instances / 68 (rule,file) pairs / 69 exemption entries**（`exemption-baseline-v1.json` 与 live 复跑字节级一致；`newHits=0`）。
 
 ## 视觉断言工具链
 

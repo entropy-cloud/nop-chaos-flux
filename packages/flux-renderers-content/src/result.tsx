@@ -20,6 +20,13 @@ const STATUS_ARIA_LABEL_KEY: Record<ResultStatus, string> = {
   info: 'flux.result.statusInfo',
 };
 
+// 09-02 (plan 483 Phase 7 batch a): the diagnostic warn is dev-only, matching
+// its own "dev warning" description (keyboard.tsx isDevRuntime precedent).
+function isDevRuntime() {
+  const importMeta = import.meta as ImportMeta & { env?: { DEV?: boolean } };
+  return importMeta.env?.DEV === true;
+}
+
 const warnedStatuses = new Set<unknown>();
 
 function resolveStatus(value: unknown): ResultStatus {
@@ -44,7 +51,7 @@ export function ResultRenderer(props: RendererComponentProps<ResultSchema>) {
   const slotProps = props.props;
   const rawStatus = (slotProps as { status?: unknown }).status;
   const status = rawStatus === undefined ? 'info' : resolveStatus(rawStatus);
-  if (rawStatus !== undefined && rawStatus !== status && !warnedStatuses.has(rawStatus)) {
+  if (isDevRuntime() && rawStatus !== undefined && rawStatus !== status && !warnedStatuses.has(rawStatus)) {
     warnedStatuses.add(rawStatus);
     console.warn(
       `[flux] result: unknown status "${String(rawStatus)}"; rendering with info semantics.`,

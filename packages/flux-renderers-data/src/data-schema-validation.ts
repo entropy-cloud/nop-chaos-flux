@@ -168,7 +168,9 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
         return;
       }
       validateColumnEditableConfig(
-        (column as unknown as Record<string, unknown>).editable,
+        // 13-04 (plan 483 Phase 7 batch c): single assertion suffices — the
+        // value flows into an `unknown` parameter anyway.
+        (column as Record<string, unknown>).editable,
         path,
         index,
         emit,

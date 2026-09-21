@@ -79,14 +79,22 @@ function readResultItem(result: ActionResult): UploadResultItem | undefined {
   return undefined;
 }
 
-function toUploadError(error: unknown): string {
-  if (error instanceof Error && error.message) {
+// Raw machine-readable message — the onUploadError payload contract (CX-10 /
+// bug-83 family): `${error}` in action args resolves to the server's message,
+// never to a localized wrapper.
+function toUploadErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
     return error.message;
   }
   if (typeof error === 'string' && error) {
     return error;
   }
   return t('flux.form.uploadFailed');
+}
+
+// User-visible message (A3, plan 483): localized category label + raw detail.
+function toUploadError(error: unknown): string {
+  return t('flux.form.uploadFailedDetail', { message: toUploadErrorMessage(error) });
 }
 
 /**
@@ -306,7 +314,7 @@ export function UploadFieldRenderer(
       const payload = {
         type: 'upload-error',
         file: { name: file.name, size: file.size, type: file.type },
-        error: toUploadError(error),
+        error: toUploadErrorMessage(error),
       };
       void props.events.onUploadError?.(payload, eventCtx(payload));
     } finally {
@@ -423,7 +431,10 @@ export function UploadFieldRenderer(
         const payload = {
           type: 'delete-fail',
           file: { name: item.name, url: item.url, size: item.size },
-          error: error instanceof Error ? error.message : 'Delete failed',
+          error:
+            error instanceof Error
+              ? t('flux.form.deleteFailedDetail', { message: error.message })
+              : t('flux.form.deleteFailed'),
         };
         void props.events.onDeleteFail?.(payload, eventCtx(payload));
       } finally {

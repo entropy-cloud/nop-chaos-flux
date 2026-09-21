@@ -1,0 +1,7 @@
+/* Mirrors the two real hardcoded literals live in flux-renderers-ai/src/styles.css
+   (plan 483 Phase 2 Proof ③) plus a token-consumption line that must not count. */
+.replica-ai-overlay {
+  background: rgb(0 0 0 / 0.45);
+  color: hsl(120, 50%, 40%);
+  border-color: hsl(var(--flux-border, 214 32% 91%));
+}
