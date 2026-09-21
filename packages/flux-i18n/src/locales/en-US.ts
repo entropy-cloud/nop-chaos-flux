@@ -758,9 +758,7 @@ export const enUS: Resource = {
     },
     reportDesigner: {
       title: 'Report Designer',
-      coreTitle: 'Report Designer Core',
       noFieldSources: 'No field sources registered.',
-      noMetadata: 'No metadata for the current target.',
       target: 'Target',
       none: 'none',
       preview: 'Preview',

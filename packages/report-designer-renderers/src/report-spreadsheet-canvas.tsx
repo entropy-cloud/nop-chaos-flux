@@ -6,6 +6,7 @@ import { useBridgeSnapshot, useRendererEnv } from '@nop-chaos/flux-react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
 /* Adjudication 01-09: cross-domain coupling report→spreadsheet - embeds spreadsheet UI (SheetTabBar, SpreadsheetGrid, useSpreadsheetInteractions) and types (SpreadsheetBridge, SpreadsheetHostSnapshot). Accept-and-annotate: architecturally expected composition dependency. */
 import {
+  resolveGridDimensions,
   SheetTabBar,
   SpreadsheetGrid,
   type SpreadsheetBridge,
@@ -22,9 +23,6 @@ import { readReportFieldDragPayload } from './report-field-panel.js';
 function getFailureMessage(error: unknown) {
   return error instanceof Error && error.message ? error.message : t('flux.common.saveFailed');
 }
-
-const ROWS = 30;
-const COLS = 10;
 
 export interface ReportSpreadsheetCanvasProps {
   core: ReportDesignerCore;
@@ -47,11 +45,15 @@ export function ReportSpreadsheetCanvas({
   const sheetId =
     spreadsheetSnapshot.activeSheet?.id || snapshot.document.spreadsheet.workbook.sheets[0]?.id || '';
 
+  // plan 477 Phase 1：画布维度随模板 cells 派生（解 30×10 硬编码——界外内容不可见
+  // 且键盘不可达）；空模板回落 DEFAULT 基线 100×26，与 spreadsheet host 一致。
+  const { rows: derivedRows, cols: derivedCols } = resolveGridDimensions(spreadsheetSnapshot, undefined);
+
   const interactions = useSpreadsheetInteractions({
     bridge: spreadsheetBridge,
     sheetId,
-    rows: ROWS,
-    cols: COLS,
+    rows: derivedRows,
+    cols: derivedCols,
   });
 
   const {
@@ -250,8 +252,8 @@ export function ReportSpreadsheetCanvas({
       <SpreadsheetGrid
         snapshot={ssSnapshot}
         bridge={spreadsheetBridge}
-        rows={ROWS}
-        cols={COLS}
+        rows={derivedRows}
+        cols={derivedCols}
         columnWidths={columnWidths}
         rowHeights={rowHeights}
         selectedCell={selectedCell}

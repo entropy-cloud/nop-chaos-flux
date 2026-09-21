@@ -1,3 +1,18 @@
+/* plan 477 Phase 2：--rp-* 包内 fallback 令牌族（:root 发布 + dark 变体）。
+ * 悬浮/徽章等面板专属态在宿主 --nop-* 调色板无对应语义令牌，包内定义；
+ * 消费点一律 var()。--ss-* 先例同构。 */
+:root {
+  --rp-hover-border: rgb(148 163 184);
+  --rp-hover-bg: rgb(248 250 252);
+  --rp-muted-bg: rgb(241 245 249);
+}
+
+[data-mode='dark'] {
+  --rp-hover-border: rgb(71 85 105);
+  --rp-hover-bg: rgb(30 41 59);
+  --rp-muted-bg: rgb(30 41 59);
+}
+
 .nop-report-field-panel[data-slot='report-field-panel-shell'] {
   display: flex;
   flex-direction: column;
@@ -46,8 +61,8 @@
 }
 
 .nop-report-field-panel [data-slot='report-field-panel-item']:hover {
-  border-color: var(--nop-border-hover, rgb(148 163 184));
-  background: var(--nop-surface-hover, rgb(248 250 252));
+  border-color: var(--rp-hover-border);
+  background: var(--rp-hover-bg);
 }
 
 .nop-report-field-panel [data-slot='report-field-panel-drag-handle'] {
@@ -71,7 +86,7 @@
   min-width: 52px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: var(--nop-surface-muted, rgb(241 245 249));
+  background: var(--rp-muted-bg);
   color: var(--nop-body-copy, rgb(71 85 105));
   font-size: 11px;
   font-weight: 600;

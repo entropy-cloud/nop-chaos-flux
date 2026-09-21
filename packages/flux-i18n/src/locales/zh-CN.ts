@@ -756,9 +756,7 @@ export const zhCN: Resource = {
     },
     reportDesigner: {
       title: '报表设计器',
-      coreTitle: '报表设计器核心',
       noFieldSources: '未注册字段源。',
-      noMetadata: '当前目标无元数据。',
       target: '目标',
       none: '无',
       preview: '预览',

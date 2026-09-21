@@ -192,7 +192,7 @@ interface ReportDesignerPageSchema {
 - `spreadsheet-page.readOnly` 是共享 host 级交互约束：除了 core mutation dispatch 以外，toolbar、sheet-tab、inline edit、field-drop、keyboard mutation entry 也必须一起锁住
 - `spreadsheet-page` 默认 host 还负责把 spreadsheet edit/save result fidelity 保持到页面层：outside-click inline save 与 namespaced `spreadsheet:*` host action provider 都必须保留 resolved failed / cancelled semantics，不得把 cancelled 重新分类成 generic failure，也不得吞掉 bridge rejection
 - shared spreadsheet grid viewport is also owner state: scroll/zoom updates flow through `spreadsheet:setViewport`, then back out through the same canonical runtime snapshot / host projection path instead of local renderer-only state mirrors
-- `spreadsheet-page` 默认 host 的 grid 维度必须从 active sheet 的已用边界推导，并保持 `100x26` 仅作为最小空白工作表基线；更大的 workbook 不能再被默认壳层静默截断到固定 demo 尺寸
+- `spreadsheet-page` 默认 host 的 grid 维度必须从 active sheet 的已用边界推导，并保持 `100x26` 仅作为最小空白工作表基线；更大的 workbook 不能再被默认壳层静默截断到固定 demo 尺寸。该派生契约同样约束 report-designer 的内嵌画布（plan 477：`report-spreadsheet-canvas` 消费同一 `resolveGridDimensions`，历史 30×10 demo 尺寸已退役）
 - `spreadsheet-page.config` 当前公开 contract 已收窄到 `defaultRowHeight?`、`defaultColumnWidth?`、`maxUndoDepth?`；未落地的 `minRowHeight` / `minColumnWidth` 不再作为 supported baseline 对外发布
 - `report-designer-page` 在 workbook 之上叠加字段拖拽、metadata、preview、inspector 适配，并已支持 `toolbar` / `fieldPanel` / `inspector` / `dialogs` / `body` 五个 region 与 `statusPath`
 - 按 `docs/architecture/designer-workbench-shell.md` 的共享规则，左侧字段面板与右侧 inspector 都是 config-driven optional panels：存在已解析 panel definition 时才显示，对应缺失时整侧隐藏

@@ -10,7 +10,7 @@ import { useSpreadsheetInteractions } from './use-spreadsheet-interactions.js';
 const DEFAULT_ROWS = 100;
 const DEFAULT_COLS = 26;
 
-function resolveGridDimensions(
+export function resolveGridDimensions(
   snapshot: SpreadsheetHostSnapshot,
   config: SpreadsheetConfig | undefined,
 ) {

@@ -473,3 +473,7 @@ codec 层必须被视为 `Report Designer` 的一等公民，而不是导入导�
 - 用分层 codec 代替单一黑盒转换
 
 只有这样，通用设计器、`nop-report` profile、后端模板模型之间才能实现长期稳定的 round-trip。
+
+## Codec 方向裁决（plan 477，2026-09-21）
+
+`TemplateCodecAdapter` 通路（接口/注册表/命令链/host method/i18n）已完备，唯一缺口是生产 adapter。裁决：**采纳 hucre 作为 codec 层依赖**（依据 `docs/analysis/2026-09-12-hucre-vs-report-designer-comparison.md`），集成（依赖引入 + adapter 实现 + demo 注册）出独立 plan，不属视觉修复域。在集成落地前，live 表面 import/export 维持 `noCodecConfigured` 失败路径（i18n 文案已备）。另：带区/分组头语义（band model）经裁决显式 deferred——文档模型无 band 概念，归域功能 roadmap（证据卡 `docs/audits/visual-quality/report-designer.md` 承载）。

@@ -283,3 +283,97 @@ describe('ReportSpreadsheetCanvas', () => {
     });
   });
 });
+
+// plan 477 Phase 1：画布维度模板驱动——网格 rows/cols 随模板 cells 派生
+// （resolveGridDimensions），不再钉死 30×10。
+describe('ReportSpreadsheetCanvas grid dimensions (plan 477)', () => {
+  function renderWithCellAt(cellAddress: string) {
+    const spreadsheet = createEmptyDocument('report-dims');
+    const sheetId = spreadsheet.workbook.sheets[0]?.id ?? '';
+    const sheet = spreadsheet.workbook.sheets[0]!;
+    sheet.cells = sheet.cells ?? {};
+    // CellDocument 契约：row/col 字段是 resolveGridDimensions 的派生输入
+    const letters = cellAddress.match(/^[A-Z]+/)?.[0] ?? 'A';
+    const rowIndex = parseInt(cellAddress.slice(letters.length), 10) - 1;
+    const colIndex = letters
+      .split('')
+      .reduce((acc, ch) => acc * 26 + (ch.charCodeAt(0) - 64), 0) - 1;
+    sheet.cells[cellAddress] = { value: 'Deep', row: rowIndex, col: colIndex } as never;
+    const document = createReportTemplateDocument(spreadsheet, 'Dims');
+    const core = createReportDesignerCore({ document, config: { kind: 'report-template' } });
+
+    const spreadsheetBridge = {
+      dispatch: vi.fn(),
+      getSnapshot: vi.fn(() => ({
+        activeSheetId: sheetId,
+        activeSheet: {
+          id: sheetId,
+          cells: spreadsheet.workbook.sheets[0]!.cells,
+        },
+      })),
+    } as any;
+
+    testMocks.mockUseSpreadsheetInteractions.mockReturnValue({
+      snapshot: {
+        runtime: { readonly: false },
+        workbook: { sheets: [{ id: sheetId, name: 'Sheet1' }] },
+        activeSheet: { id: sheetId, cells: spreadsheet.workbook.sheets[0]!.cells, merges: [] },
+        selection: { kind: 'none' },
+      },
+      selectedCell: { row: 0, col: 0 },
+      editingCell: null,
+      editValue: '',
+      editSaveState: { status: 'idle' },
+      editingCellRef: { current: null },
+      fillHandleState: { isFilling: false, startRow: 0, startCol: 0, endRow: 0, endCol: 0, currentRow: 0, currentCol: 0 },
+      isFillPreview: () => false,
+      handleFillHandleMouseDown: vi.fn(),
+      handleEditSave: vi.fn(),
+      handleEditCancel: vi.fn(),
+      handleEditValueChange: vi.fn(),
+      handleCellClick: vi.fn(),
+      handleCellDoubleClick: vi.fn(),
+      handleCellMouseDown: vi.fn(),
+      handleCellMouseEnter: vi.fn(),
+      handleColumnResizeStart: vi.fn(),
+      handleRowResizeStart: vi.fn(),
+      columnWidths: {},
+      rowHeights: {},
+      gridRef: { current: null },
+      isInRange: () => false,
+      getMergeInfo: () => ({ isMerged: false, isTopLeft: false, rowSpan: 1, colSpan: 1 }),
+      handleAddSheet: vi.fn(),
+      handleRemoveSheet: vi.fn(),
+      handleRenameSheet: vi.fn(),
+      dropTargetCell: null,
+      handleFieldDragOver: vi.fn(),
+      handleFieldDragLeave: vi.fn(),
+      handleFieldDrop: vi.fn(),
+      getSelectedRange: () => null,
+      handleSelectRow: vi.fn(),
+    });
+
+    const view = render(
+      <ReportSpreadsheetCanvas
+        core={core}
+        snapshot={core.getSnapshot()}
+        spreadsheetBridge={spreadsheetBridge}
+      />,
+    );
+    return view;
+  }
+
+  it('derives grid dimensions from template cells beyond the legacy 30x10', () => {
+    const view = renderWithCellAt('AF40');
+    expect(testMocks.lastSpreadsheetGridProps?.rows).toBeGreaterThan(30);
+    expect(testMocks.lastSpreadsheetGridProps?.cols).toBeGreaterThan(10);
+    view.unmount();
+  });
+
+  it('falls back to the default baseline for empty documents', () => {
+    const view = renderWithCellAt('A1');
+    expect(testMocks.lastSpreadsheetGridProps?.rows).toBe(100);
+    expect(testMocks.lastSpreadsheetGridProps?.cols).toBe(26);
+    view.unmount();
+  });
+});

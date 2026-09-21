@@ -226,6 +226,35 @@ test('dragging a field onto a cell writes the cell value and binds report metada
 
   await expect(targetCell).toContainText('${orderId}');
   await expect(targetCell).toHaveAttribute('data-cell-bound', 'true');
+
+  // plan 477 Phase 3：绑定单元格令牌视觉（--ss-bound-bg 底 + --ss-accent-strong 角标）
+  const boundBg = await targetCell.evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(boundBg).toBe('rgb(240, 248, 255)'); // --ss-bound-bg light 值
+});
+
+test('plan 477: grid dimensions derive from template content beyond the legacy 30x10', async ({
+  page,
+}) => {
+  await openReportDesignerDemo(page);
+
+  // 旧硬编码 30 行 10 列：滚动到底最多看到行头 30；派生基线（DEFAULT 100×26）
+  // 下滚动到底可见行头 ~100。网格虚拟化——先滚到底再断言。
+  const maxRenderedRow = await page.evaluate(() => {
+    const cell = document.querySelector('td.ss-cell');
+    const grid = cell?.closest('[data-slot="spreadsheet-grid"]');
+    if (!grid) return -1;
+    grid.scrollTop = grid.scrollHeight;
+    return new Promise<number>((resolve) => {
+      setTimeout(() => {
+        const nums = [...document.querySelectorAll('[data-slot="spreadsheet-row-header"]')]
+          .map((el) => parseInt(el.textContent ?? '', 10))
+          .filter((n) => Number.isFinite(n));
+        resolve(nums.length ? Math.max(...nums) : -1);
+      }, 300);
+    });
+  });
+  expect(maxRenderedRow, 'derived baseline must be the 100-row default, not the legacy 30').toBe(100);
+
 });
 
 test('sheet tab bar exposes the active sheet and add-sheet action', async ({ page }) => {

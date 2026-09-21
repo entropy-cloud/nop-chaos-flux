@@ -39,3 +39,5 @@ export {
   spreadsheetHostContract,
   SPREADSHEET_CAPABILITY_PUBLICATION,
 } from './spreadsheet-manifest.js';
+
+export { resolveGridDimensions } from './default-page-body.js';

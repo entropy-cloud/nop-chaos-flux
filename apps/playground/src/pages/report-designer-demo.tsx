@@ -17,6 +17,7 @@ import {
   cellAddress,
 } from '@nop-chaos/spreadsheet-core';
 import {
+  resolveGridDimensions,
   createSpreadsheetBridge,
   SheetTabBar,
   SpreadsheetToolbar,
@@ -74,8 +75,6 @@ const dropAdapter: FieldDropAdapter = {
   }),
 };
 
-const ROWS = 30;
-const COLS = 10;
 const SchemaRenderer = createSchemaRenderer();
 const inspectorRegistry = createDefaultRegistry();
 registerBasicRenderers(inspectorRegistry);
@@ -197,6 +196,11 @@ export function ReportDesignerDemo() {
     spreadsheetCore.getSnapshot,
     spreadsheetCore.getSnapshot,
   );
+  // plan 477：维度随模板派生（解 30×10 硬编码），空模板回落 DEFAULT 基线
+  const { rows: demoRows, cols: demoCols } = resolveGridDimensions(
+    spreadsheetRuntimeSnapshot as never,
+    undefined,
+  );
 
   useEffect(() => {
     designerCore.registerFieldDrop(dropAdapter);
@@ -272,7 +276,7 @@ export function ReportDesignerDemo() {
     handleFieldDragOver,
     handleFieldDragLeave,
     handleFillHandleDoubleClick,
-  } = useSpreadsheetInteractions({ bridge: spreadsheetBridge, sheetId, rows: ROWS, cols: COLS });
+  } = useSpreadsheetInteractions({ bridge: spreadsheetBridge, sheetId, rows: demoRows, cols: demoCols });
 
   useEffect(() => {
     const selection = snapshot.selection;
@@ -556,8 +560,8 @@ export function ReportDesignerDemo() {
             <SpreadsheetGrid
                 snapshot={snapshot}
                 bridge={spreadsheetBridge}
-                rows={ROWS}
-                cols={COLS}
+                rows={demoRows}
+                cols={demoCols}
                 columnWidths={columnWidths}
                 rowHeights={rowHeights}
                 selectedCell={selectedCell}

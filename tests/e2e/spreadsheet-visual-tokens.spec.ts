@@ -165,4 +165,28 @@ test.describe('spreadsheet visual tokenization (plan 476)', () => {
     await setDarkMode(page, false);
     await assertTrackedPageErrors(page);
   });
+
+  test('report canvas bound-cell token face flips in dark mode (plan 477)', async ({ page }) => {
+    await page.goto('/#/report-designer', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('.report-designer-demo')).toBeVisible({ timeout: 15_000 });
+
+    // 绑定单元格由字段拖拽产生（demo 无预置绑定）
+    const field = page.locator('[data-slot="report-field-panel-item"]').first();
+    const targetCell = page.locator('td.ss-cell[data-row="0"][data-col="0"]').first();
+    await expect(field).toBeVisible({ timeout: 15_000 });
+    await field.dragTo(targetCell);
+    await expect(targetCell).toHaveAttribute('data-cell-bound', 'true', { timeout: 15_000 });
+
+    const boundCell = page.locator('td.ss-cell[data-cell-bound]').first();
+
+    const lightBoundBg = await getComputedStyleValue(boundCell, 'background-color');
+    expect(lightBoundBg).toBe('rgb(240, 248, 255)');
+
+    await setDarkMode(page, true);
+    const darkBoundBg = await getComputedStyleValue(boundCell, 'background-color');
+    expect(darkBoundBg, 'bound-cell background must flip in dark mode').not.toBe(lightBoundBg);
+
+    await setDarkMode(page, false);
+    await assertTrackedPageErrors(page);
+  });
 });
