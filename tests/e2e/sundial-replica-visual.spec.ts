@@ -123,6 +123,14 @@ test.describe('Sundial replica — visual snapshots', () => {
     await page.getByTestId('sundial-open-todo-dialog').click();
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible({ timeout: 5_000 });
+    // plan 487 gated 添加 behind a required title: the first cancel click
+    // blurs the pristine title input, the blur-triggered validation renders
+    // 「title不能为空」and grows the dialog. Cancel still closes — the second
+    // click lands after the layout settles. (First-click displacement is
+    // registered as an adjudicated UX papercut in plan 488 Deferred But
+    // Adjudicated.)
+    await page.getByRole('button', { name: '取消' }).click();
+    await expect(page.getByText('title不能为空')).toBeVisible({ timeout: 5_000 });
     await page.getByRole('button', { name: '取消' }).click();
     await expect(dialog).toHaveCount(0, { timeout: 5_000 });
   });
@@ -161,7 +169,9 @@ test.describe('Sundial replica — plan 460 interactions', () => {
     await openPage(page, 'sundial-workbench', 'Sundial 工作台');
     await page.getByTestId('sundial-view-completed').click();
     await expect(page.getByTestId('sundial-board-completed')).toBeVisible({ timeout: 5_000 });
-    await expect(page.getByTestId('sundial-task-completed-7')).toContainText('更新团队共享日历');
+    // plan 487 ⑦: completed rows loop from the live todo source (generic row
+    // testid) instead of the former static per-task testids.
+    await expect(page.getByTestId('sundial-task-completed-row').first()).toContainText('更新团队共享日历', { timeout: 5_000 });
     await snap(page, '13-workbench-completed.png');
   });
 
@@ -176,7 +186,9 @@ test.describe('Sundial replica — plan 460 interactions', () => {
     await openPage(page, 'sundial-workbench', 'Sundial 工作台');
     await page.getByTestId('sundial-task-today-1').click();
     await expect(page.getByTestId('sundial-task-detail-dialog')).toBeVisible({ timeout: 5_000 });
-    await expect(page.getByTestId('sundial-detail-title-text')).toContainText('撰写季度复盘报告');
+    // plan 487 ⑦: the dialog title now follows the clicked task (the former
+    // expectation enshrined a static title that showed another task's name).
+    await expect(page.getByTestId('sundial-detail-title-text')).toContainText('给项目经理回电话', { timeout: 5_000 });
     await snap(page, '15-workbench-task-detail.png');
   });
 
@@ -275,6 +287,9 @@ test.describe('Sundial replica — plan 460 interactions', () => {
     await openPage(page, 'sundial-detail', 'Sundial 待办详情');
     await expect(page.getByTestId('sundial-detail-subtask-1')).toBeVisible({ timeout: 5_000 });
     await page.getByTestId('sundial-subtask-delete-1').click();
+    // plan 488 V12f: trash gained a confirm dialog (取消/确认).
+    await expect(page.locator('[role="alertdialog"]')).toBeVisible({ timeout: 5_000 });
+    await page.locator('[role="alertdialog"]').getByRole('button', { name: '确认' }).click();
     await expect(page.getByTestId('sundial-detail-subtask-1')).toBeHidden({ timeout: 5_000 });
   });
 
