@@ -1,0 +1,140 @@
+/* flux-renderers-form-advanced marker styles. */
+
+/* Plan 480 R3 fix: the editor placeholder is rendered by the shared
+   Placeholder extension — it decorates the empty paragraph with
+   `data-placeholder` + `is-editor-empty`; this rule consumes that decoration.
+   The previous handwritten `data-placeholder` on the ProseMirror root was a
+   dead face: nothing consumed it. Token-driven color, float/height:0 keeps
+   the caret on the placeholder line. */
+.nop-editor-content p.is-editor-empty::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground, 215 19% 35%));
+  opacity: 0.7;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Plan 480 Phase 3 + A6: the Image extension lands and the content typography
+   scope owns the image fallback — an oversized pasted/promoted <img> scales
+   down inside the content box instead of blowing out the editor column. */
+
+/* Plan 480 A6: editor content typography — scoped custom CSS replacing the
+   dead typography-plugin classes (no @tailwindcss/typography in repo).
+   Minimal element matrix (h1-h3 / ul / ol / blockquote / code / a / img + the
+   paragraph/pre rhythm a WYSIWYG surface needs). Dual-track colors follow the
+   `[data-slot='ai-bubble-markdown']` precedent: theme var first, literal
+   fallback second (light in the base block, classic-dark in dark blocks). */
+.nop-editor-content {
+  --flux-editor-fg: hsl(var(--foreground, 222 84% 5%));
+  --flux-editor-muted-fg: hsl(var(--muted-foreground, 215 19% 35%));
+  --flux-editor-muted: hsl(var(--muted, 210 40% 96%));
+  --flux-editor-line: hsl(var(--border, 214 32% 91%));
+  --flux-editor-primary: hsl(var(--primary, 221 83% 53%));
+  --flux-editor-code-bg: hsl(var(--muted, 210 40% 96%));
+  --flux-editor-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  color: var(--flux-editor-fg);
+}
+
+.nop-editor-content > :first-child {
+  margin-top: 0;
+}
+
+.nop-editor-content p {
+  margin: 0.375em 0;
+}
+
+.nop-editor-content h1,
+.nop-editor-content h2,
+.nop-editor-content h3 {
+  margin: 1em 0 0.4em;
+  font-weight: 600;
+  color: var(--flux-editor-fg);
+}
+.nop-editor-content h1 {
+  font-size: 1.375rem;
+}
+.nop-editor-content h2 {
+  font-size: 1.1875rem;
+}
+.nop-editor-content h3 {
+  font-size: 1.0625rem;
+}
+
+.nop-editor-content ul,
+.nop-editor-content ol {
+  margin: 0.375em 0;
+  padding-left: 1.5em;
+}
+.nop-editor-content li {
+  margin: 0.125em 0;
+}
+.nop-editor-content li::marker {
+  color: var(--flux-editor-muted-fg);
+}
+
+.nop-editor-content blockquote {
+  margin: 0.625em 0;
+  padding: 0.2em 0.85em;
+  border-left: 3px solid var(--flux-editor-line);
+  background-color: var(--flux-editor-muted);
+  color: var(--flux-editor-muted-fg);
+}
+
+.nop-editor-content pre {
+  margin: 0.625em 0;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--flux-editor-line);
+  border-radius: var(--radius-sm, 8px);
+  background-color: var(--flux-editor-code-bg);
+  font-family: var(--flux-editor-mono);
+  font-size: 0.8125rem;
+  overflow-x: auto;
+}
+
+.nop-editor-content :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background-color: var(--flux-editor-code-bg);
+  color: var(--flux-editor-fg);
+  font-family: var(--flux-editor-mono);
+  font-size: 0.85em;
+}
+
+.nop-editor-content a {
+  color: var(--flux-editor-primary);
+  text-decoration-line: underline;
+  text-underline-offset: 2px;
+}
+
+.nop-editor-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm, 8px);
+}
+
+/* Dark trigger 1: OS preference (standalone hosts without theme attributes).
+   The `:root:not([data-mode='light'])` guard keeps an explicit light mode
+   winning over the OS dark preference (ai-bubble-markdown precedent). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode='light']) .nop-editor-content {
+    --flux-editor-fg: hsl(var(--foreground, 210 40% 98%));
+    --flux-editor-muted-fg: hsl(var(--muted-foreground, 215 25% 75%));
+    --flux-editor-muted: hsl(var(--muted, 217 33% 18%));
+    --flux-editor-line: hsl(var(--border, 217 33% 27%));
+    --flux-editor-primary: hsl(var(--primary, 217 89% 63%));
+    --flux-editor-code-bg: hsl(var(--muted, 217 33% 26%));
+  }
+}
+
+/* Dark trigger 2: host data-mode attribute. */
+[data-mode='dark'] .nop-editor-content {
+  --flux-editor-fg: hsl(var(--foreground, 210 40% 98%));
+  --flux-editor-muted-fg: hsl(var(--muted-foreground, 215 25% 75%));
+  --flux-editor-muted: hsl(var(--muted, 217 33% 18%));
+  --flux-editor-line: hsl(var(--border, 217 33% 27%));
+  --flux-editor-primary: hsl(var(--primary, 217 89% 63%));
+  --flux-editor-code-bg: hsl(var(--muted, 217 33% 26%));
+}

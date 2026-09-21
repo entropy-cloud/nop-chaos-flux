@@ -6,8 +6,8 @@ export interface EditorSchema extends BoundFieldSchemaBase {
   /**
    * Toolbar configuration. `false` hides the toolbar; an array whitelists the
    * named buttons to show; omitted/`true` shows the default toolbar.
-   * Button ids: bold, italic, strike, h1, h2, bulletList, orderedList, code,
-   * blockquote, link, undo, redo.
+   * Button ids: bold, italic, underline, strike, h1, h2, bulletList,
+   * orderedList, code, blockquote, link, image, highlight, undo, redo.
    */
   toolbar?: boolean | string[];
   /** Serialized output shape. `html` (default) or `json` (TipTap JSON). */
@@ -23,6 +23,7 @@ export const editorFieldRules: SchemaFieldRule[] = [
 export type EditorToolbarButton =
   | 'bold'
   | 'italic'
+  | 'underline'
   | 'strike'
   | 'h1'
   | 'h2'
@@ -31,12 +32,15 @@ export type EditorToolbarButton =
   | 'code'
   | 'blockquote'
   | 'link'
+  | 'image'
+  | 'highlight'
   | 'undo'
   | 'redo';
 
 export const DEFAULT_EDITOR_TOOLBAR: EditorToolbarButton[] = [
   'bold',
   'italic',
+  'underline',
   'strike',
   'h1',
   'h2',
@@ -45,6 +49,8 @@ export const DEFAULT_EDITOR_TOOLBAR: EditorToolbarButton[] = [
   'code',
   'blockquote',
   'link',
+  'image',
+  'highlight',
   'undo',
   'redo',
 ];

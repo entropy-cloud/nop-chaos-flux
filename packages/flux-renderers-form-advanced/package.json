@@ -10,6 +10,9 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./styles.css": {
+      "default": "./dist/styles.css"
     }
   },
   "dependencies": {
@@ -25,16 +28,18 @@
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@tanstack/react-virtual": "^3.13.24",
+    "@tiptap/extensions": "^3.27.1",
+    "@tiptap/extension-image": "3.27.1",
+    "@tiptap/extension-highlight": "3.27.1",
     "@tiptap/react": "^3.27.1",
-    "@tiptap/starter-kit": "^3.27.1",
-    "@tiptap/extension-link": "^3.27.1"
+    "@tiptap/starter-kit": "^3.27.1"
   },
   "peerDependencies": {
     "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

@@ -175,6 +175,23 @@ describe('editor — toolbar config + render shell (render-level)', () => {
     ).toBeTruthy();
   });
 
+  it('toolbar carries no composite role (plan 480 R5 / 20-07 decision)', () => {
+    const { container } = renderEditor({});
+    const toolbar = container.querySelector('[data-slot="editor-toolbar"]');
+    expect(toolbar).toBeTruthy();
+    // APG toolbar requires roving tabindex; every button here is an
+    // independent tab stop, so the composite role is dropped entirely
+    // (mirrors the markdown-editor 20-07 decision).
+    expect(toolbar?.getAttribute('role')).toBeNull();
+    expect(toolbar?.getAttribute('aria-label')).toBeNull();
+    // Buttons keep their own accessible names and tab stops.
+    const bold = container.querySelector(
+      'button[data-testid="editor-toolbar-bold"]',
+    ) as HTMLElement;
+    expect((bold.getAttribute('aria-label') ?? '').length).toBeGreaterThan(0);
+    expect(bold.getAttribute('tabindex')).not.toBe('-1');
+  });
+
   it('readOnly hides the toolbar and marks the editor read-only', () => {
     const { container } = renderEditor({ readOnly: true });
     expect(container.querySelector('button[data-testid="editor-toolbar-bold"]')).toBeNull();

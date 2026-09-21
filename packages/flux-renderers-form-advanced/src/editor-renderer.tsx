@@ -1,21 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useEditor, EditorContent, type Content } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import {
-  BoldIcon,
-  CodeIcon,
-  Heading1Icon,
-  Heading2Icon,
-  ItalicIcon,
-  LinkIcon,
-  ListIcon,
-  ListOrderedIcon,
-  QuoteIcon,
-  Redo2Icon,
-  StrikethroughIcon,
-  Undo2Icon,
-} from 'lucide-react';
+import Image from '@tiptap/extension-image';
+import Highlight from '@tiptap/extension-highlight';
+import { Placeholder } from '@tiptap/extensions';
+import type { Extensions } from '@tiptap/core';
 import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { sanitizeHtml } from '@nop-chaos/flux-renderers-content';
 /* Adjudication 01-04: form-advanced depends on content (sanitizeHtml), form (formFieldRules, useFormFieldController, etc.), and data (CrudColumnSchema/CrudSchema types). These are architecturally expected extension-package couplings. Accept-and-annotate: shared primitives live here by design; extraction would create an artificial shared package with no other consumers. */
@@ -28,159 +17,17 @@ import {
   editorFieldRules,
   resolveToolbarButtons,
   type EditorSchema,
-  type EditorToolbarButton,
 } from './editor-schemas.js';
+import {
+  isSafeLinkUrl,
+  TOOLBAR_BUTTONS,
+  TOOLBAR_ICONS,
+  toolbarButtonTitle,
+} from './editor-toolbar-config.js';
+
+export { isSafeLinkUrl };
 
 const EDITOR_METHODS = ['clear', 'focus'] as const;
-
-interface ToolbarButtonConfig {
-  id: EditorToolbarButton;
-  label: string;
-  isActive: (editor: NonNullable<ReturnType<typeof useEditor>>) => boolean;
-  run: (editor: NonNullable<ReturnType<typeof useEditor>>) => void;
-  canRun: (editor: NonNullable<ReturnType<typeof useEditor>>) => boolean;
-}
-
-const TOOLBAR_BUTTONS: Record<EditorToolbarButton, ToolbarButtonConfig> = {
-  bold: {
-    id: 'bold',
-    label: 'B',
-    isActive: (e) => e.isActive('bold'),
-    canRun: (e) => e.can().toggleBold(),
-    run: (e) => e.chain().focus().toggleBold().run(),
-  },
-  italic: {
-    id: 'italic',
-    label: 'I',
-    isActive: (e) => e.isActive('italic'),
-    canRun: (e) => e.can().toggleItalic(),
-    run: (e) => e.chain().focus().toggleItalic().run(),
-  },
-  strike: {
-    id: 'strike',
-    label: 'S',
-    isActive: (e) => e.isActive('strike'),
-    canRun: (e) => e.can().toggleStrike(),
-    run: (e) => e.chain().focus().toggleStrike().run(),
-  },
-  h1: {
-    id: 'h1',
-    label: 'H1',
-    isActive: (e) => e.isActive('heading', { level: 1 }),
-    canRun: (e) => e.can().toggleHeading({ level: 1 }),
-    run: (e) => e.chain().focus().toggleHeading({ level: 1 }).run(),
-  },
-  h2: {
-    id: 'h2',
-    label: 'H2',
-    isActive: (e) => e.isActive('heading', { level: 2 }),
-    canRun: (e) => e.can().toggleHeading({ level: 2 }),
-    run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
-  },
-  bulletList: {
-    id: 'bulletList',
-    label: '•',
-    isActive: (e) => e.isActive('bulletList'),
-    canRun: (e) => e.can().toggleBulletList(),
-    run: (e) => e.chain().focus().toggleBulletList().run(),
-  },
-  orderedList: {
-    id: 'orderedList',
-    label: '1.',
-    isActive: (e) => e.isActive('orderedList'),
-    canRun: (e) => e.can().toggleOrderedList(),
-    run: (e) => e.chain().focus().toggleOrderedList().run(),
-  },
-  code: {
-    id: 'code',
-    label: '</>',
-    isActive: (e) => e.isActive('code'),
-    canRun: (e) => e.can().toggleCode(),
-    run: (e) => e.chain().focus().toggleCode().run(),
-  },
-  blockquote: {
-    id: 'blockquote',
-    label: '“”',
-    isActive: (e) => e.isActive('blockquote'),
-    canRun: (e) => e.can().toggleBlockquote(),
-    run: (e) => e.chain().focus().toggleBlockquote().run(),
-  },
-  link: {
-    id: 'link',
-    label: '🔗',
-    isActive: (e) => e.isActive('link'),
-    canRun: () => true,
-    run: (e) => {
-      const url = typeof window !== 'undefined' ? window.prompt(t('flux.editor.linkPrompt')) : null;
-      if (url === null) {
-        // Prompt dismissed → remove the link on the current range.
-        e.chain().focus().extendMarkRange('link').unsetLink().run();
-      } else if (isSafeLinkUrl(url)) {
-        e.chain().focus().extendMarkRange('link').setLink({ href: url.trim() }).run();
-      }
-      // Unsafe scheme (javascript:/data:/vbscript:) → ignored; nothing is set.
-    },
-  },
-  undo: {
-    id: 'undo',
-    label: '',
-    isActive: () => false,
-    canRun: (e) => e.can().undo(),
-    run: (e) => e.chain().focus().undo().run(),
-  },
-  redo: {
-    id: 'redo',
-    label: '',
-    isActive: () => false,
-    canRun: (e) => e.can().redo(),
-    run: (e) => e.chain().focus().redo().run(),
-  },
-};
-
-const TOOLBAR_ICONS: Partial<Record<EditorToolbarButton, typeof BoldIcon>> = {
-  bulletList: ListIcon,
-  orderedList: ListOrderedIcon,
-  blockquote: QuoteIcon,
-  code: CodeIcon,
-  link: LinkIcon,
-  bold: BoldIcon,
-  italic: ItalicIcon,
-  strike: StrikethroughIcon,
-  h1: Heading1Icon,
-  h2: Heading2Icon,
-  undo: Undo2Icon,
-  redo: Redo2Icon,
-};
-
-/** Static i18n key per toolbar button (static keys so `check:i18n-keys` can verify them). */
-function toolbarButtonTitle(id: EditorToolbarButton): string {
-  switch (id) {
-    case 'bold':
-      return t('flux.editor.bold');
-    case 'italic':
-      return t('flux.editor.italic');
-    case 'strike':
-      return t('flux.editor.strike');
-    case 'h1':
-      return t('flux.editor.heading1');
-    case 'h2':
-      return t('flux.editor.heading2');
-    case 'bulletList':
-      return t('flux.editor.bulletList');
-    case 'orderedList':
-      return t('flux.editor.orderedList');
-    case 'code':
-      return t('flux.editor.code');
-    case 'blockquote':
-      return t('flux.editor.blockquote');
-    case 'link':
-      return t('flux.editor.link');
-    case 'undo':
-      return t('flux.editor.undo');
-    case 'redo':
-      return t('flux.editor.redo');
-  }
-}
 
 const EDITOR_CAPABILITY_CONTRACTS = [
   {
@@ -208,38 +55,38 @@ export function sanitizeEditorHtml(html: string): string {
 }
 
 /**
- * Security red line (design §W3d): links may only use safe schemes. Absolute
- * URLs must be http/https/mailto/tel; anything else with a scheme
- * (javascript:/data:/vbscript:/file: …) is rejected. Relative URLs,
- * protocol-relative URLs and anchors are allowed.
+ * TipTap extension set for the editor renderer. The Link scheme allowlist
+ * (protocols + validate) is passed through StarterKit's v3 `link` sub-config —
+ * the previous separate `Link.configure` duplicated StarterKit's built-in Link
+ * under the same name and triggered a runtime dedupe warning. This way
+ * `javascript:`-class hrefs can never be created via the UI or paste — the
+ * stored HTML value stays safe for hosts that echo it without re-sanitizing.
+ *
+ * `placeholder` (when the schema provides one) attaches the shared Placeholder
+ * extension, which decorates the empty paragraph with `data-placeholder` +
+ * `is-editor-empty` for the package CSS to render (see `styles.css`).
+ *
+ * Phase 3 (plan 480): Image (URL-prompt only; src guarded by
+ * `isSafeImageUrl` — the upload channel is out of scope) and Highlight join
+ * the schema so `<img>` / `<mark>` round-trip through load → serialize.
  */
-export function isSafeLinkUrl(url: string): boolean {
-  const trimmed = url.trim();
-  if (!trimmed) {
-    return false;
-  }
-  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
-    return /^(https?|mailto|tel):/i.test(trimmed);
-  }
-  return true;
-}
-
-/**
- * TipTap extension set for the editor renderer. `Link` is configured with a
- * scheme allowlist (protocols + validate) so `javascript:`-class hrefs can
- * never be created via the UI or paste — the stored HTML value stays safe for
- * hosts that echo it without re-sanitizing.
- */
-export function buildEditorExtensions() {
-  return [
-    StarterKit,
-    Link.configure({
-      protocols: ['http', 'https', 'mailto', 'tel'],
-      validate: isSafeLinkUrl,
-      openOnClick: false,
-      autolink: false,
+export function buildEditorExtensions(placeholder?: string): Extensions {
+  const extensions: Extensions = [
+    StarterKit.configure({
+      link: {
+        protocols: ['http', 'https', 'mailto', 'tel'],
+        validate: isSafeLinkUrl,
+        openOnClick: false,
+        autolink: false,
+      },
     }),
+    Image,
+    Highlight,
   ];
+  if (placeholder) {
+    extensions.push(Placeholder.configure({ placeholder }));
+  }
+  return extensions;
 }
 
 export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
@@ -265,16 +112,13 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
   });
 
   const editorAttributes: Record<string, string> = {
-    class: 'nop-editor-content prose max-w-none focus:outline-none',
+    class: 'nop-editor-content focus:outline-none',
     'data-testid': 'editor-content',
     'aria-label':
       String((props.props.label ?? name) || '') || t('flux.editor.richTextEditor'),
     'aria-multiline': 'true',
     role: 'textbox',
   };
-  if (placeholder) {
-    editorAttributes['data-placeholder'] = placeholder;
-  }
 
   function readInitialContent(): Content {
     if (value === undefined || value === null || value === '') {
@@ -288,7 +132,7 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
 
   const editor = useEditor(
     {
-      extensions: buildEditorExtensions(),
+      extensions: buildEditorExtensions(placeholder),
       content: readInitialContent(),
       editable: !readOnly,
       immediatelyRender: true,
@@ -396,8 +240,6 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
         <div
           className="nop-editor-toolbar flex flex-wrap gap-1"
           data-slot="editor-toolbar"
-          role="toolbar"
-          aria-label={t('flux.editor.toolbarLabel')}
         >
           {buttons.map((id) => {
             const config = TOOLBAR_BUTTONS[id];
@@ -430,7 +272,7 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
                 )}
                 onClick={() => config.run(editor)}
               >
-                {Icon ? <Icon className="size-3.5" /> : config.label}
+                <Icon className="size-4" />
               </Button>
             );
           })}
