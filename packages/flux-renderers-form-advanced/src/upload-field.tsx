@@ -157,6 +157,9 @@ export function UploadFieldRenderer(
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [items, setItems] = useState<UploadItemState[]>([]);
   const [missingAction, setMissingAction] = useState(false);
+  // [G2-视角5-02] visible feedback for client-side rejections (maxSize /
+  // maxFiles) — the schema onReject event alone renders nothing.
+  const [rejectionNotice, setRejectionNotice] = useState<string | null>(null);
 
   // G11: track mount state and in-flight upload abort controllers so that
   // unmounting the field (a) cancels pending uploads via their abort signal and
@@ -344,6 +347,9 @@ export function UploadFieldRenderer(
       return;
     }
     let selected = Array.from(fileList);
+    // [G2-视角5-02] each selection re-evaluates the rejection surface; a fully
+    // accepted batch clears a previous notice.
+    const notices: string[] = [];
 
     // Client-side maxSize validation (U6).
     if (maxSize !== undefined) {
@@ -357,8 +363,16 @@ export function UploadFieldRenderer(
           valid.push(file);
         }
       }
+      if (oversized.length > 0) {
+        notices.push(
+          oversized
+            .map((file) => `${file.name}: ${t('flux.form.fileTooLarge')}`)
+            .join('; '),
+        );
+      }
       selected = valid;
       if (selected.length === 0) {
+        setRejectionNotice(notices.join(' '));
         if (inputRef.current) {
           try { inputRef.current.value = ''; } catch { /* best-effort */ }
         }
@@ -368,11 +382,26 @@ export function UploadFieldRenderer(
 
     if (!multiple) {
       selected = selected.slice(0, 1);
+      // [G2-R2-视角5-01] single mode: a re-select supersedes every in-flight
+      // upload. Aborting here makes the stale completion take the
+      // `controller.signal.aborted` discard path in performUpload, so a late
+      // response can never commit over the newer selection.
+      for (const controller of abortControllersRef.current.values()) {
+        controller.abort();
+      }
+      abortControllersRef.current.clear();
       setItems([]);
     } else if (maxFiles) {
       const remaining = Math.max(0, maxFiles - committedItems().length);
+      if (selected.length > remaining) {
+        notices.push(t('flux.form.maxFilesExceeded', { max: maxFiles }));
+        for (const file of selected.slice(remaining)) {
+          rejectFile(file, t('flux.form.maxFilesExceeded', { max: maxFiles }));
+        }
+      }
       selected = selected.slice(0, remaining);
     }
+    setRejectionNotice(notices.length > 0 ? notices.join(' ') : null);
 
     const newEntries: UploadItemState[] = selected.map((file) => ({
       status: 'pending',
@@ -510,6 +539,17 @@ export function UploadFieldRenderer(
           role="alert"
         >
           {t('flux.form.uploadActionMissing')}
+        </p>
+      ) : null}
+
+      {rejectionNotice ? (
+        <p
+          data-testid={`${options.marker}-rejection`}
+          data-slot="upload-rejection"
+          className="text-xs text-destructive"
+          role="alert"
+        >
+          {rejectionNotice}
         </p>
       ) : null}
 

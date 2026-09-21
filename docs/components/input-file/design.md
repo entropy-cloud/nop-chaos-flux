@@ -79,3 +79,7 @@
 ## 12. 风险、取舍与后续阶段
 
 - 最大风险是与 `input-image`、通用 action 上传器和复杂媒体工作台边界混乱。
+
+## V12b 行为契约补记（plan 485）
+
+- 失败/拒绝可见：rejectFile 与 maxFiles 截断渲染 `role="alert"` 提示（此前仅派发事件）；单选重选会 abort 在途上传并丢弃陈旧完成结果（先选文件不再覆盖后选提交）；DOM 错误面走本地化 `Upload failed: <detail>`（payload `${error}` 仍为原始消息，CX-10 契约）。

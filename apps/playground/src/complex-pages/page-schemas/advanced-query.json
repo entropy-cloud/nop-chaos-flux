@@ -79,7 +79,7 @@
         { "name": "email", "label": "邮箱", "width": 230 },
         { "name": "role.label", "label": "角色", "width": 100 },
         { "name": "status_label", "label": "状态", "width": 90 },
-        { "name": "deptId", "label": "部门", "width": 110 },
+        { "name": "deptName", "label": "部门", "width": 110 },
         { "name": "createTime", "label": "创建时间", "width": 170, "sortable": true }
       ]
     }

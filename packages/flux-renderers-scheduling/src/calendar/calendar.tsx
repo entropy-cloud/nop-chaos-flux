@@ -12,7 +12,7 @@ import React, { useImperativeHandle, useRef, useState, useEffect, useMemo, useCa
 import type { RendererComponentProps, ComponentHandle } from '@nop-chaos/flux-core';
 import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRenderScope, useRendererRuntime } from '@nop-chaos/flux-react';
-import { Skeleton, cn } from '@nop-chaos/ui';
+import { Button, Skeleton, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import type { CalendarSchema, CalendarView, CalendarEvent, CalendarResource } from '../schemas.js';
@@ -231,8 +231,10 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
               // 22-05: 句柄 invoke 即派发 schema 声明的 exportPNG reaction
               // （对齐 gantt.tsx:417-419 先例）。Consume the async export so
               // failures never surface as unhandled rejections and the handle
-              // reports the true outcome (errors are also presented in-UI via
-              // exportError).
+              // reports the true outcome; the same failure is presented in-UI
+              // through the calendar export error banner (G4-R2-视角5-02,
+              // plan 485 Phase 2 — previously the hook's exportError had zero
+              // UI consumers).
               void reactionsRef.current.exportPNG?.dispatch();
               return exportRef.current.exportToPNG().then(
                 () => ({ ok: true }),
@@ -543,6 +545,28 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           onDismiss={dragCreate.dismissTypeSelector}
         />
       )}
+
+      {/* G4-R2-视角5-02 (plan 485 Phase 2): the export hook's exportError now
+       * has a UI consumer — a dismissible destructive banner inside the
+       * calendar root. */}
+      {calendarExport.exportError ? (
+        <div
+          data-slot="calendar-export-error"
+          role="alert"
+          className="mx-2 mb-2 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          <span className="flex-1">{calendarExport.exportError}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            data-slot="calendar-export-error-dismiss"
+            onClick={calendarExport.clearExportError}
+          >
+            {t('flux.common.dismiss')}
+          </Button>
+        </div>
+      ) : null}
 
       {confirmDialog && (
         <CalendarConfirmDialog

@@ -30,8 +30,11 @@
 | V11a. Scheduling 族视觉补齐（gantt 关键路径、calendar 视图、kanban 拖拽视觉核对、任务条硬编码）                               | `done` | `docs/components/roadmap-scheduling.md`、`docs/components/{gantt,kanban,calendar}/design.md`                                                   | V0、V1       | —                                                                    |
 | V11b. Dashboard/Map/Graph 补齐与裁决（canvasWidth 解硬编码、画布键盘导航、map heatmap/轨迹、graph G-K 数据驱动着色）          | `done` | `docs/components/{dashboard-filter,dashboard-editor,map,graph}/design.md`                                                                      | V0、V1       | `docs/plans/482-visual-quality-v11b-dashboard-map-graph-plan.md`     |
 | V12a. 一致性豁免治理与 followups 处置（整包前缀豁免收紧为文件级、error.message 双轨统一、audit-followups 08-11/08-28 批处置） | `done` | `scripts/audit/find-ui-consistency-gaps.mjs`、`docs/backlog/audit-followups-*.md`                                                              | V0           | —                                                                    |
-| V12b. 一致性 P2 候选池按族消化（169 条，研究报告按组件族划批，类别清扫收口，豁免基数对照 V0 快照下降）                        | `todo` | `docs/analysis/ui-review/r2-audit.md`、`r3-p2-adjudication.md`                                                                                 | V0、V12a     | —                                                                    |
+| V12b. 一致性 P2 候选池按族消化——首批（族9+族5+V12a 转入 4 子项，30 条）                                                       | `done` | `docs/analysis/ui-review/r2-audit.md`、`r3-p2-adjudication.md`                                                                                 | V0、V12a     | —                                                                    |
 | V12c. 一致性 P3 候选池裁决与消化（87 条：修复/显式 adjudicated 逐条裁定）                                                     | `todo` | `docs/analysis/ui-review/r3-p2-adjudication.md`                                                                                                | V0、V12b     | —                                                                    |
+| V12d. P2 批二：族10（空态/加载态）+ 族8（按钮序/语义）类别清扫（报告 §3.2；V12b 行预授权滚动拆分）                            | `todo` | `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`                                                                                | V12b         | —                                                                    |
+| V12e. P2 批三：族1（门禁穿透）+ 族2（死状态）+ 族6（写后同步）类别清扫（报告 §3.2）                                           | `todo` | `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`                                                                                | V12d         | —                                                                    |
+| V12f. P2 批四：族3+族4+族7+单点/跨族收尾（权威枚举回读 r3 台账；报告 §3.2/§5）                                                | `todo` | `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`                                                                                | V12e、V12c   | —                                                                    |
 
 ## Framework / Platform Reuse
 
@@ -128,6 +131,10 @@
 ### V12b. 一致性 P2 候选池按族消化
 
 交付：169 条 P2 候选按组件族分批，类别清扫收口（每批先红后绿/类别清扫）；plan 须定义批次机制与首批族范围，其余批次按 Rule 3 字母拆分滚动收口（不预设 169 条由单 plan 一次清零）；豁免基数对照 V0 快照下降，批次划分与目标值在本 work item 研究报告中裁定。
+
+### V12b. 一致性 P2 候选池按族消化（执行状态）
+
+执行状态（2026-09-21）：研究报告 `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`（三路 fresh-session 扫描 169 条：159 开放/9 已消化/1 失效；独立核实 pass）→ plan `485`（draft review revised 1 Major 吸收后 active）→ 首批 30 条（族9×14 + 族5×12 + V12a 转入 P2-15/P2-18 残余）执行完毕：14/14 + 16/16 landed（G2-R3-视角4-01 带裁决、G7 两 schema 条目就地修复），四行为缺陷先红后绿，i18n 36 键 zh/en 对称，`check:audit-ui-consistency-gaps` 223/66/69 相对 v1（225/68/69）下降且 newHits=0、新增豁免 0。后续批次 V12d/V12e/V12f 按报告 §3.2 滚动（本行文本预授权）。状态行维持 `planned` 待独立 closure audit。
 
 ### V12c. 一致性 P3 候选池裁决与消化
 

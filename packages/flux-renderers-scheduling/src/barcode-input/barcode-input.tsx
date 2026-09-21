@@ -348,6 +348,10 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
         onClose={handleOverlayClose}
         onScan={handleScanResult}
         onScanError={handleScanError}
+        // G4-R2-视角4-01: while scanning, the field-level validation error is
+        // hidden behind the fixed z-50 overlay — mirror it inside the overlay
+        // so a rejected scan is visible (and announced) at the point of action.
+        validationError={overlayOpen ? validationError : undefined}
         formats={resolved.formats}
         scanInterval={scanInterval}
         torchButton={resolved.torchButton}

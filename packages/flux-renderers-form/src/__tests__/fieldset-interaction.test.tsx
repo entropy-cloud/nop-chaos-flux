@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { FieldsetRenderer } from '../renderers/fieldset.js';
 import type { FieldsetSchema } from '../renderers/fieldset.js';
@@ -233,5 +233,38 @@ describe('fieldset collapsible interaction', () => {
     );
 
     expect(document.querySelector('[data-slot="fieldset-collapse-icon"]')).toBeNull();
+  });
+
+  // P2-18 residual (plan 485 Phase 2): a collapsed body still validates — the
+  // fieldset must auto-expand when an inner field becomes invalid, so a
+  // submit-blocking error is never hidden behind `display: none`.
+  it('auto-expands when an inner field flips to aria-invalid while collapsed', async () => {
+    cleanup();
+    const props = makeProps({
+      title: 'Hidden Validations',
+      collapsible: true,
+      collapsed: true,
+    });
+    (props as any).regions = {
+      body: {
+        render: () => <input data-testid="inner-field" aria-invalid="false" readOnly />,
+      },
+    };
+
+    render(
+      wrapWithProviders(
+        <FieldsetRenderer {...(props as unknown as RendererComponentProps<FieldsetSchema>)} />,
+      ),
+    );
+
+    const fieldset = document.querySelector('[data-testid="fieldset-test"]') as HTMLElement;
+    expect(fieldset.getAttribute('data-collapsed')).toBe('true');
+
+    const inner = screen.getByTestId('inner-field');
+    inner.setAttribute('aria-invalid', 'true');
+
+    await waitFor(() => {
+      expect(fieldset.getAttribute('data-collapsed')).toBeNull();
+    });
   });
 });

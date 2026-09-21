@@ -33,6 +33,13 @@ interface BarcodeScannerOverlayProps {
   continuousScan?: boolean;
   autoSubmit?: boolean;
   onSubmitForm?: () => void;
+  /**
+   * G4-R2-视角4-01 (plan 485 Phase 2): scan validation failures detected by
+   * the parent are surfaced INSIDE the overlay — the field-level error region
+   * renders underneath this fixed z-50 surface and would never be seen while
+   * scanning. Rendered as a visible destructive band (role=alert announces it).
+   */
+  validationError?: string | null;
   children?: ReactNode;
 }
 
@@ -51,6 +58,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     continuousScan,
     autoSubmit,
     onSubmitForm,
+    validationError,
   } = props;
 
   const [queueStore] = useState(() => createBarcodeQueueStore());
@@ -315,6 +323,16 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
           {t('flux.offlineQueueMessage')}
         </div>
       )}
+
+      {validationError ? (
+        <div
+          data-slot="barcode-scanner-validation-error"
+          role="alert"
+          className="px-4 py-2 bg-destructive/90 text-white text-sm text-center"
+        >
+          {validationError}
+        </div>
+      ) : null}
 
       {batchMode && queueItems.length > 0 && (
         <div

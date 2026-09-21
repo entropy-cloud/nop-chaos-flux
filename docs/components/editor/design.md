@@ -83,3 +83,9 @@
 - 扩展子集裁决（plan 480）：Underline、Image、Highlight 已落地——Underline 走 StarterKit 内建扩展；Image 只开 URL prompt 通道（src 经 `isSafeImageUrl` 守卫：http(s)/`data:image`/相对路径放行，`javascript:`/`data:text/html` 等拒绝；上传通道不开放）；Highlight 一键切换；`<u>/<mark>/<img>` 经 DOMPurify round-trip 白名单断言 pin（onerror 剥离、标签保留）。Table/TextAlign 否决：表格编辑 UI 面成本不成比例（且 `markdown-editor` 工具栏已覆盖表格源码场景），TextAlign 以 inline `style` 落盘与 token 驱动 styling contract 冲突——两者按 successor 路径按需再立项。
 - 占位符：`placeholder` schema 值委托 `@tiptap/extensions` Placeholder 扩展（空段落装饰 `data-placeholder` + `is-editor-empty`），包级 `styles.css` 消费装饰渲染 `::before`；不再手写根节点 `data-placeholder` 属性。
 - 与 `code-editor` 职责分离清晰：`editor` 是富文本 WYSIWYG，`code-editor` 是代码编辑。
+
+## V12b 行为契约补记（plan 485）
+
+- Link 工具条反馈通道：`editor-toolbar-config.ts` 的 link run 返回 `ToolbarRunFeedback`；unsafe scheme（`isSafeLinkUrl` 拒绝）不再静默丢弃，`editor-renderer.tsx` 经 `data-slot="editor-toolbar-feedback"` 渲染 inline `role="status"` destructive 提示（`flux.editor.unsafeLink`）。URL 输入维持 window.prompt（plan 480 Image 同先例；prompt→popover 为后续设计升级候选）。
+- 外部值同步（G2-R4-视角5-01）：编辑器聚焦期间到达的外部 value 变更入 pending 队列（仅保留最新），blur 时应用；非聚焦期即时应用。渲染期禁止 ref 写入，经 effect 镜像转发（react-compiler 契约）。
+- 工具条文案/几何 i18n 化（`flux.editor.*`、面板键 `flux.dashboard.editor.*` 属 dashboard-editor 面）。

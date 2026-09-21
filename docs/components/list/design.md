@@ -88,3 +88,7 @@
 - **marker**：根节点 `.nop-list`（含空态根）在小屏增 `data-responsive="narrow"`（桌面缺省不输出，与 crud/chart/table 范式对齐）。
 - **小屏单列**：`list` 本身就是单列堆叠，M4b「小屏单列」诉求天然满足；本节只补触摸滚动体验 + hairline 迁移 + 响应式 marker，不改变集合/分页/选择核心逻辑（§7–§9 不动）。
 - **schema 透明**：无新 schema 字段、无 `mobileUI` 标志位、无 `*-mobile` 组件。移动分支完全在 renderer 内部由 `useIsMobile()` 决定。
+
+## V12b 行为契约补记（plan 485）
+
+- 加载失败提供 retry（与 crud-infinite-scroll-area 同构），失败态不再只有纯文本。

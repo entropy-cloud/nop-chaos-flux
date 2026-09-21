@@ -1,7 +1,7 @@
 import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../../../adapters/ai-chat-context.js';
-import type { ChatMessage, ChatMessageContentPart } from '../../../engine/types.js';
+import type { ChatMessage, MessageEngine } from '../../../engine/types.js';
 import type { BubbleContentRendererProps } from '../types.js';
 
 /**
@@ -9,8 +9,10 @@ import type { BubbleContentRendererProps } from '../types.js';
  * for the message associated with the failed turn (design.md §5.1). The
  * `ai-bubble` index sets `data-error` when `isError` is true; this renderer
  * additionally matches via `errorMatcher` so the error affordance appears
- * inside the content stream. Surfaces a retry entry that re-sends the last
- * user message text via the ai-chat context's `sendMessage`.
+ * inside the content stream. Surfaces a retry entry that re-runs the failed
+ * turn via the engine's `regenerate()` — which truncates back to the last user
+ * message and re-requests WITHOUT appending a duplicate user message
+ * (G5-R4-视角10-01).
  */
 export function ErrorContentRenderer({ message }: BubbleContentRendererProps) {
   const ctx = useAiChatContext();
@@ -30,7 +32,7 @@ export function ErrorContentRenderer({ message }: BubbleContentRendererProps) {
           data-slot="ai-bubble-error-retry"
           aria-label={t('flux.ai.retry')}
           onClick={() => {
-            void ctx?.sendMessage(lastUserText);
+            void ctx?.engine.regenerate();
           }}
         >
           {t('flux.ai.retry')}
@@ -62,7 +64,12 @@ export function errorMatcher(message: ChatMessage): boolean {
 
 export interface ListErrorBannerProps {
   messages: ChatMessage[];
-  sendMessage?: (content: string | ChatMessageContentPart[]) => Promise<void>;
+  /**
+   * G5-R4-视角10-01: retry re-runs the turn via `engine.regenerate()` —
+   * truncate-to-last-user + re-request, so no duplicate user message is
+   * appended (the previous re-send implementation duplicated it).
+   */
+  engine?: MessageEngine;
 }
 
 /**
@@ -74,9 +81,9 @@ export interface ListErrorBannerProps {
  * assistant); when the residue is dropped only the user message remains and
  * that binding can never fire — this banner is the A-5 carrier for that
  * surface. Rendered by `ai-message-list`; reuses the bubble error affordance
- * (message + retry entry re-sending the last user text).
+ * (message + retry entry re-running the turn via `engine.regenerate()`).
  */
-export function ListErrorBanner({ messages, sendMessage }: ListErrorBannerProps): React.ReactElement | null {
+export function ListErrorBanner({ messages, engine }: ListErrorBannerProps): React.ReactElement | null {
   const lastUserText = lastUserTextBefore(messages, messages.length);
   return (
     <div
@@ -85,7 +92,7 @@ export function ListErrorBanner({ messages, sendMessage }: ListErrorBannerProps)
       role="alert"
     >
       <span className="flex-1">{t('flux.ai.requestFailed')}</span>
-      {lastUserText && sendMessage ? (
+      {lastUserText && engine ? (
         <Button
           type="button"
           variant="outline"
@@ -93,7 +100,7 @@ export function ListErrorBanner({ messages, sendMessage }: ListErrorBannerProps)
           data-slot="ai-message-list-error-retry"
           aria-label={t('flux.ai.retry')}
           onClick={() => {
-            void sendMessage(lastUserText);
+            void engine.regenerate();
           }}
         >
           {t('flux.ai.retry')}

@@ -604,25 +604,15 @@ export const comboRendererDefinition: RendererDefinition = {
       const comboSchema = schema as ComboSchema;
       const rules: ValidationRule[] = [];
       if (typeof comboSchema.minItems === 'number') {
-        const value = Math.max(0, Math.floor(comboSchema.minItems));
         rules.push({
           kind: 'minItems',
-          value,
-          message:
-            value <= 1
-              ? `${schema.label ?? schema.name ?? 'Field'} requires at least one item`
-              : `${schema.label ?? schema.name ?? 'Field'} requires at least ${value} items`,
+          value: Math.max(0, Math.floor(comboSchema.minItems)),
         });
       }
       if (typeof comboSchema.maxItems === 'number') {
-        const value = Math.max(0, Math.floor(comboSchema.maxItems));
         rules.push({
           kind: 'maxItems',
-          value,
-          message:
-            value <= 1
-              ? `${schema.label ?? schema.name ?? 'Field'} must contain at most one item`
-              : `${schema.label ?? schema.name ?? 'Field'} must contain at most ${value} items`,
+          value: Math.max(0, Math.floor(comboSchema.maxItems)),
         });
       }
       return rules;

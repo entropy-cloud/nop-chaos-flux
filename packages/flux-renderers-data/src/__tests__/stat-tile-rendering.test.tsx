@@ -157,7 +157,7 @@ describe('StatTileRenderer — delta direction and status colors', () => {
     expect(delta).toBeTruthy();
     expect(delta.getAttribute('data-direction')).toBe('up');
     expect(delta.textContent).toContain('+12.5%');
-    expect(delta.className).toContain('text-emerald-600');
+    expect(delta.className).toContain('text-success');
   });
 
   it('derives down direction and negative color from a negative delta number', () => {
@@ -178,7 +178,7 @@ describe('StatTileRenderer — delta direction and status colors', () => {
     const delta = document.querySelector('[data-slot="stat-tile-delta"]') as HTMLElement;
     expect(delta.getAttribute('data-direction')).toBe('down');
     expect(delta.textContent).toContain('-3%');
-    expect(delta.className).toContain('text-red-600');
+    expect(delta.className).toContain('text-destructive');
   });
 
   it('honors delta object label and explicit direction', () => {
@@ -206,7 +206,7 @@ describe('StatTileRenderer — delta direction and status colors', () => {
     const delta = document.querySelector('[data-slot="stat-tile-delta"]') as HTMLElement;
     expect(delta.textContent).toContain('环比 +5 个百分点');
     expect(delta.getAttribute('data-direction')).toBe('down');
-    expect(delta.className).toContain('text-red-600');
+    expect(delta.className).toContain('text-destructive');
   });
 
   it('lets the explicit status override the delta sign', () => {
@@ -226,7 +226,7 @@ describe('StatTileRenderer — delta direction and status colors', () => {
 
     const delta = document.querySelector('[data-slot="stat-tile-delta"]') as HTMLElement;
     expect(delta.getAttribute('data-direction')).toBe('down');
-    expect(delta.className).toContain('text-red-600');
+    expect(delta.className).toContain('text-destructive');
   });
 
   it('omits the delta row when delta is absent', () => {

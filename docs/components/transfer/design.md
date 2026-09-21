@@ -118,3 +118,7 @@ export interface TransferSchema extends BoundFieldSchemaBase {
 - **与 select/tree-select 边界**: 已通过 valueKey/labelKey 归一化 + 双栏穿梭语义收敛，边界见 §1。
 - **虚拟滚动首版 Non-Goal**: 大数据量场景归 P3，首版聚焦交互正确性。
 - **selectMode 扩展**: tree/table/chained 等模式依赖 AMIS 的 `Tree`/`TableSelection` 等组件，Flux 需评估是否复用或重写。
+
+## V12b 行为契约补记（plan 485）
+
+- `data-indeterminate` 为 presence 语义：仅全选部分时输出字符串 `'true'`（否则不输出属性）——裸布尔会把 `false` 串化为 `"false"` 使 presence 选择器恒真（transfer-renderer 装配面，ui/checkbox 消费）。

@@ -231,9 +231,17 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
       >
-        {visibleState.error instanceof Error
-          ? t('flux.dynamicRenderer.errorDetail', { message: visibleState.error.message })
-          : t('flux.dynamicRenderer.errorDetail', { message: String(visibleState.error) })}
+        {/* G1-视角5-05 (plan 485 Phase 2): the failure is destructive-styled
+         * (semantic tokens, dark-adaptive), not plain text. */}
+        <div
+          data-slot="dynamic-renderer-error"
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {visibleState.error instanceof Error
+            ? t('flux.dynamicRenderer.errorDetail', { message: visibleState.error.message })
+            : t('flux.dynamicRenderer.errorDetail', { message: String(visibleState.error) })}
+        </div>
       </div>
     );
   }

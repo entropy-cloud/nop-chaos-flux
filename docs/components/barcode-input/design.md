@@ -363,3 +363,7 @@ navigator.mediaDevices?.getUserMedia 不可用
 | `scanNow` 重复调用            | 幂等，二次调用不重复打开                     | 防止多次触发 getUserMedia |
 | `stopScan` 无活动扫描时调用   | 幂等，无操作                                 | 安全容错                  |
 | `resetWasmPromise` 扫描中调用 | 当前扫描继续，下次扫码重新初始化 WASM        | 不中断用户操作            |
+
+## V12b 行为契约补记（plan 485）
+
+- 校验错误在扫描 overlay 内可见：字段级 validationError 镜像进 overlay（live region + error 阶段带 `role="alert"` 横带），不再被 fixed z-50 面遮挡。

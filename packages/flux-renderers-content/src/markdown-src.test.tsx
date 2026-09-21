@@ -197,3 +197,41 @@ describe('MarkdownRenderer — DD9 remote src fetch via env.fetcher (INV-1)', ()
     expect(root?.querySelector('h1')?.textContent).toBe('Inline');
   });
 });
+
+describe('MarkdownRenderer error styling — destructive semantics (G1-视角5-05, plan 485 P2)', () => {
+  it('renders the src fetch failure through a destructive token-styled alert', async () => {
+    const env = {
+      fetcher: async function () {
+        throw new Error('Not found');
+      },
+      notify: () => undefined,
+    } as unknown as RendererEnv;
+
+    const SchemaRenderer = createContentSchemaRenderer();
+    const utils = render(
+      <SchemaRenderer
+        schemaUrl="test://content/markdown-src-error-style"
+        schema={
+          {
+            type: 'page',
+            body: [
+              { type: 'markdown', testid: 'md-src-err-style', src: 'https://example.com/missing.md' },
+            ],
+          } as never
+        }
+        data={{}}
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    await waitFor(() => {
+      const alert = utils.container.querySelector('[data-slot="markdown-error"]');
+      expect(alert).not.toBeNull();
+      expect(alert!.getAttribute('role')).toBe('alert');
+    });
+    const root = utils.container.querySelector('[data-testid="md-src-err-style"]');
+    expect(root?.className).toContain('text-destructive');
+    expect(root?.className).toContain('border-destructive/40');
+  });
+});

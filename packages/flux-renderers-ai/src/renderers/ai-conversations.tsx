@@ -14,6 +14,7 @@ import {
   cn,
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { Pencil, X } from 'lucide-react';
 import type { ActionContext, FluxActionEvent, ScopeRef } from '@nop-chaos/flux-core';
 import type { AiConversationInfo } from '../engine/types.js';
 import type { AiConversationsSchema } from '../schemas.js';
@@ -149,7 +150,7 @@ export function AiConversationsRenderer(
                       setDraftTitle(conv.title ?? '');
                     }}
                   >
-                    ✎
+                    <Pencil className="size-3.5" aria-hidden="true" />
                   </Button>
                   <Button
                     type="button"
@@ -160,7 +161,7 @@ export function AiConversationsRenderer(
                     disabled={disabled}
                     onClick={() => setPendingDeleteId(conv.id)}
                   >
-                    ×
+                    <X className="size-3.5" aria-hidden="true" />
                   </Button>
                 </>
               ) : null}

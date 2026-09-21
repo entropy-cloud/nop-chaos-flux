@@ -1614,7 +1614,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "垃圾桶",
+                              "text": "垃圾箱",
                               "className": "text-xl font-semibold text-[#0d0d0d]"
                             },
                             {
@@ -1655,7 +1655,7 @@
                             },
                             {
                               "type": "text",
-                              "text": "1 条任务在垃圾桶里",
+                              "text": "1 条任务在垃圾箱里",
                               "className": "text-[10px] text-[#636363] mt-2",
                               "testid": "sundial-trash-count"
                             }
@@ -2172,9 +2172,9 @@
                 },
                 {
                   "type": "button",
-                  "label": "移到垃圾桶",
-                  "variant": "ghost",
-                  "className": "sd-btn sd-btn-ghost",
+                  "label": "移到垃圾箱",
+                  "variant": "destructive",
+                  "className": "sd-btn sd-btn-danger",
                   "testid": "sundial-task-detail-trash",
                   "onClick": [
                     {

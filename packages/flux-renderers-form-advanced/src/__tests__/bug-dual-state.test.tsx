@@ -13,6 +13,9 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index.js';
+import { installFormAdvancedTestHooks } from '../test-support.js';
+
+installFormAdvancedTestHooks();
 
 const allFormDefs = [...formRendererDefinitions, ...formAdvancedRendererDefinitions];
 

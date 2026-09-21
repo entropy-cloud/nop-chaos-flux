@@ -349,3 +349,44 @@ describe('DashboardEditorRenderer arrow-key navigation (A2)', () => {
     expect(canvasPanels()[0].style.left).toBe('0px');
   });
 });
+
+describe('Inspector props JSON apply — invalid JSON inline feedback (G3-视角4-03, plan 485 P2)', () => {
+  it('shows an inline error on invalid JSON and keeps the draft editable', () => {
+    renderEditor();
+    const panel = canvasPanels()[0];
+    fireEvent.pointerDown(panel, { button: 0, clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(panel);
+
+    const textarea = screen.getByTestId('inspector-props') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: '{ not valid json' } });
+    fireEvent.click(screen.getByTestId('inspector-props-apply'));
+
+    // The failure previously died in an empty catch — zero feedback.
+    const error = screen.getByTestId('inspector-props-error');
+    expect(error).toBeTruthy();
+    expect(error.getAttribute('role')).toBe('alert');
+    // The draft is kept so the user can repair it.
+    expect((screen.getByTestId('inspector-props') as HTMLTextAreaElement).value).toBe('{ not valid json');
+
+    // Repairing the JSON and re-applying clears the error and commits.
+    fireEvent.change(textarea, { target: { value: '{"density": 4}' } });
+    fireEvent.click(screen.getByTestId('inspector-props-apply'));
+    expect(screen.queryByTestId('inspector-props-error')).toBeNull();
+  });
+
+  it('reset clears both the draft and the error state', () => {
+    renderEditor();
+    const panel = canvasPanels()[0];
+    fireEvent.pointerDown(panel, { button: 0, clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(panel);
+
+    const textarea = screen.getByTestId('inspector-props') as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'broken' } });
+    fireEvent.click(screen.getByTestId('inspector-props-apply'));
+    expect(screen.getByTestId('inspector-props-error')).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId('inspector-props-reset'));
+    expect(screen.queryByTestId('inspector-props-error')).toBeNull();
+    expect((screen.getByTestId('inspector-props') as HTMLTextAreaElement).value).not.toBe('broken');
+  });
+});

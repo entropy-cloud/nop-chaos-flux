@@ -186,3 +186,7 @@ min/max 约束不放在 adapter 的 validate 中，而是放在渲染器内部�
 - **stepper 触摸目标**：stepper +/- 按钮在桌面为小尺寸（`h-4 w-6`），mobile 长按连续步进（LONG_PRESS）已支持；icon-only hit area 增强归 Non-Blocking Follow-up。
 - **软键盘**：focus 时 scrollIntoView 保证当前 input 不被软键盘遮挡（mobile only）；iOS 缩放由 font-size ≥ 16px 防止。
 - **无新 schema surface / 无 mobileUI 标志位**：mobile 分支完全在 renderer 内部，由 `useIsMobile()` 决定。
+
+## V12b 行为契约补记（plan 485）
+
+- 显示/提交解耦（P2-15）：输入中 draft 原样可见（含 '12e' 等 badInput 中间态，不回弹、不抹存储值）；仅合法解析或显式清空（'' 且非 badInput）提交。pin 测试 `input-number-badinput-decoupling.test.tsx`。

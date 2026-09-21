@@ -145,6 +145,50 @@ const ROLE_LABELS: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = { '1': '启用', '0': '禁用' };
 const GENDER_LABELS: Record<string, string> = { '1': '男', '0': '女' };
 
+/** V12b G7-R3-视角4-02: user list rows carry the resolved department name so
+ * tables never render raw column ids (d1-2 …) as visible data. */
+const DEPT_SEED: DeptNode[] = [
+  { id: 'd1', name: '总公司', parentId: null },
+  { id: 'd1-1', name: '研发中心', parentId: 'd1' },
+  { id: 'd1-1-1', name: '前端组', parentId: 'd1-1' },
+  { id: 'd1-1-2', name: '后端组', parentId: 'd1-1' },
+  { id: 'd1-2', name: '产品中心', parentId: 'd1' },
+  { id: 'd1-3', name: '运营中心', parentId: 'd1' },
+  { id: 'd2', name: '华南分公司', parentId: null },
+  { id: 'd2-1', name: '深圳研发', parentId: 'd2' },
+  { id: 'd3', name: '华北分公司', parentId: null },
+  { id: 'd3-1', name: '北京研发', parentId: 'd3' },
+  { id: 'd3-2', name: '天津销售', parentId: 'd3' },
+  { id: 'd4', name: '西南分公司', parentId: null },
+  { id: 'd4-1', name: '成都研发', parentId: 'd4' },
+  { id: 'd4-2', name: '重庆运营', parentId: 'd4' },
+  { id: 'd5', name: '华东分公司', parentId: null },
+  { id: 'd5-1', name: '上海研发', parentId: 'd5' },
+  { id: 'd5-2', name: '杭州产品', parentId: 'd5' },
+  { id: 'd5-3', name: '南京销售', parentId: 'd5' },
+  { id: 'd5-4', name: '苏州制造', parentId: 'd5' },
+  { id: 'd6', name: '华中分公司', parentId: null },
+  { id: 'd6-1', name: '武汉物流', parentId: 'd6' },
+  { id: 'd6-2', name: '长沙客服', parentId: 'd6' },
+  { id: 'd7', name: '东北分公司', parentId: null },
+  { id: 'd7-1', name: '沈阳制造', parentId: 'd7' },
+  { id: 'd7-2', name: '大连港口', parentId: 'd7' },
+  { id: 'd8', name: '西北分公司', parentId: null },
+  { id: 'd8-1', name: '西安研发', parentId: 'd8' },
+  { id: 'd8-2', name: '兰州能源', parentId: 'd8' },
+  { id: 'd9', name: '海外事业部', parentId: null },
+  { id: 'd9-1', name: '北美区', parentId: 'd9' },
+  { id: 'd9-2', name: '欧洲区', parentId: 'd9' },
+  { id: 'd9-3', name: '东南亚区', parentId: 'd9' },
+  { id: 'd10', name: '采购中心', parentId: null },
+  { id: 'd11', name: '财务管理部', parentId: null },
+  { id: 'd12', name: '人力资源部', parentId: null },
+];
+
+const DEPT_NAME_BY_ID: Record<string, string> = Object.fromEntries(
+  DEPT_SEED.map((d) => [d.id, d.name]),
+);
+
 /** List responses return dict fields as {value,label} so dotted column
  *  paths (e.g. status_label / role.label) render labels without extra code. */
 export function toUserListRecord(record: UserRecord) {
@@ -158,6 +202,7 @@ export function toUserListRecord(record: UserRecord) {
     gender_label: GENDER_LABELS[record.gender] ?? record.gender,
     role: { value: record.role, label: ROLE_LABELS[record.role] ?? record.role },
     deptId: record.deptId,
+    deptName: DEPT_NAME_BY_ID[record.deptId] ?? record.deptId,
     createTime: record.createTime,
   };
 }
@@ -229,43 +274,7 @@ function ts(day: number, hour: number, min: number) {
 }
 
 export function createMockDatabase(): MockDatabase {
-  const depts: DeptNode[] = [
-    { id: 'd1', name: '总公司', parentId: null },
-    { id: 'd1-1', name: '研发中心', parentId: 'd1' },
-    { id: 'd1-1-1', name: '前端组', parentId: 'd1-1' },
-    { id: 'd1-1-2', name: '后端组', parentId: 'd1-1' },
-    { id: 'd1-2', name: '产品中心', parentId: 'd1' },
-    { id: 'd1-3', name: '运营中心', parentId: 'd1' },
-    { id: 'd2', name: '华南分公司', parentId: null },
-    { id: 'd2-1', name: '深圳研发', parentId: 'd2' },
-    { id: 'd3', name: '华北分公司', parentId: null },
-    { id: 'd3-1', name: '北京研发', parentId: 'd3' },
-    { id: 'd3-2', name: '天津销售', parentId: 'd3' },
-    { id: 'd4', name: '西南分公司', parentId: null },
-    { id: 'd4-1', name: '成都研发', parentId: 'd4' },
-    { id: 'd4-2', name: '重庆运营', parentId: 'd4' },
-    { id: 'd5', name: '华东分公司', parentId: null },
-    { id: 'd5-1', name: '上海研发', parentId: 'd5' },
-    { id: 'd5-2', name: '杭州产品', parentId: 'd5' },
-    { id: 'd5-3', name: '南京销售', parentId: 'd5' },
-    { id: 'd5-4', name: '苏州制造', parentId: 'd5' },
-    { id: 'd6', name: '华中分公司', parentId: null },
-    { id: 'd6-1', name: '武汉物流', parentId: 'd6' },
-    { id: 'd6-2', name: '长沙客服', parentId: 'd6' },
-    { id: 'd7', name: '东北分公司', parentId: null },
-    { id: 'd7-1', name: '沈阳制造', parentId: 'd7' },
-    { id: 'd7-2', name: '大连港口', parentId: 'd7' },
-    { id: 'd8', name: '西北分公司', parentId: null },
-    { id: 'd8-1', name: '西安研发', parentId: 'd8' },
-    { id: 'd8-2', name: '兰州能源', parentId: 'd8' },
-    { id: 'd9', name: '海外事业部', parentId: null },
-    { id: 'd9-1', name: '北美区', parentId: 'd9' },
-    { id: 'd9-2', name: '欧洲区', parentId: 'd9' },
-    { id: 'd9-3', name: '东南亚区', parentId: 'd9' },
-    { id: 'd10', name: '采购中心', parentId: null },
-    { id: 'd11', name: '财务管理部', parentId: null },
-    { id: 'd12', name: '人力资源部', parentId: null },
-  ];
+  const depts: DeptNode[] = DEPT_SEED;
   const deptIds = depts.map((d) => d.id);
 
   const TAG_NAMES = 'VIP客户,高活跃,待跟进,已签约,流失风险,潜在用户,企业版,个人版,试用中,已过期,北区,南区,东区,西区,重点客户,战略伙伴,供应商,分销商,内部员工,外部合作,技术导向,业务导向,管理岗,一线员工,新入职,老员工,远程办公,常驻办公,合同制,实习生'.split(',');

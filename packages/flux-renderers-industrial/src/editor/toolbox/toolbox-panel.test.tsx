@@ -111,7 +111,8 @@ function buttonByText(container: HTMLElement, text: string): HTMLButtonElement {
 }
 
 // plan 2026-08-09-0648-2 Phase 3：word 按钮 label 经 i18n 解析后随 locale 变化，
-// 行为用例经稳定 data-testid 定位（locale 无关）；glyph 按钮 label 为符号不变，仍可用 buttonByText。
+// 行为用例经稳定 data-testid 定位（locale 无关）。V12b G5-视角1-04：align/distribute/z-order
+// 按钮弃用生僻字形、改走 `label.*` 短键，同样统一以 data-testid 定位。
 function buttonByTestId(container: HTMLElement, testid: string): HTMLButtonElement {
   const found = container.querySelector(`button[data-testid="${testid}"]`);
   if (!found) throw new Error(`button[testid="${testid}"] not found`);
@@ -148,14 +149,14 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
 
   it('align buttons disabled when selection < 2', () => {
     const { container } = renderPanel(['a']);
-    expect(buttonByText(container, '⌅L').disabled).toBe(true);
-    expect(buttonByText(container, '⌅R').disabled).toBe(true);
+    expect(buttonByTestId(container, 'toolbox-btn-align-left').disabled).toBe(true);
+    expect(buttonByTestId(container, 'toolbox-btn-align-right').disabled).toBe(true);
   });
 
   it('align buttons enabled + call alignSelection when selection >= 2', () => {
     // plan 2026-08-08-0900-2 Phase 1 / P2 #25：断言传入方向参数（非仅「被调用」）。
     const { container, runtime } = renderPanel(['a', 'b']);
-    const alignBtn = buttonByText(container, '⌅L');
+    const alignBtn = buttonByTestId(container, 'toolbox-btn-align-left');
     expect(alignBtn.disabled).toBe(false);
     fireEvent.click(alignBtn);
     expect(runtime.calls.align).toBeDefined();
@@ -164,29 +165,29 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
 
   it('distribute buttons disabled when selection < 3', () => {
     const { container } = renderPanel(['a', 'b']);
-    expect(buttonByText(container, '↔').disabled).toBe(true);
+    expect(buttonByTestId(container, 'toolbox-btn-distribute-h').disabled).toBe(true);
   });
 
   it('distribute buttons enabled + call distributeSelection when selection >= 3', () => {
     // plan 2026-08-08-0900-2 Phase 1 / P2 #25：断言传入方向参数。
     const { container, runtime } = renderPanel(['a', 'b', 'c']);
-    fireEvent.click(buttonByText(container, '↕'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-distribute-v'));
     expect(runtime.calls.distribute).toBeDefined();
     expect(runtime.calls.distribute[0]).toBe('vertical');
   });
 
   it('z-order buttons disabled when no selection', () => {
     const { container } = renderPanel([]);
-    expect(buttonByText(container, '⤒').disabled).toBe(true);
+    expect(buttonByTestId(container, 'toolbox-btn-to-top').disabled).toBe(true);
   });
 
   it('z-order buttons call reorderZOrder when selection present', () => {
     // plan 2026-08-08-0900-2 Phase 1 / P2 #25：断言传入 z-order action 参数（4 个按钮 4 个不同 action）。
     const { container, runtime } = renderPanel(['a']);
-    fireEvent.click(buttonByText(container, '⤒'));
-    fireEvent.click(buttonByText(container, '↑'));
-    fireEvent.click(buttonByText(container, '↓'));
-    fireEvent.click(buttonByText(container, '⤓'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-to-top'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-move-up'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-move-down'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-to-bottom'));
     expect(runtime.allCalls.zorder).toHaveLength(4);
     expect(runtime.allCalls.zorder[0][0]).toBe('toTop');
     expect(runtime.allCalls.zorder[1][0]).toBe('moveUp');
@@ -285,7 +286,7 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     // plan 2026-08-08-0900-2 Phase 1 / P2 #24：验证 i18n 文本内容（t(noChange) => '无变化'）。
     const noOp = makeRuntime({ alignSelection: () => false });
     const { container } = renderPanel(['a', 'b'], noOp);
-    fireEvent.click(buttonByText(container, '⌅L'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-align-left'));
     const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
     expect(status?.textContent).toContain('无变化');
   });
@@ -294,7 +295,7 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     // plan 2026-08-08-0900-2 Phase 1 / P2 #24：验证 i18n 文本内容。
     const noOp = makeRuntime({ distributeSelection: () => false });
     const { container } = renderPanel(['a', 'b', 'c'], noOp);
-    fireEvent.click(buttonByText(container, '↔'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-distribute-h'));
     const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
     expect(status?.textContent).toContain('无变化');
   });
@@ -303,7 +304,7 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     // plan 2026-08-08-0900-2 Phase 1 / P2 #24：验证 i18n 文本内容。
     const noOp = makeRuntime({ reorderZOrder: () => false });
     const { container } = renderPanel(['a'], noOp);
-    fireEvent.click(buttonByText(container, '⤒'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-to-top'));
     const status = container.querySelector('[data-slot="scada-editor-toolbox-status"]');
     expect(status?.textContent).toContain('无变化');
   });
@@ -396,7 +397,7 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
   // plan 2026-08-09-0648-2 Phase 3 (D3/D5)：word 按钮 label i18n focused 用例。
   it('word buttons render resolved localized labels (zh-CN, not raw key)', () => {
     const { container } = renderPanel([]);
-    // 12 个 word 按钮全部经 t() 解析命中 zh locale（抽样断言；glyph 按钮 + 1:1 保持原符号）。
+    // word 按钮全部经 t() 解析命中 zh locale（抽样断言；1:1/+/- 为纯符号保持不变）。
     expect(buttonByTestId(container, 'toolbox-btn-delete').textContent?.trim()).toBe('删除');
     expect(buttonByTestId(container, 'toolbox-btn-group').textContent?.trim()).toBe('组合');
     expect(buttonByTestId(container, 'toolbox-btn-ungroup').textContent?.trim()).toBe('解组');
@@ -409,12 +410,19 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     expect(buttonByTestId(container, 'toolbox-btn-import').textContent?.trim()).toBe('导入');
     expect(buttonByTestId(container, 'toolbox-btn-fit').textContent?.trim()).toBe('适配');
     expect(buttonByTestId(container, 'toolbox-btn-center').textContent?.trim()).toBe('居中');
-    // glyph 按钮 + 1:1 (D4) label 保持原符号，i18n 不适用。
+    // V12b G5-视角1-04：align/distribute/z-order 按钮可见 label 走 `label.*` 短键（zh）。
+    expect(buttonByTestId(container, 'toolbox-btn-align-left').textContent?.trim()).toBe('左对齐');
+    expect(buttonByTestId(container, 'toolbox-btn-align-right').textContent?.trim()).toBe('右对齐');
+    expect(buttonByTestId(container, 'toolbox-btn-align-hcenter').textContent?.trim()).toBe('水平居中');
+    expect(buttonByTestId(container, 'toolbox-btn-distribute-h').textContent?.trim()).toBe('横分布');
+    expect(buttonByTestId(container, 'toolbox-btn-distribute-v').textContent?.trim()).toBe('纵分布');
+    expect(buttonByTestId(container, 'toolbox-btn-to-top').textContent?.trim()).toBe('置顶');
+    expect(buttonByTestId(container, 'toolbox-btn-move-up').textContent?.trim()).toBe('上移');
+    expect(buttonByTestId(container, 'toolbox-btn-to-bottom').textContent?.trim()).toBe('置底');
+    // 1:1 (D4) / + / - 为纯 ASCII 符号，label 不走 i18n。
     expect(buttonByTestId(container, 'toolbox-btn-reset').textContent?.trim()).toBe('1:1');
     expect(buttonByTestId(container, 'toolbox-btn-zoom-in').textContent?.trim()).toBe('+');
     expect(buttonByTestId(container, 'toolbox-btn-zoom-out').textContent?.trim()).toBe('−');
-    expect(buttonByTestId(container, 'toolbox-btn-align-left').textContent?.trim()).toBe('⌅L');
-    expect(buttonByTestId(container, 'toolbox-btn-distribute-h').textContent?.trim()).toBe('↔');
     // raw key 不应泄漏到可见文本。
     expect(buttonByTestId(container, 'toolbox-btn-fit').textContent).not.toContain('industrial.scada.editor.toolbox.label.fit');
   });
@@ -438,7 +446,13 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     expect(buttonByTestId(container, 'toolbox-btn-import').textContent?.trim()).toBe('Import');
     expect(buttonByTestId(container, 'toolbox-btn-fit').textContent?.trim()).toBe('Fit');
     expect(buttonByTestId(container, 'toolbox-btn-center').textContent?.trim()).toBe('Center');
+    // V12b G5-视角1-04：align/distribute/z-order 按钮回退英文短词。
+    expect(buttonByTestId(container, 'toolbox-btn-align-left').textContent?.trim()).toBe('Left');
+    expect(buttonByTestId(container, 'toolbox-btn-distribute-h').textContent?.trim()).toBe('Dist H');
+    expect(buttonByTestId(container, 'toolbox-btn-to-top').textContent?.trim()).toBe('To Top');
+    expect(buttonByTestId(container, 'toolbox-btn-move-down').textContent?.trim()).toBe('Down');
     // raw key 不应泄漏（证明显式未命中检测生效，非 `||` 短路）。
     expect(buttonByTestId(container, 'toolbox-btn-fit').textContent).not.toContain('industrial.scada.editor.toolbox.label.fit');
+    expect(buttonByTestId(container, 'toolbox-btn-align-left').textContent).not.toContain('industrial.scada.editor.toolbox.label.alignLeft');
   });
 });

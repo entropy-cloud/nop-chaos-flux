@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { Calendar } from './calendar.js';
 import type { ComponentHandle } from '@nop-chaos/flux-core';
 
@@ -144,5 +145,39 @@ describe('Calendar component exportToPNG handle', () => {
     expect(result.ok).toBe(true);
     expect(exportPNG.dispatch).toHaveBeenCalledTimes(1);
     expect(print.dispatch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Calendar export error in-UI banner (G4-R2-视角5-02, plan 485 P2)', () => {
+  afterEach(() => {
+    resetFluxI18n();
+  });
+
+  it('surfaces a failed PNG export as a dismissible in-UI banner', async () => {
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+    html2canvasMock.mockRejectedValue(new Error('canvas boom'));
+    const utils = render(<Calendar {...baseProps} />);
+    await waitFor(() => {
+      expect(registryMock.state.handle).toBeTruthy();
+    });
+
+    await registryMock.state.handle!.capabilities.invoke('exportToPNG', undefined, {});
+
+    // exportError previously had zero UI consumers — the failure was only
+    // visible through the handle result. Queries are scoped to this render's
+    // container: earlier tests in this file never unmount, so document-level
+    // queries would hit a stale banner.
+    await waitFor(() => {
+      const banner = utils.container.querySelector('[data-slot="calendar-export-error"]');
+      expect(banner).not.toBeNull();
+      expect(banner!.getAttribute('role')).toBe('alert');
+      expect(banner!.textContent).toContain('PNG export failed');
+    });
+
+    fireEvent.click(utils.container.querySelector('[data-slot="calendar-export-error-dismiss"]')!);
+    await waitFor(() => {
+      expect(utils.container.querySelector('[data-slot="calendar-export-error"]')).toBeNull();
+    });
   });
 });

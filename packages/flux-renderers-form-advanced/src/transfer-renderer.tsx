@@ -369,7 +369,10 @@ function TransferPane(props: TransferPaneProps) {
           {props.checkAllEnabled && props.onToggleAll && (
             <Checkbox
               checked={props.allChecked}
-              data-indeterminate={props.someChecked && !props.allChecked}
+              // [G2-视角3-01] presence-selector contract: data-indeterminate must
+              // be the string 'true' or absent — a bare boolean renders 'false'
+              // as a present attribute and `[data-indeterminate]` matches always.
+              data-indeterminate={props.someChecked && !props.allChecked ? 'true' : undefined}
               disabled={props.interactionDisabled || props.options.length === 0}
               onCheckedChange={() => props.onToggleAll?.()}
               data-slot="transfer-toggle-all"

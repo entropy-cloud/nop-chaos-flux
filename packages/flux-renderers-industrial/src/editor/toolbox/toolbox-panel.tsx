@@ -131,8 +131,8 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
 
   // plan 2026-08-09-0648-2 Phase 1/3 (D3/D5)：word 按钮可见 label 经 i18n 解析（`label.*` 短键，与长描述
   // tooltip 键分离）。显式未命中检测（`resolved === key`）后回退原英文短词——i18next 未命中返回 key 串本身
-  // （非 falsy），`||` 短路永不触发会渲染 raw key，故必须显式检测。glyph 按钮 + '1:1' (D4) label 为符号，
-  // i18n 不适用，保持原符号不变。
+  // （非 falsy），`||` 短路永不触发会渲染 raw key，故必须显式检测。V12b G5-视角1-04 起 align/distribute/
+  // z-order 按钮同样走 `label.*` 短键（原 ⌅/↔/↕/⤒ 生僻字形有 tofu 风险）；'1:1' (D4) 为纯 ASCII 符号，保持不变。
   const labelOr = (key: string, fallback: string) => {
     const resolved = t(key);
     return resolved === key ? fallback : resolved;
@@ -180,21 +180,21 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
       </ButtonGroup>
       <Separator orientation="vertical" className="nop-scada-editor-toolbox-sep" />
       <ButtonGroup>
-        {btn('⌅L', () => handleAlign('left'), !canAlign, t('industrial.scada.editor.toolbox.alignLeft'), 'toolbox-btn-align-left')}
-        {btn('⌅R', () => handleAlign('right'), !canAlign, t('industrial.scada.editor.toolbox.alignRight'), 'toolbox-btn-align-right')}
-        {btn('⌅H', () => handleAlign('hcenter'), !canAlign, t('industrial.scada.editor.toolbox.alignHCenter'), 'toolbox-btn-align-hcenter')}
-        {btn('⌅T', () => handleAlign('top'), !canAlign, t('industrial.scada.editor.toolbox.alignTop'), 'toolbox-btn-align-top')}
-        {btn('⌅B', () => handleAlign('bottom'), !canAlign, t('industrial.scada.editor.toolbox.alignBottom'), 'toolbox-btn-align-bottom')}
-        {btn('⌅V', () => handleAlign('vcenter'), !canAlign, t('industrial.scada.editor.toolbox.alignVCenter'), 'toolbox-btn-align-vcenter')}
-        {btn('↔', () => handleDistribute('horizontal'), !canDistribute, t('industrial.scada.editor.toolbox.distributeH'), 'toolbox-btn-distribute-h')}
-        {btn('↕', () => handleDistribute('vertical'), !canDistribute, t('industrial.scada.editor.toolbox.distributeV'), 'toolbox-btn-distribute-v')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.alignLeft', 'Left'), () => handleAlign('left'), !canAlign, t('industrial.scada.editor.toolbox.alignLeft'), 'toolbox-btn-align-left')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.alignRight', 'Right'), () => handleAlign('right'), !canAlign, t('industrial.scada.editor.toolbox.alignRight'), 'toolbox-btn-align-right')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.alignHCenter', 'H-Center'), () => handleAlign('hcenter'), !canAlign, t('industrial.scada.editor.toolbox.alignHCenter'), 'toolbox-btn-align-hcenter')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.alignTop', 'Top'), () => handleAlign('top'), !canAlign, t('industrial.scada.editor.toolbox.alignTop'), 'toolbox-btn-align-top')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.alignBottom', 'Bottom'), () => handleAlign('bottom'), !canAlign, t('industrial.scada.editor.toolbox.alignBottom'), 'toolbox-btn-align-bottom')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.alignVCenter', 'V-Center'), () => handleAlign('vcenter'), !canAlign, t('industrial.scada.editor.toolbox.alignVCenter'), 'toolbox-btn-align-vcenter')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.distributeH', 'Dist H'), () => handleDistribute('horizontal'), !canDistribute, t('industrial.scada.editor.toolbox.distributeH'), 'toolbox-btn-distribute-h')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.distributeV', 'Dist V'), () => handleDistribute('vertical'), !canDistribute, t('industrial.scada.editor.toolbox.distributeV'), 'toolbox-btn-distribute-v')}
       </ButtonGroup>
       <Separator orientation="vertical" className="nop-scada-editor-toolbox-sep" />
       <ButtonGroup>
-        {btn('⤒', () => handleZOrder('toTop'), !hasSelection, t('industrial.scada.editor.toolbox.toTop'), 'toolbox-btn-to-top')}
-        {btn('↑', () => handleZOrder('moveUp'), !hasSelection, t('industrial.scada.editor.toolbox.moveUp'), 'toolbox-btn-move-up')}
-        {btn('↓', () => handleZOrder('moveDown'), !hasSelection, t('industrial.scada.editor.toolbox.moveDown'), 'toolbox-btn-move-down')}
-        {btn('⤓', () => handleZOrder('toBottom'), !hasSelection, t('industrial.scada.editor.toolbox.toBottom'), 'toolbox-btn-to-bottom')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.toTop', 'To Top'), () => handleZOrder('toTop'), !hasSelection, t('industrial.scada.editor.toolbox.toTop'), 'toolbox-btn-to-top')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.moveUp', 'Up'), () => handleZOrder('moveUp'), !hasSelection, t('industrial.scada.editor.toolbox.moveUp'), 'toolbox-btn-move-up')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.moveDown', 'Down'), () => handleZOrder('moveDown'), !hasSelection, t('industrial.scada.editor.toolbox.moveDown'), 'toolbox-btn-move-down')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.toBottom', 'To Bottom'), () => handleZOrder('toBottom'), !hasSelection, t('industrial.scada.editor.toolbox.toBottom'), 'toolbox-btn-to-bottom')}
       </ButtonGroup>
       <Separator orientation="vertical" className="nop-scada-editor-toolbox-sep" />
       <ButtonGroup>

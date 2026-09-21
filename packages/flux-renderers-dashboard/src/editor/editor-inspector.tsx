@@ -42,10 +42,10 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
       data-slot="dashboard-editor-inspector"
       className="flex h-full flex-col gap-3 overflow-y-auto p-3"
     >
-      <InspectorField label="Id">
+      <InspectorField label={t('flux.dashboard.editor.panelId')}>
         <Input readOnly value={selectedPanel.id} data-testid="inspector-id" />
       </InspectorField>
-      <InspectorField label="Type">
+      <InspectorField label={t('flux.dashboard.editor.panelType')}>
         <NativeSelect
           value={selectedPanel.type}
           data-testid="inspector-type"
@@ -54,13 +54,13 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
           {DASHBOARD_PALETTE_TYPES.filter((entry) => runtime.registry.has(entry.type)).map(
             (entry) => (
               <option key={entry.type} value={entry.type}>
-                {entry.label}
+                {t(entry.labelKey)}
               </option>
             ),
           )}
         </NativeSelect>
       </InspectorField>
-      <InspectorField label="Title">
+      <InspectorField label={t('flux.dashboard.editor.panelTitle')}>
         <Input
           value={selectedPanel.title ?? ''}
           data-testid="inspector-title"
@@ -68,28 +68,28 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
         />
       </InspectorField>
       <div className="grid grid-cols-2 gap-2">
-        <InspectorField label="X">
+        <InspectorField label={t('flux.dashboard.editor.posX')}>
           <NumberInput
             testId="inspector-x"
             value={selectedPanel.x}
             onChange={(value) => updatePanel(core, selectedPanel.id, { x: value })}
           />
         </InspectorField>
-        <InspectorField label="Y">
+        <InspectorField label={t('flux.dashboard.editor.posY')}>
           <NumberInput
             testId="inspector-y"
             value={selectedPanel.y}
             onChange={(value) => updatePanel(core, selectedPanel.id, { y: value })}
           />
         </InspectorField>
-        <InspectorField label="W">
+        <InspectorField label={t('flux.dashboard.editor.width')}>
           <NumberInput
             testId="inspector-w"
             value={selectedPanel.w}
             onChange={(value) => updatePanel(core, selectedPanel.id, { w: value })}
           />
         </InspectorField>
-        <InspectorField label="H">
+        <InspectorField label={t('flux.dashboard.editor.height')}>
           <NumberInput
             testId="inspector-h"
             value={selectedPanel.h}
@@ -97,7 +97,7 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
           />
         </InspectorField>
       </div>
-      <InspectorField label="Source (data expression)">
+      <InspectorField label={t('flux.dashboard.editor.source')}>
         <Input
           value={typeof selectedPanel.source === 'string' ? selectedPanel.source : ''}
           data-testid="inspector-source"
@@ -109,7 +109,7 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
           }
         />
       </InspectorField>
-      <InspectorField label="Props (JSON)">
+      <InspectorField label={t('flux.dashboard.editor.props')}>
         <JsonPropsEditor
           value={selectedPanel.props}
           onChange={(props) => updatePanel(core, selectedPanel.id, { props })}
@@ -163,22 +163,38 @@ function JsonPropsEditor({
 }) {
   const { t } = useFluxTranslation();
   const [draft, setDraft] = useState<string | null>(null);
+  // G3-视角4-03 (plan 485 Phase 2): invalid JSON no longer dies in an empty
+  // catch — the apply button reports an inline, dismissible-by-retry error.
+  const [invalid, setInvalid] = useState(false);
   const current = draft ?? (value !== undefined ? JSON.stringify(value, null, 2) : '');
   return (
     <>
       <Textarea
         data-testid="inspector-props"
         rows={6}
+        aria-invalid={invalid || undefined}
         value={current}
         onChange={(event) => setDraft(event.target.value)}
       />
+      {invalid ? (
+        <p
+          data-testid="inspector-props-error"
+          role="alert"
+          className="text-xs text-destructive"
+        >
+          {t('flux.dashboard.editor.invalidJson')}
+        </p>
+      ) : null}
       <div className="flex justify-end gap-2">
         <Button
           type="button"
           variant="outline"
           size="sm"
           data-testid="inspector-props-reset"
-          onClick={() => setDraft(null)}
+          onClick={() => {
+            setDraft(null);
+            setInvalid(false);
+          }}
         >
           {t('flux.dashboard.editor.reset')}
         </Button>
@@ -191,10 +207,13 @@ function JsonPropsEditor({
             if (draft === null) return;
             try {
               const parsed = draft.trim() === '' ? undefined : (JSON.parse(draft) as SchemaValue);
+              setInvalid(false);
               onChange(parsed);
               setDraft(null);
             } catch {
-              // invalid JSON: keep draft, do not touch the panel
+              // G3-视角4-03: keep the draft so the user can repair it, and
+              // surface the failure inline.
+              setInvalid(true);
             }
           }}
         >

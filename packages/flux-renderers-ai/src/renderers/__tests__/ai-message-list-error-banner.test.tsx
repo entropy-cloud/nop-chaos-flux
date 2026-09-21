@@ -98,6 +98,13 @@ describe('ai-message-list — A-5 error carrier for dropped-residue failed turns
       expect(engine.getState().requestState).toBe('completed');
     });
     expect(engine.getState().messages.some((m) => m.role === 'assistant' && m.content === 'recovered')).toBe(true);
+    // G5-R4-视角10-01 (plan 485 Phase 2): retry must NOT append a duplicate
+    // user message — the transcript keeps exactly one 'hello'.
+    const userTexts = engine
+      .getState()
+      .messages.filter((m) => m.role === 'user')
+      .map((m) => (typeof m.content === 'string' ? m.content : ''));
+    expect(userTexts).toEqual(['hello']);
     // The banner disappears once the turn recovered.
     expect(container.querySelector('[data-slot="ai-message-list-error"]')).toBeNull();
   });
@@ -185,5 +192,12 @@ describe('ai-message-list — A-5 error carrier for dropped-residue failed turns
 
     expect(engine.getState().requestState).toBe('aborted');
     expect(container.querySelector('[data-slot="ai-message-list-error"]')).toBeNull();
+    // G5-R2-视角3-01 (plan 485 Phase 2): an aborted turn surfaces a visible
+    // terminal note (token-driven muted styling, role=status) instead of
+    // silently dropping back to idle visuals.
+    const abortedNote = container.querySelector('[data-slot="ai-message-list-aborted"]');
+    expect(abortedNote).not.toBeNull();
+    expect(abortedNote?.getAttribute('role')).toBe('status');
+    expect(abortedNote?.textContent).toContain('stopped');
   });
 });

@@ -284,11 +284,13 @@ describe('FluxBasicPage debugger wiring', () => {
     expect(form).toBeTruthy();
     expect(within(form as HTMLElement).getByPlaceholderText('Reviewer 1')).toBeTruthy();
 
-    fireEvent.click(
-      within(form as HTMLElement).getByRole('button', {
-        name: /^(?!Move (up|down)).*Reviewer 1$/,
-      }),
+    // Remove button is locale-agnostic via its stable data-slot marker (the
+    // visible aria-label prefix follows the active i18n language).
+    const removeButton = (form as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-slot="array-editor-remove"]',
     );
+    expect(removeButton?.getAttribute('aria-label')).toContain('Reviewer 1');
+    fireEvent.click(removeButton!);
 
     await waitFor(() => {
       expect(within(form as HTMLElement).queryByPlaceholderText('Reviewer 1')).toBeNull();

@@ -336,14 +336,14 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
       header={header}
       leftPanel={<EditorPalette onAddPanel={addPanel} />}
-      leftLabel="Collapse panel palette"
+      leftLabel={t('flux.dashboard.editor.collapsePalette')}
       leftResizable
       leftWidth={220}
       leftMinWidth={180}
       leftMaxWidth={360}
       canvas={canvas}
       rightPanel={<EditorInspector core={core} selection={selection} />}
-      rightLabel="Collapse inspector"
+      rightLabel={t('flux.dashboard.editor.collapseInspector')}
       rightResizable
       rightWidth={280}
       rightMinWidth={220}

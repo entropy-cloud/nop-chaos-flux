@@ -421,3 +421,7 @@ interface CalendarResource {
 - 排班场景中"天"的边界以资源时区为准（而非 UTC 天）
 - 跨时区排班时系统需明确标注资源所在时区，避免误解
 - 夏令时切换日需特殊处理：`Intl.DateTimeFormat` 自动处理，但需确保 UI 显示日期与实际排班日期一致
+
+## V12b 行为契约补记（plan 485）
+
+- 导出失败可见：`use-calendar-export` 的 exportError 经画布 `role="alert"` 横带呈现（可关闭），此前仅 set 不消费。

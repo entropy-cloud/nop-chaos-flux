@@ -5,7 +5,7 @@ import { Spinner, cn } from '@nop-chaos/ui';
 import type { PullRefreshSchema } from './schemas.js';
 import { useTouch } from './hooks/use-touch.js';
 
-type PullRefreshStatus = 'normal' | 'pulling' | 'loosing' | 'loading' | 'success';
+type PullRefreshStatus = 'normal' | 'pulling' | 'loosing' | 'loading' | 'success' | 'error';
 
 const DAMPING_FACTOR = 0.5;
 const MAX_PULL_DISTANCE = 200;
@@ -28,6 +28,9 @@ function resolveIndicatorText(
       return texts.loadingText ?? t('flux.mobile.pullRefresh.loading', { defaultValue: '加载中...' });
     case 'success':
       return texts.successText ?? t('flux.mobile.pullRefresh.success', { defaultValue: '刷新成功' });
+    case 'error':
+      // G4-R2-视角5-01 (plan 485 Phase 2): a failed refresh is user-visible.
+      return t('flux.mobile.pullRefresh.error', { defaultValue: '刷新失败' });
     default:
       return '';
   }
@@ -104,15 +107,18 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   // MA-10: derive the displayed status at render time instead of mirroring it
   // through a useEffect+setStatus on every touchmove frame (60-120Hz double
   // render). `status` state now only holds the COMMITTED machine state
-  // (normal/loading/success); the transient 'pulling'/'loosing' labels are
-  // pure functions of the current touch.
+  // (normal/loading/success/error); the transient 'pulling'/'loosing' labels
+  // are pure functions of the current touch.
   //
   // The derivation MUST be gated on `state.isTouching`: use-touch.onTouchEnd
   // only clears isTouching, not deltaY/deltaX (those reset on the next
   // touchStart). Without the gate, a release-without-commit would leave a
   // stale 'pulling'/'loosing' label and data-status because the (now stale)
   // directionalDelta is still > 0.
-  const isBusy = status === 'loading' || status === 'success';
+  // G4-R2-视角5-01: 'error' holds the indicator (like 'success') for the same
+  // bounded window — but with the error label and NO spinner.
+  const isBusy = status === 'loading' || status === 'success' || status === 'error';
+  const showSpinner = status === 'loading';
   const resolvedStatus: PullRefreshStatus = isBusy
     ? status
     : state.isTouching && directionalDelta > 0
@@ -133,6 +139,12 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
       // pattern — write the ref inline with every setStatus so a rapid second
       // touchEnd in the same tick sees 'loading' and short-circuits (the
       // passive useEffect mirror would only fire after commit).
+      // A pending 'success'/'error' reset timer must not fire into the new
+      // 'loading' window and cut it short.
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+        successTimerRef.current = null;
+      }
       statusRef.current = 'loading';
       setStatus('loading');
       // MA-01: a rejected onRefresh must return to 'normal' instead of locking
@@ -164,9 +176,19 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
           }, successDuration);
         })
         .catch(() => {
+          // G4-R2-视角5-01 (plan 485 Phase 2): a failed refresh is no longer a
+          // silent reset — it shows an 'error' status (visible label, no
+          // spinner) for the same bounded window as success, then resets.
           if (!isMountedRef.current) return;
-          statusRef.current = 'normal';
-          setStatus('normal');
+          statusRef.current = 'error';
+          setStatus('error');
+          if (successTimerRef.current) clearTimeout(successTimerRef.current);
+          successTimerRef.current = setTimeout(() => {
+            if (!isMountedRef.current) return;
+            successTimerRef.current = null;
+            statusRef.current = 'normal';
+            setStatus('normal');
+          }, successDuration);
         });
       return;
     }
@@ -263,7 +285,7 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
         aria-live="polite"
         data-indicator-text={indicatorText || undefined}
       >
-        {isBusy ? <Spinner className="size-4" /> : null}
+        {showSpinner ? <Spinner className="size-4" /> : null}
         <span>{indicatorText}</span>
       </div>
       <div data-slot="pull-refresh-body">{bodyContent}</div>

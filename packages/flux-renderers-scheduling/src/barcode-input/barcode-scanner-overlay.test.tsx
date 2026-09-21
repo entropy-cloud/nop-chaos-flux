@@ -385,3 +385,37 @@ describe('BarcodeScannerOverlay C9 regression — consume-once guard (P1-2 doubl
     unmount();
   });
 });
+
+describe('BarcodeScannerOverlay — validation error surfaced in-overlay (G4-R2-视角4-01, plan 485 P2)', () => {
+  afterEach(cleanup);
+
+  it('renders a visible destructive validation band inside the overlay', () => {
+    render(
+      <BarcodeScannerOverlay
+        open={true}
+        onClose={vi.fn()}
+        onScan={vi.fn()}
+        validationError="Value does not match pattern: ^ABC"
+      />,
+    );
+    // The field-level error region sits underneath this fixed z-50 overlay —
+    // the rejected scan must be visible (and announced) at the point of action.
+    const band = document.querySelector('[data-slot="barcode-scanner-validation-error"]');
+    expect(band).toBeTruthy();
+    expect(band!.getAttribute('role')).toBe('alert');
+    expect(band!.textContent).toContain('Value does not match pattern');
+    // It lives INSIDE the overlay surface, not behind it.
+    expect(band!.closest('[data-slot="barcode-scanner-overlay"]')).toBeTruthy();
+  });
+
+  it('renders no validation band when no validation error is passed', () => {
+    render(
+      <BarcodeScannerOverlay
+        open={true}
+        onClose={vi.fn()}
+        onScan={vi.fn()}
+      />,
+    );
+    expect(document.querySelector('[data-slot="barcode-scanner-validation-error"]')).toBeNull();
+  });
+});

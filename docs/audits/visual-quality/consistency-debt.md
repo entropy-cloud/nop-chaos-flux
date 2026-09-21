@@ -32,6 +32,12 @@
   - 裁决: pending
   - 状态: open
 
+[V12b-D1] P2 候选池首批消化（族9+族5+V12a 转入 30 条）
+
+- 证据: `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`（159 开放台账）+ plan 485
+- 裁决: 30/30 landed（G2-R3-视角4-01 prompt 保留带 inline 反馈裁决；G7 两 schema 条目就地修复）；门禁 225→223 instances、68→66 files，newHits=0、新增豁免 0
+- 状态: closed（V12b 面）；V12d/V12e/V12f 滚动批次与 V12c P3 池残余 open
+
 ## 视觉证据
 
 闭环指标即门禁数字：V12a 起对照协议 v1（`README.md`）——v1 快照（225 instances / 68 对 / 69 entries，2026-09-21）之后 `totals.entries` 不增、`totals.instances` 单调不增且变动附批次归因、`newHits` 持续 0。批次先红后绿证据随各 plan 记录。

@@ -69,6 +69,10 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   const controlledValue = Array.isArray(resolved.value) ? (resolved.value as AiAttachmentItem[]) : null;
   const [internalAttachments, setInternalAttachments] = useState<AiAttachment[]>([]);
   const [dragging, setDragging] = useState(false);
+  // G5-R2-视角5-01 (plan 485 Phase 2): over-limit files were dropped silently
+  // (only the schema onError event fired, which renders nothing). The rejection
+  // now also surfaces as a visible destructive note (existing i18n keys).
+  const [rejectionNote, setRejectionNote] = useState<string | null>(null);
   const attachments = controlledValue ?? internalAttachments;
   // AI-10 (resource lifecycle): object URLs created locally (via the picker /
   // drop / paste) are tracked here so they can be revoked on remove and on
@@ -132,6 +136,17 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
     if (tooMany) {
       const errorPayload = { type: 'ai:attachments-error', reason: 'attachment-too-many' };
       void props.events.onError?.(errorPayload, dispatchCtx(errorPayload, props.node.scope as ScopeRef | undefined));
+    }
+    // G5-R2-视角5-01: visible feedback alongside the schema event. Cleared on
+    // the next fully-accepted batch so the note stays bounded.
+    if (tooLarge || tooMany) {
+      setRejectionNote(
+        [tooLarge ? t('flux.ai.fileTooLarge') : null, tooMany ? t('flux.ai.tooManyFiles') : null]
+          .filter(Boolean)
+          .join(' '),
+      );
+    } else if (accepted.length > 0) {
+      setRejectionNote(null);
     }
   }
 
@@ -259,6 +274,15 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
           </Button>
         ) : null}
       </div>
+      {rejectionNote ? (
+        <div
+          data-slot="ai-attachments-rejection"
+          role="alert"
+          className="mt-2 text-xs text-destructive"
+        >
+          {rejectionNote}
+        </div>
+      ) : null}
       {attachments.length > 0 ? (
         <div
           data-slot="ai-attachments-list"

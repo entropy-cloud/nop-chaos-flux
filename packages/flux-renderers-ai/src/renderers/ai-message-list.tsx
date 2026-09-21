@@ -51,6 +51,24 @@ function LoopLimitNote(): React.ReactElement {
   );
 }
 
+/**
+ * G5-R2-视角3-01 (plan 485 Phase 2): aborted turns get a user-visible terminal
+ * state — previously the request silently dropped back to idle visuals with no
+ * indication that generation was stopped. Token-driven muted styling, same
+ * family as LoopLimitNote.
+ */
+function AbortedNote(): React.ReactElement {
+  return (
+    <div
+      data-slot="ai-message-list-aborted"
+      className="flex items-center gap-2 px-1 pb-1 text-xs text-muted-foreground"
+      role="status"
+    >
+      {t('flux.ai.requestAborted')}
+    </div>
+  );
+}
+
 function messageContentSignature(message: ChatMessage): string {
   const content = message.content;
   if (typeof content === 'string') return content;
@@ -67,6 +85,8 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
   const messages = ctx?.messages ?? [];
   const autoScrollEnabled = props.autoScroll !== false;
   const inError = ctx?.requestState === 'error';
+  // G5-R2-视角3-01: aborted is a distinct terminal state with its own note.
+  const inAborted = ctx?.requestState === 'aborted';
   // bug 166 (plan 472 V2): display-level streaming window = engine processing
   // && the bubble is the last message && it is the assistant reply being
   // accumulated. Drives bubble `data-streaming` + the markdown cursor through
@@ -180,7 +200,8 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
             })}
           </div>
           {loopLimitReached ? <LoopLimitNote /> : null}
-          {showListErrorBanner ? <ListErrorBanner messages={messages} sendMessage={ctx?.sendMessage} /> : null}
+          {inAborted ? <AbortedNote /> : null}
+          {showListErrorBanner ? <ListErrorBanner messages={messages} engine={ctx?.engine} /> : null}
         </>
       ) : (
         <>
@@ -201,7 +222,8 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
             />
           ))}
           {loopLimitReached ? <LoopLimitNote /> : null}
-          {showListErrorBanner ? <ListErrorBanner messages={messages} sendMessage={ctx?.sendMessage} /> : null}
+          {inAborted ? <AbortedNote /> : null}
+          {showListErrorBanner ? <ListErrorBanner messages={messages} engine={ctx?.engine} /> : null}
         </>
       )}
     </div>

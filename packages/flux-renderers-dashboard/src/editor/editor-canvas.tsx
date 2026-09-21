@@ -2,6 +2,7 @@ import React, { useRef, type KeyboardEvent, type PointerEvent as ReactPointerEve
 import type { EditorCore } from '@nop-chaos/editor-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { GripVertical, X } from 'lucide-react';
+import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import type { DashboardDocument } from './dashboard-domain-adapter.js';
 import { buildPalettePanel } from './editor-palette.js';
 import type { DashboardPanelSchema } from '../schemas.js';
@@ -52,6 +53,7 @@ export function EditorCanvas({
   height,
   renderPanelContent,
 }: EditorCanvasProps) {
+  const { t } = useFluxTranslation();
   const { canvasRef, canvasWidth } = useCanvasWidth();
   const working = core.getState().working;
   const dragRef = useRef<{
@@ -188,7 +190,7 @@ export function EditorCanvas({
       <div
         data-slot="dashboard-editor-canvas-body"
         role="region"
-        aria-label="Dashboard editing canvas"
+        aria-label={t('flux.dashboard.editor.canvasLabel')}
         className="relative"
         style={{ width: '100%', height: Math.max(canvasHeight, 120) }}
         tabIndex={0}
@@ -210,7 +212,7 @@ export function EditorCanvas({
               data-selected={selected ? 'true' : undefined}
               role="button"
               tabIndex={0}
-              aria-label={`Dashboard panel ${panel.id}`}
+              aria-label={t('flux.dashboard.editor.panelLabel', { id: panel.id })}
               className={cn(
                 'group absolute flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm',
                 selected
@@ -231,7 +233,7 @@ export function EditorCanvas({
                       type="button"
                       variant="ghost"
                       size="icon-xs"
-                      aria-label={`Remove ${panel.id}`}
+                      aria-label={t('flux.dashboard.editor.removePanel', { id: panel.id })}
                       className="rounded-full border border-border bg-background text-muted-foreground hover:text-destructive"
                       onClick={(event) => {
                         event.stopPropagation();

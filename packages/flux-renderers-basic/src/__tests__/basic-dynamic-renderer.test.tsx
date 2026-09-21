@@ -566,3 +566,40 @@ describe('basicRendererDefinitions dynamic-renderer schema-fetch dedup + cache (
     cleanup();
   });
 });
+
+describe('dynamic-renderer error styling — destructive semantics (G1-视角5-05, plan 485 P2)', () => {
+  it('renders the load failure through a destructive token-styled alert, not plain text', async () => {
+    const fetcher = createMockFetcher(async () => ({
+      ok: false,
+      status: 500,
+      data: null,
+    }));
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer-error-style"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dynamic-renderer',
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
+              body: { type: 'text', text: 'Loading...' },
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => {
+      const alert = document.querySelector('[data-slot="dynamic-renderer-error"]');
+      expect(alert).not.toBeNull();
+      expect(alert!.getAttribute('role')).toBe('alert');
+      expect(alert!.className).toContain('text-destructive');
+      expect(alert!.className).toContain('border-destructive/40');
+    });
+    cleanup();
+  });
+});

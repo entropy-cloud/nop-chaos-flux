@@ -37,7 +37,7 @@ test.describe('E3 form input enhancements', () => {
   }) => {
     await openFormInputEnhancementsPage(page);
 
-    const moveUpButtons = page.getByRole('button', { name: /^Move up Tag \d+$/ });
+    const moveUpButtons = page.locator('[data-slot="array-editor-move-up"]');
     await expect(moveUpButtons.nth(0)).toBeDisabled();
     await expect(moveUpButtons.nth(1)).toBeEnabled();
 

@@ -89,9 +89,20 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
         data-cid={props.meta.cid || undefined}
         data-slot="markdown"
         data-state={fetchError ? 'error' : 'empty'}
-        className={cn('nop-markdown', props.meta.className)}
+        className={cn(
+          'nop-markdown',
+          // G1-视角5-05 (plan 485 Phase 2): the fetch failure is
+          // destructive-styled (semantic tokens, dark-adaptive), not plain text.
+          fetchError &&
+            'rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive',
+          props.meta.className,
+        )}
       >
-        {fetchError ? t('flux.common.loadFailed') : (hasEmpty ? emptyContent : null)}
+        {fetchError ? (
+          <span role="alert" data-slot="markdown-error">
+            {t('flux.common.loadFailed')}
+          </span>
+        ) : (hasEmpty ? emptyContent : null)}
       </div>
     );
   }

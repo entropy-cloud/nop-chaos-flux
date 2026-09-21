@@ -127,3 +127,7 @@ normal → pulling → loosing → loading → success → normal
 | onRefresh reject（2026-06-23 MA-01 裁定）                     | `status` 回到 `normal`（不卡 `loading`），用户可再次下拉重试                                              |
 | 卸载时 in-flight refresh（NEW-MM-04）                         | `isMountedRef` 守卫阻止 `.then()` 在 unmount 后调度 success `setTimeout`（由 focused 测试验证可观测信号） |
 | **触摸目标**                                                  | 触摸区域需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸     |
+
+## V12b 行为契约补记（plan 485）
+
+- 刷新失败进入有界 'error' 态并显示可见标签，不再静默复位 normal。

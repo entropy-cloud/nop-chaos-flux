@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, hasRendererSlotContent } from '@nop-chaos/flux-react';
 import { resolveGap } from '@nop-chaos/flux-react';
@@ -23,12 +23,31 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
   const bodyContent = resolveRendererSlotContent(props, 'body');
   const collapsible = slotProps.collapsible === true;
   const [collapsed, setCollapsed] = useState(slotProps.collapsed === true && collapsible);
+  const fieldsetRef = useRef<HTMLFieldSetElement | null>(null);
   const fieldsetGap = resolveGap(slotProps.gap as number | string | undefined);
   const resolvedColumnCount =
     slotProps.columnCount !== undefined && Number.isFinite(slotProps.columnCount)
       ? Math.max(1, Math.floor(slotProps.columnCount))
       : undefined;
   const showGrid = resolvedColumnCount !== undefined && resolvedColumnCount > 1;
+
+  // P2-18 residual (plan 485 Phase 2): the collapsed body keeps validating, so
+  // a submit-blocking error must reveal itself — auto-expand when any inner
+  // field flips to aria-invalid instead of hiding it behind display:none.
+  useEffect(() => {
+    const host = fieldsetRef.current;
+    if (!collapsible || !collapsed || !host || typeof MutationObserver === 'undefined') return;
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if ((mutation.target as Element | null)?.getAttribute?.('aria-invalid') === 'true') {
+          setCollapsed(false);
+          return;
+        }
+      }
+    });
+    observer.observe(host, { attributes: true, attributeFilter: ['aria-invalid'], subtree: true });
+    return () => observer.disconnect();
+  }, [collapsible, collapsed]);
 
   const bodyStyle = collapsed
     ? { display: 'none', ...fieldsetGap.style }
@@ -38,6 +57,7 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
 
   return (
     <fieldset
+      ref={fieldsetRef}
       className={cn('nop-fieldset', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}

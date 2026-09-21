@@ -79,7 +79,7 @@ function ArrayEditorRow(props: {
     behavior: childBehavior,
     fieldState: itemFieldState,
   });
-  const labelBase = itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`;
+  const labelBase = itemLabel ? `${itemLabel} ${index + 1}` : t('flux.form.itemEntry', { index: index + 1 });
   const canRemove = totalCount > minItems;
   const canMoveUp = index > 0;
   const canMoveDown = index < totalCount - 1;
@@ -99,8 +99,8 @@ function ArrayEditorRow(props: {
           type="text"
           value={item.value}
           disabled={disabled}
-          placeholder={itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}
-          aria-label={itemLabel ? `${itemLabel} ${index + 1}` : `Item ${index + 1}`}
+          placeholder={labelBase}
+          aria-label={labelBase}
           aria-invalid={itemUi.showError ? true : undefined}
           aria-describedby={itemUi.showError ? errorId : undefined}
           aria-errormessage={itemUi.showError ? errorId : undefined}
@@ -147,7 +147,7 @@ function ArrayEditorRow(props: {
         size="sm"
         data-slot="array-editor-move-up"
         disabled={disabled || !canMoveUp}
-        aria-label={`Move up ${labelBase}`}
+        aria-label={`${t('flux.form.moveUp')} ${labelBase}`}
         onClick={() => {
           if (readOnly || !canMoveUp) {
             return;
@@ -163,7 +163,7 @@ function ArrayEditorRow(props: {
         size="sm"
         data-slot="array-editor-move-down"
         disabled={disabled || !canMoveDown}
-        aria-label={`Move down ${labelBase}`}
+        aria-label={`${t('flux.form.moveDown')} ${labelBase}`}
         onClick={() => {
           if (readOnly || !canMoveDown) {
             return;
@@ -177,6 +177,7 @@ function ArrayEditorRow(props: {
         type="button"
         variant="ghost"
         size="sm"
+        data-slot="array-editor-remove"
         disabled={disabled || !canRemove}
         className="hover:text-destructive"
         aria-label={`${t('flux.form.remove')} ${labelBase}`}

@@ -12,17 +12,17 @@ import type { DashboardPanelSchema } from '../schemas.js';
  */
 export const DASHBOARD_PALETTE_TYPES: ReadonlyArray<{
   type: string;
-  label: string;
+  labelKey: string;
   defaultTitle: string;
   defaultW: number;
   defaultH: number;
 }> = [
-  { type: 'chart', label: 'Chart', defaultTitle: 'Chart', defaultW: 6, defaultH: 4 },
-  { type: 'table', label: 'Table', defaultTitle: 'Table', defaultW: 6, defaultH: 4 },
-  { type: 'stat-tile', label: 'Stat Tile', defaultTitle: 'KPI', defaultW: 3, defaultH: 2 },
-  { type: 'iframe', label: 'Iframe', defaultTitle: 'Iframe', defaultW: 6, defaultH: 4 },
-  { type: 'html', label: 'HTML', defaultTitle: 'HTML', defaultW: 6, defaultH: 3 },
-  { type: 'text', label: 'Text', defaultTitle: 'Text', defaultW: 4, defaultH: 2 },
+  { type: 'chart', labelKey: 'flux.dashboard.editor.paletteChart', defaultTitle: 'Chart', defaultW: 6, defaultH: 4 },
+  { type: 'table', labelKey: 'flux.dashboard.editor.paletteTable', defaultTitle: 'Table', defaultW: 6, defaultH: 4 },
+  { type: 'stat-tile', labelKey: 'flux.dashboard.editor.paletteStatTile', defaultTitle: 'KPI', defaultW: 3, defaultH: 2 },
+  { type: 'iframe', labelKey: 'flux.dashboard.editor.paletteIframe', defaultTitle: 'Iframe', defaultW: 6, defaultH: 4 },
+  { type: 'html', labelKey: 'flux.dashboard.editor.paletteHtml', defaultTitle: 'HTML', defaultW: 6, defaultH: 3 },
+  { type: 'text', labelKey: 'flux.dashboard.editor.paletteText', defaultTitle: 'Text', defaultW: 4, defaultH: 2 },
 ];
 
 export interface EditorPaletteProps {
@@ -62,7 +62,7 @@ export function EditorPalette({ onAddPanel }: EditorPaletteProps) {
             'hover:border-primary/60 hover:bg-accent',
           )}
         >
-          <span>{entry.label}</span>
+          <span>{t(entry.labelKey)}</span>
           <span className="text-xs text-muted-foreground">{entry.type}</span>
         </Button>
       ))}

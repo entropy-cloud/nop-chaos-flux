@@ -15,7 +15,7 @@ import {
   useRenderInstancePath,
   useRenderScope,
 } from '@nop-chaos/flux-react';
-import { cn, useIsMobile } from '@nop-chaos/ui';
+import { Button, cn, useIsMobile } from '@nop-chaos/ui';
 import { getOptionRowStateAttributes, optionRowValueMatches } from '@nop-chaos/flux-react';
 import type { ListSchema, ListSelectionMode, OptionRowConfig } from './schemas.js';
 import {
@@ -398,6 +398,25 @@ export function ListRenderer(props: ListOwner) {
     onLoadMore: handleLoadMore,
   });
 
+  // G3-视角5-03 (plan 485 Phase 2): a failed infinite load is user-visible
+  // (status line) AND re-triggerable. The retry re-dispatches onLoadMore for
+  // the CURRENT page — the page pointer was already advanced by the failed
+  // attempt's applyPage, so retrying must not advance it again. Mirrors the
+  // crud-infinite-scroll-area retry contract (clear error → load → settle).
+  const retryLoadMore = (): Promise<unknown> | void => {
+    const loadPayload = {
+      type: 'list:load-more',
+      currentPage: pagination.currentPage,
+      pageSize: pagination.pageSize,
+      total: pagination.total,
+    };
+    return props.events.onLoadMore?.(loadPayload, {
+      scope: props.node.scope,
+      event: loadPayload,
+      evaluationBindings: loadPayload,
+    });
+  };
+
   useListHandle({
     componentRegistry,
     id: props.id,
@@ -541,8 +560,42 @@ export function ListRenderer(props: ListOwner) {
         );
       })}
       {infiniteActive ? (
-        <div className="nop-list-infinite px-3 py-2 text-sm text-muted-foreground" data-slot="list-infinite">
+        <div className="nop-list-infinite flex flex-col items-start gap-2 px-3 py-2 text-sm text-muted-foreground" data-slot="list-infinite">
           <div data-slot="list-infinite-status">{infiniteStatus}</div>
+          {infiniteState.error ? (
+            <Button
+              variant="outline"
+              size="sm"
+              data-slot="list-infinite-retry"
+              onClick={() => {
+                infiniteState.setError(undefined);
+                const result = retryLoadMore();
+                if (result && typeof (result as Promise<unknown>).then === 'function') {
+                  infiniteState.setLoading(true);
+                  void Promise.resolve(result)
+                    .then((value) => {
+                      const ok =
+                        value && typeof value === 'object'
+                          ? (value as { ok?: boolean }).ok
+                          : undefined;
+                      if (ok === false) {
+                        infiniteState.setError(
+                          (value as { error?: unknown }).error ?? new Error('Load failed'),
+                        );
+                      }
+                    })
+                    .catch((err: unknown) => {
+                      infiniteState.setError(err);
+                    })
+                    .finally(() => {
+                      infiniteState.setLoading(false);
+                    });
+                }
+              }}
+            >
+              {t('flux.common.retry')}
+            </Button>
+          ) : null}
           {infiniteSentinelEnabled ? (
             <div ref={sentinelRef} data-slot="list-infinite-sentinel" style={{ height: 1 }} aria-hidden />
           ) : null}

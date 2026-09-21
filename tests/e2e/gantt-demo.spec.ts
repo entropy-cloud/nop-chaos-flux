@@ -57,8 +57,9 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
 
     const buttons = toolbar.locator('button');
     await expect(buttons).toHaveCount(4);
-    await expect(buttons.nth(0)).toHaveText('−');
-    await expect(buttons.nth(1)).toHaveText('+');
+    // plan 485 G4-视角1-01: zoom controls are icon buttons with i18n aria-labels
+    await expect(buttons.nth(0)).toHaveAttribute('aria-label', '缩小');
+    await expect(buttons.nth(1)).toHaveAttribute('aria-label', '放大');
 
     await assertTrackedPageErrors(page);
   });
@@ -372,7 +373,7 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const zoomOutBtn = page.locator('[data-slot="gantt"] button').filter({ hasText: '−' }).first();
+    const zoomOutBtn = page.locator('[data-slot="gantt"] button[aria-label="缩小"]').first();
     if (await zoomOutBtn.isVisible()) {
       await zoomOutBtn.click();
       await expect

@@ -2,6 +2,7 @@ import React, { useState, useSyncExternalStore } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttTask, GanttColumn, GanttStoreApi } from './gantt.types.js';
 
@@ -149,10 +150,14 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
                             size="sm"
                             aria-expanded={store.isOpen(task.id)}
                             aria-label={store.isOpen(task.id) ? t('scheduling.gantt.collapseTask', { text: task.text }) : t('scheduling.gantt.expandTask', { text: task.text })}
-                            className="w-4 h-4 p-0 text-muted-foreground hover:text-foreground text-xs"
+                            className="w-4 h-4 p-0 text-muted-foreground hover:text-foreground"
                             onClick={(e) => { e.stopPropagation(); handleToggle(task.id); }}
                           >
-                            {'>'}
+                            {store.isOpen(task.id) ? (
+                              <ChevronDownIcon className="size-3" aria-hidden="true" />
+                            ) : (
+                              <ChevronRightIcon className="size-3" aria-hidden="true" />
+                            )}
                           </Button>
                         )}
                         {editingCell?.taskId === task.id && editingCell?.column === 'text' ? (

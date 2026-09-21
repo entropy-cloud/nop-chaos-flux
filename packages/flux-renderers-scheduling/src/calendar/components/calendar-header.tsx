@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import type { CalendarView } from '../../schemas.js';
 import type { CalendarNavigationResult } from '../hooks/use-calendar-navigation.js';
 
@@ -51,7 +52,7 @@ export function CalendarHeader({
           className="hover:bg-gray-100"
           aria-label={t('scheduling.previous')}
         >
-          ‹
+          <ChevronLeftIcon className="size-4" aria-hidden="true" />
         </Button>
         <Button
           variant="outline"
@@ -68,7 +69,7 @@ export function CalendarHeader({
           className="hover:bg-gray-100"
           aria-label={t('scheduling.next')}
         >
-          ›
+          <ChevronRightIcon className="size-4" aria-hidden="true" />
         </Button>
         <h2 className="text-base font-semibold ml-2">
           {formatPeriodLabel(currentDate, activeView, locale)}

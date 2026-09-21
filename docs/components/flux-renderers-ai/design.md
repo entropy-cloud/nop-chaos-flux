@@ -775,3 +775,7 @@ v1→v2 变更摘要（§4）、第 1 轮 fresh-session 复审记录（§5）、
 **组件级细节增强**（时间戳 / 流式光标 / 代码块复制 / 工具状态颜色 / 拖放附件 / 消息编辑 / LaTeX 评估 / a11y `aria-live` / 虚拟滚动等）见 `improvement-analysis.md` §3-§7。Phase 路线与改进项 ID 映射见 `implementation.md` §2。
 
 **已明确不引入**：mermaid / shiki / Babel standalone / MCP SDK 包内依赖 / LLM 提供商 SDK（理由见 `improvement-analysis.md` §6）。
+
+## V12b 行为契约补记（plan 485）
+
+- 会话切换/失败反馈三通道：aborted 消息有独立视觉态（AbortedNote，role="status"）；ai retry 走 engine.regenerate（截断到上一条用户消息后重放），不再追加重复用户消息；附件超限走既有 i18n 键 + onError 通知（不再静默丢弃）。

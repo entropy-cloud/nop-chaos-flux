@@ -162,7 +162,7 @@ test.describe('Gantt — Editor Dialog, Keyboard Nav & Undo', () => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
 
-    const zoomOutBtn = page.locator('[data-slot="gantt"] button').filter({ hasText: '−' }).first();
+    const zoomOutBtn = page.locator('[data-slot="gantt"] button[aria-label="缩小"]').first();
     if (await zoomOutBtn.isVisible()) {
       await zoomOutBtn.click();
       await expect

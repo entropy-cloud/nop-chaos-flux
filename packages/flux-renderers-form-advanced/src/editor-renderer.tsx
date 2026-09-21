@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent, type Content } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -103,6 +103,9 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
   const readOnly = presentation.readOnly || !presentation.interactive;
   const handlersRef = useRef(handlers);
   const outputFormatRef = useRef(outputFormat);
+  // V12b G2-R3-视角4-01: toolbar runs report an inline feedback token (e.g.
+  // rejected link URL) instead of failing silently.
+  const [toolbarFeedback, setToolbarFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     handlersRef.current = handlers;
@@ -156,6 +159,14 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
       },
       onBlur() {
         handlersRef.current.onBlur();
+        // [G2-R4-视角5-01] focus released — apply the external change that was
+        // queued while the user was editing (emitUpdate:false keeps the applied
+        // content out of the commit loop).
+        const pending = pendingSyncRef.current;
+        pendingSyncRef.current = null;
+        if (pending && pending.value !== lastCommittedRef.current) {
+          applyExternalValueRef.current(pending.value);
+        }
       },
     },
     [],
@@ -166,6 +177,35 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
   // — avoids touching ProseMirror's lazily-built DOMSerializer before the view
   // is fully warmed up, and avoids clobbering the caret during active editing.
   const lastCommittedRef = useRef<unknown>(value);
+
+  // [G2-R4-视角5-01] an external value change landing while the editor holds
+  // focus is QUEUED here (never dropped) and applied on blur. A superseding
+  // queue write keeps only the newest value — no stale commit.
+  const pendingSyncRef = useRef<{ value: unknown } | null>(null);
+
+  function applyExternalValue(next: unknown): void {
+    if (!editor) {
+      return;
+    }
+    const nextContent: Content =
+      outputFormat === 'json'
+        ? (next as Content)
+        : sanitizeEditorHtml(String(next ?? ''));
+    try {
+      editor.commands.setContent(nextContent || '', { emitUpdate: false });
+      lastCommittedRef.current = next;
+    } catch {
+      // Editor view not ready yet (e.g. mid-mount); the next external change
+      // re-attempts the sync. The editor still initializes from `content`.
+    }
+  }
+  // The once-created TipTap onBlur reads this mirror so it always calls the
+  // latest render's apply routine (fresh outputFormat closure). The mirror is
+  // refreshed in an effect — react-compiler forbids ref writes during render.
+  const applyExternalValueRef = useRef(applyExternalValue);
+  useEffect(() => {
+    applyExternalValueRef.current = applyExternalValue;
+  });
 
   // Sync external value changes (initial value / programmatic setValue) into the
   // editor without clobbering the user's caret during active editing.
@@ -180,19 +220,12 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
       return;
     }
     if (editor.isFocused) {
+      // [G2-R4-视角5-01] queue instead of dropping — applied on blur.
+      pendingSyncRef.current = { value };
       return;
     }
-    const nextContent: Content =
-      outputFormat === 'json'
-        ? (value as Content)
-        : sanitizeEditorHtml(String(value ?? ''));
-    try {
-      editor.commands.setContent(nextContent || '', { emitUpdate: false });
-      lastCommittedRef.current = value;
-    } catch {
-      // Editor view not ready yet (e.g. mid-mount); the next external change
-      // re-attempts the sync. The editor still initializes from `content`.
-    }
+    pendingSyncRef.current = null;
+    applyExternalValueRef.current(value);
   }, [editor, value, outputFormat, presentation.readOnly]);
 
   useEffect(() => {
@@ -270,13 +303,23 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
                   active && 'bg-accent text-accent-foreground',
                   disabled && 'opacity-40',
                 )}
-                onClick={() => config.run(editor)}
+                onClick={() => {
+                  setToolbarFeedback(
+                    config.run(editor) === 'unsafe-link' ? t('flux.editor.unsafeLink') : null,
+                  );
+                }}
               >
                 <Icon className="size-4" />
               </Button>
             );
           })}
         </div>
+      ) : null}
+
+      {toolbarFeedback ? (
+        <p className="text-xs text-destructive" role="status" data-slot="editor-toolbar-feedback">
+          {toolbarFeedback}
+        </p>
       ) : null}
 
       <div className="rounded-md border border-input bg-background">

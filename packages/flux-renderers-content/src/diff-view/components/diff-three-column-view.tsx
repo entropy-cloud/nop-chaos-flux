@@ -94,7 +94,7 @@ export function DiffThreeColumnView({
   return (
     <div data-view="three-column" className="nop-diff-three-column-view">
       {conflictZones.length > 0 && (
-        <div className="nop-diff-three-col-nav flex items-center gap-2 px-2 py-1 border-b bg-gray-50">
+        <div className="nop-diff-three-col-nav flex items-center gap-2 px-2 py-1 border-b">
           <Button
             size="sm"
             variant="outline"

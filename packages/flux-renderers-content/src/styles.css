@@ -16,18 +16,41 @@
 }
 
 /* Progress variant theming recolors the inner indicator (the ui Progress builds
-   its own indicator with bg-primary; the marker overrides per data-variant). */
+   its own indicator with bg-primary; the marker overrides per data-variant).
+   Colors flow through the theme-tokens semantic status vars (--success /
+   --warning / --destructive, re-declared per theme block); local tokens carry
+   bare-host fallbacks with the nop-editor-content dark triggers (OS preference
+   guarded against explicit light, plus the [data-mode='dark'] attribute). */
+.nop-progress {
+  --nop-progress-success: hsl(var(--success, 160 84% 39%));
+  --nop-progress-warning: hsl(var(--warning, 38 92% 50%));
+  --nop-progress-danger: hsl(var(--destructive, var(--danger, 0 84% 60%)));
+}
 
 .nop-progress[data-variant='success'] [data-slot='progress-indicator'] {
-  background-color: oklch(72% 0.17 152);
+  background-color: var(--nop-progress-success);
 }
 
 .nop-progress[data-variant='warning'] [data-slot='progress-indicator'] {
-  background-color: oklch(75% 0.18 70);
+  background-color: var(--nop-progress-warning);
 }
 
 .nop-progress[data-variant='danger'] [data-slot='progress-indicator'] {
-  background-color: oklch(58% 0.22 27);
+  background-color: var(--nop-progress-danger);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode='light']) .nop-progress {
+    --nop-progress-success: hsl(var(--success, 160 70% 50%));
+    --nop-progress-warning: hsl(var(--warning, 38 82% 60%));
+    --nop-progress-danger: hsl(var(--destructive, var(--danger, 0 70% 50%)));
+  }
+}
+
+[data-mode='dark'] .nop-progress {
+  --nop-progress-success: hsl(var(--success, 160 70% 50%));
+  --nop-progress-warning: hsl(var(--warning, 38 82% 60%));
+  --nop-progress-danger: hsl(var(--destructive, var(--danger, 0 70% 50%)));
 }
 
 @import './diff-view/diff-view.css';

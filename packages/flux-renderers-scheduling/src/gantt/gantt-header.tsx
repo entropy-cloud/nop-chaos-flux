@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { MinusIcon, PlusIcon } from 'lucide-react';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttStoreApi } from './gantt.types.js';
 
@@ -53,8 +54,12 @@ export function GanttHeader({ store, toolbarRegion, className, onZoomChange, onZ
 
   return (
     <div className={cn('nop-gantt-toolbar flex items-center gap-1 p-2 border-b bg-gray-50', className)} data-slot="gantt-toolbar">
-      <Button variant="ghost" size="sm" onClick={handleZoomOut}>−</Button>
-      <Button variant="ghost" size="sm" onClick={handleZoomIn}>+</Button>
+      <Button variant="ghost" size="sm" onClick={handleZoomOut} aria-label={t('scheduling.gantt.zoomOut')}>
+        <MinusIcon className="size-4" aria-hidden="true" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={handleZoomIn} aria-label={t('scheduling.gantt.zoomIn')}>
+        <PlusIcon className="size-4" aria-hidden="true" />
+      </Button>
       <Button variant="ghost" size="sm" onClick={handleZoomToFit}>{t('scheduling.gantt.zoomFit')}</Button>
       <Button variant="ghost" size="sm" onClick={handleScrollToToday}>{t('scheduling.today')}</Button>
     </div>

@@ -22,70 +22,95 @@ import type { EditorToolbarButton } from './editor-schemas.js';
 export interface ToolbarButtonConfig {
   id: EditorToolbarButton;
   isActive: (editor: Editor) => boolean;
-  run: (editor: Editor) => void;
+  /** Returns a feedback token for inline display; `undefined` when nothing to surface. */
+  run: (editor: Editor) => ToolbarRunFeedback | undefined;
   canRun: (editor: Editor) => boolean;
 }
+
+/** V12b G2-R3-视角4-01: unsafe link scheme no longer drops silently — the
+ * renderer surfaces this token as inline feedback below the toolbar. */
+export type ToolbarRunFeedback = 'unsafe-link';
 
 export const TOOLBAR_BUTTONS: Record<EditorToolbarButton, ToolbarButtonConfig> = {
   bold: {
     id: 'bold',
     isActive: (e) => e.isActive('bold'),
     canRun: (e) => e.can().toggleBold(),
-    run: (e) => e.chain().focus().toggleBold().run(),
+    run: (e) => {
+      e.chain().focus().toggleBold().run();
+    },
   },
   italic: {
     id: 'italic',
     isActive: (e) => e.isActive('italic'),
     canRun: (e) => e.can().toggleItalic(),
-    run: (e) => e.chain().focus().toggleItalic().run(),
+    run: (e) => {
+      e.chain().focus().toggleItalic().run();
+    },
   },
   underline: {
     id: 'underline',
     isActive: (e) => e.isActive('underline'),
     canRun: (e) => e.can().toggleUnderline(),
-    run: (e) => e.chain().focus().toggleUnderline().run(),
+    run: (e) => {
+      e.chain().focus().toggleUnderline().run();
+    },
   },
   strike: {
     id: 'strike',
     isActive: (e) => e.isActive('strike'),
     canRun: (e) => e.can().toggleStrike(),
-    run: (e) => e.chain().focus().toggleStrike().run(),
+    run: (e) => {
+      e.chain().focus().toggleStrike().run();
+    },
   },
   h1: {
     id: 'h1',
     isActive: (e) => e.isActive('heading', { level: 1 }),
     canRun: (e) => e.can().toggleHeading({ level: 1 }),
-    run: (e) => e.chain().focus().toggleHeading({ level: 1 }).run(),
+    run: (e) => {
+      e.chain().focus().toggleHeading({ level: 1 }).run();
+    },
   },
   h2: {
     id: 'h2',
     isActive: (e) => e.isActive('heading', { level: 2 }),
     canRun: (e) => e.can().toggleHeading({ level: 2 }),
-    run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
+    run: (e) => {
+      e.chain().focus().toggleHeading({ level: 2 }).run();
+    },
   },
   bulletList: {
     id: 'bulletList',
     isActive: (e) => e.isActive('bulletList'),
     canRun: (e) => e.can().toggleBulletList(),
-    run: (e) => e.chain().focus().toggleBulletList().run(),
+    run: (e) => {
+      e.chain().focus().toggleBulletList().run();
+    },
   },
   orderedList: {
     id: 'orderedList',
     isActive: (e) => e.isActive('orderedList'),
     canRun: (e) => e.can().toggleOrderedList(),
-    run: (e) => e.chain().focus().toggleOrderedList().run(),
+    run: (e) => {
+      e.chain().focus().toggleOrderedList().run();
+    },
   },
   code: {
     id: 'code',
     isActive: (e) => e.isActive('code'),
     canRun: (e) => e.can().toggleCode(),
-    run: (e) => e.chain().focus().toggleCode().run(),
+    run: (e) => {
+      e.chain().focus().toggleCode().run();
+    },
   },
   blockquote: {
     id: 'blockquote',
     isActive: (e) => e.isActive('blockquote'),
     canRun: (e) => e.can().toggleBlockquote(),
-    run: (e) => e.chain().focus().toggleBlockquote().run(),
+    run: (e) => {
+      e.chain().focus().toggleBlockquote().run();
+    },
   },
   link: {
     id: 'link',
@@ -96,10 +121,15 @@ export const TOOLBAR_BUTTONS: Record<EditorToolbarButton, ToolbarButtonConfig> =
       if (url === null) {
         // Prompt dismissed → remove the link on the current range.
         e.chain().focus().extendMarkRange('link').unsetLink().run();
-      } else if (isSafeLinkUrl(url)) {
-        e.chain().focus().extendMarkRange('link').setLink({ href: url.trim() }).run();
+        return undefined;
       }
-      // Unsafe scheme (javascript:/data:/vbscript:) → ignored; nothing is set.
+      if (isSafeLinkUrl(url)) {
+        e.chain().focus().extendMarkRange('link').setLink({ href: url.trim() }).run();
+        return undefined;
+      }
+      // Unsafe scheme (javascript:/data:/vbscript:) → report inline instead of
+      // dropping silently (V12b G2-R3-视角4-01, same guard reused).
+      return 'unsafe-link';
     },
   },
   image: {
@@ -121,19 +151,25 @@ export const TOOLBAR_BUTTONS: Record<EditorToolbarButton, ToolbarButtonConfig> =
     id: 'highlight',
     isActive: (e) => e.isActive('highlight'),
     canRun: (e) => e.can().toggleHighlight(),
-    run: (e) => e.chain().focus().toggleHighlight().run(),
+    run: (e) => {
+      e.chain().focus().toggleHighlight().run();
+    },
   },
   undo: {
     id: 'undo',
     isActive: () => false,
     canRun: (e) => e.can().undo(),
-    run: (e) => e.chain().focus().undo().run(),
+    run: (e) => {
+      e.chain().focus().undo().run();
+    },
   },
   redo: {
     id: 'redo',
     isActive: () => false,
     canRun: (e) => e.can().redo(),
-    run: (e) => e.chain().focus().redo().run(),
+    run: (e) => {
+      e.chain().focus().redo().run();
+    },
   },
 };
 

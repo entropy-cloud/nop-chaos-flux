@@ -256,6 +256,43 @@ describe('Gantt', () => {
     expect(t2Toggle).toBeTruthy();
     expect(t2Toggle!.getAttribute('aria-expanded')).toBe('false');
   });
+
+  it('expander indicator follows isOpen (V12b G4-视角3-01)', () => {
+    const tasks = [
+      {
+        id: 't1', text: 'Root 1', start: '2026-01-01', end: '2026-01-10', open: true,
+        children: [
+          { id: 't1a', text: 'Child 1', start: '2026-01-02', end: '2026-01-05' },
+        ],
+      },
+      {
+        id: 't2', text: 'Root 2', start: '2026-01-05', end: '2026-01-15', open: false,
+        children: [
+          { id: 't2a', text: 'Child 2a', start: '2026-01-06', end: '2026-01-10' },
+        ],
+      },
+    ];
+    const { container } = render(
+      React.createElement(Gantt, { ...baseProps, props: { tasks, links: [] } as any }),
+    );
+
+    const toggleButtons = container.querySelectorAll('button[aria-expanded]');
+    const t1Toggle = Array.from(toggleButtons).find(
+      (btn) => btn.getAttribute('aria-label')?.includes('Root 1'),
+    );
+    expect(t1Toggle).toBeTruthy();
+    expect(t1Toggle!.getAttribute('aria-expanded')).toBe('true');
+    expect(t1Toggle!.querySelector('svg.lucide-chevron-down')).toBeTruthy();
+    expect(t1Toggle!.querySelector('svg.lucide-chevron-right')).toBeNull();
+
+    const t2Toggle = Array.from(toggleButtons).find(
+      (btn) => btn.getAttribute('aria-label')?.includes('Root 2'),
+    );
+    expect(t2Toggle).toBeTruthy();
+    expect(t2Toggle!.getAttribute('aria-expanded')).toBe('false');
+    expect(t2Toggle!.querySelector('svg.lucide-chevron-right')).toBeTruthy();
+    expect(t2Toggle!.querySelector('svg.lucide-chevron-down')).toBeNull();
+  });
 });
 
 describe('Gantt regression — C9 scheduling audit (event ctx / reactions / prop re-parse)', () => {

@@ -1,6 +1,7 @@
 import React, { useState, useSyncExternalStore } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { XIcon } from 'lucide-react';
 import type { GanttStoreApi } from './gantt.types.js';
 import { diffInDays } from './utils/date.js';
 
@@ -116,7 +117,7 @@ export function GanttLinks({ store, className, onLinkClick, onLinkRemove }: Gant
                   tabIndex={0}
                   aria-label={t('scheduling.gantt.deleteLinkLabel')}
                 >
-                  &times;
+                  <XIcon className="size-3" aria-hidden="true" />
                 </div>
               </foreignObject>
             )}

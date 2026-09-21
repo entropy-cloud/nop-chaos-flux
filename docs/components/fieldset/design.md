@@ -116,3 +116,7 @@ fieldset 不涉及布局配置。`mode`/`labelAlign`/`labelWidth` 通过 React c
 
 - 需要避免把折叠逻辑耦合到 form runtime。
 - `fieldset` 已按当前 live runtime 收入口径矩阵；后续重点是保持 matrix、manifest 与实现同步，避免再次漂移。
+
+## V12b 行为契约补记（plan 485）
+
+- 折叠体持续参与校验（keepMounted + display:none）；任一内部字段 `aria-invalid="true"` 时 fieldset 经 MutationObserver 自动展开，提交阻断类错误不再被隐藏。

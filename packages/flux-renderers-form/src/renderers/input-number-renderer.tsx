@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { numberAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -71,6 +71,11 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
   const inputRef = useRef<HTMLInputElement | null>(null);
   const initialValueRef = useRef<number | undefined>(numericValue);
   const latestValueRef = useRef<number | undefined>(numericValue);
+  // [P2-15] display/commit decoupling: while the user is typing, the input
+  // shows this draft verbatim (including badInput intermediates like '12e');
+  // the stored value only moves on a valid parse or an explicit clear. `null`
+  // = mirror the stored value.
+  const [draft, setDraft] = useState<string | null>(null);
 
   useEffect(() => {
     latestValueRef.current = numericValue;
@@ -111,6 +116,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
 
   function handleBlur() {
     cancelLongPress();
+    setDraft(null);
     if (numericValue !== undefined) {
       const clamped = clamp(numericValue, min, max);
       const withPrecision = applyPrecision(clamped, precision, precisionMode);
@@ -136,6 +142,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
     }
 
     latestValueRef.current = next;
+    setDraft(null);
     handlers.onChange(next);
     return true;
   }
@@ -224,7 +231,7 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           inputMode={inputMode}
           id={name ? `${name}-control` : undefined}
           name={name || undefined}
-          value={numericValue !== undefined ? numericValue : ''}
+          value={draft ?? (numericValue !== undefined ? numericValue : '')}
           disabled={presentation.effectiveDisabled}
           readOnly={presentation.readOnly}
           aria-label={String((props.props.label ?? name) || '') || undefined}
@@ -247,8 +254,17 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           }}
           onChange={(event) => {
             const raw = event.target.value;
+            // [P2-15] the draft keeps the user's in-progress text visible
+            // (no controlled snap-back); the stored value moves only below.
+            setDraft(raw);
             if (raw === '') {
-              handlers.onChange(undefined);
+              // A badInput intermediate (e.g. a lone '-' in browsers) also
+              // reports '' — it must not wipe the stored value; only an
+              // explicit clear commits undefined.
+              const badInput = (event.target as HTMLInputElement).validity?.badInput === true;
+              if (!badInput) {
+                handlers.onChange(undefined);
+              }
               return;
             }
             const parsed = Number(raw);
