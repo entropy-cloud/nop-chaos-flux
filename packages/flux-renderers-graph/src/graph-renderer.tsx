@@ -5,7 +5,7 @@ import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-co
 import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
-import { Maximize, ZoomIn, ZoomOut } from 'lucide-react';
+import { Maximize, X, ZoomIn, ZoomOut } from 'lucide-react';
 import {
   DEFAULT_LEVEL_MAP,
   type GraphEdge,
@@ -593,7 +593,7 @@ export function GraphRenderer(props: RendererComponentProps<GraphSchema>) {
               onClick={clearSearch}
               className="h-8 px-2"
             >
-              ×
+              <X className="h-4 w-4" />
             </Button>
           ) : null}
         </div>

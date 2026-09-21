@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterEach, beforeEach } from 'vitest';
 import { describe, expect, it } from 'vitest';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { basicRendererDefinitions } from '../index.js';
@@ -8,6 +9,19 @@ import { env } from '../test-support.js';
 
 afterEach(() => {
   cleanup();
+});
+
+// G1-视角9-12 (plan 489 Phase 1): the default title and collapsed hint flow
+// through i18n now — pin the locale (basic-reactions.test.tsx pattern) so the
+// string assertions below are deterministic.
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
 });
 
 describe('ScopeDebugRenderer', () => {

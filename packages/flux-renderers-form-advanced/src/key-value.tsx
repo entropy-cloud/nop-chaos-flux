@@ -207,7 +207,7 @@ function KeyValueRow(props: {
       <Button
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon-sm"
         data-slot="key-value-move-up"
         disabled={disabled || !canMoveUp}
         aria-label={`Move up entry ${index + 1}`}
@@ -223,7 +223,7 @@ function KeyValueRow(props: {
       <Button
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon-sm"
         data-slot="key-value-move-down"
         disabled={disabled || !canMoveDown}
         aria-label={`Move down entry ${index + 1}`}
@@ -240,7 +240,7 @@ function KeyValueRow(props: {
         ref={removeButtonRef}
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon-sm"
         disabled={disabled || !canRemove}
         className="hover:text-destructive"
         aria-label={`${t('flux.form.remove')} entry ${index + 1}`}

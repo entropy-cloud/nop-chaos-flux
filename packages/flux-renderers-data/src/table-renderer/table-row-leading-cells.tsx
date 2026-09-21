@@ -38,7 +38,7 @@ export function TableDragCell(props: {
     >
       <span
         {...dragHandleProps}
-        className="inline-flex h-6 w-6 items-center justify-center rounded hover:bg-accent"
+        className="inline-flex h-6 w-6 items-center justify-center rounded hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <GripVerticalIcon className="size-4" />
       </span>

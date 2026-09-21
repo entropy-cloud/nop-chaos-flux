@@ -114,7 +114,8 @@ describe('StatusRenderer (W3c — business status display, Badge semantic layer)
       container
         .querySelector('[data-testid="success"] [data-slot="status-badge"]')
         ?.className.split(' ')
-        .some((c) => c.startsWith('bg-emerald')),
+        .some((c) => c.startsWith('bg-success')),
+        // plan 489 G6-视角7-01: badge success/warning variants now ride the --success/--warning tokens
     ).toBe(true);
 
     expect(container.querySelector('[data-testid="warn"]')?.getAttribute('data-level')).toBe(
@@ -124,7 +125,7 @@ describe('StatusRenderer (W3c — business status display, Badge semantic layer)
       container
         .querySelector('[data-testid="warn"] [data-slot="status-badge"]')
         ?.className.split(' ')
-        .some((c) => c.startsWith('bg-amber')),
+        .some((c) => c.startsWith('bg-warning')),
     ).toBe(true);
 
     expect(container.querySelector('[data-testid="error"]')?.getAttribute('data-level')).toBe(

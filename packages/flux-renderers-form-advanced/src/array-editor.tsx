@@ -144,7 +144,7 @@ function ArrayEditorRow(props: {
       <Button
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon-sm"
         data-slot="array-editor-move-up"
         disabled={disabled || !canMoveUp}
         aria-label={`${t('flux.form.moveUp')} ${labelBase}`}
@@ -160,7 +160,7 @@ function ArrayEditorRow(props: {
       <Button
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon-sm"
         data-slot="array-editor-move-down"
         disabled={disabled || !canMoveDown}
         aria-label={`${t('flux.form.moveDown')} ${labelBase}`}
@@ -176,7 +176,7 @@ function ArrayEditorRow(props: {
       <Button
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon-sm"
         data-slot="array-editor-remove"
         disabled={disabled || !canRemove}
         className="hover:text-destructive"

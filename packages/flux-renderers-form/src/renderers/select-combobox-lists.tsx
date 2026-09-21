@@ -23,7 +23,7 @@ function highlightText(text: string, query: string): ReactNode {
 
   return parts.map((part) =>
     part.toLowerCase() === query.toLowerCase() ? (
-      <mark key={part} className="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">
+      <mark key={part} className="rounded bg-warning/30 px-0.5 dark:bg-warning/50">
         {part}
       </mark>
     ) : (

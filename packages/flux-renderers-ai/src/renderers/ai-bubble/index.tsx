@@ -2,7 +2,7 @@ import type { ActionContext, FluxActionEvent, RendererComponentProps, RendererRe
 import { isValidElement } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { Bot, User } from 'lucide-react';
+import { Bot, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import type { ChatMessage, MessageEngine } from '../../engine/types.js';
 import type { AiBranch, AiBubbleSchema } from '../../schemas.js';
 import { useAiChatContext } from '../../adapters/ai-chat-context.js';
@@ -272,7 +272,7 @@ function BranchPicker({
         onClick={() => go(-1)}
         className="h-6 px-1"
       >
-        ‹
+        <ChevronLeft className="size-3.5" aria-hidden="true" />
       </Button>
       <span data-slot="ai-bubble-branch-counter">
         {activeIdx + 1}/{count}
@@ -287,7 +287,7 @@ function BranchPicker({
         onClick={() => go(1)}
         className="h-6 px-1"
       >
-        ›
+        <ChevronRight className="size-3.5" aria-hidden="true" />
       </Button>
     </div>
   );

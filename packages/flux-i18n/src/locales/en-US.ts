@@ -284,7 +284,7 @@ export const enUS: Resource = {
       maxFilesExceeded: 'Too many files — at most {{max}} allowed',
       uploadActionMissing: 'uploadAction is not configured — cannot upload.',
       uploadNoResult: 'Upload action did not return a usable result',
-      removeItem: 'Remove {name}',
+      removeItem: 'Remove {{name}}',
       uploadedImage: 'uploaded image',
       treeSelectPlaceholder: 'Select tree option',
       addRow: 'Add row',
@@ -1219,6 +1219,8 @@ export const enUS: Resource = {
       debug: 'Debug',
       expand: 'Expand',
       collapse: 'Collapse',
+      defaultTitle: 'Scope Debug',
+      expandHint: 'Expand to inspect scope.',
     },
     dynamicRenderer: {
       error: 'Error: ',

@@ -191,7 +191,7 @@ export function EditorCanvas({
         data-slot="dashboard-editor-canvas-body"
         role="region"
         aria-label={t('flux.dashboard.editor.canvasLabel')}
-        className="relative"
+        className="relative focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         style={{ width: '100%', height: Math.max(canvasHeight, 120) }}
         tabIndex={0}
         onKeyDown={handleKeyDown}
@@ -216,7 +216,7 @@ export function EditorCanvas({
                 name: resolvePanelDisplayName(panel, (key) => t(key)),
               })}
               className={cn(
-                'group absolute flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm',
+                'group absolute flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                 selected
                   ? 'border-primary ring-2 ring-primary/60'
                   : 'border-border hover:border-primary/50',

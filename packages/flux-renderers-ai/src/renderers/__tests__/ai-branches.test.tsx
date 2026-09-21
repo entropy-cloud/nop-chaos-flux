@@ -80,4 +80,22 @@ describe('A-16 ai-bubble branch picker', () => {
       '1/2',
     );
   });
+
+  // G5-视角1-03 (plan 489 Phase 1): prev/next must render lucide chevron
+  // icons, not the former text glyphs ‹ / ›.
+  it('renders lucide chevron icons instead of the text glyphs ‹/›', () => {
+    const branches: AiBranch[] = [
+      { id: 'b1', messageId: 'a1' },
+      { id: 'b2', messageId: 'a1' },
+    ];
+    const { container } = render(
+      <AiBubbleView message={MESSAGE} branches={branches} activeBranchId="b1" />,
+    );
+    const prev = container.querySelector('[data-slot="ai-bubble-branch-prev"]')!;
+    const next = container.querySelector('[data-slot="ai-bubble-branch-next"]')!;
+    expect(prev.querySelector('svg.lucide-chevron-left')).toBeTruthy();
+    expect(next.querySelector('svg.lucide-chevron-right')).toBeTruthy();
+    expect(prev.textContent).not.toContain('‹');
+    expect(next.textContent).not.toContain('›');
+  });
 });

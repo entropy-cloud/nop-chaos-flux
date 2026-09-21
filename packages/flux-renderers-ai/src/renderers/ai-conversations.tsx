@@ -14,7 +14,7 @@ import {
   cn,
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { Pencil, X } from 'lucide-react';
+import { Pencil, Plus, X } from 'lucide-react';
 import type { ActionContext, FluxActionEvent, ScopeRef } from '@nop-chaos/flux-core';
 import type { AiConversationInfo } from '../engine/types.js';
 import type { AiConversationsSchema } from '../schemas.js';
@@ -81,6 +81,7 @@ export function AiConversationsRenderer(
             void props.events.onCreate?.(payload, dispatchCtx(payload));
           }}
         >
+          <Plus className="size-4" aria-hidden="true" />
           {t('flux.ai.newConversation')}
         </Button>
       </div>

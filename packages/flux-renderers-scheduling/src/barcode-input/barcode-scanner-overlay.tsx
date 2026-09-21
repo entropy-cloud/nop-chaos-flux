@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useState, useRef, useSyncExternalStore, useEffectEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, Spinner, cn } from '@nop-chaos/ui';
 import { X, Flashlight, FlashlightOff, ScanLine, Check, XCircle, Trash2 } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { useBarcodeCamera } from './hooks/use-barcode-camera.js';
@@ -262,7 +262,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
       <div className="relative flex-1 flex items-center justify-center">
         {phase === 'loading' && (
           <div data-slot="barcode-scanner-loading" className="flex flex-col items-center gap-3 text-white">
-            <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <Spinner className="size-8" />
             <span className="text-sm text-white/70">{t('flux.openingCamera')}</span>
           </div>
         )}

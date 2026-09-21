@@ -49,6 +49,19 @@ describe('flux i18n', () => {
     expect(t('reportDesigner.noSelection')).toBe('选择一个目标进行检查。');
   });
 
+  // [P2-承接-removeItem] (plan 489 Phase 1): the placeholder must be i18next
+  // double-brace syntax — upload-field.tsx passes { name } and the label used
+  // to render the raw "{name}" literal.
+  it('[P2-承接-removeItem] flux.form.removeItem interpolates the name placeholder in both locales', async () => {
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+
+    await changeLanguage('en-US');
+    expect(t('flux.form.removeItem', { name: 'report.pdf' })).toBe('Remove report.pdf');
+
+    await changeLanguage('zh-CN');
+    expect(t('flux.form.removeItem', { name: 'report.pdf' })).toBe('移除 report.pdf');
+  });
+
   it('adds resources into the active instance without reinitializing', async () => {
     initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
     addResources('en-US', 'flux', {

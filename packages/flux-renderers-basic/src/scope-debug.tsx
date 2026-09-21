@@ -89,14 +89,14 @@ export function ScopeDebugRenderer(props: RendererComponentProps<ScopeDebugSchem
   const title =
     typeof props.props.title === 'string' && props.props.title.length > 0
       ? props.props.title
-      : 'Scope Debug';
+      : t('flux.scopeDebug.defaultTitle');
   const dataPaths = Array.isArray(props.props.dataPaths)
     ? props.props.dataPaths.filter((path): path is string => typeof path === 'string' && path.length > 0)
     : undefined;
   const shouldSubscribe = expanded;
   const scopeText = useScopeSelector((scopeData) => stringifyDebugValue(scopeData), Object.is, {
     enabled: shouldSubscribe,
-    fallback: 'Expand to inspect scope.',
+    fallback: t('flux.scopeDebug.expandHint'),
     paths: dataPaths,
   });
 

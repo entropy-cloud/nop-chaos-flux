@@ -127,8 +127,8 @@ test.describe('Sundial replica — visual snapshots', () => {
     // blurs the pristine title input, the blur-triggered validation renders
     // 「title不能为空」and grows the dialog. Cancel still closes — the second
     // click lands after the layout settles. (First-click displacement is
-    // registered as an adjudicated UX papercut in plan 488 Deferred But
-    // Adjudicated.)
+    // registered as an adjudicated UX papercut in consistency-debt V12c-D5's
+    // P2 adoption subsection — plan 489.)
     await page.getByRole('button', { name: '取消' }).click();
     await expect(page.getByText('title不能为空')).toBeVisible({ timeout: 5_000 });
     await page.getByRole('button', { name: '取消' }).click();

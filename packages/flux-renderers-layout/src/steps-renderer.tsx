@@ -274,43 +274,54 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
               aria-label={`${t('flux.steps.step')} ${index + 1}: ${item.title ?? item.value ?? item.key ?? index + 1}`}
               onClick={() => handleClick(item, index)}
               className={cn(
-                'nop-steps-indicator relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors',
-                STATUS_INDICATOR_CLASS[status],
+                // [G1-R4-视角8-02] one interactive stop per step: the indicator
+                // button owns the whole step row (circle + title/description) so
+                // the click hot zone is not limited to the 28px indicator.
+                // Keyboard focus lands here, exactly once per step.
+                'nop-steps-indicator relative z-10 h-auto shrink whitespace-normal rounded-md py-0',
+                orientation === 'vertical'
+                  ? 'flex flex-row items-start gap-3 px-0 text-left'
+                  : 'flex flex-col items-center gap-1 px-1 text-center',
                 disabled && 'opacity-50 cursor-not-allowed',
               )}
             >
-              {status === 'finish' ? (
-                <CheckIcon className="size-4" />
-              ) : status === 'error' ? (
-                <XIcon className="size-4" />
-              ) : (
-                index + 1
-              )}
-            </Button>
-            <div
-              className={cn(
-                'min-w-0',
-                orientation === 'vertical' ? 'flex flex-col pt-1' : 'flex flex-col',
-              )}
-            >
               <span
-                data-slot="steps-title"
+                data-slot="steps-indicator-circle"
                 className={cn(
-                  'text-sm font-medium leading-tight',
-                  isCurrent ? 'text-foreground' : 'text-muted-foreground',
+                  'flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors',
+                  STATUS_INDICATOR_CLASS[status],
                 )}
               >
-                {item.title ?? item.value ?? item.key ?? index + 1}
+                {status === 'finish' ? (
+                  <CheckIcon className="size-4" />
+                ) : status === 'error' ? (
+                  <XIcon className="size-4" />
+                ) : (
+                  index + 1
+                )}
               </span>
-              {item.description ? (
+              <span
+                className={cn('flex min-w-0 flex-col', orientation === 'vertical' && 'pt-1')}
+              >
                 <span
-                  data-slot="steps-description"
-                  className="mt-0.5 text-xs text-muted-foreground"
+                  data-slot="steps-title"
+                  className={cn(
+                    'text-sm font-medium leading-tight',
+                    isCurrent ? 'text-foreground' : 'text-muted-foreground',
+                  )}
                 >
-                  {item.description}
+                  {item.title ?? item.value ?? item.key ?? index + 1}
                 </span>
-              ) : null}
-            </div>
+                {item.description ? (
+                  <span
+                    data-slot="steps-description"
+                    className="mt-0.5 text-xs text-muted-foreground"
+                  >
+                    {item.description}
+                  </span>
+                ) : null}
+              </span>
+            </Button>
           </li>
         );
       })}

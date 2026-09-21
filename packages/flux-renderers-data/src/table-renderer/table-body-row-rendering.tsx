@@ -6,7 +6,7 @@ import {
   resolveTableRowOptionState,
   tableRowOptionRowProps,
 } from './table-row-option-state.js';
-import { Button, TableCell, TableRow, cn } from '@nop-chaos/ui';
+import { Button, TableCell, TableRow, Spinner, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema, TableColumnSchema } from '../schemas.js';
@@ -380,7 +380,7 @@ export function DataRowView({
             }
           >
             {lazyState?.loading ? (
-              <span className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <Spinner className="size-3" />
             ) : lazyState?.error ? (
               <ChevronRightIcon className="size-3 text-destructive" />
             ) : isTreeExpanded ? (

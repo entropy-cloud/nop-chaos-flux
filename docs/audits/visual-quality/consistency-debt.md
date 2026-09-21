@@ -27,10 +27,24 @@
   - 证据: 普查 §7.2
   - 裁决: pending
   - 状态: open
-- [V12c-F6] 一致性 P3 候选池 87 条零立项（台账 `r3-p2-adjudication.md`）——逐条裁定修复/adjudicated
+- [V12c-F6] 一致性 P3 候选池 87 条零立项（台账 `r3-p2-adjudication.md` P3 池裁决区块）——逐条裁定修复/adjudicated
   - 证据: 普查 §7.2
   - 裁决: pending
   - 状态: open
+
+[V12c-D5] P3 池 87 条裁决与收口 + P2 承接 5 条
+
+- 证据: `docs/logs/2026/09-22.md`（P2 池残项承接依据）+ plan 489 Appendix A（P3 87 行权威裁决表，materialize 于 `r3-p2-adjudication.md` P3 池裁决区块）
+- 裁决: 87 = FIXED_SINCE 7 + 修复批 18 + watch-only 62（P3）+ 承接 4 FIX + 1 WATCH（P2 残项）
+- 状态: closed（2026-09-22 closure audit approved；P3 池清零，roadmap V12c → done）
+
+P2 承接小节（plan 488 对账口径外孤儿项 5 条）:
+
+- G1-R3-视角8-01 tabs swipe（FIX）
+- G1-R4-视角8-02 steps 热区（FIX）
+- flux.form.removeItem 占位符（FIX）
+- barcode overlay 手写 spinner（FIX）
+- sundial todo-dialog 取消首击位移吞没（watch-only；理由：root fix 需校验展示策略/对话框初始焦点策略裁决，form-validation 保护区域）
 
 [V12f-D4] P2 候选池批四消化（named 10 + 单点收尾 89，P2 池清零）
 

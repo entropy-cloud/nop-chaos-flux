@@ -403,4 +403,17 @@ describe('GraphRenderer', () => {
     expect(payload.type).toBe('graph:selection-change');
     expect(payload.nodeId).toBe('c');
   });
+
+  // G5-视角1-02 (plan 489 Phase 1): the search clear button must render an
+  // XIcon, not the text glyph '×'.
+  it('search clear button renders an XIcon instead of the text glyph ×', () => {
+    const { utils } = renderGraph();
+    invoke('search', { keyword: 'root' });
+
+    const button = utils.container.querySelector('[data-slot="graph-search"] button');
+    expect(button).toBeTruthy();
+    expect(button?.getAttribute('aria-label')).toBeTruthy();
+    expect(button?.querySelector('svg.lucide-x')).toBeTruthy();
+    expect(button?.textContent).not.toContain('×');
+  });
 });

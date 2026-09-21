@@ -30,3 +30,24 @@ describe('Sheet', () => {
     expect(document.querySelector('[data-slot="sheet-overlay"]')).toBeTruthy();
   });
 });
+
+// G6-视角8-01 (plan 489 Phase 1): the built-in Sheet close button must sit at
+// the same 8px inset as Dialog/Drawer (top-2 right-2), not the historical 12px.
+describe('Sheet close button placement', () => {
+  it('positions the built-in close button at top-2 right-2 (dialog/drawer parity)', () => {
+    render(
+      <Sheet modal={false} open>
+        <SheetContent>
+          <div>Sheet body</div>
+        </SheetContent>
+      </Sheet>,
+    );
+
+    const close = document.querySelector('[data-slot="sheet-close"]');
+    expect(close).toBeTruthy();
+    expect(close?.className).toContain('top-2');
+    expect(close?.className).toContain('right-2');
+    expect(close?.className).not.toContain('top-3');
+    expect(close?.className).not.toContain('right-3');
+  });
+});

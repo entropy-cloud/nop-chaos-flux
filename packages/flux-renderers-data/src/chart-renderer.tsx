@@ -323,7 +323,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
             cx={dotProps.cx}
             cy={dotProps.cy}
             r={4}
-            fill={markers.color ?? '#ef4444'}
+            fill={markers.color ?? 'hsl(var(--destructive))'}
             stroke="none"
           />
         );

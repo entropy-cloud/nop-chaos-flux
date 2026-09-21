@@ -428,7 +428,8 @@ export function createColumnResizeHandleProps(options: {
     tabIndex: 0,
     onPointerDown: resizeStart,
     onKeyDown: resizeKeyDown,
-    className: 'absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-primary/40',
+    className:
+      'absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
     style: { touchAction: 'none' },
   };
 }

@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { registerBasicRenderers } from '../index.js';
 import {
   buildSlotBindings,
@@ -11,6 +12,20 @@ import {
 import { resolveDirection } from '../utils.js';
 import { resolveGap } from '@nop-chaos/flux-react';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+
+// G1-视角9-12 (plan 489 Phase 1): scope-debug strings now flow through i18n —
+// pin the locale (basic-reactions.test.tsx pattern) so title assertions are
+// deterministic regardless of worker/aggregation order.
+beforeEach(async () => {
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+  await changeLanguage('en-US');
+});
+
+afterEach(() => {
+  resetFluxI18n();
+  cleanup();
+});
 
 describe('basic renderer coverage gaps', () => {
   it('covers layout utility helpers across token, numeric, and css gap inputs', () => {
@@ -50,8 +65,8 @@ describe('basic renderer coverage gaps', () => {
     );
 
     expect(screen.getByText('Info').className).toContain('bg-secondary');
-    expect(screen.getByText('Success').className).toContain('bg-emerald');
-    expect(screen.getByText('Warning').className).toContain('bg-amber');
+    expect(screen.getByText('Success').className).toContain('bg-success');
+    expect(screen.getByText('Warning').className).toContain('bg-warning');
     expect(screen.getByTestId('danger-badge').className).toContain('bg-destructive');
     expect(screen.getByTestId('empty-badge').textContent).toBe('');
 
@@ -77,11 +92,11 @@ describe('basic renderer coverage gaps', () => {
 
     const correctBadge = screen.getByTestId('badge-correct');
     expect(correctBadge.textContent).toBe('Correct');
-    expect(correctBadge.className).toContain('bg-emerald');
+    expect(correctBadge.className).toContain('bg-success');
 
     const wrongBadge = screen.getByTestId('badge-wrong');
     expect(wrongBadge.textContent).toBe('');
-    expect(wrongBadge.className).not.toContain('bg-emerald');
+    expect(wrongBadge.className).not.toContain('bg-success');
 
     cleanup();
   });

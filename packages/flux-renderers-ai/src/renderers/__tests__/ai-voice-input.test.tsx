@@ -73,6 +73,19 @@ function makeProps(overrides?: Partial<ReturnType<typeof createMockRendererProps
 }
 
 describe('ai-voice-input (Widget, A-15) — supported path', () => {
+  // G5-视角1-05 (plan 489 Phase 1): the idle icon must be the lucide MicIcon —
+  // the former hand-drawn inline SVG carried no lucide class and was the only
+  // svg in the control.
+  it('renders the lucide mic icon instead of the hand-drawn inline SVG', () => {
+    const props = makeProps();
+    const { container } = render(<Voice {...props} />);
+    const btn = container.querySelector('[data-slot="ai-voice-input"]') as HTMLElement;
+    const mic = btn.querySelector('svg.lucide-mic');
+    expect(mic).toBeTruthy();
+    expect(mic?.getAttribute('aria-hidden')).toBe('true');
+    expect(btn.querySelectorAll('svg').length).toBe(1);
+  });
+
   it('renders the nop-ai-voice-input marker button and enters listening state on click', () => {
     const mock = installMockSpeechRecognition();
     const props = makeProps();

@@ -419,3 +419,24 @@ describe('BarcodeScannerOverlay — validation error surfaced in-overlay (G4-R2-
     expect(document.querySelector('[data-slot="barcode-scanner-validation-error"]')).toBeNull();
   });
 });
+
+describe('BarcodeScannerOverlay — loading spinner uses ui Spinner (P2 承接 barcode spinner, plan 489 Phase 1)', () => {
+  afterEach(cleanup);
+
+  it('renders the ui Spinner marker instead of the handwritten border ring', () => {
+    render(
+      <BarcodeScannerOverlay
+        open={true}
+        onClose={vi.fn()}
+        onScan={vi.fn()}
+      />,
+    );
+    const loading = document.querySelector('[data-slot="barcode-scanner-loading"]') as HTMLElement;
+    expect(loading).toBeTruthy();
+    const spinner = loading.querySelector('svg.nop-spinner');
+    expect(spinner).toBeTruthy();
+    expect(spinner?.getAttribute('role')).toBe('status');
+    // The former handwritten spinner was a div.animate-spin border ring.
+    expect(loading.querySelector('div.animate-spin')).toBeNull();
+  });
+});

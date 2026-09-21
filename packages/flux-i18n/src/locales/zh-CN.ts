@@ -284,7 +284,7 @@ export const zhCN: Resource = {
       maxFilesExceeded: '文件数量超限 —— 最多允许 {{max}} 个',
       uploadActionMissing: '未配置 uploadAction —— 无法上传。',
       uploadNoResult: '上传动作未返回可用结果',
-      removeItem: '移除 {name}',
+      removeItem: '移除 {{name}}',
       uploadedImage: '已上传图片',
       treeSelectPlaceholder: '选择树选项',
       addRow: '新增行',
@@ -1217,6 +1217,8 @@ export const zhCN: Resource = {
       debug: '调试',
       expand: '展开',
       collapse: '折叠',
+      defaultTitle: '作用域调试',
+      expandHint: '展开以查看作用域。',
     },
     dynamicRenderer: {
       error: '错误: ',

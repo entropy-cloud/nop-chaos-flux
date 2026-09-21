@@ -24,6 +24,8 @@
   justify-content: center;
   height: 100%;
   padding: 1rem;
-  color: #dc2626;
+  /* [G5-视角7-01] same --nop-danger token chain + literal fallback as the
+     editor-side error rule (editor/styles.css). */
+  color: var(--nop-danger, #dc2626);
   font-size: 0.875rem;
 }

@@ -47,6 +47,33 @@ import {
   type TabsViewOps,
 } from './tabs-view-management.js';
 
+// [G1-R3-视角8-01] A gesture starting on a natively-interactive control belongs
+// to that control (selector mirrors swipe-cell's interactive exclusion); a
+// gesture starting inside a horizontally-scrollable region belongs to that
+// scroller. The tabs swipe must only claim plain panel content.
+const SWIPE_EXCLUSION_SELECTOR =
+  'button, a, input, select, textarea, [role="button"], [role="slider"]';
+
+function isSwipeExcludedTarget(target: EventTarget | null, boundary: HTMLElement): boolean {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+  let node: Element | null = target;
+  while (node && node !== boundary) {
+    if (node.matches(SWIPE_EXCLUSION_SELECTOR)) {
+      return true;
+    }
+    if (node instanceof HTMLElement && node.scrollWidth > node.clientWidth) {
+      const overflowX = getComputedStyle(node).overflowX;
+      if (overflowX === 'auto' || overflowX === 'scroll') {
+        return true;
+      }
+    }
+    node = node.parentElement;
+  }
+  return false;
+}
+
 export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const componentRegistry = useCurrentComponentRegistry();
   const schemaProps = useSchemaProps(props);
@@ -443,6 +470,9 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
             data-slot="tabs-panels-swipe"
             onTouchStart={(event) => {
               if (event.touches.length !== 1) return;
+              // [G1-R3-视角8-01] nested scrollers / native controls keep their
+              // own horizontal gesture: do not start swipe tracking.
+              if (isSwipeExcludedTarget(event.target, event.currentTarget)) return;
               const touch = event.touches[0]!;
               swipeStateRef.current = {
                 startX: touch.clientX,
