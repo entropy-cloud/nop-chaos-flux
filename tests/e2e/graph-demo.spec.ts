@@ -1,4 +1,5 @@
-import { expect, test, assertTrackedPageErrors } from './fixtures.js';
+import { assertTrackedPageErrors, expect, test } from './fixtures.js';
+import { getComputedStyleValue } from './helpers/visual-assert.js';
 
 async function openGraphDemo(page: import('@playwright/test').Page) {
   await page.goto('/#/graph-demo', { waitUntil: 'commit' });
@@ -122,6 +123,67 @@ test.describe('Graph Viewer Demo', () => {
     await openGraphDemo(page);
     const emptyGraph = page.locator('[data-slot="graph"]').nth(3);
     await expect(emptyGraph.locator('[data-slot="graph-empty"]')).toBeVisible({ timeout: 10_000 });
+    await assertTrackedPageErrors(page);
+  });
+
+  test('semantic-level border tokens: danger/warning/success computed styles in light and dark (plan 482 R2/A5)', async ({
+    page,
+  }) => {
+    await openGraphDemo(page);
+    const graph = traceGraph(page);
+    await expect(graph.locator('[data-slot="graph-node"]')).toHaveCount(6, { timeout: 15_000 });
+
+    // 探针元素按 R2 契约表达式取色：节点边框必须与 `hsl(var(--token) / 0.55)` 解析值一致
+    // （token 通道身份；旧字面 hsl(32 95% 44%) / hsl(142 71% 45%) 与 token 值不同，会被此断言钉住）
+    const probeTokenColor = (token: string) =>
+      page.evaluate((tok) => {
+        const el = document.createElement('span');
+        document.body.appendChild(el);
+        el.style.color = `hsl(var(${tok}) / 0.55)`;
+        const resolved = getComputedStyle(el).color;
+        el.remove();
+        return resolved;
+      }, token);
+    const tokenOf = { danger: '--destructive', warning: '--warning', success: '--success' } as const;
+    const levels = ['danger', 'warning', 'success'] as const;
+
+    const borderOf = (level: string) =>
+      getComputedStyleValue(
+        graph.locator(`[data-slot="graph-node"][data-level="${level}"]`),
+        'border-top-color',
+      );
+
+    for (const level of levels) {
+      expect(await borderOf(level)).toBe(await probeTokenColor(tokenOf[level]));
+    }
+    // 三态语义边框色彼此不同
+    const lightBorders: string[] = [];
+    for (const level of levels) lightBorders.push(await borderOf(level));
+    expect(new Set(lightBorders).size).toBe(3);
+
+    // light → dark 双态：token 通道在 dark 下仍按当班主题块解析。
+    // 注意 .nop-graph-node 带 border-color .15s transition——断言前等待过渡收敛。
+    await page.getByLabel('模式').selectOption('dark');
+    await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark');
+    for (const level of levels) {
+      await expect
+        .poll(() => borderOf(level), { message: `${level} border settles on the dark token` })
+        .toBe(await probeTokenColor(tokenOf[level]));
+    }
+
+    // classic 的 dark 块与 light 同族不同值（token 数据事实）；glass 主题块三 token 值不同，
+    // 切主题后边框计算样式必须真实变化（主题跟随性，非烘焙色）
+    await page.getByLabel('主题').selectOption('glass');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'glass');
+    let warningGlass = '';
+    await expect
+      .poll(async () => {
+        warningGlass = await borderOf('warning');
+        return warningGlass;
+      }, { message: 'warning border settles on the glass token' })
+      .toBe(await probeTokenColor('--warning'));
+    expect(warningGlass).not.toBe(lightBorders[1]);
+
     await assertTrackedPageErrors(page);
   });
 });

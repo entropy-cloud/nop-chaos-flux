@@ -1,6 +1,32 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDashboardSchemaRenderer, env, formulaCompiler } from './test-support.js';
+
+/** 可控 ResizeObserver 替身（happy-dom 内建 no-op RO，无法驱动重测量）。 */
+class MeasuredResizeObserver {
+  static instances: MeasuredResizeObserver[] = [];
+  observed: Element[] = [];
+  private callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    MeasuredResizeObserver.instances.push(this);
+  }
+
+  observe(element: Element) {
+    this.observed.push(element);
+  }
+
+  disconnect() {
+    this.observed = [];
+  }
+
+  unobserve() {}
+
+  trigger() {
+    this.callback([], this as unknown as ResizeObserver);
+  }
+}
 
 afterEach(() => {
   cleanup();
@@ -248,5 +274,150 @@ describe('DashboardRenderer runtime layout', () => {
     const canvas = document.querySelector('[data-slot="dashboard-canvas"]') as HTMLElement;
     // 3 rows: 3*40 + 2*8 = 136px
     expect(canvas.style.height).toBe('136px');
+  });
+});
+
+describe('DashboardRenderer runtime canvas width measurement (A1)', () => {
+  // cols 12 缺省 + gap 8 缺省：stride = cw + 8
+  const measuredSchema = {
+    type: 'page' as const,
+    body: [
+      {
+        type: 'dashboard',
+        panels: [
+          { id: 'p1', type: 'panel-content', x: 0, y: 0, w: 6, h: 2 },
+          { id: 'p2', type: 'panel-content', x: 6, y: 0, w: 6, h: 2 },
+        ],
+      },
+    ],
+  };
+
+  // cols 6 + gap 12：cellWidth = (1200 - 5*12)/6 = 190，panel w3 宽 = 3*190 + 2*12 = 594px
+  const fallbackSchema = {
+    type: 'page' as const,
+    body: [
+      {
+        type: 'dashboard',
+        cols: 6,
+        gap: 12,
+        panels: [{ id: 'p1', type: 'panel-content', x: 0, y: 0, w: 3, h: 2 }],
+      },
+    ],
+  };
+
+  function lastObserver(): MeasuredResizeObserver {
+    const observer = MeasuredResizeObserver.instances.at(-1);
+    if (!observer) throw new Error('no MeasuredResizeObserver instance recorded');
+    return observer;
+  }
+
+  it('keeps the 1200 fallback when the measured canvas width is 0 (jsdom/first frame)', () => {
+    MeasuredResizeObserver.instances = [];
+    vi.stubGlobal('ResizeObserver', MeasuredResizeObserver);
+    const SchemaRenderer = createDashboardSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/runtime-measure-zero"
+        schema={fallbackSchema}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const canvas = document.querySelector('[data-slot="dashboard-canvas"]') as HTMLElement;
+    expect(lastObserver().observed).toContain(canvas);
+    vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ width: 0 } as DOMRect);
+    act(() => lastObserver().trigger());
+    const panel = document.querySelector('[data-slot="dashboard-panel"]') as HTMLElement;
+    expect(panel.style.width).toBe('594px');
+    vi.unstubAllGlobals();
+  });
+
+  it('keeps the 1200 fallback when ResizeObserver is unavailable', () => {
+    vi.stubGlobal('ResizeObserver', undefined);
+    const SchemaRenderer = createDashboardSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/runtime-measure-no-ro"
+        schema={fallbackSchema}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const panel = document.querySelector('[data-slot="dashboard-panel"]') as HTMLElement;
+    expect(panel.style.width).toBe('594px');
+    vi.unstubAllGlobals();
+  });
+
+  it('scales panels to a measured container wider than the fallback (1600px)', () => {
+    MeasuredResizeObserver.instances = [];
+    vi.stubGlobal('ResizeObserver', MeasuredResizeObserver);
+    const SchemaRenderer = createDashboardSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/runtime-measure-wide"
+        schema={measuredSchema}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const canvas = document.querySelector('[data-slot="dashboard-canvas"]') as HTMLElement;
+    vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ width: 1600 } as DOMRect);
+    act(() => lastObserver().trigger());
+    const panels = canvas.querySelectorAll('[data-slot="dashboard-panel"]');
+    // cellWidth = (1600 - 11*8)/12 = 126; width = 6*126 + 5*8 = 796px; left(p2) = 6*(126+8) = 804px
+    expect((panels[0] as HTMLElement).style.width).toBe('796px');
+    expect((panels[1] as HTMLElement).style.width).toBe('796px');
+    expect((panels[1] as HTMLElement).style.left).toBe('804px');
+    // 网格比例不变：等宽面板保持等宽
+    expect((panels[0] as HTMLElement).style.width).toBe((panels[1] as HTMLElement).style.width);
+    vi.unstubAllGlobals();
+  });
+
+  it('scales panels to a measured container narrower than the fallback (988px)', () => {
+    MeasuredResizeObserver.instances = [];
+    vi.stubGlobal('ResizeObserver', MeasuredResizeObserver);
+    const SchemaRenderer = createDashboardSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/runtime-measure-narrow"
+        schema={measuredSchema}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const canvas = document.querySelector('[data-slot="dashboard-canvas"]') as HTMLElement;
+    vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ width: 988 } as DOMRect);
+    act(() => lastObserver().trigger());
+    const panels = canvas.querySelectorAll('[data-slot="dashboard-panel"]');
+    // cellWidth = (988 - 11*8)/12 = 75; width = 6*75 + 5*8 = 490px; left(p2) = 6*(75+8) = 498px
+    expect((panels[0] as HTMLElement).style.width).toBe('490px');
+    expect((panels[1] as HTMLElement).style.left).toBe('498px');
+    vi.unstubAllGlobals();
+  });
+
+  it('measures the container once at mount when ResizeObserver is unavailable', () => {
+    vi.stubGlobal('ResizeObserver', undefined);
+    const rectSpy = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue({ width: 1600 } as DOMRect);
+    const SchemaRenderer = createDashboardSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/runtime-measure-mount"
+        schema={measuredSchema}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const panels = document.querySelectorAll('[data-slot="dashboard-panel"]');
+    expect((panels[0] as HTMLElement).style.width).toBe('796px');
+    expect((panels[1] as HTMLElement).style.left).toBe('804px');
+    rectSpy.mockRestore();
+    vi.unstubAllGlobals();
   });
 });

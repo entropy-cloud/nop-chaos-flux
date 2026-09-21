@@ -44,11 +44,11 @@
 }
 
 .nop-graph-node[data-level='warning'] {
-  border-color: hsl(32 95% 44% / 0.55);
+  border-color: hsl(var(--warning) / 0.55);
 }
 
 .nop-graph-node[data-level='success'] {
-  border-color: hsl(142 71% 45% / 0.55);
+  border-color: hsl(var(--success) / 0.55);
 }
 
 .nop-graph-node-label {

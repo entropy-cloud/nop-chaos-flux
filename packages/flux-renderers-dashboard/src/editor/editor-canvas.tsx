@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import React, { useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import type { EditorCore } from '@nop-chaos/editor-core';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { GripVertical, X } from 'lucide-react';
 import type { DashboardDocument } from './dashboard-domain-adapter.js';
 import { buildPalettePanel } from './editor-palette.js';
 import type { DashboardPanelSchema } from '../schemas.js';
+import { useCanvasWidth } from '../use-canvas-width.js';
 import {
   dragPanel,
   panelToPixels,
@@ -35,25 +36,6 @@ const HANDLE_POSITION: Record<ResizeHandle, string> = {
   se: 'right-0 bottom-0 translate-x-1/2 translate-y-1/2 cursor-nwse-resize',
   sw: 'left-0 bottom-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize',
 };
-
-function useCanvasWidth(): { canvasRef: React.RefObject<HTMLDivElement | null>; canvasWidth: number } {
-  const canvasRef = useRef<HTMLDivElement | null>(null);
-  const [canvasWidth, setCanvasWidth] = useState(1200);
-  useEffect(() => {
-    const element = canvasRef.current;
-    if (!element) return undefined;
-    const update = () => {
-      const width = element.getBoundingClientRect().width;
-      if (width > 0) setCanvasWidth(width);
-    };
-    update();
-    if (typeof ResizeObserver === 'undefined') return undefined;
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-  return { canvasRef, canvasWidth };
-}
 
 /**
  * dashboard 编辑态画布（DOM pointer 拖拽 + resize 八向句柄 + 网格吸附 + 选中高亮）。
@@ -162,6 +144,15 @@ export function EditorCanvas({
     } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'd') {
       event.preventDefault();
       duplicateSelected(core, sel);
+    } else if (
+      (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp' || event.key === 'ArrowDown') &&
+      sel.length === 1
+    ) {
+      // 选中单面板方向键移动 1 格：经 dragPanel（snap + clamp 内建），core.update 单 undo 步。
+      // defaultPrevented 防面板/画布体两层 onKeyDown 对同一事件双处理。
+      if (event.defaultPrevented) return;
+      event.preventDefault();
+      moveSelectedByCells(core, sel[0], event.key, gridOptions);
     } else if (event.key === 'Escape') {
       core.setSelection([]);
     }
@@ -236,10 +227,12 @@ export function EditorCanvas({
                     data-slot="dashboard-editor-panel-remove"
                     className="absolute right-1 top-1 z-10 hidden group-hover:flex"
                   >
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
                       aria-label={`Remove ${panel.id}`}
-                      className="flex size-5 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-destructive"
+                      className="rounded-full border border-border bg-background text-muted-foreground hover:text-destructive"
                       onClick={(event) => {
                         event.stopPropagation();
                         core.update((doc) => ({
@@ -249,7 +242,7 @@ export function EditorCanvas({
                       }}
                     >
                       <X className="size-3" />
-                    </button>
+                    </Button>
                   </div>
                   <div
                     data-slot="dashboard-editor-panel-drag-icon"
@@ -311,6 +304,24 @@ function duplicateSelected(
   }
   core.update((doc) => ({ panels: [...doc.panels, ...newPanels] }));
   core.setSelection(newPanels.map((p) => p.id));
+}
+
+/** 方向键移动选中面板 1 格：目标格坐标换算回像素（snapToGrid 精确落格），clamp 由 dragPanel 内建。 */
+function moveSelectedByCells(
+  core: EditorCore<DashboardDocument, unknown>,
+  panelId: string,
+  key: string,
+  options: { cols: number; rowHeight: number; gap: number; canvasWidth: number; maxY: number },
+): void {
+  const target = core.getState().working.panels.find((p) => p.id === panelId);
+  if (!target) return;
+  const cellStride = (options.canvasWidth - (options.cols - 1) * options.gap) / options.cols + options.gap;
+  const rowStride = options.rowHeight + options.gap;
+  const dx = key === 'ArrowLeft' ? -1 : key === 'ArrowRight' ? 1 : 0;
+  const dy = key === 'ArrowUp' ? -1 : key === 'ArrowDown' ? 1 : 0;
+  core.update((doc) => ({
+    panels: dragPanel(doc.panels, panelId, (target.x + dx) * cellStride, (target.y + dy) * rowStride, options),
+  }));
 }
 
 /** 从画布外（palette）落点网格坐标（供 palette drop 复用）。 */

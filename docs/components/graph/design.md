@@ -118,8 +118,17 @@ const defaultLevelMap = {
 };
 ```
 
-- 语义级 → 视觉：`danger` 红、`warning` 琥珀、`success` 绿、`info` 默认；节点 marker 发布 `data-level="<语义级>"`，样式类经 Tailwind 语义 token 映射（不硬编码色值，遵循 styling-system）。
+- 语义级 → 视觉：`danger` 红、`warning` 琥珀、`success` 绿、`info` 默认；节点唯一语义级
+  marker 通道为 `data-level="<语义级>"`（曾同时发射的 `nop-graph-level-*` 类无 CSS 消费点，
+  已摘除处置，plan 482 R3）。styles.css 按 `data-level` 消费主题 token：
+  `hsl(var(--destructive) / 0.55)`、`hsl(var(--warning) / 0.55)`、`hsl(var(--success) / 0.55)`
+  （`--warning`/`--success` 已四主题块定义；token 缺失时与 danger 同架构静默弱化，不打包内
+  fallback）。不硬编码色值（R2 令牌化，plan 482）。
 - `levelMap` 未命中的值：不发布 `data-level`，走默认节点样式。
+- 边（`GraphEdge`）无着色/语义级通道：**显式 defer（A4 裁决，plan 482）**——`GraphEdge`
+  首版仅 id/source/target/label/animated；edge region 首版已否决（避免双重渲染通道），节点
+  通道（levelMap + node region 逃生口）已够用，不重复建设。再触发条件 = 真实 trace/审批
+  消费页需要边状态语义。
 
 ### 4.3 node region 绑定
 
@@ -222,18 +231,18 @@ node region 模板内可用绑定（参照 tree node region 模式）：
 
 ## 10. 样式与 DOM marker 约定
 
-| 位置     | Marker / 约定                                                                                                 |
-| -------- | ------------------------------------------------------------------------------------------------------------- |
-| 根节点   | `nop-graph`（Layout vs Widget：graph 是 Widget，自样式但主题 token 化）                                       |
-| 视口容器 | `data-slot="graph-viewport"`                                                                                  |
-| 节点容器 | `data-slot="graph-node"` + `data-level="<语义级>"` + `data-selected`（选中时）+ `data-matching`（搜索命中时） |
-| 节点标签 | `data-slot="graph-node-label"`                                                                                |
-| 边容器   | 首版不发布（默认 xyflow 边渲染，label + animated；自定义边渲染归 deferred，见 §2）                            |
-| 控制条   | `data-slot="graph-controls"`                                                                                  |
-| 搜索框   | `data-slot="graph-search-input"`；搜索激活态根节点 `data-state="searching"`                                   |
-| 空态     | `data-slot="graph-empty"`                                                                                     |
+| 位置     | Marker / 约定                                                                                                                                                                              |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 根节点   | `nop-graph`（Layout vs Widget：graph 是 Widget，自样式但主题 token 化）                                                                                                                    |
+| 视口容器 | `data-slot="graph-viewport"`                                                                                                                                                               |
+| 节点容器 | `data-slot="graph-node"` + `data-level="<语义级>"`（唯一语义级通道；曾并发发射的 `nop-graph-level-*` 类已摘除处置，plan 482 R3）+ `data-selected`（选中时）+ `data-matching`（搜索命中时） |
+| 节点标签 | `data-slot="graph-node-label"`                                                                                                                                                             |
+| 边容器   | 首版不发布（默认 xyflow 边渲染，label + animated；自定义边渲染归 deferred，见 §2）；边着色/语义级通道显式 defer（A4，plan 482）                                                            |
+| 控制条   | `data-slot="graph-controls"`                                                                                                                                                               |
+| 搜索框   | `data-slot="graph-search-input"`；搜索激活态根节点 `data-state="searching"`                                                                                                                |
+| 空态     | `data-slot="graph-empty"`                                                                                                                                                                  |
 
-- 语义色经 Tailwind token（`border-danger-*` 等），不硬编码色值。
+- 语义色经主题 token（styles.css `data-level` 规则消费 `hsl(var(--destructive|--warning|--success) / 0.55)`，plan 482 R2 令牌化），不硬编码色值。
 - 状态用 `data-*` / `aria-*`（presence-only），禁止 BEM modifier。
 
 ## 11. 实现拆分建议

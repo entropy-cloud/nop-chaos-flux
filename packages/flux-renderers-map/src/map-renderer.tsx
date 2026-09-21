@@ -55,7 +55,7 @@ function resolveThemeColor(cssVariable: string, fallback: string): string {
   }
 }
 
-/** 主题映射：CSS 变量 → OL 样式色值（每次数据更新时重解析，主题切换在下次更新生效）。 */
+/** 主题映射：CSS 变量 → OL 样式色值（data-theme/data-mode 翻转时重解析并触发重绘）。 */
 function resolveMapTheme(): MapThemeColors {
   return {
     border: resolveThemeColor('--border', '#d0d7de'),
@@ -66,7 +66,9 @@ function resolveMapTheme(): MapThemeColors {
 }
 
 /**
- * 主题响应：监听 document root class 变化（`.dark` 切换）→ 重解析 CSS 变量。
+ * 主题响应：监听 document root 的 data-theme/data-mode 属性翻转 → 重解析 CSS 变量
+ * （全仓 dark 触发器为 `[data-mode="dark"]` + `data-theme` 双属性，无 `.dark` 类切换点；
+ * resolveMapTheme 读取的四 token 随双属性变化，任一翻转都需重解析）。
  * OL 是 canvas 渲染（样式函数在创建时固化色值），CSS 变量本身不会自动生效，
  * 需要显式重建主题色 + 触发重绘（manager.setTheme → layer.changed）。
  */
@@ -82,7 +84,7 @@ function useMapTheme(): MapThemeColors {
     });
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ['data-theme', 'data-mode'],
     });
     return () => observer.disconnect();
   }, []);

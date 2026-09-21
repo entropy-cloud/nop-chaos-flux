@@ -75,7 +75,7 @@ export interface MapSchema extends BaseSchema {
   height?: number;
   /** 空态内容（value-or-region）。 */
   empty?: SchemaValue;
-  /** 外部 loading 状态（false 时渲染 loading 态）。 */
+  /** 外部 loading 状态（true 时渲染 loading 态）。 */
   loading?: boolean;
   onClick?: ActionSchema;
 }

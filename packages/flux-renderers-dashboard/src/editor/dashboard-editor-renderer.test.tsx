@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { RendererDefinition } from '@nop-chaos/flux-core';
 import {
   createDashboardSchemaRenderer,
   createSpiedEditorDefinition,
@@ -261,5 +262,90 @@ describe('DashboardEditorRenderer selection & editing flows', () => {
       return event?.type === 'dashboard-editor:save';
     });
     expect(saveCalls.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('DashboardEditorRenderer arrow-key navigation (A2)', () => {
+  function selectPanel(index: number): HTMLElement {
+    const panel = canvasPanels()[index];
+    fireEvent.pointerDown(panel, { button: 0, clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(panel);
+    expect(panel.getAttribute('data-selected')).toBe('true');
+    return panel;
+  }
+
+  it('moves the selected panel one cell right/down with ArrowRight/ArrowDown (single handler pass)', () => {
+    renderEditor();
+    selectPanel(0);
+    fireEvent.keyDown(canvasPanels()[0], { key: 'ArrowRight' });
+    // col stride = (1200 - 11*8)/12 + 8 ≈ 100.67；单次按键恰好移动 1 格（不双跳）
+    expect(parseFloat(canvasPanels()[0].style.left)).toBeCloseTo(100.667, 2);
+    fireEvent.keyDown(canvasPanels()[0], { key: 'ArrowDown' });
+    // row stride = 40 + 8 = 48
+    expect(canvasPanels()[0].style.top).toBe('48px');
+  });
+
+  it('moves one cell left/up and clamps at the canvas origin', () => {
+    renderEditor();
+    selectPanel(0);
+    fireEvent.keyDown(canvasPanels()[0], { key: 'ArrowDown' });
+    // x 已在 0：ArrowLeft clamp 不动，y 保持 1
+    fireEvent.keyDown(canvasPanels()[0], { key: 'ArrowLeft' });
+    expect(canvasPanels()[0].style.left).toBe('0px');
+    expect(canvasPanels()[0].style.top).toBe('48px');
+    fireEvent.keyDown(canvasPanels()[0], { key: 'ArrowUp' });
+    expect(canvasPanels()[0].style.top).toBe('0px');
+  });
+
+  it('clamps ArrowRight at the right canvas edge (dragPanel clamp semantics)', () => {
+    renderEditor();
+    selectPanel(1); // p2: x=6, w=6, cols=12 → 右边界 x=6
+    const before = canvasPanels()[1].style.left;
+    fireEvent.keyDown(canvasPanels()[1], { key: 'ArrowRight' });
+    expect(canvasPanels()[1].style.left).toBe(before);
+  });
+
+  it('one key press is one undo step', () => {
+    renderEditor();
+    selectPanel(0);
+    fireEvent.keyDown(canvasPanels()[0], { key: 'ArrowRight' });
+    fireEvent.keyDown(canvasPanels()[0], { key: 'ArrowRight' });
+    // 两次按键 = 两个 undo 步：第一次 undo 回到中间态
+    fireEvent.click(screen.getByTestId('editor-undo'));
+    expect(parseFloat(canvasPanels()[0].style.left)).toBeCloseTo(100.667, 2);
+    fireEvent.click(screen.getByTestId('editor-undo'));
+    expect(canvasPanels()[0].style.left).toBe('0px');
+    expect((screen.getByTestId('editor-undo') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('ignores Arrow keys while focus is inside an input (early exit branch)', () => {
+    const inputPanelRenderer: RendererDefinition = {
+      type: 'input-panel',
+      component: () => <input data-testid="panel-input" defaultValue="" readOnly />,
+    };
+    const SchemaRenderer = createDashboardSchemaRenderer([inputPanelRenderer]);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/editor-arrow-input"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dashboard-editor',
+              layout: {
+                panels: [{ id: 'p1', type: 'input-panel', title: 'Input', x: 0, y: 0, w: 6, h: 2 }],
+              },
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    selectPanel(0);
+    const input = screen.getByTestId('panel-input');
+    fireEvent.keyDown(input, { key: 'ArrowRight' });
+    expect(canvasPanels()[0].style.left).toBe('0px');
   });
 });

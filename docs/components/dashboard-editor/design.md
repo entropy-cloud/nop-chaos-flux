@@ -44,9 +44,12 @@ interface DashboardPanelSchema extends SchemaObject {
 
 **裁定（运行态布局方案）**：自研绝对定位 + 网格对齐渲染（`panelToPixels`），**不复用** `grid`
 renderer（CSS grid flow 语义，无绝对坐标）。判据：编辑态坐标 → 运行态渲染零转换，
-`DashboardPanelSchema` 为坐标模型单一来源。对照结论：`grid` renderer 保留其 CSS grid flow
-语义（响应式流式布局），与 dashboard 的网格吸附坐标模型语义不同，不混用（记录于
-Non-Blocking Follow-ups）。
+`DashboardPanelSchema` 为坐标模型单一来源。画布宽度由共享测量 hook（`use-canvas-width.ts`，
+编辑态/运行态同一测量模式）经 ResizeObserver 实测容器宽，运行态按实测容器宽换算面板像素，
+实测不可用（SSR/首帧 width=0/ResizeObserver 缺失）时回退 1200。不提供 `canvasWidth` schema
+字段（默认仍错且把失真转嫁给作者），也不输出 %（`panelToPixels` 单一来源 + 编辑态指针吸附
+数学需要 px）。对照结论：`grid` renderer 保留其 CSS grid flow 语义（响应式流式布局），与
+dashboard 的网格吸附坐标模型语义不同，不混用（记录于 Non-Blocking Follow-ups）。
 
 ### 2.3 `dashboard-editor`（编辑态）
 
@@ -87,6 +90,8 @@ interface DashboardEditorSchema extends BaseSchema {
   已落地）→ 入 palette（已注册时显示）。
 - **选区**：单面板选中（点击/拖拽落点）；画布空白处 pointerdown 清空；Delete/Backspace 删除、
   Ctrl/Cmd+D 复制（原地复制新 id）、Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z（或 Cmd+Y）undo/redo、
+  方向键（ArrowLeft/Right/Up/Down）移动选中单面板 1 格（经 `dragPanel`，snap + clamp 内建，
+  单次按键 = 单 undo 步；输入焦点在 input/textarea/contentEditable 时早退不劫持）、
   Escape 清选区。
 - **组件句柄**：`save`/`undo`/`redo`/`getLayout`（`useDashboardEditorHandles`，对齐 hmi
   editor 句柄注册模式）。失败路径：`not-mounted` / `no-undo` / `no-redo` / `unknown method`。

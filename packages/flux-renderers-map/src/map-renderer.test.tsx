@@ -309,14 +309,37 @@ describe('MapRenderer 事件桥接', () => {
     expect(dataLayerOf(map).changedCount).toBeGreaterThan(0);
   });
 
-  it('re-applies theme on document class change (MutationObserver → setTheme → layer.changed)', async () => {
+  it('re-applies theme when the root data-mode attribute flips (MutationObserver → setTheme → layer.changed)', async () => {
+    renderMap({ mapType: 'region', regionData: [{ name: '北京市', value: 10 }] });
+    await waitFor(() => expect(fakeMapInstances.length).toBe(1));
+    const layer = dataLayerOf();
+    const before = layer.changedCount;
+
+    document.documentElement.setAttribute('data-mode', 'dark');
+    await waitFor(() => expect(layer.changedCount).toBeGreaterThan(before));
+    document.documentElement.removeAttribute('data-mode');
+  });
+
+  it('re-applies theme when the root data-theme attribute flips (MutationObserver → setTheme → layer.changed)', async () => {
+    renderMap({ mapType: 'region', regionData: [{ name: '北京市', value: 10 }] });
+    await waitFor(() => expect(fakeMapInstances.length).toBe(1));
+    const layer = dataLayerOf();
+    const before = layer.changedCount;
+
+    document.documentElement.setAttribute('data-theme', 'dark');
+    await waitFor(() => expect(layer.changedCount).toBeGreaterThan(before));
+    document.documentElement.removeAttribute('data-theme');
+  });
+
+  it('no longer observes the legacy document class trigger (attributeFilter narrowed to data-theme/data-mode)', async () => {
     renderMap({ mapType: 'region', regionData: [{ name: '北京市', value: 10 }] });
     await waitFor(() => expect(fakeMapInstances.length).toBe(1));
     const layer = dataLayerOf();
     const before = layer.changedCount;
 
     document.documentElement.classList.add('dark');
-    await waitFor(() => expect(layer.changedCount).toBeGreaterThan(before));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(layer.changedCount).toBe(before);
     document.documentElement.classList.remove('dark');
   });
 });

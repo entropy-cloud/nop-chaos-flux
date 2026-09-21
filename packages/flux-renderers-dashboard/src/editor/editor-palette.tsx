@@ -1,6 +1,6 @@
 import { useRendererRuntime } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import type { DashboardDocument } from './dashboard-domain-adapter.js';
 import type { DashboardPanelSchema } from '../schemas.js';
 
@@ -46,9 +46,10 @@ export function EditorPalette({ onAddPanel }: EditorPaletteProps) {
         </p>
       )}
       {entries.map((entry) => (
-        <button
+        <Button
           key={entry.type}
           type="button"
+          variant="outline"
           data-testid={`palette-${entry.type}`}
           draggable
           onDragStart={(event) => {
@@ -63,7 +64,7 @@ export function EditorPalette({ onAddPanel }: EditorPaletteProps) {
         >
           <span>{entry.label}</span>
           <span className="text-xs text-muted-foreground">{entry.type}</span>
-        </button>
+        </Button>
       ))}
     </div>
   );

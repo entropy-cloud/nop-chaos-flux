@@ -68,4 +68,11 @@ describe('GraphNodeView', () => {
     const { container } = renderNode(viewData({ semanticLevel: undefined }));
     expect(container.querySelector('[data-slot="graph-node"]')?.getAttribute('data-level')).toBeNull();
   });
+
+  it('keeps data-level as the only semantic-level marker channel (nop-graph-level-* class retired, R3)', () => {
+    const { container } = renderNode(viewData({ semanticLevel: 'warning' }));
+    const node = container.querySelector('[data-slot="graph-node"]');
+    expect(node?.getAttribute('data-level')).toBe('warning');
+    expect(node?.className).not.toContain('nop-graph-level-');
+  });
 });

@@ -20,20 +20,20 @@ AMIS 无地图组件。参考：Metabase（leaflet + region/pin 双模式 + 懒�
 
 > Flux 决策主语。列：`能力 | 采纳 | 不采纳 | 理由`。
 
-| 能力                                                  | 采纳     | 不采纳 | 理由                                                                                                                                                                           |
-| ----------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 区域着色（region / choropleth）                       | **实现** | —      | 核心模式一。`regionData` 按 `name` 匹配 geojson feature `properties.name`，`visualMap` 色阶着色。                                                                              |
-| 点位聚合（pin / cluster）                             | **实现** | —      | 核心模式二。OL 内置 Cluster 源（distance 40）；多点聚合点击放大一级，单点（含单成员 cluster）派发 `onClick`。                                                                  |
-| 瓦片底图（xyz/wms）                                   | **实现** | —      | 缺省 OSM xyz；`basemap.url` 可配天地图/高德/自建瓦片（key 含于 url 或经 RendererEnv 注入，**无硬编码**）。底图加载失败不影响矢量层（dev warn）。                               |
-| geojson 资源自管                                      | **实现** | —      | 内建 `src/map-data/*.json`（中国省市 / 世界国家，随 lazy chunk 加载）+ **`geojsonSource` action**（自定义边界，校验失败 → 错误态 + 重试）。不另立 workspace 数据包。           |
-| 主题映射（明暗切换）                                  | **实现** | —      | CSS 变量 → OL style 色值（`resolveThemeColor` 探针解析）；`MutationObserver` 监听 root class（`.dark`）→ `manager.setTheme` → 重绘。canvas 无 CSS 变量自动生效，需显式重解析。 |
-| 点击事件（区域/点位）                                 | **实现** | —      | `onClick` payload `{ type: 'map:feature-click', mapType, name, value, feature }`；仅命中 feature 才派发（空白点击不派发）。                                                    |
-| 区域高亮（hover）                                     | **实现** | —      | pointermove → `setHighlight` → 填充色/边框切换。                                                                                                                               |
-| 空态 / loading / 错误态                               | **实现** | —      | 空数据 → `empty` slot（不创建 Map）；外部 `loading` + geojson action loading → loading slot；OL 导入失败 / geojson action 失败 → 错误占位（不白屏）。                          |
-| 绘制/编辑（draw/edit 交互）、测距、轨迹动画、热力图层 | —        | 不采纳 | OL 能力存在但超出 BI 控件首版定位；热力图层（`ol/source/Heatmap`）记入 follow-up。                                                                                             |
-| 字段级地图（坐标字段展示，nocobase 参考）             | —        | 不采纳 | 表单/详情域能力，与 BI 图表级 map 解耦，后续独立评估。                                                                                                                         |
-| deck.gl / MapLibre / leaflet 插件生态                 | —        | 不采纳 | 复杂图层需求出现时独立评估（分析报告 §6.2）。                                                                                                                                  |
-| 地图服务（瓦片托管/key 管理）                         | —        | 不采纳 | 应用层职责（key 经 schema + RendererEnv 注入）。                                                                                                                               |
+| 能力                                                  | 采纳     | 不采纳 | 理由                                                                                                                                                                                                                                              |
+| ----------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 区域着色（region / choropleth）                       | **实现** | —      | 核心模式一。`regionData` 按 `name` 匹配 geojson feature `properties.name`，`visualMap` 色阶着色。                                                                                                                                                 |
+| 点位聚合（pin / cluster）                             | **实现** | —      | 核心模式二。OL 内置 Cluster 源（distance 40）；多点聚合点击放大一级，单点（含单成员 cluster）派发 `onClick`。                                                                                                                                     |
+| 瓦片底图（xyz/wms）                                   | **实现** | —      | 缺省 OSM xyz；`basemap.url` 可配天地图/高德/自建瓦片（key 含于 url 或经 RendererEnv 注入，**无硬编码**）。底图加载失败不影响矢量层（dev warn）。                                                                                                  |
+| geojson 资源自管                                      | **实现** | —      | 内建 `src/map-data/*.json`（中国省市 / 世界国家，随 lazy chunk 加载）+ **`geojsonSource` action**（自定义边界，校验失败 → 错误态 + 重试）。不另立 workspace 数据包。                                                                              |
+| 主题映射（明暗切换）                                  | **实现** | —      | CSS 变量 → OL style 色值（`resolveThemeColor` 探针解析）；`MutationObserver` 监听 root 的 `data-theme`/`data-mode` 属性翻转（`attributeFilter` 收窄，无 `.dark` 类触发器）→ `manager.setTheme` → 重绘。canvas 无 CSS 变量自动生效，需显式重解析。 |
+| 点击事件（区域/点位）                                 | **实现** | —      | `onClick` payload `{ type: 'map:feature-click', mapType, name, value, feature }`；仅命中 feature 才派发（空白点击不派发）。                                                                                                                       |
+| 区域高亮（hover）                                     | **实现** | —      | pointermove → `setHighlight` → 填充色/边框切换。                                                                                                                                                                                                  |
+| 空态 / loading / 错误态                               | **实现** | —      | 空数据 → `empty` slot（不创建 Map）；外部 `loading=true` + geojson action loading → loading slot；OL 导入失败 / geojson action 失败 → 错误占位（不白屏）。                                                                                        |
+| 绘制/编辑（draw/edit 交互）、测距、轨迹动画、热力图层 | —        | 不采纳 | OL 能力存在但超出 BI 控件首版定位；热力图层（`ol/source/Heatmap`）记入 follow-up。                                                                                                                                                                |
+| 字段级地图（坐标字段展示，nocobase 参考）             | —        | 不采纳 | 表单/详情域能力，与 BI 图表级 map 解耦，后续独立评估。                                                                                                                                                                                            |
+| deck.gl / MapLibre / leaflet 插件生态                 | —        | 不采纳 | 复杂图层需求出现时独立评估（分析报告 §6.2）。                                                                                                                                                                                                     |
+| 地图服务（瓦片托管/key 管理）                         | —        | 不采纳 | 应用层职责（key 经 schema + RendererEnv 注入）。                                                                                                                                                                                                  |
 
 ### 2.1 关键裁定（实现依据）
 
@@ -106,7 +106,7 @@ action 模板经 `${event.name}` / `${event.value}` 读取（CX-10 `evaluationBi
 ## 5. 主题映射
 
 - OL canvas 无法消费 CSS 变量 → 渲染期探针解析（`getComputedStyle` 读 `--border`/`--background`/`--foreground`/`--primary`，回退固定色值）。
-- 主题变化：`MutationObserver` 监听 `document.documentElement` class（`.dark` 切换）→ 重解析 → `manager.setTheme` → `layer.changed()` 重绘。
+- 主题变化：`MutationObserver` 监听 `document.documentElement` 的 `data-theme`/`data-mode` 属性翻转（全仓 dark 触发器为双属性，无 `.dark` 类切换点；四 token 随双属性变化，任一翻转都重解析）→ 重解析 → `manager.setTheme` → `layer.changed()` 重绘。
 - 矢量层色值：区域填充 = `visualMap` 色阶 / 高亮 = accent 半透明；边框 = `--border`；点位描边 = `--background`；cluster 文本 = `--foreground`。
 
 ## 6. 失败路径
@@ -158,7 +158,7 @@ action 模板经 `${event.name}` / `${event.value}` 读取（CX-10 `evaluationBi
 
 ## 8. Non-Goals 与 Follow-up
 
-- 热力图层（`ol/source/Heatmap`）、绘制/编辑、轨迹动画、测距：OL 能力存在，超出首版定位（plan Deferred 节）。
+- 热力图层（`ol/source/Heatmap`）、绘制/编辑、轨迹动画、测距、围栏：**显式裁决 defer（A3，plan 482）**——引入面 = OlApi 模块扩展（Heatmap）+ layer manager 新层类型 + schema 通道，属能力立项而非视觉修复；当前无真实消费页，BI 首版定位外，V11b 不预留半成品接口。再触发条件 = 真实热力/轨迹/围栏消费页或 mission 立项，届时连同围栏语义进能力 roadmap。
 - 字段级地图（坐标字段展示）：后续独立评估。
 - `map-data` 数据包与 nop-app 行政区划数据源对齐（应用层接入时）。
 - OL 版本升级策略（锁定 `^10.10.0`，minor 更新复核）。

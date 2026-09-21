@@ -9,6 +9,7 @@ import {
   sanitizePanels,
   type PanelPixelRect,
 } from './layout-math.js';
+import { useCanvasWidth } from './use-canvas-width.js';
 
 function asReactNode(value: RendererRenderOutput): React.ReactNode {
   return value as React.ReactNode;
@@ -66,18 +67,20 @@ function buildPanelFragment(panel: DashboardPanelSchema): BaseSchema {
  * dashboard 运行态 renderer（design: docs/components/dashboard-editor/design.md）。
  *
  * 布局 JSON → 网格渲染：面板经 `panelToPixels` 绝对定位（编辑态坐标模型单一来源，
- * 编辑/运行同构零转换）。面板内容经 `helpers.render` 以 fragment 编译求值（props/source
- * 表达式在渲染时解析）；未注册面板类型忽略 + dev warn（失败路径 dashboard-layout-invalid）。
+ * 编辑/运行同构零转换）；画布宽度经共享测量 hook 实测容器宽（回退 1200 兜底
+ * jsdom/SSR/首帧），与编辑态同一测量模式。面板内容经 `helpers.render` 以 fragment
+ * 编译求值（props/source 表达式在渲染时解析）；未注册面板类型忽略 + dev warn
+ * （失败路径 dashboard-layout-invalid）。
  */
 export function DashboardRenderer(props: RendererComponentProps<DashboardLayoutSchema>) {
   const schemaProps = props.props;
   const { helpers, regions } = props;
   const runtime = useRendererRuntime();
   const layout = resolveLayoutProps(schemaProps);
+  const { canvasRef, canvasWidth } = useCanvasWidth();
 
   const rawPanels = Array.isArray(schemaProps.panels) ? (schemaProps.panels as unknown) : undefined;
   const panels = sanitizePanels(rawPanels, { cols: layout.cols });
-  const canvasWidth = 1200;
 
   if (panels.length === 0) {
     const emptyContent = regions.empty ? asReactNode(regions.empty.render()) : null;
@@ -115,6 +118,7 @@ export function DashboardRenderer(props: RendererComponentProps<DashboardLayoutS
       data-panel-count={panels.length}
     >
       <div
+        ref={canvasRef}
         data-slot="dashboard-canvas"
         className="relative"
         style={{ width: '100%', minWidth: 320, height: Math.max(height, 120) }}
