@@ -66,30 +66,72 @@
 }
 
 .nop-code-editor[data-theme='dark'] {
-  --nop-code-editor-toolbar-bg: rgba(255, 255, 255, 0.04);
-  --nop-code-editor-toolbar-border: rgba(255, 255, 255, 0.08);
-  --nop-code-editor-toolbar-button-fg: #777;
-  --nop-code-editor-toolbar-button-hover-bg: rgba(255, 255, 255, 0.1);
-  --nop-code-editor-toolbar-button-hover-fg: #ccc;
-  --nop-code-editor-toolbar-button-hover-outline: rgba(255, 255, 255, 0.15);
-  --nop-code-editor-header-border: rgba(255, 255, 255, 0.1);
-  --nop-code-editor-header-bg: rgba(255, 255, 255, 0.05);
-  --nop-code-editor-header-title-fg: #ccc;
-  --nop-code-editor-header-close-fg: #999;
-  --nop-code-editor-header-close-hover-bg: rgba(255, 255, 255, 0.1);
-  --nop-code-editor-header-close-hover-fg: #fff;
-  --nop-code-editor-header-close-hover-outline: rgba(255, 255, 255, 0.15);
-  --nop-code-editor-var-panel-border: rgba(255, 255, 255, 0.1);
-  --nop-code-editor-var-panel-bg: rgba(255, 255, 255, 0.03);
-  --nop-code-editor-var-panel-header-border: rgba(255, 255, 255, 0.08);
-  --nop-code-editor-var-panel-title-fg: #999;
-  --nop-code-editor-var-item-hover-bg: rgba(255, 255, 255, 0.06);
-  --nop-code-editor-var-item-label-fg: #ccc;
-  --nop-code-editor-var-item-value-fg: #777;
-  --nop-code-editor-result-border: rgba(255, 255, 255, 0.1);
-  --nop-code-editor-result-muted-fg: #999;
-  --nop-code-editor-result-header-bg: rgba(255, 255, 255, 0.03);
-  --nop-code-editor-result-header-border: rgba(255, 255, 255, 0.08);
+  --nop-code-editor-toolbar-bg: var(--nop-code-editor-dark-toolbar-bg, rgba(255, 255, 255, 0.04));
+  --nop-code-editor-toolbar-border: var(
+    --nop-code-editor-dark-toolbar-border,
+    rgba(255, 255, 255, 0.08)
+  );
+  --nop-code-editor-toolbar-button-fg: var(--nop-code-editor-dark-toolbar-button-fg, #777);
+  --nop-code-editor-toolbar-button-hover-bg: var(
+    --nop-code-editor-dark-toolbar-button-hover-bg,
+    rgba(255, 255, 255, 0.1)
+  );
+  --nop-code-editor-toolbar-button-hover-fg: var(
+    --nop-code-editor-dark-toolbar-button-hover-fg,
+    #ccc
+  );
+  --nop-code-editor-toolbar-button-hover-outline: var(
+    --nop-code-editor-dark-toolbar-button-hover-outline,
+    rgba(255, 255, 255, 0.15)
+  );
+  --nop-code-editor-header-border: var(
+    --nop-code-editor-dark-header-border,
+    rgba(255, 255, 255, 0.1)
+  );
+  --nop-code-editor-header-bg: var(--nop-code-editor-dark-header-bg, rgba(255, 255, 255, 0.05));
+  --nop-code-editor-header-title-fg: var(--nop-code-editor-dark-header-title-fg, #ccc);
+  --nop-code-editor-header-close-fg: var(--nop-code-editor-dark-header-close-fg, #999);
+  --nop-code-editor-header-close-hover-bg: var(
+    --nop-code-editor-dark-header-close-hover-bg,
+    rgba(255, 255, 255, 0.1)
+  );
+  --nop-code-editor-header-close-hover-fg: var(--nop-code-editor-dark-header-close-hover-fg, #fff);
+  --nop-code-editor-header-close-hover-outline: var(
+    --nop-code-editor-dark-header-close-hover-outline,
+    rgba(255, 255, 255, 0.15)
+  );
+  --nop-code-editor-var-panel-border: var(
+    --nop-code-editor-dark-var-panel-border,
+    rgba(255, 255, 255, 0.1)
+  );
+  --nop-code-editor-var-panel-bg: var(
+    --nop-code-editor-dark-var-panel-bg,
+    rgba(255, 255, 255, 0.03)
+  );
+  --nop-code-editor-var-panel-header-border: var(
+    --nop-code-editor-dark-var-panel-header-border,
+    rgba(255, 255, 255, 0.08)
+  );
+  --nop-code-editor-var-panel-title-fg: var(--nop-code-editor-dark-var-panel-title-fg, #999);
+  --nop-code-editor-var-item-hover-bg: var(
+    --nop-code-editor-dark-var-item-hover-bg,
+    rgba(255, 255, 255, 0.06)
+  );
+  --nop-code-editor-var-item-label-fg: var(--nop-code-editor-dark-var-item-label-fg, #ccc);
+  --nop-code-editor-var-item-value-fg: var(--nop-code-editor-dark-var-item-value-fg, #777);
+  --nop-code-editor-result-border: var(
+    --nop-code-editor-dark-result-border,
+    rgba(255, 255, 255, 0.1)
+  );
+  --nop-code-editor-result-muted-fg: var(--nop-code-editor-dark-result-muted-fg, #999);
+  --nop-code-editor-result-header-bg: var(
+    --nop-code-editor-dark-result-header-bg,
+    rgba(255, 255, 255, 0.03)
+  );
+  --nop-code-editor-result-header-border: var(
+    --nop-code-editor-dark-result-header-border,
+    rgba(255, 255, 255, 0.08)
+  );
 }
 
 .nop-code-editor[data-fullscreen] {
@@ -295,7 +337,7 @@
 }
 
 .nop-code-editor[data-colorize-container] {
-  border: 1px solid var(--nop-field-border, #d1d5db);
+  border: 1px solid hsl(var(--border));
   border-radius: 6px;
   background-color: var(--nop-code-editor-surface, hsl(var(--background)));
   overflow: hidden;

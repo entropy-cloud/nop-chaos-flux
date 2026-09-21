@@ -1,5 +1,6 @@
 import { test, expect, assertTrackedPageErrors } from './fixtures.js';
 import { selectComboboxOptionByLabel } from './select-helpers.js';
+import { getComputedStyleValue } from './helpers/visual-assert.js';
 
 async function waitForDebuggerPanel(page: import('@playwright/test').Page) {
   await expect(page.locator('.nop-debugger')).toBeVisible();
@@ -480,5 +481,77 @@ test.describe('Nop Debugger', () => {
 
     const bar = page.locator('.ndbg-minimized');
     await expect(bar.locator('.ndbg-minimized-error-badge')).toBeVisible();
+  });
+
+  test('panel chrome flips with host data-mode via token chains', async ({ page }) => {
+    test.setTimeout(90_000);
+    await prepareFreshPage(page);
+
+    await getLauncher(page).click();
+    await waitForDebuggerPanel(page);
+
+    const panel = page.locator('.nop-debugger').first();
+    const textLight = await getComputedStyleValue(panel, 'color');
+    const borderLight = await getComputedStyleValue(panel, 'border-top-color');
+    const bgLight = await getComputedStyleValue(panel, 'background-image');
+    const hostBackgroundLight = await getComputedStyleValue(page.locator('html'), '--background');
+    const hostForegroundLight = await getComputedStyleValue(page.locator('html'), '--foreground');
+    expect(hostBackgroundLight, 'host --background must resolve').not.toBe('');
+    expect(hostForegroundLight, 'host --foreground must resolve').not.toBe('');
+
+    // Navigate to the page hosting the runtime theme switcher; the debugger
+    // panel persists across SPA navigation.
+    await openFluxBasicPage(page);
+    await expect(panel).toBeVisible();
+    await page.getByLabel('模式').selectOption('dark');
+
+    const hostBackgroundDark = await getComputedStyleValue(page.locator('html'), '--background');
+    const hostForegroundDark = await getComputedStyleValue(page.locator('html'), '--foreground');
+    expect(hostBackgroundDark).not.toBe(hostBackgroundLight);
+    expect(hostForegroundDark).not.toBe(hostForegroundLight);
+
+    const textDark = await getComputedStyleValue(panel, 'color');
+    const borderDark = await getComputedStyleValue(panel, 'border-top-color');
+    const bgDark = await getComputedStyleValue(panel, 'background-image');
+    expect(textDark).not.toBe(textLight);
+    expect(borderDark).not.toBe(borderLight);
+    expect(bgDark).not.toBe(bgLight);
+  });
+
+  test('launcher, panel and pick overlay keep fixed positioning and z-index layering', async ({
+    page,
+  }) => {
+    await prepareFreshPage(page);
+
+    const launcher = getLauncher(page);
+    await expect(launcher).toBeVisible();
+    const launcherStyle = await launcher.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { position: s.position, zIndex: s.zIndex };
+    });
+    expect(launcherStyle.position).toBe('fixed');
+    expect(launcherStyle.zIndex).toBe('9998');
+
+    await launcher.click();
+    await waitForDebuggerPanel(page);
+
+    const panelStyle = await page
+      .locator('.nop-debugger')
+      .first()
+      .evaluate((el) => {
+        const s = getComputedStyle(el);
+        return { position: s.position, zIndex: s.zIndex };
+      });
+    expect(panelStyle.position).toBe('fixed');
+    expect(panelStyle.zIndex).toBe('9999');
+
+    // Pick overlays mount with the panel (hidden until inspect mode activates).
+    const overlay = page.locator('.nop-debugger-overlay').first();
+    const overlayStyle = await overlay.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { position: s.position, zIndex: s.zIndex };
+    });
+    expect(overlayStyle.position).toBe('fixed');
+    expect(overlayStyle.zIndex).toBe('10000');
   });
 });

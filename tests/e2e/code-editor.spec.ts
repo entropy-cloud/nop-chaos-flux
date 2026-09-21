@@ -1,6 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { test, expect, assertTrackedPageErrors } from './fixtures.js';
+import { getComputedStyleValue } from './helpers/visual-assert.js';
 
 // The Monaco-backed page is intentionally serialized to avoid cross-test editor startup churn.
 test.describe.configure({ mode: 'serial' });
@@ -393,8 +394,92 @@ test('read-only viewer renders with dark theme and no editing', async ({ page })
   const theme = await container.getAttribute('data-theme');
   expect(theme).toBe('dark');
 
+  // Visual upgrade of the former marker-only assertion: the dark container
+  // must actually resolve the dark chrome token (M1 option a mapping).
+  const darkTitleFg = await getComputedStyleValue(
+    container,
+    '--nop-code-editor-header-title-fg',
+  );
+  expect(darkTitleFg).toBe('#ccc');
+
   const readOnly = await content.getAttribute('aria-readonly');
   expect(readOnly).toBe('true');
+});
+
+test('dark editorTheme resolves dark chrome tokens, light stays host-driven', async ({ page }) => {
+  await openCodeEditor(page);
+
+  const darkContainer = findEditorByLabel(page, 'Read-Only Viewer').locator('.nop-code-editor').first();
+  const darkToolbarBg = await getComputedStyleValue(
+    darkContainer,
+    '--nop-code-editor-toolbar-bg',
+  );
+  expect(darkToolbarBg, 'dark container resolves the dark toolbar token').toBe(
+    'rgba(255, 255, 255, 0.04)',
+  );
+
+  const lightContainer = findEditorByLabel(page, 'Plain Text').locator('.nop-code-editor').first();
+  const lightToolbarBg = await getComputedStyleValue(
+    lightContainer,
+    '--nop-code-editor-toolbar-bg',
+  );
+  expect(lightToolbarBg).not.toBe(darkToolbarBg);
+  expect(lightToolbarBg).toContain('color-mix');
+});
+
+test('closeBrackets auto-pairs and active line highlight renders', async ({ page }) => {
+  await openCodeEditor(page);
+
+  const field = findEditorByLabel(page, 'Plain Text');
+  const content = field.locator('.cm-content').first();
+  await content.click();
+  await page.keyboard.type('(a');
+
+  const text = (await content.innerText()).replace(/\u00a0/g, ' ');
+  expect(text).toContain('(a)');
+
+  const jsField = findEditorByLabel(page, 'JavaScript Editor');
+  const activeLine = jsField.locator('.cm-activeLine').first();
+  await expect(activeLine).toBeVisible();
+  const activeBg = await getComputedStyleValue(activeLine, 'background-color');
+  expect(activeBg).not.toBe('');
+  expect(activeBg).not.toBe('rgba(0, 0, 0, 0)');
+  await expect(jsField.locator('.cm-activeLineGutter').first()).toBeVisible();
+});
+
+test('search panel opens via Mod-f, localizes, and closes on Escape', async ({ page }) => {
+  await openCodeEditor(page);
+
+  const field = findEditorByLabel(page, 'Plain Text');
+  const content = field.locator('.cm-content').first();
+  await content.click();
+  await expect(content).toBeFocused();
+
+  const panel = field.locator('.cm-panel.cm-search');
+  // CM6 maps Mod to Ctrl or Meta based on the browser UA, and the configured
+  // Desktop Chrome device carries a Windows UA even on macOS runners — pick
+  // the modifier from the page, and retry in case a StrictMode remount stole
+  // focus right after the click.
+  const useCtrl = await page.evaluate(() => /Win|Linux/.test(navigator.userAgent));
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await content.click();
+    await expect(content).toBeFocused();
+    await page.keyboard.press(useCtrl ? 'Control+f' : 'Meta+f');
+    const appeared = await panel
+      .waitFor({ state: 'visible', timeout: 1500 })
+      .then(() => true)
+      .catch(() => false);
+    if (appeared) break;
+  }
+
+  await expect(panel).toBeVisible();
+  await expect(panel.locator('input[main-field="true"], input[main-field]')).toHaveAttribute(
+    'placeholder',
+    /查找|Find/,
+  );
+
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
 });
 
 test.skip('captures code editor page screenshot', async ({ page }, testInfo) => {

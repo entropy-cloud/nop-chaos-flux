@@ -39,18 +39,21 @@ import type {
 const defaultLightTheme = EditorView.theme({
   '&': {
     fontSize: '13px',
-    border: '1px solid var(--nop-field-border, #d1d5db)',
+    border: '1px solid hsl(var(--border))',
     borderRadius: '6px',
   },
   '.cm-content': {
     fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
   },
   '.cm-focused': {
-    outline: '1px solid var(--nop-field-focus-ring, #3b82f6)',
+    outline: '1px solid hsl(var(--ring))',
     outlineOffset: '-1px',
   },
+  '.cm-activeLine': {
+    backgroundColor: 'color-mix(in srgb, hsl(var(--accent)) 45%, transparent)',
+  },
   '&.cm-readOnly': {
-    backgroundColor: 'var(--nop-field-disabled-bg, #f3f4f6)',
+    backgroundColor: 'hsl(var(--muted))',
   },
 });
 

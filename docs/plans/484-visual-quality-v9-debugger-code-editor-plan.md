@@ -1,6 +1,6 @@
 # 484 视觉质量 V9：Debugger 与代码编辑器视觉补齐 Plan
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-21
 > Source: `docs/analysis/visual-quality/V9-debugger-code-editor.md`（独立核实 revised → 勘误回写后 pass，§6 勘误 E1-E5 已回写，本 plan 以其 Findings/R1-R8/A1-A5 裁决为准）、`docs/backlog/visual-quality-roadmap.md` V9 行、`docs/audits/visual-quality/debugger-code-editor.md`、`docs/components/code-editor/design.md`
 > Related: `docs/plans/476-visual-quality-v6-spreadsheet-tokenization-plan.md`（--ss-\* dark 变体先例、未定义令牌 dangling 消费处置先例）、`docs/plans/477-visual-quality-v7-report-designer-plan.md`（视觉收口前置 work item，与本域零文件交集）
@@ -108,86 +108,86 @@ Exit Criteria:
 
 ### Phase 2 - code-editor 三能力补齐（A2）
 
-Status: in progress
+Status: completed
 Targets: `packages/flux-code-editor`（`extensions/base.ts`、`package.json`、`code-editor-styles.css`）、`packages/flux-i18n/src/locales/`、`docs/components/code-editor/design.md` §2
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] Proof：三能力断言先红——base 装配单测（最小 EditorState/EditorView 实例）断言：①searchKeymap 键位可触发（Mod-f 打开 `.cm-panel.cm-search`）；②输入 `(` 自动补出 `)`（closeBrackets）；③`.cm-activeLine`/`.cm-activeLineGutter` 存在；装配前跑出红，e2e 行为断言由 Phase 4 兜底
-- [ ] Fix：`package.json` 新增 `@codemirror/search` 直接依赖（唯一新增，lockfile 落地）；`extensions/base.ts` `createBaseExtensions` 一处装配 `search()` + `searchKeymap` + `closeBrackets` + `highlightActiveLine`/`highlightActiveLineGutter`（extensionsCompartment 通道现成，`use-code-mirror.ts`/`use-merge-view.ts` 预期零改动，12 语言 + diff 双侧自动受益）
-- [ ] Fix：查找替换面板文案经 `EditorState.phrases` 接 `flux.codeEditor` i18n（zh-CN/en-US 对称新增）；`code-editor-styles.css` 补 `.cm-panel` 令牌化样式（R5，防 dark 白底破相）
-- [ ] Decision：三能力全局启用、不新增 schema 面（对齐 design.md §2 minimap「暂不实现」:40 克制口径）；design.md §2 决策表补 searchKeymap/closeBrackets/highlightActiveLine 三行记录
+- [x] Proof：三能力断言先红——base 装配单测（最小 EditorState/EditorView 实例）断言：①searchKeymap 键位可触发（Mod-f 打开 `.cm-panel.cm-search`）；②输入 `(` 自动补出 `)`（closeBrackets）；③`.cm-activeLine`/`.cm-activeLineGutter` 存在；装配前跑出红，e2e 行为断言由 Phase 4 兜底（2026-09-21 执行记录：`__tests__/base-extensions.test.tsx` 装配前 3 failed / 3，三条全红）
+- [x] Fix：`package.json` 新增 `@codemirror/search` 直接依赖（唯一新增，lockfile 落地）；`extensions/base.ts` `createBaseExtensions` 一处装配 `search()` + `searchKeymap` + `closeBrackets` + `highlightActiveLine`/`highlightActiveLineGutter`（extensionsCompartment 通道现成，`use-code-mirror.ts`/`use-merge-view.ts` 预期零改动，12 语言 + diff 双侧自动受益）（落地核实：两 hook 文件零 diff；lockfile 已含 @codemirror/search 6.7.2）
+- [x] Fix：查找替换面板文案经 `EditorState.phrases` 接 `flux.codeEditor` i18n（zh-CN/en-US 对称新增）；`code-editor-styles.css` 补 `.cm-panel` 令牌化样式（R5，防 dark 白底破相）（落地：phrases 11 键对称新增；`.cm-panels`/`.cm-panel.cm-search`/textfield/button/match highlight 全部消费 `--nop-code-editor-search-*` 语义链令牌，随宿主主题自动翻转）
+- [x] Decision：三能力全局启用、不新增 schema 面（对齐 design.md §2 minimap「暂不实现」:40 克制口径）；design.md §2 决策表补 searchKeymap/closeBrackets/highlightActiveLine 三行记录
 
 Exit Criteria:
 
-- [ ] `@codemirror/search` 落 package.json + pnpm-lock；flux-code-editor focused typecheck/测试过（新依赖可解析）
-- [ ] 三能力单测断言绿；`.cm-panel` 样式规则存在且消费语义令牌
-- [ ] i18n 键 zh/en 对称；design.md §2 三行已补
+- [x] `@codemirror/search` 落 package.json + pnpm-lock；flux-code-editor focused typecheck/测试过（新依赖可解析）
+- [x] 三能力单测断言绿；`.cm-panel` 样式规则存在且消费语义令牌（`code-editor-styles.test.ts` 新增「tokenizes the CM6 search panel chrome」契约断言绿）
+- [x] i18n 键 zh/en 对称（flux-i18n focused 契约测试 29/29 绿）；design.md §2 三行已补
 
 ### Phase 3 - code-editor dark 令牌映射（A4）
 
-Status: planned
+Status: completed
 Targets: `code-editor-styles.css`（:53-78/:90/:290）、`extensions/base.ts`（:38/:45/:49）、`code-editor-styles.test.ts`、`docs/components/code-editor/design.md` §10
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：`code-editor-styles.test.ts` 守卫先红——沿 ：25-26 `not.toContain` 先例新增「dark 块禁裸 hex（#777/#ccc/#999/#fff/#1e1e1e/#282c34）/ 禁裸白 rgba(255,255,255,x)」断言 + field 三令牌 fallback 禁裸 hex 断言；改 CSS 前跑出红并记录
-- [ ] Fix：dark 块 24 个声明（15 rgba + 9 hex）映射语义令牌链——#777/#999/#ccc 三档灰 → `--muted-foreground`/`--foreground` color-mix 降档；rgba(255,255,255,x) 边框/底 → `--border`/`--accent`/`--muted` color-mix；light 路径 ：1-46 为同构先例
-- [ ] Fix：两处表面——`--nop-code-editor-dark-surface` var 名保留、fallback 换 `hsl(var(--background))` 链（:90/:290）；`--nop-code-editor-surface` 钩子语义不变（:86/:285）；field 三令牌（`--nop-field-border/focus-ring/disabled-bg`，`base.ts:38/:45/:49`）定义或改直连语义令牌（V6 R1 同型缺陷先例，二选一裁决记录进 design.md §10）
-- [ ] Fix：design.md §10 dark 契约重述——dark 块令牌映射后，"editorTheme 只负责内核/显式暗色覆盖路径"契约原文与映射后事实对齐（不写演进叙事）
+- [x] Proof：`code-editor-styles.test.ts` 守卫先红——沿 ：25-26 `not.toContain` 先例新增「dark 块禁裸 hex（#777/#ccc/#999/#fff/#1e1e1e/#282c34）/ 禁裸白 rgba(255,255,255,x)」断言 + field 三令牌 fallback 禁裸 hex 断言；改 CSS 前跑出红并记录（2026-09-21 执行记录：两条新守卫改 CSS/装配前 2 failed / 3 passed，红在 dark 块裸 #777 与 base.ts 残留 --nop-field-border）
+- [x] Fix：dark 块 24 个声明（15 rgba + 9 hex）映射语义令牌链——#777/#999/#ccc 三档灰 → `--muted-foreground`/`--foreground` color-mix 降档；rgba(255,255,255,x) 边框/底 → `--border`/`--accent`/`--muted` color-mix；light 路径 ：1-46 为同构先例（**按 review M1 option a 执行（取代本条目原语义链映射文本）**：24 个声明逐一映射到包级 dark 令牌 `--nop-code-editor-dark-*`（fallback-only 钩子、fallback 保留 raw 暗值本体），host 无关，亮色宿主 + editorTheme:'dark' 路径 chrome 不翻亮；守卫断言 24 个映射齐全且 var() 通道外零裸值）
+- [x] Fix：两处表面——`--nop-code-editor-dark-surface` var 名保留、fallback 换 `hsl(var(--background))` 链（:90/:290）；`--nop-code-editor-surface` 钩子语义不变（:86/:285）；field 三令牌（`--nop-field-border/focus-ring/disabled-bg`，`base.ts:38/:45/:49`）定义或改直连语义令牌（V6 R1 同型缺陷先例，二选一裁决记录进 design.md §10）（**落地按 M1 option a 调整**：两处表面 var 名与 fallback-only 钩子语义原样保留（fallback = raw 暗值本体，宿主定义优先，Failure Path dark-surface-override 语义不变），未换语义链；field 三令牌裁决取「直连」：`hsl(var(--border))`/`hsl(var(--ring))`/`hsl(var(--muted))`，裁决已记录 design.md §10）
+- [x] Fix：design.md §10 dark 契约重述——dark 块令牌映射后，"editorTheme 只负责内核/显式暗色覆盖路径"契约原文与映射后事实对齐（不写演进叙事）
 
 Exit Criteria:
 
-- [ ] 契约守卫先红后绿；dark 块与表面零裸值；五个零定义令牌逐一收敛（定义或直连，逐一可 grep）
-- [ ] editorTheme 契约语义未变：renderer :107 默认 light、`data-theme` 写点 ：243/:271 零改动（grep 证）
-- [ ] code-editor focused 测试零回归；design.md §10 与 live 一致
+- [x] 契约守卫先红后绿；dark 块与表面零裸值（var() fallback 通道外零裸色值字面，结构性守卫）；五个零定义令牌逐一收敛（定义或直连，逐一可 grep：field 三令牌已直连零残留、`--nop-code-editor-surface` 钩子+语义链 fallback、`--nop-code-editor-dark-surface` 钩子+raw 暗值 fallback）
+- [x] editorTheme 契约语义未变：renderer :107 默认 light、`data-theme` 写点 ：243/:271 零改动（grep 证：三处原文原位；renderer/use-code-mirror/use-merge-view 三文件零 diff）
+- [x] code-editor focused 测试零回归（104/104 全绿）；design.md §10 与 live 一致
 
 ### Phase 4 - e2e 视觉断言 + 裁决落卡 + owner docs 收口（A5/A3）
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/debugger.spec.ts`、`tests/e2e/code-editor.spec.ts`、`docs/audits/visual-quality/debugger-code-editor.md`、roadmap、daily log
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] Proof（A5 debugger）：light/dark 宿主双态断言——面板背景/文字/边框 `getComputedStyle`（切宿主 data-mode 后值翻转，复用 visual-assert helpers + `theme-switcher.spec.ts:40-58` 先例）+ `--nop-debugger-*` 令牌解析断言（`元素级消费端计算值探针（getComputedStyleValue）`）+ launcher/overlay `position:fixed` 与 z-index 存在性断言（9998/9999/10000）。**断言机制（review M2）**：42 令牌为 fallback-only 钩子（documentElement 上解析为空），禁用 expectCssVarResolves——debugger 域断言消费端计算值随宿主 data-mode 翻转（+宿主 --background/--foreground 解析）；code-editor dark 域用 getComputedStyleValue(locator, '--nop-code-editor-\*') 元素级读取
-- [ ] Proof（A5 code-editor）：三能力行为断言——closeBrackets 输入开括号断言补全 DOM、highlightActiveLine 断言 `.cm-activeLine` 存在 + 背景计算样式、search 面板打开后 `.cm-panel` 可见 + Esc 关闭 + i18n 文案；dark 令牌解析断言（dark 块 `--nop-code-editor-*` 值随 `data-theme` 翻转）；现有 ：393 `data-theme` 属性断言至少 1 处升级为计算样式断言
-- [ ] Decision（A3）：editorTheme 契约维持落卡——playground dark 示例核对（`code-editor-page.tsx:278/:319`）确认覆盖现状；「kernel 主题自动继承宿主 data-mode」登记 Deferred But Adjudicated（本 plan Deferred 区），design.md §10 契约原文维持
-- [ ] Fix：owner docs 收口——证据卡 `debugger-code-editor.md` 回写（勘误 1/2：F3 定性修正为 dark 覆盖路径残余 ：53-78+:90+:290、截图"3 处"计数伪影实为 1 处且在 test.skip；F1-F4 裁决与状态 open → closed；Owner plan 填 484）；roadmap V9 行状态流转；daily log（测试计数 + full-green 状态）
+- [x] Proof（A5 debugger）：light/dark 宿主双态断言——面板背景/文字/边框 `getComputedStyle`（切宿主 data-mode 后值翻转，复用 visual-assert helpers + `theme-switcher.spec.ts:40-58` 先例）+ `--nop-debugger-*` 令牌解析断言（`元素级消费端计算值探针（getComputedStyleValue）`）+ launcher/overlay `position:fixed` 与 z-index 存在性断言（9998/9999/10000）。**断言机制（review M2）**：42 令牌为 fallback-only 钩子（documentElement 上解析为空），禁用 expectCssVarResolves——debugger 域断言消费端计算值随宿主 data-mode 翻转（+宿主 --background/--foreground 解析）；code-editor dark 域用 getComputedStyleValue(locator, '--nop-code-editor-\*') 元素级读取（落地：+2 debugger test——panel chrome flips with host data-mode、z-index layering fixed+9998/9999/10000）
+- [x] Proof（A5 code-editor）：三能力行为断言——closeBrackets 输入开括号断言补全 DOM、highlightActiveLine 断言 `.cm-activeLine` 存在 + 背景计算样式、search 面板打开后 `.cm-panel` 可见 + Esc 关闭 + i18n 文案；dark 令牌解析断言（dark 块 `--nop-code-editor-*` 值随 `data-theme` 翻转）；现有 ：393 `data-theme` 属性断言至少 1 处升级为计算样式断言（落地：+3 code-editor test——dark tokens 元素级解析/closeBrackets+activeLine/search 面板 Mod-f+i18n+Esc；read-only viewer 断言升级 `--nop-code-editor-header-title-fg`=#ccc。执行发现：runner Desktop Chrome 设备携带 Windows UA，CM6 Mod 归一化为 Ctrl，修饰键改按页面 UA 选取）
+- [x] Decision（A3）：editorTheme 契约维持落卡——playground dark 示例核对（`code-editor-page.tsx:278/:319`）确认覆盖现状；「kernel 主题自动继承宿主 data-mode」登记 Deferred But Adjudicated（本 plan Deferred 区），design.md §10 契约原文维持（核对：Read-Only Viewer 与 Colorized JSON 双示例在案）
+- [x] Fix：owner docs 收口——证据卡 `debugger-code-editor.md` 回写（勘误 1/2：F3 定性修正为 dark 覆盖路径残余 ：53-78+:90+:290、截图"3 处"计数伪影实为 1 处且在 test.skip；F1-F4 裁决与状态 open → closed；Owner plan 填 484）；roadmap V9 行状态流转（Plan 列填 484 + owner doc 列修正；状态按 roadmap 规则维持 `planned`，closure audit 通过后方可改 `done`）；daily log（测试计数 + full-green 状态）
 
 Exit Criteria:
 
-- [ ] 新增断言全绿；debugger 15 + code-editor 18 active test 零回归（e2e 红线）
-- [ ] 证据卡裁决逐条落卡无 pending；roadmap/daily log 已更新
-- [ ] 快照政策合规：判据全部程序化（getComputedStyle/令牌解析），无新增截图基线入库
+- [x] 新增断言全绿；debugger 15 + code-editor 18 active test 零回归（e2e 红线：38 passed / 1 skipped（既有 skip）/ 0 failed，含新增 5 test）
+- [x] 证据卡裁决逐条落卡无 pending；roadmap/daily log 已更新
+- [x] 快照政策合规：判据全部程序化（getComputedStyle/令牌解析），无新增截图基线入库
 
 ## Draft Review Record
 
 > 起草后、执行前的独立审查证据。由独立审阅者或独立子 agent 填写。
 
-- Reviewer / Agent:
-- Verdict:
-- Rounds:
-- Findings addressed:
+- Reviewer / Agent: 独立 plan-review 审查员（fresh session，2026-09-21，重建审查）
+- Verdict: `pass-with-minors`（0 Blocker / 0 Major / 4 Minor）
+- Rounds: 1（重建轮）
+- Findings addressed: 本记录为**事故后重建**：原 draft review 已于执行前由另一独立 session 完成并达成共识（M1/M2 两项裁决），证据见 `docs/logs/2026/09-21.md` §plan 484（"draft review 共识裁决 M1/M2 落地"）及同日执行事故记录（并发 stash/restore 将本 plan 文件回退至 draft 版，Review Record 丢失）；本节由 fresh session 对 plan 文本独立重审后回填，不重复执行核验（归 closure audit）。重审结论：引用抽查 24+ 处（styles-css.ts 全部关键行号/styles.test.ts 契约/base.ts 装配面/code-editor-styles.css dark 块 15 rgba 计数/i18n 1140-1142/e2e spec 计数与行号等）对 draft 基线（0e75ae915/33135a45a）全部精确命中；**M1（dark 品牌值经 `--nop-debugger-dark-*`/`--nop-code-editor-dark-*` fallback-only 钩子保留原始暗值）与 M2（debugger e2e 禁 `expectCssVarResolves`、走消费端计算值探针）两项裁决在现行 plan 文本可见**（Phase 1 Fix、Phase 3 Fix、Phase 4 Proof），并与 design.md §10、证据卡落地形态一致。4 项 Minor 不阻塞：M-1 baseline helper 清单为重建伪影（`元素级消费端计算值探针` 非导出名、漏列 `expectCssVarResolves`）；M-2 门禁规则行号 :303 应为 :302（:319/:357 正确）；M-3 Goal A4 未随 M1 加注、Failure Path dark-surface-override「fallback 语义链」措辞与 M1 落地后的 raw 暗值 fallback 有出入（机制不变，Phase 3 已记注）；M-4 执行后预期漂移备案（styles-css.ts 506→550 已随 33135a45a 入库、locales 现位移、RENDERER_PACKAGE_SCOPE 现移、design.md §10 现移）——供 closure auditor 对照，非缺陷。
 
 ## Closure Gates
 
 > **关闭条件**：只有本 section 所有条目以及每个 Phase 的 Exit Criteria 全部勾选为 `[x]` 后，才能将 `Plan Status` 改为 `completed`。全量验证归此处，Phase 内只做局部验证。
 
-- [ ] 全部 in-scope 交付落地（Phase 1-4 Exit Criteria 全勾）
-- [ ] in-scope confirmed live defects / contract drifts 已收敛：42 fallback-only 令牌、:29 无 fallback 消费、18 处裸值、dark 块 24 raw + 2 表面 hex、field 三令牌、三能力缺失、亮色宿主双体系混色
-- [ ] 硬约束守住：运行时 `<style>` 注入与 `DEBUGGER_STYLE_ID` 未变；`@codemirror/search` 为唯一新增 npm 依赖；不新建 CSS 构建管线；theme-tokens 包零改动
-- [ ] 显式裁决落卡（A3 契约维持、品牌保真 / R2 / R6 watch-only、R8 二选一），非静默 deferred
-- [ ] 行为/契约结果已达成：三能力、亮色宿主自适应、dark 令牌解析在契约单测与 e2e 成立
-- [ ] 必要 focused verification 已完成（两契约测试先红后绿 + e2e 双态断言）
-- [ ] e2e 红线：debugger 15 + code-editor 18 active test 零回归
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响 owner docs 已同步到 live baseline：debugger/design.md（新建）、code-editor/design.md、证据卡、roadmap、daily log
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新 hit，不超出注册红名单）
+- [x] 全部 in-scope 交付落地（Phase 1-4 Exit Criteria 全勾）
+- [x] in-scope confirmed live defects / contract drifts 已收敛：42 fallback-only 令牌、:29 无 fallback 消费、18 处裸值、dark 块 24 raw + 2 表面 hex、field 三令牌、三能力缺失、亮色宿主双体系混色
+- [x] 硬约束守住：运行时 `<style>` 注入与 `DEBUGGER_STYLE_ID` 未变；`@codemirror/search` 为唯一新增 npm 依赖；不新建 CSS 构建管线；theme-tokens 包零改动
+- [x] 显式裁决落卡（A3 契约维持、品牌保真 / R2 / R6 watch-only、R8 二选一），非静默 deferred
+- [x] 行为/契约结果已达成：三能力、亮色宿主自适应、dark 令牌解析在契约单测与 e2e 成立
+- [x] 必要 focused verification 已完成（两契约测试先红后绿 + e2e 双态断言）
+- [x] e2e 红线：debugger 15 + code-editor 18 active test 零回归
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响 owner docs 已同步到 live baseline：debugger/design.md（新建）、code-editor/design.md、证据卡、roadmap、daily log
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新 hit，不超出注册红名单）
 
 ## Deferred But Adjudicated
 
@@ -227,7 +227,7 @@ Status Note: （closure audit 通过后填写）
 Closure Audit Evidence:
 
 - Auditor / Agent: （独立子 agent fresh session 填写）
-- Evidence: （task id / daily log link / findings 摘要）
+- Evidence: verdict `approved`——两 focused 套件独立复跑 nop-debugger 130/130、flux-code-editor 104/104；逐 Phase 对照表见审计输出；daily log `docs/logs/2026/09-21.md` plan 484 节 + 收口会话节。
 
 Follow-up:
 
