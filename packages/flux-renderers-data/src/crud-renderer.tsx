@@ -483,10 +483,11 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     try {
       await handleQuerySubmit();
     } catch (error) {
-      const fallback = new Error(t('flux.common.queryFailed'), { cause: error });
       env.notify?.(
         'warning',
-        error instanceof Error && error.message ? error.message : fallback.message,
+        error instanceof Error
+          ? t('flux.common.queryFailedDetail', { message: error.message })
+          : t('flux.common.queryFailed'),
       );
     }
   }, [handleQuerySubmit, env]);

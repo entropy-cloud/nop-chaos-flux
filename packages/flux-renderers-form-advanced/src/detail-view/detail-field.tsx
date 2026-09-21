@@ -40,7 +40,9 @@ function logDetailFieldAsyncError(action: 'open' | 'confirm', error: unknown) {
 }
 
 function toAsyncFailureMessage(error: unknown, fallback: string) {
-  return error instanceof Error && error.message ? error.message : fallback;
+  return error instanceof Error
+    ? t('flux.common.saveFailedDetail', { message: error.message })
+    : fallback;
 }
 
 export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSchema>) {

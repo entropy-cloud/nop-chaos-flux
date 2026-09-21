@@ -141,9 +141,10 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         reportRuntimeHostIssue({
           env: runtime.env,
           level: 'error',
-          message: `Calendar loadAction failed: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
+          message:
+            error instanceof Error
+              ? t('flux.scheduling.calendar.loadActionFailedDetail', { message: error.message })
+              : t('flux.scheduling.calendar.loadActionFailed'),
           error,
           phase: 'action',
           path: props.path,

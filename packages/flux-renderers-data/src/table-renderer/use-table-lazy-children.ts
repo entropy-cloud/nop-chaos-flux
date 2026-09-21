@@ -69,9 +69,9 @@ export function useTableLazyChildren(input: {
           } else {
             const errorMsg =
               typeof result.error === 'string' && result.error
-                ? result.error
+                ? t('flux.table.loadChildrenFailedDetail', { message: result.error })
                 : result.error instanceof Error
-                  ? result.error.message
+                  ? t('flux.table.loadChildrenFailedDetail', { message: result.error.message })
                   : t('flux.table.loadChildrenFailed');
             setNodeState(rowKey, { loading: false, error: errorMsg, children: undefined });
           }
@@ -80,7 +80,10 @@ export function useTableLazyChildren(input: {
           if (!mountedRef.current) return;
           setNodeState(rowKey, {
             loading: false,
-            error: err instanceof Error ? err.message : t('flux.table.loadChildrenFailed'),
+            error:
+              err instanceof Error
+                ? t('flux.table.loadChildrenFailedDetail', { message: err.message })
+                : t('flux.table.loadChildrenFailed'),
             children: undefined,
           });
         })

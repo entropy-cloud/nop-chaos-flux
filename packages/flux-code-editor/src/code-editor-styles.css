@@ -43,6 +43,21 @@
   --nop-code-editor-result-muted-fg: hsl(var(--muted-foreground));
   --nop-code-editor-result-header-bg: color-mix(in srgb, hsl(var(--muted)) 62%, transparent);
   --nop-code-editor-result-header-border: color-mix(in srgb, hsl(var(--border)) 72%, transparent);
+  --nop-code-editor-search-panel-bg: color-mix(in srgb, hsl(var(--muted)) 62%, transparent);
+  --nop-code-editor-search-panel-border: color-mix(in srgb, hsl(var(--border)) 82%, transparent);
+  --nop-code-editor-search-panel-fg: hsl(var(--foreground));
+  --nop-code-editor-search-panel-muted-fg: hsl(var(--muted-foreground));
+  --nop-code-editor-search-field-bg: hsl(var(--background));
+  --nop-code-editor-search-field-border: hsl(var(--border));
+  --nop-code-editor-search-field-fg: hsl(var(--foreground));
+  --nop-code-editor-search-button-fg: hsl(var(--foreground));
+  --nop-code-editor-search-button-hover-bg: color-mix(in srgb, hsl(var(--accent)) 68%, transparent);
+  --nop-code-editor-search-match-bg: color-mix(in srgb, hsl(var(--warning)) 30%, transparent);
+  --nop-code-editor-search-match-selected-bg: color-mix(
+    in srgb,
+    hsl(var(--warning)) 45%,
+    transparent
+  );
 }
 
 .nop-code-editor[data-has-toolbar] {
@@ -302,4 +317,63 @@
 
 .nop-code-editor-colorize span {
   font-family: inherit;
+}
+
+.nop-code-editor .cm-panels {
+  background: var(--nop-code-editor-search-panel-bg);
+  color: var(--nop-code-editor-search-panel-fg);
+  border-bottom: 1px solid var(--nop-code-editor-search-panel-border);
+}
+
+.nop-code-editor .cm-panel.cm-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.nop-code-editor .cm-panel.cm-search label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--nop-code-editor-search-panel-muted-fg);
+}
+
+.nop-code-editor .cm-panel.cm-search input.cm-textfield {
+  padding: 2px 6px;
+  border: 1px solid var(--nop-code-editor-search-field-border);
+  border-radius: 4px;
+  background: var(--nop-code-editor-search-field-bg);
+  color: var(--nop-code-editor-search-field-fg);
+  font-size: 12px;
+}
+
+.nop-code-editor .cm-panel.cm-search button {
+  padding: 2px 8px;
+  border: 1px solid var(--nop-code-editor-search-panel-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--nop-code-editor-search-button-fg);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.nop-code-editor .cm-panel.cm-search button:hover {
+  background: var(--nop-code-editor-search-button-hover-bg);
+}
+
+.nop-code-editor .cm-panel.cm-search [name='close'] {
+  border: none;
+  background: transparent;
+}
+
+.nop-code-editor .cm-searchMatch {
+  background: var(--nop-code-editor-search-match-bg);
+}
+
+.nop-code-editor .cm-searchMatch-selected {
+  background: var(--nop-code-editor-search-match-selected-bg);
 }

@@ -248,7 +248,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       } catch (err) {
         // Compile failure is reported via the effect below (never setState
         // during render).
-        const msg = err instanceof Error ? err.message : String(err);
+        const msg =
+          err instanceof Error
+            ? t('flux.scheduling.kanban.filterCompileFailedDetail', { message: err.message })
+            : t('flux.scheduling.kanban.filterCompileFailed');
         filterCompileErrorRef.current = msg;
       }
     }

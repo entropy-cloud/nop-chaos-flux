@@ -453,7 +453,10 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
         committing: false,
         validating: false,
         lastCommitStatus: 'error',
-        stepError: error instanceof Error ? error.message : String(error),
+        stepError:
+          error instanceof Error
+            ? t('flux.wizard.commitFailedDetail', { message: error.message })
+            : t('flux.wizard.commitFailedDetail', { message: String(error) }),
       });
       const stepErrorPayload = {
         type: 'wizard:step-error',

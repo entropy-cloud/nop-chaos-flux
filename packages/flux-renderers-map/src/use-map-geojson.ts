@@ -103,9 +103,9 @@ export function useMapGeojson(input: {
         } else {
           const errorMsg =
             typeof result.error === 'string' && result.error
-              ? result.error
+              ? t('flux.map.loadRegionDataFailedDetail', { message: result.error })
               : result.error instanceof Error
-                ? result.error.message
+                ? t('flux.map.loadRegionDataFailedDetail', { message: result.error.message })
                 : t('flux.map.loadRegionDataFailed');
           setState({ loading: false, error: errorMsg, geojson: undefined });
         }
@@ -116,7 +116,10 @@ export function useMapGeojson(input: {
         }
         setState({
           loading: false,
-          error: err instanceof Error ? err.message : t('flux.map.loadRegionDataFailed'),
+          error:
+            err instanceof Error
+              ? t('flux.map.loadRegionDataFailedDetail', { message: err.message })
+              : t('flux.map.loadRegionDataFailed'),
           geojson: undefined,
         });
       })

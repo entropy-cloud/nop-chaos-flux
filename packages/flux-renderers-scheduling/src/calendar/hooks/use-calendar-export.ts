@@ -1,5 +1,6 @@
 import html2canvas from 'html2canvas';
 import { useState, useRef } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface UseCalendarExportResult {
   exportToPrint: () => void;
@@ -54,7 +55,7 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
       });
 
       if (!blob) {
-        const msg = 'Failed to generate PNG image';
+        const msg = t('flux.scheduling.calendar.pngExportFailed');
         setExportError(msg);
         throw new Error(msg);
       }
@@ -66,7 +67,10 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
       URL.revokeObjectURL(url);
     } catch (err) {
       if ((err as DOMException)?.name === 'AbortError') return;
-      const msg = err instanceof Error ? err.message : String(err) || 'PNG export failed';
+      const msg =
+        err instanceof Error
+          ? t('flux.scheduling.calendar.pngExportFailedDetail', { message: err.message })
+          : t('flux.scheduling.calendar.pngExportFailed');
       setExportError(msg);
       throw err;
     } finally {

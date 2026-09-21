@@ -105,6 +105,9 @@ export function reportVariantFieldFailure(
   notify: RendererEnv['notify'] | undefined,
   error: unknown,
 ) {
-  const message = error instanceof Error && error.message ? error.message : t('flux.form.variantUpdateFailed');
+  const message =
+    error instanceof Error
+      ? t('flux.form.variantUpdateFailedDetail', { message: error.message })
+      : t('flux.form.variantUpdateFailed');
   notify?.('warning', message);
 }

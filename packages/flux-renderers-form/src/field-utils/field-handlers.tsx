@@ -11,6 +11,7 @@ import {
   type ValidationScopeRuntime,
   type ValueAdapter,
 } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import {
   useCurrentForm,
   useCurrentFormState,
@@ -179,7 +180,9 @@ export function useFieldHandlers(args: {
           env: runtime.env,
           level: 'warning',
           message:
-            error instanceof Error && error.message ? error.message : 'Field update failed',
+            error instanceof Error
+              ? t('flux.form.fieldUpdateFailedDetail', { message: error.message })
+              : t('flux.form.fieldUpdateFailed'),
           error,
           phase: 'action',
           path: name,

@@ -175,7 +175,9 @@ export function MapRenderer(props: RendererComponentProps<MapSchema>) {
         if (!cancelled) {
           console.error('[map] failed to load OpenLayers modules', error);
           setOlError(
-            error instanceof Error ? error.message : t('flux.map.mapLoadFailed'),
+            error instanceof Error
+              ? t('flux.map.mapLoadFailedDetail', { message: error.message })
+              : t('flux.map.mapLoadFailed'),
           );
         }
       });

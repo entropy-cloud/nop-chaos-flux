@@ -322,7 +322,9 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
 
                 env.notify?.(
                   'warning',
-                  error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+                  error instanceof Error
+                    ? t('flux.common.saveFailedDetail', { message: error.message })
+                    : t('flux.common.saveFailed'),
                 );
               });
             })
@@ -356,7 +358,9 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
         }).catch((error: unknown) => {
           env.notify?.(
             'warning',
-            error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+            error instanceof Error
+              ? t('flux.common.saveFailedDetail', { message: error.message })
+              : t('flux.common.saveFailed'),
           );
         });
         return;

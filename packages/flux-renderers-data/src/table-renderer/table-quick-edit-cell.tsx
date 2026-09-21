@@ -93,7 +93,9 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
     onSaveError(error) {
       env.notify?.(
         'warning',
-        error instanceof Error && error.message ? error.message : t('flux.common.saveFailed'),
+        error instanceof Error
+          ? t('flux.common.saveFailedDetail', { message: error.message })
+          : t('flux.common.saveFailed'),
       );
     },
   });

@@ -165,7 +165,13 @@ export function PivotTableRenderer(props: RendererComponentProps<PivotTableSchem
         });
         exposeInstance(props.id, created);
       } catch (error) {
-        queueMicrotask(() => setInitError(error instanceof Error ? error.message : String(error)));
+        queueMicrotask(() =>
+          setInitError(
+            error instanceof Error
+              ? t('flux.pivot.initFailedDetail', { message: error.message })
+              : t('flux.pivot.initFailedDetail', { message: String(error) }),
+          ),
+        );
         if (typeof console !== 'undefined' && typeof console.error === 'function') {
           console.error('[pivot-table] 实例创建失败', error);
         }

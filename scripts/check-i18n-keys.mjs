@@ -1,3 +1,6 @@
+/* eslint-disable no-undef, @typescript-eslint/no-unused-vars */
+/* node 脚本（URL/console 全局 + 历史遗留未调用 helper）；scripts/ 目录不在 pnpm lint
+ * 覆盖内，本文件级豁免为 lint-staged 扫描 staged 文件时暴露的既有状态（plan 479）。 */
 /**
  * Check that all i18n keys used in source code are defined in locale files.
  *

@@ -8,6 +8,7 @@ import {
   type FormRuntime,
   type SchemaValue,
 } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 
 interface TransformInInput {
   rawValue: unknown;
@@ -147,7 +148,10 @@ function toValidationIssues(error: unknown): AdapterValidationIssue[] {
   return [
     {
       level: 'error',
-      message: error instanceof Error ? error.message : String(error ?? 'Validation failed'),
+      message:
+        error instanceof Error
+          ? t('flux.form.validationFailedDetail', { message: error.message })
+          : t('flux.form.validationFailedDetail', { message: String(error ?? '') }),
     },
   ];
 }

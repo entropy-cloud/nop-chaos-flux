@@ -231,8 +231,9 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
       >
-        {t('flux.dynamicRenderer.error')}
-        {visibleState.error instanceof Error ? visibleState.error.message : String(visibleState.error)}
+        {visibleState.error instanceof Error
+          ? t('flux.dynamicRenderer.errorDetail', { message: visibleState.error.message })
+          : t('flux.dynamicRenderer.errorDetail', { message: String(visibleState.error) })}
       </div>
     );
   }

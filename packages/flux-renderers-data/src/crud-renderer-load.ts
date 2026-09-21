@@ -10,6 +10,7 @@ import {
   type RendererComponentProps,
   type ScopeRef,
 } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { CrudSchema } from './crud-schema.js';
 import {
   EMPTY_ROWS,
@@ -165,7 +166,7 @@ export function useCrudLoadAction(args: {
         );
         return;
       }
-      env?.notify?.('error', err.message);
+      env?.notify?.('error', t('flux.crud.loadFailedDetail', { message: err.message }));
     },
     [env, nodeScope, onError, scope],
   );

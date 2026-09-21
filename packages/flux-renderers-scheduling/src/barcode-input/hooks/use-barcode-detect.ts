@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { createBarcodeDetector, detectWithSkewRetry, SKEW_ANGLES, type BarcodeDetectResult, type BarcodeFormat } from '../utils/barcode-detector-utils.js';
 
 interface UseBarcodeDetectOptions {
@@ -108,7 +109,13 @@ export function useBarcodeDetect(
         }
       } catch (err: any) {
         if (signal.aborted) return;
-        setError(err instanceof Error ? err.message : `Decode error: ${String(err)}`);
+        setError(
+          err?.name === 'NotAllowedError'
+            ? t('flux.barcode.cameraPermissionDenied')
+            : err?.name === 'NotFoundError'
+              ? t('flux.barcode.cameraNotFound')
+              : t('flux.barcode.decodeError', { message: String(err?.message ?? err) }),
+        );
       }
 
       if (!signal.aborted) {

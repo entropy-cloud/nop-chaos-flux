@@ -1,9 +1,12 @@
 import type { Extension } from '@codemirror/state';
+import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { lineNumbers } from '@codemirror/view';
+import { lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
 import { foldGutter } from '@codemirror/language';
 import { indentWithTab, history } from '@codemirror/commands';
 import { keymap } from '@codemirror/view';
+import { search, searchKeymap } from '@codemirror/search';
+import { closeBrackets } from '@codemirror/autocomplete';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { javascript, javascriptLanguage, typescriptLanguage } from '@codemirror/lang-javascript';
 import { sql, MySQL, PostgreSQL, SQLite, MSSQL, StandardSQL } from '@codemirror/lang-sql';
@@ -17,6 +20,7 @@ import { xml, xmlLanguage } from '@codemirror/lang-xml';
 import type { Parser } from '@lezer/common';
 import { linter } from '@codemirror/lint';
 import { autocompletion } from '@codemirror/autocomplete';
+import { t } from '@nop-chaos/flux-i18n';
 import { expressionCompletionSource } from './expression/completion.js';
 import { createFriendlyNameDecoration } from './expression/decoration.js';
 import { createTemplateModeExtension } from './expression/template-mode.js';
@@ -144,8 +148,32 @@ export interface CompletionConfig {
   tables?: TableSchema[];
 }
 
+function createSearchPhrases(): Record<string, string> {
+  return {
+    Find: t('flux.codeEditor.searchFind'),
+    Replace: t('flux.codeEditor.searchReplace'),
+    next: t('flux.codeEditor.searchNext'),
+    previous: t('flux.codeEditor.searchPrevious'),
+    all: t('flux.codeEditor.searchAll'),
+    'match case': t('flux.codeEditor.searchMatchCase'),
+    regexp: t('flux.codeEditor.searchRegexp'),
+    'by word': t('flux.codeEditor.searchByWord'),
+    'replace all': t('flux.codeEditor.searchReplaceAll'),
+    close: t('flux.codeEditor.searchClose'),
+    'Go to line': t('flux.codeEditor.searchGoToLine'),
+  };
+}
+
 export function createBaseExtensions(options: CreateBaseExtensionsOptions): Extension[] {
-  const extensions: Extension[] = [keymap.of([indentWithTab]), history()];
+  const extensions: Extension[] = [
+    EditorState.phrases.of(createSearchPhrases()),
+    keymap.of([...searchKeymap, indentWithTab]),
+    history(),
+    search(),
+    closeBrackets(),
+    highlightActiveLine(),
+    highlightActiveLineGutter(),
+  ];
 
   if (options.lineNumbers) {
     extensions.push(lineNumbers());

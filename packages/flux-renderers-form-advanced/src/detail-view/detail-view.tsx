@@ -65,7 +65,9 @@ export function DetailViewRenderer(props: RendererComponentProps<DetailViewSchem
   }
 
   function toAsyncFailureMessage(error: unknown, fallback: string) {
-    return error instanceof Error && error.message ? error.message : fallback;
+    return error instanceof Error
+      ? t('flux.common.saveFailedDetail', { message: error.message })
+      : fallback;
   }
 
   function reportOpenFailure(error: unknown) {

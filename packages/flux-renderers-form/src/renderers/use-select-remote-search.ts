@@ -5,10 +5,10 @@ import type { ChoiceOption } from './input-choice-renderers.js';
 
 function searchFailureMessage(error: unknown): string {
   if (typeof error === 'string' && error) {
-    return error;
+    return t('flux.form.searchFailedDetail', { message: error });
   }
-  if (error instanceof Error && error.message) {
-    return error.message;
+  if (error instanceof Error) {
+    return t('flux.form.searchFailedDetail', { message: error.message });
   }
   return t('flux.form.searchFailed');
 }
