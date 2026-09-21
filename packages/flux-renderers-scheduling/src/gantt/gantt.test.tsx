@@ -95,6 +95,17 @@ describe('Gantt', () => {
     expect(container.querySelector('[data-testid="empty-region"]')).toBeTruthy();
   });
 
+  it('renders a styled muted empty fallback (not a bare div) when no empty region is provided (G4-视角5-01, plan 486 Phase 1 proof)', () => {
+    const { container } = render(React.createElement(Gantt, baseProps));
+    const root = container.querySelector('[data-slot="gantt"]');
+    expect(root).toBeTruthy();
+    expect(root?.getAttribute('data-empty')).toBe('true');
+    const emptyText = root?.querySelector('[data-slot="gantt-empty"]');
+    expect(emptyText).not.toBeNull();
+    expect((emptyText?.textContent ?? '').length).toBeGreaterThan(0);
+    expect(root?.className).toContain('text-muted-foreground');
+  });
+
   it('should call onMount and onUnmount events', () => {
     const onMount = vi.fn();
     const onUnmount = vi.fn();

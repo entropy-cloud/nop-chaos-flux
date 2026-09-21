@@ -268,6 +268,7 @@ export const zhCN: Resource = {
       uploadFile: '上传文件',
       uploadFiles: '上传多个文件',
       uploading: '上传中…',
+      submitting: '提交中...',
       clear: '清空',
       cancel: '取消',
       uploadFailed: '上传失败',
@@ -1374,6 +1375,7 @@ export const zhCN: Resource = {
         zoomWeek: '周',
         zoomMonth: '月',
         criticalPathLegend: '关键路径',
+        empty: '暂无任务',
       },
     },
     mobile: {
@@ -1391,6 +1393,9 @@ export const zhCN: Resource = {
       },
       noticeBar: {
         close: '关闭',
+      },
+      countdown: {
+        noTimeConfig: '未配置倒计时时间',
       },
       barcode: {
         recognizing: '识别中...',
@@ -1432,6 +1437,7 @@ export const zhCN: Resource = {
       scada: {
         canvasError: '画布场景错误',
         canvasLabel: '工业组态画面',
+        canvasLoading: '场景加载中...',
         error: {
           'config-parse': '组态配置解析失败',
           'config-invalid': '组态配置校验未通过',
@@ -1587,6 +1593,7 @@ export const zhCN: Resource = {
       },
     },
     dashboard: {
+      empty: '暂无面板',
       editor: {
         headerTitle: '仪表盘编辑器',
         undo: '撤销',

@@ -1,9 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RendererComponentProps, RendererRuntime, ScopeRef } from '@nop-chaos/flux-core';
 import type { FormSchema } from '../schemas.js';
 import { reportFormInitActionError } from './form-lifecycle-helpers.js';
 
 type FormLoadAction = NonNullable<RendererComponentProps<FormSchema>['events']['loadAction']>;
+
+export interface FormLoadActionState {
+  /** True while an autoLoad/refresh loadAction request is in flight. */
+  loadLoading: boolean;
+}
 
 /**
  * Owns the form `loadAction` orchestration: run once per activation key,
@@ -13,6 +18,10 @@ type FormLoadAction = NonNullable<RendererComponentProps<FormSchema>['events']['
  * request) on every render. Imports are always prepared by the time the form
  * renders (preload failure blocks compilation), so no import-ready gate is
  * needed here.
+ *
+ * G2-视角5-03 (plan 486 Phase 1): exposes the in-flight load state so the form
+ * render surface can show busy feedback (previously the hook kept ALL state in
+ * refs and nothing consumed it).
  */
 export function useFormLoadAction(input: {
   loadAction: FormLoadAction | undefined;
@@ -22,11 +31,15 @@ export function useFormLoadAction(input: {
   ownedForm: ReturnType<RendererRuntime['createFormRuntime']>;
   runtime: RendererRuntime;
   path: string;
-}): void {
+}): FormLoadActionState {
   const { loadAction, autoLoad, activationKey, lifecycleScope, ownedForm, runtime, path } = input;
   const loadActionKeyRef = useRef<string | undefined>(undefined);
   const loadAbortRef = useRef<AbortController | null>(null);
   const loadRequestIdRef = useRef(0);
+  // G2-视角5-03: React state mirror of "a load request is in flight" — only the
+  // start/finish transitions re-render (the request bookkeeping below stays in
+  // refs so a mid-flight re-render cannot abort the request).
+  const [loadLoading, setLoadLoading] = useState(false);
   // latest instances via refs so the load action effect does not re-run (and
   // abort the in-flight request) on every render — only on activation/action
   // change. `lifecycleScope`/`ownedForm` identities are volatile across renders.
@@ -51,6 +64,7 @@ export function useFormLoadAction(input: {
     loadAbortRef.current = controller;
     loadActionKeyRef.current = activationKey;
     const requestId = ++loadRequestIdRef.current;
+    setLoadLoading(true);
 
     void loadAction(undefined, {
       scope: loadLifecycleScopeRef.current,
@@ -83,6 +97,11 @@ export function useFormLoadAction(input: {
         }
       })
       .finally(() => {
+        // Only the latest request clears the busy flag; a superseded request's
+        // finally must not turn it off while a newer one is still in flight.
+        if (loadRequestIdRef.current === requestId) {
+          setLoadLoading(false);
+        }
         if (loadAbortRef.current === controller) {
           loadAbortRef.current = null;
         }
@@ -100,6 +119,9 @@ export function useFormLoadAction(input: {
         if (loadActionKeyRef.current === activationKey) {
           loadActionKeyRef.current = undefined;
         }
+        if (loadRequestIdRef.current === requestId) {
+          setLoadLoading(false);
+        }
       }
     };
   }, [activationKey, autoLoad, loadAction, runtime, path]);
@@ -115,12 +137,20 @@ export function useFormLoadAction(input: {
       // id so the autoLoad `then` guard (`loadRequestIdRef.current !==
       // requestId`) drops the stale result instead of overwriting fresh data.
       loadRequestIdRef.current = loadRequestIdRef.current + 1;
-      const result = await loadAction(undefined, {
-        scope: loadLifecycleScopeRef.current,
-        form: loadOwnedFormRef.current,
-      });
-      if (result.ok && !result.cancelled && result.data != null) {
-        loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
+      const requestId = loadRequestIdRef.current;
+      setLoadLoading(true);
+      try {
+        const result = await loadAction(undefined, {
+          scope: loadLifecycleScopeRef.current,
+          form: loadOwnedFormRef.current,
+        });
+        if (result.ok && !result.cancelled && result.data != null) {
+          loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
+        }
+      } finally {
+        if (loadRequestIdRef.current === requestId) {
+          setLoadLoading(false);
+        }
       }
     });
 
@@ -128,4 +158,6 @@ export function useFormLoadAction(input: {
       ownedForm.setRefreshHandler(undefined);
     };
   }, [loadAction, ownedForm]);
+
+  return { loadLoading };
 }

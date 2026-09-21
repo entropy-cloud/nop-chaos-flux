@@ -267,3 +267,7 @@ graph TD
 - M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）归属 `flux-renderers-mobile` 包，这是独立于响应式改进的组件新增，遵循主 roadmap 的 renderer 实现规范。
 - M3a 的页面骨架模式（Tabbar/NavBar/ActionBar/SubmitBar/Sticky）**不新增独立 renderer**，走 `page.region` + 标准 schema 模板（见 `page/design.md` §移动端骨架模式）。Tabbar 是路由导航（navigate），≠ `tabs`（内容切换）。
 - 跨 roadmap：本 roadmap 不做桌面端功能（归改进 roadmap）、不做非移动原生的新组件（归主 roadmap）。本 roadmap 的 M0.1/M1-M5 在 `roadmap.md` 有镜像项，**口径以本文为准**。
+
+## V12d 补记（plan 486）
+
+- countdown 缺 time/targetTime 配置渲染 muted 兜底文案（`flux.mobile.countdown.noTimeConfig` + data-missing-config），不再静默空壳。

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { BaseSchema, RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { useRendererRuntime } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { DashboardLayoutSchema, DashboardPanelSchema } from './schemas.js';
 import {
@@ -92,7 +93,14 @@ export function DashboardRenderer(props: RendererComponentProps<DashboardLayoutS
         data-slot="dashboard-root"
         data-empty=""
       >
-        {emptyContent}
+        {emptyContent ?? (
+          <div
+            data-slot="dashboard-empty"
+            className="flex min-h-[120px] h-full items-center justify-center text-sm text-muted-foreground"
+          >
+            {t('flux.dashboard.empty')}
+          </div>
+        )}
       </div>
     );
   }

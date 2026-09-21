@@ -36,6 +36,9 @@ vi.mock('@nop-chaos/flux-react', async () => {
 
 vi.mock('@nop-chaos/ui', () => ({
   cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' '),
+  // G2-视角5-03 (plan 486): the form busy surface consumes the ui Spinner.
+  Spinner: (props: Record<string, unknown>) =>
+    React.createElement('span', { 'data-testid': 'spinner', ...props }),
 }));
 
 import { FormRenderer } from '../renderers/form.js';

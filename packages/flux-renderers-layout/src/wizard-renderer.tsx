@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useStatusPathPublication } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, Spinner, cn } from '@nop-chaos/ui';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import type {
   WizardLastCommitStatus,
@@ -593,7 +593,17 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
               onClick={commitStep}
               disabled={lifecycle.committing}
             >
-              {lifecycle.committing ? <span>{t('flux.wizard.committing')}</span> : null}
+              {lifecycle.committing ? (
+                <span
+                  data-slot="wizard-committing"
+                  role="status"
+                  aria-live="polite"
+                  className="inline-flex items-center gap-2"
+                >
+                  <Spinner className="size-4" aria-hidden="true" />
+                  <span>{t('flux.wizard.committing')}</span>
+                </span>
+              ) : null}
               {!lifecycle.committing ? (
                 <span>{isLastStep ? finishLabel : nextLabel}</span>
               ) : null}

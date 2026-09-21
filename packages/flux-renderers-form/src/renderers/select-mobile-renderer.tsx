@@ -254,6 +254,20 @@ export function SelectMobileSheet(props: SelectMobileSheetProps) {
             )
           )}
         </div>
+        <div
+          className="nop-hairline nop-hairline-top p-3"
+          data-slot="select-mobile-footer"
+        >
+          <Button
+            type="button"
+            size="sm"
+            className="w-full"
+            data-slot="select-mobile-confirm"
+            onClick={() => props.setSheetOpen(false)}
+          >
+            {t('flux.common.confirm')}
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   );

@@ -53,7 +53,7 @@ export function GanttHeader({ store, toolbarRegion, className, onZoomChange, onZ
   }
 
   return (
-    <div className={cn('nop-gantt-toolbar flex items-center gap-1 p-2 border-b bg-gray-50', className)} data-slot="gantt-toolbar">
+    <div className={cn('nop-gantt-toolbar flex items-center gap-1 p-2 border-b bg-muted', className)} data-slot="gantt-toolbar">
       <Button variant="ghost" size="sm" onClick={handleZoomOut} aria-label={t('scheduling.gantt.zoomOut')}>
         <MinusIcon className="size-4" aria-hidden="true" />
       </Button>

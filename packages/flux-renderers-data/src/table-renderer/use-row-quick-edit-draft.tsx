@@ -272,21 +272,21 @@ export function RowQuickEditSaveBar({ rowDraft }: RowQuickEditSaveBarProps) {
         <>
           <Button
             type="button"
-            variant="default"
-            size="sm"
-            disabled={!rowDraft.isRowDirty || rowDraft.saving}
-            onClick={() => void rowDraft.runSave()}
-          >
-            {t('flux.common.save')}
-          </Button>
-          <Button
-            type="button"
             variant="outline"
             size="sm"
             disabled={rowDraft.saving}
             onClick={rowDraft.cancelEditing}
           >
             {t('flux.common.cancel')}
+          </Button>
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            disabled={!rowDraft.isRowDirty || rowDraft.saving}
+            onClick={() => void rowDraft.runSave()}
+          >
+            {t('flux.common.save')}
           </Button>
         </>
       )}

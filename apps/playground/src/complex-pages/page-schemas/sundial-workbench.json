@@ -1843,7 +1843,7 @@
                             },
                             {
                               "type": "button",
-                              "label": "确定",
+                              "label": "确认",
                               "variant": "default",
                               "className": "sd-btn sd-btn-default",
                               "testid": "sundial-taskdetail-date-submit",
@@ -1931,7 +1931,7 @@
                             },
                             {
                               "type": "button",
-                              "label": "确定",
+                              "label": "确认",
                               "variant": "default",
                               "className": "sd-btn sd-btn-default",
                               "testid": "sundial-taskdetail-recur-submit",
@@ -2059,7 +2059,7 @@
                             },
                             {
                               "type": "button",
-                              "label": "确定",
+                              "label": "确认",
                               "variant": "default",
                               "className": "sd-btn sd-btn-default",
                               "testid": "sundial-taskdetail-list-submit",

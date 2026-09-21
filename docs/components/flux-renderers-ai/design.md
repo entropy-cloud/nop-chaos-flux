@@ -779,3 +779,7 @@ v1→v2 变更摘要（§4）、第 1 轮 fresh-session 复审记录（§5）、
 ## V12b 行为契约补记（plan 485）
 
 - 会话切换/失败反馈三通道：aborted 消息有独立视觉态（AbortedNote，role="status"）；ai retry 走 engine.regenerate（截断到上一条用户消息后重放），不再追加重复用户消息；附件超限走既有 i18n 键 + onError 通知（不再静默丢弃）。
+
+## V12d 行为契约补记（plan 486）
+
+- 对话动作顺序契约：危险/次要操作在左（outline），主要确认在右（solid）；user-edit 取消使用独立 `flux.common.cancel` 键（不再复用 stop）。

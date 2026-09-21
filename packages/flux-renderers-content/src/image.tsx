@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ActionSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { Dialog, DialogContent, cn } from '@nop-chaos/ui';
+import { Dialog, DialogContent, Spinner, cn } from '@nop-chaos/ui';
 import type { ImageFit, ImageSchema } from './schemas.js';
 
 const FIT_TO_CLASS: Record<ImageFit, string> = {
@@ -183,10 +183,11 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
         data-state="loading"
         style={sizeStyle}
         className={cn(
-          'nop-image nop-image-loading inline-flex items-center justify-center bg-muted text-xs text-muted-foreground',
+          'nop-image nop-image-loading inline-flex items-center justify-center gap-2 bg-muted text-xs text-muted-foreground',
           props.meta.className,
         )}
       >
+        <Spinner className="size-4" aria-hidden="true" />
         <span data-slot="image-loading">{t('flux.common.loading')}</span>
       </div>
     );

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
@@ -15,7 +15,8 @@ import {
   useRenderScope,
   useRendererRuntime,
 } from '@nop-chaos/flux-react';
-import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
+import { Spinner, cn } from '@nop-chaos/ui';
 import type { FormLayoutContextValue } from '@nop-chaos/flux-react';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { FormSchema } from '../schemas.js';
@@ -296,7 +297,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const loadAction = props.events['loadAction'];
   const autoLoad = (props.props as FormSchema).autoLoad !== false;
 
-  useFormLoadAction({
+  const { loadLoading } = useFormLoadAction({
     loadAction,
     autoLoad,
     activationKey,
@@ -305,6 +306,14 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     runtime,
     path: props.path,
   });
+
+  // G2-视角5-03 (plan 486 Phase 1): consume the form store's submitting flag so
+  // the render surface can show submit-in-progress feedback.
+  const formSubmitting = useSyncExternalStore(
+    ownedForm.store.subscribe,
+    () => ownedForm.store.getState().submitting,
+    () => ownedForm.store.getState().submitting,
+  );
 
   const formMode = (props.props as FormSchema).mode;
   const formLabelAlign = (props.props as FormSchema).labelAlign;
@@ -504,6 +513,19 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             {hasRendererSlotContent(actionsContent) ? (
               <div data-slot="form-actions" className={cn(slotProps.actionsClassName)}>
                 {actionsContent}
+              </div>
+            ) : null}
+            {loadLoading || formSubmitting ? (
+              <div
+                data-slot="form-busy"
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+              >
+                <Spinner className="size-4" aria-hidden="true" />
+                <span data-slot="form-busy-text">
+                  {loadLoading ? t('flux.common.loading') : t('flux.form.submitting')}
+                </span>
               </div>
             ) : null}
           </section>

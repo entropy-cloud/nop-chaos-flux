@@ -1,6 +1,7 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { hasRendererSlotContent, resolveRendererSlotContent } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import { sanitizeHtml } from './sanitize.js';
 import type { HtmlSchema } from './schemas.js';
@@ -29,7 +30,13 @@ export function HtmlRenderer(props: RendererComponentProps<HtmlSchema>) {
         data-state="empty"
         className={cn('nop-html', props.meta.className)}
       >
-        {hasEmpty ? emptyContent : null}
+        {hasEmpty ? (
+          emptyContent
+        ) : (
+          <span data-slot="html-empty" className="text-sm text-muted-foreground">
+            {t('flux.common.noData')}
+          </span>
+        )}
       </div>
     );
   }

@@ -465,3 +465,7 @@ remark 和 labelRemark 默认渲染为：
 - `hint` 和 `description` 的 schema → FieldFrame 接线需要在 `NodeFrameWrapper` 中完成，不能在 FieldFrame 内回读 schema。
 - `remark` 和 `labelRemark` 依赖 `@nop-chaos/ui` 的 Tooltip 组件，需确认组件可用。
 - `FieldFrame` 中 `frameWrap: 'group'` 的 `<fieldset>/<legend>` 语义仅用于 radio-group/checkbox-group 等单控件多选项场景，不用于多字段分组。
+
+## V12d 行为契约补记（plan 486）
+
+- 表单 busy 通道：`form-load-action` 暴露 loading（autoLoad/refresh 双通道，请求守卫防串），form 渲染面 `[data-slot="form-busy"]`（Spinner + `flux.form.submitting`，role=status）；行内快捷编辑保存条顺序契约 = [Cancel(secondary), Save(primary)]。

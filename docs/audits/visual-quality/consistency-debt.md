@@ -32,6 +32,12 @@
   - 裁决: pending
   - 状态: open
 
+[V12d-D2] P2 候选池批二消化（族10+族8+顺带 21 条）
+
+- 证据: `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md` §4 族10/族8 + plan 486
+- 裁决: 21/21 landed（加载态 Spinner 化、空态 muted 面、[次要,主要] 按钮序契约、sundial「确认」统一、族9 残两项顺带）；门禁 223→219 instances、66→64 files，newHits=0、新增豁免 0
+- 状态: closed（V12d 面）；V12e/V12f 与 V12c P3 池残余 open
+
 [V12b-D1] P2 候选池首批消化（族9+族5+V12a 转入 30 条）
 
 - 证据: `docs/analysis/visual-quality/V12b-consistency-p2-digestion.md`（159 开放台账）+ plan 485

@@ -136,3 +136,7 @@ interface DashboardEditorSchema extends BaseSchema {
 - 面板内容配置器（编辑面板内部字段建模）——后续独立评估（plan Deferred 记录）。
 - dashboard 布局 JSON 与后端（nop-app）持久化协议对齐——应用层接入时。
 - hmi-editor 迁移实施与外壳统一——归迁移 successor plan。
+
+## V12d 行为契约补记（plan 486）
+
+- 运行态空布局（无面板且无 empty region）渲染 `[data-slot="dashboard-empty"]` muted 缺省空态（`flux.dashboard.empty`）。

@@ -38,7 +38,13 @@ export function JsonViewRenderer(props: RendererComponentProps<JsonViewSchema>) 
         data-state="empty"
         className={cn('nop-json-view', props.meta.className)}
       >
-        {hasEmpty ? emptyContent : null}
+        {hasEmpty ? (
+          emptyContent
+        ) : (
+          <span data-slot="json-view-empty" className="text-sm text-muted-foreground">
+            {t('flux.common.noData')}
+          </span>
+        )}
       </div>
     );
   }

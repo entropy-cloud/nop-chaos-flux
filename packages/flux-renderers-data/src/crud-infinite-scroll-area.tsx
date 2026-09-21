@@ -1,6 +1,6 @@
 import { type RefObject } from 'react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button } from '@nop-chaos/ui';
+import { Button, Spinner } from '@nop-chaos/ui';
 
 export function CrudInfiniteScrollArea({
   loadDataOnce,
@@ -36,7 +36,15 @@ export function CrudInfiniteScrollArea({
             : infiniteState.error
               ? t('flux.crud.loadFailed')
               : infiniteState.loading
-                ? t('flux.crud.loadingMore')
+                ? (
+                  <span
+                    data-slot="crud-infinite-loading"
+                    className="inline-flex items-center gap-2"
+                  >
+                    <Spinner className="size-4" aria-hidden="true" />
+                    <span>{t('flux.crud.loadingMore')}</span>
+                  </span>
+                )
                 : ''}
       </div>
       {infiniteSentinelRef != null ? (

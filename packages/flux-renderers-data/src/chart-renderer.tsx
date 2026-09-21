@@ -569,7 +569,12 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       {hasTitleContent ? <div data-slot="chart-title" id={titleId}>{titleContent}</div> : null}
       {/* loading 优先于空态：首次异步加载（source 尚空）显示 loading 而非"暂无数据"。 */}
       {isEmpty && !loading ? (
-        <div data-slot="chart-empty">{emptyContent}</div>
+        <div
+          data-slot="chart-empty"
+          className="flex h-full items-center justify-center text-sm text-muted-foreground"
+        >
+          {emptyContent}
+        </div>
       ) : (
         <div
           data-slot="chart-canvas"

@@ -122,3 +122,7 @@ export interface TransferSchema extends BoundFieldSchemaBase {
 ## V12b 行为契约补记（plan 485）
 
 - `data-indeterminate` 为 presence 语义：仅全选部分时输出字符串 `'true'`（否则不输出属性）——裸布尔会把 `false` 串化为 `"false"` 使 presence 选择器恒真（transfer-renderer 装配面，ui/checkbox 消费）。
+
+## V12d 行为契约补记（plan 486）
+
+- （接 V12b 补记）穿梭框选择器空/部分/全选三态经 data-indeterminate presence 通道表达，组件测试钉三态。

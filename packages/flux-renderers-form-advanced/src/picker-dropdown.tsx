@@ -56,7 +56,7 @@ const SIZE_TO_DIALOG_SIZE: Record<PickerPopupSize, 'xs' | 'sm' | 'default' | 'md
 function renderFooter(props: PickerDropdownProps): React.ReactNode {
   return (
     <>
-      <Button type="button" variant="ghost" size="sm" onClick={props.onCancel}>
+      <Button type="button" variant="outline" size="sm" onClick={props.onCancel}>
         {props.cancelText ?? t('flux.common.cancel', { defaultValue: 'Cancel' })}
       </Button>
       <Button

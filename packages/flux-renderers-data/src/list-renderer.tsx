@@ -15,7 +15,7 @@ import {
   useRenderInstancePath,
   useRenderScope,
 } from '@nop-chaos/flux-react';
-import { Button, cn, useIsMobile } from '@nop-chaos/ui';
+import { Button, Spinner, cn, useIsMobile } from '@nop-chaos/ui';
 import { getOptionRowStateAttributes, optionRowValueMatches } from '@nop-chaos/flux-react';
 import type { ListSchema, ListSelectionMode, OptionRowConfig } from './schemas.js';
 import {
@@ -481,6 +481,8 @@ export function ListRenderer(props: ListOwner) {
     );
   }
 
+  const infiniteListLoading =
+    infiniteActive && pagination.hasMore && !infiniteState.error && infiniteState.loading;
   const infiniteStatus = infiniteActive
     ? pagination.hasMore
       ? infiniteState.error
@@ -561,7 +563,16 @@ export function ListRenderer(props: ListOwner) {
       })}
       {infiniteActive ? (
         <div className="nop-list-infinite flex flex-col items-start gap-2 px-3 py-2 text-sm text-muted-foreground" data-slot="list-infinite">
-          <div data-slot="list-infinite-status">{infiniteStatus}</div>
+          <div data-slot="list-infinite-status" className="inline-flex items-center gap-2">
+            {infiniteListLoading ? (
+              <>
+                <Spinner className="size-4" aria-hidden="true" />
+                <span>{t('flux.list.loadingMore')}</span>
+              </>
+            ) : (
+              infiniteStatus
+            )}
+          </div>
           {infiniteState.error ? (
             <Button
               variant="outline"

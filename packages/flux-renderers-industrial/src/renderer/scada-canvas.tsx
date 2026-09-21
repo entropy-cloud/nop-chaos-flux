@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRendererRuntime } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
-import { cn } from '@nop-chaos/ui';
+import { cn, Spinner } from '@nop-chaos/ui';
 import { parseScadaConfig } from '../serialization/parse.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
@@ -330,7 +330,15 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
       className={cn('nop-scada-canvas h-full w-full', props.meta.className)}
     >
       {effectiveStatus === 'loading' ? (
-        asReactNode(loading?.render()) ?? <div data-slot="scada-canvas-loading" className="nop-scada-canvas-loading" />
+        asReactNode(loading?.render()) ?? (
+          <div
+            data-slot="scada-canvas-loading"
+            className="nop-scada-canvas-loading flex h-full w-full items-center justify-center gap-2 text-sm text-muted-foreground"
+          >
+            <Spinner className="size-4" aria-hidden="true" />
+            <span>{t('industrial.scada.canvasLoading')}</span>
+          </div>
+        )
       ) : effectiveStatus === 'error' ? (
         asReactNode(empty?.render({ bindings: { error: parseError ?? errorInfo } })) ?? (
           <div data-slot="scada-canvas-error" className="nop-scada-canvas-error" data-code={parseError?.code ?? errorInfo?.code}>

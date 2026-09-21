@@ -268,6 +268,7 @@ export const enUS: Resource = {
       uploadFile: 'Upload file',
       uploadFiles: 'Upload files',
       uploading: 'Uploading…',
+      submitting: 'Submitting...',
       clear: 'Clear',
       cancel: 'Cancel',
       uploadFailed: 'Upload failed',
@@ -1376,6 +1377,7 @@ export const enUS: Resource = {
         zoomWeek: 'Week',
         zoomMonth: 'Month',
         criticalPathLegend: 'Critical path',
+        empty: 'No tasks',
       },
     },
     mobile: {
@@ -1393,6 +1395,9 @@ export const enUS: Resource = {
       },
       noticeBar: {
         close: 'Close',
+      },
+      countdown: {
+        noTimeConfig: 'No countdown time configured',
       },
       barcode: {
         recognizing: 'Recognizing...',
@@ -1434,6 +1439,7 @@ export const enUS: Resource = {
       scada: {
         canvasError: 'Scada canvas error',
         canvasLabel: 'Industrial SCADA canvas',
+        canvasLoading: 'Scene loading...',
         error: {
           'config-parse': 'Scada config parse failed',
           'config-invalid': 'Scada config validation failed',
@@ -1590,6 +1596,7 @@ export const enUS: Resource = {
       },
     },
     dashboard: {
+      empty: 'No panels',
       editor: {
         headerTitle: 'Dashboard Editor',
         undo: 'Undo',

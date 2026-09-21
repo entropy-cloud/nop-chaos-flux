@@ -49,7 +49,7 @@ export function CalendarHeader({
           variant="ghost"
           size="sm"
           onClick={navigation.goPrev}
-          className="hover:bg-gray-100"
+          className="hover:bg-accent"
           aria-label={t('scheduling.previous')}
         >
           <ChevronLeftIcon className="size-4" aria-hidden="true" />
@@ -66,7 +66,7 @@ export function CalendarHeader({
           variant="ghost"
           size="sm"
           onClick={navigation.goNext}
-          className="hover:bg-gray-100"
+          className="hover:bg-accent"
           aria-label={t('scheduling.next')}
         >
           <ChevronRightIcon className="size-4" aria-hidden="true" />
@@ -86,7 +86,7 @@ export function CalendarHeader({
             aria-pressed={activeView === opt.value}
             className={cn(
               'text-xs px-3',
-              activeView === opt.value ? '' : 'hover:bg-gray-200',
+              activeView === opt.value ? '' : 'hover:bg-accent',
             )}
           >
             {t(opt.labelKey)}

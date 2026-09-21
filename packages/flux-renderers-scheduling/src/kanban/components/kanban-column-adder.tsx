@@ -52,19 +52,19 @@ export function KanbanColumnAdder({
             variant="ghost"
             size="sm"
             type="button"
-            onClick={onConfirm}
-            className="text-xs text-primary hover:text-primary/80 px-1"
+            onClick={onCancel}
+            className="text-xs text-muted-foreground hover:text-foreground px-1"
           >
-            {t('flux.common.confirm')}
+            {t('flux.common.cancel')}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             type="button"
-            onClick={onCancel}
-            className="text-xs text-muted-foreground hover:text-foreground px-1"
+            onClick={onConfirm}
+            className="text-xs text-primary hover:text-primary/80 px-1"
           >
-            {t('flux.common.cancel')}
+            {t('flux.common.confirm')}
           </Button>
         </div>
       ) : (

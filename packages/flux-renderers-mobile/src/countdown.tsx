@@ -1,5 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { CountdownSchema } from './schemas.js';
 
@@ -209,15 +210,20 @@ export function CountdownRenderer(props: RendererComponentProps<CountdownSchema>
     typeof slotProps.time === 'number' || typeof slotProps.targetTime === 'number';
 
   if (!hasTimeConfig) {
+    // G4-视角5-02 (plan 486 Phase 1): a countdown without time/targetTime used to
+    // render an invisible empty shell; surface a muted fallback instead.
     return (
       <span
-        className={cn('nop-countdown tabular-nums', props.meta.className)}
+        className={cn('nop-countdown text-sm text-muted-foreground', props.meta.className)}
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
         data-slot="countdown"
-        data-finished="true"
-        aria-live="off"
-      />
+        data-missing-config="true"
+        role="status"
+        aria-live="polite"
+      >
+        {t('flux.mobile.countdown.noTimeConfig')}
+      </span>
     );
   }
 

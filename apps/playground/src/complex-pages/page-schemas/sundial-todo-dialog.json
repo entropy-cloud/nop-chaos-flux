@@ -119,7 +119,7 @@
                       "actions": [
                         {
                           "type": "button",
-                          "label": "确定",
+                          "label": "确认",
                           "variant": "default",
                           "className": "sd-btn sd-btn-default",
                           "testid": "sundial-todo-date-submit",
@@ -254,7 +254,7 @@
                       "actions": [
                         {
                           "type": "button",
-                          "label": "确定",
+                          "label": "确认",
                           "variant": "default",
                           "className": "sd-btn sd-btn-default",
                           "testid": "sundial-todo-list-submit",

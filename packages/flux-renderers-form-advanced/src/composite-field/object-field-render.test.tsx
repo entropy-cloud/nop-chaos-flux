@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import {
   allFormDefs,
   env,
@@ -10,6 +11,13 @@ import {
   submitButtonRenderer,
   makeCapturingFetcher,
 } from './__tests__/object-field-test-support.js';
+
+// plan 486: the form busy surface now renders i18n text while submitting,
+// which lazily initializes the global i18n instance. Pin the language so
+// validation messages are deterministic English instead of depending on the
+// uninitialized identity formatter (the /required/i assertions below match
+// the resolved message, not the raw key).
+initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 describe('object-field renderer', () => {
   it('renders child fields and reads relative paths correctly', async () => {

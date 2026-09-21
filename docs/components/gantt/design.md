@@ -780,3 +780,7 @@ class UndoStack {
 | 拖拽手柄   | `role="slider"`        | `aria-valuemin`/`aria-valuemax`/`aria-valuenow`                              |
 
 **Roving tabindex**：甘特图内所有可交互元素实施 roving tabindex 模式，Tab 键一次进入组件后，内部通过方向键导航而非 Tab，避免多次 Tab 操作。
+
+## V12d 行为契约补记（plan 486）
+
+- 无 empty region 时渲染 `[data-slot="gantt-empty"]` muted 空态（`scheduling.gantt.empty`），不再渲染裸 div；weekend 列样式经 `[data-weekend]` 令牌规则（`.nop-gantt [data-slot='gantt-weekend']`）。

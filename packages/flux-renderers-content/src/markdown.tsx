@@ -10,7 +10,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { cn } from '@nop-chaos/ui';
+import { cn, Spinner } from '@nop-chaos/ui';
 import { sanitizeHtml } from './sanitize.js';
 import type { MarkdownSchema } from './schemas.js';
 
@@ -73,9 +73,13 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
         data-cid={props.meta.cid || undefined}
         data-slot="markdown"
         data-state="loading"
-        className={cn('nop-markdown', props.meta.className)}
+        className={cn(
+          'nop-markdown flex items-center gap-2 text-sm text-muted-foreground',
+          props.meta.className,
+        )}
       >
-        {t('flux.common.loading')}
+        <Spinner className="size-4" aria-hidden="true" />
+        <span data-slot="markdown-loading">{t('flux.common.loading')}</span>
       </div>
     );
   }
@@ -102,7 +106,13 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
           <span role="alert" data-slot="markdown-error">
             {t('flux.common.loadFailed')}
           </span>
-        ) : (hasEmpty ? emptyContent : null)}
+        ) : hasEmpty ? (
+          emptyContent
+        ) : (
+          <span data-slot="markdown-empty" className="text-sm text-muted-foreground">
+            {t('flux.common.noData')}
+          </span>
+        )}
       </div>
     );
   }

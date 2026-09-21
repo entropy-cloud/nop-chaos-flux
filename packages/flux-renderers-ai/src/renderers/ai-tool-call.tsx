@@ -218,6 +218,24 @@ function ApprovalFooter({
         aria-label={t('flux.ai.approvalActions')}
         className="mt-2 flex items-center justify-end gap-2 border-t pt-2"
       >
+        {/* G5-R2-视角6-01 (plan 486 Phase 2): [secondary(reject), primary(approve)]
+            DOM order — the destructive-weighted action sits left, the main
+            approval action right; semantic colors preserved. */}
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          data-slot="ai-tool-call-reject"
+          data-tool-call-id={toolCallId}
+          aria-label={t('flux.ai.reject')}
+          disabled={noHandler || disabled}
+          title={noHandlerTitle}
+          onClick={() => onApproval?.('reject')}
+          onKeyDown={onKeyDown}
+        >
+          <Ban className="h-3.5 w-3.5" />
+          {t('flux.ai.reject')}
+        </Button>
         <Button
           type="button"
           size="sm"
@@ -233,21 +251,6 @@ function ApprovalFooter({
         >
           <Check className="h-3.5 w-3.5" />
           {t('flux.ai.approve')}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          data-slot="ai-tool-call-reject"
-          data-tool-call-id={toolCallId}
-          aria-label={t('flux.ai.reject')}
-          disabled={noHandler || disabled}
-          title={noHandlerTitle}
-          onClick={() => onApproval?.('reject')}
-          onKeyDown={onKeyDown}
-        >
-          <Ban className="h-3.5 w-3.5" />
-          {t('flux.ai.reject')}
         </Button>
       </div>
     );

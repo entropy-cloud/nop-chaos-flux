@@ -8,7 +8,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { useInputComponentHandle, useRenderScope, useRendererRuntime } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, Spinner, cn } from '@nop-chaos/ui';
 import {
   formFieldRules,
   useFormFieldFromProps,
@@ -606,10 +606,11 @@ export function UploadFieldRenderer(
                 {entry.status === 'pending' ? (
                   <>
                     <span
-                      className="ml-auto text-xs text-muted-foreground"
+                      className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground"
                       data-slot="upload-pending"
                     >
-                      {t('flux.form.uploading')}
+                      <Spinner className="size-3.5" aria-hidden="true" />
+                      <span>{t('flux.form.uploading')}</span>
                     </span>
                     <Button
                       type="button"

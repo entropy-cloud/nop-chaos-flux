@@ -456,26 +456,18 @@ export const inputTableRendererDefinition: RendererDefinition = {
     collectRules(schema: BaseSchema) {
       const tableSchema = schema as InputTableSchema;
       const rules: ValidationRule[] = [];
+      // min/maxItems messages default to the flux.validation.* i18n templates
+      // at runtime (buildValidationMessage) — same as combo/array-editor.
       if (typeof tableSchema.minItems === 'number') {
-        const value = Math.max(0, Math.floor(tableSchema.minItems));
         rules.push({
           kind: 'minItems',
-          value,
-          message:
-            value <= 1
-              ? `${schema.label ?? schema.name ?? 'Field'} requires at least one row`
-              : `${schema.label ?? schema.name ?? 'Field'} requires at least ${value} rows`,
+          value: Math.max(0, Math.floor(tableSchema.minItems)),
         });
       }
       if (typeof tableSchema.maxItems === 'number') {
-        const value = Math.max(0, Math.floor(tableSchema.maxItems));
         rules.push({
           kind: 'maxItems',
-          value,
-          message:
-            value <= 1
-              ? `${schema.label ?? schema.name ?? 'Field'} must contain at most one row`
-              : `${schema.label ?? schema.name ?? 'Field'} must contain at most ${value} rows`,
+          value: Math.max(0, Math.floor(tableSchema.maxItems)),
         });
       }
       return rules;

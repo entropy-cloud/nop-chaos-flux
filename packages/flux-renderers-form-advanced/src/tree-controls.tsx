@@ -249,6 +249,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   }, [baseOptions]);
   const [query, setQuery] = React.useState('');
   const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [popoverOpen, setPopoverOpen] = React.useState(false);
   const isMobile = useIsMobile();
   const remoteSearchActive =
     props.props.searchable === true && Boolean(props.props.searchSource);
@@ -333,6 +334,13 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
         } else {
           handlers.onChange(nextValue);
         }
+        // G2-R2-视角6-01 (plan 486 Phase 2): single-select commits on pick —
+        // close the popover (desktop) / sheet (mobile) right after the change.
+        // multiple mode stays open until the sheet footer confirm button.
+        if (!multiple) {
+          setPopoverOpen(false);
+          setSheetOpen(false);
+        }
       }}
       ariaLabel={fieldLabel}
       searchLabel={searchLabel}
@@ -391,7 +399,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             {triggerIconsSpan}
           </Button>
         ) : (
-          <Popover>
+          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger
               render={
                 <Button
@@ -448,6 +456,20 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
               data-slot="tree-select-mobile-options"
             >
               {treeOptionListElement}
+            </div>
+            <div
+              className="nop-hairline nop-hairline-top p-3"
+              data-slot="tree-select-mobile-footer"
+            >
+              <Button
+                type="button"
+                size="sm"
+                className="w-full"
+                data-slot="tree-select-mobile-confirm"
+                onClick={() => setSheetOpen(false)}
+              >
+                {t('flux.common.confirm')}
+              </Button>
             </div>
           </SheetContent>
         </Sheet>

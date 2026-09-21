@@ -103,11 +103,13 @@ describe('CountdownRenderer', () => {
     expect(root.querySelector('[data-slot="countdown-suffix"]')?.textContent).toBe(' 结束');
   });
 
-  it('renders empty when neither time nor targetTime provided', () => {
+  it('renders a muted fallback (not an invisible empty shell) when neither time nor targetTime provided (G4-视角5-02, plan 486 P1)', () => {
     const { view } = renderCountdown({});
     const root = view.container.querySelector('[data-slot="countdown"]') as HTMLElement;
-    expect(root.getAttribute('data-finished')).toBe('true');
+    expect(root.getAttribute('data-missing-config')).toBe('true');
     expect(root.querySelector('[data-slot="countdown-value"]')).toBeNull();
+    expect((root.textContent ?? '').length).toBeGreaterThan(0);
+    expect(root.className).toContain('text-muted-foreground');
   });
 
   it('renders zero value and fires onFinish when time elapses to zero', () => {

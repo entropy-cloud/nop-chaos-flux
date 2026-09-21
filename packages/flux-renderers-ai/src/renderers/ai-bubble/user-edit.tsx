@@ -99,7 +99,7 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
         />
         <div className="flex justify-end gap-2">
           <Button size="sm" variant="ghost" data-slot="ai-bubble-edit-cancel" onClick={cancelEdit}>
-            {t('flux.ai.stop')}
+            {t('flux.common.cancel')}
           </Button>
           <Button size="sm" data-slot="ai-bubble-edit-submit" onClick={() => void resubmit()}>
             <Check className="h-3 w-3" />

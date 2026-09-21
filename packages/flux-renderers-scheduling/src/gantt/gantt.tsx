@@ -514,13 +514,19 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       return (
         <div
           data-slot="gantt"
+          data-empty="true"
           inert={meta.disabled === true || undefined}
           aria-disabled={meta.disabled === true || undefined}
           data-disabled={meta.disabled === true ? 'true' : undefined}
           data-testid={meta.testid || undefined}
           data-cid={meta.cid || undefined}
-          className={cn('nop-gantt', meta.className)}
-        />
+          className={cn(
+            'nop-gantt nop-gantt-empty flex items-center justify-center text-sm text-muted-foreground',
+            meta.className,
+          )}
+        >
+          <span data-slot="gantt-empty">{t('scheduling.gantt.empty')}</span>
+        </div>
       );
     }
 
