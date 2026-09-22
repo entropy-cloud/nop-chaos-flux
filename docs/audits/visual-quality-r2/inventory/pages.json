@@ -1,0 +1,1970 @@
+{
+  "generatedBy": "pnpm visual:inventory (plan 491)",
+  "sources": [
+    "apps/playground/src/route-model.ts",
+    "apps/playground/src/complex-pages/complex-pages-model.js",
+    "apps/playground/src/domain-route-entries.js"
+  ],
+  "pages": [
+    {
+      "id": "home",
+      "hash": "#/",
+      "routeKind": "index",
+      "title": "Home",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "lab-index",
+      "hash": "#/lab",
+      "routeKind": "index",
+      "title": "Component Lab Index",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "complex-pages-index",
+      "hash": "#/complex-pages",
+      "routeKind": "index",
+      "title": "Complex Pages Showcase Index",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "crud-views-export",
+      "hash": "#/complex-pages/crud-views-export",
+      "routeKind": "showcase-page",
+      "title": "视图切换 + 后台导出",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "dynamic-tabs",
+      "hash": "#/complex-pages/dynamic-tabs",
+      "routeKind": "showcase-page",
+      "title": "远程标签页",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "standard-crud",
+      "hash": "#/complex-pages/standard-crud",
+      "routeKind": "showcase-page",
+      "title": "标准增删改查",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "tree-crud",
+      "hash": "#/complex-pages/tree-crud",
+      "routeKind": "showcase-page",
+      "title": "树形导航 + 表格",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "inline-edit-table",
+      "hash": "#/complex-pages/inline-edit-table",
+      "routeKind": "showcase-page",
+      "title": "行内编辑（逐行保存）",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "advanced-query",
+      "hash": "#/complex-pages/advanced-query",
+      "routeKind": "showcase-page",
+      "title": "复杂查询 + 表格",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "master-detail",
+      "hash": "#/complex-pages/master-detail",
+      "routeKind": "showcase-page",
+      "title": "主从联动（左列表 + 右详情）",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "detail-subtables",
+      "hash": "#/complex-pages/detail-subtables",
+      "routeKind": "showcase-page",
+      "title": "详情页 + 多个子表（只读）",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "business-document",
+      "hash": "#/complex-pages/business-document",
+      "routeKind": "showcase-page",
+      "title": "业务单据（明细公式 + 合计）",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "combo-editor",
+      "hash": "#/complex-pages/combo-editor",
+      "routeKind": "showcase-page",
+      "title": "Combo 重复行编辑器",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "form-wizard",
+      "hash": "#/complex-pages/form-wizard",
+      "routeKind": "showcase-page",
+      "title": "分步表单（向导）",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "complex-form",
+      "hash": "#/complex-pages/complex-form",
+      "routeKind": "showcase-page",
+      "title": "多分组联动表单",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "approval-tasks",
+      "hash": "#/complex-pages/approval-tasks",
+      "routeKind": "showcase-page",
+      "title": "审批任务中心",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "dashboard",
+      "hash": "#/complex-pages/dashboard",
+      "routeKind": "showcase-page",
+      "title": "仪表盘（运营大屏）",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "sundial-workbench",
+      "hash": "#/complex-pages/sundial-workbench",
+      "routeKind": "showcase-page",
+      "title": "Sundial 工作台",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "sundial-analytics",
+      "hash": "#/complex-pages/sundial-analytics",
+      "routeKind": "showcase-page",
+      "title": "Sundial 分析",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "sundial-detail",
+      "hash": "#/complex-pages/sundial-detail",
+      "routeKind": "showcase-page",
+      "title": "Sundial 待办详情",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "sundial-settings",
+      "hash": "#/complex-pages/sundial-settings",
+      "routeKind": "showcase-page",
+      "title": "Sundial 设置",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "sundial-todo-dialog",
+      "hash": "#/complex-pages/sundial-todo-dialog",
+      "routeKind": "showcase-page",
+      "title": "Sundial 新建待办",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "antdpro-list",
+      "hash": "#/complex-pages/antdpro-list",
+      "routeKind": "showcase-page",
+      "title": "AntD Pro 订单列表",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "antdpro-form-basic",
+      "hash": "#/complex-pages/antdpro-form-basic",
+      "routeKind": "showcase-page",
+      "title": "AntD Pro 基础表单",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "antdpro-form-grouped",
+      "hash": "#/complex-pages/antdpro-form-grouped",
+      "routeKind": "showcase-page",
+      "title": "AntD Pro 分组表单",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "antdpro-form-dialog",
+      "hash": "#/complex-pages/antdpro-form-dialog",
+      "routeKind": "showcase-page",
+      "title": "AntD Pro 弹窗表单",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "antdpro-form-step",
+      "hash": "#/complex-pages/antdpro-form-step",
+      "routeKind": "showcase-page",
+      "title": "AntD Pro 分步表单",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "antdpro-detail-basic",
+      "hash": "#/complex-pages/antdpro-detail-basic",
+      "routeKind": "showcase-page",
+      "title": "AntD Pro 基础详情",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "antdpro-detail-advanced",
+      "hash": "#/complex-pages/antdpro-detail-advanced",
+      "routeKind": "showcase-page",
+      "title": "AntD Pro 高级详情",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "antdpro-dashboard",
+      "hash": "#/complex-pages/antdpro-dashboard",
+      "routeKind": "showcase-page",
+      "title": "AntD Pro 数据看板",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "antdpro-result",
+      "hash": "#/complex-pages/antdpro-result",
+      "routeKind": "showcase-page",
+      "title": "AntD Pro 提交结果页",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "cal-booking",
+      "hash": "#/complex-pages/cal-booking",
+      "routeKind": "showcase-page",
+      "title": "Cal 预约 · 选时段",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "cal-confirm",
+      "hash": "#/complex-pages/cal-confirm",
+      "routeKind": "showcase-page",
+      "title": "Cal 预约 · 确认信息",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "cal-success",
+      "hash": "#/complex-pages/cal-success",
+      "routeKind": "showcase-page",
+      "title": "Cal 预约 · 预约成功",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "linear-issues",
+      "hash": "#/complex-pages/linear-issues",
+      "routeKind": "showcase-page",
+      "title": "问题追踪 · 列表视图",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "linear-board",
+      "hash": "#/complex-pages/linear-board",
+      "routeKind": "showcase-page",
+      "title": "问题追踪 · 看板视图",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "linear-inbox",
+      "hash": "#/complex-pages/linear-inbox",
+      "routeKind": "showcase-page",
+      "title": "问题追踪 · 收件箱",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "linear-detail",
+      "hash": "#/complex-pages/linear-detail",
+      "routeKind": "showcase-page",
+      "title": "问题追踪 · 问题详情",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "linear-projects",
+      "hash": "#/complex-pages/linear-projects",
+      "routeKind": "showcase-page",
+      "title": "问题追踪 · 项目周期",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "linear-settings",
+      "hash": "#/complex-pages/linear-settings",
+      "routeKind": "showcase-page",
+      "title": "问题追踪 · 设置",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "notion-database",
+      "hash": "#/complex-pages/notion-database",
+      "routeKind": "showcase-page",
+      "title": "多视图数据库 · 产品需求库",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "airtable-grid",
+      "hash": "#/complex-pages/airtable-grid",
+      "routeKind": "showcase-page",
+      "title": "网格任务跟踪 · 电子表格网格",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "stripe-payments",
+      "hash": "#/complex-pages/stripe-payments",
+      "routeKind": "showcase-page",
+      "title": "金融数据面板 · 支付流水",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "flux-basic",
+      "hash": "#/flux-basic",
+      "routeKind": "domain",
+      "title": "Flux Basic",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "flow-designer",
+      "hash": "#/flow-designer",
+      "routeKind": "domain",
+      "title": "Flow Designer",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "gantt",
+      "hash": "#/gantt",
+      "routeKind": "domain",
+      "title": "Gantt Chart",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "gantt-states",
+      "hash": "#/gantt-states",
+      "routeKind": "domain",
+      "title": "Gantt States",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "kanban",
+      "hash": "#/kanban",
+      "routeKind": "domain",
+      "title": "Kanban Board",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "scheduling-calendar",
+      "hash": "#/scheduling-calendar",
+      "routeKind": "domain",
+      "title": "Calendar",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "barcode-input",
+      "hash": "#/barcode-input",
+      "routeKind": "domain",
+      "title": "Barcode Input",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "diff-view",
+      "hash": "#/diff-view",
+      "routeKind": "domain",
+      "title": "Diff View",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "graph-demo",
+      "hash": "#/graph-demo",
+      "routeKind": "domain",
+      "title": "Graph Viewer",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "map-demo",
+      "hash": "#/map-demo",
+      "routeKind": "domain",
+      "title": "Map (OpenLayers)",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "pivot-table-demo",
+      "hash": "#/pivot-table-demo",
+      "routeKind": "domain",
+      "title": "Pivot Table",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "print-designer",
+      "hash": "#/print-designer",
+      "routeKind": "domain",
+      "title": "Print Designer",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "taskflow-designer",
+      "hash": "#/taskflow-designer",
+      "routeKind": "domain",
+      "title": "TaskFlow Designer",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "report-designer",
+      "hash": "#/report-designer",
+      "routeKind": "domain",
+      "title": "Report Designer",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "report-designer-host",
+      "hash": "#/report-designer-host",
+      "routeKind": "domain",
+      "title": "Report Designer Host",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "spreadsheet",
+      "hash": "#/spreadsheet",
+      "routeKind": "domain",
+      "title": "Spreadsheet",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "debugger-lab",
+      "hash": "#/debugger-lab",
+      "routeKind": "domain",
+      "title": "Debugger Lab",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "condition-builder",
+      "hash": "#/condition-builder",
+      "routeKind": "domain",
+      "title": "Condition Builder",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "condition-builder-formula",
+      "hash": "#/condition-builder-formula",
+      "routeKind": "domain",
+      "title": "Condition Builder Formula",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "code-editor",
+      "hash": "#/code-editor",
+      "routeKind": "domain",
+      "title": "Code Editor",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "word-editor",
+      "hash": "#/word-editor",
+      "routeKind": "domain",
+      "title": "Word Editor",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "performance-table",
+      "hash": "#/performance-table",
+      "routeKind": "domain",
+      "title": "Performance Table",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "component-handles",
+      "hash": "#/component-handles",
+      "routeKind": "domain",
+      "title": "Component Handles",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "event-prevention",
+      "hash": "#/event-prevention",
+      "routeKind": "domain",
+      "title": "Event Prevention",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "boolean-control-value-contract",
+      "hash": "#/boolean-control-value-contract",
+      "routeKind": "domain",
+      "title": "Boolean Control Value Contract",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "text-icon-visual-fields",
+      "hash": "#/text-icon-visual-fields",
+      "routeKind": "domain",
+      "title": "Text / Icon Visual Fields",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "layout-family-enhancements",
+      "hash": "#/layout-family-enhancements",
+      "routeKind": "domain",
+      "title": "Layout Family Enhancements",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "form-input-enhancements",
+      "hash": "#/form-input-enhancements",
+      "routeKind": "domain",
+      "title": "Form Input Enhancements",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "input-suggest",
+      "hash": "#/input-suggest",
+      "routeKind": "domain",
+      "title": "Input Autocomplete",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "tree-display-ux",
+      "hash": "#/tree-display-ux",
+      "routeKind": "domain",
+      "title": "Tree Display UX",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "table-popover",
+      "hash": "#/table-popover",
+      "routeKind": "domain",
+      "title": "Table popOver Cell",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "table-column-width",
+      "hash": "#/table-column-width",
+      "routeKind": "domain",
+      "title": "Table Column Width Strategy",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "mobile-infrastructure",
+      "hash": "#/mobile-infrastructure",
+      "routeKind": "domain",
+      "title": "Mobile Infrastructure",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "mobile-components",
+      "hash": "#/mobile-components",
+      "routeKind": "domain",
+      "title": "Mobile Native Components",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w1b-content",
+      "hash": "#/w1b-content",
+      "routeKind": "domain",
+      "title": "Content & Feedback Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w1a-content",
+      "hash": "#/w1a-content",
+      "routeKind": "domain",
+      "title": "Content Display Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w2a-data-composition",
+      "hash": "#/w2a-data-composition",
+      "routeKind": "domain",
+      "title": "Data Composition Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w2b-date-family",
+      "hash": "#/w2b-date-family",
+      "routeKind": "domain",
+      "title": "Date Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w3a-w3b-layout-action-family",
+      "hash": "#/w3a-w3b-layout-action-family",
+      "routeKind": "domain",
+      "title": "Layout & Action Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w3c-value-mapping",
+      "hash": "#/w3c-value-mapping",
+      "routeKind": "domain",
+      "title": "Value Mapping Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w3d-advanced-input-family",
+      "hash": "#/w3d-advanced-input-family",
+      "routeKind": "domain",
+      "title": "Advanced Input Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w4a-multimedia",
+      "hash": "#/w4a-multimedia",
+      "routeKind": "domain",
+      "title": "Multimedia Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w4b-process-display",
+      "hash": "#/w4b-process-display",
+      "routeKind": "domain",
+      "title": "Process Display Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "w4c-composite-form-family",
+      "hash": "#/w4c-composite-form-family",
+      "routeKind": "domain",
+      "title": "Composite Form Family",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "m1-responsive",
+      "hash": "#/m1-responsive",
+      "routeKind": "domain",
+      "title": "M1 Responsive Controls",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "m2-touch",
+      "hash": "#/m2-touch",
+      "routeKind": "domain",
+      "title": "M2 Touch Adaptation",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "m3-layout",
+      "hash": "#/m3-layout",
+      "routeKind": "domain",
+      "title": "M3 Layout Skeletons",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "m4-data",
+      "hash": "#/m4-data",
+      "routeKind": "domain",
+      "title": "M4 Data Display Responsive",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "m5-showcase",
+      "hash": "#/m5-showcase",
+      "routeKind": "domain",
+      "title": "Mobile Component Showcase",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "calendar-perf-scale",
+      "hash": "#/calendar-perf-scale",
+      "routeKind": "domain",
+      "title": "Calendar Performance Scale",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "kanban-perf-scale",
+      "hash": "#/kanban-perf-scale",
+      "routeKind": "domain",
+      "title": "Kanban Performance Scale",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "gantt-perf-scale",
+      "hash": "#/gantt-perf-scale",
+      "routeKind": "domain",
+      "title": "Gantt Performance Scale",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "diff-perf-scale",
+      "hash": "#/diff-perf-scale",
+      "routeKind": "domain",
+      "title": "Diff View Performance Scale",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "data-verify",
+      "hash": "#/data-verify",
+      "routeKind": "domain",
+      "title": "Data Source Verify",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "env-stream",
+      "hash": "#/env-stream",
+      "routeKind": "domain",
+      "title": "env.stream / env.openSocket",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-chat",
+      "hash": "#/ai-chat",
+      "routeKind": "domain",
+      "title": "AI Chat (mock streaming)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-conversations",
+      "hash": "#/ai-conversations",
+      "routeKind": "domain",
+      "title": "AI Conversations (P1)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-tools",
+      "hash": "#/ai-tools",
+      "routeKind": "domain",
+      "title": "AI Tools (P2 agentic loop)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-attachments",
+      "hash": "#/ai-attachments",
+      "routeKind": "domain",
+      "title": "AI Attachments (P2 multimodal)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-component-handle",
+      "hash": "#/ai-component-handle",
+      "routeKind": "domain",
+      "title": "AI ComponentHandle (Layer C)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-virtual-scroll",
+      "hash": "#/ai-virtual-scroll",
+      "routeKind": "domain",
+      "title": "AI Virtual Scroll (A-8)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-persistence",
+      "hash": "#/ai-persistence",
+      "routeKind": "domain",
+      "title": "AI Persistence (P3)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-citations",
+      "hash": "#/ai-citations",
+      "routeKind": "domain",
+      "title": "AI Citations (P3, A-13)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-hitl",
+      "hash": "#/ai-hitl",
+      "routeKind": "domain",
+      "title": "AI HITL Approval (P3, A-14)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-p4",
+      "hash": "#/ai-p4",
+      "routeKind": "domain",
+      "title": "AI P4 Widgets (voice / token / suggestions)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-linkage",
+      "hash": "#/ai-linkage",
+      "routeKind": "domain",
+      "title": "AI P4 Advanced (branches + linkage)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-rich-text",
+      "hash": "#/ai-rich-text",
+      "routeKind": "domain",
+      "title": "AI Rich Text Sender (P6, A6)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-widgets",
+      "hash": "#/ai-widgets",
+      "routeKind": "domain",
+      "title": "AI Widgets Showcase",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "ai-coverage",
+      "hash": "#/ai-coverage",
+      "routeKind": "domain",
+      "title": "AI Coverage (states & edges)",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "dingtalk-flow-demo",
+      "hash": "#/dingtalk-flow-demo",
+      "routeKind": "domain",
+      "title": "DingTalk Flow Demo",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "scada-demo",
+      "hash": "#/scada-demo",
+      "routeKind": "domain",
+      "title": "Scada Demo",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "three-canvas-demo",
+      "hash": "#/three-canvas-demo",
+      "routeKind": "domain",
+      "title": "Three Canvas Demo",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "scada-pressure-demo",
+      "hash": "#/scada-pressure-demo",
+      "routeKind": "domain",
+      "title": "Scada Pressure Demo",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "scada-edge-cases",
+      "hash": "#/scada-edge-cases",
+      "routeKind": "domain",
+      "title": "Scada Edge Cases",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "scada-editor-demo",
+      "hash": "#/scada-editor-demo",
+      "routeKind": "domain",
+      "title": "Scada Editor Demo",
+      "batch": "R2-1b",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "dashboard-demo",
+      "hash": "#/dashboard-demo",
+      "routeKind": "domain",
+      "title": "Dashboard Editor",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "scada-perf-scale",
+      "hash": "#/scada-perf-scale",
+      "routeKind": "domain",
+      "title": "Scada Performance Scale",
+      "batch": "R2-1c",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "leafer-examples",
+      "hash": "#/leafer-examples",
+      "routeKind": "domain",
+      "title": "LeaferJS Examples",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "lab-page",
+      "hash": "#/lab/page",
+      "routeKind": "lab-renderer",
+      "title": "Page",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-container",
+      "hash": "#/lab/container",
+      "routeKind": "lab-renderer",
+      "title": "Container",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-fragment",
+      "hash": "#/lab/fragment",
+      "routeKind": "lab-renderer",
+      "title": "Fragment",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-flex",
+      "hash": "#/lab/flex",
+      "routeKind": "lab-renderer",
+      "title": "Flex",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-dialog",
+      "hash": "#/lab/dialog",
+      "routeKind": "lab-renderer",
+      "title": "Dialog",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-drawer",
+      "hash": "#/lab/drawer",
+      "routeKind": "lab-renderer",
+      "title": "Drawer",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-command-palette",
+      "hash": "#/lab/command-palette",
+      "routeKind": "lab-renderer",
+      "title": "Command Palette",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-tabs",
+      "hash": "#/lab/tabs",
+      "routeKind": "lab-renderer",
+      "title": "Tabs",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-loop",
+      "hash": "#/lab/loop",
+      "routeKind": "lab-renderer",
+      "title": "Loop",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-recurse",
+      "hash": "#/lab/recurse",
+      "routeKind": "lab-renderer",
+      "title": "Recurse",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-text",
+      "hash": "#/lab/text",
+      "routeKind": "lab-renderer",
+      "title": "Text",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-icon",
+      "hash": "#/lab/icon",
+      "routeKind": "lab-renderer",
+      "title": "Icon",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-badge",
+      "hash": "#/lab/badge",
+      "routeKind": "lab-renderer",
+      "title": "Badge",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-button",
+      "hash": "#/lab/button",
+      "routeKind": "lab-renderer",
+      "title": "Button",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-scope-debug",
+      "hash": "#/lab/scope-debug",
+      "routeKind": "lab-renderer",
+      "title": "Scope Debug",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-dynamic-renderer",
+      "hash": "#/lab/dynamic-renderer",
+      "routeKind": "lab-renderer",
+      "title": "Dynamic Renderer",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-reaction",
+      "hash": "#/lab/reaction",
+      "routeKind": "lab-renderer",
+      "title": "Reaction",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-keyboard",
+      "hash": "#/lab/keyboard",
+      "routeKind": "lab-renderer",
+      "title": "Keyboard",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-form",
+      "hash": "#/lab/form",
+      "routeKind": "lab-renderer",
+      "title": "Form",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-text",
+      "hash": "#/lab/input-text",
+      "routeKind": "lab-renderer",
+      "title": "Input Text",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-email",
+      "hash": "#/lab/input-email",
+      "routeKind": "lab-renderer",
+      "title": "Input Email",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-password",
+      "hash": "#/lab/input-password",
+      "routeKind": "lab-renderer",
+      "title": "Input Password",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-number",
+      "hash": "#/lab/input-number",
+      "routeKind": "lab-renderer",
+      "title": "Input Number",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-date",
+      "hash": "#/lab/input-date",
+      "routeKind": "lab-renderer",
+      "title": "Input Date",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-datetime",
+      "hash": "#/lab/input-datetime",
+      "routeKind": "lab-renderer",
+      "title": "Input Datetime",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-time",
+      "hash": "#/lab/input-time",
+      "routeKind": "lab-renderer",
+      "title": "Input Time",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-date-range",
+      "hash": "#/lab/date-range",
+      "routeKind": "lab-renderer",
+      "title": "Date Range",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-month",
+      "hash": "#/lab/input-month",
+      "routeKind": "lab-renderer",
+      "title": "Input Month",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-quarter",
+      "hash": "#/lab/input-quarter",
+      "routeKind": "lab-renderer",
+      "title": "Input Quarter",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-year",
+      "hash": "#/lab/input-year",
+      "routeKind": "lab-renderer",
+      "title": "Input Year",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-textarea",
+      "hash": "#/lab/textarea",
+      "routeKind": "lab-renderer",
+      "title": "Textarea",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-markdown-editor",
+      "hash": "#/lab/markdown-editor",
+      "routeKind": "lab-renderer",
+      "title": "Markdown Editor",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-select",
+      "hash": "#/lab/select",
+      "routeKind": "lab-renderer",
+      "title": "Select",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-checkbox",
+      "hash": "#/lab/checkbox",
+      "routeKind": "lab-renderer",
+      "title": "Checkbox",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-switch",
+      "hash": "#/lab/switch",
+      "routeKind": "lab-renderer",
+      "title": "Switch",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-radio-group",
+      "hash": "#/lab/radio-group",
+      "routeKind": "lab-renderer",
+      "title": "Radio Group",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-checkbox-group",
+      "hash": "#/lab/checkbox-group",
+      "routeKind": "lab-renderer",
+      "title": "Checkbox Group",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-button-group-select",
+      "hash": "#/lab/button-group-select",
+      "routeKind": "lab-renderer",
+      "title": "Button Group Select",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-tree",
+      "hash": "#/lab/input-tree",
+      "routeKind": "lab-renderer",
+      "title": "Input Tree",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-tree-select",
+      "hash": "#/lab/tree-select",
+      "routeKind": "lab-renderer",
+      "title": "Tree Select",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-tag-list",
+      "hash": "#/lab/tag-list",
+      "routeKind": "lab-renderer",
+      "title": "Tag List",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-key-value",
+      "hash": "#/lab/key-value",
+      "routeKind": "lab-renderer",
+      "title": "Key Value",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-array-editor",
+      "hash": "#/lab/array-editor",
+      "routeKind": "lab-renderer",
+      "title": "Array Editor",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-combo",
+      "hash": "#/lab/combo",
+      "routeKind": "lab-renderer",
+      "title": "Combo",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-table",
+      "hash": "#/lab/input-table",
+      "routeKind": "lab-renderer",
+      "title": "Input Table",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-transfer",
+      "hash": "#/lab/transfer",
+      "routeKind": "lab-renderer",
+      "title": "Transfer",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-picker",
+      "hash": "#/lab/picker",
+      "routeKind": "lab-renderer",
+      "title": "Picker",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-icon-picker",
+      "hash": "#/lab/icon-picker",
+      "routeKind": "lab-renderer",
+      "title": "Icon Picker",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-condition-builder",
+      "hash": "#/lab/condition-builder",
+      "routeKind": "lab-renderer",
+      "title": "Condition Builder",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-file",
+      "hash": "#/lab/input-file",
+      "routeKind": "lab-renderer",
+      "title": "Input File",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-image",
+      "hash": "#/lab/input-image",
+      "routeKind": "lab-renderer",
+      "title": "Input Image",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-editor",
+      "hash": "#/lab/editor",
+      "routeKind": "lab-renderer",
+      "title": "Editor",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-fieldset",
+      "hash": "#/lab/fieldset",
+      "routeKind": "lab-renderer",
+      "title": "Fieldset",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-hidden",
+      "hash": "#/lab/hidden",
+      "routeKind": "lab-renderer",
+      "title": "Hidden",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-object-field",
+      "hash": "#/lab/object-field",
+      "routeKind": "lab-renderer",
+      "title": "Object Field",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-array-field",
+      "hash": "#/lab/array-field",
+      "routeKind": "lab-renderer",
+      "title": "Array Field",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-variant-field",
+      "hash": "#/lab/variant-field",
+      "routeKind": "lab-renderer",
+      "title": "Variant Field",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-detail-field",
+      "hash": "#/lab/detail-field",
+      "routeKind": "lab-renderer",
+      "title": "Detail Field",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-detail-view",
+      "hash": "#/lab/detail-view",
+      "routeKind": "lab-renderer",
+      "title": "Detail View",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-batch-bar",
+      "hash": "#/lab/batch-bar",
+      "routeKind": "lab-renderer",
+      "title": "Batch Bar",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-query-filter",
+      "hash": "#/lab/query-filter",
+      "routeKind": "lab-renderer",
+      "title": "Query Filter",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-crud",
+      "hash": "#/lab/crud",
+      "routeKind": "lab-renderer",
+      "title": "Crud",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-table",
+      "hash": "#/lab/table",
+      "routeKind": "lab-renderer",
+      "title": "Table",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-tree",
+      "hash": "#/lab/tree",
+      "routeKind": "lab-renderer",
+      "title": "Tree",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-list",
+      "hash": "#/lab/list",
+      "routeKind": "lab-renderer",
+      "title": "List",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-pagination",
+      "hash": "#/lab/pagination",
+      "routeKind": "lab-renderer",
+      "title": "Pagination",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-data-source",
+      "hash": "#/lab/data-source",
+      "routeKind": "lab-renderer",
+      "title": "Data Source",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-chart",
+      "hash": "#/lab/chart",
+      "routeKind": "lab-renderer",
+      "title": "Chart",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-echarts",
+      "hash": "#/lab/echarts",
+      "routeKind": "lab-renderer",
+      "title": "ECharts",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-statistics",
+      "hash": "#/lab/statistics",
+      "routeKind": "lab-renderer",
+      "title": "Statistics",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-stat-tile",
+      "hash": "#/lab/stat-tile",
+      "routeKind": "lab-renderer",
+      "title": "Stat Tile",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-sparkline",
+      "hash": "#/lab/sparkline",
+      "routeKind": "lab-renderer",
+      "title": "Sparkline",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-dashboard-filter",
+      "hash": "#/lab/dashboard-filter",
+      "routeKind": "lab-renderer",
+      "title": "Dashboard Filter",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-grid",
+      "hash": "#/lab/grid",
+      "routeKind": "lab-renderer",
+      "title": "Grid",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-collapse",
+      "hash": "#/lab/collapse",
+      "routeKind": "lab-renderer",
+      "title": "Collapse",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-wizard",
+      "hash": "#/lab/wizard",
+      "routeKind": "lab-renderer",
+      "title": "Wizard",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-button-group",
+      "hash": "#/lab/button-group",
+      "routeKind": "lab-renderer",
+      "title": "Button Group",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-dropdown-button",
+      "hash": "#/lab/dropdown-button",
+      "routeKind": "lab-renderer",
+      "title": "Dropdown Button",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-steps",
+      "hash": "#/lab/steps",
+      "routeKind": "lab-renderer",
+      "title": "Steps",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-timeline",
+      "hash": "#/lab/timeline",
+      "routeKind": "lab-renderer",
+      "title": "Timeline",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-responsive",
+      "hash": "#/lab/responsive",
+      "routeKind": "lab-renderer",
+      "title": "Responsive",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-markdown",
+      "hash": "#/lab/markdown",
+      "routeKind": "lab-renderer",
+      "title": "Markdown",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-html",
+      "hash": "#/lab/html",
+      "routeKind": "lab-renderer",
+      "title": "HTML",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-json-view",
+      "hash": "#/lab/json-view",
+      "routeKind": "lab-renderer",
+      "title": "JSON View",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-link",
+      "hash": "#/lab/link",
+      "routeKind": "lab-renderer",
+      "title": "Link",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-image",
+      "hash": "#/lab/image",
+      "routeKind": "lab-renderer",
+      "title": "Image",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-card",
+      "hash": "#/lab/card",
+      "routeKind": "lab-renderer",
+      "title": "Card",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-cards",
+      "hash": "#/lab/cards",
+      "routeKind": "lab-renderer",
+      "title": "Cards",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-empty",
+      "hash": "#/lab/empty",
+      "routeKind": "lab-renderer",
+      "title": "Empty",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-result",
+      "hash": "#/lab/result",
+      "routeKind": "lab-renderer",
+      "title": "Result",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-progress",
+      "hash": "#/lab/progress",
+      "routeKind": "lab-renderer",
+      "title": "Progress",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-spinner",
+      "hash": "#/lab/spinner",
+      "routeKind": "lab-renderer",
+      "title": "Spinner",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-separator",
+      "hash": "#/lab/separator",
+      "routeKind": "lab-renderer",
+      "title": "Separator",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-alert",
+      "hash": "#/lab/alert",
+      "routeKind": "lab-renderer",
+      "title": "Alert",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-mapping",
+      "hash": "#/lab/mapping",
+      "routeKind": "lab-renderer",
+      "title": "Mapping",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-status",
+      "hash": "#/lab/status",
+      "routeKind": "lab-renderer",
+      "title": "Status",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-audio",
+      "hash": "#/lab/audio",
+      "routeKind": "lab-renderer",
+      "title": "Audio",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-video",
+      "hash": "#/lab/video",
+      "routeKind": "lab-renderer",
+      "title": "Video",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-carousel",
+      "hash": "#/lab/carousel",
+      "routeKind": "lab-renderer",
+      "title": "Carousel",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-qrcode",
+      "hash": "#/lab/qrcode",
+      "routeKind": "lab-renderer",
+      "title": "QR Code",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-diff-view",
+      "hash": "#/lab/diff-view",
+      "routeKind": "lab-renderer",
+      "title": "Diff View",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-pull-refresh",
+      "hash": "#/lab/pull-refresh",
+      "routeKind": "lab-renderer",
+      "title": "Pull Refresh",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-infinite-scroll",
+      "hash": "#/lab/infinite-scroll",
+      "routeKind": "lab-renderer",
+      "title": "Infinite Scroll",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-swipe-cell",
+      "hash": "#/lab/swipe-cell",
+      "routeKind": "lab-renderer",
+      "title": "Swipe Cell",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-countdown",
+      "hash": "#/lab/countdown",
+      "routeKind": "lab-renderer",
+      "title": "Countdown",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-notice-bar",
+      "hash": "#/lab/notice-bar",
+      "routeKind": "lab-renderer",
+      "title": "Notice Bar",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-chat",
+      "hash": "#/lab/ai-chat",
+      "routeKind": "lab-renderer",
+      "title": "AI Chat",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-message-list",
+      "hash": "#/lab/ai-message-list",
+      "routeKind": "lab-renderer",
+      "title": "AI Message List",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-bubble",
+      "hash": "#/lab/ai-bubble",
+      "routeKind": "lab-renderer",
+      "title": "AI Bubble",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-sender",
+      "hash": "#/lab/ai-sender",
+      "routeKind": "lab-renderer",
+      "title": "AI Sender",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-conversations",
+      "hash": "#/lab/ai-conversations",
+      "routeKind": "lab-renderer",
+      "title": "AI Conversations",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-tool-call",
+      "hash": "#/lab/ai-tool-call",
+      "routeKind": "lab-renderer",
+      "title": "AI Tool Call",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-attachments",
+      "hash": "#/lab/ai-attachments",
+      "routeKind": "lab-renderer",
+      "title": "AI Attachments",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-citations",
+      "hash": "#/lab/ai-citations",
+      "routeKind": "lab-renderer",
+      "title": "AI Citations",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-feedback",
+      "hash": "#/lab/ai-feedback",
+      "routeKind": "lab-renderer",
+      "title": "AI Feedback",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-token-usage",
+      "hash": "#/lab/ai-token-usage",
+      "routeKind": "lab-renderer",
+      "title": "AI Token Usage",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-prompts",
+      "hash": "#/lab/ai-prompts",
+      "routeKind": "lab-renderer",
+      "title": "AI Prompts",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-suggestions",
+      "hash": "#/lab/ai-suggestions",
+      "routeKind": "lab-renderer",
+      "title": "AI Suggestions",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-voice-input",
+      "hash": "#/lab/ai-voice-input",
+      "routeKind": "lab-renderer",
+      "title": "AI Voice Input",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-ai-welcome",
+      "hash": "#/lab/ai-welcome",
+      "routeKind": "lab-renderer",
+      "title": "AI Welcome",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-gantt",
+      "hash": "#/lab/gantt",
+      "routeKind": "lab-renderer",
+      "title": "Gantt",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-kanban",
+      "hash": "#/lab/kanban",
+      "routeKind": "lab-renderer",
+      "title": "Kanban",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-calendar",
+      "hash": "#/lab/calendar",
+      "routeKind": "lab-renderer",
+      "title": "Calendar",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-barcode-input",
+      "hash": "#/lab/barcode-input",
+      "routeKind": "lab-renderer",
+      "title": "Barcode Input",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    }
+  ]
+}
