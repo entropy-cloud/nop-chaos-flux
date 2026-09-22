@@ -1,0 +1,129 @@
+{
+  "name": "visual-quality-r2",
+  "description": "视觉质量二期 mission：渲染面全量走查（逐页面/逐控件截图确认 + A–H 评分卡）+ 设计系统整改 + 覆盖对账闭环。范围（roadmap work items R2-0–R2-5）：①R2-0 覆盖基建（页面清单从 apps/playground/src/route-model.ts 程序化枚举、控件清单从各包 renderer definitions 枚举、覆盖台账 docs/audits/visual-quality-r2/ledger.md + 对账命令、截图矩阵 runner、evidence card 模板、控件批次裁定）；②R2-1a–d 复杂页面走查四批（复刻+complex-pages / 设计器 / 可视化 / 表单编辑器 AI 移动端）；③R2-2a–c 控件族走查三批（每个 renderer 定义截图确认，复杂控件 C1–C10 全矩阵）；④R2-3a 弹层尺寸体系+表面节奏（owner plan 490）/ R2-3b 设计系统缺口补全首批族；⑤R2-4 局部缺陷按族消化首批；⑥R2-5 同探针全量复检 + 探针固化 e2e + 对账 uncovered=0。工作流：统一使用 docs/skills/visual-page-quality-inspection-prompt.md 口径（A–H 维度、状态矩阵、目视→程序化探针、迭代式评审、独立复核）；每个 work item 按一份 execution plan 交付（draft review 独立通过 → 执行 → closure audit 独立通过 → 回写 roadmap）；字母后缀滚动拆分已由 roadmap Rule 3 预授权。不遗漏四道闭环：清单程序化（禁手抄）、覆盖对账（uncovered=0 为 roadmap 关闭前置）、截图证据强制（无截图的卡复核驳回）、发现强制归族三态（systemic/local/watch-only，禁止未归族逐点修补）+ 每批同探针复检。范围排除：mobile 族组件数量级扩容（G-H）、公式引擎/协同编辑、3D 后处理/天空盒恢复、一期 D2 台账剩余 watch-only 项（G-J、D1 输入池、G-L/G-M）、与一期已 done work item 重叠的重复修复。授权约束：packages/ui/src/index.ts 公共导出面（ask-first）、样式契约、flux-core 编译内核为保护区域，触及须独立 plan + 人工确认；执行 agent 需多模态读图能力（快照目视用于诊断评审，pass/fail 判据必须程序化——AGENTS.md 快照政策）；截图证据落 _tmp/ 永不入库。沿用指针：一期成果（V0 视觉断言 helper、theme-tokens 令牌层、一致性门禁豁免治理）直接复用不重建；一期 roadmap docs/backlog/visual-quality-roadmap.md 已全部 done，其 findings 台账（r2-audit/r3-p2-adjudication）为 R2 归族时的去重对照。",
+  "version": "1.0.0",
+  "status": "active",
+  "startDate": "2026-09-22",
+  "targetDate": "2026-11-30",
+  "owner": "nop-chaos-flux",
+  "model": "glm-5.3-flash",
+  "variant": "max",
+  "roadmapPath": "docs/backlog/visual-quality-r2-roadmap.md",
+  "exitCriteria": "roadmap 全部 work item done 且覆盖对账 uncovered=0 且 R2-5 全量复检评分卡无 fail 且 pnpm check newHits=0",
+  "milestones": [
+    {
+      "id": "M0",
+      "name": "覆盖基建（清单枚举/台账对账/截图矩阵）",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T0.1",
+          "name": "R2-0 覆盖基建 plan 拟制与执行（页面/控件清单程序化枚举 + ledger + 对账命令 + 截图矩阵 runner + card 模板 + 批次裁定）",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M1",
+      "name": "复杂页面全量走查（四批）",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T1.1",
+          "name": "R2-1a 复刻页 + complex-pages 域走查（逐页 evidence card + 截图矩阵 + 归族）",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T1.2",
+          "name": "R2-1b 设计器域走查",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T1.3",
+          "name": "R2-1c 数据可视化与表格域走查",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T1.4",
+          "name": "R2-1d 表单/编辑器/AI/移动端域走查",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "控件族全量走查（三批）",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T2.1",
+          "name": "R2-2a 控件批一（basic + form + form-advanced）",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T2.2",
+          "name": "R2-2b 控件批二（data + content + layout + mobile）",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T2.3",
+          "name": "R2-2c 控件批三（ai + scheduling + industrial + 3d + 可视化族）",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M3",
+      "name": "设计系统整改",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T3.1",
+          "name": "R2-3a plan 490 执行（弹层尺寸体系 + 表面节奏 + overlay-adhoc-width 门禁）",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T3.2",
+          "name": "R2-3b 设计系统缺口补全首批族（findings 归族裁定后立项）",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M4",
+      "name": "缺陷与家族消化",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T4.1",
+          "name": "R2-4 局部缺陷首批族消化（后续字母批次预授权滚动）",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M5",
+      "name": "验收复检与守护固化",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T5.1",
+          "name": "R2-5 全量同探针复检轮 + 评分卡前后对比 + 探针固化 e2e + 对账 uncovered=0 + 门禁收口",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    }
+  ]
+}
