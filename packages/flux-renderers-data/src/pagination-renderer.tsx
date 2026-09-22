@@ -199,7 +199,7 @@ export function PaginationRenderer(props: RendererComponentProps<PaginationSchem
 
   return (
     <div
-      className={cn('nop-pagination', props.meta.className)}
+      className={cn('nop-pagination mt-[var(--space-block-gap)]', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-slot="pagination-root"

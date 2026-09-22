@@ -106,7 +106,7 @@ Current live implementation note:
 - `size` 映射：Flux 6 档映射到 drawer 几何（left/right 影响 width，top/bottom 影响 height）；`full` 走 inline `width: 100%; height: 100%`。
 - `width`/`height` 显式 override：number→px，string 透传 CSS length；与 `size` 并存时显式优先。
 - `bodyClassName`/`headerClassName`/`footerClassName` 经 `cn()` 合并到 `DrawerBody`/`DrawerHeader`/`DrawerFooter`，不污染 `nop-drawer` 根 marker。
-- `resizable: true` 时 DrawerContent 内置 `[data-slot="drawer-resize-handle"]`（边缘 separator，pointer events 拖拽）。
+- `resizable: true` 时 DrawerContent 内置 `[data-slot="drawer-resize-handle"]`（边缘 separator，pointer events 拖拽 + 方向键键盘 resize）；ui DrawerContent 的 `size` prop（plan 490，默认 sm）取 `--overlay-size-*` 阶梯档作为初始宽度（`w-3/4` 窄视口回退 + `sm:` 起档位 max-width），用户手动 resize 沿用既有自由调整语义（160px–90% clamp，inline width 覆盖类档位）。
 - 视觉和可访问性交互复用 `@nop-chaos/ui` Drawer。
 - 标准 shell 结构应为 `DrawerContent -> DrawerHeader? -> DrawerBody -> DrawerFooter?`。
 - `DrawerContent` 负责弹层壳行为；默认 body spacing 应归 `DrawerBody`，并与 dialog 保持相同的 body-slot 责任边界。

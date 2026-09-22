@@ -217,7 +217,7 @@ describe('DialogHost', () => {
     expect(surfaceRuntime.close).toHaveBeenCalledWith('dialog-2');
   });
 
-  it('maps surface sizes to the --dialog-size-* scale and stacks dialogs with the top token', () => {
+  it('maps surface sizes onto the overlay size ladder and stacks dialogs with the top token', () => {
     const scope = makeScope();
     const surfaceRuntime = makeSurfaceRuntime([
       {

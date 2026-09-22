@@ -252,6 +252,50 @@ describe('find-ui-consistency-gaps', () => {
     });
   });
 
+  describe('overlay-adhoc-width (plan 490)', () => {
+    it('flags ad-hoc width classes inside the DialogContent opening tag', async () => {
+      await stageFixture(
+        'packages/flow-designer-renderers/src/overlay-hit.fixture.tsx',
+        'overlay-adhoc-hit.fixture.tsx',
+      );
+      await expect(runGate()).rejects.toMatchObject({
+        stdout: expect.stringContaining('overlay-adhoc-width'),
+        stdout: expect.stringContaining('overlay-hit.fixture.tsx'),
+      });
+    });
+
+    it('flags named-scale max widths on overlay content (the audited max-w-3xl form)', async () => {
+      await stageFixture(
+        'packages/flux-renderers-basic/src/overlay-named-hit.fixture.tsx',
+        'overlay-adhoc-named-scale-hit.fixture.tsx',
+      );
+      await expect(runGate()).rejects.toMatchObject({
+        stdout: expect.stringContaining('overlay-adhoc-width'),
+        stdout: expect.stringContaining('max-w-3xl'),
+      });
+    });
+
+    it('accepts ladder size props and child-owned width classes without a hit', async () => {
+      await stageFixture(
+        'packages/flux-renderers-basic/src/overlay-clean.fixture.tsx',
+        'overlay-clean.fixture.tsx',
+      );
+      const { stdout } = await runGate();
+      expect(stdout).not.toContain('overlay-clean.fixture.tsx');
+    });
+
+    it('keeps packages/ui component implementations out of scope', async () => {
+      // The four overlay components consume the ladder tokens themselves; a
+      // staged fixture under packages/ui must not trip the rule.
+      await stageFixture(
+        'packages/ui/src/components/ui/overlay-ui-internal.fixture.tsx',
+        'overlay-adhoc-hit.fixture.tsx',
+      );
+      const { stdout } = await runGate();
+      expect(stdout).not.toContain('overlay-ui-internal.fixture.tsx');
+    });
+  });
+
   it('reports a clean scan when no fixture violates any rule', async () => {
     await stageFixture('packages/flux-renderers-basic/src/all-clean.fixture.ts', 'all-clean.fixture.ts');
     const { stdout } = await runGate();

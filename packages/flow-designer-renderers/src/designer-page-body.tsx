@@ -542,7 +542,8 @@ export function DesignerPageBody({
           offsetRef={jsonOffsetRef}
           aria-describedby={undefined}
           data-slot="designer-json-panel"
-          className="right-4 top-[72px] w-[min(560px,calc(100vw-32px))] max-h-[calc(100vh-96px)] p-0 overflow-hidden z-60 flex flex-col sm:max-w-2xl"
+          size="base"
+          className="right-4 top-[72px] max-h-[calc(100vh-96px)] p-0 overflow-hidden z-60 flex flex-col"
         >
           <DialogHeader className="px-4 pt-4 pb-0 shrink-0">
             <DialogTitle className="text-sm">{t('flux.flowDesigner.flowJson')}</DialogTitle>

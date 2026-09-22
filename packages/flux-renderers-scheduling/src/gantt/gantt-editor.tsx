@@ -1,5 +1,5 @@
 import React, { useId, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, Label, cn } from '@nop-chaos/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button, Input, Label } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttStoreApi } from './gantt.types.js';
@@ -61,7 +61,7 @@ export function GanttEditor({ store, editorRegion, className, editingTaskId, onC
   if (editorRegion && editingTask) {
     return (
       <Dialog open={open} onOpenChange={(o) => { if (!o) closeEditor(); }}>
-        <DialogContent className={cn('sm:max-w-md', className)}>
+        <DialogContent size="sm" className={className}>
           {editorRegion.render({
             bindings: {
               task: editingTask,
@@ -87,7 +87,7 @@ export function GanttEditor({ store, editorRegion, className, editingTaskId, onC
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) closeEditor(); }}>
-      <DialogContent className="sm:max-w-md" key={editingTaskId}>
+      <DialogContent size="sm" key={editingTaskId}>
         <DialogHeader>
           <DialogTitle>{t('scheduling.gantt.editTask')}</DialogTitle>
         </DialogHeader>

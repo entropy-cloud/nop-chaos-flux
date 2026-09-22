@@ -144,17 +144,17 @@ const DialogContent = React.forwardRef<
         : (baseTransform ?? 'translate(-50%, -50%)');
   const sizeVar =
     size === 'xs'
-      ? 'var(--dialog-size-xs)'
+      ? 'var(--overlay-size-xs)'
       : size === 'sm'
-        ? 'var(--dialog-size-sm)'
+        ? 'var(--overlay-size-sm)'
         : size === 'base' || size === 'default'
-          ? 'var(--dialog-size-base)'
+          ? 'var(--overlay-size-base)'
           : size === 'md'
-            ? 'var(--dialog-size-md)'
+            ? 'var(--overlay-size-md)'
             : size === 'lg'
-              ? 'var(--dialog-size-lg)'
+              ? 'var(--overlay-size-lg)'
               : size === 'xl'
-                ? 'var(--dialog-size-xl)'
+                ? 'var(--overlay-size-xl)'
                 : undefined;
   const { contentRef, handlePointerDown, moveBy, resetPosition } = useDialogDrag(
     { enabled: draggable, offsetRef, baseTransform: effectiveBaseTransform },
@@ -180,7 +180,7 @@ const DialogContent = React.forwardRef<
           data-size={size}
           className={cn(
             'nop-dialog ',
-            'flex w-full max-w-[calc(100%-2rem)] flex-col rounded-[var(--dialog-content-border-radius)] bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+            'flex w-full max-w-[calc(100%-2rem)] flex-col rounded-[var(--overlay-anatomy-content-border-radius)] bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
             'max-h-[calc(100dvh-2rem)]',
             isContained ? 'absolute' : 'fixed',
             noCenter
@@ -313,7 +313,7 @@ function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="dialog-body"
       className={cn(
-        'flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-[var(--dialog-body-padding-x)] py-4',
+        'flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-[var(--overlay-anatomy-body-padding-x)] py-4',
         className,
       )}
       {...props}
@@ -333,7 +333,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        'mt-auto flex shrink-0 flex-col-reverse gap-[var(--dialog-footer-gap)] p-4 [&_button]:min-w-[var(--dialog-footer-button-min-width)] sm:flex-row sm:justify-end',
+        'mt-auto flex shrink-0 flex-col-reverse gap-[var(--overlay-anatomy-footer-gap)] p-4 [&_button]:min-w-[var(--overlay-anatomy-footer-button-min-width)] sm:flex-row sm:justify-end',
         className,
       )}
       {...props}
@@ -353,7 +353,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        'font-heading text-[length:var(--dialog-title-font-size)] leading-none font-medium',
+        'font-heading text-[length:var(--overlay-anatomy-title-font-size)] leading-none font-medium',
         className,
       )}
       {...props}

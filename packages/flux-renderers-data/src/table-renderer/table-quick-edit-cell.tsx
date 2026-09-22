@@ -141,7 +141,7 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
           <Button type="button" variant="outline" size="sm" onClick={ownCtrl.openDialog}>
             {typeof column.label === 'string' ? column.label : t('flux.common.edit')}
           </Button>
-          <DialogContent data-slot="table-quick-edit-dialog">
+          <DialogContent data-slot="table-quick-edit-dialog" size="sm">
             <DialogHeader>
               <DialogTitle>
                 {typeof column.label === 'string' ? column.label : (field ?? t('flux.common.edit'))}

@@ -54,24 +54,56 @@ describe('@nop-chaos/theme-tokens styles contract', () => {
     expect(styles).toContain('--table-empty-height: 200px;');
     expect(styles).toContain('--table-row-action-height: 32px;');
     expect(styles).toContain('--table-row-action-gap: 10px;');
-    expect(styles).toContain('--crud-toolbar-gap: 10px;');
+    expect(styles).toContain('--crud-toolbar-gap: 8px;');
   });
 
-  it('defines the C1a dialog size and position tokens on :root', () => {
-    expect(styles).toContain('--dialog-size-xs: 375px;');
-    expect(styles).toContain('--dialog-size-sm: 350px;');
-    expect(styles).toContain('--dialog-size-base: 500px;');
-    expect(styles).toContain('--dialog-size-md: 800px;');
-    expect(styles).toContain('--dialog-size-lg: 1100px;');
-    expect(styles).toContain('--dialog-size-xl: 90%;');
+  it('defines the plan 490 overlay size ladder on :root with zero legacy alias residue', () => {
+    expect(styles).toContain('--overlay-size-xs: 360px;');
+    expect(styles).toContain('--overlay-size-sm: 480px;');
+    expect(styles).toContain('--overlay-size-base: 560px;');
+    expect(styles).toContain('--overlay-size-md: 720px;');
+    expect(styles).toContain('--overlay-size-lg: 960px;');
+    expect(styles).toContain('--overlay-size-xl: min(1280px, calc(100% - 4rem));');
     expect(styles).toContain('--dialog-top-offset: 60px;');
     expect(styles).toContain('--dialog-stack-step: 30px;');
     expect(styles).toContain('--dialog-overlay-bg: rgb(0 0 0 / 0.7);');
-    expect(styles).toContain('--dialog-title-font-size: 14px;');
-    expect(styles).toContain('--dialog-body-padding-x: 24px;');
-    expect(styles).toContain('--dialog-footer-gap: 8px;');
-    expect(styles).toContain('--dialog-footer-button-min-width: 72px;');
-    expect(styles).toContain('--dialog-content-border-radius: 6px;');
+    // Phase 3 closure: the transition aliases are deleted once zero consumers
+    // remained (grep 全仓无 --dialog-size 消费, plan 490 Phase 3 Proof).
+    expect(styles).not.toContain('--dialog-size-');
+    expect(styles).not.toContain('--dialog-body-padding-x');
+    expect(styles).not.toContain('--dialog-footer-gap');
+    expect(styles).not.toContain('--dialog-footer-button-min-width');
+    expect(styles).not.toContain('--dialog-title-font-size');
+    expect(styles).not.toContain('--dialog-content-border-radius');
+  });
+
+  it('defines the plan 490 shared overlay anatomy tokens on :root', () => {
+    expect(styles).toContain('--overlay-anatomy-body-padding-x: 24px;');
+    expect(styles).toContain('--overlay-anatomy-footer-gap: 8px;');
+    expect(styles).toContain('--overlay-anatomy-footer-button-min-width: 72px;');
+    expect(styles).toContain('--overlay-anatomy-title-font-size: 14px;');
+    expect(styles).toContain('--overlay-anatomy-content-border-radius: 6px;');
+  });
+
+  it('defines the plan 490 host-surface block-gap token on :root', () => {
+    expect(styles).toContain('--space-block-gap: 12px;');
+  });
+
+  it('keeps the overlay size ladder strictly monotonic (plan 490)', () => {
+    const rootStart = styles.indexOf(':root {');
+    const rootEnd = styles.indexOf('}', rootStart);
+    const rootBlock = styles.slice(rootStart, rootEnd);
+    const tiers = ['xs', 'sm', 'base', 'md', 'lg'] as const;
+    const ladder = tiers.map((tier) => {
+      const match = rootBlock.match(new RegExp(`--overlay-size-${tier}:\\s*(\\d+(?:\\.\\d+)?)px`));
+      return match ? Number(match[1]) : Number.NaN;
+    });
+    for (const [index, value] of ladder.entries()) {
+      expect(Number.isNaN(value)).toBe(false);
+      if (index > 0) {
+        expect(value).toBeGreaterThan(ladder[index - 1]!);
+      }
+    }
   });
 
   it('defines all supported theme root selectors', () => {

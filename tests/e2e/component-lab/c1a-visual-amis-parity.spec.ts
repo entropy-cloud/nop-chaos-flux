@@ -149,7 +149,7 @@ test.describe('C1a AMIS visual parity acceptance', () => {
     expect(loaded.hoverVar).toBe(true);
   });
 
-  test('dialog size matrix maps to --dialog-size-* widths (xs/sm/base/md/lg/xl/full/default)', async ({
+  test('dialog size matrix maps to --overlay-size-* ladder widths (xs/sm/base/md/lg/xl/full/default)', async ({
     page,
   }) => {
     const lab = new ComponentLabHelper(page);
@@ -159,11 +159,11 @@ test.describe('C1a AMIS visual parity acceptance', () => {
     await expect(stage).toBeVisible();
 
     const cases: Array<{ label: string; expected: number; dataSize: string }> = [
-      { label: 'Open xs', expected: 375, dataSize: 'xs' },
-      { label: 'Open sm', expected: 350, dataSize: 'sm' },
-      { label: 'Open md', expected: 500, dataSize: 'base' },
-      { label: 'Open lg', expected: 800, dataSize: 'md' },
-      { label: 'Open xl', expected: 1100, dataSize: 'lg' },
+      { label: 'Open xs', expected: 360, dataSize: 'xs' },
+      { label: 'Open sm', expected: 480, dataSize: 'sm' },
+      { label: 'Open md', expected: 560, dataSize: 'base' },
+      { label: 'Open lg', expected: 720, dataSize: 'md' },
+      { label: 'Open xl', expected: 960, dataSize: 'lg' },
     ];
 
     for (const c of cases) {
@@ -187,7 +187,7 @@ test.describe('C1a AMIS visual parity acceptance', () => {
     const defaultSurface = dialogSurfaces(page).last();
     await expect(defaultSurface).toBeVisible();
     await expect(defaultSurface).toHaveAttribute('data-size', 'default');
-    await waitForDialogWidth(defaultSurface, 500);
+    await waitForDialogWidth(defaultSurface, 560);
   });
 
   test('dialog top anchoring 60px with +30px stacking step for nested dialogs', async ({ page }) => {
@@ -217,7 +217,7 @@ test.describe('C1a AMIS visual parity acceptance', () => {
         return box ? Math.round(box.y) : -1;
       })
       .toBe(90);
-    await waitForDialogWidth(second, 350);
+    await waitForDialogWidth(second, 480);
 
     const firstBox = await first.boundingBox();
     const secondBox = await second.boundingBox();

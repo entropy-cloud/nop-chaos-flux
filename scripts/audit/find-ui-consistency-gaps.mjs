@@ -241,7 +241,69 @@ const RULES = [
       /href\s*[:=]\s*["'`]?(?:data:|blob:)/g,
     ],
   },
+  {
+    // plan 490 Phase 4: the four overlay components share the --overlay-size-*
+    // ladder selected through their `size` prop; a consumer width class on
+    // DialogContent/SheetContent/DrawerContent/AlertDialogContent hijacks the
+    // tier system (the gantt-editor `sm:max-w-md` / image `max-w-3xl` family
+    // audited and migrated in plan 490 Phase 3). packages/ui is exempt — the
+    // component implementations consume the ladder tokens themselves.
+    id: 'overlay-adhoc-width',
+    severity: 'medium',
+    description: 'Overlay content component receives an ad-hoc width class instead of a ladder size prop (plan 490)',
+    include: (filePath) => {
+      return (
+        /^(?:apps|packages)\//.test(filePath) &&
+        /\.tsx$/.test(filePath) &&
+        !isTestFile(filePath) &&
+        !filePath.startsWith('packages/ui/src/components/ui/')
+      );
+    },
+    patterns: [
+      /\b(?:sm:)?max-w-\[/g,
+      /\b(?:sm:)?w-\[/g,
+      /\bsm:max-w-[\w-]+/g,
+      /\bsm:w-[\w-]+/g,
+      // Named-scale max widths (the audited `max-w-3xl` form) — any max-w on
+      // an overlay content element is a width hijack regardless of scale.
+      /\b(?:sm:)?max-w-(?:xs|sm|base|md|lg|xl|2xl|3xl|4xl|5xl|6xl|7xl|full|prose|screen(?:-sm|-md|-lg|-xl|-2xl)?)\b/g,
+    ],
+    filterLine(codeText, lines, lineIndex, filePath) {
+      return !isInsideOverlayContentOpening(lines, lineIndex);
+    },
+  },
 ];
+
+// plan 490: a width-class hit only counts when it sits inside the JSX opening
+// tag region of one of the four overlay content components. Scanning upward
+// from the hit line: finding the component opening means inside; reaching a
+// tag terminator first means the opening tag already closed (the hit is a
+// body child, which may legally carry width classes of its own).
+const OVERLAY_CONTENT_OPENING = /<(?:Dialog|Sheet|Drawer|AlertDialog)Content\b/;
+const OVERLAY_SCAN_WINDOW = 12;
+
+function isTagTerminatorEnd(trimmedLine) {
+  if (trimmedLine.endsWith('/>')) {
+    return true;
+  }
+  return trimmedLine.endsWith('>') && !trimmedLine.endsWith('=>');
+}
+
+function isInsideOverlayContentOpening(lines, lineIndex) {
+  if (OVERLAY_CONTENT_OPENING.test(lines[lineIndex] ?? '')) {
+    return true;
+  }
+  for (let i = lineIndex - 1; i >= Math.max(0, lineIndex - OVERLAY_SCAN_WINDOW); i -= 1) {
+    const trimmed = (lines[i] ?? '').trim();
+    if (OVERLAY_CONTENT_OPENING.test(lines[i] ?? '')) {
+      return !isTagTerminatorEnd(trimmed);
+    }
+    if (isTagTerminatorEnd(trimmed)) {
+      return false;
+    }
+  }
+  return false;
+}
 
 function matchRuleLine(rule, codeText, lines, lineIndex, filePath) {
   const matches = [];

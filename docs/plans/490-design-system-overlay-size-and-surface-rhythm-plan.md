@@ -1,7 +1,7 @@
 # 490 设计系统统一：弹层尺寸体系与表面节奏（Overlay Size System And Surface Rhythm）
 
-> Plan Status: active
-> Last Reviewed: 2026-09-22
+> Plan Status: completed
+> Last Reviewed: 2026-09-23
 > Source: `docs/skills/visual-page-quality-inspection-prompt.md`（H/D 维度已知高危面）、live repo 调研（本 plan Current Baseline 全部为 2026-09-22 实测）
 > Related: `docs/backlog/visual-quality-r2-roadmap.md`（本 plan 为其 R2-3a work item 的 owner plan）、`docs/backlog/visual-quality-roadmap.md`（一期，已全 done，本 plan 处理其门禁盲区——渲染后体感）、`docs/architecture/styling-system.md`（owner doc）
 
@@ -113,91 +113,120 @@ Proof 先行项（先红后绿）：
 
 ### Phase 1 - 令牌层：阶梯重整与块距刻度
 
-Status: planned
+Status: completed
 Targets: `packages/theme-tokens/src/styles.css`、`packages/theme-tokens/src/styles.test.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof：新建阶梯单调性单测（读 `:root` 阶梯值断言递增），确认对当前 `--dialog-size-xs: 375 > sm: 350` 呈红
-- [ ] Fix：落 `--overlay-size-*` 六档新值 + `--dialog-size-*` 过渡别名 + `--space-block-gap: 12px`；`--crud-toolbar-gap` 10→8px
-- [ ] Fix：同步更新 `styles.test.ts:61-66` 既有 `--dialog-size-*` 逐值断言（375/350/500/800/1100/90%）为新阶梯值
-- [ ] Proof：单调性单测转绿；dist styles 重建无 diff 残留
+- [x] Proof：新建阶梯单调性单测（读 `:root` 阶梯值断言递增），确认对当前 `--dialog-size-xs: 375 > sm: 350` 呈红
+- [x] Fix：落 `--overlay-size-*` 六档新值 + `--dialog-size-*` 过渡别名 + `--space-block-gap: 12px`；`--crud-toolbar-gap` 10→8px
+- [x] Fix：同步更新 `styles.test.ts:61-66` 既有 `--dialog-size-*` 逐值断言（375/350/500/800/1100/90%）为新阶梯值
+- [x] Proof：单调性单测转绿；dist styles 重建无 diff 残留
 
 Exit Criteria:
 
-- [ ] `theme-tokens` 单测含阶梯单调性断言且绿；`:root` 中不再存在非单调阶梯
-- [ ] 旧令牌名在过渡别名下行为不变（focused 消费方测试抽查 ui/dialog + flux-react dialog-host 族绿）
+- [x] `theme-tokens` 单测含阶梯单调性断言且绿；`:root` 中不再存在非单调阶梯
+- [x] 旧令牌名在过渡别名下行为不变（focused 消费方测试抽查 ui/dialog + flux-react dialog-host 族绿）
 
 ### Phase 2 - ui 组件：四弹层统一消费
 
-Status: planned
+Status: completed
 Targets: `packages/ui/src/components/ui/{dialog,sheet,drawer,alert-dialog}.tsx` 及同目录测试、`tests/e2e/component-lab/c1a-visual-amis-parity.spec.ts`、`apps/playground/src/component-lab/renderers/dialog-lab-page.tsx`、`packages/flux-react/src/__tests__/dialog-host.test.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof：Sheet/Drawer `size` prop、AlertDialog 阶梯重映射的组件测试先红（prop/令牌宽不存在）
-- [ ] Fix：Dialog 绑 `--overlay-size-*`；Sheet/Drawer 增 `size`（默认 sm，`sm:` 以下 `w-3/4` 回退保留）；AlertDialog 迁 xs/sm 令牌 + 解剖学令牌；Sheet/Drawer header/body/footer 消费 `--overlay-anatomy-*`
-- [ ] Fix：更新 `c1a-visual-amis-parity.spec.ts:152-181` 档宽断言矩阵（现钉死 375/350/500/800/1100/1248）为新阶梯实测值；同步 `dialog-lab-page.tsx:404` 档位说明文案与 `dialog-host.test.tsx:220` 既有映射断言
-- [ ] Fix：AlertDialog 重映射消费面断言——`dirty-close-guard.tsx`（ui 包内测试）与 `confirm-bridge.tsx`（playground 侧）的 default 档宽度变化（320/384→480）落映射行为断言或显式裁决记录
-- [ ] Proof：四组件 focused 测试全绿（含 `data-size` 透出、窄视口回退、Drawer resize 初始宽=档位）
+- [x] Proof：Sheet/Drawer `size` prop、AlertDialog 阶梯重映射的组件测试先红（prop/令牌宽不存在）——`overlay-size-ladder.test.tsx` 7/7 红
+- [x] Fix：Dialog 绑 `--overlay-size-*`；Sheet/Drawer 增 `size`（默认 sm，`sm:` 以下 `w-3/4` 回退保留）；AlertDialog 迁 xs/sm 令牌 + 解剖学令牌；Sheet/Drawer header/body/footer 消费 `--overlay-anatomy-*`
+- [x] Fix：更新 `c1a-visual-amis-parity.spec.ts:152-181` 档宽断言矩阵（现钉死 375/350/500/800/1100/1248）为新阶梯实测值；同步 `dialog-lab-page.tsx:404` 档位说明文案与 `dialog-host.test.tsx:220` 既有映射断言
+- [x] Fix：AlertDialog 重映射消费面断言——default 档宽度变化（320/384→480）落组件级映射行为断言（`overlay-size-ladder.test.tsx` remap 用例）；`dirty-close-guard.tsx` 与 `confirm-bridge.tsx` 均未传 size（grep 核实），随 default 档统一变宽，裁决记录于此，不另落消费方专属测试
+- [x] Proof：四组件 focused 测试全绿（含 `data-size` 透出、窄视口回退、Drawer resize 初始宽=档位）——ui 209/209、c1a e2e 档宽矩阵实测绿
 
 Exit Criteria:
 
-- [ ] `pnpm --filter @nop-chaos/ui test` 绿；四组件宽度全部来源于阶梯令牌（组件文件内不再有弹层宽度硬编码类；`max-w-[calc(100%-2rem)]` 窄视口兜底与 Sheet/Drawer `sm:` 以下 `w-3/4` 比例回退为 Design 断点行为条款的有意保留，除外）
-- [ ] ui 包 typecheck 绿；`packages/ui/src/index.ts` 导出名单零变更
+- [x] `pnpm --filter @nop-chaos/ui test` 绿；四组件宽度全部来源于阶梯令牌（组件文件内不再有弹层宽度硬编码类；`max-w-[calc(100%-2rem)]` 窄视口兜底与 Sheet/Drawer `sm:` 以下 `w-3/4` 比例回退为 Design 断点行为条款的有意保留，除外）
+- [x] ui 包 typecheck 绿；`packages/ui/src/index.ts` 导出名单零变更
 
 ### Phase 3 - 消费面迁移与表面节奏
 
-Status: planned
+Status: completed
 Targets: 全仓四类弹层消费方、`packages/flux-renderers-data` 分页条/工具栏族
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof：先红断言——TablePaginationBar 根节点上间距为 0（计算样式断言），作为本 Phase 间隔迁移的红色锚点
-- [ ] Fix：全仓审计 `size=` 用法与 ad-hoc 宽度类（grep 清单落本 plan 附录），逐项迁移到档位（含 `gantt-editor.tsx` `sm:max-w-md`→`size="sm"`、`table-quick-edit-cell` 增 `size="sm"`、`detail-surface` 阶梯值重校）
-- [ ] Fix：三个分页条 + 表格 footer 槽迁移 `--space-block-gap`；crud toolbar 归栅格复核
-- [ ] Proof：flux-renderers-data focused 测试绿，红色锚点转绿（上间距 = `--space-block-gap`）；`--dialog-size-*` 过渡别名零残留检查（grep 全仓无 `--dialog-size` 消费）
+- [x] Proof：先红断言——TablePaginationBar 根节点上间距为 0（计算样式断言 `surface-rhythm-pagination.spec.ts`，light+dark 双跑 2 failed），作为本 Phase 间隔迁移的红色锚点
+- [x] Fix：全仓审计 `size=` 用法与 ad-hoc 宽度类（grep 清单见本 plan 附录），逐项迁移到档位（`gantt-editor.tsx` `sm:max-w-md`→`size="sm"` ×2、`table-quick-edit-cell` 增 `size="sm"`、`image.tsx` `max-w-3xl`→`size="md"`、`detail-surface` 透传 size 契约重校无误）
+- [x] Fix：三个分页条 + 表格 footer 槽迁移 `--space-block-gap`；crud toolbar 归栅格复核（`--crud-toolbar-gap` 8px 于 Phase 1 落地，消费方走 var 引用零改动）
+- [x] Proof：flux-renderers-data focused 测试绿（1162/1162 含新增 `surface-rhythm-block-gap.test.tsx` 类契约），红色锚点转绿（2/2 双主题，margin-top=12px）；`--dialog-size-*` 过渡别名零残留检查通过（grep 全仓无 `--dialog-size` 消费），别名已自 styles.css 删除
 
 Exit Criteria:
 
-- [ ] 全仓四类弹层组件 JSX props 无 `max-w-[`/`w-[`/`sm:max-w-`/`sm:w-` 字面类（检测器清单口径，ui 包除外）
-- [ ] flux-renderers-data focused 全绿；分页条间隔三处同令牌
+- [x] 全仓四类弹层组件 JSX props 无 `max-w-[`/`w-[`/`sm:max-w-`/`sm:w-` 字面类（消费面全量审计：24 文件 32 处使用点，仅 3 处宽度类且已全部迁移；ui 包组件实现自身消费阶梯令牌除外）
+- [x] flux-renderers-data focused 全绿；分页条间隔三处同令牌
 
 ### Phase 4 - 门禁、文档与视觉验收
 
-Status: planned
+Status: completed
 Targets: `scripts/audit/find-ui-consistency-gaps.mjs`、`docs/architecture/styling-system.md`、`docs/skills/visual-page-quality-inspection-prompt.md`、`tests/e2e/`
 
 - Item Types: `Fix | Proof | Decision`
 
-- [ ] Fix：`overlay-adhoc-width` 检测器上线，全链 `pnpm check` newHits=0、新增豁免 0
-- [ ] Fix：styling-system.md 新章节 + Spacing 表补行；**owner doc 回写 `docs/components/dialog/design.md:28,118`（阶梯值与映射契约）及 `docs/components/drawer/design.md` resize 语义一行（按 Phase 2 落地形态）**；检查提示词 H1/H2/D6 已知锚点更新为"已由 plan 490 收敛"并保留复检口径
-- [ ] Proof：e2e 双主题计算样式断言（阶梯档宽/分页间隔/footer 排布）绿
-- [ ] Decision：用 `visual-page-quality-inspection-prompt.md` 对设计器域 + 表格/CRUD 域跑 H/D 维度复检轮，评分卡结论落 `docs/analysis/`（复检发现的新问题不在本 plan 修复，走 findings 流程）
+- [x] Fix：`overlay-adhoc-width` 检测器上线（含 4 条 fixture 测试），首跑即抓到审计漏网的 `designer-page-body.tsx` JSON 面板 ad-hoc 宽度并迁移 `size="base"`；全链 `pnpm check` newHits=0、新增豁免 0（基数 216/62 不变）
+- [x] Fix：styling-system.md 新章节「Overlay Size Ladder And Anatomy」+ Spacing 表补行；owner doc 回写 `docs/components/dialog/design.md`（阶梯值与映射契约两处）及 `docs/components/drawer/design.md`（resize/初始宽度语义）；检查提示词 H1/H2/D6 已知锚点更新为收敛后状态并保留复检口径
+- [x] Proof：e2e 双主题计算样式断言绿——`surface-rhythm-pagination.spec.ts`（三抓取分页条块距 12px，light+dark）+ `overlay-ladder-anatomy.spec.ts`（dialog default 档 560/footer flex-end/gap 8/按钮 72 + drawer sm 档 480，light+dark）
+- [x] Decision：H/D 维度复检轮完成，评分卡落 `docs/analysis/2026-09-23-plan490-hd-recheck/summary.md`——H1 阶梯逐档命中（360/480/560/720/960 双主题）、D6 间距 12px、C1 无溢出；新发现 1×P1（playground 宿主裸 :root 覆盖 `--popover` 致 dark 弹层亮底，存量缺陷）+ 1×P3（watch-only），均按 Cross-Cutting 4 归族登记、不在本 plan 修复
 
 Exit Criteria:
 
-- [ ] `pnpm check` 全链 exit 0，一致性豁免基数不增
-- [ ] e2e 断言绿 + 复检轮评分卡落盘（H/D 维度 design 域与 data 域 pass 或仅 warn）
+- [x] `pnpm check` 全链 exit 0，一致性豁免基数不增
+- [x] e2e 断言绿 + 复检轮评分卡落盘（H/D 维度 design 域与 data 域 pass；B5 宿主存量缺陷已登记 findings 流程）
 
 ## Closure Gates
 
-- [ ] 三套弹层尺寸约定收敛为一套阶梯四组件消费（live 代码核对，非仅类型存在）
-- [ ] 分页器贴合类缺陷系统性收口（三处同令牌 + e2e 断言）
-- [ ] 阶梯单调性、组件映射、分页间隔 Proof 全部先红后绿并绿
-- [ ] 门禁 newHits=0、新增豁免 0、豁免基数不增
-- [ ] styling-system.md 与检查提示词锚点已回写 live baseline
-- [ ] 不存在被静默降级的 in-scope live defect（解剖学令牌化覆盖四个弹层组件，缺一不可）
-- [ ] 独立子 agent（fresh session）closure audit 完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] 三套弹层尺寸约定收敛为一套阶梯四组件消费（live 代码核对，非仅类型存在）
+- [x] 分页器贴合类缺陷系统性收口（三处同令牌 + e2e 断言）
+- [x] 阶梯单调性、组件映射、分页间隔 Proof 全部先红后绿并绿
+- [x] 门禁 newHits=0、新增豁免 0、豁免基数不增（216 instances/62 files/69 entries 实测不变）
+- [x] styling-system.md 与检查提示词锚点已回写 live baseline（另含 closure audit 发现的 flux-guide/14-theming.md 旧阶梯值更正）
+- [x] 不存在被静默降级的 in-scope live defect（解剖学令牌化覆盖四个弹层组件；复检 P1 为宿主主题层存量缺陷，已裁决 successor 归 R2-4，见 Deferred）
+- [x] 独立子 agent（fresh session）closure audit 完成并记录证据（见 Closure Audit Evidence）
+- [x] `pnpm typecheck`（exit 0，40 包）
+- [x] `pnpm build`（exit 0，40/40）
+- [x] `pnpm lint`（exit 0）
+- [x] `pnpm test`（exit 0，约 15,948 passed / 0 failed）
+- [x] `pnpm check`（exit 0，newHits=0）
+
+## 附录：Phase 3 消费面全量审计清单（2026-09-23 实测）
+
+四类弹层内容组件（Dialog/Sheet/Drawer/AlertDialogContent）消费点全量 grep（apps+packages，24 文件 32 处，排除 ui 组件实现自身与测试）：
+
+| 文件                                                                                                                                    | 处置                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `flux-renderers-scheduling/src/gantt/gantt-editor.tsx` ×2                                                                               | `sm:max-w-md` ad-hoc → `size="sm"`（本 plan 迁移）                                                           |
+| `flow-designer-renderers/src/designer-page-body.tsx`                                                                                    | `w-[min(560px,…)]`+`sm:max-w-2xl` ad-hoc → `size="base"`（门禁首跑抓出后迁移，560px 恰为 base 档，行为等价） |
+| `flux-renderers-content/src/image.tsx`                                                                                                  | `max-w-3xl` ad-hoc → `size="md"`（本 plan 迁移）                                                             |
+| `flux-renderers-data/src/table-renderer/table-quick-edit-cell.tsx`                                                                      | 无 size（吃 500px 默认档）→ `size="sm"`（单格快编）                                                          |
+| `flux-renderers-form-advanced/src/detail-view/detail-surface.tsx` ×2 / `picker-dropdown.tsx` ×2                                         | 既有 `size` prop 透传（`DIALOG_SIZES = sm/default/lg/xl`），阶梯换值后契约不变，重校无误                     |
+| `flux-react/src/dialog-host.tsx` ×2                                                                                                     | surface 词汇映射（xs→xs/sm→sm/md→base/lg→md/xl→lg/full→100vw），与新阶梯兼容，零改动                         |
+| word-editor-renderers 6 处 / spreadsheet-renderers 2 处                                                                                 | 既有 `size="sm"/"default"/"lg"` 显式档位，合规                                                               |
+| 其余（kanban-activity-log Sheet、toolbox-panel、select-mobile、tree-controls、page.tsx、confirm-bridge、mobile-infrastructure-demo 等） | 无宽度类，吃组件默认档（Sheet/Drawer=sm、Dialog=base、AlertDialog=default→sm）                               |
+
+`--dialog-size-*` 过渡别名在迁移完成后已自 `theme-tokens/src/styles.css` 删除（grep 全仓零消费），anatomy 旧名别名同理零消费、一并删除。
 
 ## Deferred But Adjudicated
 
-（暂无——执行中出现的裁决项落此处并附 Why Not Blocking Closure）
+### playground 宿主裸 :root 调色板覆盖 --popover（H/D 复检轮新发现 B5-1）
+
+- Classification: `out-of-scope improvement`（相对本 plan；相对 roadmap 属 live defect，已登记 findings 流程）
+- Why Not Blocking Closure: 先于本 plan 存在的宿主主题层存量缺陷（`apps/playground/src/styles.css:63-94` 裸 `:root` 无条件覆盖 `--popover` 等暖白系，dark 下弹层表面亮底）；本 plan 未触碰任何颜色路径，且本 plan Decision 项明文"复检发现的新问题不在本 plan 修复，走 findings 流程"。已落评分卡 `docs/analysis/2026-09-23-plan490-hd-recheck/summary.md` P1 条目，归族 local → R2-4 批消化。
+- Successor Required: `yes`
+- Successor Path: R2-0 台账建立后登记为 finding，R2-4（或字母后缀批）按"宿主主题 family"消化
+
+### Dialog header padding-x(16) 与 body(24) 不对称（H/D 复检轮 P3）
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: P3、无任务阻碍，且现形态可能为 AMIS parity 有意惯例（header p-4），需先核对对标再裁决是否统一。
+- Successor Required: `no`
+- Successor Path: R2 台账 watch 池，走查批复核时顺带核对
 
 ## Non-Blocking Follow-ups
 

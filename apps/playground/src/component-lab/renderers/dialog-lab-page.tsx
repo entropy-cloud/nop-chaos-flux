@@ -312,11 +312,11 @@ const c1aSizeMatrixDialog = {
     {
       type: 'flex',
       body: [
-        { type: 'button', label: 'Open xs', onClick: { action: 'openDialog', args: { title: 'xs dialog', size: 'xs', body: { type: 'text', text: 'xs 375px' } } } },
-        { type: 'button', label: 'Open sm', onClick: { action: 'openDialog', args: { title: 'sm dialog', size: 'sm', body: { type: 'text', text: 'sm 350px' } } } },
-        { type: 'button', label: 'Open md', onClick: { action: 'openDialog', args: { title: 'md dialog', size: 'md', body: { type: 'text', text: 'md -> base 500px' } } } },
-        { type: 'button', label: 'Open lg', onClick: { action: 'openDialog', args: { title: 'lg dialog', size: 'lg', body: { type: 'text', text: 'lg -> md 800px' } } } },
-        { type: 'button', label: 'Open xl', onClick: { action: 'openDialog', args: { title: 'xl dialog', size: 'xl', body: { type: 'text', text: 'xl -> lg 1100px' } } } },
+        { type: 'button', label: 'Open xs', onClick: { action: 'openDialog', args: { title: 'xs dialog', size: 'xs', body: { type: 'text', text: 'xs 360px' } } } },
+        { type: 'button', label: 'Open sm', onClick: { action: 'openDialog', args: { title: 'sm dialog', size: 'sm', body: { type: 'text', text: 'sm 480px' } } } },
+        { type: 'button', label: 'Open md', onClick: { action: 'openDialog', args: { title: 'md dialog', size: 'md', body: { type: 'text', text: 'md -> base 560px' } } } },
+        { type: 'button', label: 'Open lg', onClick: { action: 'openDialog', args: { title: 'lg dialog', size: 'lg', body: { type: 'text', text: 'lg -> md 720px' } } } },
+        { type: 'button', label: 'Open xl', onClick: { action: 'openDialog', args: { title: 'xl dialog', size: 'xl', body: { type: 'text', text: 'xl -> lg 960px' } } } },
         { type: 'button', label: 'Open full', onClick: { action: 'openDialog', args: { title: 'full dialog', size: 'full', body: { type: 'text', text: 'full 100vw' } } } },
         {
           type: 'button',
@@ -328,7 +328,7 @@ const c1aSizeMatrixDialog = {
               body: {
                 type: 'flex',
                 body: [
-                  { type: 'text', text: 'default -> base 500px' },
+                  { type: 'text', text: 'default -> base 560px' },
                   {
                     type: 'button',
                     label: 'Open stacked sm',
@@ -337,7 +337,7 @@ const c1aSizeMatrixDialog = {
                       args: {
                         title: 'sm dialog (stacked)',
                         size: 'sm',
-                        body: { type: 'text', text: 'sm 350px at top offset + 30px step' },
+                        body: { type: 'text', text: 'sm 480px at top offset + 30px step' },
                       },
                     },
                   },
@@ -401,7 +401,7 @@ export function DialogLabPage() {
         {
           title: 'C1a dialog size matrix',
           description:
-            'AMIS parity acceptance: explicit flux sizes xs/sm/md/lg/xl/full plus default map to --dialog-size-* widths.',
+            'AMIS parity acceptance: explicit flux sizes xs/sm/md/lg/xl/full plus default map to --overlay-size-* ladder widths (plan 490).',
           schema: c1aSizeMatrixDialog,
         },
       ]}

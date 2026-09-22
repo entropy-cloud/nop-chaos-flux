@@ -22,6 +22,7 @@
 
   --space-page-body: 16px;
   --space-section-gap: 24px;
+  --space-block-gap: 12px;
   --space-form-item-gap: 16px;
   --space-fieldset-body-gap: 16px;
   --space-form-actions-gap: 12px;
@@ -101,22 +102,29 @@
   --table-fixed-edge-shadow-right: inset -10px 0 8px -8px rgba(5, 5, 5, 0.06);
   --table-row-action-height: 32px;
   --table-row-action-gap: 10px;
-  --crud-toolbar-gap: 10px;
+  --crud-toolbar-gap: 8px;
 
-  --dialog-size-xs: 375px;
-  --dialog-size-sm: 350px;
-  --dialog-size-base: 500px;
-  --dialog-size-md: 800px;
-  --dialog-size-lg: 1100px;
-  --dialog-size-xl: 90%;
+  /* plan 490 overlay size ladder: single monotonic, 8pt-aligned vocabulary
+   * consumed by Dialog / Sheet / Drawer / AlertDialog via their size props
+   * (see styling-system.md "Overlay 尺寸与解剖学"). Consumers must pick a
+   * tier — ad-hoc width classes on overlay content are gate-blocked. */
+  --overlay-size-xs: 360px;
+  --overlay-size-sm: 480px;
+  --overlay-size-base: 560px;
+  --overlay-size-md: 720px;
+  --overlay-size-lg: 960px;
+  --overlay-size-xl: min(1280px, calc(100% - 4rem));
   --dialog-top-offset: 60px;
   --dialog-stack-step: 30px;
   --dialog-overlay-bg: rgb(0 0 0 / 0.7);
-  --dialog-title-font-size: 14px;
-  --dialog-body-padding-x: 24px;
-  --dialog-footer-button-min-width: 72px;
-  --dialog-content-border-radius: 6px;
-  --dialog-footer-gap: 8px;
+  /* plan 490 overlay anatomy: one shared three-section rhythm (padding-x /
+   * footer gap / footer button min-width / title size / surface radius) for
+   * all four overlay components. */
+  --overlay-anatomy-body-padding-x: 24px;
+  --overlay-anatomy-footer-gap: 8px;
+  --overlay-anatomy-footer-button-min-width: 72px;
+  --overlay-anatomy-title-font-size: 14px;
+  --overlay-anatomy-content-border-radius: 6px;
 }
 
 :root[data-theme='classic'][data-mode='light'] {

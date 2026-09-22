@@ -36,6 +36,21 @@ const DrawerContext = React.createContext<DrawerContextValue>({
 
 const DrawerZIndexContext = React.createContext<number | undefined>(undefined);
 
+// plan 490: side drawers take their initial width from the shared overlay
+// size ladder — `w-3/4` stays the narrow-viewport fallback, the tier cap is
+// the sm+-viewport max-width. Static literals so Tailwind sees every tier;
+// user resize keeps overriding via inline width/maxWidth (mechanism below).
+type DrawerSize = 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl';
+
+const DRAWER_SIDE_SIZE_CAPS: Record<DrawerSize, string> = {
+  xs: 'data-[swipe-direction=left]:sm:max-w-[var(--overlay-size-xs)] data-[swipe-direction=right]:sm:max-w-[var(--overlay-size-xs)]',
+  sm: 'data-[swipe-direction=left]:sm:max-w-[var(--overlay-size-sm)] data-[swipe-direction=right]:sm:max-w-[var(--overlay-size-sm)]',
+  base: 'data-[swipe-direction=left]:sm:max-w-[var(--overlay-size-base)] data-[swipe-direction=right]:sm:max-w-[var(--overlay-size-base)]',
+  md: 'data-[swipe-direction=left]:sm:max-w-[var(--overlay-size-md)] data-[swipe-direction=right]:sm:max-w-[var(--overlay-size-md)]',
+  lg: 'data-[swipe-direction=left]:sm:max-w-[var(--overlay-size-lg)] data-[swipe-direction=right]:sm:max-w-[var(--overlay-size-lg)]',
+  xl: 'data-[swipe-direction=left]:sm:max-w-[var(--overlay-size-xl)] data-[swipe-direction=right]:sm:max-w-[var(--overlay-size-xl)]',
+};
+
 function Drawer({
   direction = 'bottom',
   containerElement,
@@ -120,12 +135,14 @@ function DrawerContent({
   showMask = true,
   showCloseButton = true,
   resizable = false,
+  size = 'sm',
   style,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content> & {
   showMask?: boolean;
   showCloseButton?: boolean;
   resizable?: boolean;
+  size?: DrawerSize;
 }) {
   const { direction, containerElement } = React.useContext(DrawerContext);
   const isContained = containerElement != null;
@@ -166,6 +183,7 @@ function DrawerContent({
       >
         <DrawerPrimitive.Popup
           data-slot="drawer-popup"
+          data-size={size}
           onKeyDown={(event) => {
             wrapSurfaceTabFocus(event);
           }}
@@ -174,8 +192,9 @@ function DrawerContent({
             isContained ? 'absolute' : 'fixed',
             'data-[swipe-direction=down]:inset-x-0 data-[swipe-direction=down]:bottom-0 data-[swipe-direction=down]:mt-24 data-[swipe-direction=down]:max-h-[80vh] data-[swipe-direction=down]:rounded-t-xl data-[swipe-direction=down]:border-t data-[swipe-direction=down]:translate-y-[calc(var(--drawer-snap-point-offset,0px)+var(--drawer-swipe-movement-y,0px))] data-[swipe-direction=down]:data-starting-style:translate-y-full data-[swipe-direction=down]:data-ending-style:translate-y-full',
             'data-[swipe-direction=up]:inset-x-0 data-[swipe-direction=up]:top-0 data-[swipe-direction=up]:mb-24 data-[swipe-direction=up]:max-h-[80vh] data-[swipe-direction=up]:rounded-b-xl data-[swipe-direction=up]:border-b data-[swipe-direction=up]:-translate-y-[calc(var(--drawer-snap-point-offset,0px)+var(--drawer-swipe-movement-y,0px))] data-[swipe-direction=up]:data-starting-style:-translate-y-full data-[swipe-direction=up]:data-ending-style:-translate-y-full',
-            'data-[swipe-direction=left]:inset-x-0 data-[swipe-direction=left]:left-0 data-[swipe-direction=left]:w-3/4 data-[swipe-direction=left]:rounded-r-xl data-[swipe-direction=left]:border-r data-[swipe-direction=left]:sm:max-w-sm data-[swipe-direction=left]:-translate-x-[var(--drawer-swipe-movement-x,0px)] data-[swipe-direction=left]:data-starting-style:-translate-x-full data-[swipe-direction=left]:data-ending-style:-translate-x-full',
-            'data-[swipe-direction=right]:inset-y-0 data-[swipe-direction=right]:right-0 data-[swipe-direction=right]:w-3/4 data-[swipe-direction=right]:rounded-l-xl data-[swipe-direction=right]:border-l data-[swipe-direction=right]:sm:max-w-sm data-[swipe-direction=right]:translate-x-[var(--drawer-swipe-movement-x,0px)] data-[swipe-direction=right]:data-starting-style:translate-x-full data-[swipe-direction=right]:data-ending-style:translate-x-full',
+            'data-[swipe-direction=left]:inset-x-0 data-[swipe-direction=left]:left-0 data-[swipe-direction=left]:w-3/4 data-[swipe-direction=left]:rounded-r-xl data-[swipe-direction=left]:border-r data-[swipe-direction=left]:-translate-x-[var(--drawer-swipe-movement-x,0px)] data-[swipe-direction=left]:data-starting-style:-translate-x-full data-[swipe-direction=left]:data-ending-style:-translate-x-full',
+            'data-[swipe-direction=right]:inset-y-0 data-[swipe-direction=right]:right-0 data-[swipe-direction=right]:w-3/4 data-[swipe-direction=right]:rounded-l-xl data-[swipe-direction=right]:border-l data-[swipe-direction=right]:translate-x-[var(--drawer-swipe-movement-x,0px)] data-[swipe-direction=right]:data-starting-style:translate-x-full data-[swipe-direction=right]:data-ending-style:translate-x-full',
+            DRAWER_SIDE_SIZE_CAPS[size],
             'duration-300 data-open:animate-in data-closed:animate-out',
           )}
           style={{ ['--drawer-direction' as string]: direction, ...popupResizeStyle }}
@@ -415,7 +434,7 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
       data-slot="drawer-header"
       data-direction={direction}
       className={cn(
-        'flex flex-col gap-0.5 p-4 pb-0 md:gap-0.5 md:text-left',
+        'flex flex-col gap-0.5 py-4 pb-0 px-[var(--overlay-anatomy-body-padding-x)] md:gap-0.5 md:text-left',
         'data-[direction=bottom]:text-center data-[direction=top]:text-center',
         className,
       )}
@@ -428,7 +447,10 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="drawer-footer"
-      className={cn('mt-auto flex flex-col gap-2 p-4 pt-0', className)}
+      className={cn(
+        'mt-auto flex flex-col gap-[var(--overlay-anatomy-footer-gap)] py-4 pt-0 px-[var(--overlay-anatomy-body-padding-x)]',
+        className,
+      )}
       {...props}
     />
   );
@@ -441,7 +463,10 @@ function DrawerBody({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="drawer-body"
-      className={cn('flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-4', className)}
+      className={cn(
+        'flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto py-4 px-[var(--overlay-anatomy-body-padding-x)]',
+        className,
+      )}
       {...props}
     />
   );
@@ -451,7 +476,10 @@ function DrawerTitle({ className, ...props }: React.ComponentProps<typeof Drawer
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
-      className={cn('font-heading text-base font-medium text-foreground', className)}
+      className={cn(
+        'font-heading text-[length:var(--overlay-anatomy-title-font-size)] font-medium text-foreground',
+        className,
+      )}
       {...props}
     />
   );

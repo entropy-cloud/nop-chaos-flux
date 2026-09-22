@@ -686,7 +686,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       ) : null}
 
       {hasRendererSlotContent(footerContent) ? (
-        <div data-slot="table-footer">{asReactNode(footerContent)}</div>
+        <div data-slot="table-footer" className="mt-[var(--space-block-gap)]">{asReactNode(footerContent)}</div>
       ) : null}
     </div>
   );

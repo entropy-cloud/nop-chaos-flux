@@ -35,6 +35,15 @@ function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdr
   );
 }
 
+// plan 490 ladder remap: the historical prop names stay ('default' | 'sm',
+// zero live consumer passes one), but they map onto the shared overlay
+// ladder — default→sm tier (480px), sm→xs tier (360px) — so "sm is narrower"
+// stays intuitive and the width source is the --overlay-size-* token.
+const ALERT_DIALOG_TIER: Record<'default' | 'sm', 'sm' | 'xs'> = {
+  default: 'sm',
+  sm: 'xs',
+};
+
 function AlertDialogContent({
   className,
   size = 'default',
@@ -43,15 +52,16 @@ function AlertDialogContent({
   size?: 'default' | 'sm';
 }) {
   const zIndex = useGlobalZIndex();
+  const tier = ALERT_DIALOG_TIER[size];
   return (
     <AlertDialogPortal>
       <AlertDialogZIndexContext.Provider value={zIndex}>
         <AlertDialogOverlay />
         <AlertDialogPrimitive.Popup
           data-slot="alert-dialog-content"
-          data-size={size}
+          data-size={tier}
           className={cn(
-            'group/alert-dialog-content fixed top-1/2 left-1/2 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+            'group/alert-dialog-content fixed top-1/2 left-1/2 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-[var(--overlay-anatomy-content-border-radius)] bg-popover py-4 px-[var(--overlay-anatomy-body-padding-x)] text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=sm]:max-w-[var(--overlay-size-sm)] data-[size=xs]:max-w-[var(--overlay-size-xs)] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
             className,
           )}
           style={{ zIndex }}
@@ -67,7 +77,7 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<'div'>)
     <div
       data-slot="alert-dialog-header"
       className={cn(
-        'grid grid-rows-[auto_1fr] place-items-center gap-1.5 text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-left sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]',
+        'grid grid-rows-[auto_1fr] place-items-center gap-1.5 text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4 sm:group-data-[size=sm]/alert-dialog-content:place-items-start sm:group-data-[size=sm]/alert-dialog-content:text-left sm:group-data-[size=sm]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]',
         className,
       )}
       {...props}
@@ -80,7 +90,7 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<'div'>)
     <div
       data-slot="alert-dialog-footer"
       className={cn(
-        '-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end',
+        '-mx-[var(--overlay-anatomy-body-padding-x)] -mb-4 flex flex-col-reverse gap-[var(--overlay-anatomy-footer-gap)] rounded-b-[var(--overlay-anatomy-content-border-radius)] border-t bg-muted/50 py-4 px-[var(--overlay-anatomy-body-padding-x)] [&_button]:min-w-[var(--overlay-anatomy-footer-button-min-width)] group-data-[size=xs]/alert-dialog-content:grid group-data-[size=xs]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end',
         className,
       )}
       {...props}
@@ -93,7 +103,7 @@ function AlertDialogMedia({ className, ...props }: React.ComponentProps<'div'>) 
     <div
       data-slot="alert-dialog-media"
       className={cn(
-        "mb-2 inline-flex size-10 items-center justify-center rounded-md bg-muted sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-6",
+        "mb-2 inline-flex size-10 items-center justify-center rounded-md bg-muted sm:group-data-[size=sm]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-6",
         className,
       )}
       {...props}
@@ -109,7 +119,7 @@ function AlertDialogTitle({
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
       className={cn(
-        'font-heading text-base font-medium sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2',
+        'font-heading text-[length:var(--overlay-anatomy-title-font-size)] font-medium sm:group-data-[size=sm]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2',
         className,
       )}
       {...props}

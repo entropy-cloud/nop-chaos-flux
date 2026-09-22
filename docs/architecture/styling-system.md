@@ -523,15 +523,16 @@ Container、Flex、Grid 是三种不同层次的布局渲染器，选择取决�
 
 Following shadcn/ui's approach: spacing is context-specific, always explicit at the usage site, but guided by these conventions:
 
-| Context                      | Typical gap | Tailwind          | Notes                             |
-| ---------------------------- | ----------- | ----------------- | --------------------------------- |
-| Card internal sections       | 16px        | `gap-4`           | Header / body / footer separation |
-| Icon + adjacent text         | 12px        | `gap-3`           | Horizontal header layouts         |
-| Title + subtitle             | 4px         | `mt-1` or `gap-1` | Tight text pairing                |
-| Form fields (between)        | 16px        | `gap-4`           | Vertical form spacing             |
-| Label + input (within field) | 8px         | `gap-2`           | Input group internal              |
-| Badge / chip spacing         | 8px         | `gap-2`           | Horizontal tag groups             |
-| Footer items (between)       | 8px         | `gap-2`           | Left/right footer split           |
+| Context                                                    | Typical gap | Tailwind                      | Notes                                                                                                                                                                   |
+| ---------------------------------------------------------- | ----------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Card internal sections                                     | 16px        | `gap-4`                       | Header / body / footer separation                                                                                                                                       |
+| Icon + adjacent text                                       | 12px        | `gap-3`                       | Horizontal header layouts                                                                                                                                               |
+| Title + subtitle                                           | 4px         | `mt-1` or `gap-1`             | Tight text pairing                                                                                                                                                      |
+| Form fields (between)                                      | 16px        | `gap-4`                       | Vertical form spacing                                                                                                                                                   |
+| Label + input (within field)                               | 8px         | `gap-2`                       | Input group internal                                                                                                                                                    |
+| Badge / chip spacing                                       | 8px         | `gap-2`                       | Horizontal tag groups                                                                                                                                                   |
+| Footer items (between)                                     | 8px         | `gap-2`                       | Left/right footer split                                                                                                                                                 |
+| Host-surface functional blocks (pagination / summary bars) | 12px        | `mt-[var(--space-block-gap)]` | Vertical rhythm between toolbar ↔ content ↔ pagination/footer slots; one token (`--space-block-gap: 12px` in `theme-tokens`), three pagination bars share it (plan 490) |
 
 These values are **conventions, not enforced defaults**. Every usage site declares its spacing explicitly via classAliases or semantic props.
 
@@ -581,6 +582,46 @@ A global default gap would reduce boilerplate but creates the exact problem we a
 - Same title+subtitle in a table cell: needs 0px gap
 
 No single default is correct for all contexts. The `stack-*` alias convention reduces boilerplate while keeping the intent visible.
+
+## Overlay Size Ladder And Anatomy（plan 490）
+
+All four overlay components — `Dialog`, `Sheet`, `Drawer`, `AlertDialog` — share ONE size vocabulary: the `--overlay-size-*` ladder defined in `packages/theme-tokens/src/styles.css` (`:root`). `size` is the only legal width entry; ad-hoc Tailwind width classes on overlay content elements are gate-blocked by `overlay-adhoc-width` in `scripts/audit/find-ui-consistency-gaps.mjs`.
+
+### Size Ladder
+
+| Tier   | Token                 | Value                            | Default owner                            |
+| ------ | --------------------- | -------------------------------- | ---------------------------------------- |
+| `xs`   | `--overlay-size-xs`   | `360px`                          | AlertDialog (`size="sm"` prop → xs tier) |
+| `sm`   | `--overlay-size-sm`   | `480px`                          | Sheet, Drawer (default)                  |
+| `base` | `--overlay-size-base` | `560px`                          | Dialog (`base` / `default`)              |
+| `md`   | `--overlay-size-md`   | `720px`                          | —                                        |
+| `lg`   | `--overlay-size-lg`   | `960px`                          | —                                        |
+| `xl`   | `--overlay-size-xl`   | `min(1280px, calc(100% - 4rem))` | —                                        |
+
+The ladder is strictly monotonic and 8pt-aligned; monotonicity is pinned by `theme-tokens` unit tests. Changing a tier = changing the token value once — every overlay follows.
+
+### Component Contract
+
+- **Dialog**: `size` prop (`xs | sm | base | md | lg | xl | default`); `default` maps to `base`. Width renders inline from `var(--overlay-size-*)`; `max-w-[calc(100%-2rem)]` stays as the narrow-viewport fallback (component-internal, not consumer-tunable).
+- **Sheet**: `size` prop (default `sm`). Side sheets keep `w-3/4` below `sm:` as the narrow-viewport fallback; from `sm:` up the tier cap (`sm:max-w-[var(--overlay-size-*)]`) applies. Top/bottom sheets are height-driven and unaffected.
+- **Drawer**: `size` prop (default `sm`) — the tier is the drawer's initial width (same `w-3/4` + `sm:` cap mechanics as Sheet). User resize (pointer drag / arrow keys) keeps the existing free-adjustment semantics (160px–90% clamp) and overrides via inline width.
+- **AlertDialog**: historical prop names kept (`default | sm`) but remapped onto the ladder — `default` → `sm` tier (480px), `sm` → `xs` tier (360px) — so "sm is narrower" stays intuitive. `data-size` emits the mapped tier (`sm` / `xs`).
+
+Changing tiers via component `className` (`max-w-*`, `w-*`, `sm:max-w-*`, `sm:w-*` literal classes) is a review + gate violation. Pick a `size`; if no tier fits, the fix is a new ladder decision, not a per-call-site override.
+
+### Shared Anatomy
+
+One three-section rhythm shared by all four overlays via `--overlay-anatomy-*` tokens (`:root` in `theme-tokens`):
+
+| Token                                       | Value | Consumed by                                                                           |
+| ------------------------------------------- | ----- | ------------------------------------------------------------------------------------- |
+| `--overlay-anatomy-body-padding-x`          | 24px  | Dialog body padding-x; Sheet/Drawer/AlertDialog header/body/footer horizontal padding |
+| `--overlay-anatomy-footer-gap`              | 8px   | Dialog/AlertDialog/Sheet/Drawer footer gap                                            |
+| `--overlay-anatomy-footer-button-min-width` | 72px  | Dialog/AlertDialog footer buttons                                                     |
+| `--overlay-anatomy-title-font-size`         | 14px  | Dialog/Sheet/Drawer/AlertDialog titles                                                |
+| `--overlay-anatomy-content-border-radius`   | 6px   | Dialog content; AlertDialog content + footer                                          |
+
+Position-specific tokens (`--dialog-top-offset`, `--dialog-stack-step`) stay dialog-owned; hover floaters (Popover / DropdownMenu / Tooltip) are content-sized by design and deliberately outside the ladder.
 
 ## Dialog / Form Action Button Convention
 

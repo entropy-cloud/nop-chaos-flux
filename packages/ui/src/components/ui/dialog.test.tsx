@@ -88,15 +88,15 @@ describe('Dialog', () => {
     expect(overlay?.className).not.toContain('bg-black/10');
   });
 
-  it('maps every size tier to its --dialog-size-* token width and emits data-size', () => {
+  it('maps every size tier to its --overlay-size-* token width and emits data-size (plan 490)', () => {
     const expectations: Record<string, string> = {
-      xs: 'var(--dialog-size-xs)',
-      sm: 'var(--dialog-size-sm)',
-      base: 'var(--dialog-size-base)',
-      default: 'var(--dialog-size-base)',
-      md: 'var(--dialog-size-md)',
-      lg: 'var(--dialog-size-lg)',
-      xl: 'var(--dialog-size-xl)',
+      xs: 'var(--overlay-size-xs)',
+      sm: 'var(--overlay-size-sm)',
+      base: 'var(--overlay-size-base)',
+      default: 'var(--overlay-size-base)',
+      md: 'var(--overlay-size-md)',
+      lg: 'var(--overlay-size-lg)',
+      xl: 'var(--overlay-size-xl)',
     };
 
     for (const [size, widthVar] of Object.entries(expectations)) {

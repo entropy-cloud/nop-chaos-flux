@@ -48,7 +48,7 @@ export function TablePaginationBar({
   return (
     <div
       data-slot="table-pagination"
-      className="flex flex-col sm:flex-row items-center justify-between gap-4"
+      className="mt-[var(--space-block-gap)] flex flex-col sm:flex-row items-center justify-between gap-4"
     >
       <div className="flex items-center gap-2 whitespace-nowrap">
         <span id={pageSizeLabelId} className="text-sm text-muted-foreground">

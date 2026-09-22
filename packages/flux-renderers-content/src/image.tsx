@@ -238,7 +238,7 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
       />
       {preview && previewOpen ? (
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-3xl" showCloseButton>
+          <DialogContent size="md" showCloseButton>
             <img
               src={effectiveSrc}
               alt={alt}

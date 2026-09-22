@@ -15,7 +15,7 @@ export function CrudListPagination({
 }) {
   return (
     <div
-      className="nop-crud-list-pagination mt-3 flex flex-wrap items-center justify-end gap-2"
+      className="nop-crud-list-pagination mt-[var(--space-block-gap)] flex flex-wrap items-center justify-end gap-2"
       data-slot="crud-list-pagination"
     >
       {/* [G3-视角10-01] disabled state rides aria-disabled, consumed by the ui

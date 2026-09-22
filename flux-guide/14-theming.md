@@ -54,17 +54,17 @@
 
 - **对话框**（消费链：`ui/src/components/ui/dialog.tsx` ← `flux-react/dialog-host.tsx`）：
 
-| 变量                                | 默认                         | 职责                            |
-| ----------------------------------- | ---------------------------- | ------------------------------- |
-| `--dialog-size-xs/sm/base/md/lg/xl` | 375/350/500/800/1100px / 90% | 6 档宽度（未传 size 默认 base） |
-| `--dialog-top-offset`               | 60px                         | 顶部吸附定位                    |
-| `--dialog-stack-step`               | 30px                         | 多层叠加步进                    |
-| `--dialog-overlay-bg`               | `rgb(0 0 0 / 0.7)`           | 遮罩色                          |
-| `--dialog-title-font-size`          | 14px                         | 标题字号                        |
-| `--dialog-body-padding-x`           | 24px                         | body 水平内边距                 |
-| `--dialog-footer-button-min-width`  | 72px                         | footer 按钮最小宽               |
-| `--dialog-content-border-radius`    | 6px                          | content 圆角                    |
-| `--dialog-footer-gap`               | 8px                          | footer 间距                     |
+| 变量                                 | 默认                                           | 职责                                                                                                               |
+| ------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `--overlay-size-xs/sm/base/md/lg/xl` | 360/480/560/720/960px / min(1280px, 100%-4rem) | 弹层共享阶梯 6 档（plan 490，单调 8pt 对齐；Dialog 默认 base、Sheet/Drawer 默认 sm、AlertDialog default→sm/sm→xs） |
+| `--dialog-top-offset`                | 60px                                           | 顶部吸附定位                                                                                                       |
+| `--dialog-stack-step`                | 30px                                           | 多层叠加步进                                                                                                       |
+| `--dialog-overlay-bg`                | `rgb(0 0 0 / 0.7)`                             | 遮罩色                                                                                                             |
+| `--dialog-title-font-size`           | 14px                                           | 标题字号                                                                                                           |
+| `--dialog-body-padding-x`            | 24px                                           | body 水平内边距                                                                                                    |
+| `--dialog-footer-button-min-width`   | 72px                                           | footer 按钮最小宽                                                                                                  |
+| `--dialog-content-border-radius`     | 6px                                            | content 圆角                                                                                                       |
+| `--dialog-footer-gap`                | 8px                                            | footer 间距                                                                                                        |
 
 宿主覆盖示例（如在 `.host-shell` 上）：
 
