@@ -24,7 +24,7 @@ export type { CanvasEditorBridgeOptions } from './canvas-editor-bridge.js';
 export { createEditorStore } from './editor-store.js';
 export type { EditorStoreApi, EditorSelectionState, EditorState } from './editor-store.js';
 export { createDatasetStore } from './dataset-store.js';
-export type { DatasetStoreApi } from './dataset-store.js';
+export type { DatasetStoreApi, DatasetStoreState } from './dataset-store.js';
 export {
   captureDocumentSnapshot,
   persistSavedDocument,

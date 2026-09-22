@@ -45,8 +45,8 @@
     "@nop-chaos/flux-compiler": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },

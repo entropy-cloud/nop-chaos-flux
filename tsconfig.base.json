@@ -15,7 +15,6 @@
     "jsx": "react-jsx",
     "declaration": false,
     "sourceMap": false,
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@hufe921/canvas-editor": ["./types/hufe921-canvas-editor.d.ts"],
       "@nop-chaos/flux-core": ["./packages/flux-core/src/index.ts"],
