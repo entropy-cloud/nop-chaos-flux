@@ -33,7 +33,7 @@ pnpm visual:capture --routes <id,...> | --batches <B,...>   # 截图矩阵 → _
 | R2-1a | 40   | complex-pages 全域（含 airtable/antdpro/cal/linear/notion/sundial 各复刻页）                                                                                                                                                            |
 | R2-1b | 10   | flow-designer、dingtalk-flow-demo、print-designer、report-designer、report-designer-host、spreadsheet、word-editor、taskflow-designer、scada-editor-demo、debugger-lab                                                                  |
 | R2-1c | 13   | dashboard-demo、pivot-table-demo、map-demo、graph-demo、three-canvas-demo、scada-demo、scada-pressure-demo、scada-edge-cases、scada-perf-scale、performance-table、table-popover、table-column-width、data-verify                       |
-| R2-1d | 58   | 表单/编辑器（code-editor、condition-builder×2 等）、AI 16 页、移动端 7 页、scheduling demo（gantt/kanban/calendar/barcode + perf-scale）、w/m 系 demo、diff-view×2、env-stream、flux-basic、3 条索引路由（home/lab/complex-pages 索引） |
+| R2-1d | 58   | 表单/编辑器（code-editor、condition-builder×2 等）、AI 14 页、移动端 7 页、scheduling demo（gantt/kanban/calendar/barcode + perf-scale）、w/m 系 demo、diff-view×2、env-stream、flux-basic、3 条索引路由（home/lab/complex-pages 索引） |
 
 roadmap 差异说明：roadmap R2-1b 所称 `dashboard-editor` 无 live 路由 id（dashboard 域归 R2-1c）；`report-designer×3` 的 live 实体为 report-designer + report-designer-host 两条；scheduling demo 页（gantt/kanban/calendar 族）裁定入 R2-1d「其余 demo 面」（R2-1c 清单未列）。lab 的 124 条路由是 R2-2 控件的 carrier，不单独占 R2-1 行。
 
