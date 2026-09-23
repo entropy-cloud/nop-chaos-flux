@@ -52,7 +52,7 @@ interface ArrayFieldSchema extends BoundFieldSchemaBase {
 ## 7. 运行期状态归属
 
 - 数组值归父表单（`parentForm.values[name]`）或 scope owner。
-- 每项拥有独立投影上下文（`itemForm` 代理 / `itemScope` / `itemValidationOwner`，`staticReadOnly` 传播 readOnly/disabled）。
+- 每项拥有独立投影上下文（`itemForm` 代理 / `itemScope`；`staticReadOnly` 传播 readOnly/disabled）。注意 `itemValidationOwner` 投影当前为**恒空镜像**（R2-2a 复核坐实：`getChildFieldPathPrefix` 对对象项返回 false 截断编译期下潜，运行时投影只镜像父模型）——行级校验因此不生效（R2-2a-A9-82），修复批落地前不要依赖 per-item validation。
 - scalar 模式在父表单注册合成字段 `name.index` + `recurse-submit` 子契约 + `applyExternalErrors`。
 
 ## 8. 事件、动作与组件句柄能力

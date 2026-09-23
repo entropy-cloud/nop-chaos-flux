@@ -48,7 +48,8 @@
 
 - 根节点输出 `nop-picker` marker。
 - 根节点被 FieldFrame 包裹：`data-slot="field-control"` 由 FieldFrame 输出，根节点不再重复。
-- 弹层搜索输入（`type="search"`）挂 `aria-label={t('flux.picker.search')}`（placeholder 同源键，可访问名称）。
+- 当前实现**无弹层搜索输入**（本文档旧版宣称的 `type="search"` 搜索框与 `flux.picker.search` i18n 键在代码/i18n 资源中均不存在，R2-2a 复核 D-2 坐实）；搜索能力待后续批次补齐后再登记契约。
+- 选中回显当前直接显示 `valueField` 原始值，`labelField` 映射**未作用于选中回显**（R2-2a-F4-102，修复批待办）；候选列表内的 label 映射不受影响。
 
 ## 11. 实现拆分建议
 

@@ -39,7 +39,7 @@ interface ScopeDebugSchema extends BaseSchema {
 
 ## 6. 结构语义
 
-`scope-debug` 渲染一个自包含的调试面板：
+`scope-debug` 渲染一个自包含的调试面板（当前实现为**无容器样式的裸结构**——头部与 `<pre>` 直接裸排、无视觉承载/溢出包容，R2-2a-E5-29 已登记修复待办；本文按 live 行为记载）：
 
 - 头部（kind 标签 + 标题 + 展开/折叠按钮）
 - 主体（`<pre>` 内的 JSON 快照，2 空格缩进）

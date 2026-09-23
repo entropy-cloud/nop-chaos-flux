@@ -18,13 +18,13 @@
 
 ## 4. schema 设计
 
-- 正式字段为 `name`、`label`、`columns`、`rowKey`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`removeWhen`、`required`。
+- 正式字段为 `name`、`label`、`columns`、`rowKey`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`removeWhen`、`required`、`readOnly`。
 - `removeWhen`（可选）：相对当前行求值的布尔表达式字符串（`${...}` 形式）。声明后，某行仅在表达式对该行求值为真时允许删除；求值为假的行删除按钮禁用。未声明时所有行在 `minItems` 地板之上均可删除。求值出错 fail-open。与 combo/array-field 的 per-row 删除门控语义一致（`docs/architecture/array-field.md` _Per-Row Delete Gating_）。
 
 ## 5. 字段分类
 
 - `label`: `value-or-region`
-- `name`、`columns`、`rowKey`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`removeWhen`、`required`: `value`
+- `name`、`columns`、`rowKey`、`addable`、`removable`、`reorderable`、`minItems`、`maxItems`、`removeWhen`、`required`、`readOnly`: `value`
 - `item`: `region`（regionKey `item`，参数 `index`/`value`）
 - `onAdd`、`onRemove`、`onReorder`: `event`
 

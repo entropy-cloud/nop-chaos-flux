@@ -82,7 +82,7 @@
 2. **Ant Design 前缀检测**：若输入含 `ant-design:` 前缀，剥离前缀后进一步处理。
 3. **Ant Design 后缀剥离**：移除 `-outlined`/`-filled`/`-twotone` 变体后缀。
 4. **映射表查找**：在 `ANT_DESIGN_LUCIDE_MAP` 中查找 Ant Design 名对应的 Lucide 名。约 207 条映射，覆盖方向、文件、图表、表单、导航等常见图标。
-5. **别名映射**：应用 `ICON_ALIAS_MAP`（`house` → `home`、`gear`/`cog` → `settings-2` 等）。
+5. **别名映射**：应用 `ICON_ALIAS_MAP`（`gear`/`cog` → `settings-2` 等）。注意 `house → home` 是**死链别名**（R2-2a-A5-21 复核坐实）：映射产物 `home` 在 lucide-react 的 `icons` 对象中无对应键（barrel 虽仍导出 `Home`，但 `icons` 命名空间无 `Home` 键），`house` 与 `home` 两个输入都会在第 7 步落空并回退 `Circle`——修复前不得在 schema 使用这两个名字。
 6. **PascalCase 转换**：`toLucideKey()` 将 kebab-case 转为 PascalCase（如 `settings-2` → `Settings2`）。
 7. **Lucide 查找**：在 `lucide-react` 的 `icons` 对象中按 PascalCase 键查找。
 8. **回退**：未命中时返回 `Circle`（`resolveLucideIcon`）或 `null`（`resolveLucideIconStrict`）。

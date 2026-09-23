@@ -139,6 +139,12 @@ async function main() {
             suspects.push({ route: route.id, hash: route.hash, viewport: viewportSpec, theme, reason: 'home-fallback (dead route?)' });
             continue;
           }
+          // Playground theme is data-mode-driven (apps/playground/src/theme.ts) and ignores
+          // prefers-color-scheme: set the attribute explicitly per matrix theme (plan 496
+          // wave1 finding R2-2a-B5-34 — emulateMedia-only captures mislabeled dark as light).
+          await page.evaluate((mode) => {
+            document.documentElement.setAttribute('data-mode', mode);
+          }, theme);
           for (const step of INTERACTIONS[route.id] ?? []) {
             if (step.action === 'click') await page.locator(step.selector).first().click({ timeout: 5000 }).catch(() => {});
             else if (step.action === 'clickText') await page.getByRole('button', { name: step.text }).first().click({ timeout: 5000 }).catch(() => {});
