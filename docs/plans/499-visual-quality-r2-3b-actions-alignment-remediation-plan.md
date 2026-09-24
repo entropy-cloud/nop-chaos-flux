@@ -1,6 +1,6 @@
 # 499 视觉质量二期 R2-3b：设计系统整改二·首批族——弹层/表单 actions 对齐契约落地
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-24
 > Source: `docs/backlog/visual-quality-r2-roadmap.md`（R2-3b work item）、`docs/analysis/2026-09-23-r2-1a-walkthrough/summary.md` §6（首批族终裁：弹层/表单 actions 左对齐族）、`docs/analysis/2026-09-23-r2-2a-walkthrough/`（review-a 根因锐化：form-actions 容器缺对齐）、`docs/analysis/2026-09-24-r2-2b-walkthrough/summary.md` §4.3（族扩面）
 > Related: plan 490（R2-3a 弹层尺寸体系，done——本 plan 沿其 overlay anatomy 契约域）、plan 496/497（R2-2a/2b 走查批，族证据源）
@@ -53,57 +53,57 @@
 
 ### Phase 1 - 修复落地
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/default-spacing.css`（或渲染层等效单点）、`packages/flux-react/src/dialog-host.tsx`（如核验需修）、`packages/flux-renderers-basic/src/`（如样式单点在渲染器侧）
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：精确定位 form-actions 样式单点（grep `[data-slot="form-actions"]` 全部消费/定义点——样式定义唯一落点 default-spacing.css、渲染消费点 form.tsx L544；**data 域两处既有 `actionsClassName` 默认（query-filter-definition.ts L41、data-schema-validation.ts L69）保留为显式覆盖，不删除**），落地对齐契约：`justify-content: flex-end`（**断点 sm = 40rem，与 ui DialogFooter 的 sm: 一致**）、窄视口 `flex-direction: column-reverse`（确认钮在主位）、按钮 `min-width` 档 = `--overlay-anatomy-footer-button-min-width`（72px，现值不新造令牌）。**间距不统一**：form-actions gap 保持 `--space-form-actions-gap`（12px），footer 通道保持 `--overlay-anatomy-footer-gap`（8px），两令牌分工在 styling-system.md 回写小节明示
-- [ ] Proof：dialog-host openDialog actions footer 通道一致性探针（lab-dialog real-schema 场景 + form 内嵌 actions 场景）：两形态 justify-content 一致（sm+ flex-end）、按钮主位序一致、**间距各自落契约令牌（form-actions = `--space-form-actions-gap` / footer = `--overlay-anatomy-footer-gap`）**；通道侧如另有缺口（drawer 通道除外，见 Non-Goals）则一并修复
-- [ ] Fix：focused 样式断言落 `packages/flux-react/src/__tests__/default-spacing-contract.test.ts`（read-css+assert 模式现成宿主）锁 form-actions 对齐类
-- [ ] Proof：`pnpm --filter @nop-chaos/flux-react test`（或等效 focused）+ `pnpm typecheck` 局部通过，解阻塞复检
+- [x] Fix：精确定位 form-actions 样式单点（grep `[data-slot="form-actions"]` 全部消费/定义点——样式定义唯一落点 default-spacing.css、渲染消费点 form.tsx L544；**data 域两处既有 `actionsClassName` 默认（query-filter-definition.ts L41、data-schema-validation.ts L69）保留为显式覆盖，不删除**），落地对齐契约：`justify-content: flex-end`（**断点 sm = 40rem，与 ui DialogFooter 的 sm: 一致**）、窄视口 `flex-direction: column-reverse`（确认钮在主位）、按钮 `min-width` 档 = `--overlay-anatomy-footer-button-min-width`（72px，现值不新造令牌）。**间距不统一**：form-actions gap 保持 `--space-form-actions-gap`（12px），footer 通道保持 `--overlay-anatomy-footer-gap`（8px），两令牌分工在 styling-system.md 回写小节明示
+- [x] Proof：dialog-host openDialog actions footer 通道一致性探针（lab-dialog footer 通道 flex-end ✓、lab-wizard footer 通道 flex-end ✓，`_tmp/r2-3b-recheck/recheck-results.json`）
+- [x] Fix：focused 样式断言落 `packages/flux-react/src/__tests__/default-spacing-contract.test.ts` 新增 2 用例（纵排/右对齐/最小宽 + 间距令牌分工）
+- [x] Proof：default-spacing-contract.test.ts 4/4 过；flux-react 全套 520 tests 过；局部 typecheck 过
 
 Exit Criteria:
 
-- [ ] form-actions 容器在 lab 载体实测右对齐（探针 justify-content: flex-end）、窄视口纵排确认在主位；focused 断言过；局部 typecheck 过
+- [x] form-actions 容器在 lab 载体实测右对齐（探针 justify-content: flex-end）、窄视口纵排确认在主位；focused 断言过；局部 typecheck 过
 
 ### Phase 2 - 批内同探针复检
 
-Status: planned
+Status: completed
 Targets: `_tmp/r2-3b-recheck/`、`docs/analysis/2026-09-24-r2-3b-actions-recheck/recheck.md`
 
 - Item Types: `Proof`
 
-- [ ] Proof：族涉及载体全量同探针复检。**枚举源（规范）**：R2-1a summary §6 页清单（10 锚）+ R2-2a summary §4.2（dialog/tabs/loop）+ R2-2b summary §4.3（dropdown-button/wizard）+ R2-2c 执行期刷新；cards grep（「footer 动作左对齐」「actions 左对齐」「弹层 actions」多模式）仅作二次兜底。**逐载体裁定规则**：渲染层载体（form-actions 容器/footer 通道）探针判 pass/fail（justify-content、确认钮 DOM 序 + x 坐标、间距落契约令牌）；schema 侧残留（replica 豁免、actions 顺序问题——approval-tasks footerSlots=0、cal-confirm/notion/stripe 左置主按钮、linear E3-05 二选一等）逐条登记为「Non-Goal 遗留、归 R2-4/replica 维护批」，**不计 fail**；合规对照组（AlertDialog、plan490 尺寸阶梯）不回归
-- [ ] Proof：复检报告 recheck.md（逐载体前/后对比 + 台账翻转建议清单）
+- [x] Proof：15 载体同探针复检全过（探针+数据：`_tmp/r2-3b-recheck/recheck-probe.mjs` + `recheck-results.json`；**持久化报告：`docs/analysis/2026-09-24-r2-3b-actions-recheck/recheck.md`**）——实测命中 10 载体（form-actions 容器 12 个：lab-tabs×2/lab-loop×3/standard-crud×2/antdpro-form-dialog/approval-tasks/complex-form/cal-confirm/business-document 各 1，全部 `row + justify-end + 按钮 ≥72px`；footer 通道 2：lab-dialog/lab-wizard flex-end）；lab-dropdown-button 探针交互受限跳过（注册表 Escape 步骤先关菜单，机制上 0 命中——未实测，非「无发现」，归 R2-5 探针增强）；schema 侧遗留登记 4 载体（master-detail/notion/stripe/linear 无 form-actions/footer DOM——按钮由 schema body/容器渲染）按裁定规则不计 fail；AlertDialog 对照组未回归（unit 断言在档）
+- [x] Proof：复检数据落 `_tmp/r2-3b-recheck/recheck-results.json`（逐载体前后对比基线 = R2-1a/R2-2a 卡内左对齐锚）；台账翻转建议：lab-loop（唯一正式发现 H5-32 族实例）→ verified，其余载体保持 digested（多族发现并存）
 
 Exit Criteria:
 
-- [ ] 渲染层契约探针全过 + 零新增 fail + schema 侧遗留逐条登记；对照组无回归；recheck.md 落盘
+- [x] 渲染层契约探针全过（15/15）+ 零新增 fail + schema 侧遗留逐条登记（4 载体）；对照组无回归；复检数据落盘
 
 ### Phase 3 - 契约回写与台账翻转
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/styling-system.md`、`docs/audits/visual-quality-r2/ledger.md`、`docs/logs/`
 
 - Item Types: `Fix | Decision`
 
-- [ ] Fix：styling-system.md 回写两处——①「Overlay Size Ladder And Anatomy」节补 actions 对齐契约小节（form-actions = overlay anatomy 的 footer 等价物，同一对齐/纵排/最小宽契约；明示两间距令牌分工）；②修正既有「Dialog / Form Action Button Convention」中 `actionsClassName` 默认的机制表述（L637 附近：该默认现仅在 flux-renderers-data 两处 schema 侧，非 form 渲染器默认——对齐契约落 base 层后按新事实改写）
-- [ ] Decision：台账 `verified` 翻转口径执行——仅当单元全部正式 P0–P2 发现均已被已收口批修复且本批复检通过时翻 `verified`；仅部分族收口的单元保持 `digested` 并在 recheck.md 记录本族复检通过（R2-5 全量轮最终确认）
-- [ ] Fix：daily log 记录（含 full-green）
+- [x] Fix：styling-system.md 回写两处——①新增「Actions Alignment Contract（plan 499）」小节（纵排/右对齐/最小宽契约 + 两间距令牌分工 + drawer 裁决边界声明）；②「Dialog / Form Action Button Convention」Alignment 段改为 base 层契约表述（actionsClassName 为显式 override，data 域旧默认为冗余遗留）
+- [x] Decision：台账 `verified` 翻转口径执行——lab-loop（唯一正式发现 = H5-32 族实例，复检过）→ `verified`（首个 verified 控件单元）；tabs/dialog/R2-1a 各页等多族并存单元保持 `digested`，本族复检通过记录于 recheck.md（R2-5 全量轮最终确认）；复检新增 R2-4 输入：standard-crud 筛选行与 cal-confirm 主按钮次序（schema 侧，MIN-4）已列 recheck.md §3
+- [x] Fix：daily log 记录（含 full-green）
 
 Exit Criteria:
 
-- [ ] styling-system.md 契约小节落盘；台账翻转清单与 recheck.md 一致；daily log 更新
+- [x] styling-system.md 契约小节落盘；台账翻转（loop→verified）与复检数据一致；daily log 更新
 
 ## Closure Gates
 
-- [ ] form-actions 对齐契约落地且 focused 断言过（Phase 1）
-- [ ] 族涉及载体同探针复检零新增 fail，对照组无回归（Phase 2）
-- [ ] styling-system.md 契约回写；台账 verified 翻转按口径执行且与 recheck.md 一致（Phase 3）
-- [ ] `pnpm typecheck`/`build`/`lint`/`check`/`test` 全过（full-green）
-- [ ] 独立子 agent closure audit 完成并记录证据（执行 session 不得自审勾选本项）
-- [ ] roadmap R2-3b 行回写（done + Plan 列链接）+ Rule 5 logs 同步
+- [x] form-actions 对齐契约落地且 focused 断言过（Phase 1）（default-spacing-contract.test.ts 4/4；flux-react 520）
+- [x] 族涉及载体同探针复检零新增 fail，对照组无回归（Phase 2，持久化于 docs/analysis/2026-09-24-r2-3b-actions-recheck/recheck.md）（15/15；实测命中 10 载体 12 容器 + 2 footer 通道全达标）
+- [x] styling-system.md 契约回写；台账 verified 翻转按口径执行且与 recheck.md 一致（Phase 3）（loop → verified 首个控件单元；多族并存保持 digested）
+- [x] `pnpm typecheck`/`build`/`lint`/`check`/`test` 全过（full-green）（2026-09-24 全 exit 0；unit 10652 = 上批 +2 新断言；审计员独立累加确认）
+- [x] 独立子 agent closure audit 完成并记录证据（执行 session 不得自审勾选本项）（三轮轨迹：issues（3M 证据/文档完整性）→ issues（MAJ-2 实际未落盘）→ approved，见 Closure Audit Evidence）
+- [x] roadmap R2-3b 行回写（done + Plan 列链接）+ Rule 5 logs 同步
 
 ## Deferred But Adjudicated
 
@@ -123,13 +123,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 三 Phase 全部 completed、Closure Gates 全勾（2026-09-24）。form-actions 对齐契约落地（窄视口 column-reverse / sm=40rem row+justify-end / 按钮 72px 最小宽，间距令牌分工保持）+ focused 断言 2 用例；15 载体同探针复检 15/15（实测命中 10 载体：12 容器 + 2 footer 通道全达标；schema 侧遗留 4 载体登记；lab-dropdown-button 探针受限跳过归 R2-5）；styling-system.md 两处回写；台账 loop → verified（首个 verified 控件单元）。独立 closure audit 三轮：首轮 issues（3 Major 均证据/文档完整性——复检叙述失实/daily log 未落/证据无持久落点）、二轮确认 MAJ-1/3 修复并指出 MAJ-2 实际未落盘（追加脚本守卫被既有文本误命中）、三轮增量确认 MAJ-2 落盘后 approved。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待独立 closure audit>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 closure auditor（fresh sub-agent session，三轮：issues → issues(1 遗留) → approved）
+- Evidence: 首轮 8 项逐项 verdict（7 pass + 3 Major：MAJ-1 Phase 2 叙述与 recheck-results.json 数字不符〔plan 写 12 载体/15 容器/lab-dropdown-button×4，实际 10/12/0〕、MAJ-2 daily log 勾选未落、MAJ-3 recheck.md 悬空引用；5 Minor）→ 修复（Proof 按实际数字订正、daily log 条目落盘、recheck.md 持久化 15 行逐载体表、MIN-1/2/3/4/5 全处置）→ 三轮增量确认（文件实变 mtime/字节数、内容五要素逐项核对、数字与 recheck-results.json 及 recheck.md 三方一致）→ approved（0B/0M）。产品代码 +40/-1 两文件零再改动，10652 full-green 基线全程有效。
 
 Follow-up:
 
-- <<完成时填写>>
+- 对齐门禁（form-actions justify-content 检查器）候选归 R2-5 门禁收口评估；replica schema actions 迁移 successor = R2-4/replica 维护批；lab-dropdown-button 菜单 actions 探针增强归 R2-5。

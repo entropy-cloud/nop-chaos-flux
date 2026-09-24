@@ -623,6 +623,18 @@ One three-section rhythm shared by all four overlays via `--overlay-anatomy-*` t
 
 Position-specific tokens (`--dialog-top-offset`, `--dialog-stack-step`) stay dialog-owned; hover floaters (Popover / DropdownMenu / Tooltip) are content-sized by design and deliberately outside the ladder.
 
+## Actions Alignment Contract（plan 499）
+
+Schema-level form actions and surface footer channels share one alignment contract. The form renderer's `[data-slot='form-actions']` container defaults (base layer, `default-spacing.css`):
+
+- **Narrow viewport**（<40rem）: `flex-direction: column-reverse` — the confirm button renders on top (primary position in stacked layout), matching ui `DialogFooter`.
+- **sm+（≥40rem, same breakpoint as ui's `sm:`）**: `flex-direction: row; justify-content: flex-end` — confirm rightmost.
+- **Button min-width**: `var(--overlay-anatomy-footer-button-min-width)` (72px) on `button` descendants at sm+.
+
+Gap tokens are intentionally split: form-actions keeps `--space-form-actions-gap` (12px); surface footer channels keep `--overlay-anatomy-footer-gap` (8px). `actionsClassName` on the form schema remains the explicit override escape hatch (utilities layer wins over base layer); the `flex justify-end gap-2` defaults previously injected by flux-renderers-data schemas (query-filter/data-schema-validation) are now redundant but harmless.
+
+Drawer footer stacking (full-breakpoint column, no right alignment) is a separate open adjudication (R2-2a D-1 / H5-12) and deliberately outside this contract.
+
 ## Dialog / Form Action Button Convention
 
 All dialog and form action buttons follow a fixed ordering rule:
@@ -634,7 +646,7 @@ All dialog and form action buttons follow a fixed ordering rule:
 
 **Rule**: `actions` array MUST be `[secondary, primary]`. This aligns with Ant Design, shadcn/ui Dialog, and macOS HIG conventions.
 
-**Alignment**: Action buttons are right-aligned via `actionsClassName: "flex justify-end gap-2"` (set as default on form `form-actions`).
+**Alignment**: Action buttons are right-aligned by the base-layer form-actions contract (see 「Actions Alignment Contract」 above, plan 499) — no schema-side class is required. `actionsClassName` remains available as an explicit override; the `flex justify-end gap-2` defaults still present in some flux-renderers-data schemas are redundant legacy from before the base-layer contract landed.
 
 **Examples**:
 

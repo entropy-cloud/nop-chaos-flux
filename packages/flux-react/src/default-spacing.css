@@ -28,9 +28,26 @@
 
   .nop-form > [data-slot='form-actions'] {
     display: flex;
-    flex-direction: row;
+    flex-direction: column-reverse;
     gap: var(--space-form-actions-gap);
     margin-top: var(--space-form-body-to-actions);
+  }
+
+  /* Actions alignment contract (plan 499, R2-3b): confirm sits in the primary
+     position — rightmost on desktop, topmost when stacked. Mirrors the ui
+     DialogFooter pattern (flex-col-reverse / sm:justify-end) so schema-level
+     form actions and surface footer channels render identically. The 40rem
+     breakpoint matches ui's sm:; the min-width reuses the overlay anatomy
+     token instead of minting a second one. */
+  @media (min-width: 40rem) {
+    .nop-form > [data-slot='form-actions'] {
+      flex-direction: row;
+      justify-content: flex-end;
+    }
+
+    .nop-form > [data-slot='form-actions'] button {
+      min-width: var(--overlay-anatomy-footer-button-min-width);
+    }
   }
 
   .nop-fieldset {

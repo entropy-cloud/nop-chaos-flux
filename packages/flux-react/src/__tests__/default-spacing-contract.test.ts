@@ -37,3 +37,25 @@ describe('default-spacing.css contract', () => {
     expect(styles).not.toContain('width: var(--field-label-width, 96px)');
   });
 });
+
+describe('form-actions alignment contract (plan 499, R2-3b)', () => {
+  it('stacks actions confirm-first on narrow viewports and right-aligns them from sm (40rem)', () => {
+    expect(styles).toContain(
+      ".nop-form > [data-slot='form-actions'] {\n    display: flex;\n    flex-direction: column-reverse;",
+    );
+    expect(styles).toContain('@media (min-width: 40rem)');
+    expect(styles).toContain(
+      ".nop-form > [data-slot='form-actions'] {\n      flex-direction: row;\n      justify-content: flex-end;\n    }",
+    );
+    expect(styles).toContain(
+      '.nop-form > [data-slot=\'form-actions\'] button {\n      min-width: var(--overlay-anatomy-footer-button-min-width);\n    }',
+    );
+  });
+
+  it('keeps the form-actions gap on its own token (footer channel keeps --overlay-anatomy-footer-gap)', () => {
+    expect(styles).toContain('gap: var(--space-form-actions-gap);');
+    expect(styles).not.toContain(
+      ".nop-form > [data-slot='form-actions'] {\n      gap: var(--overlay-anatomy-footer-gap);",
+    );
+  });
+});
