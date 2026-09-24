@@ -22,7 +22,7 @@ pnpm visual:capture --routes <id,...> | --batches <B,...>   # 截图矩阵 → _
 
 - 截图只落 `_tmp/`（快照政策：永不入库）；runner 对落 home 回退的路由给 suspect 标记。
 - 交互态经 `scripts/visual-quality/interactions.mjs` 显式注册表驱动；各走查批随本批 plan 扩面。
-- R2-5 验收口径：`pnpm visual:reconcile` 输出 uncovered=0 且台账全 verified（roadmap 关闭前置）。
+- R2-5 验收口径（plan 501 裁定修订 2026-09-24）：`pnpm visual:reconcile` uncovered=0 + 复检轮零新增 fail + 全部 work item done（roadmap 本体口径）。verified 翻转语义 = 随 R2-3b/R2-4 批内复检逐单元翻转（残量 digested 单元随字母批 successor 翻转），非本节点前置。（原文「且台账全 verified」为离群严口径，与本行修订一并作废。）
 
 ## 批次裁定记录（plan 491 Phase 4，2026-09-23 按枚举实数裁定）
 

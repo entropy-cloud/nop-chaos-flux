@@ -100,6 +100,7 @@ Programmatic visual assertion toolchain (plan 470, visual-quality roadmap V0). P
 | `assertScadaCanvasRendered`                                                                                                   | `tests/e2e/helpers/scada-canvas-assert.ts` | SCADA-specific layered gate (TE-3 precedent: DOM + frame count + pixel probe)                                                                                                                             |
 
 - Smoke proof / usage examples: `tests/e2e/visual-assert-helpers.spec.ts`.
+- R2-5 additions (plan 501): `sampleLocatorContrast` / `expectLocatorContrast` / `decodePng` + `wcagRatio` (`tests/e2e/helpers/visual-contrast.ts` — PNG pixel-sampling contrast, the only reliable method over oklab()/gradient backgrounds), `setTheme` / `expectTheme` (`tests/e2e/helpers/visual-theme.ts` — explicit `data-mode` switch, never emulateMedia), `assertFormActionsAlignment` / `assertDialogFooterAlignment` / `collectAlignmentSnapshot` (`tests/e2e/helpers/form-actions-alignment.ts` + `overlay-actions-alignment.ts` — plan 499 alignment contract, selector-parameterized incl. open overlays). Smoke: `tests/e2e/visual-helpers-smoke.spec.ts`; unit tests: `tests/e2e/*.test.ts` (collected by the Playwright runner).
 - Domain-by-domain visual assertion gap inventory: `docs/analysis/visual-quality/V0-visual-regression-infra.md` §2.
 - Screenshot baselines are never committed: `tests/e2e/__snapshots__/` and `tests/e2e/artifacts/` are gitignored; ad-hoc manual baselines go under `_tmp/baselines/`.
 
