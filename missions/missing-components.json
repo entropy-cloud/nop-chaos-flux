@@ -1,0 +1,24 @@
+{
+  "name": "missing-components",
+  "description": "缺失组件与设计器补全：P0 表单原子（slider/rate/color）、P1 企业表单层（org 协议/user-select/department-select/region/signature/verification-code/money）、host channels（print/clipboard/download/toast/filter-URL）、交互残留（density/calendar date-cell/range/hover-peek 等）、SCADA 设计器补全、标准页面设计器（design-first 新产品线）、playground 入口补齐与统一注册表。分阶段 QA 审计门（线出口 ×8 + 集成 ×5 + 最终验收）确保代码质量与成品完整。",
+  "roadmapPath": "docs/backlog/missing-components-and-designer-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits/missing-components",
+  "contextDir": "docs/context",
+  "moduleDir": "packages",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck",
+    "check": "pnpm check"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(missing-components): <description>",
+  "model": "glm-5.3-flash",
+  "variant": "max"
+}

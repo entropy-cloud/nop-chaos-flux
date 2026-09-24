@@ -1,0 +1,244 @@
+# Missing Components & Designer Completion Roadmap
+
+> Created: 2026-09-24（用户下达：把分析报告中的缺失组件与 playground 缺口全部排入 roadmap 补齐）
+> Sources:
+>
+> - `docs/analysis/visual-quality/2026-09-24-missing-component-gap-analysis.md`（P0–P3 缺失类型 + 多库 + 移动端）
+> - `docs/analysis/visual-quality/2026-09-24-page-archetype-coverage-audit.md`（41 archetype + host channels N0–N5 分层）
+> - Playground 缺口现场核查（2026-09-24）：首页入口漂移、SCADA 设计器仅 E5 M1 MVP、无标准页面设计器、web-print 设计器入口未露出
+>   Authority 关系：
+> - **retention 权威**仍是 `docs/components/amis-baseline-matrix.md`——所有新增 retained type 的第一个动作都是 matrix flip（human gate），本 roadmap 的 `todo` 不等于 flip 完成。
+> - **AMIS 基线组件**的编排层仍是 `docs/components/roadmap.md`；本文承接其之外的**新增类型 / host channel / 交互残留 / playground / 设计器**工作线（`ui-review-roadmap.md`、`web-print-roadmap.md` 同类先例）。
+> - 状态流转沿用主 roadmap 规则：`proposed`（待人确认）→ `todo` → `planned`（draft review 通过）→ `done`（closure audit 通过后回写）。
+> - 拟制与共识流程：`docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`；mission 档 `missions/missing-components.json`（2026-09-24 独立双评审 Round 1 后修订）。
+
+---
+
+## 1. 交付铁律（每个组件都适用，不接受"只写代码"）
+
+任何进入本文的组件/能力，`done` 的最低交付面为：
+
+| #   | 交付物        | 说明                                                                                                                                                                                  |
+| --- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **前置裁决**  | 新增 retained type：先完成 `amis-baseline-matrix.md` flip（human gate）；既有控件能力扩展：登记 `existing-components-improvement-analysis.md`                                         |
+| 2   | **design.md** | `docs/components/<type>/design.md`，对齐 `docs/components/*/design.md` 12 节先例（定位/对照/renderer 定义/schema/字段分类/region/状态归属/事件句柄/数据源/样式 marker/实现拆分/风险） |
+| 3   | **example**   | `docs/components/<type>/example.json` + playground 演示路由 + **home 页入口**（经 L0 统一注册表）                                                                                     |
+| 4   | **代码**      | renderer definition + propContracts + defaultSchema + focused 单测 + e2e（canvas 类一律 Playwright 程序化断言）                                                                       |
+| 5   | **登记**      | `docs/components/examples.manifest.json`（`runtime` 数组）+ `docs/references/quick-reference.md` + `docs/components/index.md`；设计器类另加 `flux-guide/` 模式文档（SCADA E9.2 先例） |
+| 6   | **i18n**      | `flux-i18n` 文案键（zh-CN/en-US）                                                                                                                                                     |
+| 7   | **审计**      | 新包/新 renderer 走 `docs/references/new-renderer-introduction-audit.md`                                                                                                              |
+| 8   | **验证**      | `pnpm typecheck / build / lint / test / check` full-green + dev log 记录 + closure audit 通过后才回写 `done`                                                                          |
+
+命名注：`rate`/`slider`/`color` 等 Proposed type 名均为暂定名，实现前先过 `docs/references/naming-conventions.md` 命名 pass（gap-analysis §11 residual）。
+
+---
+
+## 2. 工作线总览
+
+| 线           | 内容                                                                                                                              | 性质                               | 依赖                           | 初始状态                          |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------ | --------------------------------- |
+| **L0**       | Playground 入口补齐（首页漂移修复 + 统一注册表）                                                                                  | 基建，先行                         | 无                             | `todo`                            |
+| **L1**       | P0 表单原子：`slider` → `rate` → `color`                                                                                          | 新 type ×3                         | L0；matrix flip                | `proposed`（待 matrix flip 确认） |
+| **L2**       | P1 企业表单层：org 协议 + `user-select`/`department-select`/`region`/`signature`/`verification-code`/money format/`cascader` 裁决 | 新 type ×5–6 + 协议                | L1 命名 pass 先行              | `proposed`                        |
+| **L3**       | Host channels（N2）：`RendererEnv.print`/`clipboard`/declarative download/toast 容器/filter↔URL                                   | env 通道，plan-first               | `renderer-env.md` 必读         | `proposed`                        |
+| **L4**       | 交互残留（N3+N5）：density/calendar date-cell/range/hover-peek/kanban 手势/G-J/G-K/cardTemplate params/replica retrofit/docs-only | 共享底座模式                       | 已 closed D1 原语              | `proposed`                        |
+| **L5**       | SCADA 设计器补全（E5 M1 MVP → 完整设计器）                                                                                        | 既有设计线实现 + 补设计            | E1–E3 设计已完成               | `todo`（先行 gap audit）          |
+| **L6**       | 标准设计器（flux 页面/schema 可视化设计器）——**新建产品线，design-first**                                                         | 新产品                             | editor-core/flow-designer 先例 | `proposed`（S0 裁决先行）         |
+| **L7**       | P2 demand-gated + 文档维护债（skeleton/image-preview capability/matrix maintenance/quick-reference P-1 等）                       | 按需 + 廉价债                      | 各自 gate                      | `todo`                            |
+| **L8（QA）** | 分阶段审计与最终验收：线出口审计 ×8 + 集成审计 ×5 + 最终验收审计                                                                  | 质量门（独立 fresh 子 agent 执行） | 绑定各线完成时点               | `todo`                            |
+
+执行顺序建议：**L0 → L1 → L2 →（L3、L4 并行）→ L5 → L6**；L7 随时穿插。每线内工作项 = 一个 execution plan 的合理范围。
+
+---
+
+## 3. L0 — Playground 入口补齐（先行基建）
+
+**现场核查结论（2026-09-24）**：`apps/playground/src/pages/home-page.tsx` 首页硬编码 24 个入口，与各 route-entries 注册表漂移——首页卡片注册表 domain-route-entries.ts 共 78 个可路由 id，其中 **56 个首页不可见**，包括 `print-designer`（Web Print 设计器）、`scada-editor-demo`（SCADA 编辑器 MVP）、`report-designer-host`、`map-demo`、`pivot-table-demo` 及其余 lab/ai/perf 条目。用户因此"看不到 webprint 设计器入口、看不到设计器入口"——入口问题先于能力问题解决。
+
+| Work item                           | 内容                                                                                                                                                                                                                                                                                                                                | 验收                                                         |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| L0.1 入口注册表统一                 | 把 home-page 硬编码清单改为消费 route-entries 注册表（单一事实源，覆盖 domain/basic/data/form/layout/content/mobile/scheduling/ai 全部 entry 文件 + complex-pages 注册表）；引入 `homeVisible` 显式标记机制承载刻意不进首页的条目（先例：`leafer-examples`「不进 home 卡片」注释）；分组合并展示（如 lab 124 渲染器聚合为一张卡片） | 首页渲染条目 = 注册表条目（含合并卡）；删除手抄清单          |
+| L0.2 漂移守卫测试                   | 扩展 `route-matrix.test.ts`（已 import 全部 entry 文件）为三条作用域化不变式：①domain 级 id ⊆ 首页卡片集合，除非 entry 标记 `homeVisible:false`；②lab id ⊆ component-lab 注册表（已有守卫）；③showcase page ⊆ complex-pages 注册表                                                                                                  | 守卫测试入 CI；任何新增可路由 entry 未进注册表/首页时红      |
+| L0.3 缺失入口补挂                   | `print-designer`、`scada-editor-demo`、`report-designer-host`、`map-demo`、`pivot-table-demo` 首页可见（随 L0.1 自动获得，抽查导航断言即可，不逐一枚举 56 个）                                                                                                                                                                      | Playwright 抽查断言五个关键入口可导航到目标页                |
+| L0.4 print-designer demo 完整性核验 | `print-designer-demo.tsx`（113 行壳）对照 `flux-print-renderers` 实际能力（canvas/palette/inspector/preview 已 P0–P4 done）核验接线完整：数据绑定、分页预览、浏览器打印、PDF 导出四链路在 playground 可走通                                                                                                                         | 四链路各有程序化断言；缺口回填 flux-print-renderers issue 行 |
+
+**done 定义**：L0.1–L0.4 全过 + `docs/architecture/playground-experience.md` 同步更新（入口注册表新约定）+ 全量 full-green + dev log。
+
+---
+
+## 4. L1 — P0 表单原子（对应 gap-analysis P0 / companion N0）
+
+> 共同前置：matrix flip（human gate，slider/rating/input-color 当前 notRetained）→ 命名 pass → 按交付铁律 8 项执行。顺序刻意 slider → rate → color（成本升序，先收割 registration debt 建模板）。
+
+| Work item | 组件               | UI 现状                                                                                                    | design.md                        | example | 代码要点                                                                 | 状态       |
+| --------- | ------------------ | ---------------------------------------------------------------------------------------------------------- | -------------------------------- | ------- | ------------------------------------------------------------------------ | ---------- |
+| L1.1      | `slider`（暂定名） | ui `Slider` 已导出，纯 registration debt                                                                   | 新写                             | 新写    | 注册 + schema + propContracts（min/max/step/value 三态）+ 单测           | `proposed` |
+| L1.2      | `rate`（暂定名）   | **ui 无 rating 组件**                                                                                      | 新写（含 ui primitive 设计）     | 新写    | ui Rating primitive + renderer（allowHalf/count/readOnly）+ 单测         | `proposed` |
+| L1.3      | `color`（暂定名）  | 仅 SCADA inspector 有私有色板；table editable 明确拒绝 `color-picker`（`gd-cell-edit-no-editor` 只读回退） | 新写（value 格式 hex/rgba 协议） | 新写    | ui ColorPicker primitive + renderer + 单测；SCADA inspector 迁移复用评估 | `proposed` |
+
+每个 work item 额外交付：playground form 域演示页条目（L0 注册表自动露出）+ e2e 一条（赋值/校验/禁用态）。
+
+---
+
+## 5. L2 — P1 企业表单层（OA / 审批 / ERP）
+
+> 共同前置：L1 命名 pass 产出命名决议后启动；`signature` 必须先 matrix flip（L284 notRetained）。**L2.0 协议先行**是本线关键路径，避免每个 picker 各自发明数据源形状。
+
+| Work item | 交付                                                     | design.md                                                                            | example                   | 说明                                                                                                                                                                                                     |
+| --------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L2.0      | **org 数据源协议**（design doc only，无代码）            | `docs/architecture/org-data-source-protocol.md`                                      | —                         | user/department/region 共用的数据面契约（分页/搜索/懒加载/多租户），renderer-env `functions`/fetcher 组合；先立约再实现。**验收**：协议文档过独立 review 共识 + 后续被 L2.1/L2.2 消费零分叉（QA.3 复核） |
+| L2.1      | `user-select` + `department-select`                      | 两份（共享 § 复用 L2.0）                                                             | 各一                      | 同一协议两个呈现面； DingTalk InnerContact/DepartmentField 为 realism 基准                                                                                                                               |
+| L2.2      | `region`（省市区，暂定名）                               | 一份（明确**不** fork `area` 第二 type；mobile wheel / desktop cascader 响应式分支） | 一                        | dataset-coupled：数据集来源与缓存归 host                                                                                                                                                                 |
+| L2.3      | `signature`                                              | 一份（canvas + pointer events + 笔迹压感取消）                                       | 一                        | **matrix flip 前置**；Vant signature / Form.io Signature 基准                                                                                                                                            |
+| L2.4      | `verification-code`                                      | 一份                                                                                 | 一                        | 纯 registration：ui `InputOtp` 已存在（同 L1.1 debt 模式）                                                                                                                                               |
+| L2.5      | money format 协议（`input-number` `format: 'currency'`） | 既有控件扩展：登记 improvement-analysis + input-number design.md 增节                | input-number example 增补 | **不建新 type**；显示/校验分歧时再议                                                                                                                                                                     |
+| L2.6      | `cascader` 裁决文档（design doc only）                   | `docs/analysis/cascader-vs-tree-select-decision.md`                                  | —                         | 列式懒加载 UX 是否为产品必需；若否，tree-select 为永久答案并回写 matrix/survey。**验收**：决议文档落盘 + matrix/survey 回写完成（human 签认）。`chained-select`/`input-formula`（P2）随本裁决一并定性    |
+
+---
+
+## 6. L3 — Host channels（companion N2，plan-first）
+
+> 全线 `docs/architecture/renderer-env.md` 必读 + INV 审计（扩 env 必须过 INV-1/INV-2）；每项先出 env 契约设计（含 capability check 与 SSR/test 降级路径），再实现。参照 2026-07-21 stream/openSocket 讨论先例：**接口进 env（如需），缺省实现留 host**。源报告 §3.2 九行中「theme switch entry」已由 plan 471 V1-F3（light/dark × classic/glass 切换）解决、「window focus refetch」已裁定不模拟——均不再立项，QA.7 coverage 复评时记录闭合。
+
+| Work item | 通道                                                                           | 解锁 archetype   | design 交付                                    | 状态       |
+| --------- | ------------------------------------------------------------------------------ | ---------------- | ---------------------------------------------- | ---------- |
+| L3.1      | `RendererEnv.print`                                                            | C6 订单/单据打印 | env 扩展设计 + playground host 实现            | `proposed` |
+| L3.2      | clipboard（env 或 action 词汇）                                                | 分享/复制链接    | 同上；裁定 env channel vs `xui:actions` action | `proposed` |
+| L3.3      | declarative download action（基于既有 `downloadBlob` + `responseType:'blob'`） | D2 报表导出 UI   | action 词汇设计（export 本体仍后端职责）       | `proposed` |
+| L3.4      | toast host 容器（导航不死）                                                    | 多步流程         | 治理既有 debounce hack 的正式通道设计          | `proposed` |
+| L3.5      | filter↔URL sync                                                                | A4/C5 深链       | crud/query-filter 与 host router 的绑定契约    | `proposed` |
+
+---
+
+## 7. L4 — 交互残留（companion N3 共享底座 + N5 docs-only）
+
+> 实现模式强制遵循 companion §3.6：统一 substrate + 编译面 + 共享 helper + N 采纳方，禁止 per-renderer bespoke。每项先写 mini design（可并入单一 substrate 设计文档），后实现。
+
+| Work item | 内容                                                                                                                                                                                                                                                                                                     | 设计输入                                                                            | 状态         |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------ |
+| L4.1      | density 语义档（enum + table prop，token 已验证）                                                                                                                                                                                                                                                        | Carbon/AntD size 词汇                                                               | `proposed`   |
+| L4.2      | calendar date-cell / 6 周格（Booker 形态；≠G-C DB，勿混淆）                                                                                                                                                                                                                                              | react-day-picker 语义；C2 回写④                                                     | `proposed`   |
+| L4.3      | range / fill-handle 选区模型                                                                                                                                                                                                                                                                             | TanStack range predicate；C2 回写⑫①（G-B2+G-B3 双前置就位后重评；G-D 语义件族方向） | `proposed`   |
+| L4.4      | hover-peek（⑫ timer + ⑭ 联动）                                                                                                                                                                                                                                                                           | C2 回写⑫⑭                                                                           | `proposed`   |
+| L4.5      | kanban 手势变体                                                                                                                                                                                                                                                                                          | 回写⑫（dragstart 发现另见回写⑤）deferred                                            | `proposed`   |
+| L4.6      | G-J Resizable schema 化                                                                                                                                                                                                                                                                                  | ui Resizable 已有；D2 §2.2 #12                                                      | `proposed`   |
+| L4.7      | G-K graph 节点状态色数据驱动                                                                                                                                                                                                                                                                             | D2 §2.2 #12                                                                         | `proposed`   |
+| L4.8      | cardTemplate per-card params                                                                                                                                                                                                                                                                             | 回写⑪ residual                                                                      | `proposed`   |
+| L4.9      | **replica retrofit**：option-row/keyboard/batch-bar 接入旧 replicas（antdpro/linear/notion/cal/stripe/airtable/sundial）                                                                                                                                                                                 | 已交付原语；逐 replica 小 plan（Rule 4 例外见 §14）                                 | `todo`       |
+| L4.10     | docs-only：wizard `mountOnEnter` guide note 落地 + `refreshSource` 父链文档                                                                                                                                                                                                                              | N5；无代码                                                                          | `todo`       |
+| L4.11     | closed-D1 残余收尾（demand-gated 择取，不重开原语）：**table 列拖拽排序 + 固定列**（回写⑮/G-D residual，C2 G-E/G-D 观察面）、gantt `selectedClass` 采纳、calendar drop-target CSS successor、共享 roving helper（≥2 renderer 需网格键盘导航时）、command-palette fuzzy scoring/recent sort/app-singleton | C2 回写⑨⑩⑫⑮ residual 列                                                             | `todo`       |
+| L4.12     | input phone mask capability（`input-text` design §2 暂不实现 → 按需重评）                                                                                                                                                                                                                                | archetype §3.2 行 9；host checkout 需求出现时启动                                   | demand-gated |
+
+---
+
+## 8. L5 — SCADA 设计器补全（E5 M1 MVP → 完整设计器）
+
+**现状（2026-09-24 核对 `docs/components/roadmap-industrial-hmi-editor.md`）**：实现进度远超 playground 所见——E7 M2 `done`（端点吸附连线 + 多选/框选 + undo-redo diff 栈）、E9.1 toolbox `done`（对齐/分布/z-order/clipboard/图元库/导入导出）、E9.2 benchmark 复测 `done`（primary 档达标，`editing-envelope-retest-2026-08-07.md`）、E10/E11 gate 已过；live 代码 `packages/flux-renderers-industrial/src/editor/{connection,undo-redo,toolbox}/` 均在。**但 playground `#/scada-editor-demo` 仍停留在 M1 能力面**（palette 24 图元 + 画布 + inspector + save/load），包内已交付能力未接线露出。真实残余 = demo 接线欠账 + 少量 UI 补全 + R7 数字收口 + 后置可选项（ActionSchema 编辑器等，E10 记录为 post-mission 可选、**无已过 gate 设计**）+ 产品级大件（L5.3/L5.4 需补设计）。
+
+| Work item | 内容                                                                                                                                                             | 设计状态                                    | 交付                                            |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------- |
+| L5.0      | **M1 demo → 完整设计器 gap audit**（对照 E1–E11 阶梯 + editor/ live 代码逐项盘点 playground 未接线能力，产出缺口清单回写本表——新增工作项需人确认）               | audit plan                                  | audit 报告                                      |
+| L5.1      | **demo 接线**：把包内已实现的 E7 连线/多选/undo-redo、E9.1 对齐分布/z-order/clipboard 能力接入 playground 编辑器 demo（具体清单由 L5.0 裁定，不预设实现）        | 能力已实现并过 gate                         | demo 扩展 + e2e                                 |
+| L5.2      | 工具箱/面板 UI 补全：断开连接工具、撤销历史面板 UI、图层管理面板（E9.1 已交付对齐分布/z-order/clipboard；缺口清单由 L5.0 裁定）                                  | 部分需补设计节（design-toolbox 增补）       | 实现 + e2e                                      |
+| L5.3      | 数据源/表达式绑定面板（design-architecture §9 接入点）                                                                                                           | **需补设计文档**（绑定面板 schema/UI 契约） | design 先行 → 实现（变量绑定到 runtime 数据源） |
+| L5.4      | 模板库 + 站点/多画面管理                                                                                                                                         | **需补设计文档**（station/template 模型）   | design 先行 → 实现                              |
+| L5.5      | 预览态集成（编辑↔运行切换的 host 级入口 + 运行态数据注入）                                                                                                       | 部分设计（双态隔离已立约）                  | 实现 + e2e                                      |
+| L5.6      | examples + i18n + 首页入口露出（随 L0）                                                                                                                          | —                                           | 交付铁律 3/5/6 项                               |
+| L5.7      | 包络数字收口：R7 人工最终确认 + extended（≤10k）档数值化确认（E9.2 primary 档复测已 done）                                                                       | W1/W2 watch-only                            | benchmark 复核报告                              |
+| L5.8      | E10 后置可选项（**demand-gated**，每项独立小 plan；ActionSchema 编辑器需先补设计文档）：ActionSchema/动作绑定编辑器、InnerEditor、OS clipboard、撤销历史面板深化 | 无已过 gate 设计 → design-first             | design → 实现                                   |
+
+---
+
+## 9. L6 — 标准设计器（flux 页面/schema 可视化设计器）——新建产品线
+
+**现状**：flow-designer（工作流）、taskflow-designer（任务 DSL）、report-designer（报表）、print-designer（打印）、word-editor（文档）、scada-editor（组态）各域设计器齐备，但**没有"可视化编排任意 flux JSON 页面"的标准设计器**——这是低代码平台的主入口能力，当前完全缺失（playground 无入口，packages 无实现）。
+
+**裁决**（design-first，S0 未过不写任何实现代码）：
+
+| Stage                  | 内容                                                                                                                                                                     | 交付                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| **S0 产品裁决 + 调研** | 目标用户/能力边界（表单编排 vs 全页编排 vs CRUD 向导）/与既有六域设计器的关系；竞品调研（amis designer、lowcode-engine 等）                                              | `docs/analysis/standard-page-designer-research.md` + 用户裁决记录                       |
+| **S1 架构设计**        | 包结构（新包 vs editor-core 复用）、canvas 适配器（flow-designer canvas-adapters 先例）、schema round-trip 契约（无损解析/序列化）、propContracts→inspector 自动生成契约 | `docs/components/page-designer/design-architecture.md` 等 12 节族（过独立 review gate） |
+| **S2 MVP**             | palette（registry 驱动的已注册 renderer 清单）+ canvas（布局容器 + 表单原子拖放）+ inspector（propContracts 生成）+ schema JSON 导入导出 + undo/redo（editor-core 复用） | 实现 + playground 入口 + e2e                                                            |
+| **S3 数据与动作**      | 数据绑定编辑、`xui:actions` 可视化编排、表达式编辑器（code-editor formula 复用）                                                                                         | 实现 + 设计补节                                                                         |
+| **S4 深化**            | 键盘漫游、模板画廊、（可选）协作命令模型预留                                                                                                                             | 实现 + benchmark                                                                        |
+
+依赖先例：`editor-core`（undo/命令栈）、`flow-designer-core`（canvas/adapter）、`report-designer-core`（inspector shell）、`condition-builder`（表单式属性面板）。
+
+---
+
+## 10. L7 — P2 demand-gated + 文档维护债
+
+| Work item | 内容                                                                                                                                                                                                                                                                                                                      | Gate                                |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| L7.1      | `skeleton` type（ui 已有）                                                                                                                                                                                                                                                                                                | host 需求出现即启动（交付铁律全量） |
+| L7.2      | `image-preview` **capability on `image`**（pinch/lightbox；非 type，2026-06-21 裁定）                                                                                                                                                                                                                                     | gallery host 需求                   |
+| L7.3      | `lazyload`（`image`/`list` props）                                                                                                                                                                                                                                                                                        | improvement roadmap，非本表 type    |
+| L7.4      | `input-excel` / `location-picker` / body 级 `breadcrumb`（条件）/ `pdf-viewer` viewer capability / **Office 预览**（word/spreadsheet 为编辑器非 viewer，ERP 附件预览）                                                                                                                                                    | survey Tier1–3 各自 demand gate     |
+| L7.5      | matrix maintenance pass（icon-picker/sparkline/calendar/hidden 翻 `runtime`；slider/rating/input-color 翻 P0 决议；**`color` display 行 ≠ `input-color` form 行澄清**）                                                                                                                                                   | human gate（gap-analysis §7）       |
+| L7.6      | roadmap O1 reconcile（area/number-keyboard/back-top 与本表对齐；icon-picker/calendar 已注册事实回写）                                                                                                                                                                                                                     | human gate                          |
+| L7.7      | quick-reference P-1 措辞刷新（stream/openSocket 已落地）                                                                                                                                                                                                                                                                  | 无 gate，随下批 docs                |
+| L7.8      | survey leftover 定期复查：`org-tree`/`mind-map`/`cron-editor`/`excel-importer`（维持 survey-owned，host demand 出现才升级）、`grid-nav`【需人确认】checkbox 关闭、`van-cell` 行模板文档化、跨包 `InputTreeSchema`/`TreeSelectSchema` 迁移评估、control-gap-survey 头部双向链接补注（gap-analysis §7「Link both ways」债） | 各自 demand gate / human confirm    |
+
+**Non-goals 指引**：P3 keep-out 与 archetype §3.4/§10.2 非目标清单（menu shell/multi-tab/iframe/export backend/Tabbar family/second range types/`*-mobile` 变体/watermark/tour/float-button/index-bar 等）以及 gap-analysis P2 composition 行（tooltip-wrapper/popover-wrapper、mentions、log/tasks/search-box、splitter、nav/anchor-nav/avatar——均为 demand-gated 非 item）以两份源报告为准，本表不重复罗列、不立项；QA.7 残余债登记册统一兜底记录。
+
+**测试策略交给 plan 的预声明**：代码线 plan 一律 `必须自动化`（铁律 4：focused 单测 + e2e 先于或随实现落地）；纯文档项 L2.0/L2.6/L4.10/L5.0/L6 S0–S1 按 `docs/plans/00-plan-authoring-and-execution-guide.md` 纯文档计划变体裁剪 Closure Gates。
+
+---
+
+## 11. L8 — 分阶段审计与最终验收（质量门）
+
+> 执行纪律：所有审计由**独立 fresh 子 agent**执行——输入仅「工作项清单 + diff 摘要 + 验证输出」三件套（Fresh Context，对齐 AGENTS.md 协作纪律），执行会话不得自审；审计报告落 `docs/audits/missing-components/`（按 QA 编号建档，含逐项核对表 + issue 清单）。severity 词汇（Blocker/Major/Minor）与 pass 判定沿用 `docs/audits/00-audit-execution-guide.md`（Pass = zero Blockers AND zero Majors）；Minor 登记 QA.7 ⑥ 残余债登记册并在下一 gate 前修复复审。发现 issue 走「修复 → 独立复审」循环直至 pass；**审计未过，对应线不得回写 `done`**。
+
+| Work item                               | 时机（gate）                                | 审计内容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Pass 标准                                      |
+| --------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **QA.1 线出口审计**（×8，L0–L7 各一次） | 每条线最后一个 plan 的 closure audit 通过后 | ①交付铁律 8 项逐行核对（design.md / example+入口 / 代码+测试 / 登记 / i18n / 前置裁决 / 审计 / full-green）；②该线 diff 代码质量抽查（RendererComponentProps 契约、禁裸 HTML、oversized-file 纪律、R1 §3.6 反模式清单）；③docs↔live 一致性（design.md vs 实际 definition 无 drift）；④本线 roadmap 状态回写准确性                                                                                                                                                                                                                                         | 0 Blocker / 0 Major；Minor 限期修复并复审      |
+| **QA.2 集成审计 #1**                    | L0 + L1 完成                                | e2e 全量 + `pnpm check` 红名单纪律（零新增红）+ home↔route parity 守卫 + matrix/examples.manifest.json/quick-reference 三处登记一致性                                                                                                                                                                                                                                                                                                                                                                                                                     | 全绿 + 0 新增 check 红                         |
+| **QA.3 集成审计 #2**                    | L2 完成                                     | org 协议在 user-select / department-select / region 三 renderer 间零分叉；每个 example schema 有 e2e/程序化断言在 playground 通过                                                                                                                                                                                                                                                                                                                                                                                                                         | 同 QA.2                                        |
+| **QA.4 集成审计 #3**                    | L3 + L4 完成                                | env 通道 INV 审计复核 + capability check 降级路径（stream/openSocket 先例：host 未提供时优雅降级）+ replica retrofit 后旧 replica e2e 无回归                                                                                                                                                                                                                                                                                                                                                                                                              | 同 QA.2                                        |
+| **QA.5 集成审计 #4**                    | L5 完成                                     | E6/E9.2 包络 benchmark 复测（≥30fps@≤1k / <100ms / ≤320MB）+ SCADA 编辑态 e2e 谱 + 双态隔离不泄漏复核                                                                                                                                                                                                                                                                                                                                                                                                                                                     | benchmark 达标 + e2e 全绿                      |
+| **QA.6 集成审计 #5**                    | L6 S2 完成（设计器 MVP）                    | schema round-trip 无损性（随机 schema 变异 → 导入→导出 → 比对）+ inspector 由 propContracts 生成契约 + 与六域设计器边界不越界                                                                                                                                                                                                                                                                                                                                                                                                                             | round-trip 0 丢失 + 边界 0 越界                |
+| **QA.7 最终验收审计**                   | 全线 done 后                                | ①全量 full-green（typecheck/build/lint/test/check）；②**coverage 复评**：以 archetype 报告 §2（A–G matrix Partial/Blocked 行）+ §3（根因）为主基线、gap-analysis §4 register 复核——目标修复行逐行重打分，产出复评报告（回写两报告或标注新版）；③**交付完整性 sweep**：roadmap 逐行 → design.md / example / home 入口 / e2e / 登记存在性程序化核对；④代码质量终审（反模式 + oversized + 渲染契约 + i18n 键完整性）；⑤playground 全入口可导航走查（程序化）；⑥**残余债登记册**：未竟事项 + 理由 + 后续 gate（含各 QA Minor 的修复闭环记录），全登记不留暗债 | 验收报告 pass + 残余债全登记 + full-green 在案 |
+
+---
+
+## 12. 依赖与排序
+
+```
+L0 ──→ L1 ──→ L2 ──→ (L3 ∥ L4) ──→ L5 ──→ L6(S0→S1→S2…)
+ │        │      │        │            │        │
+ └─QA.2───┴──────┴QA.3(QA.4)┴──QA.5────┴─QA.6───┴──→ QA.7 最终验收
+```
+
+- QA 时点以 §11 表为权威（图仅示意；QA.3 gate=L2，QA.4 gate=L3+L4）；L5.6/L6 S2 的入口工作经 L0 注册表是依赖注记，非 QA.7 的前向边。
+- L0 最先：一切新组件的 example/入口验收都依赖统一注册表。
+- L1 先于 L2 的**实现**项：命名 pass 产物被 L2 复用；registration-debt 模式（slider/L2.4）先跑通。**例外**：L2.0（纯文档）可与 L1 并行启动。
+- L3/L4 可与 L2 并行（不同包面）；L3 各项独立立项。**协调规则**：L3.5（filter↔URL）与 L4.9（replica retrofit）会触碰相同 replica 的 query/filter schema（stripe/airtable 在 P6b/P7b 有 ad-hoc URL 物化）——并行窗口内两者按 replica 错峰，后动方 rebase 先动方。
+- L5 先 audit（L5.0）后排实现；L6 S0 裁决可即刻启动（纯调研，不阻塞他人）。
+
+## 13. 状态总表（唯一**权威**动态区，更新只改这里；他节出现的状态仅为起草初值快照，冲突以本表为准）
+
+| Work item                                                           | 状态                                    | Plan | 备注                                                            |
+| ------------------------------------------------------------------- | --------------------------------------- | ---- | --------------------------------------------------------------- |
+| L0.1–L0.4                                                           | `todo`                                  | —    | 无 human gate，可先行                                           |
+| L1.1 slider / L1.2 rate / L1.3 color                                | `proposed`                              | —    | 待 matrix flip（human）                                         |
+| L2.0–L2.6                                                           | `proposed`                              | —    | L2.0 协议为关键路径（可与 L1 并行）；signature 另需 matrix flip |
+| L3.1–L3.5                                                           | `proposed`                              | —    | renderer-env.md INV 审计必过                                    |
+| L4.1–L4.8                                                           | `proposed`                              | —    | 共享底座 mini-design 先行                                       |
+| L4.9 retrofit / L4.10 docs-only / L4.11 残余收尾 / L4.12 phone mask | `todo` / `todo` / `todo` / demand-gated | —    | L4.9 逐 replica 拆子 plan                                       |
+| L5.0 gap audit                                                      | `todo`                                  | —    | 先行                                                            |
+| L5.1–L5.7                                                           | `todo`                                  | —    | L5.2/L5.3/L5.4 的 design 部分先立约                             |
+| L5.8 E10 后置可选项                                                 | demand-gated                            | —    | ActionSchema 编辑器需先补设计                                   |
+| L6 S0–S4                                                            | `proposed`                              | —    | S0 裁决为 human gate；design-first：S1 未过 review 不写实现     |
+| L7.1–L7.8                                                           | `todo` / demand-gated                   | —    | L7.5–L7.6 human gate                                            |
+| QA.1（×8 线出口）                                                   | `todo`                                  | —    | 绑定各线完成时点；独立 fresh 子 agent                           |
+| QA.2–QA.6（集成 ×5）                                                | `todo`                                  | —    | gate = 对应线完成；未过不得 done                                |
+| QA.7（最终验收）                                                    | `todo`                                  | —    | 全线 done 后；残余债登记册为必交                                |
+
+## 14. Rule
+
+1. 本文件是编排层：组件契约看 `docs/components/<type>/design.md`，retention 看 matrix，wave 编排（AMIS 基线）看 `docs/components/roadmap.md`。
+2. **禁止只写代码交付**：缺 design.md / example / 入口 / 测试 / 登记任何一项，closure audit 必须打回。
+3. 新 type 实现前 matrix flip 是硬前置；本文所有 `proposed` 不构成 flip。
+4. 每 work item 一个 plan；例外：**L4.9 是 plan 族**（逐 replica 拆子 plan，整行收口回写）；**L5.0 回写新增工作项属结构变更，需人确认**。plan 完成回写本表 + 主 roadmap（如涉及）+ dev log，full-green 记录在案。
+5. 代码线 plan 一律声明 `必须自动化` 测试策略档（铁律 4）；纯文档项按 plan guide 纯文档变体执行（见 §7 末预声明）。
