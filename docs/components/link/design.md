@@ -45,7 +45,7 @@
 
 ## 10. 样式与 DOM marker 约定
 
-- 根节点保留 `nop-link` marker。
+- 根节点保留 `nop-link` marker。注意：该 marker 当前**无任何 CSS 消费**（live 级联全量扫描 0 条规则，R2-2b-A1-41 复核坐实 2026-09-24）——link 渲染为无 hover/无主色的裸锚文本，视觉契约待修复批落地后回写。
 
 ## 11. 实现拆分建议
 

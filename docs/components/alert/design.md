@@ -51,7 +51,7 @@
 ## 10. 样式与 DOM marker 约定
 
 - 根节点保留 `nop-alert` marker。
-- 视觉层复用 `@nop-chaos/ui` Alert primitive，不在 renderer 中硬编码间距体系。
+- 视觉层复用 `@nop-chaos/ui` Alert primitive，不在 renderer 中硬编码间距体系（现状注记 R2-2b 复核 DR-4：alert-renderer.tsx L101 存在 `mt-2 gap-2` 局部间距，为 E4-1 actions 列错位的修复落点；本句按 live 行为记载）。
 - 可关闭按钮 aria-label 经 `t('flux.common.close')`（en-US: Close / zh-CN: 关闭）。
 
 ## 11. 实现拆分建议

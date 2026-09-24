@@ -48,6 +48,7 @@
 - `yAxis`（2026-08-09 双轴）：单轴形态 `{ label?: string }`（向后兼容，渲染单个 left 轴）；多轴形态 `Array<{ label?: string; position?: 'left' | 'right' }>`，`position` 缺省按下标推导（index 0 → left，其余 → right）。**双轴启用条件 = `yAxis` 数组形态 + 至少一个 series 声明 `yAxisId`**；缺映射回退单轴（Failure Path chart-dual-axis-invalid）。
 - `series[].yAxisId?: number`（2026-08-09）：映射到 `yAxis` 数组下标，缺省 0（默认左轴）；单轴形态下忽略。
 - `chartType: 'heatmap'`（2026-08-09）：数据源为 `source`（或 `series[0].data`）的 `{ x, y, value }[]` 行；自绘 SVG rect 网格（`data-slot="chart-heatmap"`，`data-x-labels`/`data-y-labels`/`data-cell-*` 供断言），色阶 = `hsl(var(--chart-1))` 基色 + 归一化不透明度（0.15–1.0）；空/畸形行丢弃，全空降级 `empty` slot（DD1 契约延续）。
+- 轴 `label` 现状注记（R2-2b 复核 D-6，2026-09-24）：`xAxis.label`/`yAxis.label` 绑定到 recharts `name=` prop，仅用于 tooltip/aria 可访问名称，**不渲染轴标题文本**；需要可见轴标题时用 `title` 或 slot。
 - `title` 遵循 value-or-region authoring contract：既可以是普通字符串，也可以是 schema fragment；renderer 会把 slot 内容渲染为 `chart-title` chrome，并通过 `aria-labelledby` 继续作为图表的可访问名称来源。
 - `series` 和 `source` 的职责需要文档明确：前者更接近最终绘图配置，后者更接近原始数据集。
 

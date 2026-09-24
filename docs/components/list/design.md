@@ -29,7 +29,7 @@
 - `items`: `value` 或 source-enabled value
 - `item`: `region`
 - `empty`: `value-or-region`
-- `pagination`: `prop`（配置对象：`{ enabled, mode: 'page' | 'infinite', pageSize, pageSizeOptions, currentPage, total, hasMore, showSizeChanger }`）
+- `pagination`: `prop`（配置对象：`{ enabled, mode: 'page' | 'infinite', pageSize, pageSizeOptions, currentPage, total, hasMore, showSizeChanger }`）。现状注记（R2-2b 复核 D-3，2026-09-24）：page 模式**不内建分页 UI**（设计裁定见本文 §分页，页码归独立 pagination renderer/宿主）；`showSizeChanger` 当前**零消费**（死配置，schema 无诊断），与 infinite 模式有内建 footer 不对称。
 - `paginationOwnership`: `prop`（`local` | `controlled` | `scope`，默认 `local`）
 - `paginationStatePath` / `pageSizeStatePath`: `prop`（scope 归属下的 scope 路径）
 - `onPageChange` / `onLoadMore`: `event`

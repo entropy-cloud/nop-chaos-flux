@@ -13,7 +13,7 @@
   - **git-diff-view**（MIT）：核心模型（`DiffFile`） + 多框架适配器架构。支持 split/unified 视图、语法高亮（lowlight/shiki 可插拔）、字符级 inline diff（fast-diff/relativeChanges）、预渲染 HTML 模板、hunk 展开/折叠。
   - **react-diff-view**（MIT）：parseDiff → Token Pipeline → 渲染的管线架构。使用 gitdiff-parser + refractor(Prism) + diff-match-patch。
 - Flux `diff-view` 结合两者优点：采用 git-diff-view 的 `DiffFile` 模型作为 UI 无关的数据层，参考 react-diff-view 的令牌管道作为渲染策略。
-- 当前未注册，需新增 renderer 到 `flux-renderers-content`。
+- 已注册于 `flux-renderers-content`（`content-renderer-definitions.ts` L578–582；本文旧版「当前未注册」表述已过期，R2-2b 复核 DR-3 更新 2026-09-24）。
 
 ## 3. Flux 中的 renderer/type 定义
 

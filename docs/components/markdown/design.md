@@ -8,6 +8,7 @@
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - 已 shipped：注册于 `flux-renderers-content`（`content-renderer-definitions.ts`），基于 `react-markdown` + `remark-gfm`；`allowHtml` 开启时先经 DOMPurify 清洗再由 `rehype-raw` 渲染存活标签。
+- 样式契约现状（R2-2b 复核 DR-1，2026-09-24）：`.nop-markdown` 的元素样式矩阵物理寄居于 **form 包** `form-renderers.css`（出身是 markdown-editor preview），且矩阵**未覆盖 GFM table/td/th**（表格塌缩为文字堆，R2-2b-C1-45 P1）——与本文宣称的 remark-gfm 支持存在视觉层缺口；修复批落地前，GFM 表格/列表符号不保证有表格化呈现。跨包寄居的迁移评估归后续 plan。
 - 支持静态 Markdown 与表达式拼接后的字符串输入；`allowHtml` 默认关闭（标签按字面转义）。
 
 ## 3. Flux 中的 renderer/type 定义

@@ -285,4 +285,183 @@ export const INTERACTIONS = {
     },
     { action: 'waitFor', ms: 400 },
   ],
+  // --- R2-2b wave1 (content 前半) wave-merged keys ---
+  'lab-alert': [
+    { action: 'click', selector: '[data-testid="alert-close"]' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-audio': [
+    { action: 'clickText', text: 'Open media dialog' },
+    { action: 'waitFor', selector: '[data-slot="dialog-surface"]' },
+  ],
+  'lab-card': [
+    { action: 'clickText', text: 'Inner action' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-cards': [
+    { action: 'clickText', text: 'Alpha' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-carousel': [
+    { action: 'clickText', text: 'Next (handle)' },
+    { action: 'waitFor', ms: 800 },
+  ],
+  'lab-diff-view': [
+    { action: 'clickText', text: 'Open diff dialog' },
+    { action: 'waitFor', selector: '[data-slot="dialog-surface"]' },
+  ],
+  'lab-empty': [
+    { action: 'click', selector: '[data-testid="c6c2-empty-cta"]' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-html': [
+    { action: 'clickText', text: 'Set malicious content' },
+    { action: 'waitFor', ms: 400 },
+  ],
+  'lab-image': [
+    { action: 'clickText', text: 'Set valid src' },
+    { action: 'waitFor', ms: 600 },
+  ],
+  'lab-json-view': [
+    { action: 'click', selector: "[aria-label='expand JSON']" },
+    { action: 'waitFor', ms: 300 },
+  ],
+  // --- R2-2b wave2 (content 后半) wave-merged keys ---
+  'lab-markdown': [
+    { action: 'clickText', text: 'Set malicious content' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-progress': [
+    { action: 'clickText', text: 'Set 250' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-qrcode': [
+    { action: 'clickText', text: 'Set value A' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-spinner': [
+    { action: 'clickText', text: 'Hide spinner' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-status': [
+    { action: 'clickText', text: 'Details' },
+    { action: 'waitFor', selector: '[data-testid="c6c3-dialog-status"]' },
+  ],
+  'lab-video': [
+    { action: 'clickText', text: 'Open media dialog' },
+    { action: 'waitFor', selector: '[data-testid="c6c4-dialog-video-error"]' },
+  ],
+  // --- R2-2b wave3 (data 前半) wave-merged keys ---
+  'lab-batch-bar': [
+    { action: 'click', selector: '[data-testid^="scenario-crud-host"] [data-slot="table-select-cell"] [data-slot="checkbox"]' },
+    { action: 'waitFor', selector: '[data-testid="lab-bar-crud"]' },
+    { action: 'clickText', text: '取消选择' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-pagination': [
+    { action: 'click', selector: '[data-testid="demo-pagination-simple"] [data-slot="pagination-link"][data-page="2"]' },
+    { action: 'waitFor', ms: 300 },
+    { action: 'setAttribute', selector: '[data-testid="demo-pagination-with-size"] select', value: '50' },
+  ],
+  'lab-data-source': [
+    { action: 'clickText', text: 'Refresh users' },
+    { action: 'waitFor', ms: 500 },
+    { action: 'clickText', text: 'Retry load' },
+    { action: 'waitFor', ms: 500 },
+  ],
+  'lab-list': [
+    { action: 'click', selector: '[data-testid="demo-list-single"] [data-slot="list-item"]' },
+    { action: 'waitFor', selector: '[role="dialog"]' },
+    { action: 'press', key: 'Escape' },
+    { action: 'click', selector: '[data-testid^="scenario-pagination-via"] button' },
+    { action: 'waitFor', ms: 400 },
+  ],
+  'lab-chart': [
+    { action: 'clickText', text: 'Update data' },
+    { action: 'waitFor', ms: 500 },
+    { action: 'clickText', text: 'Clear data' },
+    { action: 'waitFor', ms: 500 },
+  ],
+  'lab-echarts': [
+    { action: 'clickText', text: 'Load Apr-Jun batch' },
+    { action: 'waitFor', ms: 800 },
+  ],
+  'lab-crud': [
+    { action: 'click', selector: '[data-testid^="scenario-crud-quick-edit"] tbody button' },
+    { action: 'waitFor', selector: '[role="dialog"]' },
+    { action: 'press', key: 'Escape' },
+    { action: 'click', selector: '[data-testid^="scenario-crud-selection-refresh"] [data-slot="table-select-cell"] [data-slot="checkbox"]' },
+    { action: 'waitFor', ms: 400 },
+    { action: 'click', selector: "[data-testid^='scenario-host-crud-paging'] [data-slot='pagination-link']:has-text('2')" },
+    { action: 'waitFor', ms: 500 },
+  ],
+  // --- R2-2b wave4 (data 后半) wave-merged keys ---
+  'lab-query-filter': [
+    { action: 'clickText', text: '搜索' },
+    { action: 'waitFor', ms: 500 },
+    { action: 'clickText', text: '重置' },
+    { action: 'waitFor', ms: 500 },
+    { action: 'click', selector: '[data-testid="scenario-collapsible-filter"] [data-slot="query-filter-collapse"] button' },
+    { action: 'waitFor', ms: 400 },
+  ],
+  'lab-table': [
+    { action: 'click', selector: '[data-testid="scenario-table-with-sortable-text-columns"] thead th button' },
+    { action: 'waitFor', ms: 500 },
+    { action: 'click', selector: '[data-testid="scenario-header-search-and-filter-controls"] thead th button' },
+    { action: 'waitFor', selector: '[data-slot="table-filter-option"]' },
+    { action: 'click', selector: '[data-slot="table-filter-option"]' },
+    { action: 'waitFor', ms: 500 },
+    { action: 'clickText', text: '2' },
+    { action: 'waitFor', ms: 500 },
+  ],
+  'lab-tree': [
+    { action: 'click', selector: '[data-testid="scenario-expand-collapse-org-tree"] button[aria-expanded="true"]' },
+    { action: 'waitFor', ms: 500 },
+  ],
+  // --- R2-2b wave5 (layout) wave-merged keys ---
+  'lab-button-group': [
+    { action: 'clickText', text: 'Tag 1' },
+    { action: 'waitFor', ms: 250 },
+    { action: 'clickText', text: 'Option 2' },
+    { action: 'waitFor', ms: 250 },
+  ],
+  'lab-collapse': [
+    { action: 'clickText', text: 'Panel A' },
+    { action: 'waitFor', selector: '[data-slot="collapse-content"]' },
+    { action: 'clickText', text: 'Single Y' },
+    { action: 'waitFor', ms: 450 },
+  ],
+  'lab-dropdown-button': [
+    { action: 'clickText', text: 'Actions' },
+    { action: 'waitFor', selector: '[data-slot="dropdown-menu-content"]' },
+    { action: 'press', key: 'Escape' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-steps': [
+    { action: 'clickText', text: 'Two' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-wizard': [
+    { action: 'clickText', text: '下一步' },
+    { action: 'waitFor', ms: 400 },
+    { action: 'clickText', text: '上一步' },
+    { action: 'waitFor', ms: 400 },
+    { action: 'clickText', text: 'Open wizard dialog' },
+    { action: 'waitFor', selector: '[data-slot="dialog-surface"]' },
+  ],
+  // --- R2-2b wave6 (mobile) wave-merged keys ---
+  'lab-countdown': [{ action: 'waitFor', ms: 2500 }],
+  'lab-infinite-scroll': [
+    { action: 'clickText', text: 'Open mobile host dialog' },
+    { action: 'waitFor', selector: '[data-testid="c7-dialog-is"]' },
+    { action: 'waitFor', ms: 800 },
+  ],
+  'lab-notice-bar': [
+    { action: 'click', selector: '[data-testid="c7-notice-close-close"]' },
+    { action: 'waitFor', ms: 400 },
+  ],
+  'lab-pull-refresh': [
+    { action: 'clickText', text: 'Open mobile host dialog' },
+    { action: 'waitFor', selector: '[data-testid="c7-dialog-pr"]' },
+  ],
 };
