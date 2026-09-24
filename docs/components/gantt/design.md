@@ -279,13 +279,15 @@ Gantt 是 interaction owner，其状态分三层：
 | `onTaskDoubleClick` | 双击任务条                                                                                                                       | `{ _taskId }`                                                                  |
 | `onTaskDragEnd`     | 拖拽任务结束                                                                                                                     | `{ _taskId, changes: { start?, end? } }`                                       |
 | `onTaskEdit`        | 编辑型变更（编辑器保存 / 行内单元格提交 / 键盘 Delete / 键盘日期编辑 move-up/move-down/resize-left/resize-right——2-19 契约裁决） | `{ _taskId, changes? }`（更新路径）或 `{ _taskId, deleted: true }`（删除路径） |
-| `onLinkClick`       | 点击依赖线                                                                                                                       | `{ _linkId }`                                                                  |
-| `onLinkDragEnd`     | 创建新依赖结束                                                                                                                   | `{ _sourceId, _targetId, _linkType }`                                          |
-| `onEmptyCellClick`  | 点击时间线空白                                                                                                                   | `{}`                                                                           |
-| `onZoomChange`      | 缩放级别切换                                                                                                                     | `{ zoom: string }`                                                             |
-| `onScroll`          | grid/timeline 滚动                                                                                                               | `{ scrollLeft, scrollTop }`                                                    |
-| `onMount`           | 组件挂载完成后触发                                                                                                               | —                                                                              |
-| `onUnmount`         | 组件卸载前触发                                                                                                                   | —                                                                              |
+
+- 现状注记（R2-2c 复核 DA-2，2026-09-25）：本文记载的键盘日期编辑（move-up/move-down/resize-\*）实为死接线——gantt-bars 仅派发 select 事件，键盘路径未接；修复前勿依据本文使用键盘编辑。
+  | `onLinkClick` | 点击依赖线 | `{ _linkId }` |
+  | `onLinkDragEnd` | 创建新依赖结束 | `{ _sourceId, _targetId, _linkType }` |
+  | `onEmptyCellClick` | 点击时间线空白 | `{}` |
+  | `onZoomChange` | 缩放级别切换 | `{ zoom: string }` |
+  | `onScroll` | grid/timeline 滚动 | `{ scrollLeft, scrollTop }` |
+  | `onMount` | 组件挂载完成后触发 | — |
+  | `onUnmount` | 组件卸载前触发 | — |
 
 拖拽结束回弹动画 200ms ease-out，缩放切换过渡 300ms ease。
 

@@ -79,8 +79,9 @@ interface DashboardEditorSchema extends BaseSchema {
 - **undo/redo**：editor-core diff 命令栈（forward/inverse 增量，无全量快照）；`commit` 后栈保留
   （对齐 hmi save() 语义）；`revert`/重建清栈。
 - **保存链路**：`component:save()` 句柄 / 头部 Save 按钮 → `core.commit()`（`validate` → 失败
-  拒绝保留 working → `serialize` 布局 JSON）→ `dashboard-editor:save` schema 事件
-  （payload `{ serialized }`）→ host 下游同步（playground：localStorage 持久化 + scope 回推）。
+  - 现状注记（R2-2c 复核 D-3，2026-09-25）：文档描述的保存链路与 live 实现失配——实测 mount 即 dirty、点 Save 零持久化零反馈、dirty 永不清除（R2-2c-A9-122 P1，双断点：adapter `Object.is` 引用比较致 mount 即 dirty〔review-a fiber 实证坐实〕+ `${event.serialized}` payload→动作参数桥接断链〔review-a 勘误 DA-4 2026-09-25：review-b 原表述"onSave 派发静默 return"证伪，events.onSave 为函数，断点在参数桥接〕）；修复前勿依赖 demo 页保存行为。
+    拒绝保留 working → `serialize` 布局 JSON）→ `dashboard-editor:save` schema 事件
+    （payload `{ serialized }`）→ host 下游同步（playground：localStorage 持久化 + scope 回推）。
 - **controlled push-back**：host 经 `layout` prop 回推且与 committed 不同 → dispose 旧会话重建
   （避免保存回推时误重建；`diffDashboardDocument` 判定）。
 - **palette 类型清单**（以执行时已注册 renderer 为准）：`chart`/`table`/`stat-tile`/`iframe`/

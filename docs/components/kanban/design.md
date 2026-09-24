@@ -252,6 +252,7 @@ interface KanbanEvents {
 - `loading`：受控 region，`params: []`。首次 data resolve 前或 data-source 加载中显示。缺省渲染为脉冲骨架占位（三列缩略卡片）。
 - `configMap` 中的 `render`：受控 region，`params: ['card', 'column', 'index']`。当同时指定 configMap 和 cardTemplate 时，configMap 优先于 cardTemplate。卡片渲染优先级：configMap[type].render → cardTemplate → 默认卡片渲染。configMap 不处理 column 容器渲染。
 - 空列时，column 容器本身始终是有效的 drop target，确保卡片可拖入无卡片的列。
+- 现状注记（R2-2c 复核 DA-1，2026-09-25）：live 实现违反本断言——列级 drop target（use-kanban-dnd L153-178）全宿主不参与落位（弹层与 demo 页空列/列体落点 drop:0 双双失败，仅 card-target 生效，R2-2c-A6-88 review-a 根因改判）；且 L319 `data-drop-target="true"` 属性生产者断链（css 有消费规则、tsx 零设置）。修复前列拖拽入空列不可用。
 - 空列时（column.children.length === 0），column-body 渲染为虚线边框占位区域 + '拖拽卡片到此处' 浅灰提示文字（若无拖拽则仅显示最小占位高度 60px）。
 
 ## 7. 运行期状态归属

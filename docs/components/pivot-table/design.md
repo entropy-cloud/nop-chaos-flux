@@ -30,12 +30,14 @@ AMIS 无等价透视控件（`table` 静态组合可模拟只读交叉，无交�
 | 命令式实例生命周期（创建/`setRecords` 增量/`updateOption` 全量/`release`）                     | **实现**                             | —                   | Chat2DB 模式：仅 records 变化 → `setRecords`（无 remount，实例 identity 稳定）；维度/指标/dataConfig/corner 变化 → `updateOption` 全量；卸载 → `release()`。                                                                   |
 | 事件桥接（单元格点击/选区/排序/下钻/编辑）                                                     | **实现**                             | —                   | VTable `click_cell`/`selected_cell`/`sort_click`/`drillmenu_click`/`change_cell_value` → schema 事件（onCellClick/onSelectionChange/onSort/onDrill/onCellEdit），命名空间 payload type（§8）。单个回调抛错被捕获，不影响表格。 |
 | 主题映射（flux design token → VTable theme）                                                   | **实现**                             | —                   | CSS 变量（`--background`/`--foreground`/`--border`）→ VTable theme（default/header/rowHeader/body/frame）；缺失回退 LIGHT 默认色；跟随 document root class 切换（MutationObserver，map 先例）；`theme` prop 可覆盖。           |
-| loading / empty 态                                                                             | **实现**                             | —                   | `loading` → Spinner 占位；空数据/无合法 indicators → empty slot（value-or-region，缺省 `t('flux.common.noData')`），不创建实例。                                                                                               |
-| records/source 双入口                                                                          | **实现**（source 优先）              | —                   | 沿用 chart `series`/`source` 裁定：二者同设时 source 优先 + dev warn（warn-once）。                                                                                                                                            |
-| 单元格编辑 / PivotChart / 图表型 cellType（chart）                                             | —                                    | **不采纳**          | 首版只读透视核心；编辑与 PivotChart 依赖更多 schema 面，进后续版本（§12）。                                                                                                                                                    |
-| 字段建模器（拖拽字段到行/列/值）                                                               | —                                    | **不采纳**          | 编辑器侧能力，与渲染器契约解耦，后续独立评估。                                                                                                                                                                                 |
-| 服务端分页/流式加载                                                                            | —                                    | **不采纳**          | 数据经 `records`/`source` 全量进入，VTable 内部聚合。                                                                                                                                                                          |
-| 组件级 `api` / `initFetch`                                                                     | —                                    | **不采纳**          | 请求下沉 `data-source` + action。                                                                                                                                                                                              |
+
+- 现状注记（R2-2c 复核 D-2，2026-09-25）：主题监听 `MutationObserver` 的 `attributeFilter: ['class']` 与 playground 的 `data-mode` 属性切换失配——dark 切换不触发重主题，画布恒白块；与本文所引 map 先例（监听 data 属性）不一致。此为 dark 恒白块族根源，修复批待办。
+  | loading / empty 态 | **实现** | — | `loading` → Spinner 占位；空数据/无合法 indicators → empty slot（value-or-region，缺省 `t('flux.common.noData')`），不创建实例。 |
+  | records/source 双入口 | **实现**（source 优先） | — | 沿用 chart `series`/`source` 裁定：二者同设时 source 优先 + dev warn（warn-once）。 |
+  | 单元格编辑 / PivotChart / 图表型 cellType（chart） | — | **不采纳** | 首版只读透视核心；编辑与 PivotChart 依赖更多 schema 面，进后续版本（§12）。 |
+  | 字段建模器（拖拽字段到行/列/值） | — | **不采纳** | 编辑器侧能力，与渲染器契约解耦，后续独立评估。 |
+  | 服务端分页/流式加载 | — | **不采纳** | 数据经 `records`/`source` 全量进入，VTable 内部聚合。 |
+  | 组件级 `api` / `initFetch` | — | **不采纳** | 请求下沉 `data-source` + action。 |
 
 ### 2.1 关键裁定（实现依据）
 

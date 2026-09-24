@@ -18,6 +18,10 @@ export const INTERACTIONS = {
     { action: 'waitFor', ms: 2000 },
     { action: 'clickText', text: 'JSON' },
     { action: 'waitFor', selector: '[data-slot="designer-json-panel"]' },
+    { action: 'clickText', text: '节点/边摘要' },
+    { action: 'waitFor', selector: '[data-testid="summary-node-task"]' },
+    { action: 'clickText', text: 'Task Node' },
+    { action: 'waitFor', selector: '.nop-designer-node-card--active' },
   ],
   // --- R2-1a complex pages (waitFor anchor + primary overlay where the
   // walkthrough wave reports confirmed a programmatically drivable one) ---
@@ -463,5 +467,148 @@ export const INTERACTIONS = {
   'lab-pull-refresh': [
     { action: 'clickText', text: 'Open mobile host dialog' },
     { action: 'waitFor', selector: '[data-testid="c7-dialog-pr"]' },
+  ],
+  // --- R2-2c wave1 (ai 前半) wave-merged keys ---
+  'lab-ai-attachments': [
+    { action: 'click', selector: '[data-testid="c82-attach-open"]' },
+    { action: 'waitFor', selector: '[data-slot="dialog-surface"]' },
+  ],
+  'lab-ai-bubble': [
+    { action: 'click', selector: '[data-slot="ai-action-copy"]' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-ai-chat': [
+    { action: 'click', selector: '[data-testid="c8-dialog-open"]' },
+    { action: 'waitFor', selector: '[data-slot="dialog-surface"]' },
+    { action: 'clickText', text: '批准' },
+    { action: 'waitFor', ms: 400 },
+  ],
+  'lab-ai-citations': [
+    { action: 'click', selector: "[data-slot='ai-citation-trigger'][data-citation-index='1']" },
+    { action: 'waitFor', selector: '[data-slot="ai-citation-card"]' },
+    { action: 'press', key: 'Escape' },
+  ],
+  'lab-ai-conversations': [
+    { action: 'click', selector: "[data-slot='ai-conversations-item'][data-id='c2'] [data-slot='ai-conversations-item-button']" },
+    { action: 'waitFor', ms: 300 },
+    { action: 'click', selector: "[data-slot='ai-conversations-item'][data-id='c1'] [data-slot='ai-conversations-rename']" },
+    { action: 'waitFor', selector: '[data-slot="ai-conversations-rename-input"]' },
+    { action: 'clickText', text: '删除会话' },
+  ],
+  'lab-ai-feedback': [
+    { action: 'click', selector: '[data-slot="ai-feedback-like"]' },
+    { action: 'waitFor', ms: 200 },
+    { action: 'click', selector: '[data-slot="ai-feedback-dislike"]' },
+    { action: 'waitFor', ms: 200 },
+    { action: 'click', selector: '[data-slot="ai-feedback-copy"]' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'lab-ai-message-list': [
+    { action: 'waitFor', ms: 400 },
+    { action: 'click', selector: '[data-slot="ai-scroll-to-bottom"]' },
+  ],
+  // --- R2-2c wave2 (ai 后半) wave-merged keys ---
+  'lab-ai-sender': [
+    { action: 'click', selector: '[data-slot="ai-sender"] textarea' },
+    { action: 'press', key: 'a' },
+  ],
+  'lab-ai-prompts': [
+    { action: 'clickText', text: 'Open prompts dialog' },
+    { action: 'waitFor', selector: '[data-slot="ai-prompts-item"]' },
+    { action: 'clickText', text: 'Summarize' },
+  ],
+  'lab-ai-suggestions': [
+    { action: 'clickText', text: '+2' },
+    { action: 'waitFor', selector: '[data-slot="popover-content"]' },
+    { action: 'clickText', text: 'Refine' },
+  ],
+  'lab-ai-token-usage': [{ action: 'click', selector: '[data-testid="c82-token"]' }],
+  'lab-ai-tool-call': [
+    { action: 'clickText', text: '批准' },
+    { action: 'clickText', text: 'Open tool-call dialog' },
+    { action: 'waitFor', selector: '[data-testid="c82-tool-in-dialog"]' },
+    { action: 'clickText', text: 'Mark success' },
+  ],
+  'lab-ai-voice-input': [
+    { action: 'click', selector: '[data-slot="ai-voice-input"]' },
+    { action: 'waitFor', ms: 800 },
+  ],
+  'lab-ai-welcome': [{ action: 'clickText', text: 'Ask something' }],
+  // --- R2-2c wave3 (scheduling) wave-merged keys ---
+  'lab-barcode-input': [
+    { action: 'waitFor', ms: 800 },
+    { action: 'click', selector: '[data-testid="c9-barcode-submit"]' },
+    { action: 'waitFor', selector: '[data-slot="barcode-validation-error"]' },
+    { action: 'clickText', text: 'Submit' },
+    { action: 'waitFor', ms: 400 },
+  ],
+  'lab-calendar': [
+    { action: 'waitFor', ms: 800 },
+    { action: 'click', selector: '[data-testid="c9-cal-open"]' },
+    { action: 'waitFor', selector: '.nop-calendar' },
+    { action: 'clickText', text: '周' },
+    { action: 'waitFor', ms: 600 },
+    { action: 'clickText', text: '月' },
+    { action: 'waitFor', ms: 600 },
+  ],
+  'lab-gantt': [
+    { action: 'waitFor', ms: 800 },
+    { action: 'click', selector: '[data-testid="c9-gantt-open"]' },
+    { action: 'waitFor', selector: '.nop-gantt' },
+    { action: 'clickText', text: '适应' },
+    { action: 'waitFor', ms: 600 },
+    { action: 'clickText', text: '今日' },
+    { action: 'waitFor', ms: 600 },
+  ],
+  'lab-kanban': [
+    { action: 'waitFor', ms: 800 },
+    { action: 'click', selector: '[data-testid="c9-kanban-open"]' },
+    { action: 'waitFor', selector: '.nop-kanban' },
+    { action: 'clickText', text: 'Card Alpha' },
+    { action: 'waitFor', ms: 400 },
+    { action: 'press', key: 'Space' },
+    { action: 'waitFor', ms: 300 },
+    { action: 'press', key: 'ArrowRight' },
+    { action: 'waitFor', ms: 200 },
+    { action: 'press', key: 'Space' },
+    { action: 'waitFor', ms: 600 },
+  ],
+  // --- R2-2c wave4 (可视化宿主 demo 载体) wave-merged keys ---
+  'dashboard-demo': [
+    { action: 'waitFor', selector: '[data-testid="bi-dashboard"]', ms: 800 },
+    { action: 'click', selector: '[data-testid="editor-mode-toggle"]' },
+    { action: 'waitFor', selector: '[data-slot="dashboard-panel"]' },
+    { action: 'waitFor', ms: 600 },
+  ],
+  'graph-demo': [
+    { action: 'waitFor', selector: '.nop-graph', ms: 2000 },
+    { action: 'clickText', text: 'Focus Error Node' },
+    { action: 'waitFor', ms: 800 },
+  ],
+  'map-demo': [
+    { action: 'waitFor', selector: '.nop-map canvas', ms: 2000 },
+    { action: 'click', selector: '.ol-zoom button' },
+    { action: 'waitFor', ms: 600 },
+  ],
+  // --- R2-2c wave5 (设计器/编辑器宿主 demo 载体) wave-merged keys ---
+  'scada-demo': [
+    { action: 'waitFor', selector: '[data-slot="scada-canvas-canvas"]' },
+    { action: 'clickText', text: '故障' },
+    { action: 'waitFor', ms: 600 },
+  ],
+  'scada-editor-demo': [
+    { action: 'waitFor', selector: '[data-slot="scada-editor-canvas"]' },
+    { action: 'clickText', text: '撤销' },
+  ],
+  'spreadsheet': [
+    { action: 'waitFor', selector: '.nop-spreadsheet-page' },
+    { action: 'click', selector: "table td[data-row='0'][data-col='1']" },
+    { action: 'press', key: 'b' },
+    { action: 'waitFor', ms: 300 },
+  ],
+  'word-editor': [
+    { action: 'waitFor', selector: '.nop-word-editor-page' },
+    { action: 'clickText', text: '页眉' },
+    { action: 'waitFor', ms: 400 },
   ],
 };
