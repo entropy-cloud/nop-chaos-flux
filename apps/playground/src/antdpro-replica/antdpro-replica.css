@@ -1,5 +1,5 @@
 /*
- * Ant Design Pro replica styles (LIGHT MODE ONLY).
+ * Ant Design Pro replica styles (light + dark).
  *
  * Replicates the Ant Design Pro page-template family (dashboard / list /
  * form / detail / result — see
@@ -16,9 +16,15 @@
  * Consumed by page schemas complex-pages/page-schemas/antdpro-*.json through
  * the `.adp-root` page scope and the `.adp-dialog` dialog portal scope;
  * layout/spacing in schemas uses Tailwind utilities (dual-track rule).
+ *
+ * plan 500 R2-4: `[data-mode='dark']` block retunes every `--adp-*` token to
+ * the AntD dark palette so the 9 antdpro replica pages stop rendering light
+ * surfaces in dark mode (R2-1a dark-parity family). Text-role usages of the
+ * primary (link / outline hover / processing tag) get a scoped lighter tone
+ * because the fill-role primary must stay dark enough for white labels.
  */
 
-/* ── 1. Design tokens (light only) ──────────────────────────────────────── */
+/* ── 1. Design tokens (light + dark) ────────────────────────────────────── */
 
 /* Declared on .adp-root AND .adp-dialog because dialogs render through a
    portal outside the .adp-root subtree (sundial-replica.css precedent). */
@@ -57,6 +63,58 @@
   --adp-radius-sm: 4px;
   --adp-radius-lg: 8px;
   --adp-control-height: 32px;
+}
+
+/* plan 500 R2-4: dark palette follows the AntD dark algorithm seeds.
+ * Gates: body/label text ≥4.5:1 on #141414, semantic tag text ≥4.5:1 on
+ * their tinted bg, white-on-primary (fill) ≥4.5:1. */
+[data-mode='dark'] .adp-root,
+[data-mode='dark'] .adp-dialog {
+  --adp-primary: #1668dc;
+  --adp-primary-hover: #3c89e8;
+  --adp-primary-active: #1554ad;
+  --adp-primary-bg: #111a2c;
+  --adp-primary-border: #15325b;
+
+  --adp-success: #49aa19;
+  --adp-success-bg: #162312;
+  --adp-warning: #d89614;
+  --adp-warning-bg: #291404;
+  --adp-error: #e05656;
+  --adp-error-bg: #2a1315;
+  --adp-info: #1668dc;
+  --adp-info-bg: #111a2c;
+
+  --adp-text: rgba(255, 255, 255, 0.85);
+  --adp-text-secondary: rgba(255, 255, 255, 0.65);
+  --adp-text-tertiary: rgba(255, 255, 255, 0.5);
+  --adp-text-quaternary: rgba(255, 255, 255, 0.25);
+  --adp-bg-layout: #0f0f0f;
+  --adp-bg-container: #141414;
+  --adp-bg-hover: rgba(255, 255, 255, 0.06);
+  --adp-border: #424242;
+  --adp-split: rgba(253, 253, 253, 0.12);
+}
+
+/* Text-role primary: the dark fill primary (#1668dc) is tuned for white
+ * labels on it and only reaches ~3.6:1 as text on #141414, so link /
+ * outline-hover / processing-tag switch to the lighter hover tone
+ * (#3c89e8, ≥4.8:1) in dark mode. */
+[data-mode='dark'] .adp-btn-link {
+  color: var(--adp-primary-hover);
+}
+
+[data-mode='dark'] .adp-btn-link:hover {
+  color: #69b1ff;
+}
+
+[data-mode='dark'] .adp-btn-outline:hover {
+  color: var(--adp-primary-hover);
+  border-color: var(--adp-primary-hover);
+}
+
+[data-mode='dark'] .adp-tag-processing {
+  color: #69b1ff;
 }
 
 .adp-root {

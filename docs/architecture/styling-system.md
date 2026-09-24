@@ -621,6 +621,8 @@ One three-section rhythm shared by all four overlays via `--overlay-anatomy-*` t
 | `--overlay-anatomy-title-font-size`         | 14px  | Dialog/Sheet/Drawer/AlertDialog titles                                                |
 | `--overlay-anatomy-content-border-radius`   | 6px   | Dialog content; AlertDialog content + footer                                          |
 
+Overlay surface colors ride the base semantic tokens (`--popover`/`--card`); their dark-mode parity is WCAG-gated by the theme-token tests — see `docs/architecture/theme-compatibility.md` (plan 500 / R2-4).
+
 Position-specific tokens (`--dialog-top-offset`, `--dialog-stack-step`) stay dialog-owned; hover floaters (Popover / DropdownMenu / Tooltip) are content-sized by design and deliberately outside the ladder.
 
 ## Actions Alignment Contract（plan 499）

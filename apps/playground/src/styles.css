@@ -215,6 +215,9 @@
   --nop-border: rgba(148, 178, 209, 0.2);
   --nop-border-soft: rgba(148, 178, 209, 0.12);
   --nop-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
+  /* plan 500 R2-4: color-scheme follows data-mode so native controls
+   * (scrollbars, date inputs) stop being pinned to light in dark mode. */
+  color-scheme: dark;
   --nop-field-error: #ef8a7c;
   --nop-nav-surface: rgba(21, 29, 39, 0.94);
   --nop-nav-border: rgba(148, 178, 209, 0.14);
