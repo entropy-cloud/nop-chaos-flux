@@ -60,6 +60,23 @@ test.describe('print designer playground', () => {
     await expect(page.locator('[data-testid="print-demo-actions"]').getByRole('button', { name: '打印', exact: true })).toBeVisible();
   });
 
+  // missing-components L0.4（plan 502 Phase 4）：浏览器打印链程序化断言——
+  // 点击「打印」→ printPrintTemplate 挂载隐藏 iframe[data-print-frame] 并写入
+  // 分页 srcdoc（含绑定数据）→ demo 状态行确认链路完成。
+  test('print button mounts the hidden print frame with bound data', async ({ page }) => {
+    await page
+      .locator('[data-testid="print-demo-actions"]')
+      .getByRole('button', { name: '打印', exact: true })
+      .click();
+    const printFrame = page.locator('iframe[data-print-frame]');
+    await expect(printFrame).toHaveCount(1);
+    const srcdoc = await printFrame.getAttribute('srcdoc');
+    expect(srcdoc).toContain('出库单');
+    expect(srcdoc).toContain('CK-2026-0901'); // field 绑定（orderNo）
+    expect(srcdoc).toContain('fmt-page'); // 分页产物
+    await expect(page.getByTestId('print-demo-output')).toHaveText('已发送到打印机对话框');
+  });
+
   test('P5: rendered table rows stay inside their slice frames (row-height closure)', async ({ page }) => {
     await page.getByRole('button', { name: '预览' }).click();
     const frame = page.getByTestId('print-preview-frame');

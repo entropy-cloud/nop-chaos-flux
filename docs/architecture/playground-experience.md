@@ -88,10 +88,20 @@ The `useRoute` hook in `apps/playground/src/use-route.ts` reads and writes the h
 The route inventory is code-backed in `apps/playground/src/route-model.ts`:
 
 - `ALL_SHARED_RENDERER_ROUTES` — the current shared renderer inventory. Each entry carries: `id`, `title`, `category`, `sourcePackage`, `description`.
-- `DOMAIN_RENDERER_ROUTES` — the current domain host page inventory.
+- `DOMAIN_RENDERER_ROUTES` — the current domain host page inventory. Each entry additionally carries an optional `homeVisible` flag (see below).
 - `parseRoute(hash)` and `buildRoute(spec)` — the canonical serialization pair. Tests in `apps/playground/src/route-matrix.test.ts` verify round-trip stability for all routes.
 
 The inventory is cross-checked against the live renderer registries by `route-matrix.test.ts` so adding a new renderer without updating the inventory will be caught automatically.
+
+### Home Entry Registry
+
+The home page card list is a **pure derivation of the route registries** — it is never hand-maintained:
+
+- `apps/playground/src/home-cards.ts` exports `HOME_NAV_CARDS`: two aggregate cards (Component Lab covering `ALL_SHARED_RENDERER_ROUTES`, Complex Pages covering `COMPLEX_PAGE_ENTRIES`) plus one card per `DOMAIN_RENDERER_ROUTES` entry, using the registry entry's `title` / `eyebrow` / `description` verbatim.
+- `DomainRouteEntry.homeVisible: false` is the explicit opt-out for entries that deliberately stay off the home page (reference pages such as `leafer-examples`, or route entries whose demo page was removed, such as `dingtalk-flow-demo`). Absent flag defaults to home-visible.
+- `route-matrix.test.ts` pins the derivation with scoped drift guards: ① every domain entry without `homeVisible:false` must have a home card (and vice versa); ② the aggregate lab card exists (lab id coverage itself is pinned by the existing lab-registry invariants); ③ the aggregate showcase card exists and matches the complex-pages registry scale; ④ every home domain card round-trips through `parseRoute`/`buildRoute`.
+
+Adding a routable domain page therefore requires only registering it in `DOMAIN_RENDERER_ROUTES` (plus its App.tsx case); the home card, and the guard tests, follow automatically.
 
 ## Component Lab
 
@@ -155,6 +165,7 @@ Benefits:
 - live registry alignment: verifies `ALL_SHARED_RENDERER_ROUTES` covers every registered type in the basic/form/data registries
 - lab registry coverage: verifies every route entry has a corresponding `RENDERER_LAB_REGISTRY` component
 - domain inventory completeness: verifies the current domain pages remain registered
+- home entry registry drift guards: home cards must equal the registry derivation (`homeVisible` respected, no orphan cards, aggregate cards present, round-trip navigability)
 
 ## Related Documents
 

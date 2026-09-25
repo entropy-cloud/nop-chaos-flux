@@ -15,6 +15,8 @@ import {
   type RouteSpec,
 } from './route-model';
 import { RENDERER_LAB_REGISTRY } from './component-lab/renderer-lab-registry';
+import { HOME_NAV_CARDS } from './home-cards';
+import { COMPLEX_PAGE_ENTRIES } from './complex-pages/complex-pages-model';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '@nop-chaos/flux-renderers-form-advanced';
@@ -262,6 +264,62 @@ describe('Domain route inventory', () => {
         domainIds.has(pageId),
         `domain page '${pageId}' missing from domain route inventory`,
       ).toBe(true);
+    }
+  });
+});
+
+describe('Home entry registry - drift guards (missing-components L0.2)', () => {
+  const domainCards = HOME_NAV_CARDS.filter((card) => card.target.kind === 'domain');
+  const domainCardIds = new Set(domainCards.map((card) => card.id));
+
+  it('invariant 1: every domain entry without homeVisible:false has a home card', () => {
+    for (const entry of DOMAIN_RENDERER_ROUTES) {
+      if (entry.homeVisible === false) {
+        expect(
+          domainCardIds.has(entry.id),
+          `domain entry '${entry.id}' is homeVisible:false but appears on home`,
+        ).toBe(false);
+      } else {
+        expect(
+          domainCardIds.has(entry.id),
+          `domain entry '${entry.id}' missing from home cards — derive cards from the registry, never hand-maintain`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('invariant 1b: home domain cards never invent ids outside the domain registry', () => {
+    const registryIds = new Set(DOMAIN_RENDERER_ROUTES.map((r) => r.id));
+    for (const card of domainCards) {
+      expect(
+        registryIds.has(card.id),
+        `home card '${card.id}' has no matching domain registry entry`,
+      ).toBe(true);
+    }
+  });
+
+  it('invariant 2: aggregate lab card exists and lab ids stay covered by the lab registry', () => {
+    const labCard = HOME_NAV_CARDS.find((card) => card.id === 'component-lab');
+    expect(labCard, 'component-lab aggregate card missing from home cards').toBeDefined();
+    expect(labCard?.target).toEqual({ kind: 'lab' });
+    // 既有关键守卫保持：lab 路由清单 ↔ RENDERER_LAB_REGISTRY 双向覆盖见上方 describe 块。
+    expect(ALL_SHARED_RENDERER_ROUTES.length).toBeGreaterThan(0);
+  });
+
+  it('invariant 3: aggregate showcase card exists and matches the complex-pages registry scale', () => {
+    const showcaseCard = HOME_NAV_CARDS.find((card) => card.id === 'complex-pages');
+    expect(showcaseCard, 'complex-pages aggregate card missing from home cards').toBeDefined();
+    expect(showcaseCard?.target).toEqual({ kind: 'showcase' });
+    // 条目级双向覆盖由 complex-pages.test.tsx 守卫；此处钉住合并卡规模一致。
+    expect(showcaseCard?.eyebrow).toContain(`(${COMPLEX_PAGE_ENTRIES.length})`);
+    expect(COMPLEX_PAGE_ENTRIES.length).toBeGreaterThan(0);
+  });
+
+  it('invariant 4: every home domain card round-trips through the route model', () => {
+    for (const card of domainCards) {
+      if (card.target.kind !== 'domain') continue;
+      const hash = buildRoute({ kind: 'domain', domainId: card.target.domainId });
+      expect(parseRoute(hash)).toEqual({ kind: 'domain', domainId: card.target.domainId });
     }
   });
 });

@@ -36,21 +36,26 @@ test('playground entry page renders all nav cards', async ({ page }) => {
   await signIn(page);
   await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0, { timeout: 10000 });
 
-  const expectedEyebrows = [
-    'All Renderers',
-    'Core Renderers',
-    'Visual Workflow',
-    'TaskFlow',
-    'M1–M5 All Mobile',
-    'Spreadsheet + Metadata',
-    'DevTools',
-    'Form Control',
-    'CodeMirror 6',
-    'Document Template',
-    'Large Data Stress',
-  ];
-  for (const eyebrow of expectedEyebrows) {
-    await expect(page.locator('button', { hasText: eyebrow })).toBeVisible({ timeout: 3000 });
+  // plan 502 L0.1: home cards derive from DOMAIN_RENDERER_ROUTES (single source
+  // of truth) and are keyed by data-home-card — the full 78-card registry makes
+  // loose hasText matching ambiguous, so assert per-card id + registry eyebrow.
+  const expectedCards = [
+    ['component-lab', 'All Renderers'],
+    ['flux-basic', 'Core Renderers'],
+    ['flow-designer', 'Visual Workflow'],
+    ['taskflow-designer', 'TaskFlow'],
+    ['m5-showcase', 'All Mobile (M1–M5)'],
+    ['report-designer', 'Spreadsheet + Metadata'],
+    ['debugger-lab', 'DevTools'],
+    ['condition-builder', 'Form Control'],
+    ['code-editor', 'CodeMirror 6'],
+    ['word-editor', 'Document Template'],
+    ['performance-table', 'Large Data Stress'],
+  ] as const;
+  for (const [cardId, eyebrow] of expectedCards) {
+    const card = page.locator(`[data-home-card="${cardId}"]`);
+    await expect(card).toBeVisible({ timeout: 3000 });
+    await expect(card).toContainText(eyebrow);
   }
 
   const expectedTitles = [
@@ -58,7 +63,7 @@ test('playground entry page renders all nav cards', async ({ page }) => {
     'Flux Basic',
     'Flow Designer',
     'TaskFlow Designer',
-    'Mobile Showcase',
+    'Mobile Component Showcase',
     'Report Designer',
     'Debugger Lab',
     'Condition Builder',

@@ -179,13 +179,13 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
     case 'home':
       return (
         <HomePage
-          onNavigate={(pageId) => {
-            if (pageId === 'component-lab') {
+          onNavigate={(target) => {
+            if (target.kind === 'lab') {
               navigate({ kind: 'lab' });
-            } else if (pageId === 'complex-pages') {
+            } else if (target.kind === 'showcase') {
               navigate({ kind: 'showcase' });
             } else {
-              navigate({ kind: 'domain', domainId: pageId });
+              navigate({ kind: 'domain', domainId: target.domainId });
             }
           }}
         />

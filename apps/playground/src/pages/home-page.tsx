@@ -1,217 +1,14 @@
-type NavigationTarget =
-  | 'component-lab'
-  | 'complex-pages'
-  | 'flux-basic'
-  | 'flow-designer'
-  | 'gantt'
-  | 'kanban'
-  | 'scheduling-calendar'
-  | 'barcode-input'
-  | 'diff-view'
-  | 'graph-demo'
-  | 'taskflow-designer'
-  | 'report-designer'
-  | 'spreadsheet'
-  | 'debugger-lab'
-  | 'condition-builder'
-  | 'code-editor'
-  | 'word-editor'
-  | 'performance-table'
-  | 'scada-demo'
-  | 'three-canvas-demo'
-  | 'scada-pressure-demo'
-  | 'scada-edge-cases'
-  | 'm5-showcase'
-  | 'ai-widgets'
-  ;
+import { HOME_NAV_CARDS, type HomeNavigationTarget } from '../home-cards.js';
 import { Button } from '@nop-chaos/ui';
 
-interface NavCard {
-  id: NavigationTarget;
-  title: string;
-  eyebrow: string;
-  description: string;
-}
-
-const NAV_CARDS: NavCard[] = [
-  {
-    id: 'component-lab',
-    title: 'Component Lab',
-    eyebrow: 'All Renderers',
-    description:
-      'Route-backed gallery for every live Flux renderer. Left-side navigation, focused scenarios, and per-renderer verification.',
-  },
-  {
-    id: 'complex-pages',
-    title: 'Complex Pages',
-    eyebrow: 'Real-World Scenarios',
-    description:
-      'Real-world business page gallery: standard CRUD, tree-driven table, inline edit, advanced query, master-detail with multiple sub-tables, multi-step wizard, multi-fieldset linked form, and dashboard. Left category menu, right per-page demo.',
-  },
-  {
-    id: 'flux-basic',
-    title: 'Flux Basic',
-    eyebrow: 'Core Renderers',
-    description:
-      'Forms, actions, dialogs, tables, data binding, validation, API requests, and renderer fundamentals.',
-  },
-  {
-    id: 'flow-designer',
-    title: 'Flow Designer',
-    eyebrow: 'Visual Workflow',
-    description:
-      'DingTalk approval flow, action flow, and general workflow editors with toolbar, palette, inspector, and canvas.',
-  },
-  {
-    id: 'gantt',
-    title: 'Gantt Chart',
-    eyebrow: 'Scheduling',
-    description:
-      'Interactive Gantt chart with task grid, timeline, dependency links, drag-and-drop, zoom controls, and keyboard navigation.',
-  },
-  {
-    id: 'kanban',
-    title: 'Kanban Board',
-    eyebrow: 'Scheduling',
-    description:
-      'Interactive Kanban board with column and card rendering, cross-column drag-and-drop, column reorder, card filtering, and add/delete cards and columns.',
-  },
-  {
-    id: 'scheduling-calendar',
-    title: 'Calendar',
-    eyebrow: 'Scheduling',
-    description:
-      'Interactive Calendar with month/week/day views, drag-and-drop shift swapping, drag-to-create events, cross-day connectors, batch scheduling, and timezone selector.',
-  },
-  {
-    id: 'barcode-input',
-    title: 'Barcode Input',
-    eyebrow: 'Scheduling',
-    description:
-      'Barcode scanner input component with camera scan overlay, batch scan queue, torch control, and offline degradation.',
-  },
-  {
-    id: 'diff-view',
-    title: 'Diff View',
-    eyebrow: 'Scheduling',
-    description:
-      'Two-pane text diff comparison with split/unified views, syntax highlighting, inline diffs, hunk folding, and virtual scrolling.',
-  },
-  {
-    id: 'graph-demo',
-    title: 'Graph Viewer',
-    eyebrow: 'Graph',
-    description:
-      'Read-only interactive graph viewer: dagre hierarchy/flow layouts, node search, single-selection, zoom/pan/fit controls, and malformed-data degradation.',
-  },
-  {
-    id: 'taskflow-designer',
-    title: 'TaskFlow Designer',
-    eyebrow: 'TaskFlow',
-    description:
-      'TaskFlow visual designer with graph and tree modes, nop-task DSL export/import/inspector.',
-  },
-  {
-    id: 'report-designer',
-    title: 'Report Designer',
-    eyebrow: 'Spreadsheet + Metadata',
-    description:
-      'Report template page, field panel, inspector shell, namespaced actions, and report metadata bindings.',
-  },
-  {
-    id: 'spreadsheet',
-    title: 'Spreadsheet',
-    eyebrow: 'Spreadsheet Host',
-    description:
-      'Standalone spreadsheet host: virtual grid, cell editing, toolbar, freeze panes, selection, keyboard navigation, find/replace, undo.',
-  },
-  {
-    id: 'debugger-lab',
-    title: 'Debugger Lab',
-    eyebrow: 'DevTools',
-    description:
-      'Debugger API, event timeline, network trace, interaction diagnostics, and automation hooks.',
-  },
-  {
-    id: 'condition-builder',
-    title: 'Condition Builder',
-    eyebrow: 'Form Control',
-    description:
-      'Condition builder renderer: embedded/picker modes, AND/OR/NOT toggles, field search, nested groups, unique fields, custom operators.',
-  },
-  {
-    id: 'code-editor',
-    title: 'Code Editor',
-    eyebrow: 'CodeMirror 6',
-    description:
-      'Code editors for expression, SQL, JSON, JavaScript, CSS, HTML. Syntax highlighting, auto-completion, themes, line numbers, folding, and read-only mode.',
-  },
-  {
-    id: 'word-editor',
-    title: 'Word Editor',
-    eyebrow: 'Document Template',
-    description:
-      'Word-like document editor with canvas 2D rendering, template expressions, formatting toolbar, and paper settings.',
-  },
-  {
-    id: 'performance-table',
-    title: 'Performance Table',
-    eyebrow: 'Large Data Stress',
-    description:
-      'Same-environment comparative measurement page for a 1000-row paged table baseline plus nested loop cards, aggregate formulas, scope-backed selection/pagination, and many mounted editable controls.',
-  },
-  {
-    id: 'scada-demo',
-    title: 'Scada Demo',
-    eyebrow: 'Industrial HMI',
-    description:
-      'I13.1 工艺流程组态演示：设备图元 + 管道 + 仪表，点表模拟数据定时刷新（双轨），单击设备弹出详情，双击跳转，按钮触发数据请求。',
-  },
-  {
-    id: 'three-canvas-demo',
-    title: 'Three Canvas Demo',
-    eyebrow: '3D Rendering',
-    description:
-      'plan 469 three-canvas 演示：声明式图元 + 表达式绑定（tween/range/condition）+ 循环关键帧 + 对象点击，10Hz 模拟数据驱动绑定热路径。',
-  },
-  {
-    id: 'scada-pressure-demo',
-    title: 'Scada Pressure Demo',
-    eyebrow: 'Industrial HMI',
-    description:
-      'I13.2 大屏/复杂组态示例：万级（10k）图元压力画面 + 多画面切换（工艺流程大屏 / 高密度压力画面），程序化生成、固定随机种子。',
-  },
-  {
-    id: 'scada-edge-cases',
-    title: 'Scada Edge Cases',
-    eyebrow: 'Industrial HMI',
-    description:
-      'I15.1 边界用例测试页：最小合法 config / 空画面 / 非法 JSON（empty region + onError）/ 线多边形 hover 覆盖物验证，e2e 程序化断言入口。',
-  },
-  {
-    id: 'm5-showcase',
-    title: 'Mobile Showcase',
-    eyebrow: 'M1–M5 All Mobile',
-    description:
-      'Comprehensive mobile component showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers.',
-  },
-  {
-    id: 'ai-widgets',
-    title: 'AI Widgets',
-    eyebrow: 'AI Renderers',
-    description:
-      'Comprehensive showcase of all AI widget renderers: ai-welcome, ai-bubble, ai-sender, ai-prompts, ai-feedback, ai-tool-call, ai-attachments, ai-citations, ai-voice-input, ai-token-usage, and ai-suggestions.',
-  },
-];
-
 interface HomePageProps {
-  onNavigate: (page: NavigationTarget) => void;
+  onNavigate: (target: HomeNavigationTarget) => void;
 }
 
 export function HomePage({ onNavigate }: HomePageProps) {
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <section className="max-w-[860px] text-center p-10 rounded-3xl bg-[var(--nop-hero-bg)] border border-[var(--nop-hero-border)] shadow-[var(--nop-hero-shadow)]">
+    <main className="min-h-screen flex items-start justify-center p-6">
+      <section className="max-w-[1180px] w-full text-center p-10 rounded-3xl bg-[var(--nop-hero-bg)] border border-[var(--nop-hero-border)] shadow-[var(--nop-hero-shadow)]">
         <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">
           NOP Chaos Flux
         </p>
@@ -220,14 +17,15 @@ export function HomePage({ onNavigate }: HomePageProps) {
           Select a testing scenario below. Each page isolates a specific area of the framework for
           focused development and debugging.
         </p>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mt-6">
-          {NAV_CARDS.map((card) => (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 mt-6 text-left">
+          {HOME_NAV_CARDS.map((card) => (
             <Button
               key={card.id}
               type="button"
               variant="ghost"
+              data-home-card={card.id}
               className="group relative flex h-auto w-full flex-col items-start overflow-hidden rounded-[20px] border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] p-6 text-left whitespace-normal cursor-pointer justify-start gap-0 ring-0 transition-[transform,box-shadow,border-color] duration-160 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:shadow-[var(--nop-nav-shadow)] hover:border-[var(--nop-nav-hover-border)]"
-              onClick={() => onNavigate(card.id)}
+              onClick={() => onNavigate(card.target)}
             >
               <p className="mb-2 uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-accent-muted)]">
                 {card.eyebrow}

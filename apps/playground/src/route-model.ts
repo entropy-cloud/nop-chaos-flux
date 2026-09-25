@@ -32,6 +32,8 @@ export interface DomainRouteEntry {
   title: string;
   description: string;
   eyebrow: string;
+  /** 刻意不进首页卡片的条目（如参考页、已下线演示页）；缺省视为首页可见。 */
+  homeVisible?: boolean;
 }
 
 export const ALL_SHARED_RENDERER_ROUTES: RendererRouteEntry[] = [

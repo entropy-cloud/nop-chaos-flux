@@ -12,7 +12,8 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     id: 'flow-designer',
     title: 'Flow Designer',
     eyebrow: 'Visual Workflow',
-    description: 'designer-page, toolbar, inspector, canvas, node palette, edge connections.',
+    description:
+      'DingTalk approval flow, action flow, and general workflow editors with toolbar, palette, inspector, and canvas.',
   },
   {
     id: 'gantt',
@@ -43,7 +44,7 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     id: 'barcode-input',
     title: 'Barcode Input',
     eyebrow: 'Scheduling',
-    description: 'Barcode scanner input with camera scan overlay, batch queue, torch control, and offline degradation.',
+    description: 'Barcode scanner input component with camera scan overlay, batch scan queue, torch control, and offline degradation.',
   },
   {
     id: 'diff-view',
@@ -55,7 +56,7 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     id: 'graph-demo',
     title: 'Graph Viewer',
     eyebrow: 'Graph',
-    description: 'Read-only interactive graph viewer: dagre hierarchy/flow layouts, node search, single-selection, zoom/pan/fit controls, malformed-data degradation.',
+    description: 'Read-only interactive graph viewer: dagre hierarchy/flow layouts, node search, single-selection, zoom/pan/fit controls, and malformed-data degradation.',
   },
   {
     id: 'map-demo',
@@ -79,13 +80,14 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     id: 'taskflow-designer',
     title: 'TaskFlow Designer',
     eyebrow: 'TaskFlow',
-    description: 'TaskFlow visual designer with graph and tree modes, nop-task DSL round-trip.',
+    description: 'TaskFlow visual designer with graph and tree modes, nop-task DSL export/import/inspector round-trip.',
   },
   {
     id: 'report-designer',
     title: 'Report Designer',
     eyebrow: 'Spreadsheet + Metadata',
-    description: 'report-designer-page, field panel, inspector shell, toolbar, spreadsheet canvas.',
+    description:
+      'Report template page, field panel, inspector shell, namespaced actions, and report metadata bindings.',
   },
   {
     id: 'report-designer-host',
@@ -97,19 +99,22 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     id: 'spreadsheet',
     title: 'Spreadsheet',
     eyebrow: 'Spreadsheet Host',
-    description: 'standalone spreadsheet host: grid, cell editing, toolbar, freeze, selection, keyboard navigation, find/replace, undo.',
+    description:
+      'Standalone spreadsheet host: virtual grid, cell editing, toolbar, freeze panes, selection, keyboard navigation, find/replace, undo.',
   },
   {
     id: 'debugger-lab',
     title: 'Debugger Lab',
     eyebrow: 'DevTools',
-    description: 'Debugger API, event timeline, network trace, and automation hooks.',
+    description:
+      'Debugger API, event timeline, network trace, interaction diagnostics, and automation hooks.',
   },
   {
     id: 'condition-builder',
     title: 'Condition Builder',
     eyebrow: 'Form Control',
-    description: 'Standalone condition-builder renderer with embedded and picker modes.',
+    description:
+      'Condition builder renderer: embedded/picker modes, AND/OR/NOT toggles, field search, nested groups, unique fields, custom operators.',
   },
   {
     id: 'condition-builder-formula',
@@ -122,20 +127,22 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     id: 'code-editor',
     title: 'Code Editor',
     eyebrow: 'CodeMirror 6',
-    description: 'Code editors for expression, SQL, JSON, JavaScript, CSS, HTML.',
+    description:
+      'Code editors for expression, SQL, JSON, JavaScript, CSS, HTML. Syntax highlighting, auto-completion, themes, line numbers, folding, and read-only mode.',
   },
   {
     id: 'word-editor',
     title: 'Word Editor',
     eyebrow: 'Document Template',
-    description: 'Word-like editor with canvas 2D rendering and template expressions.',
+    description:
+      'Word-like document editor with canvas 2D rendering, template expressions, formatting toolbar, and paper settings.',
   },
   {
     id: 'performance-table',
     title: 'Performance Table',
     eyebrow: 'Large Data Stress',
     description:
-      'Same-environment comparative page for a 1000-row paged table baseline plus aggregate, loop, selection, pagination, and editable-form stress scenarios.',
+      'Same-environment comparative measurement page for a 1000-row paged table baseline plus nested loop cards, aggregate formulas, scope-backed selection/pagination, and many mounted editable controls.',
   },
   {
     id: 'component-handles',
@@ -466,6 +473,8 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     title: 'DingTalk Flow Demo',
     eyebrow: 'Style Prototype',
     description: 'Static DingTalk approval flow visual reference with interactive node insertion.',
+    // 演示页已删（plan 2026-08-07-1053-2），路由暂存、直达 fallback 回首页；存量条目清理归 QA.7 残余债登记册。
+    homeVisible: false,
   },
   {
     id: 'scada-demo',
@@ -521,6 +530,8 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     title: 'LeaferJS Examples',
     eyebrow: 'Reference',
     description:
-      'I17.3 LeaferJS 官方基础示例对照页（不进 home 卡片）：创建 Leafer/App + 基础元素 + animate 动画 + Group + 视口缩放/平移，团队学习 + 编辑器 mission 决策对照 + v3 升级回归基线。',
+      'I17.3 LeaferJS 官方基础示例对照页：创建 Leafer/App + 基础元素 + animate 动画 + Group + 视口缩放/平移，团队学习 + 编辑器 mission 决策对照 + v3 升级回归基线。',
+    // 原卡片注释「不进 home 卡片」：团队学习参考页，非产品演示面。
+    homeVisible: false,
   },
 ];

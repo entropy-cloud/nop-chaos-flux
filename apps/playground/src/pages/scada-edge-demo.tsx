@@ -11,7 +11,7 @@ import { Button } from '@nop-chaos/ui';
 //
 // 挂载载体裁定（I15 plan Phase 1 Decision `edge-case-carrier`）：
 //   - 空画面/非法 JSON 新增独立测试页（对齐 scada-perf-scale 独立页先例：route-model
-//     DOMAIN_RENDERER_ROUTES + App switch + pages/index + home-page NAV_CARDS），不扩展既有演示页；
+//     DOMAIN_RENDERER_ROUTES + App switch + pages/index + home-cards 注册表派生），不扩展既有演示页；
 //   - 超大画面复用既有载体（10k pressure / 100k perf-scale），不新增重复载体；
 //   - 非矩形图元（线/多边形）hover 覆盖物验证同页承载（m-C 兜底语义，gate-4 §6:173-174）。
 //
