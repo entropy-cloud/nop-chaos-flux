@@ -62,3 +62,14 @@ export interface UserSelectSchema extends OrgSelectSchema {
 export interface DepartmentSelectSchema extends OrgSelectSchema {
   type: 'department-select';
 }
+
+/**
+ * Region cascade picker (missing-components L2.2, plan 506). Narrowed org
+ * family contract: cascade browsing only — no search, no multi-select
+ * (v1 Non-Goals). All levels selectable by default (protocol §3: region
+ * defaults to every level selectable); `selectableTypes` may narrow.
+ */
+export interface InputCitySchema
+  extends Omit<OrgSelectSchema, 'sourceSearch' | 'multiple' | 'searchable' | 'searchMergeMode'> {
+  type: 'input-city';
+}

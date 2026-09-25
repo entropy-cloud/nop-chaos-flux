@@ -200,3 +200,20 @@ export const orgSelectSpecificContracts: Record<string, RendererPropContract> = 
     description: 'Injected into every request scope; string values are form-scope expressions. Keys override protocol vars.',
   },
 };
+
+/**
+ * input-city (plan 506) narrows the org family contract: search / multiple /
+ * searchable / searchMergeMode do not exist on the type (Omit in
+ * `InputCitySchema`) — the authored-props contract face must exclude them
+ * too, or designers could author no-op fields.
+ */
+const {
+  multiple: _multiple,
+  searchable: _searchable,
+  searchMergeMode: _searchMergeMode,
+  sourceSearch: _sourceSearch,
+  ...inputCityNarrowed
+} = orgSelectSpecificContracts;
+
+export const inputCitySpecificContracts: Record<string, RendererPropContract> = inputCityNarrowed;
+

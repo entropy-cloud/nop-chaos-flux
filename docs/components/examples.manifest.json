@@ -71,7 +71,8 @@
     "rating",
     "input-color",
     "user-select",
-    "department-select"
+    "department-select",
+    "input-city"
   ],
   "targetContract": [
     "alert",

@@ -1,0 +1,24 @@
+{
+  "type": "input-city",
+  "name": "region",
+  "label": "所在地区",
+  "clearable": true,
+  "sourceChildren": {
+    "action": "ajax",
+    "args": {
+      "url": "/api/region/children",
+      "params": {
+        "orgNodeId": "${orgNodeId}",
+        "orgDepth": "${orgDepth}",
+        "orgPage": "${orgPage}",
+        "orgPageSize": "${orgPageSize}"
+      }
+    }
+  },
+  "sourceResolve": {
+    "action": "ajax",
+    "args": { "url": "/api/region/resolve", "params": { "orgValues": "${orgValues}" } }
+  },
+  "extraParams": { "dataset": "china-2026" },
+  "description": "按协议消费 org 数据源：省市区三级级联（orgDepth 分级），全层级可选"
+}

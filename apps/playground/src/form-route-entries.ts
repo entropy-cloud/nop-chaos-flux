@@ -344,4 +344,11 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     sourcePackage: '@nop-chaos/flux-renderers-form',
     description: 'Org department picker over the org data-source protocol: lazy tree with empty-page termination.',
   },
+  {
+    id: 'input-city',
+    title: 'Input City',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Region cascade picker over the org data-source protocol: lazy province/city/district columns with a mobile wheel branch.',
+  },
 ];
