@@ -217,3 +217,33 @@ const {
 
 export const inputCitySpecificContracts: Record<string, RendererPropContract> = inputCityNarrowed;
 
+
+export const signatureSpecificContracts: Record<string, RendererPropContract> = {
+  penColor: {
+    displayName: 'Pen Color',
+    shape: { kind: 'string' },
+    description: 'Stroke color (CSS color string).',
+    defaultValue: '#1f2937',
+  },
+  penWidth: {
+    displayName: 'Pen Width',
+    shape: { kind: 'number' },
+    editorType: 'number',
+    description: 'Stroke width in CSS pixels (> 0, falls back to 2).',
+    defaultValue: 2,
+  },
+  height: {
+    displayName: 'Height',
+    shape: { kind: 'number' },
+    editorType: 'number',
+    description: 'Canvas height in CSS pixels (> 0, falls back to 160).',
+    defaultValue: 160,
+  },
+  backgroundColor: {
+    displayName: 'Background',
+    shape: { kind: 'string' },
+    description: 'Canvas background rendered under the strokes and exported into the PNG.',
+    defaultValue: '#ffffff',
+  },
+  clearable: { displayName: 'Clearable', shape: { kind: 'boolean' } },
+};

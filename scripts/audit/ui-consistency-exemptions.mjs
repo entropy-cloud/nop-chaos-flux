@@ -21,6 +21,18 @@ export const EXEMPTIONS = [
     source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
   },
   {
+    path: 'packages/flux-renderers-form/src/renderers/signature-renderer.tsx',
+    rule: 'hardcoded-literal-color',
+    reason: 'plan 507 input-signature 笔色/画布底色的功能性默认值（penColor/backgroundColor 是组件的值域 prop，字面色即契约本身，无 token 替代）',
+    source: 'missing-components L2.3 plan 507 Closure（2026-09-25）；exemption governance 先例：check:oversized-code-files OVERSIZED_EXEMPTIONS',
+  },
+  {
+    path: 'packages/flux-renderers-form/src/renderers/input-contracts.ts',
+    rule: 'hardcoded-literal-color',
+    reason: 'plan 507 signatureSpecificContracts penColor/backgroundColor defaultValue 字面色（同上，prop 契约默认值即功能契约）',
+    source: 'missing-components L2.3 plan 507 Closure（2026-09-25）；exemption governance 先例：check:oversized-code-files OVERSIZED_EXEMPTIONS',
+  },
+  {
     path: 'packages/flux-renderers-scheduling/src/calendar/calendar.css',
     rule: 'hardcoded-literal-color',
     reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',

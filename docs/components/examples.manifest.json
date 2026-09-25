@@ -72,7 +72,8 @@
     "input-color",
     "user-select",
     "department-select",
-    "input-city"
+    "input-city",
+    "input-signature"
   ],
   "targetContract": [
     "alert",

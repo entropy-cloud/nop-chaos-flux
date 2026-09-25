@@ -128,3 +128,4 @@ export { InputColorLabPage } from './input-color-lab-page';
 export { UserSelectLabPage } from './user-select-lab-page';
 export { DepartmentSelectLabPage } from './department-select-lab-page';
 export { RegionLabPage } from './region-lab-page';
+export { SignatureLabPage } from './signature-lab-page';

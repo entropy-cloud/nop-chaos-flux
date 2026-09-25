@@ -345,6 +345,13 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Org department picker over the org data-source protocol: lazy tree with empty-page termination.',
   },
   {
+    id: 'input-signature',
+    title: 'Input Signature',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Handwritten signature canvas: pointer-event strokes, per-stroke undo, PNG dataURL value.',
+  },
+  {
     id: 'input-city',
     title: 'Input City',
     category: 'form',

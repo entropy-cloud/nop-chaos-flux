@@ -1,0 +1,11 @@
+{
+  "type": "input-signature",
+  "name": "signature",
+  "label": "签名",
+  "penColor": "#1f2937",
+  "penWidth": 2,
+  "height": 160,
+  "backgroundColor": "#ffffff",
+  "clearable": true,
+  "description": "手写签名画布：指针绘制 + 逐笔画撤销，值 = PNG dataURL（零笔画 ⇔ 空）"
+}

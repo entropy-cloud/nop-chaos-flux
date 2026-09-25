@@ -484,6 +484,8 @@ export interface InputColorSchema extends BoundFieldSchemaBase {
   hiddenFieldPolicy?: HiddenFieldPolicy;
 }
 
+export { type InputSignatureSchema } from './schemas-signature.js';
+
 export {
   type DepartmentSelectSchema,
   type OrgNode,
