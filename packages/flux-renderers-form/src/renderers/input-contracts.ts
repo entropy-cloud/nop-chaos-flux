@@ -100,3 +100,55 @@ export const inputNumberSpecificContracts: Record<string, RendererPropContract> 
     defaultValue: 'round',
   },
 };
+
+export const sliderSpecificContracts: Record<string, RendererPropContract> = {
+  min: {
+    displayName: 'Min',
+    shape: { kind: 'number' },
+    editorType: 'number',
+    defaultValue: 0,
+  },
+  max: {
+    displayName: 'Max',
+    shape: { kind: 'number' },
+    editorType: 'number',
+    defaultValue: 100,
+  },
+  step: {
+    displayName: 'Step',
+    shape: { kind: 'number' },
+    description: 'Drag increment; must be > 0 (falls back to 1).',
+    editorType: 'number',
+    defaultValue: 1,
+  },
+};
+
+export const ratingSpecificContracts: Record<string, RendererPropContract> = {
+  count: {
+    displayName: 'Count',
+    shape: { kind: 'number' },
+    description: 'Star count (clamped to >= 1).',
+    editorType: 'number',
+    defaultValue: 5,
+  },
+  allowHalf: { displayName: 'Allow Half', shape: { kind: 'boolean' } },
+  allowClear: { displayName: 'Allow Clear', shape: { kind: 'boolean' } },
+};
+
+export const inputColorSpecificContracts: Record<string, RendererPropContract> = {
+  valueFormat: {
+    displayName: 'Value Format',
+    shape: {
+      kind: 'union',
+      anyOf: [{ kind: 'literal', value: 'hex' }, { kind: 'literal', value: 'rgba' }],
+    },
+    description: 'Commit format: hex (alpha dropped) or alpha-preserving string.',
+    editorType: 'select',
+    defaultValue: 'hex',
+  },
+  presetColors: {
+    displayName: 'Preset Colors',
+    shape: { kind: 'array', item: { kind: 'string' } },
+    description: 'Preset swatches (hex/rgba strings) shown above the input.',
+  },
+};

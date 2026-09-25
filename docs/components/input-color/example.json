@@ -1,0 +1,8 @@
+{
+  "type": "input-color",
+  "name": "accent",
+  "label": "主题色",
+  "valueFormat": "rgba",
+  "value": "rgba(37, 99, 235, 1)",
+  "presetColors": ["#0f172a", "#dc2626", "#16a34a", "#2563eb", "#7c3aed"]
+}

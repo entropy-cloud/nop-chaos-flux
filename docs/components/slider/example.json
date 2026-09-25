@@ -1,0 +1,10 @@
+{
+  "type": "slider",
+  "name": "volume",
+  "label": "音量",
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "value": 40,
+  "description": "拖动滑块选择数值"
+}

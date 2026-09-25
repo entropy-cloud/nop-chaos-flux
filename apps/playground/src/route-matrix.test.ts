@@ -15,7 +15,7 @@ import {
   type RouteSpec,
 } from './route-model';
 import { RENDERER_LAB_REGISTRY } from './component-lab/renderer-lab-registry';
-import { HOME_NAV_CARDS } from './home-cards';
+import { HOME_NAV_CARDS, type HomeNavCard } from './home-cards';
 import { COMPLEX_PAGE_ENTRIES } from './complex-pages/complex-pages-model';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -269,7 +269,10 @@ describe('Domain route inventory', () => {
 });
 
 describe('Home entry registry - drift guards (missing-components L0.2)', () => {
-  const domainCards = HOME_NAV_CARDS.filter((card) => card.target.kind === 'domain');
+  const domainCards = HOME_NAV_CARDS.filter(
+    (card): card is HomeNavCard & { target: { kind: 'domain'; domainId: string } } =>
+      card.target.kind === 'domain',
+  );
   const domainCardIds = new Set(domainCards.map((card) => card.id));
 
   it('invariant 1: every domain entry without homeVisible:false has a home card', () => {
@@ -298,6 +301,17 @@ describe('Home entry registry - drift guards (missing-components L0.2)', () => {
     }
   });
 
+  it('invariant 1c: aggregate card ids never collide with domain registry ids', () => {
+    const registryIds = new Set(DOMAIN_RENDERER_ROUTES.map((r) => r.id));
+    const aggregateIds = HOME_NAV_CARDS.filter((c) => c.target.kind !== 'domain').map((c) => c.id);
+    for (const id of aggregateIds) {
+      expect(
+        registryIds.has(id),
+        `aggregate card id '${id}' collides with a domain registry id (duplicate keys/selectors)`,
+      ).toBe(false);
+    }
+  });
+
   it('invariant 2: aggregate lab card exists and lab ids stay covered by the lab registry', () => {
     const labCard = HOME_NAV_CARDS.find((card) => card.id === 'component-lab');
     expect(labCard, 'component-lab aggregate card missing from home cards').toBeDefined();
@@ -317,7 +331,6 @@ describe('Home entry registry - drift guards (missing-components L0.2)', () => {
 
   it('invariant 4: every home domain card round-trips through the route model', () => {
     for (const card of domainCards) {
-      if (card.target.kind !== 'domain') continue;
       const hash = buildRoute({ kind: 'domain', domainId: card.target.domainId });
       expect(parseRoute(hash)).toEqual({ kind: 'domain', domainId: card.target.domainId });
     }

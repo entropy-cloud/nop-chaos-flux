@@ -856,6 +856,26 @@ All schema types are re-exported from the package barrel via `schemas.ts`.
 
 ---
 
+## Form Package — @nop-chaos/flux-renderers-form（missing-components L1 atoms）
+
+### Component Registration（form atoms）
+
+```ts
+import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
+// formRendererDefinitions aggregates form/fieldset/hidden + inputs + dates +
+// markdown-editor + formAtomsRendererDefinitions (slider / rating / input-color).
+```
+
+### Schema Types（form atoms, plan 503）
+
+| Schema            | Import path                                        | Core fields                                        |
+| ----------------- | -------------------------------------------------- | -------------------------------------------------- |
+| `SliderSchema`    | `flux-renderers-form/src/schemas`                  | `min`/`max`/`step`（≤0 回退 1）                    |
+| `RatingSchema`    | `flux-renderers-form/src/schemas`                  | `count`（≥1，默认 5）/`allowHalf`/`allowClear`      |
+| `InputColorSchema`| `flux-renderers-form/src/schemas`                  | `valueFormat`（'hex'\|'rgba'）/`presetColors`       |
+
+All three are `BoundFieldSchemaBase` scalar fields (name/label/readOnly/required/validate/hiddenFieldPolicy shared), registered in `renderers/form-atoms-renderer-definitions.ts`, and exposed as `component:clear/reset/focus` handles.
+
 ## Industrial Package — @nop-chaos/flux-renderers-industrial
 
 ### Component Registration

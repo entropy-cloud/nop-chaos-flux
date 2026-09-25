@@ -136,6 +136,9 @@ The canonicalization rules below explain why the same AMIS source type may appea
 | `radio-group`    | radio-group field                | `radio`, `radios`                                                        | `runtime` | `docs/components/radio-group/design.md`    | landed              |
 | `checkbox-group` | checkbox-group field             | `checkboxes`, `matrix-checkboxes`                                        | `runtime` | `docs/components/checkbox-group/design.md` | landed              |
 | `switch`         | switch field                     | `switch`                                                                 | `runtime` | `docs/components/switch/design.md`         | landed              |
+| `slider`         | slider field                     | `slider`（missing-components L1 flip，2026-09-25）                       | `runtime` | `docs/components/slider/design.md`         | landed              |
+| `rating`         | rating field                     | `rating`（missing-components L1 flip，2026-09-25）                       | `runtime` | `docs/components/rating/design.md`         | landed              |
+| `input-color`    | color picker field               | `input-color`（missing-components L1 flip，2026-09-25）                  | `runtime` | `docs/components/input-color/design.md`    | landed              |
 | `input-tree`     | tree field                       | `input-tree`                                                             | `runtime` | `docs/components/input-tree/design.md`     | landed              |
 | `tree-select`    | popup tree field                 | `tree-select`, `nested-select`, `chained-select`                         | `runtime` | `docs/components/tree-select/design.md`    | landed              |
 | `tag-list`       | lightweight tag collection field | no direct single AMIS top-level type; absorbs tag-list-like field scenes | `runtime` | `docs/components/tag-list/design.md`       | landed              |
@@ -269,29 +272,26 @@ Notes:
 
 ### 5. Low-Value, Host-Coupled, Security-Sensitive, Or Deferred Optional Types
 
-| AMIS type         | Why not retained in the current canonical baseline                                                                     | Replacement or note                     |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| `slider`          | keep out of the retained AMIS baseline until a dedicated `input-slider` contract is justified                          | future optional field                   |
-| `input-range`     | keep out of the retained AMIS baseline until a dedicated `input-slider` or range field contract is justified           | future optional field                   |
-| `rating`          | optional field, not part of the retained baseline                                                                      | future optional field                   |
-| `avatar`          | easy to express with existing image/badge composition; no strong owner boundary yet                                    | `image` / composition                   |
-| `color`           | color chip display is too small to justify a canonical owner now                                                       | text/badge decoration                   |
-| `input-color`     | optional field, not part of the retained baseline                                                                      | future optional field                   |
-| `uuid`            | generation behavior belongs to defaults/actions, not a top-level field type                                            | `input-text` + generated default/action |
-| `icon-picker`     | optional picker variant, not part of the retained baseline                                                             | `select` / future optional field        |
-| `location-picker` | heavy map SDK coupling                                                                                                 | future optional integration             |
-| `input-city`      | location dataset coupling                                                                                              | future optional integration             |
-| `input-signature` | specialized device/canvas behavior                                                                                     | future optional integration             |
-| `calendar`        | optional specialized surface, not part of the retained baseline                                                        | future optional family                  |
-| `nav`             | host navigation and IA coupling is too strong for the retained baseline                                                | future navigation family                |
-| `anchor-nav`      | host navigation and anchor coupling is too strong for the retained baseline                                            | future navigation family                |
-| `portlet`         | host dashboard shell coupling is too strong for the retained baseline                                                  | future optional family                  |
-| `tasks`           | business-specific and narrow                                                                                           | future domain renderer if needed        |
-| `remark`          | better modeled as metadata or tooltip/description behavior                                                             | metadata / field chrome                 |
-| `tooltip-wrapper` | better modeled as metadata or decorator behavior                                                                       | metadata / wrapper behavior             |
-| `sparkline`       | small-chart specialization should stay under the chart family if needed                                                | `chart`                                 |
-| `iframe`          | security and host embedding policy make it a poor retained baseline component                                          | host-specific optional integration      |
-| `hidden`          | hidden-field behavior belongs to field metadata and validation/submit policy, not a standalone visible renderer family | hidden-field policy on normal fields    |
+| AMIS type         | Why not retained in the current canonical baseline                                                                                                 | Replacement or note                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `input-range`     | keep out of the retained AMIS baseline until a dedicated `input-slider` or range field contract is justified                                       | future optional field                   |
+| `avatar`          | easy to express with existing image/badge composition; no strong owner boundary yet                                                                | `image` / composition                   |
+| `color`           | color chip display is too small to justify a canonical owner now (display 行 ≠ `input-color` form 行，后者经 missing-components L1 翻入 Form Core) | text/badge decoration                   |
+| `uuid`            | generation behavior belongs to defaults/actions, not a top-level field type                                                                        | `input-text` + generated default/action |
+| `icon-picker`     | optional picker variant, not part of the retained baseline                                                                                         | `select` / future optional field        |
+| `location-picker` | heavy map SDK coupling                                                                                                                             | future optional integration             |
+| `input-city`      | location dataset coupling                                                                                                                          | future optional integration             |
+| `input-signature` | specialized device/canvas behavior                                                                                                                 | future optional integration             |
+| `calendar`        | optional specialized surface, not part of the retained baseline                                                                                    | future optional family                  |
+| `nav`             | host navigation and IA coupling is too strong for the retained baseline                                                                            | future navigation family                |
+| `anchor-nav`      | host navigation and anchor coupling is too strong for the retained baseline                                                                        | future navigation family                |
+| `portlet`         | host dashboard shell coupling is too strong for the retained baseline                                                                              | future optional family                  |
+| `tasks`           | business-specific and narrow                                                                                                                       | future domain renderer if needed        |
+| `remark`          | better modeled as metadata or tooltip/description behavior                                                                                         | metadata / field chrome                 |
+| `tooltip-wrapper` | better modeled as metadata or decorator behavior                                                                                                   | metadata / wrapper behavior             |
+| `sparkline`       | small-chart specialization should stay under the chart family if needed                                                                            | `chart`                                 |
+| `iframe`          | security and host embedding policy make it a poor retained baseline component                                                                      | host-specific optional integration      |
+| `hidden`          | hidden-field behavior belongs to field metadata and validation/submit policy, not a standalone visible renderer family                             | hidden-field policy on normal fields    |
 
 ### Not-Retained Boundary: `iframe` (L16 裁定)
 

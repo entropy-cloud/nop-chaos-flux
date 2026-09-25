@@ -33,6 +33,8 @@ export const zhCN: Resource = {
       noData: '暂无数据',
       validating: '验证中...',
       increase: '增加',
+      ratingAriaLabel: '评分',
+      colorPickerAriaLabel: '颜色选择器',
       decrease: '减少',
       showPassword: '显示密码',
       hidePassword: '隐藏密码',

@@ -122,3 +122,6 @@ export { GanttLabPage } from './gantt-lab-page';
 export { KanbanLabPage } from './kanban-lab-page';
 export { CalendarLabPage } from './calendar-lab-page';
 export { BarcodeInputLabPage } from './barcode-input-lab-page';
+export { SliderLabPage } from './slider-lab-page';
+export { RatingLabPage } from './rating-lab-page';
+export { InputColorLabPage } from './input-color-lab-page';

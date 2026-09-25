@@ -42,6 +42,27 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Numeric input with min/max, precision, stepper, and prefix/suffix support.',
   },
   {
+    id: 'slider',
+    title: 'Slider',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Slider field with min/max/step contracts, keyboard stepping, and disabled presentation.',
+  },
+  {
+    id: 'rating',
+    title: 'Rating',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Star rating field with count/allowHalf/allowClear contracts and read-only state.',
+  },
+  {
+    id: 'input-color',
+    title: 'Input Color',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Color picker field with preset swatches, hex/rgba valueFormat normalization, and read-only state.',
+  },
+  {
     id: 'input-date',
     title: 'Input Date',
     category: 'form',

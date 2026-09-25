@@ -1,0 +1,9 @@
+{
+  "type": "rating",
+  "name": "satisfaction",
+  "label": "满意度",
+  "count": 5,
+  "allowHalf": true,
+  "allowClear": true,
+  "value": 3.5
+}

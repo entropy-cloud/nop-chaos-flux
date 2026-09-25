@@ -435,3 +435,51 @@ export interface MarkdownEditorSchema extends BoundFieldSchemaBase {
   /** Show the markdown syntax toolbar. Defaults to `true`. */
   toolbar?: boolean;
 }
+
+/**
+ * Missing-components L1 form atoms (plan 503): slider / rating / input-color.
+ * All three are scalar bound fields reusing the shared bound-field base
+ * (name/label/readOnly/required/…) and the shared validate/hiddenFieldPolicy
+ * contract; type names follow the amis-baseline-matrix L1 flip (2026-09-25).
+ */
+export interface SliderSchema extends BoundFieldSchemaBase {
+  type: 'slider';
+  min?: number;
+  max?: number;
+  /** Strictly positive; `<= 0` falls back to `1` at runtime. */
+  step?: number;
+  validate?: {
+    action?: ActionSchema;
+    debounce?: number;
+    message?: string;
+  };
+  hiddenFieldPolicy?: HiddenFieldPolicy;
+}
+
+export interface RatingSchema extends BoundFieldSchemaBase {
+  type: 'rating';
+  /** Star count. Defaults to `5`; clamped to `>= 1`. */
+  count?: number;
+  allowHalf?: boolean;
+  allowClear?: boolean;
+  validate?: {
+    action?: ActionSchema;
+    debounce?: number;
+    message?: string;
+  };
+  hiddenFieldPolicy?: HiddenFieldPolicy;
+}
+
+export interface InputColorSchema extends BoundFieldSchemaBase {
+  type: 'input-color';
+  /** Commit format: `#rrggbb` (default, alpha dropped) or `rgba(r, g, b, a)`. Named `valueFormat` (date-family precedent) because `BoundFieldSchemaBase.format` is value validation. */
+  valueFormat?: 'hex' | 'rgba';
+  /** Preset swatches shown above the free-form input (hex/rgba strings). */
+  presetColors?: string[];
+  validate?: {
+    action?: ActionSchema;
+    debounce?: number;
+    message?: string;
+  };
+  hiddenFieldPolicy?: HiddenFieldPolicy;
+}

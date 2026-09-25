@@ -32,6 +32,8 @@ export const enUS: Resource = {
       noData: 'No Data',
       validating: 'Validating...',
       increase: 'Increase',
+      ratingAriaLabel: 'Rating',
+      colorPickerAriaLabel: 'Color picker',
       decrease: 'Decrease',
       showPassword: 'Show password',
       hidePassword: 'Hide password',

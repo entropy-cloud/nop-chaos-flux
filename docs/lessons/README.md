@@ -60,6 +60,7 @@ Each note should include the sections that best fit the case. Common sections ar
 - [09 Host 大面审计模板方法：18 维降维 + H1–H7 + 每面 ≥1 真实浏览器宿主场景](09-host-surface-audit-template-and-host-scene-discipline.md)
 - [10 模式族回扫方法 + 门禁盲区教训：扫描器正则覆盖范围必须含 host 包](10-pattern-family-rescan-scan-scope-must-cover-host-packages.md)
 - [11 扫描器假阳性盲区类：注释/字符串剥离 + 命中面校准（全绿输出仍可能命中非代码文本）](11-scanner-false-positive-comment-string-stripping.md)
+- [12 单帧观察不能定性框架语义：in-form tpl 响应式误判 + pushDefaultValue 首帧通知 gap](12-single-frame-observation-cannot-adjudicate-framework-semantics.md)
 
 ---
 
