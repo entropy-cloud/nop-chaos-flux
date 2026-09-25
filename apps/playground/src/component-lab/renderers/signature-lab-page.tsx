@@ -39,8 +39,9 @@ const styledSignature = {
           type: 'input-signature',
           name: 'lockedSignature',
           label: 'Readonly signature',
+          // 1×1 opaque red pixel — e2e samples the bitmap to verify the echo.
           value:
-            'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+            'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
           readOnly: true,
           height: 120,
           description: 'Readonly: toolbar disabled and drawing ignored; the initial dataURL echoes onto the canvas.',

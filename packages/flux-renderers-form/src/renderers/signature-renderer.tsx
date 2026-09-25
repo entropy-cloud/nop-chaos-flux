@@ -191,13 +191,11 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
       document.addEventListener('click', swallow, { capture: true, once: true });
       window.setTimeout(() => document.removeEventListener('click', swallow, { capture: true }), 400);
     };
-    (window as unknown as { __sigAttached?: boolean }).__sigAttached = true;
     canvas.addEventListener('pointerdown', onPointerDown);
     canvas.addEventListener('pointermove', onPointerMove);
     canvas.addEventListener('pointerup', finishStroke);
     canvas.addEventListener('pointercancel', finishStroke);
     canvas.addEventListener('pointerleave', finishStroke);
-    (window as unknown as { __sigDetached?: number }).__sigDetached = ((window as unknown as { __sigDetached?: number }).__sigDetached ?? 0) + 1;
     return () => {
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onPointerMove);
@@ -217,8 +215,6 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
   };
 
   const clear = () => {
-    const w = window as unknown as { __clearCalls?: number };
-    w.__clearCalls = (w.__clearCalls ?? 0) + 1;
     if (!presentation.interactive) {
       return;
     }

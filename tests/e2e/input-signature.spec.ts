@@ -105,11 +105,63 @@ test.describe('org select — input-signature (missing-components L2.3)', () => 
     const locked = stage.locator('[data-slot="signature-canvas"]').nth(1);
     await expect(locked).toBeVisible();
 
-    // Readonly overlay blocks drawing: no value appears.
+    // The initial dataURL (1×1 opaque red pixel) echoes onto the canvas:
+    // pixel (0,0) must be opaque red.
+    const echo = await page.evaluate(() => {
+      const canvas = document.querySelectorAll('[data-slot="signature-canvas"]')[2] as
+        HTMLCanvasElement | undefined;
+      if (!canvas) {
+        return null;
+      }
+      const data = canvas.getContext('2d')!.getImageData(0, 0, 1, 1).data;
+      return { r: data[0]!, a: data[3]! };
+    });
+    expect(echo).not.toBeNull();
+    // Image decode is async — poll for the echoed pixel.
+    await expect
+      .poll(
+        async () => {
+          const state = await page.evaluate(() => {
+            const canvas = document.querySelectorAll('[data-slot="signature-canvas"]')[2] as
+              HTMLCanvasElement | undefined;
+            if (!canvas) {
+              return null;
+            }
+            const data = canvas.getContext('2d')!.getImageData(0, 0, 1, 1).data;
+            return { r: data[0]!, a: data[3]! };
+          });
+          return state;
+        },
+        { timeout: 5000 },
+      )
+      .toMatchObject({ a: 127 });
+
+    // Readonly overlay blocks drawing: the bitmap must NOT gain new ink from
+    // a draw attempt (ink pixel count unchanged).
+    const inkBefore = await page.evaluate(() => {
+      const canvas = document.querySelectorAll('[data-slot="signature-canvas"]')[2] as HTMLCanvasElement;
+      const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+      let count = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3]! > 0) count++;
+      }
+      return count;
+    });
     await drawStroke(page, locked, [
       [20, 20],
       [50, 30],
     ]);
+    const inkAfter = await page.evaluate(() => {
+      const canvas = document.querySelectorAll('[data-slot="signature-canvas"]')[2] as HTMLCanvasElement;
+      const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+      let count = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3]! > 0) count++;
+      }
+      return count;
+    });
+    expect(inkAfter).toBe(inkBefore);
+
     const styled = stage.locator('[data-slot="signature-canvas"]').first();
     await expect(styled).toBeVisible();
 

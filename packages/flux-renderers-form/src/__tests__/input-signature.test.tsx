@@ -127,7 +127,6 @@ describe('input-signature renderer (missing-components L2.3, plan 507)', () => {
       { type: 'form-state-probe', name: 'sig4' },
       { type: 'button', label: 'clear-sig4', onClick: { action: 'component:clear', componentId: 'sig4-field' } },
     ]);
-    fireEvent.click(document.querySelector('[data-slot="signature-clear"]') ? document.body : document.body);
     fireEvent.click(Array.from(document.querySelectorAll('button')).find((b) => b.textContent === 'clear-sig4') as HTMLElement);
     await waitFor(() => expect(probeText('sig4')).toBe('null'));
   });
