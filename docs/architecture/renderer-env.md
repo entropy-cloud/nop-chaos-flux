@@ -284,19 +284,20 @@ locale?: string;
 
 本文是 **`RendererEnv` 字段全集与扩充流程**的 owner doc，不重复字段细节：
 
-| 关注点                                          | 看                                                                  |
-| ----------------------------------------------- | ------------------------------------------------------------------- |
-| 渲染器契约 / `useRendererEnv` hook              | `docs/architecture/renderer-runtime.md`                             |
-| `fetcher` 的 host transport boundary 描述       | `docs/architecture/api-data-source.md`                              |
-| `ApiResponse` envelope                          | `docs/architecture/api-response-envelope.md`                        |
-| `loadPage` / `loadDict` 接口                    | `docs/architecture/flux-page-dict-loading-and-precompile.md`        |
-| `importLoader` / `resolveImportUrl`             | `docs/architecture/module-cache-and-import-stack.md`                |
-| `monitor` 在性能诊断中的角色                    | `docs/architecture/flux-monitor.md`                                 |
-| `functions` / `filters` 表达式扩展              | `docs/architecture/flux-formula.md`                                 |
-| 设计哲学（为什么 IO 经 env）                    | `docs/articles/flux-design-introduction.md:606`                     |
-| Runtime requirements（环境稳定性 / 域私有通道） | `docs/low-code-dsl-runtime-requirements.md`                         |
-| INV-1 / INV-2 原则审计                          | `docs/references/new-renderer-introduction-audit.md`                |
-| 2026-07-21 stream / openSocket 评审             | `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md` |
+| 关注点                                               | 看                                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------------- |
+| 渲染器契约 / `useRendererEnv` hook                   | `docs/architecture/renderer-runtime.md`                             |
+| `fetcher` 的 host transport boundary 描述            | `docs/architecture/api-data-source.md`                              |
+| org 族数据面契约（org 协议；INV-2 A 档裁定不扩 env） | `docs/architecture/org-data-source-protocol.md`                     |
+| `ApiResponse` envelope                               | `docs/architecture/api-response-envelope.md`                        |
+| `loadPage` / `loadDict` 接口                         | `docs/architecture/flux-page-dict-loading-and-precompile.md`        |
+| `importLoader` / `resolveImportUrl`                  | `docs/architecture/module-cache-and-import-stack.md`                |
+| `monitor` 在性能诊断中的角色                         | `docs/architecture/flux-monitor.md`                                 |
+| `functions` / `filters` 表达式扩展                   | `docs/architecture/flux-formula.md`                                 |
+| 设计哲学（为什么 IO 经 env）                         | `docs/articles/flux-design-introduction.md:606`                     |
+| Runtime requirements（环境稳定性 / 域私有通道）      | `docs/low-code-dsl-runtime-requirements.md`                         |
+| INV-1 / INV-2 原则审计                               | `docs/references/new-renderer-introduction-audit.md`                |
+| 2026-07-21 stream / openSocket 评审                  | `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md` |
 
 ## 8. env 装饰器（decorator）
 
