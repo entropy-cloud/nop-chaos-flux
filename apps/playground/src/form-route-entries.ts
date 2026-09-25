@@ -330,4 +330,18 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
     description: 'Read-only display of a nested object; expands to a dialog for inline editing.',
   },
+  {
+    id: 'user-select',
+    title: 'User Select',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Org user picker over the org data-source protocol: lazy departments, search, echo resolution.',
+  },
+  {
+    id: 'department-select',
+    title: 'Department Select',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Org department picker over the org data-source protocol: lazy tree with empty-page termination.',
+  },
 ];

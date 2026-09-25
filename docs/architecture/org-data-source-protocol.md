@@ -62,7 +62,7 @@ export interface OrgNode {
 }
 ```
 
-**混合树的可选语义**：树中可能混有非本 renderer 目标类型的节点（如 user-select 树里的 department 节点）。规则：非可选类型节点正常参与层级展示与路径回显，但不可选中；各 renderer 的可选类型集合由其 schema 字段声明（如 `selectableTypes`，取值不封闭：user-select 默认 `['user']`、department-select 默认 `['department']`、region 默认全层级可选）。协议只约定「展示可选、路径参与」这条规则，不封闭类型枚举。
+**混合树的可选语义**：树中可能混有非本 renderer 目标类型的节点（如 user-select 树里的 department 节点）。规则：非可选类型节点正常参与层级展示与路径回显，但不可选中；各 renderer 的可选类型集合由其 schema 字段声明（如 `selectableTypes`，取值不封闭：user-select 默认 `['user']`、department-select 默认 `['department']`、region 默认全层级可选）。**未标注 `type` 的节点视为通用可选节点**（不参与类型过滤——数据源不做类型标注时两个 picker 都保持可用）。协议只约定「展示可选、路径参与」这条规则，不封闭类型枚举。
 
 ### 3.1 宽容解析规则
 

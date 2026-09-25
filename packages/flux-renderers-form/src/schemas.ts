@@ -483,3 +483,11 @@ export interface InputColorSchema extends BoundFieldSchemaBase {
   };
   hiddenFieldPolicy?: HiddenFieldPolicy;
 }
+
+export {
+  type DepartmentSelectSchema,
+  type OrgNode,
+  type OrgNodePage,
+  type OrgSelectSchema,
+  type UserSelectSchema,
+} from './schemas-org.js';

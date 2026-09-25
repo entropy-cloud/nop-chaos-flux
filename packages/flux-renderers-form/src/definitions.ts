@@ -10,6 +10,7 @@ import { inputRendererDefinitions } from './renderers/input.js';
 import { dateRendererDefinitions } from './renderers/date-renderer-definitions.js';
 import { markdownEditorRendererDefinition } from './renderers/markdown-editor-renderer.js';
 import { formAtomsRendererDefinitions } from './renderers/form-atoms-renderer-definitions.js';
+import { orgSelectRendererDefinitions } from './renderers/org/org-renderer-definitions.js';
 
 export { formRendererDefinition } from './renderers/form-definition.js';
 export { fieldsetRendererDefinition } from './renderers/fieldset.js';
@@ -18,6 +19,7 @@ export { inputRendererDefinitions } from './renderers/input.js';
 export { dateRendererDefinitions } from './renderers/date-renderer-definitions.js';
 export { markdownEditorRendererDefinition } from './renderers/markdown-editor-renderer.js';
 export { formAtomsRendererDefinitions } from './renderers/form-atoms-renderer-definitions.js';
+export { orgSelectRendererDefinitions } from './renderers/org/org-renderer-definitions.js';
 
 export const formRendererDefinitions: RendererDefinition[] = [
   formRendererDefinition,
@@ -27,6 +29,7 @@ export const formRendererDefinitions: RendererDefinition[] = [
   ...dateRendererDefinitions,
   markdownEditorRendererDefinition,
   ...formAtomsRendererDefinitions,
+  ...orgSelectRendererDefinitions,
 ];
 
 export function registerFormRenderers(registry: RendererRegistry) {

@@ -1,0 +1,30 @@
+{
+  "type": "user-select",
+  "name": "approver",
+  "label": "审批人",
+  "multiple": true,
+  "clearable": true,
+  "selectableTypes": ["user"],
+  "sourceChildren": {
+    "action": "ajax",
+    "args": {
+      "url": "/api/org/children",
+      "params": {
+        "orgNodeId": "${orgNodeId}",
+        "orgDepth": "${orgDepth}",
+        "orgPage": "${orgPage}",
+        "orgPageSize": "${orgPageSize}"
+      }
+    }
+  },
+  "sourceSearch": {
+    "action": "ajax",
+    "args": { "url": "/api/org/search", "params": { "searchQuery": "${searchQuery}" } }
+  },
+  "sourceResolve": {
+    "action": "ajax",
+    "args": { "url": "/api/org/resolve", "params": { "orgValues": "${orgValues}" } }
+  },
+  "extraParams": { "corpId": "${tenantId}" },
+  "description": "按协议消费 org 数据源：部门导航 + 人员多选 + 回显解析"
+}

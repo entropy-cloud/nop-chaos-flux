@@ -330,7 +330,7 @@ UI primitive 对齐补充规则：
 
 **表单 owner / 核心字段（`flux-renderers-form`）**
 
-- `form`、`fieldset`、`input-text`、`input-email`、`input-password`、`input-number`、`textarea`、`select`、`checkbox`、`switch`、`radio-group`、`checkbox-group`、`input-date`、`input-datetime`、`input-time`、`date-range`、`input-month`、`input-quarter`、`input-year`、`markdown-editor`、`button-group-select`、`slider`、`rating`、`input-color`
+- `form`、`fieldset`、`input-text`、`input-email`、`input-password`、`input-number`、`textarea`、`select`、`checkbox`、`switch`、`radio-group`、`checkbox-group`、`input-date`、`input-datetime`、`input-time`、`date-range`、`input-month`、`input-quarter`、`input-year`、`markdown-editor`、`button-group-select`、`slider`、`rating`、`input-color`、`user-select`、`department-select`
 
 **复合 / 高级字段（`flux-renderers-form-advanced`）**
 
@@ -513,6 +513,8 @@ UI primitive 对齐补充规则：
 - `input-year/`
 - `input-tree/`
 - `tree-select/`
+- `user-select/`
+- `department-select/`
 - `tag-list/`
 - `key-value/`
 - `array-editor/`

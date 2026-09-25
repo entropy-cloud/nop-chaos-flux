@@ -1,0 +1,28 @@
+{
+  "type": "department-select",
+  "name": "costCenter",
+  "label": "成本中心",
+  "multiple": true,
+  "selectableTypes": ["department"],
+  "sourceChildren": {
+    "action": "ajax",
+    "args": {
+      "url": "/api/dept/children",
+      "params": {
+        "orgNodeId": "${orgNodeId}",
+        "orgDepth": "${orgDepth}",
+        "orgPage": "${orgPage}",
+        "orgPageSize": "${orgPageSize}"
+      }
+    }
+  },
+  "sourceSearch": {
+    "action": "ajax",
+    "args": { "url": "/api/dept/search", "params": { "searchQuery": "${searchQuery}" } }
+  },
+  "sourceResolve": {
+    "action": "ajax",
+    "args": { "url": "/api/dept/resolve", "params": { "orgValues": "${orgValues}" } }
+  },
+  "description": "按协议消费 org 数据源：部门懒加载树 + 多选 + 空页终止"
+}

@@ -69,7 +69,9 @@
     "dashboard-editor",
     "slider",
     "rating",
-    "input-color"
+    "input-color",
+    "user-select",
+    "department-select"
   ],
   "targetContract": [
     "alert",

@@ -876,6 +876,15 @@ import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 
 All three are `BoundFieldSchemaBase` scalar fields (name/label/readOnly/required/validate/hiddenFieldPolicy shared), registered in `renderers/form-atoms-renderer-definitions.ts`, and exposed as `component:clear/reset/focus` handles.
 
+### Schema Types（org select family, plan 505）
+
+| Schema                   | Import path                       | Core fields                                                                                                     |
+| ------------------------ | --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `UserSelectSchema`       | `flux-renderers-form/src/schemas` | `options`/`sourceChildren`/`sourceSearch`/`sourceResolve`/`multiple`/`searchable`/`selectableTypes`（默认 `['user']`）/`pageSize`/`extraParams` |
+| `DepartmentSelectSchema` | `flux-renderers-form/src/schemas` | 同上，`selectableTypes` 默认 `['department']`                                                                    |
+
+Both extend the shared `OrgSelectSchema` contract and consume the org data-source protocol (`docs/architecture/org-data-source-protocol.md`): request scope vars `orgNodeId`/`orgDepth`/`searchQuery`/`orgPage`/`orgPageSize`/`orgValues`, `{nodes,total?,hasMore?}` envelope, shared normalizer + termination + error keys (`flux.form.org*Failed`) in `renderers/org/`. Handles: `component:clear/reset/focus/open`. NOTE: `sourceSearch` (org field) is distinct from select's `searchSource`.
+
 ## Industrial Package — @nop-chaos/flux-renderers-industrial
 
 ### Component Registration

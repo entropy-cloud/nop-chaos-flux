@@ -152,3 +152,51 @@ export const inputColorSpecificContracts: Record<string, RendererPropContract> =
     description: 'Preset swatches (hex/rgba strings) shown above the input.',
   },
 };
+
+const orgSourceContract = (displayName: string, description: string): RendererPropContract => ({
+  shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+  displayName,
+  description,
+});
+
+export const orgSelectSpecificContracts: Record<string, RendererPropContract> = {
+  multiple: { displayName: 'Multiple', shape: { kind: 'boolean' } },
+  searchable: { displayName: 'Searchable', shape: { kind: 'boolean' } },
+  searchMergeMode: {
+    displayName: 'Search Merge Mode',
+    shape: {
+      kind: 'union',
+      anyOf: [{ kind: 'literal', value: 'append' }, { kind: 'literal', value: 'replace' }],
+    },
+    editorType: 'select',
+    defaultValue: 'append',
+  },
+  selectableTypes: {
+    displayName: 'Selectable Types',
+    shape: { kind: 'array', item: { kind: 'string' } },
+    description: 'Node types that can be selected; untyped nodes are selectable. Others stay navigable only.',
+  },
+  pageSize: {
+    displayName: 'Page Size',
+    shape: { kind: 'number' },
+    editorType: 'number',
+    defaultValue: 50,
+  },
+  sourceChildren: orgSourceContract(
+    'Children Source',
+    'Lazy-loads one level of children (ActionSchema). Scope vars: orgNodeId (root "")/orgDepth/orgPage/orgPageSize.',
+  ),
+  sourceSearch: orgSourceContract(
+    'Search Source',
+    'Flat keyword search (ActionSchema). Scope vars: searchQuery/orgPage/orgPageSize. NOTE: distinct from select `searchSource`.',
+  ),
+  sourceResolve: orgSourceContract(
+    'Resolve Source',
+    'Echo resolution (ActionSchema). Scope var: orgValues (array of ids). Returns full nodes for display.',
+  ),
+  extraParams: {
+    displayName: 'Extra Params',
+    shape: { kind: 'object', fields: {} },
+    description: 'Injected into every request scope; string values are form-scope expressions. Keys override protocol vars.',
+  },
+};
