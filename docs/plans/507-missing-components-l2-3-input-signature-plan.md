@@ -1,6 +1,6 @@
 # 507 Missing Components L2.3 — input-signature（手写签名）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-25
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §5（L2.3 行，matrix flip 前置）；§1 交付铁律；`docs/analysis/visual-quality/2026-09-24-missing-component-gap-analysis.md` §7（Vant Signature / Form.io Signature 基准）
 > Related: `docs/plans/506-missing-components-l2-2-input-city-plan.md`（org 族外的独立控件；503 交付铁律模板）
@@ -39,7 +39,7 @@
 - `docs/components/amis-baseline-matrix.md`：§5 删行 + Form Core 增行。
 - `packages/flux-renderers-form/src/`：`schemas-signature.ts`（`InputSignatureSchema`：`penColor`/`penWidth`/`height`/`backgroundColor`/`clearable`，extends InputSchema，值 string dataURL）+ `renderers/signature-renderer.tsx`（定义 + 渲染核心 + canvas 控制：pointerdown/move/up 采集笔画、undo/clear 工具条、初值回绘）——行数 ≤500，超出则拆 canvas 控制模块。
 - **画布几何契约**：位图尺寸 = 容器 CSS 宽 × `height` prop × 固定 devicePixelRatio；绘制坐标按 CSS 像素 → 位图像素 scale 映射（getBoundingClientRect 相对坐标 × DPR）——design.md §11 必须写明，e2e 须含一次「小视口绘制仍落笔在指针处」的几何断言（防 DPR 错位）。
-- i18n：`signatureUndo`/`signatureClear`/`signaturePlaceholder`/`signatureAriaLabel`（zh/en）。
+- i18n：`signatureUndo`/`signatureClear`/`signatureUnsupported`（placeholder 键在实现中由 unsupported 降级提示取代）/`signatureAriaLabel`（zh/en）。
 - playground：`signature-lab-page.tsx` + route/registry。
 - 测试：focused 单测（happy-dom + fake 2d context stub，含无 context 降级用例）+ e2e `input-signature.spec.ts`（鼠标拖绘制作 → 值提交 dataURL 前缀断言 → undo 笔画递减 → clear 清值 → 初值回绘）。
 - docs：`docs/components/input-signature/{design.md,example.json}` + 三处登记 + roadmap §13 + dev log。
@@ -157,7 +157,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: `input-signature` 全交付并经独立 closure audit 两轮通过（round 1 `issues` 1M readonly e2e 断言缺口 + 3m 死探针/i18n 键漂移/无操作语句 → 修复；round 2 diff 级复核 `approved` 0B/0M，附条件项 plan i18n 键名对齐已随本提交落盘）。`runtime`：matrix flip + design/example + 代码（7 focused 单测）+ e2e 3 用例真浏览器断言 + 三处登记 + i18n 双语 + INV 审计（铁律 7）全过。unit 侧 full-green（74/74 task；form 921）；e2e 全量零新增红（1558 passed；失败面 = 502 存量台账 9 + 1 在册 watch-only）。
+
+Closure Audit Evidence:
+
+- Auditor / Agent: 独立 fresh 子 agent（general-purpose，2026-09-25，两轮）
+- Evidence: round 1 `issues`（M1 readonly e2e 声称覆盖与实际断言不符 → 重写为行为断言：fixture 换 1×1 红 PNG + 位图采样 poll a=127 + draw 前后 ink 计数不变；m2 死探针删除、m3 plan i18n 键对齐、m4 无操作语句删除）→ round 2 diff 级复核 `approved`（审计员三重核实 fixture 解码 RGBA(255,0,0,127) 与断言精确匹配、画布索引无错位；实跑 focused 7/7 + e2e 3/3 + form 921/921 + route-matrix 42/42；commit 卫生警示记入审计证据）。
+
+Follow-up:
+
+- no remaining plan-owned work（压感线宽/容器 resize 重排已登记 Non-Blocking Follow-ups）
 
 ### new-renderer-introduction-audit 结论（§4 模板，2026-09-25，执行 session 自查、供 closure audit 复核）
 
@@ -173,12 +182,3 @@ Status Note: <<收口时填写>>
 1. **合成 click 误触工具条**：收笔提交 → 巨型 dataURL 撑爆布局 → 滚动锚定位移 → 浏览器在 pointerup 后合成的 click 落到滚到指针下的 undo 按钮（栈实锤 `at undo | at onClick (useButton)`）。修复：pointerdown `preventDefault()` 抑制兼容性 mouse 事件 + 收笔后 400ms document 捕获期一次性 click 吞除器。
 2. **画布位图擦除**：setup effect 重跑时 `canvas.width` 重赋值清空位图（initializedRef 一次定型守卫）。
 3. **stringAdapter 空串回绘**：未绑定时 hook value 为 ''，echo 守卫需用 falsy 判断而非 null 判断。
-
-Closure Audit Evidence:
-
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
-
-Follow-up:
-
-- <<收口时填写，或明确写 no remaining plan-owned work>>
