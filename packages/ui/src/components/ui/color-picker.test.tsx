@@ -93,4 +93,11 @@ describe('ColorPicker', () => {
     expect(swatch).toBeTruthy();
     expect(swatch.style.backgroundColor).toMatch(/#dc2626|rgb\(220, 38, 38\)/);
   });
+
+  it('read-only mode keeps the panel closed on trigger click (design.md §5 只读禁触发)', () => {
+    render(<ColorPicker value="#dc2626" readOnly />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'color picker' }));
+    expect(document.querySelector('[data-slot="color-picker-panel"]')).toBeNull();
+  });
 });

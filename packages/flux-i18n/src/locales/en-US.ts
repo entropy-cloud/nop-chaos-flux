@@ -281,6 +281,8 @@ export const enUS: Resource = {
       orgEmpty: 'No data',
       orgBreadcrumbRoot: 'All',
       orgRetry: 'Retry',
+      orgClear: 'Clear',
+      orgPanelClose: 'Close',
       userSelectPlaceholder: 'Select users',
       regionPlaceholder: 'Select region',
       signatureUndo: 'Undo',

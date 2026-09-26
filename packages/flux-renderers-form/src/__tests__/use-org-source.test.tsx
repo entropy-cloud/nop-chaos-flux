@@ -128,6 +128,79 @@ describe('useOrgChildren', () => {
     expect(result.current.nodeStates.dx?.nodes).toEqual([{ id: 'c1', name: 'C1' }]);
   });
 
+  it('loadMore fetches the next root page and merges with id dedupe (§5)', async () => {
+    let call = 0;
+    const dispatch = vi.fn(() => {
+      call += 1;
+      return call === 1
+        ? ok({ nodes: [{ id: 'r1', name: 'R1' }, { id: 'r2', name: 'R2' }], hasMore: true })
+        : ok({ nodes: [{ id: 'r2', name: 'R2x' }, { id: 'r3', name: 'R3' }] });
+    });
+    const { helpers, scopes } = createMockHelpers(dispatch);
+    const { result } = renderHook(() =>
+      useOrgChildren({ helpers, sourceChildren: childrenSource, enabled: true, hasStaticRoot: false }),
+    );
+    await waitFor(() => expect(result.current.rootState.status).toBe('ready'));
+    act(() => result.current.loadMore(null, 0));
+    await waitFor(() => expect(result.current.rootState.nodes).toHaveLength(3));
+    expect(result.current.rootState.nodes.map((node) => `${node.id}:${node.name}`)).toEqual([
+      'r1:R1',
+      'r2:R2x',
+      'r3:R3',
+    ]);
+    expect(result.current.rootState.hasMore).toBe(true);
+    expect(scopes[1]?.patch).toMatchObject({ orgPage: 2, orgNodeId: '' });
+  });
+
+  it('continuation stops on a zero-new-id page (§5 termination guard)', async () => {
+    const dispatch = vi.fn(() => ok({ nodes: [{ id: 'r1', name: 'R1' }], hasMore: true }));
+    const { helpers } = createMockHelpers(dispatch);
+    const { result } = renderHook(() =>
+      useOrgChildren({ helpers, sourceChildren: childrenSource, enabled: true, hasStaticRoot: false }),
+    );
+    await waitFor(() => expect(result.current.rootState.status).toBe('ready'));
+    act(() => result.current.loadMore(null, 0));
+    await waitFor(() => expect(result.current.rootState.hasMore).toBe(false));
+    const after = dispatch.mock.calls.length;
+    act(() => result.current.loadMore(null, 0));
+    expect(dispatch.mock.calls.length).toBe(after);
+  });
+
+  it('hasMore:false page closes paging without further dispatches', async () => {
+    const dispatch = vi.fn(() => ok({ nodes: [{ id: 'r1', name: 'R1' }], hasMore: false }));
+    const { helpers } = createMockHelpers(dispatch);
+    const { result } = renderHook(() =>
+      useOrgChildren({ helpers, sourceChildren: childrenSource, enabled: true, hasStaticRoot: false }),
+    );
+    await waitFor(() => expect(result.current.rootState.status).toBe('ready'));
+    expect(result.current.rootState.hasMore).toBe(false);
+    const after = dispatch.mock.calls.length;
+    act(() => result.current.loadMore(null, 0));
+    expect(dispatch.mock.calls.length).toBe(after);
+  });
+
+  it('node-level continuation merges child pages (§5, single shared implementation)', async () => {
+    let call = 0;
+    const dispatch = vi.fn(() => {
+      call += 1;
+      if (call === 1) return ok({ nodes: [{ id: 'd1', name: 'D1' }] });
+      if (call === 2) return ok({ nodes: [{ id: 'c1', name: 'C1' }], hasMore: true });
+      return ok({ nodes: [{ id: 'c2', name: 'C2' }], hasMore: false });
+    });
+    const { helpers, scopes } = createMockHelpers(dispatch);
+    const { result } = renderHook(() =>
+      useOrgChildren({ helpers, sourceChildren: childrenSource, enabled: true, hasStaticRoot: false }),
+    );
+    await waitFor(() => expect(result.current.rootState.status).toBe('ready'));
+    const node = { id: 'd1', name: 'D1' };
+    act(() => result.current.loadNode(node, 1));
+    await waitFor(() => expect(result.current.nodeStates.d1?.status).toBe('ready'));
+    act(() => result.current.loadMore(node, 1));
+    await waitFor(() => expect(result.current.nodeStates.d1?.nodes).toHaveLength(2));
+    expect(result.current.nodeStates.d1?.hasMore).toBe(false);
+    expect(scopes[2]?.patch).toMatchObject({ orgNodeId: 'd1', orgPage: 2 });
+  });
+
   it('extraParams are evaluated and override protocol variables (§6)', async () => {
     const dispatch = vi.fn(() => ok({ nodes: [] }));
     const { helpers, scopes } = createMockHelpers(dispatch);

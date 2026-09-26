@@ -281,6 +281,8 @@ export const zhCN: Resource = {
       orgEmpty: '暂无数据',
       orgBreadcrumbRoot: '全部',
       orgRetry: '重试',
+      orgClear: '清除',
+      orgPanelClose: '关闭',
       userSelectPlaceholder: '选择人员',
       regionPlaceholder: '选择省 / 市 / 区',
       signatureUndo: '撤销',

@@ -456,11 +456,12 @@ test('search panel opens via Mod-f, localizes, and closes on Escape', async ({ p
   await expect(content).toBeFocused();
 
   const panel = field.locator('.cm-panel.cm-search');
-  // CM6 maps Mod to Ctrl or Meta based on the browser UA, and the configured
-  // Desktop Chrome device carries a Windows UA even on macOS runners — pick
-  // the modifier from the page, and retry in case a StrictMode remount stole
+  // CM6 maps Mod to Meta/Ctrl via navigator.platform (Apple platforms → Meta),
+  // not the UA. The configured Desktop Chrome device presents a Windows UA on
+  // macOS runners while navigator.platform stays "MacIntel" — pick the
+  // modifier from the platform, and retry in case a StrictMode remount stole
   // focus right after the click.
-  const useCtrl = await page.evaluate(() => /Win|Linux/.test(navigator.userAgent));
+  const useCtrl = await page.evaluate(() => !/Mac|iP(hone|[oa]d)/.test(navigator.platform));
   for (let attempt = 0; attempt < 3; attempt++) {
     await content.click();
     await expect(content).toBeFocused();

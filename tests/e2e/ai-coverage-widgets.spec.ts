@@ -74,11 +74,16 @@ test.describe('AI coverage — sender modes, limits and cancel', () => {
     await assertTrackedPageErrors(page);
   });
 
-  test('loading sender disables textarea + submit and shows the cancel action', async ({ page }) => {
+  test('loading sender keeps the textarea editable, gates submit, and shows the cancel action', async ({
+    page,
+  }) => {
     await openCoverage(page);
     const sender = byTestid(page, 'cov-sender-loading');
     await expect(sender).toBeVisible({ timeout: 15_000 });
-    await expect(sender.locator('textarea')).toBeDisabled();
+    // V12e 族1 (G5-视角3-01) text-gating contract: the textarea stays enabled
+    // while a turn streams (compose-next is allowed); the commit channel is
+    // gated instead — submit disabled + cancel offered.
+    await expect(sender.locator('textarea')).toBeEnabled();
     await expect(sender.locator('[data-slot="ai-sender-submit"]')).toBeDisabled();
     await expect(sender.locator('[data-slot="ai-sender-cancel"]')).toBeVisible();
     await assertTrackedPageErrors(page);

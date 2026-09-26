@@ -143,7 +143,7 @@ test('status-host: dialog scope eval + levelMap projection (host-status-dialog)'
   const detailButtons = stage.getByRole('button', { name: 'Details' });
   await expect(detailButtons).toHaveCount(3, { timeout: 10_000 });
 
-  // Open the THIRD row (Gamma, status pending → warning/amber projection).
+  // Open the THIRD row (Gamma, status pending → warning token projection).
   await detailButtons.nth(2).click();
   const dialogStatus = page.locator('[data-testid="c6c3-dialog-status"]');
   await expect(dialogStatus).toBeVisible({ timeout: 10_000 });
@@ -153,7 +153,10 @@ test('status-host: dialog scope eval + levelMap projection (host-status-dialog)'
   const badgeClass = await dialogStatus
     .locator('[data-slot="status-badge"]')
     .evaluate((el) => el.className);
-  expect(badgeClass).toContain('amber');
+  // plan 500 R2-4 token remediation: badge variants carry semantic token
+  // classes (warning → bg-warning/15 + text-warning), no literal amber.
+  expect(badgeClass).toContain('text-warning');
+  expect(badgeClass).toContain('bg-warning/15');
 
   // Close the dialog and open the SECOND row (Beta, status idle → info/secondary).
   await page.locator('[data-slot="dialog-close"]').click();

@@ -323,11 +323,13 @@ test.describe('Cal confirm — I6 嘉宾增删 + I7 校验 + I8 提交 + I9 失�
     await expect(nameField.locator('[data-slot="field-error"]')).toBeVisible();
     await expect(nameField.locator('[data-slot="field-error"]')).toContainText('您的姓名');
     await expect(emailField.locator('[data-slot="field-error"]')).toContainText('邮箱');
-    // 红环：校验失败输入框边框走 error 色（等 150ms transition-colors 稳定后取值）
+    // 红环：校验失败输入框边框走 `aria-invalid:border-destructive` →
+    // `--destructive`（plan 500 R2-4 WCAG 重整后实值 rgb(197, 17, 17)；
+    // 等 transition-colors 稳定后取值）
     await page.waitForTimeout(400);
     expect(
       await nameField.locator('input').evaluate((el) => getComputedStyle(el).borderColor),
-    ).toMatch(/239, 67, 67|220, 38, 38|252, 165, 165/);
+    ).toMatch(/197, 17, 17/);
     await expect(page.getByTestId('complex-page-title')).toContainText('Cal 预约 · 确认信息');
     expect((await readEndpointCalls(page)).Cal__book ?? 0).toBe(0);
   });

@@ -183,10 +183,12 @@ Exit Criteria:
 
 ## Draft Review Record
 
-- Reviewer / Agent: <<待独立子 agent 填写>>
-- Verdict: <<pass | pass-with-minors | revised | degraded>>
-- Rounds: <<审查轮数>>
-- Findings addressed: <<每条已处理的 Blocker/Major 一行>>
+- Reviewer / Agent: fresh-session independent review sub-agent（未参与起草，2026-09-26；live repo 逐条核对 baseline 引用）
+- Verdict: `revised`（r1 发现 1 Major + 8 Minor，当轮全部修复落字；终态 0 Blocker / 0 Major，达成共识）
+- Rounds: 1
+- Findings addressed:
+  - Major-1（toast hack 归属错误）：Goals L3.4 / Phase 2 原写「Cal/Linear/Notion 三处」，live schema 核对实际为 AntD Pro（antdpro-form-basic/grouped/step）/ Cal（cal-confirm、cal-success）/ Linear（linear-detail）共 6 文件 7 处，Notion 零命中——与本 plan 自身 baseline 引用（回写③④⑤）矛盾。已改为正确的 replica 集 + grep 复核口径（覆盖行内/展开两种排版）。
+  - Minor 群（当轮顺手修复）：①`renderer-api.ts:83` 为陈旧锚点（继承自 renderer-env.md §2），live 接口在 :177，字段清单本身经核对无误；②print 按钮静态保留的 C2 引用 :137（clipboard 行）更正为 :109；③「D1 池 #9」无此编号，更正为 C2 :266 候选 1 / :269 P7b 池汇总⑤；④「禁止 addEventListener 岛」裁定出处由「C2 报告」更正为 archetype 审计 §10.2 规则 3；⑤Phase 2/4/5 补「按 Phase 1 裁定」依赖表述（Phase 1 design gate → 后续 Phase 依赖链显式化）；⑥P3/P4/P5 补新用户可见文案 i18n 键（zh-CN/en-US）交付项（roadmap §1 铁律 6）；⑦Test Strategy 补「单测/e2e 先于或随实现落地」执行约定；⑧Purpose 补单计划五 Phase 边界依据（§14 Rule 4 张力消解：§2 单行登记 + plan 503 先例 + guide Rules 22/24/26）；⑨Failure Paths 补 `print-invoke-fail` 运行时失败行。
 
 ## Closure Gates
 

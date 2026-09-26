@@ -105,7 +105,7 @@ test.describe('Gantt — time scale, zoom labels, today marker & aria-live', () 
 
   test('aria-live region count tracks visible tasks after collapse', async ({ page }) => {
     await openGantt(page);
-    const live = page.locator('[aria-live="polite"]');
+    const live = page.locator('[data-slot="gantt-visible-count-announcement"]');
     const before = (await live.textContent()) ?? '';
     expect(before).toMatch(/14/);
     await page.locator('[data-slot="gantt-grid-row"][data-task-id="1"] button[aria-expanded]').click();

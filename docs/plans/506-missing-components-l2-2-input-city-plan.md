@@ -167,20 +167,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复
-- [ ] 所有 in-scope confirmed contract drifts 已收敛
-- [ ] 行为/契约结果已达成（`input-city` `runtime`：matrix flip + design/example/代码/测试/登记/i18n 八项交付面齐）
+- [x] 所有 in-scope confirmed live defects 已修复
+- [x] 所有 in-scope confirmed contract drifts 已收敛
+- [x] 行为/契约结果已达成（`input-city` `runtime`：matrix flip + design/example/代码/测试/登记/i18n 八项交付面齐）
 - [x] 必要 focused verification 已完成（9 条 focused 单测 + e2e 3 用例真浏览器断言）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步到 live baseline（design.md、matrix、三处登记、共享数据面零分叉预检通过）
-- [ ] new-renderer-introduction-audit（§1 INV-1–INV-5 + §3 checklist A–G）已过且结论按 §4 模板记录于 Closure 节
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步到 live baseline（design.md、matrix、三处登记、共享数据面零分叉预检通过）
+- [x] new-renderer-introduction-audit（§1 INV-1–INV-5 + §3 checklist A–G）已过且结论按 §4 模板记录于 Closure 节
 - [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 - [x] `pnpm typecheck`（2026-09-25 全仓 0 error）
 - [x] `pnpm build`（exit 0）
 - [x] `pnpm lint`（exit 0，仅存量 1 warning）
 - [x] `pnpm test`（`--force` 零缓存 74/74 task 全绿；form 914 = 905+9——closure r1 增补 2 用例 + r2 增补 accepted-keys 断言用例；round 2 实跑 913/913、r2 修复后执行 session 复跑 914/914 全绿）
 - [x] `pnpm check`（exit 0，零新增红）
-- [ ] `pnpm test:e2e`（全量零新增红；失败面 = 502 存量台账 9 + 1 在册 watch-only + 1 已判定负载 flake）
+- [x] `pnpm test:e2e`（全量零新增红；失败面 = 502 存量台账 9 + 1 在册 watch-only + 1 已判定负载 flake）
 
 ## Deferred But Adjudicated
 

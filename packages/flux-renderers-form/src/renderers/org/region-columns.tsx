@@ -9,11 +9,13 @@ function Column(input: {
   loading: boolean;
   interactive: boolean;
   error?: string;
+  hasMore?: boolean;
   onSelectNode: (node: OrgNode) => void;
   onExpandNode: (node: OrgNode) => void;
   onRetry: () => void;
+  onLoadMore: () => void;
 }) {
-  const { nodes, selectedId, loading, interactive, error, onSelectNode, onExpandNode, onRetry } = input;
+  const { nodes, selectedId, loading, interactive, error, hasMore, onSelectNode, onExpandNode, onRetry, onLoadMore } = input;
   return (
     <div className="flex w-44 flex-col overflow-y-auto border-r last:border-r-0" data-slot="region-column">
       {error ? (
@@ -72,6 +74,16 @@ function Column(input: {
           </div>
         ))
       )}
+      {hasMore && !loading && !error && nodes.length > 0 ? (
+        <button
+          type="button"
+          data-slot="region-load-more"
+          className="px-1 py-1 text-center text-xs text-muted-foreground hover:text-foreground"
+          onClick={onLoadMore}
+        >
+          {t('flux.form.orgLoadMore')}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -92,21 +104,27 @@ export function RegionColumns(input: {
 }) {
   const { data, staticOptions, path, interactive, onCommit, onPathChange } = input;
 
-  const level = (depth: number): { nodes: OrgNode[]; loading: boolean; error?: string } => {
+  const level = (depth: number): { nodes: OrgNode[]; loading: boolean; error?: string; hasMore: boolean } => {
     if (depth === 0) {
       const state = data.children.rootState;
       return {
         nodes: staticOptions.length > 0 ? staticOptions : state.nodes,
         loading: state.status === 'loading',
         error: state.error,
+        hasMore: staticOptions.length === 0 && state.status === 'ready' && state.hasMore,
       };
     }
     const parent = path[depth - 1];
     const state = data.children.nodeStates[parent.id];
     if (parent.children && parent.children.length > 0) {
-      return { nodes: parent.children, loading: false };
+      return { nodes: parent.children, loading: false, hasMore: false };
     }
-    return { nodes: state?.nodes ?? [], loading: state?.status === 'loading', error: state?.error };
+    return {
+      nodes: state?.nodes ?? [],
+      loading: state?.status === 'loading',
+      error: state?.error,
+      hasMore: state?.status === 'ready' && (state?.hasMore ?? false),
+    };
   };
 
   const columnCount = Math.min(path.length + 1, 3);
@@ -122,6 +140,7 @@ export function RegionColumns(input: {
           loading={column.loading}
           interactive={interactive}
           error={column.error}
+          hasMore={column.hasMore}
           onSelectNode={(node) => onCommit(node, [...path.slice(0, depth), node])}
           onExpandNode={(node) => {
             data.children.loadNode(node, depth + 1);
@@ -129,6 +148,9 @@ export function RegionColumns(input: {
           }}
           onRetry={() =>
             depth === 0 ? data.children.retryRoot() : data.children.retryNode(path[depth - 1], depth)
+          }
+          onLoadMore={() =>
+            depth === 0 ? data.children.loadMore(null, 0) : data.children.loadMore(path[depth - 1], depth)
           }
         />
       ))}

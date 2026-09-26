@@ -86,4 +86,26 @@ test.describe('org select — user-select (missing-components L2.1)', () => {
 
     await assertTrackedPageErrors(page);
   });
+
+  test('paged root continues via load-more and terminates after the last page (§5)', async ({ page }) => {
+    await openUserSelectLab(page);
+
+    const stage = page.getByTestId('scenario-stage-paged-root-continuation');
+    await openPanel(page, stage);
+
+    // Page 1 carries two of the three root departments; the continuation
+    // button is offered because the mock page declares hasMore.
+    await expect(panelRow(page, 'dept-eng')).toBeVisible();
+    await expect(panelRow(page, 'dept-hr')).toHaveCount(0);
+    const loadMore = page.locator('[data-slot="org-select-panel"] [data-slot="org-select-load-more"]');
+    await expect(loadMore).toBeVisible({ timeout: 10_000 });
+
+    // Continuation merges the remaining page; the button disappears once the
+    // termination signal (hasMore:false) lands.
+    await loadMore.click();
+    await expect(panelRow(page, 'dept-hr')).toBeVisible({ timeout: 10_000 });
+    await expect(loadMore).toHaveCount(0);
+
+    await assertTrackedPageErrors(page);
+  });
 });

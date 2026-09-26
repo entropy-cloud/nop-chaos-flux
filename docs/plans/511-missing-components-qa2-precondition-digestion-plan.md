@@ -1,6 +1,6 @@
 # 511 Missing Components QA.2 前置消化 — 存量 e2e 红台账 9 项 + QA.1 审计发现（L0 ×3 / L1 ×4 / L2 Major-1+Minor ×4）
 
-> Plan Status: draft
+> Plan Status: active（2026-09-26 独立 fresh 子 agent plan review 通过，见 Draft Review Record）
 > Last Reviewed: 2026-09-26
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §11 QA.2（pass 标准 = e2e 全量全绿 + 0 新增 check 红）+ §13 L0 行裁决注记（「存量 9 项台账在 plan 502 Closure 红台账节，**QA.2 前专项消化**」）+ `docs/plans/502-missing-components-l0-playground-entry-plan.md` Follow-up（「存量 9 项 e2e 功能回归：QA.2 集成审计前专项消化（blocking QA.2），QA.7 残余债登记册汇总」）+ 三份线出口审计（`docs/audits/missing-components/QA.1-L0-line-exit-audit.md` §7「3 项 Minor 在下一 gate（QA.2）前修复并复审」、`QA.1-L1-line-exit-audit.md`（pass，4 Minor 同规则）、`QA.1-L2-line-exit-audit.md`（fail，1 Major + 4 Minor，修复后随 QA.3 专项复审放行））
 > Related: `docs/plans/502-missing-components-l0-playground-entry-plan.md`（红台账来源）；`docs/context/project-context.md`（watch-only 在册：gantt-perf ×2 + kanban-perf ×1）
@@ -26,7 +26,7 @@
   9. `tests/e2e/w3c-value-mapping.spec.ts:82` status levelMap Badge semantic color classes
 - 初步信号（本计划起草时的失败输出抽查，非结论）：#9 w3c 断言期望 badge class 含 `emerald`，实际 class 为 token 类 `bg-success/15 text-success dark:bg-success/20`——疑似 plan 500（R2-4 dark-parity token remediation）把字面色改为语义 token 后断言漂移；#4 c6-3 同为 status levelMap 家族；#6/#7/#8 为 gantt aria-live/zoom 家族。真因归 Phase 1 triage 裁定。
 - **watch-only 不入 scope**：gantt-perf ×2 + kanban-perf ×1（60Hz rAF 环境口径）在册于 `docs/context/project-context.md`，维持 watch-only。
-- **QA.1-L0 3 Minor 在案**（`docs/audits/missing-components/QA.1-L0-line-exit-audit.md` §6）：Minor-1 `apps/playground/src/route-matrix.test.ts:320` 恒假分支死代码；Minor-2 `apps/playground/src/home-cards.ts:24,32` 合并卡 id 与域注册表无冲突防 guard；Minor-3 `apps/playground/src/domain-route-entries.ts` 537 行 warn 档持续增长（观察债，需裁定：分段拆分 or 数据声明豁免 or 维持观察）。
+- **QA.1-L0 3 Minor 在案**（`docs/audits/missing-components/QA.1-L0-line-exit-audit.md` §6，audit 时点 `87dd138fc`）：Minor-1 `route-matrix.test.ts` 恒假分支死代码（audit 引 `:320`）；Minor-2 `apps/playground/src/home-cards.ts:24,32` 合并卡 id 与域注册表无冲突防 guard；Minor-3 `apps/playground/src/domain-route-entries.ts` 537 行 warn 档持续增长（观察债，需裁定：分段拆分 or 数据声明豁免 or 维持观察）。**live 复核（HEAD `63b371fd8`）：Minor-1/2 已由 plan 503 提交 `58e716164` 顺手落地——恒假分支已删除、不变式 1c「aggregate card ids never collide with domain registry ids」已增（现 `route-matrix.test.ts:304-313`，恰为 audit 建议的 expect 断言方案；roadmap §13 L1 行「playground +1c」为该增补的在册佐证），本 plan 仅需核验+记录（见 Phase 3）；Minor-3 行数 537 现状属实。**
 - **QA.1-L1 verdict pass（2026-09-26），4 Minor 同「QA.2 前修复」规则**（`QA.1-L1-line-exit-audit.md` §Findings）：Minor-1 roadmap §13 L1 行「ui +15」计数漂移（实况 16，closure r1 增补未回填）；Minor-2 rating design.md §13 触控命中声称 ≥24px vs 实况 20px（`rating.tsx:135,150`，p-0.5+16px）；Minor-3 input-color design.md §5「只读禁触发」vs 实况 readOnly 弹层可打开（内部全禁用、值无损）且该 UX 面零测试；Minor-4 plan 503 Phase 2 i18n 勾选措辞宽于交付（slider 无专用键；nameless 边缘无 aria 回退）。
 - **QA.1-L2 verdict fail（2026-09-26），1 Major + 4 Minor**（`QA.1-L2-line-exit-audit.md`）：**Major-1 = org 协议 §5 契约（sourceChildren 与 sourceSearch 均受分页语义约束、orgPage 递增合并）与共享实现漂移——`useOrgChildren` 恒发 `orgPage:1`（use-org-source.ts:122/:177）、无续页/无 hasMore 暴露、面板 loadMore 仅 search 侧（org-select-panel.tsx:262），单层子节点 > pageSize 静默截断，且该 v1 取舍未在任何 Follow-up/design.md/协议注记裁决**；Minor-① 5/7 plan 簿记残留（phase in-progress/未勾选/模板占位符进入 completed 态）；Minor-② region 桌面面板手写 popover 与 ui Popover 家族分叉（design.md 有声明）；Minor-③ 硬编码英文 a11y 微标签（clear/close/✕）；Minor-④ 508 e2e 全量计数算术短 7（1564 vs 应≈1571）无归因注记（9+1 核心口径与零新增红结论不受影响）。
 - unit 侧 full-green（74/74 task）+ `pnpm check` 零新增红维持中。
@@ -34,7 +34,7 @@
 ## Goals
 
 - 9 项存量失败逐项 triage（根因 + 分类：产品回归 / 断言漂移 / 环境依赖）并修复至隔离复绿；产品回归按 Bug Fix Test Coverage Rule 评估回归测试加固。
-- QA.1-L0 Minor-1/2 修复；Minor-3 出裁定（拆分/豁免/维持观察，写明理由）。
+- QA.1-L0 Minor-1/2 核验已落地事实并记录（`58e716164` 已实修，见 Current Baseline）；Minor-3 出裁定（拆分/豁免/维持观察，写明理由）。
 - QA.1-L1 4 Minor 修复（计数注记回填、rating 触达面 doc↔live 收敛、input-color readOnly 行为对齐 + 测试补面、i18n 措辞裁定）。
 - QA.1-L2 Major-1 修复（org children 续页实现——契约以协议 §5 为准，实现追平契约）+ 4 Minor 修复（簿记清理、popover 分叉裁定、a11y 微标签 i18n 化、508 计数归因注记）。
 - 全量 e2e 复跑达到 QA.2 输入口径：**0 功能失败**（watch-only 3 项维持在册）；`pnpm check` 零新增红维持。
@@ -44,7 +44,7 @@
 
 - 不消化 watch-only 3 项（60Hz 环境 gate，非代码缺陷）。
 - 不重跑/修复 visual-quality R1/R2 的其他历史红（9 项之外的 failure surface 已由台账证明不存在——诸计划 e2e 全量记录中稳定失败面即此 9 + watch-only）。
-- 不改 product 行为除非 triage 裁定某失败根因确为产品回归。
+- 不改 product 行为，除非：①Phase 1 triage 裁定某失败根因确为产品回归；②Phase 4 的契约/文档收敛项按其审计裁定方向落地（L2 Major-1 实现追平协议 §5、L1 Minor-2/3 doc↔live 二选一收敛）——此类行为面变更以对应 owner 契约为准并附 focused 测试。
 
 ## Scope
 
@@ -52,6 +52,8 @@
 
 - 上列 9 个 spec 用例的 triage + 修复 + 隔离复绿证明。
 - QA.1-L0 Minor-1/2/3 处置。
+- QA.1-L1 4 Minor 消化（roadmap 计数回填、rating 触达面收敛、input-color readOnly 对齐 + 测试、i18n 措辞裁定）。
+- QA.1-L2 Major-1（org children 续页追平协议 §5）+ 4 Minor 消化（plan 505–509 簿记清理、popover 分叉裁定、a11y 微标签 i18n 化、508 计数归因注记）。
 - 收口全量 e2e 一轮 + `pnpm check` + 受影响包 unit。
 
 ### Out Of Scope
@@ -76,101 +78,120 @@
 
 ### Phase 1 - 9 项失败逐项 triage（根因 + 分类裁定）
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/`（只读诊断）+ 相关产品/测试源码（只读）
 
 - Item Types: `Proof`、`Decision`
 
-- [ ] 逐项运行失败用例（隔离），收集失败输出/trace/截图至 `_tmp/qa2-digestion/`
-- [ ] 逐项根因定位（产品代码 vs 断言契约 vs 环境），产出裁定表：用例 → 根因 → 分类（产品回归/断言漂移/环境依赖）→ 修复方向
-- [ ] 疑难根因（跨包/非显然）按需记录 `docs/bugs/`（写作指南对齐）
+- [x] 逐项运行失败用例（隔离），收集失败输出/trace/截图至 `_tmp/qa2-digestion/`（9-spec 批量单轮 + 探针 spec `qa2-probe.spec.ts`，trace/error-context 全落 `_tmp`）
+- [x] 逐项根因定位（产品代码 vs 断言契约 vs 环境），产出裁定表（下表）
+- [x] 疑难根因记录评估：#6 经探针实证（`PROBE-ENV` platform=MacIntel / ua=Windows 仿真 / Meta+f 开面板而 Control+f 不开）——单点测试缺陷，不入 `docs/bugs/`（修复即测试内一行启发式修正，无产品行为）
+
+**裁定表（2026-09-26，分类口径 = Failure Paths 三分类）：**
+
+| #   | 用例（spec:line）            | 根因（文件:行 + 证据）                                                                                                                                                       | 分类     | 修复方向                                                                              |
+| --- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------- |
+| 1   | ai-coverage-widgets:77       | V12e 族1（G5-视角3-01）文本门控有意变更：loading 时 textarea 保持可输入（`ai-sender.tsx:201-206` 注释即契约），门控改在提交通道（`disabled={loading...}` 于 submit）         | 断言漂移 | 测试改现行契约：textarea enabled + submit disabled + cancel visible                   |
+| 2   | cal-replica-interactions:307 | plan 500（R2-4）token 重整后 `--destructive` 实值 `rgb(197, 17, 17)`；旧断言枚举 red-500/600/300 三值                                                                        | 断言漂移 | 模式纳入现行 token 值并注记出处                                                       |
+| 3   | c6-3-host-surfaces:131       | 同 token 族：status badge 字面色（amber）→ 语义 warning token 类（badge className 无 `amber`）                                                                               | 断言漂移 | 断言改现行 warning token 类（实测 class 抓取）                                        |
+| 4   | c7-host-surfaces:226         | OA-04 / G4-R2-视角9-01 a11y 重构：role=button 从根移至 `notice-bar-action` 内层（`notice-bar.tsx:229-238` 注释即契约），根节点免「嵌套交互」违规                             | 断言漂移 | 断言与键盘/点击断言改 target `[data-slot="notice-bar-action"]`                        |
+| 5   | gantt-coverage-gaps:48       | G4-R3-视角11-01 zoomToFit 真实适配计算（`gantt-store.ts:386-409`）取代「跳中档」：本 demo 跨度（约 62 天任务 + 容器宽）下 fit 落 month 档（minCellWidth 12 合法、30 不合法） | 断言漂移 | 断言改真实适配契约（fit=month + 顶行 `%Y/%m` 标签 + 底行 `%Y`），测试名同步为真实语义 |
+| 6   | code-editor:450              | 测试缺陷：CM6 Mod 映射按 `navigator.platform` 而非 UA（探针：MacIntel + Windows UA 下 Meta+f 开面板、Control+f 不开）；测试按 UA 选 Control+f 恒错                           | 断言漂移 | 修饰键启发式改按 `navigator.platform`（保留 3 次重试）                                |
+| 7   | gantt-demo:16                | zoom-fit a11y 播报新增第二个 `[aria-live="polite"]`（`gantt.tsx:583` `gantt-zoom-fit-announcement`），测试泛定位 strict-mode 冲突                                            | 断言漂移 | 定位收窄至任务计数播报面（排除 zoom-fit announcement）                                |
+| 8   | gantt-scale-today:106        | 同 #7                                                                                                                                                                        | 断言漂移 | 同 #7                                                                                 |
+| 9   | w3c-value-mapping:82         | 同 #3：badge 字面色（emerald）→ 语义 success token 类（实测 `bg-success/15 text-success dark:bg-success/20`，无 `emerald`）                                                  | 断言漂移 | 断言改现行 success token 类                                                           |
+
+**总裁定：9/9 = 断言漂移（对有意且有在档记录的产品契约演进），0 产品回归。**
 
 Exit Criteria:
 
-- [ ] 9/9 项裁定表落盘于本 plan（每项：根因文件:行 + 分类 + 修复方向），无「未定位」残留
+- [x] 9/9 项裁定表落盘于本 plan（每项：根因文件:行 + 分类 + 修复方向），无「未定位」残留
 
 ### Phase 2 - 按裁定修复（产品回归 Fix / 断言漂移 Fix）
 
-Status: planned
+Status: completed
 Targets: Phase 1 裁定表指向的产品/测试文件
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 产品回归项：修复 + 回归测试评估（Bug Fix Test Coverage Rule 四条逐一过）
-- [ ] 断言漂移项：断言更新至现行契约（禁止弱化为永真断言；契约出处注明）
-- [ ] 逐项隔离复绿证明（`npx playwright test <spec>:<line>` 全绿）
+- [x] 产品回归项：**不适用**——裁定表 9/9 = 断言漂移，零产品回归；唯一产品侧改动为 gantt 计数播报面补 `data-slot="gantt-visible-count-announcement"` 测试性标记（无行为变化，对齐 renderer-markers 约定，支承 #7/#8 定位收窄）
+- [x] 断言漂移项：8 处测试断言更新至现行契约（各处注记契约出处：ai-sender V12e 门控契约、`--destructive` token 实值、status badge token 类、notice-bar OA-04 语义面、zoomToFit G4-R3 真实适配语义、CM6 platform 修饰键映射、gantt 双播报面定位）；无永真化弱化
+- [x] 逐项隔离复绿证明：9-spec 批量复跑（2026-09-26）**128 passed / 0 failed / 1 skipped（2.6min）**——修复前同口径 9 failed；#5 测试名同步改为真实适配语义（「Zoom to Fit picks the largest zoom whose task span fits the viewport」，plan 502 台账中的旧名属历史记录不回写）
 
 Exit Criteria:
 
-- [ ] 9/9 用例隔离复绿（逐项命令 + 结果记录于本 plan）
-- [ ] 涉及产品代码修复的项：focused 单测/回归测试在案（或写明评估后不需新测试的理由）
+- [x] 9/9 用例隔离复绿（`npx playwright test <9 specs>` 128 passed / 0 failed，2026-09-26 2.6min）
+- [x] 涉及产品代码修复的项：无产品行为修复（gantt data-slot 标记为测试性属性，调度包 focused 单测不涉值语义；回归风险评估：零行为面变化）
 
 ### Phase 3 - QA.1-L0 Minor ×3 处置
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/route-matrix.test.ts`、`apps/playground/src/home-cards.ts`、`apps/playground/src/domain-route-entries.ts`
 
-- Item Types: `Fix`、`Decision`
+- Item Types: `Proof`、`Decision`、`Fix`（仅当核验发现 1c 守卫或死代码清除存在缺口时回退为 Fix）
 
-- [ ] Minor-1：删除 `route-matrix.test.ts:320` 恒假分支（守卫测试仍全绿）
-- [ ] Minor-2：合并卡 id 与域注册表 id 冲突防 guard 断言（audit 建议二选一：expect 断言 or 保留前缀——执行时择一并记录）
-- [ ] Minor-3：`domain-route-entries.ts` 537 行 warn 档裁定（分段拆分 / oversized 豁免登记 / 维持观察——三选一，理由落盘；若拆分/豁免则 `pnpm check` 复核）
+- [x] Minor-1/2 核验：`58e716164` 已删除恒假分支并新增不变式 1c（`route-matrix.test.ts:304-313`「invariant 1c: aggregate card ids never collide with domain registry ids」，实测在案）——`pnpm --filter @nop-chaos/flux-playground test` 复跑 **37 files / 391 passed 全绿**；「L0 audit Minor-1/2 已由 plan 503 提交顺手修复」核验结论落盘（修复侧闭环，复审侧由 QA.2 承接）
+- [x] Minor-3 裁定：**维持观察（watch-only）**——`domain-route-entries.ts` 现 537 行，处 WARN_LINES(500)–ERROR_LINES(700) 之间，`check:oversized-code-files` 对 warn 档不翻 exit code（非门禁红）；该文件为纯声明式路由数据表，按域拆分会引入 N 个 import 碎片、降低「一表总览全部域入口」的可读性，当前拆分收益为负。**触发器**：行数越过 ERROR_LINES 700（L5.6/L6 入口持续入表时可预期）→ 按域拆分 `domain-route-entries/<domain>.ts` 数据模块 + 注册表聚合导出。登记 QA.7 残余债登记册
 
 Exit Criteria:
 
-- [ ] Minor-1/2 修复落地且 playground 包单测全绿（`pnpm --filter @nop-chaos/flux-playground test`）
-- [ ] Minor-3 裁定落盘（本 plan 内写明选项与理由），所选动作（如有）已执行
+- [x] Minor-1/2 核验记录落盘于本 plan（1c 断言在案 + playground 包单测全绿，391/391）
+- [x] Minor-3 裁定落盘（维持观察 + ERROR_LINES 触发器 + 拆分预案），无需执行动作
 
 ### Phase 4 - QA.1-L1/L2 审计发现消化（Major-1 优先）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/org/`（use-org-source / org-select-panel）、`docs/architecture/org-data-source-protocol.md`、`packages/ui/src/rating.tsx`、input-color renderer/design.md、roadmap §13、plan 503/505–509 簿记、a11y 微标签 i18n
 
 - Item Types: `Fix`、`Decision`、`Proof`
 
-- [ ] **QA.1-L2 Major-1（org children 续页）**：`useOrgChildren` 补 `orgPage` 递增续页 + hasMore 暴露 + 面板 children 侧 loadMore（协议 §5 契约为准，实现追平契约）；focused 单测（多页 children 合并、终止规则复用、无 children-source 单页直通）+ e2e 断言（mock 多页 children 场景）
-- [ ] QA.1-L2 Minor-①：5/7 plan（503/505–509 中实际残留者，执行时逐一核对）簿记残留清理（phase 状态/未勾选项/模板占位符——audit 记录的事实性修正）
-- [ ] QA.1-L2 Minor-②：region 手写 popover 分叉裁定（design.md 已声明——裁决维持声明豁免 or 迁移 ui Popover；理由落盘）
-- [ ] QA.1-L2 Minor-③：org/region 面板硬编码英文 a11y 微标签（clear/close/✕）i18n 键化（flux-i18n zh/en）
-- [ ] QA.1-L2 Minor-④：508 e2e 计数算术归因注记落盘（dev log 或 QA.2 台账节）
-- [ ] QA.1-L1 Minor-1：roadmap §13 L1 行「ui +15」→「ui +16」回填（grep 复核）
-- [ ] QA.1-L1 Minor-2：rating 触达面 doc↔live 收敛（裁决：p-0.5→p-1 凑满 24px 保持 a11y 声称，或修正 design.md 声称为实况——择一，理由 + 视觉回归验证落盘）
-- [ ] QA.1-L1 Minor-3：input-color readOnly 行为对齐 design.md（弹层禁触发）+ focused 测试补面（readonly 态零测试→有断言）
-- [ ] QA.1-L1 Minor-4：i18n 措辞裁定落盘（slider 无文案键属实质成立；nameless aria 回退评估——做或裁定 watch-only 附理由）
+- [x] **QA.1-L2 Major-1（org children 续页）**：`useOrgChildren` 重写为 `fetchChildrenPage`（useCallback，协议变量 orgPage 递增）+ `loadMore(node|null, depth)` + `OrgNodeLoadState.hasMore`；续页走 §5 同一套 id-dedupe（mergeNodesById）+ 终止规则（shouldStopPaging，与 search 侧共享）；org-select-panel 树分支 + region-columns 双消费面加 load-more 按钮（复用 `flux.form.orgLoadMore` 键）；**region-wheel 豁免记录**：滚轮交互形态无按钮承载位，数据面（合并后 nodes）自动流入，大数据集由 host 调 pageSize（schema prop），不留无记录缺口。focused 单测 +4（root 续页合并+orgPage=2、零新 id 终止守卫、hasMore:false 关闭分页、node 级续页）；e2e +1（lab 新场景「Paged root continuation」mock 双页 root：load-more 点击 → 第三部门出现 → 按钮消失）
+- [x] QA.1-L2 Minor-①：plan 505–509 簿记残留清理（505 Phase 5 补勾+completed、506 Closure Gates 7 项补勾、507 Phase 3 补勾+audit gate 补勾、508 Phase 2 补勾+双占位符补写、509 Exit Criteria 补勾+Follow-up 占位符补写——audit 清单逐项对齐，注记「簿记补正 2026-09-26」）
+- [x] QA.1-L2 Minor-②：region 手写 popover 分叉**裁定 = 维持 design.md :91 声明豁免**（absolute + backdrop 形态已声明、e2e 钉住、迁移 ui Popover 属 portal/定位语义变更，非本计划范围）；若 cascader demand-gated plan 未来立项，其列面板设计时统一裁决该形态归属（watch-only，successor = cascader plan）
+- [x] QA.1-L2 Minor-③：`aria-label="clear"/"close"` 硬编码英文 → i18n 键 `flux.form.orgClear` / `flux.form.orgPanelClose`（zh-CN/en-US 双语新增；org-select-panel clear、region clear、region backdrop close 三处替换；grep 复核 = 0 残留）
+- [x] QA.1-L2 Minor-④：508 e2e 计数算术归因注记落盘 dev log（did-not-run 串联块未计入子集口径所致；核心口径与零新增红结论不变）
+- [x] QA.1-L1 Minor-1：roadmap §13 L1 行「ui +15」→「ui +16」回填（附 closure r1 clamp 用例口径注记）
+- [x] QA.1-L1 Minor-2：rating 触达面**取「实现凑满声称」路径**——`p-0.5`→`p-1`（4px padding + 16px icon = 24px，满足 design.md §13 ≥24px a11y 声称）；ui 包 226/226 全绿，视觉面由 Phase 5 全量 e2e 兜底
+- [x] QA.1-L1 Minor-3：input-color readOnly 行为对齐 design.md（ui ColorPicker 受控 open + onOpenChange readOnly 门控，trigger 不再打开弹层；内部 swatch/input disabled 双重防护保留）+ focused 测试补面（readOnly trigger click → panel 不出现；ui 226/226）
+- [x] QA.1-L1 Minor-4：i18n 措辞**裁定 = watch-only**——slider 无可见文案故无专用键（audit 亦认铁律 6 实质成立）；nameless aria 回退：字段系统经 `aria-labelledby` 注入（input.tsx :148/:158 mergeAriaSpace）即 a11y 契约，label 与 name 双缺属 authoring defect，自动回退串无信息量，不做
 
 Exit Criteria:
 
-- [ ] Major-1：多页 children 场景单测/e2e 全绿（无静默截断），协议 §5 与实现一致（审计复审输入就绪）
-- [ ] 8 项 Minor 逐项落地或裁定落盘（本 plan 内可查：文件/行/理由）
-- [ ] 受影响包 focused 单测全绿（form / ui / playground 按触达面）
+- [x] Major-1：多页 children 场景单测/e2e 全绿（form 931/931、org e2e 7/7 含 input-city 回归），协议 §5 与实现一致（审计复审输入就绪）
+- [x] 8 项 Minor 逐项落地或裁定落盘（本节逐项可见：文件/键/理由）
+- [x] 受影响包 focused 单测全绿（ui 226 / form 931 / scheduling 1033 / playground 391 / i18n 30）
 
 ### Phase 5 - 收口全量验证
 
-Status: planned
+Status: completed
 Targets: 全仓
 
 - Item Types: `Proof`
 
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 全绿
-- [ ] `pnpm check` 零新增红
-- [ ] `pnpm test:e2e` 全量一轮：**0 功能失败**（watch-only 3 项在册豁免；负载 flake 按「隔离复跑全过」口径裁定并记录）
-- [ ] dev log 记录 + roadmap §13 QA 行注记（QA.2 前置消化完成）
+- [x] `pnpm typecheck`（40/40）/ `pnpm build`（40/40）/ `pnpm lint`（40/40）/ `pnpm test`（74/74 task）全绿
+- [x] `pnpm check` 零新增红（oversized 203w/2e/2exempt = 在册基线；ui-consistency「No new unregistered」）
+- [x] `pnpm test:e2e` 全量（33.4min）：**1562 passed / 43 skipped / 24 did-not-run / 2 failed**——两个最终失败均裁定为在册 gantt 负载 flake 家族并按「隔离复跑全过」口径消化：①`gantt-bars-and-links.spec.ts:9` 首轮 ✓（:955）、隔离复跑 spec 全绿 27 passed；②`gantt-demo.spec.ts:16` 首轮 ✓（:971）、隔离复跑绿（本计划修复后已在 9-spec 批量 128 passed 中验证）。另记录：`gantt-bars-and-links.spec.ts:131`（拖拽 resize）首轮 ✘ 重试复绿、repeat-each=3 呈 2 flaky + 1 passed——属 dev log 09-25 已登记的「gantt 拖拽 flake 家族」，每轮重试均收敛，无持久功能失败；watch-only 3 项（gantt-perf ×2 / kanban-perf ×1）本轮未进入失败列表
+- [x] dev log 记录 + roadmap §13 注记（QA.2 前置消化完成，QA.2/QA.3 解锁）
 
 Exit Criteria:
 
-- [ ] 上列四项验证全过且结果记录于本 plan Closure / dev log
+- [x] 上列四项验证全过且结果记录于本 plan Closure / dev log（2026-09-26）
 
 ## Draft Review Record
 
-- Reviewer / Agent: <<待独立子 agent 填写>>
-- Verdict: <<pass | pass-with-minors | revised | degraded>>
-- Rounds: <<审查轮数>>
-- Findings addressed: <<每条已处理的 Blocker/Major 一行>>
+- Reviewer / Agent: 独立 fresh 子 agent（plan reviewer，2026-09-26，未参与起草）
+- Verdict: `revised`（3 Major 当场修订并复核，修订后 0 Blocker / 0 Major，达成共识）
+- Rounds: 2（扩编稿全文复审 1 轮 + 修订复核 1 轮）
+- Findings addressed:
+  - Major-1（引用准确性）：Phase 3 与 Current Baseline 未反映 live——L0 Minor-1/2 已由 plan 503 提交 `58e716164` 落地（恒假分支已删、不变式 1c `route-matrix.test.ts:304-313` 已增，audit 引 `:320` 为 `87dd138fc` 时点已失效）→ Baseline/Phase 3/Closure Gates 改写为「核验 + 记录」口径
+  - Major-2（内部一致性）：Scope In Scope 未随扩编更新（漏 L1/L2 消化项，与 Phase 4/Closure Gates 矛盾）→ 已补两条 In Scope
+  - Major-3（内部矛盾）：Non-Goals「不改 product 行为除非 triage…」与 Phase 4 契约收敛项（Major-1 追平实现、L1 Minor-2/3 二选一收敛）冲突 → 已加例外子句
+  - Minor（顺手修正，不逐条记）：L2 Minor-① plan 枚举 503/505–509 → audit 实录 505–509；Major-1 项补 region 消费面处置注记
 
 ## Closure Gates
 
 - [ ] 9 项存量失败全部 triage 落裁定表且修复复绿（0 功能失败）
-- [ ] QA.1-L0 Minor-1/2 修复、Minor-3 裁定闭环
+- [ ] QA.1-L0 Minor-1/2 已落地事实核验记录在案（`58e716164`）、Minor-3 裁定闭环
 - [ ] QA.1-L1 4 Minor 修复/裁定闭环；QA.1-L2 Major-1 修复 + 4 Minor 修复/裁定闭环（L2 线出口 fail → 复审输入就绪）
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（产品回归项与 Major-1 不得留 non-blocking）
 - [ ] 受影响 owner docs 已同步（org 协议 / rating / input-color design.md / roadmap 计数注记等，按实际触达面）或写明 No owner-doc update required

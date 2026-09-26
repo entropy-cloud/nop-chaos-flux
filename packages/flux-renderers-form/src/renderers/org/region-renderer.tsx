@@ -106,7 +106,7 @@ export function InputCityRenderer(props: RendererComponentProps<InputCitySchema>
             role="button"
             tabIndex={0}
             data-slot="region-clear"
-            aria-label="clear"
+            aria-label={t('flux.form.orgClear')}
             className="px-1 text-muted-foreground hover:text-foreground"
             onClick={(event) => {
               event.stopPropagation();
@@ -140,7 +140,7 @@ export function InputCityRenderer(props: RendererComponentProps<InputCitySchema>
           <div
             role="button"
             tabIndex={-1}
-            aria-label="close"
+            aria-label={t('flux.form.orgPanelClose')}
             className="fixed inset-0 z-40"
             data-slot="region-backdrop"
             onClick={() => setPanelOpen(false)}

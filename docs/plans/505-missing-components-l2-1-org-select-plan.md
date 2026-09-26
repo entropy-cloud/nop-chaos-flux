@@ -149,14 +149,14 @@ Exit Criteria:
 
 ### Phase 5 - 登记 + INV 审计 + 收口验证与状态回写
 
-Status: in progress
+Status: completed
 Targets: 三处登记文档、roadmap §13、dev log
 
 - Item Types: `Proof`、`Follow-up`（登记性）
 
 - [x] 登记：`examples.manifest.json` runtime 尾部追加两 type；`quick-reference.md` form 节补两 type 行；`components/index.md` L333 清单行 + L497 起目录两行
-- [ ] INV 审计（铁律 7）：`new-renderer-introduction-audit.md` §1 INV-1–INV-5 + §3 checklist A–G，结论按 §4 模板落本 plan Closure 节
-- [ ] 全量验证（Closure Gates）+ roadmap §13 L2.1 回写 `done`（replace 后 grep 复核）+ dev log
+- [x] INV 审计（铁律 7）：`new-renderer-introduction-audit.md` §1 INV-1–INV-5 + §3 checklist A–G，结论按 §4 模板落本 plan Closure 节（簿记补正 2026-09-26：audit 实录已完成，勾选漏同步）
+- [x] 全量验证（Closure Gates）+ roadmap §13 L2.1 回写 `done`（replace 后 grep 复核）+ dev log（簿记补正 2026-09-26）
 
 Exit Criteria:
 

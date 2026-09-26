@@ -81,7 +81,7 @@ Targets: roadmap §13、dev log
 
 Exit Criteria:
 
-- [ ] roadmap 拆行后 L2.5 = `done`、L2.6 = `proposed`；dev log 落盘一致
+- [x] roadmap 拆行后 L2.5 = `done`、L2.6 = `proposed`；dev log 落盘一致（簿记补正 2026-09-26：8c74ee8a6 已证实落盘）
 
 ## Draft Review Record
 
@@ -118,4 +118,4 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- no remaining plan-owned work（簿记补正 2026-09-26）

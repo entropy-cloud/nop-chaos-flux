@@ -86,7 +86,7 @@ Targets: 三处登记、roadmap §13、dev log
 
 - [x] 登记：examples.manifest.json（runtime +1）/ quick-reference.md（VerificationCodeSchema 行）/ components/index.md（清单行 + 目录）——grep 复核命中
 - [x] INV 审计（铁律 7）结论按 §4 模板落 Closure 节
-- [ ] 全量验证 + roadmap §13 L2.4 回写 `done`（grep 复核）+ dev log
+- [x] 全量验证 + roadmap §13 L2.4 回写 `done`（grep 复核）+ dev log（簿记补正 2026-09-26）
 
 Exit Criteria:
 
@@ -126,7 +126,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- （收口时填写，或明确写无）
+- 无（收口裁定：本计划无 non-blocking 治理项残留；簿记补正 2026-09-26）
 
 ## Closure
 
@@ -139,4 +139,4 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- no remaining plan-owned work（簿记补正 2026-09-26）

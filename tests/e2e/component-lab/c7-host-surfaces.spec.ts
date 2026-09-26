@@ -240,10 +240,14 @@ test('mobile-host: notice-bar close hides + click dispatches + static stays stat
   await expect(closable).toHaveCount(0);
   await expect.poll(async () => readProbe(page, 'noticeClose'), { timeout: 10_000 }).toBe('closed');
 
-  // Clickable bar: role=button, click dispatches onClick.
+  // Clickable bar: the operable role=button surface is the inner
+  // notice-bar-action (OA-04: the root also hosts the real close button, so
+  // role=button stays off the root to avoid nested interactive content);
+  // clicking the action surface dispatches the bar's onClick.
   const clickable = stage.locator('[data-testid="c7-notice-click"]');
-  await expect(clickable).toHaveAttribute('role', 'button');
-  await clickable.click();
+  const clickAction = clickable.locator('[data-slot="notice-bar-action"]');
+  await expect(clickAction).toHaveAttribute('role', 'button');
+  await clickAction.click();
   await expect.poll(async () => readProbe(page, 'noticeClick'), { timeout: 10_000 }).toBe('clicked');
 
   // Static bar: advisory role=status, not focusable.

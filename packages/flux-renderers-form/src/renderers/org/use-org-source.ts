@@ -16,6 +16,8 @@ export interface OrgNodeLoadState {
   status: OrgLoadStatus;
   nodes: OrgNode[];
   error?: string;
+  /** Protocol §5: false once the §5 termination rules say no further page. */
+  hasMore: boolean;
 }
 
 type OrgFailureKey = 'flux.form.orgChildrenFailed' | 'flux.form.orgSearchFailed' | 'flux.form.orgResolveFailed';
@@ -80,6 +82,13 @@ async function requestOrgPage(
   }
 }
 
+/**
+ * Per-key continuation cursor (protocol §5: children pages merge with the
+ * same id-dedupe and termination rules as search pages). Key = node id, or
+ * the root sentinel for the top layer.
+ */
+const ROOT_PAGE_KEY = '__org_root__';
+
 export function useOrgChildren(input: {
   helpers: RendererHelpers;
   scope?: ScopeRef;
@@ -94,13 +103,15 @@ export function useOrgChildren(input: {
   rootState: OrgNodeLoadState;
   nodeStates: Record<string, OrgNodeLoadState>;
   loadNode: (node: OrgNode, depth: number) => void;
+  loadMore: (node: OrgNode | null, depth: number) => void;
   retryNode: (node: OrgNode, depth: number) => void;
   retryRoot: () => void;
 } {
   const { helpers, scope, sourceChildren, pageSize = 50, extraParams, enabled, hasStaticRoot } = input;
-  const [rootState, setRootState] = useState<OrgNodeLoadState>({ status: 'idle', nodes: [] });
+  const [rootState, setRootState] = useState<OrgNodeLoadState>({ status: 'idle', nodes: [], hasMore: true });
   const [nodeStates, setNodeStates] = useState<Record<string, OrgNodeLoadState>>({});
   const controllerRef = useRef<AbortController | null>(null);
+  const pageRefs = useRef<Map<string, number>>(new Map());
   // extraParams identity may churn per render (inline schema objects); reads
   // go through the ref so request effects key on semantic inputs only.
   const extraParamsRef = useRef(extraParams);
@@ -108,38 +119,71 @@ export function useOrgChildren(input: {
     extraParamsRef.current = extraParams;
   });
 
-  const runRoot = useCallback(() => {
-    if (!sourceChildren) {
-      return;
-    }
-    const controller = new AbortController();
-    controllerRef.current?.abort();
-    controllerRef.current = controller;
-    startTransition(() => setRootState({ status: 'loading', nodes: [] }));
-    requestOrgPage(
-      { helpers, scope, pageSize, extraParams: extraParamsRef.current },
-      sourceChildren,
-      { orgNodeId: '', orgDepth: 0, orgPage: 1, orgPageSize: pageSize },
-      controller.signal,
-    )
-      .then((result) => {
-        if (controller.signal.aborted) return;
+  const fetchChildrenPage = useCallback(
+    (key: string, node: OrgNode | null, depth: number, page: number, baseNodes: OrgNode[]) => {
+      if (!sourceChildren) {
+        return;
+      }
+      const controller = new AbortController();
+      controllerRef.current?.abort();
+      controllerRef.current = controller;
+      pageRefs.current.set(key, page);
+      const patch = node
+        ? { orgNodeId: node.id, orgDepth: depth, orgPage: page, orgPageSize: pageSize }
+        : { orgNodeId: '', orgDepth: 0, orgPage: page, orgPageSize: pageSize };
+      const applyState = (updater: (previous: OrgNodeLoadState) => OrgNodeLoadState) => {
         startTransition(() => {
-          if (result.ok) {
-            setRootState({ status: 'ready', nodes: result.page.nodes });
+          if (node) {
+            setNodeStates((previous) => ({
+              ...previous,
+              [node.id]: updater(previous[node.id] ?? { status: 'idle', nodes: [], hasMore: true }),
+            }));
           } else {
-            setRootState({
-              status: 'error',
-              nodes: [],
-              error: orgFailureMessage('flux.form.orgChildrenFailed', result.error),
-            });
+            setRootState(updater);
           }
         });
-      })
-      .catch(() => {
-        /* aborted */
-      });
-  }, [helpers, pageSize, scope, sourceChildren]);
+      };
+      // First page replaces the previous listing (root blanks, node keeps its
+      // stale rows until the fresh page lands — §7 echo-friendliness); a
+      // continuation page keeps the merged rows visible while loading.
+      applyState((previous) => ({
+        status: 'loading',
+        nodes: page === 1 ? (node ? previous.nodes : []) : previous.nodes,
+        hasMore: previous.hasMore,
+      }));
+      requestOrgPage(
+        { helpers, scope, pageSize, extraParams: extraParamsRef.current },
+        sourceChildren,
+        patch,
+        controller.signal,
+      )
+        .then((result) => {
+          if (controller.signal.aborted) return;
+          applyState((previous) => {
+            if (!result.ok) {
+              return {
+                status: 'error',
+                nodes: page === 1 ? [] : previous.nodes,
+                error: orgFailureMessage('flux.form.orgChildrenFailed', result.error),
+                hasMore: false,
+              };
+            }
+            const knownIds = new Set(page > 1 ? baseNodes.map((entry) => entry.id) : []);
+            const merged = page > 1 ? mergeNodesById(baseNodes, result.page.nodes) : result.page.nodes;
+            const stop = shouldStopPaging({ page: result.page, loadedCount: merged.length, knownIds });
+            return { status: 'ready', nodes: merged, hasMore: !stop };
+          });
+        })
+        .catch(() => {
+          /* aborted */
+        });
+    },
+    [helpers, pageSize, scope, sourceChildren],
+  );
+
+  const runRoot = useCallback(() => {
+    fetchChildrenPage(ROOT_PAGE_KEY, null, 0, 1, []);
+  }, [fetchChildrenPage]);
 
   useEffect(() => {
     if (!enabled || !sourceChildren || hasStaticRoot) {
@@ -162,48 +206,26 @@ export function useOrgChildren(input: {
     if (!force && existing && existing.status !== 'error') {
       return;
     }
-    const controller = new AbortController();
-    controllerRef.current?.abort();
-    controllerRef.current = controller;
-    startTransition(() => {
-      setNodeStates((previous) => ({
-        ...previous,
-        [node.id]: { status: 'loading', nodes: existing?.nodes ?? [] },
-      }));
-    });
-    requestOrgPage(
-      { helpers, scope, pageSize, extraParams: extraParamsRef.current },
-      sourceChildren,
-      { orgNodeId: node.id, orgDepth: depth, orgPage: 1, orgPageSize: pageSize },
-      controller.signal,
-    )
-      .then((result) => {
-        if (controller.signal.aborted) return;
-        startTransition(() => {
-          setNodeStates((previous) => {
-            if (result.ok) {
-              return { ...previous, [node.id]: { status: 'ready', nodes: result.page.nodes } };
-            }
-            return {
-              ...previous,
-              [node.id]: {
-                status: 'error',
-                nodes: [],
-                error: orgFailureMessage('flux.form.orgChildrenFailed', result.error),
-              },
-            };
-          });
-        });
-      })
-      .catch(() => {
-        /* aborted */
-      });
+    fetchChildrenPage(node.id, node, depth, 1, []);
+  };
+
+  const loadMore = (node: OrgNode | null, depth: number) => {
+    if (!sourceChildren) {
+      return;
+    }
+    const state = node ? nodeStates[node.id] : rootState;
+    if (!state || state.status !== 'ready' || !state.hasMore) {
+      return;
+    }
+    const key = node ? node.id : ROOT_PAGE_KEY;
+    fetchChildrenPage(key, node, depth, (pageRefs.current.get(key) ?? 1) + 1, state.nodes);
   };
 
   return {
     rootState,
     nodeStates,
     loadNode: (node, depth) => loadNode(node, depth),
+    loadMore: (node, depth) => loadMore(node, depth),
     retryNode: (node, depth) => loadNode(node, depth, true),
     retryRoot: runRoot,
   };

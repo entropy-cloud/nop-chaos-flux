@@ -42,7 +42,7 @@ export interface GanttHandle {
 function GanttLiveRegion({ store }: { store: GanttStoreApi }) {
   const count = useSyncExternalStore(store.subscribe, () => store.getVisibleTasks().length);
   return (
-    <div aria-live="polite" aria-atomic="true" className="sr-only">
+    <div aria-live="polite" aria-atomic="true" className="sr-only" data-slot="gantt-visible-count-announcement">
       {t('scheduling.gantt.tasksVisible', { count })}
     </div>
   );

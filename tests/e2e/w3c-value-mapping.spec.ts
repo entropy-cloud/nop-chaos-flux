@@ -84,16 +84,20 @@ test.describe('W3c value mapping family — mapping/status', () => {
   }) => {
     await openW3c(page);
 
-    // success → emerald; warning → amber; error → destructive
+    // Badge variants carry semantic token classes (plan 500 R2-4 token
+    // remediation replaced literal emerald/amber): success → text-success,
+    // warning → text-warning, error → destructive.
     const successBadgeClass = await page
       .locator('[data-testid="status-success"] [data-slot="status-badge"]')
       .evaluate((el) => el.className);
-    expect(successBadgeClass).toContain('emerald');
+    expect(successBadgeClass).toContain('text-success');
+    expect(successBadgeClass).toContain('bg-success/15');
 
     const warningBadgeClass = await page
       .locator('[data-testid="status-warning"] [data-slot="status-badge"]')
       .evaluate((el) => el.className);
-    expect(warningBadgeClass).toContain('amber');
+    expect(warningBadgeClass).toContain('text-warning');
+    expect(warningBadgeClass).toContain('bg-warning/15');
 
     const errorBadgeClass = await page
       .locator('[data-testid="status-error"] [data-slot="status-badge"]')

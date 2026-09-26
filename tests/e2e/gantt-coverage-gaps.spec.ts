@@ -45,7 +45,7 @@ test.describe('Gantt — coverage gaps: root ARIA, fit zoom, blur commit, keyboa
     await assertTrackedPageErrors(page);
   });
 
-  test('Zoom to Fit returns the scale to the middle zoom level', async ({ page }) => {
+  test('Zoom to Fit picks the largest zoom whose task span fits the viewport', async ({ page }) => {
     await openGantt(page);
     const zoomIn = page.locator('[data-slot="gantt-toolbar"] button').nth(1);
     const fit = page.locator('[data-slot="gantt-toolbar"] button').nth(2);
@@ -61,9 +61,16 @@ test.describe('Gantt — coverage gaps: root ARIA, fit zoom, blur commit, keyboa
       timeout: 5_000,
     });
 
-    // Fit → back to the middle (week) zoom, W%V labels return.
+    // Fit performs a real fit computation (G4-R3-视角11-01, gantt-store
+    // zoomToFit): the largest minCellWidth zoom whose span×cellWidth fits the
+    // container — NOT a jump to the middle slot. For this demo's ~2-month task
+    // span at the default viewport that is the month zoom (week's 30px/cell
+    // overflows; month's 12px fits), so the two-tier month/year header returns.
     await fit.click();
-    await expect(scaleRows.first().locator('[data-slot="gantt-scale-cell"]').first()).toHaveText(/^W\d+$/, {
+    await expect(scaleRows.first().locator('[data-slot="gantt-scale-cell"]').first()).toHaveText(/^\d{4}\/\d{2}$/, {
+      timeout: 5_000,
+    });
+    await expect(scaleRows.nth(1).locator('[data-slot="gantt-scale-cell"]').first()).toHaveText(/^\d{4}$/, {
       timeout: 5_000,
     });
     await assertTrackedPageErrors(page);

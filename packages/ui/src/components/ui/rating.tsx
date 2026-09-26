@@ -132,7 +132,8 @@ function Rating({
             data-slot="rating-star"
             data-level={level}
             className={cn(
-              'relative rounded-sm p-0.5 transition-colors hover:bg-muted/60',
+              // 4px padding + 16px icon = 24px minimum touch target (design.md §13).
+              'relative rounded-sm p-1 transition-colors hover:bg-muted/60',
             )}
             onMouseEnter={() => setHoverValue(index + (allowHalf ? 0.5 : 1))}
             onClick={(event) => handleStarClick(index, event)}

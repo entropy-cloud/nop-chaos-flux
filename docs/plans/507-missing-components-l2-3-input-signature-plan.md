@@ -99,14 +99,14 @@ Exit Criteria:
 
 ### Phase 3 - 登记 + INV 审计 + 收口验证与状态回写
 
-Status: in progress
+Status: completed
 Targets: 三处登记、roadmap §13、dev log
 
 - Item Types: `Proof`、`Follow-up`（登记性）
 
 - [x] 登记：examples.manifest.json（runtime +1）/ quick-reference.md（InputSignatureSchema 行）/ components/index.md（清单行 + 目录）——grep 复核命中
 - [x] INV 审计（铁律 7）结论按 §4 模板落 Closure 节
-- [ ] 全量验证 + roadmap §13 L2.3 回写 `done`（grep 复核）+ dev log
+- [x] 全量验证 + roadmap §13 L2.3 回写 `done`（grep 复核）+ dev log（簿记补正 2026-09-26）
 
 Exit Criteria:
 
@@ -139,7 +139,7 @@ Exit Criteria:
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（压感线宽/容器 resize 重排登记 Non-Blocking Follow-ups）
 - [x] 受影响的 owner docs 已同步（design.md、matrix、三处登记）
 - [x] new-renderer-introduction-audit 已过且结论按 §4 模板记录于 Closure 节
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（r2 approved；簿记补正 2026-09-26）
 - [x] `pnpm typecheck`（2026-09-25 全仓 0 error）
 - [x] `pnpm build`（exit 0）
 - [x] `pnpm lint`（exit 0，仅存量 1 warning）

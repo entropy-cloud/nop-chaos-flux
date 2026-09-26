@@ -4,11 +4,16 @@ interface OrgApiRequest {
   url?: string;
 }
 
-function orgFetchEnv(options?: { failChildren?: boolean }) {
+function orgFetchEnv(options?: { failChildren?: boolean; pagedRoot?: boolean }) {
   const org: Record<string, Array<Record<string, unknown>>> = {
     root: [
       { id: 'dept-eng', name: 'Engineering', type: 'department' },
       { id: 'dept-sales', name: 'Sales', type: 'department' },
+    ],
+    rootPaged: [
+      { id: 'dept-eng', name: 'Engineering', type: 'department' },
+      { id: 'dept-sales', name: 'Sales', type: 'department' },
+      { id: 'dept-hr', name: 'HR', type: 'department' },
     ],
     'dept-eng': [
       { id: 'u-alice', name: 'Alice Zhang', type: 'user', extra: { title: 'Frontend' } },
@@ -20,6 +25,7 @@ function orgFetchEnv(options?: { failChildren?: boolean }) {
       { id: 'u-dave', name: 'Dave Chen', type: 'user' },
     ],
     'dept-sales': [{ id: 'u-erin', name: 'Erin Liu', type: 'user' }],
+    'dept-hr': [{ id: 'u-finn', name: 'Finn Zhou', type: 'user' }],
     search: [
       { id: 'u-alice', name: 'Alice Zhang', type: 'user' },
       { id: 'u-carol', name: 'Carol Wang', type: 'user' },
@@ -34,8 +40,15 @@ function orgFetchEnv(options?: { failChildren?: boolean }) {
           return { status: 500, message: 'org backend down' } as T;
         }
         const nodeId = url.searchParams.get('orgNodeId') ?? '';
-        const nodes = nodeId === '' ? org.root : (org[nodeId] ?? []);
-        return { status: 0, data: { nodes } } as T;
+        const page = Number(url.searchParams.get('orgPage') ?? '1');
+        const pool = nodeId === '' ? (options?.pagedRoot ? org.rootPaged : org.root) : (org[nodeId] ?? []);
+        let nodes = pool;
+        let hasMore: boolean | undefined;
+        if (options?.pagedRoot && nodeId === '') {
+          nodes = page === 1 ? pool.slice(0, 2) : pool.slice(2);
+          hasMore = page === 1;
+        }
+        return { status: 0, data: { nodes, hasMore } } as T;
       }
       if (url.pathname.endsWith('/search')) {
         return { status: 0, data: { nodes: org.search } } as T;
@@ -137,6 +150,25 @@ const childrenFailurePage = {
   ],
 };
 
+const pagedRootPage = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      body: [
+        {
+          type: 'user-select',
+          name: 'partner',
+          label: 'Partner (paged root)',
+          sourceChildren: orgSourceChildren,
+          description:
+            'Protocol §5 children pagination: the root layer serves page 1 of 2 departments; Load more appends the remaining page and then disappears.',
+        },
+      ],
+    },
+  ],
+};
+
 const replaceSearchPage = {
   type: 'page',
   body: [
@@ -178,6 +210,12 @@ export function UserSelectLabPage() {
           description: 'Root load fails; the panel surfaces an inline error row with Retry.',
           schema: childrenFailurePage,
           env: orgFetchEnv({ failChildren: true }),
+        },
+        {
+          title: 'Paged root continuation',
+          description: 'Children pages continue via Load more and terminate after the last page (protocol §5).',
+          schema: pagedRootPage,
+          env: orgFetchEnv({ pagedRoot: true }),
         },
         {
           title: 'Replace-mode search',

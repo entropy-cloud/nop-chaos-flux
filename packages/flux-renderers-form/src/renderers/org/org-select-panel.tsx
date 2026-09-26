@@ -183,7 +183,7 @@ export function OrgSelectPanel(input: {
                 role="button"
                 tabIndex={0}
                 data-slot="org-select-clear"
-                aria-label="clear"
+                aria-label={t('flux.form.orgClear')}
                 className="px-1 text-muted-foreground hover:text-foreground"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -313,6 +313,18 @@ export function OrgSelectPanel(input: {
                 <div className="flex justify-center py-3" data-slot="org-select-loading">
                   <Spinner className="size-4" />
                 </div>
+              ) : null}
+              {levelState?.status === 'ready' && levelState.hasMore ? (
+                <button
+                  type="button"
+                  data-slot="org-select-load-more"
+                  className="w-full rounded-sm px-2 py-1.5 text-center text-sm text-muted-foreground hover:bg-accent"
+                  onClick={() =>
+                    data.children.loadMore(path.length === 0 ? null : path[path.length - 1], path.length)
+                  }
+                >
+                  {t('flux.form.orgLoadMore')}
+                </button>
               ) : null}
               {(!levelState || levelState.status === 'ready' || levelState.status === 'idle') && levelNodes.length === 0 ? (
                 <div className="px-2 py-3 text-center text-sm text-muted-foreground" data-slot="org-select-empty">

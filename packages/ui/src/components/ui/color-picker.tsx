@@ -92,6 +92,7 @@ function ColorPicker({
 }: ColorPickerProps) {
   const [uncontrolled, setUncontrolled] = React.useState<string | undefined>(defaultValue);
   const [draft, setDraft] = React.useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = React.useState(false);
   const isControlled = valueProp !== undefined;
   const value = isControlled ? valueProp : uncontrolled;
   const swatches = presetColors ?? DEFAULT_PRESET_COLORS;
@@ -119,7 +120,15 @@ function ColorPicker({
 
   return (
     <div className={cn('inline-flex items-center', className)} data-slot="color-picker">
-      <Popover>
+      <Popover
+        open={panelOpen}
+        // Read-only contract (input-color design.md §5): the trigger must not
+        // open the panel; swatches/inputs stay disabled as a second guard.
+        onOpenChange={(next) => {
+          if (readOnly) return;
+          setPanelOpen(next);
+        }}
+      >
         <PopoverTrigger
           render={
             <Button

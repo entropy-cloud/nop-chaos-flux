@@ -20,7 +20,9 @@ test.describe('Gantt Demo — Foundation, Toolbar, Grid & Tree', () => {
     const gantt = page.locator('[data-slot="gantt"]');
     await expect(gantt).toBeVisible({ timeout: 10_000 });
 
-    const liveRegion = page.locator('[aria-live="polite"]');
+    // Scoped to the visible-count announcement: the gantt root also hosts a
+    // second live region for zoom-fit announcements (gantt.tsx).
+    const liveRegion = page.locator('[data-slot="gantt-visible-count-announcement"]');
     await expect(liveRegion).toBeVisible();
     const text = await liveRegion.textContent();
     // Locale-aware: en-US "N tasks visible" / zh-CN "N 个任务可见".
