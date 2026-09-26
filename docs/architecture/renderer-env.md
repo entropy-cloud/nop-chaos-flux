@@ -17,12 +17,17 @@
 >
 > `stream` 与 `openSocket` 已于 2026-07-21 经 INV-2 评审通过，并于 2026-07-23 **落地实施**（接口 + playground 默认实现 + decorator hooks，见 §4.3 历史记录）。两个字段均 optional，向后兼容。使用方应 capability check（`if (env.stream) ...`）。
 
+> 2026-09-26：`print` / `clipboard` / `location` 三字段经 INV-2 评审通过（契约文档 `docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md`，plan 512 Phase 1 design gate），随 plan 512 实施；optional + capability check 同款。
+
 ```ts
 export interface RendererEnv extends ExpressionExecutionEnv {
   // ===== 网络 IO =====
   fetcher: ApiFetcher; // HTTP 一次性请求（必填，已实施）
   stream?: StreamFetcher; // HTTP 流式响应（SSE/NDJSON/...，可选，2026-07-23 已实施）
   openSocket?: WebSocketOpener; // WebSocket 长连接（可选，2026-07-23 已实施）
+  print?: () => void; // 宿主打印管线（可选，2026-09-26 已裁定，plan 512）
+  clipboard?: ClipboardWriter; // 系统剪贴板写入（可选，2026-09-26 已裁定，plan 512）
+  location?: EnvLocation; // host router 查询串读写（可选，2026-09-26 已裁定，plan 512）
 
   // ===== UI 反馈 =====
   notify: (level, message) => void; // Toast 通知（必填）
@@ -247,10 +252,11 @@ locale?: string;
 
 ### 4.3 历史扩充记录
 
-| 日期       | 字段                               | 评审来源                                                            | 状态   |
-| ---------- | ---------------------------------- | ------------------------------------------------------------------- | ------ |
-| 2026-07-23 | `env.stream?: StreamFetcher`       | `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md` | 已实施 |
-| 2026-07-23 | `env.openSocket?: WebSocketOpener` | 同上                                                                | 已实施 |
+| 日期       | 字段                                                                                        | 评审来源                                                                          | 状态                      |
+| ---------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------- |
+| 2026-07-23 | `env.stream?: StreamFetcher`                                                                | `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`               | 已实施                    |
+| 2026-07-23 | `env.openSocket?: WebSocketOpener`                                                          | 同上                                                                              | 已实施                    |
+| 2026-09-26 | `env.print?: () => void` + `env.clipboard?: ClipboardWriter` + `env.location?: EnvLocation` | `docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md` | 已裁定（plan 512 实施中） |
 
 ## 5. Host 实现责任
 
@@ -265,6 +271,9 @@ locale?: string;
 | `confirm` / `alert`     | 可选    | `@nop-chaos/ui` 的 Dialog                                                                          |
 | `navigate`              | 可选    | 基于 `history` 或路由库                                                                            |
 | `loadPage` / `loadDict` | 可选    | 后端 API 或本地 mock                                                                               |
+| `print`                 | 可选    | `window.print()` 代理（plan 512）                                                                  |
+| `clipboard`             | 可选    | `navigator.clipboard.writeText` 代理（plan 512）                                                   |
+| `location`              | 可选    | hash/history router 查询串读写（plan 512；SSR 用静态桩）                                           |
 | `hasRole`               | 可选    | 缺省 allow-all                                                                                     |
 | `importLoader`          | 可选    | 静态注册表或动态 `import()`                                                                        |
 | `monitor`               | 已移除  | 改用 `<SchemaRenderer monitor>` prop（见 `flux-monitor.md`）                                       |

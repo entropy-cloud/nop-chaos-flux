@@ -2,7 +2,7 @@
 
 > Plan Status: draft
 > Last Reviewed: 2026-09-26
-> Source: `docs/backlog/missing-components-and-designer-roadmap.md` §6（L3 全表 + §1 交付铁律）+ `docs/analysis/visual-quality/2026-09-24-page-archetype-coverage-audit.md` §2（C6 Blocked 行）/ §3.2（N2 五行）/ §10.2 规则 3（「Reuse the action vocabulary」）；`docs/architecture/renderer-env.md`（必读已过：§2 字段全集、§4 INV-2 流程、§6 使用规则）
+> Source: `docs/backlog/missing-components-and-designer-roadmap.md` §6（L3 全表 + §1 交付铁律）+ `docs/analysis/visual-quality/2026-09-24-page-archetype-coverage-audit.md` §2（C6 Blocked 行）/ §3.2（N2 五行）/ §3.6 规则 3（「Reuse the action vocabulary」；初稿误写 §10.2，契约评审更正）；`docs/architecture/renderer-env.md`（必读已过：§2 字段全集、§4 INV-2 流程、§6 使用规则）
 > Related: `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`（env 扩充先例）；`docs/analysis/ui-review/C2-capability-gaps.md`（toast debounce / copy-link 语义模拟 / D1 池素材行）
 
 ## Purpose
@@ -16,7 +16,7 @@
 2026-09-26 live repo 核对（HEAD `63b371fd8` 后续随 511 推进更新）：
 
 - **env 现状**（`packages/flux-core/src/types/renderer-api.ts:177` `RendererEnv` 接口，已实施字段）：`fetcher / stream / openSocket / notify / confirm / alert / navigate / loadPage / loadDict / hasRole / importLoader / resolveImportUrl / functions / filters / locale`。**无 print、无 clipboard**（archetype 审计实证「verified absent from renderer-api.ts」）。
-- **action 词汇现状**（`packages/flux-action-core/src/action-dispatcher/built-in-actions.ts`）：built-in 集合 = setValue/setValues/ajax/openDialog/openDrawer/closeDrawer/closeDialog/closeSurface/showToast/confirm/alert/refreshTable/refreshSource/refreshNearest/pick/submit/submitForm/navigate。**无 copy、无 download、无 print**。archetype 审计 §10.2 规则 3（「Reuse the action vocabulary」）裁定：通道优先复用 action 词汇，禁止 per-renderer addEventListener 岛。
+- **action 词汇现状**（`packages/flux-action-core/src/action-dispatcher/built-in-actions.ts`）：built-in 集合 = setValue/setValues/ajax/openDialog/openDrawer/closeDrawer/closeDialog/closeSurface/showToast/confirm/alert/refreshTable/refreshSource/refreshNearest/pick/submit/submitForm/navigate。**无 copy、无 download、无 print**。archetype 审计 §3.6 规则 3（「Reuse the action vocabulary」；初稿误写 §10.2，契约评审更正）裁定：通道优先复用 action 词汇，禁止 per-renderer addEventListener 岛。
 - **L3.1 print 现场**：AntD Pro 详情页打印按钮静态保留（`docs/analysis/ui-review/C2-capability-gaps.md:109`）；print-designer 线（flux-print-\*，web-print-roadmap P0–P4 closed）是**模板设计/打印模板渲染**轨道，与运行时页面 body 的 `window.print` 型宿主通道是两回事（archetype §2 D5 行已区分）。C6 archetype 因此 Blocked。
 - **L3.2 clipboard 现场**：三处 copy-link（Cal `__shareLink` / Linear `__copyLink` / Notion `__copyLink`）均为「零副作用 get 端点 + `messages.success` 已复制」语义模拟，**实际剪贴板写入未做**（C2 :137/:172/:201）。
 - **L3.3 download 现场**：`responseType: 'blob'` 已在 schema 契约（`flux-core/src/types/schema-base-types.ts:39/:57`）；`downloadBlob` 工具已存在（`flux-renderers-scheduling/src/kanban/utils/kanban-export.ts`）；用户导出链现为「后端生成 CSV dataURL → 返回 url 字段」语义模拟（showcase-env `/r/User__export`），无声明式 action。
@@ -76,18 +76,18 @@
 
 ### Phase 1 - 五通道契约设计 + INV-2 裁定（design gate）
 
-Status: planned
+Status: completed
 Targets: `docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md`、`docs/architecture/renderer-env.md`
 
 - Item Types: `Decision`
 
-- [ ] 契约文档落盘：每通道（print/clipboard/download/toast/filter↔URL）——场景、A/B/C 档裁定与理由、接口形状（TS 签名）、capability check 约定、SSR/test 降级路径、与既有词汇边界
-- [ ] 独立 review 共识（fresh 子 agent，对齐 stream/openSocket 先例标准）；通过后回写 `renderer-env.md`（§2 全集、§5 host 责任表、§4.3 历史记录按裁定涉及面）与 `action-scope-and-imports.md`（新增 built-in action 词汇，如裁定走 action）
+- [x] 契约文档落盘：`docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md`（五通道裁定：print C / clipboard C / download A / toast 宿主约定 / filter↔URL C——sync helper owner 包经评审 M1 更正为 **flux-renderers-data**；syncUrl 三语义补丁：多实例键冲突先到优先、popstate 单发语义、序列化编解码规则）
+- [x] 独立 review 共识（fresh 子 agent，2026-09-26：0B/3M/5m 全部当轮落字，裁定零变更——M3 压测 location 字面 3+ 不达标但结构性依据成立不改档）；owner docs 回写完成（renderer-env.md §2 状态声明+接口块+§4.3 历史+§5 host 表、action-scope-and-imports.md built-in 枚举 +§478 段）
 
 Exit Criteria:
 
-- [ ] 契约文档含五通道明确裁定（无「待定」残留）+ review 记录在案
-- [ ] `renderer-env.md` / `action-scope-and-imports.md` 回写与裁定一致（grep 复核）
+- [x] 契约文档含五通道明确裁定（无「待定」残留）+ review 记录在案（文档 Review 头注）
+- [x] `renderer-env.md` / `action-scope-and-imports.md` 回写与裁定一致（grep 复核：print/clipboard/location 三字段 + 2026-09-26 历史行 + host 表三行 + built-in 枚举段命中）
 
 ### Phase 2 - L3.4 toast host 容器（先做：解锁后续 e2e 断言基线）
 
@@ -188,7 +188,7 @@ Exit Criteria:
 - Rounds: 1
 - Findings addressed:
   - Major-1（toast hack 归属错误）：Goals L3.4 / Phase 2 原写「Cal/Linear/Notion 三处」，live schema 核对实际为 AntD Pro（antdpro-form-basic/grouped/step）/ Cal（cal-confirm、cal-success）/ Linear（linear-detail）共 6 文件 7 处，Notion 零命中——与本 plan 自身 baseline 引用（回写③④⑤）矛盾。已改为正确的 replica 集 + grep 复核口径（覆盖行内/展开两种排版）。
-  - Minor 群（当轮顺手修复）：①`renderer-api.ts:83` 为陈旧锚点（继承自 renderer-env.md §2），live 接口在 :177，字段清单本身经核对无误；②print 按钮静态保留的 C2 引用 :137（clipboard 行）更正为 :109；③「D1 池 #9」无此编号，更正为 C2 :266 候选 1 / :269 P7b 池汇总⑤；④「禁止 addEventListener 岛」裁定出处由「C2 报告」更正为 archetype 审计 §10.2 规则 3；⑤Phase 2/4/5 补「按 Phase 1 裁定」依赖表述（Phase 1 design gate → 后续 Phase 依赖链显式化）；⑥P3/P4/P5 补新用户可见文案 i18n 键（zh-CN/en-US）交付项（roadmap §1 铁律 6）；⑦Test Strategy 补「单测/e2e 先于或随实现落地」执行约定；⑧Purpose 补单计划五 Phase 边界依据（§14 Rule 4 张力消解：§2 单行登记 + plan 503 先例 + guide Rules 22/24/26）；⑨Failure Paths 补 `print-invoke-fail` 运行时失败行。
+  - Minor 群（当轮顺手修复）：①`renderer-api.ts:83` 为陈旧锚点（继承自 renderer-env.md §2），live 接口在 :177，字段清单本身经核对无误；②print 按钮静态保留的 C2 引用 :137（clipboard 行）更正为 :109；③「D1 池 #9」无此编号，更正为 C2 :266 候选 1 / :269 P7b 池汇总⑤；④「禁止 addEventListener 岛」裁定出处由「C2 报告」更正为 archetype 审计 §10.2 规则 3（后续契约评审再正为 §3.6——§10.2 属 companion 文件且内容不符）；⑤Phase 2/4/5 补「按 Phase 1 裁定」依赖表述（Phase 1 design gate → 后续 Phase 依赖链显式化）；⑥P3/P4/P5 补新用户可见文案 i18n 键（zh-CN/en-US）交付项（roadmap §1 铁律 6）；⑦Test Strategy 补「单测/e2e 先于或随实现落地」执行约定；⑧Purpose 补单计划五 Phase 边界依据（§14 Rule 4 张力消解：§2 单行登记 + plan 503 先例 + guide Rules 22/24/26）；⑨Failure Paths 补 `print-invoke-fail` 运行时失败行。
 
 ## Closure Gates
 

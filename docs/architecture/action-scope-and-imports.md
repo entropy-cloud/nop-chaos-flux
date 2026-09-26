@@ -475,7 +475,7 @@ Do not make the design depend on implicit bare action names like `save` or `vali
 
 For clarity, the runtime action namespace separator is `:` for dispatched action names such as `designer:addNode`, `report-designer:preview`, and `demo:open`.
 
-Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `openDrawer`, `closeSurface`, and `showToast`.
+Built-in platform actions do not use namespace lookup. Their selectors stay plain camelCase action names such as `ajax`, `setValue`, `refreshSource`, `openDialog`, `openDrawer`, `closeSurface`, and `showToast`. Host-channel actions `print` (env.print), `copy` (env.clipboard) and `download` (fetcher blob + runtime download pipeline) join the same registry per the 2026-09-26 host-channels contract (`docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md`).
 
 Schema authoring preference:
 
