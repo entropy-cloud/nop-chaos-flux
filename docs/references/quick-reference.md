@@ -893,6 +893,16 @@ All three are `BoundFieldSchemaBase` scalar fields (name/label/readOnly/required
 
 `InputCitySchema` — type `input-city` (plan 506) — adds the region cascade picker: desktop cascader columns + mobile wheel branch (`useIsMobile`), orgDepth = province 0 / city 1 / district 2; echo path text via `extra.path` (provider-optional). Both extend the shared `OrgSelectSchema` contract and consume the org data-source protocol (`docs/architecture/org-data-source-protocol.md`): request scope vars `orgNodeId`/`orgDepth`/`searchQuery`/`orgPage`/`orgPageSize`/`orgValues`, `{nodes,total?,hasMore?}` envelope, shared normalizer + termination + error keys (`flux.form.org*Failed`) in `renderers/org/`. Handles: `component:clear/reset/focus/open`. NOTE: `sourceSearch` (org field) is distinct from select's `searchSource`.
 
+### Interaction-Surface Fields（L4 交互残留，plan 513）
+
+| Field       | Renderer  | 语义                                                                                                                                                    |
+| ----------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `density`   | `table`   | 行高语义档 `'compact' \| 'default' \| 'relaxed'`（32/40/48px `--table-row-height-*` token 阶梯）；非 default 档根元素输出 `data-density` 并归零 body 竖向 padding；非法值回 default（plan 513 L4.1） |
+| `keyboardReorder` | `kanban` | `boolean \| { enabled?, keys?: { prev?, next? } }`；缺省=现行为（键盘重排挂 `draggable` 门、Space+Arrow）；`true`/对象形与 `draggable` 解耦（keyboard-only），`false` 关闭；`keys` 用 `parseKeyCombo` 语法覆写移动键（`space` 别名已归一，plan 513 L4.5） |
+| `selectedClass`  | `gantt`（task 数据字段） | 选中时追加到 bar 的字面 class（optionRow selectedClass 同构；`data-selected`/token CSS 不动，plan 513 L4.11b）                                                                                                            |
+| `cardTemplate` params | `kanban`（region） | cardTemplate region 经 `render({ bindings })` 收到 `{ card, column, index }`，模板以 `${$slot.card.data.*}`/`${$slot.index}` 求值（plan 513 L4.8）                                                             |
+| `columnSettings.draggable` | `table` | 接线：列设置面板行出现拖拽把手，drop 经 `orderedColumnsStatePath` 单写通道重排（与上移/下移同一写入口，plan 513 L4.11a）                                                                             |
+
 ## Industrial Package — @nop-chaos/flux-renderers-industrial
 
 ### Component Registration

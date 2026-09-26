@@ -154,6 +154,30 @@ export function useTableVisibleColumns(
     [orderedColumns, orderedStatePath, renderScope],
   );
 
+  const reorderColumn = useCallback(
+    (dragKey: string, overKey: string) => {
+      if (dragKey === overKey) return;
+      const fromIndex = orderedColumns.indexOf(dragKey);
+      const targetIndex = orderedColumns.indexOf(overKey);
+      if (fromIndex < 0 || targetIndex < 0) {
+        return;
+      }
+
+      const next = [...orderedColumns];
+      const [column] = next.splice(fromIndex, 1);
+      next.splice(targetIndex, 0, column);
+
+      startTransition(() => {
+        if (orderedStatePath) {
+          renderScope.update(orderedStatePath, next);
+        } else {
+          setLocalOrderedColumns(next);
+        }
+      });
+    },
+    [orderedColumns, orderedStatePath, renderScope],
+  );
+
   return {
     columnSettingsEnabled: enabled,
     visibleColumns,
@@ -161,5 +185,6 @@ export function useTableVisibleColumns(
     tableColumns,
     toggleColumn,
     moveColumn,
+    reorderColumn,
   };
 }

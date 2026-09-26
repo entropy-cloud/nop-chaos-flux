@@ -218,6 +218,7 @@ export const zhCN: Resource = {
       sort: '排序',
       moveUp: '上移',
       moveDown: '下移',
+      reorderColumn: '拖动调整列序',
       noData: '暂无数据',
       selectAll: '全选',
       selectRow: '选择行',

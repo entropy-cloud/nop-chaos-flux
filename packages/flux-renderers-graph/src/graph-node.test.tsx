@@ -75,4 +75,12 @@ describe('GraphNodeView', () => {
     expect(node?.getAttribute('data-level')).toBe('warning');
     expect(node?.className).not.toContain('nop-graph-level-');
   });
+
+  it('publishes all four semantic levels including info (L4.7 fill-tint surface)', () => {
+    for (const level of ['danger', 'warning', 'success', 'info'] as const) {
+      const { container } = renderNode(viewData({ semanticLevel: level }));
+      expect(container.querySelector('[data-slot="graph-node"]')?.getAttribute('data-level')).toBe(level);
+      cleanup();
+    }
+  });
 });

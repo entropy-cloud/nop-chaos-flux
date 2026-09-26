@@ -86,6 +86,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       },
       columnDraggable: { displayName: 'Column Draggable', shape: { kind: 'boolean' } },
       draggable: { displayName: 'Draggable', shape: { kind: 'boolean' } },
+      keyboardReorder: { displayName: 'Keyboard Reorder', shape: { kind: 'unknown' } },
       wipStrict: { displayName: 'WIP Strict', shape: { kind: 'boolean' } },
       kanbanOwnership: {
         displayName: 'Kanban Ownership',
@@ -183,7 +184,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'columnHeader', kind: 'region', regionKey: 'columnHeader' },
       { key: 'columnHeaderToolbar', kind: 'region', regionKey: 'columnHeaderToolbar' },
       { key: 'columnAggregate', kind: 'prop' },
-      { key: 'cardTemplate', kind: 'region', regionKey: 'cardTemplate' },
+      { key: 'cardTemplate', kind: 'region', regionKey: 'cardTemplate', params: ['card', 'column', 'index'] },
       { key: 'columnFooter', kind: 'region', regionKey: 'columnFooter' },
       { key: 'empty', kind: 'region', regionKey: 'empty' },
       { key: 'loading', kind: 'region', regionKey: 'loading' },
@@ -193,6 +194,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'columnWidth', kind: 'prop' },
       { key: 'columnDraggable', kind: 'prop' },
       { key: 'draggable', kind: 'prop' },
+      { key: 'keyboardReorder', kind: 'prop' },
       { key: 'wipStrict', kind: 'prop' },
 
       { key: 'collapsedStatePath', kind: 'prop' },

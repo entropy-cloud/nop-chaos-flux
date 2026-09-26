@@ -184,6 +184,59 @@ const selectionPaginationTable = {
   ],
 };
 
+const densityTiersTable = {
+  type: 'page',
+  body: [
+    {
+      type: 'table',
+      source: '${users}',
+      rowKey: 'id',
+      density: 'compact',
+      testid: 'density-compact',
+      columns: [
+        { label: 'ID', name: 'id', width: 80 },
+        { label: 'Username', name: 'username' },
+      ],
+    },
+    {
+      type: 'table',
+      source: '${users}',
+      rowKey: 'id',
+      testid: 'density-default',
+      columns: [
+        { label: 'ID', name: 'id', width: 80 },
+        { label: 'Username', name: 'username' },
+      ],
+    },
+    {
+      type: 'table',
+      source: '${users}',
+      rowKey: 'id',
+      density: 'relaxed',
+      testid: 'density-relaxed',
+      columns: [
+        { label: 'ID', name: 'id', width: 80 },
+        { label: 'Username', name: 'username' },
+      ],
+    },
+  ],
+};
+
+const columnDragTable = {
+  type: 'table',
+  testid: 'column-drag-table',
+  columnSettings: { enabled: true, overlay: false, align: 'left' as const, draggable: true },
+  source: [
+    { id: 1, name: 'Alice', email: 'alice@example.com', role: 'admin' },
+    { id: 2, name: 'Bob', email: 'bob@example.com', role: 'editor' },
+  ],
+  columns: [
+    { label: 'Name', name: 'name' },
+    { label: 'Email', name: 'email' },
+    { label: 'Role', name: 'role' },
+  ],
+};
+
 const pagedUserData = Array.from({ length: 7 }, (_, i) => ({
   id: i + 1,
   username: `user-${i + 1}`,
@@ -246,6 +299,19 @@ export function TableLabPage() {
           schema: selectionPaginationTable,
           data: { pagedUsers: pagedUserData },
           env: tableHostEnv,
+        },
+        {
+          title: 'Density tiers (L4.1)',
+          description:
+            'Three tables side by side: density compact (32px rows), default (40px, no attribute), relaxed (48px). Row height drives header and body cells; non-default tiers zero the body-cell vertical padding.',
+          schema: densityTiersTable,
+          data: { users: userData },
+        },
+        {
+          title: 'Column drag reorder (L4.11a)',
+          description:
+            'columnSettings with draggable:true — open Columns, drag a row handle onto another row to reorder through the ordered-columns state channel (up/down buttons share the same write path).',
+          schema: columnDragTable,
         },
       ]}
     />

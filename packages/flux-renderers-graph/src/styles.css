@@ -41,14 +41,22 @@
 
 .nop-graph-node[data-level='danger'] {
   border-color: hsl(var(--destructive) / 0.55);
+  background: color-mix(in srgb, hsl(var(--destructive)) 12%, hsl(var(--card)));
 }
 
 .nop-graph-node[data-level='warning'] {
   border-color: hsl(var(--warning) / 0.55);
+  background: color-mix(in srgb, hsl(var(--warning)) 12%, hsl(var(--card)));
 }
 
 .nop-graph-node[data-level='success'] {
   border-color: hsl(var(--success) / 0.55);
+  background: color-mix(in srgb, hsl(var(--success)) 12%, hsl(var(--card)));
+}
+
+.nop-graph-node[data-level='info'] {
+  border-color: hsl(var(--info) / 0.55);
+  background: color-mix(in srgb, hsl(var(--info)) 12%, hsl(var(--card)));
 }
 
 .nop-graph-node-label {

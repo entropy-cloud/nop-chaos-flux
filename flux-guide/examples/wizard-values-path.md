@@ -118,7 +118,10 @@
 | `formId` = 步骤校验闸  | 给 step 的 body 里那个 form 设 `id` 并在 step 上声明 `formId`，wizard 会先校验该 form 通过才允许进入下一步。 |
 | 确认步无 `formId`      | 纯展示步不需要校验，不放 `formId`。                                                                          |
 | `mountOnEnter: true`   | 步骤体进入时才挂载，避免一次性渲染全部表单（也避免未访问步骤的副作用）。                                     |
-| `onComplete` 聚合提交  | 不依赖某个 form 的 `submitAction`，而是 wizard 自己的完成回调，把多步数据拼成一个请求。                      |
-| `??` / `\|\|` 兜底     | 跨步引用时未填值要兜底（`?? 0`、`\|\| "-"`），否则渲染 `undefined`。                                         |
+
+| `??` / `\|\|` 兜底 | 跨步引用时未填值要兜底（`?? 0`、`\|\| "-"`），否则渲染 `undefined`。 |
+| `onComplete` 聚合提交 | 不依赖某个 form 的 `submitAction`，而是 wizard 自己的完成回调，把多步数据拼成一个请求。 |
 
 > 真实完整版（含 picker 部门选择）见 `apps/playground/src/complex-pages/page-schemas/form-wizard.json`。
+
+> **footgun（plan 513 L4.10）**：不开 `mountOnEnter`（缺省 false）时，离开步骤即卸载该步表单——form 卸载会触发 external publication 清理（`form-runtime.ts` 的 `setupExternalPublication` dispose 路径把 `valuesPath` 写回 `undefined`），该步已发布到 scope 的值会**整体丢失**。要么显式开 `mountOnEnter: true`，要么确认步/提交侧不依赖离开步骤后的已发布值。

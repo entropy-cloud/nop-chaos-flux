@@ -16,7 +16,7 @@ export interface KanbanColumnProps {
   configMap?: Record<string, KanbanCardConfig>;
   columnHeaderRegion?: { render: () => React.ReactNode } | null;
   columnHeaderToolbarRegion?: { render: () => React.ReactNode } | null;
-  cardTemplateRegion?: { render: (params: { card: BoardItem; column: BoardItem; index: number }) => React.ReactNode } | null;
+  cardTemplateRegion?: { render: (options?: { bindings?: Record<string, unknown> }) => React.ReactNode } | null;
   columnFooterRegion?: { render: () => React.ReactNode } | null;
   onCardClick?: (cardId: string, columnId: string, index: number) => void;
   onColumnClick?: (columnId: string) => void;

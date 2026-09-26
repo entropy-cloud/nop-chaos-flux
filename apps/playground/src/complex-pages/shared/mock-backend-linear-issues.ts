@@ -255,10 +255,14 @@ export interface LinearBoardPayload {
 /**
  * Build the kanban BoardData structure (root + status columns + cards) from
  * the issue dataset. Card payloads map onto the kanban default card face
- * (title / description / color dot / tag pills / member initials) because the
- * cardTemplate region renders without card scope — the identifier and
- * estimate ride the description line, labels become tag pills, the assignee
- * becomes a member circle, and the priority becomes the accent dot color.
+ * (title / description / color dot / tag pills / member initials): the
+ * identifier and estimate ride the description line, labels become tag pills,
+ * the assignee becomes a member circle, and the priority becomes the accent
+ * dot color. (Historical note: cardTemplate could not read card scope when
+ * this mapping was authored. The region now receives per-card bindings via
+ * `render({ bindings })` — plan 513 L4.8 — so a custom template reading
+ * `${$slot.card.data.*}` is possible; migrating this board to one is replica
+ * visual redesign, deferred to the L4.9 retrofit window.)
  */
 export function buildLinearBoardData(rows: LinearIssue[]): LinearBoardPayload {
   const board: Record<string, unknown> = {};

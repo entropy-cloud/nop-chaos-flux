@@ -1,4 +1,5 @@
 import { useId, useMemo, useState } from 'react';
+import { GripVerticalIcon } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   Button,
@@ -33,6 +34,9 @@ export interface TableColumnSettingsProps {
   rendererId: string | number;
   onToggle: (key: string, checked: boolean) => void;
   onMove: (key: string, direction: 'up' | 'down') => void;
+  /** L4.11a: pointer drag-reorder handle per row (columnSettings.draggable). */
+  draggable?: boolean;
+  onReorder?: (dragKey: string, overKey: string) => void;
   /** 测试/调试锚点，透传 renderer props.id。 */
   debugId?: string;
 }
@@ -43,6 +47,7 @@ export interface TableColumnSettingsProps {
  */
 export function TableColumnSettings(props: TableColumnSettingsProps) {
   const [inlineOpen, setInlineOpen] = useState(false);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   // 20-05: the inline form is a hand-rolled disclosure — expose the expanded
   // state and the controlled panel through aria-expanded/aria-controls.
   const inlinePanelId = useId();
@@ -82,10 +87,49 @@ export function TableColumnSettings(props: TableColumnSettingsProps) {
     return null;
   }
 
+  // L4.11a: drag-reorder drop target — drop = insert dragged column at the
+  // hovered row's position, through the same ordered-columns write channel as
+  // the up/down buttons (later write wins).
+  const rowDragProps = props.draggable && props.onReorder
+    ? (key: string) => ({
+        onDragOver: (event: React.DragEvent) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'move';
+          setDragOverKey(key);
+        },
+        onDragLeave: () => {
+          setDragOverKey((current) => (current === key ? null : current));
+        },
+        onDrop: (event: React.DragEvent) => {
+          event.preventDefault();
+          setDragOverKey(null);
+          const dragKey = event.dataTransfer.getData('text/nop-table-column');
+          if (dragKey) {
+            props.onReorder?.(dragKey, key);
+          }
+        },
+      })
+    : undefined;
+
+  const dragHandleProps = props.draggable && props.onReorder
+    ? (key: string) => ({
+        draggable: true,
+        onDragStart: (event: React.DragEvent) => {
+          event.dataTransfer.setData('text/nop-table-column', key);
+          event.dataTransfer.effectAllowed = 'move';
+        },
+        onDragEnd: () => setDragOverKey(null),
+      })
+    : undefined;
+
   const renderItem = ({ key, label, orderedIndex, visible }: TableColumnSettingsEntry) => {
     if (props.overlay) {
       return (
-        <div key={key} data-slot="table-column-settings-item">
+        <div
+          key={key}
+          data-slot="table-column-settings-item"
+          {...rowDragProps?.(key)}
+        >
           <DropdownMenuCheckboxItem
             checked={visible}
             onCheckedChange={(checked) => props.onToggle(key, checked)}
@@ -114,6 +158,17 @@ export function TableColumnSettings(props: TableColumnSettingsProps) {
             >
               {t('flux.table.moveDown')}
             </DropdownMenuItem>
+            {dragHandleProps ? (
+              <span
+                {...dragHandleProps(key)}
+                aria-label={t('flux.table.reorderColumn')}
+                title={t('flux.table.reorderColumn')}
+                data-slot="table-column-settings-drag-handle"
+                className="inline-flex cursor-grab items-center px-1"
+              >
+                <GripVerticalIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
+              </span>
+            ) : null}
           </div>
           {orderedIndex < props.orderedColumns.length - 1 ? <DropdownMenuSeparator /> : null}
         </div>
@@ -125,10 +180,25 @@ export function TableColumnSettings(props: TableColumnSettingsProps) {
     return (
       <div
         key={key}
-        className="flex items-center justify-between gap-3 px-2 py-1.5"
+        className={cn(
+          'flex items-center justify-between gap-3 px-2 py-1.5',
+          dragOverKey === key && 'rounded-md bg-accent',
+        )}
         data-slot="table-column-settings-item"
+        {...rowDragProps?.(key)}
       >
         <div className="flex items-center gap-2">
+          {dragHandleProps ? (
+            <span
+              {...dragHandleProps(key)}
+              aria-label={`${t('flux.table.reorderColumn')} ${label}`}
+              title={t('flux.table.reorderColumn')}
+              data-slot="table-column-settings-drag-handle"
+              className="inline-flex cursor-grab items-center"
+            >
+              <GripVerticalIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
+            </span>
+          ) : null}
           <Checkbox
             id={checkboxId}
             checked={visible}

@@ -180,6 +180,7 @@ export function GanttBars({ store, className, selectedTaskId, criticalTaskIds, o
               'absolute rounded-sm group cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring',
               isProject ? 'nop-gantt-bar-project' : 'nop-gantt-bar-task',
               taskBarClassName,
+              isSelected ? task.selectedClass : undefined,
             )}
             style={{
               left: task.$x ?? 0,

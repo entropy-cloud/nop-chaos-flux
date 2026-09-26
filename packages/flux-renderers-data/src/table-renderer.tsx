@@ -140,6 +140,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     tableColumns,
     toggleColumn,
     moveColumn,
+    reorderColumn,
   } = useTableVisibleColumns(tableSchemaProps, columns);
   const { paginationEnabled, serverPaged, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
     useTablePagination(tableSchemaProps, props.events.onPageChange);
@@ -475,6 +476,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isLoading = schemaProps.loading === true;
   const isStriped = schemaProps.stripe === true;
   const isBordered = schemaProps.bordered === true;
+  const densityTier =
+    schemaProps.density === 'compact' || schemaProps.density === 'relaxed' ? schemaProps.density : undefined;
   const columnCount =
     (nestedHeadersActive ? leafBodyColumns : mainColumns).length +
     (schemaProps.rowSelection ? 1 : 0) +
@@ -507,6 +510,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       className={cn('nop-table', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
+      data-density={densityTier}
       data-responsive-expand={responsiveExpandActive ? 'true' : undefined}
       data-selection-capped={selectionCapped ? 'true' : undefined}
       data-selection-count={selectionMax !== undefined ? selectedRowKeys.size : undefined}
@@ -526,6 +530,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         rendererId={props.id}
         onToggle={toggleColumn}
         onMove={moveColumn}
+        draggable={schemaProps.columnSettings?.draggable === true}
+        onReorder={reorderColumn}
       />
 
       <div

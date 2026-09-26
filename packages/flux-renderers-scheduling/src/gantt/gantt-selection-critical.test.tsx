@@ -66,6 +66,22 @@ describe('gantt selection visual (plan 481 A2)', () => {
     expect(bar).toBeTruthy();
     expect(cssSource).toMatch(/\.nop-gantt \[data-slot='gantt-bar'\]\[data-selected='true'\]/);
   });
+
+  it('selectedClass from task data appends to the selected bar only (L4.11b)', () => {
+    const store = createStore([
+      { id: 't1', text: 'Task 1', start: '2026-01-01', end: '2026-01-04', selectedClass: 'ring-flux-t1' },
+      { id: 't2', text: 'Task 2', start: '2026-01-01', end: '2026-01-03' },
+    ]);
+    const { container } = render(<GanttBars store={store} selectedTaskId="t1" />);
+    const selectedBar = container.querySelector('[data-task-id="t1"][data-selected="true"]');
+    expect(selectedBar?.className).toContain('ring-flux-t1');
+    const otherBar = container.querySelector('[data-task-id="t2"]');
+    expect(otherBar?.className).not.toContain('ring-flux-t1');
+    // selecting a task without the field stays clean
+    const { container: container2 } = render(<GanttBars store={store} selectedTaskId="t2" />);
+    const second = container2.querySelector('[data-task-id="t2"][data-selected="true"]');
+    expect(second?.className).not.toContain('undefined');
+  });
 });
 
 describe('gantt critical path rendering (plan 481 A1)', () => {

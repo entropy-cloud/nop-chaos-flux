@@ -155,6 +155,9 @@ export interface TableSchema extends BaseSchema {
   loadingContent?: BaseSchema | BaseSchema[] | string;
   stripe?: boolean;
   bordered?: boolean;
+  /** Row density tier (L4.1): 32/40/48px `--table-row-height-*` ladder; non-default tiers
+   * zero body-cell vertical padding; anything else falls back to default. */
+  density?: 'compact' | 'default' | 'relaxed';
   virtualThreshold?: number;
   scrollHeight?: number;
   /**

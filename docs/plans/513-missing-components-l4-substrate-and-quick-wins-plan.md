@@ -1,6 +1,6 @@
 # 513 Missing Components L4 — 交互残留：共享底座设计 + 裁决 + 快赢实现
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-26
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §7（L4 全表）+ §11（QA.1-L4 出口绑定）；`docs/analysis/ui-review/C2-capability-gaps.md` 回写③④⑤⑨⑩⑫⑬⑭⑮；`docs/analysis/visual-quality/2026-09-24-page-archetype-coverage-audit.md` §3.6（共享底座六条规则）/ §3.2 行 9；`docs/analysis/visual-quality/2026-09-24-missing-component-gap-analysis.md`
 > Related: `docs/plans/512-missing-components-l3-host-channels-plan.md`（L3 收口先行，plan 512 in flight——本计划执行不阻塞于其收口，但 roadmap 回写时序在其后）
@@ -80,140 +80,140 @@
 
 ### Phase 1 - 共享底座 mini-design + 挂起项正式裁决（design gate）
 
-Status: planned
+Status: completed
 Targets: `docs/discussions/2026-09-26-l4-interaction-residual-substrate.md`、roadmap §13（裁决行）
 
 - Item Types: `Decision`
 
-- [ ] 底座文档落盘：六实现项 substrate 契约（density enum 词表与 token 档映射；kanban 手势配置 schema 形状与 draggable 门解耦口径；graph 语义色面与 levelMap 兼容规则；region bindings 通道形状——`render(options)` 增量可选参数不破坏既有消费方；gantt selectedClass 采纳接口口径；列拖拽排序接线 vs 死配置移除的裁定）+ 与 archetype §3.6 六条规则逐条对齐说明
-- [ ] 挂起项裁决记录（带 C2 回写出处）：L4.3 → demand-gated（回写⑮）；L4.4 → watch-only residual（回写⑫④ + ⑭①）；L4.11c → 销项核实（V11a calendar.css 证据复核）；L4.11d → deferred（触发条件未满足）；L4.11e → demand-gated（无消费诉求登记）
-- [ ] 独立 review 共识（fresh 子 agent）：0 Blocker / 0 Major 后才进实现 Phase
+- [x] 底座文档落盘：六实现项 substrate 契约（density enum 词表与 token 档映射；kanban 手势配置 schema 形状与 draggable 门解耦口径；graph 语义色面与 levelMap 兼容规则；region bindings 通道形状——`render(options)` 增量可选参数不破坏既有消费方；gantt selectedClass 采纳接口口径；列拖拽排序接线 vs 死配置移除的裁定）+ 与 archetype §3.6 六条规则逐条对齐说明
+- [x] 挂起项裁决记录（带 C2 回写出处）：L4.3 → demand-gated（回写⑮）；L4.4 → watch-only residual（回写⑫④ + ⑭①）；L4.11c → 销项核实（V11a calendar.css 证据复核）；L4.11d → deferred（触发条件未满足）；L4.11e → demand-gated（无消费诉求登记）
+- [x] 独立 review 共识（fresh 子 agent）：r1 fail（1M+6m）→ 全部修订落字 → r2 fail（M1′+m1′+m4′）→ 修订 → r3 **pass**（0B/0M/0m，2026-09-26）；M 级修订含 In-Scope 扩 `packages/ui`（table.css 档位规则属地）与 flux-react keyboard 别名表面
 
 Exit Criteria:
 
-- [ ] 底座文档含六项契约 + 五项裁决（无「待定」残留）+ review 记录在案（文档 Review 头注）
-- [ ] roadmap §13 对应行已带裁决注记（L4.3/L4.4/L4.11c/d/e）
+- [x] 底座文档含六项契约 + 五项裁决（无「待定」残留）+ review 记录在案（文档 Review 头注，三轮记录齐）
+- [x] roadmap §13 对应行已带裁决注记（L4.3/L4.4/L4.11c/d/e，L4.1–L4.8 行 + L4.9/L4.10/L4.11 行更新为 in progress + 去向）
 
 ### Phase 2 - L4.1 density 语义档
 
-Status: planned
-Targets: `packages/theme-tokens/src/styles.css`、`packages/flux-renderers-data/src/schemas.ts`、`table-renderer/`
+Status: completed
+Targets: `packages/theme-tokens/src/styles.css`、`packages/ui`（table.css 档位规则——review M1 修订属地）、`packages/flux-renderers-data/src/schemas.ts`、`table-renderer/`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] theme tokens 增 `--table-row-height-compact: 32px` / `--table-row-height-relaxed: 48px`（default 档沿用既有 `--table-row-height: 40px`）
-- [ ] table schema 增 `density?: 'compact' | 'default' | 'relaxed'`（Phase 1 定稿词表），行高/单元格 padding 按档消费 token；非法值归 default
-- [ ] focused 单测（三档 class/token 断言 + 非法值回退）+ e2e 一条（档位切换行高程序化断言，参照 stripe P7a 口径）
+- [x] theme tokens 增 `--table-row-height-compact: 32px` / `--table-row-height-relaxed: 48px`（default 档沿用既有 `--table-row-height: 40px`）
+- [x] table schema 增 `density?: 'compact' | 'default' | 'relaxed'`（Phase 1 定稿词表），根元素 `data-density` 属性（default 档不输出）+ ui table.css 档位规则（`--table-row-height` 局部覆写 + `[data-density] tbody td { height; padding-block: 0 }`）；非法值归 default
+- [x] focused 单测（三档 data-density 属性断言 + 非法值回退 + ui 规则生效行高程序化断言）+ e2e 一条（档位切换行高程序化断言，参照 stripe P7a 口径）——table-density.test.tsx ×2（data 1172/1172 绿）+ table-density.spec.ts（bounding box ±2px 精确命中 32/40/48，table lab 页新增三档场景）
 
 Exit Criteria:
 
-- [ ] 三档 token 在库 + table prop 接线，focused 单测与 e2e 全绿
-- [ ] quick-reference 登记 density 行
+- [x] 三档 token 在库 + table prop 接线，focused 单测与 e2e 全绿
+- [x] quick-reference 登记 density 行（Interaction-Surface Fields 节）
 
 ### Phase 3 - L4.7 graph 节点状态色面扩展
 
-Status: planned
-Targets: `packages/flux-renderers-graph/src/`（schemas.ts、graph-node.tsx、styles.css）
+Status: completed
+Targets: `packages/flux-renderers-graph/src/`（graph-node.tsx、styles.css）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 数据驱动着色面扩展：按 Phase 1 裁定落地（预期：levelMap 消费面从 border-color 扩至节点填充/徽标语义色，token 驱动，`data-level` 既有语义四档保留兼容）
-- [ ] focused 单测（levelMap→颜色面映射 + 既有 schema 兼容）+ e2e/程序化断言一条
+- [x] 数据驱动着色面扩展：按 Phase 1 裁定落地（实施口径按底座 §3 收窄为 **fill tint**——`data-level` 四语义级 border+fill 双消费，token/color-mix 驱动；「徽标语义色」预期由契约管辖未纳入）
+- [x] focused 单测（graph-node.test.tsx 增四语义级 marker 例，graph 51/51 绿）+ e2e/程序化断言一条（graph-level-tint.spec.ts：tinted ≠ plain + 无 level 零回归 + plan-482 亮暗断言保持绿）
 
 Exit Criteria:
 
-- [ ] 着色面扩展落地且既有 levelMap schema 渲染无回归（单测断言）
-- [ ] archetype B2 行 G-K open 口径回写（C2 或 archetype 文档注记）
+- [x] 着色面扩展落地且既有 levelMap schema 渲染无回归（单测断言）
+- [x] archetype B2 行 G-K open 口径回写（archetype 文档 B2 行 2026-09-26 dated 注记：G-K CLOSED；C2 为快照档案不改）
 
 ### Phase 4 - L4.5 kanban 手势 schema 配置面
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/kanban/`（kanban.types.ts，经包根 schemas.ts re-export；use-kanban-board-effects.ts、use-kanban-dnd.ts）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 键盘重排手势 schema 配置面（按 Phase 1 定稿形状：至少支持覆盖默认键位组合），`draggable` 门与键盘重排挂接解耦（独立开关，缺省=现状）
-- [ ] focused 单测（缺省零回归 + 配置生效两分支）+ e2e 断言一条
+- [x] 键盘重排手势 schema 配置面：`keyboardReorder?: boolean | { enabled?, keys?: { prev?, next? } }`（缺省=现状逐字节一致；对象形与 `draggable` 解耦；`keys` 走 flux-react `parseKeyCombo`/`comboMatchesKey`，keyboard.ts 增 key 别名表 `"space"→" "`）
+- [x] focused 单测：keyboard.ts 别名归一 ×1（flux-react 521/521 绿）+ kanban dnd 集成 ×3（keyboard-only 解耦 / false 关闭 / prev-next 覆写且 Arrow 抑制，scheduling 1036/1036 绿，缺省零回归由既有 12 个 dnd 键盘用例承载）+ e2e 一条（kanban-keyboard-reorder.spec.ts：draggable:false + Space/ArrowRight 跨列移动）
 
 Exit Criteria:
 
-- [ ] 缺省行为逐字节不变（既有 kanban e2e 全绿）+ 配置面生效有测试钉住
-- [ ] flux-guide 或 quick-reference 登记配置面
+- [x] 缺省行为逐字节不变（既有 kanban e2e/单测全绿）+ 配置面生效有测试钉住
+- [x] quick-reference 登记 keyboardReorder 行（Interaction-Surface Fields 节）
 
 ### Phase 5 - L4.8 cardTemplate per-card params（region bindings 通道）
 
-Status: planned
-Targets: `packages/flux-core/src/types/render-fragment-types.ts`、`packages/flux-react`（region render 面）、`packages/flux-renderers-scheduling/src/kanban/kanban-card.tsx`
+Status: completed
+Targets: `packages/flux-renderers-scheduling/src/kanban/`（kanban-card.tsx、kanban-column.tsx）+ `scheduling-renderer-definitions.ts`（region params 声明）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] region `render(options)` 增量承载 per-card bindings（Phase 1 定稿形状；旧位置参数消费方行为不变——Failure Path 行 3 钉住）
-- [ ] kanban-card 改走 bindings 通道传 `{card, column, index}`；linear 复刻绕行回灌评估记录（回灌或不回灌的裁定 + 理由）
-- [ ] focused 单测（bindings 可见性 + 旧路径回归双断言）+ e2e 一条（cardTemplate 内表达式读到 card 字段）
+- [x] 根因修复落地（实施范围较底座收窄）：kanban-card 改走 `render({ bindings: { card, column, index } })` + cardTemplate region 声明补 `params: ['card', 'column', 'index']`（无 params 时 flux-react instantiateRegion 不建 $slot frame——底座漏检的半个根因）；**flux-core/flux-react 零改动**（通道在库）
+- [x] focused 单测：kanban-card-template-bindings.test.tsx（bindings 通道逐卡断言 card/column/index，scheduling 全绿）+ e2e 一条（kanban-card-template.spec.ts：cardTemplate 模板 `${$slot.card.data.title}`/`${$slot.index}` 逐卡解析命中，kanban lab 新增 L4.8 场景）
+- [x] linear 复刻绕行回灌评估：裁定**不回灌**（linear 用默认卡面、无模板块可改；自绘模板属 replica 重设计归 L4.9）；mock 注释已更新为 L4.8 后事实
 
 Exit Criteria:
 
-- [ ] cardTemplate region 内表达式可读 card/column/index，旧 region 消费方零回归（flux-react/data 包 focused 全绿）
-- [ ] 回写⑪ G-A 观察面该项销项注记（C2 或 roadmap）
+- [x] cardTemplate region 内表达式可读 card/column/index（e2e 实证），旧 region 消费方零回归（scheduling 1036+ / flux-react 521 / data 1172 全绿）
+- [x] 回写⑪ G-A 观察面该项销项注记（roadmap §13 L4 行 + 底座文档 §4；C2 为快照档案不改）
 
 ### Phase 6 - L4.11a table 列拖拽排序
 
-Status: planned
-Targets: `packages/flux-renderers-data/src/`（table-column-settings.tsx、use-table-visible-columns.ts、schemas.ts）
+Status: completed
+Targets: `packages/flux-renderers-data/src/table-renderer/`（table-column-settings.tsx、use-table-visible-columns.ts、table-renderer.tsx 接线）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 按 Phase 1 裁定接线列拖拽排序（预期：columnSettings 浮层内拖拽重排 → `orderedColumnsStatePath` 既有顺序通道）并消解 `draggable` 死配置（接线或删除该字段，随裁定）
-- [ ] focused 单测（拖拽重排→顺序持久化 + 与上移/下移按钮共存）+ e2e 一条（键盘可达的等效重排路径断言）
+- [x] 裁定落地：**接线** `columnSettings.draggable`（不删字段）——inline 面板行加拖拽把手（HTML5 DnD，dataTransfer `text/nop-table-column`），drop = 新序写入既有 `orderedColumnsStatePath` 单写通道（新 `reorderColumn`，与上移/下移同一 write path，后写胜出）；overlay 形态同样可用；把手 aria-label/title 走 flux.table.reorderColumn（zh/en 新键；原名 dragColumn 与 flux.table 既有键撞名 TS1117，收口时改名）
+- [x] focused 单测（table-column-drag.test.tsx ×2：拖拽重排 header 顺序 Email/Role/Name + 未配置时零把手零行为，data 包全绿）+ e2e 一条（table-column-drag.spec.ts：lab 新增 L4.11a 场景，结构化选择器 locale 无关，dragTo 重排断言）
 
 Exit Criteria:
 
-- [ ] 死配置消解（grep 可证：要么接线有消费，要么 schema 字段移除）+ focused/e2e 全绿
-- [ ] 回写③ G-E/G-D 观察面「列拖拽排序」子项（C2:97）销项注记
+- [x] 死配置消解（grep 可证：columnSettings.draggable 已有消费——table-renderer.tsx `draggable={schemaProps.columnSettings?.draggable === true}`）+ focused/e2e 全绿
+- [x] 回写③ G-E/G-D 观察面「列拖拽排序」子项（C2:97）销项注记（roadmap §13 L4 行 Phase 9 回写；C2 为快照档案不改）
 
 ### Phase 7 - L4.11b gantt 选中态 schema 通道
 
-Status: planned
-Targets: `packages/flux-renderers-scheduling/src/gantt/`（gantt-store.ts、task 渲染面；schema 契约落点 Phase 1 定稿时列实际文件——gantt/ 目录现无独立 schemas 文件）
+Status: completed
+Targets: `packages/flux-renderers-scheduling/src/gantt/`（gantt.types.ts、gantt-bars.tsx）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 按 Phase 1 裁定的接口采纳（不硬套 optionRow 绑定模型；预期：task schema 增 `selectedClass` 通道或等效 schema 表达，内部 store 选中态驱动）
-- [ ] focused 单测（缺省零回归 + 配置生效）+ 既有 gantt-selection-critical 防回归测试保持绿
+- [x] 采纳落地（实施裁定：**字面字段**与 optionRow selectedClass 同构，非表达式——gantt task 为数据面，表达式版需接 evaluate 管线且需求未现，底座文档 §6 已记）：`GanttTaskData.selectedClass?: string`，选中 bar 追加该 class；`data-selected` + token CSS 不动
+- [x] focused 单测（gantt-selection-critical.test.tsx 增 1 例：选中 bar 带 class、未选任务不带、无字段任务选中不污染，9/9 绿；既有防回归全保持）
 
 Exit Criteria:
 
-- [ ] schema 通道生效且有测试钉住；回写⑨ residual「selectedClass」子项销项注记
+- [x] schema/数据通道生效且有测试钉住；回写⑨ residual「selectedClass」子项销项注记（roadmap §13 Phase 9 回写）
 
 ### Phase 8 - L4.10 docs-only（wizard footgun + refreshSource 姿势）
 
-Status: planned
-Targets: `flux-guide/examples/wizard-values-path.md`、`flux-guide/design-patterns/data-source.md`（或 form.md 相应节）
+Status: completed
+Targets: `flux-guide/examples/wizard-values-path.md`、`flux-guide/design-patterns/data-source.md`
 
 - Item Types: `Fix`（docs）
 
-- [ ] wizard-values-path.md 增「未开 mountOnEnter 时离开步即丢已发布值」警示（引用 form-runtime external publication 清理语义，file:line 锚点）
-- [ ] data-source 刷新姿势节：`refreshSource` scoped lookup 无父链回退的现状边界 + `component:refresh` + componentId 正解（引用 source-registry.ts:440-457 语义）
-- [ ] 纯文档计划变体：pnpm test/build/lint/typecheck 不适用；`pnpm check:active-doc-code-anchors` 过（锚点有效性）
+- [x] wizard-values-path.md 增「footgun：未开 mountOnEnter 时离开步即丢已发布值」警示（external publication 清理语义：dispose 路径写回 `undefined`）
+- [x] data-source.md 增「刷新上游数据源的正确姿势」节：refreshSource scoped lookup 无父链回退（仅本 scope 桶）→ form 内刷新页面级 source 用 `component:refresh` + componentId；refreshSource 适用面 = 同 scope 注册的 source
+- [x] 纯文档计划变体：pnpm test/build/lint/typecheck 不适用；`check:active-doc-code-anchors` exit 0
 
 Exit Criteria:
 
-- [ ] 两处 guide 增量落盘且与 live 代码语义一致（锚点检查通过）
+- [x] 两处 guide 增量落盘且与 live 代码语义一致（锚点检查通过）
 
 ### Phase 9 - 收口验证 + 登记回写
 
-Status: planned
+Status: completed
 Targets: 全仓 + 登记面
 
 - Item Types: `Proof`
 
-- [ ] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红（oversized 以收口时 `check:oversized-code-files` 实际输出对照在册基线——最近在册 203w/2e/2exempt，512 Phase 6 拆分后 crud-renderer.tsx 691 行迁入 warn 档）；e2e 全量零新增红
-- [ ] roadmap §13 L4 各行回写终态 + dev log
-- [ ] L4.2/L4.6 successor plan 514 与 L4.9 plan 族在 roadmap §13 带去向注记
+- [x] `pnpm typecheck` / `build` / `lint` / `test` 全绿（40/40 ×3 + 74/74 task）；`pnpm check` 零新增红（exit 0；第一次全链曾红：i18n `dragColumn` 键与 flux.table 既有键撞名 TS1117 + kanban 测试类型收窄——改 `reorderColumn` 新键 + 类型放宽后复跑全绿；oversized 204w/2e/2exempt 与 512 后基线一致）；e2e 全量（42.2m）**1598 passed / 43 skipped / 2 failed / 0 flaky**——2 失败 = kanban-perf:34（在册 watch-only 60Hz 口径）+ layout-family-enhancements:58（page aside 负载 flake，隔离复跑全绿，511「负载 flake 隔离复跑全过」同款消化口径；新观察项随 QA.4 复核）——零新增红
+- [x] roadmap §13 L4 各行回写终态 + dev log
+- [x] L4.2/L4.6 successor plan 514 与 L4.9 plan 族（515 scoping + 516+）在 roadmap §13 带去向注记
 
 Exit Criteria:
 
-- [ ] 全量验证记录于 Closure；roadmap/dev log 落盘
+- [x] 全量验证记录于 Closure；roadmap/dev log 落盘
 
 ## Draft Review Record
 
@@ -224,17 +224,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1 契约与裁决全部落地（无偏离裁决的实现）
-- [ ] 各实现 Phase Exit Criteria 全勾
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（挂起项均有 Phase 1 正式裁决 + roadmap 注记）
-- [ ] 受影响 owner docs 已同步（quick-reference / flux-guide / C2 观察面注记）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增红，oversized 实际输出对照在册基线）
-- [ ] `pnpm test:e2e`（零新增红口径）
+- [x] Phase 1 契约与裁决全部落地（无偏离裁决的实现；两处实施裁定——L4.8 补 region params 声明、L4.11b 字面字段非表达式——已回写底座文档并在案）
+- [x] 各实现 Phase Exit Criteria 全勾
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（挂起项均有 Phase 1 正式裁决 + roadmap 注记）
+- [x] 受影响 owner docs 已同步（quick-reference Interaction-Surface Fields 五行 / flux-guide 两处 / 底座文档）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（r1 `issues` 0B/2M/4m → 全部修复 → delta 复审 `approved` 0B/0M，2026-09-26）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新增红，oversized 204w/2e/2exempt 与基线一致）
+- [x] `pnpm test:e2e`（零新增红口径：1598/43/2——watch-only ×1 + 负载 flake ×1 隔离复跑全绿）
 
 ## Deferred But Adjudicated
 
@@ -284,13 +284,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 九个 Phase 全部落地并经独立 closure audit 两轮通过（r1 issues 0B/2M/4m → 修复 → delta 复审 approved 0B/0M）：六项快赢按底座契约实现（density 三档 token 阶梯 / kanban keyboardReorder 解耦+键位覆写 / graph levelMap fill-tint 消费面 / cardTemplate bindings+params 通道 / 列拖拽接线消解死配置 / gantt selectedClass 字面字段）+ L4.10 两处 guide；五挂起项正式裁决落 roadmap §13。全量验证在案：typecheck/build/lint 40/40、test 74/74 task、check exit 0（oversized 204w/2e/2exempt 在册口径）、e2e 1598/43/2/0 零新增红（watch-only ×1 + 负载 flake ×1 隔离复跑全绿）。L4.2/L4.6 → plan 514（active）、L4.9 → plan 515（active scoping）、demand-gated 项维持登记。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 fresh 子 agent（general-purpose，2026-09-26，未参与起草与执行；42 次工具调用逐 Phase live 抽查 + 测试实跑）
+- Evidence: r1 verdict `issues`（0B/2M/4m）——M1 Phase 3 文本未收口 + archetype B2 G-K 注记缺失、M2 底座 §4 params 补记缺失、m1-m4 文本一致性；全部修复后 delta 复审 `approved`（0B/0M，六处逐项 file:line 核对 + 流程状态核查：audit gate 未预勾、Plan Status 未提前翻转）。审计同时实证：六契约实现零偏离、7 个新/增测试文件断言语义相符且实跑全绿（data 4/scheduling 25/graph 7/flux-react 22 聚焦子集）、验证日志与声称吻合、deferred 诚实、514/515 successor 在册。
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- layout-family-enhancements:58（page aside）负载 flake 为本线新观察项（全量轮失败、隔离复跑全绿）——随 QA.4 集成审计复核定性
+- no remaining plan-owned work

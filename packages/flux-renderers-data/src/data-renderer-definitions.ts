@@ -256,6 +256,7 @@ export const dataRendererDefinitions: RendererDefinition[] = [
       { key: 'loading', kind: 'prop' },
       { key: 'stripe', kind: 'prop' },
       { key: 'bordered', kind: 'prop' },
+      { key: 'density', kind: 'prop' },
       { key: 'virtualThreshold', kind: 'prop' },
       { key: 'scrollHeight', kind: 'prop' },
       { key: 'autoFillHeight', kind: 'prop' },

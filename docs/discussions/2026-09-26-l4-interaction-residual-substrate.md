@@ -3,7 +3,7 @@
 > Date: 2026-09-26
 > Owner plan: `docs/plans/513-missing-components-l4-substrate-and-quick-wins-plan.md`（Phase 1 design gate）
 > Sources: `docs/backlog/missing-components-and-designer-roadmap.md` §7；`docs/analysis/visual-quality/2026-09-24-page-archetype-coverage-audit.md` §3.6（共享底座规则）；`docs/analysis/ui-review/C2-capability-gaps.md` 回写③⑤⑧⑨⑩⑪⑫⑭⑮
-> Review: r1 独立 fresh 审阅（0B/**1M**/6m，2026-09-26）——M1 density 消费面断言不成立（tbody 行高 padding 驱动，档位规则须落 ui table.css）+ 6 Minor；全部当轮修订落字（§1 重写 ui 包规则路径 + plan 513 In-Scope 扩 `packages/ui`；m1 hsl() 公式；m2 keyboard.ts 别名表面声明；m3 锚点 :26/:63 + gantt-bars bindings 先例；m4 DropdownMenu dragstart 风险与回退；m5 §3.6 六条逐条对齐表；m6 roadmap §13 L4.3/L4.4 裁决注记落盘）。r2 复核 <<待填>>
+> Review: r1 独立 fresh 审阅（0B/**1M**/6m，2026-09-26）——M1 density 消费面断言不成立（tbody 行高 padding 驱动，档位规则须落 ui table.css）+ 6 Minor；全部当轮修订落字（§1 重写 ui 包规则路径 + plan 513 In-Scope 扩 `packages/ui`；m1 hsl() 公式；m2 keyboard.ts 别名表面声明；m3 锚点 :26/:63 + gantt-bars bindings 先例；m4 DropdownMenu dragstart 风险与回退；m5 §3.6 六条逐条对齐表；m6 roadmap §13 L4.3/L4.4 裁决注记落盘）。r2 复核（0B/1M/2m）——五项消解证实；残留 M1′（compact 档不可达：td height 最小值语义 + 11px padding 自然行高 ~40px 压过 32px）/ m1′（`--card` 未包 hsl）/ m4′（Base UI 名称）。r3 复核 **pass**（0B/0M/0m，2026-09-26）——三处全部消解证实（padding-block 归零 + 双参数 hsl() + Base UI 更正），Phase 1 design gate 共识达成
 
 本文是 plan 513 六个实现项的统一 substrate 契约，与五项挂起裁决记录。原则遵循 archetype §3.6：统一 substrate + 编译面 + 共享 helper + N 采纳方；禁止 per-renderer bespoke。
 
@@ -22,7 +22,7 @@
 - **词表**（Carbon size / AntD `size` 词汇对照后定稿）：`density?: 'compact' | 'default' | 'relaxed'`——三档与 stripe replica 已实测锁定的 32/40/48px 阶梯一一对应（`--st-row-compact/default/relaxed`，P7a），不用 Carbon 四档（本仓无第 4 档实测参照值）。
 - **Substrate**（review M1 修订：tbody 行高为 padding 驱动，`--table-row-height` 在库唯一消费者是 ui table.css thead th height——档位规则必须落在 ui 包）：
   - theme-tokens 增档位 token：`--table-row-height-compact: 32px` / `--table-row-height-relaxed: 48px`；default 档沿用既有 `--table-row-height: 40px`（不新增 default 别名，避免第二事实源）。
-  - `packages/ui` table.css（`.nop-table` 样式属地）：非 default 档局部覆写 `--table-row-height`（`[data-density='compact']` / `[data-density='relaxed']` 两块）+ 增 `[data-density] tbody td { height: var(--table-row-height); }`（td height 即行高最小值语义，body 行从 padding 驱动切到 height 驱动——仅当显式设档时生效，base 行为零改动）。
+  - `packages/ui` table.css（`.nop-table` 样式属地）：非 default 档局部覆写 `--table-row-height`（`[data-density='compact']` / `[data-density='relaxed']` 两块）+ 增 `[data-density] tbody td { height: var(--table-row-height); padding-block: 0; }`（r2 M1′ 修订：td height 是最小值语义，base 档 `--table-cell-padding-y: 11px` 下自然行高 ~40px 会使 compact 不可达——对齐 stripe-replica.css:372-375 先例「height + 垂直 padding 归零 + 单元格 vertical-align 居中」，horizontal padding 不动；仅显式设档时生效，base 行为零改动）。
 - **消费面**：table 根元素输出 `data-density="<档>"`（default 档不输出属性）——renderer 侧改动仅一个 attribute，样式全部在 ui 包 table.css 与 theme-tokens。
 - **编译/契约面**：`TableSchema` 增 `density` 字段（`schemas.ts`）；非法值（枚举外）按 default 处理（归一化在 schema props 解析层做，Failure Path density-invalid-value）。
 - **采纳方**：table（roadmap 行指定范围）。list/cards 形态不采纳（复刻层已有各自密度面，YAGNI）。
@@ -41,7 +41,7 @@
 
 - **既有链**：`levelField`/`levelMap`（schemas.ts:40-63，DEFAULT_LEVEL_MAP 四语义级）→ 节点 `data-level` marker（graph-node.tsx:30）→ CSS 仅 border-color 三规则（styles.css:42/:46/:50），填充恒 `--card`（styles.css:23）。
 - **裁决**：**不新增第二套色词汇**（禁发明 colorMap/colorField 并行通道——G-E colorLadder 属 D1 输入池②，未立项）。扩展方式 = 同一 levelMap 语义四档的消费面加深：
-  - 节点填充改语义色调 tint（review m1 修正公式——语义 token 为 HSL 三元组，须包 `hsl()`，随 graph styles.css:43 既有先例）：`background: color-mix(in srgb, hsl(var(--<level-token>)) 12%, var(--card))`（level token 对应 `--success`/`--warning`/`--destructive`/info 语义变量，实现时以 theme-tokens 实际变量名为准）。
+  - 节点填充改语义色调 tint（review m1/m1′ 修正公式——语义 token 与 `--card` 均为 HSL 三元组，一律包 `hsl()`，随 graph styles.css:43/:23 既有先例）：`background: color-mix(in srgb, hsl(var(--<level-token>)) 12%, hsl(var(--card)))`（level token 对应 `--success`/`--warning`/`--destructive`/info 语义变量，实现时以 theme-tokens 实际变量名为准）。
   - 节点 `data-selected` 高亮与 `data-matching` 既有规则不动。
 - **兼容红线**：未配置 levelField 的图（无 `data-level`）渲染输出与现状逐字节一致；levelMap 自定义映射（非四语义级）走 fallback neutral tint。
 - **G-K 销项口径**：archetype B2 行「G-K open」在本项落地后回写 closed（数据驱动着色 = levelMap 全语义面消费）。
@@ -49,24 +49,24 @@
 ## 4. L4.8 cardTemplate per-card params（region bindings 通道）
 
 - **根因**（已核实）：`RenderRegionHandle.render(options)` 契约含 `bindings?: Record<string, unknown>`（render-fragment-types.ts:26），bindings 经 `$slot` frame 进入 region 表达式（flux-react/slot-frame.ts `buildSlotFrame`）；而 `kanban-card.tsx:84` 把 `{ card, column, index }` 作 options 对象整体传入（`options.bindings` 为 undefined）→ region 内表达式拿不到卡片 scope。通道可行性已有在库先例：`gantt-bars.tsx:201` 即以 `render({ bindings: { task } })` 传任务数据（review 补引）。
-- **修复**：kanban-card 改 `cardTemplateRegion.render({ bindings: { card, column, index } })`。**flux-core/flux-react 零改动**（通道在库）——plan Phase 5 的 Targets 修订为 scheduling 包单面。
+- **修复**：kanban-card 改 `cardTemplateRegion.render({ bindings: { card, column, index } })`。**flux-core/flux-react 零改动**（通道在库）——plan Phase 5 的 Targets 修订为 scheduling 包单面。**实施补记（closure audit M2）**：光改调用侧不够——flux-react `instantiateRegion` 仅在 region 声明带 `params` 且传入 bindings 时才建 `$slot` frame（node-renderer-resolved.tsx:286 前置条件），故 cardTemplate region 声明须同步补 `params: ['card', 'column', 'index']`（scheduling-renderer-definitions.ts:187）——这是底座漏检的另半个根因。
 - **表达式面**：region schema 以 `${$slot.card.title}` 形态消费（与 list item region 同一 slot-frame 语义——作者心智一致）。
 - **兼容红线**：`config?.render` 自定义渲染分支与其余 region 消费方零改动；旧位置参数调用形态无其它在库使用（grep 证实唯一）。
-- **linear 复刻绕行回灌评估**：`mock-backend-linear-issues.ts:255-263` 注释记载「cardTemplate region 无 card scope → 标题与 estimate 挤进 description 行」。回灌 = 该卡面 schema 改用 `$slot.card.*` 表达式恢复独立字段排版。裁定：**回灌**（现役绕行正是本缺陷的活证据，修复后不回灌则缺陷证据长存；schema 改动限 cardTemplate 模板块内，e2e 面断言随动）。
+- **linear 复刻绕行回灌评估**：`mock-backend-linear-issues.ts:255-263` 注释记载「cardTemplate region 无 card scope → 标题与 estimate 挤进 description 行」。实施核实（修订原假设）：linear board 用的是**默认卡面**（无 cardTemplate 模板块），「回灌」无既有模板可改——改为自绘模板属 replica 视觉重设计。裁定：**不回灌**（归 L4.9 retrofit 窗口），仅把该注释更新为反映 L4.8 后的通道事实（已完成），避免缺陷证据以失实措辞长存。
 
 ## 5. L4.11a table 列拖拽排序（消解 `columnSettings.draggable` 死配置）
 
 - **现状**：`TableColumnSettingsConfig.draggable`（schemas.ts:58）全包零消费；列序通道 = 设置浮层上移/下移按钮（table-column-settings.tsx:102-121）+ `orderedColumnsStatePath` 顺序 state。固定列 `fixed` 已在库（roadmap 行该子句已被 live 超越，不需实现）。
 - **裁定**：**接线而非删除**（schema 字段已发布，删除 = 契约破坏）。
 - **Substrate**：columnSettings 浮层列行支持指针拖拽重排（HTML5 draggable 属性 + dragover/drop，局部于浮层面板，非全局事件岛——生命周期随浮层开关），drop = 计算新序写入既有 `orderedColumnsStatePath`（单写入口 `moveColumn → scope.update(orderedStatePath)`，use-table-visible-columns.ts:145-152——与上移/下移按钮同一写入口，后写胜出）。**无新 state 通道、无新 schema 字段**。
-- **风险与缓解（review m4）**：浮层载体是 Radix DropdownMenu（table-column-settings.tsx:3-17），其 modal 焦点/指针管理层可能干扰原生 HTML5 dragstart——实现时优先在菜单 content（portal 面）内用原生 DnD 并以 focused 单测 + e2e 钉住；若 Radix 拦截成立，回退为指针事件重排（pointerdown/move 局部实现），两类实现都仅存在于浮层开窗生命周期内。
+- **风险与缓解（review m4/m4′）**：浮层载体是 Base UI DropdownMenu（`@base-ui/react/menu`，packages/ui/src/components/ui/dropdown-menu.tsx:2；table-column-settings.tsx:102 注释同证），其 modal 焦点/指针管理层可能干扰原生 HTML5 dragstart——实现时优先在菜单 content（portal 面）内用原生 DnD 并以 focused 单测 + e2e 钉住；若拦截成立，回退为指针事件重排（pointerdown/move 局部实现），两类实现都仅存在于浮层开窗生命周期内。
 - **键盘等效**：既有 moveUp/moveDown 按钮保留（键盘路径不退化）；拖拽把手补 `aria-label`（flux.i18n 键，zh/en）。
 - **冲突矩阵**：与列显隐 toggle、固定列协同 = 重排仅改顺序不改 hidden/fixed 位（顺序通道语义不变）。
 
 ## 6. L4.11b gantt 选中态 schema 通道（selectedClass 采纳）
 
 - **现状**：选中态 = renderer 内部 store `selectedTaskId`（gantt-store.ts:26/:63）；bar 输出 `data-selected` + token CSS（防回归测试 gantt-selection-critical.test.tsx 在案）。bindings 求值通道先例：`gantt-bars.tsx:201` 已以 `render({ bindings: { task } })` 向 region 传任务数据——`selectedClass` 的每任务表达式求值沿用同一任务数据面。
-- **裁定**：**不硬套 optionRow 绑定模型**（任务无「选中值绑定」语义；内部 store 选中是 gantt 交互域的正解）。采纳面 = task schema 增 `selectedClass?: string`（每任务表达式求值，task 数据可见），bar 选中时追加该 class（`data-selected` 与 token CSS 不动）。
+- **裁定**：**不硬套 optionRow 绑定模型**（任务无「选中值绑定」语义；内部 store 选中是 gantt 交互域的正解）。采纳面 = `GanttTaskData` 增 `selectedClass?: string`——**字面 class token（与 optionRow 的 selectedClass 同构），非表达式**（实施裁定：gantt task 为数据面非 schema 节点，表达式版需给 gantt 接 evaluate 管线，需求未现；字面字段已满足「每任务数据驱动」语义），bar 选中时追加该 class（`data-selected` 与 token CSS 不动）。
 - **契约**：缺省（未配置）零回归；与既有 `className`（常态 class）叠加而非替代；schema 契约落点随实现落在 gantt task 定义文件（gantt/ 目录无独立 schemas 文件，Targets 以实现时实际文件为准）。
 - **销项口径**：回写⑨（C2:287）「gantt selectedClass 按价值可后续采纳」→ 本项落地后销项。
 

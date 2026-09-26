@@ -66,6 +66,16 @@ export interface KanbanSchema extends BaseSchema {
   columnWidth?: number | 'auto' | 'equal';
   columnDraggable?: boolean;
   draggable?: boolean;
+  /**
+   * Keyboard card-reorder configuration (L4.5). Default (field absent) keeps
+   * the shipped behavior: reorder keys active iff `draggable`, fixed
+   * Space-pick + Arrow move + Escape-cancel. `true` / `{ enabled: true }`
+   * decouples the keys from `draggable` (keyboard-only reorder);
+   * `false` / `{ enabled: false }` disables them even on a draggable board.
+   * `keys.prev`/`keys.next` override the move keys with `parseKeyCombo`
+   * combos (e.g. `'['` / `']'`).
+   */
+  keyboardReorder?: boolean | { enabled?: boolean; keys?: { prev?: string; next?: string } };
   collapsedStatePath?: string;
   collapsedOwnership?: 'local' | 'controlled' | 'scope';
   columnHeaderClassName?: string;

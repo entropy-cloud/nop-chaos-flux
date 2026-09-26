@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { comboMatchesKey, parseKeyCombo } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import type { BoardData } from '../kanban.types.js';
+import type { BoardData, KanbanSchema } from '../kanban.types.js';
 
 interface ColumnInfo {
   id: string;
@@ -11,6 +12,7 @@ interface ColumnInfo {
 interface UseKanbanBoardEffectsOptions {
   boardRef: React.RefObject<HTMLDivElement | null>;
   draggable: boolean;
+  keyboardReorder?: KanbanSchema['keyboardReorder'];
   boardDataRef: React.MutableRefObject<BoardData>;
   columns: ColumnInfo[];
   moveCardKeyboard: (board: BoardData, cardId: string, fromColId: string, toColId: string, fromIndex: number, toIndex: number) => void;
@@ -27,6 +29,7 @@ interface UseKanbanBoardEffectsOptions {
 export function useKanbanBoardEffects({
   boardRef,
   draggable,
+  keyboardReorder,
   boardDataRef,
   columns,
   moveCardKeyboard,
@@ -71,9 +74,30 @@ export function useKanbanBoardEffects({
   const moveCardKeyboardRef = useRef(moveCardKeyboard);
   useEffect(() => { moveCardKeyboardRef.current = moveCardKeyboard; }, [moveCardKeyboard]);
 
+  // L4.5: absent config keeps the shipped gate (keys active iff draggable).
+  // `true` / object form decouples the keys from `draggable`; `false` /
+  // `{ enabled: false }` turns them off even on a draggable board.
+  const keyboardActive = useMemo(() => {
+    if (keyboardReorder === undefined) return draggable;
+    if (keyboardReorder === false) return false;
+    if (keyboardReorder === true) return true;
+    return keyboardReorder.enabled !== false;
+  }, [draggable, keyboardReorder]);
+  const moveKeys = useMemo(() => {
+    if (!keyboardReorder || typeof keyboardReorder !== 'object') return undefined;
+    const { keys } = keyboardReorder;
+    if (!keys) return undefined;
+    return {
+      prev: keys.prev ? parseKeyCombo(keys.prev) : undefined,
+      next: keys.next ? parseKeyCombo(keys.next) : undefined,
+    };
+  }, [keyboardReorder]);
+  const moveKeysRef = useRef(moveKeys);
+  useEffect(() => { moveKeysRef.current = moveKeys; }, [moveKeys]);
+
   useEffect(() => {
     const el = boardRef.current;
-    if (!el || !draggable) return;
+    if (!el || !keyboardActive) return;
     const handler = (e: KeyboardEvent) => {
       const cardEl = (e.target as HTMLElement).closest('[data-dnd-card]') as HTMLElement | null;
       if (!cardEl) return;
@@ -95,38 +119,47 @@ export function useKanbanBoardEffects({
       }
       if (keyboardMoveCard.cardId !== cardId) return;
 
-      const dirActions: Record<string, () => void> = {
-        ArrowLeft: () => {
-          const curIdx = columnsRef.current.findIndex(c => c.id === keyboardMoveCard.columnId);
-          if (curIdx > 0) {
-            const targetColId = columnsRef.current[curIdx - 1].id;
-            moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
-            setKeyboardMoveCard({ cardId, columnId: targetColId });
-            setDndAnnouncement(t('scheduling.kanban.cardMovedTo', { title: columnsRef.current[curIdx - 1]?.title || targetColId }));
-          }
-        },
-        ArrowRight: () => {
-          const curIdx = columnsRef.current.findIndex(c => c.id === keyboardMoveCard.columnId);
-          if (curIdx < columnsRef.current.length - 1) {
-            const targetColId = columnsRef.current[curIdx + 1].id;
-            moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
-            setKeyboardMoveCard({ cardId, columnId: targetColId });
-            setDndAnnouncement(t('scheduling.kanban.cardMovedTo', { title: columnsRef.current[curIdx + 1]?.title || targetColId }));
-          }
-        },
-        Escape: () => {
-          cardEl.removeAttribute('data-keyboard-dragging');
-          cardEl.removeAttribute('aria-grabbed');
-          setKeyboardMoveCard(null);
-          setDndAnnouncement(t('scheduling.kanban.cardDragCancelled'));
-        },
+      // L4.5: keys.prev/next override the default Arrow move keys; when no
+      // override is configured the shipped Arrow matching applies as-is.
+      const keys = moveKeysRef.current;
+      const movePrev = () => {
+        const curIdx = columnsRef.current.findIndex(c => c.id === keyboardMoveCard.columnId);
+        if (curIdx > 0) {
+          const targetColId = columnsRef.current[curIdx - 1].id;
+          moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
+          setKeyboardMoveCard({ cardId, columnId: targetColId });
+          setDndAnnouncement(t('scheduling.kanban.cardMovedTo', { title: columnsRef.current[curIdx - 1]?.title || targetColId }));
+        }
       };
-      const action = dirActions[e.key];
+      const moveNext = () => {
+        const curIdx = columnsRef.current.findIndex(c => c.id === keyboardMoveCard.columnId);
+        if (curIdx < columnsRef.current.length - 1) {
+          const targetColId = columnsRef.current[curIdx + 1].id;
+          moveCardKeyboardRef.current(boardDataRef.current, cardId, keyboardMoveCard.columnId, targetColId, cardIdx, 0);
+          setKeyboardMoveCard({ cardId, columnId: targetColId });
+          setDndAnnouncement(t('scheduling.kanban.cardMovedTo', { title: columnsRef.current[curIdx + 1]?.title || targetColId }));
+        }
+      };
+      const cancel = () => {
+        cardEl.removeAttribute('data-keyboard-dragging');
+        cardEl.removeAttribute('aria-grabbed');
+        setKeyboardMoveCard(null);
+        setDndAnnouncement(t('scheduling.kanban.cardDragCancelled'));
+      };
+
+      let action: (() => void) | undefined;
+      if (e.key === 'Escape') {
+        action = cancel;
+      } else if (keys?.prev ? comboMatchesKey(keys.prev, e) : e.key === 'ArrowLeft') {
+        action = movePrev;
+      } else if (keys?.next ? comboMatchesKey(keys.next, e) : e.key === 'ArrowRight') {
+        action = moveNext;
+      }
       if (action) { e.preventDefault(); action(); }
     };
     el.addEventListener('keydown', handler);
     return () => el.removeEventListener('keydown', handler);
-  }, [draggable, keyboardMoveCard, boardRef, boardDataRef, setKeyboardMoveCard, setDndAnnouncement]);
+  }, [keyboardActive, keyboardMoveCard, boardRef, boardDataRef, setKeyboardMoveCard, setDndAnnouncement]);
 
   useEffect(() => {
     if (!boardRef.current) return;

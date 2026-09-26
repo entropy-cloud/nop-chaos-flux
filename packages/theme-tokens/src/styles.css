@@ -85,6 +85,8 @@
   --table-cell-padding-x: 10px;
   --table-edge-padding-x: 16px;
   --table-row-height: 40px;
+  --table-row-height-compact: 32px;
+  --table-row-height-relaxed: 48px;
   --table-header-bg: hsl(var(--background));
   --table-header-separator-color: hsl(var(--border));
   --table-hover-bg: color-mix(in hsl, hsl(var(--primary)) 6%, transparent);

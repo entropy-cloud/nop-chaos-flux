@@ -218,6 +218,7 @@ export const enUS: Resource = {
       sort: 'Sort',
       moveUp: 'Move Up',
       moveDown: 'Move Down',
+      reorderColumn: 'Drag to reorder column',
       noData: 'No Data',
       selectAll: 'Select All',
       selectRow: 'Select Row',

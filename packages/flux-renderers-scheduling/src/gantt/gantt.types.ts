@@ -31,6 +31,12 @@ export interface GanttTaskData extends SchemaObject {
   calendar?: string;
   segments?: GanttSegment[];
   baselines?: GanttBaseline[];
+  /**
+   * Extra class appended to the bar while this task is selected (L4.11b,
+   * option-row selectedClass analog — a literal token, not an expression).
+   * `data-selected` + the token CSS stay in place.
+   */
+  selectedClass?: string;
 }
 
 export interface GanttTask extends GanttTaskData {

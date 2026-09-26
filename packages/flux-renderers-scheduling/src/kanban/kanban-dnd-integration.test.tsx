@@ -4,12 +4,16 @@ import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { KanbanBoard } from './kanban-board.js';
 import type { BoardData } from './kanban.types.js';
 
-vi.mock('@nop-chaos/flux-react', () => ({
-  useRendererRuntime: () => ({ dispatch: vi.fn() }),
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@nop-chaos/flux-react')>();
+  return {
+    ...actual,
+    useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
   useCurrentComponentRegistry: () => undefined,
-}));
+  };
+});
 
 vi.mock('@nop-chaos/flux-i18n', () => ({
   t: (key: string, params?: Record<string, unknown>) => {
@@ -198,6 +202,54 @@ describe('Kanban DnD Integration', () => {
     const toDoCol = container.querySelector('[data-column-id="col1"]');
     const cardsInToDo = toDoCol!.querySelectorAll('[data-slot="kanban-card"]');
     expect(cardsInToDo.length).toBe(1);
+  });
+
+  it('keyboardReorder decouples keys from draggable (keyboard-only reorder)', () => {
+    const props = {
+      ...defaultProps,
+      props: { ...defaultProps.props, draggable: false, keyboardReorder: { enabled: true } },
+    };
+    const { container } = render(React.createElement(KanbanBoard, props));
+    const cardEl = container.querySelector('[data-card-id="card1"]') as HTMLElement;
+    expect(cardEl).toBeTruthy();
+
+    fireEvent.keyDown(cardEl, { key: ' ' });
+    expect(cardEl.getAttribute('data-keyboard-dragging')).toBe('true');
+
+    fireEvent.keyDown(cardEl, { key: 'ArrowRight' });
+    const doneCol = container.querySelector('[data-column-id="col2"]');
+    expect(doneCol!.querySelectorAll('[data-slot="kanban-card"]').length).toBe(1);
+  });
+
+  it('keyboardReorder:false disables the keys even on a draggable board', () => {
+    const props = { ...defaultProps, props: { ...defaultProps.props, keyboardReorder: false } };
+    const { container } = render(React.createElement(KanbanBoard, props));
+    const cardEl = container.querySelector('[data-card-id="card1"]') as HTMLElement;
+
+    fireEvent.keyDown(cardEl, { key: ' ' });
+    expect(cardEl.getAttribute('data-keyboard-dragging')).toBeNull();
+  });
+
+  it('keyboardReorder keys.prev/next override the default arrow keys', () => {
+    const props = {
+      ...defaultProps,
+      props: {
+        ...defaultProps.props,
+        keyboardReorder: { enabled: true, keys: { prev: '[', next: ']' } },
+      },
+    };
+    const { container } = render(React.createElement(KanbanBoard, props));
+    const cardEl = container.querySelector('[data-card-id="card1"]') as HTMLElement;
+
+    fireEvent.keyDown(cardEl, { key: ' ' });
+    // default arrows are suppressed once overrides are configured
+    fireEvent.keyDown(cardEl, { key: 'ArrowRight' });
+    let doneCol = container.querySelector('[data-column-id="col2"]');
+    expect(doneCol!.querySelectorAll('[data-slot="kanban-card"]').length).toBe(0);
+
+    fireEvent.keyDown(cardEl, { key: ']' });
+    doneCol = container.querySelector('[data-column-id="col2"]');
+    expect(doneCol!.querySelectorAll('[data-slot="kanban-card"]').length).toBe(1);
   });
 
   it('reorders columns via keyboard (drag handle ArrowLeft/ArrowRight)', () => {

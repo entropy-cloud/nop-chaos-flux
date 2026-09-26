@@ -18,6 +18,23 @@
   padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
 }
 
+/* Density tiers (L4.1): the root only emits data-density for non-default
+   tiers. Row height drives both header and body cells; the body-cell vertical
+   padding zeroes so the height minimum actually governs (stripe ladder
+   precedent: height + vertical padding 0 + cell vertical-align centering). */
+.nop-table[data-density='compact'] {
+  --table-row-height: var(--table-row-height-compact);
+}
+
+.nop-table[data-density='relaxed'] {
+  --table-row-height: var(--table-row-height-relaxed);
+}
+
+.nop-table[data-density] tbody td {
+  height: var(--table-row-height);
+  padding-block: 0;
+}
+
 .nop-table tbody td:first-child {
   padding-left: var(--table-edge-padding-x);
 }

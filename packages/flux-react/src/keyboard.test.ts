@@ -46,6 +46,14 @@ describe('parseKeyCombo', () => {
     expect(parseKeyCombo('hyper+k')).toBeUndefined();
     expect(parseKeyCombo('mod+ctrl+k')).toBeUndefined();
   });
+
+  it('normalizes author-facing key aliases to event.key values (L4.5)', () => {
+    expect(parseKeyCombo('space')).toEqual({ mod: false, ctrl: false, shift: false, alt: false, key: ' ' });
+    expect(comboMatchesKey(parseKeyCombo('space')!, keyEvent({ key: ' ' }))).toBe(true);
+    expect(comboMatchesKey(parseKeyCombo('esc')!, keyEvent({ key: 'Escape' }))).toBe(true);
+    expect(comboMatchesKey(parseKeyCombo('return')!, keyEvent({ key: 'Enter' }))).toBe(true);
+    expect(comboMatchesKey(parseKeyCombo('plus')!, keyEvent({ key: '+' }))).toBe(true);
+  });
 });
 
 describe('parseModifierHotkey (command-palette contract)', () => {

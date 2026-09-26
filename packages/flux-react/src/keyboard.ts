@@ -16,6 +16,14 @@ export interface KeyCombo {
 
 const MODIFIER_NAMES = new Set(['mod', 'ctrl', 'shift', 'alt']);
 
+/** Author-facing key aliases normalized to `event.key` values (L4.5). */
+const KEY_ALIASES: Record<string, string> = {
+  space: ' ',
+  esc: 'escape',
+  return: 'enter',
+  plus: '+',
+};
+
 /** Single key combo `[(mod|ctrl|shift|alt)+]key`; bare keys are allowed. */
 export function parseKeyCombo(raw: string): KeyCombo | undefined {
   const tokens = raw
@@ -24,10 +32,11 @@ export function parseKeyCombo(raw: string): KeyCombo | undefined {
   if (tokens.length === 0 || tokens.some((token) => token.length === 0)) {
     return undefined;
   }
-  const key = tokens[tokens.length - 1];
-  if (MODIFIER_NAMES.has(key)) {
+  const rawKey = tokens[tokens.length - 1];
+  if (MODIFIER_NAMES.has(rawKey)) {
     return undefined;
   }
+  const key = KEY_ALIASES[rawKey] ?? rawKey;
   const combo: KeyCombo = { mod: false, ctrl: false, shift: false, alt: false, key };
   for (const modifier of tokens.slice(0, -1)) {
     if (modifier === 'mod') combo.mod = true;

@@ -497,6 +497,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   useKanbanBoardEffects({
     boardRef,
     draggable,
+    keyboardReorder: resolved.keyboardReorder,
     boardDataRef,
     columns,
     moveCardKeyboard,

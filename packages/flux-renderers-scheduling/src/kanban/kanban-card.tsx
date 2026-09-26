@@ -12,7 +12,7 @@ export interface KanbanCardProps {
   column: BoardItem;
   index: number;
   configMap?: Record<string, KanbanCardConfig>;
-  cardTemplateRegion?: { render: (params: { card: BoardItem; column: BoardItem; index: number }) => React.ReactNode } | null;
+  cardTemplateRegion?: { render: (options?: { bindings?: Record<string, unknown> }) => React.ReactNode } | null;
   onCardClick?: (cardId: string, columnId: string, index: number) => void;
   onCardRemove?: (cardId: string) => void;
   className?: string;
@@ -81,7 +81,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
     </>
   ) : cardTemplateRegion ? (
     <>
-      {cardTemplateRegion.render({ card, column, index })}
+      {cardTemplateRegion.render({ bindings: { card, column, index } })}
       <KanbanCardTags color={color} tags={tags} members={members} />
     </>
   ) : (
