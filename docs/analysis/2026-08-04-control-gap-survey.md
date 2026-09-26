@@ -61,15 +61,15 @@
 
 ### A. 原子表单控件缺失（落点：`flux-renderers-form`）
 
-| 建议 type      | 来源                    | 简述                                                 | 最接近的 Flux           | 价值 | 理由                             |
-| -------------- | ----------------------- | ---------------------------------------------------- | ----------------------- | ---- | -------------------------------- |
-| `cascader`     | formily/vant/nocobase   | 逐级懒加载级联单选（路径式，≠ tree-select 扁平路径） | tree-select（形态不同） | 高   | 3 处独立信号；级联是独立交互形态 |
-| `slider`       | amis/vant               | 数值/区间拖拽滑块                                    | input-number            | 高   | 拖拽定值无法被 input-number 替代 |
-| `rating`       | amis/vant/ant/prime     | 星级/打分选择                                        | 无                      | 高   | 4 库通用，质检/评价通用          |
-| `signature`    | amis/vant/signature_pad | 手写签名板（Canvas）                                 | input-image             | 高   | ERP 审批/物流收货强需求          |
-| `color-picker` | amis(`input-color`)/ant | 颜色选择器（调色板/取色）                            | 无                      | 中   | 主题/标签配色                    |
-| `input-otp`    | amis/Carbon InputOTP    | 分格验证码输入（粘贴填充）                           | input-text              | 中   | 认证/B2C 场景                    |
-| `stepper`      | vant                    | +/- 数量步进器                                       | input-number            | 中   | 移动端购物/数量，交互形态不同    |
+| 建议 type      | 来源                    | 简述                                                 | 最接近的 Flux                                                                                               | 价值 | 理由                             |
+| -------------- | ----------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---- | -------------------------------- |
+| `cascader`     | formily/vant/nocobase   | 逐级懒加载级联单选（路径式，≠ tree-select 扁平路径） | cascader（demand-gated，裁决 `cascader-vs-tree-select-decision.md`：独立交互形态成立，待 host 需求立 type） | 高   | 3 处独立信号；级联是独立交互形态 |
+| `slider`       | amis/vant               | 数值/区间拖拽滑块                                    | input-number                                                                                                | 高   | 拖拽定值无法被 input-number 替代 |
+| `rating`       | amis/vant/ant/prime     | 星级/打分选择                                        | 无                                                                                                          | 高   | 4 库通用，质检/评价通用          |
+| `signature`    | amis/vant/signature_pad | 手写签名板（Canvas）                                 | input-image                                                                                                 | 高   | ERP 审批/物流收货强需求          |
+| `color-picker` | amis(`input-color`)/ant | 颜色选择器（调色板/取色）                            | 无                                                                                                          | 中   | 主题/标签配色                    |
+| `input-otp`    | amis/Carbon InputOTP    | 分格验证码输入（粘贴填充）                           | input-text                                                                                                  | 中   | 认证/B2C 场景                    |
+| `stepper`      | vant                    | +/- 数量步进器                                       | input-number                                                                                                | 中   | 移动端购物/数量，交互形态不同    |
 
 ### B. 导航与信息展示（落点：`flux-renderers-content` / `flux-renderers-layout`）
 
