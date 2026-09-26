@@ -24,7 +24,7 @@
 
 - **正方（独立形态成立）**：control-gap-survey 三处独立信号；深层级 + 路径回看的可用性优势；506 input-city 已在本仓验证列式实现的可行性（desktop columns 组件即现成形态参考）。
 - **反方（非必需）**：当前无 host 提出非地区类级联需求；tree-select + 搜索可替代多数场景；新增 type 的维护成本（双形态响应式、键盘导航、a11y）。
-- **裁决**：cascader 列式交互形态认定为**独立交互形态**（与 survey 结论一致），具备成为独立 type 的正当性；但当前无 host demand，**不立即实现**——登记为 matrix demand-gated 行（待 host 场景出现立 plan，数据面复用 org 协议共享 hooks，呈现层参考 506 列式实现）。`tree-select` 保持既有层级选择场景的永久答案；两者按交互形态分工（树形浏览 vs 列式路径）而非互相取代。
+- **裁决**：cascader 列式交互形态认定为**独立交互形态**（与 survey 结论一致），具备成为独立 type 的正当性；但当前无 host demand，**不立即实现**——matrix 登记为 demand-gated 标记（Folded 节行 owner cell 内联，非独立 demand-gated 节行；待 host 场景出现立 plan，数据面复用 org 协议共享 hooks，呈现层参考 506 列式实现）。`tree-select` 保持既有层级选择场景的永久答案；两者按交互形态分工（树形浏览 vs 列式路径）而非互相取代。
 
 ## 4. 随本裁决一并定性
 
@@ -41,4 +41,4 @@
 ## 6. human 签认
 
 - **裁决摘要**：cascader 认定为独立交互形态，登记 demand-gated（不立即实现）；tree-select 为层级选择永久答案；chained-select 维持折叠；input-formula 维持 demand-gated。
-- **签认状态**：待用户签认（随执行报告请求）。签认前 roadmap §13 L2.6 不置 `done`。
+- **签认状态**：已签认（2026-09-26）。签认依据：用户目标指令「执行 docs/backlog/missing-components-and-designer-roadmap.md 直到彻底完成。……必须执行到彻底完成，中途不要停下来汇报进度」——对 2026-09-25 悬置签认请求（dev log 09-25 :11）的概括放行，记录于 plan 510 Phase 2；后续异议按 forward-only 修订本档。
