@@ -107,18 +107,18 @@ Exit Criteria:
 
 ### Phase 3 - L3.1 print 通道
 
-Status: planned
+Status: completed
 Targets: env 类型 / host 实现 / AntD Pro 详情页 schema / e2e
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 按 Phase 1 裁定落地 print 通道（env 字段或 action）+ playground host 实现（iframe 隔离打印或 `window.print` 代理，随裁定）+ capability check 降级（降级/错误文案 i18n 键 zh-CN/en-US 落 `flux-i18n`）
-- [ ] AntD Pro 订单详情打印按钮从静态改为派发通道 + e2e 程序化断言（host print 实现被调用——spy/标志面，非截图）
+- [x] print 通道落地：`renderer-api.ts` `print?: () => void`（评审来源注释）+ `constants.ts` 定义 + action-core runner case + runtime adapter case（缺失 → `notify('warning', flux.action.printUnsupported)` + `ok:false`；flux-runtime 新增 flux-i18n 依赖，无环）；playground host `showcase-env.ts` `window.print()` 代理
+- [x] AntD Pro 订单详情打印按钮接线 `onClick: {action: 'print'}`（antdpro-detail-basic.json）+ e2e `window.print` spy 程序化断言（测试 21b，addInitScript 标志面轮询）；focused 单测缺失/命中双分支（runtime 1441/1441；core 513 / action-core 210 / react 520 全绿）
 
 Exit Criteria:
 
-- [ ] print 通道 + host 实现落地，focused 单测在案（capability missing 降级路径）
-- [ ] e2e 断言通过（C6 打印链路可观察）
+- [x] print 通道 + host 实现落地，focused 单测在案（capability missing → warning toast + ok:false 双断言）
+- [x] e2e 断言通过（`window.print` spy 轮询为 true——C6 打印链路可观察）
 
 ### Phase 4 - L3.2 clipboard 通道
 
