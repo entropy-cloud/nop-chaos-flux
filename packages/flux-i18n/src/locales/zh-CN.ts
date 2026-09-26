@@ -209,6 +209,9 @@ export const zhCN: Resource = {
       remoteSearchFailedDetail: '搜索失败：{{message}}',
       loadChildrenFailed: '子节点加载失败',
     },
+    layout: {
+      resizeHandle: '拖动调整面板大小',
+    },
     table: {
       columns: '列设置',
       expand: '展开',

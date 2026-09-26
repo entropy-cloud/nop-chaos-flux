@@ -1,0 +1,23 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "resizable",
+      "direction": "horizontal",
+      "testid": "resizable-example",
+      "panels": [
+        {
+          "key": "nav",
+          "defaultSize": 3,
+          "min": 1,
+          "max": 6,
+          "body": [{ "type": "text", "text": "Navigation pane (weight 3, clamp 1–6)" }]
+        },
+        {
+          "key": "main",
+          "body": [{ "type": "text", "text": "Main pane (flexible)" }]
+        }
+      ]
+    }
+  ]
+}

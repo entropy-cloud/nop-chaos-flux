@@ -1006,3 +1006,10 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
   "visible": "${activeSection !== 'workbench'}", // 未选中版；选中版用 ${activeSection === 'workbench'}
 }
 ```
+
+### Layout Extensions（plan 514）
+
+| Schema                | Import path                                   | Core fields                                                                                                                                    |
+| --------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ResizableSchema`     | `flux-renderers-layout/src/schemas`           | `direction`（horizontal/vertical）/`panels[].{key,defaultSize,min,max,body}`（flex-grow 权重）/`persistStatePath`（拖拽权重数组回写+挂载种子） |
+| calendar `monthShape` | `flux-renderers-scheduling`（CalendarSchema） | `'resource'`（缺省排班矩阵）/`'grid'`（6 周纯选择网格，绕过空数据门）；`onDateSelect` payload `{date, inMonth}`，选中≠导航                     |

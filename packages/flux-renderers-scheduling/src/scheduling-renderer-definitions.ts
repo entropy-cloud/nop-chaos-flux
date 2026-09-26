@@ -252,6 +252,15 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       },
       showWeekends: { displayName: 'Show Weekends', shape: { kind: 'boolean' } },
       showCrossDayLines: { displayName: 'Show Cross Day Lines', shape: { kind: 'boolean' } },
+      monthShape: {
+        displayName: 'Month Shape',
+        shape: {
+          kind: 'union',
+          anyOf: ['resource', 'grid'].map((v) => ({ kind: 'literal', value: v })),
+        },
+        editorType: 'select',
+        defaultValue: 'resource',
+      },
       timezoneSelector: { displayName: 'Timezone Selector', shape: { kind: 'boolean' } },
       batchScheduling: { displayName: 'Batch Scheduling', shape: { kind: 'boolean' } },
       viewOwnership: {
@@ -279,6 +288,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'events', kind: 'prop' },
       { key: 'resources', kind: 'prop' },
       { key: 'firstDayOfWeek', kind: 'prop' },
+      { key: 'monthShape', kind: 'prop' },
       { key: 'showWeekends', kind: 'prop' },
       { key: 'maxConcurrent', kind: 'prop' },
       { key: 'eventTemplate', kind: 'region', regionKey: 'eventTemplate' },
@@ -290,6 +300,7 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       { key: 'emptyClassName', kind: 'prop' },
       { key: 'onEventClick', kind: 'event' },
       { key: 'onDateChange', kind: 'event' },
+      { key: 'onDateSelect', kind: 'event' },
       { key: 'onViewChange', kind: 'event' },
       { key: 'onEventChange', kind: 'event' },
       // Sole creation channel for drag-create; onEventChange is NOT fired during creation.

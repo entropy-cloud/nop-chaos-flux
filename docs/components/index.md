@@ -569,11 +569,13 @@ UI primitive 对齐补充规则：
 - `report-toolbar/`
 - `spreadsheet-page/`
 - `word-editor-page/`
+- `page-designer/`（标准页面设计器，L6 产品线；`design-architecture.md` 为 S1 架构设计，非单 renderer 契约）
 
 边界说明：
 
 - 这些目录拥有单 renderer / 单组件设计契约。
 - 对应平台 family 的架构分层、host abstraction、adapter contract 和跨组件协作规则仍由 `docs/architecture/flow-designer/` 与 `docs/architecture/report-designer/` 负责。
+- `page-designer/` 是设计器产品线目录（对齐 flow-designer/report-designer 的架构族文档模式），当前承载 L6 S1 `design-architecture.md`（S0 输入见 `docs/analysis/standard-page-designer-research.md`，路线见 `docs/backlog/missing-components-and-designer-roadmap.md` §9）；design-first 约束下过 review gate 前不写实现代码。
 
 建议后续新增组件时，先把目录加到这里，再补对应 `design.md` 与 `example.json`，保持组件索引与实际文档覆盖同步。
 

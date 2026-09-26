@@ -157,3 +157,34 @@
   }
 ]
 ```
+
+## Resizable (可调分栏，plan 514 L4.6)
+
+`resizable` 是 flux 原生布局扩展 type（flux-renderers-layout），把 ui 的 react-resizable-panels 包装暴露为 schema 面板分栏：
+
+```json
+{
+  "type": "resizable",
+  "direction": "horizontal",
+  "persistStatePath": "$page.layout",
+  "panels": [
+    {
+      "key": "nav",
+      "defaultSize": 3,
+      "min": 1,
+      "max": 6,
+      "body": [{ "type": "text", "text": "导航" }]
+    },
+    { "key": "main", "body": [{ "type": "text", "text": "主区" }] }
+  ]
+}
+```
+
+- `direction`：`horizontal`（缺省，左右分栏）/ `vertical`（上下）。
+- `panels[].key` 必填唯一；`defaultSize/min/max` 为**百分比**（以 `'35%'` 字符串传参）；`panels[].body` 为各面板 schema。
+- `persistStatePath`：拖拽结束后把面板尺寸百分比数组写回 scope；挂载时读回种子（损坏值回落 defaultSize）。缺省不持久化。
+- 相邻面板间自动渲染拖拽手柄（aria-label `flux.layout.resizeHandle`）；键盘焦点下手柄支持方向键调整。
+
+## Calendar monthShape (日历月视图形态，plan 514 L4.2)
+
+calendar（`view: "month"`）新增 `monthShape` 形态档：`resource`（缺省，资源×日期排班矩阵，语义不变）/ `grid`（Booker 式 6 周竖网格，纯日期选择面——不渲染事件/资源，绕过空数据占位门）。grid 档日期格点击派发 `onDateSelect`（payload `{ date, inMonth }`）；**选中 ≠ 导航**（`dateOwnership`/currentDate 不受影响）。

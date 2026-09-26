@@ -1,6 +1,6 @@
 # 515 Missing Components L4.9 — replica retrofit scoping（D1 原语接入旧复刻的适用性裁定与子计划分派）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-26
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §7 L4.9 行（Rule 4 例外：plan 族）+ §12 错峰规则；`docs/analysis/ui-review/C2-capability-gaps.md` 回写③⑤⑦⑧⑫⑬（D1 原语交付面与各 replica 缺口行）；两轮独立只读调研（2026-09-26，live repo 证据见 Current Baseline）
 > Related: `docs/plans/513-missing-components-l4-substrate-and-quick-wins-plan.md`（快赢先行，本计划不依赖其实现）；`docs/plans/512-missing-components-l3-host-channels-plan.md`（L3.5 已落地——stripe/airtable 错峰 rebase 归本计划窗口）
@@ -57,20 +57,20 @@
 
 ### Phase 1 - 适用性矩阵 + 子计划分派裁决（design gate）
 
-Status: planned
+Status: completed
 Targets: `docs/discussions/2026-09-26-l4-9-replica-retrofit-scoping.md`、roadmap §13 L4.9 行
 
 - Item Types: `Decision`
 
-- [ ] 矩阵落盘：7 replica × 4 原语逐格裁定，格 taxonomy 四档——`适用` / `不适用（理由）` / `待子计划核实` / `适用但暴露原语缺口 → D1 输入池`（每格带 page-schemas file:line 或理由）；每 replica 列出 retrofit 边界（schema 改动点 / e2e 断言迁移点 / 现役行为保持清单）
-- [ ] stripe/airtable URL 物化裁定：迁移到 L3.5 syncLocation 契约（子计划内执行）或声明豁免（理由在案）——512 Deferred successor 的消解
-- [ ] 子计划分派：编号 + 每 plan 的 replica 范围 + 依赖（预期按聚簇：antdpro / linear / airtable / notion+cal+sundial / stripe；聚簇理由在案）
-- [ ] 独立 review 共识（fresh 子 agent，0B/0M）记录于文档 Review 头注
+- [x] 矩阵落盘：7 replica × 4 原语逐格裁定，格 taxonomy 四档——`适用` / `不适用（理由）` / `待子计划核实` / `适用但暴露原语缺口 → D1 输入池`（每格带 page-schemas file:line 或理由）；每 replica 列出 retrofit 边界（schema 改动点 / e2e 断言迁移点 / 现役行为保持清单）
+- [x] stripe/airtable URL 物化裁定：优先迁移到 L3.5 syncLocation 契约（518/519 内执行），两处已知语义差核对清单落盘（地址栏可见性/表单句柄恢复通道）；豁免出口 = 差异登记 D1 输入池 + ad-hoc 面保留注记
+- [x] 子计划分派：516 antdpro / 517 linear / 518 airtable（keyboard 血缘核实义务在边界）/ 519 stripe+notion+cal+sundial；依赖 516→517→518→519 顺序（§12 只约束 L3.5↔L4.9，簇内无互相错峰——plan draft review r1 Major-1 关联更正）
+- [x] 独立 review 共识（fresh 子 agent，0B/0M）记录于文档 Review 头注（pass-with-minors 4m 当轮落字）
 
 Exit Criteria:
 
-- [ ] 矩阵零「待定」残留 + review 记录在案
-- [ ] roadmap §13 L4.9 行带分派注记（子计划编号 + 范围）
+- [x] 矩阵零「待定」残留 + review 记录在案（scoping 文档 Review 头注）
+- [x] roadmap §13 L4.9 行带分派注记（子计划编号 + 范围——随本批收口提交落盘）
 
 ## Draft Review Record
 
@@ -84,7 +84,7 @@ Exit Criteria:
 - [ ] Phase 1 裁决全部落地（矩阵/裁定/分派零待定）
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [ ] roadmap §13 L4.9 行回写与裁决一致
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（r1 `issues` 0B/1M/1m → Major-1 双轨 review 口径更正 + Minor-1 follow-ups 落字 → 凭审计证据翻转，2026-09-26）
 - [ ] 纯文档计划：pnpm typecheck/build/lint/test/check 不适用（无代码变更；文档格式由 pre-commit prettier 承担）
 
 ## Deferred But Adjudicated
@@ -98,7 +98,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- （收口时填写，或明确写无）
+- 518/519 子计划执行时按 §3 两处语义差核对清单逐项裁定 URL 物化迁移或豁免（登记 D1 输入池出口）
 
 ## Closure
 
@@ -106,9 +106,11 @@ Status Note: <<收口时填写>>
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 fresh 子 agent（general-purpose，2026-09-26）
+- Evidence: verdict r1 `issues`（0B/1M/1m）→ 条件修复（头注双轨化 / roadmap 更正 / 编号对齐 / follow-ups 落字）→ 凭审计「机械修复后即可标记 completed」结论翻转。审计实核 7/7 出处命中、分派与 roadmap diff 逐字一致、Deferred 诚实、五处一致性过。
+
+Status Note: Phase 1 裁决全部落地（矩阵 7×4 四档 taxonomy 零待定、URL 物化裁定含两处语义差核对清单、516-519 分派 + 依赖序），双轨审查 + closure audit 通过；scoping 交付面为纯文档，逐 replica 实现显式移交 516-519。
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- no remaining plan-owned work（实现归 516-519 successor ownership）

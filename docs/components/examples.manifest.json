@@ -74,7 +74,8 @@
     "department-select",
     "input-city",
     "input-signature",
-    "verification-code"
+    "verification-code",
+    "resizable"
   ],
   "targetContract": [
     "alert",

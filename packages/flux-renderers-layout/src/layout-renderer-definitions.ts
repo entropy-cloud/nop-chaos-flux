@@ -6,6 +6,7 @@ import { DropdownButtonRenderer } from './dropdown-button-renderer.js';
 import { WizardRenderer } from './wizard-renderer.js';
 import { ResponsiveRenderer } from './responsive-renderer.js';
 import { stepsRendererDefinition, timelineRendererDefinition } from './process-display-definitions.js';
+import { resizableRendererDefinition } from './resizable-renderer-definition.js';
 
 export const layoutRendererDefinitions: RendererDefinition[] = [
   {
@@ -634,4 +635,5 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
       { key: 'variants', kind: 'prop' },
     ],
   },
+  resizableRendererDefinition,
 ];

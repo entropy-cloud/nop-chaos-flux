@@ -132,6 +132,7 @@ import {
   KanbanLabPage,
   CalendarLabPage,
   BarcodeInputLabPage,
+  ResizableLabPage,
 } from './renderers';
 
 export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
@@ -266,5 +267,6 @@ export const RENDERER_LAB_REGISTRY: Record<string, React.ComponentType> = {
   gantt: GanttLabPage,
   kanban: KanbanLabPage,
   calendar: CalendarLabPage,
+  resizable: ResizableLabPage,
   'barcode-input': BarcodeInputLabPage,
 };

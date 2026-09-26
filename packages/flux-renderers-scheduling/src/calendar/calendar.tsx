@@ -23,6 +23,7 @@ import { useCalendarDrag } from './hooks/use-calendar-drag.js';
 import { useCalendarDragCreate } from './hooks/use-calendar-drag-create.js';
 import { CalendarHeader } from './components/calendar-header.js';
 import { CalendarMonthView } from './components/calendar-month-view.js';
+import { CalendarGridView } from './components/calendar-grid-view.js';
 import { CalendarWeekView } from './components/calendar-week-view.js';
 import { CalendarDayView } from './components/calendar-day-view.js';
 import { CalendarConfirmDialog } from './components/calendar-confirm-dialog.js';
@@ -429,7 +430,9 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     );
   }
 
-  if (!resolved.loading && eventsData.length === 0 && !resourcesData.length) {
+  // L4.2: monthShape 'grid' is a pure date-selection surface — it renders with zero events/resources.
+  const monthShape = resolved.monthShape === 'grid' ? 'grid' : 'resource';
+  if (!resolved.loading && monthShape !== 'grid' && eventsData.length === 0 && !resourcesData.length) {
     const emptyRegion = regions.empty;
     if (emptyRegion) {
       return <div data-slot="calendar" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn(meta.className, resolved.emptyClassName as string | undefined)}>{emptyRegion.render() as React.ReactNode}</div>;
@@ -446,6 +449,10 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const onEventClick = (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => {
     void events.onEventClick?.(payload, eventCtx(payload));
+  };
+
+  const onGridDateSelect = (payload: { date: string; inMonth: boolean }) => {
+    void events.onDateSelect?.(payload, eventCtx(payload));
   };
 
   const bodyRegion = regions.body;
@@ -494,7 +501,14 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         locale={locale}
       />
 
-      {activeView === 'month' && (
+      {activeView === 'month' && monthShape === 'grid' && (
+        <CalendarGridView
+          currentDate={currentDate} firstDayOfWeek={firstDayOfWeek} locale={locale}
+          onDateSelect={onGridDateSelect}
+        />
+      )}
+
+      {activeView === 'month' && monthShape !== 'grid' && (
         <div ref={scrollRef} className="overflow-auto flex-1">
           <CalendarMonthView
             events={eventsData} resources={displayResources} currentDate={currentDate}

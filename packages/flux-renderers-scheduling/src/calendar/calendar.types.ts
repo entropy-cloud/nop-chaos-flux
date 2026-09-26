@@ -96,6 +96,13 @@ export interface CalendarResource extends SchemaObject {
 export interface CalendarSchema extends BaseSchema {
   type: 'calendar';
   view?: CalendarView;
+  /**
+   * Month-view shape (L4.2). 'resource' (default) = the resource-row ×
+   * date-column scheduling matrix. 'grid' = Booker-style six-week vertical
+   * date-selection grid (pure date-select surface — no events/resources
+   * rendered; bypasses the empty-state gate). Ignored outside view=month.
+   */
+  monthShape?: 'resource' | 'grid';
   date?: string;
   events?: CalendarEvent[];
   resources?: CalendarResource[];
@@ -117,6 +124,9 @@ export interface CalendarSchema extends BaseSchema {
   statusPath?: string;
   onEventClick?: ActionSchema;
   onDateChange?: ActionSchema;
+  /** Grid-shape date-cell selection (monthShape:'grid'). Payload { date, inMonth }.
+   * Selection ≠ navigation: currentDate/dateOwnership are untouched. */
+  onDateSelect?: ActionSchema;
   onViewChange?: ActionSchema;
   onEventChange?: ActionSchema;
   onEventCreate?: ActionSchema;

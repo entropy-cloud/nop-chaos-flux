@@ -24,6 +24,14 @@ export const LAYOUT_RENDERER_ROUTES: RendererRouteEntry[] = [
       'Collapsible content group with local/controlled/scope expand-state ownership.',
   },
   {
+    id: 'resizable',
+    title: 'Resizable',
+    category: 'layout',
+    sourcePackage: '@nop-chaos/flux-renderers-layout',
+    description:
+      'Schema-driven split panes (L4.6) with min/max clamps and optional size persistence to a scope path.',
+  },
+  {
     id: 'wizard',
     title: 'Wizard',
     category: 'layout',

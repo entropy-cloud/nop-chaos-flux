@@ -40,6 +40,18 @@ export function getDateRange(start: Date, end: Date): Date[] {
   return dates;
 }
 
+/**
+ * Six-week (42-cell) grid for the Booker-style month shape (L4.2): starts on
+ * the week containing the 1st (honoring firstDayOfWeek), always 42 days so
+ * adjacent-month padding fills both edges. Pure selection surface — no event
+ * layout.
+ */
+export function getSixWeekGrid(currentDate: Date, firstDayOfWeek: 0 | 1 = 0): Date[] {
+  const monthStart = getMonthStartEnd(currentDate).start;
+  const gridStart = getWeekStartEnd(monthStart, firstDayOfWeek).start;
+  return getDateRange(gridStart, addDays(gridStart, 41));
+}
+
 export function isSameDay(d1: Date, d2: Date): boolean {
   return (
     d1.getUTCFullYear() === d2.getUTCFullYear() &&

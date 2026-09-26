@@ -332,3 +332,29 @@ export interface ResponsiveSchema extends BaseSchema {
   type: 'responsive';
   variants: ResponsiveVariantSchema[];
 }
+
+export interface ResizablePanelSchema extends SchemaObject {
+  /** Unique panel key (used as the persistence slot and React key). */
+  key: string;
+  /** Initial size percentage (e.g. 35 → '35%'). Omit for the default flexible panel. */
+  defaultSize?: number;
+  /** Lower drag bound (percentage). */
+  min?: number;
+  /** Upper drag bound (percentage). */
+  max?: number;
+  /** Panel content. */
+  body?: SchemaInput;
+}
+
+export interface ResizableSchema extends BaseSchema {
+  type: 'resizable';
+  /** Split axis. Default 'horizontal' (side-by-side columns). */
+  direction?: 'horizontal' | 'vertical';
+  /**
+   * Scope path receiving the panel size percentages after each drag settle
+   * (array order matches `panels`). Seeded back on mount when present
+   * (corrupt values fall back to `defaultSize`). Omit for no persistence.
+   */
+  persistStatePath?: string;
+  panels: ResizablePanelSchema[];
+}

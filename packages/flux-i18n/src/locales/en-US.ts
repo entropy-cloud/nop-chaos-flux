@@ -209,6 +209,9 @@ export const enUS: Resource = {
       remoteSearchFailedDetail: 'Search failed: {{message}}',
       loadChildrenFailed: 'Failed to load children',
     },
+    layout: {
+      resizeHandle: 'Drag to resize panel',
+    },
     table: {
       columns: 'Columns',
       expand: 'Expand',

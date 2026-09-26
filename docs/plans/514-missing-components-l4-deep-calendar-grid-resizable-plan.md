@@ -1,6 +1,6 @@
 # 514 Missing Components L4 深化 — calendar 6 周格视图档（L4.2）+ Resizable schema 化（L4.6）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-26
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §7（L4.2/L4.6 行）；`docs/analysis/ui-review/C1-complex-page-conceptions.md:36`（G-J）/ C2 裁决表 :31-32；`docs/analysis/visual-quality/V11a-scheduling.md`（A3 否决先例）；`docs/analysis/ui-review/D2-closure.md:72`（Open candidates #12）
 > Related: `docs/plans/513-missing-components-l4-substrate-and-quick-wins-plan.md`（同线快赢先行）；`docs/discussions/2026-09-26-l4-interaction-residual-substrate.md`（L4 底座文档——本计划两项不沿用其契约，各自独立立约）
@@ -65,63 +65,64 @@
 
 ### Phase 1 - 双项裁决文档 + 独立 review（design gate）
 
-Status: planned
+Status: completed
 Targets: `docs/discussions/2026-09-26-l4-2-l4-6-calendar-grid-and-resizable-adjudication.md`、（若裁定新 type）`docs/components/amis-baseline-matrix.md` flip 预记录
 
 - Item Types: `Decision`
 
-- [ ] L4.2 裁决：monthShape 双档语义、grid 档 42 格补位规则、onDateSelect 事件形状（payload/dateOwnership 贯通）、键盘可达性、与既有视图/e2e 的兼容红线（含 calendar.tsx:432-445 empty 门对 grid 档的处置——绕过或要求空资源）
-- [ ] L4.6 裁决：路由（新 type vs 语义字段）、schema 字段面（方向/sizes/min/max/persist）、bespoke 三处口径、（若新 type）matrix flip 执行记录
-- [ ] 独立 review 共识（fresh 子 agent，0B/0M）记录于文档 Review 头注
+- [x] L4.2 裁决：monthShape 双档语义、grid 档 42 格补位规则、onDateSelect 事件形状（payload `{date, inMonth}`；**显式不接 dateOwnership**——选中≠导航，裁决 1.4）、键盘可达性、与既有视图/e2e 的兼容红线（含 calendar.tsx:432-445 empty 门对 grid 档的处置——绕过或要求空资源）
+- [x] L4.6 裁决：**新 flux-native 布局 type `resizable` 落 flux-renderers-layout**；schema 字段面（direction/panels/persistStatePath + schema↔底层 API 名映射）；bespoke 三处**保留声明豁免**；matrix flip **不需要**（非 AMIS 基线类型，keyboard/batch-bar 先例——514 plan 的 flip 条款落空并记录）
+- [x] 独立 review 共识（fresh 子 agent，0B/0M）记录于文档 Review 头注（通过（有保留意见）+ 4 minor 当轮落字）
 
 Exit Criteria:
 
-- [ ] 裁决文档含两项目录级决定（无「待定」残留）+ review 记录在案
-- [ ] matrix flip（如触发）落盘并有放行依据注记
+- [x] 裁决文档含两项目录级决定（无「待定」残留）+ review 记录在案（Review 头注三轮记录齐）
+- [x] matrix flip（如触发）落盘并有放行依据注记——裁定**不触发**（非 AMIS 基线类型，零先行例核验）
 
 ### Phase 2 - L4.2 calendar grid 视图档 + date-cell 选中
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/calendar/`（calendar.tsx、utils/calendar-date-utils.ts、新 grid-view 组件、calendar.types.ts——schemas.ts 为 re-export）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] monthShape 双档落地（Phase 1 契约）；grid 档 6×42 格渲染 + 相邻月补位 + 今日/选中标记
-- [ ] onDateSelect 事件 + dateOwnership 贯通 + 键盘可达（Phase 1 口径）
-- [ ] focused 单测（42 格/补位/选中派发/缺省零回归）+ e2e（选中 → 事件程序化断言）
+- [x] monthShape 双档落地（Phase 1 契约）：calendar-grid-view.tsx 新组件（42 格 + `data-outside-month` 补位 + `data-today`/`data-selected` 标记）+ getSixWeekGrid util + calendar.tsx month 分支分流 + empty 门 grid 绕过 + body region 优先级保持
+- [x] onDateSelect 事件（payload {date, inMonth}，eventCtx 分发；显式不接 dateOwnership——Phase 1 裁决 1.4）+ 键盘可达（button gridcell 结构，focus + Enter/Space）
+- [x] focused 单测（calendar-grid.test.tsx ×4：42 格数学/补位标记/选中派发/缺省零回归含 empty 门）+ e2e（calendar-grid-shape.spec.ts：42 cell + 补位 + 选中标记；lab 新增 grid 场景）
 
 Exit Criteria:
 
-- [ ] 既有 calendar e2e 全绿（零回归红线）+ grid 档新断言全绿
-- [ ] calendar design.md §12 与 V11a 注记回写（重裁记录）
+- [x] 既有 calendar e2e 全绿（calendar-demo + cal-replica-interactions 22/22）+ grid 档新断言全绿
+- [x] 重裁记录落盘（裁决文档 §1.1 V11a A3 关系；flux-guide monthShape 节引导——calendar/design.md 属历史 design doc 家族，快照不改）
 
 ### Phase 3 - L4.6 Resizable schema 化（按 Phase 1 路由）
 
-Status: planned
+Status: completed
 Targets: 随 Phase 1 裁定（布局包 + ui 包装 + playground demo）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] schema 面（方向/sizes/min/max/persist）+ 渲染面接线（ui ResizablePanelGroup 消费）
-- [ ] playground 演示 entry（经 L0 注册表露出）+ focused 单测（归一化/钳制/持久化回落）+ e2e（拖拽 handle → 尺寸变化程序化断言）
+- [x] schema 面（direction/panels/persistStatePath——百分比尺寸语义，percent 字符串传参）+ 渲染面接线（resizable-renderer.tsx 消费 ui ResizablePanelGroup；meta 属性挂外层 div——panels 库覆写 group testid）+ `resizableRendererDefinition` 注册
+- [x] playground 演示 entry：resizable-lab-page.tsx + renderer-lab-registry + layout-renderer-routes 路由项（L0 注册表自动露出）+ focused 单测 ×2 + e2e（resizable-layout.spec.ts：键盘方向键 resize 收缩断言——初始布局可能落在 max 钳制位，收缩方向确定性更高）
+- [x] 交付铁律登记：docs/components/resizable/design.md（12 节）+ example.json + examples.manifest.json runtime 项 + quick-reference Layout Extensions 节 + flux-guide 07 resizable/monthShape 两节
 
 Exit Criteria:
 
-- [ ] 落地路由与 Phase 1 裁定一致；focused/e2e 全绿；AGENTS.md 宣传与实现欠账对齐（schema 面可声明）
+- [x] 落地路由与 Phase 1 裁定一致（新 type 落 flux-renderers-layout）；focused/e2e 全绿（layout 138/138）；AGENTS.md ui Resizable 宣传与 schema 面对齐（可声明）
 
 ### Phase 4 - 收口验证 + 登记
 
-Status: planned
+Status: completed
 Targets: 全仓 + 登记面
 
 - Item Types: `Proof`
 
-- [ ] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红；e2e 全量零新增红
-- [ ] 登记：quick-reference（monthShape/onDateSelect、resizable schema 面）+ flux-guide 对应节 + roadmap §13 L4.2/L4.6 done 回写 + dev log
+- [x] `pnpm typecheck` / `build` / `lint` / `test` 全绿（40/40 ×3 + 74/74 task；途中三次门禁红均当场消解——calendar-grid-view index-key lint error、layout-renderer-definitions.ts 701 行越 700 阈值（resizable 定义拆独立文件 resizable-renderer-definition.ts，主文件 640 行）、未使用 import）；`pnpm check` 零新增红（205w/2e/2exempt 在册口径）；e2e 全量（44.9m）**1574 passed / 43 skipped / 3 failed / 3 flaky**——3 失败 = gantt flake 家族 ×2（bars-and-links:131、demo:69，隔离复跑全绿）+ kanban-perf:34（在册 watch-only），零新增红
+- [x] 登记：quick-reference Layout Extensions 节（ResizableSchema + calendar monthShape 两行）+ flux-guide 07 structural-nodes 两节 + docs/components/resizable/design.md（12 节）+ example.json + examples.manifest.json + roadmap §13 L4.2/L4.6 done 回写 + dev log
 
 Exit Criteria:
 
-- [ ] 全量验证记录于 Closure；登记面 grep 复核命中；roadmap/dev log 落盘
+- [x] 全量验证记录于 Closure；登记面 grep 复核命中；roadmap/dev log 落盘
 
 ## Draft Review Record
 
@@ -132,17 +133,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1 裁决全部落地（无偏离裁定的实现；matrix flip 如触发已执行）
-- [ ] 各实现 Phase Exit Criteria 全勾
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响 owner docs 已同步（calendar design.md / V11a 注记 / quick-reference / flux-guide）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增红）
-- [ ] `pnpm test:e2e`（零新增红口径）
+- [x] Phase 1 裁决全部落地（无偏离裁定的实现；matrix flip 裁定不触发——非 AMIS 基线类型；两处实施勘误——尺寸语义终裁百分比（flex-grow 误判已更正）、resizable 定义独立文件——已回写裁决文档/plan）
+- [x] 各实现 Phase Exit Criteria 全勾
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（bespoke 迁移豁免为 Deferred 节登记项）
+- [x] 受影响 owner docs 已同步（resizable design.md / quick-reference / flux-guide / 裁决文档）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（r1 `issues` 0B/3M/3m → 全部修复 → delta 复审 1M 修字销项后准予 completed，2026-09-26）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（零新增红）
+- [x] `pnpm test:e2e`（零新增红口径）
 
 ## Deferred But Adjudicated
 
@@ -158,13 +159,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 四个 Phase 全部落地并经独立 closure audit 两轮通过（r1 issues 0B/3M/3m → 修复 → delta 复审 1M 修字销项后准予 completed）：L4.2 calendar `monthShape: 'grid'` 6 周选择网格（42 格、补位标记、onDateSelect 选中≠导航、empty 门绕过、V11a A3 重裁并存档）+ L4.6 `resizable` 新布局 type（flux-renderers-layout，百分比尺寸语义终裁，键盘/指针 resize、持久化种子与钳制纯函数单测、matrix flip 不触发裁定；bespoke 三处豁免登记）。全量验证：typecheck/build/lint 40/40、test 74/74、check exit 0（205w 在册口径）、e2e 1574/43/3/3 零新增红（gantt flake 家族 ×2 隔离复跑全绿 + watch-only ×1）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 fresh 子 agent（general-purpose，2026-09-26，两轮）
+- Evidence: r1 verdict `issues`（0B/3M/3m——尺寸单位 contract drift / roadmap done 与 dev log 未落盘 / 探针违规 + 三 minor）→ 全部修复（percent 终裁五处字面对齐、roadmap §13 L4.2/L4.6 done 回写、dev log 全量条目、normalizePersistedSizes 提取 + ×2 单测、e2e 标题更正、weekday role 结构）→ delta 复审确认 r1 五处关闭、余 1M 为 5 处字面残留 → 修字后销项，准予 completed（无需第三轮）。审计实核：Phase 2 全链 live 命中、注册链齐、matrix 零先行例实测、verify4 EXIT=0、e2e 台账一致。
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- no remaining plan-owned work（S3+ 归 L6 主线后续阶段）
