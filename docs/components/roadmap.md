@@ -295,7 +295,7 @@ graph TD
 **O1. 非 retained 可选项**（启动任一项前需先更新 `amis-baseline-matrix.md` 的 retained 决策，并为其建工作项）：
 
 - AMIS-derived（有 AMIS 源 type）：`slider`/future `input-slider`、`rating`、`avatar`、`input-color`、`icon-picker`、`location-picker`、`input-city`、`input-signature`、`calendar`、`nav`、`anchor-nav`、`portlet`、`iframe`
-- Flux-native 移动端组件（无 AMIS 源，不走 amis-baseline-matrix，启动时建 `docs/components/<type>/design.md` + 工作项即可）：`area`（省市区选择，收货地址依赖）、`number-keyboard`（支付/验证码数字键盘）、`back-top`（长列表回到顶部）
+- Flux-native 移动端组件（无 AMIS 源，不走 amis-baseline-matrix，启动时建 `docs/components/<type>/design.md` + 工作项即可）：`area`（省市区选择——**2026-09-26 注（plan 520 L7.6）：已由 missing-components L2.2 `input-city` 承接并落地，本项关闭**）、`number-keyboard`（支付/验证码数字键盘）、`back-top`（长列表回到顶部）。另：`icon-picker`（flux-renderers-form-advanced）与 `calendar`（flux-renderers-scheduling）**已注册实现**（2026-09-26 回写，plan 520 L7.6），不再作为待启动可选项。
 
 > Flux-native 移动端组件的 retained 决策类比 `mobile-roadmap.md` M5（pull-refresh 等 5 个移动端原生组件也无 AMIS 源，不经 amis-baseline-matrix，直接在 mobile-roadmap 立工作项）。上述 3 个 Flux-native 候选优先级低于 M0.1/M5，按需启动。
 

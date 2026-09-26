@@ -1,6 +1,6 @@
 # 520 Missing Components L7 — matrix/roadmap 维护 + 文档债收口
 
-> Plan Status: draft
+> Plan Status: completed
 > Last Reviewed: 2026-09-26
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §10（L7 全表）+ §7（gap-analysis 引用）；`docs/components/amis-baseline-matrix.md`（:139-141 已翻行、:283-298 folded 行）；`docs/references/quick-reference.md:240-261`（stream/openSocket 陈旧措辞）；`docs/components/roadmap.md:295-298`（O1 清单）
 > Related: plan 503（L1 命名决议）/512（host channels 落地——P-1 措辞过时的根源）
@@ -16,7 +16,7 @@
 2026-09-26 live repo 核对：
 
 - **已翻行（无需处理）**：matrix :139-141 slider/rating/input-color 三行已 `runtime`+landed（L1 flip 完成）；:285 `color` 行已带「display 行 ≠ input-color form 行」澄清注记（L7.5 该子项已在册）。
-- **L7.5 待处理行**：folded 节 :287 `icon-picker`、:296 `sparkline`、:289 `calendar`、:298 `hidden` 四行——其中 **icon-picker 已实现**（flux-renderers-form-advanced/src/icon-picker.tsx 在库）且 **calendar 已实现**（flux-renderers-scheduling/calendar 全家 + design.md 族）——matrix 行与 live 事实相反；sparkline/hidden 无实现，行措辞应维持 folded 但补「实现面核实结论」注记。
+- **L7.5 待处理行**：folded 节 :287 `icon-picker`、:296 `sparkline`、:289 `calendar`、:298 `hidden` 四行——其中 **icon-picker 已实现**（flux-renderers-form-advanced/src/icon-picker.tsx）、**calendar 已实现**（flux-renderers-scheduling/calendar 全家 + design.md 族）、**sparkline 已实现**（flux-renderers-data/src/sparkline-renderer.tsx，sparklineRendererDefinition）、**hidden 已实现**（flux-renderers-form/src/renderers/hidden-renderer.tsx，type 'hidden'）——四行 matrix 措辞与 live 事实不符，全部补「已实现」指针注记（retention 折叠语义保留：均为非 AMIS 基线家族/非视觉字段，折叠指「非 retained AMIS baseline」而非「未实现」）。
 - **L7.7 待处理**：quick-reference :240-241 stream/openSocket 行写「待 P-1 实施」、:261 注释「流式响应（P-1 实施后）」——两者已于 2026-07-23 落地实施（plan 512 亦消费），措辞过时。
 - **L7.6 待处理**：roadmap :298 O1 移动端 flux-native 清单含 `area`（省市区）——已被 missing-components L2.2 `input-city` 取代（需求由 input-city 承接，且 matrix/Form Core 已登记）；`icon-picker`/`calendar` 已注册事实未回写 O1 清单。
 - **demand-gated 终态**（无需实现，登记触发条件即可）：L7.1 skeleton / L7.2 image-preview capability / L7.3 lazyload / L7.4 input-excel 等 survey 项 / L7.8 survey leftover 复查 / L4.12 phone mask / L4.3 / L4.11e / L5.8 / L6 S4 协作可选。
@@ -56,60 +56,60 @@
 
 ### Phase 1 - matrix 四行对齐 live
 
-Status: planned
+Status: completed
 Targets: `docs/components/amis-baseline-matrix.md`
 
 - Item Types: `Fix`（docs）
 
-- [ ] icon-picker/calendar 行补「已实现」注记（实现 file:line + design.md 指针）；sparkline/hidden 行补核实结论注记（无实现，维持 folded + 触发条件）
-- [ ] 与 ：285 color 澄清注记交叉核对（该子项已在册，仅复核）
+- [x] icon-picker/calendar/sparkline/hidden 四行全部补「已实现」注记（实现路径指针；sparkline/hidden 为审查更正——两实现分别在 flux-renderers-data/form 在库；折叠语义保留）
+- [x] 与 ：285 color 澄清注记交叉核对（已在册确认）
 
 Exit Criteria:
 
-- [ ] grep 复核四行注记命中且与 live 实现面一致
+- [x] grep 复核四行注记命中且与 live 实现面一致
 
 ### Phase 2 - quick-reference 措辞刷新 + roadmap O1 reconcile
 
-Status: planned
+Status: completed
 Targets: `docs/references/quick-reference.md`、`docs/components/roadmap.md`
 
 - Item Types: `Fix`（docs）
 
-- [ ] stream/openSocket 三处「待 P-1 实施」→「已落地（2026-07-23，INV-2 C 档；消费先例 plan 512 host channels）」
-- [ ] roadmap O1：area 行标注「由 missing-components L2.2 input-city 取代」；icon-picker/calendar 已注册事实回写清单
+- [x] stream/openSocket「待 P-1 实施」×2 + 注释 ×1 全部刷新为「已落地（2026-07-23）」（grep 零残留）
+- [x] roadmap O1：area 行标注「由 missing-components L2.2 input-city 取代（本项关闭）」；icon-picker/calendar 已注册事实回写清单
 
 Exit Criteria:
 
-- [ ] grep 复核：「待 P-1 实施」零残留；O1 两处注记命中
+- [x] grep 复核：「待 P-1 实施」零残留；O1 两处注记命中
 
 ### Phase 3 - demand-gated 终态登记 + 收口
 
-Status: planned
+Status: completed
 Targets: roadmap §13 L7 行、本 plan Closure
 
 - Item Types: `Decision`、`Proof`
 
-- [ ] demand-gated 项终态登记（每项：触发条件 + 启动路径）：L7.1 skeleton（host 骨架屏需求）/ L7.2 image-preview capability（gallery 需求）/ L7.3 lazyload（improvement roadmap）/ L7.4 survey Tier1-3 各自 gate / L7.8 survey leftover（各自 gate）+ 关联 L4.12/L4.3/L4.11e/L5.8 引用
-- [ ] roadmap §13 L7 行回写终态 + dev log
+- [x] demand-gated 项终态登记（roadmap §13 L7 行逐项触发条件）：L7.1–L7.4/L7.8 + 关联 L4.12/L4.3/L4.11e/L5.8 引用
+- [x] roadmap §13 L7 行回写终态 + dev log
 
 Exit Criteria:
 
-- [ ] roadmap §13 L7 行终态与 demand-gated 登记齐
-- [ ] 纯文档变体：pnpm 全量不适用；`pnpm check:active-doc-code-anchors` 过
+- [x] roadmap §13 L7 行终态与 demand-gated 登记齐
+- [x] 纯文档变体：pnpm 全量不适用；`pnpm check:active-doc-code-anchors` exit 0
 
 ## Draft Review Record
 
-- Reviewer / Agent: <<待填>>
-- Verdict: <<待填>>
-- Rounds: <<待填>>
-- Findings addressed: <<待填>>
+- Reviewer / Agent: 独立 fresh 子 agent（general-purpose，2026-09-26，两段合并审查）
+- Verdict: r1 `issues`（draft 事实核对 fail + closure 0B/2M/4m：M1 sparkline 注记事实反转 / M2 hidden 注记事实反转 / m1 L7.8 缺 3 子项 / m2 缺关联引用 / m3 其他文档 P-1 残留登记 / m4 升 active）
+- Rounds: 1
+- Findings addressed: M1/M2 注记改为「已实现」指针（sparkline-renderer.tsx / hidden-renderer.tsx 实证）；m1 L7 行补 3 子项；m2 补关联引用；m3 登记 follow-up；m4 本条升 active
 
 ## Closure Gates
 
 - [ ] Phase 1-3 Exit Criteria 全勾
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（demand-gated 项均有触发条件登记）
 - [ ] 受影响 owner docs 已同步（matrix/quick-reference/roadmap O1）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（两段合并审查：draft r1 issues 0B/2M/4m → 修复 → delta draft pass + closure 0B/0M/2m 修字后准予 completed，2026-09-26）
 - [ ] 纯文档计划：pnpm typecheck/build/lint/test/check 不适用（`check:active-doc-code-anchors` 除外，已随 Phase 3 执行）
 
 ## Deferred But Adjudicated
@@ -122,7 +122,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- （收口时填写，或明确写无）
+- 「待 P-1 实施」陈旧措辞在 quick-reference 之外另有两处（docs/references/new-renderer-introduction-audit.md:115/:253、flux-renderers-ai/implementation.md:103）——随下批 docs 刷新（closure 审查 m3 登记）
 
 ## Closure
 
@@ -130,9 +130,12 @@ Status Note: <<收口时填写>>
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 fresh 子 agent（general-purpose，2026-09-26，两段合并审查）
+- Evidence: draft r1 `issues`（0B/2M/4m——sparkline/hidden 注记事实反转，审查实证两实现分别在 flux-renderers-data/form 在库）→ 注记更正 + L7 行补全 + follow-ups 登记 → delta：draft **pass**（1 minor）+ closure `issues`（0B/0M/2m 单行残留）→ 修字后凭「无需第三轮」结论翻转 completed。八处行号抽验全中、O1/L7 登记与 §10 全表对齐。
+
+Status Note: 三项维护（matrix 四行注记 / quick-reference P-1 措辞清零 / roadmap O1 reconcile）+ demand-gated 终态登记（L7.1–L7.4/L7.8 触发条件 + 关联引用）全部落盘；grep 复核「待 P-1 实施」零残留、anchors 检查过。L7 线出口达成：done（维护项）+ demand-gated 全登记。
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- 「待 P-1 实施」陈旧措辞另有两处（new-renderer-introduction-audit.md / implementation.md）随下批 docs 刷新（见 Non-Blocking Follow-ups）
+- no remaining plan-owned work
