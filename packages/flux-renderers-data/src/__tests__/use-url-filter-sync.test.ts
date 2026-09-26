@@ -6,7 +6,7 @@ import {
   queryToUrlValues,
   useUrlFilterSync,
 } from '../use-url-filter-sync.js';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 // Side-effect import initializes the flux i18n test locale.
 import '../test-support.js';
 
@@ -108,8 +108,9 @@ describe('useUrlFilterSync', () => {
     };
     const first = renderHook(() => useUrlFilterSync({ enabled: true, ...common }));
     const { result, rerender } = renderHook(() => useUrlFilterSync({ enabled: true, ...common }));
+    // degradation lands in a deferred task — wait for the re-render
     rerender();
-    expect(result.current).toBe(false);
+    await waitFor(() => expect(result.current).toBe(false));
     void first;
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('collides'));
   });
