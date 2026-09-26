@@ -44,6 +44,7 @@ import { useInfiniteScroll } from './use-infinite-scroll.js';
 import { asReactNode, delegateTableRendererProps, resolveCrudSlotContent } from './crud-renderer-delegate.js';
 import { useCrudFilterToggle } from './use-crud-filter-toggle.js';
 import { useCrudQueryFormScope } from './use-crud-query-form-scope.js';
+import { useUrlFilterSync } from './use-url-filter-sync.js';
 import { CrudListPagination } from './crud-list-pagination.js';
 import { CrudInfiniteScrollArea } from './crud-infinite-scroll-area.js';
 
@@ -133,6 +134,34 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const dataStatePath = normalizedSchema.dataStatePath;
   const paginationMode = resolvePaginationMode(normalizedSchema.pagination, undefined);
   const loadDataOnce = normalizedSchema.clientMode?.loadDataOnce === true;
+
+  const urlEnv = useRendererEnv();
+  const syncUrlEnabled = normalizedSchema.syncLocation === true && Boolean(urlEnv.location);
+  const applyRestoredFilters = useCallback(
+    (values: Record<string, unknown>) => {
+      const handle = componentRegistry?.resolve({
+        componentId: createCrudQueryFormId(props.id, props.path),
+      });
+      if (!handle?.capabilities?.hasMethod?.('setValues')) {
+        return false;
+      }
+      void Promise.resolve(
+        handle.capabilities.invoke('setValues', { values }, {} as never),
+      ).catch(() => false);
+      return true;
+    },
+    [componentRegistry, props.id, props.path],
+  );
+  useUrlFilterSync({
+    enabled: syncUrlEnabled,
+    instanceId: String(normalizedSchema.id ?? normalizedSchema.name ?? 'crud'),
+    location: urlEnv.location,
+    scope,
+    queryStatePath: ownerPaths.queryStatePath,
+    applyToForm: applyRestoredFilters,
+    query: queryState,
+    defaultQuery,
+  });
 
   const queryStatePath = ownerPaths.queryStatePath;
   const queryDraftStatePath = `${queryStatePath}.$draft`;

@@ -21,6 +21,26 @@
 }
 ```
 
+## 内置宿主通道动作（plan 512 L3）
+
+除了 `ajax` / `showToast` / `navigate` 等内置动作，三个宿主通道以内置 action 词汇暴露（契约：`docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md`）：
+
+```json
+[
+  { "action": "print" },
+  {
+    "action": "copy",
+    "args": { "content": "https://demo.example/x/${id}", "successMessage": "链接已复制" }
+  },
+  { "action": "download", "args": { "url": "/api/export" } }
+]
+```
+
+- `print`：派发 `env.print`（宿主 `window.print` 型页面打印）；宿主未提供时警告 toast + 动作失败。
+- `copy`：`args.content` 写入 `env.clipboard`（真实剪贴板写入）；缺省成功文案「已复制」，可用 `successMessage` 覆盖；写入失败/通道缺失均明确报错，不假成功。
+- `download`：`args.api`（blob 请求）或 `args.url`（直接 `data:` URL，或返回 `{ url, filename }` 的端点）→ 复用 runtime 下载管线触发保存；失败走 `downloadFailed` 错误 toast。
+- 深链：crud 设 `"syncLocation": true` 后筛选状态与 URL query 双向同步（宿主提供 `env.location`）。
+
 ## Action Algebra 系统 (推荐)
 
 任意组件的事件字段携带 `ActionSchema`，支持链式、并行、条件分支：

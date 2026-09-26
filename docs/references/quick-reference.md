@@ -239,6 +239,9 @@ interface RendererRuntime {
 | `fetcher`                           | ✅       | HTTP 一次性请求（`Promise<ApiResponse<T>>`）                                                                   |
 | `stream`                            | optional | HTTP 流式响应（SSE/NDJSON/text/raw 自动切分+解析，返回 `AsyncGenerator<T>`）；2026-07-21 评审通过，待 P-1 实施 |
 | `openSocket`                        | optional | WebSocket 长连接（类浏览器接口）；2026-07-21 评审通过，待 P-1 实施                                             |
+| `print`                             | optional | 宿主打印管线（`print` action 派发；缺失时 warning toast）；plan 512 L3.1                                       |
+| `clipboard`                         | optional | 剪贴板写入（`copy` action 派发；`writeText` reject → 错误 toast）；plan 512 L3.2                               |
+| `location`                          | optional | host router 查询串读写（`getQuery`/`setQuery`；crud `syncLocation: true` 深链）；plan 512 L3.5                 |
 | `notify`                            | ✅       | Toast 通知                                                                                                     |
 | `confirm` / `alert`                 | optional | 确认/警告框                                                                                                    |
 | `navigate`                          | optional | 路由跳转                                                                                                       |

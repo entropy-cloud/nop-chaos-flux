@@ -174,6 +174,17 @@ export interface ErrorMonitorPayload {
   details?: Record<string, unknown>;
 }
 
+/**
+ * `env.location` 主接口：host router 查询串的读写视图（hash 路由取 hash 内
+ * query）。值域恒为 string；数组由消费方逗号 join，空值删键。
+ */
+export interface EnvLocation {
+  /** 当前 URL 的查询参数（host router 视角）。 */
+  getQuery(): Record<string, string>;
+  /** Merge-patch 查询参数；值为 undefined 的键删除。缺省 replace，不产生 history 记录。 */
+  setQuery(patch: Record<string, string | undefined>, options?: { replace?: boolean }): void;
+}
+
 /** `env.clipboard` 主接口：写入文本到系统剪贴板。失败时 reject。 */
 export interface ClipboardWriter {
   writeText(text: string): Promise<void>;
@@ -204,6 +215,12 @@ export interface RendererEnv extends ExpressionExecutionEnv {
    * docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md
    */
   clipboard?: ClipboardWriter;
+  /**
+   * host router 查询串读写通道（filter↔URL 深链）。可选；host 不提供时
+   * `syncUrl` 静默关闭并提示一次。使用前必须 capability check。评审来源：
+   * docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md
+   */
+  location?: EnvLocation;
   notify: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
   navigate?: (to: string | number, options?: { replace?: boolean }) => void;
   confirm?: (message: string, title?: string) => Promise<boolean>;

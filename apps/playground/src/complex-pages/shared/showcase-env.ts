@@ -524,6 +524,37 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
         await navigator.clipboard.writeText(text);
       },
     },
+    // Host-channels contract (plan 512 L3.5): hash-router query read/write for
+    // filter deep links. setQuery defaults to replace (no history churn).
+    location: {
+      getQuery: () => {
+        const hash = window.location.hash;
+        const queryIndex = hash.indexOf('?');
+        const params = new URLSearchParams(queryIndex >= 0 ? hash.slice(queryIndex + 1) : '');
+        const out: Record<string, string> = {};
+        params.forEach((value, key) => {
+          out[key] = value;
+        });
+        return out;
+      },
+      setQuery: (patch, options) => {
+        const hash = window.location.hash;
+        const queryIndex = hash.indexOf('?');
+        const base = queryIndex >= 0 ? hash.slice(0, queryIndex) : hash;
+        const params = new URLSearchParams(queryIndex >= 0 ? hash.slice(queryIndex + 1) : '');
+        for (const [key, value] of Object.entries(patch)) {
+          if (value === undefined) params.delete(key);
+          else params.set(key, value);
+        }
+        const query = params.toString();
+        const next = query ? `${base}?${query}` : base;
+        if (options?.replace) {
+          window.history.replaceState(null, '', next || window.location.pathname + window.location.search);
+        } else {
+          window.location.hash = next;
+        }
+      },
+    },
     navigate: (input, options) => {
       if (typeof input === 'number') {
         window.history.go(input);

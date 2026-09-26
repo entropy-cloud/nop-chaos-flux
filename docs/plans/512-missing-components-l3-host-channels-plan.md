@@ -153,18 +153,18 @@ Exit Criteria:
 
 ### Phase 6 - L3.5 filter↔URL sync
 
-Status: planned
+Status: completed
 Targets: crud/query-filter 契约面 / host router 集成 / e2e
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 按 Phase 1 裁定落地绑定契约（schema 声明面 + URL 读取通道）+ focused 单测（序列化/恢复/非法参数容忍）
-- [ ] 深链 e2e：带 filter query 打开页面 → 列表按筛选恢复；改筛选 → URL 更新（replace 语义）
+- [x] 绑定契约落地：`renderer-api.ts` `EnvLocation`（getQuery/setQuery，值域 string、undefined 删键）+ `EnvLocation` 复用既有保留字段 **`syncLocation`**（原「Reserved—未实现」声明转为已实现注记——评审 M1 更正 owner 包为 flux-renderers-data）+ `useUrlFilterSync` 助手（data 包单一实现）：挂载恢复一次（写 committed query 态 + 表单句柄 setValues 回显，句柄未注册 50ms×5 重试）、变更恒 replace 回写（首跑仅记基线）、不订阅 popstate、保留键不读写、数组逗号 join/空值删键、多实例冲突先到优先+后到降级警告；decorator hooks 扩 print/clipboardWriteText/locationSetQuery；playground hash router 实现（showcase-env）+ standard-crud `"syncLocation": true` demo；focused 单测 ×6（编码/解码对称/保留键/挂载恢复跳保留键/replace 回写+幂等/冲突降级/无 location 失活，data 1169/1169 绿）；**route-model 修 hash query 剥离**（`#/page?key=v` 此前无法命中页面 id——L3.5 宿主侧前置）
+- [x] 深链 e2e `url-filter-sync.spec.ts` ×2：①`#/complex-pages/standard-crud?keyword=顾北辰` 打开 → 表单输入回显恢复值；②搜索提交 → hash 更新含 `keyword=`（replace 语义）
 
 Exit Criteria:
 
-- [ ] 绑定契约 + 单测在案；深链 e2e 双向断言通过
-- [ ] stripe/airtable ad-hoc URL 物化不被破坏（既有 e2e 复绿）
+- [x] 绑定契约 + 单测在案（data 1169/1169）；深链 e2e 双向断言通过（2/2）
+- [x] stripe/airtable 既有 e2e 复绿（replica 五 spec 68/68 于 Phase 4 验证；route-model query 剥离不改变无 query hash 的解析）+ home-entry/navigation e2e 13/13
 
 ### Phase 7 - 收口验证 + 登记
 

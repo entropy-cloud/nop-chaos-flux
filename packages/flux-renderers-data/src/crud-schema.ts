@@ -39,7 +39,12 @@ export interface CrudQueryFormConfig extends SchemaObject {
    * a no-op for label position control; resolution lives in data-schema-validation.ts.
    */
   mode?: 'manual' | 'auto' | 'normal' | 'horizontal' | 'vertical' | 'inline';
-  /** Reserved — URL state sync is not implemented (design §9); retained for authoring compatibility. */
+  /**
+   * filter↔URL 深链同步（host-channels 契约 §5，plan 512 L3.5 实现）。需要宿主
+   * 提供 `env.location`；缺省关闭。开启时挂载恢复一次、变更恒 replace 回写、
+   * 不订阅 popstate；保留键（page/pageSize/perPage/orderBy/orderDir/tab）
+   * 不读写；同页多实例键冲突时后到者降级关闭并警告。
+   */
   syncLocation?: boolean;
   defaultParams?: Record<string, SchemaValue>;
   parsePrimitiveQuery?:
@@ -262,7 +267,12 @@ export interface CrudSchema extends BaseSchema {
    * 默认 `'ids'`，与 pageField/pageSizeField 相同的参数名映射模式。 */
   selectionField?: string;
   defaultParams?: Record<string, SchemaValue>;
-  /** Reserved — URL state sync is not implemented (design §9); retained for authoring compatibility. */
+  /**
+   * filter↔URL 深链同步（host-channels 契约 §5，plan 512 L3.5 实现）。需要宿主
+   * 提供 `env.location`；缺省关闭。开启时挂载恢复一次、变更恒 replace 回写、
+   * 不订阅 popstate；保留键（page/pageSize/perPage/orderBy/orderDir/tab）
+   * 不读写；同页多实例键冲突时后到者降级关闭并警告。
+   */
   syncLocation?: boolean;
   columnSettings?: CrudColumnSettingsConfig;
   responsive?: CrudResponsiveConfig;

@@ -16,6 +16,7 @@
         }
       },
       "loadAllData": true,
+      "syncLocation": true,
       "selection": {},
       "filterTogglable": { "defaultCollapsed": false },
       "queryForm": {

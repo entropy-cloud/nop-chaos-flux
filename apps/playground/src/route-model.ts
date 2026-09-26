@@ -71,7 +71,10 @@ export function readDiagnosticsEnabled(search: string): boolean {
 }
 
 export function parseRoute(hash: string): RouteSpec {
-  const path = hash.startsWith('#') ? hash.slice(1) : hash;
+  // Query strings in the hash (`#/page?key=value`, filter↔URL sync — plan 512
+  // L3.5) are not part of route identity; strip before segmenting.
+  const rawPath = hash.startsWith('#') ? hash.slice(1) : hash;
+  const path = rawPath.split('?')[0];
   const segments = path.split('/').filter(Boolean);
 
   if (segments.length === 0) {

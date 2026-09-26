@@ -36,6 +36,17 @@ export interface RendererEnvDecoratorHooks {
     options?: Parameters<NonNullable<WebSocketOpener>>[1],
     ctx?: ApiRequestContext,
   ) => ReturnType<NonNullable<WebSocketOpener>>;
+
+  print?: (next: NonNullable<RendererEnv['print']>) => void;
+  clipboardWriteText?: (
+    next: NonNullable<NonNullable<RendererEnv['clipboard']>['writeText']>,
+    text: string,
+  ) => Promise<void>;
+  locationSetQuery?: (
+    next: NonNullable<NonNullable<RendererEnv['location']>['setQuery']>,
+    patch: Parameters<NonNullable<NonNullable<RendererEnv['location']>['setQuery']>>[0],
+    options?: Parameters<NonNullable<NonNullable<RendererEnv['location']>['setQuery']>>[1],
+  ) => void;
 }
 
 export function decorateRendererEnv(
@@ -47,7 +58,10 @@ export function decorateRendererEnv(
     !hooks.notify &&
     !hooks.navigate &&
     !hooks.stream &&
-    !hooks.openSocket
+    !hooks.openSocket &&
+    !hooks.print &&
+    !hooks.clipboardWriteText &&
+    !hooks.locationSetQuery
   ) {
     return env;
   }
@@ -57,6 +71,14 @@ export function decorateRendererEnv(
   const navigateHook = hooks.navigate;
   const streamHook = hooks.stream;
   const openSocketHook = hooks.openSocket;
+  const printHook = hooks.print;
+  const clipboardWriteTextHook = hooks.clipboardWriteText;
+  const locationSetQueryHook = hooks.locationSetQuery;
+  const envPrint = env.print;
+  const envClipboardWriteText = env.clipboard?.writeText.bind(env.clipboard);
+  const envLocationSetQuery = env.location
+    ? env.location.setQuery.bind(env.location)
+    : undefined;
   const envNavigate = env.navigate;
   const envStream = env.stream;
   const envOpenSocket = env.openSocket;
@@ -83,5 +105,22 @@ export function decorateRendererEnv(
       ? (url: string, options?: Parameters<NonNullable<WebSocketOpener>>[1], ctx?: ApiRequestContext) =>
           openSocketHook(envOpenSocket, url, options, ctx)
       : env.openSocket,
+    print: envPrint && printHook
+      ? () => printHook(envPrint)
+      : env.print,
+    clipboard:
+      envClipboardWriteText && clipboardWriteTextHook
+        ? {
+            writeText: (text: string) => clipboardWriteTextHook(envClipboardWriteText, text),
+          }
+        : env.clipboard,
+    location:
+      envLocationSetQuery && locationSetQueryHook
+        ? {
+            getQuery: env.location!.getQuery,
+            setQuery: (patch: Record<string, string | undefined>, options?: { replace?: boolean }) =>
+              locationSetQueryHook(envLocationSetQuery, patch, options),
+          }
+        : env.location,
   };
 }
