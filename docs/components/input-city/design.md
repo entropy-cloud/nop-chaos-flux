@@ -75,7 +75,7 @@
 
 ## 10. 样式与 DOM marker 约定
 
-Widget 自建样式。marker：`nop-input-city-field` 根类 + `data-slot="region-trigger|value|clear|panel|backdrop|columns|column|node|node-name|node-expand|loading|empty|error|retry|wheel|wheel-sheet|wheel-column|wheel-confirm"`；行级 `data-node-id`/`data-node-type`/`data-selected`/`data-disabled` 测试锚点；无 BEM。
+Widget 自建样式。marker：`nop-input-city-field` 根类 + `data-slot="region-trigger|value|clear|panel|backdrop|columns|column|node|node-name|node-expand|load-more|loading|empty|error|retry|wheel|wheel-sheet|wheel-column|wheel-confirm"`；行级 `data-node-id`/`data-node-type`/`data-selected`/`data-disabled` 测试锚点；无 BEM。
 
 ## 11. 实现拆分建议
 

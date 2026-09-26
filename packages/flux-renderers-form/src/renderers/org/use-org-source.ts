@@ -393,7 +393,7 @@ export function useOrgEcho(input: {
       inFlightRef.current.add(value);
     }
     requestOrgPage(
-      { helpers, scope, pageSize: 50, extraParams: extraParamsRef.current },
+      { helpers, scope, pageSize: 1, extraParams: extraParamsRef.current },
       sourceResolve,
       { orgValues: todo },
     )
