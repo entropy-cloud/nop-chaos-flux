@@ -1,6 +1,6 @@
 # 511 Missing Components QA.2 前置消化 — 存量 e2e 红台账 9 项 + QA.1 审计发现（L0 ×3 / L1 ×4 / L2 Major-1+Minor ×4）
 
-> Plan Status: active（2026-09-26 独立 fresh 子 agent plan review 通过，见 Draft Review Record）
+> Plan Status: completed（2026-09-26 closure audit approved；draft review 同日 pass）
 > Last Reviewed: 2026-09-26
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §11 QA.2（pass 标准 = e2e 全量全绿 + 0 新增 check 红）+ §13 L0 行裁决注记（「存量 9 项台账在 plan 502 Closure 红台账节，**QA.2 前专项消化**」）+ `docs/plans/502-missing-components-l0-playground-entry-plan.md` Follow-up（「存量 9 项 e2e 功能回归：QA.2 集成审计前专项消化（blocking QA.2），QA.7 残余债登记册汇总」）+ 三份线出口审计（`docs/audits/missing-components/QA.1-L0-line-exit-audit.md` §7「3 项 Minor 在下一 gate（QA.2）前修复并复审」、`QA.1-L1-line-exit-audit.md`（pass，4 Minor 同规则）、`QA.1-L2-line-exit-audit.md`（fail，1 Major + 4 Minor，修复后随 QA.3 专项复审放行））
 > Related: `docs/plans/502-missing-components-l0-playground-entry-plan.md`（红台账来源）；`docs/context/project-context.md`（watch-only 在册：gantt-perf ×2 + kanban-perf ×1）
@@ -190,17 +190,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 9 项存量失败全部 triage 落裁定表且修复复绿（0 功能失败）
-- [ ] QA.1-L0 Minor-1/2 已落地事实核验记录在案（`58e716164`）、Minor-3 裁定闭环
-- [ ] QA.1-L1 4 Minor 修复/裁定闭环；QA.1-L2 Major-1 修复 + 4 Minor 修复/裁定闭环（L2 线出口 fail → 复审输入就绪）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（产品回归项与 Major-1 不得留 non-blocking）
-- [ ] 受影响 owner docs 已同步（org 协议 / rating / input-color design.md / roadmap 计数注记等，按实际触达面）或写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm test:e2e` 全量 0 功能失败（watch-only 3 项在册豁免）
+- [x] 9 项存量失败全部 triage 落裁定表且修复复绿（0 功能失败）
+- [x] QA.1-L0 Minor-1/2 已落地事实核验记录在案（`58e716164`）、Minor-3 裁定闭环
+- [x] QA.1-L1 4 Minor 修复/裁定闭环；QA.1-L2 Major-1 修复 + 4 Minor 修复/裁定闭环（L2 线出口 fail → 复审输入就绪）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（产品回归项与 Major-1 不得留 non-blocking）
+- [x] 受影响 owner docs 已同步（org 协议 / rating / input-color design.md / roadmap 计数注记等，按实际触达面）或写明 No owner-doc update required
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm test:e2e` 全量 0 功能失败（watch-only 3 项在册豁免）
 
 ## Deferred But Adjudicated
 
@@ -217,13 +217,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: QA.2 前置全部消解：9 项存量 e2e 断言漂移修复复绿（裁定表 9/9，零产品回归）；QA.1 三线 12 项发现全部闭环（L2 Major-1 org children 续页按协议 §5 追平实现 + 8 Minor 落地/裁定）。验证：typecheck/build/lint/check/unit 全绿（74/74 task）；e2e 全量 1562 passed / 2 最终失败均裁定在册 gantt 负载 flake（隔离复跑全绿）。closure audit approved（0B/0M/2m）。QA.2/QA.3 解锁，L2 Major-1 复审输入就绪（随 QA.3 专项复审放行）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 fresh 子 agent（closure auditor，2026-09-26）
+- Evidence: 逐项核对表 A1–F4 全 ✅（语义级抽查 + 实跑复现：9-spec 批量 128/0/1、org 族 e2e 9/9 含 paged-root 续页终止、form 931/931、ui 226/226、scheduling 1033/1033、typecheck 40/40、check exit 0 基线一致）；0 Blocker / 0 Major / 2 Minor（Minor-1 收口动作指引由本收口提交满足——全部 gates 统一勾选 + 五处一次落盘；Minor-2 e2e 记账口径差，无矛盾，后续轮次统一四桶口径）
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- e2e 套件记账统一为四桶口径（passed/failed/skipped/dnr 全计）——随 QA.2 集成审计执行
+- no remaining plan-owned work
