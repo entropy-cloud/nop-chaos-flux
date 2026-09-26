@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { Button, toast, Toaster } from '@nop-chaos/ui';
+import { Button, toast } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -164,7 +164,6 @@ export function M2TouchDemoPage({ onBack }: M2TouchDemoPageProps) {
         />
       </div>
 
-      <Toaster />
     </main>
   );
 }

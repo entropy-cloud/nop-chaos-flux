@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button, Toaster } from '@nop-chaos/ui';
+import { Button } from '@nop-chaos/ui';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { StreamApiRequest } from '@nop-chaos/flux-core';
@@ -58,7 +58,6 @@ export function AiToolsDemoPage({ onBack }: Props) {
 
   return (
     <div className="nop-theme-root min-h-screen flex flex-col">
-      <Toaster />
       <header className="flex items-center gap-3 p-3 border-b bg-background">
         <Button variant="ghost" size="sm" onClick={onBack}>
           ← Back

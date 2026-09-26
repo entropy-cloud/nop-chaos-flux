@@ -312,6 +312,10 @@ test.describe('AntdPro forms — I12/I11/I14/I17/I18 提交链路与校验', () 
 
     await trackEndpointCalls(page);
     await openPage(page, 'antdpro-form-grouped', 'AntD Pro 分组表单');
+    // Host-channels L3.4: the success toast survives hash navigation in the
+    // app-shell Toaster (sonner pauses auto-dismiss while hovered). Wait it
+    // out so it cannot intercept the reset click at the same corner.
+    await expect(page.getByText('入库登记已提交，即将跳转')).toBeHidden({ timeout: 15_000 });
     await page.getByTestId('antdpro-grouped-owner-person').locator('input').fill('临时责任人');
     await page.getByTestId('antdpro-grouped-reset').click();
     await expect(page.getByTestId('antdpro-grouped-owner-person').locator('input')).toHaveValue('');

@@ -559,11 +559,13 @@ test.describe('Linear detail — L11 终态（复制/状态/归档）', () => {
 
     await page.getByTestId('linear-detail-archive').click();
 
-    // toast 在 debounce 1200 的跳转后仍可见（Baseline 6），随后落到列表页
-    await expect(page.getByText('问题已归档')).toBeVisible({ timeout: 10_000 });
+    // Host-channels contract (plan 512 L3.4): the app-shell Toaster survives
+    // route swaps — the navigate lands on the list FIRST and the success
+    // toast must STILL be observable afterwards (debounce hack removed).
     await expect(page.getByTestId('complex-page-title')).toContainText('问题追踪 · 列表视图', {
       timeout: 10_000,
     });
+    await expect(page.getByText('问题已归档')).toBeVisible({ timeout: 10_000 });
     expect((await readEndpointCalls(page)).Linear__archiveIssue).toBe(1);
 
     // 会话库默认过滤 archived：筛选 ENG-105 命中空态

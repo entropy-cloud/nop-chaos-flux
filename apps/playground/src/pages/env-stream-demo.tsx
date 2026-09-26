@@ -1,15 +1,5 @@
 import { useRef, useState } from 'react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Badge,
-  NativeSelect,
-  NativeSelectOption,
-  toast,
-  Toaster,
-} from '@nop-chaos/ui';
+import { Button, Card, CardContent, CardHeader, Badge, NativeSelect, NativeSelectOption, toast } from '@nop-chaos/ui';
 import type { StreamChunkType, StreamProtocol } from '@nop-chaos/flux-core';
 import { createDefaultStream } from '../env/stream-impl.js';
 
@@ -215,7 +205,6 @@ export function EnvStreamDemoPage({ onBack }: Props) {
         <code>env.openSocket</code> wraps the native browser WebSocket via{' '}
         <code>createDefaultOpenSocket</code> (see <code>env/socket-impl.ts</code>).
       </p>
-      <Toaster />
     </main>
   );
 }

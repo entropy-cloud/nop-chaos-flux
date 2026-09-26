@@ -18,6 +18,7 @@ import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial';
 import { registerScadaEditorRenderers } from '@nop-chaos/flux-renderers-industrial/editor';
 import { HomePage } from './pages/home-page';
 import { ThemeSwitcher } from './theme-switcher';
+import { Toaster } from '@nop-chaos/ui';
 import { FluxBasicPage } from './pages/flux-basic-page';
 import { ComponentLabPage } from './component-lab';
 import { ComplexPagesShowcase } from './complex-pages';
@@ -398,6 +399,10 @@ export function App() {
       <Suspense fallback={<PageFallback />}>{renderPage(route, navigate)}</Suspense>
       <ThemeSwitcher />
       <NopDebuggerPanel controller={debuggerController} />
+      {/* Host-channels contract (plan 512 L3.4): the app shell owns the ONLY
+         persistent <Toaster/> — route swaps must not kill in-flight toasts.
+         Page/host components must not mount their own. */}
+      <Toaster />
     </div>
   );
 }

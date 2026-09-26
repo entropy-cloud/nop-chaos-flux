@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Toaster } from '@nop-chaos/ui';
+import { Button } from '@nop-chaos/ui';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import { AiToolCallView, type ChatToolCall, type ChatToolCallUIState } from '@nop-chaos/flux-renderers-ai';
 
@@ -52,7 +52,6 @@ export function AiHitlDemoPage({ onBack }: Props) {
 
   return (
     <div className="nop-theme-root min-h-screen flex flex-col">
-      <Toaster />
       <header className="flex items-center gap-3 p-3 border-b bg-background">
         <Button variant="ghost" size="sm" onClick={onBack}>
           ← Back

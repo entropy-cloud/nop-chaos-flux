@@ -145,8 +145,7 @@
                         },
                         {
                           "action": "navigate",
-                          "args": { "url": "#/complex-pages/linear-issues" },
-                          "control": { "debounce": 1200 }
+                          "args": { "url": "#/complex-pages/linear-issues" }
                         }
                       ]
                     }

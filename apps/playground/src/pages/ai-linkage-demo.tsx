@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { Button, Toaster } from '@nop-chaos/ui';
+import { Button } from '@nop-chaos/ui';
 import {
   AiChatProvider,
   AiMessageListView,
@@ -142,7 +142,6 @@ export function AiLinkageDemoPage({ onBack }: Props) {
 
   return (
     <div className="nop-theme-root min-h-screen flex flex-col">
-      <Toaster />
       <header className="flex items-center gap-3 p-3 border-b bg-background">
         <Button variant="ghost" size="sm" onClick={onBack}>
           ← Back

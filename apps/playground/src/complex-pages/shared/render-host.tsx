@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { cn, Toaster } from '@nop-chaos/ui';
+import { cn } from '@nop-chaos/ui';
 import { createFormulaCompiler, createFormulaRegistry } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -100,7 +100,6 @@ export function ShowcaseSchemaHost({
       </div>
       {children}
       <ConfirmHost />
-      <Toaster />
     </>
   );
 }

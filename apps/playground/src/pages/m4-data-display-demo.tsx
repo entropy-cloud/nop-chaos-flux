@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { Button, toast, Toaster } from '@nop-chaos/ui';
+import { Button, toast } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -250,7 +250,6 @@ export function M4DataDisplayDemoPage({ onBack }: M4DataDisplayDemoPageProps) {
         hint="columns: { sm: 1, md: 2, lg: 3 }。桌面（≥768）：3 列、无 marker；小屏（<768）：1 列、data-responsive='narrow'。缺省 columns 时维持原 sm:grid-cols-2 lg:grid-cols-3。"
       />
 
-      <Toaster />
     </main>
   );
 }

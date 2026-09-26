@@ -1,10 +1,16 @@
 import React from 'react';import { afterEach, describe, expect, it } from 'vitest';import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';import { createShowcaseEnv } from './shared/showcase-env';import { SchemaPage } from './schema-page';afterEach(() => cleanup());/** * Sundial replica pages (see docs/analysis/sundial-ui-reproduction-analysis.md). * These tests verify the schema-driven replicas render their Sundial-style * structures: design tokens via className, collapse sections, circular * checkboxes, badges, KPI cards, charts, dialogs. */
+import { Toaster } from '@nop-chaos/ui';
 
 describe('Sundial replica — settings', () => {
   const { env, db } = createShowcaseEnv();
 
   it('renders settings rail and sync section', async () => {
-    render(<SchemaPage pageId="sundial-settings" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-settings" env={env} />
+        <Toaster />
+      </>
+    );
 
     expect(screen.getByTestId('sundial-settings-rail')).toBeTruthy();
     expect(screen.getByTestId('sundial-settings-sync').textContent).toMatch(/同步/);
@@ -31,7 +37,12 @@ describe('Sundial replica — settings', () => {
   });
 
   it('wires settings rail back and save with toast feedback (plan 457 C9/C16)', async () => {
-    render(<SchemaPage pageId="sundial-settings" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-settings" env={env} />
+        <Toaster />
+      </>
+    );
 
     // C16: back row (flex onClick)
     fireEvent.click(screen.getByTestId('sundial-settings-back'));
@@ -45,7 +56,12 @@ describe('Sundial replica — settings', () => {
   });
 
   it('switches the settings rail selection with toast feedback (plan 457 C8)', async () => {
-    render(<SchemaPage pageId="sundial-settings" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-settings" env={env} />
+        <Toaster />
+      </>
+    );
 
     // Initial rail selection: sync (from PAGE_DATA)
     expect(screen.getByTestId('sundial-settings-sync').getAttribute('data-selected')).toBe('true');
@@ -59,7 +75,12 @@ describe('Sundial replica — settings', () => {
   });
 
   it('switches mode cards and links the connection info area (plan 457 C7)', async () => {
-    render(<SchemaPage pageId="sundial-settings" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-settings" env={env} />
+        <Toaster />
+      </>
+    );
 
     // Initial mode: local → connection info hidden
     expect(screen.getByTestId('sundial-mode-local').getAttribute('data-selected')).toBe('true');
@@ -80,7 +101,12 @@ describe('Sundial replica — settings', () => {
   });
 
   it('switches the main panel between 5 sections (plan 460 P6)', async () => {
-    render(<SchemaPage pageId="sundial-settings" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-settings" env={env} />
+        <Toaster />
+      </>
+    );
 
     expect(screen.getByTestId('sundial-panel-sync')).toBeTruthy();
     expect(screen.queryByTestId('sundial-panel-lists')).toBeNull();
@@ -123,7 +149,12 @@ describe('Sundial replica — settings', () => {
   });
 
   it('save button writes the chosen mode to the mock backend (plan 460 P7)', async () => {
-    render(<SchemaPage pageId="sundial-settings" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-settings" env={env} />
+        <Toaster />
+      </>
+    );
 
     // choose the supabase mode card, then save → backend settings row updated
     fireEvent.click(screen.getByTestId('sundial-mode-supabase'));
@@ -140,7 +171,12 @@ describe('Sundial replica — new todo dialog', () => {
   const { env } = createShowcaseEnv();
 
   it('opens the 360px styled dialog with form fields', async () => {
-    render(<SchemaPage pageId="sundial-todo-dialog" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-todo-dialog" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-open-todo-dialog'));
     await waitFor(() => {
       expect(screen.getByText('新建待办')).toBeTruthy();
@@ -154,7 +190,12 @@ describe('Sundial replica — new todo dialog', () => {
   });
 
   it('wires todo dialog field rows with real pickers via openDialog + owner-scope writeback (plan 460 P1-P3)', async () => {
-    render(<SchemaPage pageId="sundial-todo-dialog" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-todo-dialog" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-open-todo-dialog'));
     await waitFor(() => {
       expect(screen.getByText('新建待办')).toBeTruthy();
@@ -213,7 +254,12 @@ describe('Sundial replica — new todo dialog', () => {
   });
 
   it('reopens the todo dialog after cancel (closeSurface) and after X (plan 460 B1)', async () => {
-    render(<SchemaPage pageId="sundial-todo-dialog" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-todo-dialog" env={env} />
+        <Toaster />
+      </>
+    );
 
     // cancel → reopen
     fireEvent.click(screen.getByTestId('sundial-open-todo-dialog'));
@@ -235,7 +281,12 @@ describe('Sundial replica — workbench task detail dialog (plan 460 Phase 3/P4/
   const { env, db } = createShowcaseEnv();
 
   it('settings icon navigates from workbench to the settings page (plan 460 P11)', async () => {
-    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-workbench" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-settings-icon'));
     await waitFor(() => {
       expect(window.location.hash).toBe('#/complex-pages/sundial-settings');
@@ -251,7 +302,12 @@ describe('Sundial replica — workbench task detail dialog (plan 460 Phase 3/P4/
   };
 
   it('field rows open nested pickers and write values back (plan 460 Phase 3)', async () => {
-    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-workbench" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-task-today-1'));
     await waitFor(() => {
       expect(screen.getByTestId('sundial-task-detail-dialog')).toBeTruthy();
@@ -311,7 +367,12 @@ describe('Sundial replica — workbench task detail dialog (plan 460 Phase 3/P4/
   });
 
   it('move-to-list writes the mock backend and closes the dialog (plan 460 P9)', async () => {
-    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-workbench" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-task-today-1'));
     await waitFor(() => {
       expect(screen.getByTestId('sundial-task-detail-dialog')).toBeTruthy();
@@ -333,7 +394,12 @@ describe('Sundial replica — workbench task detail dialog (plan 460 Phase 3/P4/
   });
 
   it('move-to-trash writes the mock backend and closes the dialog (plan 460 P9)', async () => {
-    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-workbench" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-task-nodate-1'));
     await waitFor(() => {
       expect(screen.getByTestId('sundial-task-detail-dialog')).toBeTruthy();

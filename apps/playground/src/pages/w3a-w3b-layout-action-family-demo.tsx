@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { Button, Card, CardContent, CardHeader, CardTitle, Toaster, toast } from '@nop-chaos/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, toast } from '@nop-chaos/ui';
 import {
   createSchemaRenderer,
   createDefaultRegistry,
@@ -216,7 +216,6 @@ export function W3aW3bLayoutActionFamilyDemoPage({ onBack }: W3aW3bLayoutActionF
         </Card>
       </div>
 
-      <Toaster />
     </main>
   );
 }

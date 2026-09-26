@@ -36,6 +36,7 @@ The debugger is not the default primary surface. It is a launcher-first floating
 3. URLs should stably identify the current page or lab selection.
 4. Scenario pages should be usable for both manual inspection and automated verification.
 5. The debugger should default to launcher/minimized form rather than occupying the main work area.
+6. Toast viewport ownership (host-channels contract, plan 512 L3.4): the app shell (`App.tsx`) mounts the ONLY `<Toaster />`; page and host components must not mount their own (duplicate viewports render every toast twice). Because the shell viewport survives route swaps, success toasts remain observable after navigate actions — schemas must not re-introduce `control:{debounce}` navigate-delay hacks to keep toasts visible.
 
 ## Page Model
 

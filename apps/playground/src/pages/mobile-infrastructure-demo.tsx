@@ -1,21 +1,5 @@
 import { useState } from 'react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  toast,
-  Toaster,
-} from '@nop-chaos/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Popover, PopoverContent, PopoverTrigger, toast } from '@nop-chaos/ui';
 
 interface MobileInfrastructureDemoPageProps {
   onBack: () => void;
@@ -173,7 +157,6 @@ export function MobileInfrastructureDemoPage({ onBack }: MobileInfrastructureDem
         </Card>
       </div>
 
-      <Toaster />
     </main>
   );
 }

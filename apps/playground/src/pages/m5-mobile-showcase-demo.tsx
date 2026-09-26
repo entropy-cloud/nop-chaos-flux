@@ -1,4 +1,4 @@
-import { Button, Toaster } from '@nop-chaos/ui';
+import { Button } from '@nop-chaos/ui';
 import {
   SchemaRenderer,
   formulaCompiler,
@@ -101,7 +101,6 @@ export function M5MobileShowcaseDemoPage({ onBack }: M5MobileShowcaseDemoPagePro
         </div>
       </div>
 
-      <Toaster />
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Toaster } from '@nop-chaos/ui';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { createShowcaseEnv } from './shared/showcase-env';
@@ -14,7 +15,12 @@ describe('Sundial replica — detail inspector', () => {
   const { env, db } = createShowcaseEnv();
 
   it('renders status row, field rows, subtasks and footer buttons', async () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
 
     expect(screen.getByTestId('sundial-detail-panel')).toBeTruthy();
     expect(screen.getByTestId('sundial-detail-status-row').textContent).toMatch(/待办/);
@@ -31,7 +37,12 @@ describe('Sundial replica — detail inspector', () => {
   });
 
   it('opens the date picker with a real calendar, month navigation, and confirm writeback (plan 460 B6)', async () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-open-date-dialog'));
 
     // Real input-date calendar popover with year/month navigation
@@ -82,7 +93,12 @@ describe('Sundial replica — detail inspector', () => {
   });
 
   it('renders the real input-date popover picker as a field alternative', () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
     const demo = screen.getByTestId('sundial-input-date-demo');
     expect(demo.textContent).toMatch(/input-date/);
     // input-date renders a trigger button + popover month-grid calendar
@@ -94,7 +110,12 @@ describe('Sundial replica — detail inspector', () => {
   });
 
   it('opens the recurrence and list pickers with radio options, cancel and confirm writeback (plan 460 B5/B6)', async () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
     // recur: page field row starts at 每周 (PAGE_DATA)
     expect(screen.getByTestId('sundial-detail-row-recurrence').textContent).toMatch(/每周/);
 
@@ -156,7 +177,12 @@ describe('Sundial replica — detail inspector', () => {
   });
 
   it('recurrence picker shows current value weekly preselected (plan 460 B6)', async () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
     // open recur picker — radios must be present (waitFor ensures the
     // openDialog + form render path completes before assertions)
     fireEvent.click(screen.getByTestId('sundial-open-recurrence-dialog'));
@@ -172,7 +198,12 @@ describe('Sundial replica — detail inspector', () => {
   });
 
   it('wires button/icon actions with toast feedback (plan 457 C4/C5/C13/C15/C6)', async () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
 
     // C15 + plan 460 P10: status row close navigates back to workbench
     fireEvent.click(screen.getByTestId('sundial-detail-close'));
@@ -233,7 +264,12 @@ describe('Sundial replica — detail inspector', () => {
   });
 
   it('subtask dialog delete writes the mock backend and closes (plan 460 P8)', async () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-subtask-open-2'));
     await waitFor(() => {
       expect(screen.getByTestId('sundial-subtask-dialog')).toBeTruthy();
@@ -251,7 +287,12 @@ describe('Sundial replica — detail inspector', () => {
   });
 
   it('clears the datetime via the picker clear button (plan 457 C13 + plan 460 B6)', async () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-open-date-dialog'));
     await waitFor(() => {
       expect(screen.getByTestId('sundial-datetime-input')).toBeTruthy();
@@ -278,7 +319,12 @@ describe('Sundial replica — detail inspector', () => {
   });
 
   it('opens dialogs from detail field rows and toggles the flag (plan 457 C3)', async () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
 
     // date row pick opens dialog with real calendar
     fireEvent.click(screen.getByTestId('sundial-detail-row-date-pick'));
@@ -321,7 +367,12 @@ describe('Sundial replica — detail inspector', () => {
     });
   });
   it('picks a calendar day, opens all pickers with cancel/confirm and writes back to the page field row (plan 460 B6)', async () => {
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
 
     // date picker: real input-date calendar → open popover → click day 20
     fireEvent.click(screen.getByTestId('sundial-open-date-dialog'));

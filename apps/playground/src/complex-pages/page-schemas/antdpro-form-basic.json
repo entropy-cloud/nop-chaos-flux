@@ -57,9 +57,6 @@
             "action": "navigate",
             "args": {
               "url": "#/complex-pages/antdpro-result"
-            },
-            "control": {
-              "debounce": 1200
             }
           },
           "body": [

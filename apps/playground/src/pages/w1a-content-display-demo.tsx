@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { Button, Card, CardContent, CardHeader, CardTitle, Toaster, toast } from '@nop-chaos/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, toast } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -185,7 +185,6 @@ export function W1aContentDisplayDemoPage({ onBack }: W1aContentDisplayDemoPageP
         </Card>
       </div>
 
-      <Toaster />
     </main>
   );
 }

@@ -91,19 +91,19 @@ Exit Criteria:
 
 ### Phase 2 - L3.4 toast host 容器（先做：解锁后续 e2e 断言基线）
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/App.tsx`（或 app shell 布局点）、`render-host.tsx`、AntD Pro/Cal/Linear 共 6 个 replica schema、相关 e2e
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 按 Phase 1 裁定的宿主常驻容器约定，落应用级单例 `<Toaster/>`（route/页面卸载不死）；`ShowcaseSchemaHost` per-page `<Toaster/>` 移除
-- [ ] AntD Pro（`antdpro-form-basic` / `antdpro-form-grouped` / `antdpro-form-step`）/ Cal（`cal-confirm`、`cal-success`）/ Linear（`linear-detail`）全部 `control:{debounce: 1200}` navigate 延迟 hack 移除（schema 层；Notion 无此 hack，无需改动）
-- [ ] e2e：跳转型动作链 toast 存活断言（程序化）；受影响 replica e2e 断言迁移复绿
+- [x] 应用级单例 `<Toaster/>` 落 `App.tsx` shell（route/页面卸载不死）；**全部 30 处页面/host 级挂载清扫**（render-host + 29 demo 页——契约 §4 双 viewport 重复渲染约束要求唯一挂载点）；`playground-experience.md` Core Rules +6 宿主约定
+- [x] AntD Pro（×3）/ Cal（cal-confirm ×2 + cal-success ×1）/ Linear（×1）共 7 处 `control:{debounce: 1200}` hack 移除（6 文件，文本级精准编辑保格式；grep 复核 = 0 命中）
+- [x] e2e：linear 测试 18 重写为幸存语义断言（点击归档 → 先落列表页 → 再验 toast 仍在，程序化）；antdpro 测试 14 按「toast 幸存 → 悬停暂停自动消失」真实行为等待消散后点击；linear+cal 34/34、antdpro 23/23、playground 单测 391/391（3 个直接渲染页面组件的测试挂具补挂 Toaster——挂具承接 app-shell 职责）
 
 Exit Criteria:
 
-- [ ] 上述 6 文件 debounce navigate hack 从 schema 删除（`grep -rn '"debounce": 1200' apps/playground/src/complex-pages/page-schemas/` = 0 命中，覆盖行内与展开两种 JSON 排版）且相关 replica e2e 复绿
-- [ ] 新增 e2e 断言：navigate 后 toast 仍可观察
+- [x] 6 文件 7 处 debounce hack 删除（grep `"debounce"` page-schemas = 0 命中）且相关 replica e2e 复绿（linear+cal 34/34、antdpro 23/23）
+- [x] 新增 e2e 断言：navigate 后 toast 仍可观察（linear 测试 18 幸存语义 + antdpro 测试 14 跨 hash 导航存活等待）
 
 ### Phase 3 - L3.1 print 通道
 

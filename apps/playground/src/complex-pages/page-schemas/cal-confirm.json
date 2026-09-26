@@ -161,13 +161,11 @@
                   },
                   "onSubmitSuccess": {
                     "action": "navigate",
-                    "args": { "url": "#/complex-pages/cal-success" },
-                    "control": { "debounce": 1200 }
+                    "args": { "url": "#/complex-pages/cal-success" }
                   },
                   "onSubmitError": {
                     "action": "navigate",
-                    "args": { "url": "#/complex-pages/cal-booking" },
-                    "control": { "debounce": 1200 }
+                    "args": { "url": "#/complex-pages/cal-booking" }
                   },
                   "body": [
                     {

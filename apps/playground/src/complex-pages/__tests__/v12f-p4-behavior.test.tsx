@@ -1,4 +1,5 @@
 import React from 'react';
+import { Toaster } from '@nop-chaos/ui';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { createShowcaseEnv } from '../shared/showcase-env';
@@ -13,7 +14,12 @@ afterEach(() => cleanup());
 describe('V12f P4 behavior — workbench search consumption (G7-R2-视角11-07)', () => {
   it('typing in the sidebar search filters the board task rows', async () => {
     const { env } = createShowcaseEnv();
-    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-workbench" env={env} />
+        <Toaster />
+      </>
+    );
 
     // board rows come from the todos source (⑦ residual: rows follow the DB)
     await screen.findByTestId('sundial-task-today-1');
@@ -35,7 +41,12 @@ describe('V12f P4 behavior — workbench search consumption (G7-R2-视角11-07)'
 
   it('sidebar and pressure-card counts reflect the seeded task DB', async () => {
     const { env } = createShowcaseEnv();
-    render(<SchemaPage pageId="sundial-workbench" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-workbench" env={env} />
+        <Toaster />
+      </>
+    );
     // 工作台 nav count = non-trashed total (9 of 10 seeded, 1 trashed)
     await waitFor(() => {
       expect(screen.getByTestId('sundial-nav-workbench').textContent).toMatch(/工作台9/);
@@ -54,7 +65,12 @@ describe('V12f P4 behavior — workbench search consumption (G7-R2-视角11-07)'
 describe('V12f P4 behavior — detail subtask add (G7-视角11-14)', () => {
   it('adding a subtask posts through the mock channel and lands in the backend', async () => {
     const { env, db } = createShowcaseEnv();
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
 
     const input = document.getElementById('subtaskAddTitle-control') as HTMLInputElement | null;
     expect(input).toBeTruthy();
@@ -73,7 +89,12 @@ describe('V12f P4 behavior — detail subtask add (G7-视角11-14)', () => {
 
   it('subtask dialog shows the row-matching title (G7-R2-视角11-04)', async () => {
     const { env } = createShowcaseEnv();
-    render(<SchemaPage pageId="sundial-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-detail" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-subtask-open-2'));
     await waitFor(() => {
       expect(screen.getByTestId('sundial-subtask-dialog')).toBeTruthy();
@@ -85,7 +106,12 @@ describe('V12f P4 behavior — detail subtask add (G7-视角11-14)', () => {
 describe('V12f P4 behavior — settings sync mode linkage (G7-视角11-12, G7-视角6-11)', () => {
   it('status card flips from 本地模式 to Supabase when the mode card is clicked', async () => {
     const { env } = createShowcaseEnv();
-    render(<SchemaPage pageId="sundial-settings" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-settings" env={env} />
+        <Toaster />
+      </>
+    );
 
     await waitFor(() => {
       expect(screen.getByTestId('sundial-status-card').textContent).toMatch(/本地模式/);
@@ -100,7 +126,12 @@ describe('V12f P4 behavior — settings sync mode linkage (G7-视角11-12, G7-�
   it('anon key input is a password field with a functional reveal toggle (G7-视角6-11)', async () => {
     const { env } = createShowcaseEnv();
     // supabase mode renders the connection info block
-    render(<SchemaPage pageId="sundial-settings" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="sundial-settings" env={env} />
+        <Toaster />
+      </>
+    );
     fireEvent.click(screen.getByTestId('sundial-mode-supabase'));
     await waitFor(() => {
       expect(screen.getByTestId('sundial-connection-info')).toBeTruthy();
@@ -115,7 +146,12 @@ describe('V12f P4 behavior — settings sync mode linkage (G7-视角11-12, G7-�
 describe('V12f P4 behavior — master-detail add gating (G7-R2-视角11-03)', () => {
   it('新增明细 is disabled without an order and enabled after selecting one', async () => {
     const { env } = createShowcaseEnv();
-    render(<SchemaPage pageId="master-detail" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="master-detail" env={env} />
+        <Toaster />
+      </>
+    );
     await screen.findByText(/NO-20240701\b/);
 
     const addBtn = screen.getByTestId('btn-add-item') as HTMLButtonElement;
@@ -131,7 +167,12 @@ describe('V12f P4 behavior — master-detail add gating (G7-R2-视角11-03)', ()
 describe('V12f P4 behavior — complex-form save status flag (G7-R4-视角3-01)', () => {
   it('shows 已保存 only while values match the last save, flips back on edits', async () => {
     const { env } = createShowcaseEnv();
-    render(<SchemaPage pageId="complex-form" env={env} />);
+    render(
+      <>
+        <SchemaPage pageId="complex-form" env={env} />
+        <Toaster />
+      </>
+    );
 
     const report = () => screen.getByTestId('complex-form-report').textContent ?? '';
     expect(report()).toMatch(/未保存/);
