@@ -1,0 +1,228 @@
+# 512 Missing Components L3 — Host channels（print / clipboard / download / toast / filter↔URL）
+
+> Plan Status: draft
+> Last Reviewed: 2026-09-26
+> Source: `docs/backlog/missing-components-and-designer-roadmap.md` §6（L3 全表 + §1 交付铁律）+ `docs/analysis/visual-quality/2026-09-24-page-archetype-coverage-audit.md` §2（C6 Blocked 行）/ §3.2（N2 五行）/ §10.2 规则 3（「Reuse the action vocabulary」）；`docs/architecture/renderer-env.md`（必读已过：§2 字段全集、§4 INV-2 流程、§6 使用规则）
+> Related: `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`（env 扩充先例）；`docs/analysis/ui-review/C2-capability-gaps.md`（toast debounce / copy-link 语义模拟 / D1 池素材行）
+
+## Purpose
+
+收口 roadmap L3 线五个 host channel 工作项：C6 订单打印解锁（L3.1）、剪贴板真实写入（L3.2）、声明式下载 action（L3.3）、host 级常驻 toast 容器（L3.4，治理三 replica 的 debounce hack）、filter↔URL 深链（L3.5）。每项先出通道契约设计（含 capability check 与 SSR/test 降级路径）并过 INV 审计，再实现。
+
+**单计划边界依据**：五通道共享同一 design gate（Phase 1 契约裁定）、同一 owner doc 面（`renderer-env.md` / `action-scope-and-imports.md`）与同一宿主验证面（playground host + e2e），符合 plan guide Rules 22/24/26 合并优先；roadmap §13 对 L3 为单行登记（L3.1–L3.5），先例见 plan 503（L1 三 work item 单计划收口）。roadmap §14 Rule 4「每 work item 一个 plan」在本线按 §2「每线内工作项 = 一个 execution plan 的合理范围」与 503 先例读作「每线一 plan、线内 Phase 对齐 work item」。
+
+## Current Baseline
+
+2026-09-26 live repo 核对（HEAD `63b371fd8` 后续随 511 推进更新）：
+
+- **env 现状**（`packages/flux-core/src/types/renderer-api.ts:177` `RendererEnv` 接口，已实施字段）：`fetcher / stream / openSocket / notify / confirm / alert / navigate / loadPage / loadDict / hasRole / importLoader / resolveImportUrl / functions / filters / locale`。**无 print、无 clipboard**（archetype 审计实证「verified absent from renderer-api.ts」）。
+- **action 词汇现状**（`packages/flux-action-core/src/action-dispatcher/built-in-actions.ts`）：built-in 集合 = setValue/setValues/ajax/openDialog/openDrawer/closeDrawer/closeDialog/closeSurface/showToast/confirm/alert/refreshTable/refreshSource/refreshNearest/pick/submit/submitForm/navigate。**无 copy、无 download、无 print**。archetype 审计 §10.2 规则 3（「Reuse the action vocabulary」）裁定：通道优先复用 action 词汇，禁止 per-renderer addEventListener 岛。
+- **L3.1 print 现场**：AntD Pro 详情页打印按钮静态保留（`docs/analysis/ui-review/C2-capability-gaps.md:109`）；print-designer 线（flux-print-\*，web-print-roadmap P0–P4 closed）是**模板设计/打印模板渲染**轨道，与运行时页面 body 的 `window.print` 型宿主通道是两回事（archetype §2 D5 行已区分）。C6 archetype 因此 Blocked。
+- **L3.2 clipboard 现场**：三处 copy-link（Cal `__shareLink` / Linear `__copyLink` / Notion `__copyLink`）均为「零副作用 get 端点 + `messages.success` 已复制」语义模拟，**实际剪贴板写入未做**（C2 :137/:172/:201）。
+- **L3.3 download 现场**：`responseType: 'blob'` 已在 schema 契约（`flux-core/src/types/schema-base-types.ts:39/:57`）；`downloadBlob` 工具已存在（`flux-renderers-scheduling/src/kanban/utils/kanban-export.ts`）；用户导出链现为「后端生成 CSV dataURL → 返回 url 字段」语义模拟（showcase-env `/r/User__export`），无声明式 action。
+- **L3.4 toast 现场**：`ShowcaseSchemaHost`（`apps/playground/src/complex-pages/shared/render-host.tsx:103`）**每 host 实例挂一个 `<Toaster/>`**；跳转型动作链（AntD Pro/Cal/Linear 提交-跳转；Notion 无此 hack）中 host 卸载致 toast 存活 <100ms，三 replica schema 以 `control: {debounce: 1200}` 延迟 navigate 补丁保 toast 可观察（C2 :108/:142/:181，回写③④⑤；live：antdpro-form-basic/grouped/step + cal-confirm/cal-success + linear-detail 共 6 文件 7 处）。
+- **L3.5 filter↔URL 现场**：runtime 无筛选状态 ↔ URL 绑定；stripe/airtable 复刻有 P6b/P7b ad-hoc URL 物化（C2 :266 候选 1 / :269 P7b 池汇总⑤，回写⑧）；A4/C5 archetype 深链缺失。`env.navigate` 已存在但**无 URL 读取通道**（deep-link 恢复需要读 URL 的能力面，INV-2 需裁定）。
+- INV-2 A/B/C 档流程与 C 档 5 条标准见 `renderer-env.md` §4；`stream/openSocket`（2026-07-23）为 C 档先例：接口进 env（optional）+ host 默认实现 + decorator hooks + capability check。
+- 测试基建：playwright e2e + per-package vitest；`tests/e2e/` 有 antdpro/cal/linear/notion replica 交互 spec 在案（toast/copy-link 语义模拟断言的现役位置）。
+
+## Goals
+
+- 一份通道契约设计文档落盘 `docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md`：五通道逐项 INV-2 裁定（A 组合 / B importLoader / C 扩 env）+ 接口形状 + capability check + SSR/test 降级路径 + 与既有词汇（showToast/navigate/ajax）的边界。过独立 review 后回写 `renderer-env.md`（含 §4.3 历史扩充记录）。
+- L3.1：`env.print?`（或 action 裁定等效面）+ playground host 实现 + AntD Pro 订单详情打印按钮接线 + e2e（打印通道被调用的程序化断言）。
+- L3.2：剪贴板通道（action `copy` 或 env 裁定面）+ host 实现（`navigator.clipboard` 代理 + 降级路径）+ 三处 copy-link 复刻从「语义模拟」升级为真实写入（保留 toast 反馈）+ e2e。
+- L3.3：声明式 `download` action（fetcher `responseType:'blob'` + downloadBlob 组合；export 本体仍是后端职责）+ e2e。
+- L3.4：playground 宿主**应用级常驻 Toaster**（route 卸载不死）+ 三 replica（AntD Pro/Cal/Linear）`control:{debounce}` navigate 延迟 hack 移除（schema 层）+ 相关 replica e2e 断言迁移 + e2e（跳转后 toast 仍可观察的程序化断言）。
+- L3.5：filter↔URL 绑定契约（crud/query-filter 状态 ↔ URL query，host router 集成；URL 读取能力面按 INV-2 裁定）+ 深链恢复 e2e。
+- 全量验证：typecheck/build/lint/test/check + e2e 全量零新增红 + dev log + roadmap §13 回写。
+
+## Non-Goals
+
+- 不做后端打印服务/静默打印（web-print 轨道已 closed，与本线分立）。
+- 不建新 renderer type（五项均为通道/动作/宿主能力，无 matrix flip）。
+- 不改 `showToast`/`navigate`/`ajax` 既有语义（新通道只做增量）。
+- L3.5 不重写 stripe/airtable 已有 ad-hoc URL 物化为新契约（登记 follow-up，归 L4.9 协调窗口按 §12 错峰规则处理）。
+
+## Scope
+
+### In Scope
+
+- `flux-core`（env 类型 + built-in action 定义，若 INV-2 裁定扩 env/action）、`flux-action-core`（新 built-in action runner）、`flux-react`/`flux-runtime`（action adapter 接线，如需）、`apps/playground`（host 实现 + demo 接线 + schema hack 清理）、`tests/e2e/`。
+- 契约设计文档 + `renderer-env.md` / `action-scope-and-imports.md` / `playground-experience.md` 回写。
+
+### Out Of Scope
+
+- renderer 组件新增；SSR host 实现（降级路径写入契约文档即可）；mobile 包通道变体。
+
+## Failure Paths
+
+| 可测场景编号                 | 触发                                                                         | 行为                                                                 | 可重试 | 用户可见表现                     |
+| ---------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------ | -------------------------------- |
+| capability-missing-print     | host 未提供 `env.print` 即派发 print action                                  | action 返回 `ok:false` + error（i18n 文案键），不抛未捕获异常        | 是     | toast 提示「当前环境不支持打印」 |
+| print-invoke-fail            | host 已提供 print 通道但调用失败（打印 iframe 被拦截 / `window.print` 异常） | 返回 `ok:false` + error（i18n 文案键）+ notify error，不抛未捕获异常 | 是     | 错误 toast                       |
+| capability-missing-clipboard | host 未提供剪贴板通道 / `navigator.clipboard` 权限拒绝                       | 通道降级：execCommand 回退或返回失败 + 现行 toast 反馈保留           | 是     | 复制失败提示（非静默假成功）     |
+| download-fetch-fail          | download action 的 blob 请求非 2xx                                           | 走 ajax 既有 envelope 错误模型 + notify error                        | 是     | 错误 toast                       |
+| url-sync-invalid-param       | URL query 含非法/未知 filter 参数                                            | 容忍解析：忽略非法键，合法键恢复；不崩页                             | 是     | 页面以可恢复状态打开             |
+| toast-container-double-mount | 宿主重复挂载常驻 Toaster                                                     | 单例约定（app shell 唯一）；per-page 移除                            | 否     | 无重复 toast                     |
+
+## Test Strategy
+
+档位选择（三选一）：`必须自动化` / `建议有测` / `不适用：理由`
+
+本档选择：**必须自动化**——通道契约属公共 API 面（env/action 词汇），roadmap §1 铁律 4（focused 单测 + e2e 先于或随实现落地）。
+
+执行约定：各 Phase 的 focused 单测 / e2e **先于或随实现落地**（roadmap §10 对代码线 plan 的预声明），Phase 内 bullet 顺序不构成「实现后补测」口径；先红后绿为先例姿势（plan 503/505 先例）。
+
+## Execution Plan
+
+### Phase 1 - 五通道契约设计 + INV-2 裁定（design gate）
+
+Status: planned
+Targets: `docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md`、`docs/architecture/renderer-env.md`
+
+- Item Types: `Decision`
+
+- [ ] 契约文档落盘：每通道（print/clipboard/download/toast/filter↔URL）——场景、A/B/C 档裁定与理由、接口形状（TS 签名）、capability check 约定、SSR/test 降级路径、与既有词汇边界
+- [ ] 独立 review 共识（fresh 子 agent，对齐 stream/openSocket 先例标准）；通过后回写 `renderer-env.md`（§2 全集、§5 host 责任表、§4.3 历史记录按裁定涉及面）与 `action-scope-and-imports.md`（新增 built-in action 词汇，如裁定走 action）
+
+Exit Criteria:
+
+- [ ] 契约文档含五通道明确裁定（无「待定」残留）+ review 记录在案
+- [ ] `renderer-env.md` / `action-scope-and-imports.md` 回写与裁定一致（grep 复核）
+
+### Phase 2 - L3.4 toast host 容器（先做：解锁后续 e2e 断言基线）
+
+Status: planned
+Targets: `apps/playground/src/App.tsx`（或 app shell 布局点）、`render-host.tsx`、AntD Pro/Cal/Linear 共 6 个 replica schema、相关 e2e
+
+- Item Types: `Fix`、`Proof`
+
+- [ ] 按 Phase 1 裁定的宿主常驻容器约定，落应用级单例 `<Toaster/>`（route/页面卸载不死）；`ShowcaseSchemaHost` per-page `<Toaster/>` 移除
+- [ ] AntD Pro（`antdpro-form-basic` / `antdpro-form-grouped` / `antdpro-form-step`）/ Cal（`cal-confirm`、`cal-success`）/ Linear（`linear-detail`）全部 `control:{debounce: 1200}` navigate 延迟 hack 移除（schema 层；Notion 无此 hack，无需改动）
+- [ ] e2e：跳转型动作链 toast 存活断言（程序化）；受影响 replica e2e 断言迁移复绿
+
+Exit Criteria:
+
+- [ ] 上述 6 文件 debounce navigate hack 从 schema 删除（`grep -rn '"debounce": 1200' apps/playground/src/complex-pages/page-schemas/` = 0 命中，覆盖行内与展开两种 JSON 排版）且相关 replica e2e 复绿
+- [ ] 新增 e2e 断言：navigate 后 toast 仍可观察
+
+### Phase 3 - L3.1 print 通道
+
+Status: planned
+Targets: env 类型 / host 实现 / AntD Pro 详情页 schema / e2e
+
+- Item Types: `Fix`、`Proof`
+
+- [ ] 按 Phase 1 裁定落地 print 通道（env 字段或 action）+ playground host 实现（iframe 隔离打印或 `window.print` 代理，随裁定）+ capability check 降级（降级/错误文案 i18n 键 zh-CN/en-US 落 `flux-i18n`）
+- [ ] AntD Pro 订单详情打印按钮从静态改为派发通道 + e2e 程序化断言（host print 实现被调用——spy/标志面，非截图）
+
+Exit Criteria:
+
+- [ ] print 通道 + host 实现落地，focused 单测在案（capability missing 降级路径）
+- [ ] e2e 断言通过（C6 打印链路可观察）
+
+### Phase 4 - L3.2 clipboard 通道
+
+Status: planned
+Targets: action 词汇（或 env，随裁定）/ host 实现 / 三 replica schema / e2e
+
+- Item Types: `Fix`、`Proof`
+
+- [ ] 按 Phase 1 裁定落地剪贴板通道（copy 内置 action 或 env 面，随裁定 + host 实现；`navigator.clipboard` 不可用降级路径；失败文案 i18n 键 zh-CN/en-US）+ focused 单测
+- [ ] Cal/Linear/Notion 三处 copy-link 从语义模拟升级为真实写入（mock 端点保留，toast 反馈成对保留）+ e2e（剪贴板内容程序化断言——`context.grantPermissions(['clipboard-read','clipboard-write'])`）
+
+Exit Criteria:
+
+- [ ] 三处复刻真实写入剪贴板且 e2e 断言读到写入内容
+- [ ] 降级路径 focused 单测在案
+
+### Phase 5 - L3.3 download action
+
+Status: planned
+Targets: `flux-action-core`（download runner）/ `flux-core`（action 定义）/ showcase 导出链 / e2e
+
+- Item Types: `Fix`、`Proof`
+
+- [ ] 按 Phase 1 裁定（roadmap §6 L3.3 已预裁定 action 词汇面）落地 `download` 内置 action：args（api/url、filename、fallbackUrl 三态）→ fetcher blob → downloadBlob 触发保存；错误走 envelope + notify（错误文案 i18n 键 zh-CN/en-US）
+- [ ] showcase 用户导出链改声明式 download action（后端 CSV 生成职责不变）+ e2e（下载事件程序化断言）
+- [ ] focused 单测（成功/非 2xx/capability 面）
+
+Exit Criteria:
+
+- [ ] download action 落地 + focused 单测全绿
+- [ ] e2e 下载断言通过（playwright download 事件）
+
+### Phase 6 - L3.5 filter↔URL sync
+
+Status: planned
+Targets: crud/query-filter 契约面 / host router 集成 / e2e
+
+- Item Types: `Fix`、`Proof`
+
+- [ ] 按 Phase 1 裁定落地绑定契约（schema 声明面 + URL 读取通道）+ focused 单测（序列化/恢复/非法参数容忍）
+- [ ] 深链 e2e：带 filter query 打开页面 → 列表按筛选恢复；改筛选 → URL 更新（replace 语义）
+
+Exit Criteria:
+
+- [ ] 绑定契约 + 单测在案；深链 e2e 双向断言通过
+- [ ] stripe/airtable ad-hoc URL 物化不被破坏（既有 e2e 复绿）
+
+### Phase 7 - 收口验证 + 登记
+
+Status: planned
+Targets: 全仓 + 登记面
+
+- Item Types: `Proof`
+
+- [ ] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红；e2e 全量零新增红
+- [ ] 登记核对：`quick-reference.md`（新 env 字段/action 词汇）+ `flux-guide/`（如 action 词汇新增）+ playground-experience.md（toast 容器约定）
+- [ ] roadmap §13 L3 行回写 + dev log
+
+Exit Criteria:
+
+- [ ] 全量验证五项记录于本 plan Closure；登记面 grep 复核命中；roadmap/dev log 落盘
+
+## Draft Review Record
+
+- Reviewer / Agent: <<待独立子 agent 填写>>
+- Verdict: <<pass | pass-with-minors | revised | degraded>>
+- Rounds: <<审查轮数>>
+- Findings addressed: <<每条已处理的 Blocker/Major 一行>>
+
+## Closure Gates
+
+- [ ] 五通道全部按 Phase 1 裁定落地（无偏离裁定的实现）
+- [ ] L3.1–L3.5 各 Phase Exit Criteria 全勾
+- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [ ] 受影响 owner docs（renderer-env / action-scope-and-imports / playground-experience / quick-reference）已同步
+- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [ ] `pnpm typecheck`
+- [ ] `pnpm build`
+- [ ] `pnpm lint`
+- [ ] `pnpm test`
+- [ ] `pnpm test:e2e`（零新增红口径）
+
+## Deferred But Adjudicated
+
+### stripe/airtable ad-hoc URL 物化迁移到 L3.5 契约
+
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: 现役 ad-hoc 物化是工作替代面且有其 e2e 钉住；§12 协调规则要求与 L4.9 replica retrofit 错峰，迁移归 L4.9 窗口
+- Successor Required: `yes`
+- Successor Path: L4.9 replica retrofit 子 plan（rebase L3.5 契约）
+
+## Non-Blocking Follow-ups
+
+- （收口时填写，或明确写无）
+
+## Closure
+
+Status Note: <<收口时填写>>
+
+Closure Audit Evidence:
+
+- Auditor / Agent: <<待填>>
+- Evidence: <<待填>>
+
+Follow-up:
+
+- <<收口时填写，或明确写 no remaining plan-owned work>>
