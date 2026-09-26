@@ -34,6 +34,27 @@
 
 **Decision（长按连续步进时序，E3）**：stepper 按钮 `onPointerDown` → 启动**初始延迟 `400ms`** timer → 延迟到达后切换为**重复间隔 `80ms`** 的间隔 timer，每次复用 `handleStep(direction)`（含 clamp+precision，不绕过 min/max）；越界（clamp 到 min/max）后**立即停止连续步进**（不溢出，Failure Path `longpress-clamp`）。取消路径：`onPointerUp` / `onPointerLeave` / `onBlur` / `ESC` 清理 timer（Failure Path `longpress-cancel`）。短按（pointer-up 在初始延迟内）保持 `onClick` 单步兼容；若 pointer-up 发生在连续步进已启动之后，用 `steppedViaLongPressRef` 守卫抑制后续 `onClick` 的多余单步。`onPointerDown` 调 `event.preventDefault()` 避免 text selection。时序常数（400ms/80ms）参考业界 input-number 控件默认值（amis/antd 一致区间），可在不破坏契约前提下调整。
 
+## 2.1 money format 显示协议（DESIGN-ACK-NOT-IMPL——协议已裁决，实现待 host demand；missing-components L2.5）
+
+**schema 字段（命名经 naming pass，沿用 AMIS 源 `format: 'currency'`）**：
+
+```json
+{
+  "type": "input-number",
+  "name": "amount",
+  "label": "金额",
+  "format": "currency"
+}
+```
+
+- **currency 显示三要素**：货币符号（如 ¥/$）、千分位分隔、精度展示——均为**显示层**渲染。
+- **值契约不变**：form value 恒为 `number`（`format` 只影响显示与输入呈现，不进入提交值）——与 §2 `kilobitSeparator`「不破坏 `number` 值契约」的关注点一致：千分位纳入显示层不是对该裁决的推翻，而是把显示职责收敛进协议化的单一 prop（`format`），替代散落的 display 字段。
+- **与 §2 既有裁决的和解**：
+  - `formatter`/`parser`「不采纳（后续）」所预告的「独立 adapter 协议」即本协议——money format 是该后续 adapter 的第一个具体实例（单格式内建，不开放任意 formatter 表达式）；通用 formatter/parser 是否开放维持不采纳，另行评估。
+  - `prefix`/`suffix`（已实现，覆盖 ¥/$ 等单位展示）与 `format: 'currency'` **共存不取代**：currency 符号由 `format` 协议内建（含本地化），`prefix`/`suffix` 继续承载非货币前/后缀；host 若同时设置货币符号与 prefix，显示层以 `format` 优先（避免双真值源）。
+- **实现前置条件**：display value 与 form value 双轨需要 display↔number 双向 adapter（输入含千分位/符号的文本 → 解析回 number；焦点/失焦切换编辑态与展示态）——即 §2 预告的 adapter 协议本体。
+- **实现触发条件**：host 出现真实货币输入 demand 且裁决「校验器读 number」的显示/校验分歧后，立实现小 plan 消费本节（missing-components L2.5 Deferred 登记）。
+
 ## 3. Flux 中的 renderer/type 定义
 
 - `type: 'input-number'`
