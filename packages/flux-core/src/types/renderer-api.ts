@@ -186,6 +186,13 @@ export interface RendererEnv extends ExpressionExecutionEnv {
    * 使用前必须 capability check（`if (env.openSocket)`）。
    */
   openSocket?: WebSocketOpener;
+  /**
+   * 把当前视图送入宿主打印管线（`window.print` 型页面打印，区别于 web-print
+   * 模板设计器轨道）。可选；host 不提供时 `print` action 返回失败并提示。
+   * 使用前必须 capability check。评审来源：
+   * docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md
+   */
+  print?: () => void;
   notify: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
   navigate?: (to: string | number, options?: { replace?: boolean }) => void;
   confirm?: (message: string, title?: string) => Promise<boolean>;

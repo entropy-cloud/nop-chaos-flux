@@ -285,6 +285,37 @@ describe('createActionRuntimeAdapter direct branches', () => {
   });
 });
 
+describe('built-in host-channel actions', () => {
+  it('print warns and fails when env.print is missing, invokes the host when present', async () => {
+    const notify = vi.fn();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
+      runtime: { env: { notify } } as unknown as RendererRuntime,
+    });
+
+    await expect(
+      adapter.invokeBuiltInAction(createBuiltInInvocation('print'), createCtx({})),
+    ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
+    expect(notify).toHaveBeenCalledWith('warning', expect.stringContaining('打印'));
+
+    const print = vi.fn();
+    const printingAdapter = createActionRuntimeAdapter({
+      getEnv: () => ({ notify, print } as unknown as RendererEnv),
+      expressionCompiler: {} as unknown as ExpressionCompiler,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
+      runtime: { env: { notify, print } } as unknown as RendererRuntime,
+    });
+    await expect(
+      printingAdapter.invokeBuiltInAction(createBuiltInInvocation('print'), createCtx({})),
+    ).resolves.toEqual({ ok: true });
+    expect(print).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('built-in scope-write and submit semantics', () => {
   it('setValue always writes current scope even when form exists', async () => {
     const adapter = createActionRuntimeAdapter({

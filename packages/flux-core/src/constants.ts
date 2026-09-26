@@ -49,6 +49,7 @@ export const BUILT_IN_ACTION_REGISTRY = {
   refreshNearest: { canonicalName: 'refreshNearest' },
   submitForm: { canonicalName: 'submitForm', compatibilityAliases: ['submit'] },
   navigate: { canonicalName: 'navigate' },
+  print: { canonicalName: 'print' },
   confirm: { canonicalName: 'confirm' },
   alert: { canonicalName: 'alert' },
   pick: { canonicalName: 'pick' },
@@ -160,6 +161,9 @@ export const BUILT_IN_ACTION_DEFINITIONS: Readonly<Record<string, BuiltInActionD
   refreshSource: { fieldRules: {} },
   refreshNearest: { fieldRules: {} },
   submitForm: { fieldRules: {} },
+  print: {
+    fieldRules: {},
+  },
   navigate: {
     fieldRules: {
       url: 'value',

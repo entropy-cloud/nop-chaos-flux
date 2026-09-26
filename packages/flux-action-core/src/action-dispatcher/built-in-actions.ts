@@ -308,6 +308,15 @@ export async function runBuiltInAction(
       };
       break;
     }
+    case 'print': {
+      invocation = {
+        action: 'print',
+        targeting: action.targeting,
+        actionNode: action,
+        signal,
+      };
+      break;
+    }
     case 'navigate': {
       const args = evaluateActionArgs(action, ctx, internals.evaluator) ?? {};
       invocation = {

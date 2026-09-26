@@ -513,6 +513,9 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       else toast.info?.(text || 'Info');
     },
     confirm: (message, title) => confirmBridge.confirm(message, title),
+    // Host-channels contract (plan 512 L3.1): page-level print goes through
+    // the host — `window.print()` proxy for the browser playground.
+    print: () => window.print(),
     navigate: (input, options) => {
       if (typeof input === 'number') {
         window.history.go(input);

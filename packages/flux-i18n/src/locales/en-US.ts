@@ -240,6 +240,13 @@ export const enUS: Resource = {
       editableRequired: 'This field is required',
       editableInvalidNumber: 'Please enter a valid number',
     },
+    action: {
+      printUnsupported: 'Printing is not supported in this environment',
+      copyUnsupported: 'Clipboard is not available in this environment',
+      copyFailed: 'Copy failed',
+      copySuccess: 'Copied',
+      downloadFailed: 'Download failed',
+    },
     form: {
       required: 'Required',
       optional: 'Optional',

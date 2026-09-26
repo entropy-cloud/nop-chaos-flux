@@ -240,6 +240,13 @@ export const zhCN: Resource = {
       editableRequired: '该字段必填',
       editableInvalidNumber: '请输入有效数字',
     },
+    action: {
+      printUnsupported: '当前环境不支持打印',
+      copyUnsupported: '剪贴板在当前环境不可用',
+      copyFailed: '复制失败',
+      copySuccess: '已复制',
+      downloadFailed: '下载失败',
+    },
     form: {
       required: '必填',
       optional: '可选',

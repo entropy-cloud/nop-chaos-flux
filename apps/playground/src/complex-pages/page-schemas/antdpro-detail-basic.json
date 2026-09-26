@@ -91,7 +91,8 @@
                   "type": "button",
                   "label": "打印",
                   "className": "adp-btn adp-btn-outline",
-                  "testid": "antdpro-detail-basic-print"
+                  "testid": "antdpro-detail-basic-print",
+                  "onClick": { "action": "print" }
                 },
                 {
                   "type": "button",

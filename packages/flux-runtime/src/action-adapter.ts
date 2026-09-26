@@ -23,6 +23,7 @@ import type { ApiRequestExecutor } from './async-data/request-runtime.js';
 import type { SchemaFetchSharingContext } from './async-data/request-in-flight-registry.js';
 import { executeRuntimeAjaxAction } from './runtime-action-helpers.js';
 import { refreshNearest, type RefreshNearestArgs, type RefreshNearestTargetType } from './refresh-nearest.js';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface ActionAdapterInput {
   getEnv: () => RendererEnv;
@@ -404,6 +405,21 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           } else {
             ctx.runtime.env.notify('info', message);
           }
+          return { ok: true };
+        }
+
+        case 'print': {
+          const env = getEnv();
+          if (!env.print) {
+            // Host-channels contract: missing capability is user-visible
+            // (warning toast) and returns a failed action result.
+            env.notify('warning', t('flux.action.printUnsupported'));
+            return {
+              ok: false,
+              error: new Error('print action requires env.print to be configured'),
+            };
+          }
+          env.print();
           return { ok: true };
         }
 

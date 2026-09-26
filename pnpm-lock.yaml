@@ -1278,6 +1278,9 @@ importers:
       '@nop-chaos/flux-formula':
         specifier: workspace:*
         version: link:../flux-formula
+      '@nop-chaos/flux-i18n':
+        specifier: workspace:*
+        version: link:../flux-i18n
     devDependencies:
       zustand:
         specifier: ^5.0.12

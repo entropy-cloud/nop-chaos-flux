@@ -478,6 +478,27 @@ test.describe('AntdPro detail/result — 审批、导航与行级一致性', () 
     await expect(page.getByTestId('complex-page-title')).toContainText('AntD Pro 基础表单', { timeout: 10_000 });
   });
 
+  test('21b detail-basic print button dispatches the host print channel (L3.1)', async ({ page }) => {
+    // Host-channels contract (plan 512): window.print is proxied by the
+    // playground env; spy on it and assert the `print` action invokes it.
+    await page.addInitScript(() => {
+      (window as unknown as { __printInvoked: boolean }).__printInvoked = false;
+      window.print = () => {
+        (window as unknown as { __printInvoked: boolean }).__printInvoked = true;
+      };
+    });
+    await openList(page);
+    await page.getByTestId('antdpro-list-crud').locator('tbody tr').first().getByTestId('antdpro-op-view').click();
+    await expect(page.getByTestId('antdpro-detail-basic-title')).toBeVisible({ timeout: 10_000 });
+
+    await page.getByTestId('antdpro-detail-basic-print').click();
+    await expect
+      .poll(async () => page.evaluate(() => (window as unknown as { __printInvoked: boolean }).__printInvoked), {
+        timeout: 10_000,
+      })
+      .toBe(true);
+  });
+
   test('22 detail-basic back navigates to the list page', async ({ page }) => {
     await openList(page);
     await page.getByTestId('antdpro-list-crud').locator('tbody tr').first().getByTestId('antdpro-op-view').click();
