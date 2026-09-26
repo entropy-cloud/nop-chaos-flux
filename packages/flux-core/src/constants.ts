@@ -51,6 +51,7 @@ export const BUILT_IN_ACTION_REGISTRY = {
   navigate: { canonicalName: 'navigate' },
   print: { canonicalName: 'print' },
   copy: { canonicalName: 'copy' },
+  download: { canonicalName: 'download' },
   confirm: { canonicalName: 'confirm' },
   alert: { canonicalName: 'alert' },
   pick: { canonicalName: 'pick' },
@@ -170,6 +171,14 @@ export const BUILT_IN_ACTION_DEFINITIONS: Readonly<Record<string, BuiltInActionD
     fieldRules: {
       content: { kind: 'value', required: true, valueType: 'string', nonEmpty: true },
       successMessage: { kind: 'value', valueType: 'string' },
+    },
+  },
+  download: {
+    argsRequired: true,
+    fieldRules: {
+      api: 'value',
+      url: { kind: 'value', valueType: 'string' },
+      filename: { kind: 'value', valueType: 'string' },
     },
   },
   navigate: {

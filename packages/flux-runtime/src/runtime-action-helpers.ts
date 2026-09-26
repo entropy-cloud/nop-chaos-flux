@@ -19,6 +19,7 @@ import {
   resolveRequestControl,
 } from '@nop-chaos/flux-action-core';
 import { executeApiSchema, prepareApiRequestForExecution } from './async-data/request-runtime.js';
+import { dataUrlToBlob, downloadBlob, resolveDownloadFilename } from './async-data/blob-download.js';
 import { createValidationError } from './validation/index.js';
 import type { ApiRequestExecutor } from './async-data/request-runtime.js';
 import { generateCacheKey, resolveCacheKey } from './async-data/api-cache.js';
@@ -317,4 +318,108 @@ function isHttpResponseFailure(error: unknown): boolean {
     'response' in error &&
     typeof (error as { status?: unknown }).status === 'number'
   );
+}
+
+
+/**
+ * `download` built-in action (host-channels contract, plan 512 L3.3):
+ * fetch → blob → trigger save, reusing the canonical blob-download pipeline.
+ * Args forms (contract §3):
+ *   1. `{ api: {...} }` — blob fetch of an ExecutableApiRequest shape;
+ *   2. `{ url, filename? }` — `data:` URL saved directly;
+ *   3. `{ url }` — endpoint returning `{ url }` in the envelope data; that
+ *      link (data: → decoded; http(s) → second blob GET) is then saved.
+ * Non-success envelopes notify a download error and fail the action.
+ */
+export async function executeRuntimeDownloadAction(
+  args: { api?: Record<string, unknown>; url?: string; filename?: string },
+  helpers: {
+    executeApiRequest: ApiRequestExecutor;
+    scope: ScopeRef;
+    signal: AbortSignal | undefined;
+    notifyError: () => void;
+  },
+): Promise<ActionResult> {
+  const { executeApiRequest, scope, signal, notifyError } = helpers;
+
+  const fail = (error: Error): ActionResult => {
+    notifyError();
+    return { ok: false, error };
+  };
+
+  const saveBlob = (blob: Blob, filename: string | undefined, url?: string) => {
+    downloadBlob(blob, filename || filenameFromUrl(url) || 'download');
+  };
+
+  const blobGet = async (url: string, filename?: string): Promise<ActionResult> => {
+    const response = await executeApiRequest<Blob>(
+      'download',
+      { url, method: 'get', responseType: 'blob' },
+      scope,
+      undefined,
+      { signal },
+    );
+    if (response.status !== 0 || !(response.data instanceof Blob)) {
+      return fail(new Error(`download request failed for ${url}`));
+    }
+    const disposition = response.headers?.['content-disposition'];
+    saveBlob(response.data, filename || resolveDownloadFilename({ downloadFileName: undefined }, disposition), url);
+    return { ok: true };
+  };
+
+  // Form 1: explicit api object → blob fetch through the envelope pipeline.
+  if (args.api && typeof args.api === 'object') {
+    const api = {
+      responseType: 'blob',
+      ...args.api,
+      downloadFileName: args.filename ?? (args.api as { downloadFileName?: string }).downloadFileName,
+    } as ExecutableApiRequest;
+    const response = await executeApiRequest<Blob>('download', api, scope, undefined, { signal });
+    if (response.status !== 0 || !(response.data instanceof Blob)) {
+      return fail(new Error('download request failed (non-success envelope)'));
+    }
+    const disposition = response.headers?.['content-disposition'];
+    const filename = resolveDownloadFilename({ downloadFileName: args.filename }, disposition) ?? 'download';
+    downloadBlob(response.data, filename);
+    return { ok: true };
+  }
+
+  // Forms 2/3: url-based.
+  if (typeof args.url === 'string' && args.url) {
+    if (args.url.startsWith('data:')) {
+      saveBlob(await dataUrlToBlob(args.url), args.filename, args.url);
+      return { ok: true };
+    }
+    // Endpoint: JSON envelope; look for a `url` field in the data.
+    const response = await executeApiRequest<unknown>('download', { url: args.url, method: 'get' }, scope, undefined, {
+      signal,
+    });
+    if (response.status !== 0) {
+      return fail(new Error(`download request failed for ${args.url}`));
+    }
+    const data = response.data as { url?: unknown; filename?: unknown } | null | undefined;
+    if (data && typeof data === 'object' && typeof (data as { url?: unknown }).url === 'string') {
+      const link = (data as { url: string }).url;
+      const serverFilename =
+        args.filename ??
+        (typeof (data as { filename?: unknown }).filename === 'string'
+          ? (data as { filename: string }).filename
+          : undefined);
+      if (link.startsWith('data:')) {
+        saveBlob(await dataUrlToBlob(link), serverFilename, link);
+        return { ok: true };
+      }
+      return blobGet(link, serverFilename);
+    }
+    return fail(new Error('download response carried no url field'));
+  }
+
+  return fail(new Error('download action requires args.api or args.url'));
+}
+
+function filenameFromUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  const path = url.split(/[?#]/)[0];
+  const last = path.slice(path.lastIndexOf('/') + 1);
+  return last || undefined;
 }

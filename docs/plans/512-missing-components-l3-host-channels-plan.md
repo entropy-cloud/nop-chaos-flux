@@ -142,14 +142,14 @@ Targets: `flux-action-core`（download runner）/ `flux-core`（action 定义）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 按 Phase 1 裁定（roadmap §6 L3.3 已预裁定 action 词汇面）落地 `download` 内置 action：args（api/url、filename、fallbackUrl 三态）→ fetcher blob → downloadBlob 触发保存；错误走 envelope + notify（错误文案 i18n 键 zh-CN/en-US）
-- [ ] showcase 用户导出链改声明式 download action（后端 CSV 生成职责不变）+ e2e（下载事件程序化断言）
-- [ ] focused 单测（成功/非 2xx/capability 面）
+- [x] `download` 内置 action 落地：`constants.ts` 定义（api/url/filename）+ action-core runner + runtime adapter 走 `executeRuntimeDownloadAction`（复用 canonical `blob-download.ts` 管线：downloadBlob/resolveDownloadFilename + 新增 `dataUrlToBlob`——data: URL 原位解码，runtime 零 fetch 直调）；三态消解按契约 §3（api blob 直取 / data: URL 直存 / 端点 envelope `url` 字段 → data: 解码或 http 二次 blob GET，响应 `filename` 字段优先）；非成功 envelope → `notify error`（`flux.action.downloadFailed` zh/en）+ ok:false
+- [x] showcase 导出链接线：crud-views-export 按钮改 onClick 数组 = ajax（保留 report UI 的 then 链）+ `download` action（后端 CSV 生成职责不变）+ e2e `download-action.spec.ts`（Playwright download 事件 + `users-*.csv` 文件名断言 + report 文案断言）
+- [x] focused 单测 ×4（form-3 envelope url+filename 保存 / form-2 data: URL 直存 / 非 2xx envelope notify+fail / 空 args fail 不 notify；runtime 1449/1449 绿）
 
 Exit Criteria:
 
-- [ ] download action 落地 + focused 单测全绿
-- [ ] e2e 下载断言通过（playwright download 事件）
+- [x] download action 落地 + focused 单测全绿（1449/1449）
+- [x] e2e 下载断言通过（playwright download 事件 + suggestedFilename 断言）
 
 ### Phase 6 - L3.5 filter↔URL sync
 

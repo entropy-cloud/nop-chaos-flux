@@ -308,6 +308,23 @@ export async function runBuiltInAction(
       };
       break;
     }
+    case 'download': {
+      const payload = evaluateActionArgs(action, ctx, internals.evaluator);
+      if (!payload || typeof payload !== 'object') {
+        return {
+          ok: false,
+          error: new Error('download requires args payload'),
+        };
+      }
+      invocation = {
+        action: 'download',
+        args: payload,
+        targeting: action.targeting,
+        actionNode: action,
+        signal,
+      };
+      break;
+    }
     case 'copy': {
       const payload = evaluateActionArgs(action, ctx, internals.evaluator);
       if (!payload || typeof payload !== 'object') {

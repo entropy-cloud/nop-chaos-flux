@@ -58,6 +58,32 @@ export function downloadBlob(blob: Blob, filename: string): void {
 }
 
 /**
+ * Convert a `data:` URL into a Blob (base64 or URL-encoded payload).
+ * Used by the download action's link-save path — runtime code never calls
+ * `fetch` directly (INV-1), so data URLs are decoded in place.
+ */
+export async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
+  if (!dataUrl.startsWith('data:')) {
+    throw new Error('not a data URL');
+  }
+  const commaIndex = dataUrl.indexOf(',');
+  if (commaIndex < 0) {
+    throw new Error('malformed data URL');
+  }
+  const meta = dataUrl.slice(5, commaIndex);
+  const payload = dataUrl.slice(commaIndex + 1);
+  const isBase64 = /;base64$/i.test(meta);
+  const contentType = meta.replace(/;base64$/i, '') || 'application/octet-stream';
+  if (isBase64) {
+    const binary = atob(payload);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: contentType });
+  }
+  return new Blob([decodeURIComponent(payload)], { type: contentType });
+}
+
+/**
  * Normalize a blob response. If the blob's content-type is JSON, it is treated as an
  * error envelope returned in a binary-typed response (JSON-in-blob): the blob is read
  * as text and JSON.parsed, and the original (error) {@link ApiResponse} is returned.

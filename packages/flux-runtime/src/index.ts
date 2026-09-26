@@ -33,6 +33,7 @@ export { executeApiObject } from './async-data/request-runtime.js';
 export {
   extractFilenameFromContentDisposition,
   resolveDownloadFilename,
+  dataUrlToBlob,
   downloadBlob,
   normalizeBlobResponse,
 } from './async-data/blob-download.js';

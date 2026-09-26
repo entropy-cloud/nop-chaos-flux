@@ -11,25 +11,31 @@
           "label": "导出 CSV（后台生成）",
           "variant": "outline",
           "testid": "btn-export",
-          "onClick": {
-            "action": "ajax",
-            "args": { "url": "/r/User__export", "method": "post" },
-            "messages": { "success": "导出成功，后台已生成文件" },
-            "then": [
-              {
-                "action": "setValue",
-                "args": { "path": "exportUrl", "value": "${result.data.url}" }
-              },
-              {
-                "action": "setValue",
-                "args": { "path": "exportName", "value": "${result.data.filename}" }
-              },
-              {
-                "action": "setValue",
-                "args": { "path": "exportCount", "value": "${result.data.count}" }
-              }
-            ]
-          }
+          "onClick": [
+            {
+              "action": "ajax",
+              "args": { "url": "/r/User__export", "method": "post" },
+              "messages": { "success": "导出成功，后台已生成文件" },
+              "then": [
+                {
+                  "action": "setValue",
+                  "args": { "path": "exportUrl", "value": "${result.data.url}" }
+                },
+                {
+                  "action": "setValue",
+                  "args": { "path": "exportName", "value": "${result.data.filename}" }
+                },
+                {
+                  "action": "setValue",
+                  "args": { "path": "exportCount", "value": "${result.data.count}" }
+                }
+              ]
+            },
+            {
+              "action": "download",
+              "args": { "url": "/r/User__export" }
+            }
+          ]
         },
         {
           "type": "text",

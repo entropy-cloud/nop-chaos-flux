@@ -23,6 +23,7 @@ import type { ApiRequestExecutor } from './async-data/request-runtime.js';
 import type { SchemaFetchSharingContext } from './async-data/request-in-flight-registry.js';
 import { executeRuntimeAjaxAction } from './runtime-action-helpers.js';
 import { refreshNearest, type RefreshNearestArgs, type RefreshNearestTargetType } from './refresh-nearest.js';
+import { executeRuntimeDownloadAction } from './runtime-action-helpers.js';
 import { t } from '@nop-chaos/flux-i18n';
 
 export interface ActionAdapterInput {
@@ -406,6 +407,23 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
             ctx.runtime.env.notify('info', message);
           }
           return { ok: true };
+        }
+
+        case 'download': {
+          const env = getEnv();
+          const args = (invocation.args ?? {}) as { api?: Record<string, unknown>; url?: string; filename?: string };
+          try {
+            return await executeRuntimeDownloadAction(args, {
+              executeApiRequest,
+              scope: ctx.scope,
+              signal: invocation.signal,
+              notifyError: () => env.notify('error', t('flux.action.downloadFailed')),
+            });
+          } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') throw error;
+            env.notify('error', t('flux.action.downloadFailed'));
+            return { ok: false, error };
+          }
         }
 
         case 'copy': {
