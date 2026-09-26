@@ -163,5 +163,3 @@ callback 在 **owner ctx** 执行（不是 surface child scope），由 surface 
 ajax 输出 → 通过 result / prevResult 链式传递
 dialog 输出 → ${result} (形态: {confirmed, value})
 ```
-
-                            

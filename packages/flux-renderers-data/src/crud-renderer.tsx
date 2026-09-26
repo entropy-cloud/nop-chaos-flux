@@ -25,6 +25,7 @@ import {
   useCrudRuntimeState,
   useCrudStatusPublisher,
 } from './crud-renderer-state.js';
+import { useCrudDataProjection, useCrudLoadRevision } from './crud-renderer-projections.js';
 import { useCrudLoadAction } from './crud-renderer-load.js';
 import {
   CrudToolbarBlocks,
@@ -44,7 +45,7 @@ import { useInfiniteScroll } from './use-infinite-scroll.js';
 import { asReactNode, delegateTableRendererProps, resolveCrudSlotContent } from './crud-renderer-delegate.js';
 import { useCrudFilterToggle } from './use-crud-filter-toggle.js';
 import { useCrudQueryFormScope } from './use-crud-query-form-scope.js';
-import { useUrlFilterSync } from './use-url-filter-sync.js';
+import { useCrudUrlSync } from './use-crud-url-sync.js';
 import { CrudListPagination } from './crud-list-pagination.js';
 import { CrudInfiniteScrollArea } from './crud-infinite-scroll-area.js';
 
@@ -135,30 +136,13 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const paginationMode = resolvePaginationMode(normalizedSchema.pagination, undefined);
   const loadDataOnce = normalizedSchema.clientMode?.loadDataOnce === true;
 
-  const urlEnv = useRendererEnv();
-  const syncUrlEnabled = normalizedSchema.syncLocation === true && Boolean(urlEnv.location);
-  const applyRestoredFilters = useCallback(
-    (values: Record<string, unknown>) => {
-      const handle = componentRegistry?.resolve({
-        componentId: createCrudQueryFormId(props.id, props.path),
-      });
-      if (!handle?.capabilities?.hasMethod?.('setValues')) {
-        return false;
-      }
-      void Promise.resolve(
-        handle.capabilities.invoke('setValues', { values }, {} as never),
-      ).catch(() => false);
-      return true;
-    },
-    [componentRegistry, props.id, props.path],
-  );
-  useUrlFilterSync({
-    enabled: syncUrlEnabled,
-    instanceId: String(normalizedSchema.id ?? normalizedSchema.name ?? 'crud'),
-    location: urlEnv.location,
-    scope,
+  const urlSyncInstanceKey = normalizedSchema.id ?? normalizedSchema.name ?? 'crud';
+  useCrudUrlSync({
+    schemaSyncLocation: normalizedSchema.syncLocation === true,
+    instanceId: String(urlSyncInstanceKey),
     queryStatePath: ownerPaths.queryStatePath,
-    applyToForm: applyRestoredFilters,
+    componentId: props.id,
+    componentPath: props.path,
     query: queryState,
     defaultQuery,
   });
@@ -207,28 +191,8 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const effectiveQuery = queryState;
   const filteredRows = clientSideQueryFiltering ? applyQueryToRows(source, effectiveQuery) : source;
 
-  useEffect(() => {
-    if (!dataStatePath || !scope) {
-      return;
-    }
-    scope.update(dataStatePath, source);
-  }, [dataStatePath, scope, source]);
-
-  // loadAction keeps rows/total in React state (not in scope), so the `$crud`
-  // projected binding — whose store only re-notifies on parent-scope writes —
-  // would not propagate load-derived summary fields (e.g. `$crud.total`) to
-  // subscribers after an async fetch. Bump a private scope revision on each
-  // load-result change so `$crud` consumers (footer totals, statistics, etc.)
-  // re-read the latest summary. The source-binding path is unaffected because
-  // its data already lives in scope.
-  const loadNonceRef = useRef(0);
-  useEffect(() => {
-    if (!useLoadAction || !scope) {
-      return;
-    }
-    loadNonceRef.current += 1;
-    scope.update('__crudLoadRevision', loadNonceRef.current);
-  }, [useLoadAction, scope, loadResult]);
+  useCrudDataProjection({ dataStatePath, scope, source });
+  useCrudLoadRevision({ enabled: useLoadAction, scope, loadResult });
   const shouldFetchOnQueryChange =
     useLoadAction || normalizedSchema.clientMode?.loadDataOnce !== true
       ? true

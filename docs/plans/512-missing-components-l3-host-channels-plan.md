@@ -1,6 +1,6 @@
 # 512 Missing Components L3 — Host channels（print / clipboard / download / toast / filter↔URL）
 
-> Plan Status: draft
+> Plan Status: completed
 > Last Reviewed: 2026-09-26
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §6（L3 全表 + §1 交付铁律）+ `docs/analysis/visual-quality/2026-09-24-page-archetype-coverage-audit.md` §2（C6 Blocked 行）/ §3.2（N2 五行）/ §3.6 规则 3（「Reuse the action vocabulary」；初稿误写 §10.2，契约评审更正）；`docs/architecture/renderer-env.md`（必读已过：§2 字段全集、§4 INV-2 流程、§6 使用规则）
 > Related: `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`（env 扩充先例）；`docs/analysis/ui-review/C2-capability-gaps.md`（toast debounce / copy-link 语义模拟 / D1 池素材行）
@@ -128,7 +128,7 @@ Targets: action 词汇（或 env，随裁定）/ host 实现 / 三 replica schem
 - Item Types: `Fix`、`Proof`
 
 - [x] 剪贴板通道落地：`renderer-api.ts` `ClipboardWriter` + `clipboard?` 字段 + `copy` 内置 action（args：content 必填非空 / successMessage 可选，缺省 `flux.action.copySuccess`）+ runtime adapter（缺失 → warning `copyUnsupported` + ok:false；writeText reject → error `copyFailed` + ok:false；成功 → success toast）；playground host `navigator.clipboard.writeText` 代理（reject 传播）；focused 单测 ×4（写入+成功文案/缺省文案/缺失降级/拒绝失败，runtime 1445/1445 绿）
-- [x] Cal/Linear/Notion 三族 copy-link 升级为真实写入：**8 处按钮全接线**（cal-success ×1 / linear-detail ×1 / linear-issues ×3（含 2 处 slot 菜单以同 `when` copy 兄弟项保端点调用）/ notion-database ×5 中 4 处 onClick 数组 + 1 处…实为 4+1）；ajax 端点调用保留（e2e 端点计数不变），`messages.success` 移除、toast 归 copy action 所有；e2e 剪贴板内容程序化断言 ×5（linear 03/06/16 精确值、notion 05 正则、cal 13 精确值，grantPermissions 于测试开头——headless 需页面 focus 的怪癖以 early-focus 消解）
+- [x] Cal/Linear/Notion 三族 copy-link 升级为真实写入：8 处按钮位全接线（schema 内 copy action 条目共 10 条——notion-peek-copy 同按钮在 5 个视图蒙皮各 1 条、linear-issues 3 条含 2 处 slot 菜单以同 `when` copy 兄弟项保端点调用）；ajax 端点调用保留（e2e 端点计数不变），`messages.success` 移除、toast 归 copy action 所有；e2e 剪贴板内容程序化断言 ×5（linear 03/06/16 精确值、notion 05 正则、cal 13 精确值，grantPermissions 于测试开头——headless 需页面 focus 的怪癖以 early-focus 消解）
 
 Exit Criteria:
 
@@ -137,7 +137,7 @@ Exit Criteria:
 
 ### Phase 5 - L3.3 download action
 
-Status: planned
+Status: completed
 Targets: `flux-action-core`（download runner）/ `flux-core`（action 定义）/ showcase 导出链 / e2e
 
 - Item Types: `Fix`、`Proof`
@@ -158,7 +158,7 @@ Targets: crud/query-filter 契约面 / host router 集成 / e2e
 
 - Item Types: `Fix`、`Proof`
 
-- [x] 绑定契约落地：`renderer-api.ts` `EnvLocation`（getQuery/setQuery，值域 string、undefined 删键）+ `EnvLocation` 复用既有保留字段 **`syncLocation`**（原「Reserved—未实现」声明转为已实现注记——评审 M1 更正 owner 包为 flux-renderers-data）+ `useUrlFilterSync` 助手（data 包单一实现）：挂载恢复一次（写 committed query 态 + 表单句柄 setValues 回显，句柄未注册 50ms×5 重试）、变更恒 replace 回写（首跑仅记基线）、不订阅 popstate、保留键不读写、数组逗号 join/空值删键、多实例冲突先到优先+后到降级警告；decorator hooks 扩 print/clipboardWriteText/locationSetQuery；playground hash router 实现（showcase-env）+ standard-crud `"syncLocation": true` demo；focused 单测 ×6（编码/解码对称/保留键/挂载恢复跳保留键/replace 回写+幂等/冲突降级/无 location 失活，data 1169/1169 绿）；**route-model 修 hash query 剥离**（`#/page?key=v` 此前无法命中页面 id——L3.5 宿主侧前置）
+- [x] 绑定契约落地：`renderer-api.ts` `EnvLocation`（getQuery/setQuery，值域 string、undefined 删键）+ `EnvLocation` 复用既有保留字段 **`syncLocation`**（原「Reserved—未实现」声明转为已实现注记——评审 M1 更正 owner 包为 flux-renderers-data）+ `useUrlFilterSync` 助手（data 包单一实现）：挂载恢复一次（写 committed query 态 + 表单句柄 setValues 回显，句柄未注册 50ms×5 重试）、变更恒 replace 回写（首跑仅记基线）、不订阅 popstate、保留键不读写、数组逗号 join/空值删键、多实例冲突先到优先+后到降级警告；decorator hooks 扩 print/clipboardWriteText/locationSetQuery；playground hash router 实现（showcase-env）+ standard-crud `"syncLocation": true` demo；focused 单测 ×7（编码/解码对称/保留键/挂载恢复跳保留键/replace 回写+幂等/冲突降级/无 location 失活，data 1169/1169 绿）；**route-model 修 hash query 剥离**（`#/page?key=v` 此前无法命中页面 id——L3.5 宿主侧前置）
 - [x] 深链 e2e `url-filter-sync.spec.ts` ×2：①`#/complex-pages/standard-crud?keyword=顾北辰` 打开 → 表单输入回显恢复值；②搜索提交 → hash 更新含 `keyword=`（replace 语义）
 
 Exit Criteria:
@@ -168,18 +168,19 @@ Exit Criteria:
 
 ### Phase 7 - 收口验证 + 登记
 
-Status: planned
+Status: completed
 Targets: 全仓 + 登记面
 
 - Item Types: `Proof`
 
-- [ ] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红；e2e 全量零新增红
-- [ ] 登记核对：`quick-reference.md`（新 env 字段/action 词汇）+ `flux-guide/`（如 action 词汇新增）+ playground-experience.md（toast 容器约定）
-- [ ] roadmap §13 L3 行回写 + dev log
+- [x] `pnpm typecheck` / `build` / `lint` / `test` 全绿（40/40 + 40/40 + 40/40 + 74/74 task）；`pnpm check` 零新增红（exit 0；oversized 204w/2e/2exempt——2e 均在册豁免，crud-renderer.tsx 拆分后 691 行迁入 warn 档）；e2e 全量零新增红（**1564 passed / 43 skipped / 3 failed / 4 flaky**：3 最终失败 = kanban-perf:34 在册 watch-only + gantt-bars-and-links:131、gantt-demo:53 gantt 负载/拖拽 flake 家族（隔离复跑 2/2 全绿，511 同款消化口径）；4 flaky = gantt ×3 同族 + scada-perf:155 吞吐阈值边缘重试过）
+- [x] 登记核对：`quick-reference.md`（env 三字段 print/clipboard/location 行 :242-244 命中）+ `flux-guide/04-action-system.md`（「内置宿主通道动作（plan 512 L3）」节在案）+ playground-experience.md（Core Rules 第 6 条 toast viewport ownership 在案）；顺手修复两处收口前缺陷——①`04-action-system.md` 尾部 28 个 NUL 字节损坏（bc59fea19 入库，已截断修复）；②Phase 6 follow-up 提交 b0826a8e7 在非 async 回调写入 `await waitFor` 的语法错误（use-url-filter-sync.test.ts，补 `async`，data 1169/1169 复绿）
+- [x] 收口前新增红消化：Phase 6 将 crud-renderer.tsx 推至 727 行越过 700 MUST-split 阈值（check:oversized 新增 error）——拆分消化：URL-sync 接线提取 `use-crud-url-sync.ts`（useCrudUrlSync）+ 两个 scope 投影 effect 提取 `crud-renderer-projections.ts`（useCrudDataProjection/useCrudLoadRevision），crud-renderer.tsx 691 行（warn 档在案）、crud-renderer-state.ts 保持 471 行；data 包 1169/1169 复绿、oversized 门禁 exit 0（2e 均为在册豁免）
+- [x] roadmap §13 L3 行回写 `done`（2026-09-26，随附裁决注记）+ dev log 记录 L3 收口
 
 Exit Criteria:
 
-- [ ] 全量验证五项记录于本 plan Closure；登记面 grep 复核命中；roadmap/dev log 落盘
+- [x] 全量验证五项记录于本 plan Closure；登记面 grep 复核命中；roadmap/dev log 落盘
 
 ## Draft Review Record
 
@@ -192,16 +193,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 五通道全部按 Phase 1 裁定落地（无偏离裁定的实现）
-- [ ] L3.1–L3.5 各 Phase Exit Criteria 全勾
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响 owner docs（renderer-env / action-scope-and-imports / playground-experience / quick-reference）已同步
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm test:e2e`（零新增红口径）
+- [x] 五通道全部按 Phase 1 裁定落地（无偏离裁定的实现）
+- [x] L3.1–L3.5 各 Phase Exit Criteria 全勾
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响 owner docs（renderer-env / action-scope-and-imports / playground-experience / quick-reference）已同步
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（verdict `approved` 0B/0M/4m，2026-09-26）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm test:e2e`（零新增红口径）
 
 ## Deferred But Adjudicated
 
@@ -214,17 +215,18 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- （收口时填写，或明确写无）
+- clipboard 直调消费方 rebase 到 `env.clipboard`（json-view.tsx:63 / variable-panel.tsx:41 / basic copyToClipboard 消费方；契约 §2 登记，optimization candidate——直调合法在先、INV-1 禁单不含 clipboard；successor = 后续 demand 或 L4 窗口）
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 七个 Phase 全部落地并经独立 closure audit 通过（0B/0M/4m，附条件 one-shot 翻转已兑现）：五通道按 Phase 1 裁定实现（print/clipboard 扩 env C 档 + copy/print/download 三内置 action；download A 档复用 blob 管线；toast 宿主单例 + 30 处挂载清扫 + 7 处 debounce hack 移除；filter↔URL `env.location` + useUrlFilterSync 单实现 + 深链 demo）。全量验证在案：typecheck/build/lint 40/40、test 74/74 task、check exit 0（oversized 2e 均在册豁免；Phase 6 新增红已拆分消化）、e2e 1564 passed/43 skipped/3 failed/4 flaky（零新增红：watch-only ×1 + gantt flake 家族 ×2 隔离复跑全绿）。登记三面命中（quick-reference/flux-guide/playground-experience），i18n 键 zh/en 在案，roadmap §13 L3 行 done。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 fresh 子 agent（general-purpose，2026-09-26，未参与起草与执行；44 次工具调用逐 Phase live 行为抽查）
+- Evidence: verdict `approved`（0 Blocker / 0 Major / 4 Minor）——Phase 1 契约文档 + renderer-env/action-scope 回写四处命中；Phase 2 App.tsx:405 单例 Toaster + debounce grep 0 残留；Phase 3-5 print/copy/download live 链路（runner/adapter/i18n/e2e + focused 单测实跑通过）；Phase 6 useUrlFilterSync 语义逐条核对 + 拆分等价性逐点比对（use-crud-url-sync vs bc59fea19 内联块）+ data 包 1169/1169 实跑复绿；Phase 7 登记三面命中 + NUL 修复验证 + oversized 拆分核对；deferred 诚实性成立（roadmap §12 错峰规则佐证）。4 Minor：①Phase 7 Status 滞后（已翻转）；②簿记计数口径（×6 实为 7 用例、copy 8 处 vs 10 条目口径——顺手改注）；③契约 §2 clipboard 直调 rebase follow-up 未登记（已补 Non-Blocking Follow-ups）；④Closure 节占位（本条填充消解）。
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- clipboard 直调消费方 rebase 到 env.clipboard（见 Non-Blocking Follow-ups；非本 plan 缺陷，登记移交）
+- 其余无 remaining plan-owned work

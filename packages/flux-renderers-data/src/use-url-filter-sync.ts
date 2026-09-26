@@ -19,6 +19,10 @@ const RESERVED_URL_KEYS = new Set(['page', 'pageSize', 'perPage', 'orderBy', 'or
 
 const claimedInstances = new Set<string>();
 
+// Contract §5 diagnostic: session-once so a host without the location channel
+// learns why syncLocation is inert without spamming per crud instance.
+let warnedMissingLocation = false;
+
 export function isUrlKeyReserved(key: string): boolean {
   return RESERVED_URL_KEYS.has(key);
 }
@@ -79,6 +83,12 @@ export function useUrlFilterSync(args: {
 
   // Registration + one-shot restore.
   useEffect(() => {
+    if (enabled && !location && !warnedMissingLocation) {
+      warnedMissingLocation = true;
+      console.warn(
+        '[url-sync] syncLocation is enabled but the host does not provide env.location — filter↔URL sync stays off.',
+      );
+    }
     if (!enabled || !location || !scope) return;
     if (claimedInstances.has(instanceId)) {
       // Deferred: degradation is not urgent, and synchronous setState inside

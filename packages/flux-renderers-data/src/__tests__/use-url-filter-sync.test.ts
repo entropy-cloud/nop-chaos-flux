@@ -33,7 +33,13 @@ describe('url filter serialization (plan 512 L3.5)', () => {
   it('reserved host keys never project to the URL', () => {
     expect(isUrlKeyReserved('page')).toBe(true);
     expect(isUrlKeyReserved('keyword')).toBe(false);
-    const values = queryToUrlValues({ keyword: 'x', status: '1', page: 2, pageSize: 10, tagIds: ['a', 'b'] });
+    const values = queryToUrlValues({
+      keyword: 'x',
+      status: '1',
+      page: 2,
+      pageSize: 10,
+      tagIds: ['a', 'b'],
+    });
     expect(values).toEqual({ keyword: 'x', status: '1', tagIds: 'a,b' });
   });
 });
@@ -94,7 +100,7 @@ describe('useUrlFilterSync', () => {
     expect(setQuery).toHaveBeenCalledTimes(1);
   });
 
-  it('degrades a colliding second instance with a warning', () => {
+  it('degrades a colliding second instance with a warning', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { scope } = updateCalls();
     const location = { getQuery: () => ({}), setQuery: vi.fn() };
@@ -115,12 +121,33 @@ describe('useUrlFilterSync', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('collides'));
   });
 
-  it('is inactive without env.location', () => {
+  it('is inactive without env.location and warns the host once (QA.1-L3 Minor-1)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { scope } = updateCalls();
+    const common = {
+      instanceId: 't4',
+      location: undefined,
+      scope: scope as never,
+      queryStatePath: '$crud.query',
+      query: {},
+      defaultQuery: {},
+    };
+    const first = renderHook(() => useUrlFilterSync({ enabled: true, ...common }));
+    expect(first.result.current).toBe(false);
+    const second = renderHook(() => useUrlFilterSync({ enabled: true, ...common }));
+    expect(second.result.current).toBe(false);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('env.location'));
+    warn.mockRestore();
+  });
+
+  it('stays silent when syncLocation is not requested', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { scope } = updateCalls();
     const { result } = renderHook(() =>
       useUrlFilterSync({
-        enabled: true,
-        instanceId: 't4',
+        enabled: false,
+        instanceId: 't5',
         location: undefined,
         scope: scope as never,
         queryStatePath: '$crud.query',
@@ -129,5 +156,7 @@ describe('useUrlFilterSync', () => {
       }),
     );
     expect(result.current).toBe(false);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

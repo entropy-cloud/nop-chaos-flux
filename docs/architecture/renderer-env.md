@@ -13,7 +13,7 @@
 
 ## 2. env 字段全集
 
-> **状态声明**：以下展示**目标态全集**。当前 `master` 分支 `packages/flux-core/src/types/renderer-api.ts:83` 已实施字段为：`fetcher / notify / navigate / confirm / alert / functions / filters / importLoader / resolveImportUrl / loadPage / loadDict / hasRole / locale`。（`monitor` 已从 env 移除，改用 `<SchemaRenderer monitor>` prop，详见 `docs/architecture/flux-monitor.md`。）
+> **状态声明**：以下展示**目标态全集**。当前 `master` 分支 `packages/flux-core/src/types/renderer-api.ts` 的 `RendererEnv` 接口（live 锚点随字段追加下移，2026-09-26 位于 :193 起；QA.1-L3 Minor-4 刷新）已实施字段为：`fetcher / notify / navigate / confirm / alert / functions / filters / importLoader / resolveImportUrl / loadPage / loadDict / hasRole / locale`。（`monitor` 已从 env 移除，改用 `<SchemaRenderer monitor>` prop，详见 `docs/architecture/flux-monitor.md`。）
 >
 > `stream` 与 `openSocket` 已于 2026-07-21 经 INV-2 评审通过，并于 2026-07-23 **落地实施**（接口 + playground 默认实现 + decorator hooks，见 §4.3 历史记录）。两个字段均 optional，向后兼容。使用方应 capability check（`if (env.stream) ...`）。
 
@@ -252,33 +252,33 @@ locale?: string;
 
 ### 4.3 历史扩充记录
 
-| 日期       | 字段                                                                                        | 评审来源                                                                          | 状态                      |
-| ---------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------- |
-| 2026-07-23 | `env.stream?: StreamFetcher`                                                                | `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`               | 已实施                    |
-| 2026-07-23 | `env.openSocket?: WebSocketOpener`                                                          | 同上                                                                              | 已实施                    |
-| 2026-09-26 | `env.print?: () => void` + `env.clipboard?: ClipboardWriter` + `env.location?: EnvLocation` | `docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md` | 已裁定（plan 512 实施中） |
+| 日期       | 字段                                                                                        | 评审来源                                                                          | 状态                                |
+| ---------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------- |
+| 2026-07-23 | `env.stream?: StreamFetcher`                                                                | `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`               | 已实施                              |
+| 2026-07-23 | `env.openSocket?: WebSocketOpener`                                                          | 同上                                                                              | 已实施                              |
+| 2026-09-26 | `env.print?: () => void` + `env.clipboard?: ClipboardWriter` + `env.location?: EnvLocation` | `docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md` | 已实施（plan 512，2026-09-26 收口） |
 
 ## 5. Host 实现责任
 
 每个 host 应用（`apps/playground` / SSR / test）必须为以下字段提供实现：
 
-| 字段                    | 必填？  | playground 默认实现                                                                                |
-| ----------------------- | ------- | -------------------------------------------------------------------------------------------------- |
-| `fetcher`               | ✅ 必填 | mock / 真实后端                                                                                    |
-| `stream`                | 可选    | **已落地**（`apps/playground/src/env/stream-impl.ts`：`fetch` + `ReadableStream` + `TextDecoder`） |
-| `openSocket`            | 可选    | **已落地**（`apps/playground/src/env/socket-impl.ts`：代理浏览器原生 `WebSocket`）                 |
-| `notify`                | ✅ 必填 | `@nop-chaos/ui` 的 `toast()`                                                                       |
-| `confirm` / `alert`     | 可选    | `@nop-chaos/ui` 的 Dialog                                                                          |
-| `navigate`              | 可选    | 基于 `history` 或路由库                                                                            |
-| `loadPage` / `loadDict` | 可选    | 后端 API 或本地 mock                                                                               |
-| `print`                 | 可选    | `window.print()` 代理（plan 512）                                                                  |
-| `clipboard`             | 可选    | `navigator.clipboard.writeText` 代理（plan 512）                                                   |
-| `location`              | 可选    | hash/history router 查询串读写（plan 512；SSR 用静态桩）                                           |
-| `hasRole`               | 可选    | 缺省 allow-all                                                                                     |
-| `importLoader`          | 可选    | 静态注册表或动态 `import()`                                                                        |
-| `monitor`               | 已移除  | 改用 `<SchemaRenderer monitor>` prop（见 `flux-monitor.md`）                                       |
-| `functions` / `filters` | 可选    | 静态注册表                                                                                         |
-| `locale`                | 可选    | i18n 库                                                                                            |
+| 字段                    | 必填？  | playground 默认实现                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fetcher`               | ✅ 必填 | mock / 真实后端                                                                                                                                                                                                                                                                                                                                                         |
+| `stream`                | 可选    | **已落地**（`apps/playground/src/env/stream-impl.ts`：`fetch` + `ReadableStream` + `TextDecoder`）                                                                                                                                                                                                                                                                      |
+| `openSocket`            | 可选    | **已落地**（`apps/playground/src/env/socket-impl.ts`：代理浏览器原生 `WebSocket`）                                                                                                                                                                                                                                                                                      |
+| `notify`                | ✅ 必填 | `@nop-chaos/ui` 的 `toast()`。toast 渲染层须 **app-shell 单例常驻**（route/页面卸载不死，页面与 host 组件不得自挂 `<Toaster/>`——双 viewport 会重复渲染每条 toast；宿主约定出处 `docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md` §4，playground 落点见 `docs/architecture/playground-experience.md` Core Rule 6；QA.1-L3 Minor-3 补记） |
+| `confirm` / `alert`     | 可选    | `@nop-chaos/ui` 的 Dialog                                                                                                                                                                                                                                                                                                                                               |
+| `navigate`              | 可选    | 基于 `history` 或路由库                                                                                                                                                                                                                                                                                                                                                 |
+| `loadPage` / `loadDict` | 可选    | 后端 API 或本地 mock                                                                                                                                                                                                                                                                                                                                                    |
+| `print`                 | 可选    | `window.print()` 代理（plan 512）                                                                                                                                                                                                                                                                                                                                       |
+| `clipboard`             | 可选    | `navigator.clipboard.writeText` 代理（plan 512）                                                                                                                                                                                                                                                                                                                        |
+| `location`              | 可选    | hash/history router 查询串读写（plan 512；SSR 用静态桩）                                                                                                                                                                                                                                                                                                                |
+| `hasRole`               | 可选    | 缺省 allow-all                                                                                                                                                                                                                                                                                                                                                          |
+| `importLoader`          | 可选    | 静态注册表或动态 `import()`                                                                                                                                                                                                                                                                                                                                             |
+| `monitor`               | 已移除  | 改用 `<SchemaRenderer monitor>` prop（见 `flux-monitor.md`）                                                                                                                                                                                                                                                                                                            |
+| `functions` / `filters` | 可选    | 静态注册表                                                                                                                                                                                                                                                                                                                                                              |
+| `locale`                | 可选    | i18n 库                                                                                                                                                                                                                                                                                                                                                                 |
 
 ## 6. 渲染器/RUNTIME 使用规则（强制）
 
