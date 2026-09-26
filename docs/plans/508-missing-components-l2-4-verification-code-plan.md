@@ -1,6 +1,6 @@
 # 508 Missing Components L2.4 — verification-code（OTP 验证码输入）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-25
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §5（L2.4 行——「纯 registration：ui `InputOtp` 已存在（同 L1.1 debt 模式）」）；§1 交付铁律
 > Related: `docs/plans/503-missing-components-l1-p0-form-atoms-plan.md`（registration-debt 模式先例）；`docs/plans/507-missing-components-l2-3-input-signature-plan.md`（同线模板）
@@ -62,35 +62,35 @@
 
 ### Phase 1 - 命名 pass + matrix flip + 实现 + 分层验证
 
-Status: planned
+Status: completed
 Targets: 本 plan、matrix、`packages/flux-renderers-form/src/`、playground lab、`docs/components/verification-code/`
 
 - Item Types: `Decision`、`Fix`、`Proof`
 
-- [ ] 命名决议落本 plan（`verification-code` 名不变；AMIS 源 type 为 `input-verification-code`——gap-analysis :97 权威，`InputOTP` 系 antd/shadcn 命名；裁决权威 `docs/references/naming-conventions.md` + naming pass 规则）；matrix Form Core 增行
-- [ ] schema + contracts + definition（capability: clear/reset/focus）+ renderer（ui InputOtp 消费、length 钳制、masked、齐位提交）
-- [ ] focused 单测（渲染 length 格/齐位提交/回退回落 undefined/清空/禁用态/初值回显归一（非齐位初值 → undefined、齐位初值回填各格）——Proof 项，随 Fix 落地并先行编写）
-- [ ] e2e `verification-code.spec.ts`（键入分发/完成提交/回退回落 undefined/清空）
-- [ ] `design.md` + `example.json`；i18n 键；lab 页 + 路由注册
+- [x] 命名决议落本 plan（`verification-code` 名不变；AMIS 源 type 为 `input-verification-code`——gap-analysis :97 权威，`InputOTP` 系 antd/shadcn 命名；裁决权威 `docs/references/naming-conventions.md` + naming pass 规则）；matrix Form Core 增行
+- [x] schema + contracts + definition（capability: clear/reset/focus）+ renderer（ui InputOTP 消费——故意非受控、length 钳制、masked 容器类、齐位提交）
+- [x] focused 单测 6 条（渲染 length 格+钳制/齐位提交/回退回落 undefined（不变式）/masked 标记/禁用态/初值回显归一两条（齐位回填 slots、非齐位归一 undefined））
+- [x] e2e `verification-code.spec.ts`（键入分发/完成提交/回退回落 undefined/连续 Backspace 后仍可编辑/masked 透明字符）
+- [x] `design.md`（13 节）+ `example.json`；i18n 键（verificationCodeAriaLabel 双语）；playground `verification-code-lab-page.tsx` + route/registry（route-matrix 42/42 绿）
 
 Exit Criteria:
 
-- [ ] focused 单测绿；route-matrix 守卫绿；e2e spec 全绿
+- [x] focused 单测绿（6/6）；route-matrix 守卫绿（42/42）；e2e spec 全绿（3/3）
 
 ### Phase 2 - 登记 + INV 审计 + 收口验证与状态回写
 
-Status: planned
+Status: completed
 Targets: 三处登记、roadmap §13、dev log
 
 - Item Types: `Proof`、`Follow-up`（登记性）
 
-- [ ] 登记：examples.manifest.json / quick-reference.md / components/index.md
-- [ ] INV 审计（铁律 7）结论按 §4 模板落 Closure 节
+- [x] 登记：examples.manifest.json（runtime +1）/ quick-reference.md（VerificationCodeSchema 行）/ components/index.md（清单行 + 目录）——grep 复核命中
+- [x] INV 审计（铁律 7）结论按 §4 模板落 Closure 节
 - [ ] 全量验证 + roadmap §13 L2.4 回写 `done`（grep 复核）+ dev log
 
 Exit Criteria:
 
-- [ ] 三处登记 diff 可见；roadmap/dev log 落盘一致
+- [x] 三处登记 diff 可见；roadmap/dev log 落盘一致
 
 ## 授权记录（human gate）
 
@@ -105,20 +105,20 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复
-- [ ] 所有 in-scope confirmed contract drifts 已收敛
-- [ ] 行为/契约结果已达成（`verification-code` `runtime` 八项交付面齐）
-- [ ] 必要 focused verification 已完成（focused 单测 + e2e 真浏览器断言）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步（design.md、matrix、三处登记）
-- [ ] new-renderer-introduction-audit 已过且结论按 §4 模板记录于 Closure 节
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增红）
-- [ ] `pnpm test:e2e`（全量零新增红；失败面 = 502 存量台账 9 + 1 在册 watch-only）
+- [x] 所有 in-scope confirmed live defects 已修复（执行中暴露：受控值循环重置格子 → 改故意非受控；初值归一缺失 → defaultValue + value watcher）
+- [x] 所有 in-scope confirmed contract drifts 已收敛
+- [x] 行为/契约结果已达成（`verification-code` `runtime` 八项交付面齐）
+- [x] 必要 focused verification 已完成（6 条 focused 单测 + e2e 3 用例真浏览器断言）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（closure r1 审出的初值归一缺失已补实现+测试；非受控设计已在 design.md §7 记录）
+- [x] 受影响的 owner docs 已同步（design.md、matrix、三处登记；masked 机制文档漂移已修）
+- [x] new-renderer-introduction-audit 已过且结论按 §4 模板记录于 Closure 节
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`（2026-09-26 全仓 0 error）
+- [x] `pnpm build`（exit 0）
+- [x] `pnpm lint`（exit 0，仅存量 1 warning）
+- [x] `pnpm test`（`--force` 零缓存 74/74 task 全绿；form 927 = 925+2，closure r1 初值归一增补后复跑全绿）
+- [x] `pnpm check`（exit 0，零新增红）
+- [x] `pnpm test:e2e`（初值归一增补后复跑：1551 passed / 13 failed——失败集在 gantt/cal/w3c/code-editor/c6/c7 等 flake 家族内轮转（本轮 gantt-bars-and-links:92/:131、cal:335、w3c:115 等），核心 10 项 = 502 存量台账 9 + watch-only 1 每轮稳定在列；flake 隔离复跑全过，登记 QA.2 前消化清单）
 
 ## Deferred But Adjudicated
 
@@ -130,12 +130,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: `verification-code` 全交付并经独立 closure audit 两轮通过（round 1 `issues` 1 Blocker matrix 缺行 + 3 Major 初值归一缺失/簿记未落/roadmap 提前回写 + 2 Minor → 全部修复；round 2 diff 级复核 `approved` 0B/0M，实跑 matrix 1 命中、focused 6/6、form 927/927、e2e 3/3、typecheck 40/40、check exit 0；Minor G/H 簿记随本提交落盘）。`runtime`：matrix flip + design/example + 代码（6 focused 单测）+ e2e 3 用例真浏览器断言 + 三处登记 + i18n 双语 + INV 审计（铁律 7）全过。unit 侧 full-green（74/74 task；form 927）；e2e 全量零新增红（1551 passed；核心失败面 = 502 存量台账 9 + 1 在册 watch-only，余为 flake 家族轮转且隔离复跑全过）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 fresh 子 agent（general-purpose，2026-09-26，两轮）
+- Evidence: round 1 `issues`（Blocker A matrix Form Core 行缺失——执行遗漏，补行；Major B 初值归一缺失——defaultValue 回填 + value watcher 归一 + 2 单测；Major C plan 簿记未随执行更新；Major D roadmap 提前回写时序违规——记录在案并校正；Minor E masked 文档漂移修正、Minor F example 措辞）→ round 2 diff 级复核 `approved`（审计员独立复跑 focused 6/6、form 927/927、e2e 3/3、typecheck、check exit 0；「接受面+契约面」之外的暴露面核查无第三处）。
 
 Follow-up:
 

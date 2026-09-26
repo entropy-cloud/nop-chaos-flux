@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import type { BaseSchema } from '@nop-chaos/flux-core';
 import { resetFluxI18n, initFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -84,6 +84,26 @@ describe('verification-code renderer (missing-components L2.4, plan 508)', () =>
     ]);
     const otp = document.querySelector('[data-slot="input-otp"]');
     expect(otp?.hasAttribute('data-masked')).toBe(true);
+  });
+
+  it('full-length initial value backfills the cells (echo)', () => {
+    renderForm([
+      { type: 'verification-code', name: 'codeEcho', label: 'Code', length: 4, value: '9012' },
+    ]);
+    const slots = document.querySelectorAll('[data-slot="input-otp-slot"]');
+    expect(slots.length).toBe(4);
+    // The lib renders each entered char in its slot; slot chars come from the
+    // lib's internal state seeded by defaultValue.
+    const chars = Array.from(slots).map((slot) => slot.textContent);
+    expect(chars.join('')).toBe('9012');
+  });
+
+  it('non-length initial value is committed back as undefined (normalization)', async () => {
+    renderForm([
+      { type: 'verification-code', name: 'codeNorm', label: 'Code', length: 6, value: '123' },
+      { type: 'form-state-probe', name: 'codeNorm' },
+    ]);
+    await waitFor(() => expect(probeText('codeNorm')).toBe('null'));
   });
 
   it('marks the control disabled without touching the bound value', () => {

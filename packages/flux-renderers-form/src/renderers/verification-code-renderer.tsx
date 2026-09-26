@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { InputOTP, InputOTPGroup, InputOTPSlot, cn } from '@nop-chaos/ui';
@@ -27,6 +27,23 @@ export function VerificationCodeRenderer(props: RendererComponentProps<Verificat
     adapter: STRING_ADAPTER,
   });
   const rootRef = useRef<HTMLDivElement | null>(null);
+  // Initial value normalization (plan 508 draft review r2 n2): a full-length
+  // initial value backfills the cells (once, via the lib's defaultValue); a
+  // non-length initial value is committed back as undefined on mount so the
+  // invariant holds from the first frame.
+  const [initialEcho] = useState(() => {
+    const initial = typeof props.props.value === 'string' ? props.props.value : '';
+    return initial.length === length ? initial : undefined;
+  });
+  // Normalization watches the bound value: pushDefaultValue lands AFTER mount
+  // (lessons/12), so a non-length schema initial value must be normalized when
+  // it reaches the form, not at mount. Typing never produces non-full-length
+  // values (handleValueChange gates), so this only fires for external pushes.
+  useEffect(() => {
+    if (typeof value === 'string' && value !== '' && value.length !== length) {
+      handlers.onChange(undefined);
+    }
+  }, [handlers, length, value]);
 
   const handleValueChange = (next: string) => {
     // Value invariant (plan 508): the form value is the code ONLY at full
@@ -62,6 +79,7 @@ export function VerificationCodeRenderer(props: RendererComponentProps<Verificat
     >
       <InputOTP
         maxLength={length}
+        defaultValue={initialEcho}
         onChange={handleValueChange}
         disabled={!presentation.interactive}
         placeholder={placeholder}

@@ -11,6 +11,6 @@ export interface VerificationCodeSchema extends InputSchema {
   type: 'verification-code';
   /** Number of cells. Defaults to 6; non-positive/non-integer → 6 (no upper bound — lib `maxLength` is unbounded). */
   length?: number;
-  /** Render entered characters as • (renderer-built via the lib `render` prop). */
+  /** Render entered slot characters transparent (container Tailwind arbitrary class). */
   masked?: boolean;
 }

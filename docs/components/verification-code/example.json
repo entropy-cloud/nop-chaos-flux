@@ -4,5 +4,5 @@
   "label": "短信验证码",
   "length": 6,
   "masked": true,
-  "description": "OTP 验证码输入：齐位提交、回退归空（零笔画 ⇔ 空）"
+  "description": "OTP 验证码输入：齐位提交、回退归空（长度 < length ⇔ 空）"
 }

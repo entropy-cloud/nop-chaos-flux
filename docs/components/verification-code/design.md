@@ -12,7 +12,7 @@ OTP 验证码输入控件：`length` 个格子、输入自动跳格，值 = 完�
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - AMIS `input-verification-code`：单元格数量、自动聚焦、完成事件。本实现对齐公共核心；AMIS 的 status/发送按钮编排由 host `xui:actions` 承担。
-- antd/shadcn `InputOTP`：ui 基元即此命名；本 renderer 消费其 `maxLength`/`render` 通路（零 ui 改动）。
+- antd/shadcn `InputOTP`：ui 基元即此命名；本 renderer 消费其 `maxLength` 通路 + 槽位渲染（零 ui 改动）。
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -30,7 +30,7 @@ OTP 验证码输入控件：`length` 个格子、输入自动跳格，值 = 完�
 }
 ```
 
-`VerificationCodeSchema` extends InputSchema（`src/schemas-verification.ts`）。`length` 默认 6；非正数/非整数 → 6（无上界钳制，lib `maxLength` 无上界）。`masked` 经容器 Tailwind arbitrary 类把槽字符置透明（lib `render` 通路的 CSS 等价）。
+`VerificationCodeSchema` extends InputSchema（`src/schemas-verification.ts`）。`length` 默认 6；非正数/非整数 → 6（无上界钳制，lib `maxLength` 无上界）。`masked` 经容器 Tailwind arbitrary 类把槽字符置透明（input-otp@1.4.2 无 `mask` prop，CSS 等价实现）。
 
 ## 5. 字段分类
 
