@@ -50,6 +50,7 @@ export const BUILT_IN_ACTION_REGISTRY = {
   submitForm: { canonicalName: 'submitForm', compatibilityAliases: ['submit'] },
   navigate: { canonicalName: 'navigate' },
   print: { canonicalName: 'print' },
+  copy: { canonicalName: 'copy' },
   confirm: { canonicalName: 'confirm' },
   alert: { canonicalName: 'alert' },
   pick: { canonicalName: 'pick' },
@@ -163,6 +164,13 @@ export const BUILT_IN_ACTION_DEFINITIONS: Readonly<Record<string, BuiltInActionD
   submitForm: { fieldRules: {} },
   print: {
     fieldRules: {},
+  },
+  copy: {
+    argsRequired: true,
+    fieldRules: {
+      content: { kind: 'value', required: true, valueType: 'string', nonEmpty: true },
+      successMessage: { kind: 'value', valueType: 'string' },
+    },
   },
   navigate: {
     fieldRules: {

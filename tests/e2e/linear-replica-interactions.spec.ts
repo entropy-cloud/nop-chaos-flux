@@ -103,8 +103,12 @@ test.describe('Linear issues — L1 ⌘K 过滤与执行', () => {
   test('03 L1 action commands: help opens the static panel; copy fires the no-op endpoint', async ({
     page,
   }) => {
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     await trackEndpointCalls(page);
     await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
+    // Focus early: headless clipboard writes are silently dropped on an
+    // unfocused document, which would blank the readText assertion below.
+    await page.evaluate(() => window.focus());
 
     await page.getByTestId('linear-issues-cmdk-trigger').click();
     await page.getByTestId('linear-issues-cmdk-input').fill('快捷键帮助');
@@ -128,6 +132,10 @@ test.describe('Linear issues — L1 ⌘K 过滤与执行', () => {
     await expect(page.getByText('链接已复制')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByTestId('linear-issues-cmdk')).not.toBeVisible();
     expect((await readEndpointCalls(page)).Linear__copyLink).toBe(1);
+    // L3.2 real clipboard write (plan 512): no selection → empty id suffix.
+    // window.focus() first — headless readText needs a focused document.
+    await page.evaluate(() => window.focus());
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('https://tracker.demo/issue/');
   });
 });
 
@@ -187,6 +195,7 @@ test.describe('Linear issues — L3/L4 内建锁定 + L7 多选 + L8 peek', () =
   test('06 L8 peek opens with the clicked row data (id consistency) and copy fires per-row id', async ({
     page,
   }) => {
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     await trackEndpointCalls(page);
     await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
 
@@ -201,6 +210,10 @@ test.describe('Linear issues — L3/L4 内建锁定 + L7 多选 + L8 peek', () =
     await page.getByTestId('linear-issues-peek-copy').click();
     await expect(page.getByText('链接已复制')).toBeVisible({ timeout: 10_000 });
     expect((await readEndpointCalls(page)).Linear__copyLink).toBe(1);
+    // L3.2: clipboard carries the clicked row's link (plan 512).
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      `https://tracker.demo/issue/${expectedKey.trim()}`,
+    );
 
     await page.keyboard.press('Escape');
     await expect(peek).not.toBeVisible();
@@ -523,6 +536,7 @@ test.describe('Linear inbox — 收件箱动作', () => {
 
 test.describe('Linear detail — L11 终态（复制/状态/归档）', () => {
   test('16 detail copy fires the no-op copyLink endpoint with the page id', async ({ page }) => {
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     await trackEndpointCalls(page);
     await openPage(page, 'linear-detail', '问题详情', { width: 1440, height: 1400 });
 
@@ -530,6 +544,10 @@ test.describe('Linear detail — L11 终态（复制/状态/归档）', () => {
     await page.getByTestId('linear-detail-copy').click();
     await expect(page.getByText('链接已复制')).toBeVisible({ timeout: 10_000 });
     expect((await readEndpointCalls(page)).Linear__copyLink).toBe(1);
+    // L3.2 real clipboard write with the page id (plan 512).
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      'https://tracker.demo/issue/ENG-105',
+    );
   });
 
   test('17 detail status select posts single-id bulkUpdate and the pills update', async ({ page }) => {

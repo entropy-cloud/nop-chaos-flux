@@ -114,16 +114,22 @@
                       "label": "复制链接",
                       "className": "ln-btn ln-btn-quiet h-7 px-3 text-xs",
                       "testid": "linear-detail-copy",
-                      "onClick": {
-                        "action": "ajax",
-                        "args": {
-                          "url": "/r/Linear__copyLink?id=${detail?.id}",
-                          "method": "get"
+                      "onClick": [
+                        {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/Linear__copyLink?id=${detail?.id}",
+                            "method": "get"
+                          }
                         },
-                        "messages": {
-                          "success": "链接已复制"
+                        {
+                          "action": "copy",
+                          "args": {
+                            "content": "https://tracker.demo/issue/${detail?.id}",
+                            "successMessage": "链接已复制"
+                          }
                         }
-                      }
+                      ]
                     },
                     {
                       "type": "button",

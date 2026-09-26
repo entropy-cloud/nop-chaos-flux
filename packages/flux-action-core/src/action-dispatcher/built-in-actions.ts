@@ -308,6 +308,23 @@ export async function runBuiltInAction(
       };
       break;
     }
+    case 'copy': {
+      const payload = evaluateActionArgs(action, ctx, internals.evaluator);
+      if (!payload || typeof payload !== 'object') {
+        return {
+          ok: false,
+          error: new Error('copy requires args payload'),
+        };
+      }
+      invocation = {
+        action: 'copy',
+        args: payload,
+        targeting: action.targeting,
+        actionNode: action,
+        signal,
+      };
+      break;
+    }
     case 'print': {
       invocation = {
         action: 'print',

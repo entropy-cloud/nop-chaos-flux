@@ -516,6 +516,14 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     // Host-channels contract (plan 512 L3.1): page-level print goes through
     // the host — `window.print()` proxy for the browser playground.
     print: () => window.print(),
+    // Host-channels contract (plan 512 L3.2): clipboard writes proxy the
+    // browser async clipboard API; rejection propagates so the copy action
+    // surfaces a failure toast instead of a silent fake success.
+    clipboard: {
+      writeText: async (text: string) => {
+        await navigator.clipboard.writeText(text);
+      },
+    },
     navigate: (input, options) => {
       if (typeof input === 'number') {
         window.history.go(input);

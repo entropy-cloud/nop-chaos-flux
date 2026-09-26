@@ -412,8 +412,13 @@
                                             "url": "/r/Linear__copyLink?id=${issueSelection?.[0] ?? ''}",
                                             "method": "get"
                                           },
-                                          "messages": {
-                                            "success": "链接已复制"
+                                          "when": "${$slot.item.act === 'copy'}"
+                                        },
+                                        {
+                                          "action": "copy",
+                                          "args": {
+                                            "content": "https://tracker.demo/issue/${issueSelection?.[0] ?? ''}",
+                                            "successMessage": "链接已复制"
                                           },
                                           "when": "${$slot.item.act === 'copy'}"
                                         },
@@ -1597,8 +1602,13 @@
                                                 "url": "/r/Linear__copyLink?id=${issueSelection?.[0] ?? ''}",
                                                 "method": "get"
                                               },
-                                              "messages": {
-                                                "success": "链接已复制"
+                                              "when": "${$slot.item.act === 'copy'}"
+                                            },
+                                            {
+                                              "action": "copy",
+                                              "args": {
+                                                "content": "https://tracker.demo/issue/${issueSelection?.[0] ?? ''}",
+                                                "successMessage": "链接已复制"
                                               },
                                               "when": "${$slot.item.act === 'copy'}"
                                             },
@@ -1954,16 +1964,22 @@
                                         "label": "复制链接",
                                         "className": "ln-btn ln-btn-ghost h-7 px-3 text-xs self-start",
                                         "testid": "linear-issues-peek-copy",
-                                        "onClick": {
-                                          "action": "ajax",
-                                          "args": {
-                                            "url": "/r/Linear__copyLink?id=${id}",
-                                            "method": "get"
+                                        "onClick": [
+                                          {
+                                            "action": "ajax",
+                                            "args": {
+                                              "url": "/r/Linear__copyLink?id=${id}",
+                                              "method": "get"
+                                            }
                                           },
-                                          "messages": {
-                                            "success": "链接已复制"
+                                          {
+                                            "action": "copy",
+                                            "args": {
+                                              "content": "https://tracker.demo/issue/${id}",
+                                              "successMessage": "链接已复制"
+                                            }
                                           }
-                                        }
+                                        ]
                                       }
                                     ]
                                   },

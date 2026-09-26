@@ -182,6 +182,7 @@ test.describe('Notion peek — I6/I10 属性编辑保存链路', () => {
   });
 
   test('05 I6 center peek (gallery) edit path and I14 equivalent copy-link carrier', async ({ page }) => {
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     await trackEndpointCalls(page);
     await openPage(page);
 
@@ -195,6 +196,10 @@ test.describe('Notion peek — I6/I10 属性编辑保存链路', () => {
     await page.getByTestId('notion-peek-copy').click();
     await expect(page.getByText('链接已复制')).toBeVisible({ timeout: 10_000 });
     expect((await readEndpointCalls(page)).Notion__copyLink).toBe(1);
+    // L3.2 real clipboard write (plan 512) — link carries the row id.
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
+      /^https:\/\/wiki\.demo\/req\//,
+    );
 
     // center peek 编辑保存
     await page.getByTestId('notion-peek-edit-title').locator('input').fill('双列布局卡片已改名');

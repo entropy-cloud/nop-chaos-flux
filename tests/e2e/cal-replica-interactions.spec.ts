@@ -438,12 +438,15 @@ test.describe('Cal success — I10 外链 + I11 复制链接 + I12 重排/取消
   });
 
   test('13 I11 copy link fires the share-link endpoint with copied feedback', async ({ page }) => {
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     await trackEndpointCalls(page);
     await openPage(page, 'cal-success', 'Cal 预约 · 预约成功');
 
     await page.getByTestId('cal-success-copy-link').click();
     await expect(page.getByText('链接已复制')).toBeVisible({ timeout: 10_000 });
     expect((await readEndpointCalls(page)).Cal__shareLink).toBe(1);
+    // L3.2 real clipboard write (plan 512) — the booking-page link.
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('#/complex-pages/cal-booking');
   });
 
   test('14 I12 reschedule returns to the booking view prefilled with the booked slot', async ({

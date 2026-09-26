@@ -408,6 +408,32 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           return { ok: true };
         }
 
+        case 'copy': {
+          const env = getEnv();
+          const args = (invocation.args ?? {}) as { content?: unknown; successMessage?: unknown };
+          if (!env.clipboard) {
+            env.notify('warning', t('flux.action.copyUnsupported'));
+            return {
+              ok: false,
+              error: new Error('copy action requires env.clipboard to be configured'),
+            };
+          }
+          if (typeof args.content !== 'string' || args.content === '') {
+            return {
+              ok: false,
+              error: new Error('copy action requires args.content'),
+            };
+          }
+          try {
+            await env.clipboard.writeText(args.content);
+          } catch (error) {
+            env.notify('error', t('flux.action.copyFailed'));
+            return { ok: false, error };
+          }
+          env.notify('success', typeof args.successMessage === 'string' && args.successMessage ? args.successMessage : t('flux.action.copySuccess'));
+          return { ok: true };
+        }
+
         case 'print': {
           const env = getEnv();
           if (!env.print) {

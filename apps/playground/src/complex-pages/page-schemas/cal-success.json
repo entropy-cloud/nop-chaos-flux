@@ -206,11 +206,19 @@
               "icon": "link",
               "className": "cal-btn cal-btn-primary",
               "testid": "cal-success-copy-link",
-              "onClick": {
-                "action": "ajax",
-                "args": { "url": "/r/Cal__shareLink", "method": "get" },
-                "messages": { "success": "链接已复制" }
-              }
+              "onClick": [
+                {
+                  "action": "ajax",
+                  "args": { "url": "/r/Cal__shareLink", "method": "get" }
+                },
+                {
+                  "action": "copy",
+                  "args": {
+                    "content": "#/complex-pages/cal-booking",
+                    "successMessage": "链接已复制"
+                  }
+                }
+              ]
             },
             {
               "type": "flex",

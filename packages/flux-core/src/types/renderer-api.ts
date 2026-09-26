@@ -174,6 +174,11 @@ export interface ErrorMonitorPayload {
   details?: Record<string, unknown>;
 }
 
+/** `env.clipboard` 主接口：写入文本到系统剪贴板。失败时 reject。 */
+export interface ClipboardWriter {
+  writeText(text: string): Promise<void>;
+}
+
 export interface RendererEnv extends ExpressionExecutionEnv {
   fetcher: ApiFetcher;
   /**
@@ -193,6 +198,12 @@ export interface RendererEnv extends ExpressionExecutionEnv {
    * docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md
    */
   print?: () => void;
+  /**
+   * 系统剪贴板写入通道。可选；host 不提供或权限拒绝时 `copy` action 返回
+   * 失败并提示（不静默假成功）。使用前必须 capability check。评审来源：
+   * docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md
+   */
+  clipboard?: ClipboardWriter;
   notify: (level: 'info' | 'success' | 'warning' | 'error', message: string) => void;
   navigate?: (to: string | number, options?: { replace?: boolean }) => void;
   confirm?: (message: string, title?: string) => Promise<boolean>;

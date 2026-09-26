@@ -293,13 +293,14 @@ describe('built-in host-channel actions', () => {
       expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
       executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
+      createSurfaceScope: vi.fn(),
       runtime: { env: { notify } } as unknown as RendererRuntime,
     });
 
     await expect(
       adapter.invokeBuiltInAction(createBuiltInInvocation('print'), createCtx({})),
     ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
-    expect(notify).toHaveBeenCalledWith('warning', expect.stringContaining('打印'));
+    expect(notify).toHaveBeenCalledWith('warning', expect.stringMatching(/打印|Printing/));
 
     const print = vi.fn();
     const printingAdapter = createActionRuntimeAdapter({
@@ -307,12 +308,67 @@ describe('built-in host-channel actions', () => {
       expressionCompiler: {} as unknown as ExpressionCompiler,
       evaluate: <T>(target: unknown) => target as T,
       executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
+      createSurfaceScope: vi.fn(),
       runtime: { env: { notify, print } } as unknown as RendererRuntime,
     });
     await expect(
       printingAdapter.invokeBuiltInAction(createBuiltInInvocation('print'), createCtx({})),
     ).resolves.toEqual({ ok: true });
     expect(print).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('built-in copy action', () => {
+  function createCopyAdapter(env: Partial<RendererEnv>) {
+    const notify = vi.fn();
+    const adapter = createActionRuntimeAdapter({
+      getEnv: () => ({ ...env, notify }) as RendererEnv,
+      expressionCompiler: {} as unknown as ExpressionCompiler,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest: vi.fn() as unknown as ApiRequestExecutor,
+      createSurfaceScope: vi.fn(),
+      runtime: { env: { ...env, notify } } as unknown as RendererRuntime,
+    });
+    return { notify, adapter };
+  }
+
+  it('writes the clipboard and reports the success message', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const { notify, adapter } = createCopyAdapter({ clipboard: { writeText } });
+    await expect(
+      adapter.invokeBuiltInAction(
+        createBuiltInInvocation('copy', { content: 'https://tracker.demo/issue/ENG-1', successMessage: '链接已复制' }),
+        createCtx({}),
+      ),
+    ).resolves.toEqual({ ok: true });
+    expect(writeText).toHaveBeenCalledWith('https://tracker.demo/issue/ENG-1');
+    expect(notify).toHaveBeenCalledWith('success', '链接已复制');
+  });
+
+  it('falls back to the default copySuccess message when none is provided', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const { notify, adapter } = createCopyAdapter({ clipboard: { writeText } });
+    await expect(
+      adapter.invokeBuiltInAction(createBuiltInInvocation('copy', { content: 'x' }), createCtx({})),
+    ).resolves.toEqual({ ok: true });
+    expect(notify).toHaveBeenCalledWith('success', expect.stringMatching(/Copied|已复制/));
+  });
+
+  it('warns and fails when env.clipboard is missing', async () => {
+    const { notify, adapter } = createCopyAdapter({});
+    await expect(
+      adapter.invokeBuiltInAction(createBuiltInInvocation('copy', { content: 'x' }), createCtx({})),
+    ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
+    expect(notify).toHaveBeenCalledWith('warning', expect.stringMatching(/Clipboard|剪贴板/));
+  });
+
+  it('surfaces a write rejection as a copyFailed error toast', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+    const { notify, adapter } = createCopyAdapter({ clipboard: { writeText } });
+    await expect(
+      adapter.invokeBuiltInAction(createBuiltInInvocation('copy', { content: 'x' }), createCtx({})),
+    ).resolves.toMatchObject({ ok: false, error: expect.any(Error) });
+    expect(notify).toHaveBeenCalledWith('error', expect.stringMatching(/Copy failed|复制失败/));
   });
 });
 

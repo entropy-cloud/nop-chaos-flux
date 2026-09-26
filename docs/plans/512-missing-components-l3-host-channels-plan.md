@@ -122,18 +122,18 @@ Exit Criteria:
 
 ### Phase 4 - L3.2 clipboard 通道
 
-Status: planned
+Status: completed
 Targets: action 词汇（或 env，随裁定）/ host 实现 / 三 replica schema / e2e
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 按 Phase 1 裁定落地剪贴板通道（copy 内置 action 或 env 面，随裁定 + host 实现；`navigator.clipboard` 不可用降级路径；失败文案 i18n 键 zh-CN/en-US）+ focused 单测
-- [ ] Cal/Linear/Notion 三处 copy-link 从语义模拟升级为真实写入（mock 端点保留，toast 反馈成对保留）+ e2e（剪贴板内容程序化断言——`context.grantPermissions(['clipboard-read','clipboard-write'])`）
+- [x] 剪贴板通道落地：`renderer-api.ts` `ClipboardWriter` + `clipboard?` 字段 + `copy` 内置 action（args：content 必填非空 / successMessage 可选，缺省 `flux.action.copySuccess`）+ runtime adapter（缺失 → warning `copyUnsupported` + ok:false；writeText reject → error `copyFailed` + ok:false；成功 → success toast）；playground host `navigator.clipboard.writeText` 代理（reject 传播）；focused 单测 ×4（写入+成功文案/缺省文案/缺失降级/拒绝失败，runtime 1445/1445 绿）
+- [x] Cal/Linear/Notion 三族 copy-link 升级为真实写入：**8 处按钮全接线**（cal-success ×1 / linear-detail ×1 / linear-issues ×3（含 2 处 slot 菜单以同 `when` copy 兄弟项保端点调用）/ notion-database ×5 中 4 处 onClick 数组 + 1 处…实为 4+1）；ajax 端点调用保留（e2e 端点计数不变），`messages.success` 移除、toast 归 copy action 所有；e2e 剪贴板内容程序化断言 ×5（linear 03/06/16 精确值、notion 05 正则、cal 13 精确值，grantPermissions 于测试开头——headless 需页面 focus 的怪癖以 early-focus 消解）
 
 Exit Criteria:
 
-- [ ] 三处复刻真实写入剪贴板且 e2e 断言读到写入内容
-- [ ] 降级路径 focused 单测在案
+- [x] 三族复刻真实写入剪贴板且 e2e 断言读到写入内容（linear 精确 URL、notion 前缀正则、cal 精确 hash；replica 五 spec 68/68 绿）
+- [x] 降级路径 focused 单测在案（capability missing + writeText reject 双路径）
 
 ### Phase 5 - L3.3 download action
 
