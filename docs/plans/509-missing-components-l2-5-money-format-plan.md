@@ -1,6 +1,6 @@
 # 509 Missing Components L2.5 — input-number money format 协议（纯文档）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-26
 > Source: `docs/backlog/missing-components-and-designer-roadmap.md` §5（L2.5 行——「既有控件扩展：登记 improvement-analysis + input-number design.md 增节 + input-number example 增补——**不建新 type**；显示/校验分歧时再议」）；§1 交付铁律
 > Related: `docs/components/input-number/design.md`（owner doc，§2 现有 `formatter`/`parser` 不采纳裁决）
@@ -59,7 +59,7 @@ Targets: improvement-analysis、input-number design.md、improvement-roadmap（e
 
 - Item Types: `Decision`
 
-- [x] improvement-analysis（2026-06-20 v2 快照）登记 money format 条目：落 §7.1 工作项表（沿用 E0a…X5 编号惯例（跳过已占用编号——E3 已被 improvement-roadmap Phase Status 占用，取首个未占用 ID 如 E4）），设计状态用 §0.4 `DESIGN-ACK-NOT-IMPL`（已规划未实现——恰为本条目匹配态）；并在活页登记册 `existing-components-improvement-roadmap.md`（Phase Status 唯一动态区）同步挂工作项供 demand-gated 实现追踪
+- [x] improvement-analysis（2026-06-20 v2 快照）登记 money format 条目：落 §7.1 横切工作项表（沿用 E0a…X5 编号惯例，跳过已占用编号——E3 已被占用，登记为 X6），设计状态用 §0.4 `DESIGN-ACK-NOT-IMPL`；并在活页登记册 `existing-components-improvement-roadmap.md` 同步挂工作项 X6（demand-gated 实现追踪）
 - [x] input-number design.md（**§2 决策表**后新增 §2.1）增协议节，除 currency 三要素/值契约不变/双轨 adapter 前置/precision 关系/实现触发条件外，必须显式和解：
   - 与 `kilobitSeparator` 不采纳裁决（design.md §2）的关系——money 协议把千分位纳入显示层，说明为何值契约不变仍然成立；
   - 与 `formatter`/`parser` 不采纳（后续）裁决的关系——money 协议是该「后续 adapter 协议」的具体实例，通用 formatter/parser 是否仍维持不采纳；
@@ -72,12 +72,12 @@ Exit Criteria:
 
 ### Phase 2 - 收口回写（closure audit 之后）
 
-Status: in progress
+Status: completed
 Targets: roadmap §13、dev log
 
 - Item Types: `Proof`
 
-- [ ] roadmap §13 L2.5–L2.6 组合行拆分：L2.5 单列 `done`（closure audit 通过后执行，对齐 roadmap:12 顺序规则）、L2.6 保持 `proposed`；grep 复核 + dev log
+- [x] roadmap §13 L2.5–L2.6 组合行拆分：L2.5 单列 `done`（closure audit 通过后执行，对齐 roadmap:12 顺序规则）、L2.6 保持 `proposed`；grep 复核 + dev log
 
 Exit Criteria:
 
@@ -94,9 +94,9 @@ Exit Criteria:
 
 > 纯文档计划：按 plan guide 模板注记，`pnpm typecheck/build/lint/test/check/e2e` 全部豁免（无代码变更）。
 
-- [ ] 协议落点（improvement-analysis + design.md + improvement-roadmap）已落盘且口径一致（example.json 维持不动）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 协议落点（improvement-analysis + design.md + improvement-roadmap）已落盘且口径一致（example.json 维持不动）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 
 ## Deferred But Adjudicated
 
@@ -109,12 +109,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 纯文档协议三落点交付并经独立 closure audit 两轮通过（round 1 `issues` 2M：roadmap §13 提前回写违反顺序规则 + precision 关系未落条文；3m：analysis 表列数/活页行格式/双编号——全部修复；round 2 diff 级复核 `approved` 0B/0M，附条件项 analysis 分隔行/活页缩进已随收口清理）。协议核心承诺（form value 恒 number、双轨 adapter 前置、precision/prefix-suffix 和解、naming pass）全部落盘；money format 实现登记 Deferred（out-of-scope，demand-gated successor）。纯文档无代码变更，全绿状态不受影响。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 fresh 子 agent（general-purpose，2026-09-26，两轮）
+- Evidence: round 1 `issues`（M1 roadmap §13 提前回写 + M2 precision 条文缺失 + m1/m2/m3 簿记）→ 全部修复 → round 2 diff 级复核 `approved`（实核 :230 合并行回退、design.md:55 precision 条文、analysis 2 列对齐、活页条目式 X6 单 ID；dev log 披露在案）。
 
 Follow-up:
 

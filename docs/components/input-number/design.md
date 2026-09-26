@@ -52,6 +52,7 @@
 - **与 §2 既有裁决的和解**：
   - `formatter`/`parser`「不采纳（后续）」所预告的「独立 adapter 协议」即本协议——money format 是该后续 adapter 的第一个具体实例（单格式内建，不开放任意 formatter 表达式）；通用 formatter/parser 是否开放维持不采纳，另行评估。
   - `prefix`/`suffix`（已实现，覆盖 ¥/$ 等单位展示）与 `format: 'currency'` **共存不取代**：currency 符号由 `format` 协议内建（含本地化），`prefix`/`suffix` 继续承载非货币前/后缀；host 若同时设置货币符号与 prefix，显示层以 `format` 优先（避免双真值源）。
+- **与既有 `precision` 的关系**：`precision` 管束 form 值的数值精度（提交前的数值舍入），money 显示精度管束展示层小数位；两者**独立共存**——display 层小数位以 `format` 协议为准，提交值仍经 `precision` 归一；若 host 要求「显示精度 = 提交精度」，在实现 plan 中裁决显式联动，协议不预设。
 - **实现前置条件**：display value 与 form value 双轨需要 display↔number 双向 adapter（输入含千分位/符号的文本 → 解析回 number；焦点/失焦切换编辑态与展示态）——即 §2 预告的 adapter 协议本体。
 - **实现触发条件**：host 出现真实货币输入 demand 且裁决「校验器读 number」的显示/校验分歧后，立实现小 plan 消费本节（missing-components L2.5 Deferred 登记）。
 
