@@ -14,6 +14,7 @@ import { projectSessionChange, type ScadaEditorSession } from './editor-session.
 import { EditorPalettePanel } from './palette/editor-palette.js';
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
 import { EditorToolboxPanel } from './toolbox/toolbox-panel.js';
+import { EditorStatusBar } from './renderer/editor-status-bar.js';
 import { collectWorldBounds } from './editor-working-helpers.js';
 import { hasScadaSymbol } from '../symbols/symbol-registry.js';
 import type { Bounds } from '../engine/viewport.js';
@@ -80,7 +81,12 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   const idCounter = useRef(0);
   const { t } = useFluxTranslation();
 
-  const events = props.props.events as ScadaEditorCanvasEvents | undefined;
+  // plan 521 / W2：events 字段在 renderer definition 中为 kind:'ignored'（echarts 同型）——
+  // 保持 raw schema，args 里的 `${event.*}` 模板在 dispatch 期结合 normalized event 求值。
+  // raw schema 优先；props 通道兜底（单测直构 props.props.events 的既有用法不受影响）。
+  const events =
+    (props.schema as { events?: ScadaEditorCanvasEvents }).events ??
+    (props.props.events as ScadaEditorCanvasEvents | undefined);
   const helpersRef = useRef<RendererHelpers>(props.helpers);
   const scopeRef = useRef<ScopeRef | undefined>(props.node?.scope);
   const eventsRef = useRef<ScadaEditorCanvasEvents | undefined>(events);
@@ -200,12 +206,25 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
 
   // canvas slot 落点（design-renderer.md §10）：leafer App 在 containerRef 内创建 <canvas>，
   // 标记 data-slot="scada-editor-canvas-canvas" + marker class。
+  // plan 521 / W7 稳健化：leafer canvas 元素可晚于本 effect（或被 leafer 内部重建）——
+  // 用 MutationObserver 兜底重标记，消除「effect 先于 canvas 创建 → marker 永不落地」竞态。
+  // 只标记**第一个** canvas（主 view 层）——leafer 含多 canvas 层，marker 契约保持唯一
+  // （host/e2e 以该 marker 定位画布几何）。
   useEffect(() => {
     if (!runtime || !containerRef.current) return;
-    const canvas = containerRef.current.querySelector('canvas');
-    if (!canvas) return;
-    canvas.setAttribute('data-slot', 'scada-editor-canvas-canvas');
-    canvas.classList.add('nop-scada-editor-canvas-canvas');
+    const container = containerRef.current;
+    const tagFirst = () => {
+      const canvas = container.querySelector('canvas');
+      if (canvas && !canvas.hasAttribute('data-slot')) {
+        canvas.setAttribute('data-slot', 'scada-editor-canvas-canvas');
+        canvas.classList.add('nop-scada-editor-canvas-canvas');
+      }
+    };
+    tagFirst();
+    if (typeof MutationObserver === 'undefined') return;
+    const observer = new MutationObserver(() => tagFirst());
+    observer.observe(container, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [runtime]);
 
   const effectiveStatus: ScadaEditorCanvasStatus = parseError ? 'error' : status;
@@ -335,8 +354,19 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         }}
         // plan 2026-08-07-1835-2 Phase 3 / open P1-B：键盘层——Delete/Ctrl+Z/Y/Ctrl+G/Ctrl+Shift+G/arrows
         // （此前 grep keydown 0 hits，delete/group/ungroup 仅 component:* handle 可达）。
+        // plan 521 / U5：Ctrl+C/X/V 剪贴板快捷键（接内部 clipboard copy/cut/paste，OS clipboard 归 L5.8 O3）；
+        // isEditable 守卫沿用仓库键盘层既有模式（flow-designer/kanban：INPUT/TEXTAREA/SELECT/contentEditable
+        // 焦点不劫持）——failure path u5-shortcut-in-input。
         onKeyDown={(e) => {
           if (!runtime || disabled) return;
+          const target = e.target as HTMLElement | null;
+          const isEditable =
+            !!target &&
+            (target.tagName === 'INPUT' ||
+              target.tagName === 'TEXTAREA' ||
+              target.tagName === 'SELECT' ||
+              target.isContentEditable === true);
+          if (isEditable) return;
           const sel = selection;
           const ctrl = e.ctrlKey || e.metaKey;
           const key = e.key.toLowerCase();
@@ -351,6 +381,17 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
           } else if ((ctrl && !e.shiftKey && key === 'y') || (ctrl && e.shiftKey && key === 'z')) {
             e.preventDefault();
             runtime.redo();
+          } else if (ctrl && !e.shiftKey && key === 'c') {
+            if (sel.length === 0) return;
+            e.preventDefault();
+            runtime.copySelection();
+          } else if (ctrl && !e.shiftKey && key === 'x') {
+            if (sel.length === 0) return;
+            e.preventDefault();
+            runtime.cutSelection();
+          } else if (ctrl && !e.shiftKey && key === 'v') {
+            e.preventDefault();
+            runtime.paste();
           } else if (ctrl && !e.shiftKey && key === 'g') {
             if (sel.length >= 2) {
               e.preventDefault();
@@ -407,7 +448,8 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
       {showLayoutBody
         ? asReactNode(statusBar?.render()) ?? (
             // plan 2026-08-08-0900-1 Phase 3 / P2 #11：statusBar 内置 fallback（发射 marker），不再恒 null。
-            <div data-slot="scada-editor-status-bar" className="nop-scada-editor-status-bar" />
+            // plan 521 / U4：fallback 换真实 statusBar（viewport/mode/selection/undo-redo 摘要，数据已在 runtime）。
+            <EditorStatusBar runtime={runtime} selection={selection} />
           )
         : null}
     </div>

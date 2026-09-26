@@ -1,9 +1,15 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
+import { Badge } from '@nop-chaos/ui';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
 import type { ScadaSymbolNode } from '../../serialization/config-types.js';
 import { getScadaSymbolDefinition } from '../../symbols/symbol-registry.js';
 import { validateScadaConfig } from '../../serialization/validate.js';
-import { extractPanelFields, evaluateVisibleWhen, type PanelField } from './schema-extractor.js';
+import {
+  extractPanelFields,
+  evaluateVisibleWhen,
+  extractJunctionConnections,
+  type PanelField,
+} from './schema-extractor.js';
 import { parseFieldErrors } from './field-errors.js';
 import { InspectorField } from './inspector-field.js';
 
@@ -37,6 +43,13 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
   const fieldErrors = validation.ok
     ? {}
     : parseFieldErrors(validation.errors, selectedNodeId, runtime.session.workingConfig);
+  // plan 521 / U6：junction 类型注入 connections 只读列表（readConnections 复用；编辑归 U1 弹层）。
+  const connectionRows = node
+    ? extractJunctionConnections(
+        node,
+        new Set(collectIds(runtime.session.workingConfig.symbols)),
+      )
+    : undefined;
 
   if (node && definition) {
     const handleFieldChange = (field: PanelField, value: unknown) => {
@@ -70,6 +83,36 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
             </div>
           );
         })}
+        {connectionRows ? (
+          <div>
+            <span className="nop-scada-editor-group-label">{t('industrial.scada.editor.connections.title')}</span>
+            {connectionRows.length === 0 ? (
+              <div className="text-xs opacity-60" data-testid="inspector-connections-empty">
+                {t('industrial.scada.editor.connections.empty')}
+              </div>
+            ) : (
+              connectionRows.map((row) => (
+                <div
+                  key={row.id}
+                  className="flex items-center gap-2 text-xs py-0.5"
+                  data-slot="scada-editor-inspector-connection-row"
+                  data-dangling={row.dangling ? 'true' : 'false'}
+                  data-testid="inspector-connection-row"
+                >
+                  <span className="font-mono opacity-70">{row.id}</span>
+                  <span className="opacity-60">→</span>
+                  <span className="font-mono opacity-70">{row.target || '-'}</span>
+                  <span className="opacity-50">{row.direction}</span>
+                  {row.dangling ? (
+                    <Badge variant="destructive" className="text-[10px]">
+                      {t('industrial.scada.editor.connections.dangling')}
+                    </Badge>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+        ) : null}
       </aside>
     );
   }
@@ -96,4 +139,17 @@ function findNode(symbols: ScadaSymbolNode[], id: string): ScadaSymbolNode | und
     }
   }
   return undefined;
+}
+
+/** 递归收集全部节点 id（含 group 子树；与 listAllConnections dangling 检测同语义，plan 521 / U6）。 */
+function collectIds(symbols: ScadaSymbolNode[]): string[] {
+  const out: string[] = [];
+  const walk = (nodes: ScadaSymbolNode[]): void => {
+    for (const node of nodes) {
+      out.push(node.id);
+      if (node.children) walk(node.children);
+    }
+  };
+  walk(symbols);
+  return out;
 }

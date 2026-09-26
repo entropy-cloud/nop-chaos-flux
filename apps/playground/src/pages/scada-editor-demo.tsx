@@ -3,75 +3,194 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
+import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerScadaRenderers, registerScadaSymbols } from '@nop-chaos/flux-renderers-industrial';
 import { registerScadaEditorRenderers } from '@nop-chaos/flux-renderers-industrial/editor';
 import { Button } from '@nop-chaos/ui';
 
-// E5 M1 MVP 编辑器演示页（#/scada-editor-demo）：scada-editor-canvas 编辑态画布 +
-// palette + inspector + save/load 按钮，对齐 scada-canvas demo 先例。
-const schema = {
-  type: 'page',
-  body: [
+// scada-editor-canvas 编辑器演示页（#/scada-editor-demo）——L5.1 完成态（plan 521）：
+// palette 24 图元拖拽 + 端点拖拽连线（junction→设备）+ inspector 六类字段 + junction connections 只读列表
+// + toolbox 全套（对齐分布 / z-order / 剪贴板 / undo-redo / 导入导出 / 连接管理 / 撤销历史 / 图层树）
+// + statusBar + Edit/Preview 受控切换 + save/export 输出可见 + onSessionChange 演示。
+
+// 初始组态：pipe-junction + 相邻设备图元，使端点拖拽连线可触发（W1）。
+// 模块级常量：mode 切换重建 schema 时保持 config 对象 identity 稳定，
+// 避免触发 use-editor-engine 的 controlled config 推回（load 会重置会话 + 清空 undo 栈）。
+const DEMO_INITIAL_CONFIG = {
+  version: 1,
+  variables: [],
+  symbols: [
     {
-      type: 'flex',
-      direction: 'column',
-      className: 'gap-3',
-      body: [
-        {
-          type: 'flex',
-          direction: 'row',
-          className: 'flex-wrap items-center gap-2',
-          body: [
-            {
-              type: 'button',
-              label: 'Save',
-              testid: 'editor-btn-save',
-              onClick: { action: 'component:save', componentId: 'editor-canvas' },
-            },
-            {
-              type: 'button',
-              label: 'Load',
-              testid: 'editor-btn-load',
-              onClick: {
-                action: 'component:load',
-                componentId: 'editor-canvas',
-                args: {
-                  config: {
-                    version: 1,
-                    variables: [],
-                    symbols: [
-                      { id: 'loaded-rect', type: 'scada-rect', x: 100, y: 100, width: 150, height: 100, fill: '#1565c0' },
-                      { id: 'loaded-text', type: 'scada-text', x: 120, y: 120, text: 'Loaded', textSize: 16, textColor: '#ffffff' },
-                    ],
-                  },
+      id: 'demo-junction',
+      type: 'scada-pipe-junction',
+      x: 150,
+      y: 170,
+      width: 130,
+      height: 52,
+      custom: { connections: [] },
+    },
+    { id: 'demo-pump', type: 'scada-device-pump', x: 540, y: 140, width: 120, height: 120 },
+    { id: 'demo-rect', type: 'scada-rect', x: 200, y: 330, width: 160, height: 100, fill: '#1565c0' },
+    { id: 'demo-text', type: 'scada-text', x: 240, y: 368, text: 'E5 Editor Demo', textSize: 18, textColor: '#ffffff' },
+    { id: 'demo-ellipse', type: 'scada-ellipse', x: 620, y: 330, width: 80, height: 80, fill: '#e74c3c' },
+  ],
+};
+
+// Load 按钮装载的固定 2 图元 config（保持既有演示能力）。
+const DEMO_LOAD_CONFIG = {
+  version: 1,
+  variables: [],
+  symbols: [
+    { id: 'loaded-rect', type: 'scada-rect', x: 100, y: 100, width: 150, height: 100, fill: '#1565c0' },
+    { id: 'loaded-text', type: 'scada-text', x: 120, y: 120, text: 'Loaded', textSize: 16, textColor: '#ffffff' },
+  ],
+};
+
+// W4：Edit/Preview 受控切换——mode prop 按钮组（schema 内按钮组 + setValue 写 modeVar）。
+// mode 经 `${modeVar || "edit"}` 表达式（动态 prop）消费：scope 变更 → 画布 props 重解析 →
+// use-editor-engine 的 controlled mode 推回（P1-09）触发 runtime.switchMode。
+// 注意不能改用「schema 对象整体替换 + 静态 mode 字面量」实现切换——静态节点的 resolved props
+// 在节点已挂载后被缓存，静态字面量变更不会重解析（实测 mode 停留 edit）。
+const DEMO_SCHEMA = {
+    type: 'page',
+    body: [
+      {
+        type: 'flex',
+        direction: 'column',
+        className: 'gap-3',
+        body: [
+          {
+            type: 'flex',
+            direction: 'row',
+            className: 'flex-wrap items-center gap-2',
+            body: [
+              {
+                // W2：Save 结果可见化——component:save 返回 serializedConfig，经 then → setValue 写入
+                // 页内变量 saveOutput（${result.data} 取上一动作返回值），由下方 collapse 输出区展示。
+                // 注意：事件 args 中的 `${event.*}` 模板在 raw 事件通道不参与求值（求值 scope 不含 event），
+                // 故 serializedConfig 经 result.data 通道展示，onSave 事件本身以 toast 演示。
+                type: 'button',
+                label: 'Save',
+                testid: 'editor-btn-save',
+                onClick: {
+                  action: 'component:save',
+                  componentId: 'editor-canvas',
+                  then: [
+                    { action: 'setValue', args: { path: 'saveOutput', value: '${result.data}' } },
+                  ],
                 },
               },
-            },
-          ],
-        },
-        {
-          type: 'scada-editor-canvas',
-          id: 'editor-canvas',
-          width: 960,
-          height: 520,
-          mode: 'edit',
-          config: {
-            version: 1,
-            variables: [],
-            symbols: [
-              { id: 'demo-rect', type: 'scada-rect', x: 200, y: 160, width: 160, height: 120, fill: '#1565c0' },
-              { id: 'demo-text', type: 'scada-text', x: 240, y: 200, text: 'E5 Editor Demo', textSize: 18, textColor: '#ffffff' },
-              { id: 'demo-ellipse', type: 'scada-ellipse', x: 440, y: 180, width: 80, height: 80, fill: '#e74c3c' },
+              {
+                type: 'button',
+                label: 'Load',
+                testid: 'editor-btn-load',
+                onClick: {
+                  action: 'component:load',
+                  componentId: 'editor-canvas',
+                  args: { config: DEMO_LOAD_CONFIG },
+                },
+              },
+              {
+                // W3：导出可见化——消费 component:exportConfig 句柄，把返回 JSON 经 then → setValue
+                // 写入页内变量 exportOutput，由下方 collapse 输出区展示。
+                type: 'button',
+                label: '导出配置到页面',
+                testid: 'editor-btn-export',
+                onClick: {
+                  action: 'component:exportConfig',
+                  componentId: 'editor-canvas',
+                  then: [
+                    { action: 'setValue', args: { path: 'exportOutput', value: '${result.data}' } },
+                  ],
+                },
+              },
+              {
+                type: 'button',
+                label: 'Edit',
+                testid: 'editor-mode-edit',
+                onClick: { action: 'setValue', args: { path: 'modeVar', value: 'edit' } },
+              },
+              {
+                type: 'button',
+                label: 'Preview',
+                testid: 'editor-mode-preview',
+                onClick: { action: 'setValue', args: { path: 'modeVar', value: 'preview' } },
+              },
             ],
           },
-        },
-      ],
-    },
-  ],
+          {
+            type: 'scada-editor-canvas',
+            id: 'editor-canvas',
+            width: 960,
+            height: 520,
+            mode: '${modeVar || "edit"}',
+            config: DEMO_INITIAL_CONFIG,
+            // W2：onSave / onSessionChange 事件接线演示。事件 args 不引用 `${event.*}` 模板
+            // （求值 scope 不含 event——见上方 Save 按钮注释），payload 经 Save 的 result.data 通道可见；
+            // 会话变更以静态值写 sessionDirty，由 collapse 输出区反应式展示。
+            events: {
+              onSave: {
+                action: 'showToast',
+                args: { level: 'success', message: 'scada-editor: save 已提交（onSave 已派发）' },
+              },
+              onSessionChange: {
+                action: 'setValue',
+                args: { path: 'sessionDirty', value: true },
+              },
+            },
+          },
+          {
+            // W3/W2 输出区：可折叠（collapse，layout renderers）；默认全部展开使输出立即可见。
+            type: 'collapse',
+            className: 'mt-1',
+            defaultValue: ['export', 'save', 'session'],
+            items: [
+              {
+                key: 'export',
+                title: '导出 JSON（component:exportConfig）',
+                body: [
+                  {
+                    type: 'text',
+                    text: '${exportOutput}',
+                    testid: 'editor-output-export',
+                    className: 'font-mono text-xs break-all whitespace-pre-wrap',
+                  },
+                ],
+              },
+              {
+                key: 'save',
+                title: '保存 serializedConfig（onSave）',
+                body: [
+                  {
+                    type: 'text',
+                    text: '${saveOutput}',
+                    testid: 'editor-output-save',
+                    className: 'font-mono text-xs break-all whitespace-pre-wrap',
+                  },
+                ],
+              },
+              {
+                key: 'session',
+                title: '会话变更状态（onSessionChange）',
+                body: [
+                  {
+                    type: 'text',
+                    text: '会话已变更：${sessionDirty}',
+                    testid: 'editor-output-session',
+                    className: 'font-mono text-xs break-all',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
 };
 
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
+registerLayoutRenderers(registry);
 registerScadaRenderers(registry);
 registerScadaSymbols();
 registerScadaEditorRenderers(registry);
@@ -105,17 +224,25 @@ export function ScadaEditorDemoPage({ onBack }: ScadaEditorDemoPageProps) {
           Back to Home
         </Button>
         <p className="mb-3 uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">
-          Industrial HMI Editor · E5 M1
+          Industrial HMI Editor · M3
         </p>
         <h1 className="m-0 mb-2">scada-editor-demo 编辑器演示页</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
-          E5 M1 MVP 编辑器：palette 图元库面板（24 内置图元，拖拽放置）+ canvas 编辑态画布（双态切换经 mode prop + 测试句柄，schema 句柄留 M2 评估）
-          + inspector 属性面板（六类字段分组 + validate 衔接）+ save/load 提交语义。
+          编辑器完整能力演示：palette 图元库（24 内置图元，拖拽放置）· 画布编辑（单选/框选/拖动/缩放/旋转/成组）
+          · <strong>连线</strong>——按住「管道接头」端点拖到相邻设备（水泵/阀门）释放即可创建连线 ·
+          toolbox 工具箱（对齐×6/分布×2/z-order×4/复制剪切粘贴/undo-redo/导入导出/<strong>连接管理</strong>/
+          <strong>撤销历史</strong>/<strong>图层树</strong>）· inspector 属性面板（六类字段 + junction 连线只读列表）·
+          statusBar（视口/模式/选区/历史深度）。
         </p>
-        <div className="mt-8">
+        <p className="text-sm leading-relaxed text-[var(--nop-body-copy)] opacity-80">
+          提交语义：commitPolicy 缺省为 manual——编辑停留在 working copy，点 Save 提交并派发 onSave（保存结果见下方
+          「保存 serializedConfig」折叠区）；设为 auto 时每次会话变更即触发 save + onSave（编辑即持久化，适合低频组态场景）。
+          Edit/Preview 按钮组受控切换 mode prop：preview 态画布只读（R5 双态隔离）。
+        </p>
+        <div className="mt-2">
           <SchemaRenderer
             schemaUrl="playground://pages/scada-editor-demo"
-            schema={schema}
+            schema={DEMO_SCHEMA}
             env={env}
             registry={registry as never}
             formulaCompiler={formulaCompiler}

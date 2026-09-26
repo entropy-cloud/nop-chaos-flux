@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ScadaConfig, ScadaSymbolNode } from '../../../serialization/config-types.js';
+import type { ScadaPipeConnection } from '../../../symbols/pipe/pipe-junction.js';
 import type { ScadaEditorMode, ScadaEditorSession } from '../../editor-session.js';
 import type { UndoRedoAdapter } from '../../undo-redo/undo-redo-adapter.js';
 import type { AlignDirection, DistributeDirection } from '../../toolbox/align-distribute.js';
@@ -83,6 +84,14 @@ export interface EditorEngineRuntime {
   importConfig: (config: string | ScadaConfig) => boolean;
   /** 图元库只读浏览（复用 listScadaSymbols，design-toolbox.md §4.5）。 */
   listSymbolLibrary: () => Array<{ type: string; name: string; category?: string }>;
+  /** 连接管理（design-toolbox.md §13.1，plan 521 / U1）：列出全部 connections（含 dangling 标记）。 */
+  listConnections: () => Array<{
+    junctionId: string;
+    connection: ScadaPipeConnection;
+    dangling: boolean;
+  }>;
+  /** 连接管理（design-toolbox.md §13.1，plan 521 / U1）：断开指定 connection（经 writeConnection 入 undo 栈）。 */
+  disconnectConnection: (junctionId: string, connectionId: string) => boolean;
   /**
    * ResizeObserver 触发 setSize 后的可选 viewport refit 回调（plan 2026-08-08-1809-3 Phase 3 / P1-5）。
    *
@@ -180,6 +189,9 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     // plan 2026-08-07-1835-2 Phase 2 / multi P1-05：回填 ctx.save，使 notifySession 在 commitPolicy='auto'
     // 时可触发 save + onSave（编辑即持久化）。回填而非构造期注入，避免与 mutators 的构造环依赖。
     ctx.save = mutators.save;
+    // plan 521 / U1（design-toolbox.md §13.1）：回填 ctx.writeConnection（与 ctx.save 同模式），
+    // 使 toolbox-runtime 的 disconnectConnection 经 mutator 写回（入 undo 栈 + preview 门控）。
+    ctx.writeConnection = mutators.writeConnection;
     const cleanupConnection = wireConnectionDrag(ctx, container, mutators.writeConnection);
 
     const next: EditorEngineRuntime = {
@@ -213,6 +225,8 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       exportConfig: toolbox.exportConfig,
       importConfig: toolbox.importConfig,
       listSymbolLibrary: toolbox.listSymbolLibrary,
+      listConnections: toolbox.listConnections,
+      disconnectConnection: toolbox.disconnectConnection,
       // plan 2026-08-08-1809-3 Phase 3 / P1-5：稳定闭包读 refitRef.current（由 scada-editor-canvas 装配）。
       refitViewportOnResize: () => refitRef.current?.(),
     };

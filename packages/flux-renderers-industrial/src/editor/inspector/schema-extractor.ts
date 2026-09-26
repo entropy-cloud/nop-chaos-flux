@@ -5,6 +5,7 @@ import type {
   ScadaSymbolPropSchemaEntry,
 } from '../../symbols/symbol-types.js';
 import type { ScadaSymbolNode } from '../../serialization/config-types.js';
+import { readConnections } from '../connection/anchor-snap.js';
 
 /**
  * 属性面板字段分组（design-property-panel.md §4.3）。
@@ -139,4 +140,35 @@ export function evaluateVisibleWhen(
   if (condition.equals !== undefined) return nodeValue === condition.equals;
   if (condition.in !== undefined) return condition.in.includes(nodeValue);
   return true;
+}
+
+/** junction connections 只读列表行（design-connection.md §4 + plan 521 / U6）。 */
+export interface JunctionConnectionRow {
+  id: string;
+  /** 目标设备 id（target 未声明时为空串 → dangling）。 */
+  target: string;
+  direction: 'in' | 'out' | 'bidirectional';
+  /** dangling：target 未声明或不存在于当前 working copy id 集。 */
+  dangling: boolean;
+}
+
+/**
+ * 对 pipe-junction 类型注入 connections 只读列表（plan 521 / U6，readConnections 复用；
+ * 编辑归 U1 连接管理弹层——本面只读）。
+ *
+ * 非 junction 类型返回 undefined（inspector 不渲染该节）；junction 返回逐条投影
+ * （id/target/direction/dangling），dangling 检测按传入的现存 id 集（与 listAllConnections
+ * 同语义：target 未声明或不存在均计 dangling）。
+ */
+export function extractJunctionConnections(
+  node: ScadaSymbolNode,
+  existingIds: Set<string>,
+): JunctionConnectionRow[] | undefined {
+  if (node.type !== 'scada-pipe-junction') return undefined;
+  return readConnections(node.custom).map((connection) => ({
+    id: connection.id,
+    target: connection.target ?? '',
+    direction: connection.direction,
+    dangling: connection.target === undefined || !existingIds.has(connection.target),
+  }));
 }

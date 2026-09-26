@@ -53,6 +53,8 @@ function makeRuntime(workingConfig: ScadaConfig): EditorEngineRuntime {
     exportConfig: () => '{}',
     importConfig: () => false,
     listSymbolLibrary: () => [],
+    listConnections: () => [],
+    disconnectConnection: () => false,
   };
 }
 
@@ -145,5 +147,45 @@ describe('EditorInspectorPanel (Phase 1 stub)', () => {
     // workingConfig 反映（updateWorkingNode 已应用 patch 到 node）
     const reflectNode = runtime.session.workingConfig.symbols.find((s) => s.id === 'node-1');
     expect(reflectNode?.x).toBe(200);
+  });
+  // plan 521 / U6：junction 类型注入 connections 只读列表（readConnections 复用；编辑归 U1 弹层）。
+  it('junction selection renders read-only connections list with dangling marker', () => {
+    const junctionConfig: ScadaConfig = {
+      version: 1,
+      variables: [],
+      symbols: [
+        { id: 'dev', type: 'scada-rect', x: 300, y: 0, width: 100, height: 100 },
+        {
+          id: 'j1',
+          type: 'scada-pipe-junction',
+          x: 0,
+          y: 0,
+          width: 80,
+          height: 40,
+          custom: {
+            connections: [
+              { id: 'j1-conn-0', x: 1, y: 0.5, direction: 'out', target: 'dev' },
+              { id: 'j1-conn-1', x: 0, y: 0.5, direction: 'out', target: 'ghost' },
+            ],
+          },
+        },
+      ],
+    };
+    const runtime = makeRuntime(junctionConfig);
+    const { container } = render(<EditorInspectorPanel runtime={runtime} selectedNodeId="j1" onError={() => undefined} />);
+    const rows = container.querySelectorAll('[data-testid="inspector-connection-row"]');
+    expect(rows).toHaveLength(2);
+    expect(rows[0].getAttribute('data-dangling')).toBe('false');
+    expect(rows[0].textContent).toContain('j1-conn-0');
+    expect(rows[0].textContent).toContain('dev');
+    expect(rows[1].getAttribute('data-dangling')).toBe('true');
+    // 只读：行内无编辑控件（编辑归 U1 连接管理弹层）。
+    expect(rows[0].querySelector('input, textarea, button')).toBeNull();
+  });
+
+  it('non-junction selection renders no connections section', () => {
+    const runtime = makeRuntime(config);
+    const { container } = render(<EditorInspectorPanel runtime={runtime} selectedNodeId="node-1" onError={() => undefined} />);
+    expect(container.querySelector('[data-testid="inspector-connection-row"]')).toBeNull();
   });
 });

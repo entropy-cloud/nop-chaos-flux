@@ -5,6 +5,7 @@ import {
   applyPatchToWorkingNode,
   collectAllSymbols,
   collectWorldBounds,
+  findNodeInWorking,
   pruneDanglingConnections,
 } from './editor-working-helpers.js';
 import { resetSession } from './editor-session.js';
@@ -13,6 +14,7 @@ import { parseScadaConfig } from '../serialization/parse.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import { errorMessage } from '../renderer/scada-errors.js';
 import { listScadaSymbols } from '../symbols/symbol-registry.js';
+import type { ScadaPipeConnection } from '../symbols/pipe/pipe-junction.js';
 import {
   alignSelection,
   distributeSelection,
@@ -27,6 +29,10 @@ import {
   PASTE_OFFSET,
   type EditorClipboard,
 } from './toolbox/clipboard.js';
+import {
+  listAllConnections,
+  programmaticDisconnect,
+} from './connection/connection-adapter.js';
 import type { EditorRuntimeContext } from './runtime-factories.js';
 
 /**
@@ -49,6 +55,14 @@ export interface EditorToolboxRuntime {
   exportConfig: () => string;
   importConfig: (config: string | ScadaConfig) => boolean;
   listSymbolLibrary: () => Array<{ type: string; name: string; category?: string }>;
+  /** 连接管理（design-toolbox.md §13.1，plan 521 / U1）：列出 working copy 全部 connections（含 dangling 标记）。 */
+  listConnections: () => Array<{ junctionId: string; connection: ScadaPipeConnection; dangling: boolean }>;
+  /**
+   * 连接管理（design-toolbox.md §13.1，plan 521 / U1）：断开指定 connection。
+   * 经 programmaticDisconnect + ctx.writeConnection（runtime-mutators 回填）写回——
+   * 入 undo 栈 operationKind='connection-update'，可撤销。幂等：connectionId 不存在返回 false。
+   */
+  disconnectConnection: (junctionId: string, connectionId: string) => boolean;
 }
 
 export function buildToolboxRuntime(ctx: EditorRuntimeContext): EditorToolboxRuntime {
@@ -269,6 +283,20 @@ export function buildToolboxRuntime(ctx: EditorRuntimeContext): EditorToolboxRun
   const listSymbolLibraryFn = () =>
     listScadaSymbols().map((d) => ({ type: d.type, name: d.name, category: d.category }));
 
+  // plan 521 / U1（design-toolbox.md §13.1）：连接管理——列表复用 listAllConnections 纯函数；
+  // 断开经 programmaticDisconnect + ctx.writeConnection（runtime-mutators 装配后回填，与 ctx.save 同模式）
+  // 走 'connection-update' 入 undo 栈 + preview 门控，不绕过 undo 栈直改 working copy。
+  const listConnectionsFn = () => listAllConnections({ symbols: session.workingConfig.symbols });
+
+  const disconnectConnectionFn = (junctionId: string, connectionId: string): boolean => {
+    const junctionNode = findNodeInWorking(session.workingConfig.symbols, junctionId);
+    if (!junctionNode) return false;
+    const result = programmaticDisconnect({ junctionNode, connectionId });
+    if (!result) return false;
+    ctx.writeConnection?.(junctionId, result.connections);
+    return true;
+  };
+
   return {
     fitView,
     centerView,
@@ -284,6 +312,8 @@ export function buildToolboxRuntime(ctx: EditorRuntimeContext): EditorToolboxRun
     exportConfig: exportConfigFn,
     importConfig: importConfigFn,
     listSymbolLibrary: listSymbolLibraryFn,
+    listConnections: listConnectionsFn,
+    disconnectConnection: disconnectConnectionFn,
   };
 }
 

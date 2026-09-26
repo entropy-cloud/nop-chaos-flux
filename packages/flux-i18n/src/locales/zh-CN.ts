@@ -1612,7 +1612,44 @@ export const zhCN: Resource = {
               moveUp: '上移',
               moveDown: '下移',
               toBottom: '置底',
+              // plan 521 / U1-U3：连接管理 / 撤销历史 / 图层重排 弹层入口短键。
+              connections: '连接',
+              history: '历史',
+              layers: '图层',
             },
+          },
+          // plan 521 / U1（design-toolbox.md §13.1）：连接管理弹层。
+          connections: {
+            title: '连接管理',
+            description: '当前画布全部连线（含悬空标记），可逐条断开（入撤销栈，可撤销）。',
+            empty: '无连线——拖拽管道接头端点到目标设备创建连线',
+            dangling: '悬空',
+            disconnect: '断开',
+            close: '关闭',
+          },
+          // plan 521 / U2（design-undo-redo.md §13）：撤销历史面板（只读观察面）。
+          history: {
+            title: '撤销历史',
+            description: '只读展示操作栈（序号/操作类型/时间）；回退请使用撤销/重做按钮。',
+            undoStack: '可撤销',
+            redoStack: '可重做',
+            empty: '暂无操作记录',
+            close: '关闭',
+          },
+          // plan 521 / U3（design-toolbox.md §13.2）：图层重排树 MVP。
+          layers: {
+            title: '图层',
+            description: '按 z 序展示图元树（上 = 顶层）；顶层图元可上移/下移重排。',
+            empty: '空场景——从图元库拖入图元',
+            orderHint: '列表自上而下 = 顶层到底层',
+            close: '关闭',
+          },
+          // plan 521 / U4：内置 statusBar 摘要。
+          status: {
+            mode: '模式',
+            viewport: '视口',
+            selection: '选中',
+            history: '历史',
           },
         },
         // plan 2026-08-09-0648-2 Phase 1/2 (D1 方案 B / D2)：palette 图元库名称键，由 def.type 派生。

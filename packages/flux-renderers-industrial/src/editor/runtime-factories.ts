@@ -20,6 +20,7 @@ import { UndoRedoAdapter } from './undo-redo/undo-redo-adapter.js';
 import type { EditorClipboard } from './toolbox/clipboard.js';
 import type { AlignDirection, DistributeDirection } from './toolbox/align-distribute.js';
 import type { ZOrderAction } from './toolbox/z-order.js';
+import type { ConnectionWriteResult } from './connection/connection-adapter.js';
 
 /**
  * Editor runtime 拆分模块（plan 2026-08-07-1835-2 Phase 1 / multi P1-03）：
@@ -96,6 +97,12 @@ export interface EditorRuntimeContext {
    * 经回填而非构造期注入，避免与 mutators 的构造环依赖（mutators 闭包捕获 notifySession）。
    */
   save?: () => string;
+  /**
+   * connection 写入句柄（plan 521 / U1 连接管理弹层）：由 runtime-mutators 装配后回填（与 save 同模式）。
+   * 写 pipe-junction custom.connections + 入 undo 栈（operationKind='connection-update'）+ preview 门控。
+   * toolbox-runtime 的 disconnectConnection 经此写回，不绕过 undo 栈直改 working copy。
+   */
+  writeConnection?: (junctionId: string, connections: ConnectionWriteResult['connections']) => void;
 }
 
 /**

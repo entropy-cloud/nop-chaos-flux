@@ -24,6 +24,94 @@
       }
     },
     {
+      "type": "keyboard",
+      "bindings": [
+        {
+          "keys": "g i",
+          "action": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/linear-inbox"
+            }
+          }
+        },
+        {
+          "keys": "g m",
+          "action": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/linear-issues"
+            }
+          }
+        },
+        {
+          "keys": "g a",
+          "action": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/linear-issues"
+            }
+          }
+        },
+        {
+          "keys": "g d",
+          "action": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/linear-board"
+            }
+          }
+        },
+        {
+          "keys": "g c",
+          "action": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/linear-projects"
+            }
+          }
+        },
+        {
+          "keys": "g p",
+          "action": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/linear-projects"
+            }
+          }
+        },
+        {
+          "keys": "g s",
+          "action": {
+            "action": "navigate",
+            "args": {
+              "url": "#/complex-pages/linear-settings"
+            }
+          }
+        },
+        {
+          "keys": "j",
+          "action": {
+            "action": "setValue",
+            "args": {
+              "path": "issueHighlightIdx",
+              "value": "${issueHighlightIdx === undefined ? 0 : $Math.min(issueHighlightIdx + 1, COUNT(issues?.items ?? []) - 1)}"
+            }
+          }
+        },
+        {
+          "keys": "k",
+          "action": {
+            "action": "setValue",
+            "args": {
+              "path": "issueHighlightIdx",
+              "value": "${issueHighlightIdx === undefined ? 0 : $Math.max(issueHighlightIdx - 1, 0)}"
+            }
+          }
+        }
+      ]
+    },
+    {
       "type": "container",
       "testid": "linear-issues-main",
       "className": "flex flex-row items-stretch min-h-screen",
@@ -475,12 +563,17 @@
                                                     "body": [
                                                       {
                                                         "type": "text",
-                                                        "text": "原版键盘原语（复刻未模拟，鼠标等价路径可用）",
+                                                        "text": "已接线键盘通道（keyboard 绑定 + 行选择修饰键，plan 517）",
                                                         "className": "ln-cmd-group"
                                                       },
                                                       {
                                                         "type": "text",
-                                                        "text": "G/O chord 导航 · J/K 高亮移动 · X 单键多选 · ⇧click 范围选 · ⌘A 全选 · ⌥↑↓ 键盘重排 · Space 悬停预览",
+                                                        "text": "G+I/M/A/D/C/P/S chord 导航 · J/K 高亮移动 · ⇧click 范围选 · ⌘A 全选",
+                                                        "className": "ln-desc-block"
+                                                      },
+                                                      {
+                                                        "type": "text",
+                                                        "text": "未迁移键盘原语（鼠标等价路径可用）：X 单键多选 · ⌥↑↓ 键盘重排 · Space 悬停预览",
                                                         "className": "ln-desc-block"
                                                       },
                                                       {
@@ -490,7 +583,7 @@
                                                         "body": [
                                                           {
                                                             "type": "text",
-                                                            "text": "键盘序列监听与修饰键手势属运行时能力缺口（G-B2），复刻页以按钮面与命令面板承载等价行为。",
+                                                            "text": "G-B2 键盘缺口已由 D1 原语消解（plan 517）：chord 导航与 J/K 高亮走 keyboard 绑定，⇧click/⌘A 走 rowSelection.modifierSelect，高亮视觉走 optionRow 行态通道；J/K 指针按源数据全序移动（客户端翻页不随动）。",
                                                             "className": "ln-row-meta"
                                                           }
                                                         ]
@@ -1665,12 +1758,17 @@
                                                         "body": [
                                                           {
                                                             "type": "text",
-                                                            "text": "原版键盘原语（复刻未模拟，鼠标等价路径可用）",
+                                                            "text": "已接线键盘通道（keyboard 绑定 + 行选择修饰键，plan 517）",
                                                             "className": "ln-cmd-group"
                                                           },
                                                           {
                                                             "type": "text",
-                                                            "text": "G/O chord 导航 · J/K 高亮移动 · X 单键多选 · ⇧click 范围选 · ⌘A 全选 · ⌥↑↓ 键盘重排 · Space 悬停预览",
+                                                            "text": "G+I/M/A/D/C/P/S chord 导航 · J/K 高亮移动 · ⇧click 范围选 · ⌘A 全选",
+                                                            "className": "ln-desc-block"
+                                                          },
+                                                          {
+                                                            "type": "text",
+                                                            "text": "未迁移键盘原语（鼠标等价路径可用）：X 单键多选 · ⌥↑↓ 键盘重排 · Space 悬停预览",
                                                             "className": "ln-desc-block"
                                                           },
                                                           {
@@ -1680,7 +1778,7 @@
                                                             "body": [
                                                               {
                                                                 "type": "text",
-                                                                "text": "键盘序列监听与修饰键手势属运行时能力缺口（G-B2），复刻页以按钮面与命令面板承载等价行为。",
+                                                                "text": "G-B2 键盘缺口已由 D1 原语消解（plan 517）：chord 导航与 J/K 高亮走 keyboard 绑定，⇧click/⌘A 走 rowSelection.modifierSelect，高亮视觉走 optionRow 行态通道；J/K 指针按源数据全序移动（客户端翻页不随动）。",
                                                                 "className": "ln-row-meta"
                                                               }
                                                             ]
@@ -2085,7 +2183,13 @@
               "id": "linear-issues-table",
               "rowSelection": {
                 "type": "checkbox",
-                "selectedRowKeys": []
+                "selectedRowKeys": [],
+                "modifierSelect": true,
+                "selectAllMode": "all"
+              },
+              "optionRow": {
+                "value": "${issues?.items[issueHighlightIdx]?.id}",
+                "selectedClass": "ln-row-highlight"
               },
               "selectionOwnership": "scope",
               "selectionStatePath": "issueSelection"

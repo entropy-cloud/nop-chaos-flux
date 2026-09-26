@@ -102,6 +102,8 @@ function makeRuntime(): EditorEngineRuntime {
     exportConfig: () => '{}',
     importConfig: () => false,
     listSymbolLibrary: () => [],
+    listConnections: () => [],
+    disconnectConnection: () => false,
   };
 }
 

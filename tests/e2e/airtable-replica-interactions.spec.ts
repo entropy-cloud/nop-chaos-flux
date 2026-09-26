@@ -10,8 +10,9 @@
  * 原位编辑与同格双态（G-D）、A3 附件/协作人/关联/按钮字段编辑器（原语缺口）、
  * A4 ⇧Space 大编辑浮层（G-B2）、A7 动态列模型 + 拖拽三处（G-D）、A13 Space
  * 展开记录（通道实测存在但不接线，用例 06 锁定裁决不回归）、A14 Hide
- * fields 搜索与批量键（G-D）、A15 键盘导航全表（G-B2）、A16 选区/填充/
- * 剪贴板/撤销（G-B3）。
+ * fields 搜索与批量键（G-D）、A15 键盘导航全表（G-B2；518 起非漫游快捷键
+ * 子集 ⌘F/⌘⇧Enter 由 `keyboard` bindings 接线，用例 12/13，其余键位维持
+ * 裁决，逐键映射表见 plan 518 Closure）、A16 选区/填充/剪贴板/撤销（G-B3）。
  */
 import { expect, test } from './fixtures.js';
 import { mkdir } from 'node:fs/promises';
@@ -387,5 +388,50 @@ test.describe('Airtable grid — A6/A14 显式裁决锁定', () => {
     expect(await page.getByTestId('airtable-colhead-title').count()).toBe(1);
     await page.keyboard.press('Escape');
     await expect(drawer).not.toBeVisible();
+  });
+});
+
+test.describe('Airtable grid — 518 keyboard 接线（⌘F / ⌘⇧Enter）', () => {
+  test('12 ⌘F opens the search dialog via keyboard binding; keyword filter flow holds', async ({ page }) => {
+    await trackEndpointCalls(page);
+    await openPage(page);
+
+    // 键盘入口与 A1 按钮面同 action（同一 dialog 声明面，testid 保持）
+    await page.keyboard.press('ControlOrMeta+f');
+    const dialog = page.getByTestId('airtable-search-dialog');
+    await expect(dialog).toBeVisible();
+    const input = page.getByTestId('airtable-search-input').locator('input');
+
+    await input.fill('会员结算页');
+    await expect(page.getByTestId('airtable-cell-title')).toHaveCount(1, { timeout: 10_000 });
+    await expect(page.getByTestId('airtable-cell-title').first()).toContainText('会员结算页金额精度对齐');
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+  });
+
+  test('13 ⌘⇧Enter opens the new-record dialog; empty submit stays required-blocked with zero write', async ({
+    page,
+    allowConsoleErrors,
+  }) => {
+    // 已登记已知噪声：空提交触发校验失败，宿主 onActionError 记一条 action error（同用例 05）。
+    allowConsoleErrors(1);
+    await trackEndpointCalls(page);
+    await openPage(page);
+
+    await page.keyboard.press('ControlOrMeta+Shift+Enter');
+    const dialog = page.getByTestId('airtable-new-record-dialog');
+    await expect(dialog).toBeVisible();
+
+    // required 拦截与 A10 按钮面同语义：校验失败、零写入
+    await page.getByTestId('airtable-new-record-submit').click();
+    const titleField = page.getByTestId('airtable-new-record-input-title');
+    await expect(titleField).toHaveAttribute('data-field-invalid', '');
+    await expect(titleField.locator('[data-slot="field-error"]')).toBeVisible();
+    await expect(dialog).toBeVisible();
+    expect((await readEndpointCalls(page)).Airtable__createRecord ?? 0).toBe(0);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
   });
 });

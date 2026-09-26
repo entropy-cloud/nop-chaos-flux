@@ -74,6 +74,8 @@ function makeRuntime(overrides: Partial<EditorEngineRuntime> = {}): EditorEngine
     exportConfig: track('export', () => '{}'),
     importConfig: track('import', () => true),
     listSymbolLibrary: () => [{ type: 'scada-rect', name: 'Rect' }],
+    listConnections: () => [],
+    disconnectConnection: () => false,
     ...overrides,
   } as unknown as EditorEngineRuntime & { calls: Record<string, unknown[]>; allCalls: Record<string, unknown[][]> };
   rt.calls = calls;
@@ -490,5 +492,36 @@ describe('[G5-R3-视角8-01] toolbox single-row overflow → wrap contract', () 
     const { container } = renderPanel([]);
     const root = container.querySelector('[data-slot="scada-editor-toolbox"]') as HTMLElement;
     expect(root.classList.contains('nop-scada-editor-toolbox')).toBe(true);
+  });
+});
+
+// plan 521 / U1-U3（design-toolbox.md §13 + design-undo-redo.md §13）：三弹层入口可达性。
+describe('toolbox dialog entries (plan 521 U1/U2/U3)', () => {
+  it('connections button opens connections dialog (portal)', () => {
+    const { container } = renderPanel([]);
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-connections'));
+    expect(document.querySelector('[data-slot="scada-editor-toolbox-connections"]')).not.toBeNull();
+  });
+
+  it('history button opens read-only history panel (portal)', () => {
+    const { container } = renderPanel([]);
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-history'));
+    expect(document.querySelector('[data-slot="scada-editor-toolbox-history"]')).not.toBeNull();
+  });
+
+  it('layers button opens layers tree panel (portal)', () => {
+    const { container } = renderPanel([]);
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-layers'));
+    expect(document.querySelector('[data-slot="scada-editor-toolbox-layers"]')).not.toBeNull();
+  });
+
+  it('dialog entry buttons carry word labels resolved from i18n', () => {
+    const { container } = renderPanel([]);
+    const conn = buttonByTestId(container, 'toolbox-btn-connections');
+    const hist = buttonByTestId(container, 'toolbox-btn-history');
+    const layers = buttonByTestId(container, 'toolbox-btn-layers');
+    expect(conn.textContent).toBe('连接');
+    expect(hist.textContent).toBe('历史');
+    expect(layers.textContent).toBe('图层');
   });
 });

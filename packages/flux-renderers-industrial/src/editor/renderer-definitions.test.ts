@@ -44,8 +44,9 @@ describe('industrialEditorRendererDefinitions (E5.1 完整 fields)', () => {
     expect(byKey.get('mode')).toMatchObject({ key: 'mode', kind: 'prop' });
     expect(byKey.get('commitPolicy')).toMatchObject({ key: 'commitPolicy', kind: 'prop' });
     expect(byKey.get('viewport')).toMatchObject({ key: 'viewport', kind: 'prop' });
-    // D-1 裁定：events 为整体 prop（非 events.* event 规则）
-    expect(byKey.get('events')).toMatchObject({ key: 'events', kind: 'prop' });
+    // D-1 裁定：events 为整体字段（非 events.* event 规则）；plan 521 / W2 起 kind='ignored'
+    // （echarts 同型）——保持 raw schema，`${event.*}` 模板在 dispatch 期求值，renderer 读 props.schema.events。
+    expect(byKey.get('events')).toMatchObject({ key: 'events', kind: 'ignored' });
     // regions
     expect(byKey.get('palette')).toMatchObject({ key: 'palette', kind: 'region' });
     expect(byKey.get('inspector')).toMatchObject({ key: 'inspector', kind: 'region' });

@@ -297,48 +297,38 @@
               "testid": "antdpro-toolbar-density"
             },
             {
-              "type": "text",
-              "text": "已选择 ${$crud.selectionCount} 项",
-              "className": "adp-desc-label",
-              "visible": "${$crud.hasSelection}",
-              "testid": "antdpro-list-selection-count"
-            },
-            {
-              "type": "button",
-              "label": "取消选择",
-              "variant": "ghost",
-              "visible": "${$crud.hasSelection}",
-              "testid": "antdpro-list-clear-selection",
-              "onClick": {
-                "action": "component:clearSelection",
-                "componentId": "antdpro-list-crud"
-              }
-            }
-          ],
-          "listActions": [
-            {
-              "type": "button",
-              "label": "批量删除",
-              "variant": "destructive",
-              "testid": "antdpro-list-bulk-delete",
-              "disabled": "${!$crud.hasSelection}",
-              "onClick": {
-                "action": "ajax",
-                "args": {
-                  "url": "/r/AntdPro__deleteOrders",
-                  "method": "post",
-                  "data": {
-                    "ids": "${$crud.selectedRowKeys}"
+              "type": "batch-bar",
+              "testid": "antdpro-list-selection-count",
+              "selectionPath": "$crud.selectedRowKeys",
+              "countTemplate": "已选择 ${count} 项",
+              "clearTarget": "antdpro-list-crud",
+              "clearLabel": "取消选择",
+              "actions": [
+                {
+                  "type": "button",
+                  "label": "批量删除",
+                  "variant": "destructive",
+                  "testid": "antdpro-list-bulk-delete",
+                  "disabled": "${!$crud.hasSelection}",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/AntdPro__deleteOrders",
+                      "method": "post",
+                      "data": {
+                        "ids": "${$crud.selectedRowKeys}"
+                      }
+                    },
+                    "messages": {
+                      "success": "批量删除成功"
+                    },
+                    "then": {
+                      "action": "component:refresh",
+                      "componentId": "antdpro-list-crud"
+                    }
                   }
-                },
-                "messages": {
-                  "success": "批量删除成功"
-                },
-                "then": {
-                  "action": "component:refresh",
-                  "componentId": "antdpro-list-crud"
                 }
-              }
+              ]
             }
           ],
           "columns": [

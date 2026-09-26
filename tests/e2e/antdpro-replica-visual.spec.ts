@@ -254,9 +254,9 @@ test.describe('AntdPro replica — initial-screen structure', () => {
   }) => {
     await openPage(page, 'antdpro-list', 'AntD Pro 订单列表');
 
-    // 禁用态成对可见：未选择时批量删除禁用
-    const bulkDelete = page.getByTestId('antdpro-list-bulk-delete');
-    await expect(bulkDelete).toBeDisabled();
+    // batch-bar（D1 原语，plan 516）空集渲染 null：未选择时整条批量栏（含批量删除）不渲染
+    await expect(page.getByTestId('antdpro-list-selection-count')).toBeHidden();
+    await expect(page.getByTestId('antdpro-list-bulk-delete')).toBeHidden();
 
     // adp-list-empty：关键字无匹配 → 空态（不报错；空态渲染为单行占位 tr）
     await page.getByTestId('antdpro-query-keyword').locator('input').fill('绝对不存在的关键词');

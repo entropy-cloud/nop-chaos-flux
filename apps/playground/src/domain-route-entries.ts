@@ -509,7 +509,7 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     title: 'Scada Editor Demo',
     eyebrow: 'Industrial HMI Editor',
     description:
-      'E5 M1 MVP 编辑器演示：palette 图元库面板（24 内置图元，拖拽放置）+ canvas 编辑态画布（双态切换）+ inspector 属性面板（六类字段分组 + validate）+ save/load 提交语义。',
+      '完整 SCADA 编辑器演示（M3 完成态）：palette 图元库（24 图元拖拽）+ 端点吸附连线/框选多选/对齐分布/z-order/剪贴板（含 Ctrl+C·X·V）/undo-redo 历史面板/连接管理与图层弹层/statusBar/Edit-Preview 双态切换/save/export 配置输出。',
   },
   {
     id: 'dashboard-demo',

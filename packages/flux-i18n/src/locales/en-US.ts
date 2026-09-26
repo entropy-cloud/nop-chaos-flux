@@ -1615,7 +1615,44 @@ export const enUS: Resource = {
               moveUp: 'Up',
               moveDown: 'Down',
               toBottom: 'To Bottom',
+              // plan 521 / U1-U3：连接管理 / 撤销历史 / 图层重排 弹层入口短键。
+              connections: 'Conn',
+              history: 'Hist',
+              layers: 'Layers',
             },
+          },
+          // plan 521 / U1（design-toolbox.md §13.1）：连接管理弹层。
+          connections: {
+            title: 'Connections',
+            description: 'All connections on the canvas (dangling marked). Disconnect per row (undoable).',
+            empty: 'No connections — drag a pipe junction endpoint onto a target device to create one',
+            dangling: 'Dangling',
+            disconnect: 'Disconnect',
+            close: 'Close',
+          },
+          // plan 521 / U2（design-undo-redo.md §13）：撤销历史面板（只读观察面）。
+          history: {
+            title: 'Undo History',
+            description: 'Read-only operation stack (index/kind/time); use Undo/Redo buttons to step.',
+            undoStack: 'Undoable',
+            redoStack: 'Redoable',
+            empty: 'No operations recorded',
+            close: 'Close',
+          },
+          // plan 521 / U3（design-toolbox.md §13.2）：图层重排树 MVP。
+          layers: {
+            title: 'Layers',
+            description: 'Symbol tree in z-order (top = front). Top-level rows can move up/down.',
+            empty: 'Empty scene — drag symbols from the palette',
+            orderHint: 'List order = top layer to bottom layer',
+            close: 'Close',
+          },
+          // plan 521 / U4：内置 statusBar 摘要。
+          status: {
+            mode: 'Mode',
+            viewport: 'Viewport',
+            selection: 'Selected',
+            history: 'History',
           },
         },
         // plan 2026-08-09-0648-2 Phase 1/2 (D1 方案 B / D2)：palette 图元库名称键，由 def.type 派生。

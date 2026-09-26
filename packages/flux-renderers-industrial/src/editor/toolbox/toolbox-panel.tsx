@@ -5,6 +5,9 @@ import { cn } from '@nop-chaos/ui';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
 import type { AlignDirection, DistributeDirection } from './align-distribute.js';
 import type { ZOrderAction } from './z-order.js';
+import { EditorConnectionsDialog } from './connections-dialog.js';
+import { EditorHistoryPanel } from './history-panel.js';
+import { EditorLayersPanel } from './layers-panel.js';
 
 export interface EditorToolboxPanelProps {
   runtime: EditorEngineRuntime;
@@ -35,6 +38,10 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState<string>('');
+  // plan 521 / U1-U3（design-toolbox.md §13 + design-undo-redo.md §13）：连接管理 / 撤销历史 / 图层重排弹层。
+  const [connectionsOpen, setConnectionsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [layersOpen, setLayersOpen] = useState(false);
 
   const hasSelection = selection.length > 0;
   const canAlign = selection.length >= 2;
@@ -215,6 +222,12 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
           setImportOpen(true);
         }, false, t('industrial.scada.editor.toolbox.import'), 'toolbox-btn-import')}
       </ButtonGroup>
+      <Separator orientation="vertical" className="nop-scada-editor-toolbox-sep" />
+      <ButtonGroup>
+        {btn(labelOr('industrial.scada.editor.toolbox.label.connections', 'Conn'), () => setConnectionsOpen(true), false, t('industrial.scada.editor.connections.title'), 'toolbox-btn-connections')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.history', 'Hist'), () => setHistoryOpen(true), false, t('industrial.scada.editor.history.title'), 'toolbox-btn-history')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.layers', 'Layers'), () => setLayersOpen(true), false, t('industrial.scada.editor.layers.title'), 'toolbox-btn-layers')}
+      </ButtonGroup>
       {statusMessage ? (
         <span
           className="nop-scada-editor-toolbox-status"
@@ -250,6 +263,21 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* plan 521 / U1-U3：连接管理（§13.1）/ 撤销历史（design-undo-redo.md §13 只读档）/ 图层重排树（§13.2）。 */}
+      <EditorConnectionsDialog
+        runtime={runtime}
+        open={connectionsOpen}
+        onOpenChange={setConnectionsOpen}
+        disabled={props.disabled}
+      />
+      <EditorHistoryPanel runtime={runtime} open={historyOpen} onOpenChange={setHistoryOpen} />
+      <EditorLayersPanel
+        runtime={runtime}
+        open={layersOpen}
+        onOpenChange={setLayersOpen}
+        selection={selection}
+      />
     </div>
   );
 }

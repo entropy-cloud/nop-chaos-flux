@@ -2,9 +2,19 @@ import { describe, it, expect } from 'vitest';
 import { UndoStack, MAX_UNDO_STACK_DEPTH, type EditorOperationKind } from './undo-stack.js';
 import type { ScadaConfigDiff } from '../../serialization/config-types.js';
 
-function entry(kind: EditorOperationKind, timestamp = 0): import('./undo-stack.js').UndoStackEntry {
+function entry(
+  kind: EditorOperationKind,
+  timestamp = 0,
+  coalesceGroup?: string,
+): import('./undo-stack.js').UndoStackEntry {
   const forward: ScadaConfigDiff = { added: [], removed: [], updated: [{ id: 'a', patch: { x: timestamp } }] };
-  return { forward, inverse: { ...forward }, operationKind: kind, timestamp };
+  return {
+    forward,
+    inverse: { ...forward },
+    operationKind: kind,
+    timestamp,
+    ...(coalesceGroup !== undefined ? { coalesceGroup } : {}),
+  };
 }
 
 describe('UndoStack push / canUndo / canRedo / depth', () => {
@@ -150,5 +160,36 @@ describe('UndoStack replaceUndoTop (coalesce merge)', () => {
     expect(stack.redoStackDepth).toBe(0);
     expect(stack.canRedo).toBe(false);
     expect(stack.peekUndoTop()).toBe(merged);
+  });
+});
+
+// plan 521 / U2（design-undo-redo.md §13）：历史面板只读投影。
+describe('UndoStack listUndoEntries / listRedoEntries (plan 521 / U2 read-only projections)', () => {
+  it('lists undo entries bottom→top with 1-based index and observable metadata only', () => {
+    const stack = new UndoStack();
+    stack.push(entry('add-symbol', 11));
+    stack.push(entry('z-order', 22, 'zorder:toTop'));
+    const infos = stack.listUndoEntries();
+    expect(infos).toHaveLength(2);
+    expect(infos[0]).toMatchObject({ index: 1, operationKind: 'add-symbol', timestamp: 11 });
+    expect(infos[1]).toMatchObject({ index: 2, operationKind: 'z-order', timestamp: 22, coalesceGroup: 'zorder:toTop' });
+    // 只读投影：不泄漏 forward/inverse diff 载荷（design-undo-redo.md §13 契约）。
+    for (const info of infos) {
+      expect('forward' in info).toBe(false);
+      expect('inverse' in info).toBe(false);
+    }
+  });
+
+  it('lists redo entries with 1-based index; empty stacks return empty arrays', () => {
+    const stack = new UndoStack();
+    expect(stack.listUndoEntries()).toEqual([]);
+    expect(stack.listRedoEntries()).toEqual([]);
+    stack.push(entry('remove-symbol', 5));
+    stack.popForUndo();
+    const redoInfos = stack.listRedoEntries();
+    expect(redoInfos).toHaveLength(1);
+    expect(redoInfos[0]).toMatchObject({ index: 1, operationKind: 'remove-symbol', timestamp: 5 });
+    // popForUndo 后 undo 栈空。
+    expect(stack.listUndoEntries()).toEqual([]);
   });
 });

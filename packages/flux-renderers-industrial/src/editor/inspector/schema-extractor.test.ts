@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractPanelFields, evaluateVisibleWhen } from './schema-extractor.js';
+import { extractPanelFields, evaluateVisibleWhen, extractJunctionConnections } from './schema-extractor.js';
 import type { ScadaSymbolDefinition } from '../../symbols/symbol-types.js';
 import type { ScadaSymbolNode } from '../../serialization/config-types.js';
 
@@ -145,5 +145,41 @@ describe('evaluateVisibleWhen', () => {
     const rectNode = { id: 'n2', type: 'scada-rect' } as ScadaSymbolNode;
     expect(evaluateVisibleWhen(field, pipeNode)).toBe(true);
     expect(evaluateVisibleWhen(field, rectNode)).toBe(false);
+  });
+});
+
+// plan 521 / U6（design-connection.md §4 + readConnections 复用）：junction connections 只读列表注入。
+describe('extractJunctionConnections', () => {
+  const existingIds = new Set(['j1', 'dev', 'gone']);
+
+  it('returns undefined for non-junction types', () => {
+    const rectNode = { id: 'n1', type: 'scada-rect' } as ScadaSymbolNode;
+    expect(extractJunctionConnections(rectNode, existingIds)).toBeUndefined();
+  });
+
+  it('projects junction connections with dangling detection', () => {
+    const junctionNode = {
+      id: 'j1',
+      type: 'scada-pipe-junction',
+      custom: {
+        connections: [
+          { id: 'j1-conn-0', x: 1, y: 0.5, direction: 'out', target: 'dev' },
+          { id: 'j1-conn-1', x: 0, y: 0.5, direction: 'out', target: 'removed-target' },
+          { id: 'j1-conn-2', x: 0.5, y: 1, direction: 'in' },
+        ],
+      },
+    } as unknown as ScadaSymbolNode;
+    const rows = extractJunctionConnections(junctionNode, existingIds);
+    expect(rows).toHaveLength(3);
+    expect(rows![0]).toEqual({ id: 'j1-conn-0', target: 'dev', direction: 'out', dangling: false });
+    // target 不存在于现存 id 集 → dangling。
+    expect(rows![1]).toEqual({ id: 'j1-conn-1', target: 'removed-target', direction: 'out', dangling: true });
+    // target 未声明 → dangling（与 listAllConnections 同语义）。
+    expect(rows![2]).toEqual({ id: 'j1-conn-2', target: '', direction: 'in', dangling: true });
+  });
+
+  it('returns empty array for junction without connections', () => {
+    const junctionNode = { id: 'j1', type: 'scada-pipe-junction' } as ScadaSymbolNode;
+    expect(extractJunctionConnections(junctionNode, existingIds)).toEqual([]);
   });
 });

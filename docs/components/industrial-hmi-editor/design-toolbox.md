@@ -314,3 +314,57 @@ OR packages/flux-renderers-industrial/src/editor/（方案 A）
 | E4.2 | 注册 `scada-editor-canvas` 空壳 + 引入依赖                                |
 | E9.1 | 工具箱完整实现（M3，落地本档五项工具契约）                                |
 | E9.2 | M3 收尾 + benchmark 复测 + 文档收尾                                       |
+| L5.2 | §13 增补节实现（连接管理弹层 + 图层重排树 MVP，plan 521）                 |
+
+## 13. L5.2 增补节：连接管理弹层 + 图层重排树 MVP（plan 521）
+
+> 增补依据：`docs/analysis/2026-09-26-scada-designer-demo-gap-audit.md` §4.2 U1/U3（E9.1 交付范围外的新 UI 面）。按 roadmap design-first 铁律，先补本节（plan 521 Phase 1）再实现（Phase 3）。复用纪律与 §1 一致：全部消费既有 API，不新增命令面、不重复实现。
+
+### 13.1 连接管理弹层（U1）
+
+**定位**：pipe-junction 连线的**可观察 + 逐条断开**工具。E9.1 五项工具未覆盖 connection 域；断开能力此前仅程序化 API（`programmaticDisconnect` / 测试句柄 `connection.disconnect`），无 UI。
+
+**数据源（复用，禁止重复实现）**：
+
+| 操作 | 消费 API                                                                                                                                           | 说明                                                                                 |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 列表 | `listAllConnections({ symbols })` → `Array<{ junctionId, connection, dangling }>`（`connection/connection-adapter.ts:274`）                        | 纯函数，UI 层直接以 `runtime.session.workingConfig.symbols` 调用，**无需经测试句柄** |
+| 断开 | `programmaticDisconnect({ junctionNode, connectionId })`（`connection-adapter.ts:254`）→ 写回经 `writeConnection(junctionId, connections)` mutator | 断开 = 一次 connection-update 入 undo 栈（与端点拖拽删线同语义，可撤销）             |
+| 刷新 | 断开成功后重新 listAllConnections（session 驱动：notifySession bump 重渲染）                                                                       | —                                                                                    |
+
+**接线说明（UI 层消费程序化 API 的通道裁定）**：`listAllConnections` 是纯函数（输入 symbols），toolbox 弹层直接消费；断开写回经 `writeConnection` mutator——该 mutator 原仅被 connection-wiring / 测试句柄消费，本节裁定**经 `EditorRuntimeContext` 回填暴露**（与 `ctx.save` 回填同模式）到 `EditorToolboxRuntime`，UI 经 runtime 方法调用，不绕过 undo 栈直写 working copy。
+
+**UI 契约**：
+
+- 入口：toolbox 按钮行「连接」按钮（`data-testid="toolbox-btn-connections"`）→ Dialog 弹层（复用 `@nop-chaos/ui` Dialog，与 §10 导入确认弹层同型）；
+- 列表：每行展示 junctionId / connection.id / connection.target / dangling 标记（dangling=true 高亮提示「目标不存在」）；
+- 逐条断开按钮：每行「断开」按钮；connectionId 已不存在时**幂等成功 + 列表刷新**（failure path u1-disconnect-dangling）；
+- marker：弹层 `nop-scada-editor-toolbox-connections` + `data-slot="scada-editor-toolbox-connections"`；行条目 `data-slot="scada-editor-connection-row"` + `data-dangling="true|false"` + `data-testid="toolbox-connection-row"`；
+- preview 态：断开按钮 disabled（写通道 preview 门控沿用 §8.1 R5 隔离）。
+
+### 13.2 图层重排树 MVP（U3）
+
+**定位**：层级**可观察 + 纯重排**。z 序 = symbols 数组顺序（§4.2.2），但用户只能对选中项做 4 个 z-order 按钮，无全场景树视图。本节补 MVP 树。
+
+**范围裁定（MVP）**：
+
+- **做**：working copy symbols 递归展开的层级树（group.children 嵌套缩进；复用 `collectAllSymbols` 语义）+ **顶层节点**行内「上移/下移」重排（经既有 `reorderZOrder`，语义与 §4.2.2 表一致）+ 点击行选中图元；
+- **不做**：嵌套子树重排（z-order.ts 既有约束「group 子树 z 序由 group 内部管理，M3 不处理嵌套 z 序」，本节不扩）；可见性/锁定字段（serialization 模型未声明 visible/locked 编辑字段，属 serialization 扩展，登记 L5.8 观察面）；拖拽重排（MVP 用按钮，不做 DnD）。
+
+**数据源（复用，禁止重复实现）**：
+
+| 操作 | 消费 API                                                                         | 说明                                               |
+| ---- | -------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 树   | working copy `symbols`（树形结构原地展开，节点发现语义同 `collectAllSymbols`）   | `editor-working-helpers.ts:20`                     |
+| 重排 | `runtime.reorderZOrder(action)`（先 setSelection 该节点，再走既有 z-order 命令） | `toolbox/z-order.ts:37` + `toolbox-runtime.ts:146` |
+| 选中 | `runtime.setSelection([nodeId])`                                                 | 与画布选区同一 canonical                           |
+
+**UI 契约**：
+
+- 入口：toolbox 按钮行「图层」按钮（`data-testid="toolbox-btn-layers"`）→ Dialog 弹层（与 §13.1 同型）；
+- 树：根 = working copy symbols 数组序（数组序 = z 序，界面标注「上 = 顶层」）；group 节点缩进展开 children；
+- 每行：图元名（复用 `industrial.scada.symbol.<type>` i18n 键，palette 同源）+ id + 选中高亮；
+- 重排：**顶层节点**行内 上移/下移 按钮（嵌套行只读展示，按钮 disabled）；
+- marker：弹层 `nop-scada-editor-toolbox-layers` + `data-slot="scada-editor-toolbox-layers"`；行条目 `data-slot="scada-editor-layer-row"` + `data-layer-depth` + `data-testid="toolbox-layer-row"`。
+
+**失败路径**：无选中重排 → 按钮 disabled；单节点层重排 → `reorderZOrder` 返回 false（movedIds 空）→ noChange 提示（对齐 §10 状态消息语义）。

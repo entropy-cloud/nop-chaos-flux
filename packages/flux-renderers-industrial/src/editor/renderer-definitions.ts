@@ -154,8 +154,12 @@ export const industrialEditorRendererDefinitions: RendererDefinition[] = [
       { key: 'mode', kind: 'prop' },
       { key: 'commitPolicy', kind: 'prop' },
       { key: 'viewport', kind: 'prop' },
-      // D-1 裁定：events 为整体 prop（非 events.* event 规则）——flux-compiler classifyField 仅匹配顶层 key。
-      { key: 'events', kind: 'prop' },
+      // D-1 裁定：events 为整体字段（非 events.* event 规则）——flux-compiler classifyField 仅匹配顶层 key。
+      // plan 521 / W2：kind 'ignored'（echarts 同型）——events 保持 raw schema，跳过编译期深求值：
+      // args 里的 `${event.*}` 模板（如 onSave 载荷 serializedConfig）必须在 dispatch 期结合 normalized
+      // event 求值；'prop' 通道会在渲染期无 event 上下文时深求值 → props 解析降级（config 丢失）。
+      // renderer 侧经 `props.schema.events`（raw）读取，props 通道兜底。
+      { key: 'events', kind: 'ignored' },
       { key: 'palette', kind: 'region' },
       { key: 'inspector', kind: 'region' },
       { key: 'toolbox', kind: 'region' },

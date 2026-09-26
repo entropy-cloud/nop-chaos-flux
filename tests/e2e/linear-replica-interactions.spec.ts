@@ -6,8 +6,12 @@
  * mock 会话态可观察变化、选择集计数、端点计数、getComputedStyle）；
  * 截图仅作视觉证据附件。
  *
- * 键盘手势子项（chord/J·K/X/⇧click/⌘A/⌥↑↓/Space hover）按处置表显式裁决
- * 不模拟（G-B2），无对应用例；按钮面/命令面为鼠标等价路径并在此锁定。
+ * 键盘手势通道（plan 517）：chord G+字母导航、J/K 高亮指针、⇧click 范围选、
+ * ⌘/ctrl+A 全选、⌘/ctrl-click 独立切换已由 keyboard 绑定 +
+ * rowSelection.modifierSelect + optionRow 行态通道接线，并在 L5 describe
+ * 程序化锁定；X 单键多选/⌥↑↓ 重排/Space hover 预览无语义等价面，仍不模拟
+ * （逐键映射表见 docs/plans/517-missing-components-l4-9b-linear-retrofit-plan.md）。
+ * 按钮面/命令面为鼠标等价路径并在此锁定。
  */
 import { expect, test } from './fixtures.js';
 import { mkdir } from 'node:fs/promises';
@@ -592,5 +596,81 @@ test.describe('Linear detail — L11 终态（复制/状态/归档）', () => {
     await page.getByTestId('linear-issues-filter-apply').click();
     await expect(page.getByText('当前筛选条件下没有问题')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByTestId('linear-issues-row-key')).toHaveCount(0);
+  });
+});
+
+test.describe('Linear issues — L5 键盘通道（plan 517）', () => {
+  test('19 L5 G-chord navigates via the keyboard binding; chords stay gated inside the cmdk input', async ({
+    page,
+  }) => {
+    await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
+
+    // chord "g i" = 打开收件箱（与命令面板 cmd-nav-inbox 同语义同落点）
+    await page.keyboard.press('g');
+    await page.keyboard.press('i');
+    await expect(page.getByTestId('complex-page-title')).toContainText('问题追踪 · 收件箱', {
+      timeout: 10_000,
+    });
+
+    // chord-in-input Failure Path: 焦点在命令面板输入框内按键不触发绑定（allowInInput 缺省 false）
+    await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
+    await page.getByTestId('linear-issues-cmdk-trigger').click();
+    const input = page.getByTestId('linear-issues-cmdk-input');
+    await input.click();
+    await page.keyboard.type('gi');
+    await expect(input).toHaveValue('gi');
+    await expect(page.getByTestId('complex-page-title')).toContainText('问题追踪 · 列表视图');
+  });
+
+  test('20 L5 J/K moves the optionRow highlight pointer without touching the selection', async ({
+    page,
+  }) => {
+    await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
+
+    const highlighted = page
+      .getByTestId('linear-issues-table')
+      .locator('[data-slot="table-row"][data-selected="true"]');
+    const count = page.getByTestId('linear-issues-bulk-count');
+
+    // j：指针落首行并随按下行序下移（optionRow 驱动 data-selected/aria-selected/selectedClass）
+    await page.keyboard.press('j');
+    await expect(highlighted).toHaveCount(1);
+    await expect(tableRows(page).nth(0)).toHaveClass(/ln-row-highlight/);
+    await expect(tableRows(page).nth(0)).toHaveAttribute('aria-selected', 'true');
+    await expect(count).toContainText('已选 0 项');
+
+    await page.keyboard.press('j');
+    await expect(highlighted).toHaveCount(1);
+    await expect(tableRows(page).nth(1)).toHaveClass(/ln-row-highlight/);
+    await expect(tableRows(page).nth(0)).not.toHaveClass(/ln-row-highlight/);
+
+    // k：回移上一行
+    await page.keyboard.press('k');
+    await expect(tableRows(page).nth(0)).toHaveClass(/ln-row-highlight/);
+    await expect(tableRows(page).nth(1)).not.toHaveClass(/ln-row-highlight/);
+    await expect(count).toContainText('已选 0 项');
+  });
+
+  test('21 L5 modifier gestures: shift-click range union, mod+A select-all, mod-click toggle', async ({
+    page,
+  }) => {
+    await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
+    const count = page.getByTestId('linear-issues-bulk-count');
+
+    // 无修饰键点击 = 锚点行（modifierSelect 开启后锚点随未修饰变更移动）
+    await clickRowCheckbox(page, 2);
+    await expect(count).toContainText('已选 1 项');
+
+    // ⇧click：anchor..clicked 加法区间并集（2..5 → 4 行），从不清除
+    await rowCheckboxes(page).nth(5).click({ modifiers: ['Shift'] });
+    await expect(count).toContainText('已选 4 项');
+
+    // ⌘/ctrl+A：表内容器 keydown 中继全选；selectAllMode 'all' → 源数据全量 34 行
+    await page.getByTestId('linear-issues-table').press('ControlOrMeta+a');
+    await expect(count).toContainText('已选 34 项');
+
+    // ⌘/ctrl-click：独立切换（不清空选择集）
+    await rowCheckboxes(page).nth(2).click({ modifiers: ['Meta'] });
+    await expect(count).toContainText('已选 33 项');
   });
 });

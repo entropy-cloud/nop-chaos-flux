@@ -33,37 +33,43 @@ test.describe('AntdPro list — I5 批量操作', () => {
     await openList(page);
     const crud = page.getByTestId('antdpro-list-crud');
 
+    // batch-bar（D1 原语，plan 516）空集渲染 null：无选中时整条批量栏（含批量删除）不渲染
+    const batchBar = page.getByTestId('antdpro-list-selection-count');
     const bulkDelete = page.getByTestId('antdpro-list-bulk-delete');
-    await expect(bulkDelete).toBeDisabled();
-    await expect(page.getByTestId('antdpro-list-selection-count')).toBeHidden();
+    await expect(batchBar).toBeHidden();
+    await expect(bulkDelete).toBeHidden();
 
     await crud.locator('thead').getByRole('checkbox').click();
-    await expect(page.getByTestId('antdpro-list-selection-count')).toContainText('已选择 10 项');
+    await expect(batchBar).toBeVisible();
+    await expect(batchBar).toHaveAttribute('data-count', '10');
+    await expect(batchBar).toContainText('已选择 10 项');
     await expect(bulkDelete).toBeEnabled();
-    await expect(page.getByTestId('antdpro-list-clear-selection')).toBeVisible();
+    await expect(page.getByTestId('antdpro-list-selection-count-clear')).toBeVisible();
 
     await bulkDelete.click();
     await expect(crud.locator('table tbody tr')).toHaveCount(10, { timeout: 10_000 });
     await expect(crud).toContainText('SO2026080110');
     await expect(crud).not.toContainText('SO2026080100');
-    await expect(page.getByTestId('antdpro-list-selection-count')).toBeHidden();
-    await expect(bulkDelete).toBeDisabled();
+    await expect(batchBar).toBeHidden();
+    await expect(bulkDelete).toBeHidden();
 
     await snap(page, 'i5-bulk-delete.png');
   });
 
-  test('02 取消选择 clears selection and restores disabled gating', async ({ page }) => {
+  test('02 取消选择 clears selection and unmounts the batch bar', async ({ page }) => {
     await openList(page);
     const crud = page.getByTestId('antdpro-list-crud');
 
     await crud.locator('tbody tr').first().getByRole('checkbox').click();
-    await expect(page.getByTestId('antdpro-list-selection-count')).toContainText('已选择 1 项');
+    const batchBar = page.getByTestId('antdpro-list-selection-count');
+    await expect(batchBar).toHaveAttribute('data-count', '1');
+    await expect(batchBar).toContainText('已选择 1 项');
     await expect(page.getByTestId('antdpro-list-bulk-delete')).toBeEnabled();
 
-    await page.getByTestId('antdpro-list-clear-selection').click();
-    await expect(page.getByTestId('antdpro-list-selection-count')).toBeHidden();
-    await expect(page.getByTestId('antdpro-list-bulk-delete')).toBeDisabled();
-    await expect(page.getByTestId('antdpro-list-clear-selection')).toBeHidden();
+    await page.getByTestId('antdpro-list-selection-count-clear').click();
+    await expect(batchBar).toBeHidden();
+    await expect(page.getByTestId('antdpro-list-bulk-delete')).toBeHidden();
+    await expect(page.getByTestId('antdpro-list-selection-count-clear')).toBeHidden();
   });
 });
 

@@ -445,6 +445,14 @@
   background: rgba(94, 106, 210, 0.16);
 }
 
+/* keyboard highlight pointer (plan 517): optionRow.value binding emits
+   data-selected/aria-selected + this class; visually distinct from the
+   checkbox-selection tint above (Linear-style left edge bar) */
+.ln-issues-table [data-slot='table-row'].ln-row-highlight {
+  box-shadow: inset 2px 0 0 var(--ln-brand);
+  background: rgba(94, 106, 210, 0.06);
+}
+
 .ln-row {
   display: flex;
   align-items: center;

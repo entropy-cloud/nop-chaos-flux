@@ -455,3 +455,26 @@ OR packages/flux-renderers-industrial/src/editor/（方案 A）
 | E4.2 | 注册 `scada-editor-canvas` 空壳 + 引入依赖                                                  |
 | E7.2 | undo-redo diff 命令栈实现（M2 基础合并 + 边界提示，落地本档契约）                           |
 | E9.1 | M3 完善（跨操作合并策略 + 用户配置 + 「撤销历史面板」UI 可选项）                            |
+| L5.2 | §13 增补节实现（撤销历史面板只读档，plan 521）；深化档维持归 L5.8（O4）                     |
+
+## 13. L5.2 增补节：撤销历史面板（plan 521，只读观察面）
+
+> 增补依据：`docs/analysis/2026-09-26-scada-designer-demo-gap-audit.md` §4.2 U2 + §4.4 O4。E9.1 后用户仅 Undo/Redo 两按钮 + 瞬态 status message；栈内信息（operationKind/timestamp/深度）已具备但无 UI 消费。本节裁定基础面板契约。
+
+**裁定（truncate 语义，plan 521 Phase 1 定案）**：历史面板为**只读列表**——展示 undo 栈 entry（operationKind/timestamp/序号），**不提供「点击回跳到某步」的 truncate-to-index 语义**。理由：回跳 = 栈语义变更（truncate undoStack/redoStack 到目标索引 + 批量 apply 逆/正 diff 链 + 失败回滚面重设计），属 §4.1 栈模型的深化档，**归 L5.8（O4，demand-gated）**；本节面板定位为**可观察性 UI**：用户可见「栈里有什么、深度多少、最近操作是什么」，操作行进仍经既有 Undo/Redo 按钮逐步完成。
+
+**数据源（复用，禁止重复实现）**：
+
+| 数据       | 来源                                                                                                                                                                                       | 说明                                                            |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| entry 列表 | `UndoStack` 新增只读投影 API：`listUndoEntries()` / `listRedoEntries()` → `Array<{ operationKind, timestamp, coalesceGroup? }>`（浅投影，不泄漏可变数组 ref 与 forward/inverse diff 载荷） | entry 结构见 §4.1.2；投影返回**栈底→栈顶**顺序 + 索引即「序号」 |
+| 深度       | `undoStackDepth` / `redoStackDepth`                                                                                                                                                        | 与 §4.5 statusBar 边界提示同源                                  |
+
+**UI 契约**：
+
+- 入口：toolbox「历史」按钮（`data-testid="toolbox-btn-history"`）→ Dialog 弹层（复用 `@nop-chaos/ui` Dialog，与 design-toolbox.md §13 弹层同型）；
+- 列表：**倒序**（栈顶在上）逐条展示「序号（栈深位置，1-based）+ operationKind + 时间戳」；栈空显示空态文案；redo 栈非空时另列「可重做」区（同样只读）；
+- 只读：行不可点击触发任何栈操作（无 truncate / 无 goto）；undo/redo 操作后列表随 session bump 刷新；
+- marker：弹层 `nop-scada-editor-toolbox-history` + `data-slot="scada-editor-toolbox-history"`；行条目 `data-slot="scada-editor-history-row"` + `data-operation-kind` + `data-testid="toolbox-history-row"`。
+
+**失败路径**：无（只读面不产生写路径；栈满丢弃最旧的提示仍走 §4.5 statusBar 边界提示，不在面板内重复）。

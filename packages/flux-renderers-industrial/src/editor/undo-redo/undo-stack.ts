@@ -50,6 +50,24 @@ export type EditorOperationKind =
 export const MAX_UNDO_STACK_DEPTH = 100;
 
 /**
+ * 历史面板只读投影条目（design-undo-redo.md §13，plan 521 / U2）。
+ *
+ * 只暴露可观察元数据（operationKind/timestamp/coalesceGroup + 1-based 栈位序号），
+ * **不泄漏** forward/inverse diff 载荷与内部可变数组 ref（R4 增量载荷对 UI 无意义，且防外部绕过
+ * 栈语义改写 entry）。
+ */
+export interface UndoStackEntryInfo {
+  /** 栈位序号（1-based，栈底=1，栈顶=depth）。 */
+  index: number;
+  /** 操作类型标签（§4.1.2）。 */
+  operationKind: EditorOperationKind;
+  /** 操作时间戳（§4.1.2）。 */
+  timestamp: number;
+  /** 跨操作合并分组键（§4.4，缺省 undefined）。 */
+  coalesceGroup?: string;
+}
+
+/**
  * UndoStack —— undo/redo 栈管理（design-undo-redo.md §4.1 + §4.1.2）。
  *
  * **栈元素不调换字段**（design-undo-redo.md §4.1 Round 2 NEW-1 修正）：
@@ -135,6 +153,19 @@ export class UndoStack {
   }
 
   /**
+   * 历史面板只读投影（design-undo-redo.md §13，plan 521 / U2）：undo 栈条目元数据列表。
+   * 返回**栈底→栈顶**顺序（index 1-based）；只含可观察元数据，无 diff 载荷（见 UndoStackEntryInfo）。
+   */
+  listUndoEntries(): UndoStackEntryInfo[] {
+    return this.undoStack.map((entry, i) => toEntryInfo(entry, i));
+  }
+
+  /** 历史面板只读投影（design-undo-redo.md §13，plan 521 / U2）：redo 栈条目元数据列表（栈底→栈顶）。 */
+  listRedoEntries(): UndoStackEntryInfo[] {
+    return this.redoStack.map((entry, i) => toEntryInfo(entry, i));
+  }
+
+  /**
    * 弹出 undoStack 栈顶 entry（不入 redoStack）。
    *
    * plan 2026-08-08-0900-1 Phase 2 / P2 #17：applyDiff 失败回滚专用——mutator 先 pushOperation 再
@@ -161,4 +192,14 @@ export class UndoStack {
     this.undoStack = [];
     this.redoStack = [];
   }
+}
+
+/** entry → 只读投影（plan 521 / U2；coalesceGroup 仅在非空时携带）。 */
+function toEntryInfo(entry: UndoStackEntry, i: number): UndoStackEntryInfo {
+  return {
+    index: i + 1,
+    operationKind: entry.operationKind,
+    timestamp: entry.timestamp,
+    ...(entry.coalesceGroup !== undefined ? { coalesceGroup: entry.coalesceGroup } : {}),
+  };
 }

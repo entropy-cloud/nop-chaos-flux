@@ -26,6 +26,186 @@
       "dependsOn": ["atGroupBy"]
     },
     {
+      "type": "keyboard",
+      "bindings": [
+        {
+          "keys": "mod+f",
+          "preventDefault": true
+        },
+        {
+          "keys": "mod+shift+enter",
+          "preventDefault": true
+        }
+      ],
+      "onTrigger": [
+        {
+          "action": "openDialog",
+          "args": {
+            "title": "搜索记录",
+            "testid": "airtable-search-dialog",
+            "className": "at-dialog",
+            "closeOnSubmit": false,
+            "body": [
+              {
+                "type": "form",
+                "testid": "airtable-search-form",
+                "className": "flex flex-col gap-2",
+                "submitScope": "surface",
+                "data": {
+                  "keyword": "${atSearchKeyword ?? ''}"
+                },
+                "body": [
+                  {
+                    "type": "input-text",
+                    "name": "keyword",
+                    "testid": "airtable-search-input",
+                    "placeholder": "搜索标题、说明、标签、负责人、邮箱…"
+                  }
+                ],
+                "actions": [
+                  {
+                    "type": "button",
+                    "label": "搜索",
+                    "variant": "ghost",
+                    "className": "at-btn at-btn-primary",
+                    "testid": "airtable-search-submit",
+                    "onClick": {
+                      "action": "submitForm"
+                    }
+                  }
+                ],
+                "submitOnChange": true,
+                "submitAction": {
+                  "action": "setValue",
+                  "args": {
+                    "path": "atSearchKeyword",
+                    "value": "${keyword ?? ''}"
+                  }
+                }
+              },
+              {
+                "type": "text",
+                "text": "搜索已接线（A1 · ⌘F 键盘入口已由 keyboard binding 接线，plan 518）：输入即过滤，匹配标题 + 属性值（url 参数物化 + dependsOn 自动刷新）；匹配域不含附件与协作人原文（缺口归 G-D）。",
+                "className": "at-note mt-2",
+                "testid": "airtable-search-note"
+              }
+            ],
+            "onSubmitSuccess": [
+              {
+                "action": "setValue",
+                "args": {
+                  "path": "atSearchKeyword",
+                  "value": "${$formData.keyword ?? ''}"
+                }
+              }
+            ]
+          },
+          "when": "${keys === 'mod+f'}"
+        },
+        {
+          "action": "openDialog",
+          "args": {
+            "title": "新增记录",
+            "testid": "airtable-new-record-dialog",
+            "className": "at-dialog",
+            "closeOnSubmit": true,
+            "body": [
+              {
+                "type": "form",
+                "testid": "airtable-new-record-form",
+                "className": "flex flex-col gap-3",
+                "submitScope": "surface",
+                "body": [
+                  {
+                    "type": "input-text",
+                    "name": "title",
+                    "label": "任务名称",
+                    "required": true,
+                    "placeholder": "必填主字段",
+                    "testid": "airtable-new-record-input-title"
+                  },
+                  {
+                    "type": "select",
+                    "name": "category",
+                    "label": "阶段",
+                    "clearable": false,
+                    "defaultValue": "需求评审",
+                    "testid": "airtable-new-record-select-category",
+                    "options": [
+                      {
+                        "label": "需求评审",
+                        "value": "需求评审"
+                      },
+                      {
+                        "label": "设计排期",
+                        "value": "设计排期"
+                      },
+                      {
+                        "label": "开发进行",
+                        "value": "开发进行"
+                      },
+                      {
+                        "label": "验收发布",
+                        "value": "验收发布"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "input-number",
+                    "name": "amount",
+                    "label": "预算",
+                    "defaultValue": 1000,
+                    "testid": "airtable-new-record-input-amount"
+                  }
+                ],
+                "submitAction": {
+                  "action": "ajax",
+                  "args": {
+                    "url": "/r/Airtable__createRecord",
+                    "method": "post",
+                    "includeScope": "*"
+                  },
+                  "messages": {
+                    "success": "记录已创建",
+                    "failed": "记录创建失败"
+                  }
+                },
+                "actions": [
+                  {
+                    "type": "button",
+                    "label": "创建",
+                    "variant": "ghost",
+                    "className": "at-btn at-btn-primary",
+                    "testid": "airtable-new-record-submit",
+                    "onClick": {
+                      "action": "submitForm"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "text",
+                "text": "插行已接线（A10）：提交写新建端点会话库并在表尾插行；⌘⇧Enter 已由 keyboard binding 接线（plan 518）；⇧Enter 下插行需当前格锚点（roving 依赖）维持缺口登记（G-B2/D1）。",
+                "className": "at-note mt-2",
+                "testid": "airtable-new-record-note"
+              }
+            ],
+            "onSubmitSuccess": [
+              {
+                "action": "component:refresh",
+                "componentId": "airtable-source-grid"
+              },
+              {
+                "action": "component:refresh",
+                "componentId": "airtable-source-group"
+              }
+            ]
+          },
+          "when": "${keys === 'mod+shift+enter'}"
+        }
+      ]
+    },
+    {
       "type": "container",
       "className": "min-h-screen",
       "testid": "airtable-page",
@@ -440,7 +620,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "搜索已接线（A1 / ⌘F 入口）：输入即过滤，匹配标题 + 属性值（url 参数物化 + dependsOn 自动刷新）；匹配域不含附件与协作人原文（缺口归 G-D）。",
+                      "text": "搜索已接线（A1 · ⌘F 键盘入口已由 keyboard binding 接线，plan 518）：输入即过滤，匹配标题 + 属性值（url 参数物化 + dependsOn 自动刷新）；匹配域不含附件与协作人原文（缺口归 G-D）。",
                       "className": "at-note mt-2",
                       "testid": "airtable-search-note"
                     }
@@ -704,10 +884,22 @@
                                                     "className": "at-edit-field",
                                                     "testid": "airtable-record-edit-category",
                                                     "options": [
-                                                      { "label": "需求评审", "value": "需求评审" },
-                                                      { "label": "设计排期", "value": "设计排期" },
-                                                      { "label": "开发进行", "value": "开发进行" },
-                                                      { "label": "验收发布", "value": "验收发布" }
+                                                      {
+                                                        "label": "需求评审",
+                                                        "value": "需求评审"
+                                                      },
+                                                      {
+                                                        "label": "设计排期",
+                                                        "value": "设计排期"
+                                                      },
+                                                      {
+                                                        "label": "开发进行",
+                                                        "value": "开发进行"
+                                                      },
+                                                      {
+                                                        "label": "验收发布",
+                                                        "value": "验收发布"
+                                                      }
                                                     ]
                                                   },
                                                   {
@@ -719,12 +911,30 @@
                                                     "className": "at-edit-field",
                                                     "testid": "airtable-record-edit-tags",
                                                     "options": [
-                                                      { "label": "客户端", "value": "客户端" },
-                                                      { "label": "服务端", "value": "服务端" },
-                                                      { "label": "体验", "value": "体验" },
-                                                      { "label": "性能", "value": "性能" },
-                                                      { "label": "安全", "value": "安全" },
-                                                      { "label": "文档", "value": "文档" }
+                                                      {
+                                                        "label": "客户端",
+                                                        "value": "客户端"
+                                                      },
+                                                      {
+                                                        "label": "服务端",
+                                                        "value": "服务端"
+                                                      },
+                                                      {
+                                                        "label": "体验",
+                                                        "value": "体验"
+                                                      },
+                                                      {
+                                                        "label": "性能",
+                                                        "value": "性能"
+                                                      },
+                                                      {
+                                                        "label": "安全",
+                                                        "value": "安全"
+                                                      },
+                                                      {
+                                                        "label": "文档",
+                                                        "value": "文档"
+                                                      }
                                                     ]
                                                   },
                                                   {
@@ -3308,7 +3518,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "插行已接线（A10）：提交写新建端点会话库并在表尾插行；⇧Enter/⌘⇧Enter 键盘插行为缺口（G-B2）显式裁决。",
+                      "text": "插行已接线（A10）：提交写新建端点会话库并在表尾插行；⌘⇧Enter 已由 keyboard binding 接线（plan 518）；⇧Enter 下插行需当前格锚点（roving 依赖）维持缺口登记（G-B2/D1）。",
                       "className": "at-note mt-2",
                       "testid": "airtable-new-record-note"
                     }
@@ -3333,7 +3543,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "新增记录（已接线 A10 · ⇧Enter/⌘⇧Enter 键盘缺口 G-B2）",
+                  "text": "新增记录（已接线 A10 · ⌘⇧Enter 键盘已接线 518 · ⇧Enter 下插行缺口 G-B2/D1）",
                   "className": "at-note"
                 }
               ]
