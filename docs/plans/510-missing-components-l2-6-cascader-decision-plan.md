@@ -58,25 +58,25 @@
 
 ### Phase 1 - 裁决文档落盘
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/cascader-vs-tree-select-decision.md`
 
 - Item Types: `Decision`
 
-- [ ] 裁决文档：场景枚举 → tree-select + childrenSource 承载力评估 → 列式 UX 必要性论证 → 结论 → 回写清单（引用 506 input-city 判例与 505 协议通路）
+- [x] 裁决文档：场景枚举 → tree-select + childrenSource 承载力评估（runtime 证据）→ 列式 UX 必要性论证（正反方）→ 结论（cascader 认定独立交互形态、demand-gated 不立即实现）→ 回写清单（引用 506 input-city 判例与 505 协议通路）
 
 Exit Criteria:
 
-- [ ] 文档落盘且含明确结论与回写清单（最终态行文，≤40KB）；承载力评估/场景枚举引用可核对的 runtime 与文档证据（文件路径/行为）
+- [x] 文档落盘且含明确结论与回写清单（最终态行文，≤40KB）；承载力评估/场景枚举引用可核对的 runtime 与文档证据（文件路径/行为）
 
 ### Phase 2 - 按结论回写 + 收口
 
-Status: planned
+Status: in progress（回写已落地；剩余：human 签认 → roadmap done 回写 → closure audit）
 Targets: matrix、gap-analysis、control-gap-survey、roadmap §13、dev log
 
 - Item Types: `Decision`、`Proof`
 
-- [ ] matrix/gap-analysis/control-gap-survey 按结论回写（含 chained-select/input-formula 定性）
+- [x] matrix/gap-analysis/control-gap-survey 按结论回写（含 chained-select 维持折叠 + input-formula 维持 demand-gated 定性）
 - [ ] **human 签认**：向用户提交裁决摘要请求签认；记录响应（签认/修改意见）于本 plan——签认前 roadmap §13 不回写 `done`
 - [ ] roadmap §13 L2.6 回写 `done`（human 签认后；grep 复核）+ dev log
 
@@ -95,10 +95,10 @@ Exit Criteria:
 
 > 纯文档计划：`pnpm typecheck/build/lint/test/check/e2e` 豁免（无代码变更）。
 
-- [ ] 裁决文档已落盘且含明确结论与回写清单
-- [ ] matrix/gap-analysis/control-gap-survey 回写与结论一致（含 chained-select/input-formula 定性）
+- [x] 裁决文档已落盘且含明确结论与回写清单
+- [x] matrix/gap-analysis/control-gap-survey 回写与结论一致（含 chained-select 维持折叠 + input-formula 维持 demand-gated 定性）
 - [ ] **human 签认已获得并记录于本 plan**（roadmap L2.6 行明文验收；无法以 sub-agent audit 替代）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 
 ## Deferred But Adjudicated
