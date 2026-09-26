@@ -73,7 +73,8 @@
     "user-select",
     "department-select",
     "input-city",
-    "input-signature"
+    "input-signature",
+    "verification-code"
   ],
   "targetContract": [
     "alert",

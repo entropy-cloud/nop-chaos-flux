@@ -12,6 +12,7 @@ import { markdownEditorRendererDefinition } from './renderers/markdown-editor-re
 import { formAtomsRendererDefinitions } from './renderers/form-atoms-renderer-definitions.js';
 import { inputCityRendererDefinition, orgSelectRendererDefinitions } from './renderers/org/org-renderer-definitions.js';
 import { inputSignatureRendererDefinition } from './renderers/signature-renderer-definitions.js';
+import { inputVerificationRendererDefinition } from './renderers/verification-renderer-definitions.js';
 
 export { formRendererDefinition } from './renderers/form-definition.js';
 export { fieldsetRendererDefinition } from './renderers/fieldset.js';
@@ -22,6 +23,7 @@ export { markdownEditorRendererDefinition } from './renderers/markdown-editor-re
 export { formAtomsRendererDefinitions } from './renderers/form-atoms-renderer-definitions.js';
 export { inputCityRendererDefinition, orgSelectRendererDefinitions } from './renderers/org/org-renderer-definitions.js';
 export { inputSignatureRendererDefinition } from './renderers/signature-renderer-definitions.js';
+export { inputVerificationRendererDefinition } from './renderers/verification-renderer-definitions.js';
 
 export const formRendererDefinitions: RendererDefinition[] = [
   formRendererDefinition,
@@ -34,6 +36,7 @@ export const formRendererDefinitions: RendererDefinition[] = [
   ...orgSelectRendererDefinitions,
   inputCityRendererDefinition,
   inputSignatureRendererDefinition,
+  inputVerificationRendererDefinition,
 ];
 
 export function registerFormRenderers(registry: RendererRegistry) {

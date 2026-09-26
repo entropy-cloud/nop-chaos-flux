@@ -330,7 +330,7 @@ UI primitive 对齐补充规则：
 
 **表单 owner / 核心字段（`flux-renderers-form`）**
 
-- `form`、`fieldset`、`input-text`、`input-email`、`input-password`、`input-number`、`textarea`、`select`、`checkbox`、`switch`、`radio-group`、`checkbox-group`、`input-date`、`input-datetime`、`input-time`、`date-range`、`input-month`、`input-quarter`、`input-year`、`markdown-editor`、`button-group-select`、`slider`、`rating`、`input-color`、`user-select`、`department-select`、`input-city`、`input-signature`
+- `form`、`fieldset`、`input-text`、`input-email`、`input-password`、`input-number`、`textarea`、`select`、`checkbox`、`switch`、`radio-group`、`checkbox-group`、`input-date`、`input-datetime`、`input-time`、`date-range`、`input-month`、`input-quarter`、`input-year`、`markdown-editor`、`button-group-select`、`slider`、`rating`、`input-color`、`user-select`、`department-select`、`input-city`、`input-signature`、`verification-code`
 
 **复合 / 高级字段（`flux-renderers-form-advanced`）**
 
@@ -517,6 +517,7 @@ UI primitive 对齐补充规则：
 - `department-select/`
 - `input-city/`
 - `input-signature/`
+- `verification-code/`
 - `tag-list/`
 - `key-value/`
 - `array-editor/`

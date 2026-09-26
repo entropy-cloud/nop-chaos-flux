@@ -886,6 +886,8 @@ All three are `BoundFieldSchemaBase` scalar fields (name/label/readOnly/required
 
 `InputSignatureSchema` — type `input-signature` (plan 507) — adds the handwritten signature canvas: pointer-event strokes, per-stroke undo, value = PNG dataURL with the zero-strokes ⇔ undefined invariant; handles `component:clear/reset`.
 
+`VerificationCodeSchema` — type `verification-code` (plan 508) — adds the OTP code field on the ui InputOTP primitive: `length` (default 6)/`masked`; value invariant — input length < `length` ⇔ `undefined`; handles `component:clear/reset/focus`. Intentionally uncontrolled (intermediate cell text lives in the lib).
+
 `InputCitySchema` — type `input-city` (plan 506) — adds the region cascade picker: desktop cascader columns + mobile wheel branch (`useIsMobile`), orgDepth = province 0 / city 1 / district 2; echo path text via `extra.path` (provider-optional). Both extend the shared `OrgSelectSchema` contract and consume the org data-source protocol (`docs/architecture/org-data-source-protocol.md`): request scope vars `orgNodeId`/`orgDepth`/`searchQuery`/`orgPage`/`orgPageSize`/`orgValues`, `{nodes,total?,hasMore?}` envelope, shared normalizer + termination + error keys (`flux.form.org*Failed`) in `renderers/org/`. Handles: `component:clear/reset/focus/open`. NOTE: `sourceSearch` (org field) is distinct from select's `searchSource`.
 
 ## Industrial Package — @nop-chaos/flux-renderers-industrial

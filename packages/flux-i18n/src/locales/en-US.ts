@@ -287,6 +287,7 @@ export const enUS: Resource = {
       signatureClear: 'Clear',
       signatureUnsupported: 'Handwriting is not supported in this environment',
       signatureAriaLabel: 'Handwritten signature',
+      verificationCodeAriaLabel: 'Verification code input',
       regionLevelProvince: 'Province',
       regionLevelCity: 'City',
       regionLevelDistrict: 'District',

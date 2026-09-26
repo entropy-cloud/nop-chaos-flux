@@ -287,6 +287,7 @@ export const zhCN: Resource = {
       signatureClear: '清除',
       signatureUnsupported: '当前环境不支持手写输入',
       signatureAriaLabel: '手写签名',
+      verificationCodeAriaLabel: '验证码输入',
       regionLevelProvince: '省',
       regionLevelCity: '市',
       regionLevelDistrict: '区',

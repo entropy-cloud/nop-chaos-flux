@@ -352,6 +352,13 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Handwritten signature canvas: pointer-event strokes, per-stroke undo, PNG dataURL value.',
   },
   {
+    id: 'verification-code',
+    title: 'Verification Code',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'OTP verification-code input on the ui InputOTP primitive: cell auto-advance, full-length commit.',
+  },
+  {
     id: 'input-city',
     title: 'Input City',
     category: 'form',
