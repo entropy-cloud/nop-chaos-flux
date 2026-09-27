@@ -55,7 +55,10 @@ export type DesignerTreeCommand =
       targetRegionKey: string;
       index: number;
     }
-  /** 批量字段合并（S3 动作编排复用）。浅合并：只写声明的键，不触碰其余键（含 sid）。 */
+  /**
+   * 批量字段合并（S3 动作编排/数据绑定复用）。浅合并：只写声明的键，不触碰其余键
+   * （含 sid）；值为 `undefined` 的键 = 移除该键（清空绑定/动作不留 undefined 幻影键）。
+   */
   | { kind: 'updateProps'; nodeId: SessionNodeId; props: Record<string, unknown> }
   | { kind: 'replaceRegion'; nodeId: SessionNodeId; regionKey: string; node: SchemaInput | null }
   | { kind: 'importDocument'; doc: SchemaInput };

@@ -172,7 +172,15 @@ function applyUpdateProps(
   const location = locateNode(doc, command.nodeId, ctx.registry);
   if (!location) return fail('unknown-node');
   const node = location.node;
-  const nextDoc = rebuildAtLocation(doc, location, () => ({ ...node, ...command.props }));
+  // S3 面板语义：`undefined` 值 = 移除该键（绑定/动作清空走同一通道，不留
+  // undefined 幻影键——与导出投影 JSON.stringify 丢弃 undefined 的形态对齐）。
+  const definedProps = Object.fromEntries(
+    Object.entries(command.props).filter(([, value]) => value !== undefined),
+  );
+  const removedKeys = Object.keys(command.props).filter((key) => command.props[key] === undefined);
+  const merged: Record<string, unknown> = { ...(node as unknown as Record<string, unknown>), ...definedProps };
+  for (const key of removedKeys) delete merged[key];
+  const nextDoc = rebuildAtLocation(doc, location, () => merged as BaseSchema);
   ctx.core.update(() => nextDoc);
   return { ok: true };
 }

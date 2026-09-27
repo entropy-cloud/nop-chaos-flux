@@ -49,6 +49,26 @@ export { applyDesignerCommand } from './commands.js';
 export type { DesignerCommandContext } from './commands.js';
 
 export {
+  serializeCommand,
+  deserializeCommand,
+} from './command-serialization.js';
+export type { SerializedDesignerCommand, DeserializedCommand } from './command-serialization.js';
+
+export {
+  collectDataSourceNames,
+  buildDataBindingExpression,
+  parseDataBindingExpression,
+  isSchemaNode,
+} from './data-binding.js';
+export type { DataBindingExpression } from './data-binding.js';
+
+export {
+  buildKeyboardNavRows,
+  resolveKeyboardMove,
+} from './keyboard-navigation.js';
+export type { KeyboardNavRow, KeyboardNavKey } from './keyboard-navigation.js';
+
+export {
   getDropRegionKeys,
   getContainerKeys,
   isContainerDefinition,

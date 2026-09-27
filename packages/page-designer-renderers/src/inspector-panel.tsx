@@ -24,11 +24,22 @@ import { resolveRendererAuthoringContract } from '@nop-chaos/flux-core';
 import type { SessionNodeId } from '@nop-chaos/page-designer-core';
 import { buildInspectorSchema } from '@nop-chaos/page-designer-core';
 import { buildInspectorPanelModel, buildRawJsonText, type InspectorFieldModel } from './inspector-field-model.js';
+import type { PageDesignerControlAdapter } from './inspector-adapters.js';
+import { ActionsEditorPanel } from './actions-editor.js';
+import { DataBindingPanel } from './data-binding-panel.js';
 
 export interface InspectorPanelProps {
   nodeId: SessionNodeId | null;
   node: BaseSchema | null;
   definition: RendererDefinition | undefined;
+  /**
+   * editorType 覆盖位（S3-3，§8.1/§11.2 控件适配位）：键为 `editorType`
+   * 字符串（如 `'expression'`），生成器打 `xui:inspectorAdapter` 标记，
+   * 字段渲染层换装自定义控件。
+   */
+  controlAdapters?: Readonly<Record<string, PageDesignerControlAdapter>>;
+  /** 数据源清单（S3-1 数据绑定面板候选，host env 注入面 + 文档扫描）。 */
+  dataSourceNames?: readonly string[];
   /**
    * 属性回写（S1 §8.2）。`stage: 'transient'` = 事务内改 working；
    * `'commit'` = 收口编辑会话事务（宿主 endTransaction → 1 条 undo 步）。
@@ -55,6 +66,7 @@ function parseNumberInput(raw: string): unknown {
 function InspectorField(props: {
   field: InspectorFieldModel;
   value: unknown;
+  adapters?: Readonly<Record<string, PageDesignerControlAdapter>>;
   callbacks: InspectorFieldCallbacks;
 }) {
   const { field, callbacks } = props;
@@ -67,6 +79,22 @@ function InspectorField(props: {
       <div className="space-y-1" data-inspector-field={field.name} data-inspector-readonly="true">
         <Label htmlFor={fieldId}>{field.label}</Label>
         <Input id={fieldId} value={props.value === undefined || props.value === null ? '' : String(props.value)} readOnly disabled />
+      </div>
+    );
+  }
+
+  // 自定义控件适配位命中（S3-3）：换装 adapter 单元格（value/onChange/onCommit）。
+  const adapter = field.adapter ? props.adapters?.[field.adapter] : undefined;
+  if (adapter) {
+    return (
+      <div data-inspector-field={field.name} data-inspector-adapter={field.adapter}>
+        {adapter.renderCell({
+          value: props.value,
+          onChange: callbacks.onFieldChange,
+          onCommit: callbacks.onEditSessionCommit,
+          fieldId,
+          fieldLabel: field.label,
+        })}
       </div>
     );
   }
@@ -186,8 +214,8 @@ export function InspectorPanel(props: InspectorPanelProps) {
   const schema = useMemo(() => {
     if (!node || !definition) return null;
     const contract = resolveRendererAuthoringContract(definition);
-    return buildInspectorSchema(contract, { fieldRules: definition.fields });
-  }, [node, definition]);
+    return buildInspectorSchema(contract, { fieldRules: definition.fields, controlAdapters: props.controlAdapters });
+  }, [node, definition, props.controlAdapters]);
 
   const model = useMemo(
     () =>
@@ -291,6 +319,7 @@ export function InspectorPanel(props: InspectorPanelProps) {
             <InspectorField
               field={field}
               value={readValue(field)}
+              adapters={props.controlAdapters}
               callbacks={{
                 onFieldChange: (value) => {
                   setDraft((prev) => ({ ...prev, [field.name]: value }));
@@ -317,6 +346,18 @@ export function InspectorPanel(props: InspectorPanelProps) {
             ))}
           </ul>
         </div>
+      ) : null}
+
+      {node ? (
+        <>
+          <ActionsEditorPanel node={node} onUpdateProps={props.onUpdateProps} />
+          <DataBindingPanel
+            node={node}
+            definition={definition}
+            dataSourceNames={props.dataSourceNames ?? []}
+            onUpdateProps={props.onUpdateProps}
+          />
+        </>
       ) : null}
     </div>
   );

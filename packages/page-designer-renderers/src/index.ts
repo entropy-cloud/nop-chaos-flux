@@ -31,6 +31,37 @@ export type { PalettePanelProps } from './palette-panel.js';
 export { InspectorPanel } from './inspector-panel.js';
 export type { InspectorPanelProps } from './inspector-panel.js';
 
+export { createFormulaExpressionAdapter } from './inspector-adapters.js';
+export type { PageDesignerControlAdapter } from './inspector-adapters.js';
+export { validateExpressionTemplate, hasExpressionSegment } from './expression-validation.js';
+
+export {
+  KNOWN_ACTION_TYPES,
+  parseActionsRecord,
+  serializeActionsRecord,
+  encodeArgValue,
+  decodeArgValue,
+  nextActionName,
+  moveRow,
+} from './actions-model.js';
+export type { ActionArgPair, ActionRow, ActionsModel } from './actions-model.js';
+
+export { ActionsEditorPanel, ACTIONS_RECORD_KEY } from './actions-editor.js';
+export type { ActionsEditorPanelProps } from './actions-editor.js';
+
+export { DataBindingPanel, DataSourceCatalog } from './data-binding-panel.js';
+export type { DataBindingPanelProps } from './data-binding-panel.js';
+
+export {
+  TemplateGallery,
+  createInMemoryTemplateStore,
+} from './template-gallery.js';
+export type {
+  PageDesignerTemplate,
+  PageDesignerTemplateStore,
+  TemplateGalleryProps,
+} from './template-gallery.js';
+
 export { StructureTree } from './structure-tree.js';
 export type { StructureTreeProps } from './structure-tree.js';
 

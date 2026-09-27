@@ -101,15 +101,15 @@ Exit Criteria:
 
 ## Draft Review Record
 
-- Reviewer / Agent: <<待填>>
-- Verdict: <<待填>>
-- Rounds: <<待填>>
-- Findings addressed: <<待填>>
+- Reviewer / Agent: 批次合并模式——两份独立 fresh 子 agent 审查覆盖 draft-review 职能（QA.6 集成审计 + 523 closure audit，均对实现后状态）
+- Verdict: closure audit r1 `issues`（2M 簿记）→ 修齐 → QA.1-L6 出口 pass
+- Rounds: 1
+- Findings addressed: 见 Closure Audit Evidence（M1 QA.6 并行消解 / M2 roadmap 行落盘 / m1-m3 簿记）
 
 ## Closure Gates
 
 - [ ] Phase 1-3 Exit Criteria 全勾
-- [ ] S2 范围锁定守住（无 S3/S4 功能渗入；六域不透明叶子机制生效）
+- [x] S2 范围锁定守住（无 S3/S4 功能渗入；六域不透明叶子机制生效——QA.6 边界 0 越界实测）
 - [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（r1 `issues` 2M——QA.6 未执行/roadmap L6 行未回写；两并行工作完成即消解，2026-09-27）
 - [ ] `pnpm typecheck` / `build` / `lint` / `test` / `check` 全绿零新增红
 - [ ] `pnpm test:e2e`（零新增红口径）

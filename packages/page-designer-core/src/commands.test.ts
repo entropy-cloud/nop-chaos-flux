@@ -349,6 +349,25 @@ describe('updateProps', () => {
     expect(findNodeById(session.getSnapshot().working, sids.atomA, session.registry)).toMatchObject({ name: 'a' });
   });
 
+  it('removes keys whose value is undefined (S3 panel clear semantics, no phantom key)', () => {
+    const { session, sids } = seedDocument();
+    session.dispatch({ kind: 'updateProps', nodeId: sids.atomA, props: { label: 'bound', value: '${u.f}' } });
+    const result = session.dispatch({
+      kind: 'updateProps',
+      nodeId: sids.atomA,
+      props: { label: undefined, value: '${u.g}', keep: 1 },
+    });
+    expect(result.ok).toBe(true);
+    const atom = findNodeById(session.getSnapshot().working, sids.atomA, session.registry) as Record<string, unknown>;
+    expect('label' in atom).toBe(false);
+    expect(atom.value).toBe('${u.g}');
+    expect(atom.keep).toBe(1);
+    // undo 恢复到删除前的键（inverse patch 对称）。
+    session.core.undo();
+    const restored = findNodeById(session.getSnapshot().working, sids.atomA, session.registry) as Record<string, unknown>;
+    expect(restored.label).toBe('bound');
+  });
+
   it('rejects unknown node', () => {
     const { session } = seedDocument();
     expect(session.dispatch({ kind: 'updateProps', nodeId: 'psid-nope', props: {} }).error).toBe('unknown-node');

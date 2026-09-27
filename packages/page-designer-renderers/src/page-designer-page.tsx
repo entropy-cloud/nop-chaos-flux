@@ -14,13 +14,17 @@ import type { RendererEnv, SchemaInput } from '@nop-chaos/flux-core';
 import { isSchema } from '@nop-chaos/flux-core';
 import type { SessionNodeId } from '@nop-chaos/page-designer-core';
 import {
+  buildKeyboardNavRows,
+  collectDataSourceNames,
   createSeededRandom,
   findNodeById,
   getDropRegionKeys,
   getRegionChildren,
   getSessionId,
   locateNode,
+  resolveKeyboardMove,
 } from '@nop-chaos/page-designer-core';
+import type { KeyboardNavKey } from '@nop-chaos/page-designer-core';
 import { buildMvpPaletteItems, createPageDesignerRegistry, resolvePaletteScaffold } from './designer-registry.js';
 import { useDesignerSession } from './use-designer-session.js';
 import { PageDesignerCanvas } from './canvas-bridge.js';
@@ -28,11 +32,20 @@ import { PalettePanel } from './palette-panel.js';
 import { InspectorPanel } from './inspector-panel.js';
 import { StructureTree } from './structure-tree.js';
 import { JsonSourceView } from './json-source-view.js';
+import { createFormulaExpressionAdapter } from './inspector-adapters.js';
+import { DataSourceCatalog, DataBindingPanel } from './data-binding-panel.js';
+import { TemplateGallery } from './template-gallery.js';
+import { createInMemoryTemplateStore } from './template-gallery.js';
+import type { PageDesignerTemplateStore } from './template-gallery.js';
 import type { DesignerDragPayload, DesignerDropHint } from './types.js';
 
 export interface PageDesignerProps {
   /** 宿主 env（编辑态预览数据源等）；缺省 `createDefaultEnv()`。 */
   env?: RendererEnv;
+  /** 模板存储宿主回调（S4-2）；缺省 demo 内存 store（会话内持久）。 */
+  templates?: PageDesignerTemplateStore;
+  /** 宿主 env 注入的数据源清单（S3-1 数据绑定候选；与文档内 source 节点扫描并集）。 */
+  dataSourceNames?: readonly string[];
   onBack?: () => void;
 }
 
@@ -56,15 +69,22 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
 }
 
+function isKeyboardNavKey(key: string): key is KeyboardNavKey {
+  return key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight';
+}
+
 export function PageDesigner(props: PageDesignerProps) {
   const registry = useMemo(() => createPageDesignerRegistry(), []);
   const env = useMemo(() => props.env ?? createDefaultEnv(), [props.env]);
+  const templateStore = useMemo(() => props.templates ?? createInMemoryTemplateStore(), [props.templates]);
+  const controlAdapters = useMemo(() => ({ expression: createFormulaExpressionAdapter() }), []);
   const { session, state } = useDesignerSession(
     useMemo(() => ({ registry, env, sidRandom: SHARED_SID_RANDOM }), [registry, env]),
   );
 
   const [hoverNodeId, setHoverNodeId] = useState<SessionNodeId | null>(null);
   const [dropHint, setDropHint] = useState<DesignerDropHint | null>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const inspectorTxActiveRef = useRef(false);
 
   const paletteItems = useMemo(() => buildMvpPaletteItems(registry), [registry]);
@@ -83,6 +103,11 @@ export function PageDesigner(props: PageDesignerProps) {
     const regions = getDropRegionKeys(registry.get((rootSchemaNode as unknown as Record<string, unknown>).type as string));
     return regions.every((key) => getRegionChildren(rootSchemaNode, key).length === 0);
   }, [rootSchemaNode, registry]);
+
+  const dataSourceNames = useMemo(
+    () => [...new Set([...(props.dataSourceNames ?? []), ...collectDataSourceNames(state.working)])],
+    [props.dataSourceNames, state.working],
+  );
 
   const clearTransient = useCallback(() => {
     setHoverNodeId(null);
@@ -246,6 +271,19 @@ export function PageDesigner(props: PageDesignerProps) {
         session.core.redo();
         return;
       }
+      if (isKeyboardNavKey(event.key)) {
+        // S4-1 键盘漫游：方向键移动选择（命令通道；文档变更仍只走 dispatch）。
+        const navKey = event.key as KeyboardNavKey;
+        if (!selectedNodeId && navKey !== 'ArrowDown') return;
+        event.preventDefault();
+        const rows = buildKeyboardNavRows(state.working, registry);
+        const next = resolveKeyboardMove(rows, selectedNodeId, navKey);
+        if (next && next !== selectedNodeId) {
+          endInspectorTransaction();
+          session.core.setSelection([next]);
+        }
+        return;
+      }
       if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNodeId) {
         event.preventDefault();
         handleDelete();
@@ -253,7 +291,7 @@ export function PageDesigner(props: PageDesignerProps) {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [handleDelete, selectedNodeId, session]);
+  }, [endInspectorTransaction, handleDelete, registry, selectedNodeId, session, state.working]);
 
   const exportedJson = useMemo(
     () => session.core.adapter.serialize(state.working),
@@ -311,6 +349,18 @@ export function PageDesigner(props: PageDesignerProps) {
           >
             {state.mode === 'edit' ? t('flux.pageDesigner.modePreview') : t('flux.pageDesigner.modeEdit')}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="page-designer-templates"
+            onClick={() => {
+              endInspectorTransaction();
+              setGalleryOpen(true);
+            }}
+          >
+            {t('flux.pageDesigner.templateGalleryTitle')}
+          </Button>
         </div>
       </header>
 
@@ -324,6 +374,9 @@ export function PageDesigner(props: PageDesignerProps) {
               <TabsTrigger value="structure" className="flex-1">
                 {t('flux.pageDesigner.structureTitle')}
               </TabsTrigger>
+              <TabsTrigger value="data" className="flex-1">
+                {t('flux.pageDesigner.dataTabTitle')}
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="palette" className="min-h-0 flex-1 overflow-hidden">
               <PalettePanel items={paletteItems} onItemClick={insertIntoContext} />
@@ -334,6 +387,16 @@ export function PageDesigner(props: PageDesignerProps) {
                 registry={registry}
                 selection={state.selection}
                 onSelect={(nodeId) => session.core.setSelection([nodeId])}
+              />
+            </TabsContent>
+            <TabsContent value="data" className="min-h-0 flex-1 overflow-y-auto">
+              {/* S3-1 数据面板位（§11.2 第三 tab）：数据源清单 + 选中节点绑定编辑。 */}
+              <DataSourceCatalog dataSourceNames={dataSourceNames} />
+              <DataBindingPanel
+                node={selectedNode}
+                definition={selectedDefinition}
+                dataSourceNames={dataSourceNames}
+                onUpdateProps={handleUpdateProps}
               />
             </TabsContent>
           </Tabs>
@@ -391,6 +454,8 @@ export function PageDesigner(props: PageDesignerProps) {
                 nodeId={selectedNodeId}
                 node={selectedNode}
                 definition={selectedDefinition}
+                controlAdapters={controlAdapters}
+                dataSourceNames={dataSourceNames}
                 onUpdateProps={handleUpdateProps}
                 onDelete={handleDelete}
                 onDuplicate={handleDuplicate}
@@ -411,6 +476,21 @@ export function PageDesigner(props: PageDesignerProps) {
           </Tabs>
         </aside>
       </main>
+
+      <TemplateGallery
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+        store={templateStore}
+        currentExportedJson={exportedJson}
+        onInstantiate={(doc) => {
+          endInspectorTransaction();
+          const result = session.dispatch({ kind: 'importDocument', doc });
+          if (result.ok) {
+            session.core.setSelection([]);
+          }
+          return result.ok;
+        }}
+      />
     </div>
   );
 }

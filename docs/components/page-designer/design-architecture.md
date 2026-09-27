@@ -381,6 +381,13 @@ function classifyNode(definition: RendererDefinition): PageNodeClass;
 | 批量树命令           | `updateProps`（多字段合并）、`replaceRegion`（整段子树替换）天然支持批量 | `xui:actions` 可视化编排 = 事件面板位的结构化编辑器，一次编排整段替换 onEvent = 1 条 undo 步，**无需新增命令种类**                          |
 | 左栏数据面板位       | 左栏两 tab（palette / 大纲树）                                           | 第三 tab「数据」，只产出标准 source 节点与 `xui:imports` schema，不改文档模型（数据绑定面向 host env 注入的数据源表达式，不引入数据建模层） |
 
+> **S3/S4 状态回写（plan 524，2026-09-26 实施后注记）**：三预埋位已全部填充，未改 S2 命令种类与文档模型。
+>
+> - **inspector 控件适配位（done）**：`createFormulaExpressionAdapter()`（page-designer-renderers `inspector-adapters.tsx`）经 `buildInspectorSchema({ controlAdapters })` 挂点注册（editorType `expression`）；校验复用 `flux-formula` `compileTemplate`（与 flux-code-editor expression linter 同引擎，不拖入 CodeMirror——依赖出清形态的择优落地）；expr-invalid 失败路径 = 行内错误、不落文档。
+> - **批量树命令位（done）**：`ActionsEditorPanel`（`actions-editor.tsx`）编辑节点 `xui:actions` 命名动作链 record（`XuiActionDefinitions` 契约），动作类型下拉（内建已知集 `BUILT_IN_ACTION_REGISTRY`）/参数键值对（JSON 归一化）/顺序增删；未知类型保留 + 标注；extras/preserved 条目原样保留。整 record 经一次 `updateProps` 合并 = 1 条 undo 步，零新增命令种类。`updateProps` 语义补全：值为 `undefined` 的键 = 移除该键（清空绑定/动作不留 undefined 幻影键）。
+> - **左栏数据面板位（done，形态收敛）**：第三 tab「数据」= `DataSourceCatalog`（文档内 `data-source`/`source` 节点 `name` 扫描 + 宿主 env 注入清单，二者并集）+ `DataBindingPanel`（选中节点 `${source.field}` 绑定的结构化编辑，产出经 updateProps 落文档；同一面板挂接 inspector 数据绑定区）。未产 source 节点插入（`data-source` renderer 不在设计器自持 registry 白名单内，插入即破坏 rt-unknown-type 导入不变式）——数据源声明留给宿主 env/数据面板后续阶段，本阶段不引入数据建模层。
+> - **S4（done）**：键盘漫游（core `buildKeyboardNavRows`/`resolveKeyboardMove` 纯函数 + 页面 keydown 接线：方向键移动选择、Delete 走 `removeNode`，全命令通道）；模板画廊（`TemplateGallery` + `PageDesignerTemplateStore` 宿主回调面 + `createInMemoryTemplateStore` demo 实现；实例化 = `importDocument` 1 条 undo 步）；协作命令模型预留（core `serializeCommand`/`deserializeCommand`，JSON 形态往返 + 入站校验，不实现传输）。
+
 预埋原则：S2 的命令面与文档模型按 S3 的最坏形状设计（批量 patch、整段替换、adapter 位），但不实现任何 S3 行为、不提前 import S3 依赖。
 
 ## 12. 风险、取舍与后续阶段

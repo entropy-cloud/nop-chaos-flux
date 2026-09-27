@@ -11,6 +11,7 @@ import { isSchema } from '@nop-chaos/flux-core';
 import type { BaseSchema, SchemaInput } from '@nop-chaos/flux-core';
 import type { SessionNodeId } from '@nop-chaos/page-designer-core';
 import {
+  INSPECTOR_ADAPTER_KEY,
   INSPECTOR_EVENTS_KEY,
   INSPECTOR_RAW_JSON_FIELD,
   INSPECTOR_READONLY_KEY,
@@ -30,6 +31,8 @@ export interface InspectorFieldModel {
   options?: { label: string; value: unknown }[];
   required: boolean;
   readOnly: boolean;
+  /** 命中的自定义控件适配键（`controlAdapters` 覆盖位，S3-3 formula 编辑器）。 */
+  adapter?: string;
   description?: string;
 }
 
@@ -75,6 +78,9 @@ function toFieldModel(field: BaseSchema): InspectorFieldModel | null {
     ...(options ? { options } : {}),
     required: record.required === true,
     readOnly: record[INSPECTOR_READONLY_KEY] === true,
+    ...(typeof record[INSPECTOR_ADAPTER_KEY] === 'string'
+      ? { adapter: record[INSPECTOR_ADAPTER_KEY] as string }
+      : {}),
     ...(typeof record.description === 'string' ? { description: record.description } : {}),
   };
 }

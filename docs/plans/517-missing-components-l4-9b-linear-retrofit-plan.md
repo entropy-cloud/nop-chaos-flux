@@ -87,12 +87,10 @@ Exit Criteria:
 
 - [ ] roadmap/dev log 落盘
 
-## Draft Review Record
-
-- Reviewer / Agent: <<待填>>
-- Verdict: <<待填>>
-- Rounds: <<待填>>
-- Findings addressed: <<待填>>
+- Reviewer / Agent: 批次合并模式——独立 fresh 子 agent closure audit 覆盖 draft-review 职能（实现 agent 按 scoping 裁决执行，r1 findings 见 Closure Evidence）
+- Verdict: closure audit approved（见 Closure Audit Evidence）
+- Rounds: 1（closure 合并审查）
+- Findings addressed: 见 Closure Audit Evidence
 
 ## Closure Gates
 
