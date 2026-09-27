@@ -283,3 +283,38 @@ D2 counts **26 app-replica pages** + 14 enterprise complex pages (40 schemas tot
 - `docs/analysis/2026-06-21-mobile-infra-and-skeleton-proposal.md` — **image-preview capability ruling** (not a type).
 - `docs/analysis/2026-09-05-framework-completeness/README.md` — parallel completeness report.
 - `apps/playground/src/complex-pages/` — living proof of composition coverage.
+
+---
+
+## 8. QA.7 复评注记（2026-09-27，dated appendix — §1–§7 快照原文不改写）
+
+> 依据 roadmap §11 QA.7 coverage 复评 + 全线 done 后 live 实跑；审计档 `docs/audits/missing-components/QA.7-final-acceptance-audit.md`。§2 快照行保持 2026-09-24 原值，冲突以本节为准。
+
+### 8.1 A–G matrix 重打分（目标修复行）
+
+| #            | 快照          | 复评                | 依据                                                                                                        |
+| ------------ | ------------- | ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| A2           | Partial       | **Full**            | `verification-code`（L2.4，ui InputOTP 注册）                                                               |
+| A4           | Full\*        | **Full**            | density 语义档（L4.1）+ filter↔URL（L3.5 `useUrlFilterSync`）双洞闭合                                       |
+| A7 / B1 / C9 | Partial       | **Full**            | `user-select`/`department-select`（L2.1，org 协议零分叉）                                                   |
+| B2           | Partial       | **Full**            | G-K CLOSED（§2 行 2026-09-26 注记；plan 513 levelMap fill tint）                                            |
+| B3           | Partial       | **Full**            | calendar `monthShape:'grid'` 6 周格 + date-cell（L4.2）                                                     |
+| B6           | Partial       | **Full**            | org 协议（L2.0，`org-data-source-protocol.md`）                                                             |
+| C4           | Partial       | **Full**            | `input-city`（L2.2，桌面级联 + 移动 wheel）                                                                 |
+| C5           | Partial       | **Full**            | filter↔URL（L3.5，`env.location` + standard-crud 深链）                                                     |
+| C6           | Blocked       | **Full**            | `RendererEnv.print`（L3.1，renderer-api.ts:211）+ print action + AntD Pro 接线                              |
+| C8           | Partial       | **Partial**（收窄） | money = 协议已立、实现 demand-gated（L2.5，input-number design.md §2.1）；PDF-out 维持 print-designer track |
+| D2           | Full\*        | **Full**            | declarative download action（L3.3）                                                                         |
+| C2 / E2 / G5 | Partial       | **Partial**（维持） | `image` preview capability（L7.2 demand-gated；not-a-type 裁定不变）                                        |
+| D4           | Partial       | **Partial**（维持） | body-level breadcrumb host-IA posture demand-gated；linkage friction（C1-8）非本 roadmap 范围               |
+| B4 / D5      | Full\* / Host | 维持                | focus-refetch 裁定不模拟（闭合记录）/ host track                                                            |
+
+**复评记分板（41 行）：Full 34（≈83%）· Full\* 1（B4）· Partial 5（C2/C8/D4/E2/G5，均为已登记 demand-gated 或 host-IA posture）· Blocked 0 · Host 1。**
+
+### 8.2 §3 根因销项
+
+§3.1：P0×3 ✅ landed（matrix flip + 命名 pass）；P1×5 ✅ landed；cascader = L2.6 demand-gated（决策文档在案）；money = 协议 demand-gated；P2 skeleton/image-preview/location-picker/input-excel = demand-gated 终态（L7）。§3.2：print ✅ / clipboard ✅（三 replica copy-link 真实写入）/ download ✅ / filter↔URL ✅ / toast host ✅（单例 Toaster + debounce hack 清除）/ theme switch ✅（plan 471 闭合）/ focus refetch ✅（裁定不模拟闭合）；PDF·Office preview 与 phone mask 维持 demand-gated。§3.3：density ✅ / calendar date-cell ✅ / G-J ✅（`resizable` type）/ G-K ✅ / cardTemplate params ✅ / kanban 手势 ✅ / replica retrofit ✅（516-519）/ docs-only ✅（L4.10）；range = L4.3 demand-gated；hover-peek = plan 513 裁定 watch-only residual（successor: no）；共享 roving = D1 池（airtable 计数 +1）。§5 DoD 达成：Blocked 清零，余 5 行 Partial 均有书面 demand-gate / host-IA 登记。
+
+### 8.3 §6 勘误
+
+「print/clipboard verified absent」已过时（现 renderer-api.ts:211/217/223 在案）；「quick-reference 待 P-1」已由 plan 520 清零（living 面）；本文件 :258 历史引用系快照档案维持原样（QA.1-L7 Obs-1）。

@@ -310,3 +310,34 @@ Do **not** open: antd `Menu`/`PageHeader`/`Comment`/`Popconfirm` as types (host 
 - `docs/analysis/ui-review/C2-capability-gaps.md` + `docs/analysis/ui-review/D2-closure.md` — D1 pool / open-candidates ledger (host channels + density overlap).
 - `docs/analysis/2026-09-05-framework-completeness/README.md` — parallel completeness report (index-routed).
 - `docs/context/project-context.md` / `docs/context/ai-autonomy-policy.md` — freshness / autonomy gate before implementation.
+
+---
+
+## 13. QA.7 复评注记（2026-09-27，dated appendix — §1–§12 快照原文不改写）
+
+> 依据 roadmap §11 QA.7 coverage 复评 + 全线 done 后 live 实跑；审计档 `docs/audits/missing-components/QA.7-final-acceptance-audit.md`。快照行保持 2026-09-24 原值，冲突以本节为准。
+
+### 13.1 §4 gap register 重打分
+
+| Register 行                                                                                                                | 快照                         | 复评                                 | live 证据                                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P0 `slider`                                                                                                                | missing（registration debt） | **landed**                           | matrix Form Core flip 2026-09-25；`flux-renderers-form/src/renderers/slider-renderer.tsx`；design.md/example/e2e/manifest/quick-reference 五面齐 |
+| P0 `rate`                                                                                                                  | missing                      | **landed（定名 `rating`）**          | 命名 pass 裁定；ui Rating 基元 + rating-renderer；matrix :140                                                                                    |
+| P0 `color`                                                                                                                 | missing                      | **landed（定名 `input-color`）**     | ui ColorPicker + input-color-renderer；matrix :141（display 行 ≠ form 行澄清在 matrix :285）                                                     |
+| P1 `user-select`/`department-select`                                                                                       | none                         | **landed**                           | plan 505 共享数据面 `renderers/org/`（协议 §9 零分叉，QA.3 复核）                                                                                |
+| P1 `region`/`city`                                                                                                         | none                         | **landed（定名 `input-city`）**      | plan 506；matrix §5 notRetained 行移除 + Form Core 增行                                                                                          |
+| P1 `signature`                                                                                                             | matrix notRetained           | **landed（定名 `input-signature`）** | plan 507 flip；PNG dataURL 值契约                                                                                                                |
+| P1 `verification-code`                                                                                                     | unregistered                 | **landed**                           | plan 508 ui InputOTP 消费                                                                                                                        |
+| P1 `cascader`                                                                                                              | conditional                  | **demand-gated（L2.6 裁决）**        | `cascader-vs-tree-select-decision.md`；独立交互形态成立、待 host 需求立 type（matrix :246 内联登记）；chained-select 维持折叠                    |
+| P1 `money` format                                                                                                          | prefix/precision only        | **协议已立、实现 demand-gated**      | L2.5（DESIGN-ACK-NOT-IMPL）：input-number design.md §2.1 `format:'currency'` + improvement-roadmap X6                                            |
+| P2 `skeleton`/`image-preview`/`lazyload`                                                                                   | demand-gated                 | 维持 demand-gated 终态               | plan 520 登记（L7.1/L7.2/L7.3 各自 gate）                                                                                                        |
+| P2 `location-picker`/`input-excel`/`input-formula`/body breadcrumb/nav 族/tooltip-wrapper 族/mentions/log·tasks·search-box | demand-gated                 | 维持 demand-gated（非 item）         | plan 520 + roadmap §10 Non-goals 指引                                                                                                            |
+| survey specialty（pdf-viewer/org-tree/mind-map/cron-editor/excel-importer）                                                | survey-owned                 | 维持 survey-owned                    | plan 520 复查确认                                                                                                                                |
+
+### 13.2 §7 维护债销项
+
+matrix maintenance pass ✅（plan 520：icon-picker/calendar 已实现指针 + sparkline/hidden 核实维持 folded + slider/rating/input-color P0 决议翻行 + color display/form 行澄清）；quick-reference P-1 措辞清零 ✅（520）；roadmap O1 reconcile ✅ 部分（area→input-city 关闭、icon-picker/calendar 回写；**残面**：O1 AMIS-derived bullet 仍列 5 个已落地项未注记——QA.1-L7 Minor-2，登记 QA.7 残余债）；control-gap-survey 双向链接补注 / InputTree·TreeSelectSchema 跨包迁移评估 / van-cell 行模板文档化 = 三项「随下批 docs」**未结**（QA.1-L7 Obs-2，登记 QA.7 残余债）。
+
+### 13.3 §2 live inventory 增补（2026-09-27 口径）
+
+`flux-renderers-form` 新增 8 type：`slider` `rating` `input-color` `user-select` `department-select` `input-city` `input-signature` `verification-code`；`flux-renderers-layout` 新增 `resizable`（L4.6，非 AMIS 基线故不触发 matrix flip——roadmap §13 L4 行裁决）；ui `InputOtp`→`verification-code`、`Slider`→`slider`、`Skeleton` 仍待 L7.1 demand。「UI 已导出未接线」清单相应收窄。

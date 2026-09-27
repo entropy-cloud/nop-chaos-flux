@@ -313,6 +313,7 @@ UI primitive 对齐补充规则：
 **布局 / 流程 / 动作（`flux-renderers-layout`）**
 
 - `grid`、`collapse`、`button-group`、`dropdown-button`、`steps`、`timeline`、`wizard`
+- `resizable/`（L4.6 新布局 type：schema 可表达分栏，plan 514；`design.md` 在案）
 
 **数据（`flux-renderers-data`）**
 
@@ -442,6 +443,7 @@ UI primitive 对齐补充规则：
 - `steps/`
 - `timeline/`
 - `wizard/`
+- `resizable/`（L4.6）
 - `dialog/`
 - `drawer/`
 
