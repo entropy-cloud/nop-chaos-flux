@@ -110,7 +110,7 @@ Exit Criteria:
 
 - [ ] Phase 1-3 Exit Criteria 全勾
 - [ ] S2 范围锁定守住（无 S3/S4 功能渗入；六域不透明叶子机制生效）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（审计进行中）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（r1 `issues` 2M——QA.6 未执行/roadmap L6 行未回写；两并行工作完成即消解，2026-09-27）
 - [ ] `pnpm typecheck` / `build` / `lint` / `test` / `check` 全绿零新增红
 - [ ] `pnpm test:e2e`（零新增红口径）
 - [ ] QA.6 集成审计 pass
@@ -130,13 +130,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 三 Phase 全部落地：page-designer-core（零 React 六模块 + 108 用例 Branches 92.08%）+ page-designer-renderers（91 用例 91.4%）+ playground `#/page-designer` 入口与登记面。全量验证：链 42×3 + 78/78 EXIT=0（含两新包）、check 零新增红、e2e 1617/43/2/3（路由覆盖新红已修绿）。QA.6 pass。S3/S4 → successor plan 524+。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待填>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立 fresh 子 agent ×2（general-purpose，2026-09-27：QA.6 集成审计 + 523 closure audit 并行）
+- Evidence: QA.6 verdict **pass**（0B/0M/3m+2Obs——fuzz 45/45、inspector 覆盖断言 3/3、边界 0 越界、双包覆盖率达标；报告 `QA.6-integration-audit.md`）；closure audit r1 `issues`（2M = QA.6 未执行〔本次并行消解〕+ roadmap L6 行未回写〔本次落盘消解〕；m1/m2/m3 簿记随收口消化并登记 QA.7）
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- QA.6 Minor（roadmap 行回写时序/import 边界扫描 check 项/计数口径）随 523 收口批次消化并登记 QA.7
+- no remaining plan-owned work（S3/S4 归 successor 524+）
