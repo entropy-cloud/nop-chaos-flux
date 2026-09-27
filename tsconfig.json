@@ -30,6 +30,8 @@
     { "path": "./packages/flow-designer-core" },
     { "path": "./packages/flow-designer-renderers" },
     { "path": "./packages/editor-core" },
+    { "path": "./packages/page-designer-core" },
+    { "path": "./packages/page-designer-renderers" },
     { "path": "./packages/flux-renderers-dashboard" },
     { "path": "./packages/spreadsheet-core" },
     { "path": "./packages/spreadsheet-renderers" },

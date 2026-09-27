@@ -71,6 +71,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     description: 'VTable PivotTable wrapper: row/column dimensions, indicators with aggregation, row/column grand+sub totals, sort/filter rules, corner title, theme linkage, empty state.',
   },
   {
+    id: 'page-designer',
+    title: 'Page Designer',
+    eyebrow: 'Designer',
+    description:
+      '标准页面设计器 MVP（plan 523 L6 S2）：布局容器 + 表单原子拖放、真渲染画布覆盖层、propContracts inspector、JSON 导入导出与 undo/redo。',
+  },
+  {
     id: 'print-designer',
     title: 'Print Designer',
     description: '拖拽设计打印模板（A4 单据 / 80mm 小票），支持数据绑定、分页预览、浏览器打印与 PDF 导出。',

@@ -114,6 +114,12 @@ const LazyConditionBuilderFormulaPage = lazy(() =>
 const LazyWordEditorPage = lazy(() =>
   import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })),
 );
+// Lazy-loaded: page-designer chunk pulls in the designer two-package stack plus a
+// self-held renderer registry — only loaded on #/page-designer (S1 §11.1 keeps the
+// main playground bundle free of designer code).
+const LazyPageDesignerPage = lazy(() =>
+  import('./pages/page-designer-demo').then((m) => ({ default: m.PageDesignerDemoPage })),
+);
 // Lazy-loaded: pulls in Tiptap/ProseMirror (~100KB) — only loaded when the
 // user navigates to #/ai-rich-text. Keeps the main bundle Tiptap-free (mirrors
 // the `./rich-text` opt-in subpath isolation at the app level).
@@ -343,6 +349,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
           return <ScadaEditorDemoPage onBack={goHome} />;
         case 'print-designer':
           return <PrintDesignerDemoPage />;
+        case 'page-designer':
+          return <LazyPageDesignerPage onBack={goHome} />;
         case 'dashboard-demo':
           return <DashboardDemoPage onBack={goHome} />;
         case 'calendar-perf-scale':

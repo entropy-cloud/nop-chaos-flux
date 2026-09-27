@@ -506,6 +506,11 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       timeout: 15_000,
     });
   },
+  'page-designer': async (page) => {
+    await expect(
+      page.locator('[data-testid="page-designer-root"]'),
+    ).toBeVisible({ timeout: 15_000 });
+  },
   'scada-editor-demo': async (page) => {
     await expect(
       page.getByRole('heading', { name: 'scada-editor-demo 编辑器演示页', level: 1 }),

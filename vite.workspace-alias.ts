@@ -193,6 +193,12 @@ export const workspacePackageAliases = {
   '@nop-chaos/editor-core': fileURLToPath(
     new URL('./packages/editor-core/src/index.ts', import.meta.url),
   ),
+  '@nop-chaos/page-designer-core': fileURLToPath(
+    new URL('./packages/page-designer-core/src/index.ts', import.meta.url),
+  ),
+  '@nop-chaos/page-designer-renderers': fileURLToPath(
+    new URL('./packages/page-designer-renderers/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-renderers-dashboard/styles.css': fileURLToPath(
     new URL('./packages/flux-renderers-dashboard/src/styles.css', import.meta.url),
   ),

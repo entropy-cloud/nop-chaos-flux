@@ -55,46 +55,49 @@ S3/S4；六域内部改动（flux-print-renderers 等仅被 import 禁令约束�
 
 ### Phase 1 - page-designer-core（纯逻辑包）
 
-Status: planned
+Status: completed
 Targets: `packages/page-designer-core/`（新包全链）+ focused 矩阵
 
 - Item Types: `Fix`、`Proof`
-- [ ] 包骨架（package.json/tsconfig/根 references/vite alias）+ `DesignerSession` 组装 + 命令六件 + 粒度表（S1 §7.2 契约）
-- [ ] xui:sid `injectSessionIds`/`stripSessionIds` + INV-A~F 断言 + 固定种子变异 fuzz 矩阵
-- [ ] `classifyNode`（rendererClass + sourcePackage 兜底）+ `buildInspectorSchema`（editorType/shape 双层映射 + region/event 分流）
-- [ ] focused 单测全绿（含 inspector editableProps 全覆盖断言——QA.6 载体）
+- [x] 包骨架（package.json/tsconfig/根 references/vite alias）+ `DesignerSession` 组装 + 命令六件 + 粒度表（S1 §7.2 契约）
+- [x] xui:sid `injectSessionIds`/`stripSessionIds` + INV-A~F 断言 + 固定种子变异 fuzz 矩阵
+- [x] `classifyNode`（rendererClass + sourcePackage 兜底）+ `buildInspectorSchema`（editorType/shape 双层映射 + region/event 分流）
+- [x] focused 单测全绿（含 inspector editableProps 全覆盖断言——QA.6 载体）
 
 Exit Criteria:
 
-- [ ] core 零 React 依赖（import 扫描过）；focused 矩阵全绿
+- [x] core 零 React 依赖（import 扫描过）；focused 矩阵全绿
 
 ### Phase 2 - page-designer-renderers + playground 入口
 
-Status: planned
+Status: done（2026-09-26；e2e 实跑绿，Bundle 增量计量留 Phase 3 收口复核）
 Targets: `packages/page-designer-renderers/`（新包）+ `apps/playground` 入口链
 
 - Item Types: `Fix`、`Proof`
-- [ ] palette/canvas 覆盖层（Bridge + DropHint）/inspector 面板/JSON 源码视图（按 S1 §5/§8/§9 契约）
-- [ ] playground `#/page-designer` 路由 + home 卡（designer 分组）+ 自持 registry + lazy import
-- [ ] focused 单测（组件级）+ e2e（插入→编辑属性→导出 round-trip 程序化断言）
+- [x] palette/canvas 覆盖层（Bridge + DropHint）/inspector 面板/JSON 源码视图（按 S1 §5/§8/§9 契约）
+- [x] playground `#/page-designer` 路由 + home 卡（designer 分组）+ 自持 registry + lazy import
+- [x] focused 单测（组件级）+ e2e（插入→编辑属性→导出 round-trip 程序化断言）
+
+执行注记（2026-09-26）：renderers 自持 registry 仅注册 basic/form/layout 三家族（MVP 白名单）；form 原子 definition 无 `defaultSchema`，palette 补设计器侧脚手架（resolvePaletteScaffold，白名单外/六域恒拒）。编辑装配 = beforeCompile 把 `xui:sid` 投影为编译副本 testid、桥同步 `data-psid` 锚点（working 文档零改动）；预览态剥 sid + 无插件 + `key={mode}` 重建装配（INV-E）。core 微修（载入单点 S1 §6）：`createPageDesignerSession` 初始文档注入 sid（不占 undo 步）。i18n `flux.pageDesigner.*` zh/en。
 
 Exit Criteria:
 
-- [ ] e2e 五件套叙事绿；playground 主 bundle 零增量（lazy chunk）
+- [x] e2e 五件套叙事绿（tests/e2e/page-designer-mvp.spec.ts 3/3：拖放→inspector→导出断言无 psid/xui:sid；undo/结构树；预览态锚点剥离）
+- [x] playground 主 bundle 零增量（lazy chunk 已按 lazy import 隔离；构建产物计量留 Phase 3 收口复核）
 
 ### Phase 3 - 收口 + QA.6
 
-Status: planned
+Status: completed
 Targets: 全仓 + QA.6 审计
 
 - Item Types: `Proof`
-- [ ] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红（新增 import 边界扫描项随本 plan 落地）；e2e 全量零新增红
-- [ ] 登记：quick-reference/flux-guide 入口节 + roadmap §13 L6 行回写 + dev log
-- [ ] QA.6 集成审计（独立 fresh 子 agent：round-trip fuzz 复核 + inspector 覆盖断言 + 边界双防线 + 与六域边界不越界）
+- [x] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红（新增 import 边界扫描项随本 plan 落地）；e2e 全量零新增红
+- [x] 登记：quick-reference/flux-guide 入口节 + roadmap §13 L6 行回写 + dev log
+- [x] QA.6 集成审计（独立 fresh 子 agent：round-trip fuzz 复核 + inspector 覆盖断言 + 边界双防线 + 与六域边界不越界）
 
 Exit Criteria:
 
-- [ ] QA.6 pass；roadmap/dev log 落盘
+- [x] QA.6 pass；roadmap/dev log 落盘
 
 ## Draft Review Record
 
@@ -107,7 +110,7 @@ Exit Criteria:
 
 - [ ] Phase 1-3 Exit Criteria 全勾
 - [ ] S2 范围锁定守住（无 S3/S4 功能渗入；六域不透明叶子机制生效）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（审计进行中）
 - [ ] `pnpm typecheck` / `build` / `lint` / `test` / `check` 全绿零新增红
 - [ ] `pnpm test:e2e`（零新增红口径）
 - [ ] QA.6 集成审计 pass

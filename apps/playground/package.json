@@ -37,6 +37,8 @@
     "@nop-chaos/flux-renderers-mobile": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/nop-debugger": "workspace:*",
+    "@nop-chaos/page-designer-core": "workspace:*",
+    "@nop-chaos/page-designer-renderers": "workspace:*",
     "@nop-chaos/report-designer-core": "workspace:*",
     "@nop-chaos/report-designer-renderers": "workspace:*",
     "@nop-chaos/spreadsheet-core": "workspace:*",

@@ -1013,3 +1013,12 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 | --------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ResizableSchema`     | `flux-renderers-layout/src/schemas`           | `direction`（horizontal/vertical）/`panels[].{key,defaultSize,min,max,body}`（flex-grow 权重）/`persistStatePath`（拖拽权重数组回写+挂载种子） |
 | calendar `monthShape` | `flux-renderers-scheduling`（CalendarSchema） | `'resource'`（缺省排班矩阵）/`'grid'`（6 周纯选择网格，绕过空数据门）；`onDateSelect` payload `{date, inMonth}`，选中≠导航                     |
+
+### Page Designer（L6 S2 MVP，plan 523）
+
+| 包                                   | 职责                                                                                                                                                                                                                             |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@nop-chaos/page-designer-core`      | 纯逻辑：DesignerSession（六命令 + editor-core undo 栈）、xui:sid inject/strip round-trip（INV-A~F）、classifyNode（opaque-leaf 边界）、buildInspectorSchema（propContracts→form schema，editableProps 全覆盖）、palette 三条过滤 |
+| `@nop-chaos/page-designer-renderers` | React：palette-panel / canvas 真渲染+覆盖层（data-psid 锚点投影）/ inspector-panel（transient+commit 两段）/ structure-tree / json-source-view / page-designer-page                                                              |
+
+入口：`#/page-designer`（designer 分组，lazy import，自持 registry 仅 basic/form/layout 三家族——六域 opaque-leaf 不可展开）。契约权威：`docs/components/page-designer/design-architecture.md`（S1）。

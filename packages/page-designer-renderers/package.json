@@ -1,0 +1,41 @@
+{
+  "name": "@nop-chaos/page-designer-renderers",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@nop-chaos/editor-core": "workspace:*",
+    "@nop-chaos/flux-core": "workspace:*",
+    "@nop-chaos/flux-formula": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*",
+    "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-renderers-basic": "workspace:*",
+    "@nop-chaos/flux-renderers-form": "workspace:*",
+    "@nop-chaos/flux-renderers-layout": "workspace:*",
+    "@nop-chaos/page-designer-core": "workspace:*",
+    "@nop-chaos/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "react": "^19.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "React renderers for the standard page designer: palette, true-render canvas bridge with selection overlay, generated inspector panel, structure tree, and JSON source view"
+}

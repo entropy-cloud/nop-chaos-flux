@@ -1,0 +1,26 @@
+{
+  "name": "@nop-chaos/page-designer-core",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@nop-chaos/editor-core": "workspace:*",
+    "@nop-chaos/flux-core": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "Pure-logic core for the standard page designer: designer session over editor-core, tree commands, xui:sid round-trip, node classification, inspector schema generation, palette filtering (zero React)"
+}
