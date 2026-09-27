@@ -1,7 +1,7 @@
 # 523 Missing Components L6 S2 — 标准页面设计器 MVP（page-designer-core + renderers + playground 入口）
 
-> Plan Status: draft
-> Last Reviewed: 2026-09-26
+> Plan Status: completed
+> Last Reviewed: 2026-09-27
 > Source: `docs/components/page-designer/design-architecture.md`（S1 架构，独立 review delta pass 0B/0M——本文是其 S2 实现计划，接口面以 S1 为契约，不重裁）；`docs/analysis/standard-page-designer-research.md`（S0）；roadmap §9
 > Related: `docs/plans/521-missing-components-l5-scada-demo-wiring-plan.md`（L5 并行线）
 
@@ -91,7 +91,7 @@ Status: completed
 Targets: 全仓 + QA.6 审计
 
 - Item Types: `Proof`
-- [x] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红（新增 import 边界扫描项随本 plan 落地）；e2e 全量零新增红
+- [x] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红（新增 import 边界扫描项随本 plan 落地——勘误：该项实际随 plan 525 Phase 3 落地，Rule 21 注记）；e2e 全量零新增红
 - [x] 登记：quick-reference/flux-guide 入口节 + roadmap §13 L6 行回写 + dev log
 - [x] QA.6 集成审计（独立 fresh 子 agent：round-trip fuzz 复核 + inspector 覆盖断言 + 边界双防线 + 与六域边界不越界）
 
@@ -108,12 +108,12 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1-3 Exit Criteria 全勾
+- [x] Phase 1-3 Exit Criteria 全勾
 - [x] S2 范围锁定守住（无 S3/S4 功能渗入；六域不透明叶子机制生效——QA.6 边界 0 越界实测）
 - [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（r1 `issues` 2M——QA.6 未执行/roadmap L6 行未回写；两并行工作完成即消解，2026-09-27）
-- [ ] `pnpm typecheck` / `build` / `lint` / `test` / `check` 全绿零新增红
-- [ ] `pnpm test:e2e`（零新增红口径）
-- [ ] QA.6 集成审计 pass
+- [x] `pnpm typecheck` / `build` / `lint` / `test` / `check` 全绿零新增红（Status Note：链 42×3 + 78/78 EXIT=0 含两新包；QA.1-L6 §6 独立复核）
+- [x] `pnpm test:e2e`（零新增红口径：1617/43/2/3——路由覆盖新红已修绿，余 kanban-perf watch-only + flaky 隔离绿；QA.1-L6 §1.3 实跑复核）
+- [x] QA.6 集成审计 pass（0B/0M/3m+2Obs，`QA.6-integration-audit.md`）
 
 ## Deferred But Adjudicated
 
@@ -126,7 +126,8 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- （收口时填写，或明确写无）
+- import 边界扫描 check 项（本 plan Phase 3 原声称随本 plan 落地，实际随 plan 525 Phase 3 落地——勘误注记，Rule 21）
+- QA.6 Minor 尾项（计数口径勘误）随 plan 525 簿记批次消化；登记册 A-9/A-10 留痕
 
 ## Closure
 

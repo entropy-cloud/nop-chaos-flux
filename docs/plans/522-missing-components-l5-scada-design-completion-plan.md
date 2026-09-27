@@ -77,7 +77,7 @@ Targets: `packages/flux-renderers-industrial/src/editor/`（inspector/binding-pa
 
 Exit Criteria:
 
-- [x] industrial vitest 1608/1608 全绿 + tsc 0 错 + Branches ≥90% 达标
+- [x] industrial vitest 1611/1611 全绿（行内原记 1608 系补测前时点值，勘误随 QA.5 Minor-2/plan 525——1550→1608→1611 三层递进）+ tsc 0 错 + Branches ≥90% 达标
 
 ### Phase 3 - 收口验证 + 登记
 

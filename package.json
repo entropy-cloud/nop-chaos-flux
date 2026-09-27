@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "turbo run dev --filter=@nop-chaos/flux-playground",
-    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:schema-prop-coverage && pnpm check:scada-symbol-keys && pnpm check:audit-suspects && pnpm check:audit-renderer-browser-io && pnpm check:audit-event-dispatch-ctx && pnpm check:ai-engine-invariants && pnpm check:audit-ui-consistency-gaps",
+    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:page-designer-boundary && pnpm check:schema-prop-coverage && pnpm check:scada-symbol-keys && pnpm check:audit-suspects && pnpm check:audit-renderer-browser-io && pnpm check:audit-event-dispatch-ctx && pnpm check:ai-engine-invariants && pnpm check:audit-ui-consistency-gaps",
     "analyze": "turbo run analyze --filter=@nop-chaos/flux-playground",
     "audit:deps": "depcruise --config .dependency-cruiser.mjs apps packages scripts",
     "audit:knip": "knip --config knip.json",
@@ -33,6 +33,7 @@
     "check:src-artifacts": "node scripts/verify-no-src-artifacts.mjs",
     "check:i18n-keys": "node scripts/check-i18n-keys.mjs",
     "check:workspace-manifest-deps": "node scripts/check-workspace-manifest-deps.mjs",
+    "check:page-designer-boundary": "node scripts/check-page-designer-import-boundary.mjs",
     "check:schema-prop-coverage": "node scripts/check-schema-prop-coverage.mjs",
     "check:scada-symbol-keys": "node scripts/check-scada-symbol-keys.mjs",
     "check:audit-suspects": "node scripts/audit/discover-audit-suspects.mjs",

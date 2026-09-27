@@ -103,7 +103,7 @@ Targets: `packages/theme-tokens/src/styles.css`、`packages/ui`（table.css 档�
 
 - [x] theme tokens 增 `--table-row-height-compact: 32px` / `--table-row-height-relaxed: 48px`（default 档沿用既有 `--table-row-height: 40px`）
 - [x] table schema 增 `density?: 'compact' | 'default' | 'relaxed'`（Phase 1 定稿词表），根元素 `data-density` 属性（default 档不输出）+ ui table.css 档位规则（`--table-row-height` 局部覆写 + `[data-density] tbody td { height; padding-block: 0 }`）；非法值归 default
-- [x] focused 单测（三档 data-density 属性断言 + 非法值回退 + ui 规则生效行高程序化断言）+ e2e 一条（档位切换行高程序化断言，参照 stripe P7a 口径）——table-density.test.tsx ×2（data 1172/1172 绿）+ table-density.spec.ts（bounding box ±2px 精确命中 32/40/48，table lab 页新增三档场景）
+- [x] focused 单测（三档 data-density 属性断言 + 非法值回退 + ui 规则生效行高程序化断言）+ e2e 一条（档位切换行高程序化断言，参照 stripe P7a 口径）——table-density.test.tsx ×2（data 1172/1172 绿——时点值，复测实 1174，勘误随 QA.4 Minor-2/plan 525）+ table-density.spec.ts（bounding box ±2px 精确命中 32/40/48，table lab 页新增三档场景）
 
 Exit Criteria:
 
@@ -133,7 +133,7 @@ Targets: `packages/flux-renderers-scheduling/src/kanban/`（kanban.types.ts，�
 - Item Types: `Fix`、`Proof`
 
 - [x] 键盘重排手势 schema 配置面：`keyboardReorder?: boolean | { enabled?, keys?: { prev?, next? } }`（缺省=现状逐字节一致；对象形与 `draggable` 解耦；`keys` 走 flux-react `parseKeyCombo`/`comboMatchesKey`，keyboard.ts 增 key 别名表 `"space"→" "`）
-- [x] focused 单测：keyboard.ts 别名归一 ×1（flux-react 521/521 绿）+ kanban dnd 集成 ×3（keyboard-only 解耦 / false 关闭 / prev-next 覆写且 Arrow 抑制，scheduling 1036/1036 绿，缺省零回归由既有 12 个 dnd 键盘用例承载）+ e2e 一条（kanban-keyboard-reorder.spec.ts：draggable:false + Space/ArrowRight 跨列移动）
+- [x] focused 单测：keyboard.ts 别名归一 ×1（flux-react 521/521 绿）+ kanban dnd 集成 ×3（keyboard-only 解耦 / false 关闭 / prev-next 覆写且 Arrow 抑制，scheduling 1036/1036 绿（时点值，复测实 1038，勘误随 QA.4 Minor-2/plan 525），缺省零回归由既有 12 个 dnd 键盘用例承载）+ e2e 一条（kanban-keyboard-reorder.spec.ts：draggable:false + Space/ArrowRight 跨列移动）
 
 Exit Criteria:
 
@@ -153,7 +153,7 @@ Targets: `packages/flux-renderers-scheduling/src/kanban/`（kanban-card.tsx、ka
 
 Exit Criteria:
 
-- [x] cardTemplate region 内表达式可读 card/column/index（e2e 实证），旧 region 消费方零回归（scheduling 1036+ / flux-react 521 / data 1172 全绿）
+- [x] cardTemplate region 内表达式可读 card/column/index（e2e 实证），旧 region 消费方零回归（scheduling 1036+ / flux-react 521 / data 1172 全绿——1172 为时点值，复测实 1174）
 - [x] 回写⑪ G-A 观察面该项销项注记（roadmap §13 L4 行 + 底座文档 §4；C2 为快照档案不改）
 
 ### Phase 6 - L4.11a table 列拖拽排序
@@ -207,7 +207,7 @@ Targets: 全仓 + 登记面
 
 - Item Types: `Proof`
 
-- [x] `pnpm typecheck` / `build` / `lint` / `test` 全绿（40/40 ×3 + 74/74 task）；`pnpm check` 零新增红（exit 0；第一次全链曾红：i18n `dragColumn` 键与 flux.table 既有键撞名 TS1117 + kanban 测试类型收窄——改 `reorderColumn` 新键 + 类型放宽后复跑全绿；oversized 204w/2e/2exempt 与 512 后基线一致）；e2e 全量（42.2m）**1598 passed / 43 skipped / 2 failed / 0 flaky**——2 失败 = kanban-perf:34（在册 watch-only 60Hz 口径）+ layout-family-enhancements:58（page aside 负载 flake，隔离复跑全绿，511「负载 flake 隔离复跑全过」同款消化口径；新观察项随 QA.4 复核）——零新增红
+- [x] `pnpm typecheck` / `build` / `lint` / `test` 全绿（40/40 ×3 + 74/74 task）；`pnpm check` 零新增红（exit 0；第一次全链曾红：i18n `dragColumn` 键与 flux.table 既有键撞名 TS1117 + kanban 测试类型收窄——改 `reorderColumn` 新键 + 类型放宽后复跑全绿；oversized 204w/2e/2exempt 与 512 后基线一致（204w 为时点值，现状 208w，登记册 A-4））；e2e 全量（42.2m）**1598 passed / 43 skipped / 2 failed / 0 flaky**——2 失败 = kanban-perf:34（在册 watch-only 60Hz 口径）+ layout-family-enhancements:58（page aside 负载 flake，隔离复跑全绿，511「负载 flake 隔离复跑全过」同款消化口径；新观察项随 QA.4 复核）——零新增红
 - [x] roadmap §13 L4 各行回写终态 + dev log
 - [x] L4.2/L4.6 successor plan 514 与 L4.9 plan 族（515 scoping + 516+）在 roadmap §13 带去向注记
 
@@ -233,7 +233,7 @@ Exit Criteria:
 - [x] `pnpm build`
 - [x] `pnpm lint`
 - [x] `pnpm test`
-- [x] `pnpm check`（零新增红，oversized 204w/2e/2exempt 与基线一致）
+- [x] `pnpm check`（零新增红，oversized 204w/2e/2exempt 与基线一致——时点值，现状 208w，登记册 A-4）
 - [x] `pnpm test:e2e`（零新增红口径：1598/43/2——watch-only ×1 + 负载 flake ×1 隔离复跑全绿）
 
 ## Deferred But Adjudicated
@@ -284,7 +284,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 九个 Phase 全部落地并经独立 closure audit 两轮通过（r1 issues 0B/2M/4m → 修复 → delta 复审 approved 0B/0M）：六项快赢按底座契约实现（density 三档 token 阶梯 / kanban keyboardReorder 解耦+键位覆写 / graph levelMap fill-tint 消费面 / cardTemplate bindings+params 通道 / 列拖拽接线消解死配置 / gantt selectedClass 字面字段）+ L4.10 两处 guide；五挂起项正式裁决落 roadmap §13。全量验证在案：typecheck/build/lint 40/40、test 74/74 task、check exit 0（oversized 204w/2e/2exempt 在册口径）、e2e 1598/43/2/0 零新增红（watch-only ×1 + 负载 flake ×1 隔离复跑全绿）。L4.2/L4.6 → plan 514（active）、L4.9 → plan 515（active scoping）、demand-gated 项维持登记。
+Status Note: 九个 Phase 全部落地并经独立 closure audit 两轮通过（r1 issues 0B/2M/4m → 修复 → delta 复审 approved 0B/0M）：六项快赢按底座契约实现（density 三档 token 阶梯 / kanban keyboardReorder 解耦+键位覆写 / graph levelMap fill-tint 消费面 / cardTemplate bindings+params 通道 / 列拖拽接线消解死配置 / gantt selectedClass 字面字段）+ L4.10 两处 guide；五挂起项正式裁决落 roadmap §13。全量验证在案：typecheck/build/lint 40/40、test 74/74 task、check exit 0（oversized 204w/2e/2exempt 在册口径——时点值，现状 208w，登记册 A-4）、e2e 1598/43/2/0 零新增红（watch-only ×1 + 负载 flake ×1 隔离复跑全绿）。L4.2/L4.6 → plan 514（active）、L4.9 → plan 515（active scoping）、demand-gated 项维持登记。
 
 Closure Audit Evidence:
 

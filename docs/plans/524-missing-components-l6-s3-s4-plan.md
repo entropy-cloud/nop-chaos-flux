@@ -56,8 +56,8 @@ Targets: `packages/page-designer-renderers/`（binding/actions 面板 + formula 
   - S3-3 `createFormulaExpressionAdapter()`（`inspector-adapters.tsx` + `expression-validation.ts`）：经 `buildInspectorSchema({ controlAdapters })` 挂点注册（editorType `expression`）；校验复用 flux-formula `compileTemplate`（与 code-editor linter 同引擎，不拖 CodeMirror）；expr-invalid 行内错误不落文档。
   - core `updateProps` 语义补全：`undefined` 值键 = 移除（types.ts/commands.ts，回写测试在 commands.test.ts）。
 - [x] focused 单测 + e2e（动作编排 → 导出含 xui:actions → 导入还原）
-  - core：`command-serialization.test.ts`(18) + `data-binding.test.ts`(7) + `keyboard-navigation.test.ts`(6) + commands.test.ts 扩展 = 140 用例全绿。
-  - renderers：`actions-model.test.ts`(11) + `actions-editor.test.tsx`(8) + `data-binding-panel.test.tsx`(8) + `inspector-adapters.test.tsx`(4) + `expression-validation.test.ts`(5) + `template-gallery.test.tsx`(10) + `page-designer-s3-s4.test.tsx`(4) = 141 用例全绿，覆盖 Stmts 97.69 / Branches 90.86 / Funcs 98.32 / Lines 98.58（≥90 门槛全过）。
+  - core：`command-serialization.test.ts`(18) + `data-binding.test.ts`(7) + `keyboard-navigation.test.ts`(5——原记 6 系虚记，勘误随 plan 525) + commands.test.ts 扩展 = 140 用例全绿。
+  - renderers：`actions-model.test.ts`(11) + `actions-editor.test.tsx`(8) + `data-binding-panel.test.tsx`(8) + `inspector-adapters.test.tsx`(4) + `expression-validation.test.ts`(5) + `template-gallery.test.tsx`(10) + `page-designer-s3-s4.test.tsx`(4) = 141 用例全绿，覆盖 Stmts 97.69 / Branches 90.86 / Funcs 98.32 / Lines 98.58（≥90 门槛全过；QA.1-L6 复测 97.93/90.86/99.15/98.84——Branch 一致，余复测时点微差）。
   - e2e：`tests/e2e/page-designer-s3-s4.spec.ts` 4 条（动作编排→导出→导入还原 / formula+数据绑定 / 键盘漫游 / 模板实例化）。
 
 Exit Criteria:
@@ -74,7 +74,7 @@ Targets: `packages/page-designer-renderers/`（gallery/keyboard）
   - S4-1 core `buildKeyboardNavRows`/`resolveKeyboardMove`（`keyboard-navigation.ts`，与结构树同序前序遍历）+ page-designer-page keydown 接线：ArrowUp/Down/Left/Right 移动选择（core.setSelection）、Delete 走既有 removeNode dispatch；文本输入焦点内不劫持。
   - S4-2 `TemplateGallery` + `PageDesignerTemplateStore` 宿主回调 + `createInMemoryTemplateStore` demo（`template-gallery.tsx`）；保存=导出投影（无 sid），实例化=`importDocument`（1 undo 步；rt-unknown-type 拒绝→toast）；空态文案（template-gallery-empty 失败路径）。
   - S4-3 core `serializeCommand`/`deserializeCommand`（`command-serialization.ts`）：六命令 JSON 往返 + 入站校验（kind 白名单/isSchemaInput/必填字段），不实现传输。
-  - i18n zh/en：`flux.pageDesigner.*` 新增 46 键（formula/data binding/actions/template 面）。
+  - i18n zh/en：`flux.pageDesigner.*` 新增 40 键（formula/data binding/actions/template 面；原记 46 系虚记，live 实测 zh/en 各 +40，勘误随 plan 525）。
 - [x] focused 单测 + e2e（键盘漫游 + 模板实例化叙事）
 
 Exit Criteria:
@@ -83,30 +83,30 @@ Exit Criteria:
 
 ### Phase 3 - 收口 + L6 出口
 
-Status: in progress（2026-09-26：实施 + focused 验证完成；closure audit / QA.1-L6 归独立子 agent 会话）
+Status: completed（2026-09-27：closure audit approved + QA.1-L6 pass 后收口翻转）
 Targets: 全仓 + 登记面
 
 - Item Types: `Proof`
 - [x] 本 plan 范围验证链：page-designer-core/renderers + playground vitest 全绿（阈值内覆盖率≥90%）+ tsc 0 错 + lint 0 错 + 两包 build 过 + 新 e2e 实跑绿；roadmap §13 L6 行 S3/S4 状态回写；design-architecture §11.2 注记
-- [ ] 全量链（`pnpm check`/`pnpm test:e2e` 全量口径）+ dev log 全量口径核对 —— 归收口批次
-- [ ] closure audit + QA.1-L6 出口审计（独立 fresh 子 agent 执行）
+- [x] 全量链（`pnpm check`/`pnpm test:e2e` 全量口径）+ dev log 全量口径核对——QA.7 §1 实测：五链全绿（typecheck/build/lint 42×3、单测 14993/0 失败、check 链 CHAIN-EXIT:0）、e2e 全量零新增红口径在案（QA.1-L5/QA.7 各轮实跑背书）；dev log 09-26/09-27 记录核对一致
+- [x] closure audit + QA.1-L6 出口审计（独立 fresh 子 agent 执行）——`QA.1-L6-line-exit-audit.md`（closure approved 0B/0M/2m+3Obs + 出口 pass 0B/0M/3m+3Obs）
 
 Exit Criteria:
 
-- [ ] QA.1-L6 pass；roadmap/dev log 落盘（closure audit 后勾）
+- [x] QA.1-L6 pass；roadmap/dev log 落盘（2026-09-27：QA.1-L6 pass 档在库、roadmap QA.1 行 L6 pass + dev log QA.7 节落盘，簿记尾项随 plan 525 消化）
 
 ## Draft Review Record
 
-- Reviewer / Agent: <<待填>>
-- Verdict: <<待填>>
-- Rounds: <<待填>>
-- Findings addressed: <<待填>>
+- Reviewer / Agent: 批次合并模式——两份独立 fresh 子 agent 审查覆盖 draft-review 职能（QA.6 集成审计〔S2 面〕+ QA.1-L6 线出口/closure 合并审计，均对实现后状态）
+- Verdict: closure audit `approved`（0B/0M/2m+3Obs）+ QA.1-L6 `pass`（0B/0M/3m+3Obs）
+- Rounds: 1（2026-09-27 单轮 approved；2m/3m 簿记随 plan 525 消化）
+- Findings addressed: Minor-2 计数口径簇（×46→×40、keyboard 6→5、coverage 复测值）与本行内注记随 plan 525 落地；Obs-1/Obs-2/Obs-3 归登记册 A-15/A-16①/A-3 留痕
 
 ## Closure Gates
 
-- [ ] Phase 1-3 Exit Criteria 全勾
+- [x] Phase 1-3 Exit Criteria 全勾
 - [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（approved 0B/0M/2m+3Obs，2026-09-27）
-- [ ] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红；`pnpm test:e2e` 零新增红口径
+- [x] `pnpm typecheck` / `build` / `lint` / `test` 全绿；`pnpm check` 零新增红；`pnpm test:e2e` 零新增红口径（链 42×3+78/78 + QA.7 §1 全链实测背书）
 
 ## Deferred But Adjudicated
 
@@ -127,4 +127,4 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- <<收口时填写，或明确写 no remaining plan-owned work>>
+- no remaining plan-owned work（Obs 尾项归登记册：A-15 gallery keydown 门控 / A-16① isSchemaNode 裁定 / A-3 计数口径，触发条件见登记册）
