@@ -40,6 +40,19 @@ vi.mock('@nop-chaos/flux-renderers-industrial', () => ({
 
 vi.mock('@nop-chaos/flux-renderers-industrial/editor', () => ({
   registerScadaEditorRenderers: () => undefined,
+  // plan 522 / L5.4：demo 页新消费的内存 storage 工厂（scada-editor-demo.tsx 模块级调用）。
+  createInMemoryTemplateStorage: () => ({
+    listTemplates: async () => [],
+    saveTemplate: async () => undefined,
+    deleteTemplate: async () => undefined,
+  }),
+  createInMemoryStationStorage: () => ({
+    loadStation: async () => null,
+    saveStation: async () => undefined,
+    loadScreen: async () => null,
+    saveScreen: async () => undefined,
+    deleteScreen: async () => undefined,
+  }),
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({

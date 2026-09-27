@@ -8,6 +8,10 @@ import type { ZOrderAction } from './z-order.js';
 import { EditorConnectionsDialog } from './connections-dialog.js';
 import { EditorHistoryPanel } from './history-panel.js';
 import { EditorLayersPanel } from './layers-panel.js';
+import { EditorTemplateDialog } from '../template/template-dialog.js';
+import type { ScadaTemplateStorage } from '../template/template-model.js';
+import { EditorStationDialog } from '../station/station-dialog.js';
+import type { ScadaStationStorage } from '../station/station-model.js';
 
 export interface EditorToolboxPanelProps {
   runtime: EditorEngineRuntime;
@@ -16,6 +20,9 @@ export interface EditorToolboxPanelProps {
   onError: (code: string, message: string) => void;
   /** [G5-R3-视角3-01] meta.disabled 门禁：整个工具箱通道（按钮/导入弹层）inert。 */
   disabled?: boolean;
+  /** plan 522 / L5.4：宿主注入的模板/站点存储回调（design-template-station.md §5）。 */
+  templateStorage?: ScadaTemplateStorage;
+  stationStorage?: ScadaStationStorage;
 }
 
 /**
@@ -42,6 +49,9 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
   const [connectionsOpen, setConnectionsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
+  // plan 522 / L5.4（design-template-station.md §4）：模板库 / 站点画面弹层。
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [stationOpen, setStationOpen] = useState(false);
 
   const hasSelection = selection.length > 0;
   const canAlign = selection.length >= 2;
@@ -227,6 +237,8 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
         {btn(labelOr('industrial.scada.editor.toolbox.label.connections', 'Conn'), () => setConnectionsOpen(true), false, t('industrial.scada.editor.connections.title'), 'toolbox-btn-connections')}
         {btn(labelOr('industrial.scada.editor.toolbox.label.history', 'Hist'), () => setHistoryOpen(true), false, t('industrial.scada.editor.history.title'), 'toolbox-btn-history')}
         {btn(labelOr('industrial.scada.editor.toolbox.label.layers', 'Layers'), () => setLayersOpen(true), false, t('industrial.scada.editor.layers.title'), 'toolbox-btn-layers')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.template', 'Tpl'), () => setTemplateOpen(true), false, t('industrial.scada.editor.template.title'), 'toolbox-btn-template')}
+        {btn(labelOr('industrial.scada.editor.toolbox.label.station', 'Screens'), () => setStationOpen(true), false, t('industrial.scada.editor.station.title'), 'toolbox-btn-station')}
       </ButtonGroup>
       {statusMessage ? (
         <span
@@ -277,6 +289,24 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
         open={layersOpen}
         onOpenChange={setLayersOpen}
         selection={selection}
+      />
+      {/* plan 522 / L5.4：模板库 + 站点/画面弹层（design-template-station.md §4）。 */}
+      <EditorTemplateDialog
+        runtime={runtime}
+        storage={props.templateStorage}
+        selection={selection}
+        open={templateOpen}
+        onOpenChange={setTemplateOpen}
+        disabled={props.disabled}
+        onError={props.onError}
+      />
+      <EditorStationDialog
+        runtime={runtime}
+        storage={props.stationStorage}
+        open={stationOpen}
+        onOpenChange={setStationOpen}
+        disabled={props.disabled}
+        onError={props.onError}
       />
     </div>
   );

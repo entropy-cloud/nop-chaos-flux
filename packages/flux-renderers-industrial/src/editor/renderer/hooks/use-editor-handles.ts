@@ -25,7 +25,7 @@ const RUNTIME_HANDLE_METHODS = [
 /**
  * editor 扩展句柄方法名（design-renderer.md §8.5.2）。
  * editor 扩展：addSymbol/removeSymbol/updateSymbol/save/load（M1）+ undo/redo（E7.2）+
- * group/ungroup（E7.2 Phase 3）。
+ * group/ungroup（E7.2 Phase 3）+ previewInject/previewClear（plan 522 / L5.5，design-renderer.md §13.3）。
  */
 const EDITOR_HANDLE_METHODS = [
   'addSymbol',
@@ -37,6 +37,8 @@ const EDITOR_HANDLE_METHODS = [
   'redo',
   'group',
   'ungroup',
+  'previewInject',
+  'previewClear',
 ] as const;
 
 /** editor 实例全部可调句柄（runtime 9 ∪ editor 扩展 9，design-renderer.md §8.5 + §8.5.2）。 */
@@ -211,6 +213,19 @@ export function useEditorHandles(args: UseEditorHandlesArgs): void {
             if (!node) return { ok: false, error: new Error('symbol-not-found') };
             if (node.type !== 'scada-group') return { ok: false, error: new Error('not-a-group') };
             current.ungroupSymbols(groupId);
+            return { ok: true };
+          }
+          // ---- plan 522 / L5.5 预览注入句柄（design-renderer.md §13.3）----
+          case 'previewInject': {
+            const values = (payload as { values?: unknown } | undefined)?.values;
+            if (!values || typeof values !== 'object' || Array.isArray(values)) {
+              return { ok: false, error: new Error('invalid-patch') };
+            }
+            const applied = current.injectPreviewValues(values as Record<string, import('../../../serialization/config-types.js').ScadaPrimitive>);
+            return { ok: true, data: applied };
+          }
+          case 'previewClear': {
+            current.clearPreviewValues();
             return { ok: true };
           }
           default:

@@ -84,9 +84,16 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // plan 521 / W2：events 字段在 renderer definition 中为 kind:'ignored'（echarts 同型）——
   // 保持 raw schema，args 里的 `${event.*}` 模板在 dispatch 期结合 normalized event 求值。
   // raw schema 优先；props 通道兜底（单测直构 props.props.events 的既有用法不受影响）。
-  const events =
-    (props.schema as { events?: ScadaEditorCanvasEvents }).events ??
-    (props.props.events as ScadaEditorCanvasEvents | undefined);
+  // plan 522 / L5.4/L5.5：templateStorage/stationStorage（函数成员对象，D-1 同型 'ignored'）与
+  // previewMock 沿用同一 raw-schema 优先 + props 通道兜底读取纪律。
+  const schemaRaw = props.schema as ScadaEditorCanvasSchema;
+  const events = schemaRaw.events ?? (props.props.events as ScadaEditorCanvasEvents | undefined);
+  const templateStorage =
+    schemaRaw.templateStorage ?? (props.props.templateStorage as import('./template/template-model.js').ScadaTemplateStorage | undefined);
+  const stationStorage =
+    schemaRaw.stationStorage ?? (props.props.stationStorage as import('./station/station-model.js').ScadaStationStorage | undefined);
+  const previewMock =
+    schemaRaw.previewMock ?? (props.props.previewMock as ScadaEditorCanvasSchema['previewMock'] | undefined);
   const helpersRef = useRef<RendererHelpers>(props.helpers);
   const scopeRef = useRef<ScopeRef | undefined>(props.node?.scope);
   const eventsRef = useRef<ScadaEditorCanvasEvents | undefined>(events);
@@ -187,6 +194,17 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
     initialConfig: parsedConfig ?? EMPTY_EDITOR_CONFIG,
     initialMode: props.props.mode,
     commitPolicy: props.props.commitPolicy,
+    // plan 522 / L5.5：preview 模拟源开关 + expression 绑定求值回调（helpers.evaluate 平台求值，
+    // `${...}` 形态直传、裸表达式包一层——完整求值语义复用平台，不复制 flux-eval 管线）。
+    previewMock,
+    evaluateExpression: (expression) => {
+      const target = expression.includes('${') ? expression : `\${${expression}}`;
+      try {
+        return props.helpers.evaluate(target, scopeRef.current) as import('../serialization/config-types.js').ScadaPrimitive | undefined;
+      } catch {
+        return undefined;
+      }
+    },
     onReady: handleReady,
     onError: handleError,
     onSelectionChange: handleSelectionChange,
@@ -285,7 +303,14 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
     >
       {showLayoutBody
         ? asReactNode(toolbox?.render({ bindings: { selection } })) ?? (
-            <EditorToolboxPanel runtime={runtime} selection={selection} onError={handleError} disabled={disabled} />
+            <EditorToolboxPanel
+              runtime={runtime}
+              selection={selection}
+              onError={handleError}
+              disabled={disabled}
+              templateStorage={templateStorage}
+              stationStorage={stationStorage}
+            />
           )
         : null}
       {/* plan 2026-08-08-0900-1 Phase 4 / P2 #40：body 行含 palette | canvas | inspector 三栏，

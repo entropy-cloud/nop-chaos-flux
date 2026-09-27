@@ -106,11 +106,11 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1-3 Exit Criteria 全勾
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（demand-gated 项均有触发条件登记）
-- [ ] 受影响 owner docs 已同步（matrix/quick-reference/roadmap O1）
+- [x] Phase 1-3 Exit Criteria 全勾
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（demand-gated 项均有触发条件登记）
+- [x] 受影响 owner docs 已同步（matrix/quick-reference/roadmap O1）
 - [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（两段合并审查：draft r1 issues 0B/2M/4m → 修复 → delta draft pass + closure 0B/0M/2m 修字后准予 completed，2026-09-26）
-- [ ] 纯文档计划：pnpm typecheck/build/lint/test/check 不适用（`check:active-doc-code-anchors` 除外，已随 Phase 3 执行）
+- [x] 纯文档计划：pnpm typecheck/build/lint/test/check 不适用（`check:active-doc-code-anchors` 除外，已随 Phase 3 执行）
 
 ## Deferred But Adjudicated
 
@@ -125,8 +125,6 @@ Exit Criteria:
 - 「待 P-1 实施」陈旧措辞在 quick-reference 之外另有两处（docs/references/new-renderer-introduction-audit.md:115/:253、flux-renderers-ai/implementation.md:103）——随下批 docs 刷新（closure 审查 m3 登记）
 
 ## Closure
-
-Status Note: <<收口时填写>>
 
 Closure Audit Evidence:
 

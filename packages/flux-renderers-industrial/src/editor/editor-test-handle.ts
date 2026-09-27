@@ -55,6 +55,19 @@ export interface ScadaEditorTestHandle {
   undo(): void;
   /** redo 句柄（E7.2，design-renderer.md §8.5.2）。 */
   redo(): void;
+  /** preview 注入测试句柄子能力（plan 522 / L5.5，design-renderer.md §13.2；注入 preview 门控在 injector 内）。 */
+  preview: {
+    /** 注入点位值（edit 态 no-op 返回 0）；返回应用的属性数。 */
+    inject(values: Record<string, import('../serialization/config-types.js').ScadaPrimitive>): number;
+    /** 清空注入 + touched 场景还原。 */
+    clear(): void;
+    /** 手动启动内置模拟源（preview 门控语义由调用方保证；缺省对已声明数值/布尔点随机游走）。 */
+    mockStart(intervalMs?: number): void;
+    /** 停止内置模拟源。 */
+    mockStop(): void;
+    /** 模拟源运行状态。 */
+    isMockRunning(): boolean;
+  };
   /** connection 测试句柄子能力（design-connection.md §8.3）。 */
   connection: {
     /** 程序化端点吸附（e2e 用）。 */

@@ -86,11 +86,20 @@ describe('extractPanelFields', () => {
     expect(event).toBeDefined();
   });
 
-  it('virtual fields have json-editor widget', () => {
+  // plan 522 / L5.3（design-binding-panel.md §2.1）：bindings/states 升级结构化编辑面，
+  // animations/events 维持 json-editor（旧「四类均 json-editor」契约被本 plan 有意取代）。
+  it('virtual fields use structured widgets (binding-editor/state-editor) while animation/event stay json-editor', () => {
     const groups = extractPanelFields(rectDefinition);
     const binding = groups.find((g) => g.group === 'binding')!;
     const bindingsField = binding.fields.find((f) => f.key === 'bindings')!;
-    expect(bindingsField.entry.widget).toBe('json-editor');
+    expect(bindingsField.entry.widget).toBe('binding-editor');
+    const state = groups.find((g) => g.group === 'state')!;
+    const statesField = state.fields.find((f) => f.key === 'states')!;
+    expect(statesField.entry.widget).toBe('state-editor');
+    const animation = groups.find((g) => g.group === 'animation')!;
+    expect(animation.fields.find((f) => f.key === 'animations')!.entry.widget).toBe('json-editor');
+    const event = groups.find((g) => g.group === 'event')!;
+    expect(event.fields.find((f) => f.key === 'events')!.entry.widget).toBe('json-editor');
   });
 
   it('group order is geometry → style → binding → state → animation → event', () => {

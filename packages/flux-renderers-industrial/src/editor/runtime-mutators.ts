@@ -269,6 +269,10 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     if (session.mode === mode) return;
     session.mode = mode;
     engine.setMode(mode);
+    // plan 522 / L5.5（design-renderer.md §13.2/§13.4）：preview 注入通道联动——
+    // edit → 停模拟 + touched 场景还原（零残留）；preview → 模拟源声明开启时自动启动。
+    // previewData 由 use-editor-engine 回填（与 ctx.save / ctx.writeConnection 同模式）。
+    ctx.previewData?.onModeChange(mode);
     latest.current.onModeChange?.(mode);
     notifySession();
   };

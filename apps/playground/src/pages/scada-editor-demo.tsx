@@ -5,20 +5,33 @@ import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerScadaRenderers, registerScadaSymbols } from '@nop-chaos/flux-renderers-industrial';
-import { registerScadaEditorRenderers } from '@nop-chaos/flux-renderers-industrial/editor';
+import {
+  registerScadaEditorRenderers,
+  createInMemoryTemplateStorage,
+  createInMemoryStationStorage,
+} from '@nop-chaos/flux-renderers-industrial/editor';
 import { Button } from '@nop-chaos/ui';
 
-// scada-editor-canvas 编辑器演示页（#/scada-editor-demo）——L5.1 完成态（plan 521）：
-// palette 24 图元拖拽 + 端点拖拽连线（junction→设备）+ inspector 六类字段 + junction connections 只读列表
-// + toolbox 全套（对齐分布 / z-order / 剪贴板 / undo-redo / 导入导出 / 连接管理 / 撤销历史 / 图层树）
-// + statusBar + Edit/Preview 受控切换 + save/export 输出可见 + onSessionChange 演示。
+// scada-editor-canvas 编辑器演示页（#/scada-editor-demo）——plan 522 完成态（L5.3/L5.4/L5.5）：
+// palette 24 图元拖拽 + 端点拖拽连线 + inspector 六类字段（binding/state 结构化编辑面 L5.3）
+// + toolbox 全套（含模板库 / 站点画面弹层 L5.4）+ statusBar + Edit/Preview 受控切换
+// + preview 态模拟数据注入（previewMock 内置模拟源 + previewInject 句柄通道 L5.5）
+// + save/export 输出可见 + onSessionChange 演示。
+
+// plan 522 / L5.4：模板/站点内存 store（demo 级——刷新即失，宿主可注入持久化实现）。
+const demoTemplateStorage = createInMemoryTemplateStorage();
+const demoStationStorage = createInMemoryStationStorage();
 
 // 初始组态：pipe-junction + 相邻设备图元，使端点拖拽连线可触发（W1）。
+// plan 522 / L5.5：variables + 绑定图元（demo-live-text.text ← tank_level），preview 态数据注入可见。
 // 模块级常量：mode 切换重建 schema 时保持 config 对象 identity 稳定，
 // 避免触发 use-editor-engine 的 controlled config 推回（load 会重置会话 + 清空 undo 栈）。
 const DEMO_INITIAL_CONFIG = {
   version: 1,
-  variables: [],
+  variables: [
+    { id: 'tank_level', source: 'static', value: 60 },
+    { id: 'pump_running', source: 'static', value: true },
+  ],
   symbols: [
     {
       id: 'demo-junction',
@@ -31,7 +44,16 @@ const DEMO_INITIAL_CONFIG = {
     },
     { id: 'demo-pump', type: 'scada-device-pump', x: 540, y: 140, width: 120, height: 120 },
     { id: 'demo-rect', type: 'scada-rect', x: 200, y: 330, width: 160, height: 100, fill: '#1565c0' },
-    { id: 'demo-text', type: 'scada-text', x: 240, y: 368, text: 'E5 Editor Demo', textSize: 18, textColor: '#ffffff' },
+    {
+      id: 'demo-live-text',
+      type: 'scada-text',
+      x: 220,
+      y: 368,
+      text: 'LIVE',
+      textSize: 18,
+      textColor: '#ffffff',
+      bindings: { text: { point: 'tank_level', format: '%d' } },
+    },
     { id: 'demo-ellipse', type: 'scada-ellipse', x: 620, y: 330, width: 80, height: 80, fill: '#e74c3c' },
   ],
 };
@@ -116,6 +138,24 @@ const DEMO_SCHEMA = {
                 testid: 'editor-mode-preview',
                 onClick: { action: 'setValue', args: { path: 'modeVar', value: 'preview' } },
               },
+              {
+                // plan 522 / L5.5：host 数据注入句柄通道——preview 态向画布注入一次静态值
+                //（demo 模拟源 previewMock 已自动随机游走注入；此按钮演示宿主主动注入）。
+                type: 'button',
+                label: '注入预览数据',
+                testid: 'editor-btn-inject',
+                onClick: {
+                  action: 'component:previewInject',
+                  componentId: 'editor-canvas',
+                  args: { values: { tank_level: 42, pump_running: true } },
+                },
+              },
+              {
+                type: 'button',
+                label: '清除注入',
+                testid: 'editor-btn-clear-inject',
+                onClick: { action: 'component:previewClear', componentId: 'editor-canvas' },
+              },
             ],
           },
           {
@@ -125,6 +165,13 @@ const DEMO_SCHEMA = {
             height: 520,
             mode: '${modeVar || "edit"}',
             config: DEMO_INITIAL_CONFIG,
+            // plan 522 / L5.5：preview 态内置模拟源（进入 preview 自动随机游走注入 tank_level/pump_running；
+            // 离开 preview / 卸载自动停止 + 场景还原）。preview 态画布只读（R5 双态隔离）。
+            previewMock: { intervalMs: 800 },
+            // plan 522 / L5.4：demo 内存模板库 / 站点存储（toolbox「模板」「画面」弹层消费）。
+            // `as never`：宿主回调对象非 JSON SchemaValue（registry as never 同型 cast 惯例）。
+            templateStorage: demoTemplateStorage as never,
+            stationStorage: demoStationStorage as never,
             // W2：onSave / onSessionChange 事件接线演示。事件 args 不引用 `${event.*}` 模板
             // （求值 scope 不含 event——见上方 Save 按钮注释），payload 经 Save 的 result.data 通道可见；
             // 会话变更以静态值写 sessionDirty，由 collapse 输出区反应式展示。
@@ -230,14 +277,16 @@ export function ScadaEditorDemoPage({ onBack }: ScadaEditorDemoPageProps) {
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
           编辑器完整能力演示：palette 图元库（24 内置图元，拖拽放置）· 画布编辑（单选/框选/拖动/缩放/旋转/成组）
           · <strong>连线</strong>——按住「管道接头」端点拖到相邻设备（水泵/阀门）释放即可创建连线 ·
-          toolbox 工具箱（对齐×6/分布×2/z-order×4/复制剪切粘贴/undo-redo/导入导出/<strong>连接管理</strong>/
-          <strong>撤销历史</strong>/<strong>图层树</strong>）· inspector 属性面板（六类字段 + junction 连线只读列表）·
+          toolbox 工具箱（对齐×6/分布×2/z-order×4/复制剪切粘贴/undo-redo/导入导出/连接管理/撤销历史/图层树/
+          <strong>模板库</strong>/<strong>站点画面</strong>）· inspector 属性面板（六类字段 +
+          <strong>绑定/状态结构化编辑面</strong>：点引用选择器 + 表达式编辑分离 + junction 连线只读列表）·
           statusBar（视口/模式/选区/历史深度）。
         </p>
         <p className="text-sm leading-relaxed text-[var(--nop-body-copy)] opacity-80">
           提交语义：commitPolicy 缺省为 manual——编辑停留在 working copy，点 Save 提交并派发 onSave（保存结果见下方
-          「保存 serializedConfig」折叠区）；设为 auto 时每次会话变更即触发 save + onSave（编辑即持久化，适合低频组态场景）。
-          Edit/Preview 按钮组受控切换 mode prop：preview 态画布只读（R5 双态隔离）。
+          「保存 serializedConfig」折叠区）。Edit/Preview 按钮组受控切换 mode prop：preview 态画布只读（R5 双态隔离），
+          且 <strong>模拟数据源自动注入</strong>（tank_level 正弦游走 → 「LIVE」文本实时变化；「注入预览数据」按钮演示
+          component:previewInject 宿主通道，切回 Edit 画布自动还原）。模板库/站点画面为 demo 内存存储——刷新即失。
         </p>
         <div className="mt-2">
           <SchemaRenderer

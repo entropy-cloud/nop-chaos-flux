@@ -76,6 +76,24 @@ export const industrialEditorRendererDefinitions: RendererDefinition[] = [
         description:
           'Schema-level event hooks (onReady/onError/onSelectionChange/onModeChange/onSessionChange/onSave/onLoad). Dispatched via createNormalizedActionEvent + helpers.dispatch.',
       },
+      templateStorage: {
+        shape: { kind: 'unknown' },
+        displayName: 'Template Storage',
+        description:
+          'Host-injected template storage callbacks (listTemplates/saveTemplate/deleteTemplate). Omitted: template dialog shows an unwired hint.',
+      },
+      stationStorage: {
+        shape: { kind: 'unknown' },
+        displayName: 'Station Storage',
+        description:
+          'Host-injected station/screen storage callbacks (loadStation/saveStation/loadScreen/saveScreen/deleteScreen). Screens are serialized config documents.',
+      },
+      previewMock: {
+        shape: { kind: 'unknown' },
+        displayName: 'Preview Mock Source',
+        description:
+          'Preview-mode built-in mock point source (true or { intervalMs }). Auto-starts a random-walk injection on entering preview; stops and restores the scene on leaving.',
+      },
     },
     eventContracts: {
       onReady: {
@@ -160,6 +178,12 @@ export const industrialEditorRendererDefinitions: RendererDefinition[] = [
       // event 求值；'prop' 通道会在渲染期无 event 上下文时深求值 → props 解析降级（config 丢失）。
       // renderer 侧经 `props.schema.events`（raw）读取，props 通道兜底。
       { key: 'events', kind: 'ignored' },
+      // plan 522 / L5.4（design-template-station.md §5）：宿主注入的 storage 回调对象（含函数成员），
+      // 同 events 纪律走 'ignored'（raw schema 读取），不经编译期深求值。
+      { key: 'templateStorage', kind: 'ignored' },
+      { key: 'stationStorage', kind: 'ignored' },
+      // plan 522 / L5.5（design-renderer.md §13.3）：preview 态内置模拟数据源开关。
+      { key: 'previewMock', kind: 'prop' },
       { key: 'palette', kind: 'region' },
       { key: 'inspector', kind: 'region' },
       { key: 'toolbox', kind: 'region' },

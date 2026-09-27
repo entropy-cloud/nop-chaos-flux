@@ -17,6 +17,13 @@ export type { ScadaEditorTestHandle } from './editor-test-handle.js';
 // plan 2026-08-08-1931-2 Phase 5 / P2-2：包公共面导出 session 投影 type（Omit undoStack），
 // 不泄漏内部 UndoStack 实现类（域内部 INV-4）。实现接口 ScadaEditorSession 仅供 editor 域内部 relative path 消费。
 export type { ScadaEditorSessionPublic, ScadaEditorMode, ScadaCommitPolicy } from './editor-session.js';
+// plan 522 / L5.4（design-template-station.md §5）：模板/站点模型类型 + 宿主 storage 契约 + 内存 store 工厂。
+export type { ScadaTemplate, ScadaTemplateStorage } from './template/template-model.js';
+export type { ScadaScreenMeta, ScadaStation, ScadaStationStorage } from './station/station-model.js';
+export { createInMemoryTemplateStorage } from './template/template-model.js';
+export { createInMemoryStationStorage, EMPTY_SCREEN_DOCUMENT } from './station/station-model.js';
+// plan 522 / L5.5（design-renderer.md §13.2）：preview 注入通道类型（host 自接通道时消费）。
+export type { PreviewInjectionSurface, PreviewDataInjectorOptions } from './preview/preview-data-injector.js';
 
 /**
  * 编辑器 renderer 定义数组（plan 2026-08-09-1300-1 Phase 2 / 1931-P2-4）。

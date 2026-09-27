@@ -55,6 +55,8 @@ function makeRuntime(workingConfig: ScadaConfig): EditorEngineRuntime {
     listSymbolLibrary: () => [],
     listConnections: () => [],
     disconnectConnection: () => false,
+    injectPreviewValues: () => 0,
+    clearPreviewValues: () => undefined,
   };
 }
 

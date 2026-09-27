@@ -50,6 +50,8 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
         new Set(collectIds(runtime.session.workingConfig.symbols)),
       )
     : undefined;
+  // plan 522 / L5.3：点引用候选集（binding/state 结构化编辑面消费，design-binding-panel.md §2.2）。
+  const pointIds = (runtime.session.workingConfig.variables ?? []).map((decl) => decl.id);
 
   if (node && definition) {
     const handleFieldChange = (field: PanelField, value: unknown) => {
@@ -77,6 +79,7 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
                   field={field}
                   value={(node as unknown as Record<string, unknown>)[field.key]}
                   error={fieldErrors[field.key]?.[0]}
+                  pointIds={pointIds}
                   onChange={(value) => handleFieldChange(field, value)}
                 />
               ))}

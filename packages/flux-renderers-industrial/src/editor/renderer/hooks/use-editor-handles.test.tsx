@@ -104,6 +104,8 @@ function makeRuntime(): EditorEngineRuntime {
     listSymbolLibrary: () => [],
     listConnections: () => [],
     disconnectConnection: () => false,
+    injectPreviewValues: () => 0,
+    clearPreviewValues: () => undefined,
   };
 }
 
@@ -152,6 +154,9 @@ describe('useEditorHandles', () => {
       'redo',
       'group',
       'ungroup',
+      // plan 522 / L5.5（design-renderer.md §13.3）：preview 注入句柄增补。
+      'previewInject',
+      'previewClear',
     ]);
   });
 

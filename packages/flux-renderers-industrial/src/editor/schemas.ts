@@ -1,5 +1,7 @@
 import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject } from '@nop-chaos/flux-core';
 import type { ScadaConfig } from '../serialization/config-types.js';
+import type { ScadaTemplateStorage } from './template/template-model.js';
+import type { ScadaStationStorage } from './station/station-model.js';
 
 export type { ScadaConfig } from '../serialization/config-types.js';
 
@@ -43,6 +45,21 @@ export interface ScadaEditorCanvasSchema extends BaseSchema {
   empty?: SchemaInput;
   /** 错误态 region（config 校验/构建失败）。 */
   error?: SchemaInput;
+  /**
+   * 宿主注入的模板存储回调（plan 522 / L5.4，design-template-station.md §5）。
+   * 对象通道（D-1 同型）：fields 注册 kind:'ignored'，renderer 经 raw schema 读取，不经编译期深求值。
+   * 交叉 `SchemaObject` 仅为满足 BaseSchema 的 SchemaValue 索引签名（schema 文档面 JSON 纯净性）——
+   * 函数成员由宿主在 schema 字面量中注入，renderer 侧按 `ScadaTemplateStorage` 消费。
+   */
+  templateStorage?: ScadaTemplateStorage & SchemaObject;
+  /** 宿主注入的站点/画面存储回调（plan 522 / L5.4，design-template-station.md §5；同上 D-1 通道）。 */
+  stationStorage?: ScadaStationStorage & SchemaObject;
+  /**
+   * preview 态内置模拟数据源（plan 522 / L5.5，design-renderer.md §13.2）。
+   * `true` = 缺省 interval（1000ms）；`{ intervalMs }` 自定周期。进入 preview 自动启动随机游走注入，
+   * 离开 preview / unmount 自动停止 + 场景还原。缺省关。
+   */
+  previewMock?: boolean | { intervalMs?: number };
   /** schema 级事件（整体 prop，D-1 裁定）。 */
   events?: ScadaEditorCanvasEvents;
 }

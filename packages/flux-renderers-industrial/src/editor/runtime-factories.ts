@@ -10,7 +10,7 @@ import { serializeScadaConfig } from '../serialization/serialize.js';
 import { parseScadaConfig } from '../serialization/parse.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import { diffScadaConfig } from '../serialization/diff.js';
-import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
+import type { ScadaConfig, ScadaPrimitive, ScadaSymbolNode } from '../serialization/config-types.js';
 import {
   cloneConfigSnapshot,
   applyPatchToWorkingNode,
@@ -21,6 +21,7 @@ import type { EditorClipboard } from './toolbox/clipboard.js';
 import type { AlignDirection, DistributeDirection } from './toolbox/align-distribute.js';
 import type { ZOrderAction } from './toolbox/z-order.js';
 import type { ConnectionWriteResult } from './connection/connection-adapter.js';
+import type { PreviewDataInjector } from './preview/preview-data-injector.js';
 
 /**
  * Editor runtime 拆分模块（plan 2026-08-07-1835-2 Phase 1 / multi P1-03）：
@@ -40,6 +41,13 @@ export interface UseEditorEngineArgs {
   initialMode?: ScadaEditorMode;
   /** 提交策略（manual 缺省 / auto；plan 2026-08-07-1835-2 Phase 2 / multi P1-05）。auto 时每次 session 变更触发 save + onSave。 */
   commitPolicy?: 'manual' | 'auto';
+  /**
+   * preview 态内置模拟数据源开关（plan 522 / L5.5，design-renderer.md §13.2）。
+   * `true` = 缺省 interval（1000ms）；`{ intervalMs }` 自定。经 latest ref 回读（mode 切换时生效）。
+   */
+  previewMock?: boolean | { intervalMs?: number };
+  /** expression 绑定求值回调（preview 注入通道；缺省跳过 expression 绑定）。 */
+  evaluateExpression?: (expression: string) => ScadaPrimitive | undefined;
   /** Editor 装配 + 初始 config 装载完成。 */
   onReady?: () => void;
   /** 装配/构建失败（config 校验失败等）。 */
@@ -103,6 +111,12 @@ export interface EditorRuntimeContext {
    * toolbox-runtime 的 disconnectConnection 经此写回，不绕过 undo 栈直改 working copy。
    */
   writeConnection?: (junctionId: string, connections: ConnectionWriteResult['connections']) => void;
+  /**
+   * preview 态数据注入通道（plan 522 / L5.5，design-renderer.md §13.2）：由 use-editor-engine 装配后
+   * 回填（与 save 同模式）。runtime-mutators 的 switchMode 经 `onModeChange` 联动模拟源启停 + 场景还原
+   * （R5：注入只发生在 preview 态，edit 态 clear + 还原）。
+   */
+  previewData?: PreviewDataInjector;
 }
 
 /**

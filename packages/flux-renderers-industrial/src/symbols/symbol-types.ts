@@ -77,6 +77,9 @@ export type ScadaPropEditorWidget =
   | 'json-editor'
   | 'point-ref'
   | 'action-editor'
+  // plan 522 / L5.3（design-binding-panel.md §2.1）：bindings/states 虚拟字段结构化编辑面。
+  | 'binding-editor'
+  | 'state-editor'
   | 'readonly';
 
 /**

@@ -86,6 +86,14 @@ export function buildEditorTestHandle(
     ungroup: mutators.ungroupSymbols,
     undo: mutators.undo,
     redo: mutators.redo,
+    // plan 522 / L5.5（design-renderer.md §13.2）：preview 注入子句柄（injector 经 ctx.previewData 回填）。
+    preview: {
+      inject: (values) => ctx.previewData?.inject(values) ?? 0,
+      clear: () => ctx.previewData?.clear(),
+      mockStart: (intervalMs?: number) => ctx.previewData?.startMock(undefined, intervalMs),
+      mockStop: () => ctx.previewData?.stopMock(),
+      isMockRunning: () => ctx.previewData?.isMockRunning() ?? false,
+    },
     connection: connectionHandle,
     undoRedo: {
       undo: mutators.undo,

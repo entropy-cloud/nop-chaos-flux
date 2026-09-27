@@ -19,6 +19,7 @@ import { buildRuntimeMutators } from '../../runtime-mutators.js';
 import { buildToolboxRuntime } from '../../toolbox-runtime.js';
 import { wireConnectionDrag } from '../../connection-wiring.js';
 import { buildEditorTestHandle } from '../../test-handle-factory.js';
+import { PreviewDataInjector } from '../../preview/preview-data-injector.js';
 
 export type { UseEditorEngineArgs } from '../../runtime-factories.js';
 export type { ScadaEditorMode, ScadaEditorSession };
@@ -101,6 +102,11 @@ export interface EditorEngineRuntime {
    * 无声明 policy 时为 no-op。运行时域内部，不进 schema-visible scope。
    */
   refitViewportOnResize?: () => void;
+  // ---- plan 522 / L5.5（design-renderer.md §13.2）：preview 态数据注入通道 ----
+  /** 注入点位值（preview 门控：edit 态 no-op 返回 0）。返回应用的属性数。 */
+  injectPreviewValues: (values: Record<string, import('../../../serialization/config-types.js').ScadaPrimitive>) => number;
+  /** 清空注入并还原 touched 场景属性（edit↔preview 往返零残留）。 */
+  clearPreviewValues: () => void;
 }
 
 /**
@@ -135,6 +141,8 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
   // runtime 对象构造期挂稳定闭包（不 mutate runtime，react-compiler 友好）；scada-editor-canvas 经
   // setResizeRefit（稳定 setter）更新 ref.current（捕获最新 policy + working config bounds）。
   const refitRef = useRef<(() => void) | undefined>(undefined);
+  // plan 522 / L5.5：preview 注入通道 holder（mount 期装配，releaseRuntime 销毁；switchMode 经 ctx 回填消费）。
+  const previewDataRef = useRef<PreviewDataInjector | null>(null);
   // plan 2026-08-08-1809-3 Phase 3 / P1-5：refit 注册器（稳定身份）。refitRef 在本 hook 内创建，
   // 其 .current 写入发生在本闭包内（react-compiler 允许自建 ref 的 mutation）；消费方（scada-editor-canvas）
   // 经此 setter 调用注册 refit，不直接 mutate 传入的 ref（避免 react-compiler/immutability 违规）。
@@ -155,6 +163,9 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     observerRef.current = undefined;
     detachAdapterRef.current?.();
     detachAdapterRef.current = undefined;
+    // plan 522 / L5.5：preview 注入通道随 runtime 释放（停模拟源；场景随 engine.destroy 一并销毁）。
+    previewDataRef.current?.destroy();
+    previewDataRef.current = null;
     const current = runtimeRef.current;
     if (!current) return;
     if (latest.current.cid !== undefined) {
@@ -192,6 +203,20 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     // plan 521 / U1（design-toolbox.md §13.1）：回填 ctx.writeConnection（与 ctx.save 同模式），
     // 使 toolbox-runtime 的 disconnectConnection 经 mutator 写回（入 undo 栈 + preview 门控）。
     ctx.writeConnection = mutators.writeConnection;
+    // plan 522 / L5.5（design-renderer.md §13.2）：装配 preview 注入通道（R5：仅 preview 态生效；
+    // mockAutoStart 经 latest ref 回读 schema previewMock，mode 切换时取最新声明）。
+    const previewInjector = new PreviewDataInjector(engine, {
+      evaluate: latest.current.evaluateExpression,
+    });
+    previewInjector.mockAutoStart = latest.current.previewMock !== undefined && latest.current.previewMock !== false;
+    previewInjector.mockIntervalMs = previewMockIntervalMs(latest.current.previewMock);
+    previewDataRef.current = previewInjector;
+    ctx.previewData = previewInjector;
+    // mount 即 preview（initialMode='preview'）时 mockAutoStart 同样生效（switchMode 不会被触发）。
+    if (session.mode === 'preview' && previewInjector.mockAutoStart) {
+      previewInjector.syncDeclarations();
+      previewInjector.startMock();
+    }
     const cleanupConnection = wireConnectionDrag(ctx, container, mutators.writeConnection);
 
     const next: EditorEngineRuntime = {
@@ -229,6 +254,9 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       disconnectConnection: toolbox.disconnectConnection,
       // plan 2026-08-08-1809-3 Phase 3 / P1-5：稳定闭包读 refitRef.current（由 scada-editor-canvas 装配）。
       refitViewportOnResize: () => refitRef.current?.(),
+      // plan 522 / L5.5：preview 注入通道（域核心 PreviewDataInjector，R5 preview 门控在 injector 内）。
+      injectPreviewValues: (values) => previewDataRef.current?.inject(values) ?? 0,
+      clearPreviewValues: () => previewDataRef.current?.clear(),
     };
     runtimeRef.current = next;
     setRuntime(next);
@@ -312,5 +340,22 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
     current.switchMode(args.initialMode);
   }, [args.initialMode]);
 
+  // plan 522 / L5.5：previewMock 声明变化同步进注入通道（自启开关 + tick 周期；
+  // 仅影响后续 mode 切换/启动，不打断正在运行的模拟）。
+  useEffect(() => {
+    const injector = previewDataRef.current;
+    if (!injector) return;
+    injector.mockAutoStart = args.previewMock !== undefined && args.previewMock !== false;
+    injector.mockIntervalMs = previewMockIntervalMs(args.previewMock);
+  }, [args.previewMock, runtime]);
+
   return { runtime, setResizeRefit };
+}
+
+/** previewMock schema 值 → tick 周期 ms（缺省 1000；非对象/非法值回落缺省）。 */
+function previewMockIntervalMs(previewMock: boolean | { intervalMs?: number } | undefined): number {
+  if (previewMock && typeof previewMock === 'object' && typeof previewMock.intervalMs === 'number' && previewMock.intervalMs > 0) {
+    return previewMock.intervalMs;
+  }
+  return 1000;
 }

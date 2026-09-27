@@ -2,11 +2,14 @@ import { useState, type ChangeEvent } from 'react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Input, Textarea, Switch, Label, NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import type { PanelField } from './schema-extractor.js';
+import { BindingEditorField, StateEditorField } from './binding-panel.js';
 
 interface InspectorFieldProps {
   field: PanelField;
   value: unknown;
   error?: string;
+  /** plan 522 / L5.3：点引用候选集（working copy variables id 集，binding/state 结构化面消费）。 */
+  pointIds?: string[];
   onChange: (value: unknown) => void;
 }
 
@@ -31,6 +34,14 @@ export function InspectorField(props: InspectorFieldProps) {
         {t(label)}: {String(value ?? t('industrial.scada.editor.inspector.empty'))}
       </Label>
     );
+  }
+
+  // plan 522 / L5.3（design-binding-panel.md §2.1）：bindings/states 结构化编辑面。
+  if (widget === 'binding-editor') {
+    return <BindingEditorField value={value} error={error} pointIds={props.pointIds ?? []} onChange={onChange} />;
+  }
+  if (widget === 'state-editor') {
+    return <StateEditorField value={value} error={error} pointIds={props.pointIds ?? []} onChange={onChange} />;
   }
 
   if (widget === 'json-editor') {

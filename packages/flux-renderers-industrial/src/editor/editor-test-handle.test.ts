@@ -37,6 +37,13 @@ function makeHandle(overrides: Partial<ScadaEditorTestHandle> = {}): ScadaEditor
     group: () => undefined,
     ungroup: () => undefined,
     undo: () => undefined,
+    preview: {
+      inject: () => 0,
+      clear: () => undefined,
+      mockStart: () => undefined,
+      mockStop: () => undefined,
+      isMockRunning: () => false,
+    },
     redo: () => undefined,
     connection: {
       connect: () => undefined,

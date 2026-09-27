@@ -442,3 +442,45 @@ packages/flux-renderers-industrial/src/editor/   （方案 A 裁定，经 subpat
 | E9.1      | 工具箱完整                                                                                                               |
 | E9.2      | M3 收尾 + benchmark 复测 + 文档收尾                                                                                      |
 | E6/E8/E10 | M1/M2/M3 整体 gate（五边界完整审计）                                                                                     |
+
+## 13. 预览态 host 集成与运行态数据注入（plan 522 / L5.5 增补节）
+
+> 日期：2026-09-26。上游：gap audit §4.3 D3（双态隔离 R5 已立为部分设计；缺 host 级「编辑↔运行」入口 + 运行态数据注入设计）+ §4.1 W4（demo Edit/Preview 受控切换已于 plan 521 落地）。本节为 §4.2 双态隔离与 §9 数据源接入点的**运行态侧增补**，不改变 edit 态任何既有契约。
+
+### 13.1 host 级「编辑 ↔ 运行」入口（契约总览）
+
+| 入口             | 通道                                                                                                                                | 状态                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 受控 `mode` prop | host 持有 mode state → schema 动态 prop（`${modeVar}`）→ controlled-mode 推回（`use-editor-engine` P1-09）→ `runtime.switchMode`    | **已立**（plan 521 W4 落地，demo Edit/Preview 按钮组） |
+| session 事件反馈 | `onModeChange`（scada-editor:modeChange）+ session 投影 `mode` + statusBar/data-mode 状态面                                         | 已立                                                   |
+| 运行态数据注入   | **本节 13.2 新立**：`component:previewInject` / `component:previewClear` 句柄 + `previewMock` schema prop + 测试句柄 `preview` 子面 | plan 522 落地                                          |
+
+host 集成三步（产品形态参考）：① host 渲染模式切换控件写 mode 变量；② host 按需声明 `previewMock`（开箱模拟源）或经动作/句柄注入真实数据；③ host 监听 `onModeChange` 在离开 preview 时做宿主侧清理（包内场景还原自动完成，见 13.4）。
+
+### 13.2 运行态数据注入契约
+
+**原则（R5 边界增补）**：注入是**preview 态专属的视觉态**——只改引擎场景节点属性，**永不**触碰 working copy / committedBaseline / undo 栈 / 序列化输出；edit 态注入通道自守 no-op。这是 §4.2 三层隔离之外的第四条不泄漏保证：
+
+1. **注入通道**（`editor/preview/preview-data-injector.ts`，域核心无 React）：
+   - `inject(values: Record<string, ScadaPrimitive>): number`——preview 门控（edit 态返回 0）→ 值入内建 `PointStore`（复用 `binding/point-store.ts`，量程换算/死区语义免费获得）→ 解析 working copy 全部 `bindings` → 引擎场景 patch 应用，返回应用属性数。
+   - 解析复用 `binding/bind-resolver.ts`：`point` 绑定经 PointStore 取值 + `scale` 换算 + `format`（文本属性）；`expression` 绑定经可选注入的 `evaluate` 回调（host 提供，如 flux-formula compiler）——无 evaluate 时跳过（完整表达式/scope 语义仍归运行态 `scada-canvas`，本通道是轻量模拟通道，不复制 pipeline）。
+   - **touched 追踪 + 场景还原**：首触属性记录原值（`engine.getSymbolProps`）；`clear()` 把 touched 属性还原为原值。edit↔preview 往返后画布零残留（不泄漏验证 #4 同型）。
+2. **host 数据入口**：
+   - 句柄：`component:previewInject`（args `{ values }`）/ `component:previewClear`——schema 动作可达（demo 按钮演示）；加入 editor 扩展句柄集（§8.5.2 增补：编辑 9 + 预览 2）。
+   - `previewMock` schema prop（`boolean | { intervalMs?: number }`，缺省关）：声明后进入 preview 态自动启动**包内模拟源**（内联于 `preview-data-injector.ts`：对 working copy `variables` 数值型声明逐点生成正弦波形值 42..78 → `inject`）；离开 preview / unmount 自动停止。demo 级开箱通道，真实数据源宿主经句柄/直接调用注入。
+   - 测试句柄 `preview` 子面：`inject(values)` / `clear()` / `mockStart()` / `mockStop()`（e2e/基准）。
+3. **声明源**：注入目标 = working copy `variables` 声明 + `bindings` 声明（注入前从 `engine.getCurrentConfig()` 重同步，load/切换画面后无需额外接线）。未声明点的注入值入 store 但无消费目标（无害）。
+
+### 13.3 schema 契约增补
+
+- `ScadaEditorCanvasSchema.previewMock?: boolean | { intervalMs?: number }`（prop，fields 注册 prop）；
+- editor 扩展句柄集增补 `previewInject`/`previewClear`（`use-editor-handles.ts` ALL_HANDLE_METHODS + invoke 分支）。
+
+### 13.4 不泄漏验证（R5 closure 增补第 5 项）
+
+5. 注入只发生在 `session.mode === 'preview'`：edit 态 `inject` no-op；preview→edit 切换（`switchMode`）自动 `stopMock + clear`（touched 还原）→ 引擎场景与 working copy 重新一致；`serializeScadaConfig` 输出与从未注入的会话完全相同（注入值不进任何序列化面）。
+
+### 13.5 边界
+
+- 本通道**不**实现状态机样式（states）/动画（animations）/事件派发的 preview 驱动——完整运行态行为归 `scada-canvas`（`design-architecture.md` §4.6 预览模式行）；preview 态编辑器画布的 symbol 事件派发维持现状。属性级绑定注入是 L5.5 交付面。
+- 模拟源是**确定性正弦波形**（内联于 preview-data-injector.ts，非真实协议接入）；真实数据源由宿主经句柄注入或后继扩展（demand-gated）。

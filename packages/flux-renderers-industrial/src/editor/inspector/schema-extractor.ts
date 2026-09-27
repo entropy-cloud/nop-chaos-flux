@@ -94,10 +94,12 @@ export function extractPanelFields(definition: ScadaSymbolDefinition): PanelFiel
   }
 
   // 注入固定虚拟字段（binding/state/animation/event）。
-  injectVirtualField(groups, 'binding', 'bindings', 'object');
-  injectVirtualField(groups, 'state', 'states', 'object');
-  injectVirtualField(groups, 'animation', 'animations', 'array');
-  injectVirtualField(groups, 'event', 'events', 'array');
+  // plan 522 / L5.3（design-binding-panel.md §2.1）：bindings/states 升级结构化编辑面
+  // （binding-editor/state-editor），animations/events 维持 json-editor（event 动作编辑器归 L5.8 O1）。
+  injectVirtualField(groups, 'binding', 'bindings', 'object', 'binding-editor');
+  injectVirtualField(groups, 'state', 'states', 'object', 'state-editor');
+  injectVirtualField(groups, 'animation', 'animations', 'array', 'json-editor');
+  injectVirtualField(groups, 'event', 'events', 'array', 'json-editor');
 
   // 按 GROUP_ORDER 排序输出，跳过空组。
   return GROUP_ORDER.filter((g) => groups.has(g) && groups.get(g)!.length > 0).map((g) => ({
@@ -118,11 +120,12 @@ function injectVirtualField(
   group: ScadaPropFieldGroup,
   key: string,
   type: 'object' | 'array',
+  widget: ScadaPropEditorWidget = 'json-editor',
 ): void {
   if (!groups.has(group)) groups.set(group, []);
   groups.get(group)!.push({
     key,
-    entry: { type, widget: 'json-editor', group },
+    entry: { type, widget, group },
     defaultValue: undefined,
   });
 }

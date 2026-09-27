@@ -23,6 +23,8 @@ export const SCADA_EDITOR_ERROR_CODES = [
   'invalid-config',
   // plan 2026-08-08-1931-2 Phase 4 / P2-8：mutator applyDiff / undo / redo / 事务 commit 失败派发（runtime-factories + runtime-mutators）。
   'editor-internal-error',
+  // plan 522 / L5.4（design-template-station.md §4）：模板/站点宿主存储回调失败（dialog onError 上报）。
+  'storage-error',
   // M2 子集（group/ungroup/undo/redo 失败路径，E7/E7.2 落地行为；码全集登记，i18n 文案随 M2 落地）
   'empty-selection',
   'not-a-group',
@@ -44,6 +46,8 @@ export const SCADA_EDITOR_ERROR_CODES_M1: readonly ScadaEditorErrorCode[] = [
   'invalid-config',
   // plan 2026-08-08-1931-2 Phase 4 / P2-8：applyDiff 失败属 M1 路径（addSymbol/removeSymbol/updateSymbol 的 syncWorkingCopy），i18n 文案与本子集同步落地。
   'editor-internal-error',
+  // plan 522 / L5.4：宿主 storage 回调失败属面板可感知路径（M1 子集 i18n 文案随 plan 522 落地）。
+  'storage-error',
 ];
 
 const EDITOR_I18N_KEY_PREFIX = 'industrial.scada.editor.error';
