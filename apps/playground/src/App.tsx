@@ -53,41 +53,6 @@ import { M2TouchDemoPage } from './pages/m2-touch-demo';
 import { M3LayoutDemoPage } from './pages/m3-layout-demo';
 import { M4DataDisplayDemoPage } from './pages/m4-data-display-demo';
 import { M5MobileShowcaseDemoPage } from './pages/m5-mobile-showcase-demo';
-import { GanttDemoPage } from './pages/gantt-demo';
-import { GanttStatesDemoPage } from './pages/gantt-states-demo';
-import { KanbanDemoPage } from './pages/kanban-demo';
-import { DiffDemoPage } from './pages/diff-demo';
-import { ScadaDemoPage } from './pages/scada-demo';
-import { ScadaPressureDemoPage } from './pages/scada-pressure-demo';
-import { ScadaPerfScaleDemoPage } from './pages/scada-perf-scale-demo';
-import { ScadaEdgeDemoPage } from './pages/scada-edge-demo';
-import { ScadaEditorDemoPage } from './pages/scada-editor-demo';
-import { DashboardDemoPage } from './pages/dashboard-demo';
-import { PrintDesignerDemoPage } from './pages/print-designer-demo';
-import { CalendarDemoPage } from './pages/calendar-demo';
-import { BarcodeDemoPage } from './pages/barcode-demo';
-import { GraphDemoPage } from './pages/graph-demo';
-import { MapDemoPage } from './pages/map-demo';
-import { PivotTableDemoPage } from './pages/pivot-table-demo';
-import { CalendarPerfScaleDemoPage } from './pages/calendar-perf-scale-demo';
-import { KanbanPerfScaleDemoPage } from './pages/kanban-perf-scale-demo';
-import { GanttPerfScaleDemoPage } from './pages/gantt-perf-scale-demo';
-import { DiffPerfScaleDemoPage } from './pages/diff-perf-scale-demo';
-import { DataVerifyPage } from './pages/data-verify-page';
-import { EnvStreamDemoPage } from './pages/env-stream-demo';
-import { AiChatDemoPage } from './pages/ai-chat-demo';
-import { AiConversationsDemoPage } from './pages/ai-conversations-demo';
-import { AiToolsDemoPage } from './pages/ai-tools-demo';
-import { AiAttachmentsDemoPage } from './pages/ai-attachments-demo';
-import { AiComponentHandleDemoPage } from './pages/ai-component-handle-demo';
-import { AiVirtualScrollDemoPage } from './pages/ai-virtual-scroll-demo';
-import { AiPersistenceDemoPage } from './pages/ai-persistence-demo';
-import { AiCitationsDemoPage } from './pages/ai-citations-demo';
-import { AiHitlDemoPage } from './pages/ai-hitl-demo';
-import { AiP4WidgetsDemoPage } from './pages/ai-p4-widgets-demo';
-import { AiLinkageDemoPage } from './pages/ai-linkage-demo';
-import { AiCoverageDemoPage } from './pages/ai-coverage-demo';
-import { AiWidgetsDemoPage } from './pages/ai-widgets-demo';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -137,6 +102,111 @@ const LazyLeaferExamplesDemoPage = lazy(() =>
 // three-free (mirrors report-designer / debugger-lab / leafer-examples lazy isolation).
 const LazyThreeCanvasDemoPage = lazy(() =>
   import('./pages/three-canvas-demo').then((m) => ({ default: m.ThreeCanvasDemoPage })),
+);
+const LazyScadaDemoPage = lazy(() =>
+  import('./pages/scada-demo').then((m) => ({ default: m.ScadaDemoPage })),
+);
+const LazyScadaPressureDemoPage = lazy(() =>
+  import('./pages/scada-pressure-demo').then((m) => ({ default: m.ScadaPressureDemoPage })),
+);
+const LazyScadaPerfScaleDemoPage = lazy(() =>
+  import('./pages/scada-perf-scale-demo').then((m) => ({ default: m.ScadaPerfScaleDemoPage })),
+);
+const LazyScadaEdgeDemoPage = lazy(() =>
+  import('./pages/scada-edge-demo').then((m) => ({ default: m.ScadaEdgeDemoPage })),
+);
+const LazyScadaEditorDemoPage = lazy(() =>
+  import('./pages/scada-editor-demo').then((m) => ({ default: m.ScadaEditorDemoPage })),
+);
+const LazyDashboardDemoPage = lazy(() =>
+  import('./pages/dashboard-demo').then((m) => ({ default: m.DashboardDemoPage })),
+);
+const LazyPrintDesignerDemoPage = lazy(() =>
+  import('./pages/print-designer-demo').then((m) => ({ default: m.PrintDesignerDemoPage })),
+);
+const LazyCalendarDemoPage = lazy(() =>
+  import('./pages/calendar-demo').then((m) => ({ default: m.CalendarDemoPage })),
+);
+const LazyBarcodeDemoPage = lazy(() =>
+  import('./pages/barcode-demo').then((m) => ({ default: m.BarcodeDemoPage })),
+);
+const LazyGraphDemoPage = lazy(() =>
+  import('./pages/graph-demo').then((m) => ({ default: m.GraphDemoPage })),
+);
+const LazyMapDemoPage = lazy(() =>
+  import('./pages/map-demo').then((m) => ({ default: m.MapDemoPage })),
+);
+const LazyPivotTableDemoPage = lazy(() =>
+  import('./pages/pivot-table-demo').then((m) => ({ default: m.PivotTableDemoPage })),
+);
+const LazyCalendarPerfScaleDemoPage = lazy(() =>
+  import('./pages/calendar-perf-scale-demo').then((m) => ({ default: m.CalendarPerfScaleDemoPage })),
+);
+const LazyKanbanPerfScaleDemoPage = lazy(() =>
+  import('./pages/kanban-perf-scale-demo').then((m) => ({ default: m.KanbanPerfScaleDemoPage })),
+);
+const LazyGanttPerfScaleDemoPage = lazy(() =>
+  import('./pages/gantt-perf-scale-demo').then((m) => ({ default: m.GanttPerfScaleDemoPage })),
+);
+const LazyDiffPerfScaleDemoPage = lazy(() =>
+  import('./pages/diff-perf-scale-demo').then((m) => ({ default: m.DiffPerfScaleDemoPage })),
+);
+const LazyDataVerifyPage = lazy(() =>
+  import('./pages/data-verify-page').then((m) => ({ default: m.DataVerifyPage })),
+);
+const LazyEnvStreamDemoPage = lazy(() =>
+  import('./pages/env-stream-demo').then((m) => ({ default: m.EnvStreamDemoPage })),
+);
+const LazyAiChatDemoPage = lazy(() =>
+  import('./pages/ai-chat-demo').then((m) => ({ default: m.AiChatDemoPage })),
+);
+const LazyAiConversationsDemoPage = lazy(() =>
+  import('./pages/ai-conversations-demo').then((m) => ({ default: m.AiConversationsDemoPage })),
+);
+const LazyAiToolsDemoPage = lazy(() =>
+  import('./pages/ai-tools-demo').then((m) => ({ default: m.AiToolsDemoPage })),
+);
+const LazyAiAttachmentsDemoPage = lazy(() =>
+  import('./pages/ai-attachments-demo').then((m) => ({ default: m.AiAttachmentsDemoPage })),
+);
+const LazyAiComponentHandleDemoPage = lazy(() =>
+  import('./pages/ai-component-handle-demo').then((m) => ({ default: m.AiComponentHandleDemoPage })),
+);
+const LazyAiVirtualScrollDemoPage = lazy(() =>
+  import('./pages/ai-virtual-scroll-demo').then((m) => ({ default: m.AiVirtualScrollDemoPage })),
+);
+const LazyAiPersistenceDemoPage = lazy(() =>
+  import('./pages/ai-persistence-demo').then((m) => ({ default: m.AiPersistenceDemoPage })),
+);
+const LazyAiCitationsDemoPage = lazy(() =>
+  import('./pages/ai-citations-demo').then((m) => ({ default: m.AiCitationsDemoPage })),
+);
+const LazyAiHitlDemoPage = lazy(() =>
+  import('./pages/ai-hitl-demo').then((m) => ({ default: m.AiHitlDemoPage })),
+);
+const LazyAiP4WidgetsDemoPage = lazy(() =>
+  import('./pages/ai-p4-widgets-demo').then((m) => ({ default: m.AiP4WidgetsDemoPage })),
+);
+const LazyAiLinkageDemoPage = lazy(() =>
+  import('./pages/ai-linkage-demo').then((m) => ({ default: m.AiLinkageDemoPage })),
+);
+const LazyAiCoverageDemoPage = lazy(() =>
+  import('./pages/ai-coverage-demo').then((m) => ({ default: m.AiCoverageDemoPage })),
+);
+const LazyAiWidgetsDemoPage = lazy(() =>
+  import('./pages/ai-widgets-demo').then((m) => ({ default: m.AiWidgetsDemoPage })),
+);
+const LazyGanttDemoPage = lazy(() =>
+  import('./pages/gantt-demo').then((m) => ({ default: m.GanttDemoPage })),
+);
+const LazyGanttStatesDemoPage = lazy(() =>
+  import('./pages/gantt-states-demo').then((m) => ({ default: m.GanttStatesDemoPage })),
+);
+const LazyKanbanDemoPage = lazy(() =>
+  import('./pages/kanban-demo').then((m) => ({ default: m.KanbanDemoPage })),
+);
+const LazyDiffDemoPage = lazy(() =>
+  import('./pages/diff-demo').then((m) => ({ default: m.DiffDemoPage })),
 );
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
@@ -236,13 +306,13 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         case 'flow-designer':
           return <FlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
         case 'gantt':
-          return <GanttDemoPage onBack={goHome} />;
+          return <LazyGanttDemoPage onBack={goHome} />;
         case 'gantt-states':
-          return <GanttStatesDemoPage onBack={goHome} />;
+          return <LazyGanttStatesDemoPage onBack={goHome} />;
         case 'kanban':
-          return <KanbanDemoPage onBack={goHome} />;
+          return <LazyKanbanDemoPage onBack={goHome} />;
         case 'scheduling-calendar':
-          return <CalendarDemoPage onBack={goHome} />;
+          return <LazyCalendarDemoPage onBack={goHome} />;
         case 'taskflow-designer':
           return <TaskFlowDesignerPage debuggerController={debuggerController} onBack={goHome} />;
         case 'report-designer':
@@ -324,75 +394,75 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         case 'm5-showcase':
           return <M5MobileShowcaseDemoPage onBack={goHome} />;
         case 'barcode-input':
-          return <BarcodeDemoPage onBack={goHome} />;
+          return <LazyBarcodeDemoPage onBack={goHome} />;
         case 'graph-demo':
-          return <GraphDemoPage onBack={goHome} />;
+          return <LazyGraphDemoPage onBack={goHome} />;
         case 'map-demo':
-          return <MapDemoPage onBack={goHome} />;
+          return <LazyMapDemoPage onBack={goHome} />;
         case 'pivot-table-demo':
-          return <PivotTableDemoPage onBack={goHome} />;
+          return <LazyPivotTableDemoPage onBack={goHome} />;
         case 'diff-view':
-          return <DiffDemoPage onBack={goHome} />;
+          return <LazyDiffDemoPage onBack={goHome} />;
         case 'scada-demo':
-          return <ScadaDemoPage onBack={goHome} />;
+          return <LazyScadaDemoPage onBack={goHome} />;
         case 'scada-pressure-demo':
-          return <ScadaPressureDemoPage onBack={goHome} />;
+          return <LazyScadaPressureDemoPage onBack={goHome} />;
         case 'scada-perf-scale':
-          return <ScadaPerfScaleDemoPage onBack={goHome} />;
+          return <LazyScadaPerfScaleDemoPage onBack={goHome} />;
         case 'leafer-examples':
           return <LazyLeaferExamplesDemoPage onBack={goHome} />;
         case 'three-canvas-demo':
           return <LazyThreeCanvasDemoPage onBack={goHome} />;
         case 'scada-edge-cases':
-          return <ScadaEdgeDemoPage onBack={goHome} />;
+          return <LazyScadaEdgeDemoPage onBack={goHome} />;
         case 'scada-editor-demo':
-          return <ScadaEditorDemoPage onBack={goHome} />;
+          return <LazyScadaEditorDemoPage onBack={goHome} />;
         case 'print-designer':
-          return <PrintDesignerDemoPage />;
+          return <LazyPrintDesignerDemoPage />;
         case 'page-designer':
           return <LazyPageDesignerPage onBack={goHome} />;
         case 'dashboard-demo':
-          return <DashboardDemoPage onBack={goHome} />;
+          return <LazyDashboardDemoPage onBack={goHome} />;
         case 'calendar-perf-scale':
-          return <CalendarPerfScaleDemoPage onBack={goHome} />;
+          return <LazyCalendarPerfScaleDemoPage onBack={goHome} />;
         case 'kanban-perf-scale':
-          return <KanbanPerfScaleDemoPage onBack={goHome} />;
+          return <LazyKanbanPerfScaleDemoPage onBack={goHome} />;
         case 'gantt-perf-scale':
-          return <GanttPerfScaleDemoPage onBack={goHome} />;
+          return <LazyGanttPerfScaleDemoPage onBack={goHome} />;
         case 'diff-perf-scale':
-          return <DiffPerfScaleDemoPage onBack={goHome} />;
+          return <LazyDiffPerfScaleDemoPage onBack={goHome} />;
         case 'data-verify':
-          return <DataVerifyPage onBack={goHome} />;
+          return <LazyDataVerifyPage onBack={goHome} />;
         case 'env-stream':
-          return <EnvStreamDemoPage onBack={goHome} />;
+          return <LazyEnvStreamDemoPage onBack={goHome} />;
         case 'ai-chat':
-          return <AiChatDemoPage onBack={goHome} />;
+          return <LazyAiChatDemoPage onBack={goHome} />;
         case 'ai-conversations':
-          return <AiConversationsDemoPage onBack={goHome} />;
+          return <LazyAiConversationsDemoPage onBack={goHome} />;
         case 'ai-tools':
-          return <AiToolsDemoPage onBack={goHome} />;
+          return <LazyAiToolsDemoPage onBack={goHome} />;
         case 'ai-attachments':
-          return <AiAttachmentsDemoPage onBack={goHome} />;
+          return <LazyAiAttachmentsDemoPage onBack={goHome} />;
         case 'ai-component-handle':
-          return <AiComponentHandleDemoPage onBack={goHome} />;
+          return <LazyAiComponentHandleDemoPage onBack={goHome} />;
         case 'ai-virtual-scroll':
-          return <AiVirtualScrollDemoPage onBack={goHome} />;
+          return <LazyAiVirtualScrollDemoPage onBack={goHome} />;
         case 'ai-persistence':
-          return <AiPersistenceDemoPage onBack={goHome} />;
+          return <LazyAiPersistenceDemoPage onBack={goHome} />;
         case 'ai-citations':
-          return <AiCitationsDemoPage onBack={goHome} />;
+          return <LazyAiCitationsDemoPage onBack={goHome} />;
         case 'ai-hitl':
-          return <AiHitlDemoPage onBack={goHome} />;
+          return <LazyAiHitlDemoPage onBack={goHome} />;
         case 'ai-p4':
-          return <AiP4WidgetsDemoPage onBack={goHome} />;
+          return <LazyAiP4WidgetsDemoPage onBack={goHome} />;
         case 'ai-linkage':
-          return <AiLinkageDemoPage onBack={goHome} />;
+          return <LazyAiLinkageDemoPage onBack={goHome} />;
         case 'ai-coverage':
-          return <AiCoverageDemoPage onBack={goHome} />;
+          return <LazyAiCoverageDemoPage onBack={goHome} />;
         case 'ai-rich-text':
           return <LazyAiRichTextDemoPage onBack={goHome} />;
         case 'ai-widgets':
-          return <AiWidgetsDemoPage onBack={goHome} />;
+          return <LazyAiWidgetsDemoPage onBack={goHome} />;
         default:
           return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
       }

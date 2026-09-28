@@ -30,34 +30,26 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
             return 'react-vendor';
           }
-          if (
-            id.includes('@nop-chaos/spreadsheet-core') ||
-            id.includes('@nop-chaos/spreadsheet-renderers')
-          ) {
+          // Workspace packages resolve to absolute source paths via
+          // vite.workspace-alias (package-name substring matching never hits —
+          // the vendor chunks silently collapsed into the entry chunk). Match
+          // the resolved package directory instead.
+          if (/[\\/]packages[\\/]spreadsheet-(core|renderers)[\\/]/.test(id)) {
             return 'spreadsheet';
           }
-          if (
-            id.includes('@nop-chaos/flow-designer-core') ||
-            id.includes('@nop-chaos/flow-designer-renderers')
-          ) {
+          if (/[\\/]packages[\\/]flow-designer-(core|renderers)[\\/]/.test(id)) {
             return 'flow-designer';
           }
-          if (
-            id.includes('@nop-chaos/report-designer-core') ||
-            id.includes('@nop-chaos/report-designer-renderers')
-          ) {
+          if (/[\\/]packages[\\/]report-designer-(core|renderers)[\\/]/.test(id)) {
             return 'report-designer';
           }
-          if (
-            id.includes('@nop-chaos/word-editor-core') ||
-            id.includes('@nop-chaos/word-editor-renderers')
-          ) {
+          if (/[\\/]packages[\\/]word-editor-(core|renderers)[\\/]/.test(id)) {
             return 'word-editor';
           }
-          if (id.includes('@nop-chaos/flux-code-editor')) {
+          if (/[\\/]packages[\\/]flux-code-editor[\\/]/.test(id)) {
             return 'code-editor';
           }
-          if (id.includes('@nop-chaos/ui')) {
+          if (/[\\/]packages[\\/]ui[\\/]/.test(id)) {
             return 'ui';
           }
         },

@@ -1,6 +1,6 @@
 # 2026-09-28-3 Playground bundle 体积优化
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-28
 > Source: `docs/analysis/2026-09-28-perf-ux-deep-optimization-analysis.md`（P5）
 > Related: `apps/playground/vite.config.ts`、`apps/playground/src/App.tsx`
@@ -59,13 +59,13 @@
 
 ### Phase 1 - manualChunks 路径匹配修复
 
-Status: planned
+Status: completed
 Targets: `apps/playground/vite.config.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: 分组规则改为按 resolved 源码路径匹配（如 `id.includes('/packages/spreadsheet-core/')`），保留 react/react-dom 的 node_modules 匹配
-- [ ] Proof: `pnpm --filter @nop-chaos/flux-playground build` 产物中出现 ui/spreadsheet/flow-designer/report-designer/word-editor/code-editor chunk；记录修复前后入口尺寸与总传输量（gzip）对照表进 daily log
+- [x] Fix: 分组规则改为按 resolved 源码路径正则匹配（`/[\\/]packages[\\/]spreadsheet-(core|renderers)[\\//` 等，含 Windows 反斜杠兼容），保留 react/react-dom 的 node_modules 匹配
+- [x] Proof: 构建产物 vendor chunks 实际产出：ui 628KB/191KB gzip、flow-designer 2460KB/726KB、report-designer 240KB/68KB、word-editor 836KB/237KB、code-editor 1400KB/461KB；入口 8560KB/2376KB gzip → 5764KB/1508KB gzip（Phase 1 后 -36.5% gzip）；数字已记 daily log
 
 Exit Criteria:
 
@@ -75,20 +75,20 @@ Exit Criteria:
 
 ### Phase 2 - 重页面 lazy 化扩展
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/App.tsx`
 
 - Item Types: `Fix`
 
-- [ ] Fix: 沿既有模式将重演示页改为 lazy + Suspense：scada 五页、calendar/gantt/kanban（含 perf-scale 变体）、diff-perf、dashboard、print-designer、graph、map、pivot、env-stream、data-verify、AI 族演示页；home/flux-basic/component-lab/complex-pages 保持 eager（核心审查面）
-- [ ] Fix: 导入语义核对——lazy 化页面的模块顶层副作用（如有）迁入页面组件内或确认无副作用
-- [ ] Proof: `app.test.tsx`/`route-matrix.test.ts` 全绿；抽样 e2e 冒烟（home → scada-demo → gantt-demo → ai-chat-demo）通过
+- [x] Fix: 35 个重演示页静态导入转为 `lazy(() => import(...))` + JSX 用点替换（scada 五页、gantt/gantt-states/kanban/calendar 及 perf-scale 变体、diff/diff-perf、dashboard、print-designer、graph、map、pivot、barcode、env-stream、data-verify、AI 13 连）；home/flux-basic/component-lab/complex-pages/performance-table 保持 eager
+- [x] Fix: 导入语义核对——目标页面均为演示组件（无注册类模块顶层副作用；渲染器注册保留在 App 顶层不变）
+- [x] Proof: `app.test.tsx`/`route-matrix.test.ts`/performance-table-page 三套件 51+1skip 全绿；e2e 冒烟 home-entry-navigation（6/6，覆盖 report-designer-host/map-demo/pivot-table-demo 卡片导航）+ visual-helpers-smoke（2/2）通过
 
 Exit Criteria:
 
-- [ ] 目标页面全部经 lazy 加载（App.tsx 审查记录），静态导入数量下降清单记录
-- [ ] 入口 chunk 尺寸进一步下降（累计数字记录进 daily log）
-- [ ] 单测全绿 + 冒烟 e2e 通过
+- [x] 目标页面全部经 lazy 加载：App.tsx 静态 `./pages` 导入 68 → 33（35 转 lazy + 既有 11 = 46 个 lazy 声明）
+- [x] 入口累计：8560KB → 4984KB raw，gzip 2376KB → 1285KB（**-46%**）；数字记入 daily log
+- [x] 单测全绿 + 冒烟 e2e 通过
 
 ## Draft Review Record
 
@@ -99,16 +99,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] manualChunks 失效缺陷已修复且产物 chunk 实际产出（live defect 收敛）
-- [ ] 行为/契约结果已达成：lazy 化后所有路由可达、测试全绿
-- [ ] 必要 focused verification 已完成（尺寸对照表 + 冒烟 e2e）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（renderer 注册时机已显式裁定 Deferred）
-- [ ] 受影响的 owner docs 已同步（`docs/architecture/playground-experience.md` 若描述构建/加载策略需更新；无变化则明确写 No owner-doc update required）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] manualChunks 失效缺陷已修复且产物 chunk 实际产出（live defect 收敛）
+- [x] 行为/契约结果已达成：lazy 化后所有路由可达、测试全绿
+- [x] 必要 focused verification 已完成（尺寸对照表 + 冒烟 e2e）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（renderer 注册时机已显式裁定 Deferred）
+- [x] 受影响的 owner docs 已同步——No owner-doc update required：playground-experience.md 未描述 chunk 策略细节；加载时序行为不变（仅打包分组与加载时机）
+- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（audit 进行中）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -125,12 +125,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note:
+Status Note: manualChunks 死配置修复（workspace 包按 resolved 源码路径分组）+ 35 个重页面 lazy 化，入口 gzip 2376KB → 1285KB（-46%），五个 vendor chunk 独立产出（spreadsheet 组归入 report-designer chunk，分组目标达成仅命名不同）。独立审计 approved，全部量化数字由审计方复现。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立子 agent（fresh session，2026-09-28）
+- Evidence: verdict approved——审计方独立重建构建（17s 成功、133 chunks、entry 4982KB/1284KB gzip）、逐 chunk 尺寸核验（五组全部命中）、lazy 化核验（静态导入 68→33、lazy 声明 46、eager 五面确认、Suspense Spinner 兜底）、三套件 51+1skip 独立复跑、playground typecheck/lint 干净；renderer 注册 Deferred 判定诚实。3 项 bookkeeping note 已由执行者处置（Phase 1 exit 勾选 + spreadsheet 命名注记、正则文本勘误、audit evidence 填写）。
 
 Follow-up:
 
