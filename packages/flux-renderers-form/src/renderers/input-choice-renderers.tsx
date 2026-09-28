@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   booleanMappingAdapter,
@@ -106,10 +106,14 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   });
   const dictState = useDictOptions(dictName);
   const hasDict = !!dictName;
-  const rawOptions = hasDict
-    ? dictState.options
-    : sanitizeChoiceOptions(props.props.options);
-  const groups = sanitizeChoiceGroups(props.props.groups);
+  // Sanitize is memoized on the source option identities: re-wrapping every
+  // option object per render (and per search keystroke) used to cost O(options)
+  // allocations each time (perf P8).
+  const rawOptions = useMemo(
+    () => (hasDict ? dictState.options : sanitizeChoiceOptions(props.props.options)),
+    [hasDict, dictState.options, props.props.options],
+  );
+  const groups = useMemo(() => sanitizeChoiceGroups(props.props.groups), [props.props.groups]);
   const useGroups = groups.length > 0 && !hasDict;
   const allOptions = useGroups ? groups.flatMap((group) => group.options) : rawOptions;
 
@@ -544,7 +548,10 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
   const { value, handlers, presentation } = useFormFieldFromProps(props, {
     adapter: choiceSingleAdapter,
   });
-  const options = sanitizeChoiceOptions(props.props.options);
+  const options = useMemo(
+    () => sanitizeChoiceOptions(props.props.options),
+    [props.props.options],
+  );
   const horizontal = props.props.direction === 'horizontal';
   const mobileStack = shouldStackChoicesVertically(isMobile, options.length);
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;

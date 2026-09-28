@@ -499,6 +499,13 @@ export function PerformanceTablePage({
               </Button>
               <Button
                 type="button"
+                variant={mode === 'virtualized' ? 'default' : 'outline'}
+                onClick={() => startTransition(() => setMode('virtualized'))}
+              >
+                Virtualized
+              </Button>
+              <Button
+                type="button"
                 variant={mode === 'scope-read-stress' ? 'default' : 'outline'}
                 onClick={() => startTransition(() => setMode('scope-read-stress'))}
               >

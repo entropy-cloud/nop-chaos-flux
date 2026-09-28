@@ -13,13 +13,28 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Highlight regex cache keyed by the active query: the static (non-virtual)
+// list used to compile a fresh RegExp per option per keystroke.
+const highlightRegexCache = new Map<string, RegExp>();
+
+function getHighlightRegex(query: string): RegExp {
+  let regex = highlightRegexCache.get(query);
+  if (!regex) {
+    regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+    if (highlightRegexCache.size > 64) {
+      highlightRegexCache.clear();
+    }
+    highlightRegexCache.set(query, regex);
+  }
+  return regex;
+}
+
 function highlightText(text: string, query: string): ReactNode {
   if (!query) {
     return text;
   }
 
-  const escapedQuery = escapeRegex(query);
-  const parts = text.split(new RegExp(`(${escapedQuery})`, 'gi'));
+  const parts = text.split(getHighlightRegex(query));
 
   return parts.map((part) =>
     part.toLowerCase() === query.toLowerCase() ? (

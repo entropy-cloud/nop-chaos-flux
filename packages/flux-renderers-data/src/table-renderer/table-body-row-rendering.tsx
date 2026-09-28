@@ -24,9 +24,8 @@ import { isDevRuntime } from './use-table-tree.js';
 import { asReactNode, indentStyle, CellContentWithPopOver } from './table-cell-chrome.js';
 import { type FlattenedRow } from './table-flattened-items.js';
 import {
-  RowQuickEditDraftContext,
+  RowQuickEditDraftProvider,
   RowQuickEditSaveBar,
-  useRowQuickEditDraft,
 } from './use-row-quick-edit-draft.js';
 
 export type { FlattenedItem, FlattenedRow, FlattenedExpandedRow } from './table-flattened-items.js';
@@ -160,13 +159,6 @@ export function DataRowView({
         : t('flux.common.saveFailed'),
     );
   };
-  const rowDraft = useRowQuickEditDraft({
-    record: entry.record,
-    rowScope,
-    helpers,
-    saveAction: schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction,
-    onSaveError: notifySaveError,
-  });
 
   // P1-1: per-cell className expression (raw, no `${}`) + vertical alignment.
   // Both are evaluated per row against the row scope; a failing classNameExpr
@@ -606,18 +598,27 @@ export function DataRowView({
           data-column-width-key="__row_save_bar__"
           className="w-32 whitespace-nowrap"
         >
-          <RowQuickEditSaveBar rowDraft={rowDraft} />
+          <RowQuickEditSaveBar />
         </TableCell>
       ) : null}
     </TableRow>
   );
 
   if (rowDraftEnabled) {
-    return (
-      <RowQuickEditDraftContext.Provider value={rowDraft}>
-        {rowContent}
-      </RowQuickEditDraftContext.Provider>
-    );
+    const saveAction = schemaProps.quickSaveItemAction ?? schemaProps.quickSaveAction;
+    if (saveAction) {
+      return (
+        <RowQuickEditDraftProvider
+          record={entry.record}
+          rowScope={rowScope}
+          helpers={helpers}
+          saveAction={saveAction}
+          onSaveError={notifySaveError}
+        >
+          {rowContent}
+        </RowQuickEditDraftProvider>
+      );
+    }
   }
 
   return rowContent;

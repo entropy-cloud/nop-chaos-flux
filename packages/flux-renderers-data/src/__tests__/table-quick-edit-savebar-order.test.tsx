@@ -53,3 +53,10 @@ describe('RowQuickEditSaveBar button order (G3-视角2-02, plan 486 Phase 2 proo
     expect(container.querySelectorAll('button')).toHaveLength(0);
   });
 });
+
+describe('RowQuickEditSaveBar without provider context (perf P7 gate)', () => {
+  it('renders nothing when no rowDraft prop and no provider context exist', () => {
+    const { container } = render(<RowQuickEditSaveBar />);
+    expect(container.firstChild).toBeNull();
+  });
+});

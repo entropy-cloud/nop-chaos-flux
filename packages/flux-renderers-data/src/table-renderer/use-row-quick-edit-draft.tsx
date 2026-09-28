@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeChange, ScopeRef, ScopeStore } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Spinner } from '@nop-chaos/ui';
@@ -244,11 +244,45 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
   };
 }
 
-export interface RowQuickEditSaveBarProps {
-  rowDraft: RowQuickEditDraftApi;
+export interface RowQuickEditDraftProviderProps {
+  record: Record<string, unknown>;
+  rowScope: ScopeRef;
+  helpers: RendererComponentProps<TableSchema>['helpers'];
+  saveAction: ActionSchema;
+  onSaveError?: (error: unknown) => void;
+  children: ReactNode;
 }
 
-export function RowQuickEditSaveBar({ rowDraft }: RowQuickEditSaveBarProps) {
+// Mounts the row-draft machinery (hook + context) only for rows whose table
+// actually enables quick-save. Conditional component mounting keeps hook order
+// stable for tables without the feature — they pay zero draft overhead per row
+// (perf P7 gate: react-compiler forbids conditional hook calls).
+export function RowQuickEditDraftProvider(props: RowQuickEditDraftProviderProps) {
+  const rowDraft = useRowQuickEditDraft({
+    record: props.record,
+    rowScope: props.rowScope,
+    helpers: props.helpers,
+    saveAction: props.saveAction,
+    onSaveError: props.onSaveError,
+  });
+  return (
+    <RowQuickEditDraftContext.Provider value={rowDraft}>
+      {props.children}
+    </RowQuickEditDraftContext.Provider>
+  );
+}
+
+export interface RowQuickEditSaveBarProps {
+  /** Omit when rendered inside a RowQuickEditDraftProvider — the context value is used. */
+  rowDraft?: RowQuickEditDraftApi;
+}
+
+export function RowQuickEditSaveBar(props: RowQuickEditSaveBarProps) {
+  const contextDraft = useRowQuickEditDraftContext();
+  const rowDraft = props.rowDraft ?? contextDraft;
+  if (!rowDraft) {
+    return null;
+  }
   if (!rowDraft.isRowDirty && !rowDraft.saving) return null;
 
   return (

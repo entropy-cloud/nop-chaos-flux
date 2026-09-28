@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
   resolveRendererSlotContent,
@@ -310,27 +310,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     [selectAllMode, processedData],
   );
 
-  const rowDragSortApi = useRowDragSort({
-    enabled: dragSortActive,
-    orderField: schemaProps.orderField,
-    statePath: schemaProps.orderStatePath,
-    ownership: schemaProps.orderOwnership ?? 'local',
-    rows: processedData,
-  });
-
-  // When drag-sort is active under local ownership, apply the reordered rows to the
-  // rendered body (and the row-scope cache) so the new order is visible and persists
-  // across re-renders instead of resetting on the next render (P0-1).
-  const displayData = rowDragSortApi ? rowDragSortApi.orderedRows : processedData;
-
-  const rowScopeCache = useTableRowScopeCache(displayData, ownerKey, helpers, props.path);
-
   // Late-bound accessor so `checkableWhen` (inside useTableSelection, which runs
-  // earlier in hook order) can evaluate against the persistent row scopes. Reads
-  // through a ref: rows missing from the cache (first render / fresh rows) take
-  // the selection hook's create-evaluate-dispose fallback.
-  const resolveRowScopeRef = useRef<((cacheKey: string) => ReturnType<typeof rowScopeCache.get>) | undefined>(undefined);
-  resolveRowScopeRef.current = (cacheKey) => rowScopeCache.get(cacheKey);
+  // earlier in hook order than useTableRowScopeCache) can evaluate against the
+  // persistent row scopes from the PREVIOUS commit; rows not yet in the cache
+  // (first render / fresh rows) take the selection hook's fallback path.
+  const resolveRowScopeRef = useRef<((cacheKey: string) => ScopeRef | undefined) | undefined>(undefined);
   const resolveRowScope = useCallback(
     (cacheKey: string) => resolveRowScopeRef.current?.(cacheKey),
     [],
@@ -420,13 +404,22 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   }, [columnResizeEnabled, leafBodyColumns, mainColumns, nestedHeadersActive, resizeApi.widths]);
 
   const measureRootRef = useRef<HTMLDivElement | null>(null);
-  const measuredWidths = useTableColumnWidths(measureRootRef, [
-    mainColumns,
-    showExpandColumn,
-    Boolean(schemaProps.rowSelection),
-    resizeApi.widths,
-    visibleColumns,
-  ]);
+  // The digest array used to be constructed inline, so the stringify memo inside
+  // useTableColumnWidths never hit and the full column schemas were deep-
+  // serialized on every render (perf P6). Memoizing the digest on its members
+  // keeps the remeasure trigger surface identical while skipping the stringify
+  // on unrelated renders.
+  const measureDigest = useMemo(
+    () => [
+      mainColumns,
+      showExpandColumn,
+      Boolean(schemaProps.rowSelection),
+      resizeApi.widths,
+      visibleColumns,
+    ],
+    [mainColumns, showExpandColumn, schemaProps.rowSelection, resizeApi.widths, visibleColumns],
+  );
+  const measuredWidths = useTableColumnWidths(measureRootRef, measureDigest);
   const fixedColumnLayout = useMemo(
     () =>
       createFixedColumnLayout(
@@ -472,6 +465,22 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     }
     return entries;
   }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, dragSortActive, showExpandColumn, rowDraftColumnEnabled]);
+
+  const rowDragSortApi = useRowDragSort({
+    enabled: dragSortActive,
+    orderField: schemaProps.orderField,
+    statePath: schemaProps.orderStatePath,
+    ownership: schemaProps.orderOwnership ?? 'local',
+    rows: processedData,
+  });
+
+  // When drag-sort is active under local ownership, apply the reordered rows to the
+  // rendered body (and the row-scope cache) so the new order is visible and persists
+  // across re-renders instead of resetting on the next render (P0-1).
+  const displayData = rowDragSortApi ? rowDragSortApi.orderedRows : processedData;
+
+  const rowScopeCache = useTableRowScopeCache(displayData, ownerKey, helpers, props.path);
+  resolveRowScopeRef.current = (cacheKey) => rowScopeCache.get(cacheKey);
 
   useTableHandle(
     props,

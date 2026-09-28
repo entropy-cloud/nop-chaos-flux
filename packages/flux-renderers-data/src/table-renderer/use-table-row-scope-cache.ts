@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { TableSchema } from '../schemas.js';
 import type { TableRowEntry } from './types.js';
@@ -74,13 +74,6 @@ function bumpCacheVersion(cacheKey: string) {
   notifyListeners(cacheKey);
 }
 
-function createRowScopeCacheSnapshot(
-  rowScopeCache: Map<string, ScopeRef>,
-  _structureVersion: number,
-): Map<string, ScopeRef> {
-  return new Map(rowScopeCache);
-}
-
 function disposeRowScope(disposeScope: (scopeId: string) => void, scope: ScopeRef | undefined) {
   if (!scope) {
     return;
@@ -144,6 +137,8 @@ export function useTableRowScopeCache(
   >(undefined);
   const processedCacheKeyRef = useRef(cacheKey);
 
+  // Version drives the snapshot identity below: subscribing here means a bump
+  // (membership change) re-renders this component and reissues the snapshot.
   const structureVersion = useSyncExternalStore(
     (listener) => subscribeToCache(cacheKey, listener),
     () => getCacheVersion(cacheKey),
@@ -258,5 +253,14 @@ export function useTableRowScopeCache(
     }
   }, [cacheKey, cacheState, ownerKey, path, processedData, rowScopeCache, rowScopeSnapshots]);
 
-  return createRowScopeCacheSnapshot(rowScopeCache, structureVersion);
+  // Snapshot identity is gated on the structure version: the version counter is
+  // bumped exactly when the scope Map's membership changes (scope created /
+  // disposed / bulk-cleared), so the memo holds while membership is unchanged.
+  // Rebuilding unconditionally used to hand consumers a fresh Map identity every
+  // render and defeated their flattened-items memos (perf P3).
+  const snapshot = useMemo(
+    () => ({ cacheKey, version: structureVersion, map: new Map(rowScopeCache) }),
+    [rowScopeCache, cacheKey, structureVersion],
+  );
+  return snapshot.map;
 }

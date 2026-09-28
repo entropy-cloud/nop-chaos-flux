@@ -193,24 +193,26 @@ export function resolveChoiceComboboxValue(input: {
   const { allOptions, value, multiple, noMatchText } = input;
   const valueArray = Array.isArray(value) ? (value as unknown[]) : [];
   const hasEchoValue = value !== undefined && value !== null && value !== '';
-  return multiple
-    ? [
-        ...allOptions.filter((option) =>
-          valueArray.some((candidate) => Object.is(candidate, option.value)),
-        ),
-        ...valueArray
-          .filter(
-            (candidate) => !allOptions.some((option) => Object.is(option.value, candidate)),
-          )
-          .map((primitive) => ({
-            label: String(primitive),
-            value: primitive as ChoiceOption['value'],
-          })),
-      ]
-    : (allOptions.find((option) => Object.is(option.value, value)) ??
-        (hasEchoValue
-          ? { label: noMatchText ?? String(value), value: value as ChoiceOption['value'] }
-          : null));
+  if (multiple) {
+    // O(n+m) membership indexes instead of filter×some over options × values —
+    // large option sets with many selected values used to go quadratic per render.
+    // Selection set uses SameValueZero (Object.is semantics modulo ±0, which is
+    // not a distinguishing value for choice options).
+    const selectedValues = new Set<unknown>(valueArray);
+    const optionByValue = new Map<unknown, ChoiceOption>(allOptions.map((option) => [option.value, option]));
+    const matched = allOptions.filter((option) => selectedValues.has(option.value));
+    for (const candidate of valueArray) {
+      if (!optionByValue.has(candidate)) {
+        matched.push({ label: String(candidate), value: candidate as ChoiceOption['value'] });
+      }
+    }
+    return matched;
+  }
+  return (
+    allOptions.find((option) => Object.is(option.value, value)) ??
+    (hasEchoValue
+      ? { label: noMatchText ?? String(value), value: value as ChoiceOption['value'] }
+      : null));
 }
 
 export function resolveChoiceMobileTriggerText(input: {
@@ -222,14 +224,14 @@ export function resolveChoiceMobileTriggerText(input: {
   const { allOptions, value, multiple, noMatchText } = input;
   const valueArray = Array.isArray(value) ? (value as unknown[]) : [];
   const hasEchoValue = value !== undefined && value !== null && value !== '';
-  return multiple
-    ? valueArray
-        .map(
-          (candidate) =>
-            allOptions.find((option) => Object.is(option.value, candidate))?.label ??
-            String(candidate),
-        )
-        .join(', ')
-    : (allOptions.find((option) => Object.is(option.value, value))?.label ??
-        (hasEchoValue ? noMatchText ?? String(value) : ''));
+  if (multiple) {
+    // O(n+m): one option lookup index instead of a find per selected value.
+    const optionByValue = new Map<unknown, ChoiceOption>(allOptions.map((option) => [option.value, option]));
+    return valueArray
+      .map((candidate) => optionByValue.get(candidate)?.label ?? String(candidate))
+      .join(', ');
+  }
+  return (
+    allOptions.find((option) => Object.is(option.value, value))?.label ??
+    (hasEchoValue ? noMatchText ?? String(value) : ''));
 }

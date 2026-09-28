@@ -154,3 +154,30 @@ describe('PerformanceTablePage', () => {
     }, { timeout: 30000 });
   }, 35000);
 });
+
+describe('PerformanceTablePage virtualized mode (perf P15 harness)', () => {
+  it('mounts the virtualized scenario page and scope data', async () => {
+    render(<PerformanceTablePage onBack={() => undefined} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Virtualized' }));
+
+    expect(await screen.findByText(/virtualized table body/i)).toBeTruthy();
+    await waitFor(() => {
+      expect(document.querySelector('table')).toBeTruthy();
+      expect((document.body.innerText.match(/Total: 1000 rows/) ?? [])[0]).toBe('Total: 1000 rows');
+    }, { timeout: 30000 });
+  }, 35000);
+
+  // Confirmed live defect (successor plan 2026-09-28-7): with pagination
+  // disabled + virtualThreshold the VirtualBody emits zero <tr> elements in a
+  // real (compiled) browser; happy-dom renders the flattened items but cannot
+  // layout-measure. Row emission is fixed in the successor plan — this test
+  // documents the current state so the fix turns it green.
+  it.skip('emits virtualized rows for the unpaginated 1000-row dataset [blocked: successor plan 2026-09-28-7]', async () => {
+    render(<PerformanceTablePage onBack={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Virtualized' }));
+    await waitFor(() => {
+      expect(document.querySelectorAll('tbody tr[data-slot="table-row"]').length).toBeGreaterThan(0);
+    }, { timeout: 30000 });
+  }, 35000);
+});

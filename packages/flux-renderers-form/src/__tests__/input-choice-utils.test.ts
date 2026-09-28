@@ -276,3 +276,41 @@ describe('input-choice-utils pure functions (14-3)', () => {
     });
   });
 });
+
+describe('resolveChoiceComboboxValue multiple — indexed matching (perf P4)', () => {
+  const OPTIONS = [
+    { label: 'Alpha', value: 'a' },
+    { label: 'Beta', value: 'b' },
+    { label: 'Gamma', value: 'c' },
+    { label: 'Beta clone', value: 'b' },
+  ];
+
+  it('appends echo entries for values with no matching option, in value order', () => {
+    const result = resolveChoiceComboboxValue({
+      allOptions: OPTIONS,
+      value: ['c', 'ghost-1', 'a', 'ghost-2'],
+      multiple: true,
+    }) as Array<{ label: string; value: unknown }>;
+    // matched options first (in OPTION order), then unmatched values (value order)
+    expect(result.map((entry) => entry.value)).toEqual(['a', 'c', 'ghost-1', 'ghost-2']);
+    expect(result.map((entry) => entry.label)).toEqual(['Alpha', 'Gamma', 'ghost-1', 'ghost-2']);
+  });
+
+  it('keeps every duplicate-valued option that is selected', () => {
+    const result = resolveChoiceComboboxValue({
+      allOptions: OPTIONS,
+      value: ['b'],
+      multiple: true,
+    }) as Array<{ label: string; value: unknown }>;
+    expect(result.map((entry) => entry.label).sort()).toEqual(['Beta', 'Beta clone']);
+  });
+
+  it('resolves mobile trigger text via one lookup pass with unknown fallbacks', () => {
+    const text = resolveChoiceMobileTriggerText({
+      allOptions: OPTIONS,
+      value: ['a', 'missing'],
+      multiple: true,
+    });
+    expect(text).toBe('Alpha, missing');
+  });
+});

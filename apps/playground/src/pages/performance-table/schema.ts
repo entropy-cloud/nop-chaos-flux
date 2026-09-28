@@ -483,7 +483,8 @@ export function createPerformanceSchema(
       ...(virtualized
         ? {
             virtualThreshold: 50,
-            autoFillHeight: { maxHeight: 640 },
+            scrollHeight: 640,
+            pagination: { enabled: false },
           }
         : {
             paginationOwnership: 'scope',

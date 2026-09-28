@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { InstanceFrame, RendererComponentProps } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
@@ -450,7 +450,9 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   const repeatedTemplateId = createTreeNodeRepeatedTemplateId(props.id);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const firstRootNodeId = data[0] ? createTreeNodeId(undefined, toNodeKey(data[0], keyField, 0)) : undefined;
-  const knownNodeIds = collectTreeNodeIds(data, childrenKey, keyField);
+  // O(tree) walks cached on the data identity (data is already memoized upstream)
+  // instead of re-walking on every render (perf P10).
+  const knownNodeIds = useMemo(() => collectTreeNodeIds(data, childrenKey, keyField), [data, childrenKey, keyField]);
   const [activeNodeId, setActiveNodeId] = useState<string | undefined>(() => {
     return firstRootNodeId;
   });
@@ -458,7 +460,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
   // schema advertises via aria-multiselectable. Internal (DOM-observable via
   // aria-selected/data-selected); single mode leaves it disengaged.
   const [selectedNodeKeys, setSelectedNodeKeys] = useState<ReadonlySet<string>>(() => new Set());
-  const toggleNodeSelected = (nodeKey: string) => {
+  const toggleNodeSelected = useCallback((nodeKey: string) => {
     setSelectedNodeKeys((prev) => {
       const next = new Set(prev);
       if (next.has(nodeKey)) {
@@ -468,7 +470,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
       }
       return next;
     });
-  };
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const searchState = searchable
     ? computeTreeSearch(data, searchQuery, childrenKey, labelField, keyField)
@@ -499,7 +501,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
     targetItem?.focus({ preventScroll: true });
   }, [activeNodeId, knownNodeIds, resolvedActiveNodeId]);
 
-  const focusNode = (nodeId: string) => {
+  const focusNode = useCallback((nodeId: string) => {
     const visibleTreeItems = getVisibleTreeItems(rootRef.current);
     const nextTreeItem = visibleTreeItems.find((item) => getTreeItemNodeId(item) === nodeId);
 
@@ -509,9 +511,9 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
 
     setActiveNodeId(nodeId);
     nextTreeItem.focus();
-  };
+  }, []);
 
-  const moveFocus = (nodeId: string, key: TreeNavigationKey) => {
+  const moveFocus = useCallback((nodeId: string, key: TreeNavigationKey) => {
     const visibleTreeItems = getVisibleTreeItems(rootRef.current);
     if (visibleTreeItems.length === 0) {
       return;
@@ -535,9 +537,9 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
     if (nextNodeId) {
       focusNode(nextNodeId);
     }
-  };
+  }, [focusNode]);
 
-  const focusFirstChild = (nodeId: string, depth: number) => {
+  const focusFirstChild = useCallback((nodeId: string, depth: number) => {
     const visibleTreeItems = getVisibleTreeItems(rootRef.current);
     const currentIndex = visibleTreeItems.findIndex((item) => getTreeItemNodeId(item) === nodeId);
     if (currentIndex === -1) {
@@ -553,9 +555,9 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
     if (nextNodeId) {
       focusNode(nextNodeId);
     }
-  };
+  }, [focusNode]);
 
-  const focusParent = (nodeId: string, depth: number) => {
+  const focusParent = useCallback((nodeId: string, depth: number) => {
     const visibleTreeItems = getVisibleTreeItems(rootRef.current);
     const currentIndex = visibleTreeItems.findIndex((item) => getTreeItemNodeId(item) === nodeId);
     if (currentIndex === -1) {
@@ -574,7 +576,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
       }
       return;
     }
-  };
+  }, [focusNode]);
 
   useStatusPathPublication(props.node.scope.parent ?? props.node.scope, statusPath, {
     kind: 'tree',

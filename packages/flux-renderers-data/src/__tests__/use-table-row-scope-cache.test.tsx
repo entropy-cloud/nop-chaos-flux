@@ -284,7 +284,10 @@ describe('useTableRowScopeCache', () => {
     );
 
     await waitFor(() => expect(cacheRefs.length).toBeGreaterThan(1));
-    expect(cacheRefs.at(-1)).not.toBe(populatedCacheRef);
+    // Payload-only change (no membership change): the snapshot Map identity is
+    // now version-gated (perf P3) so consumer memos survive; the row scope
+    // instance itself must stay stable either way.
+    expect(cacheRefs.at(-1)).toBe(populatedCacheRef);
     expect(cacheRefs.at(-1)?.get('r1')).toBe(populatedScope);
   });
 
@@ -347,5 +350,82 @@ describe('useTableRowScopeCache', () => {
     unmount();
     await waitFor(() => expect(disposeScope).toHaveBeenCalledTimes(2));
     expect(disposeScope.mock.calls[1]?.[0]).toContain('r1');
+  });
+});
+
+describe('useTableRowScopeCache snapshot identity (perf P3)', () => {
+  it('keeps the snapshot identity stable across unrelated re-renders', async () => {
+    const identities = new Set<Map<string, ScopeRef>>();
+    let cache: Map<string, ScopeRef> | undefined;
+    const { rerender } = render(
+      <HookHarness
+        processedData={[{ rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice' } }]}
+        ownerKey="table-snap"
+        path="$page.table"
+        onCache={(value) => {
+          cache = value;
+        }}
+      />,
+    );
+    await waitFor(() => expect(cache?.size).toBe(1));
+    identities.add(cache!);
+
+    // Unrelated re-render with identical data: the returned Map identity must
+    // not churn, or every consumer memo keyed on it rebuilds per render.
+    rerender(
+      <HookHarness
+        processedData={[{ rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice' } }]}
+        ownerKey="table-snap"
+        path="$page.table"
+        onCache={(value) => {
+          cache = value;
+        }}
+      />,
+    );
+    rerender(
+      <HookHarness
+        processedData={[{ rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice' } }]}
+        ownerKey="table-snap"
+        path="$page.table"
+        onCache={(value) => {
+          cache = value;
+        }}
+      />,
+    );
+    expect(identities.size).toBe(1);
+  });
+
+  it('reissues the snapshot with correct membership when the row set changes', async () => {
+    let cache: Map<string, ScopeRef> | undefined;
+    const { rerender } = render(
+      <HookHarness
+        processedData={[{ rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice' } }]}
+        ownerKey="table-snap2"
+        path="$page.table"
+        onCache={(value) => {
+          cache = value;
+        }}
+      />,
+    );
+    await waitFor(() => expect(cache?.size).toBe(1));
+    const firstSnapshot = cache;
+
+    rerender(
+      <HookHarness
+        processedData={[
+          { rowKey: 'r1', sourceIndex: 0, record: { name: 'Alice updated' } },
+          { rowKey: 'r2', sourceIndex: 1, record: { name: 'Bob' } },
+        ]}
+        ownerKey="table-snap2"
+        path="$page.table"
+        onCache={(value) => {
+          cache = value;
+        }}
+      />,
+    );
+    await waitFor(() => expect(cache?.get('r2')).toBeTruthy());
+    // Structural change must produce a NEW snapshot containing both rows.
+    expect(cache).not.toBe(firstSnapshot);
+    expect(cache!.get('r1')).toBe(firstSnapshot!.get('r1'));
   });
 });

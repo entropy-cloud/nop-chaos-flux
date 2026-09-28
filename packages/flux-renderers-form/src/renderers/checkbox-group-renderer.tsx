@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle, type SourceTransientState } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -68,8 +68,10 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
   const capHint = maxReached ? t('flux.form.checkboxMaxSelected', { max: maxSelected }) : null;
   const activeLimitHint = limitHint ?? capHint;
 
-  const isSelected = (option: ChoiceOption) =>
-    selectedValues.some((candidate: unknown) => Object.is(candidate, option.value));
+  // O(1) per-option membership instead of selectedValues.some per option
+  // (select-all state used to be O(options × selected) per render).
+  const selectedValueSet = useMemo(() => new Set(selectedValues), [selectedValues]);
+  const isSelected = (option: ChoiceOption) => selectedValueSet.has(option.value);
 
   function commit(nextValue: unknown[]) {
     handlers.onChange(nextValue);

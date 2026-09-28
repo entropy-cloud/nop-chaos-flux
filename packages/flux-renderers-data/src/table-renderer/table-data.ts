@@ -76,7 +76,24 @@ function compareValues(aVal: unknown, bVal: unknown): number {
   if (aVal === bVal) return 0;
   if (aVal == null) return 1;
   if (bVal == null) return -1;
+  // Numeric fast path: relational comparison matches numeric collation for
+  // numbers and avoids the per-comparison String/localeCompare cost.
+  if (typeof aVal === 'number' && typeof bVal === 'number') return aVal - bVal;
   return String(aVal).localeCompare(String(bVal), undefined, { numeric: true });
+}
+
+function compareKeyTuples(
+  aKeys: unknown[],
+  bKeys: unknown[],
+  sortEntries: SortEntry[],
+): number {
+  for (let index = 0; index < sortEntries.length; index += 1) {
+    const comparison = compareValues(aKeys[index], bKeys[index]);
+    if (comparison !== 0) {
+      return sortEntries[index].direction === 'asc' ? comparison : -comparison;
+    }
+  }
+  return 0;
 }
 
 function toSortEntries(sortState: SortState | MultiSortState | undefined): SortEntry[] {
@@ -104,30 +121,34 @@ export function processTableData(
 
   const sortEntries = toSortEntries(sortState);
   if (sortEntries.length > 0) {
-    data.sort((a, b) => {
-      for (const entry of sortEntries) {
-        const comparison = compareValues(getIn(a.record, entry.column), getIn(b.record, entry.column));
-        if (comparison !== 0) {
-          return entry.direction === 'asc' ? comparison : -comparison;
-        }
-      }
-      return 0;
-    });
+    // decorate-sort-undecorate: path resolution (getIn) runs once per row per
+    // sort column instead of 2×O(n log n) times inside the comparator.
+    const decorated = data.map((row) => ({
+      row,
+      keys: sortEntries.map((entry) => getIn(row.record, entry.column)),
+    }));
+    decorated.sort((a, b) => compareKeyTuples(a.keys, b.keys, sortEntries));
+    data = decorated.map((decorated_) => decorated_.row);
   }
 
+  // Single pass per active filter column: value-set membership and keyword
+  // containment are evaluated together instead of two array scans.
   Object.entries(filterState).forEach(([columnName, values]) => {
-    if (values.values.size > 0) {
-      data = data.filter((row) => values.values.has(String(getIn(row.record, columnName) ?? '')));
+    const hasValueFilter = values.values.size > 0;
+    const keyword = values.keyword && values.keyword.trim().length > 0 ? values.keyword.trim().toLowerCase() : undefined;
+    if (!hasValueFilter && !keyword) {
+      return;
     }
-
-    if (values.keyword && values.keyword.trim().length > 0) {
-      const needle = values.keyword.trim().toLowerCase();
-      data = data.filter((row) =>
-        String(getIn(row.record, columnName) ?? '')
-          .toLowerCase()
-          .includes(needle),
-      );
-    }
+    data = data.filter((row) => {
+      const cell = String(getIn(row.record, columnName) ?? '');
+      if (hasValueFilter && !values.values.has(cell)) {
+        return false;
+      }
+      if (keyword && !cell.toLowerCase().includes(keyword)) {
+        return false;
+      }
+      return true;
+    });
   });
 
   return data;

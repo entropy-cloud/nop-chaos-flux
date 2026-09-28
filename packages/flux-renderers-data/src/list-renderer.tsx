@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   ComponentHandleRegistry,
   InstanceFrame,
@@ -74,6 +74,40 @@ function createListRepeatedTemplateId(ownerId: string): string {
   return `list-item:${ownerId}`;
 }
 
+// Uncompiled-host locality (H10 precedent in table-data-row-render): without
+// this memo a selection click re-rendered every mounted item. instancePath is
+// deliberately excluded — it is derived from (parentInstancePath, itemKey), and
+// itemKey is compared directly.
+const ListItemView = React.memo(ListItemViewBase, (prev, next) =>
+  prev.item === next.item &&
+  prev.index === next.index &&
+  prev.itemKey === next.itemKey &&
+  prev.selectionMode === next.selectionMode &&
+  prev.selected === next.selected &&
+  prev.isLast === next.isLast &&
+  prev.isMobile === next.isMobile &&
+  prev.onSelect === next.onSelect &&
+  prev.owner.helpers === next.owner.helpers &&
+  prev.owner.regions === next.owner.regions &&
+  prev.optionRow === next.optionRow ||
+  (
+    prev.item === next.item &&
+    prev.index === next.index &&
+    prev.itemKey === next.itemKey &&
+    prev.selectionMode === next.selectionMode &&
+    prev.selected === next.selected &&
+    prev.isLast === next.isLast &&
+    prev.isMobile === next.isMobile &&
+    prev.onSelect === next.onSelect &&
+    prev.owner.helpers === next.owner.helpers &&
+    prev.owner.regions === next.owner.regions &&
+    prev.optionRow !== undefined &&
+    next.optionRow !== undefined &&
+    prev.optionRow.selected === next.optionRow.selected &&
+    prev.optionRow.disabled === next.optionRow.disabled &&
+    prev.optionRow.selectedClass === next.optionRow.selectedClass
+  ));
+
 interface ListItemViewProps {
   owner: ListOwner;
   item: unknown;
@@ -89,7 +123,7 @@ interface ListItemViewProps {
   optionRow?: ListItemOptionRowState;
 }
 
-function ListItemView(props: ListItemViewProps) {
+function ListItemViewBase(props: ListItemViewProps) {
   const { owner, item, index, itemKey, instancePath, selectionMode, selected, onSelect, isLast, isMobile, optionRow } = props;
   const helpers = owner.helpers;
   const [itemScope] = useState<ScopeRef>(() => helpers.createScope({ item, index }));
@@ -425,7 +459,10 @@ export function ListRenderer(props: ListOwner) {
     pagination,
   });
 
-  const handleSelect = (key: string) => {
+  // Stable identity so the memoized ListItemView comparator (below) can skip
+  // unchanged items. The latest-ref pattern keeps the callback identity stable
+  // while the implementation closure always sees current selection state.
+  const handleSelectImpl = (key: string) => {
     if (selectionMode === 'none') {
       return;
     }
@@ -460,6 +497,11 @@ export function ListRenderer(props: ListOwner) {
       scope: props.node.scope,
     });
   };
+  const handleSelectImplRef = useRef(handleSelectImpl);
+  useEffect(() => {
+    handleSelectImplRef.current = handleSelectImpl;
+  });
+  const handleSelect = useCallback((key: string) => handleSelectImplRef.current(key), []);
 
   if (items.length === 0) {
     return (
