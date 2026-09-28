@@ -29,7 +29,10 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = optionsSourceState?.loading === true;
   const errorMessage = getSourceErrorMessage(optionsSourceState);
-  const errorId = name ? `${name}-source-error` : undefined;
+  // cid-qualified so same-name instances (combo rows) don't collide; the id
+  // and its aria reference derive from the same variable, so they stay paired.
+  const instanceKey = props.meta.cid != null ? `${name}-${props.meta.cid}` : name;
+  const errorId = name ? `${instanceKey}-source-error` : undefined;
   const groupLabel = String((props.props.label ?? name) || '') || undefined;
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 

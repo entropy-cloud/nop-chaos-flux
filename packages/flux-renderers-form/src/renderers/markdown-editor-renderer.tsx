@@ -165,6 +165,11 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
   });
   const source = (value as string | undefined) ?? '';
   const errorId = name ? `${name}-error` : undefined;
+  // FieldFrame injects the instance-unique error reference chain (its error
+  // element id is cid-suffixed, not `${name}-error`); local id is the bare
+  // harness fallback.
+  const injected = props as unknown as { 'aria-describedby'?: string };
+  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const pendingSelectionRef = useRef<{ start: number; end: number } | null>(null);
@@ -305,7 +310,7 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
               aria-label={String((props.props.label ?? name) || '') || undefined}
               aria-required={props.props.required ? true : undefined}
               aria-invalid={presentation.showError ? true : undefined}
-              aria-describedby={presentation.showError ? errorId : undefined}
+              aria-describedby={describedBy}
               placeholder={
                 props.props.placeholder ? String(props.props.placeholder) : t('markdown.placeholder')
               }

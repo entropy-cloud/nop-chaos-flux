@@ -248,10 +248,15 @@ describe('formRendererDefinitions - validation timing and visibility', () => {
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     const notesTextarea = screen.getByRole('textbox', { name: 'Notes' });
 
-    expect(titleInput.getAttribute('aria-describedby')).toBe('title-error');
-    expect(titleInput.getAttribute('aria-errormessage')).toBe('title-error');
-    expect(notesTextarea.getAttribute('aria-describedby')).toBe('notes-error');
-    expect(notesTextarea.getAttribute('aria-errormessage')).toBe('notes-error');
+    // plan 2026-09-28-4: FieldFrame error ids are instance-unique (cid
+    // suffix); assert the describedby chain resolves to the real error
+    // elements instead of literal ids.
+    const titleError = screen.getByText('Title is required');
+    const notesError = screen.getByText('Notes is required');
+    expect(titleInput.getAttribute('aria-describedby')).toBe(titleError.id);
+    expect(titleInput.getAttribute('aria-errormessage')).toBe(titleError.id);
+    expect(notesTextarea.getAttribute('aria-describedby')).toBe(notesError.id);
+    expect(notesTextarea.getAttribute('aria-errormessage')).toBe(notesError.id);
   });
 
   it('keeps form semantic markers free of implicit layout classes', () => {

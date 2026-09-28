@@ -90,6 +90,11 @@ export function PeriodRenderer(
 
   const storedValue = typeof value === 'string' ? value : undefined;
   const errorId = name ? `${name}-error` : undefined;
+  // FieldFrame injects the instance-unique error reference chain (its error
+  // element id is cid-suffixed, not `${name}-error`); local id is the bare
+  // harness fallback.
+  const injected = props as unknown as { 'aria-describedby'?: string };
+  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
   const triggerRef = useRef<HTMLElement | null>(null);
 
   const minPeriod = parsePeriod(
@@ -183,7 +188,7 @@ export function PeriodRenderer(
           ariaLabel={ariaLabel}
           interactive={interactive}
           showError={presentation.showError}
-          errorId={errorId}
+          errorId={describedBy}
           attachRef={(node) => {
             triggerRef.current = node;
           }}
@@ -202,7 +207,7 @@ export function PeriodRenderer(
             ariaLabel={ariaLabel ? `${ariaLabel} ${t('flux.date.start')}` : t('flux.date.rangeStart')}
             interactive={interactive}
             showError={presentation.showError}
-            errorId={errorId}
+            errorId={describedBy}
             attachRef={(node) => {
               triggerRef.current = node;
             }}
@@ -222,7 +227,7 @@ export function PeriodRenderer(
             ariaLabel={ariaLabel ? `${ariaLabel} ${t('flux.date.end')}` : t('flux.date.rangeEnd')}
             interactive={interactive}
             showError={presentation.showError}
-            errorId={errorId}
+            errorId={describedBy}
             attachRef={() => {}}
             onFocus={handlers.onFocus}
             onBlur={handlers.onBlur}

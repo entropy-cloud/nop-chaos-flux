@@ -23,16 +23,8 @@ import {
 } from './table-renderer/table-data.js';
 import { useGroupedPageData, useTableGrouping } from './table-renderer/use-table-grouping.js';
 import { TableBodyRows } from './table-renderer/table-body-rows.js';
-import {
-  createFixedColumnLayout,
-  getFixedColumnKey,
-  DRAG_COLUMN_KEY,
-  DRAG_COLUMN_WIDTH,
-  ROW_SAVE_BAR_COLUMN_KEY,
-  ROW_SAVE_BAR_COLUMN_WIDTH,
-} from './table-renderer/fixed-columns.js';
 import { isRowDraftColumnEnabled } from './table-renderer/table-body-row-rendering.js';
-import { useTableColumnWidths } from './table-renderer/column-width-measure.js';
+import { useTableColumnLayout } from './table-renderer/use-table-column-layout.js';
 import { TableHeaderRow } from './table-renderer/table-header-row.js';
 import { TableColumnSettings } from './table-renderer/table-column-settings.js';
 import { TableSummaryRowView } from './table-renderer/table-summary-row.js';
@@ -403,37 +395,6 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     return changed ? next : baseColumns;
   }, [columnResizeEnabled, leafBodyColumns, mainColumns, nestedHeadersActive, resizeApi.widths]);
 
-  const measureRootRef = useRef<HTMLDivElement | null>(null);
-  // The digest array used to be constructed inline, so the stringify memo inside
-  // useTableColumnWidths never hit and the full column schemas were deep-
-  // serialized on every render (perf P6). Memoizing the digest on its members
-  // keeps the remeasure trigger surface identical while skipping the stringify
-  // on unrelated renders.
-  const measureDigest = useMemo(
-    () => [
-      mainColumns,
-      showExpandColumn,
-      Boolean(schemaProps.rowSelection),
-      resizeApi.widths,
-      visibleColumns,
-    ],
-    [mainColumns, showExpandColumn, schemaProps.rowSelection, resizeApi.widths, visibleColumns],
-  );
-  const measuredWidths = useTableColumnWidths(measureRootRef, measureDigest);
-  const fixedColumnLayout = useMemo(
-    () =>
-      createFixedColumnLayout(
-        {
-          rowSelection: tableSchemaProps.rowSelection,
-          draggable: dragSortActive,
-        },
-        mainColumns,
-        showExpandColumn,
-        measuredWidths,
-      ),
-    [mainColumns, tableSchemaProps.rowSelection, dragSortActive, showExpandColumn, measuredWidths],
-  );
-
   // [G3-视角5-01]/[G3-R3-视角8-01] helper body columns must pair header th +
   // colgroup col; derive the flags once and share them with header/count.
   const rowDraftColumnEnabled = useMemo(
@@ -442,29 +403,18 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   );
   const visibleColumnsSet = useMemo(() => new Set(visibleColumns), [visibleColumns]);
 
-  const colgroupEntries = useMemo(() => {
-    const entries: { key: string; width: number | undefined }[] = [];
-    if (dragSortActive) {
-      entries.push({ key: DRAG_COLUMN_KEY, width: measuredWidths.get(DRAG_COLUMN_KEY) ?? DRAG_COLUMN_WIDTH });
-    }
-    if (showExpandColumn) {
-      entries.push({ key: '__expand__', width: measuredWidths.get('__expand__') });
-    }
-    if (schemaProps.rowSelection) {
-      entries.push({ key: '__selection__', width: measuredWidths.get('__selection__') });
-    }
-    effectiveMainColumns.forEach((column, index) => {
-      const key = getFixedColumnKey(column, index);
-      entries.push({ key, width: measuredWidths.get(key) });
-    });
-    if (rowDraftColumnEnabled) {
-      entries.push({
-        key: ROW_SAVE_BAR_COLUMN_KEY,
-        width: measuredWidths.get(ROW_SAVE_BAR_COLUMN_KEY) ?? ROW_SAVE_BAR_COLUMN_WIDTH,
-      });
-    }
-    return entries;
-  }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, dragSortActive, showExpandColumn, rowDraftColumnEnabled]);
+  const measureRootRef = useRef<HTMLDivElement | null>(null);
+  const { fixedColumnLayout, colgroupEntries } = useTableColumnLayout({
+    mainColumns,
+    effectiveMainColumns,
+    visibleColumns,
+    showExpandColumn,
+    dragSortActive,
+    rowSelection: tableSchemaProps.rowSelection,
+    rowDraftColumnEnabled,
+    resizeWidths: resizeApi.widths,
+    measureRootRef,
+  });
 
   const rowDragSortApi = useRowDragSort({
     enabled: dragSortActive,

@@ -132,7 +132,10 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const ariaLabel = String(props.props.label ?? name);
   const loading = hasDict ? dictState.loading : optionsSourceState?.loading === true;
   const errorMessage = dictState.errorMessage ?? getSourceErrorMessage(optionsSourceState);
-  const errorId = errorMessage && name ? `${name}-source-error` : undefined;
+  // cid-qualified so same-name instances (combo rows) don't collide; the id
+  // and its aria reference derive from the same variable, so they stay paired.
+  const instanceKey = props.meta.cid != null ? `${name}-${props.meta.cid}` : name;
+  const errorId = errorMessage && name ? `${instanceKey}-source-error` : undefined;
   const placeholder = props.props.placeholder ? String(props.props.placeholder) : undefined;
   const searchPlaceholder = props.props.searchPlaceholder
     ? String(props.props.searchPlaceholder)
@@ -563,7 +566,10 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
   // Coerce only null/undefined to '' (matches no option unless an option
   // explicitly declares value ''); every other value keeps its native type.
   const selectedValue = (value == null ? '' : value) as ChoiceOption['value'];
-  const errorId = name ? `${name}-source-error` : undefined;
+  // cid-qualified so same-name instances (combo rows) don't collide; the id
+  // and its aria reference derive from the same variable, so they stay paired.
+  const instanceKey = props.meta.cid != null ? `${name}-${props.meta.cid}` : name;
+  const errorId = name ? `${instanceKey}-source-error` : undefined;
   const groupLabel = String((props.props.label ?? name) || '') || undefined;
   const radioRef = useRef<HTMLDivElement | null>(null);
 

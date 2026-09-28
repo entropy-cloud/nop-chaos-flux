@@ -182,6 +182,11 @@ export function UploadFieldRenderer(
   }, []);
 
   const errorId = name ? `${name}-error` : undefined;
+  // FieldFrame injects the instance-unique error reference chain (its error
+  // element id is cid-suffixed, not `${name}-error`); local id is the bare
+  // harness fallback.
+  const injected = props as unknown as { 'aria-describedby'?: string };
+  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
   const interactive = presentation.interactive;
 
   useInputComponentHandle({
@@ -533,7 +538,7 @@ export function UploadFieldRenderer(
         disabled={!interactive}
         aria-label={buttonText}
         aria-invalid={presentation.showError ? true : undefined}
-        aria-describedby={presentation.showError ? errorId : undefined}
+        aria-describedby={describedBy}
         data-testid={`${options.marker}-trigger`}
         onClick={() => inputRef.current?.click()}
       >

@@ -90,6 +90,34 @@ describe('select renderer — responsive (M1a)', () => {
     expect(document.querySelector('[data-slot="select-mobile-option"]')).toBeTruthy();
   });
 
+  it('gives mobile sheet option rows the 44px touch height (min-h-11, plan 2026-09-28-4 U3)', async () => {
+    mobileState.isMobile = true;
+    renderForm([
+      {
+        type: 'select',
+        name: 'role',
+        label: 'Role',
+        options: [
+          { label: 'Admin', value: 'admin' },
+          { label: 'Viewer', value: 'viewer' },
+        ],
+      },
+    ]);
+
+    const trigger = document.querySelector('[data-slot="select-mobile-trigger"]') as HTMLElement;
+    fireEvent.click(trigger);
+
+    const rows = await waitFor(() => {
+      const found = document.querySelectorAll('[data-slot="select-mobile-option"]');
+      expect(found.length).toBeGreaterThan(0);
+      return found;
+    });
+    rows.forEach((row) => {
+      expect((row as HTMLElement).className).toContain('min-h-11');
+      expect((row as HTMLElement).className).not.toContain('min-h-touch');
+    });
+  });
+
   it('selects a value from the mobile bottom-sheet and closes the sheet (single mode)', async () => {
     mobileState.isMobile = true;
     renderForm([

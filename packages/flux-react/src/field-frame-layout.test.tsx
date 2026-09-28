@@ -284,13 +284,17 @@ describe('FieldFrame — dynamic required subscriptions', () => {
     const { container } = render(
       <FormContext.Provider value={form}>
         <FieldFrame name="email" label="Email">
-          input
+          <input aria-label="Email input" />
         </FieldFrame>
       </FormContext.Provider>,
     );
 
     expect(capturedPaths).toEqual(['contact.method', 'contact.enabled']);
     expect(container.querySelector('[data-slot="field-required"]')?.textContent).toBe('*');
+    // plan 2026-09-28-4 U6: the rule-triggered required state must reach the
+    // real control as aria-required, not only the visible marker.
+    const input = container.querySelector('input[aria-label="Email input"]');
+    expect(input?.getAttribute('aria-required')).toBe('true');
   });
 
   it('derives dynamic required from validation-owner values outside forms', () => {
@@ -449,8 +453,57 @@ describe('FieldFrame — ARIA attributes', () => {
     expect(errorEl?.id).toContain('-error');
   });
 
-  it('forwards aria chain to the real control element', () => {
-    const state = {
+  // plan 2026-09-28-4 U1: combo rows repeat field names — same-name instances
+  // (distinct cids) must get distinct error ids and each control must point at
+  // its own row's error element.
+  it('gives same-name instances distinct error ids (combo dual-row)', () => {
+    const mkForm = () => {
+      const state = {
+        ...EMPTY_FORM_STORE_STATE,
+        fieldStates: {
+          phone: {
+            touched: true,
+            errors: [{ path: 'phone', rule: 'required', message: 'Required', sourceKind: 'field' }],
+          },
+        },
+      };
+      return createMockForm({
+        store: { subscribe: () => () => undefined, getState: () => state },
+        validation: { behavior: { triggers: ['blur'], showErrorOn: ['touched'] } },
+      });
+    };
+
+    const first = render(
+      <FormContext.Provider value={mkForm()}>
+        <FieldFrame name="phone" label="Phone" cid={1}>
+          <input aria-label="Phone row 1" />
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+    const second = render(
+      <FormContext.Provider value={mkForm()}>
+        <FieldFrame name="phone" label="Phone" cid={2}>
+          <input aria-label="Phone row 2" />
+        </FieldFrame>
+      </FormContext.Provider>,
+    );
+
+    const firstError = first.container.querySelector('[data-slot="field-error"]');
+    const secondError = second.container.querySelector('[data-slot="field-error"]');
+    expect(firstError?.id).toBeTruthy();
+    expect(secondError?.id).toBeTruthy();
+    expect(firstError?.id).not.toBe(secondError?.id);
+
+    const firstInput = first.container.querySelector('input[aria-label="Phone row 1"]');
+    const secondInput = second.container.querySelector('input[aria-label="Phone row 2"]');
+    expect(firstInput?.getAttribute('aria-describedby')).toBe(firstError?.id);
+    expect(secondInput?.getAttribute('aria-describedby')).toBe(secondError?.id);
+
+    const allErrorIds = [firstError?.id, secondError?.id];
+    expect(new Set(allErrorIds).size).toBe(allErrorIds.length);
+  });
+
+  it('forwards aria chain to the real control element', () => {    const state = {
       ...EMPTY_FORM_STORE_STATE,
       fieldStates: {
         f1: {

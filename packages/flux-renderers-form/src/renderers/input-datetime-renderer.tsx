@@ -49,6 +49,12 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
   // initializes to today); non-relative strings pass through unchanged.
   const storedValue = resolveRelativeDate(typeof value === 'string' ? value : undefined);
   const errorId = name ? `${name}-error` : undefined;
+  // FieldFrame injects the instance-unique error reference chain (its error
+  // element id is cid-suffixed, not `${name}-error`); local id is the bare
+  // harness fallback.
+  const injected = props as unknown as { 'aria-describedby'?: string; 'aria-errormessage'?: string };
+  const errorIdForControl =
+    injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
 
   const minDate = toCalendarDate(
     parseDate(
@@ -89,7 +95,7 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
         interactive={presentation.interactive}
         visible={props.meta.visible !== false}
         showError={presentation.showError}
-        errorId={errorId}
+        errorId={errorIdForControl}
         placeholder={placeholder}
         ariaLabel={String((props.props.label ?? name) || '') || undefined}
         onChange={(next) => handlers.onChange(next)}

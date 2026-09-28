@@ -194,13 +194,17 @@ describe('input renderer source state branches', () => {
 
     const error = screen.getByText('Remote options unavailable');
     expect(error).toBeTruthy();
-    expect(error.getAttribute('id')).toBe('status-source-error');
+    // plan 2026-09-28-4: the error id is cid-qualified for instance uniqueness;
+    // assert the association, not the literal id.
+    const errorId = error.getAttribute('id');
+    expect(errorId).toBeTruthy();
+    expect(errorId).toContain('status');
     expect(document.querySelector('[data-slot="radio-group-options"]')?.getAttribute('aria-describedby')).toBe(
-      'status-source-error',
+      errorId,
     );
     expect(
       document.querySelector('[data-slot="radio-group-options"]')?.getAttribute('aria-errormessage'),
-    ).toBe('status-source-error');
+    ).toBe(errorId);
   });
 
   it('falls back to the default source error message for checkbox-group options', () => {
@@ -233,8 +237,11 @@ describe('input renderer source state branches', () => {
     const error = screen.getByText('Failed to load options.');
     expect(error).toBeTruthy();
     expect(error.getAttribute('role')).toBe('alert');
+    // plan 2026-09-28-4: cid-qualified instance id; assert the association.
+    const errorId = error.getAttribute('id');
+    expect(errorId).toBeTruthy();
     expect(document.querySelector('[data-slot="checkbox-group-wrapper"]')?.getAttribute('aria-describedby')).toBe(
-      'tags-source-error',
+      errorId,
     );
   });
 

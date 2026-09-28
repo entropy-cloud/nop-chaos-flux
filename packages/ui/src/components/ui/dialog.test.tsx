@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   Dialog,
@@ -9,6 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from './dialog.js';
 
 afterEach(() => {
@@ -166,5 +167,41 @@ describe('Dialog', () => {
     first.focus();
     fireEvent.keyDown(first, { key: 'Tab', shiftKey: true });
     expect(document.activeElement).toBe(last);
+  });
+
+  // plan 2026-09-28-4 U7: opening a dialog must move focus inside the popup
+  // (WAI-ARIA APG dialog pattern). Live-browser repro showed focus staying on
+  // the trigger button; jsdom/happy-dom may mask the timing, see plan notes.
+  it('moves initial focus into the popup after opening via trigger', async () => {
+    function Harness() {
+      const [open, setOpen] = React.useState(false);
+      return (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger data-testid="dialog-opener">Open</DialogTrigger>
+          <DialogContent showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle>Focus Title</DialogTitle>
+            </DialogHeader>
+            <DialogBody>
+              <input data-testid="focus-input" aria-label="Focus input" />
+            </DialogBody>
+          </DialogContent>
+        </Dialog>
+      );
+    }
+
+    render(<Harness />);
+
+    const opener = screen.getByTestId('dialog-opener');
+    fireEvent.click(opener);
+
+    const popup = await screen.findByText('Focus Title').then(() =>
+      document.querySelector('[data-slot="dialog-content"]') as HTMLDivElement | null,
+    );
+    expect(popup).toBeTruthy();
+
+    await waitFor(() => {
+      expect(popup!.contains(document.activeElement)).toBe(true);
+    });
   });
 });

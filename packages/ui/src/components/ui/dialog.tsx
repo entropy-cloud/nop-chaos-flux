@@ -8,6 +8,7 @@ import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
 import { XIcon } from 'lucide-react';
 import { useDialogDrag } from './use-dialog-drag.js';
+import { useDialogInitialFocusFallback } from './use-dialog-initial-focus.js';
 import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
 import { wrapSurfaceTabFocus } from './wrap-surface-tab-focus.js';
 
@@ -160,6 +161,15 @@ const DialogContent = React.forwardRef<
     { enabled: draggable, offsetRef, baseTransform: effectiveBaseTransform },
     ref,
   );
+  const popupElementRef = React.useRef<HTMLDivElement | null>(null);
+  const setPopupElement = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      popupElementRef.current = node;
+      contentRef(node);
+    },
+    [contentRef],
+  );
+  useDialogInitialFocusFallback(popupElementRef);
   const dragContextValue = React.useMemo(
     () => ({
       enabled: draggable,
@@ -175,7 +185,7 @@ const DialogContent = React.forwardRef<
       <DialogZIndexContext.Provider value={zIndex}>
         {!noOverlay && <DialogOverlay />}
         <DialogPrimitive.Popup
-          ref={contentRef}
+          ref={setPopupElement}
           data-slot="dialog-content"
           data-size={size}
           className={cn(

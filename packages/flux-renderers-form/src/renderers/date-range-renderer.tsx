@@ -117,6 +117,14 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
     return joinDateRange(resolveRelativeDate(parts[0]), resolveRelativeDate(parts[1]), delimiter);
   })();
   const errorId = name ? `${name}-error` : undefined;
+  // FieldFrame injects the instance-unique error reference chain (its error
+  // element id is cid-suffixed, not `${name}-error`); local id is the bare
+  // harness fallback.
+  const injected = props as unknown as { 'aria-describedby'?: string; 'aria-errormessage'?: string };
+  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
+  const errorMessageId = presentation.showError
+    ? (injected['aria-errormessage'] ?? errorId)
+    : undefined;
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -284,8 +292,8 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
               disabled={!presentation.interactive}
               aria-label={String((props.props.label ?? name) || '') || undefined}
               aria-invalid={presentation.showError ? true : undefined}
-              aria-describedby={presentation.showError ? errorId : undefined}
-              aria-errormessage={presentation.showError ? errorId : undefined}
+              aria-describedby={describedBy}
+              aria-errormessage={errorMessageId}
               data-testid="range-trigger"
               className="w-full justify-start text-left font-normal"
             />

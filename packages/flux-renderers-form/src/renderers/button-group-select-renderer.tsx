@@ -44,7 +44,10 @@ export function ButtonGroupSelectRenderer(
   const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
   const loading = hasDict ? dictState.loading : optionsSourceState?.loading === true;
   const errorMessage = dictState.errorMessage ?? getSourceErrorMessage(optionsSourceState);
-  const errorId = errorMessage && name ? `${name}-source-error` : undefined;
+  // cid-qualified so same-name instances (combo rows) don't collide; the id
+  // and its aria reference derive from the same variable, so they stay paired.
+  const instanceKey = props.meta.cid != null ? `${name}-${props.meta.cid}` : name;
+  const errorId = errorMessage && name ? `${instanceKey}-source-error` : undefined;
   const groupRef = useRef<HTMLDivElement | null>(null);
 
   useInputComponentHandle({

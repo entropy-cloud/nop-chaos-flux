@@ -36,6 +36,14 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
   });
   const textareaValue = (value as string | undefined) ?? '';
   const errorId = name ? `${name}-error` : undefined;
+  // FieldFrame injects the instance-unique error/hint/description reference
+  // list (its error element id is cid-suffixed, not `${name}-error`). Prefer
+  // the injected chain; the local fallback only covers bare harnesses.
+  const injected = props as unknown as { 'aria-describedby'?: string; 'aria-errormessage'?: string };
+  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
+  const errorMessageId = presentation.showError
+    ? (injected['aria-errormessage'] ?? errorId)
+    : undefined;
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const initialValueRef = useRef<string>(textareaValue);
@@ -125,8 +133,8 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
       aria-label={String((props.props.label ?? name) || '') || undefined}
       aria-required={props.props.required ? true : undefined}
       aria-invalid={presentation.showError ? true : undefined}
-      aria-describedby={presentation.showError ? errorId : undefined}
-      aria-errormessage={presentation.showError ? errorId : undefined}
+      aria-describedby={describedBy}
+      aria-errormessage={errorMessageId}
       placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
       className={cn('nop-textarea', props.meta.className)}
       onFocus={() => {
