@@ -1,6 +1,6 @@
 # 2026-09-09-0001 UI Family Class Nesting Cleanup Plan
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-09
 > Source: nop-chaos-next F4 表格 hover 回归排查发现（host 侧 `.nop-table { background }` 被 tr/td 上的同名类意外命中）
 > Related: commit `695c5f539`（feat(ui): add nop- prefix CSS classes to all shadcn/ui components）
@@ -129,12 +129,12 @@ Exit Criteria:
 ## Closure Gates
 
 - [x] 附录 A 判定表完整（30 家族全覆盖；2026-09-28 终版校准，tabs 死行移除）
-- [x] 上游 ui 包无嵌套重复（`check:ui-family-nesting` 脚本复核 exit 0，2026-09-28）
+- [x] 上游 ui 包无嵌套重复（`check:ui-family-nesting` 脚本复核 exit 0，2026-09-28；round-2 blocker 修复后脚本为空格容忍 pattern + 家族级白名单 + 负向控制测试 `scripts/__tests__/check-ui-family-class-nesting.test.ts` 2/2 绿）
 - [x] 上游 typecheck/build/lint/test 全过（2026-09-28 实测：typecheck ✓ / build ✓ / lint ✓ / test 50 files 226 passed）
-- [x] tgz 同步完成，nop-chaos-next 门禁与全部 e2e 套件全绿（host `libs/nop-chaos-flux-0.1.0.tgz` 09-09；host 镜像与 `packages/ui/src` 0-diff；host log 2026/09-09.md 记录 28/28、27/27、27/27、15/15、e2e 74 passed + extension-dev 2 passed）
+- [x] tgz 同步完成，nop-chaos-next 门禁与全部 e2e 套件全绿（host `libs/nop-chaos-flux-0.1.0.tgz` 09-09；host 镜像在 09-09 同步时点与 `packages/ui/src` 0-diff——2026-09-28 起因 remediation 领先于 host 例行同步出现预期 diff，属 Follow-up 例行再同步；host log 2026/09-09.md 记录 28/28、27/27、27/27、15/15、e2e 74 passed + extension-dev 2 passed）
 - [x] host F4 `:not()` 防御已简化且行为不变（`apps/main/src/styles/flux-spacing.css:310` 为直白 `.nop-table`，无 `:not()`）
-- [ ] 独立子 agent closure-audit 已完成并记录证据（round 1 已完成并判定 issues→remediation；round 2 复审进行中）
-- [ ] 两仓 `docs/logs/` 收口记录已更新（2026-09-28 remediation 日志待本次提交附上）
+- [x] 独立子 agent closure-audit 已完成并记录证据（round 1 判定 issues→remediation；round 2 判定 issues（唯一 blocker=守卫脚本正则空转）→ 脚本已修复 + 负向测试落地，审计方明确 blocker 修复后可标 completed）
+- [x] 两仓 `docs/logs/` 收口记录已更新（flux 2026/09-09.md + host 2026/09-09.md 原始收口；2026/09-28.md 补 remediation 与 round-2 收口）
 
 ## Deferred But Adjudicated
 
@@ -199,13 +199,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 2026-09-28 closure-audit round 1 判定 issues（3 blocker）后完成 remediation：残留 9 家族同链重复清除、Item 标记恢复、附录 A 终版校准、复核脚本持久化并接入 `pnpm check`。ui 包 typecheck/build/lint/test 全绿（50 files / 226 tests），`check:ui-family-nesting` exit 0。待 round 2 独立复审通过后标记 completed。
+Status Note: 2026-09-28 closure-audit round 1 判定 issues（3 blocker）后完成 remediation：残留 9 家族同链重复清除、Item 标记恢复、附录 A 终版校准、复核脚本持久化并接入 `pnpm check`。round 2 判定 issues（唯一 blocker=守卫脚本正则空转）→ 脚本重写（空格容忍 pattern + 家族级白名单）+ 负向控制测试落地；产品代码两轮审计均确认干净。ui 包 typecheck/build/lint/test 全绿（50 files / 226 tests），`check:ui-family-nesting` exit 0 且经负向测试证明有效。审计方明示 blocker 修复后可关闭，本 plan 标记 completed。
 
 Closure Audit Evidence:
 
 - Auditor / Agent: 独立子 agent（fresh session，2026-09-28）
 - Evidence round 1: verdict `issues`——verified 主修复已落地（commit `93b3831da`、host 0-diff 镜像、F4 简化、host 门禁/e2e 记录一致）；blockers = 9 家族残留同链重复 / Item 丢标记 / 附录 A 未校准 + 脚本未持久化（详见上方 Remediation 节）。ui 测试 50 files / 226 tests 由审计方独立复跑通过。
-- Evidence round 2: <<待独立子 agent 复审后填写>>
+- Evidence round 2: verdict `issues`（唯一 blocker：守卫脚本原 pattern 未容忍字面量尾随空格，匹配 0/55 个真实字面量、exit 0 空转；审计方以 negative control 实测证实）。产品代码面全部 9 家族修复 + Item 三件套 + 附录 A 白名单一致性经审计方全量重扫确认干净（findings 1-5 全部 verified）；审计方明示 blocker 修复后无需再全量 re-audit。blocker 处置：脚本改为空格容忍 pattern、白名单降为家族级（文件内非白名单家族仍受检）、新增负向控制测试（合成重复 fixture → exit 1 断言，2/2 绿）；Minor-3 的 0-diff 措辞已加 09-09 时点限定。host tgz 再同步维持 Follow-up（remediation 严格收窄命中面，host F4 无需回改，审计方判定 honest）。
 
 Follow-up:
 
