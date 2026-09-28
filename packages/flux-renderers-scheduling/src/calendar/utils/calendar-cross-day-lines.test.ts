@@ -10,6 +10,7 @@ function makeSplitBlock(overrides: Partial<SplitEventBlock> & { eventId: string;
     isSplit: true,
     dayIndex: 0,
     totalDays: 3,
+    dateEpoch: new Date(`${overrides.date}T00:00:00Z`).getTime(),
     ...overrides,
   };
 }

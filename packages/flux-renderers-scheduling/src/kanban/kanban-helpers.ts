@@ -1,54 +1,60 @@
 import type { BoardData, BoardItem } from './kanban.types.js';
 
-function cloneBoard(board: BoardData): BoardData {
-  return structuredClone(board);
-}
+// Structural-sharing mutations: only the touched entries (board map shell,
+// source/target column children arrays, moved card entry) get fresh identity;
+// every untouched column/card entry is shared by reference with the previous
+// board. The previous `structuredClone(board)` serialized the whole board per
+// mutation, which dominated drag-drop cost on large boards.
 
 export function moveCard(board: BoardData, cardId: string, targetColumnId: string, targetIndex: number): BoardData {
-  const result = cloneBoard(board);
-  const card = result[cardId];
-  if (!card) return result;
+  const card = board[cardId];
+  if (!card) return board;
 
   // 1-4: 先校验目标列存在，再摘除旧列——目标列缺失时 board 原样返回，
   // 卡片不得被孤儿化（旧实现先摘除后 return，卡片从所有列 children 消失）。
-  const targetColumn = result[targetColumnId];
-  if (!targetColumn) return result;
+  const targetColumn = board[targetColumnId];
+  if (!targetColumn) return board;
 
   const oldParentId = card.parentId;
-  if (oldParentId && result[oldParentId]) {
-    const oldParent = result[oldParentId];
-    const idx = oldParent.children.indexOf(cardId);
-    if (idx !== -1) {
-      oldParent.children.splice(idx, 1);
+  let result = board;
+  if (oldParentId && board[oldParentId]) {
+    const oldParent = board[oldParentId];
+    if (oldParent.children.includes(cardId)) {
+      result = {
+        ...result,
+        [oldParentId]: { ...oldParent, children: oldParent.children.filter((id) => id !== cardId) },
+      };
     }
   }
 
-  const clampedIndex = Math.max(0, Math.min(targetIndex, targetColumn.children.length));
-  targetColumn.children.splice(clampedIndex, 0, cardId);
-  card.parentId = targetColumnId;
+  const removedColumn = result[targetColumnId];
+  const targetChildren = [...removedColumn.children];
+  const clampedIndex = Math.max(0, Math.min(targetIndex, targetChildren.length));
+  targetChildren.splice(clampedIndex, 0, cardId);
 
-  return result;
+  return {
+    ...result,
+    [targetColumnId]: { ...removedColumn, children: targetChildren },
+    [cardId]: { ...card, parentId: targetColumnId },
+  };
 }
 
 export function moveColumn(board: BoardData, columnId: string, targetIndex: number): BoardData {
-  const result = cloneBoard(board);
-  const root = result['root'];
-  if (!root) return result;
+  const root = board['root'];
+  if (!root) return board;
 
-  const idx = root.children.indexOf(columnId);
-  if (idx === -1) return result;
+  if (!root.children.includes(columnId)) return board;
 
-  root.children.splice(idx, 1);
-  const clampedIndex = Math.max(0, Math.min(targetIndex, root.children.length));
-  root.children.splice(clampedIndex, 0, columnId);
+  const next = root.children.filter((id) => id !== columnId);
+  const clampedIndex = Math.max(0, Math.min(targetIndex, next.length));
+  next.splice(clampedIndex, 0, columnId);
 
-  return result;
+  return { ...board, root: { ...root, children: next } };
 }
 
 export function addCard(board: BoardData, columnId: string, cardData: Record<string, any>, index?: number, meta?: Record<string, any>): BoardData {
-  const result = cloneBoard(board);
   const cardId = cardData.id as string;
-  if (!cardId) return result;
+  if (!cardId) return board;
 
   const card: BoardItem = {
     id: cardId,
@@ -62,71 +68,72 @@ export function addCard(board: BoardData, columnId: string, cardData: Record<str
     meta: meta ?? {},
   };
 
-  result[cardId] = card;
+  const column = board[columnId];
+  const result: BoardData = { ...board, [cardId]: card };
+  if (!column) return result;
 
-  const column = result[columnId];
-  if (column) {
-    if (index !== undefined && index >= 0 && index <= column.children.length) {
-      column.children.splice(index, 0, cardId);
-    } else {
-      column.children.push(cardId);
-    }
+  const children = [...column.children];
+  if (index !== undefined && index >= 0 && index <= children.length) {
+    children.splice(index, 0, cardId);
+  } else {
+    children.push(cardId);
   }
-
+  result[columnId] = { ...column, children };
   return result;
 }
 
 export function removeCard(board: BoardData, cardId: string): BoardData {
-  const result = cloneBoard(board);
-  const card = result[cardId];
-  if (!card) return result;
+  const card = board[cardId];
+  if (!card) return board;
+
+  const result: BoardData = { ...board };
+  delete result[cardId];
 
   const parentId = card.parentId;
   if (parentId && result[parentId]) {
     const parent = result[parentId];
-    const idx = parent.children.indexOf(cardId);
-    if (idx !== -1) {
-      parent.children.splice(idx, 1);
+    if (parent.children.includes(cardId)) {
+      result[parentId] = { ...parent, children: parent.children.filter((id) => id !== cardId) };
     }
   }
-
-  delete result[cardId];
   return result;
 }
 
 export function changeCard(board: BoardData, cardId: string, partial: Record<string, any>): BoardData {
-  const result = cloneBoard(board);
-  const card = result[cardId];
-  if (!card) return result;
+  const card = board[cardId];
+  if (!card) return board;
 
+  let nextCard = card;
   if (partial.data && typeof partial.data === 'object') {
-    Object.assign(card.data, partial.data);
+    nextCard = { ...nextCard, data: { ...((nextCard.data ?? {}) as Record<string, unknown>), ...partial.data } };
   }
   if (partial.meta && typeof partial.meta === 'object') {
-    Object.assign(card.meta, partial.meta);
+    nextCard = { ...nextCard, meta: { ...((nextCard.meta ?? {}) as Record<string, unknown>), ...partial.meta } };
   }
 
   if ('parentId' in partial) {
     const oldParentId = card.parentId;
     const newParentId = partial.parentId as string;
-    if (oldParentId !== newParentId && result[newParentId]) {
+    if (oldParentId !== newParentId && board[newParentId]) {
+      const result: BoardData = { ...board, [cardId]: { ...nextCard, parentId: newParentId } };
       if (oldParentId && result[oldParentId]) {
         const oldParent = result[oldParentId];
-        const idx = oldParent.children.indexOf(cardId);
-        if (idx !== -1) oldParent.children.splice(idx, 1);
+        if (oldParent.children.includes(cardId)) {
+          result[oldParentId] = { ...oldParent, children: oldParent.children.filter((id) => id !== cardId) };
+        }
       }
-      card.parentId = newParentId;
-      result[newParentId].children.push(cardId);
+      result[newParentId] = { ...result[newParentId], children: [...result[newParentId].children, cardId] };
+      return result;
     }
   }
 
-  return result;
+  if (nextCard === card) return board;
+  return { ...board, [cardId]: nextCard };
 }
 
 export function addColumn(board: BoardData, columnData: Record<string, any>, index?: number): BoardData {
-  const result = cloneBoard(board);
   const columnId = columnData.id as string;
-  if (!columnId) return result;
+  if (!columnId) return board;
 
   const column: BoardItem = {
     id: columnId,
@@ -137,34 +144,34 @@ export function addColumn(board: BoardData, columnData: Record<string, any>, ind
     meta: {},
   };
 
-  result[columnId] = column;
+  const result: BoardData = { ...board, [columnId]: column };
 
-  const root = result['root'];
+  const root = board['root'];
   if (root) {
-    if (index !== undefined && index >= 0 && index <= root.children.length) {
-      root.children.splice(index, 0, columnId);
+    const children = [...root.children];
+    if (index !== undefined && index >= 0 && index <= children.length) {
+      children.splice(index, 0, columnId);
     } else {
-      root.children.push(columnId);
+      children.push(columnId);
     }
+    result['root'] = { ...root, children };
   }
-
   return result;
 }
 
 export function removeColumn(board: BoardData, columnId: string): BoardData {
-  const result = cloneBoard(board);
-  const column = result[columnId];
-  if (!column || columnId === 'root') return result;
+  const column = board[columnId];
+  if (!column || columnId === 'root') return board;
 
+  const result: BoardData = { ...board };
   for (const childId of column.children) {
     delete result[childId];
   }
 
   const root = result['root'];
   if (root) {
-    const idx = root.children.indexOf(columnId);
-    if (idx !== -1) {
-      root.children.splice(idx, 1);
+    if (root.children.includes(columnId)) {
+      result['root'] = { ...root, children: root.children.filter((id) => id !== columnId) };
     }
   }
 

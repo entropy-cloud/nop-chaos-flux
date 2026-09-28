@@ -63,8 +63,9 @@ export function calculateCriticalPath(tasks: Map<GanttId, GanttTask>, links: Map
   for (const [id, deg] of inDegree) {
     if (deg === 0) queue.push(id);
   }
-  while (queue.length > 0) {
-    const id = queue.shift()!;
+  let queueHead = 0;
+  while (queueHead < queue.length) {
+    const id = queue[queueHead++];
     order.push(id);
     for (const edge of edges.get(id)!) {
       const next = inDegree.get(edge.to)! - 1;

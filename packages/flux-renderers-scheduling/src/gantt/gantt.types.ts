@@ -131,7 +131,7 @@ export interface GanttStoreApi {
   taskRevision: number;
   linkRevision: number;
   treeRevision: number;
-  layoutRevision: number;
+  layoutRevision: number; scrollRevision: number;
   scrollLeft: number;
   selectedTaskId: GanttId | null;
   selectTask: (v: GanttId | null) => void;

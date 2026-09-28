@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   isKanbanColumnAggregateFn,
   type KanbanColumnAggregateConfig,
@@ -36,13 +36,13 @@ export function useKanbanColumnAggregate(raw: unknown): {
   const columnAggregate =
     raw && typeof raw === 'object' && !invalidFn ? (raw as KanbanColumnAggregateConfig) : undefined;
 
-  const warnAggregateFallback = () => {
+  const warnAggregateFallback = useCallback(() => {
     if (!isDevKanbanRuntime() || aggregateWarnedRef.current) return;
     aggregateWarnedRef.current = true;
     console.warn(
       '[KanbanBoard] kanban-aggregate-missing-field: columnAggregate found no numeric values for a column; showing "-" fallback.',
     );
-  };
+  }, []);
 
   return { columnAggregate, warnAggregateFallback };
 }

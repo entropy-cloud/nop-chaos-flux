@@ -9,7 +9,7 @@
  * Gantt uses Zustand + Context (deeper tree, more inter-component subscriptions).
  * Calendar uses custom hooks (view state localized to scroll/navigation hooks).
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
@@ -125,7 +125,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     setLocalBoardData(rawData ?? EMPTY_BOARD);
   }
 
-  const columns = getColumns(boardData);
+  const columns = useMemo(() => getColumns(boardData), [boardData]);
 
   const collapsedMap = (() => {
     if (collapsedOwnership === 'controlled') {
@@ -143,15 +143,17 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     return localCollapsedData;
   })();
 
-  const setCollapsedMap = (updater: React.SetStateAction<Record<string, boolean>>) => {
+  const setCollapsedMap = useCallback((updater: React.SetStateAction<Record<string, boolean>>) => {
     if (collapsedOwnership === 'controlled') return;
-    const current = typeof updater === 'function' ? updater(collapsedMap) : updater;
+    const current = typeof updater === 'function'
+      ? updater(collapsedOwnership === 'scope' && collapsedStatePath ? (scopeCollapsedValue ?? {}) : localCollapsedData)
+      : updater;
     if (collapsedOwnership === 'scope' && collapsedStatePath) {
       rootScope.update(collapsedStatePath, current);
       return;
     }
     setLocalCollapsedData(current);
-  };
+  }, [collapsedOwnership, collapsedStatePath, rootScope, scopeCollapsedValue, localCollapsedData]);
 
   const setBoardData = useCallback((newBoard: BoardData) => {
     if (kanbanOwnership === 'controlled') return;
@@ -187,19 +189,21 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const [addingColumn, setAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
   const [actions, setActions] = useState<KanbanAction[]>([]);
+  const [keyboardMoveCard, setKeyboardMoveCard] = useState<{ cardId: string; columnId: string } | null>(null);
+  const [dndAnnouncement, setDndAnnouncement] = useState('');
 
-  const recordAction = (action: Omit<KanbanAction, 'id' | 'timestamp'>) => {
+  const recordAction = useCallback((action: Omit<KanbanAction, 'id' | 'timestamp'>) => {
     const entry: KanbanAction = {
       ...action,
       id: nextActionId(),
       timestamp: new Date().toISOString(),
     };
     setActions((prev) => [entry, ...prev].slice(0, 500));
-  };
+  }, []);
 
   const lastCommandTypeRef = useRef<UndoCommandType>('moveCard');
 
-  const handleSetBoardData = (newBoard: BoardData, commandType?: UndoCommandType, extraParams?: Record<string, any>) => {
+  const handleSetBoardData = useCallback((newBoard: BoardData, commandType?: UndoCommandType, extraParams?: Record<string, any>) => {
     if (kanbanOwnership === 'controlled') return;
     const ct = commandType ?? lastCommandTypeRef.current;
     lastCommandTypeRef.current = 'moveCard';
@@ -209,9 +213,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       timestamp: Date.now(),
       params: extraParams ?? {},
     }));
-  };
+  }, [kanbanOwnership, setBoardData]);
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     // 1-5: undo 确定性执行——旧实现经 setUndoStackState updater 副作用捕获
     // restoredBoard（React 19 updater 仅在渲染期调用，是否急切执行依赖时序，
     // 静默 no-op 导致 undo 偶发失效）；改为直接读当前栈并同步落位。
@@ -219,37 +223,37 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     if (!result) return;
     setUndoStackState(result.stack);
     setBoardData(result.board);
-  };
+  }, [undoStackState, setBoardData]);
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     const result = redoStackOp(undoStackState, boardDataRef.current);
     if (!result) return;
     setUndoStackState(result.stack);
     setBoardData(result.board);
-  };
+  }, [undoStackState, setBoardData]);
 
-  const allTags = collectAllTags(boardData, columns);
+  const allTags = useMemo(() => collectAllTags(boardData, columns), [boardData, columns]);
 
   const { filterCardFn, filterError, clearFilterError } = useKanbanFilterCard(resolved.filterCard, runtime, rootScope);
 
   const filter = useKanbanFilter({ filterText: resolved.filterText as string | undefined, filterCard: filterCardFn });
 
-  const wipOverLimitColumns = new Set(columns.filter(col => {
+  const wipOverLimitColumns = useMemo(() => new Set(columns.filter(col => {
     const d = boardData[col.id]?.data;
     const cardLimit = (d?.cardLimit as number) || 0;
     const strict = (d?.wipStrict as boolean) ?? wipStrictGlobal;
     return cardLimit > 0 && strict && col.children.filter(id => boardData[id]?.type === 'card').length >= cardLimit;
-  }).map(c => c.id));
+  }).map(c => c.id)), [boardData, columns, wipStrictGlobal]);
 
-  const handleCardMoveBoardChange = (newBoard: BoardData, cardId?: string, fromColumnId?: string, toColumnId?: string, fromIndex?: number, toIndex?: number) => {
+  const handleCardMoveBoardChange = useCallback((newBoard: BoardData, cardId?: string, fromColumnId?: string, toColumnId?: string, fromIndex?: number, toIndex?: number) => {
     lastCommandTypeRef.current = 'moveCard';
     handleSetBoardData(newBoard, 'moveCard', { cardId, fromColumnId, toColumnId, fromIndex, toIndex });
-  };
+  }, [handleSetBoardData]);
 
-  const handleColumnReorderBoardChange = (newBoard: BoardData, columnId?: string, fromIndex?: number, toIndex?: number) => {
+  const handleColumnReorderBoardChange = useCallback((newBoard: BoardData, columnId?: string, fromIndex?: number, toIndex?: number) => {
     lastCommandTypeRef.current = 'moveColumn';
     handleSetBoardData(newBoard, 'moveColumn', { columnId, fromIndex, toIndex });
-  };
+  }, [handleSetBoardData]);
 
   const { registerCard, registerColumn, dragState, dropState, moveCardKeyboard } = useKanbanDnd({
     boardData,
@@ -284,11 +288,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     enabled: columnDraggable,
   });
 
-  const handleToggleCollapse = (columnId: string) => {
+  const handleToggleCollapse = useCallback((columnId: string) => {
     setCollapsedMap((prev) => ({ ...prev, [columnId]: !prev[columnId] }));
-  };
+  }, [setCollapsedMap]);
 
-  const handleDragHandleKeyDown = (e: React.KeyboardEvent, columnId: string) => {
+  const handleDragHandleKeyDown = useCallback((e: React.KeyboardEvent, columnId: string) => {
     const root = boardData['root'];
     if (!root) return;
     const idx = root.children.indexOf(columnId);
@@ -305,26 +309,22 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       }
       setDndAnnouncement(t('scheduling.kanban.columnMoved', { from: idx + 1, to: targetIdx + 1 }));
     }
-  };
+  }, [boardData, handleSetBoardData, isControlled, events, eventCtx]);
 
-  const handleCardClick = (cardId: string, columnId: string, index: number) => {
+  const handleCardClick = useCallback((cardId: string, columnId: string, index: number) => {
     const card = boardData[cardId];
     const payload = { cardId, columnId, index, card };
     void events.onCardClick?.(payload, eventCtx(payload));
-  };
-  const handleColumnClick = (columnId: string) => {
+  }, [boardData, events, eventCtx]);
+  const handleColumnClick = useCallback((columnId: string) => {
     const payload = { columnId };
     void events.onColumnClick?.(payload, eventCtx(payload));
-  };
-
-  const handleCardAdd = (columnId: string, cardData?: Record<string, any>) => {
-    handleCardAddAt(columnId, cardData, undefined);
-  };
+  }, [events, eventCtx]);
 
   // 22-12: handle 驱动与 UI 驱动共用同一条 mutation 通道（undo + 事件 + 活动日志）。
   // 返回 boolean 供 component:* 句柄报告真实结果；controlled 模式 mutation 被
   // 丢弃时返回 false（契约注释 :52-55 语义）。
-  const handleCardAddAt = (columnId: string, cardData?: Record<string, any>, index?: number): boolean => {
+  const handleCardAddAt = useCallback((columnId: string, cardData?: Record<string, any>, index?: number): boolean => {
     if (isControlled) return false;
     const cardId = (cardData?.id as string) || nextCardId();
     const newCard = { id: cardId, title: cardData?.title || t('scheduling.kanban.newCard'), ...cardData };
@@ -342,9 +342,13 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       });
     }
     return true;
-  };
+  }, [isControlled, boardData, handleSetBoardData, events, eventCtx, recordAction]);
 
-  const handleCardRemove = (cardId: string) => {
+  const handleCardAdd = useCallback((columnId: string, cardData?: Record<string, any>) => {
+    handleCardAddAt(columnId, cardData, undefined);
+  }, [handleCardAddAt]);
+
+  const handleCardRemove = useCallback((cardId: string) => {
     lastCommandTypeRef.current = 'removeCard';
     const card = boardData[cardId];
     const columnId = card?.parentId || '';
@@ -364,10 +368,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
         detail: { cardId: ((card?.data?.title as string) || cardId), fromColumnId: columnId },
       });
     }
-  };
+  }, [boardData, isControlled, handleSetBoardData, events, eventCtx, recordAction]);
 
   // 22-12: component:moveCard 程序式移动（design.md §8）。
-  const handleCardMoveViaHandle = (cardId: string, toColumnId: string, toIndex: number): boolean => {
+  const handleCardMoveViaHandle = useCallback((cardId: string, toColumnId: string, toIndex: number): boolean => {
     if (isControlled) return false;
     const card = boardData[cardId];
     if (!card) return false;
@@ -384,14 +388,14 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       void events.onCardMove?.(movePayload, eventCtx(movePayload));
     }
     return true;
-  };
+  }, [isControlled, boardData, handleSetBoardData, events, eventCtx]);
 
   // 22-12: component:collapseColumn 程序式折叠（design.md §8）。
-  const handleCollapseColumn = (columnId: string, collapsed: boolean): boolean => {
+  const handleCollapseColumn = useCallback((columnId: string, collapsed: boolean): boolean => {
     if (collapsedOwnership === 'controlled') return false;
     setCollapsedMap((prev) => ({ ...prev, [columnId]: collapsed }));
     return true;
-  };
+  }, [collapsedOwnership, setCollapsedMap]);
 
   const handleToggleTag = (tagId: string) => {
     setSelectedTagIds((prev) =>
@@ -404,13 +408,15 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     setNewColumnTitle('');
   };
 
-  const confirmAddColumn = () => {
+  const confirmAddColumn = useCallback(() => {
     const title = newColumnTitle.trim() || t('scheduling.kanban.newColumn');
     const columnId = nextColumnId();
     const rootChildren = boardData['root']?.children ? [...boardData['root'].children] : [];
-    const newBoard = structuredClone(boardData);
-    newBoard[columnId] = { id: columnId, title, children: [], data: { title }, meta: {}, type: 'column' };
-    newBoard['root'] = { ...boardData['root'], children: [...rootChildren, columnId] };
+    const newBoard: BoardData = {
+      ...boardData,
+      [columnId]: { id: columnId, title, children: [], data: { title }, meta: {}, type: 'column' },
+      root: { ...boardData['root'], children: [...rootChildren, columnId] },
+    };
     lastCommandTypeRef.current = 'addColumn';
     handleSetBoardData(newBoard, 'addColumn', { columnId, columnData: newBoard[columnId], index: rootChildren.length });
     const colAddPayload = { columnId, index: rootChildren.length };
@@ -427,13 +433,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     }
     setAddingColumn(false);
     setNewColumnTitle('');
-  };
+  }, [newColumnTitle, boardData, isControlled, events, eventCtx, recordAction, handleSetBoardData]);
 
-  const cancelAddColumn = () => { setAddingColumn(false); setNewColumnTitle(''); };
+  const cancelAddColumn = useCallback(() => { setAddingColumn(false); setNewColumnTitle(''); }, []);
 
   const boardRef = useRef<HTMLDivElement>(null);
-  const [keyboardMoveCard, setKeyboardMoveCard] = useState<{ cardId: string; columnId: string } | null>(null);
-  const [dndAnnouncement, setDndAnnouncement] = useState('');
 
   // 22-12: component:* 句柄读取的最新操作面镜像（calendar navRef 模式）。
   // 每次渲染后刷新；句柄 invoke 经镜像间接调用，保持注册 identity 稳定。
@@ -477,7 +481,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       getData: (): BoardData => boardDataRef.current,
       getColumnsCount: (): number => getColumns(boardDataRef.current).length,
     };
-  });
+    // 回调稳定化（useCallback 家族）之后按依赖收口——此前无 deps 每 render
+    // 重建镜像；在回调稳定化之前加 deps 会拿到过期闭包（see plan 2026-09-29-1）。
+  }, [handleCardAddAt, handleCardRemove, handleCardMoveViaHandle, handleCollapseColumn, isControlled, boardData]);
 
   // 22-12: ComponentHandle 注册（gantt.tsx / calendar.tsx 模式，实现抽离
   // `kanban-handle.ts`）——使 design.md §8 声明的 component:scrollToCard/
@@ -617,8 +623,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
                 filterText={filter.activeFilterText}
                 draggable={draggable}
                 columnWidth={columnWidthMode === 'auto' ? undefined : resize.getWidth(col.id)}
-                onResizeStart={(e) => resize.handleResizeStart(e, col.id)}
-                onResizeKeyDown={(e) => resize.handleResizeKeyDown(e, col.id)}
+                onResizeStart={resize.handleResizeStart}
+                onResizeKeyDown={resize.handleResizeKeyDown}
                 minWidth={resize.minWidth}
                 maxWidth={resize.maxWidth}
                 virtualize
@@ -635,7 +641,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
                 cardTemplateRegion={regions.cardTemplate as any}
                 columnFooterRegion={regions.columnFooter as any}
                 selectedTagIds={selectedTagIds}
-                filterCardFn={(card) => filter.matchesCard(card)} 
+                filterCardFn={filter.matchesCard}
                 helpers={helpers}
                 dropTargetCardIndex={col.id === dropState.targetColumnId ? dropState.targetCardIndex : null}
                 dropClosestEdge={col.id === dropState.targetColumnId ? dropState.closestEdge : null}

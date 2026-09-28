@@ -1,7 +1,7 @@
 import React, { useSyncExternalStore } from 'react';
 import { cn } from '@nop-chaos/ui';
 import type { GanttStoreApi } from './gantt.types.js';
-import { computeScaleIntervals } from './utils/scale.js';
+import { computeScaleIntervalsCached, sliceVisibleCells } from './utils/scale.js';
 
 interface GanttCellGridProps {
   store: GanttStoreApi;
@@ -12,19 +12,19 @@ interface GanttCellGridProps {
 export function GanttCellGrid({ store, showWeekends = true, className }: GanttCellGridProps) {
   useSyncExternalStore(store.subscribe, () => store.layoutRevision);
   useSyncExternalStore(store.subscribe, () => store.treeRevision);
+  useSyncExternalStore(store.subscribe, () => store.scrollRevision);
 
   const tasks = store.getVisibleTasks();
   const totalHeight = tasks.length * store.rowHeight;
 
   const zoom = store.zoomLevels.get(store.currentZoom);
-  const dayScale = (() => {
+  const dayCells = (() => {
     if (!zoom) return [];
     const dayScales = zoom.scales.filter((s) => s.unit === 'day');
     if (dayScales.length === 0) return [];
-    return computeScaleIntervals(store.scaleRange, dayScales, store.cellWidth);
+    const rows = computeScaleIntervalsCached(store.scaleRange, dayScales, store.cellWidth);
+    return sliceVisibleCells(rows[0].cells, store.scrollLeft, store.containerWidth).cells;
   })();
-
-  const dayCells = dayScale.length > 0 ? dayScale[0].cells : [];
 
   return (
     <div className={cn('nop-gantt-cell-grid absolute inset-0 pointer-events-none', className)} data-slot="gantt-cell-grid">

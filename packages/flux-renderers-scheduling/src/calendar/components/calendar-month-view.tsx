@@ -1,11 +1,11 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import React, { useMemo, useState, useRef, useLayoutEffect } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarDateRange } from '../calendar.types.js';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
 import { getDateRange, getMonthStartEnd, isToday, isWeekend, toISODateString } from '../utils/calendar-date-utils.js';
-import { positionEventsInMonth, splitMultiDayEvents, detectConflicts } from '../utils/calendar-layout-utils.js';
+import { positionEventsInMonth, splitMultiDayEvents, detectMonthConflicts } from '../utils/calendar-layout-utils.js';
 import { computeCrossDayLines, createSVGPath, type CellPosition } from '../utils/calendar-cross-day-lines.js';
 import { CalendarEventBlock } from './calendar-event-block.js';
 
@@ -32,8 +32,28 @@ export interface CalendarMonthViewProps {
   locale?: string;
 }
 
+const weekdayFormatterCache = new Map<string, Intl.DateTimeFormat>();
+function getWeekdayFormatter(locale: string): Intl.DateTimeFormat {
+  let formatter = weekdayFormatterCache.get(locale);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+    weekdayFormatterCache.set(locale, formatter);
+  }
+  return formatter;
+}
+
+const longDateFormatterCache = new Map<string, Intl.DateTimeFormat>();
+function getLongDateFormatter(locale: string): Intl.DateTimeFormat {
+  let formatter = longDateFormatterCache.get(locale);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    longDateFormatterCache.set(locale, formatter);
+  }
+  return formatter;
+}
+
 function getWeekdayLabels(locale: string, firstDayOfWeek: 0 | 1): string[] {
-  const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+  const formatter = getWeekdayFormatter(locale);
   const labels = Array.from({ length: 7 }, (_, i) => {
     return formatter.format(new Date(2026, 0, 4 + i));
   });
@@ -63,27 +83,19 @@ export function CalendarMonthView({
   eventClassName,
   locale = 'en-US',
 }: CalendarMonthViewProps) {
-  const { start, end } = getMonthStartEnd(currentDate);
-  const days = getDateRange(start, end);
+  const { start, end } = useMemo(() => getMonthStartEnd(currentDate), [currentDate]);
+  const days = useMemo(() => getDateRange(start, end), [start, end]);
 
-  const positionedMap = positionEventsInMonth({ events, resources, dateRange, maxConcurrent });
+  const positionedMap = useMemo(
+    () => positionEventsInMonth({ events, resources, dateRange, maxConcurrent }),
+    [events, resources, dateRange, maxConcurrent],
+  );
 
-  const conflictMap = (() => {
-    const map = new Map<string, Set<string>>();
-    for (const resource of resources) {
-      for (const day of days) {
-        const dateStr = toISODateString(day);
-        const conflict = detectConflicts({ events, resourceId: resource.id, date: dateStr });
-        if (conflict) {
-          const ids = new Set(conflict.overlappingEvents.map(e => e.id));
-          map.set(`${resource.id}:${dateStr}`, ids);
-        }
-      }
-    }
-    return map;
-  })();
+  // O(events x days) bucketed membership + per-bucket sweep — replaces the
+  // per-render O(resources x days x events) filter chain (plan 2026-09-29-1).
+  const conflictMap = useMemo(() => detectMonthConflicts({ events, days }), [events, days]);
 
-  const weekdayLabels = getWeekdayLabels(locale, firstDayOfWeek);
+  const weekdayLabels = useMemo(() => getWeekdayLabels(locale, firstDayOfWeek), [locale, firstDayOfWeek]);
   const [focusedCell, setFocusedCell] = useState<{ resourceId: string; dateStr: string } | null>(null);
 
   // [G4-视角11-01] 溢出指示「+N 更多」的可点击样式必须有真实行为：点击展开
@@ -102,9 +114,11 @@ export function CalendarMonthView({
     });
   };
 
-  const uncappedPositionedMap = expandedCells.size > 0
-    ? positionEventsInMonth({ events, resources, dateRange, maxConcurrent: 0 })
-    : null;
+  const anyCellExpanded = expandedCells.size > 0;
+  const uncappedPositionedMap = useMemo(
+    () => (anyCellExpanded ? positionEventsInMonth({ events, resources, dateRange, maxConcurrent: 0 }) : null),
+    [anyCellExpanded, events, resources, dateRange],
+  );
 
   const handleDateCellKeyDown = (e: React.KeyboardEvent, dateStr: string, resourceId: string) => {
     if (!showWeekends && isWeekend(new Date(dateStr))) return;
@@ -168,6 +182,7 @@ export function CalendarMonthView({
   const displayResources = resources.length === 0
     ? [{ id: '_default', text: '', title: '' }]
     : resources;
+  const longDateFormatter = getLongDateFormatter(locale);
 
   const resourceRows = (virtualItems ?? displayResources.map((_, i) => ({ index: i, start: i * 48, size: 48 }))).map(
     (vItem) => {
@@ -256,7 +271,7 @@ export function CalendarMonthView({
                   key={dateStr}
                   role="gridcell"
                   tabIndex={cellTabIndex}
-                  aria-label={`${day.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}${today ? ', today' : ''}${weekend ? ', weekend' : ''}`}
+                  aria-label={`${longDateFormatter.format(day)}${today ? ', today' : ''}${weekend ? ', weekend' : ''}`}
                   aria-current={today ? 'date' : undefined}
                   data-slot="calendar-cell"
                   data-date={dateStr}
@@ -343,7 +358,7 @@ export function CalendarMonthView({
     },
   );
 
-  const splitEvents = splitMultiDayEvents(events);
+  const splitEvents = useMemo(() => splitMultiDayEvents(events), [events]);
 
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const [svgPixelDims, setSvgPixelDims] = useState({ width: 0, height: 0 });

@@ -17,6 +17,8 @@ export interface SplitEventBlock {
   isSplit: boolean;
   dayIndex: number;
   totalDays: number;
+  /** Precomputed epoch of `date` — sort comparators must not re-parse dates. */
+  dateEpoch: number;
 }
 
 export function splitMultiDayEvents(events: CalendarEvent[]): SplitEventBlock[] {
@@ -40,6 +42,7 @@ export function splitMultiDayEvents(events: CalendarEvent[]): SplitEventBlock[] 
         isSplit: totalDays > 1,
         dayIndex: i,
         totalDays,
+        dateEpoch: dayDate.getTime(),
       });
     }
   }
@@ -77,14 +80,9 @@ function groupEventsByResourceDate(
 
 function sortEventsByStartAndDuration(events: SplitEventBlock[]): void {
   events.sort((a, b) => {
-    const dateA = parseISODate(a.date);
-    const dateB = parseISODate(b.date);
-    if (!dateA || !dateB) return 0;
-    const cmp = dateA.getTime() - dateB.getTime();
+    const cmp = a.dateEpoch - b.dateEpoch;
     if (cmp !== 0) return cmp;
-    const durA = a.totalDays;
-    const durB = b.totalDays;
-    return durB - durA;
+    return b.totalDays - a.totalDays;
   });
 }
 
@@ -177,6 +175,61 @@ export function detectConflicts(input: ConflictInput): ConflictInfo | undefined 
 
   if (resourceDateEvents.length < 2) return undefined;
 
+  const conflict = sweepOverlaps(resourceDateEvents);
+  if (!conflict) return undefined;
+
+  return {
+    resourceId,
+    date,
+    overlappingEvents: conflict.overlappingEvents,
+  };
+}
+
+function extractDatePart(isoStr: string): string {
+  return isoStr.split('T')[0] ?? isoStr;
+}
+
+/**
+ * Month-grid batch conflict detection, equivalent to calling detectConflicts
+ * per (resource, day) but with membership bucketed in one O(events x days)
+ * pass instead of O(resources x days x events) filters per render. The sweep
+ * per non-empty bucket is the same algorithm as detectConflicts (resource id
+ * matched raw, no normalization — same as the per-cell path).
+ */
+export function detectMonthConflicts(input: {
+  events: CalendarEvent[];
+  days: Date[];
+}): Map<string, Set<string>> {
+  const { events, days } = input;
+  const result = new Map<string, Set<string>>();
+  if (events.length === 0 || days.length === 0) return result;
+
+  const dateStrs = days.map((day) => toISODateString(day));
+  const buckets = new Map<string, CalendarEvent[]>();
+  for (const event of events) {
+    const eventDateStart = extractDatePart(event.start);
+    const eventDateEnd = extractDatePart(event.end);
+    const resourceKey = event.resourceId ?? '';
+    for (const dateStr of dateStrs) {
+      if (eventDateStart <= dateStr && eventDateEnd >= dateStr) {
+        const key = `${resourceKey}:${dateStr}`;
+        const bucket = buckets.get(key);
+        if (bucket) bucket.push(event);
+        else buckets.set(key, [event]);
+      }
+    }
+  }
+
+  for (const [key, bucket] of buckets) {
+    if (bucket.length < 2) continue;
+    const conflict = sweepOverlaps(bucket);
+    if (!conflict) continue;
+    result.set(key, new Set(conflict.overlappingEvents.map((e) => e.id)));
+  }
+  return result;
+}
+
+function sweepOverlaps(resourceDateEvents: CalendarEvent[]): ConflictInfo | undefined {
   const parsed = resourceDateEvents
     .map((evt) => ({
       event: evt,
@@ -184,6 +237,8 @@ export function detectConflicts(input: ConflictInput): ConflictInfo | undefined 
       end: parseISODateTime(evt.end),
     }))
     .filter((p): p is { event: CalendarEvent; start: Date; end: Date } => p.start != null && p.end != null);
+
+  if (parsed.length < 2) return undefined;
 
   parsed.sort((a, b) => a.start.getTime() - b.start.getTime());
 
@@ -210,14 +265,10 @@ export function detectConflicts(input: ConflictInput): ConflictInfo | undefined 
   if (overlappingSet.size === 0) return undefined;
 
   return {
-    resourceId,
-    date,
+    resourceId: '',
+    date: '',
     overlappingEvents: [...overlappingSet],
   };
-}
-
-function extractDatePart(isoStr: string): string {
-  return isoStr.split('T')[0] ?? isoStr;
 }
 
 function parseISODateTime(isoStr: string): Date | undefined {

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RendererHelpers } from '@nop-chaos/flux-core';
@@ -26,8 +26,8 @@ export interface KanbanColumnProps {
   draggable?: boolean;
   className?: string;
   columnWidth?: number;
-  onResizeStart?: (e: React.PointerEvent) => void;
-  onResizeKeyDown?: (e: React.KeyboardEvent) => void;
+  onResizeStart?: (e: React.PointerEvent, columnId: string) => void;
+  onResizeKeyDown?: (e: React.KeyboardEvent, columnId: string) => void;
   minWidth?: number;
   maxWidth?: number;
   virtualize?: boolean;
@@ -50,7 +50,7 @@ export interface KanbanColumnProps {
   onAggregateFallback?: () => void;
 }
 
-export function KanbanColumn({
+function KanbanColumnInner({
   column,
   board,
   collapsed,
@@ -93,13 +93,18 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   const columnRef = useRef<HTMLDivElement>(null);
 
-  const cardIds = column.children;
-  const cardIndexMap = new Map<string, number>(cardIds.map((id, idx) => [id, idx]));
-  const cards = cardIds
-    .map((id) => board[id])
-    .filter((item): item is BoardItem => item != null && item.type === 'card');
+  const cardIndexMap = useMemo(
+    () => new Map<string, number>(column.children.map((id, idx) => [id, idx])),
+    [column],
+  );
+  const cards = useMemo(
+    () => column.children
+      .map((id) => board[id])
+      .filter((item): item is BoardItem => item != null && item.type === 'card'),
+    [column, board],
+  );
 
-  const filteredCards = (() => {
+  const filteredCards = useMemo(() => {
     let result = cards;
     if (filterText) {
       const text = filterText.toLowerCase();
@@ -120,7 +125,7 @@ export function KanbanColumn({
       result = result.filter(filterCardFn);
     }
     return result;
-  })();
+  }, [cards, filterText, selectedTagIds, filterCardFn]);
 
   useEffect(() => {
     if (!registerColumn || !columnRef.current) return;
@@ -134,7 +139,10 @@ export function KanbanColumn({
     };
   }, [registerColumn, column.id, filteredCards.length, registerBoardDropZone, board]);
 
-  const displayCards = collapsed ? [] : filteredCards;
+  const displayCards = useMemo(
+    () => (collapsed ? [] : filteredCards),
+    [collapsed, filteredCards],
+  );
   const showEmptyZone = !collapsed && filteredCards.length === 0;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -173,7 +181,7 @@ export function KanbanColumn({
   // 索引与 data-card-index（真实 board 索引）错位，索引查询会落空。
   const [rovingCardId, setRovingCardId] = useState<string | null>(null);
 
-  const handleCardKeyDown = (e: React.KeyboardEvent, displayIdx: number) => {
+  const handleCardKeyDown = useCallback((e: React.KeyboardEvent, displayIdx: number) => {
     const cards = displayCards;
     switch (e.key) {
       case 'ArrowDown': {
@@ -199,7 +207,7 @@ export function KanbanColumn({
         break;
       }
     }
-  };
+  }, [displayCards]);
 
   const rovingIndex = rovingCardId == null ? null : displayCards.findIndex((c) => c.id === rovingCardId);
 
@@ -236,8 +244,8 @@ export function KanbanColumn({
         columnHeaderRegion={columnHeaderRegion}
         columnHeaderToolbarRegion={columnHeaderToolbarRegion}
         dndEnabled={draggable}
-        onResizeStart={onResizeStart}
-        onResizeKeyDown={onResizeKeyDown}
+        onResizeStart={onResizeStart ? (e) => onResizeStart(e, column.id) : undefined}
+        onResizeKeyDown={onResizeKeyDown ? (e) => onResizeKeyDown(e, column.id) : undefined}
         columnWidth={columnWidth}
         minWidth={minWidth}
         maxWidth={maxWidth}
@@ -287,7 +295,8 @@ export function KanbanColumn({
                       registerCard={registerCard}
                       tabIndex={virtualItem.index === (rovingIndex ?? 0) ? 0 : -1}
                       // 1-11: roving 用显示索引（virtualItem.index），与 data-card-index（真实 board 索引）解耦
-                      onRovingKeyDown={(e) => handleCardKeyDown(e, virtualItem.index)}
+                      onRovingKeyDown={handleCardKeyDown}
+                      displayIndex={virtualItem.index}
                     />
                   </div>
                 );
@@ -315,7 +324,8 @@ export function KanbanColumn({
                     registerCard={registerCard}
                     tabIndex={idx === (rovingIndex ?? 0) ? 0 : -1}
                     // 1-11: roving 用显示索引（idx），与 data-card-index（真实 board 索引）解耦
-                    onRovingKeyDown={(e) => handleCardKeyDown(e, idx)}
+                    onRovingKeyDown={handleCardKeyDown}
+                    displayIndex={idx}
                   />
                   {dropTargetCardIndex === idx && dropClosestEdge === 'after' && (
                     <div role="none" className="nop-kanban-drop-indicator" />
@@ -353,3 +363,5 @@ export function KanbanColumn({
     </div>
   );
 }
+
+export const KanbanColumn = React.memo(KanbanColumnInner);

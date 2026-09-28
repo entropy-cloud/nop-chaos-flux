@@ -58,8 +58,9 @@ export function getVisibleTasks(tasks: Map<GanttId, GanttTask>, parentIndex: Map
 export function computeLevels(tasks: Map<GanttId, GanttTask>, parentIndex: Map<GanttId | null, GanttId[]>): Map<GanttId, GanttTask> {
   const newTasks = new Map(tasks);
   const queue: Array<{ parent: GanttId | null; level: number }> = [{ parent: null, level: 0 }];
-  while (queue.length > 0) {
-    const { parent, level } = queue.shift()!;
+  let queueHead = 0;
+  while (queueHead < queue.length) {
+    const { parent, level } = queue[queueHead++];
     const children = parentIndex.get(parent);
     if (children) for (const childId of children) {
       const task = newTasks.get(childId);

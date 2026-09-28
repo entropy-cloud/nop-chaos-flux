@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { CalendarView } from '../../schemas.js';
 import type { CalendarDateRange } from '../calendar.types.js';
 import { getMonthStartEnd, getWeekStartEnd, getDayStartEnd } from '../utils/calendar-date-utils.js';
@@ -41,7 +41,7 @@ export function useCalendarState(options: CalendarStateOptions = {}): CalendarSt
   const currentDate = isControlledDate ? controlledDate : localDate;
   const activeView = isControlledView ? controlledView : localView;
 
-  const dateRange = ((): CalendarDateRange => {
+  const dateRange = useMemo((): CalendarDateRange => {
     switch (activeView) {
       case 'week':
         return getWeekStartEnd(currentDate, firstDayOfWeek);
@@ -51,7 +51,7 @@ export function useCalendarState(options: CalendarStateOptions = {}): CalendarSt
       default:
         return getMonthStartEnd(currentDate);
     }
-  })();
+  }, [activeView, currentDate, firstDayOfWeek]);
 
   const setCurrentDate = (date: Date) => {
     if (!isControlledDate) {

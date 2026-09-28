@@ -27,6 +27,10 @@ export interface UseCalendarDragOptions {
   onEventChange?: (payload: DragSwapPayload) => void;
   getCellFromPoint?: (x: number, y: number) => { date: string; resourceId: string } | null;
   onKeyboardMoveEvent?: (eventId: string, direction: 'up' | 'down' | 'left' | 'right') => void;
+  /** Per-pointermove ghost frame hook. The consumer owns the ghost element
+   *  and applies (x, y) as direct style writes — pointer coordinates in
+   *  state would re-render the whole grid per mousemove. */
+  onGhostFrame?: (x: number, y: number) => void;
 }
 
 export interface UseCalendarDragResult {
@@ -49,6 +53,8 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
   useEffect(() => { getCellFromPointRef.current = getCellFromPoint; }, [getCellFromPoint]);
   const onKeyboardMoveEventRef = useRef(onKeyboardMoveEvent);
   useEffect(() => { onKeyboardMoveEventRef.current = onKeyboardMoveEvent; }, [onKeyboardMoveEvent]);
+  const onGhostFrameRef = useRef(options.onGhostFrame);
+  useEffect(() => { onGhostFrameRef.current = options.onGhostFrame; }, [options.onGhostFrame]);
 
   const [dragState, setDragState] = useState<DragSwapState>({
     active: false,
@@ -106,28 +112,25 @@ export function useCalendarDrag(options: UseCalendarDragOptions): UseCalendarDra
     const handlePointerMove = (e: PointerEvent) => {
       if (!activeRef.current) return;
 
-      setDragState((prev) => ({
-        ...prev,
-        currentX: e.clientX,
-        currentY: e.clientY,
-      }));
+      // Per-frame ghost positioning is a direct style write: putting pointer
+      // coordinates in state re-rendered the whole grid per mousemove.
+      onGhostFrameRef.current?.(e.clientX, e.clientY);
 
+      // Cell-crossing updates stay in state (they drive the drop-target
+      // highlight effect) but only fire when the target cell actually flips.
       if (getCellFromPointRef.current) {
         const cell = getCellFromPointRef.current(e.clientX, e.clientY);
-        if (cell) {
-          pendingTargetRef.current = cell;
-          setDragState((prev) => ({
-            ...prev,
-            targetDate: cell.date,
-            targetResource: cell.resourceId,
-          }));
+        const prev = pendingTargetRef.current;
+        if (!cell) {
+          if (prev) {
+            pendingTargetRef.current = null;
+            setDragState((p) => ({ ...p, targetDate: null, targetResource: null }));
+          }
         } else {
-          pendingTargetRef.current = null;
-          setDragState((prev) => ({
-            ...prev,
-            targetDate: null,
-            targetResource: null,
-          }));
+          pendingTargetRef.current = cell;
+          if (!prev || prev.date !== cell.date || prev.resourceId !== cell.resourceId) {
+            setDragState((p) => ({ ...p, targetDate: cell.date, targetResource: cell.resourceId }));
+          }
         }
       }
     };

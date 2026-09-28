@@ -21,7 +21,7 @@ export interface GanttStoreState {
   scaleRange: { start: Date; end: Date }; cellWidth: number; currentZoom: string;
   zoomLevels: Map<string, GanttZoomLevel>; taskBarHeight: number; rowHeight: number;
   containerWidth: number; revision: number; taskRevision: number; linkRevision: number;
-  treeRevision: number; layoutRevision: number;
+  treeRevision: number; layoutRevision: number; scrollRevision: number;
   expandedSet: Set<GanttId>;
   selectedTaskId: GanttId | null; editingTaskId: GanttId | null;
 }
@@ -48,6 +48,7 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
   let parentIndex = new Map<GanttId | null, GanttId[]>();
   let _cachedVisibleTasks: GanttTask[] = [];
   let _visibleTasksCacheDirty = true;
+  let _criticalPathCache: { taskRevision: number; linkRevision: number; path: GanttId[] } | null = null;
   let _scrollLeft = config?.scrollLeft ?? 0;
   const calendarManager = new CalendarManager(config?.globalCalendarId);
 
@@ -58,7 +59,7 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     zoomLevels: new Map(config?.zoomLevels?.map((zl) => [zl.key, zl]) ?? []),
     taskBarHeight: config?.taskBarHeight ?? 28, rowHeight: config?.rowHeight ?? 40,
     containerWidth: config?.containerWidth ?? 800,
-    revision: 0, taskRevision: 0, linkRevision: 0, treeRevision: 0, layoutRevision: 0,
+    revision: 0, taskRevision: 0, linkRevision: 0, treeRevision: 0, layoutRevision: 0, scrollRevision: 0,
     expandedSet: new Set(),
     selectedTaskId: null, editingTaskId: null,
   }));
@@ -71,25 +72,42 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     computeLinkPolylinesInternal();
   }
 
+  // Pure computed-properties pass: levels/branch/source-target annotations,
+  // scale range, bar coordinates and link polylines derived without any
+  // intermediate store notification — callers commit the returned patch in a
+  // single setState (updateTask pays one notification total per edit).
+  function computeComputedPatch(seedExpand = false, overrides?: Partial<GanttStoreState>): Partial<GanttStoreState> {
+    const base = overrides ? { ...gs(), ...overrides } : gs();
+    parentIndex = buildParentIndex(base.tasks);
+    const tasksAfterLevels = computeLevels(base.tasks, parentIndex);
+    const tasksAfterBranchInfo = computeBranchInfo(tasksAfterLevels, parentIndex);
+    const tasksAfterSourceTarget = computeSourceTarget(tasksAfterBranchInfo, base.links);
+    const range = computeScaleRange(Array.from(tasksAfterSourceTarget.values()));
+    const expandedSet = seedExpand ? seedExpandedSet(tasksAfterSourceTarget, base.expandedSet) : base.expandedSet;
+
+    const visibleTasks = getVisibleTasks(tasksAfterSourceTarget, parentIndex, expandedSet);
+    const visibleIds = visibleTasks.map((t) => t.id);
+    const clonedTasks = visibleTasks.map((t) => ({ ...t }));
+    computeTaskLayout(clonedTasks, visibleIds, range, base.cellWidth, base.taskBarHeight, base.rowHeight);
+    const finalTasks = new Map(tasksAfterSourceTarget);
+    for (const task of clonedTasks) finalTasks.set(task.id, task as GanttTask);
+
+    const finalLinks = new Map(base.links);
+    for (const [id, link] of finalLinks) finalLinks.set(id, { ...link });
+    computeLinkPolylines(finalTasks, finalLinks);
+
+    const patch: Partial<GanttStoreState> = { tasks: finalTasks, links: finalLinks, scaleRange: range };
+    if (seedExpand) patch.expandedSet = expandedSet;
+    return patch;
+  }
+
   function computeComputedPropertiesInternal(seedExpand = false): void {
-    parentIndex = buildParentIndex(gs().tasks);
+    // The expandedSet/patch change must invalidate the visible-tasks cache
+    // BEFORE the setState notification: a subscriber's getSnapshot re-reading
+    // getVisibleTasks() during the notification would otherwise reuse the
+    // pre-seed (all-collapsed) cache and pin it for every later consumer.
     _visibleTasksCacheDirty = true;
-    const tasksAfterLevels = computeLevels(gs().tasks, parentIndex);
-    store.setState({ tasks: tasksAfterLevels });
-    const tasksAfterBranchInfo = computeBranchInfo(gs().tasks, parentIndex);
-    store.setState({ tasks: tasksAfterBranchInfo });
-    const tasksAfterSourceTarget = computeSourceTarget(gs().tasks, gs().links);
-    store.setState({ tasks: tasksAfterSourceTarget });
-    if (seedExpand) {
-      const state = gs();
-      // The expandedSet change must invalidate the visible-tasks cache BEFORE
-      // the setState notification: a subscriber's getSnapshot re-reading
-      // getVisibleTasks() during the notification would otherwise reuse the
-      // pre-seed (all-collapsed) cache and pin it for every later consumer.
-      _visibleTasksCacheDirty = true;
-      store.setState({ expandedSet: seedExpandedSet(state.tasks, state.expandedSet) });
-    }
-    recomputeVisualLayout();
+    store.setState(computeComputedPatch(seedExpand));
   }
 
   function computeScaleRangeInternal(): void {
@@ -146,7 +164,11 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     setZoomLevels: (v: Map<string, GanttZoomLevel>) => { store.setState({ zoomLevels: v }); },
     // [G4-R3-视角10-01] 锚定生产端方法形式（属性 setter 的 React-compiler
     // 安全形态，gantt.tsx 滚动回调消费）。
-    setScrollLeft: (v: number) => { _scrollLeft = v; },
+    setScrollLeft: (v: number) => {
+      if (v === _scrollLeft) return;
+      _scrollLeft = v;
+      store.setState({ scrollRevision: gs().scrollRevision + 1 });
+    },
     setContainerWidth: (v: number) => { store.setState({ containerWidth: v }); },
     get rowHeight(): number { return gs().rowHeight; },
     get containerWidth(): number { return gs().containerWidth; },
@@ -156,8 +178,13 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
     get linkRevision(): number { return gs().linkRevision; },
     get treeRevision(): number { return gs().treeRevision; },
     get layoutRevision(): number { return gs().layoutRevision; },
+    get scrollRevision(): number { return gs().scrollRevision; },
     get scrollLeft(): number { return _scrollLeft; },
-    set scrollLeft(v: number) { _scrollLeft = v; },
+    set scrollLeft(v: number) {
+      if (v === _scrollLeft) return;
+      _scrollLeft = v;
+      store.setState({ scrollRevision: gs().scrollRevision + 1 });
+    },
 
     get selectedTaskId(): GanttId | null { return gs().selectedTaskId; },
     selectTask(v: GanttId | null): void { store.setState({ selectedTaskId: v }); },
@@ -224,10 +251,14 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
         updated = { ...updated, end: calendar.addWorkDays(from, updated.duration).toISOString().slice(0, 10) };
       }
       const newTasks = new Map(state.tasks); newTasks.set(id, updated);
-      store.setState({ tasks: newTasks, revision: state.revision + 1, taskRevision: state.taskRevision + 1 });
-      computeComputedPropertiesInternal();
-      const s2 = gs();
-      store.setState({ layoutRevision: s2.layoutRevision + 1 });
+      const patch = computeComputedPatch(false, { tasks: newTasks });
+      _visibleTasksCacheDirty = true;
+      store.setState({
+        ...patch,
+        revision: state.revision + 1,
+        taskRevision: state.taskRevision + 1,
+        layoutRevision: state.layoutRevision + 1,
+      });
     },
 
     updateLink(id: GanttId, partial: Partial<GanttLink>): void {
@@ -301,7 +332,16 @@ export function createGanttStore(config?: GanttStoreConfig): GanttStoreApi {
 
     getCriticalPath(): GanttId[] {
       const state = gs();
-      return calculateCriticalPath(state.tasks, state.links);
+      if (
+        _criticalPathCache &&
+        _criticalPathCache.taskRevision === state.taskRevision &&
+        _criticalPathCache.linkRevision === state.linkRevision
+      ) {
+        return _criticalPathCache.path;
+      }
+      const path = calculateCriticalPath(state.tasks, state.links);
+      _criticalPathCache = { taskRevision: state.taskRevision, linkRevision: state.linkRevision, path };
+      return path;
     },
 
     deleteTask(id: GanttId): void {

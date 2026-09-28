@@ -121,6 +121,41 @@ function defaultFormat(unit: GanttScaleConfig['unit']): string {
   }
 }
 
+// Single-entry memo per scaleRange identity: interval construction walks the
+// whole padded range and used to re-run on every scroll-frame re-render.
+const intervalCache = new WeakMap<ScaleRange, { scales: GanttScaleConfig[]; cellWidth: number; rows: ScaleRow[] }>();
+
+export function computeScaleIntervalsCached(
+  scaleRange: ScaleRange,
+  scales: GanttScaleConfig[],
+  cellWidth: number,
+): ScaleRow[] {
+  const entry = intervalCache.get(scaleRange);
+  if (entry && entry.scales === scales && entry.cellWidth === cellWidth) return entry.rows;
+  const rows = computeScaleIntervals(scaleRange, scales, cellWidth);
+  intervalCache.set(scaleRange, { scales, cellWidth, rows });
+  return rows;
+}
+
+export interface WindowedCells {
+  cells: ScaleCell[];
+  totalWidth: number;
+}
+
+export function sliceVisibleCells(
+  cells: ScaleCell[],
+  scrollLeft: number,
+  containerWidth: number,
+  overscan = 5,
+): WindowedCells {
+  if (cells.length === 0) return { cells, totalWidth: 0 };
+  const { startCellIndex, endCellIndex } = smartScaling(scrollLeft, containerWidth, cells);
+  const start = Math.max(0, startCellIndex - overscan);
+  const end = Math.min(cells.length - 1, endCellIndex + overscan);
+  const last = cells[cells.length - 1];
+  return { cells: cells.slice(start, end + 1), totalWidth: last.x + last.width };
+}
+
 export interface VisibleWindow {
   startCellIndex: number;
   endCellIndex: number;

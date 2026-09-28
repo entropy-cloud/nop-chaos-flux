@@ -466,7 +466,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const timelineHeight = visibleTasks.length > 0
       ? visibleTasks.reduce((max, t) => Math.max(max, (t.$y ?? 0) + (t.$h ?? 0)), 400)
       : 400;
-    // CPM 派生（design.md §12.6）：store 只读纯函数，渲染期直接调用。
+    // CPM 派生（design.md §12.6）：store 侧按 (taskRevision, linkRevision)
+    // 缓存（getCriticalPath 命中返回同一数组），渲染期只付 Set 包装成本。
     const criticalTaskIds = new Set(store.getCriticalPath());
 
     const handleTaskClick = (taskId: string | number) => {

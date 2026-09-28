@@ -62,64 +62,64 @@
 
 ### Phase 1 - kanban 拖拽成本与整板拷贝
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/kanban/`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] KanbanColumn/KanbanCard 包 React.memo；传参回调（filterCardFn、handlers）latest-ref/useCallback 稳定化（list-renderer handleSelect 先例）。**顺序约束**：先完成回调稳定化，再收口 surface ref effect——`kanban-board.tsx:438-439` 的无 deps effect 是有意的 latest-mirror（句柄 invoke 经镜像间接调用），先加 deps 会拿到过期闭包
-- [ ] 列内派生（`cardIndexMap` :97、`filteredCards` 三段 filter 链 :102-123）随 React.memo 在列 scope 收敛；板级派生仅 `collectAllTags`（:231）与 `wipOverLimitColumns`（:237-242）memo 化
-- [ ] `cloneBoard` 结构共享：仅复制 root.children + 源/目标列 children + 被移动条目（changeCard/addCard 等同理最小拷贝）
-- [ ] kanban surface ref effect 在回调稳定化之后补 deps（或 latest-ref），消除每 render 重建
-- [ ] focused 测试：memo 渲染计数断言（hover 非目标列零重渲染）、结构共享引用断言、拖拽语义回归
-- [ ] Proof: kanban 全部既有用例绿
+- [x] KanbanColumn/KanbanCard 包 React.memo；传参回调（filterCardFn、handlers）latest-ref/useCallback 稳定化（list-renderer handleSelect 先例）。**顺序约束**：先完成回调稳定化，再收口 surface ref effect——`kanban-board.tsx:438-439` 的无 deps effect 是有意的 latest-mirror（句柄 invoke 经镜像间接调用），先加 deps 会拿到过期闭包
+- [x] 列内派生（`cardIndexMap` :97、`filteredCards` 三段 filter 链 :102-123）随 React.memo 在列 scope 收敛；板级派生仅 `collectAllTags`（:231）与 `wipOverLimitColumns`（:237-242）memo 化
+- [x] `cloneBoard` 结构共享：仅复制 root.children + 源/目标列 children + 被移动条目（changeCard/addCard 等同理最小拷贝）
+- [x] kanban surface ref effect 在回调稳定化之后补 deps（或 latest-ref），消除每 render 重建
+- [x] focused 测试：memo 渲染计数断言（hover 非目标列零重渲染）、结构共享引用断言、拖拽语义回归
+- [x] Proof: kanban 全部既有用例绿
 
 Exit Criteria:
 
-- [ ] kanban-column/card memo 生效有渲染计数测试；非悬停列 hover tick 零重渲染断言成立
-- [ ] moveCard/moveColumn 后未涉及列的数组引用与旧板相同的结构共享测试成立
-- [ ] scheduling 包 focused 测试绿（含全部既有 kanban 用例）
+- [x] kanban-column/card memo 生效有渲染计数测试；非悬停列 hover tick 零重渲染断言成立（kanban-memo-structural-sharing.test.tsx：board 级无关状态变更重渲染断言 + 列/卡 identical-props bail 断言）
+- [x] moveCard/moveColumn 后未涉及列的数组引用与旧板相同的结构共享测试成立（10 项 helper 结构共享用例）
+- [x] scheduling 包 focused 测试绿（含全部既有 kanban 用例；111 文件/1069 用例）
 
 ### Phase 2 - calendar 冲突检测与拖拽
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/calendar/`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] events 按 (resourceId, date) 预分组（复用 splitMultiDayEvents/groupEventsByResourceDate），conflictMap 按桶计算，消除组件体内三重循环
-- [ ] 展开 cell 场景合并为单遍 positionEventsInMonth（消除 ：105-107 双遍）
-- [ ] drag ghost 改 ref 直改 transform（use-gantt-drag 先例），pointermove 不再整树 setDragState 重渲染网格。**消费者覆盖**：drop-target 高亮链路（`calendar.tsx:370-396` 基于 `dragSwap.dragState` 的 effect 设置 data-drop-target/drag-ok/drag-conflict + `:547-557` ghost 读 currentX/currentY）必须一并迁移到 ref/DOM-direct 路径，或保留低频 cell-crossing 状态更新并相应收窄断言（`calendar-drag-drop-visual.test.tsx` 固化了视觉契约，迁移不完整会被它拦下）
-- [ ] 次级：排序前预计算 epoch（去 comparator 内 parseISODate）、splitMultiDayEvents 单遍、Intl.DateTimeFormat 按 locale 提升
-- [ ] focused 测试：冲突标记结果与旧实现一致（等价性用例）、ghost 拖拽时网格组件渲染计数断言
-- [ ] Proof: calendar 全部既有用例绿
+- [x] events 按 (resourceId, date) 预分组（复用 splitMultiDayEvents/groupEventsByResourceDate），conflictMap 按桶计算，消除组件体内三重循环
+- [x] 展开 cell 场景合并为单遍 positionEventsInMonth（消除 ：105-107 双遍）
+- [x] drag ghost 改 ref 直改 transform（use-gantt-drag 先例），pointermove 不再整树 setDragState 重渲染网格。**消费者覆盖**：drop-target 高亮链路（`calendar.tsx:370-396` 基于 `dragSwap.dragState` 的 effect 设置 data-drop-target/drag-ok/drag-conflict + `:547-557` ghost 读 currentX/currentY）必须一并迁移到 ref/DOM-direct 路径，或保留低频 cell-crossing 状态更新并相应收窄断言（`calendar-drag-drop-visual.test.tsx` 固化了视觉契约，迁移不完整会被它拦下）
+- [x] 次级：排序前预计算 epoch（去 comparator 内 parseISODate）、splitMultiDayEvents 单遍、Intl.DateTimeFormat 按 locale 提升
+- [x] focused 测试：冲突标记结果与旧实现一致（等价性用例）、ghost 拖拽时网格组件渲染计数断言
+- [x] Proof: calendar 全部既有用例绿
 
 Exit Criteria:
 
-- [ ] 冲突检测等价性测试成立（预分组结果与全量 filter 结果一致）
-- [ ] 拖拽 pointermove 期间 month grid 重渲染计数为 0 的测试成立
-- [ ] calendar focused 测试绿（含既有用例）
+- [x] 冲突检测等价性测试成立（detectMonthConflicts 与逐 cell detectConflicts 全 (resource, day) 一致——calendar-month-conflict-and-drag-frames.test.tsx）
+- [x] 拖拽 pointermove 期间 month grid 重渲染计数为 0 的测试成立（同格移动零重渲染 + 零布局重算 + ghost 直改 style 断言；目标获取/cell-crossing 为合法单次转换，已在测试注明）
+- [x] calendar focused 测试绿（含既有用例，calendar-drag-drop-visual 视觉契约保持）
 
 ### Phase 3 - gantt 窗口化与重算收敛
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/gantt/`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] `smartScaling` 接入 gantt-timescale/gantt-cellgrid：仅渲染可见窗口 cells（offsetX 对齐）。**前置**：当前 `store.setScrollLeft`（gantt-store.ts:149）只写私有字段无通知，timescale/cellgrid 仅订阅 layoutRevision/treeRevision——需先接一条 scroll 事件驱动的 revision/state 通道（滚动节流）
-- [ ] CPM 结果按 (taskRevision, linkRevision) 缓存；选中点击零重算断言
-- [ ] updateTask 的三次 setState（levels/branch/source-target）合并为一次提交；computeCoordinates/links clone 维持行为不变前提下评估收敛
-- [ ] BFS 去 Array.shift（head 指针）
-- [ ] focused 测试：窗口化 cell 数上限断言、CPM 缓存断言、单次 setState 提交断言
-- [ ] Proof: gantt 全部既有用例绿
+- [x] `smartScaling` 接入 gantt-timescale/gantt-cellgrid：仅渲染可见窗口 cells（offsetX 对齐）。**前置**：当前 `store.setScrollLeft`（gantt-store.ts:149）只写私有字段无通知，timescale/cellgrid 仅订阅 layoutRevision/treeRevision——需先接一条 scroll 事件驱动的 revision/state 通道（滚动节流）
+- [x] CPM 结果按 (taskRevision, linkRevision) 缓存；选中点击零重算断言
+- [x] updateTask 的三次 setState（levels/branch/source-target）合并为一次提交；computeCoordinates/links clone 维持行为不变前提下评估收敛
+- [x] BFS 去 Array.shift（head 指针）
+- [x] focused 测试：窗口化 cell 数上限断言、CPM 缓存断言、单次 setState 提交断言
+- [x] Proof: gantt 全部既有用例绿
 
 Exit Criteria:
 
-- [ ] timescale/cellgrid 渲染 cell 数 ≤ 可见窗口 + overscan 的测试成立；滚动换窗无残留
-- [ ] 选中变更不触发 CPM 重算的测试成立
-- [ ] updateTask 单次 store 通知的测试成立
-- [ ] gantt focused 测试绿（含既有用例）
+- [x] timescale/cellgrid 渲染 cell 数 ≤ 可见窗口 + overscan 的测试成立；滚动换窗无残留（gantt-windowing-store-notifications.test.tsx：1358 → ≤40 cells、窗口随 scrollLeft 移动、weekend 标记同步有界）
+- [x] 选中变更不触发 CPM 重算的测试成立（getCriticalPath 按 (taskRevision, linkRevision) 缓存：重复调用/选中同引用、updateTask 后新引用）
+- [x] updateTask 单次 store 通知的测试成立（通知计数 = 1，$level 注算同 commit 内完成）
+- [x] gantt focused 测试绿（含既有用例）
 
 ## Draft Review Record
 
@@ -130,17 +130,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复（本 plan 为性能优化，无 live defect；finding 均为热点）
-- [ ] 所有 in-scope confirmed contract drifts 已收敛（不适用，无契约变更）
-- [ ] 行为/契约结果已达成（scheduling 交互行为与现状语义一致，等价性测试证明）
-- [ ] 必要 focused verification 已完成（各 Phase focused 测试）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required
+- [x] 所有 in-scope confirmed live defects 已修复（本 plan 为性能优化，无 live defect；finding 均为热点）
+- [x] 所有 in-scope confirmed contract drifts 已收敛（不适用，无契约变更）
+- [x] 行为/契约结果已达成（scheduling 交互行为与现状语义一致：kanban 结构共享/冲突检测等价性、calendar-drag-drop-visual 视觉契约、gantt 单通知语义，全部测试证明）
+- [x] 必要 focused verification 已完成（新增 3 个 focused 测试文件 28 用例：kanban memo/结构共享 14、calendar 冲突/拖拽帧 3、gantt 窗口/通知/CPM 6 + 交叉修复用例）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required（No owner-doc update required：全部为包内实现级优化，无公共契约/schema/行为面变更；gantt scrollRevision 通道与 interval 缓存为 store 内部机制）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`（42 包全绿）
+- [x] `pnpm build`（42 包全绿）
+- [x] `pnpm lint`（42 包全绿；gantt-grid useVirtualizer incompatible-library warning 为既有登记项）
+- [x] `pnpm test`（全仓通过；首轮 page-designer-renderers 并行偶发失败，单包复跑 141/141 绿 + 全量复跑缓存全绿；`pnpm check` exit 0）
 
 ## Deferred But Adjudicated
 

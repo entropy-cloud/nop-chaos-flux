@@ -20,9 +20,10 @@ export interface KanbanCardProps {
   registerCard?: (el: HTMLElement, cardId: string, columnId: string, index: number) => () => void;
   tabIndex?: number;
   onRovingKeyDown?: (e: React.KeyboardEvent, index: number) => void;
+  displayIndex?: number;
 }
 
-function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, onCardClick, onCardRemove, className, helpers, registerCard, tabIndex = 0, onRovingKeyDown }: KanbanCardProps) {
+function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, onCardClick, onCardRemove, className, helpers, registerCard, tabIndex = 0, onRovingKeyDown, displayIndex }: KanbanCardProps) {
   const cardRef = React.useRef<HTMLDivElement>(null);
   const registeredRef = React.useRef(false);
 
@@ -56,7 +57,7 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
       removeFn();
       return;
     }
-    onRovingKeyDown?.(e, index);
+    onRovingKeyDown?.(e, displayIndex ?? index);
   };
 
   const sharedAttributes = {
@@ -123,4 +124,4 @@ function KanbanCardInner({ card, column, index, configMap, cardTemplateRegion, o
   );
 }
 
-export const KanbanCard = KanbanCardInner;
+export const KanbanCard = React.memo(KanbanCardInner);

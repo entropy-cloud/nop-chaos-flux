@@ -337,12 +337,20 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     }
   };
 
+  const ghostElementRef = useRef<HTMLDivElement | null>(null);
+  const handleGhostFrame = useCallback((x: number, y: number) => {
+    const ghost = ghostElementRef.current;
+    if (!ghost) return;
+    ghost.style.left = `${x}px`;
+    ghost.style.top = `${y}px`;
+  }, []);
   const dragSwap = useCalendarDrag({
     events: eventsData,
     resources: resourcesData,
     onEventChange: handleSwapConfirm,
     getCellFromPoint,
     onKeyboardMoveEvent: handleKeyboardMoveEvent,
+    onGhostFrame: handleGhostFrame,
   });
 
   const handleEventKeyDown = (e: React.KeyboardEvent, event: CalendarEvent) => {
@@ -546,6 +554,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
       {dragSwap.dragState.active && (
         <div
+          ref={ghostElementRef}
           className="nop-calendar-drag-ghost"
           style={{
             position: 'fixed',
