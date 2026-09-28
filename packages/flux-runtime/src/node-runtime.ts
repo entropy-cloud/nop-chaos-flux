@@ -362,38 +362,51 @@ export function createNodeRuntime(input: {
     const result = execution;
     // Safe: props are always a Record<string, unknown> by schema contract.
     const propsValue = result.value as Record<string, unknown>;
-    const projectedProps = projectRendererFacingMeta({
-      disabled: normalizeBooleanLike(
-        evaluateCompiledValue(
-          input.expressionCompiler,
-          node.metaProgram.disabled,
-          scope,
-          env,
-          state?.meta.disabled,
-        ),
-      ),
-      className: evaluateCompiledValue(
-        input.expressionCompiler,
-        node.metaProgram.className,
-        scope,
-        env,
-        state?.meta.className,
-      ),
-      frameClassName: evaluateCompiledValue(
-        input.expressionCompiler,
-        node.metaProgram.frameClassName,
-        scope,
-        env,
-        state?.meta.frameClassName,
-      ),
-      testid: evaluateCompiledValue(
-        input.expressionCompiler,
-        node.metaProgram.testid,
-        scope,
-        env,
-        state?.meta.testid,
-      ),
-    });
+    // resolveNodeMeta runs back-to-back with resolveNodeProps in the same
+    // getNodeResolution pass and already executed these four meta leaves into
+    // state.resolvedMeta; re-executing them here doubled the per-node meta work.
+    // Reuse the stored values and fall back to evaluation only when meta was
+    // not resolved for this state (standalone resolveNodeProps callers).
+    const resolvedMeta = state?.resolvedMeta;
+    const projectedProps = resolvedMeta
+      ? projectRendererFacingMeta({
+          disabled: resolvedMeta.disabled,
+          className: resolvedMeta.className,
+          frameClassName: resolvedMeta.frameClassName,
+          testid: resolvedMeta.testid,
+        })
+      : projectRendererFacingMeta({
+          disabled: normalizeBooleanLike(
+            evaluateCompiledValue(
+              input.expressionCompiler,
+              node.metaProgram.disabled,
+              scope,
+              env,
+              state?.meta.disabled,
+            ),
+          ),
+          className: evaluateCompiledValue(
+            input.expressionCompiler,
+            node.metaProgram.className,
+            scope,
+            env,
+            state?.meta.className,
+          ),
+          frameClassName: evaluateCompiledValue(
+            input.expressionCompiler,
+            node.metaProgram.frameClassName,
+            scope,
+            env,
+            state?.meta.frameClassName,
+          ),
+          testid: evaluateCompiledValue(
+            input.expressionCompiler,
+            node.metaProgram.testid,
+            scope,
+            env,
+            state?.meta.testid,
+          ),
+        });
     const finalValue = Object.assign({}, projectedProps, propsValue);
     // Safe: _lastPropsResult.value is always a Record from the same props pipeline.
     const lastProjectedValue = state?._lastPropsResult?.value as Record<string, unknown> | undefined;

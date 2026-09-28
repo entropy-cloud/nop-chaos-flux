@@ -1,4 +1,4 @@
-export type PerformanceMode = 'table-only' | 'scope-read-stress' | 'full-stress';
+export type PerformanceMode = 'table-only' | 'virtualized' | 'scope-read-stress' | 'full-stress';
 
 export type RenderMetrics = {
   commitCount: number;
@@ -134,6 +134,8 @@ export function getModeDescription(mode: PerformanceMode): string {
   switch (mode) {
     case 'table-only':
       return 'Mounts a 1000-row dataset through a paged visible table only. Use this as the closest same-page baseline for visible table-cell and row-scope cost.';
+    case 'virtualized':
+      return 'Mounts the same 1000-row dataset unpaginated through the virtualized table body (virtualThreshold 50 + autoFillHeight scroll container). Use this to measure row-window cost, scroll-driven mount churn, and row-scope cache behavior under virtualization.';
     case 'scope-read-stress':
       return 'Mounts the paged table plus broad aggregate formulas and full-scope serialization via scope-debug. Use this to compare against materialize-heavy `scope.read()` style workloads.';
     case 'full-stress':

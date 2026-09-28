@@ -1,6 +1,6 @@
 # 2026-09-28-2 表格与数据展示渲染器性能优化
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-09-28
 > Source: `docs/analysis/2026-09-28-perf-ux-deep-optimization-analysis.md`（P3、P4、P6-P10、P15）
 > Related: `docs/architecture/table-row-identity-and-scope-performance.md`、`docs/architecture/performance-design-requirements.md`
@@ -114,13 +114,13 @@ Exit Criteria:
 ### Phase 4 - 选择匹配索引化（select/checkbox-group）
 
 Status: planned
-Targets: `packages/flux-renderers-form/src/renderers/input-choice-utils.ts`、`input-choice-renderers.tsx`、`checkbox-group-renderer.tsx`
+Targets: `packages/flux-renderers-form/src/renderers/input-choice-utils.ts`、`input-choice-renderers.tsx`、`select-combobox-lists.tsx`、`checkbox-group-renderer.tsx`
 
 - Item Types: `Proof | Fix`
 
 - [ ] Proof: focused 单测：multiple 回显（含不在选项集中的 echo 值）、全选半选态、移动端触发文案在索引化前后结果一致（既有语义快照）
 - [ ] Fix: `resolveChoiceComboboxValue`/`resolveChoiceMobileTriggerText` 以一次 O(n+m) 的 Map/Set 索引替代双向 filter×some/find
-- [ ] Fix: `sanitizeChoiceOptions/sanitizeChoiceGroups` 按 options 标识 memo；`highlightText` 的 RegExp 每查询编译一次
+- [ ] Fix: `sanitizeChoiceOptions/sanitizeChoiceGroups` 按 options 标识 memo；`highlightText`（select-combobox-lists.tsx:16-33，逐选项编译 RegExp 处 :22、逐选项调用处 :60）的 RegExp 改为每查询编译一次
 - [ ] Fix: CheckboxGroup `isSelected`/`checkAllState` 改用 Set 索引
 
 Exit Criteria:
@@ -148,10 +148,10 @@ Exit Criteria:
 
 ## Draft Review Record
 
-- Reviewer / Agent: <<待独立子 agent 填写>>
-- Verdict: <<pass | pass-with-minors | revised | degraded>>
-- Rounds: <<审查轮数>>
-- Findings addressed: <<Blocker/Major 处理记录>>
+- Reviewer / Agent: 独立子 agent（fresh session，2026-09-28）
+- Verdict: pass
+- Rounds: 1
+- Findings addressed: 0 Blocker / 0 Major；2 Minor 已吸收——select-combobox-lists.tsx 补入 Targets 并落到 Fix 项精确行号；Phase 4 Exit 对 form-advanced 的门禁保持（安全网，宽于 blast radius 属有意）
 
 ## Closure Gates
 

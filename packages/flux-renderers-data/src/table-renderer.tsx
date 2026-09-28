@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -310,6 +310,32 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     [selectAllMode, processedData],
   );
 
+  const rowDragSortApi = useRowDragSort({
+    enabled: dragSortActive,
+    orderField: schemaProps.orderField,
+    statePath: schemaProps.orderStatePath,
+    ownership: schemaProps.orderOwnership ?? 'local',
+    rows: processedData,
+  });
+
+  // When drag-sort is active under local ownership, apply the reordered rows to the
+  // rendered body (and the row-scope cache) so the new order is visible and persists
+  // across re-renders instead of resetting on the next render (P0-1).
+  const displayData = rowDragSortApi ? rowDragSortApi.orderedRows : processedData;
+
+  const rowScopeCache = useTableRowScopeCache(displayData, ownerKey, helpers, props.path);
+
+  // Late-bound accessor so `checkableWhen` (inside useTableSelection, which runs
+  // earlier in hook order) can evaluate against the persistent row scopes. Reads
+  // through a ref: rows missing from the cache (first render / fresh rows) take
+  // the selection hook's create-evaluate-dispose fallback.
+  const resolveRowScopeRef = useRef<((cacheKey: string) => ReturnType<typeof rowScopeCache.get>) | undefined>(undefined);
+  resolveRowScopeRef.current = (cacheKey) => rowScopeCache.get(cacheKey);
+  const resolveRowScope = useCallback(
+    (cacheKey: string) => resolveRowScopeRef.current?.(cacheKey),
+    [],
+  );
+
   const {
     selectedRowKeys,
     allSelected,
@@ -323,6 +349,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     selectionCapMax,
   } = useTableSelection(tableSchemaProps, treeFlattenedData, props.events.onSelectionChange, helpers, {
     selectAllRows,
+    resolveRowScope,
   });
 
   // Page-aware header select-all state. The 'page' mode scopes to the page
@@ -445,21 +472,6 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     }
     return entries;
   }, [effectiveMainColumns, measuredWidths, schemaProps.rowSelection, dragSortActive, showExpandColumn, rowDraftColumnEnabled]);
-
-  const rowDragSortApi = useRowDragSort({
-    enabled: dragSortActive,
-    orderField: schemaProps.orderField,
-    statePath: schemaProps.orderStatePath,
-    ownership: schemaProps.orderOwnership ?? 'local',
-    rows: processedData,
-  });
-
-  // When drag-sort is active under local ownership, apply the reordered rows to the
-  // rendered body (and the row-scope cache) so the new order is visible and persists
-  // across re-renders instead of resetting on the next render (P0-1).
-  const displayData = rowDragSortApi ? rowDragSortApi.orderedRows : processedData;
-
-  const rowScopeCache = useTableRowScopeCache(displayData, ownerKey, helpers, props.path);
 
   useTableHandle(
     props,

@@ -21,26 +21,28 @@ import { evaluateStaticAst } from './static-eval.js';
 function ensureCompileOptions(
   options: ExpressionCompileOptions | undefined,
   getSnapshot: () => FormulaRegistrySnapshot,
+  builtinSymbolTables: WeakMap<FormulaRegistrySnapshot, ExpressionCompileOptions['symbolTable']>,
 ): ExpressionCompileOptions {
   if (options?.symbolTable) {
     return options;
   }
 
   const registry = getSnapshot();
-  const symbols = Object.fromEntries(
-    Object.keys(registry.namespaces).map((name) => [
-      name,
-      {
-        name,
-        kind: 'builtin-namespace' as const,
-        members: Object.keys(registry.namespaces[name] as Record<string, unknown>),
-      },
-    ]),
-  );
+  let symbolTable = builtinSymbolTables.get(registry);
 
-  return {
-    ...options,
-    symbolTable: {
+  if (!symbolTable) {
+    const symbols = Object.fromEntries(
+      Object.keys(registry.namespaces).map((name) => [
+        name,
+        {
+          name,
+          kind: 'builtin-namespace' as const,
+          members: Object.keys(registry.namespaces[name] as Record<string, unknown>),
+        },
+      ]),
+    );
+
+    symbolTable = {
       frames: [{ id: 'default-builtins', kind: 'root', symbols }],
       push(_frame) {
         return this;
@@ -48,7 +50,13 @@ function ensureCompileOptions(
       resolve(name: string) {
         return symbols[name];
       },
-    },
+    };
+    builtinSymbolTables.set(registry, symbolTable);
+  }
+
+  return {
+    ...options,
+    symbolTable,
   };
 }
 
@@ -71,6 +79,67 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
   installBuiltins(registry);
 
   const getSnapshot: () => FormulaRegistrySnapshot = () => registry.getSnapshot();
+
+  // Compile cache: re-running lexer→parser→binder→diagnostics→static-eval for the
+  // same source is the dominant per-render cost when raw expression strings are
+  // evaluated per row/per cell (table classNameExpr/checkableWhen, keyboard.tsx).
+  // The registry snapshot identity is stable between mutations; any mutation bumps
+  // the epoch so stale compiled forms are never reused. Options participate by
+  // object identity (fresh option objects simply miss — same as no cache).
+  const compileCache = new Map<string, CompiledExpression<unknown> | CompiledStringTemplate<unknown>>();
+  const COMPILE_CACHE_LIMIT = 1024;
+  const optionsIds = new WeakMap<ExpressionCompileOptions, number>();
+  let nextOptionsId = 1;
+  let epochSnapshot: FormulaRegistrySnapshot | undefined;
+  let epoch = 0;
+
+  function currentEpoch(): number {
+    const snapshot = getSnapshot();
+    if (snapshot !== epochSnapshot) {
+      epochSnapshot = snapshot;
+      epoch += 1;
+    }
+    return epoch;
+  }
+
+  function cacheKey(
+    kind: 'expr' | 'tmpl',
+    source: string,
+    options: ExpressionCompileOptions | undefined,
+  ): string {
+    let optionsId = 0;
+    if (options) {
+      optionsId = optionsIds.get(options) ?? 0;
+      if (!optionsId) {
+        optionsId = nextOptionsId;
+        nextOptionsId += 1;
+        optionsIds.set(options, optionsId);
+      }
+    }
+    return `${kind}\u0000${source}\u0000${currentEpoch()}\u0000${optionsId}`;
+  }
+
+  function cacheGet<T>(key: string): T | undefined {
+    const cached = compileCache.get(key);
+    if (cached !== undefined) {
+      // LRU refresh on hit.
+      compileCache.delete(key);
+      compileCache.set(key, cached);
+    }
+    return cached as T | undefined;
+  }
+
+  function cacheSet(key: string, compiled: CompiledExpression<unknown> | CompiledStringTemplate<unknown>): void {
+    compileCache.set(key, compiled);
+    if (compileCache.size > COMPILE_CACHE_LIMIT) {
+      const oldest = compileCache.keys().next().value;
+      if (oldest !== undefined) {
+        compileCache.delete(oldest);
+      }
+    }
+  }
+
+  const builtinSymbolTables = new WeakMap<FormulaRegistrySnapshot, ExpressionCompileOptions['symbolTable']>();
 
   function buildBindingContext(options?: ExpressionCompileOptions): BindingContext {
     const registry = getSnapshot();
@@ -102,14 +171,20 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
       source: string,
       options?: ExpressionCompileOptions,
     ): CompiledExpression<T> {
-      const resolvedOptions = ensureCompileOptions(options, getSnapshot);
+      const cacheK = cacheKey('expr', source, options);
+      const cachedResult = cacheGet<CompiledExpression<T>>(cacheK);
+      if (cachedResult) {
+        return cachedResult;
+      }
+
+      const resolvedOptions = ensureCompileOptions(options, getSnapshot, builtinSymbolTables);
       const normalized = rewriteFilterPipeSyntax(normalizeExpressionSource(source));
       const ast = parseFormula(normalized);
       bindAst(ast, buildBindingContext(resolvedOptions));
       emitSymbolDiagnostics(ast, resolvedOptions);
       const staticEval = evaluateStaticAst(ast, getSnapshot(), resolvedOptions);
 
-      return {
+      const compiled: CompiledExpression<T> = {
         kind: 'expression',
         source,
         ...(staticEval.static ? { staticValue: staticEval.value as T } : {}),
@@ -139,12 +214,20 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
           }
         },
       };
+      cacheSet(cacheK, compiled);
+      return compiled;
     },
     compileTemplate<T = unknown>(
       source: string,
       options?: ExpressionCompileOptions,
     ): CompiledStringTemplate<T> {
-      const resolvedOptions = ensureCompileOptions(options, getSnapshot);
+      const cacheK = cacheKey('tmpl', source, options);
+      const cachedResult = cacheGet<CompiledStringTemplate<T>>(cacheK);
+      if (cachedResult) {
+        return cachedResult;
+      }
+
+      const resolvedOptions = ensureCompileOptions(options, getSnapshot, builtinSymbolTables);
       const bindingContext = buildBindingContext(resolvedOptions);
       const segments: CompiledTemplateSegment[] = parseTemplateSegments(source).map((segment) => {
         if (segment.type === 'text') {
@@ -184,7 +267,7 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
         ? (staticSegments.map((segment) => segment.value).join('') as T)
         : undefined;
 
-      return {
+      const compiledTemplate: CompiledStringTemplate<T> = {
         kind: 'template',
         source,
         ...(staticTemplate !== undefined ? { staticValue: staticTemplate } : {}),
@@ -225,6 +308,8 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
           return result as T;
         },
       };
+      cacheSet(cacheK, compiledTemplate);
+      return compiledTemplate;
     },
   };
 }

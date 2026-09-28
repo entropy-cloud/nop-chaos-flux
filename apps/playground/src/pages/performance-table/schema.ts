@@ -463,6 +463,11 @@ export function createPerformanceSchema(
   mode: PerformanceMode,
   options: PerformanceSchemaOptions = {},
 ): SchemaInput {
+  // Virtualized mode: same 1000-row dataset, no pagination — the table body
+  // windows rows via `virtualThreshold` inside an autoFillHeight scroll
+  // container. This is the harness for VirtualBody / row-scope-cache-under-
+  // scroll measurement that the paged modes never exercised.
+  const virtualized = mode === 'virtualized';
   const body: SchemaInput[] = [
     HEADER_SCHEMA,
     ACTIONS_SCHEMA,
@@ -475,14 +480,21 @@ export function createPerformanceSchema(
       stripe: true,
       selectionOwnership: 'scope',
       selectionStatePath: 'perfState.selectedKeys',
-      paginationOwnership: 'scope',
-      paginationStatePath: 'perfState.pagination',
-      pagination: {
-        currentPage: '${perfState.pagination.currentPage}',
-        pageSize: '${perfState.pagination.pageSize}',
-        pageSizeOptions: [25, 50, 100, 250],
-        showSizeChanger: true,
-      },
+      ...(virtualized
+        ? {
+            virtualThreshold: 50,
+            autoFillHeight: { maxHeight: 640 },
+          }
+        : {
+            paginationOwnership: 'scope',
+            paginationStatePath: 'perfState.pagination',
+            pagination: {
+              currentPage: '${perfState.pagination.currentPage}',
+              pageSize: '${perfState.pagination.pageSize}',
+              pageSizeOptions: [25, 50, 100, 250],
+              showSizeChanger: true,
+            },
+          }),
       rowSelection: {
         type: 'checkbox',
         selectedRowKeys: '${perfState.selectedKeys || []}',

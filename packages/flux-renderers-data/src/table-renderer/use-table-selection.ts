@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
+import { getIn, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { toStringArray } from './table-data.js';
@@ -19,6 +19,13 @@ export interface UseTableSelectionOptions {
    * `selectAllMode: 'page'`). Defaults to `rows` — the 'all' path is untouched.
    */
   selectAllRows?: TableRowEntry[];
+  /**
+   * Persistent row-scope accessor (the table's row-scope cache). `checkableWhen`
+   * evaluates against these scopes instead of creating/disposing a throwaway
+   * scope per row per data change; rows missing from the cache (first render /
+   * freshly added rows) fall back to the legacy create-evaluate-dispose path.
+   */
+  resolveRowScope?: (cacheKey: string) => ScopeRef | undefined;
 }
 
 export function useTableSelection(
@@ -134,6 +141,8 @@ export function useTableSelection(
     currentRowKeySet,
   ]);
 
+  const resolveRowScope = options?.resolveRowScope;
+
   const checkableRowKeys = useMemo(() => {
     if (!checkableWhen) {
       return null;
@@ -142,25 +151,35 @@ export function useTableSelection(
     const checkable = new Set<string>();
     for (const row of normalizedRows) {
       let isCheckable = true;
-      const rowScope = helpers.createScope({
-        ...row.record,
-        $slot: { record: row.record, index: row.sourceIndex },
-      });
-      try {
-        const wrapped = `\${${checkableWhen}}`;
-        const result = helpers.evaluate(wrapped, rowScope);
-        isCheckable = Boolean(result);
-      } catch {
-        isCheckable = false;
-      } finally {
-        helpers.disposeScope(rowScope.id);
+      const cachedScope = resolveRowScope?.(row.cacheKey ?? row.rowKey);
+      if (cachedScope) {
+        try {
+          const result = helpers.evaluate(`\${${checkableWhen}}`, cachedScope);
+          isCheckable = Boolean(result);
+        } catch {
+          isCheckable = false;
+        }
+      } else {
+        const rowScope = helpers.createScope({
+          ...row.record,
+          $slot: { record: row.record, index: row.sourceIndex },
+        });
+        try {
+          const wrapped = `\${${checkableWhen}}`;
+          const result = helpers.evaluate(wrapped, rowScope);
+          isCheckable = Boolean(result);
+        } catch {
+          isCheckable = false;
+        } finally {
+          helpers.disposeScope(rowScope.id);
+        }
       }
       if (isCheckable) {
         checkable.add(row.rowKey);
       }
     }
     return checkable;
-  }, [checkableWhen, normalizedRows, helpers]);
+  }, [checkableWhen, normalizedRows, helpers, resolveRowScope]);
 
   const isRowCheckable = useCallback(
     (rowKey: string) => {

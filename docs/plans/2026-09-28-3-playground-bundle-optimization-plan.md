@@ -1,6 +1,6 @@
 # 2026-09-28-3 Playground bundle 体积优化
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-09-28
 > Source: `docs/analysis/2026-09-28-perf-ux-deep-optimization-analysis.md`（P5）
 > Related: `apps/playground/vite.config.ts`、`apps/playground/src/App.tsx`
@@ -13,7 +13,7 @@
 
 - 实测（`apps/playground/dist`，2026-09-27 构建）：入口 `index-COfSWHdG.js` 8560KB / gzip 2376KB；总 JS 18.1MB（162 个 chunk）。
 - `apps/playground/vite.config.ts` `manualChunks(id)`：用 `id.includes('@nop-chaos/…')` 匹配，但 workspace 包经 `vite.workspace-alias` 解析为绝对源码路径（`/…/packages/ui/src/index.ts`）→ 永不命中。产物中不存在 `ui-*`/`spreadsheet-*`/`flow-designer-*`/`report-designer-*`/`word-editor`-core/`code-editor` 目标 chunk；唯 `react-vendor`（匹配 `node_modules/react/`）生效——同一函数内两种匹配的结果差异即为根因证据。
-- `App.tsx`（416 行）：11 个重页面已 lazy（report-designer/spreadsheet/debugger-lab/condition-builder×2/word-editor/page-designer/ai-rich-text/leafer/three，注释明确"mirrors … lazy isolation"为既定模式）；仍有 ~55 页面静态导入（scada 五连、gantt/kanban/calendar 及其 perf-scale、dashboard、print-designer、graph、map、pivot、env-stream、data-verify、AI 十四连等）；13 个 renderer 包模块顶注册。
+- `App.tsx`（416 行）：11 个重页面已 lazy（report-designer/spreadsheet/debugger-lab/condition-builder×2/word-editor/page-designer/ai-rich-text/leafer/three，注释明确"mirrors … lazy isolation"为既定模式）；仍有 68 个 `./pages` 静态导入（scada 五连、gantt/kanban/calendar 及其 perf-scale、dashboard、print-designer、graph、map、pivot、env-stream、data-verify、AI 13 连等；第 14 个 ai-rich-text 已 lazy）；13 个 renderer 包模块顶注册。
 - e2e（`playwright.config.ts`）以 dev server 跑，`reuseExistingServer: !CI`；构建产物不影响 e2e 运行方式。
 - 本计划只影响 playground 应用构建；host 侧产物（各包独立构建/flux-bundle）不在其内。
 
@@ -45,9 +45,9 @@
 
 ## Failure Paths
 
-| 可测场景编号         | 触发                              | 行为                                                                | 可重试         | 用户可见表现             |
-| -------------------- | --------------------------------- | ------------------------------------------------------------------- | -------------- | ------------------------ |
-| lazy-chunk-load-fail | 深链直达 lazy 页且 chunk 加载失败 | Suspense 边界保持错误不白屏（React 默认 error boundary 语义可接受） | 是（重试导航） | 与既有 11 个 lazy 页一致 |
+| 可测场景编号         | 触发                              | 行为                                                                                                                                                             | 可重试              | 用户可见表现   |
+| -------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------------- |
+| lazy-chunk-load-fail | 深链直达 lazy 页且 chunk 加载失败 | 无 error boundary：chunk 加载失败向上抛、根卸载白屏（React 无默认 error boundary，Suspense 不捕获渲染错误）；与既有 11 个 lazy 页行为一致，playground 场景可接受 | 是（重试导航/刷新） | 白屏，刷新恢复 |
 
 ## Test Strategy
 
@@ -69,7 +69,7 @@ Targets: `apps/playground/vite.config.ts`
 
 Exit Criteria:
 
-- [ ] 构建成功且目标 vendor chunk 实际产出（chunk 清单记录）
+- [ ] 构建成功且目标 vendor chunk 实际产出（记录精确 chunk 名如 `ui-*.js`/`spreadsheet-*.js`；注意与既有 lazy 页面 chunk `spreadsheet-page-*.js`/`report-designer-page-*.js` 区分，不得混淆）
 - [ ] 入口 chunk 尺寸较 8560KB/gzip 2376KB 基线显著下降（数字记录）
 - [ ] `pnpm --filter @nop-chaos/flux-playground test` 全绿
 
@@ -92,10 +92,10 @@ Exit Criteria:
 
 ## Draft Review Record
 
-- Reviewer / Agent: <<待独立子 agent 填写>>
-- Verdict: <<pass | pass-with-minors | revised | degraded>>
-- Rounds: <<审查轮数>>
-- Findings addressed: <<Blocker/Major 处理记录>>
+- Reviewer / Agent: 独立子 agent（fresh session，2026-09-28）
+- Verdict: pass-with-minors
+- Rounds: 1
+- Findings addressed: 0 Blocker / 0 Major；3 Minor 全部修订——Failure Paths lazy-chunk 行为描述改写为"无 error boundary 白屏"（原文语义错误）；静态导入计数更正为 68/AI 13 连；Phase 1 Exit 补精确 vendor chunk 名要求并与既有页面 chunk 区分
 
 ## Closure Gates
 

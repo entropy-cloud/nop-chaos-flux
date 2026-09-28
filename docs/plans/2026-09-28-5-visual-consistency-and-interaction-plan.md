@@ -1,6 +1,6 @@
 # 2026-09-28-5 视觉一致性与交互修复
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-09-28
 > Source: `docs/analysis/2026-09-28-perf-ux-deep-optimization-analysis.md`（U4、U5、U9、U10）
 > Related: `docs/architecture/styling-system.md`（styling contract，protected area 的 owner doc）
@@ -66,10 +66,10 @@ Targets: `packages/flux-renderers-scheduling/src/kanban/`、`calendar/components
 
 - Item Types: `Fix`
 
-- [ ] Fix: 19 处 `gray-*` 字面类按映射替换（`text-gray-400/500→text-muted-foreground`、`text-gray-800→text-foreground`、`border-gray-100/200/300→border-border`、`bg-gray-100→bg-muted`、hover 组合按同规则）；视觉语义逐处核对（如 drop-zone 空态、add-card 按钮、activity-log 时间戳、tag-filter 边框）
+- [ ] Fix: 19 处 `gray-*` 字面类按映射替换（`text-gray-400/500→text-muted-foreground`、`text-gray-800→text-foreground`、`border-gray-100/200/300→border-border`、`bg-gray-100→bg-muted`、hover 组合按同规则）；视觉语义逐处核对（如 drop-zone 空态、add-card 按钮、activity-log 时间戳、tag-filter 边框）；清点以 grep 复核为准，含条目化行号之外的同文件命中（如 `kanban-tag-filter.tsx:55` clear-button 的 `text-gray-400 hover:text-gray-600`）
 - [ ] Fix: `kanban-board.tsx:530` 手搓骨架 div 换 `@nop-chaos/ui` `Skeleton`
 - [ ] Proof: 渲染断言测试：kanban/calendar/gantt 相关组件输出不含 `gray-[0-9]` 字面类
-- [ ] Follow-up: 重跑 `check:audit-ui-consistency-gaps`，收缩 scheduling 相关 exempt 登记并确认 0 新增 hit
+- [ ] Proof: 重跑 `check:audit-ui-consistency-gaps`，收缩 scheduling 相关 exempt 登记并确认 0 新增 hit
 
 Exit Criteria:
 
@@ -111,10 +111,10 @@ Exit Criteria:
 
 ## Draft Review Record
 
-- Reviewer / Agent: <<待独立子 agent 填写>>
-- Verdict: <<pass | pass-with-minors | revised | degraded>>
-- Rounds: <<审查轮数>>
-- Findings addressed: <<Blocker/Major 处理记录>>
+- Reviewer / Agent: 独立子 agent（fresh session，2026-09-28）
+- Verdict: pass-with-minors
+- Rounds: 1
+- Findings addressed: 0 Blocker / 0 Major；2 Minor 已吸收——exempt 收缩项由 Follow-up 改标 Proof（in-scope closure work）；sweep 清单注明以 grep 复核为准并补 kanban-tag-filter.tsx:55。
 
 ## Closure Gates
 
