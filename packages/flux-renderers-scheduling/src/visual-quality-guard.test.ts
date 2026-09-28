@@ -30,7 +30,7 @@ const ALLOWLIST: Array<{ file: string; reason: string }> = [
   { file: 'kanban/utils/kanban-export.ts', reason: 'R10 导出介质固定白底 #ffffff（watch-only 常驻）' },
   // 未列残余显式登记：data 驱动 tag 色 chip 上的 text-white —— 用户自选底色的
   // 对比度语义，无 token 可替（R9 barcode 恒暗白字同族判例，watch-only）。
-  { file: 'kanban/components/kanban-tag-filter.tsx', reason: '数据驱动 tag 色上的对比度白字（R9 同族 watch-only 常驻）' },
+  { file: 'kanban/components/kanban-tag-filter.tsx', reason: '数据驱动 tag 色上的对比度白/黑字（R9 同族 watch-only 常驻；plan 2026-09-28-5 gray-* 已 token 化，仅剩对比度字面）' },
 ];
 
 // plan 481 枚举修复面（Scope + Fix 行点名文件；行号以 2026-09-21 master 为基线）。
@@ -44,6 +44,7 @@ const FIX_FACE: Record<'gantt' | 'calendar' | 'kanban', string[]> = {
     'gantt/gantt-layout.tsx',
     'gantt/components/baseline-bars.tsx',
     'gantt/gantt-markers.tsx',
+    'gantt/gantt-timescale.tsx',
     'gantt/hooks/use-gantt-link-draw.ts',
     'gantt/hooks/use-gantt-drag.ts',
     'gantt/gantt.css',
@@ -63,12 +64,15 @@ const FIX_FACE: Record<'gantt' | 'calendar' | 'kanban', string[]> = {
     'kanban/kanban-card.tsx',
     'kanban/kanban-column.tsx',
     'kanban/components/kanban-toolbar.tsx',
+    'kanban/components/kanban-activity-log.tsx',
+    'kanban/kanban-board.tsx',
     'kanban/components/kanban-card-tags.tsx',
   ],
 };
 
 // 落地基线：plan 481 落地后全包中性灰 utility 实count（修复前 59，只降不升）。
-const NEUTRAL_GRAY_BASELINE = 30;
+// plan 2026-09-28-5 Phase 1 将 scheduling 残余 gray-* 全量 token 化后归零（0，只允许保持 0）。
+const NEUTRAL_GRAY_BASELINE = 0;
 
 function isAllowlisted(rel: string): boolean {
   return ALLOWLIST.some((entry) => rel.startsWith(entry.file));

@@ -55,7 +55,7 @@ export function KanbanCardTags({
             </span>
           ))}
           {tags.length > maxVisibleTags && (
-            <span className="text-[10px] text-gray-400">+{tags.length - maxVisibleTags}</span>
+            <span className="text-[10px] text-muted-foreground">+{tags.length - maxVisibleTags}</span>
           )}
         </div>
       )}
@@ -78,7 +78,7 @@ export function KanbanCardTags({
             ))}
           </div>
           {members.length > maxVisibleMembers && (
-            <span className="text-[10px] text-gray-400 ml-1">+{members.length - maxVisibleMembers}</span>
+            <span className="text-[10px] text-muted-foreground ml-1">+{members.length - maxVisibleMembers}</span>
           )}
         </div>
       )}

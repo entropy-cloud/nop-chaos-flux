@@ -45,25 +45,7 @@ export const EXEMPTIONS = [
     source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
   },
   {
-    path: 'packages/flux-renderers-scheduling/src/calendar/components/calendar-day-view.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
-  },
-  {
     path: 'packages/flux-renderers-scheduling/src/calendar/components/calendar-header.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
-  },
-  {
-    path: 'packages/flux-renderers-scheduling/src/calendar/components/calendar-month-view.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
-  },
-  {
-    path: 'packages/flux-renderers-scheduling/src/calendar/components/calendar-week-view.tsx',
     rule: 'hardcoded-literal-color',
     reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
     source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
@@ -87,12 +69,6 @@ export const EXEMPTIONS = [
     source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
   },
   {
-    path: 'packages/flux-renderers-scheduling/src/gantt/gantt-timescale.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
-  },
-  {
     path: 'packages/flux-renderers-scheduling/src/gantt/gantt.css',
     rule: 'hardcoded-literal-color',
     reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
@@ -105,13 +81,7 @@ export const EXEMPTIONS = [
     source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
   },
   {
-    path: 'packages/flux-renderers-scheduling/src/kanban/components/kanban-activity-log.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
-  },
-  {
-    path: 'packages/flux-renderers-scheduling/src/kanban/components/kanban-card-tags.tsx',
+    path: 'packages/flux-renderers-scheduling/src/kanban/kanban.css',
     rule: 'hardcoded-literal-color',
     reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
     source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
@@ -119,26 +89,8 @@ export const EXEMPTIONS = [
   {
     path: 'packages/flux-renderers-scheduling/src/kanban/components/kanban-tag-filter.tsx',
     rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
-  },
-  {
-    path: 'packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
-  },
-  {
-    path: 'packages/flux-renderers-scheduling/src/kanban/kanban-column.tsx',
-    rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
-  },
-  {
-    path: 'packages/flux-renderers-scheduling/src/kanban/kanban.css',
-    rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
+    reason: '选中 tag chip 的文字色（text-white/text-black）按 WCAG 相对亮度对任意用户配置 tag.color 背景取对比色——该字面量必须对比"用户色"而非主题表面，不存在可用的语义 token（kanban-tag-contrast.ts 计算，调用点三元选择）；plan 2026-09-28-5 Phase 1 已将同文件原 gray-* 存量全部 token 化（原豁免随之收缩），本条目为修复后新增的精确豁免。',
+    source: 'plan 2026-09-28-5-visual-consistency-and-interaction-plan.md Phase 1 执行期裁定',
   },
   {
     path: 'packages/flux-renderers-scheduling/src/kanban/utils/kanban-export.ts',

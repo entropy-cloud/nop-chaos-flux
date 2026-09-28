@@ -151,7 +151,7 @@ export function CalendarDayView({
                     data-slot="calendar-cell"
                     data-date={dateStr}
                     data-resource={resource.id}
-                    className="border-b border-gray-50"
+                    className="border-b border-border"
                     style={{ height: `${HOUR_HEIGHT}px` }}
                     onPointerDown={(pe) => {
                       if (pe.button !== 0) return;

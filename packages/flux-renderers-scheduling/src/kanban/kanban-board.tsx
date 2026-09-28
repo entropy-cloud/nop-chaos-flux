@@ -13,7 +13,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
-import { Button, cn } from '@nop-chaos/ui';
+import { Button, cn, Skeleton } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, KanbanSchema, KanbanCardConfig } from './kanban.types.js';
 
@@ -527,7 +527,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     return (
       <div data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban flex gap-4 p-4 animate-pulse', meta.className)}>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="nop-kanban-skeleton bg-gray-100 rounded-lg min-w-[280px] h-64" />
+          <Skeleton key={i} className="nop-kanban-skeleton min-w-[280px] h-64 rounded-lg" />
         ))}
       </div>
     );
@@ -539,7 +539,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       return <div data-slot="kanban" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban', meta.className)}>{emptyRegion.render() as React.ReactNode}</div>;
     }
     return (
-      <div data-slot="kanban" data-empty="true" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban nop-kanban-empty flex items-center justify-center py-12 text-gray-400 text-sm', meta.className)}>
+      <div data-slot="kanban" data-empty="true" data-testid={meta.testid || undefined} data-cid={meta.cid || undefined} className={cn('nop-kanban nop-kanban-empty flex items-center justify-center py-12 text-muted-foreground text-sm', meta.className)}>
         {t('flux.common.noData')}
       </div>
     );

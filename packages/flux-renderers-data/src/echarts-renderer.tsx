@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import type {
-  ActionSchema,
-  ComponentHandle,
-  RendererComponentProps,
-} from '@nop-chaos/flux-core';
+import type { ActionSchema, ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   createNormalizedActionEvent,
   hasRendererSlotContent,
@@ -13,7 +9,7 @@ import {
   useRenderScope,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { cn } from '@nop-chaos/ui';
+import { cn, Spinner } from '@nop-chaos/ui';
 import type { EChartsSchema } from './echarts-schemas.js';
 import type { EChartsType } from './echarts-setup.js';
 
@@ -90,6 +86,9 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
   const optionIsObject = isPlainObject(option);
   const series = optionIsObject ? option.series : undefined;
   const hasSeries = Array.isArray(series) && series.length > 0;
+  // plan 2026-09-28-5 Phase 2: loading 优先于空态（对齐 chart-renderer 范式）——
+  // 首次异步加载（option/dataset 尚空）显示 loading 而非"暂无数据"。
+  const loading = props.props.loading === true;
   const datasetBinding = props.props.dataset;
   const mapBinding = props.props.map;
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
@@ -209,8 +208,7 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
   const componentId =
     typeof props.props.componentId === 'string' ? props.props.componentId : props.id;
   const height = props.props.height;
-  const chartHeight =
-    typeof height === 'number' ? `${height}px` : height ? height : '400px';
+  const chartHeight = typeof height === 'number' ? `${height}px` : height ? height : '400px';
 
   useEffect(() => {
     if (!optionIsObject || mapUnavailable) {
@@ -232,8 +230,7 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
         if (mapInfo) {
           registerMap(mapInfo.name, mapInfo.geoJson as never);
         }
-        const themeArg =
-          typeof theme === 'string' || isPlainObject(theme) ? theme : 'flux';
+        const themeArg = typeof theme === 'string' || isPlainObject(theme) ? theme : 'flux';
         instance = init(container, themeArg as string, {
           renderer: rendererMode,
           ...initOptions,
@@ -375,7 +372,12 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
       data-cid={props.meta.cid || undefined}
       data-empty={isEmpty || !hasSeries ? 'true' : undefined}
     >
-      {isEmpty ? (
+      {loading ? (
+        <div data-slot="echarts-loading" role="status" aria-live="polite">
+          <Spinner className="size-4" aria-hidden="true" />
+          <span>{t('flux.common.loading')}</span>
+        </div>
+      ) : isEmpty ? (
         <div data-slot="echarts-empty">
           {hasEmptySlotContent ? emptyContent : t('flux.common.noData')}
         </div>

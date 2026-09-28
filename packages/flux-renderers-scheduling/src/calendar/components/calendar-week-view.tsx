@@ -197,7 +197,7 @@ export function CalendarWeekView({
                     <div
                       key={hour}
                       aria-label={`${dateStr} ${String(hour).padStart(2, '0')}:00`}
-                      className="border-b border-gray-100"
+                      className="border-b border-border"
                       style={{ height: `${HOUR_HEIGHT}px` }}
                     />
                   ))}

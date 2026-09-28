@@ -96,16 +96,14 @@ function TreeOptionRow(props: TreeOptionRowProps) {
         variant="ghost"
         size="icon-xs"
         className={cn(
-          'inline-flex size-5 shrink-0 items-center justify-center rounded-sm',
+          // plan 2026-09-28-5 Phase 3: the size-5 override shrank the hit area
+          // below the 24px icon-xs target; the icon stays visually size-3.5.
+          'inline-flex shrink-0 items-center justify-center rounded-sm',
           hasChildren ? 'hover:bg-accent' : '',
           !hasChildren ? 'invisible' : '',
         )}
         aria-label={
-          hasChildren
-            ? expanded
-              ? t('flux.common.collapse')
-              : t('flux.common.expand')
-            : undefined
+          hasChildren ? (expanded ? t('flux.common.collapse') : t('flux.common.expand')) : undefined
         }
         disabled={!hasChildren}
         onClick={handleChevronClick}
@@ -250,9 +248,10 @@ export function TreeOptionList(props: TreeOptionListProps) {
     },
     [lazyExpand, toggleExpanded],
   );
-  const describedBy = [props.describedBy, props.loading ? props.loadingDescriptionId : undefined]
-    .filter(Boolean)
-    .join(' ') || undefined;
+  const describedBy =
+    [props.describedBy, props.loading ? props.loadingDescriptionId : undefined]
+      .filter(Boolean)
+      .join(' ') || undefined;
   const hasQuery = query.trim().length > 0;
   const activeDescendantId = React.useMemo(() => {
     const activeOption = activeItemKey
@@ -262,8 +261,7 @@ export function TreeOptionList(props: TreeOptionListProps) {
   }, [activeItemKey, filteredOptions, treeId]);
 
   const threshold = props.virtualThreshold ?? DEFAULT_VIRTUAL_THRESHOLD;
-  const shouldVirtualize =
-    threshold > 0 && visibleOptions.length >= threshold && !props.disabled;
+  const shouldVirtualize = threshold > 0 && visibleOptions.length >= threshold && !props.disabled;
 
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual returns non-memoizable functions; React Compiler auto-skips this component
   const virtualizer = useVirtualizer({
@@ -289,9 +287,18 @@ export function TreeOptionList(props: TreeOptionListProps) {
       }
     }
 
-    const activeElement = treeRef.current?.querySelector<HTMLElement>(`#${CSS.escape(activeDescendantId)}`);
+    const activeElement = treeRef.current?.querySelector<HTMLElement>(
+      `#${CSS.escape(activeDescendantId)}`,
+    );
     activeElement?.focus();
-  }, [activeDescendantId, activeItemKey, props.disabled, shouldVirtualize, virtualizer, visibleOptions]);
+  }, [
+    activeDescendantId,
+    activeItemKey,
+    props.disabled,
+    shouldVirtualize,
+    virtualizer,
+    visibleOptions,
+  ]);
 
   const sharedRowProps = {
     value: props.value,
@@ -397,9 +404,7 @@ export function TreeOptionList(props: TreeOptionListProps) {
           <Empty data-slot="tree-option-empty" className="min-h-28 border-0 p-4 shadow-none">
             <EmptyHeader>
               <EmptyTitle>{t('flux.common.noResults')}</EmptyTitle>
-              {hasQuery ? (
-                <EmptyDescription>{props.searchLabel}</EmptyDescription>
-              ) : null}
+              {hasQuery ? <EmptyDescription>{props.searchLabel}</EmptyDescription> : null}
             </EmptyHeader>
           </Empty>
         )}

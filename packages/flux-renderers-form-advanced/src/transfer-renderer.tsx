@@ -70,11 +70,14 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
   const searchable = props.props.searchOnly === true ? true : props.props.searchable === true;
   const valueKey = typeof props.props.valueKey === 'string' ? props.props.valueKey : undefined;
   const labelKey = typeof props.props.labelKey === 'string' ? props.props.labelKey : undefined;
-  const searchPlaceholder = typeof props.props.searchPlaceholder === 'string' ? props.props.searchPlaceholder : '';
+  const searchPlaceholder =
+    typeof props.props.searchPlaceholder === 'string' ? props.props.searchPlaceholder : '';
   const checkAllEnabled = props.props.checkAll !== false;
   const clearable = props.props.clearable !== false;
-  const selectTitle = typeof props.props.selectTitle === 'string' ? props.props.selectTitle : undefined;
-  const resultTitle = typeof props.props.resultTitle === 'string' ? props.props.resultTitle : undefined;
+  const selectTitle =
+    typeof props.props.selectTitle === 'string' ? props.props.selectTitle : undefined;
+  const resultTitle =
+    typeof props.props.resultTitle === 'string' ? props.props.resultTitle : undefined;
 
   const presentation = useFieldPresentation(name, validationOwner, {
     disabled: props.props.disabled === true,
@@ -83,7 +86,8 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
   });
 
   const formValue = useCurrentFormState(
-    (state) => (currentForm && hasName ? (name ? getIn(state.values, name) : state.values) : undefined),
+    (state) =>
+      currentForm && hasName ? (name ? getIn(state.values, name) : state.values) : undefined,
     Object.is,
     { enabled: Boolean(currentForm && hasName), path: hasName ? name : undefined },
   );
@@ -91,11 +95,14 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
     (scopeData) =>
       currentForm || !hasName ? undefined : name ? getIn(scopeData, name) : scopeData,
     Object.is,
-    { enabled: Boolean(!currentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
+    {
+      enabled: Boolean(!currentForm && hasName),
+      fallback: undefined,
+      paths: hasName ? [name] : undefined,
+    },
   );
   const rawFieldValue = React.useMemo(
-    () =>
-      (currentForm ? formValue : scopeValue) ?? (multiple ? EMPTY_VALUES : undefined),
+    () => (currentForm ? formValue : scopeValue) ?? (multiple ? EMPTY_VALUES : undefined),
     [currentForm, formValue, scopeValue, multiple],
   );
 
@@ -118,8 +125,12 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
 
   const [candidateQuery, setCandidateQuery] = React.useState('');
   const [selectedQuery, setSelectedQuery] = React.useState('');
-  const [candidateChecked, setCandidateChecked] = React.useState<Set<string | number | boolean>>(new Set());
-  const [selectedChecked, setSelectedChecked] = React.useState<Set<string | number | boolean>>(new Set());
+  const [candidateChecked, setCandidateChecked] = React.useState<Set<string | number | boolean>>(
+    new Set(),
+  );
+  const [selectedChecked, setSelectedChecked] = React.useState<Set<string | number | boolean>>(
+    new Set(),
+  );
 
   const filteredCandidates = React.useMemo(() => {
     if (!searchable || candidateQuery.trim() === '') {
@@ -157,7 +168,8 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
   const interactionDisabled = presentation.effectiveDisabled || presentation.readOnly;
 
   const allCandidateValues = filteredCandidates.map((o) => o.value);
-  const allCandidateChecked = allCandidateValues.length > 0 && allCandidateValues.every((v) => candidateChecked.has(v));
+  const allCandidateChecked =
+    allCandidateValues.length > 0 && allCandidateValues.every((v) => candidateChecked.has(v));
   const someCandidateChecked = allCandidateValues.some((v) => candidateChecked.has(v));
 
   const toggleAllCandidates = React.useCallback(() => {
@@ -181,20 +193,17 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
     void props.events.onChange?.();
   }, [interactionDisabled, multiple, props.events, writeValue]);
 
-  const toggleCandidate = React.useCallback(
-    (value: string | number | boolean) => {
-      setCandidateChecked((current) => {
-        const next = new Set(current);
-        if (next.has(value)) {
-          next.delete(value);
-        } else {
-          next.add(value);
-        }
-        return next;
-      });
-    },
-    [],
-  );
+  const toggleCandidate = React.useCallback((value: string | number | boolean) => {
+    setCandidateChecked((current) => {
+      const next = new Set(current);
+      if (next.has(value)) {
+        next.delete(value);
+      } else {
+        next.add(value);
+      }
+      return next;
+    });
+  }, []);
 
   const toggleSelected = React.useCallback((value: string | number | boolean) => {
     setSelectedChecked((current) => {
@@ -232,7 +241,15 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
     setCandidateChecked(new Set());
     void props.events.onAdd?.();
     void props.events.onChange?.();
-  }, [candidateChecked, interactionDisabled, multiple, options, props.events, selectedValues, writeValue]);
+  }, [
+    candidateChecked,
+    interactionDisabled,
+    multiple,
+    options,
+    props.events,
+    selectedValues,
+    writeValue,
+  ]);
 
   const removeFromSelected = React.useCallback(() => {
     if (interactionDisabled || selectedChecked.size === 0) {
@@ -255,7 +272,11 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
 
   return (
     <div
-      className={cn('nop-transfer', 'grid grid-cols-[1fr_auto_1fr] items-stretch gap-3', props.meta.className)}
+      className={cn(
+        'nop-transfer',
+        'grid grid-cols-[1fr_auto_1fr] items-stretch gap-3',
+        props.meta.className,
+      )}
     >
       <TransferPane
         kind="candidate"
@@ -269,11 +290,15 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
         allChecked={allCandidateChecked}
         someChecked={someCandidateChecked}
         onToggleAll={toggleAllCandidates}
-        checkAllLabel={typeof props.props.checkAllLabel === 'string' ? props.props.checkAllLabel : undefined}
+        checkAllLabel={
+          typeof props.props.checkAllLabel === 'string' ? props.props.checkAllLabel : undefined
+        }
         searchable={searchable}
         query={candidateQuery}
         onQueryChange={setCandidateQuery}
-        searchPlaceholder={searchPlaceholder || t('flux.transfer.search', { defaultValue: 'Search' })}
+        searchPlaceholder={
+          searchPlaceholder || t('flux.transfer.search', { defaultValue: 'Search' })
+        }
         interactionDisabled={interactionDisabled}
         emptyText={t('flux.transfer.noCandidates', { defaultValue: 'No candidates' })}
       />
@@ -320,7 +345,9 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
         searchable={searchable}
         query={selectedQuery}
         onQueryChange={setSelectedQuery}
-        searchPlaceholder={searchPlaceholder || t('flux.transfer.search', { defaultValue: 'Search' })}
+        searchPlaceholder={
+          searchPlaceholder || t('flux.transfer.search', { defaultValue: 'Search' })
+        }
         interactionDisabled={interactionDisabled}
         emptyText={t('flux.transfer.noSelection', { defaultValue: 'No selection' })}
       />
@@ -328,7 +355,7 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
       <input
         type="hidden"
         data-testid="transfer-value"
-        value={JSON.stringify(multiple ? selectedValues : selectedValues[0] ?? '')}
+        value={JSON.stringify(multiple ? selectedValues : (selectedValues[0] ?? ''))}
         readOnly
       />
     </div>
@@ -359,6 +386,63 @@ interface TransferPaneProps {
 }
 
 function TransferPane(props: TransferPaneProps) {
+  // plan 2026-09-28-5 Phase 3: roving-tabindex listbox keyboard navigation —
+  // ArrowUp/ArrowDown move the active item (clamped at the edges), Home/End
+  // jump to the first/last option, Space toggles the active option's checkbox.
+  const [activeKey, setActiveKey] = React.useState<string | null>(null);
+  const optionKeys = props.options.map((option) => String(option.value));
+  const activeIndex = activeKey != null ? optionKeys.indexOf(activeKey) : -1;
+  const activeVisible = activeIndex >= 0;
+  const listRef = React.useRef<HTMLUListElement | null>(null);
+
+  React.useEffect(() => {
+    if (activeKey != null && !activeVisible) {
+      setActiveKey(null);
+    }
+  }, [activeKey, activeVisible]);
+
+  const moveActive = (nextIndex: number) => {
+    if (props.options.length === 0) {
+      return;
+    }
+    const clamped = Math.max(0, Math.min(props.options.length - 1, nextIndex));
+    setActiveKey(optionKeys[clamped]);
+  };
+
+  const handleListKeyDown = (event: React.KeyboardEvent) => {
+    if (props.interactionDisabled || props.options.length === 0) {
+      return;
+    }
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        moveActive(activeVisible ? activeIndex + 1 : 0);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        moveActive(activeVisible ? activeIndex - 1 : props.options.length - 1);
+        break;
+      case 'Home':
+        event.preventDefault();
+        moveActive(0);
+        break;
+      case 'End':
+        event.preventDefault();
+        moveActive(props.options.length - 1);
+        break;
+      case ' ': {
+        event.preventDefault();
+        const target = activeVisible ? props.options[activeIndex] : undefined;
+        if (target && !target.disabled) {
+          props.onToggle(target.value);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
   return (
     <div
       className={cn('flex flex-col rounded-lg border border-border bg-card')}
@@ -376,7 +460,9 @@ function TransferPane(props: TransferPaneProps) {
               disabled={props.interactionDisabled || props.options.length === 0}
               onCheckedChange={() => props.onToggleAll?.()}
               data-slot="transfer-toggle-all"
-              aria-label={props.checkAllLabel || t('flux.transfer.selectAll', { defaultValue: 'Select all' })}
+              aria-label={
+                props.checkAllLabel || t('flux.transfer.selectAll', { defaultValue: 'Select all' })
+              }
             />
           )}
           <span className="text-sm font-medium">{props.title}</span>
@@ -418,11 +504,28 @@ function TransferPane(props: TransferPaneProps) {
         {props.options.length === 0 ? (
           <Empty className="p-4 text-sm text-muted-foreground">{props.emptyText}</Empty>
         ) : (
-          <ul className="flex flex-col">
-            {props.options.map((option) => {
+          <ul
+            ref={listRef}
+            className="flex flex-col"
+            // plan 2026-09-28-5 Phase 3: keyboard navigation WITHOUT the
+            // composite listbox role — adjudicated 20-05 (WCAG 4.1.2/1.3.1)
+            // keeps selection semantics in the per-row checkboxes; a composite
+            // listbox wrapping checkboxes is invalid ARIA. The pane keeps a
+            // roving-tabindex key handler and a visual active marker only.
+            aria-label={props.title}
+            tabIndex={0}
+            onKeyDown={handleListKeyDown}
+          >
+            {props.options.map((option, index) => {
               const isChecked = props.checked.has(option.value);
+              const isActive = activeVisible && index === activeIndex;
               return (
-                <li key={String(option.value)}>
+                <li
+                  key={String(option.value)}
+                  aria-disabled={option.disabled || undefined}
+                  data-active={isActive ? 'true' : undefined}
+                  className={cn(isActive && 'rounded bg-accent')}
+                >
                   <Label
                     className={cn(
                       'flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm font-normal hover:bg-accent',

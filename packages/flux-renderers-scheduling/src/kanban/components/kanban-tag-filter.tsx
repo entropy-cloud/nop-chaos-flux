@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { kanbanTagChipNeedsWhiteText } from '../utils/kanban-tag-contrast.js';
 
 export interface KanbanFilterTag {
   id: string;
@@ -24,8 +25,15 @@ export function KanbanTagFilter({
   if (tags.length === 0) return null;
 
   return (
-    <div className={cn('nop-kanban-tag-filter flex items-center gap-1.5 flex-wrap px-4 py-2', className)}>
-      <span className="text-xs text-gray-500 mr-1">{t('scheduling.kanban.filterLabel')}</span>
+    <div
+      className={cn(
+        'nop-kanban-tag-filter flex items-center gap-1.5 flex-wrap px-4 py-2',
+        className,
+      )}
+    >
+      <span className="text-xs text-muted-foreground mr-1">
+        {t('scheduling.kanban.filterLabel')}
+      </span>
       {tags.map((tag) => {
         const selected = selectedTagIds.includes(tag.id);
         return (
@@ -38,8 +46,11 @@ export function KanbanTagFilter({
             className={cn(
               'px-2 py-0.5 text-xs rounded-full border transition-colors',
               selected
-                ? 'border-transparent text-white font-medium'
-                : 'border-gray-300 text-gray-600 hover:bg-gray-100',
+                ? [
+                    'border-transparent font-medium',
+                    kanbanTagChipNeedsWhiteText(tag.color) ? 'text-white' : 'text-black',
+                  ]
+                : 'border-border text-foreground/70 hover:bg-muted',
             )}
             style={selected ? { backgroundColor: tag.color } : undefined}
           >
@@ -52,7 +63,7 @@ export function KanbanTagFilter({
           variant="link"
           size="sm"
           onClick={() => selectedTagIds.forEach((id) => onToggleTag(id))}
-          className="text-xs text-gray-400 hover:text-gray-600 ml-1 p-0 h-auto"
+          className="text-xs text-muted-foreground hover:text-foreground/70 ml-1 p-0 h-auto"
         >
           {t('scheduling.kanban.clearFilter')}
         </Button>

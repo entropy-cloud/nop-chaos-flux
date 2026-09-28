@@ -25,7 +25,7 @@ export function GanttTimeScale({ store, className }: GanttTimeScaleProps) {
           {row.cells.map((cell) => (
             <div
               key={`cell-${cell.start.getTime()}`}
-              className="flex-shrink-0 border-r border-gray-200 px-1 text-[10px] leading-6 text-gray-500 truncate text-center"
+              className="flex-shrink-0 border-r border-border px-1 text-[10px] leading-6 text-muted-foreground truncate text-center"
               style={{ width: cell.width, minWidth: cell.width }}
               data-slot="gantt-scale-cell"
             >

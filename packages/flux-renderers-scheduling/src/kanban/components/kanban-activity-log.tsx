@@ -101,18 +101,18 @@ export function KanbanActivityLog({
       <SheetContent side="right" className={cn('flex flex-col', className)} data-slot="kanban-activity-log">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2 font-semibold text-sm">
-            <History className="w-4 h-4 text-gray-500" />
+            <History className="w-4 h-4 text-muted-foreground" />
             {t('scheduling.kanban.activityLog')}
           </SheetTitle>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {filtered.length === 0 && (
-            <div className="text-sm text-gray-400 text-center py-8">{t('scheduling.kanban.noActivity')}</div>
+            <div className="text-sm text-muted-foreground text-center py-8">{t('scheduling.kanban.noActivity')}</div>
           )}
           {filtered.map((action) => (
-            <div key={action.id} className="text-sm py-2 border-b border-gray-100 last:border-0">
-              <div className="text-gray-800">{formatActionDescription(action, columnNames)}</div>
-              <div className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(action.timestamp, locale)}</div>
+            <div key={action.id} className="text-sm py-2 border-b border-border last:border-0">
+              <div className="text-foreground">{formatActionDescription(action, columnNames)}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{formatRelativeTime(action.timestamp, locale)}</div>
             </div>
           ))}
         </div>
