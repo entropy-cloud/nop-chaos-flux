@@ -67,6 +67,14 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
     typeof props.props.inputMode === 'string' && props.props.inputMode.length > 0
       ? (props.props.inputMode as InputModeValue)
       : 'decimal';
+  // FieldFrame injects the instance-unique error/hint/description reference
+  // list (its error element id is cid-suffixed, not `${name}-error`). Prefer
+  // the injected chain; the local fallback only covers bare harnesses.
+  const injected = props as unknown as { 'aria-describedby'?: string; 'aria-errormessage'?: string };
+  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
+  const errorMessageId = presentation.showError
+    ? (injected['aria-errormessage'] ?? errorId)
+    : undefined;
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const initialValueRef = useRef<number | undefined>(numericValue);
@@ -245,8 +253,8 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
           aria-label={String((props.props.label ?? name) || '') || undefined}
           aria-required={props.props.required ? true : undefined}
           aria-invalid={presentation.showError ? true : undefined}
-          aria-describedby={presentation.showError ? errorId : undefined}
-          aria-errormessage={presentation.showError ? errorId : undefined}
+          aria-describedby={presentation.showError ? describedBy : undefined}
+          aria-errormessage={errorMessageId}
           placeholder={props.props.placeholder ? String(props.props.placeholder) : undefined}
           min={min}
           max={max}

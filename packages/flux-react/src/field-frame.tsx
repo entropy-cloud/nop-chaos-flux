@@ -166,14 +166,20 @@ export function FieldFrame(props: FieldFrameProps) {
   const Tag = isGroup ? 'fieldset' : (rootTag ?? 'label');
   const LabelTag = isGroup ? 'legend' : 'span';
   const effectiveRequired = Boolean(required) || Boolean(currentForm ? dynamicRequired : nonFormDynamicRequired);
-  const errorId = name ? `${name}-error` : undefined;
+  // Error/hint/description ids must be unique per field INSTANCE: combo/array
+  // rows repeat the same field name, and a name-only id made every row's
+  // aria-describedby resolve to the FIRST instance's error in document order.
+  // `${name}-control` stays name-derived — it is a frozen host-visible contract
+  // (field-controls-dom-contract.test.tsx).
+  const fieldUid = cid != null ? `${name ?? ''}-${cid}` : `${name ?? ''}-${reactId}`;
+  const errorId = name ? `${fieldUid}-error` : undefined;
   const controlId = name ? `${name}-control` : undefined;
-  const labelId = label && Tag === 'div' ? `${name ?? reactId}-label` : undefined;
+  const labelId = label && Tag === 'div' ? `${fieldUid}-label` : undefined;
   const showValidating = !showError && fieldState.validating;
   const showHint = !showError && !showValidating && Boolean(hint) && focused;
   const showDescription = !showError && !showValidating && !showHint && Boolean(description);
-  const hintId = name && (showValidating || showHint) ? `${name}-hint` : undefined;
-  const descriptionId = name && showDescription ? `${name}-description` : undefined;
+  const hintId = name && (showValidating || showHint) ? `${fieldUid}-hint` : undefined;
+  const descriptionId = name && showDescription ? `${fieldUid}-description` : undefined;
   const describedBy = mergeDescribedBy(showError ? errorId : undefined, hintId, descriptionId);
   const childProps = isValidElement(children)
     ? (children.props as {
@@ -190,6 +196,7 @@ export function FieldFrame(props: FieldFrameProps) {
     ? cloneElement(children, {
         ...( {
           id: childProps?.id ?? controlId,
+          'aria-required': effectiveRequired || undefined,
           'aria-labelledby': mergeDescribedBy(childProps?.['aria-labelledby'], labelId),
           'aria-describedby': mergeDescribedBy(childProps?.['aria-describedby'], describedBy),
           'aria-errormessage': showError ? errorId : undefined,
@@ -233,7 +240,6 @@ export function FieldFrame(props: FieldFrameProps) {
       data-field-dirty={fieldState.dirty ? '' : undefined}
       data-field-invalid={showError ? '' : undefined}
       data-field-mode={formMode}
-      aria-required={effectiveRequired || undefined}
     >
       {label ? (
         <LabelTag data-slot="field-label" style={labelStyle}>

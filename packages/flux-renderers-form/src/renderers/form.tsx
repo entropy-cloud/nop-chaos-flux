@@ -364,6 +364,15 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
           const tryFocusFirstInvalid = () => {
             const firstInvalid = sectionRef.current?.querySelector('[aria-invalid="true"]');
             if (!(firstInvalid instanceof HTMLElement)) {
+              // The aria-invalid attributes are written by the re-render that
+              // the failed submit triggers — that commit may not have landed by
+              // the first frame (rAF can fire before React paints). Keep the
+              // bounded retry alive instead of early-returning, otherwise the
+              // focus is silently lost on exactly the synchronous-failure path.
+              if (attempts < 10) {
+                attempts += 1;
+                requestAnimationFrame(tryFocusFirstInvalid);
+              }
               return;
             }
             const target = resolveErrorFocusTarget(firstInvalid);

@@ -66,7 +66,7 @@ export function renderMobileOptionRow(
       data-slot="select-mobile-option"
       data-selected={ctx.selected ? 'true' : undefined}
       data-value={String(option.value)}
-      className="flex min-h-touch items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+      className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
       onClick={() => ctx.onSelect(option)}
     >
       <span

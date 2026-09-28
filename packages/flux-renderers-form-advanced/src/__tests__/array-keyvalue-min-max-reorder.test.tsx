@@ -359,7 +359,7 @@ describe('key-value minItems / maxItems / reorder', () => {
       />,
     );
 
-    const moveUpButtons = screen.getAllByRole('button', { name: /^Move up entry \d+$/ });
+    const moveUpButtons = document.querySelectorAll('[data-slot="key-value-move-up"]');
     expect(moveUpButtons).toHaveLength(3);
     expect((moveUpButtons[0] as HTMLButtonElement).disabled).toBe(true);
 
@@ -406,7 +406,7 @@ describe('key-value minItems / maxItems / reorder', () => {
       />,
     );
 
-    const moveDownButtons = screen.getAllByRole('button', { name: /^Move down entry \d+$/ });
+    const moveDownButtons = document.querySelectorAll('[data-slot="key-value-move-down"]');
     expect(moveDownButtons).toHaveLength(3);
     expect((moveDownButtons[2] as HTMLButtonElement).disabled).toBe(true);
 
@@ -458,7 +458,7 @@ describe('key-value minItems / maxItems / reorder', () => {
       />,
     );
 
-    const moveUpButtons = screen.getAllByRole('button', { name: /^Move up entry \d+$/ });
+    const moveUpButtons = document.querySelectorAll('[data-slot="key-value-move-up"]');
     fireEvent.click(moveUpButtons[1]);
 
     fireEvent.click(screen.getByText('Submit reordered metadata'));
@@ -495,7 +495,7 @@ describe('key-value minItems / maxItems / reorder', () => {
       />,
     );
 
-    const moveUpButtons = screen.getAllByRole('button', { name: /^Move up entry \d+$/ });
+    const moveUpButtons = document.querySelectorAll('[data-slot="key-value-move-up"]');
     expect((moveUpButtons[0] as HTMLButtonElement).disabled).toBe(true);
     expect((moveUpButtons[1] as HTMLButtonElement).disabled).toBe(false);
 

@@ -210,7 +210,7 @@ function KeyValueRow(props: {
         size="icon-sm"
         data-slot="key-value-move-up"
         disabled={disabled || !canMoveUp}
-        aria-label={`Move up entry ${index + 1}`}
+        aria-label={`${t('flux.form.moveUp')} ${index + 1}`}
         onClick={() => {
           if (readOnly || !canMoveUp) {
             return;
@@ -226,7 +226,7 @@ function KeyValueRow(props: {
         size="icon-sm"
         data-slot="key-value-move-down"
         disabled={disabled || !canMoveDown}
-        aria-label={`Move down entry ${index + 1}`}
+        aria-label={`${t('flux.form.moveDown')} ${index + 1}`}
         onClick={() => {
           if (readOnly || !canMoveDown) {
             return;

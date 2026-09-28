@@ -287,9 +287,10 @@ describe('code-editor integration', () => {
     const error = await screen.findByRole('alert');
     const content = document.querySelector('.cm-content');
 
-    expect(error.id).toBe('script-error');
-    expect(content?.getAttribute('aria-describedby')).toBe('script-error');
-    expect(content?.getAttribute('aria-errormessage')).toBe('script-error');
+    // Error id is instance-unique (cid-suffixed) — assert the association.
+    expect(error.id).toContain('script-');
+    expect(content?.getAttribute('aria-describedby')).toBe(error.id);
+    expect(content?.getAttribute('aria-errormessage')).toBe(error.id);
     expect(content?.getAttribute('aria-invalid')).toBe('true');
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();

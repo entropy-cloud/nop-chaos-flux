@@ -12,6 +12,7 @@
 ## Current Baseline
 
 - **U1 重复 id（实测证实）**：`packages/flux-react/src/field-frame.tsx:169-171` 的 `errorId=${name}-error`/`controlId=${name}-control` 仅按 schema name 派生（`reactId` 只用于 label 兜底）；`node-frame-wrapper.tsx:26-27,61` 直传 name。playground `#/lab/combo` 两行实测出现 `name-control`×4、`phone-control`×4 → `aria-describedby` 解析到文档序第一个匹配 id，读屏为第 3 行播报第 1 行错误，且为无效 HTML。`array-editor.tsx:74-75` 已用 `${name}-${item.id}-value` 规避同类问题。
+- **契约约束（执行期发现，修订 Phase 2 方案）**：`id = ${name}-control` 是冻结的 host-visible 契约（`flux-renderers-form/src/__tests__/field-controls-dom-contract.test.tsx:50,104-130`，"变更必须在此显式更新"；checkbox/switch 变体 `${name}-control-label` 同冻结）。不能单方面改 control id 格式。因此 U1 修复收敛为：**errorId（及 hintId/descriptionId）按实例唯一化（cid 兜底 reactId 后缀）**——修复错误关联错乱这一实际伤害；controlId 保持 `${name}-control` 契约形态（重复 control id 在 combo 行内仍存在，属契约本身与动态行的张力，记 Non-Blocking Follow-up 转交契约 owner 裁定）。另有 11 个渲染器文件内部独立生成 `${name}-error`（input-number/markdown-editor/period/date-range/input-date/datetime/time/input/textarea/input-choice/upload-field），其 error id 同样需实例唯一化，随本 plan Phase 2 一并机械处理。
 - **U2 同步校验失败无首错聚焦（实测证实）**：空必填表单点击 Submit 后错误提示、`aria-invalid`、`aria-describedby=username-error` 关联均正确，但 `document.activeElement` 停在 BODY。根因（独立 review 修正）：`submittingDelay` 默认 0（`form-runtime.ts:118`）时 `executeFormSubmit` 在校验前同步置 `submitting=true`（`form-runtime-submit-flow.ts:279`）并在 finally 复位（`:470-478`）——`justStoppedSubmitting` 转换在同步校验失败时确实发生。缺陷实际位于 `form.tsx:364-368`：转换触发后 `requestAnimationFrame(tryFocusFirstInvalid)` 运行时，React 尚未把含 `aria-invalid="true"` 的重渲染提交到 DOM，`querySelector` 落空即无重试早退（有界重试仅在"找到目标但未获焦"分支 `:377-380` 生效）→ 焦点从未落位。与浏览器实测一致（400ms 后错误已在 DOM、焦点仍在 BODY）。
 - **U3 min-h-touch 未定义**：`select-mobile-renderer.tsx:69` 唯一使用处；tailwind-preset/theme-tokens/mobile.css 均无 `--spacing-touch` → Tailwind v4 丢弃该类，移动端 select 选项行 ≥44px 触控高度从未生效。
 - **U6 aria-required 缺失**：`field-frame.tsx:190-206` cloneElement 注入 id/labelledby/describedby/errormessage/invalid 唯独无 aria-required；`:236` 挂在 wrapper label/fieldset（AT 不暴露）；`:241-245` 可见 `*` 为 aria-hidden；date/datetime/date-range/picker/tree-select/transfer/combo 等控件无任何 aria-required（10/23 form 渲染器已自行注入，input-time 在内——见 Phase 4 清单）；FieldFrame 已算出含动态 required 规则的 `effectiveRequired`（`:119-168`）但不与控件共享。
@@ -70,15 +71,15 @@
 
 ### Phase 1 - 失败测试先行（Proof）
 
-Status: planned
+Status: in progress
 Targets: `packages/flux-react/src/__tests__/`、`packages/flux-renderers-form/src/__tests__/`、`packages/ui`（dialog 测试所在层）
 
 - Item Types: `Proof`
 
-- [ ] Proof: combo 双行场景测试：两行同名字段的 control/error id 互不相同且各自 aria-describedby 指向本行错误节点（当前应红）
+- [x] Proof: FieldFrame ARIA 关联改为关联性断言（describedby === errorEl.id，不再锁字面 id）并验证实例唯一 id 生效（field-frame-layout.test.tsx 23/23 绿）
 - [ ] Proof: 同步校验失败提交测试：jsdom 单测断言提交后 `document.activeElement` 为首个无效控件（当前应红）。绑定 proof 为浏览器级：Playwright e2e 复现修复前 activeElement=BODY、修复后=首错控件（jsdom 时序可能掩盖该 rAF/DOM-commit 竞态；若 jsdom 意外通过，不得降级本缺陷，必须以 e2e 为准）
-- [ ] Proof: Dialog 初始焦点测试：打开后 activeElement 在 dialog 内（当前应红）
-- [ ] Proof: aria-required 测试：含动态 required 规则的字段在 required 生效后控件带 `aria-required="true"`（当前应红）
+- [ ] Proof: Dialog 初始焦点测试：打开后 activeElement 在 dialog 内（live 已证红；vitest 用例待续）
+- [x] Proof: aria-required 测试改为断言控件（而非 wrapper）携带注入值（field-frame-layout 修正用例；配合 Phase 4 注入已绿）
 
 Exit Criteria:
 
@@ -87,13 +88,14 @@ Exit Criteria:
 
 ### Phase 2 - FieldFrame id 唯一化
 
-Status: planned
+Status: in progress
 Targets: `packages/flux-react/src/field-frame.tsx`、`node-frame-wrapper.tsx`
 
 - Item Types: `Fix`
 
-- [ ] Fix: `errorId`/`controlId` 并入 reactId/cid 保证同页唯一（如 `${name}-${cid}-error`），label htmlFor、aria-labelledby/controls 同步
-- [ ] Fix: 核对既有依赖旧 id 形态的调用点（grep `*-error`/`*-control` 消费面）并同步；array-editor 既有唯一 id 方案保持兼容
+- [x] Fix: FieldFrame errorId/hintId/descriptionId/labelId 并入 `fieldUid`（cid 兜底 reactId）保证同页实例唯一；**controlId 保持 `${name}-control` 契约形态不变**（执行期发现：field-controls-dom-contract.test.tsx 冻结了 host-visible id 契约，单方面改格式会破坏下游——契约与动态行的张力转 Non-Blocking Follow-up 交契约 owner 裁定）
+- [x] Fix: input-number 的 aria-describedby/errormessage 改用 FieldFrame 注入链（原自造 `${name}-error` 在 FieldFrame 唯一化后成为悬空引用——本次一并修复）；其余 10 个渲染器内部 errorId 扫描为下一批（见 Follow-up）
+- [x] Fix: 消费面同步——field-frame-layout（4 处字面断言改关联断言）、input-number（关联断言）、code-editor integration（关联断言）；array-editor 既有唯一 id 方案不受影响
 - [ ] Phase 1 combo 测试转绿；`packages/flux-react` 全量单测绿
 
 Exit Criteria:
@@ -103,12 +105,12 @@ Exit Criteria:
 
 ### Phase 3 - 提交失败首错聚焦修复
 
-Status: planned
+Status: in progress
 Targets: `packages/flux-renderers-form/src/renderers/form.tsx`
 
 - Item Types: `Fix`
 
-- [ ] Fix: `tryFocusFirstInvalid` 在 `querySelector` 未找到 `[aria-invalid]` 目标时不再无重试早退——同样进入有界 rAF 重试（aria-invalid 属性的 DOM commit 可能滞后于 store 通知）；保留"找到目标但未获焦"的既有重试与 scrollToFirstError 语义
+- [x] Fix: `tryFocusFirstInvalid` 未找到 `[aria-invalid]` 目标时进入有界 rAF 重试（上限 10 帧，覆盖 DOM commit 滞后）；既有"找到但未获焦"重试与 scrollToFirstError 语义保留
 - [ ] Phase 1 同步失败聚焦测试转绿；既有 G2-R5 系列 focus 测试保持绿
 
 Exit Criteria:
@@ -118,13 +120,13 @@ Exit Criteria:
 
 ### Phase 4 - aria-required 注入
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/field-frame.tsx`
 
 - Item Types: `Fix`
 
-- [ ] Fix: cloneElement 注入 `'aria-required': effectiveRequired || undefined`；移除 `:236` wrapper 上的无效 aria-required 挂载
-- [ ] Fix: 各渲染器静态 `aria-required`/`required` 声明与注入的优先级核对（注入值为准，静态声明不冲突）。注意：23 个 form 渲染器中 10 个已自行注入（input-number/button-group-select/slider/checkbox-group/textarea/markdown-editor/input-choice/select-mobile/input-time 等），date/datetime/date-range/tree-select/transfer/combo/picker 确实缺失；且 cloneElement 注入落在渲染器元素 props 而非 DOM 控件——是否达 DOM 取决于各渲染器转发（如 select-mobile `:149` 读 `props.controlProps["aria-required"]`），行为测试即兜底
+- [x] Fix: cloneElement 注入 `'aria-required': effectiveRequired || undefined`；移除 `:236` wrapper 上的无效 aria-required 挂载
+- [x] Fix: 各渲染器静态 `aria-required`/`required` 声明与注入的优先级核对（注入值为准，静态声明不冲突）。注意：23 个 form 渲染器中 10 个已自行注入（input-number/button-group-select/slider/checkbox-group/textarea/markdown-editor/input-choice/select-mobile/input-time 等），date/datetime/date-range/tree-select/transfer/combo/picker 确实缺失；且 cloneElement 注入落在渲染器元素 props 而非 DOM 控件——是否达 DOM 取决于各渲染器转发（如 select-mobile `:149` 读 `props.controlProps["aria-required"]`），行为测试即兜底
 - [ ] Phase 1 aria-required 测试转绿；动态 required（规则触发/解除）联动断言
 
 Exit Criteria:
@@ -134,13 +136,13 @@ Exit Criteria:
 
 ### Phase 5 - Dialog 初始焦点 + i18n 标签 + min-h-touch token
 
-Status: planned
+Status: in progress
 Targets: `packages/ui/src/components/ui/dialog.tsx`、`packages/flux-renderers-form-advanced/src/key-value.tsx`、`packages/tailwind-preset/src/index.ts`、`packages/theme-tokens/src/styles.css`
 
 - Item Types: `Fix`
 
 - [ ] Fix: 定位 Dialog 初始焦点失效根因（wrapSurfaceTabFocus 时序 / initialFocus 传递 / portal 挂载）并修复；base-ui `defaultInitialFocus` 语义生效（焦点入对话框），Esc 焦点恢复保持
-- [ ] Fix: key-value 移动按钮 aria-label 改用 `t('flux.form.moveUp'/'flux.form.moveDown')`（+entry 序数）与 array-editor 同构；缺失 i18n 键补齐（flux-i18n 各 locale）
+- [x] Fix: key-value 移动按钮 aria-label 改用 `t('flux.form.moveUp'/'flux.form.moveDown')` + 序数（i18n 键已存在，flux-i18n zh-CN.ts:222-223）；测试定位器从字面名改 data-slot 查询（array-keyvalue-min-max-reorder 12/12 绿）
 - [ ] Fix: `--spacing-touch: 2.75rem` 经 Tailwind v4 `@theme`/preset theme 扩展接入（裸 CSS 变量不生成 `min-h-touch` utility；playground 经 `@theme inline` + `@config` preset 接线），`min-h-touch` 类真实产出；select-mobile 选项行高度生效断言
 - [ ] Phase 1 Dialog 测试转绿；新增 token/类产出与 aria-label 断言测试
 

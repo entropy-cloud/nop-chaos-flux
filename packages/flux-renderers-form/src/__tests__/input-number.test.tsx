@@ -427,12 +427,18 @@ describe('input-number renderer', () => {
 
     fireEvent.click(screen.getByText('Submit'));
 
-    const error = await screen.findByText(/is required/i);
+    await screen.findByText(/is required/i);
     const input = getNumberInput();
 
-    expect(error.id).toBe('count-error');
-    expect(input.getAttribute('aria-describedby')).toBe('count-error');
-    expect(input.getAttribute('aria-errormessage')).toBe('count-error');
+    // Association contract: whatever id the input points at must resolve to an
+    // element carrying this field's error text (ids are instance-unique since
+    // the cid-suffixed FieldFrame error ids, so never assert literals here).
+    const describedId = input.getAttribute('aria-describedby');
+    expect(describedId).toBeTruthy();
+    const described = document.getElementById(describedId ?? '');
+    console.warn('[DBG]', JSON.stringify({ describedId, describedText: described?.textContent?.slice(0, 80), describedHTML: described?.outerHTML?.slice(0, 200) }));
+    expect(described?.textContent).toMatch(/is required/i);
+    expect(input.getAttribute('aria-errormessage')).toBe(describedId);
   });
 
   it('renders with nop-input-number marker class', () => {

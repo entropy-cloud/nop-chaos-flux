@@ -366,16 +366,20 @@ describe('FieldFrame — ARIA attributes', () => {
     expect(errorEl?.getAttribute('role')).toBe('alert');
   });
 
-  it('field has aria-required when required', () => {
+  it('forwards aria-required to the control element when required', () => {
     const { container } = render(
       <FormContext.Provider value={createMockForm()}>
         <FieldFrame name="f1" label="Name" required>
-          input
+          <input aria-label="Name input" />
         </FieldFrame>
       </FormContext.Provider>,
     );
+    // aria-required must reach the real control (a wrapper label/fieldset is
+    // not exposed to assistive tech).
+    const input = container.querySelector('input[aria-label="Name input"]');
+    expect(input?.getAttribute('aria-required')).toBe('true');
     const field = container.querySelector('.nop-field');
-    expect(field?.getAttribute('aria-required')).toBe('true');
+    expect(field?.getAttribute('aria-required')).toBeNull();
   });
 
   it('field does not have aria-required when not required', () => {
@@ -440,8 +444,9 @@ describe('FieldFrame — ARIA attributes', () => {
     );
     const control = container.querySelector('[data-slot="field-control"]');
     const errorEl = container.querySelector('[data-slot="field-error"]');
-    expect(control?.getAttribute('aria-describedby')).toBe('f1-error');
-    expect(errorEl?.id).toBe('f1-error');
+    // Error id is instance-unique (cid/reactId suffix) — assert association.
+    expect(control?.getAttribute('aria-describedby')).toBe(errorEl?.id);
+    expect(errorEl?.id).toContain('-error');
   });
 
   it('forwards aria chain to the real control element', () => {
@@ -470,8 +475,9 @@ describe('FieldFrame — ARIA attributes', () => {
     const input = view.container.querySelector('input[aria-label="Name input"]');
     expect(input).toBeTruthy();
     expect(input?.getAttribute('id')).toBe('f1-control');
-    expect(input?.getAttribute('aria-describedby')).toBe('f1-error');
-    expect(input?.getAttribute('aria-errormessage')).toBe('f1-error');
+    const errorEl = view.container.querySelector('[data-slot="field-error"]');
+    expect(input?.getAttribute('aria-describedby')).toBe(errorEl?.id);
+    expect(input?.getAttribute('aria-errormessage')).toBe(errorEl?.id);
     expect(input?.getAttribute('aria-invalid')).toBe('true');
     const wrapper = (input as HTMLInputElement)
       .closest('.nop-field')
@@ -490,13 +496,15 @@ describe('FieldFrame — ARIA attributes', () => {
 
     const input = view.container.querySelector('input[aria-label="Name input"]');
     expect(input).toBeTruthy();
-    expect(input?.getAttribute('aria-describedby')).toBe('f1-description');
+    const descriptionEl = view.container.querySelector('[data-slot="field-description"]');
+    expect(input?.getAttribute('aria-describedby')).toBe(descriptionEl?.id);
 
     fireEvent.focus(input as HTMLInputElement);
-    expect(input?.getAttribute('aria-describedby')).toBe('f1-hint');
+    const hintEl = view.container.querySelector('[data-slot="field-hint"]');
+    expect(input?.getAttribute('aria-describedby')).toBe(hintEl?.id);
 
     fireEvent.blur(input as HTMLInputElement);
-    expect(input?.getAttribute('aria-describedby')).toBe('f1-description');
+    expect(input?.getAttribute('aria-describedby')).toBe(descriptionEl?.id);
   });
 
   it('R2.29: control element receives forwarded aria-errormessage when error is shown', () => {
@@ -523,7 +531,8 @@ describe('FieldFrame — ARIA attributes', () => {
     );
 
     const input = view.container.querySelector('input[aria-label="Name input"]');
-    expect(input?.getAttribute('aria-errormessage')).toBe('f1-error');
+    const errorEl = view.container.querySelector('[data-slot="field-error"]');
+    expect(input?.getAttribute('aria-errormessage')).toBe(errorEl?.id);
   });
 
   it('R2.29: control element does NOT get aria-errormessage when error is not shown', () => {
