@@ -41,7 +41,7 @@ function NativeSelectOptGroup({ className, ...props }: React.ComponentProps<'opt
   return (
     <optgroup
       data-slot="native-select-optgroup"
-      className={cn('nop-native-select ', className)}
+      className={className}
       {...props}
     />
   );

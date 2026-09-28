@@ -12,7 +12,6 @@ function ItemGroup({ className, ...props }: React.ComponentProps<'div'>) {
       role="list"
       data-slot="item-group"
       className={cn(
-        'nop-item ',
         'group/item-group flex w-full flex-col gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2',
         className,
       )}
@@ -65,7 +64,7 @@ function Item({
     defaultTagName: 'div',
     props: mergeProps<'div'>(
       {
-        className: cn(itemVariants({ variant, size, className })),
+        className: cn('nop-item ', itemVariants({ variant, size, className })),
       },
       props,
     ),

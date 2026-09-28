@@ -51,7 +51,6 @@ function MenubarTrigger({ className, ...props }: React.ComponentProps<typeof Dro
     <DropdownMenuTrigger
       data-slot="menubar-trigger"
       className={cn(
-        'nop-menubar ',
         // [G6-R2-视角3-02] outline-hidden erases the default focus ring, so a
         // focus-visible replacement is required for keyboard traversal.
         'flex items-center rounded-sm px-1.5 py-[2px] text-sm font-medium outline-hidden select-none hover:bg-muted aria-expanded:bg-muted focus-visible:bg-muted focus-visible:outline-1 focus-visible:outline-ring',
