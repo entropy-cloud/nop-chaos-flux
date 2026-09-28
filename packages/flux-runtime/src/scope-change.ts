@@ -1,16 +1,42 @@
 import type { ScopeChange, ScopeDependencySet } from '@nop-chaos/flux-core';
 import { normalizeRootPath, normalizeRootPaths } from '@nop-chaos/flux-core';
 
-function getChangeRoots(change: ScopeChange): readonly string[] {
-  return normalizeRootPaths(change.paths);
+// P14 (plan 2026-09-28-6): dependency sets are static per subscription and a
+// change object fans out to N subscribers — cache the derived artifacts per
+// object identity instead of rebuilding a Set + path index on every
+// change × subscriber pair.
+interface DependencyMatchArtifacts {
+  roots: readonly string[];
+  index: { exact: Set<string>; descendantsByPrefix: Map<string, Set<string>> };
 }
 
-function getDependencyRoots(dependencies: ScopeDependencySet): readonly string[] {
-  if (dependencies.wildcard) {
-    return ['*'];
-  }
+const dependencyArtifactsCache = new WeakMap<ScopeDependencySet, DependencyMatchArtifacts>();
 
-  return normalizeRootPaths(dependencies.paths);
+function getDependencyArtifacts(dependencies: ScopeDependencySet): DependencyMatchArtifacts {
+  let cached = dependencyArtifactsCache.get(dependencies);
+  if (!cached) {
+    const roots = dependencies.wildcard ? ['*'] : normalizeRootPaths(dependencies.paths);
+    cached = { roots, index: buildDependencyPathIndex(dependencies.paths) };
+    dependencyArtifactsCache.set(dependencies, cached);
+  }
+  return cached;
+}
+
+interface ChangeArtifacts {
+  roots: readonly string[];
+  rootSet: Set<string>;
+}
+
+const changeArtifactsCache = new WeakMap<ScopeChange, ChangeArtifacts>();
+
+function getChangeArtifacts(change: ScopeChange): ChangeArtifacts {
+  let cached = changeArtifactsCache.get(change);
+  if (!cached) {
+    const roots = normalizeRootPaths(change.paths);
+    cached = { roots, rootSet: new Set(roots) };
+    changeArtifactsCache.set(change, cached);
+  }
+  return cached;
 }
 
 function hasMultiSegmentPath(paths: readonly string[]): boolean {
@@ -147,14 +173,16 @@ export function scopeChangeHitsDependencies(
     return true;
   }
 
-  const changeRoots = getChangeRoots(change);
-  const dependencyRoots = getDependencyRoots(dependencies);
+  const changeArtifacts = getChangeArtifacts(change);
+  const dependencyArtifacts = getDependencyArtifacts(dependencies);
+  const changeRoots = changeArtifacts.roots;
+  const dependencyRoots = dependencyArtifacts.roots;
 
   if (changeRoots.includes('*') || dependencyRoots.includes('*')) {
     return true;
   }
 
-  const changeRootsSet = new Set(changeRoots);
+  const changeRootsSet = changeArtifacts.rootSet;
 
   if (!hasMultiSegmentPath(change.paths) && !hasMultiSegmentPath(dependencies.paths)) {
     for (const root of dependencyRoots) {
@@ -163,7 +191,7 @@ export function scopeChangeHitsDependencies(
     return false;
   }
 
-  const dependencyIndex = buildDependencyPathIndex(dependencies.paths);
+  const dependencyIndex = dependencyArtifacts.index;
 
   for (const changePath of change.paths) {
     if (dependencyIndex.exact.has(changePath)) {

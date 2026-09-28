@@ -141,6 +141,23 @@ function matchesFragmentScopeEntry(
   );
 }
 
+// P14 (plan 2026-09-28-6): schema compiles are deterministic per (input
+// identity, options fingerprint) — memoize them so callers whose useMemo deps
+// churn (re-created compileOptions objects) reuse the compiled nodes instead
+// of re-running the full compiler. Keyed on input identity via WeakMap; fresh
+// expression-produced arrays simply miss (no worse than before).
+const normalizedInputCompileCache = new WeakMap<
+  object,
+  { key: string; result: TemplateNode | readonly TemplateNode[] | null }
+>();
+
+function normalizeInputCacheKey(
+  runtime: RendererRuntime,
+  compileOptions: CompileSchemaOptions | undefined,
+): string {
+  return `${runtime.strictMode ? 'strict' : 'lenient'}:${JSON.stringify(compileOptions ?? null)}`;
+}
+
 export function normalizeNodeInput(
   runtime: RendererRuntime,
   input: RenderNodeInput,
@@ -172,8 +189,15 @@ export function normalizeNodeInput(
     }
 
     if (isSchemaArray(input)) {
+      const cacheKey = normalizeInputCacheKey(runtime, compileOptions);
+      const cached = normalizedInputCompileCache.get(input);
+      if (cached && cached.key === cacheKey) {
+        return cached.result;
+      }
       const compiled = runtime.schemaCompiler.compile(input, strictOptions);
-      return extractTemplateNodes(compiled);
+      const result = extractTemplateNodes(compiled);
+      normalizedInputCompileCache.set(input, { key: cacheKey, result });
+      return result;
     }
 
     if (runtime.strictMode) {
@@ -192,8 +216,15 @@ export function normalizeNodeInput(
   }
 
   if (isSchema(input)) {
+    const cacheKey = normalizeInputCacheKey(runtime, compileOptions);
+    const cached = normalizedInputCompileCache.get(input);
+    if (cached && cached.key === cacheKey) {
+      return cached.result;
+    }
     const compiled = runtime.schemaCompiler.compile(input, strictOptions);
-    return extractTemplateNodes(compiled);
+    const result = extractTemplateNodes(compiled);
+    normalizedInputCompileCache.set(input, { key: cacheKey, result });
+    return result;
   }
 
   if (runtime.strictMode) {

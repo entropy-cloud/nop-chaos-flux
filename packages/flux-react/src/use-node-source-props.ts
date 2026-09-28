@@ -24,6 +24,12 @@ export function hasSourcePropsInValue(
   propsValue: ResolvedNodeProps['value'],
   sourcePropKeys: readonly string[],
 ): boolean {
+  // plan 2026-09-28-6 P14: a `sourcePropKeys.length === 0` fast path was
+  // attempted and REVERTED — the cyclic-graph contract tests
+  // (use-node-source-props.test.tsx "still finds nested source schemas inside
+  // cyclic graphs") pin that source schemas can reach props through
+  // undeclared channels (runtime/expression-constructed values), so the DFS
+  // must stay as the safety net regardless of declared keys.
   if (sourcePropKeys.some((key) => isSourceSchema(propsValue[key]))) {
     return true;
   }

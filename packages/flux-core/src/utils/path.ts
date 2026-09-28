@@ -26,8 +26,11 @@ export function parsePath(path: string): string[] {
 
   const cached = parsePathCache.get(path);
 
+  // P14 (plan 2026-09-28-6): cache hits share the cached array instead of
+  // copying — the mutation-surface audit found exactly one mutator
+  // (resolveRelativePath), which has been rewritten to non-mutating form.
   if (cached !== undefined) {
-    return [...cached];
+    return cached as string[];
   }
 
   const segments: string[] = [];
@@ -101,7 +104,8 @@ export function parsePath(path: string): string[] {
 
   rememberParsedPath(path, result);
 
-  return [...result];
+  // share the stored array (see the cache-hit branch: P14 copy elision)
+  return result as string[];
 }
 
 export function normalizeRootPath(path: string): string | undefined {
@@ -145,12 +149,15 @@ export function resolveRelativePath(currentPath: string, relativePath: string): 
     return relativePath;
   }
 
+  // P14: non-mutating — parsePath now shares its cached array, so the upward
+  // walk tracks an end index instead of popping the parsed segments.
   const segments = parsePath(currentPath);
   let remaining = relativePath;
+  let end = segments.length;
 
   while (remaining.startsWith('../') || remaining === '..') {
-    if (segments.length > 0) {
-      segments.pop();
+    if (end > 0) {
+      end -= 1;
     }
 
     if (remaining === '..') {
@@ -161,11 +168,12 @@ export function resolveRelativePath(currentPath: string, relativePath: string): 
     remaining = remaining.slice(3);
   }
 
-  if (segments.length === 0) {
+  if (end === 0) {
     return remaining;
   }
 
-  return `${segments.join('.')}${remaining ? `.${remaining}` : ''}`;
+  const kept = end === segments.length ? segments : segments.slice(0, end);
+  return `${kept.join('.')}${remaining ? `.${remaining}` : ''}`;
 }
 
 export function getIn(input: unknown, path: string): unknown {

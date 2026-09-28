@@ -270,6 +270,29 @@ function createCompositeScopeStore(
 
       let lastVisibleForParent: Record<string, any> | undefined;
 
+      // P12 (plan 2026-09-28-6): a parent change whose paths are ALL shadowed
+      // by the child's own root keys cannot alter the composed visible view —
+      // the prototype-chain lookup hits the own snapshot first for those
+      // subtrees. Skip the readVisible() rebuild and the listener fan-out.
+      // Changes without path information keep the safe (always-notify) path.
+      const parentChangeFullyShadowed = (change: ScopeChange): boolean => {
+        const paths = change?.paths;
+        if (!paths || paths.length === 0) {
+          return false;
+        }
+        const ownSnapshot = ownStore.getSnapshot();
+        for (const path of paths) {
+          const dot = path.indexOf('.');
+          const bracket = path.indexOf('[');
+          const cut = dot === -1 ? bracket : bracket === -1 ? dot : Math.min(dot, bracket);
+          const root = cut === -1 ? path : path.slice(0, cut);
+          if (!root || !Object.prototype.hasOwnProperty.call(ownSnapshot, root)) {
+            return false;
+          }
+        }
+        return true;
+      };
+
       const unsubOwn = ownStore.subscribe((change) => {
         lastChange = change;
         lastVisibleForParent = readVisible();
@@ -277,6 +300,9 @@ function createCompositeScopeStore(
       });
       const unsubParent =
         parent.store?.subscribe((change) => {
+          if (parentChangeFullyShadowed(change)) {
+            return;
+          }
           const nextVisible = readVisible();
           if (nextVisible === lastVisibleForParent) {
             return;

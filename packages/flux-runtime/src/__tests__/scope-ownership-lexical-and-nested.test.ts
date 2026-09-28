@@ -158,14 +158,23 @@ describe('H12: composite store subscriptions', () => {
     expect(scope.store?.getSnapshot()).toEqual({ a: 1 });
   });
 
-  it('composite store does not dedupe when child shadows parent change', () => {
+  // plan 2026-09-28-6 Phase 2 (P12): parent changes whose paths are fully
+  // shadowed by the child's own root keys cannot alter the composed visible
+  // view, so the composite store now skips the readVisible() rebuild and the
+  // listener fan-out for them. This replaces the former "does not dedupe"
+  // contract, which pinned the wasteful always-notify behavior the plan was
+  // chartered to remove (non-shadowed and path-less changes still notify —
+  // see composite-scope-cascade-baseline.test.ts).
+  it('composite store skips fully-shadowed parent changes (P12 change-path filter)', () => {
     const parent = createTestScope({ a: 1 });
     const child = createChildScope(parent, { b: 2, a: 10 });
     const listener = vi.fn();
     child.store?.subscribe(listener);
 
     parent.update('a', 99);
-    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).not.toHaveBeenCalled();
+    expect(child.get('a')).toBe(10);
+    expect(child.get('b')).toBe(2);
   });
 
   it('notifies all child composite subscribers for one parent update', () => {

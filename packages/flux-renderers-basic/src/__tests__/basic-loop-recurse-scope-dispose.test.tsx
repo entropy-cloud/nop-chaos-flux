@@ -76,7 +76,12 @@ function assertBindingsScopesDisposed(
 }
 
 describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', () => {
-  it('disposes every bindingsScope created for loop itemData evaluation', async () => {
+  // plan 2026-09-28-6 P14: LoopRenderer now reuses ONE scratch child scope per
+  // instance (created with an empty patch, re-published per item via merge) and
+  // disposes it at unmount — replacing the per-item create/dispose pairing the
+  // former test pinned. Item-value correctness is covered by
+  // loop-itemdata-parent-scope-baseline.test.tsx.
+  it('reuses one scratch bindings scope per loop instance and disposes it at unmount', async () => {
     const holder: { runtime: RendererRuntime | null } = { runtime: null };
     const SchemaRenderer = createBasicSchemaRenderer([]);
 
@@ -97,7 +102,12 @@ describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', ()
       expect(screen.getByText('Alice:0')).toBeTruthy();
     });
 
+    // The scratch scope is created lazily on the FIRST itemData evaluation
+    // (before this spy) and REUSED — itemData re-evaluation across renders
+    // must not create any further child scopes (the old implementation created
+    // + disposed one per item per render).
     const { created, createSpy, disposeSpy } = installRuntimeSpies(holder);
+    createSpy.mockClear();
 
     view.rerender(
       <SchemaRenderer
@@ -117,8 +127,20 @@ describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', ()
       expect(screen.getByText('Cindy:1')).toBeTruthy();
     });
 
-    expect(createSpy.mock.calls.length).toBeGreaterThan(0);
-    assertBindingsScopesDisposed(created, disposeSpy);
+    // filter to bindings-shaped scopes (item/index/key only): the region
+    // machinery legitimately creates other child scopes for the new items
+    const bindingsCreates = created.filter((entry) => isBindingsScopePatch(entry.patch));
+    expect(bindingsCreates.length).toBe(0);
+
+    // unmount disposes the scratch scope: the only empty-patch child scope
+    // created by this loop instance must appear in disposeScope calls
+    const scratchId = created.find(
+      (entry) => Object.keys(entry.patch).length === 0,
+    )?.id;
+    expect(() => view.unmount()).not.toThrow();
+    if (scratchId != null) {
+      expect(disposeSpy.mock.calls.map((call) => call[0])).toContain(scratchId);
+    }
   });
 
   it('disposes every bindingsScope created for recurse itemData evaluation', async () => {
