@@ -1,3 +1,11 @@
+// plan 2026-09-28-7: under the React Compiler the bump→useSyncExternalStore→
+// snapshot-invalidation chain in this hook silently stops invalidating (live
+// bisect: excluding ONLY this file from the babel preset fixes the zero-row
+// virtual body; every other exclusion arm stays red). The hook owns module-
+// level mutable caches + a version counter + post-render population, which the
+// transform cannot model. `use no memo` opts just this file out.
+'use no memo';
+
 import { useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import type { TableSchema } from '../schemas.js';
@@ -100,7 +108,10 @@ function publishRowScopePayload(
 
   if (!previous || previous.$slot.index !== payload.$slot.index) {
     if (!changedRoots.$slot) {
-      changedRoots.$slot = { ...payload.$slot, record: previous?.$slot.record ?? payload.$slot.record };
+      changedRoots.$slot = {
+        ...payload.$slot,
+        record: previous?.$slot.record ?? payload.$slot.record,
+      };
     }
   }
 

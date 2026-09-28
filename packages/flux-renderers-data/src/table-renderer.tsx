@@ -7,13 +7,7 @@ import {
   useSchemaProps,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import {
-  Table,
-  TableBody,
-  TableFooter,
-  TableHeader,
-  cn,
-} from '@nop-chaos/ui';
+import { Table, TableBody, TableFooter, TableHeader, cn } from '@nop-chaos/ui';
 import type { TableColumnSchema, TableSchema } from './schemas.js';
 import {
   createTableRowRepeatedTemplateId,
@@ -42,7 +36,10 @@ import { useTableHandle } from './table-renderer/use-table-handle.js';
 import { useTableRowScopeCache } from './table-renderer/use-table-row-scope-cache.js';
 import { useColumnResize } from './table-renderer/use-column-resize.js';
 import { isDevRuntime, readChildren, useTableTree } from './table-renderer/use-table-tree.js';
-import { createSelectAllKeyDownHandler, warnDevOptionRowValueOverride } from './table-renderer/table-selection-feedback.js';
+import {
+  createSelectAllKeyDownHandler,
+  warnDevOptionRowValueOverride,
+} from './table-renderer/table-selection-feedback.js';
 import { useTableLazyChildren } from './table-renderer/use-table-lazy-children.js';
 import { useRowDragSort } from './table-renderer/use-row-drag-sort.js';
 import { useAutoFillHeight } from './table-renderer/use-auto-fill-height.js';
@@ -120,10 +117,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
   const templateNodeId = props.node.templateNode.templateNodeId;
   const ownerKey = createTableOwnerKey(props, runtime.runtimeId);
-  const rowRepeatedTemplateId = useMemo(
-    () => createTableRowRepeatedTemplateId(templateNodeId),
-    [templateNodeId],
-  );
+  const rowRepeatedTemplateId = createTableRowRepeatedTemplateId(templateNodeId); // string value identity — memo unneeded
 
   const {
     columnSettingsEnabled,
@@ -134,8 +128,15 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     moveColumn,
     reorderColumn,
   } = useTableVisibleColumns(tableSchemaProps, columns);
-  const { paginationEnabled, serverPaged, currentPage, pageSize, handlePageChange, handlePageSizeChange, clampPage } =
-    useTablePagination(tableSchemaProps, props.events.onPageChange);
+  const {
+    paginationEnabled,
+    serverPaged,
+    currentPage,
+    pageSize,
+    handlePageChange,
+    handlePageSizeChange,
+    clampPage,
+  } = useTablePagination(tableSchemaProps, props.events.onPageChange);
   const { sortState, sortEntries, handleSort } = useTableSort(
     tableSchemaProps,
     props.events.onSortChange,
@@ -149,7 +150,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         return;
       }
 
-      const nextFilteredRows = processTableData(source, schemaProps.rowKey, sortState, nextFilterState);
+      const nextFilteredRows = processTableData(
+        source,
+        schemaProps.rowKey,
+        sortState,
+        nextFilterState,
+      );
       clampPage(currentPage, nextFilteredRows.length);
     },
   );
@@ -172,7 +178,13 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     (responsiveExpandActive && schemaProps.responsive?.expandTrigger === 'row');
 
   const filteredData = useMemo(
-    () => processTableData(source, schemaProps.rowKey, sortEntries.length > 0 ? sortEntries : sortState, filterState),
+    () =>
+      processTableData(
+        source,
+        schemaProps.rowKey,
+        sortEntries.length > 0 ? sortEntries : sortState,
+        filterState,
+      ),
     [source, schemaProps.rowKey, sortState, sortEntries, filterState],
   );
   // Lazy children loading for tree table (T11): when a tree node with
@@ -215,7 +227,14 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       }
     }
     prevExpandedRef.current = next;
-  }, [treeMode, tableSchemaProps, expandedTreeRowKeys, lazyChildrenMap, filteredData, loadChildren]);
+  }, [
+    treeMode,
+    tableSchemaProps,
+    expandedTreeRowKeys,
+    lazyChildrenMap,
+    filteredData,
+    loadChildren,
+  ]);
 
   // D1 G-D: client-side grouping model (resolution/collapse/dev-warns live in
   // use-table-grouping.ts). Group precedence: inert under tree mode; drag-sort
@@ -284,8 +303,20 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     () =>
       pagedGroupData
         ? pagedGroupData.rows
-        : paginateTableData(treeFlattenedData, paginationEnabled && !serverPaged, resolvedCurrentPage, pageSize),
-    [pagedGroupData, treeFlattenedData, paginationEnabled, serverPaged, resolvedCurrentPage, pageSize],
+        : paginateTableData(
+            treeFlattenedData,
+            paginationEnabled && !serverPaged,
+            resolvedCurrentPage,
+            pageSize,
+          ),
+    [
+      pagedGroupData,
+      treeFlattenedData,
+      paginationEnabled,
+      serverPaged,
+      resolvedCurrentPage,
+      pageSize,
+    ],
   );
   const groupedPageItems = pagedGroupData ? pagedGroupData.items : null;
 
@@ -306,7 +337,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   // earlier in hook order than useTableRowScopeCache) can evaluate against the
   // persistent row scopes from the PREVIOUS commit; rows not yet in the cache
   // (first render / fresh rows) take the selection hook's fallback path.
-  const resolveRowScopeRef = useRef<((cacheKey: string) => ScopeRef | undefined) | undefined>(undefined);
+  const resolveRowScopeRef = useRef<((cacheKey: string) => ScopeRef | undefined) | undefined>(
+    undefined,
+  );
   const resolveRowScope = useCallback(
     (cacheKey: string) => resolveRowScopeRef.current?.(cacheKey),
     [],
@@ -323,10 +356,16 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     isRowCheckable,
     isAtMaxSelection,
     selectionCapMax,
-  } = useTableSelection(tableSchemaProps, treeFlattenedData, props.events.onSelectionChange, helpers, {
-    selectAllRows,
-    resolveRowScope,
-  });
+  } = useTableSelection(
+    tableSchemaProps,
+    treeFlattenedData,
+    props.events.onSelectionChange,
+    helpers,
+    {
+      selectAllRows,
+      resolveRowScope,
+    },
+  );
 
   // Page-aware header select-all state. The 'page' mode scopes to the page
   // slice; [G3-R3-视角4-02] the 'all' mode scopes to the FLATTENED select-all
@@ -354,14 +393,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     enabled: modifierSelectEnabled,
     onSelectAll: () => handleSelectAll(true),
   });
-  // H10: `createFixedColumnLayout` only reads `schemaProps.rowSelection` + the
-  // columns' `fixed`/`width` + `showExpandColumn`. Memoizing on those specific
-  // values (instead of the whole `tableSchemaProps`, whose identity churns every
-  // render) keeps `fixedColumnLayout` referentially stable across renders, so the
-  // row memo is not busted by pure identity churn and rows never render with a
-  // stale layout object. A genuine layout change still forces a row re-render
-  // because all content inputs are covered by the row comparator (columns via
-  // areColumnsRenderEquivalent, rowSelection, showExpandColumn).
+  // H10: fixedColumnLayout memoizes on specific values (not the identity-churning
+  // tableSchemaProps) so the row memo is not busted by pure identity churn — see
+  // use-table-column-layout.ts.
 
   const columnResizeEnabled = schemaProps.columnResize !== false;
   const resizeApi = useColumnResize(
@@ -395,8 +429,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     return changed ? next : baseColumns;
   }, [columnResizeEnabled, leafBodyColumns, mainColumns, nestedHeadersActive, resizeApi.widths]);
 
-  // [G3-视角5-01]/[G3-R3-视角8-01] helper body columns must pair header th +
-  // colgroup col; derive the flags once and share them with header/count.
+  // [G3-视角5-01]/[G3-R3-视角8-01] helper body columns pair header th + colgroup col.
   const rowDraftColumnEnabled = useMemo(
     () => isRowDraftColumnEnabled(tableSchemaProps, mainColumns),
     [tableSchemaProps, mainColumns],
@@ -424,9 +457,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     rows: processedData,
   });
 
-  // When drag-sort is active under local ownership, apply the reordered rows to the
-  // rendered body (and the row-scope cache) so the new order is visible and persists
-  // across re-renders instead of resetting on the next render (P0-1).
+  // P0-1: local drag-sort order feeds body + row-scope cache and persists.
   const displayData = rowDragSortApi ? rowDragSortApi.orderedRows : processedData;
 
   const rowScopeCache = useTableRowScopeCache(displayData, ownerKey, helpers, props.path);
@@ -448,7 +479,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   const isStriped = schemaProps.stripe === true;
   const isBordered = schemaProps.bordered === true;
   const densityTier =
-    schemaProps.density === 'compact' || schemaProps.density === 'relaxed' ? schemaProps.density : undefined;
+    schemaProps.density === 'compact' || schemaProps.density === 'relaxed'
+      ? schemaProps.density
+      : undefined;
   const columnCount =
     (nestedHeadersActive ? leafBodyColumns : mainColumns).length +
     (schemaProps.rowSelection ? 1 : 0) +
@@ -465,16 +498,15 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     !paginationEnabled && typeof virtualThreshold === 'number' && source.length > virtualThreshold;
 
   const autoFill = useAutoFillHeight(schemaProps.autoFillHeight, isLoading);
-  const autoFillActive = schemaProps.autoFillHeight !== undefined && schemaProps.autoFillHeight !== false;
+  const autoFillActive =
+    schemaProps.autoFillHeight !== undefined && schemaProps.autoFillHeight !== false;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Container-level keydown relay for rowSelection.modifierSelect (cmd/ctrl+A
   // select-all). Spread as interaction props: the container is not itself an
   // interactive element, so the static-element a11y rule does not apply.
-  const containerInteractions = modifierSelectEnabled
-    ? { onKeyDown: handleContainerKeyDown }
-    : {};
+  const containerInteractions = modifierSelectEnabled ? { onKeyDown: handleContainerKeyDown } : {};
 
   return (
     <div
@@ -508,10 +540,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       <div
         ref={(element) => {
           measureRootRef.current = element;
-          // [G3-R4-视角5-01] autoFill and virtualization are independent consumers of the
-          // same scroll container — route the element to BOTH (an if/else here left
-          // scrollRef null under autoFillHeight × virtualThreshold and the body
-          // silently rendered zero rows).
+          // [G3-R4-视角5-01] autoFill + virtualization consume the SAME scroll
+          // container — route the element to BOTH (an if/else here left scrollRef
+          // null and the body silently rendered zero rows).
           if (element && autoFillActive) {
             // eslint-disable-next-line react-hooks/immutability, react-compiler/react-compiler -- C1a 组合 ref 回调：同一元素路由到三个 ref（列宽测量 + autoFill + 虚拟滚动），hook 返回的 ref 对象由消费方赋 .current 是既有契约
             autoFill.containerRef.current = element;
@@ -521,11 +552,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
           }
         }}
         className={cn(
-          autoFillActive
-            ? 'overflow-auto'
-            : virtualEnabled
-              ? 'overflow-auto'
-              : 'relative',
+          autoFillActive ? 'overflow-auto' : virtualEnabled ? 'overflow-auto' : 'relative',
           fixedColumnLayout.hasStickyColumns ? 'overflow-x-auto' : undefined,
         )}
         style={
@@ -663,7 +690,9 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       ) : null}
 
       {hasRendererSlotContent(footerContent) ? (
-        <div data-slot="table-footer" className="mt-[var(--space-block-gap)]">{asReactNode(footerContent)}</div>
+        <div data-slot="table-footer" className="mt-[var(--space-block-gap)]">
+          {asReactNode(footerContent)}
+        </div>
       ) : null}
     </div>
   );

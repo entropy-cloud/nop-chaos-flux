@@ -16,6 +16,16 @@ This is a normative design requirements document.
 
 ## Performance Boundary Principles
 
+0. Composite scope cascades filter by change paths (plan 2026-09-28-6 P12).
+
+- A child composite scope skips its view rebuild and listener fan-out when a
+  parent change's paths are ALL shadowed by the child's own root keys
+  (`scope.ts parentChangeFullyShadowed`). Path-less changes normalize to
+  `['*']` and always notify (safe fallback); explicit-path updates (`set`,
+  `merge`) are the filtered fast path. Subscribe-side dependency matching
+  caches derived artifacts per dependency-set / change object identity
+  (`scope-change.ts`) — never rebuild per change × subscriber.
+
 1. Compile once, execute many.
 
 - Prefer compile-time normalization over repeated runtime interpretation.
@@ -160,3 +170,28 @@ When this document changes or related constraints change, review:
 - `docs/index.md`
 - `docs/references/maintenance-checklist.md`
 - architecture docs for impacted packages/modules
+
+## Table Virtualization Contract (plan 2026-09-28-7)
+
+1. `virtualThreshold` only activates the VirtualBody path when pagination is
+   explicitly disabled (`pagination: { enabled: false }`) and the source exceeds
+   the threshold. This combination was historically never exercised end-to-end;
+   the performance-table harness `virtualized` mode (1000 rows, scrollHeight 640) is its regression surface — `tests/e2e/table-virtual-body.spec.ts` is
+   the binding compiled-build guard (happy-dom cannot reproduce
+   compiler-interaction defects).
+
+2. Compiler exemption registry: `use-table-row-scope-cache.ts` carries a
+   file-level `'use no memo'` directive (must be the first statement, before
+   imports). Rationale: the hook owns module-level mutable caches, a version
+   counter, `useSyncExternalStore` subscription, and post-render population via
+   layout effect — the React Compiler transform of that combination broke the
+   bump→re-render→flattened-items chain and silently emitted a zero-row body
+   (2026-09-28, live-bisect evidence in
+   `docs/plans/2026-09-28-7-virtual-body-live-defect-plan.md`). Do not remove
+   the directive without re-running the e2e guard; do not add module-state +
+   version-counter hooks to compiler-transformed files without a bisect check.
+
+3. Virtual window expectations: rows are measured (estimateSize only seeds).
+   Rich mixed-renderer rows measure ~190px+ — short scrolls legitimately keep
+   row 0 inside the overscan window; window-follow assertions must scroll deep
+   (see the e2e spec's scroll case).
