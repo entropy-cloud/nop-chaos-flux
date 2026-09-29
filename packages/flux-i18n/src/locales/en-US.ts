@@ -3,6 +3,7 @@ export const enUS: Resource = {
   flux: {
     common: {
       loading: 'Loading...',
+      preview: 'Preview',
       error: 'Error',
       chart: 'Chart',
       close: 'Close',
@@ -475,7 +476,8 @@ export const enUS: Resource = {
       resize: 'Resize',
     },
     tabs: {
-      newTab: 'New View',
+      newTab: 'New Tab',
+      closeTab: 'Close tab',
     },
     page: {
       asideResize: 'Resize aside',

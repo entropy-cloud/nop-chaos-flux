@@ -381,12 +381,26 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
               </span>
             ) : null}
             {showClose ? (
+              // Kept as a styled span (not a real <Button>): TabsTrigger renders
+              // a native <button>, and interactive descendants inside a button
+              // are an HTML/ARIA violation. role="button" + keyboard activation
+              // makes it operable and AT-visible; stopPropagation on keydown
+              // prevents the trigger from co-activating the tab being closed.
               <span
                 data-slot="tabs-trigger-close"
-                aria-hidden="true"
-                title={String(item.title ?? item.label ?? value)}
-                className="ml-0.5 inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-sm text-[11px] leading-none text-muted-foreground/70 hover:bg-muted hover:text-foreground"
+                role="button"
+                tabIndex={0}
+                aria-label={t('flux.tabs.closeTab')}
+                title={t('flux.tabs.closeTab')}
+                className="ml-0.5 inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-sm text-[11px] leading-none text-muted-foreground/70 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onMouseDown={(event) => event.stopPropagation()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    viewOps.runRemoveTab(value);
+                  }
+                }}
                 onClick={(event) => {
                   event.stopPropagation();
                   event.preventDefault();

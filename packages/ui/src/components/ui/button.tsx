@@ -29,13 +29,13 @@ const buttonVariants = cva(
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 aria-pressed:bg-destructive/20 data-active:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:aria-pressed:bg-destructive/30 dark:data-active:bg-destructive/30 dark:focus-visible:ring-destructive/40',
         link: 'text-primary underline-offset-4 hover:underline aria-pressed:opacity-70 data-active:opacity-70',
-        info: 'bg-info text-white [a]:hover:bg-info/80 aria-pressed:bg-info/80 data-active:bg-info/80',
+        info: 'bg-info text-info-foreground [a]:hover:bg-info/80 aria-pressed:bg-info/80 data-active:bg-info/80',
         success:
-          'bg-success text-white [a]:hover:bg-success/80 aria-pressed:bg-success/80 data-active:bg-success/80',
+          'bg-success text-success-foreground [a]:hover:bg-success/80 aria-pressed:bg-success/80 data-active:bg-success/80',
         warning:
-          'bg-warning text-white [a]:hover:bg-warning/80 aria-pressed:bg-warning/80 data-active:bg-warning/80',
+          'bg-warning text-warning-foreground [a]:hover:bg-warning/80 aria-pressed:bg-warning/80 data-active:bg-warning/80',
         danger:
-          'bg-danger text-white [a]:hover:bg-danger/80 aria-pressed:bg-danger/80 data-active:bg-danger/80',
+          'bg-danger text-danger-foreground [a]:hover:bg-danger/80 aria-pressed:bg-danger/80 data-active:bg-danger/80',
         light:
           'bg-muted text-foreground hover:bg-muted/80 aria-pressed:bg-muted/80 data-active:bg-muted/80',
         dark: 'bg-foreground text-background hover:bg-foreground/80 aria-pressed:bg-foreground/80 data-active:bg-foreground/80',

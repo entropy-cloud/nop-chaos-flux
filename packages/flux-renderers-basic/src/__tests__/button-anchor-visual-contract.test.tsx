@@ -33,7 +33,9 @@ describe('[G1-R2-视角2-01] href anchor branch keeps the button visual contract
     const anchor = screen.getByText('Docs').closest('a')!;
     expect(anchor.getAttribute('href')).toBe('https://example.com');
     expect(anchor.className).toContain('bg-danger');
-    expect(anchor.className).toContain('text-white');
+    // plan 2026-09-29-5: solid variants use the theme foreground token
+    // (text-white fails WCAG on the dark accents)
+    expect(anchor.className).toContain('text-danger-foreground');
   });
 
   it('anchor carries the size geometry (lg => h-9)', () => {

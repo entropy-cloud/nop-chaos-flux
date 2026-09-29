@@ -396,7 +396,7 @@ describe('tabs view management — dead-declaration wiring and compatibility', (
 
     await waitFor(() => expect(tabValues()).toHaveLength(4));
     expect(activeProbeText()).toBe('active=a');
-    await waitFor(() => expect(screen.getByTestId('lastAdd-probe').textContent).toBe('lastAdd=新视图'));
+    await waitFor(() => expect(screen.getByTestId('lastAdd-probe').textContent).toBe('lastAdd=新标签页'));
   });
 
   it('draggable reorders via native drag events through the moveTab channel', async () => {

@@ -106,6 +106,7 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
             key={tab.key}
             variant="ghost"
             onClick={() => setStatusTab(tab.key)}
+            aria-pressed={statusTab === tab.key}
             data-active={statusTab === tab.key ? 'true' : undefined}
             style={{
               flex: 1,
@@ -167,6 +168,7 @@ function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
     <div
       role="button"
       tabIndex={0}
+      aria-current={isActive ? 'true' : undefined}
       onClick={onSelect}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(); }}
       style={{

@@ -345,8 +345,23 @@ export interface VideoSchema extends BaseSchema {
   width?: number | string;
   /** 视频高度（数字单位 px，字符串支持任意 CSS 单位） */
   height?: number | string;
+  /** 字幕/音轨（WCAG 1.2.2 captions 能力；渲染为 <track> 子元素） */
+  tracks?: MediaTrackSchema[];
   // `title` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
   onLoadError?: ActionSchema;
+}
+
+export interface MediaTrackSchema extends SchemaObject {
+  /** track 类型：captions / subtitles / descriptions / chapters / metadata */
+  kind: 'captions' | 'subtitles' | 'descriptions' | 'chapters' | 'metadata';
+  /** track 资源地址（WebVTT 等） */
+  src: string;
+  /** 语言标签（BCP 47） */
+  srcLang?: string;
+  /** 供用户代理展示的标题 */
+  label?: string;
+  /** 默认启用该 track */
+  default?: boolean;
 }
 
 export interface CarouselItemSchema extends SchemaObject {

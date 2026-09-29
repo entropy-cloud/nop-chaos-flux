@@ -308,6 +308,7 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
               data-slot="carousel-indicator"
               data-index={index}
               data-active={index === activeIndex ? 'true' : undefined}
+              aria-current={index === activeIndex ? 'true' : undefined}
               aria-label={t('flux.carousel.goToSlide', { index: index + 1 })}
               onClick={() => api?.scrollTo(index)}
               // [G1-视角8-06] the button is the touch target (24px, WCAG

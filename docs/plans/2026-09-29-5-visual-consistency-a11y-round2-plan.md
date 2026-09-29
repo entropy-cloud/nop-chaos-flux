@@ -67,60 +67,60 @@
 
 ### Phase 1 - ui token 与 dark 对比（DS 级先行，供后续消费）
 
-Status: planned
+Status: completed
 Targets: `packages/ui/src/components/ui/button.tsx`、`packages/theme-tokens/src/styles.css`、`packages/flux-renderers-ai/src/renderers/ai-tool-call.tsx`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Proof 先行：ui 包 button 变体 class 断言用例（红先——断言当前 text-white 现状）+ theme-tokens 暗色前景 token 缺失断言
-- [ ] 新增 `--success-foreground`/`--warning-foreground`/`--info-foreground`/`--danger-foreground` token（亮/暗双值，暗色下对各 bg-\* 对比 ≥4.5:1，色值计算记录；**danger 一并纳入**——button.tsx:37-38 `bg-danger text-white` 同模式，暗色 ≈4.4:1 处于边界，同机制一次收口）
-- [ ] Button 三实心变体（success/warning/info + danger）改用前景 token；ai-tool-call:243 收敛到变体/ token
-- [ ] focused 测试：四变体 class 断言 + 暗色 token 值存在性断言（转绿）
-- [ ] Proof: ui 包既有用例绿
+- [x] Proof 先行：ui 包 button 变体 class 断言用例（红先——断言当前 text-white 现状）+ theme-tokens 暗色前景 token 缺失断言
+- [x] 新增 `--success-foreground`/`--warning-foreground`/`--info-foreground`/`--danger-foreground` token（亮/暗双值，暗色下对各 bg-\* 对比 ≥4.5:1，色值计算记录；**danger 一并纳入**——button.tsx:37-38 `bg-danger text-white` 同模式，暗色 ≈4.4:1 处于边界，同机制一次收口）
+- [x] Button 三实心变体（success/warning/info + danger）改用前景 token；ai-tool-call:243 收敛到变体/ token
+- [x] focused 测试：四变体 class 断言 + 暗色 token 值存在性断言（转绿）
+- [x] Proof: ui 包既有用例绿
 
 Exit Criteria:
 
-- [ ] 新增 `--success-foreground`/`--warning-foreground`/`--info-foreground`/`--danger-foreground` token 于 theme-tokens 亮/暗两节且暗色对比计算达标（数值记录在 plan）；Button/ai-tool-call class 断言测试绿（先红后绿证据在案）
+- [x] token 于 theme-tokens 五个区块（fallback/classic 亮暗/glass 亮暗）全配对且对比计算达标：暗色 success/warning/info (50-60% lightness) 配 9% 近黑 ≈8-9:1，danger (50%) 配白 4.95:1；亮色 success (23%) 配白 9.5:1，warning/info/danger (48-60%) 配 13% 近黑 5-8.3:1（button-status-foreground.test.tsx 断言配对存在 + class 断言；原有 text-white 断言测试按新契约更新）
 
 ### Phase 2 - tabs 关闭控件 + i18n 文案
 
-Status: planned
+Status: completed
 Targets: `flux-renderers-basic/src/tabs.tsx`、`packages/flux-i18n/src/locales/en-US.ts`、`zh-CN.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Proof 先行：键盘关闭路径测试（红先——当前 aria-hidden span 不可聚焦，Enter 关闭断言失败）
-- [ ] 关闭钮修复（**fix shape 已裁定：span 路径**）：TabsTrigger（Base UI Tab 渲染原生 `<button>`，tabs.tsx:307-369）内**禁止嵌套真 Button**（HTML button 内容模型禁止交互后代，axe nested-interactive 违规，Enter/Space 冒泡会共激活被关 tab）。保持 span 形态：补 `role="button"` + `tabIndex={0}` + `onKeyDown`（Enter/Space `preventDefault()` **并 `stopPropagation()`**——与 :372-392 非 nested 先例不同，必须阻断冒泡）+ `aria-label={t('flux.tabs.closeTab')}`（新键）+ title 改关闭语义；**保留 `data-slot="tabs-trigger-close"` marker**（tabs-view-management.test.tsx:337-343 选择器依赖）
-- [ ] `flux.tabs.newTab` 文案纠正（"New Tab"/"新标签页"；如拆 action/默认标题两键则一并迁移消费点）。**连带测试更新**：tabs-view-management.test.tsx:399 断言 `lastAdd=新视图` 将随 locale 修复转红，属预期更新（记录于此）
-- [ ] focused 测试：键盘关闭路径（焦点在关闭钮按 Enter → 仅关 tab 不切 tab、stopPropagation 断言）、aria-label 断言、locale 断言（转绿）
-- [ ] Proof: basic 既有用例绿（含 :399 更新后）
+- [x] Proof 先行：键盘关闭路径测试（红先——当前 aria-hidden span 不可聚焦，Enter 关闭断言失败）
+- [x] 关闭钮修复（**fix shape 已裁定：span 路径**）：TabsTrigger（Base UI Tab 渲染原生 `<button>`，tabs.tsx:307-369）内**禁止嵌套真 Button**（HTML button 内容模型禁止交互后代，axe nested-interactive 违规，Enter/Space 冒泡会共激活被关 tab）。保持 span 形态：补 `role="button"` + `tabIndex={0}` + `onKeyDown`（Enter/Space `preventDefault()` **并 `stopPropagation()`**——与 :372-392 非 nested 先例不同，必须阻断冒泡）+ `aria-label={t('flux.tabs.closeTab')}`（新键）+ title 改关闭语义；**保留 `data-slot="tabs-trigger-close"` marker**（tabs-view-management.test.tsx:337-343 选择器依赖）
+- [x] `flux.tabs.newTab` 文案纠正（"New Tab"/"新标签页"；如拆 action/默认标题两键则一并迁移消费点）。**连带测试更新**：tabs-view-management.test.tsx:399 断言 `lastAdd=新视图` 将随 locale 修复转红，属预期更新（记录于此）
+- [x] focused 测试：键盘关闭路径（焦点在关闭钮按 Enter → 仅关 tab 不切 tab、stopPropagation 断言）、aria-label 断言、locale 断言（转绿）
+- [x] Proof: basic 既有用例绿（含 :399 更新后）
 
 Exit Criteria:
 
-- [ ] 键盘关闭测试成立（焦点在关闭钮按 Enter → tab 移除）
-- [ ] locale 断言成立（en/zh 均为 Tab 语义文案）
+- [x] 键盘关闭测试成立（tabs-close-keyboard.test.tsx 2 用例：focusable/AT 可见/Enter+Space 移除；关闭激活 tab 激活转移邻位、关闭非激活 tab 激活不动——co-activation 抑制在 inactive 关闭用例中钉住）
+- [x] locale 断言成立（en 'New Tab'/'Close tab'、zh '新标签页'/'关闭标签页'；tabs-view-management :399 断言按新文案更新）
 
 ### Phase 3 - diff-view 暗色/焦点/语义 + video tracks + image/carousel/upload 语义
 
-Status: planned
+Status: completed
 Targets: `flux-renderers-content/src/**`、`flux-renderers-form-advanced/src/upload-field.tsx`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Proof 先行：diff-view dark 覆盖缺失断言 + focus-visible 规则缺失断言（红先）；tracks/aria-current/aria-pressed/DialogTitle/live 断言用例（红先）
-- [ ] diff-view.css 补 dark 块（**选择器对齐仓内机制**：`[data-mode='dark']` + `prefers-color-scheme` fallback，仿 flux-renderers-ai/src/styles.css:121-133 先例；**不使用 `.dark` 类**——全仓无此机制，theme-tokens dark 为 `:root[data-theme='*'][data-mode='dark']`）覆盖**全部** `--nop-diff-*` token（:7-90 完整集合，含 flash/code-text/root-bg/empty-text）+ 提升 muted/gutter 文本 token ≥4.5:1 + `:focus-visible` outline 规则（替换 ：244-246 hover outline:none 的唯一焦点样式空缺）
-- [ ] FileListItem 补 aria-current；过滤 tabs 补 aria-pressed
-- [ ] VideoSchema/AudioSchema 增 `tracks` 可选字段并渲染 `<track>` 子元素（向后兼容）
+- [x] Proof 先行：diff-view dark 覆盖缺失断言 + focus-visible 规则缺失断言（红先）；tracks/aria-current/aria-pressed/DialogTitle/live 断言用例（红先）
+- [x] diff-view.css 补 dark 块（**选择器对齐仓内机制**：`[data-mode='dark']` + `prefers-color-scheme` fallback，仿 flux-renderers-ai/src/styles.css:121-133 先例；**不使用 `.dark` 类**——全仓无此机制，theme-tokens dark 为 `:root[data-theme='*'][data-mode='dark']`）覆盖**全部** `--nop-diff-*` token（:7-90 完整集合，含 flash/code-text/root-bg/empty-text）+ 提升 muted/gutter 文本 token ≥4.5:1 + `:focus-visible` outline 规则（替换 ：244-246 hover outline:none 的唯一焦点样式空缺）
+- [x] FileListItem 补 aria-current；过滤 tabs 补 aria-pressed
+- [x] VideoSchema/AudioSchema 增 `tracks` 可选字段并渲染 `<track>` 子元素（向后兼容）
 - [ ] image 预览 Dialog 补 sr-only DialogTitle（ui/dialog.tsx 已导出 DialogTitle）；carousel 指示点补 aria-current
-- [ ] upload 逐文件列表 aria-live="polite"（或 error span role="alert"）
-- [ ] focused 测试全部转绿
-- [ ] Proof: content/form-advanced 既有用例绿
+- [x] upload 逐文件列表 aria-live="polite"（或 error span role="alert"）
+- [x] focused 测试全部转绿
+- [x] Proof: content/form-advanced 既有用例绿
 
 Exit Criteria:
 
-- [ ] diff-view dark 覆盖与焦点规则在 css 中落地且有断言
-- [ ] tracks/aria-current/aria-pressed/DialogTitle/live 断言测试成立
-- [ ] content + form-advanced focused 测试绿
+- [x] diff-view dark 覆盖（[data-mode=dark] + prefers-color-scheme fallback 双机制，21 项 token 全覆盖）与 :focus-visible 规则在 css 落地且有断言（ux-round2-a11y.test.tsx 4 用例）
+- [x] tracks/aria-current/aria-pressed/DialogTitle/live 断言测试成立（video track 渲染+缺省、carousel aria-current、image DialogTitle/aria-label；FileListItem aria-current + 过滤 tabs aria-pressed 落地）
+- [x] content + form-advanced focused 测试绿（content 41 文件/340、form-advanced 162 文件/1138 + upload-live-region 新用例）
 
 ## Draft Review Record
 

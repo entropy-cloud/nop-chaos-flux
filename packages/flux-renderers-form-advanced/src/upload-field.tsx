@@ -573,6 +573,7 @@ export function UploadFieldRenderer(
 
       {showList ? (
         <ul
+          aria-live="polite"
           className={cn(
             'flex flex-col gap-1.5',
             options.kind === 'image' && multiple && 'flex-row flex-wrap',

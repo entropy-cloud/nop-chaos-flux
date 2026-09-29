@@ -244,7 +244,7 @@ function ApprovalFooter({
           type="button"
           size="sm"
           variant="default"
-          className="bg-success hover:bg-success/90 text-white"
+          className="bg-success hover:bg-success/90 text-success-foreground"
           data-slot="ai-tool-call-approve"
           data-tool-call-id={toolCallId}
           aria-label={t('flux.ai.approve')}

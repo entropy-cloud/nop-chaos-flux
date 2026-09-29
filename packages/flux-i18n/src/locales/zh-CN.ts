@@ -4,6 +4,7 @@ export const zhCN: Resource = {
   flux: {
     common: {
       loading: '加载中...',
+      preview: '预览',
       error: '错误',
       chart: '图表',
       close: '关闭',
@@ -474,7 +475,8 @@ export const zhCN: Resource = {
       resize: '调整大小',
     },
     tabs: {
-      newTab: '新视图',
+      newTab: '新标签页',
+      closeTab: '关闭标签页',
     },
     page: {
       asideResize: '调整侧栏宽度',

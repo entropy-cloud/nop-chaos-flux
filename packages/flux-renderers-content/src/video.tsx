@@ -29,6 +29,9 @@ export function VideoRenderer(props: RendererComponentProps<VideoSchema>) {
   };
   const titleContent = resolveRendererSlotContent(props, 'title');
   const hasTitle = hasRendererSlotContent(titleContent);
+  const tracks = Array.isArray(slotProps.tracks)
+    ? (slotProps.tracks as NonNullable<VideoSchema['tracks']>)
+    : [];
   const onLoadError = props.events.onLoadError;
 
   const [errored, setErrored] = React.useState(false);
@@ -88,7 +91,20 @@ export function VideoRenderer(props: RendererComponentProps<VideoSchema>) {
         muted={muted}
         onError={handleError}
         style={videoStyle}
-      />
+      >
+        {tracks.map((track) => (
+          <track
+            // content-derived key: same src+lang+kind may not repeat within a
+            // media element
+            key={`${track.kind}:${track.srcLang ?? ''}:${track.src}`}
+            kind={track.kind}
+            src={track.src}
+            srcLang={track.srcLang}
+            label={track.label}
+            default={track.default}
+          />
+        ))}
+      </video>
       {hasTitle ? (
         <figcaption data-slot="video-title" className="text-sm text-muted-foreground">
           {titleContent}

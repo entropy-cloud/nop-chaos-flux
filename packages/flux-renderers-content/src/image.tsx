@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ActionSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { Dialog, DialogContent, Spinner, cn } from '@nop-chaos/ui';
+import { Dialog, DialogContent, DialogTitle, Spinner, cn } from '@nop-chaos/ui';
 import type { ImageFit, ImageSchema } from './schemas.js';
 
 const FIT_TO_CLASS: Record<ImageFit, string> = {
@@ -238,7 +238,8 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
       />
       {preview && previewOpen ? (
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent size="md" showCloseButton>
+          <DialogContent size="md" showCloseButton aria-label={alt || t('flux.common.preview')}>
+            <DialogTitle className="sr-only">{alt || t('flux.common.preview')}</DialogTitle>
             <img
               src={effectiveSrc}
               alt={alt}
