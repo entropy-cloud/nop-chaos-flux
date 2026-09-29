@@ -170,7 +170,7 @@ Status Note: 移交的 14 个失败用例经分批复跑达到终态：11 landed
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 独立子 agent（fresh session）r1（verdict `issues`——gantt resize 双失败证伪 15/15 全绿记录、watch-only 清单缺 gantt、Plan Status/勾选状态提前、计数 12/12 与批次数错误）→ 本轮全部修正并补 pre-baseline 对照证据；r2 待派
+- Auditor / Agent: 独立子 agent（fresh session）r1（verdict `issues`——gantt resize 双失败证伪 15/15 全绿记录、watch-only 清单缺 gantt、Plan Status/勾选状态提前、计数 12/12 与批次数错误）→ 本轮全部修正并补 pre-baseline 对照证据；r2 `issues`（tally 不一致——13 landed 残留子句）→ 3b1e27c24 + 本轮修正；r3 按本轮指示终审
 
 Follow-up:
 
