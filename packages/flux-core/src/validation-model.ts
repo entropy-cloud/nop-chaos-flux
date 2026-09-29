@@ -254,5 +254,13 @@ export function hasCompiledValidationNodes(
   model: CompiledFormValidationModel | undefined,
 ): boolean {
   const nodes = model?.nodes;
-  return !!nodes && Object.keys(nodes).length > 0;
+  if (!nodes) {
+    return false;
+  }
+  for (const key in nodes) {
+    if (Object.prototype.hasOwnProperty.call(nodes, key)) {
+      return true;
+    }
+  }
+  return false;
 }

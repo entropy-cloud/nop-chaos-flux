@@ -247,4 +247,30 @@ describe('collectSubtreeValidationTargets', () => {
     expect(targets).toContain('slug');
     expect(targets).toContain('seo');
   });
+
+  it('returns BFS-discovered dependents exactly once (no duplicate validation targets)', () => {
+    const validation = {
+      ...createValidationModel(
+        {
+          root: { kind: 'container', children: ['root.field'] },
+          'root.field': { kind: 'field', children: [] },
+          depA: { kind: 'field', children: [] },
+          depB: { kind: 'field', children: [] },
+        },
+        ['root', 'root.field'],
+        'root',
+      ),
+      dependents: {
+        'root.field': ['depA'],
+        depA: ['depB'],
+      },
+    } as CompiledFormValidationModel;
+    const state = createSharedState(validation);
+
+    const targets = collectSubtreeValidationTargets(state, 'root');
+
+    expect(targets.filter((path) => path === 'depA')).toHaveLength(1);
+    expect(targets.filter((path) => path === 'depB')).toHaveLength(1);
+    expect(new Set(targets).size).toBe(targets.length);
+  });
 });

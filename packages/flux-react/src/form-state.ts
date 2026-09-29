@@ -151,6 +151,43 @@ export function isValidationFieldEffectivelyRequired(
   );
 }
 
+const PRESENTATION_AGGREGATE_SOURCE_KINDS: readonly ValidationError['sourceKind'][] = [
+  'array',
+  'object',
+  'form',
+  'runtime-registration',
+  'external',
+];
+
+function matchesPathOwnerError(error: ValidationError, path: string): boolean {
+  return error.path === path && (error.ownerPath ?? error.path) === path;
+}
+
+function isAggregatePresentationError(error: ValidationError, path: string): boolean {
+  return (
+    matchesPathOwnerError(error, path) &&
+    error.sourceKind !== undefined &&
+    PRESENTATION_AGGREGATE_SOURCE_KINDS.includes(error.sourceKind)
+  );
+}
+
+function findFirstError(
+  errors: readonly ValidationError[] | undefined,
+  isMatch: (error: ValidationError) => boolean,
+): ValidationError | undefined {
+  if (!errors) {
+    return undefined;
+  }
+
+  for (const error of errors) {
+    if (isMatch(error)) {
+      return error;
+    }
+  }
+
+  return undefined;
+}
+
 export function selectCurrentFormFieldPresentation(
   state: FormStoreState,
   input: {
@@ -162,29 +199,28 @@ export function selectCurrentFormFieldPresentation(
     query?: FormErrorQuery;
   },
 ): FormFieldPresentationSnapshot {
-  const fieldState = selectCurrentFormFieldState(
-    state,
-    input.path,
-    input.query ?? { path: input.path, ownerPath: input.path },
+  const fieldState = state.fieldStates[input.path];
+  const errors = fieldState?.errors;
+  const query = input.query;
+  const pathError = findFirstError(errors, (error) =>
+    query ? matchesFormErrorQuery(error, query) : matchesPathOwnerError(error, input.path),
   );
   const error =
-    selectCurrentFormErrors(state, {
-      path: input.path,
-      ownerPath: input.path,
-      sourceKinds: ['array', 'object', 'form', 'runtime-registration', 'external'],
-    })[0] ?? fieldState.error;
-  const field = getCompiledValidationField(input.validation, input.path);
-  const showErrorOn = resolveShowErrorTriggers(field?.behavior ?? input.validation?.behavior);
+    findFirstError(errors, (error) => isAggregatePresentationError(error, input.path)) ??
+    pathError;
+  const showErrorOn = resolveShowErrorTriggers(
+    getCompiledValidationField(input.validation, input.path)?.behavior ?? input.validation?.behavior,
+  );
   const showError = Boolean(
     error &&
     shouldShowFieldError(
       { showErrorOn },
       {
-        touched: fieldState.touched,
-        dirty: fieldState.dirty,
-        visited: fieldState.visited,
-        submitting: fieldState.submitting,
-        submitAttempted: fieldState.submitAttempted,
+        touched: fieldState?.touched === true,
+        dirty: fieldState?.dirty === true,
+        visited: fieldState?.visited === true,
+        submitting: state.submitting,
+        submitAttempted: state.submitAttempted,
       },
     ),
   );
@@ -192,8 +228,13 @@ export function selectCurrentFormFieldPresentation(
   const readOnly = Boolean(input.readOnly);
 
   return {
-    ...fieldState,
     error,
+    validating: fieldState?.validating === true,
+    touched: fieldState?.touched === true,
+    dirty: fieldState?.dirty === true,
+    visited: fieldState?.visited === true,
+    submitting: state.submitting,
+    submitAttempted: state.submitAttempted,
     effectiveDisabled,
     effectiveRequired:
       Boolean(input.required) ||

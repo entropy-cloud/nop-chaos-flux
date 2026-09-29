@@ -340,12 +340,23 @@ export function buildFormOwnerRuntime(input: {
 
     const validationPaths = getCompiledValidationTraversalOrder(currentValidation);
 
+    let scannedFieldStates: Record<string, FieldState> | undefined;
+    let scannedPathsWithErrors: string[] = [];
+
     function captureSideEffectErrors(validatedPath: string) {
       const currentFieldStates = input.sharedState.store.getState().fieldStates;
+      if (currentFieldStates !== scannedFieldStates) {
+        scannedPathsWithErrors = [];
+        for (const path in currentFieldStates) {
+          if (currentFieldStates[path]?.errors) {
+            scannedPathsWithErrors.push(path);
+          }
+        }
+        scannedFieldStates = currentFieldStates;
+      }
 
-      for (const [path, fs] of Object.entries(currentFieldStates)) {
-        const pathErrors = fs.errors;
-        if (!pathErrors || validatedPaths.has(path)) {
+      for (const path of scannedPathsWithErrors) {
+        if (validatedPaths.has(path)) {
           continue;
         }
 

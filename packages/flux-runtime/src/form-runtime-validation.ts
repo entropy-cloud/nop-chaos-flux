@@ -323,10 +323,27 @@ async function validateCompiledField(
   }
 
   try {
+    let pendingSyncCommit = false;
+    const commitPendingSyncErrors = () => {
+      if (!pendingSyncCommit) {
+        return;
+      }
+      pendingSyncCommit = false;
+      finalErrors = overlayFieldErrorsWithExternal(sharedState, path, errors);
+      commitPathValidationState({
+        sharedState,
+        path,
+        errors: finalErrors,
+        validating: true,
+      });
+    };
+
     for (const compiledRule of field.rules) {
       const rule = compiledRule.rule;
 
       if (rule.kind === 'async') {
+        commitPendingSyncErrors();
+
         const shouldRun = await waitForValidationDebounce(
           sharedState,
           path,
@@ -374,15 +391,11 @@ async function validateCompiledField(
       }
 
       if (hasAsyncRules) {
-        finalErrors = overlayFieldErrorsWithExternal(sharedState, path, errors);
-        commitPathValidationState({
-          sharedState,
-          path,
-          errors: finalErrors,
-          validating: true,
-        });
+        pendingSyncCommit = true;
       }
     }
+
+    commitPendingSyncErrors();
 
     const runtimeChildErrors = await collectRuntimeRegistrationChildErrorsForPath(
       sharedState,

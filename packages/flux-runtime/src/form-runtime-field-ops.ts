@@ -295,17 +295,62 @@ function isHiddenPath(sharedState: ManagedFormRuntimeSharedState, path: string):
   return false;
 }
 
-function clearHiddenSubtreeFieldStates(
+interface PendingHiddenSubtreeClear {
+  roots: Set<string>;
+  validation: CompiledFormValidationModel | undefined;
+  scheduled: boolean;
+}
+
+const pendingHiddenSubtreeClears = new WeakMap<
+  ManagedFormRuntimeSharedState,
+  PendingHiddenSubtreeClear
+>();
+
+function scheduleHiddenSubtreeClear(
   sharedState: ManagedFormRuntimeSharedState,
   path: string,
   currentValidation: CompiledFormValidationModel | undefined,
 ) {
+  let pending = pendingHiddenSubtreeClears.get(sharedState);
+  if (!pending) {
+    pending = { roots: new Set(), validation: currentValidation, scheduled: false };
+    pendingHiddenSubtreeClears.set(sharedState, pending);
+  }
+
+  pending.roots.add(path);
+  pending.validation = currentValidation;
+
+  if (pending.scheduled) {
+    return;
+  }
+
+  pending.scheduled = true;
+  queueMicrotask(() => {
+    const flushed = pendingHiddenSubtreeClears.get(sharedState);
+    pendingHiddenSubtreeClears.delete(sharedState);
+    if (!flushed || flushed.roots.size === 0 || sharedState.lifecycleState === 'disposed') {
+      return;
+    }
+
+    clearHiddenSubtreesFieldStates(sharedState, flushed.roots, flushed.validation);
+  });
+}
+
+function clearHiddenSubtreesFieldStates(
+  sharedState: ManagedFormRuntimeSharedState,
+  roots: Iterable<string>,
+  currentValidation: CompiledFormValidationModel | undefined,
+) {
+  const rootList = [...roots];
   const fieldStates = sharedState.store.getState().fieldStates;
   let changed = false;
   const nextFieldStates: Record<string, FieldState> = { ...fieldStates };
 
   for (const [fieldPath, existingFieldState] of Object.entries(fieldStates)) {
-    if (fieldPath !== path && !fieldPath.startsWith(`${path}.`)) {
+    const matchedRoot = rootList.find(
+      (root) => fieldPath === root || fieldPath.startsWith(`${root}.`),
+    );
+    if (!matchedRoot) {
       continue;
     }
 
@@ -430,7 +475,7 @@ export function notifyFieldHidden(
   if (hidden) {
     invalidateHiddenSubtreeValidation(sharedState, path);
     sharedState.hiddenFields.add(path);
-    clearHiddenSubtreeFieldStates(sharedState, path, currentValidation);
+    scheduleHiddenSubtreeClear(sharedState, path, currentValidation);
 
     for (const clearPath of collectClearValueWhenHiddenPaths(currentValidation, path)) {
       setValue(clearPath, undefined);

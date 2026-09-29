@@ -242,9 +242,10 @@ export function compileRuntimeValueTree<T = unknown>(
               } as RuntimeValueState<T> & { root: ObjectValueState<unknown> });
         const stateRoot = resolvedState.root;
 
-        const currentKeys = Object.keys(stateRoot.entries);
-        const needsRebuild =
-          keys.some((key) => !(key in stateRoot.entries)) || currentKeys.some((key) => !keys.includes(key));
+        // `entries` is only ever built from `keys` (both init paths above), so
+        // a missing key is the only possible drift — the reverse containment
+        // check would be dead O(K²) work on every props evaluation.
+        const needsRebuild = keys.some((key) => !(key in stateRoot.entries));
         if (needsRebuild) {
           stateRoot.entries = Object.fromEntries(
             keys.map((key) => [key, createStateRootForValue(entries[key])]),

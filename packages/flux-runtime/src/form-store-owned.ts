@@ -215,6 +215,11 @@ export function createOwnedFormStore(baseStore: FormStoreApi, ownerId: string): 
   let cachedBaseFieldStates: Record<string, FieldState> | undefined;
   let cachedOwnedFieldStates: Record<string, FieldState> | undefined;
   let cachedOwnedSummary: FormStoreSummaryState | undefined;
+  let cachedComposedState: InternalFormStoreState | undefined;
+  let cachedComposedValues: FormStoreState['values'];
+  let cachedComposedFieldStates: Record<string, FieldState> | undefined;
+  let cachedComposedSubmitting: boolean | undefined;
+  let cachedComposedSubmitAttempted: boolean | undefined;
 
   function getOwnedFieldStates(baseFieldStates: Record<string, FieldState>): Record<string, FieldState> {
     if (cachedBaseFieldStates === baseFieldStates && cachedOwnedFieldStates) {
@@ -232,13 +237,28 @@ export function createOwnedFormStore(baseStore: FormStoreApi, ownerId: string): 
     const state = resolvedBaseStore.getState() as InternalFormStoreState;
     const fieldStates = getOwnedFieldStates(state.fieldStates);
 
-    return {
+    if (
+      cachedComposedState &&
+      cachedComposedValues === state.values &&
+      cachedComposedFieldStates === fieldStates &&
+      cachedComposedSubmitting === state.submitting &&
+      cachedComposedSubmitAttempted === state.submitAttempted
+    ) {
+      return cachedComposedState;
+    }
+
+    cachedComposedState = {
       values: state.values,
       fieldStates,
       submitting: state.submitting,
       submitAttempted: state.submitAttempted,
       summary: cachedOwnedSummary ?? computeSummaryFromFieldStates(fieldStates),
     };
+    cachedComposedValues = state.values;
+    cachedComposedFieldStates = fieldStates;
+    cachedComposedSubmitting = state.submitting;
+    cachedComposedSubmitAttempted = state.submitAttempted;
+    return cachedComposedState;
   }
 
   const ownedStore: FormStoreApi = {

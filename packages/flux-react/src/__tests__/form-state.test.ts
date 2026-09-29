@@ -547,3 +547,43 @@ describe('selectCurrentFormFieldPresentation', () => {
     expect(result.showError).toBe(true);
   });
 });
+
+describe('selectCurrentFormFieldPresentation query handling', () => {
+  it('uses the provided query to filter the primary error', () => {
+    const ruleError = makeError({ rule: 'required', message: 'Required' });
+    const patternError = makeError({ rule: 'pattern', message: 'Pattern' });
+    const state = makeState({
+      fieldStates: {
+        name: { errors: [ruleError, patternError] },
+      },
+    });
+    const result = selectCurrentFormFieldPresentation(state, {
+      path: 'name',
+      query: { path: 'name', rule: 'pattern' },
+    });
+    expect(result.error).toBe(patternError);
+  });
+
+  it('defaults the primary query to path+ownerPath when query omitted', () => {
+    const foreignPathError = makeError({ path: 'other', ownerPath: 'name', sourceKind: 'array' });
+    const state = makeState({
+      fieldStates: {
+        name: { errors: [foreignPathError] },
+      },
+    });
+    const result = selectCurrentFormFieldPresentation(state, { path: 'name' });
+    expect(result.error).toBeUndefined();
+  });
+
+  it('aggregate lookup only accepts registered source kinds', () => {
+    const foreignSource = makeError({ path: 'name', sourceKind: 'field-rule' });
+    const aggregateError = makeError({ path: 'name', sourceKind: 'external', message: 'Ext' });
+    const state = makeState({
+      fieldStates: {
+        name: { errors: [foreignSource, aggregateError] },
+      },
+    });
+    const result = selectCurrentFormFieldPresentation(state, { path: 'name' });
+    expect(result.error).toBe(aggregateError);
+  });
+});

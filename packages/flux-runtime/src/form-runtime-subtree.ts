@@ -114,13 +114,10 @@ export function collectSubtreeValidationTargets(
     addTarget(candidatePath);
   }
 
-  const queue = [...orderedTargets];
-  while (queue.length > 0) {
-    const candidatePath = queue.shift();
-
-    if (!candidatePath) {
-      continue;
-    }
+  const queue = orderedTargets;
+  let head = 0;
+  while (head < queue.length) {
+    const candidatePath = queue[head++];
 
     for (const dependentPath of getCompiledValidationDependents(
       sharedState.inputValue.validation,
@@ -130,8 +127,10 @@ export function collectSubtreeValidationTargets(
         continue;
       }
 
+      // addTarget appends to orderedTargets, which is the BFS queue itself —
+      // pushing here as well would duplicate every discovered dependent in the
+      // returned array (and double-validate it downstream).
       addTarget(dependentPath);
-      queue.push(dependentPath);
     }
   }
 

@@ -82,11 +82,18 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
     return definition?.componentCapabilityContracts?.find((contract) => contract.handle === method);
   }
 
+  const surfaceValidationPlanCache = new WeakMap<object, { plan: unknown }>();
+
   function resolveSurfaceValidationPlan(surface: Record<string, unknown>) {
     const body = surface.body;
 
     if (!isSchema(body) && !isSchemaArray(body)) {
       return { plan: undefined };
+    }
+
+    const cachedPlan = surfaceValidationPlanCache.get(body as object);
+    if (cachedPlan) {
+      return { plan: cachedPlan.plan };
     }
 
     try {
@@ -95,7 +102,9 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
         body,
       });
       const root = Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
-      return { plan: root?.validationPlan };
+      const plan = root?.validationPlan;
+      surfaceValidationPlanCache.set(body as object, { plan });
+      return { plan };
     } catch (error) {
       reportRuntimeHostIssue({
         env: runtime.env,

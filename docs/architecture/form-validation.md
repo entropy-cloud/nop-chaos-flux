@@ -180,6 +180,7 @@ Current live baseline note:
 
 - `options?.signal` is now part of the public owner-validation carrier and is forwarded through `FormRuntime`, managed validation scopes, and projected validation runtimes
 - omitting `options` remains supported and preserves the prior no-options call shape
+- `notifyFieldHidden(path, true)` applies the hidden-state bookkeeping (hidden-fields set, in-flight validation invalidation) synchronously, but defers the field-state cleanup (error/validating clearing for the hidden subtree) to a microtask batch — same-frame hidden flips of multiple fields merge into one store commit. Terminal state is identical to sequential per-field flips; readers inside the same synchronous frame see the hidden-participation change immediately while the store cleanup lands at the microtask boundary.
 
 ### FormRuntime
 

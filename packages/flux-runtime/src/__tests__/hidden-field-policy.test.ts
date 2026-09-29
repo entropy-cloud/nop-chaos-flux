@@ -9,6 +9,7 @@ import {
 import { createRendererRuntime } from '../index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createManagedFormRuntime } from '../form-runtime.js';
+import { createFormStore } from '../form-store.js';
 import { createScopeRef, createScopeStore } from '../scope.js';
 import { env } from './test-fixtures.js';
 
@@ -57,6 +58,7 @@ function makeFormModel(
 function makeRuntime(
   validation: CompiledFormValidationModel | undefined,
   initialValues: Record<string, any> = {},
+  options: { existingStore?: ReturnType<typeof createFormStore> } = {},
 ) {
   const parentStore = createScopeStore(initialValues);
   const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
@@ -71,6 +73,7 @@ function makeRuntime(
     validation,
     validateRule,
     executeValidationRule,
+    ...(options.existingStore ? { existingStore: options.existingStore } : {}),
   });
 
   return { runtime, validateRule };
@@ -327,13 +330,14 @@ describe('hidden field validation participation', () => {
 
     validateRule.mockReturnValue(undefined);
     runtime.notifyFieldHidden('email', true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     const afterHideResult = await runtime.validateField('email');
     expect(afterHideResult.ok).toBe(true);
     expect(runtime.getError('email')).toBeUndefined();
   });
 
-  it('notifyFieldHidden clears existing field errors and validating state immediately', async () => {
+  it('notifyFieldHidden clears existing field errors and validating state in the same microtask batch', async () => {
     const model = makeFormModel({
       email: makeNode('email', { required: true }),
     });
@@ -349,6 +353,7 @@ describe('hidden field validation participation', () => {
     expect(runtime.getError('email')).toBeTruthy();
 
     runtime.notifyFieldHidden('email', true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(runtime.getError('email')).toBeUndefined();
     expect(runtime.getFieldState('email')?.validating).toBeFalsy();
@@ -375,7 +380,7 @@ describe('hidden field validation participation', () => {
     expect(validateRule).not.toHaveBeenCalled();
   });
 
-  it('notifyFieldHidden clears descendant field errors for hidden parent paths', async () => {
+  it('notifyFieldHidden clears descendant field errors for hidden parent paths in the microtask batch', async () => {
     const model = makeFormModel({
       parent: {
         path: 'parent',
@@ -399,6 +404,7 @@ describe('hidden field validation participation', () => {
     expect(runtime.getError('parent.child')).toBeTruthy();
 
     runtime.notifyFieldHidden('parent', true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(runtime.getError('parent.child')).toBeUndefined();
   });
@@ -659,5 +665,87 @@ describe('notifyFieldHidden idempotency', () => {
     const afterHide = await validationOwner.validateAt('email');
     expect(afterHide.ok).toBe(true);
     expect(validationOwner.getFieldState('email').errors).toEqual([]);
+  });
+});
+
+describe('notifyFieldHidden microtask batching', () => {
+  const flushMicrotasks = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  async function makeFieldsWithErrors(paths: string[]) {
+    const fields = Object.fromEntries(
+      paths.map((path) => [path, makeNode(path, { required: true })]),
+    );
+    const model = makeFormModel(fields);
+    const baseStore = createFormStore({});
+    const batchUpdateSpy = vi.spyOn(baseStore, 'batchUpdate');
+    const { runtime, validateRule } = makeRuntime(model, {}, { existingStore: baseStore });
+
+    validateRule.mockImplementation((compiledRule: { id: string }) => ({
+      path: compiledRule.id.split('#')[0],
+      message: 'Required',
+      rule: 'required',
+    }));
+
+    for (const path of paths) {
+      await runtime.validateField(path);
+    }
+    for (const path of paths) {
+      expect(runtime.getError(path)).toBeTruthy();
+    }
+
+    return { runtime, batchUpdateSpy, validateRule };
+  }
+
+  it('merges same-frame hidden flips of multiple fields into one store commit', async () => {
+    const { runtime, batchUpdateSpy } = await makeFieldsWithErrors(['a', 'b', 'c']);
+
+    batchUpdateSpy.mockClear();
+    runtime.notifyFieldHidden('a', true);
+    runtime.notifyFieldHidden('b', true);
+    runtime.notifyFieldHidden('c', true);
+    await flushMicrotasks();
+
+    expect(batchUpdateSpy).toHaveBeenCalledTimes(1);
+    for (const path of ['a', 'b', 'c']) {
+      expect(runtime.getError(path)).toBeUndefined();
+    }
+  });
+
+  it('batched terminal state equals sequential per-field flips', async () => {
+    const sequential = await makeFieldsWithErrors(['x', 'y']);
+    sequential.runtime.notifyFieldHidden('x', true);
+    await flushMicrotasks();
+    sequential.runtime.notifyFieldHidden('y', true);
+    await flushMicrotasks();
+    const sequentialState = {
+      x: sequential.runtime.getFieldState('x'),
+      y: sequential.runtime.getFieldState('y'),
+    };
+
+    const batched = await makeFieldsWithErrors(['x', 'y']);
+    batched.runtime.notifyFieldHidden('x', true);
+    batched.runtime.notifyFieldHidden('y', true);
+    await flushMicrotasks();
+    const batchedState = {
+      x: batched.runtime.getFieldState('x'),
+      y: batched.runtime.getFieldState('y'),
+    };
+
+    expect(batchedState).toEqual(sequentialState);
+  });
+
+  it('hide followed by unmount-cleanup unhide in the same frame converges to the sequential terminal state', async () => {
+    const { runtime, validateRule } = await makeFieldsWithErrors(['a']);
+
+    // Mirror the sequential flow: hide (deferred clear), unhide (triggers
+    // revalidation), flush. With validation passing after unhide, the cleared
+    // errors must not resurrect — same terminal state as hide → flush → unhide.
+    validateRule.mockReturnValue(undefined);
+
+    runtime.notifyFieldHidden('a', true);
+    runtime.notifyFieldHidden('a', false);
+    await flushMicrotasks();
+
+    expect(runtime.getError('a')).toBeUndefined();
   });
 });

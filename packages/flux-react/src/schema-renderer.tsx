@@ -52,39 +52,62 @@ function CompiledSchemaTree(props: {
   rootActionScope: import('@nop-chaos/flux-core').ActionScope;
   rootComponentRegistry: import('@nop-chaos/flux-core').ComponentHandleRegistry;
 }) {
-  const compiledRoot = useMemo<import('@nop-chaos/flux-core').CompiledTemplate | null>(() => {
+  // The compile memo keys on just the two env functions it consumes — an
+  // inline `env={{ notify, ... }}` object from the host must not re-trigger a
+  // full schema recompile on every host render. Compilation failure is reported
+  // from an effect (where reading props.env is legal) so the memo stays pure.
+  const compileResult = useMemo<
+    { template: import('@nop-chaos/flux-core').CompiledTemplate | null; error: Error | null }
+  >(() => {
     try {
-      return props.runtime.schemaCompiler.compile(props.schema, {
-        schemaUrl: props.schemaUrl,
-        importLoader: props.env.importLoader,
-        resolveImportUrl: props.env.resolveImportUrl,
-        preparedImports: props.preparedImports,
-        validation: {
-          strictMode: props.strictMode,
-        },
-        diagnostics: {
-          enabled: true,
-          continueOnError: true,
-        },
-      });
+      return {
+        template: props.runtime.schemaCompiler.compile(props.schema, {
+          schemaUrl: props.schemaUrl,
+          importLoader: props.env.importLoader,
+          resolveImportUrl: props.env.resolveImportUrl,
+          preparedImports: props.preparedImports,
+          validation: {
+            strictMode: props.strictMode,
+          },
+          diagnostics: {
+            enabled: true,
+            continueOnError: true,
+          },
+        }),
+        error: null,
+      };
     } catch (compilationError) {
-      reportImportFailure({
-        env: props.env,
-        error: compilationError instanceof Error ? compilationError : new Error(String(compilationError)),
-        message: 'Schema compilation failed',
-        phase: 'compile',
-        path: props.schemaUrl,
-      });
-      return null;
+      return {
+        template: null,
+        error:
+          compilationError instanceof Error
+            ? compilationError
+            : new Error(String(compilationError)),
+      };
     }
   }, [
     props.runtime,
     props.schema,
     props.schemaUrl,
-    props.env,
+    props.env.importLoader,
+    props.env.resolveImportUrl,
     props.preparedImports,
     props.strictMode,
   ]);
+  const compiledRoot = compileResult.template;
+
+  useEffect(() => {
+    if (!compileResult.error) {
+      return;
+    }
+    reportImportFailure({
+      env: props.env,
+      error: compileResult.error,
+      message: 'Schema compilation failed',
+      phase: 'compile',
+      path: props.schemaUrl,
+    });
+  }, [compileResult, props.env, props.schemaUrl]);
 
   useEffect(() => {
     const rootNode = getSingleRootNode(compiledRoot);
