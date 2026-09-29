@@ -1,6 +1,6 @@
 # 2026-09-29-4 核心管线与外围包剩余热点批量优化
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-29
 > Source: `docs/analysis/2026-09-29-perf-ux-round2-deep-optimization-analysis.md`（R2-P4、R2-P13、R2-P14、R2-P15、R2-P16、R2-P17、R2-P20 其余项）
 > Related: 2026-09-28-6（作用域级联与 contained 热点批量，先例）
@@ -139,7 +139,7 @@ Exit Criteria:
 - [ ] 必要 focused verification 已完成
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [ ] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
@@ -174,13 +174,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 三个 Workstream 全部落地；closure audit 三轮（r1 issues → F1 Major + F2-F6 修复；r2 issues → F6/N1/N2 修复；r3 approved）——DynamicRenderer/Tabs 渲染计数探针 Deferred 裁定经审计方独立判定诚实。四门禁 + check 每轮全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待独立审计>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立子 agent ×3（fresh session，r1 全量 + r2/r3 delta）
+- Evidence: r1 `issues`（F1 Major: inspector 合并仅覆盖 generic fields；F2-F6 minors）→ 502df9dd8；r2 `issues`（F6 措辞未处理 + N1 branch 通道 + N2 注释）→ 816362fdf；r3 `approved`（三项 delta 逐一 live 证据核对 + flow-designer-renderers 41/265 独立复跑）
 
 Follow-up:
 
-- <<待填或 no remaining plan-owned work>>
+- DynamicRenderer/Tabs 精确渲染计数（React Profiler / compiled build re-render 追踪，见 Deferred）；无其余 plan-owned work
