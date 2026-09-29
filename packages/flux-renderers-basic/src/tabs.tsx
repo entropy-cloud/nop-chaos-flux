@@ -105,9 +105,9 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
 
   // Per-tab title region render cache (plan 2026-09-29-4 R2-P17; audit r1
   // F5: the second-level key is the title REGION HANDLE so two tabs bound to
-  // the same scope items never share region-rendered content). Items without
-  // a region handle fall into the shared `undefined` bucket — their fallback
-  // content derives purely from the item's own props. A re-render of the
+  // the same scope items never share region-rendered content; region-less
+  // items fall back to keying by the item object itself, whose content
+  // derives purely from the item's own props). A re-render of the
   // tabs container with unchanged items no longer re-instantiates every
   // title region; dropping the items array releases its map.
   let titleCache = tabTitleRegionCache.get(items);

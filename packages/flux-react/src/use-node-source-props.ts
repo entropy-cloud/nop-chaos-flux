@@ -38,10 +38,11 @@ export function hasSourcePropsInValue(
   // version pushed whole arrays/objects with spread (`stack.push(...current)`)
   // and `Object.values()` per record — one 1000-row source produced ~1000
   // intermediate arrays per re-resolution. Cursor frames (one per container)
-  // keep identical visit order and semantics (own-enumerable keys only,
-  // cycle-safe via the visited set) with O(depth) allocations instead of
-  // O(nodes). The declared-key fast path above stays; the DFS remains the
-  // safety net.
+  // keep identical semantics (own-enumerable keys only, cycle-safe via the
+  // visited set; the boolean result is order-independent even though array
+  // children now visit forward instead of LIFO) with O(depth) allocations
+  // instead of O(nodes). The declared-key fast path above stays; the DFS
+  // remains the safety net.
   interface Frame {
     container: unknown[] | Record<string, unknown>;
     keys: readonly string[] | null;

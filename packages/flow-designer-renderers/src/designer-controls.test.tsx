@@ -491,6 +491,9 @@ describe('flow designer controls', () => {
     fireEvent.change(screen.getByDisplayValue('Branch 1'), {
       target: { value: 'Renamed Branch 1' },
     });
+    // plan 2026-09-29-4 audit r2 N1: branch-name edits coalesce into the
+    // shared draft window — blur flushes the pending rename
+    fireEvent.blur(screen.getByDisplayValue('Renamed Branch 1'));
     expect(mockState.context.dispatch).toHaveBeenCalledWith({
       type: 'updateBranchData',
       nodeId: 'node-1',

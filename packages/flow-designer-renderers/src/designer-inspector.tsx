@@ -35,7 +35,8 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
   // per-keystroke to per-window — recorded accepted consequence (plan
   // Workstream 3 equivalence scope: document content after undo/redo).
   const [draft, setDraft] = useState<{
-    kind: 'node' | 'edge';
+    kind: 'node' | 'edge' | 'branch';
+    /** node id / edge id / `${nodeId}::${branchId}` per kind. */
     targetId: string;
     key: string;
     value: string;
@@ -54,6 +55,14 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
       dispatch({
         type: 'updateNodeData',
         nodeId: pending.targetId,
+        data: { [pending.key]: pending.value },
+      });
+    } else if (pending.kind === 'branch') {
+      const [nodeId, branchId] = pending.targetId.split('::');
+      dispatch({
+        type: 'updateBranchData',
+        nodeId: nodeId!,
+        branchId: branchId!,
         data: { [pending.key]: pending.value },
       });
     } else {
@@ -75,6 +84,14 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
           nodeId: pending.targetId,
           data: { [pending.key]: pending.value },
         });
+      } else if (pending.kind === 'branch') {
+        const [nodeId, branchId] = pending.targetId.split('::');
+        dispatch({
+          type: 'updateBranchData',
+          nodeId: nodeId!,
+          branchId: branchId!,
+          data: { [pending.key]: pending.value },
+        });
       } else {
         dispatch({
           type: 'updateEdgeData',
@@ -84,12 +101,12 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
       }
     };
   }, [dispatch]);
-  const draftFor = (kind: 'node' | 'edge', targetId: string, key: string, current: string) =>
+  const draftFor = (kind: 'node' | 'edge' | 'branch', targetId: string, key: string, current: string) =>
     draft && draft.kind === kind && draft.targetId === targetId && draft.key === key
       ? draft.value
       : current;
   const editField = (
-    kind: 'node' | 'edge',
+    kind: 'node' | 'edge' | 'branch',
     targetId: string,
     key: string,
     value: string,
@@ -97,6 +114,12 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
     setDraft({ kind, targetId, key, value });
     window.clearTimeout(fieldCommitTimerRef.current);
     fieldCommitTimerRef.current = window.setTimeout(flushDraft, 300);
+  };
+
+  // Branch-name edits target (nodeId, branchId) — targetId packs both so the
+  // selection-switch flush guard stays a single-string comparison.
+  const editBranchField = (nodeId: string, branchId: string, key: string, value: string) => {
+    editField('branch', `${nodeId}::${branchId}`, key, value);
   };
 
   const activeNodeId = activeNode?.id;
@@ -285,15 +308,9 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                   </Label>
                   <Input
                     type="text"
-                    value={String(branch.data.label ?? '')}
-                    onChange={(e) =>
-                      dispatch({
-                        type: 'updateBranchData',
-                        nodeId: activeNode.id,
-                        branchId: branch.id,
-                        data: { label: e.target.value },
-                      })
-                    }
+                    value={draftFor('branch', `${activeNode.id}::${branch.id}`, 'label', String(branch.data.label ?? ''))}
+                    onChange={(e) => editBranchField(activeNode.id, branch.id, 'label', e.target.value)}
+                    onBlur={flushDraft}
                   />
                 </div>
               </div>
