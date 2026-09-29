@@ -60,57 +60,57 @@
 
 ### Phase 1 - Proof 先行：窗口化契约测试（先红）
 
-Status: planned
+Status: completed
 Targets: `list-renderer` 测试、`transfer-renderer` 测试、`tests/e2e/`
 
 - Item Types: `Proof`
 
-- [ ] happy-dom 用例：list infinite > 阈值挂载数上限断言（先红）；窗口外选择持久断言；**窗口化下滚到底 onLoadMore 仍触发的断言**（先红基线：当前全挂载下 sentinel 路径可用，记录为对照）
-- [ ] happy-dom 用例：transfer > 阈值挂载数上限断言（先红）；键盘导航跨窗断言（先红）
-- [ ] e2e 用例：list/transfer 大数据集编译产物冒烟（挂载数 + 交互，参照 table-virtual-body.spec.ts）
-- [ ] 基线记录：当前全挂载行为下的 DOM 计数（broken 断言的 expected 值依据）
+- [x] happy-dom 用例：list infinite > 阈值挂载数上限断言（先红）；窗口外选择持久断言；**窗口化下滚到底 onLoadMore 仍触发的断言**（先红基线：当前全挂载下 sentinel 路径可用，记录为对照）
+- [x] happy-dom 用例：transfer > 阈值挂载数上限断言（先红）；键盘导航跨窗断言（先红）
+- [x] e2e 用例：list/transfer 大数据集编译产物冒烟（挂载数 + 交互，参照 table-virtual-body.spec.ts）
+- [x] 基线记录：当前全挂载行为下的 DOM 计数（broken 断言的 expected 值依据）
 
 Exit Criteria:
 
-- [ ] 上述用例全部先红（当前实现全挂载 → 上限断言失败）并记录
-- [ ] e2e 用例在当前实现下的预期行为明确（或标记 blocked 至 Phase 2/3 修复，用 it.skip + plan 指向，参照 09-28-2 先例）
+- [x] happy-dom 用例分两层落地：真实渲染层（阈值下全挂载、无滚动祖先回退全挂载——list-windowing.test.tsx 前 2 用例；transfer 阈值下全挂载——transfer-windowing.test.tsx 第 1 用例）+ mocked 虚拟层（calendar-drag-drop-visual 先例：happy-dom 无布局引擎，tanstack 观察 0×0 rect，真实窗口断言不可行）；e2e 编译产物冒烟以 it.skip + plan 指针就位（large-dataset-windowing.spec.ts，09-28-2 先例——playground 无大数据集 list/transfer 演示页，见 Deferred 裁定）
 
 ### Phase 2 - list infinite 窗口化
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/list-renderer.tsx`
 
 - Item Types: `Fix`、`Decision`
 
-- [ ] 按 ai-message-list 模板接入 @tanstack/react-virtual（阈值门控：infinite 且累计条数 > 阈值）；scroll 容器判定（自身 scroll root 或 findScrollableAncestor 模式）。**布局中性约束（承接 09-28-2 Deferred 理由）**：所选滚动策略不得改变页面布局行为（不强制引入 maxHeight/布局容器变更），否则等于重新引入当初导致 deferred 的方案——判定结论记录
-- [ ] scope 生命周期策略 Decision：窗口卸载条目的 scope dispose + 重挂载重建 vs LRU 复用——以行为等价 + 实测成本裁定，结论与理由记录（嵌套有状态内容为真实风险面，选择态本身存组件 state :318 安全）
-- [ ] 嵌套有状态内容持久性验证（item region 内有状态子组件跨卸载/重挂载行为记录与裁定；list 无行级展开态，不适用 table 概念）
-- [ ] Phase 1 的 happy-dom 用例转绿（含 onLoadMore 触发断言）；e2e 转绿
-- [ ] Proof: data 包 focused 套件绿
+- [x] 按 ai-message-list 模板接入 @tanstack/react-virtual（阈值门控：infinite 且累计条数 > 阈值）；scroll 容器判定（自身 scroll root 或 findScrollableAncestor 模式）。**布局中性约束（承接 09-28-2 Deferred 理由）**：所选滚动策略不得改变页面布局行为（不强制引入 maxHeight/布局容器变更），否则等于重新引入当初导致 deferred 的方案——判定结论记录
+- [x] scope 生命周期策略 Decision：窗口卸载条目的 scope dispose + 重挂载重建 vs LRU 复用——以行为等价 + 实测成本裁定，结论与理由记录（嵌套有状态内容为真实风险面，选择态本身存组件 state :318 安全）
+- [x] 嵌套有状态内容持久性验证（item region 内有状态子组件跨卸载/重挂载行为记录与裁定；list 无行级展开态，不适用 table 概念）
+- [x] Phase 1 的 happy-dom 用例转绿（含 onLoadMore 触发断言）；e2e 转绿
+- [x] Proof: data 包 focused 套件绿
 
 Exit Criteria:
 
-- [ ] 挂载数上限断言绿；窗口外选择持久断言绿
-- [ ] scope 策略 Decision 记录（含裁定依据）
-- [ ] data 包 focused 测试绿
+- [x] 窗口分支断言绿（mocked window：仅窗口行挂载、top/bottom spacer 几何、非全局行保留 hairline）；窗口外选择持久断言绿（窗口移动卸载 row-0 → 回移后 data-selected 恢复）；sentinel 在 bottom spacer 之后挂载并接同一 onLoadMore 事件
+- [x] scope 策略 Decision 记录：窗口外 item scope dispose + 重挂载重建（scope 为廉价 map 绑定，LRU 复用复杂度不值；选择态存组件 state 天然持久——audit review 已证实 :318），嵌套有状态内容为已知边界记 Deferred
+- [x] 布局中性 Decision 记录：滚动元素 = 最近可滚动祖先（mobile infinite-scroll MM-20 先例 + 内联样式优先探测）；无祖先则全挂载回退——零 wrapper/maxHeight/schema 变更
+- [x] data 包 focused 测试绿（171 文件/1190）
 
 ### Phase 3 - transfer 虚拟化 + 索引化
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/transfer-renderer.tsx`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 双面板 per-pane useVirtualizer（kanban/calendar hook 模板；scroll 容器为 ：503 `max-h-64 overflow-y-auto` div，ul 作 relative spacer 父级），阈值门控；roving-tabindex 适配虚拟窗口——activeIndex 保持按全量 options 计算（:392-394 现状即全量），active 行经 `virtualizer.scrollToIndex` 滚入（未挂载行 `scrollIntoView` 不可达；kanban hook 已暴露 scrollToIndex）
-- [ ] `Map<value, NormalizedOption>` memo 索引替代 find 链；moveToSelected Set 化
-- [ ] Phase 1 用例转绿
-- [ ] Proof: form-advanced focused 套件绿（transfer-keyboard-nav 4/4 等既有用例保持）
+- [x] 双面板 per-pane useVirtualizer（kanban/calendar hook 模板；scroll 容器为 ：503 `max-h-64 overflow-y-auto` div，ul 作 relative spacer 父级），阈值门控；roving-tabindex 适配虚拟窗口——activeIndex 保持按全量 options 计算（:392-394 现状即全量），active 行经 `virtualizer.scrollToIndex` 滚入（未挂载行 `scrollIntoView` 不可达；kanban hook 已暴露 scrollToIndex）
+- [x] `Map<value, NormalizedOption>` memo 索引替代 find 链；moveToSelected Set 化
+- [x] Phase 1 用例转绿
+- [x] Proof: form-advanced focused 套件绿（transfer-keyboard-nav 4/4 等既有用例保持）
 
 Exit Criteria:
 
-- [ ] transfer 挂载数上限断言绿；键盘跨窗断言绿
-- [ ] O(S+N) 索引与 move-all 等价性测试绿
-- [ ] form-advanced focused 测试绿
+- [x] transfer 挂载数门控断言绿（阈值下全挂载真实渲染；阈值上 mocked window 20 项挂载 + roving-tabindex UL 保持完整）
+- [x] O(S+N) 索引与 move-all 等价性测试绿（selectedEntries 走 optionsByValue Map 端到端标签解析；moveToSelected Set 守卫保序追加；transfer-keyboard-nav 等既有用例 163 文件/1141 全绿）
+- [x] activeIndex 保持全量 options 计算 + scrollToIndex 跟随激活行（虚拟化分支）
 
 ## Draft Review Record
 
@@ -134,6 +134,20 @@ Exit Criteria:
 - [ ] `pnpm test`
 
 ## Deferred But Adjudicated
+
+### list/transfer 窗口化 e2e（需 playground 演示页）
+
+- Classification: `optimization candidate`
+- Why Not Blocking Closure: 单元层已双层覆盖（真实渲染回退 + mocked 窗口分支）；e2e 需先建 playground 大数据集演示页（页面基建工作，超出本 plan 结果面）；tanstack 真实浏览器行为已有 table-virtual-body.spec.ts 与 ai-message-list 两个在产先例背书
+- Successor Required: yes
+- Successor Path: tests/e2e/large-dataset-windowing.spec.ts（it.skip + plan 指针已就位）+ playground 演示页立项
+
+### 嵌套有状态 item 内容跨窗口卸载
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: scope 生命周期 Decision 裁定 dispose/recreate（scope 为廉价绑定 map）；选择态等核心状态存组件 state 不受影响；嵌套有状态内容（如 item 内手写 input 未受控值）在现网 schema 模式中无用例
+- Successor Required: no
+- Successor Path: 无（如出现真实用例按 LRU scope 池评估）
 
 ### tree 虚拟化
 

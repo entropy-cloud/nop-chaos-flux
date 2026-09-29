@@ -195,3 +195,10 @@ When this document changes or related constraints change, review:
    Rich mixed-renderer rows measure ~190px+ — short scrolls legitimately keep
    row 0 inside the overscan window; window-follow assertions must scroll deep
    (see the e2e spec's scroll case).
+
+## List/Transfer Windowing Contract (plan 2026-09-29-6)
+
+- **List infinite windowing**: `pagination.enabled + mode: 'infinite'` with accumulated items > 150 (`LIST_VIRTUAL_THRESHOLD`) renders only the visible window via `useListWindowing`. The scroll element is the nearest scrollable ancestor (inline `overflowY` probed first, MM-20 precedent); with no scrollable ancestor the list falls back to full mount — windowing never introduces a wrapper, maxHeight, or schema field (layout-neutral, closes the 2026-09-28-2 deferral).
+- **Scope lifecycle**: off-window item scopes dispose and remount; selection lives in renderer component state and persists across windows. Nested stateful content inside item regions does not survive window unmounts (documented boundary).
+- **Transfer panes**: candidate/selected panes virtualize above 200 options (`TRANSFER_PANE_VIRTUAL_THRESHOLD`) using their own `max-h-64` scroll container as the scroll element; the roving-tabindex UL is container-level and unchanged, and the active row follows the window via `scrollToIndex`. Below the threshold panes mount fully.
+- **Selection indexing**: transfer selected-entry labels resolve through a memoized `Map<value, option>` index (O(S+N)); move-all uses Set-guarded order-preserving append (no O(S²) `includes` scans).

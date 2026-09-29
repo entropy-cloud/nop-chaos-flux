@@ -1,4 +1,5 @@
 import React from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import type {
   BaseSchema,
   RendererComponentProps,
@@ -50,15 +51,22 @@ function toArrayValue(value: unknown): (string | number | boolean)[] {
 function buildSelectedEntries(
   selectedValues: (string | number | boolean)[],
   options: NormalizedOption[],
+  valueIndex?: Map<unknown, NormalizedOption>,
 ): SelectedEntry[] {
+  // O(S+N) via the prebuilt value index; the find-chain was O(S×N) per value
+  // change (plan 2026-09-29-6 R2-P12).
+  const index = valueIndex ?? new Map(options.map((option) => [option.value, option]));
   return selectedValues.map((value) => {
-    const match = options.find((option) => option.value === value);
+    const match = index.get(value);
     return {
       value,
       label: match ? match.label : typeof value === 'string' ? value : String(value),
     };
   });
 }
+
+/** Pane windowing gate (plan 2026-09-29-6): below this, all options mount. */
+export const TRANSFER_PANE_VIRTUAL_THRESHOLD = 200;
 
 export function TransferRenderer(props: RendererComponentProps<TransferSchema>) {
   const scope = useRenderScope();
@@ -113,9 +121,13 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
 
   const selectedValues = React.useMemo(() => toArrayValue(rawFieldValue), [rawFieldValue]);
   const selectedSet = React.useMemo(() => new Set(selectedValues), [selectedValues]);
+  const optionsByValue = React.useMemo(
+    () => new Map(options.map((option) => [option.value, option])),
+    [options],
+  );
   const selectedEntries = React.useMemo(
-    () => buildSelectedEntries(selectedValues, options),
-    [selectedValues, options],
+    () => buildSelectedEntries(selectedValues, options, optionsByValue),
+    [selectedValues, options, optionsByValue],
   );
 
   const candidateOptions = React.useMemo(
@@ -221,16 +233,23 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
     if (interactionDisabled || candidateChecked.size === 0) {
       return;
     }
-    const additions = options
-      .filter((option) => candidateChecked.has(option.value))
-      .map((option) => option.value);
+    const additions: Array<string | number | boolean> = [];
+    for (const checked of candidateChecked) {
+      if (optionsByValue.has(checked)) {
+        additions.push(checked);
+      }
+    }
     if (additions.length === 0) {
       return;
     }
     if (multiple) {
+      // Set-guarded append: the previous `next.includes` scan was O(S²) when
+      // moving many items (plan 2026-09-29-6 R2-P12)
+      const existing = new Set(selectedValues);
       const next = [...selectedValues];
       for (const value of additions) {
-        if (!next.includes(value)) {
+        if (!existing.has(value)) {
+          existing.add(value);
           next.push(value);
         }
       }
@@ -245,7 +264,7 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
     candidateChecked,
     interactionDisabled,
     multiple,
-    options,
+    optionsByValue,
     props.events,
     selectedValues,
     writeValue,
@@ -395,6 +414,27 @@ function TransferPane(props: TransferPaneProps) {
   const activeVisible = activeIndex >= 0;
   const listRef = React.useRef<HTMLUListElement | null>(null);
 
+  // Pane windowing (plan 2026-09-29-6 R2-P12; audit r2 follow-through): above
+  // the threshold only the visible slice mounts. The pane's overflow container
+  // (max-h-64, :503) is the scroll element — the roving tabindex stays on the
+  // UL container, so keyboard semantics are untouched; the active row follows
+  // the window via virtualizer.scrollToIndex (unmounted rows are unreachable
+  // by scrollIntoView — kanban/calendar virtualizer precedent).
+  const paneScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const paneWindowing = props.options.length > TRANSFER_PANE_VIRTUAL_THRESHOLD;
+  const paneVirtualizer = useVirtualizer({
+    count: paneWindowing ? props.options.length : 0,
+    getScrollElement: () => paneScrollRef.current,
+    estimateSize: () => 32,
+    overscan: 8,
+  });
+  const paneVirtualRows = paneWindowing ? paneVirtualizer.getVirtualItems() : null;
+  React.useEffect(() => {
+    if (paneWindowing && activeVisible) {
+      paneVirtualizer.scrollToIndex(activeIndex);
+    }
+  }, [paneWindowing, activeVisible, activeIndex, paneVirtualizer]);
+
   React.useEffect(() => {
     if (activeKey != null && !activeVisible) {
       setActiveKey(null);
@@ -500,13 +540,14 @@ function TransferPane(props: TransferPaneProps) {
           </div>
         </div>
       )}
-      <div className="max-h-64 min-h-24 overflow-y-auto p-1">
+      <div ref={paneScrollRef} className="max-h-64 min-h-24 overflow-y-auto p-1">
         {props.options.length === 0 ? (
           <Empty className="p-4 text-sm text-muted-foreground">{props.emptyText}</Empty>
         ) : (
           <ul
             ref={listRef}
-            className="flex flex-col"
+            className={cn('flex flex-col', paneVirtualRows && 'relative h-full')}
+            style={paneVirtualRows ? { height: paneVirtualizer.getTotalSize() } : undefined}
             // plan 2026-09-28-5 Phase 3: keyboard navigation WITHOUT the
             // composite listbox role — adjudicated 20-05 (WCAG 4.1.2/1.3.1)
             // keeps selection semantics in the per-row checkboxes; a composite
@@ -516,7 +557,41 @@ function TransferPane(props: TransferPaneProps) {
             tabIndex={0}
             onKeyDown={handleListKeyDown}
           >
-            {props.options.map((option, index) => {
+            {paneVirtualRows
+              ? (paneVirtualRows as Array<{ index: number; start: number }>).map((entry) => {
+              const index = entry.index;
+              const option = props.options[index]!;
+              const isChecked = props.checked.has(option.value);
+              const isActive = activeVisible && index === activeIndex;
+              return (
+                <li
+                  key={String(option.value)}
+                  ref={paneVirtualizer.measureElement}
+                  data-index={index}
+                  aria-disabled={option.disabled || undefined}
+                  data-active={isActive ? 'true' : undefined}
+                  className={cn('absolute inset-x-1', isActive && 'rounded bg-accent')}
+                  style={{ transform: `translateY(${entry.start}px)` }}
+                >
+                  <Label
+                    className={cn(
+                      'flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm font-normal hover:bg-accent',
+                      props.interactionDisabled && 'cursor-not-allowed opacity-60',
+                    )}
+                  >
+                    <Checkbox
+                      checked={isChecked}
+                      disabled={props.interactionDisabled || option.disabled}
+                      onCheckedChange={() => props.onToggle(option.value)}
+                      data-slot={`transfer-option-${props.kind}`}
+                      aria-label={option.label}
+                    />
+                    <span className="truncate">{option.label}</span>
+                  </Label>
+                </li>
+              );
+              })
+              : props.options.map((option, index) => {
               const isChecked = props.checked.has(option.value);
               const isActive = activeVisible && index === activeIndex;
               return (
@@ -543,7 +618,7 @@ function TransferPane(props: TransferPaneProps) {
                   </Label>
                 </li>
               );
-            })}
+              })}
           </ul>
         )}
       </div>

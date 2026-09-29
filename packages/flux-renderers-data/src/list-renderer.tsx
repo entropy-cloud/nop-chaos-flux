@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ComponentHandleRegistry,
   InstanceFrame,
@@ -24,14 +24,20 @@ import {
   type ResolvedListPagination,
 } from './list-pagination.js';
 import { useInfiniteScroll } from './use-infinite-scroll.js';
+import { useListWindowing } from './use-list-windowing.js';
+import { ListItemView } from './list-item-view.js';
+
+// Windowing gate (plan 2026-09-29-6): only infinite mode above this count
+// virtualizes; pagination/page mode and small lists render fully mounted.
+export const LIST_VIRTUAL_THRESHOLD = 150;
 import { isDevRuntime } from './table-renderer/use-table-tree.js';
 
 const DEFAULT_LIST_KEY_FIELD = 'id';
 const EMPTY_SET: ReadonlySet<string> = new Set();
 
-type ListOwner = RendererComponentProps<ListSchema>;
+export type ListOwner = RendererComponentProps<ListSchema>;
 
-function asReactNode(value: RendererRenderOutput): React.ReactNode {
+export function asReactNode(value: RendererRenderOutput): React.ReactNode {
   return value as React.ReactNode;
 }
 
@@ -39,7 +45,7 @@ function toListItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
-function toListItemKey(item: unknown, keyField: string, index: number): string {
+export function toListItemKey(item: unknown, keyField: string, index: number): string {
   const explicit =
     item !== null && typeof item === 'object' ? getIn(item as Record<string, unknown>, keyField) : undefined;
 
@@ -64,7 +70,7 @@ function optionRowBindingValue(binding: unknown): unknown {
   return binding === undefined || binding === null || binding === '' ? undefined : binding;
 }
 
-interface ListItemOptionRowState {
+export interface ListItemOptionRowState {
   selected: boolean;
   disabled: boolean;
   selectedClass?: string;
@@ -72,149 +78,6 @@ interface ListItemOptionRowState {
 
 function createListRepeatedTemplateId(ownerId: string): string {
   return `list-item:${ownerId}`;
-}
-
-// Uncompiled-host locality (H10 precedent in table-data-row-render): without
-// this memo a selection click re-rendered every mounted item. instancePath is
-// deliberately excluded — it is derived from (parentInstancePath, itemKey), and
-// itemKey is compared directly.
-const ListItemView = React.memo(ListItemViewBase, (prev, next) =>
-  prev.item === next.item &&
-  prev.index === next.index &&
-  prev.itemKey === next.itemKey &&
-  prev.selectionMode === next.selectionMode &&
-  prev.selected === next.selected &&
-  prev.isLast === next.isLast &&
-  prev.isMobile === next.isMobile &&
-  prev.onSelect === next.onSelect &&
-  prev.owner.helpers === next.owner.helpers &&
-  prev.owner.regions === next.owner.regions &&
-  prev.optionRow === next.optionRow ||
-  (
-    prev.item === next.item &&
-    prev.index === next.index &&
-    prev.itemKey === next.itemKey &&
-    prev.selectionMode === next.selectionMode &&
-    prev.selected === next.selected &&
-    prev.isLast === next.isLast &&
-    prev.isMobile === next.isMobile &&
-    prev.onSelect === next.onSelect &&
-    prev.owner.helpers === next.owner.helpers &&
-    prev.owner.regions === next.owner.regions &&
-    prev.optionRow !== undefined &&
-    next.optionRow !== undefined &&
-    prev.optionRow.selected === next.optionRow.selected &&
-    prev.optionRow.disabled === next.optionRow.disabled &&
-    prev.optionRow.selectedClass === next.optionRow.selectedClass
-  ));
-
-interface ListItemViewProps {
-  owner: ListOwner;
-  item: unknown;
-  index: number;
-  itemKey: string;
-  instancePath: readonly InstanceFrame[];
-  selectionMode: ListSelectionMode;
-  selected: boolean;
-  onSelect: (key: string) => void;
-  isLast: boolean;
-  isMobile: boolean;
-  /** D1 option-row contract; undefined = not declared (legacy output). */
-  optionRow?: ListItemOptionRowState;
-}
-
-function ListItemViewBase(props: ListItemViewProps) {
-  const { owner, item, index, itemKey, instancePath, selectionMode, selected, onSelect, isLast, isMobile, optionRow } = props;
-  const helpers = owner.helpers;
-  const [itemScope] = useState<ScopeRef>(() => helpers.createScope({ item, index }));
-
-  const optionRowActive = optionRow !== undefined;
-  const optionRowState = optionRowActive
-    ? getOptionRowStateAttributes({ selected: optionRow.selected, disabled: optionRow.disabled })
-    : undefined;
-
-  useEffect(() => {
-    itemScope.merge({ item, index });
-  }, [itemScope, item, index]);
-
-  useEffect(() => {
-    return () => {
-      helpers.disposeScope(itemScope.id);
-    };
-  }, [helpers, itemScope.id]);
-
-  const content = owner.regions.item
-    ? asReactNode(
-        owner.regions.item.render({
-          scope: itemScope,
-          bindings: { item, index },
-          instancePath,
-        }),
-      )
-    : null;
-
-  const interactive = selectionMode !== 'none' || Boolean(owner.events.onItemClick);
-
-  const handleClick = (_event: React.MouseEvent<HTMLDivElement>) => {
-    onSelect(itemKey);
-    // CX-10 / bug-83 family convention: the second dispatch arg carries
-    // { event, evaluationBindings, scope } so action args templates can read
-    // payload keys (${item} / ${index} / ${key}) as bare bindings.
-    const payload = { type: 'list:item-click', item, index, key: itemKey };
-    void owner.events.onItemClick?.(payload, {
-      event: payload,
-      evaluationBindings: payload,
-      scope: itemScope,
-    });
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!interactive) {
-      return;
-    }
-
-    if (event.key !== 'Enter' && event.key !== ' ') {
-      return;
-    }
-
-    event.preventDefault();
-    onSelect(itemKey);
-    const payload = { type: 'list:item-click', item, index, key: itemKey };
-    void owner.events.onItemClick?.(payload, {
-      event: payload,
-      evaluationBindings: payload,
-      scope: itemScope,
-    });
-  };
-
-  return (
-    <div
-      data-slot="list-item"
-      data-item-key={itemKey}
-      data-option-row={optionRowActive ? 'true' : undefined}
-      data-state={optionRowState?.['data-state']}
-      data-selected={selected || undefined}
-      role="listitem"
-      aria-selected={optionRowState?.['aria-selected']}
-      aria-disabled={optionRowState?.['aria-disabled']}
-      aria-current={selectionMode !== 'none' ? (selected ? 'true' : undefined) : undefined}
-      tabIndex={interactive ? 0 : undefined}
-      className={cn(
-        'min-w-0 px-3 text-sm transition-colors',
-        isMobile ? 'py-3' : 'py-2',
-        // Inter-item divider migrated from root `divide-y divide-border` to the M0.1
-        // `nop-hairline` 0.5px hairline (last item omits the bottom edge).
-        !isLast ? 'nop-hairline nop-hairline-bottom' : null,
-        interactive ? 'cursor-pointer hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none' : null,
-        selected ? 'bg-primary/10' : null,
-        optionRowActive && selected ? optionRow?.selectedClass : null,
-      )}
-      onClick={interactive ? handleClick : undefined}
-      onKeyDown={interactive ? handleKeyDown : undefined}
-    >
-      {content}
-    </div>
-  );
 }
 
 function computeVisibleItems(items: unknown[], pagination: ResolvedListPagination): unknown[] {
@@ -331,6 +194,9 @@ export function ListRenderer(props: ListOwner) {
 
   const visibleItems = computeVisibleItems(items, pagination);
   const lastDispatchedPageRef = useRef<number>(pagination.currentPage);
+
+  const { windowingActive, virtualRows, measureElement, listRootRef, windowBottomSpacerHeight } = useListWindowing(visibleItems, pagination);
+
 
   // opt-row-selection-clash: an explicit optionRow.value binding exclusively
   // drives the row state markers; warn once in dev when it coexists with the
@@ -537,6 +403,7 @@ export function ListRenderer(props: ListOwner) {
 
   return (
     <div
+      ref={listRootRef}
       className={cn(
         // Inter-item dividers migrated to per-item `nop-hairline` (M0.1); the root keeps the
         // outer rounded border. Mobile adds `touch-pan-y` for fluid vertical touch scrolling.
@@ -554,7 +421,57 @@ export function ListRenderer(props: ListOwner) {
       data-pagination-mode={pagination.enabled ? pagination.mode : undefined}
       role="list"
     >
-      {visibleItems.map((item, index) => {
+      {virtualRows ? (
+        <>
+          {virtualRows[0]!.start > 0 ? (
+            <div data-slot="list-window-spacer-top" style={{ height: virtualRows[0]!.start }} aria-hidden="true" />
+          ) : null}
+          {virtualRows.map((virtualRow) => {
+            const item = visibleItems[virtualRow.index]!;
+            const index = virtualRow.index;
+            const itemKey = toListItemKey(item, keyField, index);
+            const instancePath: InstanceFrame[] = [
+              ...(parentInstancePath ?? []),
+              { repeatedTemplateId, instanceKey: itemKey },
+            ];
+            const markedSelected = optionRowActive
+              ? optionRowHasBinding
+                ? optionRowValueMatches(getIn(item as Record<string, unknown>, optionRowValueField), optionRowBinding)
+                : effectiveSelectedKeys.has(itemKey)
+              : effectiveSelectedKeys.has(itemKey);
+            return (
+              <ListItemView
+                key={itemKey}
+                data-index={virtualRow.index}
+                ref={measureElement}
+                owner={props}
+                item={item}
+                index={index}
+                itemKey={itemKey}
+                instancePath={instancePath}
+                selectionMode={selectionMode}
+                selected={markedSelected}
+                onSelect={handleSelect}
+                isLast={index === visibleItems.length - 1}
+                isMobile={isMobile}
+                optionRow={
+                  optionRowActive
+                    ? {
+                        selected: markedSelected,
+                        disabled: listDisabled,
+                        selectedClass: optionRowSelectedClass,
+                      }
+                  : undefined
+                }
+              />
+            );
+          })}
+          {windowBottomSpacerHeight > 0 ? (
+            <div data-slot="list-window-spacer-bottom" style={{ height: windowBottomSpacerHeight }} aria-hidden="true" />
+          ) : null}
+        </>
+      ) : (
+        visibleItems.map((item, index) => {
         // Use the GLOBAL index (offset by the page window) for the fallback key
         // so keys stay unique across pages. Without this, every page reuses
         // `item:0..pageSize-1`, which lets React reconcile ListItemView across
@@ -602,7 +519,8 @@ export function ListRenderer(props: ListOwner) {
             }
           />
         );
-      })}
+      })
+      )}
       {infiniteActive ? (
         <div className="nop-list-infinite flex flex-col items-start gap-2 px-3 py-2 text-sm text-muted-foreground" data-slot="list-infinite">
           <div data-slot="list-infinite-status" className="inline-flex items-center gap-2">
