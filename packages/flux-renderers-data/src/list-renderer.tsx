@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   ComponentHandleRegistry,
   InstanceFrame,
   RendererComponentProps,
   RendererRenderOutput,
-  ScopeRef,
 } from '@nop-chaos/flux-core';
 import { getIn, toPositiveNumber } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
@@ -16,7 +15,7 @@ import {
   useRenderScope,
 } from '@nop-chaos/flux-react';
 import { Button, Spinner, cn, useIsMobile } from '@nop-chaos/ui';
-import { getOptionRowStateAttributes, optionRowValueMatches } from '@nop-chaos/flux-react';
+import { optionRowValueMatches } from '@nop-chaos/flux-react';
 import type { ListSchema, ListSelectionMode, OptionRowConfig } from './schemas.js';
 import {
   resolveListPaginationOwnership,
@@ -29,7 +28,6 @@ import { ListItemView } from './list-item-view.js';
 
 // Windowing gate (plan 2026-09-29-6): only infinite mode above this count
 // virtualizes; pagination/page mode and small lists render fully mounted.
-export const LIST_VIRTUAL_THRESHOLD = 150;
 import { isDevRuntime } from './table-renderer/use-table-tree.js';
 
 const DEFAULT_LIST_KEY_FIELD = 'id';
@@ -195,8 +193,7 @@ export function ListRenderer(props: ListOwner) {
   const visibleItems = computeVisibleItems(items, pagination);
   const lastDispatchedPageRef = useRef<number>(pagination.currentPage);
 
-  const { windowingActive, virtualRows, measureElement, listRootRef, windowBottomSpacerHeight } = useListWindowing(visibleItems, pagination);
-
+  const { virtualRows, measureElement, listRootRef, windowBottomSpacerHeight } = useListWindowing(visibleItems, pagination);
 
   // opt-row-selection-clash: an explicit optionRow.value binding exclusively
   // drives the row state markers; warn once in dev when it coexists with the

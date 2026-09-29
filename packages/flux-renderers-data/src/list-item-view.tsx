@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { cn } from '@nop-chaos/ui';
 import type { ScopeRef } from '@nop-chaos/flux-core';
-import { getOptionRowStateAttributes, optionRowValueMatches } from '@nop-chaos/flux-react';
-import { asReactNode, toListItemKey, type ListOwner, type ListItemOptionRowState } from './list-renderer.js';
+import { getOptionRowStateAttributes } from '@nop-chaos/flux-react';
+import { asReactNode, type ListOwner, type ListItemOptionRowState } from './list-renderer.js';
 import type { ListSelectionMode } from './schemas.js';
 
 // Uncompiled-host locality (H10 precedent in table-data-row-render): without

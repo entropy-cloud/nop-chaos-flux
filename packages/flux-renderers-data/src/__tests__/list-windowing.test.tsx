@@ -107,7 +107,7 @@ function mountedRowCount(): number {
 }
 
 describe('list-renderer windowing (plan 2026-09-29-6)', () => {
-  it('keeps full mount below the threshold (200 → threshold 150: small lists never virtualize)', () => {
+  it('keeps full mount below the threshold (20-item list never virtualizes)', () => {
     renderList(makeItems(20));
     expect(mountedRowCount()).toBe(20);
     expect(document.querySelector('[data-slot="list-window-spacer-top"]')).toBeNull();

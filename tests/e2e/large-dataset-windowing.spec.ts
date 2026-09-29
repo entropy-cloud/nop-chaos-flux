@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 // plan 2026-09-29-6 Phase 1: compiled-product proof for the list/transfer
 // windowing paths. BLOCKED (see plan 2026-09-29-6 Deferred): the playground
 // does not yet expose large-dataset list/transfer demo pages — the specs
-// below are the ready-to-unblock shape (it.skip + plan pointer, 2026-09-28-2
+// below are the ready-to-unblock shape (test.skip + plan pointer, 2026-09-28-2
 // precedent). Unit coverage: list-windowing.test.tsx (real fallback render +
 // mocked window branch) and transfer-windowing.test.tsx (real below-threshold
 // render + mocked window branch).

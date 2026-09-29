@@ -1,6 +1,6 @@
 # 2026-09-29-6 大数据集窗口化（list / transfer successor 收口）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-29
 > Source: `docs/analysis/2026-09-29-perf-ux-round2-deep-optimization-analysis.md`（R2-P12 全部 + 第一轮 Plan 2 Deferred：list 窗口化、transfer 虚拟化）
 > Related: 2026-09-28-2（Deferred 来源 plan）、2026-09-28-7（VirtualBody 缺陷与编译豁免契约）
@@ -127,7 +127,7 @@ Exit Criteria:
 - [ ] 必要 focused verification 已完成
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [ ] 受影响的 owner docs 已同步到 live baseline（performance-design-requirements.md 窗口化契约如有扩展）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
@@ -162,13 +162,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 三个 Phase 全部落地；closure audit `approved-with-minors`（mocked 虚拟层裁定经审计方独立判定诚实非静默降级；5 项 Minor 全部折入：plan 措辞与 Deferred 对齐、分类改 watch-only residual、阈值常量去重、测试注释路径/计数修正）。四门禁 + check 全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待独立审计>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立子 agent（fresh session）
+- Evidence: verdict `approved-with-minors`（逐 gate live 证据：list-item-view.tsx:64-79 scope 对称 create/dispose、sentinel 于 bottom spacer 之后的 DOM 序、selection 存组件 state :181、list-renderer 577 行低于门禁、owner doc 契约节逐行核对；data 171/1190 与 form-advanced 163/1141 审计方 live 复跑）
 
 Follow-up:
 
-- <<待填或 no remaining plan-owned work>>
+- playground 大数据集演示页 + tests/e2e/large-dataset-windowing.spec.ts 解锁（Deferred, Successor Required: yes）；无其余 plan-owned work
