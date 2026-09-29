@@ -108,7 +108,7 @@ Targets: `flux-renderers-content/src/**`、`flux-renderers-form-advanced/src/upl
 - Item Types: `Fix`、`Proof`
 
 - [x] Proof 先行：diff-view dark 覆盖缺失断言 + focus-visible 规则缺失断言（红先）；tracks/aria-current/aria-pressed/DialogTitle/live 断言用例（红先）
-- [x] diff-view.css 补 dark 块（**选择器对齐仓内机制**：`[data-mode='dark']` + `prefers-color-scheme` fallback，仿 flux-renderers-ai/src/styles.css:121-133 先例；**不使用 `.dark` 类**——全仓无此机制，theme-tokens dark 为 `:root[data-theme='*'][data-mode='dark']`）覆盖**全部** `--nop-diff-*` token（:7-90 完整集合，含 flash/code-text/root-bg/empty-text）+ 提升 muted/gutter 文本 token ≥4.5:1 + `:focus-visible` outline 规则（替换 ：244-246 hover outline:none 的唯一焦点样式空缺）
+- [x] diff-view.css 补 dark 块（**选择器对齐仓内机制**：`[data-mode='dark']` + `prefers-color-scheme` fallback，仿 flux-renderers-ai/src/styles.css:121-133 先例；**不使用 `.dark` 类**——全仓无此机制，theme-tokens dark 为 `:root[data-theme='*'][data-mode='dark']`）覆盖 48 项 `--nop-diff-*` 亮色集合中的 46 项（`context-bg` transparent 与 `code-text` inherit 为模式无关项，不需暗色覆盖）+ 提升 muted/gutter 文本 token ≥4.5:1 + `:focus-visible` outline 规则（替换 ：244-246 hover outline:none 的唯一焦点样式空缺）
 - [x] FileListItem 补 aria-current；过滤 tabs 补 aria-pressed
 - [x] VideoSchema/AudioSchema 增 `tracks` 可选字段并渲染 `<track>` 子元素（向后兼容；audio 通道为 audit r1 finding 2 补齐——chapters/metadata 轨合法）
 - [ ] image 预览 Dialog 补 sr-only DialogTitle（ui/dialog.tsx 已导出 DialogTitle）；carousel 指示点补 aria-current
@@ -118,7 +118,7 @@ Targets: `flux-renderers-content/src/**`、`flux-renderers-form-advanced/src/upl
 
 Exit Criteria:
 
-- [x] diff-view dark 覆盖（[data-mode=dark] + prefers-color-scheme fallback 双机制，21 项 token 全覆盖）与 :focus-visible 规则在 css 落地且有断言（ux-round2-a11y.test.tsx 4 用例）
+- [x] diff-view dark 覆盖（[data-mode=dark] + prefers-color-scheme fallback 双机制，48 项中 46 项——两项模式无关）与 :focus-visible 规则在 css 落地且有断言（ux-round2-a11y.test.tsx 4 用例）
 - [x] tracks/aria-current/aria-pressed/DialogTitle/live 断言测试成立（video track 渲染+缺省、carousel aria-current、image DialogTitle/aria-label；FileListItem aria-current + 过滤 tabs aria-pressed 落地）
 - [x] content + form-advanced focused 测试绿（content 41 文件/340、form-advanced 162 文件/1138 + upload-live-region 新用例）
 
