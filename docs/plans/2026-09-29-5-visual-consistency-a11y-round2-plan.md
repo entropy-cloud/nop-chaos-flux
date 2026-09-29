@@ -1,6 +1,6 @@
 # 2026-09-29-5 视觉一致性与可访问性优化（第二批）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-29
 > Source: `docs/analysis/2026-09-29-perf-ux-round2-deep-optimization-analysis.md`（R2-U1/U2/U3/U4/U5/U6/U7/U9/U10/U13）
 > Related: 2026-09-28-5（视觉一致性第一批，已收口）、2026-09-28-4（表单 a11y，已收口）
@@ -137,7 +137,7 @@ Exit Criteria:
 - [ ] 必要 focused verification 已完成
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [ ] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
@@ -158,13 +158,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 三个 Phase 全部落地；closure audit 两轮（r1 issues：danger 亮色对比 Major + 3 Minor → 65755aff1；r2 approved-with-minors：剩余 2 项均为纯文档同步 → e219e811f 修复）。四门禁 + check 全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待独立审计>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立子 agent ×2（fresh session，r1 全量 + r2 delta）
+- Evidence: r1 `issues`（Major：亮色 danger 13% 前景实测 4.25:1 < 4.5，且 success/white 6.45 而非记录的 9.5；Minor：audio tracks 未落地/checkbox 未勾/token 计数 21→实为 48 中 46）→ 65755aff1（danger 提级 9% = 4.74:1 经审计方独立重算确认；audio chapters 轨落地 + 测试）；r2 delta `approved-with-minors`（ui 232 / content 341 审计方 live 复跑；剩余 2 项文档同步 → e219e811f）
 
 Follow-up:
 
-- <<待填或 no remaining plan-owned work>>
+- transcript region（Deferred 既有裁定）；无其余 plan-owned work
