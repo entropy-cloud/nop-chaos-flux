@@ -1,6 +1,6 @@
 # 2026-09-29-1 scheduling 渲染器性能优化
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-29
 > Source: `docs/analysis/2026-09-29-perf-ux-round2-deep-optimization-analysis.md`（R2-P2/P3/P6/P7/P8/P9/P18/P20-gantt-shift/P20-kanban-surface）
 > Related: 2026-09-28-5（scheduling token 化，已收口）
@@ -136,7 +136,7 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成（新增 3 个 focused 测试文件 23 用例：kanban memo/结构共享 14、calendar 冲突/拖拽帧 3、gantt 窗口/通知/CPM 6 + 交叉修复用例）
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [x] 受影响的 owner docs 已同步到 live baseline（closure audit r1 指认 `docs/components/calendar/design-conflict-detection.md` §3.1/§5 与月视图批量冲突检测新实现漂移，已同步为 detectMonthConflicts 分桶+sweep 描述与 O(events×days) 复杂度；其余为包内实现级优化，无公共契约/schema 变更；gantt scrollRevision 通道与 interval 缓存为 store 内部机制）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 - [x] `pnpm typecheck`（42 包全绿）
 - [x] `pnpm build`（42 包全绿）
 - [x] `pnpm lint`（42 包全绿；gantt-grid useVirtualizer incompatible-library warning 为既有登记项）
@@ -154,13 +154,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 三个 Phase 全部落地且行为等价性有测试兜底（kanban 结构共享/memo 门、calendar 冲突等价/拖拽帧、gantt 窗口化/单通知/CPM 缓存）；closure audit r1 判 issues（owner doc 漂移 Major + 2 Minor）→ 修复后 delta 复审 approved。四门禁 + check 全绿（详见 daily log 2026-09-29）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待独立审计>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立子 agent ×2（fresh session，r1 全量审计 + r2 delta 复审）
+- Evidence: r1 verdict `issues`（Major: design-conflict-detection.md 漂移；Minor: 测试计数 28→23、pre-existing follow-ups 未记）→ 处置提交 2b3290151；r2 delta 复审 verdict `approved`（逐 finding live 代码证据核对，含 calendar-layout-utils.ts:209-221/:225、calendar-month-view.tsx:96 与文档逐字一致）
 
 Follow-up:
 
-- <<待填或 no remaining plan-owned work>>
+- kanban/calendar pane 虚拟化（optimization candidate，hook 基础设施已在位）
+- gantt design.md 组件文件名清单陈旧（pre-existing，r1 记录）
+- calendar-week-view.tsx 每 render 构造 Intl.DateTimeFormat（量级小）
