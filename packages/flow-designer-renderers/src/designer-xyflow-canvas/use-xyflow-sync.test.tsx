@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Node } from '@xyflow/react';
-import { syncLocalNodesWithSnapshot } from './use-xyflow-sync.js';
+import { renderHook } from '@testing-library/react';
+import type { Edge, Node } from '@xyflow/react';
+import { syncLocalNodesWithSnapshot, useXyflowSync } from './use-xyflow-sync.js';
 import { createXyflowNodes } from './xyflow-utils.js';
 
 describe('useXyflowSync', () => {
@@ -149,5 +150,34 @@ describe('bugs/11 drag initialization regression', () => {
     }
 
     expect(nodes[0]?.measured).toEqual(liveMeasured);
+  });
+});
+describe('useXyflowSync renderedEdges hover', () => {
+  const EMPTY_NODES: Node[] = [];
+
+  function edge(id: string): Edge {
+    return { id, source: 'a', target: 'b', data: { label: id } };
+  }
+
+  it('rebuilds only the hovered edge object and clears the flag through fresh snapshots', () => {
+    const snapshotEdges = [edge('e1'), edge('e2')];
+    const { result, rerender } = renderHook(
+      ({ edges, hovered }: { edges: Edge[]; hovered: string | null }) =>
+        useXyflowSync({ snapshotNodes: EMPTY_NODES, snapshotEdges: edges, hoveredEdgeId: hovered }),
+      { initialProps: { edges: snapshotEdges, hovered: null } },
+    );
+    expect(result.current.renderedEdges).toBe(snapshotEdges);
+
+    rerender({ edges: snapshotEdges, hovered: 'e1' });
+    const hoveredOnce = result.current.renderedEdges;
+    expect(hoveredOnce[0]).not.toBe(snapshotEdges[0]);
+    expect((hoveredOnce[0].data as Record<string, unknown>).__fdHovered).toBe(true);
+    expect(hoveredOnce[1]).toBe(snapshotEdges[1]);
+
+    rerender({ edges: snapshotEdges, hovered: 'e2' });
+    const moved = result.current.renderedEdges;
+    expect((moved[1].data as Record<string, unknown>).__fdHovered).toBe(true);
+    expect(moved[0]).toBe(snapshotEdges[0]);
+    expect((moved[0].data as Record<string, unknown>).__fdHovered).toBeUndefined();
   });
 });

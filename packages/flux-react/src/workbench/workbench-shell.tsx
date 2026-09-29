@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 
 export interface WorkbenchShellProps {
   className?: string;
@@ -19,6 +20,7 @@ export interface WorkbenchShellProps {
   leftCollapsed?: boolean;
   onLeftToggle?: () => void;
   leftLabel?: string;
+  leftResizeLabel?: string;
   leftResizable?: boolean;
   leftWidth?: number;
   onLeftWidthChange?: (width: number) => void;
@@ -29,6 +31,7 @@ export interface WorkbenchShellProps {
   rightCollapsed?: boolean;
   onRightToggle?: () => void;
   rightLabel?: string;
+  rightResizeLabel?: string;
   rightResizable?: boolean;
   rightWidth?: number;
   onRightWidthChange?: (width: number) => void;
@@ -109,6 +112,7 @@ export function WorkbenchShell({
   leftCollapsed = false,
   onLeftToggle,
   leftLabel = 'Expand left panel',
+  leftResizeLabel,
   leftResizable,
   leftWidth,
   onLeftWidthChange,
@@ -119,6 +123,7 @@ export function WorkbenchShell({
   rightCollapsed = false,
   onRightToggle,
   rightLabel = 'Expand right panel',
+  rightResizeLabel,
   rightResizable,
   rightWidth,
   onRightWidthChange,
@@ -153,6 +158,23 @@ export function WorkbenchShell({
 
   const leftResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const rightResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
+  // Drag-preview widths: pointermove only paints a local preview (rAF-coalesced);
+  // the controlled onWidthChange (global store dispatch on the designer side)
+  // fires once on pointerup. Keeps per-move renders local to the shell.
+  const [leftDragWidth, setLeftDragWidth] = useState<number | null>(null);
+  const [rightDragWidth, setRightDragWidth] = useState<number | null>(null);
+  const leftDragWidthRef = useRef<number | null>(null);
+  const rightDragWidthRef = useRef<number | null>(null);
+  const leftDragRafRef = useRef<number | null>(null);
+  const rightDragRafRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (leftDragRafRef.current !== null) cancelAnimationFrame(leftDragRafRef.current);
+      if (rightDragRafRef.current !== null) cancelAnimationFrame(rightDragRafRef.current);
+    },
+    [],
+  );
 
   const isWideViewport = useWideWorkbenchViewport();
 
@@ -191,11 +213,28 @@ export function WorkbenchShell({
   const handleLeftPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!leftResizeRef.current) return;
     const dx = event.clientX - leftResizeRef.current.startX;
-    commitLeftWidth(leftResizeRef.current.startWidth + dx);
+    const next = clampWidth(leftResizeRef.current.startWidth + dx, leftMin, leftMax);
+    leftDragWidthRef.current = next;
+    if (leftDragRafRef.current === null) {
+      leftDragRafRef.current = requestAnimationFrame(() => {
+        leftDragRafRef.current = null;
+        setLeftDragWidth(leftDragWidthRef.current);
+      });
+    }
   };
 
   const handleLeftPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const dragWidth = leftDragWidthRef.current;
     leftResizeRef.current = null;
+    leftDragWidthRef.current = null;
+    if (leftDragRafRef.current !== null) {
+      cancelAnimationFrame(leftDragRafRef.current);
+      leftDragRafRef.current = null;
+    }
+    setLeftDragWidth(null);
+    if (dragWidth !== null) {
+      commitLeftWidth(dragWidth);
+    }
     finishResize(event);
   };
 
@@ -221,11 +260,28 @@ export function WorkbenchShell({
     if (!rightResizeRef.current) return;
     // Dragging left on the right panel widens it.
     const dx = rightResizeRef.current.startX - event.clientX;
-    commitRightWidth(rightResizeRef.current.startWidth + dx);
+    const next = clampWidth(rightResizeRef.current.startWidth + dx, rightMin, rightMax);
+    rightDragWidthRef.current = next;
+    if (rightDragRafRef.current === null) {
+      rightDragRafRef.current = requestAnimationFrame(() => {
+        rightDragRafRef.current = null;
+        setRightDragWidth(rightDragWidthRef.current);
+      });
+    }
   };
 
   const handleRightPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const dragWidth = rightDragWidthRef.current;
     rightResizeRef.current = null;
+    rightDragWidthRef.current = null;
+    if (rightDragRafRef.current !== null) {
+      cancelAnimationFrame(rightDragRafRef.current);
+      rightDragRafRef.current = null;
+    }
+    setRightDragWidth(null);
+    if (dragWidth !== null) {
+      commitRightWidth(dragWidth);
+    }
     finishResize(event);
   };
 
@@ -248,13 +304,21 @@ export function WorkbenchShell({
     const columns: string[] = [];
     if (hasLeft) {
       columns.push(
-        leftCollapsed ? '2rem' : leftResizeActive ? `${resolvedLeftWidth}px` : '15rem',
+        leftCollapsed
+          ? '2rem'
+          : leftResizeActive
+            ? `${leftDragWidth ?? resolvedLeftWidth}px`
+            : '15rem',
       );
     }
     columns.push('minmax(0,1fr)');
     if (hasRight) {
       columns.push(
-        rightCollapsed ? '2rem' : rightResizeActive ? `${resolvedRightWidth}px` : '22rem',
+        rightCollapsed
+          ? '2rem'
+          : rightResizeActive
+            ? `${rightDragWidth ?? resolvedRightWidth}px`
+            : '22rem',
       );
     }
     gridTemplateColumns = columns.join(' ');
@@ -319,7 +383,7 @@ export function WorkbenchShell({
                   data-testid="left-resize-handle"
                   role="separator"
                   aria-orientation="vertical"
-                  aria-label="Resize left panel"
+                  aria-label={leftResizeLabel ?? t('flux.workbench.resizeLeftPanel')}
                   aria-valuenow={Math.round(resolvedLeftWidth)}
                   aria-valuemin={leftMin}
                   aria-valuemax={leftMax}
@@ -373,7 +437,7 @@ export function WorkbenchShell({
                   data-testid="right-resize-handle"
                   role="separator"
                   aria-orientation="vertical"
-                  aria-label="Resize right panel"
+                  aria-label={rightResizeLabel ?? t('flux.workbench.resizeRightPanel')}
                   aria-valuenow={Math.round(resolvedRightWidth)}
                   aria-valuemin={rightMin}
                   aria-valuemax={rightMax}

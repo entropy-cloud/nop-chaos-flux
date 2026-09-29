@@ -1,4 +1,16 @@
-import type { DesignerConfig, NormalizedDesignerConfig } from '../types.js';
+import type { DesignerConfig, NormalizedDesignerConfig, ToolbarConfig } from '../types.js';
+
+// Hosts that do not configure a toolbar still get the three load-bearing
+// commands; keyboard-only access is not an acceptable default surface.
+// An explicit `toolbar: { items: [] }` from the host keeps the toolbar hidden.
+const DEFAULT_TOOLBAR_ITEMS: ToolbarConfig['items'] = [
+  { type: 'button', action: 'undo', icon: 'undo' },
+  { type: 'button', action: 'redo', icon: 'redo' },
+  { type: 'spacer' },
+  { type: 'button', action: 'save', icon: 'save' },
+];
+
+const DEFAULT_TOOLBAR: ToolbarConfig = { items: DEFAULT_TOOLBAR_ITEMS };
 
 export function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfig {
   const nodeTypes = new Map(config.nodeTypes.map((nodeType) => [nodeType.id, nodeType]));
@@ -11,13 +23,15 @@ export function normalizeConfig(config: DesignerConfig): NormalizedDesignerConfi
     edgeTypes,
     palette: config.palette,
     shell: config.shell,
-    toolbar: config.toolbar,
+    toolbar: config.toolbar ?? DEFAULT_TOOLBAR,
     shortcuts: {
       undo: ['Ctrl+Z', 'Cmd+Z'],
       redo: ['Ctrl+Y', 'Cmd+Y', 'Ctrl+Shift+Z', 'Cmd+Shift+Z'],
       copy: ['Ctrl+C', 'Cmd+C'],
       paste: ['Ctrl+V', 'Cmd+V'],
       delete: ['Delete', 'Backspace'],
+      selectAll: ['Ctrl+A', 'Cmd+A'],
+      duplicate: ['Ctrl+D', 'Cmd+D'],
       ...config.shortcuts,
     },
     features: {

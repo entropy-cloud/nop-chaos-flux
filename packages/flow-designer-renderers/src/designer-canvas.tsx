@@ -409,6 +409,9 @@ export function DesignerCanvasContent(props: {
       event?.stopPropagation();
       dispatch({ type: 'setViewport', viewport });
     },
+    onViewportPersist: (viewport: { x: number; y: number; zoom: number }) => {
+      dispatch({ type: 'persistViewport', viewport });
+    },
     onDrop: (nodeTypeId: string, position: { x: number; y: number }) => {
       dispatch({ type: 'addNode', nodeType: nodeTypeId, position });
     },

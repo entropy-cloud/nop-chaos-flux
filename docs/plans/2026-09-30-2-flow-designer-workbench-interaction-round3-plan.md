@@ -1,6 +1,6 @@
 # 02 flow designer 与 workbench 交互性能与 UX（round-3）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-perf-ux-round3-deep-optimization-analysis.md`（R3-P11、P17、P18、P19 + R3-U4、U10、U12、U19、U20、U21）
 > Related: `docs/architecture/flow-designer/design.md`、`docs/plans/2026-09-29-4-core-pipeline-and-peripheral-hotspots-plan.md`（inspector 击键已修，本 plan 是同族交互路径的延续）
@@ -66,59 +66,59 @@
 
 ### Phase 1 - viewport 移出 document/undo/dirty（R3-P11 + U4 同根修复）
 
-Status: planned
+Status: completed
 Targets: `flow-designer-core/src/core/shell-controls.ts`、`flow-designer-renderers/src/designer-canvas.tsx`、`designer-xyflow-canvas/designer-xyflow-canvas.tsx`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix：`setViewport` 不再 `setDocument`/`pushHistory`/`updateDirtyState`，只写 shellState + emit `viewportChanged`
-- [ ] Fix（落盘机制裁定，三选一已定）：viewport 从 document 写路径迁出，落盘改走 **revision-free 专用通道**——core 新增 `persistViewport(viewport)`：以**顶层浅替换**更新 document（`{...doc, viewport}`，保证 snapshot 缓存按 doc 引用失配而刷新 → host projection `designer-host-projection.ts:263` 与 taskflow 落盘 `taskflow-designer-lib/index.ts:55` 能取到最终 viewport），但**不递增 docRevision、不 pushHistory、不触发 dirty**（history/savedDoc 均为 cloneDocument 深克隆，替换 doc 不污染 undo 栈；`documentsEquivalent` 只比 nodes/edges 不受影响）；`persistViewport` 落盘后 emit 一次 `viewportChanged`；`replaceDocumentFromHost → resetShellViewportFromDocument`（shell-controls.ts:154-160）的恢复路径保持读取 doc.viewport 兼容。undo/redo 裁定：**不再从 history entry 重置 viewport**（`core.ts:322/:345` undo/redo 内的 `resetShellViewportFromDocument` 调用移除）——viewport 移出 undo 语义后 entry 携带的 viewport 是最后一次内容编辑时的值，重置会引发画布跳位
-- [ ] Fix（渲染侧强制配套一）：受控 viewport 取源重接——`designer-xyflow-canvas.tsx:171-174` 的受控 viewport memo 现优先取 `props.snapshot.doc.viewport`，persistViewport 仅 onMoveEnd 更新后该值在手势期间滞后，xyflow `useViewportSync` 会把画布拽回旧值形成拉锯；改为**活源取 `props.snapshot.viewport`（shellState），`doc.viewport` 降级为落盘/恢复专用字段**
-- [ ] Fix（渲染侧强制配套二）：`createXyflowNodes` 的 useMemo deps（`designer-xyflow-canvas.tsx:163-166`，现含整个 snapshot）与 `snapshotEdges` 的 useMemo deps（`:167-170`，同病且直接级联 `use-xyflow-sync.ts:125-134` renderedEdges）一并收窄为真实输入——nodes：`snapshot.doc`（nodes）+ `snapshot.selection` + `snapshot.activeBranch`；edges：`snapshot.doc`（edges）+ selectedEdgeIds + `snapshot.activeBranch` + documentMode——使 snapshot.viewport 每帧变化不再触发 O(N)/O(M) 重建（`activeBranch` 必须纳入，避免 branch 聚焦切换时选中/聚焦标记滞后一帧）
-- [ ] Fix：xyflow canvas 在 `onMoveEnd`/`onZoomEnd` 调用 `persistViewport` 一次性落盘（保持刷新后恢复 viewport 的既有产品行为）
-- [ ] Proof：focused 单测——Failure Paths 三场景（viewport-restore / undo-after-pan / pan-not-dirty）全绿；`persistViewport` 后 `docRevision` 不变、undo 栈长度不变、`isDirty()` 状态不变（断言三否定）；纯平移后触发 taskflow flush 断言投影 viewport 为最终值（非上一手势值）；undo/redo 后画布 viewport 不回跳（受控源 = snapshot.viewport 断言）；受控 viewport 取源断言（活源为 snapshot.viewport，doc.viewport 仅落盘/恢复）；`createXyflowNodes` 与 edges memo 在 snapshot.viewport 引用变化但 doc/selection/activeBranch 不变时不重跑（计数桩）；既有 viewport 持久化测试（若有）更新并通过
-- [ ] Proof：渲染路径验证——平移期间 `createXyflowNodes` 不因 viewport 重建（viewport 不再出现在 document snapshot 中驱动节点 memo 失配；以单测或显式断言锁定）
+- [x] Fix：`setViewport` 不再 `setDocument`/`pushHistory`/`updateDirtyState`，只写 shellState + emit `viewportChanged`
+- [x] Fix（落盘机制裁定，三选一已定）：viewport 从 document 写路径迁出，落盘改走 **revision-free 专用通道**——core 新增 `persistViewport(viewport)`：以**顶层浅替换**更新 document（`{...doc, viewport}`，保证 snapshot 缓存按 doc 引用失配而刷新 → host projection `designer-host-projection.ts:263` 与 taskflow 落盘 `taskflow-designer-lib/index.ts:55` 能取到最终 viewport），但**不递增 docRevision、不 pushHistory、不触发 dirty**（history/savedDoc 均为 cloneDocument 深克隆，替换 doc 不污染 undo 栈；`documentsEquivalent` 只比 nodes/edges 不受影响）；`persistViewport` 落盘后 emit 一次 `viewportChanged`；`replaceDocumentFromHost → resetShellViewportFromDocument`（shell-controls.ts:154-160）的恢复路径保持读取 doc.viewport 兼容。undo/redo 裁定：**不再从 history entry 重置 viewport**（`core.ts:322/:345` undo/redo 内的 `resetShellViewportFromDocument` 调用移除）——viewport 移出 undo 语义后 entry 携带的 viewport 是最后一次内容编辑时的值，重置会引发画布跳位
+- [x] Fix（渲染侧强制配套一）：受控 viewport 取源重接——`designer-xyflow-canvas.tsx:171-174` 的受控 viewport memo 现优先取 `props.snapshot.doc.viewport`，persistViewport 仅 onMoveEnd 更新后该值在手势期间滞后，xyflow `useViewportSync` 会把画布拽回旧值形成拉锯；改为**活源取 `props.snapshot.viewport`（shellState），`doc.viewport` 降级为落盘/恢复专用字段**
+- [x] Fix（渲染侧强制配套二）：`createXyflowNodes` 的 useMemo deps（`designer-xyflow-canvas.tsx:163-166`，现含整个 snapshot）与 `snapshotEdges` 的 useMemo deps（`:167-170`，同病且直接级联 `use-xyflow-sync.ts:125-134` renderedEdges）一并收窄为真实输入——nodes：`snapshot.doc`（nodes）+ `snapshot.selection` + `snapshot.activeBranch`；edges：`snapshot.doc`（edges）+ selectedEdgeIds + `snapshot.activeBranch` + documentMode——使 snapshot.viewport 每帧变化不再触发 O(N)/O(M) 重建（`activeBranch` 必须纳入，避免 branch 聚焦切换时选中/聚焦标记滞后一帧）
+- [x] Fix：xyflow canvas 在 `onMoveEnd` 调用 `persistViewport` 一次性落盘（保持刷新后恢复 viewport 的既有产品行为；xyflow 的 pan 与 zoom 手势结束统一触发 onMoveEnd，无独立 onZoomEnd 需求——closure audit r2 措辞校正）
+- [x] Proof：focused 单测——Failure Paths 三场景（viewport-restore / undo-after-pan / pan-not-dirty）全绿；`persistViewport` 后 `docRevision` 不变、undo 栈长度不变、`isDirty()` 状态不变（断言三否定）；纯平移后触发 taskflow flush 断言投影 viewport 为最终值（非上一手势值）；undo/redo 后画布 viewport 不回跳（受控源 = snapshot.viewport 断言）；受控 viewport 取源断言（活源为 snapshot.viewport，doc.viewport 仅落盘/恢复）；`createXyflowNodes` 与 edges memo 在 snapshot.viewport 引用变化但 doc/selection/activeBranch 不变时不重跑（计数桩）；既有 viewport 持久化测试（若有）更新并通过
+- [x] Proof：渲染路径验证——平移期间 `createXyflowNodes` 不因 viewport 重建（viewport 不再出现在 document snapshot 中驱动节点 memo 失配；以单测或显式断言锁定）
 
 Exit Criteria:
 
-- [ ] viewport 退出 document/undo/dirty，三场景 focused 测试全绿
-- [ ] viewport 持久化产品行为（重开恢复位置）不回退
+- [x] viewport 退出 document/undo/dirty，三场景 focused 测试全绿
+- [x] viewport 持久化产品行为（重开恢复位置）不回退
 
 ### Phase 2 - hover / 辅助线 / resize 帧成本
 
-Status: planned
+Status: completed
 Targets: `designer-xyflow-canvas/use-xyflow-sync.ts`、`use-alignment-guides.ts`、`designer-xyflow-canvas.tsx`（死通道清理）、`packages/flux-react/src/workbench/workbench-shell.tsx`、`packages/flow-designer-renderers/src/designer-page-body.tsx`（:509,:525 的 setPanelWidths 派发路径）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-P17)：边 hover 仅目标边对象重建（其余边引用保持）；`onNodeHover`/`onEdgeHover` 死通道删除或接通（以删除为准，除非存在消费方）
-- [ ] Fix (R3-P18)：对齐辅助线 guides 值浅等价则跳过 setState；兄弟节点矩形按距离/视口预剪枝
-- [ ] Fix (R3-P19)：workbench 面板 resize 过程本地 state/rAF 驱动，pointerup 一次性 dispatch `setPanelWidths`
-- [ ] Proof：focused 单测——hover 单边变更时其余边对象引用不变；guides 值不变不触发回调；resize pointerup 前零全局 dispatch
+- [x] Fix (R3-P17)：边 hover 仅目标边对象重建（其余边引用保持）；`onNodeHover`/`onEdgeHover` 死通道删除（closure audit r2 确认全仓零消费方，props 声明与 4 处调用点已删）
+- [x] Fix (R3-P18)：对齐辅助线 guides 值浅等价则跳过 setState；兄弟节点矩形按距离/视口预剪枝
+- [x] Fix (R3-P19)：workbench 面板 resize 过程本地 state/rAF 驱动，pointerup 一次性 dispatch `setPanelWidths`
+- [x] Proof：focused 单测——hover 单边变更时其余边对象引用不变；guides 值不变不触发回调；resize pointerup 前零全局 dispatch
 
 Exit Criteria:
 
-- [ ] 3 项 Fix 落地，focused 单测全绿
-- [ ] flow-designer-renderers 与 flux-react（workbench）focused 测试均无回归
+- [x] 3 项 Fix 落地，focused 单测全绿
+- [x] flow-designer-renderers 与 flux-react（workbench）focused 测试均无回归
 
 ### Phase 3 - UX 基线（工具栏 / 快捷键 / 落点预览 / ARIA / i18n）
 
-Status: planned
+Status: completed
 Targets: `flow-designer-core/src/core/config.ts`、`designer-toolbar.tsx`、palette 拖放路径（`designer-xyflow-canvas.tsx:394-407`）、`workbench-shell.tsx`、`apps/playground/src/flow-designer/flow-designer-toolbar.tsx`、flux-i18n locales
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-U19)：normalizeConfig 提供默认 undo/redo/save 工具栏项（host config 可覆盖）
-- [ ] Fix (R3-U20)：默认快捷键补 Ctrl+A（selectAllNodes）/ Ctrl+D（duplicateNode），遵守 isEditableTarget 守卫
-- [ ] Fix (R3-U12)：palette dragover 期间渲染半透明预览节点（screenToFlowPosition + 吸附对齐可选），drop 后消失
-- [ ] Fix (R3-U10)：playground flow 工具栏视图切换按钮补 `aria-pressed`
-- [ ] Fix (R3-U21)：workbench resize 手柄 aria-label 经 i18n（新增 locale 键，两语言齐全）
-- [ ] Proof：focused 单测/DOM 断言——默认 config 渲染出 undo/redo/save 按钮；Ctrl+A/Ctrl+D 触发对应命令且输入框聚焦时不触发；dragover 出现预览节点元素；aria-pressed/aria-label 断言
+- [x] Fix (R3-U19)：normalizeConfig 提供默认 undo/redo/save 工具栏项（host config 可覆盖）
+- [x] Fix (R3-U20)：默认快捷键补 Ctrl+A（selectAllNodes）/ Ctrl+D（duplicateNode），遵守 isEditableTarget 守卫
+- [x] Fix (R3-U12)：palette dragover 期间渲染半透明预览节点（screenToFlowPosition + 吸附对齐可选），drop 后消失
+- [x] Fix (R3-U10)：playground flow 工具栏视图切换按钮补 `aria-pressed`
+- [x] Fix (R3-U21)：workbench resize 手柄 aria-label 经 i18n（新增 locale 键，两语言齐全）
+- [x] Proof：focused 单测/DOM 断言——默认 config 渲染出 undo/redo/save 按钮；Ctrl+A/Ctrl+D 触发对应命令且输入框聚焦时不触发；dragover 出现预览节点元素；aria-pressed/aria-label 断言
 
 Exit Criteria:
 
-- [ ] 5 项 UX Fix 落地，DOM 断言测试全绿
-- [ ] 新增 locale 键在 en-US/zh-CN 两边齐全（契约测试通过）
+- [x] 5 项 UX Fix 落地，DOM 断言测试全绿
+- [x] 新增 locale 键在 en-US/zh-CN 两边齐全（契约测试通过）
 
 ## Draft Review Record
 
@@ -129,17 +129,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live 缺陷已修复（R3-P11、P17、P18、P19、U4、U10、U12、U19、U20、U21 逐条核对）
-- [ ] 不适用 contract drift（viewport 语义修正属内部行为，host 兼容性以 focused + 既有测试为准）
-- [ ] 行为/契约结果已达成（Failure Paths 三场景 + UX 断言全绿）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] owner docs 已同步：`docs/architecture/flow-designer/design.md` 的 graph runtime 持有状态描述（:117 记载 "`document`、`viewport`、…history、dirty"）已按 persistViewport revision-free 通道落地后的语义更新
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live 缺陷已修复（R3-P11、P17、P18、P19、U4、U10、U12、U19、U20、U21 逐条核对）
+- [x] 不适用 contract drift（viewport 语义修正属内部行为，host 兼容性以 focused + 既有测试为准）
+- [x] 行为/契约结果已达成（Failure Paths 三场景 + UX 断言全绿）
+- [x] 必要 focused verification 已完成
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] owner docs 已同步：`docs/architecture/flow-designer/design.md` 的 graph runtime 持有状态描述（:117 记载 "`document`、`viewport`、…history、dirty"）已按 persistViewport revision-free 通道落地后的语义更新
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -151,13 +151,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 10 条 in-scope 修复全部落地；viewport 移出 content-edit 语义经 Failure Paths 三场景 focused 测试锁定；r2 closure audit 附带的两条 minor（onZoomEnd 措辞、hover 死通道 props 未删）已当场收口；全仓 typecheck/build/lint/test 于收口树实测绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_e9080f4a）
+- Evidence: verdict `approved`——逐项 live 核对（14 项 file:line 在案）、Failure Paths 三场景断言真实且 25+25 focused 实测绿、persistViewport 门控经「手势结束 shell 已为终值」场景深读确认无 r1 形态 bug、owner-doc design.md 与 live 一致、无静默降级。详见 `docs/logs/2026/09-30.md` Plan 2 段。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up>>
+- palette 落点预览的吸附对齐精细化（optimization candidate，位置预览已满足 U12 收口标准）

@@ -48,7 +48,7 @@ function resolveNodeSize(
 }
 
 export function createXyflowNodes(
-  snapshot: DesignerSnapshot,
+  snapshot: Pick<DesignerSnapshot, 'doc' | 'selection' | 'activeBranch'>,
   nodeTypeSizeMap?: Map<string, { minWidth?: number; minHeight?: number }>,
   documentMode?: 'graph' | 'tree',
   nodeTypeMap?: Map<string, NodeTypeConfig>,
@@ -93,7 +93,7 @@ export function createXyflowNodes(
 }
 
 export function createXyflowEdges(
-  snapshot: DesignerSnapshot,
+  snapshot: Pick<DesignerSnapshot, 'doc' | 'selection' | 'activeBranch'>,
   documentMode?: 'graph' | 'tree',
 ): Edge[] {
   const edgeType = documentMode === 'tree' ? 'dingflowEdge' : 'designerEdge';

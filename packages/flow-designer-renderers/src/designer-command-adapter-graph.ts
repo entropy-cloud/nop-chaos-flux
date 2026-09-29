@@ -169,6 +169,14 @@ export function executeGraphOnlyCommand(
           | undefined,
       });
     }
+    case 'selectAll': {
+      core.selectAllNodes();
+      return createSuccess(core);
+    }
+    case 'persistViewport': {
+      core.persistViewport(command.viewport);
+      return createSuccess(core, { reason: 'unchanged' });
+    }
     case 'setViewport': {
       const previousViewport = core.getSnapshot().viewport;
       core.setViewport(command.viewport);

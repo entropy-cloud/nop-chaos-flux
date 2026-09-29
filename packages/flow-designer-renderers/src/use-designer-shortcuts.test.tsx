@@ -7,9 +7,18 @@ import { useDesignerShortcuts } from './use-designer-shortcuts.js';
 
 type DesignerCoreLike = ReturnType<typeof createDesignerCore>;
 
-function createMockCore(config: { shortcuts?: Record<string, string[]>; features?: Record<string, boolean> }): DesignerCoreLike {
+function createMockCore(config: {
+  shortcuts?: Record<string, string[]>;
+  features?: Record<string, boolean>;
+  documentMode?: 'graph' | 'tree';
+  activeNodeId?: string;
+}): DesignerCoreLike {
   return {
     getConfig: () => config,
+    getSnapshot: () => ({
+      activeNode: config.activeNodeId ? { id: config.activeNodeId } : null,
+      selection: { selectedNodeIds: config.activeNodeId ? [config.activeNodeId] : [] },
+    }),
   } as unknown as DesignerCoreLike;
 }
 
@@ -31,6 +40,8 @@ function renderHarness(config: {
   shortcuts?: Record<string, string[]>;
   features?: Record<string, boolean>;
   readOnly?: boolean;
+  documentMode?: 'graph' | 'tree';
+  activeNodeId?: string;
 } = {}) {
   const dispatch = vi.fn();
   const core = createMockCore(config);
@@ -154,5 +165,39 @@ describe('useDesignerShortcuts', () => {
     fireEvent.keyDown(root, { key: 'z', ctrlKey: true });
 
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('dispatches selectAll for Ctrl+A and duplicateNode for Ctrl+D', () => {
+    const { dispatch, root } = renderHarness({
+      ...baseConfig,
+      documentMode: 'graph',
+      activeNodeId: 'task-1',
+      shortcuts: { ...baseConfig.shortcuts, selectAll: ['Ctrl+A'], duplicate: ['Ctrl+D'] },
+    });
+
+    fireEvent.keyDown(root, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(root, { key: 'd', ctrlKey: true });
+
+    expect(dispatch.mock.calls.map((call) => call[0])).toEqual([
+      { type: 'selectAll' },
+      { type: 'duplicateNode', nodeId: 'task-1' },
+    ]);
+  });
+
+  it('guards selectAll/duplicate behind the editable-target check and skips duplicate in tree mode', () => {
+    const { dispatch, root, view } = renderHarness({
+      ...baseConfig,
+      documentMode: 'tree',
+      activeNodeId: 'task-1',
+      shortcuts: { ...baseConfig.shortcuts, selectAll: ['Ctrl+A'], duplicate: ['Ctrl+D'] },
+    });
+
+    fireEvent.keyDown(view.getByTestId('editable-input'), { key: 'a', ctrlKey: true });
+    expect(dispatch).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(root, { key: 'a', ctrlKey: true });
+    expect(dispatch).toHaveBeenCalledWith({ type: 'selectAll' });
+    fireEvent.keyDown(root, { key: 'd', ctrlKey: true });
+    expect(dispatch.mock.calls.map((call) => call[0].type)).toEqual(['selectAll']);
   });
 });

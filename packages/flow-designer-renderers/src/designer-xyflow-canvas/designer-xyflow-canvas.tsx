@@ -30,6 +30,13 @@ import { PortConnectionA11yContext } from './port-connection-a11y-context.js';
 
 export const DESIGNER_PALETTE_NODE_MIME = 'application/x-flow-designer-node-type';
 
+// dataTransfer.getData() is security-blocked outside drop, so the palette
+// stashes the dragged node type here on dragstart and clears it on dragend.
+let activePaletteDragType: string | null = null;
+export function setPaletteDragType(nodeTypeId: string | null): void {
+  activePaletteDragType = nodeTypeId;
+}
+
 export interface DesignerXyflowCanvasProps {
   snapshot: DesignerSnapshot;
   canvasConfig?: CanvasConfig;
@@ -71,10 +78,9 @@ export interface DesignerXyflowCanvasProps {
     viewport: { x: number; y: number; zoom: number },
     event?: React.MouseEvent,
   ): void;
+  onViewportPersist?(viewport: { x: number; y: number; zoom: number }): void;
   onNodeDoubleClick?(nodeId: string, event?: React.MouseEvent): void;
   onEdgeDoubleClick?(edgeId: string, event?: React.MouseEvent): void;
-  onNodeHover?(nodeId: string | null, event?: React.MouseEvent): void;
-  onEdgeHover?(edgeId: string | null, event?: React.MouseEvent): void;
   onDrop?(nodeTypeId: string, position: { x: number; y: number }): void;
   documentMode?: 'graph' | 'tree';
   onPlusButtonClick?: (
@@ -160,28 +166,61 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     [],
   );
 
+  // Deps are the factories' real inputs (doc content + selection + branch
+  // focus), NOT the snapshot object itself — the snapshot rebuilds on every
+  // viewport frame while panning, and rebuilding node/edge object arrays there
+  // defeats xyflow's shallow equality for the entire graph.
+  const { doc: snapshotDoc, selection: snapshotSelection, activeBranch: snapshotActiveBranch } =
+    props.snapshot;
   const snapshotNodes = useMemo(
-    () => createXyflowNodes(props.snapshot, props.nodeTypeSizeMap, props.documentMode, props.nodeTypeMap),
-    [props.snapshot, props.nodeTypeSizeMap, props.documentMode, props.nodeTypeMap],
+    () =>
+      createXyflowNodes(
+        { doc: snapshotDoc, selection: snapshotSelection, activeBranch: snapshotActiveBranch },
+        props.nodeTypeSizeMap,
+        props.documentMode,
+        props.nodeTypeMap,
+      ),
+    [
+      snapshotDoc,
+      snapshotSelection,
+      snapshotActiveBranch,
+      props.nodeTypeSizeMap,
+      props.documentMode,
+      props.nodeTypeMap,
+    ],
   );
   const snapshotEdges = useMemo(
-    () => createXyflowEdges(props.snapshot, props.documentMode),
-    [props.snapshot, props.documentMode],
+    () =>
+      createXyflowEdges(
+        { doc: snapshotDoc, selection: snapshotSelection, activeBranch: snapshotActiveBranch },
+        props.documentMode,
+      ),
+    [snapshotDoc, snapshotSelection, snapshotActiveBranch, props.documentMode],
   );
+  // Live source first: doc.viewport is only the persistence/restore channel and
+  // lags one gesture behind while panning.
   const viewport = useMemo(
-    () => normalizeControlledViewport(props.snapshot.doc.viewport ?? props.snapshot.viewport),
-    [props.snapshot.doc.viewport, props.snapshot.viewport],
+    () => normalizeControlledViewport(props.snapshot.viewport ?? props.snapshot.doc.viewport),
+    [props.snapshot.viewport, props.snapshot.doc.viewport],
   );
 
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [dropPreview, setDropPreview] = useState<{ nodeTypeId: string; x: number; y: number } | null>(
+    null,
+  );
+  const dropPreviewRafRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
         hoverTimeoutRef.current = null;
+      }
+      if (dropPreviewRafRef.current !== null) {
+        cancelAnimationFrame(dropPreviewRafRef.current);
+        dropPreviewRafRef.current = null;
       }
     };
   }, []);
@@ -337,9 +376,10 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           onMove={(_event, nextViewport) =>
             handleViewportChange(nextViewport as XyflowViewportChange)
           }
-          onMoveEnd={(_event, nextViewport) =>
-            handleViewportChange(nextViewport as XyflowViewportChange)
-          }
+          onMoveEnd={(_event, nextViewport) => {
+            handleViewportChange(nextViewport as XyflowViewportChange);
+            props.onViewportPersist?.(nextViewport as { x: number; y: number; zoom: number });
+          }}
           onPaneClick={() => {
             props.onPaneClick();
           }}
@@ -361,28 +401,15 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             props.onEdgeSelect(edge.id, undefined);
           }}
           proOptions={{ hideAttribution: true }}
-          onNodeMouseEnter={(_e, node) => {
-            if (hoverTimeoutRef.current) {
-              clearTimeout(hoverTimeoutRef.current);
-            }
-            props.onNodeHover?.(node.id, undefined);
-          }}
-          onNodeMouseLeave={() => {
-            hoverTimeoutRef.current = setTimeout(() => {
-              props.onNodeHover?.(null, undefined);
-            }, 160);
-          }}
           onEdgeMouseEnter={(_e, edge) => {
             if (hoverTimeoutRef.current) {
               clearTimeout(hoverTimeoutRef.current);
             }
             setHoveredEdgeId(edge.id);
-            props.onEdgeHover?.(edge.id, undefined);
           }}
           onEdgeMouseLeave={() => {
             hoverTimeoutRef.current = setTimeout(() => {
               setHoveredEdgeId(null);
-              props.onEdgeHover?.(null, undefined);
             }, 160);
           }}
           onNodeDoubleClick={(_event, node) => {
@@ -393,6 +420,11 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           }}
           onDrop={(event) => {
             event.preventDefault();
+            if (dropPreviewRafRef.current !== null) {
+              cancelAnimationFrame(dropPreviewRafRef.current);
+              dropPreviewRafRef.current = null;
+            }
+            setDropPreview(null);
             const nodeTypeId = event.dataTransfer.getData(DESIGNER_PALETTE_NODE_MIME);
             if (!nodeTypeId || !props.onDrop) return;
             const position = reactFlowInstance
@@ -404,6 +436,27 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           onDragOver={(event) => {
             event.preventDefault();
             event.dataTransfer.dropEffect = 'move';
+            const nodeTypeId = activePaletteDragType;
+            if (!nodeTypeId) return;
+            const rect = surfaceRef.current?.getBoundingClientRect();
+            const x = event.clientX - (rect?.left ?? 0);
+            const y = event.clientY - (rect?.top ?? 0);
+            if (dropPreviewRafRef.current === null) {
+              dropPreviewRafRef.current = requestAnimationFrame(() => {
+                dropPreviewRafRef.current = null;
+                setDropPreview({ nodeTypeId, x, y });
+              });
+            }
+          }}
+          onDragLeave={(event) => {
+            if (event.currentTarget.contains(event.relatedTarget as Node)) {
+              return;
+            }
+            if (dropPreviewRafRef.current !== null) {
+              cancelAnimationFrame(dropPreviewRafRef.current);
+              dropPreviewRafRef.current = null;
+            }
+            setDropPreview(null);
           }}
         >
           {showBackground && (
@@ -457,6 +510,21 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
             </ViewportPortal>
           )}
           </ReactFlow>
+          {dropPreview && (
+            <div
+              className="pointer-events-none absolute z-40 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border-2 border-dashed border-primary/60 bg-primary/10 text-xs font-medium text-primary"
+              style={{
+                left: dropPreview.x,
+                top: dropPreview.y,
+                minWidth: props.nodeTypeSizeMap?.get(dropPreview.nodeTypeId)?.minWidth ?? 160,
+                minHeight: props.nodeTypeSizeMap?.get(dropPreview.nodeTypeId)?.minHeight ?? 56,
+              }}
+              aria-hidden="true"
+              data-testid="designer-drop-preview"
+            >
+              {dropPreview.nodeTypeId}
+            </div>
+          )}
         </div>
       </ReactFlowProvider>
     </PortConnectionA11yContext.Provider>

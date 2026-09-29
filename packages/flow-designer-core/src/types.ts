@@ -282,6 +282,7 @@ export interface ShortcutsConfig {
   paste?: string[];
   delete?: string[];
   selectAll?: string[];
+  duplicate?: string[];
   save?: string[];
 }
 

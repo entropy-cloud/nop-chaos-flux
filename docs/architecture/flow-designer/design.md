@@ -114,7 +114,7 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 
 建议约束：
 
-- graph runtime 持有：`document`、`viewport`、`selection`、`activeTarget`、history、dirty、clipboard、连接校验相关状态
+- graph runtime 持有：`document`、`viewport`、`selection`、`activeTarget`、history、dirty、clipboard、连接校验相关状态。其中 viewport 与 content-edit 语义解耦：交互期只写 shellState（`setViewport`），手势结束经 `persistViewport` 一次性落盘进 document——该通道是 revision-free 的（不递增 `docRevision`、不入 undo 历史、不触发 dirty），因此平移/缩放既不污染 undo 栈也不误报未保存变更；受控 viewport 的活数据源是 shellState，`doc.viewport` 仅作为落盘/恢复通道
 - `@xyflow/react` 可持有：pointer capture、dragging 中间态、连线预览、节点尺寸测量、框选手势中的纯 UI 临时态
 - `onNodesChange`、`onEdgesChange`、`onConnect`、selection change 等回调先归一化为 designer bridge command，再进入 `designer:*` action 或 core action executor
 - canvas adapter 不直接写 graph store 的结构化 document 状态，避免双写和回调环

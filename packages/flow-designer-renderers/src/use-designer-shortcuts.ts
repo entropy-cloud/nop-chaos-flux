@@ -66,6 +66,28 @@ export function useDesignerShortcuts(args: {
         dispatch({ type: 'pasteClipboard' });
         return;
       }
+      if (matchesShortcut(event, shortcuts.selectAll)) {
+        event.preventDefault();
+        dispatch({ type: 'selectAll' });
+        return;
+      }
+      // Ctrl+D duplicates the active/first-selected node; tree mode routes node
+      // duplication through tree-owned commands, so the graph-only command
+      // would just surface an "unavailable" toast.
+      if (
+        canUseClipboard &&
+        core.getConfig().documentMode !== 'tree' &&
+        matchesShortcut(event, shortcuts.duplicate)
+      ) {
+        event.preventDefault();
+        const snapshot = core.getSnapshot();
+        const activeNodeId =
+          snapshot.activeNode?.id ?? snapshot.selection.selectedNodeIds[0] ?? undefined;
+        if (activeNodeId) {
+          dispatch({ type: 'duplicateNode', nodeId: activeNodeId });
+        }
+        return;
+      }
       if (matchesShortcut(event, shortcuts.delete)) {
         event.preventDefault();
         dispatch({ type: 'deleteSelection' });

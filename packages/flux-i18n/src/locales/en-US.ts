@@ -484,6 +484,10 @@ export const enUS: Resource = {
       asideToggle: 'Toggle aside',
       remark: 'Remark',
     },
+    workbench: {
+      resizeLeftPanel: 'Resize left panel',
+      resizeRightPanel: 'Resize right panel',
+    },
     sheet: {
       close: 'Close',
       deleteTitle: 'Delete Sheet',

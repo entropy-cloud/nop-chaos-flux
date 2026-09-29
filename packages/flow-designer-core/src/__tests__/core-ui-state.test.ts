@@ -100,47 +100,70 @@ function createDocumentWithEdgeChain(): GraphDocument {
 }
 
 describe('createDesignerCore - viewport and UI state', () => {
-  it('normalizes viewport updates and restores them through undo/redo', () => {
+  it('normalizes viewport updates but keeps them out of undo history and dirty state', () => {
     const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
 
     core.save();
     core.setViewport({ x: 12.6, y: 24.4, zoom: 1.26 });
     expect(core.getSnapshot().viewport).toEqual({ x: 12.6, y: 24.4, zoom: 1.26 });
-    expect(core.getSnapshot().isDirty).toBe(true);
+    expect(core.getSnapshot().isDirty).toBe(false);
+    expect(core.getSnapshot().canUndo).toBe(false);
+
+    // A real content edit seeds history; undo must not move the viewport.
+    core.updateNode('task-1', { label: 'Renamed' });
     expect(core.getSnapshot().canUndo).toBe(true);
 
     core.undo();
-    expect(core.getSnapshot().viewport).toEqual({ x: 0, y: 0, zoom: 1 });
-
-    core.redo();
     expect(core.getSnapshot().viewport).toEqual({ x: 12.6, y: 24.4, zoom: 1.26 });
   });
 
-  it('treats unchanged normalized viewport updates as a history no-op', () => {
+  it('treats viewport updates as a history no-op whether or not the value changed', () => {
     const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
 
     const before = core.getSnapshot();
     core.setViewport({ x: 0.2, y: 0.4, zoom: 1.04 });
 
     expect(core.getSnapshot().viewport).toEqual({ x: 0.2, y: 0.4, zoom: 1.04 });
-    expect(core.getSnapshot().canUndo).toBe(true);
+    expect(core.getSnapshot().canUndo).toBe(before.canUndo);
     expect(core.getSnapshot().canRedo).toBe(before.canRedo);
   });
 
-  it('keeps viewport inside save and restore semantics', () => {
+  it('keeps panning outside save/restore dirty semantics while restore still resets the viewport', () => {
     const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
 
+    // Model the real gesture flow: pan (live) -> gesture end persists -> save.
     core.setViewport({ x: 15, y: 30, zoom: 1.2 });
+    core.persistViewport({ x: 15, y: 30, zoom: 1.2 });
     core.save();
     expect(core.getSnapshot().isDirty).toBe(false);
 
     core.setViewport({ x: 60, y: 90, zoom: 1.6 });
     expect(core.getSnapshot().viewport).toEqual({ x: 60, y: 90, zoom: 1.6 });
-    expect(core.getSnapshot().isDirty).toBe(true);
+    expect(core.getSnapshot().isDirty).toBe(false);
 
+    // Restore rolls the document back to the saved baseline, so the viewport
+    // resets to the last persisted gesture position, not the live mid-gesture one.
     core.restore();
     expect(core.getSnapshot().viewport).toEqual({ x: 15, y: 30, zoom: 1.2 });
     expect(core.getSnapshot().isDirty).toBe(false);
+  });
+
+  it('persistViewport writes the final gesture viewport without revision, history, or dirty impact', () => {
+    const core = createDesignerCore(createBasicDocument(), createTestDesignerConfig());
+
+    core.save();
+    const revisionBefore = core.exportDocument();
+    core.setViewport({ x: 5, y: 5, zoom: 1.1 });
+    core.persistViewport({ x: 40, y: 80, zoom: 1.5 });
+
+    expect(core.getSnapshot().viewport).toEqual({ x: 40, y: 80, zoom: 1.5 });
+    expect(core.getSnapshot().isDirty).toBe(false);
+    expect(core.getSnapshot().canUndo).toBe(false);
+    expect(core.getDocument().viewport).toEqual({ x: 40, y: 80, zoom: 1.5 });
+    // The persisted document (with the new viewport) equals what a fresh export
+    // of the saved doc plus viewport would be — the revision-free write is the
+    // only document delta.
+    expect(core.exportDocument()).not.toBe(revisionBefore);
   });
 
   it('updates multiple nodes immutably in a single pass', () => {

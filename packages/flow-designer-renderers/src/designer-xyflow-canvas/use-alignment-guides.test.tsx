@@ -1,5 +1,8 @@
+import { act } from 'react';
 import { describe, expect, it } from 'vitest';
-import { computeAlignmentGuides } from './use-alignment-guides.js';
+import { renderHook } from '@testing-library/react';
+import type { Node } from '@xyflow/react';
+import { computeAlignmentGuides, useAlignmentGuides } from './use-alignment-guides.js';
 
 describe('computeAlignmentGuides', () => {
   const dragged = { x: 100, y: 200, width: 220, height: 80 };
@@ -43,5 +46,52 @@ describe('computeAlignmentGuides', () => {
     const result = computeAlignmentGuides(dragged, [{ x: 0, y: 0, width: 100, height: 284 }]);
     expect(result.horizontal).toBe(284);
     expect(result.dy).toBe(4);
+  });
+});
+describe('useAlignmentGuides state identity', () => {
+  function node(id: string, x: number, y: number): Node {
+    return { id, position: { x, y }, data: {} } as unknown as Node;
+  }
+
+  it('keeps the guides state reference when the aligned value is unchanged', () => {
+    const nodes = [node('sibling', 100, 400)];
+    const { result } = renderHook(() =>
+      useAlignmentGuides({ getNodes: () => nodes, applyPosition: () => undefined }),
+    );
+    const dragNode = node('drag', 100, 200);
+
+    act(() => {
+      result.current.onNodeDrag({}, dragNode, [dragNode]);
+    });
+    const first = result.current.guides;
+    expect(first.vertical).toBe(100);
+
+    act(() => {
+      result.current.onNodeDrag({}, dragNode, [dragNode]);
+    });
+
+    expect(result.current.guides).toBe(first);
+  });
+
+  it('keeps the null guides reference across repeated drag stops with no active guides', () => {
+    const nodes = [node('sibling', 400, 400)];
+    const { result } = renderHook(() =>
+      useAlignmentGuides({ getNodes: () => nodes, applyPosition: () => undefined }),
+    );
+    const dragNode = node('drag', 100, 200);
+
+    act(() => {
+      result.current.onNodeDrag({}, dragNode, [dragNode]);
+    });
+    act(() => {
+      result.current.onNodeDragStop();
+    });
+    const cleared = result.current.guides;
+    expect(cleared.vertical).toBeNull();
+
+    act(() => {
+      result.current.onNodeDragStop();
+    });
+    expect(result.current.guides).toBe(cleared);
   });
 });

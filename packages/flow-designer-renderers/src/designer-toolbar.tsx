@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { reportRuntimeHostIssue, shallowEqual } from '@nop-chaos/flux-core';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
@@ -36,6 +37,33 @@ const VIEW_SAFE_ACTIONS = new Set([
   'designer:autoLayout', 'autoLayout', 'designer:navigate-back',
 ]);
 
+function isUndoAction(action: string | undefined): boolean {
+  return action === 'undo' || action === 'designer:undo';
+}
+
+function isRedoAction(action: string | undefined): boolean {
+  return action === 'redo' || action === 'designer:redo';
+}
+
+// Default toolbar items carry icon only — the localized accessible name comes
+// from the action identity at render time, keeping core config i18n-free.
+const DESIGNER_ACTION_I18N_KEYS: Record<string, string> = {
+  undo: 'flux.flowDesigner.undo',
+  'designer:undo': 'flux.flowDesigner.undo',
+  redo: 'flux.flowDesigner.redo',
+  'designer:redo': 'flux.flowDesigner.redo',
+  save: 'flux.flowDesigner.save',
+  'designer:save': 'flux.flowDesigner.save',
+};
+
+function designerActionAriaLabel(action: string | undefined): string | undefined {
+  if (!action) {
+    return undefined;
+  }
+  const key = DESIGNER_ACTION_I18N_KEYS[action];
+  return key ? t(key) : undefined;
+}
+
 function isMutationAction(action: string | undefined): boolean {
   if (!action) return false;
   if (VIEW_SAFE_ACTIONS.has(action)) return false;
@@ -49,8 +77,11 @@ export function DesignerToolbarContent(props: {
   autoLayoutBusy?: boolean;
   readOnly?: boolean;
 }) {
-  const { config, designerScope } = useDesignerContext();
-  useDesignerSnapshotSelector<ToolbarSnapshot>((state) => ({
+  // Toolbar items come from the NORMALIZED config on the core: the context
+  // config is the raw host input, whose absent toolbar must resolve to the
+  // default undo/redo/save items.
+  const { core, designerScope } = useDesignerContext();
+  const toolbarSnapshot = useDesignerSnapshotSelector<ToolbarSnapshot>((state) => ({
     canUndo: state.canUndo,
     canRedo: state.canRedo,
     isDirty: state.isDirty,
@@ -110,7 +141,7 @@ export function DesignerToolbarContent(props: {
   );
 
   const items = (() => {
-    const allItems = config.toolbar?.items ?? [];
+    const allItems = core.getConfig().toolbar?.items ?? [];
     const filteredItems = props.readOnly
       ? allItems.filter((item) => {
           if (item.type !== 'button' && item.type !== 'switch') return true;
@@ -241,7 +272,9 @@ export function DesignerToolbarContent(props: {
         if (item.type === 'button') {
           const disabled =
             item.disabled === true ||
-            (item.action === 'designer:autoLayout' && props.autoLayoutBusy === true);
+            (item.action === 'designer:autoLayout' && props.autoLayoutBusy === true) ||
+            (isUndoAction(item.action) && !toolbarSnapshot.canUndo) ||
+            (isRedoAction(item.action) && !toolbarSnapshot.canRedo);
           const active =
             item.active === true ||
             (item.action === 'designer:export' && props.exportActive === true);
@@ -251,6 +284,7 @@ export function DesignerToolbarContent(props: {
               : active || item.intent === 'primary'
                 ? 'default'
                 : 'outline';
+          const ariaLabel = item.label ?? designerActionAriaLabel(item.action);
           return (
             <Button
               key={key}
@@ -258,6 +292,8 @@ export function DesignerToolbarContent(props: {
               variant={variant}
               size="sm"
               disabled={disabled}
+              aria-label={ariaLabel}
+              title={ariaLabel}
               onClick={() => {
                 if (item.action === 'designer:autoLayout') {
                   props.onAutoLayout?.();

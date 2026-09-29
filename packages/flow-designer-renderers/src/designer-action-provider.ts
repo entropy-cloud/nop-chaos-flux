@@ -456,6 +456,17 @@ export function createDesignerActionProvider(
           });
           return toActionResult(result);
         }
+        case 'persistViewport': {
+          const result = adapter.execute({
+            type: 'persistViewport',
+            viewport: (args.viewport as { x: number; y: number; zoom: number } | undefined) ?? {
+              x: 0,
+              y: 0,
+              zoom: 1,
+            },
+          });
+          return toActionResult(result);
+        }
         case 'setPanelWidths': {
           const result = adapter.execute({
             type: 'setPanelWidths',

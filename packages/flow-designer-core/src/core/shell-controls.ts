@@ -30,14 +30,12 @@ function clampShellWidth(
 export function createShellControls(args: {
   getDocument: () => GraphDocument;
   setDocument: (nextDoc: GraphDocument) => boolean;
-  pushHistory: () => void;
   replaceHistory: (nextDoc: GraphDocument) => void;
   markHostDocumentSaved: (nextDoc: GraphDocument) => void;
   emit: (event: DesignerEvent) => void;
   updateDirtyState: () => void;
   shellState: DesignerShellState;
   shellConfig?: DesignerShellConfig;
-  getTransactionDepth: () => number;
 }) {
   function copySelection(nodeIds: string[]) {
     if (nodeIds.length === 0) {
@@ -136,17 +134,15 @@ export function createShellControls(args: {
     args.emit({ type: 'inspectorWidthChanged', width: nextWidth });
   }
 
+  // Live viewport path: only shellState + event emission. Viewport is NOT a
+  // document edit — persisting it into the document (without dirty/history
+  // impact) happens once per gesture via core.persistViewport.
   function setViewport(newViewport: { x: number; y: number; zoom: number }) {
     if (!setShellViewport(args.shellState, newViewport)) {
       return;
     }
 
-    const currentDoc = args.getDocument();
-    args.setDocument({ ...currentDoc, viewport: args.shellState.viewport });
-    if (args.getTransactionDepth() === 0) args.pushHistory();
     args.emit({ type: 'viewportChanged', viewport: args.shellState.viewport });
-    args.emit({ type: 'documentChanged', doc: args.getDocument() });
-    args.updateDirtyState();
   }
 
   function replaceDocumentFromHost(nextDoc: GraphDocument) {

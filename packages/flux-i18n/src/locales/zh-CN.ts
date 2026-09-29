@@ -483,6 +483,10 @@ export const zhCN: Resource = {
       asideToggle: '切换侧栏',
       remark: '备注',
     },
+    workbench: {
+      resizeLeftPanel: '调整左侧面板宽度',
+      resizeRightPanel: '调整右侧面板宽度',
+    },
     sheet: {
       close: '关闭',
       deleteTitle: '删除工作表',

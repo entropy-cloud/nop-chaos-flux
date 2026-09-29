@@ -28,7 +28,7 @@ import {
   rollbackTransactionState,
   type DesignerTransaction,
 } from './core/transactions.js';
-import { createDesignerShellState, resetShellViewportFromDocument } from './core/shell-state.js';
+import { createDesignerShellState, resetShellViewportFromDocument, setShellViewport } from './core/shell-state.js';
 import { createShellControls } from './core/shell-controls.js';
 import { createDesignerSnapshotCache, getDesignerSnapshot } from './core/snapshot.js';
 import { layoutNodesInDocument } from './core/node-operations.js';
@@ -296,14 +296,12 @@ function createDesignerCoreInternal(
   const shellControls = createShellControls({
     getDocument,
     setDocument,
-    pushHistory,
     replaceHistory: replaceHistoryBaseline,
     markHostDocumentSaved,
     emit,
     updateDirtyState,
     shellState,
     shellConfig: config.shell,
-    getTransactionDepth: () => transactionStack.length,
   });
 
   function undo(): void {
@@ -319,7 +317,8 @@ function createDesignerCoreInternal(
     if (isTreeMode && restoredTree) {
       currentTreeDocument = restoredTree;
     }
-    resetShellViewportFromDocument(shellState, doc);
+    // Viewport is not part of undo semantics: keep the user's current viewport
+    // instead of jumping to the viewport captured at entry time.
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'viewportChanged', viewport: shellState.viewport });
@@ -342,7 +341,7 @@ function createDesignerCoreInternal(
     if (isTreeMode && restoredTree) {
       currentTreeDocument = restoredTree;
     }
-    resetShellViewportFromDocument(shellState, doc);
+    // Viewport is not part of redo semantics (see undo).
     emit({ type: 'historyChanged', canUndo: canUndo(), canRedo: canRedo() });
     emit({ type: 'documentChanged', doc });
     emit({ type: 'viewportChanged', viewport: shellState.viewport });
@@ -405,6 +404,32 @@ function createDesignerCoreInternal(
 
   function setViewport(newViewport: { x: number; y: number; zoom: number }): void {
     shellControls.setViewport(newViewport);
+  }
+
+  // Revision-free viewport persistence: writes the final gesture viewport into
+  // the document (so host save/restore paths can read it) without counting as
+  // a content edit — no docRevision bump, no history entry, no dirty flip.
+  // The gate compares against doc.viewport (not shell state): at gesture end
+  // the shell already holds the final value, so a shell-change gate would skip
+  // the write entirely.
+  function persistViewport(newViewport: { x: number; y: number; zoom: number }): void {
+    const shellChanged = setShellViewport(shellState, newViewport);
+    const viewport = shellState.viewport;
+    const currentViewport = doc.viewport;
+    const docChanged =
+      !currentViewport ||
+      currentViewport.x !== viewport.x ||
+      currentViewport.y !== viewport.y ||
+      currentViewport.zoom !== viewport.zoom;
+
+    if (!shellChanged && !docChanged) {
+      return;
+    }
+
+    if (docChanged) {
+      doc = { ...doc, viewport };
+    }
+    emit({ type: 'viewportChanged', viewport });
   }
 
   function replaceDocumentFromHost(nextDoc: GraphDocument, treeDocument?: TreeDocument): void {
@@ -626,6 +651,7 @@ function createDesignerCoreInternal(
     setPaletteWidth,
     setInspectorWidth,
     setViewport,
+    persistViewport,
     replaceDocument: replaceDocumentWithHistory,
     replaceDocumentFromHost,
     save,

@@ -71,6 +71,7 @@ export function FlowDesignerToolbar({
           variant="ghost"
           size="sm"
           data-active={activeTab === 'designer' ? '' : undefined}
+          aria-pressed={activeTab === 'designer'}
           onClick={() => onTabChange('designer')}
         >
           Designer
@@ -79,6 +80,7 @@ export function FlowDesignerToolbar({
           variant="ghost"
           size="sm"
           data-active={activeTab === 'json' ? '' : undefined}
+          aria-pressed={activeTab === 'json'}
           onClick={() => onTabChange('json')}
         >
           JSON

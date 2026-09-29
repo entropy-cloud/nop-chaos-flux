@@ -76,6 +76,7 @@ export interface DesignerCore {
   setInspectorWidth(width: number): void;
 
   setViewport(viewport: { x: number; y: number; zoom: number }): void;
+  persistViewport(viewport: { x: number; y: number; zoom: number }): void;
   replaceDocument(document: GraphDocument): void;
   replaceDocumentFromHost(document: GraphDocument): void;
 

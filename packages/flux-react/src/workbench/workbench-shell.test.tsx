@@ -189,7 +189,7 @@ describe('WorkbenchShell resizable panels', () => {
     expect(onRightWidthChange).toHaveBeenLastCalledWith(452);
   });
 
-  it('reports intermediate widths on a single pointer drag', () => {
+  it('keeps intermediate drag widths local and commits once on pointerup', () => {
     const onLeftWidthChange = vi.fn();
     render(
       <WorkbenchShell
@@ -205,10 +205,11 @@ describe('WorkbenchShell resizable panels', () => {
 
     const handle = screen.getByTestId('left-resize-handle');
     fireEvent.pointerDown(handle, { clientX: 100, button: 0, pointerId: 1 });
-    fireEvent.pointerMove(handle, { clientX: 150, pointerId: 1 }); // +50 → 290
-    fireEvent.pointerMove(handle, { clientX: 180, pointerId: 1 }); // +80 → 320
+    fireEvent.pointerMove(handle, { clientX: 150, pointerId: 1 }); // +50 → 290 (preview only)
+    fireEvent.pointerMove(handle, { clientX: 180, pointerId: 1 }); // +80 → 320 (preview only)
+    expect(onLeftWidthChange).not.toHaveBeenCalled();
     fireEvent.pointerUp(handle, { clientX: 180, pointerId: 1 });
-    expect(onLeftWidthChange.mock.calls.map((call) => call[0])).toEqual([290, 320]);
+    expect(onLeftWidthChange.mock.calls.map((call) => call[0])).toEqual([320]);
   });
 
   it('resizes via keyboard arrows with step and clamp', () => {
@@ -297,5 +298,40 @@ describe('WorkbenchShell resizable panels', () => {
     fireEvent.pointerMove(handle, { clientX: 200, pointerId: 1 });
     fireEvent.pointerUp(handle, { clientX: 200, pointerId: 1 });
     expect(body.style.gridTemplateColumns).toBe('340px minmax(0,1fr) 352px');
+  });
+
+  it('labels resize handles through i18n (locale-provided, prop-overridable)', async () => {
+    const { initFluxI18n, resetFluxI18n, changeLanguage } = await import('@nop-chaos/flux-i18n');
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+    await changeLanguage('en-US');
+    try {
+      render(
+        <WorkbenchShell
+          leftPanel={<div>Left</div>}
+          leftResizable
+          leftWidth={240}
+          canvas={<div>Canvas</div>}
+          rightPanel={<div>Right</div>}
+          rightResizable
+          rightWidth={280}
+        />,
+      );
+      expect(screen.getByLabelText('Resize left panel')).toBeTruthy();
+      expect(screen.getByLabelText('Resize right panel')).toBeTruthy();
+
+      cleanup();
+      render(
+        <WorkbenchShell
+          leftPanel={<div>Left</div>}
+          leftResizable
+          leftWidth={240}
+          leftResizeLabel="Breite links"
+          canvas={<div>Canvas</div>}
+        />,
+      );
+      expect(screen.getByLabelText('Breite links')).toBeTruthy();
+    } finally {
+      resetFluxI18n();
+    }
   });
 });

@@ -4,6 +4,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
 import { DesignerIcon } from './designer-icon.js';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge.js';
+import { setPaletteDragType } from './designer-xyflow-canvas/designer-xyflow-canvas.js';
 import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { resolveNodeTypeAccent } from './designer-node-appearance.js';
 
@@ -137,7 +138,9 @@ export function DesignerPaletteContent(props: {
                         onDragStart={(event) => {
                           event.dataTransfer.setData(DESIGNER_PALETTE_NODE_MIME, nt.id);
                           event.dataTransfer.effectAllowed = 'move';
+                          setPaletteDragType(nt.id);
                         }}
+                        onDragEnd={() => setPaletteDragType(null)}
                         title={nt.description ?? nt.label}
                       >
                          <span

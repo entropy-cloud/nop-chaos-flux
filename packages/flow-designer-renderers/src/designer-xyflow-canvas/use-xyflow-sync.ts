@@ -122,17 +122,31 @@ export function useXyflowSync({
     onSelectionPushed?.(collectSelectedIds(snapshotNodes), collectSelectedIds(snapshotEdges));
   }, [snapshotNodes, snapshotEdges, setLocalNodes, onSelectionPushed]);
 
-  const renderedEdges = useMemo<Edge[]>(
-    () =>
-      snapshotEdges.map((edge) => ({
+  // Hover is per-edge visual state: rebuild ONLY the hovered edge object so
+  // every other edge keeps its reference and xyflow's shallow equality bails
+  // them out of re-rendering. Previously this mapped the full edge array on
+  // every hover enter/leave (O(E) object churn twice per hover).
+  const renderedEdges = useMemo<Edge[]>(() => {
+    if (hoveredEdgeId == null) {
+      return snapshotEdges;
+    }
+
+    let touched = false;
+    const next = snapshotEdges.map((edge) => {
+      if (edge.id !== hoveredEdgeId) {
+        return edge;
+      }
+      touched = true;
+      return {
         ...edge,
         data: {
           ...((edge.data as Record<string, unknown> | undefined) ?? {}),
-          __fdHovered: edge.id === hoveredEdgeId,
+          __fdHovered: true,
         },
-      })),
-    [snapshotEdges, hoveredEdgeId],
-  );
+      };
+    });
+    return touched ? next : snapshotEdges;
+  }, [snapshotEdges, hoveredEdgeId]);
 
   return {
     localNodes,
