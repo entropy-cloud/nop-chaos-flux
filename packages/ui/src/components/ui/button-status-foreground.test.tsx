@@ -56,11 +56,12 @@ describe('button solid status variants (plan 2026-09-29-5)', () => {
     // danger dark (50% lightness red) keeps white — 4.95:1 measured
     expect(darkSection).toContain('--danger-foreground: 0 0% 100%');
 
-    // light sections pair the 48-60% lightness accents with near-black text
+    // light sections pair the 48-60% lightness accents with near-black text;
+    // danger needs the darker 9% step (13% measures 4.25:1 — below the bar)
     const lightIdx = tokensCss.indexOf("data-theme='classic'][data-mode='light']");
     const lightSection = tokensCss.slice(lightIdx, tokensCss.indexOf('gray-50', lightIdx));
     expect(lightSection).toContain('--info-foreground: 0 0% 13%');
-    expect(lightSection).toContain('--danger-foreground: 0 0% 13%');
+    expect(lightSection).toContain('--danger-foreground: 0 0% 9%');
     expect(lightSection).toContain('--warning-foreground: 0 0% 13%');
   });
 });

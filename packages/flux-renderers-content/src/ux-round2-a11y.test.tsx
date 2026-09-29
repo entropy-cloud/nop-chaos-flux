@@ -22,9 +22,10 @@ vi.mock('@nop-chaos/flux-i18n', () => ({
 }));
 
 import { VideoRenderer } from './video.js';
+import { AudioRenderer } from './audio.js';
 import { CarouselRenderer } from './carousel.js';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import type { CarouselSchema, VideoSchema } from './schemas.js';
+import type { AudioSchema, CarouselSchema, VideoSchema } from './schemas.js';
 
 afterEach(cleanup);
 
@@ -102,6 +103,22 @@ describe('video tracks (plan 2026-09-29-5 Phase 3)', () => {
       <VideoRenderer {...rendererProps<VideoSchema>({ type: 'video' }, { src: 'movie.mp4' })} />,
     );
     expect(container.querySelectorAll('track').length).toBe(0);
+  });
+});
+
+describe('audio tracks (plan 2026-09-29-5 audit r1 finding 2)', () => {
+  it('renders track children from schema for the audio element', () => {
+    const { container } = render(
+      <AudioRenderer
+        {...rendererProps<AudioSchema>({ type: 'audio' }, {
+          src: 'episode.mp3',
+          tracks: [{ kind: 'chapters', src: '/chapters.vtt', srcLang: 'en' }],
+        })}
+      />,
+    );
+    const tracks = container.querySelectorAll('track');
+    expect(tracks.length).toBe(1);
+    expect(tracks[0]?.getAttribute('kind')).toBe('chapters');
   });
 });
 

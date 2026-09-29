@@ -63,7 +63,7 @@
   --info: 199 89% 48%;
   --info-foreground: 0 0% 13%;
   --danger: 0 84% 60%;
-  --danger-foreground: 0 0% 13%;
+  --danger-foreground: 0 0% 9%;
   --danger-bg: 0 84% 95%;
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
@@ -148,7 +148,7 @@
   --success-foreground: 0 0% 100%;
   --success-bg: 160 84% 95%;
   --danger: 0 84% 60%;
-  --danger-foreground: 0 0% 13%;
+  --danger-foreground: 0 0% 9%;
   --danger-bg: 0 84% 95%;
   --destructive: 0 84% 42%;
   --destructive-foreground: 0 0% 100%;
@@ -281,7 +281,7 @@
   --success-foreground: 0 0% 100%;
   --success-bg: 160 84% 95%;
   --danger: 0 84% 60%;
-  --danger-foreground: 0 0% 13%;
+  --danger-foreground: 0 0% 9%;
   --danger-bg: 0 84% 95%;
   --destructive: 0 84% 42%;
   --destructive-foreground: 0 0% 100%;

@@ -18,6 +18,9 @@ export function AudioRenderer(props: RendererComponentProps<AudioSchema>) {
   const controls = slotProps.controls !== false;
   const titleContent = resolveRendererSlotContent(props, 'title');
   const hasTitle = hasRendererSlotContent(titleContent);
+  const tracks = Array.isArray(slotProps.tracks)
+    ? (slotProps.tracks as NonNullable<AudioSchema['tracks']>)
+    : [];
   const onLoadError = props.events.onLoadError;
 
   const [errored, setErrored] = React.useState(false);
@@ -78,7 +81,18 @@ export function AudioRenderer(props: RendererComponentProps<AudioSchema>) {
         loop={loop}
         controls={controls}
         onError={handleError}
-      />
+      >
+        {tracks.map((track) => (
+          <track
+            key={`${track.kind}:${track.srcLang ?? ''}:${track.src}`}
+            kind={track.kind}
+            src={track.src}
+            srcLang={track.srcLang}
+            label={track.label}
+            default={track.default}
+          />
+        ))}
+      </audio>
       {hasTitle ? (
         <figcaption data-slot="audio-title" className="text-sm text-muted-foreground">
           {titleContent}

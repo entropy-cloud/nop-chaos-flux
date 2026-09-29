@@ -323,6 +323,8 @@ export interface AudioSchema extends BaseSchema {
   loop?: boolean;
   /** 显示原生控件，默认 true */
   controls?: boolean;
+  /** 文本替代轨（章节/描述；音频本体无字幕轨，但章节/元数据轨合法） */
+  tracks?: MediaTrackSchema[];
   // `title` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
   onLoadError?: ActionSchema;
 }

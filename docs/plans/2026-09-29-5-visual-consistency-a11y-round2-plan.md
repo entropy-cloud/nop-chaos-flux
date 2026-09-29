@@ -80,7 +80,7 @@ Targets: `packages/ui/src/components/ui/button.tsx`、`packages/theme-tokens/src
 
 Exit Criteria:
 
-- [x] token 于 theme-tokens 五个区块（fallback/classic 亮暗/glass 亮暗）全配对且对比计算达标：暗色 success/warning/info (50-60% lightness) 配 9% 近黑 ≈8-9:1，danger (50%) 配白 4.95:1；亮色 success (23%) 配白 9.5:1，warning/info/danger (48-60%) 配 13% 近黑 5-8.3:1（button-status-foreground.test.tsx 断言配对存在 + class 断言；原有 text-white 断言测试按新契约更新）
+- [x] token 于 theme-tokens 五个区块（fallback/classic 亮暗/glass 亮暗）全配对且对比计算达标（audit r1 finding 1 精算复核后数值）：暗色 success 9.80 / warning 9.25 / info 8.16（配 9% 近黑）、danger 配白 4.94；亮色 success 配白 6.45、warning 7.52 / info 5.64（配 13% 近黑）、danger 60% 亮度配 13% 仅 4.25 不达标 → 前景提级为 9% 近黑 4.74:1（三个亮色区块）。button-status-foreground.test.tsx 断言配对存在 + class 断言；原有 text-white 断言测试按新契约更新
 
 ### Phase 2 - tabs 关闭控件 + i18n 文案
 
@@ -110,7 +110,7 @@ Targets: `flux-renderers-content/src/**`、`flux-renderers-form-advanced/src/upl
 - [x] Proof 先行：diff-view dark 覆盖缺失断言 + focus-visible 规则缺失断言（红先）；tracks/aria-current/aria-pressed/DialogTitle/live 断言用例（红先）
 - [x] diff-view.css 补 dark 块（**选择器对齐仓内机制**：`[data-mode='dark']` + `prefers-color-scheme` fallback，仿 flux-renderers-ai/src/styles.css:121-133 先例；**不使用 `.dark` 类**——全仓无此机制，theme-tokens dark 为 `:root[data-theme='*'][data-mode='dark']`）覆盖**全部** `--nop-diff-*` token（:7-90 完整集合，含 flash/code-text/root-bg/empty-text）+ 提升 muted/gutter 文本 token ≥4.5:1 + `:focus-visible` outline 规则（替换 ：244-246 hover outline:none 的唯一焦点样式空缺）
 - [x] FileListItem 补 aria-current；过滤 tabs 补 aria-pressed
-- [x] VideoSchema/AudioSchema 增 `tracks` 可选字段并渲染 `<track>` 子元素（向后兼容）
+- [x] VideoSchema/AudioSchema 增 `tracks` 可选字段并渲染 `<track>` 子元素（向后兼容；audio 通道为 audit r1 finding 2 补齐——chapters/metadata 轨合法）
 - [ ] image 预览 Dialog 补 sr-only DialogTitle（ui/dialog.tsx 已导出 DialogTitle）；carousel 指示点补 aria-current
 - [x] upload 逐文件列表 aria-live="polite"（或 error span role="alert"）
 - [x] focused 测试全部转绿
