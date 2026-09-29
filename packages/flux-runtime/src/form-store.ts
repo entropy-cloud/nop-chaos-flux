@@ -357,6 +357,62 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
     }
   }
 
+  // setValue diff: the write path is known, so only the write spine can
+  // differ (setIn clones exactly the spine and shares every other subtree by
+  // reference). Walking the spine and applying the same leaf/object rules as
+  // the full deep diff produces the identical changed-path set without the
+  // per-level sibling-key Set allocations across a flat record (plan
+  // 2026-09-29-3 R2-P19; batchUpdate/setValues keep the full deep diff).
+  function collectWriteSpineChangedPaths(
+    before: Record<string, any>,
+    after: Record<string, any>,
+    path: string,
+    changed: Set<string>,
+  ) {
+    const segments = path.split('.');
+    let b: unknown = before;
+    let a: unknown = after;
+    let currentPath = '';
+    for (let i = 0; i < segments.length; i++) {
+      const bWalkable = typeof b === 'object' && b !== null && !Array.isArray(b);
+      const aWalkable = typeof a === 'object' && a !== null && !Array.isArray(a);
+      if (!bWalkable || !aWalkable) {
+        // The full diff would have added the current ancestor as a changed
+        // leaf and never descended past a non-object/array boundary.
+        if (currentPath) {
+          changed.add(currentPath);
+        }
+        return;
+      }
+      const key = segments[i]!;
+      currentPath = currentPath ? `${currentPath}.${key}` : key;
+      b = (b as Record<string, unknown>)[key];
+      a = (a as Record<string, unknown>)[key];
+    }
+    collectChangedValuePaths(b, a, changed, path);
+  }
+
+  function diffAndNotifyValuePathWrite(
+    before: Record<string, any>,
+    after: Record<string, any>,
+    path: string,
+    options?: { capture?: boolean },
+  ) {
+    const changedPaths = new Set<string>();
+    collectWriteSpineChangedPaths(before, after, path, changedPaths);
+
+    if (changedPaths.size === 0 && before !== after) {
+      collectSubscribedChangedPaths(before, after, changedPaths);
+    }
+
+    notifyValuePathListeners(changedPaths);
+    if (options?.capture !== false) {
+      captureCommit({ changedPaths, changedKinds: ['values'] });
+    }
+
+    return changedPaths;
+  }
+
   function notifyValuePathListeners(changedPaths: Set<string>) {
     if (changedPaths.size === 0) {
       return;
@@ -526,7 +582,7 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
       const current = store.getState().values;
       const nextValues = setIn(current, path, value);
       store.setState({ values: nextValues });
-      diffAndNotifyValuePaths(current, nextValues);
+      diffAndNotifyValuePathWrite(current, nextValues, path);
     },
     setPathErrors(path, errors) {
       updateFieldState(path, { errors: errors && errors.length > 0 ? errors : undefined });

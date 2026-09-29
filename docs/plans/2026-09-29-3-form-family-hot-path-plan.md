@@ -63,59 +63,59 @@
 
 ### Phase 1 - 日期工具缓存与相对日期稳定化
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/src/renderers/date/`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] `tokenizeFormat` + 正则构造按 format 字符串模块级缓存（Map，parsePath 模式）
-- [ ] `resolveRelativeDate` 标识稳定化（**约束性 Decision，非开放项**）：缓存键必须含时间桶（秒级量化的 `Date.now()` 桶 + 原始 schema 字符串）——`'now'` 在同秒窗内返回同标识、跨秒窗必须重新解析推进；禁止纯字符串键的进程级冻结缓存（会使 `minDate:'now'` 停止前进、长生命周期表单可选过去日期）。Proof 必须含跨窗推进用例
-- [ ] focused 测试：缓存等价性（缓存 vs 无缓存实现逐例一致）、**同秒窗标识稳定 + 跨秒窗标识刷新/'now' 推进**断言、调用点行为回归（回归覆盖面：date-range-renderer.tsx、input-date-renderer.tsx、input-datetime-renderer.tsx、input-time-renderer.tsx、date/date-field-control.tsx、date/date-presets.ts 共 6 个消费文件）
-- [ ] Proof: date/time/period/range 既有用例绿
+- [x] `tokenizeFormat` + 正则构造按 format 字符串模块级缓存（Map，parsePath 模式）
+- [x] `resolveRelativeDate` 标识稳定化（**约束性 Decision，非开放项**）：缓存键必须含时间桶（秒级量化的 `Date.now()` 桶 + 原始 schema 字符串）——`'now'` 在同秒窗内返回同标识、跨秒窗必须重新解析推进；禁止纯字符串键的进程级冻结缓存（会使 `minDate:'now'` 停止前进、长生命周期表单可选过去日期）。Proof 必须含跨窗推进用例
+- [x] focused 测试：缓存等价性（缓存 vs 无缓存实现逐例一致）、**同秒窗标识稳定 + 跨秒窗标识刷新/'now' 推进**断言、调用点行为回归（回归覆盖面：date-range-renderer.tsx、input-date-renderer.tsx、input-datetime-renderer.tsx、input-time-renderer.tsx、date/date-field-control.tsx、date/date-presets.ts 共 6 个消费文件）
+- [x] Proof: date/time/period/range 既有用例绿
 
 Exit Criteria:
 
-- [ ] 同 format 二次 parseDate/formatDate 零重 tokenize 的测试成立
-- [ ] `'now'` minDate 跨两次 render 产生相同解析标识的测试成立
-- [ ] date 族 focused 测试绿
+- [x] 同 format 二次 parseDate/formatDate 零重 tokenize 的测试成立（compiled-format cache：二遍结果逐例等价 + cache entries 不增长——date-utils-cache.test.ts）
+- [x] `'now'` minDate 跨两次 render 产生相同解析标识的测试成立（同秒桶同标识 + 跨桶推进/'now' 前进 + today 本地零点量化）
+- [x] date 族 focused 测试绿（form 112 文件/941 用例全绿，6 个消费文件经既有 date/time/period/range 套件回归）
 
 ### Phase 2 - 字典共享加载与验证字段 memo
 
-Status: planned
+Status: completed
 Targets: `use-dict-options.ts`、`packages/flux-core/src/validation-model.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] useDictOptions 模块级 `Map<dictName, Promise>` in-flight/resolved 共享（含失败不缓存的决策记录）
-- [ ] abort 语义落地：`RendererEnv.loadDict` 契约已声明 `signal?: AbortSignal` 参数（`flux-core/src/types/renderer-api.ts:236`），无需契约变更——controller.signal 直接穿透传入；host 侧是否真正响应 abort 属宿主实现自由（best-effort 契约），记入测试注记
-- [ ] `getCompiledValidationField` WeakMap<model, Map<path, field>> memo（前置假设：编译后验证模型按代次不可变；测试含 canary 断言——若未来 in-place 变异 model nodes，stale 引用断言会红）
-- [ ] focused 测试：并发挂载单次 loadDict、验证字段对象引用稳定（同 model 同 path 同引用）、值变更后新 model 新引用、signal 已传入 loadDict
-- [ ] Proof: form 既有用例绿
+- [x] useDictOptions 模块级 `Map<dictName, Promise>` in-flight/resolved 共享（含失败不缓存的决策记录）
+- [x] abort 语义落地：`RendererEnv.loadDict` 契约已声明 `signal?: AbortSignal` 参数（`flux-core/src/types/renderer-api.ts:236`），无需契约变更——controller.signal 直接穿透传入；host 侧是否真正响应 abort 属宿主实现自由（best-effort 契约），记入测试注记
+- [x] `getCompiledValidationField` WeakMap<model, Map<path, field>> memo（前置假设：编译后验证模型按代次不可变；测试含 canary 断言——若未来 in-place 变异 model nodes，stale 引用断言会红）
+- [x] focused 测试：并发挂载单次 loadDict、验证字段对象引用稳定（同 model 同 path 同引用）、值变更后新 model 新引用、signal 已传入 loadDict
+- [x] Proof: form 既有用例绿
 
 Exit Criteria:
 
-- [ ] 同 dict 双实例仅一次 loadDict 的测试成立
-- [ ] 同一 model 同 path 二次调用返回同一对象引用的测试成立
-- [ ] form/core focused 测试绿
+- [x] 同 dict 双实例仅一次 loadDict 的测试成立（select-dict-loading.test.tsx：并发挂载 1 次调用 + 失败不缓存重试语义）
+- [x] 同一 model 同 path 二次调用返回同一对象引用的测试成立（validation-model-memo.test.ts：引用稳定/负查询 memo/新 model 新引用/契约 pin）
+- [x] form/core focused 测试绿（core 36 文件/517 用例、form 112 文件/941 用例）
 
 ### Phase 3 - form-store 写路径 diff 合成
 
-Status: planned
+Status: completed
 Targets: `packages/flux-runtime/src/form-store.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] **Decision（已裁定）**：写路径合成仅覆盖 `setValue`（path 为 API 入参，store 内合成）；`batchUpdate(updates)` 的 `{values}` 无 path 入参，调用方路径知识在 caller 侧（form-runtime-values.ts:103-113 / form-runtime-array.ts:243-250）——本 plan 不扩展 FormStore 契约，batchUpdate 保留现有深度 diff（决策与理由记录于此项）
-- [ ] setValue 按已知写路径合成变更 path 集（pathPrefixes 复用），移除逐层 Set/spread diff
-- [ ] 等价性测试两个已识别细节：① no-op 写守卫——结构性相等替换今日零通知（collectChangedValuePaths 无叶变化 + collectSubscribedChangedPaths 兜底），合成路径前必须 `Object.is(getIn(before,path), getIn(after,path))` 守卫避免虚假通知；② `captureCommit({changedPaths})`（:431）诊断粒度若因合成到 spine 根而变粗，需保持与现路径集合一致或显式记录
-- [ ] focused 测试：合成 diff 与旧 deep diff 产生相同变更通知集合（等价性用例，含嵌套路径/数组索引/no-op 写）
-- [ ] Proof: form-runtime/form-store 既有用例绿
+- [x] **Decision（已裁定）**：写路径合成仅覆盖 `setValue`（path 为 API 入参，store 内合成）；`batchUpdate(updates)` 的 `{values}` 无 path 入参，调用方路径知识在 caller 侧（form-runtime-values.ts:103-113 / form-runtime-array.ts:243-250）——本 plan 不扩展 FormStore 契约，batchUpdate 保留现有深度 diff（决策与理由记录于此项）
+- [x] setValue 按已知写路径合成变更 path 集（pathPrefixes 复用），移除逐层 Set/spread diff
+- [x] 等价性测试两个已识别细节：① no-op 写守卫——结构性相等替换今日零通知（collectChangedValuePaths 无叶变化 + collectSubscribedChangedPaths 兜底），合成路径前必须 `Object.is(getIn(before,path), getIn(after,path))` 守卫避免虚假通知；② `captureCommit({changedPaths})`（:431）诊断粒度若因合成到 spine 根而变粗，需保持与现路径集合一致或显式记录
+- [x] focused 测试：合成 diff 与旧 deep diff 产生相同变更通知集合（等价性用例，含嵌套路径/数组索引/no-op 写）
+- [x] Proof: form-runtime/form-store 既有用例绿
 
 Exit Criteria:
 
-- [ ] 等价性测试成立（新旧 diff 通知集合一致）
-- [ ] setValue 单击键路径零逐层 Set 分配的实现落地
-- [ ] runtime focused 测试绿
+- [x] 等价性测试成立（form-store-setvalue-spine-diff.test.ts：叶写/深层前缀链/对象替换叶集合/数组叶规则/新建路径/no-op 六场景通知集合与旧 deep diff 手工推导一致）
+- [x] setValue 击键路径零逐层 Set 分配的实现落地（collectWriteSpineChangedPaths 沿写 spine 行走，仅在写路径值子树内复用 collectChangedValuePaths；batchUpdate/setValues 按裁定保留全量 deep diff）
+- [x] runtime focused 测试绿（138 文件/1472 用例）
 
 ## Draft Review Record
 

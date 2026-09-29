@@ -52,6 +52,17 @@ const TOKEN_PATTERNS: Record<TokenDef, string> = {
 
 type FormatSegment = { kind: 'literal'; value: string } | { kind: 'token'; token: TokenDef };
 
+// The format set is small and closed (schema-declared display/value formats),
+// but formatDate/parseDate run per render/keystroke per field — tokenize +
+// regex construction used to re-run every call (plan 2026-09-29-3 R2-P5).
+const FORMAT_CACHE_LIMIT = 256;
+const formatCache = new Map<string, { segments: FormatSegment[]; regex: RegExp; captureTokens: TokenDef[] }>();
+
+/** Test/diagnostic accessor for the compiled-format cache (internal). */
+export function formatCacheStats(): { entries: number } {
+  return { entries: formatCache.size };
+}
+
 function tokenizeFormat(format: string): FormatSegment[] {
   const segments: FormatSegment[] = [];
   let i = 0;
@@ -72,6 +83,31 @@ function tokenizeFormat(format: string): FormatSegment[] {
     }
   }
   return segments;
+}
+
+function getCompiledFormat(format: string): { segments: FormatSegment[]; regex: RegExp; captureTokens: TokenDef[] } {
+  const cached = formatCache.get(format);
+  if (cached) return cached;
+
+  const segments = tokenizeFormat(format);
+  let regexSource = '^';
+  const captureTokens: TokenDef[] = [];
+  for (const segment of segments) {
+    if (segment.kind === 'literal') {
+      regexSource += escapeRegex(segment.value);
+    } else {
+      regexSource += TOKEN_PATTERNS[segment.token];
+      captureTokens.push(segment.token);
+    }
+  }
+  regexSource += '$';
+
+  const compiled = { segments, regex: new RegExp(regexSource), captureTokens };
+  if (formatCache.size >= FORMAT_CACHE_LIMIT) {
+    formatCache.clear();
+  }
+  formatCache.set(format, compiled);
+  return compiled;
 }
 
 function pad2(value: number): string {
@@ -112,7 +148,7 @@ export function formatDate(
   }
   const utc = options?.utc === true;
   const parts = getDateComponents(date, utc);
-  const segments = tokenizeFormat(format);
+  const { segments } = getCompiledFormat(format);
   let out = '';
   for (const segment of segments) {
     if (segment.kind === 'literal') {
@@ -165,20 +201,9 @@ export function parseDate(
     return undefined;
   }
   const str = String(value).trim();
-  const segments = tokenizeFormat(format);
-  let regex = '^';
-  const captureTokens: TokenDef[] = [];
-  for (const segment of segments) {
-    if (segment.kind === 'literal') {
-      regex += escapeRegex(segment.value);
-    } else {
-      regex += TOKEN_PATTERNS[segment.token];
-      captureTokens.push(segment.token);
-    }
-  }
-  regex += '$';
+  const { regex, captureTokens } = getCompiledFormat(format);
 
-  const match = new RegExp(regex).exec(str);
+  const match = regex.exec(str);
   if (!match) {
     // P1-05: relative-date expressions (`now`/`today`/`now±Nd`/`today±Nd`)
     // resolve to ISO-8601 strings (see resolveRelativeDate) that never match
@@ -323,11 +348,17 @@ export function compareDates(a: Date | undefined, b: Date | undefined): number {
   return 0;
 }
 
-export function resolveRelativeDate(value: string | undefined): string | undefined {
-  if (value == null || value === '') {
-    return value;
-  }
-  const str = String(value).trim();
+// `resolveRelativeDate` feeds minDate/maxDate/value constraints, so its result
+// identity drives downstream memo chains (toCalendarDate → disabled-matchers).
+// A pure string-keyed cache would freeze `now` for the process lifetime — the
+// cache key therefore includes a second-quantized wall-clock bucket: identity
+// is stable within a bucket (per-render hits) and the value advances across
+// buckets (plan 2026-09-29-3, review-constrained Decision).
+const RELATIVE_DATE_BUCKET_MS = 1000;
+const RELATIVE_CACHE_LIMIT = 128;
+const relativeDateCache = new Map<string, { bucket: number; iso: string }>();
+
+function computeRelativeDate(str: string): string | undefined {
   const nowMatch = /^now$/i.exec(str);
   if (nowMatch) {
     return new Date().toISOString();
@@ -361,7 +392,28 @@ export function resolveRelativeDate(value: string | undefined): string | undefin
     d.setDate(d.getDate() + amount);
     return d.toISOString();
   }
-  return value;
+  return undefined;
+}
+
+export function resolveRelativeDate(value: string | undefined): string | undefined {
+  if (value == null || value === '') {
+    return value;
+  }
+  const str = String(value).trim();
+  const bucket = Math.floor(Date.now() / RELATIVE_DATE_BUCKET_MS);
+  const cached = relativeDateCache.get(str);
+  if (cached && cached.bucket === bucket) {
+    return cached.iso;
+  }
+  const iso = computeRelativeDate(str);
+  if (iso === undefined) {
+    return value;
+  }
+  if (relativeDateCache.size >= RELATIVE_CACHE_LIMIT) {
+    relativeDateCache.clear();
+  }
+  relativeDateCache.set(str, { bucket, iso });
+  return iso;
 }
 
 export interface NormalizedRange {

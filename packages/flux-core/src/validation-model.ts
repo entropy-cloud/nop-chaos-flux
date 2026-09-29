@@ -60,6 +60,15 @@ export function isCompiledValidationFieldNode(
   return !!node && node.kind !== 'form' && typeof node.controlType === 'string' && !!node.behavior;
 }
 
+/** Per-model memo: compiled validation models are immutable per generation,
+ * so the projected field (and its policy objects) can be shared across the
+ * 3+ per-keystroke call sites instead of allocating fresh each call
+ * (plan 2026-09-29-3 R2-P11). Assumption: consumers never mutate a model's
+ * `nodes` in place — the canary test in validation-model-memo.test.ts pins
+ * this. */
+const validationFieldMemo = new WeakMap<CompiledFormValidationModel, Map<string, CompiledFormValidationField | undefined>>();
+const MODEL_FIELD_MEMO_LIMIT = 4096;
+
 export function getCompiledValidationField(
   model: CompiledFormValidationModel | undefined,
   path: string,
@@ -68,23 +77,40 @@ export function getCompiledValidationField(
     return undefined;
   }
 
-  const node = model.nodes?.[path];
-
-  if (!isCompiledValidationFieldNode(node)) {
-    return undefined;
+  let byPath = validationFieldMemo.get(model);
+  if (byPath) {
+    const cached = byPath.get(path);
+    if (cached !== undefined || (byPath as Map<string, CompiledFormValidationField | undefined>).has(path)) {
+      return cached;
+    }
+  } else {
+    byPath = new Map();
+    validationFieldMemo.set(model, byPath);
   }
 
-  return {
-    path: node.path,
-    controlType: node.controlType,
-    label: node.label,
-    rules: node.rules,
-    behavior: node.behavior,
-    hiddenFieldPolicy: resolveHiddenFieldPolicy(
-      node.hiddenFieldPolicy,
-      model.defaultHiddenFieldPolicy,
-    ),
-  };
+  const node = model.nodes?.[path];
+  const projected = (() => {
+    if (!isCompiledValidationFieldNode(node)) {
+      return undefined;
+    }
+    return {
+      path: node.path,
+      controlType: node.controlType,
+      label: node.label,
+      rules: node.rules,
+      behavior: node.behavior,
+      hiddenFieldPolicy: resolveHiddenFieldPolicy(
+        node.hiddenFieldPolicy,
+        model.defaultHiddenFieldPolicy,
+      ),
+    };
+  })();
+
+  if (byPath.size >= MODEL_FIELD_MEMO_LIMIT) {
+    byPath.clear();
+  }
+  byPath.set(path, projected);
+  return projected;
 }
 
 export function buildCompiledValidationDependentMap(

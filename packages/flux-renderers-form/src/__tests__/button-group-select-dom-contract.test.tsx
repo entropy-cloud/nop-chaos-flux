@@ -212,6 +212,6 @@ describe('button-group-select DOM contract', () => {
       expect(items.length).toBe(2);
       expect(items[0].textContent).toContain('Dict A');
     });
-    expect(loadDict).toHaveBeenCalledWith('siteDict');
+    expect(loadDict).toHaveBeenCalledWith('siteDict', expect.any(AbortSignal));
   });
 });

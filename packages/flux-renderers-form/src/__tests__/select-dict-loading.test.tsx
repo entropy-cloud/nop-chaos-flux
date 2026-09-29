@@ -44,6 +44,40 @@ describe('useDictOptions', () => {
     vi.clearAllMocks();
   });
 
+  it('two instances declaring the same dict share a single loadDict call (plan 2026-09-29-3)', async () => {
+    const mockLoadDict = vi.fn().mockResolvedValue({
+      name: 'role',
+      options: [{ label: 'Admin', value: 'admin' }],
+    });
+    vi.mocked(useRendererEnv).mockReturnValue({ loadDict: mockLoadDict } as any);
+
+    const refA = renderHookResult<DictOptionsState>(() => useDictOptions('role'));
+    const refB = renderHookResult<DictOptionsState>(() => useDictOptions('role'));
+
+    await waitFor(() => {
+      expect(refA.current.options.length).toBe(1);
+      expect(refB.current.options.length).toBe(1);
+    });
+    // concurrent mounts coalesce into one shared load
+    expect(mockLoadDict).toHaveBeenCalledTimes(1);
+
+    // a failed load is not cached — the next mount retries
+    cleanup();
+    vi.clearAllMocks();
+    const failing = vi.fn().mockRejectedValue(new Error('network down'));
+    vi.mocked(useRendererEnv).mockReturnValue({ loadDict: failing } as any);
+    const refC = renderHookResult<DictOptionsState>(() => useDictOptions('role'));
+    await waitFor(() => {
+      expect(refC.current.errorMessage).toBeTruthy();
+    });
+    expect(failing).toHaveBeenCalledTimes(1);
+    const refD = renderHookResult<DictOptionsState>(() => useDictOptions('role'));
+    await waitFor(() => {
+      expect(refD.current.errorMessage).toBeTruthy();
+    });
+    expect(failing).toHaveBeenCalledTimes(2);
+  });
+
   it('loads options when dictName is provided and env.loadDict is configured', async () => {
     const mockLoadDict = vi.fn().mockResolvedValue({
       name: 'role',
@@ -60,7 +94,7 @@ describe('useDictOptions', () => {
       expect(ref.current.loading).toBe(false);
     });
 
-    expect(mockLoadDict).toHaveBeenCalledWith('role');
+    expect(mockLoadDict).toHaveBeenCalledWith('role', expect.any(AbortSignal));
     expect(ref.current.options).toEqual([
       { label: 'Admin', value: 'admin', disabled: false },
       { label: 'User', value: 'user', disabled: false },
