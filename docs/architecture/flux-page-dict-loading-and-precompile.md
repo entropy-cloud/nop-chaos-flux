@@ -57,7 +57,7 @@ Select renderer supports a declarative `dict: "role"` property:
 { "type": "select", "name": "role", "label": "Role", "dict": "role" }
 ```
 
-When `dict` is set, the select renderer calls `env.loadDict(dictName)` via `useRendererEnv()`, maps `DictBean.options` to select options, and renders them. When `env.loadDict` is absent, the renderer warns and falls back to `props.props.options`. The `dict` property takes priority over `options` when both are present.
+When `dict` is set, the select renderer calls `env.loadDict(dictName, signal?)` via `useRendererEnv()`, maps `DictBean.options` to select options, and renders them. Loads are shared per (loadDict identity, dict name): N fields declaring the same `dict` coalesce into one in-flight call, and resolved option lists are cached per env (failures are not cached — the next mount retries). When `env.loadDict` is absent, the renderer warns and falls back to `props.props.options`. The `dict` property takes priority over `options` when both are present.
 
 This replaces the earlier `@dict:` URL dispatch pattern (`source: { type: "source", api: { url: "@dict:role" } }`), which is no longer supported.
 

@@ -1,6 +1,6 @@
 # 2026-09-29-3 表单族热路径优化
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-29
 > Source: `docs/analysis/2026-09-29-perf-ux-round2-deep-optimization-analysis.md`（R2-P5、R2-P10、R2-P11、R2-P19）
 > Related: 2026-09-28-1（表达式/节点解析热路径，已收口）、2026-09-28-4（表单 a11y，已收口）
@@ -23,7 +23,7 @@
 - 日期 format tokenize/regex 按 format 缓存；相对日期解析标识稳定化，min/max 下游 memo 链可命中。
 - 同名 dict 多实例共享单次加载；abort 语义真实生效（或如实记录 env 契约约束）。
 - `getCompiledValidationField` 按模型代次 memo，无每 call 分配。
-- setValue/batchUpdate 路径 diff 从"逐层 deep diff"改为"按已知写路径合成"，整对象 setValues 保留深度 diff。
+- setValue 路径 diff 从"逐层 deep diff"改为"按已知写路径合成"；batchUpdate/setValues 按 review Decision 保留深度 diff（batchUpdate 的路径知识在调用方，本 plan 不扩展 FormStore 契约）。
 
 ## Non-Goals
 
@@ -132,7 +132,7 @@ Exit Criteria:
 - [ ] 必要 focused verification 已完成
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [ ] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
@@ -143,23 +143,23 @@ Exit Criteria:
 ### host 侧 loadDict 对 abort 的实际响应
 
 - Classification: `watch-only residual`
-- Why Not Blocking Closure: signal 穿透在本 plan 落地（契约已含参数，零变更）；host 实现是否真正中断请求属宿主行为，generation counter 已兜底正确性
+- Why Not Blocking Closure: signal 穿透在本 plan 落地（契约已含参数，零变更）；host 是否真正中断请求属宿主行为。已知边界：host 若响应 abort，首个卸载的 coalescing 实例会使共享 promise reject——仍挂载的 peers 会经各自的 gen 门呈现错误态（in-flight 条目 settle 后即清除，下次挂载重试恢复）；该路径以 host 遵守 abort 为前提，条件性且可恢复
 - Successor Required: no
 - Successor Path: 无（host 文档侧说明即可）
 
 ## Non-Blocking Follow-ups
 
-- 无（执行期补充）
+- 主击键路径 `thisForm.setValue` → `batchUpdate` 仍走全量 deep diff（Decision 裁定保留）；caller 侧路径合成（form-runtime-values/form-runtime-array 已知 changedPaths 回传）是后续 optimization candidate
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 三个 Phase 全部落地且通知集合等价性有测试兜底；closure audit（独立子 agent）判定 approved-with-minors（4 Minor 全部折入：dict owner doc 同步、Deferred peer-propagation 边界补记、Goal 文本与 Decision 对齐、caller 侧路径合成记 follow-up）；四门禁 + check 全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待独立审计>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立子 agent（fresh session）
+- Evidence: verdict `approved-with-minors`（零 Blocker/Major；Phase 3 六场景语义经审计方按 setIn 结构共享独立重推导确认与旧 deep diff 一致；form 套件经审计方 live 复跑 941/941；两处既有测试更新核实为断言强化——pin 住 signal 穿透——非弱化）
 
 Follow-up:
 
-- <<待填或 no remaining plan-owned work>>
+- caller 侧路径合成（batchUpdate 深度 diff 的后继优化候选，见 Non-Blocking Follow-ups）；无其余 plan-owned work
