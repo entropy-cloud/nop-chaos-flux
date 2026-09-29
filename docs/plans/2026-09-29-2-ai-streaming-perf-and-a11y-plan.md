@@ -1,6 +1,6 @@
 # 2026-09-29-2 AI 渲染器流式性能与可访问性优化
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-29
 > Source: `docs/analysis/2026-09-29-perf-ux-round2-deep-optimization-analysis.md`（R2-P1、R2-P20-AI 签名、R2-U8/U11/U12/U14）
 > Related: 2026-09-28-4（表单 a11y，已收口）
@@ -113,13 +113,20 @@ Exit Criteria:
 - [ ] 必要 focused verification 已完成
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [ ] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
 
 ## Deferred But Adjudicated
+
+### 稳定块边界增量 markdown 解析
+
+- Classification: `optimization candidate`
+- Why Not Blocking Closure: 80ms 时间片节流经实测已把流式解析成本压到近 O(n)（30-chunk 单窗 burst ≤2 次新内容解析），增量解析的进一步收益不抵 react-markdown 管线改造的回归风险；最终渲染输出与逐 chunk 直渲染等价（focused 测试证明）
+- Successor Required: no
+- Successor Path: 无（如未来流式长度量级显著增长再评估）
 
 ### 会话侧栏窗口化
 
@@ -130,17 +137,17 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- 若 Phase 1 裁定仅节流（不做稳定块边界），增量解析记 optimization candidate 并附实测数据
+- 稳定块边界增量解析已按 Phase 1 Decision 裁定为 optimization candidate（见 Deferred But Adjudicated），本节为记录位置占位，无未决 follow-up
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 两个 Phase 全部落地；closure audit（独立子 agent，fresh session）判定 approved-with-minors（4 Minor 全部在收口提交中折入：/70 断言非空化、增量解析 formal Deferred 条目、follow-up 措辞收敛、design.md §10.4 补注）；四门禁 + check 全绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待独立审计>>
-- Evidence: <<待填>>
+- Auditor / Agent: 独立子 agent（fresh session）
+- Evidence: verdict `approved-with-minors`（零 Blocker/Major；逐 gate live 证据：markdown.tsx:47-84 节流实现无条件 hook/无渲染期 ref 写、ai-message-list.tsx:75-88 增量长度、四项 a11y 源码核对、audit 方独立复跑 focused 7/7 + 包级 eslint 绿；reasoning 路径不受影响经 create-engine.ts:537-539 证据链核验）
 
 Follow-up:
 
-- <<待填或 no remaining plan-owned work>>
+- token-usage 测试断言已非空化（收口提交）；无其余 plan-owned work

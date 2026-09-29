@@ -141,14 +141,16 @@ describe('AI a11y round-2 fixes (plan 2026-09-29-2 Phase 2)', () => {
 
   it('token-usage detail lines drop alpha-muted tiny text', () => {
     const usage = { total_tokens: 100, prompt_tokens: 60, completion_tokens: 40 };
-    const { container } = render(<AiTokenUsageView usage={usage as never} />);
+    const { container } = render(<AiTokenUsageView usage={usage as never} contextLimit={500} />);
     const detail = container.querySelector('[data-slot="ai-token-usage-prompt"]')!.parentElement as HTMLElement;
     expect(detail.className).toContain('text-xs');
     expect(detail.className).not.toContain('text-[10px]');
     expect(detail.className).not.toContain('/80');
-    const limitSpan = container.querySelector('[data-slot="ai-token-usage-text"] span span') as HTMLElement | null;
-    if (limitSpan) {
-      expect(limitSpan.className).not.toContain('/70');
-    }
+    const limitSpan = Array.from(container.querySelectorAll('[data-slot="ai-token-usage-text"] span'))
+      .filter((el) => el.className)
+      .find((el) => el.textContent?.includes('/ 500')) as HTMLElement | undefined;
+    expect(limitSpan).toBeTruthy();
+    expect(limitSpan!.className).toContain('text-muted-foreground');
+    expect(limitSpan!.className).not.toContain('/70');
   });
 });
