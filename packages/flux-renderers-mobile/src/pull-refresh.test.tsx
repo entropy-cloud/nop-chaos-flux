@@ -66,6 +66,33 @@ function renderPullRefresh(
 }
 
 describe('PullRefreshRenderer', () => {
+  it('gesture-driven re-renders do not re-invoke the body region render (plan 2026-09-29-4 R2-P13)', () => {
+    const bodyRender = vi.fn(() => <div data-testid="body-content">Body</div>);
+    const props = createMockRendererProps<PullRefreshSchema>({
+      schema: { type: 'pull-refresh' },
+      props: { threshold: 60 },
+      regions: {},
+      events: { onRefresh: (async () => {}) as never },
+    });
+    (props.regions as Record<string, unknown>).body = {
+      key: 'body',
+      templateNode: null,
+      render: bodyRender,
+    };
+
+    const view = render(<PullRefreshRenderer {...props} />);
+    const initial = bodyRender.mock.calls.length;
+    expect(initial).toBeGreaterThan(0);
+
+    const root = view.container.querySelector('[data-slot="pull-refresh"]') as HTMLElement;
+    fireEvent.touchStart(root, touch(100, 100));
+    fireEvent.touchMove(root, touch(100, 140));
+    fireEvent.touchMove(root, touch(100, 180));
+    expect(bodyRender.mock.calls.length).toBe(initial);
+
+    fireEvent.touchEnd(root);
+  });
+
   it('renders body content and starts in normal state', () => {
     const { view } = renderPullRefresh();
     expect(view.container.querySelector('[data-slot="pull-refresh"]')).toBeTruthy();

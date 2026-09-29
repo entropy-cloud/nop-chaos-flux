@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   getIn,
   type ActionContext,
@@ -315,14 +315,27 @@ export function useCrudHandle(
   const name = (props.props as CrudSchema).name as string | undefined;
   const nodeScope = props.node?.scope;
 
+  // Latest-mirror pattern (calendar navRef / kanban surface precedent): the
+  // registry surface reads handlers + selection through a ref so selection
+  // toggles and query churn no longer tear down/re-register all six handle
+  // indexes per state change (plan 2026-09-29-4 R2-P15). Re-registration is
+  // keyed on identity + method-set presence only.
+  const latestRef = useRef({ selectedRowKeys, clearSelection, handleRefresh, toggleSelection, handleLoadMore, querySubmit, queryReset });
+  useEffect(() => {
+    latestRef.current = { selectedRowKeys, clearSelection, handleRefresh, toggleSelection, handleLoadMore, querySubmit, queryReset };
+  });
+
+  const hasQuerySubmit = querySubmit != null;
+  const hasQueryReset = queryReset != null;
+
   useEffect(() => {
     if (!componentRegistry || cid === undefined) {
       return;
     }
 
     const methods = ['refresh', 'getSelection', 'clearSelection', 'toggleSelection', 'loadMore'];
-    if (querySubmit) methods.push('querySubmit');
-    if (queryReset) methods.push('queryReset');
+    if (latestRef.current.querySubmit) methods.push('querySubmit');
+    if (latestRef.current.queryReset) methods.push('queryReset');
 
     return componentRegistry.register(
       {
@@ -338,30 +351,31 @@ export function useCrudHandle(
             return methods;
           },
           async invoke(method, payload, ctx) {
+            const latest = latestRef.current;
             switch (method) {
               case 'refresh':
-                handleRefresh(toPartialActionContext(ctx));
+                latest.handleRefresh(toPartialActionContext(ctx));
                 return { ok: true };
               case 'getSelection':
-                return { ok: true, data: selectedRowKeys };
+                return { ok: true, data: latest.selectedRowKeys };
               case 'clearSelection':
-                clearSelection();
+                latest.clearSelection();
                 return { ok: true };
               case 'toggleSelection':
-                toggleSelection((payload as { key?: unknown } | undefined)?.key);
+                latest.toggleSelection((payload as { key?: unknown } | undefined)?.key);
                 return { ok: true };
               case 'loadMore':
-                handleLoadMore();
+                latest.handleLoadMore();
                 return { ok: true };
               case 'querySubmit':
-                if (querySubmit) {
-                  await querySubmit();
+                if (latest.querySubmit) {
+                  await latest.querySubmit();
                   return { ok: true };
                 }
                 return { ok: false, error: new Error('querySubmit not available') };
               case 'queryReset':
-                if (queryReset) {
-                  queryReset();
+                if (latest.queryReset) {
+                  latest.queryReset();
                   return { ok: true };
                 }
                 return { ok: false, error: new Error('queryReset not available') };
@@ -373,7 +387,7 @@ export function useCrudHandle(
       },
       { cid },
     );
-  }, [clearSelection, componentRegistry, cid, handleRefresh, id, name, nodeScope, selectedRowKeys, toggleSelection, handleLoadMore, querySubmit, queryReset]);
+  }, [componentRegistry, cid, id, name, nodeScope, hasQuerySubmit, hasQueryReset]);
 }
 
 export function useCrudRuntimeState(args: {

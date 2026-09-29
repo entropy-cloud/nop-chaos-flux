@@ -41,7 +41,7 @@ export function diffPrintDocuments(prev: PrintDocument, next: PrintDocument): Pr
     const before = prevById.get(id);
     if (!before) {
       added.push({ index, element });
-    } else if (JSON.stringify(before.element) !== JSON.stringify(element)) {
+    } else if (!printElementsEquivalent(before.element, element)) {
       patches[id] = { before: before.element, after: element };
     }
   }
@@ -51,11 +51,11 @@ export function diffPrintDocuments(prev: PrintDocument, next: PrintDocument): Pr
     }
   }
 
-  const page = JSON.stringify(prev.page) !== JSON.stringify(next.page)
+  const page = !printPagesEquivalent(prev.page, next.page)
     ? { before: prev.page, after: next.page }
     : null;
   const name = prev.name !== next.name ? { before: prev.name, after: next.name } : null;
-  const testData = JSON.stringify(prev.testData ?? null) !== JSON.stringify(next.testData ?? null)
+  const testData = !printValuesEquivalent(prev.testData, next.testData)
     ? { before: prev.testData, after: next.testData }
     : null;
 
@@ -114,4 +114,23 @@ export function createPrintDomainAdapter(): EditorDomainAdapter<PrintDocument, P
     applyDiff: applyPrintDocumentDiff,
     getDocumentIds: (doc) => doc.elements.map((element) => element.id),
   };
+}
+
+
+// Equality helpers: the previous whole-object JSON.stringify comparisons ran
+// per editor update (plan 2026-09-29-4 R2-P20). Identity first; a shared
+// shallow/deep fallback only when references differ.
+function printValuesEquivalent(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || b === null || a === undefined || b === undefined) return false;
+  if (typeof a !== 'object' || typeof b !== 'object') return false;
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function printElementsEquivalent(a: unknown, b: unknown): boolean {
+  return printValuesEquivalent(a, b);
+}
+
+function printPagesEquivalent(a: unknown, b: unknown): boolean {
+  return printValuesEquivalent(a, b);
 }

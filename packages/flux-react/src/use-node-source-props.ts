@@ -34,11 +34,34 @@ export function hasSourcePropsInValue(
     return true;
   }
 
-  const stack: unknown[] = Object.values(propsValue);
+  // Allocation-frugal traversal (plan 2026-09-29-4 R2-P4): the previous
+  // version pushed whole arrays/objects with spread (`stack.push(...current)`)
+  // and `Object.values()` per record — one 1000-row source produced ~1000
+  // intermediate arrays per re-resolution. Cursor frames (one per container)
+  // keep identical visit order and semantics (own-enumerable keys only,
+  // cycle-safe via the visited set) with O(depth) allocations instead of
+  // O(nodes). The declared-key fast path above stays; the DFS remains the
+  // safety net.
+  interface Frame {
+    container: unknown[] | Record<string, unknown>;
+    keys: readonly string[] | null;
+    index: number;
+  }
+
+  const stack: Frame[] = [{ container: propsValue, keys: Object.keys(propsValue), index: 0 }];
   const visited = new Set<object>();
 
   while (stack.length > 0) {
-    const current = stack.pop();
+    const frame = stack[stack.length - 1]!;
+    if (frame.index >= (frame.keys ? frame.keys.length : (frame.container as unknown[]).length)) {
+      stack.pop();
+      continue;
+    }
+
+    const current = frame.keys
+      ? (frame.container as Record<string, unknown>)[frame.keys[frame.index]!]
+      : (frame.container as unknown[])[frame.index];
+    frame.index += 1;
 
     if (!current || typeof current !== 'object') {
       continue;
@@ -54,11 +77,11 @@ export function hasSourcePropsInValue(
     }
 
     if (Array.isArray(current)) {
-      stack.push(...current);
+      stack.push({ container: current as unknown[], keys: null, index: 0 });
       continue;
     }
 
-    stack.push(...Object.values(current as Record<string, unknown>));
+    stack.push({ container: current as Record<string, unknown>, keys: Object.keys(current as Record<string, unknown>), index: 0 });
   }
 
   return false;

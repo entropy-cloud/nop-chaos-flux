@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
 import type {
   BaseSchema,
   ComponentCapabilityResult,
@@ -93,6 +93,22 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
     state.loadActionKey === loadActionKey
       ? state
       : createDynamicRendererState(loadAction, autoLoad);
+
+  // 'use no memo' file: without this, every parent re-render re-walked the
+  // compiled template and rebuilt the whole dynamic element tree (plan
+  // 2026-09-29-4 R2-P16). Keyed on schema + helpers identity. Lives before the
+  // early returns so hook order stays unconditional.
+  const dynamicElement = useMemo(
+    () =>
+      visibleState.schema
+        ? asReactNode(
+            props.helpers.render(visibleState.schema, {
+              pathSuffix: `dynamic.${loadActionKey ?? 'schema'}`,
+            }),
+          )
+        : null,
+    [visibleState.schema, props.helpers, loadActionKey],
+  );
 
   const loadSchemaRef = useRef<{
     run: () => Promise<ComponentCapabilityResult>;
@@ -253,11 +269,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid || undefined}
       >
-        {asReactNode(
-          props.helpers.render(visibleState.schema, {
-            pathSuffix: `dynamic.${loadActionKey ?? 'schema'}`,
-          }),
-        )}
+        {dynamicElement}
       </div>
     );
   }

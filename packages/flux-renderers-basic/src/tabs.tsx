@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+
+// Module-level per-items title render cache (see TabsRenderer).
+const tabTitleRegionCache = new WeakMap<object, Map<unknown, React.ReactNode>>();
 import type {
   ComponentHandle,
   RendererComponentProps,
@@ -99,6 +102,31 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const [managedItems, setManagedItems] = useState<TabsItemSchema[] | null>(null);
   const baseItems = scopeItemsActive && scopeItems ? scopeItems : rawItems;
   const items = managedItems ?? baseItems;
+
+  // Per-tab title region render cache (plan 2026-09-29-4 R2-P17): keyed by
+  // the items array identity at module level (render-phase code must not touch
+  // refs), then per item. A re-render of the tabs container with unchanged
+  // items no longer re-instantiates every title region; a replaced/inserted
+  // item gets fresh entries, and dropping the items array releases its map.
+  let titleCache = tabTitleRegionCache.get(items);
+  if (!titleCache) {
+    titleCache = new Map<unknown, React.ReactNode>();
+    tabTitleRegionCache.set(items, titleCache);
+  }
+  const memoizedTitleContent = (item: TabsItemSchema, index: number, value: string): React.ReactNode => {
+    const cached = titleCache!.get(item);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const regionOptions = createTabRegionOptions(item, index);
+    const titleRegion =
+      typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
+    const content =
+      asReactNode(titleRegion?.render(regionOptions)) ?? item.title ?? item.label ?? value;
+    titleCache!.set(item, content);
+    return content;
+  };
+
   const toolbarContent = resolveRendererSlotContent(props, 'toolbar');
   const firstValue = getItemValue(items[0] ?? {}, 0);
   const ownedAxis = useOwnedAxisValue<string>({
@@ -292,11 +320,10 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
     >
       {items.map((item, index) => {
         const value = getItemValue(item, index);
-        const regionOptions = createTabRegionOptions(item, index);
-        const titleRegion =
-          typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
-        const titleContent =
-          asReactNode(titleRegion?.render(regionOptions)) ?? item.title ?? item.label ?? value;
+        // Title region render memoized per tab (plan 2026-09-29-4 R2-P17):
+        // re-rendering the tabs container no longer re-instantiates every
+        // title region; a real item/region change re-runs it.
+        const titleContent = memoizedTitleContent(item, index, value);
         const badgeContent = resolveTabBadge(item.badge);
         const iconComp = resolveTabIcon(item.icon);
         const itemClosable =

@@ -84,8 +84,10 @@ describe('table-data helpers', () => {
     expect(createTableRowRepeatedTemplateId(undefined)).toBe('table-row:unknown');
     expect(createRowScopeId('orders', 'r1')).toBe('table:orders:row:r1');
     expect(createRowScopePath('$page.table', 'r1')).toBe('$page.table.rowsByKey.r1');
+    // plan 2026-09-29-4: the id is a JSON-quoted composite (collision-free for
+    // arbitrary keys containing separators); consumers treat it as opaque.
     expect(serializeInstancePath([{ repeatedTemplateId: 'table-row:1', instanceKey: 'x' }])).toBe(
-      '[{"repeatedTemplateId":"table-row:1","instanceKey":"x"}]',
+      '"table-row:1"|"x"',
     );
     expect(serializeInstancePath(undefined)).toBe('root');
   });

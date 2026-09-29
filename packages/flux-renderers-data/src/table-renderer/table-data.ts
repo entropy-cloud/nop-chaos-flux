@@ -185,7 +185,17 @@ export function toSelectionPayload(
 export function serializeInstancePath(
   instancePath: readonly { repeatedTemplateId: string; instanceKey: string }[] | undefined,
 ): string {
-  return instancePath?.length ? JSON.stringify(instancePath) : 'root';
+  if (!instancePath?.length) {
+    return 'root';
+  }
+  // Scalar JSON quoting per segment keeps the id collision-free for arbitrary
+  // instance keys (values may contain the separators) while avoiding the
+  // whole-array stringify per row-scope id creation (plan 2026-09-29-4
+  // R2-P20). The output is a composite scope id — consumers treat it as an
+  // opaque key (table-renderer.tsx embeds it in the row scope id).
+  return instancePath
+    .map((seg) => `${JSON.stringify(seg.repeatedTemplateId)}|${JSON.stringify(seg.instanceKey)}`)
+    .join('/');
 }
 
 export function createTableRowRepeatedTemplateId(tableNodeId: number | undefined): string {

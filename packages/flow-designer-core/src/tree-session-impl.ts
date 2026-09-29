@@ -13,7 +13,7 @@ import { migrateTreeConfig, normalizeTreeDocumentVersion } from './core/config-m
 import { normalizeConfig } from './core/config.js';
 import type { TreeChangeReason } from './types.js';
 import type { DesignerShellState } from './core/shell-state.js';
-import { cloneDocument } from './core/clone.js';
+import { cloneDocument, documentsEquivalent } from './core/clone.js';
 
 import { projectAndLayoutTree } from './tree-projection.js';
 import {
@@ -307,9 +307,9 @@ export function createTreeSessionSurface(ctx: TreeSessionContext): TreeSessionSu
     }
 
     const nextDoc = cloneDocument(projection.view.document);
-    const previousSnapshot = JSON.stringify({ nodes: ctx.doc.nodes, edges: ctx.doc.edges });
-    const nextSnapshot = JSON.stringify({ nodes: nextDoc.nodes, edges: nextDoc.edges });
-    if (previousSnapshot === nextSnapshot) {
+    // Structural no-op check — the previous whole-document double
+    // JSON.stringify ran per relayout (plan 2026-09-29-4 R2-P14).
+    if (documentsEquivalent(ctx.doc, nextDoc)) {
       return makeTreeCommandResult(true);
     }
 

@@ -9,8 +9,30 @@ import type {
 } from '../commands.js';
 import type { SpreadsheetSelection } from '../types.js';
 
+// Field-level equality: this runs per pointer move during drag-select — the
+// previous whole-object JSON.stringify comparison is the P1-prohibited
+// interactive-tick serialization pattern (plan 2026-09-29-4 R2-P20).
 function selectionsEqual(left: SpreadsheetSelection, right: SpreadsheetSelection): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
+  if (left.kind !== right.kind || left.sheetId !== right.sheetId) return false;
+  if (left.anchor?.sheetId !== right.anchor?.sheetId) return false;
+  if (left.anchor?.address !== right.anchor?.address) return false;
+  if (left.anchor?.row !== right.anchor?.row) return false;
+  const sameRanges =
+    left.range?.startRow === right.range?.startRow &&
+    left.range?.endRow === right.range?.endRow &&
+    left.range?.startCol === right.range?.startCol &&
+    left.range?.endCol === right.range?.endCol;
+  if (!sameRanges) return false;
+  return numberListsEqual(left.rows, right.rows) && numberListsEqual(left.columns, right.columns);
+}
+
+function numberListsEqual(a: readonly number[] | undefined, b: readonly number[] | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 export const handleSetActiveSheet: CommandHandler<SetActiveSheetCommand> = (store, command) => {

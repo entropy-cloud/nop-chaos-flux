@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import { useNodeTypeConfig } from './designer-context.js';
@@ -27,6 +27,50 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
   const nodeCount = useDesignerSnapshotSelector((snapshot) => snapshot.doc.nodes.length);
   const edgeCount = useDesignerSnapshotSelector((snapshot) => snapshot.doc.edges.length);
   const activeBranch = useDesignerSnapshotSelector((snapshot) => snapshot.activeBranch);
+
+  // Per-keystroke updateNodeData used to run full-tree projection + layout +
+  // history clone per character (plan 2026-09-29-4 R2-P14). Field edits now
+  // coalesce into a local draft and dispatch on a short window; blur/unmount/
+  // node-switch flush immediately. History granularity coarsens from
+  // per-keystroke to per-window — recorded accepted consequence (plan
+  // Workstream 3 equivalence scope: document content after undo/redo).
+  const [draft, setDraft] = useState<{ nodeId: string; key: string; value: string } | null>(null);
+  const draftRef = useRef(draft);
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+  const fieldCommitTimerRef = useRef<number | undefined>(undefined);
+  const flushDraft = React.useCallback(() => {
+    const pending = draftRef.current;
+    if (!pending) return;
+    draftRef.current = null;
+    setDraft(null);
+    dispatch({
+      type: 'updateNodeData',
+      nodeId: pending.nodeId,
+      data: { [pending.key]: pending.value },
+    });
+  }, [dispatch]);
+  React.useEffect(() => {
+    return () => {
+      const pending = draftRef.current;
+      if (!pending) return;
+      draftRef.current = null;
+      dispatch({
+        type: 'updateNodeData',
+        nodeId: pending.nodeId,
+        data: { [pending.key]: pending.value },
+      });
+    };
+  }, [dispatch]);
+  const activeNodeId = activeNode?.id;
+  React.useEffect(() => {
+    // node switch flushes any pending edit for the previous node before the
+    // inspector rebinds (the stale draft stops matching the new node's keys).
+    if (draftRef.current && activeNodeId && draftRef.current.nodeId !== activeNodeId) {
+      flushDraft();
+    }
+  }, [activeNodeId, flushDraft]);
 
   const activeNodeTypeConfig = useNodeTypeConfig(activeNode?.type ?? '');
   const activeInspectorSchema = activeNodeTypeConfig?.inspector?.body;
@@ -91,14 +135,20 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
           <Label className="text-sm font-medium text-foreground">{key}</Label>
           <Input
             type="text"
-            value={String(value ?? '')}
-            onChange={(e) =>
-              dispatch({
-                type: 'updateNodeData',
-                nodeId: activeNode.id,
-                data: { [key]: e.target.value },
-              })
+            value={
+              draft && draft.nodeId === activeNode.id && draft.key === key
+                ? draft.value
+                : String(value ?? '')
             }
+            onChange={(e) => {
+              setDraft({ nodeId: activeNode.id, key, value: e.target.value });
+              window.clearTimeout(fieldCommitTimerRef.current);
+              fieldCommitTimerRef.current = window.setTimeout(flushDraft, 300);
+            }}
+            onBlur={() => {
+              window.clearTimeout(fieldCommitTimerRef.current);
+              flushDraft();
+            }}
           />
         </div>
       );

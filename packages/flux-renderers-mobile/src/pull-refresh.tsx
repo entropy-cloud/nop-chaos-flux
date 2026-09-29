@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Spinner, cn } from '@nop-chaos/ui';
@@ -218,7 +218,16 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
     setStatus('normal');
   }, [touchHandlers, disabled]);
 
-  const bodyContent = props.regions.body?.render() as React.ReactNode;
+  // Gesture frames re-render this component per touchmove (delta state), but
+  // the slotted body region handle is identity-stable — memoizing the rendered
+  // element tree keeps the (typically list-sized) body from being rebuilt per
+  // frame (plan 2026-09-29-4 R2-P13). Reactive updates inside the body flow
+  // through child subscriptions, not through re-calling render().
+  const bodyRegion = props.regions.body;
+  const bodyContent = useMemo(
+    () => (bodyRegion?.render() as React.ReactNode) ?? null,
+    [bodyRegion],
+  );
   const indicatorText = resolveIndicatorText(resolvedStatus, texts);
 
   // OA-18: gate the RESTING translate on `isTouching`. use-touch.onTouchEnd

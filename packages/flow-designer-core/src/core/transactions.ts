@@ -1,5 +1,5 @@
 import type { GraphDocument } from '../types.js';
-import { cloneDocument, generateId } from './clone.js';
+import { cloneDocument, cloneTreeDocument, generateId } from './clone.js';
 import type { TreeDocument } from '../types.js';
 
 export interface DesignerTransaction {
@@ -25,7 +25,7 @@ export function beginTransactionState(
           id,
           label: label ?? '',
           snapshotBefore: cloneDocument(doc),
-          treeSnapshotBefore: treeDocument ? (JSON.parse(JSON.stringify(treeDocument)) as TreeDocument) : undefined,
+          treeSnapshotBefore: cloneTreeDocument(treeDocument),
         },
       ],
     };

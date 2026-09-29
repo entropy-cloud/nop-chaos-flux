@@ -1,9 +1,5 @@
 import type { GraphDocument, TreeDocument } from '../types.js';
-import { cloneDocument } from './clone.js';
-
-function cloneTreeDocument(tree: TreeDocument | undefined): TreeDocument | undefined {
-  return tree ? (JSON.parse(JSON.stringify(tree)) as TreeDocument) : undefined;
-}
+import { cloneDocument, cloneTreeDocument } from './clone.js';
 
 export interface HistoryEntry {
   doc: GraphDocument;

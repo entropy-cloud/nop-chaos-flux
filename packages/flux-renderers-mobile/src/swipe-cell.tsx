@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import type { SwipeCellSchema } from './schemas.js';
@@ -248,7 +248,14 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
     return () => container.removeEventListener('click', handler, true);
   }, [closeCell]);
 
-  const bodyContent = props.regions.body?.render() as React.ReactNode;
+  // Gesture frames re-render per touchmove (translate state); the slotted
+  // body region handle is identity-stable — memoize the element tree so the
+  // body is not rebuilt per frame (plan 2026-09-29-4 R2-P13).
+  const bodyRegion = props.regions.body;
+  const bodyContent = useMemo(
+    () => (bodyRegion?.render() as React.ReactNode) ?? null,
+    [bodyRegion],
+  );
   const leftContent = props.regions.left?.render() as React.ReactNode;
   const rightContent = props.regions.right?.render() as React.ReactNode;
 

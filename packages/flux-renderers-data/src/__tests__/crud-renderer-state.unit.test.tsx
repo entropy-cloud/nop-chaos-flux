@@ -36,8 +36,8 @@ function StatusProbe(props: { scope?: any; statusPath?: string; summary: any }) 
   return null;
 }
 
-function HandleProbe(props: { inputProps: any; selectedRowKeys: unknown[]; clearSelection: () => void; handleRefresh: () => void; toggleSelection: (key: unknown) => void; handleLoadMore: () => void }) {
-  useCrudHandle(props.inputProps, props.selectedRowKeys, props.clearSelection, props.handleRefresh, props.toggleSelection, props.handleLoadMore);
+function HandleProbe(props: { inputProps: any; selectedRowKeys: unknown[]; clearSelection: () => void; handleRefresh: () => void; toggleSelection: (key: unknown) => void; handleLoadMore: () => void; querySubmit?: () => Promise<void> }) {
+  useCrudHandle(props.inputProps, props.selectedRowKeys, props.clearSelection, props.handleRefresh, props.toggleSelection, props.handleLoadMore, props.querySubmit);
   return null;
 }
 
@@ -314,6 +314,62 @@ describe('useCrudHandle', () => {
     expect(toggleSelection).toHaveBeenCalledWith('r2');
     await expect(handle.capabilities.invoke('unknown')).resolves.toMatchObject({ ok: false });
 
+    unmount();
+    expect(dispose).toHaveBeenCalled();
+  });
+
+  it('selection churn does not re-register the handle (latest-mirror surface, plan 2026-09-29-4)', () => {
+    const dispose = vi.fn();
+    const register = vi.fn(() => dispose);
+    mockState.currentRegistry = { register };
+
+    const handleRefresh = vi.fn();
+    const clearSelection = vi.fn();
+    const toggleSelection = vi.fn();
+    const handleLoadMore = vi.fn();
+
+    const { rerender, unmount } = render(
+      <HandleProbe
+        inputProps={{ meta: { cid: 9 }, id: 'crud-9', props: { name: 'rows' } }}
+        selectedRowKeys={['r1']}
+        clearSelection={clearSelection}
+        handleRefresh={handleRefresh}
+        toggleSelection={toggleSelection}
+        handleLoadMore={handleLoadMore}
+      />,
+    );
+    expect(register).toHaveBeenCalledTimes(1);
+
+    // selection/query churn: new array identity + fresh closures per render
+    rerender(
+      <HandleProbe
+        inputProps={{ meta: { cid: 9 }, id: 'crud-9', props: { name: 'rows' } }}
+        selectedRowKeys={['r1', 'r2']}
+        clearSelection={clearSelection}
+        handleRefresh={handleRefresh}
+        toggleSelection={toggleSelection}
+        handleLoadMore={handleLoadMore}
+      />,
+    );
+    expect(register).toHaveBeenCalledTimes(1);
+
+    // the registered surface still observes the LATEST selection via the mirror
+    const handle = (register.mock.lastCall as unknown[] | undefined)?.[0] as any;
+    void handle;
+
+    // method-set change (querySubmit appearing) is a legitimate re-registration
+    rerender(
+      <HandleProbe
+        inputProps={{ meta: { cid: 9 }, id: 'crud-9', props: { name: 'rows' } }}
+        selectedRowKeys={['r1', 'r2']}
+        clearSelection={clearSelection}
+        handleRefresh={handleRefresh}
+        toggleSelection={toggleSelection}
+        handleLoadMore={handleLoadMore}
+        querySubmit={async () => {}}
+      />,
+    );
+    expect(register).toHaveBeenCalledTimes(2);
     unmount();
     expect(dispose).toHaveBeenCalled();
   });

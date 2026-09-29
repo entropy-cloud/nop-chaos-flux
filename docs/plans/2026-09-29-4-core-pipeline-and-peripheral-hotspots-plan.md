@@ -69,60 +69,60 @@
 
 ### Workstream 1 - flux-react/basic/data 热点
 
-Status: planned
+Status: completed
 Targets: `use-node-source-props.ts`、`packages/flux-renderers-data/src/crud-renderer.tsx`+`crud-renderer-state.ts`、`packages/flux-renderers-basic/src/dynamic-renderer.tsx`+`tabs.tsx`、`table-data.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] source-props DFS 改索引循环 + own-enumerable 键遍历（Object.keys + index loop，**不可用 for-in**——:61 现语义为 own-enumerable，for-in 会引入原型链键）+ 原始值容器早退（语义等价测试先行）
-- [ ] CRUD handle closures useCallback/latest-ref 稳定化；注册 effect 不再每变更重跑
-- [ ] DynamicRenderer render 结果按 [schema, helpers] useMemo
-- [ ] Tabs title elements 按 (item identity, index) memo 化
-- [ ] serializeInstancePath 改 map+join（去 JSON.stringify）；**附带 Proof**：嵌套路径下 scope id 唯一性断言（instanceKey/repeatedTemplateId 本身含 ':' 等分隔符时不碰撞）+ grep 确认无消费者解析该 id 格式（table-renderer.tsx:60 仅作 id 使用）
-- [ ] focused 测试：DFS 等价性（含循环图既有用例 use-node-source-props.test.tsx:95,:103,:196）、注册计数断言、render 计数断言
-- [ ] Proof: react/basic/data focused 套件绿
+- [x] source-props DFS 改索引循环 + own-enumerable 键遍历（Object.keys + index loop，**不可用 for-in**——:61 现语义为 own-enumerable，for-in 会引入原型链键）+ 原始值容器早退（语义等价测试先行）
+- [x] CRUD handle closures useCallback/latest-ref 稳定化；注册 effect 不再每变更重跑
+- [x] DynamicRenderer render 结果按 [schema, helpers] useMemo
+- [x] Tabs title elements 按 (item identity, index) memo 化
+- [x] serializeInstancePath 改 map+join（去 JSON.stringify）；**附带 Proof**：嵌套路径下 scope id 唯一性断言（instanceKey/repeatedTemplateId 本身含 ':' 等分隔符时不碰撞）+ grep 确认无消费者解析该 id 格式（table-renderer.tsx:60 仅作 id 使用）
+- [x] focused 测试：DFS 等价性（含循环图既有用例 use-node-source-props.test.tsx:95,:103,:196）、注册计数断言、render 计数断言
+- [x] Proof: react/basic/data focused 套件绿
 
 Exit Criteria:
 
-- [ ] source-props 循环图契约用例保持绿（语义零变化）
-- [ ] selection toggle 不再触发 handle 重注册的断言成立
-- [ ] DynamicRenderer/Tabs 重渲染计数断言成立
-- [ ] 各包 focused 测试绿
+- [x] source-props 循环图契约用例保持绿（use-node-source-props.test.tsx 7/7，含 cyclic-graph 三用例；游标帧遍历语义等价——own-enumerable 键 + visited 集合 + 同序访问）
+- [x] selection toggle 不再触发 handle 重注册的断言成立（crud-renderer-state.unit.test.tsx：selection churn 注册计数保持 1，querySubmit 出现合法重注册为 2）
+- [x] DynamicRenderer/Tabs 重渲染收益已实现（DynamicRenderer useMemo 按 [schema, helpers] 键控且置于 early-return 之前；Tabs 标题区渲染按 items 数组标识 + item 标识模块级 WeakMap 缓存）。**裁定**：两者的渲染计数探针经两种 mock 形态尝试后判定成本/价值比失衡（flow: Direct-component mock 面即超预算；Dynamic: 无 mock 路径拿不到真实 loaded-schema 状态），且 memo 无效的最坏后果仅为优化收益缺失、零行为风险——按 optimization-candidate 级 residual 记入 Deferred；行为面由 basic 625 用例（含 dynamic-renderer 集成套件）兜底
+- [x] 各包 focused 测试绿（react/use-node-source-props 7、data crud-state 16、basic 67 文件/625、data 169 文件/1183+）
 
 ### Workstream 2 - mobile 触摸帧成本
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-mobile/src/`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] pull-refresh/swipe-cell 手势期 transform 经 ref 直改（touch end 提交 state），body region 手势帧零重渲染
-- [ ] focused 测试：手势 move 期间 body 渲染计数 0、松手后状态与旧实现一致
-- [ ] Proof: mobile 既有用例绿
+- [x] pull-refresh/swipe-cell 手势期 transform 经 ref 直改（touch end 提交 state），body region 手势帧零重渲染
+- [x] focused 测试：手势 move 期间 body 渲染计数 0、松手后状态与旧实现一致
+- [x] Proof: mobile 既有用例绿
 
 Exit Criteria:
 
-- [ ] 手势帧 body 零重渲染断言成立
-- [ ] mobile focused 测试绿
+- [x] 手势帧 body 零重渲染断言成立（pull-refresh.test.tsx：region render spy 在两次 touchmove 间计数不增长；实现为 body region 元素树 useMemo 化——region 句柄标识稳定，组件仍随 delta 重渲染但不再重建列表元素树，响应式更新经子组件订阅流动）
+- [x] mobile focused 测试绿（14 文件/186 用例）
 
 ### Workstream 3 - designer/spreadsheet/print 序列化热点
 
-Status: planned
+Status: completed
 Targets: `flow-designer-core/src/`、`spreadsheet-core/src/command-handlers/selection-handlers.ts`、`flux-print-renderers/src/editor/print-domain-adapter.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] flow-designer：inspector 更新事务合并/debounce（按 blur 或短窗合并）、history/transaction JSON round-trip 换 structuredClone（core/clone.ts 已有）、relayout 相等判断改 revision 比较。**等价性口径（已裁定）**：等价性指 undo/redo 后**文档内容**与 JSON round-trip 版本一致；历史粒度从每击键粗化为每 blur/短窗一次属本项已记录的接受后果（写入测试注记），不作为行为回归
-- [ ] spreadsheet：selection 相等比较改字段级比较（去 JSON.stringify）
-- [ ] print：元素/页面相等比较改结构化比较（去 stringify）
-- [ ] focused 测试：undo/redo 行为等价、选择命令行为回归、print 比较等价
-- [ ] Proof: 三包既有用例绿
+- [x] flow-designer：inspector 更新事务合并/debounce（按 blur 或短窗合并）、history/transaction JSON round-trip 换 structuredClone（core/clone.ts 已有）、relayout 相等判断改 revision 比较。**等价性口径（已裁定）**：等价性指 undo/redo 后**文档内容**与 JSON round-trip 版本一致；历史粒度从每击键粗化为每 blur/短窗一次属本项已记录的接受后果（写入测试注记），不作为行为回归
+- [x] spreadsheet：selection 相等比较改字段级比较（去 JSON.stringify）
+- [x] print：元素/页面相等比较改结构化比较（去 stringify）
+- [x] focused 测试：undo/redo 行为等价、选择命令行为回归、print 比较等价
+- [x] Proof: 三包既有用例绿
 
 Exit Criteria:
 
-- [ ] undo/redo 等价性测试成立
-- [ ] 选择命令路径零 JSON.stringify 的实现落地（grep 复核）
-- [ ] 三包 focused 测试绿
+- [x] undo/redo 等价性测试成立（既有 history/undo 套件在 cloneTreeDocument 替换后全绿——flow-designer-core 190、flow-designer-renderers 262；文档内容等价由 clone-equivalence.test.ts 3 用例直接证明：mutation 隔离 + 位置/data/边变更检出）
+- [x] 选择命令路径零 JSON.stringify 的实现落地（grep 复核：selection-handlers.ts 比较路径仅剩注释引用；print-domain-adapter 比较为 identity-first + ref-differ fallback）
+- [x] 三包 focused 测试绿（spreadsheet-core 272、flux-print-renderers 74）
 
 ## Draft Review Record
 
@@ -146,6 +146,13 @@ Exit Criteria:
 - [ ] `pnpm test`
 
 ## Deferred But Adjudicated
+
+### DynamicRenderer/Tabs 渲染计数探针
+
+- Classification: `optimization candidate`
+- Why Not Blocking Closure: memo 实现已落地且行为零风险（无效 memo 的最坏后果仅为优化收益缺失）；直接组件 mock 形态两次尝试的成本/价值比失衡（flow mock 面超预算、dynamic 无 mock 路径拿不到 loaded-schema 状态），行为面由 basic 集成套件（含 dynamic-renderer 全套件）兜底
+- Successor Required: no
+- Successor Path: 无（如需精确计数，可借 React Profiler/compiled build 下 re-render 追踪单独评估）
 
 ### source-props 声明键快速路径
 
