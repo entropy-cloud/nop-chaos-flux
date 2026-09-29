@@ -51,12 +51,16 @@ function dateOverlapsOnDay(event: CalendarEvent, dateStr: string): boolean;
 
 ### 3.1 月视图
 
-Calendar 月视图在渲染时遍历每个资源的每天，调用 `detectConflicts()` 构建 `conflictMap`：
+Calendar 月视图经 `detectMonthConflicts()` 一次性批量构建 `conflictMap`（`calendar-layout-utils.ts`）：先把全部事件按 `(resourceId, date)` 桶分（成员判定与逐 cell 版本一致：`eventDateStart <= dateStr && eventDateEnd >= dateStr`，resourceId 原样匹配、不做归一化），再对非空桶执行与 `detectConflicts` 相同的 sweep 重叠检测：
 
 ```ts
-const conflictMap = new Map<string, Set<string>>();
-conflictMap.set(`${resource.id}:${dateStr}`, conflictedEventIds);
+const conflictMap = useMemo(
+  () => detectMonthConflicts({ events, days }),
+  [events, days],
+); // Map<string, Set<string>>，键 `${resourceId}:${dateStr}`
 ```
+
+逐 cell 的 `detectConflicts()` 仍保留并对外导出（供宿主/非月视图场景复用），其 sweep 实现与批量版本共享同一 `sweepOverlaps` 内核。
 
 `CalendarEventBlock` 检查 `overlap` 标志：
 
@@ -119,7 +123,7 @@ interface CalendarCellData {
 
 ## 5. 性能考虑
 
-冲突检测在月视图渲染时触发：复杂度为 `O(resources × days × eventsPerResource × log(eventsPerResource))`（排序步骤）。对于 300 资源 × 31 天 × 每资源 5 事件的典型场景，检测可在数毫秒内完成，不需要额外缓存或虚拟化。
+冲突检测经 `detectMonthConflicts` 在月视图渲染时触发：成员分桶为 `O(events × days)`，重叠检测仅对非空桶做 sweep（每桶 `O(k log k)`，k 为桶内事件数），与资源数无关。结果随 `events`/`days` 记忆化（`useMemo`），仅在事件集或月网格变化时重算，不需要额外缓存或虚拟化。
 
 ## 6. 配置选项
 
