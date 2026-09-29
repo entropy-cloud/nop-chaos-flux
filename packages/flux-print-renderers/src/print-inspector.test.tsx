@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createEmptyPrintTemplate,
   type PrintElementSchema,
@@ -90,48 +90,82 @@ describe('PrintInspector - element sections', () => {
     expect(screen.getByText('未选中元素，点击画布中的元素进行编辑')).toBeTruthy();
   });
 
-  it('edits text content and bound field of the selected element', () => {
+  it('edits text content and bound field of the selected element', async () => {
     const controller = makeController([text('a')], ['a']);
     render(<PrintInspector controller={controller} />);
     fireEvent.change(screen.getByLabelText('文本内容'), { target: { value: '客户名称' } });
-    expect(controller.getTemplate().elements[0]).toMatchObject({ text: '客户名称' });
+    await vi.waitFor(() => {
+      expect(controller.getTemplate().elements[0]).toMatchObject({ text: '客户名称' });
+    });
     fireEvent.change(screen.getByLabelText('绑定字段'), { target: { value: 'customerName' } });
-    expect(controller.getTemplate().elements[0]).toMatchObject({ field: 'customerName' });
+    await vi.waitFor(() => {
+      expect(controller.getTemplate().elements[0]).toMatchObject({ field: 'customerName' });
+    });
   });
 
-  it('changes region via select', () => {
+  it('changes region via select', async () => {
     const controller = makeController([text('a')], ['a']);
     render(<PrintInspector controller={controller} />);
     fireEvent.change(screen.getByLabelText('区域'), { target: { value: 'footer' } });
-    expect(controller.getTemplate().elements[0]).toMatchObject({ region: 'footer' });
+    await vi.waitFor(() => {
+      expect(controller.getTemplate().elements[0]).toMatchObject({ region: 'footer' });
+    });
   });
 
-  it('edits style font size and text align', () => {
+  it('edits style font size and text align', async () => {
     const controller = makeController([text('a')], ['a']);
     render(<PrintInspector controller={controller} />);
     fireEvent.change(screen.getByLabelText('字号'), { target: { value: '14' } });
-    expect(controller.getTemplate().elements[0].style.fontSize).toBe(14);
+    await vi.waitFor(() => {
+      expect(controller.getTemplate().elements[0].style.fontSize).toBe(14);
+    });
     fireEvent.change(screen.getByLabelText('对齐'), { target: { value: 'center' } });
-    expect(controller.getTemplate().elements[0].style.textAlign).toBe('center');
+    await vi.waitFor(() => {
+      expect(controller.getTemplate().elements[0].style.textAlign).toBe('center');
+    });
   });
 
-  it('adds and removes table columns', () => {
+  it('adds and removes table columns', async () => {
     const controller = makeController([{
       type: 'table', id: 'tb', region: 'body', left: 0, top: 0, width: 100, height: 50, style: {},
       source: '${orders}', columns: [{ label: '品名', field: 'name' }],
     } as PrintElementSchema], ['tb']);
     render(<PrintInspector controller={controller} />);
     fireEvent.click(screen.getByText('添加列'));
-    expect((controller.getTemplate().elements[0] as { columns: unknown[] }).columns).toHaveLength(2);
+    await vi.waitFor(() => {
+      expect((controller.getTemplate().elements[0] as { columns: unknown[] }).columns).toHaveLength(2);
+    });
     fireEvent.click(screen.getAllByLabelText('移除列')[0]!);
-    expect((controller.getTemplate().elements[0] as { columns: unknown[] }).columns).toHaveLength(1);
+    await vi.waitFor(() => {
+      expect((controller.getTemplate().elements[0] as { columns: unknown[] }).columns).toHaveLength(1);
+    });
   });
 
-  it('undoes inspector edits through the session stack', () => {
+  it('undoes inspector edits through the session stack', async () => {
     const controller = makeController([text('a', { left: 0 })], ['a']);
     render(<PrintInspector controller={controller} />);
     fireEvent.change(screen.getByLabelText('X (mm)'), { target: { value: '9' } });
-    expect(controller.getTemplate().elements[0].left).toBe(9);
+    await vi.waitFor(() => {
+      expect(controller.getTemplate().elements[0].left).toBe(9);
+    });
+    controller.undo();
+    expect(controller.getTemplate().elements[0].left).toBe(0);
+  });
+
+  it('coalesces a keystroke burst into one undo step (300ms window)', async () => {
+    const controller = makeController([text('a', { left: 0 })], ['a']);
+    render(<PrintInspector controller={controller} />);
+    const undoDepthBefore = controller.getState().undoDepth;
+
+    fireEvent.change(screen.getByLabelText('X (mm)'), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText('X (mm)'), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText('X (mm)'), { target: { value: '123' } });
+
+    await vi.waitFor(() => {
+      expect(controller.getTemplate().elements[0].left).toBe(123);
+    });
+    expect(controller.getState().undoDepth).toBe(undoDepthBefore + 1);
+
     controller.undo();
     expect(controller.getTemplate().elements[0].left).toBe(0);
   });

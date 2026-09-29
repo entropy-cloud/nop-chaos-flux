@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { SchemaValue } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '../index.js';
@@ -24,13 +25,13 @@ describe('surface validation plan compile cache', () => {
 
   function countPageCompiles(compileSpy: ReturnType<typeof vi.spyOn>) {
     return compileSpy.mock.calls.filter(
-      (call) => (call[0] as { type?: string })?.type === 'page',
+      (call: unknown[]) => (call[0] as { type?: string } | undefined)?.type === 'page',
     ).length;
   }
 
   it('compiles the dialog validation plan once across repeated opens of the same body', async () => {
     const { runtime, page, surfaceRuntime, compileSpy } = setup();
-    const body = [{ type: 'text', text: 'Body' }];
+    const body = [{ type: 'text', text: 'Body' }] as unknown as SchemaValue;
 
     const openOnce = () =>
       runtime.dispatch(
@@ -56,7 +57,7 @@ describe('surface validation plan compile cache', () => {
   it('recompiles when the body schema identity changes and the new plan takes effect', async () => {
     const { runtime, page, surfaceRuntime, compileSpy } = setup();
 
-    const openWith = (body: unknown[]) =>
+    const openWith = (body: SchemaValue) =>
       runtime.dispatch(
         {
           action: 'openDialog',
@@ -75,7 +76,7 @@ describe('surface validation plan compile cache', () => {
 
   it('caches drawer validation plans the same way', async () => {
     const { runtime, page, surfaceRuntime, compileSpy } = setup();
-    const body = [{ type: 'text', text: 'Drawer body' }];
+    const body = [{ type: 'text', text: 'Drawer body' }] as unknown as SchemaValue;
 
     const openOnce = () =>
       runtime.dispatch(

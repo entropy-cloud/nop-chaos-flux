@@ -112,9 +112,18 @@ export function createEditorStore() {
     },
 
     setSelection(selection: Partial<EditorSelectionState>) {
-      store.setState((state) => ({
-        selection: { ...state.selection, ...selection },
-      }));
+      store.setState((state) => {
+        const nextSelection = { ...state.selection, ...selection };
+        // Cursor moves fire at caret rate; an identity-stable selection keeps
+        // Object.is subscribers (toolbar, hostScopeData) from re-rendering on
+        // every bridge tick that carries the same selection.
+        for (const key of Object.keys(nextSelection) as Array<keyof EditorSelectionState>) {
+          if (nextSelection[key] !== state.selection[key]) {
+            return { selection: nextSelection };
+          }
+        }
+        return state;
+      });
     },
 
     setActiveZone(zone: EditorZone) {

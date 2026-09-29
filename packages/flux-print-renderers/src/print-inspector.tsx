@@ -1,6 +1,6 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Button, Input, Label, NativeSelect, Switch } from '@nop-chaos/ui';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PAPER_SIZE_PRESETS, type PrintElementSchema, PrintTableColumn } from '@nop-chaos/flux-print-core';
 import { usePrintEditorSnapshot, type PrintEditorController } from './editor/use-print-editor.js';
 
@@ -108,10 +108,46 @@ export function PrintInspector({ controller, className }: PrintInspectorProps) {
   const template = state.working;
   const selectedId = state.selection[0];
   const selected = template.elements.find((element) => element.id === selectedId);
+  // A pending draft for a previous selection is intentionally NOT flushed on
+  // selection switch: the coalesce timer commits it to its own target element,
+  // and inputs here render the draft-merged value only when targetId matches.
 
+  // Inspector text/number fields coalesce into a local draft and commit on a
+  // short window (mirroring the flow designer inspector): one undo step and
+  // one commit per burst instead of one per keystroke. Blur paths — selection
+  // switch, unmount — flush immediately.
+  const [draft, setDraft] = useState<{ targetId: string; patch: Partial<PrintElementSchema> } | null>(
+    null,
+  );
+  const draftRef = useRef(draft);
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+  const draftTimerRef = useRef<number | undefined>(undefined);
+  const flushDraft = React.useCallback(() => {
+    const pending = draftRef.current;
+    if (!pending) return;
+    draftRef.current = null;
+    setDraft(null);
+    controller.updateElement(pending.targetId, pending.patch);
+  }, [controller]);
+  useEffect(() => {
+    return () => {
+      const pending = draftRef.current;
+      if (!pending) return;
+      draftRef.current = null;
+      controller.updateElement(pending.targetId, pending.patch);
+    };
+  }, [controller]);
   const patchElement = (patch: Partial<PrintElementSchema>) => {
     if (!selected) return;
-    controller.updateElement(selected.id, patch);
+    setDraft((prev) =>
+      prev && prev.targetId === selected.id
+        ? { targetId: selected.id, patch: { ...prev.patch, ...patch } }
+        : { targetId: selected.id, patch },
+    );
+    window.clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = window.setTimeout(flushDraft, 300);
   };
 
   if (!selected) {
@@ -176,17 +212,24 @@ export function PrintInspector({ controller, className }: PrintInspectorProps) {
     );
   }
 
+  // Controlled inputs display the draft-merged element so typing is not
+  // visually gated on the coalesce window.
+  const displayed: PrintElementSchema =
+    draft && draft.targetId === selected.id
+      ? ({ ...selected, ...draft.patch } as PrintElementSchema)
+      : selected;
+
   return (
     <div className={className} data-testid="print-inspector">
       <Section title={t('flux.print.inspector.positionSection')}>
-        <NumberField label={t('flux.print.inspector.left')} value={selected.left} onChange={(left) => patchElement({ left })} />
-        <NumberField label={t('flux.print.inspector.top')} value={selected.top} onChange={(top) => patchElement({ top })} />
-        <NumberField label={t('flux.print.inspector.width')} value={selected.width} onChange={(width) => patchElement({ width })} />
-        <NumberField label={t('flux.print.inspector.height')} value={selected.height} onChange={(height) => patchElement({ height })} />
-        <NumberField label={t('flux.print.inspector.rotate')} value={selected.rotate} onChange={(rotate) => patchElement({ rotate } as Partial<PrintElementSchema>)} />
+        <NumberField label={t('flux.print.inspector.left')} value={displayed.left} onChange={(left) => patchElement({ left })} />
+        <NumberField label={t('flux.print.inspector.top')} value={displayed.top} onChange={(top) => patchElement({ top })} />
+        <NumberField label={t('flux.print.inspector.width')} value={displayed.width} onChange={(width) => patchElement({ width })} />
+        <NumberField label={t('flux.print.inspector.height')} value={displayed.height} onChange={(height) => patchElement({ height })} />
+        <NumberField label={t('flux.print.inspector.rotate')} value={displayed.rotate} onChange={(rotate) => patchElement({ rotate } as Partial<PrintElementSchema>)} />
         <SelectField
           label={t('flux.print.inspector.region')}
-          value={selected.region}
+          value={displayed.region}
           onChange={(value) => patchElement({ region: value } as Partial<PrintElementSchema>)}
           options={[
             { value: 'header', label: t('flux.print.inspector.regionHeader') },
@@ -195,8 +238,8 @@ export function PrintInspector({ controller, className }: PrintInspectorProps) {
           ]}
         />
       </Section>
-      <TypeSpecificSection controller={controller} selected={selected} />
-      <StyleSection selected={selected} patchElement={patchElement} />
+      <TypeSpecificSection selected={displayed} patch={patchElement} />
+      <StyleSection selected={displayed} patchElement={patchElement} />
     </div>
   );
 }
@@ -232,14 +275,13 @@ function StyleSection({
 }
 
 function TypeSpecificSection({
-  controller,
   selected,
+  patch,
 }: {
-  controller: PrintEditorController;
   selected: PrintElementSchema;
+  patch: (patch: Partial<PrintElementSchema>) => void;
 }) {
   const { t } = useFluxTranslation();
-  const patch = (p: Partial<PrintElementSchema>) => controller.updateElement(selected.id, p);
 
   if (selected.type === 'text') {
     return (

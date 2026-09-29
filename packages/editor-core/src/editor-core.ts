@@ -63,7 +63,18 @@ export function createEditorCore<TDocument = unknown, TDiff = unknown>(
   let txStart: TDocument | null = null;
   let lastSnapshot: EditorSessionState<TDocument> | null = null;
 
-  const isDirty = (): boolean => adapter.diff(committed, working) !== null;
+  // working/committed are only ever replaced wholesale (update/undo/redo/abort
+  // replace working; runCommit replaces committed), so an identity-keyed memo
+  // is exact and removes the per-notify O(document) diff.
+  let dirtyMemo: { working: TDocument; committed: TDocument; value: boolean } | null = null;
+  const isDirty = (): boolean => {
+    if (dirtyMemo && dirtyMemo.working === working && dirtyMemo.committed === committed) {
+      return dirtyMemo.value;
+    }
+    const value = adapter.diff(committed, working) !== null;
+    dirtyMemo = { working, committed, value };
+    return value;
+  };
 
   const pruneSelection = (): void => {
     if (!adapter.getDocumentIds || selection.length === 0) return;
@@ -162,18 +173,22 @@ export function createEditorCore<TDocument = unknown, TDiff = unknown>(
       const next = updater(prev);
       if (next === prev) return false;
 
-      const diff = adapter.diff(prev, next);
       if (txStart === null) {
+        const diff = adapter.diff(prev, next);
         if (diff !== null) {
           const inverse = adapter.diff(next, prev);
           recordEntry(diff, inverse as TDiff);
         }
       }
+      // Inside a transaction the per-update diff pair is throwaway work
+      // (endTransaction computes one forward/inverse pair for the whole
+      // gesture), and an auto-commit per frame would serialize/clone the whole
+      // document per pointermove — both defer to endTransaction.
       working = next;
       pruneSelection();
       notify();
 
-      if (policy === 'auto') {
+      if (txStart === null && policy === 'auto') {
         runCommit();
       }
       return true;

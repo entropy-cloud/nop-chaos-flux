@@ -22,11 +22,17 @@ export function PrintPreview({ controller, open, onOpenChange }: PrintPreviewPro
   const { t } = useFluxTranslation();
   const { state } = usePrintEditorSnapshot(controller);
   const template = state.working;
-  if (!open) return null;
 
   // layout 内置 bind（其 diagnostics 已含 bind 诊断）——预览不重复绑定（review D22-02）
-  const layout = layoutPrintTemplate(template, template.testData ?? {});
-  const html = renderPrintTemplateToHtml(template, template.testData ?? {});
+  // Pagination layout + full-document serialization are expensive; any dialog
+  // state churn while the preview is open must not rerun them. Hooks stay
+  // above the closed-dialog early return.
+  const { layout, html } = React.useMemo(() => {
+    const memoLayout = layoutPrintTemplate(template, template.testData ?? {});
+    return { layout: memoLayout, html: renderPrintTemplateToHtml(template, template.testData ?? {}) };
+  }, [template]);
+
+  if (!open) return null;
   const diagnostics: PrintDiagnostic[] = layout.diagnostics;
   const pageCount = layout.pages.length;
 

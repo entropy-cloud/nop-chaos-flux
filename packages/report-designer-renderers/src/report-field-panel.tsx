@@ -111,9 +111,19 @@ export function ReportFieldPanel({
                       disabled={
                         !onFieldInsert || (canInsertField ? !canInsertField(source.id, field.id) : false)
                       }
+                      title={
+                        canInsertField && !canInsertField(source.id, field.id)
+                          ? t('flux.reportDesigner.insertDisabledNoSelection')
+                          : undefined
+                      }
                        aria-label={t('flux.reportDesigner.insertFieldToSelection', {
                          field: field.label,
                        })}
+                      aria-describedby={
+                        canInsertField && !canInsertField(source.id, field.id)
+                          ? 'report-field-insert-disabled-reason'
+                          : undefined
+                      }
                        onClick={() => onFieldInsert?.(source.id, field.id, field.label)}
                       >
                         {t('flux.reportDesigner.insert')}

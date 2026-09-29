@@ -303,3 +303,45 @@ describe('UndoCommandStack primitive', () => {
     expect(stack.peekUndo()?.inverse).toBe(-1);
   });
 });
+
+describe('editor-core transaction commit semantics (policy auto)', () => {
+  it('defers auto-commit to endTransaction: zero commits and zero undo steps during updates', () => {
+    const onCommitted = vi.fn();
+    const core = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter(), {
+      policy: 'auto',
+      onCommitted,
+    });
+    core.beginTransaction();
+
+    core.update((doc) => ({ ...doc, title: 'a' }));
+    core.update((doc) => ({ ...doc, title: 'ab' }));
+    core.update((doc) => ({ ...doc, title: 'abc' }));
+
+    expect(onCommitted).not.toHaveBeenCalled();
+    expect(core.getState().undoDepth).toBe(0);
+
+    core.endTransaction();
+
+    expect(onCommitted).toHaveBeenCalledTimes(1);
+    expect(core.getState().undoDepth).toBe(1);
+    expect(core.getState().working.title).toBe('abc');
+
+    core.undo();
+    expect(core.getState().working.title).toBe('t0');
+  });
+
+  it('keeps per-update auto-commit outside transactions and memoizes dirty by document identity', () => {
+    const onCommitted = vi.fn();
+    const core = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter(), {
+      policy: 'auto',
+      onCommitted,
+    });
+
+    core.update((doc) => ({ ...doc, title: 'one' }));
+    expect(onCommitted).toHaveBeenCalledTimes(1);
+    expect(core.getState().dirty).toBe(false);
+
+    core.update((doc) => ({ ...doc, title: 'two' }));
+    expect(core.getState().dirty).toBe(false);
+  });
+});

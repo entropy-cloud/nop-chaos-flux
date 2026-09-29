@@ -44,6 +44,8 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
   const template = state.working;
   const paper = template.page.paper;
   const dragRef = useRef<DragState | null>(null);
+  const dragSnapOptionsRef = useRef<ReturnType<typeof buildSnapOptions> | null>(null);
+  const moveFrameRafRef = useRef<number | null>(null);
   const paperRef = useRef<HTMLDivElement | null>(null);
 
   const widthPx = mmToPx(paper.width) * zoom;
@@ -71,9 +73,12 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
 
   /** 吸附候选与移动 frame 同处区域坐标系：网格铺满 region，元素锚点取同区域元素。 */
   const buildSnapOptions = (dragId: string, region: { left: number; top: number; width: number; height: number }) => {
-    const others = template.elements.filter(
-      (element) => element.id !== dragId && element.region === template.elements.find((e) => e.id === dragId)?.region,
-    );
+    // 拖拽会话内元素集合不变（pointerdown 时经 cacheDragSnapOptions 缓存），这里
+    // 只做一次 O(n) 单遍过滤——不要在这里对每个元素再嵌套一次 elements.find。
+    const dragRegion = template.elements.find((element) => element.id === dragId)?.region;
+    const others = dragRegion
+      ? template.elements.filter((element) => element.id !== dragId && element.region === dragRegion)
+      : [];
     const xs = [...gridCandidates(region.width, 10)];
     const ys = [...gridCandidates(region.height, 10)];
     for (const other of others) {
@@ -97,6 +102,17 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
       regionOrigin: { left: regionRect.left, top: regionRect.top },
       regionBounds: { width: regionRect.width, height: regionRect.height },
     };
+    // 拖拽会话内元素集合不变：snap 候选在 pointerdown 一次算清（zoom 也固定），
+    // pointermove 只读缓存，消除每帧 O(n) 过滤 + O(n²) 嵌套查找。
+    dragSnapOptionsRef.current =
+      element.region != null
+        ? buildSnapOptions(element.id, {
+            left: regionRect.left,
+            top: regionRect.top,
+            width: regionRect.width,
+            height: regionRect.height,
+          })
+        : null;
   };
 
   const handleRotatePointerDown = (event: React.PointerEvent, element: PrintElementSchema) => {
@@ -127,8 +143,11 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
         width: drag.startFrame.width,
         height: drag.startFrame.height,
       };
-      const snapped = computeSnap(moved, buildSnapOptions(drag.id, { left: drag.regionOrigin.left, top: drag.regionOrigin.top, ...drag.regionBounds }));
-      controller.moveFrame(drag.id, clampFrame(snapped.frame, drag.regionBounds.width, drag.regionBounds.height));
+      const snapOptions = dragSnapOptionsRef.current;
+      if (snapOptions) {
+        const snapped = computeSnap(moved, snapOptions);
+        scheduleMoveFrame(drag.id, clampFrame(snapped.frame, drag.regionBounds.width, drag.regionBounds.height));
+      }
       return;
     }
 
@@ -149,7 +168,34 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
     controller.updateElement(drag.id, { rotate: angle } as Partial<PrintElementSchema>);
   };
 
+  const pendingMoveRef = useRef<{ id: string; frame: Frame } | null>(null);
+
+  const scheduleMoveFrame = (id: string, frame: Frame) => {
+    pendingMoveRef.current = { id, frame };
+    if (moveFrameRafRef.current !== null) {
+      return;
+    }
+    moveFrameRafRef.current = requestAnimationFrame(() => {
+      moveFrameRafRef.current = null;
+      const pending = pendingMoveRef.current;
+      pendingMoveRef.current = null;
+      if (pending) {
+        controller.moveFrame(pending.id, pending.frame);
+      }
+    });
+  };
+
   const handlePaperPointerUp = () => {
+    if (moveFrameRafRef.current !== null) {
+      cancelAnimationFrame(moveFrameRafRef.current);
+      moveFrameRafRef.current = null;
+    }
+    // 手势结束时同步落最后一帧，否则松手位置会回跳到上一个 rAF 已应用的位置。
+    const pending = pendingMoveRef.current;
+    pendingMoveRef.current = null;
+    if (pending) {
+      controller.moveFrame(pending.id, pending.frame);
+    }
     if (!dragRef.current) return;
     dragRef.current = null;
     controller.endDrag();

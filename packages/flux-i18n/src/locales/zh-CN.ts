@@ -959,6 +959,7 @@ export const zhCN: Resource = {
       collapseInspector: '收起检查器',
       expandInspector: '展开检查器',
       insert: '插入',
+      insertDisabledNoSelection: '请先在表格中选中单元格',
       dragField: '拖拽字段 {{field}}',
       insertFieldToSelection: '将字段 {{field}} 插入到当前选择',
     },

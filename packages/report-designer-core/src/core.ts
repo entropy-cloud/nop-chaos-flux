@@ -462,6 +462,9 @@ export function createReportDesignerCore(
     syncSpreadsheetDocument(nextDocument) {
       if (isReadonly) return;
       const currentDocument = store.getState().document;
+      // structuredClone 是契约性封印（designer-core.test "seals the provided
+      // spreadsheet subtree reference"）：宿主持有的引用可能在 sync 之后变异，
+      // 隔离优先于克隆成本——不要移除。
       const changed = applyDocumentChange({
         ...currentDocument,
         spreadsheet: structuredClone(nextDocument),

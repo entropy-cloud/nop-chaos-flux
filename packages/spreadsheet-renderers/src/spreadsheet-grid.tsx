@@ -112,6 +112,11 @@ export function SpreadsheetGrid({
   >(null);
   const [viewportHeight, setViewportHeight] = useState(600);
   const [viewportWidth, setViewportWidth] = useState(800);
+  // Scroll events fire above frame rate; a per-event store round-trip re-rendered
+  // the whole page per tick. Local scroll state drives the virtual window at
+  // rAF cadence; the store copy is persisted per frame for restart fidelity.
+  const [localScroll, setLocalScroll] = useState<{ x: number; y: number } | null>(null);
+  const scrollRafRef = useRef<number | null>(null);
   const keyboardCellRef = useRef<{ row: number; col: number }>(selectedCell ?? { row: 0, col: 0 });
 
   useEffect(() => {
@@ -199,25 +204,43 @@ export function SpreadsheetGrid({
     if (!el) return;
     if (el.clientHeight !== viewportHeight) setViewportHeight(el.clientHeight);
     if (el.clientWidth !== viewportWidth) setViewportWidth(el.clientWidth);
-    void bridge.dispatch({
-      type: 'spreadsheet:setViewport',
-      viewport: {
-        scrollX: el.scrollLeft,
-        scrollY: el.scrollTop,
-        zoom: snapshot.runtime.zoom,
-      },
+    if (scrollRafRef.current !== null) {
+      cancelAnimationFrame(scrollRafRef.current);
+    }
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      setLocalScroll({ x: el.scrollLeft, y: el.scrollTop });
+      void bridge.dispatch({
+        type: 'spreadsheet:setViewport',
+        viewport: {
+          scrollX: el.scrollLeft,
+          scrollY: el.scrollTop,
+          zoom: snapshot.runtime.zoom,
+        },
+      });
     });
   };
+
+  useEffect(
+    () => () => {
+      if (scrollRafRef.current !== null) {
+        cancelAnimationFrame(scrollRafRef.current);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) {
       return;
     }
-    if (el.scrollTop !== snapshot.runtime.viewport.scrollY) {
+    // A user scroll in flight (rAF pending, store not yet caught up) must not
+    // be snapped back to the stale store viewport by this sync pass.
+    if (scrollRafRef.current === null && el.scrollTop !== snapshot.runtime.viewport.scrollY) {
       el.scrollTop = snapshot.runtime.viewport.scrollY;
     }
-    if (el.scrollLeft !== snapshot.runtime.viewport.scrollX) {
+    if (scrollRafRef.current === null && el.scrollLeft !== snapshot.runtime.viewport.scrollX) {
       el.scrollLeft = snapshot.runtime.viewport.scrollX;
     }
     if (el.clientHeight !== viewportHeight) {
@@ -239,7 +262,11 @@ export function SpreadsheetGrid({
     [rows, cols, columnWidths, rowHeights],
   );
 
-  const viewport = buildSpreadsheetGridViewport({
+  const scrollX = localScroll?.x ?? snapshot.runtime.viewport.scrollX;
+  const scrollY = localScroll?.y ?? snapshot.runtime.viewport.scrollY;
+  const viewport = useMemo(
+    () =>
+      buildSpreadsheetGridViewport({
         rows,
         cols,
         columnWidths,
@@ -248,11 +275,27 @@ export function SpreadsheetGrid({
         snapshot,
         selectedCell,
         frozen,
-        scrollTop: snapshot.runtime.viewport.scrollY,
-        scrollLeft: snapshot.runtime.viewport.scrollX,
+        scrollTop: scrollY,
+        scrollLeft: scrollX,
         viewportHeight,
         viewportWidth,
-      }, offsets);
+      }, offsets),
+    [
+      rows,
+      cols,
+      columnWidths,
+      rowHeights,
+      selection,
+      snapshot,
+      selectedCell,
+      frozen,
+      scrollY,
+      scrollX,
+      viewportHeight,
+      viewportWidth,
+      offsets,
+    ],
+  );
 
   const isDraggingRef = useRef(false);
   const lastDragCellRef = useRef<{ row: number; col: number } | null>(null);

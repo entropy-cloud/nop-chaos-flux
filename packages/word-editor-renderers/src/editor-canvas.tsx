@@ -52,6 +52,16 @@ export function EditorCanvas({
         } catch {
           // Ignore autosave snapshot failures and keep editing interactive.
         }
+        // The status-bar counter only reads once at mount otherwise; ride the
+        // autosave tick so it tracks content edits.
+        bridge
+          .getWordCount()
+          .then((count) => {
+            if (!controller.signal.aborted) editorStore.setWordCount(count);
+          })
+          .catch(() => {
+            // Counter refresh is best-effort; keep the last known value.
+          });
       }, 500);
     };
 

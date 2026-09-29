@@ -69,32 +69,32 @@
 
 ### Phase 1 - editor-core 事务语义与 print 拖拽/inspector（R3-P12、P13、P14、P22）
 
-Status: planned
+Status: completed
 Targets: `packages/editor-core/src/editor-core.ts`、`packages/flux-print-renderers/src/print-designer-canvas.tsx`、`print-inspector.tsx`、`print-preview.tsx`、`editor/use-print-editor.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-P12)：`update()` 事务开启时跳过 `adapter.diff` 与 `runCommit`（延迟到 `endTransaction` 一次执行）；`buildSnapshot` 的 dirty 改标记位推导（消除每次 O(N) diff）
-- [ ] Fix (R3-P13)：print inspector 文本/数字字段本地 draft + coalesce 提交（对齐 flow designer-inspector 模式），undo 步按合并粒度产生
-- [ ] Fix (R3-P14)：pointerdown 时预计算 `dragElement.region` 与 snap 候选缓存，`buildSnapOptions` 拖拽会话内 O(n)；`moveFrame` rAF 合帧
-- [ ] Fix (R3-P22)：`print-preview` layout + HTML 序列化按 `template`/`testData` useMemo
-- [ ] Proof：focused 单测——Failure Paths drag-undo-granularity / inspector-undo-granularity 全绿；事务内无 runCommit（commit 计数桩）；拖拽会话内 snap 候选计算次数 = O(1) 次（计数桩）；preview 在 template 不变时不重跑 layout
+- [x] Fix (R3-P12)：`update()` 事务开启时跳过 `adapter.diff` 与 `runCommit`（延迟到 `endTransaction` 一次执行）；`buildSnapshot` 的 dirty 改标记位推导（消除每次 O(N) diff）
+- [x] Fix (R3-P13)：print inspector 文本/数字字段本地 draft + coalesce 提交（对齐 flow designer-inspector 模式），undo 步按合并粒度产生
+- [x] Fix (R3-P14)：pointerdown 时预计算 `dragElement.region` 与 snap 候选缓存，`buildSnapOptions` 拖拽会话内 O(n)；`moveFrame` rAF 合帧
+- [x] Fix (R3-P22)：`print-preview` layout + HTML 序列化按 `template`/`testData` useMemo
+- [x] Proof：focused 单测——Failure Paths drag-undo-granularity / inspector-undo-granularity 全绿；事务内无 runCommit（commit 计数桩）；拖拽会话内 snap 候选计算次数 = O(1) 次（计数桩）；preview 在 template 不变时不重跑 layout
 
 Exit Criteria:
 
-- [ ] 4 项 Fix 落地，undo 粒度与 commit 计数 focused 测试全绿
-- [ ] print-designer 相关既有测试（含方向键微移、粘贴隔离）无回归
+- [x] 4 项 Fix 落地，undo 粒度与 commit 计数 focused 测试全绿
+- [x] print-designer 相关既有测试（含方向键微移、粘贴隔离）无回归
 
 ### Phase 2 - spreadsheet 滚动与编辑草稿（R3-P15、P16）
 
-Status: planned
+Status: in progress
 Targets: `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx`、`src/spreadsheet-grid/table-shell.tsx`、`src/spreadsheet-interactions/use-editing.ts`、`packages/spreadsheet-core/src/core.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-P15)：scroll 事件 rAF 合并 + 本地 viewport state 驱动虚拟窗口（落盘仍走 store，节流提交）；`SpreadsheetGridCell` 包 `React.memo`；`buildSpreadsheetGridViewport` 进 useMemo
+- [x] Fix (R3-P15)（部分）：scroll 事件 rAF 合并 + 本地 scroll state 驱动虚拟窗口（落盘仍走 store，rAF 节流）；外部同步 effect 加「rAF 挂起时跳过回写」守卫（防止 store 未跟上时用户滚动被重置——由滚动同步测试暴露）；`buildSpreadsheetGridViewport` 进 useMemo。`SpreadsheetGridCell` 包 React.memo 一项转入 Deferred：cell 的 30 个 props 含大量 page-body 透传闭包，不做跨层 handler 稳定化契约改动则 memo 永不命中，收益/风险不成比例
 - [ ] Fix (R3-P16)：单元格编辑草稿下沉为 CellEditor 本地 state；`core.updateEditValue` 仅在 save 边界进入 store。已知外部读取点须逐点迁移或保留兼容读取：`use-selection.ts:108,121`（切格提交时读 store 中 `draftValue`）、`use-editing.ts:27,54,69`
-- [ ] Proof：focused 单测——scroll 会话内 store dispatch 次数受节流约束（计数桩）；cell memo 生效（无关 props 不变时引用相等跳过渲染，可用渲染计数）；edit 值仅 save 后进入 store；既有编辑/提交 e2e-adjacent 单测全绿
+- [x] Proof（部分）：focused 单测——scroll 会话 dispatch rAF 节流（grid-selection 滚动同步测试更新为新契约）；167 用例绿。cell memo 渲染计数与 edit 值 save 边界两项随 Deferred/Phase 2 剩余项顺延
 
 Exit Criteria:
 
@@ -103,14 +103,14 @@ Exit Criteria:
 
 ### Phase 3 - word selection 与 report 同步（R3-P20、P21）
 
-Status: planned
+Status: completed
 Targets: `packages/word-editor-core/src/editor-store.ts`、`canvas-editor-bridge.ts`、`packages/word-editor-renderers/src/hooks/use-word-editor-state.ts`、`packages/report-designer-core/src/core.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-P20)：`setSelection` 浅比较，无变化不 setState；`selection` 订阅改 shallowEqual（对齐 editorRuntime 先例）
-- [ ] Fix (R3-P21)：`syncSpreadsheetDocument` 直接引用 nextDocument，移除 structuredClone
-- [ ] Proof：focused 单测——相同 selection 重复 set 不触发订阅者；内容变化仍触发；report 表格变更后嵌入文档引用传递且 undo/derived 状态正确
+- [x] Fix (R3-P20)：`setSelection` 逐字段浅比较（无变化复用 store state）；`selection` 订阅补字段级等值比较（对齐 editorRuntime 先例）
+- [x] Fix (R3-P21)（执行裁定：不修复，契约封印）：实施时发现既有契约测试 "syncSpreadsheetDocument seals the provided spreadsheet subtree reference"（designer-core.test.ts:258）钉死 structuredClone 是防宿主 post-sync 变异的封印语义，非纯浪费——保持 clone 并在代码内加契约注记；优化诉求转 Deferred（见 Deferred But Adjudicated）
+- [x] Proof：focused 单测——相同 selection 重复 set 不触发订阅者（word-editor-core 272 用例绿，含 setSelection 幂等路径）；内容变化仍触发；report 表格变更后嵌入文档引用传递且 undo/derived 状态正确（186 用例绿，含 seal 契约）
 
 Exit Criteria:
 
@@ -119,16 +119,16 @@ Exit Criteria:
 
 ### Phase 4 - print/report/word UX（R3-U11、U13、U18、U22）
 
-Status: planned
+Status: in progress
 Targets: `print-designer.tsx`（校验明细）、`print-designer-canvas.tsx`（键盘选中）、`report-field-panel.tsx`（禁用原因）、`word-editor-renderers/src/editor-canvas.tsx`（字数刷新）、flux-i18n locales
 
 - Item Types: `Fix`、`Proof`
 
 - [ ] Fix (R3-U11)：validate 结果以可定位列表展示（每条含元素标识，点击/Enter 滚动定位并选中该元素）
 - [ ] Fix (R3-U18)：print 画布元素可键盘选中（元素 tabIndex + Enter/方向键 roving selection；容器级 nudge/delete 快捷键复用）
-- [ ] Fix (R3-U13)：report 插入按钮 disabled 时附 title/aria-describedby 原因（如"请先选中单元格"，locale 两语言）
-- [ ] Fix (R3-U22)：word 状态栏字数在 debounced autosave/内容变更回调中刷新
-- [ ] Proof：DOM 断言单测——校验列表项点击触发选中定位；元素可 Tab 聚焦且 Enter 选中；disabled 原因属性存在；字数随内容变更更新
+- [x] Fix (R3-U13)：report 插入按钮 disabled 时附 title + aria-describedby 原因（`flux.reportDesigner.insertDisabledNoSelection` 两语言）
+- [x] Fix (R3-U22)：word 状态栏字数在 debounced autosave tick 中刷新（mount-only 问题消除，卸载 aborted 守卫保留）
+- [ ] Proof：DOM 断言单测——校验列表项点击触发选中定位（U11 未落地顺延）；元素可 Tab 聚焦且 Enter 选中（U18 未落地顺延）；disabled 原因属性存在（U13 已落地，断言顺延至 Phase 4 收口）；字数随内容变更更新（U22 已落地，断言顺延至 Phase 4 收口）
 
 Exit Criteria:
 
@@ -158,7 +158,19 @@ Exit Criteria:
 
 ## Deferred But Adjudicated
 
-（无——in-scope 全部 Fix）
+### report syncSpreadsheetDocument 去 structuredClone（R3-P21）
+
+- Classification: `adjudicated as residual-risk-only / watch-only`
+- Why Not Blocking Closure: 实施发现 structuredClone 是被契约测试钉死的封印语义（designer-core.test.ts "seals the provided spreadsheet subtree reference"，防宿主 post-sync 变异），移除即破约；克隆成本为已记录的契约代价，代码内已加注记防止后人误删。
+- Successor Required: `no`
+- Successor Path: 如需优化，先在 spreadsheet 侧提供冻结（Object.freeze 深冻结）或代次标记机制并修订契约测试。
+
+### SpreadsheetGridCell React.memo（R3-P15 子项）
+
+- Classification: `optimization candidate`
+- Why Not Blocking Closure: cell 的 30 个 props 中约半数为 page-body 每渲染重建的透传闭包；仅包 memo 而不做跨层 handler 稳定化（latest-ref/useCallback 契约）则浅比较永不命中，属纯噪音改动。scroll 主热点（每事件 store 往返）已由 rAF 合帧 + 本地 scroll state 收口。
+- Successor Required: `no`
+- Successor Path: 与 page-body props 契约稳定化同批收口。
 
 ## Non-Blocking Follow-ups
 

@@ -961,6 +961,7 @@ export const enUS: Resource = {
       collapseInspector: 'Collapse inspector',
       expandInspector: 'Expand inspector',
       insert: 'Insert',
+      insertDisabledNoSelection: 'Select a cell in the sheet first',
       dragField: 'Drag field {{field}}',
       insertFieldToSelection: 'Insert field {{field}} into the current selection',
     },

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { FormStoreState } from '@nop-chaos/flux-core';
 import { createFormStore } from '../form-store.js';
 import { createOwnedFormStore } from '../form-store-owned.js';
 
@@ -70,11 +71,11 @@ describe('createOwnedFormStore snapshot identity', () => {
 
     owned.setDirty('a', true);
     owned.setDirty('b', true);
-    const withTwo = owned.getState();
+    const withTwo = owned.getState() as FormStoreState & { summary: { dirtyCount: number } };
     expect(withTwo.summary.dirtyCount).toBe(2);
 
     owned.setDirty('b', false);
-    const withOne = owned.getState();
+    const withOne = owned.getState() as FormStoreState & { summary: { dirtyCount: number } };
     expect(withOne).not.toBe(withTwo);
     expect(withOne.summary.dirtyCount).toBe(1);
   });

@@ -127,6 +127,14 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
     editorStore.getState,
     editorStore.getState,
     (state) => state.selection,
+    // Field-wise equality: the selection object is rebuilt per bridge tick
+    // even when every field is unchanged (aligns with the editorRuntime
+    // subscription below).
+    (left, right) =>
+      left === right ||
+      (Object.keys(left) as Array<keyof typeof left>).every(
+        (key) => left[key] === right[key],
+      ),
   );
 
   const activeZone = useSyncExternalStoreWithSelector(

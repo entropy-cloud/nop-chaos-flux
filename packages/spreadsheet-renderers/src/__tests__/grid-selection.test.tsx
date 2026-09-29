@@ -85,6 +85,7 @@ describe('spreadsheet grid selection', () => {
     Object.defineProperty(grid!, 'clientWidth', { value: 800, writable: true });
     fireEvent.scroll(grid!);
 
+    // Scroll dispatch is rAF-coalesced (per-frame, not per-event).
     await waitFor(() => {
       expect(dispatchSpy).toHaveBeenCalledWith(
         expect.objectContaining({
