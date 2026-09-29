@@ -109,7 +109,7 @@ Exit Criteria:
 
 ## 逐用例裁定表（Phase 1 复跑 @ HEAD，2026-09-29；分四批 playwright 复跑，全部通过）
 
-复跑结论：**14 个移交失败用例全部达到终态**——13 例 landed、1 例（gantt resize-right）经 pre-baseline 对照证实为批次前既有 flake 一并 watch-only；无产品缺陷残留。4 例呈 retry 恢复特征（playwright 内建 retry 首跑失败、复跑通过），按环境时序 flake 裁定 watch-only（理由与条件见下）。
+复跑结论：**14 个移交失败用例全部达到终态：11 landed + 3 watch-only**（gantt resize-right + stripe×2 为 watch-only；popover 3 例全 landed，但其中 1 例首跑 retry 恢复——该 flake 非移交失败用例，另登记 residual，使 residual 登记合计 4 条）。无产品缺陷残留。
 
 | Spec | 用例 | 复跑现状 | 分类 | 处置 |
 | --- | --- | --- | --- | --- |
@@ -166,7 +166,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 移交的 14 个失败用例经分批复跑达到终态（13 landed + 1 watch-only flake with pre-baseline 对照证据；audit r1 证伪的 15/15 全绿记录已修正）；无产品缺陷、无 owner-doc 变更。四门禁 + check 全绿（批次基线）。
+Status Note: 移交的 14 个失败用例经分批复跑达到终态：11 landed + 3 watch-only（gantt resize-right、stripe×2；另 popover×1 首跑 retry 恢复登记 residual——非移交失败用例，登记合计 4 条）。audit r1 证伪的 15/15 全绿记录已修正。无产品缺陷、无 owner-doc 变更。四门禁 + check 全绿（批次基线）。
 
 Closure Audit Evidence:
 
