@@ -1,6 +1,6 @@
 # 2026-09-29-7 pre-existing e2e 失败修复与裁定
 
-> Plan Status: completed
+> Plan Status: active
 > Last Reviewed: 2026-09-29
 > Source: `docs/logs/2026/09-28.md`（Plan 2026-09-28-5 e2e 裁定节：clean-HEAD bisect 证实与本批次无关，交后续 owner）；现状核对见 `docs/analysis/2026-09-29-perf-ux-round2-deep-optimization-analysis.md` 第四节
 > Related: 2026-09-28-5（移交来源）
@@ -66,7 +66,7 @@ Targets: `tests/e2e/`（9 spec）
 
 - Item Types: `Proof`、`Decision`
 
-- [x] `pnpm test:e2e` 按 spec 分组复跑（4 批，全部通过；全量 1086+ 用例单跑成本过高，9 个移交 spec 逐批覆盖——移交清单即本 plan 范围）
+- [x] `pnpm test:e2e` 按 spec 分组复跑（4 批 = 4+13+29+5 = **51 用例**，最终全通过；首批实为 4 用例，此前记录 3/6 均误）
 - [x] 逐失败用例分类完成：11 例 landed（批次修复覆盖）、3 例环境-flaky（retry 恢复，watch-only 登记）；无产品缺陷新增（复跑零失败，签名归档以 playwright 输出为准——首跑 flaky 痕迹记录于本表）
 - [x] 分类表落 plan（上表），每项标 landed / watch-only
 
@@ -98,7 +98,7 @@ Targets: `pnpm test:e2e` 全量
 
 - Item Types: `Proof`
 
-- [x] 全量 e2e 复跑：本清单相关用例全绿（9 spec 分四批复跑 6+13+29+5 = 53 用例全通过；仅剩 3 例已裁定 watch-only flake）
+- [x] 全量 e2e 复跑：本清单相关用例最终全绿（9 spec 分四批复跑 4+13+29+5 = 51 用例；4 例已裁定 watch-only flake——含 gantt resize-right 的 pre-baseline 对照）
 - [x] 与既有 watch-only 终态清单（gantt-perf×2 + kanban-perf×1）合并后的 e2e 终态记录进 daily log
 - [x] 产品面修复触及的包 focused 单测零回归（移交后批次均各自全绿收口）
 
@@ -109,7 +109,7 @@ Exit Criteria:
 
 ## 逐用例裁定表（Phase 1 复跑 @ HEAD，2026-09-29；分四批 playwright 复跑，全部通过）
 
-复跑结论：**14 个移交失败用例全部转绿（landed）**，无产品缺陷残留。其中 3 个用例呈 retry 恢复特征（playwright 内建 retry 首跑失败、复跑通过），按环境时序 flake 裁定 watch-only（理由与条件见下）。
+复跑结论：**14 个移交失败用例全部达到终态**——13 例 landed、1 例（gantt resize-right）经 pre-baseline 对照证实为批次前既有 flake 一并 watch-only；无产品缺陷残留。4 例呈 retry 恢复特征（playwright 内建 retry 首跑失败、复跑通过），按环境时序 flake 裁定 watch-only（理由与条件见下）。
 
 | Spec | 用例 | 复跑现状 | 分类 | 处置 |
 | --- | --- | --- | --- | --- |
@@ -117,8 +117,8 @@ Exit Criteria:
 | stripe-replica-visual | ×2 | 2 次 run 均 retry 恢复后 passed（持续 flaky 特征） | adjudicated watch-only | 环境时序 flake（并行负载下 mock endpoint 时序）；非产品缺陷——retry 全绿、断言面未变 |
 | table-column-width-layout | ×2 | 2 passed 稳定 | landed | 同上（批次修复覆盖） |
 | table-density | ×1 | passed 稳定 | landed | 同上 |
-| gantt-bars-and-links | 15/15 passed | 全绿（含移交的 1 例） | landed | gantt 时标/布局修复链覆盖 |
-| layout-family-enhancements | 12/12 passed | 全绿 | landed | 批次修复覆盖 |
+| gantt-bars-and-links | 15/15 passed（单跑 3 轮：pass/flaky 恢复/pass；3-spec 并行负载下 resize-right 曾连续两次失败） | 全绿但 resize-right 判定 watch-only | **adjudicated watch-only**（非 landed——见下） | pre-baseline 对照（worktree @92be6e58d，vite 别名按 import.meta.url 相对解析即测批次前源码）复现同一失败 → 批次前既有负载时序 flake，非 Plan 1 回归 |
+| layout-family-enhancements | 9/9 passed | 全绿 | landed | 批次修复覆盖 |
 | word-editor-template-expr | 7/7 passed | 全绿 | landed | 批次修复覆盖 |
 | crud-list-mode | ×2 | passed（随 13 用例批通过） | landed | 批次修复覆盖 |
 | c6-2-host-surfaces | 7/7 passed | 全绿 | landed | 批次修复覆盖 |
@@ -138,13 +138,20 @@ Exit Criteria:
 - [ ] 必要 focused verification 已完成（修复项回归测试）
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（watch-only 项必须附理由）
 - [ ] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required
-- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
 
 ## Deferred But Adjudicated
+
+### gantt-bars-and-links resize-right 负载时序 flake
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: 失败签名 = 拖拽提交未落位（宽度 poll 超时），负载敏感且间歇；**pre-baseline 对照证非回归**——worktree @92be6e58d（本批次前）经 vite 别名相对解析运行批次前源码，同测试同样失败；HEAD 单跑 3 轮 pass/flaky 恢复/pass。移交时的 gantt×1 失败与本轮同源
+- Successor Required: no
+- Successor Path: e2e 稳定性治理（拖拽合成的 pointer 时序等待策略）follow-up 承接
 
 ### stripe-replica-visual ×2 + table-popover ×1 retry 恢复 flake
 
@@ -159,12 +166,11 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 移交的 14 个失败用例经分批复跑全部转绿（11 landed——移交后批次修复间接覆盖；3 watch-only flake 附复现条件）；无产品缺陷、无 owner-doc 变更。四门禁 + check 全绿（批次基线）。
+Status Note: 移交的 14 个失败用例经分批复跑达到终态（13 landed + 1 watch-only flake with pre-baseline 对照证据；audit r1 证伪的 15/15 全绿记录已修正）；无产品缺陷、无 owner-doc 变更。四门禁 + check 全绿（批次基线）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 独立子 agent（fresh session）
-- Evidence: <<复跑输出：4 批 playwright 结果 3/13/29/5 全通过，stripe×2 与 popover×1 retry 恢复特征两轮复现>>
+- Auditor / Agent: 独立子 agent（fresh session）r1（verdict `issues`——gantt resize 双失败证伪 15/15 全绿记录、watch-only 清单缺 gantt、Plan Status/勾选状态提前、计数 12/12 与批次数错误）→ 本轮全部修正并补 pre-baseline 对照证据；r2 待派
 
 Follow-up:
 
