@@ -69,14 +69,22 @@ function AbortedNote(): React.ReactElement {
   );
 }
 
-function messageContentSignature(message: ChatMessage): string {
+// The auto-scroll trigger only consumes the LENGTH of the last message's
+// content; joining array parts into a full string per chunk allocated the
+// whole transcript twice per tick (plan 2026-09-29-2 R2-P20).
+function messageContentLength(message: ChatMessage): number {
   const content = message.content;
-  if (typeof content === 'string') return content;
-  if (Array.isArray(content))
-    return content
-      .map((p) => (p && typeof p === 'object' && 'text' in p ? String((p as { text: unknown }).text) : ''))
-      .join('');
-  return '';
+  if (typeof content === 'string') return content.length;
+  if (Array.isArray(content)) {
+    let total = 0;
+    for (const p of content) {
+      if (p && typeof p === 'object' && 'text' in p) {
+        total += String((p as { text: unknown }).text).length;
+      }
+    }
+    return total;
+  }
+  return 0;
 }
 
 /** Internal message-list view — reads engine + messages from ai-chat context. */
@@ -117,7 +125,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
   // over as the A-5 error carrier.
   const showListErrorBanner =
     inError && messages.length > 0 && lastMessage?.role !== 'assistant';
-  const trigger = `${messages.length}:${lastMessage ? messageContentSignature(lastMessage).length : 0}:${loopLimitReached ? 1 : 0}`;
+  const trigger = `${messages.length}:${lastMessage ? messageContentLength(lastMessage) : 0}:${loopLimitReached ? 1 : 0}`;
   const { containerRef, onScroll, scrollToBottom, pinned } = useAutoScroll(autoScrollEnabled ? trigger : null);
 
   const enableVirtual = messages.length > VIRTUAL_SCROLL_THRESHOLD;

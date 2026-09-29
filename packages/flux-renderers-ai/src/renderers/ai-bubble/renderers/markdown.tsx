@@ -39,17 +39,66 @@ import { preprocessMathDelimiters } from '../math-delimiter-preprocess.js';
  *   `\[...\]` delimiters to `$`/`$$` so mainstream LLM formula forms render
  *   as math (design.md §10.4 delimiter semantic table).
  */
+// Streaming throttle: the full slice → sanitize → mdast/hast → highlight
+// pipeline runs per parse; per-chunk re-parses of a growing answer cost O(n²)
+// in total (plan 2026-09-29-2 R2-P1). Gate the pipeline to ~80ms time slices
+// while streaming; non-streaming updates flush immediately. Compiler-safe:
+// state/scheduler driven — no render-phase ref gating, no 'use no memo'.
+const STREAM_PARSE_THROTTLE_MS = 80;
+
+function useThrottledMarkdownSource(raw: string, streaming: boolean): string {
+  const [displayed, setDisplayed] = useState(raw);
+  const latestRawRef = useRef(raw);
+  const parseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Shrink or non-prefix switch (message swap / truncation) must never wait
+  // for the timer — render-time adjust (repo's adjust-state-during-render
+  // pattern) snaps displayed back onto the new source immediately.
+  if (raw !== displayed && (raw.length < displayed.length || !raw.startsWith(displayed))) {
+    setDisplayed(raw);
+  }
+
+  useEffect(() => {
+    latestRawRef.current = raw;
+    if (!streaming || raw === displayed) return;
+    if (parseTimerRef.current != null) return;
+    parseTimerRef.current = setTimeout(() => {
+      parseTimerRef.current = null;
+      setDisplayed(latestRawRef.current);
+    }, STREAM_PARSE_THROTTLE_MS);
+  }, [raw, displayed, streaming]);
+
+  useEffect(() => {
+    return () => {
+      if (parseTimerRef.current != null) {
+        clearTimeout(parseTimerRef.current);
+        parseTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Non-streaming renders consume the source directly — the throttle only
+  // exists to bound re-parse frequency during the accumulation window, so no
+  // flush effect is needed when streaming ends.
+  return streaming ? displayed : raw;
+}
+
 export function MarkdownContentRenderer({ message, content, streaming: streamingProp }: BubbleContentRendererProps) {
   const raw = extractContentText(content);
-  const source = preprocessMathDelimiters(safeMarkdownSlice(raw));
-  if (source.length === 0) return null;
 
   // A-11: append a blinking cursor while the assistant message is streaming.
   // bug 166 (plan 472 V2): prefer the chat-level streaming signal threaded by
   // `AiBubbleView` — the engine clears `message.loading` at the first chunk,
   // so the loading flag alone never covers the accumulation window.
   const streaming = streamingProp ?? message?.loading === true;
+  const throttledRaw = useThrottledMarkdownSource(raw, streaming);
+  const source = preprocessMathDelimiters(safeMarkdownSlice(throttledRaw));
+  if (source.length === 0) return null;
 
+  // A-11: append a blinking cursor while the assistant message is streaming.
+  // bug 166 (plan 472 V2): prefer the chat-level streaming signal threaded by
+  // `AiBubbleView` — the engine clears `message.loading` at the first chunk,
+  // so the loading flag alone never covers the accumulation window.
   // Security gate: sanitize first, then let rehype-raw render the safe subset.
   const safe = sanitizeHtml(source);
   return (

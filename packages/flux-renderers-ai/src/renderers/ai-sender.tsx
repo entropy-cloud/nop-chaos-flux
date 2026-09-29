@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentType, type KeyboardEvent } from 'react';
+import { useId as useReactId, useEffect, useRef, useState, type ComponentType, type KeyboardEvent } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { Button, Textarea, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -74,6 +74,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   }, [senderDraft]);
 
   const overLimit = typeof maxLength === 'number' && draft.length > maxLength;
+  const senderCountId = useReactId();
   const trimmedLength = draft.trim().length;
 
   function commit(text: string) {
@@ -175,7 +176,9 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
           />
           {props.showWordLimit && typeof maxLength === 'number' ? (
             <span
+              id={senderCountId}
               data-slot="ai-sender-count"
+              aria-live="polite"
               className={cn(
                 'absolute bottom-1 right-2 text-xs',
                 overLimit ? 'text-destructive' : 'text-muted-foreground',
@@ -198,6 +201,8 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
           value={draft}
           placeholder={props.placeholder ?? t('flux.ai.placeholder')}
           aria-label={props.placeholder ?? t('flux.ai.messageInput')}
+          aria-invalid={overLimit || undefined}
+          aria-describedby={overLimit ? senderCountId : undefined}
           // V12e 族1 (G5-视角3-01) text-gating: the textarea stays enabled
           // while a turn streams (the author composes the next message); the
           // commit channel is gated instead. Only the node-level `disabled`
@@ -217,7 +222,9 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
         />
         {props.showWordLimit && typeof maxLength === 'number' ? (
           <span
+            id={senderCountId}
             data-slot="ai-sender-count"
+            aria-live="polite"
             className={cn(
               'absolute bottom-1 right-2 text-xs',
               overLimit ? 'text-destructive' : 'text-muted-foreground',

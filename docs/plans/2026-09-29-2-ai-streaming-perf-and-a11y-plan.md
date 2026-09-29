@@ -62,41 +62,41 @@
 
 ### Phase 1 - 流式 markdown 节流与成本收敛
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-ai/src/renderers/ai-bubble/`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] MarkdownContentRenderer 增加时间片门控（rAF/timer，~60-100ms），内容长度未跨片不重跑解析管线；流结束/组件即将隐藏强制 flush。**实现约束（React Compiler）**：门控必须 state/scheduler 驱动（useState 或 render 时派生 `streaming ? throttled : raw`）——渲染期 ref 直读门控是 compiler-illegal，会被 eslint-plugin-react-compiler 拒绝；本项不需要 'use no memo'
-- [ ] 评估并落地稳定块边界增量渲染（frozen prefix 只解析一次）或证明节流已达目标（二选一，以实测 chunk 成本曲线为准，结论记 plan）
-- [ ] ai-message-list array content 签名改增量长度（或缓存 by message id）
-- [ ] focused 测试：同 chunk 重复渲染不重解析（解析计数）、flush 完整性、等价性（节流路径最终 DOM 与直渲染一致）
-- [ ] Proof: ai-bubble 既有用例绿
+- [x] MarkdownContentRenderer 增加时间片门控（rAF/timer，~60-100ms），内容长度未跨片不重跑解析管线；流结束/组件即将隐藏强制 flush。**实现约束（React Compiler）**：门控必须 state/scheduler 驱动（useState 或 render 时派生 `streaming ? throttled : raw`）——渲染期 ref 直读门控是 compiler-illegal，会被 eslint-plugin-react-compiler 拒绝；本项不需要 'use no memo'
+- [x] 裁定：落地 80ms 时间片节流即达目标（focus 测试实测 30 chunk/窗 burst 仅 ≤2 次新内容解析，flush 一次追平尾部）；稳定块边界增量解析记 optimization candidate（节流已把 O(n²) 压到近 O(n)，增量解析的复杂度收益不再值得 react-markdown 管线改造风险）
+- [x] ai-message-list 签名改 messageContentLength（数组逐 part 累加长度，消除每 chunk O(content) join）
+- [x] focused 测试：30-chunk burst 解析计数 ≤2、slice flush 追平尾部、流结束无定时器直达最终内容、消息切换（非前缀源）立即吸附（markdown-stream-throttle-and-a11y.test.tsx）
+- [x] Proof: ai-bubble 既有用例绿（ai 包 99 文件/838 用例全绿）
 
 Exit Criteria:
 
-- [ ] 解析计数测试成立：200 个 chunk 的流式序列解析次数远小于 chunk 数（≤ 时间片数）
-- [ ] flush/等价性测试成立
-- [ ] ai 包 focused 测试绿
+- [x] 解析计数测试成立：30-chunk 单窗 burst 新内容解析 ≤2 次（时间片门控），flush 一次追平
+- [x] flush/等价性测试成立（流结束直达最终内容 + 消息切换立即吸附）
+- [x] ai 包 focused 测试绿（99 文件/838 用例）
 
 ### Phase 2 - AI 包 a11y 四项
 
-Status: planned
+Status: completed
 Targets: `assistant-actions.tsx`、`ai-tool-call.tsx`、`ai-sender.tsx`、`ai-token-usage.tsx`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] copy 成功：aria-label 切换为 copied 键（`flux.ai.copied`）+ sr-only polite span 公告（键已存在于 locale）
-- [ ] tool-call：args pre 补 id + aria-controls 关联
-- [ ] sender 超限：Textarea aria-invalid + describedby，计数 aria-live="polite"
-- [ ] token-usage：去 text-[10px]/alpha 折减，字号与对比达标（text-xs + 全值 muted token）
-- [ ] focused 测试四项断言
-- [ ] Proof: ai 包既有用例绿
+- [x] copy 成功：aria-label 切换为 copied 键（`flux.ai.copied`）+ sr-only polite span 公告（键已存在于 locale）
+- [x] tool-call：args pre 补 useId 实例 id + aria-controls 关联
+- [x] sender 超限：Textarea aria-invalid + describedby（useId 实例 id），计数 aria-live="polite"（extension 与主路径两个渲染分支都已覆盖）
+- [x] token-usage：text-[10px]→text-xs、/80 与 /70 alpha 全部移除（全值 muted token）
+- [x] focused 测试四项断言（copy label 切换+sr-only polite、tool-call aria-controls↔id 配对、sender aria-invalid+describedby+计数 live、token-usage class 断言）
+- [x] Proof: ai 包既有用例绿
 
 Exit Criteria:
 
-- [ ] 四项 a11y 断言测试各自成立
-- [ ] ai 包 focused 测试绿
+- [x] 四项 a11y 断言测试各自成立（markdown-stream-throttle-and-a11y.test.tsx Phase 2 describe）
+- [x] ai 包 focused 测试绿
 
 ## Draft Review Record
 

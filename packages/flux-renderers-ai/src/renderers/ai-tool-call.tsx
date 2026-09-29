@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId as useReactId, useRef, useState } from 'react';
 import type {
   FluxActionEvent,
   RendererComponentProps,
@@ -54,6 +54,8 @@ export function AiToolCallView(props: {
   const status: ToolCallStatus = state?.status ?? 'running';
   const approval = state?.approval;
   const [internalOpen, setInternalOpen] = useState(props.defaultOpen ?? false);
+  // Instance-unique id for the disclosed args region (aria-controls target).
+  const argsRegionId = useReactId();
   // P1-7 (2026-08-10 multi-audit): `?? internalOpen` was short-circuited by
   // write-once-false `state.open`. Merge only when the engine actually holds a
   // value — absent `open` falls through to the local expand state (the engine
@@ -155,6 +157,7 @@ export function AiToolCallView(props: {
           data-slot="ai-tool-call-toggle"
           aria-label={open ? t('flux.ai.collapse') : t('flux.ai.expand')}
           aria-expanded={open}
+          aria-controls={open ? argsRegionId : undefined}
           disabled={disabled}
           onClick={handleToggle}
         >
@@ -165,6 +168,7 @@ export function AiToolCallView(props: {
       </div>
       {open ? (
         <pre
+          id={argsRegionId}
           data-slot="ai-tool-call-args"
           className="mt-1 overflow-x-auto rounded bg-muted/40 p-2 text-xs"
         >

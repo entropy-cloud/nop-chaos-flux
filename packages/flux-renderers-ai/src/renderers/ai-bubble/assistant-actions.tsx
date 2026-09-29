@@ -46,8 +46,14 @@ export function AssistantActions(props: {
 
   return (
     <div data-slot="ai-assistant-actions">
-      <button type="button" data-slot="ai-action-copy" aria-label={t('flux.ai.copyMessage')} onClick={() => void handleCopy()}>
+      <button
+        type="button"
+        data-slot="ai-action-copy"
+        aria-label={copied ? t('flux.ai.copied') : t('flux.ai.copyMessage')}
+        onClick={() => void handleCopy()}
+      >
         {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+        <span aria-live="polite" className="sr-only">{copied ? t('flux.ai.copied') : ''}</span>
       </button>
       {props.engine ? (
         <button

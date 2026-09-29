@@ -109,9 +109,9 @@ export function AiTokenUsageView(props: {
       <span data-slot="ai-token-usage-text" className="inline-flex flex-col leading-tight">
         <span>
           <span data-slot="ai-token-usage-total">{fmt(total)}</span>
-          {limit ? <span className="text-muted-foreground/70"> / {fmt(limit)}</span> : null}
+          {limit ? <span className="text-muted-foreground"> / {fmt(limit)}</span> : null}
         </span>
-        <span className="text-[10px] text-muted-foreground/80">
+        <span className="text-xs text-muted-foreground">
           <span data-slot="ai-token-usage-prompt">↑{fmt(usage.prompt_tokens)}</span>
           {' · '}
           <span data-slot="ai-token-usage-completion">↓{fmt(usage.completion_tokens)}</span>
