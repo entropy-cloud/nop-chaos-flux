@@ -1,6 +1,6 @@
 # 2026-09-29-7 pre-existing e2e 失败修复与裁定
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-29
 > Source: `docs/logs/2026/09-28.md`（Plan 2026-09-28-5 e2e 裁定节：clean-HEAD bisect 证实与本批次无关，交后续 owner）；现状核对见 `docs/analysis/2026-09-29-perf-ux-round2-deep-optimization-analysis.md` 第四节
 > Related: 2026-09-28-5（移交来源）
@@ -138,7 +138,7 @@ Exit Criteria:
 - [ ] 必要 focused verification 已完成（修复项回归测试）
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift（watch-only 项必须附理由）
 - [ ] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
