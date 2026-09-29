@@ -34,7 +34,12 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
   // node-switch flush immediately. History granularity coarsens from
   // per-keystroke to per-window — recorded accepted consequence (plan
   // Workstream 3 equivalence scope: document content after undo/redo).
-  const [draft, setDraft] = useState<{ nodeId: string; key: string; value: string } | null>(null);
+  const [draft, setDraft] = useState<{
+    kind: 'node' | 'edge';
+    targetId: string;
+    key: string;
+    value: string;
+  } | null>(null);
   const draftRef = useRef(draft);
   useEffect(() => {
     draftRef.current = draft;
@@ -45,29 +50,61 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
     if (!pending) return;
     draftRef.current = null;
     setDraft(null);
-    dispatch({
-      type: 'updateNodeData',
-      nodeId: pending.nodeId,
-      data: { [pending.key]: pending.value },
-    });
+    if (pending.kind === 'node') {
+      dispatch({
+        type: 'updateNodeData',
+        nodeId: pending.targetId,
+        data: { [pending.key]: pending.value },
+      });
+    } else {
+      dispatch({
+        type: 'updateEdgeData',
+        edgeId: pending.targetId,
+        data: { [pending.key]: pending.value },
+      });
+    }
   }, [dispatch]);
   React.useEffect(() => {
     return () => {
       const pending = draftRef.current;
       if (!pending) return;
       draftRef.current = null;
-      dispatch({
-        type: 'updateNodeData',
-        nodeId: pending.nodeId,
-        data: { [pending.key]: pending.value },
-      });
+      if (pending.kind === 'node') {
+        dispatch({
+          type: 'updateNodeData',
+          nodeId: pending.targetId,
+          data: { [pending.key]: pending.value },
+        });
+      } else {
+        dispatch({
+          type: 'updateEdgeData',
+          edgeId: pending.targetId,
+          data: { [pending.key]: pending.value },
+        });
+      }
     };
   }, [dispatch]);
+  const draftFor = (kind: 'node' | 'edge', targetId: string, key: string, current: string) =>
+    draft && draft.kind === kind && draft.targetId === targetId && draft.key === key
+      ? draft.value
+      : current;
+  const editField = (
+    kind: 'node' | 'edge',
+    targetId: string,
+    key: string,
+    value: string,
+  ) => {
+    setDraft({ kind, targetId, key, value });
+    window.clearTimeout(fieldCommitTimerRef.current);
+    fieldCommitTimerRef.current = window.setTimeout(flushDraft, 300);
+  };
+
   const activeNodeId = activeNode?.id;
   React.useEffect(() => {
-    // node switch flushes any pending edit for the previous node before the
-    // inspector rebinds (the stale draft stops matching the new node's keys).
-    if (draftRef.current && activeNodeId && draftRef.current.nodeId !== activeNodeId) {
+    // Selection switch — including to nothing (deselect) or to an edge —
+    // flushes any pending edit for the previous target before the inspector
+    // rebinds (the stale draft stops matching the new selection).
+    if (draftRef.current && draftRef.current.targetId !== (activeNodeId ?? '')) {
       flushDraft();
     }
   }, [activeNodeId, flushDraft]);
@@ -135,16 +172,8 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
           <Label className="text-sm font-medium text-foreground">{key}</Label>
           <Input
             type="text"
-            value={
-              draft && draft.nodeId === activeNode.id && draft.key === key
-                ? draft.value
-                : String(value ?? '')
-            }
-            onChange={(e) => {
-              setDraft({ nodeId: activeNode.id, key, value: e.target.value });
-              window.clearTimeout(fieldCommitTimerRef.current);
-              fieldCommitTimerRef.current = window.setTimeout(flushDraft, 300);
-            }}
+            value={draftFor('node', activeNode.id, key, String(value ?? ''))}
+            onChange={(e) => editField('node', activeNode.id, key, e.target.value)}
             onBlur={() => {
               window.clearTimeout(fieldCommitTimerRef.current);
               flushDraft();
@@ -396,14 +425,9 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                   </Label>
                   <Input
                     type="text"
-                    value={String(activeNode.data.label ?? '')}
-                    onChange={(e) =>
-                      dispatch({
-                        type: 'updateNodeData',
-                        nodeId: activeNode.id,
-                        data: { label: e.target.value },
-                      })
-                    }
+                    value={draftFor('node', activeNode.id, 'label', String(activeNode.data.label ?? ''))}
+                    onChange={(e) => editField('node', activeNode.id, 'label', e.target.value)}
+                    onBlur={flushDraft}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -412,14 +436,9 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                   </Label>
                   <Textarea
                     className="min-h-[80px] resize-y"
-                    value={String(activeNode.data.description ?? '')}
-                    onChange={(e) =>
-                      dispatch({
-                        type: 'updateNodeData',
-                        nodeId: activeNode.id,
-                        data: { description: e.target.value },
-                      })
-                    }
+                    value={draftFor('node', activeNode.id, 'description', String(activeNode.data.description ?? ''))}
+                    onChange={(e) => editField('node', activeNode.id, 'description', e.target.value)}
+                    onBlur={flushDraft}
                   />
                 </div>
                 {activeInspectorSchema && props.renderSchema
@@ -453,14 +472,9 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                       <Label className="text-sm font-medium text-foreground">{key}</Label>
                       <Input
                         type="text"
-                        value={String(value ?? '')}
-                        onChange={(e) =>
-                          dispatch({
-                            type: 'updateEdgeData',
-                            edgeId: activeEdge.id,
-                            data: { [key]: e.target.value },
-                          })
-                        }
+                        value={draftFor('edge', activeEdge.id, key, String(value ?? ''))}
+                        onChange={(e) => editField('edge', activeEdge.id, key, e.target.value)}
+                        onBlur={flushDraft}
                       />
                     </div>
                   );

@@ -79,7 +79,7 @@ Targets: `use-node-source-props.ts`、`packages/flux-renderers-data/src/crud-ren
 - [x] DynamicRenderer render 结果按 [schema, helpers] useMemo
 - [x] Tabs title elements 按 (item identity, index) memo 化
 - [x] serializeInstancePath 改 map+join（去 JSON.stringify）；**附带 Proof**：嵌套路径下 scope id 唯一性断言（instanceKey/repeatedTemplateId 本身含 ':' 等分隔符时不碰撞）+ grep 确认无消费者解析该 id 格式（table-renderer.tsx:60 仅作 id 使用）
-- [x] focused 测试：DFS 等价性（含循环图既有用例 use-node-source-props.test.tsx:95,:103,:196）、注册计数断言、render 计数断言
+- [x] focused 测试：DFS 等价性（含循环图既有用例 use-node-source-props.test.tsx:95,:103,:196）、注册计数断言落地；render 计数断言按 Deferred 节裁定改由集成套件兜底（见 WS1 Exit Criteria 裁定行）
 - [x] Proof: react/basic/data focused 套件绿
 
 Exit Criteria:
@@ -87,7 +87,7 @@ Exit Criteria:
 - [x] source-props 循环图契约用例保持绿（use-node-source-props.test.tsx 7/7，含 cyclic-graph 三用例；游标帧遍历语义等价——own-enumerable 键 + visited 集合 + 同序访问）
 - [x] selection toggle 不再触发 handle 重注册的断言成立（crud-renderer-state.unit.test.tsx：selection churn 注册计数保持 1，querySubmit 出现合法重注册为 2）
 - [x] DynamicRenderer/Tabs 重渲染收益已实现（DynamicRenderer useMemo 按 [schema, helpers] 键控且置于 early-return 之前；Tabs 标题区渲染按 items 数组标识 + item 标识模块级 WeakMap 缓存）。**裁定**：两者的渲染计数探针经两种 mock 形态尝试后判定成本/价值比失衡（flow: Direct-component mock 面即超预算；Dynamic: 无 mock 路径拿不到真实 loaded-schema 状态），且 memo 无效的最坏后果仅为优化收益缺失、零行为风险——按 optimization-candidate 级 residual 记入 Deferred；行为面由 basic 625 用例（含 dynamic-renderer 集成套件）兜底
-- [x] 各包 focused 测试绿（react/use-node-source-props 7、data crud-state 16、basic 67 文件/625、data 169 文件/1183+）
+- [x] 各包 focused 测试绿（react/use-node-source-props 7、data crud-state 16、basic 67 文件/625、data 169 文件/1183+）。audit r1 F5 修复：Tabs 标题缓存二级键改为 title region 句柄（跨实例隔离；无 region 的 item 落入共享 undefined 桶——内容纯派生自 item 自身 props）
 
 ### Workstream 2 - mobile 触摸帧成本
 
@@ -112,9 +112,9 @@ Targets: `flow-designer-core/src/`、`spreadsheet-core/src/command-handlers/sele
 
 - Item Types: `Fix`、`Proof`
 
-- [x] flow-designer：inspector 更新事务合并/debounce（按 blur 或短窗合并）、history/transaction JSON round-trip 换 structuredClone（core/clone.ts 已有）、relayout 相等判断改 revision 比较。**等价性口径（已裁定）**：等价性指 undo/redo 后**文档内容**与 JSON round-trip 版本一致；历史粒度从每击键粗化为每 blur/短窗一次属本项已记录的接受后果（写入测试注记），不作为行为回归
+- [x] flow-designer：inspector 更新事务合并/debounce（**全部字段面**：generic fields + label + description + edge data 字段统一走 300ms 短窗 + blur/卸载/选中切换 flush——audit r1 F1 指认 label/description/edge 遗漏后扩展；deselect（切换到空选中）同样 flush，由 designer-inspector-coalescing.test.tsx 3 用例钉住）、history/transaction JSON round-trip 换 structuredClone（core/clone.ts 新增 cloneTreeDocument）、relayout 相等判断改 documentsEquivalent 结构比较（比 plan 原文的 revision 比较更强：直接比较位置/data/边字段，data 仅 ref-differ fallback）。**等价性口径（已裁定）**：等价性指 undo/redo 后**文档内容**与 JSON round-trip 版本一致；历史粒度从每击键粗化为每 blur/短窗一次属本项已记录的接受后果（写入测试注记），不作为行为回归
 - [x] spreadsheet：selection 相等比较改字段级比较（去 JSON.stringify）
-- [x] print：元素/页面相等比较改结构化比较（去 stringify）
+- [x] print：元素/页面相等比较改 identity-first 比较（ref 相等零成本 bail；ref 不同时保留 per-value stringify fallback——与 exit criteria 的 identity-first + ref-differ fallback 口径一致）
 - [x] focused 测试：undo/redo 行为等价、选择命令行为回归、print 比较等价
 - [x] Proof: 三包既有用例绿
 

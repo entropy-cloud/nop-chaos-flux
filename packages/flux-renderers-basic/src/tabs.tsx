@@ -103,27 +103,30 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const baseItems = scopeItemsActive && scopeItems ? scopeItems : rawItems;
   const items = managedItems ?? baseItems;
 
-  // Per-tab title region render cache (plan 2026-09-29-4 R2-P17): keyed by
-  // the items array identity at module level (render-phase code must not touch
-  // refs), then per item. A re-render of the tabs container with unchanged
-  // items no longer re-instantiates every title region; a replaced/inserted
-  // item gets fresh entries, and dropping the items array releases its map.
+  // Per-tab title region render cache (plan 2026-09-29-4 R2-P17; audit r1
+  // F5: the second-level key is the title REGION HANDLE so two tabs bound to
+  // the same scope items never share region-rendered content). Items without
+  // a region handle fall into the shared `undefined` bucket — their fallback
+  // content derives purely from the item's own props. A re-render of the
+  // tabs container with unchanged items no longer re-instantiates every
+  // title region; dropping the items array releases its map.
   let titleCache = tabTitleRegionCache.get(items);
   if (!titleCache) {
     titleCache = new Map<unknown, React.ReactNode>();
     tabTitleRegionCache.set(items, titleCache);
   }
   const memoizedTitleContent = (item: TabsItemSchema, index: number, value: string): React.ReactNode => {
-    const cached = titleCache!.get(item);
+    const titleRegion =
+      typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
+    const cacheKey = titleRegion ?? item;
+    const cached = titleCache!.get(cacheKey);
     if (cached !== undefined) {
       return cached;
     }
     const regionOptions = createTabRegionOptions(item, index);
-    const titleRegion =
-      typeof item.titleRegionKey === 'string' ? props.regions[item.titleRegionKey] : undefined;
     const content =
       asReactNode(titleRegion?.render(regionOptions)) ?? item.title ?? item.label ?? value;
-    titleCache!.set(item, content);
+    titleCache!.set(cacheKey, content);
     return content;
   };
 
