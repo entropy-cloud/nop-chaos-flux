@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, waitFor } from '@testing-library/react';
-import type { RendererRuntime } from '@nop-chaos/flux-core';
+import type { ImportedLibraryLoader, RendererRuntime } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer.js';
-import { createExpressionCompiler } from '../test-support.js';
 import { env as baseEnv, textRenderer } from '../test-support-core.js';
+
+function makeImportLoader(): ImportedLibraryLoader {
+  return {
+    load: vi.fn(async () => ({} as ImportedLibraryModule)),
+  };
+}
+type ImportedLibraryModule = Awaited<ReturnType<ImportedLibraryLoader['load']>>;
 
 afterEach(() => {
   cleanup();
@@ -12,13 +18,14 @@ afterEach(() => {
 });
 
 const STABLE_SCHEMA = { type: 'text', text: 'Env deps probe' } as const;
+const STABLE_FORMULA_COMPILER = createFormulaCompiler();
 
 // R3-P5: the root compile memo must key on the two env functions it consumes,
 // not on the env object identity — hosts routinely pass inline `env={{...}}`
 // objects, and every host render would otherwise recompile the whole schema.
 describe('SchemaRenderer root compile env dependencies', () => {
   it('does not recompile when a fresh inline env object carries stable import functions', async () => {
-    const importLoader = vi.fn();
+    const importLoader = makeImportLoader();
     const resolveImportUrl = vi.fn((url: string) => url);
     const onRuntimeChange = vi.fn();
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
@@ -28,7 +35,7 @@ describe('SchemaRenderer root compile env dependencies', () => {
         schemaUrl="test://env-deps.json"
         schema={STABLE_SCHEMA}
         env={{ ...baseEnv, importLoader, resolveImportUrl }}
-        expressionCompiler={createExpressionCompiler(createFormulaCompiler())}
+        formulaCompiler={STABLE_FORMULA_COMPILER}
         onRuntimeChange={onRuntimeChange}
       />,
     );
@@ -43,7 +50,7 @@ describe('SchemaRenderer root compile env dependencies', () => {
         schemaUrl="test://env-deps.json"
         schema={STABLE_SCHEMA}
         env={{ ...baseEnv, importLoader, resolveImportUrl }}
-        expressionCompiler={createExpressionCompiler(createFormulaCompiler())}
+        formulaCompiler={STABLE_FORMULA_COMPILER}
         onRuntimeChange={onRuntimeChange}
       />,
     );
@@ -57,13 +64,13 @@ describe('SchemaRenderer root compile env dependencies', () => {
     const onRuntimeChange = vi.fn();
     const SchemaRenderer = createSchemaRenderer([textRenderer]);
 
-    const initialImportLoader = vi.fn();
+    const initialImportLoader = makeImportLoader();
     const { rerender } = render(
       <SchemaRenderer
         schemaUrl="test://env-deps.json"
         schema={STABLE_SCHEMA}
         env={{ ...baseEnv, importLoader: initialImportLoader, resolveImportUrl }}
-        expressionCompiler={createExpressionCompiler(createFormulaCompiler())}
+        formulaCompiler={STABLE_FORMULA_COMPILER}
         onRuntimeChange={onRuntimeChange}
       />,
     );
@@ -72,13 +79,13 @@ describe('SchemaRenderer root compile env dependencies', () => {
     const runtime = onRuntimeChange.mock.calls[0][0] as RendererRuntime;
     const compileSpy = vi.spyOn(runtime.schemaCompiler, 'compile');
 
-    const lateImportLoader = vi.fn();
+    const lateImportLoader = makeImportLoader();
     rerender(
       <SchemaRenderer
         schemaUrl="test://env-deps.json"
         schema={STABLE_SCHEMA}
         env={{ ...baseEnv, importLoader: lateImportLoader, resolveImportUrl }}
-        expressionCompiler={createExpressionCompiler(createFormulaCompiler())}
+        formulaCompiler={STABLE_FORMULA_COMPILER}
         onRuntimeChange={onRuntimeChange}
       />,
     );

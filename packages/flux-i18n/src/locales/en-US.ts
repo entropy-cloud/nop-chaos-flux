@@ -262,6 +262,7 @@ export const enUS: Resource = {
       min: 'Minimum value is {{min}}',
       max: 'Maximum value is {{max}}',
       remove: 'Remove',
+      rowActions: 'Row actions',
       addItem: 'Add item',
       maxItemsReached: 'Maximum items reached ({{count}}/{{max}})',
       checkboxMaxSelected: 'Up to {{max}} options can be selected',

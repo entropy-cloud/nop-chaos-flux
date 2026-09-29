@@ -618,6 +618,7 @@ export function TreeRenderer(props: RendererComponentProps<TreeSchema>) {
           <Input
             data-slot="tree-search-input"
             type="search"
+            aria-label={t('flux.common.search')}
             size="sm"
             placeholder={t('flux.common.search')}
             value={searchQuery}

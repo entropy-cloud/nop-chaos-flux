@@ -51,6 +51,7 @@ export function QueryFilterRenderer(props: RendererComponentProps<QueryFilterSch
             size="icon-sm"
             onClick={() => setCollapsed(!collapsed)}
             aria-expanded={!collapsed}
+            aria-controls={formContent ? 'query-filter-content' : undefined}
             aria-label={collapsed ? collapsedSummary : expandedToggleLabel}
           >
             <ChevronDownIcon
@@ -65,6 +66,7 @@ export function QueryFilterRenderer(props: RendererComponentProps<QueryFilterSch
           runtime. */}
       {!collapsed || !enabled || formContent ? (
         <div
+          id="query-filter-content"
           className={enabled ? 'mt-3' : ''}
           hidden={enabled && collapsed ? true : undefined}
         >

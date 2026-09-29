@@ -318,8 +318,11 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
               <span
                 data-slot="carousel-indicator-dot"
                 className={cn(
-                  'size-2 rounded-full',
-                  index === activeIndex ? 'bg-primary' : 'bg-muted-foreground/30',
+                  'size-2 rounded-full transition-transform',
+                  // Active cue is shape+size in addition to color (WCAG 1.4.1).
+                  index === activeIndex
+                    ? 'bg-primary ring-2 ring-primary/40 scale-110'
+                    : 'bg-muted-foreground/30',
                 )}
               />
             </Button>

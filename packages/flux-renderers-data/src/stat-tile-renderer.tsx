@@ -216,7 +216,6 @@ export function StatTileRenderer(props: RendererComponentProps<StatTileSchema>) 
               viewBox={`0 0 ${SPARKLINE_WIDTH} ${SPARKLINE_HEIGHT}`}
               width={SPARKLINE_WIDTH}
               height={SPARKLINE_HEIGHT}
-              role="img"
               aria-hidden="true"
               className="shrink-0"
             >

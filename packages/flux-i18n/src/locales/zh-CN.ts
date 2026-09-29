@@ -262,6 +262,7 @@ export const zhCN: Resource = {
       min: '最小值为 {{min}}',
       max: '最大值为 {{max}}',
       remove: '删除',
+      rowActions: '行操作',
       addItem: '添加项',
       maxItemsReached: '已达最大条目数（{{count}}/{{max}}）',
       checkboxMaxSelected: '最多可选 {{max}} 项',

@@ -358,7 +358,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
               ) : (
                 <TableHead>{t('flux.form.value', { defaultValue: 'Value' })}</TableHead>
               )}
-              {showActionColumn && <TableHead className="w-px" aria-label="row actions" />}
+              {showActionColumn && <TableHead className="w-px" aria-label={t('flux.form.rowActions')} />}
             </TableRow>
           </TableHeader>
           <TableBody>

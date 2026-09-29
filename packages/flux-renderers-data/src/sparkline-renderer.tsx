@@ -83,7 +83,6 @@ export function SparklineRenderer(props: RendererComponentProps<SparklineSchema>
         viewBox={`0 0 ${width} ${height}`}
         width={width}
         height={height}
-        role="img"
         aria-hidden="true"
         className="shrink-0"
       >

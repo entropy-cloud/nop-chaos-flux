@@ -576,7 +576,7 @@ describe('selectCurrentFormFieldPresentation query handling', () => {
   });
 
   it('aggregate lookup only accepts registered source kinds', () => {
-    const foreignSource = makeError({ path: 'name', sourceKind: 'field-rule' });
+    const foreignSource = makeError({ path: 'name', sourceKind: 'row' });
     const aggregateError = makeError({ path: 'name', sourceKind: 'external', message: 'Ext' });
     const state = makeState({
       fieldStates: {

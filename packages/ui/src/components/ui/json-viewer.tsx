@@ -35,13 +35,16 @@ type DataViewerProps = {
 function DataViewer({ data, defaultExpand = true, className }: DataViewerProps) {
   const [format, setFormat] = React.useState<'json' | 'yaml'>('json');
 
-  const yamlText = (() => {
+  // YAML serialization only when the YAML tab is actually shown — stringifying
+  // large documents on every render while the JSON tab is active is waste.
+  const yamlText = format === 'yaml' ? safeYaml() : '';
+  function safeYaml(): string {
     try {
       return stringify(data, { lineWidth: 0 });
     } catch {
       return '';
     }
-  })();
+  }
 
   return (
     <div className={cn('flex flex-col', className)}>

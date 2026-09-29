@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent, type Content } from '@tiptap/react';
+
+const HTML_COMMIT_DEBOUNCE_MS = 300;
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Highlight from '@tiptap/extension-highlight';
@@ -103,6 +105,7 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
   const readOnly = presentation.readOnly || !presentation.interactive;
   const handlersRef = useRef(handlers);
   const outputFormatRef = useRef(outputFormat);
+  const htmlCommitTimerRef = useRef<number | undefined>(undefined);
   // V12b G2-R3-视角4-01: toolbar runs report an inline feedback token (e.g.
   // rejected link URL) instead of failing silently.
   const [toolbarFeedback, setToolbarFeedback] = useState<string | null>(null);
@@ -144,15 +147,27 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
       },
       onUpdate({ editor: activeEditor }) {
         const fmt = outputFormatRef.current;
+        if (fmt === 'json') {
+          const nextJson = activeEditor.getJSON();
+          lastCommittedRef.current = nextJson;
+          handlersRef.current.onChange(nextJson);
+          return;
+        }
         // HTML output passes the DOMPurify gate again (design §W3d: the editor
         // only ever emits the safe subset), so a pasted/typed link with an
-        // unsafe scheme can never leak into the stored field value.
-        const next =
-          fmt === 'json'
-            ? activeEditor.getJSON()
-            : sanitizeEditorHtml(activeEditor.getHTML());
-        lastCommittedRef.current = next;
-        handlersRef.current.onChange(next);
+        // unsafe scheme can never leak into the stored field value. The
+        // serialize+sanitize pipeline is trailing-debounced — sanitize still
+        // gates EVERY store write (no raw-HTML window); the editor itself
+        // remains the interactive truth while typing.
+        if (htmlCommitTimerRef.current !== undefined) {
+          window.clearTimeout(htmlCommitTimerRef.current);
+        }
+        htmlCommitTimerRef.current = window.setTimeout(() => {
+          htmlCommitTimerRef.current = undefined;
+          const nextHtml = sanitizeEditorHtml(activeEditor.getHTML());
+          lastCommittedRef.current = nextHtml;
+          handlersRef.current.onChange(nextHtml);
+        }, HTML_COMMIT_DEBOUNCE_MS);
       },
       onFocus() {
         handlersRef.current.onFocus();
@@ -236,6 +251,15 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
 
   useEffect(() => {
     return () => {
+      if (htmlCommitTimerRef.current !== undefined) {
+        window.clearTimeout(htmlCommitTimerRef.current);
+        htmlCommitTimerRef.current = undefined;
+        if (editor && !editor.isDestroyed) {
+          const nextHtml = sanitizeEditorHtml(editor.getHTML());
+          lastCommittedRef.current = nextHtml;
+          handlersRef.current.onChange(nextHtml);
+        }
+      }
       editor?.destroy();
     };
   }, [editor]);

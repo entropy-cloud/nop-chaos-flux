@@ -128,7 +128,11 @@ describe('flow designer controls', () => {
       designerScope: {
         materializeVisible: () => mockState.snapshot,
       },
-      core: { subscribe: () => () => {}, getSnapshot: () => mockState.snapshot },
+      core: {
+        subscribe: () => () => {},
+        getSnapshot: () => mockState.snapshot,
+        getConfig: () => mockState.context.config,
+      },
     };
   });
 

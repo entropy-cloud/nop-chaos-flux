@@ -8,7 +8,9 @@ function readCurrentRoute(): RouteSpec {
 function applyRoute(spec: RouteSpec) {
   const hash = buildRoute(spec);
   const bare = hash.startsWith('#') ? hash.slice(1) : hash;
-  window.location.replace(`${window.location.pathname}${window.location.search}#${bare}`);
+  // Push semantics: in-app navigation must keep browser history working —
+  // replace() made the back button leave the whole playground.
+  window.location.hash = bare;
 }
 
 export function useRoute(): [RouteSpec, (spec: RouteSpec) => void] {

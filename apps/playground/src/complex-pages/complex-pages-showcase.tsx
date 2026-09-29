@@ -83,6 +83,7 @@ function NavGroup({
                   : 'text-[var(--nop-body-copy)] hover:bg-[var(--nop-nav-surface)] hover:text-[var(--nop-text-strong)]',
               )}
               onClick={() => onSelectPage(entry.id)}
+              aria-current={activePageId === entry.id ? 'true' : undefined}
               data-testid={`complex-nav-${entry.id}`}
             >
               <span className="truncate">{entry.title}</span>

@@ -166,7 +166,7 @@ export function FluxBasicPage({ debuggerController, onBack }: FluxBasicPageProps
                     status: 0,
           data: {
             valid: !exists,
-            message: exists ? 'Username is already-taken' : 'Username is available',
+            message: exists ? 'Username is already taken' : 'Username is available',
             summary: `username=${username || '(empty)'}`,
           } as T,
         };

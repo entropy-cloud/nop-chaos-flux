@@ -13,10 +13,14 @@ import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubm
 import type { BarcodeFormat, BarcodeDetectResult } from './barcode-input.types.js';
 import { useFocusTrap } from '../shared/hooks/use-focus-trap.js';
 
-const statusMessages = {
-  recognizing: t('flux.barcode.recognizing'),
-  retry: t('flux.barcode.recognitionFailed'),
-};
+// R3-U3: resolved inside the component — module-scope t() freezes the locale
+// at module-init time and survives runtime language switches.
+function statusMessages() {
+  return {
+    recognizing: t('flux.barcode.recognizing'),
+    retry: t('flux.barcode.recognitionFailed'),
+  };
+}
 
 interface BarcodeScannerOverlayProps {
   open: boolean;
@@ -314,7 +318,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
             detect.isScanning ? 'opacity-100' : 'opacity-0',
           )}
         >
-          {detect.isScanning ? statusMessages.recognizing : detect.error ? statusMessages.retry : ''}
+          {detect.isScanning ? statusMessages().recognizing : detect.error ? statusMessages().retry : ''}
         </div>
       </div>
 

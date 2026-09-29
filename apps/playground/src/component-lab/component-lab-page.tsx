@@ -16,6 +16,8 @@ const CATEGORY_ORDER: RendererCategory[] = [
   'advanced',
   'form',
   'data',
+  'scheduling',
+  'domain',
 ];
 
 const CATEGORY_LABELS: Record<RendererCategory, string> = {
@@ -135,6 +137,7 @@ function NavGroup({
                   : 'text-[var(--nop-body-copy)] hover:bg-[var(--nop-nav-surface)] hover:text-[var(--nop-text-strong)]',
               )}
               onClick={() => onSelectRenderer(entry.id)}
+              aria-current={activeRendererId === entry.id ? 'true' : undefined}
               data-testid={`nav-renderer-${entry.id}`}
             >
               <span className="truncate">{entry.title}</span>

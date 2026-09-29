@@ -8,6 +8,7 @@ const messages: Record<string, string> = {
   'flux.combobox.clear': 'Clear selection',
   'flux.combobox.toggleDropdown': 'Toggle dropdown',
   'flux.combobox.removeChip': 'Remove entry',
+  'flux.common.loading': 'Loading...',
   'flux.common.close': 'Close',
   'flux.common.confirm': 'Confirm',
   'flux.common.cancel': 'Cancel',
