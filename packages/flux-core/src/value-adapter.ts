@@ -463,7 +463,9 @@ export interface ActionBackedAdapterOptions {
    * Message seam (flux-core stays dependency-free — no i18n here). Default
    * emits plain English messages with `cause`; hosts inject their own
    * localization (form-advanced passes the flux.form.validationFailedDetail
-   * formatter).
+   * formatter). Note: the plain-schema fallthrough reuses actionAdapter,
+   * which always uses the core English formatter — the injected formatter
+   * only applies when at least one action is a compiled program.
    */
   toValidationIssues?: (error: unknown) => AdapterValidationIssue[];
 }

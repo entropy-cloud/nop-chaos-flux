@@ -1,7 +1,7 @@
 # CQ-4 跨包重复与衍生实现收敛（3d/industrial/form-advanced/report/spreadsheet）
 
-> Plan Status: active
-> As-Built Note: Phase 1 已随 0813a100d/ed9cbf8af 落地;Phase 2 组合 API 落于 flux-core value-adapter(createActionBackedAdapter,actionAdapter 保持原实现并在 plain-schema 路径被组合体复用——委托式统一尝试曾引发递归与 payload 偏差,已回退为并行双实现,core 内 56L 结构性相似记为 residual);Phase 4 经 live 勘察后裁定收缩(见该 Phase 回填)
+> Plan Status: completed
+> As-Built Note: Phase 1 已随 d4cfa6c5c(docs)+ed9cbf8af(code) 落地（0813a100d 为拆分前的 reflog 悬挂号,不可达,audit Minor-1 勘误）;Phase 2 组合 API 落于 flux-core value-adapter(createActionBackedAdapter,actionAdapter 保持原实现并在 plain-schema 路径被组合体复用——委托式统一尝试曾引发递归与 payload 偏差,已回退为并行双实现,core 内 56L 结构性相似记为 residual);Phase 4 经 live 勘察后裁定收缩(见该 Phase 回填)
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md`（CQ-D2、D3、D4、D15；D11/D13 defer 裁定见报告第五节）+ 首轮独立评审 live 勘误
 > Related: `docs/plans/2026-09-30-cq-2-core-shared-primitives-plan.md`（其 Phase 2 承接 host-action-provider 粘合层对，本 plan 不依赖其落地）
@@ -135,7 +135,7 @@ Exit Criteria:
 - [x] 行为锁定测试先行且迁移后全绿（既有 binding/detail-view 套件即锁定,零改动通过）
 - [x] owner docs 已同步（renderer-runtime.md 增 Binding Evaluation Core 节；anchors 门禁 exit 0）
 - [x] 不存在被静默降级的 in-scope live defect（Phase 3 hooks 与 Phase 4 三对保留均有 live 勘察证据与 plan 回填）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure）
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -171,13 +171,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 四 Phase 落地。独立 fresh-session closure audit 首轮 verdict `approved`（0 Blocker/Major,2 Minor 均已修：As-Built 悬挂 commit 号勘误、toValidationIssues plain-schema 路径限制披露）。委托式统一回退与 Phase 4 收缩裁定经审计独立复核成立（回退路径 runner 单参签名无害、三对保留证据逐对核实）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<>>
-- Evidence: <<>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_9c149a0b）
+- Verdict: `approved`（2 Minor 非 blocking,已修）
+- Evidence: 审计独立复跑 3d 204 / industrial 1611 / form-advanced 1144 / report 206 / spreadsheet 169 / spreadsheet-core 279 / report-designer-core 186 全绿;56L residual 定向 jscpd 复现逐字吻合;manifest 松紧差(allow vs reject×8)与 canvas/renderers 枚举性质逐对核实;门禁(manifest/anchors/duplicates)全绿。
 
 Follow-up:
 
-- <<>>
+- dashboard handles 跨包收敛（依赖边阻塞,已注记）
+- ownership/statePath 下沉 flux-react;undo 栈统一(CQ-D13);inspector field-model(CQ-D11)（Deferred 既有）
