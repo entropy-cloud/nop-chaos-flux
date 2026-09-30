@@ -69,48 +69,48 @@
 
 ### Phase 1 - 性能热点（R3-P23 ~ P30）
 
-Status: planned
+Status: completed
 Targets: `editor-renderer.tsx`、`signature-renderer.tsx`、`key-value.tsx`、`condition-group.tsx`、`chart-renderer.tsx`、`chart-heatmap.tsx`、`stat-tile-renderer.tsx`、`use-crud-polling.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-P23)：editor onUpdate 路径 **sanitize 先于 store 写入**（可 trailing debounce 合并连续击键，但不引入"裸 HTML 进 store"的瞬态窗口）；粘贴/输入路径 sanitization 语义经既有 sanitize 测试证明等价
-- [ ] Fix (R3-P24)：签名 pointermove 只增量绘制最新线段；全量 redraw 保留 undo/clear/resize
-- [ ] Fix (R3-P25)：`KeyValueRow` 包 React.memo + 行级 props 收敛（对齐 ComboItem/ArrayItem/InputTableRow 先例）
-- [ ] Fix (R3-P26)：condition-group 组级 useMemo 一次构建 `excludeId → usedFields` 映射
-- [ ] Fix (R3-P27)：pie sr-only 摘要 `slice(0, 20)` + 总数注明（对齐 cartesian/heatmap 先例）
-- [ ] Fix (R3-P28)：heatmap cells 上限（超限截断 + 提示），`<title>` 改单 tooltip 事件委托（或保持 per-cell title 但有上限，执行时按实现成本裁定并在 plan 本节回写最终裁定）
-- [ ] Fix (R3-P29)：stat-tile Intl.NumberFormat 按 `language|decimals|thousands` 模块级 Map 缓存
-- [ ] Fix (R3-P30)：crud 轮询解析重试设上限（20 次 × 250ms ≈ 5s，覆盖 schema 顺序 `[crud, data-source]` 的合法晚注册窗口；live 注释 `use-crud-polling.ts:126-133` 记载的 warn-once 设计保留）；达上限后停止自动重试并 warn 指引配置检查；组件 effect 重跑时计数重新武装
-- [ ] Proof：focused 单测——sanitize 边界等价（unsafe HTML 不入存储值）；签名增量绘制断言（draw call 计数）；key-value 单行击键只重渲该行（渲染计数）；condition-builder 映射与原递归结果一致；pie/heatmap 上限生效；formatter 缓存命中；重试达上限停止
+- [x] Fix (R3-P23)：editor onUpdate 路径 **sanitize 先于 store 写入**（可 trailing debounce 合并连续击键，但不引入"裸 HTML 进 store"的瞬态窗口）；粘贴/输入路径 sanitization 语义经既有 sanitize 测试证明等价
+- [x] Fix (R3-P24)：签名 pointermove 只增量绘制最新线段（`drawSegment`/`drawDot` 活线条元原语直接画到位图；pointerdown 点、移动线段零全量 redraw）；全量 redraw 保留 undo/clear/resize/echo
+- [x] Fix (R3-P25)：`KeyValueRow` 包 React.memo + 行级 props 收敛（对齐 ComboItem/ArrayItem/InputTableRow 先例）：行契约改为 `onSync(index, patch)` + `registerRemoveButton(index, button)`，父级 `handleRemove/handleMove` 改读 `pairsRef.current` 消除 `pairs` 闭包依赖，`toRawKeyValuePairs` 克隆导致的恒新对象由组件内 identity cache（state+effect，array identity 复用防环）修复；comparator 提取为导出的 `keyValueRowPropsEqual`；组件迁至 `key-value-row.tsx`（顺带收口 oversized 700 行红线）
+- [x] Fix (R3-P26)：condition-group 组级 useMemo 单遍构建 `excludeId → usedFields` 映射（每子项自有字段集一次遍历 + total 差集），替代每项递归 O(n²)
+- [x] Fix (R3-P27)：pie sr-only 摘要 `slice(0, 20)` + 总数注明（`flux.chart.summaryTruncated` 两语言；heatmap/cartesian 既有 slice 统一到 `CHART_SUMMARY_LIMIT` 常量）
+- [x] Fix (R3-P28)：heatmap cells 上限（`MAX_HEATMAP_CELLS = 2000`，超限截断 + svg 内 `[data-slot="chart-heatmap-truncated"]` 提示，viewBox 增高一行）。**裁定回写：保留 per-cell `<title>`**——上限已同时约束 rect 与 title 节点总量，事件委托 tooltip 会改变 UX 且收益边际，按实现成本选择保持
+- [x] Fix (R3-P29)：stat-tile Intl.NumberFormat 按 `language|decimals|thousands` 模块级 Map 缓存
+- [x] Fix (R3-P30)：crud 轮询解析重试设上限（20 次 × 250ms ≈ 5s，覆盖 schema 顺序 `[crud, data-source]` 的合法晚注册窗口；live 注释 `use-crud-polling.ts` 记载的 warn-once 设计保留）；达上限后停止自动重试并 warn 指引配置检查；计数为 effect 局部变量，effect 重跑（registry 变更）时重新武装
+- [x] Proof：focused 单测——sanitize 边界等价（既有 sanitize 测试）；签名增量绘制断言（8 次 move → 恰 8 次 lineTo/beginPath 段数 + 会话内零 clearRect + undo 仍全量重绘）；key-value comparator 真值表（14 项 prop 变更全 bypass）+ 兄弟行内容隔离；pie/heatmap 上限生效（30 项 pie 恰 20 行 + 截断注明；100×100 → 恰 2000 rect + 提示文本）；formatter 缓存命中（既有测试）；重试达上限停止（20 次 ≈ 5s 后零新尝试 + 恰一次 cap warn；registry 变更后 effect 重跑立即 start）
 
 Exit Criteria:
 
-- [ ] 8 项 Fix 落地，focused 测试全绿
-- [ ] 相关包既有测试（editor sanitize、signature、chart、crud）无回归
+- [x] 8 项 Fix 落地，focused 测试全绿
+- [x] 相关包既有测试（editor sanitize、signature 9/9、chart 292+6、crud 169+6）无回归
 
 ### Phase 2 - UX 与 i18n 残余（R3-U3、U14 ~ U17、U29 ~ U31）
 
-Status: planned
+Status: completed
 Targets: `barcode-scanner-overlay.tsx`、`signature-renderer.tsx`、`key-value.tsx`、`input-table-renderer.tsx`、`tree-renderer.tsx`、`carousel.tsx`、`query-filter.tsx`、`sparkline-renderer.tsx`、`stat-tile-renderer.tsx`、flux-i18n locales
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-U3)：barcode statusMessages 移入组件内（随语言切换）
-- [ ] Fix (R3-U14)：签名板 tabIndex + 键盘可达说明（焦点进入时 sr-only/可视说明指引指针替代路径），满足"键盘可达 + 降级提示"收口标准
-- [ ] Fix (R3-U15)：key-value 校验/aria-label 文案改用带 `{index}` 占位的完整本地化键（复用/新增 `flux.form.keyEntry` 系）
-- [ ] Fix (R3-U16)：input-table "row actions" aria-label 换 t() 键
-- [ ] Fix (R3-U17)：tree 搜索框补 `aria-label={t('flux.common.search')}`（或专用键）
-- [ ] Fix (R3-U29)：carousel 激活指示点加非颜色差异（ring/scale）
-- [ ] Fix (R3-U30)：query-filter 内容区 id + 按钮 aria-controls
-- [ ] Fix (R3-U31)：sparkline/stat-tile 移除与 aria-hidden 矛盾的 `role="img"`
-- [ ] Proof：DOM 断言单测——语言切换后 barcode 文案变化；签名聚焦出现说明；key-value aria-label 全本地化；tree 搜索 accessible name；carousel 激活点非仅颜色断言（class/attr 存在）；aria-controls 指向存在 id；冗余 role 移除
-- [ ] Proof：新增 locale 键 en-US/zh-CN 齐全（i18n 契约测试通过）
+- [x] Fix (R3-U3)：barcode statusMessages 移入组件内（`statusMessages()` 每 render 经 `t()` 解析，语言切换即生效）
+- [x] Fix (R3-U14)：签名板 tabIndex + 键盘可达说明（canvas `tabIndex=0` + `aria-describedby` sr-only 提示 + focus 可视提示 `signature-focus-hint`；`flux.form.signatureKeyboardHint` 两语言）
+- [x] Fix (R3-U15)：key-value 校验/aria-label 文案改用带 `{index}` 占位的完整本地化键（`flux.form.moveEntryUp/moveEntryDown/removeEntry/entryKeyLabel/entryValueLabel` 两语言新增）
+- [x] Fix (R3-U16)：input-table "row actions" aria-label 换 `flux.form.rowActions` t() 键
+- [x] Fix (R3-U17)：tree 搜索框补 `aria-label={t('flux.common.search')}`（input type=search）
+- [x] Fix (R3-U29)：carousel 激活指示点加非颜色差异（`ring-2 ring-primary/40 scale-110` + `data-active` 属性）
+- [x] Fix (R3-U30)：query-filter 内容区 id + 按钮 aria-controls（`#query-filter-content`，collapse 时 hidden 保持挂载）
+- [x] Fix (R3-U31)：sparkline/stat-tile 移除与 aria-hidden 矛盾的 `role="img"`
+- [x] Proof：DOM 断言单测——语言切换后 barcode 文案变化（en 'Recognizing...' → zh '识别中...'，changeLanguage + rerender）；签名聚焦出现说明（input-signature R3-U14 用例：tabindex/hint id/可视提示 focus-blur 生命周期）；key-value aria-label 全本地化（'Move entry 2 up'/'Remove entry 3' 完整键断言）；tree 搜索 accessible name（searchbox name+placeholder 双断言）；carousel 激活点非仅颜色断言（data-active=true）；aria-controls 指向存在 id（getElementById + aria-expanded 翻转 + hidden 保持挂载）；冗余 role 移除（stat-tile+sparkline 无 role="img"、aria-hidden 保留）；rowActions 表头 label 断言
+- [x] Proof：新增 locale 键 en-US/zh-CN 齐全（i18n 契约测试通过）
 
 Exit Criteria:
 
-- [ ] 8 项 UX Fix 落地，DOM 断言测试全绿
-- [ ] i18n 契约测试通过（键集一致）
+- [x] 8 项 UX Fix 落地，DOM 断言测试全绿
+- [x] i18n 契约测试通过（键集一致）
 
 ## Draft Review Record
 

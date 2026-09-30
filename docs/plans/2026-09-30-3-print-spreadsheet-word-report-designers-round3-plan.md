@@ -87,19 +87,20 @@ Exit Criteria:
 
 ### Phase 2 - spreadsheet 滚动与编辑草稿（R3-P15、P16）
 
-Status: in progress
+Status: completed
 Targets: `packages/spreadsheet-renderers/src/spreadsheet-grid.tsx`、`src/spreadsheet-grid/table-shell.tsx`、`src/spreadsheet-interactions/use-editing.ts`、`packages/spreadsheet-core/src/core.ts`
 
 - Item Types: `Fix`、`Proof`
 
 - [x] Fix (R3-P15)（部分）：scroll 事件 rAF 合并 + 本地 scroll state 驱动虚拟窗口（落盘仍走 store，rAF 节流）；外部同步 effect 加「rAF 挂起时跳过回写」守卫（防止 store 未跟上时用户滚动被重置——由滚动同步测试暴露）；`buildSpreadsheetGridViewport` 进 useMemo。`SpreadsheetGridCell` 包 React.memo 一项转入 Deferred：cell 的 30 个 props 含大量 page-body 透传闭包，不做跨层 handler 稳定化契约改动则 memo 永不命中，收益/风险不成比例
-- [ ] Fix (R3-P16)：单元格编辑草稿下沉为 CellEditor 本地 state；`core.updateEditValue` 仅在 save 边界进入 store。已知外部读取点须逐点迁移或保留兼容读取：`use-selection.ts:108,121`（切格提交时读 store 中 `draftValue`）、`use-editing.ts:27,54,69`
-- [x] Proof（部分）：focused 单测——scroll 会话 dispatch rAF 节流（grid-selection 滚动同步测试更新为新契约）；167 用例绿。cell memo 渲染计数与 edit 值 save 边界两项随 Deferred/Phase 2 剩余项顺延
+- [x] Fix (R3-P16)：编辑草稿改为 core 内非响应式 draft（`updateEditValue` 不再写 store/不通知订阅者）；新增 `getEditValue()`（渲染期种子读取）与 `commitEditValue()`（save 边界一次性同步 store `draftValue` 并返回值）；`handleEditSave`/`commitEditingCell` 两个外部读取点迁移到 `commitEditValue()`；`SpreadsheetCellEditor` 转非受控（`defaultValue` 种子 + DOM 持有，会话内零 React 重渲染）。host snapshot `editing` 仅投影 `{row,col}`（bridge.ts:19），saveStatus/saveMessage 仍从 core snapshot 读取
+- [x] Proof（部分）：focused 单测——scroll 会话 dispatch rAF 节流（grid-selection 滚动同步测试更新为新契约）；167 用例绿。cell memo 渲染计数一项随 Deferred 顺延
+- [x] Proof：edit-draft boundary focused 测试（spreadsheet-core 5 例：startEditing 种子 / updateEditValue 零通知零快照变化 / commitEditValue 单次同步 + 返回值 / 无会话返回空 / 跨会话重置）+ 渲染层 2 例（键入期间 store 零通知零 dispatch、Enter 落 `abc`；切格 click 提交当前草稿）。spreadsheet-core 277 + spreadsheet-renderers 169 用例全绿
 
 Exit Criteria:
 
-- [ ] 2 项 Fix 落地，focused 测试全绿
-- [ ] spreadsheet 键盘编辑/提交语义不回退（既有 focused 测试通过）
+- [x] 2 项 Fix 落地，focused 测试全绿
+- [x] spreadsheet 键盘编辑/提交语义不回退（既有 focused 测试通过：键盘导航、F2/Enter 编辑、失败保留草稿、取消丢弃全部保持绿）
 
 ### Phase 3 - word selection 与 report 同步（R3-P20、P21）
 
@@ -119,21 +120,21 @@ Exit Criteria:
 
 ### Phase 4 - print/report/word UX（R3-U11、U13、U18、U22）
 
-Status: in progress
+Status: completed
 Targets: `print-designer.tsx`（校验明细）、`print-designer-canvas.tsx`（键盘选中）、`report-field-panel.tsx`（禁用原因）、`word-editor-renderers/src/editor-canvas.tsx`（字数刷新）、flux-i18n locales
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-U11)：validate 结果以可定位列表展示（每条含元素标识，点击/Enter 滚动定位并选中该元素）
-- [ ] Fix (R3-U18)：print 画布元素可键盘选中（元素 tabIndex + Enter/方向键 roving selection；容器级 nudge/delete 快捷键复用）
-- [x] Fix (R3-U13)：report 插入按钮 disabled 时附 title + aria-describedby 原因（`flux.reportDesigner.insertDisabledNoSelection` 两语言）
+- [x] Fix (R3-U11)：validate 结果以可定位列表展示（`print-diagnostics` region + `print-diagnostic-item` 列表，含 level 标识与消息；带 elementId 的项可点击 → `setSelection` + `scrollIntoView` + focus 定位；errorCount 由 diagnostics 派生）；新增 `flux.print.diagnostics.*` 两语言键
+- [x] Fix (R3-U18)：print 画布元素可键盘选中（元素 `tabIndex=0` + `role="button"` + `aria-pressed` + `aria-label`；focus 即选中（roving select）、Enter/Space 显式选中并 stopPropagation；方向键/Delete 冒泡复用 shell 级 nudge/delete 快捷键）
+- [x] Fix (R3-U13)：report 插入按钮 disabled 时附 title + aria-describedby 原因（`flux.reportDesigner.insertDisabledNoSelection` 两语言）；补渲染 `#report-field-insert-disabled-reason` sr-only 描述节点（原实现 describedby 指向不存在的 id）
 - [x] Fix (R3-U22)：word 状态栏字数在 debounced autosave tick 中刷新（mount-only 问题消除，卸载 aborted 守卫保留）
-- [ ] Proof：DOM 断言单测——校验列表项点击触发选中定位（U11 未落地顺延）；元素可 Tab 聚焦且 Enter 选中（U18 未落地顺延）；disabled 原因属性存在（U13 已落地，断言顺延至 Phase 4 收口）；字数随内容变更更新（U22 已落地，断言顺延至 Phase 4 收口）
+- [x] Proof：DOM 断言单测——校验列表项点击触发选中定位（print-designer.test U11：断言面板文本、level 属性、点击后 `aria-pressed=true`）；元素可 Tab 聚焦且 Enter 选中（print-designer.test U18：tabindex/role/aria-pressed + Enter/Space）；键盘选中后方向键微移仍工作（nudge 冒泡不回退）；disabled 原因属性存在（report-field-panel.test：title/aria-describedby/描述节点文本三断言）；字数随内容变更更新（editor-canvas.test：mount 7 → 编辑后 autosave tick 12）
 
 Exit Criteria:
 
-- [ ] 4 项 UX Fix 落地，DOM 断言测试全绿
-- [ ] 新增 locale 键两语言齐全（契约测试通过）
+- [x] 4 项 UX Fix 落地，DOM 断言测试全绿
+- [x] 新增 locale 键两语言齐全（契约测试通过：flux-i18n 30 用例绿）
 
 ## Draft Review Record
 

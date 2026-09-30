@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Badge, Button, cn } from '@nop-chaos/ui';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Badge, Button, Drawer, DrawerContent, Input, cn, useIsMobile } from '@nop-chaos/ui';
+import { ChevronDown, ChevronRight, Menu, Search } from 'lucide-react';
 import {
   ALL_SHARED_RENDERER_ROUTES,
   type RendererRouteEntry,
@@ -159,42 +159,110 @@ export function ComponentLabPage({
 }: ComponentLabPageProps) {
   const activeEntry = resolveActiveEntry(activeRendererId);
   const LabPage = activeRendererId ? RENDERER_LAB_REGISTRY[activeRendererId] : null;
+  const isMobile = useIsMobile();
+  const [filter, setFilter] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const normalizedFilter = filter.trim().toLowerCase();
+  const visibleGroups = useMemo(
+    () =>
+      grouped
+        .map(({ category, entries }) => ({
+          category,
+          entries: normalizedFilter
+            ? entries.filter(
+                (entry) =>
+                  entry.title.toLowerCase().includes(normalizedFilter) ||
+                  entry.id.toLowerCase().includes(normalizedFilter),
+              )
+            : entries,
+        }))
+        .filter((group) => group.entries.length > 0),
+    [normalizedFilter],
+  );
+
+  const handleSelectRenderer = (id: string) => {
+    onSelectRenderer(id);
+    setDrawerOpen(false);
+  };
+
+  const sidebarBody = (
+    <>
+      <div className="p-4 border-b border-[var(--nop-nav-border)] shrink-0">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-3 text-xs text-[var(--nop-accent)] hover:underline cursor-pointer bg-transparent border-none p-0"
+          onClick={onBack}
+          data-testid="component-lab-back"
+        >
+          ← Back to Home
+        </Button>
+        <p className="uppercase tracking-[0.14em] text-[10px] font-bold text-[var(--nop-accent-muted)]">
+          Component Lab
+        </p>
+        <p className="text-xs text-[var(--nop-body-copy)] mt-0.5">
+          {ALL_SHARED_RENDERER_ROUTES.length} renderers
+        </p>
+        <div className="relative mt-2">
+          <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-[var(--nop-body-copy)] opacity-60" />
+          <Input
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
+            placeholder="Filter renderers…"
+            aria-label="Filter renderers"
+            data-testid="component-lab-filter"
+            className="h-7 pl-7 text-xs"
+          />
+        </div>
+      </div>
+      <nav className="flex-1 min-h-0 overflow-y-auto p-2" data-testid="component-lab-nav">
+        {visibleGroups.map(({ category, entries }) => (
+          <NavGroup
+            key={category}
+            category={category}
+            entries={entries}
+            activeRendererId={activeRendererId}
+            onSelectRenderer={handleSelectRenderer}
+          />
+        ))}
+        {visibleGroups.length === 0 ? (
+          <p className="px-2 py-4 text-xs text-[var(--nop-body-copy)] opacity-60" data-testid="component-lab-filter-empty">
+            No renderers match “{filter}”.
+          </p>
+        ) : null}
+      </nav>
+    </>
+  );
 
   return (
     <div className="flex h-screen overflow-hidden" data-testid="component-lab">
-      <aside
-        className="w-[240px] shrink-0 border-r border-[var(--nop-nav-border)] bg-[var(--nop-hero-bg)] flex flex-col h-screen"
-        data-testid="component-lab-sidebar"
-      >
-        <div className="p-4 border-b border-[var(--nop-nav-border)] shrink-0">
+      {isMobile ? (
+        <>
           <Button
             variant="ghost"
-            size="sm"
-            className="mb-3 text-xs text-[var(--nop-accent)] hover:underline cursor-pointer bg-transparent border-none p-0"
-            onClick={onBack}
-            data-testid="component-lab-back"
+            size="icon-sm"
+            aria-label="Open navigation"
+            data-testid="component-lab-menu"
+            className="absolute left-2 top-2 z-30"
+            onClick={() => setDrawerOpen(true)}
           >
-            ← Back to Home
+            <Menu className="size-4" />
           </Button>
-          <p className="uppercase tracking-[0.14em] text-[10px] font-bold text-[var(--nop-accent-muted)]">
-            Component Lab
-          </p>
-          <p className="text-xs text-[var(--nop-body-copy)] mt-0.5">
-            {ALL_SHARED_RENDERER_ROUTES.length} renderers
-          </p>
-        </div>
-        <nav className="flex-1 min-h-0 overflow-y-auto p-2" data-testid="component-lab-nav">
-          {grouped.map(({ category, entries }) => (
-            <NavGroup
-              key={category}
-              category={category}
-              entries={entries}
-              activeRendererId={activeRendererId}
-              onSelectRenderer={onSelectRenderer}
-            />
-          ))}
-        </nav>
-      </aside>
+          <Drawer direction="left" open={drawerOpen} onOpenChange={setDrawerOpen}>
+          <DrawerContent size="xs" data-testid="component-lab-sidebar-drawer">
+            <div className="flex h-full flex-col">{sidebarBody}</div>
+          </DrawerContent>
+          </Drawer>
+        </>
+      ) : (
+        <aside
+          className="w-[240px] shrink-0 border-r border-[var(--nop-nav-border)] bg-[var(--nop-hero-bg)] flex flex-col h-screen"
+          data-testid="component-lab-sidebar"
+        >
+          {sidebarBody}
+        </aside>
+      )}
 
       <main className="flex-1 overflow-auto" data-testid="component-lab-main">
         {LabPage && activeEntry ? (

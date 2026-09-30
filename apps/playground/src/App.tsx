@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { Component, lazy, Suspense, type ReactNode } from 'react';
 import { NopDebuggerPanel, createNopDebugger } from '@nop-chaos/nop-debugger';
 import { createDefaultRegistry } from '@nop-chaos/flux-react';
+import { t } from '@nop-chaos/flux-i18n';
+import { Button } from '@nop-chaos/ui';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
@@ -247,6 +249,68 @@ function PageFallback() {
   );
 }
 
+interface RouteErrorBoundaryProps {
+  /** Route identity; a change resets a caught error so navigation recovers. */
+  routeKey: string;
+  children: ReactNode;
+}
+
+/**
+ * Shell-level guard around the lazy route outlet (R3-U5): a failed/stale chunk
+ * after a redeploy renders a reload fallback instead of a white screen.
+ */
+class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, { error: Error | null }> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidUpdate(prevProps: RouteErrorBoundaryProps) {
+    if (this.state.error && prevProps.routeKey !== this.props.routeKey) {
+      this.setState({ error: null });
+    }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div
+          className="flex h-screen flex-col items-center justify-center gap-3 p-6 text-center"
+          data-testid="route-error-boundary"
+          role="alert"
+        >
+          <p className="text-lg font-medium">{t('flux.app.routeErrorTitle')}</p>
+          <p className="max-w-md text-sm text-muted-foreground">
+            {t('flux.app.routeErrorDescription')}
+          </p>
+          <Button type="button" onClick={() => window.location.reload()}>
+            {t('flux.app.routeErrorReload')}
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function DomainNotFound({ domainId, onBack }: { domainId: string; onBack: () => void }) {
+  return (
+    <div
+      className="flex h-screen flex-col items-center justify-center gap-3 p-6 text-center"
+      data-testid="domain-not-found"
+    >
+      <p className="text-lg font-medium">{t('flux.app.domainNotFoundTitle', { domain: domainId })}</p>
+      <p className="max-w-md text-sm text-muted-foreground">
+        {t('flux.app.domainNotFoundDescription')}
+      </p>
+      <Button type="button" onClick={onBack}>
+        {t('flux.app.backHome')}
+      </Button>
+    </div>
+  );
+}
+
 function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
   const goHome = () => navigate({ kind: 'home' });
   const diagnosticsEnabled =
@@ -464,17 +528,20 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         case 'ai-widgets':
           return <LazyAiWidgetsDemoPage onBack={goHome} />;
         default:
-          return <HomePage onNavigate={() => navigate({ kind: 'home' })} />;
+          return <DomainNotFound domainId={route.domainId} onBack={goHome} />;
       }
   }
 }
 
 export function App() {
   const [route, navigate] = useRoute();
+  const routeKey = route.kind === 'domain' ? `domain:${route.domainId}` : route.kind;
 
   return (
     <div className="nop-theme-root">
-      <Suspense fallback={<PageFallback />}>{renderPage(route, navigate)}</Suspense>
+      <RouteErrorBoundary routeKey={routeKey}>
+        <Suspense fallback={<PageFallback />}>{renderPage(route, navigate)}</Suspense>
+      </RouteErrorBoundary>
       <ThemeSwitcher />
       <NopDebuggerPanel controller={debuggerController} />
       {/* Host-channels contract (plan 512 L3.4): the app shell owns the ONLY

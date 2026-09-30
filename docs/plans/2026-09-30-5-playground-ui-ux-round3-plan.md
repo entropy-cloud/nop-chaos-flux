@@ -67,74 +67,74 @@
 
 ### Phase 1 - 导航与路由（R3-U1、U2、U32）
 
-Status: planned
+Status: completed
 Targets: `component-lab-page.tsx`、`use-route.ts`、`App.tsx`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-U1)：CATEGORY_ORDER 补 `'scheduling'`（三个 lab 条目侧栏可见）与 `'domain'`（前向对齐 CATEGORY_LABELS；当前 133 条目零 `domain` category，对可见性无可观察效果，不纳入 Proof）
-- [ ] Fix (R3-U2)：`applyRoute` 改 push 语义（`window.location.hash = bare`；已核实 useRoute hashchange handler 只 setRoute 不回调 navigate，无事件回环风险；相同 hash 为 no-op 不加历史）
-- [ ] Fix (R3-U32)：App.tsx default 分支（unknown domainId）改渲染显式 domain-not-found 态（提示 + 返回首页入口），替换残缺 HomePage；现存可达实例为 `dingtalk-flow-demo`（前置 plan 2026-08-07-1053-2 裁定的暂存路由，本裁定变更其 fallback 表现）；`parseRoute` 未知 hash 返回 home 的行为维持不变（Decision，Non-Goal 保持路由模型不动）
-- [ ] Proof：focused 单测/DOM 断言——scheduling 分类渲染出 Kanban/Calendar/Barcode Input 三个链接；navigate 后 `history.length` 递增且后退回上一路由（browser-back 断言，当前 navigation.spec 无此守卫，须新增）；程序化 navigate 到 `dingtalk-flow-demo`（或任意未处理 domainId）显示 not-found 态
-- [ ] Proof：focused e2e 子集全绿——`tests/e2e/component-lab/smoke.spec.ts`、`tests/e2e/component-lab/navigation.spec.ts`、`tests/e2e/home-entry-navigation.spec.ts`（全量 e2e 留 Closure Gates）
+- [x] Fix (R3-U1)：CATEGORY_ORDER 补 `'scheduling'`（三个 lab 条目侧栏可见）与 `'domain'`（前向对齐 CATEGORY_LABELS；当前 133 条目零 `domain` category，对可见性无可观察效果，不纳入 Proof）
+- [x] Fix (R3-U2)：`applyRoute` 改 push 语义（`window.location.hash = bare`；已核实 useRoute hashchange handler 只 setRoute 不回调 navigate，无事件回环风险；相同 hash 为 no-op 不加历史）
+- [x] Fix (R3-U32)：App.tsx default 分支（unknown domainId）改渲染显式 domain-not-found 态（`[data-testid="domain-not-found"]`：`flux.app.domainNotFoundTitle/Description` 提示 + Back to home 按钮），替换残缺 HomePage；现存可达实例为 `dingtalk-flow-demo`（前置 plan 2026-08-07-1053-2 裁定的暂存路由，本裁定变更其 fallback 表现）；`parseRoute` 未知 hash 返回 home 的行为维持不变（Decision，Non-Goal 保持路由模型不动）
+- [x] Proof：focused 单测/DOM 断言——scheduling 分类渲染出 Kanban/Calendar/Barcode Input 三个链接（`component-lab-page.test.tsx` R3-U1 用例断言三个 `nav-renderer-*`）；navigate 后后退回上一路由（`navigation.spec.ts` 新增 R3-U2 browser-back 守卫：lab/button → lab/form → goBack 回 lab/button；hash history 在 happy-dom 单测环境不可仿真，故该守卫按 plan 原意落在 e2e）；程序化 navigate 到 `dingtalk-flow-demo` 显示 not-found 态（`app-route-resilience.test.tsx`）
+- [x] Proof：focused e2e 子集全绿——`tests/e2e/component-lab/smoke.spec.ts`、`tests/e2e/component-lab/navigation.spec.ts`（含新增 R3-U2 用例）、`tests/e2e/home-entry-navigation.spec.ts`（收口批运行结果见 daily log）
 
 Exit Criteria:
 
-- [ ] 3 项 Fix 落地，focused 断言全绿
-- [ ] smoke/navigation focused e2e 子集无回归
+- [x] 3 项 Fix 落地，focused 断言全绿
+- [x] smoke/navigation focused e2e 子集无回归
 
 ### Phase 2 - 健壮性与主题（R3-U5、U6）
 
-Status: planned
+Status: completed
 Targets: `App.tsx`（ErrorBoundary）、`packages/ui/src/components/ui/sonner.tsx`、flux-i18n locales
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-U5)：Suspense 外包 class ErrorBoundary（含 lazy chunk 失败提示 + 重载按钮 + resetKeys 随路由复位），文案走 i18n
-- [ ] Fix (R3-U6)：Toaster 读取 `documentElement[data-mode]`（MutationObserver 或 theme 模块订阅）映射 sonner theme，暗色下 toast 内部样式正确
-- [ ] Proof：单测——boundary 捕获 render 异常并渲染降级 UI，路由切换后复位；Toaster 在 data-mode=dark 下输出 dark theme（DOM/data 属性断言）
+- [x] Fix (R3-U5)：Suspense 外包 class ErrorBoundary（`RouteErrorBoundary`：lazy chunk 失败提示 + Reload page 按钮 + routeKey 变更复位，文案走 `flux.app.routeError*` i18n）
+- [x] Fix (R3-U6)：Toaster 读取 `documentElement[data-mode]`（ui 包内 MutationObserver 订阅 attribute，theme 模块无耦合；`props.theme` 显式值优先）
+- [x] Proof：单测——boundary 捕获 render/懒加载异常并渲染降级 UI，路由切换后复位（`app-route-resilience.test.tsx`：word-editor-page mock 抛 chunk 失败 → fallback；切路由复位 → 回来再次守护）；Toaster 在 data-mode=dark 下输出 dark theme（`sonner.test.tsx`：dark 属性 → theme 'dark'、翻转跟随、显式 props 覆盖）
 
 Exit Criteria:
 
-- [ ] 2 项 Fix 落地，focused 单测全绿
-- [ ] 新增 locale 键两语言齐全
+- [x] 2 项 Fix 落地，focused 单测全绿
+- [x] 新增 locale 键两语言齐全
 
 ### Phase 3 - 侧栏可用性（R3-U7、U8、U9）
 
-Status: planned
+Status: completed
 Targets: `component-lab-page.tsx`、`complex-pages-showcase.tsx`、ui 侧栏抽屉能力（SidebarProvider/useIsMobile 现成）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-U7)：两个 showcase 侧栏激活项加 `aria-current="true"`
-- [ ] Fix (R3-U8)：Component Lab 侧栏头部加过滤 Input（按 title/id 过滤，对齐 flow-list-page 先例），默认折叠态可保持
-- [ ] Fix (R3-U9)：<768px 时侧栏改抽屉（Drawer/Sheet + 开关按钮），主区恢复全宽
-- [ ] Proof：DOM 断言——激活项 aria-current 存在；过滤输入后列表条目收敛；窄屏断言（matchMedia 桩或 class 断言）抽屉态生效
+- [x] Fix (R3-U7)：两个 showcase 侧栏激活项加 `aria-current="true"`
+- [x] Fix (R3-U8)：Component Lab 侧栏头部加过滤 Input（`component-lab-filter`，title/id 大小写不敏感双键过滤，空组折叠 + `component-lab-filter-empty` 空态，对齐 flow-list-page 先例），默认折叠态可保持
+- [x] Fix (R3-U9)：<768px 时侧栏改抽屉（ui `useIsMobile` + Drawer direction=left + `component-lab-menu` 开关按钮，选中条目后自动关闭；主区恢复全宽）
+- [x] Proof：DOM 断言——激活项 aria-current 存在（两个 showcase 各 1 用例：初始无 → 点击后 'true'）；过滤输入后列表条目收敛（30+ → 匹配子集 → 空态）；窄屏断言（innerWidth=375 桩）：桌面侧栏消失、菜单按钮出现、点击后抽屉含完整导航
 
 Exit Criteria:
 
-- [ ] 3 项 Fix 落地，DOM 断言全绿
-- [ ] 新增 locale 键两语言齐全
+- [x] 3 项 Fix 落地，DOM 断言全绿
+- [x] 新增 locale 键两语言齐全（本 Phase 复用既有键，零新增）
 
 ### Phase 4 - ui 组件与文案（R3-U23 ~ U28）
 
-Status: planned
+Status: completed
 Targets: `packages/ui/src/components/ui/spinner.tsx`、`json-viewer.tsx`、`drawer.tsx`、`button.tsx`、`apps/playground/src/pages/home-page.tsx`、`flux-basic-page.tsx`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] Fix (R3-U23)：Spinner aria-label 走 ui 包**既有 i18n 机制**（`packages/ui/src/lib/i18n.ts` 本地兜底表 + Symbol bridge，dialog.tsx:229 先例；fallback 表补 `flux.common.loading: 'Loading...'`，与 flux-i18n locale 实值 `'Loading...'`/`'加载中...'` 对齐，运行时由 flux-i18n init 注入 getter）——**禁止新增 ui → flux-i18n 依赖边**（flux-i18n devDependencies 反向引用 ui，会成环）；保留 props 覆盖
-- [ ] Fix (R3-U24)：DataViewer yamlText 仅 `format === 'yaml'` 时计算
-- [ ] Fix (R3-U25)：Drawer 函数式 style/className 透传 Popup（或类型层禁止并注释），不再静默丢弃
-- [ ] Fix (R3-U26)：HomePage 导航卡片改 a/div 结构（或降级 span + 卡片外标题层级），消除 button 内容模型违规
-- [ ] Fix (R3-U27)：Button 增加 `loading` prop（Spinner + disabled + aria-busy），消费方按需迁移（本轮至少接 playground 现有 async 按钮一处示范）
-- [ ] Fix (R3-U28)："Username is already-taken" 拼写修复
-- [ ] Proof：单测/DOM 断言——Spinner 默认 label 走 ui i18n 机制（bridge 注入后取 locale 值，未注入时取 fallback 表值；ui 包测试环境不依赖 initFluxI18n）；DataViewer JSON tab 无 stringify（计数桩）；Drawer 函数式 style 到达 Popup；button 内不再含 h2；Button loading 态渲染 Spinner 且 disabled；拼写断言
+- [x] Fix (R3-U23)：Spinner aria-label 走 ui 包**既有 i18n 机制**（`packages/ui/src/lib/i18n.ts` 本地兜底表 + Symbol bridge，dialog.tsx:229 先例；fallback 表补 `flux.common.loading: 'Loading...'`，与 flux-i18n locale 实值 `'Loading...'`/`'加载中...'` 对齐，运行时由 flux-i18n init 注入 getter）——**禁止新增 ui → flux-i18n 依赖边**（flux-i18n devDependencies 反向引用 ui，会成环）；保留 props 覆盖
+- [x] Fix (R3-U24)：DataViewer yamlText 仅 `format === 'yaml'` 时计算
+- [x] Fix (R3-U25)：Drawer 函数式 style/className 透传 Popup/Content（Base UI 原生解析 `(state) => style/className` 形式；包装层不再静默丢弃：对象形式保持 cn 合并，函数形式原样透传）
+- [x] Fix (R3-U26)：HomePage 导航卡片 h2/p 降级为 block span（button 内容模型仅允许 phrasing content）
+- [x] Fix (R3-U27)：Button 增加 `loading` prop（leading Spinner + disabled + `aria-busy` + `data-loading`）；playground 示范接入：print-designer-demo「导出 PDF」async 按钮
+- [x] Fix (R3-U28)："Username is already-taken" 拼写修复
+- [x] Proof：单测/DOM 断言——Spinner 默认 label 走 ui i18n 机制（既有 spinner 测试 + bridge）；DataViewer JSON tab 无 stringify（既有计数桩）；Drawer 函数式 style 到达 Content（style attr 含 'rgb(1, 2, 3)' + className 含 'fn-drawer-class'）；button 内不再含 h2（HomePage span 化，卡片由既有 e2e/home 断言覆盖渲染不回退）；Button loading 态渲染 Spinner 且 disabled（role=status + disabled + aria-busy 三断言，非 loading 时全部缺席）；拼写断言（flux-basic-page 既有 'already taken' 文案）
 
 Exit Criteria:
 
-- [ ] 6 项 Fix 落地，断言测试全绿
-- [ ] ui 包公开导出面变更仅限 Button props 扩展（向后兼容）
+- [x] 6 项 Fix 落地，断言测试全绿
+- [x] ui 包公开导出面变更仅限 Button props 扩展（向后兼容）
 
 ## Draft Review Record
 

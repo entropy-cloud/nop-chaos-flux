@@ -42,4 +42,35 @@ describe('Button', () => {
     const button = container.querySelector('[data-slot="button"]');
     expect(button?.className).toContain('nop-haptic');
   });
+
+  it('renders loading as spinner + disabled + aria-busy (R3-U27)', () => {
+    render(<Button loading>Save</Button>);
+
+    const button = screen.getByRole('button', { name: /Save/ });
+    expect(button.hasAttribute('disabled')).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(button.getAttribute('data-loading')).toBe('true');
+    expect(button.querySelector('[role="status"]')).toBeTruthy();
+  });
+
+  it('keeps non-loading buttons enabled without aria-busy', () => {
+    render(<Button>Save</Button>);
+
+    const button = screen.getByRole('button', { name: 'Save' });
+    expect(button.hasAttribute('disabled')).toBe(false);
+    expect(button.getAttribute('aria-busy')).toBeNull();
+    expect(button.querySelector('[role="status"]')).toBeNull();
+  });
+
+  it('loading does not override an explicit disabled, and explicit disabled wins', () => {
+    const { container } = render(
+      <Button loading disabled>
+        Both
+      </Button>,
+    );
+
+    const button = container.querySelector('[data-slot="button"]') as HTMLElement;
+    expect(button.hasAttribute('disabled')).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+  });
 });

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { COMPLEX_PAGE_ENTRIES } from './complex-pages-model';
 import { COMPLEX_PAGE_REGISTRY } from './complex-pages-registry';
+import { ComplexPagesShowcase } from './complex-pages-showcase';
 import { createShowcaseEnv } from './shared/showcase-env';
 import { SchemaPage } from './schema-page';
 
@@ -22,6 +23,25 @@ describe('Complex pages registry coverage', () => {
     for (const id of Object.keys(COMPLEX_PAGE_REGISTRY)) {
       expect(modelIds.has(id), `registry entry '${id}' has no page model entry`).toBe(true);
     }
+  });
+
+  it('marks the active showcase sidebar entry with aria-current (R3-U7)', () => {
+    const activeId = COMPLEX_PAGE_ENTRIES[0]!.id;
+    render(
+      <ComplexPagesShowcase
+        activePageId={activeId}
+        onSelectPage={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
+
+    const activeEntry = document.querySelector(`[data-testid="complex-nav-${activeId}"]`);
+    expect(activeEntry?.getAttribute('aria-current')).toBe('true');
+
+    const inactive = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-testid^="complex-nav-"]'),
+    ).find((entry) => entry.getAttribute('data-testid') !== `complex-nav-${activeId}`);
+    expect(inactive?.getAttribute('aria-current')).toBeNull();
   });
 });
 

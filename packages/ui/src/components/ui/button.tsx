@@ -2,6 +2,7 @@ import { Button as ButtonPrimitive } from '@base-ui/react/button';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '../../lib/utils.js';
+import { Spinner } from './spinner.js';
 
 const buttonVariants = cva(
   // [G1-R2-视角3-02] pressed-state visual branches live in the VARIANT table
@@ -61,20 +62,34 @@ const buttonVariants = cva(
   },
 );
 
+interface ButtonLoadingProps {
+  /** Busy state: shows a leading Spinner, disables interaction, sets aria-busy. */
+  loading?: boolean;
+}
+
 function Button({
   className,
   variant = 'default',
   size = 'default',
   type = 'button',
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & ButtonLoadingProps) {
   return (
     <ButtonPrimitive
       data-slot="button"
+      data-loading={loading || undefined}
       type={type}
+      disabled={disabled || loading || undefined}
+      aria-busy={loading || undefined}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
-    />
+    >
+      {loading ? <Spinner /> : null}
+      {children}
+    </ButtonPrimitive>
   );
 }
 

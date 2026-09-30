@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 import {
   CircleCheckIcon,
@@ -24,11 +25,38 @@ const defaultToastOptions = {
   },
 };
 
+// Theme independence contract: the shell communicates dark mode through
+// `documentElement[data-mode]`, not a React context. Follow the attribute so
+// sonner's internal toast palette switches with it; explicit props still win.
+function useDocumentThemeMode(): 'light' | 'dark' {
+  const [mode, setMode] = useState<'light' | 'dark'>(() =>
+    typeof document !== 'undefined' && document.documentElement.getAttribute('data-mode') === 'dark'
+      ? 'dark'
+      : 'light',
+  );
+
+  useEffect(() => {
+    if (typeof MutationObserver === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      setMode(
+        document.documentElement.getAttribute('data-mode') === 'dark' ? 'dark' : 'light',
+      );
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-mode'] });
+    return () => observer.disconnect();
+  }, []);
+
+  return mode;
+}
+
 const Toaster = ({ ...props }: ToasterProps) => {
+  const documentMode = useDocumentThemeMode();
   return (
     <Sonner
       {...props}
-      theme={props.theme ?? 'light'}
+      theme={props.theme ?? documentMode}
       className={cn('nop-toaster toaster group', props.className)}
       icons={props.icons ?? defaultIcons}
       style={

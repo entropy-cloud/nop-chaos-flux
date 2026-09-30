@@ -55,6 +55,18 @@ export const enUS: Resource = {
       value: 'Value',
       references: 'References: ',
       heatmapAria: '{{name}} heatmap',
+      summaryTruncated: '…and {{count}} more items not listed',
+      heatmapTruncated: 'Showing first {{shown}} of {{total}} cells',
+    },
+    app: {
+      routeErrorTitle: 'Page failed to load',
+      routeErrorDescription:
+        'A lazy-loaded page chunk failed to load, possibly due to a recent deployment. Reload the page to recover.',
+      routeErrorReload: 'Reload page',
+      domainNotFoundTitle: 'Page "{{domain}}" is not available',
+      domainNotFoundDescription:
+        'This route is registered in the entry list but has no page implementation. It may have been moved or removed.',
+      backHome: 'Back to home',
     },
     pagination: {
       morePages: 'More pages',
@@ -271,6 +283,11 @@ export const enUS: Resource = {
       key: 'Key',
       keyEntry: 'Key {{index}}',
       valueEntry: 'Value {{index}}',
+      entryKeyLabel: 'Entry {{index}} key',
+      entryValueLabel: 'Entry {{index}} value',
+      moveEntryUp: 'Move entry {{index}} up',
+      moveEntryDown: 'Move entry {{index}} down',
+      removeEntry: 'Remove entry {{index}}',
       itemEntry: 'Item {{index}}',
       selectIcon: 'Select icon',
       searchIcon: 'Search icons',
@@ -302,6 +319,8 @@ export const enUS: Resource = {
       signatureClear: 'Clear',
       signatureUnsupported: 'Handwriting is not supported in this environment',
       signatureAriaLabel: 'Handwritten signature',
+      signatureKeyboardHint:
+        'Signature drawing requires a pointer or touch input and is not keyboard-operable. Keyboard users can use the Undo and Clear buttons instead.',
       verificationCodeAriaLabel: 'Verification code input',
       regionLevelProvince: 'Province',
       regionLevelCity: 'City',
@@ -991,6 +1010,12 @@ export const enUS: Resource = {
         preview: 'Preview',
         validate: 'Validate',
         invalidCount: '{{count}} errors',
+      },
+      diagnostics: {
+        title: 'Validation Results',
+        error: 'Error',
+        warning: 'Warning',
+        locate: 'Locate and select element',
       },
       inspector: {
         noneSelected: 'No element selected. Click an element on the canvas to edit it.',

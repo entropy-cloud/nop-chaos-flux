@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { t } from '@nop-chaos/flux-i18n';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -198,6 +199,22 @@ describe('input-table: row editing + composite handle addRow/removeRow/moveRow',
     expect(document.querySelector('.nop-input-table')).toBeTruthy();
     expect(document.querySelector('[data-slot="input-table-header"]')).toBeTruthy();
     expect(document.querySelectorAll('[data-slot="input-table-row"]')).toHaveLength(1);
+  });
+
+  it('labels the row-actions column header through the localized rowActions key (R3-U16)', () => {
+    renderSchema({
+      type: 'form',
+      id: 'f-actions',
+      data: { rows: [{ sku: 'A', amount: 1 }] },
+      body: [
+        { type: 'input-table', id: 't-actions', name: 'rows', label: 'Rows', columns: tableColumns, item: tableItemRegion, removable: true },
+      ],
+    });
+
+    const header = Array.from(
+      document.querySelectorAll('[data-slot="input-table-header"] th'),
+    ).find((th) => th.getAttribute('aria-label') != null);
+    expect(header?.getAttribute('aria-label')).toBe(t('flux.form.rowActions'));
   });
 });
 

@@ -32,6 +32,7 @@ import { createDesignerShellState, resetShellViewportFromDocument, setShellViewp
 import { createShellControls } from './core/shell-controls.js';
 import { createDesignerSnapshotCache, getDesignerSnapshot } from './core/snapshot.js';
 import { layoutNodesInDocument } from './core/node-operations.js';
+import { viewportsEqual } from './core/viewport.js';
 import { buildTreeSessionContext, createTreeSessionSurface, createTreeDesignerCore as createTreeDesignerCoreImpl } from './tree-session-impl.js';
 import { createGraphCommandGate } from './core/graph-command-gate.js';
 
@@ -415,12 +416,7 @@ function createDesignerCoreInternal(
   function persistViewport(newViewport: { x: number; y: number; zoom: number }): void {
     const shellChanged = setShellViewport(shellState, newViewport);
     const viewport = shellState.viewport;
-    const currentViewport = doc.viewport;
-    const docChanged =
-      !currentViewport ||
-      currentViewport.x !== viewport.x ||
-      currentViewport.y !== viewport.y ||
-      currentViewport.zoom !== viewport.zoom;
+    const docChanged = !doc.viewport || !viewportsEqual(doc.viewport, viewport);
 
     if (!shellChanged && !docChanged) {
       return;

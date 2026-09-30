@@ -53,6 +53,23 @@ test('sidebar nav switching: click nav item changes active renderer', async ({ p
   await expect(lab.rendererContainer('form')).toBeVisible();
 });
 
+test('browser back returns to the previous in-app route instead of exiting (R3-U2)', async ({
+  page,
+}) => {
+  const lab = new ComponentLabHelper(page);
+  await lab.openRenderer('button');
+  await expect(lab.rendererTitle).toHaveText('Button');
+
+  await lab.navItem('form').click();
+  await expect(page).toHaveURL(/\/lab\/form/);
+
+  // Push semantics: one step back returns to the previous in-app route, not
+  // out of the application (the pre-fix behavior used location.replace).
+  await page.goBack();
+  await expect(page).toHaveURL(/\/lab\/button/, { timeout: 10_000 });
+  await expect(lab.rendererTitle).toHaveText('Button');
+});
+
 test('back button navigates to home page', async ({ page }) => {
   const lab = new ComponentLabHelper(page);
   await lab.openRenderer('text');

@@ -1,6 +1,6 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Button, Input } from '@nop-chaos/ui';
-import type { PrintTemplateSchema } from '@nop-chaos/flux-print-core';
+import type { PrintDiagnostic, PrintTemplateSchema } from '@nop-chaos/flux-print-core';
 import React, { useRef, useState } from 'react';
 import { PrintDesignerCanvas } from './print-designer-canvas.js';
 import { PrintInspector } from './print-inspector.js';
@@ -28,7 +28,8 @@ export function PrintDesigner({ template, onTemplateChange, className }: PrintDe
 
   const { state, zoom } = usePrintEditorSnapshot(controller);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [errorCount, setErrorCount] = useState(0);
+  const [diagnostics, setDiagnostics] = useState<PrintDiagnostic[]>([]);
+  const errorCount = diagnostics.filter((diagnostic) => diagnostic.level === 'error').length;
   const shellRef = useRef<HTMLDivElement | null>(null);
 
   const isTypingTarget = (target: EventTarget | null): boolean => {
@@ -86,7 +87,19 @@ export function PrintDesigner({ template, onTemplateChange, className }: PrintDe
   };
 
   const handleValidate = () => {
-    setErrorCount(controller.validate().filter((diagnostic) => diagnostic.level === 'error').length);
+    setDiagnostics(controller.validate());
+  };
+
+  const locateDiagnostic = (diagnostic: PrintDiagnostic) => {
+    if (!diagnostic.elementId) return;
+    controller.setSelection([diagnostic.elementId]);
+    const element = shellRef.current?.querySelector(
+      `[data-element-id="${CSS.escape(diagnostic.elementId)}"]`,
+    );
+    if (element instanceof HTMLElement) {
+      element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      element.focus();
+    }
   };
 
   return (
@@ -168,6 +181,48 @@ export function PrintDesigner({ template, onTemplateChange, className }: PrintDe
           {t('flux.print.toolbar.preview')}
         </Button>
       </div>
+      {diagnostics.length > 0 ? (
+        <div
+          className="border-b border-border px-2 py-1"
+          data-testid="print-diagnostics"
+          role="region"
+          aria-label={t('flux.print.diagnostics.title')}
+        >
+          <div className="text-xs font-medium text-muted-foreground">
+            {t('flux.print.diagnostics.title')}
+          </div>
+          <ul className="m-0 list-none p-0">
+            {diagnostics.map((diagnostic, index) => (
+              <li key={`${diagnostic.code}-${diagnostic.elementId ?? index}`}>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-xs hover:bg-muted disabled:cursor-default disabled:hover:bg-transparent"
+                  data-testid="print-diagnostic-item"
+                  data-diagnostic-level={diagnostic.level}
+                  aria-label={
+                    diagnostic.elementId ? t('flux.print.diagnostics.locate') : undefined
+                  }
+                  disabled={!diagnostic.elementId}
+                  onClick={() => locateDiagnostic(diagnostic)}
+                >
+                  <span
+                    className={
+                      diagnostic.level === 'error'
+                        ? 'font-medium text-destructive'
+                        : 'font-medium text-warning'
+                    }
+                  >
+                    {diagnostic.level === 'error'
+                      ? t('flux.print.diagnostics.error')
+                      : t('flux.print.diagnostics.warning')}
+                  </span>
+                  <span className="truncate">{diagnostic.message}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="flex" style={{ minHeight: 320 }}>
         <PrintPalette controller={controller} className="w-32 shrink-0 border-r border-border" />
         <div

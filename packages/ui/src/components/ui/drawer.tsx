@@ -159,7 +159,12 @@ function DrawerContent({
     direction === 'bottom' && 'top-0 left-0 w-full h-1 cursor-ns-resize',
   );
 
-  const resolvedStyle = typeof style === 'function' ? undefined : style;
+  // R3-U25: Base UI resolves function-style className/style against component
+  // state on Content — forward those forms verbatim instead of dropping them.
+  const resolvedClassName =
+    typeof className === 'function'
+      ? className
+      : cn('group/drawer-content flex h-full flex-col', className);
   // [G6-R3-视角6-01] the resize handle wrote `--drawer-resize-size` onto Content
   // while the width/height classes live on Popup — the variable had zero
   // consumers, so dragging changed nothing. Consume it directly on the Popup
@@ -203,8 +208,8 @@ function DrawerContent({
             data-slot="drawer-content"
             data-direction={direction}
             data-resizable={resizable ? 'true' : undefined}
-            className={cn('group/drawer-content flex h-full flex-col', className)}
-            style={resolvedStyle}
+            className={resolvedClassName}
+            style={style}
             {...props}
           >
             <div className="mx-auto mt-4 hidden h-1 w-[100px] shrink-0 rounded-full bg-muted group-data-[direction=bottom]/drawer-content:block" />

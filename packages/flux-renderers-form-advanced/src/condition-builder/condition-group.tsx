@@ -33,7 +33,7 @@ import type {
 import { ConditionItem } from './condition-item.js';
 import { genId } from './id-utils.js';
 import { resolveDefaultOp } from './operators.js';
-import { computeUsedFields } from './utils.js';
+
 import { WrappedFieldAction } from '../wrapped-field-action.js';
 import type { EvaluateConditionFormula } from './condition-builder.js';
 
@@ -195,6 +195,49 @@ export function ConditionGroup({
 
   const childIds = useMemo(() => value.children.map((c) => c.id), [value.children]);
 
+  // Group-level map built in one pass: each child's own field set (nested
+  // groups flattened), then excludeId → (total minus own). Same result as the
+  // previous per-item computeUsedFields recursion, but O(nodes) per group
+  // instead of O(n²).
+  const usedFieldsByExcludeId = useMemo(() => {
+    if (!uniqueFields) {
+      return undefined;
+    }
+    const ownFields = new Map<string, Set<string>>();
+    for (const child of value.children) {
+      const fields = new Set<string>();
+      if ('children' in child) {
+        const stack = [...child.children];
+        while (stack.length > 0) {
+          const node = stack.pop()!;
+          if ('children' in node) {
+            stack.push(...node.children);
+          } else if (node.left?.field) {
+            fields.add(node.left.field);
+          }
+        }
+      } else if (child.left?.field) {
+        fields.add(child.left.field);
+      }
+      ownFields.set(child.id, fields);
+    }
+    const total = new Set<string>();
+    for (const fields of ownFields.values()) {
+      for (const field of fields) {
+        total.add(field);
+      }
+    }
+    const map = new Map<string, Set<string>>();
+    for (const [id, fields] of ownFields) {
+      const rest = new Set(total);
+      for (const field of fields) {
+        rest.delete(field);
+      }
+      map.set(id, rest);
+    }
+    return map;
+  }, [uniqueFields, value.children]);
+
   const childrenList = draggable ? (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={childIds} strategy={verticalListSortingStrategy}>
@@ -237,9 +280,7 @@ export function ConditionGroup({
                   onRemove={() => handleChildRemove(index)}
                   disabled={disabled}
                   removeLabel={removeConditionLabel}
-                  usedFields={
-                    uniqueFields ? computeUsedFields(value.children, child.id) : undefined
-                  }
+                  usedFields={usedFieldsByExcludeId?.get(child.id)}
                   uniqueFields={uniqueFields}
                   draggable={draggable}
                   dragHandleProps={dragHandleProps}
@@ -293,7 +334,7 @@ export function ConditionGroup({
             onRemove={() => handleChildRemove(index)}
             disabled={disabled}
               removeLabel={removeConditionLabel}
-              usedFields={uniqueFields ? computeUsedFields(value.children, child.id) : undefined}
+              usedFields={usedFieldsByExcludeId?.get(child.id)}
               uniqueFields={uniqueFields}
               draggable={draggable}
               formulas={formulas}

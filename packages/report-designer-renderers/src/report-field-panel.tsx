@@ -78,6 +78,9 @@ export function ReportFieldPanel({
 }: ReportFieldPanelProps) {
   return (
     <div className={cn('nop-report-field-panel', className)} data-slot="report-field-panel-shell">
+      <span id="report-field-insert-disabled-reason" className="sr-only">
+        {t('flux.reportDesigner.insertDisabledNoSelection')}
+      </span>
       {fieldSources.map((source) => (
         <div key={source.id} data-slot="report-field-panel-source">
           <div data-slot="report-field-panel-source-label">{source.label}</div>

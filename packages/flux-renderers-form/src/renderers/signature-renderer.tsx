@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
@@ -42,6 +42,8 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
   const drawingRef = useRef(false);
   const lastCommittedRef = useRef<string | undefined>(undefined);
   const [hasContext, setHasContext] = useState(false);
+  const [canvasFocused, setCanvasFocused] = useState(false);
+  const keyboardHintId = useId();
   const interactiveRef = useRef(true);
   useEffect(() => {
     interactiveRef.current = presentation.interactive;
@@ -75,10 +77,7 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
       }
       if (stroke.length === 1) {
         // A tap is a dot: degenerate zero-length segments render nothing.
-        ctx.beginPath();
-        ctx.arc(stroke[0].x, stroke[0].y, penWidth / 2, 0, Math.PI * 2);
-        ctx.fillStyle = penColor;
-        ctx.fill();
+        drawDotOn(ctx, stroke[0], penWidth, penColor);
         continue;
       }
       ctx.beginPath();
@@ -90,6 +89,48 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
     }
     ctx.restore();
   }, [penColor, penWidth]);
+
+  // Live-stroke primitives paint only the newest segment/dot onto the existing
+  // bitmap, keeping a pointer session O(points) instead of O(points²) full
+  // redraws. Full redraw stays reserved for undo/clear/resize/echo paths.
+  const drawDot = useCallback(
+    (point: StrokePoint) => {
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!ctx || !canvas) {
+        return;
+      }
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr(), dpr());
+      drawDotOn(ctx, point, penWidth, penColor);
+      ctx.restore();
+    },
+    [penColor, penWidth],
+  );
+
+  const drawSegment = useCallback(
+    (from: StrokePoint, to: StrokePoint) => {
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!ctx || !canvas || (from.x === to.x && from.y === to.y)) {
+        return;
+      }
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr(), dpr());
+      ctx.strokeStyle = penColor;
+      ctx.lineWidth = penWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.restore();
+    },
+    [penColor, penWidth],
+  );
 
   // Canvas sizing runs once: a later re-run would re-assign canvas.width and
   // wipe committed ink (the ref-held strokes would no longer match the bitmap).
@@ -162,7 +203,7 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
       event.preventDefault();
       drawingRef.current = true;
       strokesRef.current.push([pointerPos(event)]);
-      redraw();
+      drawDot(strokesRef.current[strokesRef.current.length - 1]![0]);
     };
     const onPointerMove = (event: PointerEvent) => {
       if (!drawingRef.current) {
@@ -172,15 +213,16 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
       if (!stroke) {
         return;
       }
-      stroke.push(pointerPos(event));
-      redraw();
+      const from = stroke[stroke.length - 1]!;
+      const to = pointerPos(event);
+      stroke.push(to);
+      drawSegment(from, to);
     };
     const finishStroke = () => {
       if (!drawingRef.current) {
         return;
       }
       drawingRef.current = false;
-      redraw();
       commit();
       // A stroke-finish layout shift can drop the browser's synthesized click
       // onto a toolbar button that scrolled under the pointer — swallow it.
@@ -203,7 +245,7 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
       canvas.removeEventListener('pointercancel', finishStroke);
       canvas.removeEventListener('pointerleave', finishStroke);
     };
-  }, [commit, hasContext, redraw]);
+  }, [commit, hasContext, drawDot, drawSegment]);
 
   const undo = () => {
     if (!presentation.interactive || !hasContext) {
@@ -258,9 +300,17 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
           data-slot="signature-canvas"
           data-testid={props.meta.testid}
           aria-label={String(props.props.label ?? name) || t('flux.form.signatureAriaLabel')}
+          aria-describedby={keyboardHintId}
+          tabIndex={disabled ? -1 : 0}
+          role="img"
           className="block w-full cursor-crosshair rounded-md border border-input touch-none"
           style={{ height, backgroundColor }}
+          onFocus={() => setCanvasFocused(true)}
+          onBlur={() => setCanvasFocused(false)}
         />
+        <p id={keyboardHintId} className="sr-only" data-slot="signature-keyboard-hint">
+          {t('flux.form.signatureKeyboardHint')}
+        </p>
         {!hasContext ? (
           <div
             className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground"
@@ -273,6 +323,11 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
           <div className="absolute inset-0" data-slot="signature-readonly-overlay" />
         ) : null}
       </div>
+      {canvasFocused && hasContext && !disabled ? (
+        <p className="mt-1 text-xs text-muted-foreground" data-slot="signature-focus-hint">
+          {t('flux.form.signatureKeyboardHint')}
+        </p>
+      ) : null}
       {hasContext ? (
         <div className="mt-1 flex items-center gap-1" data-slot="signature-toolbar">
           <Button
@@ -305,4 +360,16 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
 
 function dpr(): number {
   return typeof window !== 'undefined' && window.devicePixelRatio > 0 ? window.devicePixelRatio : 1;
+}
+
+function drawDotOn(
+  ctx: CanvasRenderingContext2D,
+  point: StrokePoint,
+  penWidth: number,
+  penColor: string,
+): void {
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, penWidth / 2, 0, Math.PI * 2);
+  ctx.fillStyle = penColor;
+  ctx.fill();
 }

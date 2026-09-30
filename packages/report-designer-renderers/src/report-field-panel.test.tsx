@@ -61,11 +61,15 @@ describe('ReportFieldPanel public component', () => {
       />,
     );
 
-    expect(
-      screen.getByRole('button', { name: '将字段 Order ID 插入到当前选择' }).hasAttribute(
-        'disabled',
-      ),
-    ).toBe(true);
+    const insertButton = screen.getByRole('button', { name: '将字段 Order ID 插入到当前选择' });
+    expect(insertButton.hasAttribute('disabled')).toBe(true);
+    expect(insertButton.getAttribute('title')).toBe('请先在表格中选中单元格');
+    expect(insertButton.getAttribute('aria-describedby')).toBe(
+      'report-field-insert-disabled-reason',
+    );
+    expect(document.getElementById('report-field-insert-disabled-reason')?.textContent).toBe(
+      '请先在表格中选中单元格',
+    );
   });
 
   it('writes the canonical field drag payload without exposing button semantics', () => {

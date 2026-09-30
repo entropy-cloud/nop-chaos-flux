@@ -1,13 +1,22 @@
 // @vitest-environment happy-dom
 
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createNopDebugger, getNopDebuggerAutomationApi } from '@nop-chaos/nop-debugger';
+import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { FluxBasicPage, fluxBasicPageSchema } from './flux-basic-page';
+
+beforeEach(() => {
+  // Row validation labels are localized (flux.form.entryKeyLabel); pin en-US so
+  // assertions on visible feedback text stay language-stable.
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+});
 
 afterEach(() => {
   cleanup();
+  resetFluxI18n();
 });
 
 function readInputCid(labelText: string) {
@@ -258,7 +267,9 @@ describe('FluxBasicPage debugger wiring', () => {
         expect(screen.getByText(`User: ${row.username}`)).toBeTruthy();
         expect(screen.getByText(`Email: ${row.email}`)).toBeTruthy();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+        // The localized dialog exposes two Close affordances (header X + footer
+        // action); the header close is the first in DOM order.
+        fireEvent.click(screen.getAllByRole('button', { name: 'Close' })[0]!);
         await waitFor(() => {
           expect(screen.queryByText('User Details')).toBeNull();
         });

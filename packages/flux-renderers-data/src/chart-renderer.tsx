@@ -242,15 +242,16 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   const resolvedChartType = (
     series.length > 0 ? (series[0].type ?? chartType) : chartType
   ) as ChartType;
+  const CHART_SUMMARY_LIMIT = 20;
   const chartDataSummary = (() => {
     if (isHeatmap) {
-      return heatmapRows.slice(0, 20).map((row) => `${row.x}/${row.y}: ${row.value}`);
+      return heatmapRows.slice(0, CHART_SUMMARY_LIMIT).map((row) => `${row.x}/${row.y}: ${row.value}`);
     }
     if (resolvedChartType === 'pie') {
-      return pieData.map((item) => `${item.name}: ${item.value}`);
+      return pieData.slice(0, CHART_SUMMARY_LIMIT).map((item) => `${item.name}: ${item.value}`);
     }
 
-    return cartesianData.slice(0, 20).map((item, index) => {
+    return cartesianData.slice(0, CHART_SUMMARY_LIMIT).map((item, index) => {
       const record = item as Record<string, unknown>;
       const label = xKey ? String(getIn(record, xKey) ?? `item-${index + 1}`) : `item-${index + 1}`;
       const seriesList = (series.length > 0 ? series : [{ name: 'value' } as ChartSeriesSchema])
@@ -267,6 +268,15 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       ? `${t('flux.chart.references')}${referenceLines
           .map((line) => `${line.label ?? 'reference'}: ${line.value}`)
           .join(', ')}`
+      : undefined;
+  const summarySourceCount = isHeatmap
+    ? heatmapRows.length
+    : resolvedChartType === 'pie'
+      ? pieData.length
+      : cartesianData.length;
+  const summaryTruncatedNote =
+    summarySourceCount > CHART_SUMMARY_LIMIT
+      ? t('flux.chart.summaryTruncated', { count: summarySourceCount - CHART_SUMMARY_LIMIT })
       : undefined;
 
   const handleResize = useCallback(() => {
@@ -601,6 +611,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
                 <li key={line}>{line}</li>
               ))}
               {referenceSummary ? <li>{referenceSummary}</li> : null}
+              {summaryTruncatedNote ? <li>{summaryTruncatedNote}</li> : null}
             </ul>
           </div>
           {loading ? (

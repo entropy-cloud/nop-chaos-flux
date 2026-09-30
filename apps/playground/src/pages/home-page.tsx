@@ -27,13 +27,16 @@ export function HomePage({ onNavigate }: HomePageProps) {
               className="group relative flex h-auto w-full flex-col items-start overflow-hidden rounded-[20px] border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] p-6 text-left whitespace-normal cursor-pointer justify-start gap-0 ring-0 transition-[transform,box-shadow,border-color] duration-160 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:shadow-[var(--nop-nav-shadow)] hover:border-[var(--nop-nav-hover-border)]"
               onClick={() => onNavigate(card.target)}
             >
-              <p className="mb-2 uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-accent-muted)]">
+              {/* Flow (phrasing) content only: <button> forbids h2/p children. */}
+              <span className="mb-2 block uppercase tracking-[0.14em] text-[11px] font-bold text-[var(--nop-accent-muted)]">
                 {card.eyebrow}
-              </p>
-              <h2 className="mb-2 text-xl font-bold text-[var(--nop-text-strong)]">{card.title}</h2>
-              <p className="text-sm leading-relaxed text-[var(--nop-body-copy)]">
+              </span>
+              <span className="mb-2 block text-xl font-bold text-[var(--nop-text-strong)]">
+                {card.title}
+              </span>
+              <span className="block text-sm leading-relaxed text-[var(--nop-body-copy)]">
                 {card.description}
-              </p>
+              </span>
               <span className="absolute right-4 bottom-4 text-xl text-[var(--nop-accent)] opacity-0 -translate-x-1 transition-all duration-160 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-100 group-hover:translate-x-0">
                 →
               </span>

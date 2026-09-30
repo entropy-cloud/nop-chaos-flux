@@ -86,6 +86,11 @@ export interface UseCrudPollingArgs {
 // a bounded timer so polling starts automatically once the data-source
 // registers, instead of being silently disabled forever (2-10).
 const RESOLVE_RETRY_MS = 250;
+// 20 × 250ms ≈ 5s covers the legitimate late-registration window; beyond that
+// the missing handle is a configuration error, not pending registration. The
+// counter lives per effect run, so a re-run (re-render with changed registry)
+// re-arms it.
+const MAX_RESOLVE_ATTEMPTS = 20;
 
 export interface UseCrudPollingResult {
   /** schema `enabled` resolved against the user toggle */
@@ -120,6 +125,7 @@ export function useCrudPolling(args: UseCrudPollingArgs): UseCrudPollingResult {
 
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     let warned = false;
+    let resolveAttempts = 0;
 
     const attempt = () => {
       const handle = resolveDataSourceHandle(componentRegistry, sourceId);
@@ -127,8 +133,8 @@ export function useCrudPolling(args: UseCrudPollingArgs): UseCrudPollingResult {
 
       if (!handle) {
         // The upstream data-source may not be registered yet (schema order
-        // `[crud, data-source]`): warn once, then retry on a timer until it
-        // appears or the effect tears down (2-10).
+        // `[crud, data-source]`): warn once, retry within the legitimate
+        // late-registration window, then give up with a config pointer.
         if (!warned) {
           warned = true;
           if (typeof console !== 'undefined' && typeof console.warn === 'function') {
@@ -136,6 +142,15 @@ export function useCrudPolling(args: UseCrudPollingArgs): UseCrudPollingResult {
               `[crud polling] polling.enabled is true but no upstream data-source was found${sourceId ? ` for sourceId "${sourceId}"` : ''}; retrying until it registers`,
             );
           }
+        }
+        resolveAttempts += 1;
+        if (resolveAttempts >= MAX_RESOLVE_ATTEMPTS) {
+          if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+            console.warn(
+              `[crud polling] data-source still unresolved after ${MAX_RESOLVE_ATTEMPTS} retries (~${Math.round((MAX_RESOLVE_ATTEMPTS * RESOLVE_RETRY_MS) / 1000)}s)${sourceId ? ` for sourceId "${sourceId}"` : ''}; stopping auto-retry. Check the polling.sourceId / data-source config.`,
+            );
+          }
+          return;
         }
         retryTimer = setTimeout(attempt, RESOLVE_RETRY_MS);
         return;

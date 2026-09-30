@@ -238,4 +238,81 @@ describe('spreadsheet grid editing', () => {
     fireEvent.change(editor, { target: { value: 'Hello' } });
     expect(editor.value).toBe('Hello');
   });
+
+  it('keystrokes bypass the reactive store until the save boundary commits the draft', async () => {
+    const documentModel = createEmptyDocument('grid-edit-keystroke-bypass');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const dispatchSpy = vi.spyOn(bridge, 'dispatch');
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell[data-row="0"][data-col="0"]') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+    fireEvent.doubleClick(firstCell!);
+
+    const editor = await waitFor(() => {
+      const next = container.querySelector('input.ss-cell-edit-input') as HTMLInputElement | null;
+      expect(next).toBeTruthy();
+      return next as HTMLInputElement;
+    });
+
+    const storeListener = vi.fn();
+    const unsubscribe = core.subscribe(storeListener);
+    const snapshotDuringTyping = core.getSnapshot();
+
+    fireEvent.change(editor, { target: { value: 'a' } });
+    fireEvent.change(editor, { target: { value: 'ab' } });
+    fireEvent.change(editor, { target: { value: 'abc' } });
+
+    expect(storeListener).not.toHaveBeenCalled();
+    expect(core.getSnapshot()).toBe(snapshotDuringTyping);
+    expect(dispatchSpy).not.toHaveBeenCalled();
+    expect(editor.value).toBe('abc');
+    unsubscribe();
+
+    fireEvent.keyDown(editor, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(core.getSnapshot().editing).toBeUndefined();
+      expect(core.getSnapshot().document.workbook.sheets[0]?.cells?.['A1']?.value).toBe('abc');
+    });
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'spreadsheet:setCellValue',
+        cell: expect.objectContaining({ address: 'A1', row: 0, col: 0 }),
+        value: 'abc',
+      }),
+    );
+  });
+
+  it('commits the current editor draft when the selection moves to another cell', async () => {
+    const documentModel = createEmptyDocument('grid-edit-switch-cell-commit');
+    const core = createSpreadsheetCore({ document: documentModel });
+    const sheetId = core.getSnapshot().activeSheetId;
+    const bridge = createSpreadsheetBridge(core);
+    const { container } = render(<SpreadsheetGridHarness sheetId={sheetId} bridge={bridge} />);
+
+    const firstCell = container.querySelector('td.ss-cell[data-row="0"][data-col="0"]') as HTMLElement | null;
+    expect(firstCell).toBeTruthy();
+    fireEvent.doubleClick(firstCell!);
+
+    const editor = await waitFor(() => {
+      const next = container.querySelector('input.ss-cell-edit-input') as HTMLInputElement | null;
+      expect(next).toBeTruthy();
+      return next as HTMLInputElement;
+    });
+
+    fireEvent.change(editor, { target: { value: 'switched' } });
+
+    const targetCell = container.querySelector('td.ss-cell[data-row="2"][data-col="2"]') as HTMLElement | null;
+    expect(targetCell).toBeTruthy();
+    fireEvent.click(targetCell!);
+
+    await waitFor(() => {
+      expect(core.getSnapshot().editing).toBeUndefined();
+      expect(core.getSnapshot().document.workbook.sheets[0]?.cells?.['A1']?.value).toBe('switched');
+      expect(core.getSnapshot().selection.anchor?.address).toBe('C3');
+    });
+  });
 });

@@ -1,8 +1,6 @@
 import React from 'react';
 import type {
   BaseSchema,
-  CompiledValidationBehavior,
-  FormRuntime,
   RendererComponentProps,
   RendererDefinition,
   RuntimeFieldRegistration,
@@ -16,18 +14,16 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Input, cn } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { Button, cn } from '@nop-chaos/ui';
+import { PlusIcon } from 'lucide-react';
 import {
   formFieldRules,
-  getChildFieldUiState,
   getFieldValidationBehavior,
   shouldValidateOn,
-  useCompositeChildFieldState,
   useFormFieldFromProps,
 } from '@nop-chaos/flux-renderers-form';
 import type { KeyValuePair, KeyValueSchema } from '@nop-chaos/flux-renderers-form';
-import { FieldHint } from '@nop-chaos/flux-renderers-form';
+import { KeyValueRow } from './key-value-row.js';
 import { createNextCompositeItemId } from './composite-field/composite-item-id.js';
 import { useCompatibilityItemKeys } from './composite-field/composite-item-keys.js';
 import {
@@ -40,222 +36,6 @@ import {
   COMPOSITE_EDITOR_METHODS,
 } from './composite-field/composite-editor-capability-contracts.js';
 
-function KeyValueRow(props: {
-  pair: KeyValuePair;
-  index: number;
-  totalCount: number;
-  minItems: number;
-  name: string;
-  currentForm: FormRuntime | undefined;
-  childBehavior: CompiledValidationBehavior;
-  onSync(nextPairs: KeyValuePair[]): void;
-  onRemove: (index: number) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
-  pairs: KeyValuePair[];
-  disabled?: boolean;
-  readOnly?: boolean;
-  removeButtonRef?: (button: HTMLButtonElement | null) => void;
-}) {
-  const {
-    pair,
-    index,
-    totalCount,
-    minItems,
-    name,
-    currentForm,
-    childBehavior,
-    onSync,
-    onRemove,
-    onMoveUp,
-    onMoveDown,
-    pairs,
-    disabled,
-    readOnly,
-    removeButtonRef,
-  } = props;
-  const keyPath = `${name}.${index}.key`;
-  const valuePath = `${name}.${index}.value`;
-  const keyInputId = `${name || 'key-value'}-${pair.id}-key`;
-  const valueInputId = `${name || 'key-value'}-${pair.id}-value`;
-  const keyErrorId = `${keyInputId}-error`;
-  const valueErrorId = `${valueInputId}-error`;
-  const keyFieldState = useCompositeChildFieldState(keyPath);
-  const valueFieldState = useCompositeChildFieldState(valuePath);
-  const keyUi = getChildFieldUiState({
-    behavior: childBehavior,
-    fieldState: keyFieldState,
-  });
-  const valueUi = getChildFieldUiState({
-    behavior: childBehavior,
-    fieldState: valueFieldState,
-  });
-  const canRemove = totalCount > minItems;
-  const canMoveUp = index > 0;
-  const canMoveDown = index < totalCount - 1;
-
-  return (
-    <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2.5 items-start">
-      <div
-        className={keyUi.className}
-        data-child-field-visited={keyUi['data-child-field-visited']}
-        data-child-field-touched={keyUi['data-child-field-touched']}
-        data-child-field-dirty={keyUi['data-child-field-dirty']}
-        data-child-field-invalid={keyUi['data-child-field-invalid']}
-      >
-        <Input
-          id={keyInputId}
-          type="text"
-          value={pair.key}
-          disabled={disabled}
-          placeholder={t('flux.form.key')}
-          aria-label={t('flux.form.keyEntry', { index: index + 1 })}
-          aria-invalid={keyUi.showError ? true : undefined}
-          aria-describedby={keyUi.showError ? keyErrorId : undefined}
-          aria-errormessage={keyUi.showError ? keyErrorId : undefined}
-          onFocus={() => {
-            if (currentForm && name) {
-              currentForm.visitField(name);
-              currentForm.visitField(keyPath);
-            }
-          }}
-          onChange={(event) => {
-            if (readOnly) {
-              return;
-            }
-
-            const nextPairs = pairs.map((candidate, candidateIndex) =>
-              candidateIndex === index ? { ...candidate, key: event.target.value } : candidate,
-            );
-            onSync(nextPairs);
-
-            if (currentForm) {
-              currentForm.touchField(keyPath);
-              currentForm.setValue(keyPath, event.target.value);
-
-              if (shouldValidateOn(name, currentForm, 'change')) {
-                void currentForm.validateField(keyPath, 'change');
-              }
-            }
-          }}
-          onBlur={() => {
-            if (currentForm) {
-              currentForm.touchField(keyPath);
-
-              if (shouldValidateOn(name, currentForm, 'blur')) {
-                void currentForm.validateField(keyPath, 'blur');
-              }
-            }
-          }}
-        />
-        <FieldHint errorMessage={keyUi.error?.message} showError={keyUi.showError} id={keyErrorId} />
-      </div>
-      <div
-        className={valueUi.className}
-        data-child-field-visited={valueUi['data-child-field-visited']}
-        data-child-field-touched={valueUi['data-child-field-touched']}
-        data-child-field-dirty={valueUi['data-child-field-dirty']}
-        data-child-field-invalid={valueUi['data-child-field-invalid']}
-      >
-        <Input
-          id={valueInputId}
-          type="text"
-          value={pair.value}
-          disabled={disabled}
-          placeholder={t('flux.form.value')}
-          aria-label={t('flux.form.valueEntry', { index: index + 1 })}
-          aria-invalid={valueUi.showError ? true : undefined}
-          aria-describedby={valueUi.showError ? valueErrorId : undefined}
-          aria-errormessage={valueUi.showError ? valueErrorId : undefined}
-          onFocus={() => {
-            if (currentForm && name) {
-              currentForm.visitField(name);
-              currentForm.visitField(valuePath);
-            }
-          }}
-          onChange={(event) => {
-            if (readOnly) {
-              return;
-            }
-
-            const nextPairs = pairs.map((candidate, candidateIndex) =>
-              candidateIndex === index ? { ...candidate, value: event.target.value } : candidate,
-            );
-            onSync(nextPairs);
-
-            if (currentForm) {
-              currentForm.touchField(valuePath);
-              currentForm.setValue(valuePath, event.target.value);
-
-              if (shouldValidateOn(name, currentForm, 'change')) {
-                void currentForm.validateField(valuePath, 'change');
-              }
-            }
-          }}
-          onBlur={() => {
-            if (currentForm) {
-              currentForm.touchField(valuePath);
-
-              if (shouldValidateOn(name, currentForm, 'blur')) {
-                void currentForm.validateField(valuePath, 'blur');
-              }
-            }
-          }}
-        />
-        <FieldHint errorMessage={valueUi.error?.message} showError={valueUi.showError} id={valueErrorId} />
-      </div>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        data-slot="key-value-move-up"
-        disabled={disabled || !canMoveUp}
-        aria-label={`${t('flux.form.moveUp')} ${index + 1}`}
-        onClick={() => {
-          if (readOnly || !canMoveUp) {
-            return;
-          }
-          onMoveUp(index);
-        }}
-      >
-        <ChevronUpIcon className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        data-slot="key-value-move-down"
-        disabled={disabled || !canMoveDown}
-        aria-label={`${t('flux.form.moveDown')} ${index + 1}`}
-        onClick={() => {
-          if (readOnly || !canMoveDown) {
-            return;
-          }
-          onMoveDown(index);
-        }}
-      >
-        <ChevronDownIcon className="size-4" />
-      </Button>
-      <Button
-        ref={removeButtonRef}
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        disabled={disabled || !canRemove}
-        className="hover:text-destructive"
-        aria-label={`${t('flux.form.remove')} entry ${index + 1}`}
-        onClick={() => {
-          if (!canRemove) {
-            return;
-          }
-          onRemove(index);
-        }}
-      >
-        <Trash2Icon className="size-4" />
-      </Button>
-    </div>
-  );
-}
 
 export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) {
   const name = String(props.props.name ?? '');
@@ -301,15 +81,31 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     append: compatAppend,
     move: compatMove,
   } = useCompatibilityItemKeys(rawPairs.length, 'pair-');
-  const pairs = React.useMemo<KeyValuePair[]>(
-    () =>
-      rawPairs.map((pair, index) => ({
-        id: pair.id ?? compatKeyAt(index),
-        key: pair.key,
-        value: pair.value,
-      })),
-    [rawPairs, compatKeyAt],
-  );
+  // toRawKeyValuePairs clones every entry, so untouched rows would get fresh
+  // pair objects on each keystroke and row memoization would never hit. The
+  // cache re-issues the previous object for unchanged (id, key, value) and
+  // reuses the previous array identity once every element is cache-stable.
+  const [pairIdentityCache, setPairIdentityCache] = React.useState<KeyValuePair[]>([]);
+  const pairs = React.useMemo<KeyValuePair[]>(() => {
+    const next = rawPairs.map((pair, index) => {
+      const id = pair.id ?? compatKeyAt(index);
+      const cached = pairIdentityCache[index];
+      if (cached && cached.id === id && cached.key === pair.key && cached.value === pair.value) {
+        return cached;
+      }
+      return { id, key: pair.key, value: pair.value };
+    });
+    if (
+      pairIdentityCache.length === next.length &&
+      pairIdentityCache.every((pair, index) => pair === next[index])
+    ) {
+      return pairIdentityCache;
+    }
+    return next;
+  }, [rawPairs, compatKeyAt, pairIdentityCache]);
+  React.useEffect(() => {
+    setPairIdentityCache(pairs);
+  }, [pairs]);
   const childPaths = React.useMemo(
     () =>
       Array.from({ length: pairs.length }, (_, index) => [
@@ -351,9 +147,27 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
     [currentForm, name, scope],
   );
 
+  // Row-level patch sync: rows own only their index + patch, so a keystroke in
+  // one row produces stable row props for every other row (memo comparator).
+  const syncPairAt = React.useCallback(
+    (index: number, patch: Partial<KeyValuePair>) => {
+      syncField(
+        pairsRef.current.map((candidate, candidateIndex) =>
+          candidateIndex === index ? { ...candidate, ...patch } : candidate,
+        ),
+      );
+    },
+    [syncField],
+  );
+
+  const registerRemoveButton = React.useCallback((index: number, button: HTMLButtonElement | null) => {
+    removeButtonRefs.current[index] = button;
+  }, []);
+
   const handleRemove = React.useCallback(
     (index: number) => {
-      const nextPairs = pairs.filter((_, candidateIndex) => candidateIndex !== index);
+      const currentPairs = pairsRef.current;
+      const nextPairs = currentPairs.filter((_, candidateIndex) => candidateIndex !== index);
       const nextFocusIndex = Math.min(index, nextPairs.length - 1);
 
       pairsRef.current = nextPairs;
@@ -372,16 +186,17 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
         }
       });
     },
-    [currentForm, name, pairs, syncField, compatRemoveAt],
+    [currentForm, name, syncField, compatRemoveAt],
   );
 
   const handleMove = React.useCallback(
     (index: number, to: number) => {
-      if (index === to || to < 0 || to >= pairs.length) {
+      const currentPairs = pairsRef.current;
+      if (index === to || to < 0 || to >= currentPairs.length) {
         return;
       }
 
-      const nextPairs = pairs.slice();
+      const nextPairs = currentPairs.slice();
       const [moved] = nextPairs.splice(index, 1);
       if (!moved) {
         return;
@@ -400,7 +215,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
       syncField(nextPairs);
     },
-    [currentForm, name, pairs, syncField, compatMove],
+    [currentForm, name, syncField, compatMove],
   );
 
   const handleMoveUp = React.useCallback((index: number) => handleMove(index, index - 1), [handleMove]);
@@ -541,7 +356,9 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             {
               path,
               rule: 'required',
-              message: t('validation.required', { label: `Entry ${Number(match[1]) + 1} key` }),
+              message: t('validation.required', {
+                label: t('flux.form.entryKeyLabel', { index: Number(match[1]) + 1 }),
+              }),
             },
           ];
         }
@@ -551,7 +368,9 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             {
               path,
               rule: 'required',
-              message: t('validation.required', { label: `Entry ${Number(match[1]) + 1} value` }),
+              message: t('validation.required', {
+                label: t('flux.form.entryValueLabel', { index: Number(match[1]) + 1 }),
+              }),
             },
           ];
         }
@@ -580,16 +399,13 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             name={name}
             currentForm={currentForm}
             childBehavior={childBehavior}
-            onSync={syncField}
+            onSync={syncPairAt}
             onRemove={handleRemove}
             onMoveUp={handleMoveUp}
             onMoveDown={handleMoveDown}
-            pairs={pairs}
             disabled={presentation.effectiveDisabled || presentation.readOnly}
             readOnly={presentation.readOnly}
-            removeButtonRef={(button) => {
-              removeButtonRefs.current[index] = button;
-            }}
+            registerRemoveButton={registerRemoveButton}
           />
         );
       })}

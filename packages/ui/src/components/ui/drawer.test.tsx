@@ -23,6 +23,27 @@ describe('Drawer', () => {
     expect(drawerContent?.textContent).toContain('Drawer body');
   });
 
+  it('forwards function-style className/style to the drawer content (R3-U25)', () => {
+    cleanup();
+    render(
+      <Drawer open direction="right">
+        <DrawerContent
+          style={() => ({ backgroundColor: 'rgb(1, 2, 3)' })}
+          className={() => 'fn-drawer-class'}
+        >
+          fn body
+        </DrawerContent>
+      </Drawer>,
+    );
+
+    const drawerContent = document.body.querySelector(
+      '[data-slot="drawer-content"]',
+    ) as HTMLElement | null;
+    expect(drawerContent).toBeTruthy();
+    expect(drawerContent?.getAttribute('style')).toContain('rgb(1, 2, 3)');
+    expect(drawerContent?.className).toContain('fn-drawer-class');
+  });
+
   it('accepts the retained handleOnly prop without changing renderability', () => {
     cleanup();
 

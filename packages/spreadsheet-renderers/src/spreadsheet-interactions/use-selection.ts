@@ -105,20 +105,21 @@ export function useSelection(
       return;
     }
 
-    const { cell, draftValue } = editingState;
+    const { cell } = editingState;
     if (cell.row < 0 || cell.col < 0 || cell.row >= totalRows || cell.col >= totalCols) {
       core.clearEditing();
       return;
     }
 
     const addr = cellAddress(cell.row, cell.col);
+    const value = core.commitEditValue();
     core.clearEditing();
 
     try {
       await bridge.dispatch({
         type: 'spreadsheet:setCellValue',
         cell: { sheetId, address: addr, row: cell.row, col: cell.col },
-        value: String(draftValue ?? ''),
+        value,
       });
     } catch (error) {
       if (!isAbortLike(error)) {

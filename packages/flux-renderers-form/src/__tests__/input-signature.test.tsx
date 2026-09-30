@@ -32,6 +32,8 @@ function fake2d() {
     stroke: vi.fn(),
     clearRect: vi.fn(),
     drawImage: vi.fn(),
+    arc: vi.fn(),
+    fill: vi.fn(),
     fillStyle: '',
     strokeStyle: '',
     lineWidth: 1,
@@ -158,5 +160,55 @@ describe('input-signature renderer (missing-components L2.3, plan 507)', () => {
     await new Promise((resolve) => setTimeout(resolve, 30));
     expect(context.drawImage).not.toHaveBeenCalled();
     expect(document.querySelector('[data-slot="signature-canvas"]')).toBeTruthy();
+  });
+
+  it('draws each pointermove incrementally: one segment per move, no full redraw (R3-P24)', async () => {
+    const context = fake2d();
+    stubCanvas(context);
+    renderSignatureForm([{ type: 'input-signature', name: 'sig8', label: 'Signature' }]);
+    const canvas = document.querySelector('[data-slot="signature-canvas"]') as HTMLCanvasElement;
+
+    fireEvent.pointerDown(canvas, { clientX: 10, clientY: 10 });
+    const clearRectAfterMountAndDown = context.clearRect.mock.calls.length;
+    for (let step = 1; step <= 8; step += 1) {
+      fireEvent.pointerMove(canvas, { clientX: 10 + step * 5, clientY: 10 + step * 3 });
+    }
+    fireEvent.pointerUp(canvas);
+
+    // One beginPath/lineTo pair per live segment — not one per full redraw,
+    // which would rescale quadratically with the accumulated point count.
+    // beginPath counts one extra for the pointerdown dot (arc + fill).
+    expect(context.lineTo).toHaveBeenCalledTimes(8);
+    expect(context.beginPath).toHaveBeenCalledTimes(9);
+    // A session with only live primitives never wipes the bitmap mid-stroke
+    // (the one mount-time sizing redraw happened before the stroke started).
+    expect(context.clearRect).toHaveBeenCalledTimes(clearRectAfterMountAndDown);
+
+    // Full redraw stays reserved for undo/clear. The undo click must wait out
+    // the post-stroke stray-click swallow window (finishStroke, 400ms).
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    context.clearRect.mockClear();
+    fireEvent.click(document.querySelector('[data-slot="signature-undo"]') as HTMLElement);
+    expect(context.clearRect).toHaveBeenCalled();
+  });
+
+  it('exposes a focusable canvas with a keyboard fallback hint (R3-U14)', () => {
+    const context = fake2d();
+    stubCanvas(context);
+    renderSignatureForm([{ type: 'input-signature', name: 'sig9', label: 'Signature' }]);
+    const canvas = document.querySelector('[data-slot="signature-canvas"]') as HTMLCanvasElement;
+
+    expect(canvas.getAttribute('tabindex')).toBe('0');
+    const hint = document.querySelector('[data-slot="signature-keyboard-hint"]');
+    expect(hint?.textContent).toContain('not keyboard-operable');
+    expect(canvas.getAttribute('aria-describedby')).toBe(hint?.id);
+
+    expect(document.querySelector('[data-slot="signature-focus-hint"]')).toBeNull();
+    fireEvent.focus(canvas);
+    expect(document.querySelector('[data-slot="signature-focus-hint"]')?.textContent).toContain(
+      'not keyboard-operable',
+    );
+    fireEvent.blur(canvas);
+    expect(document.querySelector('[data-slot="signature-focus-hint"]')).toBeNull();
   });
 });

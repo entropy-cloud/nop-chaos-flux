@@ -36,6 +36,32 @@ describe('StatTileRenderer — KPI value rendering (formatting / placeholder / e
     expect(screen.getByText('1,234,567.89')).toBeTruthy();
   });
 
+  it('exposes no decorative role="img" on the stat tile or embedded sparkline (R3-U31)', () => {
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/stat-tile-sparkline-a11y"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'stat-tile',
+              testid: 'demo-stat-tile-a11y',
+              value: 42,
+              sparkline: [1, 2, 3, 4, 5],
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    expect(document.querySelector('.nop-stat-tile [role="img"]')).toBeNull();
+    expect(document.querySelector('.nop-stat-tile svg[aria-hidden="true"]')).not.toBeNull();
+  });
+
   it('follows a reactive value expression (${expr} resolves at runtime)', () => {
     const SchemaRenderer = createDataSchemaRenderer();
     const schema = {

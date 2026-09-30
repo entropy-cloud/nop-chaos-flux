@@ -23,8 +23,12 @@ export function useEditing(
   const core = bridge.getCore();
   const editingCell = snapshot.editing ?? null;
 
+  // Seed for the uncontrolled cell editor, re-read per render so a session
+  // opened by grid keyboard typing (startEditing + updateEditValue in one
+  // handler) mounts with the typed replacement rather than the cell's old
+  // value. Keystrokes after mount live in the DOM + core draft only.
+  const editValue = core.getEditValue();
   const coreEditing = core.getSnapshot().editing;
-  const editValue = coreEditing ? String(coreEditing.draftValue ?? '') : '';
   const editSaveState: EditSaveState = coreEditing
     ? coreEditing.saveStatus === 'idle'
       ? { status: 'idle' }
@@ -51,7 +55,7 @@ export function useEditing(
       core.clearEditing();
       return;
     }
-    const { cell, draftValue } = editingState;
+    const { cell } = editingState;
     if (cell.row < 0 || cell.col < 0) {
       core.clearEditing();
       return;
@@ -62,11 +66,12 @@ export function useEditing(
       return;
     }
     const addr = cellAddress(cell.row, cell.col);
+    const value = core.commitEditValue();
     core.setEditSaveStatus('saving', t('flux.spreadsheet.savingCell'));
     const result = await bridge.dispatch({
       type: 'spreadsheet:setCellValue',
       cell: { sheetId, address: addr, row: cell.row, col: cell.col },
-      value: String(draftValue ?? ''),
+      value,
     });
 
     if ('cancelled' in result && result.cancelled) {

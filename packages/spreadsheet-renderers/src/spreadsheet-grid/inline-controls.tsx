@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 
 export interface SpreadsheetCellEditorProps {
+  /** Seed for a fresh editing session; the uncontrolled input owns it afterwards. */
   value: string;
   readOnly?: boolean;
   onChange: (value: string) => void;
@@ -35,7 +36,7 @@ export function SpreadsheetCellEditor({
       type="text"
       className="ss-cell-edit-input"
       data-slot="spreadsheet-cell-editor-input"
-      value={value}
+      defaultValue={value}
       onChange={(e) => onChange(e.target.value)}
       onBlur={onSave}
       readOnly={readOnly}

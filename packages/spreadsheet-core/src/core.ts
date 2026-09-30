@@ -26,6 +26,8 @@ export interface SpreadsheetCore {
   getClipboard(): ClipboardData | null;
   startEditing(cell: SpreadsheetCellRef, initialValue: unknown): void;
   updateEditValue(value: unknown): void;
+  getEditValue(): string;
+  commitEditValue(): string;
   setEditSaveStatus(status: EditSaveStatus, message?: string): void;
   clearEditing(): void;
 }
@@ -55,6 +57,10 @@ export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): Sp
     clipboard: null,
     maxUndoDepth: config?.maxUndoDepth ?? 100,
   }));
+  // Keystroke-path edit draft. Held outside the store so each character does
+  // not re-render the whole grid page; the store copy is synced only at the
+  // save boundary via commitEditValue().
+  let editDraft = '';
   let cachedState = store.getState();
   let cachedSnapshot = buildSnapshot(cachedState);
 
@@ -114,6 +120,7 @@ export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): Sp
     },
 
     startEditing(cell: SpreadsheetCellRef, initialValue: unknown) {
+      editDraft = String(initialValue ?? '');
       store.setState({
         editing: {
           cell,
@@ -125,11 +132,23 @@ export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): Sp
     },
 
     updateEditValue(value: unknown) {
+      editDraft = String(value ?? '');
+    },
+
+    getEditValue() {
+      return String(editDraft ?? '');
+    },
+
+    commitEditValue() {
       const state = store.getState();
-      if (!state.editing) return;
+      if (!state.editing) {
+        return '';
+      }
+      const value = String(editDraft ?? '');
       store.setState({
         editing: { ...state.editing, draftValue: value, saveStatus: 'idle' },
       });
+      return value;
     },
 
     setEditSaveStatus(status: EditSaveStatus, message?: string) {
@@ -141,6 +160,7 @@ export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): Sp
     },
 
     clearEditing() {
+      editDraft = '';
       store.setState({ editing: undefined });
     },
   };

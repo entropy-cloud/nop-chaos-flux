@@ -1,7 +1,11 @@
 import React from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 
 // 自绘 heatmap 网格单元尺寸（viewBox 坐标，随容器缩放）。
 export const HEATMAP_CELL_SIZE = 28;
+
+// 单图渲染上限：超过即截断 + 提示（100×100 数据不再生成 1 万个 rect+title 节点）。
+export const MAX_HEATMAP_CELLS = 2000;
 
 export interface HeatmapRow {
   x: string | number;
@@ -90,8 +94,10 @@ const LABEL_FONT_SIZE = 9;
 
 export function HeatmapGrid(props: { grid: HeatmapGridModel; ariaLabel: string }) {
   const { grid, ariaLabel } = props;
+  const truncated = grid.cells.length > MAX_HEATMAP_CELLS;
+  const visibleCells = truncated ? grid.cells.slice(0, MAX_HEATMAP_CELLS) : grid.cells;
   const totalWidth = LABEL_GUTTER_X + grid.width;
-  const totalHeight = grid.height + LABEL_GUTTER_Y;
+  const totalHeight = grid.height + LABEL_GUTTER_Y + (truncated ? LABEL_FONT_SIZE + 4 : 0);
   return (
     <svg
       data-slot="chart-heatmap"
@@ -103,7 +109,7 @@ export function HeatmapGrid(props: { grid: HeatmapGridModel; ariaLabel: string }
       aria-label={ariaLabel}
       className="h-full w-full"
     >
-      {grid.cells.map((cell) => (
+      {visibleCells.map((cell) => (
         <rect
           key={`heatmap-cell-${cell.x}-${cell.y}`}
           data-cell-x={String(grid.xLabels[cell.x])}
@@ -120,6 +126,17 @@ export function HeatmapGrid(props: { grid: HeatmapGridModel; ariaLabel: string }
           <title>{`${grid.xLabels[cell.x]} / ${grid.yLabels[cell.y]}: ${cell.value}`}</title>
         </rect>
       ))}
+      {truncated ? (
+        <text
+          data-slot="chart-heatmap-truncated"
+          x={LABEL_GUTTER_X}
+          y={grid.height + LABEL_GUTTER_Y + LABEL_FONT_SIZE}
+          fontSize={LABEL_FONT_SIZE}
+          fill="hsl(var(--muted-foreground))"
+        >
+          {t('flux.chart.heatmapTruncated', { shown: MAX_HEATMAP_CELLS, total: grid.cells.length })}
+        </text>
+      ) : null}
       {grid.xLabels.map((label, index) => (
         <text
           key={`heatmap-x-label-${label}`}

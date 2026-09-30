@@ -90,6 +90,36 @@ describe('dataRendererDefinitions tree rendering and status', () => {
     });
   });
 
+  it('gives the tree search input a localized accessible name when searchable (R3-U17)', async () => {
+    const SchemaRenderer = createDataSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://data/tree-search-a11y-name"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'tree',
+              title: 'Searchable tree',
+              searchable: true,
+              data: [
+                { id: '1', label: 'Node 1' },
+                { id: '2', label: 'Node 2' },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const searchBox = await screen.findByRole('searchbox', {
+      name: t('flux.common.search'),
+    });
+    expect(searchBox.getAttribute('placeholder')).toBe(t('flux.common.search'));
+  });
+
   it('falls back to flux.data.tree when no label/title/id provides the accessible name', () => {
     resetFluxI18n();
     initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN' });

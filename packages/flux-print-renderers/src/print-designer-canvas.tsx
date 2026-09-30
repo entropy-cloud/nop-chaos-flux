@@ -305,6 +305,10 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
               className={cn('nop-print-element', isSelected && 'nop-print-element-selected')}
               data-print-type={element.type}
               data-element-id={element.id}
+              tabIndex={0}
+              role="button"
+              aria-pressed={isSelected}
+              aria-label={element.type}
               style={{
                 position: 'absolute',
                 left: mmToPx(elementRegion.left + element.left) * zoom,
@@ -325,6 +329,15 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
                 opacity: element.style.opacity,
               }}
               onPointerDown={(event) => handleElementPointerDown(event, element)}
+              onFocus={() => controller.setSelection([element.id])}
+              onKeyDown={(event) => {
+                // Tab 聚焦即选中；Enter/Space 显式选中后拦住，避免冒泡触发 paper 级拖拽语义。
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  controller.setSelection([element.id]);
+                }
+              }}
             >
               <Renderer element={element} />
               {isSelected ? (

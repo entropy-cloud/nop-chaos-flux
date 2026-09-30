@@ -183,6 +183,32 @@ describe('query-filter render behavior', () => {
     expect(screen.getByRole('button', { name: t('flux.common.reset') })).toBeTruthy();
   });
 
+  it('wires the collapse toggle aria-controls to an existing content id (R3-U30)', () => {
+    renderSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'query-filter',
+          testid: 'qf-toggle',
+          togglable: true,
+          body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
+        },
+      ],
+    });
+
+    const toggle = screen.getByRole('button', { name: t('flux.crud.collapseQuery') });
+    const controlsId = toggle.getAttribute('aria-controls');
+    expect(controlsId).toBe('query-filter-content');
+    expect(document.getElementById(controlsId!)).not.toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+
+    fireEvent.click(toggle);
+    const collapsedToggle = screen.getByRole('button', { name: t('flux.crud.expandQuery') });
+    expect(collapsedToggle.getAttribute('aria-expanded')).toBe('false');
+    // Draft survival contract (22-04): content stays mounted (hidden, not unmounted).
+    expect(document.getElementById('query-filter-content')?.hasAttribute('hidden')).toBe(true);
+  });
+
   it('Search click dispatches the onSubmit chain through the form submit pipeline', async () => {
     const fetcher = makeFetchSpy();
     renderSchema(

@@ -322,6 +322,48 @@ describe('EditorCanvas', () => {
     expect(mockedCore.captureDocumentSnapshotMock).toHaveBeenCalledTimes(1);
   });
 
+  it('refreshes the word count on content edits, not only at mount (R3-U22)', async () => {
+    await changeLanguage('en-US');
+    let onContentChange: (() => void) | undefined;
+    let currentWordCount = 7;
+    const bridge = {
+      mount: vi.fn((_container, _editorData, callbacks) => {
+        onContentChange = callbacks.onContentChange;
+      }),
+      unmount: vi.fn(),
+      getValue: vi.fn(() => ({ data: { header: [], main: [{ value: 'draft' }], footer: [] } })),
+      getPaperSettings: vi.fn(() => null),
+      getWordCount: vi.fn(() => Promise.resolve(currentWordCount)),
+    };
+    const editorStore = {
+      setDirty: vi.fn(),
+      setBridge: vi.fn(),
+      setReady: vi.fn(),
+      setPaperSettings: vi.fn(),
+      setWordCount: vi.fn(),
+      setSelection: vi.fn(),
+      setTotalPages: vi.fn(),
+      setScale: vi.fn(),
+      getState: vi.fn(() => ({
+        paperSettings: { width: 595, height: 842, direction: 'vertical', margins: [100, 120, 100, 120] },
+      })),
+    };
+
+    render(<EditorCanvas editorStore={editorStore as any} bridge={bridge as any} />);
+
+    await Promise.resolve();
+    expect(editorStore.setWordCount).toHaveBeenCalledWith(7);
+    editorStore.setWordCount.mockClear();
+
+    currentWordCount = 12;
+    onContentChange?.();
+    await vi.advanceTimersByTimeAsync(500);
+    await Promise.resolve();
+
+    expect(bridge.getWordCount).toHaveBeenCalledTimes(2);
+    expect(editorStore.setWordCount).toHaveBeenCalledWith(12);
+  });
+
   it('publishes an accessible canvas host region with fallback guidance', async () => {
     await changeLanguage('en-US');
     const bridge = {

@@ -60,6 +60,7 @@ export function PrintDesignerDemoPage() {
   const [template, setTemplate] = useState<PrintTemplateSchema>(a4OrderTemplate);
   const [templateKey, setTemplateKey] = useState(0);
   const [outputMessage, setOutputMessage] = useState<OutputMessage>(null);
+  const [exporting, setExporting] = useState(false);
 
   const switchTemplate = (kind: 'a4' | 'receipt') => {
     setTemplate(kind === 'a4' ? a4OrderTemplate() : receipt80Template());
@@ -77,11 +78,14 @@ export function PrintDesignerDemoPage() {
   };
 
   const handleExport = async () => {
+    setExporting(true);
     try {
       await exportPrintTemplateToPdf(template, template.testData ?? {}, { fileName: template.name });
       setOutputMessage({ level: 'info', text: 'PDF 已导出' });
     } catch (error) {
       setOutputMessage({ level: 'error', text: `导出失败：${error instanceof Error ? error.message : String(error)}` });
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -92,7 +96,9 @@ export function PrintDesignerDemoPage() {
         <Button type="button" size="sm" variant={!template.name.includes('A4') ? 'default' : 'outline'} onClick={() => switchTemplate('receipt')}>80mm 小票</Button>
         <div className="flex-1" />
         <Button type="button" size="sm" onClick={handlePrint}>打印</Button>
-        <Button type="button" size="sm" onClick={handleExport}>导出 PDF</Button>
+        <Button type="button" size="sm" loading={exporting} onClick={() => void handleExport()}>
+          导出 PDF
+        </Button>
       </div>
       {outputMessage ? (
         <div

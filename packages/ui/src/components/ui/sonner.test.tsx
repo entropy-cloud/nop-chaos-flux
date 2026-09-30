@@ -1,6 +1,6 @@
 import React from 'react';
 import { readFileSync } from 'node:fs';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const sonnerMock = vi.hoisted(() => {
@@ -86,5 +86,30 @@ describe('Toaster props (P0-2)', () => {
   it('T3 source guard: sonner.tsx wrapper defines no duration token', () => {
     const source = readFileSync('src/components/ui/sonner.tsx', 'utf8');
     expect(source).not.toMatch(/\bduration\b/i);
+  });
+
+  // R3-U6 — shell dark mode (documentElement[data-mode]) drives sonner theme.
+  it('follows documentElement[data-mode=dark] into the dark theme', () => {
+    document.documentElement.setAttribute('data-mode', 'dark');
+    render(<Toaster />);
+    expect(sonnerMock.getProps().theme).toBe('dark');
+  });
+
+  it('reacts to data-mode flips through the attribute observer', async () => {
+    document.documentElement.setAttribute('data-mode', 'light');
+    render(<Toaster />);
+    expect(sonnerMock.getProps().theme).toBe('light');
+
+    document.documentElement.setAttribute('data-mode', 'dark');
+    await waitFor(() => expect(sonnerMock.getProps().theme).toBe('dark'));
+
+    document.documentElement.setAttribute('data-mode', 'light');
+    await waitFor(() => expect(sonnerMock.getProps().theme).toBe('light'));
+  });
+
+  it('keeps an explicit theme prop winning over the document attribute', () => {
+    document.documentElement.setAttribute('data-mode', 'dark');
+    render(<Toaster theme="light" />);
+    expect(sonnerMock.getProps().theme).toBe('light');
   });
 });

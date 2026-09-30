@@ -135,3 +135,74 @@ describe('PrintDesigner shell', () => {
     expect(screen.getByTestId('print-designer-canvas').querySelectorAll('.nop-print-element')).toHaveLength(1);
   });
 });
+
+describe('PrintDesigner diagnostics and keyboard selection', () => {
+  it('lists validate diagnostics and locates + selects the element on click (R3-U11)', () => {
+    render(
+      <PrintDesigner
+        template={templateWith([
+          textEl('a'),
+          {
+            type: 'image',
+            id: 'img1',
+            region: 'body',
+            left: 10,
+            top: 10,
+            width: 30,
+            height: 20,
+            style: {},
+            src: 'logo.png',
+          } as PrintElementSchema,
+        ])}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText('校验'));
+
+    const panel = screen.getByTestId('print-diagnostics');
+    expect(panel.textContent).toContain('image 元素缺少必填字段 fit');
+    const item = screen.getByTestId('print-diagnostic-item');
+    expect(item.getAttribute('data-diagnostic-level')).toBe('error');
+
+    fireEvent.click(item);
+
+    const wrapper = screen
+      .getByTestId('print-designer-canvas')
+      .querySelector('[data-element-id="img1"]');
+    expect(wrapper?.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('selects canvas elements via keyboard focus and Enter (R3-U18)', () => {
+    render(<PrintDesigner template={templateWith([textEl('a'), textEl('b')])} />);
+    const canvas = screen.getByTestId('print-designer-canvas');
+    const elementA = canvas.querySelector('[data-element-id="a"]') as HTMLElement;
+    const elementB = canvas.querySelector('[data-element-id="b"]') as HTMLElement;
+
+    expect(elementA.getAttribute('tabindex')).toBe('0');
+    expect(elementA.getAttribute('role')).toBe('button');
+    expect(elementA.getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.focus(elementA);
+    expect(elementA.getAttribute('aria-pressed')).toBe('true');
+
+    fireEvent.keyDown(elementA, { key: 'Enter' });
+    expect(elementA.getAttribute('aria-pressed')).toBe('true');
+    expect(elementB.getAttribute('aria-pressed')).toBe('false');
+
+    fireEvent.keyDown(elementA, { key: ' ' });
+    expect(elementA.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('keeps shell-level keyboard nudge working from a keyboard-selected element (R3-U18)', () => {
+    render(<PrintDesigner template={templateWith([textEl('a', { left: 5 })])} />);
+    const canvas = screen.getByTestId('print-designer-canvas');
+    const wrapperEl = canvas.querySelector('[data-element-id="a"]') as HTMLElement;
+
+    fireEvent.focus(wrapperEl);
+    fireEvent.keyDown(wrapperEl, { key: 'ArrowRight' });
+
+    const wrapper = canvas.querySelector('[data-element-id="a"]') as HTMLElement;
+    // left 5mm + nudge 1mm + body 区域原点偏移（默认左边距 15mm）
+    expect(Number(wrapper.style.left.replace('px', ''))).toBeCloseTo((5 + 1 + 15) * (96 / 25.4), 4);
+  });
+});

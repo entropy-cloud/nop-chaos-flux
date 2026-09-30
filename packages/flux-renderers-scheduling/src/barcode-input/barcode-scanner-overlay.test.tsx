@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent, cleanup } from '@testing-library/react';
+import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { BarcodeScannerOverlay } from './barcode-scanner-overlay.js';
 
 const mockUseBarcodeDetect = vi.hoisted(() => vi.fn<any>(() => ({
@@ -39,6 +40,30 @@ describe('BarcodeScannerOverlay', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('resolves status text through t() at render so language switches apply (R3-U3)', async () => {
+    resetFluxI18n();
+    initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+    try {
+      mockUseBarcodeDetect.mockReturnValue({ result: null, isScanning: true, error: null });
+      const { rerender } = render(
+        <BarcodeScannerOverlay open={true} onClose={vi.fn()} onScan={vi.fn()} />,
+      );
+      expect(document.querySelector('[data-slot="barcode-scanner-status-text"]')?.textContent).toBe(
+        'Recognizing...',
+      );
+
+      await changeLanguage('zh-CN');
+      rerender(<BarcodeScannerOverlay open={true} onClose={vi.fn()} onScan={vi.fn()} />);
+      expect(document.querySelector('[data-slot="barcode-scanner-status-text"]')?.textContent).toBe(
+        '识别中...',
+      );
+    } finally {
+      mockUseBarcodeDetect.mockReturnValue({ result: null, isScanning: false, error: null });
+      await changeLanguage('en-US');
+      resetFluxI18n();
+    }
   });
 
   it('should render null when not open', () => {
