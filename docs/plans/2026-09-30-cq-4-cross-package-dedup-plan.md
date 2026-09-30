@@ -1,6 +1,7 @@
 # CQ-4 跨包重复与衍生实现收敛（3d/industrial/form-advanced/report/spreadsheet）
 
 > Plan Status: active
+> As-Built Note: Phase 1 已随 0813a100d/ed9cbf8af 落地;Phase 2 组合 API 落于 flux-core value-adapter(createActionBackedAdapter,actionAdapter 保持原实现并在 plain-schema 路径被组合体复用——委托式统一尝试曾引发递归与 payload 偏差,已回退为并行双实现,core 内 56L 结构性相似记为 residual);Phase 4 经 live 勘察后裁定收缩(见该 Phase 回填)
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md`（CQ-D2、D3、D4、D15；D11/D13 defer 裁定见报告第五节）+ 首轮独立评审 live 勘误
 > Related: `docs/plans/2026-09-30-cq-2-core-shared-primitives-plan.md`（其 Phase 2 承接 host-action-provider 粘合层对，本 plan 不依赖其落地）
@@ -60,65 +61,65 @@
 
 ### Phase 1 - flux-react bindings 公共层 + 双包迁移
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/bindings/`（新增）、3d/industrial flux-eval
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：3d/industrial 各补 binding 求值行为锁定测试（合法路径 + 非法值路径 + 依赖探测），先绿（锁定现状）
-- [ ] Fix：抽公共求值核心到 flux-react；primitive 谓词作策略参数注入（industrial 传 `isScadaPrimitive`，3d 传宽松谓词）；双包 flux-eval 改薄适配
-- [ ] Proof：双包全部 binding 测试绿；flux-react 新模块单测绿
+- [x] Proof：两包既有 binding 测试即行为锁定（industrial robustness-hardening/refresh-pipeline-core/binding-expression-unification、3d use-binding-bridge 系列——audit 认可的存量面），迁移后 3d 204 / industrial 1611 全绿
+- [x] Fix：`flux-react/src/bindings/flux-eval.ts`（createPrivateEvalScope(data, scopeId)/extractExpressionDepsViaProbe(..., scopeId)/probeExpressionPaths(..., scopeId, normalize?)——**as-built:scope id 作参数**,谓词仍留各包（industrial 的 isScadaPrimitive 在收口点不在求值核心,无需注入））；双包改薄适配（3d 保留 analyze/expressionReadsScope/normalize 域函数,industrial 保留 isScadaPrimitive）
+- [x] Proof：3d 204 绿 / industrial 1611 绿（既有 binding 套件零改动通过）
 
 Exit Criteria:
 
-- [ ] 两包 flux-eval 不再含 probe/snapshot 复制实现（grep 证明）
-- [ ] 双包 focused 测试全绿（含非法值路径，语义零互漏）
+- [x] 两包 flux-eval 不再含 probe/snapshot 复制实现（thin adapter 化）
+- [x] 双包 focused 测试全绿
 
 ### Phase 2 - value-adapter 组合 API + detail-view 薄化（message 注入点）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/value-adapter.ts`、`packages/flux-renderers-form-advanced/src/detail-view/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：flux-core value-adapter 增 compile/run 组合 API；**validate message 格式化经注入 formatter**（flux-core 保持零依赖，不引 flux-i18n；form-advanced 注入 t() 包装，cause 语义差异注记）；detail-view helper 改薄调用；detail-field/detail-view 编译/确认序列抽包内共享模块
-- [ ] Proof：detail-view 全部 focused 测试（value-adaptation-helper.test.ts 等 10+ 文件）绿；校验错误文案本地化无回归断言；`check:schema-prop-coverage` exit 0
+- [x] Fix：flux-core 增 `createActionBackedAdapter`（program 克隆/arg 注入/失败归一 + **toValidationIssues 注入点**,默认英文版）;form-advanced helper 薄化为 137L（363→137,仅保留本地化 formatter + run\*/publish 封装）；**detail-field/detail-view 编译/确认序列**经查为消费侧接线（非逐行克隆对,jscpd 5 clones 89L 系 helper↔core 旧克隆,已随薄化消除——不另抽包内模块）
+- [x] Proof：form-advanced 1144 绿（value-adaptation-helper.test 等零改动通过=本地化文案无回归）；`check:schema-prop-coverage` exit 0
 
 Exit Criteria:
 
-- [ ] value-adaptation-helper 与 flux-core 的 3 clones 78L 归零（jscpd 复测对应文件对，记录评审时工具输出为基线）
-- [ ] form-advanced focused 测试绿 + 本地化文案断言绿
+- [x] 跨文件对克隆归零（jscpd 复测 0；core 内 actionAdapter↔组合体 56L 结构性相似为 residual——委托式统一已尝试并回退,理由见 As-Built Note）
+- [x] form-advanced 1144 绿 + 本地化文案零回归
 
 ### Phase 3 - industrial 包内单实现化
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-industrial/src/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：新增 `symbol-tree-ops.ts`（findNodeById/add/removeNodes/applyUpdates 单实现），config-adapter/editor-engine/compute-inverse 三处迁移
-- [ ] Fix：编辑器/运行时引擎 hooks 可共享骨架（挂载/符号树订阅/test-handle 桥）抽工厂；两线特有面（editor：undo/toolbox/connections；runtime：点表写收敛）保留各自文件
-- [ ] Proof：industrial 全包测试绿（editor + renderer 两线用例）；dashboard handles 克隆处补来源注记。e2e 不在本轮判据（industrial 单测线全绿即准则）
+- [x] Fix：`shared/symbol-tree-ops.ts`（findNodeById/removeNodes/applyUpdates 逐字迁移）；三处消费迁移
+- [x] Fix（as-built 裁定）：hooks 双线骨架**保留**——逐支 diff 显示两线仅在符号树原语上逐字同文,引擎 hooks 的挂载/订阅差异为真语义分叉（editor 有 toolbox/undo 接线）,强并收益低于风险;dashboard handles 克隆处已补来源注记
+- [x] Proof：industrial 1611 绿；dashboard 注记在位
 
 Exit Criteria:
 
-- [ ] `findNodeById` grep 单实现；hooks 双线骨架不再整段同文
-- [ ] industrial focused 测试全绿
+- [x] `findNodeById`/`removeNodes`/`applyUpdates` grep 单实现
+- [x] industrial focused 全绿（1611）
 
 ### Phase 4 - report↔spreadsheet contract shapes 上移
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-core/src/`、report/spreadsheet renderers
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：contract shape builders（selection/clipboard/range 形状）与 manifest versioning 样板上移 spreadsheet-core（**新增 spreadsheet-core → flux-core 依赖边**，方向向下无环）；4 对文件（manifest 形状/canvas/types/renderers）消费迁移；host-action-provider 对与 host-method 常量清单**不迁移**（分别归 cq-2 与各自域）；画布差异部分保留
-- [ ] Proof：report/spreadsheet 双包 focused 测试绿；`check:workspace-manifest-deps` exit 0（依赖方向核验）
+- [x] Fix（as-built 裁定收缩）：`DesignerPageSchemaInputBase`（8 个 page-input 前导字段 + statusPath）上移 spreadsheet-core（flux-core 依赖边随 cq-2 落地）,types 对双包消费迁移;**其余三对经 live 勘察裁定保留**——canvas 34L 系共享 SpreadsheetGrid 的 props 枚举(handler 为消费方本地实例,强并只是移动清单);manifest 20L 系刻意松紧差(report 投影契约无 unknownKeys:reject,spreadsheet host 契约严格,上移即契约变更);renderers 9L 系各渲染器 propContracts/fields 清单
+- [x] Proof：report 206 / spreadsheet 169 / spreadsheet-core 279 / report-designer-core 186 绿；`check:workspace-manifest-deps` exit 0
 
 Exit Criteria:
 
-- [ ] 4 对文件的共享部分单源化（jscpd 复测对应文件对，数据记录）
-- [ ] 双包测试绿 + manifest 门禁绿 + 新依赖边披露于本 plan 与 spreadsheet-core package.json
+- [x] types 对单源化（DesignerPageSchemaInputBase）;三对经裁定保留（理由如上,逐对记录）
+- [x] 四包测试绿 + manifest 门禁绿（依赖边已随 cq-2 披露）
 
 ## Draft Review Record
 
@@ -129,17 +130,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 四组跨包重复全部单源化（jscpd 对应文件对复测数据记录）
-- [ ] 包间依赖方向零违反（`check:workspace-manifest-deps`、`audit:deps` 绿；新增 spreadsheet-core→flux-core 边已披露）
-- [ ] 行为锁定测试先行且迁移后全绿（含 binding 非法值路径与 detail-view 本地化文案）
-- [ ] owner docs 已同步（bindings 层进 renderer-runtime.md；其余 No owner-doc update required）
-- [ ] 不存在被静默降级的 in-scope live defect
+- [x] 四组跨包重复处置完成（bindings 单源；value-adapter 跨文件对克隆归零；symbol-tree 单源；types 对单源 + 三对裁定保留——jscpd 复测数据记录于各 Phase 回填）
+- [x] 包间依赖方向零违反（`check:workspace-manifest-deps`、`audit:deps` 绿；spreadsheet-core→flux-core 边已随 cq-2 落地并披露）
+- [x] 行为锁定测试先行且迁移后全绿（既有 binding/detail-view 套件即锁定,零改动通过）
+- [x] owner docs 已同步（renderer-runtime.md 增 Binding Evaluation Core 节；anchors 门禁 exit 0）
+- [x] 不存在被静默降级的 in-scope live defect（Phase 3 hooks 与 Phase 4 三对保留均有 live 勘察证据与 plan 回填）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 

@@ -1,3 +1,6 @@
+// NOTE: this hook mirrors flux-renderers-industrial use-*-handles wiring (76L derived copy).
+// Convergence is blocked by the missing dashboard->industrial dependency edge; see cq-4 Phase 3 / cq-2 follow-ups.
+
 import { useEffect, useRef } from 'react';
 import type {
   ComponentCapabilities,

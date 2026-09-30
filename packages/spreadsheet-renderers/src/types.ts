@@ -1,16 +1,12 @@
-import type { BaseSchema, SchemaInput } from '@nop-chaos/flux-core';
-import type { SpreadsheetConfig, SpreadsheetDocument } from '@nop-chaos/spreadsheet-core';
+import type { BaseSchema } from '@nop-chaos/flux-core';
+import type {
+  DesignerPageSchemaInputBase,
+  SpreadsheetConfig,
+  SpreadsheetDocument,
+} from '@nop-chaos/spreadsheet-core';
 
-export interface SpreadsheetPageSchemaInput {
+export interface SpreadsheetPageSchemaInput extends DesignerPageSchemaInputBase {
   type: 'spreadsheet-page';
-  id?: string;
-  name?: string;
-  label?: string;
-  title?: string | SchemaInput;
-  className?: string;
-  visible?: boolean | string;
-  hidden?: boolean | string;
-  disabled?: boolean | string;
   document: SpreadsheetDocument;
   config?: SpreadsheetConfig;
   readOnly?: boolean;

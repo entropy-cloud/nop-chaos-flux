@@ -1,4 +1,5 @@
 import type { BaseSchema, SchemaInput } from '@nop-chaos/flux-core';
+import type { DesignerPageSchemaInputBase } from '@nop-chaos/spreadsheet-core';
 import type {
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,
@@ -13,16 +14,8 @@ export type {
   ReportInspectorSchema,
 } from './schemas.js';
 
-export interface ReportDesignerPageSchemaInput {
+export interface ReportDesignerPageSchemaInput extends DesignerPageSchemaInputBase {
   type: 'report-designer-page';
-  id?: string;
-  name?: string;
-  label?: string;
-  title?: string | SchemaInput;
-  className?: string;
-  visible?: boolean | string;
-  hidden?: boolean | string;
-  disabled?: boolean | string;
   document: ReportTemplateDocument;
   config: ReportDesignerConfig;
   profile?: ReportDesignerProfile;

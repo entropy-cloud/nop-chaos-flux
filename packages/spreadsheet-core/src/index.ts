@@ -1,3 +1,4 @@
+import type { SchemaInput } from '@nop-chaos/flux-core';
 export type {
   SpreadsheetHostStatusSummary,
   SpreadsheetDocument,
@@ -127,3 +128,21 @@ export { isSpreadsheetCommand } from './commands.js';
 export type { SpreadsheetCore, CreateSpreadsheetCoreOptions } from './core.js';
 
 export { createSpreadsheetCore } from './core.js';
+
+/**
+ * Shared designer-page schema preamble (cq-4 Phase 4): the designer-family
+ * page-input fields common to spreadsheet/report (and available to future
+ * designer pages). `type` and package-specific payload fields stay with each
+ * renderer package.
+ */
+export interface DesignerPageSchemaInputBase {
+  id?: string;
+  name?: string;
+  label?: string;
+  title?: string | SchemaInput;
+  className?: string;
+  visible?: boolean | string;
+  hidden?: boolean | string;
+  disabled?: boolean | string;
+  statusPath?: string;
+}

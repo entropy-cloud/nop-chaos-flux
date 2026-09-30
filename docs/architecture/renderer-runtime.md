@@ -1459,3 +1459,7 @@ List, table, and tree renderers should avoid eager child-scope creation for work
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/references/renderer-interfaces.md`
+
+## Binding Evaluation Core (flux-react bindings)
+
+`packages/flux-react/src/bindings/flux-eval.ts` hosts the shared binding-expression evaluation core used by flux-renderers-3d and flux-renderers-industrial (cq-4 Phase 1): `createPrivateEvalScope(data, scopeId)` (INV-4 read-only private scope), `extractExpressionDepsViaProbe(compiler, env, expression, scopeId)` (tolerant Proxy probe → platform dependency collection, five-state result), and `probeExpressionPaths(expression, context, scopeId, normalize?)`. Callers pin their scope identity (`three-canvas-flux-eval` / `scada-flux-eval`); the value-domain policy stays in each caller (3d lenient arrays/objects, industrial ScadaPrimitive guard).

@@ -5,6 +5,7 @@ import type {
   ScadaSymbolNode,
   ScadaVariablesDiff,
 } from '../../serialization/config-types.js';
+import { applyUpdates, findNodeById, removeNodes } from '../../shared/symbol-tree-ops.js';
 
 /**
  * `computeInverse(forward, prevSnapshot)` —— push 时预计算逆 diff（design-undo-redo.md §4.1.1）。
@@ -32,16 +33,7 @@ export function findNodeForInverse(snapshot: ScadaConfig, id: string): ScadaSymb
   return findNodeById(snapshot.symbols, id);
 }
 
-function findNodeById(nodes: ScadaSymbolNode[], id: string): ScadaSymbolNode | undefined {
-  for (const node of nodes) {
-    if (node.id === id) return node;
-    if (node.children) {
-      const found = findNodeById(node.children, id);
-      if (found) return found;
-    }
-  }
-  return undefined;
-}
+
 
 /**
  * 计算一条 ScadaConfigDiff 的逆 diff（design-undo-redo.md §4.1.1）。
@@ -171,35 +163,7 @@ function reorderSymbolsById(symbols: ScadaSymbolNode[], reorderedIds: string[]):
   return reorderedIds.map((id) => byId.get(id)!);
 }
 
-function removeNodes(symbols: ScadaSymbolNode[], removed: Set<string>): ScadaSymbolNode[] {
-  const out: ScadaSymbolNode[] = [];
-  for (const node of symbols) {
-    if (removed.has(node.id)) continue;
-    if (node.children) {
-      const filteredChildren = removeNodes(node.children, removed);
-      out.push({ ...node, children: filteredChildren });
-    } else {
-      out.push({ ...node });
-    }
-  }
-  return out;
-}
 
-function applyUpdates(symbols: ScadaSymbolNode[], updates: Array<{ id: string; patch: Partial<ScadaSymbolNode> }>): ScadaSymbolNode[] {
-  const patchById = new Map(updates.map((u) => [u.id, u.patch]));
-  const apply = (nodes: ScadaSymbolNode[]): ScadaSymbolNode[] =>
-    nodes.map((node) => {
-      const patch = patchById.get(node.id);
-      if (patch) {
-        return { ...node, ...patch };
-      }
-      if (node.children) {
-        return { ...node, children: apply(node.children) };
-      }
-      return { ...node };
-    });
-  return apply(symbols);
-}
 
 function applyVariablesDiff(existing: ScadaPointDeclaration[], diff: ScadaVariablesDiff): ScadaPointDeclaration[] {
   const removed = new Set(diff.removed);

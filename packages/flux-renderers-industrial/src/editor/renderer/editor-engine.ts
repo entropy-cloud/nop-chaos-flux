@@ -28,6 +28,7 @@ import type {
   ScadaSymbolNode,
 } from '../../serialization/config-types.js';
 import type { ScadaEditorMode } from '../editor-session.js';
+import { findNodeById } from '../../shared/symbol-tree-ops.js';
 
 const GROUP_CONTAINER_TYPE = 'scada-group';
 
@@ -441,15 +442,6 @@ export class ScadaEditorEngine {
   }
 }
 
-function findNodeById(nodes: ScadaSymbolNode[], id: string): ScadaSymbolNode | undefined {
-  for (const node of nodes) {
-    if (node.id === id) return node;
-    if (node.children) {
-      const found = findNodeById(node.children, id);
-      if (found) return found;
-    }
-  }
-  return undefined;
-}
+
 
 export type { Bounds, Point, Size, ViewportState };

@@ -2,6 +2,7 @@ import { Group, type IGroup } from 'leafer-ui';
 import type { ScadaCanvasEngine } from './scada-engine.js';
 import type { TreeRegistry } from './tree-registry.js';
 import { getScadaSymbolDefinition } from '../symbols/symbol-registry.js';
+import { findNodeById } from '../shared/symbol-tree-ops.js';
 import { instantiateSymbol, toNodePatch } from '../symbols/symbol-factory.js';
 import { resolveSymbolStyle } from '../symbols/style-resolver.js';
 import type { LeafNode, ScadaSymbolProps } from '../symbols/symbol-types.js';
@@ -168,13 +169,4 @@ export class ConfigAdapter {
   }
 }
 
-function findNodeById(nodes: ScadaSymbolNode[], id: string): ScadaSymbolNode | undefined {
-  for (const node of nodes) {
-    if (node.id === id) return node;
-    if (node.children) {
-      const found = findNodeById(node.children, id);
-      if (found) return found;
-    }
-  }
-  return undefined;
-}
+

@@ -1,5 +1,6 @@
 import type { ActionContext, ActionResult, ActionSchema } from './types/actions.js';
 import type { FormRuntime } from './types/runtime.js';
+import type { CompiledActionNode, CompiledActionProgram } from './types/actions.js';
 import type { SchemaValue } from './types/schema.js';
 import type { ScopeRef } from './types/scope.js';
 
@@ -67,21 +68,21 @@ function markSyncAdapter<TAdapter extends ValueAdapter>(
   return syncAdapter;
 }
 
+function supportsArgsInjection(action: ActionSchema) {
+  return (
+    action.action !== 'closeDialog' &&
+    action.action !== 'closeDrawer' &&
+    action.action !== 'closeSurface' &&
+    action.action !== 'refreshTable' &&
+    action.action !== 'refreshSource'
+  );
+}
+
 function injectDefaultArgs(
   actionSchema: ActionSchema | ActionSchema[],
   payload: Record<string, unknown>,
 ): ActionSchema | ActionSchema[] {
   const schemaPayload = payload as Record<string, SchemaValue>;
-
-  function supportsArgsInjection(action: ActionSchema) {
-    return (
-      action.action !== 'closeDialog' &&
-      action.action !== 'closeDrawer' &&
-      action.action !== 'closeSurface' &&
-      action.action !== 'refreshTable' &&
-      action.action !== 'refreshSource'
-    );
-  }
 
   if (Array.isArray(actionSchema)) {
     return actionSchema.map((entry) =>
@@ -378,11 +379,218 @@ export function actionAdapter(
         }
 
         return { valid: true };
-        // Errors routed through host runtime error boundary — adapter update errors
       } catch (error) {
         return {
           valid: false,
           issues: toValidationIssues(error),
+        };
+      }
+    },
+  };
+}
+
+
+
+// --- Action-backed adapter composition (cq-4 Phase 2) -----------------------
+
+export type ValueAdaptationAction = ActionSchema | ActionSchema[] | CompiledActionProgram;
+
+export function isCompiledActionProgram(value: unknown): value is CompiledActionProgram {
+  return Boolean(
+    value && typeof value === 'object' && 'nodes' in value && Array.isArray((value as { nodes?: unknown }).nodes),
+  );
+}
+
+function cloneCompiledActionProgramWithPayload(
+  program: CompiledActionProgram,
+  payload: Record<string, unknown>,
+): CompiledActionProgram {
+  const schemaPayload = payload as Record<string, SchemaValue>;
+
+  return {
+    ...program,
+    isFullyStatic: false,
+    nodes: program.nodes.map(function cloneNode(node): CompiledActionNode {
+      const source = injectDefaultArgs(node.source, payload) as ActionSchema;
+      return {
+        ...node,
+        source,
+        payload: {
+          ...node.payload,
+          args:
+            node.source.args === undefined && supportsArgsInjection(node.source)
+              ? {
+                  kind: 'static',
+                  isStatic: true,
+                  node: { kind: 'static-node', value: schemaPayload },
+                  value: schemaPayload,
+                }
+              : node.payload.args,
+        },
+        then: node.then?.map(cloneNode),
+        onError: node.onError?.map(cloneNode),
+        onSettled: node.onSettled?.map(cloneNode),
+        parallel: node.parallel?.map(cloneNode),
+      };
+    }),
+  };
+}
+
+async function runValueAdaptationAction(
+  actionSchema: ValueAdaptationAction | undefined,
+  payload: Record<string, unknown>,
+  runner: (actionSchema: ValueAdaptationAction, ctx?: AdapterActionContext) => Promise<ActionResult>,
+  ctx?: AdapterActionContext,
+): Promise<ActionResult | undefined> {
+  if (!actionSchema) {
+    return undefined;
+  }
+
+  return runner(
+    isCompiledActionProgram(actionSchema)
+      ? cloneCompiledActionProgramWithPayload(actionSchema, payload)
+      : injectDefaultArgs(actionSchema, payload),
+    ctx,
+  );
+}
+
+export interface ActionBackedAdapterOptions {
+  transformInAction?: ValueAdaptationAction;
+  transformOutAction?: ValueAdaptationAction;
+  validateAction?: ValueAdaptationAction;
+  runner: (actionSchema: ValueAdaptationAction, ctx?: AdapterActionContext) => Promise<ActionResult>;
+  /**
+   * Message seam (flux-core stays dependency-free — no i18n here). Default
+   * emits plain English messages with `cause`; hosts inject their own
+   * localization (form-advanced passes the flux.form.validationFailedDetail
+   * formatter).
+   */
+  toValidationIssues?: (error: unknown) => AdapterValidationIssue[];
+}
+
+/**
+ * Composition of transformIn/transformOut/validate action pipelines over a
+ * host-provided runner. Supports compiled action programs (payload is cloned
+ * into every node); falls through to {@link actionAdapter} for plain schema
+ * inputs. This is the detail-view adaptation seam (cq-4 Phase 2).
+ */
+export function createActionBackedAdapter(options: ActionBackedAdapterOptions): ValueAdapter<unknown, unknown, AdapterActionContext> {
+  const {
+    transformInAction,
+    transformOutAction,
+    validateAction,
+    runner,
+    toValidationIssues: formatIssues = toValidationIssues,
+  } = options;
+
+  if (
+    !isCompiledActionProgram(transformInAction) &&
+    !isCompiledActionProgram(transformOutAction) &&
+    !isCompiledActionProgram(validateAction)
+  ) {
+    return actionAdapter(
+      transformInAction as ActionSchema | ActionSchema[] | undefined,
+      transformOutAction as ActionSchema | ActionSchema[] | undefined,
+      validateAction as ActionSchema | ActionSchema[] | undefined,
+      // runner seam: core's dispatch path resolves the runner from ctx at call
+      // time and forwards (scope, form); the composition's runner ignores ctx.
+      async (actionSchema) => runner(actionSchema as ValueAdaptationAction),
+    );
+  }
+
+  return {
+    async in(value, ctx) {
+      if (!transformInAction) {
+        return value;
+      }
+
+      const result = await runValueAdaptationAction(
+        transformInAction,
+        {
+          value,
+          readOnly: ctx.readOnly,
+          ...(ctx.name !== undefined ? { name: ctx.name } : {}),
+        },
+        runner,
+        ctx,
+      );
+
+      if (!result?.ok) {
+        throw createActionFailureError('transformIn', result);
+      }
+
+      return getActionResultValue(result, value);
+    },
+
+    async out(value, ctx) {
+      if (!transformOutAction) {
+        return value;
+      }
+
+      const result = await runValueAdaptationAction(
+        transformOutAction,
+        {
+          value,
+          originalValue: ctx.originalValue,
+          readOnly: ctx.readOnly,
+          ...(ctx.name !== undefined ? { name: ctx.name } : {}),
+        },
+        runner,
+        ctx,
+      );
+
+      if (!result?.ok) {
+        throw createActionFailureError('transformOut', result);
+      }
+
+      return getActionResultValue(result, value);
+    },
+
+    async validate(value, ctx) {
+      if (!validateAction) {
+        return { valid: true };
+      }
+
+      try {
+        const result = await runValueAdaptationAction(
+          validateAction,
+          {
+            value,
+            originalValue: ctx.originalValue,
+            ...(ctx.name !== undefined ? { name: ctx.name } : {}),
+          },
+          runner,
+        );
+
+        if (!result?.ok) {
+          return {
+            valid: false,
+            issues: formatIssues(result?.error),
+          };
+        }
+
+        const data = result.data;
+        if (!data || typeof data !== 'object') {
+          return { valid: true };
+        }
+
+        const candidate = data as {
+          valid?: unknown;
+          issues?: AdapterValidationIssue[];
+        };
+
+        if (candidate.valid === false) {
+          return {
+            valid: false,
+            issues: Array.isArray(candidate.issues) ? candidate.issues : [],
+          };
+        }
+
+        return { valid: true };
+      } catch (error) {
+        return {
+          valid: false,
+          issues: formatIssues(error),
         };
       }
     },
