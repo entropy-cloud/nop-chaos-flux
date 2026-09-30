@@ -23,7 +23,10 @@ export function createSharedVitestConfig(options: SharedVitestConfigOptions) {
         }),
     test: {
       environment: options.environment,
-      setupFiles: [resolve(__dirname, 'test-setup/strict-validation.ts')],
+      setupFiles: [
+        resolve(__dirname, 'test-setup/strict-validation.ts'),
+        ...(isHappyDOM ? [resolve(__dirname, 'test-setup/dom.ts')] : []),
+      ],
       env: {
         __FLUX_STRICT_VALIDATION__: 'true',
         __FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__: 'true',

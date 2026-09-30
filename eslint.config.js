@@ -189,6 +189,25 @@ export default [
       'jsx-a11y/label-has-associated-control': 'off',
     },
   },
+  // console gate (cq-1): no-console for package source; warn/error stay allowed
+  // (levels belong to the diagnostic pipeline). The ignored files hold the 3
+  // registered console.log/debug hits (scripts/baselines/console-log-baseline.json)
+  // and are exempt until cq-6 removes them — keep this list in sync with the baseline.
+  {
+    files: ['packages/*/src/**/*.{ts,tsx}'],
+    ignores: [
+      '**/*.test.{ts,tsx}',
+      '**/__tests__/**',
+      '**/*.spec.{ts,tsx}',
+      '**/test-support*.{ts,tsx}',
+      'packages/flux-renderers-scheduling/src/gantt/undo-stack.ts',
+      'packages/word-editor-renderers/src/editor-canvas.tsx',
+      'packages/word-editor-renderers/src/preview/doc-preview-page.tsx',
+    ],
+    rules: {
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+    },
+  },
   // i18n: 检测组件库中的硬编码字符串 (排除 playground、test、apps)
   {
     files: [

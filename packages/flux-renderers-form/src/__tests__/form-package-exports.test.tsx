@@ -88,7 +88,11 @@ describe('FieldsetRenderer', () => {
 
     const beforeCollapsed = fieldset.dataset.collapsed;
     fireEvent.click(screen.getByText('Static'));
-    expect(fieldset.dataset.collapsible).toBe('true');
+    // Non-collapsible fieldset: no data-collapsible marker, and clicking the
+    // title must not toggle data-collapsed. (This file previously passed by
+    // leaking test 1's collapsible <fieldset> into querySelector — the shared
+    // test-setup cleanup exposed the wrong assertion.)
+    expect(fieldset.dataset.collapsible).toBeUndefined();
     expect(fieldset.dataset.collapsed).toBe(beforeCollapsed);
     expect(body.textContent).toBe('');
   });

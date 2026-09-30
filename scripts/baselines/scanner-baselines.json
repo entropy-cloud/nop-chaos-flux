@@ -1,0 +1,11 @@
+{
+  "_header": {
+    "description": "Numeric baselines for the three high-risk advisory scanners. A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
+    "lastUpdated": "2026-09-30"
+  },
+  "scanners": {
+    "find-styling-suspects": 221,
+    "discover-audit-suspects": 716,
+    "find-test-global-leaks": 108
+  }
+}

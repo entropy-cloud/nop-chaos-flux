@@ -1,0 +1,149 @@
+{
+  "_header": {
+    "description": "console.log/debug baseline for non-test src under packages/ and apps/. New hits fail check:console-baseline; shrink via --update-baselines after removing hits.",
+    "lastUpdated": "2026-09-30",
+    "count": 28
+  },
+  "entries": [
+    {
+      "file": "packages/flux-renderers-scheduling/src/gantt/undo-stack.ts",
+      "line": 185,
+      "text": "if (typeof console !== 'undefined') console.log('[redo-delete]', this.rootTaskId, 'inMap=', !!this.store.getSnapshot().tasks.get(this.rootTaskId));"
+    },
+    {
+      "file": "packages/word-editor-renderers/src/editor-canvas.tsx",
+      "line": 156,
+      "text": "console.debug('[word-editor] word count failed', err);"
+    },
+    {
+      "file": "packages/word-editor-renderers/src/preview/doc-preview-page.tsx",
+      "line": 50,
+      "text": "console.debug('[word-editor] preview load failed', err);"
+    },
+    {
+      "file": "apps/playground/src/pages/barcode-demo.tsx",
+      "line": 25,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/calendar-demo.tsx",
+      "line": 21,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/calendar-perf-scale-demo.tsx",
+      "line": 21,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/dashboard-demo.tsx",
+      "line": 103,
+      "text": "notify: (_level, message) => console.log('[dashboard-demo]', message),"
+    },
+    {
+      "file": "apps/playground/src/pages/data-verify-page.tsx",
+      "line": 28,
+      "text": "console.log('[VERIFY] fetcher called:', req.url);"
+    },
+    {
+      "file": "apps/playground/src/pages/diff-demo.tsx",
+      "line": 23,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/diff-perf-scale-demo.tsx",
+      "line": 21,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/event-prevention-demo.tsx",
+      "line": 99,
+      "text": "console.log(`[event-prevention-demo notify:${level}] ${message}`);"
+    },
+    {
+      "file": "apps/playground/src/pages/gantt-demo.tsx",
+      "line": 19,
+      "text": "console.log('[GANTT] fetcher:', req.url);"
+    },
+    {
+      "file": "apps/playground/src/pages/gantt-demo.tsx",
+      "line": 22,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/gantt-perf-scale-demo.tsx",
+      "line": 21,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/gantt-states-demo.tsx",
+      "line": 21,
+      "text": "console.log('[GANTT-STATES] fetcher:', req.url);"
+    },
+    {
+      "file": "apps/playground/src/pages/gantt-states-demo.tsx",
+      "line": 24,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/graph-demo.tsx",
+      "line": 25,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/kanban-demo.tsx",
+      "line": 19,
+      "text": "console.log('[KANBAN] fetcher:', req.url);"
+    },
+    {
+      "file": "apps/playground/src/pages/kanban-demo.tsx",
+      "line": 22,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/kanban-perf-scale-demo.tsx",
+      "line": 19,
+      "text": "console.log('[KANBAN] fetcher:', req.url);"
+    },
+    {
+      "file": "apps/playground/src/pages/kanban-perf-scale-demo.tsx",
+      "line": 22,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/map-demo.tsx",
+      "line": 67,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/pivot-table-demo.tsx",
+      "line": 27,
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+    },
+    {
+      "file": "apps/playground/src/pages/scada-demo.tsx",
+      "line": 373,
+      "text": "console.log('[scada-demo] ajax', api.method ?? 'GET', api.url);"
+    },
+    {
+      "file": "apps/playground/src/pages/scada-demo.tsx",
+      "line": 380,
+      "text": "console.log('[scada-demo] notify', level, message);"
+    },
+    {
+      "file": "apps/playground/src/pages/scada-editor-demo.tsx",
+      "line": 251,
+      "text": "notify: (_level, message) => console.log('[scada-editor-demo]', message),"
+    },
+    {
+      "file": "apps/playground/src/pages/three-canvas-demo.tsx",
+      "line": 71,
+      "text": "console.log('[three-canvas-demo] ajax', api.method ?? 'GET', api.url);"
+    },
+    {
+      "file": "apps/playground/src/pages/three-canvas-demo.tsx",
+      "line": 76,
+      "text": "console.log('[three-canvas-demo] notify', level, message);"
+    }
+  ]
+}

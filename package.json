@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "turbo run dev --filter=@nop-chaos/flux-playground",
-    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:page-designer-boundary && pnpm check:schema-prop-coverage && pnpm check:scada-symbol-keys && pnpm check:audit-suspects && pnpm check:audit-renderer-browser-io && pnpm check:audit-event-dispatch-ctx && pnpm check:ai-engine-invariants && pnpm check:audit-ui-consistency-gaps && pnpm check:ui-family-nesting",
+    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:page-designer-boundary && pnpm check:schema-prop-coverage && pnpm check:scada-symbol-keys && pnpm check:scanner-baselines && pnpm check:audit-renderer-browser-io && pnpm check:audit-event-dispatch-ctx && pnpm check:ai-engine-invariants && pnpm check:audit-ui-consistency-gaps && pnpm check:ui-family-nesting && pnpm check:duplicates-baseline && pnpm check:console-baseline && pnpm check:docs-garbled && pnpm check:jsdom-pragma-whitelist && pnpm check:knip-baseline",
     "analyze": "turbo run analyze --filter=@nop-chaos/flux-playground",
     "audit:deps": "depcruise --config .dependency-cruiser.mjs apps packages scripts",
     "audit:knip": "knip --config knip.json",
@@ -59,6 +59,7 @@
     "check:audit-hardcoded-type-dispatch": "node scripts/audit/find-hardcoded-type-dispatch.mjs",
     "check:audit-canvas-wrapper-a11y": "node scripts/audit/find-canvas-wrapper-a11y-gaps.mjs",
     "check:duplicates": "node scripts/check-duplicates.mjs",
+    "check:knip-baseline": "node scripts/check-knip-baseline.mjs",
     "check:duplicates:detail": "jscpd packages/ --config .jscpd.json",
     "flux-guide:validate": "pnpm build && node --experimental-loader ./flux-guide/scripts/css-stub.mjs flux-guide/scripts/validate.mjs",
     "flux-guide:generate-types": "node flux-guide/scripts/generate-types.mjs",
@@ -70,7 +71,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "pack:flux-bundle": "node scripts/pack-flux-bundle.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "check:duplicates-baseline": "node scripts/check-duplicates.mjs",
+    "check:console-baseline": "node scripts/check-console-baseline.mjs",
+    "check:jsdom-pragma-whitelist": "node scripts/check-jsdom-pragma-whitelist.mjs",
+    "check:scanner-baselines": "node scripts/check-scanner-baselines.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
@@ -106,7 +111,7 @@
     "husky": "^9.1.7",
     "i18next": "^26.0.5",
     "jscpd": "^4.0.9",
-    "knip": "^6.9.0",
+    "knip": "6.9.0",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.3",
     "react-i18next": "^17.0.4",
@@ -118,7 +123,8 @@
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.58.0",
     "vite": "^8.3.0",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.1",
+    "@testing-library/jest-dom": "^6.9.1"
   },
   "pnpm": {
     "overrides": {
