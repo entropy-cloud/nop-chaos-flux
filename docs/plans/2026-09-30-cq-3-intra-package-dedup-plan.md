@@ -92,7 +92,7 @@ Exit Criteria:
 ### Phase 3 - form-advanced array-item controller
 
 Status: completed
-Targets: `packages/flux-renderers-form-advanced/src/`（新增 array-item-controller + chrome，迁移 combo/input-table；array-editor 视分歧裁定）
+Targets: `packages/flux-renderers-form-advanced/src/`（新增 `array-item-shared.tsx` + chrome，迁移 combo/input-table；array-editor 视分歧裁定）
 
 - Item Types: `Proof | Fix`
 
@@ -112,7 +112,7 @@ Targets: `packages/flux-renderers-data/src/table-renderer/`
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：盘点 `use-table-controls.sort-filter-expand.test.tsx` 对 filter commit 三段（apply/search/clear）的 payload/事件序列断言强度，缺口先补
+- [x] Proof：盘点结论（audit 后补齐）——该文件此前仅对 clearFilters 尾做 `toHaveBeenLastCalledWith` 深断言,handleFilter 的 payload 形状零断言（audit M1 漏网根因）;已补 handleFilter 首勾 payload 深断言（锁 `keyword: undefined` 非 '' 归一化）,缺口已堵
 - [x] Fix：单桥对象（`const bridge: TableBodyRowsProps = {...}` + 两 Body spread——两 Body 本就共用 TableBodyRowsProps 类型,仅 virtual 消费 scrollRef）;`commitFilters(newFilters, payload)` 合并三段 scope 写入+事件尾（**执行更正一次**:handleFilter 真实签名为 (column,value,checked) 的 checkbox 语义,首版误读为 values 数组,已按原语义恢复并由 suite 拦截）
 - [x] Proof：flux-renderers-data 1200 全绿；e2e probe 留待 cq-3 收口后 focused 跑（bridge 为纯 JSX 透传重构,无渲染路径变更）
 
@@ -128,7 +128,7 @@ Targets: `packages/flux-renderers-layout/src/`（新增 step-index.ts，steps/ti
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：盘点 steps/timeline 既有测试对索引解析/ownership 的覆盖，缺口先补
+- [x] Proof：盘点结论（audit 后补齐）——steps-renderer/timeline-renderer/steps-click-surface/steps-a11y/timeline-root-disabled 五个专门测试文件在位,索引解析与 ownership 路径已覆盖,无缺口需补
 - [x] Fix：抽 `step-index.ts`（clampIndex/asNumericIndex/resolveCurrentIndex/resolveFinalIndex,keyExtractor 吸收 key 差异）;**ownership hook 层保留**（steps 的 defaultValue fallback 链 vs timeline 的无激活态裁定系文档化语义分叉,不并）
 - [x] Proof：layout 140 绿
 
