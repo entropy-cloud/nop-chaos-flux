@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useDebouncedValue } from '@nop-chaos/flux-react';
 
 export interface UseKanbanFilterOptions {
   filterText?: string;
@@ -13,7 +14,7 @@ export function useKanbanFilter({ filterText: externalFilterText, filterCard, de
     setLocalText(externalFilterText ?? '');
   }, [externalFilterText]);
 
-  const debouncedValue = useDebounce(localText, debounceMs);
+  const debouncedValue = useDebouncedValue(localText, debounceMs);
   const [activeText, setActiveText] = useState('');
 
   useEffect(() => {
@@ -40,18 +41,4 @@ export function useKanbanFilter({ filterText: externalFilterText, filterCard, de
   };
 }
 
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    timeoutRef.current = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}

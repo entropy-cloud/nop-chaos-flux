@@ -7,6 +7,9 @@ const LazyMapRenderer = createLazyRendererComponent<MapSchema>(
   () => import('./map-renderer.js').then((m) => m.MapRenderer),
 );
 
+// Deliberately NOT flux-core's toJsonPointer: no escaping by design —
+// mapType/cluster dev-warning pointers only ever carry plain identifiers
+// (cq-2 E-group).
 function toJsonPointer(path: string, ...segments: Array<string | number>) {
   const parts = path.split('.').filter((segment) => segment.length > 0);
   return `/${[...parts, ...segments.map(String)].join('/')}`;

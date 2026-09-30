@@ -1,10 +1,4 @@
-import {
-  createNodeId,
-  parsePath,
-  type BaseSchema,
-  type SchemaInput,
-  type RendererSchemaValidationContext,
-} from '@nop-chaos/flux-core';
+import { createNodeId, toJsonPointer, type BaseSchema, type RendererSchemaValidationContext, type SchemaInput } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import type { CrudSchema, CrudSelectionConfig } from './crud-schema.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
@@ -112,22 +106,6 @@ function createCrudQueryFormRegion(schema: CrudSchema, path: string) {
   }
 
   return region;
-}
-
-function escapeJsonPointerSegment(segment: string) {
-  return segment.replace(/~/g, '~0').replace(/\//g, '~1');
-}
-
-function toJsonPointer(path: string, ...segments: Array<string | number>) {
-  const parts = parsePath(path)
-    .filter((segment) => segment !== '$')
-    .concat(segments.map((segment) => String(segment)));
-
-  if (parts.length === 0) {
-    return '';
-  }
-
-  return `/${parts.map(escapeJsonPointerSegment).join('/')}`;
 }
 
 function validateStringArray(value: unknown) {

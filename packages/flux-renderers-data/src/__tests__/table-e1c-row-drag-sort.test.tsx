@@ -9,7 +9,8 @@ import { useRowDragSort } from '../table-renderer/use-row-drag-sort.js';
 import type { TableRowEntry } from '../table-renderer/types.js';
 import type { FixedColumnLayout } from '../table-renderer/fixed-columns.js';
 
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
   useRenderScope: () => ({ update: vi.fn() }),
 }));
 

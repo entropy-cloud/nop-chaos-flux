@@ -12,7 +12,8 @@ import {
 } from '../table-renderer/use-column-resize.js';
 import { renderDataRow } from '../table-renderer/table-body-row-rendering.js';
 
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
   useRenderScope: () => ({ update: vi.fn() }),
   useScopeSelector: () => undefined,
 }));

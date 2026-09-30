@@ -7,9 +7,10 @@ import { KanbanCard } from './kanban-card.js';
 import { KanbanBoard } from './kanban-board.js';
 import { addCard, moveCard, moveColumn, removeCard, changeCard, addColumn, removeColumn } from './kanban-helpers.js';
 
-vi.mock('@nop-chaos/flux-react', () => {
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => {
   const stableScope = { id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() };
   return {
+    ...(await importOriginal<Record<string, unknown>>()),
     useRendererRuntime: () => ({ dispatch: vi.fn() }),
     useRenderScope: () => stableScope,
     useScopeSelector: () => undefined,

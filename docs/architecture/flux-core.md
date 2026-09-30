@@ -463,6 +463,15 @@ Priority order:
 - **`normalizeRootPath(path)`** / **`normalizeRootPaths(paths)`** — extract first path segment(s) for dependency tracking. `*` acts as wildcard.
 - **`createPathBinding`** (`packages/flux-core/src/utils/path-binding.ts`) — creates a path-binding service for projected-owner subtree rebasing, mapping between relative (owner-local) and absolute (parent-scope) coordinates.
 
+## Shared Value Utilities And Host Provider Factory (cq-2)
+
+- **`cloneDeep(value)`** (`src/utils/object.ts`) — structuredClone with JSON round-trip fallback. Input domain: plain JSON data (functions rejected under structuredClone semantics; undefined-valued properties dropped).
+- **`toJsonPointer(path, ...segments)`** (`src/utils/path.ts`) — dot/bracket schema path → escaped RFC 6901 pointer, `$` root dropped, empty output collapses to `''`.
+- **`appendToJsonPointer(path, ...segments)`** — appends raw segments to an already pointer-shaped path (no parsing/escaping of the incoming path).
+- **`genId()`** (`src/utils/id.ts`) — canonical `<ms>-<base36>` id shape. Package-local variants (prefixed/colon/underscore forms) are deliberate and annotated at their sites.
+- **`createHostActionProvider({ namespace, methods, contracts, dispatch, toActionResult, fallbackErrorMessage?, onInvokeError? })`** (`src/host-action-provider.ts`) — designer-family host action-provider factory (contract-table validation + `namespace:method` dispatch + error normalization). `createHostMethodValidator(namespace, contracts)` and `toHostActionError(error, fallbackMessage)` are the lower-level primitives for providers that keep bespoke invoke bodies (word-editor, flow-designer).
+- **`defineRendererFamily({ sourcePackage?, defaultSchema? })`** (`src/renderer-definition-builder.ts`) — registration builder pinning package-wide definition invariants; produced objects are structurally identical to hand-written `RendererDefinition` literals.
+
 ## URL Safety Utility
 
 `packages/flux-core/src/utils/url.ts` hosts the shared schema-driven `href` safety gate:

@@ -38,6 +38,10 @@ export function EditorCanvas({
     const container = containerRef.current;
     if (!container) return;
 
+    // Deliberately effect-scoped timer, not flux-react useDebouncedCallback:
+    // the debounce lifecycle is tied to THIS bridge mount (cleanup cancels
+    // pending saves on bridge swap) and shares the effect's AbortController
+    // for word-count best-effort refresh (cq-2 Phase 3 annotation).
     let saveTimer: ReturnType<typeof setTimeout> | null = null;
     const controller = new AbortController();
 

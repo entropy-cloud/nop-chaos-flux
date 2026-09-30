@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getIn, parsePath, setIn } from './path.js';
+import { appendToJsonPointer, getIn, parsePath, setIn, toJsonPointer } from './path.js';
 
 describe('path utils', () => {
   it('parses bracket indexes without changing path semantics', () => {
@@ -57,5 +57,24 @@ describe('path utils', () => {
     expect(() => setIn(obj, 'a.prototype.b', 1)).toThrow(/not allowed/);
     // Verify Object.prototype was not polluted
     expect((Object.prototype as any).polluted).toBeUndefined();
+  });
+});
+
+describe('toJsonPointer / appendToJsonPointer (cq-2)', () => {
+  it('converts a dot path to an escaped JSON pointer, dropping the $ root', () => {
+    expect(toJsonPointer('$.table.columns', '0', 'editable')).toBe('/table/columns/0/editable');
+    expect(toJsonPointer('$.user.name')).toBe('/user/name');
+    expect(toJsonPointer('$.a/b', 'c~d')).toBe('/a~1b/c~0d');
+    expect(toJsonPointer('list[0].name', 'x')).toBe('/list/0/name/x');
+  });
+
+  it('returns an empty pointer for a bare root path with no extra segments', () => {
+    expect(toJsonPointer('$')).toBe('');
+    expect(toJsonPointer('')).toBe('');
+  });
+
+  it('appends raw segments to an already pointer-shaped path without escaping the path', () => {
+    expect(appendToJsonPointer('/echarts/option', 'series', 0)).toBe('/echarts/option/series/0');
+    expect(appendToJsonPointer('', 'option')).toBe('/option');
   });
 });

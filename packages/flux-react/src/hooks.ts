@@ -21,7 +21,11 @@ import {
   useCurrentPickerRuntime,
   useStructuralLoopContext,
 } from './context-hooks.js';
-import { useRenderScopeContext, useRendererRuntimeContext } from './runtime-context-hooks.js';
+import {
+  useRenderScopeContext,
+  useRendererRuntimeContext,
+  useRendererRuntimeOrNullContext,
+} from './runtime-context-hooks.js';
 export {
   useCurrentActionScope,
   useCurrentComponentRegistry,
@@ -73,6 +77,10 @@ export {
 
 export function useRendererRuntime(): RendererRuntime {
   return useRendererRuntimeContext();
+}
+
+export function useRendererRuntimeOrNull(): RendererRuntime | null {
+  return useRendererRuntimeOrNullContext();
 }
 
 export function useRenderScope(): ScopeRef {

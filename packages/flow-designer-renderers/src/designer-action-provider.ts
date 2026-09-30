@@ -1,4 +1,4 @@
-import { validateHostMethodPayload } from '@nop-chaos/flux-core';
+import { createHostMethodValidator } from '@nop-chaos/flux-core';
 import type { ActionNamespaceProvider, HostCapabilityContract } from '@nop-chaos/flux-core';
 import type { DesignerCore } from '@nop-chaos/flow-designer-core';
 import { createDesignerCommandAdapter } from './designer-command-adapter.js';
@@ -12,16 +12,10 @@ function isCommandRecord(value: unknown): value is CommandRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function validateMethodPayload(
-  method: string,
-  payload: unknown,
-): { ok: true; args: CommandRecord } | { ok: false; error: Error } {
-  const contract = (FLOW_DESIGNER_HOST_METHOD_CONTRACTS as HostCapabilityContract['methods'])[method];
-  const validation = validateHostMethodPayload('designer', method, payload, contract);
-  return validation.ok
-    ? { ok: true, args: validation.args as CommandRecord }
-    : validation;
-}
+const validateMethodPayload = createHostMethodValidator(
+  'designer',
+  FLOW_DESIGNER_HOST_METHOD_CONTRACTS as HostCapabilityContract['methods'],
+);
 
 function mapPublishedResult(method: string, actionResult: ReturnType<typeof toActionResult>) {
   if (!actionResult.ok) {

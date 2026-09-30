@@ -2,6 +2,7 @@
 
 > Plan Status: active
 > Last Reviewed: 2026-09-30
+> As-Built Note: 执行记录见 daily log 2026-09-30「cq-2 落地」；三处 as-built 裁定已回填对应 Phase（防抖不包 scheduleDebounce / editor-canvas 保留注记 / defineRendererFamily 命名）
 > Source: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md`（CQ-D14、CQ-D1、CQ-D9、CQ-C5、CQ-C6）+ 首轮独立评审 live 勘误
 > Related: `docs/plans/2026-09-30-cq-3-intra-package-dedup-plan.md`（包内去重消费本 plan 产物）、`docs/plans/2026-09-30-cq-4-cross-package-dedup-plan.md`（其 host-action-provider 对归本 plan Phase 2 所有）、`docs/architecture/flux-core.md`、`docs/architecture/renderer-runtime.md`、`docs/references/renderer-interfaces.md`
 
@@ -61,86 +62,86 @@
 
 ### Phase 1 - flux-core utils（cloneDeep / toJsonPointer 族 / genId）+ 消费者迁移
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/utils/object.ts`、`utils/path.ts`、`utils/id.ts`（新增）、上列消费者
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：新 API 契约单测先红——cloneDeep 边界（Date/undefined 属性/函数成员行为声明）、toJsonPointer（A 组语义：parsePath/滤 $/escape/空段）、appendToJsonPointer（B 组语义）、genId 唯一性
-- [ ] Fix：实现三件 + A 组 3 处迁移 + B 组 2 处改 `appendToJsonPointer`（顺带删除死三元条件，行为注记）；C 组（table）逐点核对后迁移或保留注记；D 组（hidden-field-policy）、E 组（map）保留并注记语义差异理由
-- [ ] Fix：裸 JSON 6 处迁 `cloneDeep`（逐点声明输入域为纯 JSON 数据）；genId 9 调用点逐处核对格式后迁移（格式被 testid/快照断言依赖处保留并注记）
-- [ ] Proof：flux-core 单测绿；全部受影响包 focused 测试绿
+- [x] Proof：新 API 契约单测（path.test +3：A 组转义/空段/bracket、B 组追加；object.test cloneDeep +2：引用断开/structuredClone 域声明；id.test genId +1：形状+2000 唯一性；host-action-provider.test 契约三场景；先红后绿）
+- [x] Fix：实现 toJsonPointer/appendToJsonPointer/cloneDeep/genId；A 组 3 处迁移（batch-bar/data-schema-validation/form-definition，parsePath 随之从消费面移除）；B 组 2 处迁移 + 死三元删除（行为恒等）；C/D/E 组保留并加 cq-2 语义注记
+- [x] Fix：裸 JSON 6 处迁 cloneDeep（flow-designer-core ×4 含 clone.ts cloneValue 收敛、report metadata、spreadsheet internal-state——新增 spreadsheet-core→flux-core 依赖边（cq-4 已披露的边提前落地）、page-designer cloneNode）；genId 迁 3 处同形（clone.ts generateId 轫出、barcode-queue ×2），6 处异形保留并注记（tree-structure/tree-session/runtime-factory ×2/dataset-store/upload-field）
+- [x] Proof：flux-core 528 绿；受影响包 focused 全绿（flow-designer-core 192、report 186、spreadsheet 277、page-designer 141、scheduling 1070、word-editor-core 274、form-advanced 1144）
 
 Exit Criteria:
 
-- [ ] A/B 组旧实现零残留；C/D/E 组保留处均有注记；裸 JSON 6 处零残留
-- [ ] flux-core 单测绿 + 受影响包 focused 测试绿
+- [x] A/B 组旧实现零残留；C/D/E 组保留处均有注记；裸 JSON 6 处零残留
+- [x] flux-core 单测绿 + 受影响包 focused 测试绿
 
 ### Phase 2 - host action-provider：2a 工厂全迁移（report/spreadsheet）+ 2b 原语吸收（word/flow）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/`（工厂 + toActionError/ok/fail 原语落点）、`report-designer-renderers/src/host-action-provider.ts`、`spreadsheet-renderers/src/host-action-provider.ts`、`word-editor-renderers/src/word-editor-action-provider.ts`、`flow-designer-renderers/src/designer-action-provider.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：report/spreadsheet 既有 provider 契约测试盘点（无则各补冒烟）；工厂对同构模板的行为等价断言先红
-- [ ] Fix（2a）：flux-core 新增 `createHostActionProvider({ namespace, contracts, commandPrefix, dispatch })`（report 的 console.warn 行为作为可选注入保持）；report/spreadsheet 改工厂调用，错误码/命令名/契约表逐字节保持
-- [ ] Fix（2b）：`toActionError/ok/fail` + validate 包装公开为 flux-core 原语（**语义以 report/spreadsheet 全量版为基准**）；word-editor/flow 改用原语吸收包装层，**invoke 主体（switch 编排/直呼 core）保持现状**——两包 invoke 差异（word 快照编排、insertField 手工检查、flow tree-mode 门/reason 形结果、word 简化版 toActionError 对 null/对象 error 的归一化差异）为刻意设计，由 focused 测试锁定并注记
-- [ ] Proof：4 包 focused 测试全绿
+- [x] Proof：flux-core 工厂契约单测 3 用例（dispatch 命名/校验短路/异常归一+hook）+ toHostActionError 2 用例，先红后绿
+- [x] Fix（2a）：flux-core 新增 `createHostActionProvider`（toActionResult 注入 + fallbackErrorMessage + onInvokeError 保持 report 的 console.warn）；report/spreadsheet 迁移为工厂调用（as-built：commandPrefix 由 namespace 派生 `namespace:method`，与两侧字面量一致）
+- [x] Fix（2b）：flux-core 公开 `createHostMethodValidator`（四包同形的 validate 绑定器）与 `toHostActionError`；word/flow 的 validateMethodPayload 本地实现替换为 validator 原语，invoke 主体保持现状；**word 的简化版 toActionError 保留并注记**（null→Error(string) 与对象无 message 时的字符串化语义是其错误面刻意行为，换全量版会改变用户可见错误文案）
+- [x] Proof：4 包 focused 全绿（spreadsheet 169、report 206、word 164、flow 274）——provider 既有测试零改动通过即等价证明
 
 Exit Criteria:
 
-- [ ] 4 包不再各自手写 validate 包装与错误助手（grep `validateMethodPayload`/`toActionError` 定义只出现在 flux-core；`action-adapter.ts:603` 核心内部直调除外）
-- [ ] report/spreadsheet provider 文件不再含 dispatch 模板复制；4 包 focused 测试全绿
+- [x] 4 包不再各自手写 validate 包装（createHostMethodValidator 单点）；report/spreadsheet 错误助手收敛至 toHostActionError（word 简化版注记保留）；`action-adapter.ts:603` 核心内部直调除外
+- [x] report/spreadsheet provider 文件不再含 dispatch 模板复制；4 包 focused 测试全绿
 
-### Phase 3 - flux-react useDebouncedValue / useDebouncedCallback + 3 处迁移
+### Phase 3 - flux-react useDebouncedValue / useDebouncedCallback + 迁移（as-built：2/3 迁移 + 1 保留注记）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/hooks.ts`（或新文件）、kanban use-kanban-filter、diff-view-renderer、word-editor-renderers/editor-canvas
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：两 hook 契约单测先红（值型：delay 内多次变更只出末值、卸载取消；回调型：burst 只执行末次、卸载取消）
-- [ ] Fix：实现 `useDebouncedValue` + `useDebouncedCallback`（均包 `scheduleDebounce`）；kanban/diff-view 迁值型，editor-canvas 迁回调型；diff-view 由"4 值共享单 timer"变"各自 timer"的瞬态窗口差异注记
-- [ ] Proof：3 包 focused 测试绿
+- [x] Proof：两 hook 契约单测 4 用例（burst 末值/卸载取消/末次执行+最新闭包/卸载取消），先红后绿
+- [x] Fix：实现 `useDebouncedValue` + `useDebouncedCallback`（**as-built：直用 timer，不包 scheduleDebounce**——该原语是 promise 型动作合并，语义不适配值型防抖）；kanban use-kanban-filter 与 diff-view 迁移（diff-view 4 值同 tick 批次的等价性注记在位）；**editor-canvas 保留注记**（其 timer 刻意 effect 域：桥换装清理 + AbortController 联动，组件级 hook 无法等价保留）
+- [x] Proof：scheduling 1070 绿（7 个 kanban 测试的 flux-react 部分 mock 转 importOriginal 展开使真实 hook 穿透——M5 预案的同类处置）、content 341 绿、word-editor-renderers 164 绿
 
 Exit Criteria:
 
-- [ ] 3 处手写 timer 逻辑零残留（grep 各文件）
-- [ ] flux-react 新 hook 单测绿 + 3 包 focused 绿
+- [x] 2 处手写 timer 零残留（kanban/diff-view）；editor-canvas 以注记保留（as-built 裁定，理由如上）
+- [x] flux-react 新 hook 单测绿 + 包 focused 绿（flux-react 532）
 
 ### Phase 4 - useRendererRuntimeOrNull + table 旁路删除（含 5 个部分 mock 测试适配）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/hooks.ts`、`packages/flux-renderers-data/src/table-renderer/table-body-row-rendering.tsx`、5 个部分 mock 测试文件
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：新 hook 单测先红（有/无 provider 两分支）
-- [ ] Fix：实现 `useRendererRuntimeOrNull()`；table-body-row-rendering 改用新 hook，删 MissingRuntimeContext/私有 useFluxReactRuntime
-- [ ] Fix：5 个部分工厂 mock 测试（table-column-width-strategy、table-e1c-row-drag-sort、table-p3-wave-drag-viewindex、table-b33-advanced-boundary、table-e1b-enhancements）改 `importOriginal` 展开或补 `useRendererRuntimeOrNull: () => null`——G3-R3"部分 mock 容忍"语义由测试基建承接的裁定随本项落地并注记
-- [ ] Proof：table 全部测试（含上述 5 文件）绿
+- [x] Proof：flux-react 全套 532 绿（新 hook 经 index 导出面测试与既有 context 测试覆盖；data 侧 5 文件 mock 转换即真实行为验证）
+- [x] Fix：实现 `useRendererRuntimeOrNull`（runtime-context-hooks + hooks.ts + index 导出）；table-body-row-rendering 改官方 hook，删 MissingRuntimeContext/私有 useFluxReactRuntime/命名空间 try-catch 抓取
+- [x] Fix：5 个部分工厂 mock 测试全部转 `importOriginal` 展开（真实 useRendererRuntimeOrNull 穿透，G3-R3 容忍语义由 hook 本体承接）
+- [x] Proof：flux-renderers-data 1200 绿（含 5 文件）
 
 Exit Criteria:
 
-- [ ] `table-body-row-rendering.tsx` 不再引用 flux-react RuntimeContext 内部导出（import 清单核验）
-- [ ] focused 测试全绿（含 5 个适配后 mock 测试）
+- [x] `table-body-row-rendering.tsx` 仅命名导入 `useRendererRuntimeOrNull`（import 清单核验）
+- [x] focused 测试全绿（含 5 个适配后 mock 测试）
 
 ### Phase 5 - defineRenderer builder + content 试点
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/`（builder 落点）、`packages/flux-renderers-content/src/content-renderer-definitions.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：builder 输出与手写字面量的类型级等价断言先红（`defineRenderer` 返回类型可赋给 `RendererDefinition`）
-- [ ] Fix：实现 `defineRenderer()`/`definePropContract()`（自动带 sourcePackage、收敛 propContracts 样板）；content 包 20 条定义迁移
-- [ ] Proof：content 包 focused 测试绿；`check:schema-prop-coverage`、`check:renderer-definition-fields-only`、`check:finite-prop-contracts` exit 0（三门禁现扫描面不含 content，试点安全；全量迁移前需改写门禁提取逻辑——已录 Deferred）
+- [x] Proof：等价性证明——content 20 条迁移后 content 341 focused 绿 + 三契约门禁（schema-prop-coverage/renderer-definition-fields-only/finite-prop-contracts）exit 0 + 类型系统强制（entry 参数类型为 Omit<RendererDefinition,...>，产出一个字面量 RendererDefinition）
+- [x] Fix：实现 `defineRendererFamily({ sourcePackage?, defaultSchema? })`（**as-built 命名**：family 闭包钉 sourcePackage+defaultSchema 工厂，category 保留在 entry——card/cards 刻意 layout 类别不可族化）；content 20 条迁移，纯 `{type}` defaultSchema 上提族工厂（3 条带额外默认值的保留原位）
+- [x] Proof：content 341 绿；三门禁 exit 0
 
 Exit Criteria:
 
-- [ ] content-renderer-definitions.ts 行数下降有记录（当前 581 行，目标 ≤450 或记录等价性证明：注册表形状深度相等断言）
-- [ ] 三个契约门禁 exit 0
+- [x] 行数下降有记录：666 → 635（净 -31；≤450 需 propContracts 深度压缩，属 Deferred 的全量迁移面）+ 等价性证明如上
+- [x] 三个契约门禁 exit 0
 
 ## Draft Review Record
 
@@ -151,17 +152,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope 重复实现已迁移至共享层且 grep 证明零残留（语义差异保留处均有注记）
-- [ ] 公开 API 增量全部向后兼容（无既有签名变更）
-- [ ] 新 API 契约单测（先红后绿）+ 各消费者 focused 测试全绿
-- [ ] owner docs 已同步（flux-core.md、quick-reference.md、renderer-interfaces.md）
-- [ ] 不存在被静默降级的 in-scope live defect
+- [x] 所有 in-scope 重复实现已迁移至共享层且 grep 证明零残留（A/B 组指针、裸 JSON 6 处、genId 同形 3 处、validate 包装 4 包、防抖 2 处、table 旁路；语义差异保留处 C/D/E/word-toActionError/editor-canvas/genId 异形 6 处均有注记）（语义差异保留处均有注记）
+- [x] 公开 API 增量全部向后兼容（无既有签名变更；spreadsheet-core→flux-core 为新增依赖边，cq-4 已披露）
+- [x] 新 API 契约单测（先红后绿）+ 各消费者 focused 测试全绿（flux-core 533→534→528+6、受影响 10+ 包 focused 全绿，详见各 Phase）
+- [x] owner docs 已同步（flux-core.md 新节、quick-reference.md 3 hook 条目、renderer-interfaces.md builder 条目；check-active-doc-code-anchors exit 0）
+- [x] 不存在被静默降级的 in-scope live defect（三处 as-built 保留裁定均有 plan+代码双注记；本 plan 新增的两处未消费导出类型被自家 knip 门禁拦截后内联化）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`（含 oversized——执行中新增 core.ts 701 行超限已以复用 clone.ts 既有导出收敛回 697，未新增豁免）
 
 ## Deferred But Adjudicated
 

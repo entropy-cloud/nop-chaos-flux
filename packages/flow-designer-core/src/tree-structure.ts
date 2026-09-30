@@ -62,6 +62,7 @@ export function cloneTreeDocument(tree: TreeDocument): TreeDocument {
 }
 
 export function createTreeNodeId(seed: string): string {
+  // Deliberately not flux-core genId: colon-joined `${seed}:${rand}` session-seed shape.
   return `${seed}:${Math.random().toString(36).slice(2, 8)}`;
 }
 

@@ -14,6 +14,7 @@ import { normalizeConfig } from './core/config.js';
 import type { TreeChangeReason } from './types.js';
 import type { DesignerShellState } from './core/shell-state.js';
 import { cloneDocument, documentsEquivalent } from './core/clone.js';
+import { cloneDeep } from '@nop-chaos/flux-core';
 
 import { projectAndLayoutTree } from './tree-projection.js';
 import {
@@ -30,7 +31,7 @@ import {
 } from './tree-structure.js';
 
 function cloneTreeDocumentValue(tree: TreeDocument | undefined): TreeDocument | undefined {
-  return tree ? (JSON.parse(JSON.stringify(tree)) as TreeDocument) : undefined;
+  return tree ? cloneDeep(tree) : undefined;
 }
 
 function makeTreeCommandResult(

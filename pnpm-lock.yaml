@@ -1438,6 +1438,10 @@ importers:
         version: 19.2.4
 
   packages/spreadsheet-core:
+    dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
     devDependencies:
       zustand:
         specifier: ^5.0.12

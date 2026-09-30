@@ -566,10 +566,13 @@ interface PageRuntime {
 
 ### Utility hooks
 
-| Hook                       | Returns                          | Purpose                                |
-| -------------------------- | -------------------------------- | -------------------------------------- |
-| `useSchemaProps<S>(props)` | `RendererResolvedProps<S>`       | Type-safe props bridge (`props.props`) |
-| `useRenderFragment()`      | `(input, options?) => ReactNode` | Render ad-hoc fragments                |
+| Hook                           | Returns                          | Purpose                                          |
+| ------------------------------ | -------------------------------- | ------------------------------------------------ |
+| `useSchemaProps<S>(props)`     | `RendererResolvedProps<S>`       | Type-safe props bridge (`props.props`)           |
+| `useRenderFragment()`          | `(input, options?) => ReactNode` | Render ad-hoc fragments                          |
+| `useDebouncedValue(v, ms)`     | `T`                              | Trailing value debounce (unmount cancels)        |
+| `useDebouncedCallback(fn, ms)` | `(...args) => void`              | Trailing callback debounce (latest closure wins) |
+| `useRendererRuntimeOrNull()`   | `RendererRuntime \| null`        | Runtime read without throwing when absent        |
 
 ---
 

@@ -97,6 +97,7 @@ export function createRendererRuntime(input: {
   strictMode?: boolean;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }): RendererRuntime {
+    // Deliberately not flux-core genId: no timestamp, prefixed 8-char random.
   const runtimeId = `runtime-${Math.random().toString(36).slice(2, 10)}`;
   const plugins = sortRendererPlugins(input.plugins);
   const expressionCompiler =
@@ -361,6 +362,7 @@ export function createRendererRuntime(input: {
       const data = toRecord(patch);
       const store = createScopeStore(data);
       const scopeBaseId = options?.scopeKey ?? `${parent.id}:${options?.pathSuffix ?? 'child'}`;
+            // Deliberately not flux-core genId: `${baseId}:${rand}` scope shape.
       const scopeId = `${scopeBaseId}:${Math.random().toString(36).slice(2, 10)}`;
       const scope = createScopeRef({
         id: scopeId,

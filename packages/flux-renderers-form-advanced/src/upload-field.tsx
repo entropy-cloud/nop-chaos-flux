@@ -423,6 +423,7 @@ export function UploadFieldRenderer(
 
     const newEntries: UploadItemState[] = selected.map((file) => ({
       status: 'pending',
+            // Deliberately not flux-core genId: composite `${name}-${size}-${ts}-${rand}` file id.
       id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       name: file.name,
     }));

@@ -1,3 +1,4 @@
+import { defineRendererFamily } from '@nop-chaos/flux-core';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { AlertRenderer } from './alert-renderer.js';
 import { AudioRenderer } from './audio.js';
@@ -42,13 +43,16 @@ import type {
   VideoSchema,
 } from './schemas.js';
 
+const defineContentRenderer = defineRendererFamily({
+  sourcePackage: '@nop-chaos/flux-renderers-content',
+  defaultSchema: (type) => ({ type }),
+});
+
 export const contentRendererDefinitions: RendererDefinition[] = [
-  {
+  defineContentRenderer({
     type: 'separator',
     displayName: 'Separator',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'separator' },
     component: SeparatorRenderer,
     propContracts: {
       orientation: {
@@ -67,25 +71,22 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'decorative', kind: 'prop', valueType: 'boolean' },
       { key: 'label', kind: 'value-or-region', regionKey: 'label' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'spinner',
     displayName: 'Spinner',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'spinner' },
     component: SpinnerRenderer,
     fields: [
       { key: 'label', kind: 'value-or-region', regionKey: 'label' },
       { key: 'size', kind: 'prop' },
       { key: 'visible', kind: 'meta' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'progress',
     displayName: 'Progress',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
     defaultSchema: { type: 'progress', value: 0 },
     component: ProgressRenderer,
     fields: [
@@ -95,13 +96,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'variant', kind: 'prop' },
       { key: 'showValue', kind: 'prop', valueType: 'boolean' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'empty',
     displayName: 'Empty',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'empty' },
     component: EmptyRenderer,
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
@@ -109,13 +108,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'image', kind: 'prop' },
       { key: 'actions', kind: 'region', regionKey: 'actions' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'result',
     displayName: 'Result',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'result' },
     component: ResultRenderer,
     propContracts: {
       status: {
@@ -144,12 +141,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'description', kind: 'value-or-region', regionKey: 'description' },
       { key: 'actions', kind: 'region', regionKey: 'actions' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'card',
     displayName: 'Card',
     category: 'layout',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
     defaultSchema: { type: 'card', body: [] },
     component: CardRenderer,
     fields: [
@@ -163,13 +159,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'variant', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'link',
     displayName: 'Link',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'link' },
     component: LinkRenderer,
     propContracts: {
       target: {
@@ -193,13 +187,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'download', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'image',
     displayName: 'Image',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'image' },
     component: ImageRenderer,
     propContracts: {
       preview: { displayName: 'Preview', shape: { kind: 'boolean' } },
@@ -218,13 +210,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'onClick', kind: 'event' },
       { key: 'onLoadError', kind: 'event' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'json-view',
     displayName: 'JSON View',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'json-view' },
     component: JsonViewRenderer,
     fields: [
       { key: 'value', kind: 'prop' },
@@ -232,13 +222,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'showCopy', kind: 'prop', valueType: 'boolean' },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'markdown',
     displayName: 'Markdown',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'markdown' },
     component: MarkdownRenderer,
     fields: [
       { key: 'content', kind: 'prop' },
@@ -246,26 +234,22 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'allowHtml', kind: 'prop', valueType: 'boolean' },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'html',
     displayName: 'HTML',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'html' },
     component: HtmlRenderer,
     fields: [
       { key: 'content', kind: 'prop' },
       { key: 'sanitize', kind: 'prop', valueType: 'boolean' },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'cards',
     displayName: 'Cards',
     category: 'data',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'cards' },
     component: CardsRenderer,
     propContracts: {
       items: {
@@ -334,13 +318,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'card', kind: 'region', params: ['item', 'index'], isolate: false },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'alert',
     displayName: 'Alert',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'alert' },
     component: AlertRenderer,
     propContracts: {
       level: {
@@ -391,13 +373,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'actions', kind: 'region', regionKey: 'actions' },
       { key: 'onClose', kind: 'event' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'mapping',
     displayName: 'Mapping',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'mapping' },
     component: MappingRenderer,
     propContracts: {
       value: {
@@ -433,13 +413,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'source', kind: 'prop' },
       { key: 'item', kind: 'region', regionKey: 'item' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'status',
     displayName: 'Status',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'status' },
     component: StatusRenderer,
     propContracts: {
       value: {
@@ -480,13 +458,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'iconMap', kind: 'prop' },
       { key: 'placeholder', kind: 'prop' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'audio',
     displayName: 'Audio',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'audio' },
     component: AudioRenderer,
     fields: [
       { key: 'src', kind: 'prop' },
@@ -497,13 +473,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'onLoadError', kind: 'event' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'video',
     displayName: 'Video',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'video' },
     component: VideoRenderer,
     fields: [
       { key: 'src', kind: 'prop' },
@@ -517,13 +491,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'onLoadError', kind: 'event' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'carousel',
     displayName: 'Carousel',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'carousel' },
     component: CarouselRenderer,
     propContracts: {
       items: {
@@ -556,13 +528,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'indicators', kind: 'prop', valueType: 'boolean' },
       { key: 'onChange', kind: 'event' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'qrcode',
     displayName: 'QR Code',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
-    defaultSchema: { type: 'qrcode' },
     component: QrCodeRenderer,
     fields: [
       { key: 'value', kind: 'prop' },
@@ -573,12 +543,11 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'label', kind: 'value-or-region', regionKey: 'label' },
       { key: 'onLoadError', kind: 'event' },
     ],
-  },
-  {
+  }),
+  defineContentRenderer({
     type: 'diff-view',
     displayName: 'Diff View',
     category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-content',
     defaultSchema: { type: 'diff-view', viewType: 'split', showLineNumbers: true },
     component: DiffViewRenderer,
     propContracts: {
@@ -640,7 +609,7 @@ export const contentRendererDefinitions: RendererDefinition[] = [
       { key: 'expandAll', kind: 'reaction' },
       { key: 'collapseAll', kind: 'reaction' },
     ],
-  },
+  }),
 ];
 
 export type ContentRendererSchema =

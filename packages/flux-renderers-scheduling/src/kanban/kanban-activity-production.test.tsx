@@ -11,7 +11,8 @@ import type { BoardData } from './kanban.types.js';
  * cardUpdate / columnDelete 在 board 内不存在既有 emitter（无卡片编辑、
  * 无删列能力），不在本批凭空造通道——见 plan 488 对账的 adjudication。
  */
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({
     id: 'mock-scope',

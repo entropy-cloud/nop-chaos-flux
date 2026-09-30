@@ -8,7 +8,7 @@ import type {
   TreeCoreCreationResult,
 } from './types.js';
 import type { DesignerCore } from './designer-core-types.js';
-import { cloneDocument } from './core/clone.js';
+import { cloneDocument, cloneTreeDocument } from './core/clone.js';
 import { normalizeConfig } from './core/config.js';
 import {
   canRedoHistory,
@@ -55,9 +55,7 @@ function emitTreeChanged(emit: (event: DesignerEvent) => void, tree: TreeDocumen
   emit({ type: 'treeChanged', tree, reason } as DesignerEvent);
 }
 
-function cloneTreeDocumentValue(tree: TreeDocument | undefined): TreeDocument | undefined {
-  return tree ? (JSON.parse(JSON.stringify(tree)) as TreeDocument) : undefined;
-}
+
 
 export function createDesignerCore(
   initialDoc: GraphDocument,
@@ -102,7 +100,7 @@ function createDesignerCoreInternal(
 
   let historyState: DesignerHistoryState = createHistoryState(doc, 0, currentTreeDocument);
   let savedDoc: GraphDocument | null = cloneDocument(doc);
-  let savedTreeDocument: TreeDocument | undefined = cloneTreeDocumentValue(currentTreeDocument);
+  let savedTreeDocument: TreeDocument | undefined = cloneTreeDocument(currentTreeDocument);
   let docRevision = 0;
   let savedRevision = 0;
 
@@ -177,7 +175,7 @@ function createDesignerCoreInternal(
 
   function markHostDocumentSaved(nextDoc: GraphDocument) {
     savedDoc = cloneDocument(nextDoc);
-    savedTreeDocument = cloneTreeDocumentValue(currentTreeDocument);
+    savedTreeDocument = cloneTreeDocument(currentTreeDocument);
     savedRevision = docRevision;
   }
 
@@ -314,7 +312,7 @@ function createDesignerCoreInternal(
 
     historyState = result.state;
     replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
-    const restoredTree = result.entry.treeDocument ? cloneTreeDocumentValue(result.entry.treeDocument) : undefined;
+    const restoredTree = result.entry.treeDocument ? cloneTreeDocument(result.entry.treeDocument) : undefined;
     if (isTreeMode && restoredTree) {
       currentTreeDocument = restoredTree;
     }
@@ -338,7 +336,7 @@ function createDesignerCoreInternal(
 
     historyState = result.state;
     replaceDocument(cloneDocument(result.entry.doc), result.entry.revision);
-    const restoredTree = result.entry.treeDocument ? cloneTreeDocumentValue(result.entry.treeDocument) : undefined;
+    const restoredTree = result.entry.treeDocument ? cloneTreeDocument(result.entry.treeDocument) : undefined;
     if (isTreeMode && restoredTree) {
       currentTreeDocument = restoredTree;
     }
@@ -435,7 +433,7 @@ function createDesignerCoreInternal(
     }
     if (assertReadonly('replaceDocumentFromHost')) return;
     if (treeDocument) {
-      currentTreeDocument = cloneTreeDocumentValue(treeDocument);
+      currentTreeDocument = cloneTreeDocument(treeDocument);
     }
     shellControls.replaceDocumentFromHost(nextDoc);
   }
@@ -451,7 +449,7 @@ function createDesignerCoreInternal(
     }
 
     if (treeDocument) {
-      currentTreeDocument = cloneTreeDocumentValue(treeDocument);
+      currentTreeDocument = cloneTreeDocument(treeDocument);
     }
 
     if (transactionStack.length === 0) {
@@ -466,7 +464,7 @@ function createDesignerCoreInternal(
   function save(): void {
     if (assertReadonly('save')) return;
     savedDoc = cloneDocument(doc);
-    savedTreeDocument = cloneTreeDocumentValue(currentTreeDocument);
+    savedTreeDocument = cloneTreeDocument(currentTreeDocument);
     savedRevision = docRevision;
     emit({ type: 'dirtyChanged', isDirty: false });
   }
@@ -479,7 +477,7 @@ function createDesignerCoreInternal(
 
     replaceDocument(cloneDocument(savedDoc), savedRevision);
     if (savedTreeDocument) {
-      currentTreeDocument = cloneTreeDocumentValue(savedTreeDocument);
+      currentTreeDocument = cloneTreeDocument(savedTreeDocument);
     }
     resetShellViewportFromDocument(shellState, doc);
     if (transactionStack.length === 0) pushHistory();
@@ -592,7 +590,7 @@ function createDesignerCoreInternal(
     transactionStack = result.stack;
     replaceDocument(result.snapshotBefore, getCurrentRevision(historyState) ?? docRevision);
     if (result.treeSnapshotBefore) {
-      currentTreeDocument = cloneTreeDocumentValue(result.treeSnapshotBefore);
+      currentTreeDocument = cloneTreeDocument(result.treeSnapshotBefore);
     }
     resetShellViewportFromDocument(shellState, doc);
     for (const rolledBackId of result.rolledBackIds) {

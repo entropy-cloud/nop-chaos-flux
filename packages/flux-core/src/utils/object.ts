@@ -61,3 +61,16 @@ export function shallowEqual(left: unknown, right: unknown): boolean {
     Object.is((left as Record<string, unknown>)[key], (right as Record<string, unknown>)[key]),
   );
 }
+
+/**
+ * Deep clone: structuredClone when available (Date/Map/RegExp fidelity),
+ * JSON round-trip fallback for legacy runtimes. Input domain is plain JSON
+ * data — functions and undefined-valued properties follow structuredClone
+ * semantics (dropped / DataCloneError) and are NOT supported.
+ */
+export function cloneDeep<T>(value: T): T {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(value);
+  }
+  return JSON.parse(JSON.stringify(value)) as T;
+}

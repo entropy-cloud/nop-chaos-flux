@@ -65,6 +65,10 @@ export {
   useFormLayout,
   useStrictMode,
 } from './hooks.js';
+import { useRendererRuntimeOrNull } from './hooks.js';
+export { useRendererRuntimeOrNull };
+import { useDebouncedCallback, useDebouncedValue } from './hooks/use-debounced.js';
+export { useDebouncedCallback, useDebouncedValue };
 export { useRenderFragment } from './use-render-fragment.js';
 export {
   useInputComponentHandle,

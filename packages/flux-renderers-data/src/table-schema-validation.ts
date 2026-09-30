@@ -156,6 +156,9 @@ function escapeJsonPointerSegment(segment: string) {
   return segment.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
+// Deliberately NOT flux-core's toJsonPointer: this validator treats `path` as
+// one opaque escaped segment (no parsePath, no `$` filtering) — its emitted
+// diagnostic pointers have a different, table-specific shape (cq-2 C-group).
 function toJsonPointer(path: string, ...segments: Array<string | number>) {
   const parts = [path, ...segments.map((segment) => String(segment))].map((segment) =>
     escapeJsonPointerSegment(segment),

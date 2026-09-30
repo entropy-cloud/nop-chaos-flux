@@ -235,3 +235,35 @@ export function setIn(
 
   return clone;
 }
+
+
+function escapeJsonPointerSegment(segment: string): string {
+  return segment.replace(/~/g, '~0').replace(/\//g, '~1');
+}
+
+/**
+ * Dot/split schema path -> JSON pointer (RFC 6901): `$` root is dropped,
+ * segments are escaped, empty output collapses to `''`. Callers pass extra
+ * segments (property names, indices) that are appended and escaped as-is.
+ */
+export function toJsonPointer(path: string, ...segments: Array<string | number>): string {
+  const parts = parsePath(path)
+    .filter((segment) => segment !== '$')
+    .concat(segments.map((segment) => String(segment)));
+
+  if (parts.length === 0) {
+    return '';
+  }
+
+  return `/${parts.map(escapeJsonPointerSegment).join('/')}`;
+}
+
+/**
+ * Append raw segments to an already-pointer-shaped path (no parsePath, no
+ * `$` filtering, no escaping of the incoming path). For validators whose
+ * context.path is already a JSON pointer.
+ */
+export function appendToJsonPointer(path: string, ...segments: Array<string | number>): string {
+  const suffix = segments.map((segment) => `/${String(segment)}`).join('');
+  return `${path}${suffix}`;
+}

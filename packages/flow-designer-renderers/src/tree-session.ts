@@ -448,5 +448,6 @@ export function createTreeSessionId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
+  // Deliberately not flux-core genId: prefixed + 8-char random variant.
   return `tree-session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }

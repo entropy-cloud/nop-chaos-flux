@@ -10,7 +10,8 @@ import type { TableRowEntry } from '../table-renderer/types.js';
 import type { FixedColumnLayout } from '../table-renderer/fixed-columns.js';
 
 const scopeUpdate = vi.fn();
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
   useRenderScope: () => ({ update: scopeUpdate }),
   useRendererEnv: () => ({ notify: vi.fn() }),
 }));

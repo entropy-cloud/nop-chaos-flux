@@ -105,6 +105,7 @@ Important current note:
 Key contracts:
 
 - `RendererDefinition`
+- `defineRendererFamily({ sourcePackage?, defaultSchema? })` — registration builder; entries state only what varies, output is structurally identical to hand-written literals (flux-core.md "Shared Value Utilities")
 - `RendererRegistry`
 - `SchemaFieldRule`
 - `ScopePolicy`

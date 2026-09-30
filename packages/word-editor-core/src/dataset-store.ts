@@ -69,6 +69,7 @@ export function createDatasetStore() {
 
       const newColumn = createDataColumn({
         ...column,
+                // Deliberately not flux-core genId: `col_` underscore-prefixed column-name shape.
         name: `col_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       });
       const updated = {

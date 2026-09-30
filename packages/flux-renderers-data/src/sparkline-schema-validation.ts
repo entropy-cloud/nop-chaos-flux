@@ -1,10 +1,6 @@
 import type { RendererSchemaValidationContext } from '@nop-chaos/flux-core';
+import { appendToJsonPointer } from '@nop-chaos/flux-core';
 import type { SparklineSchema } from './sparkline-schemas.js';
-
-function toJsonPointer(path: string, ...segments: Array<string | number>): string {
-  const suffix = segments.map((segment) => (typeof segment === 'number' ? `/${segment}` : `/${segment}`)).join('');
-  return `${path}${suffix}`;
-}
 
 /**
  * `sparkline` schema validator：`data` 为字面量非数组时输出 warning（不抛错）。
@@ -21,7 +17,7 @@ export function validateSparklineSchema(context: RendererSchemaValidationContext
     emit({
       code: 'invalid-property-shape',
       severity: 'warning',
-      path: toJsonPointer(path, 'data'),
+      path: appendToJsonPointer(path, 'data'),
       message: 'sparkline.data must be a number[] or an expression string when provided; rendering an empty sparkline.',
     });
   }

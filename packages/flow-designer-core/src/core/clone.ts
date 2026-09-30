@@ -1,15 +1,11 @@
+import { cloneDeep, genId } from '@nop-chaos/flux-core';
 import type { GraphDocument, GraphNode, GraphEdge, TreeDocument } from '../types.js';
 
-function cloneValue<T>(value: T): T {
-  if (typeof structuredClone === 'function') {
-    return structuredClone(value);
-  }
-  return JSON.parse(JSON.stringify(value)) as T;
-}
+const cloneValue = cloneDeep;
 
-export function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
+// Canonical flux-core shape (`<ms>-<base36>`); kept as a named re-export for
+// flow-designer-core's historical API.
+export const generateId = genId;
 
 export function cloneNode(node: GraphNode): GraphNode {
   return {

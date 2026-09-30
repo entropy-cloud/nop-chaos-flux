@@ -1,28 +1,7 @@
-import {
-  parsePath,
-  type BaseSchema,
-  type RendererDefinition,
-  type RendererSchemaValidationContext,
-} from '@nop-chaos/flux-core';
+import { toJsonPointer, type BaseSchema, type RendererDefinition, type RendererSchemaValidationContext } from '@nop-chaos/flux-core';
 import { FormRenderer } from './form.js';
 import type { FormSchema } from '../schemas.js';
 import { validateHiddenFieldPolicySchema } from './hidden-field-policy-schema.js';
-
-function escapeJsonPointerSegment(segment: string) {
-  return segment.replace(/~/g, '~0').replace(/\//g, '~1');
-}
-
-function toJsonPointer(path: string, ...segments: Array<string | number>) {
-  const parts = parsePath(path)
-    .filter((segment) => segment !== '$')
-    .concat(segments.map((segment) => String(segment)));
-
-  if (parts.length === 0) {
-    return '';
-  }
-
-  return `/${parts.map(escapeJsonPointerSegment).join('/')}`;
-}
 
 function validateFormSchema(context: RendererSchemaValidationContext<BaseSchema>) {
   if (context.schema.type !== 'form') {

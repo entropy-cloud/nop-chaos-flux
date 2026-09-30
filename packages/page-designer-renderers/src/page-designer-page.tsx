@@ -49,8 +49,9 @@ export interface PageDesignerProps {
   onBack?: () => void;
 }
 
+import { cloneDeep } from '@nop-chaos/flux-core';
 function cloneNode(node: SchemaInput): SchemaInput {
-  return JSON.parse(JSON.stringify(node)) as SchemaInput;
+  return cloneDeep(node);
 }
 
 // 模块级会话种子计数器（与 page-designer-core 同构；多实例间保证种子不重复）。

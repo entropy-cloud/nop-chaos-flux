@@ -1,4 +1,4 @@
-import { validateHostMethodPayload } from '@nop-chaos/flux-core';
+import { createHostMethodValidator } from '@nop-chaos/flux-core';
 import type {
   ActionContext,
   ActionNamespaceProvider,
@@ -23,18 +23,10 @@ import {
 } from '@nop-chaos/word-editor-core';
 import { WORD_EDITOR_HOST_METHOD_CONTRACTS } from './word-editor-manifest.js';
 
-type CommandRecord = Record<string, unknown>;
-
-function validateMethodPayload(
-  method: string,
-  payload: unknown,
-): { ok: true; args: CommandRecord } | { ok: false; error: Error } {
-  const contract = (WORD_EDITOR_HOST_METHOD_CONTRACTS as HostCapabilityContract['methods'])[method];
-  const validation = validateHostMethodPayload('word-editor', method, payload, contract);
-  return validation.ok
-    ? { ok: true, args: validation.args as CommandRecord }
-    : validation;
-}
+const validateMethodPayload = createHostMethodValidator(
+  'word-editor',
+  WORD_EDITOR_HOST_METHOD_CONTRACTS as HostCapabilityContract['methods'],
+);
 
 function ok(data?: unknown): ActionResult {
   return data === undefined ? { ok: true } : { ok: true, data };
@@ -48,6 +40,10 @@ function failWithError(error: Error): ActionResult {
   return { ok: false, error };
 }
 
+// Deliberately NOT flux-core's toHostActionError: this simplified variant
+// stringifies every non-Error/non-string value (no message/code extraction,
+// null -> Error('null')) — word editor error surfacing depends on it
+// (cq-2 Phase 2b annotation).
 function toActionError(error: unknown): Error {
   if (error instanceof Error) {
     return error;

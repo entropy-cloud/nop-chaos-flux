@@ -8,6 +8,9 @@ function escapeJsonPointerSegment(segment: string) {
   return segment.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
+// Deliberately NOT flux-core's toJsonPointer: bracket-aware local path
+// splitting and a (path, key) signature — output shape is policy-specific
+// and covered by its own tests (cq-2 D-group).
 function toJsonPointer(path: string, key: string) {
   const parts = path
     .split('.')

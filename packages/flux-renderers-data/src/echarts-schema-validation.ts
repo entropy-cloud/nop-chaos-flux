@@ -1,12 +1,8 @@
 import type { RendererSchemaValidationContext } from '@nop-chaos/flux-core';
+import { appendToJsonPointer } from '@nop-chaos/flux-core';
 import type { EChartsSchema } from './echarts-schemas.js';
 
-function toJsonPointer(path: string, ...segments: Array<string | number>): string {
-  const suffix = segments
-    .map((segment) => (typeof segment === 'number' ? `/${segment}` : `/${segment}`))
-    .join('');
-  return `${path}${suffix}`;
-}
+
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -35,14 +31,14 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
     emit({
       code: 'invalid-property-shape',
       severity: 'warning',
-      path: toJsonPointer(path, 'option'),
+      path: appendToJsonPointer(path, 'option'),
       message:
         'echarts.option is missing; the renderer shows an explicit empty state until an option is provided.',
     });
   } else if (!isPlainObject(schema.option) && typeof schema.option !== 'string') {
     emit({
       code: 'invalid-property-shape',
-      path: toJsonPointer(path, 'option'),
+      path: appendToJsonPointer(path, 'option'),
       message:
         'echarts.option must be an option object (or an expression string resolving to one) when provided.',
     });
@@ -52,7 +48,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
     if (!isPlainObject(schema.dataset)) {
       emit({
         code: 'invalid-property-shape',
-        path: toJsonPointer(path, 'dataset'),
+        path: appendToJsonPointer(path, 'dataset'),
         message: 'echarts.dataset must be an object when provided.',
       });
     } else {
@@ -60,7 +56,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
       if (typeof source !== 'string' && !Array.isArray(source)) {
         emit({
           code: 'invalid-property-shape',
-          path: toJsonPointer(path, 'dataset', 'source'),
+          path: appendToJsonPointer(path, 'dataset', 'source'),
           message:
             'echarts.dataset.source must be an expression string or a static array of rows when provided.',
         });
@@ -68,14 +64,14 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
       if (dimensions !== undefined && !isStringArray(dimensions)) {
         emit({
           code: 'invalid-property-shape',
-          path: toJsonPointer(path, 'dataset', 'dimensions'),
+          path: appendToJsonPointer(path, 'dataset', 'dimensions'),
           message: 'echarts.dataset.dimensions must be an array of dimension names when provided.',
         });
       }
       if (transform !== undefined && !Array.isArray(transform)) {
         emit({
           code: 'invalid-property-shape',
-          path: toJsonPointer(path, 'dataset', 'transform'),
+          path: appendToJsonPointer(path, 'dataset', 'transform'),
           message: 'echarts.dataset.transform must be an array of transform entries when provided.',
         });
       }
@@ -86,7 +82,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
     if (!isPlainObject(schema.events)) {
       emit({
         code: 'invalid-property-shape',
-        path: toJsonPointer(path, 'events'),
+        path: appendToJsonPointer(path, 'events'),
         message: 'echarts.events must be an object keyed by on* event names when provided.',
       });
     } else {
@@ -94,7 +90,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
         if (!isPlainObject(value)) {
           emit({
             code: 'invalid-property-shape',
-            path: toJsonPointer(path, 'events', key),
+            path: appendToJsonPointer(path, 'events', key),
             message: `echarts.events.${key} must be an action schema object when provided.`,
           });
         }
@@ -105,7 +101,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
   if (schema.renderer !== undefined && schema.renderer !== 'canvas' && schema.renderer !== 'svg') {
     emit({
       code: 'invalid-property-shape',
-      path: toJsonPointer(path, 'renderer'),
+      path: appendToJsonPointer(path, 'renderer'),
       message: 'echarts.renderer must be "canvas" or "svg" when provided.',
     });
   }
@@ -114,21 +110,21 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
     if (!isPlainObject(schema.map)) {
       emit({
         code: 'invalid-property-shape',
-        path: toJsonPointer(path, 'map'),
+        path: appendToJsonPointer(path, 'map'),
         message: 'echarts.map must be an object ({ name, geoJson }) when provided.',
       });
     } else {
       if (typeof schema.map.name !== 'string') {
         emit({
           code: 'invalid-property-shape',
-          path: toJsonPointer(path, 'map', 'name'),
+          path: appendToJsonPointer(path, 'map', 'name'),
           message: 'echarts.map.name must be a string when provided.',
         });
       }
       if (schema.map.geoJson === undefined) {
         emit({
           code: 'invalid-property-shape',
-          path: toJsonPointer(path, 'map', 'geoJson'),
+          path: appendToJsonPointer(path, 'map', 'geoJson'),
           message: 'echarts.map.geoJson is required when echarts.map is provided.',
         });
       }
@@ -138,7 +134,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
   if (schema.initOptions !== undefined && !isPlainObject(schema.initOptions)) {
     emit({
       code: 'invalid-property-shape',
-      path: toJsonPointer(path, 'initOptions'),
+      path: appendToJsonPointer(path, 'initOptions'),
       message: 'echarts.initOptions must be an object when provided.',
     });
   }
@@ -150,7 +146,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
   ) {
     emit({
       code: 'invalid-property-shape',
-      path: toJsonPointer(path, 'theme'),
+      path: appendToJsonPointer(path, 'theme'),
       message: 'echarts.theme must be a registered theme name or a theme object when provided.',
     });
   }
@@ -158,7 +154,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
   if (schema.notMerge !== undefined && typeof schema.notMerge !== 'boolean') {
     emit({
       code: 'invalid-property-shape',
-      path: toJsonPointer(path, 'notMerge'),
+      path: appendToJsonPointer(path, 'notMerge'),
       message: 'echarts.notMerge must be a boolean when provided.',
     });
   }
@@ -166,7 +162,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
   if (schema.lazyUpdate !== undefined && typeof schema.lazyUpdate !== 'boolean') {
     emit({
       code: 'invalid-property-shape',
-      path: toJsonPointer(path, 'lazyUpdate'),
+      path: appendToJsonPointer(path, 'lazyUpdate'),
       message: 'echarts.lazyUpdate must be a boolean when provided.',
     });
   }
@@ -174,7 +170,7 @@ export function validateEChartsSchema(context: RendererSchemaValidationContext):
   if (schema.height !== undefined && typeof schema.height !== 'number' && typeof schema.height !== 'string') {
     emit({
       code: 'invalid-property-shape',
-      path: toJsonPointer(path, 'height'),
+      path: appendToJsonPointer(path, 'height'),
       message: 'echarts.height must be a number or a CSS length string when provided.',
     });
   }

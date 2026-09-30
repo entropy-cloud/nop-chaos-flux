@@ -1,3 +1,4 @@
+import { cloneDeep } from '@nop-chaos/flux-core';
 import type { GraphDocument } from '../types.js';
 import { cloneDocument, cloneTreeDocument, generateId } from './clone.js';
 import type { TreeDocument } from '../types.js';
@@ -94,9 +95,7 @@ export function rollbackTransactionState(
       return {
         stack: stack.slice(0, -1),
         snapshotBefore: cloneDocument(txn.snapshotBefore),
-        treeSnapshotBefore: txn.treeSnapshotBefore
-          ? (JSON.parse(JSON.stringify(txn.treeSnapshotBefore)) as TreeDocument)
-          : undefined,
+        treeSnapshotBefore: txn.treeSnapshotBefore ? cloneDeep(txn.treeSnapshotBefore) : undefined,
         rolledBackIds: [txn.id],
       };
   }
@@ -116,9 +115,7 @@ export function rollbackTransactionState(
   return {
     stack: stack.slice(0, index),
     snapshotBefore: cloneDocument(txn.snapshotBefore),
-    treeSnapshotBefore: txn.treeSnapshotBefore
-      ? (JSON.parse(JSON.stringify(txn.treeSnapshotBefore)) as TreeDocument)
-      : undefined,
+    treeSnapshotBefore: txn.treeSnapshotBefore ? cloneDeep(txn.treeSnapshotBefore) : undefined,
     rolledBackIds,
   };
 }

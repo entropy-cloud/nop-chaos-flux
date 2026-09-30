@@ -27,7 +27,9 @@ export {
   shallowEqualRecords,
   shallowEqual,
 } from './utils/object.js';
-export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn, resolveRelativePath } from './utils/path.js';
+export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn, resolveRelativePath, toJsonPointer, appendToJsonPointer } from './utils/path.js';
+export { genId } from './utils/id.js';
+export { cloneDeep } from './utils/object.js';
 export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema.js';
 export { decorateRendererEnv } from './utils/renderer-env.js';
 export {
@@ -61,6 +63,14 @@ export { cancelPendingDebounce, scheduleDebounce } from './utils/debounce.js';
 export { isSafeNavigationUrl } from './utils/url.js';
 export type { SafeNavigationUrlOptions } from './utils/url.js';
 export { matchesFluxValueShape, validateHostMethodPayload } from './schema-diagnostics/value-shape-runtime.js';
+export { defineRendererFamily } from './renderer-definition-builder.js';
+export {
+  createHostActionProvider,
+  createHostMethodValidator,
+  toHostActionError,
+  type HostActionProviderFactoryOptions,
+  type HostCommandResult,
+} from './host-action-provider.js';
 
 export { setMessageFormatter, getMessageFormatter } from './i18n-sink.js';
 export type { MessageFormatter } from './i18n-sink.js';

@@ -5,10 +5,11 @@ import type {
   ReportSemanticDocument,
   ReportTemplateDocument,
 } from '../types.js';
+import { cloneDeep } from '@nop-chaos/flux-core';
 import { getTargetMeta } from '../types.js';
 
 export function cloneDocument(document: ReportTemplateDocument): ReportTemplateDocument {
-  return JSON.parse(JSON.stringify(document)) as ReportTemplateDocument;
+  return cloneDeep(document);
 }
 
 export function cloneMetadataBag(input: MetadataBag | undefined): MetadataBag | undefined {

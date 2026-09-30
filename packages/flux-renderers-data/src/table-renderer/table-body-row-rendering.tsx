@@ -1,6 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import * as fluxReact from '@nop-chaos/flux-react';
+import { useRendererRuntimeOrNull } from '@nop-chaos/flux-react';
 import {
   isClickOnInput,
   resolveTableRowOptionState,
@@ -33,34 +33,11 @@ export { buildFlattenedItems } from './table-flattened-items.js';
 export { renderExpandedRow } from './table-expanded-row.js';
 
 /**
- * Optional RendererRuntime context for row-level failure feedback ([G3-R3-视角5-01]).
- * Namespace access (not a named import) + module-level fallback keeps bare
- * DataRowView harnesses and partial `@nop-chaos/flux-react` mocks renderable —
- * no runtime, no notify.
+ * Row-level failure feedback ([G3-R3-视角5-01]): the graceful-degradation read
+ * moved into flux-react's `useRendererRuntimeOrNull` (cq-2 Phase 4) — null
+ * runtime (bare DataRowView harnesses, partial flux-react mocks via
+ * importOriginal spreads) means "no notify", never a throw.
  */
-const MissingRuntimeContext = React.createContext<
-  { env: { notify?: (level: string, message: string) => void } } | null
->(null);
-const RuntimeContextOrNull = (() => {
-  try {
-    // A partial module mock throws on unknown exports — treat that as "absent".
-    return (
-      (fluxReact as {
-        RuntimeContext?: React.Context<
-          { env: { notify?: (level: string, message: string) => void } } | null
-        >;
-      }).RuntimeContext ?? MissingRuntimeContext
-    );
-  } catch {
-    return MissingRuntimeContext;
-  }
-})();
-
-function useFluxReactRuntime(): {
-  env: { notify?: (level: string, message: string) => void };
-} | null {
-  return React.useContext(RuntimeContextOrNull);
-}
 
 type DataRowRenderProps = {
   item: FlattenedRow;
@@ -150,7 +127,7 @@ export function DataRowView({
   // Tolerant context read (namespace access + null fallback): DataRowView must
   // stay renderable in bare harnesses / partial flux-react mocks — there the
   // notify channel is simply absent.
-  const runtime = useFluxReactRuntime();
+  const runtime = useRendererRuntimeOrNull();
   const notifySaveError = (error: unknown) => {
     runtime?.env.notify?.(
       'warning',

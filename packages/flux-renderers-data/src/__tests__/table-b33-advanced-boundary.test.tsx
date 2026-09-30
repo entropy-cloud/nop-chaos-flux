@@ -17,7 +17,8 @@ import {
   resetTableControlTestState,
 } from './use-table-controls.test-support.js';
 
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
   useRenderScope: () => ({ update: vi.fn() }),
   useScopeSelector: () => undefined,
 }));

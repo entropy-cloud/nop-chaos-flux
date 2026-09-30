@@ -3,25 +3,9 @@ import type {
   RendererDefinition,
   RendererSchemaValidationContext,
 } from '@nop-chaos/flux-core';
-import { parsePath } from '@nop-chaos/flux-core';
+import { toJsonPointer } from '@nop-chaos/flux-core';
 import { BatchBarRenderer } from './batch-bar.js';
 import type { BatchBarSchema } from './schemas.js';
-
-function escapeJsonPointerSegment(segment: string) {
-  return segment.replace(/~/g, '~0').replace(/\//g, '~1');
-}
-
-function toJsonPointer(path: string, ...segments: Array<string | number>) {
-  const parts = parsePath(path)
-    .filter((segment) => segment !== '$')
-    .concat(segments.map((segment) => String(segment)));
-
-  if (parts.length === 0) {
-    return '';
-  }
-
-  return `/${parts.map(escapeJsonPointerSegment).join('/')}`;
-}
 
 export function validateBatchBarSchema(context: RendererSchemaValidationContext<BaseSchema>) {
   if (context.schema.type !== 'batch-bar') {

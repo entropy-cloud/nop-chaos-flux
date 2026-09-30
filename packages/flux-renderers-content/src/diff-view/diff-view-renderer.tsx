@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
-import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
+import { useCurrentComponentRegistry, useDebouncedValue } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffViewSchema, DiffFileMeta } from '../schemas.js';
@@ -68,24 +68,14 @@ function SingleFileDiff({
   expansionState,
 }: SingleFileDiffProps) {
   'use no memo';
-  const [debouncedOld, setDebouncedOld] = useState(oldContent);
-  const [debouncedNew, setDebouncedNew] = useState(newContent);
-  const [debouncedMid, setDebouncedMid] = useState(middleContent ?? '');
-  const [debouncedLang, setDebouncedLang] = useState(language);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  useEffect(() => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedOld(oldContent);
-      setDebouncedNew(newContent);
-      setDebouncedMid(middleContent ?? '');
-      setDebouncedLang(language);
-    }, DEBOUNCE_MS);
-    return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, [oldContent, newContent, middleContent, language]);
+  // As-built note (cq-2 Phase 3): the previous coupled single-timer version is
+  // now four useDebouncedValue instances. Props arrive together in one render,
+  // so all four timers land in the same tick/batch — observable behavior is
+  // unchanged; cancellation is per-value instead of shared.
+  const debouncedOld = useDebouncedValue(oldContent, DEBOUNCE_MS);
+  const debouncedNew = useDebouncedValue(newContent, DEBOUNCE_MS);
+  const debouncedMid = useDebouncedValue(middleContent ?? '', DEBOUNCE_MS);
+  const debouncedLang = useDebouncedValue(language, DEBOUNCE_MS);
 
   const file = useMemo(() => computeDiffFile(debouncedOld, debouncedNew), [debouncedOld, debouncedNew]);
   const stats = useMemo(() => computeDiffStats(file), [file]);

@@ -22,8 +22,9 @@ export interface SpreadsheetInternalState {
   maxUndoDepth: number;
 }
 
+import { cloneDeep } from '@nop-chaos/flux-core';
 export function cloneSpreadsheetDocument(document: SpreadsheetDocument): SpreadsheetDocument {
-  return JSON.parse(JSON.stringify(document)) as SpreadsheetDocument;
+  return cloneDeep(document);
 }
 
 export function buildSnapshot(state: SpreadsheetInternalState): SpreadsheetRuntimeSnapshot {

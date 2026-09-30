@@ -24,5 +24,8 @@
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
-  "description": "Core logic and data model for the spreadsheet editor"
+  "description": "Core logic and data model for the spreadsheet editor",
+  "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*"
+  }
 }

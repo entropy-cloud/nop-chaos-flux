@@ -15,7 +15,8 @@ const registryMock = vi.hoisted(() => {
   };
 });
 
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({
     id: 'mock-scope',

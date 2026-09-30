@@ -1,5 +1,6 @@
 import { createStore } from 'zustand/vanilla';
 import type { BarcodeQueueItem } from '../barcode-input.types.js';
+import { genId } from '@nop-chaos/flux-core';
 
 interface BarcodeQueueState {
   items: BarcodeQueueItem[];
@@ -30,7 +31,7 @@ export function enqueueItem(
     }
     if (existing.status === 'submitted') {
       const dupItem: BarcodeQueueItem = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        id: genId(),
         rawValue,
         timestamp: Date.now(),
         format,
@@ -47,7 +48,7 @@ export function enqueueItem(
   // consecutive same-value scan produces submittable processing instead of
   // being folded into a duplicate marker that autoSubmit never delivers.
   const item: BarcodeQueueItem = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: genId(),
     rawValue,
     timestamp: Date.now(),
     format,
