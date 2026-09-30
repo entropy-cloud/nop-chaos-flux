@@ -1,6 +1,6 @@
 # CQ-1 质量门禁与测试基建收口（代码质量轴第一轮）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md`（CQ-T1 ~ T8）
 > Related: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md` 第五节（裁决记录）、`scripts/audit/shared.mjs`（runScanner advisory 机制）、`docs/audits/arm-index.md:182`（knip 旧登记）
@@ -12,10 +12,10 @@
 ## Current Baseline
 
 - `pnpm check` 链 17 项；`package.json` 共 34 个 `check:*`；`scripts/audit/` 16 个扫描器中 12 个经 `runScanner`（`shared.mjs:664`）只打印不失败。17 项链中只有 `check:audit-suspects` 来自扫描器族；`find-styling-suspects`、`find-test-global-leaks` 是未接链的独立脚本。
-- `audit:knip`（knip 6.9.0）实测 exit 1：79 unused files / 402 unused exports / 581 unused exported types / 3 unused deps / 16 unused devDeps / 30 unlisted deps / 1 unlisted binary（起草时实测值；**最终以 Phase 1 基线快照输出为准**）。unlisted 分布：playground 约 11、`scripts/visual-quality/generate-visual-inventory.test.ts` 约 18、flux-renderers-data 1。不在任何门禁链；唯一登记（arm-index.md:182）只记 exit code 无数值，自 2026-07-27 起不可对账。knip 对 `scripts/__tests__/fixtures/**` 有误报（约 60 命中）需 ignore。
+- `audit:knip`（knip 6.9.0）实测 exit 1：79 unused files / 402 unused exports / 581 unused exported types / 3 unused deps / 16 unused devDeps / 30 unlisted deps / 1 unlisted binary（基线落地时实测 exports 401 / devDeps 17——后者含 word-editor-renderers jest-dom 已知误报，见上）（起草时实测值；**最终以 Phase 1 基线快照输出为准**）。unlisted 分布：playground 约 11、`scripts/visual-quality/generate-visual-inventory.test.ts` 约 18、flux-renderers-data 1。不在任何门禁链；唯一登记（arm-index.md:182）只记 exit code 无数值，自 2026-07-27 起不可对账。knip 对 `scripts/__tests__/fixtures/**` 有误报（约 60 命中）需 ignore。
 - `check:duplicates`（jscpd 包装，阈值 8%）实测 exit 0（597 clones / 2.99%），不在 check 链；脚本已输出 clones 总数（`scripts/check-duplicates.mjs:56`）但无基线比较。2026-08-08 登记 454 clones / 3.04%——当时无 clones 数门禁（脚本只比对 ratio），数量 +31% 未被捕捉。
 - `check:docs-garbled` 脚本存在，check 链与 lint 链均未包含（全仓唯一双重遗漏的现成脚本）。
-- console：eslint 无 `no-console` 规则。非测试 `console.log/debug` 共 30 处：apps/playground 27 处 demo 页输出 + 2 处字符串字面量（`code-editor-page.tsx:19/:276`，eslint 不可见）+ packages 内 1 处（scheduling gantt undo-stack:185，cq-6 删除）。
+- console：eslint 无 `no-console` 规则。非测试 `console.log/debug` 可检测调用点 28 处（committed 基线口径）：apps 25（playground demo 页输出）+ packages 3（gantt undo-stack:185 log，cq-6 删除；word-editor-renderers 2 处 debug）；另有 2 处 eslint 不可见的字符串字面量（code-editor-page.tsx:19/:276）不计入。
 - `vitest.shared.ts` 的 `createSharedVitestConfig` 未注入 RTL cleanup/jest-dom（根 devDeps 现无 `@testing-library/jest-dom`，需补）；现有 `setupFiles: [test-setup/strict-validation.ts]` 注入须 append 不得替换；手动 cleanup 口径：`^\s*cleanup();` 语句 625 处（packages+apps）。`word-editor-renderers/src/__tests__/setup.ts` 有 setup 先例。
 - jsdom pragma 实为 **6** 处：`flux-renderers-content` 5 个测试文件（DOMPurify 需要，刻意决策）+ `flux-renderers-data/src/__tests__/table-quick-edit-savebar-order.test.tsx:1`；content 与 data 两包 devDeps 各含 jsdom。data 包的 jsdom pragma/依赖属刻意决策或待迁移，Phase 4 内裁定登记。`docs/logs/2026/05-14.md:131` 的"零残留"登记已过时；`scan-jsdom-usage.mjs` 未接任何 script。
 - CQ-T12（origin=gitee，ci.yml 不触发）属基础设施观察，需人类确认托管策略；本 plan 不改 CI 配置。
@@ -100,14 +100,14 @@ Targets: 根 `package.json`、`eslint.config.js`、`scripts/check-console-baseli
 
 - [x] Proof：console-baseline 脚本单测（3 用例：committed 基线对真树绿 / 空基线对真树红且报 undo-stack.ts / file+text 模糊匹配防行号漂移假红；eslint no-console 真探针文件验证规则生效）
 - [x] Fix：`check:docs-garbled` 加入 `pnpm check` 链（exit 0，18 处 informational）
-- [ ] Fix：eslint 增 `no-console: ['error', { allow: ['warn', 'error'] }]`，经 config overrides 仅对 `packages/*/src` 生效（存量命中 1 处，gantt undo-stack，cq-6 删除；该文件以 overrides 文件清单豁免，不改源码）；apps 侧不启用 eslint 规则，由 baseline 脚本覆盖
-- [ ] Fix：`check:console-baseline`：非测试 src 的 `console.log/debug` 与 committed 基线（30 处，条目格式：文件+行号+匹配行文本）diff，新增命中 exit 1；接入 check 链
-- [ ] Proof：lint 对 packages 新增 console.log 报错（fixture 验证）；两门禁单测绿
+- [x] Fix：eslint 增 `no-console: ['error', { allow: ['warn', 'error'] }]`，经 config overrides 仅对 `packages/*/src` 生效（存量命中 3 处以 overrides ignores 文件清单豁免至 cq-6 清理，不改源码；真探针文件验证 error 级生效）；apps 侧不启用 eslint 规则，由 baseline 脚本覆盖
+- [x] Fix：`check:console-baseline`：非测试 src 的 `console.log/debug` 与 committed 基线（实测 28 处可检测调用点 = packages 3 + apps 25，条目格式：文件+行号+行文本，file+text 匹配容忍行漂移）diff，新增命中 exit 1；接入 check 链
+- [x] Proof：lint 对 packages 新增 console.log 报错（真探针文件验证）；两门禁单测绿（console-baseline 3/3）
 
 Exit Criteria:
 
-- [ ] `pnpm lint` 在当前树绿（packages 存量命中全部在 overrides 豁免清单内）
-- [ ] `check:console-baseline` 当前树 exit 0 且新增命中可红（单测钉住）；`check:docs-garbled` 在链上且 exit 0
+- [x] `pnpm lint` 在当前树绿（packages 存量命中全部在 overrides ignores 内）
+- [x] `check:console-baseline` 当前树 exit 0 且新增命中可红（单测钉住 + 空基线探针红）；`check:docs-garbled` 在链上且 exit 0
 
 ### Phase 4 - 测试基建：RTL cleanup 上提 + jsdom 白名单门禁
 
@@ -117,7 +117,7 @@ Targets: `vitest.shared.ts`、`test-setup/`（新增共享 dom setup）、`packa
 - Item Types: `Proof | Fix`
 
 - [x] Proof：jsdom 白名单脚本单测（3 用例：committed 白名单对真树绿 / 部分白名单红且列缺失项 / 全量+已消失项绿且列收缩提示）
-- [x] Fix：`createSharedVitestConfig` 对 happy-dom 档 append `test-setup/dom.ts`（RTL cleanup + jest-dom，根 devDep 补装 ^6.9.1）；word-editor-renderers 本地 setup 删除、setupFiles override 移除、包内 jest-dom devDep 移除（由根供给）；strict-validation 保留
+- [x] Fix：`createSharedVitestConfig` 对 happy-dom 档 append `test-setup/dom.ts`（RTL cleanup + jest-dom，根 devDep 补装 ^6.9.1）；word-editor-renderers 本地 setup 删除、setupFiles override 移除，运行时由根共享 setup 供给；**包内 jest-dom devDep 以 types-only 形态保留**（closure audit M1 as-built 修正：先移除后回补——`src/__tests__/jest-dom.d.ts` 的类型增强 import 需要包内可解析，运行时 setup 不再使用它；knip 将其计为 unused devDep 属已知误报，已在基线文件头注记）；strict-validation 保留
 - [x] Fix：`check:jsdom-pragma-whitelist` 脚本 + 基线（6 条：content 5 + data 1，文件:行号身份）；data 包裁定为刻意保留并记入基线文件头；接入 check 链
 - [x] Proof：受影响包 focused 全绿（basic 627、data 1200、form 943、scheduling 1070、layout 140、word-editor-renderers 164、content 341 含 jsdom pragma 组、nop-debugger 130、word-editor-core 274、playground 406）。**修复一处被共享 cleanup 暴露的泄漏依赖测试**：`form-package-exports.test.tsx` FieldsetRenderer 用例此前靠上一条测试的 DOM 泄漏碰巧通过（querySelector 拿到旧 fieldset），断言 `data-collapsible === 'true'` 本身违背非 collapsible 契约——修正为 `toBeUndefined()`（clean-HEAD worktree 对照确认该失败由本 Phase 引入的隔离修复所暴露）
 - [x] Proof：`docs/logs/2026/09-30.md` 记录 05-14 "零残留"登记的修正口径（本 plan 收口时写入）
@@ -157,7 +157,7 @@ Exit Criteria:
 - [x] RTL cleanup 共享 setup 生效且有 focused 证明（10 包 focused 全绿；共享 cleanup 暴露并修复 form-package-exports 泄漏依赖断言）
 - [x] 不存在被静默降级的 in-scope live defect（其余 9 个 advisory 扫描器不建基线的裁定已记录于分析报告第五节与本 plan Non-Goals）
 - [x] owner docs 已同步（daily log 2026-09-30 记录门禁清单与 05-14 jsdom 登记修正口径）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure；首轮 issues → remediation → 聚焦复审）
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -187,13 +187,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 五个 Phase 全部落地并经独立 fresh-session closure audit。首轮 verdict `issues`（1 Blocker：Phase 3 条目未回填勾选——行为已实证但文本不一致；1 Major：word-editor-renderers jest-dom devDep 勾选表述与 as-built 不符；3 Minor：401/17 数值勘误、28 口径、log 13/16 措辞）。全部 remediation 后（as-built 如实改写 + 数值勘误 + 基线已知误报注记），聚焦复审通过。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_8837226d，首轮 → 聚焦复审两轮）
+- Verdict: 首轮 `issues`（B1 + M1 + 3 Minor）→ remediation → 第二轮确认
+- Evidence: 审计独立复跑全部红绿路径探针（knip 造死文件 exit 1、空 console 基线 exit 1、scanner 基线 -1 exit 1、jsdom 白名单缺项 exit 1、eslint no-console 三方探针、16 门禁单测复跑绿、word-editor-renderers 164/164 复跑绿）；确认行为层五 Phase exit criteria 全部 repo-observable 成立、deferred 分类诚实、无 in-scope 静默丢弃。remediation diff：plan 文本回填（Phase 3 六项勾选 + M1 as-built 改写 + 401/17 与 28 口径勘误）+ knip 基线文件头 knownFalsePositives 注记 + daily log 措辞修正。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up>>
+- CQ-T13 coverage 阈值补齐（Non-Blocking Follow-ups 既有）
+- CQ-T14 playground 并发偶发 watch-only（既有）

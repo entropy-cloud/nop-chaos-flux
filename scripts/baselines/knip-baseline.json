@@ -11,7 +11,8 @@
       "devDependencies": 17,
       "unlisted": 30
     },
-    "unlistedReconciliation": "CQ-S17 reconciled 2026-09-30: check-workspace-manifest-deps forward check scans packages/*/src only (apps/ and scripts/ are out of scope), so the two tools are complementary, not contradictory. unlisted=30: apps/playground 11 (graph/pivot/industrial imports incl. tests+demo pages), scripts/visual-quality 18 (root-manifest renderer imports + playwright), flux-renderers-data test jsdom 1 (workspace-scoping quirk; package devDeps declares jsdom). All resolve via pnpm workspace hoisting today. Cleanup transferred to cq-6 Phase 5 (declare playground graph/pivot/industrial deps)."
+    "unlistedReconciliation": "CQ-S17 reconciled 2026-09-30: check-workspace-manifest-deps forward check scans packages/*/src only (apps/ and scripts/ are out of scope), so the two tools are complementary, not contradictory. unlisted=30: apps/playground 11 (graph/pivot/industrial imports incl. tests+demo pages), scripts/visual-quality 18 (root-manifest renderer imports + playwright), flux-renderers-data test jsdom 1 (workspace-scoping quirk; package devDeps declares jsdom). All resolve via pnpm workspace hoisting today. Cleanup transferred to cq-6 Phase 5 (declare playground graph/pivot/industrial deps).",
+    "knownFalsePositives": "packages/word-editor-renderers package.json @testing-library/jest-dom devDep: types-only usage (src/__tests__/jest-dom.d.ts matcher augmentation for this package typecheck); runtime setup comes from root test-setup/dom.ts. knip cannot see type-only resolution from package tsconfig; keep entry."
   },
   "files": [
     "flux-guide/flux-types/common.d.ts",
