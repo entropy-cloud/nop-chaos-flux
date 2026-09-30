@@ -114,8 +114,9 @@ export function PrintInspector({ controller, className }: PrintInspectorProps) {
 
   // Inspector text/number fields coalesce into a local draft and commit on a
   // short window (mirroring the flow designer inspector): one undo step and
-  // one commit per burst instead of one per keystroke. Blur paths — selection
-  // switch, unmount — flush immediately.
+  // one commit per burst instead of one per keystroke. The unmount cleanup
+  // flushes immediately; a selection switch relies on the timer commit
+  // landing on the draft's own target (see note above).
   const [draft, setDraft] = useState<{ targetId: string; patch: Partial<PrintElementSchema> } | null>(
     null,
   );

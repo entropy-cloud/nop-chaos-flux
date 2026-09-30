@@ -196,9 +196,12 @@ export function ConditionGroup({
   const childIds = useMemo(() => value.children.map((c) => c.id), [value.children]);
 
   // Group-level map built in one pass: each child's own field set (nested
-  // groups flattened), then excludeId → (total minus own). Same result as the
-  // previous per-item computeUsedFields recursion, but O(nodes) per group
-  // instead of O(n²).
+  // groups flattened), then excludeId → (total minus own). Under the builder's
+  // no-duplicate-field invariant this matches the previous per-item
+  // computeUsedFields recursion, but at O(nodes) per group instead of O(n²).
+  // (If one field were shared by the excluded child and a sibling, total-minus-
+  // own would drop it while the old recursion kept it — unreachable while the
+  // uniqueFields constraint holds.)
   const usedFieldsByExcludeId = useMemo(() => {
     if (!uniqueFields) {
       return undefined;

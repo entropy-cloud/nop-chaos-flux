@@ -102,6 +102,38 @@ describe('createEditorStore', () => {
     expect(state2.font).toBe('Arial');
   });
 
+  it('setSelection with identical values keeps the state identity and does not notify subscribers (R3-P20)', () => {
+    const store = createEditorStore();
+    store.setSelection({ bold: true, font: 'Arial', italic: false, size: 16 });
+    const snapshotBefore = store.getState();
+    const selectionBefore = snapshotBefore.selection;
+    const listener = vi.fn();
+    const unsubscribe = store.subscribe(listener);
+
+    // Bridge ticks repeatedly deliver the same selection payload; none of
+    // them may bump Object.is subscribers.
+    store.setSelection({ bold: true, font: 'Arial' });
+    store.setSelection({ bold: true, italic: false, size: 16, font: 'Arial' });
+    store.setSelection({});
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(store.getState()).toBe(snapshotBefore);
+    expect(store.getState().selection).toBe(selectionBefore);
+    unsubscribe();
+  });
+
+  it('setSelection still notifies when selection content actually changes (R3-P20)', () => {
+    const store = createEditorStore();
+    const listener = vi.fn();
+    const unsubscribe = store.subscribe(listener);
+
+    store.setSelection({ bold: true });
+
+    expect(listener).toHaveBeenCalled();
+    expect(store.getState().selection.bold).toBe(true);
+    unsubscribe();
+  });
+
   it('setPaperSettings replaces paper settings', () => {
     const store = createEditorStore();
     const custom = {

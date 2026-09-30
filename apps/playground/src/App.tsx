@@ -535,7 +535,10 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
 
 export function App() {
   const [route, navigate] = useRoute();
-  const routeKey = route.kind === 'domain' ? `domain:${route.domainId}` : route.kind;
+  // Full route identity (kind + every discriminated id) — a tripped boundary
+  // must reset on ANY navigation, including same-kind id switches like
+  // #/lab/form → #/lab/button.
+  const routeKey = JSON.stringify(route);
 
   return (
     <div className="nop-theme-root">

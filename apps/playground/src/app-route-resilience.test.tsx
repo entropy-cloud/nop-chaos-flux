@@ -159,4 +159,21 @@ describe('App shell resilience (R3-U5 / R3-U32)', () => {
     errorSpy.mockRestore();
     unmount();
   });
+
+  it('resets the boundary on a same-kind route switch (R3-U5 routeKey granularity)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setHash('#/word-editor');
+    const { unmount } = render(<App />);
+    await screen.findByTestId('route-error-boundary');
+
+    // Same route kind ('domain'), different id: the tripped boundary must
+    // still reset so the new domain renders instead of a stuck error screen
+    // (dingtalk-flow-demo renders the explicit not-found state).
+    setHash('#/dingtalk-flow-demo');
+    await screen.findByTestId('domain-not-found');
+    expect(screen.queryByTestId('route-error-boundary')).toBeNull();
+
+    errorSpy.mockRestore();
+    unmount();
+  });
 });

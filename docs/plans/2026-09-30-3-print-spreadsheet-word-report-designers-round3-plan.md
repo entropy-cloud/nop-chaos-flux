@@ -1,6 +1,6 @@
 # 03 print/spreadsheet/word/report designer 批量优化（round-3）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-perf-ux-round3-deep-optimization-analysis.md`（R3-P12 ~ P16、P20 ~ P22 + R3-U11、U13、U18、U22）
 > Related: `docs/plans/2026-09-30-2-flow-designer-workbench-interaction-round3-plan.md`（editor-core 事务语义与 flow inspector 修复同族）
@@ -111,12 +111,12 @@ Targets: `packages/word-editor-core/src/editor-store.ts`、`canvas-editor-bridge
 
 - [x] Fix (R3-P20)：`setSelection` 逐字段浅比较（无变化复用 store state）；`selection` 订阅补字段级等值比较（对齐 editorRuntime 先例）
 - [x] Fix (R3-P21)（执行裁定：不修复，契约封印）：实施时发现既有契约测试 "syncSpreadsheetDocument seals the provided spreadsheet subtree reference"（designer-core.test.ts:258）钉死 structuredClone 是防宿主 post-sync 变异的封印语义，非纯浪费——保持 clone 并在代码内加契约注记；优化诉求转 Deferred（见 Deferred But Adjudicated）
-- [x] Proof：focused 单测——相同 selection 重复 set 不触发订阅者（word-editor-core 272 用例绿，含 setSelection 幂等路径）；内容变化仍触发；report 表格变更后嵌入文档引用传递且 undo/derived 状态正确（186 用例绿，含 seal 契约）
+- [x] Proof：focused 单测——相同 selection 重复 set 不触发订阅者且 state 引用不变（`editor-store.test.ts` R3-P20 幂等路径：三次相同 payload set 零通知零引用变化）；内容变化仍触发（R3-P20 变更路径）；report 表格变更后嵌入文档引用传递且 undo/derived 状态正确（186 用例绿，含 seal 契约）
 
 Exit Criteria:
 
-- [ ] 2 项 Fix 落地，focused 测试全绿
-- [ ] word toolbar 状态刷新与 report 双向同步防乒乓测试无回归
+- [x] 2 项 Fix 落地，focused 测试全绿
+- [x] word toolbar 状态刷新与 report 双向同步防乒乓测试无回归
 
 ### Phase 4 - print/report/word UX（R3-U11、U13、U18、U22）
 
@@ -145,17 +145,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live 缺陷已修复（R3-P12 ~ P16、P20 ~ P22、U11、U13、U18、U22 逐条核对）
-- [ ] 不适用 contract drift（editor-core 对外契约不变；print/spreadsheet/word/report 组件契约以既有测试为准）
-- [ ] 行为/契约结果已达成（Failure Paths 三场景 + 全部 focused/DOM 断言测试通过）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] owner docs 已同步（若编辑草稿归属变化属文档化行为需更新对应组件文档；否则写明 No owner-doc update required）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live 缺陷已修复（R3-P12 ~ P16、P20 ~ P22、U11、U13、U18、U22 逐条核对）
+- [x] 不适用 contract drift（editor-core 对外契约不变；print/spreadsheet/word/report 组件契约以既有测试为准；spreadsheet-core 仅新增 getEditValue/commitEditValue 接口成员，向后兼容）
+- [x] 行为/契约结果已达成（Failure Paths 三场景 + 全部 focused/DOM 断言测试通过）
+- [x] 必要 focused verification 已完成（typecheck/build/lint/check exit 0；pnpm test 78/78 task exit 0）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（两条 Deferred 均为裁定条目，非静默降级）
+- [x] owner docs 已同步（No owner-doc update required：编辑草稿归属为组件内部状态实现细节，宿主可见契约——save 边界语义——未变；P21 封印契约已在代码内注记）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -179,13 +179,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 12 项 in-scope Fix（R3-P12 ~ P16、P20 ~ P22、U11、U13、U18、U22）全部落地。首轮独立审计 verdict `issues`（1 major：R3-P20 Proof 断言的 setSelection 幂等 focused 测试实际不存在；2 minor：Phase 3 exit criteria 未勾选、P13 注释自相矛盾）——按审计循环补齐 R3-P20 幂等/变更双测试并修正两 minor 后，聚焦重审 verdict `approved`（1 残留 minor：注释 blur flush 表述，已在 closure 批修正）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_4570ba58 首轮 → agent_c18d54c3 聚焦重审）
+- Verdict: 首轮 `issues`（1 major + 2 minor）→ 修复 → 重审 `approved`（1 minor 注释 nit，已修）
+- Evidence: 首轮逐项核实 12 项 Fix 真实存在且 focused 测试全绿（editor-core 21、edit-draft-boundary 5、print 27、grid 20、report-field-panel 3、designer-core 25 含 seal 契约、word editor-store 18）；R3-P16 非响应式 draft / commitEditValue 接口成员 / 非受控编辑器逐点确认；locale 双语言在位；无既有测试弱化（grid-selection 仅注释、typing 修复断言完整）。重审确认 R3-P20 双测试断言零通知 + 引用不变（zustand Object.is 语义下有意义）、plan diff 仅含 remediation 编辑。全量 `pnpm typecheck/build/lint/check/test` 复验 exit 0（见 daily log 2026-09-30 收口批）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up>>
+- print 校验明细与预览弹窗诊断数据源统一（原 Follow-up 保留）。
+- print-inspector coalesce 提交管线可补 blur flush 决策的显式测试（当前行为：仅 timer + unmount flush，注释已如实描述）。

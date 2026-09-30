@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import React from 'react';
+import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createNopDebugger, getNopDebuggerAutomationApi } from '@nop-chaos/nop-debugger';
@@ -343,5 +344,13 @@ describe('FluxBasicPage debugger wiring', () => {
               event.detail?.includes('/api/composite-demo')),
         ),
     ).toBe(false);
+  });
+});
+
+describe('flux-basic-page copy hygiene (R3-U28)', () => {
+  it('uses the corrected "already taken" spelling (no hyphenated already-taken)', () => {
+    const source = readFileSync('src/pages/flux-basic-page.tsx', 'utf8');
+    expect(source).toContain('Username is already taken');
+    expect(source).not.toContain('already-taken');
   });
 });

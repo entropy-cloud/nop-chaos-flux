@@ -1,6 +1,6 @@
 # 04 renderer 族残余性能与 UX 批量（round-3）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-perf-ux-round3-deep-optimization-analysis.md`（R3-P23 ~ P30 + R3-U3、U14 ~ U17、U29 ~ U31）
 > Related: `docs/plans/2026-09-29-1-scheduling-renderer-performance-plan.md`、`docs/plans/2026-09-29-5-visual-consistency-a11y-round2-plan.md`、`docs/plans/2026-09-30-5-playground-ui-ux-round3-plan.md`（playground 侧 UX 分开承接）
@@ -121,17 +121,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live 缺陷已修复（R3-P23 ~ P30、U3、U14 ~ U17、U29 ~ U31 逐条核对）
-- [ ] 不适用 contract drift（sanitize 边界移动不改变存储值安全语义，以等价测试为准）
-- [ ] 行为/契约结果已达成（Failure Paths 三场景 + 全部 focused/DOM 断言测试通过）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] owner docs 已同步（若 sanitize 边界属文档化设计决策需更新对应设计文档；否则写明 No owner-doc update required）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live 缺陷已修复（R3-P23 ~ P30、U3、U14 ~ U17、U29 ~ U31 逐条核对）
+- [x] 不适用 contract drift（sanitize 边界移动不改变存储值安全语义，以等价测试为准；ui/form 包公开导出面零变更）
+- [x] 行为/契约结果已达成（Failure Paths 三场景 + 全部 focused/DOM 断言测试通过）
+- [x] 必要 focused verification 已完成（typecheck/build/lint/check exit 0；pnpm test 78/78 task exit 0）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（Deferred But Adjudicated 一节为空）
+- [x] owner docs 已同步（No owner-doc update required：P23 sanitize 边界为组件内部实现时机，不构成文档化设计决策变更；P25 行契约收敛已在 key-value-row.tsx 代码契约注释中记录）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -143,13 +143,17 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 16 项 in-scope Fix（R3-P23 ~ P30、U3、U14 ~ U17、U29 ~ U31）全部落地并经独立 fresh-session 审计通过（approved，3 minor 非 blocking）。审计 minor 修复：R3-P26 的 usedFields 等价性注释已改为精确表述（no-duplicate 不变式下等价，共享字段角 case 已注明不可达）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_68ad1243）
+- Verdict: `approved`（3 minor，全部 non-blocking）
+- Evidence: 16/16 项均有真实代码 + 真实 proof 测试；审计独立 spot-run 全绿（signature 9/9、key-value 6/6、chart+crud 上限 6/6、barcode 18/18、condition-builder 292/292）；P25 identity cache 无渲染环（数组身份复用 + Object.is bail + compatKeyAt state 稳定）；包公开导出面双 commit 零 diff；首 commit 的既有测试改动为 sourceKind union 变更后的等价 fixture 更新（非弱化）。3 条 minor：P26 共享字段角 case（已修注释）、P23 debounce 专线无 focused 测试（sanitize 函数已被既有测试锁定，审计认可 by-construction 不变量）、U29 data-active 断言早于本轮（ring/scale 类新增无断言）。全量 `pnpm typecheck/build/lint/check/test` 复验 exit 0（见 daily log 2026-09-30 收口批）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up>>
+- R3-P26 共享字段角 case：若未来放开 uniqueFields 约束（允许重复字段），excludeId 映射需回归 per-item 递归或差集策略需修订（当前不可达，仅备忘）。
+- R3-P23 debounce 提交管线（trailing flush + unmount flush）可补一条 focused 提交时序测试（当前 sanitize 函数已被锁定，不变量 by construction 成立）。
+- R3-U29 激活点 ring/scale 类可补 class 断言（当前 data-active 属性断言在位）。
+- heatmap 大数据集降采样策略精细化（原 Follow-up 保留）。

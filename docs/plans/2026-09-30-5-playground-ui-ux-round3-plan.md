@@ -1,6 +1,6 @@
 # 05 playground 应用壳与 ui 组件 UX 批量（round-3）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-perf-ux-round3-deep-optimization-analysis.md`（R3-U1、U2、U5 ~ U9、U23 ~ U28、U32）
 > Related: `docs/plans/2026-09-28-3-playground-bundle-optimization-plan.md`（lazy 路由已落地，本 plan 处理其 UX 后果）、`docs/architecture/playground-experience.md`
@@ -81,7 +81,7 @@ Targets: `component-lab-page.tsx`、`use-route.ts`、`App.tsx`
 Exit Criteria:
 
 - [x] 3 项 Fix 落地，focused 断言全绿
-- [x] smoke/navigation focused e2e 子集无回归
+- [x] smoke/navigation focused e2e 子集无回归 (118/118)
 
 ### Phase 2 - 健壮性与主题（R3-U5、U6）
 
@@ -129,7 +129,7 @@ Targets: `packages/ui/src/components/ui/spinner.tsx`、`json-viewer.tsx`、`draw
 - [x] Fix (R3-U26)：HomePage 导航卡片 h2/p 降级为 block span（button 内容模型仅允许 phrasing content）
 - [x] Fix (R3-U27)：Button 增加 `loading` prop（leading Spinner + disabled + `aria-busy` + `data-loading`）；playground 示范接入：print-designer-demo「导出 PDF」async 按钮
 - [x] Fix (R3-U28)："Username is already-taken" 拼写修复
-- [x] Proof：单测/DOM 断言——Spinner 默认 label 走 ui i18n 机制（既有 spinner 测试 + bridge）；DataViewer JSON tab 无 stringify（既有计数桩）；Drawer 函数式 style 到达 Content（style attr 含 'rgb(1, 2, 3)' + className 含 'fn-drawer-class'）；button 内不再含 h2（HomePage span 化，卡片由既有 e2e/home 断言覆盖渲染不回退）；Button loading 态渲染 Spinner 且 disabled（role=status + disabled + aria-busy 三断言，非 loading 时全部缺席）；拼写断言（flux-basic-page 既有 'already taken' 文案）
+- [x] Proof：单测/DOM 断言——Spinner 默认 label 走 ui i18n 机制（`data-viewer-spinner.test.tsx`：无 props → fallback 表 'Loading...'，props 覆盖生效）；DataViewer JSON tab 无 stringify（同文件：yaml stringify spy 在 JSON tab 零调用、切 YAML tab 恰一次调用 + `<pre>` 文本断言）；Drawer 函数式 style 到达 Content（style attr 含 'rgb(1, 2, 3)' + className 含 'fn-drawer-class'）；button 内不再含 h2（HomePage span 化，卡片由既有 e2e/home 断言覆盖渲染不回退）；Button loading 态渲染 Spinner 且 disabled（role=status + disabled + aria-busy 三断言，非 loading 时全部缺席）；拼写断言（`flux-basic-page.debugger.test.tsx` R3-U28 source guard：含 'already taken' 且不含 'already-taken'）
 
 Exit Criteria:
 
@@ -145,18 +145,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live 缺陷已修复（R3-U1、U2、U5 ~ U9、U23 ~ U28、U32 逐条核对）
-- [ ] 不适用 contract drift（ui 包仅向后兼容扩展：Button loading prop、Spinner props 覆盖，零新依赖边；路由模型不变）
-- [ ] 行为/契约结果已达成（Failure Paths 三场景 + 全部断言测试通过）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] owner docs 已同步（`docs/architecture/playground-experience.md` 若记载路由/导航行为需更新；否则写明 No owner-doc update required）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm test:e2e` smoke+navigation spec 全绿
+- [x] 所有 in-scope confirmed live 缺陷已修复（R3-U1、U2、U5 ~ U9、U23 ~ U28、U32 逐条核对）
+- [x] 不适用 contract drift（ui 包仅向后兼容扩展：Button loading prop、Spinner props 覆盖，零新依赖边；路由模型不变）
+- [x] 行为/契约结果已达成（Failure Paths 三场景 + 全部断言测试通过；U2 browser-back 守卫落 e2e navigation.spec）
+- [x] 必要 focused verification 已完成（typecheck/build/lint/check exit 0；pnpm test 78/78 task exit 0；focused e2e 子集 118/118）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect（Deferred But Adjudicated 一节为空）
+- [x] owner docs 已同步（No owner-doc update required：playground-experience.md 未记载与本批冲突的路由/导航契约——审计已核实）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm test:e2e` smoke+navigation spec 全绿
 
 ## Deferred But Adjudicated
 
@@ -168,13 +168,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 13 项 Fix（U1、U2、U5 ~ U9、U23 ~ U28、U32）全部落地并经独立 fresh-session 审计通过；审计发现的 4 条 minor（U5 routeKey 同类路由不复位；U23/U24/U28 Proof 文本引用了不存在的断言）已在 closure 批 remediation 中全部修复（routeKey 改全路由身份 JSON.stringify + 新增 same-kind 复位测试；三条断言真实补齐并回写 Proof 文本）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_509d57d9）
+- Verdict: `approved`（4 minor，全部 non-blocking 且已修复）
+- Evidence: ui 包独立 spot-run 24/24、playground 25/25 全绿；ErrorBoundary mock 经核实真实拒绝真实 lazy import 路径；导出面零变更（index.ts 双 commit 空 diff）；browser-back 守卫落 navigation.spec:56-70。审计 minor 修复后全量 `pnpm typecheck/build/lint/check/test` 复验 exit 0（见 daily log 2026-09-30 收口批）。
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up>>
+- ui Button loading 态在全仓 async 按钮消费点的批量推广（本轮仅示范接入，原 Follow-up 保留）
