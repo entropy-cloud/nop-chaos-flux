@@ -167,7 +167,7 @@
       "instances": 1
     },
     {
-      "file": "packages/flux-renderers-form/src/form-renderers.css",
+      "file": "packages/flux-renderers-form/src/styles.css",
       "rule": "hardcoded-literal-color",
       "instances": 3
     },

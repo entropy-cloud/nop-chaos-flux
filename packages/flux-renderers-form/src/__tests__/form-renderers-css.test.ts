@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const styles = readFileSync('src/form-renderers.css', 'utf8');
+const styles = readFileSync('src/styles.css', 'utf8');
 
 describe('form renderer stylesheet contract', () => {
   it('scopes form field selectors to the nop-form root', () => {

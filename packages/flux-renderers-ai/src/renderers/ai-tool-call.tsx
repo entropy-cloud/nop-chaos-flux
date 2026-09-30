@@ -5,9 +5,9 @@ import type {
   RendererRenderOutput,
   ScopeRef,
 } from '@nop-chaos/flux-core';
-import { Button, Badge, cn } from '@nop-chaos/ui';
+import { Button, Badge, Spinner, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { Check, Loader2, TriangleAlert, Ban, ChevronDown, ChevronRight } from 'lucide-react';
+import { Check, TriangleAlert, Ban, ChevronDown, ChevronRight } from 'lucide-react';
 import { jsonrepair } from 'jsonrepair';
 import type { ChatToolCall, ChatToolCallUIState } from '../engine/types.js';
 import type { BubbleToolRendererProps } from './ai-bubble/types.js';
@@ -343,7 +343,8 @@ export function FallbackToolCallCard(props: BubbleToolRendererProps): React.Reac
 
 function StatusIcon({ status }: { status: ToolCallStatus }): React.ReactElement {
   if (status === 'running') {
-    return <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />;
+    // aria-hidden keeps this a decorative glyph (role="status" from Spinner is suppressed for AT).
+    return <Spinner className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />;
   }
   if (status === 'success') {
     return <Check className="h-3.5 w-3.5 text-success" aria-hidden="true" />;

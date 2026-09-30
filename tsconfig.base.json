@@ -40,8 +40,8 @@
       "@nop-chaos/flux-renderers-form/definitions": [
         "./packages/flux-renderers-form/src/definitions.ts"
       ],
-      "@nop-chaos/flux-renderers-form/form-renderers.css": [
-        "./packages/flux-renderers-form/src/form-renderers.css"
+      "@nop-chaos/flux-renderers-form/styles.css": [
+        "./packages/flux-renderers-form/src/styles.css"
       ],
       "@nop-chaos/flux-renderers-data": ["./packages/flux-renderers-data/src/index.tsx"],
       "@nop-chaos/flux-renderers-content": ["./packages/flux-renderers-content/src/index.ts"],

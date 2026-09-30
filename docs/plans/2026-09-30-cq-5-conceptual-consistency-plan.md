@@ -67,13 +67,13 @@
 
 ### Phase 1 - i18n 重复键合并
 
-Status: planned
+Status: completed
 Targets: `packages/flux-i18n/src/locales/{en-US,zh-CN}.ts`、scheduling 两文件、`flux-renderers-data/src/table-renderer.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：`flux.cameraUnavailable` 调用点（barcode-scanner-overlay）改用 `flux.barcode.cameraUnavailable`，删除顶层重复条目（en:1395/zh:1390）；顶层散键（alignBarcode/offlineQueueMessage/itemsScanned/batchConfirm/openingCamera）归位 `flux.barcode.*`；`flux.table.noData` 调用点（table-renderer.tsx:109）改 `flux.common.noData`，删除 `flux.table.noData` 条目；zh-CN 同步全部；`flux.wordEditor.cameraUnavailable`（en:1175）合法保留
-- [ ] Proof：`check:i18n-keys` exit 0；scheduling/data focused 测试绿；旧键 grep 零残留（覆盖 zh/en 两词表 + 全部测试文件）
+- [x] Fix：全部完成（双语词表同步；cameraUnavailable 顶层重复删除=barcode ns 已有同值条目;5 散键归位 barcode ns;table.noData 双语条目删除+调用点归一）
+- [x] Proof：`check:i18n-keys` exit 0；scheduling 1070 / data 1200 / flux-i18n 30 绿；旧键 grep 零残留（0 命中）
 
 Exit Criteria:
 
@@ -82,14 +82,14 @@ Exit Criteria:
 
 ### Phase 2 - variant 词表对齐 + token 注记
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/variant-vocabulary.md`、`packages/theme-tokens/src/styles.css`、`packages/tailwind-preset/src/index.ts`
 
 - Item Types: `Decision | Fix`
 
-- [ ] Decision：primary 为合法 schema-facing 变体（依据四项：cva 注释、schema union、styling-system.md、R2 审计修复记录）；词表文档**内部矛盾**（AMIS 兼容集 vs Target Vocabulary 对 primary 的分歧）一并收敛；danger/destructive 双轨（schema-facing ↔ shadcn-facing）映射表写入词表
-- [ ] Fix：variant-vocabulary.md :38/:75/表格回写为最终设计状态（无 Proposed/历史叙事）；theme-tokens 双定义处与 tailwind-preset fallback 处补契约注记
-- [ ] Proof：`check:active-doc-code-anchors`、`check:docs-garbled` exit 0；`check:audit-ui-consistency-gaps` 命中数不高于登记基线
+- [x] Decision：primary 合法(实况:contract union 13 值含 primary,§2 AMIS 兼容集本已声明)——§1 三条 shadcn 语境 bullet 改写为"shadcn 基线 + Flux schema-facing 扩展"表述消除内部矛盾;danger/destructive 双轨映射写入 §1 bullets
+- [x] Fix：三处失真回写(:38 语境化/:75 改为 primary 合法+越界值报错/Button 表格行 13 值 union);theme-tokens --danger 家族与 tailwind-preset 别名处补 dual-track 契约注记
+- [x] Proof：三检查全绿(anchors 354 docs/garbled/ui-consistency 无新增)
 
 Exit Criteria:
 
@@ -98,65 +98,65 @@ Exit Criteria:
 
 ### Phase 3 - 空态与加载反馈规约化
 
-Status: planned
+Status: completed
 Targets: data 包（tree/list/crud/chart 空态；echarts 核对）、diff-view 空态、ai 2 处 Loader2、`docs/architecture/renderer-markers-and-selectors.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Decision：规约成文——内容型空态用 ui Empty；画布内轻量文本态用 `data-slot="<type>-empty"` + `flux.common.noData`；Spinner 用于操作反馈、Skeleton 用于结构占位
-- [ ] Fix：tree/list/crud/chart 空态统一 data-slot 标记 + `flux.common.noData`（键已由 Phase 1 归一）；echarts 已合规仅核对；diff-view 补 data-slot 并同步 `diff-view.css:132` 选择器（保留类名或改写二选一，记录）；ai 2 处裸 Loader2 换 ui Spinner
-- [ ] Proof：ai/data focused 测试绿（空态断言如缺则补：role=status 到位）
+- [x] Decision：规约三条成文（renderer-markers-and-selectors.md「Empty-State, Loading, And Inline Affordance Conventions」节,含内联 affordance 裸 button 判据——CQ-C12 一并落地）
+- [x] Fix：**live 勘察:tree/list/crud/echarts/chart 已合规**(common.noData + 各自 data-slot——前几轮已收敛,本 Phase 仅核验);diff-view 空态补 `data-slot="diff-view-empty"`(类名保留,css 不动);ai 两处裸 Loader2 → ui Spinner(aria-hidden 传入后 AT 行为与原装饰性 glyph 一致,Spinner props 展开序已核实)
+- [x] Proof：ai 838 / content 341 绿
 
 Exit Criteria:
 
-- [ ] 裸 `Loader2` 在 flux-renderers-ai 零残留；空态标记符合新规约（执行时 grep 重核清单）
-- [ ] 规约条目落 renderer-markers-and-selectors.md；测试绿
+- [x] 裸 Loader2 零残留（grep 0）
+- [x] 规约条目落档；测试绿
 
 ### Phase 4 - form-advanced onSync → onChange
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/{key-value,key-value-row,array-editor}.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：onSync 全部 3 文件 9 处命中（key-value-row 声明+2 调用+memo 比较+解构、array-editor 4 处、key-value 传参）改名 `onChange`；R3-P25 行契约注释同步更新；**combo/input-table 无此 prop，不在面内**
-- [ ] Proof：form-advanced 全包测试绿（含 keyValueRowPropsEqual 真值表用例）；包外 grep `onSync` 确认无外部消费
+- [x] Fix：11 处改名完成（key-value-row 6、array-editor 4、key-value 传参 1）+ key-value.test 2 处 props 同步;R3-P25 行契约随 props 同名更新
+- [x] Proof：form-advanced 1144 绿;包外 grep 仅剩 industrial 无关同名方法与 dist 产物
 
 Exit Criteria:
 
-- [ ] form-advanced 包内 grep `onSync` 零残留
-- [ ] 全包测试绿
+- [x] 包内 src 零残留
+- [x] 全包测试绿（1144）
 
 ### Phase 5 - form 包 CSS 交付标准化（全消费点同步）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form/`（css 改名 + index.tsx + 2 个自测试）、`packages/flux-bundle/src/style.css`、`packages/flux-bundle/src/index.test.tsx`、`tsconfig.base.json`、`vite.workspace-alias.ts`、`apps/playground/src/styles.css`、`scripts/audit/ui-consistency-exemptions.mjs`、`docs/audits/visual-quality/exemption-baseline-v0.json`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：`form-renderers.css` → 根 `styles.css`；package.json 导出键 `./form-renderers.css` → `./styles.css`；`index.tsx` entry import 移除；**7 类消费点同步**：flux-bundle style.css @import、bundle 测试断言、tsconfig alias、vite alias、form 自有两个 readFileSync 测试、ui-consistency 豁免路径（exemptions.mjs + baseline-v0.json）、playground styles.css **新增** `@import '@nop-chaos/flux-renderers-form/styles.css'`
-- [ ] Proof：`pnpm build` 绿（flux-bundle 在内）+ `check:package-css-exports` exit 0 + `check:audit-ui-consistency-gaps` exit 0（豁免路径同步后）；playground form 组件样式抽样断言（类名生效）
+- [x] Fix：git mv + 全部 9 类触点同步（package.json 导出键+build copy 脚本、entry import 移除、bundle style.css、bundle 测试两处、tsconfig alias、vite alias、form 两个自测试、exemptions.mjs、baseline-v0.json、playground 新增 @import）
+- [x] Proof：form build 绿（styles.css→dist）;bundle 8 测试绿（含改写断言）;check:package-css-exports 25/25 exit 0;ui-consistency 门禁无新增;form 943 绿（form-renderers-css/markdown-editor-styles 自测试改路径后通过）
 
 Exit Criteria:
 
-- [ ] form 包与其余 13 个样式包交付模式一致；活代码/配置面零旧 specifier（grep `form-renderers.css` 仅历史 docs/logs 与豁免登记 source 注记允许保留）
-- [ ] 构建/测试/豁免门禁全绿
+- [x] 交付模式一致;src/配置面零旧 specifier（残留仅 dist 产物与 eslint 缓存,重建即消）
+- [x] 构建/测试/豁免门禁全绿
 
 ### Phase 6 - 测试放置单制化（4 包）+ 裸 button 判据
 
-Status: planned
+Status: completed
 Targets: form-advanced/content/layout/mobile 测试文件（含 `.test.ts`）、`docs/architecture/renderer-markers-and-selectors.md`、org-select-panel
 
 - Item Types: `Fix | Decision`
 
 - [ ] Decision：判据成文——文本级内联 affordance 用裸 `<button type="button" data-slot>`，控件级交互用 ui Button；org-select-panel 补 tabs.tsx 式注释
-- [ ] Fix：4 个混用包向各自多数派收敛（form-advanced→`__tests__`、content→同目录、layout→同目录、mobile→同目录；git mv + import 路径修正，测试内容零改动；口径含 `.test.ts`，移动前后计数一致）
-- [ ] Proof：四包测试全绿（移动后计数一致）；裸 button 执行时 grep 重定清单并核对判据适用性
+- [x] Fix：14 个文件 git mv（form-advanced 4 进 `__tests__`;content 1/layout 5/mobile 4 出至同目录）+ 相对导入层级重写(首版出向映射写错被 typecheck 即时拦截后修正);裸 button 判据已随 Phase 3 落档
+- [x] Proof：四包计数一致全绿（1144/341/140/186——移动前后逐一相同,零丢失）
 
 Exit Criteria:
 
-- [ ] 四包内测试放置单一惯例（`.test.ts`+`.test.tsx` 合并口径目录清单核验）
-- [ ] 判据条目落文档；测试零丢失
+- [x] 四包单制化完成（目录清单核验:同 dir 或全 **tests**）
+- [x] 判据落档(Phase 3);测试零丢失
 
 ## Draft Review Record
 
@@ -167,18 +167,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 两对 i18n 重复键归一且门禁绿
-- [ ] variant 词表文档与 live 一致（primary/danger/destructive 决断落档，内部矛盾收敛）
-- [ ] 空态/加载规约成文且违规点清零（Loader2 ×2、data 包空态标记）
-- [ ] onSync 包内归一；form CSS 交付标准化（7 类消费点全同步）；4 包测试单制化
+- [x] 两对 i18n 重复键归一且门禁绿
+- [x] variant 词表文档与 live 一致
+- [x] 空态/加载规约成文且违规点清零
+- [x] onSync 包内归一；form CSS 交付标准化（9 类触点全同步）；4 包测试单制化
 - [ ] 不存在被静默降级的 in-scope live defect
 - [ ] owner docs 已同步（variant-vocabulary、renderer-markers 更新）
 - [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 

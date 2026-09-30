@@ -106,7 +106,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     typeof schemaProps.selectionStatePath === 'string' ? schemaProps.selectionStatePath : undefined;
 
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
-    fallback: t('flux.table.noData'),
+    fallback: t('flux.common.noData'),
   });
   const headerContent = resolveRendererSlotContent(props, 'header');
   const footerContent = resolveRendererSlotContent(props, 'footer');

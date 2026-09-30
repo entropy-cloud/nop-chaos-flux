@@ -1,20 +1,20 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import React from 'react';
-import * as MobileEntry from '../index.js';
+import * as MobileEntry from './index.js';
 import type {
   CountdownSchema,
   InfiniteScrollSchema,
   NoticeBarSchema,
   PullRefreshSchema,
   SwipeCellSchema,
-} from '../schemas.js';
-import { CountdownRenderer } from '../countdown.js';
-import { InfiniteScrollRenderer } from '../infinite-scroll.js';
-import { NoticeBarRenderer } from '../notice-bar.js';
-import { PullRefreshRenderer } from '../pull-refresh.js';
-import { SwipeCellRenderer } from '../swipe-cell.js';
-import { createMockRendererProps } from '../test-support.js';
+} from './schemas.js';
+import { CountdownRenderer } from './countdown.js';
+import { InfiniteScrollRenderer } from './infinite-scroll.js';
+import { NoticeBarRenderer } from './notice-bar.js';
+import { PullRefreshRenderer } from './pull-refresh.js';
+import { SwipeCellRenderer } from './swipe-cell.js';
+import { createMockRendererProps } from './test-support.js';
 
 afterEach(() => {
   cleanup();

@@ -43,7 +43,7 @@ function ArrayEditorRow(props: {
   name: string;
   currentForm: FormRuntime | undefined;
   childBehavior: CompiledValidationBehavior;
-  onSync(nextItems: ArrayEditorItem[]): void;
+  onChange(nextItems: ArrayEditorItem[]): void;
   onRemove(index: number): void;
   onMoveUp(index: number): void;
   onMoveDown(index: number): void;
@@ -61,7 +61,7 @@ function ArrayEditorRow(props: {
     name,
     currentForm,
     childBehavior,
-    onSync,
+    onChange,
     onRemove,
     onMoveUp,
     onMoveDown,
@@ -118,7 +118,7 @@ function ArrayEditorRow(props: {
             const nextItems = items.map((candidate, candidateIndex) =>
               candidateIndex === index ? { ...candidate, value: event.target.value } : candidate,
             );
-            onSync(nextItems);
+            onChange(nextItems);
 
             if (currentForm) {
               currentForm.touchField(itemPath);
@@ -544,7 +544,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             name={name}
             currentForm={currentForm}
             childBehavior={childBehavior}
-            onSync={syncItems}
+            onChange={syncItems}
             onRemove={handleRemove}
             onMoveUp={handleMoveUp}
             onMoveDown={handleMoveDown}

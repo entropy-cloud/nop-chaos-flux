@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createLayoutSchemaRenderer, env, formulaCompiler } from '../test-support.js';
-import { layoutRendererDefinitions } from '../layout-renderer-definitions.js';
+import { createLayoutSchemaRenderer, env, formulaCompiler } from './test-support.js';
+import { layoutRendererDefinitions } from './layout-renderer-definitions.js';
 
 /**
  * C5.2 layout action-family contract tests (test-first evidence for

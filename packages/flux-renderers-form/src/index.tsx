@@ -1,4 +1,3 @@
-import './form-renderers.css';
 export { formRendererDefinition, formRendererDefinitions, registerFormRenderers } from './definitions.js';
 
 export { FormRenderer } from './renderers/form.js';

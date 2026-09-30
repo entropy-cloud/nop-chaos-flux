@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FluxSchemaDefinitionShape } from '@nop-chaos/flux-core';
-import { layoutRendererDefinitions } from '../layout-renderer-definitions.js';
-import { isStepDisabled } from '../wizard-renderer.js';
+import { layoutRendererDefinitions } from './layout-renderer-definitions.js';
+import { isStepDisabled } from './wizard-renderer.js';
 
 function getWizardStepsShape(): FluxSchemaDefinitionShape {
   const wizardDef = layoutRendererDefinitions.find((def) => def.type === 'wizard');

@@ -6,11 +6,11 @@ import { useCurrentFormState } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { describe, expect, it } from 'vitest';
-import { formAdvancedRendererDefinitions } from './index.js';
-import { keyValueRendererDefinition } from './key-value.js';
-import { keyValueRowPropsEqual, type KeyValueRowProps } from './key-value-row.js';
-import { baseEnv, formulaCompiler } from './test-support.js';
-import { installFormAdvancedTestHooks } from './test-support.js';
+import { formAdvancedRendererDefinitions } from '.././index.js';
+import { keyValueRendererDefinition } from '.././key-value.js';
+import { keyValueRowPropsEqual, type KeyValueRowProps } from '.././key-value-row.js';
+import { baseEnv, formulaCompiler } from '.././test-support.js';
+import { installFormAdvancedTestHooks } from '.././test-support.js';
 
 installFormAdvancedTestHooks();
 
@@ -215,7 +215,7 @@ describe('key-value renderer', () => {
       name: 'settings',
       currentForm: undefined,
       childBehavior: { triggers: ['blur'] } as KeyValueRowProps['childBehavior'],
-      onSync: noop,
+      onChange: noop,
       onRemove: noop,
       onMoveUp: noop,
       onMoveDown: noop,
@@ -236,7 +236,7 @@ describe('key-value renderer', () => {
     expectBypass({ minItems: 1 });
     expectBypass({ name: 'other' });
     expectBypass({ childBehavior: { triggers: ['change'] } as KeyValueRowProps['childBehavior'] });
-    expectBypass({ onSync: () => {} });
+    expectBypass({ onChange: () => {} });
     expectBypass({ onRemove: () => {} });
     expectBypass({ onMoveUp: () => {} });
     expectBypass({ onMoveDown: () => {} });

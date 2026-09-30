@@ -35,22 +35,22 @@ type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghos
 Important points:
 
 - `default` is the filled primary-looking button because it uses the theme `primary` token.
-- shadcn does **not** use `variant="primary"` for Button.
-- shadcn uses `destructive`, not `danger`, for the destructive Button visual.
+- shadcn itself does not use `variant="primary"` for Button; Flux extends the copied component with a schema-facing `primary` main-action variant (cva entry annotated as the schema-facing convention) — see the AMIS compatibility set in §2.
+- shadcn uses `destructive`; Flux keeps `destructive` (shadcn-facing) and additionally registers `danger` (schema-facing, AMIS `level`-mapped). Both render the destructive visual — the mapping is deliberate dual-track, not drift.
 - Other components may have different variant sets, for example Alert commonly has only `default | destructive`.
 - Local projects may extend copied shadcn components, but that does not make the added values globally valid.
 
 Representative current `@nop-chaos/ui` examples:
 
-| Component                              | Current UI/private variant values                                                       | Public schema status                                             |
-| -------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `Button`                               | `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`                       | Public through `button.variant`                                  |
-| `TabsList`                             | `default`, `line`                                                                       | Public through `tabs.variant`                                    |
-| `Badge`                                | `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, `success`, `warning` | UI-private; Flux schema should prefer `level` for passive status |
-| `Alert`                                | `default`, `destructive`                                                                | UI-private unless an alert renderer exposes it explicitly        |
-| `DropdownMenuItem` / `ContextMenuItem` | `default`, `destructive`                                                                | UI-private action item visual branch                             |
-| `SidebarLayout`                        | `sidebar`, `floating`, `inset`                                                          | UI-private layout mode                                           |
-| `FieldLegend`                          | `legend`, `label`                                                                       | UI-private rendering mode                                        |
+| Component                              | Current UI/private variant values                                                                                                                                                                                                           | Public schema status                                             |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `Button`                               | `default`, `primary`, `destructive`/`danger`, `outline`, `secondary`, `ghost`, `link`, `info`, `success`, `warning`, `light`, `dark` (13-value union: 6 shadcn-inherited + Flux schema-facing extension; `danger` ≡ `destructive` visually) | Public through `button.variant`                                  |
+| `TabsList`                             | `default`, `line`                                                                                                                                                                                                                           | Public through `tabs.variant`                                    |
+| `Badge`                                | `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, `success`, `warning`                                                                                                                                                     | UI-private; Flux schema should prefer `level` for passive status |
+| `Alert`                                | `default`, `destructive`                                                                                                                                                                                                                    | UI-private unless an alert renderer exposes it explicitly        |
+| `DropdownMenuItem` / `ContextMenuItem` | `default`, `destructive`                                                                                                                                                                                                                    | UI-private action item visual branch                             |
+| `SidebarLayout`                        | `sidebar`, `floating`, `inset`                                                                                                                                                                                                              | UI-private layout mode                                           |
+| `FieldLegend`                          | `legend`, `label`                                                                                                                                                                                                                           | UI-private rendering mode                                        |
 
 ## Naming Matrix
 
@@ -72,7 +72,7 @@ This document defines the live authoring vocabulary enforced by compiler-integra
 Current compiler baseline:
 
 - `validateSchema(...)` and compile diagnostics now validate statically knowable renderer prop values against registered `propContracts.shape` `literal` / `union` / primitive / array / object constraints.
-- `button.variant: "primary"` now emits `invalid-property-value` because `primary` is outside the public `button.variant` vocabulary.
+- `button.variant: "primary"` is a valid public value (AMIS compatibility set, §2) and compiles without diagnostics; values outside the 13-value union (e.g. `"totally-bogus"`) emit `invalid-property-value`.
 - Dynamic expressions such as `button.variant: "${expr}"` and source-shaped authored values are intentionally skipped by compile-time finite-value validation because their runtime result is not statically knowable.
 - Invalid finite prop values are skipped from prop lowering the same way error-severity unknown properties are skipped, so compile output does not silently normalize unsupported authored values into renderer props.
 

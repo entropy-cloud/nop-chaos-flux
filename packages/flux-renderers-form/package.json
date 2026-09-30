@@ -17,8 +17,8 @@
       "types": "./dist/definitions.d.ts",
       "default": "./dist/definitions.js"
     },
-    "./form-renderers.css": {
-      "default": "./dist/form-renderers.css"
+    "./styles.css": {
+      "default": "./dist/styles.css"
     }
   },
   "dependencies": {
@@ -34,7 +34,7 @@
     "react": "^19.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/form-renderers.css dist/form-renderers.css",
+    "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"

@@ -5,9 +5,9 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { PullRefreshSchema } from '../schemas.js';
-import { PullRefreshRenderer } from '../pull-refresh.js';
-import { createMockRendererProps } from '../test-support.js';
+import type { PullRefreshSchema } from './schemas.js';
+import { PullRefreshRenderer } from './pull-refresh.js';
+import { createMockRendererProps } from './test-support.js';
 
 afterEach(() => {
   cleanup();

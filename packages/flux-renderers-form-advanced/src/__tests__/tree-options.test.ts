@@ -5,7 +5,7 @@ import {
   cascadeSelectParent,
   deriveCheckedState,
   flattenTreeOptions,
-} from './tree-options.js';
+} from '.././tree-options.js';
 
 describe('tree-options — TR2 cascade contract confirmation (down-propagate + up-derive)', () => {
   const tree = () =>

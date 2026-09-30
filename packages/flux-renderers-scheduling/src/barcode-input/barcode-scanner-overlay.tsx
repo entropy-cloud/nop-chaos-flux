@@ -139,7 +139,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
       } catch (err: any) {
         if (signal.aborted) return;
         setPhase('error');
-        const msg = err?.message ?? t('flux.cameraUnavailable');
+        const msg = err?.message ?? t('flux.barcode.cameraUnavailable');
         setErrorMessage(msg);
         onScanErrorRef.current?.(msg);
       }
@@ -267,14 +267,14 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
         {phase === 'loading' && (
           <div data-slot="barcode-scanner-loading" className="flex flex-col items-center gap-3 text-white">
             <Spinner className="size-8" />
-            <span className="text-sm text-white/70">{t('flux.openingCamera')}</span>
+            <span className="text-sm text-white/70">{t('flux.barcode.openingCamera')}</span>
           </div>
         )}
 
         {phase === 'error' && (
           <div data-slot="barcode-scanner-error" className="flex flex-col items-center gap-3 text-white/70">
             <ScanLine className="w-12 h-12 opacity-40" />
-            <span className="text-sm">{errorMessage ?? t('flux.cameraUnavailable')}</span>
+            <span className="text-sm">{errorMessage ?? t('flux.barcode.cameraUnavailable')}</span>
           </div>
         )}
 
@@ -324,7 +324,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
 
       {!isOnline && (
         <div className="px-4 py-2 bg-yellow-600/90 text-white text-sm text-center">
-          {t('flux.offlineQueueMessage')}
+          {t('flux.barcode.offlineQueueMessage')}
         </div>
       )}
 
@@ -344,7 +344,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
           className="bg-black/70 backdrop-blur border-t border-white/10 px-4 pt-3 pb-4 max-h-48 overflow-y-auto"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-white/60">{t('flux.itemsScanned', { count: queueItems.length })}</span>
+            <span className="text-xs text-white/60">{t('flux.barcode.itemsScanned', { count: queueItems.length })}</span>
             <div className="flex gap-2">
               <Button
                 variant="ghost"
@@ -354,7 +354,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
                 onClick={handleQueueSubmit}
                 disabled={getPending(queueStore).length === 0}
               >
-                {t('flux.batchConfirm')}
+                {t('flux.barcode.batchConfirm')}
               </Button>
               <Button
                 variant="ghost"

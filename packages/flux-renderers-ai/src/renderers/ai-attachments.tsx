@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import { File as FileIcon, ImageIcon, Loader2, Paperclip, TriangleAlert, X } from 'lucide-react';
+import { File as FileIcon, ImageIcon, Paperclip, TriangleAlert, X } from 'lucide-react';
+import { Spinner } from '@nop-chaos/ui';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
 import type { ChatMessageContentPart } from '../engine/types.js';
 import type { AiAttachmentsSchema, AiAttachmentItem } from '../schemas.js';
@@ -404,7 +405,7 @@ function AttachmentStatus({ status, mode }: { status?: AiAttachment['status']; m
   if (status === 'uploading') {
     return (
       <span className="flex items-center gap-1 text-[10px] text-muted-foreground" data-slot="ai-attachments-status">
-        <Loader2 className={mode === 'image' ? 'h-3 w-3 animate-spin' : 'h-3 w-3 animate-spin'} aria-hidden="true" />
+        <Spinner className="h-3 w-3" aria-hidden="true" />
         {mode === 'image' ? null : t('flux.ai.uploading')}
       </span>
     );

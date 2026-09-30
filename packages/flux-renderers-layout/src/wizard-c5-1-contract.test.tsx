@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createLayoutSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+import { createLayoutSchemaRenderer, env, formulaCompiler } from './test-support.js';
 
 function wizardRoot() {
   return document.querySelector('.nop-wizard') as HTMLElement;

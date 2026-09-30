@@ -19,7 +19,7 @@ export interface KeyValueRowProps {
   name: string;
   currentForm: FormRuntime | undefined;
   childBehavior: CompiledValidationBehavior;
-  onSync: (index: number, patch: Partial<KeyValuePair>) => void;
+  onChange: (index: number, patch: Partial<KeyValuePair>) => void;
   onRemove: (index: number) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
@@ -37,7 +37,7 @@ function KeyValueRowView(props: KeyValueRowProps) {
     name,
     currentForm,
     childBehavior,
-    onSync,
+    onChange,
     onRemove,
     onMoveUp,
     onMoveDown,
@@ -95,7 +95,7 @@ function KeyValueRowView(props: KeyValueRowProps) {
               return;
             }
 
-            onSync(index, { key: event.target.value });
+            onChange(index, { key: event.target.value });
 
             if (currentForm) {
               currentForm.touchField(keyPath);
@@ -146,7 +146,7 @@ function KeyValueRowView(props: KeyValueRowProps) {
               return;
             }
 
-            onSync(index, { value: event.target.value });
+            onChange(index, { value: event.target.value });
 
             if (currentForm) {
               currentForm.touchField(valuePath);
@@ -233,7 +233,7 @@ export function keyValueRowPropsEqual(prev: KeyValueRowProps, next: KeyValueRowP
     prev.name === next.name &&
     prev.currentForm === next.currentForm &&
     prev.childBehavior === next.childBehavior &&
-    prev.onSync === next.onSync &&
+    prev.onChange === next.onChange &&
     prev.onRemove === next.onRemove &&
     prev.onMoveUp === next.onMoveUp &&
     prev.onMoveDown === next.onMoveDown &&

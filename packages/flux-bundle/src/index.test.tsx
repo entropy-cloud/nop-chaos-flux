@@ -20,7 +20,7 @@ const packageJsonFromCwd = JSON.parse(readFileSync('package.json', 'utf8')) as {
 
 const styles = readFileSync('src/style.css', 'utf8');
 const defaultSpacingStyles = readFileSync('../flux-react/src/default-spacing.css', 'utf8');
-const formRendererStyles = readFileSync('../flux-renderers-form/src/form-renderers.css', 'utf8');
+const formRendererStyles = readFileSync('../flux-renderers-form/src/styles.css', 'utf8');
 
 describe('@nop-chaos/flux public entry contract', () => {
   it('exposes the root stylesheet export and host-owned peers', () => {
@@ -87,7 +87,7 @@ describe('@nop-chaos/flux public entry contract', () => {
   it('composes facade styling from canonical package stylesheets', () => {
     expect(styles).toContain(`.${FLUX_ROOT_CLASS} {`);
     expect(styles).toContain("@import '@nop-chaos/flux-react/default-spacing.css';");
-    expect(styles).toContain("@import '@nop-chaos/flux-renderers-form/form-renderers.css';");
+    expect(styles).toContain("@import '@nop-chaos/flux-renderers-form/styles.css';");
     expect(styles).toContain("@import '@nop-chaos/flux-renderers-content/styles.css';");
     expect(styles).toContain("@import '@nop-chaos/flux-renderers-layout/styles.css';");
     expect(styles).toContain("@import '@nop-chaos/flux-renderers-scheduling/styles.css';");

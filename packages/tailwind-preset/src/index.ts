@@ -44,6 +44,8 @@ const baseThemeExtension: TailwindThemeExtension = {
       'accent-foreground': 'hsl(var(--sidebar-accent-foreground, var(--accent-foreground)))',
       border: 'hsl(var(--sidebar-border, var(--border)))',
       ring: 'hsl(var(--sidebar-ring, var(--ring)))',
+      // dual-track alias (variant-vocabulary.md): danger <-> destructive are deliberate schema-facing/shadcn-facing aliases.
+
     },
     destructive: {
       DEFAULT: 'hsl(var(--destructive, var(--danger)))',

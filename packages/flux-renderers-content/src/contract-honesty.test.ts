@@ -10,7 +10,7 @@ import {
   type ContractHonestySourceFile,
   type RendererDefinition,
 } from '@nop-chaos/flux-core';
-import { layoutRendererDefinitions } from '../index.js';
+import { contentRendererDefinitions } from './index.js';
 
 const srcDir = join(import.meta.dirname, '..');
 
@@ -61,19 +61,19 @@ const files = readSourceFiles(srcDir);
 const factories = readRuntimeHandleFactories();
 const resolver = buildPerRendererSourceResolver(
   files,
-  layoutRendererDefinitions.map((d) => d.type),
+  contentRendererDefinitions.map((d) => d.type),
   factories,
 );
 
-describe('flux-renderers-layout contract honesty guard', () => {
+describe('flux-renderers-content contract honesty guard', () => {
   it('every declared event / capability contract is referenced by the renderer implementation (per-renderer isolation)', () => {
-    const violations = findUnreferencedContracts(layoutRendererDefinitions, resolver);
+    const violations = findUnreferencedContracts(contentRendererDefinitions, resolver);
 
     expect(violations).toEqual([]);
   });
 
   it('per-renderer isolation: a probe is flagged even when a sibling wires its contract (H7)', () => {
-    const real = layoutRendererDefinitions.find(
+    const real = contentRendererDefinitions.find(
       (d) =>
         (d.eventContracts && Object.keys(d.eventContracts).length > 0) ||
         (d.componentCapabilityContracts && d.componentCapabilityContracts.length > 0),
@@ -87,7 +87,7 @@ describe('flux-renderers-layout contract honesty guard', () => {
       ...(handle ? { componentCapabilityContracts: [{ handle, displayName: 'X' }] } : {}),
     };
 
-    const violations = findUnreferencedContracts([...layoutRendererDefinitions, probe], resolver);
+    const violations = findUnreferencedContracts([...contentRendererDefinitions, probe], resolver);
     const probeViolation = violations.find((v) => v.rendererType === '__contract_probe__');
 
     expect(probeViolation).toBeTruthy();

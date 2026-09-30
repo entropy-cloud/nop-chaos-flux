@@ -399,7 +399,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
             name={name}
             currentForm={currentForm}
             childBehavior={childBehavior}
-            onSync={syncPairAt}
+            onChange={syncPairAt}
             onRemove={handleRemove}
             onMoveUp={handleMoveUp}
             onMoveDown={handleMoveDown}

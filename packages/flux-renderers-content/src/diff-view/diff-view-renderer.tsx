@@ -134,7 +134,7 @@ function SingleFileDiff({
           onPrevFile={onPrevFile}
           onNextFile={onNextFile}
         />
-        <div className="nop-diff-empty-state">{t('flux.diff.noChanges')}</div>
+        <div data-slot="diff-view-empty" className="nop-diff-empty-state">{t('flux.diff.noChanges')}</div>
       </div>
     );
   }

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { BaseSchema } from '@nop-chaos/flux-core';
-import { createLayoutSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+import { createLayoutSchemaRenderer, env, formulaCompiler } from './test-support.js';
 
 // [G1-视角3-03] (R2 consistency audit, P1): `selectionMode` emitted
 // data-selected/aria-pressed but no selector consumed them — selecting an item

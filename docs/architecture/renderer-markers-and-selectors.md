@@ -251,3 +251,11 @@ Additional package-CSS guardrails that follow from the current live baseline:
 - package-owned selectors such as debugger `.ndbg-*` internals must be anchored under a stable package root (`.nop-debugger`, `.nop-debugger-launcher`, package `data-slot`, etc.) instead of publishing bare global helper classes
 - package CSS may read host/public CSS variables with fallback values, but it must not publish shared token defaults onto `.nop-theme-root` or other global theme roots from a late-loaded runtime stylesheet
 - when a package owns reusable chrome but the visible color should follow config/runtime metadata, prefer a tokenized slot/state path (for example Flow Designer palette `--fd-palette-accent`) over hardcoded id-to-class presentation tables
+
+## Empty-State, Loading, And Inline Affordance Conventions
+
+Conventions converged by the cq-5 round (live baseline: tree/list/chart/crud/echarts/diff-view):
+
+- **Empty states**: content-level empty containers use the ui `Empty` component where a standalone content block is rendered (transfer, tree-option-list). Canvas-internal lightweight text fallbacks use `data-slot="<component>-empty"` (e.g. `tree-empty`, `list-empty`, `diff-view-empty`) with `flux.common.noData` (or the component's domain key) — never a bare unmarked div.
+- **Loading feedback**: `Spinner` (ui) for operation/inline feedback (it carries `role="status"`); `Skeleton` for structural placeholders of unmounted canvases (kanban/gantt/calendar surfaces). For purely decorative inline glyphs, pass `aria-hidden="true"` to `Spinner` — AT suppression wins over the built-in `role="status"` and matches a bare icon's prior behavior; never hand-roll `Loader2 + animate-spin` (it silently drops the spinner contract).
+- **Inline text-level affordances**: bare `<button type="button" data-slot="…">` is allowed for text-level inline affordances inside authored content (the `tabs.tsx` nested-button ARIA constraint is the precedent); control-level interactive chrome uses the ui `Button`. When deviating, leave a comment stating the constraint (see `flux-renderers-basic/src/tabs.tsx`).

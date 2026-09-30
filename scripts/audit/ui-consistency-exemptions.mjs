@@ -370,7 +370,7 @@ export const EXEMPTIONS = [
 
   // --- form -------------------------------------------------------------------
   {
-    path: 'packages/flux-renderers-form/src/form-renderers.css',
+    path: 'packages/flux-renderers-form/src/styles.css',
     rule: 'hardcoded-literal-color',
     reason: 'form 渲染器 CSS 色值（族9 域）',
     source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记',

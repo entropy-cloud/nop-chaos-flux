@@ -7,8 +7,8 @@ import {
   useTreeOptionListController,
   useTreeRemoteSearch,
   useTreeSelectController,
-} from './tree-control-controllers.js';
-import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from './tree-options.js';
+} from '.././tree-control-controllers.js';
+import { buildTreeOptionMetaList, getTreeOptionConfig, type TreeOptionMeta } from '.././tree-options.js';
 
 function FilterHarness(props: { options: TreeOptionMeta[]; searchable: boolean }) {
   const { query, setQuery, filteredOptions } = useTreeOptionListController({

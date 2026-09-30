@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
  * markdown-content.test.tsx). Computed-style verification is owned by the
  * A7 e2e layer.
  */
-const css = readFileSync('src/form-renderers.css', 'utf8');
+const css = readFileSync('src/styles.css', 'utf8');
 
 describe('plan 480 A6 — .nop-markdown preview typography matrix', () => {
   it('covers the minimal element matrix (h1-h3/ul/ol/blockquote/code/a/img)', () => {

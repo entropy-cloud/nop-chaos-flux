@@ -2,13 +2,13 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 import React from 'react';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import type { CountdownSchema, PullRefreshSchema, SwipeCellSchema } from '../schemas.js';
-import { CountdownRenderer } from '../countdown.js';
-import { PullRefreshRenderer } from '../pull-refresh.js';
-import { SwipeCellRenderer } from '../swipe-cell.js';
-import { NoticeBarRenderer } from '../notice-bar.js';
-import { createMockRendererProps } from '../test-support.js';
-import { renderInfiniteScroll } from '../infinite-scroll-test-support.js';
+import type { CountdownSchema, PullRefreshSchema, SwipeCellSchema } from './schemas.js';
+import { CountdownRenderer } from './countdown.js';
+import { PullRefreshRenderer } from './pull-refresh.js';
+import { SwipeCellRenderer } from './swipe-cell.js';
+import { NoticeBarRenderer } from './notice-bar.js';
+import { createMockRendererProps } from './test-support.js';
+import { renderInfiniteScroll } from './infinite-scroll-test-support.js';
 
 afterEach(() => {
   cleanup();

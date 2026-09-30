@@ -62,6 +62,7 @@
   --warning-bg: 38 92% 95%;
   --info: 199 89% 48%;
   --info-foreground: 0 0% 13%;
+  /* danger/destructive dual-track (variant-vocabulary.md): danger is the schema-facing AMIS-level alias of destructive; both resolve to the same visual tokens. */
   --danger: 0 84% 60%;
   --danger-foreground: 0 0% 9%;
   --danger-bg: 0 84% 95%;
