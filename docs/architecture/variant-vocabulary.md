@@ -203,7 +203,7 @@ Exceptions:
 
 Use `danger` in Flux semantic schema fields such as `intent` and `level`.
 
-Use `destructive` only when directly targeting shadcn-compatible UI component `variant` values.
+Prefer `destructive` when authoring shadcn-compatible UI component `variant` values; `button.variant: "danger"` is a registered schema-facing alias that renders the same destructive visual (dual-track mapping, §1).
 
 Rationale:
 
@@ -236,10 +236,13 @@ When adding a new property or value, ask these questions in order:
 
 ## Current Target Vocabulary
 
-Public schema targets should converge on this split:
+**Scope of this section — long-range authoring guidance, not the live Button contract.** The live `button.variant` vocabulary is the 13-value AMIS compatibility set in §2 (which includes schema-facing `primary` and the `danger` alias); the split below describes where the vocabulary should converge once AMIS-compat consumers migrate to `intent`/`level` fields.
+
+Long-range authoring targets:
 
 ```ts
-type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+// long-range target — NOT the live button.variant union (see §2)
+type ButtonVariantTarget = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 type TabsVariant = 'default' | 'line';
 type ActionIntent = 'neutral' | 'primary' | 'danger' | 'warning' | 'success' | 'info';
 type StatusLevel = 'info' | 'success' | 'warning' | 'danger';
@@ -248,9 +251,9 @@ type StatusLevel = 'info' | 'success' | 'warning' | 'danger';
 Interpretation:
 
 - `default` is only a component fallback visual variant.
-- `primary` is an `intent`, not a `variant`.
+- In new-authoring schemas, prefer `intent: "primary"` over `variant: "primary"`; the live `button.variant: "primary"` value remains valid for AMIS compatibility (§2).
 - `danger`, `warning`, `success`, and `info` are semantic values for `intent` or `level`.
-- `destructive` is only a shadcn-compatible visual variant value.
+- `destructive` is the shadcn-compatible visual variant value; schema-facing `danger` is its registered alias (dual-track, §1/§5).
 
 ## Related Files
 

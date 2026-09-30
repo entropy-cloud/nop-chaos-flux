@@ -83,6 +83,8 @@ Exit Criteria:
 ### Phase 2 - variant 词表对齐 + token 注记
 
 Status: completed
+
+Audit M1 补正：:241-253 Current Target Vocabulary 节加作用域界定（long-range guidance 非 live 契约,类型更名 ButtonVariantTarget）+ primary 表述改为 intent 优先/AMIS 兼容保留;§5 的 destructive-only 表述调和为「destructive 优先,danger 为注册别名」。
 Targets: `docs/architecture/variant-vocabulary.md`、`packages/theme-tokens/src/styles.css`、`packages/tailwind-preset/src/index.ts`
 
 - Item Types: `Decision | Fix`

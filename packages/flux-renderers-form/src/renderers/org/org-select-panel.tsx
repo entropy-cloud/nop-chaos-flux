@@ -36,6 +36,9 @@ function OrgNodeRow(input: {
           aria-label={node.name}
         />
       ) : null}
+      {/* text-level inline affordance: bare button + data-slot per
+          renderer-markers-and-selectors.md (a nested ui Button inside the
+          selectable row button would violate the button content model). */}
       <button
         type="button"
         data-slot="org-select-node-name"

@@ -259,3 +259,12 @@ Conventions converged by the cq-5 round (live baseline: tree/list/chart/crud/ech
 - **Empty states**: content-level empty containers use the ui `Empty` component where a standalone content block is rendered (transfer, tree-option-list). Canvas-internal lightweight text fallbacks use `data-slot="<component>-empty"` (e.g. `tree-empty`, `list-empty`, `diff-view-empty`) with `flux.common.noData` (or the component's domain key) — never a bare unmarked div.
 - **Loading feedback**: `Spinner` (ui) for operation/inline feedback (it carries `role="status"`); `Skeleton` for structural placeholders of unmounted canvases (kanban/gantt/calendar surfaces). For purely decorative inline glyphs, pass `aria-hidden="true"` to `Spinner` — AT suppression wins over the built-in `role="status"` and matches a bare icon's prior behavior; never hand-roll `Loader2 + animate-spin` (it silently drops the spinner contract).
 - **Inline text-level affordances**: bare `<button type="button" data-slot="…">` is allowed for text-level inline affordances inside authored content (the `tabs.tsx` nested-button ARIA constraint is the precedent); control-level interactive chrome uses the ui `Button`. When deviating, leave a comment stating the constraint (see `flux-renderers-basic/src/tabs.tsx`).
+
+## Test Placement Convention
+
+Per-package single convention, resolved as (cq-5 Phase 6):
+
+- A package whose tests are majority-colocated under `src/__tests__/` treats `src/__tests__/` as its test home (new tests go there) — e.g. flux-renderers-form-advanced, flux-renderers-data, flux-renderers-form.
+- A package whose tests are majority next-to-source treats same-directory as its convention — e.g. flux-renderers-scheduling, flux-renderers-layout, flux-renderers-mobile, flux-renderers-content.
+- Subunit cluster directories (`composite-field/`, `condition-builder/`, `detail-view/`, `diff-view/`) are cohesion units, not mixing: tests inside a subunit stay beside the subunit source even when the package's loose-test home is `__tests__/`.
+- Never mix for the same unit: new tests follow the convention of the directory they target.

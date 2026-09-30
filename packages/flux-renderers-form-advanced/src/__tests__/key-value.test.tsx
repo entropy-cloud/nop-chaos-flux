@@ -6,7 +6,7 @@ import { useCurrentFormState } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { describe, expect, it } from 'vitest';
-import { formAdvancedRendererDefinitions } from '.././index.js';
+import { formAdvancedRendererDefinitions } from '../index.js';
 import { keyValueRendererDefinition } from '.././key-value.js';
 import { keyValueRowPropsEqual, type KeyValueRowProps } from '.././key-value-row.js';
 import { baseEnv, formulaCompiler } from '.././test-support.js';
