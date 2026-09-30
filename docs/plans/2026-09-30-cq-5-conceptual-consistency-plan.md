@@ -1,6 +1,6 @@
 # CQ-5 概念一致性收敛（i18n / variant 词表 / 空态 / 命名 / 交付惯例）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md`（CQ-C1、C2、C4、C7、C8、C9、C10、C12）+ 首轮独立评审 live 勘误
 > Related: `docs/architecture/variant-vocabulary.md`、`docs/architecture/renderer-markers-and-selectors.md`、`packages/flux-i18n/src/i18n.ts`
@@ -175,7 +175,7 @@ Exit Criteria:
 - [x] onSync 包内归一；form CSS 交付标准化（9 类触点全同步）；4 包测试单制化
 - [ ] 不存在被静默降级的 in-scope live defect
 - [ ] owner docs 已同步（variant-vocabulary、renderer-markers 更新）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure）
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -201,16 +201,18 @@ Exit Criteria:
 ## Non-Blocking Follow-ups
 
 - CQ-C11 入口/导出组织漂移（允许范围内，新包趋 type-block+named）
+- flux.wordEditor 域 6 个 barcode 语义键全仓零调用（预存死键，含 alignBarcode 缩进错位）——cleanup 归后续触达
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 六 Phase 落地。独立 fresh-session closure audit 两轮：首轮 `issues`（2 Major + 5 Minor）→ remediation → 第二轮 `approved`（3 residual Minor 已顺手修毕：plan 计数/措辞、import 空格、follow-up 归拢）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<>>
-- Evidence: <<>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_461f65d6，两轮）
+- Verdict: 首轮 `issues` → 第二轮 `approved`
+- Evidence: 审计复跑 form-advanced 1144 / form 943 / ai 838 / content 341 / layout 140 / mobile 186 / flux-bundle 8 绿；门禁（i18n-keys / package-css-exports 25/25 / anchors 354 / ui-consistency / finite-prop / garbled）全绿；9 类 CSS 触点与 14 个测试移动逐一 diff 核实。
 
 Follow-up:
 
-- <<>>
+- flux.wordEditor 域 6 个 barcode 语义死键 cleanup（已登记 Non-Blocking Follow-ups）

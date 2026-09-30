@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
-import { Button, cn , Spinner } from '@nop-chaos/ui';
+import { Button, Spinner, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { File as FileIcon, ImageIcon, Paperclip, TriangleAlert, X } from 'lucide-react';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
