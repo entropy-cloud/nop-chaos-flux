@@ -176,6 +176,26 @@ describe('useTableFilter', () => {
     });
     expect(api.filterState).toEqual({});
     expect(onFilterChange).toHaveBeenCalled();
+    // cq-3 Phase 4 closure: handleFilter's own payload shape is locked here —
+    // a column with no prior keyword must keep `keyword: undefined` (NOT ''
+    // normalization) in the evaluation bindings exposed to schema expressions.
+    expect(onFilterChange).toHaveBeenCalledWith(null, {
+      event: {
+        type: 'table:filter-change',
+        column: 'name',
+        filters: ['Alice'],
+        keyword: undefined,
+        filter: { column: 'name', filters: ['Alice'], keyword: undefined },
+      },
+      scope: { update: renderScopeUpdate },
+      evaluationBindings: {
+        type: 'table:filter-change',
+        column: 'name',
+        filters: ['Alice'],
+        keyword: undefined,
+        filter: { column: 'name', filters: ['Alice'], keyword: undefined },
+      },
+    });
     expect(onFilterChange).toHaveBeenLastCalledWith(null, {
       event: {
         type: 'table:filter-change',

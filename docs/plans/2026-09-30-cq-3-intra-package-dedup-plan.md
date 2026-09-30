@@ -1,6 +1,6 @@
 # CQ-3 包内重复代码消除（六个包内克隆群）
 
-> Plan Status: active
+> Plan Status: completed
 > As-Built Note: 六 Phase 全部落地;as-built 裁定见各 Phase 回填(dialog-host 确认栏/JSDoc、replaceSheet 扩展至 clipboard/filter/search 共 25 处、array-editor 与 editor-canvas 同域保留、scheduling region 编排按 surface 保留)
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md`（CQ-D5、D6、D7、D8、D10、D12）+ 首轮独立评审 live 勘误
@@ -14,7 +14,7 @@
 
 - `flux-react/src/dialog-host.tsx`：DialogView 198-399 ↔ DrawerView 401-587，handleClose（210-217↔411-418）、surfaceContext memo（219-236↔420-437）、regions 解析（237-242↔438-443）、confirmButtons（273-281↔468-476）逐行同文。差异点（留在 View 侧）：mobile 尺寸→full、drawer side→bottom、stack 锚定、DialogView 的 isTopmost 抑制块（:296-308）、`closeOnOutsideClick` vs `closeOnOutside` 两个不同 schema 字段。既有测试面充足（dialog-host 6 个 focused 文件：close-behavior 含 topmost/stackIndex、responsive 含 mobile、surface、lifecycle-contracts）。
 - `spreadsheet-core/src/core/`：cell-operations 10 处内联三段式 + 6 处 `replaceSheet` 半收敛、structure-operations 4 处、sheet-operations 前 4 函数 4 处，合计 ~24 处。**已核实的关键语义**：未命中 sheetId 时 `ensureSheetCells`（document-access.ts:10-12）**throw**（`Sheet not found`，全仓零测试锁定）；`applyEditComment`（:462-464）/`applyDeleteComment`（:487-489）no-op 时**早退返回原 doc 引用**——report-designer-core `designer-core.test.ts:250`（seal 契约）与 :269（renderer short-circuit 引用追踪）证明引用身份 load-bearing；sheet-operations 的 map-only 族（applyRenameSheet/applyHideSheet/applyProtectSheet/applyFreezePanes 等）miss 时**静默 no-op**，与三段式族 throw 语义不同。
-- `flux-renderers-form-advanced`：combo-renderer(630L) ↔ input-table-renderer(485L) 高度同构（itemScope/itemForm/itemValidationOwner/itemContent/itemLayout 逐行同文）；但**消费者有语义分歧**：combo 的 `handleRemove` 有 `isRemoveBlockedAt(index)` 门控（:399-401），input-table 没有（:213-230）；`array-editor` 是另一种 item 模型（ArrayEditorItem wrapper + 内嵌 id + pendingFocusRef/inputRefs 焦点管理 + syncItems 整组回写，无 itemEntries/stable keys）；`useCompositeFieldHandle` type 亦不同（'combo' vs 'input-table'）。
+- `flux-renderers-form-advanced`：combo-renderer(630L) ↔ input-table-renderer(485L) 高度同构（itemScope/itemForm/itemValidationOwner/itemContent/itemLayout 逐行同文）；但**消费者有语义分歧**：combo 的 `handleRemove` 有 `isRemoveBlockedAt(index)` 门控（:399-401），input-table 同日早些 commit（da669de8d）已获父组件同类门控——两侧门控差异已收敛,行组件仍统一经 removeBlocked prop 接收；`array-editor` 是另一种 item 模型（ArrayEditorItem wrapper + 内嵌 id + pendingFocusRef/inputRefs 焦点管理 + syncItems 整组回写，无 itemEntries/stable keys）；`useCompositeFieldHandle` type 亦不同（'combo' vs 'input-table'）。
 - `flux-renderers-data/table-renderer`：table-body-rows.tsx:92-124 ↔ :129-162 两份钻透（仅差 scrollRef 一项）；use-table-filter 尾巴实为**三**段同构（handleFilter:98 / handleSearch:151 / clearFilters:201）。下游 memo 边界在 `MemoizedDataRow`（table-data-row-render.tsx:26），其比较器按内容消费 `item.*` 等字段，不消费 bridge 对象——spread 透传不进入比较器输入。单测内无 render-count 用例；性能锁定在 `tests/e2e/performance-table.spec.ts`（probe delta）。CQ-D7 其余 5 文件零散克隆（table-body-row-rendering/table-editable-cell/use-table-selection/table-header-row/table-flattened-items ~272L）不在本 plan（见 Non-Goals）。
 - `flux-renderers-layout`：steps:20-124 ↔ timeline:60-137（clampIndex@26/66、asNumericIndex@39/74、ownership 解析）；key 提取有差异（steps `item.value ?? item.key`，timeline 仅 `item.value`）。
 - `flux-renderers-scheduling`：eventCtx 的 **payload 变换逐字相同**（四处），但 scope 来源三变体：barcode/calendar `[scope]` 直连、gantt `scopeRef.current`+`[]`（保持 eventCtx 身份稳定，其 onMount/onUnmount effect deps 含 eventCtx）、kanban `[rootScope]`。loading/empty region：calendar:435-449 与 gantt:521-541 近同文；kanban:536-548 skeleton/类名/`data-empty` 结构不同。eventCtx 形状已被 calendar/gantt/kanban 既有 `evaluationBindings` 断言锁定（docs/bugs/83 在案）。
@@ -80,12 +80,13 @@ Targets: `packages/spreadsheet-core/src/core/`
 - Item Types: `Proof | Fix`
 
 - [ ] Proof：先补两条行为锁定测试（当前零锁定）：miss sheetId → throw `Sheet not found`；comment no-op → 返回原 doc 引用（身份断言）。先红或直接绿均可（锁定现状）
-- [x] Fix：**as-built 以既有私有 replaceSheet 为组合子本体**（上移 document-access.ts 导出，语义与 plan 的 withSheet 等价：fn 返回完整 nextSheet;no-op 早退由调用方 `return doc` 保持——两条锁定测试先绿钉住）；迁移 25 处内联重建（cell 10 + structure 4 + sheet 4 + clipboard 5 + filter 2 + search 1,超出 plan 三文件范围的同型站点一并收敛）；**map-only 族不迁移**（原样）
+- [x] Proof：先补两条行为锁定测试（原零锁定）：miss sheetId → throw `Sheet not found`；comment no-op → 返回原 doc 引用（`toBe` 身份断言）——`operation-contracts.test.ts`,audit 确认真锁(实抛路径/早退路径)
+- [x] Fix：**as-built 以既有私有 replaceSheet 为组合子本体**（上移 document-access.ts 导出，语义与 plan 的 withSheet 等价：fn 返回完整 nextSheet;no-op 早退由调用方 `return doc` 保持——两条锁定测试先绿钉住）；迁移 25 处内联重建（cell 10 + structure 4 + sheet 4 + clipboard 4 + filter 2 + search 1 = 25,超出 plan 三文件范围的同型站点一并收敛）；**map-only 族不迁移**（原样）
 - [x] Proof：锁定测试 2 条先绿（miss→throw、comment no-op→原 doc 引用）；spreadsheet-core 279 绿 + report-designer-core 186 绿（含 seal 契约）+ spreadsheet-renderers 169 绿
 
 Exit Criteria:
 
-- [x] 三段式重建样板 grep 零残留（全 core 仅组合子定义本体一处）；map-only 族原样
+- [x] 三段式内联重建 grep 零残留（唯一 `const workbook = {` 残留在 ensureSheetCells 的数组拷贝语义内,不可用组合子表达,正当保留;组合子本体为内联 map 字面量）;map-only 族原样
 - [x] 全包 + seal 契约测试绿
 
 ### Phase 3 - form-advanced array-item controller
@@ -165,7 +166,7 @@ Exit Criteria:
 - [x] 语义分歧点（removeWhen 门控在父组件、array-editor wrapper 模型、map-only 族、ownership hook fallback 链、scheduling region 编排）零行为变更——保留裁定均在 plan 回填
 - [x] owner docs：No owner-doc update required（纯内部重构，无契约变更）
 - [x] 不存在被静默降级的 in-scope live defect
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（audit 进行中）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure）
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -188,13 +189,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 六 Phase 全部落地。独立 fresh-session closure audit 首轮 verdict `issues`（2 Major + 5 Minor）:M1（handleFilter payload `?? ''` 归一化偏差,audit 同时定位到 handleFilter payload 零断言的测试缺口）与 M2（三项 Proof 未闭环）已全部 remediation——keyword 原语义恢复 + payload 深断言补齐（该断言可拦截 M1 回归）+ 盘点结论回填 + 锁定测试勾选;Minor 5 条全修。聚焦复审通过后标记 completed。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<>>
-- Evidence: <<>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_56d5c176，首轮 → remediation → 复核）
+- Verdict: 首轮 `issues`（2 Major + 5 Minor，无 Blocker）→ remediation → 复核确认
+- Evidence: 审计七包 focused 复跑全绿（spreadsheet-core 279 / flux-react 532 / form-advanced 1144 / data 1200 / layout 140 / scheduling 1070 / report-designer-core 186 / spreadsheet-renderers 169）;clipboard dual-site 优先级等价性、replaceSheet 25 处、export 面零变更、knip/duplicates 门禁均经独立复核;remediation 后全量 typecheck/lint/check/test exit 0。
 
 Follow-up:
 
-- <<>>
+- CQ-D7 其余 5 文件零散克隆（Non-Blocking Follow-ups 既有）
+- ownership/statePath 解析下沉 flux-react;removeWhen 门控语义统一需产品裁定（既有）

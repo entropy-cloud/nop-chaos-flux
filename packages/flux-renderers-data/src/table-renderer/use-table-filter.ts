@@ -86,8 +86,8 @@ export function useTableFilter(
         type: 'table:filter-change';
         column: string;
         filters: string[];
-        keyword: string;
-        filter: { column: string; filters: string[]; keyword: string };
+        keyword: string | undefined;
+        filter: { column: string; filters: string[]; keyword: string | undefined };
       },
     ) => {
       startTransition(() => {
@@ -142,11 +142,11 @@ export function useTableFilter(
         type: 'table:filter-change',
         column: columnName,
         filters,
-        keyword: current.keyword ?? '',
+        keyword: current.keyword,
         filter: {
           column: columnName,
           filters,
-          keyword: current.keyword ?? '',
+          keyword: current.keyword,
         },
       });
     },
