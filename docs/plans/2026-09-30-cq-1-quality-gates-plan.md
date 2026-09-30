@@ -66,7 +66,7 @@ Targets: `knip.json`、`scripts/check-knip-baseline.mjs`（新增）、`scripts/
 
 - [x] Proof：先写基线 diff 脚本单测（临时 fixture 制造新增 unused file → 红；无新增 → 绿），先红（首跑因脚本缺失与断言修正两轮红，终 4/4 绿）
 - [x] Fix：`knip.json` 增加 `scripts/__tests__/fixtures/**` ignore，消除 fixture 误报；锁定 knip 精确版本 6.9.0（package.json + lockfile）
-- [x] Fix：生成 committed 基线快照（分类：unused files/exports/exported types/deps/devDeps/unlisted——unlisted 仅登记数量与分布供 CQ-S17 对账，不进 diff 判据，理由：与在链 manifest 门禁口径未对齐），文件头记录生成时 knip 6.9.0（实测 28 files/402 exports/581 types/3 deps/16 devDeps/30 unlisted；files 口径为 issues[].files 去重身份，与 text reporter 的 79 全仓口径不同已注明）
+- [x] Fix：生成 committed 基线快照（分类：unused files/exports/exported types/deps/devDeps/unlisted——unlisted 仅登记数量与分布供 CQ-S17 对账，不进 diff 判据，理由：与在链 manifest 门禁口径未对齐），文件头记录生成时 knip 6.9.0（committed 基线实测 28 files/401 exports/581 types/3 deps/17 devDeps/30 unlisted——devDeps 17 含 word-editor-renderers jest-dom types-only 已知误报；files 口径为 issues[].files 去重身份，与 text reporter 的 79 全仓口径不同已注明）
 - [x] Fix：新增 `check:knip-baseline`：当前输出与基线按分类 diff，**新增**命中 exit 1（含路径），只减不增 exit 0 并提示可收缩（支持 --input/--baseline 隔离测试；knip issue 退出码非零时从 error.stdout 取 JSON）
 - [x] Fix：接入 `pnpm check` 链（check:knip-baseline 追加至链尾）
 - [x] Proof：CQ-S17 对账——knip unlisted 逐条与 `check-workspace-manifest-deps`（exit 0 权威）比对，结论写入基线文件头注记（manifest 门禁前向检查仅扫 packages/\*/src，apps/scripts 为盲区；30 项 = playground 11 + visual-quality 18 + data test jsdom 1，均经 hoisting 解析；playground 三包声明缺失转 cq-6 Phase 5）
@@ -194,6 +194,7 @@ Closure Audit Evidence:
 - Auditor / Agent: 独立子 agent（fresh session，agent_8837226d，首轮 → 聚焦复审两轮）
 - Verdict: 首轮 `issues`（B1 + M1 + 3 Minor）→ remediation → 第二轮确认
 - Evidence: 审计独立复跑全部红绿路径探针（knip 造死文件 exit 1、空 console 基线 exit 1、scanner 基线 -1 exit 1、jsdom 白名单缺项 exit 1、eslint no-console 三方探针、16 门禁单测复跑绿、word-editor-renderers 164/164 复跑绿）；确认行为层五 Phase exit criteria 全部 repo-observable 成立、deferred 分类诚实、无 in-scope 静默丢弃。remediation diff：plan 文本回填（Phase 3 六项勾选 + M1 as-built 改写 + 401/17 与 28 口径勘误）+ knip 基线文件头 knownFalsePositives 注记 + daily log 措辞修正。
+- 第二轮聚焦复审（同 agent）：发现 M1 处置依据虚假——`src/__tests__/jest-dom.d.ts` 被 lint 链 `clean-src-artifacts`（禁止 packages/\*/src 下 .d.ts）在验证期删除，提交树缺类型增强致包级 typecheck 82 错（turbo 缓存键未捕获删除造成假绿，M3）。终 remediation：类型增强迁至根 `types/testing-library-jest-dom.d.ts`（tsconfig 既有 include 挂载点，不受 clean-src-artifacts 影响），`turbo run typecheck --force` 42/42 真绿复验；plan 残留 402/16 勘误同步。
 
 Follow-up:
 
