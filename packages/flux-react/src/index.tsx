@@ -65,6 +65,13 @@ export {
   useFormLayout,
   useStrictMode,
 } from './hooks.js';
+export {
+  createPrivateEvalScope,
+  extractExpressionDepsViaProbe,
+  probeExpressionPaths,
+  type ExpressionDepsProbeResult,
+  type FluxEvalContext,
+} from './bindings/flux-eval.js';
 import { useRendererRuntimeOrNull } from './hooks.js';
 export { useRendererRuntimeOrNull };
 import { useDebouncedCallback, useDebouncedValue } from './hooks/use-debounced.js';

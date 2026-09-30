@@ -1,9 +1,15 @@
-import { getIn, type ExpressionCompiler, type RendererEnv, type ScopeRef, type ScopeDependencySet } from '@nop-chaos/flux-core';
+import type { ExpressionCompiler, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
+import {
+  createPrivateEvalScope as createSharedEvalScope,
+  extractExpressionDepsViaProbe as extractShared,
+  probeExpressionPaths as probeShared,
+} from '@nop-chaos/flux-react';
 import type { ScadaPrimitive } from '../serialization/config-types.js';
 
 /**
  * `ScadaPrimitive` 类型守卫：flux 求值与 host 句柄共用，确保进入点表的值恒为
- * number|boolean|string，非 primitive 值在边界处被拒绝。
+ * number|boolean|string，非 primitive 值在边界处被拒绝。（域策略保留在本包——
+ * 3d 的宽松值域不适用，cq-4 Phase 1。）
  */
 export function isScadaPrimitive(value: unknown): value is ScadaPrimitive {
   return typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string';
@@ -11,44 +17,16 @@ export function isScadaPrimitive(value: unknown): value is ScadaPrimitive {
 
 /**
  * 私有求值子 scope（design-data-binding.md §9.1）：注入点表上下文 + scope 快照，
- * 非 schema-visible scope（INV-4 边界），仅供 flux 表达式编译求值读取。
- * 合并优先级 `{...pointValues, ...scopeData}`——scope 在 id 冲突时遮蔽 point。
+ * 非 schema-visible scope（INV-4 边界）。求值核心单源于 flux-react bindings
+ * 公共层（cq-4 Phase 1）；合并优先级 `{...pointValues, ...scopeData}`——scope 在
+ * id 冲突时遮蔽 point。
  */
 export function createPrivateEvalScope(data: Record<string, unknown>): ScopeRef {
-  return {
-    id: 'scada-flux-eval',
-    path: '$',
-    value: data,
-    get(path: string) {
-      return getIn(data, path);
-    },
-    has(path: string) {
-      return getIn(data, path) !== undefined;
-    },
-    readOwn: () => data,
-    readVisible: () => data,
-    materializeVisible: () => data,
-    update: () => undefined,
-    merge: () => undefined,
-  };
+  return createSharedEvalScope(data, FLUX_EVAL_SCOPE_ID);
 }
 
-function createTolerantProbeScopeData(): Record<string, unknown> {
-  const handler: ProxyHandler<Record<string, unknown>> = {
-    get(_target, property) {
-      if (typeof property !== 'string') return undefined;
-      if (property === '__proto__' || property === 'constructor' || property === 'prototype') return undefined;
-      if (property === 'valueOf') return () => 0;
-      if (property === 'toString') return () => '';
-      if (property === 'length') return 0;
-      return new Proxy({} as Record<string, unknown>, handler);
-    },
-    has() {
-      return true;
-    },
-  };
-  return new Proxy({} as Record<string, unknown>, handler);
-}
+/** Scope identity pinned for the scada family（原逐字本地实现 — cq-4 Phase 1）。 */
+const FLUX_EVAL_SCOPE_ID = 'scada-flux-eval';
 
 export type ExpressionDepsProbeResult =
   | { status: 'ok'; paths: string[] }
@@ -66,32 +44,7 @@ export function extractExpressionDepsViaProbe(
   env: RendererEnv,
   expression: string,
 ): ExpressionDepsProbeResult {
-  let compiled: ReturnType<ExpressionCompiler['compileValue']>;
-  try {
-    compiled = compiler.compileValue(expression);
-  } catch {
-    return { status: 'compile-failed' };
-  }
-  if (compiled.kind !== 'dynamic') return { status: 'ok', paths: [] };
-  let state: ReturnType<ExpressionCompiler['createState']>;
-  try {
-    state = compiler.createState(compiled);
-  } catch {
-    return { status: 'create-state-failed' };
-  }
-  const probeScope = createPrivateEvalScope(createTolerantProbeScopeData());
-  try {
-    compiler.evaluateWithState(compiled, probeScope, env, state);
-  } catch {
-    return { status: 'evaluate-failed' };
-  }
-  const root = state.root;
-  if (root.kind !== 'leaf-state') return { status: 'deps-empty' };
-  const deps: ScopeDependencySet | undefined = root.dependencies;
-  if (!deps || deps.wildcard) return { status: 'deps-empty' };
-  const paths = [...deps.paths];
-  if (paths.length === 0) return { status: 'deps-empty' };
-  return { status: 'ok', paths };
+  return extractShared(compiler, env, expression, FLUX_EVAL_SCOPE_ID);
 }
 
 export interface FluxEvalContext {
@@ -104,8 +57,5 @@ export interface FluxEvalContext {
  * 当 compiler/env 不可用时返回空数组（向后兼容）。
  */
 export function probeExpressionPaths(expression: string, context?: FluxEvalContext): string[] {
-  if (!context) return [];
-  const normalized = expression.trim().startsWith('${') ? expression.trim() : `\${${expression.trim()}}`;
-  const result = extractExpressionDepsViaProbe(context.compiler, context.env, normalized);
-  return result.status === 'ok' ? result.paths : [];
+  return probeShared(expression, context, FLUX_EVAL_SCOPE_ID);
 }
