@@ -1,6 +1,6 @@
 # CQ-2 核心层共享原语下沉（flux-core / flux-react 公开 API 增量）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-09-30
 > As-Built Note: 执行记录见 daily log 2026-09-30「cq-2 落地」；三处 as-built 裁定已回填对应 Phase（防抖不包 scheduleDebounce / editor-canvas 保留注记 / defineRendererFamily 命名）
 > Source: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md`（CQ-D14、CQ-D1、CQ-D9、CQ-C5、CQ-C6）+ 首轮独立评审 live 勘误
@@ -135,7 +135,7 @@ Targets: `packages/flux-core/src/`（builder 落点）、`packages/flux-renderer
 - Item Types: `Proof | Fix`
 
 - [x] Proof：等价性证明——content 20 条迁移后 content 341 focused 绿 + 三契约门禁（schema-prop-coverage/renderer-definition-fields-only/finite-prop-contracts）exit 0 + 类型系统强制（entry 参数类型为 Omit<RendererDefinition,...>，产出一个字面量 RendererDefinition）
-- [x] Fix：实现 `defineRendererFamily({ sourcePackage?, defaultSchema? })`（**as-built 命名**：family 闭包钉 sourcePackage+defaultSchema 工厂，category 保留在 entry——card/cards 刻意 layout 类别不可族化）；content 20 条迁移，纯 `{type}` defaultSchema 上提族工厂（3 条带额外默认值的保留原位）
+- [x] Fix：实现 `defineRendererFamily({ sourcePackage?, defaultSchema? })`（**as-built 命名**：family 闭包钉 sourcePackage+defaultSchema 工厂，category 保留在 entry——card=layout、cards=data(各自刻意类别,不可族化)）；content 20 条迁移，纯 `{type}` defaultSchema 上提族工厂（3 条带额外默认值的保留原位）
 - [x] Proof：content 341 绿；三门禁 exit 0
 
 Exit Criteria:
@@ -157,7 +157,7 @@ Exit Criteria:
 - [x] 新 API 契约单测（先红后绿）+ 各消费者 focused 测试全绿（flux-core 533→534→528+6、受影响 10+ 包 focused 全绿，详见各 Phase）
 - [x] owner docs 已同步（flux-core.md 新节、quick-reference.md 3 hook 条目、renderer-interfaces.md builder 条目；check-active-doc-code-anchors exit 0）
 - [x] 不存在被静默降级的 in-scope live defect（三处 as-built 保留裁定均有 plan+代码双注记；本 plan 新增的两处未消费导出类型被自家 knip 门禁拦截后内联化）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure）
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -188,13 +188,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 五 Phase 全部落地。独立 fresh-session closure audit 首轮 verdict `approved`（3 Minor 非 blocking，均已顺手修复）。关键等价性证据：四包 provider 测试零改动通过（audit 以 `git show --name-only` 证实 commit 未触碰任何 provider 测试文件）；flux-core 534/534、content 341/341 复跑绿；A/B 组与裸 JSON/genId 零残留经 audit 独立 grep 复核。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<>>
-- Evidence: <<>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_6b9ba58f）
+- Verdict: `approved`（3 Minor：card/cards 类别表述以偏概全、clone.ts 回退分支无注记、C 组注记缺 cq-2 字样——全部已修）
+- Evidence: 审计独立复跑 flux-core 534、content 341、report/word/flow/spreadsheet provider 子集全绿；逐分支比对新旧 toActionError 语义恒等；spreadsheet-core→flux-core 边核实无环；导出面新增仅限声明集合。
 
 Follow-up:
 
-- <<>>
+- 其余 16 包 RendererDefinition 全量迁移（先改写 finite-prop-contracts/schema-prop-coverage 提取逻辑，见 Deferred）
+- ownership/statePath 解析根治性下沉 flux-react；dashboard handles 跨包收敛（cq-4 裁定路径）

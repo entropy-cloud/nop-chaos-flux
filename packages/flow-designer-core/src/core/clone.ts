@@ -33,6 +33,9 @@ export function cloneDocument(doc: GraphDocument): GraphDocument {
 
 export function cloneTreeDocument(tree: TreeDocument | undefined): TreeDocument | undefined {
   if (!tree) return undefined;
+  // structuredClone primary with JSON round-trip fallback (the only remaining
+  // hand-rolled JSON deep-clone branch — flux-core cloneDeep is the shared
+  // implementation for all other call sites, cq-2 Phase 1).
   if (typeof structuredClone === 'function') {
     return structuredClone(tree);
   }
