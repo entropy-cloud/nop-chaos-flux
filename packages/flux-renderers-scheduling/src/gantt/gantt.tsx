@@ -23,6 +23,7 @@ import { useGanttScroll } from './hooks/use-gantt-scroll.js';
 import { useGanttKeyboard } from './hooks/use-gantt-keyboard.js';
 import { dateToPixel } from './utils/layout.js';
 import { UndoStack, UpdateTaskCommand, RemoveLinkCommand, DeleteTaskCommand } from './undo-stack.js';
+import { useSchedulingEventCtxStable } from '../shared/scheduling-event-ctx.js';
 
 export interface GanttHandle {
   zoomIn: () => void;
@@ -169,14 +170,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     const scopeRef = useRef(scope);
     useEffect(() => { scopeRef.current = scope; }, [scope]);
 
-    // CX-10 / bug-83 family convention: schema event dispatches carry a
-    // second dispatch-arg ctx { event, evaluationBindings, scope } so action
-    // args templates can read payload keys as bare bindings.
-    const eventCtx = useCallback((payload: Record<string, unknown>) => ({
-      event: { ...payload, type: typeof payload.type === 'string' ? payload.type : 'custom' },
-      evaluationBindings: payload,
-      scope: scopeRef.current,
-    }), []);
+    const eventCtx = useSchedulingEventCtxStable(() => scopeRef.current);
 
     useEffect(() => {
       void eventsRef.current.onMount?.({}, eventCtx({}));

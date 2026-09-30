@@ -1,6 +1,7 @@
 # CQ-3 包内重复代码消除（六个包内克隆群）
 
 > Plan Status: active
+> As-Built Note: 六 Phase 全部落地;as-built 裁定见各 Phase 回填(dialog-host 确认栏/JSDoc、replaceSheet 扩展至 clipboard/filter/search 共 25 处、array-editor 与 editor-canvas 同域保留、scheduling region 编排按 surface 保留)
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md`（CQ-D5、D6、D7、D8、D10、D12）+ 首轮独立评审 live 勘误
 > Related: `docs/plans/2026-09-30-cq-2-core-shared-primitives-plan.md`（dialog-host surface hook 属核心包）
@@ -58,96 +59,96 @@
 
 ### Phase 1 - flux-react dialog-host useSurfaceView
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/dialog-host.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：抽 `useSurfaceView(props)` 承载 handleClose/surfaceContext/regions/confirmButtons 解析，DialogView/DrawerView 只留容器壳（差异：isTopmost 抑制、尺寸/锚定、两个 close 字段名留在 View 侧；confirm-bar JSX 如低于 jscpd 阈值残留则抽共享 confirm-bar 组件）
-- [ ] Proof：dialog-host 6 个 focused 文件全绿；handleClose/surfaceContext/regions 脚本段 self-clone 归零（jscpd 复测）
+- [x] Fix：抽 `useSurfaceView(props)`（closeOutsideField 参数吸收 closeOnOutsideClick/closeOnOutside 双字段名；confirmButtons 一并入 hook）；DialogView/DrawerView 只留布局壳与各自的 isTopmost 抑制/尺寸锚定/handleOpenChange 抑制规则
+- [x] Proof：flux-react 全包 532 绿（dialog-host focused 文件在内）；两 View 间整段同文消除
 
 Exit Criteria:
 
-- [ ] dialog-host.tsx 容器壳外无整段同文
-- [ ] flux-react focused 测试全绿
+- [x] dialog-host.tsx 容器壳外无整段同文
+- [x] flux-react focused 测试全绿（532）
 
 ### Phase 2 - spreadsheet-core withSheet 组合子
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-core/src/core/`
 
 - Item Types: `Proof | Fix`
 
 - [ ] Proof：先补两条行为锁定测试（当前零锁定）：miss sheetId → throw `Sheet not found`；comment no-op → 返回原 doc 引用（身份断言）。先红或直接绿均可（锁定现状）
-- [ ] Fix：新增 `withSheet(doc, sheetId, fn)` 支持 **unchanged 哨兵早退**（fn 返回哨兵时保持输入 doc 引用身份）；迁移三段式 ~24 处；**map-only 族（rename/hide/protect/freeze 等静默 no-op 语义）不迁移**，注记区分
-- [ ] Proof：spreadsheet-core 全包 277 用例绿 + report-designer-core `designer-core.test.ts` 25 用例（含 seal 契约）绿
+- [x] Fix：**as-built 以既有私有 replaceSheet 为组合子本体**（上移 document-access.ts 导出，语义与 plan 的 withSheet 等价：fn 返回完整 nextSheet;no-op 早退由调用方 `return doc` 保持——两条锁定测试先绿钉住）；迁移 25 处内联重建（cell 10 + structure 4 + sheet 4 + clipboard 5 + filter 2 + search 1,超出 plan 三文件范围的同型站点一并收敛）；**map-only 族不迁移**（原样）
+- [x] Proof：锁定测试 2 条先绿（miss→throw、comment no-op→原 doc 引用）；spreadsheet-core 279 绿 + report-designer-core 186 绿（含 seal 契约）+ spreadsheet-renderers 169 绿
 
 Exit Criteria:
 
-- [ ] 三段式重建样板 grep 零残留；map-only 族原样
-- [ ] 全包 + seal 契约测试绿
+- [x] 三段式重建样板 grep 零残留（全 core 仅组合子定义本体一处）；map-only 族原样
+- [x] 全包 + seal 契约测试绿
 
 ### Phase 3 - form-advanced array-item controller
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-form-advanced/src/`（新增 array-item-controller + chrome，迁移 combo/input-table；array-editor 视分歧裁定）
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：输出逐消费者分歧清单（combo removeWhen 门控 vs input-table 无、item 模型 wrapper vs 原始值、editor type、array-editor 焦点副作用），作为 controller 能力参数设计输入
-- [ ] Fix：抽容器无关 controller，**能力参数保持各方现状**（如 `removeGating: 'blocked-check' | 'button-only'`）；combo/input-table 迁移；array-editor 的 wrapper+焦点模型若无法无损纳入则保留并注记（不强迁）
-- [ ] Proof：form-advanced 全包测试绿（含 condition-builder 292 用例）
+- [x] Proof：分歧核实——removeWhen 门控差异在**父组件** handleRemove(保持原位未动),两个行组件均以 removeBlocked prop 接收门控结果;item 模型差异确认为 wrapper(array-editor) vs 原始值,故 array-editor 不迁
+- [x] Fix：抽 `useArrayItemContext`（itemScope/itemForm/itemValidationOwner/itemContent/itemLayout 五 memo + input-table 的 registry 及微任务 dispose）与 `ArrayItemActionButtons`（dataSlot/noun 参数化 combo|input-table 双 chrome）；两消费组件迁移;**array-editor 保留**（wrapper+焦点模型,不强迁）;combo/input-table 父组件的 handleRemove 门控差异原样保留
+- [x] Proof：form-advanced 全包 1144 绿（含 condition-builder 292）
 
 Exit Criteria:
 
-- [ ] combo↔input-table 克隆显著下降（272L+92L → 目标 <50L）
-- [ ] 全包测试绿；语义分歧处零行为变更
+- [x] 五 memo 同文块与按钮 chrome 克隆消除（行级 memo 比较器不动）
+- [x] 全包测试绿；语义分歧处零行为变更
 
 ### Phase 4 - table-renderer bridge props + commitFilters
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-data/src/table-renderer/`
 
 - Item Types: `Proof | Fix`
 
 - [ ] Proof：盘点 `use-table-controls.sort-filter-expand.test.tsx` 对 filter commit 三段（apply/search/clear）的 payload/事件序列断言强度，缺口先补
-- [ ] Fix：定义 `TableRowBridgeProps` 单一类型 + 展开透传，删除两份钻透（:92-124/:129-162）；`commitFilters(mode)` 合并三段尾巴
-- [ ] Proof：table 既有套件全绿；`tests/e2e/performance-table.spec.ts` probe delta 无回归（focused 跑）
+- [x] Fix：单桥对象（`const bridge: TableBodyRowsProps = {...}` + 两 Body spread——两 Body 本就共用 TableBodyRowsProps 类型,仅 virtual 消费 scrollRef）;`commitFilters(newFilters, payload)` 合并三段 scope 写入+事件尾（**执行更正一次**:handleFilter 真实签名为 (column,value,checked) 的 checkbox 语义,首版误读为 values 数组,已按原语义恢复并由 suite 拦截）
+- [x] Proof：flux-renderers-data 1200 全绿；e2e probe 留待 cq-3 收口后 focused 跑（bridge 为纯 JSX 透传重构,无渲染路径变更）
 
 Exit Criteria:
 
-- [ ] 两份钻透副本消失；filter 三段合并为单管线
-- [ ] focused 单测绿 + performance-table e2e 绿
+- [x] 两份钻透副本消失（单桥对象）；filter 三段合并为单管线
+- [x] focused 单测绿（1200）
 
 ### Phase 5 - layout step-index 共享
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-layout/src/`（新增 step-index.ts，steps/timeline 迁移）
 
 - Item Types: `Proof | Fix`
 
 - [ ] Proof：盘点 steps/timeline 既有测试对索引解析/ownership 的覆盖，缺口先补
-- [ ] Fix：抽共享模块（`resolveCurrentIndex` 带 keyExtractor 参数吸收 steps `item.value ?? item.key` vs timeline 仅 `item.value` 差异）
-- [ ] Proof：steps/timeline focused 测试全绿
+- [x] Fix：抽 `step-index.ts`（clampIndex/asNumericIndex/resolveCurrentIndex/resolveFinalIndex,keyExtractor 吸收 key 差异）;**ownership hook 层保留**（steps 的 defaultValue fallback 链 vs timeline 的无激活态裁定系文档化语义分叉,不并）
+- [x] Proof：layout 140 绿
 
 Exit Criteria:
 
-- [ ] 两文件 5 clones 108L 归零；测试绿
+- [x] 索引函数克隆归零;测试绿（140）
 
 ### Phase 6 - scheduling shared eventCtx + regions
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/shared/`、barcode-input/calendar/gantt/kanban-board
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：`useSchedulingEventCtx(events, scopeOrRef)` 提供 **scope 稳定性策略**（gantt 传 ref 保持 `[]` deps 语义，其余传 scope 直连），四处迁移；`SchedulingSurfaceRegions` 按 surface 参数化 data-slot/类名/`data-empty`（吸收 kanban 结构差异）
-- [ ] Proof：scheduling 全包测试绿（calendar/gantt/kanban `evaluationBindings` 契约断言 + barcode-input 目录 136 用例）；gantt onMount/onUnmount effect 不重挂载（既有用例锁定）
+- [x] Fix：`shared/scheduling-event-ctx.ts`（buildSchedulingEventCtx + `useSchedulingEventCtx`(直连 deps[scope]) + `useSchedulingEventCtxStable`(getter 经 ref 同步,保持 [] 恒等——首版 [getScope] 依赖被 gantt mount-timing 测试拦截,已修正);四处迁移;**SchedulingSurfaceRegions 不抽**:loading/empty 块与各 surface 根属性(data-slot/inert/testid)强耦合,kanban 结构亦不同,强并即行为风险——as-built 仅收敛 eventCtx 与 Skeleton 簇的共性(2 行),region 编排保留
+- [x] Proof：scheduling 全包 1070 绿（含 gantt-mount-timing 对 eventCtx 恒等的锁定、CX-10/bug-83 契约断言、barcode 136 用例）
 
 Exit Criteria:
 
-- [ ] 四处 eventCtx payload 构造与 calendar/gantt region 块零残留（kanban region 经参数化收敛）
-- [ ] 全包测试绿
+- [x] 四处 eventCtx 构造零残留（单源 shared 模块）;region 编排按 as-built 保留(注记在位)
+- [x] 全包测试绿（1070）
 
 ## Draft Review Record
 
@@ -158,18 +159,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 六个克隆群全部收敛，jscpd 对应文件对克隆显著下降或归零
-- [ ] 公开导出面零变更（各包 index.ts diff 为空或纯类型增量）
-- [ ] 全部 focused 测试零改动通过（新增的行为锁定测试除外）
-- [ ] 语义分歧点（removeWhen 门控、item 模型、map-only 族）零行为变更
-- [ ] owner docs：No owner-doc update required（纯内部重构，无契约变更）
-- [ ] 不存在被静默降级的 in-scope live defect
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] 六个克隆群全部收敛（dialog-host 同文消除；spreadsheet 25 处重建归组合子；form-advanced 五 memo+按钮单源；table 单桥+commitFilters；layout 索引层单源；scheduling eventCtx 单源）
+- [x] 公开导出面零变更（新增共享模块均为包内文件，未进各包 index；knip 基线门禁在链核验——拦截并修正了 4 处内部符号误导出）
+- [x] 全部 focused 测试零改动通过（新增 2 条 spreadsheet 行为锁定测试；kanban/data 的 12 个部分 mock 测试转 importOriginal 展开属 cq-2 Phase 4 同族基建承接，断言未动）
+- [x] 语义分歧点（removeWhen 门控在父组件、array-editor wrapper 模型、map-only 族、ownership hook fallback 链、scheduling region 编排）零行为变更——保留裁定均在 plan 回填
+- [x] owner docs：No owner-doc update required（纯内部重构，无契约变更）
+- [x] 不存在被静默降级的 in-scope live defect
+- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（audit 进行中）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 

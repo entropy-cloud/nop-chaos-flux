@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, startTransition, useState } from 'react';
+import { resolveFinalIndex } from './step-index.js';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -20,57 +21,7 @@ function isItemDisabled(item: StepsItemSchema): boolean {
   return item.disabled === true;
 }
 
-function clampIndex(idx: number, count: number): number {
-  if (count <= 0) return 0;
-  if (idx < 0) return 0;
-  if (idx > count - 1) return count - 1;
-  return idx;
-}
-
-function matchKeyIndex(value: unknown, items: StepsItemSchema[]): number {
-  if (value === undefined || value === null) return -1;
-  const target = String(value);
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const key = item.value ?? item.key;
-    if (key !== undefined && key !== null && String(key) === target) return i;
-  }
-  return -1;
-}
-
-function asNumericIndex(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
-  if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) {
-    const parsed = parseInt(value, 10);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-/**
- * Resolve the current step index. Key match takes precedence; a numeric value is
- * treated as a (clamped) index; an unmatched non-numeric value returns -1 so the
- * caller can fall back to defaultValue or the first step.
- */
-function resolveStepIndex(value: unknown, items: StepsItemSchema[]): number {
-  if (items.length === 0) return -1;
-  const keyIdx = matchKeyIndex(value, items);
-  if (keyIdx >= 0) return keyIdx;
-  const numeric = asNumericIndex(value);
-  if (numeric !== undefined) return clampIndex(numeric, items.length);
-  return -1;
-}
-
-function resolveFinalIndex(
-  current: unknown,
-  fallback: unknown,
-  items: StepsItemSchema[],
-): number {
-  let idx = resolveStepIndex(current, items);
-  if (idx < 0) idx = resolveStepIndex(fallback, items);
-  if (idx < 0) idx = 0;
-  return idx;
-}
+const stepsItemKey = (item: StepsItemSchema) => item.value ?? item.key;
 
 function deriveStatus(
   item: StepsItemSchema,
@@ -165,7 +116,7 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
   const orientation = schemaProps.orientation === 'vertical' ? 'vertical' : 'horizontal';
   const { ownership, currentValue, setValue } = useStepsValue(props);
 
-  const currentIndex = resolveFinalIndex(currentValue, schemaProps.defaultValue, rawItems);
+  const currentIndex = resolveFinalIndex(currentValue, schemaProps.defaultValue, rawItems, stepsItemKey);
   const rootDisabled = props.meta.disabled === true;
 
   if (rawItems.length === 0) {

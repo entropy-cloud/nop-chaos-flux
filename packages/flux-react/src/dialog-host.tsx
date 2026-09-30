@@ -195,15 +195,20 @@ export function DialogHost() {
   );
 }
 
-function DialogView(props: {
+/**
+ * Shared surface-view orchestration (cq-3 Phase 1): handleClose, surface
+ * context memo, title/actions/header/footer nodes, container resolution and
+ * confirm buttons are container-agnostic — DialogView/DrawerView keep only
+ * their layout shells and container-specific close fields
+ * (`closeOnOutsideClick` vs `closeOnOutside`) and suppression rules.
+ */
+function useSurfaceView(props: {
   surface: SurfaceEntry;
   surfaceRuntime: SurfaceRuntime;
   modalContainer?: string;
-  isTopmost: boolean;
-  stackIndex: number;
+  closeOutsideField: 'closeOnOutsideClick' | 'closeOnOutside';
 }) {
-  const { surface, surfaceRuntime, isTopmost, stackIndex } = props;
-  const isMobile = useIsMobile();
+  const { surface, surfaceRuntime, modalContainer, closeOutsideField } = props;
   const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
     | ((nextOpen: boolean) => void)
     | undefined;
@@ -244,12 +249,69 @@ function DialogView(props: {
   const containerId =
     typeof surface.surface.container === 'string'
       ? surface.surface.container
-      : props.modalContainer;
+      : modalContainer;
   const containerElement = resolveContainerElement(containerId, surface.componentRegistry);
   const showMask = surface.surface.showMask !== false;
-  const closeOnOutsideClick = surface.surface.closeOnOutsideClick !== false;
   const closeOnEsc = surface.surface.closeOnEsc !== false;
   const showCloseButton = surface.surface.showCloseButton !== false;
+  const closeOnOutside =
+    closeOutsideField === 'closeOnOutsideClick'
+      ? surface.surface.closeOnOutsideClick !== false
+      : surface.surface.closeOnOutside !== false;
+  const confirmButtons = resolveConfirmButtons({
+    confirm: surface.surface.confirm as string | boolean | undefined,
+    hasExplicitActions: Boolean(surface.actions),
+    onCancel: handleClose,
+    onConfirm: () => {
+      void surface.onConfirm?.();
+      handleClose();
+    },
+  });
+
+  return {
+    handleClose,
+    surfaceContext,
+    titleNode,
+    actionsNode,
+    headerNode,
+    footerNode,
+    containerElement,
+    showMask,
+    closeOnEsc,
+    showCloseButton,
+    closeOnOutside,
+    confirmButtons,
+  };
+}
+
+function DialogView(props: {
+  surface: SurfaceEntry;
+  surfaceRuntime: SurfaceRuntime;
+  modalContainer?: string;
+  isTopmost: boolean;
+  stackIndex: number;
+}) {
+  const { surface, surfaceRuntime, isTopmost, stackIndex } = props;
+  const isMobile = useIsMobile();
+  const {
+    handleClose,
+    surfaceContext,
+    titleNode,
+    actionsNode,
+    headerNode,
+    footerNode,
+    containerElement,
+    showMask,
+    closeOnEsc,
+    showCloseButton,
+    closeOnOutside: closeOnOutsideClick,
+    confirmButtons,
+  } = useSurfaceView({
+    surface,
+    surfaceRuntime,
+    modalContainer: props.modalContainer,
+    closeOutsideField: 'closeOnOutsideClick',
+  });
   const size = surface.surface.size as FluxSurfaceSize | undefined;
   const hasExplicitSize = typeof size === 'string' && size.length > 0;
   const effectiveSize: FluxSurfaceSize | undefined =
@@ -270,16 +332,6 @@ function DialogView(props: {
   const headerClassName = surface.surface.headerClassName as string | undefined;
   const bodyClassName = surface.surface.bodyClassName as string | undefined;
   const footerClassName = surface.surface.footerClassName as string | undefined;
-  const confirmButtons = resolveConfirmButtons({
-    confirm: surface.surface.confirm as string | boolean | undefined,
-    hasExplicitActions: Boolean(surface.actions),
-    onCancel: handleClose,
-    onConfirm: () => {
-      void surface.onConfirm?.();
-      handleClose();
-    },
-  });
-
   const handleOpenChange = (open: boolean, eventDetails: unknown) => {
     if (open) {
       return;
@@ -405,52 +457,25 @@ function DrawerView(props: {
 }) {
   const { surface, surfaceRuntime } = props;
   const isMobile = useIsMobile();
-  const handleDeclarativeOpenChange = surface.surface.__handleOpenChange as
-    | ((nextOpen: boolean) => void)
-    | undefined;
-  const handleClose = React.useCallback(() => {
-    if (handleDeclarativeOpenChange) {
-      handleDeclarativeOpenChange(false);
-      return;
-    }
-
-    surfaceRuntime.close(surface.id);
-  }, [handleDeclarativeOpenChange, surface.id, surfaceRuntime]);
-
-  const surfaceContext = React.useMemo(
-    () => ({
-      scope: surface.scope,
-      validationOwner: surface.validationOwner,
-      actionScope: surface.actionScope,
-      componentRegistry: surface.componentRegistry,
-      ownerNodeInstance: surface.ownerNodeInstance,
-      surfaceRuntime,
-    }),
-    [
-      surface.scope,
-      surface.validationOwner,
-      surface.actionScope,
-      surface.componentRegistry,
-      surface.ownerNodeInstance,
-      surfaceRuntime,
-    ],
-  );
-  const titleNode = surface.title ? renderSurfaceNode(surface.title, surfaceContext) : null;
-  const actionsNode = surface.actions ? renderSurfaceNode(surface.actions, surfaceContext) : null;
-  const headerRegion = surface.regionHandles?.header?.templateNode ?? surface.surface.header;
-  const footerRegion = surface.regionHandles?.footer?.templateNode ?? surface.surface.footer;
-  const headerNode = headerRegion ? renderSurfaceNode(headerRegion, surfaceContext) : null;
-  const footerNode = footerRegion ? renderSurfaceNode(footerRegion, surfaceContext) : null;
-
-  const containerId =
-    typeof surface.surface.container === 'string'
-      ? surface.surface.container
-      : props.modalContainer;
-  const containerElement = resolveContainerElement(containerId, surface.componentRegistry);
-  const showMask = surface.surface.showMask !== false;
-  const closeOnOutside = surface.surface.closeOnOutside !== false;
-  const closeOnEsc = surface.surface.closeOnEsc !== false;
-  const showCloseButton = surface.surface.showCloseButton !== false;
+  const {
+    handleClose,
+    surfaceContext,
+    titleNode,
+    actionsNode,
+    headerNode,
+    footerNode,
+    containerElement,
+    showMask,
+    closeOnEsc,
+    showCloseButton,
+    closeOnOutside,
+    confirmButtons,
+  } = useSurfaceView({
+    surface,
+    surfaceRuntime,
+    modalContainer: props.modalContainer,
+    closeOutsideField: 'closeOnOutside',
+  });
   const size = surface.surface.size as FluxSurfaceSize | undefined;
   const resizable = surface.surface.resizable === true;
   const schemaSide = surface.surface.side as string | undefined;
@@ -465,15 +490,6 @@ function DrawerView(props: {
   const headerClassName = surface.surface.headerClassName as string | undefined;
   const bodyClassName = surface.surface.bodyClassName as string | undefined;
   const footerClassName = surface.surface.footerClassName as string | undefined;
-  const confirmButtons = resolveConfirmButtons({
-    confirm: surface.surface.confirm as string | boolean | undefined,
-    hasExplicitActions: Boolean(surface.actions),
-    onCancel: handleClose,
-    onConfirm: () => {
-      void surface.onConfirm?.();
-      handleClose();
-    },
-  });
 
   const handleOpenChange = (open: boolean, eventDetails: unknown) => {
     if (open) {

@@ -1,6 +1,7 @@
 import React, { startTransition, useEffect, useRef, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { resolveCurrentIndex } from './step-index.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn, resolveLucideIcon } from '@nop-chaos/ui';
 import type {
@@ -60,42 +61,9 @@ function timelineItemKey(item: TimelineItemSchema, index: number): string {
   return time ? `timeline:${time}:${index}` : `timeline:${index}`;
 }
 
-function clampIndex(idx: number, count: number): number {
-  if (count <= 0) return 0;
-  if (idx < 0) return 0;
-  if (idx > count - 1) return count - 1;
-  return idx;
-}
-
-function asNumericIndex(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
-  if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) {
-    const parsed = parseInt(value, 10);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return undefined;
-}
-
-/**
- * Resolve the current event index. Key match (`item.value`) takes precedence; a
- * numeric value is treated as a (clamped) index; an unmatched value returns -1
- * so the caller can fall back to defaultValue or render no active state.
- * Semantics mirror `resolveStepIndex` in steps-renderer.tsx (isomorphic, local
- * implementation — promote to a flux-core shared helper when a third sibling
- * consumer appears).
- */
-function resolveEventIndex(value: unknown, items: TimelineItemSchema[]): number {
-  if (items.length === 0) return -1;
-  const target = String(value);
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const key = item.value;
-    if (key !== undefined && key !== null && String(key) === target) return i;
-  }
-  const numeric = asNumericIndex(value);
-  if (numeric !== undefined) return clampIndex(numeric, items.length);
-  return -1;
-}
+const timelineItemValue = (item: TimelineItemSchema) => item.value;
+const resolveEventIndex = (value: unknown, items: TimelineItemSchema[]) =>
+  resolveCurrentIndex(value, items, timelineItemValue);
 
 function useTimelineValue(props: RendererComponentProps<TimelineSchema>) {
   const schemaProps = props.props;

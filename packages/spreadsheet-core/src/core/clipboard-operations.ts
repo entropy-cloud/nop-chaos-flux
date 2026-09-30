@@ -7,7 +7,7 @@ import type {
   CellDocument,
 } from '../types.js';
 import { cellAddress, normalizeRange } from '../types.js';
-import { ensureSheetCells, setCell, setCells } from './document-access.js';
+import { ensureSheetCells, setCell, setCells, replaceSheet } from './document-access.js';
 
 function deleteCells(sheet: import('../types.js').WorksheetDocument, keys: ReadonlyArray<string>) {
   if (!sheet.cells || keys.length === 0) {
@@ -125,28 +125,17 @@ export function applyPasteCells(
           }
         }
         const clearedSheet = deleteCells(sourceSheet, keysToDelete);
-        const workbook = {
-          ...updated.workbook,
-          sheets: updated.workbook.sheets.map((sheetDoc) =>
-            sheetDoc.id === sourceSheetId
-              ? clearedSheet
-              : sheetDoc.id === target.sheetId
-                ? newSheet
-                : sheetDoc,
-          ),
-        };
+        const workbook = replaceSheet(
+          replaceSheet(updated, target.sheetId, newSheet),
+          sourceSheetId,
+          clearedSheet,
+        ).workbook;
         return { ...updated, workbook };
       }
     }
   }
 
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === target.sheetId ? newSheet : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, target.sheetId, newSheet);
 }
 
 export function applyClearCells(
@@ -182,13 +171,7 @@ export function applyClearCells(
         newSheet = setCell(newSheet, row, col, cleared);
       }
     }
-    const workbook = {
-      ...updated.workbook,
-      sheets: updated.workbook.sheets.map((sheetDoc) =>
-        sheetDoc.id === range.sheetId ? newSheet : sheetDoc,
-      ),
-    };
-    return { ...updated, workbook };
+    return replaceSheet(updated, range.sheetId, newSheet);
   }
 
   const cell = target as SpreadsheetCellRef;
@@ -210,12 +193,5 @@ export function applyClearCells(
   if (!clearComments) {
     cleared.comment = existing.comment;
   }
-  const newSheet = setCell(sheet, cell.row, cell.col, cleared);
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? newSheet : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, setCell(sheet, cell.row, cell.col, cleared));
 }

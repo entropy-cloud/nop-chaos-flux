@@ -33,6 +33,7 @@ import { useCalendarOwnership } from './hooks/use-calendar-ownership.js';
 import { useCalendarConfirmDialog } from './hooks/use-calendar-confirm-dialog.js';
 import { parseISODate, flattenResources } from './utils/calendar-date-utils.js';
 import './utils/calendar-print.css';
+import { useSchedulingEventCtx } from '../shared/scheduling-event-ctx.js';
 
 export interface CalendarHandle {
   goNext: () => void;
@@ -93,14 +94,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const scope = useRenderScope();
 
-  // CX-10 / bug-83 family convention: schema event dispatches carry a second
-  // dispatch-arg ctx { event, evaluationBindings, scope } so action args
-  // templates can read payload keys as bare bindings.
-  const eventCtx = useCallback((payload: Record<string, unknown>) => ({
-    event: { ...payload, type: typeof payload.type === 'string' ? payload.type : 'custom' },
-    evaluationBindings: payload,
-    scope,
-  }), [scope]);
+  const eventCtx = useSchedulingEventCtx(scope);
 
   const { controlledView, controlledDate } = useCalendarOwnership(resolved as Record<string, unknown>);
 

@@ -76,6 +76,48 @@ export function useTableFilter(
     [controlledFilterState, filterOwnership, localFilterState, scopeFilterState],
   );
 
+  // Shared commit pipeline (cq-3 Phase 4): scope/local write + event dispatch +
+  // state-change notification — previously three verbatim copies across
+  // handleFilter/handleSearch/clearFilters.
+  const commitFilters = useCallback(
+    (
+      newFilters: FilterState,
+      payload: {
+        type: 'table:filter-change';
+        column: string;
+        filters: string[];
+        keyword: string;
+        filter: { column: string; filters: string[]; keyword: string };
+      },
+    ) => {
+      startTransition(() => {
+        if (filterOwnership === 'scope' && filterStatePath) {
+          renderScope.update(
+            filterStatePath,
+            Object.fromEntries(
+              Object.entries(newFilters).map(([key, entry]) => [
+                key,
+                { filters: Array.from(entry.values), keyword: entry.keyword },
+              ]),
+            ),
+          );
+        } else {
+          setLocalFilterState(newFilters);
+        }
+      });
+
+      onFilterChange?.(
+        null,
+        createTableEventContext(payload, {
+          scope: renderScope,
+          event: payload,
+        }),
+      );
+      onFilterStateChange?.(newFilters);
+    },
+    [filterOwnership, filterStatePath, onFilterChange, onFilterStateChange, renderScope],
+  );
+
   const handleFilter = useCallback(
     (columnName: string, value: string, checked: boolean) => {
       const prev = filterState;
@@ -95,46 +137,22 @@ export function useTableFilter(
         newFilters[columnName] = { values: currentFilters, keyword: current.keyword };
       }
 
-      startTransition(() => {
-        if (filterOwnership === 'scope' && filterStatePath) {
-          renderScope.update(
-            filterStatePath,
-            Object.fromEntries(
-              Object.entries(newFilters).map(([key, entry]) => [
-                key,
-                { filters: Array.from(entry.values), keyword: entry.keyword },
-              ]),
-            ),
-          );
-        } else {
-          setLocalFilterState(newFilters);
-        }
-      });
-
       const filters = Array.from(currentFilters);
-      const payload = {
+      commitFilters(newFilters, {
         type: 'table:filter-change',
         column: columnName,
         filters,
-        keyword: current.keyword,
+        keyword: current.keyword ?? '',
         filter: {
           column: columnName,
           filters,
-          keyword: current.keyword,
+          keyword: current.keyword ?? '',
         },
-      };
-
-      onFilterChange?.(
-        null,
-        createTableEventContext(payload, {
-          scope: renderScope,
-          event: payload,
-        }),
-      );
-      onFilterStateChange?.(newFilters);
+      });
     },
-    [filterOwnership, filterState, filterStatePath, onFilterChange, onFilterStateChange, renderScope],
+    [commitFilters, filterState],
   );
+
 
   const handleSearch = useCallback(
     (columnName: string, keyword: string) => {
@@ -148,24 +166,8 @@ export function useTableFilter(
         newFilters[columnName] = { values: new Set(current.values), keyword: keyword || undefined };
       }
 
-      startTransition(() => {
-        if (filterOwnership === 'scope' && filterStatePath) {
-          renderScope.update(
-            filterStatePath,
-            Object.fromEntries(
-              Object.entries(newFilters).map(([key, entry]) => [
-                key,
-                { filters: Array.from(entry.values), keyword: entry.keyword },
-              ]),
-            ),
-          );
-        } else {
-          setLocalFilterState(newFilters);
-        }
-      });
-
       const filters = Array.from(current.values);
-      const payload = {
+      commitFilters(newFilters, {
         type: 'table:filter-change',
         column: columnName,
         filters,
@@ -175,19 +177,11 @@ export function useTableFilter(
           filters,
           keyword,
         },
-      };
-
-      onFilterChange?.(
-        null,
-        createTableEventContext(payload, {
-          scope: renderScope,
-          event: payload,
-        }),
-      );
-      onFilterStateChange?.(newFilters);
+      });
     },
-    [filterOwnership, filterState, filterStatePath, onFilterChange, onFilterStateChange, renderScope],
+    [commitFilters, filterState],
   );
+
 
   const clearFilters = useCallback(
     (columnName: string) => {
@@ -198,23 +192,7 @@ export function useTableFilter(
       const newFilters: FilterState = { ...filterState };
       delete newFilters[columnName];
 
-      startTransition(() => {
-        if (filterOwnership === 'scope' && filterStatePath) {
-          renderScope.update(
-            filterStatePath,
-            Object.fromEntries(
-              Object.entries(newFilters).map(([key, entry]) => [
-                key,
-                { filters: Array.from(entry.values), keyword: entry.keyword },
-              ]),
-            ),
-          );
-        } else {
-          setLocalFilterState(newFilters);
-        }
-      });
-
-      const payload = {
+      commitFilters(newFilters, {
         type: 'table:filter-change',
         column: columnName,
         filters: [],
@@ -224,19 +202,11 @@ export function useTableFilter(
           filters: [],
           keyword: '',
         },
-      };
-
-      onFilterChange?.(
-        null,
-        createTableEventContext(payload, {
-          scope: renderScope,
-          event: payload,
-        }),
-      );
-      onFilterStateChange?.(newFilters);
+      });
     },
-    [filterOwnership, filterState, filterStatePath, onFilterChange, onFilterStateChange, renderScope],
+    [commitFilters, filterState],
   );
+
 
   return useMemo(
     () => ({ filterState, handleFilter, handleSearch, clearFilters }),

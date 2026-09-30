@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react';
 import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentForm, useCurrentFormError, useCurrentFormState, useInputComponentHandle, useRenderScope, useRendererEnv } from '@nop-chaos/flux-react';
+import { useSchedulingEventCtx } from '../shared/scheduling-event-ctx.js';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, cn } from '@nop-chaos/ui';
 import { ScanLine } from 'lucide-react';
@@ -36,14 +37,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
   // the same error region as the local scan validation.
   const formError = useCurrentFormError(name ? { path: name } : { path: '' }, { enabled: !!name });
 
-  // CX-10 / bug-83 family convention: schema event dispatches carry a second
-  // dispatch-arg ctx { event, evaluationBindings, scope } so action args
-  // templates can read payload keys as bare bindings.
-  const eventCtx = useCallback((payload: Record<string, unknown>) => ({
-    event: { ...payload, type: typeof payload.type === 'string' ? payload.type : 'custom' },
-    evaluationBindings: payload,
-    scope,
-  }), [scope]);
+  const eventCtx = useSchedulingEventCtx(scope);
 
   useEffect(() => {
     void events.onMount?.({}, eventCtx({}));

@@ -83,3 +83,22 @@ export function updateCellStyle(
   const mergedStyle = { ...(existing.style ?? {}), ...stylePatch };
   return setCell(sheet, row, col, { ...existing, style: mergedStyle });
 }
+
+/**
+ * Immutable single-sheet patch combinator (cq-3 Phase 2): returns `doc` with
+ * `nextSheet` substituted for `sheetId`; all other sheet entries pass through
+ * by reference. The former per-operation inline rebuilds collapsed onto this.
+ */
+export function replaceSheet(
+  doc: SpreadsheetDocument,
+  sheetId: string,
+  nextSheet: WorksheetDocument,
+): SpreadsheetDocument {
+  return {
+    ...doc,
+    workbook: {
+      ...doc.workbook,
+      sheets: doc.workbook.sheets.map((sheetDoc) => (sheetDoc.id === sheetId ? nextSheet : sheetDoc)),
+    },
+  };
+}

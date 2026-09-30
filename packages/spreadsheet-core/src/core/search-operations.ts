@@ -1,7 +1,7 @@
 import type { SpreadsheetDocument, SpreadsheetCellRef } from '../types.js';
 import { cellAddress } from '../types.js';
 import type { FindResult } from '../commands.js';
-import { ensureSheetCells } from './document-access.js';
+import { ensureSheetCells, replaceSheet } from './document-access.js';
 
 const UNSAFE_REGEX_PATTERN = /(\([^)]*[+*][^)]*\)[+*])|(\.\*)|(\.\+)|(\[[^\]]*\][+*]\+?)/;
 
@@ -133,13 +133,7 @@ export function replaceInDocument(
   }
 
   const cells = { ...sheet.cells, [key]: { ...existing, value: newValue } };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, { ...sheet, cells });
 }
 
 export function replaceAllInDocument(

@@ -34,6 +34,7 @@ import type { UndoStack, UndoCommandType } from './utils/kanban-undo-stack.js';
 import { addCard, removeCard, moveCard, moveColumn, getColumns, collectAllTags } from './kanban-helpers.js';
 import { registerKanbanHandle, type KanbanHandleSurface } from './kanban-handle.js';
 import { useKanbanColumnAggregate } from './hooks/use-kanban-column-aggregate.js';
+import { useSchedulingEventCtx } from '../shared/scheduling-event-ctx.js';
 
 const EMPTY_BOARD = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
 
@@ -167,14 +168,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const setBoardDataRef = useRef(setBoardData);
   useEffect(() => { setBoardDataRef.current = setBoardData; }, [setBoardData]);
 
-  // CX-10 / bug-83 family convention: schema event dispatches carry a second
-  // dispatch-arg ctx { event, evaluationBindings, scope } so action args
-  // templates can read payload keys as bare bindings.
-  const eventCtx = useCallback((payload: Record<string, unknown>) => ({
-    event: { ...payload, type: typeof payload.type === 'string' ? payload.type : 'custom' },
-    evaluationBindings: payload,
-    scope: rootScope,
-  }), [rootScope]);
+  const eventCtx = useSchedulingEventCtx(rootScope);
 
   const initialFilterTags = (resolved.filterTags as string[]) || [];
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilterTags);

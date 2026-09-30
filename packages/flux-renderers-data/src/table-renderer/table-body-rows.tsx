@@ -87,80 +87,47 @@ export function TableBodyRows({
   onToggleGroupCollapse,
   indexColumnOffset,
 }: TableBodyRowsProps) {
+  // Single bridge (cq-3 Phase 4): NonVirtualBody/VirtualBody share the same
+  // TableBodyRowsProps surface; only virtual rendering consumes scrollRef.
+  const bridge: TableBodyRowsProps = {
+    props,
+    columns,
+    responsiveHiddenColumns,
+    processedData,
+    rowScopeCache,
+    rowRepeatedTemplateId,
+    expandedRowKeys,
+    selectedRowKeys,
+    columnCount,
+    isStriped,
+    fixedColumnLayout,
+    emptyContent,
+    showExpandColumn,
+    expandRowByClick,
+    onToggleExpand,
+    onSelectRow,
+    isRowCheckable,
+    isAtMaxSelection,
+    scrollRef,
+    combineNum,
+    combineFromIndex,
+    expandAllByDefault,
+    treeMode,
+    expandedTreeRowKeys,
+    onToggleTreeExpand,
+    onRetryTreeLoad,
+    lazyChildrenMap,
+    rowDragSortApi,
+    draggable,
+    groupedPageItems,
+    onToggleGroupCollapse,
+    indexColumnOffset,
+  };
   if (!virtualEnabled || processedData.length === 0) {
-    return (
-      <NonVirtualBody
-        props={props}
-        columns={columns}
-        responsiveHiddenColumns={responsiveHiddenColumns}
-        processedData={processedData}
-        rowScopeCache={rowScopeCache}
-        rowRepeatedTemplateId={rowRepeatedTemplateId}
-        expandedRowKeys={expandedRowKeys}
-        selectedRowKeys={selectedRowKeys}
-        columnCount={columnCount}
-        isStriped={isStriped}
-        fixedColumnLayout={fixedColumnLayout}
-        emptyContent={emptyContent}
-        showExpandColumn={showExpandColumn}
-        expandRowByClick={expandRowByClick}
-        onToggleExpand={onToggleExpand}
-        onSelectRow={onSelectRow}
-        isRowCheckable={isRowCheckable}
-        isAtMaxSelection={isAtMaxSelection}
-        combineNum={combineNum}
-        combineFromIndex={combineFromIndex}
-        expandAllByDefault={expandAllByDefault}
-        treeMode={treeMode}
-        expandedTreeRowKeys={expandedTreeRowKeys}
-        onToggleTreeExpand={onToggleTreeExpand}
-        onRetryTreeLoad={onRetryTreeLoad}
-        lazyChildrenMap={lazyChildrenMap}
-        rowDragSortApi={rowDragSortApi}
-        draggable={draggable}
-        groupedPageItems={groupedPageItems}
-        onToggleGroupCollapse={onToggleGroupCollapse}
-        indexColumnOffset={indexColumnOffset}
-      />
-    );
+    return <NonVirtualBody {...bridge} />;
   }
 
-  return (
-    <VirtualBody
-      props={props}
-      columns={columns}
-      responsiveHiddenColumns={responsiveHiddenColumns}
-      processedData={processedData}
-      rowScopeCache={rowScopeCache}
-      rowRepeatedTemplateId={rowRepeatedTemplateId}
-      expandedRowKeys={expandedRowKeys}
-      selectedRowKeys={selectedRowKeys}
-      columnCount={columnCount}
-      isStriped={isStriped}
-      fixedColumnLayout={fixedColumnLayout}
-      emptyContent={emptyContent}
-      showExpandColumn={showExpandColumn}
-      expandRowByClick={expandRowByClick}
-      onToggleExpand={onToggleExpand}
-      onSelectRow={onSelectRow}
-      isRowCheckable={isRowCheckable}
-      isAtMaxSelection={isAtMaxSelection}
-      scrollRef={scrollRef}
-      combineNum={combineNum}
-      combineFromIndex={combineFromIndex}
-      expandAllByDefault={expandAllByDefault}
-      treeMode={treeMode}
-      expandedTreeRowKeys={expandedTreeRowKeys}
-      onToggleTreeExpand={onToggleTreeExpand}
-      onRetryTreeLoad={onRetryTreeLoad}
-      lazyChildrenMap={lazyChildrenMap}
-      rowDragSortApi={rowDragSortApi}
-      draggable={draggable}
-      groupedPageItems={groupedPageItems}
-      onToggleGroupCollapse={onToggleGroupCollapse}
-      indexColumnOffset={indexColumnOffset}
-    />
-  );
+  return <VirtualBody {...bridge} />;
 }
 
 function NonVirtualBody({

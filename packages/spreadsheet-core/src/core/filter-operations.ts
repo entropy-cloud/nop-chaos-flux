@@ -1,6 +1,6 @@
 import type { SpreadsheetDocument, WorksheetFilterState } from '../types.js';
 import { cellAddress } from '../types.js';
-import { ensureSheetCells } from './document-access.js';
+import { ensureSheetCells, replaceSheet } from './document-access.js';
 
 export function applyFilterRowsByCellValue(
   doc: SpreadsheetDocument,
@@ -36,15 +36,11 @@ export function applyFilterRowsByCellValue(
     };
   }
 
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === sheetId
-        ? { ...sheetDoc, rows, filters: { columns: newFilterColumns } }
-        : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, sheetId, {
+    ...sheet,
+    rows,
+    filters: { columns: newFilterColumns },
+  });
 }
 
 export function applyClearRowFilters(
@@ -64,16 +60,6 @@ export function applyClearRowFilters(
     };
   }
 
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === sheetId
-        ? (() => {
-            const filters: WorksheetFilterState = { columns: [] };
-            return { ...sheetDoc, rows, filters };
-          })()
-        : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  const filters: WorksheetFilterState = { columns: [] };
+  return replaceSheet(updated, sheetId, { ...sheet, rows, filters });
 }

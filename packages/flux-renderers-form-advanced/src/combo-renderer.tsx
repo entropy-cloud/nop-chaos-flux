@@ -18,32 +18,27 @@ import {
   useCurrentForm,
   useCurrentFormState,
   useCurrentValidationScope,
-  useFormLayout,
   useRenderInstancePath,
   useRenderScope,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
-import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
 import type { ComboSchema } from './composite-field/composite-schemas.js';
-import { createItemFormProxy, createItemScope } from './composite-field/array-field-runtime.js';
+import { createItemScope } from './composite-field/array-field-runtime.js';
+import { ArrayItemActionButtons, useArrayItemContext } from './array-item-shared.js';
 import { instancePathEqual } from './composite-field/instance-path-equal.js';
 import { isRemoveBlockedByWhen, isRemoveWhenConfigured } from './composite-field/remove-when-gating.js';
 import {
   buildStableObjectItemKeys,
   useCompatibilityItemKeys,
 } from './composite-field/composite-item-keys.js';
-import { createProjectedValidationRuntime } from './detail-view/projected-validation-runtime.js';
 import {
   COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
   COMPOSITE_EDITOR_METHODS,
 } from './composite-field/composite-editor-capability-contracts.js';
 import { formFieldRules, shouldValidateOn, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 const EMPTY_ITEMS: unknown[] = [];
 
@@ -95,58 +90,24 @@ function ComboItemView(props: ComboItemProps) {
     itemRegion,
   } = props;
 
-  const parentLayout = useFormLayout();
-
-  const itemScope = React.useMemo(
-    () => createItemScope(parentScope, arrayPath, index, 'object', readOnly, itemIdentity),
-    [parentScope, arrayPath, index, readOnly, itemIdentity],
-  );
-  const itemForm = React.useMemo(
-    () => (parentForm ? createItemFormProxy(parentForm, arrayPath, index, 'object') : parentForm),
-    [parentForm, arrayPath, index],
-  );
-  const itemValidationOwner = React.useMemo(() => {
-    if (!parentValidationOwner) {
-      return parentValidationOwner;
-    }
-    return createProjectedValidationRuntime(parentValidationOwner, {
-      ownerRootPath: `${arrayPath}.${index}`,
-      prefixPath(path) {
-        if (!path) return `${arrayPath}.${index}`;
-        return `${arrayPath}.${index}.${path}`;
-      },
-    });
-  }, [arrayPath, index, parentValidationOwner]);
-
-  const itemContent = React.useMemo(
-    () =>
-      asReactNode(
-        itemRegion?.render({
-          scope: itemScope,
-          bindings: { index, value: item },
-          instancePath: itemInstancePath,
-        }),
-      ) ?? null,
-    [index, item, itemInstancePath, itemRegion, itemScope],
-  );
-
-  // Propagate the composite-level readOnly/disabled into the item fields
-  // through the form-layout mechanism (staticReadOnly): without this, item
-  // field presentations only see their own schema props and stay editable
-  // while the composite chrome is locked (C3.1 P1-2).
-  const itemLayout = React.useMemo(() => {
-    if (readOnly) {
-      return parentLayout
-        ? { ...parentLayout, staticReadOnly: true }
-        : { staticReadOnly: true };
-    }
-    return parentLayout;
-  }, [parentLayout, readOnly]);
-
-  const canRemove = totalCount > minItems;
-  const canRemoveNow = canRemove && !removeBlocked;
-  const canMoveUp = index > 0;
-  const canMoveDown = index < totalCount - 1;
+  const {
+    itemScope,
+    itemForm,
+    itemValidationOwner,
+    itemContent,
+    itemLayout,
+  } = useArrayItemContext({
+    parentScope,
+    parentForm,
+    parentValidationOwner,
+    arrayPath,
+    index,
+    readOnly,
+    itemIdentity,
+    item,
+    itemInstancePath,
+    itemRegion,
+  });
 
   const resolvedColumnCount =
     props.columnCount !== undefined && Number.isFinite(props.columnCount)
@@ -174,46 +135,20 @@ function ComboItemView(props: ComboItemProps) {
         </div>
         {(reorderable || removable) && !readOnly && (
           <div className="flex shrink-0 flex-col gap-1" data-slot="combo-item-actions">
-            {reorderable && (
-              <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  data-slot="combo-move-up"
-                  disabled={readOnly || !canMoveUp}
-                  aria-label={t('flux.form.moveUp', { defaultValue: `Move up item ${index + 1}` })}
-                  onClick={() => canMoveUp && onMoveUp(index)}
-                >
-                  <ChevronUpIcon className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  data-slot="combo-move-down"
-                  disabled={readOnly || !canMoveDown}
-                  aria-label={t('flux.form.moveDown', { defaultValue: `Move down item ${index + 1}` })}
-                  onClick={() => canMoveDown && onMoveDown(index)}
-                >
-                  <ChevronDownIcon className="size-4" />
-                </Button>
-              </>
-            )}
-            {removable && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                data-slot="combo-remove"
-                disabled={readOnly || !canRemoveNow}
-                className="hover:text-destructive"
-                aria-label={t('flux.form.remove', { defaultValue: `Remove item ${index + 1}` })}
-                onClick={() => canRemoveNow && onRemove(index)}
-              >
-                <Trash2Icon className="size-4" />
-              </Button>
-            )}
+            <ArrayItemActionButtons
+              dataSlot="combo"
+              noun="item"
+              readOnly={readOnly}
+              index={index}
+              totalCount={totalCount}
+              minItems={minItems}
+              removeBlocked={removeBlocked}
+              reorderable={reorderable}
+              removable={removable}
+              onRemove={onRemove}
+              onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+            />
           </div>
         )}
       </div>

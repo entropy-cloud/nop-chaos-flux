@@ -6,23 +6,9 @@ import type {
   CellStyle,
 } from '../types.js';
 import { cellAddress, normalizeRange } from '../types.js';
-import { ensureSheetCells, setCells, updateCellStyle, updateCells } from './document-access.js';
+import { ensureSheetCells, replaceSheet, setCells, updateCellStyle, updateCells } from './document-access.js';
 
 export type CellTarget = SpreadsheetCellRef | SpreadsheetRange;
-
-function replaceSheet(
-  doc: SpreadsheetDocument,
-  sheetId: string,
-  nextSheet: import('../types.js').WorksheetDocument,
-): SpreadsheetDocument {
-  return {
-    ...doc,
-    workbook: {
-      ...doc.workbook,
-      sheets: doc.workbook.sheets.map((sheetDoc) => (sheetDoc.id === sheetId ? nextSheet : sheetDoc)),
-    },
-  };
-}
 
 export function applySetCellValue(
   doc: SpreadsheetDocument,
@@ -40,13 +26,7 @@ export function applySetCellValue(
     col: cell.col,
   };
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, { ...sheet, cells });
 }
 
 export function applySetCellFormula(
@@ -72,13 +52,7 @@ export function applySetCellFormula(
     };
   }
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, { ...sheet, cells });
 }
 
 export function applySetCellStyle(
@@ -121,13 +95,7 @@ export function applySetCellStyle(
     col: cell.col,
   };
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, { ...sheet, cells });
 }
 
 export function applySetCellNumberFormat(
@@ -172,13 +140,7 @@ export function applySetCellNumberFormat(
     col: cell.col,
   };
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, { ...sheet, cells });
 }
 
 export function applyCellStyleChange(
@@ -214,14 +176,7 @@ export function applyCellStyleChange(
 
   const cell = target as SpreadsheetCellRef;
   const { doc: updated, sheet } = ensureSheetCells(doc, cell.sheetId);
-  const newSheet = updateCellStyle(sheet, cell.row, cell.col, stylePatch);
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? newSheet : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, updateCellStyle(sheet, cell.row, cell.col, stylePatch));
 }
 
 export function applyMergeRange(
@@ -241,13 +196,7 @@ export function applyMergeRange(
   if (!exists) {
     merges.push(normalized);
   }
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === normalized.sheetId ? { ...sheetDoc, merges } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, normalized.sheetId, { ...sheet, merges });
 }
 
 export function applyUnmergeRange(
@@ -265,13 +214,7 @@ export function applyUnmergeRange(
         merge.endCol === normalized.endCol
       ),
   );
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === normalized.sheetId ? { ...sheetDoc, merges } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, normalized.sheetId, { ...sheet, merges });
 }
 
 export function applyMergeCellsCenter(
@@ -442,13 +385,7 @@ export function applyAddComment(
     col: cell.col,
   };
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, { ...sheet, cells });
 }
 
 export function applyEditComment(
@@ -469,13 +406,7 @@ export function applyEditComment(
     comment: { ...existingComment, text },
   };
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, { ...sheet, cells });
 }
 
 export function applyDeleteComment(
@@ -491,11 +422,5 @@ export function applyDeleteComment(
   const newCell: CellDocument = { ...existing };
   delete newCell.comment;
   const cells = { ...sheet.cells, [key]: newCell };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === cell.sheetId ? { ...sheetDoc, cells } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, cell.sheetId, { ...sheet, cells });
 }

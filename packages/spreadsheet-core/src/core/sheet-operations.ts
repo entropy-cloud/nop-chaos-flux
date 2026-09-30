@@ -4,7 +4,7 @@ import type {
   WorksheetDocument,
   SheetProtectionOptions,
 } from '../types.js';
-import { ensureSheetCells } from './document-access.js';
+import { ensureSheetCells, replaceSheet } from './document-access.js';
 import { applyCellStyleChange, applyMergeRange } from './cell-operations.js';
 
 export function applyResizeRow(
@@ -17,13 +17,7 @@ export function applyResizeRow(
   const rows = { ...sheet.rows };
   const key = String(row);
   rows[key] = { ...(rows[key] ?? { index: row }), index: row, height };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === sheetId ? { ...sheetDoc, rows } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, sheetId, { ...sheet, rows });
 }
 
 export function applyResizeColumn(
@@ -36,13 +30,7 @@ export function applyResizeColumn(
   const columns = { ...sheet.columns };
   const key = String(col);
   columns[key] = { ...(columns[key] ?? { index: col }), index: col, width };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === sheetId ? { ...sheetDoc, columns } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, sheetId, { ...sheet, columns });
 }
 
 export function applyHideRow(
@@ -55,13 +43,7 @@ export function applyHideRow(
   const rows = { ...sheet.rows };
   const key = String(row);
   rows[key] = { ...(rows[key] ?? { index: row }), index: row, hidden };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === sheetId ? { ...sheetDoc, rows } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, sheetId, { ...sheet, rows });
 }
 
 export function applyHideColumn(
@@ -74,13 +56,7 @@ export function applyHideColumn(
   const columns = { ...sheet.columns };
   const key = String(col);
   columns[key] = { ...(columns[key] ?? { index: col }), index: col, hidden };
-  const workbook = {
-    ...updated.workbook,
-    sheets: updated.workbook.sheets.map((sheetDoc) =>
-      sheetDoc.id === sheetId ? { ...sheetDoc, columns } : sheetDoc,
-    ),
-  };
-  return { ...updated, workbook };
+  return replaceSheet(updated, sheetId, { ...sheet, columns });
 }
 
 export function applyAddSheet(
