@@ -102,7 +102,7 @@
 
 ## 会话交接（2026-10-01）
 
-- R1-R10 全部收口并经收敛复审计（fresh-eyes 19 路由重走：17 修复面全过，新发现 2 P1）；R11 修复/钉住后进行二轮收敛复核（仅验 N-1/N-2 修复面 + 抽样），无新 P0/P1 判收敛。
+- R1-R11 全部收口并提交。二轮收敛复核（2026-10-01）：N-1 修复面视觉+e2e 双确认（word-editor 1440 大纲入视口、docW=1440 无横向溢出）；N-2 稳定性探针 5 种导航模式 + 4 次 5 路由序列全绿（期间捕获 1 次罕见空面板竞态——已归 registered follow-up 取证，非新 finding）；消费设计器（flow/report/dashboard-demo）无栅格钳制回归。**CONVERGENCE: reached**（无新 P0/P1；P2/P3 残留与竞态调查均为 registered follow-up，见上节登记）。
 - 执行纪律要点（R6-R8 教训）：①plan 严禁预记 closure audit 结论（R7/R8 均犯，Blocker 级）；②共识后执行；③勾选项必须与 live 一致（R8 r1：owner doc 勾了但没写）。
 
 完成 R1–R10 后进行一轮复审计（fresh eyes 重走截图对比），无新 finding 才判收敛。
