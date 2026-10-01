@@ -94,6 +94,7 @@
 
 - `series` 与 `source` 的双入口如果不收敛，后续会产生重复语义，需要持续规范。
 - `colors` override 只改取色来源（默认 `COLORS` → 自定义 palette），不改 `series`/`source` 双入口语义或数据归一化路径。
+- **静默空白失败路径（2026-10-01，ux-r1）**：`source` 非空、无任何 series 声明非空 `data`、且全部 series 的 dataKey（`dataRegionKey ?? name ?? 'value'`，含无 series 时的隐式 `'value'` 回退）在所有行上解析为 `undefined` 时，判定为配置断裂——回退渲染空态（DD1 门控 `isEmpty && !loading` 延续，loading 优先）+ dev 环境按 `chartType|series keys|source 行结构` 签名去重 `console.warn`。series 声明非空 `data` 且 source 非空（conflict）时维持 source 优先渲染、仅告警提示 `data` 被忽略。pie（`item.value ?? 0` 已定义回退）、scatter（仅认 `dataRegionKey` 存量语义）、heatmap（自绘网格另有空态）不在检测范围。实现：`chart-diagnostics.ts`（`isSilentBlankSource`/`warnSilentBlank`/`warnSeriesDataIgnored`，测试重置锚 `resetChartDiagnosticsForTests`）。
 - **后续候选（2026-08-09 记录，plan Phase 5 Follow-up）**：
   - `map` 独立 renderer：geojson 资源管理独立评估（`docs/analysis/2026-08-09-bi-control-support-analysis.md` §6：OpenLayers 首选，独立包懒加载）。
   - tooltip/legend 自定义 slot：当前由 recharts 内置组件承担（§2 决策表维持不采纳），出现真实自定义需求时再评估。

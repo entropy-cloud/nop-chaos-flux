@@ -36,6 +36,11 @@ import {
   type ChartConfig,
 } from '@nop-chaos/ui/chart';
 import type { ChartSchema, ChartSeriesSchema, ChartType } from './chart-schemas.js';
+import {
+  isSilentBlankSource,
+  warnSeriesDataIgnored,
+  warnSilentBlank,
+} from './chart-diagnostics.js';
 import { buildHeatmapGrid, HeatmapGrid, sanitizeHeatmapRows } from './chart-heatmap.js';
 import { sanitizeYAxis, type SanitizedYAxisEntry } from './chart-y-axis.js';
 import {
@@ -222,9 +227,19 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
   );
   const heatmapGrid = buildHeatmapGrid(heatmapRows);
   const isHeatmap = (series.length > 0 ? (series[0].type ?? chartType) : chartType) === 'heatmap';
-  const isEmpty = isHeatmap
-    ? heatmapRows.length === 0
-    : source.length === 0 && series.every((s) => !s.data || s.data.length === 0);
+  // ux-r1 静默空白失败路径：source 非空但 series key 全部解析不到值 → 空态 + dev 告警；
+  // series 声明非空 data 时为 conflict 路径（source 优先渲染，仅告警）。
+  const silentBlank = isSilentBlankSource(chartType, source, series);
+  if (silentBlank) {
+    warnSilentBlank(chartType, source, series);
+  } else if (source.length > 0) {
+    warnSeriesDataIgnored(chartType, series);
+  }
+  const isEmpty =
+    silentBlank ||
+    (isHeatmap
+      ? heatmapRows.length === 0
+      : source.length === 0 && series.every((s) => !s.data || s.data.length === 0));
 
   const MOBILE_BREAKPOINT = 768;
   const MOBILE_HEIGHT_CEILING = 300;

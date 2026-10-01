@@ -50,10 +50,9 @@ const DEFAULT_LAYOUT_PANELS = [
     source: '${salesData}',
     props: {
       chartType: 'line',
+      height: 140,
       xAxis: { dataKey: 'month' },
-      series: [
-        { name: 'Sales', data: '${salesSeries}' },
-      ],
+      series: [{ name: 'Sales', dataRegionKey: 'sales' }],
       legend: true,
     },
   },
@@ -62,9 +61,9 @@ const DEFAULT_LAYOUT_PANELS = [
     type: 'table',
     title: 'Orders',
     x: 0,
-    y: 2,
-    w: 6,
-    h: 4,
+    y: 4,
+    w: 12,
+    h: 5,
     source: '${ordersData}',
     props: {
       columns: [
@@ -77,10 +76,16 @@ const DEFAULT_LAYOUT_PANELS = [
   },
 ];
 
+const LAYOUT_STORAGE_KEY = 'flux-dashboard-layout:v2';
+const LEGACY_LAYOUT_STORAGE_KEY = 'flux-dashboard-layout';
+
 function readSavedLayout(): string {
   try {
-    const raw = localStorage.getItem('flux-dashboard-layout');
+    const raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
     if (raw) return raw;
+    // 旧 key 布局可能携带修复前的坏面板配置（如 chart series 未声明
+    // dataRegionKey），迁移会永久绕过新默认布局——直接废弃。
+    localStorage.removeItem(LEGACY_LAYOUT_STORAGE_KEY);
   } catch {
     // storage may be unavailable; fall back to the default layout
   }
@@ -124,7 +129,7 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
           const serialized = (payload as { serialized?: unknown } | undefined)?.serialized;
           if (typeof serialized === 'string') {
             try {
-              localStorage.setItem('flux-dashboard-layout', serialized);
+              localStorage.setItem(LAYOUT_STORAGE_KEY, serialized);
             } catch {
               // storage may be unavailable; the in-scope layout still updates
             }
@@ -217,9 +222,6 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
                 { month: 'Apr', sales: 520 },
                 { month: 'May', sales: 610 },
                 { month: 'Jun', sales: 590 },
-              ],
-              salesSeries: [
-                { name: 'Sales', data: [320, 410, 380, 520, 610, 590] },
               ],
               ordersData: [
                 { orderId: 'A-1001', product: 'Laptop', amount: 1299, status: 'Paid' },

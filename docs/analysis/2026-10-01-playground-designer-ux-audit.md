@@ -85,9 +85,9 @@
 
 ### 3.7 Dashboard Editor（BI 看板编辑器）【P0】
 
-- DB-1 P0：**图表面板渲染空白**：Sales Trend 面板有数据源 `${salesData}`、chartType line，画布只有网格与一条纵轴线，无任何数据线/面积。
-- DB-2 P1：**面板内容溢出与重叠**：表格面板列截断（"Sta…/Pai…"），底部 "Orders" 标签压在面板边缘线上；KPI 与图表面板高度参差。
-- DB-3 P1：**拖拽添加面板无反馈**：从面板类型拖拽"图表"到画布空白区，无新面板、无 drop 指示、无失败提示。
+- DB-1 P0：**图表面板渲染空白**：Sales Trend 面板有数据源 `${salesData}`、chartType line，画布只有网格与一条纵轴线，无任何数据线/面积。（根因已定位并修复，见 plan `2026-10-01-ux-r1-dashboard-chart-plan.md`：演示面板 series 声明了无效的 `data: '${salesSeries}'` 而 source 行结构为 `{month, sales}`，chart 渲染器 dataKey 回退 `'Sales'` 全 undefined 且空态判定不覆盖此形态 → 静默空白；渲染器已补该失败路径的空态 + dev 告警。）
+- DB-2 P1：**面板内容溢出与重叠**：表格面板列截断（"Sta…/Pai…"），底部 "Orders" 标签压在面板边缘线上；KPI 与图表面板高度参差。（列截断已随 R1 修复：表格面板改整行布局；"Orders" 底部标题为编辑态 chrome 设计使然，非缺陷。）
+- DB-3 P1→改判为**工具链误报（非产品缺陷）**：`editor-palette.tsx:59` 支持点击即加面板；拖拽走 HTML5 DnD（draggable + dataTransfer），合成鼠标事件（CUA/Playwright drag）不触发该协议属已知工具链限制。真实浏览器拖拽行为归 R10 人工复核。
 - DB-4 P2：页头大段开发说明 + 通栏巨型返回按钮（G-4）；KPI 数值无千分位（1284300）。
 
 ### 3.8 SCADA Editor 【P1/P2】
@@ -128,7 +128,7 @@
 
 ## 5. 根因假设（供修复排期取证）
 
-1. **图表数据断链（DB-1）**：Dashboard Editor（editor-core 包）的 Sales Trend 面板有数据源、有坐标网格，但等待 6s 后仍无任何序列渲染——与 flux chart 渲染器无关（运营大屏同型图表复核后确认能出数据），断点在 editor-core 的图表面板实现。方向：editor-core 面板 → recharts 的数据传递或尺寸测量（容器 0 高/宽导致 series 不绘）。
+1. **图表数据断链（DB-1）**：根因已定位——演示面板 series 配置（`data: '${salesSeries}'`）与 source 行结构 `{month, sales}` 不匹配，chart 渲染器 dataKey 回退 `'Sales'` 全 undefined；渲染器 `isEmpty` 判定只覆盖"source 空且 series.data 空"，此形态静默空白。修复见 plan `2026-10-01-ux-r1-dashboard-chart-plan.md`（演示配置纠正 + 渲染器失败路径空态/dev 告警）。
 2. **透视表明细为空（PV-1）**：小计/合计走聚合管线有值，明细单元格取数失败——方向：明细行 key 拼装或 indicator 数据源的行匹配逻辑。
 3. **地图无底图无着色（MP-1/2）**：geojson/区域 layer 可能因投影/extent 计算失效或样式变量未注入而整体不可见；pin 用了无样式默认 vector。OpenLayers 图层顺序/样式函数需排查。
 4. **公式不求值（SP-1）**：host 的公式设置通路（单元格存储）与渲染通路都拿到 raw 字符串——求值步骤缺失或渲染读 raw 值。
