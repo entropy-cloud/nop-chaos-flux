@@ -139,7 +139,15 @@ type DropHint =
 - 锚点只落在 renderer 已有的 frame 根元素（运行时 `frameWrap`/frame 通道），**不得**改动 renderer 内部 DOM、不得进 renderer definition、不得进非编辑装配。预览态（`setMode('preview')`）渲染剥离 sid 后的 committed 文档（§6 INV-E），装配层退化为纯渲染。
 - 覆盖层与真渲染层同级叠放：覆盖层 `pointer-events` 仅在选择/hover 热区开启，其余事件穿透给运行时（表单原子在编辑态可交互性受 `meta.disabled` 编辑态策略控制，S2 plan 细化）。
 
-DOM marker 约定：`nop-page-designer-canvas`（画布根）、`data-psid`（节点锚点，编辑态专属）、`data-page-designer-overlay`（覆盖层根）、`data-drop-hint="inside|before|after"`（插入指示）。选区/hover/drop 视觉全部由覆盖层按 token 绘制，不写进运行时样式。
+DOM marker 约定：`nop-page-designer-canvas`（画布根）、`data-psid`（节点锚点，编辑态专属）、`data-page-designer-overlay`（覆盖层根）、`data-drop-hint="inside|before|after|invalid|root-fallback"`（插入指示）。选区/hover/drop 视觉全部由覆盖层按 token 绘制，不写进运行时样式。
+
+### 5.2.1 空容器投影与落点可命中契约（ux-r5，2026-10-01）
+
+真渲染画布对空容器（全部 drop region 为空的容器节点）存在「0 内容 → 0 高度 → 不可见且不可命中」的结构性盲区：`resolveRect` 丢弃 0×0 矩形，drop 目标解析随之穿透到根回退。契约：
+
+- **设计器侧只读投影**（`empty-container-projection.ts`，与 `data-psid` 同模式，零污染运行时）：编辑态空容器锚点获得 `data-pd-empty="true"` + `data-pd-empty-label="<type>"` + 44px 行内最小高度——真实 DOM 盒子因此可点击选中、可作 drop 目标；容器获得任意子节点后投影即清除。根节点除外（整页空态由 page 级提示 chip 负责）。预览态锚点收敛为零，投影随之消失。
+- **覆盖层占位框**：空容器渲染虚线占位框 + 「空容器：可拖入子组件」类型标签（0 尺寸锚点合成 160×44 最小可视盒，jsdom/未布局态兜底）。
+- **根回退提示**：画布空白处拖拽的 hint 携带 `viaRootFallback: true`，覆盖层渲染「松开将插入页面末尾」底线 + 标签，不再把整个 page 根描边（整页描边与"无目标提示"视觉不可分）。
 
 ### 5.3 插入语义
 

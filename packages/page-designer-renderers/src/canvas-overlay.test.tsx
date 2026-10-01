@@ -13,6 +13,7 @@ afterEach(cleanup);
 const RECTS = new Map<string, { left: number; top: number; width: number; height: number }>([
   ['psid-page', { left: 0, top: 0, width: 800, height: 600 }],
   ['psid-text', { left: 20, top: 20, width: 120, height: 32 }],
+  ['psid-container', { left: 20, top: 80, width: 0, height: 0 }],
 ]);
 
 function mountOverlay(props: Partial<Parameters<typeof CanvasOverlay>[0]> = {}) {
@@ -95,6 +96,66 @@ describe('CanvasOverlay', () => {
       return element!;
     });
     expect(bar!.getAttribute('style')).toContain('height: 4px');
+  });
+
+  it('renders placeholder box with type label for empty containers (ux-r5)', async () => {
+    const root = document.createElement('div');
+    for (const [sid] of RECTS) {
+      const child = document.createElement('div');
+      child.setAttribute('data-psid', sid);
+      if (sid === 'psid-container') child.setAttribute('data-pd-empty-label', 'container');
+      root.appendChild(child);
+    }
+    document.body.appendChild(root);
+    const rectSpy = vi
+      .spyOn(Element.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: Element) {
+        const sid = (this as HTMLElement).getAttribute?.('data-psid');
+        const rect = sid ? RECTS.get(sid) : undefined;
+        return {
+          x: rect?.left ?? 0,
+          y: rect?.top ?? 0,
+          width: rect?.width ?? 0,
+          height: rect?.height ?? 0,
+          top: rect?.top ?? 0,
+          left: rect?.left ?? 0,
+          right: (rect?.left ?? 0) + (rect?.width ?? 0),
+          bottom: (rect?.top ?? 0) + (rect?.height ?? 0),
+          toJSON: () => ({}),
+        } as DOMRect;
+      });
+    const view = render(
+      <CanvasOverlay
+        rootRef={{ current: root }}
+        selection={[]}
+        hoverNodeId={null}
+        dropHint={null}
+        emptyContainers={[{ sid: 'psid-container', type: 'container' }]}
+        visible
+      />,
+    );
+    await waitFor(() => expect(document.querySelector('[data-page-designer-box="placeholder"]')).toBeTruthy());
+    const box = document.querySelector('[data-page-designer-box="placeholder"]')!;
+    // 0 尺寸锚点合成最小可视盒
+    expect(box.getAttribute('style')).toContain('width: 160px');
+    expect(box.getAttribute('style')).toContain('height: 44px');
+    expect(box.textContent).toContain('container');
+    view.unmount();
+    rectSpy.mockRestore();
+  });
+
+  it('renders root-fallback cue instead of whole-page inside outline (ux-r5)', async () => {
+    mountOverlay({
+      dropHint: {
+        kind: 'inside',
+        parentId: 'psid-page',
+        regionKey: 'body',
+        index: 0,
+        viaRootFallback: true,
+      } as DesignerDropHint,
+    });
+    await waitFor(() => expect(document.querySelector('[data-drop-hint="root-fallback"]')).toBeTruthy());
+    expect(document.querySelector('[data-drop-hint="inside"]')).toBeNull();
   });
 
   it('renders full-canvas rejection state for invalid hints', () => {

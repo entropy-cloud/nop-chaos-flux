@@ -366,7 +366,9 @@ export function PageDesigner(props: PageDesignerProps) {
       </header>
 
       <main className="flex min-h-0 flex-1">
-        <aside className="flex w-64 shrink-0 flex-col border-r p-2">
+        {/* ux-r5 PD-4：预览态隐藏编辑面板，画布呈现运行态（用户视角） */}
+        {state.mode === 'edit' ? (
+        <aside data-testid="page-designer-left-panel" className="flex w-64 shrink-0 flex-col border-r p-2">
           <Tabs defaultValue="palette" className="flex min-h-0 flex-1 flex-col">
             <TabsList className="mb-2 w-full">
               <TabsTrigger value="palette" className="flex-1">
@@ -402,6 +404,7 @@ export function PageDesigner(props: PageDesignerProps) {
             </TabsContent>
           </Tabs>
         </aside>
+        ) : null}
 
         <div className="relative flex min-w-0 flex-1 flex-col">
           <PageDesignerCanvas
@@ -440,7 +443,8 @@ export function PageDesigner(props: PageDesignerProps) {
           ) : null}
         </div>
 
-        <aside className="flex w-80 shrink-0 flex-col border-l p-2">
+        {state.mode === 'edit' ? (
+        <aside data-testid="page-designer-right-panel" className="flex w-80 shrink-0 flex-col border-l p-2">
           <Tabs defaultValue="inspector" className="flex min-h-0 flex-1 flex-col">
             <TabsList className="mb-2 w-full">
               <TabsTrigger value="inspector" className="flex-1">
@@ -476,6 +480,7 @@ export function PageDesigner(props: PageDesignerProps) {
             </TabsContent>
           </Tabs>
         </aside>
+        ) : null}
       </main>
 
       <TemplateGallery

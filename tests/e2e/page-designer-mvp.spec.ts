@@ -97,3 +97,46 @@ test('page-designer MVP: preview mode strips edit anchors (INV-E runtime zero-aw
   await page.getByTestId('page-designer-mode-toggle').click();
   await expect(page.locator('[data-psid]').first()).toBeAttached({ timeout: 15_000 });
 });
+
+test('page-designer ux-r5: empty container placeholder is visible, droppable, and preview hides edit panels', async ({ page }) => {
+  await openPageDesigner(page);
+
+  // 拖入容器：空容器获得可辨识占位（锚点投影 + overlay 占位框 + 最小高度）。
+  await page.locator('[data-palette-item="container"]').scrollIntoViewIfNeeded();
+  await page.dragAndDrop('[data-palette-item="container"]', '[data-testid="page-designer-canvas"]');
+  const containerAnchor = page.locator('[data-pd-empty="true"]');
+  await expect(containerAnchor).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.locator('[data-page-designer-box="placeholder"]')).toHaveCount(1);
+  await expect(page.locator('[data-page-designer-box="placeholder"]')).toContainText('container');
+
+  // 向容器视觉区域中心拖入 text：落点=容器子级（落点与视觉一致，不再根回退）。
+  await page.dragAndDrop('[data-palette-item="text"]', '[data-pd-empty="true"]');
+  await page.waitForFunction(
+    () => document.querySelectorAll('[data-psid]').length === 3,
+    undefined,
+    { timeout: 15_000 },
+  );
+  await expect(page.locator('[data-pd-empty="true"]')).toHaveCount(0, { timeout: 15_000 });
+  await expect(page.locator('[data-page-designer-box="placeholder"]')).toHaveCount(0);
+
+  // 导出 JSON：text 位于 container 子级。
+  await page.getByRole('tab', { name: 'JSON 源码' }).click();
+  const exported = await page.getByTestId('page-designer-source-textarea').inputValue();
+  const parsed = JSON.parse(exported) as {
+    body: Array<{ type: string; body?: Array<{ type: string }> }>;
+  };
+  const containerNode = parsed.body.find((node) => node.type === 'container');
+  expect(containerNode).toBeTruthy();
+  const containerChildren = containerNode?.body ?? [];
+  expect(containerChildren.some((child) => child.type === 'text')).toBe(true);
+
+  // 预览态：左右编辑面板隐藏，画布保留（用户视角）。
+  await page.getByTestId('page-designer-mode-toggle').click();
+  await expect(page.getByTestId('page-designer-left-panel')).toHaveCount(0, { timeout: 15_000 });
+  await expect(page.getByTestId('page-designer-right-panel')).toHaveCount(0, { timeout: 15_000 });
+  await expect(page.getByTestId('page-designer-canvas')).toBeVisible();
+
+  // 返回编辑态：面板恢复。
+  await page.getByTestId('page-designer-mode-toggle').click();
+  await expect(page.getByTestId('page-designer-left-panel')).toBeVisible({ timeout: 15_000 });
+});

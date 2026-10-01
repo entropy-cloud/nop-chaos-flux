@@ -106,4 +106,21 @@ describe('PageDesigner assembly', () => {
     await waitFor(() => expect(document.querySelectorAll('[data-psid]').length).toBe(0));
     expect(document.querySelector('[data-page-designer-overlay]')?.getAttribute('style')).toContain('none');
   });
+
+  it('ux-r5: preview mode hides the left palette/structure panel and the right inspector', async () => {
+    const view = await openDesigner();
+    expect(view.getByTestId('page-designer-left-panel')).toBeTruthy();
+    expect(view.getByTestId('page-designer-right-panel')).toBeTruthy();
+
+    fireEvent.click(view.getByTestId('page-designer-mode-toggle'));
+
+    await waitFor(() => {
+      expect(view.queryByTestId('page-designer-left-panel')).toBeNull();
+      expect(view.queryByTestId('page-designer-right-panel')).toBeNull();
+    });
+    // 画布仍在（运行态渲染），模式开关可返回编辑态
+    expect(view.getByTestId('page-designer-canvas')).toBeTruthy();
+    fireEvent.click(view.getByTestId('page-designer-mode-toggle'));
+    await waitFor(() => expect(view.getByTestId('page-designer-left-panel')).toBeTruthy());
+  });
 });

@@ -3,13 +3,18 @@
  * 不写进运行时样式）。覆盖层 `pointer-events: none`——事件全部由画布根
  * （bridge wrapper）接管后穿透给运行时；矩形每帧按锚点 `getBoundingClientRect`
  * 重算（相对画布根），滚动/布局位移免监听。
+ *
+ * ux-r5：空容器占位框（`emptyContainers`，0 尺寸时合成最小盒）与根回退提示
+ * （`viaRootFallback` 的 inside hint → 底部插入线 + 标签，替代整页描边）。
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import type { SessionNodeId } from '@nop-chaos/page-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { NODE_ANCHOR_ATTRIBUTE } from './constants.js';
 import type { PixelRect } from './canvas-layout.js';
 import type { DesignerDropHint } from './types.js';
+import type { EmptyContainerInfo } from './empty-container-projection.js';
 
 export interface CanvasOverlayProps {
   /** 画布根元素（矩形坐标系原点 + 锚点查询范围）。 */
@@ -17,6 +22,8 @@ export interface CanvasOverlayProps {
   selection: readonly SessionNodeId[];
   hoverNodeId: SessionNodeId | null;
   dropHint: DesignerDropHint | null;
+  /** 编辑态空容器清单（ux-r5）：渲染虚线占位框 + 类型标签。 */
+  emptyContainers?: readonly EmptyContainerInfo[];
   /** false = 预览态：不绘制任何编辑 chrome（S1 §5.2）。 */
   visible: boolean;
 }
@@ -25,6 +32,14 @@ interface AnchorBox {
   sid: string;
   rect: PixelRect;
 }
+
+interface PlaceholderBox extends AnchorBox {
+  label: string;
+}
+
+/** 合成最小可视盒：0 尺寸锚点（jsdom/未布局）也给占位框一个可读形状。 */
+const PLACEHOLDER_MIN_WIDTH = 160;
+const PLACEHOLDER_MIN_HEIGHT = 44;
 
 function readAnchorBoxes(root: Element, sids: readonly string[]): Map<string, PixelRect> {
   const boxes = new Map<string, PixelRect>();
@@ -39,6 +54,34 @@ function readAnchorBoxes(root: Element, sids: readonly string[]): Map<string, Pi
       top: rect.top - origin.top,
       width: rect.width,
       height: rect.height,
+    });
+  }
+  return boxes;
+}
+
+function readPlaceholderBoxes(
+  root: Element,
+  emptyContainers: readonly EmptyContainerInfo[],
+): PlaceholderBox[] {
+  const origin = root.getBoundingClientRect();
+  const boxes: PlaceholderBox[] = [];
+  for (const info of emptyContainers) {
+    const element = root.querySelector(
+      `[${NODE_ANCHOR_ATTRIBUTE}="${CSS.escape(info.sid)}"]`,
+    );
+    if (!element) continue;
+    const rect = element.getBoundingClientRect();
+    const width = Math.max(rect.width, PLACEHOLDER_MIN_WIDTH);
+    const height = Math.max(rect.height, PLACEHOLDER_MIN_HEIGHT);
+    boxes.push({
+      sid: info.sid,
+      label: element.getAttribute('data-pd-empty-label') ?? info.type,
+      rect: {
+        left: rect.left - origin.left,
+        top: rect.top - origin.top,
+        width,
+        height,
+      },
     });
   }
   return boxes;
@@ -70,10 +113,11 @@ function OverlayBox(props: {
 }
 
 export function CanvasOverlay(props: CanvasOverlayProps) {
-  const { rootRef, selection, hoverNodeId, dropHint, visible } = props;
+  const { rootRef, selection, hoverNodeId, dropHint, emptyContainers, visible } = props;
   // 锚点矩形在 rAF 回调中读取并写入 state（渲染期不触碰 ref；每帧重读，
   // 滚动/布局位移免监听）。
   const [boxes, setBoxes] = useState<Map<string, PixelRect>>(() => new Map());
+  const [placeholderBoxes, setPlaceholderBoxes] = useState<PlaceholderBox[]>([]);
   const sidsKey = useMemo(() => {
     const sids = [...selection];
     if (hoverNodeId) sids.push(hoverNodeId);
@@ -84,17 +128,18 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
   useEffect(() => {
     if (!visible) return;
     let raf = 0;
-    const sids = sidsKey.length > 0 ? sidsKey.split('|') : [];
     const tick = () => {
       const root = rootRef.current;
       if (root) {
+        const sids = sidsKey.length > 0 ? sidsKey.split('|') : [];
         setBoxes(readAnchorBoxes(root, sids));
+        setPlaceholderBoxes(readPlaceholderBoxes(root, emptyContainers ?? []));
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [visible, sidsKey, rootRef]);
+  }, [visible, sidsKey, emptyContainers, rootRef]);
 
   if (!visible) {
     return <div data-page-designer-overlay="" style={{ display: 'none' }} />;
@@ -117,6 +162,7 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
       data-page-designer-overlay=""
       data-overlay-selection={selection.length > 0 ? 'true' : undefined}
       data-overlay-hover={hoverNodeId ?? undefined}
+      data-overlay-placeholders={placeholderBoxes.length > 0 ? String(placeholderBoxes.length) : undefined}
       style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 20 }}
     >
       {dropHint?.kind === 'invalid' ? (
@@ -131,7 +177,73 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
           }}
         />
       ) : null}
-      {dropParentBox && dropHint && dropHint.kind === 'inside' ? (
+      {placeholderBoxes.map((box) => (
+        <div
+          key={box.sid}
+          data-page-designer-box="placeholder"
+          data-placeholder-for={box.sid}
+          style={{
+            position: 'absolute',
+            left: box.rect.left,
+            top: box.rect.top,
+            width: box.rect.width,
+            height: box.rect.height,
+            border: '1.5px dashed color-mix(in srgb, var(--nop-accent, #6366f1) 55%, transparent)',
+            borderRadius: 6,
+            background: 'color-mix(in srgb, var(--nop-accent, #6366f1) 4%, transparent)',
+            pointerEvents: 'none',
+          }}
+        >
+          <span
+            style={{
+              position: 'absolute',
+              left: 6,
+              top: 4,
+              fontSize: 10,
+              lineHeight: '14px',
+              padding: '0 6px',
+              borderRadius: 999,
+              color: 'var(--nop-text-strong, #1f2937)',
+              background: 'color-mix(in srgb, var(--nop-accent, #6366f1) 14%, var(--nop-surface, #fff))',
+              border: '1px solid color-mix(in srgb, var(--nop-accent, #6366f1) 30%, transparent)',
+            }}
+          >
+            {box.label} · {t('flux.pageDesigner.emptyContainerHint')}
+          </span>
+        </div>
+      ))}
+      {dropParentBox && dropHint && dropHint.kind === 'inside' && dropHint.viaRootFallback ? (
+        <div
+          data-drop-hint="root-fallback"
+          style={{
+            position: 'absolute',
+            left: dropParentBox.rect.left,
+            top: dropParentBox.rect.top + dropParentBox.rect.height - 4,
+            width: Math.max(dropParentBox.rect.width, 24),
+            height: 4,
+            background: 'var(--nop-accent, #6366f1)',
+            pointerEvents: 'none',
+          }}
+        >
+          <span
+            style={{
+              position: 'absolute',
+              right: 8,
+              top: -22,
+              fontSize: 11,
+              lineHeight: '18px',
+              padding: '0 8px',
+              borderRadius: 999,
+              whiteSpace: 'nowrap',
+              color: '#fff',
+              background: 'var(--nop-accent, #6366f1)',
+            }}
+          >
+            {t('flux.pageDesigner.rootFallbackHint')}
+          </span>
+        </div>
+      ) : null}
+      {dropParentBox && dropHint && dropHint.kind === 'inside' && !dropHint.viaRootFallback ? (
         <OverlayBox
           box={dropParentBox}
           marker={dropHint.kind}

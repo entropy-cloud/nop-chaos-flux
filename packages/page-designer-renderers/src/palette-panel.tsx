@@ -54,7 +54,7 @@ function PaletteEntry(props: { item: PaletteItem; onClick(): void }) {
     >
       <span className="flex-1 truncate">{item.displayName}</span>
       {item.isContainer ? (
-        <span className="rounded bg-[var(--nop-accent-muted,#eef2ff)] px-1 text-[10px] uppercase text-[var(--nop-accent,#6366f1)]">
+        <span className="shrink-0 whitespace-nowrap rounded-full border border-[color-mix(in_srgb,var(--nop-accent)_35%,transparent)] bg-[color-mix(in_srgb,var(--nop-accent)_10%,var(--nop-surface,#fff))] px-1.5 py-0.5 text-[10px] font-medium leading-none text-[var(--nop-text-strong,#1f2937)]">
           {t('flux.pageDesigner.containerBadge')}
         </span>
       ) : null}

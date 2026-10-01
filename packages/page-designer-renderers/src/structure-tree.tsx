@@ -84,10 +84,10 @@ export function StructureTree(props: StructureTreeProps) {
           type="button"
           data-testid={`page-designer-tree-node-${row.sid}`}
           data-tree-node-type={row.type}
-          className={`block w-full truncate rounded px-2 py-1 text-left text-sm hover:bg-[var(--nop-nav-hover-border,#f3f4f6)] ${
+          className={`block w-full truncate rounded border-l-[3px] px-2 py-1 text-left text-sm hover:bg-[var(--nop-nav-hover-border,#f3f4f6)] ${
             props.selection.includes(row.sid)
-              ? 'bg-[var(--nop-accent-muted,#eef2ff)] text-[var(--nop-accent,#6366f1)]'
-              : ''
+              ? 'border-l-[var(--nop-accent,#6366f1)] bg-[color-mix(in_srgb,var(--nop-accent)_14%,var(--nop-surface,#fff))] font-medium text-[var(--nop-text-strong,#1f2937)]'
+              : 'border-l-transparent'
           }`}
           style={{ paddingLeft: `${8 + row.depth * 14}px` }}
           onClick={() => props.onSelect(row.sid)}

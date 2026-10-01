@@ -11,7 +11,7 @@ import { useMemo, useRef } from 'react';
 import { useEffect } from 'react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import type { RendererPlugin } from '@nop-chaos/flux-core';
+import type { RendererPlugin, RendererRegistry, SchemaInput } from '@nop-chaos/flux-core';
 import type { SessionNodeId } from '@nop-chaos/page-designer-core';
 import { findNodeById, stripSessionIds } from '@nop-chaos/page-designer-core';
 import {
@@ -29,8 +29,13 @@ import {
   type CanvasLayoutModel,
 } from './canvas-layout.js';
 import { createEditAssemblyPlugin } from './edit-assembly.js';
+import {
+  collectEmptyContainers,
+  syncEmptyContainerPresentation,
+  type EmptyContainerInfo,
+} from './empty-container-projection.js';
 import { CanvasOverlay } from './canvas-overlay.js';
-import type { PageCanvasBridgeProps } from './types.js';
+import type { PageCanvasBridgeProps, DesignerDropHint } from './types.js';
 
 /** 锚点投影：`[data-testid^="psid-"]` → `data-psid`（编辑装配层专属；失效锚点清扫，预览态收敛为零）。 */
 export function syncAnchorAttributes(root: Element): number {
@@ -59,19 +64,26 @@ const EDIT_ASSEMBLY_PLUGIN = createEditAssemblyPlugin();
 function useAnchorProjection(
   rootRef: React.RefObject<HTMLDivElement | null>,
   projectionKey: string,
+  doc: SchemaInput,
+  registry: RendererRegistry,
 ): void {
   useEffect(() => {
     const root = rootRef.current;
     /* v8 ignore next -- effect 仅在挂载后运行（root 已就绪） */
     if (!root) return;
-    syncAnchorAttributes(root);
+    const sync = () => {
+      syncAnchorAttributes(root);
+      // 空容器投影（ux-r5 PD-1）：编辑态空容器锚点获得可命中的最小视觉区域
+      syncEmptyContainerPresentation(root, collectEmptyContainers(doc, registry));
+    };
+    sync();
     const observer = new MutationObserver(() => {
       observer.takeRecords();
-      syncAnchorAttributes(root);
+      sync();
     });
     observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-testid'] });
     return () => observer.disconnect();
-  }, [projectionKey, rootRef]);
+  }, [projectionKey, rootRef, doc, registry]);
 }
 
 function readPointerAnchor(
@@ -125,7 +137,13 @@ export function PageDesignerCanvas(props: PageCanvasBridgeProps) {
     [doc, mode],
   );
 
-  useAnchorProjection(rootRef, mode);
+  // 空容器投影（ux-r5 PD-1）：投影随文档变化经 effect 依赖刷新
+  useAnchorProjection(rootRef, mode, doc, registry);
+
+  const emptyContainers = useMemo<readonly EmptyContainerInfo[]>(
+    () => (mode === 'edit' ? collectEmptyContainers(doc, registry) : []),
+    [doc, registry, mode],
+  );
 
   const buildGeometry = () => {
     const root = rootRef.current;
@@ -175,28 +193,35 @@ export function PageDesignerCanvas(props: PageCanvasBridgeProps) {
     }
   };
 
+  const resolveDropHint = (event: React.DragEvent): DesignerDropHint => {
+    const geometry = buildGeometry();
+    /* v8 ignore next -- dragover/drop 的 buildGeometry 非空守卫（挂载后必非空） */
+    if (!geometry) return { kind: 'invalid' };
+    const computed = computeDropHintAt(
+      { model: geometry.model, registry, findNode: (sid) => findNodeById(doc, sid, registry) ?? null },
+      event.clientX,
+      event.clientY,
+    );
+    if (computed) return computed;
+    // 根回退（ux-r5 PD-2）：画布空白处的落点，标记来源供 overlay 渲染可辨识提示
+    const fallback = buildRootDropHint(doc, registry);
+    if (fallback && fallback.kind === 'inside') {
+      return { ...fallback, viaRootFallback: true };
+    }
+    return fallback ?? { kind: 'invalid' };
+  };
+
   const handleDragOver = (event: React.DragEvent) => {
     if (mode !== 'edit') return;
     event.preventDefault();
     event.dataTransfer.dropEffect = 'copy';
-    const geometry = buildGeometry();
-    /* v8 ignore next */ if (!geometry) return;
-    const hint =
-      computeDropHintAt({ model: geometry.model, registry, findNode: (sid) => findNodeById(doc, sid, registry) ?? null },
-    /* v8 ignore next -- drop hint 最终回退：根容器恒为合法 region（防御分支） */
-        event.clientX, event.clientY) ?? buildRootDropHint(doc, registry) ?? { kind: 'invalid' as const };
-    onDragOver(hint);
+    onDragOver(resolveDropHint(event));
   };
 
   const handleDrop = (event: React.DragEvent) => {
     if (mode !== 'edit') return;
     event.preventDefault();
-    const geometry = buildGeometry();
-    /* v8 ignore next */ if (!geometry) return;
-    const hint =
-      computeDropHintAt({ model: geometry.model, registry, findNode: (sid) => findNodeById(doc, sid, registry) ?? null },
-    /* v8 ignore next -- drop hint 最终回退：根容器恒为合法 region（防御分支） */
-        event.clientX, event.clientY) ?? buildRootDropHint(doc, registry) ?? { kind: 'invalid' as const };
+    const hint = resolveDropHint(event);
     let payload: Parameters<typeof onDrop>[0] = { source: 'palette', type: '' };
     const raw = event.dataTransfer.getData(PAGE_DESIGNER_DRAG_MIME);
     if (raw) {
@@ -237,6 +262,7 @@ export function PageDesignerCanvas(props: PageCanvasBridgeProps) {
         selection={selection}
         hoverNodeId={hoverNodeId}
         dropHint={dropHint}
+        emptyContainers={emptyContainers}
         visible={mode === 'edit'}
       />
     </div>

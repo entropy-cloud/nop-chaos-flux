@@ -10,9 +10,11 @@ import type { RendererEnv, RendererRegistry, SchemaInput } from '@nop-chaos/flux
 import type { EditorMode } from '@nop-chaos/editor-core';
 import type { SessionNodeId } from '@nop-chaos/page-designer-core';
 
-/** 插入位置指示（S1 §5.1/§5.3）。`invalid` = DropHint 拒绝态（drop-invalid-target 失败路径）。 */
+/** 插入位置指示（S1 §5.1/§5.3）。`invalid` = DropHint 拒绝态（drop-invalid-target 失败路径）。
+ * `viaRootFallback`（ux-r5）：hint 来自画布空白处的根容器回退——overlay 据此渲染可辨识的
+ * 「插入页面末尾」提示，而非把整个 page 根描边。 */
 export type DesignerDropHint =
-  | { kind: 'inside'; parentId: SessionNodeId; regionKey: string; index: number }
+  | { kind: 'inside'; parentId: SessionNodeId; regionKey: string; index: number; viaRootFallback?: boolean }
   | { kind: 'before'; parentId: SessionNodeId; regionKey: string; index: number }
   | { kind: 'after'; parentId: SessionNodeId; regionKey: string; index: number }
   | { kind: 'invalid' };

@@ -97,6 +97,65 @@ describe('PageDesigner interactions', () => {
     await waitFor(() => expect(canvas.getAttribute('data-drop-active')).toBeNull());
   });
 
+  it('ux-r5: dragover on an empty container targets the container; drop lands inside it', async () => {
+    const view = await openDesigner();
+    fireEvent.click(document.querySelector('[data-palette-item="container"]')!);
+    await waitFor(() => expect(anchors().length).toBe(2));
+    const container = anchors()[1];
+    const pageAnchor = anchors()[0];
+
+    // 投影最小高度在真实浏览器中给出的几何（happy-dom 用 stub 等价模拟）
+    const rectSpy = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        if (this === container) {
+          return { left: 20, top: 20, width: 300, height: 44, right: 320, bottom: 64, x: 20, y: 20, toJSON: () => ({}) } as DOMRect;
+        }
+        if (this === pageAnchor) {
+          return { left: 0, top: 0, width: 800, height: 600, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+        }
+        return { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+      });
+    try {
+      const dragOver = new Event('dragover', { bubbles: true, cancelable: true }) as DragEvent;
+      Object.defineProperty(dragOver, 'dataTransfer', { value: { dropEffect: 'none' } });
+      Object.defineProperty(dragOver, 'clientX', { value: 100 });
+      Object.defineProperty(dragOver, 'clientY', { value: 40 });
+      fireEvent(view.getByTestId('page-designer-canvas'), dragOver);
+
+      // overlay inside 指示盒几何 = 空容器盒（落点即视觉目标，不再根回退整页描边）
+      await waitFor(() => {
+        const insideBox = document.querySelector('[data-page-designer-box="inside"]');
+        expect(insideBox).toBeTruthy();
+        expect(insideBox!.getAttribute('style')).toContain('left: 20px');
+        expect(insideBox!.getAttribute('style')).toContain('top: 20px');
+      });
+
+      const dropEvent = new Event('drop', { bubbles: true, cancelable: true }) as DragEvent;
+      Object.defineProperty(dropEvent, 'dataTransfer', {
+        value: { getData: () => JSON.stringify({ source: 'palette', type: 'input-text' }), dropEffect: 'copy' },
+      });
+      Object.defineProperty(dropEvent, 'clientX', { value: 100 });
+      Object.defineProperty(dropEvent, 'clientY', { value: 40 });
+      fireEvent(view.getByTestId('page-designer-canvas'), dropEvent);
+      await waitFor(() => expect(anchors().length).toBe(3));
+    } finally {
+      rectSpy.mockRestore();
+    }
+
+    // drop 落入 container 子级（树路径断言，替代画布根 data-drop-active）
+    fireEvent.click(screen.getByText('JSON 源码'));
+    await waitFor(() => expect(screen.getByTestId('page-designer-source-textarea')).toBeTruthy());
+    const doc = JSON.parse((screen.getByTestId('page-designer-source-textarea') as HTMLTextAreaElement).value);
+    const rootBody = doc.body ?? doc.children ?? [];
+    const containerNode = (Array.isArray(rootBody) ? rootBody : [rootBody]).find(
+      (node: { type?: string }) => node?.type === 'container',
+    );
+    expect(containerNode).toBeTruthy();
+    const containerChildren = containerNode.body ?? containerNode.children ?? containerNode.items ?? [];
+    expect(JSON.stringify(containerChildren)).toContain('input-text');
+  });
+
   it('drops with malformed payload are ignored', async () => {
     const view = await openDesigner();
     const before = anchors().length;
