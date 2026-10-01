@@ -42,7 +42,13 @@ export function useEditing(
       }
       const addr = cellAddress(row, col);
       const cell = snapshot.activeSheet?.cells?.[addr];
-      const val = cell?.value != null ? String(cell.value) : '';
+      // 编辑态回显公式原文（ux-r4）：有 formula 显示 `=...` 而非缓存计算值
+      const val =
+        typeof cell?.formula === 'string'
+          ? cell.formula
+          : cell?.value != null
+            ? String(cell.value)
+            : '';
       core.startEditing({ sheetId, address: addr, row, col }, val);
     },
     [snapshot, core, sheetId],
@@ -68,11 +74,22 @@ export function useEditing(
     const addr = cellAddress(cell.row, cell.col);
     const value = core.commitEditValue();
     core.setEditSaveStatus('saving', t('flux.spreadsheet.savingCell'));
-    const result = await bridge.dispatch({
-      type: 'spreadsheet:setCellValue',
-      cell: { sheetId, address: addr, row: cell.row, col: cell.col },
-      value,
-    });
+    // 提交路由升格（ux-r4）：`=` 前缀内容写 formula 字段（公式权威存储），
+    // 其余走 value 通路；重算由 dispatch 出口的 recalcDocument 统一处理
+    const isFormula = typeof value === 'string' && value.trim().startsWith('=');
+    const result = await bridge.dispatch(
+      isFormula
+        ? {
+            type: 'spreadsheet:setCellFormula',
+            cell: { sheetId, address: addr, row: cell.row, col: cell.col },
+            formula: value,
+          }
+        : {
+            type: 'spreadsheet:setCellValue',
+            cell: { sheetId, address: addr, row: cell.row, col: cell.col },
+            value,
+          },
+    );
 
     if ('cancelled' in result && result.cancelled) {
       core.setEditSaveStatus('cancelled', t('flux.spreadsheet.cellSaveCancelled'));

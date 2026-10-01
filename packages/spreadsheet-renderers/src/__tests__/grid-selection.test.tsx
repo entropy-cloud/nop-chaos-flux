@@ -208,7 +208,7 @@ describe('spreadsheet grid selection', () => {
 
     await waitFor(() => {
       expect(core.getSnapshot().selection.kind).toBe('column');
-      expect(core.getSnapshot().selection.columns).toEqual([1, 3]);
+      expect(core.getSnapshot().selection.columns).toEqual([1, 2, 3]);
     });
   });
 
@@ -231,7 +231,7 @@ describe('spreadsheet grid selection', () => {
 
     await waitFor(() => {
       expect(core.getSnapshot().selection.kind).toBe('row');
-      expect(core.getSnapshot().selection.rows).toEqual([1, 3]);
+      expect(core.getSnapshot().selection.rows).toEqual([1, 2, 3]);
     });
   });
 

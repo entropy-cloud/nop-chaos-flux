@@ -74,8 +74,11 @@
 ### 3.5 Spreadsheet 【P0】
 
 - SP-1 P0：**公式不求值**：B3 输入 `=SUM(B1:B2)`（双击编辑、回车提交）后单元格**原样显示公式文本**而非 49；顶部"Set Formula on selected cell"宿主按钮写入后同样显示原文。公式引擎→显示管线断链（或 host 未渲染计算值），这对"电子表格"是致命演示缺陷。
+  - 补注（ux-r4 执行，2026-10-01）：根因实锤——spreadsheet-core 无任何公式求值引擎（`applySetCellFormula` 仅存原文）。已内建最小公式引擎（`packages/spreadsheet-core/src/formula/`），重算挂 `dispatchSpreadsheetCommand` 统一出口 + 装载求值，`=` 前缀提交升格 formula 权威存储；修复见 plan `2026-10-01-ux-r4-spreadsheet-formula-plan.md`。
 - SP-2 P1：单选单元格后直接键入不进入编辑（主流电子表格均支持 type-to-edit），必须双击。
+  - 补注（ux-r4 执行，2026-10-01）：审计原观察不成立——type-to-edit 已实现且独立 Playwright 探针复测通过（原观察疑为 IME composition 假象）。执行中发现相邻真实缺陷：editor 挂载 `input.select()` 全选种子字符致多字符键入被截断（R2-2c-A9-156），已修复为光标置尾并组件测试钉住。
 - SP-3 P2：演示数据 3 个单元格（Alpha/42/Beta/7/Middle）；底部暴露开发日志条（"Selected B3 / Formula set on B3"）。
+  - 补注（ux-r4 执行，2026-10-01）：演示数据已充实为季度销售示例表（SUM 合计行/列 + AVERAGE/ROUND 均值行，打开即见计算值）；开发日志条改为默认折叠的 `<details>`。
 
 ### 3.6 Print Designer 【P2】（完成度相对最高）
 
@@ -131,7 +134,7 @@
 1. **图表数据断链（DB-1）**：根因已定位——演示面板 series 配置（`data: '${salesSeries}'`）与 source 行结构 `{month, sales}` 不匹配，chart 渲染器 dataKey 回退 `'Sales'` 全 undefined；渲染器 `isEmpty` 判定只覆盖"source 空且 series.data 空"，此形态静默空白。修复见 plan `2026-10-01-ux-r1-dashboard-chart-plan.md`（演示配置纠正 + 渲染器失败路径空态/dev 告警）。
 2. **透视表明细为空（PV-1）**：根因已定位——`subTotalsDimensions` 含 leaf 行维度（quarter）触发 VTable 明细全空缺陷（非明细管线问题）；修复见 plan `2026-10-01-ux-r2-pivot-detail-cells-plan.md`。
 3. **地图无底图无着色（MP-1/2）**：根因已定位——MP-1 为 readFeatures 缺投影转换（RC-A），MP-2 黑点为 resolveThemeColor 裸 var 探针缺陷（RC-3）；底图空白为离线环境瓦片不可达（环境事实）。修复见 plan `2026-10-01-ux-r3-map-render-plan.md`。
-4. **公式不求值（SP-1）**：host 的公式设置通路（单元格存储）与渲染通路都拿到 raw 字符串——求值步骤缺失或渲染读 raw 值。
+4. **公式不求值（SP-1）**：根因已定位——spreadsheet-core 完全没有公式求值引擎（formula 仅作字符串存储，渲染读 raw value）；修复见 plan `2026-10-01-ux-r4-spreadsheet-formula-plan.md`（最小引擎 + 统一出口重算 + 装载求值 + 提交路由升格）。
 5. **Page Designer 空容器不可见（PD-1/2）**："真渲染画布"直接渲染子组件而未注入设计器装饰层（空态占位/最小高度/点击命中区），drop 命中计算基于真实 DOM 而非视觉引导。
 6. **徽章遮挡（G-1）**：徽章 fixed 定位与页面标题区重叠，且无避让/折叠机制；日志计数随 console 噪音膨胀。
 7. **迷你地图黑块（FD-1）**：minimap 节点绘制用了无样式的默认 fill（黑）且无视口矩形层。

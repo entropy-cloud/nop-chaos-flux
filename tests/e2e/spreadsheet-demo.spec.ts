@@ -25,9 +25,12 @@ test('ss-1 table rendering: seeded cells render inside a virtualized window', as
   await openSpreadsheetDemo(page);
 
   const a1 = page.locator('td[data-row="0"][data-col="0"]').first();
-  await expect(a1).toContainText('Alpha');
-  await expect(page.locator('td[data-row="1"][data-col="0"]').first()).toContainText('Beta');
-  await expect(page.locator('td[data-row="0"][data-col="1"]').first()).toContainText('42');
+  await expect(a1).toContainText('Region');
+  await expect(page.locator('td[data-row="1"][data-col="0"]').first()).toContainText('North');
+  await expect(page.locator('td[data-row="0"][data-col="1"]').first()).toContainText('Q1');
+
+  // 种子公式打开即见计算值（ux-r4 装载求值）：E2=SUM(B2:D2)=405
+  await expect(page.locator('td[data-row="1"][data-col="4"]').first()).toContainText('405');
 
   const renderedRows = page.locator('tbody tr[role="row"]');
   const rowCount = await renderedRows.count();
@@ -175,8 +178,8 @@ test('ss-7 selection: multi-row delete removes only the actually selected rows',
 }) => {
   await openSpreadsheetDemo(page);
 
-  await expect(page.locator('td[data-row="2"][data-col="2"]')).toContainText('Middle');
-  await expect(page.locator('td[data-row="1"][data-col="0"]')).toContainText('Beta');
+  await expect(page.locator('td[data-row="2"][data-col="0"]')).toContainText('South');
+  await expect(page.locator('td[data-row="1"][data-col="0"]')).toContainText('North');
 
   const rowHeader2 = page.locator('[data-slot="spreadsheet-row-header"] button').nth(1);
   const rowHeader4 = page.locator('[data-slot="spreadsheet-row-header"] button').nth(3);
@@ -190,9 +193,11 @@ test('ss-7 selection: multi-row delete removes only the actually selected rows',
   await expect(page.getByTestId('spreadsheet-context-delete-row')).toBeVisible();
   await page.getByTestId('spreadsheet-context-delete-row').click();
 
-  await expect(page.getByText('Beta')).toHaveCount(0, { timeout: 10_000 });
-  await expect(page.getByText('Middle')).toHaveCount(1, { timeout: 10_000 });
-  await expect(page.getByText('Alpha')).toHaveCount(1);
+  await expect(page.getByText('North')).toHaveCount(0, { timeout: 10_000 });
+  await expect(page.locator('td[data-row="1"][data-col="0"]').first()).toContainText('West', {
+    timeout: 10_000,
+  });
+  await expect(page.getByText('Region')).toHaveCount(1);
 });
 
 test('ss-8 keyboard: arrows move selection, typing opens the editor, Ctrl+Z undoes', async ({
@@ -225,7 +230,7 @@ test('ss-8 keyboard: arrows move selection, typing opens the editor, Ctrl+Z undo
 
   await grid.focus();
   await page.keyboard.press('Control+z');
-  await expect(page.locator('td[data-row="1"][data-col="0"]')).toContainText('Beta', {
+  await expect(page.locator('td[data-row="1"][data-col="0"]')).toContainText('North', {
     timeout: 10_000,
   });
 
@@ -247,17 +252,17 @@ test('ss-9 search: find locates a value and replace-all rewrites it', async ({ p
   await expect(panel).toBeVisible();
 
   const findInput = page.locator('[data-slot="spreadsheet-find-input"]');
-  await findInput.fill('Alpha');
+  await findInput.fill('South');
   await panel.getByRole('button', { name: /查找下一个/ }).click();
 
   const results = page.locator('[data-slot="spreadsheet-find-results"]');
-  await expect(results).toContainText('A1', { timeout: 10_000 });
+  await expect(results).toContainText('A3', { timeout: 10_000 });
 
   const replaceInput = page.locator('[data-slot="spreadsheet-replace-input"]');
   await replaceInput.fill('Zulu');
   await panel.getByRole('button', { name: /全部替换/ }).click();
 
-  await expect(page.locator('td[data-row="0"][data-col="0"]')).toContainText('Zulu', {
+  await expect(page.locator('td[data-row="2"][data-col="0"]')).toContainText('Zulu', {
     timeout: 10_000,
   });
 
@@ -284,6 +289,71 @@ test('ss-10 undo: toolbar undo/redo round-trips a cell edit', async ({ page }) =
 
   await page.getByRole('button', { name: /重做/ }).click();
   await expect(page.locator('td[data-row="5"][data-col="0"]')).toContainText('RoundTrip', {
+    timeout: 10_000,
+  });
+});
+
+test('ss-11 formula: typing =SUM commits and renders the computed value', async ({ page }) => {
+  await openSpreadsheetDemo(page);
+
+  const cell = await selectCell(page, 7, 5);
+  await cell.dblclick();
+  const editor = page.locator('[data-slot="spreadsheet-cell-editor-input"]');
+  await expect(editor).toBeVisible();
+  await editor.fill('=SUM(B2:D2)');
+  await editor.press('Enter');
+
+  await expect(page.locator('td[data-row="7"][data-col="5"]')).toContainText('405', {
+    timeout: 10_000,
+  });
+
+  const exported = await page.evaluate(() => {
+    const cell = window.__SPREADSHEET_DEMO__?.exportDocument().workbook.sheets[0].cells?.['F8'];
+    return cell ? { formula: cell.formula, value: cell.value } : null;
+  });
+  expect(exported).toEqual({ formula: '=SUM(B2:D2)', value: 405 });
+});
+
+test('ss-12 formula: editing a dependency recalculates dependents', async ({ page }) => {
+  await openSpreadsheetDemo(page);
+
+  // 改 B2（North Q1）→ E2（=SUM(B2:D2)）与 B6（=SUM(B2:B5)）联动
+  const b2 = await selectCell(page, 1, 1);
+  await b2.dblclick();
+  const editor = page.locator('[data-slot="spreadsheet-cell-editor-input"]');
+  await expect(editor).toBeVisible();
+  await editor.fill('200');
+  await editor.press('Enter');
+
+  await expect(page.locator('td[data-row="1"][data-col="4"]')).toContainText('485', {
+    timeout: 10_000,
+  });
+  await expect(page.locator('td[data-row="5"][data-col="1"]')).toContainText('530', {
+    timeout: 10_000,
+  });
+});
+
+test('ss-13 formula: circular reference renders #CIRC! error into the cell', async ({ page }) => {
+  await openSpreadsheetDemo(page);
+
+  const a1 = await selectCell(page, 0, 0);
+  await a1.dblclick();
+  const editor = page.locator('[data-slot="spreadsheet-cell-editor-input"]');
+  await expect(editor).toBeVisible();
+  await editor.fill('=SUM(B1:B1)');
+  await editor.press('Enter');
+
+  // 先把 A1 变成公式（引用 B1），再让 B1 反向引用 A1 构造循环
+  const b1 = await selectCell(page, 0, 1);
+  await b1.dblclick();
+  await expect(editor).toBeVisible();
+  await editor.fill('=A1');
+  await editor.press('Enter');
+
+  await expect(page.locator('td[data-row="0"][data-col="1"]')).toContainText('#CIRC!', {
+    timeout: 10_000,
+  });
+  await expect(page.locator('td[data-row="0"][data-col="0"]')).toContainText('#CIRC!', {
     timeout: 10_000,
   });
 });

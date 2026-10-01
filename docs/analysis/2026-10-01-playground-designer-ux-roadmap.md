@@ -67,17 +67,17 @@
 
 ## 执行顺序与状态
 
-| #   | Work item                 | 优先级 | Plan                                                  | 状态    |
-| --- | ------------------------- | ------ | ----------------------------------------------------- | ------- |
-| R1  | Dashboard Editor 图表断链 | P0     | `docs/plans/2026-10-01-ux-r1-dashboard-chart-plan.md` | pending |
-| R2  | 透视表明细空白            | P0     | —                                                     | pending |
-| R3  | 地图渲染                  | P0     | —                                                     | pending |
-| R4  | 电子表格公式求值          | P0     | —                                                     | pending |
-| R5  | Page Designer 画布        | P0/P1  | —                                                     | pending |
-| R6  | 全局外壳治理              | P1/P2  | —                                                     | pending |
-| R7  | 流程设计器家族视觉        | P1/P2  | —                                                     | pending |
-| R8  | 排程组件视口与视觉        | P1/P2  | —                                                     | pending |
-| R9  | Report Designer 检查器    | P1/P2  | —                                                     | pending |
-| R10 | 编辑器演示页治理          | P2/P3  | —                                                     | pending |
+| #   | Work item                 | 优先级 | Plan                                                      | 状态                                                                                                          |
+| --- | ------------------------- | ------ | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| R1  | Dashboard Editor 图表断链 | P0     | `docs/plans/2026-10-01-ux-r1-dashboard-chart-plan.md`     | **completed**（4cabab47c）                                                                                    |
+| R2  | 透视表明细空白            | P0     | `docs/plans/2026-10-01-ux-r2-pivot-detail-cells-plan.md`  | **completed**（5e8143ae4）                                                                                    |
+| R3  | 地图渲染                  | P0     | `docs/plans/2026-10-01-ux-r3-map-render-plan.md`          | **completed**（d59f38f5e；诊断反转：实锤投影缺失 + 主题探针缺陷）                                             |
+| R4  | 电子表格公式求值          | P0     | `docs/plans/2026-10-01-ux-r4-spreadsheet-formula-plan.md` | **completed**（独立 closure audit approved；执行期补修 type-to-edit 多字符截断 + 行/列 shift 扩选非连续区间） |
+| R5  | Page Designer 画布        | P0/P1  | —                                                         | pending                                                                                                       |
+| R6  | 全局外壳治理              | P1/P2  | —                                                         | pending                                                                                                       |
+| R7  | 流程设计器家族视觉        | P1/P2  | —                                                         | pending                                                                                                       |
+| R8  | 排程组件视口与视觉        | P1/P2  | —                                                         | pending                                                                                                       |
+| R9  | Report Designer 检查器    | P1/P2  | —                                                         | pending                                                                                                       |
+| R10 | 编辑器演示页治理          | P2/P3  | —                                                         | pending                                                                                                       |
 
 完成 R1–R10 后进行一轮复审计（fresh eyes 重走截图对比），无新 finding 才判收敛。

@@ -247,11 +247,11 @@ describe('selection commands', () => {
     expect(snap.selection.rows).toEqual([2]);
   });
 
-  it('should extend row selection', async () => {
+  it('should extend row selection as a contiguous range (Excel semantics)', async () => {
     await core.dispatch({ type: 'spreadsheet:selectRow', sheetId, row: 1 });
     await core.dispatch({ type: 'spreadsheet:selectRow', sheetId, row: 3, extend: true });
     const snap = core.getSnapshot();
-    expect(snap.selection.rows).toEqual([1, 3]);
+    expect(snap.selection.rows).toEqual([1, 2, 3]);
   });
 
   it('should select column', async () => {

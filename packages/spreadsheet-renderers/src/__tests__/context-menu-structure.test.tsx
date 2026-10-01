@@ -313,7 +313,7 @@ describe('spreadsheet context menu structure commands', () => {
     });
   });
 
-  it('deletes exactly the selected rows for a non-contiguous multi-row selection', async () => {
+  it('deletes the full contiguous range selected via shift-extend (Excel semantics)', async () => {
     const documentModel = createEmptyDocument('contextmenu-delete-noncontiguous-rows');
     const core = createSpreadsheetCore({ document: documentModel });
     const sheetId = core.getSnapshot().activeSheetId;
@@ -339,7 +339,7 @@ describe('spreadsheet context menu structure commands', () => {
     await core.dispatch({ type: 'spreadsheet:selectRow', sheetId, row: 2, extend: true });
 
     await waitFor(() => {
-      expect(core.getSnapshot().selection.rows).toEqual([0, 2]);
+      expect(core.getSnapshot().selection.rows).toEqual([0, 1, 2]);
     });
 
     const rowHeaders = container.querySelectorAll('td[data-slot="spreadsheet-row-header"]');
@@ -357,8 +357,8 @@ describe('spreadsheet context menu structure commands', () => {
         .document.workbook.sheets.find((sheet) => sheet.id === sheetId);
       const values = Object.values(activeSheet?.cells ?? {}).map((cell) => cell.value);
       expect(values).not.toContain('top');
+      expect(values).not.toContain('second');
       expect(values).not.toContain('third');
-      expect(activeSheet?.cells?.A1?.value).toBe('second');
     });
 
     await core.dispatch({ type: 'spreadsheet:undo' });

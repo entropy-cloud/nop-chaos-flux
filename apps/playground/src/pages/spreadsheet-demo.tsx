@@ -26,16 +26,57 @@ declare global {
 const ROWS = 200;
 const COLS = 26;
 
+function seedCell(address: string, row: number, col: number, value?: unknown, formula?: string) {
+  return { address, row, col, value, formula };
+}
+
+// 演示数据（ux-r4 SP-3）：季度销售示例表，含 SUM 合计行/列与 AVERAGE+ROUND 均值行，
+// 打开即经装载求值呈现公式计算值。
 function seedDocument(): SpreadsheetDocument {
   const doc = createEmptyDocument('spreadsheet-demo');
   const sheet = doc.workbook.sheets[0];
-  sheet.cells = {
-    A1: { address: 'A1', row: 0, col: 0, value: 'Alpha' },
-    A2: { address: 'A2', row: 1, col: 0, value: 'Beta' },
-    B1: { address: 'B1', row: 0, col: 1, value: '42' },
-    B2: { address: 'B2', row: 1, col: 1, value: '7' },
-    C3: { address: 'C3', row: 2, col: 2, value: 'Middle' },
-  };
+  const rows: Array<[string, number, number, unknown?, string?]> = [
+    ['A1', 0, 0, 'Region'],
+    ['B1', 0, 1, 'Q1'],
+    ['C1', 0, 2, 'Q2'],
+    ['D1', 0, 3, 'Q3'],
+    ['E1', 0, 4, 'Total'],
+    ['A2', 1, 0, 'North'],
+    ['B2', 1, 1, 120],
+    ['C2', 1, 2, 135],
+    ['D2', 1, 3, 150],
+    ['E2', 1, 4, undefined, '=SUM(B2:D2)'],
+    ['A3', 2, 0, 'South'],
+    ['B3', 2, 1, 90],
+    ['C3', 2, 2, 110],
+    ['D3', 2, 3, 95],
+    ['E3', 2, 4, undefined, '=SUM(B3:D3)'],
+    ['A4', 3, 0, 'East'],
+    ['B4', 3, 1, 140],
+    ['C4', 3, 2, 125],
+    ['D4', 3, 3, 160],
+    ['E4', 3, 4, undefined, '=SUM(B4:D4)'],
+    ['A5', 4, 0, 'West'],
+    ['B5', 4, 1, 100],
+    ['C5', 4, 2, 105],
+    ['D5', 4, 3, 115],
+    ['E5', 4, 4, undefined, '=SUM(B5:D5)'],
+    ['A6', 5, 0, 'Total'],
+    ['B6', 5, 1, undefined, '=SUM(B2:B5)'],
+    ['C6', 5, 2, undefined, '=SUM(C2:C5)'],
+    ['D6', 5, 3, undefined, '=SUM(D2:D5)'],
+    ['E6', 5, 4, undefined, '=SUM(E2:E5)'],
+    ['A7', 6, 0, 'Average'],
+    ['B7', 6, 1, undefined, '=ROUND(AVERAGE(B2:B5),1)'],
+    ['C7', 6, 2, undefined, '=ROUND(AVERAGE(C2:C5),1)'],
+    ['D7', 6, 3, undefined, '=ROUND(AVERAGE(D2:D5),1)'],
+  ];
+  sheet.cells = Object.fromEntries(
+    rows.map(([address, row, col, value, formula]) => [
+      address,
+      seedCell(address, row, col, value, formula),
+    ]),
+  );
   return doc;
 }
 
@@ -224,16 +265,21 @@ export function SpreadsheetDemo() {
         />
       </div>
 
-      <div
+      <details
         data-testid="spreadsheet-demo-log"
-        className="max-h-24 overflow-auto rounded-lg border border-[var(--nop-border)] bg-[var(--nop-surface-muted)] p-2 text-xs text-[var(--nop-body-copy)]"
+        className="rounded-lg border border-[var(--nop-border)] bg-[var(--nop-surface-muted)] px-2 py-1.5 text-xs text-[var(--nop-body-copy)]"
       >
-        {logs.length === 0 ? <span>No actions yet.</span> : logs.map((entry, index) => (
-          <div key={entry.id} className={cn(index === 0 && 'font-semibold')}>
-            {entry.text}
-          </div>
-        ))}
-      </div>
+        <summary className="cursor-pointer select-none text-[var(--nop-eyebrow)]">
+          Dev Log{logs.length > 0 ? `（${logs.length}）` : ''}
+        </summary>
+        <div className="mt-1 max-h-24 overflow-auto">
+          {logs.length === 0 ? <span>No actions yet.</span> : logs.map((entry, index) => (
+            <div key={entry.id} className={cn(index === 0 && 'font-semibold')}>
+              {entry.text}
+            </div>
+          ))}
+        </div>
+      </details>
     </div>
   );
 }

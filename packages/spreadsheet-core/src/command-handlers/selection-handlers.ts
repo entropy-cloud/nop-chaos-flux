@@ -88,6 +88,18 @@ export const handleSelectAll: CommandHandler<SelectAllCommand> = (store, command
   return { ok: true, changed: true };
 };
 
+// Excel 语义：shift+点击行头扩展为锚点行到点击行的连续区间（而非仅并集已点行），
+// 否则 shift 扩选后删除/格式化只作用于端点行（ux-r4 期间 ss-7 暴露）。
+function fillContiguous(rows: number[]): number[] {
+  const min = Math.min(...rows);
+  const max = Math.max(...rows);
+  const filled: number[] = [];
+  for (let row = min; row <= max; row += 1) {
+    filled.push(row);
+  }
+  return filled;
+}
+
 export const handleSelectRow: CommandHandler<SelectRowCommand> = (store, command) => {
   const state = store.getState();
   const current = state.selection;
@@ -97,7 +109,7 @@ export const handleSelectRow: CommandHandler<SelectRowCommand> = (store, command
     current.sheetId === command.sheetId &&
     current.rows
   ) {
-    const rows = [...new Set([...current.rows, command.row])].sort((a, b) => a - b);
+    const rows = fillContiguous([...current.rows, command.row]);
     store.setState({ selection: { kind: 'row', sheetId: command.sheetId, rows } });
   } else {
     store.setState({ selection: { kind: 'row', sheetId: command.sheetId, rows: [command.row] } });
@@ -114,8 +126,10 @@ export const handleSelectColumn: CommandHandler<SelectColumnCommand> = (store, c
     current.sheetId === command.sheetId &&
     current.columns
   ) {
-    const columns = [...new Set([...current.columns, command.col])].sort((a, b) => a - b);
-    store.setState({ selection: { kind: 'column', sheetId: command.sheetId, columns } });
+    const columns = fillContiguous([...current.columns, command.col]);
+    store.setState({
+      selection: { kind: 'column', sheetId: command.sheetId, columns },
+    });
   } else {
     store.setState({
       selection: { kind: 'column', sheetId: command.sheetId, columns: [command.col] },

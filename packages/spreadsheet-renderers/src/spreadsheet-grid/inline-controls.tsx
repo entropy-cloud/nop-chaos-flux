@@ -25,7 +25,10 @@ export function SpreadsheetCellEditor({
     }
 
     input.focus();
-    input.select();
+    // 光标置尾（不 select 全选）：type-to-edit 种子字符后须追加后续键入，
+    // 全选会让下一个输入字符替换掉种子（"hi"→"i"、公式只余尾字符）。
+    const end = input.value.length;
+    input.setSelectionRange(end, end);
   }, [readOnly]);
 
   return (

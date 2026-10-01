@@ -69,7 +69,7 @@
 - Sheet tab rename 必须提供完整键盘等价路径：active sheet tab 可通过 `F2` 进入 rename，rename input 必须带基于当前 sheet 名称的可访问名称，而不是只依赖 pointer-only double-click 或无名 textbox。
 - Report/Spreadsheet 绑定单元格不能只靠背景色表达语义：绑定 cell 必须同时发布非颜色 marker，并把绑定字段信息并入 `gridcell` 可访问名称或描述。
 - Excel-like cell editing baseline is selection-first, not auto-edit-on-focus: single click / focus only updates the active cell; editing begins through double-click, `Enter`, `F2`, or direct text entry that replaces the current cell content draft.
-- 现状注记（R2-2c 复核 D-1，2026-09-25）：type-to-edit（direct text entry）的「首键进入编辑」契约与 live 行为不符——inline-controls.tsx L27 `input.select()` 全选播种字符，首键被替换（R2-2c-A9-156，review-b 根因修正坐实，慢键入仍复现 = 确定性缺陷）；修复前 direct text entry 首字符会丢。
+- 现状注记（ux-r4 修正，2026-10-01）：type-to-edit（direct text entry）的「首键进入编辑 + 种子字符 + 后续键入追加」契约已与 live 行为一致。历史缺陷（R2-2c-A9-156：editor 挂载 `input.select()` 全选种子字符，第二个输入字符替换种子）已修复为光标置尾（`inline-controls.tsx`，组件测试钉住光标契约）。
 - The supported cell-value editing surface is the inline editor rendered inside the active grid cell. The toolbar must not render a separate cell-value input or formula-bar-like duplicate editor by default.
 - In report-designer surfaces, richer cell metadata and binding configuration remain owned by the right inspector/property panel. Inline grid editing only covers the cell's displayed value text and must not introduce a second competing property-edit surface under the toolbar.
 - Spreadsheet cell inline editing is an explicit high-density canvas exception to the general `@nop-chaos/ui` input usage rule: when the shared `Input` size/border contract cannot fit the fixed cell box without changing row height, the spreadsheet package may use a dedicated inline editor input that matches the canvas cell metrics exactly. This exception is limited to grid-cell inline editing only and must stay documented plus regression-tested.
@@ -118,6 +118,14 @@ This section defines the intended user-visible spreadsheet interaction model. Wh
 
 - `document` 和 `config` 可由 loader 或宿主适配层提供。
 - 导入导出等能力应由 namespace actions 或外部 toolbar 组合提供。
+
+### 9.1 公式引擎契约（ux-r4，2026-10-01）
+
+- spreadsheet-core 内建最小公式引擎（`packages/spreadsheet-core/src/formula/`）：`=` 前缀公式（单元格引用 A1、区域 A1:B2、四则与幂/括号/一元负号、比较符、SUM/AVERAGE/MIN/MAX/COUNT/COUNTA/ROUND/ABS）。
+- **存储语义**：公式以 `formula` 字段为权威存储（`=` 前缀原文），计算值写回 `value`；编辑态回显 formula 原文、显示态呈现计算值。存量 `=` 前缀 value 在重算时防御性升格为 formula（历史文档/粘贴来源兼容）。
+- **求值挂点**：全量重算挂统一分发出口 `dispatchSpreadsheetCommand`（覆盖键入/粘贴/排序/填充/undo/redo 等），装载时 `createSpreadsheetCore` 对种子文档执行一次全量求值；值无变化时重算返回原文档引用（不污染 undo/dirty）。
+- **错误值契约**：循环引用 `#CIRC!`、未知函数 `#NAME?`、除零 `#DIV/0!`、引用越界 `#REF!`、语法错误 `#ERROR!`；错误值入格显示且沿依赖传播。
+- **能力边界（当前支持面）**：单 sheet 引用、全量重算（无增量依赖图）、无易变函数/数组公式/跨 sheet 引用；聚合函数对非数值文本跳过（区域含表头文本时求和不受污染），数值字符串参与聚合。
 
 ## 10. 样式与 DOM marker 约定
 

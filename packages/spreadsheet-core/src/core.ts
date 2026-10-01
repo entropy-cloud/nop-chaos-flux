@@ -15,6 +15,7 @@ import {
   type SpreadsheetInternalState,
 } from './core/internal-state.js';
 import { dispatchSpreadsheetCommand } from './core-dispatch.js';
+import { recalcDocument } from './formula/recalc-document.js';
 
 export interface SpreadsheetCore {
   getSnapshot(): SpreadsheetRuntimeSnapshot;
@@ -40,7 +41,8 @@ export interface CreateSpreadsheetCoreOptions {
 
 export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): SpreadsheetCore {
   const { document, config, readonly = false } = options;
-  const initialDocument = cloneSpreadsheetDocument(document);
+  // 装载求值（ux-r4）：种子文档含公式时打开即见计算值（不经命令通路）
+  const initialDocument = recalcDocument(cloneSpreadsheetDocument(document));
   const firstSheetId = initialDocument.workbook.sheets[0]?.id ?? '';
 
   const store = createStore<SpreadsheetInternalState>(() => ({
