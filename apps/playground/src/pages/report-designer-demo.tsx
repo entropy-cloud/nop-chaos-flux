@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import '@nop-chaos/spreadsheet-renderers/canvas-styles.css';
 import {
   createSchemaRenderer,
@@ -7,6 +7,10 @@ import {
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import {
+  reportCellStylePanelDefinition,
+  reportCellStylePanelRefs,
+} from './report-designer-cell-style-panel';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
@@ -24,7 +28,8 @@ import {
   SpreadsheetGrid,
   useSpreadsheetInteractions,
 } from '@nop-chaos/spreadsheet-renderers';
-import {
+import { createDefaultSemantic,
+  setCellMeta,
   createReportDesignerCore,
   createReportTemplateDocument,
   type ReportDesignerConfig,
@@ -77,6 +82,7 @@ const dropAdapter: FieldDropAdapter = {
 
 const SchemaRenderer = createSchemaRenderer();
 const inspectorRegistry = createDefaultRegistry();
+inspectorRegistry.register(reportCellStylePanelDefinition as never);
 registerBasicRenderers(inspectorRegistry);
 registerFormRenderers(inspectorRegistry);
 registerFormAdvancedRenderers(inspectorRegistry);
@@ -84,6 +90,8 @@ registerDataRenderers(inspectorRegistry);
 registerReportDesignerRenderers(inspectorRegistry);
 const inspectorEnv = createDefaultEnv();
 const inspectorFormulaCompiler = createFormulaCompiler();
+
+
 
 export function ReportDesignerDemo() {
   const [draggingField, setDraggingField] = useState<{
@@ -100,19 +108,45 @@ export function ReportDesignerDemo() {
     [],
   );
 
-  const spreadsheetDoc = useMemo(() => createEmptyDocument('demo-spreadsheet'), []);
+  // ux-r9 RD-1：预置示例报表（标题/表头/数据行 + 一个绑定字段示例），打开即有内容
+  const spreadsheetDoc = useMemo(() => {
+    const doc = createEmptyDocument('demo-spreadsheet');
+    const sheet = doc.workbook.sheets[0];
+    const seed: Array<[string, number, number, unknown]> = [
+      ['A1', 0, 0, 'Demo Sales Report'],
+      ['A2', 1, 0, 'Region'],
+      ['B2', 1, 1, 'Customer'],
+      ['C2', 1, 2, 'Amount'],
+      ['A3', 2, 0, 'North'],
+      ['B3', 2, 1, 'Acme Corp'],
+      ['C3', 2, 2, 1280],
+      ['A4', 3, 0, 'South'],
+      ['B4', 3, 1, 'Globex'],
+      ['C4', 3, 2, 960],
+    ];
+    sheet.cells = Object.fromEntries(
+      seed.map(([address, row, col, value]) => [address, { address, row, col, value }]),
+    );
+    return doc;
+  }, []);
   const spreadsheetCore = useMemo(
     () => createSpreadsheetCore({ document: spreadsheetDoc }),
     [spreadsheetDoc],
   );
+  reportCellStylePanelRefs.spreadsheetCore = spreadsheetCore;
   const spreadsheetBridge = useMemo(
     () => createSpreadsheetBridge(spreadsheetCore),
     [spreadsheetCore],
   );
-  const reportDoc = useMemo(
-    () => createReportTemplateDocument(spreadsheetDoc, 'Demo Report'),
-    [spreadsheetDoc],
-  );
+  const reportDoc = useMemo(() => {
+    const doc = createReportTemplateDocument(spreadsheetDoc, 'Demo Report');
+    // ux-r9 RD-3：B2 预置字段绑定（产生 bound-indicator，供可读性验收）
+    const sheetId = doc.spreadsheet.workbook.sheets[0].id;
+    doc.semantic = setCellMeta(doc.semantic ?? createDefaultSemantic(), sheetId, 'B2', {
+      field: { fieldId: 'customer', data: { label: 'Customer' } },
+    });
+    return doc;
+  }, [spreadsheetDoc]);
   const designerConfig: ReportDesignerConfig = useMemo(
     () => ({
       kind: 'report-template',
@@ -169,8 +203,8 @@ export function ReportDesignerDemo() {
             type: 'container',
             className: 'stack-sm text-sm',
             body: [
-              { type: 'text', text: 'Cell selected' },
-              { type: 'text', text: 'Use drop from the field panel to bind a dataset field.' },
+              { type: 'report-cell-style-panel' },
+              { type: 'text', text: 'Drop a field from the panel onto a cell to bind it.' },
             ],
           },
         },

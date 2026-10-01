@@ -731,7 +731,8 @@
   position: absolute;
   top: 2px;
   left: 3px;
-  font-size: 9px;
+  /* ux-r9 RD-3：9px 不可读 → 12px */
+  font-size: 12px;
   line-height: 1;
   font-weight: 700;
   text-transform: lowercase;

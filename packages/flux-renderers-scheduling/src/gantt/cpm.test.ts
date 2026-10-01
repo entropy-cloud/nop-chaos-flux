@@ -164,13 +164,12 @@ describe('ux-r8 GT-2 demo 拓扑关键路径语义（critical 豁免 project 条
       { id: '12', type: 'task', start: '2026-10-21', end: '2026-11-20' },
       { id: '13', type: 'task', start: '2026-11-21', end: '2026-12-01' },
     ]);
-    const links = new Map(
-      [
-        ['l1', { id: 'l1', source: '2', target: '3', type: 'FS', $p: '' }],
-        ['l2', { id: 'l2', source: '11', target: '12', type: 'FS', $p: '' }],
-        ['l3', { id: 'l3', source: '12', target: '13', type: 'FS', $p: '' }],
-      ].map((l) => [l.id, l as never]),
-    );
+    const linkRows = [
+      { id: 'l1', source: '2', target: '3', type: 'FS' },
+      { id: 'l2', source: '11', target: '12', type: 'FS' },
+      { id: 'l3', source: '12', target: '13', type: 'FS' },
+    ];
+    const links = new Map(linkRows.map((l) => [l.id, l as never]));
     const path = calculateCriticalPath(tasks, links);
     // 唯一零浮动 = Beta project（maxFinish 锚点）；子任务链有正浮动非 critical
     expect(path).toEqual(['10']);
