@@ -302,3 +302,16 @@ styling-suspects 221 ✅ 零漂移；oversized 2 errors 均 locale 豁免 ✅；
 ## Test Strategy
 
 档位：**必须自动化**（门禁项全部落 committed 基线 + 门禁脚本测试，仿既有 `scripts/__tests__/` 先红后绿模式）+ **建议有测**（重构项 focused 单测随 PR）。
+
+---
+
+## Round-2 收敛验证（2026-09-30，六 plan 完成后）
+
+四路复验（334 文件回归检查/5 新轴/follow-up 归属核对）结论：**第一轮收敛质量成立，无新 plan 立项依据**。
+
+- 回归检查：无拼接痕迹（20 疑点全为误报）；死文件删除零悬空引用；注释与实现一致；TODO/FIXME 仍仅 1 处（与 round-1 判断一致）；门禁基线对账吻合（console 27、knip files 19、i18n 双语对称）。
+- 新轴五项：包间 re-export 收敛（仅 F3:DesignerPageSchemaInputBase 定义在桶文件内，归 CQ-C11）；React 19 双轨语义有注释成文（不立案）；事件命名两族规约零漂移（发射型 kebab / 命令名 camel，建议未来在文档补一句）；aria 一致性（F2:aria-label 字面量 99 处 i18n 缺口，低）；CSS 变量前缀零漂移。
+- 低优先新 finding 3 条（F1 flux.mobile.barcode 死键并案/F2 aria i18n/F3 桶文件内定义）+ 1 条勘误（playground 依赖声明登记位）已全部登记至 `docs/plans/2026-09-30-cq-6-targeted-defects-plan.md` Non-Blocking Follow-ups。
+- 门禁终态：knip files 19（自 28）、console 27（自 30，再减 undo-stack 1 处后 26——以基线文件为准）、duplicates 559 clones/2.74%（自 597/2.99%）、所有 cq-1 新门禁绿。
+
+**收敛判定**：两轮挖掘（round-1 四路 + round-2 五轴）产出的全部 finding 均已 plan 化、裁定或登记 follow-up；新轴检查未发现 plan 级新问题。代码质量轴在当前基线下收敛。
