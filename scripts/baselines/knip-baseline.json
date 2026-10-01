@@ -4,21 +4,20 @@
     "knipVersion": "6.9.0",
     "lastUpdated": "2026-10-01",
     "counts": {
-      "files": 21,
+      "files": 19,
       "exports": 396,
       "types": 581,
       "dependencies": 3,
       "devDependencies": 17,
       "unlisted": 30
     },
-    "unlistedReconciliation": "CQ-S17 reconciled 2026-09-30: check-workspace-manifest-deps forward check scans packages/*/src only (apps/ and scripts/ are out of scope), so the two tools are complementary, not contradictory. unlisted=30: apps/playground 11 (graph/pivot/industrial imports incl. tests+demo pages), scripts/visual-quality 18 (root-manifest renderer imports + playwright), flux-renderers-data test jsdom 1 (workspace-scoping quirk; package devDeps declares jsdom). All resolve via pnpm workspace hoisting today. Cleanup transferred to cq-6 Phase 5 (declare playground graph/pivot/industrial deps)."
+    "unlistedReconciliation": "CQ-S17 reconciled 2026-09-30: check-workspace-manifest-deps forward check scans packages/*/src only (apps/ and scripts/ are out of scope), so the two tools are complementary, not contradictory. unlisted=30: apps/playground 11 (graph/pivot/industrial imports incl. tests+demo pages), scripts/visual-quality 18 (root-manifest renderer imports + playwright), flux-renderers-data test jsdom 1 (workspace-scoping quirk; package devDeps declares jsdom). All resolve via pnpm workspace hoisting today. Cleanup transferred to cq-6 Phase 5 (declare playground graph/pivot/industrial deps).",
+    "depsDevDepsAdjudication": "cq-6 Phase 5 remediation (audit M2): unused deps (3) and devDeps are NOT auto-deletable \u2014 knip reports them per its own resolution rules; each needs a per-package manual confirmation before removal (e.g. devDeps serving test/build configs). Moved to Non-Blocking Follow-ups as a dedicated cleanup pass. playground graph/pivot/industrial dependency declarations: registered as follow-up as well (was incorrectly transferred here by cq-1)."
   },
   "files": [
     "flux-guide/flux-types/common.d.ts",
     "flux-guide/flux-types/index.ts",
     "flux-guide/flux-types/schema.d.ts",
-    "packages/flux-code-editor/src/extensions/sql/index.ts",
-    "packages/flux-compiler/src/schema-compiler/index.ts",
     "packages/flux-renderers-form-advanced/src/detail-view/detail-view-transform.test-support.tsx",
     "packages/flux-renderers-industrial/src/test-support/editor-mock.ts",
     "scripts/analyze-variant-vocabulary.mjs",

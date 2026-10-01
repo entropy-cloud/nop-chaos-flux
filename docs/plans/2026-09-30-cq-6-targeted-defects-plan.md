@@ -1,6 +1,6 @@
 # CQ-6 定向缺陷与卫生批（类型安全 / 调试残留 / 死代码清理 / 测试卫生 / 巨型组件拆分首批）
 
-> Plan Status: active
+> Plan Status: completed
 > As-Built Note: 七 Phase 全部落地;Phase 7 数值目标(<400L/≤20/≤10)经实测裁定未全达并移入 Deferred(理由见该 Phase 回填);Phase 3 as-built 用独立页表替代 DomainRouteEntry.component 字段(元数据表保持纯元数据)
 > Last Reviewed: 2026-09-30
 > Source: `docs/analysis/2026-09-30-code-quality-round1-deep-analysis.md`（CQ-S2/S3/S4/S5/S7/S8/S9/S10/S11/S13/S14/S15/S16/S18、CQ-T9/T10/T11、CQ-S1 清理面）+ 首轮独立评审 live 勘误
@@ -77,7 +77,7 @@ Targets: gantt.tsx、evaluator.ts、renderer-api.ts、compound.ts、source-compi
 
 - Item Types: `Proof | Fix`
 
-- [x] Proof：evaluator characterisation 矩阵 20 用例（合法组合 × 5 算子,含 bigint 混算抛错/字符串拼接/NaN 路径的实况钉住）；非法组合诊断 3 用例先红后绿（对象 `<`/`>`/`+` → undefined + reportError）
+- [x] Proof：evaluator characterisation 矩阵 19 用例（合法组合 × 5 算子,含 bigint 混算抛错/字符串拼接/NaN 路径的实况钉住）；非法组合诊断 3 用例先红后绿（对象 `<`/`>`/`+` → undefined + reportError）
 - [x] Fix：gantt `createInitialStore(resolved: Readonly<RendererResolvedProps<GanttSchema>>)`(11 处 cast 清零,全文件 as any=0);evaluator `+`/`<`/`<=`/`>`/`>=` typeof 归一化 + reportIllegalOperand 诊断通道(undefined+reportError);renderer-api functions/filters unknown 化(全仓 typecheck 零破坏);compound.ts 收敛为 readPropsRecord/writePropsRecord 双具名转换缝(as unknown as 仅存于两 helper 内部,7→3);source-compiler 增 `asRuntimeValue<T>` 单点输出断言缝(6 处 inline cast 清零)
 - [x] Proof：flux-formula 235(matrix 23+全套)/flux-core/industrial 1611/flux-compiler 553/scheduling 1070 全绿
 
@@ -110,7 +110,7 @@ Targets: `apps/playground/src/App.tsx`、`domain-route-entries.ts`
 
 - [x] Proof：`domain-route-pages.test.tsx` 对账测试(entries 表 ↔ page 表双向,dingtalk-flow-demo 显式登记为无 page 夹具);app-route-resilience 同套件绿
 - [x] Fix：**as-built**:`domain-route-pages.tsx` 新模块承载 `DOMAIN_ROUTE_PAGES` 查表(78 条,自持 46 个 lazy 定义+32 个直接页面 import),App.tsx domain case 退化为查表+DomainNotFound 兜底;**DomainRouteEntry 未增 component 字段**(元数据表保持纯元数据,页表独立——二者由对账测试钉住,效果等同且避免元数据模块 React 化);kind-switch 6 case 保留
-- [x] Proof：playground 408 绿(含新对账 2 用例+resilience);App.tsx 557→398 行
+- [x] Proof：playground 408 绿(含新对账 2 用例+resilience);App.tsx 556→261 行
 
 Exit Criteria:
 
@@ -139,7 +139,7 @@ Targets: cq-1 Phase 1 基线快照内经验证的死文件（ding-flow-canvas-ov
 
 - Item Types: `Fix | Proof`
 
-- [x] Fix：cq-1 基线已先行落地;删除 7 个验证死文件(ding-flow-canvas-overlay/diff-gutter/cell-editor/scheduling 4 barrel)+2 个零消费 Scada 别名;2 文件经 grep 证实有引用**保留**(schema-compiler/index.ts→wizard 测试引用;sql/index.ts→use-sql-editor-state)——审计口径外的 2 个 SKIP 是删除前逐文件复查的价值证明;knip 基线 files 28→21 收缩
+- [x] Fix：cq-1 基线已先行落地;删除 7 个验证死文件(ding-flow-canvas-overlay/diff-gutter/cell-editor/scheduling 4 barrel)+2 个零消费 Scada 别名;首轮 grep 误报导致 schema-compiler/index.ts 与 sql/index.ts 被保守保留——closure audit M1 精确复核证实两文件引用为零(此前 grep 命中的是目录前缀/基线自登记行),已补删并收缩基线 files 21→19;教训:死文件判定必须对完整 specifier 精确 grep
 - [x] Proof：force test 78/78 绿;knip 门禁收缩后绿
 
 Exit Criteria:
@@ -159,7 +159,7 @@ Targets: branch-fill-2、auto-layout-guards:232、debug-canvas.spec、field-defa
 
 Exit Criteria:
 
-- [x] `expect(true)` 生产断言清零(残留 3 处均为注释引用/诊断 spec);≥100ms 睡眠 3 处注记保留(dropdown 860ms+rAF 语义/input-suggest debounce/conversation-switch 流收尾),清单在 plan 本 Phase
+- [x] `expect(true)` 弱断言语义清零(grep 残留 4 处:2 注释引用、1 诊断 spec、1 waitFor 轮询回调内的等待机制退化用法——非弱断言语义);≥100ms 睡眠治理为 hotspot 局部全量(field-default 12 处)+3 组注记保留;其余 ~13 处(form-shell 400ms×5 等)未治理未注记——登记 follow-up(下方)
 - [x] 受影响单测全绿
 
 ### Phase 7 - 巨型组件拆分首批
@@ -192,7 +192,7 @@ Exit Criteria:
 - [x] cq-1 各基线同步收缩后仍绿（knip/console/duplicates 三门禁复跑绿）
 - [x] owner docs：No owner-doc update required（无契约/设计变更；路由页表为 playground 内部结构并由对账测试钉住）
 - [x] 不存在被静默降级的 in-scope live defect（Phase 7 数值裁定为 optimization candidate 非缺陷;两次红→绿循环——vi.mock 迁移坑与 fake-timer rAF 均由测试当场拦截）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（audit 进行中）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure）
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -244,13 +244,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<完成时填写>>
+Status Note: 七 Phase 落地。独立 fresh-session closure audit 首轮 verdict `issues`（0 Blocker + 3 Major + 6 Minor,全部为文档/裁定记录层面失实,无代码返工）：M1 两 SKIP 文件的保留理由不可复现（grep 误报,精确复核后补删,基线 21→19）;M2 deps/devDeps 零处置零裁定（补裁定登记 + follow-up 转移）;M3 dev log 记录被回退的中间实现（已更正为最终 as-built）。全部 remediation 后标记 completed。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<>>
-- Evidence: <<>>
+- Auditor / Agent: 独立子 agent（fresh session，agent_33425085）
+- Verdict: 首轮 `issues`（3 Major + 6 Minor,无代码返工需求）→ remediation → 复核
+- Evidence: 审计独立复跑 typecheck 42/42、check exit 0、focused 全绿（formula 235/playground 408/form-advanced 1144/flow 274/report 206/scheduling 1070/ai 838/industrial 1611/core 534/compiler 553）;矩阵断言抽 5 项 JS 语义核对全对;use-kanban-board-state 与被删区域逐字等价（连中文注释与缩进怪癖原样）;Deferred 五条裁定（kanban 剩余/refs 回退/CQ-S6/巨型函数/门禁）逐条核实成立。
 
 Follow-up:
 
-- <<>>
+- knip unused deps/devDeps 清理 + playground 三依赖声明（audit M2 登记位）
+- ≥100ms 睡眠存量 ~13 处治理（audit m5 登记位）
+- CQ-S15 watch-only（本 plan Deferred 跟踪位）

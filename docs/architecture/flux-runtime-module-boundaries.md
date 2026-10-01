@@ -66,7 +66,7 @@ Use `docs/references/architecture-guardrails-from-bugs.md` for detailed bug-to-g
 
 - `packages/flux-compiler/src/schema-compiler.ts`
   - top-level compiler entry and orchestration
-- `packages/flux-compiler/src/schema-compiler/index.ts`
+- `packages/flux-compiler/src/schema-compiler.ts`
   - compiler submodule composition and re-exports for nested region helpers now owned by `@nop-chaos/flux-core`
 - `packages/flux-compiler/src/schema-compiler/fields.ts`
   - renderer field classification helpers and meta-program compilation
