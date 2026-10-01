@@ -166,8 +166,8 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
     title: '仪表盘（运营大屏）',
     category: 'visualization',
     description:
-      '模拟运营大屏：6 张 KPI 卡片（订单总数/今日订单/活跃/待付款/收入/增长率）+ 3 图（趋势面积图/每日订单柱状图/渠道占比饼图）+ 2 表（最近订单/待审批任务）。6 个 data-source 并行取数。',
-    features: ['stat cards', 'chart（area/pie/bar）', 'data-source 并行', 'table ×2'],
+      '模拟运营大屏：6 张 KPI 卡片（订单总数/今日订单/活跃/待付款/收入/增长率）+ 趋势面积图、每日订单柱状图、渠道占比饼图 + 最近订单与待审批两张明细表，多路数据并行加载。',
+    features: ['KPI 卡片', '趋势图表', '渠道占比', '订单明细'],
   },
   {
     id: 'sundial-workbench',

@@ -61,7 +61,7 @@
 
 ## R10 编辑器演示页治理（Word / Code / SCADA / Dashboard 杂项）【P2/P3】
 
-- Findings: WD-1（角标残缺、内容空）；WD-2（空态文案重复）；CE-1（编辑器全空、SQL 高度塌陷）；SC-1/2/3/4（工具栏纯文本双排、图元库无缩略图、LIVE 调试块、DnD 复核）；DB-3（拖拽加面板无反馈）、DB-4（千分位）；PD-5（Page Designer inspector 开发者向文案/原始 JSON 编辑面治理——R5 Non-Goal 排除后归属此行，防孤儿）；G-3 中英混排与 G-4 开发文案下墙的各页落地。
+- Findings: WD-1（角标残缺、内容空）；WD-2（空态文案冗余）；CE-1（特性演示编辑器空、SQL 高度塌陷——行号/主题需执行期核验裁定）；SC-1/2/4（工具栏纯文本双排、图元库无缩略图、DnD 复核）；SC-3 改判（LIVE 块经 R1 review 证实为 tank_level 数据绑定演示而非调试残留，真实问题= G-4 开发文案上墙）；DB-3（拖拽加面板无反馈，人工复核）、DB-4（千分位+开发文案+巨型返回按钮）；OP-2（运营大屏千分位/今日订单 0/实现标签 chip）；PD-5（Page Designer inspector 开发者向文案/原始 JSON 编辑面治理——R5 Non-Goal 排除后归属此行，防孤儿）；G-3 中英混排与 G-4 开发文案下墙的各页落地。
 - Owner: 各演示页 + 对应包的演示数据。
 - Proof: 每页打开即有代表性内容；无调试残留；中英文案统一策略落地。
 
@@ -75,22 +75,22 @@
 
 ## 执行顺序与状态
 
-| #   | Work item                 | 优先级 | Plan                                                       | 状态                                                                                                                    |
-| --- | ------------------------- | ------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| R1  | Dashboard Editor 图表断链 | P0     | `docs/plans/2026-10-01-ux-r1-dashboard-chart-plan.md`      | **completed**（4cabab47c）                                                                                              |
-| R2  | 透视表明细空白            | P0     | `docs/plans/2026-10-01-ux-r2-pivot-detail-cells-plan.md`   | **completed**（5e8143ae4）                                                                                              |
-| R3  | 地图渲染                  | P0     | `docs/plans/2026-10-01-ux-r3-map-render-plan.md`           | **completed**（d59f38f5e；诊断反转：实锤投影缺失 + 主题探针缺陷）                                                       |
-| R4  | 电子表格公式求值          | P0     | `docs/plans/2026-10-01-ux-r4-spreadsheet-formula-plan.md`  | **completed**（独立 closure audit approved；执行期补修 type-to-edit 多字符截断 + 行/列 shift 扩选非连续区间）           |
-| R5  | Page Designer 画布        | P0/P1  | `docs/plans/2026-10-01-ux-r5-page-designer-canvas-plan.md` | **completed**（review 2 轮 pass + 独立 closure audit approved；空容器投影/根回退提示/预览面板隐藏/对比度治理）          |
-| R6  | 全局外壳治理              | P1/P2  | `docs/plans/2026-10-01-ux-r6-shell-chrome-plan.md`         | **completed**（closure audit approved；G-1 计数改判为误读，launcher 底部停靠 + 主题单一路径）                           |
-| R7  | 流程设计器家族视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r7-flow-designer-visual-plan.md` | **completed**（closure audit 2 轮 + TF-1 reviewer 再裁定 approved；FD-1/2/2b/3/4/5/6+TF-2 落地，TF-1 改判归边路由引擎） |
-| R8  | 排程组件视口与视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r8-scheduling-viewport-plan.md`  | **completed**（closure audit 4 轮 approved；GT-1/2、CA-1/2、KB-1 落地，GT-3 登记 follow-up）                            |
-| R9  | Report Designer 检查器    | P1/P2  | `docs/plans/2026-10-01-ux-r9-report-designer-plan.md`      | **completed**（closure audit approved；示例报表 + cell 样式面板 + 绑定指示 12px）                                       |
-| R10 | 编辑器演示页治理          | P2/P3  | `docs/plans/2026-10-01-ux-r10-editor-demos-plan.md`        | draft（review 共识后执行）                                                                                              |
+| #   | Work item                 | 优先级 | Plan                                                       | 状态                                                                                                                                                                                 |
+| --- | ------------------------- | ------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R1  | Dashboard Editor 图表断链 | P0     | `docs/plans/2026-10-01-ux-r1-dashboard-chart-plan.md`      | **completed**（4cabab47c）                                                                                                                                                           |
+| R2  | 透视表明细空白            | P0     | `docs/plans/2026-10-01-ux-r2-pivot-detail-cells-plan.md`   | **completed**（5e8143ae4）                                                                                                                                                           |
+| R3  | 地图渲染                  | P0     | `docs/plans/2026-10-01-ux-r3-map-render-plan.md`           | **completed**（d59f38f5e；诊断反转：实锤投影缺失 + 主题探针缺陷）                                                                                                                    |
+| R4  | 电子表格公式求值          | P0     | `docs/plans/2026-10-01-ux-r4-spreadsheet-formula-plan.md`  | **completed**（独立 closure audit approved；执行期补修 type-to-edit 多字符截断 + 行/列 shift 扩选非连续区间）                                                                        |
+| R5  | Page Designer 画布        | P0/P1  | `docs/plans/2026-10-01-ux-r5-page-designer-canvas-plan.md` | **completed**（review 2 轮 pass + 独立 closure audit approved；空容器投影/根回退提示/预览面板隐藏/对比度治理）                                                                       |
+| R6  | 全局外壳治理              | P1/P2  | `docs/plans/2026-10-01-ux-r6-shell-chrome-plan.md`         | **completed**（closure audit approved；G-1 计数改判为误读，launcher 底部停靠 + 主题单一路径）                                                                                        |
+| R7  | 流程设计器家族视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r7-flow-designer-visual-plan.md` | **completed**（closure audit 2 轮 + TF-1 reviewer 再裁定 approved；FD-1/2/2b/3/4/5/6+TF-2 落地，TF-1 改判归边路由引擎）                                                              |
+| R8  | 排程组件视口与视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r8-scheduling-viewport-plan.md`  | **completed**（closure audit 4 轮 approved；GT-1/2、CA-1/2、KB-1 落地，GT-3 登记 follow-up）                                                                                         |
+| R9  | Report Designer 检查器    | P1/P2  | `docs/plans/2026-10-01-ux-r9-report-designer-plan.md`      | **completed**（closure audit approved；示例报表 + cell 样式面板 + 绑定指示 12px）                                                                                                    |
+| R10 | 编辑器演示页治理          | P2/P3  | `docs/plans/2026-10-01-ux-r10-editor-demos-plan.md`        | **completed**（review 2 轮共识 + closure audit approved；Word/Code 内容、SCADA 分组/缩略图/G-4 折叠、大屏千分位、PD-5 文案与 FieldSet 契约；SC-3 误诊纠正：LIVE 块实为数据绑定演示） |
 
 ## 会话交接（2026-10-01）
 
-- R1-R9 已完成并提交（各 plan 见上表；closure audit 记录在各 plan Closure 节）。R10 plan 已起草（draft，待独立 review 共识后执行）。R10 完成后执行收敛复审计（fresh-eyes 截图重走 19 路由，无新 finding 判收敛）。
+- R1-R10 全部收口（各 plan 见上表；closure audit 记录在各 plan Closure 节；R10 经 review 2 轮共识 + closure audit approved）。收敛复审计（fresh-eyes 截图重走 19 路由，无新 finding 判收敛）为下一动作。
 - 执行纪律要点（R6-R8 教训）：①plan 严禁预记 closure audit 结论（R7/R8 均犯，Blocker 级）；②共识后执行；③勾选项必须与 live 一致（R8 r1：owner doc 勾了但没写）。
 
 完成 R1–R10 后进行一轮复审计（fresh eyes 重走截图对比），无新 finding 才判收敛。

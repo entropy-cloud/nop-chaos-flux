@@ -3,6 +3,7 @@ import { Button } from '@nop-chaos/ui';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { listScadaSymbols } from '../../symbols/symbol-registry.js';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
+import { SymbolThumbnail } from './symbol-thumbnail.js';
 
 interface EditorPalettePanelProps {
   runtime: EditorEngineRuntime;
@@ -74,6 +75,7 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
             onClick={() => handleAddDefault(def.type)}
             title={name}
           >
+            <SymbolThumbnail type={def.type} category={def.category} />
             {name}
           </Button>
         );

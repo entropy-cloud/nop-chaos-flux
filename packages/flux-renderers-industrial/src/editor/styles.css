@@ -57,6 +57,17 @@
   flex-wrap: wrap;
 }
 
+/* ux-r10 SC-1 分组容器化：每组建一个有界容器（描边圆角盒），换行发生在组间而非组内
+   散落——视觉层级与 ButtonGroup 语义对齐。flex-wrap 契约规则（上方两条）保持不变。 */
+.nop-scada-editor-toolbox-group {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--nop-border, #e2e8f0);
+  border-radius: 6px;
+  background: var(--nop-surface, #ffffff);
+  padding: 1px 2px;
+}
+
 /* 状态栏（含 undo/redo 边界提示，M1 占位）。 */
 .nop-scada-editor-status-bar {
   display: flex;
@@ -158,6 +169,17 @@
 .nop-scada-editor-palette-item[aria-disabled='true'] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ux-r10 SC-2：形状级缩略图——固定占位盒避免不同图元名称长度导致图标列错位。 */
+.nop-scada-editor-palette-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--nop-body-copy, #64748b);
 }
 
 .nop-scada-editor-field-error {

@@ -113,14 +113,14 @@ export const formRendererDefinition: RendererDefinition = {
       shape: { kind: 'string' },
       displayName: 'Status Path',
       description:
-        'Publishes the readonly form status summary to parent scope. Dynamic rerouting is supported and recreates the form owner so the old path is cleared during replacement disposal.',
+        'Scope path that publishes the form status summary (validation and touch state) to the parent scope.',
       editorType: 'path',
     },
     valuesPath: {
       shape: { kind: 'string' },
       displayName: 'Values Path',
       description:
-        'Publishes the readonly form values snapshot to parent scope. Dynamic rerouting is supported and recreates the form owner so the old path is cleared during replacement disposal.',
+        'Scope path that publishes a snapshot of the current form values to the parent scope.',
       editorType: 'path',
     },
     mode: {

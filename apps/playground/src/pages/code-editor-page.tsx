@@ -20,11 +20,28 @@ const schema = {
         colorizeSql: 'SELECT id, name, email\nFROM users\nWHERE active = 1\nORDER BY name ASC;',
         colorizeJson:
           '{\n  "name": "flux",\n  "version": 3,\n  "features": ["diff", "colorize"]\n}',
+        // ux-r10 ce1: 每个特性演示编辑器预置代表性示例——value 静态 prop 在有 name 时
+        // 不参与绑定（useCodeEditorBinding 仅无 name 时回退 props.value），示例一律走 form data。
+        expression: 'IF(data.age > 18, CONCAT("Adult: ", data.name), "Minor")',
+        templateExpr: 'Hello {UPPER(data.name)}, order {data.order.id} is ready.',
+        expressionRemote: 'CONCAT(user.name, " @ ", tenantId)',
+        sql: 'SELECT u.username, COUNT(o.id) AS order_count, SUM(o.amount) AS total\nFROM users u\nLEFT JOIN orders o ON o.user_id = u.id\nWHERE o.status = \'paid\'\nGROUP BY u.username\nORDER BY total DESC\nLIMIT 10;',
+        sqlEnhanced:
+          '/* demo：Format / Snippets / 变量面板 / 运行 */\nSELECT u.username, o.amount\nFROM users u\nINNER JOIN orders o ON o.user_id = u.id\nWHERE u.id = #{userId}\nORDER BY o.amount DESC;',
+        jsonSchema:
+          '{\n  "server": {\n    "host": "0.0.0.0",\n    "port": 8080\n  },\n  "features": ["format", "fold"],\n  "retries": 3\n}',
+        javascriptCode:
+          'function formatPrice(amount, currency = "CNY") {\n  const formatted = amount.toLocaleString("zh-CN", {\n    minimumFractionDigits: 2,\n  });\n  return `${currency} ${formatted}`;\n}\n\nconsole.log(formatPrice(104663.7));',
+        cssEditor:
+          '.kpi-card {\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n  padding: 16px;\n  border-radius: 12px;\n  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);\n}',
+        plaintextEditor: 'Release 2.6.0\n- CodeMirror 6 表达式补全\n- SQL 执行预览\n- JSON 折叠',
+        readOnlyCode: 'const greeting = "Hello, World!";\nconsole.log(greeting);',
       },
       body: [
         {
           type: 'code-editor',
           name: 'expression',
+          testid: 'code-editor-expression',
           label: 'Expression Editor (with completion)',
           language: 'expression',
           mode: 'expression',
@@ -82,6 +99,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'templateExpr',
+          testid: 'code-editor-template',
           label: 'Template Mode',
           language: 'expression',
           mode: 'template',
@@ -110,6 +128,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'expressionRemote',
+          testid: 'code-editor-expression-remote',
           label: 'Expression Editor (remote source)',
           language: 'expression',
           mode: 'expression',
@@ -127,6 +146,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'sql',
+          testid: 'code-editor-sql',
           label: 'SQL Editor',
           language: 'sql',
           height: 300,
@@ -161,6 +181,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'sqlEnhanced',
+          testid: 'code-editor-sql-enhanced',
           label: 'SQL Editor (Format + Snippets + Variables + Execution)',
           language: 'sql',
           height: 400,
@@ -250,6 +271,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'jsonSchema',
+          testid: 'code-editor-json',
           label: 'JSON Editor (Fullscreen)',
           language: 'json',
           height: 200,
@@ -261,6 +283,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'javascriptCode',
+          testid: 'code-editor-javascript',
           label: 'JavaScript Editor',
           language: 'javascript',
           height: 200,
@@ -270,16 +293,17 @@ const schema = {
         {
           type: 'code-editor',
           name: 'readOnlyCode',
+          testid: 'code-editor-readonly',
           label: 'Read-Only Viewer',
           language: 'javascript',
           readOnly: true,
-          value: 'const greeting = "Hello, World!";\nconsole.log(greeting);',
           lineNumbers: true,
           editorTheme: 'dark',
         },
         {
           type: 'code-editor',
           name: 'cssEditor',
+          testid: 'code-editor-css',
           label: 'CSS Editor',
           language: 'css',
           height: 150,
@@ -289,6 +313,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'plaintextEditor',
+          testid: 'code-editor-plaintext',
           label: 'Plain Text',
           language: 'plaintext',
           height: 100,
@@ -297,6 +322,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'colorizeJs',
+          testid: 'code-editor-colorize-js',
           label: 'Colorized JS (read-only highlight)',
           language: 'javascript',
           colorize: true,
@@ -305,6 +331,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'colorizeSql',
+          testid: 'code-editor-colorize-sql',
           label: 'Colorized SQL (read-only highlight)',
           language: 'sql',
           colorize: true,
@@ -313,6 +340,7 @@ const schema = {
         {
           type: 'code-editor',
           name: 'colorizeJson',
+          testid: 'code-editor-colorize-json',
           label: 'Colorized JSON (dark, read-only highlight)',
           language: 'json',
           colorize: true,

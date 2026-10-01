@@ -9,7 +9,6 @@ import { getComputedStyleValue } from './helpers/visual-assert.js';
  * 全部程序化判据（2026-08-28 快照政策），零截图。
  */
 
-
 async function openDashboardDemo(page: import('@playwright/test').Page) {
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.goto('/#/dashboard-demo', { waitUntil: 'commit' });
@@ -43,7 +42,9 @@ interface PreviewGeometry {
   panels: Record<string, PanelGeometry>;
 }
 
-async function readPreviewGeometry(page: import('@playwright/test').Page): Promise<PreviewGeometry> {
+async function readPreviewGeometry(
+  page: import('@playwright/test').Page,
+): Promise<PreviewGeometry> {
   return page.evaluate(() => {
     const preview = document.querySelector('[data-slot="dashboard-editor-preview"]');
     const canvas = preview?.querySelector('[data-slot="dashboard-canvas"]');
@@ -78,16 +79,22 @@ test.describe('Dashboard demo — runtime adaptive geometry (A1)', () => {
     const mismatchPx = async (): Promise<number> => {
       const g = await readPreviewGeometry(page);
       const cw = (g.canvasWidth - 11 * 8) / 12;
+      // ux-r10 勘误：R1 起 DEFAULT_LAYOUT_PANELS 的 table-orders 为 x:0 w:12（通栏表），
+      // 本期望表仍停留在 6 列旧默认——自 R1 后全量 e2e 未再整体跑过，属于陈旧期望
+      // （本轮探针实证：仅 table-orders 差 252px = 12 列实际宽 - 6 列期望宽）。按现行默认修正。
       const expected: Record<string, number> = {
         'kpi-revenue': 3 * cw + 2 * 8,
+        'kpi-orders': 3 * cw + 2 * 8,
         'chart-sales': 6 * cw + 5 * 8,
-        'table-orders': 6 * cw + 5 * 8,
+        'table-orders': 12 * cw + 11 * 8,
       };
       return Math.max(
         ...Object.entries(expected).map(([id, v]) => Math.abs((g.panels[id]?.width ?? 0) - v)),
       );
     };
-    await expect.poll(mismatchPx, { message: 'panels settle on the measured canvas width' }).toBeLessThan(1);
+    await expect
+      .poll(mismatchPx, { message: 'panels settle on the measured canvas width' })
+      .toBeLessThan(1);
 
     const wide = await readPreviewGeometry(page);
     expect(wide.canvasWidth).toBeGreaterThan(0);
@@ -128,7 +135,8 @@ test.describe('Dashboard demo — editor arrow-key navigation (A2)', () => {
     const orders = page.locator('[data-slot="dashboard-editor-panel"][data-panel-id="kpi-orders"]');
 
     // stride = 同行相邻面板 left 差（跨 3 列），由 live DOM 推导，不假设容器宽
-    const threeColSpan = (await orders.evaluate((el) => parseFloat(el.style.left))) -
+    const threeColSpan =
+      (await orders.evaluate((el) => parseFloat(el.style.left))) -
       (await panel.evaluate((el) => parseFloat(el.style.left)));
     const leftBefore = await panel.evaluate((el) => parseFloat(el.style.left));
 

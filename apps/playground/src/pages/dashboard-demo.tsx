@@ -27,7 +27,7 @@ const DEFAULT_LAYOUT_PANELS = [
     y: 0,
     w: 3,
     h: 2,
-    props: { value: '${revenue}', delta: 12.5 },
+    props: { value: '${revenue}', delta: 12.5, formatter: { thousands: true, decimals: 0 } },
   },
   {
     id: 'kpi-orders',
@@ -37,7 +37,7 @@ const DEFAULT_LAYOUT_PANELS = [
     y: 0,
     w: 3,
     h: 2,
-    props: { value: '${orders}', delta: { value: -3.2, direction: 'down' } },
+    props: { value: '${orders}', delta: { value: -3.2, direction: 'down' }, formatter: { thousands: true, decimals: 0 } },
   },
   {
     id: 'chart-sales',
@@ -159,6 +159,7 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
               type: 'button',
               label: '← Back to Home',
               testid: 'dashboard-back',
+              className: 'w-fit self-start',
               onClick: { action: 'dashboardDemo:back' },
             },
             {
@@ -199,10 +200,16 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
           BI Dashboard · editor-core
         </p>
         <h1 className="m-0 mb-2">dashboard-editor 演示页</h1>
-        <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
-          WorkbenchShell 三段式外壳（palette + canvas + inspector）+ editor-core 会话（undo/redo/commit）+
-          网格拖拽/缩放/吸附。保存后布局持久化到 localStorage，刷新页面自动还原；Editor 内 Preview 切换展示运行态渲染。
-        </p>
+        {/* ux-r10 DB-4/G-4：开发态说明收进折叠说明——打开即看板 */}
+        <details className="mb-2 text-sm text-[var(--nop-body-copy)]">
+          <summary className="cursor-pointer select-none text-[13px] font-medium opacity-80">
+            页面说明（外壳构成 / 持久化语义）
+          </summary>
+          <p className="mt-2 leading-relaxed">
+            WorkbenchShell 三段式外壳（palette + canvas + inspector）+ editor-core 会话（undo/redo/commit）+
+            网格拖拽/缩放/吸附。保存后布局持久化到 localStorage，刷新页面自动还原；Editor 内 Preview 切换展示运行态渲染。
+          </p>
+        </details>
         <div className="mt-8">
           <SchemaRenderer
             schemaUrl="playground://pages/dashboard-demo"

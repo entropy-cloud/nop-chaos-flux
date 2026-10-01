@@ -292,7 +292,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "${summary?.revenue ?? 0}",
+                  "text": "${summary?.revenueLabel ?? summary?.revenue ?? 0}",
                   "className": "text-3xl font-bold leading-none"
                 },
                 { "type": "text", "text": "元", "className": "text-xs text-muted-foreground mt-2" }

@@ -414,9 +414,15 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       const today = nowStamp().slice(0, 10);
       const todayOrders = db.orders.filter((o) => o.createTime.startsWith(today)).length;
       const avgOrderValue = totalOrders > 0 ? Math.round((revenue / totalOrders) * 100) / 100 : 0;
+      // ux-r10 OP-2：KPI 文本节点直出模板串，千分位在数据侧给成品（revenue 数值保持
+      // 原样供其它消费方比较，revenueLabel 专供展示）。
+      const revenueLabel = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }).format(revenue);
       return {
         status: 0,
-        data: clone({ totalOrders, active, pending, revenue, userCount, todayOrders, avgOrderValue, monthGrowth: '12.5%' }) as T,
+        data: clone({ totalOrders, active, pending, revenue, revenueLabel, userCount, todayOrders, avgOrderValue, monthGrowth: '12.5%' }) as T,
       };
     }
     if (url.includes('/r/Dashboard__trend') && method === 'get') {

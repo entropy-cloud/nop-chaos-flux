@@ -371,6 +371,10 @@ export function createMockDatabase(): MockDatabase {
     }
   }
 
+  // ux-r10 OP-2：运营大屏「今日订单」KPI 按 createTime 当天前缀过滤，固定 2024-07
+  // 种子恒为 0——把最后一单落到今天，演示数据不再开天窗。
+  orders[orders.length - 1].createTime = nowStamp();
+
   const budgets: BudgetRow[] = Array.from({ length: 30 }, (_, i) => ({
     id: `b${i + 1}`,
     department: DEPARTMENT_NAMES[i % DEPARTMENT_NAMES.length],

@@ -201,11 +201,9 @@ export function OutlinePanel({ bridge, showHeader = true }: OutlinePanelProps) {
           {outline.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <FileText className="w-8 h-8 text-[var(--nop-body-copy)] opacity-50 mb-2" />
+              {/* wd2 去冗余：页头已渲染 addHeadingsHint 副标题，空态内不再重复同一句 */}
               <p className="text-xs text-[var(--nop-body-copy)] opacity-70">
                 {t('flux.wordEditor.noHeadings')}
-              </p>
-              <p className="text-[10px] text-[var(--nop-body-copy)] opacity-50 mt-1">
-                {t('flux.wordEditor.addHeadingsHint')}
               </p>
             </div>
           ) : (

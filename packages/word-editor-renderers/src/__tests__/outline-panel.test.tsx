@@ -50,6 +50,13 @@ describe('OutlinePanel', () => {
     expect(screen.getByText('No headings found')).toBeInTheDocument();
   });
 
+  // ux-r10 wd2: 面板头部已含 addHeadingsHint 副标题（word-editor-page），空态内
+  // 再渲染同一句形成语义冗余——空态收敛为单行提示。
+  it('shows exactly one hint line in the empty state (no duplicated add-heading hint)', () => {
+    render(<OutlinePanel bridge={null} />);
+    expect(screen.queryByText('Add headings to see them here')).not.toBeInTheDocument();
+  });
+
   it('shows empty state when bridge has no headings', () => {
     const bridge = createMockBridge([]);
     render(<OutlinePanel bridge={bridge as any} />);

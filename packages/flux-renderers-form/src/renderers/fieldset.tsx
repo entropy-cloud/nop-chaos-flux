@@ -143,6 +143,53 @@ export const fieldsetRendererDefinition: RendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-form',
   defaultSchema: { type: 'fieldset', body: [] },
   component: FieldsetRenderer,
+  // ux-r10 PD-5 裁定：补 propContracts（此前缺失 → page-designer inspector 落原始
+  // JSON 直编兜底）。键集与下方 fields: 元数据 1:1（body 为 region 键，不入契约）。
+  propContracts: {
+    title: {
+      shape: { kind: 'string' },
+      displayName: 'Title',
+      description: 'Fieldset legend text shown above the grouped fields.',
+      editorType: 'text',
+    },
+    collapsible: {
+      shape: { kind: 'boolean' },
+      displayName: 'Collapsible',
+      description: 'When true, the fieldset body can be collapsed via its header.',
+      editorType: 'boolean',
+    },
+    collapsed: {
+      shape: { kind: 'boolean' },
+      displayName: 'Collapsed',
+      description: 'Initial collapsed state when collapsible is true.',
+      editorType: 'boolean',
+    },
+    columnCount: {
+      shape: { kind: 'number' },
+      displayName: 'Column Count',
+      description:
+        'Renders the fieldset body as a CSS grid with the given number of columns. Values < 1 are clamped to 1 (single column).',
+      editorType: 'number',
+    },
+    gap: {
+      shape: { kind: 'unknown' },
+      displayName: 'Gap',
+      description: 'Spacing between body fields (stack-*/hstack-* aliases or a raw length).',
+      editorType: 'gap',
+    },
+    bodyClassName: {
+      shape: { kind: 'string' },
+      displayName: 'Body Class Name',
+      description: 'Additional className applied to the fieldset body region.',
+      editorType: 'text',
+    },
+    titleClassName: {
+      shape: { kind: 'string' },
+      displayName: 'Title Class Name',
+      description: 'Additional className applied to the fieldset title.',
+      editorType: 'text',
+    },
+  },
   fields: [
     { key: 'title', kind: 'prop' },
     { key: 'collapsible', kind: 'prop', valueType: 'boolean' },

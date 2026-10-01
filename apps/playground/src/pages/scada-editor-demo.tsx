@@ -49,7 +49,9 @@ const DEMO_INITIAL_CONFIG = {
       type: 'scada-text',
       x: 220,
       y: 368,
-      text: 'LIVE',
+      // 静态占位取绑定初值格式化结果（tank_level=60, '%d'）——edit 态显示真实读数
+      // 而非 "LIVE" 调试字样（ux-r10 SC-3 产品化裁定：绑定演示保留，静态文本产品化）。
+      text: '60',
       textSize: 18,
       textColor: '#ffffff',
       bindings: { text: { point: 'tank_level', format: '%d' } },
@@ -274,20 +276,26 @@ export function ScadaEditorDemoPage({ onBack }: ScadaEditorDemoPageProps) {
           Industrial HMI Editor · M3
         </p>
         <h1 className="m-0 mb-2">scada-editor-demo 编辑器演示页</h1>
-        <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
-          编辑器完整能力演示：palette 图元库（24 内置图元，拖拽放置）· 画布编辑（单选/框选/拖动/缩放/旋转/成组）
-          · <strong>连线</strong>——按住「管道接头」端点拖到相邻设备（水泵/阀门）释放即可创建连线 ·
-          toolbox 工具箱（对齐×6/分布×2/z-order×4/复制剪切粘贴/undo-redo/导入导出/连接管理/撤销历史/图层树/
-          <strong>模板库</strong>/<strong>站点画面</strong>）· inspector 属性面板（六类字段 +
-          <strong>绑定/状态结构化编辑面</strong>：点引用选择器 + 表达式编辑分离 + junction 连线只读列表）·
-          statusBar（视口/模式/选区/历史深度）。
-        </p>
-        <p className="text-sm leading-relaxed text-[var(--nop-body-copy)] opacity-80">
-          提交语义：commitPolicy 缺省为 manual——编辑停留在 working copy，点 Save 提交并派发 onSave（保存结果见下方
-          「保存 serializedConfig」折叠区）。Edit/Preview 按钮组受控切换 mode prop：preview 态画布只读（R5 双态隔离），
-          且 <strong>模拟数据源自动注入</strong>（tank_level 正弦游走 → 「LIVE」文本实时变化；「注入预览数据」按钮演示
-          component:previewInject 宿主通道，切回 Edit 画布自动还原）。模板库/站点画面为 demo 内存存储——刷新即失。
-        </p>
+        {/* ux-r10 SC-3/G-4：开发态说明收进折叠说明——打开即画布，不用 ~300 字内部文档挡首屏 */}
+        <details className="mb-4 text-sm text-[var(--nop-body-copy)]">
+          <summary className="cursor-pointer select-none text-[13px] font-medium opacity-80">
+            编辑器能力速览（点开查看操作说明与提交语义）
+          </summary>
+          <p className="mt-2 leading-relaxed">
+            编辑器完整能力演示：palette 图元库（24 内置图元，拖拽放置）· 画布编辑（单选/框选/拖动/缩放/旋转/成组）
+            · <strong>连线</strong>——按住「管道接头」端点拖到相邻设备（水泵/阀门）释放即可创建连线 ·
+            toolbox 工具箱（对齐×6/分布×2/z-order×4/复制剪切粘贴/undo-redo/导入导出/连接管理/撤销历史/图层树/
+            <strong>模板库</strong>/<strong>站点画面</strong>）· inspector 属性面板（六类字段 +
+            <strong>绑定/状态结构化编辑面</strong>：点引用选择器 + 表达式编辑分离 + junction 连线只读列表）·
+            statusBar（视口/模式/选区/历史深度）。
+          </p>
+          <p className="mt-2 text-[13px] leading-relaxed opacity-80">
+            提交语义：commitPolicy 缺省为 manual——编辑停留在 working copy，点 Save 提交并派发 onSave（保存结果见下方
+            「保存 serializedConfig」折叠区）。Edit/Preview 按钮组受控切换 mode prop：preview 态画布只读（R5 双态隔离），
+            且 <strong>模拟数据源自动注入</strong>（tank_level 正弦游走 → 液位读数实时变化；「注入预览数据」按钮演示
+            component:previewInject 宿主通道，切回 Edit 画布自动还原）。模板库/站点画面为 demo 内存存储——刷新即失。
+          </p>
+        </details>
         <div className="mt-2">
           <SchemaRenderer
             schemaUrl="playground://pages/scada-editor-demo"
