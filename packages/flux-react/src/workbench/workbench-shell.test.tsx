@@ -37,6 +37,16 @@ describe('WorkbenchShell', () => {
     expect(screen.getByTestId('right-panel-expanded')).toBeTruthy();
   });
 
+  // ux-r11 n1：根容器单列轨道钳制（grid-cols-1 = minmax(0,1fr)）——隐式 auto
+  // 轨道会被宽 header 内容（ribbon 工具条）按 max-content 撑爆视口。
+  it('clamps the single column track to the container (grid-cols-1 on the root)', () => {
+    render(
+      <WorkbenchShell data-testid="wb" header={<div>Header</div>} canvas={<div>Canvas</div>} />,
+    );
+    const root = screen.getByTestId('wb');
+    expect(root.className).toContain('grid-cols-1');
+  });
+
   it('expands collapsed rails from the whole rail surface', () => {
     const onLeftToggle = vi.fn();
     const onRightToggle = vi.fn();

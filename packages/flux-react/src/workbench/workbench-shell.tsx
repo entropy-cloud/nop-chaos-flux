@@ -327,7 +327,11 @@ export function WorkbenchShell({
   return (
     <div
       className={cn(
-        'nop-workbench grid grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3',
+        // ux-r11 n1：单列轨道必须显式 minmax(0,1fr) 钳制——隐式 auto 轨道按
+        // max-content 取尺寸，宽工具条（如 word-editor ribbon 2965px）会把整条
+        // 工作台撑出视口（大纲面板推到 x=2652 成死灰区），子级 overflow-x-auto
+        // 在未钳制轨道上永不生效。
+        'nop-workbench grid grid-cols-1 grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3',
         density === 'default' ? 'p-6' : 'p-0',
         className,
       )}

@@ -6,6 +6,14 @@
 
 export const PAGE_DATA: Record<string, Record<string, unknown>> = {};
 
+// ── Linear 问题列表：筛选根声明默认值（ux-r11 n2 作者契约加固，非缺陷修复——
+// data-source dependsOn 引用的 scope 根应有声明默认值，避免依赖用户输入才物化）。
+PAGE_DATA['linear-issues'] = {
+  filterKeyword: '',
+  filterStatus: '',
+  filterPriority: '',
+};
+
 // ── Dynamic Tabs: remote tab items loaded via DynamicRenderer ──
 PAGE_DATA['dynamic-tabs'] = {
   remoteTabItems: [

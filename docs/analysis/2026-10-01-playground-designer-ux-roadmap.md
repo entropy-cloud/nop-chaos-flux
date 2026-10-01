@@ -73,6 +73,17 @@
 
 - TF-1 整体（error/retry 环回线穿越节点本体）：偏移弧线机制经三种变体探针证伪不足；e6 源端口几何落在邻节点包围盒内使"采样零落入"判据构造性不可满足（布局/缩放跨加载漂移）。归**边路由引擎**（自动避障/端口感知路由）follow-up，见 plan `2026-10-01-ux-r7-flow-designer-visual-plan.md` Recorded Scope Change（经独立 reviewer 再裁定）。
 
+## 收敛复审计登记（R10 后 fresh-eyes 19 路由重走，2026-10-01）
+
+- 复审计结论：**CONVERGENCE: not-reached**——R1-R10 全部 17 个修复面在 live 验证落地（含全部 P0），新发现 2 P1（N-1 Word 工作台爆宽 / N-2 linear-issues 偶发空面板）→ R11 plan（`docs/plans/2026-10-01-ux-r11-convergence-p1-plan.md`）修复/钉住。
+- Follow-up 登记（复审计确认未复现或未修复，非新 P0/P1）：
+  - PR-1（print 样式区输入空无占位；Y 浮点未复现，疑拖拽期才现）
+  - GR-2（graph 邻接边小环——归边路由引擎 follow-up 家族）
+  - OP-1（运营大屏渠道占比卡右缘溢出；首屏 loading 未复现）
+  - DF-1（diff 新增行行号列空白；删除行已修复）
+  - P3 nits：dashboard-demo KPI 轻微裁边 / code-editor SQL 上方灰条 / kanban 卡无日期 / page-designer 叶子字段带容器徽标语义 / debugger launcher 压 palette 底部
+  - N-2 linear-issues 首屏空面板竞态调查（负载下 mount/dispose 时序取证，复现优先；dependsOn 根未初始化机制主张已被运行时源码证伪——source-registry.ts:398 无条件 start）
+
 ## 执行顺序与状态
 
 | #   | Work item                 | 优先级 | Plan                                                       | 状态                                                                                                                                                                                 |
@@ -87,10 +98,11 @@
 | R8  | 排程组件视口与视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r8-scheduling-viewport-plan.md`  | **completed**（closure audit 4 轮 approved；GT-1/2、CA-1/2、KB-1 落地，GT-3 登记 follow-up）                                                                                         |
 | R9  | Report Designer 检查器    | P1/P2  | `docs/plans/2026-10-01-ux-r9-report-designer-plan.md`      | **completed**（closure audit approved；示例报表 + cell 样式面板 + 绑定指示 12px）                                                                                                    |
 | R10 | 编辑器演示页治理          | P2/P3  | `docs/plans/2026-10-01-ux-r10-editor-demos-plan.md`        | **completed**（review 2 轮共识 + closure audit approved；Word/Code 内容、SCADA 分组/缩略图/G-4 折叠、大屏千分位、PD-5 文案与 FieldSet 契约；SC-3 误诊纠正：LIVE 块实为数据绑定演示） |
+| R11 | 收敛复审计 P1 修复        | P1     | `docs/plans/2026-10-01-ux-r11-convergence-p1-plan.md`      | **completed**（review 2 轮 + closure audit 链收口 approved；N-1 grid-cols-1 轨道钳制 + N-2 born-green 稳定性钉 + 作者契约加固；P2 残留登记见上节）                                   |
 
 ## 会话交接（2026-10-01）
 
-- R1-R10 全部收口（各 plan 见上表；closure audit 记录在各 plan Closure 节；R10 经 review 2 轮共识 + closure audit approved）。收敛复审计（fresh-eyes 截图重走 19 路由，无新 finding 判收敛）为下一动作。
+- R1-R10 全部收口并经收敛复审计（fresh-eyes 19 路由重走：17 修复面全过，新发现 2 P1）；R11 修复/钉住后进行二轮收敛复核（仅验 N-1/N-2 修复面 + 抽样），无新 P0/P1 判收敛。
 - 执行纪律要点（R6-R8 教训）：①plan 严禁预记 closure audit 结论（R7/R8 均犯，Blocker 级）；②共识后执行；③勾选项必须与 live 一致（R8 r1：owner doc 勾了但没写）。
 
 完成 R1–R10 后进行一轮复审计（fresh eyes 重走截图对比），无新 finding 才判收敛。
