@@ -304,7 +304,9 @@ export function DesignerXyflowNode(props: NodeProps) {
         onKeyDown={handleNodeKeyDown}
       >
         {renderPorts(nodeType.ports, isTreeMode, portOptions, treeDirection)}
-        {isTreeMode && treeNodeType?.tree?.isTerminal ? (
+        {/* ux-r7 FD-5：terminal 节点仅在无自定义 body 时才走极简圆点渲染；
+            有 body（如 action-flow 的卡片化 end 模板）渲染真卡片，不再裸文字 */}
+        {isTreeMode && treeNodeType?.tree?.isTerminal && !(nodeType.body && isSchemaInput(nodeType.body)) ? (
           <div className="flex flex-col items-center justify-center w-full h-full">
             <div
               className="w-3 h-3 rounded-full bg-muted-foreground/40"
@@ -339,8 +341,9 @@ export function DesignerXyflowNode(props: NodeProps) {
         )}
       </div>
 
+      {/* ux-r7 FD-2b：offset 抬高工具条与节点间距，缓解覆盖上方相邻节点 */}
       {(hasQuickActions || isToolbarVisible) && !isEmptySlot && (
-        <NodeToolbar isVisible={isToolbarVisible} position={Position.Top}>
+        <NodeToolbar isVisible={isToolbarVisible} position={Position.Top} offset={12}>
           <div
             role="toolbar"
             tabIndex={0}

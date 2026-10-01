@@ -31,7 +31,8 @@
   --fd-edge-actions-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   --fd-grid-color: rgba(148, 163, 184, 0.26);
   --fd-minimap-bg: rgba(219, 234, 254, 0.5);
-  --fd-minimap-node: rgba(15, 23, 42, 0.92);
+  /* ux-r7 FD-1：浅色 minimap 节点可读半透明（slate-500/55%）——原 rgba(15,23,42,0.92) 在浅蓝底上近似纯黑块 */
+  --fd-minimap-node: rgba(71, 85, 105, 0.55);
   --fd-minimap-mask: rgba(255, 255, 255, 0.55);
   --fd-edge-stroke: #cacaca;
   --fd-primary: #3296fa;

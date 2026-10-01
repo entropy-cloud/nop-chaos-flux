@@ -99,6 +99,7 @@ Responsibilities:
 Current live baseline (plan 475 Phase 3 contract change):
 
 - the Flow Designer package publishes the `--fd-*` token family on the `.nop-designer` scope in `designer-theme.css` (surface tokens, grid/minimap colors, node accent identity colors, alignment guides)
+- minimap node fill (ux-r7): the light-mode `--fd-minimap-node` must stay a _readable_ value on the light minimap background — `rgba(15,23,42,0.92)` was re-adjudicated as the FD-1 "black blocks" defect and replaced by `rgba(71,85,105,0.55)` (slate-500/55%); consumption passes the token through `style.fill` (React Flow MiniMap), where `var()` resolves normally, so the inline fallback only serves bare hosts and mirrors the light token value
 - consumption sites keep the `var(--fd-x, fallback)` form; the fallback only serves bare hosts that mount designer markup without the `.nop-designer` assembly
 - mode-dependent tokens are re-declared in a `[data-mode='dark']` descendant block; `data-mode` lives on `:root`, matching the theme-tokens dark trigger (single source of truth). Node accent identity colors (`--fd-node-accent-*`) do not flip between modes
 - where possible the published values reference theme-tokens semantic surfaces (`--surface-*`, `--shadow-*`) with literal fallbacks, so classic/glass theme blocks retune designer chrome without extra selectors

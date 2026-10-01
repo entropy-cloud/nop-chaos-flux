@@ -115,7 +115,7 @@ export function DesignerXyflowEdge(props: EdgeProps) {
             aria-label={edgeAriaLabel}
             aria-pressed={props.selected}
             className={cn(
-              'fd-edge-label px-3 py-1.5 rounded-full border border-border text-sm font-medium text-muted-foreground shadow-sm',
+              'fd-edge-label px-3 py-1.5 rounded-full border border-border text-sm font-semibold text-foreground shadow-sm',
               props.selected && 'border-primary text-foreground',
             )}
             style={{

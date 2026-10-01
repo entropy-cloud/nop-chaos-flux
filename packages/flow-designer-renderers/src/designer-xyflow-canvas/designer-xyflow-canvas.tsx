@@ -474,7 +474,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
               zoomable
               bgColor="var(--fd-minimap-bg, rgba(219, 234, 254, 0.5))"
               offsetScale={0}
-              nodeColor={() => 'var(--fd-minimap-node, rgba(15, 23, 42, 0.92))'}
+              nodeColor={() => 'var(--fd-minimap-node, rgba(71, 85, 105, 0.55))'}
               nodeStrokeColor={() => 'var(--fd-edge-stroke, hsl(var(--primary)))'}
               nodeBorderRadius={4}
               maskColor="var(--fd-minimap-mask, rgba(255, 255, 255, 0.55))"

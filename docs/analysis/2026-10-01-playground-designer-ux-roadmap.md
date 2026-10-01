@@ -65,19 +65,23 @@
 - Owner: 各演示页 + 对应包的演示数据。
 - Proof: 每页打开即有代表性内容；无调试残留；中英文案统一策略落地。
 
+## R7 补充登记（执行期，2026-10-01）
+
+- TF-1 整体（error/retry 环回线穿越节点本体）：偏移弧线机制经三种变体探针证伪不足；e6 源端口几何落在邻节点包围盒内使"采样零落入"判据构造性不可满足（布局/缩放跨加载漂移）。归**边路由引擎**（自动避障/端口感知路由）follow-up，见 plan `2026-10-01-ux-r7-flow-designer-visual-plan.md` Recorded Scope Change（经独立 reviewer 再裁定）。
+
 ## 执行顺序与状态
 
-| #   | Work item                 | 优先级 | Plan                                                       | 状态                                                                                                           |
-| --- | ------------------------- | ------ | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| R1  | Dashboard Editor 图表断链 | P0     | `docs/plans/2026-10-01-ux-r1-dashboard-chart-plan.md`      | **completed**（4cabab47c）                                                                                     |
-| R2  | 透视表明细空白            | P0     | `docs/plans/2026-10-01-ux-r2-pivot-detail-cells-plan.md`   | **completed**（5e8143ae4）                                                                                     |
-| R3  | 地图渲染                  | P0     | `docs/plans/2026-10-01-ux-r3-map-render-plan.md`           | **completed**（d59f38f5e；诊断反转：实锤投影缺失 + 主题探针缺陷）                                              |
-| R4  | 电子表格公式求值          | P0     | `docs/plans/2026-10-01-ux-r4-spreadsheet-formula-plan.md`  | **completed**（独立 closure audit approved；执行期补修 type-to-edit 多字符截断 + 行/列 shift 扩选非连续区间）  |
-| R5  | Page Designer 画布        | P0/P1  | `docs/plans/2026-10-01-ux-r5-page-designer-canvas-plan.md` | **completed**（review 2 轮 pass + 独立 closure audit approved；空容器投影/根回退提示/预览面板隐藏/对比度治理） |
-| R6  | 全局外壳治理              | P1/P2  | `docs/plans/2026-10-01-ux-r6-shell-chrome-plan.md`         | **completed**（closure audit approved；G-1 计数改判为误读，launcher 底部停靠 + 主题单一路径）                  |
-| R7  | 流程设计器家族视觉        | P1/P2  | —                                                          | pending                                                                                                        |
-| R8  | 排程组件视口与视觉        | P1/P2  | —                                                          | pending                                                                                                        |
-| R9  | Report Designer 检查器    | P1/P2  | —                                                          | pending                                                                                                        |
-| R10 | 编辑器演示页治理          | P2/P3  | —                                                          | pending                                                                                                        |
+| #   | Work item                 | 优先级 | Plan                                                       | 状态                                                                                                                    |
+| --- | ------------------------- | ------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| R1  | Dashboard Editor 图表断链 | P0     | `docs/plans/2026-10-01-ux-r1-dashboard-chart-plan.md`      | **completed**（4cabab47c）                                                                                              |
+| R2  | 透视表明细空白            | P0     | `docs/plans/2026-10-01-ux-r2-pivot-detail-cells-plan.md`   | **completed**（5e8143ae4）                                                                                              |
+| R3  | 地图渲染                  | P0     | `docs/plans/2026-10-01-ux-r3-map-render-plan.md`           | **completed**（d59f38f5e；诊断反转：实锤投影缺失 + 主题探针缺陷）                                                       |
+| R4  | 电子表格公式求值          | P0     | `docs/plans/2026-10-01-ux-r4-spreadsheet-formula-plan.md`  | **completed**（独立 closure audit approved；执行期补修 type-to-edit 多字符截断 + 行/列 shift 扩选非连续区间）           |
+| R5  | Page Designer 画布        | P0/P1  | `docs/plans/2026-10-01-ux-r5-page-designer-canvas-plan.md` | **completed**（review 2 轮 pass + 独立 closure audit approved；空容器投影/根回退提示/预览面板隐藏/对比度治理）          |
+| R6  | 全局外壳治理              | P1/P2  | `docs/plans/2026-10-01-ux-r6-shell-chrome-plan.md`         | **completed**（closure audit approved；G-1 计数改判为误读，launcher 底部停靠 + 主题单一路径）                           |
+| R7  | 流程设计器家族视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r7-flow-designer-visual-plan.md` | **completed**（closure audit 2 轮 + TF-1 reviewer 再裁定 approved；FD-1/2/2b/3/4/5/6+TF-2 落地，TF-1 改判归边路由引擎） |
+| R8  | 排程组件视口与视觉        | P1/P2  | —                                                          | pending                                                                                                                 |
+| R9  | Report Designer 检查器    | P1/P2  | —                                                          | pending                                                                                                                 |
+| R10 | 编辑器演示页治理          | P2/P3  | —                                                          | pending                                                                                                                 |
 
 完成 R1–R10 后进行一轮复审计（fresh eyes 重走截图对比），无新 finding 才判收敛。

@@ -134,6 +134,21 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
 
   const activeNodeTypeConfig = useNodeTypeConfig(activeNode?.type ?? '');
   const activeInspectorSchema = activeNodeTypeConfig?.inspector?.body;
+  // ux-r7 FD-6/TF-2 名称身份去重：nodeType inspector 已含名称身份字段（name==='label' 或
+  // 以 '.name' 结尾）时跳过内建"名称"字段——否则 workflow 出现双"名称"、taskflow 出现
+  // 恒空内建"名称"+schema Name/Display Name 并存。
+  const schemaHasNameField = (() => {
+    if (!activeInspectorSchema || typeof activeInspectorSchema !== 'object') return false;
+    const visit = (value: unknown): boolean => {
+      if (Array.isArray(value)) return value.some((item) => visit(item));
+      if (value === null || typeof value !== 'object') return false;
+      const record = value as Record<string, unknown>;
+      const name = typeof record['name'] === 'string' ? record['name'] : '';
+      if (name === 'label' || name.endsWith('.name')) return true;
+      return Object.values(record).some((child) => visit(child));
+    };
+    return visit(activeInspectorSchema);
+  })();
   const branchItems = React.useMemo(
     () =>
       Array.isArray(activeNode?.data.branches)
@@ -436,6 +451,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
             </div>
             <div className="fd-panel-card rounded-lg border border-border p-4">
               <div className="flex flex-col gap-4">
+                {!schemaHasNameField ? (
                 <div className="flex flex-col gap-2">
                   <Label className="text-sm font-medium text-foreground">
                     {t('flux.flowDesigner.inspector.name')}
@@ -447,6 +463,7 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
                     onBlur={flushDraft}
                   />
                 </div>
+                ) : null}
                 <div className="flex flex-col gap-2">
                   <Label className="text-sm font-medium text-foreground">
                     {t('flux.flowDesigner.inspector.description')}

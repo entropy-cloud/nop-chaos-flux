@@ -246,13 +246,13 @@
                 },
                 {
                   "type": "text",
-                  "body": "${when}",
+                  "body": "when: ${when}",
                   "data-slot": "af-node-meta",
                   "data-meta-variant": "when"
                 },
                 {
                   "type": "text",
-                  "body": "${timeout}",
+                  "body": "timeout: ${timeout}",
                   "data-slot": "af-node-meta",
                   "data-meta-variant": "timeout"
                 }
@@ -305,20 +305,32 @@
         "icon": "square",
         "body": {
           "type": "flex",
+          "direction": "column",
           "className": "af-node-root",
           "data-slot": "af-node",
           "data-node-variant": "end",
           "items": [
             {
-              "type": "text",
-              "body": "${label}",
-              "data-slot": "af-node-title"
+              "type": "flex",
+              "data-slot": "af-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "square",
+                  "data-slot": "af-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${label}",
+                  "data-slot": "af-node-title"
+                }
+              ]
             }
           ]
         },
         "appearance": {
-          "minWidth": 80,
-          "minHeight": 60
+          "minWidth": 120,
+          "minHeight": 48
         },
         "tree": {
           "allowChild": false,

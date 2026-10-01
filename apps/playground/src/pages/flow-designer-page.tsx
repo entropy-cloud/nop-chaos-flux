@@ -72,9 +72,10 @@ export function FlowDesignerPage({ debuggerController, onBack }: FlowDesignerPag
 
   return (
     <div className="relative h-screen flex flex-col">
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
+      {/* ux-r7 FD-3：例签移入文档流 header 行——absolute 悬浮胶囊与 WorkbenchShell 工具栏同域重叠 */}
+      <div className="flex h-12 shrink-0 items-center justify-center border-b bg-background/80 backdrop-blur-sm">
         <Tabs value={activeExample} onValueChange={(v) => setActiveExample(v as ExampleKey)}>
-          <TabsList className="h-8 bg-background/80 backdrop-blur-sm shadow-sm">
+          <TabsList className="h-8 bg-transparent shadow-none">
             {(Object.entries(EXAMPLES) as [ExampleKey, { label: string }][]).map(
               ([key, { label }]) => (
                 <TabsTrigger key={key} value={key} className="text-xs px-3 h-6">
