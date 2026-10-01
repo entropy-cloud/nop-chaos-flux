@@ -322,6 +322,17 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       }
     }, [store, timelineRef]);
 
+    // ux-r8 GT-1：挂载就绪且今天在 scaleRange 内时自动居中今天（主流 Gantt 基线行为；
+    // 仅初始居中一次，后续滚动不干预）
+    useEffect(() => {
+      if (!ganttReady) return;
+      const today = new Date();
+      const { start, end } = store.scaleRange;
+      if (today >= start && today <= end) {
+        scrollToToday();
+      }
+    }, [ganttReady, scrollToToday, store]);
+
     const scrollToTask = useCallback((taskId: string | number) => {
       const task = store.tasks.get(taskId);
       if (task) {

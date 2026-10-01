@@ -151,3 +151,28 @@ describe('calculateCriticalPath (plan 481 A1)', () => {
     expect(calculateCriticalPath(tasks, links).sort()).toEqual(['T1', 'T2']);
   });
 });
+
+describe('ux-r8 GT-2 demo 拓扑关键路径语义（critical 豁免 project 条带的语义保留证明）', () => {
+  it('双项目 FS 链：唯一零浮动节点为后结束的 project 锚点（渲染豁免前即如此）', () => {
+    // gantt-demo 拓扑同构：两个 project 各带 FS 子链，Beta project 结束最晚
+    const tasks = makeTasks([
+      { id: '1', type: 'project', start: '2026-10-01', end: '2026-10-20' },
+      { id: '2', type: 'task', start: '2026-10-01', end: '2026-10-08' },
+      { id: '3', type: 'task', start: '2026-10-09', end: '2026-10-20' },
+      { id: '10', type: 'project', start: '2026-10-05', end: '2026-12-01' },
+      { id: '11', type: 'task', start: '2026-10-05', end: '2026-10-20' },
+      { id: '12', type: 'task', start: '2026-10-21', end: '2026-11-20' },
+      { id: '13', type: 'task', start: '2026-11-21', end: '2026-12-01' },
+    ]);
+    const links = new Map(
+      [
+        ['l1', { id: 'l1', source: '2', target: '3', type: 'FS', $p: '' }],
+        ['l2', { id: 'l2', source: '11', target: '12', type: 'FS', $p: '' }],
+        ['l3', { id: 'l3', source: '12', target: '13', type: 'FS', $p: '' }],
+      ].map((l) => [l.id, l as never]),
+    );
+    const path = calculateCriticalPath(tasks, links);
+    // 唯一零浮动 = Beta project（maxFinish 锚点）；子任务链有正浮动非 critical
+    expect(path).toEqual(['10']);
+  });
+});

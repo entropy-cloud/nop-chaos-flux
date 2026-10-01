@@ -114,7 +114,9 @@ export function GanttBars({ store, className, selectedTaskId, criticalTaskIds, o
         const isMilestone = task.type === 'milestone';
         const isProject = task.type === 'project';
         const isSelected = selectedTaskId === task.id;
-        const isCritical = criticalTaskIds?.has(task.id) ?? false;
+        // ux-r8 GT-2：critical 条带豁免 project 汇总条——近白卡体上的 2px 红条带视觉退化为
+        // "红线"；汇总锚点的关键性经其子任务条呈现（子条各自携带 data-critical）
+        const isCritical = !isProject && (criticalTaskIds?.has(task.id) ?? false);
 
         if (isMilestone) {
           const size = 12;

@@ -68,7 +68,7 @@ const SAMPLE_KANBAN_DATA = {
     parentId: 'col-todo',
     children: [],
     data: { title: '需求分析', description: '完成用户需求调研和功能规格编写', type: 'task' },
-    meta: { priority: 1, color: '#3b82f6' },
+    meta: { priority: 1, color: '#3b82f6', tags: [{"id": "t1", "text": "调研", "color": "#3b82f6"}, {"id": "t2", "text": "P1", "color": "#ef4444"}], members: [{"id": "m1", "name": "陈晓"}] },
   },
   'card-2': {
     id: 'card-2',
@@ -76,7 +76,7 @@ const SAMPLE_KANBAN_DATA = {
     parentId: 'col-todo',
     children: [],
     data: { title: 'UI 设计评审', description: '审查首页和登录页的交互设计稿', type: 'task' },
-    meta: { priority: 2, color: '#8b5cf6' },
+    meta: { priority: 2, color: '#8b5cf6', tags: [{"id": "t3", "text": "设计", "color": "#8b5cf6"}], members: [{"id": "m2", "name": "林岚"}] },
   },
   'card-3': {
     id: 'card-3',
@@ -84,7 +84,7 @@ const SAMPLE_KANBAN_DATA = {
     parentId: 'col-todo',
     children: [],
     data: { title: '数据库设计', description: '设计核心业务表结构', type: 'task' },
-    meta: { priority: 1, color: '#ef4444' },
+    meta: { priority: 1, color: '#ef4444', tags: [{"id": "t4", "text": "P2", "color": "#f59e0b"}], members: [{"id": "m3", "name": "周然"}] },
   },
   'card-4': {
     id: 'card-4',
@@ -92,7 +92,7 @@ const SAMPLE_KANBAN_DATA = {
     parentId: 'col-progress',
     children: [],
     data: { title: 'API 开发', description: '实现用户模块 RESTful API', type: 'task' },
-    meta: { priority: 1, color: '#f59e0b' },
+    meta: { priority: 1, color: '#f59e0b', tags: [{"id": "t5", "text": "前端", "color": "#10b981"}, {"id": "t6", "text": "P1", "color": "#ef4444"}], members: [{"id": "m1", "name": "陈晓"}, {"id": "m2", "name": "林岚"}] },
   },
   'card-5': {
     id: 'card-5',
@@ -100,7 +100,7 @@ const SAMPLE_KANBAN_DATA = {
     parentId: 'col-progress',
     children: [],
     data: { title: '前端框架搭建', description: '配置构建工具、路由、状态管理', type: 'task' },
-    meta: { priority: 2, color: '#10b981' },
+    meta: { priority: 2, color: '#10b981', tags: [{"id": "t7", "text": "前端", "color": "#10b981"}], members: [{"id": "m3", "name": "周然"}] },
   },
   'card-6': {
     id: 'card-6',
@@ -108,7 +108,7 @@ const SAMPLE_KANBAN_DATA = {
     parentId: 'col-done',
     children: [],
     data: { title: '技术选型文档', description: '确定技术栈和开发规范' },
-    meta: { priority: 3 },
+    meta: { priority: 3, tags: [{"id": "t8", "text": "联调", "color": "#8b5cf6"}], members: [{"id": "m2", "name": "林岚"}] },
   },
   'card-7': {
     id: 'card-7',
@@ -116,7 +116,7 @@ const SAMPLE_KANBAN_DATA = {
     parentId: 'col-done',
     children: [],
     data: { title: '项目初始化', description: '创建仓库、搭建 CI/CD 流水线' },
-    meta: { priority: 3 },
+    meta: { priority: 3, tags: [{"id": "t9", "text": "P0", "color": "#ef4444"}], members: [{"id": "m1", "name": "陈晓"}] },
   },
   'card-8': {
     id: 'card-8',
@@ -124,7 +124,7 @@ const SAMPLE_KANBAN_DATA = {
     parentId: 'col-done',
     children: [],
     data: { title: '环境配置', description: '配置开发/测试/生产环境' },
-    meta: { priority: 3 },
+    meta: { priority: 3, tags: [{"id": "t10", "text": "联调", "color": "#8b5cf6"}], members: [{"id": "m4", "name": "赵磊"}] },
   },
 };
 

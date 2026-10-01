@@ -184,3 +184,26 @@ describe('Gantt listener mount timing (1-7): loading/empty first mount must not 
     expect(document.body.querySelector('[role="dialog"]')).toBeTruthy();
   });
 });
+
+describe('ux-r8 GT-1 挂载居中', () => {
+  it('today 在 scaleRange 内时挂载即居中（scrollLeft 置为今天像素位）', async () => {
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30);
+    const tasks = [
+      { id: 't1', text: 'Span Task', type: 'task', start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10), progress: 0 },
+    ];
+    const props = {
+      ...baseProps,
+      props: { tasks, links: [] } as any,
+      schema: { type: 'gantt' as const, cellWidth: 40, defaultZoom: 'week', taskBarHeight: 28 },
+    };
+    const { container } = render(<Gantt {...(props as any)} />);
+    await waitFor(() => expect(container.querySelector('[data-slot="gantt-today"]')).toBeTruthy(), { timeout: 3000 });
+    // 挂载居中：时间线 scrollLeft 被置为今天像素位（jsdom clientWidth=0 → max(0, x) > 0）
+    const timeline = [...container.querySelectorAll('.overflow-auto')].find((el) => el.querySelector('[data-slot="gantt-today"]')) as HTMLElement | undefined;
+    await waitFor(() => {
+      expect(timeline?.scrollLeft ?? 0).toBeGreaterThan(0);
+    }, { timeout: 3000 });
+  });
+});

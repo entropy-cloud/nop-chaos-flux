@@ -22,6 +22,17 @@ const env: RendererEnv = {
   notify: (level, msg) => console.log(`[${level}] ${msg}`),
 };
 
+
+// ux-r8 GT-1：演示日期相对今天动态生成——打开即与"今天"相关（静态 2026-07/08 日期
+// 使初始视口与当前时间脱节）
+const TODAY = new Date();
+function iso(offsetDays: number): string {
+  const d = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + offsetDays);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 const SAMPLE_GANTT_SCHEMA = {
   type: 'gantt',
   cellWidth: 40,
@@ -37,55 +48,55 @@ const SAMPLE_GANTT_SCHEMA = {
       id: '1',
       text: 'Project Alpha',
       type: 'project',
-      start: '2026-07-01',
-      end: '2026-08-30',
+      start: iso(0),
+      end: iso(60),
       progress: 40,
       children: [
         {
           id: '2',
           text: 'Requirements',
-          start: '2026-07-01',
-          end: '2026-07-10',
+          start: iso(0),
+          end: iso(9),
           progress: 100,
           parent: '1',
         },
         {
           id: '3',
           text: 'Design',
-          start: '2026-07-11',
-          end: '2026-07-25',
+          start: iso(10),
+          end: iso(24),
           progress: 70,
           parent: '1',
         },
         {
           id: '4',
           text: 'Development',
-          start: '2026-07-26',
-          end: '2026-08-15',
+          start: iso(25),
+          end: iso(45),
           progress: 30,
           parent: '1',
           children: [
             {
               id: '5',
               text: 'Frontend',
-              start: '2026-07-26',
-              end: '2026-08-05',
+              start: iso(25),
+              end: iso(35),
               progress: 40,
               parent: '4',
             },
             {
               id: '6',
               text: 'Backend',
-              start: '2026-07-26',
-              end: '2026-08-10',
+              start: iso(25),
+              end: iso(40),
               progress: 25,
               parent: '4',
             },
             {
               id: '7',
               text: 'API Integration',
-              start: '2026-08-01',
-              end: '2026-08-15',
+              start: iso(31),
+              end: iso(45),
               progress: 10,
               parent: '4',
             },
@@ -94,8 +105,8 @@ const SAMPLE_GANTT_SCHEMA = {
         {
           id: '8',
           text: 'Testing',
-          start: '2026-08-16',
-          end: '2026-08-25',
+          start: iso(46),
+          end: iso(55),
           progress: 0,
           parent: '1',
         },
@@ -103,8 +114,8 @@ const SAMPLE_GANTT_SCHEMA = {
           id: '9',
           text: 'Deployment',
           type: 'milestone',
-          start: '2026-08-30',
-          end: '2026-08-30',
+          start: iso(60),
+          end: iso(60),
           parent: '1',
         },
       ],
@@ -113,23 +124,23 @@ const SAMPLE_GANTT_SCHEMA = {
       id: '10',
       text: 'Project Beta',
       type: 'project',
-      start: '2026-07-15',
-      end: '2026-09-15',
+      start: iso(14),
+      end: iso(76),
       progress: 20,
       children: [
         {
           id: '11',
           text: 'Research',
-          start: '2026-07-15',
-          end: '2026-07-31',
+          start: iso(14),
+          end: iso(30),
           progress: 60,
           parent: '10',
         },
         {
           id: '12',
           text: 'Prototype',
-          start: '2026-08-01',
-          end: '2026-08-20',
+          start: iso(31),
+          end: iso(50),
           progress: 10,
           parent: '10',
         },
@@ -137,15 +148,15 @@ const SAMPLE_GANTT_SCHEMA = {
           id: '13',
           text: 'Review',
           type: 'milestone',
-          start: '2026-08-20',
-          end: '2026-08-20',
+          start: iso(50),
+          end: iso(50),
           parent: '10',
         },
         {
           id: '14',
           text: 'Production',
-          start: '2026-08-21',
-          end: '2026-09-15',
+          start: iso(51),
+          end: iso(76),
           progress: 0,
           parent: '10',
         },

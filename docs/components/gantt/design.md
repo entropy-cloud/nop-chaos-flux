@@ -322,6 +322,10 @@ Gantt 是 interaction owner，其状态分三层：
 | ~~`component:scrollTo`~~  | —                  | 未实现（设计超前）                                                             |
 | ~~`component:setZoom`~~   | —                  | 未实现（设计超前）                                                             |
 
+### 8.4 挂载居中默认行为（ux-r8，2026-10-01）
+
+组件挂载就绪（数据非空、loading 结束）且**今天落在 scaleRange 内**时，时间线自动居中到今天（等价 `scrollToToday` 一次，后续滚动不干预）。这是渲染器默认行为（`gantt.tsx` ganttReady 门控 effect），宿主无需逐个挂 `onMount → component:scrollToToday`；今天不在范围内（纯历史/未来排程）时保持数据起点视口，可用既有 action/handle 手动定位。
+
 ## 9. 数据源、表达式、导入能力接入点
 
 ### 9.0 loadAction 入口

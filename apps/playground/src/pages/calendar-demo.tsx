@@ -58,8 +58,10 @@ function generateSampleEvents(): Array<{
     resourceId: string;
     color?: string;
   }> = [];
-  const startDate = new Date(Date.UTC(2026, 6, 1));
-  const _endDate = new Date(Date.UTC(2026, 7, 31));
+  // ux-r8 CA-1：事件锚定今天（当月前后各铺 ~30 天），打开即见排班内容
+  const now = new Date();
+  const startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+  startDate.setUTCDate(startDate.getUTCDate() - 15);
 
   const shiftNames: Record<string, string[]> = {
     shift: ['早班', '中班', '晚班'],
@@ -102,7 +104,8 @@ const SAMPLE_EVENTS = generateSampleEvents();
 const SAMPLE_CALENDAR_SCHEMA = {
   type: 'calendar',
   view: 'month',
-  date: '2026-07-20',
+  // ux-r8 CA-1：不传固定历史日期 → 打开即当前月；CA-2：locale 中文化周表头
+  locale: 'zh-CN',
   showWeekends: true,
   maxConcurrent: 4,
   showCrossDayLines: true,
