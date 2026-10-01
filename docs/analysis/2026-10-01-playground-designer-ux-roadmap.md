@@ -85,7 +85,7 @@
 | R6  | 全局外壳治理              | P1/P2  | `docs/plans/2026-10-01-ux-r6-shell-chrome-plan.md`         | **completed**（closure audit approved；G-1 计数改判为误读，launcher 底部停靠 + 主题单一路径）                           |
 | R7  | 流程设计器家族视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r7-flow-designer-visual-plan.md` | **completed**（closure audit 2 轮 + TF-1 reviewer 再裁定 approved；FD-1/2/2b/3/4/5/6+TF-2 落地，TF-1 改判归边路由引擎） |
 | R8  | 排程组件视口与视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r8-scheduling-viewport-plan.md`  | **completed**（closure audit 4 轮 approved；GT-1/2、CA-1/2、KB-1 落地，GT-3 登记 follow-up）                            |
-| R9  | Report Designer 检查器    | P1/P2  | —                                                          | pending                                                                                                                 |
+| R9  | Report Designer 检查器    | P1/P2  | `docs/plans/2026-10-01-ux-r9-report-designer-plan.md`      | **completed**（closure audit approved；示例报表 + cell 样式面板 + 绑定指示 12px）                                       |
 | R10 | 编辑器演示页治理          | P2/P3  | —                                                          | pending                                                                                                                 |
 
 完成 R1–R10 后进行一轮复审计（fresh eyes 重走截图对比），无新 finding 才判收敛。

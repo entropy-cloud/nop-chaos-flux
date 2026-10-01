@@ -1,6 +1,6 @@
 # UX-R9 Report Designer 检查器与首屏内容
 
-> Plan Status: completed（closure audit 第 1 轮 pending——见 Closure）
+> Plan Status: completed
 > Last Reviewed: 2026-10-01
 > Source: `docs/analysis/2026-10-01-playground-designer-ux-audit.md`（RD-1/2/3）、`docs/analysis/2026-10-01-playground-designer-ux-roadmap.md` R9
 > Related: `apps/playground/src/pages/report-designer-demo.tsx`（demo owner）、`packages/report-designer-core/`（config 契约）、`packages/spreadsheet-core/`（cell style 命令面）
@@ -61,7 +61,7 @@
 
 ### Phase 1 - 示例报表与 cell 检查器
 
-Status: planned
+Status: completed
 Targets: `report-designer-demo.tsx`
 
 - Item Types: `Proof`, `Fix`
@@ -78,7 +78,7 @@ Exit Criteria:
 
 ### Phase 2 - 绑定指示可读性
 
-Status: planned
+Status: completed
 Targets: `packages/spreadsheet-renderers/src/canvas-styles.css`
 
 - Item Types: `Proof`, `Fix`
@@ -111,18 +111,19 @@ Exit Criteria:
 - [x] `pnpm test`（78 tasks 全绿：playground 408 等）
 - [x] `pnpm check`（exit 0，零新增红项；report-designer-demo 741 行超限触发拆分后消除）
 - [x] owner doc 同步裁定：No owner-doc update required——最终落地为 demo 本地自定义 renderer（闭包桥接），未改 report-inspector/design.md §8 预告的 namespace 通道契约本身
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 
 ## Non-Blocking Follow-ups
 
+- sheet/row/column/range 检查器动态文本（allowSource 表达式 + host-data activeCell/activeSheet 已核实可用；Why Not Blocking Closure：动态文本需 inspector env 具备 schema 桥接（当前仅 fetcher/notify），静态占位引导保留，不影响 cell 样式面板已交付的可用性）
 - 工具栏分组标签/间距重设计（RD-3 深层；title/aria/Tooltip 已由 ToolbarButton 覆盖）
 - 检查器属性维度扩展（数字格式/边框等）
 
 ## Closure
 
-Status Note: 2026-10-01 completion pending（closure audit 第 1 轮复审中）。R1-R9 修复轮第 9 项。
+Status Note: 2026-10-01 completed。R1-R9 修复轮第 9 项收口。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 独立子 agent（fresh session，general-purpose）第 1 轮复审中
-- Evidence: 第 1 轮复审进行中（结论待 auditor verdict 回填）：r9 e2e 3/3、playground 408、全量门 42×3+78+check exit 0 已由执行者实跑；TF-1/R8 教训——严禁预记结论，待 verdict 后回填。
+- Auditor / Agent: 独立子 agent（fresh session，general-purpose），2026-10-01
+- Evidence: VERDICT（round-1，verbatim 要点）：工程实质全部独立复验（r9 e2e 3 passed、playground 41 files/408、oversized-files exit 0/demo 687 行拆分后达标）；RD-1/2/3 逐项 file:line 核实（含 setCellMeta 签名、命令面注册、12px 断言、双层回归护栏）；机制偏差（demo 本地 renderer 替代 namespace 路由）确认已如实记录且可行。Round-1 finding：①Major——Phase slice Status 两行未同步（本节 flip 时已改 completed）②Minor——动态文本 deferral 已登记 Non-Blocking Follow-ups（本节已补 Why Not Blocking）③Note——roadmap R9 行 flip 时补（已补）。审计明确"无代码改动需要"。
