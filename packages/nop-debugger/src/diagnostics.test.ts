@@ -37,6 +37,7 @@ function createSnapshot(events: NopDebugEvent[]): NopDebuggerSnapshot {
     paused: false,
     activeTab: 'timeline',
     position: { x: 1, y: 2 },
+    dock: 'floating',
     events,
     filters: ['render', 'action', 'api', 'compile', 'notify', 'error'],
     pinnedErrors: { earliest: [], latest: [] },

@@ -58,6 +58,7 @@ export function useDraggablePosition(
   controller: NopDebuggerController,
   initial: { x: number; y: number },
   onTap?: () => void,
+  docked = false,
 ) {
   const [position, setPosition] = useState(initial);
   const positionRef = useRef(initial);
@@ -142,10 +143,20 @@ export function useDraggablePosition(
       }
 
       hasMovedRef.current = false;
+      // docked（bottom-left）锚定渲染无绝对坐标：首拖时按当前盒换算基准位置并转 floating
+      let baseX = position.x;
+      let baseY = position.y;
+      if (docked && target instanceof HTMLElement) {
+        const rect = target.getBoundingClientRect();
+        baseX = rect.left;
+        baseY = rect.top;
+        positionRef.current = { x: baseX, y: baseY };
+        setPosition(positionRef.current);
+      }
       dragState.current = {
         pointerId: event.pointerId,
-        offsetX: event.clientX - position.x,
-        offsetY: event.clientY - position.y,
+        offsetX: event.clientX - baseX,
+        offsetY: event.clientY - baseY,
         startX: event.clientX,
         startY: event.clientY,
         hasMoved: false,
@@ -229,6 +240,7 @@ export function useResizablePanel() {
 export function useLauncherDrag(
   controller: NopDebuggerController,
   initial: { x: number; y: number },
+  docked = false,
 ) {
   const [position, setPosition] = useState(initial);
   const positionRef = useRef(initial);
@@ -317,12 +329,22 @@ export function useLauncherDrag(
 
       const target = event.currentTarget;
       wasDraggedRef.current = false;
+      // docked（bottom-left）锚定渲染无绝对坐标：首拖时按当前盒换算并转 floating
+      let startPosX = position.x;
+      let startPosY = position.y;
+      if (docked && target instanceof HTMLElement) {
+        const rect = target.getBoundingClientRect();
+        startPosX = rect.left;
+        startPosY = rect.top;
+        positionRef.current = { x: startPosX, y: startPosY };
+        setPosition(positionRef.current);
+      }
       dragState.current = {
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
-        startPosX: position.x,
-        startPosY: position.y,
+        startPosX,
+        startPosY,
         hasMoved: false,
         target,
       };

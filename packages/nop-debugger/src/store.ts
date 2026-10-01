@@ -1,5 +1,5 @@
 import { DEFAULT_FILTERS } from './diagnostics.js';
-import type { NopDebugEvent, NopDebuggerSnapshot, NopDebuggerTab } from './types.js';
+import type { DebuggerWindowDock, NopDebugEvent, NopDebuggerSnapshot, NopDebuggerTab } from './types.js';
 
 export interface NopDebuggerStore {
   getSnapshot(): NopDebuggerSnapshot;
@@ -28,6 +28,8 @@ export function createDebuggerStore(input: {
   defaultOpen: boolean;
   defaultTab: NopDebuggerTab;
   position: { x: number; y: number };
+  /** 缺省 'floating'（既有宿主/测试的绝对坐标语义）；bottom-left 由显式配置启用。 */
+  dock?: DebuggerWindowDock;
   errorBufferKeepEarliest: number;
   errorBufferKeepLatest: number;
   persistPosition?: (position: { x: number; y: number }) => void;
@@ -43,6 +45,7 @@ export function createDebuggerStore(input: {
     strictMode: false,
     activeTab: input.defaultTab,
     position: input.position,
+    dock: input.dock ?? 'floating',
     events: [],
     filters: [...DEFAULT_FILTERS],
     pinnedErrors: { earliest: [], latest: [] },
@@ -191,7 +194,8 @@ export function createDebuggerStore(input: {
     },
     setPosition(position: { x: number; y: number }) {
       positionPersistCallback?.(position);
-      setSnapshot((current) => ({ ...current, position }));
+      // 拖拽落点即绝对坐标：dock 翻转 floating（ux-r6 G-1）
+      setSnapshot((current) => ({ ...current, position, dock: 'floating' }));
     },
     toggleFilter(filter: NopDebuggerSnapshot['filters'][number]) {
       setSnapshot((current) => {

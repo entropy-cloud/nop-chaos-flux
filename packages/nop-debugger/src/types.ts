@@ -69,7 +69,7 @@ export type NopDebuggerFilterKind =
   | 'error'
   | 'node';
 
-export type DebuggerWindowDock = 'floating';
+export type DebuggerWindowDock = 'floating' | 'bottom-left';
 
 export interface NopDebuggerWindowConfig {
   enabled?: boolean;
@@ -148,6 +148,8 @@ export interface NopDebuggerSnapshot {
   strictMode: boolean;
   activeTab: NopDebuggerTab;
   position: { x: number; y: number };
+  /** launcher 停靠模式（ux-r6）：bottom-left = 无拖拽持久化位置时的默认停靠；拖拽落点即转 floating。 */
+  dock: DebuggerWindowDock;
   events: NopDebugEvent[];
   filters: NopDebuggerFilterKind[];
   pinnedErrors: NopDebuggerPinnedErrors;

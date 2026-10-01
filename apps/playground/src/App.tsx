@@ -94,8 +94,8 @@ if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefin
     enabled: true,
     defaultOpen: false,
     defaultTab: 'timeline',
-    position: { x: 24, y: 24 },
-    dock: 'floating',
+    // ux-r6 G-1：默认停靠左下角，不占页面 header 区
+    dock: 'bottom-left',
   };
 }
 

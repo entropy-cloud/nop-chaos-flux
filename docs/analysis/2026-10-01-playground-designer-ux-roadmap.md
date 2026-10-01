@@ -74,7 +74,7 @@
 | R3  | 地图渲染                  | P0     | `docs/plans/2026-10-01-ux-r3-map-render-plan.md`           | **completed**（d59f38f5e；诊断反转：实锤投影缺失 + 主题探针缺陷）                                              |
 | R4  | 电子表格公式求值          | P0     | `docs/plans/2026-10-01-ux-r4-spreadsheet-formula-plan.md`  | **completed**（独立 closure audit approved；执行期补修 type-to-edit 多字符截断 + 行/列 shift 扩选非连续区间）  |
 | R5  | Page Designer 画布        | P0/P1  | `docs/plans/2026-10-01-ux-r5-page-designer-canvas-plan.md` | **completed**（review 2 轮 pass + 独立 closure audit approved；空容器投影/根回退提示/预览面板隐藏/对比度治理） |
-| R6  | 全局外壳治理              | P1/P2  | —                                                          | pending                                                                                                        |
+| R6  | 全局外壳治理              | P1/P2  | `docs/plans/2026-10-01-ux-r6-shell-chrome-plan.md`         | **completed**（closure audit approved；G-1 计数改判为误读，launcher 底部停靠 + 主题单一路径）                  |
 | R7  | 流程设计器家族视觉        | P1/P2  | —                                                          | pending                                                                                                        |
 | R8  | 排程组件视口与视觉        | P1/P2  | —                                                          | pending                                                                                                        |
 | R9  | Report Designer 检查器    | P1/P2  | —                                                          | pending                                                                                                        |

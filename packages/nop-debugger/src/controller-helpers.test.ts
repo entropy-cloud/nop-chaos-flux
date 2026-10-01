@@ -30,19 +30,21 @@ describe('controller helpers', () => {
   });
 
   it('reads debugger window config from defaults, boolean flags, and explicit config', () => {
+    // ux-r6 G-1：未配置时默认 bottom-left 停靠且无绝对坐标（不占页面 header 区）
     expect(readWindowConfig()).toMatchObject({
       enabled: false,
       defaultOpen: false,
       defaultTab: 'timeline',
-      position: { x: 24, y: 24 },
-      dock: 'floating',
+      dock: 'bottom-left',
     });
+    expect(readWindowConfig().position).toBeUndefined();
 
     window.__NOP_DEBUGGER__ = true;
     expect(readWindowConfig()).toMatchObject({
       enabled: true,
       defaultOpen: true,
       defaultTab: 'timeline',
+      dock: 'bottom-left',
     });
 
     window.__NOP_DEBUGGER__ = {
@@ -57,6 +59,7 @@ describe('controller helpers', () => {
       defaultOpen: false,
       defaultTab: 'network',
       position: { x: 99, y: 77 },
+      dock: 'floating',
     });
   });
 

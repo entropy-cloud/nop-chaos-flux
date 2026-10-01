@@ -72,6 +72,7 @@ export function createSnapshot(): NopDebuggerSnapshot {
     paused: false,
     activeTab: 'overview',
     position: { x: 24, y: 24 },
+    dock: 'floating',
     events: [],
     filters: ['render', 'action', 'api', 'compile', 'notify', 'error'],
     pinnedErrors: { earliest: [], latest: [] },

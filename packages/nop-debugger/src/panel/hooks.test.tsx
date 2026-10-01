@@ -38,6 +38,7 @@ describe('useDebuggerSnapshot', () => {
       strictMode: false,
       activeTab: 'overview',
       position: { x: 24, y: 24 },
+      dock: 'floating',
       events: [],
       filters: [...filters],
       pinnedErrors: { earliest: [], latest: [] },

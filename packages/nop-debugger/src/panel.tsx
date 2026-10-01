@@ -3,7 +3,7 @@ import type { MouseEvent } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
 import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types.js';
+import type { DebuggerWindowDock, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types.js';
 import { buildOverview } from './diagnostics.js';
 import { loadPersistedSearchHistory, persistSearchHistory } from './controller-helpers.js';
 import { formatTraceSummary, groupErrors, mergeNetworkRequests } from './panel/event-groups.js';
@@ -47,6 +47,7 @@ function equalChromeState(
     strictMode: boolean;
     activeTab: NopDebuggerTab;
     position: { x: number; y: number };
+    dock: DebuggerWindowDock;
   },
   b: {
     enabled: boolean;
@@ -56,6 +57,7 @@ function equalChromeState(
     strictMode: boolean;
     activeTab: NopDebuggerTab;
     position: { x: number; y: number };
+    dock: DebuggerWindowDock;
   },
 ) {
   return (
@@ -65,8 +67,16 @@ function equalChromeState(
     a.paused === b.paused &&
     a.strictMode === b.strictMode &&
     a.activeTab === b.activeTab &&
-    a.position === b.position
+    a.position === b.position &&
+    a.dock === b.dock
   );
+}
+
+/** ux-r6 G-1：docked 模式以左下角锚定渲染（不占 header 区）；floating 用绝对坐标。 */
+function chromeBoxStyle(docked: boolean, position: { x: number; y: number }): React.CSSProperties {
+  return docked
+    ? { left: '24px', bottom: '24px' }
+    : { left: `${position.x}px`, top: `${position.y}px` };
 }
 
 function getFilterLabels(): Record<NopDebuggerFilterKind, string> {
@@ -166,6 +176,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
       strictMode: snapshot.strictMode,
       activeTab: snapshot.activeTab,
       position: snapshot.position,
+      dock: snapshot.dock,
     }),
     equalChromeState,
   );
@@ -175,11 +186,13 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     (snapshot) => snapshot.filters,
     equalFilters,
   );
+  const docked = chrome.dock === 'bottom-left';
   const handlePanelTap = chrome.minimized ? () => props.controller.unminimize() : undefined;
   const { position, bind: dragBind } = useDraggablePosition(
     props.controller,
     chrome.position,
     handlePanelTap,
+    docked,
   );
   const { width: panelWidth, bind: resizeBind } = useResizablePanel();
   const {
@@ -187,7 +200,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
     bind: launcherBind,
     wasDraggedRef,
     consumeSuppressedClick,
-  } = useLauncherDrag(props.controller, chrome.position);
+  } = useLauncherDrag(props.controller, chrome.position, docked);
   useInjectDebuggerStyles(chrome.enabled);
 
   const [searchHistory, setSearchHistory] = useState<string[]>(() =>
@@ -307,7 +320,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
         variant="outline"
         size="sm"
         className="nop-debugger-launcher nop-theme-root"
-        style={{ left: `${launcherPosition.x}px`, top: `${launcherPosition.y}px` }}
+        style={chromeBoxStyle(docked, launcherPosition)}
         onPointerDown={launcherBind.onPointerDown}
         title={t('flux.debugger.openDebugger')}
         onClick={(event: MouseEvent<HTMLButtonElement>) => {
@@ -339,7 +352,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
       <div
         className="nop-debugger nop-theme-root ndbg-minimized"
         data-panel-state="minimized"
-        style={{ left: `${position.x}px`, top: `${position.y}px` }}
+        style={chromeBoxStyle(docked, position)}
         {...dragBind}
       >
         <span className="ndbg-launcher-icon">
@@ -363,7 +376,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   return (
     <div
       className="nop-debugger nop-theme-root"
-      style={{ left: `${position.x}px`, top: `${position.y}px`, width: `${panelWidth}px` }}
+      style={{ ...chromeBoxStyle(docked, position), width: `${panelWidth}px` }}
     >
       <div className="ndbg-resize-handle" {...resizeBind} />
       <div className="ndbg-header">

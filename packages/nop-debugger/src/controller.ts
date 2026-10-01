@@ -29,7 +29,7 @@ import {
   persistMinimized,
   persistPanelOpen,
   persistPosition,
-  readWindowConfig,
+  readWindowConfig, DEFAULT_POSITION,
 } from './controller-helpers.js';
 import {
   applyEventQuery,
@@ -101,6 +101,10 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const persistedMinimized = loadPersistedMinimized(debuggerId);
   const initialPosition = persistedPosition ?? windowConfig.position;
   const initialPanelOpen = persistedPanelOpen ?? windowConfig.defaultOpen;
+  // ux-r6 G-1：持久化位置或显式 position 配置存在即 floating；否则按 windowConfig 停靠（默认 bottom-left）
+  const initialDock =
+    persistedPosition ?? windowConfig.position ? ('floating' as const) : windowConfig.dock;
+  const storePosition = initialPosition ?? DEFAULT_POSITION;
 
   const store = createDebuggerStore({
     enabled,
@@ -108,7 +112,8 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     maxEvents,
     defaultOpen: initialPanelOpen,
     defaultTab: windowConfig.defaultTab,
-    position: initialPosition,
+    position: storePosition,
+    dock: initialDock,
     errorBufferKeepEarliest: options.errorBuffer?.keepEarliest ?? 3,
     errorBufferKeepLatest: options.errorBuffer?.keepLatest ?? 5,
   });

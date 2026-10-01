@@ -9,16 +9,20 @@ import type {
   NopDebuggerWindowConfig,
 } from './types.js';
 
-const DEFAULT_POSITION = { x: 24, y: 24 };
+/** floating 渲染的兜底绝对坐标（dock=bottom-left 时不消费）。 */
+export const DEFAULT_POSITION = { x: 24, y: 24 };
 
-export function readWindowConfig(): Required<NopDebuggerWindowConfig> & { enabled: boolean } {
+export function readWindowConfig(): Omit<Required<NopDebuggerWindowConfig>, 'position'> & {
+  enabled: boolean;
+  /** 未配置时为 undefined：由 controller 决定 dock 语义（bottom-left 不消费坐标）。 */
+  position?: { x: number; y: number };
+} {
   if (typeof window === 'undefined') {
     return {
       enabled: false,
       defaultOpen: false,
       defaultTab: 'timeline',
-      position: DEFAULT_POSITION,
-      dock: 'floating',
+      dock: 'bottom-left',
     };
   }
 
@@ -29,8 +33,7 @@ export function readWindowConfig(): Required<NopDebuggerWindowConfig> & { enable
       enabled: true,
       defaultOpen: true,
       defaultTab: 'timeline',
-      position: DEFAULT_POSITION,
-      dock: 'floating',
+      dock: 'bottom-left',
     };
   }
 
@@ -39,8 +42,7 @@ export function readWindowConfig(): Required<NopDebuggerWindowConfig> & { enable
       enabled: false,
       defaultOpen: false,
       defaultTab: 'timeline',
-      position: DEFAULT_POSITION,
-      dock: 'floating',
+      dock: 'bottom-left',
     };
   }
 
@@ -48,8 +50,8 @@ export function readWindowConfig(): Required<NopDebuggerWindowConfig> & { enable
     enabled: raw.enabled ?? true,
     defaultOpen: raw.defaultOpen ?? true,
     defaultTab: raw.defaultTab ?? 'timeline',
-    position: raw.position ?? DEFAULT_POSITION,
-    dock: raw.dock ?? 'floating',
+    position: raw.position,
+    dock: raw.dock ?? 'bottom-left',
   };
 }
 

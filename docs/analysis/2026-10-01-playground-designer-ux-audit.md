@@ -21,10 +21,12 @@
 - 现象：左上角圆形悬浮徽章（console 日志计数器，DOM `region "Notifications alt+T"`）压在每一页的"返回"按钮和页面标题上。Page Designer 压住"返回"、Flow/TaskFlow 压住流程标题（"Customer onboarding"/"Action Flow"/"钉钉审批流"不可读）、Spreadsheet/Report 压住 Home 按钮（只剩"ome"）。
 - 证据链：计数随页面切换增长（0→106→136→196→386），说明各演示页存在**大量 console 告警输出**，徽章因此常驻且显眼。
 - 双重问题：(a) 徽章定位策略侵入页面标题区；(b) 页面 console 告警泛滥本身是质量债。
+  - 补注（ux-r6 执行，2026-10-01）：(a) 已修复——debugger launcher 默认停靠视口左下角（`DebuggerWindowDock='bottom-left'`，三种 chrome 状态统一 bottom 锚定 + 首拖换算基准坐标），拖拽持久化语义保留；(b) **改判为误读**——badge 计数是 debugger 事件时间线（action/state/api 等全 kind 事件），非 console 告警；17 路由探针（`_tmp/console-noise-probe.mjs`）实测 console warn/error：16 路由 × 0，仅 graph-demo 2 条（畸形数据演示卡有意设计的 dev 告警），console 基线本就为个位数。
 
 ### G-2 主题控制机制重复且位置突兀 【P2】
 
 - 右下角恒浮 `classic/light` 两个下拉（主题+模式），部分页面（如 Pivot）右上角另有"暗色"开关——同一能力两套入口、两种交互，且右下角浮层会盖住右侧面板滚动内容的末尾。
+  - 补注（ux-r6 执行，2026-10-01）：重复入口已消除——pivot 页内"暗色"开关移除（全仓唯一一处页内开关），全局 ThemeSwitcher 为唯一主题控制路径（pivot e2e 改走全局开关并断言页内无暗色/亮色按钮）；右下角浮层位置为 plan 471 既有裁决，维持不动。
 
 ### G-3 中英混排贯穿全部设计器 【P2】
 
