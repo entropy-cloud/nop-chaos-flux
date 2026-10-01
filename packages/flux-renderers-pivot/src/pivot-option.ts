@@ -21,6 +21,7 @@ import type {
   PivotTableSchema,
   PivotTotalsSchema,
 } from './schemas.js';
+import { warnOnce } from './pivot-warn.js';
 
 const VALID_AGGREGATION_TYPES: readonly PivotAggregationType[] = [
   'SUM',
@@ -42,6 +43,46 @@ function devWarn(message: string): void {
   if (typeof console !== 'undefined' && typeof console.warn === 'function') {
     console.warn(`[pivot-table] ${message}`);
   }
+}
+
+/**
+ * leaf 行/列维度上的小计是退化配置：VTable 在 subTotalsDimensions 命中 leaf 维度时
+ * 渲染出全空明细单元格（小计/合计仍有值）。ux-r2 活页探针证据：`['region','quarter']`
+ * → 明细全空，剔除 quarter 后恢复；全 leaf 时需联动关闭 showSubTotals，避免 VTable
+ * 「无 subTotalsDimensions 即全层级小计」语义重新引入退化形态。
+ */
+function stripLeafSubtotalDimensions(
+  side: PivotTotalsSchema,
+  leafDimensionKey: string | null,
+  sideLabel: 'row' | 'column',
+): { showSubTotals: boolean; subTotalsDimensions?: string[] } {
+  const showSubTotals = side.showSubTotals === true;
+  if (!Array.isArray(side.subTotalsDimensions) || !leafDimensionKey) {
+    return {
+      showSubTotals,
+      ...(Array.isArray(side.subTotalsDimensions)
+        ? { subTotalsDimensions: side.subTotalsDimensions }
+        : {}),
+    };
+  }
+  if (!side.subTotalsDimensions.includes(leafDimensionKey)) {
+    return { showSubTotals, subTotalsDimensions: side.subTotalsDimensions };
+  }
+  const remaining = side.subTotalsDimensions.filter((d) => d !== leafDimensionKey);
+  if (remaining.length === 0) {
+    if (showSubTotals) {
+      warnOnce(
+        `pivot-totals-leaf-${sideLabel}-${leafDimensionKey}`,
+        `[pivot-table] totals.${sideLabel}.subTotalsDimensions only references leaf dimension "${leafDimensionKey}"; removed and showSubTotals disabled — VTable renders empty detail cells with leaf subtotals`,
+      );
+    }
+    return { showSubTotals: false };
+  }
+  warnOnce(
+    `pivot-totals-leaf-${sideLabel}-${leafDimensionKey}`,
+    `[pivot-table] totals.${sideLabel}.subTotalsDimensions references leaf dimension "${leafDimensionKey}"; entry removed — VTable renders empty detail cells with leaf subtotals`,
+  );
+  return { showSubTotals, subTotalsDimensions: remaining };
 }
 
 export interface DesignTokenThemeInput {
@@ -134,16 +175,21 @@ function buildAggregationRules(
   });
 }
 
-function normalizeTotalsSide(side: PivotTotalsSchema | undefined): Totals['row'] | undefined {
+function normalizeTotalsSide(
+  side: PivotTotalsSchema | undefined,
+  leafDimensionKey: string | null,
+  sideLabel: 'row' | 'column',
+): Totals['row'] | undefined {
   if (!side) {
     return undefined;
   }
+  const leafGuarded = stripLeafSubtotalDimensions(side, leafDimensionKey, sideLabel);
   const result: Totals['row'] = {
     showGrandTotals: side.showGrandTotals === true,
-    showSubTotals: side.showSubTotals === true,
+    showSubTotals: leafGuarded.showSubTotals,
   };
-  if (Array.isArray(side.subTotalsDimensions)) {
-    result.subTotalsDimensions = side.subTotalsDimensions;
+  if (leafGuarded.subTotalsDimensions) {
+    result.subTotalsDimensions = leafGuarded.subTotalsDimensions;
   }
   if (typeof side.grandTotalLabel === 'string') {
     result.grandTotalLabel = side.grandTotalLabel;
@@ -154,13 +200,17 @@ function normalizeTotalsSide(side: PivotTotalsSchema | undefined): Totals['row']
   return result;
 }
 
-function buildTotals(schema: PivotOptionInput): Totals | undefined {
+function buildTotals(
+  schema: PivotOptionInput,
+  rowLeafKey: string | null,
+  columnLeafKey: string | null,
+): Totals | undefined {
   const totals = schema.dataConfig?.totals;
   if (!totals) {
     return undefined;
   }
-  const row = normalizeTotalsSide(totals.row);
-  const column = normalizeTotalsSide(totals.column);
+  const row = normalizeTotalsSide(totals.row, rowLeafKey, 'row');
+  const column = normalizeTotalsSide(totals.column, columnLeafKey, 'column');
   if (!row && !column) {
     return undefined;
   }
@@ -294,7 +344,10 @@ export function buildPivotOption(
   if (aggregationRules.length > 0) {
     dataConfig.aggregationRules = aggregationRules;
   }
-  const totals = buildTotals(schema);
+  const rowLeafKey = rows.length > 0 ? (rows[rows.length - 1].dimensionKey ?? null) : null;
+  const columnLeafKey =
+    columns.length > 0 ? (columns[columns.length - 1].dimensionKey ?? null) : null;
+  const totals = buildTotals(schema, rowLeafKey, columnLeafKey);
   if (totals) {
     dataConfig.totals = totals;
   }

@@ -73,7 +73,7 @@ const PIVOT_SCHEMA = {
       row: {
         showGrandTotals: true,
         showSubTotals: true,
-        subTotalsDimensions: ['region', 'quarter'],
+        subTotalsDimensions: ['region'],
         grandTotalLabel: '总计',
         subTotalLabel: '小计',
       },
@@ -107,8 +107,9 @@ const FILTERED_SCHEMA = {
   id: 'demoFilteredPivot',
   label: '仅 Electronics（filterRules IN）',
   records: SALES_RECORDS,
-  rowDimensions: ['region'],
-  columnDimensions: ['category'],
+  // 显式短标题：默认 80px 表头列宽下字段名（region/category）会截断为 "cate…" 观感
+  rowDimensions: [{ dimensionKey: 'region', title: '地区' }],
+  columnDimensions: [{ dimensionKey: 'category', title: '品类' }],
   indicators: [
     { field: 'sales', title: '销售额', aggregationType: 'SUM' },
     { field: 'profit', title: '利润', aggregationType: 'AVG', cellType: 'progressbar' },

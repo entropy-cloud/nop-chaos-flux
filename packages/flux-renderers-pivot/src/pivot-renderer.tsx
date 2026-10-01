@@ -13,27 +13,12 @@ import {
   type DesignTokenThemeInput,
 } from './pivot-option.js';
 import { attachPivotEvents } from './pivot-events.js';
+import { warnOnce } from './pivot-warn.js';
 
 const DEFAULT_HEIGHT = 320;
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
-}
-
-function isDevRuntime() {
-  const importMeta = import.meta as ImportMeta & { env?: { DEV?: boolean } };
-  return importMeta.env?.DEV === true;
-}
-
-const warnedKeys = new Set<string>();
-
-function warnOnce(key: string, message: string): void {
-  // 15-01 (plan 483 Phase 7 batch a): dev-gated, repo-wide warnOnce convention.
-  if (!isDevRuntime() || warnedKeys.has(key)) {
-    return;
-  }
-  warnedKeys.add(key);
-  console.warn(message);
 }
 
 /** records/source 双入口：source 优先，二者同设 dev warn（chart series/source 裁定延续）。 */

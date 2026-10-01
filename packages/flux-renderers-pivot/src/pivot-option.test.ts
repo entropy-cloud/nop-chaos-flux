@@ -1,4 +1,5 @@
-import { describe, expect, it, vi, afterEach } from 'vitest';
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
+import { resetPivotWarnForTests } from './pivot-warn.js';
 import {
   buildPivotOption,
   mapDesignTokensToVTableTheme,
@@ -128,6 +129,8 @@ describe('buildPivotOption - totals 映射', () => {
   it('row/column 小计总计逐字段断言', () => {
     const option = buildPivotOption(
       makeSchema({
+        rowDimensions: ['region', 'quarter'],
+        columnDimensions: ['category', 'subcategory'],
         dataConfig: {
           totals: {
             row: {
@@ -410,5 +413,76 @@ describe('mapDesignTokensToVTableTheme', () => {
       foreground: '#1f2328',
       border: '#d0d7de',
     });
+  });
+});
+
+describe('buildPivotOption - totals leaf 维度防御（ux-r2）', () => {
+  function makeTotalsSchema(totals: Record<string, unknown>): PivotTableSchema {
+    return makeSchema({
+      rowDimensions: ['region', 'quarter'],
+      columnDimensions: ['category'],
+      dataConfig: { totals } as PivotTableSchema['dataConfig'],
+    });
+  }
+
+  beforeEach(() => {
+    resetPivotWarnForTests();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('row 侧剔除 leaf 维度条目并告警，非 leaf 条目保留', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const option = buildPivotOption(
+      makeTotalsSchema({
+        row: { showSubTotals: true, subTotalsDimensions: ['region', 'quarter'] },
+      }),
+      undefined,
+    )!;
+    expect(option.dataConfig?.totals?.row?.subTotalsDimensions).toEqual(['region']);
+    expect(option.dataConfig?.totals?.row?.showSubTotals).toBe(true);
+    expect(warn.mock.calls.some((call: unknown[]) => String(call[0]).includes('quarter'))).toBe(
+      true,
+    );
+  });
+
+  it('row 侧全 leaf 条目：清空 subTotalsDimensions 并联动关闭 showSubTotals', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const option = buildPivotOption(
+      makeTotalsSchema({
+        row: { showSubTotals: true, subTotalsDimensions: ['quarter'] },
+      }),
+      undefined,
+    )!;
+    expect(option.dataConfig?.totals?.row?.subTotalsDimensions).toBeUndefined();
+    expect(option.dataConfig?.totals?.row?.showSubTotals).toBe(false);
+    expect(warn.mock.calls.length).toBeGreaterThan(0);
+  });
+
+  it('column 侧 leaf 维度同构防御', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const option = buildPivotOption(
+      makeTotalsSchema({
+        column: { showSubTotals: true, subTotalsDimensions: ['category'] },
+      }),
+      undefined,
+    )!;
+    expect(option.dataConfig?.totals?.column?.subTotalsDimensions).toBeUndefined();
+    expect(option.dataConfig?.totals?.column?.showSubTotals).toBe(false);
+    expect(warn.mock.calls.length).toBeGreaterThan(0);
+  });
+
+  it('非 leaf 条目不受影响', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const option = buildPivotOption(
+      makeTotalsSchema({
+        row: { showSubTotals: true, subTotalsDimensions: ['region'] },
+      }),
+      undefined,
+    )!;
+    expect(option.dataConfig?.totals?.row?.subTotalsDimensions).toEqual(['region']);
+    expect(option.dataConfig?.totals?.row?.showSubTotals).toBe(true);
   });
 });
