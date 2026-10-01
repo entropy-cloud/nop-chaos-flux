@@ -2,7 +2,13 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RendererEventHandler } from '@nop-chaos/flux-core';
 import { createMockRendererProps } from './test-support.js';
-import { createFakeOlApi, fakeMapInstances, FakeFeature } from './test-support/ol-fake.js';
+import {
+  createFakeOlApi,
+  fakeMapInstances,
+  FakeFeature,
+  lastGeoJsonReadOptions,
+  resetLastGeoJsonReadOptions,
+} from './test-support/ol-fake.js';
 import type { MapSchema } from './schemas.js';
 import type { GeoJsonFeatureCollection } from './map-data.js';
 
@@ -133,6 +139,29 @@ describe('MapRenderer 挂载（mock OL）', () => {
     };
     expect(basemap.source.options.url).toBe('https://example.test/wms');
     expect(basemap.source.attributions).toEqual(['Test ©']);
+  });
+});
+
+describe('MapRenderer region 投影（ux-r3 RC-A）', () => {
+  beforeEach(() => {
+    loadOlApiMock.mockReset();
+    loadOlApiMock.mockResolvedValue(createFakeOlApi());
+    fakeMapInstances.length = 0;
+    resetLastGeoJsonReadOptions();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('readFeatures 收到 4326→3857 投影选项（缺省 GeoJSON 坐标进 3857 视图会塌缩到原点）', async () => {
+    renderMap({ mapType: 'region', geojsonName: 'china-provinces' });
+    await waitFor(() => expect(fakeMapInstances.length).toBeGreaterThan(0));
+    await waitFor(() => {
+      expect(lastGeoJsonReadOptions).toBeDefined();
+    });
+    expect(lastGeoJsonReadOptions?.['dataProjection']).toBe('EPSG:4326');
+    expect(lastGeoJsonReadOptions?.['featureProjection']).toBe('EPSG:3857');
   });
 });
 

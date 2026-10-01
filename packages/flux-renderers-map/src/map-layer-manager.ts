@@ -145,9 +145,12 @@ export function createMapLayerManager(input: {
     if (!regionSource) {
       regionSource = new api.VectorSource();
     }
-    const features = new api.GeoJSON().readFeatures(
-      build.featureCollection as never,
-    ) as OlFeature[];
+    // GeoJSON 坐标为 EPSG:4326，视图为 EPSG:3857——缺省 readFeatures 不做投影，
+    // 经纬度数值当米用会塌缩到原点附近（ux-r3 RC-A 活页探针证据）。
+    const features = new api.GeoJSON().readFeatures(build.featureCollection as never, {
+      dataProjection: 'EPSG:4326',
+      featureProjection: 'EPSG:3857',
+    }) as OlFeature[];
     regionSource.clear();
     regionSource.addFeatures(features);
     layer.setSource(regionSource);

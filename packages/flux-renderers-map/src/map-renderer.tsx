@@ -37,22 +37,55 @@ const DEFAULT_ZOOM: Record<string, number> = {
   pin: 4,
 };
 
+/**
+ * token 原始值 → 具体色值（ux-r3 RC-3）：本仓主题 token 为裸 HSL 三元组
+ * （shadcn 约定，消费形如 `hsl(var(--token))`）。此前的 `var(--token)` 裸探针
+ * 对三元组取 computed 色恒退化 `rgb(0,0,0)`（guard 只拦透明色），主题四色
+ * 全黑。这里直接读 token 原始值：三元组包装 hsl()，完整色值直通，非法回退。
+ */
+export function resolveTokenColor(rawTokenValue: string, fallback = '#0969da'): string {
+  const raw = rawTokenValue.trim();
+  if (raw.length === 0) {
+    return fallback;
+  }
+  if (/^#[0-9a-fA-F]{3,8}$/.test(raw)) {
+    return raw;
+  }
+  if (/^(rgb|rgba|hsl|hsla)\(/i.test(raw)) {
+    return raw;
+  }
+  // 裸 HSL 三元组："217 91% 60%" / "217, 91%, 60%"
+  if (/^\d+(?:\.\d+)?[ ,]+\d+(?:\.\d+)?%[ ,]+\d+(?:\.\d+)?%$/.test(raw)) {
+    return `hsl(${raw})`;
+  }
+  return fallback;
+}
+
 function resolveThemeColor(cssVariable: string, fallback: string): string {
   if (typeof document === 'undefined') {
     return fallback;
   }
   try {
-    const probe = document.createElement('div');
-    probe.style.position = 'fixed';
-    probe.style.visibility = 'hidden';
-    probe.style.border = `1px solid var(${cssVariable})`;
-    document.body.appendChild(probe);
-    const resolved = getComputedStyle(probe).borderColor;
-    probe.remove();
-    return resolved && resolved !== 'rgba(0, 0, 0, 0)' ? resolved : fallback;
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(cssVariable);
+    return resolveTokenColor(raw, fallback);
   } catch {
     return fallback;
   }
+}
+
+// 测试/程序化断言锚点：以 schema id 为键（pivot `__flux_pivot_<id>` 先例的 id 化变体）。
+function exposeMapInstance(key: string, map: unknown): void {
+  if (typeof window === 'undefined' || key.length === 0) {
+    return;
+  }
+  (window as unknown as Record<string, unknown>)[`__flux_map_${key}`] = { map };
+}
+
+function clearExposedMapInstance(key: string): void {
+  if (typeof window === 'undefined' || key.length === 0) {
+    return;
+  }
+  delete (window as unknown as Record<string, unknown>)[`__flux_map_${key}`];
 }
 
 /** 主题映射：CSS 变量 → OL 样式色值（data-theme/data-mode 翻转时重解析并触发重绘）。 */
@@ -264,6 +297,7 @@ export function MapRenderer(props: RendererComponentProps<MapSchema>) {
     const manager = createMapLayerManager({ api: olApi, map, theme: latestRef.current.theme });
     mapRef.current = map;
     managerRef.current = manager;
+    exposeMapInstance(props.id, map);
 
     map.on('singleclick', (event: { pixel?: number[] }) => {
       if (!event.pixel) {
@@ -304,6 +338,7 @@ export function MapRenderer(props: RendererComponentProps<MapSchema>) {
     });
 
     return () => {
+      clearExposedMapInstance(props.id);
       manager.dispose();
       map.setTarget(undefined);
       map.dispose();
@@ -311,7 +346,7 @@ export function MapRenderer(props: RendererComponentProps<MapSchema>) {
       managerRef.current = null;
       fitDoneRef.current = false;
     };
-  }, [olApi, mapVisible]);
+  }, [olApi, mapVisible, props.id]);
 
   // 主题变化 → 更新 manager 主题色 + 触发重绘（canvas 无 CSS 变量自动生效）
   useEffect(() => {

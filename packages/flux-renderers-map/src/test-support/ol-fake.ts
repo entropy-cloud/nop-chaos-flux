@@ -225,6 +225,12 @@ class FakeStyleBase {
   }
 }
 
+/** ux-r3：记录最近一次 GeoJSON.readFeatures 的 options（模块级，跨 fake api 实例共享）。 */
+export let lastGeoJsonReadOptions: Record<string, unknown> | undefined;
+export function resetLastGeoJsonReadOptions(): void {
+  lastGeoJsonReadOptions = undefined;
+}
+
 export function createFakeOlApi(): OlApi {
   return {
     Map: FakeMap as never,
@@ -236,7 +242,11 @@ export function createFakeOlApi(): OlApi {
     TileWMS: FakeVectorSource as never,
     Cluster: FakeClusterSource as never,
     GeoJSON: class FakeGeoJSON {
-      readFeatures(collection: { features: Array<{ properties: Record<string, unknown> }> }) {
+      readFeatures(
+        collection: { features: Array<{ properties: Record<string, unknown> }> },
+        options?: Record<string, unknown>,
+      ) {
+        lastGeoJsonReadOptions = options;
         return collection.features.map((feature) => new FakeFeature(feature.properties));
       }
     } as never,

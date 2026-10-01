@@ -79,13 +79,13 @@ interface MapSchema extends BaseSchema {
 
 ### 4.2 数据契约
 
-| 数据            | 契约                                                                                                                                                                               |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `regionData`    | `[{ name: string, value?: number }]`。`name` 与 geojson feature `properties.name` 精确匹配；无 `value` 的条目保留（defaultColor 路径），不参与色阶范围；无匹配 → 丢弃 + dev warn。 |
-| `pinData`       | `[{ name?: string, lat: number, lng: number, value?: number }]`。`lat ∈ [-90, 90]`、`lng ∈ [-180, 180]` 且有限；非法坐标丢弃 + dev warn。                                          |
-| `visualMap`     | `min`/`max` 声明缺省回退数据实际范围；`colors` 多段线性插值（RGB），外插 clamp；缺省色阶蓝→青→黄→红；`defaultColor` 缺省 `#dddddd`。                                               |
-| geojson 内建    | `src/map-data/china-provinces.json`（35 省，DataV 数据）、`world-countries.json`（177 国，Natural Earth 110m）。随 lazy chunk 加载。                                               |
-| `geojsonSource` | action 结果必须是 FeatureCollection（`sanitizeGeojsonActionResult` 校验）；成功结果缓存复用；失败/非法 → error 态 + 重试按钮。                                                     |
+| 数据            | 契约                                                                                                                                                                                                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `regionData`    | `[{ name: string, value?: number }]`。`name` 与 geojson feature `properties.name` 精确匹配；无 `value` 的条目保留（defaultColor 路径），不参与色阶范围；无匹配 → 丢弃 + dev warn。                                                                                                                |
+| `pinData`       | `[{ name?: string, lat: number, lng: number, value?: number }]`。`lat ∈ [-90, 90]`、`lng ∈ [-180, 180]` 且有限；非法坐标丢弃 + dev warn。                                                                                                                                                         |
+| `visualMap`     | `min`/`max` 声明缺省回退数据实际范围；`colors` 多段线性插值（RGB），外插 clamp；缺省色阶蓝→青→黄→红；`defaultColor` 缺省 `#dddddd`。                                                                                                                                                              |
+| geojson 内建    | `src/map-data/china-provinces.json`（35 省，DataV 数据）、`world-countries.json`（177 国，Natural Earth 110m）。随 lazy chunk 加载。`readFeatures` 必须传 `{ dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }`——缺省不投影，经纬度数值被当 3857 米用会塌缩到原点附近（ux-r3 RC-A）。 |
+| `geojsonSource` | action 结果必须是 FeatureCollection（`sanitizeGeojsonActionResult` 校验）；成功结果缓存复用；失败/非法 → error 态 + 重试按钮。                                                                                                                                                                    |
 
 ### 4.3 事件契约
 
@@ -105,7 +105,7 @@ action 模板经 `${event.name}` / `${event.value}` 读取（CX-10 `evaluationBi
 
 ## 5. 主题映射
 
-- OL canvas 无法消费 CSS 变量 → 渲染期探针解析（`getComputedStyle` 读 `--border`/`--background`/`--foreground`/`--primary`，回退固定色值）。
+- OL canvas 无法消费 CSS 变量 → 渲染期解析。token 原始值为裸 HSL 三元组（shadcn 约定）：`resolveThemeColor` 读 `getComputedStyle(root).getPropertyValue(--token)` 后经 `resolveTokenColor` 处理——三元组包装 `hsl()`、完整色值直通、非法/空回退固定色值（ux-r3 RC-3：此前的 `var(--token)` 裸探针对三元组恒退化 `rgb(0,0,0)`，主题四色全黑）。
 - 主题变化：`MutationObserver` 监听 `document.documentElement` 的 `data-theme`/`data-mode` 属性翻转（全仓 dark 触发器为双属性，无 `.dark` 类切换点；四 token 随双属性变化，任一翻转都重解析）→ 重解析 → `manager.setTheme` → `layer.changed()` 重绘。
 - 矢量层色值：区域填充 = `visualMap` 色阶 / 高亮 = accent 半透明；边框 = `--border`；点位描边 = `--background`；cluster 文本 = `--foreground`。
 
