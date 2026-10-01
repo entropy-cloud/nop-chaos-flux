@@ -5,7 +5,7 @@ import {
   createSnapshot,
   installCanvasBridgeTestHooks,
   mockState,
-} from './canvas-bridge-test-support.js';
+} from './__tests__/canvas-bridge-test-support.js';
 import { DesignerXyflowCanvasBridge, renderDesignerCanvasBridge } from './canvas-bridge.js';
 import { DesignerXyflowNode } from './designer-xyflow-canvas/index.js';
 import { DesignerContext } from './designer-context.js';

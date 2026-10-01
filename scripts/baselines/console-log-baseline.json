@@ -2,14 +2,9 @@
   "_header": {
     "description": "console.log/debug baseline for non-test src under packages/ and apps/. New hits fail check:console-baseline; shrink via --update-baselines after removing hits.",
     "lastUpdated": "2026-09-30",
-    "count": 28
+    "count": 27
   },
   "entries": [
-    {
-      "file": "packages/flux-renderers-scheduling/src/gantt/undo-stack.ts",
-      "line": 185,
-      "text": "if (typeof console !== 'undefined') console.log('[redo-delete]', this.rootTaskId, 'inMap=', !!this.store.getSnapshot().tasks.get(this.rootTaskId));"
-    },
     {
       "file": "packages/word-editor-renderers/src/editor-canvas.tsx",
       "line": 156,

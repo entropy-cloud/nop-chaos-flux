@@ -61,10 +61,54 @@ function normalizeLogicalName(name: string): string {
   return name === 'and' ? '&&' : name === 'or' ? '||' : name;
 }
 
-function applyBinaryOperator(op: string, left: unknown, right: unknown): unknown {
+const LEGAL_PRIMITIVE_OPERAND = new Set(['number', 'string', 'boolean', 'bigint']);
+
+function isLegalOperand(value: unknown): boolean {
+  return (
+    value === null || value === undefined || LEGAL_PRIMITIVE_OPERAND.has(typeof value)
+  );
+}
+
+function reportIllegalOperand(
+  reportError: ((error: unknown, details?: Record<string, unknown>) => void) | undefined,
+  op: string,
+  value: unknown,
+): void {
+  reportError?.(
+    createExpressionError(`Binary '${op}' requires primitive operands; received ${typeof value}`),
+    { op, operandType: typeof value },
+  );
+}
+
+function applyBinaryOperator(
+  op: string,
+  left: unknown,
+  right: unknown,
+  reportError?: (error: unknown, details?: Record<string, unknown>) => void,
+): unknown {
   switch (op) {
-    case '+':
-      return (left as any) + (right as any);
+    case '+': {
+      if (!isLegalOperand(left)) {
+        reportIllegalOperand(reportError, op, left);
+        return undefined;
+      }
+      if (!isLegalOperand(right)) {
+        reportIllegalOperand(reportError, op, right);
+        return undefined;
+      }
+      // Explicit JS `+` semantics for primitive operands (was `(as any)` —
+      // cq-6 Phase 1; behavior pinned by the characterisation matrix).
+      if (typeof left === 'string' || typeof right === 'string') {
+        return String(left) + String(right);
+      }
+      if (typeof left === 'bigint' && typeof right === 'bigint') {
+        return left + right;
+      }
+      if (typeof left === 'bigint' || typeof right === 'bigint') {
+        throw createExpressionError("Cannot mix BigInt and other types, use explicit conversions");
+      }
+      return (left as number) + (right as number);
+    }
     case '-':
       return Number(left) - Number(right);
     case '*':
@@ -75,14 +119,70 @@ function applyBinaryOperator(op: string, left: unknown, right: unknown): unknown
       return Number(left) % Number(right);
     case '**':
       return Number(left) ** Number(right);
-    case '<':
-      return (left as any) < (right as any);
-    case '<=':
-      return (left as any) <= (right as any);
-    case '>':
-      return (left as any) > (right as any);
-    case '>=':
-      return (left as any) >= (right as any);
+    case '<': {
+      if (!isLegalOperand(left)) {
+        reportIllegalOperand(reportError, op, left);
+        return undefined;
+      }
+      if (!isLegalOperand(right)) {
+        reportIllegalOperand(reportError, op, right);
+        return undefined;
+      }
+      // String pairs compare lexicographically; everything else numeric
+      // (bigint via Number — precision only degrades past 2^53, documented).
+      if (typeof left === 'string' && typeof right === 'string') {
+        return left < right;
+      }
+      return (left as number) < (right as number);
+    }
+    case '<=': {
+      if (!isLegalOperand(left)) {
+        reportIllegalOperand(reportError, op, left);
+        return undefined;
+      }
+      if (!isLegalOperand(right)) {
+        reportIllegalOperand(reportError, op, right);
+        return undefined;
+      }
+      // String pairs compare lexicographically; everything else numeric
+      // (bigint via Number — precision only degrades past 2^53, documented).
+      if (typeof left === 'string' && typeof right === 'string') {
+        return left <= right;
+      }
+      return (left as number) <= (right as number);
+    }
+    case '>': {
+      if (!isLegalOperand(left)) {
+        reportIllegalOperand(reportError, op, left);
+        return undefined;
+      }
+      if (!isLegalOperand(right)) {
+        reportIllegalOperand(reportError, op, right);
+        return undefined;
+      }
+      // String pairs compare lexicographically; everything else numeric
+      // (bigint via Number — precision only degrades past 2^53, documented).
+      if (typeof left === 'string' && typeof right === 'string') {
+        return left > right;
+      }
+      return (left as number) > (right as number);
+    }
+    case '>=': {
+      if (!isLegalOperand(left)) {
+        reportIllegalOperand(reportError, op, left);
+        return undefined;
+      }
+      if (!isLegalOperand(right)) {
+        reportIllegalOperand(reportError, op, right);
+        return undefined;
+      }
+      // String pairs compare lexicographically; everything else numeric
+      // (bigint via Number — precision only degrades past 2^53, documented).
+      if (typeof left === 'string' && typeof right === 'string') {
+        return left >= right;
+      }
+      return (left as number) >= (right as number);
+    }
     case '|':
       return Number(left) | Number(right);
     case '^':
@@ -145,6 +245,7 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
             node.op,
             evaluateNode(node.left, frame),
             evaluateNode(node.right, frame),
+            options.reportError,
           );
         case 'LogicalExpression': {
           const left = evaluateNode(node.left, frame);

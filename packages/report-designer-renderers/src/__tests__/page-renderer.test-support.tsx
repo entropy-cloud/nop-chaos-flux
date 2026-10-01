@@ -20,7 +20,7 @@ import {
 import {
   defineReportDesignerPageSchema,
   registerReportDesignerRenderers,
-} from './index.js';
+} from '../index.js';
 
 export const env: RendererEnv = {
   fetcher: async <T,>() => ({ status: 0, data: null as T }),
@@ -53,10 +53,6 @@ function ReportRuntimeDirtyProbe() {
   return <span data-testid="report-runtime-dirty">{String(Boolean(dirty))}</span>;
 }
 
-export const reportRuntimeDirtyProbeRenderer: RendererDefinition = {
-  type: 'report-runtime-dirty-probe',
-  component: ReportRuntimeDirtyProbe,
-};
 
 function ReportTargetKindProbe() {
   const targetKind = useScopeSelector((data: any) => data.selectionTarget?.kind ?? '');
@@ -79,10 +75,6 @@ function ReportStatusProbe() {
   );
 }
 
-export const reportStatusProbeRenderer: RendererDefinition = {
-  type: 'report-status-probe',
-  component: ReportStatusProbe,
-};
 
 beforeEach(async () => {
   resetFluxI18n();
@@ -101,6 +93,16 @@ export function createRuntimeConfig(overrides?: Partial<ReportDesignerConfig>): 
     ...(overrides ?? {}),
   };
 }
+
+const reportRuntimeDirtyProbeRenderer: RendererDefinition = {
+  type: 'report-runtime-dirty-probe',
+  component: ReportRuntimeDirtyProbe,
+};
+
+const reportStatusProbeRenderer: RendererDefinition = {
+  type: 'report-status-probe',
+  component: ReportStatusProbe,
+};
 
 export function createReportDesignerRegistry(extraRenderers: RendererDefinition[] = []) {
   const registry = createDefaultRegistry([

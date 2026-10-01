@@ -352,4 +352,3 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   );
 }
 
-export const ScadaCanvas = ScadaCanvasRenderer;

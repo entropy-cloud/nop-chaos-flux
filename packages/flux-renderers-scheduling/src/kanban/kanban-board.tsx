@@ -11,8 +11,7 @@
  */
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { shallowEqual } from '@nop-chaos/flux-core';
-import { useCurrentComponentRegistry, useRendererRuntime, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useCurrentComponentRegistry, useRendererRuntime } from '@nop-chaos/flux-react';
 import { Button, cn, Skeleton } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { BoardData, KanbanSchema, KanbanCardConfig } from './kanban.types.js';
@@ -29,14 +28,14 @@ import { KanbanToolbar } from './components/kanban-toolbar.js';
 import { KanbanColumnAdder } from './components/kanban-column-adder.js';
 import { KanbanActivityLog } from './components/kanban-activity-log.js';
 import type { KanbanAction } from './components/kanban-activity-log.js';
-import { createUndoStack, pushCommand as pushUndoCommand, undo as undoStackOp, redo as redoStackOp, canUndo, canRedo } from './utils/kanban-undo-stack.js';
-import type { UndoStack, UndoCommandType } from './utils/kanban-undo-stack.js';
+import type { UndoCommandType } from './utils/kanban-undo-stack.js';
 import { addCard, removeCard, moveCard, moveColumn, getColumns, collectAllTags } from './kanban-helpers.js';
 import { registerKanbanHandle, type KanbanHandleSurface } from './kanban-handle.js';
 import { useKanbanColumnAggregate } from './hooks/use-kanban-column-aggregate.js';
+import { useKanbanBoardState } from './hooks/use-kanban-board-state.js';
+import { canUndo, canRedo } from './utils/kanban-undo-stack.js';
 import { useSchedulingEventCtx } from '../shared/scheduling-event-ctx.js';
 
-const EMPTY_BOARD = { root: { id: 'root', type: 'root', children: [], data: {}, meta: {} } } as BoardData;
 
 // Event-time id factories (never called during render): Date.now() is impure,
 // so the react-compiler purity rule requires these to live at module scope.
@@ -48,7 +47,6 @@ const nextColumnId = () => `col-${Date.now()}-${++boardIdCounter}`;
 export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const { props: resolved, meta, regions, events, helpers } = props;
   const runtime = useRendererRuntime();
-  const rootScope = useRenderScope();
 
   const rawData = resolved.data as BoardData | undefined;
   const configMap = resolved.configMap as Record<string, KanbanCardConfig> | undefined;
@@ -67,108 +65,48 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   // no-ops on rawData), so mutation events (onCardMove/onColumnReorder/
   // onCardAdd/onCardRemove) and the activity log must not claim changes that
   // never happened. Interaction events (onCardClick/onColumnClick) still fire.
-  const isControlled = kanbanOwnership === 'controlled';
 
-  const fallbackBoard = EMPTY_BOARD;
 
-  // 05-01: 订阅门控——非 scope ownership 不订阅 scope（enabled:false 时
-  // useScopeSelector 走 fallback，零订阅渲染），scope 模式收窄到 state path。
-  const scopeBoardData = useScopeSelector(
-    (data: Record<string, unknown>) => {
-      if (!kanbanStatePath) return undefined;
-      const parts = kanbanStatePath.split('.');
-      let val: unknown = data;
-      for (const p of parts) val = (val as Record<string, unknown>)?.[p];
-      return val as BoardData | undefined;
-    },
-     shallowEqual,
-     {
-       enabled: kanbanOwnership === 'scope' && !!kanbanStatePath,
-       paths: kanbanStatePath ? [kanbanStatePath] : undefined,
-     },
-  );
 
-  const scopeCollapsedValue = useScopeSelector(
-    (data: Record<string, unknown>) => {
-      if (!collapsedStatePath) return undefined;
-      const parts = collapsedStatePath.split('.');
-      let val: unknown = data;
-      for (const p of parts) val = (val as Record<string, unknown>)?.[p];
-      return val as Record<string, boolean> | undefined;
-    },
-    Object.is,
-    {
-      enabled: collapsedOwnership === 'scope' && !!collapsedStatePath,
-      paths: collapsedStatePath ? [collapsedStatePath] : undefined,
-    },
-  );
 
-  const [localBoardData, setLocalBoardData] = useState<BoardData>(rawData ?? fallbackBoard);
-  const [localCollapsedData, setLocalCollapsedData] = useState<Record<string, boolean>>({});
-
-  const boardData = (kanbanOwnership === 'controlled')
-    ? (rawData ?? fallbackBoard)
-    : (kanbanOwnership === 'scope' && scopeBoardData ? scopeBoardData : localBoardData);
-
-  const boardDataRef = useRef(boardData);
-  useEffect(() => { boardDataRef.current = boardData; }, [boardData]);
-
-  // 22-03: re-seed local board state when the schema data prop changes at
-  // runtime (async data-source arrive, scope-driven refresh). New data wins
-  // over local edits — same semantics as the gantt re-seed precedent. The
-  // first render is skipped (state equals the initial value); every later
-  // reference change, including the first undefined→data arrival, re-seeds.
-  // React's adjust-state-during-render pattern: an effect+setState here would
-  // cascade (react-hooks/set-state-in-effect).
-  const [lastRawData, setLastRawData] = useState(rawData);
-  if (kanbanOwnership === 'local' && lastRawData !== rawData) {
-    setLastRawData(rawData);
-    setLocalBoardData(rawData ?? EMPTY_BOARD);
-  }
-
-  const columns = useMemo(() => getColumns(boardData), [boardData]);
-
-  const collapsedMap = (() => {
-    if (collapsedOwnership === 'controlled') {
-      const map: Record<string, boolean> = {};
-      if (columnsConfig) {
-        for (const [id, cfg] of Object.entries(columnsConfig)) {
-          if (typeof cfg === 'object' && cfg !== null && 'collapsed' in cfg) {
-            map[id] = !!(cfg as any).collapsed;
-          }
-        }
-      }
-      return map;
-    }
-    if (collapsedOwnership === 'scope' && scopeCollapsedValue) return scopeCollapsedValue;
-    return localCollapsedData;
-  })();
-
-  const setCollapsedMap = useCallback((updater: React.SetStateAction<Record<string, boolean>>) => {
-    if (collapsedOwnership === 'controlled') return;
-    const current = typeof updater === 'function'
-      ? updater(collapsedOwnership === 'scope' && collapsedStatePath ? (scopeCollapsedValue ?? {}) : localCollapsedData)
-      : updater;
-    if (collapsedOwnership === 'scope' && collapsedStatePath) {
-      rootScope.update(collapsedStatePath, current);
-      return;
-    }
-    setLocalCollapsedData(current);
-  }, [collapsedOwnership, collapsedStatePath, rootScope, scopeCollapsedValue, localCollapsedData]);
-
-  const setBoardData = useCallback((newBoard: BoardData) => {
-    if (kanbanOwnership === 'controlled') return;
-    if (kanbanOwnership === 'scope' && kanbanStatePath) {
-      rootScope.update(kanbanStatePath, newBoard);
-      return;
-    }
-    setLocalBoardData(newBoard);
-  }, [kanbanOwnership, kanbanStatePath, rootScope, setLocalBoardData]);
-
-  const setBoardDataRef = useRef(setBoardData);
-  useEffect(() => { setBoardDataRef.current = setBoardData; }, [setBoardData]);
-
+  const {
+    isControlled,
+    boardData,
+    columns,
+    collapsedMap,
+    setCollapsedMap,
+    boardDataRef,
+    undoStackState,
+    handleSetBoardData,
+    handleUndo,
+    handleRedo,
+    rootScope,
+  } = useKanbanBoardState({
+    kanbanOwnership,
+    kanbanStatePath,
+    collapsedOwnership,
+    collapsedStatePath,
+    rawData,
+    columnsConfig,
+  });
+  const [activityLogOpen, setActivityLogOpen] = useState(false);
+  const [addingColumn, setAddingColumn] = useState(false);
+  const [newColumnTitle, setNewColumnTitle] = useState('');
+  const [keyboardMoveCard, setKeyboardMoveCard] = useState<{ cardId: string; columnId: string } | null>(null);
+  const [dndAnnouncement, setDndAnnouncement] = useState('');
+  const [actions, setActions] = useState<KanbanAction[]>([]);
+  const lastCommandTypeRef = useRef<UndoCommandType>('moveCard');
+  const recordAction = useCallback((action: Omit<KanbanAction, 'id' | 'timestamp'>) => {
+    const entry: KanbanAction = {
+      ...action,
+      id: nextActionId(),
+      timestamp: new Date().toISOString(),
+    };
+    setActions((prev) => [entry, ...prev].slice(0, 500));
+  }, []);
   const eventCtx = useSchedulingEventCtx(rootScope);
+
+
 
   const initialFilterTags = (resolved.filterTags as string[]) || [];
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialFilterTags);
@@ -178,53 +116,6 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     return () => { void events.onUnmount?.({}, eventCtx({})); };
   }, [events, eventCtx]);
 
-  const [undoStackState, setUndoStackState] = useState<UndoStack>(() => createUndoStack(1000));
-  const [activityLogOpen, setActivityLogOpen] = useState(false);
-  const [addingColumn, setAddingColumn] = useState(false);
-  const [newColumnTitle, setNewColumnTitle] = useState('');
-  const [actions, setActions] = useState<KanbanAction[]>([]);
-  const [keyboardMoveCard, setKeyboardMoveCard] = useState<{ cardId: string; columnId: string } | null>(null);
-  const [dndAnnouncement, setDndAnnouncement] = useState('');
-
-  const recordAction = useCallback((action: Omit<KanbanAction, 'id' | 'timestamp'>) => {
-    const entry: KanbanAction = {
-      ...action,
-      id: nextActionId(),
-      timestamp: new Date().toISOString(),
-    };
-    setActions((prev) => [entry, ...prev].slice(0, 500));
-  }, []);
-
-  const lastCommandTypeRef = useRef<UndoCommandType>('moveCard');
-
-  const handleSetBoardData = useCallback((newBoard: BoardData, commandType?: UndoCommandType, extraParams?: Record<string, any>) => {
-    if (kanbanOwnership === 'controlled') return;
-    const ct = commandType ?? lastCommandTypeRef.current;
-    lastCommandTypeRef.current = 'moveCard';
-    setBoardData(newBoard);
-    setUndoStackState((s) => pushUndoCommand(s, {
-      type: ct,
-      timestamp: Date.now(),
-      params: extraParams ?? {},
-    }));
-  }, [kanbanOwnership, setBoardData]);
-
-  const handleUndo = useCallback(() => {
-    // 1-5: undo 确定性执行——旧实现经 setUndoStackState updater 副作用捕获
-    // restoredBoard（React 19 updater 仅在渲染期调用，是否急切执行依赖时序，
-    // 静默 no-op 导致 undo 偶发失效）；改为直接读当前栈并同步落位。
-    const result = undoStackOp(undoStackState, boardDataRef.current);
-    if (!result) return;
-    setUndoStackState(result.stack);
-    setBoardData(result.board);
-  }, [undoStackState, setBoardData]);
-
-  const handleRedo = useCallback(() => {
-    const result = redoStackOp(undoStackState, boardDataRef.current);
-    if (!result) return;
-    setUndoStackState(result.stack);
-    setBoardData(result.board);
-  }, [undoStackState, setBoardData]);
 
   const allTags = useMemo(() => collectAllTags(boardData, columns), [boardData, columns]);
 
@@ -477,7 +368,9 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     };
     // 回调稳定化（useCallback 家族）之后按依赖收口——此前无 deps 每 render
     // 重建镜像；在回调稳定化之前加 deps 会拿到过期闭包（see plan 2026-09-29-1）。
-  }, [handleCardAddAt, handleCardRemove, handleCardMoveViaHandle, handleCollapseColumn, isControlled, boardData]);
+    // boardDataRef is a stable ref mirror — its identity never changes, so
+    // listing it satisfies exhaustive-deps without re-running the effect.
+  }, [handleCardAddAt, handleCardRemove, handleCardMoveViaHandle, handleCollapseColumn, isControlled, boardData, boardDataRef]);
 
   // 22-12: ComponentHandle 注册（gantt.tsx / calendar.tsx 模式，实现抽离
   // `kanban-handle.ts`）——使 design.md §8 声明的 component:scrollToCard/

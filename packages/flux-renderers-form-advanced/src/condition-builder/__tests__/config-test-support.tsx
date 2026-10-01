@@ -2,9 +2,9 @@ import React from 'react';
 import { afterEach, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { ConditionGroup } from './condition-group.js';
-import type { ConditionBuilderSchema, ConditionField, ConditionFormulaConfig, ConditionGroupValue } from './types.js';
-import type { EvaluateConditionFormula } from './condition-builder.js';
+import { ConditionGroup } from '../condition-group.js';
+import type { ConditionBuilderSchema, ConditionField, ConditionFormulaConfig, ConditionGroupValue } from '../types.js';
+import type { EvaluateConditionFormula } from '../condition-builder.js';
 
 vi.mock('@dnd-kit/core', () => ({
   DndContext: ({ children }: any) => <>{children}</>,
@@ -188,7 +188,6 @@ export const testFields: ConditionField[] = [
   { name: 'score', label: '分数', type: 'number' },
 ];
 
-export { ConditionGroup };
 
 resetFluxI18n();
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
@@ -202,7 +201,7 @@ export function renderGroup(
   value?: ConditionGroupValue,
   onChange?: (v: ConditionGroupValue) => void,
   options?: {
-    operatorsOverride?: import('./types.js').ConditionOperatorOverrides;
+    operatorsOverride?: import('../types.js').ConditionOperatorOverrides;
     disabled?: boolean;
     depth?: number;
     formulas?: ConditionFormulaConfig;

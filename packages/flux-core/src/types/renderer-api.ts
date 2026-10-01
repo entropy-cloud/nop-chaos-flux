@@ -225,8 +225,8 @@ export interface RendererEnv extends ExpressionExecutionEnv {
   navigate?: (to: string | number, options?: { replace?: boolean }) => void;
   confirm?: (message: string, title?: string) => Promise<boolean>;
   alert?: (message: string, title?: string) => void;
-  functions?: Record<string, (...args: any[]) => any>;
-  filters?: Record<string, (input: any, ...args: any[]) => any>;
+  functions?: Record<string, (...args: unknown[]) => unknown>;
+  filters?: Record<string, (input: unknown, ...args: unknown[]) => unknown>;
   importLoader?: ImportedLibraryLoader;
   resolveImportUrl?: (schemaUrl: string, from: string, options?: Record<string, unknown>) => string;
 

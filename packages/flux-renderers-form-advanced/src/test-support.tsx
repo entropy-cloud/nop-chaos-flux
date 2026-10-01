@@ -99,6 +99,10 @@ export const baseEnv: RendererEnv = {
 };
 
 export const formulaCompiler = createFormulaCompiler();
+/**
+ * @deprecated Use `formulaCompiler` (cq-6 Phase 2: duplicate-export aliases
+ * funnel to the primary name; removed after one compatibility round).
+ */
 export const sharedFormulaCompiler = formulaCompiler;
 
 export async function selectOption(labelText: string, optionText: string) {

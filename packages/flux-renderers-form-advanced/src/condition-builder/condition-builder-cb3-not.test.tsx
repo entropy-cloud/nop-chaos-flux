@@ -8,7 +8,7 @@ import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { env, formStateProbeRenderer } from '../test-support.js';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { sanitizeNode } from './utils.js';
-import { renderGroup } from './config-test-support.js';
+import { renderGroup } from './__tests__/config-test-support.js';
 import { installFormAdvancedTestHooks } from '../test-support.js';
 
 installFormAdvancedTestHooks();

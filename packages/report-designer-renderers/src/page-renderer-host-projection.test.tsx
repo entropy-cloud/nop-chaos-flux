@@ -10,7 +10,7 @@ import {
   createRuntimeConfig,
   env,
   renderReportDesignerPage,
-} from './page-renderer.test-support.js';
+} from './__tests__/page-renderer.test-support.js';
 
 describe('ReportDesignerPageRenderer host projection contracts', { timeout: 15000 }, () => {
   it('publishes report designer host status through statusPath', async () => {

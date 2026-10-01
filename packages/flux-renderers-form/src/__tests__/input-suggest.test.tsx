@@ -130,6 +130,9 @@ async function typeAndExpectSuggestions(input: HTMLInputElement, value: string) 
 }
 
 describe('input-text suggest — trigger=input (default)', () => {
+  // NOTE (cq-6): the 120ms waits below ride the component's real debounce
+  // timer — fake timers would virtualize the debounce but the popover render
+  // settles over real microtasks; retained-with-reason in plan cq-6 Phase 6.
   it('dispatches refreshSource on debounced input change and renders suggestions popover', async () => {
     const fetcher = vi.fn(defaultSuggestionsFetcher()) as RendererEnv['fetcher'];
     renderForm(SUGGEST_SCHEMA, fetcher);

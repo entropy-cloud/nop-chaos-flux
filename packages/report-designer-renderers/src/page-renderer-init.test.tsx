@@ -10,7 +10,7 @@ import {
   createRuntimeConfig,
   env,
   reportTargetKindProbeRenderer,
-} from './page-renderer.test-support.js';
+} from './__tests__/page-renderer.test-support.js';
 
 describe('ReportDesignerPageRenderer initialization and failure paths', { timeout: 15000 }, () => {
   it('reports refreshFieldSources failures through notify', async () => {

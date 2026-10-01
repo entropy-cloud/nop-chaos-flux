@@ -14,7 +14,7 @@ import {
   makeEmptyGroup,
   renderGroup,
   testFields,
-} from './config-test-support.js';
+} from './__tests__/config-test-support.js';
 import type { ConditionGroupValue, ConditionItemValue } from './types.js';
 import type { EvaluateConditionFormula } from './condition-builder.js';
 import { installFormAdvancedTestHooks } from '../test-support.js';

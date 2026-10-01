@@ -137,7 +137,7 @@ export function createSnapshot(): DesignerSnapshot {
   };
 }
 
-vi.mock('./designer-context', async () => {
+vi.mock('../designer-context', async () => {
   const ReactMock = await import('react');
   const DesignerContext = ReactMock.createContext<any>(null);
   return {

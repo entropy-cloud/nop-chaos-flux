@@ -229,7 +229,10 @@ describe('DesignerPage auto layout guards', () => {
     testState.layoutResolvers[0]?.(new Map([['node-1', { x: 100, y: 100 }]]));
     await Promise.resolve();
 
-    expect(true).toBe(true);
+    // Real assertion (was `expect(true).toBe(true)`): the resolved layout must
+    // NOT throw when the owning renderer is gone — the late result is dropped
+    // silently. No further layout request may be enqueued after unmount.
+    expect(testState.layoutResolvers).toHaveLength(1);
   });
 
   it('keeps sibling layout requests active across instance cleanup', async () => {

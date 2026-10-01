@@ -88,8 +88,8 @@ describe('page branch closure', () => {
     expect(document.querySelectorAll('[data-psid]').length).toBe(1);
   });
 
-  it('keydown in textarea/select targets is ignored', () => {
-    render(<PageDesigner />);
+  it('keydown in textarea/select targets is ignored (no undo-stack mutation)', () => {
+    const view = render(<PageDesigner />);
     for (const tag of ['textarea', 'select']) {
       const el = document.createElement(tag);
       document.body.appendChild(el);
@@ -101,7 +101,11 @@ describe('page branch closure', () => {
     document.body.appendChild(editable);
     fireEvent.keyDown(editable, { key: 'Delete' });
     editable.parentElement?.removeChild(editable);
-    expect(true).toBe(true);
+    // Real assertions (was `expect(true).toBe(true)`): ignored keydowns must
+    // leave the designer untouched — undo stays disabled (nothing recorded)
+    // and the canvas keeps its node count.
+    expect((view.getByTestId('page-designer-undo') as HTMLButtonElement).disabled).toBe(true);
+    expect(document.querySelectorAll('[data-psid]').length).toBeGreaterThan(0);
   });
 
   it('two transient edits stay inside one transaction', async () => {

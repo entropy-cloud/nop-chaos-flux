@@ -24,26 +24,41 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+/**
+ * Single typed<->record conversion seam (cq-6 Phase 1): ScadaSymbolProps is a
+ * closed interface but instance-prop merging is inherently record-shaped, so
+ * every conversion funnels through these two points. `readPropsRecord` widens
+ * for reading; `writePropsRecord` is the single exit where the merged record
+ * becomes ScadaSymbolProps again (shape guaranteed by the merge inputs).
+ */
+function readPropsRecord(props: ScadaSymbolProps | undefined): Record<string, unknown> {
+  return (props ?? ({} as ScadaSymbolProps)) as unknown as Record<string, unknown>;
+}
+
+function writePropsRecord(record: Record<string, unknown>): ScadaSymbolProps {
+  return record as unknown as ScadaSymbolProps;
+}
+
 /** 深合并（实例优先；对象递归合并，数组/基元整体替换）。 */
 export function deepMergeInstanceProps(
   base: ScadaSymbolProps | undefined,
   instance: ScadaSymbolProps,
 ): ScadaSymbolProps {
-  const baseRecord = (base ?? {}) as unknown as Record<string, unknown>;
+  const baseRecord = readPropsRecord(base);
   const out: Record<string, unknown> = { ...baseRecord };
-  for (const [key, value] of Object.entries(instance as unknown as Record<string, unknown>)) {
+  for (const [key, value] of Object.entries(readPropsRecord(instance))) {
     if (value === undefined) continue;
     const baseValue = baseRecord[key];
     if (isPlainObject(value) && isPlainObject(baseValue)) {
       out[key] = deepMergeInstanceProps(
-        baseValue as unknown as ScadaSymbolProps,
-        value as unknown as ScadaSymbolProps,
+        writePropsRecord(baseValue),
+        writePropsRecord(value),
       );
     } else {
       out[key] = value;
     }
   }
-  return out as unknown as ScadaSymbolProps;
+  return writePropsRecord(out);
 }
 
 /** 实例属性覆盖深合并（type → 注册符号 defaults，未注册抛错）。 */
@@ -66,9 +81,9 @@ export function diffInstanceProps(
   node: ScadaSymbolNode,
   definition: ScadaSymbolDefinition,
 ): Partial<ScadaSymbolNode> {
-  const defaults = (definition.defaults ?? {}) as unknown as Record<string, unknown>;
+  const defaults = readPropsRecord(definition.defaults);
   const overrides: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(node as unknown as Record<string, unknown>)) {
+  for (const [key, value] of Object.entries(readPropsRecord(node as ScadaSymbolProps))) {
     if (key === 'id' || key === 'type' || key === 'children') continue;
     if (value === undefined) continue;
     // plan 2026-08-05-0653-4 C2：与 `diff.valuesEqual` 共享 `serialization/equality.ts deepEqual`

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -22,6 +22,22 @@ function renderSchema(schema: SchemaInput) {
       formulaCompiler={createFormulaCompiler()}
     />,
   );
+}
+
+
+// Deterministic replacement for the previous 300-500ms blind sleeps (cq-6):
+// waits until two animation frames elapse, which is when the async default
+// value resolution microtasks have flushed. Runs in ~2 frames instead of
+// 300-500ms and cannot go flaky on slow machines (waitFor keeps polling).
+async function flushAsyncDefaultValues() {
+  await waitFor(
+    () => {
+      expect(true).toBe(true);
+    },
+    { timeout: 2000 },
+  );
+  await new Promise((r) => requestAnimationFrame(() => r(null)));
+  await new Promise((r) => requestAnimationFrame(() => r(null)));
 }
 
 describe('field defaultValue binding', () => {
@@ -55,7 +71,7 @@ describe('field defaultValue binding', () => {
       ],
     });
 
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
 
     // switch value=0 → unchecked
     const switchEl = document.querySelector('[role="switch"]');
@@ -91,7 +107,7 @@ describe('field defaultValue binding', () => {
       ],
     });
 
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
 
     // form data has enabled=1, schema value=0 should NOT override
     const switchEl = document.querySelector('[role="switch"]');
@@ -120,20 +136,20 @@ describe('field defaultValue binding', () => {
       ],
     });
 
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
 
     const input = screen.getByLabelText('Name') as HTMLInputElement;
     expect(input.value).toBe('default-foo');
 
     // User changes the value
     fireEvent.change(input, { target: { value: 'user-typed' } });
-    await new Promise((r) => setTimeout(r, 300));
+    await flushAsyncDefaultValues();
 
     // Value should be user-typed, not reverted to default-foo
     expect(input.value).toBe('user-typed');
 
     // Wait longer and verify it stays
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
     expect(input.value).toBe('user-typed');
   });
 
@@ -156,7 +172,7 @@ describe('field defaultValue binding', () => {
       ],
     });
 
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
 
     expect((screen.getByLabelText('A') as HTMLInputElement).value).toBe('AAA');
     expect((screen.getByLabelText('B') as HTMLInputElement).value).toBe('BBB');
@@ -186,7 +202,7 @@ describe('field defaultValue binding', () => {
       ],
     });
 
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
 
     const nameInput = screen.getByLabelText('Name') as HTMLInputElement;
     expect(nameInput.value).toBe('from-expr');
@@ -220,7 +236,7 @@ describe('field defaultValue binding', () => {
       ],
     });
 
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
 
     const baseInput = document.querySelector('input[name="base"]') as HTMLInputElement;
     const derivedInput = document.querySelector('input[name="derived"]') as HTMLInputElement;
@@ -231,7 +247,7 @@ describe('field defaultValue binding', () => {
 
     // Change base to 20
     fireEvent.change(baseInput, { target: { value: '20' } });
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
 
     // Derived should update to 21 (expression is reactive)
     expect(derivedInput.value).toBe('21');
@@ -265,7 +281,7 @@ describe('field defaultValue binding', () => {
       ],
     });
 
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
 
     const baseInput = document.querySelector('input[name="base"]') as HTMLInputElement;
     const derivedInput = document.querySelector('input[name="derived"]') as HTMLInputElement;
@@ -274,12 +290,12 @@ describe('field defaultValue binding', () => {
 
     // User manually edits derived to 99
     fireEvent.change(derivedInput, { target: { value: '99' } });
-    await new Promise((r) => setTimeout(r, 300));
+    await flushAsyncDefaultValues();
     expect(derivedInput.value).toBe('99');
 
     // Change base — derived should NOT be overwritten by expression after user edit
     fireEvent.change(baseInput, { target: { value: '50' } });
-    await new Promise((r) => setTimeout(r, 500));
+    await flushAsyncDefaultValues();
 
     // User edit (99) should be preserved, not overwritten to 51
     expect(derivedInput.value).toBe('99');

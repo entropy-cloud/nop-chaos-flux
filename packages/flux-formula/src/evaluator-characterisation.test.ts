@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type { EvalContext, RendererEnv } from '@nop-chaos/flux-core';
-import { createFormulaCompiler } from './index.js';
 import { evaluateAst } from './evaluator.js';
 import { parseFormula } from './parser.js';
 
@@ -8,8 +7,6 @@ const env: RendererEnv = {
   fetcher: async <T>() => ({ status: 0, data: null as T }),
   notify: () => undefined,
 };
-
-const compiler = createFormulaCompiler();
 
 function createContext(data: Record<string, unknown>): EvalContext {
   return {
@@ -81,7 +78,6 @@ describe('binary operator characterisation (cq-6, pre-refactor pin)', () => {
         evaluateAst(ast, {
           env,
           context: createContext(OPERANDS),
-          registry: compiler.getRegistry?.() ?? undefined,
         });
       if (expected === 'THROWS') {
         expect(run).toThrow(/Cannot mix BigInt/);

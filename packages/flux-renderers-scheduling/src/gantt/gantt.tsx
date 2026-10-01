@@ -1,7 +1,7 @@
 import React, { useRef, useImperativeHandle, useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { Skeleton, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { RendererComponentProps, ComponentHandle } from '@nop-chaos/flux-core';
+import type { ComponentHandle, RendererComponentProps, RendererResolvedProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-react';
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttSchema } from '../schemas.js';
@@ -49,22 +49,18 @@ function GanttLiveRegion({ store }: { store: GanttStoreApi }) {
   );
 }
 
-export function createInitialStore(resolved: Record<string, unknown>): GanttStoreApi {
+export function createInitialStore(resolved: Readonly<RendererResolvedProps<GanttSchema>>): GanttStoreApi {
   const s = createGanttStore({
-    cellWidth: (resolved.cellWidth as number) ?? 40,
-    defaultZoom: (resolved.defaultZoom as string) ?? 'week',
-    taskBarHeight: (resolved.taskBarHeight as number) ?? 28,
-    zoomLevels: (resolved.zoomLevels as any[]) ?? [
+    cellWidth: resolved.cellWidth ?? 40,
+    defaultZoom: resolved.defaultZoom ?? 'week',
+    taskBarHeight: resolved.taskBarHeight ?? 28,
+    zoomLevels: resolved.zoomLevels ?? [
       { key: 'day', label: t('scheduling.gantt.zoomDay'), minCellWidth: 40, scales: [{ unit: 'day', step: 1, format: '%m/%d' }] },
       { key: 'week', label: t('scheduling.gantt.zoomWeek'), minCellWidth: 80, scales: [{ unit: 'week', step: 1, format: '%Y' }, { unit: 'day', step: 1, format: '%d' }] },
       { key: 'month', label: t('scheduling.gantt.zoomMonth'), minCellWidth: 60, scales: [{ unit: 'month', step: 1, format: '%Y' }, { unit: 'day', step: 1, format: '%d' }] },
     ],
   });
-  const taskData = (resolved.tasks as any[]) ?? [];
-  const linkData = (resolved.links as any[]) ?? [];
-  const resourceData = (resolved.resources as any[]) ?? undefined;
-  const assignmentData = (resolved.assignments as any[]) ?? undefined;
-  s.parse(taskData, linkData, resourceData, assignmentData);
+  s.parse(resolved.tasks ?? [], resolved.links ?? [], resolved.resources, resolved.assignments);
   return s;
 }
 
@@ -140,10 +136,10 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
         }
       }
       if (dataChanged || storeEmpty) {
-        const taskData = (resolved.tasks as any[]) ?? [];
-        const linkData = (resolved.links as any[]) ?? [];
-        const resourceData = (resolved.resources as any[]) ?? undefined;
-        const assignmentData = (resolved.assignments as any[]) ?? undefined;
+        const taskData = resolved.tasks ?? [];
+        const linkData = resolved.links ?? [];
+        const resourceData = resolved.resources;
+        const assignmentData = resolved.assignments;
         store.parse(taskData, linkData, resourceData, assignmentData);
       }
       // parse() does not bump layoutRevision (the render subscription), so
@@ -555,10 +551,10 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       );
     }
 
-    const columns = resolved.columns as any[] | undefined;
+    const columns = resolved.columns;
     const showWeekends = resolved.showWeekends !== false;
     const showToday = resolved.showToday !== false;
-    const columnNames = columns?.map((c: any) => c.name as string) ?? ['text', 'start', 'end', 'duration', 'predecessor'];
+    const columnNames = columns?.map((c) => c.name) ?? ['text', 'start', 'end', 'duration', 'predecessor'];
     const columnRegions = Object.fromEntries(
       columnNames.map((name: string) => [name, regions[name] as RenderRegionHandle | undefined]).filter(([, r]) => r),
     );

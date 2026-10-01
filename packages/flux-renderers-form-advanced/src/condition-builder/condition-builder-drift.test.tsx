@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
-import { makeEmptyGroup, renderGroup, testFields } from './config-test-support.js';
+import { makeEmptyGroup, renderGroup, testFields } from './__tests__/config-test-support.js';
 import type { ConditionGroupValue } from './types.js';
 
 // E0d Phase 1 裁定:

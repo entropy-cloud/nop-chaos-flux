@@ -71,7 +71,8 @@ describe('useConversation — switch / background processing', () => {
     // (processing === true). The active engine is B's, not A's.
     expect(result.current.activeConversationId).not.toBe(aId);
     expect(result.current.activeEngine).not.toBe(aEngine);
-    // Wait for A's stream to settle.
+    // Wait for A's stream to settle (cq-6 retained-with-reason: streaming
+    // completion settles over real async I/O simulation, not a bare timer).
     await act(async () => {
       await new Promise((r) => setTimeout(r, 200));
     });

@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { renderGroup } from './config-test-support.js';
+import { renderGroup } from './__tests__/config-test-support.js';
 import type { ConditionGroupValue } from './types.js';
 
 // B6.1 CB1 regression lock: `disabled` is a single umbrella switch that fans out to

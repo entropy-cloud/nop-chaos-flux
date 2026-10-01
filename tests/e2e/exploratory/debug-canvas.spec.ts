@@ -1,6 +1,9 @@
+// DIAGNOSTIC SPEC (cq-6 Phase 6): console.log + waitForTimeout probe, no product assertions.
+// Skipped from the default suite — run explicitly with `npx playwright test debug-canvas` when debugging.
+
 import { test, expect } from './fixtures.js';
 
-test('debug canvas element', async ({ page }) => {
+test.skip('debug canvas element', async ({ page }) => {
   await page.goto('/#/scada-editor-demo', { waitUntil: 'load' });
   await page.waitForTimeout(3000);
   const info = await page.evaluate(() => {

@@ -9,6 +9,17 @@ import type {
   ExpressionCompileOptions,
 } from '@nop-chaos/flux-core';
 import { compileActions } from './action-compiler.js';
+
+/**
+ * Single output-shape assertion seam (cq-6 Phase 1): compileValue types the
+ * INPUT expression; the runtime value shape (e.g. stopWhen must evaluate to
+ * boolean) is guaranteed by the action field contracts, so the output
+ * assertion funnels through this one named point instead of six inline
+ * `as unknown as` casts.
+ */
+function asRuntimeValue<T>(value: CompiledRuntimeValue<unknown>): CompiledRuntimeValue<T> {
+  return value as unknown as CompiledRuntimeValue<T>;
+}
 export interface SourceCompilerOptions extends ExpressionCompileOptions {
   basePath?: string;
 }
@@ -93,17 +104,17 @@ export function compileDataSource(
     }
 
     if (actionSchema.stopWhen !== undefined) {
-      compiled.stopWhen = compiler.compileValue(actionSchema.stopWhen, {
+      compiled.stopWhen = asRuntimeValue<boolean>(compiler.compileValue(actionSchema.stopWhen, {
         ...options,
         sourcePath: `${basePath}.stopWhen`,
-      }) as unknown as CompiledRuntimeValue<boolean>;
+      }));
     }
 
     if (actionSchema.silent !== undefined) {
-      compiled.silent = compiler.compileValue(actionSchema.silent, {
+      compiled.silent = asRuntimeValue<boolean>(compiler.compileValue(actionSchema.silent, {
         ...options,
         sourcePath: `${basePath}.silent`,
-      }) as unknown as CompiledRuntimeValue<boolean>;
+      }));
     }
 
     if (actionSchema.sendOn !== undefined) {
@@ -111,17 +122,17 @@ export function compileDataSource(
       // Wrap it so the expression compiler evaluates it as a condition rather than a
       // literal string (same evaluation semantics as `when` / `stopWhen`).
       const wrappedSendOn = `\${${actionSchema.sendOn}}`;
-      compiled.sendOn = compiler.compileValue(wrappedSendOn, {
+      compiled.sendOn = asRuntimeValue<boolean>(compiler.compileValue(wrappedSendOn, {
         ...options,
         sourcePath: `${basePath}.sendOn`,
-      }) as unknown as CompiledRuntimeValue<boolean>;
+      }));
     }
 
     if (actionSchema.initFetch !== undefined) {
-      compiled.initFetch = compiler.compileValue(actionSchema.initFetch, {
+      compiled.initFetch = asRuntimeValue<boolean>(compiler.compileValue(actionSchema.initFetch, {
         ...options,
         sourcePath: `${basePath}.initFetch`,
-      }) as unknown as CompiledRuntimeValue<boolean>;
+      }));
     }
 
     if (actionSchema.onSuccess !== undefined) {
@@ -154,17 +165,19 @@ export function compileDataSource(
   }
 
   if (schema.resultMapping !== undefined) {
-    compiled.resultMapping = compiler.compileValue(schema.resultMapping, {
-      ...options,
-      sourcePath: `${basePath}.resultMapping`,
-    }) as unknown as CompiledRuntimeValue<Record<string, string>>;
+    compiled.resultMapping = asRuntimeValue<Record<string, string>>(
+      compiler.compileValue(schema.resultMapping, {
+        ...options,
+        sourcePath: `${basePath}.resultMapping`,
+      }),
+    );
   }
 
   if (schema.mergeStrategy !== undefined) {
-    compiled.mergeStrategy = compiler.compileValue(schema.mergeStrategy, {
+    compiled.mergeStrategy = asRuntimeValue<'replace' | 'append' | 'prepend' | 'merge' | 'upsert'>(compiler.compileValue(schema.mergeStrategy, {
       ...options,
       sourcePath: `${basePath}.mergeStrategy`,
-    }) as unknown as CompiledRuntimeValue<'replace' | 'append' | 'prepend' | 'merge' | 'upsert'>;
+    }));
   }
 
   if (schema.mergeKey !== undefined) {

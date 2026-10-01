@@ -16,7 +16,7 @@ import {
   pageRenderer,
   actionButtonRenderer,
   textRenderer,
-} from '../page-renderer.test-support.js';
+} from '../__tests__/page-renderer.test-support.js';
 
 // React StrictMode double-mounts effects (dev default, HMR). The page renderer
 // used to dispose its memoized designer core in the effect cleanup, which killed

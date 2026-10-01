@@ -5,7 +5,7 @@ import { createReportTemplateDocument } from '@nop-chaos/report-designer-core';
 import {
   createRuntimeConfig,
   renderReportDesignerPage,
-} from './page-renderer.test-support.js';
+} from './__tests__/page-renderer.test-support.js';
 
 describe('ReportDesignerPageRenderer shell contracts', { timeout: 15000 }, () => {
   it('prefers byProfile inspector schema over byTarget and body', async () => {

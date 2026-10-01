@@ -293,19 +293,21 @@ export function createFormStore(initialValues: Record<string, any>): FormStoreAp
             descendantListeners = new Set();
             descendantPathListeners.set(prefix, descendantListeners);
           }
-          descendantListeners.add(listener);
+          const descendantSet = descendantListeners;
+          descendantSet.add(listener);
 
           return () => {
-            descendantListeners!.delete(listener);
-            if (descendantListeners!.size === 0) {
+            descendantSet.delete(listener);
+            if (descendantSet.size === 0) {
               descendantPathListeners.delete(prefix);
             }
           };
         });
 
+      const pathSet = listeners;
       return () => {
-        listeners!.delete(listener);
-        if (listeners!.size === 0) {
+        pathSet.delete(listener);
+        if (pathSet.size === 0) {
           pathListeners.delete(path);
         }
 

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { renderGroup } from './config-test-support.js';
+import { renderGroup } from './__tests__/config-test-support.js';
 
 /**
  * V12f Phase 1 — [G2-R7-视角4-01] condition-group Add-Group 的

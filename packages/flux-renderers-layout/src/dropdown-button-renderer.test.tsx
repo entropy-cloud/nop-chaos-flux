@@ -183,6 +183,11 @@ describe('DropdownButtonRenderer (W3b — menu-style action trigger)', () => {
   });
 
   it('P1-04: hover menu stays open while the pointer travels from the trigger into the portal menu', async () => {
+    // NOTE (cq-6): the three waits here are blind sleeps retained deliberately —
+    // Base UI's open/close path uses rAF-driven exit animation, which fake
+    // timers cannot virtualize (verified: converted attempt leaves the menu
+    // element mounted through the close step). 860ms of wall time accepted.
+    // Retained-with-reason entry in plan 2026-09-30-cq-6 Phase 6.
     const SchemaRenderer = createLayoutSchemaRenderer();
     render(
       <SchemaRenderer
@@ -216,6 +221,9 @@ describe('DropdownButtonRenderer (W3b — menu-style action trigger)', () => {
     // needs a grace window to travel into the portaled menu (P1-04 regression:
     // a synchronous close makes hover unusable for mouse users).
     fireEvent.mouseLeave(wrapper);
+    // NOTE (cq-6): the three waits below are blind sleeps retained deliberately —
+    // Base UI's open/close path is rAF-driven, which fake timers cannot
+    // virtualize. Retained-with-reason: plan 2026-09-30-cq-6 Phase 6.
     await new Promise((r) => setTimeout(r, 60));
     const content = document.querySelector('[data-slot="dropdown-menu-content"]');
     expect(content).toBeTruthy();

@@ -481,7 +481,6 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   );
 }
 
-export const ScadaEditorCanvas = ScadaEditorCanvasRenderer;
 
 /**
  * 计算全部图元（含 group 嵌套）的聚合世界包围盒（plan 2026-08-08-0900-1 Phase 3 / P2 #9 viewport policy 消费用）。

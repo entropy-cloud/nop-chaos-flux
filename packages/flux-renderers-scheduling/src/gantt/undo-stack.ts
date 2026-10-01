@@ -182,7 +182,6 @@ export class DeleteTaskCommand implements Command {
   }
 
   redo(): void {
-    if (typeof console !== 'undefined') console.log('[redo-delete]', this.rootTaskId, 'inMap=', !!this.store.getSnapshot().tasks.get(this.rootTaskId));
     this.store.deleteTask(this.rootTaskId);
   }
 
