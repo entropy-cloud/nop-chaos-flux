@@ -18,6 +18,10 @@ import {
   shouldShowTrailingEllipsis,
 } from '../pagination-window.js';
 
+// ux-r12 cp7：schema 未声明 pageSizeOptions 时的兜底——此前 undefined 直接渲染
+// 空选项 select（pagination-renderer 同场景有兜底，两处契约拉齐）。
+const DEFAULT_PAGE_SIZE_OPTIONS: readonly number[] = [10, 20, 50, 100];
+
 interface TablePaginationBarProps {
   currentPage: number;
   pageSize: number;
@@ -61,7 +65,7 @@ export function TablePaginationBar({
           className="min-w-16"
           aria-labelledby={pageSizeLabelId}
         >
-          {pageSizeOptions?.map((size) => (
+          {(pageSizeOptions ?? DEFAULT_PAGE_SIZE_OPTIONS).map((size) => (
             <NativeSelectOption key={size} value={String(size)}>
               {size}
             </NativeSelectOption>

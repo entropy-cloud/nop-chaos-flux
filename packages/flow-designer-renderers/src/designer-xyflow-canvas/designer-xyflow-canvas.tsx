@@ -350,9 +350,19 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           edges={renderedEdges}
           nodeTypes={xyflowNodeTypes}
           edgeTypes={xyflowEdgeTypes}
-          onInit={(instance) => setReactFlowInstance(instance)}
+          onInit={(instance) => {
+            setReactFlowInstance(instance);
+            // ux-r12 tft6：异步自动布局（ELK）在 init 后才落位，初始 fitView
+            // 按布局前的散布边界算 zoom 导致节点文字不可读（实测 ~0.5x）。
+            // 落位后一次性重适配，maxZoom 钳制可读下限；只此一次，不与用户
+            // 后续平移/缩放抢视口。
+            window.setTimeout(() => {
+              void instance.fitView({ padding: 0.15, maxZoom: 1 });
+            }, 300);
+          }}
           viewport={viewport}
           fitView
+          fitViewOptions={{ padding: 0.15, maxZoom: 1 }}
           nodesConnectable={!isTreeMode}
           elementsSelectable
           nodesDraggable={!isTreeMode}

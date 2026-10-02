@@ -66,7 +66,14 @@ describe('table group — zero regression & declaration gate', () => {
 
     expect(groupHeaders()).toHaveLength(0);
     expect(bodyRows()).toHaveLength(4);
-    expect(screen.getByText('10')).toBeTruthy();
+    // ux-r12 cp7：每页行数 select 未声明 pageSizeOptions 时渲染兜底选项，
+    // "10" 同时出现在选项与总数文案——收窄到分页条内断言
+    const paginationBar = screen
+      .getAllByText('10')
+      .map((el) => el.closest('[data-slot="table-pagination"]'))
+      .find(Boolean);
+    expect(paginationBar).toBeTruthy();
+    expect(paginationBar?.querySelector('select')?.options?.length ?? 0).toBeGreaterThan(0);
   });
 
   it('renders group header rows with label, member count and aggregate text', () => {

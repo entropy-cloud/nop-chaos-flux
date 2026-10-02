@@ -43,6 +43,38 @@ import {
 } from './chart-diagnostics.js';
 import { buildHeatmapGrid, HeatmapGrid, sanitizeHeatmapRows } from './chart-heatmap.js';
 import { sanitizeYAxis, type SanitizedYAxisEntry } from './chart-y-axis.js';
+
+/**
+ * ux-r12 cp3：pie 图例逐切片渲染（name + 调色板色点）。共享 ChartLegendContent
+ * 按 ChartConfig（系列级，key=dataRegionKey）查标签，pie 场景会把每个切片都
+ * 标成系列名（如 4 个切片全显「订单数」）——切片名在数据行里，须单独渲染。
+ */
+function PieSliceLegend({
+  items,
+  palette,
+  className,
+}: {
+  items: Array<{ name: string | number; value: number }>;
+  palette: string[];
+  className?: string | undefined;
+}) {
+  return (
+    <div className={cn('flex flex-wrap items-center justify-center gap-x-4 gap-y-1', className)}>
+      {items.map((item, i) => (
+        <div
+          key={`pie-legend-${item.name}:${item.value}`}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground"
+        >
+          <div
+            className="h-2 w-2 shrink-0 rounded-[2px]"
+            style={{ backgroundColor: palette[i % palette.length] }}
+          />
+          <span>{item.name}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 import {
   isChartType,
   sanitizeBand,
@@ -394,7 +426,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
       return (
         <PieChart>
           <ChartTooltip content={<ChartTooltipContent />} />
-          {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
+          {showLegend && <PieSliceLegend items={pieData} palette={palette} className={legendClassName} />}
           <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%">
             {pieData.map((item, i) => (
               // H22: key on name+value so same-named Pie cells no longer collide

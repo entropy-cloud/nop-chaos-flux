@@ -341,7 +341,7 @@
             {
               "name": "customer",
               "label": "客户名称",
-              "width": 200
+              "width": 180
             },
             {
               "name": "channelLabel",
@@ -351,7 +351,7 @@
             {
               "name": "amountText",
               "label": "订单金额",
-              "width": 120,
+              "width": 110,
               "align": "right",
               "cell": {
                 "type": "text",
@@ -396,7 +396,7 @@
             {
               "name": "owner",
               "label": "销售负责人",
-              "width": 110
+              "width": 95
             },
             {
               "name": "createdAt",
@@ -407,7 +407,6 @@
             {
               "type": "operation",
               "label": "操作",
-              "fixed": "right",
               "width": 160,
               "buttons": [
                 {

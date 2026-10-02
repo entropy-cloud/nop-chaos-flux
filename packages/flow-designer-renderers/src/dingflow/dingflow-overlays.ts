@@ -90,12 +90,17 @@ export function computeDingFlowOverlays(
     const isTB = firstGeometry.direction !== 'LR';
     const ownerCenterX = Math.round(owner.position.x + ownerSize.width / 2);
     const ownerCenterY = Math.round(owner.position.y + ownerSize.height / 2);
+    // ux-r12 tft4：按钮放在 owner 边缘与分叉线的中点——此前正压在 lineMain
+    //（分叉点），与 Valid/Invalid 边标签同带互相遮盖。
+    const ownerBottom = owner.position.y + ownerSize.height;
+    const ownerRight = owner.position.x + ownerSize.width;
+    const forkLine = Math.round(firstGeometry.lineMain);
 
     const x = isTB
       ? ownerCenterX
-      : Math.round(firstGeometry.lineMain);
+      : Math.round((ownerRight + forkLine) / 2);
     const y = isTB
-      ? Math.round(firstGeometry.lineMain)
+      ? Math.round((ownerBottom + forkLine) / 2)
       : ownerCenterY;
     result.push({
       id: `overlay-addcond-${ownerId}`,

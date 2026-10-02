@@ -84,21 +84,30 @@
   - P3 nits：dashboard-demo KPI 轻微裁边 / code-editor SQL 上方灰条 / kanban 卡无日期 / page-designer 叶子字段带容器徽标语义 / debugger launcher 压 palette 底部
   - N-2 linear-issues 首屏空面板竞态调查（负载下 mount/dispose 时序取证，复现优先；dependsOn 根未初始化机制主张已被运行时源码证伪——source-registry.ts:398 无条件 start）
 
+## R12 补充登记（执行期，2026-10-02）
+
+- **容器渲染器 className-flex 作者陷阱**：`container` 恒把 body 包进无类名 `container-body`，schema 写在外层 className 的 flex 布局类全部静默失效（linear 家族 6 页 + antdpro-result 横幅同病）。schema 层已按 `direction`/`align` 契约修正；渲染器层修法（无 header/footer 时免包装，或 className 布局类透传 body）为行为契约变更，plan-first，successor = container 布局类透传设计。
+- **表格 fixed 列渲染器缺口**：`fixed: "right"` 列不预留宽度，粘性列盖住液态列（antdpro-list 实测 31px 重叠且透明底透字）。demo 已去 fixed；渲染器修复（宽度预留 + 不透明底）plan-first。
+- **linear-issues replica 家族自有 css 债**（R12 补扫 P2 三项，改判理由：replica 深色主题自有细节、非宿主缺陷）：topbar 溢出容器裁剪（看板/列表 tab 垂直错位 15px + 筛选行压容器边框）、表头浅色带反色低对比、批量操作栏零选态常驻贴靠分页行。
+- **combo-editor P3**：行内 × 与 trash 双删除 affordance 冗余。
+- **HEAD 既有 e2e 红 3 项**（非本轮引入，stash 验证）：flow-designer-dingtalk-visual "end variant 出现/terminal dot 变卡片"×2 + taskflow-designer-ui "playground 入口导航卡"——与并行会话 flux-core WIP 面相关，successor = 并行会话收口时处理。
+
 ## 执行顺序与状态
 
-| #   | Work item                 | 优先级 | Plan                                                       | 状态                                                                                                                                                                                 |
-| --- | ------------------------- | ------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| R1  | Dashboard Editor 图表断链 | P0     | `docs/plans/2026-10-01-ux-r1-dashboard-chart-plan.md`      | **completed**（4cabab47c）                                                                                                                                                           |
-| R2  | 透视表明细空白            | P0     | `docs/plans/2026-10-01-ux-r2-pivot-detail-cells-plan.md`   | **completed**（5e8143ae4）                                                                                                                                                           |
-| R3  | 地图渲染                  | P0     | `docs/plans/2026-10-01-ux-r3-map-render-plan.md`           | **completed**（d59f38f5e；诊断反转：实锤投影缺失 + 主题探针缺陷）                                                                                                                    |
-| R4  | 电子表格公式求值          | P0     | `docs/plans/2026-10-01-ux-r4-spreadsheet-formula-plan.md`  | **completed**（独立 closure audit approved；执行期补修 type-to-edit 多字符截断 + 行/列 shift 扩选非连续区间）                                                                        |
-| R5  | Page Designer 画布        | P0/P1  | `docs/plans/2026-10-01-ux-r5-page-designer-canvas-plan.md` | **completed**（review 2 轮 pass + 独立 closure audit approved；空容器投影/根回退提示/预览面板隐藏/对比度治理）                                                                       |
-| R6  | 全局外壳治理              | P1/P2  | `docs/plans/2026-10-01-ux-r6-shell-chrome-plan.md`         | **completed**（closure audit approved；G-1 计数改判为误读，launcher 底部停靠 + 主题单一路径）                                                                                        |
-| R7  | 流程设计器家族视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r7-flow-designer-visual-plan.md` | **completed**（closure audit 2 轮 + TF-1 reviewer 再裁定 approved；FD-1/2/2b/3/4/5/6+TF-2 落地，TF-1 改判归边路由引擎）                                                              |
-| R8  | 排程组件视口与视觉        | P1/P2  | `docs/plans/2026-10-01-ux-r8-scheduling-viewport-plan.md`  | **completed**（closure audit 4 轮 approved；GT-1/2、CA-1/2、KB-1 落地，GT-3 登记 follow-up）                                                                                         |
-| R9  | Report Designer 检查器    | P1/P2  | `docs/plans/2026-10-01-ux-r9-report-designer-plan.md`      | **completed**（closure audit approved；示例报表 + cell 样式面板 + 绑定指示 12px）                                                                                                    |
-| R10 | 编辑器演示页治理          | P2/P3  | `docs/plans/2026-10-01-ux-r10-editor-demos-plan.md`        | **completed**（review 2 轮共识 + closure audit approved；Word/Code 内容、SCADA 分组/缩略图/G-4 折叠、大屏千分位、PD-5 文案与 FieldSet 契约；SC-3 误诊纠正：LIVE 块实为数据绑定演示） |
-| R11 | 收敛复审计 P1 修复        | P1     | `docs/plans/2026-10-01-ux-r11-convergence-p1-plan.md`      | **completed**（review 2 轮 + closure audit 链收口 approved；N-1 grid-cols-1 轨道钳制 + N-2 born-green 稳定性钉 + 作者契约加固；P2 残留登记见上节）                                   |
+| #   | Work item                    | 优先级 | Plan                                                               | 状态                                                                                                                                                                                 |
+| --- | ---------------------------- | ------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R1  | Dashboard Editor 图表断链    | P0     | `docs/plans/2026-10-01-ux-r1-dashboard-chart-plan.md`              | **completed**（4cabab47c）                                                                                                                                                           |
+| R2  | 透视表明细空白               | P0     | `docs/plans/2026-10-01-ux-r2-pivot-detail-cells-plan.md`           | **completed**（5e8143ae4）                                                                                                                                                           |
+| R3  | 地图渲染                     | P0     | `docs/plans/2026-10-01-ux-r3-map-render-plan.md`                   | **completed**（d59f38f5e；诊断反转：实锤投影缺失 + 主题探针缺陷）                                                                                                                    |
+| R4  | 电子表格公式求值             | P0     | `docs/plans/2026-10-01-ux-r4-spreadsheet-formula-plan.md`          | **completed**（独立 closure audit approved；执行期补修 type-to-edit 多字符截断 + 行/列 shift 扩选非连续区间）                                                                        |
+| R5  | Page Designer 画布           | P0/P1  | `docs/plans/2026-10-01-ux-r5-page-designer-canvas-plan.md`         | **completed**（review 2 轮 pass + 独立 closure audit approved；空容器投影/根回退提示/预览面板隐藏/对比度治理）                                                                       |
+| R6  | 全局外壳治理                 | P1/P2  | `docs/plans/2026-10-01-ux-r6-shell-chrome-plan.md`                 | **completed**（closure audit approved；G-1 计数改判为误读，launcher 底部停靠 + 主题单一路径）                                                                                        |
+| R7  | 流程设计器家族视觉           | P1/P2  | `docs/plans/2026-10-01-ux-r7-flow-designer-visual-plan.md`         | **completed**（closure audit 2 轮 + TF-1 reviewer 再裁定 approved；FD-1/2/2b/3/4/5/6+TF-2 落地，TF-1 改判归边路由引擎）                                                              |
+| R8  | 排程组件视口与视觉           | P1/P2  | `docs/plans/2026-10-01-ux-r8-scheduling-viewport-plan.md`          | **completed**（closure audit 4 轮 approved；GT-1/2、CA-1/2、KB-1 落地，GT-3 登记 follow-up）                                                                                         |
+| R9  | Report Designer 检查器       | P1/P2  | `docs/plans/2026-10-01-ux-r9-report-designer-plan.md`              | **completed**（closure audit approved；示例报表 + cell 样式面板 + 绑定指示 12px）                                                                                                    |
+| R10 | 编辑器演示页治理             | P2/P3  | `docs/plans/2026-10-01-ux-r10-editor-demos-plan.md`                | **completed**（review 2 轮共识 + closure audit approved；Word/Code 内容、SCADA 分组/缩略图/G-4 折叠、大屏千分位、PD-5 文案与 FieldSet 契约；SC-3 误诊纠正：LIVE 块实为数据绑定演示） |
+| R11 | 收敛复审计 P1 修复           | P1     | `docs/plans/2026-10-01-ux-r11-convergence-p1-plan.md`              | **completed**（review 2 轮 + closure audit 链收口 approved；N-1 grid-cols-1 轨道钳制 + N-2 born-green 稳定性钉 + 作者契约加固；P2 残留登记见上节）                                   |
+| R12 | TaskFlow Tree + 复杂页面视觉 | P1/P2  | `docs/plans/2026-10-02-ux-r12-taskflow-tree-complex-pages-plan.md` | **completed**（用户实测驱动回炉：browser-use 实机走查 + 38 页全量 sweep；review 2 轮 + closure audit approved；tft1-6 + cp1-7 落地，linear 滚动白底 P1 修复）                        |
 
 ## 会话交接（2026-10-01）
 

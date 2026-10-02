@@ -127,8 +127,10 @@ export function ComplexPagesShowcase({
 
   return (
     <div className="flex h-screen overflow-hidden" data-testid="complex-pages-showcase">
+      {/* ux-r12 cp2：aside 底部让出 launcher 停靠带（fixed 底左 ~52px）——
+          让带在 aside 自身，内容物理上不进入 launcher 区，任意滚动位无碰撞 */}
       <aside
-        className="w-[240px] shrink-0 border-r border-[var(--nop-nav-border)] bg-[var(--nop-hero-bg)] flex flex-col h-screen"
+        className="w-[240px] shrink-0 border-r border-[var(--nop-nav-border)] bg-[var(--nop-hero-bg)] flex flex-col h-screen pb-14"
         data-testid="complex-pages-sidebar"
       >
         <div className="p-4 border-b border-[var(--nop-nav-border)] shrink-0">

@@ -14,11 +14,28 @@
           "gap": 6,
           "className": "items-center adp-breadcrumb",
           "body": [
-            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
-            { "type": "text", "text": "/" },
-            { "type": "text", "text": "订单管理", "className": "adp-breadcrumb-link" },
-            { "type": "text", "text": "/" },
-            { "type": "text", "text": "提交结果" }
+            {
+              "type": "text",
+              "text": "项目中心",
+              "className": "adp-breadcrumb-link"
+            },
+            {
+              "type": "text",
+              "text": "/"
+            },
+            {
+              "type": "text",
+              "text": "订单管理",
+              "className": "adp-breadcrumb-link"
+            },
+            {
+              "type": "text",
+              "text": "/"
+            },
+            {
+              "type": "text",
+              "text": "提交结果"
+            }
           ]
         },
         {
@@ -36,7 +53,7 @@
       "body": [
         {
           "type": "container",
-          "className": "flex flex-col items-center text-center gap-3",
+          "className": "text-center",
           "body": [
             {
               "type": "container",
@@ -64,7 +81,10 @@
               "className": "adp-desc-label",
               "testid": "antdpro-result-description"
             }
-          ]
+          ],
+          "direction": "column",
+          "align": "center",
+          "bodyClassName": "gap-3"
         },
         {
           "type": "container",

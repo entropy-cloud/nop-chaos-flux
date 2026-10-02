@@ -7,13 +7,19 @@
       "type": "data-source",
       "name": "event",
       "action": "ajax",
-      "args": { "url": "/r/Cal__event", "method": "get" }
+      "args": {
+        "url": "/r/Cal__event",
+        "method": "get"
+      }
     },
     {
       "type": "data-source",
       "name": "selected",
       "action": "ajax",
-      "args": { "url": "/r/Cal__selectedSlot", "method": "get" }
+      "args": {
+        "url": "/r/Cal__selectedSlot",
+        "method": "get"
+      }
     },
     {
       "type": "data-source",
@@ -46,7 +52,12 @@
                   "type": "container",
                   "className": "cal-avatar",
                   "testid": "cal-booking-avatar",
-                  "body": [{ "type": "text", "text": "${event?.hostInitials}" }]
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "${event?.hostInitials}"
+                    }
+                  ]
                 },
                 {
                   "type": "text",
@@ -80,8 +91,15 @@
                   "gap": 6,
                   "className": "items-center cal-meta-row",
                   "body": [
-                    { "type": "icon", "icon": "clock", "size": 16 },
-                    { "type": "text", "text": "${event?.defaultDuration} 分钟" }
+                    {
+                      "type": "icon",
+                      "icon": "clock",
+                      "size": 16
+                    },
+                    {
+                      "type": "text",
+                      "text": "${event?.defaultDuration} 分钟"
+                    }
                   ]
                 },
                 {
@@ -90,8 +108,15 @@
                   "gap": 6,
                   "className": "items-center cal-meta-row",
                   "body": [
-                    { "type": "icon", "icon": "video", "size": 16 },
-                    { "type": "text", "text": "${event?.location}" }
+                    {
+                      "type": "icon",
+                      "icon": "video",
+                      "size": 16
+                    },
+                    {
+                      "type": "text",
+                      "text": "${event?.location}"
+                    }
                   ]
                 },
                 {
@@ -100,7 +125,11 @@
                   "gap": 6,
                   "className": "items-center cal-meta-row",
                   "body": [
-                    { "type": "icon", "icon": "globe", "size": 16 },
+                    {
+                      "type": "icon",
+                      "icon": "globe",
+                      "size": 16
+                    },
                     {
                       "type": "text",
                       "text": "${event?.timezoneLabel}",
@@ -127,10 +156,22 @@
           "valueStatePath": "calDuration",
           "value": "${selected?.durationKey ?? \"30\"}",
           "items": [
-            { "key": "15", "title": "15 分钟" },
-            { "key": "30", "title": "30 分钟" },
-            { "key": "45", "title": "45 分钟" },
-            { "key": "60", "title": "60 分钟" }
+            {
+              "key": "15",
+              "title": "15 分钟"
+            },
+            {
+              "key": "30",
+              "title": "30 分钟"
+            },
+            {
+              "key": "45",
+              "title": "45 分钟"
+            },
+            {
+              "key": "60",
+              "title": "60 分钟"
+            }
           ]
         },
         {
@@ -151,7 +192,14 @@
                   "firstDayOfWeek": 1,
                   "dateOwnership": "scope",
                   "dateStatePath": "calDate",
-                  "resources": [{ "id": "booker", "title": "可预约" }]
+                  "resources": [
+                    {
+                      "id": "booker",
+                      "title": "可预约"
+                    }
+                  ],
+                  "monthShape": "grid",
+                  "date": "2026-09-03"
                 },
                 {
                   "type": "container",
@@ -162,7 +210,11 @@
                       "type": "container",
                       "className": "flex flex-col gap-1",
                       "body": [
-                        { "type": "text", "text": "时区", "className": "cal-timezone-label" },
+                        {
+                          "type": "text",
+                          "text": "时区",
+                          "className": "cal-timezone-label"
+                        },
                         {
                           "type": "select",
                           "name": "calTimezone",
@@ -170,14 +222,38 @@
                           "searchable": true,
                           "clearable": false,
                           "options": [
-                            { "label": "上海 (GMT+8)", "value": "Asia/Shanghai" },
-                            { "label": "东京 (GMT+9)", "value": "Asia/Tokyo" },
-                            { "label": "新加坡 (GMT+8)", "value": "Asia/Singapore" },
-                            { "label": "伦敦 (GMT+0)", "value": "Europe/London" },
-                            { "label": "柏林 (GMT+1)", "value": "Europe/Berlin" },
-                            { "label": "纽约 (GMT-5)", "value": "America/New_York" },
-                            { "label": "旧金山 (GMT-8)", "value": "America/Los_Angeles" },
-                            { "label": "悉尼 (GMT+11)", "value": "Australia/Sydney" }
+                            {
+                              "label": "上海 (GMT+8)",
+                              "value": "Asia/Shanghai"
+                            },
+                            {
+                              "label": "东京 (GMT+9)",
+                              "value": "Asia/Tokyo"
+                            },
+                            {
+                              "label": "新加坡 (GMT+8)",
+                              "value": "Asia/Singapore"
+                            },
+                            {
+                              "label": "伦敦 (GMT+0)",
+                              "value": "Europe/London"
+                            },
+                            {
+                              "label": "柏林 (GMT+1)",
+                              "value": "Europe/Berlin"
+                            },
+                            {
+                              "label": "纽约 (GMT-5)",
+                              "value": "America/New_York"
+                            },
+                            {
+                              "label": "旧金山 (GMT-8)",
+                              "value": "America/Los_Angeles"
+                            },
+                            {
+                              "label": "悉尼 (GMT+11)",
+                              "value": "Australia/Sydney"
+                            }
                           ]
                         }
                       ]
@@ -186,7 +262,11 @@
                       "type": "container",
                       "className": "flex flex-col gap-1",
                       "body": [
-                        { "type": "text", "text": "时间制式", "className": "cal-timezone-label" },
+                        {
+                          "type": "text",
+                          "text": "时间制式",
+                          "className": "cal-timezone-label"
+                        },
                         {
                           "type": "switch",
                           "name": "cal24h",
@@ -364,10 +444,20 @@
                           "testid": "cal-booking-skeleton",
                           "className": "flex flex-col gap-2",
                           "body": [
-                            { "type": "container", "className": "cal-skeleton h-3 w-3/4" },
-                            { "type": "container", "className": "cal-skeleton h-3 w-1/2" },
-                            { "type": "container", "className": "cal-skeleton h-8 w-full" }
-                          ]
+                            {
+                              "type": "container",
+                              "className": "cal-skeleton h-3 w-3/4"
+                            },
+                            {
+                              "type": "container",
+                              "className": "cal-skeleton h-3 w-1/2"
+                            },
+                            {
+                              "type": "container",
+                              "className": "cal-skeleton h-8 w-full"
+                            }
+                          ],
+                          "visible": "${!slots}"
                         },
                         {
                           "type": "loop",
@@ -430,7 +520,9 @@
                                                 },
                                                 "then": {
                                                   "action": "navigate",
-                                                  "args": { "url": "#/complex-pages/cal-confirm" }
+                                                  "args": {
+                                                    "url": "#/complex-pages/cal-confirm"
+                                                  }
                                                 }
                                               }
                                             }
@@ -459,7 +551,9 @@
                                                 },
                                                 "then": {
                                                   "action": "navigate",
-                                                  "args": { "url": "#/complex-pages/cal-confirm" }
+                                                  "args": {
+                                                    "url": "#/complex-pages/cal-confirm"
+                                                  }
                                                 }
                                               }
                                             }
@@ -488,7 +582,9 @@
                                                 },
                                                 "then": {
                                                   "action": "navigate",
-                                                  "args": { "url": "#/complex-pages/cal-confirm" }
+                                                  "args": {
+                                                    "url": "#/complex-pages/cal-confirm"
+                                                  }
                                                 }
                                               }
                                             },

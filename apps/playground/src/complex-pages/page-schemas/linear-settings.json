@@ -6,7 +6,7 @@
     {
       "type": "container",
       "testid": "linear-settings-main",
-      "className": "flex flex-row items-stretch min-h-screen",
+      "className": "min-h-screen",
       "body": [
         {
           "type": "container",
@@ -339,7 +339,9 @@
             }
           ]
         }
-      ]
+      ],
+      "direction": "row",
+      "align": "stretch"
     }
   ]
 }

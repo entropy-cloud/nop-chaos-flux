@@ -7,12 +7,15 @@
       "type": "data-source",
       "name": "projects",
       "action": "ajax",
-      "args": { "url": "/r/Linear__projects", "method": "get" }
+      "args": {
+        "url": "/r/Linear__projects",
+        "method": "get"
+      }
     },
     {
       "type": "container",
       "testid": "linear-projects-main",
-      "className": "flex flex-row items-stretch min-h-screen",
+      "className": "min-h-screen",
       "body": [
         {
           "type": "container",
@@ -32,10 +35,22 @@
                     {
                       "type": "container",
                       "className": "ln-avatar ln-avatar-brand",
-                      "body": [{ "type": "text", "text": "问" }]
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "问"
+                        }
+                      ]
                     },
-                    { "type": "text", "text": "问题工作台" },
-                    { "type": "icon", "icon": "chevron-down", "size": 14 }
+                    {
+                      "type": "text",
+                      "text": "问题工作台"
+                    },
+                    {
+                      "type": "icon",
+                      "icon": "chevron-down",
+                      "size": 14
+                    }
                   ]
                 }
               ]
@@ -45,15 +60,26 @@
               "testid": "linear-projects-nav",
               "className": "flex flex-col",
               "body": [
-                { "type": "text", "text": "导航", "className": "ln-side-group" },
+                {
+                  "type": "text",
+                  "text": "导航",
+                  "className": "ln-side-group"
+                },
                 {
                   "type": "flex",
                   "direction": "row",
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "inbox", "size": 15 },
-                    { "type": "text", "text": "收件箱" }
+                    {
+                      "type": "icon",
+                      "icon": "inbox",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "收件箱"
+                    }
                   ]
                 },
                 {
@@ -62,8 +88,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "layers", "size": 15 },
-                    { "type": "text", "text": "活跃问题" }
+                    {
+                      "type": "icon",
+                      "icon": "layers",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "活跃问题"
+                    }
                   ]
                 },
                 {
@@ -72,8 +105,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "kanban", "size": 15 },
-                    { "type": "text", "text": "看板视图" }
+                    {
+                      "type": "icon",
+                      "icon": "kanban",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "看板视图"
+                    }
                   ]
                 },
                 {
@@ -82,8 +122,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "repeat", "size": 15 },
-                    { "type": "text", "text": "周期" }
+                    {
+                      "type": "icon",
+                      "icon": "repeat",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "周期"
+                    }
                   ]
                 },
                 {
@@ -92,8 +139,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item ln-side-item-active",
                   "body": [
-                    { "type": "icon", "icon": "folder", "size": 15 },
-                    { "type": "text", "text": "项目" }
+                    {
+                      "type": "icon",
+                      "icon": "folder",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "项目"
+                    }
                   ]
                 },
                 {
@@ -102,8 +156,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "settings", "size": 15 },
-                    { "type": "text", "text": "设置" }
+                    {
+                      "type": "icon",
+                      "icon": "settings",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "设置"
+                    }
                   ]
                 }
               ]
@@ -183,7 +244,12 @@
                               "type": "container",
                               "className": "ln-avatar ln-avatar-sm",
                               "testid": "linear-projects-card-lead",
-                              "body": [{ "type": "text", "text": "${$slot.item.lead?.initials}" }]
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "${$slot.item.lead?.initials}"
+                                }
+                              ]
                             },
                             {
                               "type": "text",
@@ -226,7 +292,11 @@
                           "testid": "linear-projects-cycles",
                           "className": "flex flex-col gap-2 border-t pt-3",
                           "body": [
-                            { "type": "text", "text": "周期概览", "className": "ln-prop-label" },
+                            {
+                              "type": "text",
+                              "text": "周期概览",
+                              "className": "ln-prop-label"
+                            },
                             {
                               "type": "loop",
                               "items": "${$slot.item.cycles}",
@@ -293,7 +363,9 @@
             }
           ]
         }
-      ]
+      ],
+      "direction": "row",
+      "align": "stretch"
     }
   ]
 }

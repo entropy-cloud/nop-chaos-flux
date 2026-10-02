@@ -50,10 +50,12 @@ describe('computeDingFlowOverlays', () => {
       const overlays = computeDingFlowOverlays(nodes, edges);
       const addCondition = overlays.filter((overlay) => overlay.kind === 'addCondition');
       expect(addCondition).toHaveLength(1);
+      // ux-r12 tft4：按钮中心移至 owner 底缘与分叉线中点（原钉 y=150 正压
+      // Valid/Invalid 标签带）——中点不变量仍保证在 owner 与分叉线之间。
       expect(addCondition[0]).toMatchObject({
         id: 'overlay-addcond-cond',
         x: Math.round(0 + DW / 2),
-        y: 150,
+        y: Math.round((DH + 150) / 2),
         sourceId: 'cond',
       });
     });
@@ -78,7 +80,8 @@ describe('computeDingFlowOverlays', () => {
       ];
       const overlays = computeDingFlowOverlays(nodes, edges);
       const addCondition = overlays.find((overlay) => overlay.kind === 'addCondition')!;
-      expect(addCondition.x).toBe(160);
+      // ux-r12 tft4：LR 同理，x 取 owner 右缘与分叉线中点（原钉 x=160 压标签带）
+      expect(addCondition.x).toBe(Math.round((DW + 160) / 2));
       expect(addCondition.y).toBe(Math.round(0 + DH / 2));
     });
   });
@@ -155,8 +158,9 @@ describe('computeDingFlowOverlays', () => {
       const addCondition = computeDingFlowOverlays(nodes, edges).find(
         (overlay) => overlay.kind === 'addCondition',
       )!;
-      expect(addCondition.y).toBe(150);
-      expect(addCondition.y).toBeLessThan(200);
+      // ux-r12 tft4：owner 底缘与分叉线（150）的中点，仍高于分支目标
+      expect(addCondition.y).toBe(Math.round((DH + 150) / 2));
+      expect(addCondition.y).toBeLessThan(150);
     });
 
     it('places mergeAdd overlay below the merge line and above the merge target', () => {

@@ -14,6 +14,12 @@ PAGE_DATA['linear-issues'] = {
   filterPriority: '',
 };
 
+// ── Cal 预约：日历选中日期锚定预选槽位（mock Cal__selectedSlot 固定 2026-09-03）——
+// 不种子时日历显示当月而选中日期在 9 月，月历与选中态互相矛盾（ux-r12 cp6）。
+PAGE_DATA['cal-booking'] = {
+  calDate: '2026-09-03',
+};
+
 // ── Dynamic Tabs: remote tab items loaded via DynamicRenderer ──
 PAGE_DATA['dynamic-tabs'] = {
   remoteTabItems: [

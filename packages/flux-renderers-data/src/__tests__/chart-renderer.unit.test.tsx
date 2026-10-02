@@ -441,7 +441,11 @@ describe('ChartRenderer', () => {
 
     expect(screen.getByTestId('PieChart')).toBeTruthy();
     expect(screen.getByTestId('Pie')).toBeTruthy();
-    expect(screen.getByTestId('ChartLegend')).toBeTruthy();
+    // ux-r12 cp3：pie 图例改为逐切片渲染（PieSliceLegend）——共享 ChartLegendContent
+    // 按 ChartConfig 系列查表会把每个切片都标成系列名（订单数×N）
+    expect(screen.queryByTestId('ChartLegend')).toBeNull();
+    expect(screen.getByText('Jan')).toBeTruthy();
+    expect(screen.getByText('Feb')).toBeTruthy();
     expect(screen.getAllByTestId('Cell')).toHaveLength(2);
     expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Revenue');
   });

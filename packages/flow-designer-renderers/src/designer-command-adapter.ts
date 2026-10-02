@@ -77,6 +77,39 @@ function deleteGraphSelection(core: DesignerCore): DesignerCommandResult {
 export function createDesignerCommandAdapter(core: DesignerCore): DesignerCommandAdapter {
   const isTreeMode = core.getConfig().documentMode === 'tree';
 
+  // ux-r12 tft1：插入类命令的 data 是菜单层的硬编码兜底（'CC'/'Please set'），
+  // 必须与节点类型 defaults 合并（键冲突时兜底胜、defaults 补缺；'CC' 兜底名另由
+  // defaults 派生名接管）——否则 tf-* 等 body 模板绑定
+  // defaults 字段（如 step.common.name）的节点画布渲染空标签、名字与类型无关。
+  // dt-* 家族 defaults 为空对象 → 合并后兜底值原样保留。
+  function withNodeTypeDefaults(
+    nodeType: string,
+    data: Record<string, unknown> | undefined,
+  ): Record<string, unknown> {
+    const rawNodeTypes: unknown = core.getConfig().nodeTypes;
+    const definition = (
+      rawNodeTypes instanceof Map
+        ? rawNodeTypes.get(nodeType)
+        : (rawNodeTypes as Array<{ id: string }>).find((entry) => entry.id === nodeType)
+    ) as { defaults?: Record<string, unknown> } | undefined;
+    const defaults = definition?.defaults;
+    const fallback = data ?? {};
+    if (!defaults || typeof defaults !== 'object' || Object.keys(defaults).length === 0) {
+      return fallback;
+    }
+    const merged: Record<string, unknown> = {
+      ...structuredClone(defaults),
+      ...fallback,
+    };
+    // 兜底 label（'CC'）与类型无关——defaults 派生名存在时以它为准，
+    // 让 inspector「当前选中」与新节点画布标签显示类型相关名字。
+    const defaultName = (defaults as Record<string, any>)?.step?.common?.name;
+    if (typeof defaultName === 'string' && defaultName.length > 0 && fallback.label === 'CC') {
+      merged.label = defaultName;
+    }
+    return merged;
+  }
+
   function mapTreeCommand(result: { ok: boolean; reason?: string; error?: unknown }): DesignerCommandResult {
     if (result.ok) {
       return createSuccess(core);
@@ -168,15 +201,27 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         return mapTreeCommand(result);
       }
       case 'insertChainNode': {
-        const result = core.insertChainNode(command.sourceId, command.nodeType, command.data);
+        const result = core.insertChainNode(
+          command.sourceId,
+          command.nodeType,
+          withNodeTypeDefaults(command.nodeType, command.data),
+        );
         return mapTreeCommand(result);
       }
       case 'insertChainNodeAtMerge': {
-        const result = core.insertChainNodeAtMerge(command.targetId, command.nodeType, command.data);
+        const result = core.insertChainNodeAtMerge(
+          command.targetId,
+          command.nodeType,
+          withNodeTypeDefaults(command.nodeType, command.data),
+        );
         return mapTreeCommand(result);
       }
       case 'insertBranchPair': {
-        const result = core.insertBranchPair(command.sourceId, command.condNodeType, command.condData);
+        const result = core.insertBranchPair(
+          command.sourceId,
+          command.condNodeType,
+          withNodeTypeDefaults(command.condNodeType, command.condData),
+        );
         return mapTreeCommand(result);
       }
       case 'insertBranchChild': {
@@ -184,7 +229,7 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
           command.ownerId,
           command.branchId,
           command.nodeType,
-          command.data,
+          withNodeTypeDefaults(command.nodeType, command.data),
         );
         return mapTreeCommand(result);
       }

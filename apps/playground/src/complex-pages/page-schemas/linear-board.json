@@ -8,12 +8,15 @@
       "id": "linear-board-source",
       "name": "board",
       "action": "ajax",
-      "args": { "url": "/r/Linear__issues?view=board", "method": "get" }
+      "args": {
+        "url": "/r/Linear__issues?view=board",
+        "method": "get"
+      }
     },
     {
       "type": "container",
       "testid": "linear-board-main",
-      "className": "flex flex-row items-stretch min-h-screen",
+      "className": "min-h-screen",
       "body": [
         {
           "type": "container",
@@ -34,10 +37,22 @@
                     {
                       "type": "container",
                       "className": "ln-avatar ln-avatar-brand",
-                      "body": [{ "type": "text", "text": "问" }]
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "问"
+                        }
+                      ]
                     },
-                    { "type": "text", "text": "问题工作台" },
-                    { "type": "icon", "icon": "chevron-down", "size": 14 }
+                    {
+                      "type": "text",
+                      "text": "问题工作台"
+                    },
+                    {
+                      "type": "icon",
+                      "icon": "chevron-down",
+                      "size": 14
+                    }
                   ]
                 }
               ]
@@ -47,16 +62,31 @@
               "testid": "linear-board-nav",
               "className": "flex flex-col",
               "body": [
-                { "type": "text", "text": "导航", "className": "ln-side-group" },
+                {
+                  "type": "text",
+                  "text": "导航",
+                  "className": "ln-side-group"
+                },
                 {
                   "type": "flex",
                   "direction": "row",
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "inbox", "size": 15 },
-                    { "type": "text", "text": "收件箱" },
-                    { "type": "text", "text": "4", "className": "ln-row-meta ml-auto" }
+                    {
+                      "type": "icon",
+                      "icon": "inbox",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "收件箱"
+                    },
+                    {
+                      "type": "text",
+                      "text": "4",
+                      "className": "ln-row-meta ml-auto"
+                    }
                   ]
                 },
                 {
@@ -65,8 +95,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "user", "size": 15 },
-                    { "type": "text", "text": "我的问题" }
+                    {
+                      "type": "icon",
+                      "icon": "user",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "我的问题"
+                    }
                   ]
                 },
                 {
@@ -75,8 +112,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "layers", "size": 15 },
-                    { "type": "text", "text": "活跃问题" }
+                    {
+                      "type": "icon",
+                      "icon": "layers",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "活跃问题"
+                    }
                   ]
                 },
                 {
@@ -85,8 +129,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item ln-side-item-active",
                   "body": [
-                    { "type": "icon", "icon": "kanban", "size": 15 },
-                    { "type": "text", "text": "看板视图" }
+                    {
+                      "type": "icon",
+                      "icon": "kanban",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "看板视图"
+                    }
                   ]
                 },
                 {
@@ -95,8 +146,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "repeat", "size": 15 },
-                    { "type": "text", "text": "周期" }
+                    {
+                      "type": "icon",
+                      "icon": "repeat",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "周期"
+                    }
                   ]
                 },
                 {
@@ -105,8 +163,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "folder", "size": 15 },
-                    { "type": "text", "text": "项目" }
+                    {
+                      "type": "icon",
+                      "icon": "folder",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "项目"
+                    }
                   ]
                 },
                 {
@@ -115,8 +180,15 @@
                   "gap": 8,
                   "className": "items-center ln-side-item",
                   "body": [
-                    { "type": "icon", "icon": "settings", "size": 15 },
-                    { "type": "text", "text": "设置" }
+                    {
+                      "type": "icon",
+                      "icon": "settings",
+                      "size": 15
+                    },
+                    {
+                      "type": "text",
+                      "text": "设置"
+                    }
                   ]
                 }
               ]
@@ -148,11 +220,20 @@
                       "testid": "linear-board-tab-list",
                       "onClick": {
                         "action": "navigate",
-                        "args": { "url": "#/complex-pages/linear-issues" }
+                        "args": {
+                          "url": "#/complex-pages/linear-issues"
+                        }
                       },
                       "body": [
-                        { "type": "icon", "icon": "list", "size": 14 },
-                        { "type": "text", "text": "列表" }
+                        {
+                          "type": "icon",
+                          "icon": "list",
+                          "size": 14
+                        },
+                        {
+                          "type": "text",
+                          "text": "列表"
+                        }
                       ]
                     },
                     {
@@ -160,8 +241,15 @@
                       "className": "ln-tab ln-tab-active",
                       "testid": "linear-board-tab-board",
                       "body": [
-                        { "type": "icon", "icon": "kanban", "size": 14 },
-                        { "type": "text", "text": "看板" }
+                        {
+                          "type": "icon",
+                          "icon": "kanban",
+                          "size": 14
+                        },
+                        {
+                          "type": "text",
+                          "text": "看板"
+                        }
                       ]
                     }
                   ]
@@ -216,13 +304,19 @@
                       "componentId": "linear-board-source"
                     }
                   },
-                  "empty": { "type": "text", "text": "该状态下暂无问题", "className": "ln-empty" }
+                  "empty": {
+                    "type": "text",
+                    "text": "该状态下暂无问题",
+                    "className": "ln-empty"
+                  }
                 }
               ]
             }
           ]
         }
-      ]
+      ],
+      "direction": "row",
+      "align": "stretch"
     }
   ]
 }

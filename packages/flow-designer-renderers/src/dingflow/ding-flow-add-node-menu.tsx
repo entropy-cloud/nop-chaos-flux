@@ -74,11 +74,12 @@ export function DingFlowAddNodeMenu({
         <DropdownMenuPositioner
           anchor={anchor}
           positionMethod="fixed"
-          side="top"
-          sideOffset={110}
+          // ux-r12 tft2：+ 下方展开 + 碰撞回避开启——此前 side=top + 固定
+          // 110/100 偏移 + 禁用碰撞，+ 靠近画布顶部时弹层盖住页面标题、
+          // 靠左时 Choose 项被截断出屏。
+          side="bottom"
+          sideOffset={8}
           align="center"
-          alignOffset={100}
-          collisionAvoidance={{ side: 'none', align: 'none', fallbackAxisSide: 'none' }}
         >
           <DropdownMenuPopup
             aria-label="Add node"

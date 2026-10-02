@@ -169,9 +169,19 @@ test('add-branch overlay center sits exactly on a split/merge line', async ({ pa
   // one add-branch button per branch-group owner (条件路由 + 并行处理)
   expect(geometry.buttons.length).toBe(2);
 
+  // ux-r12 tft4：按钮移到 owner 底缘与分叉线中点（原位正压 Valid/Invalid 标签带）。
+  // 不变量：按钮中心位于最近分叉线上方 2..80px 带内（中点带），仍与分叉结构关联。
   for (const button of geometry.buttons) {
-    const onLine = geometry.lineYs.some((y) => Math.abs(button.y - y) <= 2);
-    expect(onLine, `button y ${button.y} should sit on one of the lines ${geometry.lineYs.join(',')}`).toBe(true);
+    const gaps = geometry.lineYs
+      .map((y) => y - button.y)
+      .filter((g) => g >= 2)
+      .sort((a, b) => a - b);
+    const nearest = gaps[0];
+    expect(
+      nearest,
+      `button y ${button.y} should sit above a split line ${geometry.lineYs.join(',')} (midpoint band)`,
+    ).toBeGreaterThanOrEqual(2);
+    expect(nearest, `button should stay within 80px above its split line`).toBeLessThanOrEqual(80);
   }
 
   await assertTrackedPageErrors(page);
