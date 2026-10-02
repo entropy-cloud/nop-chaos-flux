@@ -85,9 +85,30 @@
   color: var(--ln-text-2);
   background: var(--ln-bg);
   min-height: 100%;
+  /* ux-r12b：共享 nop-table 的浅色表头 token 在深色 replica 内反转不可读
+     （白底带 + 浅灰字）——token 级覆盖为面板底色，表头融入深色表格 */
+  --table-header-bg: var(--ln-bg-panel, #0f1011);
+  --table-hover-bg: rgba(255, 255, 255, 0.04);
+  --table-striped-bg: rgba(255, 255, 255, 0.02);
   /* ux-r12 cp1 补充：面板内内容高于面板高度时（showcase 卡片内嵌场景），
      溢出内容会露出宿主白底造成滚动 white-on-white——面板自滚动保持深底恒在。 */
   overflow-y: auto;
+  /* ux-r12b：滚动条深色化（横向滚动槽白条在深底上刺眼） */
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.ln-root *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.ln-root *::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 5px;
+}
+
+.ln-root *::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Surface-level dark theming for dialogs/drawers carrying .ln-dialog. */

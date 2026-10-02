@@ -88,7 +88,7 @@
 
 - **容器渲染器 className-flex 作者陷阱**：`container` 恒把 body 包进无类名 `container-body`，schema 写在外层 className 的 flex 布局类全部静默失效（linear 家族 6 页 + antdpro-result 横幅同病）。schema 层已按 `direction`/`align` 契约修正；渲染器层修法（无 header/footer 时免包装，或 className 布局类透传 body）为行为契约变更，plan-first，successor = container 布局类透传设计。
 - **表格 fixed 列渲染器缺口**：`fixed: "right"` 列不预留宽度，粘性列盖住液态列（antdpro-list 实测 31px 重叠且透明底透字）。demo 已去 fixed；渲染器修复（宽度预留 + 不透明底）plan-first。
-- **linear-issues replica 家族自有 css 债**（R12 补扫 P2 三项，改判理由：replica 深色主题自有细节、非宿主缺陷）：topbar 溢出容器裁剪（看板/列表 tab 垂直错位 15px + 筛选行压容器边框）、表头浅色带反色低对比、批量操作栏零选态常驻贴靠分页行。
+- ~~linear-issues replica 家族自有 css 债~~（R12 补扫 P2 三项）→ **已修复（2026-10-03 自动修复轮）**：topbar `h-12` 固定高装不下 76px 内容改 `min-h-12 py-1`；表头白底带经 token 级覆盖 `--table-header-bg` 融入深色；批量栏零选态隐藏（`visible: ${(0)>0}` 门控）+ 滚动条深色化。cp8 e2e 守护钉在案。
 - **combo-editor P3**：行内 × 与 trash 双删除 affordance 冗余。
 - **HEAD 既有 e2e 红 3 项**（非本轮引入，stash 验证）：flow-designer-dingtalk-visual "end variant 出现/terminal dot 变卡片"×2 + taskflow-designer-ui "playground 入口导航卡"——与并行会话 flux-core WIP 面相关，successor = 并行会话收口时处理。
 

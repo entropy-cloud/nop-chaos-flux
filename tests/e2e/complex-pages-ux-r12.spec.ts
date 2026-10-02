@@ -192,3 +192,37 @@ test('cp7-notion-table: page-size select has options and table fits its containe
   expect(state.pageSizeSelects, 'page-size select present with options').toBeGreaterThanOrEqual(1);
   expect(state.scrollable, 'wide table has a horizontal scroll affordance').toBe(true);
 });
+
+test('cp8-linear-polish: topbar unclipped, dark table header, bulk bar selection-gated', async ({
+  page,
+}) => {
+  await openComplexPage(page, 'linear-issues');
+  const state = await page.evaluate(() => {
+    // 1) tab 行完整在 replica 可视区内（修复前 h-12 容器装 76px 内容向上溢出被裁）
+    const tab = [...document.querySelectorAll('[class*="ln-tab"]')].find((e) =>
+      (e.textContent ?? '').includes('列表'),
+    );
+    const tabR = tab?.getBoundingClientRect();
+    const rootR = document.querySelector('.ln-root')?.getBoundingClientRect();
+    // 2) 表头融入深色（--table-header-bg token 在 ln-root 作用域覆盖为面板底色）
+    const th = document.querySelector('thead th');
+    const thBg = th ? getComputedStyle(th).backgroundColor : null;
+    // 3) 零选态批量栏隐藏（悬浮层遮挡末行/分页）
+    const bulk = document.querySelector('[data-testid="linear-issues-bulk-bar"]');
+    const bulkR = bulk?.getBoundingClientRect();
+    return {
+      tabTop: tabR ? Math.round(tabR.y) : null,
+      rootTop: rootR ? Math.round(rootR.y) : null,
+      thBg,
+      bulkHidden: !bulk || (bulkR?.height ?? 0) === 0,
+    };
+  });
+  expect(
+    state.tabTop,
+    'list tab must not be clipped above the replica top edge',
+  ).toBeGreaterThanOrEqual(state.rootTop ?? 0);
+  expect(state.thBg, `table header bg ${state.thBg} should be the dark panel color`).toBe(
+    'rgb(15, 16, 17)',
+  );
+  expect(state.bulkHidden, 'bulk bar hidden at zero selection').toBe(true);
+});

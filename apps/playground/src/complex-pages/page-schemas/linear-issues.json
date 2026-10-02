@@ -852,7 +852,7 @@
             {
               "type": "container",
               "testid": "linear-issues-topbar",
-              "className": "h-12 shrink-0 border-b flex items-center gap-2 px-4",
+              "className": "min-h-12 py-1 shrink-0 border-b flex items-center gap-2 px-4",
               "body": [
                 {
                   "type": "flex",
@@ -2607,7 +2607,8 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "visible": "${(issueSelection?.length ?? 0) > 0}"
             }
           ]
         }
