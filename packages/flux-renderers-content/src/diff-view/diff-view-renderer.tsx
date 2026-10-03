@@ -89,6 +89,7 @@ function SingleFileDiff({
     return (
       <div
         data-testid={testid}
+        data-slot="diff-view"
         className={cn('nop-diff-view nop-diff-view-three-column', className)}
         data-view="three-column"
         style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}

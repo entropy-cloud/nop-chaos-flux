@@ -1,6 +1,6 @@
 # 533 flux-renderers-content 渲染器 DOM 结构契约审计与整改
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-03
 > Source: `docs/architecture/renderer-markers-and-selectors.md`（DOM 结构契约）、`docs/backlog/dom-structure-audit-roadmap.md`（W6）、`docs/audits/dom-structure-checklist.md`
 > Related: `docs/plans/2026-10-03-527-dom-marker-shared-infra-plan.md`（前置）
@@ -10,6 +10,8 @@
 把 flux-renderers-content 全部 renderer type 的 DOM 结构收口到契约 6 维。本包以 leaf 为主、基线良好，重点是 carousel 多层链裁定与 card/cards/carousel/diff-view 四个 composite 的审计，并冻结包级契约测试。
 
 ## Current Baseline
+
+> **执行发现（2026-10-03）**：20 type 全部合规或在 W6 收口；两处 fix——carousel 每帧媒体框层（caption 定位+裁剪+底色三合一）补 `carousel-item-frame` slot；diff-view three-column 分支根补 `data-slot="diff-view"`（与其它分支一致，W3 轮漏检）。diff-view 内层无 data-cid 为帧根单点锚语义（合规）；ui Carousel 内层同名 data-slot="carousel" 嵌套登记；alert close testid 硬编码登记 Non-Blocking Follow-up（testid 契约项非结构项）；cards CardContent 层带 slot 归因 pass。
 
 - 组件清单（type 注册于 `content-renderer-definitions.ts`，共 20 个；card → `card.tsx`，diff-view → `diff-view/`）：separator、spinner、progress、empty、result、card、link、image、json-view、markdown、html、cards、alert、mapping、status、audio、video、carousel、qrcode、diff-view。
 - `nop-*` 根类全覆盖（含 `nop-audio`、`nop-qrcode`）；`data-slot` 普遍。
@@ -48,44 +50,45 @@
 
 ### Phase 1 - 逐组件审计卡
 
-Status: planned
-Targets: `docs/audits/dom-structure/*.md`（本包 20 张）
+Status: completed
+Targets: `docs/audits/dom-structure/*.md`（本包 20 张已落盘）
 
 - Item Types: `Proof`
 
-- [ ] 逐 type 落卡；carousel 6 层链逐层归因（vendor 内层 flex 记 forced wrapper；末端 relative 层判 fix 或 forced/exempt）
+- [x] 逐 type 落卡（20 张，六维判定齐全）；carousel 6 层链逐层归因（vendor 双 div forced wrapper + 末端 relative 层 fix）
 
 Exit Criteria:
 
-- [ ] 全部 type 落卡且六维判定齐全
+- [x] 全部 type 落卡且六维判定齐全（20/20）
 
 ### Phase 2 - 整改
 
-Status: planned
-Targets: `carousel.tsx` 及卡面其余 fix 项
+Status: completed
+Targets: `carousel.tsx`、`diff-view/diff-view-renderer.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] carousel 按裁定整改（decorative 层合并入子元素/根，或登记约束）
-- [ ] 逐项 test-first 落地
+- [x] carousel 每帧媒体框层补 `data-slot="carousel-item-frame"`（三合一职责归因，非删除——删除会破坏 caption 定位/裁剪/占位）
+- [x] diff-view three-column 分支根补 `data-slot="diff-view"`（分支一致性缺口）
 
 Exit Criteria:
 
-- [ ] 每个 fix 项落地且有 focused 断言；既有包测试无回归（focused 范围）
+- [x] 每个 fix 项落地且有 focused 断言（契约测试 4 用例）
+- [x] 既有包测试无回归（content 345/345）
 
 ### Phase 3 - 契约测试冻结
 
-Status: planned
-Targets: 包测试约定位置（该包为同目录多数派）
+Status: completed
+Targets: `src/dom-structure-contract.test.tsx`（4 用例，直挂式 per 包惯例 + TestRuntimeProvider）
 
 - Item Types: `Proof`
 
-- [ ] 契约测试覆盖全部 type D1 三件套 + 本包登记的关键 D3/D4 项（使用 527 helper）
+- [x] 契约测试冻结：qrcode 根锚（figure + fallback 路径）、carousel 根 + item-frame ×2、status span 根、diff-view three-column 分支 slot（使用 527 helper 的 skip marker 口径）
 
 Exit Criteria:
 
-- [ ] 契约测试落位并通过
-- [ ] roadmap W6 回写就绪
+- [x] 契约测试落位并通过（4/4）
+- [x] roadmap W6 回写就绪
 
 ## Draft Review Record
 
@@ -98,16 +101,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 全部 type 审计卡六维收口
-- [ ] carousel 整改/豁免落地且有 proof
-- [ ] `dom-structure` 契约测试冻结
-- [ ] 不存在被静默降级的 in-scope live defect
-- [ ] owner docs 同步核对完成
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 全部 type 审计卡六维收口（20/20）
+- [x] carousel/diff-view 整改落地且有 proof
+- [x] `dom-structure` 契约测试冻结（4 用例）
+- [x] 不存在被静默降级的 in-scope live defect
+- [x] owner docs 同步核对完成（无契约语义变更）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（exit 0）
+- [x] `pnpm build`（exit 0）
+- [x] `pnpm lint`（exit 0）
+- [x] `pnpm test`（全量 exit 0；content 345/345 = 341 + 4）
+- [x] `pnpm check`（exit 0）
 
 ## Deferred But Adjudicated
 
@@ -115,16 +119,16 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-（暂无）
+- alert close 按钮 testid 硬编码 "alert-close" 改 `${testid}-close` 派生（testid 契约项，非结构项）
 
 ## Closure
 
-Status Note: 待收口
+Status Note: 2026-10-03 收口。20 卡落盘；两处 fix（carousel-item-frame、diff-view three-column 根 slot）；4 用例契约测试（直挂式）；alert testid 硬编码登记 Follow-up。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待定
-- Evidence: 待定
+- Auditor / Agent: 独立子代理（fresh session，agent_5a3279a8，两轮）
+- Evidence: Round 1 发现 F1（case4 空过断言：props 误用致 three-column 分支从未渲染 + if(root) 守卫空过）——已修复（正确 props + 无条件断言）并经审计方二次敏感性实测（删 :92 fix 即失败）；审计还原操作丢失的 :92 fix 已重新应用。Round 2 approved：case4 为真实有效断言，carousel :258 同前次实测有效。
 
 Follow-up:
 

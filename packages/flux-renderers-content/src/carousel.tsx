@@ -254,7 +254,10 @@ export function CarouselRenderer(props: RendererComponentProps<CarouselSchema>) 
             const caption = asString(item.caption);
             return (
               <CarouselItem key={toSlideKey(item, index)} data-slot="carousel-item" data-item-index={index}>
-                <div className="relative flex items-center justify-center overflow-hidden rounded-md bg-muted">
+                <div
+                  data-slot="carousel-item-frame"
+                  className="relative flex items-center justify-center overflow-hidden rounded-md bg-muted"
+                >
                   {image ? (
                     <img
                       src={image}
