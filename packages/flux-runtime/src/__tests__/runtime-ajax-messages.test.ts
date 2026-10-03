@@ -73,6 +73,47 @@ describe('ajax action messages', () => {
 
     expect(result.ok).toBe(false);
     expect(notify).toHaveBeenCalledWith('error', 'Failed!');
+    // Author-declared failed message suppresses the dispatcher's generic
+    // failure toast (double-toast regression guard).
+    expect(result.failureHandled).toBe(true);
+  });
+
+  it('leaves failureHandled unset when messages.failed is absent', async () => {
+    const notify = vi.fn();
+    const executeApiRequest = Object.assign(
+      vi.fn().mockRejectedValue({
+        response: { status: 500, data: null },
+        status: 500,
+        message: 'Server error',
+      }),
+      { dispose: vi.fn() },
+    );
+
+    const result = await executeRuntimeAjaxAction(
+      { url: '/api/fail', method: 'post' },
+      {
+        action: 'ajax',
+        payload: {},
+        targeting: {},
+        control: {},
+        source: {
+          action: 'ajax',
+          args: { url: '/api/fail', method: 'post' },
+        },
+      } as unknown as CompiledActionNode,
+      { scope: { id: 'scope-1' } } as unknown as ActionContext,
+      undefined,
+      {
+        getEnv: () => ({ notify } as unknown as RendererEnv),
+        expressionCompiler: {} as unknown as ExpressionCompiler,
+        evaluate: <T>(target: unknown) => target as T,
+        executeApiRequest,
+      },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(notify).not.toHaveBeenCalled();
+    expect(result.failureHandled).toBeUndefined();
   });
 
   it('does not call notify when messages is absent', async () => {

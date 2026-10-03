@@ -99,6 +99,62 @@ describe('action-dispatcher control flow', () => {
     );
   });
 
+  it('notifies structured non-Error failure payloads with readable text', async () => {
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: async () => ({
+        ok: false,
+        error: [
+          { path: 'name', message: '姓名为必填项', rule: 'required' },
+          { path: 'email', message: '邮箱格式不正确', rule: 'email' },
+        ],
+      }),
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'submitForm',
+          payload: { args: staticCompiled({}) },
+          targeting: {},
+          control: {},
+          source: { action: 'submitForm', args: {} },
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(runtime.env.notify).toHaveBeenCalledWith(
+      'error',
+      '姓名为必填项；邮箱格式不正确',
+    );
+  });
+
+  it('notifies object failure payloads via their message field', async () => {
+    const adapter = createMockAdapter({
+      invokeBuiltInAction: async () => ({
+        ok: false,
+        error: { code: 'E_X', message: '下游服务不可用' },
+      }),
+    });
+    const { dispatcher, runtime } = createTestDispatcher({ adapter });
+
+    await dispatcher.dispatch(
+      makeCompiledProgram([
+        {
+          action: 'ajax',
+          payload: { args: staticCompiled({ url: '/x' }) },
+          targeting: {},
+          control: {},
+          source: { action: 'ajax', args: { url: '/x' } },
+        },
+      ]),
+      createActionCtx({ runtime }),
+    );
+
+    expect(runtime.env.notify).toHaveBeenCalledWith('error', '下游服务不可用');
+  });
+
   it('continues on failure when continueOnError is true', async () => {
     const order: string[] = [];
     const adapter = createMockAdapter({

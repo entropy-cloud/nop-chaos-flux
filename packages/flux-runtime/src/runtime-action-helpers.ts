@@ -165,6 +165,9 @@ export async function executeRuntimeAjaxAction(
   } else if (!result.ok && !result.cancelled && messages?.failed) {
     const value = helpers.evaluate<string>(messages.failed, ctx.scope);
     env.notify('error', String(value));
+    // The author already surfaced the failure; suppress the dispatcher's
+    // generic failure toast (reportUnhandledFailureClass) to avoid double toasts.
+    return { ...result, failureHandled: true };
   }
 
   return result;

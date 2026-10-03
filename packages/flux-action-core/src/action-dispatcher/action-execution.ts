@@ -158,6 +158,34 @@ function reportActionError(
   }
 }
 
+// Structured action failures (e.g. form submit validation results) carry
+// non-Error payloads ({ValidationError[]}, {message}) — String() would render
+// them as "[object Object]" in user-facing notify toasts.
+function describeActionFailure(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (Array.isArray(error)) {
+    return error
+      .map((item) => describeActionFailure(item))
+      .filter(Boolean)
+      .join('；')
+      .slice(0, 200);
+  }
+  if (
+    error &&
+    typeof error === 'object' &&
+    typeof (error as { message?: unknown }).message === 'string'
+  ) {
+    return (error as { message: string }).message;
+  }
+  if (error === undefined || error === null) return 'Action failed';
+  try {
+    return JSON.stringify(error).slice(0, 200);
+  } catch {
+    return String(error);
+  }
+}
+
 function reportUnhandledFailureClass(
   ctx: ActionDispatcherContext,
   actionCtx: ActionContext,
@@ -192,10 +220,7 @@ function reportUnhandledFailureClass(
     return;
   }
 
-  const message =
-    result.error instanceof Error
-      ? result.error.message
-      : String(result.error ?? 'Action failed');
+  const message = describeActionFailure(result.error);
 
   ctx.getEnv().notify('error', message);
 }
@@ -597,7 +622,7 @@ async function dispatch(
         } catch (error) {
           reportActionError(ctx, error, currentActionCtx);
 
-          const message = error instanceof Error ? error.message : String(error);
+          const message = describeActionFailure(error);
           ctx.getEnv().notify('error', message);
 
           previous = {

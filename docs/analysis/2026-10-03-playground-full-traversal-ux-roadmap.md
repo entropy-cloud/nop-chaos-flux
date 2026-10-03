@@ -1,7 +1,7 @@
 # Playground 全页面遍历 UX Roadmap（R13：全页面 × 全操作按钮确认与主子通信标准化）
 
 > 创建日期：2026-10-02（R12 收口后用户提出）
-> 状态：**roadmap 已定稿，待逐页执行**（执行期按 §五 波次推进，本文档 §六 矩阵逐页回填）
+> 状态：**执行中**——W-A1 已完成（2026-10-03，40/40 页操作面遍历，确认卡见 §六 W-A 表；P1×1 + P2×1 当波修复，P3 尾册见 §七）；W-A2/W-B/W-C/W-D/W-E 待执行（执行期按 §五 波次推进，本文档 §六 矩阵逐页回填）
 > 用户验收原话：每一个页面展现都要达到 UI/UX 要求，布局合理、美观、操作符合预期；弹窗中操作后需要更新到子页面的要更新到子页面；使用标准方案实现主子页面通信；不跨页面使用 id，页面内也尽量不使用 id。
 > 方法论基线：browser-use 实机逐页逐按钮遍历（R12 的 40 页确认与此同法；禁纯探针下结论——R12 复审教训）。
 
@@ -70,48 +70,48 @@
 
 ### W-A Complex Pages（40）
 
-| 页面                    | 状态   | 卡片 |
-| ----------------------- | ------ | ---- |
-| crud-views-export       | 待执行 |      |
-| dynamic-tabs            | 待执行 |      |
-| standard-crud           | 待执行 |      |
-| tree-crud               | 待执行 |      |
-| inline-edit-table       | 待执行 |      |
-| advanced-query          | 待执行 |      |
-| master-detail           | 待执行 |      |
-| detail-subtables        | 待执行 |      |
-| business-document       | 待执行 |      |
-| combo-editor            | 待执行 |      |
-| form-wizard             | 待执行 |      |
-| complex-form            | 待执行 |      |
-| approval-tasks          | 待执行 |      |
-| dashboard               | 待执行 |      |
-| sundial-workbench       | 待执行 |      |
-| sundial-analytics       | 待执行 |      |
-| sundial-detail          | 待执行 |      |
-| sundial-settings        | 待执行 |      |
-| sundial-todo-dialog     | 待执行 |      |
-| antdpro-list            | 待执行 |      |
-| antdpro-form-basic      | 待执行 |      |
-| antdpro-form-grouped    | 待执行 |      |
-| antdpro-form-dialog     | 待执行 |      |
-| antdpro-form-step       | 待执行 |      |
-| antdpro-detail-basic    | 待执行 |      |
-| antdpro-detail-advanced | 待执行 |      |
-| antdpro-dashboard       | 待执行 |      |
-| antdpro-result          | 待执行 |      |
-| cal-booking             | 待执行 |      |
-| cal-confirm             | 待执行 |      |
-| cal-success             | 待执行 |      |
-| linear-issues           | 待执行 |      |
-| linear-board            | 待执行 |      |
-| linear-inbox            | 待执行 |      |
-| linear-detail           | 待执行 |      |
-| linear-projects         | 待执行 |      |
-| linear-settings         | 待执行 |      |
-| notion-database         | 待执行 |      |
-| airtable-grid           | 待执行 |      |
-| stripe-payments         | 待执行 |      |
+| 页面                    | 状态 | 卡片                                                                                                     |
+| ----------------------- | ---- | -------------------------------------------------------------------------------------------------------- |
+| crud-views-export       | ✅   | 导出 toast+下载链接、表格/卡片视图切换、分页全通（截图目检）                                             |
+| dynamic-tabs            | ✅   | 远程数据 tab 懒加载 3 行+共 3 条（mountOnEnter 实证）                                                    |
+| standard-crud           | ✅   | CRUD 全链路：新增/编辑回填/删除确认/批量删除（34→32 条）/搜索重置/排序/分页/折叠                         |
+| tree-crud               | ✅   | 30 树节点逐点联动过滤（10→6→2→1…）+清除复原                                                              |
+| inline-edit-table       | ✅   | input-number 步进器 ×80、行保存 toast、分页全通                                                          |
+| advanced-query          | ✅   | 搜索过滤（10→1）/重置/分页全通                                                                           |
+| master-detail           | ✅   | 点选 NO-20240702 → 详情+SKU 4 行+子表 tab 切换                                                           |
+| detail-subtables        | ✅   | 订单选择器 dialog+清除+三子表 tab 切换                                                                   |
+| business-document       | ✅   | 步进器数量 2→4 金额 36000→72000 实时重算；新增/删除行；提交校验 toast 可读                               |
+| combo-editor            | ✅   | 添加项 共 2→3→2 位、删除/排序、保存校验 toast 可读（P3 双删除钮维持登记）                                |
+| form-wizard             | ✅   | 三步跳转+上一步 step1 禁用+分步校验                                                                      |
+| complex-form            | ✅   | 级联（省→市解禁）/高级选项展开/保存校验 toast 可读                                                       |
+| approval-tasks          | ✅   | 10 处理钮全部弹审批框；通过 → 待审批→已通过+列表即时更新                                                 |
+| dashboard               | ✅   | 纯展示页零操作钮；pageOverflow=0 饼图完整（截图）                                                        |
+| sundial-workbench       | ✅   | 视图切换 toast×5、分组折叠、添加待办弹窗                                                                 |
+| sundial-analytics       | ✅   | 纯展示页零操作钮，零错误                                                                                 |
+| sundial-detail          | ✅   | 旗标 toast、子任务校验、日期/重复/列表/移动/垃圾箱弹层全开                                               |
+| sundial-settings        | ✅   | 设置分组 toast×5+返回导航                                                                                |
+| sundial-todo-dialog     | ✅   | 标题自动聚焦、添加 → toast 待办已添加+弹窗关闭                                                           |
+| antdpro-list            | ✅   | 新建订单弹窗、列设置、全选+批量删除 toast、行查看(→详情)/编辑(回填+宿主更新)/删除(确认+toast+总数 36→35) |
+| antdpro-form-basic      | ✅   | 日期范围弹层、提交校验 toast 可读                                                                        |
+| antdpro-form-grouped    | ✅   | 入库日期/仓库选择弹层、提交 → toast+跳转                                                                 |
+| antdpro-form-dialog     | ✅   | 新建订单弹窗+空提交校验 toast                                                                            |
+| antdpro-form-step       | ✅   | 步骤连接线+空提交红框内联错误+「步骤校验未通过」横幅+上一步禁用（截图）                                  |
+| antdpro-detail-basic    | ✅   | 返回列表导航；打印按 host-channel 契约验证接线                                                           |
+| antdpro-detail-advanced | ✅   | 通过/驳回 toast+步骤推进+pill tab 切换                                                                   |
+| antdpro-dashboard       | ✅   | 纯展示页零操作钮，零错误                                                                                 |
+| antdpro-result          | ✅   | 查看订单→列表、再录一单→表单                                                                             |
+| cal-booking             | ✅   | 时长 tabs、月/周/日切换、时区、槽位面板分组、选时段 → 跳转确认页                                         |
+| cal-confirm             | ✅   | 添加嘉宾/移除、渠道 chips、空提交校验按已填字段精确过滤、返回上一步                                      |
+| cal-success             | ✅   | 日历链接/ICS、重新安排 → booking、取消预约确认框                                                         |
+| linear-issues           | ✅   | ⌘K 搜索、筛选/显示/新建/命令弹层、全选/行选批量栏、行 peek 弹层                                          |
+| linear-board            | ✅   | 234 卡/9 列；标签筛选片 234→10→234 双向生效（R12 修复维持）；卡片 peek 活动流                            |
+| linear-inbox            | ✅   | 全部标为已读/归档所选 toast+列表更新                                                                     |
+| linear-detail           | ✅   | 复制链接/归档/状态选择；改状态+应用 → 状态已更新（lastBulkUpdate 钩子实证）                              |
+| linear-projects         | ✅   | 纯展示页零操作钮，零错误                                                                                 |
+| linear-settings         | ✅   | 常规/外观/工作流 tab 实切换+3 偏好开关                                                                   |
+| notion-database         | ✅   | 分页第 2 页/每页条数切换（10→32 行）                                                                     |
+| airtable-grid           | ✅   | 隐藏字段/搜索/分组切换/行高/单元格编辑/行展开×10/新增记录弹层/分页                                       |
+| stripe-payments         | ✅   | 日期预设档、导出模态、行金额点击 → 交易详情抽屉（导航 shell 静态为设计意图）                             |
 
 ### W-B 设计器/编辑器（10）
 
@@ -201,6 +201,18 @@
 
 - R12 确认文档在册项：linear-board（tab 对齐已修/筛选片已修 → W-A1 只验操作面）、dashboard（渠道占比卡已修）、combo-editor 双删除钮（共享 composite 组件，维持登记）、sundial-detail 留白（已居中）、antdpro form-basic/detail-basic 背景接缝（改判非缺陷）、master-detail 子表加载 >2s（性能观测）。
 - 渲染器级 plan-first：container className-flex 陷阱；表格 fixed 列宽度预留（不透明底已在 R12e 落地）；SPA hash 导航竞态（自动化测试关注）。
+
+### W-A1 执行期新增登记（2026-10-03）
+
+- **P3**：批量操作零选中静默无反馈（standard-crud 批量删除、antdpro-list 批量导出同病）——建议「请先选择记录」提示或禁用态。
+- **P3**：sundial-detail 子任务空标题校验文案用原始键名（`subtaskAddTitle不能为空`）——schema 字段补 label 即可。
+- **P3**：approval-tasks 审批「通过」成功后弹窗不自动关闭（保留可继续操作形态，建议关闭或禁用双钮）。
+- **P3**：剪贴板写入失败 toast 含原始英文异常（`Failed to execute 'writeText'…`，cal-success/linear-detail 复制链接同病）——失败文案宜收敛为本地化短语。
+- **P3**：linear-detail 状态选择未变更直接点「应用」提交空 patch → mock 判 invalid patch → 误报「状态更新失败」——建议未变更时禁用「应用」。
+- **P3（a11y）**：master-detail 订单列表项为无角色 SPAN，键盘不可达（R12 展现层未覆盖维度）。
+- **已修（当波 P1）**：表单校验失败 toast 显示 `[object Object]`——`flux-action-core` 失败通知对结构化非 Error 负载（ValidationResult[]）直接 String() 所致；新增 `describeActionFailure`（数组取 message 拼接、对象取 message 字段、兜底 JSON），全站生效（standard-crud/business-document/antdpro-form-dialog/complex-form 实机复验均输出可读中文文案）；回归测试 ×2（action-dispatcher-control-flow.test.ts）。
+- **已修（当波 P2）**：配置 `messages.failed` 的 ajax 失败叠加通用 `Request failed` 双 toast——`flux-runtime` executeRuntimeAjaxAction 在作者消息消费失败后补标 `failureHandled`，dispatcher 通用失败通知跳过；回归测试 ×2（runtime-ajax-messages.test.ts）。
+- **测试观测面**：linear mock 新增 `lastBulkUpdate` 钩子（与既有 lastMove 同款，e2e 请求体观测）。
 
 ## 八、完成定义（DoD）
 

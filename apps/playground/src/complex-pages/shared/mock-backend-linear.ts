@@ -343,6 +343,8 @@ type LinearTestHooks = {
   moveMiss?: boolean;
   /** last `Linear__moveCard` body (opt-in e2e observation; production no-op) */
   lastMove?: Record<string, unknown>;
+  /** last `Linear__bulkUpdate` body (opt-in e2e observation; production no-op) */
+  lastBulkUpdate?: Record<string, unknown>;
 };
 
 function readLinearTestHooks(): LinearTestHooks | undefined {
@@ -378,6 +380,8 @@ export function createLinearFetcherBranch(db: LinearDatabase, clone: <T>(value: 
     // ----- writes (P4b) -----
     if (normalizedMethod === 'post') {
       if (url.includes('/r/Linear__bulkUpdate')) {
+        const hooks = readLinearTestHooks();
+        if (hooks) hooks.lastBulkUpdate = { ...body };
         const result = bulkUpdateLinearIssues(db.issues, body);
         return result.ok
           ? { status: 0, data: clone({ ok: true, updated: result.updated }) as T }
