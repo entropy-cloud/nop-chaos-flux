@@ -23,6 +23,7 @@ function mockConnector(chunks: AiConnectorChunk[]): AiConnector {
   };
 }
 
+
 describe('AiBubbleView', () => {
   it('renders the nop-ai-bubble marker with data-role', () => {
     const message: ChatMessage = { id: 'm1', role: 'assistant', content: 'Hello world' };
@@ -185,3 +186,4 @@ describe('AiMessageListView + AiSenderView inside an ai-chat context', () => {
     expect(stamps.length).toBe(2);
   });
 });
+
