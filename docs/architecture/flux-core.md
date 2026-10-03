@@ -463,6 +463,50 @@ Priority order:
 - **`normalizeRootPath(path)`** / **`normalizeRootPaths(paths)`** — extract first path segment(s) for dependency tracking. `*` acts as wildcard.
 - **`createPathBinding`** (`packages/flux-core/src/utils/path-binding.ts`) — creates a path-binding service for projected-owner subtree rebasing, mapping between relative (owner-local) and absolute (parent-scope) coordinates.
 
+## Schema-Agnostic JSON Merge / Delta Utility
+
+`packages/flux-core/src/json-merge/` 提供 "基线 + 差量 = 结果" 的合并与差量提取能力。**该层不含任何 Flux schema 依赖**：签名与实现都不出现 `SchemaInput` / `BaseSchema` / renderer 类型，元素身份在运行时从数据本身发现，因此同一套代码可服务任意 JSON 文档形态（表单配置、页面 schema、i18n 文案、任意业务配置）。
+
+### API
+
+- **`mergeJson(base, delta, options?) → { value, diagnostics }`** — 把 `delta` 合并到 `base`。纯函数，不修改入参，输出与入参不共享引用。从不抛异常：所有降级通过 `diagnostics` 上报。
+- **`diffToDelta(resolved, base, options?) → { value, diagnostics }`** — 求出差量文档 `d`，使 `mergeJson(base, d)` 深度等于 `resolved`。无差异时 `value` 为 `undefined`。round-trip 性质由 `round-trip.test.ts` 锁定。
+- **`classifyList(list, options?) → 'all' | 'some' | 'none'`** — 运行时判定列表的身份覆盖率。
+- **`readIdentity(value, options?) → IdentityRef | undefined`** — 解析单个元素的身份。
+- **`planListMerge(baseCount, deltaIndexes) → ListMergeSlot[]`** — 由身份匹配结果重建列表顺序。
+
+### 合并语义
+
+| delta 形态 | 行为 |
+| --- | --- |
+| 键缺省 / `undefined` | base 值保持不变 |
+| `null` | 置为 `null` |
+| 标量 | delta 覆盖 base |
+| 对象 | 逐键递归合并 |
+| 数组 | 按身份匹配元素，顺序由 `planListMerge` 重建 |
+| `{ [overrideKey]: 'remove' }` | 删除该子树 |
+| `{ [overrideKey]: 'replace', ... }` | 整段替换，标记键从输出剥离 |
+
+列表顺序重建遵循三条规则：delta 顺序优先；未匹配的 base 元素尽量保序；delta 新元素插入到其锚点元素之后。每个被匹配的 base 元素充当锚点，代表它自己直到下一个锚点之间的全部内容。
+
+### 身份解析
+
+`options.identityKeys` 为有序链，默认 `['xui:id', 'id', 'name']`，首个持有非空标量的键胜出。`options.uniqueAttrKey`（默认 `xui:unique-attr`）提供间接寻址：其值是另一个键名，用该键的值作为身份。空串、`null`、非标量值不携带身份。
+
+base 列表未达到 `'all'` 时整段取 delta，并产出 `list-not-keyed` 诊断；base 列表内身份重复时保留首个匹配并产出 `duplicate-identity` 诊断。诊断的 `path` 为 RFC 6901 JSON Pointer。
+
+### 差量提取
+
+identity 列表**按 resolved 顺序完整输出**，且每个元素都带上身份戳（否则 merge 无法定位）；从列表中消失的元素以 `remove` 算子追加。完整输出是重排序可表达的前提——部分列表无法携带顺序信息。无身份的列表整体替换。
+
+### 配置项
+
+`options.markers` 可覆盖标记键（默认 `xui:override` / `xui:virtual`），用于对接其它命名空间（如 NOP 的 `x:override`）。`options.forceOverridePrefix` 默认**禁用**：启用后带此前缀的 delta 键整段替换而不合并——它会占用任意文档的合法键空间，不适合作为默认值。
+
+### 与 page-designer tree-patch 的分工
+
+`packages/page-designer-core/src/tree-patch.ts` 的 `diffSchemaInput` / `applyTreePatches` 产出 JSON Pointer patch 列表，服务设计器 undo/redo 栈——该场景下同一会话内 base 不漂移，positional patch 体积小且可回放。本工具服务跨版本 / 跨文件 / 跨人场景。**两者并存，不互相替换。**
+
 ## Shared Value Utilities And Host Provider Factory (cq-2)
 
 - **`cloneDeep(value)`** (`src/utils/object.ts`) — structuredClone with JSON round-trip fallback. Input domain: plain JSON data (functions rejected under structuredClone semantics; undefined-valued properties dropped).

@@ -28,6 +28,28 @@ export {
   shallowEqual,
 } from './utils/object.js';
 export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn, resolveRelativePath, toJsonPointer, appendToJsonPointer } from './utils/path.js';
+export {
+  mergeJson,
+  diffToDelta,
+  classifyList,
+  readIdentity,
+  planListMerge,
+  DEFAULT_IDENTITY_KEYS,
+  DEFAULT_OVERRIDE_KEY,
+  DEFAULT_UNIQUE_ATTR_KEY,
+  DEFAULT_VIRTUAL_KEY,
+} from './json-merge/index.js';
+export type {
+  DeltaResult,
+  IdentityRef,
+  JsonMergeOptions,
+  ListIdentityKind,
+  ListMergeSlot,
+  MergeDiagnostic,
+  MergeDiagnosticCode,
+  MergeMarkers,
+  MergeResult,
+} from './json-merge/index.js';
 export { genId } from './utils/id.js';
 export { cloneDeep } from './utils/object.js';
 export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema.js';
