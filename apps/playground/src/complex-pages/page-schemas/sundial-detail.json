@@ -10,7 +10,7 @@
         {
           "type": "container",
           "testid": "sundial-detail-panel",
-          "className": "sd-card w-[400px] p-4 flex flex-col gap-3",
+          "className": "sd-card w-[400px] p-4 flex flex-col gap-3 mx-auto",
           "body": [
             {
               "type": "flex",

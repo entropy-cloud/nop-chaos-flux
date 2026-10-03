@@ -33,3 +33,15 @@
   display: flex;
   flex-direction: column;
 }
+
+/* ux-r12e：水平 wizard 步骤导航连接线——步骤项之间补一段横线，
+   视觉上表达先后顺序（此前三步头只有编号圆点、无顺序连接）。 */
+[data-slot='wizard-step-nav'][data-mode='horizontal'] ol > li + li::before {
+  content: '';
+  display: inline-block;
+  width: 28px;
+  height: 1px;
+  background: hsl(var(--border) / 0.6);
+  margin-right: 6px;
+  vertical-align: middle;
+}

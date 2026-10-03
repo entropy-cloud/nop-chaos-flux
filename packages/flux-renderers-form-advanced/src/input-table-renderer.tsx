@@ -358,7 +358,16 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
               ) : (
                 <TableHead>{t('flux.form.value', { defaultValue: 'Value' })}</TableHead>
               )}
-              {showActionColumn && <TableHead className="w-px" aria-label={t('flux.form.rowActions')} />}
+              {showActionColumn && (
+                <TableHead
+                  className="text-xs text-muted-foreground"
+                  aria-label={t('flux.form.rowActions')}
+                >
+                  {/* ux-r12e：空操作列表头不可读——渲染与 aria 同源的标签文字
+                      （原 w-px 空头在演示页读作"没有表头"） */}
+                  {t('flux.form.rowActions')}
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>

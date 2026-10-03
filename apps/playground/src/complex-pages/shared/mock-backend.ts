@@ -314,28 +314,33 @@ export function createMockDatabase(): MockDatabase {
     const status = ORDER_STATUSES[i % ORDER_STATUSES.length];
     const channel = CHANNELS[i % CHANNELS.length];
     const day = i;
-    orders.push({
-      id: oid,
-      orderNo: `NO-202407${pad2(i + 1)}`,
-      customer: COMPANIES[i % COMPANIES.length],
-      amount: +(1280.5 + i * 312.7).toFixed(2),
-      status,
-      channel,
-      createTime: ts(day, i, i * 7),
-    });
-
+    // ux-r12e：明细勾稽——订单金额由其明细行 Σ(qty×price) 派生（先建明细再定金额），
+    // 详情页主金额与子表小计不再互相矛盾。
     const itemCount = (i % 3) + 1;
+    const items = [];
     for (let j = 0; j < itemCount; j++) {
       const sku = SKUS[(i + j) % SKUS.length];
-      orderItems.push({
+      const qty = ((i + j) % 5) + 1;
+      items.push({
         id: `i${i * 3 + j + 1}`,
         orderId: oid,
         sku: sku.sku,
         name: sku.name,
-        qty: ((i + j) % 5) + 1,
+        qty,
         price: sku.price,
       });
     }
+    const itemsTotal = +(items.reduce((sum, it) => sum + it.qty * it.price, 0)).toFixed(2);
+    orders.push({
+      id: oid,
+      orderNo: `NO-202407${pad2(i + 1)}`,
+      customer: COMPANIES[i % COMPANIES.length],
+      amount: itemsTotal,
+      status,
+      channel,
+      createTime: ts(day, i, i * 7),
+    });
+    orderItems.push(...items);
 
     orderLogs.push({
       id: `l${i * 2 + 1}`,

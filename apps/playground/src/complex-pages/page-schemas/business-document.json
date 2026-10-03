@@ -12,16 +12,36 @@
         "discountRate": 0,
         "taxRate": 13,
         "items": [
-          { "name": "服务器（标准型）", "qty": 2, "price": 18000 },
-          { "name": "交换机（24 口）", "qty": 1, "price": 6800 }
+          {
+            "name": "服务器（标准型）",
+            "qty": 2,
+            "price": 18000
+          },
+          {
+            "name": "交换机（24 口）",
+            "qty": 1,
+            "price": 6800
+          }
         ]
       },
       "submitAction": {
         "action": "ajax",
-        "args": { "url": "/r/PurchaseOrder__save", "method": "post", "includeScope": "*" },
-        "messages": { "success": "采购单已提交" },
+        "args": {
+          "url": "/r/PurchaseOrder__save",
+          "method": "post",
+          "includeScope": "*"
+        },
+        "messages": {
+          "success": "采购单已提交"
+        },
         "then": [
-          { "action": "setValue", "args": { "path": "orderSaved", "value": true } },
+          {
+            "action": "setValue",
+            "args": {
+              "path": "orderSaved",
+              "value": true
+            }
+          },
           {
             "action": "setValue",
             "args": {
@@ -45,7 +65,11 @@
               "required": true,
               "placeholder": "必填"
             },
-            { "type": "input-date", "name": "orderDate", "label": "订单日期" },
+            {
+              "type": "input-date",
+              "name": "orderDate",
+              "label": "订单日期"
+            },
             {
               "type": "input-number",
               "name": "discountRate",
@@ -53,7 +77,13 @@
               "min": 0,
               "max": 100
             },
-            { "type": "input-number", "name": "taxRate", "label": "税率(%)", "min": 0, "max": 100 }
+            {
+              "type": "input-number",
+              "name": "taxRate",
+              "label": "税率(%)",
+              "min": 0,
+              "max": 100
+            }
           ]
         },
         {
@@ -65,16 +95,47 @@
           "addable": true,
           "removable": true,
           "columns": [
-            { "label": "商品名称", "width": 240 },
-            { "label": "数量", "width": 110 },
-            { "label": "单价(元)", "width": 130 },
-            { "label": "金额(元)", "width": 130 }
+            {
+              "label": "商品名称",
+              "width": 240
+            },
+            {
+              "label": "数量",
+              "width": 110
+            },
+            {
+              "label": "单价(元)",
+              "width": 130
+            },
+            {
+              "label": "金额(元)",
+              "width": 130
+            }
           ],
           "item": [
-            { "type": "input-text", "name": "name", "placeholder": "商品名称", "required": true },
-            { "type": "input-number", "name": "qty", "min": 0, "placeholder": "数量" },
-            { "type": "input-number", "name": "price", "min": 0, "placeholder": "单价" },
-            { "type": "text", "text": "${(qty ?? 0) * (price ?? 0)}", "testid": "row-amount" }
+            {
+              "type": "input-text",
+              "name": "name",
+              "placeholder": "商品名称",
+              "required": true
+            },
+            {
+              "type": "input-number",
+              "name": "qty",
+              "min": 0,
+              "placeholder": "数量"
+            },
+            {
+              "type": "input-number",
+              "name": "price",
+              "min": 0,
+              "placeholder": "单价"
+            },
+            {
+              "type": "text",
+              "text": "${(qty ?? 0) * (price ?? 0)}",
+              "testid": "row-amount"
+            }
           ]
         },
         {
@@ -132,7 +193,9 @@
           "label": "提交采购单",
           "variant": "primary",
           "testid": "order-submit",
-          "onClick": { "action": "submitForm" }
+          "onClick": {
+            "action": "submitForm"
+          }
         }
       ]
     }

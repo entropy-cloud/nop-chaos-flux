@@ -10,6 +10,12 @@
   background: var(--table-header-bg);
 }
 
+/* ux-r12e：fixed 粘性列必须不透明——透明底会透出下方液态列内容。
+   宿主需定义 --table-fixed-bg（深浅主题各自取值）；未定义时回退表头 token。 */
+.nop-table [data-fixed] {
+  background: var(--table-fixed-bg, var(--table-header-bg, var(--table-striped-bg)));
+}
+
 .nop-table thead th + th {
   border-left: 1px solid var(--table-header-separator-color);
 }

@@ -526,7 +526,11 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       data-mode={mode}
     >
       {stepCount > 0 ? (
-        <nav data-slot="wizard-step-nav" aria-label={t('flux.wizard.stepNav')}>
+        <nav
+          data-slot="wizard-step-nav"
+          data-mode={mode}
+          aria-label={t('flux.wizard.stepNav')}
+        >
           <ol
             className={cn(
               mode === 'vertical'

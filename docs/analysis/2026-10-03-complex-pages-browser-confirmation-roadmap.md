@@ -97,9 +97,11 @@
 1. ~~linear-board 看板 tab 错位 + 标签筛选片文字不可读~~ **已修复**：看板 tab 节点与列表 tab 对齐为同构 flex 包装；`.ln-root .nop-kanban-tag-filter button` 文字色 ln-root 作用域覆盖（`--ln-text-3`）。browser-use 实机复验：两 tab 同高完整、~34 个筛选片文字全部可读。
 2. ~~dashboard 渠道占比卡右缘溢出~~（OP-1 残留）**已修复**：三张图表卡补 `min-w-0`（flex 子项被图表固有宽撑破）。browser-use 实机复验：卡右缘 1369 ≤ 1440 完整可见，饼图完整渲染。
 
-### P3（在册不改，随 G-3 全局收敛审计一并处理）
+### P3（2026-10-03 执行轮已修复 8 项，剩余 4 项在册）
 
-- combo-editor ×/trash 双删除 affordance；sundial-detail 检查器左置留白；antdpro form-basic/detail-basic 背景接缝；antdpro-form-step 步骤连接线；approval-tasks 状态纯文本 + 查询卡右侧空区；business-document/inline-edit-table 空操作列表头；detail-subtables mock 金额勾稽；crud-views-export 状态列徽标化；linear-detail 表头浅色带对比度。
+- **已修复（当轮）**：sundial-detail 检查器居中（mx-auto）；antdpro-form-step 步骤连接线（wizard data-mode 钩子 + css 连接线，token 裸分量陷阱实机修正为 `hsl(var(--border)/0.6)`）；approval-tasks 状态徽标（琥珀/绿/玫红）+ crud-views-export 状态徽标（✅启用/⛔禁用）；business-document/inline-edit-table 空操作列表头补「行操作」标签（input-table + 行保存条两处渲染器）；detail-subtables 订单金额改由明细 Σ(qty×price) 派生（勾稽）；linear-detail 表头带（随 R12 token 覆盖已融入深色）。
+- **table fixed 粘性列透明底**（渲染器缺口）：`packages/ui/styles/table.css` 补 `[data-fixed]` 不透明底规则（token 链回退）。
+- **仍在册**：combo-editor ×/trash 双删除（共享 composite 组件语义，改动面大）、antdpro form-basic/detail-basic 背景接缝（改判：卡片边界于渐变底上，非缺陷）、approval-tasks 查询卡右侧空区（布局偏好）。
 
 ### 渲染器级（plan-first，已在 R12 补充登记）
 

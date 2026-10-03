@@ -11,9 +11,14 @@
       "loadAction": {
         "action": "ajax",
         "dependsOn": ["__approval_load__"],
-        "args": { "url": "/r/ApprovalTask__findPage", "method": "get" }
+        "args": {
+          "url": "/r/ApprovalTask__findPage",
+          "method": "get"
+        }
       },
-      "filterTogglable": { "defaultCollapsed": false },
+      "filterTogglable": {
+        "defaultCollapsed": false
+      },
       "queryForm": {
         "layout": "horizontal",
         "columnCount": 3,
@@ -32,20 +37,75 @@
             "clearable": true,
             "placeholder": "全部状态",
             "options": [
-              { "label": "待审批", "value": "pending" },
-              { "label": "已通过", "value": "approved" },
-              { "label": "已驳回", "value": "rejected" }
-            ]
+              {
+                "label": "待审批",
+                "value": "pending"
+              },
+              {
+                "label": "已通过",
+                "value": "approved"
+              },
+              {
+                "label": "已驳回",
+                "value": "rejected"
+              }
+            ],
+            "cell": {
+              "type": "container",
+              "className": "flex items-center",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "${status}",
+                  "className": "${status === \"待审批\" ? \"text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5\" : status === \"已通过\" ? \"text-xs text-emerald-700 bg-emerald-50 rounded px-1.5 py-0.5\" : \"text-xs text-rose-700 bg-rose-50 rounded px-1.5 py-0.5\"}"
+                }
+              ]
+            }
           }
         ]
       },
       "columns": [
-        { "name": "title", "label": "申请标题", "width": 240 },
-        { "name": "applicant", "label": "申请人", "width": 100 },
-        { "name": "department", "label": "部门", "width": 120 },
-        { "name": "amount", "label": "金额(元)", "width": 110 },
-        { "name": "status_label", "label": "状态", "width": 100 },
-        { "name": "submitTime", "label": "提交时间", "width": 170 },
+        {
+          "name": "title",
+          "label": "申请标题",
+          "width": 240
+        },
+        {
+          "name": "applicant",
+          "label": "申请人",
+          "width": 100
+        },
+        {
+          "name": "department",
+          "label": "部门",
+          "width": 120
+        },
+        {
+          "name": "amount",
+          "label": "金额(元)",
+          "width": 110
+        },
+        {
+          "name": "status_label",
+          "label": "状态",
+          "width": 100,
+          "cell": {
+            "type": "container",
+            "className": "flex items-center",
+            "body": [
+              {
+                "type": "text",
+                "text": "${status_label}",
+                "className": "${status === \"pending\" ? \"text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5\" : status === \"approved\" ? \"text-xs text-emerald-700 bg-emerald-50 rounded px-1.5 py-0.5\" : \"text-xs text-rose-700 bg-rose-50 rounded px-1.5 py-0.5\"}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "submitTime",
+          "label": "提交时间",
+          "width": 170
+        },
         {
           "type": "operation",
           "label": "操作",
@@ -61,7 +121,9 @@
                 "args": {
                   "title": "审批处理",
                   "testid": "approval-dialog",
-                  "data": { "id": "${$slot.record.id}" },
+                  "data": {
+                    "id": "${$slot.record.id}"
+                  },
                   "body": [
                     {
                       "type": "form",
@@ -72,7 +134,9 @@
                         "args": {
                           "url": "/r/ApprovalTask__get",
                           "method": "get",
-                          "data": { "id": "${id}" }
+                          "data": {
+                            "id": "${id}"
+                          }
                         }
                       },
                       "body": [
@@ -136,13 +200,23 @@
                                 "args": {
                                   "url": "/r/ApprovalTask__reject",
                                   "method": "post",
-                                  "data": { "id": "${id}", "comment": "${comment ?? \"\"}" }
+                                  "data": {
+                                    "id": "${id}",
+                                    "comment": "${comment ?? \"\"}"
+                                  }
                                 },
                                 "confirmText": "确认驳回该申请？",
-                                "messages": { "success": "已驳回" },
+                                "messages": {
+                                  "success": "已驳回"
+                                },
                                 "then": [
-                                  { "action": "component:refresh", "componentId": "approval-crud" },
-                                  { "action": "closeSurface" }
+                                  {
+                                    "action": "component:refresh",
+                                    "componentId": "approval-crud"
+                                  },
+                                  {
+                                    "action": "closeSurface"
+                                  }
                                 ]
                               }
                             },
@@ -157,12 +231,22 @@
                                 "args": {
                                   "url": "/r/ApprovalTask__approve",
                                   "method": "post",
-                                  "data": { "id": "${id}", "comment": "${comment ?? \"\"}" }
+                                  "data": {
+                                    "id": "${id}",
+                                    "comment": "${comment ?? \"\"}"
+                                  }
                                 },
-                                "messages": { "success": "已通过" },
+                                "messages": {
+                                  "success": "已通过"
+                                },
                                 "then": [
-                                  { "action": "component:refresh", "componentId": "approval-crud" },
-                                  { "action": "closeSurface" }
+                                  {
+                                    "action": "component:refresh",
+                                    "componentId": "approval-crud"
+                                  },
+                                  {
+                                    "action": "closeSurface"
+                                  }
                                 ]
                               }
                             },

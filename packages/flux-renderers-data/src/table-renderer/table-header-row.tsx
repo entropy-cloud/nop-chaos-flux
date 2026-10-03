@@ -28,10 +28,7 @@ import {
   hasNestedColumns,
   type HeaderTreeCell,
 } from './table-header-tree.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
+import { asReactNode, resolveLabelRegion, resolveTableHeaderText } from './table-header-text.js';
 
 interface TableHeaderRowProps {
   props: RendererComponentProps<TableSchema>;
@@ -99,12 +96,13 @@ function renderLeafHeaderCell(
     resizeApi,
   } = ctx;
 
-  const labelRegion =
-    typeof column.labelRegionKey === 'string'
-      ? rendererProps.regions[column.labelRegionKey]
-      : undefined;
-  const labelContent = asReactNode(labelRegion?.render()) ?? column.label ?? column.name;
-  const columnLabelText = typeof column.label === 'string' ? column.label : column.name;
+  // ux-r12e：label 解析抽到 table-header-text.ts（本文件 700 行预算）
+  const labelRegion = resolveLabelRegion(rendererProps.regions, column.labelRegionKey);
+  const { labelContent, columnLabelText } = resolveTableHeaderText({
+    labelRegion: labelRegion?.render(),
+    label: column.label,
+    name: column.name,
+  });
   const isSortable = column.sortable === true;
   const filterConfig =
     typeof column.filterable === 'object' && column.filterable
@@ -499,7 +497,10 @@ function FlatTableHeaderRow({
           data-slot="table-row-save-bar-column"
           data-column-width-key="__row_save_bar__"
           className="w-32"
-        />
+        >
+          {/* ux-r12e：行保存条列表头补标签（此前空 th 读作缺列） */}
+          {t('flux.form.rowActions')}
+        </TableHead>
       ) : null}
     </TableRow>
   );
