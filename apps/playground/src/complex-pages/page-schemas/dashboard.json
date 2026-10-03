@@ -6,44 +6,66 @@
       "type": "data-source",
       "name": "summary",
       "action": "ajax",
-      "args": { "url": "/r/Dashboard__summary", "method": "get" },
+      "args": {
+        "url": "/r/Dashboard__summary",
+        "method": "get"
+      },
       "testid": "dash-summary-source"
     },
     {
       "type": "data-source",
       "name": "trend",
       "action": "ajax",
-      "args": { "url": "/r/Dashboard__trend", "method": "get" }
+      "args": {
+        "url": "/r/Dashboard__trend",
+        "method": "get"
+      }
     },
     {
       "type": "data-source",
       "name": "daily",
       "action": "ajax",
-      "args": { "url": "/r/Dashboard__daily", "method": "get" }
+      "args": {
+        "url": "/r/Dashboard__daily",
+        "method": "get"
+      }
     },
     {
       "type": "data-source",
       "name": "category",
       "action": "ajax",
-      "args": { "url": "/r/Dashboard__category", "method": "get" }
+      "args": {
+        "url": "/r/Dashboard__category",
+        "method": "get"
+      }
     },
     {
       "type": "data-source",
       "name": "recentOrders",
       "action": "ajax",
-      "args": { "url": "/r/Dashboard__recentOrders", "method": "get" }
+      "args": {
+        "url": "/r/Dashboard__recentOrders",
+        "method": "get"
+      }
     },
     {
       "type": "data-source",
       "name": "approvals",
       "action": "ajax",
-      "args": { "url": "/r/Dashboard__approvals", "method": "get" }
+      "args": {
+        "url": "/r/Dashboard__approvals",
+        "method": "get"
+      }
     },
     {
       "type": "container",
       "className": "mb-3",
       "body": [
-        { "type": "text", "text": "仪表盘", "className": "text-lg font-semibold" },
+        {
+          "type": "text",
+          "text": "仪表盘",
+          "className": "text-lg font-semibold"
+        },
         {
           "type": "text",
           "text": "实时业务概览",
@@ -63,7 +85,11 @@
           "testid": "dash-stat-total",
           "className": "flex-1 rounded-xl bg-card ring-1 ring-foreground/10 shadow-sm overflow-hidden dash-card",
           "body": [
-            { "type": "text", "text": "", "className": "block h-1 w-full bg-blue-500" },
+            {
+              "type": "text",
+              "text": "",
+              "className": "block h-1 w-full bg-blue-500"
+            },
             {
               "type": "container",
               "className": "p-4",
@@ -113,7 +139,11 @@
           "testid": "dash-stat-today",
           "className": "flex-1 rounded-xl bg-card ring-1 ring-foreground/10 shadow-sm overflow-hidden dash-card",
           "body": [
-            { "type": "text", "text": "", "className": "block h-1 w-full bg-emerald-500" },
+            {
+              "type": "text",
+              "text": "",
+              "className": "block h-1 w-full bg-emerald-500"
+            },
             {
               "type": "container",
               "className": "p-4",
@@ -149,7 +179,11 @@
                   "text": "${summary?.todayOrders ?? 0}",
                   "className": "text-3xl font-bold leading-none"
                 },
-                { "type": "text", "text": "笔", "className": "text-xs text-muted-foreground mt-2" }
+                {
+                  "type": "text",
+                  "text": "笔",
+                  "className": "text-xs text-muted-foreground mt-2"
+                }
               ]
             }
           ]
@@ -159,7 +193,11 @@
           "testid": "dash-stat-active",
           "className": "flex-1 rounded-xl bg-card ring-1 ring-foreground/10 shadow-sm overflow-hidden dash-card",
           "body": [
-            { "type": "text", "text": "", "className": "block h-1 w-full bg-violet-500" },
+            {
+              "type": "text",
+              "text": "",
+              "className": "block h-1 w-full bg-violet-500"
+            },
             {
               "type": "container",
               "className": "p-4",
@@ -209,7 +247,11 @@
           "testid": "dash-stat-pending",
           "className": "flex-1 rounded-xl bg-card ring-1 ring-foreground/10 shadow-sm overflow-hidden dash-card",
           "body": [
-            { "type": "text", "text": "", "className": "block h-1 w-full bg-amber-500" },
+            {
+              "type": "text",
+              "text": "",
+              "className": "block h-1 w-full bg-amber-500"
+            },
             {
               "type": "container",
               "className": "p-4",
@@ -259,7 +301,11 @@
           "testid": "dash-stat-revenue",
           "className": "flex-1 rounded-xl bg-card ring-1 ring-foreground/10 shadow-sm overflow-hidden dash-card",
           "body": [
-            { "type": "text", "text": "", "className": "block h-1 w-full bg-cyan-500" },
+            {
+              "type": "text",
+              "text": "",
+              "className": "block h-1 w-full bg-cyan-500"
+            },
             {
               "type": "container",
               "className": "p-4",
@@ -295,7 +341,11 @@
                   "text": "${summary?.revenueLabel ?? summary?.revenue ?? 0}",
                   "className": "text-3xl font-bold leading-none"
                 },
-                { "type": "text", "text": "元", "className": "text-xs text-muted-foreground mt-2" }
+                {
+                  "type": "text",
+                  "text": "元",
+                  "className": "text-xs text-muted-foreground mt-2"
+                }
               ]
             }
           ]
@@ -305,7 +355,11 @@
           "testid": "dash-stat-growth",
           "className": "flex-1 rounded-xl bg-card ring-1 ring-foreground/10 shadow-sm overflow-hidden dash-card",
           "body": [
-            { "type": "text", "text": "", "className": "block h-1 w-full bg-rose-500" },
+            {
+              "type": "text",
+              "text": "",
+              "className": "block h-1 w-full bg-rose-500"
+            },
             {
               "type": "container",
               "className": "p-4",
@@ -360,37 +414,27 @@
       "body": [
         {
           "type": "container",
-          "className": "flex-1 border rounded-lg p-3 bg-background",
+          "className": "flex-1 border rounded-lg p-3 bg-background min-w-0",
           "body": [
-            { "type": "text", "text": "销售趋势", "className": "text-sm font-semibold mb-2" },
+            {
+              "type": "text",
+              "text": "销售趋势",
+              "className": "text-sm font-semibold mb-2"
+            },
             {
               "type": "chart",
               "testid": "dash-trend-chart",
               "chartType": "area",
               "source": "${trend?.items}",
               "height": 240,
-              "xAxis": { "dataKey": "date" },
-              "series": [{ "name": "销售额", "dataRegionKey": "amount" }],
-              "grid": true,
-              "legend": true
-            }
-          ]
-        },
-        {
-          "type": "container",
-          "className": "flex-1 border rounded-lg p-3 bg-background",
-          "body": [
-            { "type": "text", "text": "每日订单", "className": "text-sm font-semibold mb-2" },
-            {
-              "type": "chart",
-              "testid": "dash-daily-chart",
-              "chartType": "bar",
-              "source": "${daily?.items}",
-              "height": 240,
-              "xAxis": { "dataKey": "date" },
+              "xAxis": {
+                "dataKey": "date"
+              },
               "series": [
-                { "name": "订单笔数", "dataRegionKey": "count" },
-                { "name": "销售额", "dataRegionKey": "amount" }
+                {
+                  "name": "销售额",
+                  "dataRegionKey": "amount"
+                }
               ],
               "grid": true,
               "legend": true
@@ -399,17 +443,61 @@
         },
         {
           "type": "container",
-          "className": "flex-1 border rounded-lg p-3 bg-background",
+          "className": "flex-1 border rounded-lg p-3 bg-background min-w-0",
           "body": [
-            { "type": "text", "text": "渠道占比", "className": "text-sm font-semibold mb-2" },
+            {
+              "type": "text",
+              "text": "每日订单",
+              "className": "text-sm font-semibold mb-2"
+            },
+            {
+              "type": "chart",
+              "testid": "dash-daily-chart",
+              "chartType": "bar",
+              "source": "${daily?.items}",
+              "height": 240,
+              "xAxis": {
+                "dataKey": "date"
+              },
+              "series": [
+                {
+                  "name": "订单笔数",
+                  "dataRegionKey": "count"
+                },
+                {
+                  "name": "销售额",
+                  "dataRegionKey": "amount"
+                }
+              ],
+              "grid": true,
+              "legend": true
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "className": "flex-1 border rounded-lg p-3 bg-background min-w-0",
+          "body": [
+            {
+              "type": "text",
+              "text": "渠道占比",
+              "className": "text-sm font-semibold mb-2"
+            },
             {
               "type": "chart",
               "testid": "dash-category-chart",
               "chartType": "pie",
               "source": "${category?.items}",
               "height": 240,
-              "xAxis": { "dataKey": "name" },
-              "series": [{ "name": "订单数", "dataRegionKey": "value" }],
+              "xAxis": {
+                "dataKey": "name"
+              },
+              "series": [
+                {
+                  "name": "订单数",
+                  "dataRegionKey": "value"
+                }
+              ],
               "legend": true
             }
           ]
@@ -426,21 +514,54 @@
           "type": "container",
           "className": "flex-1 border rounded-lg p-3 bg-background",
           "body": [
-            { "type": "text", "text": "最近订单", "className": "text-sm font-semibold mb-2" },
+            {
+              "type": "text",
+              "text": "最近订单",
+              "className": "text-sm font-semibold mb-2"
+            },
             {
               "type": "table",
               "testid": "dash-recent-table",
               "source": "${recentOrders?.items}",
               "rowKey": "id",
-              "pagination": { "enabled": false },
-              "empty": { "type": "text", "text": "暂无订单" },
+              "pagination": {
+                "enabled": false
+              },
+              "empty": {
+                "type": "text",
+                "text": "暂无订单"
+              },
               "columns": [
-                { "name": "orderNo", "label": "订单号", "width": 180 },
-                { "name": "customer", "label": "客户", "width": 180 },
-                { "name": "amount", "label": "金额", "width": 100 },
-                { "name": "status_label", "label": "状态", "width": 100 },
-                { "name": "channel_label", "label": "渠道", "width": 90 },
-                { "name": "createTime", "label": "创建时间", "width": 170 }
+                {
+                  "name": "orderNo",
+                  "label": "订单号",
+                  "width": 180
+                },
+                {
+                  "name": "customer",
+                  "label": "客户",
+                  "width": 180
+                },
+                {
+                  "name": "amount",
+                  "label": "金额",
+                  "width": 100
+                },
+                {
+                  "name": "status_label",
+                  "label": "状态",
+                  "width": 100
+                },
+                {
+                  "name": "channel_label",
+                  "label": "渠道",
+                  "width": 90
+                },
+                {
+                  "name": "createTime",
+                  "label": "创建时间",
+                  "width": 170
+                }
               ]
             }
           ]
@@ -449,21 +570,54 @@
           "type": "container",
           "className": "flex-1 border rounded-lg p-3 bg-background",
           "body": [
-            { "type": "text", "text": "待审批任务", "className": "text-sm font-semibold mb-2" },
+            {
+              "type": "text",
+              "text": "待审批任务",
+              "className": "text-sm font-semibold mb-2"
+            },
             {
               "type": "table",
               "testid": "dash-approvals-table",
               "source": "${approvals?.items}",
               "rowKey": "id",
-              "pagination": { "enabled": false },
-              "empty": { "type": "text", "text": "暂无待审批" },
+              "pagination": {
+                "enabled": false
+              },
+              "empty": {
+                "type": "text",
+                "text": "暂无待审批"
+              },
               "columns": [
-                { "name": "title", "label": "标题", "width": 200 },
-                { "name": "applicant", "label": "申请人", "width": 80 },
-                { "name": "status_label", "label": "状态", "width": 70 },
-                { "name": "department", "label": "部门", "width": 80 },
-                { "name": "amount", "label": "金额(元)", "width": 100 },
-                { "name": "submitTime", "label": "提交时间", "width": 160 }
+                {
+                  "name": "title",
+                  "label": "标题",
+                  "width": 200
+                },
+                {
+                  "name": "applicant",
+                  "label": "申请人",
+                  "width": 80
+                },
+                {
+                  "name": "status_label",
+                  "label": "状态",
+                  "width": 70
+                },
+                {
+                  "name": "department",
+                  "label": "部门",
+                  "width": 80
+                },
+                {
+                  "name": "amount",
+                  "label": "金额(元)",
+                  "width": 100
+                },
+                {
+                  "name": "submitTime",
+                  "label": "提交时间",
+                  "width": 160
+                }
               ]
             }
           ]

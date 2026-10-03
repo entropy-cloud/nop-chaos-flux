@@ -270,7 +270,12 @@ const APPLICANTS = '张三,李四,王五,Alice,Bob,赵六,孙七,周八'.split('
 function pad2(n: number) { return String(n).padStart(2, '0'); }
 
 function ts(day: number, hour: number, min: number) {
-  return `2024-07-${pad2((day % 31) + 1)} ${pad2(8 + (hour % 12))}:${pad2(min % 60)}:00`;
+  // ux-r12c：订单时间轴改为相对今天滚动 30 天——固定 2024-07 种子会让趋势图
+  // 横跨两年（今日订单种子 2026-10 与 2024-07 主体之间大片空档）。
+  const d = new Date();
+  d.setDate(d.getDate() - (29 - (day % 30)));
+  const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  return `${ymd} ${pad2(8 + (hour % 12))}:${pad2(min % 60)}:00`;
 }
 
 export function createMockDatabase(): MockDatabase {

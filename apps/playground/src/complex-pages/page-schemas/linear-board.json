@@ -203,7 +203,7 @@
             {
               "type": "container",
               "testid": "linear-board-topbar",
-              "className": "h-12 shrink-0 border-b flex items-center gap-2 px-4",
+              "className": "min-h-12 py-1 shrink-0 border-b flex items-center gap-2 px-4",
               "body": [
                 {
                   "type": "flex",
@@ -237,8 +237,8 @@
                       ]
                     },
                     {
-                      "type": "container",
-                      "className": "ln-tab ln-tab-active",
+                      "type": "flex",
+                      "className": "ln-tab ln-tab-active items-center",
                       "testid": "linear-board-tab-board",
                       "body": [
                         {
@@ -250,7 +250,9 @@
                           "type": "text",
                           "text": "看板"
                         }
-                      ]
+                      ],
+                      "direction": "row",
+                      "gap": 4
                     }
                   ]
                 },

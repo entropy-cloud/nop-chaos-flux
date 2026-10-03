@@ -111,6 +111,13 @@
   background: transparent;
 }
 
+/* ux-r12d：linear-board 看板筛选条（nop-kanban-tag-filter）按钮文字为浅色
+   主题 token（近黑 oklab），深色 replica 内不可读（只剩白描边胶囊）——
+   ln-root 作用域覆盖为深色可读文字。 */
+.ln-root .nop-kanban-tag-filter button {
+  color: var(--ln-text-3, #d0d6e0);
+}
+
 /* Surface-level dark theming for dialogs/drawers carrying .ln-dialog. */
 .ln-dialog {
   background: var(--ln-bg-float);
