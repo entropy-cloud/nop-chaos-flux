@@ -100,6 +100,7 @@ export function ResponsiveRenderer(props: RendererComponentProps<ResponsiveSchem
 
   return (
     <div
+      data-slot="responsive-root"
       className={cn('nop-responsive', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
