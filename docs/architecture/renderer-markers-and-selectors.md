@@ -6,7 +6,6 @@ This document defines the current DOM marker and selector protocol for Flux rend
 - One-time migration work belongs under `docs/plans/`.
 - `docs/architecture/styling-system.md` remains the umbrella styling architecture document.
 - This file defines the narrower selector contract for root markers, `data-slot`, and `data-*` / `aria-*` state semantics.
-- Rollout status of the Universal Root Anchors, Structural Flatness Contract, and Design-Time Frame Protocol sections is tracked by `docs/backlog/dom-structure-audit-roadmap.md`.
 
 ## Purpose
 
