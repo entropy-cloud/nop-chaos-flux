@@ -150,10 +150,11 @@ Every renderer root element carries, in addition to its `nop-<type>` class, two 
 
 Injection rules:
 
-- both anchors are injected centrally in the flux-react render path (the auto-renderer already injects `data-testid` / `data-cid`); renderer components do not hand-write them
-- a renderer whose root bypasses the auto-renderer (custom `component` definitions, portal content roots) must still end up with both anchors on its visible root
+- `data-cid` is injected by the existing channels (auto-renderer props, FieldFrame chain, hand-written roots) and stays single-point per node — the stamp never adds it, because a second copy on the same node would break tooling's uniqueness assumption
+- `data-renderer` is stamped centrally: the auto path injects it via props, and custom `component` definitions get a clone-stamp on their rendered output root — descending context-provider chains to the host element, falling through component elements whose props forwarding reaches the DOM, skipping Fragment/structural outputs, and skipping `wrap: true` field-family definitions whose visible root is the FieldFrame frame (the frame root already carries both anchors; inner stamping would duplicate them)
 - FieldFrame's existing `data-renderer` (see Field selector contract attributes) is the field-family instance of this rule; its value semantics (`NodeMetaContext.type`) are the reference for the central injection
-- portal-surface renderers attach the anchors to their portal content root; a renderer that returns `null` while closed is exempt until mounted
+- a renderer whose root bypasses both channels must still end up with the anchor on its visible root or carry a registered exemption on its audit card
+- portal-surface renderers attach the anchors to their portal content root; a renderer that returns `null` while closed is exempt until mounted; schema-level `frameWrap: false` is an explicit opt-out of the frame contract — the instance anchor is exempt with the opt-out recorded on the audit card
 
 A universal `nop-renderer` marker class is explicitly rejected: it duplicates `data-renderer` without adding information and would create a third marker vocabulary. Machine targeting uses `[data-renderer]`; human, styling, and test targeting use `nop-<type>` and `data-slot`.
 

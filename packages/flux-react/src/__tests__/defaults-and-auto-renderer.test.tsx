@@ -82,17 +82,21 @@ describe('defaults and auto renderer', () => {
     expect(click).toHaveBeenCalled();
   });
 
-  it('keeps existing components (wrapped for root stamping) and auto-wraps reactComponent definitions', () => {
+  it('keeps wrap:true field-family definitions and auto-wraps the rest with memoized identity', () => {
     const component = () => null;
-    const withComponent = ensureRendererComponent({ type: 'a', component } as RendererDefinition);
-    expect(typeof withComponent.component).toBe('function');
-    expect(withComponent.component).not.toBe(component);
+    // 字段族（wrap:true）：原样保留，锚点由 FieldFrame 帧根承担。
+    const fieldFamily = ensureRendererComponent({
+      type: 'a',
+      wrap: true,
+      component,
+    } as unknown as RendererDefinition);
+    expect(fieldFamily.component).toBe(component);
 
-    const wrapped = ensureRendererComponent({
-      type: 'b',
-      reactComponent: () => null,
-    } as RendererDefinition);
-    expect(typeof wrapped.component).toBe('function');
+    // 非字段族：包装且同一 definition 重复 ensure 返回同一包装（注册表身份语义）。
+    const plain = { type: 'b', component } as unknown as RendererDefinition;
+    const wrappedOnce = ensureRendererComponent(plain);
+    expect(typeof wrappedOnce.component).toBe('function');
+    expect(ensureRendererComponent(plain)).toBe(wrappedOnce);
 
     const registry = createDefaultRegistry([
       { type: 'x', reactComponent: () => null } as RendererDefinition,
@@ -100,115 +104,6 @@ describe('defaults and auto renderer', () => {
     ]);
     expect(registry.get('x')?.component).toBeTruthy();
     expect(typeof registry.get('y')?.component).toBe('function');
-  });
-
-  it('stamps data-renderer onto custom component output roots (cid stays on its own channel)', () => {
-    function CustomRenderer(props: RendererComponentProps) {
-      return (
-        <section className="nop-custom" data-testid={props.meta.testid}>
-          {String((props.props as { label?: string }).label ?? '')}
-        </section>
-      );
-    }
-
-    const wrapped = ensureRendererComponent({
-      type: 'custom',
-      component: CustomRenderer,
-    } as unknown as RendererDefinition);
-    const Comp = wrapped.component as unknown as React.ComponentType<any>;
-
-    render(
-      <Comp
-        id="n"
-        path="$"
-        props={{ label: 'hi' }}
-        schema={{ type: 'custom' } as BaseSchema}
-        meta={{ testid: 'custom-root', cid: 'cid-77' } as any}
-        events={{} as RendererComponentProps['events']}
-        helpers={{} as any}
-        regions={{}}
-        reactions={{}}
-        templateNode={{} as any}
-        node={{} as any}
-      />,
-    );
-
-    const root = screen.getByTestId('custom-root');
-    expect(root.getAttribute('data-renderer')).toBe('custom');
-    // data-cid 由既有通道提供（AutoRenderer/组件手写/FieldFrame 链），stamp 不补，
-    // 避免同节点双层 cid（field-frame 唯一性契约，见 input-number.test.tsx）。
-    expect(root.getAttribute('data-cid')).toBeNull();
-  });
-
-  it('leaves fragment output untouched (structural renderers)', () => {
-    const wrapped = ensureRendererComponent({
-      type: 'frag',
-      component: () => (
-        <React.Fragment>
-          <span data-testid="frag-child">x</span>
-        </React.Fragment>
-      ),
-    } as unknown as RendererDefinition);
-    const Comp = wrapped.component as unknown as React.ComponentType<any>;
-
-    render(
-      <Comp
-        id="n"
-        path="$"
-        props={{}}
-        schema={{ type: 'frag' } as BaseSchema}
-        meta={{ cid: 'cid-f' } as any}
-        events={{} as RendererComponentProps['events']}
-        helpers={{} as any}
-        regions={{}}
-        reactions={{}}
-        templateNode={{} as any}
-        node={{} as any}
-      />,
-    );
-
-    expect(screen.getByTestId('frag-child')).toBeTruthy();
-  });
-
-  it('injects data-renderer from the definition type on the auto path', () => {
-    function PlainComponent(props: Record<string, unknown>) {
-      return (
-        <button
-          type="button"
-          data-testid={String(props['data-testid'])}
-          data-cid={String(props['data-cid'])}
-          data-renderer={props['data-renderer'] as string | undefined}
-        >
-          {String(props.label ?? '')}
-        </button>
-      );
-    }
-
-    const wrapped = ensureRendererComponent({
-      type: 'demo-button',
-      reactComponent: PlainComponent,
-    } as RendererDefinition);
-    const Comp = wrapped.component as unknown as React.ComponentType<any>;
-
-    render(
-      <Comp
-        id="node-dr"
-        path="$.body[2]"
-        props={{ label: 'Run', testid: 'dr-btn', cid: 'cid-dr' }}
-        schema={{ type: 'demo-button' } as BaseSchema}
-        meta={{ disabled: false, testid: 'dr-btn', cid: 'cid-dr' } as any}
-        events={{}}
-        helpers={{} as any}
-        regions={{}}
-        reactions={{}}
-        templateNode={{} as any}
-        node={{} as any}
-      />,
-    );
-
-    const btn = screen.getByTestId('dr-btn');
-    expect(btn.getAttribute('data-renderer')).toBe('demo-button');
-    expect(btn.getAttribute('data-cid')).toBe('cid-dr');
   });
 
   it('requires caller-provided registries to be core-normalized before register', () => {

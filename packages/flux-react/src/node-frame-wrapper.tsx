@@ -1,3 +1,4 @@
+import React from 'react';
 import type { ReactNode } from 'react';
 import type { ResolvedNodeMeta, TemplateNode } from '@nop-chaos/flux-core';
 import type { RenderRegionHandle } from './react-contracts.js';

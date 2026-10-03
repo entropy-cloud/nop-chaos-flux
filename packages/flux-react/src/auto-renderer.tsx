@@ -33,59 +33,90 @@ export function createAutoRendererComponent<
   };
 }
 
+
 /**
  * DOM 结构契约（renderer-markers-and-selectors.md "Universal Root Anchors"）：
- * 渲染器根统一携带 `data-renderer`/`data-cid`。custom `component:` 通道的根
- * 由组件自绘，无法经 props 通道注入——这里对渲染输出做 clone 补章（组件已
- * 自带的值不覆盖；Fragment/结构性输出跳过）。`data-cid` 不在此补章——它由
- * 既有通道提供（AutoRenderer props 注入/组件手写/FieldFrame 链），补章会造成
- * 同节点双层 cid，破坏工具链对 cid 唯一性的假设（field-frame 契约）。
+ * custom `component:` 通道的根由组件自绘，props 通道够不到——对渲染输出 clone
+ * 补章 `data-renderer`（组件自带值不覆盖；Fragment/结构性输出跳过）。
+ * `wrap: true` 的字段族不在此盖章：其可见根是 FieldFrame（帧根自带三件套），
+ * 内层补章会产生同节点双层标记；schema `frameWrap:false` 显式退出帧契约时，
+ * 实例锚随之豁免（登记于各审计卡）。
  */
+const ensuredDefinitions = new WeakMap<
+  object,
+  RendererDefinition<BaseSchema, Record<string, unknown>>
+>();
+
+const REACT_PROVIDER_TYPE = Symbol.for('react.provider');
+const REACT_CONTEXT_TYPE = Symbol.for('react.context');
+
+function isContextProviderElement(output: React.ReactElement): boolean {
+  const elementType = output.type as { $$typeof?: symbol } | string | symbol;
+  return (
+    typeof elementType === 'object' &&
+    elementType !== null &&
+    (elementType.$$typeof === REACT_PROVIDER_TYPE || elementType.$$typeof === REACT_CONTEXT_TYPE)
+  );
+}
+
+/** 递归下钻 context Provider 链到宿主元素再盖章（owner 渲染器根常是 Provider 树）。 */
 function stampRenderedRoot(
   output: React.ReactElement | null,
   rendererType: string,
 ): React.ReactElement | null {
   if (!output || output.type === React.Fragment) return output;
+  if (typeof output.type === 'string') {
+    if ((output.props as Record<string, unknown>)['data-renderer'] !== undefined) {
+      return output;
+    }
+    return React.cloneElement(output as React.ReactElement<Record<string, unknown>>, {
+      'data-renderer': rendererType,
+    });
+  }
+  if (isContextProviderElement(output)) {
+    const children = (output.props as Record<string, unknown>).children;
+    if (!React.isValidElement(children)) return output;
+    const stampedChildren = stampRenderedRoot(children, rendererType);
+    if (stampedChildren === children) return output;
+    return React.cloneElement(output as React.ReactElement<Record<string, unknown>>, {
+      children: stampedChildren,
+    });
+  }
+  // 组件元素根（如 ui Button/Badge）：clone 补章，透传 props 的组件即落到 DOM，
+  // 不透传的组件静默忽略（无害）。
   if ((output.props as Record<string, unknown>)['data-renderer'] !== undefined) return output;
   return React.cloneElement(output as React.ReactElement<Record<string, unknown>>, {
     'data-renderer': rendererType,
   });
 }
 
-/**
- * 渲染 definition.component 的输出（不引入额外组件层）：普通函数组件直接调用；
- * forwardRef/exotic 对象调其 `render(props, ref)`（React 19 ref 走 props）；
- * 其余形态走 createElement 兜底（此时无法拦截输出根，stamp 不可达，由卡面豁免）。
- */
 function invokeRendererComponent(
-  inner: unknown,
-  props: RendererComponentProps<BaseSchema, Record<string, unknown>>,
+  component: unknown,
+  componentProps: Record<string, unknown>,
 ): React.ReactElement | null {
-  if (typeof inner === 'function') {
+  if (typeof component === 'function') {
     return (
-      inner as unknown as (
-        p: RendererComponentProps<BaseSchema, Record<string, unknown>>,
-      ) => React.ReactElement | null
-    )(props);
+      component as unknown as (p: Record<string, unknown>) => React.ReactElement | null
+    )(componentProps);
   }
-  const exotic = inner as { render?: (p: unknown, ref?: unknown) => React.ReactElement | null };
+  const exotic = component as { render?: (p: unknown, ref?: unknown) => React.ReactElement | null };
   if (typeof exotic?.render === 'function') {
-    return exotic.render(props, (props as { ref?: unknown }).ref);
+    return exotic.render(componentProps, (componentProps as { ref?: unknown }).ref);
   }
   return React.createElement(
-    inner as React.ComponentType<RendererComponentProps<BaseSchema, Record<string, unknown>>>,
-    props,
+    component as React.ComponentType<Record<string, unknown>>,
+    componentProps,
   );
 }
-
-const ensuredDefinitions = new WeakMap<
-  object,
-  RendererDefinition<BaseSchema, Record<string, unknown>>
->();
 
 export function ensureRendererComponent<S extends BaseSchema, P extends Record<string, unknown>>(
   definition: RendererDefinition<S, P>,
 ): RendererDefinition<S, P> {
+  if (definition.component && definition.wrap) {
+    // 字段族：FieldFrame 帧根拥有锚点，组件输出根不补章（防双层标记）。
+    return definition;
+  }
+
   // 记忆化：同一 definition 重复 ensure（如测试注册表合并同一数组两次）必须
   // 返回同一包装对象，保持注册表 `existing !== definition` 的身份豁免语义。
   const cached = ensuredDefinitions.get(definition) as RendererDefinition<S, P> | undefined;
@@ -105,7 +136,7 @@ export function ensureRendererComponent<S extends BaseSchema, P extends Record<s
       stampRenderedRoot(
         invokeRendererComponent(
           inner,
-          props as unknown as RendererComponentProps<BaseSchema, Record<string, unknown>>,
+          props as unknown as Record<string, unknown>,
         ),
         rendererType,
       ),

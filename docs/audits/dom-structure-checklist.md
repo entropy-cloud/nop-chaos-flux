@@ -15,7 +15,8 @@
 - 根元素携带 `data-cid`（AutoRenderer 兜底，或组件在自定义根上显式携带）
 - 豁免口径：portal 类渲染器关闭态 `return null`（挂载后的 portal 内容根必须携带）；`hidden` 等刻意裸输出的字段（豁免理由必须落卡）
 - portal/surface 通道口径（W1 裁定）：关闭态 `return null` 记 n-a；挂载后根由 host（flux-react dialog-host）盖章，三件套齐全；portal 内自绘根（如 command-palette 可见面板）由组件手动携带 `data-renderer`
-- custom `component:` 通道口径（W1 裁定）：根的 `data-renderer` 由 `ensureRendererComponent` 对渲染输出 clone 补章（组件自带值不覆盖；输出根为 Fragment 的结构性渲染器豁免，卡面登记）；`data-cid` 不由 stamp 补——它由既有通道提供（AutoRenderer props 注入/组件手写/FieldFrame 链），补章会造成同节点双层 cid，破坏工具链唯一性假设
+- custom `component:` 通道口径（W1 建立，W2 精化）：`ensureRendererComponent` 对渲染输出 clone 补章 `data-renderer`（组件自带值不覆盖）；根为 context Provider 树时递归下钻至宿主元素；根为组件元素时 clone 后经透传 props 的组件（ui Button/Badge 等）落到 DOM；`wrap: true` 字段族跳过 stamp——可见根是 FieldFrame（帧根自带三件套），内层补章会产生双层标记；Fragment/结构性输出跳过；`data-cid` 不由 stamp 补（field-frame 唯一性契约）；schema `frameWrap:false` 显式退出帧契约时实例锚豁免（卡面登记）
+- 字段族 class 命名口径（W2 裁定）：`nop-slider-field`/`nop-org-select-field` 等与 `nop-<type>` 后缀不一致的根 class 记 D1 exempt——类型锚由 `data-renderer` 契约承担，class 惯例不回改（避免破坏既有主题与冻结测试）
 
 ### D2 根自然性
 
