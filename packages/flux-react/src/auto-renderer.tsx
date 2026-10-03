@@ -11,6 +11,7 @@ export function createAutoRendererComponent<
   P extends Record<string, unknown> = RendererResolvedProps<S>,
 >(
   ReactComponent: React.ComponentType<Readonly<P>>,
+  options?: { rendererType?: string },
 ): (props: RendererComponentProps<S, P>) => React.ReactElement | null {
   return function AutoRenderer(props: RendererComponentProps<S, P>) {
     const uiProps: Record<string, unknown> = { ...props.props };
@@ -27,6 +28,7 @@ export function createAutoRendererComponent<
       className: props.props.className,
       'data-testid': props.props.testid || undefined,
       'data-cid': props.props.cid || undefined,
+      'data-renderer': options?.rendererType || undefined,
     } as P);
   };
 }
@@ -42,6 +44,6 @@ export function ensureRendererComponent<S extends BaseSchema, P extends Record<s
 
   return {
     ...definition,
-    component: createAutoRendererComponent<S, P>(reactComponent),
+    component: createAutoRendererComponent<S, P>(reactComponent, { rendererType: definition.type }),
   };
 }

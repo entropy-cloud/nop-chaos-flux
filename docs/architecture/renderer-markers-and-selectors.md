@@ -195,7 +195,7 @@ Designer affordances around a renderer node — selection frame, hover outline, 
 
 - frames are never rendered inside the renderer component subtree, and never inserted as the parent wrapper of the renderer root
 - frames render in an external overlay layer mounted at the canvas root: absolutely positioned, `pointer-events: none`, geometry derived from the target's `getBoundingClientRect()`; the reference implementation is `CanvasOverlay` (`packages/page-designer-renderers/src/canvas-overlay.tsx`)
-- frame element identity: `id="nop-frame-${cid}"` plus `data-frame-for="${cid}"`, where `cid` is the target renderer root's `data-cid`; target lookup is `[data-cid="${cid}"]`
+- frame element identity: `id="nop-frame-${cid}"` plus `data-frame-for="${cid}"`, where `cid` is the target renderer root's `data-cid`; target lookup is `[data-cid="${cid}"]`. In designer canvases whose projected nodes anchor by session id instead (no `data-cid` on the document node, e.g. page-designer's `data-psid`), the anchor falls back to that session id, the lookup keeps the canvas's existing channel, and `data-frame-for` records whichever anchor was used
 - the production render path emits no frame elements; frame markup is design-time only
 
 Rejected alternatives:

@@ -16,11 +16,19 @@ const RECTS = new Map<string, { left: number; top: number; width: number; height
   ['psid-container', { left: 20, top: 80, width: 0, height: 0 }],
 ]);
 
-function mountOverlay(props: Partial<Parameters<typeof CanvasOverlay>[0]> = {}) {
+function mountOverlay(
+  props: Partial<Parameters<typeof CanvasOverlay>[0]> & {
+    nodeAttrs?: Record<string, Record<string, string>>;
+  } = {},
+) {
+  const { nodeAttrs, ...overlayProps } = props;
   const root = document.createElement('div');
   for (const [sid] of RECTS) {
     const child = document.createElement('div');
     child.setAttribute('data-psid', sid);
+    for (const [key, value] of Object.entries(nodeAttrs?.[sid] ?? {})) {
+      child.setAttribute(key, value);
+    }
     root.appendChild(child);
   }
   document.body.appendChild(root);
@@ -49,7 +57,7 @@ function mountOverlay(props: Partial<Parameters<typeof CanvasOverlay>[0]> = {}) 
       hoverNodeId={null}
       dropHint={null}
       visible
-      {...props}
+      {...overlayProps}
     />,
   );
   return { view, rectSpy };
@@ -62,6 +70,27 @@ describe('CanvasOverlay', () => {
     const box = document.querySelector('[data-page-designer-box="selection"]');
     expect(box).toBeTruthy();
     expect(box!.getAttribute('style')).toContain('width: 120px');
+  });
+
+  it('derives the selection frame identity from the target anchor (sid fallback)', async () => {
+    mountOverlay();
+    await waitFor(() => expect(document.getElementById('nop-frame-psid-text')).toBeTruthy());
+    const frame = document.getElementById('nop-frame-psid-text')!;
+    expect(frame.getAttribute('data-frame-for')).toBe('psid-text');
+    expect(frame.getAttribute('data-page-designer-box')).toBe('selection');
+  });
+
+  it('prefers data-cid over the sid for the frame identity when present', async () => {
+    mountOverlay({ nodeAttrs: { 'psid-text': { 'data-cid': 'cid-42' } } });
+    await waitFor(() => expect(document.getElementById('nop-frame-cid-42')).toBeTruthy());
+    expect(document.getElementById('nop-frame-psid-text')).toBeNull();
+    expect(document.getElementById('nop-frame-cid-42')!.getAttribute('data-frame-for')).toBe('cid-42');
+  });
+
+  it('never renders frame identity on hover chrome', async () => {
+    mountOverlay({ hoverNodeId: 'psid-page' });
+    await waitFor(() => expect(document.querySelector('[data-page-designer-box="hover"]')).toBeTruthy());
+    expect(document.querySelector('[data-page-designer-box="hover"]')!.getAttribute('data-frame-for')).toBeNull();
   });
 
   it('renders hover box for non-selected hover node', async () => {

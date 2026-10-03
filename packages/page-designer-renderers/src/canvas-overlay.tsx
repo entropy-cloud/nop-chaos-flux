@@ -30,19 +30,25 @@ export interface CanvasOverlayProps {
 
 interface AnchorBox {
   sid: string;
+  /** frame 身份锚：目标元素 `data-cid` 优先，缺省回退 sid。 */
+  anchor: string;
   rect: PixelRect;
 }
 
-interface PlaceholderBox extends AnchorBox {
+type AnchoredRect = PixelRect & { anchor: string };
+
+interface PlaceholderBox {
+  sid: string;
   label: string;
+  rect: PixelRect;
 }
 
 /** 合成最小可视盒：0 尺寸锚点（jsdom/未布局）也给占位框一个可读形状。 */
 const PLACEHOLDER_MIN_WIDTH = 160;
 const PLACEHOLDER_MIN_HEIGHT = 44;
 
-function readAnchorBoxes(root: Element, sids: readonly string[]): Map<string, PixelRect> {
-  const boxes = new Map<string, PixelRect>();
+function readAnchorBoxes(root: Element, sids: readonly string[]): Map<string, AnchoredRect> {
+  const boxes = new Map<string, AnchoredRect>();
   const origin = root.getBoundingClientRect();
   for (const sid of sids) {
     const element = root.querySelector(`[${NODE_ANCHOR_ATTRIBUTE}="${CSS.escape(sid)}"]`);
@@ -50,6 +56,7 @@ function readAnchorBoxes(root: Element, sids: readonly string[]): Map<string, Pi
     const rect = element.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) continue;
     boxes.set(sid, {
+      anchor: element.getAttribute('data-cid') || sid,
       left: rect.left - origin.left,
       top: rect.top - origin.top,
       width: rect.width,
@@ -93,11 +100,15 @@ function OverlayBox(props: {
   style: React.CSSProperties;
   marker?: string;
   dropHintKind?: string;
+  /** 选中 frame 专属：`nop-frame-${anchor}` 身份（契约 Design-Time Frame Protocol）。 */
+  frameFor?: string;
 }) {
   return (
     <div
       data-page-designer-box={props.marker}
       data-drop-hint={props.dropHintKind}
+      data-frame-for={props.frameFor}
+      id={props.frameFor ? `nop-frame-${props.frameFor}` : undefined}
       className={props.className}
       style={{
         position: 'absolute',
@@ -116,7 +127,7 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
   const { rootRef, selection, hoverNodeId, dropHint, emptyContainers, visible } = props;
   // 锚点矩形在 rAF 回调中读取并写入 state（渲染期不触碰 ref；每帧重读，
   // 滚动/布局位移免监听）。
-  const [boxes, setBoxes] = useState<Map<string, PixelRect>>(() => new Map());
+  const [boxes, setBoxes] = useState<Map<string, AnchoredRect>>(() => new Map());
   const [placeholderBoxes, setPlaceholderBoxes] = useState<PlaceholderBox[]>([]);
   const sidsKey = useMemo(() => {
     const sids = [...selection];
@@ -146,15 +157,21 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
   }
 
   const selectedBoxes: AnchorBox[] = selection
-    .map((sid) => (boxes.has(sid) ? { sid, rect: boxes.get(sid)! } : null))
+    .map((sid): AnchorBox | null =>
+      boxes.has(sid) ? { sid, anchor: boxes.get(sid)!.anchor, rect: boxes.get(sid)! } : null,
+    )
     .filter((box): box is AnchorBox => box !== null);
   const hoverBox =
     hoverNodeId && boxes.has(hoverNodeId) && !selection.includes(hoverNodeId)
-      ? { sid: hoverNodeId, rect: boxes.get(hoverNodeId)! }
+      ? { sid: hoverNodeId, anchor: boxes.get(hoverNodeId)!.anchor, rect: boxes.get(hoverNodeId)! }
       : null;
   const dropParentBox =
     dropHint && dropHint.kind !== 'invalid' && boxes.has(dropHint.parentId)
-      ? { sid: dropHint.parentId, rect: boxes.get(dropHint.parentId)! }
+      ? {
+          sid: dropHint.parentId,
+          anchor: boxes.get(dropHint.parentId)!.anchor,
+          rect: boxes.get(dropHint.parentId)!,
+        }
       : null;
 
   return (
@@ -285,6 +302,7 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
           key={box.sid}
           box={box}
           marker="selection"
+          frameFor={box.anchor}
           className=""
           style={{ outline: '2px solid var(--nop-accent, #6366f1)' }}
         />

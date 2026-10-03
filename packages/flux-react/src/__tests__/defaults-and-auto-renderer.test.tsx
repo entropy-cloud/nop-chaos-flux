@@ -101,6 +101,47 @@ describe('defaults and auto renderer', () => {
     expect(registry.get('y')?.component).toBe(component);
   });
 
+  it('injects data-renderer from the definition type on the auto path', () => {
+    function PlainComponent(props: Record<string, unknown>) {
+      return (
+        <button
+          type="button"
+          data-testid={String(props['data-testid'])}
+          data-cid={String(props['data-cid'])}
+          data-renderer={props['data-renderer'] as string | undefined}
+        >
+          {String(props.label ?? '')}
+        </button>
+      );
+    }
+
+    const wrapped = ensureRendererComponent({
+      type: 'demo-button',
+      reactComponent: PlainComponent,
+    } as RendererDefinition);
+    const Comp = wrapped.component as unknown as React.ComponentType<any>;
+
+    render(
+      <Comp
+        id="node-dr"
+        path="$.body[2]"
+        props={{ label: 'Run', testid: 'dr-btn', cid: 'cid-dr' }}
+        schema={{ type: 'demo-button' } as BaseSchema}
+        meta={{ disabled: false, testid: 'dr-btn', cid: 'cid-dr' } as any}
+        events={{}}
+        helpers={{} as any}
+        regions={{}}
+        reactions={{}}
+        templateNode={{} as any}
+        node={{} as any}
+      />,
+    );
+
+    const btn = screen.getByTestId('dr-btn');
+    expect(btn.getAttribute('data-renderer')).toBe('demo-button');
+    expect(btn.getAttribute('data-cid')).toBe('cid-dr');
+  });
+
   it('requires caller-provided registries to be core-normalized before register', () => {
     const registry = createRendererRegistry() as RendererRegistry;
 

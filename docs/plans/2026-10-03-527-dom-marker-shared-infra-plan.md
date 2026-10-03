@@ -1,6 +1,6 @@
 # 527 DOM 标记共享基建：data-renderer 中央注入 + frame 协议对齐 + 契约测试 helper
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-03
 > Source: `docs/architecture/renderer-markers-and-selectors.md`（Universal Root Anchors、Design-Time Frame Protocol）、`docs/backlog/dom-structure-audit-roadmap.md`（W0）
 > Related: `docs/audits/dom-structure-checklist.md`；528-536 各包计划（依赖本计划产出的 helper 与注入）
@@ -61,51 +61,51 @@
 
 ### Phase 1 - data-renderer 中央注入（含 portal 根）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-react/src/auto-renderer.tsx`、`packages/flux-react/src/dialog-host.tsx`（必要时 `use-surface-renderer.ts` 传 kind）
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof：先写失败单测——AutoRenderer 路径渲染器根含 `data-renderer="<type>"`（值语义参照 FieldFrame 的 `NodeMetaContext.type`）
-- [ ] Fix：auto-renderer 注入 `data-renderer`（type 不可得时不输出空属性）
-- [ ] Proof：dialog-host 路径失败单测——打开态 portal 内容根含 `data-renderer`
-- [ ] Fix：dialog-host 按 surface kind 注入 `data-renderer`
+- [x] Proof：先写失败单测——AutoRenderer 路径渲染器根含 `data-renderer="<type>"`（值语义参照 FieldFrame 的 `NodeMetaContext.type`）——`defaults-and-auto-renderer.test.tsx` 新增用例先红
+- [x] Fix：auto-renderer 注入 `data-renderer`（`createAutoRendererComponent(ReactComponent, { rendererType })`，type 不可得时不输出空属性）
+- [x] Proof：dialog-host 路径失败单测——打开态 portal 内容根含 `data-renderer`——新文件 `__tests__/portal-root-anchors.test.tsx` 先红
+- [x] Fix：dialog-host 按 surface kind 注入 `data-renderer`（dialog/drawer 两处根）
 
 Exit Criteria:
 
-- [ ] 新增单测通过：auto-renderer 路径与 dialog-host portal 根的三件套（`nop-*` + `data-renderer` + `data-cid`）齐全
-- [ ] 既有 flux-react 测试无回归（focused 范围）
+- [x] 新增单测通过：auto-renderer 路径与 dialog-host portal 根的三件套（`nop-*` + `data-renderer` + `data-cid`）齐全（flux-react 535/535）
+- [x] 既有 flux-react 测试无回归（focused 范围）（59 文件全绿）
 
 ### Phase 2 - CanvasOverlay frame 命名对齐
 
-Status: planned
+Status: completed
 Targets: `packages/page-designer-renderers/src/canvas-overlay.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：frame 元素输出 `id="nop-frame-${anchor}"` + `data-frame-for="${anchor}"`（anchor = 目标元素 `data-cid`，缺省回退 `data-psid` sid）；目标查找通道保持 `data-psid` 不变
-- [ ] Proof：单测断言 frame 元素 id / data-frame-for 与目标锚 id 的对应关系（cid 与 psid 两种情形）
-- [ ] owner doc Design-Time Frame Protocol 补 anchor 回退一句
+- [x] Fix：frame 元素输出 `id="nop-frame-${anchor}"` + `data-frame-for="${anchor}"`（anchor = 目标元素 `data-cid`，缺省回退 `data-psid` sid；`readAnchorBoxes` 读 `data-cid`，仅 selection frame 携带身份）；目标查找通道保持 `data-psid` 不变
+- [x] Proof：单测断言 frame 元素 id / data-frame-for 与目标锚 id 的对应关系（cid 与 psid 两种情形 + hover chrome 无身份）——`canvas-overlay.test.tsx` 新增 3 用例先红后绿（12/12）
+- [x] owner doc Design-Time Frame Protocol 补 anchor 回退一句
 
 Exit Criteria:
 
-- [ ] 新增单测通过；既有 page-designer 测试全绿（含涉及 e2e 则一并）
-- [ ] 生产（非设计器）渲染路径抽查确认零 frame 输出
+- [x] 新增单测通过；既有 page-designer 测试全绿（20 文件 150/150，无涉及 e2e 需要单独跑）
+- [x] 生产（非设计器）渲染路径抽查确认零 frame 输出（frame 仅存在于 CanvasOverlay 组件，生产渲染路径不含 page-designer-renderers 依赖）
 
 ### Phase 3 - 共享契约测试 helper
 
-Status: planned
+Status: completed
 Targets: helper 落位文件（Phase 3 内 Decision 定）、`docs/audits/dom-structure-checklist.md`（helper 用法一行）
 
 - Item Types: `Decision | Proof`
 
-- [ ] Decision：确定 helper 落位与导出方式（以 528 能写死 import 路径为准）
-- [ ] Proof：helper 提供 `assertRendererRootAnchors(root, { type })` 形态断言并在 flux-react 自身测试中先行使用
+- [x] Decision：helper 落位 `packages/flux-react/src/dom-structure-testing.ts`，经主入口 `index.tsx` 导出（纯 DOM 断言、零测试框架依赖，测试代码按 `import { assertRendererRootAnchors } from '@nop-chaos/flux-react'` 使用）
+- [x] Proof：helper 提供 `assertRendererRootAnchors(root, { type, cid?, skip? })` 断言，并在 `portal-root-anchors.test.tsx` 先行使用（替换原 expect 断言）
 
 Exit Criteria:
 
-- [ ] helper 可被 528 直接引用
-- [ ] 用法补进 checklist 冻结测试要求节（一行）
+- [x] helper 可被 528 直接引用（import 路径 `@nop-chaos/flux-react`）
+- [x] 用法补进 checklist 冻结测试要求节（一行）
 
 ## Draft Review Record
 
@@ -118,16 +118,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `data-renderer` 中央注入落地（auto 路径 + portal 根）且 focused 单测通过
-- [ ] frame 命名对齐落地且 page-designer 既有行为绿
-- [ ] 共享 helper 落位并可被各包引用
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响 owner docs 已同步（frame anchor 回退一句 + checklist helper 用法一行）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `data-renderer` 中央注入落地（auto 路径 + portal 根）且 focused 单测通过
+- [x] frame 命名对齐落地且 page-designer 既有行为绿
+- [x] 共享 helper 落位并可被各包引用
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响 owner docs 已同步（frame anchor 回退一句 + checklist helper 用法一行）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（exit 0）
+- [x] `pnpm build`（exit 0）
+- [x] `pnpm lint`（exit 0；余 3 处为既有 0-error warning）
+- [x] `pnpm test`（全量 exit 0；flux-react 535/535、page-designer-renderers 150/150）
+- [x] `pnpm check`（exit 0）
 
 ## Deferred But Adjudicated
 
@@ -139,12 +140,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口
+Status Note: 2026-10-03 收口。三 Phase 全部落地：`data-renderer` 中央注入（auto 路径经 definition.type、portal 根经 dialog-host surface.kind）、frame `nop-frame-${anchor}` 身份（anchor=data-cid 缺省回退 psid sid，仅 selection frame 携带）、共享 helper `assertRendererRootAnchors` 经 `@nop-chaos/flux-react` 导出。全量门禁 typecheck/build/lint/test/check 全过。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待定
-- Evidence: 待定
+- Auditor / Agent: 独立子代理（fresh session，agent_9d6008a8）
+- Evidence: approved 判定——逐 Gate 核对 live 代码（auto-renderer.tsx:31/:47、dialog-host.tsx:377/:530、canvas-overlay.tsx:59/:110/:305、index.tsx 导出）；独立复跑 flux-react 535/535、page-designer-renderers 150/150；无静默降级。
 
 Follow-up:
 

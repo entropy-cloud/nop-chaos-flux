@@ -16,7 +16,7 @@
 
 | Work Item                                                                  | Status | Plan (draft)                                                              |
 | -------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------- |
-| W0 共享基建：`data-renderer` 中央注入 + frame id/anchor 协议对齐 + 共享契约测试 helper | planned | `docs/plans/2026-10-03-527-dom-marker-shared-infra-plan.md`               |
+| W0 共享基建：`data-renderer` 中央注入 + frame id/anchor 协议对齐 + 共享契约测试 helper | done   | `docs/plans/2026-10-03-527-dom-marker-shared-infra-plan.md`               |
 | W1 `flux-renderers-basic`（~18 type）                                       | planned | `docs/plans/2026-10-03-528-dom-structure-basic-plan.md`                   |
 | W2 `flux-renderers-form`（form/fieldset/hidden + ~30 控件 type）             | planned | `docs/plans/2026-10-03-529-dom-structure-form-plan.md`                    |
 | W3 `flux-renderers-form-advanced`（~19 type）                                | planned | `docs/plans/2026-10-03-530-dom-structure-form-advanced-plan.md`           |

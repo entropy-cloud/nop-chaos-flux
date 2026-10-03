@@ -88,5 +88,6 @@
 
 - 每包在收口 Phase 增加 `dom-structure` 契约测试：以默认配置渲染包内全部 type，断言 D1 三件套（`nop-<type>` + `data-renderer` + `data-cid`）与该包登记过的 D4/D5 关键项；D6 用 `getAttribute('role')` / `getAttribute('aria-label')` 属性级断言
 - 测试模式参照 `packages/flux-renderers-form/src/__tests__/field-controls-dom-contract.test.tsx`；共享断言 helper 由路线图 W0 计划提供
+- 共享断言 helper：`assertRendererRootAnchors(root, { type, cid?, skip? })`（`@nop-chaos/flux-react` 导出，纯 DOM 断言、无测试框架依赖；`skip` 仅用于卡面登记过的豁免项）
 - 测试落位遵循 `renderer-markers-and-selectors.md` 的 Test Placement Convention（按包既有多数派布局）
 - 契约后续演进时：先改 owner doc 与本 checklist，再改测试，最后清理卡面

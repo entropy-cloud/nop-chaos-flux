@@ -374,6 +374,7 @@ function DialogView(props: {
         className={cn('nop-dialog', surface.meta?.className)}
         data-testid={surface.meta?.testid || undefined}
         data-cid={surface.meta?.cid || undefined}
+        data-renderer={surface.kind}
         data-slot="dialog-surface"
         data-close-on-outside={closeOnOutsideClick ? 'true' : 'false'}
         data-close-on-esc={closeOnEsc ? 'true' : 'false'}
@@ -526,6 +527,7 @@ function DrawerView(props: {
         className={cn('nop-drawer', surface.meta?.className)}
         data-testid={surface.meta?.testid || undefined}
         data-cid={surface.meta?.cid || undefined}
+        data-renderer={surface.kind}
         data-slot="drawer-surface"
         data-close-on-outside={closeOnOutside ? 'true' : 'false'}
         data-close-on-esc={closeOnEsc ? 'true' : 'false'}
