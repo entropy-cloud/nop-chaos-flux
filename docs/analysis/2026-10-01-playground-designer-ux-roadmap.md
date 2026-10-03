@@ -84,6 +84,10 @@
   - P3 nits：dashboard-demo KPI 轻微裁边 / code-editor SQL 上方灰条 / kanban 卡无日期 / page-designer 叶子字段带容器徽标语义 / debugger launcher 压 palette 底部
   - N-2 linear-issues 首屏空面板竞态调查（负载下 mount/dispose 时序取证，复现优先；dependsOn 根未初始化机制主张已被运行时源码证伪——source-registry.ts:398 无条件 start）
 
+## R13 全页面遍历 Roadmap 登记（2026-10-02，用户提出）
+
+- 新开 **R13 全页面遍历 UX Roadmap**：`docs/analysis/2026-10-03-playground-full-traversal-ux-roadmap.md`——playground 全站 115 页（complex 40 + 设计器/编辑器 10 + 渲染器演示 22 + AI 14 + 性能/基建/实验 19 + 内容样例）逐页逐操作按钮遍历确认；六查验收标准（布局/美观/操作符合预期/弹窗后子页面更新/标准主子通信/id 规范）；主子通信对齐既有 `refreshNearest` + Surface 生命周期钩子标准（2026-07-27 设计），id 规范明确定义（页面 hash 不携行 id、组件协作不依赖 DOM id、接口 URL 资源寻址合规）。执行状态见其 §六 逐页矩阵（待执行）。
+
 ## R12 补充登记（执行期，2026-10-02）
 
 - **容器渲染器 className-flex 作者陷阱**：`container` 恒把 body 包进无类名 `container-body`，schema 写在外层 className 的 flex 布局类全部静默失效（linear 家族 6 页 + antdpro-result 横幅同病）。schema 层已按 `direction`/`align` 契约修正；渲染器层修法（无 header/footer 时免包装，或 className 布局类透传 body）为行为契约变更，plan-first，successor = container 布局类透传设计。
