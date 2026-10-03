@@ -5,7 +5,7 @@ import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support
 describe('widget renderer data-slot and marker contract', () => {
   afterEach(() => cleanup());
 
-  it('button has no nop- renderer marker class on root (uses shadcn/ui)', () => {
+  it('button root carries both the renderer marker class and the shadcn data-slot', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -18,12 +18,12 @@ describe('widget renderer data-slot and marker contract', () => {
     const button = container.querySelector('button');
     expect(button).toBeTruthy();
     expect(button?.getAttribute('data-slot')).toBe('button');
-    // `nop-haptic` / `nop-safe-*` / `nop-hairline*` are @nop-chaos/ui mobile
-    // utility classes (see docs/architecture/mobile-responsive-baseline.md §10),
-    // not flux renderer markers. Block only renderer-identifier markers such as
-    // `nop-button`, `nop-table`, etc.
-    const rendererMarkerMatch = button?.className.match(/\bnop-(?!haptic|safe-|hairline)\w+/);
-    expect(rendererMarkerMatch).toBeNull();
+    // DOM 结构契约（renderer-markers-and-selectors.md "Universal Root Anchors"，
+    // plan 528）：根同时携带 `nop-button` 标记与 ui 层 `data-slot="button"`；
+    // `nop-haptic` / `nop-safe-*` / `nop-hairline*` 是 @nop-chaos/ui mobile
+    // utility classes（docs/architecture/mobile-responsive-baseline.md §10），
+    // 非 renderer 标记。
+    expect(button?.className.match(/\bnop-button\b/)).toBeTruthy();
   });
 
   it('text renderer emits nop-text marker', () => {

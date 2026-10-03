@@ -14,6 +14,8 @@
 - 根元素携带 `data-renderer="<type>"`（由 flux-react 中央注入路径提供；自定义 `component` 绕过 AutoRenderer 的路径需确认覆盖到位）
 - 根元素携带 `data-cid`（AutoRenderer 兜底，或组件在自定义根上显式携带）
 - 豁免口径：portal 类渲染器关闭态 `return null`（挂载后的 portal 内容根必须携带）；`hidden` 等刻意裸输出的字段（豁免理由必须落卡）
+- portal/surface 通道口径（W1 裁定）：关闭态 `return null` 记 n-a；挂载后根由 host（flux-react dialog-host）盖章，三件套齐全；portal 内自绘根（如 command-palette 可见面板）由组件手动携带 `data-renderer`
+- custom `component:` 通道口径（W1 裁定）：根的 `data-renderer` 由 `ensureRendererComponent` 对渲染输出 clone 补章（组件自带值不覆盖；输出根为 Fragment 的结构性渲染器豁免，卡面登记）；`data-cid` 不由 stamp 补——它由既有通道提供（AutoRenderer props 注入/组件手写/FieldFrame 链），补章会造成同节点双层 cid，破坏工具链唯一性假设
 
 ### D2 根自然性
 

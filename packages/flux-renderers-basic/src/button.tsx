@@ -188,6 +188,7 @@ export function ButtonRenderer(props: RendererComponentProps<ButtonSchema>) {
 
   const mobileTouchTarget = isMobile && MOBILE_TOUCH_TARGET_SIZES.includes(size);
   const buttonClass = cn(
+    'nop-button',
     props.meta.className,
     block && 'w-full',
     mobileTouchTarget && 'min-h-11',
@@ -276,6 +277,7 @@ function resolveRel(target: unknown, rel: unknown): string | undefined {
       target={props.props.target}
       rel={resolveRel(props.props.target, props.props.rel)}
       aria-disabled={effectiveDisabled || undefined}
+      data-slot="button"
       {...commonProps}
       onClick={(event) => void handleClick(event)}
       className={cn(

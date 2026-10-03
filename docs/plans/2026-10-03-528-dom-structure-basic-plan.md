@@ -1,6 +1,6 @@
 # 528 flux-renderers-basic 渲染器 DOM 结构契约审计与整改
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-03
 > Source: `docs/architecture/renderer-markers-and-selectors.md`（DOM 结构契约）、`docs/backlog/dom-structure-audit-roadmap.md`（W1）、`docs/audits/dom-structure-checklist.md`
 > Related: `docs/plans/2026-10-03-527-dom-marker-shared-infra-plan.md`（前置：`data-renderer` 注入与共享 helper）
@@ -17,6 +17,7 @@
 - `flex.tsx`、button/icon/badge 无任何 `data-slot`（单元素，预期 D4 豁免）。
 - text/icon/badge/button 单元素直出、无包装——本包即 D2 合规范本。
 - 盘点未发现本包自带 frame。
+- **执行中发现（2026-10-03，D1 通道缺口）**：本包 18 个 type 全部走 `component:` 自定义通道，W0 的 auto 路径注入（`reactComponent:` 专用）实际不可达——已按契约在 `ensureRendererComponent` 增加渲染输出 clone 补章（flux-react，537 测试全绿）：`data-renderer` 由 stamp 补齐至全部 custom 通道渲染器根；`data-cid` 经裁定**不**由 stamp 补（field-frame 唯一性契约要求 cid 单点，input-number.test.tsx 实证双 cid 冲突），继续由既有通道（AutoRenderer/组件手写/FieldFrame 链）提供。该修复为跨包共享能力，W2-W9 直接受益。
 
 ## Goals
 
@@ -38,6 +39,7 @@
 - `packages/flux-renderers-basic/src/` 全部 renderer type 的审计卡、整改、契约测试
 - `docs/audits/dom-structure-checklist.md` 的 portal/surface 口径补充
 - command-palette 根的标记补点（如裁定为 fix，落点在本包 `command-palette.tsx`）
+- **Scope change（2026-10-03，执行中发现）**：`ensureRendererComponent` 渲染输出 clone 补章（`packages/flux-react/src/auto-renderer.tsx`）——custom `component:` 通道的 D1 注入缺口，属跨包共享的契约落地修复；发现记录于 Current Baseline，审计卡 18 张均按此通道判定
 
 ### Out Of Scope
 
@@ -52,49 +54,50 @@
 
 ### Phase 1 - 逐组件审计卡
 
-Status: planned
-Targets: `docs/audits/dom-structure/*.md`（本包 ~18 张）
+Status: completed
+Targets: `docs/audits/dom-structure/*.md`（本包 18 张，已全部落盘）
 
 - Item Types: `Proof`
 
-- [ ] 按 6 维逐 type 落卡，含结构图（根 → 首个内容/交互元素逐层归因）
-- [ ] dialog/drawer：确认 portal 根三件套（依赖 527 Phase 1 落地），登记挂载态/关闭态口径
-- [ ] command-palette：确认 `data-renderer` 可达性（AutoRenderer 或自绘根补点）并落卡
-- [ ] flex/button/icon/badge 的 D4 豁免登记（无内部区域）
+- [x] 按 6 维逐 type 落卡，含结构图（根 → 首个内容/交互元素逐层归因）——18 张卡落 `docs/audits/dom-structure/`
+- [x] dialog/drawer：确认 portal 根三件套（527 host 注入 + 本包契约测试），登记挂载态/关闭态口径
+- [x] command-palette：确认 stamp 不可达（输出根为 Dialog 组件树），手动盖章落卡
+- [x] flex/button/icon/badge 的 D4 豁免登记（无内部区域）；fragment/loop/recurse/reaction/keyboard structural 豁免落卡
 
 Exit Criteria:
 
-- [ ] 包内全部 type 均有卡且六维判定齐全，无悬置
-- [ ] portal/surface 口径文本已写回 `docs/audits/dom-structure-checklist.md`
+- [x] 包内全部 type 均有卡且六维判定齐全，无悬置（18/18）
+- [x] portal/surface 口径文本已写回 `docs/audits/dom-structure-checklist.md`（含 custom 通道 stamp 口径）
 
 ### Phase 2 - 整改
 
-Status: planned
-Targets: 卡面 fix 项（预期涉及 `command-palette.tsx`）
+Status: completed
+Targets: `packages/flux-react/src/auto-renderer.tsx`（通道缺口修复）、`packages/flux-renderers-basic/src/button.tsx`、`packages/flux-renderers-basic/src/command-palette.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] command-palette 根标记补点（如 Phase 1 裁定为 fix）
-- [ ] 落地卡面其余 fix 项（test-first）
+- [x] D1 通道缺口：`ensureRendererComponent` 对 custom `component:` 输出 clone 补章 `data-renderer`（Fragment 跳过；组件自带值不覆盖；data-cid 不补章避免双层 cid）——flux-react 新增 2 用例（custom stamp + fragment untouched），537/537；forwardRef 型组件（gantt）经 exotic `.render(props, ref)` 通道兼容
+- [x] command-palette 可见面板手动补 `data-renderer="command-palette"`（portal 通道豁免）
+- [x] button 根补 `nop-button` class（两分支）+ anchor 分支补 `data-slot="button"`；旧"button 无 nop- 标记"测试按新契约更新（widget-markers-contract.test.tsx）
 
 Exit Criteria:
 
-- [ ] 每个 fix 项落地且有 focused 断言
-- [ ] 既有 basic 包测试无回归（focused 范围）
+- [x] 每个 fix 项落地且有 focused 断言
+- [x] 既有 basic 包测试无回归（69 文件 643/643；flux-react 59 文件 537/537）
 
 ### Phase 3 - 契约测试冻结
 
-Status: planned
-Targets: 包测试约定位置（`src/__tests__/` 按包多数派）
+Status: completed
+Targets: `src/__tests__/dom-structure-contract.test.tsx`
 
 - Item Types: `Proof`
 
-- [ ] `dom-structure` 契约测试：默认配置渲染包内全部 type，断言 D1 三件套 + portal 挂载态标记 + 本包登记的 D4/D5 关键项（使用 527 helper）
+- [x] `dom-structure` 契约测试：默认配置渲染包内全部 type——page 根 + 9 个 inline type 三件套 + button anchor 分支身份 + structural 豁免 + null-render 豁免 + dialog/drawer/command-palette portal 根（16 用例全绿，使用 527 helper）
 
 Exit Criteria:
 
-- [ ] 契约测试落位并通过
-- [ ] `docs/backlog/dom-structure-audit-roadmap.md` W1 状态回写就绪（closure audit 后置 done）
+- [x] 契约测试落位并通过
+- [x] `docs/backlog/dom-structure-audit-roadmap.md` W1 状态回写就绪（closure audit 后置 done）
 
 ## Draft Review Record
 
@@ -107,17 +110,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 全部 type 审计卡六维收口（pass/fix/exempt）
-- [ ] 全部 in-scope fix 已落地并有 focused proof
-- [ ] `dom-structure` 契约测试冻结
-- [ ] portal/surface 口径已写回 checklist
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] owner docs 同步核对完成
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 全部 type 审计卡六维收口（pass/fix/exempt）——18/18 卡
+- [x] 全部 in-scope fix 已落地并有 focused proof（stamp 通道/button/command-palette）
+- [x] `dom-structure` 契约测试冻结（16 用例）
+- [x] portal/surface 口径已写回 checklist（含 custom 通道 stamp 口径）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] owner docs 同步核对完成
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（exit 0）
+- [x] `pnpm build`（exit 0）
+- [x] `pnpm lint`（exit 0）
+- [x] `pnpm test`（全量 exit 0；flux-react 537/537、basic 643/643、report-designer-renderers 206/206）
+- [x] `pnpm check`（exit 0）
 
 ## Deferred But Adjudicated
 
@@ -129,13 +133,9 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口
+Status Note: 2026-10-03 收口。18 type 审计卡全落盘；执行中发现并修复 D1 通道缺口（ensureRendererComponent 渲染输出 clone 补章 data-renderer，WeakMap 记忆化 + forwardRef 兼容 + data-cid 不补章裁定）；button/command-palette 身份补齐；16 用例契约测试冻结；portal/surface 与 custom 通道口径回写 checklist。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待定
-- Evidence: 待定
-
-Follow-up:
-
-- 见 Non-Blocking Follow-ups
+- Auditor / Agent: 独立子代理（fresh session，agent_fe6c072b）
+- Evidence: approved 判定——逐交付物核对 live repo（18 卡、auto-renderer.tsx stamp/WeakMap/exotic render、button.tsx、command-palette.tsx:480、契约测试 16 用例、checklist L17-18）；门禁数字与 plan 声明精确吻合。

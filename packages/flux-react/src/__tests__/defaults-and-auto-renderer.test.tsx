@@ -82,10 +82,11 @@ describe('defaults and auto renderer', () => {
     expect(click).toHaveBeenCalled();
   });
 
-  it('keeps existing components and auto-wraps reactComponent definitions', () => {
+  it('keeps existing components (wrapped for root stamping) and auto-wraps reactComponent definitions', () => {
     const component = () => null;
     const withComponent = ensureRendererComponent({ type: 'a', component } as RendererDefinition);
-    expect(withComponent.component).toBe(component);
+    expect(typeof withComponent.component).toBe('function');
+    expect(withComponent.component).not.toBe(component);
 
     const wrapped = ensureRendererComponent({
       type: 'b',
@@ -98,7 +99,75 @@ describe('defaults and auto renderer', () => {
       { type: 'y', component } as RendererDefinition,
     ]);
     expect(registry.get('x')?.component).toBeTruthy();
-    expect(registry.get('y')?.component).toBe(component);
+    expect(typeof registry.get('y')?.component).toBe('function');
+  });
+
+  it('stamps data-renderer onto custom component output roots (cid stays on its own channel)', () => {
+    function CustomRenderer(props: RendererComponentProps) {
+      return (
+        <section className="nop-custom" data-testid={props.meta.testid}>
+          {String((props.props as { label?: string }).label ?? '')}
+        </section>
+      );
+    }
+
+    const wrapped = ensureRendererComponent({
+      type: 'custom',
+      component: CustomRenderer,
+    } as unknown as RendererDefinition);
+    const Comp = wrapped.component as unknown as React.ComponentType<any>;
+
+    render(
+      <Comp
+        id="n"
+        path="$"
+        props={{ label: 'hi' }}
+        schema={{ type: 'custom' } as BaseSchema}
+        meta={{ testid: 'custom-root', cid: 'cid-77' } as any}
+        events={{} as RendererComponentProps['events']}
+        helpers={{} as any}
+        regions={{}}
+        reactions={{}}
+        templateNode={{} as any}
+        node={{} as any}
+      />,
+    );
+
+    const root = screen.getByTestId('custom-root');
+    expect(root.getAttribute('data-renderer')).toBe('custom');
+    // data-cid 由既有通道提供（AutoRenderer/组件手写/FieldFrame 链），stamp 不补，
+    // 避免同节点双层 cid（field-frame 唯一性契约，见 input-number.test.tsx）。
+    expect(root.getAttribute('data-cid')).toBeNull();
+  });
+
+  it('leaves fragment output untouched (structural renderers)', () => {
+    const wrapped = ensureRendererComponent({
+      type: 'frag',
+      component: () => (
+        <React.Fragment>
+          <span data-testid="frag-child">x</span>
+        </React.Fragment>
+      ),
+    } as unknown as RendererDefinition);
+    const Comp = wrapped.component as unknown as React.ComponentType<any>;
+
+    render(
+      <Comp
+        id="n"
+        path="$"
+        props={{}}
+        schema={{ type: 'frag' } as BaseSchema}
+        meta={{ cid: 'cid-f' } as any}
+        events={{} as RendererComponentProps['events']}
+        helpers={{} as any}
+        regions={{}}
+        reactions={{}}
+        templateNode={{} as any}
+        node={{} as any}
+      />,
+    );
+
+    expect(screen.getByTestId('frag-child')).toBeTruthy();
   });
 
   it('injects data-renderer from the definition type on the auto path', () => {
