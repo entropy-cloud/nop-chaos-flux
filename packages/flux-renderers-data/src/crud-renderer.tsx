@@ -603,7 +603,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
 
       {hasToolbar || hasListActions || headerBlocks.length > 0 || pollingToggleProps ? (
         <div className="nop-crud-toolbar flex flex-col gap-[var(--crud-toolbar-gap)]" data-slot="crud-toolbar">
-          <div className="flex flex-wrap items-center gap-[var(--crud-toolbar-gap)]">
+          <div data-slot="crud-toolbar-row" className="flex flex-wrap items-center gap-[var(--crud-toolbar-gap)]">
           {hasToolbar ? (
             <div data-slot="crud-toolbar-main">{asReactNode(toolbarContent)}</div>
           ) : null}

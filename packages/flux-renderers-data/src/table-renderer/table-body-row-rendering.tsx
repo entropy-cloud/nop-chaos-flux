@@ -370,6 +370,7 @@ export function DataRowView({
           return (
             <TableCell
               key={`${column.name ?? `index-${columnIndex}`}`}
+              data-field={column.name ?? undefined}
               className={cn(
                 'text-center',
                 resolveCellChromeClass(column, columnIndex),
@@ -396,6 +397,7 @@ export function DataRowView({
           return (
             <TableCell
               key={column.name ?? `op-${columnIndex}`}
+              data-field={column.name ?? undefined}
               className={cn(
                 resolveCellChromeClass(column, columnIndex),
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
@@ -433,6 +435,7 @@ export function DataRowView({
           return (
             <TableCell
               key={`${column.name ?? columnIndex}`}
+              data-field={column.name ?? undefined}
               className={cn(
                 resolveCellChromeClass(column, columnIndex),
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
@@ -476,6 +479,7 @@ export function DataRowView({
             return (
               <TableCell
                 key={`${column.name ?? columnIndex}`}
+                data-field={column.name ?? undefined}
                 className={cn(
                   resolveCellChromeClass(column, columnIndex),
                   fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
@@ -508,6 +512,7 @@ export function DataRowView({
           return (
             <TableCell
               key={`${column.name ?? columnIndex}`}
+              data-field={column.name ?? undefined}
               className={cn(
                 resolveCellChromeClass(column, columnIndex),
                 fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
@@ -540,6 +545,7 @@ export function DataRowView({
         return (
           <TableCell
             key={`${column.name ?? columnIndex}`}
+            data-field={column.name ?? undefined}
             className={cn(
               resolveCellChromeClass(column, columnIndex),
               fixedColumnLayout.getColumnCellProps(column, columnIndex).className,
