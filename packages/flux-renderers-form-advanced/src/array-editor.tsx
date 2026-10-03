@@ -85,8 +85,12 @@ function ArrayEditorRow(props: {
   const canMoveDown = index < totalCount - 1;
 
   return (
-    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2.5 items-start">
+    <div
+      data-slot="array-editor-row"
+      className="grid grid-cols-[1fr_auto_auto_auto] gap-2.5 items-start"
+    >
       <div
+        data-slot="array-editor-row-body"
         className={itemUi.className}
         data-child-field-visited={itemUi['data-child-field-visited']}
         data-child-field-touched={itemUi['data-child-field-touched']}

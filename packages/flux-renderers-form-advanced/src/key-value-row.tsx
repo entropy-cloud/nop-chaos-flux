@@ -66,8 +66,12 @@ function KeyValueRowView(props: KeyValueRowProps) {
   const canMoveDown = index < totalCount - 1;
 
   return (
-    <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2.5 items-start">
+    <div
+      data-slot="key-value-row"
+      className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2.5 items-start"
+    >
       <div
+        data-slot="key-value-row-body"
         className={keyUi.className}
         data-child-field-visited={keyUi['data-child-field-visited']}
         data-child-field-touched={keyUi['data-child-field-touched']}

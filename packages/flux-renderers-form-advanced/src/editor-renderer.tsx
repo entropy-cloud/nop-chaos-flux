@@ -352,7 +352,7 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
         </p>
       ) : null}
 
-      <div className="rounded-md border border-input bg-background">
+      <div data-slot="editor-content-frame" className="rounded-md border border-input bg-background">
         <EditorContent editor={editor} />
       </div>
     </div>

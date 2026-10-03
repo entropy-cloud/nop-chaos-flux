@@ -19,7 +19,7 @@
 | W0 共享基建：`data-renderer` 中央注入 + frame id/anchor 协议对齐 + 共享契约测试 helper | done   | `docs/plans/2026-10-03-527-dom-marker-shared-infra-plan.md`               |
 | W1 `flux-renderers-basic`（~18 type）                                       | done    | `docs/plans/2026-10-03-528-dom-structure-basic-plan.md`                   |
 | W2 `flux-renderers-form`（form/fieldset/hidden + ~30 控件 type）             | done    | `docs/plans/2026-10-03-529-dom-structure-form-plan.md`                    |
-| W3 `flux-renderers-form-advanced`（~19 type）                                | planned | `docs/plans/2026-10-03-530-dom-structure-form-advanced-plan.md`           |
+| W3 `flux-renderers-form-advanced`（~19 type）                                | done    | `docs/plans/2026-10-03-530-dom-structure-form-advanced-plan.md`           |
 | W4 `flux-renderers-data`（~12 type）                                         | planned | `docs/plans/2026-10-03-531-dom-structure-data-plan.md`                    |
 | W5 `flux-renderers-layout`（9 type，steps/timeline 单次注册）                   | planned | `docs/plans/2026-10-03-532-dom-structure-layout-plan.md`                  |
 | W6 `flux-renderers-content`（20 type）                                       | planned | `docs/plans/2026-10-03-533-dom-structure-content-plan.md`                 |

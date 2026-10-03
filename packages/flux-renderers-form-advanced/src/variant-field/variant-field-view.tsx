@@ -65,6 +65,7 @@ interface VariantFieldViewProps {
   hintContent: React.ReactNode;
   labelContent: React.ReactNode;
   meta: ResolvedNodeMeta;
+  rendererType: string;
   onVariantSwitch: (key: string) => void;
   readOnly: boolean;
   schemaProps: RendererComponentProps<VariantFieldSchema>['props'];
@@ -84,6 +85,7 @@ export function VariantFieldView({
   hintContent,
   labelContent,
   meta,
+  rendererType,
   onVariantSwitch,
   readOnly,
   schemaProps,
@@ -221,6 +223,7 @@ export function VariantFieldView({
       return (
         <FieldFrame
           name={typeof schemaProps.name === 'string' ? schemaProps.name : undefined}
+          renderer={rendererType}
           label={labelContent}
           required={schemaProps.required === true}
           hint={hintContent}

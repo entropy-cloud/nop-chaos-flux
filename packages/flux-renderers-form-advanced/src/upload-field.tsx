@@ -575,6 +575,7 @@ export function UploadFieldRenderer(
       {showList ? (
         <ul
           aria-live="polite"
+          data-slot="upload-field-list"
           className={cn(
             'flex flex-col gap-1.5',
             options.kind === 'image' && multiple && 'flex-row flex-wrap',
@@ -584,6 +585,7 @@ export function UploadFieldRenderer(
           {existing.map((entry, index) => (
             <li
               key={`existing-${entry.url}-${entry.name ?? ''}-${entry.size ?? ''}`}
+              data-slot="upload-field-item"
               className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1 text-sm"
               data-testid={`${options.marker}-item`}
               data-item-status="done"
@@ -618,6 +620,7 @@ export function UploadFieldRenderer(
             return (
               <li
                 key={entry.id}
+                data-slot="upload-field-item"
                 className="flex items-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-2 py-1 text-sm"
                 data-testid={`${options.marker}-item`}
                 data-item-status={entry.status}

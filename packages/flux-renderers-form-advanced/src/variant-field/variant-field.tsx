@@ -78,6 +78,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
 
   return (
     <VariantFieldView
+      rendererType={props.templateNode.rendererType}
       activeContentRegion={activeContentRegion}
       activeKey={activeKey}
       activeViewerRegion={activeViewerRegion}
