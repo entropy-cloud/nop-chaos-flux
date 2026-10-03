@@ -76,8 +76,8 @@
                       "className": "adp-dialog",
                       "closeOnSubmit": true,
                       "onSubmitSuccess": {
-                        "action": "component:refresh",
-                        "componentId": "antdpro-list-crud"
+                        "action": "refreshNearest",
+                        "args": { "targetType": "crud", "notFound": "error" }
                       },
                       "body": [
                         {
@@ -451,8 +451,8 @@
                       },
                       "closeOnSubmit": true,
                       "onSubmitSuccess": {
-                        "action": "component:refresh",
-                        "componentId": "antdpro-list-crud"
+                        "action": "refreshNearest",
+                        "args": { "targetType": "crud", "notFound": "error" }
                       },
                       "body": [
                         {
@@ -598,11 +598,11 @@
                                 },
                                 "then": [
                                   {
-                                    "action": "closeSurface"
+                                    "action": "refreshNearest",
+                                    "args": { "targetType": "crud", "notFound": "error" }
                                   },
                                   {
-                                    "action": "component:refresh",
-                                    "componentId": "antdpro-list-crud"
+                                    "action": "closeSurface"
                                   }
                                 ]
                               }

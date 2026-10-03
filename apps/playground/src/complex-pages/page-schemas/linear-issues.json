@@ -215,8 +215,11 @@
                                             "closeOnSubmit": true,
                                             "onSubmitSuccess": [
                                               {
-                                                "action": "component:refresh",
-                                                "componentId": "linear-issues-source"
+                                                "action": "refreshNearest",
+                                                "args": {
+                                                  "targetType": "data-source",
+                                                  "notFound": "error"
+                                                }
                                               }
                                             ],
                                             "body": [
@@ -524,8 +527,11 @@
                                             "failed": "没有可归档的问题"
                                           },
                                           "then": {
-                                            "action": "component:refresh",
-                                            "componentId": "linear-issues-source"
+                                            "action": "refreshNearest",
+                                            "args": {
+                                              "targetType": "data-source",
+                                              "notFound": "error"
+                                            }
                                           },
                                           "when": "${$slot.item.act === 'archive'}"
                                         },
@@ -1203,8 +1209,11 @@
                           "closeOnSubmit": true,
                           "onSubmitSuccess": [
                             {
-                              "action": "component:refresh",
-                              "componentId": "linear-issues-source"
+                              "action": "refreshNearest",
+                              "args": {
+                                "targetType": "data-source",
+                                "notFound": "error"
+                              }
                             }
                           ],
                           "body": [
@@ -1410,8 +1419,11 @@
                                                 "closeOnSubmit": true,
                                                 "onSubmitSuccess": [
                                                   {
-                                                    "action": "component:refresh",
-                                                    "componentId": "linear-issues-source"
+                                                    "action": "refreshNearest",
+                                                    "args": {
+                                                      "targetType": "data-source",
+                                                      "notFound": "error"
+                                                    }
                                                   }
                                                 ],
                                                 "body": [
@@ -1719,8 +1731,11 @@
                                                 "failed": "没有可归档的问题"
                                               },
                                               "then": {
-                                                "action": "component:refresh",
-                                                "componentId": "linear-issues-source"
+                                                "action": "refreshNearest",
+                                                "args": {
+                                                  "targetType": "data-source",
+                                                  "notFound": "error"
+                                                }
                                               },
                                               "when": "${$slot.item.act === 'archive'}"
                                             },
@@ -2226,8 +2241,11 @@
                           "closeOnSubmit": true,
                           "onSubmitSuccess": [
                             {
-                              "action": "component:refresh",
-                              "componentId": "linear-issues-source"
+                              "action": "refreshNearest",
+                              "args": {
+                                "targetType": "data-source",
+                                "notFound": "error"
+                              }
                             },
                             {
                               "action": "component:setSelection",
@@ -2320,8 +2338,11 @@
                           "closeOnSubmit": true,
                           "onSubmitSuccess": [
                             {
-                              "action": "component:refresh",
-                              "componentId": "linear-issues-source"
+                              "action": "refreshNearest",
+                              "args": {
+                                "targetType": "data-source",
+                                "notFound": "error"
+                              }
                             },
                             {
                               "action": "component:setSelection",
@@ -2414,8 +2435,11 @@
                           "closeOnSubmit": true,
                           "onSubmitSuccess": [
                             {
-                              "action": "component:refresh",
-                              "componentId": "linear-issues-source"
+                              "action": "refreshNearest",
+                              "args": {
+                                "targetType": "data-source",
+                                "notFound": "error"
+                              }
                             },
                             {
                               "action": "component:setSelection",
@@ -2508,8 +2532,11 @@
                           "closeOnSubmit": true,
                           "onSubmitSuccess": [
                             {
-                              "action": "component:refresh",
-                              "componentId": "linear-issues-source"
+                              "action": "refreshNearest",
+                              "args": {
+                                "targetType": "data-source",
+                                "notFound": "error"
+                              }
                             },
                             {
                               "action": "component:setSelection",

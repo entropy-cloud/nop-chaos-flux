@@ -113,6 +113,28 @@
 | airtable-grid           | ✅   | 隐藏字段/搜索/分组切换/行高/单元格编辑/行展开×10/新增记录弹层/分页                                       |
 | stripe-payments         | ✅   | 日期预设档、导出模态、行金额点击 → 交易详情抽屉（导航 shell 静态为设计意图）                             |
 
+### W-A2 主子通信对齐审计（2026-10-03，plan 538）
+
+> 范围：全部「弹窗/surface + 宿主数据」组合页（13 个 schema 含 openDialog + 声明式 dialog 页）；逐弹窗核对 §三 标准形态。静态盘点 + 转换 + 9 流实机复验（详见 `docs/plans/2026-10-03-538-playground-traversal-wa2-plan.md`）。
+
+| 页面                                                          | 弹窗→宿主形态（转换前）                                                                                                              | 处置                                                                                                                              | 复验证据                                                      |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| standard-crud                                                 | 新增/编辑 openDialog 表单 then 链 component:refresh(user-crud)                                                                       | **转标准**：form 补 submitScope=surface + closeOnSubmit + onSubmitSuccess=refreshNearest(crud)                                    | 新增 33→34 条 + 弹窗关闭 ✓                                    |
+| master-detail                                                 | 新增明细 openDialog 表单 then 链 component:refresh(md-items-crud)                                                                    | **转标准**（同上）                                                                                                                | SKU 子表 4→5 行 ✓                                             |
+| approval-tasks                                                | 审批弹窗 通过/驳回 button then 链 component:refresh(approval-crud)                                                                   | **转标准**：then[0] → refreshNearest(crud)（refresh→close 顺序）                                                                  | 通过 待审批→已通过 ✓；驳回 确认门→已驳回 ✓                    |
+| antdpro-list                                                  | 新建/编辑订单 onSubmitSuccess=component:refresh(antdpro-list-crud)（closeOnSubmit 形态，live 正确样本）；删除确认 then 链 close 在前 | 新建/编辑原地替换为 refreshNearest(crud)；删除链归一 [refreshNearest, closeSurface]                                               | 新建 36→37 ✓；删除 37→36 ✓                                    |
+| linear-issues                                                 | 批量×4 + 新建×3 onSubmitSuccess=component:refresh(linear-issues-source)；筛选弹窗 then 链 ×2                                         | **转标准**：全部 9 处 → refreshNearest(data-source)（含 notFound=error）                                                          | 新建 源总数 +1 ✓；批量修改状态 ENG-101 待办→进行中 实时翻转 ✓ |
+| sundial-workbench                                             | 声明式 dialog（open 状态驱动）；原 rev 计数器经 setValue 写弹窗域被遮蔽——**既有缺陷：添加待办后六个数据源从未刷新**                  | **修标准**：onSubmitSuccess = refreshSource ×6（source registry 全桶名扫描，弹窗域可命中页级源）+ 状态翻转关闭 + messages.success | 计数 9→10 ✓（计数契约首次真正生效）                           |
+| sundial-todo-dialog                                           | 声明式 dialog；onSubmitSuccess 混 closeSurface/showToast                                                                             | **钩子归位**：messages.success + 状态翻转关闭，onSubmitSuccess 只留数据回调                                                       | toast + 关闭 ✓（该页无宿主列表）                              |
+| notion-database                                               | 弹窗 onSubmitSuccess=component:refresh ×5 源（table/board/gallery/calendar/list）                                                    | **裁定保留**：多源同步，refreshNearest 单目标语义无法表达（见 §七）                                                               | W-A1 已验行为正常                                             |
+| airtable-grid                                                 | 弹窗 onSubmitSuccess=component:refresh ×2 源（grid/group）                                                                           | **裁定保留**（同上多源同步）                                                                                                      | W-A1 已验行为正常                                             |
+| stripe-payments                                               | 筛选/搜索/添加 widget 弹窗 onSubmitSuccess=setValue 写页面状态 → dependsOn 响应式刷新                                                | **合规**（scope 状态所有权，即 §三 主从联动标准形态）                                                                             | W-A1 已验行为正常                                             |
+| antdpro-form-dialog                                           | 新建订单弹窗（独立表单演示，无宿主）                                                                                                 | 不适用                                                                                                                            | W-A1 已验                                                     |
+| sundial-detail / cal-success / cal-booking                    | 选择器/取消预约等弹层，关闭类或导航类                                                                                                | 不涉及宿主刷新                                                                                                                    | W-A1 已验                                                     |
+| standard-crud 批量删除/行删除（confirmText 门）、工具栏刷新类 | 页面域 confirmText 门 + then 显式自刷新                                                                                              | **裁定保留**：调用方在页面域非 surface 内，非「弹窗内定位宿主」被禁场景（与 antdpro 工具栏刷新同类）                              | W-A1 已验行为正常                                             |
+
+审计结论：弹窗→宿主刷新 100% 收敛为 §三 标准形态（refreshNearest / refreshSource / 生命周期钩子 / scope 状态所有权）或书面裁定；全站 0 处残留「弹窗内以宿主 id 定位刷新」。主从联动页（master-detail/linear-issues/detail-subtables/stripe 等 selectionStatePath+dependsOn / 状态所有权）维持合规。
+
 ### W-B 设计器/编辑器（10）
 
 | 页面                 | 状态   | 卡片 |
@@ -213,6 +235,12 @@
 - **已修（当波 P1）**：表单校验失败 toast 显示 `[object Object]`——`flux-action-core` 失败通知对结构化非 Error 负载（ValidationResult[]）直接 String() 所致；新增 `describeActionFailure`（数组取 message 拼接、对象取 message 字段、兜底 JSON），全站生效（standard-crud/business-document/antdpro-form-dialog/complex-form 实机复验均输出可读中文文案）；回归测试 ×2（action-dispatcher-control-flow.test.ts）。
 - **已修（当波 P2）**：配置 `messages.failed` 的 ajax 失败叠加通用 `Request failed` 双 toast——`flux-runtime` executeRuntimeAjaxAction 在作者消息消费失败后补标 `failureHandled`，dispatcher 通用失败通知跳过；回归测试 ×2（runtime-ajax-messages.test.ts）。
 - **测试观测面**：linear mock 新增 `lastBulkUpdate` 钩子（与既有 lastMove 同款，e2e 请求体观测）。
+
+### W-A2 执行期新增登记（2026-10-03）
+
+- **已修（既有缺陷，plan 538 执行期发现）**：sundial-workbench 添加待办后计数从不刷新——form 级 onSubmitSuccess 在弹窗域派发导致 setValue(rev) 遮蔽页级变量、六个 dependsOn 数据源永不重取；改为 refreshSource ×6 后计数契约首次真正生效（9→10 实证）。
+- **P3（页面设计说明，非缺陷）**：sundial-workbench 分组任务行为静态 schema（仅计数绑定数据源）——新增待办只在计数反映，列表行不随数据渲染；如需全动态列表需页面级改造（超出本审计范围，登记为设计演进候选）。
+- **裁定（多源同步保留显式刷新）**：notion-database（5 源）/ airtable-grid（2 源）/ sundial-workbench（6 源）弹窗提交需同步多数据源，refreshNearest 单目标语义无法表达；显式 refreshSource/component:refresh 多目标是多视图一致性的正确形态。
 
 ## 八、完成定义（DoD）
 

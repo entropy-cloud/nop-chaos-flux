@@ -1772,23 +1772,21 @@
               "url": "/r/Sundial__addTodoItem",
               "method": "post",
               "includeScope": "*"
-            }
+            },
+            "messages": { "success": "待办已添加" }
           },
           "onSubmitSuccess": [
+            { "action": "refreshSource", "targetId": "todosAll" },
+            { "action": "refreshSource", "targetId": "todosToday" },
+            { "action": "refreshSource", "targetId": "todosScheduled" },
+            { "action": "refreshSource", "targetId": "todosDone" },
+            { "action": "refreshSource", "targetId": "todosTrash" },
+            { "action": "refreshSource", "targetId": "pressure" },
             {
               "action": "setValue",
               "args": {
-                "path": "sundialTodosRev",
-                "value": "${(sundialTodosRev ?? 0) + 1}"
-              }
-            },
-            {
-              "action": "closeSurface"
-            },
-            {
-              "action": "showToast",
-              "args": {
-                "message": "待办已添加"
+                "path": "todoDialogOpen",
+                "value": false
               }
             }
           ]

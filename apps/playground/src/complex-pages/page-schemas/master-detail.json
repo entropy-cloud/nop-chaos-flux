@@ -242,10 +242,18 @@
                             "args": {
                               "title": "新增明细",
                               "testid": "add-item-dialog",
+                              "closeOnSubmit": true,
+                              "onSubmitSuccess": [
+                                {
+                                  "action": "refreshNearest",
+                                  "args": { "targetType": "crud", "notFound": "error" }
+                                }
+                              ],
                               "body": [
                                 {
                                   "type": "form",
                                   "testid": "add-item-form",
+                                  "submitScope": "surface",
                                   "data": { "sku": "", "name": "", "qty": 1, "price": 0 },
                                   "submitAction": {
                                     "action": "ajax",
@@ -260,14 +268,7 @@
                                         "orderId": "${mdFilter?.orderId}"
                                       }
                                     },
-                                    "messages": { "success": "新增成功" },
-                                    "then": [
-                                      {
-                                        "action": "component:refresh",
-                                        "componentId": "md-items-crud"
-                                      },
-                                      { "action": "closeSurface" }
-                                    ]
+                                    "messages": { "success": "新增成功" }
                                   },
                                   "actions": [
                                     {

@@ -211,8 +211,8 @@
                                 },
                                 "then": [
                                   {
-                                    "action": "component:refresh",
-                                    "componentId": "approval-crud"
+                                    "action": "refreshNearest",
+                                    "args": { "targetType": "crud", "notFound": "error" }
                                   },
                                   {
                                     "action": "closeSurface"
@@ -241,8 +241,8 @@
                                 },
                                 "then": [
                                   {
-                                    "action": "component:refresh",
-                                    "componentId": "approval-crud"
+                                    "action": "refreshNearest",
+                                    "args": { "targetType": "crud", "notFound": "error" }
                                   },
                                   {
                                     "action": "closeSurface"
