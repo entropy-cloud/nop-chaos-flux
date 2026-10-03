@@ -6,6 +6,7 @@ This document defines the current DOM marker and selector protocol for Flux rend
 - One-time migration work belongs under `docs/plans/`.
 - `docs/architecture/styling-system.md` remains the umbrella styling architecture document.
 - This file defines the narrower selector contract for root markers, `data-slot`, and `data-*` / `aria-*` state semantics.
+- Rollout status of the Universal Root Anchors, Structural Flatness Contract, and Design-Time Frame Protocol sections is tracked by `docs/backlog/dom-structure-audit-roadmap.md`.
 
 ## Purpose
 
@@ -140,6 +141,22 @@ Rules:
 - root markers must not encode internal regions or state
 - root markers must not cause renderer component code to smuggle in implicit layout or color rules
 
+### Universal Root Anchors: `data-renderer` And `data-cid`
+
+Every renderer root element carries, in addition to its `nop-<type>` class, two stable attributes:
+
+- `data-renderer={rendererType}` — the schema renderer type (for example `container`, `input-text`, `table`). It is the machine-readable renderer identity; tooling queries renderer roots with `[data-renderer]` / `[data-renderer='<type>']`.
+- `data-cid={cid}` — the component instance id. It is the stable per-instance anchor for design-time tooling and per-node debugging.
+
+Injection rules:
+
+- both anchors are injected centrally in the flux-react render path (the auto-renderer already injects `data-testid` / `data-cid`); renderer components do not hand-write them
+- a renderer whose root bypasses the auto-renderer (custom `component` definitions, portal content roots) must still end up with both anchors on its visible root
+- FieldFrame's existing `data-renderer` (see Field selector contract attributes) is the field-family instance of this rule; its value semantics (`NodeMetaContext.type`) are the reference for the central injection
+- portal-surface renderers attach the anchors to their portal content root; a renderer that returns `null` while closed is exempt until mounted
+
+A universal `nop-renderer` marker class is explicitly rejected: it duplicates `data-renderer` without adding information and would create a third marker vocabulary. Machine targeting uses `[data-renderer]`; human, styling, and test targeting use `nop-<type>` and `data-slot`.
+
 ## Internal Region Rules
 
 Renderer-internal regions use `data-slot`, not BEM region classes.
@@ -155,6 +172,36 @@ Do not introduce or preserve renderer-internal region classes such as:
 - `nop-page__header`
 - `nop-container__footer`
 - `nop-table__pagination`
+
+## Structural Flatness Contract
+
+The default structure of a renderer is its natural DOM. Nesting is not free: every wrapper element between the renderer root and its content must pay rent by carrying exactly one of the following responsibilities:
+
+1. multi-region grouping (header/body/footer/toolbar structure)
+2. a scroll region (overflow container)
+3. a layout scope the component's own contract requires (flex/grid container, canvas/engine mount point)
+4. a portal/surface boundary (dialog/drawer/popover mounting)
+
+Rules:
+
+- a wrapper that exists must declare its role with `data-slot` — an unnamed wrapper div is a defect, not a style detail
+- leaf renderers (text, tpl, icon, badge-style single-element output) put root markers on the natural element and render no root wrapper
+- decorative-only wrappers (rounding/background/positioning around a single child) are collapsed into the child or the root; a wrapper kept because of a documented external constraint (e.g. a third-party library overwrites `id`/`data-testid` on its mount node) is registered as a forced wrapper on the component's audit card with the constraint named, not silently kept
+- audit method: render the component in default config, enumerate every element between root and first content/interactive element, attribute each to one of the responsibilities above; results are recorded on the per-component audit cards under `docs/audits/dom-structure/` per `docs/audits/dom-structure-checklist.md`
+
+## Design-Time Frame Protocol
+
+Designer affordances around a renderer node — selection frame, hover outline, drop hint — follow an overlay protocol, not a wrapper protocol:
+
+- frames are never rendered inside the renderer component subtree, and never inserted as the parent wrapper of the renderer root
+- frames render in an external overlay layer mounted at the canvas root: absolutely positioned, `pointer-events: none`, geometry derived from the target's `getBoundingClientRect()`; the reference implementation is `CanvasOverlay` (`packages/page-designer-renderers/src/canvas-overlay.tsx`)
+- frame element identity: `id="nop-frame-${cid}"` plus `data-frame-for="${cid}"`, where `cid` is the target renderer root's `data-cid`; target lookup is `[data-cid="${cid}"]`
+- the production render path emits no frame elements; frame markup is design-time only
+
+Rejected alternatives:
+
+- wrapping the component in a frame div breaks parent flex/grid semantics (gap counts, `flex-1`, grid track placement) and violates the flatness contract
+- nesting the frame inside the component couples design-time chrome to production DOM and pollutes every structural test
 
 ## State Rules
 
@@ -241,9 +288,12 @@ If performance is the concern, focus first on:
 When adding or changing renderer DOM markers:
 
 - Is this a root renderer identity? Use a root `nop-*` class if needed.
+- Is this a renderer root anchor attribute? `data-renderer` / `data-cid` come from the central render path — do not hand-write them per component.
 - Is this an internal region? Use `data-slot`.
 - Is this a state signal? Use `data-*` or `aria-*`.
 - Is this only visual? Use Tailwind or schema-driven classes, not semantic markers.
+- Is this a new wrapper element? It must pay rent (see Structural Flatness Contract) and declare `data-slot`.
+- Is this a design-time frame? Follow the overlay protocol — never render it inside the component subtree.
 - Is this a one-time migration concern? Put it in `docs/plans/`, not here.
 
 Additional package-CSS guardrails that follow from the current live baseline:

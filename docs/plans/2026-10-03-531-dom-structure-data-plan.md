@@ -1,0 +1,141 @@
+# 531 flux-renderers-data 渲染器 DOM 结构契约审计与整改
+
+> Plan Status: active
+> Last Reviewed: 2026-10-03
+> Source: `docs/architecture/renderer-markers-and-selectors.md`（DOM 结构契约）、`docs/backlog/dom-structure-audit-roadmap.md`（W4）、`docs/audits/dom-structure-checklist.md`
+> Related: `docs/plans/2026-10-03-527-dom-marker-shared-infra-plan.md`（前置）
+
+## Purpose
+
+把 flux-renderers-data 全部 renderer type 的 DOM 结构收口到契约 6 维。本包 `data-cid`/`data-slot` 基线最好（全覆盖、普遍），重点是 crud toolbar 纯布局层等少数包装裁定与 chart/echarts 引擎挂载层归因，并冻结包级契约测试。
+
+## Current Baseline
+
+- 组件清单（type 注册聚合于 `data-renderer-definitions.ts` 等）：crud → `crud-renderer.tsx`（canvas 容器）、table → `table-renderer.tsx`、tree、list、query-filter、batch-bar、pagination、statistics、stat-tile、chart、echarts、sparkline（chart/echarts/sparkline 偏 leaf/composite）、data-source → `data-source-renderer.tsx`（:94 return null，null-render 豁免登记）。
+- `data-cid` 全覆盖（crud:551、table:515、tree:594、list、pagination、chart、echarts、stat-tile:171 等）；`data-slot` 30+ 文件普遍使用。
+- 已点名包装嫌疑：
+  - `crud-renderer.tsx:548-669`（4 层）：root `nop-crud` → query 区 → collapse 行 → toolbar 区内 `nop-crud-toolbar`(:605) → 纯布局 `div.flex-wrap`(:606)（无 data-slot，目的仅 gap）→ 两个 slot div(:608,611)
+  - `statistics-renderer.tsx:10`：纯文本"共 N 条"包一层 div（有 data-slot/data-total，弱辩护）
+  - `sparkline-renderer.tsx:71`：`div.nop-sparkline` 包 svg（状态属性挂 div）
+- 合规参照：`table-renderer.tsx:511-565` 根 → header-region → `data-slot="table-container"` 滚动容器 → table，各层职责明确。
+- **confirmed contract drift（owner-doc ↔ live）**：owner doc 承诺 table 单元格 `<td data-field={column.name}>`（`renderer-markers-and-selectors.md:110`），live 的 flux-renderers-data 与 packages/ui 均无 `data-field` 输出——本包必须显式裁定（补实现 = Fix，或修订 owner doc），不得当作既有有效契约绕开。
+- 盘点未发现本包自带 frame；D6：crud/table 容器是否属"scene-graph 引擎画布"待逐卡判定（echarts canvas 挂载归因到引擎挂载点职责）。
+
+## Goals
+
+- 全部 type 六维判定落卡（含 data-source null-render 豁免）；crud/statistics/sparkline 三处包装裁定并整改或豁免登记
+- chart/echarts 引擎挂载层在结构图中归因（引擎挂载点职责），并判定 D6 适用性
+- `<td data-field>` contract drift 显式裁定并落地（补实现或修订 owner doc，二选一留痕）
+- `dom-structure` 契约测试冻结
+
+## Non-Goals
+
+- 功能契约 18 维审计；crud 数据流/分页行为变更
+- echarts/recharts 库内部 DOM 与数据请求/排序/筛选行为
+- 其它包的结构问题
+
+## Scope
+
+### In Scope
+
+- `packages/flux-renderers-data/src/` 全部 renderer type 的审计卡、整改、契约测试
+
+### Out Of Scope
+
+- echarts/recharts 库内部 DOM
+- 数据请求、排序、筛选行为
+
+## Test Strategy
+
+档位选择：`建议有测`——crud toolbar 整改与引擎挂载归因为必测断言；其余以卡面 + 契约测试覆盖。
+
+## Execution Plan
+
+### Phase 1 - 逐组件审计卡
+
+Status: planned
+Targets: `docs/audits/dom-structure/*.md`（本包 13 张，含 data-source）
+
+- Item Types: `Proof`
+
+- [ ] 逐 type 落卡；crud/statistics/sparkline 逐层归因
+- [ ] chart/echarts 引擎挂载层归因 + D6 适用性判定
+- [ ] Decision：`<td data-field>` drift 裁定——补实现（进 Phase 2）或修订 owner doc（本计划内执行文档修订）
+
+Exit Criteria:
+
+- [ ] 全部 type 落卡且六维判定齐全
+- [ ] td data-field 裁定留痕（卡面 + 如修订 owner doc 则文档已改）
+
+### Phase 2 - 整改
+
+Status: planned
+Targets: `crud-renderer.tsx`、`statistics-renderer.tsx`、`sparkline-renderer.tsx` 及卡面其余 fix 项
+
+- Item Types: `Fix | Proof`
+
+- [ ] crud toolbar 纯布局层按裁定整改（合并进 toolbar 区或补 `data-slot`）
+- [ ] statistics/sparkline 按裁定整改（属性可下沉时合并入自然元素）
+- [ ] 如 Phase 1 裁定为补实现：table 单元格 `<td data-field={column.name}>` test-first 落地（Proof 先行失败断言）
+- [ ] 逐项 test-first 落地
+
+Exit Criteria:
+
+- [ ] 每个 fix 项落地且有 focused 断言；既有包测试无回归（focused 范围）
+
+### Phase 3 - 契约测试冻结
+
+Status: planned
+Targets: `src/__tests__/`（该包为 `__tests__` 多数派）
+
+- Item Types: `Proof`
+
+- [ ] 契约测试覆盖全部 type D1 三件套 + 本包登记的关键 D3/D4 项（使用 527 helper）
+
+Exit Criteria:
+
+- [ ] 契约测试落位并通过
+- [ ] roadmap W4 回写就绪
+
+## Draft Review Record
+
+> 起草后、执行前的独立审查证据。由独立审阅者或独立子 agent 填写。
+
+- Reviewer / Agent: 独立子代理 R2（fresh session）
+- Verdict: pass（Round 1 issues → 1 项 Major 已修订：`<td data-field>` 改判为 confirmed contract drift 并入裁定流程；Round 2 复核通过）
+- Rounds: 2
+- Findings addressed: ①td data-field 从"既有契约"改判 drift + Decision/Fix 流程 ②清单补 data-source（null-render 豁免）③table-renderer 引用范围扩至 :511-565
+
+## Closure Gates
+
+- [ ] 全部 type 审计卡六维收口
+- [ ] 全部 in-scope fix 已落地并有 focused proof
+- [ ] `dom-structure` 契约测试冻结
+- [ ] 不存在被静默降级的 in-scope live defect
+- [ ] owner docs 同步核对完成
+- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [ ] `pnpm typecheck`
+- [ ] `pnpm build`
+- [ ] `pnpm lint`
+- [ ] `pnpm test`
+
+## Deferred But Adjudicated
+
+（暂无）
+
+## Non-Blocking Follow-ups
+
+（暂无）
+
+## Closure
+
+Status Note: 待收口
+
+Closure Audit Evidence:
+
+- Auditor / Agent: 待定
+- Evidence: 待定
+
+Follow-up:
+
+- 见 Non-Blocking Follow-ups
