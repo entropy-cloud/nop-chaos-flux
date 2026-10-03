@@ -1415,6 +1415,9 @@ export const zhCN: Resource = {
       previous: '上一个',
       next: '下一个',
       noScheduleData: '暂无排班数据',
+      ganttCanvasLabel: '甘特图',
+      kanbanCanvasLabel: '看板',
+      calendarCanvasLabel: '日历',
       calendar: {
         viewMonth: '月',
         viewWeek: '周',

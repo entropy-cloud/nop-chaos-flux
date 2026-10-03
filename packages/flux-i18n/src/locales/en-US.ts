@@ -1420,6 +1420,9 @@ export const enUS: Resource = {
       previous: 'Previous',
       next: 'Next',
       noScheduleData: 'No schedule data',
+      ganttCanvasLabel: 'Gantt chart',
+      kanbanCanvasLabel: 'Kanban board',
+      calendarCanvasLabel: 'Calendar',
       calendar: {
         viewMonth: 'Month',
         viewWeek: 'Week',

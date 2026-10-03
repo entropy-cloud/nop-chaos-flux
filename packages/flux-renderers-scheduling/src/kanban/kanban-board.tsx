@@ -449,6 +449,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     <div
       ref={boardRef}
       data-slot="kanban"
+      role="application"
+      aria-label={t('scheduling.kanbanCanvasLabel')}
       inert={meta.disabled === true || undefined}
       aria-disabled={meta.disabled === true || undefined}
       data-disabled={meta.disabled === true ? 'true' : undefined}

@@ -97,7 +97,11 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
   const maxGridWidth = containerWidth > 0 ? Math.round(containerWidth * MAX_GRID_WIDTH_PERCENT) : MIN_GRID_WIDTH;
 
   return (
-    <div ref={containerRef} className={cn('nop-gantt flex flex-col h-full', className)}>
+    <div
+      ref={containerRef}
+      data-slot="gantt-layout"
+      className={cn('flex flex-col h-full', className)}
+    >
       {header}
       <div className="flex flex-1 min-h-0">
         <div className="flex-shrink-0" style={{ width: gridWidth }}>

@@ -478,6 +478,8 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     <div
       ref={calendarRef}
       data-slot="calendar"
+      role="application"
+      aria-label={t('scheduling.calendarCanvasLabel')}
       inert={meta.disabled === true || undefined}
       aria-disabled={meta.disabled === true || undefined}
       data-disabled={meta.disabled === true ? 'true' : undefined}

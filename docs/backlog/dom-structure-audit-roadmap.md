@@ -24,7 +24,7 @@
 | W5 `flux-renderers-layout`（9 type，steps/timeline 单次注册）                   | done    | `docs/plans/2026-10-03-532-dom-structure-layout-plan.md`                  |
 | W6 `flux-renderers-content`（20 type）                                       | done    | `docs/plans/2026-10-03-533-dom-structure-content-plan.md`                 |
 | W7 `flux-renderers-mobile`（5 type）                                         | done    | `docs/plans/2026-10-03-534-dom-structure-mobile-plan.md`                  |
-| W8 `flux-renderers-scheduling`（4 type，canvas 密集）                        | planned | `docs/plans/2026-10-03-535-dom-structure-scheduling-plan.md`              |
+| W8 `flux-renderers-scheduling`（4 type，canvas 密集）                        | done    | `docs/plans/2026-10-03-535-dom-structure-scheduling-plan.md`              |
 | W9 `flux-renderers-ai`（14 type）                                            | planned | `docs/plans/2026-10-03-536-dom-structure-ai-plan.md`                      |
 
 ## Framework / Platform Reuse
