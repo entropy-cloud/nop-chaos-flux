@@ -59,7 +59,7 @@
 | W-B  | 设计器/编辑器 10 页全按钮遍历（每页含工具栏/右键/弹窗/模式切换全操作）                   | 10         | 2-3 会话 | 确认卡回填；P1 清零          |
 | W-C  | 渲染器演示页 27 路由（原 23 + 评审补入 gantt/kanban/scheduling-calendar/spreadsheet）    | 27         | 2 会话   | 确认卡回填；P1 清零          |
 | W-D  | AI 家族 14 页                                                                            | 14         | 1-2 会话 | 确认卡回填；P1 清零          |
-| W-E  | 性能/基建/实验 19 页                                                                     | 19         | 1 会话   | 确认卡回填；P1 清零          |
+| W-E  | 性能/基建/实验 27 页（18 表项，w 合并行含 10 页）                                        | 27         | 1 会话   | 确认卡回填；P1 清零          |
 | W-F  | 收尾：全量 P2/P3 尾册复核 + 本文档状态收口 + 提交                                        | —          | 0.5 会话 | 本文 §六 矩阵 100% 回填      |
 
 每页产出「确认卡」（回填 §六 矩阵）：页面 | 遍历日期 | 按钮总数/触发数 | 六查结论 | P1/P2/P3 清单 | 修复去向（当波修复 / 登记编号）。
@@ -203,26 +203,26 @@
 
 ### W-E 性能/基建/实验（27 页 = 18 表项，w 系列合并行含 10 页）
 
-| 页面                                                                                          | 状态   | 卡片 |
-| --------------------------------------------------------------------------------------------- | ------ | ---- |
-| performance-table                                                                             | 待执行 |      |
-| gantt-perf-scale                                                                              | 待执行 |      |
-| kanban-perf-scale                                                                             | 待执行 |      |
-| calendar-perf-scale                                                                           | 待执行 |      |
-| diff-perf-scale                                                                               | 待执行 |      |
-| scada-perf-scale                                                                              | 待执行 |      |
-| scada-pressure-demo                                                                           | 待执行 |      |
-| scada-demo                                                                                    | 待执行 |      |
-| scada-edge-cases                                                                              | 待执行 |      |
-| gantt-states                                                                                  | 待执行 |      |
-| m1-responsive                                                                                 | 待执行 |      |
-| m2-touch                                                                                      | 待执行 |      |
-| m3-layout                                                                                     | 待执行 |      |
-| m4-data                                                                                       | 待执行 |      |
-| m5-showcase                                                                                   | 待执行 |      |
-| barcode-input                                                                                 | 待执行 |      |
-| debugger-lab                                                                                  | 待执行 |      |
-| w1a-content / w1b-content / w2a / w2b / w3a-w3b / w3c / w3d / w4a / w4b / w4c（合并一行跟踪） | 待执行 |      |
+| 页面                     | 状态 | 卡片                                                                                                                                                                                                                                                                             |
+| ------------------------ | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| performance-table        | ✅   | Virtualized/Scope Read Stress/Full Stress 三形态切换全变 ✓（千行级 DOM，代表 性覆盖 1139 可点元素中 5）                                                                                                                                                                          |
+| gantt-perf-scale         | ✅   | 500 任务+2000 依赖渲染零错误；缩放变、任务组/今日（canvas 类 no-op）；watch-only 帧率在册不复测                                                                                                                                                                                  |
+| kanban-perf-scale        | ✅   | 20 列×300 卡渲染零错误；折叠列 ✓、拖拽列（拖拽类不实点）；watch-only 在册                                                                                                                                                                                                        |
+| calendar-perf-scale      | ✅   | 300 资源×31 天渲染零错误；上一个/今日/下一个全变 ✓                                                                                                                                                                                                                               |
+| diff-perf-scale          | ✅   | 1500+ 行 diff 渲染零错误；统一视图切换、折叠 4992 行展开全变 ✓                                                                                                                                                                                                                   |
+| scada-perf-scale         | ✅   | 基准测量页（10 万图元首屏/拖动 fps/内存）零错误；三基准档位按钮在位                                                                                                                                                                                                              |
+| scada-pressure-demo      | ✅   | 工艺流程大屏/高密度 10,000 图元双画面 tab（canvas 重渲染类 no-op）零错误                                                                                                                                                                                                         |
+| scada-demo               | ✅   | 设备控制钮组（启动/停止/故障/开/关/触发/复位）驱动 canvas 模拟状态（绘制类 no-op）；e2e 覆盖在册                                                                                                                                                                                 |
+| scada-edge-cases         | ✅   | 最小合法 config/空画面/非法 JSON/线多边形 hover/默认几何 fit 五边界入口全在位（e2e 覆盖）                                                                                                                                                                                        |
+| gantt-states             | ✅   | 缩放变、三状态任务（Late/Early/On Track）渲染、空/加载态（e2e 覆盖）                                                                                                                                                                                                             |
+| m1-responsive            | ✅   | 选择树弹层/Dialog/Drawer 弹层 ✓、下拉收展（响应式断点按口径不切视口）                                                                                                                                                                                                            |
+| m2-touch                 | ✅   | 触控目标≥44px 契约 demo：checkbox 组翻转 ✓、步进器（等长值变更类）                                                                                                                                                                                                               |
+| m3-layout                | ✅   | Tabbar 导航 toast ✓（navigate → /home 等）、返回键、全选                                                                                                                                                                                                                         |
+| m4-data                  | ✅   | 小屏工具简化 demo：折叠/Bulk Delete/Edit（等长/状态类 no-op 代表 性验证）                                                                                                                                                                                                        |
+| m5-showcase              | ✅   | 综合样例：Tabbar 四键、侧滑展开 ✓、订单/设置入口 ✓                                                                                                                                                                                                                               |
+| barcode-input            | ✅   | 扫描条码触发（摄像头实点按口径不实点）、主题选择                                                                                                                                                                                                                                 |
+| debugger-lab             | ✅   | 调试器 API 面板：Show/Hide/Toggle/Clear/Pause、overview/timeline 视图切换（状态类 no-op 代表 性覆盖 20 项中 7）                                                                                                                                                                  |
+| w1a-content / w1b-conten | ✅   | w 系列 10 页全通零错误：w1a JSON 折叠/复制；w1b spinner 隐藏/卡片；w2a 分页翻页 ✓；w2b 四类日期弹层 ✓；w3a-w3b 折叠面板/单选组；w3c 纯映射展示；w3d 富文本工具栏/季度选择（31 项代表 性覆盖）；w4a 轮播三控制+handle；w4b 步骤点击翻转 ✓；w4c combo 增删/上下移/input-table 步进 |
 
 ## 七、已知在册基线（执行时对照，不重复开卡）
 
