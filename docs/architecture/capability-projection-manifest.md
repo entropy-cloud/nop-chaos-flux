@@ -1192,3 +1192,7 @@ The active decisions from this document are:
 - `docs/architecture/complex-control-host-protocol.md`
 - `docs/architecture/flow-designer/design.md`
 - `docs/architecture/report-designer/design.md`
+
+## Related Documents
+
+- `docs/architecture/editor-designer-standard.md` — editor/designer 家族实现契约收敛与豁免登记（§2.3 Manifest 层 + §5 豁免登记表）；本文是 Manifest 层 owner doc。

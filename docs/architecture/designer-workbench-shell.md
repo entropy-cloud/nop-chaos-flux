@@ -174,3 +174,7 @@ Any workbench-shell implementation should converge on the following steps:
 3. Hide unavailable sides entirely.
 4. Render collapsed rails only for available sides.
 5. Keep the central surface visually primary on desktop and mobile.
+
+## Cross-Family Contract
+
+editor/designer 家族实现契约收敛与豁免登记（八层契约/正面/负面清单）见 `editor-designer-standard.md`（§2 Shell 层 + §5 豁免登记表 + family mapping 标定）；本文是 Shell 层 owner doc。

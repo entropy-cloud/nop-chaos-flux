@@ -176,3 +176,7 @@ operationKind?, coalesceGroup?)` 原语落栈（空栈等价 push、U6 截断 re
 - `flux-print-renderers`（P5 裁定）：**不在卸载 effect 中 dispose**；controller 随组件引用由 GC 回收，dispose 仅供测试显式调用（见 `print-designer.tsx` 注释与 `tests/e2e/print-designer.spec.ts` 回归守卫）。
 
 新消费者应在 StrictMode 宿主中采用 print 侧裁定。
+
+## 8. 跨家族契约
+
+editor/designer 家族实现契约收敛与豁免登记（八层契约/正面/负面清单）见 `editor-designer-standard.md`（§2 契约 + §5 豁免登记表）；本文是其会话内核层 owner doc。

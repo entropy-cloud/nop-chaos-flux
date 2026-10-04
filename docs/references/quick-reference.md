@@ -1025,3 +1025,18 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 | `@nop-chaos/page-designer-renderers` | React：palette-panel / canvas 真渲染+覆盖层（data-psid 锚点投影）/ inspector-panel（transient+commit 两段）/ structure-tree / json-source-view / page-designer-page                                                                                                                           |
 
 入口：`#/page-designer`（designer 分组，lazy import，自持 registry 仅 basic/form/layout 三家族——六域 opaque-leaf 不可展开）。契约权威：`docs/components/page-designer/design-architecture.md`（S1）。
+
+### Editor/Designer 八层契约（P5.1，plan 560）
+
+| 家族        | 会话内核                   | Shell        | Manifest  | statusPath | 档位         |
+| ----------- | -------------------------- | ------------ | --------- | ---------- | ------------ |
+| flow        | 自研 history（豁免①）      | ✓            | ✓         | ✓          | 豁免 2.1     |
+| page        | 隔离架构（豁免②）          | 豁免         | 豁免      | 豁免       | props 契约档 |
+| report      | editor-core                | ✓            | ✓         | ✓          | 参照合规     |
+| spreadsheet | editor-core                | ✓            | ✓         | ✓          | 参照合规     |
+| word        | canvas-editor 引擎         | ✓            | ✓         | ✓          | 引擎内 undo  |
+| scada       | editor-core（P1.1 facade） | ✓（P2.2）    | ✓（P3.1） | ✓（P3.3）  | 栈单源       |
+| dashboard   | editor-core                | ✓（P2.1 前） | ✓（P3.1） | ✓（P3.3）  | 合规         |
+| print       | editor-core（豁免②）       | 豁免         | 豁免      | 豁免       | props 契约档 |
+
+契约权威：`docs/architecture/editor-designer-standard.md`（§2 八层 + §5 豁免登记表）；守卫：`pnpm check:designer-conformance`（scripts/check-designer-conformance.mjs，新家族接入即检查）。
