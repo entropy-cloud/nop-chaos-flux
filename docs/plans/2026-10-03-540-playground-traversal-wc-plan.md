@@ -87,7 +87,7 @@ Exit Criteria:
 - [x] 受影响的 owner docs 已同步到 live baseline，或明确写明 No owner-doc update required（本波无代码变更，No owner-doc update required）
 - [x] 非平凡修复有 focused 测试或探针记录（event-prevention e2e 4/4 复证回退正确性）
 - [x] 不存在被静默降级的 in-scope live defect
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [x] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` / `pnpm check` 全绿
 
 ## Deferred But Adjudicated

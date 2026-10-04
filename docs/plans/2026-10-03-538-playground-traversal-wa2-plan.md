@@ -94,8 +94,8 @@ Targets: dev server 实机 + R13 roadmap + daily log
 
 - [x] 逐流实机复验（9 流）：standard-crud 新增（共 33→34 条 ✓）、master-detail 新增明细（SKU 子表 4→5 行 ✓）、approval-tasks 通过（待审批→已通过 ✓）+驳回（确认门→已驳回 ✓）、antdpro-list 新建（36→37 ✓）+删除（37→36 ✓）、linear-issues 新建问题（源总数 +1 ✓）+批量修改状态（ENG-101 待办→进行中，宿主列表实时翻转 ✓）、sundial-todo-dialog 添加待办（toast+状态翻转关闭 ✓）、sundial-workbench 添加待办（toast+关闭+计数 9→10 ✓——经 refreshSource 修复后计数契约首次真正生效；分组行为静态 schema 属页面设计，登记 P3 说明）
 - [x] 裁定登记：notion/airtable 多源同步保留理由、master-detail 自刷新、standard-crud confirmText/工具栏页面域刷新、审计范围外清单（详见 roadmap §六 W-A2 审计小节）
-- [ ] roadmap §六 追加 W-A2 审计小节（逐页 verdict）
-- [ ] 全量门禁（typecheck/build/lint/test/check）+ daily log
+- [x] roadmap §六 追加 W-A2 审计小节（逐页 verdict）
+- [x] 全量门禁（typecheck/build/lint/test/check）+ daily log
 
 Exit Criteria:
 
