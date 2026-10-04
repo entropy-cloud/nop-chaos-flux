@@ -1,3 +1,12 @@
+export {
+  REPORT_DESIGNER_DOMAIN_KIND,
+  REPORT_DESIGNER_COMMAND_TYPES,
+  hasReportDocChanges,
+  createReportDesignerDomainAdapter,
+  registerReportDesignerDomain,
+  isReportDesignerCommand as isReportDesignerDomainCommand,
+} from './editor-core-adapter.js';
+
 export type {
   ReportDesignerHostStatusSummary,
   ReportSelectionTargetKind,

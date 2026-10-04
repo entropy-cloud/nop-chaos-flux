@@ -27,7 +27,6 @@ import {
 } from '@nop-chaos/spreadsheet-renderers';
 import type {
   ReportDesignerCommand,
-  ReportDesignerCommandResult,
   ReportDesignerAdapterRegistry,
   ReportDesignerConfig,
   ReportDesignerCore,
@@ -297,21 +296,15 @@ export function ReportDesignerPageRenderer(
         profile: resolvedProfile,
         adapters: resolvedAdapters ?? createEmptyAdapterRegistry(),
         readonly: readOnly,
+        // P1.3（plan 548）：save 级联经标准 onCommitted 回调注入（替代 dispatch 包装内
+        // 的手工命令类型匹配）。
+        onCommitted: () => spreadsheetCore.acceptCurrentDocumentAsSaved(),
       }),
-    [resolvedAdapters, resolvedDesigner, resolvedDocument, resolvedProfile, readOnly],
+    [resolvedAdapters, resolvedDesigner, resolvedDocument, resolvedProfile, readOnly, spreadsheetCore],
   );
   const reportDesignerProvider = useMemo(
-    () =>
-      createReportDesignerActionProvider(
-        async (command: ReportDesignerCommand) => {
-          const result = (await core.dispatch(command)) as ReportDesignerCommandResult;
-          if (command.type === 'report-designer:save' && result.ok && !result.cancelled) {
-            spreadsheetCore.acceptCurrentDocumentAsSaved();
-          }
-          return result;
-        },
-      ),
-    [core, spreadsheetCore],
+    () => createReportDesignerActionProvider((command: ReportDesignerCommand) => core.dispatch(command)),
+    [core],
   );
   const actionScope = useCurrentActionScope();
 

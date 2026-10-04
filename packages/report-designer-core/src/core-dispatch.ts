@@ -34,8 +34,8 @@ export interface ReportDesignerInternalState {
     lastResult?: unknown;
   };
   readonly: boolean;
-  undoStack: ReportTemplateDocument[];
-  redoStack: ReportTemplateDocument[];
+  /** P1.3（plan 548）：undo/redo 栈单源 editor-core（快照对 entry，操作时点语义见 history 处理）。 */
+  undo: import('@nop-chaos/editor-core').UndoCommandStack<ReportTemplateDocument>;
 }
 
 export interface DispatchContext {
@@ -55,6 +55,10 @@ export interface DispatchContext {
   refreshDerivedState: () => Promise<unknown>;
   setSelectionTarget: (target?: ReportSelectionTarget) => Promise<void>;
   pushUndoEntry: (current: ReportDesignerInternalState) => Partial<ReportDesignerInternalState>;
+  /** P1.3：save 成功后的标准提交回调（可选；异常在 dispatch 侧隔离）。 */
+  onCommitted?: (result: ReportDesignerCommandResult) => void;
+  /** P1.3：onCommitted 异常上报通道（宿主 onError 透传）。 */
+  onError?: (error: unknown, context: { phase: 'refresh-derived-state'; selectionTarget?: import('./types.js').ReportSelectionTarget }) => void;
   startPreviewRun: () => { requestId: number; signal: AbortSignal };
   cancelPreviewRun: () => void;
   isCurrentPreviewRun: (requestId: number) => boolean;
@@ -286,19 +290,24 @@ export async function dispatchReportDesignerCommand(
       }
 
       case 'report-designer:undo': {
+        // P1.3（plan 548）：栈单源 editor-core；操作时点语义与旧数组实现一致——
+        // 恢复目标 = entry.inverse（入栈前文档），对侧 redo entry 以 undo 时点文档重建。
         const current = store.getState();
-        if (current.undoStack.length === 0) {
+        const entry = current.undo.peekUndo();
+        if (!entry) {
           return { ok: false, changed: false, error: t('flux.reportDesigner.nothingToUndo') };
         }
-        const undoStack = [...current.undoStack];
-        const prevDocument = undoStack.pop()!;
-        const redoStack = [...current.redoStack, current.document];
+        const prevDocument = entry.inverse;
+        current.undo.popUndo();
+        current.undo.pushRedo({
+          forward: current.document,
+          inverse: prevDocument,
+          timestamp: Date.now(),
+        });
         store.setState((s) => ({
           ...s,
           document: prevDocument,
           spreadsheetSyncSource: undefined,
-          undoStack,
-          redoStack,
         }));
         await ctx.refreshDerivedState();
         return { ok: true, changed: true };
@@ -306,18 +315,21 @@ export async function dispatchReportDesignerCommand(
 
       case 'report-designer:redo': {
         const current = store.getState();
-        if (current.redoStack.length === 0) {
+        const entry = current.undo.peekRedo();
+        if (!entry) {
           return { ok: false, changed: false, error: t('flux.reportDesigner.nothingToRedo') };
         }
-        const redoStack = [...current.redoStack];
-        const nextDocument = redoStack.pop()!;
-        const undoStack = [...current.undoStack, current.document];
+        const nextDocument = entry.forward;
+        current.undo.popRedo();
+        current.undo.pushUndo({
+          forward: nextDocument,
+          inverse: current.document,
+          timestamp: Date.now(),
+        });
         store.setState((s) => ({
           ...s,
           document: nextDocument,
           spreadsheetSyncSource: undefined,
-          undoStack,
-          redoStack,
         }));
         await ctx.refreshDerivedState();
         return { ok: true, changed: true };
@@ -330,7 +342,17 @@ export async function dispatchReportDesignerCommand(
           ...state,
           savedDocument: current.document,
         }));
-        return { ok: true, changed: false, data: exported };
+        const result: ReportDesignerCommandResult = { ok: true, changed: false, data: exported };
+        // onCommitted（P1.3）：save 成功后的标准提交回调（替代宿主 dispatch 包装内的手工级联）。
+        // 异常隔离：回调抛错不影响 save 结果本身（经 onError 通道上报）。
+        if (ctx.onCommitted) {
+          try {
+            ctx.onCommitted(result);
+          } catch (error) {
+            ctx.onError?.(error, { phase: 'refresh-derived-state' });
+          }
+        }
+        return result;
       }
 
       default:

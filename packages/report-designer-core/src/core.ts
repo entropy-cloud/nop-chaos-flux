@@ -1,4 +1,5 @@
 import { createStore } from 'zustand/vanilla';
+import { UndoCommandStack } from '@nop-chaos/editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import type {
   ReportDesignerConfig,
@@ -53,6 +54,13 @@ export interface CreateReportDesignerCoreOptions {
   profile?: ReportDesignerProfile;
   readonly?: boolean;
   onError?: (error: unknown, context: { phase: 'refresh-derived-state'; selectionTarget?: ReportSelectionTarget }) => void;
+  /**
+   * 提交策略回调（P1.3，plan 548；editor-core.md §2.3 形状映射）：`report-designer:save`
+   * 成功（ok 且非 cancelled）后触发，实参为 save 命令的 `ReportDesignerCommandResult`
+   * （含 `data: ReportTemplateDocument`，非 editor-core serialized string）。回调异常经隔离，
+   * 不影响 save 命令结果。
+   */
+  onCommitted?: (result: ReportDesignerCommandResult) => void;
 }
 
 function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntimeSnapshot {
@@ -71,8 +79,8 @@ function buildSnapshot(state: ReportDesignerInternalState): ReportDesignerRuntim
     fieldSources: state.fieldSources,
     fieldDrag: state.fieldDrag,
     preview: state.preview,
-    canUndo: state.undoStack.length > 0,
-    canRedo: state.redoStack.length > 0,
+    canUndo: state.undo.canUndo,
+    canRedo: state.undo.canRedo,
   };
 }
 
@@ -118,8 +126,9 @@ export function createReportDesignerCore(
     fieldDrag: { active: false },
     preview: { running: false },
     readonly: isReadonly,
-    undoStack: [],
-    redoStack: [],
+    // P1.3（plan 548）：undo/redo 栈单源 editor-core（快照对 entry，同 P1.2 裁定：
+    // inverse=undo 恢复目标 / forward=redo 恢复目标；undo/redo 以操作时点文档重建对侧 entry）。
+    undo: new UndoCommandStack<ReportTemplateDocument>(config.maxUndoDepth ?? 50),
   }));
   let cachedState = store.getState();
   let cachedSnapshot = buildSnapshot(cachedState);
@@ -316,10 +325,14 @@ export function createReportDesignerCore(
   function pushUndoEntry(
     current: ReportDesignerInternalState,
   ): Partial<ReportDesignerInternalState> {
-    const maxDepth = config.maxUndoDepth ?? 50;
-    const undoStack = [...current.undoStack, current.document];
-    if (undoStack.length > maxDepth) undoStack.shift();
-    return { undoStack, redoStack: [] };
+    // 快照对 entry：inverse=当前文档（undo 恢复目标）、forward=当前文档（快照即自逆 diff，
+    // forward 不作为 redo 恢复目标消费——redo/undo 以操作时点文档重建对侧 entry）。
+    current.undo.push({
+      forward: current.document,
+      inverse: current.document,
+      timestamp: Date.now(),
+    });
+    return {};
   }
 
   function applyDocumentChange(nextDocument: ReportTemplateDocument): boolean {
@@ -352,6 +365,8 @@ export function createReportDesignerCore(
     startPreviewRun,
     cancelPreviewRun,
     isCurrentPreviewRun,
+    onCommitted: options.onCommitted,
+    onError: options.onError,
   };
 
   const MUTATION_COMMAND_TYPES = new Set([
