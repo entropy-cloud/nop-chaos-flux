@@ -31,7 +31,10 @@ describe('industrialEditorRendererDefinitions (E5.1 完整 fields)', () => {
       commitPolicy: 'manual',
     });
     expect(def.component).toBe(ScadaEditorCanvasRenderer);
-    expect(def.rendererClass).toBe('instance-renderer');
+    // P3.1（plan 552，review M2）：host 家族 manifest 挂接须配 domain-host-renderer 分类
+    //（capability-projection-manifest.md Scope：仅 domain-host-renderer 定义 hostContract）。
+    expect(def.rendererClass).toBe('domain-host-renderer');
+    expect(def.hostContract?.family).toBe('scada-editor');
   });
 
   it('scada-editor-canvas complete fields registered (E5.1: props + regions + events whole-object)', () => {

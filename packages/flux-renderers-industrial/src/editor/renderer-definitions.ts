@@ -1,5 +1,6 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { ScadaEditorCanvasRenderer } from './scada-editor-canvas.js';
+import { scadaEditorHostContract } from './scada-editor-manifest.js';
 
 /**
  * `scada-editor-canvas` renderer 定义（E5.1 完整 fields，design-renderer.md §4.3 D-1 裁定）。
@@ -25,8 +26,9 @@ export const industrialEditorRendererDefinitions: RendererDefinition[] = [
       mode: 'edit',
       commitPolicy: 'manual',
     },
-    rendererClass: 'instance-renderer',
+    rendererClass: 'domain-host-renderer',
     component: ScadaEditorCanvasRenderer,
+    hostContract: scadaEditorHostContract,
     propContracts: {
       config: {
         shape: { kind: 'unknown' },

@@ -11,6 +11,12 @@ export { dashboardRendererDefinition } from './dashboard-definitions.js';
 export { DashboardEditorRenderer } from './editor/dashboard-editor-renderer.js';
 export { dashboardEditorRendererDefinition } from './editor/dashboard-editor-definitions.js';
 export {
+  DASHBOARD_EDITOR_MANIFEST_V1,
+  DASHBOARD_EDITOR_COMMAND_TYPES,
+  resolveDashboardEditorManifest,
+  dashboardEditorHostContract,
+} from './editor/dashboard-editor-manifest.js';
+export {
   panelToPixels,
   snapToGrid,
   clampPanelPosition,

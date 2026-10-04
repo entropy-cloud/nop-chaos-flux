@@ -285,6 +285,8 @@ The host may internally keep a richer snapshot and publish only a trimmed projec
 
 The capability contract declares the namespaced methods schema may dispatch.
 
+An **empty methods map is a valid namespace reservation** when a host's capability surface lives on component handles rather than family namespaced actions (P3.1, plan 552: `dashboard-editor` / `scada-editor` reserve their family namespaces this way); only declared methods are stable contract.
+
 Examples:
 
 - `designer:addNode`

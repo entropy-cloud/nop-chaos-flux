@@ -1,5 +1,6 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { DashboardEditorRenderer } from './dashboard-editor-renderer.js';
+import { dashboardEditorHostContract } from './dashboard-editor-manifest.js';
 
 /** dashboard editor renderer definition（编辑态：palette/canvas/inspector + editor-core 会话）。 */
 export const dashboardEditorRendererDefinition: RendererDefinition = {
@@ -7,7 +8,9 @@ export const dashboardEditorRendererDefinition: RendererDefinition = {
   displayName: 'Dashboard Editor',
   category: 'layout',
   sourcePackage: '@nop-chaos/flux-renderers-dashboard',
+  rendererClass: 'domain-host-renderer',
   component: DashboardEditorRenderer,
+  hostContract: dashboardEditorHostContract,
   propContracts: {
     layout: {
       shape: { kind: 'unknown' },

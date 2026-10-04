@@ -34,6 +34,12 @@ export type { PreviewInjectionSurface, PreviewDataInjectorOptions } from './prev
  */
 export { industrialEditorRendererDefinitions } from './renderer-definitions.js';
 export {
+  SCADA_EDITOR_MANIFEST_V1,
+  SCADA_EDITOR_MANIFEST_COMMAND_TYPES,
+  resolveScadaEditorManifest,
+  scadaEditorHostContract,
+} from './scada-editor-manifest.js';
+export {
   SCADA_EDITOR_DOMAIN_KIND,
   SCADA_EDITOR_DOMAIN_COMMANDS,
   hasScadaDiffChanges,
