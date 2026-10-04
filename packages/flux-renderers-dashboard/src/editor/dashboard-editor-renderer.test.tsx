@@ -390,3 +390,83 @@ describe('Inspector props JSON apply — invalid JSON inline feedback (G3-视角
     expect((screen.getByTestId('inspector-props') as HTMLTextAreaElement).value).not.toBe('broken');
   });
 });
+
+describe('DashboardEditorRenderer session/mode events (P3.2)', () => {
+  it('dispatches dashboard-editor:sessionChange with the full session summary on change', () => {
+    const dispatch = vi.fn();
+    const SchemaRenderer = createDashboardSchemaRenderer([], createSpiedEditorDefinition(dispatch));
+    render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/editor-session-change"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dashboard-editor',
+              layout: initialLayout,
+              onSessionChange: { action: 'noop', args: {} },
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    // initial snapshot after core creation + one per mutation
+    const sessionCalls = () =>
+      dispatch.mock.calls.filter((call) => {
+        const event = (call[1] as { event?: { type?: string } } | undefined)?.event;
+        return event?.type === 'dashboard-editor:sessionChange';
+      });
+    expect(sessionCalls().length).toBeGreaterThanOrEqual(1);
+
+    fireEvent.click(screen.getByTestId('palette-chart'));
+    const calls = sessionCalls();
+    expect(calls.length).toBeGreaterThanOrEqual(2);
+    const payload = (calls[calls.length - 1]![1] as { event?: Record<string, unknown> }).event as {
+      canUndo: boolean;
+      canRedo: boolean;
+      dirty: boolean;
+      selection: string[];
+      mode: string;
+    };
+    expect(payload.canUndo).toBe(true);
+    expect(payload.dirty).toBe(true);
+    expect(payload.mode).toBe('edit');
+    expect(Array.isArray(payload.selection)).toBe(true);
+  });
+
+  it('dispatches dashboard-editor:modeChange on edit/preview toggle', () => {
+    const dispatch = vi.fn();
+    const SchemaRenderer = createDashboardSchemaRenderer([], createSpiedEditorDefinition(dispatch));
+    render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/editor-mode-change"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dashboard-editor',
+              layout: initialLayout,
+              onModeChange: { action: 'noop', args: {} },
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('editor-mode-toggle'));
+    const modeCalls = dispatch.mock.calls.filter((call) => {
+      const event = (call[1] as { event?: { type?: string } } | undefined)?.event;
+      return event?.type === 'dashboard-editor:modeChange';
+    });
+    expect(modeCalls.length).toBe(1);
+    const payload = (modeCalls[0]![1] as { event?: { mode?: string } }).event as { mode: string };
+    expect(payload.mode).toBe('preview');
+  });
+});

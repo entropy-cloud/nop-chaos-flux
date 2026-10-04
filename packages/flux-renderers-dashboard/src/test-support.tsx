@@ -83,6 +83,8 @@ const dashboardEditorDefinitionForTest: RendererDefinition = {
     { key: 'commitPolicy', kind: 'prop' },
     { key: 'onSave', kind: 'event' },
     { key: 'onError', kind: 'event' },
+    { key: 'onSessionChange', kind: 'event' },
+    { key: 'onModeChange', kind: 'event' },
   ],
 };
 
@@ -161,6 +163,8 @@ export function createSpiedEditorDefinition(
       { key: 'commitPolicy', kind: 'prop' },
       { key: 'onSave', kind: 'event' },
       { key: 'onError', kind: 'event' },
+      { key: 'onSessionChange', kind: 'event' },
+      { key: 'onModeChange', kind: 'event' },
     ],
   };
 }

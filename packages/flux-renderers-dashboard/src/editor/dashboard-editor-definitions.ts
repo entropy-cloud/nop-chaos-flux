@@ -93,6 +93,32 @@ export const dashboardEditorRendererDefinition: RendererDefinition = {
         },
       },
     },
+    onSessionChange: {
+      displayName: 'Session Change',
+      description:
+        'Dispatched as dashboard-editor:sessionChange on any session notify (P3.2 minimal event set). Payload: session summary.',
+      payload: {
+        kind: 'object',
+        fields: {
+          canUndo: { kind: 'boolean' },
+          canRedo: { kind: 'boolean' },
+          dirty: { kind: 'boolean' },
+          selection: { kind: 'array', item: { kind: 'string' } },
+          mode: { kind: 'string' },
+        },
+      },
+    },
+    onModeChange: {
+      displayName: 'Mode Change',
+      description:
+        'Dispatched as dashboard-editor:modeChange when the editor switches edit/preview (P3.2). Payload: { mode }.',
+      payload: {
+        kind: 'object',
+        fields: {
+          mode: { kind: 'string' },
+        },
+      },
+    },
   },
   fields: [
     { key: 'layout', kind: 'prop' },
@@ -104,5 +130,7 @@ export const dashboardEditorRendererDefinition: RendererDefinition = {
     { key: 'commitPolicy', kind: 'prop' },
     { key: 'onSave', kind: 'event' },
     { key: 'onError', kind: 'event' },
+    { key: 'onSessionChange', kind: 'event' },
+    { key: 'onModeChange', kind: 'event' },
   ],
 };

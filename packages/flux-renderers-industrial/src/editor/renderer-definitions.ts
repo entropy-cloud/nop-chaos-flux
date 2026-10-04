@@ -148,11 +148,15 @@ export const industrialEditorRendererDefinitions: RendererDefinition[] = [
       },
       onSave: {
         displayName: 'Save',
-        description: 'Fires on manual save; payload contains the serialized config (scada-editor:save).',
+        description: 'Fires on manual save (scada-editor:save). P3.2: payload key unified to `serialized`; `serializedConfig` is the deprecated compat key (one version).',
         payload: {
           kind: 'object',
           fields: {
-            serializedConfig: { kind: 'string' },
+            serialized: { kind: 'string', description: 'Serialized config JSON (primary, P3.2 裁决③).' },
+            serializedConfig: {
+              kind: 'string',
+              description: 'Deprecated compat alias of `serialized` (one version; same value).',
+            },
           },
         },
       },

@@ -4,7 +4,6 @@ import {
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
-import type { SavedDocumentData } from '@nop-chaos/word-editor-core';
 import { wordEditorHostContract } from './word-editor-manifest.js';
 import type { WordEditorPageSchema } from './types.js';
 import { WordEditorPage } from './word-editor-page.js';
@@ -28,16 +27,16 @@ const wordEditorPanelConfigShape = {
   optional: ['generator'],
 };
 
+// P3.2（plan 553，裁决③）：payload 统一 `serialized` primary；旧 SavedDocumentData 三顶层键
+// 保留一版兼容读（description 注记 deprecated；FluxValueShape 无结构化 deprecated 标志）。
 const savedDocumentDataShape = {
   kind: 'object' as const,
   fields: {
-    data: { kind: 'object' as const, fields: {} },
-    paperSettings: { kind: 'object' as const, fields: {} },
-    savedAt: { kind: 'string' as const },
+    serialized: { kind: 'string' as const, description: 'Serialized document JSON (primary, P3.2 裁决③).' },
+    data: { kind: 'object' as const, fields: {}, description: 'Deprecated compat: saved document object (one version).' },
+    paperSettings: { kind: 'object' as const, fields: {}, description: 'Deprecated compat: paper settings (one version).' },
+    savedAt: { kind: 'string' as const, description: 'Deprecated compat: save timestamp (one version).' },
   },
-} satisfies {
-  kind: 'object';
-  fields: Record<keyof SavedDocumentData, unknown>;
 };
 
 export const wordEditorRendererDefinitions: RendererDefinition[] = [

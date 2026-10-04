@@ -65,6 +65,8 @@ interface DashboardEditorSchema extends BaseSchema {
   commitPolicy?: 'manual' | 'auto';
   onSave?: ActionSchema; // dashboard-editor:save { serialized }
   onError?: ActionSchema; // dashboard-editor:error { code, message }
+  onSessionChange?: ActionSchema; // dashboard-editor:sessionChange { canUndo, canRedo, dirty, selection, mode }（P3.2 最小事件集）
+  onModeChange?: ActionSchema; // dashboard-editor:modeChange { mode }（P3.2 最小事件集；真实模式迁移时派发）
 }
 ```
 

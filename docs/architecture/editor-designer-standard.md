@@ -54,6 +54,8 @@
 - **save 事件 payload 统一 `{ serialized: string }`**（family 序列化文档的 JSON 字符串）。
 - 最小事件集 = `ready` / `error` / `sessionChange` / `save`；`selectionChange`/`modeChange`/`load` 按需补充，一旦补充须入 eventContracts。
 - **禁用裸 DOM `CustomEvent` 作宿主契约**；测试专用通道（如 `nop-designer:test-*` window 事件）须在本家族文档或 eventContracts 处显式豁免声明，不得无声存在。
+- **最小事件集适用性（P3.2 裁决③适用性澄清，非豁免）**：最小事件集治理**推送型**事件面。pull 型家族（flow/spreadsheet/report——save 走 §2.5 命令面）经 capability（save）+ §2.4 statusPath（ready=busy/idle、error）满足，不强制新增推送事件；word 为混合型判例（save 经 `word-editor:save` 命令面触发后经 onSave 推送回执）。`sessionChange` payload 词汇：至少含 `{canUndo, canRedo, selection, mode}`（scada 现状），可含家族会话摘要附加键（dashboard 另含 `dirty`——EditorSessionState 直出，additive 方向）。
+- **save payload 键迁移纪律（裁决③落地注）**：键迁移须留一个版本兼容读（旧键保留/双键同值，description 注记 deprecated）+ dev log 声明；旧键删除归后续治理轮。
 - 验收观测点：eventContracts 声明的事件名/ payload 形状与实际 dispatch 一致；全仓 `new CustomEvent(` 在 renderer 包内无未豁免命中。
 
 ### 2.7 注册与元数据（MUST / SHOULD 分档）

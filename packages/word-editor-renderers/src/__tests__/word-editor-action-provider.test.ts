@@ -132,7 +132,16 @@ describe('createWordEditorActionProvider', () => {
     const result = await provider.invoke('save', undefined, {} as ActionContext);
 
     expect(result.ok).toBe(true);
-    expect(saveEvent).toHaveBeenCalledWith(savedDocument, expect.anything());
+    // P3.2（plan 553）：事件 payload = { serialized, ...SavedDocumentData 兼容键 }（旧键一版兼容读）。
+    expect(saveEvent).toHaveBeenCalledWith(
+      {
+        serialized: JSON.stringify(savedDocument.data),
+        data: savedDocument.data,
+        paperSettings: savedDocument.paperSettings,
+        savedAt: savedDocument.savedAt,
+      },
+      expect.anything(),
+    );
     expect(editorStore.setDirty).toHaveBeenCalledWith(false);
     expect(onDocumentSaved).toHaveBeenCalledWith(savedDocument);
     const { persistSavedDocument } = await import('@nop-chaos/word-editor-core');

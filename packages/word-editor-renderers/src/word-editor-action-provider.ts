@@ -12,6 +12,7 @@ import type {
   DocCode,
   EditorStoreApi,
   PaperSettings,
+  WordDocument,
   SavedDocumentData,
 } from '@nop-chaos/word-editor-core';
 import {
@@ -78,7 +79,16 @@ export function createWordEditorActionProvider(input: {
   datasetStore: DatasetStoreApi;
   getPaperSettings(): PaperSettings;
   saveEvent?:
-    | ((event?: SavedDocumentData, ctx?: Partial<ActionContext>) => Promise<ActionResult>)
+    | ((
+        event?: {
+          /** Serialized document JSON（P3.2 裁决③ primary）。 */
+          serialized: string;
+          data: WordDocument;
+          paperSettings: PaperSettings;
+          savedAt: string;
+        },
+        ctx?: Partial<ActionContext>,
+      ) => Promise<ActionResult>)
     | undefined;
   onDocumentSaved?: (saved: SavedDocumentData) => void;
 }): ActionNamespaceProvider {
@@ -106,7 +116,15 @@ export function createWordEditorActionProvider(input: {
               );
             }
             if (input.saveEvent) {
-              const result = await input.saveEvent(saved, ctx);
+              // P3.2（plan 553，裁决③）：save payload 统一 `{ serialized }` primary；
+              // 旧 SavedDocumentData 三顶层键（data/paperSettings/savedAt）逐一保留一版兼容读。
+              const payload = {
+                serialized: JSON.stringify(saved.data),
+                data: saved.data,
+                paperSettings: saved.paperSettings,
+                savedAt: saved.savedAt,
+              };
+              const result = await input.saveEvent(payload, ctx);
               if (!result.ok) {
                 return result;
               }

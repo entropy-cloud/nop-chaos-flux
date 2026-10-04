@@ -172,12 +172,25 @@ describe('WordEditorPage host scope', () => {
       },
       optional: ['nativeEvent', 'currentTarget', 'target'],
     });
+    // P3.2（plan 553，裁决③）：payload 统一 serialized primary + 旧三键一版兼容读。
     expect(definition?.eventContracts?.onSave?.payload).toEqual({
       kind: 'object',
       fields: {
-        data: { kind: 'object', fields: {} },
-        paperSettings: { kind: 'object', fields: {} },
-        savedAt: { kind: 'string' },
+        serialized: { kind: 'string', description: 'Serialized document JSON (primary, P3.2 裁决③).' },
+        data: {
+          kind: 'object',
+          fields: {},
+          description: 'Deprecated compat: saved document object (one version).',
+        },
+        paperSettings: {
+          kind: 'object',
+          fields: {},
+          description: 'Deprecated compat: paper settings (one version).',
+        },
+        savedAt: {
+          kind: 'string',
+          description: 'Deprecated compat: save timestamp (one version).',
+        },
       },
     });
   });

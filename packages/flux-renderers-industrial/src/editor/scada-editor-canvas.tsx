@@ -167,9 +167,10 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // plan 2026-08-07-1835-2 Phase 2 / multi P1-04：save 经 runtime-mutators save() → latest.onSave
   // 触发此处 → 派发 scada-editor:save schema 事件（payload=serializedConfig）。此前 schema 声明 onSave 但 0 dispatch。
   const handleSave = (serializedConfig: string) => {
+    // P3.2（plan 553）：save payload 统一 `{ serialized }`（裁决③）；serializedConfig 旧键一版兼容读。
     dispatchEvent(
       'scada-editor:save',
-      { serializedConfig },
+      { serialized: serializedConfig, serializedConfig },
       eventsRef.current?.onSave,
     );
   };

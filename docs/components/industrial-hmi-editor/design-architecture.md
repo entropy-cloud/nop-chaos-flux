@@ -342,7 +342,7 @@ interface ScadaEditorSession {
 ### 8.1 架构层 schema 级事件（完整契约属 E2.6）
 
 - `onSessionChange`：编辑会话组态变更（每次编辑操作入栈后派发，载荷含 canUndo/canRedo/selection 等）；
-- `onSave`：提交（保存）触发，载荷含 serializedConfig（string）；
+- `onSave`：提交（保存）触发，载荷 `{ serialized: string }`（P3.2 裁决③统一键；`serializedConfig` 旧键一版兼容读，同值）；
 - `onLoad`：加载外部 config 装入编辑会话；
 - `onModeChange`：模式切换（edit ↔ preview），载荷含 mode；
 - `onSelectionChange`：选中变化（载荷含 listNodeIds）。

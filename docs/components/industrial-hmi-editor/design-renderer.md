@@ -94,7 +94,7 @@ interface ScadaEditorCanvasSchema extends BaseSchema {
 interface ScadaEditorCanvasEvents {
   /** 编辑会话组态变更（每次编辑操作入栈后派发，载荷含 canUndo/canRedo/selection/mode） */
   onSessionChange?: ActionSchema;
-  /** 提交（保存）：编辑会话组态 → 经 config 同步链触发下游 scada-canvas 重建（载荷含 serializedConfig: string） */
+  /** 提交（保存）：编辑会话组态 → 经 config 同步链触发下游 scada-canvas 重建（载荷 { serialized: string }，P3.2 统一键；serializedConfig 旧键一版兼容） */
   onSave?: ActionSchema;
   /** 加载：外部 config 装入编辑会话（替换 working copy + 重置 undo/redo 栈） */
   onLoad?: ActionSchema;
@@ -146,10 +146,10 @@ interface ScadaEditorCanvasEvents {
 
 ### 4.5 提交语义（save/load，对齐 design-architecture.md §4.5）
 
-| commitPolicy     | 触发                                                     | 路径                                                                                                                                                                                                                                                                                                            |
-| ---------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `manual`（缺省） | 用户显式调用 `component:save()` 句柄                     | working copy → `serializeScadaConfig(workingConfig)` → 经 `props.events.onSave` 派发（载荷含 serializedConfig）或上层 host 写回源（如服务端 / localStorage）→ 触发 `scada-canvas` props.config 变化 → `diffScadaConfig(committedBaseline, workingConfig)` → `engine.applyDiff` 增量应用                         |
-| `auto`           | 每次编辑操作后 notifySession（onSessionChange 派发时机） | 同 manual 路径，但每次变更即 save+onSave（编辑即持久化）。**实现（plan 2026-08-07-1835-2 Phase 2 / P1-05 方案 A）**：`notifySession` 在 `commitPolicy='auto'` 且非事务期（`undoRedo.isInTransaction=false`）时触发 `ctx.save()`；transform 拖拽逐帧由 `commitTransaction` 的 notifySession 兜底（防逐帧序列化） |
+| commitPolicy     | 触发                                                     | 路径                                                                                                                                                                                                                                                                                                                              |
+| ---------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `manual`（缺省） | 用户显式调用 `component:save()` 句柄                     | working copy → `serializeScadaConfig(workingConfig)` → 经 `props.events.onSave` 派发（载荷 `{ serialized }`，P3.2 统一键；serializedConfig 旧键一版兼容）或上层 host 写回源（如服务端 / localStorage）→ 触发 `scada-canvas` props.config 变化 → `diffScadaConfig(committedBaseline, workingConfig)` → `engine.applyDiff` 增量应用 |
+| `auto`           | 每次编辑操作后 notifySession（onSessionChange 派发时机） | 同 manual 路径，但每次变更即 save+onSave（编辑即持久化）。**实现（plan 2026-08-07-1835-2 Phase 2 / P1-05 方案 A）**：`notifySession` 在 `commitPolicy='auto'` 且非事务期（`undoRedo.isInTransaction=false`）时触发 `ctx.save()`；transform 拖拽逐帧由 `commitTransaction` 的 notifySession 兜底（防逐帧序列化）                   |
 
 `component:load(config)` 句柄替换 working copy + 重置 undo/redo 栈（design-undo-redo.md §8.2）+ 派发 `scada-editor:load`（payload=parsed config，host `events.onLoad` 接收，plan 2026-08-07-1835-2 Phase 2 / P1-04）；`component:exportConfig()` 导出 working copy 序列化结果（不修改 committedBaseline）。
 
@@ -208,7 +208,7 @@ interface ScadaEditorCanvasEvents {
 ### 8.1 schema 级事件（props.events）
 
 - `onSessionChange`：编辑会话组态变更（载荷 `{ canUndo, canRedo, selection: string[], mode }`）；
-- `onSave`：提交（载荷 `{ serializedConfig: string }`）；
+- `onSave`：提交（载荷 `{ serialized: string }`，P3.2 裁决③统一键；`serializedConfig` 旧键一版兼容读）；
 - `onLoad`：加载外部 config 装入编辑会话；
 - `onModeChange`：模式切换（载荷 `{ mode }`）；
 - `onSelectionChange`：选中变化（载荷 `{ listNodeIds: string[] }`）；

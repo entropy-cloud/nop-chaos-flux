@@ -115,7 +115,7 @@ function invokeSync(
 }
 
 describe('P1-04 scada-editor:save / load dispatch (contract wiring)', () => {
-  it('save() dispatches scada-editor:save with serializedConfig payload', async () => {
+  it('save() dispatches scada-editor:save with serialized payload (P3.2: serialized primary + serializedConfig compat)', async () => {
     const dispatch = vi.fn();
     const { container } = renderSpiedEditor(dispatch, {
       events: { onSave: { action: 'noop', args: {} } },
@@ -130,7 +130,10 @@ describe('P1-04 scada-editor:save / load dispatch (contract wiring)', () => {
       const ev = (c[1] as { event?: { type?: string } } | undefined)?.event;
       return ev?.type === 'scada-editor:save';
     });
-    expect((saveCall![1] as { event?: { serializedConfig?: string } }).event?.serializedConfig).toContain('editor-rect');
+    const event = (saveCall![1] as { event?: { serialized?: string; serializedConfig?: string } }).event;
+    // P3.2（plan 553）：新键 primary；旧键一版兼容读（双键同值）。
+    expect(event?.serialized).toContain('editor-rect');
+    expect(event?.serializedConfig).toBe(event?.serialized);
   });
 
   it('load() dispatches scada-editor:load with parsed config payload', async () => {

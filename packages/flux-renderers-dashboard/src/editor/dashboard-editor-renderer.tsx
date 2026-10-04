@@ -162,6 +162,37 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
 
   const session = useEditorCoreSession(core);
 
+  // P3.2（plan 553）：sessionChange/modeChange 推送事件（裁决③最小事件集对齐）。
+  // effect 内 core 守卫（core 建立后的首次快照派发一次初始 sessionChange——挂载时派发为裁定行为）；
+  // session 为逐 notify 新对象（buildSnapshot），值驱动派发。payload = EditorSessionState 全量会话摘要。
+  useEffect(() => {
+    if (!core) return;
+    dispatchEventRef.current(
+      'dashboard-editor:sessionChange',
+      {
+        canUndo: session.canUndo,
+        canRedo: session.canRedo,
+        dirty: session.dirty,
+        selection: [...session.selection],
+        mode: session.mode,
+      },
+      eventsRef.current?.onSessionChange,
+    );
+  });
+  const lastModeRef = useRef<EditorMode | null>(null);
+  useEffect(() => {
+    if (!core) return;
+    // 仅真实模式迁移派发（挂载快照不派发 modeChange——与 sessionChange 的挂载派发裁定区分）。
+    if (lastModeRef.current !== null && lastModeRef.current !== session.mode) {
+      dispatchEventRef.current(
+        'dashboard-editor:modeChange',
+        { mode: session.mode },
+        eventsRef.current?.onModeChange,
+      );
+    }
+    lastModeRef.current = session.mode;
+  }, [core, session.mode]);
+
   const addPanel = (type: string) => {
     if (!core) return;
     const working = core.getState().working;
