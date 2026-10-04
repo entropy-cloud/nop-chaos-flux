@@ -20,7 +20,12 @@ import {
 import { EditorCanvas } from './editor-canvas.js';
 import { EditorInspector } from './editor-inspector.js';
 import { EditorPalette } from './editor-palette.js';
-import { useHostScope, useStatusPathPublication } from '@nop-chaos/flux-react';
+import {
+  buildDesignerPaletteCatalog,
+  useHostScope,
+  useStatusPathPublication,
+} from '@nop-chaos/flux-react';
+import { DEFAULT_DASHBOARD_PALETTE_CATALOG } from './editor-palette.js';
 import { useDashboardEditorHandles } from './use-dashboard-editor-handles.js';
 import { useEditorCoreSession } from './editor-session-hook.js';
 import { resolveCols, resolveGapPx, resolveRowHeight, findFreePosition } from '../layout-math.js';
@@ -195,6 +200,13 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
     canRedo: session.canRedo,
     selectionCount: session.selection.length,
   });
+
+  // P4.1（plan 555）：palette 生效目录——声明常量 × registry 在场过滤（共享契约）。
+  // 线程化传入全部 4 消费站点（palette/inspector/addPanel 尺寸/显示名），防覆盖目录漂移。
+  const effectivePalette = useMemo(
+    () => buildDesignerPaletteCatalog(DEFAULT_DASHBOARD_PALETTE_CATALOG, runtime.registry),
+    [runtime.registry],
+  );
 
   // P3.2（plan 553）：sessionChange/modeChange 推送事件（裁决③最小事件集对齐）。
   // effect 内 core 守卫（core 建立后的首次快照派发一次初始 sessionChange——挂载时派发为裁定行为）；
@@ -389,6 +401,7 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       <EditorCanvas
         core={core}
         selection={selection}
+        palette={effectivePalette}
         cols={cols}
         rowHeight={rowHeight}
         gap={gap}
@@ -426,14 +439,14 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
       header={header}
-      leftPanel={<EditorPalette onAddPanel={addPanel} />}
+      leftPanel={<EditorPalette palette={effectivePalette} onAddPanel={addPanel} />}
       leftLabel={t('flux.dashboard.editor.collapsePalette')}
       leftResizable
       leftWidth={220}
       leftMinWidth={180}
       leftMaxWidth={360}
       canvas={canvas}
-      rightPanel={<EditorInspector core={core} selection={selection} />}
+      rightPanel={<EditorInspector core={core} selection={selection} palette={effectivePalette} />}
       rightLabel={t('flux.dashboard.editor.collapseInspector')}
       rightResizable
       rightWidth={280}

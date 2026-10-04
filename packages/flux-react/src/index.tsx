@@ -106,6 +106,10 @@ export {
   useHostScope,
   useNamespaceRegistration,
   WorkbenchShell,
+  buildDesignerPaletteCatalog,
+  resolvePaletteLabel,
+  type DesignerPaletteEntry,
+  type ResolvedPaletteItem,
 } from './workbench/index.js';
 export {
   useResolvedContainer,

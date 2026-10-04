@@ -3,6 +3,7 @@ import type { EditorCore } from '@nop-chaos/editor-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { GripVertical, X } from 'lucide-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
+import type { ResolvedPaletteItem } from '@nop-chaos/flux-react';
 import type { DashboardDocument } from './dashboard-domain-adapter.js';
 import { buildPalettePanel, resolvePanelDisplayName } from './editor-palette.js';
 import type { DashboardPanelSchema } from '../schemas.js';
@@ -18,6 +19,8 @@ import {
 export interface EditorCanvasProps {
   core: EditorCore<DashboardDocument, unknown>;
   selection: readonly string[];
+  /** 生效目录（P4.1：addPanel 尺寸/显示名与 palette/inspector 同源）。 */
+  palette: ResolvedPaletteItem[];
   cols: number;
   rowHeight: number;
   gap: number;
@@ -47,6 +50,7 @@ const HANDLE_POSITION: Record<ResizeHandle, string> = {
 export function EditorCanvas({
   core,
   selection,
+  palette,
   cols,
   rowHeight,
   gap,
@@ -167,7 +171,7 @@ export function EditorCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const { x, y } = clientToGrid(event.clientX, event.clientY, canvas, { cols, rowHeight, gap });
-    const panel = buildPalettePanel(working, type, { x, y }, { cols });
+    const panel = buildPalettePanel(working, type, { x, y }, { cols }, palette);
     core.update((doc) => ({ panels: [...doc.panels, panel] }));
     core.setSelection([panel.id]);
   };
@@ -213,7 +217,7 @@ export function EditorCanvas({
               role="button"
               tabIndex={0}
               aria-label={t('flux.dashboard.editor.panelLabel', {
-                name: resolvePanelDisplayName(panel, (key) => t(key)),
+                name: resolvePanelDisplayName(panel, (key) => t(key), palette),
               })}
               className={cn(
                 'group absolute flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
@@ -236,7 +240,7 @@ export function EditorCanvas({
                       variant="ghost"
                       size="icon-xs"
                       aria-label={t('flux.dashboard.editor.removePanel', {
-                        name: resolvePanelDisplayName(panel, (key) => t(key)),
+                        name: resolvePanelDisplayName(panel, (key) => t(key), palette),
                       })}
                       className="rounded-full border border-border bg-background text-muted-foreground hover:text-destructive"
                       onClick={(event) => {

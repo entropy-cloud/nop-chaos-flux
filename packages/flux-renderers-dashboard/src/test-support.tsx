@@ -85,6 +85,7 @@ const dashboardEditorDefinitionForTest: RendererDefinition = {
     { key: 'onError', kind: 'event' },
     { key: 'onSessionChange', kind: 'event' },
     { key: 'onModeChange', kind: 'event' },
+    { key: 'statusPath', kind: 'prop' },
   ],
 };
 
@@ -165,6 +166,7 @@ export function createSpiedEditorDefinition(
       { key: 'onError', kind: 'event' },
       { key: 'onSessionChange', kind: 'event' },
       { key: 'onModeChange', kind: 'event' },
+      { key: 'statusPath', kind: 'prop' },
     ],
   };
 }

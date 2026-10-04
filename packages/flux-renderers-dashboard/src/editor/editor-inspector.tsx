@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import type { EditorCore } from '@nop-chaos/editor-core';
-import { useRendererRuntime } from '@nop-chaos/flux-react';
 import { Button, Input, Label, NativeSelect, Textarea } from '@nop-chaos/ui';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import type { SchemaValue } from '@nop-chaos/flux-core';
 import type { DashboardDocument } from './dashboard-domain-adapter.js';
-import { DASHBOARD_PALETTE_TYPES } from './editor-palette.js';
+import { resolvePaletteLabel, type ResolvedPaletteItem } from '@nop-chaos/flux-react';
 import type { DashboardPanelSchema } from '../schemas.js';
 
 type PanelPatch = Partial<
@@ -13,6 +12,8 @@ type PanelPatch = Partial<
 >;
 
 export interface EditorInspectorProps {
+  /** 生效目录（renderer 经共享 builder 解析后线程化）。 */
+  palette: ResolvedPaletteItem[];
   core: EditorCore<DashboardDocument, unknown>;
   selection: readonly string[];
 }
@@ -21,8 +22,7 @@ export interface EditorInspectorProps {
  * inspector 面板（位置/尺寸/标题/type/props/source 编辑）。
  * 编辑经 `core.update` 写入会话（单次更新 = 单 undo 步）。
  */
-export function EditorInspector({ core, selection }: EditorInspectorProps) {
-  const runtime = useRendererRuntime();
+export function EditorInspector({ palette, core, selection }: EditorInspectorProps) {
   const { t } = useFluxTranslation();
   const working = core.getState().working;
   const selectedPanel = selection.length === 1 ? working.panels.find((p) => p.id === selection[0]) : undefined;
@@ -65,10 +65,10 @@ export function EditorInspector({ core, selection }: EditorInspectorProps) {
           id={id.panelType}
           onChange={(event) => updatePanel(core, selectedPanel.id, { type: event.target.value })}
         >
-          {DASHBOARD_PALETTE_TYPES.filter((entry) => runtime.registry.has(entry.type)).map(
+          {palette.map(
             (entry) => (
               <option key={entry.type} value={entry.type}>
-                {t(entry.labelKey)}
+                {resolvePaletteLabel(entry, (key) => t(key))}
               </option>
             ),
           )}

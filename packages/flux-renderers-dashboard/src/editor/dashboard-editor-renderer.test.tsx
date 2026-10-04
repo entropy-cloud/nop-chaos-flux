@@ -470,3 +470,12 @@ describe('DashboardEditorRenderer session/mode events (P3.2)', () => {
     expect(payload.mode).toBe('preview');
   });
 });
+
+describe('DashboardEditorRenderer declarative palette (P4.1)', () => {
+  it('falls back to the declared default catalog when palette is omitted', () => {
+    renderEditor();
+    expect(screen.getByTestId('palette-chart')).toBeTruthy();
+    expect(screen.getByTestId('palette-table')).toBeTruthy();
+    expect(screen.getByTestId('palette-text')).toBeTruthy();
+  });
+});
