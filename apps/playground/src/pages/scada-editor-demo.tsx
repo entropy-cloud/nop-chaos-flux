@@ -1,16 +1,13 @@
 import { useMemo } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
-import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
-import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
-import { registerScadaRenderers, registerScadaSymbols } from '@nop-chaos/flux-renderers-industrial';
 import {
-  registerScadaEditorRenderers,
   createInMemoryTemplateStorage,
   createInMemoryStationStorage,
 } from '@nop-chaos/flux-renderers-industrial/editor';
 import { Button } from '@nop-chaos/ui';
+import { createDesignerRegistry, SCADA_EDITOR_DEMO_RECIPE } from '../designer-hosts/registry-factory.js';
 
 // scada-editor-canvas 编辑器演示页（#/scada-editor-demo）——plan 522 完成态（L5.3/L5.4/L5.5）：
 // palette 24 图元拖拽 + 端点拖拽连线 + inspector 六类字段（binding/state 结构化编辑面 L5.3）
@@ -237,12 +234,7 @@ const DEMO_SCHEMA = {
     ],
 };
 
-const registry = createDefaultRegistry();
-registerBasicRenderers(registry);
-registerLayoutRenderers(registry);
-registerScadaRenderers(registry);
-registerScadaSymbols();
-registerScadaEditorRenderers(registry);
+const registry = createDesignerRegistry(SCADA_EDITOR_DEMO_RECIPE);
 
 const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();

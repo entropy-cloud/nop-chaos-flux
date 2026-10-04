@@ -1,7 +1,16 @@
 // @vitest-environment happy-dom
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DOMAIN_ROUTE_PAGES } from './domain-route-pages.js';
+
+vi.mock('leafer-ui', () => ({
+  Rect: class {},
+  Ellipse: class {},
+  Line: class {},
+  Group: class {},
+  Text: class {},
+  Image: class {},
+}));
 import { DOMAIN_RENDERER_ROUTES } from './domain-route-entries.js';
 
 // cq-6 Phase 3 reconciliation: metadata table vs page-wiring table must stay

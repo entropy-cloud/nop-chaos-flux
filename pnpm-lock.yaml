@@ -254,9 +254,6 @@ importers:
       '@nop-chaos/word-editor-renderers':
         specifier: workspace:*
         version: link:../../packages/word-editor-renderers
-      '@xyflow/react':
-        specifier: ^12.10.2
-        version: 12.10.2(@types/react@19.3.0)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       katex:
         specifier: ^0.16.0
         version: 0.16.47

@@ -3,18 +3,14 @@ import '@nop-chaos/spreadsheet-renderers/canvas-styles.css';
 import {
   createSchemaRenderer,
   createDefaultEnv,
-  createDefaultRegistry,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
+import { createDesignerRegistry, REPORT_DESIGNER_DEMO_RECIPE } from '../designer-hosts/registry-factory.js';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
   reportCellStylePanelDefinition,
   reportCellStylePanelRefs,
 } from './report-designer-cell-style-panel';
-import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
-import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
-import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
-import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import {
   createSpreadsheetCore,
   createEmptyDocument,
@@ -28,7 +24,8 @@ import {
   SpreadsheetGrid,
   useSpreadsheetInteractions,
 } from '@nop-chaos/spreadsheet-renderers';
-import { createDefaultSemantic,
+import {
+  createDefaultSemantic,
   setCellMeta,
   createReportDesignerCore,
   createReportTemplateDocument,
@@ -40,7 +37,6 @@ import {
   createReportDesignerBridge,
   ReportFieldPanel,
   buildReportDesignerScopeData,
-  registerReportDesignerRenderers,
   readReportFieldDragPayload,
 } from '@nop-chaos/report-designer-renderers';
 import { t } from '@nop-chaos/flux-i18n';
@@ -81,13 +77,8 @@ const dropAdapter: FieldDropAdapter = {
 };
 
 const SchemaRenderer = createSchemaRenderer();
-const inspectorRegistry = createDefaultRegistry();
+const inspectorRegistry = createDesignerRegistry(REPORT_DESIGNER_DEMO_RECIPE);
 inspectorRegistry.register(reportCellStylePanelDefinition as never);
-registerBasicRenderers(inspectorRegistry);
-registerFormRenderers(inspectorRegistry);
-registerFormAdvancedRenderers(inspectorRegistry);
-registerDataRenderers(inspectorRegistry);
-registerReportDesignerRenderers(inspectorRegistry);
 const inspectorEnv = createDefaultEnv();
 const inspectorFormulaCompiler = createFormulaCompiler();
 

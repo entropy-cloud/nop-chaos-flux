@@ -69,7 +69,7 @@
 ### 2.8 消费侧（SHOULD）
 
 - 句柄注册用共享 helper（统一形状：save/undo/redo/serialize…），不逐家族复制 use-editor-handles。**共享实现（P4.3）**：`packages/flux-react/src/workbench/use-editor-component-handles.ts`（`useEditorComponentHandles`：capabilities 注册骨架 + latest-ref；`invoke(method, payload)` 家族提供，ctx 第三参暂不透出——命名裁定：roadmap 提法 `useEditorHandles` 与 industrial 本地 hook 撞名故取 Component 变体）。dashboard 已迁（复制体消灭，plan 557）；industrial 20 句柄带载荷解析，按 roadmap『逐个对齐』节奏留后续（helper 签名已兼容，机械搬移）。
-- playground 宿主胶水走统一 designer host factory（registry recipe 声明式），不逐页手抄 register 清单。
+- playground 宿主胶水走统一 designer host factory（registry recipe 声明式），不逐页手抄 register 清单。**共享实现（P4.4）**：`apps/playground/src/designer-hosts/registry-factory.ts`（`createDesignerRegistry` + 五条页级 recipe 常量），六 designer demo 页已迁。**flow-designer 死代码收敛裁定**：roadmap 原前提『私有 toolbar/palette/inspector 改消费包内导出』过时——走查实证 `apps/playground/src/flow-designer/` 全目录（1831 行 + example + root test）零外部消费（flow 页经 schema + 包内 designer-page renderer 渲染），删除即收敛（plan 558；flow-designer-nodes.css 为 live 页样式保留）。
 - i18n 键 `flux.<family>.*`；testid 沿用 `meta.testid` + `data-slot` / `nop-<family>-*` marker 约定（`renderer-markers-and-selectors.md`）。
 - 验收观测点：`apps/playground/src/pages/*-demo.tsx` 无逐页 `createDefaultRegistry()` 手拼；句柄文件来源唯一。
 

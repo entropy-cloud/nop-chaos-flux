@@ -57,6 +57,7 @@ vi.mock('@nop-chaos/flux-renderers-industrial/editor', () => ({
 
 vi.mock('@nop-chaos/flux-react', () => ({
   createDefaultRegistry: () => ({ register: () => undefined }),
+  createLazyRendererComponent: () => () => null,
   createSchemaRenderer: () => {
     return function MockSchemaRenderer(props: { env: any; data?: Record<string, unknown> }) {
       rendererSnapshots.push({ env: props.env, data: props.data });

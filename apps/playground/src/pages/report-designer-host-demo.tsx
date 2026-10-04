@@ -1,23 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { createSchemaRenderer, createDefaultEnv, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { createSchemaRenderer, createDefaultEnv } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
-import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
-import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
-import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
   createReportTemplateDocument,
   type ReportDesignerConfig,
   type FieldSourceSnapshot,
 } from '@nop-chaos/report-designer-core';
-import {
-  defineReportDesignerPageSchema,
-  registerReportDesignerRenderers,
-} from '@nop-chaos/report-designer-renderers';
+import { defineReportDesignerPageSchema } from '@nop-chaos/report-designer-renderers';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
+import { createDesignerRegistry, REPORT_DESIGNER_DEMO_RECIPE } from '../designer-hosts/registry-factory.js';
 
 declare global {
   interface Window {
@@ -76,12 +70,10 @@ const hostDirtyProbeRenderer: RendererDefinition = {
 };
 
 const SchemaRenderer = createSchemaRenderer();
-const registry = createDefaultRegistry([hostDirtyProbeRenderer]);
-registerBasicRenderers(registry);
-registerFormRenderers(registry);
-registerFormAdvancedRenderers(registry);
-registerDataRenderers(registry);
-registerReportDesignerRenderers(registry);
+const registry = createDesignerRegistry({
+  ...REPORT_DESIGNER_DEMO_RECIPE,
+  register: [...REPORT_DESIGNER_DEMO_RECIPE.register, hostDirtyProbeRenderer],
+});
 const env = createDefaultEnv();
 const formulaCompiler = createFormulaCompiler();
 

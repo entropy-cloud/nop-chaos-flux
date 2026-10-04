@@ -1,14 +1,10 @@
 import { useMemo } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createActionScope } from '@nop-chaos/flux-runtime';
 import type { RendererEnv } from '@nop-chaos/flux-core';
-import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
-import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
-import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
-import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
-import { registerDashboardRenderers } from '@nop-chaos/flux-renderers-dashboard';
 import { Button } from '@nop-chaos/ui';
+import { createDesignerRegistry, DASHBOARD_DEMO_RECIPE } from '../designer-hosts/registry-factory.js';
 
 /**
  * dashboard-demo 示例页（BI 看板：KPI 卡 + chart + table 面板，编辑态↔运行态切换，
@@ -92,12 +88,7 @@ function readSavedLayout(): string {
   return JSON.stringify({ panels: DEFAULT_LAYOUT_PANELS });
 }
 
-const registry = createDefaultRegistry();
-registerBasicRenderers(registry);
-registerContentRenderers(registry);
-registerDataRenderers(registry);
-registerLayoutRenderers(registry);
-registerDashboardRenderers(registry);
+const registry = createDesignerRegistry(DASHBOARD_DEMO_RECIPE);
 
 const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();

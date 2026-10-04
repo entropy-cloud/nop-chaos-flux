@@ -7,6 +7,15 @@ import { ReportDesignerDemo } from './report-designer-demo';
 
 let injectSpreadsheetInsertFailure = false;
 
+vi.mock('leafer-ui', () => ({
+  Rect: class {},
+  Ellipse: class {},
+  Line: class {},
+  Group: class {},
+  Text: class {},
+  Image: class {},
+}));
+
 vi.mock('@nop-chaos/spreadsheet-renderers', async () => {
   const actual = await vi.importActual<typeof import('@nop-chaos/spreadsheet-renderers')>(
     '@nop-chaos/spreadsheet-renderers',

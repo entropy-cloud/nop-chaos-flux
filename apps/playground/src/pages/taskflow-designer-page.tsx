@@ -4,27 +4,17 @@ import type { ImportedLibraryModule, XuiImportSpec } from '@nop-chaos/flux-core'
 import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 import {
   createSchemaRenderer,
-  createDefaultRegistry,
   createDefaultEnv,
 } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createActionScope } from '@nop-chaos/flux-runtime';
-import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
-import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
-import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
-import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
-import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
 import { Tabs, TabsList, TabsTrigger } from '@nop-chaos/ui';
 import taskflowWorkflowSchema from '../schemas/taskflow-workflow-schema.json';
 import taskflowDingflowSchema from '../schemas/taskflow-dingflow-schema.json';
 import * as taskflowDesignerLib from '../taskflow-designer-lib/index.js';
+import { createDesignerRegistry, TASKFLOW_DESIGNER_PAGE_RECIPE } from '../designer-hosts/registry-factory.js';
 
-const registry = createDefaultRegistry();
-registerBasicRenderers(registry);
-registerFormRenderers(registry);
-registerFormAdvancedRenderers(registry);
-registerDataRenderers(registry);
-registerFlowDesignerRenderers(registry);
+const registry = createDesignerRegistry(TASKFLOW_DESIGNER_PAGE_RECIPE);
 
 const SchemaRenderer = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();

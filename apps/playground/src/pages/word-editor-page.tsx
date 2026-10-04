@@ -3,20 +3,10 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
   createSchemaRenderer,
   createDefaultEnv,
-  createDefaultRegistry,
 } from '@nop-chaos/flux-react';
-import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
-import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
-import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
-import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
-import { registerWordEditorRenderers } from '@nop-chaos/word-editor-renderers';
+import { createDesignerRegistry, WORD_EDITOR_PAGE_RECIPE } from '../designer-hosts/registry-factory.js';
 
-const registry = createDefaultRegistry();
-registerBasicRenderers(registry);
-registerFormRenderers(registry);
-registerFormAdvancedRenderers(registry);
-registerDataRenderers(registry);
-registerWordEditorRenderers(registry);
+const registry = createDesignerRegistry(WORD_EDITOR_PAGE_RECIPE);
 
 const SchemaRenderer = createSchemaRenderer();
 const env = createDefaultEnv();
