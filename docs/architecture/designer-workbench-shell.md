@@ -109,6 +109,14 @@ Required interaction rules:
 - today's dataset/field panel and outline panel are the default generators selected by that `WordEditorConfig`, not renderer-private permanent UI
 - `toolbar` / `leftPanel` / `rightPanel` page regions remain explicit override surfaces
 
+### Spreadsheet
+
+- Spreadsheet page consumes the shell with **no side panels**: `leftPanel`/`rightPanel` are never defined, so both sides stay hidden per the optional-side-panel rules (no rail placeholder)
+- the canvas slot holds the toolbar strip and the grid/tab-bar body (`DefaultSpreadsheetPageBody`); the toolbar region stays conditional — no empty toolbar chrome renders when the host omits it
+- the header slot carries the family title/status; `dialogs` slot carries host dialog regions
+- family DOM contract is preserved inside the slots: `.nop-spreadsheet-page` section wrapper + `data-slot="spreadsheet-page-*"` markers (`.nop-spreadsheet-page`/header/body directly unit-locked; toolbar/dialogs preserved verbatim by the migration); `density="flush"` keeps the outer padding at zero
+- shell-standard canvas card chrome (rounded/border/shadow/overflow-hidden), slot gap, and the auto/1fr row grid are the adopted visual baseline (P2.1 adjudication)
+
 ## View / Edit Mode Panel Rules
 
 When a designer operates in View mode (`readOnly: true`), the workbench shell adjusts side panel visibility per the following rules:

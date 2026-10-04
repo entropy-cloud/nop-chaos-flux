@@ -8,6 +8,7 @@ import {
   useCurrentActionScope,
   useHostScope,
   useStatusPathPublication,
+  WorkbenchShell,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -223,41 +224,51 @@ export function SpreadsheetPageRenderer(props: RendererComponentProps<Spreadshee
 
   return (
     <section
-      className={cn('nop-spreadsheet-page', props.meta.className)}
+      className={cn('nop-spreadsheet-page min-h-0', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
-      <header data-slot="spreadsheet-page-header">
-        <h2>
-          {hasRendererSlotContent(titleContent)
-            ? asReactNode(titleContent)
-            : t('flux.spreadsheet.designer')}
-        </h2>
-        <p>{buildSpreadsheetStatusLabel(spreadsheet)}</p>
-      </header>
-
-      {hasRendererSlotContent(asReactNode(toolbarContent)) ? (
-        <div data-slot="spreadsheet-page-toolbar">{asReactNode(toolbarContent)}</div>
-      ) : null}
-
-      <main data-slot="spreadsheet-page-body">
-        {hasRendererSlotContent(asReactNode(bodyContent))
-          ? asReactNode(bodyContent)
-          : spreadsheetBridge && snapshot.activeSheetId
-            ? (
-                <DefaultSpreadsheetPageBody
-                  bridge={spreadsheetBridge}
-                  snapshot={spreadsheet}
-                  config={resolvedConfig}
-                  showToolbar={!hasRendererSlotContent(asReactNode(toolbarContent))}
-                />
-              )
-            : renderFallbackBody(snapshot)}
-      </main>
-
-      {hasRendererSlotContent(asReactNode(dialogsContent)) ? (
-        <div data-slot="spreadsheet-page-dialogs">{asReactNode(dialogsContent)}</div>
-      ) : null}
+      {/* P2.1（plan 549）：三栏工作台收敛 WorkbenchShell（family mapping：无 side panel，
+          canvas = toolbar+body；家族 marker 于槽内层保持，契约断言不改动）。 */}
+      <WorkbenchShell
+        density="flush"
+        header={
+          <div data-slot="spreadsheet-page-header">
+            <h2>
+              {hasRendererSlotContent(titleContent)
+                ? asReactNode(titleContent)
+                : t('flux.spreadsheet.designer')}
+            </h2>
+            <p>{buildSpreadsheetStatusLabel(spreadsheet)}</p>
+          </div>
+        }
+        canvas={
+          <>
+            {hasRendererSlotContent(asReactNode(toolbarContent)) ? (
+              <div data-slot="spreadsheet-page-toolbar">{asReactNode(toolbarContent)}</div>
+            ) : null}
+            <main data-slot="spreadsheet-page-body">
+              {hasRendererSlotContent(asReactNode(bodyContent))
+                ? asReactNode(bodyContent)
+                : spreadsheetBridge && snapshot.activeSheetId
+                  ? (
+                      <DefaultSpreadsheetPageBody
+                        bridge={spreadsheetBridge}
+                        snapshot={spreadsheet}
+                        config={resolvedConfig}
+                        showToolbar={!hasRendererSlotContent(asReactNode(toolbarContent))}
+                      />
+                    )
+                  : renderFallbackBody(snapshot)}
+            </main>
+          </>
+        }
+        dialogs={
+          hasRendererSlotContent(asReactNode(dialogsContent)) ? (
+            <div data-slot="spreadsheet-page-dialogs">{asReactNode(dialogsContent)}</div>
+          ) : undefined
+        }
+      />
     </section>
   );
 }
