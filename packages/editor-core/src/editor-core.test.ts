@@ -345,3 +345,149 @@ describe('editor-core transaction commit semantics (policy auto)', () => {
     expect(core.getState().dirty).toBe(false);
   });
 });
+
+describe('UndoCommandStack.replaceUndoTop (coalesce merge primitive)', () => {
+  const entryOf = (forward: number, inverse: number, group?: string) =>
+    ({
+      forward,
+      inverse,
+      timestamp: 1000,
+      ...(group !== undefined ? { coalesceGroup: group } : {}),
+    }) as never;
+
+  it('replaces the top entry in place', () => {
+    const stack = new UndoCommandStack<number>();
+    stack.push(entryOf(1, -1));
+    stack.replaceUndoTop(entryOf(2, -2));
+    expect(stack.undoDepth).toBe(1);
+    expect(stack.peekUndo()?.forward).toBe(2);
+    expect(stack.peekUndo()?.inverse).toBe(-2);
+  });
+
+  it('pushes when the stack is empty (parity with industrial replaceUndoTop)', () => {
+    const stack = new UndoCommandStack<number>();
+    stack.replaceUndoTop(entryOf(1, -1));
+    expect(stack.undoDepth).toBe(1);
+    expect(stack.peekUndo()?.forward).toBe(1);
+  });
+
+  it('truncates the redo chain as a new-commit path (U6)', () => {
+    const stack = new UndoCommandStack<number>();
+    stack.push(entryOf(1, -1));
+    stack.pushRedo(entryOf(1, -1));
+    expect(stack.canRedo).toBe(true);
+    stack.replaceUndoTop(entryOf(2, -2));
+    expect(stack.canRedo).toBe(false);
+    expect(stack.redoDepth).toBe(0);
+  });
+});
+
+describe('editor-core coalesce hooks (recordCoalesced / replaceTop)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('merges same-group entry within the window: undo restores the pre-coalesce state', () => {
+    const core = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter());
+    core.record({ title: 'one' }, { title: 't0' }, 'property-edit', 'align:left');
+    vi.advanceTimersByTime(100);
+    const merged = core.recordCoalesced({ title: 'two' }, { title: 'ignored' }, 'align:left', 'property-edit', 500);
+    expect(merged).toBe(true);
+    expect(core.getState().undoDepth).toBe(1);
+    core.undo();
+    expect(core.getState().working.title).toBe('t0');
+  });
+
+  it('propagates operationKind and coalesceGroup so 3+ chained merges keep working', () => {
+    const core = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter());
+    core.recordCoalesced({ title: 'one' }, { title: 't0' }, 'align:left', 'property-edit', 500);
+    vi.advanceTimersByTime(100);
+    core.recordCoalesced({ title: 'two' }, { title: 'ignored' }, 'align:left', 'property-edit', 500);
+    vi.advanceTimersByTime(100);
+    core.recordCoalesced({ title: 'three' }, { title: 'ignored' }, 'align:left', 'property-edit', 500);
+    expect(core.getState().undoDepth).toBe(1);
+    core.undo();
+    expect(core.getState().working.title).toBe('t0');
+    core.redo();
+    expect(core.getState().working.title).toBe('three');
+  });
+
+  it('does not merge different groups (plain push, returns false)', () => {
+    const core = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter());
+    core.recordCoalesced({ title: 'one' }, { title: 't0' }, 'align:left', 'property-edit', 500);
+    const merged = core.recordCoalesced({ title: 'two' }, { title: 'x' }, 'align:right', 'property-edit', 500);
+    expect(merged).toBe(false);
+    expect(core.getState().undoDepth).toBe(2);
+  });
+
+  it('does not merge against a groupless top (plain record entry)', () => {
+    const core = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter());
+    core.record({ title: 'one' }, { title: 't0' }, 'property-edit');
+    const merged = core.recordCoalesced({ title: 'two' }, { title: 'x' }, 'g', 'property-edit', 1000);
+    expect(merged).toBe(false);
+    expect(core.getState().undoDepth).toBe(2);
+  });
+
+  it('boundary: delta == windowMs merges, delta > windowMs does not', () => {
+    const coreA = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter());
+    coreA.recordCoalesced({ title: 'one' }, { title: 't0' }, 'g', 'property-edit', 500);
+    vi.advanceTimersByTime(500);
+    expect(coreA.recordCoalesced({ title: 'two' }, { title: 'x' }, 'g', 'property-edit', 500)).toBe(true);
+    expect(coreA.getState().undoDepth).toBe(1);
+
+    vi.setSystemTime(1000);
+    const coreB = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter());
+    coreB.recordCoalesced({ title: 'one' }, { title: 't0' }, 'g', 'property-edit', 500);
+    vi.advanceTimersByTime(501);
+    expect(coreB.recordCoalesced({ title: 'two' }, { title: 'x' }, 'g', 'property-edit', 500)).toBe(false);
+    expect(coreB.getState().undoDepth).toBe(2);
+  });
+
+  it('replaceTop swaps the top entry wholesale and truncates redo', () => {
+    const core = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter());
+    core.record({ title: 'one' }, { title: 't0' }, 'property-edit');
+    core.undo();
+    expect(core.getState().canRedo).toBe(true);
+    core.replaceTop({ title: 'merged' }, { title: 't0' }, 'property-edit');
+    expect(core.getState().canRedo).toBe(false);
+    expect(core.getState().undoDepth).toBe(1);
+    core.redo();
+    expect(core.getState().working.title).toBe('t0');
+    core.undo();
+    expect(core.getState().working.title).toBe('t0');
+  });
+
+  it('replaceTop pushes when the stack is empty', () => {
+    const core = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter());
+    core.replaceTop({ title: 'x' }, { title: 't0' });
+    expect(core.getState().undoDepth).toBe(1);
+    core.undo();
+    expect(core.getState().working.title).toBe('t0');
+  });
+
+  it('no-ops inside a transaction and after dispose', () => {
+    const core = createEditorCore<TestDocument, Partial<TestDocument>>(createTestAdapter());
+    core.beginTransaction();
+    expect(core.recordCoalesced({ title: 'x' }, { title: 't0' }, 'g')).toBe(false);
+    expect(core.getState().undoDepth).toBe(0);
+    core.update((doc) => docWith([...doc.items, 'tx']));
+    core.endTransaction();
+    expect(core.getState().undoDepth).toBe(1);
+    core.dispose();
+    core.recordCoalesced({ title: 'y' }, { title: 't0' }, 'g');
+    core.replaceTop({ title: 'z' }, { title: 't0' });
+    expect(core.getState().undoDepth).toBe(1);
+  });
+});
+
+describe('DEFAULT_COALESCE_WINDOW_MS', () => {
+  it('aligns with the industrial coalesce window (500ms)', async () => {
+    const mod = await import('./undo-command-stack.js');
+    expect(mod.DEFAULT_COALESCE_WINDOW_MS).toBe(500);
+  });
+});

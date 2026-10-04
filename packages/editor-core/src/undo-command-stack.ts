@@ -3,6 +3,9 @@ import type { EditorDiffEntry } from './types.js';
 /** 栈深度上限（对齐 `MAX_UNDO_STACK_DEPTH`）。 */
 export const MAX_UNDO_STACK_DEPTH = 100;
 
+/** M3 group 合并默认时间窗（design-undo-redo.md §4.4；对齐 industrial `operation-coalesce.ts`）。 */
+export const DEFAULT_COALESCE_WINDOW_MS = 500;
+
 /**
  * UndoCommandStack —— undo/redo 栈管理（对齐 `UndoStack`，design-undo-redo.md §4.1 + §4.1.2）。
  *
@@ -53,6 +56,20 @@ export class UndoCommandStack<TDiff = unknown> {
   /** 推入 redo 栈（undo 成功后由 host 原样移入）。 */
   pushRedo(entry: EditorDiffEntry<TDiff>): void {
     this.redoStack.push(entry);
+  }
+
+  /**
+   * 替换 undo 栈顶 entry（跨操作合并用：把栈顶替换为合并后的新 entry；空栈等价 push）。
+   * 合并替换也是一次「新提交」（coalesce-merge 产出新 forward），按 U6 截断 redo 链——与
+   * industrial `UndoStack.replaceUndoTop` 同语义。
+   */
+  replaceUndoTop(entry: EditorDiffEntry<TDiff>): void {
+    if (this.undoStack.length === 0) {
+      this.undoStack.push(entry);
+    } else {
+      this.undoStack[this.undoStack.length - 1] = entry;
+    }
+    this.redoStack.length = 0;
   }
 
   /** 当前 redo 栈顶 entry（不弹出）。 */

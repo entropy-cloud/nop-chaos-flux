@@ -26,6 +26,14 @@ export interface EditorDiffEntry<TDiff = unknown> {
   operationKind?: string;
   /** 操作时间戳。 */
   timestamp: number;
+  /**
+   * 跨操作合并分组键（M3 group 合并，design-undo-redo.md §4.4）。
+   *
+   * 非空时，与栈顶同 group 且时间窗（`DEFAULT_COALESCE_WINDOW_MS`）内的 entry 经
+   * `recordCoalesced` 合并为 1 步（对齐/分布/层级连续操作合并）。拖拽事务不设 group。
+   * 缺省 undefined = 不参与 group 合并。
+   */
+  coalesceGroup?: string;
 }
 
 /**
@@ -133,7 +141,26 @@ export interface EditorCore<TDocument = unknown, TDiff = unknown> {
   update(updater: (working: TDocument) => TDocument): boolean;
 
   /** 直接记录一条 diff 命令（updater 外置的场景，如拖拽事务收口）。 */
-  record(forward: TDiff, inverse: TDiff, operationKind?: string): void;
+  record(forward: TDiff, inverse: TDiff, operationKind?: string, coalesceGroup?: string): void;
+
+  /**
+   * 跨操作合并记录（M3 group 合并，design-undo-redo.md §4.4）：与栈顶同 `coalesceGroup` 且
+   * 时间差 ≤ windowMs 时，栈顶替换为合并 entry（forward 取新 forward、inverse 保留栈顶原 inverse、
+   * operationKind/coalesceGroup/timestamp 取新 entry）；否则普通入栈。返回是否发生合并。
+   */
+  recordCoalesced(
+    forward: TDiff,
+    inverse: TDiff,
+    coalesceGroup: string,
+    operationKind?: string,
+    windowMs?: number,
+  ): boolean;
+
+  /**
+   * 域内自算合并的替换钩子（M2 属性合并等域专属路径）：把栈顶整体替换为该 entry
+   * （空栈等价 push）；截断 redo 链（U6，与 `UndoCommandStack.replaceUndoTop` 同语义）。
+   */
+  replaceTop(forward: TDiff, inverse: TDiff, operationKind?: string, coalesceGroup?: string): void;
 
   /**
    * 开启编辑事务（对齐 hmi transform 拖拽事务）：后续 `update` 只改 working 不入栈；

@@ -8,7 +8,7 @@ import type {
   EditorMode,
   EditorSessionState,
 } from './types.js';
-import { UndoCommandStack } from './undo-command-stack.js';
+import { UndoCommandStack, DEFAULT_COALESCE_WINDOW_MS } from './undo-command-stack.js';
 
 const EMPTY_ERROR_MESSAGE = 'document is invalid';
 
@@ -108,12 +108,13 @@ export function createEditorCore<TDocument = unknown, TDiff = unknown>(
     console.warn(`[editor-core] ${op} on empty stack (no-op)`);
   };
 
-  const recordEntry = (forward: TDiff, inverse: TDiff, operationKind?: string): void => {
+  const recordEntry = (forward: TDiff, inverse: TDiff, operationKind?: string, coalesceGroup?: string): void => {
     const entry: EditorDiffEntry<TDiff> = {
       forward,
       inverse,
       operationKind,
       timestamp: Date.now(),
+      ...(coalesceGroup !== undefined ? { coalesceGroup } : {}),
     };
     stack.push(entry);
   };
@@ -194,9 +195,42 @@ export function createEditorCore<TDocument = unknown, TDiff = unknown>(
       return true;
     },
 
-    record(forward, inverse, operationKind) {
+    record(forward, inverse, operationKind, coalesceGroup) {
       if (disposed || txStart !== null) return;
-      recordEntry(forward, inverse, operationKind);
+      recordEntry(forward, inverse, operationKind, coalesceGroup);
+      notify();
+    },
+
+    recordCoalesced(forward, inverse, coalesceGroup, operationKind, windowMs) {
+      if (disposed || txStart !== null) return false;
+      const top = stack.peekUndo();
+      const now = Date.now();
+      const window = windowMs ?? DEFAULT_COALESCE_WINDOW_MS;
+      if (top && top.coalesceGroup && top.coalesceGroup === coalesceGroup && now - top.timestamp <= window) {
+        stack.replaceUndoTop({
+          forward,
+          inverse: top.inverse,
+          operationKind,
+          timestamp: now,
+          coalesceGroup,
+        });
+        notify();
+        return true;
+      }
+      recordEntry(forward, inverse, operationKind, coalesceGroup);
+      notify();
+      return false;
+    },
+
+    replaceTop(forward, inverse, operationKind, coalesceGroup) {
+      if (disposed || txStart !== null) return;
+      stack.replaceUndoTop({
+        forward,
+        inverse,
+        operationKind,
+        timestamp: Date.now(),
+        ...(coalesceGroup !== undefined ? { coalesceGroup } : {}),
+      });
       notify();
     },
 
