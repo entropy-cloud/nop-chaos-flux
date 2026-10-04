@@ -108,8 +108,10 @@ export {
   WorkbenchShell,
   buildDesignerPaletteCatalog,
   resolvePaletteLabel,
+  useEditorComponentHandles,
   type DesignerPaletteEntry,
   type ResolvedPaletteItem,
+  type UseEditorComponentHandlesArgs,
 } from './workbench/index.js';
 export {
   useResolvedContainer,

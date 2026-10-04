@@ -68,24 +68,24 @@
 
 ### 2.8 消费侧（SHOULD）
 
-- 句柄注册用共享 helper（统一形状：save/undo/redo/serialize…），不逐家族复制 use-editor-handles。
+- 句柄注册用共享 helper（统一形状：save/undo/redo/serialize…），不逐家族复制 use-editor-handles。**共享实现（P4.3）**：`packages/flux-react/src/workbench/use-editor-component-handles.ts`（`useEditorComponentHandles`：capabilities 注册骨架 + latest-ref；`invoke(method, payload)` 家族提供，ctx 第三参暂不透出——命名裁定：roadmap 提法 `useEditorHandles` 与 industrial 本地 hook 撞名故取 Component 变体）。dashboard 已迁（复制体消灭，plan 557）；industrial 20 句柄带载荷解析，按 roadmap『逐个对齐』节奏留后续（helper 签名已兼容，机械搬移）。
 - playground 宿主胶水走统一 designer host factory（registry recipe 声明式），不逐页手抄 register 清单。
 - i18n 键 `flux.<family>.*`；testid 沿用 `meta.testid` + `data-slot` / `nop-<family>-*` marker 约定（`renderer-markers-and-selectors.md`）。
 - 验收观测点：`apps/playground/src/pages/*-demo.tsx` 无逐页 `createDefaultRegistry()` 手拼；句柄文件来源唯一。
 
 ## 3. 正面清单（应标准化，全部已裁定）
 
-| 维度                     | 裁定                             | 依据                                                                                                            |
-| ------------------------ | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| 会话/undo/提交内核       | 标准化（editor-core 单一事实源） | 四套自研语义同构；editor-core 已被多家族验证；唯一缺口 `replaceUndoTop`/coalesce 已立 work item（roadmap P1.0） |
-| WorkbenchShell           | 标准化                           | 四家族先例 + shell owner doc 定版                                                                               |
-| Manifest/hostContract    | 标准化                           | 类型已进 flux-core 并被编译器校验消费                                                                           |
-| scope 投影/statusPath    | 标准化                           | hooks 现成                                                                                                      |
-| 事件/save payload        | 标准化（§2.6 定版词汇）          | 三套 payload 键并存，宿主无法写通用保存接线                                                                     |
-| 渲染器注册               | 标准化（既有事实标准）           | 例外仅限 §5 登记的豁免                                                                                          |
-| palette/inspector 元数据 | 标准化为声明式，分两档推进       | palette registry 驱动全量可行；inspector 生成器先共享、采纳按家族节奏                                           |
-| 句柄/action provider     | 标准化（共享 helper）            | 复制体已出现（dashboard←industrial），漂移实证                                                                  |
-| playground 宿主胶水      | 标准化（factory）                | 逐页手抄 register 清单是 registry 漂移温床                                                                      |
+| 维度                     | 裁定                             | 依据                                                                                                                                                                       |
+| ------------------------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 会话/undo/提交内核       | 标准化（editor-core 单一事实源） | 四套自研语义同构；editor-core 已被多家族验证；唯一缺口 `replaceUndoTop`/coalesce 已立 work item（roadmap P1.0）                                                            |
+| WorkbenchShell           | 标准化                           | 四家族先例 + shell owner doc 定版                                                                                                                                          |
+| Manifest/hostContract    | 标准化                           | 类型已进 flux-core 并被编译器校验消费                                                                                                                                      |
+| scope 投影/statusPath    | 标准化                           | hooks 现成                                                                                                                                                                 |
+| 事件/save payload        | 标准化（§2.6 定版词汇）          | 三套 payload 键并存，宿主无法写通用保存接线                                                                                                                                |
+| 渲染器注册               | 标准化（既有事实标准）           | 例外仅限 §5 登记的豁免                                                                                                                                                     |
+| palette/inspector 元数据 | 标准化为声明式，分两档推进       | palette registry 驱动全量可行；inspector 生成器先共享、采纳按家族节奏                                                                                                      |
+| 句柄/action provider     | 标准化（共享 helper）            | 复制体已出现（dashboard←industrial），漂移实证（P4.3 勘误 2026-10-04：dashboard 复制体已消灭——useEditorComponentHandles 共享 helper，plan 557；industrial 逐个对齐留后续） |
+| playground 宿主胶水      | 标准化（factory）                | 逐页手抄 register 清单是 registry 漂移温床                                                                                                                                 |
 
 ## 4. 负面清单（明确不标准化，域内自治）
 

@@ -1,16 +1,12 @@
-// NOTE: this hook mirrors flux-renderers-industrial use-*-handles wiring (76L derived copy).
-// Convergence is blocked by the missing dashboard->industrial dependency edge; see cq-4 Phase 3 / cq-2 follow-ups.
-
 import { useEffect, useRef } from 'react';
 import type {
-  ComponentCapabilities,
   ComponentHandleRegistry,
 } from '@nop-chaos/flux-core';
+import { useEditorComponentHandles } from '@nop-chaos/flux-react';
 import type { EditorCore } from '@nop-chaos/editor-core';
 import type { DashboardDocument } from './dashboard-domain-adapter.js';
 
 const EDITOR_HANDLE_METHODS = ['save', 'undo', 'redo', 'getLayout'] as const;
-const ALL_HANDLE_METHOD_SET = new Set<string>(EDITOR_HANDLE_METHODS);
 
 export interface UseDashboardEditorHandlesArgs {
   componentRegistry: ComponentHandleRegistry | undefined;
@@ -24,56 +20,46 @@ export interface UseDashboardEditorHandlesArgs {
 /**
  * dashboard editor 组件句柄（`component:save()` / `undo` / `redo` / `getLayout`，
  * 对齐 hmi editor 句柄注册模式 design-architecture.md §8.5）。
+ *
+ * P4.3（plan 557）：注册骨架收敛共享 helper `useEditorComponentHandles`
+ * （原 "derived copy of the industrial wiring" 复制体消灭）；本文件只保留家族 invoke 映射。
  */
 export function useDashboardEditorHandles(args: UseDashboardEditorHandlesArgs): void {
-  const { componentRegistry, id, cid } = args;
   const latest = useRef(args);
   useEffect(() => {
     latest.current = args;
   });
 
-  useEffect(() => {
-    if (!componentRegistry || id === undefined) return undefined;
-
-    const capabilities: ComponentCapabilities = {
-      hasMethod(method) {
-        return ALL_HANDLE_METHOD_SET.has(method);
-      },
-      listMethods() {
-        return [...EDITOR_HANDLE_METHODS];
-      },
-      invoke(method) {
-        const current = latest.current.core;
-        if (!current) return { ok: false, error: new Error('not-mounted') };
-        switch (method) {
-          case 'save': {
-            const result = current.commit();
-            if (!result.ok) return { ok: false, error: result.error ?? new Error('commit failed') };
-            latest.current.onCommitted?.(result.serialized as string, current.getState().working);
-            return { ok: true, data: result.serialized };
-          }
-          case 'undo': {
-            const ok = current.undo();
-            return ok ? { ok: true } : { ok: false, error: new Error('no-undo') };
-          }
-          case 'redo': {
-            const ok = current.redo();
-            return ok ? { ok: true } : { ok: false, error: new Error('no-redo') };
-          }
-          case 'getLayout': {
-            return { ok: true, data: current.getState().working.panels };
-          }
-          default:
-            return { ok: false, error: new Error(`unknown method "${method}"`) };
+  useEditorComponentHandles({
+    componentRegistry: args.componentRegistry,
+    id: args.id,
+    cid: args.cid,
+    componentType: 'dashboard-editor',
+    methods: EDITOR_HANDLE_METHODS,
+    invoke: (method) => {
+      const current = latest.current.core;
+      if (!current) return { ok: false, error: new Error('not-mounted') };
+      switch (method) {
+        case 'save': {
+          const result = current.commit();
+          if (!result.ok) return { ok: false, error: result.error ?? new Error('commit failed') };
+          latest.current.onCommitted?.(result.serialized as string, current.getState().working);
+          return { ok: true, data: result.serialized };
         }
-      },
-    };
-
-    return componentRegistry.register({
-      id: String(id),
-      _cid: cid,
-      type: 'dashboard-editor',
-      capabilities,
-    });
-  }, [componentRegistry, id, cid]);
+        case 'undo': {
+          const ok = current.undo();
+          return ok ? { ok: true } : { ok: false, error: new Error('no-undo') };
+        }
+        case 'redo': {
+          const ok = current.redo();
+          return ok ? { ok: true } : { ok: false, error: new Error('no-redo') };
+        }
+        case 'getLayout': {
+          return { ok: true, data: current.getState().working.panels };
+        }
+        default:
+          return { ok: false, error: new Error(`unknown method "${method}"`) };
+      }
+    },
+  });
 }

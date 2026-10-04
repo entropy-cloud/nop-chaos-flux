@@ -7,3 +7,7 @@ export {
   type DesignerPaletteEntry,
   type ResolvedPaletteItem,
 } from './palette-catalog.js';
+export {
+  useEditorComponentHandles,
+  type UseEditorComponentHandlesArgs,
+} from './use-editor-component-handles.js';
