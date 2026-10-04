@@ -184,22 +184,22 @@
 
 ### W-D AI 家族（14）
 
-| 页面                | 状态   | 卡片 |
-| ------------------- | ------ | ---- |
-| ai-chat             | 待执行 |      |
-| ai-tools            | 待执行 |      |
-| ai-widgets          | 待执行 |      |
-| ai-hitl             | 待执行 |      |
-| ai-citations        | 待执行 |      |
-| ai-conversations    | 待执行 |      |
-| ai-persistence      | 待执行 |      |
-| ai-coverage         | 待执行 |      |
-| ai-component-handle | 待执行 |      |
-| ai-rich-text        | 待执行 |      |
-| ai-linkage          | 待执行 |      |
-| ai-p4               | 待执行 |      |
-| ai-virtual-scroll   | 待执行 |      |
-| ai-attachments      | 待执行 |      |
+| 页面                | 状态 | 卡片                                                                                                                                                                                                                   |
+| ------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ai-chat             | ✅   | 发送→mock 流式 Echo 气泡 ✓（流式光标+停止按钮）；空输入发送禁用为正确设计                                                                                                                                              |
+| ai-tools            | ✅   | agentic 工具环流全链路 ✓：发送→get_weather tool_call→executor 执行→结果回灌下一轮流式回复                                                                                                                              |
+| ai-widgets          | ✅   | 反馈五钮 toast ✓、引用弹层、建议展开、语音 permission-denied 降级提示、prompt 按钮组                                                                                                                                   |
+| ai-hitl             | ✅   | 批准→已批准徽标 ✓、拒绝按钮在位（焦点陷阱 e2e 覆盖）                                                                                                                                                                   |
+| ai-citations        | ✅   | 引用 [N] 弹层逐个 ✓、来源链接 toast                                                                                                                                                                                    |
+| ai-conversations    | ⚠️1  | External ai:send ✓、消息编辑/重试/停止 ✓；⚠️1：新建/删除/重命名会话 dispatch 成功（e2e 断言无错）但侧栏列表不渲染新会话（store→pageData→schema 传播链未闭合；e2e 注释明示该可视循环未覆盖）——P2 改判渲染器级 follow-up |
+| ai-persistence      | ✅   | 新建/切换/删除会话全通 ✓（React 直连 controller 形态）、localStorage 持久化                                                                                                                                            |
+| ai-coverage         | ✅   | 状态/边缘矩阵页：编辑/重试/停止/代码复制/prompt 按钮全通（36 项代表 性覆盖）                                                                                                                                           |
+| ai-component-handle | ✅   | component:send 外部驱动 ✓、消息编辑/重试                                                                                                                                                                               |
+| ai-rich-text        | ✅   | 模板条目（Greeting/Summary/Code）、Tiptap 富文本发送 ✓                                                                                                                                                                 |
+| ai-linkage          | ✅   | 双联动实证 ✓：消息序列化→表单字段（JSON 数组回显）+ 完成事件→数据源重载                                                                                                                                                |
+| ai-p4               | ✅   | 建议六钮 toast ✓、溢出 +3 弹层、语音 permission-denied 降级                                                                                                                                                            |
+| ai-virtual-scroll   | ✅   | 千条消息窗口化渲染（按口径：视口挂载+零错误）、编辑/取消 ✓                                                                                                                                                             |
+| ai-attachments      | ✅   | 添加附件按钮（文件选择器 IAB 不支持实点，拖拽/粘贴路径按口径不实点）                                                                                                                                                   |
 
 ### W-E 性能/基建/实验（27 页 = 18 表项，w 系列合并行含 10 页）
 
@@ -246,6 +246,10 @@
 - **已修（既有缺陷，plan 538 执行期发现）**：sundial-workbench 添加待办后计数从不刷新——form 级 onSubmitSuccess 在弹窗域派发导致 setValue(rev) 遮蔽页级变量、六个 dependsOn 数据源永不重取；改为 refreshSource ×6 后计数契约首次真正生效（9→10 实证）。
 - **P3（页面设计说明，非缺陷）**：sundial-workbench 分组任务行为静态 schema（仅计数绑定数据源）——新增待办只在计数反映，列表行不随数据渲染；如需全动态列表需页面级改造（超出本审计范围，登记为设计演进候选）。
 - **裁定（多源同步保留显式刷新）**：notion-database（5 源）/ airtable-grid（2 源）/ sundial-workbench（6 源）弹窗提交需同步多数据源，refreshNearest 单目标语义无法表达；显式 refreshSource/component:refresh 多目标是多视图一致性的正确形态。
+
+### W-D 执行期新增登记（2026-10-03）
+
+- **P2（书面改判 → 渲染器/演示页数据流 follow-up）**：ai-conversations 页新建/删除/重命名会话后侧栏列表不渲染——`ai:createConversation` dispatch 成功（e2e `ai-conversations.spec.ts` 明示仅断言接线无错、可视循环未覆盖），`useConversation` store 循环有单测，但 store → pageData memo → schema `data` prop → ai-conversations 渲染器 `${conversations}` prop 的 live 传播链未闭合。修复方向：调试 page data 对象经 schema 通道到渲染器 prop 的传播（对照 ai-persistence 的 React 直连形态）。
 
 ### W-B 执行期新增登记（2026-10-03）
 
