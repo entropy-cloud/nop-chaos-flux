@@ -221,3 +221,21 @@ PrintTemplateSchema + data
 - **分页行高：估算回退 + measure 可注入扩展点**：行高解析顺序为 schema rowHeight → `LayoutMeasure` 注入实测（扩展点，宿主/真机链路可自行构造隐藏容器注入；v1 内置 print/export/preview 链路不自动注入）→ 估算常量 ESTIMATE_ROW_HEIGHT_MM=6。纯几何回退保证无 DOM 环境可确定性分页（单测/服务端）；浏览器内按估算行高分页的精度由 repeatHeader/聚合行预留与 schema rowHeight 兜底，精确 DOM 实测注入是 P4 后的增强点。
 - **不引入 Fabric.js 位图画布**：openprint 用 Fabric 但与 DOM 流式生态冲突；本仓库全部设计器均为 DOM 体系。
 - **许可证红线**：openprint/vue-print-designer/report-designer 的代码零拷贝；本文档只引用其思想并标注来源。schema 命名为本项目原创（不抄 hiprint tid/options 命名）。
+
+## 对外 props 契约（豁免档）
+
+> 本家族按 `docs/architecture/editor-designer-standard.md` §5.2 / §6 裁决②登记为八层契约**正式豁免档**（嵌入式打印设计组件，无平台化 scope/manifest 诉求）；本节即裁决②附带义务要求的替代契约成文。恢复路径见 §5.2 登记表。
+
+### 登记契约面（豁免替代契约）
+
+`PrintDesigner`（`packages/flux-print-renderers/src/print-designer.tsx`）：
+
+| Prop                | 类型                             | 语义                                                                                                                                                                                                                               |
+| ------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `template`          | `PrintTemplateSchema`            | 受控初值（模板文档）                                                                                                                                                                                                               |
+| `onTemplateChange?` | `(template, serialized) => void` | commit/受控回写通道：editor-core `onCommitted` 经 `policy:'auto'` 在每次变更后触发（非离散 save 动作；与 `editor-designer-standard.md` 裁决③的 `<family>:save` **事件**词汇无关，P3.2 落地时不得混淆——本家族为豁免档，不接事件面） |
+| `className?`        | `string`                         | 壳样式                                                                                                                                                                                                                             |
+
+### 组合面导出（豁免内部面，不入登记契约）
+
+`index.ts` 另导出 `createPrintEditorController`/`PrintEditorController`（命令面）、`PrintDesignerCanvas`/`PrintPalette`/`PrintInspector`/`PrintPreview` 及其 props——豁免壳层的内部组合面，不属于 §5.2 登记契约，随内部实现自由演化。

@@ -421,3 +421,24 @@ function classifyNode(definition: RendererDefinition): PageNodeClass;
 - 路线与验收：`docs/backlog/missing-components-and-designer-roadmap.md` §9、§11（QA.6）
 - 底座契约：`docs/architecture/editor-core.md`、`docs/architecture/flow-designer/canvas-adapters.md`、`docs/architecture/report-designer/inspector-design.md`、`docs/architecture/renderer-env.md`
 - 契约面代码锚点：`packages/flux-core/src/types/renderer-authoring-contract.ts`（`resolveRendererAuthoringContract`）、`packages/flux-core/src/types/renderer-definition-types.ts`（`RendererPropContract`/`RendererDefinitionShape`）、`packages/editor-core/src/types.ts`（`EditorCore`/`EditorDomainAdapter`）、`packages/flux-bundle/src/index.tsx`（默认注册与真渲染装配）
+
+## 对外 props 契约（豁免档）
+
+> 本家族按 `docs/architecture/editor-designer-standard.md` §5.2 / §6 裁决②登记为八层契约**正式豁免档**（"与宿主应用零共享"隔离架构，L6 S1 已过 gate）；本节即裁决②附带义务要求的替代契约成文。恢复路径见 §5.2 登记表。
+
+### 登记契约面（豁免替代契约）
+
+`PageDesigner`（`packages/page-designer-renderers/src/page-designer-page.tsx`）：
+
+| Prop               | 类型                        | 语义                                                               |
+| ------------------ | --------------------------- | ------------------------------------------------------------------ |
+| `env?`             | `RendererEnv`               | 宿主 env（编辑态预览数据源等）；缺省 `createDefaultEnv()`          |
+| `templates?`       | `PageDesignerTemplateStore` | 模板存储宿主回调；缺省 demo 内存 store（会话内持久）               |
+| `dataSourceNames?` | `readonly string[]`         | 宿主注入的数据源清单（数据绑定候选，与文档内 source 节点扫描并集） |
+| `onBack?`          | `() => void`                | 宿主导航回调                                                       |
+
+导出产物：`exportedJson`（组件内 `useMemo(() => session.core.adapter.serialize(state.working))` 派生，经 JSON source 面板/模板画廊消费）。**注意：page-designer 当前无编程式宿主保存通道**——导出面即此 memo 的 UI 呈现，宿主取 JSON 走 UI 复制/模板存储。
+
+### 组合面导出（豁免内部面，不入登记契约）
+
+`index.ts` 另导出 `useDesignerSession`、`PageDesignerCanvas`、`CanvasOverlay`、`PalettePanel`、`InspectorPanel`、`createEditAssemblyPlugin`、`createFormulaExpressionAdapter` 等——这些是豁免壳层留给宿主自建组合的内部面，**不属于** §5.2 登记的替代契约；随家族内部实现自由演化，不另立稳定性承诺。
