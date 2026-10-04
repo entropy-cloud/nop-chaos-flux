@@ -29,6 +29,8 @@ export interface ScadaEditorCanvasSchema extends BaseSchema {
   mode?: 'edit' | 'preview';
   /** 提交策略（manual 缺省 / auto）；缺省 manual。 */
   commitPolicy?: 'manual' | 'auto';
+  /** 宿主运行状态发布路径（P3.3 §2.4；未声明不发布）。 */
+  statusPath?: string;
   /** 视口策略（fit/center，复用 runtime 引擎命令）。 */
   viewport?: ScadaEditorViewportPolicy;
   /** 图元库面板 region（E5.2）。 */

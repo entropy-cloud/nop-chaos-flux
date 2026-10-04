@@ -30,6 +30,12 @@ export const industrialEditorRendererDefinitions: RendererDefinition[] = [
     component: ScadaEditorCanvasRenderer,
     hostContract: scadaEditorHostContract,
     propContracts: {
+      statusPath: {
+        shape: { kind: 'string' },
+        displayName: 'Status Path',
+        description: 'Host runtime status publication path (P3.3): {kind, dirty, busy, error, canUndo, canRedo, selectionCount, mode, status}.',
+        editorType: 'expression',
+      },
       config: {
         shape: { kind: 'unknown' },
         displayName: 'Config',
@@ -172,6 +178,7 @@ export const industrialEditorRendererDefinitions: RendererDefinition[] = [
       },
     },
     fields: [
+      { key: 'statusPath', kind: 'prop' },
       { key: 'config', kind: 'prop' },
       { key: 'width', kind: 'prop' },
       { key: 'height', kind: 'prop' },

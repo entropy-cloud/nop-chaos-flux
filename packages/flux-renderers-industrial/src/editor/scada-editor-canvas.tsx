@@ -12,7 +12,7 @@ import { useEditorHandles } from './renderer/hooks/use-editor-handles.js';
 import { scadaEditorErrorI18nKey } from './renderer/editor-errors.js';
 import { projectSessionChange, type ScadaEditorSession } from './editor-session.js';
 import { EditorPalettePanel } from './palette/editor-palette.js';
-import { WorkbenchShell } from '@nop-chaos/flux-react';
+import { useHostScope, useStatusPathPublication, WorkbenchShell } from '@nop-chaos/flux-react';
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
 import { EditorToolboxPanel } from './toolbox/toolbox-panel.js';
 import { EditorStatusBar } from './renderer/editor-status-bar.js';
@@ -166,8 +166,13 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
 
   // plan 2026-08-07-1835-2 Phase 2 / multi P1-04：save 经 runtime-mutators save() → latest.onSave
   // 触发此处 → 派发 scada-editor:save schema 事件（payload=serializedConfig）。此前 schema 声明 onSave 但 0 dispatch。
+  // P3.3（plan 554）：保存深度追踪——dirty 派生基座（workingConfig/committedBaseline 永不引用相等，
+  // 引用比较不可用；undoDepthAtSave 在 save/load 时写入，dirty = 当前深度 !== 保存时深度）。
+  // state 而非 ref：render-time 读取（React Compiler 禁 render 读 ref），写点在事件处理器（合法）。
+  const [undoDepthAtSave, setUndoDepthAtSave] = useState(0);
   const handleSave = (serializedConfig: string) => {
     // P3.2（plan 553）：save payload 统一 `{ serialized }`（裁决③）；serializedConfig 旧键一版兼容读。
+    setUndoDepthAtSave(runtime ? runtime.session.undoStack.undoStackDepth : 0);
     dispatchEvent(
       'scada-editor:save',
       { serialized: serializedConfig, serializedConfig },
@@ -178,6 +183,8 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // plan 2026-08-07-1835-2 Phase 2 / multi P1-04：load 经 runtime-mutators load() → latest.onLoad
   // 触发此处 → 派发 scada-editor:load schema 事件（payload=parsed config）。
   const handleLoad = (config: ScadaConfig) => {
+    // load 清栈（resetSession）→ 保存深度基线归零。
+    setUndoDepthAtSave(0);
     dispatchEvent(
       'scada-editor:load',
       { config },
@@ -296,6 +303,39 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // （containerRef），palette/inspector 为其兄弟（外层 flex layout）。leafer <canvas> inset:0 填充 canvas 区，
   // 不再覆盖兄弟 panel。loading/error 经 absolute overlay 覆盖 canvas 区。
   const showLayoutBody = runtime !== null && effectiveStatus !== 'loading' && effectiveStatus !== 'error';
+
+  // P3.3（plan 554）：family 只读投影（形状 = P3.1 manifest projection）+ statusPath 发布。
+  // INV-4：投影只读快照（selection 浅拷贝），域 state 不进 scope 可写面；session 为 ref-held
+  // 可变对象，sessionVersion bump 驱动重渲染，render-time 直读即最新值——投影对象每次渲染重建
+  //（useHostScope replace 逐键 diff，等值 no-op，无循环风险）。dirty = 保存深度追踪（见 undoDepthAtSave 注）。
+  const scadaSession = runtime?.session;
+  // dirty 为 statusPath summary 键（§2.4），不进 useHostScope 投影——投影键集 == P3.1 manifest
+  // projection fields（parity 测试锁定），域脏标记走 statusPath 通道。
+  const scadaDirty =
+    (scadaSession?.undoStack.undoStackDepth ?? 0) !== undoDepthAtSave;
+  const scadaScopeData = {
+    config: scadaSession?.workingConfig,
+    selection: scadaSession ? [...scadaSession.selection] : [],
+    mode: scadaSession?.mode ?? (props.props.mode ?? 'edit'),
+    runtime: {
+      canUndo: scadaSession?.undoStack.canUndo ?? false,
+      canRedo: scadaSession?.undoStack.canRedo ?? false,
+    },
+  };
+  useHostScope(scadaScopeData, props.path, 'scada-editor');
+  const statusPath =
+    typeof props.props.statusPath === 'string' ? props.props.statusPath : undefined;
+  useStatusPathPublication(props.node?.scope?.parent ?? props.node?.scope, statusPath, {
+    kind: 'scada-editor',
+    dirty: scadaDirty,
+    busy: effectiveStatus === 'loading',
+    error: effectiveStatus === 'error' ? (errorCode ?? 'error') : null,
+    canUndo: scadaScopeData.runtime.canUndo,
+    canRedo: scadaScopeData.runtime.canRedo,
+    selectionCount: scadaScopeData.selection.length,
+    mode: scadaScopeData.mode,
+    status: effectiveStatus,
+  });
 
   // P2.2（plan 550）：五槽位映射——header=toolbox / leftPanel=palette / canvas=leafer 画布 /
   // rightPanel=inspector / footer=statusBar。隐藏态（loading/error）槽位传 undefined（shell 门

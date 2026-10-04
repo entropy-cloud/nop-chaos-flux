@@ -68,6 +68,12 @@ export const dashboardEditorRendererDefinition: RendererDefinition = {
       editorType: 'select',
       defaultValue: 'manual',
     },
+    statusPath: {
+      shape: { kind: 'string' },
+      displayName: 'Status Path',
+      description: 'Host runtime status publication path (P3.3): {kind, dirty, busy, error, canUndo, canRedo, selectionCount}.',
+      editorType: 'expression',
+    },
   },
   eventContracts: {
     onSave: {
@@ -132,5 +138,6 @@ export const dashboardEditorRendererDefinition: RendererDefinition = {
     { key: 'onError', kind: 'event' },
     { key: 'onSessionChange', kind: 'event' },
     { key: 'onModeChange', kind: 'event' },
+    { key: 'statusPath', kind: 'prop' },
   ],
 };

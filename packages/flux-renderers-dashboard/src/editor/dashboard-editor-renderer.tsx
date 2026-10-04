@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   createNormalizedActionEvent,
   useCurrentComponentRegistry,
@@ -20,6 +20,7 @@ import {
 import { EditorCanvas } from './editor-canvas.js';
 import { EditorInspector } from './editor-inspector.js';
 import { EditorPalette } from './editor-palette.js';
+import { useHostScope, useStatusPathPublication } from '@nop-chaos/flux-react';
 import { useDashboardEditorHandles } from './use-dashboard-editor-handles.js';
 import { useEditorCoreSession } from './editor-session-hook.js';
 import { resolveCols, resolveGapPx, resolveRowHeight, findFreePosition } from '../layout-math.js';
@@ -40,8 +41,12 @@ export interface DashboardEditorSchema extends BaseSchema {
   mode?: 'edit' | 'preview';
   /** 提交策略（缺省 manual）。 */
   commitPolicy?: 'manual' | 'auto';
+  /** 宿主运行状态发布路径（P3.3 §2.4；未声明不发布）。 */
+  statusPath?: string;
   onSave?: ActionSchema;
   onError?: ActionSchema;
+  onSessionChange?: ActionSchema;
+  onModeChange?: ActionSchema;
 }
 
 function asReactNode(value: RendererRenderOutput): React.ReactNode {
@@ -161,6 +166,35 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
   }, [schemaProps.layout, commitPolicy, initialMode]);
 
   const session = useEditorCoreSession(core);
+
+  // P3.3（plan 554）：family 只读投影（形状 = P3.1 manifest projection）+ statusPath 发布。
+  // INV-4：投影只读快照（selection 浅拷贝），域 state 不进 scope 可写面。
+  // hooks 须置于 `if (!core)` early return 之前（rules of hooks）；statusPath 未声明不发布。
+  const dashboardScopeData = useMemo(
+    () => ({
+      layout: session.working,
+      selection: [...session.selection],
+      mode: session.mode,
+      runtime: {
+        canUndo: session.canUndo,
+        canRedo: session.canRedo,
+        dirty: session.dirty,
+      },
+    }),
+    [session],
+  );
+  useHostScope(dashboardScopeData, props.path, 'dashboard-editor');
+  const statusPath =
+    typeof schemaProps.statusPath === 'string' ? schemaProps.statusPath : undefined;
+  useStatusPathPublication(props.node.scope.parent ?? props.node.scope, statusPath, {
+    kind: 'dashboard-editor',
+    dirty: session.dirty,
+    busy: false,
+    error: null,
+    canUndo: session.canUndo,
+    canRedo: session.canRedo,
+    selectionCount: session.selection.length,
+  });
 
   // P3.2（plan 553）：sessionChange/modeChange 推送事件（裁决③最小事件集对齐）。
   // effect 内 core 守卫（core 建立后的首次快照派发一次初始 sessionChange——挂载时派发为裁定行为）；
