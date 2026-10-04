@@ -152,35 +152,35 @@
 
 ### W-C 渲染器演示（27）
 
-| 页面                           | 状态 | 卡片                                                                                                                                            |
-| ------------------------------ | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| flux-basic                     | ✅   | 表单提交管线（component:submit）、对话框、combo 增删、Inspect 行弹层；Docs/API/Urgent 为静态 tag 数据非按钮                                     |
-| table-column-width             | ✅   | 列宽策略宿主：选择/全选机制验证（E3 宿主 fixture）                                                                                              |
-| table-popover                  | ✅   | 单元格 popOver 逐行打开 ✓、复制到剪贴板、分页                                                                                                   |
-| tree-display-ux                | ✅   | 展开/折叠/搜索高亮机制 ✓（E3）、节点树渲染                                                                                                      |
-| condition-builder              | ✅   | 添加条件/分组/筛选、操作符与值下拉、配置弹窗、删除重组 ✓                                                                                        |
-| condition-builder-formula      | ✅   | E3 公式集成变体：条件增删/分组/操作符下拉 ✓                                                                                                     |
-| form-input-enhancements        | ✅   | input-number 步进、array-editor 增删/排序（等长值变更类 no-op 为检测盲区已核）、Submit→console 设计                                             |
-| input-suggest                  | ✅   | 异步建议浮层干净加载+真实输入验证 ✓（Apple/Apricot/Grape/Papaya；早期虚警为残留状态+合成事件假象）；suggestTemplate 区域、Live form values 回显 |
-| layout-family-enhancements     | ✅   | tab 切换（含 badge）、aside 备注、mountOnEnter 系列 ✓                                                                                           |
-| text-icon-visual-fields        | ✅   | 复制 toast「已复制」、maxLine 展开/收起（E3）                                                                                                   |
-| component-handles              | ✅   | Focus/Clear/Reset 句柄语义程序化验证 ✓（activeElement 翻转+值清空）、Select 弹层、表单提交/重置                                                 |
-| event-prevention               | ✅   | X2 三拦截全工作（e2e 4/4 绿：表单/链接/键盘 + 开关切换）；P3：schema 内残留死开关按钮（path:\_ 无操作，功能由外置 React 开关承担）——清理候选    |
-| boolean-control-value-contract | ✅   | checkbox trueValue/falseValue 契约翻转 ✓（E3）                                                                                                  |
-| data-verify                    | ✅   | 数据源机制验证页：展开/setValue 探针 ✓                                                                                                          |
-| env-stream                     | ✅   | Start stream 触发流式输出 ✓、Abort 空栈 no-op、协议/解码器选择                                                                                  |
-| gantt                          | ✅   | 缩放/适应/今日、任务组折叠展开 ✓、依赖连线为图形非按钮                                                                                          |
-| kanban                         | ✅   | 标签过滤片逐个 ✓、清除、列折叠、添加卡片/移除卡片、列拖拽（拖拽类不实点）                                                                       |
-| scheduling-calendar            | ✅   | 上一个/今日/下一个、月/周/日切换 ✓、事件块（leave/maintenance/shift/appointment）渲染                                                           |
-| spreadsheet                    | ✅   | 查找替换、选择整表/整列机制 ✓、撤销空栈 no-op、Set Formula 需先选单元格（代表 性验证网格选择机制）                                              |
-| diff-view                      | ✅   | 统一/分割视图、行折叠展开、视图选择 ✓                                                                                                           |
-| graph-demo                     | ✅   | hierarchy/flow 布局切换、搜索+清除、Focus 定位、缩放族（canvas 变换类 no-op）                                                                   |
-| map-demo                       | ✅   | 四场景截图目检：区域着色/Pin 聚合/自定义边界/空态全渲染，无黑域 ✓；缩放为 canvas 变换                                                           |
-| pivot-table-demo               | ✅   | VTable 画布渲染零错误，主题/模式选择                                                                                                            |
-| leafer-examples                | ✅   | 画布示例渲染、缩放/平移按钮（canvas 变换类）                                                                                                    |
-| three-canvas-demo              | ✅   | AI 生成 schema（离线）/恢复默认场景 ✓、10Hz 数据驱动                                                                                            |
-| mobile-components              | ✅   | swipe-cell 归档/删除（滑动手势类，不实点）、弹层关闭 ✓（M5）                                                                                    |
-| mobile-infrastructure          | ✅   | 触感反馈按钮（触觉类 no-op）、Open Dialog ✓（M0.1）                                                                                             |
+| 页面                           | 状态 | 卡片                                                                                                                                                                                                                         |
+| ------------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| flux-basic                     | ✅   | 表单提交管线（component:submit）、对话框、combo 增删、Inspect 行弹层；Docs/API/Urgent 为静态 tag 数据非按钮                                                                                                                  |
+| table-column-width             | ✅   | 列宽策略宿主：选择/全选机制验证（E3 宿主 fixture）                                                                                                                                                                           |
+| table-popover                  | ✅   | 单元格 popOver 逐行打开 ✓、复制到剪贴板、分页                                                                                                                                                                                |
+| tree-display-ux                | ✅   | 展开/折叠/搜索高亮机制 ✓（E3）、节点树渲染                                                                                                                                                                                   |
+| condition-builder              | ✅   | 添加条件/分组/筛选、操作符与值下拉、配置弹窗、删除重组 ✓                                                                                                                                                                     |
+| condition-builder-formula      | ✅   | E3 公式集成变体：条件增删/分组/操作符下拉 ✓                                                                                                                                                                                  |
+| form-input-enhancements        | ✅   | input-number 步进、array-editor 增删/排序（等长值变更类 no-op 为检测盲区已核）、Submit→console 设计                                                                                                                          |
+| input-suggest                  | ✅   | 异步建议浮层干净加载+真实输入验证 ✓（Apple/Apricot/Grape/Papaya；早期虚警为残留状态+合成事件假象）；suggestTemplate 区域、Live form values 回显                                                                              |
+| layout-family-enhancements     | ✅   | tab 切换（含 badge）、aside 备注、mountOnEnter 系列 ✓                                                                                                                                                                        |
+| text-icon-visual-fields        | ✅   | 复制 toast「已复制」、maxLine 展开/收起（E3）                                                                                                                                                                                |
+| component-handles              | ✅   | Focus/Clear/Reset 句柄语义程序化验证 ✓（activeElement 翻转+值清空）、Select 弹层、表单提交/重置                                                                                                                              |
+| event-prevention               | ✅   | X2 三拦截全工作（e2e 4/4 绿：表单/链接/键盘 + 开关切换）；P3：schema 内残留死开关按钮（path:\_ 无操作，功能由外置 React 开关承担）——清理候选                                                                                 |
+| boolean-control-value-contract | ✅   | checkbox trueValue/falseValue 契约翻转 ✓（E3）                                                                                                                                                                               |
+| data-verify                    | ✅   | 数据源机制验证页：展开/setValue 探针 ✓                                                                                                                                                                                       |
+| env-stream                     | ✅   | Start stream 触发流式输出 ✓、Abort 空栈 no-op、协议/解码器选择                                                                                                                                                               |
+| gantt                          | ✅   | 深度验证 ✓：双击编辑弹窗（end 10-28→10-21 持久化+条宽 600→320px 重渲染）；边缘拖拽缩放 320→480px；拖拽移动日期平移（弹窗确认同步）；选中+Delete 删除+Ctrl+Z 撤销 ✓；跨天=条宽按起止比例；缩放/折叠 ✓                         |
+| kanban                         | ✅   | 深度验证 ✓：跨列拖卡（调研 待办→进行中，列计数更新）；标签过滤/清除、列折叠、添加/移除卡片                                                                                                                                   |
+| scheduling-calendar            | ✅   | 深度验证 ✓：长按 500ms+拖格创建（类型选择器→事件落格+toast「已创建排班: leave (10-20~10-21)」）；导航+日期变更 toast；P2 修复：demo 五事件回调原为非法 actionType 形状全死接线 → 改 {action:"showToast"}+notify 接真实 toast |
+| spreadsheet                    | ✅   | 深度验证 ✓：双击单元格→编辑→输入→Enter 落格；查找替换、选择机制、撤销空栈                                                                                                                                                    |
+| diff-view                      | ✅   | 统一/分割视图、行折叠展开、视图选择 ✓                                                                                                                                                                                        |
+| graph-demo                     | ✅   | hierarchy/flow 布局切换、搜索+清除、Focus 定位、缩放族（canvas 变换类 no-op）                                                                                                                                                |
+| map-demo                       | ✅   | 四场景截图目检：区域着色/Pin 聚合/自定义边界/空态全渲染，无黑域 ✓；缩放为 canvas 变换                                                                                                                                        |
+| pivot-table-demo               | ✅   | VTable 画布渲染零错误，主题/模式选择                                                                                                                                                                                         |
+| leafer-examples                | ✅   | 画布示例渲染、缩放/平移按钮（canvas 变换类）                                                                                                                                                                                 |
+| three-canvas-demo              | ✅   | AI 生成 schema（离线）/恢复默认场景 ✓、10Hz 数据驱动                                                                                                                                                                         |
+| mobile-components              | ✅   | swipe-cell 归档/删除（滑动手势类，不实点）、弹层关闭 ✓（M5）                                                                                                                                                                 |
+| mobile-infrastructure          | ✅   | 触感反馈按钮（触觉类 no-op）、Open Dialog ✓（M0.1）                                                                                                                                                                          |
 
 ### W-D AI 家族（14）
 
@@ -246,6 +246,11 @@
 - **已修（既有缺陷，plan 538 执行期发现）**：sundial-workbench 添加待办后计数从不刷新——form 级 onSubmitSuccess 在弹窗域派发导致 setValue(rev) 遮蔽页级变量、六个 dependsOn 数据源永不重取；改为 refreshSource ×6 后计数契约首次真正生效（9→10 实证）。
 - **P3（页面设计说明，非缺陷）**：sundial-workbench 分组任务行为静态 schema（仅计数绑定数据源）——新增待办只在计数反映，列表行不随数据渲染；如需全动态列表需页面级改造（超出本审计范围，登记为设计演进候选）。
 - **裁定（多源同步保留显式刷新）**：notion-database（5 源）/ airtable-grid（2 源）/ sundial-workbench（6 源）弹窗提交需同步多数据源，refreshNearest 单目标语义无法表达；显式 refreshSource/component:refresh 多目标是多视图一致性的正确形态。
+
+### W-F 执行期新增登记（2026-10-03，深度抽验轮）
+
+- **P2（已修复，calendar-demo.tsx）**：日历 demo 五个事件回调（onEventClick/onEventChange/onEventCreate/onViewChange/onDateChange）自创建起使用非法 `{actionType:'toast'}` 形状——ActionSchema 无此字段，全部死接线（拖建创建成功但用户零反馈；日期导航同样无反馈）。修正为合法 `{action:'showToast', args}` 形状 + demo env notify 接通 toast UI。复验：日期变更 toast ✓、拖建「已创建排班: leave (2026-10-20 ~ 2026-10-21)」toast ✓。
+- **深度抽验记录**（用户质询驱动，gantt 示范 + 调度同族补验）：gantt 双击编辑弹窗持久化 ✓、条内边缘拖拽缩放 ✓、拖拽移动日期平移 ✓、选中+Delete 删除与 Ctrl+Z 撤销 ✓；kanban 跨列拖卡 ✓；calendar 长按拖建 ✓；spreadsheet 单元格编辑 ✓。**口径更正**：W-B/W-E 曾将拖拽类标为「不实点」——实际均可程序化驱动（CUA drag/合成 PointerEvent），深度抽验应作为后续遍历的标准动作。
 
 ### W-D 执行期新增登记（2026-10-03）
 

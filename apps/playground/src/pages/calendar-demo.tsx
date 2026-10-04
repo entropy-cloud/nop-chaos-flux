@@ -1,4 +1,4 @@
-import { Button } from '@nop-chaos/ui';
+import { Button, toast } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -18,7 +18,12 @@ const env: RendererEnv = {
   fetcher: async function <T>(_req: { url: string }) {
     return { status: 0, data: null as T };
   },
-  notify: (level, msg) => console.log(`[${level}] ${msg}`),
+  notify: (level, msg) => {
+    const text = typeof msg === 'string' ? msg : String(msg ?? '');
+    if (level === 'error') toast.error(text);
+    else if (level === 'success') toast.success(text);
+    else toast.info(text);
+  },
 };
 
 const SHIFT_TYPES = ['shift', 'leave', 'appointment', 'maintenance'];
@@ -111,10 +116,11 @@ const SAMPLE_CALENDAR_SCHEMA = {
   showCrossDayLines: true,
   events: SAMPLE_EVENTS,
   resources: SAMPLE_RESOURCES,
-  onEventClick: { actionType: 'toast', args: { msg: '${event.title} - ${date}' } },
-  onEventChange: { actionType: 'toast', args: { msg: '排班已更新: ${event.title}' } },
-  onViewChange: { actionType: 'toast', args: { msg: '视图切换: ${view}' } },
-  onDateChange: { actionType: 'toast', args: { msg: '日期变更: ${date}' } },
+  onEventClick: { action: 'showToast', args: { message: '${event.title} - ${date}' } },
+  onEventChange: { action: 'showToast', args: { message: '排班已更新: ${event.title}' } },
+  onEventCreate: { action: 'showToast', args: { message: '已创建排班: ${event.title} (${event.start} ~ ${event.end})' } },
+  onViewChange: { action: 'showToast', args: { message: '视图切换: ${view}' } },
+  onDateChange: { action: 'showToast', args: { message: '日期变更: ${date}' } },
 };
 
 export function CalendarDemoPage({ onBack }: CalendarDemoPageProps) {
