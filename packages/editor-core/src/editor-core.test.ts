@@ -491,3 +491,48 @@ describe('DEFAULT_COALESCE_WINDOW_MS', () => {
     expect(mod.DEFAULT_COALESCE_WINDOW_MS).toBe(500);
   });
 });
+
+describe('UndoCommandStack.listUndo / listRedo (read-only projection)', () => {
+  const entryOf = (forward: number, inverse: number, group?: string) =>
+    ({
+      forward,
+      inverse,
+      operationKind: 'op',
+      timestamp: 1000,
+      ...(group !== undefined ? { coalesceGroup: group } : {}),
+    }) as never;
+
+  it('lists undo entries bottom→top with full fields', () => {
+    const stack = new UndoCommandStack<number>();
+    stack.push(entryOf(1, -1, 'g1'));
+    stack.push(entryOf(2, -2));
+    const entries = stack.listUndo();
+    expect(entries).toHaveLength(2);
+    expect(entries[0].forward).toBe(1);
+    expect(entries[0].coalesceGroup).toBe('g1');
+    expect(entries[1].forward).toBe(2);
+    expect(entries[1].coalesceGroup).toBeUndefined();
+  });
+
+  it('lists redo entries bottom→top', () => {
+    const stack = new UndoCommandStack<number>();
+    stack.push(entryOf(1, -1));
+    stack.pushRedo(entryOf(9, -9));
+    expect(stack.listRedo()).toHaveLength(1);
+    expect(stack.listRedo()[0].forward).toBe(9);
+  });
+
+  it('returns empty arrays on empty stacks', () => {
+    const stack = new UndoCommandStack<number>();
+    expect(stack.listUndo()).toEqual([]);
+    expect(stack.listRedo()).toEqual([]);
+  });
+
+  it('returns snapshots that do not alias the internal stack', () => {
+    const stack = new UndoCommandStack<number>();
+    stack.push(entryOf(1, -1));
+    const entries = stack.listUndo() as Array<{ forward: number }>;
+    entries.pop();
+    expect(stack.undoDepth).toBe(1);
+  });
+});

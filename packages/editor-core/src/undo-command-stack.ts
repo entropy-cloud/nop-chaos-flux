@@ -77,6 +77,16 @@ export class UndoCommandStack<TDiff = unknown> {
     return this.redoStack[this.redoStack.length - 1];
   }
 
+  /** undo 栈只读投影（栈底→栈顶快照数组；历史面板/域合并决策消费，不泄漏内部可变数组）。 */
+  listUndo(): readonly EditorDiffEntry<TDiff>[] {
+    return [...this.undoStack];
+  }
+
+  /** redo 栈只读投影（栈底→栈顶快照数组）。 */
+  listRedo(): readonly EditorDiffEntry<TDiff>[] {
+    return [...this.redoStack];
+  }
+
   /** 弹出 redo 栈顶 entry（redo 成功后由 host 移回 undo 栈）。 */
   popRedo(): EditorDiffEntry<TDiff> | undefined {
     return this.redoStack.pop();

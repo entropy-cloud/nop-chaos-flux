@@ -1083,6 +1083,9 @@ importers:
       '@leafer-in/viewport':
         specifier: 2.2.9
         version: 2.2.9(@leafer-in/interface@2.2.9(@leafer-ui/interface@2.2.9)(@leafer/interface@2.2.9))(@leafer-ui/core@2.2.9)(@leafer-ui/interface@2.2.9)
+      '@nop-chaos/editor-core':
+        specifier: workspace:*
+        version: link:../editor-core
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core

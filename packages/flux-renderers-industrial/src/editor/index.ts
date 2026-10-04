@@ -33,6 +33,13 @@ export type { PreviewInjectionSurface, PreviewDataInjectorOptions } from './prev
  * `registerScadaEditorRenderers` 仍是一键全注册便捷入口。
  */
 export { industrialEditorRendererDefinitions } from './renderer-definitions.js';
+export {
+  SCADA_EDITOR_DOMAIN_KIND,
+  SCADA_EDITOR_DOMAIN_COMMANDS,
+  hasScadaDiffChanges,
+  createScadaEditorDomainAdapter,
+  registerScadaEditorDomain,
+} from './editor-core-adapter.js';
 
 /**
  * `scada-editor-canvas` renderer 注册入口（design-renderer.md §11）。

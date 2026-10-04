@@ -3,46 +3,8 @@ import type { ComponentCapabilities, ComponentHandleRegistry } from '@nop-chaos/
 import type { ScadaConfig, ScadaSymbolNode } from '../../../serialization/config-types.js';
 import type { EditorEngineRuntime } from './use-editor-engine.js';
 
-/**
- * runtime 9 句柄（design-renderer.md §8.5 表；与 runtime `use-scada-handles` 同名集）。
- *
- * plan 2026-08-07-1835-2 Phase 2 / multi P1-06：此前 editor renderer 仅注册 9 个 editor 扩展方法，
- * runtime 9 句柄（含 destroy）对 editor 实例不可达（host 调 component:destroy()/fit() 报 unknown method）。
- * 现合并注册，各自委派 EditorEngineRuntime 等价能力。
- */
-const RUNTIME_HANDLE_METHODS = [
-  'fit',
-  'center',
-  'getSymbols',
-  'getSymbol',
-  'setPointValue',
-  'getPointTable',
-  'exportConfig',
-  'importConfig',
-  'destroy',
-] as const;
-
-/**
- * editor 扩展句柄方法名（design-renderer.md §8.5.2）。
- * editor 扩展：addSymbol/removeSymbol/updateSymbol/save/load（M1）+ undo/redo（E7.2）+
- * group/ungroup（E7.2 Phase 3）+ previewInject/previewClear（plan 522 / L5.5，design-renderer.md §13.3）。
- */
-const EDITOR_HANDLE_METHODS = [
-  'addSymbol',
-  'removeSymbol',
-  'updateSymbol',
-  'save',
-  'load',
-  'undo',
-  'redo',
-  'group',
-  'ungroup',
-  'previewInject',
-  'previewClear',
-] as const;
-
-/** editor 实例全部可调句柄（runtime 9 ∪ editor 扩展 9，design-renderer.md §8.5 + §8.5.2）。 */
-const ALL_HANDLE_METHODS = [...RUNTIME_HANDLE_METHODS, ...EDITOR_HANDLE_METHODS] as const;
+// 句柄方法名单一声明源（plan 546：与 editor-core-adapter domainCommands 共用，防漂移）。
+import { ALL_HANDLE_METHODS } from '../../editor-handle-names.js';
 const ALL_HANDLE_METHOD_SET = new Set<string>(ALL_HANDLE_METHODS);
 
 export interface UseEditorHandlesArgs {

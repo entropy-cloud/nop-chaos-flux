@@ -1,30 +1,6 @@
+import type { EditorDiffEntry } from '@nop-chaos/editor-core';
+import { UndoCommandStack, MAX_UNDO_STACK_DEPTH } from '@nop-chaos/editor-core';
 import type { ScadaConfigDiff } from '../../serialization/config-types.js';
-
-/**
- * undo 栈元素结构（design-undo-redo.md §4.1.2）。
- *
- * 栈元素**仅含 forward + inverse 两条增量 diff**（外加 operationKind + timestamp 元数据）。
- * **不存储全量 prevSnapshot**（R4 内存约束——push 时 computeInverse 一次性预计算 inverse 后 prevSnapshot 丢弃）。
- */
-export interface UndoStackEntry {
-  /** 编辑操作产出的 forward diff（apply 到 working copy 使其前进）。 */
-  forward: ScadaConfigDiff;
-  /** forward 的逆 diff（apply 到 working copy 使其回退到此 entry 入栈前的状态）；push 时经 computeInverse 预计算。 */
-  inverse: ScadaConfigDiff;
-  /** 操作类型标签（跨操作合并 §4.4 + 边界提示 §4.5 用）。 */
-  operationKind: EditorOperationKind;
-  /** 操作时间戳（跨操作合并时间窗口判定 §4.4）。 */
-  timestamp: number;
-  /**
-   * 跨操作合并分组键（M3 完善，design-undo-redo.md §4.4）。
-   *
-   * 非空时，连续同 group + 时间窗口内的 entry 经 tryCoalesce 合并为 1 步（用户可感知的合并粒度）。
-   * 用于对齐/分布/层级连续操作合并（如连续 toTop / 连续 align:left）。transform 族 drag 事务
-   * 不设 group（每次 pointerup = 独立事务，不合，§4.4 表）。缺省 undefined = 不参与 group 合并。
-   */
-  coalesceGroup?: string;
-}
-
 /**
  * 编辑操作类型（design-undo-redo.md §4.1.2）。
  *
@@ -46,8 +22,17 @@ export type EditorOperationKind =
   | 'property-edit'
   | 'z-order';
 
-/** 栈深度上限（design-undo-redo.md §2 + §4.5 边界提示，U7 满栈丢弃最旧）。 */
-export const MAX_UNDO_STACK_DEPTH = 100;
+/**
+ * undo 栈元素结构（design-undo-redo.md §4.1.2）。
+ *
+ * **P1.1 迁移**：存储契约收敛到 editor-core `EditorDiffEntry`（forward/inverse 双增量 +
+ * operationKind/timestamp/coalesceGroup 元数据，不含全量 prevSnapshot——R4 内存约束），
+ * `operationKind` 收窄为 SCADA 域操作类型联合。
+ */
+export interface UndoStackEntry extends EditorDiffEntry<ScadaConfigDiff> {
+  /** 操作类型标签（跨操作合并 §4.4 + 边界提示 §4.5 用）。 */
+  operationKind: EditorOperationKind;
+}
 
 /**
  * 历史面板只读投影条目（design-undo-redo.md §13，plan 521 / U2）。
@@ -70,6 +55,10 @@ export interface UndoStackEntryInfo {
 /**
  * UndoStack —— undo/redo 栈管理（design-undo-redo.md §4.1 + §4.1.2）。
  *
+ * **P1.1 迁移裁定**（roadmap P1.1，plan 546）：本类不再持有自有双栈存储，改为 editor-core
+ * `UndoCommandStack<ScadaConfigDiff>` 的存储 facade——仓库内 undo 栈实现单源到 `@nop-chaos/editor-core`
+ * （消灭 roadmap §3 登记的独立实现并存）。公开 API 与语义逐项保持不变：
+ *
  * **栈元素不调换字段**（design-undo-redo.md §4.1 Round 2 NEW-1 修正）：
  * - undo：从 undoStack pop entry →（host apply inverse）→ **同一个 entry 原样**推入 redoStack。
  * - redo：从 redoStack pop entry →（host apply forward）→ **同一个 entry 原样**推回 undoStack。
@@ -81,45 +70,38 @@ export interface UndoStackEntryInfo {
  * 纯逻辑（无 React / leafer 依赖），Vitest 单测先行。
  */
 export class UndoStack {
-  private undoStack: UndoStackEntry[] = [];
-  private redoStack: UndoStackEntry[] = [];
-  private readonly maxDepth: number;
+  private readonly core: UndoCommandStack<ScadaConfigDiff>;
 
   constructor(maxDepth: number = MAX_UNDO_STACK_DEPTH) {
-    this.maxDepth = maxDepth;
+    this.core = new UndoCommandStack<ScadaConfigDiff>(maxDepth);
   }
 
   /** 入栈（编辑器适配层在 computeInverse 预计算后调用）。满栈丢弃最旧（U7）。 */
   push(entry: UndoStackEntry): void {
-    this.undoStack.push(entry);
-    if (this.undoStack.length > this.maxDepth) {
-      this.undoStack.shift();
-    }
-    // 新操作入栈截断 redo 链（U6 标准模型）。
-    this.redoStack = [];
+    this.core.push(entry);
   }
 
   /** 可撤销（undoStack 非空）。 */
   get canUndo(): boolean {
-    return this.undoStack.length > 0;
+    return this.core.canUndo;
   }
 
   /** 可重做（redoStack 非空）。 */
   get canRedo(): boolean {
-    return this.redoStack.length > 0;
+    return this.core.canRedo;
   }
 
   get undoStackDepth(): number {
-    return this.undoStack.length;
+    return this.core.undoDepth;
   }
 
   get redoStackDepth(): number {
-    return this.redoStack.length;
+    return this.core.redoDepth;
   }
 
   /** 栈顶 operationKind（合并/边界测试用）。 */
   get topOperationKind(): EditorOperationKind | undefined {
-    return this.undoStack[this.undoStack.length - 1]?.operationKind;
+    return this.core.peekUndo()?.operationKind as EditorOperationKind | undefined;
   }
 
   /**
@@ -127,9 +109,9 @@ export class UndoStack {
    * 返回 undefined 表示栈空（边界提示：无可撤销操作，§4.5）。
    */
   popForUndo(): UndoStackEntry | undefined {
-    const entry = this.undoStack.pop();
-    if (entry) this.redoStack.push(entry);
-    return entry;
+    const entry = this.core.popUndo();
+    if (entry) this.core.pushRedo(entry);
+    return entry as UndoStackEntry;
   }
 
   /**
@@ -137,19 +119,19 @@ export class UndoStack {
    * 返回 undefined 表示栈空（边界提示：无可重做操作，§4.5）。
    */
   popForRedo(): UndoStackEntry | undefined {
-    const entry = this.redoStack.pop();
-    if (entry) this.undoStack.push(entry);
-    return entry;
+    const entry = this.core.popRedo();
+    if (entry) this.core.pushUndo(entry);
+    return entry as UndoStackEntry;
   }
 
   /** 查看栈顶（不 pop；合并决策用）。 */
   peekUndoTop(): UndoStackEntry | undefined {
-    return this.undoStack[this.undoStack.length - 1];
+    return this.core.peekUndo() as UndoStackEntry | undefined;
   }
 
   /** 查看 redoStack 栈顶（不 pop；plan 2026-08-08-0900-1 Phase 2 / P2 #17 失败可回滚的 redo 用）。 */
   peekRedoTop(): UndoStackEntry | undefined {
-    return this.redoStack[this.redoStack.length - 1];
+    return this.core.peekRedo() as UndoStackEntry | undefined;
   }
 
   /**
@@ -157,12 +139,12 @@ export class UndoStack {
    * 返回**栈底→栈顶**顺序（index 1-based）；只含可观察元数据，无 diff 载荷（见 UndoStackEntryInfo）。
    */
   listUndoEntries(): UndoStackEntryInfo[] {
-    return this.undoStack.map((entry, i) => toEntryInfo(entry, i));
+    return this.core.listUndo().map((entry, i) => toEntryInfo(entry as UndoStackEntry, i));
   }
 
   /** 历史面板只读投影（design-undo-redo.md §13，plan 521 / U2）：redo 栈条目元数据列表（栈底→栈顶）。 */
   listRedoEntries(): UndoStackEntryInfo[] {
-    return this.redoStack.map((entry, i) => toEntryInfo(entry, i));
+    return this.core.listRedo().map((entry, i) => toEntryInfo(entry as UndoStackEntry, i));
   }
 
   /**
@@ -172,25 +154,17 @@ export class UndoStack {
    * syncWorkingCopy，applyDiff 抛错时弹出刚入栈条目，使栈状态与 working copy 保持一致。
    */
   dropUndoTop(): UndoStackEntry | undefined {
-    return this.undoStack.pop();
+    return this.core.popUndo() as UndoStackEntry | undefined;
   }
 
   /** 替换栈顶 entry（合并用：把栈顶替换为合并后的新 entry）。 */
   replaceUndoTop(entry: UndoStackEntry): void {
-    if (this.undoStack.length === 0) {
-      this.undoStack.push(entry);
-    } else {
-      this.undoStack[this.undoStack.length - 1] = entry;
-    }
-    // 合并替换也是一次「新提交」（coalesce-merge 产出新 forward），按 U6 截断 redo 分支，
-    // 与 push 同语义（design-undo-redo.md §4.5 + §12.1 U6：undo 后任何新操作丢弃 redoStack）。
-    this.redoStack = [];
+    this.core.replaceUndoTop(entry);
   }
 
   /** 清空两栈（load 句柄消费，design-undo-redo.md §8.2 编辑历史不保留）。 */
   clear(): void {
-    this.undoStack = [];
-    this.redoStack = [];
+    this.core.clear();
   }
 }
 
@@ -203,3 +177,6 @@ function toEntryInfo(entry: UndoStackEntry, i: number): UndoStackEntryInfo {
     ...(entry.coalesceGroup !== undefined ? { coalesceGroup: entry.coalesceGroup } : {}),
   };
 }
+
+/** 栈深度上限（历史导出名，P1.1 起单源 editor-core `MAX_UNDO_STACK_DEPTH` 同值 100；向后兼容保留）。 */
+export { MAX_UNDO_STACK_DEPTH } from '@nop-chaos/editor-core';
