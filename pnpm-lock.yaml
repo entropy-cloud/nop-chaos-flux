@@ -1442,6 +1442,9 @@ importers:
 
   packages/spreadsheet-core:
     dependencies:
+      '@nop-chaos/editor-core':
+        specifier: workspace:*
+        version: link:../editor-core
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core

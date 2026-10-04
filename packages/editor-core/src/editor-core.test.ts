@@ -536,3 +536,22 @@ describe('UndoCommandStack.listUndo / listRedo (read-only projection)', () => {
     expect(stack.undoDepth).toBe(1);
   });
 });
+
+describe('UndoCommandStack.clearRedo', () => {
+  it('clears redo without touching undo', () => {
+    const stack = new UndoCommandStack<number>();
+    const entry = { forward: 1, inverse: -1, timestamp: 0 } as never;
+    stack.push(entry);
+    stack.pushRedo(entry);
+    stack.clearRedo();
+    expect(stack.canUndo).toBe(true);
+    expect(stack.canRedo).toBe(false);
+    expect(stack.redoDepth).toBe(0);
+  });
+
+  it('is a no-op on an empty redo stack', () => {
+    const stack = new UndoCommandStack<number>();
+    stack.clearRedo();
+    expect(stack.canRedo).toBe(false);
+  });
+});

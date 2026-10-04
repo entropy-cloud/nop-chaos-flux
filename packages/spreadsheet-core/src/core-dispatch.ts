@@ -8,7 +8,8 @@ import {
 
 export type { SpreadsheetDispatchStore } from './command-handlers/index.js';
 
-const commandHandlers = createCommandHandlerRegistry();
+/** 命令 handler 注册表（单一事实源；editor-core-adapter domainCommands 派生 + parity 锁定）。 */
+export const commandHandlers = createCommandHandlerRegistry();
 
 export async function dispatchSpreadsheetCommand(
   store: SpreadsheetDispatchStore,

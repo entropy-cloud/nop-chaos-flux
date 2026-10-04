@@ -26,6 +26,7 @@
   },
   "description": "Core logic and data model for the spreadsheet editor",
   "dependencies": {
+    "@nop-chaos/editor-core": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*"
   }
 }

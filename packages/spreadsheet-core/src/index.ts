@@ -128,6 +128,13 @@ export { isSpreadsheetCommand } from './commands.js';
 export type { SpreadsheetCore, CreateSpreadsheetCoreOptions } from './core.js';
 
 export { createSpreadsheetCore } from './core.js';
+export {
+  SPREADSHEET_DOMAIN_KIND,
+  SPREADSHEET_DOMAIN_COMMANDS,
+  hasSpreadsheetDocChanges,
+  createSpreadsheetDomainAdapter,
+  registerSpreadsheetDomain,
+} from './editor-core-adapter.js';
 
 /**
  * Shared designer-page schema preamble (cq-4 Phase 4): the designer-family

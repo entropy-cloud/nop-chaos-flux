@@ -1,4 +1,5 @@
 import { createStore } from 'zustand/vanilla';
+import { UndoCommandStack } from '@nop-chaos/editor-core';
 import type {
   SpreadsheetConfig,
   SpreadsheetDocument,
@@ -53,8 +54,8 @@ export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): Sp
     viewport: createDefaultViewport(),
     readonly,
     dirty: false,
-    undoStack: [],
-    redoStack: [],
+    // P1.2（plan 547）：undo/redo 栈单源 editor-core（快照对 entry，见 internal-state.ts 类注释）。
+    undo: new UndoCommandStack<SpreadsheetDocument>(config?.maxUndoDepth ?? 100),
     transactionDoc: null,
     clipboard: null,
     maxUndoDepth: config?.maxUndoDepth ?? 100,
@@ -89,14 +90,14 @@ export function createSpreadsheetCore(options: CreateSpreadsheetCoreOptions): Sp
     replaceDocument(nextDocument: SpreadsheetDocument) {
       const replacedDocument = cloneSpreadsheetDocument(nextDocument);
       const activeSheetId = replacedDocument.workbook.sheets[0]?.id ?? '';
+      const state = store.getState();
+      state.undo.clear();
       store.setState({
         document: replacedDocument,
         activeSheetId,
         selection: { kind: 'none' },
         editing: undefined,
         dirty: false,
-        undoStack: [],
-        redoStack: [],
         transactionDoc: null,
       });
     },

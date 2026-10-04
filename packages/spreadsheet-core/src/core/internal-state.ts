@@ -1,3 +1,4 @@
+import type { UndoCommandStack } from '@nop-chaos/editor-core';
 import type {
   SpreadsheetDocument,
   SpreadsheetRuntimeSnapshot,
@@ -7,6 +8,17 @@ import type {
 } from '../types.js';
 import { createDefaultLayout } from '../types.js';
 
+/**
+ * P1.2 迁移（plan 547）：undo/redo 栈存储单源 editor-core `UndoCommandStack<SpreadsheetDocument>`。
+ *
+ * 快照对 entry 裁定（editor-core.md §6.2）：SpreadsheetDocument 无结构化域 diff，entry 的
+ * `inverse` = undo 恢复目标文档、`forward` = redo 恢复目标文档（全量快照即自逆 diff，
+ * forward/inverse 对称契约平凡满足，undo 恢复语义与旧数组快照栈逐字节一致）。
+ * **操作时点语义**：undo/redo 恢复目标取 entry.inverse/forward，但 redo/undo 时会以操作时点
+ * `current.document` 重建对侧 entry（见 history-handlers）——事务开启期间文档可漂移
+ * （事务内 mutation / recalc 不入栈），操作时点语义与旧数组实现一致。
+ * 事务起点快照 `transactionDoc` 映射 editor-core 事务三件套的 `txStart`（域协调层持有）。
+ */
 export interface SpreadsheetInternalState {
   document: SpreadsheetDocument;
   activeSheetId: string;
@@ -15,8 +27,8 @@ export interface SpreadsheetInternalState {
   viewport: { scrollX: number; scrollY: number; zoom: number };
   readonly: boolean;
   dirty: boolean;
-  undoStack: SpreadsheetDocument[];
-  redoStack: SpreadsheetDocument[];
+  /** undo/redo 栈（editor-core 单源；实例引用跨 setState 稳定，快照对 entry 见类注释）。 */
+  undo: UndoCommandStack<SpreadsheetDocument>;
   transactionDoc: SpreadsheetDocument | null;
   clipboard: ClipboardData | null;
   maxUndoDepth: number;
@@ -34,10 +46,10 @@ export function buildSnapshot(state: SpreadsheetInternalState): SpreadsheetRunti
     selection: state.selection,
     editing: state.editing,
     history: {
-      canUndo: state.undoStack.length > 0,
-      canRedo: state.redoStack.length > 0,
-      undoDepth: state.undoStack.length,
-      redoDepth: state.redoStack.length,
+      canUndo: state.undo.canUndo,
+      canRedo: state.undo.canRedo,
+      undoDepth: state.undo.undoDepth,
+      redoDepth: state.undo.redoDepth,
     },
     viewport: state.viewport,
     layout: createDefaultLayout(),
@@ -48,26 +60,24 @@ export function buildSnapshot(state: SpreadsheetInternalState): SpreadsheetRunti
 
 export function pushUndo(
   state: SpreadsheetInternalState,
-  maxUndoDepth?: number,
 ): SpreadsheetInternalState {
-  return pushUndoDocument(state, state.document, maxUndoDepth);
+  return pushUndoDocument(state, state.document);
 }
 
-export function pushUndoDocument(
+function pushUndoDocument(
   state: SpreadsheetInternalState,
   previousDocument: SpreadsheetDocument,
-  maxUndoDepth?: number,
 ): SpreadsheetInternalState {
   if (state.transactionDoc) {
-    return { ...state, redoStack: [] };
+    state.undo.clearRedo();
+    return { ...state };
   }
-
-  const maxDepth = maxUndoDepth ?? state.maxUndoDepth ?? 100;
-  const undoStack = [...state.undoStack, previousDocument];
-  if (undoStack.length > maxDepth) {
-    undoStack.shift();
-  }
-  return { ...state, undoStack, redoStack: [] };
+  state.undo.push({
+    forward: state.document,
+    inverse: previousDocument,
+    timestamp: Date.now(),
+  });
+  return { ...state };
 }
 
 export function clearTransientState(

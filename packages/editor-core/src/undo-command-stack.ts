@@ -87,6 +87,11 @@ export class UndoCommandStack<TDiff = unknown> {
     return [...this.redoStack];
   }
 
+  /** 清空 redo 栈（不动 undo 栈；域事务开启期间丢弃重做分支用）。 */
+  clearRedo(): void {
+    this.redoStack.length = 0;
+  }
+
   /** 弹出 redo 栈顶 entry（redo 成功后由 host 移回 undo 栈）。 */
   popRedo(): EditorDiffEntry<TDiff> | undefined {
     return this.redoStack.pop();

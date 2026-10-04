@@ -147,6 +147,17 @@ operationKind?, coalesceGroup?)` 原语落栈（空栈等价 push、U6 截断 re
   `EditorSessionState`）按 plan 546 Deferred 改判为显式 successor ownership（z-order `reordered` 的 inverse
   必经域 `computeInverse`，内核 `diff(next, prev)` 反演不表达顺序变更；追认流程归 roadmap §10 Rule 3/5）。
 
+### 6.2 spreadsheet 映射（P1.2，plan 547，2026-10-04）
+
+| spreadsheet 面                                                                      | editor-core 映射                                                                                                                                                                                         | 覆盖状态                                   |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `SpreadsheetInternalState.undoStack/redoStack: SpreadsheetDocument[]`（全量快照栈） | `UndoCommandStack<SpreadsheetDocument>` 实例字段（快照对 entry：`inverse`=undo 恢复目标、`forward`=redo 恢复目标）                                                                                       | **已落地（P1.2）**：栈实现单源 editor-core |
+| `transactionDoc: SpreadsheetDocument \| null`（事务起点快照）                       | editor-core 事务三件套的 `txStart`（事务内变更不入栈 + 收口一次入栈 + 回滚恢复）；域协调层（history-handlers）保留                                                                                       | 直接映射（语义）                           |
+| `acceptCurrentDocumentAsSaved()`（dirty→false）                                     | editor-core `commit()` 的"working 视为已保存基线"语义（spreadsheet 域 validate 恒 ok、无序列化下游）                                                                                                     | 直接映射（语义）                           |
+| 快照对 entry 的 diff 契约                                                           | SpreadsheetDocument 无结构化域 diff：**快照即自逆 diff**（forward/inverse 对称平凡满足，undo 恢复与快照栈逐字节一致）                                                                                    | 裁定成文                                   |
+| undo/redo 恢复目标语义                                                              | **操作时点文档**：undo/redo 恢复取 `entry.inverse/forward`，对侧 entry 以操作时点 `current.document` 重建——事务开启期间文档漂移（事务内 mutation / recalc 不入栈）后行为与旧数组实现一致（pin 测试锁定） | 裁定成文                                   |
+| `domainCommands`                                                                    | 全量 `spreadsheet:*` 命令名（与 core-dispatch handler 注册表键集 parity 锁定）                                                                                                                           | 已声明（P1.2）                             |
+
 ## 7. 消费侧
 
 - React：`useSyncExternalStore(core.subscribe, core.getState)`（见 `flux-renderers-dashboard` editor）。

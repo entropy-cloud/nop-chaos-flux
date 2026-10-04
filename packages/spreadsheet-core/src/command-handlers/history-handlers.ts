@@ -9,8 +9,16 @@ import type {
 import {
   clearTransientState,
   cloneSpreadsheetDocument,
-  pushUndoDocument,
 } from '../core/internal-state.js';
+import type { SpreadsheetInternalState } from '../core/internal-state.js';
+import type { SpreadsheetDocument } from '../types.js';
+
+/**
+ * P1.2 迁移（plan 547）：undo/redo 存储单源 editor-core `UndoCommandStack`（快照对 entry）。
+ * **操作时点语义**（与旧数组实现逐字节一致）：undo/redo 恢复目标取 entry.inverse/forward，
+ * 但对侧 entry 以操作时点 `current.document` 重建——事务开启期间文档漂移（事务内 mutation /
+ * recalc 不入栈）后 undo→redo 仍恢复 undo 时点文档。
+ */
 
 export const handleBeginTransaction: CommandHandler<BeginSpreadsheetTransactionCommand> = (
   store,
@@ -30,7 +38,7 @@ export const handleCommitTransaction: CommandHandler<CommitSpreadsheetTransactio
   const state = store.getState();
   if (state.transactionDoc) {
     if (state.document !== state.transactionDoc) {
-      const updated = pushUndoDocument(
+      const updated = pushUndoDocumentTransaction(
         { ...state, transactionDoc: null },
         state.transactionDoc,
       );
@@ -47,26 +55,42 @@ export const handleRollbackTransaction: CommandHandler<RollbackSpreadsheetTransa
 ) => {
   const state = store.getState();
   if (state.transactionDoc) {
+    state.undo.clearRedo();
     store.setState({
       document: state.transactionDoc,
       transactionDoc: null,
       ...clearTransientState(state),
-      redoStack: [],
     });
   }
   return { ok: true, changed: true };
 };
 
+/** 事务收口入栈：transactionDoc 为 undo 目标（inverse），redo 分支已清（push 截断）。 */
+function pushUndoDocumentTransaction(
+  state: SpreadsheetInternalState,
+  transactionDoc: SpreadsheetDocument,
+): SpreadsheetInternalState {
+  state.undo.push({
+    forward: state.document,
+    inverse: transactionDoc,
+    timestamp: Date.now(),
+  });
+  return { ...state };
+}
+
 export const handleUndo: CommandHandler<UndoSpreadsheetCommand> = (store) => {
   const current = store.getState();
-  if (current.undoStack.length === 0)
-    return { ok: false, changed: false, error: 'Nothing to undo' };
-  const prevDoc = current.undoStack[current.undoStack.length - 1];
-  const undoStack = current.undoStack.slice(0, -1);
+  const entry = current.undo.peekUndo();
+  if (!entry) return { ok: false, changed: false, error: 'Nothing to undo' };
+  const prevDoc = entry.inverse;
+  current.undo.popUndo();
+  current.undo.pushRedo({
+    forward: current.document,
+    inverse: prevDoc,
+    timestamp: Date.now(),
+  });
   store.setState({
     document: prevDoc,
-    undoStack,
-    redoStack: [...current.redoStack, current.document],
     dirty: true,
     ...clearTransientState(current),
   });
@@ -75,14 +99,17 @@ export const handleUndo: CommandHandler<UndoSpreadsheetCommand> = (store) => {
 
 export const handleRedo: CommandHandler<RedoSpreadsheetCommand> = (store) => {
   const current = store.getState();
-  if (current.redoStack.length === 0)
-    return { ok: false, changed: false, error: 'Nothing to redo' };
-  const nextDoc = current.redoStack[current.redoStack.length - 1];
-  const redoStack = current.redoStack.slice(0, -1);
+  const entry = current.undo.peekRedo();
+  if (!entry) return { ok: false, changed: false, error: 'Nothing to redo' };
+  const nextDoc = entry.forward;
+  current.undo.popRedo();
+  current.undo.pushUndo({
+    forward: nextDoc,
+    inverse: current.document,
+    timestamp: Date.now(),
+  });
   store.setState({
     document: nextDoc,
-    undoStack: [...current.undoStack, current.document],
-    redoStack,
     dirty: true,
     ...clearTransientState(current),
   });
