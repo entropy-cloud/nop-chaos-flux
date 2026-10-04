@@ -63,7 +63,7 @@
 - （MUST）`RendererDefinition`（propContracts + eventContracts + actionScopePolicy）经 `registerRendererDefinitions` 注册；家族不维护绕开全局 registry 的私有实例注册表，除非 §5 豁免登记。
 - （MUST）palette 目录声明式：来自注册表/家族 config 元数据，禁止代码内硬编码清单或代码内白名单。
 - **palette catalog 共享契约（P4.1）**：`packages/flux-react/src/workbench/palette-catalog.ts`（`buildDesignerPaletteCatalog` 声明 entries × registry 在场过滤；`resolvePaletteLabel` labelKey→label→type 回退）。家族声明单一源常量（如 `DEFAULT_DASHBOARD_PALETTE_CATALOG`）经 builder 生效；未注册 type 自动隐藏。**家族裁定**：dashboard=声明常量 + builder（原组件内硬编码清单消灭）；scada=符号注册表（`listScadaSymbols`）既存合规；flow=家族 config（`DesignerConfig.palette.groups`）既存合规；spreadsheet 无 palette；**page-designer 合规裁定**——`buildPaletteItems(registry, stage, {allowlist})` 全量 registry 驱动 + `MVP_PALETTE_TYPES` 导出声明清单（= 布局类型 + DESIGNER_SCAFFOLDS 键集），roadmap §3 "代码内白名单" 表述过时（白名单即 stage 类别声明常量 + host allowlist 出口，声明式合规）。
-- （SHOULD）inspector 优先 propContracts→SchemaInput 声明式生成（参照 `page-designer-core/src/inspector-schema.ts`）；域内特殊控件走扩展点，不整体手拼。
+- （SHOULD）inspector 优先 propContracts→SchemaInput 声明式生成（参照实现 `@nop-chaos/flux-core` authoring 域 `buildInspectorSchema`，P4.2 自 page-designer-core 迁入共享；page-designer-core 经兼容再导出保留旧路径）；域内特殊控件走扩展点，不整体手拼。**家族档位裁定（P4.2）**：page=参照实现；report=SchemaInput+form runtime 同向已合规；scada（符号分组字段模型）/dashboard（固定字段面板）/word·print（面板编辑器）=分档不采纳——域契约不同，采纳需先立域契约再重写面板，各家族平台化时按本档推进。
 - 验收观测点：palette items 有单一声明源；inspector 面板由 schema 生成器产出或登记豁免。
 
 ### 2.8 消费侧（SHOULD）
@@ -146,6 +146,6 @@
 - 会话内核 API/迁移矩阵：`docs/architecture/editor-core.md`（§6 迁移矩阵是 P1.x 迁移的验收输入）。
 - Shell 槽位/family mapping/collapsed rail：`docs/architecture/designer-workbench-shell.md`。
 - Manifest 形状/解析/编译校验：`docs/architecture/capability-projection-manifest.md`。
-- Inspector 声明式生成参照：`docs/architecture/report-designer/inspector-design.md`、`packages/page-designer-core/src/inspector-schema.ts`。
+- Inspector 声明式生成参照：`docs/architecture/report-designer/inspector-design.md`、`packages/flux-core/src/authoring/inspector-schema.ts`（P4.2 迁入；page-designer-core 兼容再导出）。
 - 不变式与入场审计：`docs/references/new-renderer-introduction-audit.md`（INV-1~5）。
 - 执行编排与状态：`docs/backlog/editor-designer-standardization-roadmap.md`（§6 Phases 总表）、`missions/editor-designer-standardization.json`。

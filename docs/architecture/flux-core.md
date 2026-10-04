@@ -463,6 +463,10 @@ Priority order:
 - **`normalizeRootPath(path)`** / **`normalizeRootPaths(paths)`** — extract first path segment(s) for dependency tracking. `*` acts as wildcard.
 - **`createPathBinding`** (`packages/flux-core/src/utils/path-binding.ts`) — creates a path-binding service for projected-owner subtree rebasing, mapping between relative (owner-local) and absolute (parent-scope) coordinates.
 
+## Authoring Domain — Inspector Schema Generator (P4.2)
+
+`src/authoring/inspector-schema.ts`：inspector schema 生成器——输入 `ResolvedAuthoringContract`（authoring 契约层），输出瞬态 flux form `SchemaInput`（`buildInspectorSchema`；`deriveControlFromShape` shape 推导兜底；`xui:inspector*`/`xui:events` 瞬态标记键；无 propContracts 降级 `xui:raw`）。纯逻辑零 React。归宿裁定（plan 556）：authoring contract 同层（editor-core 零依赖姿态保持；React 无关）；page-designer-core 经选择性具名兼容再导出保留旧路径。消费：page-designer（参照实现）；其余家族按 `editor-designer-standard.md` §2.7 档位裁定分档采纳。
+
 ## Schema-Agnostic JSON Merge / Delta Utility
 
 `packages/flux-core/src/json-merge/` 提供 "基线 + 差量 = 结果" 的合并与差量提取能力。**该层不含任何 Flux schema 依赖**：签名与实现都不出现 `SchemaInput` / `BaseSchema` / renderer 类型，元素身份在运行时从数据本身发现，因此同一套代码可服务任意 JSON 文档形态（表单配置、页面 schema、i18n 文案、任意业务配置）。
@@ -477,15 +481,15 @@ Priority order:
 
 ### 合并语义
 
-| delta 形态 | 行为 |
-| --- | --- |
-| 键缺省 / `undefined` | base 值保持不变 |
-| `null` | 置为 `null` |
-| 标量 | delta 覆盖 base |
-| 对象 | 逐键递归合并 |
-| 数组 | 按身份匹配元素，顺序由 `planListMerge` 重建 |
-| `{ [overrideKey]: 'remove' }` | 删除该子树 |
-| `{ [overrideKey]: 'replace', ... }` | 整段替换，标记键从输出剥离 |
+| delta 形态                          | 行为                                        |
+| ----------------------------------- | ------------------------------------------- |
+| 键缺省 / `undefined`                | base 值保持不变                             |
+| `null`                              | 置为 `null`                                 |
+| 标量                                | delta 覆盖 base                             |
+| 对象                                | 逐键递归合并                                |
+| 数组                                | 按身份匹配元素，顺序由 `planListMerge` 重建 |
+| `{ [overrideKey]: 'remove' }`       | 删除该子树                                  |
+| `{ [overrideKey]: 'replace', ... }` | 整段替换，标记键从输出剥离                  |
 
 列表顺序重建遵循三条规则：delta 顺序优先；未匹配的 base 元素尽量保序；delta 新元素插入到其锚点元素之后。每个被匹配的 base 元素充当锚点，代表它自己直到下一个锚点之间的全部内容。
 

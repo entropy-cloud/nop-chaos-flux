@@ -26,7 +26,7 @@ function def(partial: Partial<RendererDefinition>): RendererDefinition {
 }
 
 function propFields(contract: ReturnType<typeof resolveRendererAuthoringContract>, options?: InspectorBuildOptions) {
-  const schema = buildInspectorSchema(contract, options) as { body: Record<string, unknown>[] };
+  const schema = buildInspectorSchema(contract, options) as unknown as { body: Record<string, unknown>[] };
   return schema.body.filter((field) => field.name !== INSPECTOR_RAW_JSON_FIELD);
 }
 
@@ -97,7 +97,7 @@ describe('editableProps 全覆盖断言（QA.6 载体）', () => {
 
   it('every generated field name maps back to a declared editableProps key', () => {
     const contract = resolveRendererAuthoringContract(LAYOUT_DEF);
-    const schema = buildInspectorSchema(contract) as { body: Record<string, unknown>[] };
+    const schema = buildInspectorSchema(contract) as unknown as { body: Record<string, unknown>[] };
     for (const field of schema.body) {
       expect(contract.editableProps[field.name as string]).toBeDefined();
     }
@@ -107,7 +107,7 @@ describe('editableProps 全覆盖断言（QA.6 载体）', () => {
 describe('region/event 零泄漏（QA.6 载体）', () => {
   it('region keys never appear as inspector fields; routed events listed once', () => {
     const contract = resolveRendererAuthoringContract(LAYOUT_DEF);
-    const schema = buildInspectorSchema(contract, { fieldRules: LAYOUT_DEF.fields }) as {
+    const schema = buildInspectorSchema(contract, { fieldRules: LAYOUT_DEF.fields }) as unknown as {
       body: Record<string, unknown>[];
       [key: string]: unknown;
     };
@@ -273,9 +273,17 @@ describe('无 propContracts 降级', () => {
   it('degrades to raw JSON editing, not a blank panel', () => {
     const contract = resolveRendererAuthoringContract(def({}));
     expect(Object.keys(contract.editableProps)).toEqual([]);
-    const schema = buildInspectorSchema(contract) as { body: Record<string, unknown>[] };
+    const schema = buildInspectorSchema(contract) as unknown as { body: Record<string, unknown>[] };
     expect(schema.body.length).toBe(1);
     expect(schema.body[0]).toMatchObject({ name: INSPECTOR_RAW_JSON_FIELD, type: 'json' });
     expect(schema.body[0][INSPECTOR_READONLY_KEY]).toBeUndefined();
+  });
+});
+
+describe('P4.2 shared-module placement (flux-core authoring)', () => {
+  it('is consumable directly from the flux-core public surface', async () => {
+    const mod = await import('../index.js');
+    expect(typeof mod.buildInspectorSchema).toBe('function');
+    expect(mod.INSPECTOR_EVENTS_KEY).toBe('xui:events');
   });
 });
