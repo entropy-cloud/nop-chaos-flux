@@ -137,18 +137,18 @@
 
 ### W-B 设计器/编辑器（10）
 
-| 页面                 | 状态   | 卡片 |
-| -------------------- | ------ | ---- |
-| page-designer        | 待执行 |      |
-| flow-designer        | 待执行 |      |
-| taskflow-designer    | 待执行 |      |
-| report-designer      | 待执行 |      |
-| report-designer-host | 待执行 |      |
-| print-designer       | 待执行 |      |
-| dashboard-demo       | 待执行 |      |
-| word-editor          | 待执行 |      |
-| code-editor          | 待执行 |      |
-| scada-editor-demo    | 待执行 |      |
+| 页面                 | 状态 | 卡片                                                                                                                                                    |
+| -------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| page-designer        | ✅   | palette 插入全变画、节点复制/删除、JSON 源码/导出（6439 字符+行内消息）/导入契约验证、面板切换；undo/redo 无独立按钮（命令面板/键盘路径）               |
+| flow-designer        | ✅   | 模式切换×3、节点库收展、节点选中、JSON 弹层、撤销空栈 no-op 合理                                                                                        |
+| taskflow-designer    | ✅   | Graph/Tree 切换、节点选中/增删、Undo/Redo 实变（恢复删除节点）、检查器收展；Save/Export 静默成功（P2 → 渲染器级 follow-up，schema then 已前向兼容加入） |
+| report-designer      | ✅   | 查找替换、字段面板收展、冻结、列/表选择机制（代表 性验证）；撤销空栈 no-op                                                                              |
+| report-designer-host | ✅   | 预览模式切换（+15KB DOM）、字段面板、网格选择；保存静默（同类 P2）                                                                                      |
+| print-designer       | ✅   | 模板切换、缩放、校验、预览弹层、警告定位、图元 palette×8 全插入、撤销/重做——全活跃 ✓                                                                    |
+| dashboard-demo       | ✅   | palette 插入（截图实证 panel-5+检查器联动）、预览切换、检查器属性；保存静默（同类 P2）；保存→刷新还原由 editor-core 测试覆盖                            |
+| word-editor          | ✅   | 页眉/主文档/页脚切换、字体下拉、格式按钮（canvas 绘制，aria 翻转验证）；保存静默（同类 P2）                                                             |
+| code-editor          | ✅   | 格式化/变量面板/运行/{…} 弹层/全屏切换——零错误全通 ✓                                                                                                    |
+| scada-editor-demo    | ✅   | Save 变更反馈、导出配置、导入/连接/历史/图层/模板/画面 6 弹层、图元工具选择、缩放/适配                                                                  |
 
 ### W-C 渲染器演示（22）
 
@@ -241,6 +241,11 @@
 - **已修（既有缺陷，plan 538 执行期发现）**：sundial-workbench 添加待办后计数从不刷新——form 级 onSubmitSuccess 在弹窗域派发导致 setValue(rev) 遮蔽页级变量、六个 dependsOn 数据源永不重取；改为 refreshSource ×6 后计数契约首次真正生效（9→10 实证）。
 - **P3（页面设计说明，非缺陷）**：sundial-workbench 分组任务行为静态 schema（仅计数绑定数据源）——新增待办只在计数反映，列表行不随数据渲染；如需全动态列表需页面级改造（超出本审计范围，登记为设计演进候选）。
 - **裁定（多源同步保留显式刷新）**：notion-database（5 源）/ airtable-grid（2 源）/ sundial-workbench（6 源）弹窗提交需同步多数据源，refreshNearest 单目标语义无法表达；显式 refreshSource/component:refresh 多目标是多视图一致性的正确形态。
+
+### W-B 执行期新增登记（2026-10-03）
+
+- **P2（书面改判 → 渲染器级 follow-up）**：设计器工具栏动作静默成功——taskflow Save/Export、word-editor/report-designer-host/dashboard-demo 保存均无用户反馈。根因：`flow-designer-renderers/src/designer-toolbar.tsx` 的 invokeAction 直连 `actionScope.resolve().provider.invoke()`，绕过通用 ActionDispatcher 的 then/messages 管线（schema 层 then 已加入 taskflow 双 schema，前向兼容但当前不生效）。修复面涉及工具栏动作管线设计（then 支持 or 内建成功反馈），登记渲染器级 plan-first，不在 W-B 当波修。
+- **验证口径说明**：格式类按钮（word-editor 加粗等）与画布缩放/工具选择类按钮（scada）反馈在 canvas/状态层，DOM 探针不可见，以 aria 翻转/零错误判定；网格单元格点击属选择机制，代表性验证（首个选择均产生大量 mutation）。
 
 ## 八、完成定义（DoD）
 

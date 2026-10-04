@@ -1,101 +1,169 @@
 {
   "type": "designer-page",
-  "xui:imports": [{ "from": "taskflow-designer", "as": "taskflow" }],
+  "xui:imports": [
+    {
+      "from": "taskflow-designer",
+      "as": "taskflow"
+    }
+  ],
   "document": {
     "id": "tf-workflow-demo",
     "kind": "nop-taskflow-workflow",
     "name": "TaskFlow Workflow Demo",
     "version": "1.0",
-    "viewport": { "x": 0, "y": 0, "zoom": 1 },
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    },
     "nodes": [
       {
         "id": "start-1",
         "type": "tf-start",
-        "position": { "x": 50, "y": 200 },
+        "position": {
+          "x": 50,
+          "y": 200
+        },
         "data": {
           "step": {
             "id": "start-1",
             "type": "script",
-            "common": { "name": "start" },
-            "props": { "type": "script", "lang": "js", "source": "// init" }
+            "common": {
+              "name": "start"
+            },
+            "props": {
+              "type": "script",
+              "lang": "js",
+              "source": "// init"
+            }
           }
         }
       },
       {
         "id": "script-1",
         "type": "tf-script",
-        "position": { "x": 250, "y": 200 },
+        "position": {
+          "x": 250,
+          "y": 200
+        },
         "data": {
           "step": {
             "id": "script-1",
             "type": "script",
-            "common": { "name": "validateInput" },
-            "props": { "type": "script", "lang": "js", "source": "// validate" }
+            "common": {
+              "name": "validateInput"
+            },
+            "props": {
+              "type": "script",
+              "lang": "js",
+              "source": "// validate"
+            }
           }
         }
       },
       {
         "id": "invoke-1",
         "type": "tf-invoke",
-        "position": { "x": 450, "y": 200 },
+        "position": {
+          "x": 450,
+          "y": 200
+        },
         "data": {
           "step": {
             "id": "invoke-1",
             "type": "invoke",
-            "common": { "name": "processOrder" },
-            "props": { "type": "invoke", "bean": "orderService", "method": "process" }
+            "common": {
+              "name": "processOrder"
+            },
+            "props": {
+              "type": "invoke",
+              "bean": "orderService",
+              "method": "process"
+            }
           }
         }
       },
       {
         "id": "if-1",
         "type": "tf-if",
-        "position": { "x": 650, "y": 200 },
+        "position": {
+          "x": 650,
+          "y": 200
+        },
         "data": {
           "step": {
             "id": "if-1",
             "type": "if",
-            "common": { "name": "checkStatus" },
-            "props": { "type": "if", "condition": "${status == 'ok'}" }
+            "common": {
+              "name": "checkStatus"
+            },
+            "props": {
+              "type": "if",
+              "condition": "${status == 'ok'}"
+            }
           }
         }
       },
       {
         "id": "delay-1",
         "type": "tf-delay",
-        "position": { "x": 650, "y": 400 },
+        "position": {
+          "x": 650,
+          "y": 400
+        },
         "data": {
           "step": {
             "id": "delay-1",
             "type": "delay",
-            "common": { "name": "waitBeforeRetry" },
-            "props": { "type": "delay", "delayMillisExpr": "5000" }
+            "common": {
+              "name": "waitBeforeRetry"
+            },
+            "props": {
+              "type": "delay",
+              "delayMillisExpr": "5000"
+            }
           }
         }
       },
       {
         "id": "end-1",
         "type": "tf-end",
-        "position": { "x": 850, "y": 200 },
+        "position": {
+          "x": 850,
+          "y": 200
+        },
         "data": {
           "step": {
             "id": "end-1",
             "type": "script",
-            "common": { "name": "complete" },
-            "props": { "type": "script", "lang": "js", "source": "// done" }
+            "common": {
+              "name": "complete"
+            },
+            "props": {
+              "type": "script",
+              "lang": "js",
+              "source": "// done"
+            }
           }
         }
       },
       {
         "id": "graph-1",
         "type": "tf-graph",
-        "position": { "x": 250, "y": 400 },
+        "position": {
+          "x": 250,
+          "y": 400
+        },
         "data": {
           "step": {
             "id": "graph-1",
             "type": "graph",
-            "common": { "name": "subGraph" },
-            "props": { "type": "graph" }
+            "common": {
+              "name": "subGraph"
+            },
+            "props": {
+              "type": "graph"
+            }
           }
         }
       }
@@ -108,7 +176,10 @@
         "target": "script-1",
         "sourcePort": "next",
         "targetPort": "in",
-        "data": { "taskflowEdgeKind": "taskflow-next", "label": "next" }
+        "data": {
+          "taskflowEdgeKind": "taskflow-next",
+          "label": "next"
+        }
       },
       {
         "id": "e2",
@@ -117,7 +188,10 @@
         "target": "invoke-1",
         "sourcePort": "next",
         "targetPort": "in",
-        "data": { "taskflowEdgeKind": "taskflow-next", "label": "next" }
+        "data": {
+          "taskflowEdgeKind": "taskflow-next",
+          "label": "next"
+        }
       },
       {
         "id": "e3",
@@ -126,7 +200,10 @@
         "target": "if-1",
         "sourcePort": "next",
         "targetPort": "in",
-        "data": { "taskflowEdgeKind": "taskflow-next", "label": "next" }
+        "data": {
+          "taskflowEdgeKind": "taskflow-next",
+          "label": "next"
+        }
       },
       {
         "id": "e4",
@@ -135,7 +212,10 @@
         "target": "delay-1",
         "sourcePort": "error",
         "targetPort": "in",
-        "data": { "taskflowEdgeKind": "taskflow-error", "label": "error" }
+        "data": {
+          "taskflowEdgeKind": "taskflow-error",
+          "label": "error"
+        }
       },
       {
         "id": "e5",
@@ -144,7 +224,10 @@
         "target": "end-1",
         "sourcePort": "next",
         "targetPort": "in",
-        "data": { "taskflowEdgeKind": "taskflow-next", "label": "next" }
+        "data": {
+          "taskflowEdgeKind": "taskflow-next",
+          "label": "next"
+        }
       },
       {
         "id": "e6",
@@ -153,7 +236,10 @@
         "target": "graph-1",
         "sourcePort": "wait",
         "targetPort": "in",
-        "data": { "taskflowEdgeKind": "taskflow-wait", "label": "wait" }
+        "data": {
+          "taskflowEdgeKind": "taskflow-wait",
+          "label": "wait"
+        }
       },
       {
         "id": "e7",
@@ -162,7 +248,10 @@
         "target": "graph-1",
         "sourcePort": "wait-error",
         "targetPort": "in",
-        "data": { "taskflowEdgeKind": "taskflow-wait-error", "label": "wait-error" }
+        "data": {
+          "taskflowEdgeKind": "taskflow-wait-error",
+          "label": "wait-error"
+        }
       },
       {
         "id": "e8",
@@ -171,7 +260,10 @@
         "target": "invoke-1",
         "sourcePort": "next",
         "targetPort": "in",
-        "data": { "taskflowEdgeKind": "taskflow-next", "label": "retry" }
+        "data": {
+          "taskflowEdgeKind": "taskflow-next",
+          "label": "retry"
+        }
       }
     ]
   },
@@ -225,9 +317,21 @@
         "label": "Start",
         "icon": "play-circle",
         "description": "Workflow start node",
-        "constraints": { "maxInstances": 1, "allowIncoming": false },
-        "defaults": { "step": { "common": { "name": "start" } } },
-        "appearance": { "minWidth": 192, "minHeight": 112 },
+        "constraints": {
+          "maxInstances": 1,
+          "allowIncoming": false
+        },
+        "defaults": {
+          "step": {
+            "common": {
+              "name": "start"
+            }
+          }
+        },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
         "body": {
           "type": "flex",
           "direction": "column",
@@ -240,7 +344,12 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--tf-start",
-                  "body": [{ "type": "icon", "icon": "play-circle" }]
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "play-circle"
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -313,9 +422,21 @@
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "step.common.name", "label": "Name" },
-              { "type": "input-text", "name": "step.common.displayName", "label": "Display Name" },
-              { "type": "input-text", "name": "step.props.source", "label": "Source" }
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.common.displayName",
+                "label": "Display Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.props.source",
+                "label": "Source"
+              }
             ]
           }
         }
@@ -325,9 +446,15 @@
         "label": "End",
         "icon": "stop-circle",
         "description": "Workflow end node",
-        "constraints": { "maxInstances": 1, "allowOutgoing": false },
+        "constraints": {
+          "maxInstances": 1,
+          "allowOutgoing": false
+        },
         "defaults": {},
-        "appearance": { "minWidth": 192, "minHeight": 112 },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
         "body": {
           "type": "flex",
           "direction": "column",
@@ -340,7 +467,12 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--tf-end",
-                  "body": [{ "type": "icon", "icon": "stop-circle" }]
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "stop-circle"
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -391,7 +523,13 @@
         "inspector": {
           "body": {
             "type": "form",
-            "body": [{ "type": "input-text", "name": "step.common.name", "label": "Name" }]
+            "body": [
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              }
+            ]
           }
         }
       },
@@ -400,9 +538,20 @@
         "label": "Script",
         "icon": "code",
         "description": "Run a script step",
-        "appearance": { "minWidth": 192, "minHeight": 112 },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
         "defaults": {
-          "step": { "common": { "name": "script" }, "props": { "type": "script", "lang": "js" } }
+          "step": {
+            "common": {
+              "name": "script"
+            },
+            "props": {
+              "type": "script",
+              "lang": "js"
+            }
+          }
         },
         "body": {
           "type": "flex",
@@ -416,7 +565,12 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--tf-script",
-                  "body": [{ "type": "icon", "icon": "code" }]
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "code"
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -496,24 +650,37 @@
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "step.common.name", "label": "Name" },
-              { "type": "input-text", "name": "step.common.displayName", "label": "Display Name" },
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.common.displayName",
+                "label": "Display Name"
+              },
               {
                 "type": "select",
                 "name": "step.props.lang",
                 "label": "Language",
                 "options": {
                   "values": [
-                    { "label": "JavaScript", "value": "js" },
-                    { "label": "XPL", "value": "xpl" }
+                    {
+                      "label": "JavaScript",
+                      "value": "js"
+                    },
+                    {
+                      "label": "XPL",
+                      "value": "xpl"
+                    }
                   ]
                 }
               },
               {
-                "type": "input-text",
+                "type": "textarea",
                 "name": "step.props.source",
-                "label": "Source",
-                "type": "textarea"
+                "label": "Source"
               }
             ]
           }
@@ -524,11 +691,20 @@
         "label": "Invoke",
         "icon": "zap",
         "description": "Invoke a bean method",
-        "appearance": { "minWidth": 192, "minHeight": 112 },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
         "defaults": {
           "step": {
-            "common": { "name": "invoke" },
-            "props": { "type": "invoke", "bean": "", "method": "" }
+            "common": {
+              "name": "invoke"
+            },
+            "props": {
+              "type": "invoke",
+              "bean": "",
+              "method": ""
+            }
           }
         },
         "body": {
@@ -543,7 +719,12 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--tf-invoke",
-                  "body": [{ "type": "icon", "icon": "zap" }]
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "zap"
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -623,10 +804,26 @@
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "step.common.name", "label": "Name" },
-              { "type": "input-text", "name": "step.common.displayName", "label": "Display Name" },
-              { "type": "input-text", "name": "step.props.bean", "label": "Bean" },
-              { "type": "input-text", "name": "step.props.method", "label": "Method" }
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.common.displayName",
+                "label": "Display Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.props.bean",
+                "label": "Bean"
+              },
+              {
+                "type": "input-text",
+                "name": "step.props.method",
+                "label": "Method"
+              }
             ]
           }
         }
@@ -636,8 +833,20 @@
         "label": "If Condition",
         "icon": "git-branch",
         "description": "Conditional branch",
-        "appearance": { "minWidth": 192, "minHeight": 112 },
-        "defaults": { "step": { "common": { "name": "condition" }, "props": { "type": "if" } } },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
+        "defaults": {
+          "step": {
+            "common": {
+              "name": "condition"
+            },
+            "props": {
+              "type": "if"
+            }
+          }
+        },
         "body": {
           "type": "flex",
           "direction": "column",
@@ -650,7 +859,12 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--tf-if",
-                  "body": [{ "type": "icon", "icon": "git-branch" }]
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "git-branch"
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -730,9 +944,21 @@
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "step.common.name", "label": "Name" },
-              { "type": "input-text", "name": "step.common.displayName", "label": "Display Name" },
-              { "type": "input-text", "name": "step.props.condition", "label": "Condition" }
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.common.displayName",
+                "label": "Display Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.props.condition",
+                "label": "Condition"
+              }
             ]
           }
         }
@@ -742,8 +968,20 @@
         "label": "Choose",
         "icon": "list",
         "description": "Multi-branch choose",
-        "appearance": { "minWidth": 192, "minHeight": 112 },
-        "defaults": { "step": { "common": { "name": "choose" }, "props": { "type": "choose" } } },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
+        "defaults": {
+          "step": {
+            "common": {
+              "name": "choose"
+            },
+            "props": {
+              "type": "choose"
+            }
+          }
+        },
         "body": {
           "type": "flex",
           "direction": "column",
@@ -756,7 +994,12 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--tf-choose",
-                  "body": [{ "type": "icon", "icon": "list" }]
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "list"
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -836,8 +1079,16 @@
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "step.common.name", "label": "Name" },
-              { "type": "input-text", "name": "step.props.decider", "label": "Decider" }
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.props.decider",
+                "label": "Decider"
+              }
             ]
           }
         }
@@ -847,9 +1098,19 @@
         "label": "Sequential",
         "icon": "list-ordered",
         "description": "Sequential step container",
-        "appearance": { "minWidth": 192, "minHeight": 112 },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
         "defaults": {
-          "step": { "common": { "name": "sequential" }, "props": { "type": "sequential" } }
+          "step": {
+            "common": {
+              "name": "sequential"
+            },
+            "props": {
+              "type": "sequential"
+            }
+          }
         },
         "body": {
           "type": "flex",
@@ -863,7 +1124,12 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--tf-sequential",
-                  "body": [{ "type": "icon", "icon": "list-ordered" }]
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "list-ordered"
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -942,7 +1208,13 @@
         "inspector": {
           "body": {
             "type": "form",
-            "body": [{ "type": "input-text", "name": "step.common.name", "label": "Name" }]
+            "body": [
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              }
+            ]
           }
         }
       },
@@ -957,12 +1229,23 @@
           "borderColor": "#6366f1",
           "borderStyle": "dashed"
         },
-        "defaults": { "step": { "common": { "name": "subGraph" }, "props": { "type": "graph" } } },
+        "defaults": {
+          "step": {
+            "common": {
+              "name": "subGraph"
+            },
+            "props": {
+              "type": "graph"
+            }
+          }
+        },
         "body": {
           "type": "container",
           "onClick": {
             "action": "taskflow:enter-container",
-            "args": { "containerId": "${step.id}" }
+            "args": {
+              "containerId": "${step.id}"
+            }
           },
           "body": [
             {
@@ -977,7 +1260,12 @@
                     {
                       "type": "container",
                       "className": "node-icon node-icon--tf-graph",
-                      "body": [{ "type": "icon", "icon": "git-merge" }]
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "git-merge"
+                        }
+                      ]
                     },
                     {
                       "type": "container",
@@ -1059,8 +1347,16 @@
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "step.common.name", "label": "Name" },
-              { "type": "input-text", "name": "step.common.displayName", "label": "Display Name" }
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.common.displayName",
+                "label": "Display Name"
+              }
             ]
           }
         }
@@ -1070,9 +1366,19 @@
         "label": "Parallel",
         "icon": "columns",
         "description": "Parallel execution",
-        "appearance": { "minWidth": 192, "minHeight": 112 },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
         "defaults": {
-          "step": { "common": { "name": "parallel" }, "props": { "type": "parallel" } }
+          "step": {
+            "common": {
+              "name": "parallel"
+            },
+            "props": {
+              "type": "parallel"
+            }
+          }
         },
         "body": {
           "type": "flex",
@@ -1086,7 +1392,12 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--tf-parallel",
-                  "body": [{ "type": "icon", "icon": "columns" }]
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "columns"
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -1166,15 +1477,25 @@
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "step.common.name", "label": "Name" },
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              },
               {
                 "type": "select",
                 "name": "step.props.joinType",
                 "label": "Join Type",
                 "options": {
                   "values": [
-                    { "label": "Join All", "value": "joinAll" },
-                    { "label": "Cancel On Error", "value": "cancelOnError" }
+                    {
+                      "label": "Join All",
+                      "value": "joinAll"
+                    },
+                    {
+                      "label": "Cancel On Error",
+                      "value": "cancelOnError"
+                    }
                   ]
                 }
               }
@@ -1187,11 +1508,19 @@
         "label": "Delay",
         "icon": "clock",
         "description": "Delay step",
-        "appearance": { "minWidth": 192, "minHeight": 112 },
+        "appearance": {
+          "minWidth": 192,
+          "minHeight": 112
+        },
         "defaults": {
           "step": {
-            "common": { "name": "delay" },
-            "props": { "type": "delay", "delayMillisExpr": "1000" }
+            "common": {
+              "name": "delay"
+            },
+            "props": {
+              "type": "delay",
+              "delayMillisExpr": "1000"
+            }
           }
         },
         "body": {
@@ -1206,7 +1535,12 @@
                 {
                   "type": "container",
                   "className": "node-icon node-icon--tf-delay",
-                  "body": [{ "type": "icon", "icon": "clock" }]
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "clock"
+                    }
+                  ]
                 },
                 {
                   "type": "container",
@@ -1286,8 +1620,16 @@
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "step.common.name", "label": "Name" },
-              { "type": "input-text", "name": "step.props.delayMillisExpr", "label": "Delay (ms)" }
+              {
+                "type": "input-text",
+                "name": "step.common.name",
+                "label": "Name"
+              },
+              {
+                "type": "input-text",
+                "name": "step.props.delayMillisExpr",
+                "label": "Delay (ms)"
+              }
             ]
           }
         }
@@ -1302,14 +1644,28 @@
           "text": "${data.label}",
           "className": "text-xs font-medium text-indigo-600 bg-white/80 px-1.5 py-0.5 rounded"
         },
-        "appearance": { "stroke": "#6366f1", "strokeWidth": 2, "markerEnd": "arrow" },
-        "defaults": { "taskflowEdgeKind": "taskflow-next" },
+        "appearance": {
+          "stroke": "#6366f1",
+          "strokeWidth": 2,
+          "markerEnd": "arrow"
+        },
+        "defaults": {
+          "taskflowEdgeKind": "taskflow-next"
+        },
         "inspector": {
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "data.taskflowEdgeKind", "label": "Edge Kind" },
-              { "type": "input-text", "name": "data.label", "label": "Label" }
+              {
+                "type": "input-text",
+                "name": "data.taskflowEdgeKind",
+                "label": "Edge Kind"
+              },
+              {
+                "type": "input-text",
+                "name": "data.label",
+                "label": "Label"
+              }
             ]
           }
         }
@@ -1328,13 +1684,23 @@
           "strokeStyle": "dashed",
           "markerEnd": "arrow"
         },
-        "defaults": { "taskflowEdgeKind": "taskflow-error" },
+        "defaults": {
+          "taskflowEdgeKind": "taskflow-error"
+        },
         "inspector": {
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "data.taskflowEdgeKind", "label": "Edge Kind" },
-              { "type": "input-text", "name": "data.label", "label": "Label" }
+              {
+                "type": "input-text",
+                "name": "data.taskflowEdgeKind",
+                "label": "Edge Kind"
+              },
+              {
+                "type": "input-text",
+                "name": "data.label",
+                "label": "Label"
+              }
             ]
           }
         }
@@ -1353,13 +1719,23 @@
           "strokeStyle": "dotted",
           "markerEnd": "arrow"
         },
-        "defaults": { "taskflowEdgeKind": "taskflow-wait" },
+        "defaults": {
+          "taskflowEdgeKind": "taskflow-wait"
+        },
         "inspector": {
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "data.taskflowEdgeKind", "label": "Edge Kind" },
-              { "type": "input-text", "name": "data.label", "label": "Label" }
+              {
+                "type": "input-text",
+                "name": "data.taskflowEdgeKind",
+                "label": "Edge Kind"
+              },
+              {
+                "type": "input-text",
+                "name": "data.label",
+                "label": "Label"
+              }
             ]
           }
         }
@@ -1378,13 +1754,23 @@
           "strokeStyle": "dashed",
           "markerEnd": "arrow"
         },
-        "defaults": { "taskflowEdgeKind": "taskflow-wait-error" },
+        "defaults": {
+          "taskflowEdgeKind": "taskflow-wait-error"
+        },
         "inspector": {
           "body": {
             "type": "form",
             "body": [
-              { "type": "input-text", "name": "data.taskflowEdgeKind", "label": "Edge Kind" },
-              { "type": "input-text", "name": "data.label", "label": "Label" }
+              {
+                "type": "input-text",
+                "name": "data.taskflowEdgeKind",
+                "label": "Edge Kind"
+              },
+              {
+                "type": "input-text",
+                "name": "data.label",
+                "label": "Label"
+              }
             ]
           }
         }
@@ -1393,13 +1779,21 @@
     "palette": {
       "searchable": true,
       "groups": [
-        { "id": "control", "label": "Control", "nodeTypes": ["tf-start", "tf-end"] },
+        {
+          "id": "control",
+          "label": "Control",
+          "nodeTypes": ["tf-start", "tf-end"]
+        },
         {
           "id": "execution",
           "label": "Execution",
           "nodeTypes": ["tf-script", "tf-invoke", "tf-delay"]
         },
-        { "id": "logic", "label": "Logic", "nodeTypes": ["tf-if", "tf-choose"] },
+        {
+          "id": "logic",
+          "label": "Logic",
+          "nodeTypes": ["tf-if", "tf-choose"]
+        },
         {
           "id": "containers",
           "label": "Containers",
@@ -1409,9 +1803,17 @@
     },
     "toolbar": {
       "items": [
-        { "type": "title", "body": "TaskFlow (Graph)" },
-        { "type": "text", "text": "Container: ${doc.name}" },
-        { "type": "spacer" },
+        {
+          "type": "title",
+          "body": "TaskFlow (Graph)"
+        },
+        {
+          "type": "text",
+          "text": "Container: ${doc.name}"
+        },
+        {
+          "type": "spacer"
+        },
         {
           "type": "button",
           "action": "taskflow:exit-container",
@@ -1422,12 +1824,50 @@
           "type": "button",
           "action": "taskflow:export-json",
           "label": "Export",
-          "icon": "download"
+          "icon": "download",
+          "then": [
+            {
+              "action": "showToast",
+              "args": {
+                "message": "已导出到检查器输出",
+                "level": "success"
+              }
+            }
+          ]
         },
-        { "type": "button", "action": "taskflow:import-json", "label": "Import", "icon": "upload" },
-        { "type": "button", "action": "taskflow:save", "label": "Save", "icon": "save" },
-        { "type": "button", "action": "designer:undo", "label": "Undo", "icon": "undo" },
-        { "type": "button", "action": "designer:redo", "label": "Redo", "icon": "redo" }
+        {
+          "type": "button",
+          "action": "taskflow:import-json",
+          "label": "Import",
+          "icon": "upload"
+        },
+        {
+          "type": "button",
+          "action": "taskflow:save",
+          "label": "Save",
+          "icon": "save",
+          "then": [
+            {
+              "action": "showToast",
+              "args": {
+                "message": "已保存",
+                "level": "success"
+              }
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "action": "designer:undo",
+          "label": "Undo",
+          "icon": "undo"
+        },
+        {
+          "type": "button",
+          "action": "designer:redo",
+          "label": "Redo",
+          "icon": "redo"
+        }
       ]
     },
     "features": {
@@ -1438,7 +1878,10 @@
       "export": false,
       "clipboard": true
     },
-    "rules": { "allowMultiEdge": true, "defaultEdgeType": "tf-next" },
+    "rules": {
+      "allowMultiEdge": true,
+      "defaultEdgeType": "tf-next"
+    },
     "canvas": {
       "background": "dots",
       "gridSize": 20,

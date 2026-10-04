@@ -719,7 +719,16 @@
           "type": "button",
           "action": "taskflow:export-json",
           "label": "Export",
-          "icon": "download"
+          "icon": "download",
+          "then": [
+            {
+              "action": "showToast",
+              "args": {
+                "message": "已导出到检查器输出",
+                "level": "success"
+              }
+            }
+          ]
         },
         {
           "type": "button",
@@ -731,7 +740,16 @@
           "type": "button",
           "action": "taskflow:save",
           "label": "Save",
-          "icon": "save"
+          "icon": "save",
+          "then": [
+            {
+              "action": "showToast",
+              "args": {
+                "message": "已保存",
+                "level": "success"
+              }
+            }
+          ]
         },
         {
           "type": "button",
