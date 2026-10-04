@@ -5,17 +5,17 @@
 > 用户验收原话：每一个页面展现都要达到 UI/UX 要求，布局合理、美观、操作符合预期；弹窗中操作后需要更新到子页面的要更新到子页面；使用标准方案实现主子页面通信；不跨页面使用 id，页面内也尽量不使用 id。
 > 方法论基线：browser-use 实机逐页逐按钮遍历（R12 的 40 页确认与此同法；禁纯探针下结论——R12 复审教训）。
 
-## 一、范围清单（115 页，全量无抽样）
+## 一、范围清单（118 路由页，全量无抽样；§六 矩阵按表项回填，w 系列十页合并一行跟踪）
 
-| 波次 | 分组                                       | 页数 | 清单来源                                                                                                                                                                                                                                                                                                                                                                                                                | 现状基线                                                                                                                  |
-| ---- | ------------------------------------------ | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| W-A  | Complex Pages（外部应用刻划 + 数据可视化） | 40   | `apps/playground/src/complex-pages/complex-pages-model.ts`（45 id 项中 40 页 + 类目节点）                                                                                                                                                                                                                                                                                                                               | **R12 已全量确认过展现层**（`2026-10-03-complex-pages-browser-confirmation-roadmap.md`）；本轮增量 = **操作按钮逐一触发** |
-| W-B  | 设计器 / 编辑器大家族                      | 10   | page-designer、flow-designer、taskflow-designer、report-designer、report-designer-host、print-designer、dashboard-demo、word-editor、code-editor、scada-editor-demo                                                                                                                                                                                                                                                     | R1-R12 修复基线 + 原始审计 19 路由确认；本轮增量 = 全按钮遍历                                                             |
-| W-C  | 渲染器演示页                               | 22   | flux-basic、table-column-width、table-popover、tree-display-ux、condition-builder(+formula)、form-input-enhancements、input-suggest、layout-family-enhancements、text-icon-visual-fields、component-handles、event-prevention、boolean-control-value-contract、data-verify、env-stream、diff-view、graph-demo、map-demo、pivot-table-demo、leafer-examples、three-canvas-demo、mobile-components、mobile-infrastructure | 多数从未逐按钮确认                                                                                                        |
-| W-D  | AI 家族                                    | 14   | ai-chat、ai-tools、ai-widgets、ai-hitl、ai-citations、ai-conversations、ai-persistence、ai-coverage、ai-component-handle、ai-rich-text、ai-linkage、ai-p4、ai-virtual-scroll、ai-attachments                                                                                                                                                                                                                            | 从未逐按钮确认                                                                                                            |
-| W-E  | 性能 / 基建 / 实验页                       | 19   | performance-table、gantt-perf-scale、kanban-perf-scale、calendar-perf-scale、diff-perf-scale、scada-perf-scale、scada-pressure-demo、scada-demo、scada-edge-cases、gantt-states、m1-m5 移动五页、barcode-input、debugger-lab、w1a-w4c 内容家族九页                                                                                                                                                                      | 从未逐按钮确认（w 系列为内容组件样例页）                                                                                  |
+| 波次 | 分组                                       | 页数 | 清单来源                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | 现状基线                                                                                                                  |
+| ---- | ------------------------------------------ | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| W-A  | Complex Pages（外部应用刻划 + 数据可视化） | 40   | `apps/playground/src/complex-pages/complex-pages-model.ts`（45 id 项中 40 页 + 类目节点）                                                                                                                                                                                                                                                                                                                                                                                                 | **R12 已全量确认过展现层**（`2026-10-03-complex-pages-browser-confirmation-roadmap.md`）；本轮增量 = **操作按钮逐一触发** |
+| W-B  | 设计器 / 编辑器大家族                      | 10   | page-designer、flow-designer、taskflow-designer、report-designer、report-designer-host、print-designer、dashboard-demo、word-editor、code-editor、scada-editor-demo                                                                                                                                                                                                                                                                                                                       | R1-R12 修复基线 + 原始审计 19 路由确认；本轮增量 = 全按钮遍历                                                             |
+| W-C  | 渲染器演示页                               | 27   | flux-basic、table-column-width、table-popover、tree-display-ux、condition-builder、condition-builder-formula、form-input-enhancements、input-suggest、layout-family-enhancements、text-icon-visual-fields、component-handles、event-prevention、boolean-control-value-contract、data-verify、env-stream、diff-view、graph-demo、map-demo、pivot-table-demo、leafer-examples、three-canvas-demo、mobile-components、mobile-infrastructure、gantt、kanban、scheduling-calendar、spreadsheet | 多数从未逐按钮确认                                                                                                        |
+| W-D  | AI 家族                                    | 14   | ai-chat、ai-tools、ai-widgets、ai-hitl、ai-citations、ai-conversations、ai-persistence、ai-coverage、ai-component-handle、ai-rich-text、ai-linkage、ai-p4、ai-virtual-scroll、ai-attachments                                                                                                                                                                                                                                                                                              | 从未逐按钮确认                                                                                                            |
+| W-E  | 性能 / 基建 / 实验页                       | 27   | performance-table、gantt-perf-scale、kanban-perf-scale、calendar-perf-scale、diff-perf-scale、scada-perf-scale、scada-pressure-demo、scada-demo、scada-edge-cases、gantt-states、m1-responsive、m2-touch、m3-layout、m4-data、m5-showcase（移动五页）、barcode-input、debugger-lab、w1a-w4c 内容家族十页                                                                                                                                                                                  | 从未逐按钮确认（w 系列为内容组件样例页）                                                                                  |
 
-> 合计 40 + 75 = **115 页**（home 入口页不计；report-designer-host 为宿主形态页与 report-designer 并列确认）。
+> 合计 40 + 10 + 27 + 14 + 27 = **118 路由页**（home 入口页不计；report-designer-host 并列确认；dingtalk-flow-demo 为死路由不计）。原「115」系多波次口径误差（W-E 少计 8 + W-C 漏 env-stream，原「40+75」分项亦加不出 115），2026-10-03 W-C 评审逐波核对修正。gantt、kanban、scheduling-calendar、spreadsheet 四条 live 路由原未入波次，已并入 W-C（2026-10-03）。
 
 ## 二、逐页验收标准（每页六查，全部通过才记「确认」）
 
@@ -57,7 +57,7 @@
 | W-A1 | complex-pages 40 页：操作按钮逐一触发（展现层复用 R12 确认，不重复截图确认；只补操作面） | 40         | 3-4 会话 | 40 页确认卡全部回填；P1 清零 |
 | W-A2 | complex-pages 主子通信对齐审计（弹窗+宿主组合页逐一核对 §三 标准形态）                   | 组合页 ~12 | 1 会话   | 非标准形态清零或登记         |
 | W-B  | 设计器/编辑器 10 页全按钮遍历（每页含工具栏/右键/弹窗/模式切换全操作）                   | 10         | 2-3 会话 | 确认卡回填；P1 清零          |
-| W-C  | 渲染器演示页 22 页                                                                       | 22         | 2 会话   | 确认卡回填；P1 清零          |
+| W-C  | 渲染器演示页 27 路由（原 23 + 评审补入 gantt/kanban/scheduling-calendar/spreadsheet）    | 27         | 2 会话   | 确认卡回填；P1 清零          |
 | W-D  | AI 家族 14 页                                                                            | 14         | 1-2 会话 | 确认卡回填；P1 清零          |
 | W-E  | 性能/基建/实验 19 页                                                                     | 19         | 1 会话   | 确认卡回填；P1 清零          |
 | W-F  | 收尾：全量 P2/P3 尾册复核 + 本文档状态收口 + 提交                                        | —          | 0.5 会话 | 本文 §六 矩阵 100% 回填      |
@@ -150,32 +150,37 @@
 | code-editor          | ✅   | 格式化/变量面板/运行/{…} 弹层/全屏切换——零错误全通 ✓                                                                                                    |
 | scada-editor-demo    | ✅   | Save 变更反馈、导出配置、导入/连接/历史/图层/模板/画面 6 弹层、图元工具选择、缩放/适配                                                                  |
 
-### W-C 渲染器演示（22）
+### W-C 渲染器演示（27）
 
-| 页面                           | 状态   | 卡片 |
-| ------------------------------ | ------ | ---- |
-| flux-basic                     | 待执行 |      |
-| table-column-width             | 待执行 |      |
-| table-popover                  | 待执行 |      |
-| tree-display-ux                | 待执行 |      |
-| condition-builder              | 待执行 |      |
-| condition-builder-formula      | 待执行 |      |
-| form-input-enhancements        | 待执行 |      |
-| input-suggest                  | 待执行 |      |
-| layout-family-enhancements     | 待执行 |      |
-| text-icon-visual-fields        | 待执行 |      |
-| component-handles              | 待执行 |      |
-| event-prevention               | 待执行 |      |
-| boolean-control-value-contract | 待执行 |      |
-| data-verify                    | 待执行 |      |
-| diff-view                      | 待执行 |      |
-| graph-demo                     | 待执行 |      |
-| map-demo                       | 待执行 |      |
-| pivot-table-demo               | 待执行 |      |
-| leafer-examples                | 待执行 |      |
-| three-canvas-demo              | 待执行 |      |
-| mobile-components              | 待执行 |      |
-| mobile-infrastructure          | 待执行 |      |
+| 页面                           | 状态 | 卡片                                                                                                                                            |
+| ------------------------------ | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| flux-basic                     | ✅   | 表单提交管线（component:submit）、对话框、combo 增删、Inspect 行弹层；Docs/API/Urgent 为静态 tag 数据非按钮                                     |
+| table-column-width             | ✅   | 列宽策略宿主：选择/全选机制验证（E3 宿主 fixture）                                                                                              |
+| table-popover                  | ✅   | 单元格 popOver 逐行打开 ✓、复制到剪贴板、分页                                                                                                   |
+| tree-display-ux                | ✅   | 展开/折叠/搜索高亮机制 ✓（E3）、节点树渲染                                                                                                      |
+| condition-builder              | ✅   | 添加条件/分组/筛选、操作符与值下拉、配置弹窗、删除重组 ✓                                                                                        |
+| condition-builder-formula      | ✅   | E3 公式集成变体：条件增删/分组/操作符下拉 ✓                                                                                                     |
+| form-input-enhancements        | ✅   | input-number 步进、array-editor 增删/排序（等长值变更类 no-op 为检测盲区已核）、Submit→console 设计                                             |
+| input-suggest                  | ✅   | 异步建议浮层干净加载+真实输入验证 ✓（Apple/Apricot/Grape/Papaya；早期虚警为残留状态+合成事件假象）；suggestTemplate 区域、Live form values 回显 |
+| layout-family-enhancements     | ✅   | tab 切换（含 badge）、aside 备注、mountOnEnter 系列 ✓                                                                                           |
+| text-icon-visual-fields        | ✅   | 复制 toast「已复制」、maxLine 展开/收起（E3）                                                                                                   |
+| component-handles              | ✅   | Focus/Clear/Reset 句柄语义程序化验证 ✓（activeElement 翻转+值清空）、Select 弹层、表单提交/重置                                                 |
+| event-prevention               | ✅   | X2 三拦截全工作（e2e 4/4 绿：表单/链接/键盘 + 开关切换）；P3：schema 内残留死开关按钮（path:\_ 无操作，功能由外置 React 开关承担）——清理候选    |
+| boolean-control-value-contract | ✅   | checkbox trueValue/falseValue 契约翻转 ✓（E3）                                                                                                  |
+| data-verify                    | ✅   | 数据源机制验证页：展开/setValue 探针 ✓                                                                                                          |
+| env-stream                     | ✅   | Start stream 触发流式输出 ✓、Abort 空栈 no-op、协议/解码器选择                                                                                  |
+| gantt                          | ✅   | 缩放/适应/今日、任务组折叠展开 ✓、依赖连线为图形非按钮                                                                                          |
+| kanban                         | ✅   | 标签过滤片逐个 ✓、清除、列折叠、添加卡片/移除卡片、列拖拽（拖拽类不实点）                                                                       |
+| scheduling-calendar            | ✅   | 上一个/今日/下一个、月/周/日切换 ✓、事件块（leave/maintenance/shift/appointment）渲染                                                           |
+| spreadsheet                    | ✅   | 查找替换、选择整表/整列机制 ✓、撤销空栈 no-op、Set Formula 需先选单元格（代表 性验证网格选择机制）                                              |
+| diff-view                      | ✅   | 统一/分割视图、行折叠展开、视图选择 ✓                                                                                                           |
+| graph-demo                     | ✅   | hierarchy/flow 布局切换、搜索+清除、Focus 定位、缩放族（canvas 变换类 no-op）                                                                   |
+| map-demo                       | ✅   | 四场景截图目检：区域着色/Pin 聚合/自定义边界/空态全渲染，无黑域 ✓；缩放为 canvas 变换                                                           |
+| pivot-table-demo               | ✅   | VTable 画布渲染零错误，主题/模式选择                                                                                                            |
+| leafer-examples                | ✅   | 画布示例渲染、缩放/平移按钮（canvas 变换类）                                                                                                    |
+| three-canvas-demo              | ✅   | AI 生成 schema（离线）/恢复默认场景 ✓、10Hz 数据驱动                                                                                            |
+| mobile-components              | ✅   | swipe-cell 归档/删除（滑动手势类，不实点）、弹层关闭 ✓（M5）                                                                                    |
+| mobile-infrastructure          | ✅   | 触感反馈按钮（触觉类 no-op）、Open Dialog ✓（M0.1）                                                                                             |
 
 ### W-D AI 家族（14）
 
@@ -196,7 +201,7 @@
 | ai-virtual-scroll   | 待执行 |      |
 | ai-attachments      | 待执行 |      |
 
-### W-E 性能/基建/实验（19）
+### W-E 性能/基建/实验（27 页 = 18 表项，w 系列合并行含 10 页）
 
 | 页面                                                                                          | 状态   | 卡片 |
 | --------------------------------------------------------------------------------------------- | ------ | ---- |
@@ -249,7 +254,7 @@
 
 ## 八、完成定义（DoD）
 
-1. §六 矩阵 115 行全部回填，`✅/⚠️` 覆盖 100%，`❌` 清零。
+1. §六 矩阵全部行回填（118 路由页对应表项，w 系列合并行按 10 页展开核验），`✅/⚠️` 覆盖 100%，`❌` 清零。
 2. 所有 P1/P2 修复有对应测试或实机探针记录（daily log 归档）。
 3. 主子通信审计：所有「弹窗+宿主」组合页均为 §三 标准形态（或改判书面理由）。
 4. id 规范：全站无新增 id 耦合；接口 URL 资源寻址合规。
