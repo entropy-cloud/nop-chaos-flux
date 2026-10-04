@@ -156,6 +156,8 @@ export function DesignerCanvasContent(props: {
       dispatch({ type: 'selectEdge', edgeId: detail.edgeId });
     };
 
+    // 测试专用通道显式豁免声明（P4.5，editor-designer-standard.md §2.6）：仅 e2e
+    // （flow-designer-reconnect 等 spec）派发，非宿主契约。
     window.addEventListener(
       'nop-designer:test-start-reconnect',
       handleTestStartReconnect as EventListener,

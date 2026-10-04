@@ -364,8 +364,8 @@ export type DesignerEvent =
   | { type: 'mutationRejected'; method: string; reason: 'tree-owned' }
   | { type: 'presentationChanged'; doc: GraphDocument }
   | { type: 'treeChanged'; tree: TreeDocument; reason: 'command' | 'undo' | 'redo' | 'restore'; commandType?: 'transaction' }
-  | { type: 'nodes:moved' }
-  | { type: 'nodes:updated' };
+  // P4.5（plan 559）：`nodes:moved`/`nodes:updated` 杂散事件已删除——零消费者
+  // （监听面走 documentChanged/dirtyChanged；命名外事件按 §2.6 词汇清出）。
 
 export type DesignerEventType = DesignerEvent['type'];
 

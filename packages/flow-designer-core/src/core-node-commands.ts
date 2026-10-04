@@ -179,7 +179,6 @@ export function moveNodesCommand(
 
   ctx.setDocument(nextDoc);
   if (ctx.transactionStack.length === 0) ctx.pushHistory();
-  ctx.emitMutation({ type: 'nodes:moved' });
   ctx.emit({ type: 'documentChanged', doc: ctx.doc });
   ctx.updateDirtyState();
 }
@@ -195,7 +194,6 @@ export function updateMultipleNodesCommand(
 
   ctx.setDocument(nextDoc);
   if (ctx.transactionStack.length === 0) ctx.pushHistory();
-  ctx.emitMutation({ type: 'nodes:updated' });
   ctx.emit({ type: 'documentChanged', doc: ctx.doc });
   ctx.updateDirtyState();
 }

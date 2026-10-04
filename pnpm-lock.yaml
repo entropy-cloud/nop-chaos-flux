@@ -296,10 +296,6 @@ importers:
       elkjs:
         specifier: ^0.11.1
         version: 0.11.1
-    devDependencies:
-      zustand:
-        specifier: ^5.0.12
-        version: 5.0.12(@types/react@19.3.0)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
 
   packages/flow-designer-renderers:
     dependencies:
