@@ -22,6 +22,7 @@ Designer-style hosts use one common workbench pattern:
 - central canvas or editor surface as the primary authoring area
 - optional right side panel next to the central editing surface
 - optional dialogs and transient surfaces mounted from the same host/action boundary
+- optional persistent footer (status-bar chrome) rendered as a full-width row under the workbench body — distinct from the dialogs slot's transient semantics
 
 The central surface is the primary interaction target. Side panels are supporting authoring surfaces and must not permanently consume space unless the resolved host configuration actually provides them.
 
@@ -108,6 +109,14 @@ Required interaction rules:
 - `WordEditorConfig.leftPanel` and `WordEditorConfig.rightPanel` are the canonical side-existence switches for the current baseline
 - today's dataset/field panel and outline panel are the default generators selected by that `WordEditorConfig`, not renderer-private permanent UI
 - `toolbar` / `leftPanel` / `rightPanel` page regions remain explicit override surfaces
+
+### SCADA Editor
+
+- SCADA editor consumes the shell with a five-slot mapping: header = toolbox strip, leftPanel = palette, canvas = the leafer canvas surface (wrapped in a flex container inside the shell canvas card — the canvas div's `flex: 1` sizing requires a flex parent), rightPanel = inspector, footer = status bar
+- hidden states (loading/error) pass `undefined` (never `null`) to the four conditional slots (header/leftPanel/rightPanel/footer) so no empty panel cards render; the canvas slot always renders (it hosts the loading/error overlays)
+- region override precedence is preserved verbatim: schema regions replace the built-in panels through the same `render(...) ?? fallback` expressions as before the migration
+- the root keeps the family marker class `.nop-scada-editor-layout`; element-level markers (`.nop-scada-editor-layout-canvas`, `.nop-scada-editor-status-bar`, …) stay on their original elements (test-locked)
+- shell-standard canvas card chrome, slot gap, and the row grid are the adopted visual baseline (same adjudication as Spreadsheet); `density="flush"` keeps outer padding at zero
 
 ### Spreadsheet
 

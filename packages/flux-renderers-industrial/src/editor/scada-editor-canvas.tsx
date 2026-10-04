@@ -12,6 +12,7 @@ import { useEditorHandles } from './renderer/hooks/use-editor-handles.js';
 import { scadaEditorErrorI18nKey } from './renderer/editor-errors.js';
 import { projectSessionChange, type ScadaEditorSession } from './editor-session.js';
 import { EditorPalettePanel } from './palette/editor-palette.js';
+import { WorkbenchShell } from '@nop-chaos/flux-react';
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
 import { EditorToolboxPanel } from './toolbox/toolbox-panel.js';
 import { EditorStatusBar } from './renderer/editor-status-bar.js';
@@ -295,30 +296,52 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // 不再覆盖兄弟 panel。loading/error 经 absolute overlay 覆盖 canvas 区。
   const showLayoutBody = runtime !== null && effectiveStatus !== 'loading' && effectiveStatus !== 'error';
 
+  // P2.2（plan 550）：五槽位映射——header=toolbox / leftPanel=palette / canvas=leafer 画布 /
+  // rightPanel=inspector / footer=statusBar。隐藏态（loading/error）槽位传 undefined（shell 门
+  // 为 !== undefined，传 null 会渲染空卡片）。canvas 槽 flex 包装（M1）：canvas div 的 flex:1
+  // 在 PANEL_CARD block 容器内需 flex 父级，否则生产布局塌缩（jsdom 无布局不报）。
+  const toolboxSlot = showLayoutBody
+    ? asReactNode(toolbox?.render({ bindings: { selection } })) ?? (
+        <EditorToolboxPanel
+          runtime={runtime}
+          selection={selection}
+          onError={handleError}
+          disabled={disabled}
+          templateStorage={templateStorage}
+          stationStorage={stationStorage}
+        />
+      )
+    : undefined;
+  const paletteSlot = showLayoutBody
+    ? asReactNode(palette?.render()) ?? <EditorPalettePanel runtime={runtime} onError={handleError} disabled={disabled} />
+    : undefined;
+  const inspectorSlot = showLayoutBody
+    ? asReactNode(inspector?.render({ bindings: { nodeId: selectedNodeId } })) ?? (
+        <EditorInspectorPanel runtime={runtime} selectedNodeId={selectedNodeId} onError={handleError} disabled={disabled} />
+      )
+    : undefined;
+  const statusBarSlot = showLayoutBody
+    ? asReactNode(statusBar?.render()) ?? (
+        // plan 2026-08-08-0900-1 Phase 3 / P2 #11：statusBar 内置 fallback（发射 marker），不再恒 null。
+        // plan 521 / U4：fallback 换真实 statusBar（viewport/mode/selection/undo-redo 摘要，数据已在 runtime）。
+        <EditorStatusBar runtime={runtime} selection={selection} />
+      )
+    : undefined;
+
   return (
     <div
       data-testid={props.meta.testid || undefined}
       className={cn('nop-scada-editor-layout', props.meta.className)}
       style={rootStyle}
     >
-      {showLayoutBody
-        ? asReactNode(toolbox?.render({ bindings: { selection } })) ?? (
-            <EditorToolboxPanel
-              runtime={runtime}
-              selection={selection}
-              onError={handleError}
-              disabled={disabled}
-              templateStorage={templateStorage}
-              stationStorage={stationStorage}
-            />
-          )
-        : null}
-      {/* plan 2026-08-08-0900-1 Phase 4 / P2 #40：body 行含 palette | canvas | inspector 三栏，
-          toolbox（顶）/ statusBar（底）为列方向兄弟——避免 toolbox 宽按钮挤压缩 canvas 到 0。 */}
-      <div className="nop-scada-editor-body">
-        {showLayoutBody
-          ? asReactNode(palette?.render()) ?? <EditorPalettePanel runtime={runtime} onError={handleError} disabled={disabled} />
-          : null}
+      <WorkbenchShell
+        density="flush"
+        header={toolboxSlot}
+        leftPanel={paletteSlot}
+        rightPanel={inspectorSlot}
+        footer={statusBarSlot}
+        canvas={
+          <div className="flex h-full min-h-0 w-full" data-testid="scada-editor-canvas-wrap">
         <div
           ref={containerRef}
           data-cid={cidAttr}
@@ -463,20 +486,10 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
               </div>
             )
           : null}
-      </div>
-      {showLayoutBody
-        ? asReactNode(inspector?.render({ bindings: { nodeId: selectedNodeId } })) ?? (
-            <EditorInspectorPanel runtime={runtime} selectedNodeId={selectedNodeId} onError={handleError} disabled={disabled} />
-          )
-        : null}
-      </div>
-      {showLayoutBody
-        ? asReactNode(statusBar?.render()) ?? (
-            // plan 2026-08-08-0900-1 Phase 3 / P2 #11：statusBar 内置 fallback（发射 marker），不再恒 null。
-            // plan 521 / U4：fallback 换真实 statusBar（viewport/mode/selection/undo-redo 摘要，数据已在 runtime）。
-            <EditorStatusBar runtime={runtime} selection={selection} />
-          )
-        : null}
+        </div>
+          </div>
+        }
+      />
     </div>
   );
 }

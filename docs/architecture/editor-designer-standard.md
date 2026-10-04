@@ -26,7 +26,7 @@
 
 ### 2.2 Shell（MUST）
 
-- 三栏工作台一律由 `WorkbenchShell`（`packages/flux-react/src/workbench/workbench-shell.tsx`）槽位组合：header/leftPanel/canvas/rightPanel/dialogs。
+- 三栏工作台一律由 `WorkbenchShell`（`packages/flux-react/src/workbench/workbench-shell.tsx`）槽位组合：header/leftPanel/canvas/rightPanel/dialogs（+ 可选 footer 底栏槽，持久状态栏 chrome；P2.2 增）。
 - 面板存在性由家族 config 驱动（`designer-workbench-shell.md` family mapping）；collapsed rail、resize、View-mode 面板规则沿用该 doc，家族不得重写。
 - 画布引擎（xyflow/leafer/canvas-editor/自研 grid）是家族私有实现，只经 canvas 槽进入 shell。
 - 验收观测点：家族页面渲染器 import `WorkbenchShell`；`docs/architecture/` 下无手拼三栏的自研 shell。

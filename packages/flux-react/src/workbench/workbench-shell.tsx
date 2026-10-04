@@ -38,6 +38,8 @@ export interface WorkbenchShellProps {
   rightMinWidth?: number;
   rightMaxWidth?: number;
   dialogs?: ReactNode;
+  /** 底栏槽（P2.2，plan 550）：持久状态栏 chrome（区别于 dialogs 的 transient 语义）；不传不渲染。 */
+  footer?: ReactNode;
   'data-testid'?: string;
   'data-cid'?: string;
 }
@@ -130,6 +132,7 @@ export function WorkbenchShell({
   rightMinWidth,
   rightMaxWidth,
   dialogs,
+  footer,
   'data-testid': testId,
   'data-cid': cid,
 }: WorkbenchShellProps) {
@@ -298,6 +301,8 @@ export function WorkbenchShell({
   };
 
   const gridColsClass = resolveWorkbenchGridCols(hasLeft, hasRight, leftCollapsed, rightCollapsed);
+  // footer 存在时行模板补 auto 尾行（防 footer-无-header 组合下 footer 侵占 1fr 行）。
+  const gridRowsClass = footer !== undefined ? 'grid-rows-[auto_minmax(0,1fr)_auto]' : 'grid-rows-[auto_minmax(0,1fr)]';
 
   let gridTemplateColumns: string | undefined;
   if ((leftResizeActive || rightResizeActive) && isWideViewport) {
@@ -331,7 +336,8 @@ export function WorkbenchShell({
         // max-content 取尺寸，宽工具条（如 word-editor ribbon 2965px）会把整条
         // 工作台撑出视口（大纲面板推到 x=2652 成死灰区），子级 overflow-x-auto
         // 在未钳制轨道上永不生效。
-        'nop-workbench grid grid-cols-1 grid-rows-[auto_minmax(0,1fr)] h-full min-h-0 gap-3',
+        'nop-workbench grid grid-cols-1 h-full min-h-0 gap-3',
+        gridRowsClass,
         density === 'default' ? 'p-6' : 'p-0',
         className,
       )}
@@ -458,6 +464,11 @@ export function WorkbenchShell({
             </div>
           ))}
       </div>
+      {footer !== undefined && (
+        <div data-slot="workbench-footer" className="min-h-0">
+          {footer}
+        </div>
+      )}
       {dialogs !== undefined && (
         <div data-slot="workbench-dialogs" className="relative">
           {dialogs}

@@ -345,3 +345,28 @@ describe('WorkbenchShell resizable panels', () => {
     }
   });
 });
+
+describe('WorkbenchShell footer slot', () => {
+  it('renders the footer after the body and before dialogs when provided', () => {
+    const { container } = render(
+      <WorkbenchShell
+        header={<div>header</div>}
+        canvas={<div>canvas</div>}
+        footer={<div data-testid="footer-content">status</div>}
+        dialogs={<div>dialogs</div>}
+      />,
+    );
+    const footer = container.querySelector('[data-slot="workbench-footer"]');
+    expect(footer).toBeTruthy();
+    const body = container.querySelector('[data-testid="workbench-body"]')!;
+    const dialogs = container.querySelector('[data-slot="workbench-dialogs"]')!;
+    // DOM order: body < footer < dialogs
+    expect(body.compareDocumentPosition(footer!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(footer!.compareDocumentPosition(dialogs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('does not render a footer wrapper when the prop is omitted', () => {
+    const { container } = render(<WorkbenchShell canvas={<div>canvas</div>} />);
+    expect(container.querySelector('[data-slot="workbench-footer"]')).toBeNull();
+  });
+});
