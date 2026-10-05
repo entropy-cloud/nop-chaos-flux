@@ -437,16 +437,44 @@ export function createRuntimeSourceRegistry(input: {
     }
   }
 
+  /**
+   * Refresh a data source by name. With `scope`, resolution walks the scope
+   * chain nearest-first (own bucket → ancestors), so page-level sources stay
+   * reachable from nested fragment scopes (the canonical cross-scope
+   * `refreshSource` form documented in flux-guide 01/05); same-name shadowing
+   * in nearer scopes wins. The walk stops at `isolate` boundaries — an
+   * isolated scope cannot refresh sources it cannot read — and the global
+   * `nameIndex` fallback is skipped when a boundary was crossed, so isolated
+   * contexts never reach outside their visible chain. Without `scope`, all
+   * buckets are scanned, then the name index.
+   */
   async function refreshDataSource(args: { name: string; scope?: ScopeRef }): Promise<DataSourceRefreshOutcome> {
     if (args.scope) {
-      const bucket = scopeEntries.get(args.scope.id);
-      const entry = Array.from(bucket?.values() ?? []).find((candidate) => candidate.name === args.name);
+      let scope: ScopeRef | undefined = args.scope;
+      let crossedIsolate = false;
+      while (scope) {
+        const bucket = scopeEntries.get(scope.id);
+        const entry = Array.from(bucket?.values() ?? []).find((candidate) => candidate.name === args.name);
 
-      if (!entry) {
-        return { found: false };
+        if (entry) {
+          return { found: true, result: await runControllerRefresh(entry) };
+        }
+
+        if (scope.isolate) {
+          crossedIsolate = true;
+          break;
+        }
+        scope = scope.parent;
       }
 
-      return { found: true, result: await runControllerRefresh(entry) };
+      if (!crossedIsolate) {
+        const namedEntry = nameIndex.get(args.name);
+        if (namedEntry) {
+          return { found: true, result: await runControllerRefresh(namedEntry) };
+        }
+      }
+
+      return { found: false };
     }
 
     for (const bucket of scopeEntries.values()) {
@@ -470,9 +498,10 @@ export function createRuntimeSourceRegistry(input: {
    * undefined if the scope owns no data source. Used by `refreshNearest` to
    * locate the closest refreshable data source without knowing its name.
    *
-   * Like `refreshDataSource({ scope })`, this matches the scope's own bucket
-   * only — it does NOT walk the parent scope chain. Callers responsible for
-   * scope chain traversal (e.g. `refreshNearest`).
+   * Unlike `refreshDataSource({ scope })` (which walks the parent chain
+   * nearest-first with an isolate boundary), this matches the scope's own
+   * bucket only. Callers responsible for scope chain traversal (e.g.
+   * `refreshNearest`).
    */
   function findFirstInScope(
     scope: ScopeRef,

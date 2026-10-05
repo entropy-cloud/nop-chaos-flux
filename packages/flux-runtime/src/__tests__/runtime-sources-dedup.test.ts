@@ -427,3 +427,89 @@ describe('createRendererRuntime source dedup strategies and isolation', () => {
     regB.dispose();
   });
 });
+
+describe('refreshDataSource scope-chain resolution (parent walk + nameIndex fallback)', () => {
+  function setup() {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler,
+    });
+    const page = runtime.createPageRuntime({});
+    return { runtime, page };
+  }
+
+  function registerNamedSource(
+    runtime: ReturnType<typeof createRendererRuntime>,
+    scope: ReturnType<ReturnType<typeof createRendererRuntime>['createPageRuntime']>['scope'],
+    name: string,
+    value: string,
+  ) {
+    return runtime.registerDataSource({
+      id: `${scope.id}:${name}`,
+      scope,
+      compiledSource: compileDataSource(
+        name,
+        { type: 'data-source', name, formula: `'${value}'` },
+        expressionCompiler,
+      ),
+    });
+  }
+
+  it('refreshSource from a child scope resolves a page-level (ancestor) source', async () => {
+    const { runtime, page } = setup();
+    registerNamedSource(runtime, page.scope, 'payload', 'page');
+    const child = runtime.createChildScope(page.scope, {}, { pathSuffix: 'form-scope' });
+
+    await expect(
+      runtime.refreshDataSource({ name: 'payload', scope: child }),
+    ).resolves.toEqual({ found: true, result: { skipped: false, ok: true } });
+  });
+
+  it('nearest scope shadows an ancestor source with the same name', async () => {
+    const parentFetch = vi.fn(async <T>(api: { url: string }) => ({ status: 0, data: { url: api.url, from: 'parent' } as T }));
+    const runtime2 = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: { ...env, fetcher: ((api, ctx) => parentFetch(api, ctx)) as RendererEnv['fetcher'] },
+      expressionCompiler,
+    });
+    const page2 = runtime2.createPageRuntime({});
+    registerNamedSource(runtime2, page2.scope, 'payload', 'page');
+    const child = runtime2.createChildScope(page2.scope, {}, { pathSuffix: 'form-scope' });
+    registerNamedSource(runtime2, child, 'payload', 'child');
+
+    parentFetch.mockClear();
+    await expect(
+      runtime2.refreshDataSource({ name: 'payload', scope: child }),
+    ).resolves.toEqual({ found: true, result: { skipped: false, ok: true } });
+    expect(parentFetch).not.toHaveBeenCalled();
+  });
+
+  it('sibling-scope source resolves via the global name index when the chain misses', async () => {
+    const { runtime, page } = setup();
+    const sibling = runtime.createChildScope(page.scope, {}, { pathSuffix: 'sibling-fragment' });
+    registerNamedSource(runtime, sibling, 'payload', 'sibling');
+    const unrelated = runtime.createChildScope(page.scope, {}, { pathSuffix: 'unrelated-fragment' });
+
+    await expect(
+      runtime.refreshDataSource({ name: 'payload', scope: unrelated }),
+    ).resolves.toEqual({ found: true, result: { skipped: false, ok: true } });
+  });
+
+  it('isolate boundary stops the walk and suppresses the name-index fallback', async () => {
+    const { runtime, page } = setup();
+    registerNamedSource(runtime, page.scope, 'payload', 'page');
+    const isolated = runtime.createChildScope(page.scope, {}, { pathSuffix: 'isolated-dialog', isolate: true });
+
+    // own-scope source inside the isolated scope still resolves
+    registerNamedSource(runtime, isolated, 'local', 'local');
+    await expect(
+      runtime.refreshDataSource({ name: 'local', scope: isolated }),
+    ).resolves.toEqual({ found: true, result: { skipped: false, ok: true } });
+
+    // outside-the-boundary source is unreachable: no parent walk, no nameIndex fallback
+    await expect(
+      runtime.refreshDataSource({ name: 'payload', scope: isolated }),
+    ).resolves.toEqual({ found: false });
+  });
+});

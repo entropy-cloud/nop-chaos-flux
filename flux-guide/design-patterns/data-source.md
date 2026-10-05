@@ -117,15 +117,16 @@
 
 **关键点**：`data-source` 是非视觉的命名数据生产者，通过 `name` 发布值到 scope，其他组件（兄弟节点）通过 `${name.xxx}` 读取。
 
-## 刷新上游数据源的正确姿势（plan 513 L4.10）
+## 刷新上游数据源的正确姿势
 
-`refreshSource` 动作的 scoped lookup **没有父链回退**：带动作上下文 scope 时只在**该 scope 自身**的注册桶里查找（`source-registry.ts` 的 `refreshDataSource`，按 `args.scope.id` 查桶；`findFirstInScope` 同样只查本桶）。因此：
+`refreshSource` 动作按 scope 链**最近优先**解析目标（source-registry.ts 的 `refreshDataSource`：本 scope 桶 → 父链逐级上行 → 全局 nameIndex 兜底），因此：
 
-- **form 内按钮刷新页面级 data-source 会报 `Source not found`**——form 的 scope 不是声明 data-source 的页面 scope。
-- 跨层级刷新用 `component:refresh` + 目标组件的 `componentId`（按组件句柄寻址，不依赖 scope 链）：
+- **form 内按钮刷新页面级 data-source 可用**——父链最近优先命中页面 scope 注册的 source；同名 source 就近遮蔽（nearer wins）。
+- **isolate 边界**（如 `isolate` dialog/drawer）会截断解析：隔离上下文不能刷新其不可见链路上的 source（与数据读取语义一致），且不走全局 nameIndex 兜底。
+- `component:refresh` + 目标组件的 `componentId`（按组件句柄寻址，不依赖 scope 链）仍是等价替代姿势，适合显式定位单个组件实例：
 
 ```json
 { "action": "component:refresh", "args": { "componentId": "userTable" } }
 ```
 
-- `refreshSource` 的适用面 = **同一 scope 内**注册的 data-source（如页面 body 顶层声明的 source，由页面级动作直接派发）。
+> 历史（plan 513 L4.10）：scoped lookup 曾仅查本桶（无父链回退），form 内按钮刷新页面级 source 会报 `Source not found`；该限制已由 scope 链遍历修复取代。
