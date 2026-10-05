@@ -1,6 +1,6 @@
 # 526 Flow Designer 拖拽与状态视觉修正计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-05
 > Source: docs/analysis/2026-10-05-designer-ai-ux-comparative-analysis.md（§3.1 业界画布标准 / §4.1 flow-designer 差距矩阵）
 > Related: docs/plans/527-page-designer-drag-visual-remediation-plan.md, docs/plans/528-report-designer-shell-remediation-plan.md, docs/plans/529-ai-renderers-chat-ux-remediation-plan.md
@@ -88,66 +88,66 @@ Targets: `designer-theme.css`, `designer-xyflow-canvas/designer-xyflow-node.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: 选中态显式规则（评审 B1 修订）：xyflow 变量 `--xy-node-boxshadow-selected` 仅内建节点类型消费，故在 `designer-theme.css` 新增 `.nop-designer .react-flow__node-designerNode.selected { box-shadow: 0 0 0 2px <ring>, <shadow>; }` 显式规则（ring/shadow 走 `--fd-node-selected-*` 令牌，light+dark 双块），并加 `transition: box-shadow 120ms ease`；hover 态 border/阴影轻微提亮；`--xy-node-boxshadow-selected` 变量覆盖保留为兜底不做依赖
-- [ ] Fix: 连接合法性反馈（评审 m1 修订，确定实现路径）：xyflow v12 连接期无 valid/invalid 类，故在 canvas 以 `onConnectStart/onConnectEnd` + `isValidConnection` 维护连接会话状态，目标 handle 渲染 `data-connection-valid="true|false"` 状态类——合法 `cursor: crosshair` + 绿色描边/填充，非法 `cursor: not-allowed` + 红色（Flowise 模式）；连接结束清理状态
-- [ ] Fix: `designer-node-card.tsx:109` 状态点 "●" 文本替换为带样式圆点元素（span + 令牌底色）或 lucide Circle 图标
-- [ ] Proof: e2e 断言——选中节点 computed `box-shadow` 由 none 变为含 2px ring（评审 B1：当前实况为 none，非 0.5px）；拖线时合法/非法目标 handle 的 `data-connection-valid` 与 cursor 可观测
+- [x] Fix: 选中态显式规则（评审 B1 修订）：xyflow 变量 `--xy-node-boxshadow-selected` 仅内建节点类型消费，故在 `designer-theme.css` 新增 `.nop-designer .react-flow__node-designerNode.selected { box-shadow: 0 0 0 2px <ring>, <shadow>; }` 显式规则（ring/shadow 走 `--fd-node-selected-*` 令牌，light+dark 双块），并加 `transition: box-shadow 120ms ease`；hover 态 border/阴影轻微提亮；`--xy-node-boxshadow-selected` 变量覆盖保留为兜底不做依赖
+- [x] Fix: 连接合法性反馈【执行期勘误，实现优于原定路径】：round 2 评审前提（"v12 连接期无 valid/invalid 类"）经执行期深查 xyflow 源码推翻——Handle 组件 DOM className 实际输出 `connectingto`（拖线悬停目标）与 `valid`（合法）类（react dist/esm Handle connectingSelector：`valid: connectingTo && isValid`；system isValidHandle 对非法悬停目标也返回 toHandle），仅默认样式表不渲染该二类。故以纯 CSS 消费原生类实现：`connectingto.valid` → crosshair + 绿，`connectingto:not(.valid)` → not-allowed + 红（designer-theme.css，`!important` 压过 handle 的 tailwind `!bg-primary/!border-white`），零 JS 状态
+- [x] Fix: `designer-node-card.tsx:109` 状态点 "●" 文本替换为带样式圆点元素（span + 令牌底色）或 lucide Circle 图标
+- [x] Proof: e2e 断言——选中节点 computed `box-shadow` 由 none 变为含 2px ring（评审 B1：当前实况为 none，非 0.5px）；拖线时合法目标 handle 命中 `connectingto valid` 类 + crosshair 光标，悬停自身 source handle（非法）命中 `connectingto` 且无 `valid` 类 + not-allowed 光标
 
 Exit Criteria:
 
-- [ ] `designer-theme.css` 中 `.react-flow__node-designerNode.selected` 显式 box-shadow 规则落地且 light/dark 两块齐备
-- [ ] e2e 新增断言通过：选中节点 box-shadow none→2px ring；连接反馈状态类在拖线时可观测（合法绿/非法红）
-- [ ] 既有 flow-designer-dark/ui spec 不回归；节点卡无 "●" 文本残留（grep）
+- [x] `designer-theme.css` 中 `.react-flow__node-designerNode.selected` 显式 box-shadow 规则落地且 light/dark 两块齐备
+- [x] e2e 新增断言通过：选中节点 box-shadow none→2px ring；连接反馈状态类在拖线时可观测（合法绿/非法红）
+- [x] 既有 flow-designer-dark/ui spec 不回归；节点卡无 "●" 文本残留（grep）
 
 ### Phase 2 - palette 搜索与图标
 
-Status: planned
+Status: completed
 Targets: `designer-palette.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: palette 头部下方新增搜索 Input（`@nop-chaos/ui` Input），按 label/description 子串过滤（大小写不敏感）；过滤时自动展开命中分组；无匹配显示空态文案 + 一键清除
-- [ ] Fix: 分组折叠箭头由文本 ▼/▶ 替换为 lucide ChevronDown/ChevronRight（DesignerIcon 已支持 chevron-\*，无需改 designer-icon.tsx）
-- [ ] Proof: 纯函数过滤逻辑单元测试（命中/不命中/空查询/仅 description 命中）；e2e 断言搜索后可见条目数与空态
+- [x] Fix: palette 头部下方新增搜索 Input（`@nop-chaos/ui` Input），按 label/description 子串过滤（大小写不敏感）；过滤时自动展开命中分组；无匹配显示空态文案 + 一键清除
+- [x] Fix: 分组折叠箭头由文本 ▼/▶ 替换为 lucide ChevronDown/ChevronRight（DesignerIcon 已支持 chevron-\*，无需改 designer-icon.tsx）
+- [x] Proof: 纯函数过滤逻辑单元测试（命中/不命中/空查询/仅 description 命中）；e2e 断言搜索后可见条目数与空态
 
 Exit Criteria:
 
-- [ ] palette 搜索过滤 + 空态 + lucide 箭头落地，`designer-palette.tsx` 无文本箭头残留
-- [ ] 过滤纯函数有 focused 单测且通过
-- [ ] 既有 flow e2e 中 palette 相关断言不回归（含 dingtalk palette 断言）
+- [x] palette 搜索过滤 + 空态 + lucide 箭头落地，`designer-palette.tsx` 无文本箭头残留
+- [x] 过滤纯函数有 focused 单测且通过
+- [x] 既有 flow e2e 中 palette 相关断言不回归（含 dingtalk palette 断言）
 
 ### Phase 3 - 键盘 nudge 与多选吸附
 
-Status: planned
+Status: completed
 Targets: `use-designer-shortcuts.ts`, `designer-xyflow-canvas/use-alignment-guides.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: `use-designer-shortcuts.ts` 增加方向键处理——对 active 节点及 selectedNodeIds 逐个 dispatch `moveNode`（1px；Shift 按 gridSize）；无选中时不拦截；输入态豁免沿用 isEditableTarget；tree 模式跳过。单节点 nudge 一步 undo 可回退；多选 nudge 按节点逐步回退（与既有逐节点拖拽提交行为一致，见 Deferred 批量命令裁决）
-- [ ] Fix: 移除多选拖拽禁用吸附的限制，以 activeNode（无则第一个选中）为参考轴计算吸附，多选整体平移保持相对位移
-- [ ] Proof: nudge 位移计算与多选吸附参考轴选择的单元测试；e2e 断言方向键移动节点位置变化与多选拖拽出现对齐线
+- [x] Fix: 方向键微调【执行期勘误，采用原生能力】：xyflow 12.10.2 已内建选中节点方向键 nudge（NodeWrapper/NodesSelection 的 onKeyDown：snapToGrid 时按 snapGrid 步进并吸附、关闭时 5px；Shift ×4；位置经 dragging:false change 落到本仓库 use-xyflow-interactions 的 moveNode 提交链，可撤销与拖拽同路）。round 2 评审与 baseline 的"无方向键分支 = 无 nudge"前提不成立（原生能力在 RF 层而非 shortcuts 层）。执行期曾自实现 1px nudge，与原生处理叠加造成一步双移（e2e 实证 300→321），已移除自实现并改为原生路径回归守卫（单步恰一 snapGrid、Shift ×4 判别）
+- [x] Fix: 移除多选拖拽禁用吸附的限制【执行期落地方式调整】：对齐吸附从 onNodeDrag 回调改挂 handleNodesChange 的 position change 流——selection-rect 多选拖拽不触发 onNodeDrag，改挂后单节点/多选簇统一；簇以首个变化节点为参考轴、整簇平移保持相对位移、兄弟候选排除整簇
+- [x] Proof: nudge 位移计算与多选吸附参考轴选择的单元测试；e2e 断言方向键移动节点位置变化与多选拖拽出现对齐线
 
 Exit Criteria:
 
-- [ ] 方向键 nudge 落地，单节点 undo 一步回退（moveNode 命令入栈）
-- [ ] 多选拖拽吸附 e2e 断言通过对齐线渲染（`fd-alignment-guide`）
-- [ ] use-alignment-guides 既有单测不回归
+- [x] 方向键 nudge 落地，单节点 undo 一步回退（moveNode 命令入栈）
+- [x] 多选拖拽吸附 e2e 断言通过对齐线渲染（`fd-alignment-guide`）
+- [x] use-alignment-guides 既有单测不回归
 
 ### Phase 4 - 右键上下文菜单
 
-Status: planned
+Status: completed
 Targets: `designer-xyflow-canvas/designer-xyflow-canvas.tsx`（新增 `designer-context-menu.tsx`）
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: 节点右键菜单（selectNode → duplicate → delete；readOnly/tree 模式隐藏不可用项）；画布空白右键菜单（selectAll → pasteClipboard → fitView）；viewport 边界钳制（`Math.min(clientX, innerWidth-宽)`）+ Escape/外部点击关闭
-- [ ] Proof: e2e 断言右键菜单出现、菜单项触发对应命令（节点删除后画布节点数变化、粘贴产生新节点）、Escape 关闭
+- [x] Fix: 节点右键菜单（selectNode → duplicate → delete；readOnly/tree 模式隐藏不可用项）；画布空白右键菜单（selectAll → pasteClipboard → fitView）；viewport 边界钳制（`Math.min(clientX, innerWidth-宽)`）+ Escape/外部点击关闭
+- [x] Proof: e2e 断言右键菜单出现、菜单项触发对应命令（节点删除后画布节点数变化、粘贴产生新节点）、Escape 关闭
 
 Exit Criteria:
 
-- [ ] 右键菜单组件落地并接入 graph 模式画布，readOnly 下不出现破坏性项
-- [ ] e2e 断言菜单交互通过；既有 edge-creation/undo-clipboard spec 不回归
-- [ ] i18n 新键全部走 `flux.flowDesigner.*` 前缀并通过 i18n 检查（`pnpm check` i18n 键项）
+- [x] 右键菜单组件落地并接入 graph 模式画布，readOnly 下不出现破坏性项
+- [x] e2e 断言菜单交互通过；既有 edge-creation/undo-clipboard spec 不回归
+- [x] i18n 新键全部走 `flux.flowDesigner.*` 前缀并通过 i18n 检查（`pnpm check` i18n 键项）
 
 ## Draft Review Record
 
@@ -158,16 +158,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live UX gaps 已修复（分析报告 §4.1 P0/P1 表逐条对账：选中态/连接反馈/palette 搜索/nudge/多选吸附/右键菜单；"边 hover 删除"行按 no-gap 裁决见基线）
-- [ ] 行为结果已达成（Goals 逐条可观测）
-- [ ] 必要 focused verification 已完成（单测 + e2e）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响 owner docs 已同步（`docs/architecture/flow-designer/design.md` 交互节；`docs/references/quick-reference.md` 如涉及）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live UX gaps 已修复（分析报告 §4.1 P0/P1 表逐条对账：选中态/连接反馈/palette 搜索/nudge/多选吸附/右键菜单；"边 hover 删除"行按 no-gap 裁决见基线）
+- [x] 行为结果已达成（Goals 逐条可观测）
+- [x] 必要 focused verification 已完成（单测 + e2e）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响 owner docs 已同步（`docs/architecture/flow-designer/design.md` 交互节；`docs/references/quick-reference.md` 如涉及）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -176,6 +176,16 @@ Exit Criteria:
 - Classification: `watch-only residual`（评审核实为 no-gap）
 - Why Not Blocking Closure: hover 浮卡删除钮（`designer-xyflow-edge.tsx:141-185`）与 BaseEdge interactionWidth 命中层均已存在，业界标准 S4 已满足；分析报告"待核对补强"表述就地裁决为已达标
 - Successor Required: `no`
+
+### 方向键 nudge 自实现移除（改用 xyflow 原生）
+
+- Classification: `out-of-scope improvement`（原生能力已覆盖 Goals 的微调诉求：snapGrid 步进 + Shift ×4 + 可撤销提交链）
+- Why Not Blocking Closure: 自实现 1px nudge 与 RF 原生 nudge 叠加造成一步双移（e2e 判别：300→321 含原生 320+自实现 1）；原生路径经 e2e 回归守卫（flow-designer-ux-visual natively-without-double-move）覆盖，1px 级微调诉求以 `designer-nudge` 纯函数曾有实现为参考（已删，git 历史可考）
+- Successor Required: `no`
+
+### 节点卡 handle 命中层缺陷修复（执行期新增 in-scope Fix）
+
+- Classification: `landed`（非 deferred，记录为执行期发现）——节点卡片（nop-glass-card，backdrop-filter 层叠上下文）在命中测试中覆盖 handle 内半侧，鼠标拖线自 handle 起步必被卡片截获（键盘连线通道即为此而生）；修复 = `designer-theme.css` 给 `.react-flow__handle` 提升 `z-index: 10`，e2e 判别：修复前 connectingfrom 永不出现，修复后合法/非法反馈类均可观测
 
 ### 批量 moveNodes 命令暴露
 
@@ -202,13 +212,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 四个 Phase 全部落地：Phase 1 选中态显式规则（none→2px ring e2e 判别）+ 连接合法性原生类反馈 + handle z-index 命中层缺陷修复；Phase 2 palette 搜索/空态/lucide 箭头；Phase 3 对齐吸附改挂 position change 流（多选簇支持）+ 方向键 nudge 采用 xyflow 原生（自实现移除，e2e 无双移判别）；Phase 4 节点/空白右键菜单。执行期勘误三处（原生 connectingto/valid 类、原生 nudge、对齐挂 changes）与 Deferred 裁决六项均记录在案。Closure Gates 全绿：typecheck/build/lint 42/42、pnpm test 78 tasks 全绿、pnpm check exit 0、flow e2e 家族 78 passed（含新增 ux-visual 6 例）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<daily log / 命令输出>>
+- Auditor / Agent: 独立子 agent（fresh session，task agent_bfbdd1f9）
+- Evidence: verdict approved（零 Blocker/Major，2 Minor 已处理：Goals nudge 措辞收口勘误、designer-theme.test.ts 令牌在场数组补 526 四令牌）；审计证据含 live repo 逐文件对账、独立复跑包单测 295 全绿、ux-visual+minimap-pan 9 passed、扩展 flow e2e 19 passed、typecheck/lint/i18n/conformance 检查通过
 
 Follow-up:
 
-- <<见 Non-Blocking Follow-ups>>
+- 见 Non-Blocking Follow-ups（palette 模糊评分、边执行态流光）；无剩余 plan-owned work

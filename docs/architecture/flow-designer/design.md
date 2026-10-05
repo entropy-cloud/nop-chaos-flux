@@ -120,6 +120,15 @@ Flow Designer 应实现为 `SchemaRenderer` 上的一层领域扩展。
 - canvas adapter 不直接写 graph store 的结构化 document 状态，避免双写和回调环
 - runtime 快照回推到 canvas 时必须允许 no-op 合并，避免受控更新造成事件回环
 
+### 3.4 graph 画布交互契约（plan 526）
+
+- **节点选中态**：显式规则 `.nop-designer .react-flow__node-designerNode.selected` 输出 ring+shadow（`--fd-node-selected-ring/shadow` 令牌，light/dark 双块，120ms box-shadow 过渡）。xyflow 内建 `--xy-node-boxshadow-selected` 仅被内建节点类型选择器消费，自定义 `designerNode` wrapper 不适用。hover 态为 1px 半强度 ring。
+- **连接合法性反馈**：纯 CSS 消费 xyflow 连接期输出的原生 DOM 类 `connectingto`（拖线悬停目标）与 `valid`（合法）——合法 `crosshair` + `--fd-connection-valid` 绿，非法 `not-allowed` + `--fd-connection-invalid` 红；`background/border` 用 `!important` 压过 handle 的 tailwind `!bg-primary/!border-white`。`.react-flow__handle` 带 `z-index: 10`：节点卡片的 backdrop-filter 层叠上下文会在命中测试中覆盖 handle 内半侧，不提升层级鼠标拖线无法自 handle 起步。
+- **对齐吸附**：统一挂 `onNodesChange` 的 position change 流（`use-alignment-guides.handlePositionChanges`）——selection-rect 多选拖拽不触发 `onNodeDrag` 回调；单节点拖拽与多选簇共用，簇以首个变化节点为参考轴、整簇平移保持相对位移、兄弟候选排除整簇。alignment hook 的返回对象必须保持稳定身份（useMemo），否则 `handleNodesChange` 逐渲染换新会连锁翻转 RF props（曾回归 minimap 导航的事件绑定）。
+- **方向键 nudge**：直接采用 xyflow 12.10 原生能力（选中节点 ArrowKey：snapToGrid 开启时按 snapGrid 步进并吸附、关闭时 5px；Shift ×4），位置经 `dragging:false` change 落入 `use-xyflow-interactions` 的 `moveNode` 提交链（可撤销）。shortcuts 层不得再自实现方向键移动（会与原生处理叠加成一步双移）。
+- **palette 检索**：`designer-palette-filter` 纯函数（label/id/description 子串，大小写不敏感），过滤时命中分组强制展开，空结果有清除入口。
+- **右键上下文菜单**：`designer-context-menu` 组件，节点态（选中/复制副本/删除，readOnly 隐藏变更项，tree 模式隐藏复制）与空白态（全选/粘贴/适应画布）；viewport 防溢出钳制 + Escape/外点关闭 + 方向键项间移动。fitView 经 `onReactFlowReady` 注入的实例执行。
+
 ## 4. 为什么不做独立引擎
 
 参考 `packages/flux-react/src/schema-renderer.tsx`、`packages/flux-react/src/hooks.ts`、`packages/flux-react/src/dialog-host.tsx` 与 `packages/flux-react/src/workbench/hooks.ts`，当前体系已经具备：

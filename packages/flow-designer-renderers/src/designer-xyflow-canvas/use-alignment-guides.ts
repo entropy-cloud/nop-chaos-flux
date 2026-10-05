@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Node } from '@xyflow/react';
 
-/** plan 475 Phase 2：拖拽对齐辅助线（最小实现）——单节点拖拽时对兄弟节点的
- * left/center/right × top/middle/bottom 候选线做阈值吸附；多选拖拽不吸附。 */
+/** plan 475 Phase 2 + plan 526 Phase 3：拖拽对齐辅助线——单节点拖拽与多选簇拖拽
+ * （selection-rect 路径）统一经 RF position change 流做 left/center/right ×
+ * top/middle/bottom 候选线阈值吸附；多选簇以首个变化节点为参考轴、整簇平移。 */
 export const ALIGNMENT_THRESHOLD = 6;
 
 export interface AlignmentRect {
@@ -102,10 +103,20 @@ export interface UseAlignmentGuidesParams {
   applyPosition(id: string, position: { x: number; y: number }): void;
 }
 
+interface DraggingPositionChange {
+  id: string;
+  dragging?: boolean;
+  position?: { x: number; y: number };
+}
+
 export interface UseAlignmentGuidesResult {
   guides: AlignmentGuidesState;
-  onNodeDrag(event: unknown, node: Node, draggedNodes?: Node[]): void;
-  onNodeDragStop(): void;
+  /** 拖拽位置变化入口——单节点拖拽（XYDrag→onNodesChange）与多选簇拖拽
+   *（NodesSelection selection-rect 拖拽）统一走 RF 的 position change 流；
+   * selection-rect 路径不触发 onNodeDrag 回调，故对齐吸附必须挂 changes。
+   * dragging:false（拖放提交/键盘 nudge）到达时清除参考线。 */
+  handlePositionChanges(changes: DraggingPositionChange[]): void;
+  clearGuides(): void;
 }
 
 export function useAlignmentGuides({
@@ -123,7 +134,7 @@ export function useAlignmentGuides({
     applyPositionRef.current = applyPosition;
   });
 
-  const onNodeDragStop = useCallback(() => {
+  const clearGuides = useCallback(() => {
     setGuides((current) =>
       current.vertical === null && current.horizontal === null
         ? current
@@ -131,39 +142,60 @@ export function useAlignmentGuides({
     );
   }, []);
 
-  const onNodeDrag = useCallback((_event: unknown, node: Node, draggedNodes?: Node[]) => {
-    // 最小实现：仅单节点拖拽吸附；多选簇吸附需要平移整簇，超出本计划面。
-    if (draggedNodes && draggedNodes.length > 1) {
-      setGuides((current) =>
-        current.vertical === null && current.horizontal === null
-          ? current
-          : { vertical: null, horizontal: null },
+  const handlePositionChanges = useCallback(
+    (changes: DraggingPositionChange[]) => {
+      const draggingChanges = changes.filter(
+        (change) => change.dragging === true && change.position !== undefined,
       );
-      return;
-    }
+      if (draggingChanges.length === 0) {
+        clearGuides();
+        return;
+      }
 
-    const all = getNodesRef.current();
-    const dragged = rectOf(node);
-    const siblings = all
-      .filter((candidate) => candidate.id !== node.id)
-      .map((candidate) => rectOf(candidate));
+      // 多选簇吸附（plan 526 Phase 3）：以首个变化节点为参考轴计算吸附位移，
+      // 整簇平移保持相对位移；兄弟候选排除整个拖拽簇（而非仅参考节点）。
+      const clusterIds = new Set(draggingChanges.map((change) => change.id));
+      const all = getNodesRef.current();
+      const reference = draggingChanges[0];
+      const referenceNode = all.find((node) => node.id === reference.id);
+      if (!referenceNode || !reference.position) {
+        return;
+      }
+      const dragged: AlignmentRect = {
+        x: reference.position.x,
+        y: reference.position.y,
+        width: referenceNode.measured?.width ?? referenceNode.width ?? 0,
+        height: referenceNode.measured?.height ?? referenceNode.height ?? 0,
+      };
+      const siblings = all
+        .filter((candidate) => !clusterIds.has(candidate.id))
+        .map((candidate) => rectOf(candidate));
 
-    const result = computeAlignmentGuides(dragged, siblings);
+      const result = computeAlignmentGuides(dragged, siblings);
 
-    // 值未变不换引用：guides 每帧新对象会连带重渲染整个画布子树。
-    setGuides((current) =>
-      current.vertical === result.vertical && current.horizontal === result.horizontal
-        ? current
-        : { vertical: result.vertical, horizontal: result.horizontal },
-    );
+      // 值未变不换引用：guides 每帧新对象会连带重渲染整个画布子树。
+      setGuides((current) =>
+        current.vertical === result.vertical && current.horizontal === result.horizontal
+          ? current
+          : { vertical: result.vertical, horizontal: result.horizontal },
+      );
 
-    if (result.dx !== 0 || result.dy !== 0) {
-      applyPositionRef.current(node.id, {
-        x: node.position.x + result.dx,
-        y: node.position.y + result.dy,
-      });
-    }
-  }, []);
+      if (result.dx !== 0 || result.dy !== 0) {
+        for (const change of draggingChanges) {
+          applyPositionRef.current(change.id, {
+            x: change.position!.x + result.dx,
+            y: change.position!.y + result.dy,
+          });
+        }
+      }
+    },
+    [clearGuides],
+  );
 
-  return { guides, onNodeDrag, onNodeDragStop };
+  // 结果对象身份必须稳定：调用方（designer-xyflow-canvas）把它放进 handleNodesChange
+  // 的 useCallback 依赖，身份抖动会连锁翻转 RF props（minimap-pan 回归的根因）。
+  return useMemo(
+    () => ({ guides, handlePositionChanges, clearGuides }),
+    [guides, handlePositionChanges, clearGuides],
+  );
 }

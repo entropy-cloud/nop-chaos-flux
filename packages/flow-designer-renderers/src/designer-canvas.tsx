@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { t } from '@nop-chaos/flux-i18n';
 import { renderDesignerCanvasBridge } from './canvas-bridge.js';
 import { registerDesignerCanvasFocusHandler } from './designer-canvas-focus.js';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
@@ -11,6 +12,11 @@ import {
   resolveNodeTypeMeta,
   shouldIncludeInTreeAddMenu,
 } from './designer-node-appearance.js';
+import {
+  DesignerContextMenu,
+  type DesignerContextMenuItem,
+  type DesignerContextMenuState,
+} from './designer-xyflow-canvas/designer-context-menu.js';
 
 const plusButtonHandlers = new WeakMap<
   object,
@@ -104,12 +110,18 @@ export function DesignerCanvasContent(props: {
   const [pendingConnectionSourcePortId, setPendingConnectionSourcePortId] = useState<string | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<string | null>(null);
   const [popover, setPopover] = useState<PopoverState | null>(null);
+  const [contextMenu, setContextMenu] = useState<DesignerContextMenuState | null>(null);
+  // fitView 实例经 onReactFlowReady 存 state（React Compiler refs 规则禁止渲染期读 ref）
+  const [reactFlowApi, setReactFlowApi] = useState<{
+    fitView(options?: { padding?: number; duration?: number; maxZoom?: number }): void | Promise<boolean>;
+  } | null>(null);
 
   const handlePaneClick = useCallback(() => {
     setPendingConnectionSourceId(null);
     setPendingConnectionSourcePortId(null);
     setReconnectingEdgeId(null);
     setPopover(null);
+    setContextMenu(null);
     dispatch({ type: 'clearSelection' });
   }, [dispatch]);
 
@@ -231,6 +243,81 @@ export function DesignerCanvasContent(props: {
     },
     [dispatch],
   );
+
+  // plan 526 Phase 4：右键上下文菜单项——节点菜单（选中/复制副本/删除）与空白菜单
+  // （全选/粘贴/适应画布）。readOnly 只保留只读项；tree 模式节点复制走树自有命令，
+  // 菜单隐藏复制项（与 shortcuts 的 duplicate 豁免一致）。
+  const contextMenuItems = useMemo<DesignerContextMenuItem[]>(() => {
+    if (!contextMenu) {
+      return [];
+    }
+    const readOnly = snapshot.readonly === true;
+    if (contextMenu.nodeId) {
+      const nodeId = contextMenu.nodeId;
+      const items: DesignerContextMenuItem[] = [
+        {
+          key: 'select',
+          label: t('flux.flowDesigner.selectNode'),
+          icon: 'mouse-pointer-2',
+          testid: 'designer-context-select-node',
+          onSelect: () => dispatch({ type: 'selectNode', nodeId }),
+        },
+      ];
+      if (!readOnly && config.documentMode !== 'tree') {
+        items.push({
+          key: 'duplicate',
+          label: t('flux.flowDesigner.duplicateNode'),
+          icon: 'copy',
+          testid: 'designer-context-duplicate-node',
+          onSelect: () => handleDuplicateNode(nodeId),
+        });
+      }
+      if (!readOnly) {
+        items.push({
+          key: 'delete',
+          label: t('flux.flowDesigner.deleteNode'),
+          icon: 'trash-2',
+          destructive: true,
+          testid: 'designer-context-delete-node',
+          onSelect: () => handleDeleteNode(nodeId),
+        });
+      }
+      return items;
+    }
+    const items: DesignerContextMenuItem[] = [
+      {
+        key: 'select-all',
+        label: t('flux.flowDesigner.selectAll'),
+        icon: 'box-select',
+        testid: 'designer-context-select-all',
+        onSelect: () => dispatch({ type: 'selectAll' }),
+      },
+    ];
+    if (!readOnly) {
+      items.push({
+        key: 'paste',
+        label: t('flux.flowDesigner.pasteClipboard'),
+        icon: 'clipboard-paste',
+        testid: 'designer-context-paste',
+        onSelect: () => dispatch({ type: 'pasteClipboard' }),
+      });
+    }
+    if (reactFlowApi) {
+      items.push({
+        key: 'fit-view',
+        label: t('flux.flowDesigner.fitView'),
+        icon: 'maximize',
+        testid: 'designer-context-fit-view',
+        onSelect: () => {
+          const fitted = reactFlowApi.fitView({ padding: 0.15, duration: 400 });
+          if (fitted && typeof fitted.catch === 'function') {
+            fitted.catch(() => undefined);
+          }
+        },
+      });
+    }
+    return items;
+  }, [contextMenu, reactFlowApi, snapshot.readonly, config.documentMode, dispatch, handleDeleteNode, handleDuplicateNode]);
 
   const handleDeleteEdge = useCallback(
     (edgeId: string) => {
@@ -421,6 +508,15 @@ export function DesignerCanvasContent(props: {
     showMinimap: config.features?.minimap !== false,
     showControls: config.features?.controls !== false,
     onPlusButtonClick: config.documentMode === 'tree' ? handlePlusButtonClick : undefined,
+    onNodeContextMenu: (nodeId, event) => {
+      event.preventDefault();
+      setContextMenu({ x: event.clientX, y: event.clientY, nodeId });
+    },
+    onPaneContextMenu: (event) => {
+      event.preventDefault();
+      setContextMenu({ x: event.clientX, y: event.clientY });
+    },
+    onReactFlowReady: setReactFlowApi,
   });
 
   return (
@@ -441,6 +537,13 @@ export function DesignerCanvasContent(props: {
           items={menuItems}
           onSelect={handleMenuSelect}
           onClose={() => setPopover(null)}
+        />
+      )}
+      {contextMenu && contextMenuItems.length > 0 && (
+        <DesignerContextMenu
+          menu={contextMenu}
+          items={contextMenuItems}
+          onClose={() => setContextMenu(null)}
         />
       )}
     </div>

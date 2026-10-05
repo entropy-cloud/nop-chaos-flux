@@ -93,6 +93,11 @@ export function useDesignerShortcuts(args: {
         dispatch({ type: 'deleteSelection' });
         return;
       }
+      // plan 526 Phase 3【执行期勘误】：方向键微调采用 xyflow 12.10 原生能力——
+      // NodeWrapper/NodesSelection 的 onKeyDown 对选中节点按 snapGrid（snapToGrid 开启时）
+      // 或 5px（关闭时）步进、Shift ×4，位置经 dragging:false change 落到本仓库
+      // use-xyflow-interactions 的 moveNode 提交链（可撤销，与拖拽同路）。
+      // 此前自实现的 1px nudge 与原生处理叠加造成一步双移，已移除（见 plan Deferred）。
       if (matchesShortcut(event, shortcuts.save)) {
         event.preventDefault();
         dispatch({ type: 'save' });

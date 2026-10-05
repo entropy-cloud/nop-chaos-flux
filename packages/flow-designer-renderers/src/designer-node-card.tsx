@@ -106,7 +106,10 @@ export function DesignerNodeCardRenderer(props: DesignerNodeCardRendererProps) {
         </span>
       </span>
       {summary.active ? (
-        <span className="nop-designer-node-card__state text-xs font-medium text-primary">●</span>
+        <span
+          className="nop-designer-node-card__state inline-block h-2 w-2 shrink-0 rounded-full bg-primary"
+          aria-hidden="true"
+        />
       ) : null}
     </button>
   );

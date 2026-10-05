@@ -40,6 +40,11 @@
   --fd-success-bg: rgba(255, 255, 255, 0.78);
   --fd-success-text: #67c23a;
   --fd-alignment-guide: rgba(59, 130, 246, 0.85);
+  /* plan 526 Phase 1：节点选中态（ring+shadow 业界公式）与连接合法性反馈令牌 */
+  --fd-node-selected-ring: hsl(var(--primary));
+  --fd-node-selected-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+  --fd-connection-valid: #22a06b;
+  --fd-connection-invalid: #e5484d;
 
   /* 节点身份色（dingtalk demo parity，light 值与 e2e hex 合同一致）。
    * 身份色不随模式翻转；暗色块不重声明。dt-* 与同义通用键色值不同，逐键独立。 */
@@ -85,6 +90,9 @@
   --fd-edge-stroke: #475569;
   --fd-success-bg: rgba(15, 23, 42, 0.6);
   --fd-alignment-guide: rgba(96, 165, 250, 0.9);
+  --fd-node-selected-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --fd-connection-valid: #3dd68c;
+  --fd-connection-invalid: #ff6369;
 
   /* --xy-* 库变量 dark 最小集：Controls、框选、选中连线、连接点。 */
   --xy-controls-button-background-color: rgba(15, 23, 42, 0.85);
@@ -160,6 +168,53 @@
   background: var(--fd-alignment-guide);
   pointer-events: none;
   z-index: 1000;
+}
+
+/* plan 526 Phase 1：节点选中态（ring+shadow 业界公式）与 hover 提亮——xyflow 内建
+ * --xy-node-boxshadow-selected 仅被内建节点类型选择器（.react-flow__node-input/...）
+ * 消费，自定义 designerNode wrapper 不匹配，需此显式规则。 */
+.nop-designer .react-flow__node-designerNode {
+  transition: box-shadow 120ms ease;
+}
+
+.nop-designer .react-flow__node-designerNode:hover {
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--fd-node-selected-ring, hsl(var(--primary))) 45%, transparent);
+}
+
+.nop-designer .react-flow__node-designerNode.selected {
+  box-shadow:
+    0 0 0 2px var(--fd-node-selected-ring, hsl(var(--primary))),
+    var(--fd-node-selected-shadow, 0 10px 30px rgba(15, 23, 42, 0.16));
+}
+
+/* plan 526 Phase 1：连接合法性即时反馈（Flowise 模式）——xyflow v12 连接期在悬停目标
+ * handle 上输出 connectingto（拖线悬停中）与 valid（合法）DOM 类（默认样式表不渲染
+ * 该二类，但类名真实存在）；valid 缺席即非法目标。background/border 的 !important
+ * 用于压过 handle 的 tailwind !bg-primary/!border-white。 */
+.nop-designer .react-flow__handle {
+  /* 执行期勘误修复（in-scope 连接便捷性缺陷）：节点卡片（nop-glass-card，backdrop-filter
+   * 层叠上下文）在命中测试中覆盖 handle 的内半侧，导致鼠标拖线自 handle 起步必被卡片
+   * 截获（键盘连线通道即为此而生）。提升 handle 层级恢复完整可点面。 */
+  z-index: 10;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.nop-designer .react-flow__handle.connectingto.valid {
+  cursor: crosshair;
+  background: var(--fd-connection-valid, #22a06b) !important;
+  border-color: var(--fd-connection-valid, #22a06b) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--fd-connection-valid, #22a06b) 25%, transparent);
+}
+
+.nop-designer .react-flow__handle.connectingto:not(.valid) {
+  cursor: not-allowed;
+  background: var(--fd-connection-invalid, #e5484d) !important;
+  border-color: var(--fd-connection-invalid, #e5484d) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--fd-connection-invalid, #e5484d) 22%, transparent);
 }
 
 .fd-branch-label {

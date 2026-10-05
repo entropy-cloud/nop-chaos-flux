@@ -81,6 +81,13 @@ export interface DesignerXyflowCanvasProps {
   onViewportPersist?(viewport: { x: number; y: number; zoom: number }): void;
   onNodeDoubleClick?(nodeId: string, event?: React.MouseEvent): void;
   onEdgeDoubleClick?(edgeId: string, event?: React.MouseEvent): void;
+  // xyflow v12 的 contextmenu 回调事件是 React.MouseEvent | MouseEvent 联合，
+  // 消费方只需要 preventDefault 与 client 坐标，用结构化类型收敛。
+  onNodeContextMenu?(nodeId: string, event: { clientX: number; clientY: number; preventDefault(): void }): void;
+  onPaneContextMenu?(event: { clientX: number; clientY: number; preventDefault(): void }): void;
+  onReactFlowReady?(instance: {
+    fitView(options?: { padding?: number; duration?: number; maxZoom?: number }): void | Promise<boolean>;
+  }): void;
   onDrop?(nodeTypeId: string, position: { x: number; y: number }): void;
   documentMode?: 'graph' | 'tree';
   onPlusButtonClick?: (
@@ -278,12 +285,31 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     onViewportChange,
   });
 
+  // plan 475 Phase 2 + plan 526 Phase 3：拖拽对齐辅助线——吸附位置经 position change
+  // （dragging 中）回写本地节点层，不触发 moveNode 提交；网格吸附共存时对齐线优先
+  // （对齐后位置覆盖网格舍入）。单节点拖拽与多选簇拖拽（selection-rect，不触发
+  // onNodeDrag）统一经 handleNodesChange 的 position change 流计算吸附。
+  // alignment 结果对象身份由 hook 内 useMemo 稳定：否则 handleNodesChange 每渲染换新，
+  // RF props 抖动会打断 minimap 导航的 mousedown/mouseup 绑定（minimap-pan 回归根因）。
+  const alignment = useAlignmentGuides({
+    getNodes: () => localNodes,
+    applyPosition: (id, position) =>
+      onNodesChangeInternal([{ id, type: 'position', position, dragging: true }]),
+  });
+
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
       interactions.handleNodesChange(changes);
       rfSelectionBridge.applyToggles(collectSelectToggles(changes), 'nodes');
+      alignment.handlePositionChanges(
+        changes.flatMap((change) =>
+          change.type === 'position'
+            ? [{ id: change.id, position: change.position, dragging: change.dragging }]
+            : [],
+        ),
+      );
     },
-    [interactions, rfSelectionBridge],
+    [interactions, rfSelectionBridge, alignment],
   );
   const handleEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
@@ -293,14 +319,6 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     [interactions, rfSelectionBridge],
   );
   const { handleViewportChange, handleConnect, handleReconnect } = interactions;
-
-  // plan 475 Phase 2：拖拽对齐辅助线——吸附位置经 position change（dragging 中）回写
-  // 本地节点层，不触发 moveNode 提交；网格吸附共存时对齐线优先（对齐后位置覆盖网格舍入）。
-  const alignment = useAlignmentGuides({
-    getNodes: () => localNodes,
-    applyPosition: (id, position) =>
-      onNodesChangeInternal([{ id, type: 'position', position, dragging: true }]),
-  });
   const portConnectionA11yValue = useMemo(
     () => ({
       pendingConnectionSourceId,
@@ -352,6 +370,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           edgeTypes={xyflowEdgeTypes}
           onInit={(instance) => {
             setReactFlowInstance(instance);
+            props.onReactFlowReady?.(instance);
             // ux-r12 tft6：异步自动布局（ELK）在 init 后才落位，初始 fitView
             // 按布局前的散布边界算 zoom 导致节点文字不可读（实测 ~0.5x）。
             // 落位后一次性重适配，maxZoom 钳制可读下限；只此一次，不与用户
@@ -400,8 +419,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           deleteKeyCode={null}
           onNodesChange={handleNodesChange}
           onEdgesChange={handleEdgesChange}
-          onNodeDrag={alignment.onNodeDrag}
-          onNodeDragStop={alignment.onNodeDragStop}
+          onNodeDragStop={alignment.clearGuides}
           onNodeClick={(event, node) => {
             if (!isTreeMode && multiSelectEnabled && (event.ctrlKey || event.metaKey || event.shiftKey)) return;
             props.onNodeSelect(node.id, undefined);
@@ -427,6 +445,12 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
           }}
           onEdgeDoubleClick={(_event, edge) => {
             props.onEdgeDoubleClick?.(edge.id, undefined);
+          }}
+          onNodeContextMenu={(event, node) => {
+            props.onNodeContextMenu?.(node.id, event);
+          }}
+          onPaneContextMenu={(event) => {
+            props.onPaneContextMenu?.(event);
           }}
           onDrop={(event) => {
             event.preventDefault();

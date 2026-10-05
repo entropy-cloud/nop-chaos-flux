@@ -1,11 +1,19 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import type { NodeTypeConfig } from '@nop-chaos/flow-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
 import { DesignerIcon } from './designer-icon.js';
 import { DESIGNER_PALETTE_NODE_MIME } from './canvas-bridge.js';
 import { setPaletteDragType } from './designer-xyflow-canvas/designer-xyflow-canvas.js';
-import { Button, Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
+import { filterPaletteGroups } from './designer-palette-filter.js';
+import {
+  Button,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Input,
+  cn,
+} from '@nop-chaos/ui';
 import { resolveNodeTypeAccent } from './designer-node-appearance.js';
 
 const DEFAULT_INSERT_POSITION = { x: 180, y: 120 };
@@ -29,10 +37,19 @@ export function DesignerPaletteContent(props: {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     new Set(['basic', 'logic', 'execution']),
   );
+  const [searchQuery, setSearchQuery] = useState('');
 
   const nodeTypes = config.nodeTypes;
-  const nodeTypesById = new Map(nodeTypes.map((nodeType) => [nodeType.id, nodeType] as const));
-  const paletteGroups = config.palette?.groups ?? [];
+  const nodeTypesById = useMemo(
+    () => new Map(nodeTypes.map((nodeType) => [nodeType.id, nodeType] as const)),
+    [nodeTypes],
+  );
+  const isFiltering = searchQuery.trim().length > 0;
+  const filteredGroups = useMemo(
+    () => filterPaletteGroups(config.palette?.groups ?? [], nodeTypesById, searchQuery),
+    [config.palette?.groups, nodeTypesById, searchQuery],
+  );
+  const totalMatches = filteredGroups.reduce((count, group) => count + group.nodeTypes.length, 0);
 
   const toggleGroup = useCallback((groupId: string) => {
     setExpandedGroups((prev) => {
@@ -63,8 +80,6 @@ export function DesignerPaletteContent(props: {
     [activeNode, dispatch, openCreateDialog],
   );
 
-  const filteredGroups = paletteGroups.filter((g) => g.nodeTypes.length > 0);
-
   return (
     <div
       className={cn('nop-palette h-full text-foreground', props.rootProps?.className)}
@@ -91,11 +106,34 @@ export function DesignerPaletteContent(props: {
           </Button>
         </div>
       </div>
+      <div className="border-b border-border px-4 py-2">
+        <Input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder={t('flux.flowDesigner.paletteSearchPlaceholder')}
+          aria-label={t('flux.flowDesigner.paletteSearchLabel')}
+          data-testid="designer-palette-search"
+          className="h-8 text-sm"
+        />
+      </div>
       <div className="flex-1 min-h-0 overflow-y-auto p-3">
+        {isFiltering && totalMatches === 0 && (
+          <div
+            data-testid="designer-palette-empty"
+            className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border p-6 text-center"
+          >
+            <span className="text-sm text-muted-foreground">
+              {t('flux.flowDesigner.paletteNoMatch', { query: searchQuery.trim() })}
+            </span>
+            <Button type="button" variant="outline" size="sm" onClick={() => setSearchQuery('')}>
+              {t('flux.flowDesigner.paletteClearSearch')}
+            </Button>
+          </div>
+        )}
         {filteredGroups.map((group) => (
           <Collapsible
             key={group.id}
-            open={expandedGroups.has(group.id)}
+            open={isFiltering ? true : expandedGroups.has(group.id)}
             onOpenChange={() => toggleGroup(group.id)}
           >
             <div className="fd-panel-card rounded-lg border border-border p-2.5 mb-3 last:mb-0">
@@ -109,9 +147,11 @@ export function DesignerPaletteContent(props: {
                   />
                 }
               >
-                <span className="text-[10px] text-muted-foreground">
-                  {expandedGroups.has(group.id) ? '▼' : '▶'}
-                </span>
+                <DesignerIcon
+                  icon={isFiltering || expandedGroups.has(group.id) ? 'chevron-down' : 'chevron-right'}
+                  size={12}
+                  className="text-muted-foreground"
+                />
                 <span>{group.label}</span>
               </CollapsibleTrigger>
               <CollapsibleContent>

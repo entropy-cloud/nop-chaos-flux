@@ -48,50 +48,110 @@ describe('computeAlignmentGuides', () => {
     expect(result.dy).toBe(4);
   });
 });
+
 describe('useAlignmentGuides state identity', () => {
   function node(id: string, x: number, y: number): Node {
     return { id, position: { x, y }, data: {} } as unknown as Node;
   }
 
+  function change(id: string, x: number, y: number) {
+    return { id, dragging: true as const, position: { x, y } };
+  }
+
   it('keeps the guides state reference when the aligned value is unchanged', () => {
-    const nodes = [node('sibling', 100, 400)];
+    const nodes = [node('sibling', 100, 400), node('drag', 100, 200)];
     const { result } = renderHook(() =>
       useAlignmentGuides({ getNodes: () => nodes, applyPosition: () => undefined }),
     );
-    const dragNode = node('drag', 100, 200);
 
     act(() => {
-      result.current.onNodeDrag({}, dragNode, [dragNode]);
+      result.current.handlePositionChanges([change('drag', 100, 200)]);
     });
     const first = result.current.guides;
     expect(first.vertical).toBe(100);
 
     act(() => {
-      result.current.onNodeDrag({}, dragNode, [dragNode]);
+      result.current.handlePositionChanges([change('drag', 100, 200)]);
     });
 
     expect(result.current.guides).toBe(first);
   });
 
   it('keeps the null guides reference across repeated drag stops with no active guides', () => {
-    const nodes = [node('sibling', 400, 400)];
+    const nodes = [node('sibling', 400, 400), node('drag', 100, 200)];
     const { result } = renderHook(() =>
       useAlignmentGuides({ getNodes: () => nodes, applyPosition: () => undefined }),
     );
-    const dragNode = node('drag', 100, 200);
 
     act(() => {
-      result.current.onNodeDrag({}, dragNode, [dragNode]);
+      result.current.handlePositionChanges([change('drag', 100, 200)]);
     });
     act(() => {
-      result.current.onNodeDragStop();
+      result.current.clearGuides();
     });
     const cleared = result.current.guides;
     expect(cleared.vertical).toBeNull();
 
     act(() => {
-      result.current.onNodeDragStop();
+      result.current.clearGuides();
     });
     expect(result.current.guides).toBe(cleared);
+  });
+
+  it('clears guides when a dragging:false position change arrives', () => {
+    const nodes = [node('sibling', 100, 400), node('drag', 100, 200)];
+    const { result } = renderHook(() =>
+      useAlignmentGuides({ getNodes: () => nodes, applyPosition: () => undefined }),
+    );
+
+    act(() => {
+      result.current.handlePositionChanges([change('drag', 100, 200)]);
+    });
+    expect(result.current.guides.vertical).toBe(100);
+
+    act(() => {
+      // 拖放提交：dragging:false 且带位置——应清线而非继续吸附
+      result.current.handlePositionChanges([
+        { id: 'drag', dragging: false, position: { x: 100, y: 400 } },
+      ]);
+    });
+    expect(result.current.guides.vertical).toBeNull();
+  });
+
+  // plan 526 Phase 3：多选簇吸附——以首个变化节点为参考轴，整簇平移保持相对位移。
+  it('snaps the dragged cluster as a whole keeping relative offsets', () => {
+    const positions = new Map<string, { x: number; y: number }>();
+    const applyPosition = (id: string, position: { x: number; y: number }) => {
+      positions.set(id, position);
+    };
+    const nodes = [node('sibling', 103, 400), node('a', 100, 200), node('b', 150, 210)];
+    const { result } = renderHook(() =>
+      useAlignmentGuides({ getNodes: () => nodes, applyPosition }),
+    );
+
+    act(() => {
+      result.current.handlePositionChanges([change('a', 100, 200), change('b', 150, 210)]);
+    });
+
+    // 参考 a 左缘 100→103 吸附（dx=3），整簇同步平移
+    expect(result.current.guides.vertical).toBe(103);
+    expect(positions.get('a')).toEqual({ x: 103, y: 200 });
+    expect(positions.get('b')).toEqual({ x: 153, y: 210 });
+    expect(positions.has('sibling')).toBe(false);
+  });
+
+  it('excludes every cluster member from sibling candidates while cluster-dragging', () => {
+    // b 与 a 相对位置固定：若 b 未被排除出兄弟候选，a 会被吸到 b 的边上产生簇内抖动
+    const nodes = [node('a', 100, 200), node('b', 100, 210)];
+    const { result } = renderHook(() =>
+      useAlignmentGuides({ getNodes: () => nodes, applyPosition: () => undefined }),
+    );
+
+    act(() => {
+      result.current.handlePositionChanges([change('a', 100, 200), change('b', 100, 210)]);
+    });
+
+    expect(result.current.guides.vertical).toBeNull();
+    expect(result.current.guides.horizontal).toBeNull();
   });
 });
