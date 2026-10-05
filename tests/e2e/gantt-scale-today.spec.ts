@@ -1,6 +1,19 @@
 import { test, expect, assertTrackedPageErrors } from './fixtures.js';
 
 const ROUTE = '/#/gantt';
+
+// gantt-demo 日期自 ux-r8 起相对"今天"动态生成；断言一律运行时推导，禁止写死日历日期。
+function demoIso(offsetDays: number): string {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offsetDays);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+const currentMonthLabel = (() => {
+  const now = new Date();
+  return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+})();
 const HEADING = /Gantt Chart Demo/i;
 
 async function openGantt(page: import('@playwright/test').Page) {
@@ -36,7 +49,7 @@ test.describe('Gantt — time scale, zoom labels, today marker & aria-live', () 
     // toward the finest (day) granularity.
     await toolbarButton(page, 0).click();
     const labels = async () => (await scaleLabels(page)).join(' ');
-    await expect.poll(labels, { timeout: 5_000 }).toMatch(/2026\/0[67]/);
+    await expect.poll(labels, { timeout: 5_000 }).toContain(currentMonthLabel);
     const joined = await labels();
     expect(joined).toMatch(/\b(0[1-9]|[12][0-9]|3[01])\b/);
     await assertTrackedPageErrors(page);
@@ -46,7 +59,9 @@ test.describe('Gantt — time scale, zoom labels, today marker & aria-live', () 
     await openGantt(page);
     // The + button moves toward the coarsest (month) granularity.
     await toolbarButton(page, 1).click();
-    await expect.poll(async () => (await scaleLabels(page)).join(' '), { timeout: 5_000 }).toMatch(/2026\/0[67]/);
+    await expect
+      .poll(async () => (await scaleLabels(page)).join(' '), { timeout: 5_000 })
+      .toContain(currentMonthLabel);
     const joined = await scaleLabels(page).then((l) => l.join(' '));
     expect(joined).toContain('2026');
     await expect
@@ -64,15 +79,36 @@ test.describe('Gantt — time scale, zoom labels, today marker & aria-live', () 
   });
 
   test('Today button scrolls the timeline to the today marker', async ({ page }) => {
+    // 契约口径：点击 Today 后"今日标记进入可视区"（ux-r8 起 demo 范围从今天开始，
+    // 宽视口下今日天然可见、无滚动可言；窄视口下先拨到最右再验证滚回）。
+    await page.setViewportSize({ width: 720, height: 800 });
     await openGantt(page);
     const timeline = page.locator('[data-slot="gantt-scale"]').locator('..');
+    const todayLeft = await page
+      .locator('[data-slot="gantt-today"]')
+      .evaluate((el) => parseFloat(el.style.left));
+    expect(todayLeft).not.toBeNaN();
+    await timeline.evaluate((el) => {
+      el.scrollLeft = el.scrollWidth;
+    });
     const before = await timeline.evaluate((el) => el.scrollLeft);
+    expect(before).toBeGreaterThan(0);
     await toolbarButton(page, 3).click();
     await expect
-      .poll(async () => timeline.evaluate((el) => el.scrollLeft), { timeout: 5_000 })
-      .not.toBe(before);
-    const after = await timeline.evaluate((el) => el.scrollLeft);
-    expect(after).toBeGreaterThan(0);
+      .poll(
+        async () =>
+          page.evaluate(
+            ({ todayLeft }) => {
+              const el = document.querySelector('[data-slot="gantt-scale"]')!.parentElement!;
+              return el.scrollLeft <= todayLeft && todayLeft <= el.scrollLeft + el.clientWidth
+                ? 'visible'
+                : 'off';
+            },
+            { todayLeft },
+          ),
+        { timeout: 5_000 },
+      )
+      .toBe('visible');
     await assertTrackedPageErrors(page);
   });
 
@@ -96,7 +132,10 @@ test.describe('Gantt — time scale, zoom labels, today marker & aria-live', () 
     await openGantt(page);
     await toolbarButton(page, 0).click();
     await expect
-      .poll(async () => page.locator('[data-slot="gantt-cell-grid"] [data-weekend="true"]').count(), { timeout: 5_000 })
+      .poll(
+        async () => page.locator('[data-slot="gantt-cell-grid"] [data-weekend="true"]').count(),
+        { timeout: 5_000 },
+      )
       .toBeGreaterThanOrEqual(2);
     const cellGrid = page.locator('[data-slot="gantt-cell-grid"]');
     await expect(cellGrid).toBeVisible();
@@ -108,7 +147,9 @@ test.describe('Gantt — time scale, zoom labels, today marker & aria-live', () 
     const live = page.locator('[data-slot="gantt-visible-count-announcement"]');
     const before = (await live.textContent()) ?? '';
     expect(before).toMatch(/14/);
-    await page.locator('[data-slot="gantt-grid-row"][data-task-id="1"] button[aria-expanded]').click();
+    await page
+      .locator('[data-slot="gantt-grid-row"][data-task-id="1"] button[aria-expanded]')
+      .click();
     await expect
       .poll(async () => (await live.textContent()) ?? '', { timeout: 5_000 })
       .not.toBe(before);
@@ -132,8 +173,8 @@ test.describe('Gantt — time scale, zoom labels, today marker & aria-live', () 
     const cells = row.locator('[data-slot="gantt-grid-cell"]');
     await expect(cells).toHaveCount(5);
     await expect(cells.nth(0)).toContainText('Requirements');
-    await expect(cells.nth(1)).toContainText('2026-07-01');
-    await expect(cells.nth(2)).toContainText('2026-07-10');
+    await expect(cells.nth(1)).toContainText(demoIso(0));
+    await expect(cells.nth(2)).toContainText(demoIso(9));
     await expect(cells.nth(3)).toContainText(/^\s*9\s*$/);
     const row3 = page.locator('[data-slot="gantt-grid-row"][data-task-id="3"]');
     const cells3 = row3.locator('[data-slot="gantt-grid-cell"]');
@@ -141,7 +182,9 @@ test.describe('Gantt — time scale, zoom labels, today marker & aria-live', () 
     await assertTrackedPageErrors(page);
   });
 
-  test('collapsing every parent leaves only root rows; expanding restores all', async ({ page }) => {
+  test('collapsing every parent leaves only root rows; expanding restores all', async ({
+    page,
+  }) => {
     await openGantt(page);
     const rowCount = () => page.locator('[data-slot="gantt-grid-row"]').count();
     const full = await rowCount();
@@ -155,7 +198,11 @@ test.describe('Gantt — time scale, zoom labels, today marker & aria-live', () 
       const before = await expanded.count();
       await expanded.first().click();
       await expect
-        .poll(async () => page.locator('[data-slot="gantt-grid-row"] button[aria-expanded="true"]').count(), { timeout: 5_000 })
+        .poll(
+          async () =>
+            page.locator('[data-slot="gantt-grid-row"] button[aria-expanded="true"]').count(),
+          { timeout: 5_000 },
+        )
         .toBeLessThan(before);
     }
     await expect.poll(rowCount, { timeout: 5_000 }).toBe(2);

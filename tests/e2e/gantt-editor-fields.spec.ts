@@ -1,5 +1,15 @@
 import { test, expect, assertTrackedPageErrors } from './fixtures.js';
 
+// gantt-demo 任务日期自 ux-r8 起相对"今天"动态生成（iso(0)=今天, iso(9)=今天+9）；
+// 期望值在运行时同构推导，禁止写死日历日期（日期腐烂）。
+function demoIso(offsetDays: number): string {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offsetDays);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
 const ROUTE = '/#/gantt';
 const HEADING = /Gantt Chart Demo/i;
 
@@ -34,7 +44,7 @@ test.describe('Gantt — editor dialog field contract', () => {
     const start = dialog.locator('input[id$="-edit-start"]');
     await expect(start).toBeVisible();
     await expect(start).toHaveAttribute('type', 'date');
-    await expect(start).toHaveValue('2026-07-01');
+    await expect(start).toHaveValue(demoIso(0));
     await assertTrackedPageErrors(page);
   });
 
@@ -43,7 +53,7 @@ test.describe('Gantt — editor dialog field contract', () => {
     const end = dialog.locator('input[id$="-edit-end"]');
     await expect(end).toBeVisible();
     await expect(end).toHaveAttribute('type', 'date');
-    await expect(end).toHaveValue('2026-07-10');
+    await expect(end).toHaveValue(demoIso(9));
     await assertTrackedPageErrors(page);
   });
 
@@ -72,9 +82,12 @@ test.describe('Gantt — editor dialog field contract', () => {
     await dialog.locator('input[id$="-edit-text"]').fill('Edited Via Dialog');
     await dialog.getByRole('button', { name: '保存' }).click();
     await expect(dialog).not.toBeVisible({ timeout: 5_000 });
-    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="2"]')).toContainText('Edited Via Dialog', {
-      timeout: 5_000,
-    });
+    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="2"]')).toContainText(
+      'Edited Via Dialog',
+      {
+        timeout: 5_000,
+      },
+    );
     await assertTrackedPageErrors(page);
   });
 
@@ -83,8 +96,12 @@ test.describe('Gantt — editor dialog field contract', () => {
     await dialog.locator('input[id$="-edit-text"]').fill('Should Not Persist');
     await dialog.getByRole('button', { name: '取消' }).click();
     await expect(dialog).not.toBeVisible({ timeout: 5_000 });
-    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="2"]')).toContainText('Requirements');
-    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="2"]')).not.toContainText('Should Not Persist');
+    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="2"]')).toContainText(
+      'Requirements',
+    );
+    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="2"]')).not.toContainText(
+      'Should Not Persist',
+    );
     await assertTrackedPageErrors(page);
   });
 
@@ -93,7 +110,9 @@ test.describe('Gantt — editor dialog field contract', () => {
     await dialog.locator('input[id$="-edit-text"]').fill('Escaped Edit');
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible({ timeout: 5_000 });
-    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="2"]')).not.toContainText('Escaped Edit');
+    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="2"]')).not.toContainText(
+      'Escaped Edit',
+    );
     await assertTrackedPageErrors(page);
   });
 });

@@ -13,19 +13,26 @@ test.describe('Gantt — splitter & two-way scroll sync', () => {
   test('mouse drag on the splitter widens the grid panel', async ({ page }) => {
     await openGantt(page);
     const splitter = page.locator('[role="separator"]');
-    const before = await splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') ?? '0'));
+    const before = await splitter.evaluate((el) =>
+      parseFloat(el.getAttribute('aria-valuenow') ?? '0'),
+    );
     const box = await splitter.boundingBox();
     expect(box).toBeTruthy();
 
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
     await page.mouse.down();
     for (let i = 1; i <= 6; i++) {
-      await page.mouse.move(box!.x + box!.width / 2 + i * 20, box!.y + box!.height / 2, { steps: 2 });
+      await page.mouse.move(box!.x + box!.width / 2 + i * 20, box!.y + box!.height / 2, {
+        steps: 2,
+      });
     }
     await page.mouse.up();
 
     await expect
-      .poll(async () => splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') ?? '0')), { timeout: 5_000 })
+      .poll(
+        async () => splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') ?? '0')),
+        { timeout: 5_000 },
+      )
       .toBeGreaterThan(before);
     await assertTrackedPageErrors(page);
   });
@@ -34,21 +41,30 @@ test.describe('Gantt — splitter & two-way scroll sync', () => {
     await openGantt(page);
     const splitter = page.locator('[role="separator"]');
     await splitter.focus();
-    const before = await splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') ?? '0'));
+    const before = await splitter.evaluate((el) =>
+      parseFloat(el.getAttribute('aria-valuenow') ?? '0'),
+    );
     await splitter.press('ArrowRight');
     await expect
-      .poll(async () => splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') ?? '0')), { timeout: 5_000 })
+      .poll(
+        async () => splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') ?? '0')),
+        { timeout: 5_000 },
+      )
       .toBe(before + 20);
     await splitter.press('ArrowLeft');
     await expect
-      .poll(async () => splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') ?? '0')), { timeout: 5_000 })
+      .poll(
+        async () => splitter.evaluate((el) => parseFloat(el.getAttribute('aria-valuenow') ?? '0')),
+        { timeout: 5_000 },
+      )
       .toBe(before);
     await assertTrackedPageErrors(page);
   });
 
   test('timeline scroll propagates back to the grid (two-way sync)', async ({ page }) => {
     // A short viewport forces both panes to be scrollable (14 rows exceed it).
-    await page.setViewportSize({ width: 1280, height: 480 });
+    // 行虚拟化 + h-full 布局下 480px 恰好容纳 14 行（无溢出）——用更矮的视口保证前提。
+    await page.setViewportSize({ width: 1280, height: 360 });
     await openGantt(page);
     const containers = await page.evaluate(() => {
       const grid = document.querySelector('[data-slot="gantt-grid"]') as HTMLElement | null;
@@ -56,12 +72,18 @@ test.describe('Gantt — splitter & two-way scroll sync', () => {
       return {
         gridScrollable: grid ? (grid.parentElement as HTMLElement) : null,
         timelineScrollable: scale ? (scale.parentElement as HTMLElement) : null,
-        gridCanScroll: !!grid?.parentElement && grid.parentElement.scrollHeight > grid.parentElement.clientHeight,
-        timelineCanScroll: !!scale?.parentElement && scale.parentElement.scrollHeight > scale.parentElement.clientHeight,
+        gridCanScroll:
+          !!grid?.parentElement &&
+          grid.parentElement.scrollHeight > grid.parentElement.clientHeight,
+        timelineCanScroll:
+          !!scale?.parentElement &&
+          scale.parentElement.scrollHeight > scale.parentElement.clientHeight,
       };
     });
     expect(containers.gridCanScroll, 'grid pane should overflow at 480px height').toBe(true);
-    expect(containers.timelineCanScroll, 'timeline pane should overflow at 480px height').toBe(true);
+    expect(containers.timelineCanScroll, 'timeline pane should overflow at 480px height').toBe(
+      true,
+    );
 
     await page.evaluate(() => {
       const scale = document.querySelector('[data-slot="gantt-scale"]') as HTMLElement | null;
@@ -87,7 +109,9 @@ test.describe('Gantt — splitter & two-way scroll sync', () => {
     await assertTrackedPageErrors(page);
   });
 
-  test('grid rows and timeline bars keep a constant row pitch (alignment invariant)', async ({ page }) => {
+  test('grid rows and timeline bars keep a constant row pitch (alignment invariant)', async ({
+    page,
+  }) => {
     await openGantt(page);
     // The grid header and the time scale have different heights, so a fixed
     // header offset between row N and bar N is expected — the alignment

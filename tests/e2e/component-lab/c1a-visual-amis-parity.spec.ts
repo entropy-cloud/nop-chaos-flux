@@ -74,19 +74,34 @@ test.describe('C1a AMIS visual parity acceptance', () => {
     const fixedCell = table.locator('tbody td[data-fixed="left"]').first();
     const middleCell = firstRow.locator('td[data-fixed="left"] ~ td:not([data-fixed])').first();
 
-    const rowBgBefore = await readComputedStyle(firstRow, ['background-color']);
-    expect(rowBgBefore['background-color']).toBe('rgba(0, 0, 0, 0)');
+    const fixedBgBefore = (await readComputedStyle(fixedCell, ['background-color']))[
+      'background-color'
+    ];
+    // ux-r12e 契约反演：fixed 粘性列必须不透明（透明底会透出下方液态列内容，
+    // .nop-table [data-fixed] 强制 --table-fixed-bg）——旧的"穿透=透明"断言已废。
+    expect(fixedBgBefore).not.toBe('rgba(0, 0, 0, 0)');
 
     await middleCell.hover();
 
     await expect
-      .poll(async () => (await readComputedStyle(firstRow, ['background-color']))['background-color'])
+      .poll(
+        async () => (await readComputedStyle(firstRow, ['background-color']))['background-color'],
+      )
       .not.toBe('rgba(0, 0, 0, 0)');
 
-    const fixedBg = await readComputedStyle(fixedCell, ['background-color']);
-    const middleBg = await readComputedStyle(middleCell, ['background-color']);
-    expect(fixedBg['background-color']).toBe(middleBg['background-color']);
-    expect(fixedBg['background-color']).toBe('rgba(0, 0, 0, 0)');
+    // 悬停稳定性契约：hover 只落在行底色，固定列底色保持不透明且不被 hover 改写，
+    // 中列单元格保持透明（行底色穿透）。
+    await expect
+      .poll(async () => {
+        const fixedBg = (await readComputedStyle(fixedCell, ['background-color']))[
+          'background-color'
+        ];
+        const middleBg = (await readComputedStyle(middleCell, ['background-color']))[
+          'background-color'
+        ];
+        return { fixedBg, middleBg };
+      })
+      .toEqual({ fixedBg: fixedBgBefore, middleBg: 'rgba(0, 0, 0, 0)' });
   });
 
   test('fixed edge shadow markers render with a real ::after box-shadow', async ({ page }) => {
@@ -122,7 +137,9 @@ test.describe('C1a AMIS visual parity acceptance', () => {
     expect(style.height).toBe('32px');
   });
 
-  test('stripe/bordered/fixed-edge CSS rules are loaded in real browser stylesheets', async ({ page }) => {
+  test('stripe/bordered/fixed-edge CSS rules are loaded in real browser stylesheets', async ({
+    page,
+  }) => {
     const lab = await openCrudLab(page);
     await expect(lab.multiScenarioLab).toBeVisible();
 
@@ -190,7 +207,9 @@ test.describe('C1a AMIS visual parity acceptance', () => {
     await waitForDialogWidth(defaultSurface, 560);
   });
 
-  test('dialog top anchoring 60px with +30px stacking step for nested dialogs', async ({ page }) => {
+  test('dialog top anchoring 60px with +30px stacking step for nested dialogs', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('dialog');
     const slug = scenarioSlug('C1a dialog size matrix');
@@ -224,7 +243,9 @@ test.describe('C1a AMIS visual parity acceptance', () => {
     expect(secondBox!.y - firstBox!.y).toBe(30);
   });
 
-  test('dialog overlay is 0.7 opacity, title 14px, footer buttons min-width 72px', async ({ page }) => {
+  test('dialog overlay is 0.7 opacity, title 14px, footer buttons min-width 72px', async ({
+    page,
+  }) => {
     const lab = new ComponentLabHelper(page);
     await lab.openRenderer('dialog');
     const slug = scenarioSlug('Informational dialog');

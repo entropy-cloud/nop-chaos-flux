@@ -52,13 +52,16 @@ test.describe('Cal replica — initial-screen structure', () => {
     }
     await expect(duration.locator('[role="tab"][data-active]')).toContainText('30 分钟');
 
-    // 左栏：月历网格存在（calendar renderer 月视图）+ 今日强调 + 时区选择器 + 12h/24h 开关
+    // 左栏：月历网格存在（calendar renderer monthShape=grid，ux-r12 CP-6 形态：
+    // calendar-grid-cell 六周网格）+ 今日强调 + 时区选择器 + 12h/24h 开关
     const calendar = page.getByTestId('cal-booking-calendar');
     await expect(calendar).toBeVisible();
-    const cells = calendar.locator('[data-slot="calendar-cell"]');
+    const cells = calendar.locator('[data-slot="calendar-grid-cell"]');
     await expect(cells.first()).toBeVisible();
-    expect(await cells.count()).toBeGreaterThanOrEqual(28);
-    await expect(calendar.locator('[data-slot="calendar-cell"][data-today="true"]')).toHaveCount(1);
+    expect(await cells.count()).toBe(42);
+    await expect(
+      calendar.locator('[data-slot="calendar-grid-cell"][data-today="true"]'),
+    ).toHaveCount(1);
     const timezone = page.getByTestId('cal-booking-timezone').first();
     await expect(timezone).toBeVisible();
     await expect(timezone.locator('input').first()).toHaveValue('上海 (GMT+8)');
@@ -84,8 +87,8 @@ test.describe('Cal replica — initial-screen structure', () => {
     await expect(page.getByTestId('cal-booking-slot-attention')).toContainText('名额将满');
     await expect(page.getByTestId('cal-booking-slot-expired-badge')).toContainText('已失效');
 
-    // 骨架屏加载样本静态可见
-    await expect(page.getByTestId('cal-booking-skeleton')).toBeVisible();
+    // 骨架屏门控（ux-r12 CP-6 契约）：visible=${!slots}——槽位加载完成后骨架隐藏
+    await expect(page.getByTestId('cal-booking-skeleton')).toBeHidden();
 
     // 令牌解析证明（Phase 1 @import 生效）：--cal-* 在 .cal-root 子树可解析
     const action = await page.evaluate(() =>
@@ -137,7 +140,9 @@ test.describe('Cal replica — initial-screen structure', () => {
     await expect(page.getByTestId('cal-confirm-form')).toBeVisible();
     await expect(page.getByTestId('cal-confirm-name')).toBeVisible();
     await expect(page.getByTestId('cal-confirm-email')).toBeVisible();
-    await expect(page.getByTestId('cal-confirm-phone').locator('[data-field="phone"]')).toHaveCount(0);
+    await expect(page.getByTestId('cal-confirm-phone').locator('[data-field="phone"]')).toHaveCount(
+      0,
+    );
     expect(
       await page
         .getByTestId('cal-confirm-phone')
@@ -178,7 +183,9 @@ test.describe('Cal replica — initial-screen structure', () => {
     // Confirm 黑按钮（--cal-action 品牌黑令牌抽查）
     const submit = page.getByTestId('cal-confirm-submit');
     await expect(submit).toContainText('确认预约');
-    expect(await submit.evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(/17, 24, 39/);
+    expect(await submit.evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(
+      /17, 24, 39/,
+    );
     await expect(page.getByTestId('cal-confirm-back')).toContainText('返回上一步');
 
     await snap(page, '02-confirm.png');

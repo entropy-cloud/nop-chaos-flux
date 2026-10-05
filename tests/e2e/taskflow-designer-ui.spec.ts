@@ -58,22 +58,38 @@ test('playground entry page renders all nav cards', async ({ page }) => {
     await expect(card).toContainText(eyebrow);
   }
 
+  // plan 502 round-3 起卡片标题在 <button> 内以 <span> 承载（<button> 禁止 h2 子元素），
+  // 标题断言随卡片容器走：data-home-card 内出现精确标题文案。
   const expectedTitles = [
-    'Component Lab',
-    'Flux Basic',
-    'Flow Designer',
-    'TaskFlow Designer',
-    'Mobile Component Showcase',
-    'Report Designer',
-    'Debugger Lab',
-    'Condition Builder',
-    'Code Editor',
-    'Word Editor',
-    'Performance Table',
-  ];
-  for (const title of expectedTitles) {
-    const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    await expect(page.locator('h2').filter({ hasText: new RegExp(`^${escaped}$`) })).toBeVisible({ timeout: 3000 });
+    'component-lab',
+    'flux-basic',
+    'flow-designer',
+    'taskflow-designer',
+    'm5-showcase',
+    'report-designer',
+    'debugger-lab',
+    'condition-builder',
+    'code-editor',
+    'word-editor',
+    'performance-table',
+  ] as const;
+  const expectedTitleCopy: Record<(typeof expectedTitles)[number], string> = {
+    'component-lab': 'Component Lab',
+    'flux-basic': 'Flux Basic',
+    'flow-designer': 'Flow Designer',
+    'taskflow-designer': 'TaskFlow Designer',
+    'm5-showcase': 'Mobile Component Showcase',
+    'report-designer': 'Report Designer',
+    'debugger-lab': 'Debugger Lab',
+    'condition-builder': 'Condition Builder',
+    'code-editor': 'Code Editor',
+    'word-editor': 'Word Editor',
+    'performance-table': 'Performance Table',
+  };
+  for (const cardId of expectedTitles) {
+    await expect(
+      page.locator(`[data-home-card="${cardId}"]`).filter({ hasText: expectedTitleCopy[cardId] }),
+    ).toBeVisible({ timeout: 3000 });
   }
 
   await assertTrackedPageErrors(page);

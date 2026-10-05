@@ -179,7 +179,9 @@ test('op2-kpi-format: ops big-screen KPI readable, seeded, and header productize
   await expect(page.getByTestId('dash-stat-revenue')).toBeVisible({ timeout: 30_000 });
 
   // KPI 千分位
-  await expect(page.getByTestId('dash-stat-revenue')).toContainText(/104,663\.7/);
+  // 种子金额随 ux-r12e 明细勾稽派生（Σ qty×price）更新为 106,995.3；断言既钉
+  // 确定性种子值也锚千分位+一位小数格式契约。
+  await expect(page.getByTestId('dash-stat-revenue')).toContainText(/106,995\.3/);
   // 今日订单种子修复：不再为 0
   const today = await page.getByTestId('dash-stat-today').textContent();
   expect(today ?? '', 'today orders seeded').not.toContain('今日订单0');

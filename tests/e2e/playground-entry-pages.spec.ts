@@ -15,7 +15,9 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 30_000 });
   },
   'taskflow-designer': async (page) => {
-    await expect(page.getByRole('tab', { name: 'TaskFlow (Graph)' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('tab', { name: 'TaskFlow (Graph)' })).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 30_000 });
   },
   'report-designer': async (page) => {
@@ -59,7 +61,9 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     ).toBeVisible();
   },
   'word-editor': async (page) => {
-    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: 'Word Editor' })).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.getByRole('button', { name: '保存' })).toBeVisible();
   },
   'performance-table': async (page) => {
@@ -151,8 +155,12 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       page.getByRole('heading', { name: 'Table 列宽策略宿主 fixture', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
-    await expect(page.getByTestId('width-default-auto').locator('table[data-slot="table"]')).toBeVisible();
-    await expect(page.getByTestId('width-selection-pinned').locator('table[data-slot="table"]')).toBeVisible();
+    await expect(
+      page.getByTestId('width-default-auto').locator('table[data-slot="table"]'),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId('width-selection-pinned').locator('table[data-slot="table"]'),
+    ).toBeVisible();
   },
   'mobile-infrastructure': async (page) => {
     await expect(
@@ -220,16 +228,16 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-testid="m4-chart-root"]')).toBeVisible({ timeout: 15_000 });
   },
   'w1b-content': async (page) => {
-    await expect(
-      page.getByRole('heading', { name: /容器与反馈组/, level: 1 }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /容器与反馈组/, level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
     await expect(page.locator('[data-testid="w1b-renderer-host"]')).toBeVisible();
   },
   'w1a-content': async (page) => {
-    await expect(
-      page.getByRole('heading', { name: /内容展示组/, level: 1 }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /内容展示组/, level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
     await expect(page.locator('[data-testid="w1a-renderer-host"]')).toBeVisible();
   },
@@ -243,9 +251,9 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
   },
   'w2b-date-family': async (page) => {
-    await expect(
-      page.getByRole('heading', { name: /日期族/, level: 1 }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /日期族/, level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole('button', { name: 'Back to Home' })).toBeVisible();
     await expect(page.locator('[data-testid="w2b-renderer-host"]')).toBeVisible();
   },
@@ -325,29 +333,33 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.getByRole('button', { name: /Back/ })).toBeVisible();
   },
   'barcode-input': async (page) => {
-    await expect(page.getByRole('heading', { name: /Barcode Scanner|扫码/i, level: 1 })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { name: /Barcode Scanner|扫码/i, level: 1 }),
+    ).toBeVisible({
       timeout: 30_000,
     });
   },
-  'gantt': async (page) => {
+  gantt: async (page) => {
     await expect(page.getByRole('heading', { name: /Gantt|甘特/i, level: 1 })).toBeVisible({
       timeout: 30_000,
     });
   },
-  'kanban': async (page) => {
+  kanban: async (page) => {
     await expect(page.getByRole('heading', { name: /Kanban|看板/i, level: 1 })).toBeVisible({
       timeout: 30_000,
     });
   },
   'scheduling-calendar': async (page) => {
-    await expect(page.getByRole('heading', { name: /Calendar|日历|Scheduling/i, level: 1 })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { name: /Calendar|日历|Scheduling/i, level: 1 }),
+    ).toBeVisible({
       timeout: 30_000,
     });
   },
   'diff-view': async (page) => {
-    await expect(
-      page.getByRole('heading', { name: /Diff View Demo/i, level: 1 }),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /Diff View Demo/i, level: 1 })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.locator('.nop-diff-view')).toBeVisible();
   },
   'calendar-perf-scale': async (page) => {
@@ -381,7 +393,9 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     });
   },
   'scada-demo': async (page) => {
-    await expect(page.getByRole('heading', { name: /scada-demo 工艺流程组态演示页/i, level: 1 })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { name: /scada-demo 工艺流程组态演示页/i, level: 1 }),
+    ).toBeVisible({
       timeout: 15_000,
     });
   },
@@ -391,17 +405,23 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     ).toBeVisible({ timeout: 15_000 });
   },
   'scada-edge-cases': async (page) => {
-    await expect(page.getByRole('heading', { name: /scada 边界用例测试页/i, level: 1 })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { name: /scada 边界用例测试页/i, level: 1 }),
+    ).toBeVisible({
       timeout: 15_000,
     });
   },
   'scada-perf-scale': async (page) => {
-    await expect(page.getByRole('heading', { name: /scada-perf-scale 性能基准测量页/i, level: 1 })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { name: /scada-perf-scale 性能基准测量页/i, level: 1 }),
+    ).toBeVisible({
       timeout: 30_000,
     });
   },
   'env-stream': async (page) => {
-    await expect(page.getByRole('heading', { name: /env\.stream/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /env\.stream/i })).toBeVisible({
+      timeout: 15_000,
+    });
   },
   'ai-chat': async (page) => {
     await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
@@ -422,10 +442,14 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
     await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 15_000 });
   },
   'ai-persistence': async (page) => {
-    await expect(page.locator('[data-testid="ai-persistence-panel"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="ai-persistence-panel"]')).toBeVisible({
+      timeout: 15_000,
+    });
   },
   'ai-citations': async (page) => {
-    await expect(page.locator('[data-testid="ai-citations-widget"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="ai-citations-widget"]')).toBeVisible({
+      timeout: 15_000,
+    });
   },
   'ai-hitl': async (page) => {
     await expect(page.locator('[data-testid="hitl-reset"]')).toBeVisible({ timeout: 15_000 });
@@ -453,10 +477,14 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
   'map-demo': async (page) => {
     // region 模式：OL 懒加载（renderer chunk + ol 模块动态导入）后渲染 canvas 视口
     await expect(page.locator('[data-slot="map"]').first()).toBeVisible({ timeout: 30_000 });
-    await expect(page.locator('[data-slot="map"] [data-slot="map-viewport"] .ol-viewport').first()).toBeVisible({
+    await expect(
+      page.locator('[data-slot="map"] [data-slot="map-viewport"] .ol-viewport').first(),
+    ).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.locator('[data-slot="map"] canvas').first()).toBeAttached({ timeout: 30_000 });
+    await expect(page.locator('[data-slot="map"] canvas').first()).toBeAttached({
+      timeout: 30_000,
+    });
     // 空态卡渲染 empty slot（不创建地图）
     await expect(page.locator('[data-slot="map"][data-state="empty"]').first()).toBeVisible({
       timeout: 30_000,
@@ -471,45 +499,50 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       timeout: 30_000,
     });
   },
-  'spreadsheet': async (page) => {
+  spreadsheet: async (page) => {
     await expect(page.locator('[data-slot="spreadsheet-grid"]')).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('[data-slot="spreadsheet-toolbar"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-slot="spreadsheet-toolbar"]')).toBeVisible({
+      timeout: 15_000,
+    });
   },
   'leafer-examples': async (page) => {
     await expect(
       page.getByRole('heading', { name: 'LeaferJS 官方示例对照页', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('[data-testid="leafer-example-canvas"]')).toHaveCount(4, { timeout: 10_000 });
+    await expect(page.locator('[data-testid="leafer-example-canvas"]')).toHaveCount(4, {
+      timeout: 10_000,
+    });
   },
   'print-designer': async (page) => {
-    await expect(page.locator('[data-testid="print-designer-demo"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="print-designer-demo"]')).toBeVisible({
+      timeout: 15_000,
+    });
   },
   // DV (plan 2026-08-25-0215-1 Phase 2): the five routes below were registered
   // in DOMAIN_RENDERER_ROUTES without ROUTE_ASSERTIONS entries, so their
   // loop-generated smoke tests were no-ops and the :490 inventory test was red.
   'gantt-states': async (page) => {
     await expect(
-      page.getByRole('heading', { name: 'Gantt States — empty / loading / baselines / regions', level: 1 }),
+      page.getByRole('heading', {
+        name: 'Gantt States — empty / loading / baselines / regions',
+        level: 1,
+      }),
     ).toBeVisible({ timeout: 15_000 });
+  },
+  'dingtalk-flow-demo': async (page) => {
+    // 刻意保留 metadata 但无页面实现（domain-route-pages.ts 头注）——实况契约是
+    // domain-not-found 屏（R3-U32）。冷启动 vite 按需 transform 可达 10-20s，超时放宽。
+    await expect(page.getByTestId('domain-not-found')).toBeVisible({ timeout: 45_000 });
   },
   'ai-coverage': async (page) => {
     await expect(
       page.getByRole('heading', { name: 'AI Coverage — states, widgets & edge cases', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
   },
-  'dingtalk-flow-demo': async (page) => {
-    // The standalone dingtalk demo page was removed (plan 2026-08-07-1053-2);
-    // this route id has no App.tsx case, so live behavior is the home-page
-    // fallback. The smoke pins that live fallback until the stale route entry
-    // is cleaned up by its owner.
-    await expect(page.getByRole('heading', { name: 'Playground', level: 1 })).toBeVisible({
+  'page-designer': async (page) => {
+    await expect(page.locator('[data-testid="page-designer-root"]')).toBeVisible({
       timeout: 15_000,
     });
-  },
-  'page-designer': async (page) => {
-    await expect(
-      page.locator('[data-testid="page-designer-root"]'),
-    ).toBeVisible({ timeout: 15_000 });
   },
   'scada-editor-demo': async (page) => {
     await expect(
@@ -543,7 +576,16 @@ test('domain route coverage matches playground route inventory', () => {
 // plan 2026-08-04-1558-3 Phase 2：scada-perf-scale 经 open-audit live probe 证 0 console.error/pageerror，
 // 从 KNOWN_ERRORS 移除（证据驱动）。其余 8 条（gantt/kanban/scheduling/calendar/barcode 等）属其他家族、
 // 无本计划探针证据——不盲删，归各自 owner 或凭逐路由探针证据移除（m3-r2）。
-const ROUTES_WITH_KNOWN_ERRORS = new Set(['gantt', 'kanban', 'scheduling-calendar', 'barcode-input', 'calendar-perf-scale', 'kanban-perf-scale', 'gantt-perf-scale', 'diff-perf-scale']);
+const ROUTES_WITH_KNOWN_ERRORS = new Set([
+  'gantt',
+  'kanban',
+  'scheduling-calendar',
+  'barcode-input',
+  'calendar-perf-scale',
+  'kanban-perf-scale',
+  'gantt-perf-scale',
+  'diff-perf-scale',
+]);
 
 for (const route of DOMAIN_RENDERER_ROUTES) {
   test(`playground entry page smoke: ${route.id}`, async ({ page, allowConsoleErrors }) => {

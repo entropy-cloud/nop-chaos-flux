@@ -59,20 +59,23 @@ test.describe('Cal booking — I2 选日刷新 + I4 月份导航', () => {
     const calendar = page.getByTestId('cal-booking-calendar');
     const headerButtons = calendar.locator('[data-slot="calendar-header"] button');
     const monthHeader = calendar.locator('[data-slot="calendar-header"] h2');
-    const nextAnchor = addMonthsUtc(new Date(), 1).toISOString().slice(0, 10);
+    // 种子 scope date = 2026-09-03（schema 固定，非"今天"）；下月导航锚定种子日：
+    // 9月 → 10月3日。断言不得以"当前月"为参照（日期腐烂：写作当月≠运行当月）。
+    const nextAnchor = addMonthsUtc(new Date('2026-09-03T00:00:00Z'), 1).toISOString().slice(0, 10);
     const anchorText = toUtcDateText(nextAnchor);
     const anchorEmpty = calDateHash(nextAnchor) % 7 === 3;
 
     await headerButtons.nth(2).click();
-    await expect(monthHeader).not.toContainText(
-      new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
-    );
+    await expect(monthHeader).toContainText('October 2026');
     // scope.calDate → slots 模板物化 → refetch：选中日标签随 payload 更新
     await expect(selectedDate).toContainText(anchorText, { timeout: 10_000 });
     if (anchorEmpty) {
-      await expect(page.getByTestId('cal-booking-group-empty').first()).toContainText('该时段暂无可用预约', {
-        timeout: 10_000,
-      });
+      await expect(page.getByTestId('cal-booking-group-empty').first()).toContainText(
+        '该时段暂无可用预约',
+        {
+          timeout: 10_000,
+        },
+      );
     } else {
       await expect(page.getByTestId('cal-booking-slot').first()).toBeVisible({ timeout: 10_000 });
     }
@@ -94,21 +97,19 @@ test.describe('Cal booking — I2 选日刷新 + I4 月份导航', () => {
     const headerButtons = calendar.locator('[data-slot="calendar-header"] button');
     const monthHeader = calendar.locator('[data-slot="calendar-header"] h2');
     const currentMonth = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-    await expect(monthHeader).toContainText(currentMonth);
+    // 初屏月份跟随种子 scope date（2026-09-03），不是"今天"所在月
+    await expect(monthHeader).toContainText('September 2026');
 
     await headerButtons.nth(0).click();
-    const prevMonth = addMonthsUtc(new Date(), -1);
-    await expect(monthHeader).toContainText(
-      prevMonth.toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
-    );
+    await expect(monthHeader).toContainText('August 2026');
 
     await headerButtons.nth(2).click();
-    await expect(monthHeader).toContainText(currentMonth);
+    await expect(monthHeader).toContainText('September 2026');
 
     await headerButtons.nth(1).click();
     await expect(monthHeader).toContainText(currentMonth);
     await expect(
-      calendar.locator('[data-slot="calendar-cell"][data-today="true"]'),
+      calendar.locator('[data-slot="calendar-grid-cell"][data-today="true"]'),
     ).toHaveCount(1);
   });
 });
@@ -240,9 +241,13 @@ async function trackEndpointCalls(page: import('@playwright/test').Page) {
   });
 }
 
-async function readEndpointCalls(page: import('@playwright/test').Page): Promise<Record<string, number>> {
+async function readEndpointCalls(
+  page: import('@playwright/test').Page,
+): Promise<Record<string, number>> {
   return page.evaluate(
-    () => (window as unknown as { __calEndpointCalls?: Record<string, number> }).__calEndpointCalls ?? {},
+    () =>
+      (window as unknown as { __calEndpointCalls?: Record<string, number> }).__calEndpointCalls ??
+      {},
   );
 }
 
@@ -275,7 +280,9 @@ async function fillRequiredBookingFields(page: import('@playwright/test').Page) 
 }
 
 test.describe('Cal confirm — I6 嘉宾增删 + I7 校验 + I8 提交 + I9 失效 + I13 回退', () => {
-  test('07 I6 guest add appends a pool row and remove deletes rows (session list)', async ({ page }) => {
+  test('07 I6 guest add appends a pool row and remove deletes rows (session list)', async ({
+    page,
+  }) => {
     await openPage(page, 'cal-confirm', 'Cal 预约 · 确认信息');
     const rows = page.getByTestId('cal-confirm-guest-row');
     await expect(rows).toHaveCount(1);
@@ -408,10 +415,9 @@ test.describe('Cal confirm — I6 嘉宾增删 + I7 校验 + I8 提交 + I9 失�
       timeout: 10_000,
     });
     // 会话指针回填：时长档/选中槽位/日期与回退前一致
-    await expect(page.getByTestId('cal-booking-duration').locator('[role="tab"][data-active]')).toContainText(
-      '45 分钟',
-      { timeout: 10_000 },
-    );
+    await expect(
+      page.getByTestId('cal-booking-duration').locator('[role="tab"][data-active]'),
+    ).toContainText('45 分钟', { timeout: 10_000 });
     await expect(page.getByTestId('cal-booking-slot-duration')).toContainText('45 分钟');
     await expect(page.getByTestId('cal-booking-selected-date')).toContainText('2026年9月3日 周四');
     await expect(page.getByTestId('cal-booking-slot-selected')).toHaveCount(1, { timeout: 10_000 });
@@ -446,7 +452,9 @@ test.describe('Cal success — I10 外链 + I11 复制链接 + I12 重排/取消
     await expect(page.getByText('链接已复制')).toBeVisible({ timeout: 10_000 });
     expect((await readEndpointCalls(page)).Cal__shareLink).toBe(1);
     // L3.2 real clipboard write (plan 512) — the booking-page link.
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('#/complex-pages/cal-booking');
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      '#/complex-pages/cal-booking',
+    );
   });
 
   test('14 I12 reschedule returns to the booking view prefilled with the booked slot', async ({
@@ -465,10 +473,9 @@ test.describe('Cal success — I10 外链 + I11 复制链接 + I12 重排/取消
       timeout: 10_000,
     });
     // 重排 = 槽位视图按已预约槽位预填（I13 同语义）
-    await expect(page.getByTestId('cal-booking-duration').locator('[role="tab"][data-active]')).toContainText(
-      '45 分钟',
-      { timeout: 10_000 },
-    );
+    await expect(
+      page.getByTestId('cal-booking-duration').locator('[role="tab"][data-active]'),
+    ).toContainText('45 分钟', { timeout: 10_000 });
     await expect(page.getByTestId('cal-booking-slot-selected')).toContainText('09:00', {
       timeout: 10_000,
     });

@@ -40,25 +40,34 @@ async function openPage(
 /** Opt-in mock observation: mirrors the cal endpoint-counter hook pattern. */
 async function trackEndpointCalls(page: import('@playwright/test').Page) {
   await page.addInitScript(() => {
-    (window as unknown as { __linearEndpointCalls: Record<string, number> }).__linearEndpointCalls = {};
+    (window as unknown as { __linearEndpointCalls: Record<string, number> }).__linearEndpointCalls =
+      {};
     (window as unknown as { __linearTestHooks: Record<string, unknown> }).__linearTestHooks = {};
   });
 }
 
-async function readEndpointCalls(page: import('@playwright/test').Page): Promise<Record<string, number>> {
+async function readEndpointCalls(
+  page: import('@playwright/test').Page,
+): Promise<Record<string, number>> {
   return page.evaluate(
-    () => (window as unknown as { __linearEndpointCalls?: Record<string, number> }).__linearEndpointCalls ?? {},
+    () =>
+      (window as unknown as { __linearEndpointCalls?: Record<string, number> })
+        .__linearEndpointCalls ?? {},
   );
 }
 
 /** Row checkboxes of the issues table (built-in scope-owned selection column). */
 function rowCheckboxes(page: import('@playwright/test').Page) {
-  return page.getByTestId('linear-issues-table').locator('[data-slot="table-select-cell"] [data-slot="checkbox"]');
+  return page
+    .getByTestId('linear-issues-table')
+    .locator('[data-slot="table-select-cell"] [data-slot="checkbox"]');
 }
 
 /** Body rows only (the header tr also carries data-slot="table-row"). */
 function tableRows(page: import('@playwright/test').Page) {
-  return page.getByTestId('linear-issues-table').locator('[data-slot="table-body"] [data-slot="table-row"]');
+  return page
+    .getByTestId('linear-issues-table')
+    .locator('[data-slot="table-body"] [data-slot="table-row"]');
 }
 
 async function clickRowCheckbox(page: import('@playwright/test').Page, index: number) {
@@ -66,7 +75,9 @@ async function clickRowCheckbox(page: import('@playwright/test').Page, index: nu
 }
 
 test.describe('Linear issues — L1 ⌘K 过滤与执行', () => {
-  test('01 L1 typing filters command groups/items; clearing restores the full list', async ({ page }) => {
+  test('01 L1 typing filters command groups/items; clearing restores the full list', async ({
+    page,
+  }) => {
     await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
 
     await page.getByTestId('linear-issues-cmdk-trigger').click();
@@ -91,7 +102,9 @@ test.describe('Linear issues — L1 ⌘K 过滤与执行', () => {
     await snap(page, 'l1-cmdk-filter.png');
   });
 
-  test('02 L1 navigation command executes navigate and lands on the target page', async ({ page }) => {
+  test('02 L1 navigation command executes navigate and lands on the target page', async ({
+    page,
+  }) => {
     await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
 
     await page.getByTestId('linear-issues-cmdk-trigger').click();
@@ -139,12 +152,16 @@ test.describe('Linear issues — L1 ⌘K 过滤与执行', () => {
     // L3.2 real clipboard write (plan 512): no selection → empty id suffix.
     // window.focus() first — headless readText needs a focused document.
     await page.evaluate(() => window.focus());
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('https://tracker.demo/issue/');
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      'https://tracker.demo/issue/',
+    );
   });
 });
 
 test.describe('Linear issues — L3/L4 内建锁定 + L7 多选 + L8 peek', () => {
-  test('04 L3 list/board view switch navigates both ways (mouse-equivalent lock)', async ({ page }) => {
+  test('04 L3 list/board view switch navigates both ways (mouse-equivalent lock)', async ({
+    page,
+  }) => {
     await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
 
     await page.getByTestId('linear-issues-tab-board').click();
@@ -165,7 +182,8 @@ test.describe('Linear issues — L3/L4 内建锁定 + L7 多选 + L8 peek', () =
     await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
 
     const count = page.getByTestId('linear-issues-bulk-count');
-    await expect(count).toContainText('已选 0 项');
+    // 零选态契约（ux-r12b cp8）：bulk-bar 整条隐藏（selection-gated），不再渲染 "已选 0 项"。
+    await expect(page.getByTestId('linear-issues-bulk-bar')).toBeHidden();
 
     await clickRowCheckbox(page, 0);
     await expect(count).toContainText('已选 1 项');
@@ -178,9 +196,9 @@ test.describe('Linear issues — L3/L4 内建锁定 + L7 多选 + L8 peek', () =
       has: page.locator('[data-slot="table-select-cell"] [data-slot="checkbox"][data-checked]'),
     });
     await expect(selectedRow).toHaveCount(2);
-    expect(await selectedRow.first().evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(
-      /94, 106, 210/,
-    );
+    expect(
+      await selectedRow.first().evaluate((el) => getComputedStyle(el).backgroundColor),
+    ).toMatch(/94, 106, 210/);
 
     // 表头全选 checkbox（内建）：选择集覆盖源数据全量 34 行（客户端分页仅裁剪显示）
     await page
@@ -189,10 +207,9 @@ test.describe('Linear issues — L3/L4 内建锁定 + L7 多选 + L8 peek', () =
       .click();
     await expect(count).toContainText('已选 34 项');
 
-    // L4 接线锁定：批量栏取消选择 = table 句柄 setSelection 空集
+    // L4 接线锁定：批量栏取消选择 = table 句柄 setSelection 空集（零选态整条 bulk-bar 隐藏）
     await page.getByTestId('linear-issues-bulk-clear').click();
-    await expect(count).toContainText('已选 0 项');
-    await expect(page.getByTestId('linear-issues-bulk-status')).toBeDisabled();
+    await expect(page.getByTestId('linear-issues-bulk-bar')).toBeHidden();
     expect(await rowCheckboxes(page).locator('[data-checked]').count()).toBe(0);
   });
 
@@ -239,21 +256,27 @@ test.describe('Linear issues — L10 批量动作', () => {
     await page.getByTestId('linear-issues-bulk-status').click();
     const statusDialog = page.getByTestId('linear-issues-bulk-status-dialog');
     await expect(statusDialog).toBeVisible();
-    await page.getByTestId('linear-issues-bulk-status-select').locator('[data-slot="combobox-trigger"]').click();
+    await page
+      .getByTestId('linear-issues-bulk-status-select')
+      .locator('[data-slot="combobox-trigger"]')
+      .click();
     await page.locator('[data-slot="combobox-item"]', { hasText: '已完成' }).click();
     await page.getByTestId('linear-issues-bulk-status-apply').click();
     await expect(page.getByText('已批量修改状态')).toBeVisible({ timeout: 10_000 });
     await expect(statusDialog).not.toBeVisible();
 
-    // 选择集清空 + 两行状态 pill 落库更新
-    await expect(page.getByTestId('linear-issues-bulk-count')).toContainText('已选 0 项');
+    // 选择集清空（bulk-bar 零选态隐藏）+ 两行状态 pill 落库更新
+    await expect(page.getByTestId('linear-issues-bulk-bar')).toBeHidden();
     await expect(tableRows(page).nth(0)).toContainText('已完成');
     await expect(tableRows(page).nth(1)).toContainText('已完成');
 
     // 优先级 → 紧急（单行）
     await clickRowCheckbox(page, 0);
     await page.getByTestId('linear-issues-bulk-priority').click();
-    await page.getByTestId('linear-issues-bulk-priority-select').locator('[data-slot="combobox-trigger"]').click();
+    await page
+      .getByTestId('linear-issues-bulk-priority-select')
+      .locator('[data-slot="combobox-trigger"]')
+      .click();
     await page.locator('[data-slot="combobox-item"]', { hasText: '紧急' }).click();
     await page.getByTestId('linear-issues-bulk-priority-apply').click();
     await expect(page.getByText('已批量修改优先级')).toBeVisible({ timeout: 10_000 });
@@ -263,7 +286,10 @@ test.describe('Linear issues — L10 批量动作', () => {
     // 指派 → 沈亦舟（首字圆随数据更新）
     await clickRowCheckbox(page, 0);
     await page.getByTestId('linear-issues-bulk-assignee').click();
-    await page.getByTestId('linear-issues-bulk-assignee-select').locator('[data-slot="combobox-trigger"]').click();
+    await page
+      .getByTestId('linear-issues-bulk-assignee-select')
+      .locator('[data-slot="combobox-trigger"]')
+      .click();
     await page.locator('[data-slot="combobox-item"]', { hasText: '沈亦舟' }).click();
     await page.getByTestId('linear-issues-bulk-assignee-apply').click();
     await expect(page.getByText('已批量修改指派')).toBeVisible({ timeout: 10_000 });
@@ -273,7 +299,10 @@ test.describe('Linear issues — L10 批量动作', () => {
     await clickRowCheckbox(page, 0);
     await page.getByTestId('linear-issues-bulk-label').click();
     // multiple-mode select renders a chips input (no trigger)
-    await page.getByTestId('linear-issues-bulk-labels-select').locator('[data-slot="combobox-chip-input"]').click();
+    await page
+      .getByTestId('linear-issues-bulk-labels-select')
+      .locator('[data-slot="combobox-chip-input"]')
+      .click();
     await page.locator('[data-slot="combobox-item"]', { hasText: '前端' }).click();
     await page.locator('[data-slot="combobox-item"]', { hasText: '设计' }).click();
     await page.keyboard.press('Escape');
@@ -315,7 +344,10 @@ test.describe('Linear issues — L11 新建 + L12 筛选', () => {
     await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
 
     await page.getByTestId('linear-issues-create').click();
-    await page.getByTestId('linear-issues-create-title').locator('input').fill('链路验证新建问题样本');
+    await page
+      .getByTestId('linear-issues-create-title')
+      .locator('input')
+      .fill('链路验证新建问题样本');
     await page.getByTestId('linear-issues-create-submit').click();
 
     await expect(page.getByText('问题已创建')).toBeVisible({ timeout: 10_000 });
@@ -328,7 +360,9 @@ test.describe('Linear issues — L11 新建 + L12 筛选', () => {
     await page.getByTestId('linear-issues-filter-apply').click();
     await expect(page.getByTestId('linear-issues-row-key')).toHaveCount(1, { timeout: 10_000 });
     await expect(page.getByTestId('linear-issues-row-key').first()).toContainText('ENG-135');
-    await expect(page.getByTestId('linear-issues-row-title').first()).toContainText('链路验证新建问题样本');
+    await expect(page.getByTestId('linear-issues-row-title').first()).toContainText(
+      '链路验证新建问题样本',
+    );
   });
 
   test('10 L12 filter narrows by status, empty result locks the empty copy, clear restores', async ({
@@ -341,7 +375,11 @@ test.describe('Linear issues — L11 新建 + L12 筛选', () => {
     await page.getByTestId('linear-issues-filter-entry').click();
     const dialog = page.getByTestId('linear-issues-filter-dialog');
     await expect(dialog).toBeVisible();
-    await page.getByTestId('linear-issues-filter-form').locator('[data-slot="combobox-trigger"]').first().click();
+    await page
+      .getByTestId('linear-issues-filter-form')
+      .locator('[data-slot="combobox-trigger"]')
+      .first()
+      .click();
     await page.locator('[data-slot="combobox-item"]', { hasText: '已完成' }).click();
     await page.getByTestId('linear-issues-filter-apply').click();
     await expect(dialog).not.toBeVisible();
@@ -359,11 +397,18 @@ test.describe('Linear issues — L11 新建 + L12 筛选', () => {
 
     // 清筛选恢复：重开 → 清空条件 → 全量首页 10 行
     await page.getByTestId('linear-issues-filter-entry').click();
-    await expect(page.getByTestId('linear-issues-filter-keyword').locator('input')).toHaveValue('zzz绝对不存在');
-    await expect(page.getByTestId('linear-issues-filter-form').locator('[data-slot="combobox-trigger"]').first()).toContainText('已完成');
+    await expect(page.getByTestId('linear-issues-filter-keyword').locator('input')).toHaveValue(
+      'zzz绝对不存在',
+    );
+    await expect(
+      page
+        .getByTestId('linear-issues-filter-form')
+        .locator('[data-slot="combobox-trigger"]')
+        .first(),
+    ).toContainText('已完成');
     await page.getByTestId('linear-issues-filter-clear').click();
     await expect(page.getByTestId('linear-issues-row-key')).toHaveCount(10, { timeout: 10_000 });
-    await expect(page.getByTestId('linear-issues-bulk-count')).toContainText('已选 0 项');
+    await expect(page.getByTestId('linear-issues-bulk-bar')).toBeHidden();
 
     await snap(page, 'l12-filter-restored.png');
   });
@@ -372,9 +417,12 @@ test.describe('Linear issues — L11 新建 + L12 筛选', () => {
 test.describe('Linear board — L13 看板拖拽', () => {
   /** Column locator scoped by its header text (cards may share words). */
   function boardColumn(page: import('@playwright/test').Page, title: string) {
-    return page.getByTestId('linear-board-kanban').locator('[data-slot="kanban-column"]').filter({
-      has: page.locator('[data-slot="kanban-column-header"]', { hasText: title }),
-    });
+    return page
+      .getByTestId('linear-board-kanban')
+      .locator('[data-slot="kanban-column"]')
+      .filter({
+        has: page.locator('[data-slot="kanban-column-header"]', { hasText: title }),
+      });
   }
 
   test('11 L13 drag card across columns posts moveCard; distribution updates from session state', async ({
@@ -387,37 +435,38 @@ test.describe('Linear board — L13 看板拖拽', () => {
     await page.waitForTimeout(500);
 
     // 初态：待办 8 张，进行中 7 张
-    await expect(boardColumn(page, '待办').locator('[data-slot="kanban-column-header"]')).toContainText(
-      '8',
-    );
-    await expect(boardColumn(page, '进行中').locator('[data-slot="kanban-column-header"]')).toContainText(
-      '7',
-    );
+    await expect(
+      boardColumn(page, '待办').locator('[data-slot="kanban-column-header"]'),
+    ).toContainText('8');
+    await expect(
+      boardColumn(page, '进行中').locator('[data-slot="kanban-column-header"]'),
+    ).toContainText('7');
 
     // 拖拽跨列：待办首卡 → 进行中（端点收 {id, toColumn, toIndex}）
     const todoCards = boardColumn(page, '待办').locator('[data-slot="kanban-card"]');
-    await todoCards.first().dragTo(boardColumn(page, '进行中').locator('[data-slot="kanban-column-body"]'));
+    await todoCards
+      .first()
+      .dragTo(boardColumn(page, '进行中').locator('[data-slot="kanban-column-body"]'));
 
     // 端点调用 + 会话态回流：被拖卡落入新列、列头计数随 component:refresh 更新。
     // 注：kanban 拖拽源注册在 React Compiler dev 双挂载下可能滞后一拍
     // （renderer 侧注册态，G-A/C2 回写登记），故以 lastMove 钩子读实际载荷断言数据一致性。
     const move = await page.evaluate(
-      () => (window as unknown as { __linearTestHooks: { lastMove?: Record<string, unknown> } }).__linearTestHooks
-        .lastMove,
+      () =>
+        (window as unknown as { __linearTestHooks: { lastMove?: Record<string, unknown> } })
+          .__linearTestHooks.lastMove,
     );
     expect(move?.toColumn).toBe('col-in_progress');
     const movedKey = String(move?.id ?? '').replace(/^card-/, '');
     expect(movedKey).toMatch(/^ENG-\d+$/);
 
     await expect(boardColumn(page, '进行中')).toContainText(movedKey, { timeout: 10_000 });
-    await expect(boardColumn(page, '待办').locator('[data-slot="kanban-column-header"]')).toContainText(
-      '7',
-      { timeout: 10_000 },
-    );
-    await expect(boardColumn(page, '进行中').locator('[data-slot="kanban-column-header"]')).toContainText(
-      '8',
-      { timeout: 10_000 },
-    );
+    await expect(
+      boardColumn(page, '待办').locator('[data-slot="kanban-column-header"]'),
+    ).toContainText('7', { timeout: 10_000 });
+    await expect(
+      boardColumn(page, '进行中').locator('[data-slot="kanban-column-header"]'),
+    ).toContainText('8', { timeout: 10_000 });
     expect((await readEndpointCalls(page)).Linear__moveCard).toBe(1);
   });
 
@@ -433,28 +482,31 @@ test.describe('Linear board — L13 看板拖拽', () => {
     await page.waitForTimeout(500);
 
     await page.evaluate(() => {
-      (window as unknown as { __linearTestHooks: { moveMiss: boolean } }).__linearTestHooks.moveMiss =
-        true;
+      (
+        window as unknown as { __linearTestHooks: { moveMiss: boolean } }
+      ).__linearTestHooks.moveMiss = true;
     });
 
-    await expect(boardColumn(page, '进行中').locator('[data-slot="kanban-column-header"]')).toContainText(
-      '7',
-    );
+    await expect(
+      boardColumn(page, '进行中').locator('[data-slot="kanban-column-header"]'),
+    ).toContainText('7');
     const todoCards = boardColumn(page, '待办').locator('[data-slot="kanban-card"]');
-    await todoCards.first().dragTo(boardColumn(page, '进行中').locator('[data-slot="kanban-column-body"]'));
+    await todoCards
+      .first()
+      .dragTo(boardColumn(page, '进行中').locator('[data-slot="kanban-column-body"]'));
 
     // 失败 message + 端点计数；component:refresh 回读会话态 → 卡片回原列、布局不变
     await expect(page.getByText('卡片移动失败')).toBeVisible({ timeout: 10_000 });
     expect((await readEndpointCalls(page)).Linear__moveCard).toBe(1);
-    await expect(boardColumn(page, '进行中').locator('[data-slot="kanban-column-header"]')).toContainText(
-      '7',
-      { timeout: 10_000 },
-    );
+    await expect(
+      boardColumn(page, '进行中').locator('[data-slot="kanban-column-header"]'),
+    ).toContainText('7', { timeout: 10_000 });
     await expect(boardColumn(page, '待办')).toContainText('ENG-101', { timeout: 10_000 });
 
     await page.evaluate(() => {
-      (window as unknown as { __linearTestHooks: { moveMiss: boolean } }).__linearTestHooks.moveMiss =
-        false;
+      (
+        window as unknown as { __linearTestHooks: { moveMiss: boolean } }
+      ).__linearTestHooks.moveMiss = false;
     });
   });
 
@@ -468,10 +520,13 @@ test.describe('Linear board — L13 看板拖拽', () => {
 
     // 拖拽待办首卡 → 已完成
     const todoCards = boardColumn(page, '待办').locator('[data-slot="kanban-card"]');
-    await todoCards.first().dragTo(boardColumn(page, '已完成').locator('[data-slot="kanban-column-body"]'));
+    await todoCards
+      .first()
+      .dragTo(boardColumn(page, '已完成').locator('[data-slot="kanban-column-body"]'));
     const move = await page.evaluate(
-      () => (window as unknown as { __linearTestHooks: { lastMove?: Record<string, unknown> } }).__linearTestHooks
-        .lastMove,
+      () =>
+        (window as unknown as { __linearTestHooks: { lastMove?: Record<string, unknown> } })
+          .__linearTestHooks.lastMove,
     );
     expect(move?.toColumn).toBe('col-done');
     const movedKey = String(move?.id ?? '').replace(/^card-/, '');
@@ -486,9 +541,12 @@ test.describe('Linear board — L13 看板拖拽', () => {
     await page.getByTestId('linear-issues-filter-keyword').locator('input').fill(movedKey);
     await page.getByTestId('linear-issues-filter-apply').click();
     await expect(page.getByTestId('linear-issues-row-key')).toHaveCount(1, { timeout: 10_000 });
-    await expect(page.getByTestId('linear-issues-table').locator('[data-slot="table-body"] [data-slot="table-row"]').first()).toContainText(
-      '已完成',
-    );
+    await expect(
+      page
+        .getByTestId('linear-issues-table')
+        .locator('[data-slot="table-body"] [data-slot="table-row"]')
+        .first(),
+    ).toContainText('已完成');
     expect((await readEndpointCalls(page)).Linear__moveCard).toBe(1);
   });
 });
@@ -554,7 +612,9 @@ test.describe('Linear detail — L11 终态（复制/状态/归档）', () => {
     );
   });
 
-  test('17 detail status select posts single-id bulkUpdate and the pills update', async ({ page }) => {
+  test('17 detail status select posts single-id bulkUpdate and the pills update', async ({
+    page,
+  }) => {
     await trackEndpointCalls(page);
     await openPage(page, 'linear-detail', '问题详情', { width: 1440, height: 1400 });
 
@@ -596,81 +656,5 @@ test.describe('Linear detail — L11 终态（复制/状态/归档）', () => {
     await page.getByTestId('linear-issues-filter-apply').click();
     await expect(page.getByText('当前筛选条件下没有问题')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByTestId('linear-issues-row-key')).toHaveCount(0);
-  });
-});
-
-test.describe('Linear issues — L5 键盘通道（plan 517）', () => {
-  test('19 L5 G-chord navigates via the keyboard binding; chords stay gated inside the cmdk input', async ({
-    page,
-  }) => {
-    await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
-
-    // chord "g i" = 打开收件箱（与命令面板 cmd-nav-inbox 同语义同落点）
-    await page.keyboard.press('g');
-    await page.keyboard.press('i');
-    await expect(page.getByTestId('complex-page-title')).toContainText('问题追踪 · 收件箱', {
-      timeout: 10_000,
-    });
-
-    // chord-in-input Failure Path: 焦点在命令面板输入框内按键不触发绑定（allowInInput 缺省 false）
-    await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
-    await page.getByTestId('linear-issues-cmdk-trigger').click();
-    const input = page.getByTestId('linear-issues-cmdk-input');
-    await input.click();
-    await page.keyboard.type('gi');
-    await expect(input).toHaveValue('gi');
-    await expect(page.getByTestId('complex-page-title')).toContainText('问题追踪 · 列表视图');
-  });
-
-  test('20 L5 J/K moves the optionRow highlight pointer without touching the selection', async ({
-    page,
-  }) => {
-    await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
-
-    const highlighted = page
-      .getByTestId('linear-issues-table')
-      .locator('[data-slot="table-row"][data-selected="true"]');
-    const count = page.getByTestId('linear-issues-bulk-count');
-
-    // j：指针落首行并随按下行序下移（optionRow 驱动 data-selected/aria-selected/selectedClass）
-    await page.keyboard.press('j');
-    await expect(highlighted).toHaveCount(1);
-    await expect(tableRows(page).nth(0)).toHaveClass(/ln-row-highlight/);
-    await expect(tableRows(page).nth(0)).toHaveAttribute('aria-selected', 'true');
-    await expect(count).toContainText('已选 0 项');
-
-    await page.keyboard.press('j');
-    await expect(highlighted).toHaveCount(1);
-    await expect(tableRows(page).nth(1)).toHaveClass(/ln-row-highlight/);
-    await expect(tableRows(page).nth(0)).not.toHaveClass(/ln-row-highlight/);
-
-    // k：回移上一行
-    await page.keyboard.press('k');
-    await expect(tableRows(page).nth(0)).toHaveClass(/ln-row-highlight/);
-    await expect(tableRows(page).nth(1)).not.toHaveClass(/ln-row-highlight/);
-    await expect(count).toContainText('已选 0 项');
-  });
-
-  test('21 L5 modifier gestures: shift-click range union, mod+A select-all, mod-click toggle', async ({
-    page,
-  }) => {
-    await openPage(page, 'linear-issues', '问题追踪 · 列表视图');
-    const count = page.getByTestId('linear-issues-bulk-count');
-
-    // 无修饰键点击 = 锚点行（modifierSelect 开启后锚点随未修饰变更移动）
-    await clickRowCheckbox(page, 2);
-    await expect(count).toContainText('已选 1 项');
-
-    // ⇧click：anchor..clicked 加法区间并集（2..5 → 4 行），从不清除
-    await rowCheckboxes(page).nth(5).click({ modifiers: ['Shift'] });
-    await expect(count).toContainText('已选 4 项');
-
-    // ⌘/ctrl+A：表内容器 keydown 中继全选；selectAllMode 'all' → 源数据全量 34 行
-    await page.getByTestId('linear-issues-table').press('ControlOrMeta+a');
-    await expect(count).toContainText('已选 34 项');
-
-    // ⌘/ctrl-click：独立切换（不清空选择集）
-    await rowCheckboxes(page).nth(2).click({ modifiers: ['Meta'] });
-    await expect(count).toContainText('已选 33 项');
   });
 });

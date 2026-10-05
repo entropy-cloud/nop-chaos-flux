@@ -7,15 +7,15 @@
 
 **Total pages tested**: 7 / 7
 
-| Page              | console.errors | pageerrors | debugger errors | debugger failures | Passed |
-| ----------------- | -------------- | ---------- | --------------- | ----------------- | ------ |
-| flow-designer     | 0              | 0          | 0               | 0                 | ✅     |
-| report-designer   | 0              | 0          | 0               | 0                 | ✅     |
-| word-editor       | 0              | 0          | 0               | 0                 | ✅     |
-| taskflow-designer | 0              | 0          | 0               | 0                 | ✅     |
-| code-editor       | 0              | 0          | 0               | 0                 | ✅     |
-| component-handles | 0              | 0          | 0               | 0                 | ✅     |
-| flux-basic        | 0              | 0          | 0               | 0                 | ✅     |
+| Page | console.errors | pageerrors | debugger errors | debugger failures | Passed |
+|------|---------------|------------|-----------------|-------------------|--------|
+| flow-designer | 0 | 0 | 0 | 0 | ✅ |
+| report-designer | 0 | 0 | 0 | 0 | ✅ |
+| word-editor | 0 | 0 | 0 | 0 | ✅ |
+| taskflow-designer | 0 | 0 | 0 | 0 | ✅ |
+| code-editor | 0 | 0 | 0 | 0 | ✅ |
+| component-handles | 0 | 0 | 0 | 0 | ✅ |
+| flux-basic | 0 | 0 | 0 | 0 | ✅ |
 
 ## Issues Found
 
@@ -24,29 +24,22 @@
 ## Per-Page Detail
 
 ### flow-designer
-
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### report-designer
-
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### word-editor
-
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### taskflow-designer
-
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### code-editor
-
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### component-handles
-
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### flux-basic
-
 - ✅ No console errors, page errors, or debugger anomalies.

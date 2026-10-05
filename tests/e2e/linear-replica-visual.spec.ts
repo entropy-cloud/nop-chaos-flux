@@ -73,12 +73,14 @@ test.describe('Linear replica — initial-screen structure', () => {
     await expect(table.locator('[data-slot="table-select-cell"]').first()).toBeVisible();
     expect(await table.locator('[data-slot="table-select-cell"]').count()).toBe(10);
 
-    // 底部批量操作栏动态形态（G-B3 实测：计数绑选择集，无选择时动作钮禁用）
+    // 底部批量操作栏动态形态（ux-r12b cp8 契约：selection-gated——零选态整条隐藏，
+    // 选中后出现且计数绑选择集）
     const bulkBar = page.getByTestId('linear-issues-bulk-bar');
+    await expect(bulkBar).toBeHidden();
+    await table.locator('[data-slot="table-select-cell"] [data-slot="checkbox"]').first().click();
     await expect(bulkBar).toBeVisible();
-    await expect(page.getByTestId('linear-issues-bulk-count')).toContainText('已选 0 项');
+    await expect(page.getByTestId('linear-issues-bulk-count')).toContainText('已选 1 项');
     await expect(page.getByTestId('linear-issues-bulk-status')).toContainText('状态');
-    await expect(page.getByTestId('linear-issues-bulk-status')).toBeDisabled();
     await expect(page.getByTestId('linear-issues-bulk-priority')).toContainText('优先级');
     await expect(page.getByTestId('linear-issues-bulk-assignee')).toContainText('指派');
     await expect(page.getByTestId('linear-issues-bulk-label')).toContainText('标签');
@@ -113,7 +115,9 @@ test.describe('Linear replica — initial-screen structure', () => {
     const peek = page.getByTestId('linear-issues-peek');
     await expect(peek).toBeVisible();
     await expect(page.getByTestId('linear-issues-peek-key')).toContainText('ENG-105');
-    await expect(page.getByTestId('linear-issues-peek-title')).toContainText('命令面板搜索结果缺少最近访问分组');
+    await expect(page.getByTestId('linear-issues-peek-title')).toContainText(
+      '命令面板搜索结果缺少最近访问分组',
+    );
     await expect(page.getByTestId('linear-issues-peek-status')).toContainText('待办');
     await expect(page.getByTestId('linear-issues-peek-desc')).toContainText('复现路径');
     await expect(page.getByTestId('linear-issues-peek-props')).toContainText('优先级');
@@ -142,7 +146,9 @@ test.describe('Linear replica — initial-screen structure', () => {
     await snap(page, '01-issues.png');
   });
 
-  test('02 board — status columns + column counts + card fields from mock + tokens', async ({ page }) => {
+  test('02 board — status columns + column counts + card fields from mock + tokens', async ({
+    page,
+  }) => {
     await openPage(page, 'linear-board', '问题追踪 · 看板视图');
 
     // 三栏骨架：侧边栏 + 顶栏 tabs（列表可跳转回列表视图）
@@ -249,7 +255,9 @@ test.describe('Linear replica — initial-screen structure', () => {
     // 标题区：标识符 + 状态 pill（数据来自 Linear__issue?id=ENG-105）
     await expect(page.getByTestId('linear-detail-key')).toContainText('ENG-105');
     await expect(page.getByTestId('linear-detail-status')).toContainText('待办');
-    await expect(page.getByTestId('linear-detail-title')).toContainText('命令面板搜索结果缺少最近访问分组');
+    await expect(page.getByTestId('linear-detail-title')).toContainText(
+      '命令面板搜索结果缺少最近访问分组',
+    );
 
     // 描述区：纯文本多段承载（Phase 1 富文本裁定）
     const desc = page.getByTestId('linear-detail-description');
@@ -290,7 +298,9 @@ test.describe('Linear replica — initial-screen structure', () => {
     await snap(page, '04-detail.png');
   });
 
-  test('05 projects — project cards with progress + cycle overview rows from mock', async ({ page }) => {
+  test('05 projects — project cards with progress + cycle overview rows from mock', async ({
+    page,
+  }) => {
     await openPage(page, 'linear-projects', '问题追踪 · 项目周期');
 
     // 顶栏：标题 + 项目计数（数据来自 Linear__projects）
@@ -302,7 +312,9 @@ test.describe('Linear replica — initial-screen structure', () => {
     await expect(page.getByTestId('linear-projects-card-name').first()).toContainText('平台重构');
     await expect(page.getByTestId('linear-projects-card-status').first()).toContainText('进行中');
     await expect(page.getByTestId('linear-projects-card-lead').first()).toContainText('沈');
-    await expect(page.getByTestId('linear-projects-card-summary').first()).toContainText('分层重构');
+    await expect(page.getByTestId('linear-projects-card-summary').first()).toContainText(
+      '分层重构',
+    );
     await expect(page.getByTestId('linear-projects-card-progress').first()).toContainText('62%');
 
     // 进度条填充宽度来自 mock（62% 平台重构）
@@ -332,9 +344,9 @@ test.describe('Linear replica — initial-screen structure', () => {
     expect(cycleStatusText).toContain('已完成');
 
     // 品牌紫进度条（--ln-brand 令牌抽查）
-    expect(
-      await fill.evaluate((el) => getComputedStyle(el).backgroundColor),
-    ).toMatch(/94, 106, 210/);
+    expect(await fill.evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(
+      /94, 106, 210/,
+    );
 
     // 零品牌资产
     const replicaText = await page.getByTestId('linear-projects-main').innerText();
@@ -364,14 +376,18 @@ test.describe('Linear replica — initial-screen structure', () => {
     await expect(tabs.locator('[role="tab"][data-active]')).toContainText('常规');
 
     // 表单区：工作区名/图标形态 + fieldset 分组
-    await expect(page.getByTestId('linear-settings-fieldset-workspace')).toContainText('工作区信息');
+    await expect(page.getByTestId('linear-settings-fieldset-workspace')).toContainText(
+      '工作区信息',
+    );
     await expect(page.getByTestId('linear-settings-icon-row')).toBeVisible();
     await expect(page.getByTestId('linear-settings-workspace-name')).toBeVisible();
     await expect(page.getByTestId('linear-settings-workspace-slug')).toBeVisible();
     await expect(page.getByTestId('linear-settings-workspace-desc')).toBeVisible();
 
     // 偏好开关组（静态形态）
-    await expect(page.getByTestId('linear-settings-fieldset-preferences')).toContainText('偏好开关');
+    await expect(page.getByTestId('linear-settings-fieldset-preferences')).toContainText(
+      '偏好开关',
+    );
     await expect(page.getByTestId('linear-settings-switch-digest')).toBeVisible();
     await expect(page.getByTestId('linear-settings-switch-kbd')).toBeVisible();
     await expect(page.getByTestId('linear-settings-switch-quiet')).toBeVisible();

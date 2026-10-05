@@ -12,12 +12,17 @@ test.describe('Kanban Performance Baseline', () => {
     await page.waitForTimeout(1000);
 
     const fps = await measureFps(page, 2000);
-    console.log(`[PERF] Kanban idle FPS: avg=${fps.avgFps}, min=${fps.minFps}, frames=${fps.totalFrames}, duration=${fps.durationMs}ms`);
+    console.log(
+      `[PERF] Kanban idle FPS: avg=${fps.avgFps}, min=${fps.minFps}, frames=${fps.totalFrames}, duration=${fps.durationMs}ms`,
+    );
 
     expect(fps.avgFps).toBeGreaterThan(30);
   });
 
-  test('idle FPS baseline on kanban-perf-scale (20×300) route targets 30fps avg', async ({ page, allowConsoleErrors }) => {
+  test('idle FPS baseline on kanban-perf-scale (20×300) route targets 30fps avg', async ({
+    page,
+    allowConsoleErrors,
+  }) => {
     allowConsoleErrors(100);
     await page.goto('/#/kanban-perf-scale', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Kanban Performance Scale')).toBeVisible({ timeout: 120_000 });
@@ -26,12 +31,17 @@ test.describe('Kanban Performance Baseline', () => {
     await page.waitForTimeout(2000);
 
     const fps = await measureFps(page, 3000);
-    console.log(`[PERF] Kanban 20×300 idle FPS: avg=${fps.avgFps}, min=${fps.minFps}, frames=${fps.totalFrames}, duration=${fps.durationMs}ms`);
+    console.log(
+      `[PERF] Kanban 20×300 idle FPS: avg=${fps.avgFps}, min=${fps.minFps}, frames=${fps.totalFrames}, duration=${fps.durationMs}ms`,
+    );
 
     expect(fps.avgFps).toBeGreaterThan(30);
   });
 
-  test('drag FPS on kanban-perf-scale (20×300) route targets 60fps avg', async ({ page, allowConsoleErrors }) => {
+  test('drag FPS on kanban-perf-scale (20×300) route targets 60fps avg', async ({
+    page,
+    allowConsoleErrors,
+  }) => {
     allowConsoleErrors(100);
     await page.goto('/#/kanban-perf-scale', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Kanban Performance Scale')).toBeVisible({ timeout: 120_000 });
@@ -51,13 +61,19 @@ test.describe('Kanban Performance Baseline', () => {
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
     for (let i = 0; i < 20; i++) {
-      await page.mouse.move(box.x + box.width / 2 + i * 10, box.y + box.height / 2 + 30, { steps: 2 });
+      await page.mouse.move(box.x + box.width / 2 + i * 10, box.y + box.height / 2 + 30, {
+        steps: 2,
+      });
     }
     await page.mouse.up();
 
     const fps = await measureFps(page, 2000);
-    console.log(`[PERF] Kanban 20×300 drag FPS: avg=${fps.avgFps}, min=${fps.minFps}, frames=${fps.totalFrames}, duration=${fps.durationMs}ms`);
+    console.log(
+      `[PERF] Kanban 20×300 drag FPS: avg=${fps.avgFps}, min=${fps.minFps}, frames=${fps.totalFrames}, duration=${fps.durationMs}ms`,
+    );
 
-    expect(fps.avgFps).toBeGreaterThan(60);
+    // headless chromium rAF 被 60Hz 封顶（avg 恰为 60），阈值须低于刷新上限；
+    // 对齐 gantt drag/scroll 套件惯例（>50）。
+    expect(fps.avgFps).toBeGreaterThan(50);
   });
 });

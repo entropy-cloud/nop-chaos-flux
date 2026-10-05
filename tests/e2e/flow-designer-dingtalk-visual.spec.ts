@@ -36,7 +36,9 @@ async function openDingtalkDesigner(page: import('@playwright/test').Page) {
   await page.waitForTimeout(2000);
 }
 
-test('dingtalk cards render schema body data-slot/variant attributes (CSS hooks present)', async ({ page }) => {
+test('dingtalk cards render schema body data-slot/variant attributes (CSS hooks present)', async ({
+  page,
+}) => {
   await openDingtalkDesigner(page);
 
   const root = page.locator('[data-slot="dt-node"]').first();
@@ -45,12 +47,23 @@ test('dingtalk cards render schema body data-slot/variant attributes (CSS hooks 
   const variant = await root.getAttribute('data-node-variant');
   expect(variant).toBe('initiator');
 
-  const variants = await page.locator('[data-slot="dt-node"]').evaluateAll((els) =>
-    [...new Set(els.map((el) => el.getAttribute('data-node-variant')))].sort(),
-  );
-  // dt-end is a terminal node: it renders via the tree-mode terminal branch
-  // (circle dot + label), not the schema body, so it has no dt-node body hook.
-  expect(variants).toEqual(['approval', 'cc', 'condition', 'initiator', 'parallel', 'subprocess']);
+  const variants = await page
+    .locator('[data-slot="dt-node"]')
+    .evaluateAll((els) =>
+      [...new Set(els.map((el) => el.getAttribute('data-node-variant')))].sort(),
+    );
+  // dt-end 自 schema 起即声明卡片 body（dt-node 钩子齐全）；ux-r7 FD-5 契约 =
+  // terminal 节点有自定义 body 时渲染真卡片（仅无 body 才走极简圆点），因此
+  // 'end' 变体同样经 dt-node body 渲染。
+  expect(variants).toEqual([
+    'approval',
+    'cc',
+    'condition',
+    'end',
+    'initiator',
+    'parallel',
+    'subprocess',
+  ]);
 
   await assertTrackedPageErrors(page);
 });
@@ -97,38 +110,28 @@ test('dingtalk card header colors match the CSS contract per variant', async ({ 
   expect(headers['condition:title']).toBe('#15bc83');
 
   // header text must be white on the colored bands (demo parity)
-  for (const key of ['initiator:title', 'approval:title', 'cc:title', 'parallel:title', 'subprocess:title']) {
+  for (const key of [
+    'initiator:title',
+    'approval:title',
+    'cc:title',
+    'parallel:title',
+    'subprocess:title',
+  ]) {
     expect(headers[key], `${key} should be white`).toBe('#ffffff');
   }
 
   await assertTrackedPageErrors(page);
 });
 
-test('dingtalk end node renders as terminal circle dot with label', async ({ page }) => {
+test('dingtalk end node renders its schema card body with the label', async ({ page }) => {
+  // ux-r7 FD-5 契约：dt-end 声明了卡片 body → 渲染真卡片（dt-node 钩子 + 标题），
+  // 不再走无 body 时的极简圆点分支。
   await openDingtalkDesigner(page);
 
-  const endNode = page.locator('.react-flow__node').filter({ hasText: '结束' }).first();
+  const endNode = page.locator('[data-slot="dt-node"][data-node-variant="end"]').first();
   await expect(endNode).toBeVisible({ timeout: 10000 });
-
-  const shape = await endNode.evaluate((el) => {
-    const circle = el.querySelector('.rounded-full');
-    if (!circle) return null;
-    const style = window.getComputedStyle(circle as HTMLElement);
-    return {
-      width: parseFloat(style.width),
-      height: parseFloat(style.height),
-      borderRadius: style.borderRadius,
-      background: style.backgroundColor !== 'rgba(0, 0, 0, 0)' && style.backgroundColor !== 'transparent',
-    };
-  });
-  expect(shape).not.toBeNull();
-  expect(shape!.width).toBeGreaterThan(0);
-  expect(shape!.height).toBeGreaterThan(0);
-  // Tailwind v4 rounded-full computes to calc(infinity * 1px); accept any
-  // effectively-round value (50% or a very large pixel radius).
-  const radius = parseFloat(shape!.borderRadius);
-  expect(shape!.borderRadius === '50%' || radius > 1000).toBe(true);
-  expect(shape!.background).toBe(true);
+  await expect(endNode).toContainText('结束');
+  await expect(endNode.locator('[data-slot="dt-node-title"]')).toContainText('结束');
 
   await assertTrackedPageErrors(page);
 });
@@ -157,7 +160,9 @@ test('add-branch overlay center sits exactly on a split/merge line', async ({ pa
     const uniqueLineYs = [...new Set(lineYs.map((y) => Math.round(y)))].sort((a, b) => a - b);
 
     const buttons: Array<{ x: number; y: number }> = [];
-    for (const el of document.querySelectorAll('.react-flow__viewport button[aria-label="添加分支"]')) {
+    for (const el of document.querySelectorAll(
+      '.react-flow__viewport button[aria-label="添加分支"]',
+    )) {
       const r = el.getBoundingClientRect();
       const c = toFlow(r.x + r.width / 2, r.y + r.height / 2);
       buttons.push({ x: Math.round(c.x), y: Math.round(c.y) });
@@ -226,7 +231,10 @@ test('branch labels render on split lines above the branch legs', async ({ page 
   });
   expect(lineYs.length).toBeGreaterThan(0);
   for (const label of labels) {
-    expect(lineYs.some((y) => Math.abs(label.y - y) <= 2), `label ${label.text} y ${label.y} on line`).toBe(true);
+    expect(
+      lineYs.some((y) => Math.abs(label.y - y) <= 2),
+      `label ${label.text} y ${label.y} on line`,
+    ).toBe(true);
   }
 
   await assertTrackedPageErrors(page);
@@ -243,7 +251,10 @@ test('minimap renders bottom-right and controls render top-left', async ({ page 
     const controls = document.querySelector('.react-flow__controls')?.getBoundingClientRect();
     if (!surfaceRect || !minimap || !controls) return null;
     return {
-      minimap: { right: surfaceRect.right - minimap.right, bottom: surfaceRect.bottom - minimap.bottom },
+      minimap: {
+        right: surfaceRect.right - minimap.right,
+        bottom: surfaceRect.bottom - minimap.bottom,
+      },
       controls: { left: controls.left - surfaceRect.left, top: controls.top - surfaceRect.top },
     };
   });

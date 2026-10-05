@@ -13,7 +13,9 @@ async function openGantt(page: import('@playwright/test').Page) {
 
 async function openGanttStates(page: import('@playwright/test').Page) {
   await page.goto(STATES_ROUTE, { waitUntil: 'commit' });
-  await expect(page.getByRole('heading', { name: STATES_HEADING })).toBeVisible({ timeout: 25_000 });
+  await expect(page.getByRole('heading', { name: STATES_HEADING })).toBeVisible({
+    timeout: 25_000,
+  });
 }
 
 async function selectTask(page: import('@playwright/test').Page, taskId: string) {
@@ -21,7 +23,9 @@ async function selectTask(page: import('@playwright/test').Page, taskId: string)
   await grid.focus();
   await page.keyboard.press('ArrowDown');
   for (let i = 0; i < 20; i++) {
-    const active = await page.evaluate(() => document.activeElement?.getAttribute('data-task-id') ?? null);
+    const active = await page.evaluate(
+      () => document.activeElement?.getAttribute('data-task-id') ?? null,
+    );
     if (active === taskId) return;
     await page.keyboard.press('ArrowDown');
   }
@@ -53,11 +57,15 @@ test.describe('Gantt — coverage gaps: root ARIA, fit zoom, blur commit, keyboa
     // Week (default) scale header shows W%V labels.
     const scaleRows = page.locator('[data-slot="gantt-scale"] > div');
     await expect(scaleRows).toHaveCount(2, { timeout: 10_000 });
-    await expect(scaleRows.first().locator('[data-slot="gantt-scale-cell"]').first()).toHaveText(/^W\d+$/);
+    await expect(scaleRows.first().locator('[data-slot="gantt-scale-cell"]').first()).toHaveText(
+      /^W\d+$/,
+    );
 
     // Zoom in once → day level (day-of-month numbers).
     await zoomIn.click();
-    await expect(scaleRows.first().locator('[data-slot="gantt-scale-cell"]').first()).not.toHaveText(/^W\d+$/, {
+    await expect(
+      scaleRows.first().locator('[data-slot="gantt-scale-cell"]').first(),
+    ).not.toHaveText(/^W\d+$/, {
       timeout: 5_000,
     });
 
@@ -67,12 +75,18 @@ test.describe('Gantt — coverage gaps: root ARIA, fit zoom, blur commit, keyboa
     // span at the default viewport that is the month zoom (week's 30px/cell
     // overflows; month's 12px fits), so the two-tier month/year header returns.
     await fit.click();
-    await expect(scaleRows.first().locator('[data-slot="gantt-scale-cell"]').first()).toHaveText(/^\d{4}\/\d{2}$/, {
-      timeout: 5_000,
-    });
-    await expect(scaleRows.nth(1).locator('[data-slot="gantt-scale-cell"]').first()).toHaveText(/^\d{4}$/, {
-      timeout: 5_000,
-    });
+    await expect(scaleRows.first().locator('[data-slot="gantt-scale-cell"]').first()).toHaveText(
+      /^\d{4}\/\d{2}$/,
+      {
+        timeout: 5_000,
+      },
+    );
+    await expect(scaleRows.nth(1).locator('[data-slot="gantt-scale-cell"]').first()).toHaveText(
+      /^\d{4}$/,
+      {
+        timeout: 5_000,
+      },
+    );
     await assertTrackedPageErrors(page);
   });
 
@@ -104,14 +118,18 @@ test.describe('Gantt — coverage gaps: root ARIA, fit zoom, blur commit, keyboa
     await openGantt(page);
     await selectTask(page, '5');
     await page.keyboard.press('Backspace');
-    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="5"]')).toHaveCount(0, { timeout: 5_000 });
+    await expect(page.locator('[data-slot="gantt-grid-row"][data-task-id="5"]')).toHaveCount(0, {
+      timeout: 5_000,
+    });
     await expect
       .poll(async () => page.locator('[data-slot="gantt-grid-row"]').count(), { timeout: 5_000 })
       .toBe(13);
     await assertTrackedPageErrors(page);
   });
 
-  test('ArrowLeft on every parent collapses all rows; ArrowRight restores them', async ({ page }) => {
+  test('ArrowLeft on every parent collapses all rows; ArrowRight restores them', async ({
+    page,
+  }) => {
     await openGantt(page);
     const rowCount = () => page.locator('[data-slot="gantt-grid-row"]').count();
     await expect.poll(rowCount, { timeout: 10_000 }).toBe(14);
@@ -148,9 +166,7 @@ test.describe('Gantt — coverage gaps: root ARIA, fit zoom, blur commit, keyboa
       if (before === 0) break;
       await page.keyboard.press('ArrowDown');
       await page.keyboard.press('Delete');
-      await expect
-        .poll(async () => rows.count(), { timeout: 5_000 })
-        .toBeLessThan(before);
+      await expect.poll(async () => rows.count(), { timeout: 5_000 }).toBeLessThan(before);
     }
 
     await expect(rows).toHaveCount(0);
@@ -161,7 +177,9 @@ test.describe('Gantt — coverage gaps: root ARIA, fit zoom, blur commit, keyboa
 });
 
 test.describe('Gantt — default zoom level formats (no zoomLevels config)', () => {
-  test('week default renders YYYY + DD rows, zoom in shows MM/DD, zoom out shows month row', async ({ page }) => {
+  test('week default renders YYYY + DD rows, zoom in shows MM/DD, zoom out shows month row', async ({
+    page,
+  }) => {
     await openGanttStates(page);
     const gantt = page.locator('[data-testid="gantt-default-zoom"]');
     await expect(gantt).toBeVisible({ timeout: 15_000 });
@@ -175,34 +193,46 @@ test.describe('Gantt — default zoom level formats (no zoomLevels config)', () 
     const zoomIn = gantt.locator('[data-slot="gantt-toolbar"] button').nth(1);
 
     // Default zoom is week: top row %Y labels, bottom row %d labels.
+    // 2026-09-29 性能批次起 gantt 头部横向窗口化挂载（只挂可见+overscan），
+    // 断言以"行结构+标签格式"为准，挂载计数只做非空/低位数下限。
     await expect(rows).toHaveCount(2, { timeout: 10_000 });
-    const weekTopLabels = await rows.first().locator('[data-slot="gantt-scale-cell"]').allTextContents();
-    expect(weekTopLabels.length).toBeGreaterThanOrEqual(8);
+    const weekTopLabels = await rows
+      .first()
+      .locator('[data-slot="gantt-scale-cell"]')
+      .allTextContents();
+    expect(weekTopLabels.length).toBeGreaterThanOrEqual(1);
     for (const label of weekTopLabels) expect(label).toMatch(/^20\d{2}$/);
-    const weekBottomLabels = await rows.nth(1).locator('[data-slot="gantt-scale-cell"]').allTextContents();
-    expect(weekBottomLabels.length).toBeGreaterThanOrEqual(30);
+    const weekBottomLabels = await rows
+      .nth(1)
+      .locator('[data-slot="gantt-scale-cell"]')
+      .allTextContents();
+    expect(weekBottomLabels.length).toBeGreaterThanOrEqual(5);
     for (const label of weekBottomLabels) expect(label).toMatch(/^\d{1,2}$/);
 
     // Zoom out → day level: a single %m/%d row.
     await zoomOut.click();
-    await expect
-      .poll(async () => rows.count(), { timeout: 5_000 })
-      .toBe(1);
-    const dayLabels = await rows.first().locator('[data-slot="gantt-scale-cell"]').allTextContents();
-    expect(dayLabels.length).toBeGreaterThanOrEqual(30);
+    await expect.poll(async () => rows.count(), { timeout: 5_000 }).toBe(1);
+    const dayLabels = await rows
+      .first()
+      .locator('[data-slot="gantt-scale-cell"]')
+      .allTextContents();
+    expect(dayLabels.length).toBeGreaterThanOrEqual(5);
     for (const label of dayLabels) expect(label).toMatch(/^\d{2}\/\d{2}$/);
 
     // Back to week, then zoom in → month level: top row cell count drops to a
     // few months.
     await zoomIn.click();
-    await expect
-      .poll(async () => rows.count(), { timeout: 5_000 })
-      .toBe(2);
+    await expect.poll(async () => rows.count(), { timeout: 5_000 }).toBe(2);
     await zoomIn.click();
     await expect
-      .poll(async () => rows.first().locator('[data-slot="gantt-scale-cell"]').count(), { timeout: 5_000 })
+      .poll(async () => rows.first().locator('[data-slot="gantt-scale-cell"]').count(), {
+        timeout: 5_000,
+      })
       .toBeLessThanOrEqual(5);
-    const monthTopLabels = await rows.first().locator('[data-slot="gantt-scale-cell"]').allTextContents();
+    const monthTopLabels = await rows
+      .first()
+      .locator('[data-slot="gantt-scale-cell"]')
+      .allTextContents();
     for (const label of monthTopLabels) expect(label).toMatch(/^20\d{2}$/);
     await assertTrackedPageErrors(page);
   });

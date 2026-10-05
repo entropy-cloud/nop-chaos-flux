@@ -19,31 +19,36 @@ async function openWordEditor(page: import('@playwright/test').Page) {
 }
 
 test.describe('Word Editor Recovery (we-7 import + we-3 selection + we-4 confirmations)', () => {
-  test('seeded valid persisted document hydrates into the editor on open (import path)', async ({ page }) => {
+  test('seeded valid persisted document hydrates into the editor on open (import path)', async ({
+    page,
+  }) => {
     await page.goto('/#/word-editor', { waitUntil: 'commit' });
-    await page.evaluate(({ documentKey, datasetsKey }) => {
-      localStorage.removeItem(documentKey);
-      localStorage.removeItem(datasetsKey);
-      localStorage.setItem(
-        documentKey,
-        JSON.stringify({
-          data: {
-            header: [],
-            main: [{ value: 'Seeded Import Marker' }, { value: ' Second Part' }],
-            footer: [],
-            charts: [],
-            codes: [],
-          },
-          paperSettings: {
-            width: 595,
-            height: 842,
-            direction: 'vertical',
-            margins: [100, 120, 100, 120],
-          },
-          savedAt: new Date().toISOString(),
-        }),
-      );
-    }, { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY });
+    await page.evaluate(
+      ({ documentKey, datasetsKey }) => {
+        localStorage.removeItem(documentKey);
+        localStorage.removeItem(datasetsKey);
+        localStorage.setItem(
+          documentKey,
+          JSON.stringify({
+            data: {
+              header: [],
+              main: [{ value: 'Seeded Import Marker' }, { value: ' Second Part' }],
+              footer: [],
+              charts: [],
+              codes: [],
+            },
+            paperSettings: {
+              width: 595,
+              height: 842,
+              direction: 'vertical',
+              margins: [100, 120, 100, 120],
+            },
+            savedAt: new Date().toISOString(),
+          }),
+        );
+      },
+      { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY },
+    );
     await page.reload({ waitUntil: 'commit' });
 
     await openWordEditor(page);
@@ -52,38 +57,55 @@ test.describe('Word Editor Recovery (we-7 import + we-3 selection + we-4 confirm
     });
   });
 
-  test('corrupt persisted JSON root ("null") does not crash the page (recovery fail-closed)', async ({ page }) => {
+  test('corrupt persisted JSON root ("null") does not crash the page (recovery fail-closed)', async ({
+    page,
+  }) => {
     await page.goto('/#/word-editor', { waitUntil: 'commit' });
-    await page.evaluate(({ documentKey, datasetsKey }) => {
-      localStorage.removeItem(documentKey);
-      localStorage.removeItem(datasetsKey);
-      localStorage.setItem(documentKey, 'null');
-    }, { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY });
+    await page.evaluate(
+      ({ documentKey, datasetsKey }) => {
+        localStorage.removeItem(documentKey);
+        localStorage.removeItem(datasetsKey);
+        localStorage.setItem(documentKey, 'null');
+      },
+      { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY },
+    );
     await page.reload({ waitUntil: 'commit' });
 
     await openWordEditor(page);
-    await expect(savedPreview(page)).toContainText('无文档数据', { timeout: 15_000 });
+    // ux-r10 wd1 契约：recovery 失败（损坏持久化被丢弃、页面不崩溃）后回落到页面的
+    // initialDocument 演示文档——savedPreview 呈现演示标题即证明 fail-closed 生效。
+    await expect(savedPreview(page)).toContainText('产品发布计划（2026 Q4）', { timeout: 15_000 });
   });
 
-  test('corrupt persisted JSON syntax does not crash the page (recovery fail-closed)', async ({ page }) => {
+  test('corrupt persisted JSON syntax does not crash the page (recovery fail-closed)', async ({
+    page,
+  }) => {
     await page.goto('/#/word-editor', { waitUntil: 'commit' });
-    await page.evaluate(({ documentKey, datasetsKey }) => {
-      localStorage.removeItem(documentKey);
-      localStorage.removeItem(datasetsKey);
-      localStorage.setItem(documentKey, '{bad json');
-    }, { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY });
+    await page.evaluate(
+      ({ documentKey, datasetsKey }) => {
+        localStorage.removeItem(documentKey);
+        localStorage.removeItem(datasetsKey);
+        localStorage.setItem(documentKey, '{bad json');
+      },
+      { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY },
+    );
     await page.reload({ waitUntil: 'commit' });
 
     await openWordEditor(page);
-    await expect(savedPreview(page)).toContainText('无文档数据', { timeout: 15_000 });
+    // ux-r10 wd1 契约：recovery 失败（损坏持久化被丢弃、页面不崩溃）后回落到页面的
+    // initialDocument 演示文档——savedPreview 呈现演示标题即证明 fail-closed 生效。
+    await expect(savedPreview(page)).toContainText('产品发布计划（2026 Q4）', { timeout: 15_000 });
   });
 
   test('selection echo: formatting toolbar reflects the live selection state', async ({ page }) => {
     await page.goto('/#/word-editor', { waitUntil: 'commit' });
-    await page.evaluate(({ documentKey, datasetsKey }) => {
-      localStorage.removeItem(documentKey);
-      localStorage.removeItem(datasetsKey);
-    }, { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY });
+    await page.evaluate(
+      ({ documentKey, datasetsKey }) => {
+        localStorage.removeItem(documentKey);
+        localStorage.removeItem(datasetsKey);
+      },
+      { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY },
+    );
     await page.reload({ waitUntil: 'commit' });
 
     await openWordEditor(page);
@@ -102,12 +124,17 @@ test.describe('Word Editor Recovery (we-7 import + we-3 selection + we-4 confirm
     await expect(boldButton).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('selecting a dataset makes its fields reachable in the Fields tab (P1-1 confirmation)', async ({ page }) => {
+  test('selecting a dataset makes its fields reachable in the Fields tab (P1-1 confirmation)', async ({
+    page,
+  }) => {
     await page.goto('/#/word-editor', { waitUntil: 'commit' });
-    await page.evaluate(({ documentKey, datasetsKey }) => {
-      localStorage.removeItem(documentKey);
-      localStorage.removeItem(datasetsKey);
-    }, { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY });
+    await page.evaluate(
+      ({ documentKey, datasetsKey }) => {
+        localStorage.removeItem(documentKey);
+        localStorage.removeItem(datasetsKey);
+      },
+      { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY },
+    );
     await page.reload({ waitUntil: 'commit' });
 
     await openWordEditor(page);
@@ -134,24 +161,29 @@ test.describe('Word Editor Recovery (we-7 import + we-3 selection + we-4 confirm
     await expect(page.getByText('未选择数据集')).toHaveCount(0);
   });
 
-  test('deleting a dataset through the row menu removes it after confirmation (P1-2 confirmation)', async ({ page }) => {
+  test('deleting a dataset through the row menu removes it after confirmation (P1-2 confirmation)', async ({
+    page,
+  }) => {
     await page.goto('/#/word-editor', { waitUntil: 'commit' });
-    await page.evaluate(({ documentKey, datasetsKey }) => {
-      localStorage.removeItem(documentKey);
-      localStorage.removeItem(datasetsKey);
-      localStorage.setItem(
-        datasetsKey,
-        JSON.stringify([
-          {
-            id: 'ds-e2e-delete',
-            name: 'DoomedDataset',
-            description: '',
-            type: 'static',
-            columns: [],
-          },
-        ]),
-      );
-    }, { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY });
+    await page.evaluate(
+      ({ documentKey, datasetsKey }) => {
+        localStorage.removeItem(documentKey);
+        localStorage.removeItem(datasetsKey);
+        localStorage.setItem(
+          datasetsKey,
+          JSON.stringify([
+            {
+              id: 'ds-e2e-delete',
+              name: 'DoomedDataset',
+              description: '',
+              type: 'static',
+              columns: [],
+            },
+          ]),
+        );
+      },
+      { documentKey: DOCUMENT_KEY, datasetsKey: DATASETS_KEY },
+    );
     await page.reload({ waitUntil: 'commit' });
 
     await openWordEditor(page);

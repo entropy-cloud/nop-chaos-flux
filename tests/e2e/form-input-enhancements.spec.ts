@@ -21,9 +21,7 @@ test.describe('E3 form input enhancements', () => {
     await page.waitForTimeout(600);
     await increase.dispatchEvent('pointerup');
 
-    const countText = await page
-      .getByTestId('form-input-enhancements-count')
-      .textContent();
+    const countText = await page.getByTestId('form-input-enhancements-count').textContent();
     const match = countText?.match(/count = (-?\d+)/);
     const finalCount = match ? Number(match[1]) : 0;
     expect(finalCount).toBeGreaterThanOrEqual(2);
@@ -57,7 +55,9 @@ test.describe('E3 form input enhancements', () => {
   }) => {
     await openFormInputEnhancementsPage(page);
 
-    const moveDownButtons = page.getByRole('button', { name: /^Move down entry \d+$/ });
+    // 移动按钮的可访问名走 i18n（en 'Move entry N down' / zh '下移第 N 项'），
+    // 断言改用稳定的 data-slot 定位，避免文案耦合。
+    const moveDownButtons = page.locator('[data-slot="key-value-move-down"]');
     const count = await moveDownButtons.count();
     await expect(moveDownButtons.nth(count - 1)).toBeDisabled();
     await expect(moveDownButtons.nth(0)).toBeEnabled();
@@ -74,4 +74,3 @@ test.describe('E3 form input enhancements', () => {
     await assertTrackedPageErrors(page);
   });
 });
-
