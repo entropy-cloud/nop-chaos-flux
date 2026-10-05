@@ -1,0 +1,9 @@
+/*
+ * Page designer 画布层语义令牌（plan 527 Phase 1）——本包 hex 兜底唯一落点；
+ * 宿主 `--nop-*` 语义面优先，裸宿主（无令牌装配路径）回退字面值。
+ * 消费点一律引用 var(--pd-*)，不得再内联 `var(--nop-x, <hex>)` 字面值。
+ */
+:root {
+  --pd-accent: var(--nop-accent, #6366f1);
+  --pd-destructive: var(--nop-destructive, #ef4444);
+}

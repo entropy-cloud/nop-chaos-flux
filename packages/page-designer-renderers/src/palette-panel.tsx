@@ -4,12 +4,57 @@
  * 携带 `{ source: 'palette', type }` 载荷，落点经命令通道 insertNode）。
  */
 
+import './page-designer-tokens.css';
+
+import type { DragEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { PaletteItem } from '@nop-chaos/page-designer-core';
 import { PAGE_DESIGNER_DRAG_MIME } from './constants.js';
+import { PD_ACCENT_BORDER, PD_ACCENT_SOFT_BG } from './page-designer-tokens.js';
 import type { DesignerDragPayload } from './types.js';
+
+/** plan 527 Phase 1：拖拽 ghost（AutoGPT setDragImage 模式）——构造离屏 DOM 节点
+ * （fixed 视口外 + pointer-events:none，避免干扰 elementsFromPoint 命中链），
+ * setDragImage 后即刻移除；宿主/测试 dataTransfer 缺 setDragImage 时降级浏览器
+ * 默认截图（feature-detect 守卫）。 */
+function setPaletteDragGhost(
+  event: DragEvent<HTMLElement>,
+  label: string,
+  isContainer: boolean,
+): void {
+  const dataTransfer = event.dataTransfer as (DataTransfer & { setDragImage?: unknown }) | null;
+  if (!dataTransfer || typeof dataTransfer.setDragImage !== 'function') {
+    return;
+  }
+  const ghost = document.createElement('div');
+  ghost.textContent = isContainer ? `${label} · ${t('flux.pageDesigner.containerBadge')}` : label;
+  ghost.setAttribute('data-testid', 'page-designer-drag-ghost');
+  ghost.style.cssText = [
+    'position:fixed',
+    'top:-200px',
+    'left:-200px',
+    'z-index:-1',
+    'pointer-events:none',
+    'display:inline-flex',
+    'align-items:center',
+    'gap:6px',
+    'padding:6px 12px',
+    'border-radius:8px',
+    `border:1px solid ${PD_ACCENT_BORDER}`,
+    `background:${PD_ACCENT_SOFT_BG}`,
+    'box-shadow:0 4px 12px rgba(15,23,42,0.16)',
+    'font-size:13px',
+    'font-weight:500',
+    'white-space:nowrap',
+  ].join(';');
+  document.body.appendChild(ghost);
+  dataTransfer.setDragImage(ghost, 12, 12);
+  window.setTimeout(() => {
+    ghost.remove();
+  }, 0);
+}
 
 export interface PalettePanelProps {
   items: readonly PaletteItem[];
@@ -44,11 +89,12 @@ function PaletteEntry(props: { item: PaletteItem; onClick(): void }) {
       draggable
       data-palette-item={item.type}
       data-palette-container={item.isContainer ? 'true' : undefined}
-      className="flex w-full cursor-grab items-center gap-2 rounded-md border border-[var(--nop-nav-border,#e5e7eb)] bg-[var(--nop-nav-surface,#fff)] px-3 py-2 text-left text-sm hover:border-[var(--nop-accent,#6366f1)]"
+      className="flex w-full cursor-grab items-center gap-2 rounded-md border border-[var(--nop-nav-border,#e5e7eb)] bg-[var(--nop-nav-surface,#fff)] px-3 py-2 text-left text-sm transition-colors hover:border-[var(--pd-accent)]"
       onDragStart={(event) => {
         const payload: DesignerDragPayload = { source: 'palette', type: item.type };
         event.dataTransfer.setData(PAGE_DESIGNER_DRAG_MIME, JSON.stringify(payload));
         event.dataTransfer.effectAllowed = 'copy';
+        setPaletteDragGhost(event, item.displayName, item.isContainer === true);
       }}
       onClick={props.onClick}
     >

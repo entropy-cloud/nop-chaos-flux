@@ -22,7 +22,8 @@
     "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/flux-renderers-layout": "workspace:*",
     "@nop-chaos/page-designer-core": "workspace:*",
-    "@nop-chaos/ui": "workspace:*"
+    "@nop-chaos/ui": "workspace:*",
+    "lucide-react": "^1.17.0"
   },
   "peerDependencies": {
     "react": "^19.0.0"

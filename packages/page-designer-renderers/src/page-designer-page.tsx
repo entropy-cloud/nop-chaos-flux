@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, SquarePlus } from 'lucide-react';
 import { Button, Separator, Tabs, TabsContent, TabsList, TabsTrigger, toast } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { createDefaultEnv } from '@nop-chaos/flux-react';
@@ -38,6 +39,13 @@ import { TemplateGallery } from './template-gallery.js';
 import { createInMemoryTemplateStore } from './template-gallery.js';
 import type { PageDesignerTemplateStore } from './template-gallery.js';
 import type { DesignerDragPayload, DesignerDropHint } from './types.js';
+import {
+  PageDesignerContextMenu,
+  type PageDesignerContextMenuAction,
+  type PageDesignerContextMenuState,
+} from './page-designer-context-menu.js';
+import { NODE_ANCHOR_ATTRIBUTE } from './constants.js';
+import { copyNodeToClipboard, resolvePasteTarget } from './designer-clipboard.js';
 
 export interface PageDesignerProps {
   /** 宿主 env（编辑态预览数据源等）；缺省 `createDefaultEnv()`。 */
@@ -86,6 +94,9 @@ export function PageDesigner(props: PageDesignerProps) {
   const [hoverNodeId, setHoverNodeId] = useState<SessionNodeId | null>(null);
   const [dropHint, setDropHint] = useState<DesignerDropHint | null>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  // plan 527 Phase 2：元素级剪贴板（Ctrl+C 复制子树 / Ctrl+V 粘贴到选中上下文）
+  const [clipboardNode, setClipboardNode] = useState<SchemaInput | null>(null);
+  const [contextMenu, setContextMenu] = useState<PageDesignerContextMenuState | null>(null);
   const inspectorTxActiveRef = useRef(false);
 
   const paletteItems = useMemo(() => buildMvpPaletteItems(registry), [registry]);
@@ -255,9 +266,57 @@ export function PageDesigner(props: PageDesignerProps) {
     }
   }, [registry, selectedNode, selectedNodeId, session, state.working]);
 
+  // plan 527 Phase 2：Ctrl+C 深拷贝选中子树进内部剪贴板（id 清空策略与 duplicate 的
+  // cloneNode→insertNode 重注入一致——insertNode 重新生成 sid）。
+  const handleCopy = useCallback(() => {
+    if (!selectedNode) return;
+    setClipboardNode(copyNodeToClipboard(selectedNode));
+  }, [selectedNode]);
+
+  const handlePaste = useCallback(
+    (targetNodeId?: SessionNodeId | null) => {
+      if (!clipboardNode) return;
+      const target = resolvePasteTarget({
+        working: state.working,
+        registry,
+        targetNodeId,
+        selectedNodeId,
+      });
+      if (!target) return;
+      const result = session.dispatch({
+        kind: 'insertNode',
+        parentId: target.parentId,
+        regionKey: target.regionKey,
+        node: cloneNode(clipboardNode),
+      });
+      if (result.ok && result.nodeId) {
+        session.core.setSelection([result.nodeId]);
+      } else {
+        toast.error(t('flux.pageDesigner.dropRejected'));
+      }
+    },
+    [clipboardNode, registry, selectedNodeId, session, state.working],
+  );
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (isTextEntryTarget(event.target)) return;
+      if (state.mode !== 'edit') return;
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'c' && selectedNodeId) {
+        event.preventDefault();
+        handleCopy();
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v' && clipboardNode) {
+        event.preventDefault();
+        handlePaste();
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd' && selectedNodeId) {
+        event.preventDefault();
+        handleDuplicate();
+        return;
+      }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault();
         if (event.shiftKey) {
@@ -292,11 +351,28 @@ export function PageDesigner(props: PageDesignerProps) {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [endInspectorTransaction, handleDelete, registry, selectedNodeId, session, state.working]);
+  }, [clipboardNode, endInspectorTransaction, handleCopy, handleDelete, handleDuplicate, handlePaste, registry, selectedNodeId, session, state.mode, state.working]);
 
   const exportedJson = useMemo(
     () => session.core.adapter.serialize(state.working),
     [session, state.working],
+  );
+
+  const handleContextAction = useCallback(
+    (action: PageDesignerContextMenuAction, nodeId: string | null) => {
+      endInspectorTransaction();
+      if (nodeId) {
+        session.core.setSelection([nodeId]);
+      }
+      if (action === 'paste') {
+        handlePaste(nodeId);
+      } else if (action === 'duplicate' && nodeId) {
+        handleDuplicate();
+      } else if (action === 'delete') {
+        handleDelete();
+      }
+    },
+    [endInspectorTransaction, handleDelete, handleDuplicate, handlePaste, session.core],
   );
 
   return (
@@ -304,7 +380,8 @@ export function PageDesigner(props: PageDesignerProps) {
       <header className="flex items-center gap-3 border-b px-4 py-2">
         {props.onBack ? (
           <Button type="button" variant="ghost" size="sm" data-testid="page-designer-back" onClick={props.onBack}>
-            ← {t('flux.pageDesigner.back')}
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            {t('flux.pageDesigner.back')}
           </Button>
         ) : null}
         <h1 className="text-lg font-bold">{t('flux.pageDesigner.title')}</h1>
@@ -406,7 +483,21 @@ export function PageDesigner(props: PageDesignerProps) {
         </aside>
         ) : null}
 
-        <div className="relative flex min-w-0 flex-1 flex-col">
+        <div
+          className="relative flex min-w-0 flex-1 flex-col"
+          role="region"
+          aria-label={t('flux.pageDesigner.title')}
+          onContextMenu={(event) => {
+            if (state.mode !== 'edit') return;
+            const anchor = (event.target as HTMLElement).closest(`[${NODE_ANCHOR_ATTRIBUTE}]`);
+            event.preventDefault();
+            setContextMenu({
+              x: event.clientX,
+              y: event.clientY,
+              nodeId: anchor?.getAttribute(NODE_ANCHOR_ATTRIBUTE) ?? null,
+            });
+          }}
+        >
           <PageDesignerCanvas
             document={state.working}
             registry={registry}
@@ -436,10 +527,24 @@ export function PageDesigner(props: PageDesignerProps) {
               className="pointer-events-none absolute inset-0 flex items-center justify-center"
               data-testid="page-designer-canvas-empty"
             >
-              <p className="rounded-lg border border-dashed px-4 py-3 text-sm text-[var(--nop-body-copy,#6b7280)]">
-                {t('flux.pageDesigner.canvasEmpty')}
-              </p>
+              <div className="flex max-w-xs flex-col items-center gap-2 rounded-xl border border-dashed border-[var(--pd-accent)] px-6 py-5 text-center">
+                <SquarePlus className="h-6 w-6 text-[var(--pd-accent)]" aria-hidden="true" />
+                <p className="text-sm font-medium text-[var(--nop-text-strong,#1f2937)]">
+                  {t('flux.pageDesigner.canvasEmpty')}
+                </p>
+                <p className="text-xs text-[var(--nop-body-copy,#6b7280)]">
+                  {t('flux.pageDesigner.canvasEmptyHint')}
+                </p>
+              </div>
             </div>
+          ) : null}
+          {contextMenu && state.mode === 'edit' ? (
+            <PageDesignerContextMenu
+              menu={contextMenu}
+              hasClipboard={clipboardNode != null}
+              onAction={handleContextAction}
+              onClose={() => setContextMenu(null)}
+            />
           ) : null}
         </div>
 

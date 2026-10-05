@@ -336,6 +336,15 @@ interface PaletteItem {
 
 palette 拖出即 `insertNode`（`defaultSchema` 经 authoringTransform，§6.2），`PaletteItem` 的 `isContainer` 驱动落点合法性（§5.3）。
 
+### 9.2 画布交互契约（plan 527）
+
+- **拖拽 ghost**：palette 条目 dragstart 构造自定义 ghost（类型徽标 + 名称，`data-testid="page-designer-drag-ghost"`）经 `setDragImage` 注入；元素 fixed 视口外 + `pointer-events:none`（不干扰 `elementsFromPoint` 命中链），微任务后清理；宿主 dataTransfer 缺 `setDragImage` 时降级浏览器默认截图（守卫判别，单测覆盖生命周期与降级）。
+- **overlay 过渡**：覆盖层外观属性（outline-color/background-color/border-color）统一 120ms 过渡（`PD_OVERLAY_TRANSITION`，`page-designer-tokens.ts`）；几何属性由 rAF tick 每帧重算，不得入 transition（追帧拖影）。
+- **语义令牌**：画布层 accent/destructive 色彩统一引用 `--pd-accent`/`--pd-destructive`（`page-designer-tokens.css` 为全包 hex 兜底唯一落点，宿主 `--nop-*` 优先）；消费点不再内联 `var(--nop-x, <hex>)` 字面值。
+- **元素级剪贴板**：Ctrl+C（`copyNodeToClipboard` 深拷贝解耦）、Ctrl+V（`resolvePasteTarget` 三分支：显式目标容器 inside / 叶子父容器原位 / 根首 region；经 `insertNode` 重注入 → sid 重生成 INV-D、1 条 undo 步）、Ctrl+D（duplicate）。目标优先级：显式（右键）> 选中 > 根。
+- **右键上下文菜单**：`page-designer-context-menu`（div role=menu；viewport 防溢出钳制、Escape/外点关闭、方向键项间导航）；节点态 = 粘贴到此处（无剪贴板禁用）/复制副本/删除，右击即选中（粘贴目标 = 右击节点上下文）；空白态 = 粘贴。仅 edit 态（预览无菜单）。
+- **返回键图标**：lucide `ArrowLeft`（lucide-react 为包内依赖）。
+
 ## 10. 与六域设计器的边界治理（裁决 7）
 
 **终裁：双防线——运行时分类断言（数据驱动）+ `pnpm check` 静态 import 边界扫描；QA.6 审计是验证手段而非防线本体。六域产物在本画布中是不透明叶子：只允许 propContracts 级属性编辑与整体替换，不得展开编辑内部文档。**

@@ -8,10 +8,23 @@
  * （`viaRootFallback` 的 inside hint → 底部插入线 + 标签，替代整页描边）。
  */
 
+import './page-designer-tokens.css';
+
 import { useEffect, useMemo, useState } from 'react';
 import type { SessionNodeId } from '@nop-chaos/page-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { NODE_ANCHOR_ATTRIBUTE } from './constants.js';
+import {
+  PD_ACCENT,
+  PD_ACCENT_BORDER,
+  PD_ACCENT_FAINT_BG,
+  PD_ACCENT_HOVER_LINE,
+  PD_ACCENT_LINE,
+  PD_ACCENT_SOFT_BG,
+  PD_DESTRUCTIVE,
+  PD_DESTRUCTIVE_SOFT_BG,
+  PD_OVERLAY_TRANSITION,
+} from './page-designer-tokens.js';
 import type { PixelRect } from './canvas-layout.js';
 import type { DesignerDropHint } from './types.js';
 import type { EmptyContainerInfo } from './empty-container-projection.js';
@@ -117,6 +130,7 @@ function OverlayBox(props: {
         width: props.box.rect.width,
         height: props.box.rect.height,
         pointerEvents: 'none',
+        transition: PD_OVERLAY_TRANSITION,
         ...props.style,
       }}
     />
@@ -188,9 +202,10 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
           style={{
             position: 'absolute',
             inset: 0,
-            border: '2px dashed var(--nop-destructive, #ef4444)',
-            background: 'color-mix(in srgb, var(--nop-destructive, #ef4444) 8%, transparent)',
+            border: `2px dashed ${PD_DESTRUCTIVE}`,
+            background: PD_DESTRUCTIVE_SOFT_BG,
             pointerEvents: 'none',
+            transition: PD_OVERLAY_TRANSITION,
           }}
         />
       ) : null}
@@ -205,10 +220,11 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
             top: box.rect.top,
             width: box.rect.width,
             height: box.rect.height,
-            border: '1.5px dashed color-mix(in srgb, var(--nop-accent, #6366f1) 55%, transparent)',
+            border: `1.5px dashed ${PD_ACCENT_LINE}`,
             borderRadius: 6,
-            background: 'color-mix(in srgb, var(--nop-accent, #6366f1) 4%, transparent)',
+            background: PD_ACCENT_FAINT_BG,
             pointerEvents: 'none',
+            transition: PD_OVERLAY_TRANSITION,
           }}
         >
           <span
@@ -221,8 +237,8 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
               padding: '0 6px',
               borderRadius: 999,
               color: 'var(--nop-text-strong, #1f2937)',
-              background: 'color-mix(in srgb, var(--nop-accent, #6366f1) 14%, var(--nop-surface, #fff))',
-              border: '1px solid color-mix(in srgb, var(--nop-accent, #6366f1) 30%, transparent)',
+              background: `color-mix(in srgb, ${PD_ACCENT} 14%, var(--nop-surface, #fff))`,
+              border: `1px solid ${PD_ACCENT_BORDER}`,
             }}
           >
             {box.label} · {t('flux.pageDesigner.emptyContainerHint')}
@@ -238,8 +254,9 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
             top: dropParentBox.rect.top + dropParentBox.rect.height - 4,
             width: Math.max(dropParentBox.rect.width, 24),
             height: 4,
-            background: 'var(--nop-accent, #6366f1)',
+            background: PD_ACCENT,
             pointerEvents: 'none',
+            transition: PD_OVERLAY_TRANSITION,
           }}
         >
           <span
@@ -253,7 +270,7 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
               borderRadius: 999,
               whiteSpace: 'nowrap',
               color: '#fff',
-              background: 'var(--nop-accent, #6366f1)',
+              background: PD_ACCENT,
             }}
           >
             {t('flux.pageDesigner.rootFallbackHint')}
@@ -267,8 +284,8 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
           dropHintKind="inside"
           className=""
           style={{
-            border: '2px dashed var(--nop-accent, #6366f1)',
-            background: 'color-mix(in srgb, var(--nop-accent, #6366f1) 8%, transparent)',
+            border: `2px dashed ${PD_ACCENT}`,
+            background: PD_ACCENT_SOFT_BG,
           }}
         />
       ) : null}
@@ -284,8 +301,9 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
                 : dropParentBox.rect.top + dropParentBox.rect.height - 2,
             width: Math.max(dropParentBox.rect.width, 24),
             height: 4,
-            background: 'var(--nop-accent, #6366f1)',
+            background: PD_ACCENT,
             pointerEvents: 'none',
+            transition: PD_OVERLAY_TRANSITION,
           }}
         />
       ) : null}
@@ -294,7 +312,7 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
           box={hoverBox}
           marker="hover"
           className=""
-          style={{ outline: '1px dashed color-mix(in srgb, var(--nop-accent, #6366f1) 60%, transparent)' }}
+          style={{ outline: `1px dashed ${PD_ACCENT_HOVER_LINE}` }}
         />
       ) : null}
       {selectedBoxes.map((box) => (
@@ -304,7 +322,7 @@ export function CanvasOverlay(props: CanvasOverlayProps) {
           marker="selection"
           frameFor={box.anchor}
           className=""
-          style={{ outline: '2px solid var(--nop-accent, #6366f1)' }}
+          style={{ outline: `2px solid ${PD_ACCENT}` }}
         />
       ))}
     </div>

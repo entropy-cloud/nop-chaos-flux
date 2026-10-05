@@ -1369,6 +1369,9 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
     devDependencies:
       '@testing-library/react':
         specifier: ^16.3.0

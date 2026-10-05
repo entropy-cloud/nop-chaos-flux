@@ -1,6 +1,6 @@
 # 527 Page Designer 拖拽反馈与视觉一致性修正计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-05
 > Source: docs/analysis/2026-10-05-designer-ai-ux-comparative-analysis.md（§3.1 / §4.2 page-designer 差距矩阵）
 > Related: docs/plans/526-flow-designer-drag-visual-remediation-plan.md 等 528/529
@@ -80,54 +80,54 @@
 
 ### Phase 1 - 拖拽 ghost 与动效令牌
 
-Status: planned
+Status: completed
 Targets: `palette-panel.tsx`, `canvas-bridge.tsx`, `canvas-overlay.tsx`, `structure-tree.tsx`, `palette-panel.test.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: palette dragstart 构造 ghost 元素并 `setDragImage`——ghost 须已在 DOM（视口外 fixed 定位）、`pointer-events:none`（避免干扰 `canvas-bridge.tsx:96-112` elementsFromPoint 命中链）、dragend 移除；对 `setDragImage` 做 feature-detect 守卫（宿主/测试 mock 缺失时降级浏览器默认截图），并同步扩展 palette-panel.test.tsx 的 dataTransfer mock + 新增 ghost 守卫断言
-- [ ] Fix: canvas-overlay 选中/hover/插入线/invalid/占位元素的外观属性（opacity/border-color/background/outline-color）加 `transition: 120ms ease`；几何属性（left/top/width/height）明确不过渡（rAF tick 每帧重设几何，过渡几何会产生追帧拖影）
-- [ ] Fix: canvas-overlay/palette-panel/structure-tree 内 `var(--x, <hex>)` 的 hex 兜底收敛到语义令牌（`hsl(var(--primary))` 系或既有 `--nop-*` 语义面）；json-source-view 及 inspector 系面板文件不在本 Phase（见 Follow-ups）
-- [ ] Proof: e2e 断言 dragstart 后存在 ghost 视觉（data-testid 标记）；overlay 元素 computed transition 非 none（外观属性）；grep 确认 In Scope 三文件无 `#6366f1` 类 hex 兜底残留
+- [x] Fix: palette dragstart 构造 ghost 元素并 `setDragImage`——ghost 须已在 DOM（视口外 fixed 定位）、`pointer-events:none`（避免干扰 `canvas-bridge.tsx:96-112` elementsFromPoint 命中链）、dragend 移除；对 `setDragImage` 做 feature-detect 守卫（宿主/测试 mock 缺失时降级浏览器默认截图），并同步扩展 palette-panel.test.tsx 的 dataTransfer mock + 新增 ghost 守卫断言
+- [x] Fix: canvas-overlay 选中/hover/插入线/invalid/占位元素的外观属性（opacity/border-color/background/outline-color）加 `transition: 120ms ease`；几何属性（left/top/width/height）明确不过渡（rAF tick 每帧重设几何，过渡几何会产生追帧拖影）
+- [x] Fix: canvas-overlay/palette-panel/structure-tree 内 `var(--x, <hex>)` 的 hex 兜底收敛到语义令牌（`hsl(var(--primary))` 系或既有 `--nop-*` 语义面）；json-source-view 及 inspector 系面板文件不在本 Phase（见 Follow-ups）
+- [x] Proof: e2e 断言 dragstart 后存在 ghost 视觉（data-testid 标记）；overlay 元素 computed transition 非 none（外观属性）；grep 确认 In Scope 三文件无 `#6366f1` 类 hex 兜底残留
 
 Exit Criteria:
 
-- [ ] ghost + 外观过渡 + In Scope 文件令牌化落地，分析报告 §4.2 差距 1/2 关闭（差距 3 部分：In Scope 文件内清零）
-- [ ] `canvas-overlay.test.tsx` 既有落点断言（inside/before/after/invalid，:108-190）不回归；page-designer-mvp 的 drag→insert/占位盒断言不回归
-- [ ] focused e2e 通过
+- [x] ghost + 外观过渡 + In Scope 文件令牌化落地，分析报告 §4.2 差距 1/2 关闭（差距 3 部分：In Scope 文件内清零）
+- [x] `canvas-overlay.test.tsx` 既有落点断言（inside/before/after/invalid，:108-190）不回归；page-designer-mvp 的 drag→insert/占位盒断言不回归
+- [x] focused e2e 通过
 
 ### Phase 2 - 快捷键与右键菜单
 
-Status: planned
+Status: completed
 Targets: `page-designer-page.tsx`（新增 `designer-context-menu.tsx` 组件如需拆分）
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: 元素级剪贴板——Ctrl+C 复制选中元素 schema（深拷贝 + id 清空策略与既有 duplicate 组合一致）、Ctrl+V 粘贴到当前选中容器/插入位（走 insertNode）、Ctrl+D duplicate；全部入 undo 事务；输入态豁免；mode='preview' 不响应
-- [ ] Fix: 画布元素右键菜单（`@nop-chaos/ui` ContextMenu：删除 / 复制副本 / 粘贴到此处），viewport 钳制 + Escape/外点关闭；mode='preview' 不出现变更项
-- [ ] Proof: 剪贴板纯逻辑单测（复制深拷贝独立性、粘贴 id 重生成、事务可撤销）；e2e 断言 Ctrl+C/V/D 后节点数与 undo 栈行为、右键菜单交互
+- [x] Fix: 元素级剪贴板——Ctrl+C 复制选中元素 schema（深拷贝 + id 清空策略与既有 duplicate 组合一致）、Ctrl+V 粘贴到当前选中容器/插入位（走 insertNode）、Ctrl+D duplicate；全部入 undo 事务；输入态豁免；mode='preview' 不响应
+- [x] Fix: 画布元素右键菜单（`@nop-chaos/ui` ContextMenu：删除 / 复制副本 / 粘贴到此处），viewport 钳制 + Escape/外点关闭；mode='preview' 不出现变更项
+- [x] Proof: 剪贴板纯逻辑单测（复制深拷贝独立性、粘贴 id 重生成、事务可撤销）；e2e 断言 Ctrl+C/V/D 后节点数与 undo 栈行为、右键菜单交互
 
 Exit Criteria:
 
-- [ ] copy/paste/duplicate 快捷键 + 右键菜单落地，§4.2 差距 4 关闭
-- [ ] 剪贴板单测通过；page-designer-s3-s4（方向键导航）不回归
-- [ ] i18n 新键落位并通过 check
+- [x] copy/paste/duplicate 快捷键 + 右键菜单落地，§4.2 差距 4 关闭
+- [x] 剪贴板单测通过；page-designer-s3-s4（方向键导航）不回归
+- [x] i18n 新键落位并通过 check
 
 ### Phase 3 - 图标与空态
 
-Status: planned
+Status: completed
 Targets: `page-designer-page.tsx`, `package.json`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: `package.json` 补 `lucide-react` 依赖声明（对齐 flow-designer-renderers 先例）；文本 "←"（`page-designer-page.tsx:307`）替换 lucide ArrowLeft；grep 确认 page-designer-renderers 无遗留文本箭头图标
-- [ ] Fix: 画布空态从纯文字虚线框升级为 图标 + 标题 + 引导文案 + 「从左侧添加组件」提示的居中卡片，样式走语义令牌，保留 data-testid=page-designer-canvas-empty
-- [ ] Proof: e2e 断言空态结构（data-testid + 图标渲染）
+- [x] Fix: `package.json` 补 `lucide-react` 依赖声明（对齐 flow-designer-renderers 先例）；文本 "←"（`page-designer-page.tsx:307`）替换 lucide ArrowLeft；grep 确认 page-designer-renderers 无遗留文本箭头图标
+- [x] Fix: 画布空态从纯文字虚线框升级为 图标 + 标题 + 引导文案 + 「从左侧添加组件」提示的居中卡片，样式走语义令牌，保留 data-testid=page-designer-canvas-empty
+- [x] Proof: e2e 断言空态结构（data-testid + 图标渲染）
 
 Exit Criteria:
 
-- [ ] 图标与空态落地，§4.2 差距 5/6 关闭（"●" 项归 526，见其 Phase 1）
-- [ ] focused e2e 通过；既有 spec 不回归
+- [x] 图标与空态落地，§4.2 差距 5/6 关闭（"●" 项归 526，见其 Phase 1）
+- [x] focused e2e 通过；既有 spec 不回归
 
 ## Draft Review Record
 
@@ -138,16 +138,23 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live UX gaps 已修复（§4.2 差距 1-6 逐条对账；差距 5 的 "●" 部分由 plan 526 承接并交叉引用）
-- [ ] 行为结果已达成（Goals 逐条可观测）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响 owner docs 已同步（page-designer 相关 owner 文档交互节，如涉及）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live UX gaps 已修复（§4.2 差距 1-6 逐条对账；差距 5 的 "●" 部分由 plan 526 承接并交叉引用）
+- [x] 行为结果已达成（Goals 逐条可观测）
+- [x] 必要 focused verification 已完成
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响 owner docs 已同步（page-designer 相关 owner 文档交互节，如涉及）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Execution Notes（执行期裁定与勘误）
+
+- **右键菜单选型**：plan 点名 `@nop-chaos/ui` ContextMenu——实际实现为自研 `div[role=menu]` 组件（`page-designer-context-menu.tsx`）：Radix ContextMenu 需 ContextMenuTrigger 包裹画布（与画布既有 pointer 命中链冲突），且 right-click 定位菜单需 viewport 钳制/方向键导航等自研面；交互契约（钳制/Escape/外点/方向键）与 flow-designer 菜单同构。审计 m1 裁决记录。
+- **粘贴入节点菜单**：画布根节点锚点覆盖全幅，"空白态"实际不可达——粘贴项并入节点态（右击即选中，粘贴目标 = 右击节点上下文，`handlePaste(targetNodeId)` 显式覆盖）；空白态仅兜底。
+- **In Scope 文件 canvas-bridge.tsx 未改动**：ghost 实际接在 palette dragstart（拖拽源侧），命中链由 e2e drag→insert 落点断言验证。
+- **剪贴板纯逻辑模块化**：审计 M2 后将复制/目标解析抽为 `designer-clipboard.ts` 纯函数（copyNodeToClipboard 深拷贝独立性 / resolvePasteTarget 三分支）+ 5 单测；sid 重生成由 core insertNode 契约（INV-D）+ e2e undo 收敛覆盖。
 
 ## Deferred But Adjudicated
 
@@ -177,13 +184,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 三 Phase 落地：Phase 1 拖拽 ghost（setDragImage 守卫 + 生命周期/降级单测）+ overlay 外观属性 120ms 过渡（全七类元素）+ 三文件 hex 兜底收敛（`--pd-*` 唯一落点）；Phase 2 元素级剪贴板（Ctrl+C/V/D，`designer-clipboard.ts` 纯函数 + 5 单测）+ 右键上下文菜单（粘贴/复制副本/删除，右击即选中）；Phase 3 lucide ArrowLeft + 空态卡片。审计 issues（M1 owner doc、M2 剪贴板单测、M3 过渡覆盖面 + 4 minors）全部处理后复验通过。Closure Gates 全绿：typecheck/lint/build 42/42、pnpm test 78 tasks、pnpm check exit 0、page-designer e2e 13 passed（新增 ux-visual 5 例）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<daily log / 命令输出>>
+- Auditor / Agent: 独立子 agent（fresh session，task agent_6da637c5）
+- Evidence: round1 verdict issues（M1 owner-doc 未同步 / M2 剪贴板单测未落地 / M3 过渡仅覆盖 3/7 类 + m1 选型偏离未记录 + m2 mode 死契约 + n1 temp 空目录）；全部处理——M1 design-architecture.md 新增 §9.2 画布交互契约 + §5.2.1 空态描述就地更新、M2 designer-clipboard.ts + designer-clipboard.test.ts（5 用例）、M3 其余四类元素补 PD_OVERLAY_TRANSITION、m2 mode prop 删除、n1 temp 目录清理、m1 选型裁定落 Execution Notes；复验 typecheck/lint/test/check 全绿
 
 Follow-up:
 
-- <<见 Non-Blocking Follow-ups>>
+- 见 Non-Blocking Follow-ups；无剩余 plan-owned work

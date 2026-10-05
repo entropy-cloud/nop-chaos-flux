@@ -116,15 +116,50 @@ describe('PalettePanel', () => {
     const item = document.querySelector('[data-palette-item="button"]') as HTMLElement;
     expect(item.getAttribute('draggable')).toBe('true');
     const setData = vi.fn();
+    const setDragImage = vi.fn();
     const fired = new Event('dragstart', { bubbles: true, cancelable: true }) as DragEvent;
     Object.defineProperty(fired, 'dataTransfer', {
-      value: { setData, effectAllowed: '' },
+      value: { setData, effectAllowed: '', setDragImage },
     });
     item.dispatchEvent(fired);
     expect(setData).toHaveBeenCalledTimes(1);
     const [mime, payload] = setData.mock.calls[0] as string[];
     expect(mime).toBe('application/x-nop-page-designer');
     expect(JSON.parse(payload)).toEqual({ source: 'palette', type: 'button' });
+  });
+
+  // plan 527 Phase 1：dragstart 构造自定义 ghost（setDragImage 守卫下）并在微任务后清理
+  it('creates and cleans up a drag ghost when dataTransfer supports setDragImage', async () => {
+    const registry = createPageDesignerRegistry();
+    const items = buildMvpPaletteItems(registry);
+    render(<PalettePanel items={items} onItemClick={vi.fn()} />);
+    const item = document.querySelector('[data-palette-item="button"]') as HTMLElement;
+    const setDragImage = vi.fn((ghost: Element) => {
+      expect(ghost.getAttribute('data-testid')).toBe('page-designer-drag-ghost');
+      expect(document.body.contains(ghost)).toBe(true);
+    });
+    const fired = new Event('dragstart', { bubbles: true, cancelable: true }) as DragEvent;
+    Object.defineProperty(fired, 'dataTransfer', {
+      value: { setData: vi.fn(), effectAllowed: '', setDragImage },
+    });
+    item.dispatchEvent(fired);
+    expect(setDragImage).toHaveBeenCalledTimes(1);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(document.querySelector('[data-testid="page-designer-drag-ghost"]')).toBeNull();
+  });
+
+  // plan 527 Phase 1：dataTransfer mock 无 setDragImage（既有宿主形态）时不炸、不产 ghost
+  it('degrades gracefully when dataTransfer lacks setDragImage', () => {
+    const registry = createPageDesignerRegistry();
+    const items = buildMvpPaletteItems(registry);
+    render(<PalettePanel items={items} onItemClick={vi.fn()} />);
+    const item = document.querySelector('[data-palette-item="button"]') as HTMLElement;
+    const fired = new Event('dragstart', { bubbles: true, cancelable: true }) as DragEvent;
+    Object.defineProperty(fired, 'dataTransfer', {
+      value: { setData: vi.fn(), effectAllowed: '' },
+    });
+    expect(() => item.dispatchEvent(fired)).not.toThrow();
+    expect(document.querySelector('[data-testid="page-designer-drag-ghost"]')).toBeNull();
   });
 
   it('filters items by keyword', () => {

@@ -5,6 +5,8 @@
  * 树 = working 文档投影（无第二存储）；行点击 → `onSelect`（宿主 setSelection）。
  */
 
+import './page-designer-tokens.css';
+
 import { useMemo } from 'react';
 import { isSchema } from '@nop-chaos/flux-core';
 import type { BaseSchema, RendererRegistry, SchemaInput } from '@nop-chaos/flux-core';
@@ -86,7 +88,7 @@ export function StructureTree(props: StructureTreeProps) {
           data-tree-node-type={row.type}
           className={`block w-full truncate rounded border-l-[3px] px-2 py-1 text-left text-sm hover:bg-[var(--nop-nav-hover-border,#f3f4f6)] ${
             props.selection.includes(row.sid)
-              ? 'border-l-[var(--nop-accent,#6366f1)] bg-[color-mix(in_srgb,var(--nop-accent)_14%,var(--nop-surface,#fff))] font-medium text-[var(--nop-text-strong,#1f2937)]'
+              ? 'border-l-[var(--pd-accent)] bg-[color-mix(in_srgb,var(--nop-accent)_14%,var(--nop-surface,#fff))] font-medium text-[var(--nop-text-strong,#1f2937)]'
               : 'border-l-transparent'
           }`}
           style={{ paddingLeft: `${8 + row.depth * 14}px` }}
