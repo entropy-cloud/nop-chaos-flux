@@ -27,6 +27,15 @@
 
 所以本指南只保留最少规则，并把它们直接体现在模板里。
 
+### Lessons From History 2.0（2026-10-04 editor-designer-standardization 会话实证，17 plans）
+
+该会话（plans 544–560）实测：14 份送审 plan 中 7 份 draft review 首轮 fail、6 份 closure audit 首轮 issues。失败高度集中在四类**执行侧纪律**模式，而非审计深度不足——已固化为本指南的强制规则（标注【P5.1 后新增】）：
+
+1. **完成声称与仓库实况漂移**（约 6 次，最高频）：计划 `[x]` 项或 closure 声称"已回写/文档已改/测试已存在"，审计对照 git diff/实跑发现未落。→ 规则见 Plan Review Rule 检查 5 与 Closure Audit Rule 最低要求 10。
+2. **等价/兼容声称缺判别性测试**（约 4 次）："行为不变/零回归/兼容读"只有套件总数背书，无一个旧实现下必挂的判别性测试。→ 规则见 When Drafting 13。
+3. **Roadmap/Deferred 所有权记账悬空**（约 4 次）：整行 `done` 与行内"逐个对齐"子句矛盾；Deferred 节留"（无）"占位但裁决实际发生在别处。→ 规则见 When Executing 7 与 Closure Audit Rule 最低要求 11。
+4. **被交付推翻的前提未就地勘误**（约 3 次）：交付推翻了 roadmap/基线文档的前提表述，但原文未就地标注，形成复述性漂移。→ 规则见 Closure Audit Rule 最低要求 12。
+
 ## Minimum Rules
 
 1. 写计划前先核对 live repo，再写 `Current Baseline`。
@@ -169,7 +178,7 @@
 - <<明确不在本计划内的方向>>
 - <<明确不在本计划内的方向>>
 
-## Scope
+## Scope（必填节；Minimum Rule 2——写不出 In/Out 边界说明 plan 还太宽）
 
 ### In Scope
 
@@ -211,7 +220,7 @@ Targets: `<<文件/模块/文档>>`
 
 Exit Criteria:
 
-> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。
+> 每个 Phase 完成后，必须逐条勾选本节。所有 `[x]` 后才能将 Phase Status 改为 `completed`。全量 `pnpm typecheck/build/lint/test` 属 Closure Gates，不入本节（Minimum Rule 18）。
 >
 > **写法原则**：只写本 Phase 真正交付的可观测结果 + 保证后续 Phase 能继续所必需的局部检查。不要写 boilerplate（无改动就不写 `No owner-doc update required`）；全量 `pnpm typecheck/build/lint/test` 是 Closure Gates 的事，不是每个 Phase 的默认项（见 Minimum Rule 18）。
 
@@ -282,6 +291,8 @@ Exit Criteria:
 - [ ] `pnpm test`
 
 ## Deferred But Adjudicated
+
+> 执行中推翻/改判条目时，裁决**当场**落本节（When Executing 7）； Closure audit 不得发现“（无）”占位与正文裁决不一致。
 
 ### <<条目名称>>
 
@@ -360,6 +371,7 @@ This guide uses two distinct concepts that were previously conflated under "audi
 10. 当你犹豫“要不要新开一个 successor plan”时，先尝试在当前 owner plan 内新增一个 phase / workstream，并问自己：这样是否已经足够诚实地表达不同 proof 或 owner-doc obligations？如果足够，就不要新增 plan 文件。
 11. `## Failure Paths`：涉及错误处理、API 契约、鉴权、外部集成的计划应填写。每行至少包含触发条件、预期行为（含状态码/错误码）、是否可重试、用户可见表现。缺这一节，实现时容易只写 happy path。纯重构、纯文档、纯内部实现可跳过并写明“不适用”。
 12. `## Test Strategy`：声明本轮计划对测试投入的风险匹配策略。鉴权、对外 API 契约、核心回归路径应选“必须自动化”；一般功能选“建议有测”；纯文档/无行为变更选“不适用”并附理由。选“必须自动化”时，对应的 Proof 项应在 Fix/Implement 之前。
+13. 【P5.1 后新增】**等价/兼容声称必须点名判别性测试**：凡 Exit Criteria 或 Goals 声称“行为不变/零回归/兼容读/逐字节等价”，必须同时指定一个**旧实现下必挂、新实现下通过**的具体测试（并说明其判别机制——为什么旧实现挂）；只有套件总数（“N/N 全绿”）不算数。无法点名时，该声称降级为待证并显式列入 Proof 项。（针对 Lessons 2.0 模式 2。）
 
 ### Plan Review Rule
 
@@ -368,12 +380,13 @@ This guide uses two distinct concepts that were previously conflated under "audi
 - **达成共识**：plan 才能从 `draft` 改为 `active`，并把审查证据记入 `## Draft Review Record`。
 - **未达成共识**：plan 维持 `draft`，不得自行改为 `active`，由后续补救审计兜底。
 
-plan review 检查四项：
+plan review 检查五项：
 
 1. **可想象性分析** —— 在脑中执行计划，找出设计↔代码的 gap。
-2. **格式完整性** —— 遵循本 guide 模板，必填字段齐全。
-3. **内容稳健性** —— Goals/Non-Goals 清晰；Phase 切分合理；Exit Criteria 可在仓库中观测；工作量足够（非微小变更堆砌）。
+2. **格式完整性** —— 遵循本 guide 模板，必填字段齐全（含 `## Scope` 必填节）。
+3. **内容稳健性** —— Goals/Non-Goals 清晰；Phase 切分合理；Exit Criteria 可在仓库中观测；工作量足够（非微小变更堆砌）；全量门禁只出现在 Closure Gates（Minimum Rule 18）。
 4. **引用准确性** —— 引用的路径、行号、函数/组件名经 live repo 核对。
+5. **声称-实况对账**【P5.1 后新增】 —— plan 文本中的每条事实性声称（"既有测试已覆盖 X"/"回写已完成"/"文档已更新"/计数）逐一对照 live repo / git 状态核实；测试文件必须打开确认断言真实存在且针对声称的行为。该检查针对 Lessons 2.0 模式 1，任何一条不成立即 Major。
 
 **通过 = 零 Blocker 且零 Major。** Minor 不阻塞、不触发返工。
 
@@ -385,6 +398,7 @@ plan review 检查四项：
 4. 如果只完成了类型/接口/方法壳，而语义或测试还没对齐，不要把 slice 标成 `completed`；这类情况通常应保持 `in progress` 或改成 `partially completed` 的 plan-level 状态。
 5. 如果某个项决定延期，先把它移到 `Deferred But Adjudicated` 或 `Non-Blocking Follow-ups`，并写清 `Why Not Blocking Closure`；不能只在 execution list 里放着不勾选。
 6. 执行当前 active plan 时，如果读到的是已 `completed` 的旧计划，默认把它当作历史证据而不是待修正文档；除非用户明确要求，否则不要顺手按新模板回写历史计划。
+7. 【P5.1 后新增】**执行中推翻/改判计划内条目时，Deferred 记账必须当场落节**：交付偏离 Goals/Failure Paths（如宿主覆盖不落地、迁移改判部分完成）发生的那一刻，就把条目按模板写入 `## Deferred But Adjudicated`（Classification/Why Not Blocking/Successor），并同步修订对应的 Goals/Failure Paths 行——不得把 Deferred 节留作“（无）”占位而把裁决只在 checkbox 文本或 daily log 里带过。（针对 Lessons 2.0 模式 3。）
 
 ### When Closing The Plan
 
@@ -398,6 +412,10 @@ plan review 检查四项：
 6. 明确区分“接口存在”与“行为完成”（对代码变更计划：至少抽查一轮 live code path 和 focused tests；对纯文档计划：抽查文档内容与 live repo 代码的一致性），确认实现语义真的满足 exit criteria。
 7. closure-audit 必须在执行 session **之外**完成——由独立子 agent（fresh session，不复用执行者上下文）反复审核直到通过，证据记入 plan 或对应 daily log。执行 session 不得自审、不得勾 Closure Gates 中的 audit 条目、不得以"留 human gate"替代；没有独立 agent 可用时必须显式启动一个 fresh sub-agent session，否则 plan 保持未关闭。
 8. 逐条检查 deferred / follow-up 项是否真的 non-blocking，确认没有把 in-scope live defect、contract drift、或硬门禁失败项偷偷改写成“后续再做”。
+9. 【P5.1 后新增】**回写同 commit 纪律**：closure audit 通过后的全部回写（roadmap 状态、daily log 计数修正、过时声称/注释修正、Deferred 补录）必须与 closure 证据并入**同一次提交**；禁止“审计已过但回写未落”的中间态提交。（针对 Lessons 2.0 模式 1。）
+10. 【P5.1 后新增】**声称-实况对账**：对 plan `[x]` 项与 Closure Evidence 中的每条文件/命令/测试声称做直接观测核验（git diff / 实跑 / 打开测试文件看断言）；任何一条声称不成立即退回执行。（针对 Lessons 2.0 模式 1。）
+11. 【P5.1 后新增】**Roadmap/Deferred 所有权记账核对**：roadmap 行回写状态必须与该行 scope 子句及 plan Deferred 裁定一致——行 scope 含未做子句时用部分收敛标注而非整行 `done`；Deferred 的 Successor 归属不得悬空。（针对 Lessons 2.0 模式 3。）
+12. 【P5.1 后新增】**前提就地勘误**：交付推翻了 roadmap/基线文档既有前提表述时，回写时必须在原文处就地加勘误标注（历史文本不改写、就地附注），防止复述性漂移。（针对 Lessons 2.0 模式 4。）
 
 如果这些事没做完，就不要把 `Plan Status` 改成 `completed`。
 
