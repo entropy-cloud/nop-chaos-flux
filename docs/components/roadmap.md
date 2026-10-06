@@ -323,6 +323,7 @@ graph TD
 - **可标记单位是工作项**（W1a…D1a，以及镜像自 `mobile-roadmap.md` 的 M0.1），不是 wave。wave 只是优先级分组。
 - AI 可自主推进工作项状态（`todo`→`planned`→`done`），这是基于 plan 完成的客观事实记录，不需要人确认；但工作项本身的增删/重排需人确认。
 - 移动端轨道（M0.1/M1-M5）的主入口是 `mobile-roadmap.md`，本文件只做 Phase Status 镜像；M0.1 等移动端工作项的细节看 `mobile-roadmap.md`。
+- cron 调度轨道（C1-C7，含 nop-entropy Java 端语法/锚点扩展）的主入口是 `docs/backlog/cron-scheduling-roadmap.md`，本文件不镜像其状态。
 - **W1d 移动端交互组（pull-refresh/infinite-scroll）与 `mobile-roadmap.md` M5 共享同一批交付物**（同属 `flux-renderers-mobile` 包，共用 `useTouch` Hook）。代码落地状态、口径、打勾单位以 `mobile-roadmap.md` Current Baseline 为准；M5 已 `done`，`pull-refresh`/`infinite-scroll` 代码已落地于 `flux-renderers-mobile`（注册证据见 `mobile-renderer-definitions.ts`），W1d 已随 M5 一并标 `done`，避免重复打勾或漏打勾。
 - 根据 roadmap 拟制 plan 时，plan 对应一个或多个工作项；**plan 通过 closure audit 后，必须把对应工作项在 Phase Status 标记为 `done`**，并同步 `amis-baseline-matrix.md` 的组件状态。
 - 不得在 closure audit 通过前把工作项标为 `done`。

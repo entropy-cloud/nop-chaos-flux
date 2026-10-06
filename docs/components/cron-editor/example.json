@@ -1,0 +1,32 @@
+{
+  "type": "form",
+  "body": [
+    {
+      "type": "cron-editor",
+      "name": "dailyReportSchedule",
+      "label": "日报生成计划",
+      "value": { "cron": "0 0 9 ? * MON-FRI" },
+      "required": true
+    },
+    {
+      "type": "cron-editor",
+      "name": "biweeklySync",
+      "label": "双周同步会议",
+      "mode": "visual",
+      "value": {
+        "cron": "0 0 10 ? * MON",
+        "repeat": { "every": 2, "unit": "week", "anchor": "2026-01-05" },
+        "range": { "start": "2026-01-05", "count": 12 }
+      }
+    },
+    {
+      "type": "cron-editor",
+      "name": "monthEndSettlement",
+      "label": "月末结算（每月最后一天 23:00）",
+      "mode": "text",
+      "value": { "cron": "0 0 23 L * ?" },
+      "clearable": true,
+      "previewCount": 3
+    }
+  ]
+}

@@ -541,6 +541,7 @@ UI primitive 对齐补充规则：
 - `detail-field/`
 - `detail-view/`
 - `variant-field/`
+- `cron-editor/`
 
 ### 移动端原生组件
 

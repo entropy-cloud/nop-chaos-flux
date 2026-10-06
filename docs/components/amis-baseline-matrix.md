@@ -196,10 +196,11 @@ Notes:
 
 ### 7. Flux-Only Form Component Families
 
-| Flux component    | Role                                        | AMIS source | Status    | Owner doc                                   |
-| ----------------- | ------------------------------------------- | ----------- | --------- | ------------------------------------------- |
-| `fieldset`        | form group container                        | none        | `runtime` | `docs/components/fieldset/design.md`        |
-| `markdown-editor` | markdown source editor + live preview (W3d) | none        | `runtime` | `docs/components/markdown-editor/design.md` |
+| Flux component    | Role                                        | AMIS source | Status           | Owner doc                                   |
+| ----------------- | ------------------------------------------- | ----------- | ---------------- | ------------------------------------------- |
+| `fieldset`        | form group container                        | none        | `runtime`        | `docs/components/fieldset/design.md`        |
+| `markdown-editor` | markdown source editor + live preview (W3d) | none        | `runtime`        | `docs/components/markdown-editor/design.md` |
+| `cron-editor`     | nop-dialect cron schedule field (dual-mode) | none        | `targetContract` | `docs/components/cron-editor/design.md`     |
 
 ## Not Retained As Standalone Flux Component Types
 

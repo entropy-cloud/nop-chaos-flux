@@ -113,6 +113,8 @@
 | `cron-editor`                | DataEase/react-js-cron           | 可视化 Cron 表达式构建                        | 无                       | 中高 | notify 子系统/定时任务/告警             |
 | `relative-time-range-picker` | Grafana/Redash/Metabase/Superset | 时间范围含相对预设（近7天/近1小时）+ 绝对区间 | date-range（无相对预设） | 中高 | 仪表盘/监控通用；亦可作 date-range 增强 |
 
+> 就地注记（2026-10-07）：上表 `cron-editor` demand 已确认并升级执行——轨道入口 `docs/backlog/cron-scheduling-roadmap.md`（C1-C7），组件契约 `docs/components/cron-editor/design.md`。历史候选结论保持原文。
+
 ### F. 协作与采集（落点：`flux-renderers-content` / `flux-renderers-data`）
 
 | 建议 type        | 来源             | 简述                                       | 最接近的 Flux        | 价值 | 理由                             |
@@ -177,6 +179,8 @@ cron-editor, relative-time-range-picker, comments, flowchart-designer,
 data-grid, watermark
 ```
 
+> 就地注记（2026-10-07）：Tier 2 中的 `cron-editor` 已 demand 确认升级执行（`docs/backlog/cron-scheduling-roadmap.md`），其余候选维持 demand-gated。
+
 **Tier 3（中等，~15 个）**——可入 form/content 全套或作能力增强：
 
 ```
@@ -200,4 +204,4 @@ log-viewer, filter-bar, tree-table, dashboard-filter, image-editor
 - Tier 1：14；Tier 2：11；Tier 3：~15
 - 能力增强项：5 类
 - 已覆盖确认（无新增）：6 类
-- 高价值跨组复现（≥2 组独立报出）：cascader、iframe、map、signature、cron-editor、descriptions、avatar/avatar-stack、pdf-viewer
+- 高价值跨组复现（≥2 组独立报出）：cascader、iframe、map、signature、cron-editor（已 demand 确认升级执行 → `docs/backlog/cron-scheduling-roadmap.md`）、descriptions、avatar/avatar-stack、pdf-viewer
