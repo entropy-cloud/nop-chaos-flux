@@ -145,7 +145,7 @@ DOM marker 约定：`nop-page-designer-canvas`（画布根）、`data-psid`（�
 
 真渲染画布对空容器（全部 drop region 为空的容器节点）存在「0 内容 → 0 高度 → 不可见且不可命中」的结构性盲区：`resolveRect` 丢弃 0×0 矩形，drop 目标解析随之穿透到根回退。契约：
 
-- **设计器侧只读投影**（`empty-container-projection.ts`，与 `data-psid` 同模式，零污染运行时）：编辑态空容器锚点获得 `data-pd-empty="true"` + `data-pd-empty-label="<type>"` + 44px 行内最小高度——真实 DOM 盒子因此可点击选中、可作 drop 目标；容器获得任意子节点后投影即清除。根节点除外（整页空态由 page 级提示 chip 负责）。预览态锚点收敛为零，投影随之消失。
+- **设计器侧只读投影**（`empty-container-projection.ts`，与 `data-psid` 同模式，零污染运行时）：编辑态空容器锚点获得 `data-pd-empty="true"` + `data-pd-empty-label="<type>"` + 44px 行内最小高度——真实 DOM 盒子因此可点击选中、可作 drop 目标；容器获得任意子节点后投影即清除。根节点除外（整页空态由 page 级空态卡片负责，plan 527 勘误：原「提示 chip」已升级为 SquarePlus 图标 + 标题 + 引导文案的居中卡片，`data-testid=page-designer-canvas-empty` 契约不变）。预览态锚点收敛为零，投影随之消失。
 - **覆盖层占位框**：空容器渲染虚线占位框 + 「空容器：可拖入子组件」类型标签（0 尺寸锚点合成 160×44 最小可视盒，jsdom/未布局态兜底）。
 - **根回退提示**：画布空白处拖拽的 hint 携带 `viaRootFallback: true`，覆盖层渲染「松开将插入页面末尾」底线 + 标签，不再把整个 page 根描边（整页描边与"无目标提示"视觉不可分）。
 
@@ -338,7 +338,7 @@ palette 拖出即 `insertNode`（`defaultSchema` 经 authoringTransform，§6.2�
 
 ### 9.2 画布交互契约（plan 527）
 
-- **拖拽 ghost**：palette 条目 dragstart 构造自定义 ghost（类型徽标 + 名称，`data-testid="page-designer-drag-ghost"`）经 `setDragImage` 注入；元素 fixed 视口外 + `pointer-events:none`（不干扰 `elementsFromPoint` 命中链），微任务后清理；宿主 dataTransfer 缺 `setDragImage` 时降级浏览器默认截图（守卫判别，单测覆盖生命周期与降级）。
+- **拖拽 ghost**：palette 条目 dragstart 构造自定义 ghost（类型徽标 + 名称，`data-testid="page-designer-drag-ghost"`）经 `setDragImage` 注入；元素 fixed 视口外 + `pointer-events:none`（不干扰 `elementsFromPoint` 命中链），`setDragImage` 后经 `setTimeout(0)` 异步清理；宿主 dataTransfer 缺 `setDragImage` 时降级浏览器默认截图（守卫判别，单测覆盖生命周期与降级）。
 - **overlay 过渡**：覆盖层外观属性（outline-color/background-color/border-color）统一 120ms 过渡（`PD_OVERLAY_TRANSITION`，`page-designer-tokens.ts`）；几何属性由 rAF tick 每帧重算，不得入 transition（追帧拖影）。
 - **语义令牌**：画布层 accent/destructive 色彩统一引用 `--pd-accent`/`--pd-destructive`（`page-designer-tokens.css` 为全包 hex 兜底唯一落点，宿主 `--nop-*` 优先）；消费点不再内联 `var(--nop-x, <hex>)` 字面值。
 - **元素级剪贴板**：Ctrl+C（`copyNodeToClipboard` 深拷贝解耦）、Ctrl+V（`resolvePasteTarget` 三分支：显式目标容器 inside / 叶子父容器原位 / 根首 region；经 `insertNode` 重注入 → sid 重生成 INV-D、1 条 undo 步）、Ctrl+D（duplicate）。目标优先级：显式（右键）> 选中 > 根。

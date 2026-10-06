@@ -190,6 +190,7 @@ Closure Audit Evidence:
 
 - Auditor / Agent: 独立子 agent（fresh session，task agent_6da637c5）
 - Evidence: round1 verdict issues（M1 owner-doc 未同步 / M2 剪贴板单测未落地 / M3 过渡仅覆盖 3/7 类 + m1 选型偏离未记录 + m2 mode 死契约 + n1 temp 空目录）；全部处理——M1 design-architecture.md 新增 §9.2 画布交互契约 + §5.2.1 空态描述就地更新、M2 designer-clipboard.ts + designer-clipboard.test.ts（5 用例）、M3 其余四类元素补 PD_OVERLAY_TRANSITION、m2 mode prop 删除、n1 temp 目录清理、m1 选型裁定落 Execution Notes；复验 typecheck/lint/test/check 全绿
+- Post-commit 补充审计（2026-10-06，独立 fresh session）：逐项声称-实况复验通过——ghost 守卫/生命周期/降级（palette-panel.tsx setPaletteDragGhost + 3 单测）、七类 overlay 元素 PD_OVERLAY_TRANSITION（几何排除）、三文件 #6366f1/#ef4444 清零（page-designer-tokens.css 唯一落点）、Ctrl+C/V/D + handlePaste(targetNodeId) 覆盖、右键菜单（data-psid/右击即选中/mode 门控）、lucide ArrowLeft + 空态卡（SquarePlus，testid 保留）；复跑 page-designer-renderers 21 files/157 tests 绿、page-designer e2e mvp+ux-visual+s3-s4 13/13 绿。发现一处漂移：round1 修复声称「§5.2.1 空态描述就地更新」未随 dd72a80b3 落盘（该 commit 对 owner doc 仅新增 §9.2，live §5.2.1 仍述旧「提示 chip」空态）——按前向修复就地勘误 §5.2.1 + §9.2 ghost 清理时序措辞精确化（setTimeout(0)）。minors（不阻塞）：designer-clipboard.test.ts 第三用例标题与实际断言不符（实为未知 sid→根回退；叶子父容器分支由 e2e 右键粘贴用例行为性覆盖）；历史文本「微任务清理」措辞 vs setTimeout(0) 宏任务实现（行为无差）。
 
 Follow-up:
 
