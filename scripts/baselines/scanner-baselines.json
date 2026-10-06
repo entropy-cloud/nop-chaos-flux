@@ -1,11 +1,14 @@
 {
   "_header": {
     "description": "Numeric baselines for the three high-risk advisory scanners. A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
-    "lastUpdated": "2026-10-03"
+    "lastUpdated": "2026-10-06",
+    "reRegistrationNotes": [
+      "2026-10-06 plan 528: 716 -> 717。+1 = report-field-panel.tsx setFieldDragGhost 的降级 catch（宿主 setDragImage 抛 Not implemented 时移除 ghost 回落浏览器默认拖拽截图——catch 体为 UI 降级而非错误吞噬；试图像 toast/throw 等结构化信号注入均为伪语义，故有意识注册）。"
+    ]
   },
   "scanners": {
     "find-styling-suspects": 222,
-    "discover-audit-suspects": 716,
+    "discover-audit-suspects": 717,
     "find-test-global-leaks": 108
   }
 }

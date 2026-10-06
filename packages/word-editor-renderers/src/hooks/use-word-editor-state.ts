@@ -90,6 +90,9 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  // plan 528 Phase 1：面板可调宽（会话内有效；WorkbenchShell 无持久化）
+  const [leftWidth, setLeftWidth] = useState<number | undefined>(undefined);
+  const [rightWidth, setRightWidth] = useState<number | undefined>(undefined);
   const [activePanel, setActivePanel] = useState<'datasets' | 'fields'>('datasets');
   const [datasetDialogOpen, setDatasetDialogOpen] = useState(false);
   const [editingDatasetId, setEditingDatasetId] = useState<string | null>(null);
@@ -293,6 +296,10 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
     setLeftCollapsed,
     rightCollapsed,
     setRightCollapsed,
+    leftWidth,
+    setLeftWidth,
+    rightWidth,
+    setRightWidth,
     activePanel,
     setActivePanel,
     datasetDialogOpen,

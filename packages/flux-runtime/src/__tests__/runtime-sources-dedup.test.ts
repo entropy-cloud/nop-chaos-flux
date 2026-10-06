@@ -467,7 +467,7 @@ describe('refreshDataSource scope-chain resolution (parent walk + nameIndex fall
   });
 
   it('nearest scope shadows an ancestor source with the same name', async () => {
-    const parentFetch = vi.fn(async <T>(api: { url: string }) => ({ status: 0, data: { url: api.url, from: 'parent' } as T }));
+    const parentFetch = vi.fn(async <T>(api: { url: string }, _ctx?: unknown) => ({ status: 0, data: { url: api.url, from: 'parent' } as T }));
     const runtime2 = createRendererRuntime({
       registry: createRendererRegistry([textRenderer]),
       env: { ...env, fetcher: ((api, ctx) => parentFetch(api, ctx)) as RendererEnv['fetcher'] },

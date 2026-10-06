@@ -63,10 +63,14 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
     isDirty,
     isSaving,
     leftCollapsed,
+    leftWidth,
+    setLeftWidth,
     mountedRef,
     readOnly,
     recoveredState,
     rightCollapsed,
+    rightWidth,
+    setRightWidth,
     rootRef,
     setActivePanel,
     setDatasetDialogOpen,
@@ -341,11 +345,17 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
         leftCollapsed={leftCollapsed}
         onLeftToggle={() => setLeftCollapsed((v) => !v)}
         leftLabel={t('flux.wordEditor.expandFieldPanel')}
+        leftResizable
+        leftWidth={leftWidth}
+        onLeftWidthChange={setLeftWidth}
         canvas={canvasSlot}
         rightPanel={rightPanelSlot}
         rightCollapsed={rightCollapsed}
         onRightToggle={() => setRightCollapsed((v) => !v)}
         rightLabel={t('flux.wordEditor.expandOutline')}
+        rightResizable
+        rightWidth={rightWidth}
+        onRightWidthChange={setRightWidth}
         dialogs={
           <DatasetDialog
             key={`${editingDatasetId ?? 'new'}:${datasetDialogOpen ? 'open' : 'closed'}`}

@@ -91,6 +91,9 @@ export function ReportDesignerDemo() {
     label: string;
   } | null>(null);
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
+  // plan 528 Phase 1：demo 路径面板可调宽（会话内有效）
+  const [leftWidth, setLeftWidth] = useState<number | undefined>(undefined);
+  const [rightWidth, setRightWidth] = useState<number | undefined>(undefined);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [fieldInsertError, setFieldInsertError] = useState<string | null>(null);
 
@@ -558,6 +561,9 @@ export function ReportDesignerDemo() {
         leftCollapsed={paletteCollapsed}
         onLeftToggle={() => setPaletteCollapsed((v) => !v)}
         leftLabel={t('flux.reportDesigner.expandFieldPanel')}
+        leftResizable
+        leftWidth={leftWidth}
+        onLeftWidthChange={setLeftWidth}
         canvas={
           <div
             ref={gridRef}
@@ -671,6 +677,9 @@ export function ReportDesignerDemo() {
         rightCollapsed={inspectorCollapsed}
         onRightToggle={() => setInspectorCollapsed((v) => !v)}
         rightLabel={t('flux.reportDesigner.expandInspector')}
+        rightResizable
+        rightWidth={rightWidth}
+        onRightWidthChange={setRightWidth}
       />
     </div>
   );

@@ -520,6 +520,9 @@ export function ReportDesignerPageRenderer(
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  // plan 528 Phase 1：面板可调宽（会话内有效；WorkbenchShell 无持久化，与 flow 行为一致）
+  const [leftWidth, setLeftWidth] = useState<number | undefined>(undefined);
+  const [rightWidth, setRightWidth] = useState<number | undefined>(undefined);
   const showFieldPanel = !readOnly && hasConfiguredFieldPanel({
     config: resolvedDesigner,
     adapters: resolvedAdapters,
@@ -651,6 +654,9 @@ export function ReportDesignerPageRenderer(
         leftCollapsed={leftCollapsed}
         onLeftToggle={() => setLeftCollapsed((v) => !v)}
         leftLabel={t('flux.reportDesigner.expandFieldPanel')}
+        leftResizable
+        leftWidth={leftWidth}
+        onLeftWidthChange={setLeftWidth}
         canvas={
           hasRendererSlotContent(asReactNode(bodyContent)) ? (
             asReactNode(bodyContent)
@@ -666,6 +672,9 @@ export function ReportDesignerPageRenderer(
         rightCollapsed={rightCollapsed}
         onRightToggle={() => setRightCollapsed((v) => !v)}
         rightLabel={t('flux.reportDesigner.expandInspector')}
+        rightResizable
+        rightWidth={rightWidth}
+        onRightWidthChange={setRightWidth}
         dialogs={
           hasRendererSlotContent(asReactNode(dialogsContent))
             ? asReactNode(dialogsContent)

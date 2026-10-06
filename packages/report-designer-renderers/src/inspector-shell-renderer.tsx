@@ -10,6 +10,7 @@ import type {
   ReportSelectionTarget,
 } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
+import { ClipboardList, TriangleAlert } from 'lucide-react';
 import { cn } from '@nop-chaos/ui';
 import type { ReportInspectorShellSchema } from './types.js';
 
@@ -49,17 +50,40 @@ export function ReportInspectorShellRenderer(
       ) : null}
 
       {!target ? (
-        <p data-slot="report-designer-empty">
-          {String(props.props.noSelectionLabel ?? t('flux.reportDesigner.noSelection'))}
-        </p>
+        <div
+          data-slot="report-designer-empty"
+          data-testid="report-inspector-empty"
+          className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border p-5 m-3 text-center"
+        >
+          <ClipboardList className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground">
+            {String(props.props.noSelectionLabel ?? t('flux.reportDesigner.noSelection'))}
+          </p>
+        </div>
       ) : inspector?.loading ? (
-        <p data-slot="report-designer-empty">{t('flux.reportDesigner.loadingPanels')}</p>
+        <div
+          data-slot="report-designer-loading"
+          data-testid="report-inspector-loading"
+          aria-busy="true"
+          className="flex flex-col gap-2 p-3"
+        >
+          <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-full animate-pulse rounded bg-muted" />
+          <div className="h-4 w-5/6 animate-pulse rounded bg-muted" />
+          <div className="h-8 w-full animate-pulse rounded bg-muted" />
+          <span className="sr-only">{t('flux.reportDesigner.loadingPanels')}</span>
+        </div>
       ) : inspector?.error ? (
-        <div data-slot="report-designer-stack">
-          <p data-slot="report-designer-empty">
+        <div
+          data-slot="report-designer-stack"
+          data-testid="report-inspector-error"
+          className="m-3 flex flex-col gap-1.5 rounded-lg border border-destructive/40 bg-destructive/5 p-4"
+        >
+          <p className="flex items-center gap-1.5 text-sm font-medium text-destructive">
+            <TriangleAlert className="h-4 w-4" aria-hidden="true" />
             {String(props.props.errorLabel ?? t('flux.reportDesigner.loadPanelsFailed'))}
           </p>
-          <p data-slot="report-designer-empty">{inspectorErrorLabel}</p>
+          <p className="text-xs text-muted-foreground">{inspectorErrorLabel}</p>
         </div>
       ) : (
         (props.helpers.render(inspectorSchema, { pathSuffix: 'inspector' }) as React.ReactNode)

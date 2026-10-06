@@ -1,6 +1,6 @@
 # 528 Report Designer 外壳体验修正计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-05
 > Source: docs/analysis/2026-10-05-designer-ai-ux-comparative-analysis.md（§3.1 / §4.3 report-designer 差距矩阵 / §4.4 word-editor）
 > Related: docs/plans/526-flow-designer-drag-visual-remediation-plan.md 等 527/529
@@ -71,53 +71,53 @@
 
 ### Phase 1 - 面板可调宽（report 双路径 + word-editor）
 
-Status: planned
+Status: completed
 Targets: `report-designer-renderers/src/page-renderer.tsx`, `apps/playground/src/pages/report-designer-demo.tsx`, `word-editor-renderers/src/word-editor-page.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: report renderer 路径 `page-renderer.tsx` WorkbenchShell 传入 `leftResizable`/`rightResizable`，宽度走页面本地 useState（会话内有效，对齐 demo 页 leftCollapsed 模式；shell 无持久化，不触碰 core 命令面）
-- [ ] Fix: report demo 路径 `report-designer-demo.tsx` 自组合的 WorkbenchShell 同样传入两 props（本地 useState）
-- [ ] Fix: word-editor `word-editor-page.tsx` WorkbenchShell 接入左右 resizable（同法）
-- [ ] Proof: e2e（≥1024px 视口）断言三处拖动 4px 分隔手柄后面板宽度变化（getBoundingClientRect 前后对比）+ 键盘 focus-visible 可达
+- [x] Fix: report renderer 路径 `page-renderer.tsx` WorkbenchShell 传入 `leftResizable`/`rightResizable`，宽度走页面本地 useState（会话内有效，对齐 demo 页 leftCollapsed 模式；shell 无持久化，不触碰 core 命令面）
+- [x] Fix: report demo 路径 `report-designer-demo.tsx` 自组合的 WorkbenchShell 同样传入两 props（本地 useState）
+- [x] Fix: word-editor `word-editor-page.tsx` WorkbenchShell 接入左右 resizable（同法）
+- [x] Proof: e2e（≥1024px 视口）断言三处拖动 4px 分隔手柄后面板宽度变化（getBoundingClientRect 前后对比）+ 键盘 focus-visible 可达
 
 Exit Criteria:
 
-- [ ] report demo/renderer 两路径 + word-editor 面板可调宽落地，与 flow 行为一致（会话内）
+- [x] report demo/renderer 两路径 + word-editor 面板可调宽落地，与 flow 行为一致（会话内）
 - [ ] report-designer-demo/host/ux-r9、word-editor 既有 e2e 不回归
-- [ ] focused e2e 通过
+- [x] focused e2e 通过
 
 ### Phase 2 - 字段面板搜索与拖放 ghost
 
-Status: planned
+Status: completed
 Targets: `report-designer-renderers/src/report-field-panel.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: 面板顶部（frame header 之下）新增搜索 Input，按字段 label/fieldType 子串过滤（大小写不敏感；数据源 fieldSources 快照），空结果空态 + 清除
-- [ ] Fix: dragstart 构造类型色 ghost（字段类型 pill 色 + 名称）`setDragImage`（feature-detect 守卫），dragend 清理；MIME payload 不变
-- [ ] Proof: 过滤纯函数单测；e2e 断言搜索过滤与 drop 流程（既有 drop-target 断言、失败回滚断言）共存
+- [x] Fix: 面板顶部（frame header 之下）新增搜索 Input，按字段 label/fieldType 子串过滤（大小写不敏感；数据源 fieldSources 快照），空结果空态 + 清除
+- [x] Fix: dragstart 构造类型色 ghost（字段类型 pill 色 + 名称）`setDragImage`（feature-detect 守卫），dragend 清理；MIME payload 不变
+- [x] Proof: 过滤纯函数单测；e2e 断言搜索过滤与 drop 流程（既有 drop-target 断言、失败回滚断言）共存
 
 Exit Criteria:
 
-- [ ] 搜索 + ghost 落地
-- [ ] 单测通过；report drop 回滚既有断言不回归
-- [ ] i18n 新键通过 check
+- [x] 搜索 + ghost 落地
+- [x] 单测通过；report drop 回滚既有断言不回归
+- [x] i18n 新键通过 check
 
 ### Phase 3 - 空态与加载态升级
 
-Status: planned
+Status: completed
 Targets: `report-designer-renderers/src/inspector-shell-renderer.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: Inspector 空态 → 图标 + 标题 + 引导文案卡片；loading → 骨架条（Skeleton 或 CSS 骨架），错误态保留文字但加图标与 destructive 令牌
-- [ ] Proof: e2e 断言三态结构（data-testid/aria-busy）
+- [x] Fix: Inspector 空态 → 图标 + 标题 + 引导文案卡片；loading → 骨架条（Skeleton 或 CSS 骨架），错误态保留文字但加图标与 destructive 令牌
+- [x] Proof: e2e 断言三态结构（data-testid/aria-busy）
 
 Exit Criteria:
 
-- [ ] 三态升级落地
-- [ ] focused e2e 通过；既有 report e2e 不回归
+- [x] 三态升级落地
+- [x] focused e2e 通过；既有 report e2e 不回归
 
 ## Draft Review Record
 
@@ -128,16 +128,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live UX gaps 已修复（§4.3 表逐条对账 + §4.4 面板调宽）
-- [ ] 行为结果已达成（Goals 逐条可观测）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响 owner docs 已同步（report-designer/word-editor owner 文档交互节，如涉及）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live UX gaps 已修复（§4.3 表逐条对账 + §4.4 面板调宽）
+- [x] 行为结果已达成（Goals 逐条可观测）
+- [x] 必要 focused verification 已完成
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响 owner docs 已同步（report-designer/word-editor owner 文档交互节，如涉及）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -161,13 +161,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 三 Phase 落地：Phase 1 三处面板可调宽（report renderer 路径 / playground demo 路径 / word-editor 经 use-word-editor-state 透传，本地 useState 会话内有效——WorkbenchShell 无持久化机制已裁决）；Phase 2 字段面板检索（matchesReportFieldQuery 纯函数 + 4 单测 + 空态清除）与拖拽 ghost（typeof+try/catch 双守卫降级）；Phase 3 Inspector 三态升级（空态卡 ClipboardList/骨架 aria-busy+sr-only/错误卡 TriangleAlert+destructive 令牌）+ 三态确定性单测。Closure Gates 全绿：typecheck/build/lint 42/42、pnpm test 78 tasks、pnpm check exit 0（scanner-baselines 716→717 有意识注册：ghost 降级 catch 属 UI 降级而非错误吞噬，理由落 reRegistrationNotes）、report/word-editor e2e 32 passed（新增 ux-visual 4 例）。执行期顺手修复存量 flux-runtime 测试 stale mock（HEAD 上 TS2554，与本 plan 无关）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<daily log / 命令输出>>
+- Auditor / Agent: 独立子 agent（fresh session，round1 task agent_3cdddb26 verdict issues；round2 task agent_f5d857d3 verdict approved 零 findings）
+- Evidence: round1 两 Major（en-US 丢键 insertDisabledNoSelection / scanner-baselines 未注册）与两 Minor（Inspector 三态零断言 / Phase 1 Proof 收窄）全部处理后 round2 复核 approved：en-US 键恢复（en-US.ts:997）、基线注册含日期理由、inspector-shell-states.test.tsx 三态真实断言（包 21 files/213 tests 绿）、ux-visual 4/4 绿、双包 typecheck 通过
 
 Follow-up:
 
-- <<见 Non-Blocking Follow-ups>>
+- 见 Non-Blocking Follow-ups（field-panel-renderer 第二套实现 parity / 字段面板类型分组 / Inspector 空态直达插入）；无剩余 plan-owned work
