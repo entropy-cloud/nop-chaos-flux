@@ -84,7 +84,7 @@ Targets: `report-designer-renderers/src/page-renderer.tsx`, `apps/playground/src
 Exit Criteria:
 
 - [x] report demo/renderer 两路径 + word-editor 面板可调宽落地，与 flow 行为一致（会话内）
-- [ ] report-designer-demo/host/ux-r9、word-editor 既有 e2e 不回归
+- [x] report-designer-demo/host/ux-r9、word-editor 既有 e2e 不回归
 - [x] focused e2e 通过
 
 ### Phase 2 - 字段面板搜索与拖放 ghost
