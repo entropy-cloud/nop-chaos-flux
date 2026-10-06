@@ -61,7 +61,7 @@
 | ------------------------------ | ------ | -------------------------------------------------------------- | -------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
 | S1 SCADA 编辑器视觉与令牌基础  | `done` | `docs/components/industrial-hmi-editor/design-architecture.md` | —              | 526 选中态令牌模式                                          | `docs/plans/530-scada-visual-token-foundation-plan.md` |
 | S2 SCADA 拖拽便捷性与 palette  | `done` | 同上 + `design-toolbox.md`                                     | S1（令牌基础） | 527 ghost 模式、526 alignment 模式                          | `docs/plans/531-scada-drag-palette-ux-plan.md`         |
-| S3 SCADA 菜单与面板收尾        | `todo` | 同上 + `design-property-panel.md`                              | S1             | `page-designer-context-menu` 模式、WorkbenchShell resizable | —                                                      |
+| S3 SCADA 菜单与面板收尾        | `done` | 同上 + `design-property-panel.md`                              | S1             | `page-designer-context-menu` 模式、WorkbenchShell resizable | `docs/plans/532-scada-menu-panel-plan.md`              |
 | D1 3D 渲染器 UX 打磨           | `done` | `docs/components/threejs-integration/design-renderer.md`       | —              | 529 reduced-motion/空态模式、语义令牌                       | `docs/plans/533-three-renderer-ux-plan.md`             |
 | D2 3D 文档一致性与演示路由收尾 | `done` | `docs/components/threejs-integration/design.md`                | D1             | —                                                           | `docs/plans/534-three-docs-demo-plan.md`               |
 
