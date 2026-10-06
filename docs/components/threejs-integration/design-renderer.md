@@ -173,7 +173,7 @@ const dispatchEvent = (type: string, payload: Record<string, unknown>, action: u
 };
 // 对象点击 → dispatchEvent('object:click', { modelId, point }, events.onObjectClick)
 // hover    → dispatchEvent('object:hover', { modelId, hovered }, events.onObjectHover)
-//             plan 473: pointermove（rAF 节流）驱动连续 hover 进入/离开；pointerdown 强制 enter（触屏无 move）；hover 高亮 = MeshStandardMaterial emissive 临时提亮（按材质记录原始值，离开/卸载还原；MeshBasicMaterial 无 emissive 跳过）；非 interactive 模型不参与
+//             plan 473: pointermove（rAF 节流）驱动连续 hover 进入/离开；pointerdown 强制 enter（触屏无 move）；hover 高亮 = MeshStandardMaterial emissive 临时提亮（按材质记录原始值，离开/卸载还原；MeshBasicMaterial 无 emissive 跳过）；非 interactive 模型不参与（勘误 2026-10-06：plan 533 D1 起 MeshBasicMaterial 白提亮通道默认启用——反馈与材质类型解耦，见下方 §视口质感契约）
 ```
 
 射线拾取：`renderer.domElement` pointer 事件 → `Raycaster.intersectObjects(models, true)` → 命中回溯到 modelId（`object.userData.modelId` 或向上遍历至 `mesh.name === config.id` 的注册根）。`interactive: false` 的模型不参与拾取。
@@ -235,3 +235,14 @@ export class ModelLoader {
 | 5   | `sceneManager.getLights()` 渲染期反射 `<primitive>`            | 灯光/模型全部命令式 add，React 不渲染 three 对象                                                                                                             | D1                         |
 | 6   | `environment.skybox`、`postProcessing`（PostProcessingConfig） | **v5 砍除**：首版无消费场景，效果栈（EffectComposer）引入面大；需要时经 backlog 新立工作项                                                                   | 记录惯例（本表）           |
 | 7   | `render-optimizer`（脏标记）、`memory-manager`（WeakRef 跟踪） | **被吸收**：前者由「精确订阅 + 合帧 flush（每帧至多一次写入）+ 常渲染循环」覆盖，后者由 `dispose()` 链覆盖（three 资源无 GC 回调可用，WeakRef 统计无行动点） | design-data-binding.md §7  |
+
+## 视口质感契约（plan 533 D1，2026-10-06 落地）
+
+- **常量单一事实源**：`engine/three-defaults.ts`——`DEFAULT_ASPECT`（800/600 回退）、`FALLBACK_WIDTH/HEIGHT`（800/400）、`DEFAULT_LIGHT_COLOR`（#ffffff）、`DEFAULT_GROUND_COLOR`（#404040）、`DEFAULT_COMPONENT_HEIGHT`（400px）、`DEFAULT_HOVER_EMISSIVE`（0x2b4c7e）/`DEFAULT_HOVER_INTENSITY`（0.9）、`HOVER_BASIC_LIFT`（0.25）、`MAX_PIXEL_RATIO`（2）。
+- **HiDPI**：init 时 `setPixelRatio(min(devicePixelRatio, MAX_PIXEL_RATIO))`（真实 renderer 恒有该方法；headless stub 缺失静默跳过）。初始 aspect 用容器真实尺寸（零尺寸回退 `DEFAULT_ASPECT`；init 末尾 resizeToContainer 以容器覆盖）。
+- **hover 双通道**（`SceneManagerOptions.hoverHighlight?: { emissive?, intensity? }` 可配，缺省 = 内置常量）：Standard 系 emissive 提升通道 + MeshBasicMaterial 白提亮通道（color 向白 lerp 0.25，tracked/restore）——**白提亮默认启用**，反馈与材质类型解耦（roadmap「默认与材质解耦」子句交付形态；emissive 默认色值保留现值可配，色值属美学而非耦合）。
+- **指针反馈**：hoverable 图元悬停 → 容器 `cursor: pointer`；OrbitControls 拖拽期间 hover 不清除（cursor 恒 pointer，拖拽结束恢复——外观 nit）。
+- **canvas a11y 契约**：domElement = `role="application"` + `tabindex=0`（engine init 侧）+ `aria-label`（组件侧经 `getRenderer().domElement` 后置设置，i18n `flux.three.canvasLabel`）；容器 div 无 role，仅 `aria-busy`（loading 态）。
+- **错误差异化**：`webgl-unavailable` 独立图标（MonitorX）+ `flux.three.errorWebgl` 文案 + **无重试入口**（不可重试）；其余错误维持通用文案 + 重试（retry 同步清理 errorCode）。
+- **加载骨架**：默认 loading slot = Spinner + pulse 骨架条（进度确定时宽度同步）+ 文案；`aria-busy` 双置（容器 + loading slot）。
+- **降级族**：headless stub 缺 `style`/`setPixelRatio`/`setAttribute` 时静默跳过（真实 DOM 恒有）。

@@ -112,3 +112,38 @@ describe('three-canvas built-in loading UI (plan 473 V3-F4)', () => {
     expect(container.querySelector('[data-slot="three-canvas-retry"]')).not.toBeNull();
   });
 });
+
+describe('three-canvas webgl-unavailable differentiation + skeleton (plan 533 D1 Phase 2)', () => {
+  it('renders the dedicated webgl-unavailable copy+icon without retry (判别性: 无 code 分流实现必挂)', async () => {
+    const environment = createThreeTestEnvironment();
+    const { container } = render(
+      <ThreeTestProviders environment={environment}>
+        <ThreeCanvasRenderer {...makeProps()} />
+      </ThreeTestProviders>,
+    );
+    await act(async () => {
+      lifecycleCaptured.onError?.({ code: 'webgl-unavailable', message: 'no GL' });
+    });
+    const error = container.querySelector('[data-slot="three-canvas-error"]');
+    expect(error).not.toBeNull();
+    expect(error?.getAttribute('data-three-error-code')).toBe('webgl-unavailable');
+    expect(error?.textContent).toContain('不支持 WebGL');
+    expect(error?.querySelector('svg')).not.toBeNull();
+    // WebGL 不可用不可重试 → retry 入口不渲染（其余错误态仍有 retry，见上用例）。
+    expect(container.querySelector('[data-slot="three-canvas-retry"]')).toBeNull();
+  });
+
+  it('marks the container aria-busy while loading and renders the pulse skeleton', () => {
+    const environment = createThreeTestEnvironment();
+    const { container } = render(
+      <ThreeTestProviders environment={environment}>
+        <ThreeCanvasRenderer {...makeProps()} />
+      </ThreeTestProviders>,
+    );
+    expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+    const loading = container.querySelector('[data-slot="three-canvas-loading"]');
+    expect(loading?.getAttribute('aria-busy')).toBe('true');
+    // 529 模式骨架块（animate-pulse）在案。
+    expect(loading?.querySelector('.animate-pulse')).not.toBeNull();
+  });
+});

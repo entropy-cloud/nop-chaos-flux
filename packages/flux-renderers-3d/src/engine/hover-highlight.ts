@@ -1,25 +1,46 @@
 import * as THREE from 'three';
+import {
+  HOVER_BASIC_LIFT,
+  hoverEmissiveColor,
+  hoverIntensity,
+} from './three-defaults.js';
 
 /**
- * Hover emissive highlight (plan 473, visual-quality V3-F1).
+ * Hover highlight (plan 473 V3-F1; plan 533 D1 configurable + basic-material
+ * feedback channel).
  *
- * Boosts `emissive` on the hovered model's meshes and restores the original
- * values on leave/unload/dispose. Materials are tracked per instance so
- * shared materials restore exactly once. `MeshBasicMaterial` (no emissive)
- * is skipped — hover events still fire, only the visual boost is absent.
+ * Two channels, both tracked per instance (shared materials restore exactly
+ * once) and reverted on leave/unload/dispose:
+ * - `emissive` boost for materials with an emissive channel (MeshStandard
+ *   family) — color/intensity configurable via `SceneManagerOptions.hoverHighlight`.
+ * - white-lift for `MeshBasicMaterial` (no emissive): color lerped toward
+ *   white by HOVER_BASIC_LIFT. Enabled by default — feedback decoupled from
+ *   material type (plan 533, roadmap「默认与材质解耦」交付形态).
  */
 
 interface HighlightOriginal {
-  emissive: THREE.Color;
-  emissiveIntensity: number;
+  emissive?: THREE.Color;
+  emissiveIntensity?: number;
+  color?: THREE.Color;
 }
 
-const HIGHLIGHT_EMISSIVE = new THREE.Color(0x2b4c7e);
-const HIGHLIGHT_INTENSITY = 0.9;
+const WHITE = new THREE.Color(0xffffff);
+
+export interface HoverHighlightOptions {
+  emissive?: string;
+  intensity?: number;
+}
 
 export class HoverHighlighter {
+  private readonly emissiveColor: THREE.Color;
+  private readonly intensity: number;
   private originals = new Map<THREE.Material, HighlightOriginal>();
   private activeRoot: THREE.Object3D | null = null;
+
+  constructor(options?: HoverHighlightOptions) {
+    this.emissiveColor = hoverEmissiveColor(options);
+    this.intensity = hoverIntensity(options);
+  }
 
   apply(root: THREE.Object3D): void {
     if (this.activeRoot === root) return;
@@ -31,14 +52,21 @@ export class HoverHighlighter {
       const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       for (const material of materials) {
         const standard = material as THREE.MeshStandardMaterial;
-        if (!standard || !standard.emissive || typeof standard.emissiveIntensity !== 'number') continue;
-        if (this.originals.has(standard)) continue;
-        this.originals.set(standard, {
-          emissive: standard.emissive.clone(),
-          emissiveIntensity: standard.emissiveIntensity,
-        });
-        standard.emissive.copy(HIGHLIGHT_EMISSIVE);
-        standard.emissiveIntensity = HIGHLIGHT_INTENSITY;
+        if (standard && standard.emissive && typeof standard.emissiveIntensity === 'number') {
+          if (this.originals.has(material)) continue;
+          this.originals.set(material, {
+            emissive: standard.emissive.clone(),
+            emissiveIntensity: standard.emissiveIntensity,
+          });
+          standard.emissive.copy(this.emissiveColor);
+          standard.emissiveIntensity = this.intensity;
+          continue;
+        }
+        // MeshBasicMaterial 白提亮通道（默认启用，plan 533）：无 emissive 亦有悬停反馈。
+        const basic = material as THREE.MeshBasicMaterial;
+        if (!basic || !basic.color || this.originals.has(material)) continue;
+        this.originals.set(material, { color: basic.color.clone() });
+        basic.color.lerp(WHITE, HOVER_BASIC_LIFT);
       }
     });
   }
@@ -50,8 +78,13 @@ export class HoverHighlighter {
     }
     for (const [material, original] of this.originals) {
       const standard = material as THREE.MeshStandardMaterial;
-      standard.emissive.copy(original.emissive);
-      standard.emissiveIntensity = original.emissiveIntensity;
+      if (original.emissive && original.emissiveIntensity !== undefined) {
+        standard.emissive.copy(original.emissive);
+        standard.emissiveIntensity = original.emissiveIntensity;
+      }
+      if (original.color) {
+        (material as THREE.MeshBasicMaterial).color.copy(original.color);
+      }
     }
     this.originals.clear();
     this.activeRoot = null;

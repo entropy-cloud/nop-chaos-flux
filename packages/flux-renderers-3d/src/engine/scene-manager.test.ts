@@ -328,3 +328,63 @@ describe('ModelLoader (generation-guard, D5)', () => {
     expect(loaded).toEqual(['a']);
   });
 });
+
+describe('plan 533 D1 — 视口质感契约判别单测（closure audit M1 补证）', () => {
+  it('setPixelRatio is invoked with the resolved devicePixelRatio (判别: 无设置实现必挂)', () => {
+    const { manager, renderer } = makeManager(makeSceneConfig());
+    manager.init();
+    // jsdom devicePixelRatio = 1 → resolveDevicePixelRatio() = 1（上限 2 内）。
+    expect(renderer.setPixelRatio).toHaveBeenCalledWith(1);
+    manager.dispose();
+  });
+
+  it('initial camera aspect falls back to DEFAULT_ASPECT on zero-metric containers', () => {
+    // jsdom 容器 clientWidth/Height = 0 → 回退 800/600（真实容器走 clientWidth/Height 比例）。
+    const { manager } = makeManager(makeSceneConfig({ camera: { position: [0, 0, 5] } }));
+    manager.init();
+    const aspect = (manager as unknown as { camera: { aspect: number } }).camera.aspect;
+    expect(aspect).toBeCloseTo(800 / 600, 6);
+    manager.dispose();
+  });
+
+  it('stamps role and tabindex onto the renderer domElement (mock domElement 捕获)', () => {
+    const { manager, renderer } = makeManager(makeSceneConfig());
+    // appendChild 分支需容器已 attach（jsdom 容器带 appendChild 桩）。
+    manager.attach({
+      appendChild: vi.fn(),
+      clientWidth: 0,
+      clientHeight: 0,
+    } as unknown as HTMLElement);
+    manager.init();
+    const canvas = renderer.domElement as unknown as {
+      setAttribute: ReturnType<typeof vi.fn>;
+    };
+    expect(canvas.setAttribute).toHaveBeenCalledWith('role', 'application');
+    expect(canvas.setAttribute).toHaveBeenCalledWith('tabindex', '0');
+    manager.dispose();
+  });
+
+  it('hoverHighlight options flow into the highlighter (configurable emissive 注入生效)', async () => {
+    const model = makeGltfResult('valve');
+    const loader = () => ({
+      load: (_url: string) => Promise.resolve(model),
+    });
+    const { manager } = makeManager(
+      makeSceneConfig({ models: [{ id: 'valve', url: 'valve.glb' }] }),
+      {
+        loaderFactory: () => loader() as never,
+        hoverHighlight: { emissive: '#00ff00', intensity: 0.5 },
+      },
+    );
+    manager.init();
+    await manager.loadModels();
+    // 悬停命中 → Standard 材质 emissive = 注入色/注入强度（而非内置 0x2b4c7e/0.9）。
+    (manager as unknown as { highlighter: { apply(root: object): void } }).highlighter.apply(
+      model.scene,
+    );
+    const material = (model.scene.children[0] as import('three').Mesh).material as import('three').MeshStandardMaterial;
+    expect(material.emissive.getHex()).toBe(0x00ff00);
+    expect(material.emissiveIntensity).toBe(0.5);
+    manager.dispose();
+  });
+});

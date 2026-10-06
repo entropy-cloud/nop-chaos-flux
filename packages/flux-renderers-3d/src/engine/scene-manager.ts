@@ -2,7 +2,15 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ModelLoader, type LoadedModel, type LoaderFactory } from './model-loader.js';
 import { TweenRegistry } from './tween-registry.js';
-import { HoverHighlighter } from './hover-highlight.js';
+import { HoverHighlighter, type HoverHighlightOptions } from './hover-highlight.js';
+import {
+  DEFAULT_ASPECT,
+  DEFAULT_GROUND_COLOR,
+  DEFAULT_LIGHT_COLOR,
+  FALLBACK_HEIGHT,
+  FALLBACK_WIDTH,
+  resolveDevicePixelRatio,
+} from './three-defaults.js';
 import { PointerHoverController } from './pointer-hover.js';
 import {
   applyMeshShadowFlags,
@@ -54,6 +62,8 @@ export interface SceneManagerOptions {
   scheduleFrame?: ScheduleFrame;
   /** TweenRegistry 时钟注入（测试确定性） */
   now?: () => number;
+  /** hover 高亮可配（plan 533 D1：emissive 色/强度；缺省 = 内置常量；Basic 白提亮通道默认启用）。 */
+  hoverHighlight?: HoverHighlightOptions;
 }
 
 interface ManagedModel {
@@ -91,7 +101,7 @@ export class SceneManager {
   private hoverListeners = new Set<(e: HoverEvent) => void>();
   private readyListeners = new Set<() => void>();
   private readyEmitted = false;
-  private highlighter = new HoverHighlighter();
+  private readonly highlighter: HoverHighlighter;
   private pointer: PointerHoverController | null = null;
   private raycaster = new THREE.Raycaster();
   private frameHandle: (() => void) | null = null;
@@ -124,6 +134,8 @@ export class SceneManager {
         return controls;
       });
     this.loader = new ModelLoader(options.loaderFactory);
+    // plan 533 D1：hover 高亮可配（缺省 = 内置常量；Basic 白提亮通道默认启用）。
+    this.highlighter = new HoverHighlighter(options.hoverHighlight);
     this.scheduleFrame = options.scheduleFrame ?? DEFAULT_SCHEDULE_FRAME;
     this.tweenRegistry = new TweenRegistry({ now: options.now, onError: (code, message) => {
       this.onErrorSink?.({ code, message });
@@ -148,10 +160,23 @@ export class SceneManager {
       return;
     }
     this.renderer = renderer;
+    // plan 533 D1：HiDPI 清晰渲染（headless 守卫；上限 MAX_PIXEL_RATIO）。
+    const ratio = resolveDevicePixelRatio();
+    // 真实 WebGLRenderer 恒有 setPixelRatio；headless stub 缺失时静默跳过（降级族同 cursor 守卫）。
+    if (ratio !== null && typeof renderer.setPixelRatio === 'function') renderer.setPixelRatio(ratio);
     if (this.container && renderer.domElement && typeof this.container.appendChild === 'function') {
-      this.container.appendChild(renderer.domElement as unknown as HTMLElement);
+      // plan 533 D1：canvas a11y 契约（engine 侧 role/tabIndex；aria-label 由组件侧后置设置）。
+      const el = renderer.domElement as unknown as HTMLElement;
+      // 真实 DOM 恒有 setAttribute；headless stub 缺失时静默跳过（降级族同 cursor/pixelRatio 守卫）。
+      if (typeof el.setAttribute === 'function') {
+        el.setAttribute('role', 'application');
+        el.setAttribute('tabindex', '0');
+      }
+      this.container.appendChild(el);
     }
-    const aspect = 800 / 600;
+    const containerWidth = this.container?.clientWidth || 0;
+    const containerHeight = this.container?.clientHeight || 0;
+    const aspect = containerWidth > 0 && containerHeight > 0 ? containerWidth / containerHeight : DEFAULT_ASPECT;
     const camera = new THREE.PerspectiveCamera(this.config.camera.fov ?? 75, aspect, this.config.camera.near ?? 0.1, this.config.camera.far ?? 1000);
     camera.position.set(...this.config.camera.position);
     camera.updateMatrixWorld();
@@ -188,7 +213,7 @@ export class SceneManager {
   }
 
   private createLight(config: LightConfig): THREE.Light {
-    const color = config.color ?? '#ffffff';
+    const color = config.color ?? DEFAULT_LIGHT_COLOR;
     const intensity = config.intensity ?? 1;
     switch (config.type) {
       case 'ambient':
@@ -213,7 +238,7 @@ export class SceneManager {
         return light;
       }
       case 'hemisphere':
-        return new THREE.HemisphereLight(color, config.groundColor ?? '#404040', intensity);
+        return new THREE.HemisphereLight(color, config.groundColor ?? DEFAULT_GROUND_COLOR, intensity);
       default:
         return new THREE.AmbientLight(color, intensity);
     }
@@ -529,6 +554,10 @@ export class SceneManager {
     this.pointer = new PointerHoverController(domElement, {
       resolveHit: (ndc) => this.pickAt(ndc.x, ndc.y),
       onHoverChange: (modelId, previous) => {
+        // plan 533 D1：hoverable 悬停指针反馈（OrbitControls 拖拽期间 hover 不清除——cursor 恒 pointer，拖拽结束恢复，外观 nit 记 owner doc）。
+        // 真实 DOM 恒有 style；headless stub 缺 style 时静默跳过（Failure Paths cursor-during-orbit 同族降级）。
+        const hoverStyle = (domElement as { style?: { cursor?: string } }).style;
+        if (hoverStyle) hoverStyle.cursor = modelId ? 'pointer' : '';
         if (previous) {
           this.highlighter.revert();
           for (const listener of [...this.hoverListeners]) listener({ modelId: previous, hovered: false });
@@ -559,8 +588,8 @@ export class SceneManager {
 
   private resizeToContainer(): void {
     if (!this.renderer || !this.camera || !this.container) return;
-    const width = this.container.clientWidth || 800;
-    const height = this.container.clientHeight || 400;
+    const width = this.container.clientWidth || FALLBACK_WIDTH;
+    const height = this.container.clientHeight || FALLBACK_HEIGHT;
     this.renderer.setSize(width, height);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();

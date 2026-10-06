@@ -161,6 +161,8 @@ export const zhCN: Resource = {
       loading: '场景加载中…',
       loadingProgress: '场景加载中… {{percent}}%',
       error: '3D 场景加载失败。',
+      errorWebgl: '当前浏览器不支持 WebGL，无法渲染 3D 场景。',
+      canvasLabel: '3D 交互场景（可拖拽旋转/缩放）',
       retry: '重试',
       empty: '当前场景未配置模型。',
     },

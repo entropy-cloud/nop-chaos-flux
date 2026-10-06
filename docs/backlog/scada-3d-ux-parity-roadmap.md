@@ -52,7 +52,7 @@
 | S1 SCADA 编辑器视觉与令牌基础  | `done` | `docs/plans/530-scada-visual-token-foundation-plan.md` |
 | S2 SCADA 拖拽便捷性与 palette  | `done` | `docs/plans/531-scada-drag-palette-ux-plan.md`         |
 | S3 SCADA 菜单与面板收尾        | `done` | `docs/plans/532-scada-menu-panel-plan.md`              |
-| D1 3D 渲染器 UX 打磨           | `todo` | —                                                      |
+| D1 3D 渲染器 UX 打磨           | `done` | `docs/plans/533-three-renderer-ux-plan.md`             |
 | D2 3D 文档一致性与演示路由收尾 | `todo` | —                                                      |
 
 ## Phases
@@ -62,7 +62,7 @@
 | S1 SCADA 编辑器视觉与令牌基础  | `done` | `docs/components/industrial-hmi-editor/design-architecture.md` | —              | 526 选中态令牌模式                                          | `docs/plans/530-scada-visual-token-foundation-plan.md` |
 | S2 SCADA 拖拽便捷性与 palette  | `done` | 同上 + `design-toolbox.md`                                     | S1（令牌基础） | 527 ghost 模式、526 alignment 模式                          | `docs/plans/531-scada-drag-palette-ux-plan.md`         |
 | S3 SCADA 菜单与面板收尾        | `todo` | 同上 + `design-property-panel.md`                              | S1             | `page-designer-context-menu` 模式、WorkbenchShell resizable | —                                                      |
-| D1 3D 渲染器 UX 打磨           | `todo` | `docs/components/threejs-integration/design-renderer.md`       | —              | 529 reduced-motion/空态模式、语义令牌                       | —                                                      |
+| D1 3D 渲染器 UX 打磨           | `done` | `docs/components/threejs-integration/design-renderer.md`       | —              | 529 reduced-motion/空态模式、语义令牌                       | `docs/plans/533-three-renderer-ux-plan.md`             |
 | D2 3D 文档一致性与演示路由收尾 | `todo` | `docs/components/threejs-integration/design.md`                | D1             | —                                                           | —                                                      |
 
 ## Phase Details
@@ -71,6 +71,7 @@
 - **S2 SCADA 拖拽便捷性与 palette**：palette 拖入 ghost（527 双守卫模式）；画布 drop 落点指示（对齐 527 落点指示体系）+ drop 后自动选中；图元位移网格/对齐吸附（526 alignment 模式移植到 leafer 坐标系，吸收既有连线吸附阈值惯例），对标增补（Ignition 8.3）：自定义参考线（对标尺拖出 guide）作吸附体系评估项，可为一页裁定后再定是否入交付；方向键 nudge 批量单 undo entry（对齐 P2-4 纪律，仅改 UX 入口不碰 HCA10 事务语义）；palette 搜索过滤（纯函数 + 空态 + 清除）与分组折叠，条目元信息（分组/类型徽标）参照 FUXA-SVG-Widgets 与 WinCC 符号库的分类惯例。
 - **S3 SCADA 菜单与面板收尾**：画布右键/键盘上下文菜单（图元态：删除/复制/层级；空白态：粘贴/全选/适应画布；viewport 钳制 + Escape/外点/方向键，readOnly 收敛），层级操作对齐 Ignition layering 语义（置顶/上移/下移/置底）；WorkbenchShell 宽度回调接线（会话内持久，对齐 528 裁决）；编辑器空态升级（图标 + 标题 + 引导 CTA）。
 - **D1 3D 渲染器 UX 打磨**：`setPixelRatio(devicePixelRatio)` + 初始 aspect 修正（消除首帧错比例/HiDPI 发糊）；WebGL 不可用差异化降级（独立文案/图标，与加载失败分离）；hover 反馈完备化（高亮色可配/默认与材质解耦、MeshBasicMaterial 反馈、hoverable cursor:pointer）；canvas role/aria-label/焦点路径；灯色与 height 默认值令牌化/常量化收尾；加载骨架视觉规格对齐 529 模式；视口质感以 Spline 为浏览器 3D 基准水位（不引入 gizmo/outliner——运行态渲染器边界，见对标小节 three.js editor 条目）；单测与 e2e 断言随项落地。
+  - **勘误（2026-10-06，plan 533 D1 落地）**：本行「默认与材质解耦」交付形态 = MeshBasicMaterial 白提亮通道**默认启用**（反馈通道与材质类型解耦）；emissive 默认色值保留现值 0x2b4c7e（可配，色值属美学而非耦合）；「消除首帧错比例」实为初始化健壮性缺陷（init 末尾 resizeToContainer 覆盖 aspect，用户不可见错比例首帧）。契约见 design-renderer.md「视口质感契约」节。
 - **D2 3D 文档一致性与演示路由收尾**：`threejs-integration-analysis.md`「评审中」过时状态勘误、v2–v4 中间稿标注归档；工业适配器/重连管理器演示路由补齐（domain-route-entries + demo 页）；`__flux_three_handles` 生产暴露决策记录；深色模式/视觉回归覆盖方式按 2026-08-28 政策做一次对齐评估（结论可为一页裁定）。
 
 ## Dependency Graph

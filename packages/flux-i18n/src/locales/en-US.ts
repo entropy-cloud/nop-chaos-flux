@@ -163,6 +163,8 @@ export const enUS: Resource = {
       loading: 'Loading scene…',
       loadingProgress: 'Loading scene… {{percent}}%',
       error: 'Failed to load the 3D scene.',
+      errorWebgl: 'Your browser does not support WebGL — the 3D scene cannot be rendered.',
+      canvasLabel: 'Interactive 3D scene (drag to rotate/zoom)',
       retry: 'Retry',
       empty: 'No models configured for this scene.',
     },

@@ -314,6 +314,12 @@ export const EXEMPTIONS = [
     reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
     source: 'plan 465 Phase 6 closure（industrial 域豁免同款判例：canvas 引擎字面色 + scada-errors 结构化诊断）；plan 483 A1 文件级展开',
   },
+  {
+    path: 'packages/flux-renderers-3d/src/engine/three-defaults.ts',
+    rule: 'hardcoded-literal-color',
+    reason: 'plan 533 D1：THREE 灯光/材质默认色常量单一事实源（scene-manager 字面色收敛迁入本文件；canvas 引擎域字面色即契约本身，非 UI 样式硬编码）',
+    source: 'plan 533 D1 Closure（2026-10-06）；先例：scene-manager.ts canvas 引擎字面色豁免（plan 465/483）',
+  },
   // --- map（candidate A 域 + candidate C 单文件）---------------------------
   {
     path: 'packages/flux-renderers-map/src/',

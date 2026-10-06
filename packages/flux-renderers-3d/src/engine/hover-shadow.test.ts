@@ -167,21 +167,31 @@ describe('real hover — pointermove + emissive highlight (plan 473 V3-F1)', () 
     expect(material.emissive.getHex()).toBe(originalEmissive);
   });
 
-  it('skips highlight for MeshBasicMaterial (no emissive) without throwing', async () => {
+  it('lifts MeshBasicMaterial color on hover and restores it on leave (plan 533 D1：白提亮通道)', async () => {
     const harness = makeHarness();
     await harness.ready;
-    // basic material swap after load (emissive-less surface): hover events
-    // still fire, only the emissive boost is absent
+    // basic material swap after load (emissive-less surface)：plan 533 起白提亮通道
+    // 默认启用——反馈与材质类型解耦；断言提亮发生且离开后精确恢复。
     const mesh = harness.manager.getModel('cube')!.root as THREE.Mesh;
-    mesh.material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const basic = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    mesh.material = basic;
+    const originalColor = basic.color.clone();
     const events: HoverEvent[] = [];
     harness.manager.onHover((e) => events.push(e));
 
-    expect(() => {
-      harness.fire('pointermove', clientToNdc(400, 300));
-      harness.scheduled.splice(0).forEach((cb) => cb());
-    }).not.toThrow();
+    harness.fire('pointermove', clientToNdc(400, 300));
+    harness.scheduled.splice(0).forEach((cb) => cb());
     expect(events.some((e) => e.hovered)).toBe(true);
+    expect(basic.color.getHex()).not.toBe(originalColor.getHex());
+    // 红向白 lerp 0.25 → (1, 0.25, 0.25)：g/b 通道抬升且未全白。
+    expect(basic.color.r).toBeCloseTo(1, 5);
+    expect(basic.color.g).toBeCloseTo(0.25, 5);
+    expect(basic.color.b).toBeCloseTo(0.25, 5);
+
+    // leave → 精确恢复
+    harness.fire('pointermove', clientToNdc(-1, -1));
+    harness.scheduled.splice(0).forEach((cb) => cb());
+    expect(basic.color.getHex()).toBe(originalColor.getHex());
   });
 
   it('keeps the pointerdown/up driven hover for touch taps (no move)', async () => {

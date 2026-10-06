@@ -653,6 +653,9 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.4)
       three:
         specifier: 0.186.0
         version: 0.186.0
