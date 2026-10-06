@@ -191,6 +191,12 @@ Exit Criteria:
 - Why Not Blocking Closure: 收起态单行摘要已落地（`ai-tool-call-result-summary`，首行截断）；"对象 JSON 折叠视图"未做——引擎 result 契约为 string（engine/types.ts:57），对象场景由调用方 stringify，pretty JSON 展开态已可读
 - Successor Required: `no`
 
+### 会话 demo create→列表回路存量接线缺陷（round3 审计新发现登记）
+
+- Classification: `watch-only residual`（存量缺陷，非本 plan 引入——本 plan 改动前 create→列表即不闭环，既有 ai-conversations.spec 注释明示完整回路由 use-conversation 单测覆盖、e2e 只验证接线无错）
+- Why Not Blocking Closure: 本 plan 的检索判别性验证已由 ai-conversations-filter.test.tsx 确定性单测承接（850 全绿）；e2e 改为断言检索输入接线在活。缺陷本体：点击 + 派发 ai:createConversation 后列表不增（探针：conversations prop 恒 []、零 console 错误、conversationController 已解析——嫌疑 import-stack 命名空间竞态，ai:send 可用而 ai:createConversation 静默无效的不对称吻合）
+- Successor Required: `yes`（后继：引擎/接线修复 plan——import-stack 命名空间注册竞态调查，探针证据与路由不对称描述已录本节与 10-06 日志）
+
 ### 静默缩水记账（round2 审计 M3）
 
 - Classification: `watch-only residual`
@@ -222,11 +228,11 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 四 Phase 落地：P1 sender 同位切换（loading 时 cancel 槽位同位取代 submit——4 处既有断言按新语义迁移）+ textarea 自增高（192px 封顶/提交清空复位/内置路径限定）；P2 操作栏 hover/focus-within 浮现（opacity/transform，触屏常显，reduced-motion 降级）+ 用户气泡 copy + 气泡投影 + tool 尾随消息跳过操作栏（红先绿后留痕：stash 回退红 1 failed → 恢复 846 绿）；P3 代码块语言标签头（v10 契约：仅 language-\* 围栏渲染 chip，无语言围栏走 inline 不渲染——执行期勘误移除死 fallback）+ 思考态三点交错脉冲（reduced-motion 降级）；P4 工具卡 result（展开态 verbatim + 收起态单行摘要）+ tool 角色 subdued 样式 + 会话检索（标题子串 + 空态）+ AbortedNote 虚拟列表可达性 e2e（真实 send→stop 路径，跳底后 note 落可视区距底 ≤64px）。Closure Gates 全绿：typecheck/build/lint 42/42、pnpm test 78 tasks、pnpm check exit 0（scanner-baselines 有意识重注册 styling 240 / audit 737，理由落 reRegistrationNotes）、AI e2e 家族 137 passed（新增 ai-chat-ux-visual 5 例 + aborted-note 可达性 1 例）。
+Status Note: 四 Phase 落地：P1 sender 同位切换（loading 时 cancel 槽位同位取代 submit——4 处既有断言按新语义迁移）+ textarea 自增高（192px 封顶/提交清空复位/内置路径限定）；P2 操作栏 hover/focus-within 浮现（opacity/transform，触屏常显，reduced-motion 降级）+ 用户气泡 copy + 气泡投影 + tool 尾随消息跳过操作栏（红先绿后留痕：stash 回退红 1 failed → 恢复 846 绿）；P3 代码块语言标签头（v10 契约：仅 language-\* 围栏渲染 chip，无语言围栏走 inline 不渲染——执行期勘误移除死 fallback）+ 思考态三点交错脉冲（reduced-motion 降级）；P4 工具卡 result（展开态 verbatim + 收起态单行摘要）+ tool 角色 subdued 样式 + 会话检索（标题子串 + 空态）+ AbortedNote 虚拟列表可达性 e2e（真实 send→stop 路径，跳底后 note 落可视区距底 ≤64px）。Closure Gates 全绿：typecheck/build/lint 42/42、pnpm test 78 tasks、pnpm check exit 0（scanner-baselines 有意识重注册 styling 240 / audit 737，理由落 reRegistrationNotes）、AI e2e 家族 137 passed（新增 ai-chat-ux-visual 5 例 + aborted-note 可达性 1 例；其中 conversations 检索用例在 round3 复核后改为接线断言 + 单测承接——见 Deferred 存量缺陷登记）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 独立子 agent（fresh session，round1 task agent_84c61320 verdict issues；round2 task agent_34c8e090 verdict issues——两轮全部 findings 处理完毕后本 closure 落笔）
+- Auditor / Agent: 独立子 agent（fresh session；round1 task agent_84c61320 issues、round2 task agent_34c8e090 issues、round3 task agent_c84d0a89 issues——round2 四项 Minor/Major 文档类全部闭合，round3 新发现 conversations create 回路存量缺陷已按上节登记并移交后继，检索判别性验证转单测承接）
 - Evidence: round1 两 Major（conversations e2e 等待语义 / owner doc 零记载）+ 两 Minor（缩水未记账 / 红测留痕缺失）；round2 复核仍 issues（conversations demo 冷启动无会话——等待语义修复无效需先建会话，已改为点击 + 经 ai:createConversation 真建后再检索；plan 文本三项未落盘——已全部落盘：Execution Notes 三节 + Deferred 两节 + 头注释修正 + renderers.md sender 注释补齐；result 测试头注释指向不存在文件——已改为指向真实文件；spec :10 过时注释——已按 v10 契约修正）。最终验证：flux-renderers-ai 102 files/848 tests 全绿、ai-chat-ux-visual 5/5 + ai-conversations 3/3 串行绿、全量门禁 exit 0
 
 Follow-up:
