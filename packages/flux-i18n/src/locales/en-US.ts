@@ -1638,11 +1638,24 @@ export const enUS: Resource = {
           'invalid-config': 'Invalid scada config',
           unknown: 'Unknown error',
         },
+        category: {
+          shape: 'Shapes',
+          device: 'Devices',
+          instrument: 'Instruments',
+          'sensor-control': 'Sensor & Control',
+          pipe: 'Pipes',
+          other: 'Other',
+        },
         editor: {
           loading: 'Loading editor…',
           canvasError: 'Editor canvas error',
           canvasLabel: 'SCADA editor canvas',
           emptyScene: 'Empty scene — drag symbols from the palette to start editing',
+          palette: {
+            filterPlaceholder: 'Search symbols…',
+            filterEmpty: 'No matching symbols',
+            filterClear: 'Clear search',
+          },
           inspector: {
             title: 'Properties',
             id: 'ID',

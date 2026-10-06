@@ -35,7 +35,8 @@ function makeRuntime(symbols: ScadaSymbolNode[]): EditorEngineRuntime {
     load: () => undefined,
     syncWorkingCopy: () => undefined,
     updateWorkingNode: () => undefined,
-    addWorkingSymbol: () => undefined,
+    addWorkingSymbol: () => '',
+    nudgeWorkingSymbols: () => undefined,
     removeWorkingSymbol: () => undefined,
     undoRedo: new UndoRedoAdapter(new UndoStack()),
     undo: () => undefined,
@@ -114,6 +115,7 @@ describe('EditorTemplateDialog (design-template-station.md §4.1)', () => {
     const added: ScadaSymbolNode[] = [];
     runtime.addWorkingSymbol = (node) => {
       added.push(node);
+      return node.id;
     };
     const { getByTestId } = renderDialog({ storage, runtime });
     await waitFor(() => expect(getByTestId('toolbox-template-row')).toBeTruthy());

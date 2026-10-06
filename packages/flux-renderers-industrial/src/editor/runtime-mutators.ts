@@ -30,7 +30,10 @@ export interface EditorRuntimeMutators {
     junctionId: string,
     connections: ConnectionWriteResult['connections'],
   ) => void;
-  addWorkingSymbol: (node: ScadaSymbolNode) => void;
+  /** 返回 resolved id（resolveUniqueNodeId 产物；plan 531 S2：drop 后自动选中需拿回真实 id）。 */
+  addWorkingSymbol: (node: ScadaSymbolNode) => string;
+  /** 批量 nudge（方向键位移；P2-4 同款：单 snapshot + 单 pushOperation = 1 undo entry）。 */
+  nudgeWorkingSymbols: (ids: string[], dx: number, dy: number) => void;
   removeWorkingSymbol: (nodeId: string | string[]) => void;
   undo: () => void;
   redo: () => void;
@@ -83,7 +86,8 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
   };
 
   const addWorkingSymbol = (node: ScadaSymbolNode) => {
-    if (editingBlockedInPreview()) return;
+    // plan 531 S2：返回 resolved id；preview 门控早退返回空串（调用方以 truthy 判定再选中）。
+    if (editingBlockedInPreview()) return '';
     const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
     // plan 2026-08-08-1809-2 Phase 1 / F3：拖拽落点 / palette 点击的 id 由组件内不重置的 idCounter 生成，
     // 与 working copy 已装入图元碰撞 → tree-registry last-write-wins 静默覆盖。此处把去重收敛进单一 owner
@@ -94,6 +98,26 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     const resolvedNode = resolveUniqueNodeId(node, existingIds);
     session.workingConfig.symbols = [...session.workingConfig.symbols, resolvedNode];
     undoRedo.pushOperation('add-symbol', prevSnapshot, session.workingConfig);
+    syncWorkingCopy();
+    notifySession();
+    return resolvedNode.id;
+  };
+
+  // plan 531 S2 Phase 3：方向键 nudge 批量单 diff（对齐 P2-4 removeWorkingSymbol(string[]) 纪律）——
+  // 此前键盘层对 selection 逐 id 调 updateWorkingNode（每调用 1 snapshot + 1 push），N 元选中一次
+  // nudge 产 N undo entry。此处单 snapshot → 逐 id applyPatch + 连线联动重算 → 单 push（1 entry）。
+  // 仅改 UX 入口聚合，undoStack 事务核心与逆计算不触碰（HCA10 边界）。
+  const nudgeWorkingSymbols = (ids: string[], dx: number, dy: number) => {
+    if (ids.length === 0) return;
+    if (editingBlockedInPreview()) return;
+    const prevSnapshot = cloneConfigSnapshot(session.workingConfig);
+    for (const id of ids) {
+      const node = findNodeInWorking(session.workingConfig.symbols, id);
+      if (!node) continue;
+      applyPatchToWorkingNode(session, id, { x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy });
+      recomputeLinkagesForMovedNode(session, id);
+    }
+    undoRedo.pushOperation('update-symbol', prevSnapshot, session.workingConfig);
     syncWorkingCopy();
     notifySession();
   };
@@ -341,6 +365,7 @@ export function buildRuntimeMutators(ctx: EditorRuntimeContext): EditorRuntimeMu
     updateWorkingNode,
     writeConnection,
     addWorkingSymbol,
+    nudgeWorkingSymbols,
     removeWorkingSymbol,
     undo,
     redo,

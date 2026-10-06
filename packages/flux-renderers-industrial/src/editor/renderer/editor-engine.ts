@@ -90,6 +90,10 @@ export class ScadaEditorEngine {
       editor: {
         selectArea: true,
         selectKeep: true,
+        // plan 531 S2 Phase 3：关闭 leafer Editor 原生按键处理（arrowStep 方向键位移 / 内建 delete 等）——
+        // canvas 键盘层已自实现同集快捷键（delete/undo/redo/clipboard/group/arrows），双层同开会产生
+        // 双重 nudge（leafer 移动节点 → editor.move 写回 +1，canvas 层批量 mutator 再 +1）与漂移风险。
+        keyEvent: false,
         // D-530-2（plan 530 S1）：EditBox 选中框颜色接 `--ind-node-selected-ring`（与覆盖物
         // selected 令牌同源；创建时解析一次，口径与覆盖物令牌缓存一致）。解析失败回退
         // EDITOR_SELECTED_RING_FALLBACK（即 leafer 默认紫替换为选中令牌 fallback 值）。

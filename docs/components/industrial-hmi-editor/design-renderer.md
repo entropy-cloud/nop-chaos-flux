@@ -135,12 +135,12 @@ interface ScadaEditorCanvasEvents {
 
 ### 4.4 regions 与 slot 约定
 
-| region      | params                                             | 说明                                                                                                    |
-| ----------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `palette`   | `[]`（无参数）                                     | 图元库面板（E5.2）：列出 24 内置图元（`listScadaSymbols()` 只读），支持拖入放置                         |
-| `inspector` | `[{ nodeId }]`                                     | 属性面板（E5.3）：消费 schema 抽取 + 字段六类（design-property-panel.md §5），nodeId 来自当前 selection |
-| `toolbox`   | `[]`（无参数）                                     | 工具箱（E9.1）：视图工具 + 对齐分布层级 + 复制粘贴 + 导入导出 + 图元库浏览（design-toolbox.md §4）      |
-| `statusBar` | `[{ canUndo, canRedo, viewport, selectionCount }]` | 状态栏：undo/redo 边界提示（design-undo-redo.md §4.5）+ 当前视口显示 + selection 计数                   |
+| region      | params                                             | 说明                                                                                                                                                                                                                                                                                                           |
+| ----------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `palette`   | `[]`（无参数）                                     | 图元库面板（E5.2）：列出 24 内置图元（`listScadaSymbols()` 只读），支持拖入放置。plan 531 S2 增补：检索过滤（纯函数 palette-filter + 空态 + 清除）、分类分组折叠（`industrial.scada.category.*` i18n 组头 + other 兜底）、拖入 ghost（527 setPaletteDragGhost 同款）；条目 `data-palette-item=<type>` 测试锚点 |
+| `inspector` | `[{ nodeId }]`                                     | 属性面板（E5.3）：消费 schema 抽取 + 字段六类（design-property-panel.md §5），nodeId 来自当前 selection                                                                                                                                                                                                        |
+| `toolbox`   | `[]`（无参数）                                     | 工具箱（E9.1）：视图工具 + 对齐分布层级 + 复制粘贴 + 导入导出 + 图元库浏览（design-toolbox.md §4）                                                                                                                                                                                                             |
+| `statusBar` | `[{ canUndo, canRedo, viewport, selectionCount }]` | 状态栏：undo/redo 边界提示（design-undo-redo.md §4.5）+ 当前视口显示 + selection 计数                                                                                                                                                                                                                          |
 
 **根容器 slot**：`data-slot="scada-editor-canvas"`（与运行态 `scada-canvas` 区分，双态隔离在 DOM marker 层落地）；canvas 元素 `data-slot="scada-editor-canvas-canvas"`（对齐 runtime §10 + plan 2026-08-04-1558-3 Phase 1 落地模式）。
 

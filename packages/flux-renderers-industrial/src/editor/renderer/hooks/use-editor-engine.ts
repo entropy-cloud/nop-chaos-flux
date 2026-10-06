@@ -42,8 +42,10 @@ export interface EditorEngineRuntime {
   syncWorkingCopy: () => void;
   /** 更新 working copy 节点（inspector/palette 经此写回）。 */
   updateWorkingNode: (nodeId: string, patch: Partial<ScadaSymbolNode>) => void;
-  /** 新增图元到 working copy（palette 拖入经此写回）。 */
-  addWorkingSymbol: (node: ScadaSymbolNode) => void;
+  /** 新增图元到 working copy（palette 拖入经此写回）；返回 resolved id（plan 531 S2 drop 自动选中）。 */
+  addWorkingSymbol: (node: ScadaSymbolNode) => string;
+  /** 批量 nudge（方向键位移；单 undo entry，plan 531 S2 Phase 3）。 */
+  nudgeWorkingSymbols: (ids: string[], dx: number, dy: number) => void;
   /** 从 working copy 删除图元（接受单 id 或 id 数组；数组批量删产单 undo entry）。 */
   removeWorkingSymbol: (nodeId: string | string[]) => void;
   /** undo-redo 适配层（事务边界 + 入栈协调；E7.2 落地）。 */
@@ -230,6 +232,7 @@ export function useEditorEngine(args: UseEditorEngineArgs) {
       syncWorkingCopy: ctx.syncWorkingCopy,
       updateWorkingNode: mutators.updateWorkingNode,
       addWorkingSymbol: mutators.addWorkingSymbol,
+      nudgeWorkingSymbols: mutators.nudgeWorkingSymbols,
       removeWorkingSymbol: mutators.removeWorkingSymbol,
       undoRedo: ctx.undoRedo,
       undo: mutators.undo,

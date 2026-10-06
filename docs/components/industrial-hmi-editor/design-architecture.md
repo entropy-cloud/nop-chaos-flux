@@ -448,6 +448,24 @@ runtime `use-scada-handles.ts:11-21` 现有 9 方法（fit/center/getSymbols/get
 
 **EditBox 选中样式裁定（D-530-2）**：`@leafer-in/editor` 默认 EditBox `stroke:'#836DFF'` 经 appConfig `editor:{}` 合并通道可覆盖（`selectArea/selectKeep` 同通道，`Editor` 构造 `DataHelper.default` 合并）。裁定 = **落地最小定制**：`editor-engine.ts` 创建时解析 `--ind-node-selected-ring` 写入 `editor.stroke`（`pointFill`/交互行为/包裹层视觉不动）。拒绝路径：包裹层视觉（自绘选中框）成本高且与 leafer EditBox 命中/手柄体系冲突，不做。
 
+### 10.2 拖拽吸附与 palette 便捷性契约（plan 531 S2，2026-10-06 落地）
+
+**吸附体系**（纯函数 `editor/snap/transform-snap.ts`，drop 落点与 transformEnd 修正共用）：
+
+- 对齐吸附：left/center/right × top/middle/bottom 三轴候选，band 剪枝；阈值 `MOVE_SNAP_ALIGNMENT_THRESHOLD = 8`（世界坐标，吸收连线锚点吸附 `DEFAULT_SNAP_THRESHOLD = 8` 惯例）。
+- 网格吸附：对齐候选缺失的轴 round 到 `MOVE_SNAP_GRID_SIZE = 10`（世界坐标常数，契约导出；设置 UI 不在本轨）。
+- 优先级：对齐命中不叠加网格修正；网格不产生辅助线。
+- 应用时机：drop 落点即吸附着位；拖拽经 transformEnd 提交前修正——**仅纯位移事务**（判别 = 事务起始几何快照对比，任一被拖图元 width/height/rotation 变更即 resize/skew 事务，跳过位置吸附；适配层每帧 patch 恒含全键，不可按 patch 键判别）。修正写 working copy → syncWorkingCopy → engine.applyDiff 写回 leafer（手势已终止无反馈环），修正并入同一 transform-move 事务 diff（一拖拽 = 一 undo entry，HCA 事务语义不变）。
+- 拖拽中辅助线：DOM overlay（`.nop-scada-editor-alignment-guide`，526 fd-alignment-guide 同形态），经 `UseEditorEngineArgs.onMoveGuides` 回调上报线世界坐标，transformEnd 清除；视觉通道不入 working copy。
+
+**批量 nudge**：`nudgeWorkingSymbols(ids, dx, dy)`（P2-4 `removeWorkingSymbol(string[])` 同款——单 snapshot + 单 pushOperation('update-symbol') = 1 undo entry）；canvas 键盘层方向键由此前逐 id `updateWorkingNode`（N entry）改调批量入口。leafer Editor 原生按键处理关闭（appConfig `editor.keyEvent: false`）：canvas 键盘层已自实现同集快捷键，双层同开产生双重 nudge 与漂移。
+
+**drop 便捷性**：`addWorkingSymbol` 返回 resolved id（`resolveUniqueNodeId` 产物；preview 门控早退返回空串）；drop 后 `setSelection([resolvedId])` 自动选中；dragover 渲染 snapped 落点预览框（`data-testid="scada-editor-drop-preview"`，内联 dashed 预览样式；dragleave/drop/invalid-type 早退均清除）。palette MIME 保持 `application/x-scada-symbol-type` 裸 type（不迁移 527 JSON payload——canvas 校验路径稳定契约）。
+
+**palette 检索/分组**：纯函数 `editor/palette/palette-filter.ts`（`matchesScadaPaletteQuery` 名称/type/category 子串匹配 + `groupScadaPaletteSymbols` 分类分组/组内过滤/空组剔除，category 缺省单列 other 组）；分组折叠本地 useState（会话内）；条目元信息 = 分组头（i18n `industrial.scada.category.*`）+ item title（名称 · 分类）。拖入 ghost = 527 `setPaletteDragGhost` 同款（feature-detect setDragImage + 离屏 fixed + pointer-events:none + timeout 清理）。
+
+**自定义参考线裁定（D-531-1，Ignition 8.3 对标项）**：**拒绝入交付**。证据与拒绝路径：①本编辑器无标尺 UI——参考线的交互入口依赖标尺系统（标尺 chrome 面本身就是独立组件面），裸 guide 无产出交互的入口；②参考线需跨会话持久化才有设计价值 → 进 ScadaConfig 序列化契约 = 触碰序列化校验域（HCA 已治理边界）；③拖拽吸附已由「网格 + 兄弟对齐」双通道覆盖 S2 便捷性水位，参考线为锦上添花。Successor path：未来编辑器 chrome 升级（标尺系统）立项时一并评估 guide 存储（schema 扩展 + 校验 + 序列化）。
+
 ## 11. 实现拆分建议（架构层声明，完整拆分属 E2.6 + E5）
 
 ```

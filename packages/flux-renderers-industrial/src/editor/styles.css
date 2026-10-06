@@ -44,6 +44,33 @@
     box-shadow 120ms ease;
 }
 
+/* plan 531 S2 Phase 1：palette 检索空态（令牌链，与 toolbox-status 同款口径）。 */
+.nop-scada-editor-palette-empty {
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--nop-body-copy, hsl(var(--muted-foreground)));
+}
+
+/* plan 531 S2 Phase 3：拖拽对齐辅助线（526 fd-alignment-guide 同形态；1px 线 + pointer-events none）。 */
+.nop-scada-editor-alignment-guide {
+  position: absolute;
+  pointer-events: none;
+  background: hsl(var(--primary) / 0.7);
+  z-index: 5;
+}
+
+.nop-scada-editor-alignment-guide-vertical {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.nop-scada-editor-alignment-guide-horizontal {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
 /* 根容器（design-renderer.md §10：data-slot="scada-editor-canvas"）。 */
 .nop-scada-editor-canvas {
   position: relative;

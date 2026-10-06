@@ -15,7 +15,7 @@
 - **右键菜单**：`page-designer-context-menu.tsx` 组件模式（viewport 钳制 / Escape / 外点 / 方向键导航，items 子内构建）。
 - **过渡常量**：`PD_OVERLAY_TRANSITION` 外观属性限定模式（几何属性不入 transition）。
 - **面板调宽**：WorkbenchShell `leftResizable/rightResizable` + 本地 useState（会话内有效）。
-- **palette 检索**：`matchesPaletteQuery`/`matchesReportFieldQuery` 纯函数 + 空态 + 清除模式。
+- **palette 检索**：`matchesPaletteQuery`/`matchesReportFieldQuery` 纯函数 + 空态 + 清除模式（勘误 2026-10-06：该模式由 plan 526 落库，非 527——git a0e50285a）。
 - **既有栈**：leafer-ui `@leafer-in/editor`（EditBox/EditSelect/框选内建）、WorkbenchShell 三栏、`@nop-chaos/ui`（Input/Skeleton/Button）、i18n 双 locale 纪律。
 
 ## Current Baseline（2026-10-06 探查）
@@ -50,7 +50,7 @@
 | Work Item                      | 状态   | 计划                                                   |
 | ------------------------------ | ------ | ------------------------------------------------------ |
 | S1 SCADA 编辑器视觉与令牌基础  | `done` | `docs/plans/530-scada-visual-token-foundation-plan.md` |
-| S2 SCADA 拖拽便捷性与 palette  | `todo` | —                                                      |
+| S2 SCADA 拖拽便捷性与 palette  | `done` | `docs/plans/531-scada-drag-palette-ux-plan.md`         |
 | S3 SCADA 菜单与面板收尾        | `todo` | —                                                      |
 | D1 3D 渲染器 UX 打磨           | `todo` | —                                                      |
 | D2 3D 文档一致性与演示路由收尾 | `todo` | —                                                      |
@@ -60,7 +60,7 @@
 | Phase                          | 状态   | Owner Doc                                                      | 依赖           | 复用                                                        | 计划                                                   |
 | ------------------------------ | ------ | -------------------------------------------------------------- | -------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
 | S1 SCADA 编辑器视觉与令牌基础  | `done` | `docs/components/industrial-hmi-editor/design-architecture.md` | —              | 526 选中态令牌模式                                          | `docs/plans/530-scada-visual-token-foundation-plan.md` |
-| S2 SCADA 拖拽便捷性与 palette  | `todo` | 同上 + `design-toolbox.md`                                     | S1（令牌基础） | 527 ghost 模式、526 alignment 模式                          | —                                                      |
+| S2 SCADA 拖拽便捷性与 palette  | `done` | 同上 + `design-toolbox.md`                                     | S1（令牌基础） | 527 ghost 模式、526 alignment 模式                          | `docs/plans/531-scada-drag-palette-ux-plan.md`         |
 | S3 SCADA 菜单与面板收尾        | `todo` | 同上 + `design-property-panel.md`                              | S1             | `page-designer-context-menu` 模式、WorkbenchShell resizable | —                                                      |
 | D1 3D 渲染器 UX 打磨           | `todo` | `docs/components/threejs-integration/design-renderer.md`       | —              | 529 reduced-motion/空态模式、语义令牌                       | —                                                      |
 | D2 3D 文档一致性与演示路由收尾 | `todo` | `docs/components/threejs-integration/design.md`                | D1             | —                                                           | —                                                      |

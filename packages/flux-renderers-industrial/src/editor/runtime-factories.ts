@@ -5,7 +5,9 @@ import {
   type ScadaEditorMode,
   type ScadaEditorSession,
 } from './editor-session.js';
+import { collectAllSymbols, findNodeInWorking } from './editor-working-helpers.js';
 import { attachEditorAdapter } from './editor-adapter.js';
+import { computeMoveSnap, type SnapRect } from './snap/transform-snap.js';
 import { serializeScadaConfig } from '../serialization/serialize.js';
 import { parseScadaConfig } from '../serialization/parse.js';
 import { validateScadaConfig } from '../serialization/validate.js';
@@ -62,6 +64,8 @@ export interface UseEditorEngineArgs {
   onSave?: (serializedConfig: string) => void;
   /** 装入外部 config（load 句柄触发；plan 2026-08-07-1835-2 Phase 2 / multi P1-04）。 */
   onLoad?: (config: ScadaConfig) => void;
+  /** 拖拽对齐辅助线上报（plan 531 S2 Phase 3；拖拽帧上报线世界坐标，结束/中断上报 null 清除）。 */
+  onMoveGuides?: (guides: { vertical: number | null; horizontal: number | null } | null) => void;
 }
 
 /**
@@ -275,6 +279,41 @@ export function createRuntimeCore(
   // → 单帧 O(s·n)。现用 microtask trailing：一帧内首节点调度一次 microtask，后续节点跳过；microtask 在帧末
   // 一次性 syncWorkingCopy + notifySession，单帧收敛为 O(n + k)（去掉 s 乘子）。
   let geometrySyncPending = false;
+  // plan 531 S2 Phase 3：拖拽吸附记账——onTransformStart/End 无参且事务统一 kind='transform-move'
+  // 覆盖 move/scale/rotate/skew，而适配层每帧 geometry patch 恒含 width/height（readTargetGeometry 全键读取），
+  // 故「纯位移」判别取**事务起始几何快照对比**：任一被拖图元的 width/height/rotation 相对起始快照变更
+  // 即判 resize/skew 事务（不做位置吸附、不上报辅助线）；否则为纯位移，transformEnd 应用吸附修正。
+  interface TransformStartGeometry {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number;
+  }
+  let transformStartRects = new Map<string, TransformStartGeometry>();
+  let transformMovedIds = new Set<string>();
+  let transformResized = false;
+  const captureTransformStartRects = () => {
+    transformStartRects = new Map();
+    for (const node of collectAllSymbols(session.workingConfig.symbols)) {
+      transformStartRects.set(node.id, {
+        x: node.x ?? 0,
+        y: node.y ?? 0,
+        width: node.width ?? 0,
+        height: node.height ?? 0,
+        rotation: node.rotation ?? 0,
+      });
+    }
+  };
+  const nodeSnapRect = (nodeId: string): SnapRect | undefined => {
+    const node = findNodeInWorking(session.workingConfig.symbols, nodeId);
+    if (!node) return undefined;
+    return { x: node.x ?? 0, y: node.y ?? 0, width: node.width ?? 0, height: node.height ?? 0 };
+  };
+  const siblingRectsExcluding = (nodeId: string): SnapRect[] =>
+    collectAllSymbols(session.workingConfig.symbols)
+      .filter((n: ScadaSymbolNode) => n.id !== nodeId)
+      .map((n: ScadaSymbolNode) => ({ x: n.x ?? 0, y: n.y ?? 0, width: n.width ?? 0, height: n.height ?? 0 }));
   const handleGeometryChange = (nodeId: string, patch: Partial<ScadaSymbolNode>) => {
     // 连线端点拖动模式启用时 Editor transform 不写回（design-connection.md §4.2 关键约束 1 互斥）。
     if (connectionDragActiveRef.current) return;
@@ -283,6 +322,26 @@ export function createRuntimeCore(
     applyPatchToWorkingNode(session, nodeId, patch);
     // 图元移动联动（design-connection.md §4.4 + §4.5）：目标设备移动后重算所有指向它的 connection.x/y。
     recomputeLinkagesForMovedNode(session, nodeId);
+    transformMovedIds.add(nodeId);
+    const start = transformStartRects.get(nodeId);
+    const node = findNodeInWorking(session.workingConfig.symbols, nodeId);
+    if (start && node) {
+      if (
+        (node.width ?? 0) !== start.width ||
+        (node.height ?? 0) !== start.height ||
+        (node.rotation ?? 0) !== start.rotation
+      ) {
+        transformResized = true;
+      }
+    }
+    // 拖拽中对齐辅助线（纯位移帧）：按当前自由位置计算候选线并上报（视觉通道，不入 working copy）。
+    if (!transformResized) {
+      const rect = nodeSnapRect(nodeId);
+      if (rect) {
+        const snap = computeMoveSnap({ dragged: rect, siblings: siblingRectsExcluding(nodeId) });
+        latest.current.onMoveGuides?.({ vertical: snap.vertical, horizontal: snap.horizontal });
+      }
+    }
     if (!geometrySyncPending) {
       geometrySyncPending = true;
       queueMicrotask(() => {
@@ -294,9 +353,31 @@ export function createRuntimeCore(
   };
   // transform 事务边界（design-undo-redo.md §4.2）：首帧快照 working copy，pointerup 一次性 diff 入栈。
   const handleTransformStart = () => {
+    captureTransformStartRects();
+    transformMovedIds = new Set();
+    transformResized = false;
     undoRedo.beginTransaction('transform-move', session.workingConfig);
   };
   const handleTransformEnd = () => {
+    // plan 531 S2 Phase 3：提交前吸附修正（仅纯位移事务）——对齐优先、网格兜底（阈值吸收连线吸附 8 惯例）。
+    // 修正写 working copy → syncWorkingCopy → engine.applyDiff 写回 leafer（拖拽手势已终止，无反馈环）；
+    // 修正后 commitTransaction：一拖拽仍 = 一 diff（修正并入同一 undo entry，HCA 事务语义不变）。
+    if (!transformResized) {
+      for (const movedId of transformMovedIds) {
+        const rect = nodeSnapRect(movedId);
+        if (!rect) continue;
+        const snap = computeMoveSnap({ dragged: rect, siblings: siblingRectsExcluding(movedId) });
+        if (snap.dx !== 0 || snap.dy !== 0) {
+          applyPatchToWorkingNode(session, movedId, { x: Math.round(rect.x + snap.dx), y: Math.round(rect.y + snap.dy) });
+          recomputeLinkagesForMovedNode(session, movedId);
+        }
+      }
+    }
+    transformStartRects = new Map();
+    transformMovedIds = new Set();
+    transformResized = false;
+    latest.current.onMoveGuides?.(null);
+    syncWorkingCopy();
     undoRedo.commitTransaction(session.workingConfig);
     notifySession();
   };

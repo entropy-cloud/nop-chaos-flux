@@ -1632,11 +1632,24 @@ export const zhCN: Resource = {
           'invalid-config': '组态配置非法',
           unknown: '未知错误',
         },
+        category: {
+          shape: '形状',
+          device: '设备',
+          instrument: '仪表',
+          'sensor-control': '传感控制',
+          pipe: '管道',
+          other: '其他',
+        },
         editor: {
           loading: '编辑器加载中…',
           canvasError: '编辑器画布错误',
           canvasLabel: '组态编辑器画布',
           emptyScene: '空场景——从左侧图元库拖入图元开始编辑',
+          palette: {
+            filterPlaceholder: '搜索图元…',
+            filterEmpty: '无匹配图元',
+            filterClear: '清除检索',
+          },
           inspector: {
             title: '属性',
             id: 'ID',

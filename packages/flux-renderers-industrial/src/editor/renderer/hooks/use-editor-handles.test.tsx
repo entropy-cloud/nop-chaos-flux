@@ -77,7 +77,9 @@ function makeRuntime(): EditorEngineRuntime {
     },
     addWorkingSymbol: (node: { id: string }) => {
       session.workingConfig.symbols.push(node as never);
+      return node.id;
     },
+    nudgeWorkingSymbols: () => undefined,
     removeWorkingSymbol: (id: string | string[]) => {
       const ids = Array.isArray(id) ? id : [id];
       const set = new Set(ids);

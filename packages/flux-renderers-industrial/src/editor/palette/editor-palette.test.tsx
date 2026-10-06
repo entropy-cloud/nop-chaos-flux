@@ -51,10 +51,11 @@ describe('EditorPalettePanel i18n (plan 2026-08-09-0648-2 Phase 2)', () => {
     expect(findButtonByText(container, 'industrial.scada.symbol.scada-rect')).toBeUndefined();
   });
 
-  it('renders localized name also as title attribute', () => {
+  it('renders localized name plus category in title attribute (plan 531 S2: 条目元信息)', () => {
     const { container } = render(<EditorPalettePanel runtime={makeRuntime()} onError={() => undefined} />);
     const rectBtn = findButtonByText(container, '矩形');
-    expect(rectBtn?.getAttribute('title')).toBe('矩形');
+    // plan 531 S2 Phase 1：title 由「仅名称」升级为「名称 · 分类」（分组头承载分组元信息、title 承载条目级元信息）。
+    expect(rectBtn?.getAttribute('title')).toBe('矩形 · 形状');
   });
 
   it('falls back to def.name (English) on locale miss via explicit miss-detection (D5)', () => {

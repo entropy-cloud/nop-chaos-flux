@@ -7,7 +7,7 @@ import { parseScadaConfig } from '../serialization/parse.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 import type { ScadaEditorCanvasSchema, ScadaEditorCanvasEvents } from './schemas.js';
-import { useEditorEngine } from './renderer/hooks/use-editor-engine.js';
+import { useEditorEngine, type EditorEngineRuntime } from './renderer/hooks/use-editor-engine.js';
 import { useEditorHandles } from './renderer/hooks/use-editor-handles.js';
 import { scadaEditorErrorI18nKey } from './renderer/editor-errors.js';
 import { projectSessionChange, type ScadaEditorSession } from './editor-session.js';
@@ -16,8 +16,9 @@ import { useHostScope, useStatusPathPublication, WorkbenchShell } from '@nop-cha
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
 import { EditorToolboxPanel } from './toolbox/toolbox-panel.js';
 import { EditorStatusBar } from './renderer/editor-status-bar.js';
-import { collectWorldBounds } from './editor-working-helpers.js';
+import { collectAllSymbols, collectWorldBounds } from './editor-working-helpers.js';
 import { hasScadaSymbol } from '../symbols/symbol-registry.js';
+import { computeMoveSnap, type SnapRect } from './snap/transform-snap.js';
 import type { Bounds } from '../engine/viewport.js';
 
 export type ScadaEditorCanvasStatus = 'loading' | 'ready' | 'error' | 'destroyed';
@@ -74,6 +75,10 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   const [status, setStatus] = useState<ScadaEditorCanvasStatus>('loading');
   const [errorInfo, setErrorInfo] = useState<ScadaEditorCanvasErrorInfo | undefined>();
   const [selection, setSelection] = useState<string[]>([]);
+  // plan 531 S2 Phase 2：drop 落点指示（snapped 世界坐标预览框）；dragleave/drop 清除，invalid type 早退不残留。
+  const [dropPreview, setDropPreview] = useState<SnapRect | null>(null);
+  // plan 531 S2 Phase 3：拖拽对齐辅助线（runtime-factories 拖拽帧上报线世界坐标，transformEnd 清 null）。
+  const [moveGuides, setMoveGuides] = useState<{ vertical: number | null; horizontal: number | null } | null>(null);
   // session 反应式通道（plan 2026-08-07-1835-1 Phase 1 / open P1-A）：
   // `runtime.session.*` 是 ref-held 可变对象（INV-4），不进 React 状态；notifySession 经 handleSessionChange
   // 派发 schema 事件外，还 bump 此计数器，触发本组件重渲染 → 子 panel（toolbox Undo/Redo disabled、
@@ -214,6 +219,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         return undefined;
       }
     },
+    onMoveGuides: setMoveGuides,
     onReady: handleReady,
     onError: handleError,
     onSelectionChange: handleSelectionChange,
@@ -400,6 +406,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         onDrop={(e) => {
           if (disabled) return;
           e.preventDefault();
+          setDropPreview(null);
           const type = e.dataTransfer.getData('application/x-scada-symbol-type');
           if (type && runtime) {
             // plan 2026-08-08-1931-1 Phase 1 / F11：drop 入口符号类型校验——
@@ -427,19 +434,39 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
             const viewX = e.clientX - rect.left;
             const viewY = e.clientY - rect.top;
             const world = runtime.engine.getWorldPoint({ x: viewX, y: viewY });
-            runtime.addWorkingSymbol({
+            // plan 531 S2 Phase 2：落点吸附（对齐优先、网格兜底；x/y round 与既有纪律一致）。
+            const freeX = world.x - 50;
+            const freeY = world.y - 50;
+            const snap = computeMoveSnap({
+              dragged: { x: freeX, y: freeY, width: 100, height: 100 },
+              siblings: collectSiblingRects(runtime),
+            });
+            const resolvedId = runtime.addWorkingSymbol({
               id,
               type,
-              x: Math.round(world.x - 50),
-              y: Math.round(world.y - 50),
+              x: Math.round(freeX + snap.dx),
+              y: Math.round(freeY + snap.dy),
               width: 100,
               height: 100,
             });
+            // plan 531 S2 Phase 2：drop 后自动选中（addWorkingSymbol 返回 resolveUniqueNodeId 产物 id；
+            // preview 门控早退返回空串 → 不选中）。
+            if (resolvedId) runtime.setSelection([resolvedId]);
           }
         }}
         onDragOver={(e) => {
           e.preventDefault();
           e.dataTransfer.dropEffect = 'copy';
+          // plan 531 S2 Phase 2：落点指示——snapped 世界坐标预览框（world→viewport 定位由渲染层换算）。
+          if (!runtime) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const world = runtime.engine.getWorldPoint({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+          const free = { x: world.x - 50, y: world.y - 50, width: 100, height: 100 };
+          const snap = computeMoveSnap({ dragged: free, siblings: collectSiblingRects(runtime) });
+          setDropPreview({ x: free.x + snap.dx, y: free.y + snap.dy, width: 100, height: 100 });
+        }}
+        onDragLeave={(e) => {
+          if (e.currentTarget === e.target) setDropPreview(null);
         }}
         // plan 2026-08-07-1835-2 Phase 3 / open P1-B：键盘层——Delete/Ctrl+Z/Y/Ctrl+G/Ctrl+Shift+G/arrows
         // （此前 grep keydown 0 hits，delete/group/ungroup 仅 component:* handle 可达）。
@@ -496,13 +523,47 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
             const step = e.shiftKey ? 10 : 1;
             const dx = key === 'arrowleft' ? -step : key === 'arrowright' ? step : 0;
             const dy = key === 'arrowup' ? -step : key === 'arrowdown' ? step : 0;
-            for (const id of sel) {
-              const node = runtime.session.workingConfig.symbols.find((s) => s.id === id);
-              if (node) runtime.updateWorkingNode(id, { x: (node.x ?? 0) + dx, y: (node.y ?? 0) + dy });
-            }
+            // plan 531 S2 Phase 3：批量单 undo entry（此前逐 id updateWorkingNode 产 N entry）。
+            runtime.nudgeWorkingSymbols(sel, dx, dy);
           }
         }}
       >
+        {/* plan 531 S2 Phase 3：拖拽对齐辅助线（世界坐标 → viewport 换算定位，transformEnd 清除）。 */}
+        {showLayoutBody && runtime && moveGuides?.vertical != null
+          ? (() => {
+              const viewX = runtime.engine.getViewportPoint({ x: moveGuides.vertical, y: 0 }).x;
+              return <div data-testid="scada-editor-move-guide-vertical" aria-hidden="true" className="nop-scada-editor-alignment-guide nop-scada-editor-alignment-guide-vertical" style={{ left: viewX }} />;
+            })()
+          : null}
+        {showLayoutBody && runtime && moveGuides?.horizontal != null
+          ? (() => {
+              const viewY = runtime.engine.getViewportPoint({ x: 0, y: moveGuides.horizontal }).y;
+              return <div data-testid="scada-editor-move-guide-horizontal" aria-hidden="true" className="nop-scada-editor-alignment-guide nop-scada-editor-alignment-guide-horizontal" style={{ top: viewY }} />;
+            })()
+          : null}
+        {/* plan 531 S2 Phase 2：drop 落点指示（snapped 世界坐标预览框，world→viewport 换算定位）。 */}
+        {showLayoutBody && runtime && dropPreview
+          ? (() => {
+              const viewPoint = runtime.engine.getViewportPoint({ x: dropPreview.x, y: dropPreview.y });
+              const scale = runtime.engine.getViewport().scale;
+              return (
+                <div
+                  data-testid="scada-editor-drop-preview"
+                  aria-hidden="true"
+                  className="pointer-events-none absolute"
+                  style={{
+                    left: viewPoint.x,
+                    top: viewPoint.y,
+                    width: dropPreview.width * scale,
+                    height: dropPreview.height * scale,
+                    border: '1px dashed hsl(var(--primary))',
+                    borderRadius: 4,
+                    background: 'hsl(var(--primary) / 0.06)',
+                  }}
+                />
+              );
+            })()
+          : null}
         {/* plan 2026-08-08-0900-1 Phase 3 / P2 #12：empty region 正确归所——ready 但无图元时显示空场景提示（canvas 区内 overlay）。 */}
         {showLayoutBody && runtime.session.workingConfig.symbols.length === 0
           ? asReactNode(empty?.render()) ?? (
@@ -540,6 +601,18 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
  * 计算全部图元（含 group 嵌套）的聚合世界包围盒（plan 2026-08-08-0900-1 Phase 3 / P2 #9 viewport policy 消费用）。
  * 复用 collectWorldBounds（与 toolbox-runtime computeBounds 同语义）；跳过零尺寸节点。
  */
+
+
+/** plan 531 S2：吸附兄弟矩形面（working copy 全图元 leaf rect；缺省宽高按 0 处理）。 */
+function collectSiblingRects(runtime: EditorEngineRuntime): SnapRect[] {
+  return collectAllSymbols(runtime.session.workingConfig.symbols).map((s) => ({
+    x: s.x ?? 0,
+    y: s.y ?? 0,
+    width: s.width ?? 0,
+    height: s.height ?? 0,
+  }));
+}
+
 function computeAggregateViewportBounds(symbols: ScadaConfig['symbols']): Bounds | undefined {
   const worldBounds = collectWorldBounds(symbols, 0, 0);
   let out: Bounds | undefined;

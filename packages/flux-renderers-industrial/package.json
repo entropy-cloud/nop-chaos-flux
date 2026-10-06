@@ -32,7 +32,8 @@
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "leafer-ui": "2.2.9"
+    "leafer-ui": "2.2.9",
+    "lucide-react": "^1.17.0"
   },
   "peerDependencies": {
     "react": "^19.0.0",
