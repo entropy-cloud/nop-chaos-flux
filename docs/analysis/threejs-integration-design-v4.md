@@ -2,7 +2,7 @@
 
 > **文档版本**: 4.0  
 > **更新日期**: 2026-09-05  
-> **状态**: 设计评审中  
+> **状态**: ~~设计评审中~~ **已归档（superseded）**——终稿 = `docs/components/threejs-integration/design.md`（v5 定稿，I1.1 共识审查通过）；本稿为历史中间稿，不再演进（勘误 2026-10-06，plan 534 D2）。  
 > **变更说明**: 修复 v3 审查发现的 7 项问题（P0×3 + P1×4）——extractDeps 不存在、compileExpression 路径错误、数据流断裂、selector 内副作用、WebSocket API 错误、OrbitControls 未导入、applyTransform 未定义
 
 ---

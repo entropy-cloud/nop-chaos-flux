@@ -3,7 +3,8 @@
 > **文档版本**: 5.0
 > **状态**: 定稿（I1.1 共识审查通过：3 轮独立 sub-agent 审查，R1 3M/7m → R2 0B/0M/5m → R3 终审 0B/0M，plan `docs/plans/464-threejs-i1-design-review-plan.md` Review Rounds 留痕）
 > **更新日期**: 2026-09-13
-> **前置**: 调研 `docs/analysis/threejs-integration-analysis.md`（§7 复用点、§8 v4 核对表）；v4 历史版本归档于 `docs/analysis/threejs-integration-design-v4.md`
+> **前置**: 调研 `docs/analysis/threejs-integration-analysis.md`（§7 复用点、§8 v4 核对表）；v2/v3/v4 历史中间稿归档于 `docs/analysis/threejs-integration-design-v{2,3,4}.md`（2026-10-06 就地标注「已归档（superseded by 本 v5 定稿）」——原「设计评审中」状态勘误，plan 534 D2）
+> **演示路由**: `#/three-canvas-demo`（渲染器演示）+ `#/three-industrial-demo`（IndustrialAdapter + ReconnectionManager 数据源演示，plan 534 D2；合成 openSocket 标签源 + 重连尝试计数 = 合成源建连次数）
 > **来源路线图**: `docs/backlog/threejs-integration-roadmap.md`
 
 ---

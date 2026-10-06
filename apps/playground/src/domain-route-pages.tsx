@@ -168,6 +168,9 @@ const LazySpreadsheetPage = lazy(() =>
 const LazyThreeCanvasDemoPage = lazy(() =>
   import('./pages/three-canvas-demo').then((m) => ({ default: m.ThreeCanvasDemoPage })),
 );
+const LazyThreeIndustrialDemoPage = lazy(() =>
+  import('./pages/three-industrial-demo').then((m) => ({ default: m.ThreeIndustrialDemoPage })),
+);
 const LazyWordEditorPage = lazy(() =>
   import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })),
 );
@@ -246,6 +249,7 @@ export const DOMAIN_ROUTE_PAGES: Record<string, (ctx: DomainPageContext) => Reac
   'scada-perf-scale': (ctx) => <LazyScadaPerfScaleDemoPage onBack={ctx.goHome} />,
   'leafer-examples': (ctx) => <LazyLeaferExamplesDemoPage onBack={ctx.goHome} />,
   'three-canvas-demo': (ctx) => <LazyThreeCanvasDemoPage onBack={ctx.goHome} />,
+  'three-industrial-demo': (ctx) => <LazyThreeIndustrialDemoPage onBack={ctx.goHome} />,
   'scada-edge-cases': (ctx) => <LazyScadaEdgeDemoPage onBack={ctx.goHome} />,
   'scada-editor-demo': (ctx) => <LazyScadaEditorDemoPage onBack={ctx.goHome} />,
   'print-designer': () => <LazyPrintDesignerDemoPage />,

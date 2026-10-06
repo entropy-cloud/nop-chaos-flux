@@ -53,7 +53,7 @@
 | S2 SCADA 拖拽便捷性与 palette  | `done` | `docs/plans/531-scada-drag-palette-ux-plan.md`         |
 | S3 SCADA 菜单与面板收尾        | `done` | `docs/plans/532-scada-menu-panel-plan.md`              |
 | D1 3D 渲染器 UX 打磨           | `done` | `docs/plans/533-three-renderer-ux-plan.md`             |
-| D2 3D 文档一致性与演示路由收尾 | `todo` | —                                                      |
+| D2 3D 文档一致性与演示路由收尾 | `done` | `docs/plans/534-three-docs-demo-plan.md`               |
 
 ## Phases
 
@@ -63,7 +63,7 @@
 | S2 SCADA 拖拽便捷性与 palette  | `done` | 同上 + `design-toolbox.md`                                     | S1（令牌基础） | 527 ghost 模式、526 alignment 模式                          | `docs/plans/531-scada-drag-palette-ux-plan.md`         |
 | S3 SCADA 菜单与面板收尾        | `todo` | 同上 + `design-property-panel.md`                              | S1             | `page-designer-context-menu` 模式、WorkbenchShell resizable | —                                                      |
 | D1 3D 渲染器 UX 打磨           | `done` | `docs/components/threejs-integration/design-renderer.md`       | —              | 529 reduced-motion/空态模式、语义令牌                       | `docs/plans/533-three-renderer-ux-plan.md`             |
-| D2 3D 文档一致性与演示路由收尾 | `todo` | `docs/components/threejs-integration/design.md`                | D1             | —                                                           | —                                                      |
+| D2 3D 文档一致性与演示路由收尾 | `done` | `docs/components/threejs-integration/design.md`                | D1             | —                                                           | `docs/plans/534-three-docs-demo-plan.md`               |
 
 ## Phase Details
 
@@ -73,6 +73,7 @@
 - **D1 3D 渲染器 UX 打磨**：`setPixelRatio(devicePixelRatio)` + 初始 aspect 修正（消除首帧错比例/HiDPI 发糊）；WebGL 不可用差异化降级（独立文案/图标，与加载失败分离）；hover 反馈完备化（高亮色可配/默认与材质解耦、MeshBasicMaterial 反馈、hoverable cursor:pointer）；canvas role/aria-label/焦点路径；灯色与 height 默认值令牌化/常量化收尾；加载骨架视觉规格对齐 529 模式；视口质感以 Spline 为浏览器 3D 基准水位（不引入 gizmo/outliner——运行态渲染器边界，见对标小节 three.js editor 条目）；单测与 e2e 断言随项落地。
   - **勘误（2026-10-06，plan 533 D1 落地）**：本行「默认与材质解耦」交付形态 = MeshBasicMaterial 白提亮通道**默认启用**（反馈通道与材质类型解耦）；emissive 默认色值保留现值 0x2b4c7e（可配，色值属美学而非耦合）；「消除首帧错比例」实为初始化健壮性缺陷（init 末尾 resizeToContainer 覆盖 aspect，用户不可见错比例首帧）。契约见 design-renderer.md「视口质感契约」节。
 - **D2 3D 文档一致性与演示路由收尾**：`threejs-integration-analysis.md`「评审中」过时状态勘误、v2–v4 中间稿标注归档；工业适配器/重连管理器演示路由补齐（domain-route-entries + demo 页）；`__flux_three_handles` 生产暴露决策记录；深色模式/视觉回归覆盖方式按 2026-08-28 政策做一次对齐评估（结论可为一页裁定）。
+  - **勘误（2026-10-06，plan 534 D2 落地）**：「analysis「评审中」」前提不成立——analysis 文档全文无评审中标记（头部为 I0.1 调研收口）；「评审中」仅存在于 v2/v3/v4 三份中间稿（已就地归档勘误）。
 
 ## Dependency Graph
 

@@ -498,6 +498,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'plan 469 three-canvas 演示：声明式图元 + 表达式绑定（tween/range/condition）+ 循环关键帧 + 对象点击，10Hz 模拟数据驱动绑定热路径（fps e2e 基准演示场景）。',
   },
   {
+    id: 'three-industrial-demo',
+    title: 'Three Industrial Demo',
+    eyebrow: '3D Rendering',
+    description:
+      'plan 534 IndustrialAdapter + ReconnectionManager 数据源演示：合成 openSocket 标签源（float32/bool/int16 帧）+ 退避重连可观测（重连尝试计数 = 合成源建连次数）。',
+  },
+  {
     id: 'scada-pressure-demo',
     title: 'Scada Pressure Demo',
     eyebrow: 'Industrial HMI',

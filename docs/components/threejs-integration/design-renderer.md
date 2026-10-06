@@ -246,3 +246,22 @@ export class ModelLoader {
 - **错误差异化**：`webgl-unavailable` 独立图标（MonitorX）+ `flux.three.errorWebgl` 文案 + **无重试入口**（不可重试）；其余错误维持通用文案 + 重试（retry 同步清理 errorCode）。
 - **加载骨架**：默认 loading slot = Spinner + pulse 骨架条（进度确定时宽度同步）+ 文案；`aria-busy` 双置（容器 + loading slot）。
 - **降级族**：headless stub 缺 `style`/`setPixelRatio`/`setAttribute` 时静默跳过（真实 DOM 恒有）。
+
+## 句柄暴露与覆盖方式裁定（plan 534 D2，2026-10-06 落地）
+
+### D-534-1 `__flux_three_handles` 生产暴露裁定
+
+**裁定 = 保留现状**。证据与边界：
+
+- 挂载条件：仅当渲染器 `meta.testid`（→ `debugHandleKey`）存在时挂载 `window.__flux_three_handles[key]`（`use-scene-manager.ts:54-58`），内容为 `getScene()/getRenderer()` **只读**面（无写通道）。
+- 消费方：`three-canvas-visual.spec.ts` L4 观测层（程序化断言，2026-08-28 政策）与 e2e/自动化诊断。
+- 风险与边界：生产构建同样存在（非 dev-only）——但暴露面为只读场景树/渲染器引用，不含用户数据；有 testid 的生产组态本就是诊断意图。**不做**环境 gating（为 e2e 简单性牺牲的复杂度不值得）。
+- 措辞调和：spec 头注「dev-only」与 hook 注「生产构建同样存在」——统一口径为「**testid-gated 只读诊断面**（dev/prod 一致）」。
+
+### D-534-2 深色模式/视觉回归覆盖方式裁定
+
+**裁定 = 维持程序化断言，不引入截图基线**（2026-08-28 政策对齐）：
+
+- 现状即合规：`three-canvas-visual.spec.ts` 为 L1 DOM（lifecycle UI）/ L2 geometry（height prop）/ L4 handles（场景树/shadowMap）三层程序化断言，无 `toHaveScreenshot` 判据。
+- 深色模式覆盖：demo 页/测试当前未覆盖 `data-mode` 翻转——补强方式 = 程序化断言（`data-mode='dark'` 翻转后 `scene.background`/DOM 令牌的 computed 断言），**不引入**截图对比；是否为 demo 页加 dark 开关 = 独立 UX 打磨项（非本 plan）。
+- 3D 渲染为 WebGL 画布——截图对比天然受 GL 实现差异影响，程序化断言是该域的正确形态（与 Spline 锚点的「质感」靠 D1 契约保障，非回归截图）。

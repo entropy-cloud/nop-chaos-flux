@@ -72,7 +72,8 @@ import { Spinner } from '@nop-chaos/ui';
 // only loaded when the user navigates to #/leafer-examples. Keeps the main bundle + App unit tests
 // leafer-ui-free (mirrors report-designer / debugger-lab lazy isolation).
 // Lazy-loaded: pulls in three.js WebGL runtime (~heavy, requires browser WebGLRenderingContext) —
-// only loaded when the user navigates to #/three-canvas-demo. Keeps the main bundle + App unit tests
+// only loaded when the user navigates to #/three-canvas-demo (same isolation applies to
+// #/three-industrial-demo, plan 534). Keeps the main bundle + App unit tests
 // three-free (mirrors report-designer / debugger-lab / leafer-examples lazy isolation).
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
