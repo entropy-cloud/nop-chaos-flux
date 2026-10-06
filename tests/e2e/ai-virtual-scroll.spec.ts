@@ -25,4 +25,68 @@ test.describe('AI virtual scroll — A-8 windowed rendering (1000 messages)', ()
 
     await assertTrackedPageErrors(page);
   });
+
+  // plan 529 Phase 4：note 可达性——虚拟模式下产生尾部 AbortedNote（发送后立即
+  // 停止 → requestState='aborted'，note 渲染于虚拟窗口后的常规流内）；跳底后
+  // note 必须落在可视区内（不被 spacer 遮挡）。判定：note 与容器底缘距离 ≤ 64px
+  // 且纵向上与可视区相交。
+  test('aborted note is reachable at the bottom of the virtual list', async ({ page }) => {
+    await openAiVirtualScrollDemo(page);
+
+    const list = page.locator('[data-slot="ai-message-list"]');
+    await expect(list).toHaveAttribute('data-virtual', { timeout: 15_000 });
+
+    // 发送 → 立即停止：制造 requestState='aborted' 的尾部 note
+    const textarea = page.locator('[data-slot="ai-sender-input"] textarea');
+    await textarea.fill('trigger abort note');
+    await page.locator('[data-slot="ai-sender-submit"]').click();
+    const cancel = page.locator('[data-slot="ai-sender-cancel"]');
+    await expect(cancel).toBeVisible({ timeout: 10_000 });
+    await cancel.click();
+    await expect(page.locator('[data-slot="ai-message-list-aborted"]')).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // 程序化跳底（pinned 滚动语义：直接置 scrollTop 到底）
+    await page.evaluate(() => {
+      const container = document.querySelector('[data-slot="ai-message-list"]');
+      if (!(container instanceof HTMLElement)) return;
+      const scroller =
+        container.scrollHeight > container.clientHeight
+          ? container
+          : ((container.querySelector('[data-virtual]') as HTMLElement | null) ??
+            (container.firstElementChild as HTMLElement | null));
+      if (scroller instanceof HTMLElement) {
+        scroller.scrollTop = scroller.scrollHeight;
+      }
+    });
+    await page.waitForTimeout(300);
+
+    const reachability = await page.evaluate(() => {
+      const container = document.querySelector('[data-slot="ai-message-list"]');
+      if (!(container instanceof HTMLElement)) return null;
+      const scroller =
+        container.scrollHeight > container.clientHeight
+          ? container
+          : ((container.querySelector('[data-virtual]') as HTMLElement | null) ??
+            (container.firstElementChild as HTMLElement | null));
+      if (!(scroller instanceof HTMLElement)) return null;
+      const note = document.querySelector('[data-slot="ai-message-list-aborted"]');
+      if (!(note instanceof HTMLElement)) return { noteFound: false };
+      const noteRect = note.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      return {
+        noteFound: true,
+        visible: noteRect.bottom > containerRect.top && noteRect.top < containerRect.bottom,
+        distanceFromBottom: Math.abs(noteRect.bottom - containerRect.bottom),
+      };
+    });
+
+    expect(reachability).toBeTruthy();
+    expect(reachability!.noteFound).toBe(true);
+    expect(reachability!.visible).toBe(true);
+    expect(reachability!.distanceFromBottom).toBeLessThanOrEqual(64);
+
+    await assertTrackedPageErrors(page);
+  });
 });

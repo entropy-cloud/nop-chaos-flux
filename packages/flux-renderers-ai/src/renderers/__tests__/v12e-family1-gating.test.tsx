@@ -46,14 +46,18 @@ function buildExternalEngine(initialMessages?: ChatMessage[]): MessageEngine {
 }
 
 describe('V12e 族1 — ai-sender streaming text-gating (G5-视角3-01)', () => {
-  it('loading=true keeps the textarea ENABLED and disables the submit button', () => {
+  it('loading=true keeps the textarea ENABLED and swaps the submit slot for the stop button', () => {
     const { container } = render(<AiSenderView loading={true} onSubmit={() => undefined} />);
     const textarea = container.querySelector('[data-slot="ai-sender-input"] textarea') as HTMLTextAreaElement;
     expect(textarea).toBeTruthy();
     // Inverted gating: the author can keep typing while the turn streams.
     expect(textarea.disabled).toBe(false);
-    const submit = container.querySelector('[data-slot="ai-sender-submit"]') as HTMLButtonElement;
-    expect(submit.disabled).toBe(true);
+    // plan 529 同位切换：loading 时 submit 槽位被 cancel（停止）钮取代。
+    const submit = container.querySelector('[data-slot="ai-sender-submit"]');
+    expect(submit).toBeNull();
+    const cancel = container.querySelector('[data-slot="ai-sender-cancel"]') as HTMLButtonElement;
+    expect(cancel).toBeTruthy();
+    expect(cancel.disabled).toBe(false);
   });
 
   it('loading=true does not clear the draft when Enter is pressed (submit is gated)', () => {

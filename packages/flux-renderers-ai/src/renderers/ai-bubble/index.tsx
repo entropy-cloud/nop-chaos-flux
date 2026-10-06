@@ -221,7 +221,9 @@ export function AiBubbleView(props: AiBubbleViewProps): React.ReactElement | nul
           />
         ) : null}
         {isUser ? <UserMessageActions message={renderMessage} /> : null}
-        {!isUser ? (
+        {/* plan 529 Phase 2：role:'tool' 尾随消息不渲染操作栏——copy 语义错位
+            （retry 本就因无 engine 未挂载），tool 结果非可重试会话内容。 */}
+        {!isUser && renderMessage.role !== 'tool' ? (
           <AssistantActions message={renderMessage} engine={props.actionsEngine} busy={ctx?.isProcessing} />
         ) : null}
       </div>

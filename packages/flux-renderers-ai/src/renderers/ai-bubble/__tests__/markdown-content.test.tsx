@@ -14,6 +14,27 @@ afterEach(() => {
 // 2-20: code-block copy reset timer must be cleared on unmount (no setState
 // after unmount). Same class of leak as ai-feedback's copied-reset timer.
 // ============================================================================
+// plan 529 Phase 3：代码块语言标签头（有语言 → 语言标签；无语言 → 'code'）。
+describe('MarkdownContentRenderer — code lang header (plan 529)', () => {
+  function renderBubbleContent(content: string) {
+    const props = makeProps({ content });
+    return render(<MarkdownContentRenderer {...props} />);
+  }
+
+  it('renders an uppercase language chip for a fenced block with a language', () => {
+    const { container } = renderBubbleContent('```ts\nconst answer = 42;\n```');
+    const chip = container.querySelector('[data-slot="ai-bubble-code-lang"]');
+    expect(chip).not.toBeNull();
+    expect(chip!.textContent).toBe('ts');
+  });
+
+  it('renders no chip for unlabeled fences (v10 treats them as inline code)', () => {
+    const { container } = renderBubbleContent('```\nplain fenced\n```');
+    expect(container.querySelector('[data-slot="ai-bubble-code-lang"]')).toBeNull();
+    expect(container.querySelector('[data-slot="ai-bubble-code"]')).toBeNull();
+  });
+});
+
 describe('MarkdownContentRenderer — code copy reset timer cleanup (2-20)', () => {
   it('clears the copied-reset timer on unmount', async () => {
     vi.useFakeTimers();
@@ -373,8 +394,9 @@ describe('MarkdownContentRenderer — D2 typography contract (G2)', () => {
     // (near-invisible text on a light page). Track census: typography /
     // avatar / welcome-icon (D2 baseline) + bubble surface / scroll-to-bottom
     // / assistant actions (plan 472 V2) + tiptap sender content (plan 480 A6)
-    // = 7 media tracks; the bubble-surface and actions tracks each carry two
-    // guarded selectors → 9 guards total.
+    // = 7 media tracks; plan 529 adds the tool-role surface to the bubble
+    // track (+1, user-actions buttons join the existing actions guards via
+    // grouped selectors → actions guard count unchanged) → 10 guards total.
     const blocks = darkPrefersColorSchemeBlocks(stylesCss);
     expect(blocks.length).toBe(7);
     for (const [index, block] of blocks.entries()) {
@@ -382,7 +404,7 @@ describe('MarkdownContentRenderer — D2 typography contract (G2)', () => {
       const guardCount = occurrences(block, ":root:not([data-mode='light'])");
       expect(guardCount, `dark media block #${index + 1} must guard every inner selector`).toBe(ruleCount);
     }
-    expect(occurrences(stylesCss, ":root:not([data-mode='light'])")).toBe(9);
+    expect(occurrences(stylesCss, ":root:not([data-mode='light'])")).toBe(10);
   });
 
   it('(c2) dark path — [data-mode] attribute trigger', () => {

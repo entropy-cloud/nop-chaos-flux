@@ -207,16 +207,16 @@ export interface BubbleToolRendererMatch {
 
 > 与 `renderers/ai-bubble/renderers/default-renderers.ts` 的 `defaultBubbleContentRenderers` 一致（共 8 个）。注册系统按 `priority` 升序遍历，第一个 `find` 返回 true 的胜出（越小越优先）。
 
-| 名字        | priority    | 匹配条件                                                      | 渲染                                                                  |
-| ----------- | ----------- | ------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `loading`   | LOADING(-1) | `message.loading === true`                                    | Spinner                                                               |
-| `tools`     | CONTENT(10) | `message.tool_calls?.length > 0`（`toolsMatcher`）            | `<AiToolCallRenderer>` 列表                                           |
-| `reasoning` | CONTENT(10) | `message.reasoning_content` 非空（`reasoningMatcher`）        | 可折叠面板（thinking）                                                |
-| `image`     | CONTENT(10) | content 为数组含 `image_url`（`imageMatcher`）                | 图片网格                                                              |
-| `error`     | CONTENT(10) | `errorMatcher(message)`（engine 错误态，A-5 wiring）          | 错误提示 + retry                                                      |
-| `markdown`  | NORMAL(0)   | 非空 text content（string 或 `{type:'text', text}` 非空）     | `react-markdown` + sanitize（复用 `flux-renderers-content/sanitize`） |
-| `data-part` | CONTENT(10) | content part 的 `type` 以 `data-` 前缀开头（A-1 host 自定义） | host 自定义内容块                                                     |
-| `text`      | ROLE(20)    | 兜底 `() => true`（非字符串/未匹配 content 降级为文本）       | 纯文本                                                                |
+| 名字        | priority    | 匹配条件                                                      | 渲染                                                                        |
+| ----------- | ----------- | ------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `loading`   | LOADING(-1) | `message.loading === true`                                    | 三点交错脉冲（plan 529：`ai-bubble-loading-dots`，reduced-motion 降级静态） |
+| `tools`     | CONTENT(10) | `message.tool_calls?.length > 0`（`toolsMatcher`）            | `<AiToolCallRenderer>` 列表                                                 |
+| `reasoning` | CONTENT(10) | `message.reasoning_content` 非空（`reasoningMatcher`）        | 可折叠面板（thinking）                                                      |
+| `image`     | CONTENT(10) | content 为数组含 `image_url`（`imageMatcher`）                | 图片网格                                                                    |
+| `error`     | CONTENT(10) | `errorMatcher(message)`（engine 错误态，A-5 wiring）          | 错误提示 + retry                                                            |
+| `markdown`  | NORMAL(0)   | 非空 text content（string 或 `{type:'text', text}` 非空）     | `react-markdown` + sanitize（复用 `flux-renderers-content/sanitize`）       |
+| `data-part` | CONTENT(10) | content part 的 `type` 以 `data-` 前缀开头（A-1 host 自定义） | host 自定义内容块                                                           |
+| `text`      | ROLE(20)    | 兜底 `() => true`（非字符串/未匹配 content 降级为文本）       | 纯文本                                                                      |
 
 **markdown 数学定界符契约（与 `design.md` §10.4 语义表同源）**：`markdown` renderer 支持的公式定界符集合为 `$...$`（行内，`.katex`）、`$$...$$`（块级，`.katex-display`）、`\(...\)`（行内，预处理映射为 `$...$`）、`\[...\]`（块级，映射为 `$$...$$`）。字面例外：code 区域（fenced / inline）内的定界符与 `$` 一律字面；**原文 `$` 后随数字视为货币**（转义为 `\$` 字面渲染，open 与 close 侧同口径），数字开头的行内公式须用 `$$` / `\(...\)` 形态表达；孤立闭定界符（`\)` / `\]` 无前置未闭合 open）保持字面；`\$` 为字面美元；`\\(` / `\\[`（转义反斜杠）为字面。
 
@@ -239,7 +239,12 @@ export interface BubbleToolRendererMatch {
     </div>
   </div>
   <div data-slot="ai-bubble-feedback">...</div>
-  <div data-slot="ai-assistant-actions">          (plan 472: assistant 专享；copy 全挂 + retry 仅末条)
+  <div data-slot="ai-assistant-actions">          (plan 472: assistant 专享；copy 全挂 + retry 仅末条；plan 529: hover/focus-within 浮现——opacity/transform 机制，触屏常显，role:'tool' 尾随消息不渲染本栏)
+  <div data-slot="ai-user-actions">               (plan 529: 用户消息 copy + 编辑铅笔，同一浮现机制)
+    <button data-slot="ai-bubble-copy-user" aria-label="复制">
+    <button data-slot="ai-bubble-edit-toggle" aria-label="编辑">
+  </div>
+  <div style="display:none"> <!-- 原始 assistant 形态参照 -->
     <button data-slot="ai-action-copy" aria-label="复制">
     <button data-slot="ai-action-retry" aria-label="重试"?   (有 engine 且非末条不挂)
   </div>
@@ -256,7 +261,7 @@ export interface BubbleToolRendererMatch {
 export interface AiSenderSchema extends BaseSchema {
   type: 'ai-sender';
   placeholder?: string;
-  loading?: SchemaValue; // engine.isProcessing 的镜像，true 显示停止按钮
+  loading?: SchemaValue; // engine.isProcessing 的镜像；plan 529 同位切换：true 时 ai-sender-cancel（Square 停止钮）同位取代 ai-sender-submit（SendHorizontal 图标发送钮）。textarea 自增高（内容高度封顶 12rem，提交/清空复位，仅内置 Textarea 路径——Tiptap extension 自管）
   maxLength?: number;
   showWordLimit?: boolean;
   submitType?: 'enter' | 'ctrlEnter' | 'shiftEnter';
@@ -330,6 +335,9 @@ export interface AiConversationsSchema extends BaseSchema {
   activeId?: SchemaValue; // 同上
   showRenameControls?: boolean;
   menuItems?: AiConversationMenuItem[];
+  // plan 529：内置标题子串检索（ai-conversations-search，大小写不敏感 + 空结果态
+  // ai-conversations-empty）；host 侧 AiConversationInfo.metadata 可约定注入
+  // 最后消息预览（渲染器仅消费约定字段，引擎不持会话状态）。
 
   onItemClick?: ActionSchema; // { id, conversation }
   onItemRename?: ActionSchema; // { id, title }
@@ -797,7 +805,7 @@ ai-chat-root (data-state=idle|processing|completed|aborted|error|empty)
 │           │   ├── ai-bubble-loading
 │           │   ├── ai-bubble-markdown
 │           │   │   ├── ai-bubble-cursor?              (流式光标，挂显示级 streaming 信号)
-│           │   │   ├── ai-bubble-pre > ai-bubble-code (代码块)
+│           │   │   ├── ai-bubble-pre > ai-bubble-code (代码块；plan 529: 内含 ai-bubble-code-lang 语言标签头——仅带 language-* 的围栏)
 │           │   │   └── ai-bubble-copy-code?           (代码复制按钮)
 │           │   ├── ai-bubble-reasoning (data-open)
 │           │   ├── ai-bubble-image
@@ -806,6 +814,8 @@ ai-chat-root (data-state=idle|processing|completed|aborted|error|empty)
 │           │   │   └── ai-tool-call (data-tool-status, data-approval?, data-requires-approval?)
 │           │   │       ├── ai-tool-call-toggle        (展开/折叠 header)
 │           │   │       ├── ai-tool-call-args          (JSON 高亮)
+│           │   │       ├── ai-tool-call-result-summary? (plan 529: 收起态单行摘要，有 result 时)
+│           │   │       ├── ai-tool-call-result?        (plan 529: 展开态执行结果区——string 直显)
 │           │   │       └── ai-tool-call-approval?     (P3 HITL pending 时)
 │           │   │           ├── ai-tool-call-approve
 │           │   │           └── ai-tool-call-reject
@@ -828,7 +838,7 @@ ai-chat-root (data-state=idle|processing|completed|aborted|error|empty)
 ├── ai-scroll-to-bottom?                   (plan 472: unpinned 时显示，点击回底)
 ├── ai-chat-after?                         (afterMessages region)
 ├── ai-sender (data-extension?，根元素 <div>)
-│   ├── ai-sender-input
+│   ├── ai-sender-input  (plan 529: 图标发送钮 ⇄ 停止钮同位切换 + textarea 自增高)
 │   │   └── ai-sender-count?               (字数计数)
 │   └── ai-sender-actions
 │       ├── ai-sender-cancel?              (processing 时显示停止)

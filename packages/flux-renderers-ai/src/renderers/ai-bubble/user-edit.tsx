@@ -1,4 +1,5 @@
-import { Check, Pencil } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Check, Copy, Pencil } from 'lucide-react';
 import { Button, Textarea, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../../adapters/ai-chat-context.js';
@@ -38,6 +39,28 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
   const editingState = message.state?.editing;
   const editing = editingState?.active === true;
   const draft = editingState?.draft ?? '';
+
+  // plan 529 Phase 2：用户气泡补 copy（与 assistant-actions 相同的剪贴板纪律：
+  // 只有写入成功才翻 Copied，失败保持原态）
+  const [copied, setCopied] = useState(false);
+  const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (copyResetRef.current) clearTimeout(copyResetRef.current);
+    };
+  }, []);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(extractText(message));
+      setCopied(true);
+      if (copyResetRef.current) clearTimeout(copyResetRef.current);
+      copyResetRef.current = setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // 失败保持 pre-copy 态（不假成功）
+    }
+  }
+
 
   // V12e 族1 (G5-R4-视角3-01): the chat-level disabled gate must reach the
   // user-edit channel — previously only the embedded sender was gated, so a
@@ -120,16 +143,30 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
   }
 
   return (
-    <Button
-      size="sm"
-      variant="ghost"
-      className="self-end opacity-60 hover:opacity-100"
-      data-slot="ai-bubble-edit-toggle"
-      aria-label={t('flux.ai.editMessage')}
-      disabled={chatDisabled || (ctx?.isProcessing ?? false)}
-      onClick={startEdit}
-    >
-      <Pencil className="h-3 w-3" />
-    </Button>
+    <div data-slot="ai-user-actions" className="flex items-center gap-0.5 self-end">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="opacity-60 hover:opacity-100"
+        data-slot="ai-bubble-copy-user"
+        aria-label={copied ? t('flux.ai.copied') : t('flux.ai.copyMessage')}
+        disabled={chatDisabled}
+        onClick={() => void handleCopy()}
+      >
+        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+        <span aria-live="polite" className="sr-only">{copied ? t('flux.ai.copied') : ''}</span>
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="opacity-60 hover:opacity-100"
+        data-slot="ai-bubble-edit-toggle"
+        aria-label={t('flux.ai.editMessage')}
+        disabled={chatDisabled || (ctx?.isProcessing ?? false)}
+        onClick={startEdit}
+      >
+        <Pencil className="h-3 w-3" />
+      </Button>
+    </div>
   );
 }

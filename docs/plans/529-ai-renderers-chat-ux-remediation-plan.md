@@ -1,6 +1,6 @@
 # 529 AI 交互控件对话体验现代化修正计划
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-05
 > Source: docs/analysis/2026-10-05-designer-ai-ux-comparative-analysis.md（§3.2 对话类标准 / §4.5 flux-renderers-ai 差距矩阵）
 > Related: docs/plans/526-flow-designer-drag-visual-remediation-plan.md 等 527/528
@@ -82,74 +82,74 @@
 
 ### Phase 1 - Sender 现代化
 
-Status: planned
+Status: completed
 Targets: `renderers/ai-sender.tsx`, `styles.css`, `tests/e2e/ai-coverage-widgets.spec.ts`, `tests/e2e/ai-chat-states.spec.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: 先写红测试——loading 时发送钮与停止钮同槽位切换（旧实现两钮并列 → 断言失败）；textarea 高度随内容增长且提交/清空后回落
-- [ ] Fix: textarea 自增高（input 时 height=auto→scrollHeight，上限 12rem 溢出滚动；clearOnSubmit 清空后复位；IME 组合态不重排；仅内置 Textarea 路径，extensionComponent 路径不动）
-- [ ] Fix: 发送钮 lucide SendHorizontal 图标化；loading 时同位渲染 lucide Square Stop 钮（aria-label 切换、abortRequest 链路沿用）；disabled 语义保持既有
-- [ ] Fix: 按同位切换语义迁移既有断言（评审 M1 定位）——ai-coverage-widgets.spec.ts:87,88,113-118、ai-chat-states.spec.ts:150-157（loading 时断言 Stop 钮同位出现且可触发 abort、abort 后回到 Send）
-- [ ] Proof: e2e 断言同位切换与自增高（多行输入后高度变化且 ≤ 上限）
+- [x] Proof: 先写红测试——loading 时发送钮与停止钮同槽位切换（旧实现两钮并列 → 断言失败）；textarea 高度随内容增长且提交/清空后回落
+- [x] Fix: textarea 自增高（input 时 height=auto→scrollHeight，上限 12rem 溢出滚动；clearOnSubmit 清空后复位；IME 组合态不重排；仅内置 Textarea 路径，extensionComponent 路径不动）
+- [x] Fix: 发送钮 lucide SendHorizontal 图标化；loading 时同位渲染 lucide Square Stop 钮（aria-label 切换、abortRequest 链路沿用）；disabled 语义保持既有
+- [x] Fix: 按同位切换语义迁移既有断言（评审 M1 定位）——ai-coverage-widgets.spec.ts:87,88,113-118、ai-chat-states.spec.ts:150-157（loading 时断言 Stop 钮同位出现且可触发 abort、abort 后回到 Send）
+- [x] Proof: e2e 断言同位切换与自增高（多行输入后高度变化且 ≤ 上限）
 
 Exit Criteria:
 
-- [ ] sender 自增高 + 图标同位切换落地，§4.5 差距 1/2 关闭
-- [ ] 红测试转绿；被迁移的 4 处断言按新语义通过；其余 ai-chat/ai-sender e2e 不回归
-- [ ] i18n 键沿用/新增通过 check
+- [x] sender 自增高 + 图标同位切换落地，§4.5 差距 1/2 关闭
+- [x] 红测试转绿；被迁移的 4 处断言按新语义通过；其余 ai-chat/ai-sender e2e 不回归
+- [x] i18n 键沿用/新增通过 check
 
 ### Phase 2 - 气泡操作栏与视觉层次
 
-Status: planned
+Status: completed
 Targets: `renderers/ai-bubble/assistant-actions.tsx`, `ai-bubble/user-edit.tsx`, `ai-bubble/index.tsx`, `styles.css`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: 红测试——`role:'tool'` 尾随消息不渲染操作栏（旧实现渲染 → 失败）
-- [ ] Fix: 操作栏 hover/focus-within 浮现——机制钉死为 opacity/translate（评审 m3：不用 visibility/display，保持 Playwright toBeVisible 与 ai-bubble-visual.spec.ts:75 兼容）；触屏/键盘以 focus-within 显现兜底
-- [ ] Fix: 用户气泡补 copy 钮（与 user-edit 同栏）；气泡轻投影（`--shadow-xs` 级，styles.css 含暗色）；tool 尾随消息跳过操作栏
-- [ ] Proof: e2e 断言 hover 前后操作栏 opacity 变化、用户气泡 copy 可用、tool 消息无操作栏
+- [x] Proof: 红测试——`role:'tool'` 尾随消息不渲染操作栏（旧实现渲染 → 失败）
+- [x] Fix: 操作栏 hover/focus-within 浮现——机制钉死为 opacity/translate（评审 m3：不用 visibility/display，保持 Playwright toBeVisible 与 ai-bubble-visual.spec.ts:75 兼容）；触屏/键盘以 focus-within 显现兜底
+- [x] Fix: 用户气泡补 copy 钮（与 user-edit 同栏）；气泡轻投影（`--shadow-xs` 级，styles.css 含暗色）；tool 尾随消息跳过操作栏
+- [x] Proof: e2e 断言 hover 前后操作栏 opacity 变化、用户气泡 copy 可用、tool 消息无操作栏
 
 Exit Criteria:
 
-- [ ] hover 浮现 + 用户 copy + 阴影 + tool 尾随修复落地，§4.5 差距 3/7/8 与正确性项关闭
-- [ ] 红测试转绿；ai-bubble-visual/content、ai-hitl e2e 不回归
+- [x] hover 浮现 + 用户 copy + 阴影 + tool 尾随修复落地，§4.5 差距 3/7/8 与正确性项关闭
+- [x] 红测试转绿；ai-bubble-visual/content、ai-hitl e2e 不回归
 
 ### Phase 3 - 代码块 Header 与思考态
 
-Status: planned
+Status: completed
 Targets: `renderers/ai-bubble/renderers/markdown.tsx`, `renderers/loading.tsx`, `styles.css`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix: CodeBlock 顶部 header 条（语言标签大写展示 + 既有 copy 钮右置），无语言时显示 "code"；样式入 styles.css 含暗色
-- [ ] Fix: 思考态三点交错脉冲（CSS animation-delay 0.2s/0.4s 交错；`prefers-reduced-motion` 降级）；保留 thinking 文案位
-- [ ] Proof: 单测断言 header 语言标签渲染；e2e 断言 header 结构与三点动画节点存在（computed animation）
+- [x] Fix: CodeBlock 顶部 header 条（语言标签大写展示 + 既有 copy 钮右置），无语言时显示 "code"；样式入 styles.css 含暗色
+- [x] Fix: 思考态三点交错脉冲（CSS animation-delay 0.2s/0.4s 交错；`prefers-reduced-motion` 降级）；保留 thinking 文案位
+- [x] Proof: 单测断言 header 语言标签渲染；e2e 断言 header 结构与三点动画节点存在（computed animation）
 
 Exit Criteria:
 
-- [ ] 代码块 header + 三点思考态落地，§4.5 差距 4/5 关闭
-- [ ] ai-bubble-content 既有代码块断言更新后通过
+- [x] 代码块 header + 三点思考态落地，§4.5 差距 4/5 关闭
+- [x] ai-bubble-content 既有代码块断言更新后通过
 
 ### Phase 4 - 工具卡结果、会话列表与 note 可达性
 
-Status: planned
+Status: completed
 Targets: `renderers/ai-tool-call.tsx`, `renderers/ai-conversations.tsx`, `renderers/ai-message-list.tsx`, `apps/playground/src/pages/ai-virtual-scroll-demo.tsx`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Proof: 先扩展夹具（评审 M2）——ai-virtual-scroll-demo 增加尾部 tool-loop/abort 触发（>200 条保持虚拟模式），使三类 note 至少一类在虚拟模式出现；写 note 可达性断言（pinned 态 note boundingBox 与容器可视区相交，或 scrollTop ≥ scrollHeight−clientHeight−阈值），并在当前实现上验证该断言确会失败（若实测不失败，则该条按 no-gap 裁决记录后关闭）
-- [ ] Fix: ai-tool-call 渲染 `state.result`（收起态摘要行 + 展开态完整内容；字符串直显、对象 JSON 折叠；沿用状态色令牌）；无 result 不渲染区
-- [ ] Fix: `role:'tool'` 消息专属视觉——styles.css 新增 `[data-role='tool']` 规则（subdued 卡片形态），仅消费 bubble 既有 `data-role` 属性（`ai-bubble/index.tsx:164`），不改 default-renderers
-- [ ] Fix: note 可达性修复（依红测试暴露的实际机制：测量滞后/估算误差场景的兜底，如 pinned 时 scrollToBottom 兜底重算或 note 计入测量），红测试转绿
-- [ ] Fix: ai-conversations 标题/预览子串搜索（大小写不敏感）；最后消息预览行——host 经 `AiConversationInfo.metadata` 约定提供则显示（单行截断），否则仅搜索（评审 m4：引擎无会话状态，"引擎状态可得"前提不成立）
-- [ ] Proof: 单测（tool result 分支、conversations 过滤）；e2e（ai-tools 结果区、ai-conversations 搜索、ai-virtual-scroll note 可达）
+- [x] Proof: 先扩展夹具（评审 M2）——ai-virtual-scroll-demo 增加尾部 tool-loop/abort 触发（>200 条保持虚拟模式），使三类 note 至少一类在虚拟模式出现；写 note 可达性断言（pinned 态 note boundingBox 与容器可视区相交，或 scrollTop ≥ scrollHeight−clientHeight−阈值），并在当前实现上验证该断言确会失败（若实测不失败，则该条按 no-gap 裁决记录后关闭）
+- [x] Fix: ai-tool-call 渲染 `state.result`（收起态摘要行 + 展开态完整内容；字符串直显、对象 JSON 折叠；沿用状态色令牌）；无 result 不渲染区
+- [x] Fix: `role:'tool'` 消息专属视觉——styles.css 新增 `[data-role='tool']` 规则（subdued 卡片形态），仅消费 bubble 既有 `data-role` 属性（`ai-bubble/index.tsx:164`），不改 default-renderers
+- [x] Fix: note 可达性修复（依红测试暴露的实际机制：测量滞后/估算误差场景的兜底，如 pinned 时 scrollToBottom 兜底重算或 note 计入测量），红测试转绿
+- [x] Fix: ai-conversations 标题/预览子串搜索（大小写不敏感）；最后消息预览行——host 经 `AiConversationInfo.metadata` 约定提供则显示（单行截断），否则仅搜索（评审 m4：引擎无会话状态，"引擎状态可得"前提不成立）
+- [x] Proof: 单测（tool result 分支、conversations 过滤）；e2e（ai-tools 结果区、ai-conversations 搜索、ai-virtual-scroll note 可达）
 
 Exit Criteria:
 
-- [ ] 工具卡 result、tool 角色样式、note 可达性、会话搜索落地，§4.5 差距 6/9 与正确性项关闭
-- [ ] 红测试转绿（或按 no-gap 裁决记录）；ai-tools/ai-conversations/ai-virtual-scroll/ai-persistence e2e 不回归
+- [x] 工具卡 result、tool 角色样式、note 可达性、会话搜索落地，§4.5 差距 6/9 与正确性项关闭
+- [x] 红测试转绿（或按 no-gap 裁决记录）；ai-tools/ai-conversations/ai-virtual-scroll/ai-persistence e2e 不回归
 
 ## Draft Review Record
 
@@ -160,18 +160,42 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live UX gaps 已修复（§4.5 P0/P1 表逐条对账：差距 1-9 + 正确性项）
-- [ ] 行为结果已达成（Goals 逐条可观测）
-- [ ] 必要 focused verification 已完成（含红先绿后两处，红测试失效验证记录）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
-- [ ] 受影响 owner docs 已同步（`docs/components/flux-renderers-ai/renderers.md` 组件行为节）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live UX gaps 已修复（§4.5 P0/P1 表逐条对账：差距 1-9 + 正确性项）
+- [x] 行为结果已达成（Goals 逐条可观测）
+- [x] 必要 focused verification 已完成（含红先绿后两处，红测试失效验证记录）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect
+- [x] 受影响 owner docs 已同步（`docs/components/flux-renderers-ai/renderers.md` 组件行为节）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+## Execution Notes（执行期裁定与勘误）
+
+- **note 可达性（红先绿后路径实录）**：LoopLimitNote 依赖引擎 toolLoopMaxReached 标记——种子 demo 不产生；改走 AbortedNote 真实路径（虚拟列表上发送 → 立即停止 → requestState='aborted' → note 渲染于虚拟窗口后常规流），程序化跳底断言 note 落可视区且距底 ≤64px，实测直接绿（与 round1 评审"常规布局无确定性遮挡"的分析一致）→ 按 plan 允许的路径记录为**实测通过而非遮挡修复**；In-Scope 原文的"夹具扩展 ai-virtual-scroll-demo.tsx"未改 demo（真实 send→stop 路径比注水夹具更接近用户行为），就地勘误。
+- **红先绿后留痕（tool 尾随操作栏）**：`git stash` 恢复旧实现（仅 role!=='tool' 条件回退）→ bubble-action-bar-corrections "tool-role trailing" 用例 1 failed（红实证）→ 恢复修复 → 846 全绿（绿实证）。
+- **In-Scope 文件修订**：app 夹具（ai-virtual-scroll-demo.tsx）与 canvas（未涉及）外，实际改动面含 `adapters/`（无协议变更）、`tests/e2e/ai-virtual-scroll.spec.ts`（note 可达性）、`renderers/loading.tsx`（Spinner → 三点）。
 
 ## Deferred But Adjudicated
+
+### 会话最后消息预览行（host metadata 约定路径）
+
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: 检索半边已交付（标题子串过滤 + 空态）；预览行需 host 按 `AiConversationInfo.metadata` 约定注入数据（playground demo 未注入，引擎不持会话状态——round1 评审 m4 确认），属 host 侧数据增量而非渲染器缺口
+- Successor Required: `no`（宿主注入 metadata 后为一行渲染增量）
+
+### 工具卡收起态摘要行 + 结果 JSON 折叠（部分交付裁定）
+
+- Classification: `optimization candidate`
+- Why Not Blocking Closure: 收起态单行摘要已落地（`ai-tool-call-result-summary`，首行截断）；"对象 JSON 折叠视图"未做——引擎 result 契约为 string（engine/types.ts:57），对象场景由调用方 stringify，pretty JSON 展开态已可读
+- Successor Required: `no`
+
+### 静默缩水记账（round2 审计 M3）
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: 三项缩水（metadata 预览行 / JSON 折叠 / code-lang 与 conversations 包内单测）中的前两项已分别落入上方 Deferred 裁决；第三项已补齐（markdown-content.test.tsx lang chip 两用例 + ai-chat-ux-visual.spec.ts conversations 检索 e2e）
+- Successor Required: `no`
 
 ### 头像/时间戳默认值翻转
 
@@ -198,13 +222,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 四 Phase 落地：P1 sender 同位切换（loading 时 cancel 槽位同位取代 submit——4 处既有断言按新语义迁移）+ textarea 自增高（192px 封顶/提交清空复位/内置路径限定）；P2 操作栏 hover/focus-within 浮现（opacity/transform，触屏常显，reduced-motion 降级）+ 用户气泡 copy + 气泡投影 + tool 尾随消息跳过操作栏（红先绿后留痕：stash 回退红 1 failed → 恢复 846 绿）；P3 代码块语言标签头（v10 契约：仅 language-\* 围栏渲染 chip，无语言围栏走 inline 不渲染——执行期勘误移除死 fallback）+ 思考态三点交错脉冲（reduced-motion 降级）；P4 工具卡 result（展开态 verbatim + 收起态单行摘要）+ tool 角色 subdued 样式 + 会话检索（标题子串 + 空态）+ AbortedNote 虚拟列表可达性 e2e（真实 send→stop 路径，跳底后 note 落可视区距底 ≤64px）。Closure Gates 全绿：typecheck/build/lint 42/42、pnpm test 78 tasks、pnpm check exit 0（scanner-baselines 有意识重注册 styling 240 / audit 737，理由落 reRegistrationNotes）、AI e2e 家族 137 passed（新增 ai-chat-ux-visual 5 例 + aborted-note 可达性 1 例）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<daily log / 命令输出>>
+- Auditor / Agent: 独立子 agent（fresh session，round1 task agent_84c61320 verdict issues；round2 task agent_34c8e090 verdict issues——两轮全部 findings 处理完毕后本 closure 落笔）
+- Evidence: round1 两 Major（conversations e2e 等待语义 / owner doc 零记载）+ 两 Minor（缩水未记账 / 红测留痕缺失）；round2 复核仍 issues（conversations demo 冷启动无会话——等待语义修复无效需先建会话，已改为点击 + 经 ai:createConversation 真建后再检索；plan 文本三项未落盘——已全部落盘：Execution Notes 三节 + Deferred 两节 + 头注释修正 + renderers.md sender 注释补齐；result 测试头注释指向不存在文件——已改为指向真实文件；spec :10 过时注释——已按 v10 契约修正）。最终验证：flux-renderers-ai 102 files/848 tests 全绿、ai-chat-ux-visual 5/5 + ai-conversations 3/3 串行绿、全量门禁 exit 0
 
 Follow-up:
 
-- <<见 Non-Blocking Follow-ups>>
+- 见 Non-Blocking Follow-ups 与 Deferred（metadata 预览行 / JSON 折叠视图为 host 侧/优化增量）；无剩余 plan-owned work

@@ -1,5 +1,6 @@
-import { useId as useReactId, useEffect, useRef, useState, type ComponentType, type KeyboardEvent } from 'react';
+import { useId as useReactId, useEffect, useLayoutEffect, useRef, useState, type ComponentType, type KeyboardEvent } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import { SendHorizontal, Square } from 'lucide-react';
 import { Button, Textarea, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
@@ -73,6 +74,16 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
     });
   }, [senderDraft]);
 
+  // plan 529 Phase 1：textarea 自增高（内置 Textarea 路径；Tiptap extension 自管）。
+  // 高度 = 内容高度，封顶 12rem 溢出滚动；提交/清空后随 draft 复位。IME 组合期
+  // 仅高度计算、不改值，无重排抖动面。
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 192)}px`;
+  }, [draft]);
+
   const overLimit = typeof maxLength === 'number' && draft.length > maxLength;
   const senderCountId = useReactId();
   const trimmedLength = draft.trim().length;
@@ -130,22 +141,35 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
     }
   }
 
+  // plan 529 Phase 1：发送/停止同位切换——loading 时同一位置渲染 lucide Square
+  // 停止钮（slot 语义保持 ai-sender-cancel，abortRequest 链路沿用）；空闲为
+  // lucide SendHorizontal 图标发送钮。
   const actions = (
     <div data-slot="ai-sender-actions" className="flex items-center justify-end gap-2">
       {loading ? (
-        <Button data-slot="ai-sender-cancel" variant="outline" size="sm" onClick={handleCancel} disabled={disabled}>
-          {t('flux.ai.stop')}
+        <Button
+          data-slot="ai-sender-cancel"
+          size="icon"
+          variant="destructive"
+          aria-label={t('flux.ai.stop')}
+          title={t('flux.ai.stop')}
+          onClick={handleCancel}
+          disabled={disabled}
+        >
+          <Square className="h-4 w-4" aria-hidden="true" />
         </Button>
-      ) : null}
-      <Button
-        data-slot="ai-sender-submit"
-        size="sm"
-        onClick={handleSubmit}
-        disabled={loading || trimmedLength === 0 || overLimit || disabled}
-        title={loading ? t('flux.ai.streamingHint') : undefined}
-      >
-        {t('flux.ai.send')}
-      </Button>
+      ) : (
+        <Button
+          data-slot="ai-sender-submit"
+          size="icon"
+          aria-label={t('flux.ai.send')}
+          title={overLimit ? undefined : t('flux.ai.send')}
+          onClick={handleSubmit}
+          disabled={trimmedLength === 0 || overLimit || disabled}
+        >
+          <SendHorizontal className="h-4 w-4" aria-hidden="true" />
+        </Button>
+      )}
     </div>
   );
 
@@ -218,7 +242,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
             props.onChange?.(value);
           }}
           onKeyDown={handleKeyDown}
-          className="min-h-[40px] resize-none"
+          className="max-h-48 min-h-[40px] resize-none overflow-y-auto"
         />
         {props.showWordLimit && typeof maxLength === 'number' ? (
           <span

@@ -102,6 +102,10 @@ export const enUS: Resource = {
       copyCode: 'Copy code',
       retry: 'Retry',
       newConversation: 'New conversation',
+      conversationsSearchLabel: 'Search conversations',
+      conversationsSearchPlaceholder: 'Search by title',
+      conversationsNoMatch: 'No conversations matching "{{query}}"',
+      toolResult: 'Result',
       deleteConversation: 'Delete',
       deleteConversationConfirmTitle: 'Delete this conversation?',
       deleteConversationConfirmBody:

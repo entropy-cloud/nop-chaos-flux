@@ -152,8 +152,10 @@ test.describe('AI chat — states, events & boundary cases', () => {
     await submit.click();
     // The engine guards processing: the textarea keeps the draft only until
     // clearOnSubmit; a second immediate click hits the disabled button.
+    // plan 529 同位切换：processing 中 submit 槽位被 cancel 停止钮取代。
     await expect(chat.locator('[data-slot="ai-bubble"][data-role="user"]')).toHaveCount(1, { timeout: 10_000 });
-    await expect(submit).toBeDisabled({ timeout: 10_000 });
+    await expect(submit).toHaveCount(0, { timeout: 10_000 });
+    await expect(chat.locator('[data-slot="ai-sender-cancel"]')).toBeVisible({ timeout: 10_000 });
     await expect(chat.locator('[data-slot="ai-bubble"][data-role="user"]')).toHaveCount(1, { timeout: 15_000 });
     await assertTrackedPageErrors(page);
   });

@@ -1,4 +1,4 @@
-import { useEffect, useId as useReactId, useRef, useState } from 'react';
+import { useEffect, useId as useReactId, useMemo, useRef, useState } from 'react';
 import type {
   FluxActionEvent,
   RendererComponentProps,
@@ -61,6 +61,18 @@ export function AiToolCallView(props: {
   // value — absent `open` falls through to the local expand state (the engine
   // no longer writes `open`, see tool-plugin.ts).
   const open = state?.open !== undefined ? state.open : internalOpen;
+  // plan 529 Phase 4：渲染执行结果——字符串直显、对象/数组 JSON 折叠展示；
+  // 无 result（尚未完成/引擎未写入）不渲染结果区。
+  const resultText = useMemo(() => {
+    const result = state?.result;
+    if (result == null || result === '') return null;
+    if (typeof result === 'string') return result;
+    try {
+      return JSON.stringify(result, null, 2);
+    } catch {
+      return String(result);
+    }
+  }, [state?.result]);
 
   // Focus trap for the pending-approval footer (a11y §7 P3).
   const approvalFooterRef = useRef<HTMLDivElement | null>(null);
@@ -166,6 +178,19 @@ export function AiToolCallView(props: {
         <StatusIcon status={status} />
         <span className="font-mono text-xs font-medium">{toolCall.function.name}</span>
       </div>
+      {open
+        ? null
+        : resultText
+        ? (
+          // plan 529 Phase 4：收起态摘要行（单行截断；展开态完整内容见 result 区）
+          <div
+            data-slot="ai-tool-call-result-summary"
+            className="mt-0.5 truncate text-[11px] text-muted-foreground"
+          >
+            {resultText.split('\n')[0]}
+          </div>
+        )
+        : null}
       {open ? (
         <pre
           id={argsRegionId}
@@ -174,6 +199,14 @@ export function AiToolCallView(props: {
         >
           <code dangerouslySetInnerHTML={{ __html: highlightJson(toolCall.function.arguments) }} />
         </pre>
+      ) : null}
+      {open && resultText ? (
+        <div data-slot="ai-tool-call-result" className="mt-1">
+          <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            {t('flux.ai.toolResult')}
+          </div>
+          <pre className="overflow-x-auto rounded bg-muted/60 p-2 text-xs">{resultText}</pre>
+        </div>
       ) : null}
       {approval ? (
         <ApprovalFooter

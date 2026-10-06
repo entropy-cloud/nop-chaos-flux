@@ -320,7 +320,16 @@ function CodeBlock({
     // line — reserve the button row (pt-8 = top-1 + h-7) so the first code line
     // renders below it, and give the button an opaque chip so code scrolling
     // under its right edge stays legible.
+    // plan 529 Phase 3：左上语言标签与复制钮构成一体 header 条。
+    // 注：react-markdown v10 以 language-* 类标记围栏块，无语言标注的围栏走
+    // inline 分支（上方 isFenced 守卫）——lang 在此恒存在。
     <code className={cn('relative block pt-8', className)} data-slot="ai-bubble-code">
+      <span
+        data-slot="ai-bubble-code-lang"
+        className="absolute left-2 top-1.5 rounded border border-border/60 bg-background/90 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+      >
+        {lang}
+      </span>
       <Button
         type="button"
         variant="ghost"

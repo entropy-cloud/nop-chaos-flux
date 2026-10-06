@@ -3,12 +3,13 @@
     "description": "Numeric baselines for the three high-risk advisory scanners. A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
     "lastUpdated": "2026-10-06",
     "reRegistrationNotes": [
-      "2026-10-06 plan 528: 716 -> 717。+1 = report-field-panel.tsx setFieldDragGhost 的降级 catch（宿主 setDragImage 抛 Not implemented 时移除 ghost 回落浏览器默认拖拽截图——catch 体为 UI 降级而非错误吞噬；试图像 toast/throw 等结构化信号注入均为伪语义，故有意识注册）。"
+      "2026-10-06 plan 528: 716 -> 717。+1 = report-field-panel.tsx setFieldDragGhost 的降级 catch（宿主 setDragImage 抛 Not implemented 时移除 ghost 回落浏览器默认拖拽截图——catch 体为 UI 降级而非错误吞噬；试图像 toast/throw 等结构化信号注入均为伪语义，故有意识注册）。",
+      "2026-10-06 plan 529: styling 222 -> 240、audit 717 -> 737。来源 flux-renderers-ai/src/styles.css 新增选择器（思考态三点 ai-bubble-loading-dots、用户操作栏 ai-user-actions、tool 角色面、气泡暗色投影——与该文件既有 data-slot 键控组织同模式）+ user-edit.tsx copy 降级 catch（剪贴板失败保持 pre-copy 态，与 assistant-actions 既有注册形态一致）+ 移行重计（sender/index/tool-call 既有 void/catch 行号位移在按行号 diff 中呈新增）。"
     ]
   },
   "scanners": {
-    "find-styling-suspects": 222,
-    "discover-audit-suspects": 717,
+    "find-styling-suspects": 240,
+    "discover-audit-suspects": 737,
     "find-test-global-leaks": 108
   }
 }

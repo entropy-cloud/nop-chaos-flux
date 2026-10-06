@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import {
   AlertDialog,
@@ -42,6 +42,14 @@ export function AiConversationsRenderer(
   // the click only arms a destructive confirmation; the event dispatches after
   // explicit confirmation (session-delete-confirm).
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  // plan 529 Phase 4：会话检索（标题子串，大小写不敏感）+ 空结果态
+  const [query, setQuery] = useState('');
+  const filteredConversations = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return conversations;
+    return conversations.filter((conv) => (conv.title ?? '').toLowerCase().includes(needle));
+  }, [conversations, query]);
+  const isFiltering = query.trim().length > 0;
 
   // C8.1 P1 (bug 83 family convention): pass `{ event, evaluationBindings,
   // scope }` as the second dispatch arg so action-args templates can read the
@@ -85,8 +93,22 @@ export function AiConversationsRenderer(
           {t('flux.ai.newConversation')}
         </Button>
       </div>
+      <div data-slot="ai-conversations-search" className="px-0.5 pb-1">
+        <Input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t('flux.ai.conversationsSearchPlaceholder')}
+          aria-label={t('flux.ai.conversationsSearchLabel')}
+          data-testid="ai-conversations-search"
+        />
+      </div>
+      {isFiltering && filteredConversations.length === 0 ? (
+        <p data-testid="ai-conversations-empty" className="px-1 py-2 text-sm text-muted-foreground">
+          {t('flux.ai.conversationsNoMatch', { query: query.trim() })}
+        </p>
+      ) : null}
       <ul data-slot="ai-conversations-list" className="flex flex-col gap-1">
-        {conversations.map((conv) => {
+        {filteredConversations.map((conv) => {
           const isActive = conv.id === activeId;
           const isRenaming = renamingId === conv.id;
           return (
