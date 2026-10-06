@@ -170,6 +170,12 @@ export class ScadaCanvasEngine {
     return this.app.sky;
   }
 
+  /** 画布容器元素（plan 530 S1：`--ind-*` 令牌解析源）；destroyed 后返回 null（与 overlay 生命周期纪律同形）。 */
+  get container(): HTMLElement | null {
+    if (this.destroyed) return null;
+    return this.options.container ?? null;
+  }
+
   /** 交互覆盖层（I8.2，sky 层 hover/selected 等反馈）：`interactionLayer` 选项开启时惰性可用。 */
   get interactionOverlay(): InteractionOverlay | undefined {
     if (!this.options.interactionLayer) return undefined;

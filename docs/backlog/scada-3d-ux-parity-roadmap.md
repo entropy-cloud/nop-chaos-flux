@@ -23,6 +23,7 @@
 **SCADA 编辑器**（`packages/flux-renderers-industrial/src/editor`，leafer-ui 2.2.9，136 源文件）：
 
 - 选中视觉 = leafer Editor 插件默认 EditBox（`editor-engine.ts:78,89`，零定制）；运行态覆盖物 `engine/interaction-overlay.ts:15-18` 硬编码 hex（hover `#2f6fed` / selected `#ff7f2a` 等），无 ring/shadow 公式。
+  - **勘误（2026-10-06，plan 530 S1 落地）**：上行为 S1 立项时基线——本行两项均已收敛：覆盖物 hex → `--ind-*` 语义令牌（ring+浅填充+软阴影公式 + 120ms 过渡，`engine/interaction-tokens.ts` + 双表令牌块）；EditBox 经 appConfig `editor:{}` 接 `--ind-node-selected-ring` 定制（不再零定制）。契约见 `design-architecture.md` §10.1。
 - palette 拖入无 ghost/落点指示（`editor-palette.tsx:36-39`、`scada-editor-canvas.tsx:400-443`）；图元位移无网格/对齐吸附（仅连线有钱锚点吸附 `anchor-snap.ts:53-56`）；drop 后不自动选中。
 - 全包无右键菜单（grep 0 命中）；全包无 CSS transition；`styles.css` 用 `--nop-*` + hex fallback（非 hsl 令牌惯例）。
 - palette 24 图元平铺，无搜索/分组折叠；WorkbenchShell 可拖宽但未传回调（不持久化）；空态纯文案。
@@ -46,23 +47,23 @@
 
 ## Phase Status
 
-| Work Item                      | 状态   | 计划 |
-| ------------------------------ | ------ | ---- |
-| S1 SCADA 编辑器视觉与令牌基础  | `todo` | —    |
-| S2 SCADA 拖拽便捷性与 palette  | `todo` | —    |
-| S3 SCADA 菜单与面板收尾        | `todo` | —    |
-| D1 3D 渲染器 UX 打磨           | `todo` | —    |
-| D2 3D 文档一致性与演示路由收尾 | `todo` | —    |
+| Work Item                      | 状态   | 计划                                                   |
+| ------------------------------ | ------ | ------------------------------------------------------ |
+| S1 SCADA 编辑器视觉与令牌基础  | `done` | `docs/plans/530-scada-visual-token-foundation-plan.md` |
+| S2 SCADA 拖拽便捷性与 palette  | `todo` | —                                                      |
+| S3 SCADA 菜单与面板收尾        | `todo` | —                                                      |
+| D1 3D 渲染器 UX 打磨           | `todo` | —                                                      |
+| D2 3D 文档一致性与演示路由收尾 | `todo` | —                                                      |
 
 ## Phases
 
-| Phase                          | 状态   | Owner Doc                                                      | 依赖           | 复用                                                        | 计划 |
-| ------------------------------ | ------ | -------------------------------------------------------------- | -------------- | ----------------------------------------------------------- | ---- |
-| S1 SCADA 编辑器视觉与令牌基础  | `todo` | `docs/components/industrial-hmi-editor/design-architecture.md` | —              | 526 选中态令牌模式                                          | —    |
-| S2 SCADA 拖拽便捷性与 palette  | `todo` | 同上 + `design-toolbox.md`                                     | S1（令牌基础） | 527 ghost 模式、526 alignment 模式                          | —    |
-| S3 SCADA 菜单与面板收尾        | `todo` | 同上 + `design-property-panel.md`                              | S1             | `page-designer-context-menu` 模式、WorkbenchShell resizable | —    |
-| D1 3D 渲染器 UX 打磨           | `todo` | `docs/components/threejs-integration/design-renderer.md`       | —              | 529 reduced-motion/空态模式、语义令牌                       | —    |
-| D2 3D 文档一致性与演示路由收尾 | `todo` | `docs/components/threejs-integration/design.md`                | D1             | —                                                           | —    |
+| Phase                          | 状态   | Owner Doc                                                      | 依赖           | 复用                                                        | 计划                                                   |
+| ------------------------------ | ------ | -------------------------------------------------------------- | -------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
+| S1 SCADA 编辑器视觉与令牌基础  | `done` | `docs/components/industrial-hmi-editor/design-architecture.md` | —              | 526 选中态令牌模式                                          | `docs/plans/530-scada-visual-token-foundation-plan.md` |
+| S2 SCADA 拖拽便捷性与 palette  | `todo` | 同上 + `design-toolbox.md`                                     | S1（令牌基础） | 527 ghost 模式、526 alignment 模式                          | —                                                      |
+| S3 SCADA 菜单与面板收尾        | `todo` | 同上 + `design-property-panel.md`                              | S1             | `page-designer-context-menu` 模式、WorkbenchShell resizable | —                                                      |
+| D1 3D 渲染器 UX 打磨           | `todo` | `docs/components/threejs-integration/design-renderer.md`       | —              | 529 reduced-motion/空态模式、语义令牌                       | —                                                      |
+| D2 3D 文档一致性与演示路由收尾 | `todo` | `docs/components/threejs-integration/design.md`                | D1             | —                                                           | —                                                      |
 
 ## Phase Details
 

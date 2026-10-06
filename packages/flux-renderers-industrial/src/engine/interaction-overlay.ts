@@ -1,22 +1,27 @@
-import { Group, Rect, type IGroup, type IRect } from 'leafer-ui';
+import { Group, Rect, type IGroup, type IRect, type ITransition } from 'leafer-ui';
 import type { ScadaCanvasEngine } from './scada-engine.js';
+import { resolveInteractionStyles } from './interaction-tokens.js';
+
+export { INTERACTION_STYLE_PRESETS } from './interaction-tokens.js';
 
 export type InteractionState = 'hover' | 'press' | 'selected' | 'disabled';
+
+/**
+ * D-530-1 覆盖物过渡（120ms，秒单位——leafer ITransition 口径）：经 `set(data, transition)` 消费，
+ * 该重写来自 @leafer-in/animate 插件。本包**不捆绑**插件：宿主加载（playground 全局 import）→
+ * 120ms 过渡生效；未加载宿主 base `set` 忽略第二参 → 即时终态（Failure Paths animate-env-noop
+ * 的契约降级路径，确定性不变）。
+ */
+const OVERLAY_TRANSITION: ITransition = { duration: 0.12, easing: 'ease-out' };
 
 export interface InteractionStyle {
   stroke?: string;
   strokeWidth?: number;
   fill?: string;
   opacity?: number;
+  /** plan 530 S1：selected 软阴影（leafer IShadowString 形态）；refresh 回拷白名单含此键。 */
+  shadow?: string;
 }
-
-/** 交互状态样式预设（I8.2）：hover/press/selected/disabled 为图元内部实现细节，不进组态 JSON（design-symbols.md §10）。 */
-export const INTERACTION_STYLE_PRESETS: Record<InteractionState, InteractionStyle> = {
-  hover: { stroke: '#2f6fed', strokeWidth: 2, fill: 'rgba(47, 111, 237, 0.08)' },
-  press: { stroke: '#1e4fbd', strokeWidth: 2 },
-  selected: { stroke: '#ff7f2a', strokeWidth: 2, fill: 'rgba(255, 127, 42, 0.12)' },
-  disabled: { stroke: '#9ca3af', strokeWidth: 1, opacity: 0.55 },
-};
 
 /** 覆盖物最小尺寸（无宽高语义/0 尺寸图元退化兜底，gate-4-review m-C）。 */
 const MIN_OVERLAY_SIZE = 8;
@@ -82,6 +87,7 @@ function resolveOverlayGeometry(node: OverlayNodeGeometry): { x: number; y: numb
 export class InteractionOverlay {
   private readonly group: IGroup;
   private readonly overlays = new Map<string, IRect>();
+  private tokenStyles: Record<InteractionState, InteractionStyle> | null = null;
 
   constructor(private readonly engine: ScadaCanvasEngine) {
     // P1-7 覆盖物必须不参与命中测试（hittable: false）：sky 层覆盖物与图元 screen 几何对齐后，
@@ -102,18 +108,66 @@ export class InteractionOverlay {
   highlight(symbolId: string, style?: InteractionStyle): void {
     const leaf = this.engine.registry.get(symbolId);
     if (!leaf) return;
-    const node = leaf.node as unknown as OverlayNodeGeometry;
-    const merged = { ...(style ?? INTERACTION_STYLE_PRESETS.hover) };
-    const geometry = resolveOverlayGeometry(node);
-    const attrs = this.toScreenAttrs(geometry, node, merged);
+    const merged = { ...(style ?? this.defaultStyle()) };
+    const geometry = resolveOverlayGeometry(leaf.node as unknown as OverlayNodeGeometry);
+    const attrs = this.toScreenAttrs(geometry, leaf.node as unknown as OverlayNodeGeometry, merged);
     const existing = this.overlays.get(symbolId);
     if (existing) {
-      existing.set(attrs);
+      this.applyOverlayAttrs(existing, attrs);
     } else {
       const rect = new Rect(attrs);
       this.group.add(rect);
       this.overlays.set(symbolId, rect);
+      this.playFadeIn(rect, attrs);
     }
+  }
+
+  /** plan 530 S1：默认样式 = `--ind-*` 令牌解析（每 overlay 生命周期缓存一次），fallback=PRESETS。 */
+  private defaultStyle(): InteractionStyle {
+    if (!this.tokenStyles) {
+      this.tokenStyles = resolveInteractionStyles(this.engine.container ?? null);
+    }
+    return this.tokenStyles.hover;
+  }
+
+  /**
+   * D-530-1 过渡通道：已有覆盖物重着色时，样式键经 leafer `set(data, transition)` 120ms 过渡，
+   * 几何键（x/y/width/height/rotation）恒即时 set。animate 插件缺失（宿主未加载）→ 直接即时
+   * 终态（Failure Paths animate-env-noop：终态同步可达是硬约束，过渡仅观感通道）。
+   */
+  private applyOverlayAttrs(rect: IRect, attrs: Record<string, unknown>): void {
+    const geometryKeys = ['x', 'y', 'width', 'height', 'rotation'] as const;
+    const geometryAttrs: Record<string, unknown> = {};
+    const styleAttrs: Record<string, unknown> = {};
+    let hasStyle = false;
+    for (const key of Object.keys(attrs)) {
+      if ((geometryKeys as readonly string[]).includes(key)) {
+        geometryAttrs[key] = attrs[key];
+      } else {
+        styleAttrs[key] = attrs[key];
+        hasStyle = true;
+      }
+    }
+    if (Object.keys(geometryAttrs).length > 0) rect.set(geometryAttrs);
+    if (!hasStyle) return;
+    if (this.hasAnimatePlugin(rect)) {
+      rect.set(styleAttrs, OVERLAY_TRANSITION);
+    } else {
+      rect.set(styleAttrs);
+    }
+  }
+
+  /** D-530-1 淡入通道：终态 set 先行，animate 插件在时 opacity 0→目标值淡入 120ms（观感通道，非判据）。 */
+  private playFadeIn(rect: IRect, attrs: Record<string, unknown>): void {
+    const targetOpacity = typeof attrs.opacity === 'number' ? attrs.opacity : 1;
+    if (!this.hasAnimatePlugin(rect)) return;
+    rect.set({ opacity: 0 });
+    rect.set({ opacity: targetOpacity }, OVERLAY_TRANSITION);
+  }
+
+  /** animate 插件活性探测（插件重写 UI.prototype 后实例可见 animate；未加载宿主为 undefined）。 */
+  private hasAnimatePlugin(rect: IRect): boolean {
+    return typeof (rect as unknown as { animate?: unknown }).animate === 'function';
   }
 
   /**
@@ -149,7 +203,7 @@ export class InteractionOverlay {
       const geometry = resolveOverlayGeometry(node);
       const current = rect.get() as Record<string, unknown>;
       const style: InteractionStyle = {};
-      for (const key of ['stroke', 'strokeWidth', 'fill', 'opacity'] as const) {
+      for (const key of ['stroke', 'strokeWidth', 'fill', 'opacity', 'shadow'] as const) {
         if (current[key] !== undefined) (style as Record<string, unknown>)[key] = current[key];
       }
       rect.set(this.toScreenAttrs(geometry, node, style));

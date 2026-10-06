@@ -132,6 +132,12 @@ export const EXEMPTIONS = [
     source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记（R2 G5 组静态口径）；plan 483 A1 文件级展开',
   },
   {
+    path: 'packages/flux-renderers-industrial/src/engine/interaction-tokens.ts',
+    rule: 'hardcoded-literal-color',
+    reason: 'plan 530 S1：--ind-* 令牌 fallback 常量面（INTERACTION_STYLE_PRESETS 裸宿主兜底值，与 src/styles.css light 块同值双写；fallback 字面色即契约本身，非 UI 样式硬编码）',
+    source: 'plan 530 S1 Closure（2026-10-06）；先例：plan 507 penColor「prop 契约默认值即功能契约」判例',
+  },
+  {
     path: 'packages/flux-renderers-industrial/src/styles.css',
     rule: 'hardcoded-literal-color',
     reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',

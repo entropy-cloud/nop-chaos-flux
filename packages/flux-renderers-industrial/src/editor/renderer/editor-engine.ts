@@ -5,6 +5,7 @@ import '@leafer-in/viewport';
 // （app.editor）。主入口 `src/index.ts` 不 import 本模块 → `@leafer-in/editor` 不进 runtime bundle。
 import '@leafer-in/editor';
 import { TreeRegistry, type RegistryLeaf } from '../../engine/tree-registry.js';
+import { EDITOR_SELECTED_RING_FALLBACK, EDITOR_SELECTED_RING_VAR, readIndTokenVar } from '../../engine/interaction-tokens.js';
 import {
   clampViewport,
   fit as fitViewport,
@@ -86,7 +87,14 @@ export class ScadaEditorEngine {
       ground: {},
       tree: { type: 'viewport', move: { drag: 'auto', dragEmpty: true } },
       sky: {},
-      editor: { selectArea: true, selectKeep: true },
+      editor: {
+        selectArea: true,
+        selectKeep: true,
+        // D-530-2（plan 530 S1）：EditBox 选中框颜色接 `--ind-node-selected-ring`（与覆盖物
+        // selected 令牌同源；创建时解析一次，口径与覆盖物令牌缓存一致）。解析失败回退
+        // EDITOR_SELECTED_RING_FALLBACK（即 leafer 默认紫替换为选中令牌 fallback 值）。
+        stroke: readIndTokenVar(options.container, EDITOR_SELECTED_RING_VAR, EDITOR_SELECTED_RING_FALLBACK),
+      },
     } as unknown as IAppConfig;
     this.app = new App(appConfig);
   }

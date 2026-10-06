@@ -430,6 +430,24 @@ runtime `use-scada-handles.ts:11-21` 现有 9 方法（fit/center/getSymbols/get
 - canvas 渲染层不额外产 DOM marker（Editor 渲染在 leafer sky 层，对齐 runtime design-engine.md §10）；
 - 主题独立性（roadmap Cross-Cutting + runtime design-renderer.md §10）：编辑器 DOM regions 走 CSS 变量 + 稳定 class 名，不引入 React ThemeProvider。
 
+### 10.1 交互覆盖物与 EditBox 选中令牌契约（plan 530 S1，2026-10-06 落地）
+
+**`--ind-*` 语义令牌**（消费方：`engine/interaction-tokens.ts` + EditBox 接线）：
+
+- 定义位置：`src/styles.css` 的 `.nop-scada-canvas` 块（运行态）与 `src/editor/styles.css` 的 `.nop-scada-editor-canvas` 块（编辑器）**同值双写**——两表可被宿主独立加载；改值必须两处同步。light 块 + `[data-mode='dark']` 重声明（触发器与 designer-theme 惯例一致）。
+- 键面：`--ind-interaction-hover/-press/-selected/-disabled`（描边色）+ `--ind-interaction-hover-fill/-press-fill/-selected-fill`（浅填充）+ `--ind-interaction-selected-shadow`（软阴影）+ `--ind-node-selected-ring`（EditBox ring，与 selected 同源值）。
+- 解析链：画布容器 `getComputedStyle` → 空值/非法值（非色彩形态、shadow 缺长度分量）逐键回退 `INTERACTION_STYLE_PRESETS` 内置常量（与令牌 light 块同值，裸宿主兜底）；解析失败静默不抛错。
+- 解析时机：覆盖物 = `InteractionOverlay` 首次使用时按引擎生命周期缓存一次；EditBox = 编辑器引擎创建时解析一次。**dark 中途翻转不热更新**（会话内一次性；编辑器 edit/preview 切换重建引擎后刷新）——watch-only residual。
+
+**三态视觉公式**（hover/press/selected 为图元内部实现细节，不进组态 JSON；WinCC 三态区分度水位）：
+
+- hover/press = ring 描边 + 浅填充；selected = ring 描边 + 浅填充 + 软阴影（leafer `shadow` IShadowString）；disabled = 单描边 + opacity 0.55。
+- 覆盖物只承担选择/悬停视觉反馈（sky 层，`hittable:false`），不侵入运行态绑定路径（业务状态写图元节点，分层契约由 `state-visual.test.ts` 固化）。
+
+**过渡口径（D-530-1 裁定）**：覆盖物样式重着色/淡入经 leafer `set(data, transition)`（`OVERLAY_TRANSITION = { duration: 0.12, easing: 'ease-out' }`，几何键恒即时 set）。该重写来自 `@leafer-in/animate` 插件——industrial 包**不捆绑**插件；宿主加载插件（playground `main.tsx` 全局 import）→ 120ms 过渡生效；未加载宿主 base `set` 忽略第二参 → 即时终态（契约降级路径，终态确定性不受影响）。DOM 面（palette item / toolbox 分组 / 状态栏）transition 恒生效，appearance 属性限定，几何属性禁止入 transition。
+
+**EditBox 选中样式裁定（D-530-2）**：`@leafer-in/editor` 默认 EditBox `stroke:'#836DFF'` 经 appConfig `editor:{}` 合并通道可覆盖（`selectArea/selectKeep` 同通道，`Editor` 构造 `DataHelper.default` 合并）。裁定 = **落地最小定制**：`editor-engine.ts` 创建时解析 `--ind-node-selected-ring` 写入 `editor.stroke`（`pointFill`/交互行为/包裹层视觉不动）。拒绝路径：包裹层视觉（自绘选中框）成本高且与 leafer EditBox 命中/手柄体系冲突，不做。
+
 ## 11. 实现拆分建议（架构层声明，完整拆分属 E2.6 + E5）
 
 ```

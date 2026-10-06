@@ -3,6 +3,47 @@
  * regions 使用既有 @nop-chaos/ui 样式系统（无新 token 命名空间）。
  */
 
+/* plan 530 S1：--ind-* 交互令牌 light 块（值与 src/styles.css 的 .nop-scada-canvas 块同值双写，
+ * 两表可被宿主独立加载，改值必须两处同步）。消费点：engine/interaction-tokens.ts（覆盖物解析，
+ * 缺失回退同名内置常量）+ --ind-node-selected-ring（D-530-2 EditBox ring）。
+ * dark 触发器与 designer-theme 惯例一致（[data-mode='dark']）。 */
+.nop-scada-editor-canvas {
+  --ind-interaction-hover: #2f6fed;
+  --ind-interaction-hover-fill: rgba(47, 111, 237, 0.08);
+  --ind-interaction-press: #1e4fbd;
+  --ind-interaction-press-fill: rgba(30, 79, 189, 0.1);
+  --ind-interaction-selected: #ff7f2a;
+  --ind-interaction-selected-fill: rgba(255, 127, 42, 0.12);
+  --ind-interaction-selected-shadow: 0 4px 16px rgba(255, 127, 42, 0.35);
+  --ind-interaction-disabled: #9ca3af;
+  --ind-node-selected-ring: #ff7f2a;
+}
+
+[data-mode='dark'] .nop-scada-editor-canvas {
+  --ind-interaction-hover: #5b8ff5;
+  --ind-interaction-hover-fill: rgba(91, 143, 245, 0.16);
+  --ind-interaction-press: #4a76d8;
+  --ind-interaction-press-fill: rgba(74, 118, 216, 0.18);
+  --ind-interaction-selected: #ffa04d;
+  --ind-interaction-selected-fill: rgba(255, 160, 77, 0.18);
+  --ind-interaction-selected-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+  --ind-interaction-disabled: #6b7280;
+  --ind-node-selected-ring: #ffa04d;
+}
+
+/* plan 530 S1：DOM 反馈过渡——外观属性限定 120ms；几何属性（width/height/transform/top/left/
+ * inset）不得入 transition（527 PD_OVERLAY_TRANSITION 同纪律，page-designer-tokens.ts:19）。 */
+.nop-scada-editor-palette-item,
+.nop-scada-editor-toolbox-group,
+.nop-scada-editor-status-bar {
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    outline-color 120ms ease,
+    opacity 120ms ease,
+    box-shadow 120ms ease;
+}
+
 /* 根容器（design-renderer.md §10：data-slot="scada-editor-canvas"）。 */
 .nop-scada-editor-canvas {
   position: relative;
@@ -10,6 +51,7 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  transition: outline-color 120ms ease;
 }
 
 /* canvas 画布（leafer App 在容器内创建 <canvas>）。 */

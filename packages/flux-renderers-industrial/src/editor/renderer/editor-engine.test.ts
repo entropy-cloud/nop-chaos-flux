@@ -47,6 +47,26 @@ afterEach(() => {
 });
 
 describe('ScadaEditorEngine lifecycle', () => {
+  it('editor appConfig carries the --ind-node-selected-ring resolved stroke (D-530-2, plan 530)', () => {
+    const spy = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockReturnValue({
+        getPropertyValue: (name: string) => (name === '--ind-node-selected-ring' ? '#123abc' : ''),
+      } as unknown as CSSStyleDeclaration);
+    const engine = ScadaEditorEngine.create({ container, width: 400, height: 300 });
+    const app = engine.app as unknown as { config: { editor?: { stroke?: string } } };
+    expect(app.config.editor?.stroke).toBe('#123abc');
+    spy.mockRestore();
+    engine.destroy();
+  });
+
+  it('editor appConfig stroke falls back to the selected token constant without tokens (D-530-2)', () => {
+    const engine = ScadaEditorEngine.create({ container, width: 400, height: 300 });
+    const app = engine.app as unknown as { config: { editor?: { stroke?: string } } };
+    expect(app.config.editor?.stroke).toBe('#ff7f2a');
+    engine.destroy();
+  });
+
   it('create + build + destroy', () => {
     const engine = ScadaEditorEngine.create({ container, width: 400, height: 300 });
     engine.build(configWithRect);
