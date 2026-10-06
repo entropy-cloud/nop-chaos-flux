@@ -466,6 +466,21 @@ runtime `use-scada-handles.ts:11-21` 现有 9 方法（fit/center/getSymbols/get
 
 **自定义参考线裁定（D-531-1，Ignition 8.3 对标项）**：**拒绝入交付**。证据与拒绝路径：①本编辑器无标尺 UI——参考线的交互入口依赖标尺系统（标尺 chrome 面本身就是独立组件面），裸 guide 无产出交互的入口；②参考线需跨会话持久化才有设计价值 → 进 ScadaConfig 序列化契约 = 触碰序列化校验域（HCA 已治理边界）；③拖拽吸附已由「网格 + 兄弟对齐」双通道覆盖 S2 便捷性水位，参考线为锦上添花。Successor path：未来编辑器 chrome 升级（标尺系统）立项时一并评估 guide 存储（schema 扩展 + 校验 + 序列化）。
 
+### 10.3 上下文菜单与面板/空态契约（plan 532 S3，2026-10-06 落地）
+
+**右键上下文菜单**（`editor/context-menu.tsx`，527 `page-designer-context-menu` 同款组件模式）：
+
+- 双态 items：图元态 = 创建副本（copySelection+paste，副本偏移 +20/+20 并成为新选区）/删除（destructive 位）/层级四操作（置顶/上移/下移/置底，经 `reorderZOrder`——Ignition layering 语义，working copy 数组重排防 T3）/粘贴；空白态 = 粘贴/全选（`setSelection(顶层 ids)`）/适应画布（`fitView`）。全部映射既有 runtime 面，无新增事务语义。
+- **右键选区契约**：命中图元 ∈ 当前 selection → 保留现选区（多选批量层级/删除）；命中 ∉ selection → 先 `setSelection([hitId])` 再弹出（动作统一走 selection）；空白右键保留现选区。
+- 交互：viewport 钳制（VIEWPORT_MARGIN 8）、Escape（window capture + stopPropagation）/外点关闭、方向键项间移动（跳过 disabled）+ Enter 触发、`role="menu"`/`menuitem` + `scada-editor-context-*` testid。
+- 挂载点 = canvas 键盘层容器（`data-slot="scada-editor-canvas"` div）的**兄弟**（scada-editor-canvas-wrap 内）——规避容器 onKeyDown nudge 对菜单方向键导航的冒泡污染；Escape 在组件内以 window capture stopPropagation 自理。
+- 命中检测：`editor/context-menu-hit.ts` `pickSymbolAtPoint(symbols, worldPoint)`——原语 `collectWorldBounds`（世界系 rect，累计父链偏移；group 子节点 parent-relative 裸 rect 不可用），取返回序末尾（绘制序顶层，z-order 数组序同语义）。
+- readOnly 收敛：meta.disabled 下 `onContextMenu` 门控早退（菜单不弹出），与 canvas 既有 inert/aria-disabled 门控同链路。
+
+**面板宽度**（528 裁决口径）：WorkbenchShell `leftResizable/rightResizable + leftWidth/onLeftWidthChange + rightWidth/onRightWidthChange` 全套接线，本地 useState（初始 undefined = Shell uncontrolled 缺省，会话内有效，不持久化）。
+
+**空态**：`.nop-scada-editor-empty` overlay（pointer-events:none 保持）内图标（lucide LayoutGrid）+ 标题（`emptySceneTitle`）+ 引导行（`emptyScene` 复用）；文案级断言由 RTL 守卫（既有仅有 data-slot 存在性断言）。
+
 ## 11. 实现拆分建议（架构层声明，完整拆分属 E2.6 + E5）
 
 ```

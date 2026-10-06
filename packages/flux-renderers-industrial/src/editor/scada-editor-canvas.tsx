@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
 import type { ActionSchema, RendererComponentProps, RendererHelpers, ScopeRef } from '@nop-chaos/flux-core';
 import { createNormalizedActionEvent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
@@ -7,7 +7,7 @@ import { parseScadaConfig } from '../serialization/parse.js';
 import { validateScadaConfig } from '../serialization/validate.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 import type { ScadaEditorCanvasSchema, ScadaEditorCanvasEvents } from './schemas.js';
-import { useEditorEngine, type EditorEngineRuntime } from './renderer/hooks/use-editor-engine.js';
+import { useEditorEngine } from './renderer/hooks/use-editor-engine.js';
 import { useEditorHandles } from './renderer/hooks/use-editor-handles.js';
 import { scadaEditorErrorI18nKey } from './renderer/editor-errors.js';
 import { projectSessionChange, type ScadaEditorSession } from './editor-session.js';
@@ -16,10 +16,12 @@ import { useHostScope, useStatusPathPublication, WorkbenchShell } from '@nop-cha
 import { EditorInspectorPanel } from './inspector/inspector-panel.js';
 import { EditorToolboxPanel } from './toolbox/toolbox-panel.js';
 import { EditorStatusBar } from './renderer/editor-status-bar.js';
-import { collectAllSymbols, collectWorldBounds } from './editor-working-helpers.js';
+import { LayoutGrid } from 'lucide-react';
 import { hasScadaSymbol } from '../symbols/symbol-registry.js';
 import { computeMoveSnap, type SnapRect } from './snap/transform-snap.js';
-import type { Bounds } from '../engine/viewport.js';
+import { pickSymbolAtPoint } from './context-menu-hit.js';
+import { asReactNode, collectSiblingRects, computeAggregateViewportBounds } from './canvas-view-helpers.js';
+import { ScadaEditorContextMenu, type ScadaEditorContextMenuAction, type ScadaEditorContextMenuState } from './context-menu.js';
 
 export type ScadaEditorCanvasStatus = 'loading' | 'ready' | 'error' | 'destroyed';
 
@@ -57,9 +59,6 @@ function parseAndValidateConfig(
   }
 }
 
-function asReactNode(value: unknown): ReactNode {
-  return value as ReactNode;
-}
 
 /**
  * `scada-editor-canvas` 编辑态画布渲染器（E5.1，design-renderer.md §4.1/§8/§10）。
@@ -79,6 +78,11 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   const [dropPreview, setDropPreview] = useState<SnapRect | null>(null);
   // plan 531 S2 Phase 3：拖拽对齐辅助线（runtime-factories 拖拽帧上报线世界坐标，transformEnd 清 null）。
   const [moveGuides, setMoveGuides] = useState<{ vertical: number | null; horizontal: number | null } | null>(null);
+  // plan 532 S3：右键上下文菜单态（client 坐标 + 命中图元 id，null = 空白态）。
+  const [contextMenu, setContextMenu] = useState<ScadaEditorContextMenuState | null>(null);
+  // plan 532 S3：左右面板宽度（WorkbenchShell 受控回调；本地 useState 会话内，528 裁决口径）。
+  const [leftWidth, setLeftWidth] = useState<number | undefined>(undefined);
+  const [rightWidth, setRightWidth] = useState<number | undefined>(undefined);
   // session 反应式通道（plan 2026-08-07-1835-1 Phase 1 / open P1-A）：
   // `runtime.session.*` 是 ref-held 可变对象（INV-4），不进 React 状态；notifySession 经 handleSessionChange
   // 派发 schema 事件外，还 bump 此计数器，触发本组件重渲染 → 子 panel（toolbox Undo/Redo disabled、
@@ -347,6 +351,40 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // rightPanel=inspector / footer=statusBar。隐藏态（loading/error）槽位传 undefined（shell 门
   // 为 !== undefined，传 null 会渲染空卡片）。canvas 槽 flex 包装（M1）：canvas div 的 flex:1
   // 在 PANEL_CARD block 容器内需 flex 父级，否则生产布局塌缩（jsdom 无布局不报）。
+  // plan 532 S3：菜单动作分发（全部映射既有 runtime 面，无新增事务语义）；动作后关菜单。
+  const handleMenuAction = (action: ScadaEditorContextMenuAction, _nodeId: string | null) => {
+    if (!runtime) return;
+    const selected = runtime.session.selection;
+    switch (action) {
+      case 'duplicate':
+        // copySelection（纯 clipboard，无 undo entry）+ paste（新 id 偏移 +20/+20 并成为新选区）。
+        if (selected.length > 0) {
+          runtime.copySelection();
+          runtime.paste();
+        }
+        break;
+      case 'delete':
+        if (selected.length > 0) runtime.removeWorkingSymbol(selected);
+        break;
+      case 'toTop':
+      case 'moveUp':
+      case 'moveDown':
+      case 'toBottom':
+        runtime.reorderZOrder(action);
+        break;
+      case 'paste':
+        runtime.paste();
+        break;
+      case 'selectAll':
+        runtime.setSelection(runtime.session.workingConfig.symbols.map((s) => s.id));
+        break;
+      case 'fitCanvas':
+        runtime.fitView();
+        break;
+    }
+    setContextMenu(null);
+  };
+
   const toolboxSlot = showLayoutBody
     ? asReactNode(toolbox?.render({ bindings: { selection } })) ?? (
         <EditorToolboxPanel
@@ -385,7 +423,13 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         density="flush"
         header={toolboxSlot}
         leftPanel={paletteSlot}
+        leftResizable
+        leftWidth={leftWidth}
+        onLeftWidthChange={setLeftWidth}
         rightPanel={inspectorSlot}
+        rightResizable
+        rightWidth={rightWidth}
+        onRightWidthChange={setRightWidth}
         footer={statusBarSlot}
         canvas={
           <div className="flex h-full min-h-0 w-full" data-testid="scada-editor-canvas-wrap">
@@ -473,6 +517,17 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         // plan 521 / U5：Ctrl+C/X/V 剪贴板快捷键（接内部 clipboard copy/cut/paste，OS clipboard 归 L5.8 O3）；
         // isEditable 守卫沿用仓库键盘层既有模式（flow-designer/kanban：INPUT/TEXTAREA/SELECT/contentEditable
         // 焦点不劫持）——failure path u5-shortcut-in-input。
+        onContextMenu={(e) => {
+          // plan 532 S3：右键菜单（readOnly 收敛——disabled 门控早退不弹出）。
+          if (!runtime || disabled) return;
+          e.preventDefault();
+          const rect = e.currentTarget.getBoundingClientRect();
+          const world = runtime.engine.getWorldPoint({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+          const hit = pickSymbolAtPoint(runtime.session.workingConfig.symbols, world);
+          // 右键选区契约：命中 ∈ selection 保留多选；命中 ∉ selection 先同步单选；空白保留选区。
+          if (hit && !selection.includes(hit)) runtime.setSelection([hit]);
+          setContextMenu({ x: e.clientX, y: e.clientY, nodeId: hit });
+        }}
         onKeyDown={(e) => {
           if (!runtime || disabled) return;
           const target = e.target as HTMLElement | null;
@@ -568,7 +623,11 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         {showLayoutBody && runtime.session.workingConfig.symbols.length === 0
           ? asReactNode(empty?.render()) ?? (
               <div data-slot="scada-editor-empty" className="nop-scada-editor-empty">
-                {t('industrial.scada.editor.emptyScene')}
+                <div className="flex flex-col items-center gap-2">
+                  <LayoutGrid className="size-8 opacity-60" aria-hidden="true" />
+                  <p className="text-sm font-medium">{t('industrial.scada.editor.emptySceneTitle')}</p>
+                  <p className="text-xs opacity-80">{t('industrial.scada.editor.emptyScene')}</p>
+                </div>
               </div>
             )
           : null}
@@ -589,44 +648,19 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
             )
           : null}
         </div>
+        {/* plan 532 S3：菜单挂载为 keydown 容器兄弟（canvas-wrap 内），规避容器 nudge 冒泡。 */}
+        {contextMenu && runtime ? (
+          <ScadaEditorContextMenu
+            menu={contextMenu}
+            hasClipboard={runtime.getClipboard() !== null}
+            hasSymbols={runtime.session.workingConfig.symbols.length > 0}
+            onAction={handleMenuAction}
+            onClose={() => setContextMenu(null)}
+          />
+        ) : null}
           </div>
         }
       />
     </div>
   );
-}
-
-
-/**
- * 计算全部图元（含 group 嵌套）的聚合世界包围盒（plan 2026-08-08-0900-1 Phase 3 / P2 #9 viewport policy 消费用）。
- * 复用 collectWorldBounds（与 toolbox-runtime computeBounds 同语义）；跳过零尺寸节点。
- */
-
-
-/** plan 531 S2：吸附兄弟矩形面（working copy 全图元 leaf rect；缺省宽高按 0 处理）。 */
-function collectSiblingRects(runtime: EditorEngineRuntime): SnapRect[] {
-  return collectAllSymbols(runtime.session.workingConfig.symbols).map((s) => ({
-    x: s.x ?? 0,
-    y: s.y ?? 0,
-    width: s.width ?? 0,
-    height: s.height ?? 0,
-  }));
-}
-
-function computeAggregateViewportBounds(symbols: ScadaConfig['symbols']): Bounds | undefined {
-  const worldBounds = collectWorldBounds(symbols, 0, 0);
-  let out: Bounds | undefined;
-  for (const b of worldBounds) {
-    if (b.width <= 0 || b.height <= 0) continue;
-    if (out === undefined) {
-      out = { x: b.x, y: b.y, width: b.width, height: b.height };
-    } else {
-      const minX = Math.min(out.x, b.x);
-      const minY = Math.min(out.y, b.y);
-      const maxX = Math.max(out.x + out.width, b.x + b.width);
-      const maxY = Math.max(out.y + out.height, b.y + b.height);
-      out = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-    }
-  }
-  return out;
 }

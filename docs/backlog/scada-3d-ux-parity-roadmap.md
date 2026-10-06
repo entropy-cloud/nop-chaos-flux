@@ -51,7 +51,7 @@
 | ------------------------------ | ------ | ------------------------------------------------------ |
 | S1 SCADA 编辑器视觉与令牌基础  | `done` | `docs/plans/530-scada-visual-token-foundation-plan.md` |
 | S2 SCADA 拖拽便捷性与 palette  | `done` | `docs/plans/531-scada-drag-palette-ux-plan.md`         |
-| S3 SCADA 菜单与面板收尾        | `todo` | —                                                      |
+| S3 SCADA 菜单与面板收尾        | `done` | `docs/plans/532-scada-menu-panel-plan.md`              |
 | D1 3D 渲染器 UX 打磨           | `todo` | —                                                      |
 | D2 3D 文档一致性与演示路由收尾 | `todo` | —                                                      |
 
