@@ -891,6 +891,7 @@ All three are `BoundFieldSchemaBase` scalar fields (name/label/readOnly/required
 | `InputCitySchema`        | `flux-renderers-form/src/schemas` | 窄化接口（无 sourceSearch/multiple/searchable/searchMergeMode）；`sourceChildren`+`sourceResolve`；全层级可选（`selectableTypes` 默认空）|
 
 `InputSignatureSchema` — type `input-signature` (plan 507) — adds the handwritten signature canvas: pointer-event strokes, per-stroke undo, value = PNG dataURL with the zero-strokes ⇔ undefined invariant; handles `component:clear/reset`.
+`CronEditorSchema` — type `cron-editor` (plan 540) — dual-mode schedule field (visual 7-segment / text); value `CronScheduleValue` `{cron, repeat?, range?}` (edit overwrites `cron`, passthrough preserves repeat/range); live diagnostics (10 codes) + next-fire preview (`showPreview`/`previewCount` 1-20); handles `component:clear/reset/focus`.
 
 `VerificationCodeSchema` — type `verification-code` (plan 508) — adds the OTP code field on the ui InputOTP primitive: `length` (default 6)/`masked`; value invariant — input length < `length` ⇔ `undefined`; handles `component:clear/reset/focus`. Intentionally uncontrolled (intermediate cell text lives in the lib).
 

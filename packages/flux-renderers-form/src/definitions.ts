@@ -13,6 +13,7 @@ import { formAtomsRendererDefinitions } from './renderers/form-atoms-renderer-de
 import { inputCityRendererDefinition, orgSelectRendererDefinitions } from './renderers/org/org-renderer-definitions.js';
 import { inputSignatureRendererDefinition } from './renderers/signature-renderer-definitions.js';
 import { inputVerificationRendererDefinition } from './renderers/verification-renderer-definitions.js';
+import { cronEditorRendererDefinition } from './renderers/cron-editor-renderer-definitions.js';
 
 export { formRendererDefinition } from './renderers/form-definition.js';
 export { fieldsetRendererDefinition } from './renderers/fieldset.js';
@@ -24,6 +25,7 @@ export { formAtomsRendererDefinitions } from './renderers/form-atoms-renderer-de
 export { inputCityRendererDefinition, orgSelectRendererDefinitions } from './renderers/org/org-renderer-definitions.js';
 export { inputSignatureRendererDefinition } from './renderers/signature-renderer-definitions.js';
 export { inputVerificationRendererDefinition } from './renderers/verification-renderer-definitions.js';
+export { cronEditorRendererDefinition } from './renderers/cron-editor-renderer-definitions.js';
 
 export const formRendererDefinitions: RendererDefinition[] = [
   formRendererDefinition,
@@ -37,6 +39,7 @@ export const formRendererDefinitions: RendererDefinition[] = [
   inputCityRendererDefinition,
   inputSignatureRendererDefinition,
   inputVerificationRendererDefinition,
+  cronEditorRendererDefinition,
 ];
 
 export function registerFormRenderers(registry: RendererRegistry) {

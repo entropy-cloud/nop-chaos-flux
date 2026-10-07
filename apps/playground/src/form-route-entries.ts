@@ -345,6 +345,13 @@ export const FORM_RENDERER_ROUTES: RendererRouteEntry[] = [
     description: 'Org department picker over the org data-source protocol: lazy tree with empty-page termination.',
   },
   {
+    id: 'cron-editor',
+    title: 'Cron Editor',
+    category: 'form',
+    sourcePackage: '@nop-chaos/flux-renderers-form',
+    description: 'Dual-mode (visual segment / text expression) cron schedule field with live diagnostics and next-fire preview.',
+  },
+  {
     id: 'input-signature',
     title: 'Input Signature',
     category: 'form',

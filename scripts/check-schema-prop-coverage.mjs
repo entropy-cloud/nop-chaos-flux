@@ -340,6 +340,7 @@ async function main() {
     'packages/flux-renderers-form-advanced/src/detail-view/detail-field.tsx',
     'packages/flux-renderers-form-advanced/src/tree-controls.tsx',
     'packages/flux-code-editor/src/code-editor-renderer.tsx',
+    'packages/flux-renderers-form/src/renderers/cron-editor-renderer-definitions.ts',
   ];
 
   for (const relPath of rendererFiles) {

@@ -73,7 +73,7 @@
 - `category: 'form'`
 - `sourcePackage: '@nop-chaos/flux-renderers-form'`
 - 定义模块：`renderers/cron-editor-renderer-definitions.ts`（sibling definitions module 先例同 signature / date，避免主文件超行数红线），组件 `CronEditorRenderer`，`wrap: true`。
-- `propContracts` = `formFieldContracts` + cron 专属契约（`mode` / `showRepeat` / `showRange` / `showPreview` / `previewCount` / `presets`），`fields` = `formFieldRules` + 同名 `SchemaFieldRule`；regions/events **不进** `propContracts`。
+- `propContracts` = `formFieldContracts` + cron 专属契约（`mode` / `showRepeat` / `showRange` / `showPreview` / `previewCount` / `presets`），`fields` = `formFieldRules` + 同名 `SchemaFieldRule`；regions/events **不进** `propContracts`。<!-- 注记 2026-10-07（plan 540 C5 交付）：v1 propContracts 实挂 v1 消费四面 `mode`/`showPreview`/`previewCount`/`clearable`；`showRepeat`/`showRange`/`presets` 声明进 schema、propContracts 待 C6 区块挂契约（最小锚点测试钉「声明存在、效果缺省」）。诊断双通道：schemaValidator = 创作期初值预检；运行期实时诊断 = 组件诊断区渲染。历史表述不改写。 -->
 - `validation` 走表单字段规则（`createFieldValidation()` + `validateInputFieldSchema` 先例），诊断文案由组件级 `schemaValidator` 附加（cron 专属错误码见 §4）。
 
 ## 4. schema 设计
@@ -147,7 +147,7 @@ interface CronEditorSchema extends InputSchema {
 ## 7. 运行期状态归属
 
 - **值与校验**：form runtime（`useFormFieldFromProps` → `handlers.onChange`），对象值整体提交。
-- **本地态（local）**：text 模式的非法草稿、当前焦点段、预览游标；这些不进 scope。
+- **本地态（local）**：text 模式的非法草稿、当前焦点段、预览游标；这些不进 scope。<!-- 注记 2026-10-07（plan 540 C5 交付）：local 态清单补「分段草稿」——分段聚焦期本地草稿，合法即提交、非法留段显示（值提交门控，见 plan 540）。 -->
 - **派生态（render-time derivation）**：频率档位、分段编辑器各段取值、预设高亮——全部由 `value.cron` 实时 parse 得出，**不写回成镜像 state**（无 effect 同步，无双源不一致）。
 - 识别不了的表达式（如含 `*/10` 复杂步进）→ 档位自动落「自定义」，分段编辑器照常编辑；切换到向导档位时由向导重编译 cron，旧表达式被覆盖属于预期交互。
 

@@ -486,6 +486,7 @@ export interface InputColorSchema extends BoundFieldSchemaBase {
 
 export { type InputSignatureSchema } from './schemas-signature.js';
 export { type VerificationCodeSchema } from './schemas-verification.js';
+export { type CronEditorSchema } from './schemas-cron.js';
 
 export {
   type DepartmentSelectSchema,

@@ -40,6 +40,24 @@ describe('form renderer definition contracts', () => {
     expect(fieldset?.fields?.some((f) => f.key === 'body' && f.kind === 'region')).toBe(true);
   });
 
+  it('cron-editor is a wrapped field renderer with cron diagnostics validation (cron 轨道 C5, plan 540)', () => {
+    const def = formRendererDefinitions.find((d) => d.type === 'cron-editor');
+    expect(def?.wrap).toBe(true);
+    expect(def?.sourcePackage).toBe('@nop-chaos/flux-renderers-form');
+    expect(def?.validation).toBeDefined();
+    expect(def?.schemaValidator).toBeDefined();
+    for (const key of ['mode', 'showPreview', 'previewCount', 'clearable']) {
+      expect(def?.propContracts?.[key], `propContracts.${key}`).toBeDefined();
+    }
+    for (const key of ['mode', 'showPreview', 'previewCount']) {
+      expect(def?.fields?.some((f) => f.key === key), `fields.${key}`).toBe(true);
+    }
+    // v2 props 按 design §4 声明进 schema 面（propContracts C6 再挂）
+    for (const key of ['showRepeat', 'showRange', 'presets']) {
+      expect(def?.propContracts?.[key]).toBeUndefined();
+    }
+  });
+
   it('all input renderers use wrap: true (field frame wrapping)', () => {
     const inputTypes = [
       'input-text',

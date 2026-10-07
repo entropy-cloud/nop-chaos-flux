@@ -12,6 +12,13 @@ import type { RendererCoverageEntry } from './coverage-manifest';
 export const COMPONENT_LAB_COVERAGE_MANIFEST: RendererCoverageEntry[] = [
   // --- Form ---
   {
+    id: 'cron-editor',
+    title: 'Cron Editor',
+    tier: 'write',
+    primaryScenario: 'Submit echo',
+    notes: 'Text/segment edit commits CronScheduleValue; invalid input diagnostics; preview strictly increasing (plan 540)',
+  },
+  {
     id: 'form',
     title: 'Form',
     tier: 'write',

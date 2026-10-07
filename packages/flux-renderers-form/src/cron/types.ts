@@ -12,11 +12,11 @@ export type CronDiagnosticCode =
   | 'impossible';
 
 /** 编辑器值：cron 为本体，repeat/range 为 cron 表达不了的配套结构（design §4） */
-export interface CronScheduleValue {
+export type CronScheduleValue = {
   cron: string;
   repeat?: { every: number; unit: 'day' | 'week'; anchor?: string };
   range?: { start?: string; end?: string; count?: number };
-}
+};
 
 export type FieldItem =
   | { kind: 'star' }

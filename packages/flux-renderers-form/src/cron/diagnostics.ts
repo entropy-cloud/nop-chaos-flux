@@ -3,7 +3,7 @@
 import { parseCron } from './parse';
 import type { CronDiagnosticCode, CronScheduleValue } from './types';
 
-type ValueDiagnosticCode = CronDiagnosticCode | 'repeatAnchorMissing' | 'rangeConflict';
+export type ValueDiagnosticCode = CronDiagnosticCode | 'repeatAnchorMissing' | 'rangeConflict';
 
 export function validateCronScheduleValue(value: CronScheduleValue): { code: ValueDiagnosticCode | null } {
   const parsed = parseCron(value.cron);

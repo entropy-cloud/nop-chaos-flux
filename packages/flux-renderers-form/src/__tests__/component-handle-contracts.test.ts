@@ -21,6 +21,10 @@ describe('input renderer component capability contracts (X1)', () => {
     expect(handlesFor('input-number')).toEqual(['clear', 'reset', 'focus']);
   });
 
+  it('cron-editor publishes clear/reset/focus (cron 轨道 C5, plan 540)', () => {
+    expect(handlesFor('cron-editor')).toEqual(['clear', 'reset', 'focus']);
+  });
+
   it('select publishes clear/focus/open', () => {
     expect(handlesFor('select')).toEqual(['clear', 'focus', 'open']);
   });
