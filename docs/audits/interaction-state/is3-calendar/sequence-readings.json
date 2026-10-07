@@ -1,0 +1,67 @@
+[
+  {
+    "name": "calendar: view switch month→week (onViewChange)",
+    "ok": true,
+    "reading": {
+      "before": 58,
+      "after": 10,
+      "viewChanged": true
+    }
+  },
+  {
+    "name": "calendar: date navigation (next/prev)",
+    "ok": true,
+    "reading": {
+      "labelChanged": true,
+      "sample": "今日"
+    }
+  },
+  {
+    "name": "calendar: event click feedback (onEventClick toast)",
+    "ok": true,
+    "reading": {
+      "toasts": ["晚班 - 2026-09-29", "日期变更: 2026-09-30T20:59:59.104Z", "视图切换: week"]
+    }
+  },
+  {
+    "name": "perf-scale: initial + scroll container readings",
+    "ok": true,
+    "reading": {
+      "events": 166,
+      "scrollable": true,
+      "st": 0
+    }
+  },
+  {
+    "name": "perf-scale: scroll settle (V1 container)",
+    "ok": true,
+    "reading": {
+      "set": 600,
+      "after": 600
+    }
+  },
+  {
+    "name": "cal-booking: date select updates scope state (dateStatePath)",
+    "ok": true,
+    "reading": {
+      "clicked": "2026-09-10",
+      "selected": "2026-09-10"
+    }
+  },
+  {
+    "name": "cal-confirm: no calendar renderer interaction face (n/a)",
+    "ok": true,
+    "reading": {
+      "calendarRendererNodes": 0,
+      "note": "page uses static content, no calendar renderer"
+    }
+  },
+  {
+    "name": "cal-success: no calendar renderer interaction face (n/a)",
+    "ok": true,
+    "reading": {
+      "calendarRendererNodes": 0,
+      "note": "page uses static content, no calendar renderer"
+    }
+  }
+]

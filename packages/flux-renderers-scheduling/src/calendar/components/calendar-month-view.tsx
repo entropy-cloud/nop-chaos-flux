@@ -9,7 +9,15 @@ import { positionEventsInMonth, splitMultiDayEvents, detectMonthConflicts } from
 import { computeCrossDayLines, createSVGPath, type CellPosition } from '../utils/calendar-cross-day-lines.js';
 import { CalendarEventBlock } from './calendar-event-block.js';
 
+interface CalendarDragCreatePreview {
+  resource: string;
+  from: string;
+  to: string;
+}
+
 export interface CalendarMonthViewProps {
+  /** plan 546 seed-5: in-press drag-create range — covered cells render data-drag-preview. */
+  dragCreatePreview?: CalendarDragCreatePreview | null;
   events: CalendarEvent[];
   resources: CalendarResource[];
   dateRange: CalendarDateRange;
@@ -77,6 +85,8 @@ export function CalendarMonthView({
   totalSize,
   onDragStart,
   onCellDragStart,
+  dragCreatePreview,
+
   onCellKeyboardCreate,
   showCrossDayLines = true,
   onEventKeyDown,
@@ -276,6 +286,14 @@ export function CalendarMonthView({
                   data-slot="calendar-cell"
                   data-date={dateStr}
                   data-resource={resource.id}
+                  data-drag-preview={
+                    dragCreatePreview &&
+                    dragCreatePreview.resource === resource.id &&
+                    dateStr >= dragCreatePreview.from &&
+                    dateStr <= dragCreatePreview.to
+                      ? 'true'
+                      : undefined
+                  }
                   data-empty={!isCurrentMonth ? 'true' : undefined}
                   data-weekend={weekendAttr}
                   data-today={todayAttr}

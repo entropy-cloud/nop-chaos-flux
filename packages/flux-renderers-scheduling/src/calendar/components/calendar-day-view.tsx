@@ -19,6 +19,8 @@ export interface CalendarDayViewProps {
   /** [G4-R3-视角11-02] 长按/键盘创建入口——与月/周视图同能力。 */
   onCellDragStart?: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
   onCellKeyboardCreate?: (date: string, resourceId: string) => void;
+  /** plan 546 seed-5: in-press drag-create range — covered cells render data-drag-preview. */
+  dragCreatePreview?: { resource: string; from: string; to: string } | null;
   onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
   locale?: string;
 }
@@ -36,6 +38,8 @@ export function CalendarDayView({
   onEventClick,
   onDragStart,
   onCellDragStart,
+  dragCreatePreview,
+
   onCellKeyboardCreate,
   onEventKeyDown,
   locale = 'en-US',
@@ -151,6 +155,14 @@ export function CalendarDayView({
                     data-slot="calendar-cell"
                     data-date={dateStr}
                     data-resource={resource.id}
+                    data-drag-preview={
+                      dragCreatePreview &&
+                      dragCreatePreview.resource === resource.id &&
+                      dateStr >= dragCreatePreview.from &&
+                      dateStr <= dragCreatePreview.to
+                        ? 'true'
+                        : undefined
+                    }
                     className="border-b border-border"
                     style={{ height: `${HOUR_HEIGHT}px` }}
                     onPointerDown={(pe) => {

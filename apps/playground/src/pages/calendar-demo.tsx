@@ -1,9 +1,11 @@
 import { Button, toast } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { createActionScope } from '@nop-chaos/flux-runtime';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { ArrowLeft } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 interface CalendarDemoPageProps {
   onBack: () => void;
@@ -106,7 +108,7 @@ function generateSampleEvents(): Array<{
 
 const SAMPLE_EVENTS = generateSampleEvents();
 
-const SAMPLE_CALENDAR_SCHEMA = {
+const SAMPLE_CALENDAR_SCHEMA_BASE = {
   type: 'calendar',
   view: 'month',
   // ux-r8 CA-1：不传固定历史日期 → 打开即当前月；CA-2：locale 中文化周表头
@@ -114,16 +116,84 @@ const SAMPLE_CALENDAR_SCHEMA = {
   showWeekends: true,
   maxConcurrent: 4,
   showCrossDayLines: true,
-  events: SAMPLE_EVENTS,
   resources: SAMPLE_RESOURCES,
   onEventClick: { action: 'showToast', args: { message: '${event.title} - ${date}' } },
-  onEventChange: { action: 'showToast', args: { message: '排班已更新: ${event.title}' } },
-  onEventCreate: { action: 'showToast', args: { message: '已创建排班: ${event.title} (${event.start} ~ ${event.end})' } },
   onViewChange: { action: 'showToast', args: { message: '视图切换: ${view}' } },
   onDateChange: { action: 'showToast', args: { message: '日期变更: ${date}' } },
 };
 
+function shiftIsoDate(iso: string, dayDelta: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + dayDelta);
+  return d.toISOString().split('T')[0];
+}
+
 export function CalendarDemoPage({ onBack }: CalendarDemoPageProps) {
+  // plan 546 seed-4 (V3): events are component state — a confirmed drag-move
+  // must actually move the event (pre-fix: module-level constant + toast only,
+  // so the confirm dialog produced zero state change).
+  const [events, setEvents] = useState(SAMPLE_EVENTS);
+  // SchemaRenderer compiles static schema data once per mount (page runtime is
+  // created a single time), so event mutations need a remount to reach the
+  // renderer. Bump on every confirmed mutation; view state resets to the
+  // month view centered on today, which is acceptable for the demo surface.
+  // Framework-level dynamic-schema propagation is registered as a watch
+  // finding (plan 546).
+  const [rendererRevision, setRendererRevision] = useState(0);
+
+  const actionScope = useMemo(() => {
+    const scope = createActionScope({ id: 'calendar-demo-page-action-scope' });
+    scope.registerNamespace('calendarDemo', {
+      kind: 'host',
+      listMethods() {
+        return ['move', 'create'];
+      },
+      invoke(method: string, payload: unknown) {
+        const p = (payload ?? {}) as {
+          eventId?: string;
+          fromDate?: string;
+          toDate?: string;
+          toResource?: string;
+          event?: { title?: string };
+        };
+        if (method === 'move') {
+          const dayDelta = p.fromDate && p.toDate ? (Date.parse(p.toDate) - Date.parse(p.fromDate)) / 86_400_000 : 0;
+          setEvents((prev) =>
+            prev.map((e) =>
+              e.id === p.eventId
+                ? { ...e, start: shiftIsoDate(e.start, dayDelta), end: shiftIsoDate(e.end, dayDelta), resourceId: p.toResource ?? e.resourceId }
+                : e,
+            ),
+          );
+          toast.success(`排班已更新: ${p.event?.title ?? ''}`);
+          setRendererRevision((r) => r + 1);
+          return { ok: true };
+        }
+        if (method === 'create') {
+          const created = p.event as { id?: string; title?: string } | undefined;
+          if (created) {
+            setEvents((prev) => [...prev, { ...(created as (typeof prev)[number]) , id: created.id ?? `new-${prev.length + 1}` }]);
+          }
+          toast.success(`已创建排班: ${created?.title ?? ''}`);
+          setRendererRevision((r) => r + 1);
+          return { ok: true };
+        }
+        return { ok: false, error: new Error(`Unknown calendarDemo method: ${method}`) };
+      },
+    });
+    return scope;
+  }, []);
+
+  const schema = useMemo(
+    () => ({
+      ...SAMPLE_CALENDAR_SCHEMA_BASE,
+      events,
+      onEventChange: { action: 'calendarDemo:move' },
+      onEventCreate: { action: 'calendarDemo:create' },
+    }),
+    [events],
+  );
+
   return (
     <div className="h-screen flex flex-col">
       <div className="flex items-center gap-3 px-4 py-2 border-b bg-white shrink-0">
@@ -145,11 +215,13 @@ export function CalendarDemoPage({ onBack }: CalendarDemoPageProps) {
       </div>
       <div className="flex-1 min-h-0">
         <SchemaRenderer
+          key={rendererRevision}
           schemaUrl="calendar://demo"
-          schema={SAMPLE_CALENDAR_SCHEMA as React.ComponentProps<typeof SchemaRenderer>['schema']}
+          schema={schema as React.ComponentProps<typeof SchemaRenderer>['schema']}
           registry={registry as React.ComponentProps<typeof SchemaRenderer>['registry']}
           env={env}
           formulaCompiler={formulaCompiler}
+          actionScope={actionScope}
         />
       </div>
     </div>

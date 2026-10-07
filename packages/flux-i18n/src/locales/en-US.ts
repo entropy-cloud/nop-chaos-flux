@@ -1507,6 +1507,7 @@ export const enUS: Resource = {
         appointment: 'Appointment',
         maintenance: 'Maintenance',
         selectType: 'Select Shift Type',
+        dragCreateHint: 'Tip: long-press an empty cell and drag across cells to create a shift; focus a cell and press Enter to create via keyboard',
         confirmMove: 'Confirm Schedule Move',
         moveConfirm: 'Move {{title}} to {{date}} {{resource}}?',
         batchSchedule: 'Batch Schedule',

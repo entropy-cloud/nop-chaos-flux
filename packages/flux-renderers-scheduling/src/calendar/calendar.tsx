@@ -403,6 +403,20 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
     longPressMs: 500,
   });
 
+  // plan 546 seed-5 (E): expose the in-press drag-create range so the views can
+  // mark covered cells with data-drag-preview — pre-fix the press had zero
+  // visual feedback and the gesture was undiscoverable.
+  const dragCreatePreview = dragCreate.dragCreateState.active &&
+    dragCreate.dragCreateState.startDate &&
+    dragCreate.dragCreateState.currentDate
+    ? (() => {
+        const state = dragCreate.dragCreateState;
+        const from = state.startDate! <= state.currentDate! ? state.startDate! : state.currentDate!;
+        const to = state.startDate! <= state.currentDate! ? state.currentDate! : state.startDate!;
+        return { resource: state.startResource ?? '', from, to };
+      })()
+    : null;
+
   const displayResources = resourcesData.length === 0
     ? (() => {
         const uniqueIds = [...new Set(eventsData.map((e) => e.resourceId).filter(Boolean))];
@@ -505,6 +519,15 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
         locale={locale}
       />
 
+      {/* plan 546 seed-5 (E): persistent discoverability hint for the
+          long-press drag-create gesture + its keyboard equivalent. Resource
+          shape only — monthShape 'grid' hosts are pure date pickers. */}
+      {monthShape !== 'grid' && (
+        <div data-slot="calendar-drag-create-hint" className="px-3 py-1 text-xs text-muted-foreground">
+          {t('scheduling.calendar.dragCreateHint')}
+        </div>
+      )}
+
       {activeView === 'month' && monthShape === 'grid' && (
         <CalendarGridView
           currentDate={currentDate} firstDayOfWeek={firstDayOfWeek} locale={locale}
@@ -521,6 +544,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
             onEventClick={onEventClick} virtualItems={virtualItems} totalSize={totalSize}
             onDragStart={dragSwap.startDrag} onCellDragStart={dragCreate.startCellDrag}
             onCellKeyboardCreate={dragCreate.startKeyboardCreate}
+            dragCreatePreview={dragCreatePreview}
             showCrossDayLines={showCrossDayLines} onEventKeyDown={handleEventKeyDown}
             eventClassName={resolved.eventClassName as string | undefined} locale={locale}
           />
@@ -535,6 +559,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           eventTemplate={regions.eventTemplate ?? undefined} onEventClick={onEventClick}
           onDragStart={dragSwap.startDrag} onEventKeyDown={handleEventKeyDown} locale={locale}
           onCellDragStart={dragCreate.startCellDrag} onCellKeyboardCreate={dragCreate.startKeyboardCreate}
+        dragCreatePreview={dragCreatePreview}
         />
       )}
 
@@ -545,6 +570,7 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
           eventTemplate={regions.eventTemplate ?? undefined} onEventClick={onEventClick}
           onDragStart={dragSwap.startDrag} onEventKeyDown={handleEventKeyDown} locale={locale}
           onCellDragStart={dragCreate.startCellDrag} onCellKeyboardCreate={dragCreate.startKeyboardCreate}
+        dragCreatePreview={dragCreatePreview}
         />
       )}
 

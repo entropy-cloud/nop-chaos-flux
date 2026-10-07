@@ -1502,6 +1502,7 @@ export const zhCN: Resource = {
         appointment: '预约',
         maintenance: '维保',
         selectType: '选择班次类型',
+        dragCreateHint: '提示：长按空白格并拖选区间即可创建排班；键盘聚焦单元格后按 Enter 也可创建',
         confirmMove: '确认移动排班',
         moveConfirm: '将 {{title}} 移到 {{date}} {{resource}}?',
         batchSchedule: '批量排班',

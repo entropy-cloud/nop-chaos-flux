@@ -22,6 +22,8 @@ export interface CalendarWeekViewProps {
   /** [G4-R3-视角11-02] 长 按/键盘创建入口——与月视图同能力，三视图一致。 */
   onCellDragStart?: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
   onCellKeyboardCreate?: (date: string, resourceId: string) => void;
+  /** plan 546 seed-5: in-press drag-create range — covered cells render data-drag-preview. */
+  dragCreatePreview?: { resource: string; from: string; to: string } | null;
   onEventKeyDown?: (e: React.KeyboardEvent, event: CalendarEvent) => void;
 }
 
@@ -40,6 +42,8 @@ export function CalendarWeekView({
   onEventClick,
   onDragStart,
   onCellDragStart,
+  dragCreatePreview,
+
   onCellKeyboardCreate,
   onEventKeyDown,
   locale = 'en-US',
@@ -185,6 +189,14 @@ export function CalendarWeekView({
                   data-slot="calendar-cell"
                   data-date={dateStr}
                   data-resource={resource.id}
+                  data-drag-preview={
+                    dragCreatePreview &&
+                    dragCreatePreview.resource === resource.id &&
+                    dateStr >= dragCreatePreview.from &&
+                    dateStr <= dragCreatePreview.to
+                      ? 'true'
+                      : undefined
+                  }
                   className="flex-1 relative border-r last:border-r-0"
                   onPointerDown={(pe) => {
                     // [G4-R3-视角11-02] 空格长按创建入口（与月视图 onCellDragStart 同通道）。

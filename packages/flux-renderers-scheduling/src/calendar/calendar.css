@@ -43,8 +43,20 @@
   cursor: pointer;
 }
 
+.nop-calendar [data-slot='calendar-cell'] {
+  /* plan 546 seed-5 (E): signal that cells participate in the long-press
+     drag-create gesture (pre-fix: cursor auto, gesture undiscoverable). */
+  cursor: cell;
+}
+
 .nop-calendar [data-slot='calendar-cell']:hover {
   background-color: var(--color-muted);
+}
+
+.nop-calendar [data-slot='calendar-cell'][data-drag-preview='true'] {
+  background-color: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  outline: 1px dashed var(--color-primary);
+  outline-offset: -1px;
 }
 
 .nop-calendar [data-slot='calendar-header'] button:hover {
