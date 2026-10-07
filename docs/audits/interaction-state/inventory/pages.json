@@ -1,0 +1,2065 @@
+{
+  "generatedBy": "pnpm interaction:inventory (plan 543)",
+  "sources": [
+    "apps/playground/src/route-model.ts",
+    "apps/playground/src/complex-pages/complex-pages-model.ts"
+  ],
+  "pages": [
+    {
+      "id": "home",
+      "hash": "#/",
+      "family": "index",
+      "title": "Home",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-index",
+      "hash": "#/lab",
+      "family": "index",
+      "title": "Component Lab Index",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "complex-pages-index",
+      "hash": "#/complex-pages",
+      "family": "index",
+      "title": "Complex Pages Showcase Index",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "flux-basic",
+      "hash": "#/flux-basic",
+      "family": "domain",
+      "title": "Flux Basic",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "flow-designer",
+      "hash": "#/flow-designer",
+      "family": "domain",
+      "title": "Flow Designer",
+      "batch": "IS-1",
+      "profile": "canvas+drag+selection+dialog+feedback+shell-host"
+    },
+    {
+      "id": "gantt",
+      "hash": "#/gantt",
+      "family": "domain",
+      "title": "Gantt Chart",
+      "batch": "IS-2",
+      "profile": "scroll+drag+feedback+dialog"
+    },
+    {
+      "id": "gantt-states",
+      "hash": "#/gantt-states",
+      "family": "domain",
+      "title": "Gantt States",
+      "batch": "IS-2",
+      "profile": "scroll+drag+feedback+dialog"
+    },
+    {
+      "id": "kanban",
+      "hash": "#/kanban",
+      "family": "domain",
+      "title": "Kanban Board",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "scheduling-calendar",
+      "hash": "#/scheduling-calendar",
+      "family": "domain",
+      "title": "Calendar",
+      "batch": "IS-3",
+      "profile": "scroll+drag+selection+feedback+dialog"
+    },
+    {
+      "id": "barcode-input",
+      "hash": "#/barcode-input",
+      "family": "domain",
+      "title": "Barcode Input",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "diff-view",
+      "hash": "#/diff-view",
+      "family": "domain",
+      "title": "Diff View",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "graph-demo",
+      "hash": "#/graph-demo",
+      "family": "domain",
+      "title": "Graph Viewer",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "map-demo",
+      "hash": "#/map-demo",
+      "family": "domain",
+      "title": "Map (OpenLayers)",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "pivot-table-demo",
+      "hash": "#/pivot-table-demo",
+      "family": "domain",
+      "title": "Pivot Table",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "page-designer",
+      "hash": "#/page-designer",
+      "family": "domain",
+      "title": "Page Designer",
+      "batch": "IS-4",
+      "profile": "canvas+drag+selection+dialog+feedback"
+    },
+    {
+      "id": "print-designer",
+      "hash": "#/print-designer",
+      "family": "domain",
+      "title": "Print Designer",
+      "batch": "IS-4",
+      "profile": "canvas+drag+selection+dialog+feedback"
+    },
+    {
+      "id": "taskflow-designer",
+      "hash": "#/taskflow-designer",
+      "family": "domain",
+      "title": "TaskFlow Designer",
+      "batch": "IS-4",
+      "profile": "canvas+drag+selection+dialog+feedback"
+    },
+    {
+      "id": "report-designer",
+      "hash": "#/report-designer",
+      "family": "domain",
+      "title": "Report Designer",
+      "batch": "IS-4",
+      "profile": "canvas+drag+selection+dialog+feedback+shell-host"
+    },
+    {
+      "id": "report-designer-host",
+      "hash": "#/report-designer-host",
+      "family": "domain",
+      "title": "Report Designer Host",
+      "batch": "IS-4",
+      "profile": "canvas+drag+selection+dialog+feedback+shell-host"
+    },
+    {
+      "id": "spreadsheet",
+      "hash": "#/spreadsheet",
+      "family": "domain",
+      "title": "Spreadsheet",
+      "batch": "IS-4",
+      "profile": "canvas+drag+selection+dialog+feedback+shell-host"
+    },
+    {
+      "id": "debugger-lab",
+      "hash": "#/debugger-lab",
+      "family": "domain",
+      "title": "Debugger Lab",
+      "batch": "IS-4",
+      "profile": "canvas+drag+selection+dialog+feedback"
+    },
+    {
+      "id": "condition-builder",
+      "hash": "#/condition-builder",
+      "family": "domain",
+      "title": "Condition Builder",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "condition-builder-formula",
+      "hash": "#/condition-builder-formula",
+      "family": "domain",
+      "title": "Condition Builder Formula",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "code-editor",
+      "hash": "#/code-editor",
+      "family": "domain",
+      "title": "Code Editor",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "word-editor",
+      "hash": "#/word-editor",
+      "family": "domain",
+      "title": "Word Editor",
+      "batch": "IS-4",
+      "profile": "canvas+drag+selection+dialog+feedback+shell-host"
+    },
+    {
+      "id": "performance-table",
+      "hash": "#/performance-table",
+      "family": "domain",
+      "title": "Performance Table",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "component-handles",
+      "hash": "#/component-handles",
+      "family": "domain",
+      "title": "Component Handles",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "event-prevention",
+      "hash": "#/event-prevention",
+      "family": "domain",
+      "title": "Event Prevention",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "boolean-control-value-contract",
+      "hash": "#/boolean-control-value-contract",
+      "family": "domain",
+      "title": "Boolean Control Value Contract",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "text-icon-visual-fields",
+      "hash": "#/text-icon-visual-fields",
+      "family": "domain",
+      "title": "Text / Icon Visual Fields",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "layout-family-enhancements",
+      "hash": "#/layout-family-enhancements",
+      "family": "domain",
+      "title": "Layout Family Enhancements",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "form-input-enhancements",
+      "hash": "#/form-input-enhancements",
+      "family": "domain",
+      "title": "Form Input Enhancements",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "input-suggest",
+      "hash": "#/input-suggest",
+      "family": "domain",
+      "title": "Input Autocomplete",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "tree-display-ux",
+      "hash": "#/tree-display-ux",
+      "family": "domain",
+      "title": "Tree Display UX",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "table-popover",
+      "hash": "#/table-popover",
+      "family": "domain",
+      "title": "Table popOver Cell",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "table-column-width",
+      "hash": "#/table-column-width",
+      "family": "domain",
+      "title": "Table Column Width Strategy",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "mobile-infrastructure",
+      "hash": "#/mobile-infrastructure",
+      "family": "domain",
+      "title": "Mobile Infrastructure",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "mobile-components",
+      "hash": "#/mobile-components",
+      "family": "domain",
+      "title": "Mobile Native Components",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w1b-content",
+      "hash": "#/w1b-content",
+      "family": "domain",
+      "title": "Content & Feedback Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w1a-content",
+      "hash": "#/w1a-content",
+      "family": "domain",
+      "title": "Content Display Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w2a-data-composition",
+      "hash": "#/w2a-data-composition",
+      "family": "domain",
+      "title": "Data Composition Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w2b-date-family",
+      "hash": "#/w2b-date-family",
+      "family": "domain",
+      "title": "Date Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w3a-w3b-layout-action-family",
+      "hash": "#/w3a-w3b-layout-action-family",
+      "family": "domain",
+      "title": "Layout & Action Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w3c-value-mapping",
+      "hash": "#/w3c-value-mapping",
+      "family": "domain",
+      "title": "Value Mapping Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w3d-advanced-input-family",
+      "hash": "#/w3d-advanced-input-family",
+      "family": "domain",
+      "title": "Advanced Input Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w4a-multimedia",
+      "hash": "#/w4a-multimedia",
+      "family": "domain",
+      "title": "Multimedia Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w4b-process-display",
+      "hash": "#/w4b-process-display",
+      "family": "domain",
+      "title": "Process Display Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "w4c-composite-form-family",
+      "hash": "#/w4c-composite-form-family",
+      "family": "domain",
+      "title": "Composite Form Family",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "m1-responsive",
+      "hash": "#/m1-responsive",
+      "family": "domain",
+      "title": "M1 Responsive Controls",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "m2-touch",
+      "hash": "#/m2-touch",
+      "family": "domain",
+      "title": "M2 Touch Adaptation",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "m3-layout",
+      "hash": "#/m3-layout",
+      "family": "domain",
+      "title": "M3 Layout Skeletons",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "m4-data",
+      "hash": "#/m4-data",
+      "family": "domain",
+      "title": "M4 Data Display Responsive",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "m5-showcase",
+      "hash": "#/m5-showcase",
+      "family": "domain",
+      "title": "Mobile Component Showcase",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "calendar-perf-scale",
+      "hash": "#/calendar-perf-scale",
+      "family": "domain",
+      "title": "Calendar Performance Scale",
+      "batch": "IS-3",
+      "profile": "scroll+drag+selection+feedback+dialog"
+    },
+    {
+      "id": "kanban-perf-scale",
+      "hash": "#/kanban-perf-scale",
+      "family": "domain",
+      "title": "Kanban Performance Scale",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "gantt-perf-scale",
+      "hash": "#/gantt-perf-scale",
+      "family": "domain",
+      "title": "Gantt Performance Scale",
+      "batch": "IS-2",
+      "profile": "scroll+drag+feedback+dialog"
+    },
+    {
+      "id": "diff-perf-scale",
+      "hash": "#/diff-perf-scale",
+      "family": "domain",
+      "title": "Diff View Performance Scale",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "data-verify",
+      "hash": "#/data-verify",
+      "family": "domain",
+      "title": "Data Source Verify",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "env-stream",
+      "hash": "#/env-stream",
+      "family": "domain",
+      "title": "env.stream / env.openSocket",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-chat",
+      "hash": "#/ai-chat",
+      "family": "domain",
+      "title": "AI Chat (mock streaming)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-conversations",
+      "hash": "#/ai-conversations",
+      "family": "domain",
+      "title": "AI Conversations (P1)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-tools",
+      "hash": "#/ai-tools",
+      "family": "domain",
+      "title": "AI Tools (P2 agentic loop)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-attachments",
+      "hash": "#/ai-attachments",
+      "family": "domain",
+      "title": "AI Attachments (P2 multimodal)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-component-handle",
+      "hash": "#/ai-component-handle",
+      "family": "domain",
+      "title": "AI ComponentHandle (Layer C)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-virtual-scroll",
+      "hash": "#/ai-virtual-scroll",
+      "family": "domain",
+      "title": "AI Virtual Scroll (A-8)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-persistence",
+      "hash": "#/ai-persistence",
+      "family": "domain",
+      "title": "AI Persistence (P3)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-citations",
+      "hash": "#/ai-citations",
+      "family": "domain",
+      "title": "AI Citations (P3, A-13)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-hitl",
+      "hash": "#/ai-hitl",
+      "family": "domain",
+      "title": "AI HITL Approval (P3, A-14)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-p4",
+      "hash": "#/ai-p4",
+      "family": "domain",
+      "title": "AI P4 Widgets (voice / token / suggestions)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-linkage",
+      "hash": "#/ai-linkage",
+      "family": "domain",
+      "title": "AI P4 Advanced (branches + linkage)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-rich-text",
+      "hash": "#/ai-rich-text",
+      "family": "domain",
+      "title": "AI Rich Text Sender (P6, A6)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-widgets",
+      "hash": "#/ai-widgets",
+      "family": "domain",
+      "title": "AI Widgets Showcase",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "ai-coverage",
+      "hash": "#/ai-coverage",
+      "family": "domain",
+      "title": "AI Coverage (states & edges)",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
+      "id": "dingtalk-flow-demo",
+      "hash": "#/dingtalk-flow-demo",
+      "family": "domain",
+      "title": "DingTalk Flow Demo",
+      "batch": "IS-1",
+      "profile": "canvas+drag+selection+dialog+feedback+shell-host"
+    },
+    {
+      "id": "scada-demo",
+      "hash": "#/scada-demo",
+      "family": "domain",
+      "title": "Scada Demo",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "three-canvas-demo",
+      "hash": "#/three-canvas-demo",
+      "family": "domain",
+      "title": "Three Canvas Demo",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "three-industrial-demo",
+      "hash": "#/three-industrial-demo",
+      "family": "domain",
+      "title": "Three Industrial Demo",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "scada-pressure-demo",
+      "hash": "#/scada-pressure-demo",
+      "family": "domain",
+      "title": "Scada Pressure Demo",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "scada-edge-cases",
+      "hash": "#/scada-edge-cases",
+      "family": "domain",
+      "title": "Scada Edge Cases",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "scada-editor-demo",
+      "hash": "#/scada-editor-demo",
+      "family": "domain",
+      "title": "Scada Editor Demo",
+      "batch": "IS-4",
+      "profile": "canvas+drag+selection+dialog+feedback+shell-host"
+    },
+    {
+      "id": "dashboard-demo",
+      "hash": "#/dashboard-demo",
+      "family": "domain",
+      "title": "Dashboard Editor",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection+shell-host"
+    },
+    {
+      "id": "scada-perf-scale",
+      "hash": "#/scada-perf-scale",
+      "family": "domain",
+      "title": "Scada Performance Scale",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "leafer-examples",
+      "hash": "#/leafer-examples",
+      "family": "domain",
+      "title": "LeaferJS Examples",
+      "batch": "IS-5",
+      "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "crud-views-export",
+      "hash": "#/complex-pages/crud-views-export",
+      "family": "complex",
+      "title": "视图切换 + 后台导出",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "dynamic-tabs",
+      "hash": "#/complex-pages/dynamic-tabs",
+      "family": "complex",
+      "title": "远程标签页",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "standard-crud",
+      "hash": "#/complex-pages/standard-crud",
+      "family": "complex",
+      "title": "标准增删改查",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "tree-crud",
+      "hash": "#/complex-pages/tree-crud",
+      "family": "complex",
+      "title": "树形导航 + 表格",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "inline-edit-table",
+      "hash": "#/complex-pages/inline-edit-table",
+      "family": "complex",
+      "title": "行内编辑（逐行保存）",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "advanced-query",
+      "hash": "#/complex-pages/advanced-query",
+      "family": "complex",
+      "title": "复杂查询 + 表格",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "master-detail",
+      "hash": "#/complex-pages/master-detail",
+      "family": "complex",
+      "title": "主从联动（左列表 + 右详情）",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "detail-subtables",
+      "hash": "#/complex-pages/detail-subtables",
+      "family": "complex",
+      "title": "详情页 + 多个子表（只读）",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "business-document",
+      "hash": "#/complex-pages/business-document",
+      "family": "complex",
+      "title": "业务单据（明细公式 + 合计）",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "combo-editor",
+      "hash": "#/complex-pages/combo-editor",
+      "family": "complex",
+      "title": "Combo 重复行编辑器",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "form-wizard",
+      "hash": "#/complex-pages/form-wizard",
+      "family": "complex",
+      "title": "分步表单（向导）",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "complex-form",
+      "hash": "#/complex-pages/complex-form",
+      "family": "complex",
+      "title": "多分组联动表单",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "approval-tasks",
+      "hash": "#/complex-pages/approval-tasks",
+      "family": "complex",
+      "title": "审批任务中心",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "dashboard",
+      "hash": "#/complex-pages/dashboard",
+      "family": "complex",
+      "title": "仪表盘（运营大屏）",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "sundial-workbench",
+      "hash": "#/complex-pages/sundial-workbench",
+      "family": "complex",
+      "title": "Sundial 工作台",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "sundial-analytics",
+      "hash": "#/complex-pages/sundial-analytics",
+      "family": "complex",
+      "title": "Sundial 分析",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "sundial-detail",
+      "hash": "#/complex-pages/sundial-detail",
+      "family": "complex",
+      "title": "Sundial 待办详情",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "sundial-settings",
+      "hash": "#/complex-pages/sundial-settings",
+      "family": "complex",
+      "title": "Sundial 设置",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "sundial-todo-dialog",
+      "hash": "#/complex-pages/sundial-todo-dialog",
+      "family": "complex",
+      "title": "Sundial 新建待办",
+      "batch": "IS-7a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "antdpro-list",
+      "hash": "#/complex-pages/antdpro-list",
+      "family": "complex",
+      "title": "AntD Pro 订单列表",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "antdpro-form-basic",
+      "hash": "#/complex-pages/antdpro-form-basic",
+      "family": "complex",
+      "title": "AntD Pro 基础表单",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "antdpro-form-grouped",
+      "hash": "#/complex-pages/antdpro-form-grouped",
+      "family": "complex",
+      "title": "AntD Pro 分组表单",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "antdpro-form-dialog",
+      "hash": "#/complex-pages/antdpro-form-dialog",
+      "family": "complex",
+      "title": "AntD Pro 弹窗表单",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "antdpro-form-step",
+      "hash": "#/complex-pages/antdpro-form-step",
+      "family": "complex",
+      "title": "AntD Pro 分步表单",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "antdpro-detail-basic",
+      "hash": "#/complex-pages/antdpro-detail-basic",
+      "family": "complex",
+      "title": "AntD Pro 基础详情",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "antdpro-detail-advanced",
+      "hash": "#/complex-pages/antdpro-detail-advanced",
+      "family": "complex",
+      "title": "AntD Pro 高级详情",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "antdpro-dashboard",
+      "hash": "#/complex-pages/antdpro-dashboard",
+      "family": "complex",
+      "title": "AntD Pro 数据看板",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "antdpro-result",
+      "hash": "#/complex-pages/antdpro-result",
+      "family": "complex",
+      "title": "AntD Pro 提交结果页",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "cal-booking",
+      "hash": "#/complex-pages/cal-booking",
+      "family": "complex",
+      "title": "Cal 预约 · 选时段",
+      "batch": "IS-3",
+      "profile": "scroll+drag+selection+feedback+dialog"
+    },
+    {
+      "id": "cal-confirm",
+      "hash": "#/complex-pages/cal-confirm",
+      "family": "complex",
+      "title": "Cal 预约 · 确认信息",
+      "batch": "IS-3",
+      "profile": "scroll+drag+selection+feedback+dialog"
+    },
+    {
+      "id": "cal-success",
+      "hash": "#/complex-pages/cal-success",
+      "family": "complex",
+      "title": "Cal 预约 · 预约成功",
+      "batch": "IS-3",
+      "profile": "scroll+drag+selection+feedback+dialog"
+    },
+    {
+      "id": "linear-issues",
+      "hash": "#/complex-pages/linear-issues",
+      "family": "complex",
+      "title": "问题追踪 · 列表视图",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "linear-board",
+      "hash": "#/complex-pages/linear-board",
+      "family": "complex",
+      "title": "问题追踪 · 看板视图",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "linear-inbox",
+      "hash": "#/complex-pages/linear-inbox",
+      "family": "complex",
+      "title": "问题追踪 · 收件箱",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "linear-detail",
+      "hash": "#/complex-pages/linear-detail",
+      "family": "complex",
+      "title": "问题追踪 · 问题详情",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "linear-projects",
+      "hash": "#/complex-pages/linear-projects",
+      "family": "complex",
+      "title": "问题追踪 · 项目周期",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "linear-settings",
+      "hash": "#/complex-pages/linear-settings",
+      "family": "complex",
+      "title": "问题追踪 · 设置",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "notion-database",
+      "hash": "#/complex-pages/notion-database",
+      "family": "complex",
+      "title": "多视图数据库 · 产品需求库",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "airtable-grid",
+      "hash": "#/complex-pages/airtable-grid",
+      "family": "complex",
+      "title": "网格任务跟踪 · 电子表格网格",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "stripe-payments",
+      "hash": "#/complex-pages/stripe-payments",
+      "family": "complex",
+      "title": "金融数据面板 · 支付流水",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-page",
+      "hash": "#/lab/page",
+      "family": "lab",
+      "title": "Page",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-container",
+      "hash": "#/lab/container",
+      "family": "lab",
+      "title": "Container",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-fragment",
+      "hash": "#/lab/fragment",
+      "family": "lab",
+      "title": "Fragment",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-flex",
+      "hash": "#/lab/flex",
+      "family": "lab",
+      "title": "Flex",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-dialog",
+      "hash": "#/lab/dialog",
+      "family": "lab",
+      "title": "Dialog",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-drawer",
+      "hash": "#/lab/drawer",
+      "family": "lab",
+      "title": "Drawer",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-command-palette",
+      "hash": "#/lab/command-palette",
+      "family": "lab",
+      "title": "Command Palette",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-tabs",
+      "hash": "#/lab/tabs",
+      "family": "lab",
+      "title": "Tabs",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-loop",
+      "hash": "#/lab/loop",
+      "family": "lab",
+      "title": "Loop",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-recurse",
+      "hash": "#/lab/recurse",
+      "family": "lab",
+      "title": "Recurse",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-text",
+      "hash": "#/lab/text",
+      "family": "lab",
+      "title": "Text",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-icon",
+      "hash": "#/lab/icon",
+      "family": "lab",
+      "title": "Icon",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-badge",
+      "hash": "#/lab/badge",
+      "family": "lab",
+      "title": "Badge",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-button",
+      "hash": "#/lab/button",
+      "family": "lab",
+      "title": "Button",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-scope-debug",
+      "hash": "#/lab/scope-debug",
+      "family": "lab",
+      "title": "Scope Debug",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-dynamic-renderer",
+      "hash": "#/lab/dynamic-renderer",
+      "family": "lab",
+      "title": "Dynamic Renderer",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-reaction",
+      "hash": "#/lab/reaction",
+      "family": "lab",
+      "title": "Reaction",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-keyboard",
+      "hash": "#/lab/keyboard",
+      "family": "lab",
+      "title": "Keyboard",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-form",
+      "hash": "#/lab/form",
+      "family": "lab",
+      "title": "Form",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-text",
+      "hash": "#/lab/input-text",
+      "family": "lab",
+      "title": "Input Text",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-email",
+      "hash": "#/lab/input-email",
+      "family": "lab",
+      "title": "Input Email",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-password",
+      "hash": "#/lab/input-password",
+      "family": "lab",
+      "title": "Input Password",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-number",
+      "hash": "#/lab/input-number",
+      "family": "lab",
+      "title": "Input Number",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-slider",
+      "hash": "#/lab/slider",
+      "family": "lab",
+      "title": "Slider",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-rating",
+      "hash": "#/lab/rating",
+      "family": "lab",
+      "title": "Rating",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-color",
+      "hash": "#/lab/input-color",
+      "family": "lab",
+      "title": "Input Color",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-date",
+      "hash": "#/lab/input-date",
+      "family": "lab",
+      "title": "Input Date",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-datetime",
+      "hash": "#/lab/input-datetime",
+      "family": "lab",
+      "title": "Input Datetime",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-time",
+      "hash": "#/lab/input-time",
+      "family": "lab",
+      "title": "Input Time",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-date-range",
+      "hash": "#/lab/date-range",
+      "family": "lab",
+      "title": "Date Range",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-month",
+      "hash": "#/lab/input-month",
+      "family": "lab",
+      "title": "Input Month",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-quarter",
+      "hash": "#/lab/input-quarter",
+      "family": "lab",
+      "title": "Input Quarter",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-year",
+      "hash": "#/lab/input-year",
+      "family": "lab",
+      "title": "Input Year",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-textarea",
+      "hash": "#/lab/textarea",
+      "family": "lab",
+      "title": "Textarea",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-markdown-editor",
+      "hash": "#/lab/markdown-editor",
+      "family": "lab",
+      "title": "Markdown Editor",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-select",
+      "hash": "#/lab/select",
+      "family": "lab",
+      "title": "Select",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-checkbox",
+      "hash": "#/lab/checkbox",
+      "family": "lab",
+      "title": "Checkbox",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-switch",
+      "hash": "#/lab/switch",
+      "family": "lab",
+      "title": "Switch",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-radio-group",
+      "hash": "#/lab/radio-group",
+      "family": "lab",
+      "title": "Radio Group",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-checkbox-group",
+      "hash": "#/lab/checkbox-group",
+      "family": "lab",
+      "title": "Checkbox Group",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-button-group-select",
+      "hash": "#/lab/button-group-select",
+      "family": "lab",
+      "title": "Button Group Select",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-tree",
+      "hash": "#/lab/input-tree",
+      "family": "lab",
+      "title": "Input Tree",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-tree-select",
+      "hash": "#/lab/tree-select",
+      "family": "lab",
+      "title": "Tree Select",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-tag-list",
+      "hash": "#/lab/tag-list",
+      "family": "lab",
+      "title": "Tag List",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-key-value",
+      "hash": "#/lab/key-value",
+      "family": "lab",
+      "title": "Key Value",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-array-editor",
+      "hash": "#/lab/array-editor",
+      "family": "lab",
+      "title": "Array Editor",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-combo",
+      "hash": "#/lab/combo",
+      "family": "lab",
+      "title": "Combo",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-table",
+      "hash": "#/lab/input-table",
+      "family": "lab",
+      "title": "Input Table",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-transfer",
+      "hash": "#/lab/transfer",
+      "family": "lab",
+      "title": "Transfer",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-picker",
+      "hash": "#/lab/picker",
+      "family": "lab",
+      "title": "Picker",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-icon-picker",
+      "hash": "#/lab/icon-picker",
+      "family": "lab",
+      "title": "Icon Picker",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-condition-builder",
+      "hash": "#/lab/condition-builder",
+      "family": "lab",
+      "title": "Condition Builder",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-file",
+      "hash": "#/lab/input-file",
+      "family": "lab",
+      "title": "Input File",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-image",
+      "hash": "#/lab/input-image",
+      "family": "lab",
+      "title": "Input Image",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-editor",
+      "hash": "#/lab/editor",
+      "family": "lab",
+      "title": "Editor",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-fieldset",
+      "hash": "#/lab/fieldset",
+      "family": "lab",
+      "title": "Fieldset",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-hidden",
+      "hash": "#/lab/hidden",
+      "family": "lab",
+      "title": "Hidden",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-object-field",
+      "hash": "#/lab/object-field",
+      "family": "lab",
+      "title": "Object Field",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-array-field",
+      "hash": "#/lab/array-field",
+      "family": "lab",
+      "title": "Array Field",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-variant-field",
+      "hash": "#/lab/variant-field",
+      "family": "lab",
+      "title": "Variant Field",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-detail-field",
+      "hash": "#/lab/detail-field",
+      "family": "lab",
+      "title": "Detail Field",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-detail-view",
+      "hash": "#/lab/detail-view",
+      "family": "lab",
+      "title": "Detail View",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-user-select",
+      "hash": "#/lab/user-select",
+      "family": "lab",
+      "title": "User Select",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-department-select",
+      "hash": "#/lab/department-select",
+      "family": "lab",
+      "title": "Department Select",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-cron-editor",
+      "hash": "#/lab/cron-editor",
+      "family": "lab",
+      "title": "Cron Editor",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-signature",
+      "hash": "#/lab/input-signature",
+      "family": "lab",
+      "title": "Input Signature",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-verification-code",
+      "hash": "#/lab/verification-code",
+      "family": "lab",
+      "title": "Verification Code",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-input-city",
+      "hash": "#/lab/input-city",
+      "family": "lab",
+      "title": "Input City",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-batch-bar",
+      "hash": "#/lab/batch-bar",
+      "family": "lab",
+      "title": "Batch Bar",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-query-filter",
+      "hash": "#/lab/query-filter",
+      "family": "lab",
+      "title": "Query Filter",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-crud",
+      "hash": "#/lab/crud",
+      "family": "lab",
+      "title": "Crud",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-table",
+      "hash": "#/lab/table",
+      "family": "lab",
+      "title": "Table",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-tree",
+      "hash": "#/lab/tree",
+      "family": "lab",
+      "title": "Tree",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-list",
+      "hash": "#/lab/list",
+      "family": "lab",
+      "title": "List",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-pagination",
+      "hash": "#/lab/pagination",
+      "family": "lab",
+      "title": "Pagination",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-data-source",
+      "hash": "#/lab/data-source",
+      "family": "lab",
+      "title": "Data Source",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-chart",
+      "hash": "#/lab/chart",
+      "family": "lab",
+      "title": "Chart",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-echarts",
+      "hash": "#/lab/echarts",
+      "family": "lab",
+      "title": "ECharts",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-statistics",
+      "hash": "#/lab/statistics",
+      "family": "lab",
+      "title": "Statistics",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-stat-tile",
+      "hash": "#/lab/stat-tile",
+      "family": "lab",
+      "title": "Stat Tile",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-sparkline",
+      "hash": "#/lab/sparkline",
+      "family": "lab",
+      "title": "Sparkline",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-dashboard-filter",
+      "hash": "#/lab/dashboard-filter",
+      "family": "lab",
+      "title": "Dashboard Filter",
+      "batch": "IS-8a",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-grid",
+      "hash": "#/lab/grid",
+      "family": "lab",
+      "title": "Grid",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-collapse",
+      "hash": "#/lab/collapse",
+      "family": "lab",
+      "title": "Collapse",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-resizable",
+      "hash": "#/lab/resizable",
+      "family": "lab",
+      "title": "Resizable",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-wizard",
+      "hash": "#/lab/wizard",
+      "family": "lab",
+      "title": "Wizard",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-button-group",
+      "hash": "#/lab/button-group",
+      "family": "lab",
+      "title": "Button Group",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-dropdown-button",
+      "hash": "#/lab/dropdown-button",
+      "family": "lab",
+      "title": "Dropdown Button",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-steps",
+      "hash": "#/lab/steps",
+      "family": "lab",
+      "title": "Steps",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-timeline",
+      "hash": "#/lab/timeline",
+      "family": "lab",
+      "title": "Timeline",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-responsive",
+      "hash": "#/lab/responsive",
+      "family": "lab",
+      "title": "Responsive",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-markdown",
+      "hash": "#/lab/markdown",
+      "family": "lab",
+      "title": "Markdown",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-html",
+      "hash": "#/lab/html",
+      "family": "lab",
+      "title": "HTML",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-json-view",
+      "hash": "#/lab/json-view",
+      "family": "lab",
+      "title": "JSON View",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-link",
+      "hash": "#/lab/link",
+      "family": "lab",
+      "title": "Link",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-image",
+      "hash": "#/lab/image",
+      "family": "lab",
+      "title": "Image",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-card",
+      "hash": "#/lab/card",
+      "family": "lab",
+      "title": "Card",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-cards",
+      "hash": "#/lab/cards",
+      "family": "lab",
+      "title": "Cards",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-empty",
+      "hash": "#/lab/empty",
+      "family": "lab",
+      "title": "Empty",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-result",
+      "hash": "#/lab/result",
+      "family": "lab",
+      "title": "Result",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-progress",
+      "hash": "#/lab/progress",
+      "family": "lab",
+      "title": "Progress",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-spinner",
+      "hash": "#/lab/spinner",
+      "family": "lab",
+      "title": "Spinner",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-separator",
+      "hash": "#/lab/separator",
+      "family": "lab",
+      "title": "Separator",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-alert",
+      "hash": "#/lab/alert",
+      "family": "lab",
+      "title": "Alert",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-mapping",
+      "hash": "#/lab/mapping",
+      "family": "lab",
+      "title": "Mapping",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-status",
+      "hash": "#/lab/status",
+      "family": "lab",
+      "title": "Status",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-audio",
+      "hash": "#/lab/audio",
+      "family": "lab",
+      "title": "Audio",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-video",
+      "hash": "#/lab/video",
+      "family": "lab",
+      "title": "Video",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-carousel",
+      "hash": "#/lab/carousel",
+      "family": "lab",
+      "title": "Carousel",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-qrcode",
+      "hash": "#/lab/qrcode",
+      "family": "lab",
+      "title": "QR Code",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-diff-view",
+      "hash": "#/lab/diff-view",
+      "family": "lab",
+      "title": "Diff View",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-pull-refresh",
+      "hash": "#/lab/pull-refresh",
+      "family": "lab",
+      "title": "Pull Refresh",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-infinite-scroll",
+      "hash": "#/lab/infinite-scroll",
+      "family": "lab",
+      "title": "Infinite Scroll",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-swipe-cell",
+      "hash": "#/lab/swipe-cell",
+      "family": "lab",
+      "title": "Swipe Cell",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-countdown",
+      "hash": "#/lab/countdown",
+      "family": "lab",
+      "title": "Countdown",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-notice-bar",
+      "hash": "#/lab/notice-bar",
+      "family": "lab",
+      "title": "Notice Bar",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-chat",
+      "hash": "#/lab/ai-chat",
+      "family": "lab",
+      "title": "AI Chat",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-message-list",
+      "hash": "#/lab/ai-message-list",
+      "family": "lab",
+      "title": "AI Message List",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-bubble",
+      "hash": "#/lab/ai-bubble",
+      "family": "lab",
+      "title": "AI Bubble",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-sender",
+      "hash": "#/lab/ai-sender",
+      "family": "lab",
+      "title": "AI Sender",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-conversations",
+      "hash": "#/lab/ai-conversations",
+      "family": "lab",
+      "title": "AI Conversations",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-tool-call",
+      "hash": "#/lab/ai-tool-call",
+      "family": "lab",
+      "title": "AI Tool Call",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-attachments",
+      "hash": "#/lab/ai-attachments",
+      "family": "lab",
+      "title": "AI Attachments",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-citations",
+      "hash": "#/lab/ai-citations",
+      "family": "lab",
+      "title": "AI Citations",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-feedback",
+      "hash": "#/lab/ai-feedback",
+      "family": "lab",
+      "title": "AI Feedback",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-token-usage",
+      "hash": "#/lab/ai-token-usage",
+      "family": "lab",
+      "title": "AI Token Usage",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-prompts",
+      "hash": "#/lab/ai-prompts",
+      "family": "lab",
+      "title": "AI Prompts",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-suggestions",
+      "hash": "#/lab/ai-suggestions",
+      "family": "lab",
+      "title": "AI Suggestions",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-voice-input",
+      "hash": "#/lab/ai-voice-input",
+      "family": "lab",
+      "title": "AI Voice Input",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-ai-welcome",
+      "hash": "#/lab/ai-welcome",
+      "family": "lab",
+      "title": "AI Welcome",
+      "batch": "IS-8b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-gantt",
+      "hash": "#/lab/gantt",
+      "family": "lab",
+      "title": "Gantt",
+      "batch": "IS-8c",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-kanban",
+      "hash": "#/lab/kanban",
+      "family": "lab",
+      "title": "Kanban",
+      "batch": "IS-8c",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-calendar",
+      "hash": "#/lab/calendar",
+      "family": "lab",
+      "title": "Calendar",
+      "batch": "IS-8c",
+      "profile": "dynamic"
+    },
+    {
+      "id": "lab-barcode-input",
+      "hash": "#/lab/barcode-input",
+      "family": "lab",
+      "title": "Barcode Input",
+      "batch": "IS-8c",
+      "profile": "dynamic"
+    }
+  ]
+}
