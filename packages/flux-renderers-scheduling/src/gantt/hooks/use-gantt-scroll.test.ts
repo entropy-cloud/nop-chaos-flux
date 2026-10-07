@@ -71,6 +71,28 @@ describe('useGanttScroll', () => {
     expect(timelineEl.scrollTop).toBe(100);
   });
 
+  // plan 545 Phase 2: the writer must know which container scrolled —
+  // store.scrollLeft carries the TIMELINE semantic, so the grid source has to
+  // be distinguishable at the callback. The pre-fix hook passed only two args
+  // (source undefined), which is what let the grid's horizontal scroll write
+  // the same store value and poison the zoom anchor.
+  it('reports the scroll source (grid vs timeline) to onScroll', () => {
+    const gridEl = document.createElement('div');
+    const timelineEl = document.createElement('div');
+    document.body.appendChild(gridEl);
+    document.body.appendChild(timelineEl);
+    const onScroll = vi.fn();
+    renderHook(() => useGanttScroll({ current: gridEl }, { current: timelineEl }, onScroll));
+
+    gridEl.scrollLeft = 200;
+    gridEl.dispatchEvent(new Event('scroll', { bubbles: true }));
+    expect(onScroll).toHaveBeenCalledWith(200, gridEl.scrollTop, 'grid');
+
+    timelineEl.scrollLeft = 300;
+    timelineEl.dispatchEvent(new Event('scroll', { bubbles: true }));
+    expect(onScroll).toHaveBeenCalledWith(300, timelineEl.scrollTop, 'timeline');
+  });
+
   it('should sync vertical scroll from timeline to grid', async () => {
     const gridEl = document.createElement('div');
     const timelineEl = document.createElement('div');

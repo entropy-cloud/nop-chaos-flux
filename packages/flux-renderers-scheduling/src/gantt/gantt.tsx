@@ -18,6 +18,7 @@ import { GanttMarkers } from './gantt-markers.js';
 import { BaselineBars } from './components/baseline-bars.js';
 import { GanttEditor } from './gantt-editor.js';
 import { useGanttDrag } from './hooks/use-gantt-drag.js';
+import { useGanttInitialCenter } from './hooks/use-gantt-initial-center.js';
 import { useGanttLinkDraw } from './hooks/use-gantt-link-draw.js';
 import { useGanttScroll } from './hooks/use-gantt-scroll.js';
 import { useGanttKeyboard } from './hooks/use-gantt-keyboard.js';
@@ -203,11 +204,16 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
 
     const { onPointerDown: onDragPointerDown } = useGanttDrag(store, containerRef, draggable ? handleTaskDragCommit : undefined, undoStack);
     const { onLinkHandlePointerDown } = useGanttLinkDraw(store, svgRef, linkable ? handleLinkDragCommit : undefined, linkable, undoStack);
-    useGanttScroll(gridRef, timelineRef, (scrollLeft, scrollTop) => {
+    useGanttScroll(gridRef, timelineRef, (scrollLeft, scrollTop, source) => {
       // [G4-R3-视角10-01] producer side of the zoom anchor: store.scrollLeft
       // previously had no writer, so setZoom's center-anchor branch never
       // fired and the visible date window jumped on every zoom change.
-      store.setScrollLeft(scrollLeft);
+      // plan 545 Phase 2: only the timeline writes store.scrollLeft — the
+      // grid is permanently horizontally scrollable and its scrollLeft would
+      // poison the zoom anchor (windowing semantics are timeline-based).
+      if (source === 'timeline') {
+        store.setScrollLeft(scrollLeft);
+      }
       const timelineEl = timelineRef.current;
       if (timelineEl && timelineEl.clientWidth > 0 && store.containerWidth !== timelineEl.clientWidth) {
         store.setContainerWidth(timelineEl.clientWidth);
@@ -323,15 +329,10 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     }, [store, timelineRef]);
 
     // ux-r8 GT-1：挂载就绪且今天在 scaleRange 内时自动居中今天（主流 Gantt 基线行为；
-    // 仅初始居中一次，后续滚动不干预）
-    useEffect(() => {
-      if (!ganttReady) return;
-      const today = new Date();
-      const { start, end } = store.scaleRange;
-      if (today >= start && today <= end) {
-        scrollToToday();
-      }
-    }, [ganttReady, scrollToToday, store]);
+    // 仅初始居中一次，后续滚动不干预）。plan 545 种子 6：抽显式 deps hook +
+    // didInitialCenter 守卫——此前依赖 compiler 增强 deps，拖拽提交换 scaleRange
+    // 引用即重跑 scrollToToday，把用户滚动位置平滑拉回 0。
+    useGanttInitialCenter(ganttReady, scrollToToday, store.scaleRange);
 
     const scrollToTask = useCallback((taskId: string | number) => {
       const task = store.tasks.get(taskId);

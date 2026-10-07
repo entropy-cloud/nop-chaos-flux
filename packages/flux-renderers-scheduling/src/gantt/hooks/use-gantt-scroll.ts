@@ -3,7 +3,14 @@ import { useRef, useEffect } from 'react';
 export function useGanttScroll(
   gridRef: React.RefObject<HTMLElement | null>,
   timelineRef: React.RefObject<HTMLElement | null>,
-  onScroll?: (scrollLeft: number, scrollTop: number) => void,
+  /**
+   * plan 545 Phase 2: `source` tells the writer which container scrolled.
+   * store.scrollLeft carries the TIMELINE semantic (windowing + zoom anchor);
+   * the grid's horizontal scroll must not write it (the grid is permanently
+   * horizontally scrollable at its default width and would poison the zoom
+   * anchor). Vertical sync is unaffected.
+   */
+  onScroll?: (scrollLeft: number, scrollTop: number, source: 'grid' | 'timeline') => void,
   /** 1-7: 就绪信号——loading/empty 首挂载（refs 为空）时监听不挂；ready 翻真后必挂。 */
   active = true,
 ) {
@@ -41,11 +48,11 @@ export function useGanttScroll(
     if (!grid || !timeline) return;
     const onGridScroll = () => {
       syncScroll('grid');
-      onScrollRef.current?.(grid.scrollLeft, grid.scrollTop);
+      onScrollRef.current?.(grid.scrollLeft, grid.scrollTop, 'grid');
     };
     const onTimelineScroll = () => {
       syncScroll('timeline');
-      onScrollRef.current?.(timeline.scrollLeft, timeline.scrollTop);
+      onScrollRef.current?.(timeline.scrollLeft, timeline.scrollTop, 'timeline');
     };
     grid.addEventListener('scroll', onGridScroll, { passive: true });
     timeline.addEventListener('scroll', onTimelineScroll, { passive: true });

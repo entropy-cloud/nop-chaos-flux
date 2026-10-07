@@ -1,0 +1,103 @@
+[
+  {
+    "name": "gantt: mount-centering reading",
+    "ok": true,
+    "reading": {
+      "sl": 0,
+      "sw": 4880,
+      "cw": 1114,
+      "bars": 12
+    }
+  },
+  {
+    "name": "gantt: scroll 900 + settle",
+    "ok": true,
+    "reading": {
+      "settled": 900
+    }
+  },
+  {
+    "name": "gantt: Today/zoom explicit paths",
+    "ok": true,
+    "reading": {
+      "before": {
+        "sl": 900,
+        "sw": 4880,
+        "cw": 1114,
+        "bars": 12
+      },
+      "after": {
+        "sl": 1603,
+        "sw": 7320,
+        "cw": 1114,
+        "bars": 12
+      }
+    }
+  },
+  {
+    "name": "gantt: keyboard undo scroll behavior (Ctrl+Z nudge path absent — record only)",
+    "ok": true,
+    "reading": {
+      "note": "keyboard editing shares updateTask → covered by hook guard; no dedicated UI drive"
+    }
+  },
+  {
+    "name": "gantt-states: initial reading (multi-instance variants)",
+    "ok": true,
+    "reading": {
+      "instances": 8,
+      "sl": 0,
+      "sw": 1400,
+      "cw": 1082,
+      "bars": 9
+    }
+  },
+  {
+    "name": "gantt-states: scroll+settle on first instance",
+    "ok": true,
+    "reading": {
+      "settled": 318
+    }
+  },
+  {
+    "name": "gantt-perf-scale: mount reading (500 tasks)",
+    "ok": true,
+    "reading": {
+      "sl": 3923,
+      "sw": 14600,
+      "cw": 1114,
+      "bars": 27
+    }
+  },
+  {
+    "name": "gantt-perf-scale: scroll far + settle (V1)",
+    "ok": true,
+    "reading": {
+      "settled": 3000,
+      "final": {
+        "sl": 3000,
+        "sw": 14600,
+        "cw": 1114,
+        "bars": 27
+      }
+    }
+  },
+  {
+    "name": "gantt-perf-scale: drag commit scroll preservation",
+    "ok": true,
+    "reading": {
+      "before": {
+        "sl": 3000,
+        "sw": 14600,
+        "cw": 1114,
+        "bars": 27
+      },
+      "after": {
+        "sl": 3000,
+        "sw": 14600,
+        "cw": 1114,
+        "bars": 27
+      }
+    }
+  }
+]
