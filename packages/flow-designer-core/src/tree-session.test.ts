@@ -207,6 +207,28 @@ describe('createTreeDesignerCore - mutation gate', () => {
     expect(doc.edges).toHaveLength(3);
   });
 
+  it('tree commands preserve the shell viewport (plan 544 seed 2 / V2)', () => {
+    const core = getCore(createTreeDesignerCore(createChainTree(), createTreeConfig()));
+    core.setViewport({ x: 120, y: 48, zoom: 0.8 });
+    expect(core.getSnapshot().viewport).toEqual({ x: 120, y: 48, zoom: 0.8 });
+
+    const inserted = core.insertChainNode('n1', 'task', { label: 'New' });
+    expect(inserted.ok).toBe(true);
+    expect(core.getSnapshot().viewport).toEqual({ x: 120, y: 48, zoom: 0.8 });
+
+    const relayouted = core.relayoutTree();
+    expect(relayouted.ok).toBe(true);
+    expect(core.getSnapshot().viewport).toEqual({ x: 120, y: 48, zoom: 0.8 });
+  });
+
+  it('undo/redo keeps the viewport (regression guard: core already preserved it before plan 544)', () => {
+    const core = getCore(createTreeDesignerCore(createChainTree(), createTreeConfig()));
+    core.setViewport({ x: 64, y: 32, zoom: 0.9 });
+    core.insertChainNode('n1', 'task', { label: 'New' });
+    core.undo();
+    expect(core.getSnapshot().viewport).toEqual({ x: 64, y: 32, zoom: 0.9 });
+  });
+
   it('keeps pair and history unchanged after rejected mutations', () => {
     const core = getCore(createTreeDesignerCore(createChainTree(), createTreeConfig()));
     const beforeDoc = core.getDocument();

@@ -892,6 +892,8 @@ export const enUS: Resource = {
       edgeRow: {
         empty: 'No edge',
       },
+      summaryMissingNode: 'Referenced node not found',
+      summaryMissingEdge: 'Referenced edge not found',
       command: {
         treeCommandFailed: 'Tree command failed.',
         edgeDeletionUnavailableInTreeMode: 'Edge deletion is unavailable in tree mode.',

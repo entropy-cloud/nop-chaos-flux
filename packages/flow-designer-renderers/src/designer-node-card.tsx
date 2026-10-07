@@ -50,15 +50,24 @@ export function DesignerNodeCardRenderer(props: DesignerNodeCardRendererProps) {
   }
 
   if (!summary) {
+    // plan 544 seed 3 (V6): a missing reference renders a visible dashed
+    // placeholder instead of a zero-height bare div, so the summary row stays
+    // perceivable and its text stays accessible (no aria-hidden).
     return (
       <div
-        className={cn(DESIGNER_NODE_CARD_MARKER, 'nop-designer-node-card--empty', props.meta.className)}
+        className={cn(
+          DESIGNER_NODE_CARD_MARKER,
+          'nop-designer-node-card--empty',
+          'flex min-h-9 w-full items-center rounded-md border border-dashed border-border bg-muted/40 px-2 py-1.5 text-xs text-muted-foreground',
+          props.meta.className,
+        )}
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
         data-empty="true"
         data-node-id={nodeId ?? undefined}
-        aria-hidden="true"
-      />
+      >
+        {t('flux.flowDesigner.summaryMissingNode')}
+      </div>
     );
   }
 
@@ -70,7 +79,7 @@ export function DesignerNodeCardRenderer(props: DesignerNodeCardRendererProps) {
       className={cn(
         DESIGNER_NODE_CARD_MARKER,
         'nop-designer-summary-card',
-        'flex w-full items-start gap-2 rounded-md border border-border/60 bg-card p-2 text-left transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'flex w-full items-start gap-2 rounded-md border border-border bg-card p-2 text-left transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         summary.active && 'nop-designer-node-card--active border-primary/60 ring-1 ring-primary/40',
         summary.selected && !summary.active && 'nop-designer-node-card--selected border-primary/40',
         props.meta.className,

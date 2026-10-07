@@ -22,12 +22,12 @@ export {
 } from './tree-validation.js';
 export { validateTreeConfig, validateTreeEdgeDecorations, resolveEmptyBranchSize } from './tree-validation.js';
 
+import { buildProjectionNodes } from './tree-projection-nodes.js';
 import type {
   TreeDocument,
   TreeNode,
   TreeNodeBranch,
   NormalizedDesignerConfig,
-  GraphNode,
   GraphEdge,
   TreeProjectionResult,
   TreeProjectionView,
@@ -636,18 +636,7 @@ export function projectAndLayoutTree(
     return { ok: false, error: decorationError };
   }
 
-  const nodes: GraphNode[] = state.nodes.map((node) => {
-    const position =
-      direction === 'TB'
-        ? { x: Math.round(node.crossStart), y: Math.round(node.mainStart) }
-        : { x: Math.round(node.mainStart), y: Math.round(node.crossStart) };
-    return {
-      id: node.id,
-      type: node.type,
-      position,
-      data: node.data,
-    };
-  });
+  const nodes = buildProjectionNodes(state.nodes, edges, direction, placedNodeMap);
 
   for (const slot of state.slots) {
     const position =

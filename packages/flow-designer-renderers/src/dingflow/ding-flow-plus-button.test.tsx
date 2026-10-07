@@ -24,4 +24,19 @@ describe('DingFlowPlusButton centering (ux-r12 tft3)', () => {
     expect(button.style.transform).toContain('translateY(-50%)');
     expect(button.style.right).toBeTruthy();
   });
+
+  // plan 544 seed 1 (V4): mainOffset pins the button OUTER edge so its CENTER
+  // lands at mainOffset − BTN_DIAMETER/2. Legacy default (no prop) must keep
+  // the historical -50px anchor; gap 100 → mainOffset 64 → center at +50
+  // (the true gap midpoint) instead of the legacy +36.
+  it('anchors the button center at mainOffset − BTN_DIAMETER/2', () => {
+    const legacy = render(<DingFlowPlusButton onClick={vi.fn()} direction="TB" />);
+    expect(legacy.container.querySelector('button')?.style.bottom).toBe('-50px');
+
+    const gap100 = render(<DingFlowPlusButton onClick={vi.fn()} direction="TB" mainOffset={64} />);
+    expect(gap100.container.querySelector('button')?.style.bottom).toBe('-64px');
+
+    const gap80LR = render(<DingFlowPlusButton onClick={vi.fn()} direction="LR" mainOffset={54} />);
+    expect(gap80LR.container.querySelector('button')?.style.right).toBe('-54px');
+  });
 });

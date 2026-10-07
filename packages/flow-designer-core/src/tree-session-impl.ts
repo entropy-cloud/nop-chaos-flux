@@ -214,7 +214,11 @@ export function createTreeSessionSurface(ctx: TreeSessionContext): TreeSessionSu
     if (ctx.transactionStack.length === 0) {
       ctx.pushHistory();
     }
-    ctx.resetViewport();
+    // plan 544 seed 2 (V2): tree commands must not silently move the viewport.
+    // resetViewport here snapped the controlled viewport to {0,0,1} on every
+    // insert/delete (the projected document carries no viewport), which is the
+    // user-reported "canvas jumps to top-left after insert". The viewport now
+    // persists across commands; refit stays an explicit user action.
     ctx.emit({ type: 'documentChanged', doc: ctx.doc });
     ctx.emit({ type: 'viewportChanged', viewport: ctx.shellState.viewport });
     ctx.updateDirtyState();
@@ -289,7 +293,9 @@ export function createTreeSessionSurface(ctx: TreeSessionContext): TreeSessionSu
     ctx.replaceDocument(cloneDocument(projection.view.document), ctx.docRevision);
     ctx.replaceHistoryBaseline(projection.view.document);
     ctx.markHostDocumentSaved(projection.view.document);
-    ctx.resetViewport();
+    // plan 544 seed 2 adjudication: host document replacement also keeps the
+    // current viewport (same V2 rule); mid-session replacements previously
+    // snapped to {0,0,1} for no viewport-related reason.
     ctx.emit({ type: 'documentChanged', doc: ctx.doc });
     ctx.emit({ type: 'viewportChanged', viewport: ctx.shellState.viewport });
     ctx.emit({ type: 'historyChanged', canUndo: ctx.canUndo(), canRedo: ctx.canRedo() });
@@ -316,7 +322,8 @@ export function createTreeSessionSurface(ctx: TreeSessionContext): TreeSessionSu
 
     ctx.doc = nextDoc;
     ctx.currentTreeDocument = projection.view.tree;
-    ctx.resetViewport();
+    // plan 544 seed 2 adjudication: explicit relayout (toolbar) keeps the
+    // viewport; at mount time the shell viewport is the initial state anyway.
     ctx.emit({ type: 'presentationChanged', doc: ctx.doc });
     return makeTreeCommandResult(true);
   }

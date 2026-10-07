@@ -140,6 +140,44 @@ describe('projectAndLayoutTree - structured projection', () => {
     }
   });
 
+  it('decorates chain parents with __fdChainGap = main-axis gap (plan 544 seed 1)', () => {
+    const result = projectTree(createChainTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const byId = new Map(result.view.document.nodes.map((node) => [node.id, node]));
+    // layerSpacing 100 → every chain parent's gap is exactly 100; terminal end
+    // has no outgoing chain edge → no decoration.
+    expect(byId.get('root')?.data.__fdChainGap).toBe(100);
+    expect(byId.get('a')?.data.__fdChainGap).toBe(100);
+    expect(byId.get('b')?.data.__fdChainGap).toBe(100);
+    expect(byId.get('end')?.data.__fdChainGap).toBeUndefined();
+  });
+
+  it('marks branch-group owners with __fdBranchGroupOwner (plan 544 Phase 4)', () => {
+    const result = projectTree(createBranchTree(), createTreeConfig());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const byId = new Map(result.view.document.nodes.map((node) => [node.id, node]));
+    // cond fans out to branches b1/b2 (split source) → flagged; plain chain
+    // parents are not.
+    expect(byId.get('cond')?.data.__fdBranchGroupOwner).toBe(true);
+    expect(byId.get('root')?.data.__fdBranchGroupOwner).toBeUndefined();
+    expect(byId.get('cond')?.data.__fdChainGap).toBeUndefined();
+  });
+
+  it('emits the clamped chain gap (≥ MIN_CHAIN_GAP) when layerSpacing is smaller', () => {
+    const config = createTreeConfig();
+    config.treeConfig = { ...config.treeConfig!, layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 20 } };
+    const result = projectTree(createChainTree(), config);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const byId = new Map(result.view.document.nodes.map((node) => [node.id, node]));
+    expect(byId.get('root')?.data.__fdChainGap).toBe(MIN_CHAIN_GAP);
+  });
+
   it('keeps chain main-axis positions strictly increasing with min chain gap', () => {
     const result = projectTree(createChainTree(), createTreeConfig());
     expect(result.ok).toBe(true);

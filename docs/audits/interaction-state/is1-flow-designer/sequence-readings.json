@@ -1,0 +1,183 @@
+{
+  "sequences": [
+    {
+      "name": "workflow: initial viewport (fitView settled)",
+      "ok": true,
+      "reading": {
+        "transform": "transform: translate(3.78px, 229.71px) scale(0.59);",
+        "selectedCount": 0,
+        "menus": 0,
+        "toasts": []
+      }
+    },
+    {
+      "name": "workflow: palette search empty state",
+      "ok": true,
+      "reading": {
+        "emptyStateShown": true
+      }
+    },
+    {
+      "name": "workflow: save feedback truthfulness (V3)",
+      "ok": false,
+      "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: /^保存|Save$/ }).first()\n    - locator resolved to <button disabled title=\"保存\" tabindex=\"0\" type=\"button\" aria-label=\"保存\" data-disabled=\"\" data-slot=\"button\" class=\"nop-haptic group/button inli",
+      "note": "expected: save button disabled-until-dirty (honest semantics) — the timeout is the disabled button not being clickable, not a defect."
+    },
+    {
+      "name": "workflow: context menu open + fit-view (explicit viewport change)",
+      "ok": true,
+      "reading": {
+        "items": ["选中节点", "复制节点", "删除节点"],
+        "after": {
+          "transform": "transform: translate(3.78px, 229.71px) scale(0.59);",
+          "selectedCount": 0,
+          "menus": 0,
+          "toasts": []
+        }
+      }
+    },
+    {
+      "name": "workflow: context menu Esc cancel (V5)",
+      "ok": true,
+      "reading": {
+        "before": {
+          "transform": "transform: translate(3.78px, 229.71px) scale(0.59);",
+          "selectedCount": 0,
+          "menus": 0,
+          "toasts": []
+        },
+        "after": {
+          "transform": "transform: translate(3.78px, 229.71px) scale(0.59);",
+          "selectedCount": 0,
+          "menus": 0,
+          "toasts": []
+        },
+        "menuClosed": true
+      }
+    },
+    {
+      "name": "钉钉审批流: initial viewport",
+      "ok": true,
+      "reading": {
+        "transform": "transform: translate(399.01px, 48px) scale(0.456);",
+        "selectedCount": 0,
+        "menus": 0,
+        "toasts": []
+      }
+    },
+    {
+      "name": "钉钉审批流: add-node menu Esc cancel (V5)",
+      "ok": true,
+      "reading": {
+        "before": {
+          "transform": "transform: translate(399.01px, 48px) scale(0.456);",
+          "selectedCount": 0,
+          "menus": 0,
+          "toasts": []
+        },
+        "after": {
+          "transform": "transform: translate(399.01px, 48px) scale(0.456);",
+          "selectedCount": 0,
+          "menus": 0,
+          "toasts": []
+        },
+        "menuClosed": true
+      }
+    },
+    {
+      "name": "钉钉审批流: add-node menu anchor vs click point (V4)",
+      "ok": true,
+      "reading": {
+        "clickX": 538,
+        "clickY": 244,
+        "menuX": 406,
+        "menuY": 265
+      }
+    },
+    {
+      "name": "钉钉审批流: branch/merge overlay inventory + collision readings",
+      "ok": true,
+      "reading": {
+        "chainButtons": 9,
+        "mergeOverlays": 2,
+        "branchOverlays": 2,
+        "chainButtonCenterY": [430.4, 610.4, 776.4, 990.4, 990.4, 1204.4, 1370.4, 1584.4, 1584.4],
+        "branchOverlayCenterY": [774.4, 1368.4]
+      }
+    },
+    {
+      "name": "Action 编排: initial viewport",
+      "ok": true,
+      "reading": {
+        "transform": "transform: translate(240.06px, 48px) scale(0.593);",
+        "selectedCount": 0,
+        "menus": 0,
+        "toasts": []
+      }
+    },
+    {
+      "name": "Action 编排: add-node menu Esc cancel (V5)",
+      "ok": true,
+      "reading": {
+        "before": {
+          "transform": "transform: translate(240.06px, 48px) scale(0.593);",
+          "selectedCount": 0,
+          "menus": 0,
+          "toasts": []
+        },
+        "after": {
+          "transform": "transform: translate(240.06px, 48px) scale(0.593);",
+          "selectedCount": 0,
+          "menus": 0,
+          "toasts": []
+        },
+        "menuClosed": true
+      }
+    },
+    {
+      "name": "Action 编排: add-node menu anchor vs click point (V4)",
+      "ok": true,
+      "reading": {
+        "clickX": 538,
+        "clickY": 244,
+        "menuX": 537,
+        "menuY": 265
+      }
+    },
+    {
+      "name": "Action 编排: branch/merge overlay inventory + collision readings",
+      "ok": true,
+      "reading": {
+        "chainButtons": 8,
+        "mergeOverlays": 1,
+        "branchOverlays": 3,
+        "chainButtonCenterY": [331, 497, 721, 945, 1169, 1169, 945, 721],
+        "branchOverlayCenterY": [495, 719, 943]
+      }
+    },
+    {
+      "name": "summary: card click select state (V6)",
+      "ok": true,
+      "reading": {
+        "selectedAttr": "true",
+        "activeAttr": "true"
+      }
+    },
+    {
+      "name": "summary: edge row click select state",
+      "ok": true,
+      "reading": {
+        "selectedAttr": "true"
+      }
+    },
+    {
+      "name": "taskflow: V4 chain button spot check",
+      "ok": null,
+      "reading": {
+        "chainOffsets": [],
+        "nodeCount": 7
+      },
+      "note": "n/a: taskflow tree canvas requires palette-interaction bootstrap; chainOffsets [] is an empty probe, not a pass. Replacement coverage: taskflow-tree-ux-r12.spec.ts green (83-pass family run) + shared projection unit tests. See plan 544 execution note."
+    }
+  ]
+}

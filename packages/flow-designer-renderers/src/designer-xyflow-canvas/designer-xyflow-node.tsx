@@ -84,7 +84,17 @@ export function DesignerXyflowNode(props: NodeProps) {
   const hasQuickActions = nodeType?.quickActions && isSchemaInput(nodeType.quickActions);
 
   const treeNodeType = nodeType as TreeNodeTypeConfig | undefined;
-  const showPlusButton = onPlusButtonClick && !treeNodeType?.tree?.isTerminal && !isEmptySlot;
+  // plan 544 Phase 4: branch-group owners (split sources) must not render the
+  // in-node chain plus-button — the addCondition overlay owns that band and
+  // intercepted its pointer events; insertBranchPair on a node that already
+  // has branches would overwrite them (tree-structure.ts sets branches
+  // unconditionally). Fresh condition nodes without branches keep the button
+  // for their initial pair insertion.
+  const showPlusButton =
+    onPlusButtonClick &&
+    !treeNodeType?.tree?.isTerminal &&
+    !isEmptySlot &&
+    data.__fdBranchGroupOwner !== true;
   const typeMeta = resolveNodeTypeMeta(data.typeId, nodeType);
   const accent = resolveNodeTypeAccent(data.typeId, nodeType) ?? 'hsl(var(--primary))';
 
@@ -337,6 +347,11 @@ export function DesignerXyflowNode(props: NodeProps) {
           <DingFlowPlusButton
             onClick={(e) => onPlusButtonClick!(props.id, e.clientX, e.clientY, 'node')}
             direction={treeDirection}
+            mainOffset={
+              typeof data.__fdChainGap === 'number' && data.__fdChainGap > 0
+                ? data.__fdChainGap / 2 + 14 /* BTN_DIAMETER/2: center on the true gap midpoint */
+                : undefined
+            }
           />
         )}
       </div>

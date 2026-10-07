@@ -887,6 +887,8 @@ export const zhCN: Resource = {
       edgeRow: {
         empty: '无连线',
       },
+      summaryMissingNode: '引用的节点不存在',
+      summaryMissingEdge: '引用的连线不存在',
       command: {
         treeCommandFailed: '树命令执行失败。',
         edgeDeletionUnavailableInTreeMode: '树模式下无法删除连线。',

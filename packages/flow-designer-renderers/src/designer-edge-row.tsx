@@ -1,5 +1,6 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { Badge, cn } from '@nop-chaos/ui';
 import type { DesignerEdgeRowSchema } from './schemas.js';
 import {
@@ -56,15 +57,23 @@ export function DesignerEdgeRowRenderer(props: DesignerEdgeRowRendererProps) {
   }
 
   if (!summary) {
+    // plan 544 seed 3 (V6): visible dashed placeholder for a missing edge
+    // reference (see designer-node-card.tsx for the rationale).
     return (
       <div
-        className={cn(DESIGNER_EDGE_ROW_MARKER, 'nop-designer-edge-row--empty', props.meta.className)}
+        className={cn(
+          DESIGNER_EDGE_ROW_MARKER,
+          'nop-designer-edge-row--empty',
+          'flex min-h-9 w-full items-center rounded-md border border-dashed border-border bg-muted/40 px-2 py-1.5 text-xs text-muted-foreground',
+          props.meta.className,
+        )}
         data-testid={props.meta.testid || undefined}
         data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
         data-empty="true"
         data-edge-id={edgeId ?? undefined}
-        aria-hidden="true"
-      />
+      >
+        {t('flux.flowDesigner.summaryMissingEdge')}
+      </div>
     );
   }
 
@@ -73,9 +82,9 @@ export function DesignerEdgeRowRenderer(props: DesignerEdgeRowRendererProps) {
       type="button"
       className={cn(
         DESIGNER_EDGE_ROW_MARKER,
-        'flex w-full items-center gap-2 rounded-md border border-transparent px-2 py-1.5 text-left transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        summary.active && 'nop-designer-edge-row--active bg-accent/80 ring-1 ring-primary/40',
-        summary.selected && !summary.active && 'nop-designer-edge-row--selected bg-accent/40',
+        'flex w-full items-center gap-2 rounded-md border border-border px-2 py-1.5 text-left transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        summary.active && 'nop-designer-edge-row--active border-primary/40 bg-accent/80 ring-1 ring-primary/40',
+        summary.selected && !summary.active && 'nop-designer-edge-row--selected border-primary/40 bg-accent/40',
         props.meta.className,
       )}
       data-testid={props.meta.testid || undefined}

@@ -200,7 +200,11 @@ describe('designer-node-card renderer', () => {
     const missingCard = missing.container.querySelector('.nop-designer-node-card');
     expect(missingCard).toBeTruthy();
     expect(missingCard?.getAttribute('data-empty')).toBe('true');
-    expect(missingCard?.getAttribute('aria-hidden')).toBe('true');
+    // plan 544 seed 3 (V6): the placeholder is a visible dashed box with real
+    // text — perceivable and accessible, no aria-hidden.
+    expect(missingCard?.getAttribute('aria-hidden')).toBeNull();
+    expect(missingCard?.className).toContain('border-dashed');
+    expect(missingCard?.textContent).toContain('不存在');
     missing.unmount();
 
     const empty = render(wrapInContext(<DesignerNodeCardRenderer {...createProps({})} />));
@@ -262,7 +266,10 @@ describe('designer-edge-row renderer', () => {
     const row = container.querySelector('.nop-designer-edge-row');
     expect(row).toBeTruthy();
     expect(row?.getAttribute('data-empty')).toBe('true');
-    expect(row?.getAttribute('aria-hidden')).toBe('true');
+    // plan 544 seed 3 (V6): visible dashed placeholder with real text.
+    expect(row?.getAttribute('aria-hidden')).toBeNull();
+    expect(row?.className).toContain('border-dashed');
+    expect(row?.textContent).toContain('不存在');
   });
 
   it('throws when rendered outside designer context (context-leak)', () => {
