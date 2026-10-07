@@ -19,7 +19,7 @@
 - C1. 黄金向量与治理记账: `done`（plan 535）
 - C2. nop Java 语法扩展（`L`/`W`/`#`/年段）: `done`（plan 536）
 - C3. nop Java 锚点周期与重复范围字段: `done`（plan 537）
-- C4. flux cron 引擎纯模块: `todo`
+- C4. flux cron 引擎纯模块: `done`（plan 539）
 - C5. flux cron-editor v1（文本 + 分段编辑 + 诊断 + 预览）: `todo`
 - C6. flux cron-editor v2（Office 频率档位 + repeat/range 区块 + 预设）: `todo`
 - C7. 跨仓对账与收口（UI 测试覆盖审计 + 视觉复核 + 全绿）: `todo`
@@ -54,7 +54,7 @@
 | C1 黄金向量与治理记账      | `done` | `docs/components/cron-editor/design.md` §2/§4 | —            | 本 roadmap + survey/backlog 既有登记表                    | 535  |
 | C2 nop Java 语法扩展       | `done` | nop `CronExpression` + `TestCronExpression`   | C1           | C1 向量、现有 equals/hashCode 回归网                      | 536  |
 | C3 nop Java 锚点与范围字段 | `done` | nop `TriggerSpec` + 触发层                    | C1, C2       | `TriggerSpec` 范围三字段、trigger 装饰器/排除日历既有模式 | 537  |
-| C4 flux cron 引擎纯模块    | `todo` | design.md §4/§11                              | C1           | C1 向量、日期族底层                                       | —    |
+| C4 flux cron 引擎纯模块    | `done` | design.md §4/§11                              | C1           | C1 向量、日期族底层                                       | 539  |
 | C5 flux cron-editor v1     | `todo` | design.md 全文                                | C4           | 字段装配、ui 组件、注册与登记机制                         | —    |
 | C6 flux cron-editor v2     | `todo` | design.md §4/§7                               | C5           | C5 骨架与测试基建                                         | —    |
 | C7 跨仓对账与收口          | `todo` | design.md §9/§12                              | C2, C3, C6   | C1 向量、全套测试基建                                     | —    |
