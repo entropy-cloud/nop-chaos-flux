@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createSchemaRenderer, createDefaultEnv } from '@nop-chaos/flux-react';
+import { notifyWithToast } from './notify-toast.js';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
@@ -74,7 +75,7 @@ const registry = createDesignerRegistry({
   ...REPORT_DESIGNER_DEMO_RECIPE,
   register: [...REPORT_DESIGNER_DEMO_RECIPE.register, hostDirtyProbeRenderer],
 });
-const env = createDefaultEnv();
+const env = createDefaultEnv({ notify: notifyWithToast });
 const formulaCompiler = createFormulaCompiler();
 
 export function ReportDesignerHostDemo() {

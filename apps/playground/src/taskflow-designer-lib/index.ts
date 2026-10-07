@@ -38,8 +38,13 @@ interface DesignerProjection {
 
 function getDesignerDoc(ctx: ActionContext): DesignerProjection['doc'] | null {
   try {
-    const designer = ctx.scope.get('$designer') as DesignerProjection | undefined;
-    if (designer?.doc) return designer.doc;
+    // plan 547 (taskflow-1): the imported-library namespace scope IS
+    // `$page.imports.designer` — the designer projection doc lives in its own
+    // data (there is no '$designer' key; the old lookup never resolved).
+    const own = ctx.scope.readOwn() as { doc?: DesignerProjection['doc'] };
+    if (own.doc) return own.doc;
+    const viaGet = ctx.scope.get('doc') as DesignerProjection['doc'] | undefined;
+    if (viaGet) return viaGet;
     return null;
   } catch {
     return null;
@@ -77,11 +82,39 @@ function flushDesignerProjectionIntoModel(
   containerId: string | null,
 ): TaskFlowAuthoringModel | null {
   const designerDoc = getDesignerDoc(ctx);
-  if (!designerDoc || !model || !containerId) {
+  // (doc.kind: workflow tab = 'nop-taskflow-workflow' → graph sync; tree tab doc → successor gap)
+  if (!designerDoc || designerDoc.kind !== 'nop-taskflow-workflow') {
+    // plan 547 (taskflow-1): tree (dingflow) documents need a tree-structure
+    // doc→model sync that the lib does not provide yet — registered as a
+    // successor gap (plan 547 Deferred); graph documents take the full path.
     return model;
   }
+  // plan 547 (taskflow-1): a fresh page has no authoring model until
+  // set-authoring-model is dispatched — previously save/export on a
+  // never-initialized page failed with 'No authoring model available.' even
+  // though the designer document holds the full current state. Bootstrap a
+  // minimal workflow model + root container and let the projection sync fill.
+  const bootstrapped = !model;
+  const effectiveModel = model ?? {
+    kind: 'nop-taskflow',
+    schemaVersion: '1.0',
+    task: { version: 1, graphMode: true, restartable: false, defaultSaveState: true, useParentBeanContainer: false, recordMetrics: false },
+    root: { id: 'root', profile: 'workflow', enterStepRefs: [], exitStepRefs: [], nodes: [], edges: [] },
+  };
+  const effectiveContainerId = containerId ?? 'root';
 
-  return syncFromGraphDocument(model, containerId, buildGraphDocFromProjection(designerDoc));
+  const synced = syncFromGraphDocument(effectiveModel, effectiveContainerId, buildGraphDocFromProjection(designerDoc));
+  if (bootstrapped) {
+    // syncFromGraphDocument syncs nodes/edges only — a fresh model's entry/exit
+    // refs must be derived from the graph structure (nodes with no incoming
+    // edges are entries; no outgoing edges are exits).
+    const graphRoot = synced.root as { enterStepRefs: string[]; exitStepRefs: string[] };
+    const targets = new Set(designerDoc.edges.map((e) => e.target));
+    const sources = new Set(designerDoc.edges.map((e) => e.source));
+    graphRoot.enterStepRefs = designerDoc.nodes.filter((n) => !targets.has(n.id)).map((n) => n.id);
+    graphRoot.exitStepRefs = designerDoc.nodes.filter((n) => !sources.has(n.id)).map((n) => n.id);
+  }
+  return synced;
 }
 
 export function createNamespace(_context: ImportedNamespaceContext): ActionNamespaceProvider {

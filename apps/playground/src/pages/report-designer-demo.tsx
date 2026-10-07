@@ -5,6 +5,7 @@ import {
   createDefaultEnv,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
+import { notifyWithToast } from './notify-toast.js';
 import { createDesignerRegistry, REPORT_DESIGNER_DEMO_RECIPE } from '../designer-hosts/registry-factory.js';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
@@ -79,7 +80,7 @@ const dropAdapter: FieldDropAdapter = {
 const SchemaRenderer = createSchemaRenderer();
 const inspectorRegistry = createDesignerRegistry(REPORT_DESIGNER_DEMO_RECIPE);
 inspectorRegistry.register(reportCellStylePanelDefinition as never);
-const inspectorEnv = createDefaultEnv();
+const inspectorEnv = createDefaultEnv({ notify: notifyWithToast });
 const inspectorFormulaCompiler = createFormulaCompiler();
 
 

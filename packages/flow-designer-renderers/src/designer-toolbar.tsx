@@ -121,6 +121,29 @@ export function DesignerToolbarContent(props: {
     [actionScope, runtime, scope],
   );
 
+  // plan 547 (taskflow-1): schema toolbar items declare `then` chains
+  // (e.g. taskflow:save → showToast 已保存) that the dispatch below never ran —
+  // success feedback promised by the schema never appeared. Execute the chain
+  // when the primary action resolves ok.
+  const runThenChain = useCallback(
+    (thenChain: unknown) => {
+      if (!Array.isArray(thenChain)) return;
+      for (const step of thenChain) {
+        const spec = step as { action?: string; args?: { message?: string; level?: string } };
+        if (!spec.action) continue;
+        if (spec.action === 'showToast') {
+          // showToast is a SchemaRenderer built-in — the designer actionScope
+          // cannot resolve it, so surface the message through env.notify.
+          const level = spec.args?.level === 'error' ? 'error' : 'success';
+          env.notify(level, spec.args?.message ?? '');
+          continue;
+        }
+        void invokeAction(spec.action);
+      }
+    },
+    [invokeAction, env],
+  );
+
   const handleActionFailure = useCallback(
     (action: string, error: unknown) => {
       notifyCommandFailure({
@@ -311,7 +334,9 @@ export function DesignerToolbarContent(props: {
                   .then((result) => {
                     if (result && !result.ok) {
                       handleActionFailure(action, result.error ?? new Error('Action failed'));
+                      return;
                     }
+                    runThenChain((item as { then?: unknown }).then);
                   })
                   .catch((error) => handleActionFailure(action, error));
               }}
@@ -348,7 +373,9 @@ export function DesignerToolbarContent(props: {
                     .then((result) => {
                       if (result && !result.ok) {
                         handleActionFailure(action, result.error ?? new Error('Action failed'));
+                        return;
                       }
+                      runThenChain((item as { then?: unknown }).then);
                     })
                     .catch((error) => handleActionFailure(action, error));
                 }}

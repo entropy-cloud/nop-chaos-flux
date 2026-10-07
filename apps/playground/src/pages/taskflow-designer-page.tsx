@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { notifyWithToast } from './notify-toast.js';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import type { ImportedLibraryModule, XuiImportSpec } from '@nop-chaos/flux-core';
 import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
@@ -118,6 +119,7 @@ export function TaskFlowDesignerPage({ debuggerController, onBack }: TaskFlowDes
     () =>
       debuggerController.decorateEnv(
         createDefaultEnv({
+        notify: notifyWithToast,
           importLoader,
           resolveImportUrl,
         }),

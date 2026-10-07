@@ -265,11 +265,26 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
         if (!isTreeMode) {
           return deleteGraphSelection(core);
         }
-        return createFailure(
-          core,
-          t('flux.flowDesigner.command.deleteSelectionUnavailableInTreeMode'),
-          'unavailable',
-        );
+        // plan 547 (taskflow-2): tree mode previously failed unconditionally —
+        // keyboard Delete cleared the selection without deleting anything while
+        // the context menu (deleteNode) worked. Route the selection through the
+        // same tree delete path per node.
+        const snapshot = core.getSnapshot();
+        const nodeIds = [...snapshot.selection.selectedNodeIds];
+        if (nodeIds.length === 0 && snapshot.activeNode?.id) {
+          nodeIds.push(snapshot.activeNode.id);
+        }
+        if (nodeIds.length === 0) {
+          return createFailure(core, 'Nothing to delete', 'unchanged');
+        }
+        let lastResult = createSuccess(core);
+        for (const nodeId of nodeIds) {
+          lastResult = mapTreeCommand(core.deleteTreeNode(nodeId));
+          if (!lastResult.ok) {
+            return lastResult;
+          }
+        }
+        return lastResult;
       }
       case 'copySelection':
         core.copySelection();
