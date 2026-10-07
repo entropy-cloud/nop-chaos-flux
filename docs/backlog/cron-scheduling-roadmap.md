@@ -17,7 +17,7 @@
 > 状态流转：plan 通过独立 draft review → `todo` 改 `planned`；plan 通过 closure audit → `planned` 改 `done`（不得提前）。一个 plan 对应本文一个工作项。
 
 - C1. 黄金向量与治理记账: `done`（plan 535）
-- C2. nop Java 语法扩展（`L`/`W`/`#`/年段）: `todo`
+- C2. nop Java 语法扩展（`L`/`W`/`#`/年段）: `done`（plan 536）
 - C3. nop Java 锚点周期与重复范围字段: `todo`
 - C4. flux cron 引擎纯模块: `todo`
 - C5. flux cron-editor v1（文本 + 分段编辑 + 诊断 + 预览）: `todo`
@@ -44,7 +44,7 @@
 
 - **flux 侧零实现**：`packages/` / `apps/` / `flux-guide/` 全文无 cron 渲染器、无 cron 解析代码；survey 已把 `cron-editor` 登记为 Tier 2 候选、demand-gated。
 - **已立约未实现**：`docs/components/cron-editor/design.md` + `example.json` 已就位（manifest `targetContract`、matrix `targetContract`）。
-- **nop-entropy 侧**：`CronExpression` 严格 6 段、日/周 AND 语义、构造期 BitSet 静态化；不支持 `L`/`W`/`#`、可选年段、`@` 别名；`TriggerSpec` 已有范围三字段但无锚点字段、无时区字段；前端 `cronExpr` 为纯文本输入。
+- **nop-entropy 侧**：`CronExpression` 严格 6 段、日/周 AND 语义、构造期 BitSet 静态化；不支持 `L`/`W`/`#`、可选年段、`@` 别名；`TriggerSpec` 已有范围三字段但无锚点字段、无时区字段；前端 `cronExpr` 为纯文本输入。<!-- 勘误 2026-10-07（plan 536 后）：CronExpression 已扩为 6/7 段方言，支持 L/L-n/nW/LW/d#N/dL/单独L(=周六) 与可选年段（1970-2099）；本条为 C2 前历史基线。 -->
 - **主要缺口**：① Office 同等能力所需的语法扩展；② 每 N 天/周锚点机制；③ 重复范围的编辑与映射；④ 编辑器本体与全套 UI 测试。
 
 ## Phases
@@ -52,7 +52,7 @@
 | Phase                      | Status | Owner Doc                                     | Dependencies | Reuse                                                     | Plan |
 | -------------------------- | ------ | --------------------------------------------- | ------------ | --------------------------------------------------------- | ---- |
 | C1 黄金向量与治理记账      | `done` | `docs/components/cron-editor/design.md` §2/§4 | —            | 本 roadmap + survey/backlog 既有登记表                    | 535  |
-| C2 nop Java 语法扩展       | `todo` | nop `CronExpression` + `TestCronExpression`   | C1           | C1 向量、现有 equals/hashCode 回归网                      | —    |
+| C2 nop Java 语法扩展       | `done` | nop `CronExpression` + `TestCronExpression`   | C1           | C1 向量、现有 equals/hashCode 回归网                      | 536  |
 | C3 nop Java 锚点与范围字段 | `todo` | nop `TriggerSpec` + 触发层                    | C1, C2       | `TriggerSpec` 范围三字段、trigger 装饰器/排除日历既有模式 | —    |
 | C4 flux cron 引擎纯模块    | `todo` | design.md §4/§11                              | C1           | C1 向量、日期族底层                                       | —    |
 | C5 flux cron-editor v1     | `todo` | design.md 全文                                | C4           | 字段装配、ui 组件、注册与登记机制                         | —    |
@@ -70,7 +70,7 @@
 ### C2 nop Java 语法扩展
 
 - 扩展 nop `CronExpression` 支持 Quartz 兼容的 `L` / `nL` / `L-n` / `W` / `LW` / `d#N` 与可选第 7 段年；动态日判定以谓词方式接入，主循环与两道守卫保持不动。
-- 同步修正引擎外的段数预检与 cron 语法文档表述，使其与严格 6 段口径一致。
+- 同步修正引擎外的段数预检与 cron 语法文档表述，使其与严格 6 段口径一致。<!-- 勘误 2026-10-07（plan 536 交付后）：C2 交付为 6/7 段方言（第 7 段年可选），"严格 6 段"指实现前的历史口径；预检/文档已同步 6/7 口径。历史表述不改写。 -->
 - 判别性测试吃 C1 向量；档位：必须自动化（Proof 先行）。
 
 ### C3 nop Java 锚点与范围字段
