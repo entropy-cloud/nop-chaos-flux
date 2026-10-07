@@ -178,6 +178,42 @@ interface CronEditorSchema extends InputSchema {
 
 映射责任在**宿主动作/表达式层**（提交时拆列），renderer 只负责编辑与校验；因此绑定单字符串列的存量表单可只读 `value.cron`。
 
+**宿主装配示例（plan 542 C7 worked example）**
+
+约定（与引擎口径对齐）：
+
+- **epoch ms 换算基准 = JVM 默认时区**（`ZoneId.systemDefault()`）——cron 引擎的触发时刻按 JVM 默认时区日历推演（§12 时区口径），拆列若用别的时区折算日期边界，`min/maxScheduleTime` 会相对触发日历整体偏移。
+- **边界含端点**（`LimitTimeTrigger`：`time < min` 不触发、`time > max` 终止，等于仍触发）——因此 `range.start` 换算为**当日 00:00:00.000**，`range.end` 换算为**当日 23:59:59.999**（若取 end 当日 00:00，end 当天的合法触发会被整日拒掉）。
+- `repeat.anchor` 缺省回退 `range.start`（回退是宿主装配语义，editor 值对象不回填）。
+
+示例输入（编辑器提交的值对象）：
+
+```json
+{
+  "cron": "0 0 9 ? * MON-FRI",
+  "repeat": { "every": 2, "unit": "week", "anchor": "2026-01-05" },
+  "range": { "start": "2026-03-01", "end": "2026-06-30", "count": 12 }
+}
+```
+
+宿主装配输出（JVM 默认时区为东八区时的列值）：
+
+| TriggerSpec 列      | 值                  | 推导                                                                                                                           |
+| ------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `cronExpr`          | `0 0 9 ? * MON-FRI` | 原样入库（字符串列，不 canonical 化）                                                                                          |
+| `repeatAnchorEvery` | `2`                 | `repeat.every`                                                                                                                 |
+| `repeatAnchorUnit`  | `week`              | `repeat.unit`                                                                                                                  |
+| `repeatAnchorDate`  | `2026-01-05`        | `repeat.anchor` 显式给出，不回退                                                                                               |
+| `minScheduleTime`   | `1772294400000`     | 2026-03-01 00:00（东八区）epoch ms                                                                                             |
+| `maxScheduleTime`   | `1782835199999`     | 2026-06-30 23:59:59.999（东八区）epoch ms——含端点边界见上                                                                      |
+| `maxExecutionCount` | `12`                | `range.count`（与 `range.end` 同填时 nop 侧二者同时生效，先到者终止；**编辑器侧互斥诊断只约束 UI 输入**，见 §4 rangeConflict） |
+
+缺 anchor 的回退案例：`repeat: { every: 3, unit: "day" }` + `range.start: "2026-03-01"` → 宿主装配 `repeatAnchorDate = 2026-03-01`（回退 `range.start`）；两者皆缺则不装配锚点列（引擎 `cron-repeat-anchor-missing` 诊断对应的行为缺口由编辑器前置拦截）。
+
+存量单列宿主（只拆 `cronExpr`）：`{ cron: value.cron }`，repeat/range 不装配——范围与锚点不生效，属宿主能力取舍而非契约破坏。
+
+<!-- 注记 2026-10-07（plan 542 C7）：本示例为 §12「宿主拆列归 C7」残余项的闭环交付；epoch ms 换算基准（JVM 默认时区）与含端点边界为宿主装配裁决，Java 引擎侧零变更。 -->
+
 ## 10. 样式与 DOM marker 约定
 
 - 根 marker：`nop-cron-editor`；根节点由 FieldFrame 包裹，`data-slot="field-control"` 由 FieldFrame 输出，根不重复。
@@ -206,7 +242,7 @@ interface CronEditorSchema extends InputSchema {
 - **时区口径**：预览用浏览器时区，nop 引擎用 JVM 默认时区；两端不一致时预览会偏移。首版保持口径暴露（文档标注），`timezone` 字段与 nop `TriggerSpec` 扩展留后续。
 - **首版不吸附 minDate/maxDate**：范围区块的日期上下界约束记为后续阶段（避免首版字段面过大）。
 - **两段交付**：v1（text + 分段编辑 + 诊断 + 预览）与 v2（Office 频率档位 + repeat/range 区块 + 预设）分属两个工作项，避免单文件与单 plan 超载。
-- 后续阶段候选：视觉复核基线、设计器属性面板适配、宿主集成示例、`timezone` 字段（需 nop 侧同名字段先落地）。
+- 后续阶段候选：视觉复核基线、设计器属性面板适配、宿主集成示例、`timezone` 字段（需 nop 侧同名字段先落地）。<!-- 勘误 2026-10-07（plan 542 C7 交付）：「视觉复核基线」已落 `tests/e2e/cron-editor-visual.spec.ts`；「宿主集成示例」已落 §9 宿主装配示例——两条随 C7 出候选清单；属性面板适配与 timezone 仍未排期。 -->
 
 ## 原则审计（日期：2026-10-06，审计人：文档立约，实现期复审）
 
@@ -216,4 +252,4 @@ interface CronEditorSchema extends InputSchema {
 - **INV-4 内部 state**：草稿与焦点为 local，派生态 render-time 计算，不进 schema-visible scope。✅
 - **INV-5 契约边界**：签名 `(props: RendererComponentProps<CronEditorSchema>) => RendererRenderOutput`，数据只读 `props.props` / `meta` / `events` / `helpers`，响应式读走 selector hooks，不直连 store。✅
 - **Checklist A-G**：A/B/C/D/E/F 按上述各节成立；**G 不适用（零新包）**。
-- **例外与未决项**：值对象到 `TriggerSpec` 的映射责任在宿主（§9）。~~Java 侧字段定名待 C3 落定后回写本节~~（已闭环 2026-10-07，plan 537：`repeatAnchorEvery`/`repeatAnchorUnit`/`repeatAnchorDate`，见 §9 映射表）。残余：锚点字段暂无 `NopJobSchedule` 实体/ORM 列（dao 实体路径无法持久化锚点配置，程序化 `TriggerSpec` 可达），宿主拆列归 C7 宿主映射示例工作面。
+- **例外与未决项**：值对象到 `TriggerSpec` 的映射责任在宿主（§9）。~~Java 侧字段定名待 C3 落定后回写本节~~（已闭环 2026-10-07，plan 537：`repeatAnchorEvery`/`repeatAnchorUnit`/`repeatAnchorDate`，见 §9 映射表）。~~残余：锚点字段暂无 `NopJobSchedule` 实体/ORM 列（dao 实体路径无法持久化锚点配置，程序化 `TriggerSpec` 可达），宿主拆列归 C7 宿主映射示例工作面。~~（已闭环 2026-10-07，plan 542：§9 宿主装配示例落地——含 epoch ms 换算基准（JVM 默认时区）与含端点边界裁决；实体/ORM 锚点列本身仍不存在，属宿主拆列路径的前提事实而非缺口，程序化 `TriggerSpec` 与未来宿主 ORM 扩展不受影响。）

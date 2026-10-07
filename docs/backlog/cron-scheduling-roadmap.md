@@ -22,7 +22,7 @@
 - C4. flux cron 引擎纯模块: `done`（plan 539）
 - C5. flux cron-editor v1（文本 + 分段编辑 + 诊断 + 预览）: `done`（plan 540）<!-- 勘误 2026-10-07（C5 收口）：bullet 2「index 清单」经核实 `docs/components/index.md` 为目录清单、无状态列，无翻面动作；翻 runtime 实际落 matrix + manifest + quick-reference 三处。 -->
 - C6. flux cron-editor v2（Office 频率档位 + repeat/range 区块 + 预设）: `done`（plan 541）
-- C7. 跨仓对账与收口（UI 测试覆盖审计 + 视觉复核 + 全绿）: `todo`
+- C7. 跨仓对账与收口（UI 测试覆盖审计 + 视觉复核 + 全绿）: `done`（plan 542）
 
 ## Framework / Platform Reuse
 
@@ -57,7 +57,7 @@
 | C4 flux cron 引擎纯模块    | `done` | design.md §4/§11                              | C1           | C1 向量、日期族底层                                       | 539  |
 | C5 flux cron-editor v1     | `done` | design.md 全文                                | C4           | 字段装配、ui 组件、注册与登记机制                         | 540  |
 | C6 flux cron-editor v2     | `done` | design.md §4/§7                               | C5           | C5 骨架与测试基建                                         | 541  |
-| C7 跨仓对账与收口          | `todo` | design.md §9/§12                              | C2, C3, C6   | C1 向量、全套测试基建                                     | —    |
+| C7 跨仓对账与收口          | `done` | design.md §9/§12                              | C2, C3, C6   | C1 向量、全套测试基建                                     | 542  |
 
 ## Phase Details
 
