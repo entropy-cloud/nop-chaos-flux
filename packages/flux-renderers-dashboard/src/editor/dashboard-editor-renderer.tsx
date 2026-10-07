@@ -148,6 +148,9 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
 
   const [core, setCore] = useState<EditorCore<DashboardDocument, unknown> | null>(null);
   const coreRef = useRef<EditorCore<DashboardDocument, unknown> | null>(null);
+  // plan 538：左右面板收起态（WorkbenchShell collapsed 契约；本地 useState 会话内，同宽度接线口径）。
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
 
   // 会话创建（mount）+ controlled push-back：host 经 layout prop 回推新布局且与
   // committed 不同 → dispose 旧会话并重建。ref 只在 effect 内读写（React Compiler 纪律）。
@@ -439,15 +442,34 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
       header={header}
-      leftPanel={<EditorPalette palette={effectivePalette} onAddPanel={addPanel} />}
-      leftLabel={t('flux.dashboard.editor.collapsePalette')}
+      leftPanel={
+        <EditorPalette
+          palette={effectivePalette}
+          onAddPanel={addPanel}
+          onCollapse={() => setLeftCollapsed(true)}
+          collapseLabel={t('flux.dashboard.editor.collapsePalette')}
+        />
+      }
+      leftCollapsed={leftCollapsed}
+      onLeftToggle={() => setLeftCollapsed((v) => !v)}
+      leftLabel={t('flux.dashboard.editor.expandPalette')}
       leftResizable
       leftWidth={220}
       leftMinWidth={180}
       leftMaxWidth={360}
       canvas={canvas}
-      rightPanel={<EditorInspector core={core} selection={selection} palette={effectivePalette} />}
-      rightLabel={t('flux.dashboard.editor.collapseInspector')}
+      rightPanel={
+        <EditorInspector
+          core={core}
+          selection={selection}
+          palette={effectivePalette}
+          onCollapse={() => setRightCollapsed(true)}
+          collapseLabel={t('flux.dashboard.editor.collapseInspector')}
+        />
+      }
+      rightCollapsed={rightCollapsed}
+      onRightToggle={() => setRightCollapsed((v) => !v)}
+      rightLabel={t('flux.dashboard.editor.expandInspector')}
       rightResizable
       rightWidth={280}
       rightMinWidth={220}

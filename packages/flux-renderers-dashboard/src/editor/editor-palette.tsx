@@ -5,6 +5,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
+import { ChevronLeft } from 'lucide-react';
 import type { DashboardDocument } from './dashboard-domain-adapter.js';
 import type { DashboardPanelSchema } from '../schemas.js';
 
@@ -31,21 +32,40 @@ export interface EditorPaletteProps {
   /** 生效目录（renderer 经共享 builder 解析后线程化）。 */
   palette: ResolvedPaletteItem[];
   onAddPanel: (type: string) => void;
+  /** plan 538：面板头收起 affordance（WorkbenchShell collapsed 契约）；不传零渲染。 */
+  onCollapse?: () => void;
+  collapseLabel?: string;
 }
 
 /** palette 面板（点击即加；HTML5 draggable 拖入画布由画布 drop 消费）。 */
 export function EditorPalette({
   palette,
   onAddPanel,
+  onCollapse,
+  collapseLabel,
 }: EditorPaletteProps) {
   const { t } = useFluxTranslation();
   const entries = palette;
 
   return (
     <div data-slot="dashboard-editor-palette" className="flex h-full flex-col gap-2 overflow-y-auto p-3">
-      <p data-slot="dashboard-editor-palette-title" className="text-sm font-medium text-foreground">
-        {t('flux.dashboard.editor.panelTypes')}
-      </p>
+      <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+        <p data-slot="dashboard-editor-palette-title" className="text-sm font-medium text-foreground">
+          {t('flux.dashboard.editor.panelTypes')}
+        </p>
+        {onCollapse ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={collapseLabel ?? t('flux.dashboard.editor.collapsePalette')}
+            data-testid="collapse-palette"
+            onClick={onCollapse}
+          >
+            <ChevronLeft />
+          </Button>
+        ) : null}
+      </div>
       {entries.length === 0 && (
         <p className="text-xs text-muted-foreground">
           {t('flux.dashboard.editor.noPanelTypes')}

@@ -7,9 +7,24 @@
  * 表变更时同步；断言 8 校验两处对齐）。
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
-const ROOT = join(import.meta.dirname, '..');
+// plan 538：可选 `--root <dir>`（fixtures 判别用，缺省 live repo）与 `--families <id,...>`（家族子集）。
+// 无参调用行为与参数化前逐字节等价。
+function parseArgs(argv) {
+  const args = { root: join(import.meta.dirname, '..'), families: null };
+  for (let i = 2; i < argv.length; i += 1) {
+    if (argv[i] === '--root') {
+      args.root = resolve(argv[i + 1]);
+      i += 1;
+    } else if (argv[i] === '--families') {
+      args.families = argv[i + 1].split(',').map((id) => id.trim());
+      i += 1;
+    }
+  }
+  return args;
+}
+const { root: ROOT, families: FAMILIES_FILTER } = parseArgs(process.argv);
 
 // editor-designer-standard.md §5.2 豁免登记表机器镜像（该表变更时同步）。
 // 值 = 豁免的标准 §2 层号。
@@ -18,6 +33,11 @@ const EXEMPTIONS = {
   page: ['2.2', '2.3', '2.4', '2.7'], // 裁决②：隔离架构
   print: ['2.2', '2.3', '2.4', '2.7'], // 裁决②：独立组件
 };
+
+// plan 538：family mapping 声明有侧板的家族（designer-workbench-shell.md Family Mapping 节，
+// 含该节硬化条款）必须接线 WorkbenchShell collapsed 契约；spreadsheet（无侧板）/page/print
+// （豁免②隔离架构）不在此列。
+const COLLAPSED_WIRED_FAMILIES = new Set(['flow', 'report', 'word', 'scada', 'dashboard']);
 
 // 档位标定（P0-P4 落地后的 conformed baseline；editor-designer-standard.md §2.6 裁定④ + §3 基线）：
 // - eventContracts 断言仅适用推送事件家族（dashboard/scada/word）；pull 型（flow/page/report/spreadsheet）
@@ -57,6 +77,7 @@ function assertCheck(family, label, ok) {
 }
 
 for (const f of FAMILIES) {
+  if (FAMILIES_FILTER && !FAMILIES_FILTER.includes(f.family)) continue;
   const exempt = EXEMPTIONS[f.family] ?? [];
   const renderersSrc = join(ROOT, f.renderers, 'src');
   const coreSrc = join(ROOT, f.core, 'src');
@@ -107,15 +128,27 @@ for (const f of FAMILIES) {
       dirContains(coreSrc, `nop-${f.family}`) ||
       dirContains(renderersSrc, 'data-slot'),
   );
+
+  // 9. collapsed 契约接线（plan 538；designer-workbench-shell.md Family Mapping 硬化条款）：
+  // 有侧板家族的 renderers 必须含 onLeftToggle/onRightToggle 接线（resize-only 不合规）。
+  // 仅当 renderers 目录存在于扫描 root 时断言（live 恒存在；fixtures 子集树不误报缺席家族）。
+  if (COLLAPSED_WIRED_FAMILIES.has(f.family) && existsSync(join(ROOT, f.renderers))) {
+    assertCheck(f.family, 'collapsed 契约接线（onLeftToggle）', dirContains(renderersSrc, 'onLeftToggle'));
+    assertCheck(f.family, 'collapsed 契约接线（onRightToggle）', dirContains(renderersSrc, 'onRightToggle'));
+  }
 }
 
-// 8. 豁免表对齐（守卫 EXEMPTIONS 家族集合 ⊆ 标准文档 §5.2 登记行集合）
-const standard = readFileSync(join(ROOT, 'docs', 'architecture', 'editor-designer-standard.md'), 'utf8');
-const sectionStart = standard.indexOf('### 5.2 豁免登记表');
-const sectionEnd = standard.indexOf('## 6.', sectionStart);
-const registrySection = standard.slice(sectionStart, sectionEnd);
-for (const family of Object.keys(EXEMPTIONS)) {
-  assertCheck('exemptions', `豁免表登记：${family}`, registrySection.includes(`| ${family}`));
+// 8. 豁免表对齐（守卫 EXEMPTIONS 家族集合 ⊆ 标准文档 §5.2 登记行集合）。
+// 标准 doc 在 fixtures 子集 root 下不存在 → 跳过该对账（live 恒存在，保证不变）。
+const standardPath = join(ROOT, 'docs', 'architecture', 'editor-designer-standard.md');
+if (existsSync(standardPath)) {
+  const standard = readFileSync(standardPath, 'utf8');
+  const sectionStart = standard.indexOf('### 5.2 豁免登记表');
+  const sectionEnd = standard.indexOf('## 6.', sectionStart);
+  const registrySection = standard.slice(sectionStart, sectionEnd);
+  for (const family of Object.keys(EXEMPTIONS)) {
+    assertCheck('exemptions', `豁免表登记：${family}`, registrySection.includes(`| ${family}`));
+  }
 }
 
 if (failures.length > 0) {

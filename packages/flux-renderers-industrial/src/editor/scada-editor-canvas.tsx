@@ -83,6 +83,9 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // plan 532 S3：左右面板宽度（WorkbenchShell 受控回调；本地 useState 会话内，528 裁决口径）。
   const [leftWidth, setLeftWidth] = useState<number | undefined>(undefined);
   const [rightWidth, setRightWidth] = useState<number | undefined>(undefined);
+  // plan 538：左右面板收起态（WorkbenchShell collapsed 契约；本地 useState 会话内，同宽度口径）。
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
   // session 反应式通道（plan 2026-08-07-1835-1 Phase 1 / open P1-A）：
   // `runtime.session.*` 是 ref-held 可变对象（INV-4），不进 React 状态；notifySession 经 handleSessionChange
   // 派发 schema 事件外，还 bump 此计数器，触发本组件重渲染 → 子 panel（toolbox Undo/Redo disabled、
@@ -398,11 +401,26 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
       )
     : undefined;
   const paletteSlot = showLayoutBody
-    ? asReactNode(palette?.render()) ?? <EditorPalettePanel runtime={runtime} onError={handleError} disabled={disabled} />
+    ? asReactNode(palette?.render()) ?? (
+        <EditorPalettePanel
+          runtime={runtime}
+          onError={handleError}
+          disabled={disabled}
+          onCollapse={() => setLeftCollapsed(true)}
+          collapseLabel={t('industrial.scada.editor.collapsePalette')}
+        />
+      )
     : undefined;
   const inspectorSlot = showLayoutBody
     ? asReactNode(inspector?.render({ bindings: { nodeId: selectedNodeId } })) ?? (
-        <EditorInspectorPanel runtime={runtime} selectedNodeId={selectedNodeId} onError={handleError} disabled={disabled} />
+        <EditorInspectorPanel
+          runtime={runtime}
+          selectedNodeId={selectedNodeId}
+          onError={handleError}
+          disabled={disabled}
+          onCollapse={() => setRightCollapsed(true)}
+          collapseLabel={t('industrial.scada.editor.collapseInspector')}
+        />
       )
     : undefined;
   const statusBarSlot = showLayoutBody
@@ -423,10 +441,16 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
         density="flush"
         header={toolboxSlot}
         leftPanel={paletteSlot}
+        leftCollapsed={leftCollapsed}
+        onLeftToggle={() => setLeftCollapsed((v) => !v)}
+        leftLabel={t('industrial.scada.editor.expandPalette')}
         leftResizable
         leftWidth={leftWidth}
         onLeftWidthChange={setLeftWidth}
         rightPanel={inspectorSlot}
+        rightCollapsed={rightCollapsed}
+        onRightToggle={() => setRightCollapsed((v) => !v)}
+        rightLabel={t('industrial.scada.editor.expandInspector')}
         rightResizable
         rightWidth={rightWidth}
         onRightWidthChange={setRightWidth}

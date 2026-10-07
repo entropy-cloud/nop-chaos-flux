@@ -191,3 +191,30 @@ test.describe('Dashboard demo — panel chrome across light/dark (A5)', () => {
     await assertTrackedPageErrors(page);
   });
 });
+
+test.describe('Dashboard demo — side panel collapse (plan 538)', () => {
+  test('palette/inspector header buttons collapse both sides, rails restore them', async ({ page }) => {
+    await openDashboardDemo(page);
+
+    await expect(page.getByTestId('left-panel-expanded')).toBeVisible();
+    await expect(page.getByTestId('right-panel-expanded')).toBeVisible();
+
+    await page.getByTestId('collapse-palette').click();
+    await expect(page.getByTestId('left-panel-collapsed')).toBeVisible();
+    await expect(page.getByTestId('left-panel-expanded')).toHaveCount(0);
+
+    await page.getByTestId('collapse-inspector').click();
+    await expect(page.getByTestId('right-panel-collapsed')).toBeVisible();
+    await expect(page.getByTestId('right-panel-expanded')).toHaveCount(0);
+
+    await page.getByTestId('expand-left-panel').click();
+    await expect(page.getByTestId('left-panel-expanded')).toBeVisible();
+    await expect(page.getByTestId('left-panel-collapsed')).toHaveCount(0);
+
+    await page.getByTestId('expand-right-panel').click();
+    await expect(page.getByTestId('right-panel-expanded')).toBeVisible();
+    await expect(page.getByTestId('right-panel-collapsed')).toHaveCount(0);
+
+    await assertTrackedPageErrors(page);
+  });
+});

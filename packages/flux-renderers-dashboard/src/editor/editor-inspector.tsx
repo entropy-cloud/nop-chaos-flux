@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { EditorCore } from '@nop-chaos/editor-core';
 import { Button, Input, Label, NativeSelect, Textarea } from '@nop-chaos/ui';
+import { ChevronRight } from 'lucide-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import type { SchemaValue } from '@nop-chaos/flux-core';
 import type { DashboardDocument } from './dashboard-domain-adapter.js';
@@ -16,13 +17,16 @@ export interface EditorInspectorProps {
   palette: ResolvedPaletteItem[];
   core: EditorCore<DashboardDocument, unknown>;
   selection: readonly string[];
+  /** plan 538：面板头收起 affordance（WorkbenchShell collapsed 契约）；不传零渲染。 */
+  onCollapse?: () => void;
+  collapseLabel?: string;
 }
 
 /**
  * inspector 面板（位置/尺寸/标题/type/props/source 编辑）。
  * 编辑经 `core.update` 写入会话（单次更新 = 单 undo 步）。
  */
-export function EditorInspector({ palette, core, selection }: EditorInspectorProps) {
+export function EditorInspector({ palette, core, selection, onCollapse, collapseLabel }: EditorInspectorProps) {
   const { t } = useFluxTranslation();
   const working = core.getState().working;
   const selectedPanel = selection.length === 1 ? working.panels.find((p) => p.id === selection[0]) : undefined;
@@ -42,7 +46,21 @@ export function EditorInspector({ palette, core, selection }: EditorInspectorPro
 
   if (!selectedPanel) {
     return (
-      <div data-slot="dashboard-editor-inspector" className="p-3">
+      <div data-slot="dashboard-editor-inspector" className="flex h-full flex-col gap-2 p-3">
+        {onCollapse ? (
+          <div className="flex items-center justify-end border-b border-border pb-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={collapseLabel ?? t('flux.dashboard.editor.collapseInspector')}
+              data-testid="collapse-inspector"
+              onClick={onCollapse}
+            >
+              <ChevronRight />
+            </Button>
+          </div>
+        ) : null}
         <p className="text-sm text-muted-foreground">
           {t('flux.dashboard.editor.selectHint')}
         </p>
@@ -55,6 +73,20 @@ export function EditorInspector({ palette, core, selection }: EditorInspectorPro
       data-slot="dashboard-editor-inspector"
       className="flex h-full flex-col gap-3 overflow-y-auto p-3"
     >
+      {onCollapse ? (
+        <div className="flex items-center justify-end border-b border-border pb-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={collapseLabel ?? t('flux.dashboard.editor.collapseInspector')}
+            data-testid="collapse-inspector"
+            onClick={onCollapse}
+          >
+            <ChevronRight />
+          </Button>
+        </div>
+      ) : null}
       <InspectorField label={t('flux.dashboard.editor.panelId')} htmlFor={id.panelId}>
         <Input readOnly value={selectedPanel.id} data-testid="inspector-id" id={id.panelId} />
       </InspectorField>

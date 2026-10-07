@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Button, Input } from '@nop-chaos/ui';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { listScadaSymbols } from '../../symbols/symbol-registry.js';
@@ -14,6 +14,9 @@ interface EditorPalettePanelProps {
   onError: (code: string, message: string) => void;
   /** [G5-R3-视角3-01] meta.disabled 门禁：图元库拖入/点击添加通道 inert。 */
   disabled?: boolean;
+  /** plan 538：面板头收起 affordance（WorkbenchShell collapsed 契约）；不传零渲染。 */
+  onCollapse?: () => void;
+  collapseLabel?: string;
 }
 
 /**
@@ -93,6 +96,21 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
       aria-disabled={props.disabled || undefined}
       data-disabled={props.disabled ? 'true' : undefined}
     >
+      {props.onCollapse ? (
+        <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+          <span className="text-sm font-medium text-foreground">{t('industrial.scada.editor.palette.title')}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={props.collapseLabel ?? t('industrial.scada.editor.collapsePalette')}
+            data-testid="collapse-palette"
+            onClick={props.onCollapse}
+          >
+            <ChevronLeft />
+          </Button>
+        </div>
+      ) : null}
       <div className="relative">
         <Input
           value={query}

@@ -87,6 +87,8 @@ Required interaction rules:
 
 ## Family Mapping
 
+Family mapping rules are binding on host wiring (plan 538): a family whose mapping declares side panels MUST wire the shell collapsed contract (`leftCollapsed`/`onLeftToggle`/`leftLabel`, right symmetric) and expose a visible collapse affordance inside each family panel header (see Collapsed Rail Contract); resize-only wiring is non-conformant. Families whose mapping declares no side panels (Spreadsheet) or which are exempt from shell adoption are not covered. The conformance guard (`scripts/check-designer-conformance.mjs`, collapsed-wiring rule) asserts this for flow/report/word/scada/dashboard.
+
 ### Flow Designer
 
 - left panel is the palette surface resolved from `DesignerConfig`
@@ -117,6 +119,12 @@ Required interaction rules:
 - region override precedence is preserved verbatim: schema regions replace the built-in panels through the same `render(...) ?? fallback` expressions as before the migration
 - the root keeps the family marker class `.nop-scada-editor-layout`; element-level markers (`.nop-scada-editor-layout-canvas`, `.nop-scada-editor-status-bar`, …) stay on their original elements (test-locked)
 - shell-standard canvas card chrome, slot gap, and the row grid are the adopted visual baseline (same adjudication as Spreadsheet); `density="flush"` keeps outer padding at zero
+
+### Dashboard Editor
+
+- Dashboard editor consumes the shell with a four-slot mapping: header = mode/save toolbar, leftPanel = panel-type palette, canvas = the panel layout canvas, rightPanel = inspector; no footer slot today
+- both sides are always-present authoring surfaces in edit mode; palette/inspector are family-rendered panels mounted directly into the slots (no region override surface today)
+- side panels carry fixed family widths with resize opt-in (left 220px clamp 180–360, right 280px clamp 220–420) and the collapsed contract per the family mapping rule above; the collapsed rails use expand-semantic labels (`flux.dashboard.editor.expandPalette`/`expandInspector`), while the collapse labels live on the panel-header affordance buttons
 
 ### Spreadsheet
 

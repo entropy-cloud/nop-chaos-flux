@@ -1,5 +1,6 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
-import { Badge } from '@nop-chaos/ui';
+import { Badge, Button } from '@nop-chaos/ui';
+import { ChevronRight } from 'lucide-react';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
 import type { ScadaSymbolNode } from '../../serialization/config-types.js';
 import { getScadaSymbolDefinition } from '../../symbols/symbol-registry.js';
@@ -19,6 +20,26 @@ interface EditorInspectorPanelProps {
   onError: (code: string, message: string) => void;
   /** [G5-R3-视角3-01] meta.disabled 门禁：属性面板写入通道 inert。 */
   disabled?: boolean;
+  /** plan 538：面板头收起 affordance（WorkbenchShell collapsed 契约）；不传零渲染。 */
+  onCollapse?: () => void;
+  collapseLabel?: string;
+}
+
+function InspectorCollapseButton(props: { onCollapse?: () => void; collapseLabel?: string }) {
+  const { t } = useFluxTranslation();
+  if (!props.onCollapse) return null;
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label={props.collapseLabel ?? t('industrial.scada.editor.collapseInspector')}
+      data-testid="collapse-inspector"
+      onClick={props.onCollapse}
+    >
+      <ChevronRight />
+    </Button>
+  );
 }
 
 /**
@@ -65,7 +86,10 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
         aria-disabled={props.disabled || undefined}
         data-disabled={props.disabled ? 'true' : undefined}
       >
-        <span className="nop-scada-editor-group-label">{t('industrial.scada.editor.inspector.title')}</span>
+        <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+          <span className="nop-scada-editor-group-label">{t('industrial.scada.editor.inspector.title')}</span>
+          <InspectorCollapseButton onCollapse={props.onCollapse} collapseLabel={props.collapseLabel} />
+        </div>
         <div className="text-xs opacity-60">{t('industrial.scada.editor.inspector.id')}: {node.id}</div>
         <div className="text-xs opacity-60">{t('industrial.scada.editor.inspector.type')}: {node.type}</div>
         {fieldGroups.map((group) => {
@@ -128,7 +152,10 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
       aria-disabled={props.disabled || undefined}
       data-disabled={props.disabled ? 'true' : undefined}
     >
-      <span className="nop-scada-editor-group-label">{t('industrial.scada.editor.inspector.title')}</span>
+      <div className="flex items-center justify-between gap-2 border-b border-border pb-2">
+        <span className="nop-scada-editor-group-label">{t('industrial.scada.editor.inspector.title')}</span>
+        <InspectorCollapseButton onCollapse={props.onCollapse} collapseLabel={props.collapseLabel} />
+      </div>
       <div className="text-xs opacity-60">{t('industrial.scada.editor.inspector.noSelection')}</div>
     </aside>
   );
