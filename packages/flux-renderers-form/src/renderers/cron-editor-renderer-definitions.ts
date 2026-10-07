@@ -5,14 +5,17 @@ import { validateCronEditorSchema } from './cron-editor-schema-validator.js';
 import { CronEditorRenderer } from './cron-editor-renderer.js';
 
 /**
- * cron-editor（cron 轨道 C5，plan 540）：定时计划编辑字段。propContracts 仅挂 v1
- * 实际消费的四 prop；showRepeat/showRange/presets 按 design §4 声明进 schema、
- * C6 区块落地时再挂契约（v1 最小锚点测试钉「声明存在、效果缺省」）。
+ * cron-editor（cron 轨道 C5/C6，plan 540/541）：定时计划编辑字段。propContracts
+ * 实挂全部七个 prop：v1 四 prop（mode/showPreview/previewCount/clearable）+ C6
+ * 区块三 prop（showRepeat/showRange/presets，array shape 契约见 presets 项）。
  */
 const cronFieldRules: SchemaFieldRule[] = [
   { key: 'mode', kind: 'prop', valueType: 'string' },
   { key: 'showPreview', kind: 'prop', valueType: 'boolean' },
   { key: 'previewCount', kind: 'prop', valueType: 'number' },
+  { key: 'showRepeat', kind: 'prop', valueType: 'boolean' },
+  { key: 'showRange', kind: 'prop', valueType: 'boolean' },
+  { key: 'presets', kind: 'prop' },
 ];
 
 export const cronEditorRendererDefinition: RendererDefinition = {
@@ -52,6 +55,34 @@ export const cronEditorRendererDefinition: RendererDefinition = {
       description: 'Show the clear affordance.',
       shape: { kind: 'boolean' },
       editorType: 'switch',
+    },
+    showRepeat: {
+      displayName: 'Show Repeat',
+      description: 'Show the repeat (every N days/weeks + anchor) block.',
+      shape: { kind: 'boolean' },
+      editorType: 'switch',
+      defaultValue: true,
+    },
+    showRange: {
+      displayName: 'Show Range',
+      description: 'Show the range (start/end/count) block.',
+      shape: { kind: 'boolean' },
+      editorType: 'switch',
+      defaultValue: true,
+    },
+    presets: {
+      displayName: 'Presets',
+      description: 'Preset schedule values; overrides the built-in list.',
+      shape: {
+        kind: 'array',
+        item: {
+          kind: 'object',
+          fields: {
+            label: { kind: 'string' },
+            value: { kind: 'record', value: { kind: 'unknown' } },
+          },
+        },
+      },
     },
   },
   fields: [...formFieldRules, ...cronFieldRules],

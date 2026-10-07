@@ -18,7 +18,8 @@ describe('deriveFrequency（档位派生，C6 向导输入面）', () => {
   it('weekly：周位单值（数字或名字），日位通配', () => {
     expect(deriveFrequency(mustParse('0 0 10 ? * MON'))).toBe('weekly');
     expect(deriveFrequency(mustParse('0 0 10 ? * 1'))).toBe('weekly');
-    expect(deriveFrequency(mustParse('0 0 10 ? * MON-FRI'))).not.toBe('weekly');
+    // C6 裁决 1（plan 541）：多选周位（含 MON-FRI 区间）提交后回落 weekly 档
+    expect(deriveFrequency(mustParse('0 0 10 ? * MON-FRI'))).toBe('weekly');
   });
 
   it('monthly：日位单值数字，周位通配', () => {

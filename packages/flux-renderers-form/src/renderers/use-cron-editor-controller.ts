@@ -19,6 +19,11 @@ interface CronEditorController {
   /** 分段当前显示值：草稿优先，否则已提交 cron 的 canonical 段 */
   segmentValue: (key: CronSegmentKey) => string;
   clearDrafts: () => void;
+  /** 向导合成通道（plan 541 裁决 2）：parse 合法 → serializeCron canonical 归一提交 */
+  commitWizard: (expr: string) => boolean;
+  /** repeat/range 区块结构提交（plan 541）：形状照实提交，诊断就近显示不阻断 */
+  commitRepeat: (repeat: CronScheduleValue['repeat']) => void;
+  commitRange: (range: CronScheduleValue['range']) => void;
 }
 
 /**
@@ -131,6 +136,26 @@ export function useCronEditorController(
     clearDrafts: () => {
       setSegmentDrafts({});
       setTextDraft(null);
+    },
+    commitWizard: (expr: string) => {
+      const parsed = parseCron(expr);
+      if (!parsed.ok) return false;
+      const canonical = serializeCron(parsed.value);
+      commit({ ...(boundValue ?? {}), cron: canonical });
+      setSegmentDrafts({});
+      return true;
+    },
+    commitRepeat: (repeat) => {
+      const next = { ...(boundValue ?? {}) } as CronScheduleValue;
+      if (repeat) next.repeat = repeat;
+      else delete next.repeat;
+      commit(next);
+    },
+    commitRange: (range) => {
+      const next = { ...(boundValue ?? {}) } as CronScheduleValue;
+      if (range) next.range = range;
+      else delete next.range;
+      commit(next);
     },
   };
 }

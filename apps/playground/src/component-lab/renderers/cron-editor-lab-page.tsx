@@ -45,6 +45,27 @@ const visualSegments = {
   ],
 };
 
+
+const wizardBlocks = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      valuesPath: 'ui.wizardCron',
+      data: { cron: { cron: '0 0 9 * * ?', repeat: { every: 2, unit: 'week', anchor: '2026-01-05' } } },
+      body: [
+        {
+          type: 'cron-editor',
+          name: 'cron',
+          label: 'Wizard + repeat/range blocks + presets',
+          value: { cron: '0 0 9 * * ?', repeat: { every: 2, unit: 'week', anchor: '2026-01-05' } },
+        },
+        { type: 'text', testid: 'cron-editor-wizard-echo', text: 'Value: ${$JSON.stringify(ui.wizardCron)}' },
+      ],
+    },
+  ],
+};
+
 const submitEcho = {
   type: 'page',
   body: [
@@ -78,6 +99,7 @@ export function CronEditorLabPage() {
       scenarios={[
         { title: 'Text diagnostics', description: 'Live diagnostics in text mode; invalid input is not committed.', schema: textDiagnostics },
         { title: 'Visual segments', description: '7-segment editor with passthrough of repeat/range value keys.', schema: visualSegments },
+        { title: 'Wizard and blocks', description: 'Office frequency tiers, repeat/range blocks with mutual-exclusion diagnostics, preset apply (plan 541).', schema: wizardBlocks },
         { title: 'Submit echo', description: 'Submit the form and read back the committed CronScheduleValue.', schema: submitEcho },
       ]}
     />

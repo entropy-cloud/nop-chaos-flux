@@ -52,9 +52,10 @@ describe('form renderer definition contracts', () => {
     for (const key of ['mode', 'showPreview', 'previewCount']) {
       expect(def?.fields?.some((f) => f.key === key), `fields.${key}`).toBe(true);
     }
-    // v2 props 按 design §4 声明进 schema 面（propContracts C6 再挂）
+    // C6（plan 541）：v2 props 挂契约（翻转 v1 锚点）
     for (const key of ['showRepeat', 'showRange', 'presets']) {
-      expect(def?.propContracts?.[key]).toBeUndefined();
+      expect(def?.propContracts?.[key], `propContracts.${key}`).toBeDefined();
+      expect(def?.fields?.some((f) => f.key === key), `fields.${key}`).toBe(true);
     }
   });
 

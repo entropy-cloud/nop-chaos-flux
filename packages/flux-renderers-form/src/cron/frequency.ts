@@ -23,10 +23,13 @@ export function deriveFrequency(parsed: ParsedCron | null): CronFrequency {
   const dowAll = parsed.dynamicWeek === null && isAll(parsed.daysOfWeek);
   const day = parsed.dynamicDay === null ? isSingleNumber(parsed.daysOfMonth) : null;
   const month = isSingleNumber(parsed.months);
+  // C6（plan 541 裁决 1）：weekly 档向导产物为多选周位（列表/区间/单值皆可），
+  // 提交后档位条回落派生须识别为 weekly；动态周描述符（#/L）仍归 custom。
+  const dowExplicit = parsed.dynamicWeek === null && parsed.daysOfWeek.items.length > 0 && !dowAll;
   const dow = parsed.dynamicWeek === null ? isSingleNumber(parsed.daysOfWeek) : null;
 
   if (dayAll && dowAll && monthAll) return 'daily';
-  if (dayAll && dow !== null && monthAll) return 'weekly';
+  if (dayAll && (dow !== null || dowExplicit) && monthAll) return 'weekly';
   if (day !== null && dowAll && monthAll) return 'monthly';
   if (day !== null && dowAll && month !== null) return 'yearly';
   return 'custom';

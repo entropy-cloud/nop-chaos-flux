@@ -33,6 +33,8 @@ test.describe('cron-editor lab', () => {
     const stage = page.getByTestId('scenario-stage-visual-segments');
     await expect(stage).toBeVisible();
 
+    // C6：visual 缺省派生档（daily → 向导）；分段编辑器在自定义档
+    await stage.locator('[data-testid="cron-editor-tier-custom"]').click();
     const hour = stage.locator('[data-testid="cron-editor-segment-hour"]');
     await expect(hour).toHaveValue('9', { timeout: 15_000 });
     await hour.fill('11');
@@ -72,11 +74,84 @@ test.describe('cron-editor lab', () => {
     const stage = page.getByTestId('scenario-stage-visual-segments');
     await expect(stage).toBeVisible();
 
+    await stage.locator('[data-testid="cron-editor-tier-custom"]').click();
     const second = stage.locator('[data-testid="cron-editor-segment-second"]');
     await second.focus();
     await page.keyboard.type('30');
     await expect(second).toHaveValue('30');
     await expect(stage.getByTestId('cron-editor-visual-echo')).toContainText('30 0 9');
+
+    await assertTrackedPageErrors(page);
+  });
+
+  // C6 v2 全量用户旅程（cron 轨道 plan 541）：向导档位编译、每周改周几、repeat/range 区块、
+  // range 互斥诊断、预设应用 replace 整值 + 档位条重定位、键盘可达（radiogroup 方向键 + Tab 走查）、零页面错误。
+  test('v2 wizard journey: tier compile, weekly dows, repeat/range blocks, preset apply, keyboard', async ({ page }) => {
+    const stage = page.getByTestId('scenario-stage-wizard-and-blocks');
+    await expect(stage).toBeVisible();
+
+    const echo = stage.getByTestId('cron-editor-wizard-echo');
+    await expect(echo).toContainText('0 0 9', { timeout: 15_000 });
+
+    // 档位向导：daily 时间字段改 8 点 → canonical 提交，repeat 透传保留
+    const hour = stage.locator('[data-testid="cron-editor-wizard-h"]');
+    await expect(hour).toHaveValue('9');
+    await hour.fill('8');
+    await expect(echo).toContainText('"cron":"0 0 8 * * *"');
+    await expect(echo).toContainText('"every":2');
+
+    // 向导每周：切 weekly（周几未选不提交，echo 保持原值）→ 多选周几 → canonical 提交
+    await stage.locator('[data-testid="cron-editor-tier-weekly"]').click();
+    const dows = stage.locator('[data-testid="cron-editor-wizard-dows"]');
+    await expect(dows).toBeVisible();
+    await expect(echo).toContainText('"cron":"0 0 8 * * *"');
+    await dows.selectOption(['1', '3', '5']);
+    await expect(echo).toContainText('"cron":"0 0 8 * * 1,3,5"');
+
+    // repeat 区块：锚点更新结构提交
+    await stage.locator('[data-testid="cron-editor-repeat-anchor"]').fill('2026-02-01');
+    await expect(echo).toContainText('2026-02-01');
+
+    // range 互斥：end+count 同填 → 形状照实提交 + 诊断就近出现
+    await stage.locator('[data-testid="cron-editor-range-end"]').fill('2026-06-30');
+    await stage.locator('[data-testid="cron-editor-range-count"]').fill('4');
+    await expect(echo).toContainText('"range":{"end":"2026-06-30","count":4}');
+    await expect(stage.locator('[data-testid="cron-editor-range-diagnostic"]')).toBeVisible();
+
+    // 预设应用（replace 整值）：repeat/range 重置 + 档位条随 deriveFrequency 重定位（裁决 4；
+    // daily-9 派生 daily；hourly 星号时分落 custom 档）
+    await stage.locator('#cron-editor-preset-select').selectOption({ index: 2 });
+    await expect(echo).toContainText('"cron":"0 0 9 * * *"');
+    await expect(echo).not.toContainText('2026-02-01');
+    await expect(stage.locator('[data-testid="cron-editor-tier-daily"]')).toHaveAttribute('aria-checked', 'true');
+
+    // 键盘可达：radiogroup 方向键换档（roving tabindex）+ Tab 走查向导字段/预设/区块
+    const tierDaily = stage.locator('[data-testid="cron-editor-tier-daily"]');
+    await tierDaily.focus();
+    await expect(tierDaily).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    const tierWeekly = stage.locator('[data-testid="cron-editor-tier-weekly"]');
+    await expect(tierWeekly).toBeFocused();
+    await expect(tierWeekly).toHaveAttribute('aria-checked', 'true');
+    await page.keyboard.press('ArrowLeft');
+    await expect(tierDaily).toBeFocused();
+    await page.keyboard.press('Tab');
+    // 向导时间字段按 cron 段序（s → mi → h）
+    await expect(stage.locator('[data-testid="cron-editor-wizard-s"]')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await expect(stage.locator('[data-testid="cron-editor-wizard-h"]')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(stage.locator('#cron-editor-preset-select')).toBeFocused();
+    await stage.locator('[data-testid="cron-editor-repeat-every"]').focus();
+    await page.keyboard.press('Tab');
+    // repeat 已被预设重置：unit/anchor disabled 跳出 tab 序，下一停点为 range-start
+    await expect(stage.locator('[data-testid="cron-editor-range-start"]')).toBeFocused();
+    // date input 内部分段（chromium 月/日/年）会消耗 Tab：end/count 以可聚焦断言收口
+    await stage.locator('[data-testid="cron-editor-range-end"]').focus();
+    await expect(stage.locator('[data-testid="cron-editor-range-end"]')).toBeFocused();
+    await stage.locator('[data-testid="cron-editor-range-count"]').focus();
+    await expect(stage.locator('[data-testid="cron-editor-range-count"]')).toBeFocused();
 
     await assertTrackedPageErrors(page);
   });
