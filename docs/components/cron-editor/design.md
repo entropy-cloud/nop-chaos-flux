@@ -168,13 +168,13 @@ interface CronEditorSchema extends InputSchema {
 
 **宿主映射契约（CronScheduleValue → nop `TriggerSpec`）**
 
-| 值字段        | TriggerSpec                                             |
-| ------------- | ------------------------------------------------------- |
-| `cron`        | `cronExpr`（VARCHAR(100) 字符串列）                     |
-| `repeat`      | 锚点字段（每 N 天/周，字段定名由 nop 侧工作项 C3 落定） |
-| `range.start` | `minScheduleTime`（epoch ms）                           |
-| `range.end`   | `maxScheduleTime`（epoch ms）                           |
-| `range.count` | `maxExecutionCount`                                     |
+| 值字段        | TriggerSpec                                                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cron`        | `cronExpr`（VARCHAR(100) 字符串列）                                                                                                                                 |
+| `repeat`      | `repeatAnchorEvery`（int ≥1）+ `repeatAnchorUnit`（`day`\|`week`）+ `repeatAnchorDate`（`YYYY-MM-DD`，plan 537 定名；anchor 缺省回退 `range.start` 属宿主装配语义） |
+| `range.start` | `minScheduleTime`（epoch ms）                                                                                                                                       |
+| `range.end`   | `maxScheduleTime`（epoch ms）                                                                                                                                       |
+| `range.count` | `maxExecutionCount`                                                                                                                                                 |
 
 映射责任在**宿主动作/表达式层**（提交时拆列），renderer 只负责编辑与校验；因此绑定单字符串列的存量表单可只读 `value.cron`。
 
@@ -216,4 +216,4 @@ interface CronEditorSchema extends InputSchema {
 - **INV-4 内部 state**：草稿与焦点为 local，派生态 render-time 计算，不进 schema-visible scope。✅
 - **INV-5 契约边界**：签名 `(props: RendererComponentProps<CronEditorSchema>) => RendererRenderOutput`，数据只读 `props.props` / `meta` / `events` / `helpers`，响应式读走 selector hooks，不直连 store。✅
 - **Checklist A-G**：A/B/C/D/E/F 按上述各节成立；**G 不适用（零新包）**。
-- **例外与未决项**：值对象到 `TriggerSpec` 的映射责任在宿主（§9）；Java 侧字段定名待 C3 落定后回写本节。
+- **例外与未决项**：值对象到 `TriggerSpec` 的映射责任在宿主（§9）。~~Java 侧字段定名待 C3 落定后回写本节~~（已闭环 2026-10-07，plan 537：`repeatAnchorEvery`/`repeatAnchorUnit`/`repeatAnchorDate`，见 §9 映射表）。残余：锚点字段暂无 `NopJobSchedule` 实体/ORM 列（dao 实体路径无法持久化锚点配置，程序化 `TriggerSpec` 可达），宿主拆列归 C7 宿主映射示例工作面。
