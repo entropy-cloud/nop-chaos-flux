@@ -3,7 +3,7 @@
 > 审查方法：docs/skills/interaction-state-audit-prompt.md §4/§6/§9；双审查组独立 fresh session 真实驱动浏览器取证（2026-10-07）。
 > 完整 finding 全文与每页已验证无缺陷序列清单（taskflow 12 / report 10 / host 6 / page-designer 6 / print 8 / spreadsheet 11 / word 9 / scada 11 / debugger 6 条 ✓）见 plan 547 Current Baseline 与本卡 §findings 摘要；探针与原始读数存审查组 /tmp/isa-audit/ 与 /tmp/is-audit/（会话级），关键读数已摘录至各 finding 行。
 
-## Findings 摘要（22 = P1×5 + P2×8 + P3×9）
+## Findings 摘要（22 = P1×5 + P2×9 + P3×8）
 
 | ID              | 页面          | 症状                                                                                                | 类别/级别 | 归属                                  |
 | --------------- | ------------- | --------------------------------------------------------------------------------------------------- | --------- | ------------------------------------- |
@@ -34,3 +34,17 @@
 
 - F 类 WorkbenchShell 宿主对账：五宿主 collapsed+toggle 全接线（538 修复覆盖）、spreadsheet 家族映射无侧板豁免——无 finding。
 - SC pipe-junction 拖拽不动（可能设计意图）；PD 校验通过零反馈；DB Esc 面板惯例偏离；Direction 文案观感；word 工具栏滚动 400→62 合法钳制。
+
+## 修复收口（plan 547，2026-10-08）
+
+| ID         | 裁决                                                  | 修复面与证据                                                                                                                                                                                                                                                                                                                                                      |
+| ---------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| taskflow-3 | **fixed→verified**（IS-taskflow-designer-001）        | notify-toast.ts helper（notifyWithToast）接入 taskflow/report/report-host 三页 createDefaultEnv({notify})；红→绿 e2e：粘贴失败出 failure toast。                                                                                                                                                                                                                  |
+| taskflow-1 | **部分 fixed**（IS-taskflow-designer-002 保持 found） | graph tab：getDesignerDoc 改读 namespace scope 自身 doc（旧 `$designer` 键从未存在）+ authoringModel bootstrap + designer-toolbar then-chain 执行与 showToast 分支；e2e：Save 出"已保存"。遗留：tree-tab Save 的树结构 doc→model 同步、Import 无 input UI——successor-required。                                                                                   |
+| taskflow-2 | **fixed→verified**（IS-taskflow-designer-003）        | designer-command-adapter tree deleteSelection 按 selectedNodeIds/activeNode 路由 core.deleteTreeNode。诊断勘误：先前"keydown 零命中"是 dev server 陈旧 served 模块伪影——重启后 shortcut handler 正常触发；e2e：Delete 后 `script-2` 节点消失（非总数减），空分支占位卡保持计数。                                                                                  |
+| host-1     | **fixed→verified**（IS-report-designer-host-001）     | report-field-insert.ts（新模块，page-renderer 700 行门禁内抽离）：插入先 `spreadsheet:setCellValue` 写 `${fieldId}` 到目标 cell（sheetId 取自 target cell/range 自带字段；closure audit R2 补强：await 写入结果、`!ok`/`cancelled` 即中止——对齐 demo 参照的 abort 语义）再派发 `report-designer:dropFieldToTarget` 元数据。e2e：断言目标单元格出现 `${fieldId}`。 |
+| SS-1       | **fixed→verified**（IS-spreadsheet-001）              | 修复面为 demo bridge：spreadsheet-demo `hasSelection={snapshot.selection.kind !== 'none'}`（closure audit R1 勘误：初版 `Boolean(selectedCell) \|\| kind !== 'cell'` 在 fresh load kind='none' 时过度解禁——enabled-but-no-op 假供纳同类缺陷；改为按 kind 全集判别，cell/range/row/column/sheet 均解禁、none 禁用）。e2e：拖选后 Copy (Ctrl) 按钮 toBeEnabled。    |
+
+判别口径修正（先红后绿纪律保留的红用例现全绿）：taskflow Delete 断言改为 `.react-flow__node[data-id="script-2"]` 计数 0（原"总数减一"断言对分支占位卡渲染不判别）；spreadsheet 按钮判别用标准 `disabled` 属性 + 双语 aria-label 集合（getByRole button name）。
+
+e2e 全量：tests/e2e/designer-interaction-state.spec.ts 5/5 passed（2026-10-08，修复后复检；closure audit R1 修 SS-1 判别 + host-1 abort 语义后复跑 5/5 passed）。原始 survey 读数存本目录 survey-readings.json。

@@ -169,7 +169,7 @@ export function SpreadsheetDemo() {
             cellAddress={cellRef}
             cellValue={interactions.cellValue}
             frozen={frozen}
-            hasSelection={Boolean(selectedCell)}
+            hasSelection={snapshot.selection.kind !== 'none'}
             currentCellStyle={interactions.currentCell?.style}
             onUndo={() => void interactions.handleUndo()}
             onRedo={() => void interactions.handleRedo()}

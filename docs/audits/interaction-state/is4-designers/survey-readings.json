@@ -1,0 +1,128 @@
+[
+  {
+    "name": "taskflow-designer",
+    "route": "/#/taskflow-designer",
+    "reading": {
+      "h1": null,
+      "canvases": 2,
+      "scrollables": 0,
+      "buttons": 28,
+      "dialogs": 0,
+      "shellRails": 2,
+      "inputs": 3
+    },
+    "ok": true
+  },
+  {
+    "name": "report-designer",
+    "route": "/#/report-designer",
+    "reading": {
+      "h1": "Report Designer Playground",
+      "canvases": 188,
+      "scrollables": 1,
+      "buttons": 94,
+      "dialogs": 0,
+      "shellRails": 24,
+      "inputs": 3
+    },
+    "ok": true
+  },
+  {
+    "name": "report-designer-host",
+    "route": "/#/report-designer-host",
+    "reading": {
+      "h1": "Report Designer Host Playground",
+      "canvases": 370,
+      "scrollables": 1,
+      "buttons": 136,
+      "dialogs": 0,
+      "shellRails": 24,
+      "inputs": 3
+    },
+    "ok": true
+  },
+  {
+    "name": "page-designer",
+    "route": "/#/page-designer",
+    "reading": {
+      "h1": "页面设计器",
+      "canvases": 0,
+      "scrollables": 1,
+      "buttons": 41,
+      "dialogs": 0,
+      "shellRails": 2,
+      "inputs": 4
+    },
+    "ok": true
+  },
+  {
+    "name": "print-designer",
+    "route": "/#/print-designer",
+    "reading": {
+      "h1": null,
+      "canvases": 0,
+      "scrollables": 0,
+      "buttons": 20,
+      "dialogs": 0,
+      "shellRails": 0,
+      "inputs": 14
+    },
+    "ok": true
+  },
+  {
+    "name": "spreadsheet",
+    "route": "/#/spreadsheet",
+    "reading": {
+      "h1": "Spreadsheet Playground",
+      "canvases": 199,
+      "scrollables": 1,
+      "buttons": 93,
+      "dialogs": 0,
+      "shellRails": 0,
+      "inputs": 2
+    },
+    "ok": true
+  },
+  {
+    "name": "word-editor",
+    "route": "/#/word-editor",
+    "reading": {
+      "h1": "Word Editor",
+      "canvases": 5,
+      "scrollables": 2,
+      "buttons": 57,
+      "dialogs": 0,
+      "shellRails": 4,
+      "inputs": 13
+    },
+    "ok": true
+  },
+  {
+    "name": "scada-editor-demo",
+    "route": "/#/scada-editor-demo",
+    "reading": {
+      "h1": "scada-editor-demo 编辑器演示页",
+      "canvases": 17,
+      "scrollables": 0,
+      "buttons": 75,
+      "dialogs": 0,
+      "shellRails": 2,
+      "inputs": 3
+    },
+    "ok": true
+  },
+  {
+    "name": "debugger-lab",
+    "route": "/#/debugger-lab",
+    "reading": {
+      "h1": "Debugger Lab",
+      "canvases": 0,
+      "scrollables": 0,
+      "buttons": 29,
+      "dialogs": 0,
+      "shellRails": 0,
+      "inputs": 3
+    },
+    "ok": true
+  }
+]

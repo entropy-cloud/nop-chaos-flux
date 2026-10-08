@@ -59,17 +59,14 @@ test.describe('IS-4 designer interaction state (plan 547)', () => {
     await page.waitForTimeout(1500);
     const node = page.locator('.react-flow__node[data-id="script-2"]').first();
     await expect(node).toBeVisible({ timeout: 20_000 });
-    const before = await page.locator('.react-flow__node').count();
     await node.click();
     await page.waitForTimeout(300);
-    await expect(page.locator('.react-flow__node.selected, .react-flow__node[aria-selected="true"]').first()).toBeVisible({ timeout: 5_000 }).catch(() => {});
     await page.keyboard.press('Delete');
     await page.waitForTimeout(600);
-    const after = await page.locator('.react-flow__node').count();
-    expect(
-      after,
-      `Delete must remove the selected branch node (before ${before}, after ${after}; selection-cleared-without-delete = the taskflow-2 defect)`,
-    ).toBeLessThan(before);
+    // deleting the sole child of a branch leaves an empty-branch placeholder
+    // card (also a .react-flow__node), so the correct V3 reading is that the
+    // script-2 node itself is gone — total count may stay flat.
+    await expect(page.locator('.react-flow__node[data-id="script-2"]')).toHaveCount(0, { timeout: 5_000 });
     await assertTrackedPageErrors(page);
   });
 
@@ -79,7 +76,7 @@ test.describe('IS-4 designer interaction state (plan 547)', () => {
     await gotoPage(page, '/#/report-designer-host');
     // select a visible cell in the spreadsheet canvas
     const cell = page.locator('[data-slot="spreadsheet-cell"], [role="gridcell"]').first();
-    await expect(cell.first).toBeTruthy;
+    await expect(cell).toBeVisible({ timeout: 10_000 });
     const target = page.locator('[data-slot="spreadsheet-cell"]').first();
     const fallback = page.getByText('Alpha').first();
     if (await target.isVisible().catch(() => false)) {
@@ -111,6 +108,11 @@ test.describe('IS-4 designer interaction state (plan 547)', () => {
     const cells = page.locator('[role="gridcell"]');
     const count = await cells.count();
     expect(count, 'grid cells present').toBeGreaterThan(4);
+    // fresh load (selection kind 'none') must keep the mutation group
+    // disabled — guards against an over-enabling hasSelection that fakes an
+    // affordance with nothing selected (closure audit R1)
+    const freshCopyBtn = page.getByRole('button', { name: /复制 Ctrl|Copy Ctrl/ }).first();
+    await expect(freshCopyBtn).toBeDisabled();
     const a = await cells.nth(0).boundingBox();
     const b = await cells.nth(4).boundingBox();
     expect(a).not.toBeNull();

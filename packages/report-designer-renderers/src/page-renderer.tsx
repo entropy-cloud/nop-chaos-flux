@@ -43,6 +43,7 @@ import { Button, cn, resolveLucideIcon } from '@nop-chaos/ui';
 import { createReportDesignerActionProvider } from './host-action-provider.js';
 import { createReportFieldDragPayload, ReportFieldPanel } from './report-field-panel.js';
 import { ReportSpreadsheetCanvas } from './report-spreadsheet-canvas.js';
+import { insertFieldWithBinding } from './report-field-insert.js';
 import { getFieldCount } from './helpers.js';
 import { buildReportDesignerScopeData } from './host-data.js';
 import {
@@ -594,17 +595,12 @@ export function ReportDesignerPageRenderer(
                   if (!nextSource || !nextField) {
                     return;
                   }
-
-                  const target = snapshot.selectionTarget;
-                  if (target?.kind !== 'cell' && target?.kind !== 'range') {
-                    return;
-                  }
-
-                  await core.dispatch({
-                    type: 'report-designer:dropFieldToTarget',
-                    source: 'field-panel',
-                    field: createReportFieldDragPayload(nextSource, nextField),
-                    target,
+                  await insertFieldWithBinding({
+                    spreadsheetCore,
+                    core,
+                    selectionTarget: snapshot.selectionTarget,
+                    fieldId,
+                    payload: createReportFieldDragPayload(nextSource, nextField),
                   });
                 }}
                 canInsertField={() =>
