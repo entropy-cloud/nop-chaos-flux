@@ -203,7 +203,7 @@
             {
               "type": "container",
               "testid": "linear-inbox-topbar",
-              "className": "h-12 shrink-0 border-b flex items-center gap-3 px-4",
+              "className": "min-h-12 shrink-0 border-b flex items-center gap-3 px-4 py-1",
               "body": [
                 {
                   "type": "text",

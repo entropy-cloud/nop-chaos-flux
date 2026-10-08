@@ -427,8 +427,11 @@ export function createAntdProFetcherBranch(orders: AntdProOrder[], clone: <T>(va
         return { status: 0, data: clone(result) as T };
       }
       if (url.includes('/r/AntdPro__submitForm')) {
-        const id = typeof body.id === 'string' && body.id ? body.id : nextAntdProOrderId(orders);
-        return { status: 0, data: clone({ ok: true, id }) as T };
+        // plan 551 (IS-antdpro-form-dialog-001): submitForm used to return a
+        // bare {ok, id} without persisting — the dialog's「订单已创建」toast
+        // was false feedback (same-session list search found nothing). Persist
+        // through the same save path as the list's 新建订单.
+        return { status: 0, data: clone(saveAntdProOrder(orders, body)) as T };
       }
       if (url.includes('/r/AntdPro__selectOrder')) {
         const id = read('id') ?? '';

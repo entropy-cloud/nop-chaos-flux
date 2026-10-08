@@ -1,0 +1,287 @@
+{
+  "batch": "IS-7b-group-A",
+  "plan": 551,
+  "date": "2026-10-07",
+  "reviewer": "review-group A (fresh session, antdpro replica family, 9 pages)",
+  "env": "http://127.0.0.1:4175 strict-validation, Playwright chromium, programmatic readings only",
+  "surveyReadings": {
+    "antdpro-list": {
+      "surface": {
+        "pageButtons": [
+          "批量导出(antdpro-list-export)",
+          "新建订单(antdpro-list-new)",
+          "刷新(antdpro-toolbar-refresh)",
+          "密度(antdpro-toolbar-density)",
+          "列设置",
+          "搜索",
+          "重置"
+        ],
+        "queryControls": ["keyword input", "status select", "channel select"],
+        "rowOpsPerPage": 10,
+        "sortButtons": 2,
+        "seedRows": 36,
+        "pageSize": 10
+      },
+      "densityClick": {
+        "before": { "overlays": 0, "rowH": 55, "bodyLen": 1493, "toasts": [] },
+        "after": { "overlays": 0, "rowH": 55, "bodyLen": 1493, "toasts": [] }
+      },
+      "exportClick": {
+        "before": { "overlays": 0, "toasts": [] },
+        "after": { "overlays": 0, "toasts": [] },
+        "download": false
+      },
+      "statusFilter": {
+        "totalBefore": "共 36 条",
+        "totalAfter": "共 14 条",
+        "statusColCells": "10/10 已完成",
+        "rows": 10
+      },
+      "partialBatchDelete": {
+        "selected": 2,
+        "dataCount": "2",
+        "toast": "批量删除成功",
+        "firstGone": true,
+        "secondGone": true,
+        "thirdStill": true,
+        "remainingRows": 10,
+        "confirmDialog": false
+      },
+      "editPrefill": {
+        "customer": "杭州云澈服饰有限公司",
+        "amount": "128",
+        "channelTrigger": "官网",
+        "owner": "陈立群"
+      },
+      "editCancelV5": { "rowTextUnchanged": true, "reopenCustomer": "杭州云澈服饰有限公司" },
+      "v1Scroll": {
+        "before": 300,
+        "afterRefresh": 300,
+        "afterDeleteRefresh": 300,
+        "container": "shell main scrollable (non-window)"
+      },
+      "consoleErrorsLoadAndSearch": 0
+    },
+    "antdpro-form-basic": {
+      "emptySubmit": { "committedSpec17": "field-invalid + error text + 0 endpoint calls" },
+      "weightOverMax": {
+        "typed": "150",
+        "afterBlurValue": "100",
+        "dataFieldInvalid": null,
+        "fieldError": null,
+        "toasts": []
+      },
+      "rangePopover": { "opens": true, "shortcutsRendered": false },
+      "validSubmit": {
+        "toast": "任务已提交，即将跳转",
+        "endpoints": { "AntdPro__submitForm": 1 },
+        "navigatedTitle": "AntD Pro 提交结果页"
+      }
+    },
+    "antdpro-form-grouped": {
+      "zeroFillSubmit": {
+        "toasts": ["入库登记已提交，即将跳转"],
+        "navigatedTitle": "AntD Pro 提交结果页",
+        "endpoints": { "AntdPro__submitForm": 1 },
+        "entryNoRequiredStar": true,
+        "entryNoInvalidAfterSubmit": null,
+        "inlineFormInvalidCountFreshVisit": 0
+      },
+      "resetScope": {
+        "inlineValueKept": "RK202608290001",
+        "remarkKept": "备注内容甲",
+        "ownerDeptCleared": ""
+      },
+      "linkageRulesDeclared": false
+    },
+    "antdpro-form-dialog": {
+      "emptySubmit": {
+        "invalid": "",
+        "errorText": "客户名称不能为空",
+        "endpoints": {},
+        "dialogStillOpen": true
+      },
+      "cancelReopenV5": { "reopenedCustomer": "" },
+      "escClose": "committed spec 18 green",
+      "submit": { "toast": "订单已创建", "endpoints": { "AntdPro__submitForm": 1 } },
+      "listSearchAfterSubmit": {
+        "customer": "假反馈验证客户丙",
+        "rows": 1,
+        "rowsIsEmptyStateRow": true,
+        "emptyStateText": true
+      },
+      "dialogInDialogPresent": false
+    },
+    "antdpro-form-step": {
+      "prevAtStep0": { "visible": true, "disabled": true },
+      "confirmStepShowsValues": { "hasPayee": true, "hasAmount3600": true },
+      "backPreserves": { "payee": "验收收款户", "amount": "3600" },
+      "doneStepPrev": {
+        "visible": true,
+        "backToIndex": 1,
+        "doubleSubmitReachable": false,
+        "note": "completion navigates away via onComplete.then navigate"
+      },
+      "finish": "committed spec 15 green (toast + endpoint 1 + navigate)"
+    },
+    "antdpro-detail-basic": {
+      "directNav": {
+        "orderNo": "SO2026080100",
+        "customer": "杭州云澈服饰有限公司",
+        "amount": "¥ 128.00",
+        "visibleStatusTags": ["已完成"]
+      },
+      "printStub": { "printCalls": 1, "toasts": [] },
+      "backNav": { "hash": "#/complex-pages/antdpro-list", "title": "AntD Pro 订单列表" },
+      "opViewSessionPointer": "committed spec 03 green"
+    },
+    "antdpro-detail-advanced": {
+      "stepsBefore": { "currentStepTitle": "客户签收", "currentIdx": 3 },
+      "afterReject": {
+        "toast": "已驳回，订单关闭",
+        "currentStepTitle": "创建订单",
+        "currentIdx": 0
+      },
+      "afterApprove": { "toast": "审批通过", "currentStepTitle": "客户签收", "currentIdx": 3 },
+      "afterSecondReject": { "currentIdx": 0 },
+      "approvalCommentAfterReject": "审批意见客户侧预算调整，经确认关闭该单。",
+      "approvalTabTimelineRows": 4
+    },
+    "antdpro-dashboard": {
+      "pageLevelInteractiveControls": 0,
+      "kpis": {
+        "todaySales": "11800",
+        "monthSales": "126200",
+        "totalOrders": "36",
+        "pendingOrders": "4",
+        "matchMock": true
+      },
+      "lineChartPaths": 2,
+      "pieSlices": 4,
+      "topTableRows": 10,
+      "legend": {
+        "wrapper": "recharts-legend-wrapper",
+        "cursor": "default",
+        "interactiveAffordance": false
+      }
+    },
+    "antdpro-result": {
+      "surface": {
+        "buttons": ["查看订单", "再录一单"],
+        "iconVisible": true,
+        "descStatic": "订单编号 SO2026080136 已进入备货流程…"
+      },
+      "primaryNav": { "hash": "#/complex-pages/antdpro-list", "title": "AntD Pro 订单列表" },
+      "secondaryNav": { "hash": "#/complex-pages/antdpro-form-basic", "title": "AntD Pro 基础表单" }
+    }
+  },
+  "findings": [
+    {
+      "id": "IS-antdpro-list-001",
+      "page": "antdpro-list",
+      "symptom": "工具栏「密度」按钮死控：trusted click 零效果（无菜单、无行高变化、无 toast）",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "sequence": "open list -> click antdpro-toolbar-density -> readings",
+      "evidence": "before {overlays:0,rowH:55,bodyLen:1493} == after; schema button has no onClick",
+      "ownership": "demo 接线",
+      "suspectedFile": "apps/playground/src/complex-pages/page-schemas/antdpro-list.json (toolbar 密度按钮, no onClick)",
+      "redE2e": "click -> assert menu appears or row height changes (red today)"
+    },
+    {
+      "id": "IS-antdpro-list-002",
+      "page": "antdpro-list",
+      "symptom": "页头「批量导出」按钮死控：点击无菜单/无下载/无 toast，DOM 零变化",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "sequence": "open list -> click antdpro-list-export -> readings",
+      "evidence": "before == after (overlays 0, toasts [], no download); schema has no onClick",
+      "ownership": "demo 接线",
+      "suspectedFile": "apps/playground/src/complex-pages/page-schemas/antdpro-list.json (header 批量导出按钮)",
+      "redE2e": "click -> assert download or toast (red today)"
+    },
+    {
+      "id": "IS-antdpro-list-003",
+      "page": "antdpro-list",
+      "symptom": "批量删除无确认环节，单击立即真删（行级删除有确认弹窗，保护不一致）",
+      "class": "E",
+      "priority": "P2",
+      "invariant": "E-parity",
+      "sequence": "select 2 rows -> click 批量删除 once -> rows removed + toast, no confirm dialog",
+      "evidence": "data-count=2 -> toast 批量删除成功; SO…100/101 gone, SO…102 kept; confirmDialog=false",
+      "ownership": "demo 接线",
+      "suspectedFile": "apps/playground/src/complex-pages/page-schemas/antdpro-list.json (batch-bar 批量删除 direct ajax)",
+      "redE2e": "click -> assert confirm dialog appears before deletion"
+    },
+    {
+      "id": "IS-antdpro-form-basic-001",
+      "page": "antdpro-form-basic",
+      "symptom": "input-number 超上限静默钳制：150 -> blur -> 100，无校验态无提示（与 IS-inline-edit-table-002 同根新表现点）",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "sequence": "fill 目标权重=150 -> blur -> read value + validation state",
+      "evidence": "{value:'100', dataFieldInvalid:null, fieldError:null, toasts:[]}; submit then succeeds with silently changed value",
+      "ownership": "renderer（同根家族）",
+      "suspectedFile": "packages/flux-renderers-form/src/renderers/input-number-renderer.tsx clamp() L17-20, applied L129/L145",
+      "redE2e": "fill 150 -> blur -> assert field-invalid or toast (red: silent clamp)"
+    },
+    {
+      "id": "IS-antdpro-form-grouped-001",
+      "page": "antdpro-form-grouped",
+      "symptom": "零填写提交成功：required 星标字段（入库编号/经手人）永不校验，成功文案「入库登记已提交」虚指整页而提交链仅覆盖责任信息卡 2 个选填字段",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "sequence": "open page -> submit with zero input -> toast + navigate + endpoint 1; inline form never flagged invalid",
+      "evidence": "{toasts:['入库登记已提交，即将跳转'], navigated:'提交结果页', endpoints:{submitForm:1}, entryNoInvalid:null, requiredStar:true}",
+      "ownership": "demo 接线",
+      "suspectedFile": "apps/playground/src/complex-pages/page-schemas/antdpro-form-grouped.json (three sibling forms; submitAction only on owner form L149-205)",
+      "redE2e": "submit empty -> assert 入库编号 field-error visible && endpoint count 0 (red: toast + endpoint 1)"
+    },
+    {
+      "id": "IS-antdpro-form-grouped-002",
+      "page": "antdpro-form-grouped",
+      "symptom": "「重置」只清责任信息卡，入库基信/备注卡输入保留（局部性可辩护，P3 裁决）",
+      "class": "E",
+      "priority": "P3",
+      "invariant": "ergonomics",
+      "sequence": "fill inline entryNo + remark + ownerDept -> 重置 -> read three values",
+      "evidence": "{inlineKept:'RK202608290001', remarkKept:'备注内容甲', ownerDeptCleared:''}",
+      "ownership": "demo 接线",
+      "suspectedFile": "apps/playground/src/complex-pages/page-schemas/antdpro-form-grouped.json (component:reset targets owner form only)",
+      "redE2e": "n/a (P3, three-state adjudication)"
+    },
+    {
+      "id": "IS-antdpro-form-dialog-001",
+      "page": "antdpro-form-dialog",
+      "symptom": "「订单已创建」假反馈：mock submitForm 不落任何订单，同会话 list 搜索提交客户为 0 行（对照 list 新建走 saveOrder 真实落表）",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "sequence": "open dialog -> fill customer -> 确定 -> toast -> hash to antdpro-list -> search customer",
+      "evidence": "{toast:'订单已创建', endpoints:{submitForm:1}} -> list search {rows:1(empty-state), emptyState:true}; page desc claims 提交写入模拟后端",
+      "ownership": "demo 接线 × mock 语义",
+      "suspectedFile": "apps/playground/src/complex-pages/page-schemas/antdpro-form-dialog.json (submitAction url submitForm) + apps/playground/src/complex-pages/shared/mock-backend-antdpro.ts L429-432 (no-persist stub) vs saveOrder L415-417",
+      "redE2e": "submit -> search list -> assert rows>=1 (red: empty state)"
+    }
+  ],
+  "watchList": [
+    "input-number 静默钳制家族：IS-inline-edit-table-002 (IS-7a) + IS-antdpro-form-basic-001 同根，建议并案类扫描 min/max 两向",
+    "antdpro-result 静态文案硬编码订单号 SO2026080136 与真实提交 id 不一致（display fidelity，scope 外）",
+    "reactive-dispatch console 噪声（committed spec 09-11 allowance 2）在搜索路径未复现（console.error=0）",
+    "form-grouped reset 局部性（grouped-002 P3 裁决输入）",
+    "批量删除若豁免确认，建议 demo 文案注明即时生效"
+  ],
+  "naRegistrations": [
+    "antdpro-dashboard: 交互面 n/a — 页面根 0 交互控件（程序化枚举），纯展示复刻；KPI/图表/表格真值全对",
+    "antdpro-form-dialog: dialog-in-dialog n/a（页面单弹窗）",
+    "antdpro-form-grouped: linkage 规则 n/a（schema 未声明）",
+    "antdpro-result: 失败态 n/a（schema 仅成功态，无隐藏分支）",
+    "antdpro-list: Enter 不重查 — 550 已立契约（搜索钮驱动），不定罪"
+  ],
+  "pagesClean": ["antdpro-form-step", "antdpro-detail-basic", "antdpro-detail-advanced"],
+  "counts": { "total": 7, "P0": 0, "P1": 4, "P2": 2, "P3": 1 }
+}

@@ -59,12 +59,6 @@
               "body": [
                 {
                   "type": "button",
-                  "label": "批量导出",
-                  "className": "adp-btn adp-btn-outline",
-                  "testid": "antdpro-list-export"
-                },
-                {
-                  "type": "button",
                   "label": "新建订单",
                   "className": "adp-btn adp-btn-primary",
                   "testid": "antdpro-list-new",
@@ -288,13 +282,6 @@
                 "action": "component:refresh",
                 "componentId": "antdpro-list-crud"
               }
-            },
-            {
-              "type": "button",
-              "label": "密度",
-              "icon": "rows-3",
-              "variant": "outline",
-              "testid": "antdpro-toolbar-density"
             },
             {
               "type": "batch-bar",

@@ -1,0 +1,366 @@
+{
+  "batch": "IS-7b group B (plan 551 Phase 1)",
+  "date": "2026-10-08",
+  "method": "interaction-state-audit-prompt §4/§6/§9; fresh-session Playwright chromium; readings convict, screenshots unused",
+  "devServer": "http://127.0.0.1:4175 (strict-validation)",
+  "pages": [
+    "linear-issues",
+    "linear-board",
+    "linear-inbox",
+    "linear-detail",
+    "linear-projects",
+    "linear-settings",
+    "notion-database",
+    "airtable-grid",
+    "stripe-payments"
+  ],
+  "surveyReadings": {
+    "consoleErrorsOnLoad": { "all9Pages": 0 },
+    "linear-issues": {
+      "rows": "header+10 (ENG-101..110), total 34, pager 4 pages",
+      "surfaces": {
+        "rowSelectCells": 10,
+        "peekTriggers": 10,
+        "bulkDialogs": 4,
+        "topbarDialogs": 4,
+        "keyboardBindings": ["g i", "g m", "g a", "g d"]
+      },
+      "sequences": {
+        "S2_select2": { "bulkBarVisible": true, "bulkCount": "已选 2 项" },
+        "S3_bulkStatus": {
+          "statusBefore": ["todo", "in_progress"],
+          "statusAfter": ["backlog", "backlog"],
+          "toast": "已批量修改状态",
+          "dialogClosed": true,
+          "scrollKept": 634
+        },
+        "S4_keywordFilter": { "rowsBefore": 11, "rowsAfter": 1 },
+        "S4_statusFilter": { "allRows": "ln-status-todo" },
+        "S5_clear": { "rowsRestored": 11 },
+        "S6_peek": {
+          "peekKey": "ENG-102",
+          "matchesRow": true,
+          "escResidue": 0,
+          "v1KeyboardScroll": { "focus": 329, "open": 329, "close": 329 }
+        },
+        "S8_create": {
+          "toast": "问题已创建",
+          "totalBefore": "共 34 条",
+          "totalAfter": "共 35 条",
+          "rowKeysChanged": false,
+          "newRowOnlyOnLastPage": true
+        },
+        "S9_pagination": {
+          "keysBefore": "ENG-101..110",
+          "keysAfter": "ENG-111..120",
+          "ariaCurrent": "1->2"
+        },
+        "S10_keyboardGI": { "hash": "#/complex-pages/linear-inbox" },
+        "S7_displayDrawer": {
+          "groupingOptions": ["无分组", "按状态", "按指派人", "按优先级"],
+          "rowsAfterChange": 11,
+          "listChanged": false
+        }
+      }
+    },
+    "linear-board": {
+      "columns": 5,
+      "cards": 34,
+      "columnCountsTruthful": [7, 8, 7, 9, 3],
+      "sequences": {
+        "B1_drag": {
+          "col0": "7->6",
+          "col1": "8->9",
+          "headersSynced": true,
+          "totalConstant": 34,
+          "hScrollStable": true,
+          "ghostPresentMidDrag": true
+        },
+        "B2_escCancel": {
+          "columnsBefore": [7, 8, 7, 9, 3],
+          "columnsAfter": [7, 8, 7, 9, 3],
+          "identical": true
+        },
+        "B3_tabList": { "hash": "#/complex-pages/linear-issues" }
+      },
+      "dndNote": "拖拽已接线：卡片可拖拽跨列，状态与列计数随会话态更新"
+    },
+    "linear-inbox": {
+      "rows": 9,
+      "unreadDots": 3,
+      "pill": "3 条未读",
+      "groups": ["今天(3)", "本周(3)", "更早(3)"],
+      "sequences": {
+        "N1_itemArchive": {
+          "rows": "9->8",
+          "dots": "3->2",
+          "pill": "3->2 条未读",
+          "nav": "3->2",
+          "groupToday": "3->2",
+          "toast": "通知已归档"
+        },
+        "N3_geometry": {
+          "topbar": { "top": 172, "bottom": 220 },
+          "bulkReadBtn": { "top": 219.5, "bottom": 251.5 },
+          "groupsContainerTop": 236,
+          "centerHit": "group-header DIV",
+          "hitIsBtn": false
+        },
+        "N4_centerClick": { "dots": "3->3", "toasts": [] },
+        "N4_topEdgeClick": { "dots": "3->0", "pill": "0 条未读", "toast": "已全部标为已读" }
+      }
+    },
+    "linear-detail": {
+      "key": "ENG-105",
+      "subIssues": 3,
+      "activity": 4,
+      "statusOptions": 5,
+      "commentBoxInSchema": false,
+      "sequences": {
+        "D1_statusChange": {
+          "pill": "待办->已完成",
+          "pillClass": "ln-pill-todo->ln-pill-done",
+          "toast": "状态已更新"
+        },
+        "D2_copy": { "toasts": ["Failed to execute 'writeText' ...", "复制失败"] },
+        "D2_archive": { "toast": "问题已归档", "hash": "#/complex-pages/linear-issues" },
+        "D3_geometry": {
+          "topbar": { "top": 192, "bottom": 240 },
+          "copyBtn": { "top": 234.5, "bottom": 266.5 },
+          "columnsTop": 256,
+          "centerHit": "BUTTON(copy)",
+          "centerClickable": true
+        }
+      }
+    },
+    "linear-projects": {
+      "cards": 3,
+      "cycles": 7,
+      "countText": "3 个项目",
+      "cardButtons": [0, 0, 0],
+      "cardClickEffect": "none",
+      "pureDisplay": true
+    },
+    "linear-settings": {
+      "switches": 3,
+      "tabs": 3,
+      "subnav": 4,
+      "staticNote": "本页为零写提交的静态形态：表单不绑定提交动作，保存流转归后续交互计划。",
+      "sequences": {
+        "switchToggle": { "ariaChecked": "false->true x3" },
+        "inputFill": { "valueKept": "改过的名称" },
+        "tabSwitch": {
+          "appearanceSelected": true,
+          "appearanceVisible": true,
+          "generalHidden": true
+        },
+        "subnavClick": { "activeMoved": false }
+      }
+    },
+    "notion-database": {
+      "views": [
+        "全部记录(table 11 rows)",
+        "状态看板(32 cards)",
+        "封面墙(30 cards)",
+        "排期月历(6-week grid)",
+        "进行清单(24 rows)"
+      ],
+      "sequences": {
+        "NT1_viewTabs": { "exactlyOneViewVisibleEachTab": true, "ariaSelectedSynced": true },
+        "NT2_peek": {
+          "titleMatchesRow": "首页信息流卡片支持双列布局切换",
+          "status": "进行中",
+          "escResidue": 0
+        },
+        "NT6_peekEditSave": {
+          "statusChange": "进行中->未开始",
+          "toast": "属性已保存",
+          "rowUpdated": true
+        },
+        "NT3_create": {
+          "toast": "记录已创建",
+          "gallery": "30->31",
+          "list": "24->25",
+          "tablePage1Unchanged": true
+        },
+        "NT4_dialogs": {
+          "settingsDrawer": true,
+          "searchDialog": true,
+          "columnMenu": true,
+          "allEscClean": true
+        }
+      }
+    },
+    "airtable-grid": {
+      "grid": "10 rows x 20 cols, scrollWidth 2857, total 33",
+      "sequences": {
+        "AT1_rowHeight": { "rowPx": "32->80", "activePill": "short->tall" },
+        "AT1_group": {
+          "groups": ["需求评审(9)", "设计排期(8)", "开发进行(8)", "验收发布(8)"],
+          "sum": 33
+        },
+        "AT4_groupOwner": { "chips": ["文清鹤", "韩知序", "陆明澈", "姚霏然", "程以宁"] },
+        "AT4_v1KeyboardIsolated": { "slBefore": 400, "slDuringModal": 0, "slAfterEsc": 0 },
+        "AT5_insertRow": {
+          "toast": "记录已创建",
+          "summary": "共 33 条->共 34 条",
+          "currentGridUnchanged": true
+        },
+        "AT5_recordEdit": { "toast": "记录已保存", "gridRowUpdated": true },
+        "AT3_filterEntryClick": { "dialogOpened": false, "declaredShapeOnly": true }
+      }
+    },
+    "stripe-payments": {
+      "rows": "10/page, total 36",
+      "sortColumns": ["amount", "date"],
+      "sequences": {
+        "SP1_pagination": {
+          "pager": "第 1-10 条,共 36 条 -> 第 11-20 条,共 36 条",
+          "rowsChanged": true
+        },
+        "SP1_sort": { "ariaSort": "ascending", "rowsAscending": true },
+        "SP4_filterApply": { "allRowsSucceeded": true },
+        "SP4_chipRemove": { "listWidened": true, "pendingOrRefundedRowsReturn": true },
+        "SP9_refund": { "row": "已成功->已退款", "toast": "退款任务已创建" },
+        "SP9_widgetToggle": { "chartWrapUnmounted": true },
+        "SP3_datePresets": {
+          "activeMoved": true,
+          "listUnchanged": true,
+          "declaredZeroEffect": true
+        },
+        "SP7_widgetDialogButtons": [
+          { "text": "Apply", "tid": "stripe-widget-apply" },
+          { "text": "关闭" }
+        ]
+      }
+    }
+  },
+  "findings": [
+    {
+      "id": "IS-linear-inbox-001",
+      "page": "linear-inbox",
+      "symptom": "顶栏批量「全部标为已读/归档所选」按钮越出 h-12 topbar 带、下半被通知列表层覆盖；视觉中心点击零响应（半死控件），上缘可点",
+      "class": "B",
+      "invariant": "V4",
+      "priority": "P1",
+      "evidence": "topbar 172..220 vs bulkBtn 219.5..251.5 vs groups top=236; center elementFromPoint=组头 DIV; centerClick{dots 3->3, toasts[]}; topEdgeClick{dots 3->0, toast 已全部标为已读}",
+      "ownership": "demo 接线（linear-inbox.json topbar h-12 + bulk 容器类）× playground ln-btn 样式；具体 CSS 链未证实",
+      "redE2e": "elementFromPoint(bulkCenter).contains(btn) 为 true；中心点击后 dots 3->0 + toast"
+    },
+    {
+      "id": "IS-airtable-grid-001",
+      "page": "airtable-grid",
+      "symptom": "记录展开 modal 打开将网格横向 scrollLeft 400->0，Esc 关闭后不恢复（gantt 滚动归零同族、modal 触发形态）",
+      "class": "A",
+      "invariant": "V1",
+      "priority": "P1",
+      "evidence": "键盘隔离：sl 400 -> Enter 开 modal {sl:0, modalOpen:true} -> Esc {sl:0}；鼠标路径同值",
+      "ownership": "renderer 候选（surface open 触发网格子树重渲染/remount，SchemaRenderer remount 先例同族）；未证实到层",
+      "redE2e": "sl=400 -> 键盘开 modal -> expect(sl).toBe(400) during 与 after"
+    },
+    {
+      "id": "IS-linear-issues-001",
+      "page": "linear-issues",
+      "symptom": "新建问题 toast 为真 + 计数 34->35，但当前视图零变化，新问题仅末页可达、无引导",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P3",
+      "evidence": "rowKeys 全同 + total 34->35 + toast 问题已创建；末页翻页才见新行",
+      "ownership": "demo 接线（mock append-at-end + refreshNearest 停留第 1 页）；IS-sundial-workbench-002 同族",
+      "redE2e": "创建后 expect 当前页行集含新标识符 或 断言存在定位反馈"
+    },
+    {
+      "id": "IS-linear-issues-002",
+      "page": "linear-issues",
+      "symptom": "Display 抽屉「分组/排序」select 无消费者，列表永不变化（受控无通道）",
+      "class": "C",
+      "invariant": "V3(反模式 c)",
+      "priority": "P3",
+      "evidence": "分组 options 全可选，选择后 rows=11 不变、无分组头；schema displayGrouping/displayOrdering 为 dialog 域纯字段",
+      "ownership": "demo 接线（linear-issues.json display-body）",
+      "redE2e": "分组选按状态后断言出现分组结构或行序变化"
+    },
+    {
+      "id": "IS-linear-detail-001",
+      "page": "linear-detail",
+      "symptom": "topbar 动作按钮越出 h-12 topbar 带约 26px、底部伸入内容层（中心尚可点，未成死区；IS-linear-inbox-001 同根轻症）",
+      "class": "B",
+      "invariant": "V4",
+      "priority": "P3",
+      "evidence": "topbar 192..240 vs copyBtn 234.5..266.5 vs columnsTop 256; centerHit=copy 按钮",
+      "ownership": "demo 接线（topbar 布局类，与 inbox-001 一并收敛）",
+      "redE2e": "断言按钮 bottom <= topbar bottom"
+    },
+    {
+      "id": "IS-stripe-payments-001",
+      "page": "stripe-payments",
+      "symptom": "「添加 widget」dialog 主按钮英文「Apply」，同页其余操作全中文",
+      "class": "C",
+      "invariant": "V3(弱)",
+      "priority": "P3",
+      "evidence": "buttons=[Apply(stripe-widget-apply), 关闭]；schema label:\"Apply\"；IS-approval-tasks-003 同族",
+      "ownership": "demo 接线（stripe-payments.json label）",
+      "redE2e": "dialog 内主按钮文本为中文「应用」"
+    },
+    {
+      "id": "IS-linear-nav-001",
+      "page": "linear-* 全家族 + linear-settings 子导航（表现点 6 页）",
+      "symptom": "侧边导航项渲染为可点样态（ln-side-item/active 高亮）但全家族无 handler，点击零响应",
+      "class": "C/E",
+      "invariant": "V6",
+      "priority": "P3",
+      "evidence": "linear-issues 点击 nth(2) hash 不变；linear-settings 子导航 active 不迁移；六页 schema 导航项均无 onClick",
+      "ownership": "demo 接线（复刻导航统一未接线且无口径注记）",
+      "redE2e": "点击后断言 hash/active 迁移或家族口径 note 在场"
+    }
+  ],
+  "watchList": [
+    "linear-detail copy 权限拒绝时裸浏览器异常文案与「复制失败」并列（framework copy 错误映射；IS-approval-tasks-003 同族；正常授权环境不复现）",
+    "notion/airtable 新建/插行当前分页视图不可见（计数与兄弟视图即时更新；IS-linear-issues-001 同族低烈度）",
+    "airtable 分组样本区标题文案静态（切负责人后仍「按阶段」）",
+    "stripe 初始 chip 文案与初始数据不符（chip-note 已声明固定维度样本——防声明漂移留观察）",
+    "drawer 面 testid 落 drawer-surface 外壳、role=dialog 在内层 drawer-popup（自动化选择器口径差异；meta 传递正确——初判 testid 丢失经复核降级）",
+    "complex-pages-model.ts 描述过期：linear-board「拖拽不接线」实为已接线；linear-issues peek 实为可交互 dialog",
+    "notion peek combobox option 一次 locator 点击超时（listbox 重渲染瞬态，坐标复测通过）"
+  ],
+  "naRegistrations": [
+    {
+      "page": "linear-projects",
+      "scope": "页面级",
+      "reason": "纯展示复刻：0 声明交互面、卡无 button、点击无效果；计数=卡数 3=3（读数为证）"
+    },
+    {
+      "page": "linear-settings",
+      "scope": "保存/提交",
+      "reason": "static-note 声明零写提交；开关/输入/tabs 已实测为真"
+    },
+    {
+      "page": "linear-detail",
+      "scope": "comment box / 优先级/指派 picker",
+      "reason": "schema 无该节点；子问题/关系/活动流为展示行"
+    },
+    {
+      "page": "airtable-grid",
+      "scope": "筛选入口、列模型动作、Space 展开、hover/选中样本、Hide fields 切换",
+      "reason": "toolbar-note/grid-note/抽屉注记显式声明形态或不接线（原文引注见报告 §1.8）"
+    },
+    {
+      "page": "stripe-payments",
+      "scope": "再次收款/发送收据、搜索、密度样本、初始 chips",
+      "reason": "抽屉注记与 chip-note/模型描述声明零生效或样本（原文引注见报告 §1.9）"
+    },
+    {
+      "page": "linear-inbox",
+      "scope": "批量归档上缘路径",
+      "reason": "与 bulk-read 同 geometry，通道经 read-all 证实；未单独复测——如实注记非独立证据"
+    }
+  ],
+  "probeArtifactsRetracted": [
+    "linear-issues 批量 apply「点击死」→ hit-test 证伪（combobox 过渡竞态）→ GREEN",
+    "linear-issues 分页「死」→ 误点 1 钮 → A 锚复测 1->2 行集更换 → GREEN",
+    "linear-issues 三 dialog「打开滚动归零」→ Playwright auto-scroll 伪影，键盘隔离 V1 PASS（airtable 同形态经键盘隔离后定罪，判别路径相同结论相反）",
+    "drawer testid「丢失」→ Z1 探针证实在外壳节点 → 降级 watch",
+    "notion NT5 option 点击超时 → 瞬态，坐标复测通过"
+  ],
+  "counts": { "findings": 7, "P0": 0, "P1": 2, "P2": 0, "P3": 5, "watch": 7, "naRegistrations": 6 }
+}

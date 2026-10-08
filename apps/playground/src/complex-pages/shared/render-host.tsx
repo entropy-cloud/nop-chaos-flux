@@ -94,6 +94,20 @@ export function ShowcaseSchemaHost({
           formulaCompiler={showcaseFormulaCompiler}
           data={data}
           onActionError={(error) => {
+            // Form-validation rejections ({ok:false, error: ValidationError[]})
+            // are surfaced inline by the form (toast + aria-invalid) — they are
+            // not host-level action errors (plan 551: the grouped-form merge
+            // made empty submits fail validation and this log flagged every
+            // gated submit as a console error).
+            if (
+              error &&
+              typeof error === 'object' &&
+              'ok' in error &&
+              (error as { ok: boolean }).ok === false &&
+              Array.isArray((error as { error?: unknown }).error)
+            ) {
+              return;
+            }
             console.error('[showcase] action error:', error);
           }}
         />

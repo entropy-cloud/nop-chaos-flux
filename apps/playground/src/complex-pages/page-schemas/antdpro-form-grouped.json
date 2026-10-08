@@ -14,11 +14,28 @@
           "gap": 6,
           "className": "items-center adp-breadcrumb",
           "body": [
-            { "type": "text", "text": "项目中心", "className": "adp-breadcrumb-link" },
-            { "type": "text", "text": "/" },
-            { "type": "text", "text": "仓储管理", "className": "adp-breadcrumb-link" },
-            { "type": "text", "text": "/" },
-            { "type": "text", "text": "入库登记" }
+            {
+              "type": "text",
+              "text": "项目中心",
+              "className": "adp-breadcrumb-link"
+            },
+            {
+              "type": "text",
+              "text": "/"
+            },
+            {
+              "type": "text",
+              "text": "仓储管理",
+              "className": "adp-breadcrumb-link"
+            },
+            {
+              "type": "text",
+              "text": "/"
+            },
+            {
+              "type": "text",
+              "text": "入库登记"
+            }
           ]
         },
         {
@@ -35,14 +52,26 @@
       ]
     },
     {
-      "type": "container",
-      "className": "adp-card p-6 mb-4",
+      "type": "form",
+      "id": "antdpro-grouped-form",
+      "testid": "antdpro-grouped-form",
+      "columnCount": 2,
+      "submitAction": {
+        "action": "ajax",
+        "args": {
+          "url": "/r/AntdPro__submitForm",
+          "method": "post",
+          "includeScope": "*"
+        },
+        "messages": {
+          "success": "入库登记已提交，即将跳转"
+        }
+      },
       "body": [
         {
-          "type": "form",
-          "id": "antdpro-grouped-inline-form",
-          "testid": "antdpro-grouped-inline-form",
-          "columnCount": 2,
+          "type": "container",
+          "className": "adp-card p-6 mb-4",
+          "testid": null,
           "body": [
             {
               "type": "fieldset",
@@ -74,9 +103,18 @@
                   "label": "入库仓库",
                   "placeholder": "选择仓库",
                   "options": [
-                    { "label": "华东一号仓", "value": "wh-east-1" },
-                    { "label": "华东二号仓", "value": "wh-east-2" },
-                    { "label": "华南主仓", "value": "wh-south-1" }
+                    {
+                      "label": "华东一号仓",
+                      "value": "wh-east-1"
+                    },
+                    {
+                      "label": "华东二号仓",
+                      "value": "wh-east-2"
+                    },
+                    {
+                      "label": "华南主仓",
+                      "value": "wh-south-1"
+                    }
                   ]
                 }
               ]
@@ -101,24 +139,18 @@
               ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "type": "container",
-      "className": "adp-card p-6 mb-4",
-      "testid": "antdpro-grouped-card-desc",
-      "body": [
-        {
-          "type": "text",
-          "text": "任务描述",
-          "className": "adp-card-title mb-3",
-          "testid": "antdpro-grouped-card-desc-title"
         },
         {
-          "type": "form",
-          "id": "antdpro-grouped-desc-form",
+          "type": "container",
+          "className": "adp-card p-6 mb-4",
+          "testid": "antdpro-grouped-card-desc",
           "body": [
+            {
+              "type": "text",
+              "text": "任务描述",
+              "className": "adp-card-title mb-3",
+              "testid": "antdpro-grouped-card-desc-title"
+            },
             {
               "type": "textarea",
               "name": "remark",
@@ -131,42 +163,18 @@
               "label": "入库后需质检复核"
             }
           ]
-        }
-      ]
-    },
-    {
-      "type": "container",
-      "className": "adp-card p-6 mb-4",
-      "testid": "antdpro-grouped-card-owner",
-      "body": [
-        {
-          "type": "text",
-          "text": "责任信息",
-          "className": "adp-card-title mb-3",
-          "testid": "antdpro-grouped-card-owner-title"
         },
         {
-          "type": "form",
-          "id": "antdpro-grouped-owner-form",
-          "columnCount": 2,
-          "submitAction": {
-            "action": "ajax",
-            "args": {
-              "url": "/r/AntdPro__submitForm",
-              "method": "post",
-              "includeScope": "*"
-            },
-            "messages": {
-              "success": "入库登记已提交，即将跳转"
-            }
-          },
-          "onSubmitSuccess": {
-            "action": "navigate",
-            "args": {
-              "url": "#/complex-pages/antdpro-result"
-            }
-          },
+          "type": "container",
+          "className": "adp-card p-6 mb-4",
+          "testid": "antdpro-grouped-card-owner",
           "body": [
+            {
+              "type": "text",
+              "text": "责任信息",
+              "className": "adp-card-title mb-3",
+              "testid": "antdpro-grouped-card-owner-title"
+            },
             {
               "type": "input-text",
               "name": "ownerDept",
@@ -181,30 +189,36 @@
               "placeholder": "请输入责任人",
               "testid": "antdpro-grouped-owner-person"
             }
-          ],
-          "actions": [
-            {
-              "type": "button",
-              "label": "重置",
-              "className": "adp-btn adp-btn-outline",
-              "testid": "antdpro-grouped-reset",
-              "onClick": {
-                "action": "component:reset",
-                "componentId": "antdpro-grouped-owner-form"
-              }
-            },
-            {
-              "type": "button",
-              "label": "提交",
-              "className": "adp-btn adp-btn-primary",
-              "testid": "antdpro-grouped-submit",
-              "onClick": {
-                "action": "submitForm"
-              }
-            }
           ]
         }
-      ]
+      ],
+      "actions": [
+        {
+          "type": "button",
+          "label": "重置",
+          "className": "adp-btn adp-btn-outline",
+          "testid": "antdpro-grouped-reset",
+          "onClick": {
+            "action": "component:reset",
+            "componentId": "antdpro-grouped-form"
+          }
+        },
+        {
+          "type": "button",
+          "label": "提交",
+          "className": "adp-btn adp-btn-primary",
+          "testid": "antdpro-grouped-submit",
+          "onClick": {
+            "action": "submitForm"
+          }
+        }
+      ],
+      "onSubmitSuccess": {
+        "action": "navigate",
+        "args": {
+          "url": "#/complex-pages/antdpro-result"
+        }
+      }
     }
   ]
 }
