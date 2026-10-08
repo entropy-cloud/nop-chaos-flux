@@ -1,13 +1,13 @@
 {
   "_header": {
     "description": "console.log/debug baseline for non-test src under packages/ and apps/. New hits fail check:console-baseline; shrink via --update-baselines after removing hits.",
-    "lastUpdated": "2026-09-30",
-    "count": 27
+    "lastUpdated": "2026-10-08",
+    "count": 25
   },
   "entries": [
     {
       "file": "packages/word-editor-renderers/src/editor-canvas.tsx",
-      "line": 156,
+      "line": 160,
       "text": "console.debug('[word-editor] word count failed', err);"
     },
     {
@@ -21,18 +21,13 @@
       "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
     },
     {
-      "file": "apps/playground/src/pages/calendar-demo.tsx",
-      "line": 21,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
-    },
-    {
       "file": "apps/playground/src/pages/calendar-perf-scale-demo.tsx",
       "line": 21,
       "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
     },
     {
       "file": "apps/playground/src/pages/dashboard-demo.tsx",
-      "line": 103,
+      "line": 99,
       "text": "notify: (_level, message) => console.log('[dashboard-demo]', message),"
     },
     {
@@ -106,13 +101,8 @@
       "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
     },
     {
-      "file": "apps/playground/src/pages/map-demo.tsx",
-      "line": 67,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
-    },
-    {
       "file": "apps/playground/src/pages/pivot-table-demo.tsx",
-      "line": 27,
+      "line": 25,
       "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
     },
     {
@@ -127,7 +117,7 @@
     },
     {
       "file": "apps/playground/src/pages/scada-editor-demo.tsx",
-      "line": 251,
+      "line": 245,
       "text": "notify: (_level, message) => console.log('[scada-editor-demo]', message),"
     },
     {

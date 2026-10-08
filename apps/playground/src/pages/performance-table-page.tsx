@@ -1,5 +1,6 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
+import { createActionScope } from '@nop-chaos/flux-runtime';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import { Button } from '@nop-chaos/ui';
 import {
@@ -151,6 +152,52 @@ export function PerformanceTablePage({
   );
 
   const env = useMemo<RendererEnv>(() => performanceEnv, []);
+
+  // plan 548 (IS-perf-001): row transforms live on the host — the previous
+  // inline object-spread expressions did not compile in the formula engine
+  // and the silent raw-literal fallback emptied the table.
+  const actionScope = useMemo(() => {
+    const scope = createActionScope({ id: 'performance-table-page-action-scope' });
+    scope.registerNamespace('perfDemo', {
+      kind: 'host',
+      listMethods() {
+        return ['shuffleScores', 'toggleActiveFlags', 'appendTag'];
+      },
+      invoke(method) {
+        if (method === 'shuffleScores') {
+          setPerfRows((rows) =>
+            rows.map((row, idx) => {
+              const score = ((row.score + idx + 13) % 100) + 1;
+              return {
+                ...row,
+                score,
+                scoreBand: (score < 60 ? 'low' : score < 85 ? 'mid' : 'high') as PerfRow['scoreBand'],
+                progress: (row.progress + idx + 17) % 100,
+              };
+            }),
+          );
+          return { ok: true };
+        }
+        if (method === 'toggleActiveFlags') {
+          setPerfRows((rows) =>
+            rows.map((row, idx) => (idx % 3 === 0 ? { ...row, active: !row.active, verified: !row.verified } : row)),
+          );
+          return { ok: true };
+        }
+        if (method === 'appendTag') {
+          setPerfRows((rows) =>
+            rows.map((row, idx) => {
+              const tags = [...row.tags, `burst-${idx % 4}`];
+              return { ...row, tags, tagsText: tags.join(', ') };
+            }),
+          );
+          return { ok: true };
+        }
+        return { ok: false, error: new Error(`Unknown perfDemo method: ${method}`) };
+      },
+    });
+    return scope;
+  }, []);
 
   const data = useMemo(
     () =>
@@ -626,6 +673,7 @@ export function PerformanceTablePage({
             schema={schema}
             data={data}
             env={env}
+            actionScope={actionScope}
             onProfilerCommit={handleProfilerCommit}
             debuggerController={debuggerController}
             diagnosticsEnabled={diagnosticsEnabled}

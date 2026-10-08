@@ -1,0 +1,303 @@
+{
+  "batch": "IS-5 review group A (plan 548 Phase 1)",
+  "date": "2026-10-07",
+  "method": "docs/skills/interaction-state-audit-prompt.md §4 five-step; Playwright chromium against http://127.0.0.1:4175; readings-only convictions (DOM/computed style/geometry/pixel signature/localStorage spy); zero screenshots used as proof",
+  "pagesProbed": 8,
+  "totals": { "findings": 12, "P0": 0, "P1": 4, "P2": 4, "P3": 4, "cleanChecks": 56 },
+  "surveyReadings": [
+    {
+      "page": "performance-table",
+      "route": "#/performance-table",
+      "h1": "Table Performance Playground",
+      "canvases": 0,
+      "buttons": 969,
+      "inputs": 404,
+      "scrollables": "1x table-container (virtualized mode, 640px) + textareas",
+      "dialogs": 0,
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "page": "table-popover",
+      "route": "#/table-popover",
+      "h1": "table popOver 单元格（详情弹层）",
+      "canvases": 0,
+      "buttons": 12,
+      "inputs": 5,
+      "scrollables": 0,
+      "dialogs": 0,
+      "popoverTriggers": 7,
+      "tables": 3,
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "page": "table-column-width",
+      "route": "#/table-column-width",
+      "h1": "Table 列宽策略宿主 fixture（列宽合计 = 容器宽 / 控制列 40px）",
+      "canvases": 0,
+      "buttons": 2,
+      "inputs": 9,
+      "scrollables": 0,
+      "dialogs": 0,
+      "tables": 2,
+      "resizeHandles": 9,
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "page": "pivot-table-demo",
+      "route": "#/pivot-table-demo",
+      "h1": "Pivot Table Demo（VTable PivotTable）",
+      "canvases": 2,
+      "buttons": 2,
+      "inputs": 4,
+      "scrollables": 1,
+      "dialogs": 0,
+      "pivotTables": 3,
+      "pivotCanvases": 2,
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "page": "data-verify",
+      "route": "#/data-verify",
+      "h1": "Data-Source Mechanism Verify",
+      "canvases": 0,
+      "buttons": 4,
+      "inputs": 2,
+      "scrollables": 0,
+      "dialogs": 0,
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "page": "dashboard-demo",
+      "route": "#/dashboard-demo",
+      "h1": "dashboard-editor 演示页",
+      "canvases": 0,
+      "buttons": 15,
+      "inputs": 3,
+      "scrollables": 0,
+      "dialogs": 0,
+      "workbenchShell": true,
+      "editorPanels": 4,
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "page": "graph-demo",
+      "route": "#/graph-demo",
+      "h1": "Graph Viewer Demo",
+      "canvases": 0,
+      "buttons": 15,
+      "inputs": 3,
+      "scrollables": 0,
+      "dialogs": 0,
+      "graphs": 4,
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    {
+      "page": "leafer-examples",
+      "route": "#/leafer-examples",
+      "h1": "LeaferJS 官方示例对照页",
+      "canvases": 6,
+      "buttons": 7,
+      "inputs": 2,
+      "scrollables": 0,
+      "dialogs": 0,
+      "consoleErrors": 0,
+      "pageErrors": 0
+    }
+  ],
+  "findings": [
+    {
+      "id": "IS-perf-001",
+      "page": "performance-table",
+      "category": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "symptom": "Toggle Active Flags / Append Tag To All Rows / Shuffle Scores silently replace the 1000-row dataset with the raw unevaluated template string: table empties (暂无数据), pagination bar disappears, header claims Total: 109/144/252 rows (= string length); zero console/notify feedback",
+      "evidence": "after click: {rows:0, emptyRow:true, pagination:false, status:'Total: 252 rows'}; counts match expression source length + 2 → literal '${perfRows.map(...)}' written to scope perfRows; host-side Run 20 Host Mutations unaffected (control)",
+      "ownership": "candidate chain: demo expressions use object-spread the formula engine cannot evaluate → flux-action-core evaluateCompiled falls back to raw literal → setValue writes silently (packages/flux-action-core/src/action-core.ts:301-339); demo: apps/playground/src/pages/performance-table/schema.ts:206-232",
+      "redE2e": "click Shuffle Scores → assert [data-slot=table-empty-row] count 0, [data-slot=table-pagination] present, status matches /Total: 1000 rows/"
+    },
+    {
+      "id": "IS-perf-002",
+      "page": "performance-table",
+      "category": "A",
+      "priority": "P2",
+      "invariant": "V3",
+      "symptom": "Run 20 Host Mutations (host data refresh) silently resets scope-owned selection (Selected 1→0, checkbox cleared) and pagination (Page 3→1) although row ids are preserved by the transform",
+      "evidence": "status line 'Selected: 1'→'Selected: 0' and 'Page: 3'→'Page: 1' after host mutation; createBatchTransform spreads ...row preserving id",
+      "ownership": "renderer candidate (table resets scope selection/pagination on source identity change, flux-renderers-data) or demo bridge data-object rebuild — unproven to line",
+      "redE2e": "select row + go to page 3 + run host mutations → assert /Selected: 1 .* Page: 3/"
+    },
+    {
+      "id": "IS-colw-001",
+      "page": "table-column-width",
+      "category": "B",
+      "priority": "P1",
+      "invariant": "V4+V3",
+      "symptom": "First resize drag on a no-width (stretch) column anchors to the 120px fallback instead of the rendered 200px: 80px pointer dead zone with zero visual response; commit = 120+Δ not renderedWidth+Δ (+90px drag grows +10px); negative drags are visually swallowed entirely while a bogus tracked width is committed",
+      "evidence": "mid-drag readings at +10..+80px: th/col width stays 200; +90px → 210; +120px → 240; negative -40/-60px: rendered stays 200 (w-full auto layout restores); once a width is tracked (240), subsequent drags are exact (240+60=300)",
+      "ownership": "renderer: packages/flux-renderers-data/src/table-renderer/use-column-resize.ts startWidth = widths[key] ?? resolveColumnWidth(column) (120 fallback) disconnected from measured colgroup width (column-width-measure.ts)",
+      "redE2e": "read Name col width W; drag handle +40px → assert mid-drag and committed width = W+40 (currently stays W); drag -40 → assert W-40 (currently W)"
+    },
+    {
+      "id": "IS-colw-002",
+      "page": "table-column-width",
+      "category": "E",
+      "priority": "P2",
+      "invariant": "V5",
+      "symptom": "Column resize has no cancel path: Esc mid-drag ignored (drag continues and commits), pointercancel runs the same commit path as pointerup, double-click does not reset",
+      "evidence": "Esc mid-drag then release: width 210→290 (committed through Esc); synthetic pointercancel mid-drag: 310→360 (+50 committed); dblclick on handle: 360→360 no-op; use-column-resize.ts:337-338 binds pointerup and pointercancel to the same finish",
+      "ownership": "renderer: packages/flux-renderers-data/src/table-renderer/use-column-resize.ts (IS-4 print PD-1 precedent)",
+      "redE2e": "pointerdown → move +50 → pointercancel → assert width unchanged (currently +50 → red)"
+    },
+    {
+      "id": "IS-verify-001",
+      "page": "data-verify",
+      "category": "D",
+      "priority": "P3",
+      "invariant": "testability",
+      "symptom": "loop schema node testid (verify-loop) never rendered to DOM while other node testids are",
+      "evidence": "document.querySelector('[data-testid=\"verify-loop\"]') null; loop content (Alice/Bob/Carol) renders fine; verify-root/verify-scope/verify-expr/verify-setvalue* all present",
+      "ownership": "renderer candidate: loop renderer does not apply props.meta.testid",
+      "redE2e": "assert [data-testid=verify-loop] exists (currently absent → red)"
+    },
+    {
+      "id": "IS-dash-001",
+      "page": "dashboard-demo",
+      "category": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "symptom": "Save (editor-save) is a dead control: click produces zero effect (localStorage flux-dashboard-layout:v2 never written — proven with setItem spy, host persist action never reached), zero feedback (no toast/console/error), reload restores nothing; save also enabled at fresh load despite disabled={!session.dirty}",
+      "evidence": "setItem spy on fresh save and post-drag save: only theme/debugger keys; localStorage null after save; reload → default layout; zero console lines",
+      "ownership": "candidate chain (needs fix-session bisection): core.commit() returns not-ok → error event dispatched to unbound onError (dashboard-editor-renderer.tsx:359-367, swallowed) OR commit ok but eventsRef.current?.onSave not a function (dispatchEventRef no-op on non-function action, lines 136-141); demo schema onSave defined at apps/playground/src/pages/dashboard-demo.tsx:162-171",
+      "redE2e": "click save → assert localStorage key exists and JSON contains the 4 panel ids (currently null → red)"
+    },
+    {
+      "id": "IS-dash-002",
+      "page": "dashboard-demo",
+      "category": "D",
+      "priority": "P2",
+      "invariant": "feedback surface",
+      "symptom": "demo schema third section 'Saved Layout (dashboard-editor:save → host persist)' panel + json-view never renders (0 DOM hits), silently, under strict-validation env",
+      "evidence": "0 elements containing 'Saved Layout' or 'host persist'; 0 json-view elements; no console diagnostics",
+      "ownership": "demo bridge candidate: apps/playground/src/pages/dashboard-demo.tsx:173-179 declares panel/json-view; DASHBOARD_DEMO_RECIPE registry coverage unverified",
+      "redE2e": "assert page contains the Saved Layout panel title text (currently absent → red)"
+    },
+    {
+      "id": "IS-dash-003",
+      "page": "dashboard-demo",
+      "category": "F",
+      "priority": "P1",
+      "invariant": "V3/V4",
+      "symptom": "WorkbenchShell left/right resize handles are dead: controlled leftWidth={220}/rightWidth={280} passed without onLeftWidthChange/onRightWidthChange → commit no-op; drag paints a preview then snaps back on release",
+      "evidence": "left handle drag +80px → left panel width 220→220 (delta 0); dashboard-editor-renderer.tsx passes leftResizable+min/max but no change handlers; workbench-shell.tsx:210-241 commitLeftWidth calls onLeftWidthChange?.() only",
+      "ownership": "demo bridge / packages/flux-renderers-dashboard/src/editor/dashboard-editor-renderer.tsx (F-class half-wiring, sister of the 538 collapsed-contract gap)",
+      "redE2e": "drag handle +80 → assert aria-valuenow and panel width = 220+80 (currently 220 → red)"
+    },
+    {
+      "id": "IS-dash-004",
+      "page": "dashboard-demo",
+      "category": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "symptom": "Save button enabled on fresh load although nothing changed (session.dirty true at mount), contradicting the disabled={!session.dirty} gate",
+      "evidence": "editor-save.disabled=false at fresh load (P6b S0 header button dump)",
+      "ownership": "renderer candidate (editor-core session initial dirty accounting)",
+      "redE2e": "fresh load → assert editor-save disabled (currently enabled → red)"
+    },
+    {
+      "id": "IS-graph-001",
+      "page": "graph-demo",
+      "category": "C",
+      "priority": "P2",
+      "invariant": "V2/V3",
+      "symptom": "Focus Missing Node silently refits the viewport (scale 0.653→0.445) with zero not-found feedback; the boolean result of focusNodeById is discarded by the event layer",
+      "evidence": "two consecutive readings identical: scale drop + translate change on clicking Focus Missing Node; graph-renderer.tsx:252-258 fallback fitView with 'return false' ignored at component:focusNode dispatch",
+      "ownership": "renderer: packages/flux-renderers-graph/src/graph-renderer.tsx",
+      "redE2e": "zoom → click Focus Missing Node → assert scale unchanged and not-found feedback visible (currently scale changes → red)"
+    },
+    {
+      "id": "IS-graph-002",
+      "page": "graph-demo",
+      "category": "E",
+      "priority": "P3",
+      "invariant": "V5",
+      "symptom": "No deselect affordances: Esc keeps node selection, clicking empty pane keeps selection, Esc keeps search input value",
+      "evidence": "[data-selected=true] count stays 1 after Esc and after pane click; search input value 'call' persists after Esc",
+      "ownership": "renderer capability gap (IS-4 page-1 precedent)",
+      "redE2e": "select node → Esc → assert [data-selected=true] count 0 (currently 1 → red)"
+    },
+    {
+      "id": "IS-leafer-001",
+      "page": "leafer-examples",
+      "category": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "symptom": "Move buttons (→/←) intermittently no-op on first press (pixel signature unchanged), effective from second press; reference/learning page, not a renderer-driven product surface",
+      "evidence": "fresh load → click → pixel signature 3968479→3968479 (unchanged); second click → 3811179 (changed); after Zoom In the move works first press",
+      "ownership": "playground reference page (leafer-examples-demo.tsx ViewportExample / leafer-ui move semantics)",
+      "redE2e": "click → once → assert canvas pixel signature changed (currently unchanged → red)"
+    }
+  ],
+  "naRegistrations": [
+    {
+      "page": "pivot-table-demo",
+      "reason": "renderer-driven interactive surface is none beyond VTable canvas internals: no expand/drill (grid hierarchy, no drill icons, expandedCoordList null), no renderer event wiring for header clicks; canvas scroll works (scrollTop 200); empty slot renders; instance exposed at window.__flux_pivot_demoSalesPivot (rowCount 19, colCount 8, records 24)",
+      "watch": "VTable built-in sort-on-header-click not programmatically verifiable on canvas widget — not convicted"
+    },
+    {
+      "page": "graph-demo node drag",
+      "reason": "read-only hard contract (nodesDraggable:false etc., xyflow-canvas.tsx:34-36) — node drag sequences n/a by design, not a defect"
+    },
+    {
+      "page": "leafer-examples",
+      "reason": "reference page, not renderer-driven; readings archived; IS-leafer-001 registered at P3"
+    }
+  ],
+  "watchList": [
+    "perf-table tbody rows carry no stable key attribute in either mode (testability, IS-9 candidate)",
+    "table-popover copy button has no text/toast feedback (clipboard value is truthful)",
+    "dashboard save chain bisection: commit-fail-swallowed vs onSave-not-a-function (IS-dash-001 attribution)",
+    "data-verify fetcher called twice on first load (mechanism page observation)",
+    "leafer Reset = zoom('fit') does not restore exact initial viewport (acceptable semantics)"
+  ],
+  "artifacts": {
+    "report": "_tmp/is5a-review-report.md",
+    "probes": [
+      "_tmp/is5a-survey-probe.mjs",
+      "_tmp/is5a-survey-raw.json",
+      "_tmp/is5a-performance-table-probe.mjs",
+      "_tmp/is5a-perf-table-discriminate.mjs",
+      "_tmp/is5a-perf-table-shuffle.mjs",
+      "_tmp/is5a-perf-table-matrix.mjs",
+      "_tmp/is5a-perf-table-console.mjs",
+      "_tmp/is5a-perf-table-scope-reset.mjs",
+      "_tmp/is5a-table-popover-probe.mjs",
+      "_tmp/is5a-table-column-width-probe.mjs",
+      "_tmp/is5a-column-width-drag2.mjs",
+      "_tmp/is5a-column-width-negativedrag.mjs",
+      "_tmp/is5a-pivot-probe.mjs",
+      "_tmp/is5a-data-verify-probe.mjs",
+      "_tmp/is5a-data-verify-loop.mjs",
+      "_tmp/is5a-dashboard-probe.mjs",
+      "_tmp/is5a-dashboard-save.mjs",
+      "_tmp/is5a-dashboard-fresh-save.mjs",
+      "_tmp/is5a-dashboard-save-trace.mjs",
+      "_tmp/is5a-dashboard-section.mjs",
+      "_tmp/is5a-dashboard-inspector.mjs",
+      "_tmp/is5a-graph-probe.mjs",
+      "_tmp/is5a-graph-probe2.mjs",
+      "_tmp/is5a-graph-probe3.mjs",
+      "_tmp/is5a-graph-select.mjs",
+      "_tmp/is5a-graph-pan.mjs",
+      "_tmp/is5a-leafer-probe.mjs",
+      "_tmp/is5a-leafer-move.mjs"
+    ]
+  }
+}

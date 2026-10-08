@@ -60,11 +60,11 @@ export interface ColumnResizeApi {
   // no-width column must fall back to the schema semantic and stay
   // auto-stretchable (P1-01: never invent a 120px default here).
   getColumnWidth(column: TableColumnSchema, index: number): number | string | undefined;
-  startResize(column: TableColumnSchema, index: number, startClientX: number): () => void;
+  startResize(column: TableColumnSchema, index: number, startClientX: number, measuredWidth?: number): () => void;
   // Keyboard entry point (WCAG 2.1 SC 2.1.1): ArrowLeft/ArrowRight step the
   // width by `delta` px, clamped to [minWidth, maxWidth], and commit through the
   // same ownership path as a pointer drag (mirrors use-row-drag-sort H6).
-  stepResize(column: TableColumnSchema, index: number, delta: number): void;
+  stepResize(column: TableColumnSchema, index: number, delta: number, measuredWidth?: number): void;
 }
 
 interface ActiveResize {
@@ -263,11 +263,15 @@ export function useColumnResize(
   }, []);
 
   const startResize = useCallback(
-    (column: TableColumnSchema, index: number, startClientX: number) => {
+    (column: TableColumnSchema, index: number, startClientX: number, measuredWidth?: number) => {
       const key = columnKey(column, index);
       const minWidth = resolveColumnMinWidth(column);
       const maxWidth = resolveColumnMaxWidth(column);
-      const startWidth = widths[key] ?? resolveColumnWidth(column);
+      // Anchor on the RENDERED width for a no-width (stretch) column — the
+      // 120px schema fallback diverges from the auto layout (IS-5 colw-001:
+      // 200px rendered vs 120px anchor → 80px dead zone) and negative drags
+      // get silently swallowed while polluting tracked state.
+      const startWidth = widths[key] ?? toNumericWidth(measuredWidth, resolveColumnWidth(column));
       const { effectiveOwnership: eo, onWidthsChange: oc } = latest.current;
 
       stopListeners();
@@ -359,11 +363,12 @@ export function useColumnResize(
   }, []);
 
   const stepResize = useCallback(
-    (column: TableColumnSchema, index: number, delta: number) => {
+    (column: TableColumnSchema, index: number, delta: number, measuredWidth?: number) => {
       const key = columnKey(column, index);
       const minWidth = resolveColumnMinWidth(column);
       const maxWidth = resolveColumnMaxWidth(column);
-      const current = widths[key] ?? resolveColumnWidth(column);
+      const current =
+        widths[key] ?? toNumericWidth(measuredWidth, resolveColumnWidth(column));
       let next = current + delta;
       if (next < minWidth) next = minWidth;
       if (maxWidth !== undefined && next > maxWidth) next = maxWidth;
@@ -407,18 +412,30 @@ export function createColumnResizeHandleProps(options: {
   style: { touchAction: 'none' };
 } {
   const { column, index, resizable, resizeApi } = options;
+  const measuredColumnWidth = (event: {
+    currentTarget: { closest: (selector: string) => HTMLElement | null };
+  }): number | undefined => {
+    const th = event.currentTarget.closest('th');
+    const width = th?.getBoundingClientRect().width;
+    return typeof width === 'number' && Number.isFinite(width) && width > 0 ? width : undefined;
+  };
   const resizeStart = (event: React.PointerEvent<HTMLSpanElement>) => {
     if (!resizable || !resizeApi) return;
     event.preventDefault();
     event.stopPropagation();
-    resizeApi.startResize(column, index, event.clientX);
+    resizeApi.startResize(column, index, event.clientX, measuredColumnWidth(event));
   };
   const resizeKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
     if (!resizable || !resizeApi) return;
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     event.preventDefault();
     event.stopPropagation();
-    resizeApi.stepResize(column, index, event.key === 'ArrowLeft' ? -COLUMN_RESIZE_KEYBOARD_STEP : COLUMN_RESIZE_KEYBOARD_STEP);
+    resizeApi.stepResize(
+      column,
+      index,
+      event.key === 'ArrowLeft' ? -COLUMN_RESIZE_KEYBOARD_STEP : COLUMN_RESIZE_KEYBOARD_STEP,
+      measuredColumnWidth(event),
+    );
   };
   return {
     'data-slot': 'table-column-resize-handle',

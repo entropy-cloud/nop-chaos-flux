@@ -1,0 +1,232 @@
+{
+  "batch": "IS-5 review group B (plan 548)",
+  "date": "2026-10-07",
+  "server": "http://127.0.0.1:4175",
+  "method": "docs/skills/interaction-state-audit-prompt.md §4/§6/§9 — live Playwright chromium, programmatic readings only",
+  "probes": [
+    "_tmp/is5b-common.mjs",
+    "_tmp/is5b-map-probe.mjs",
+    "_tmp/is5b-map-probe2.mjs",
+    "_tmp/is5b-map-probe3.mjs",
+    "_tmp/is5b-map-probe4.mjs",
+    "_tmp/is5b-map-probe5.mjs",
+    "_tmp/is5b-map-probe6.mjs",
+    "_tmp/is5b-map-probe7.mjs",
+    "_tmp/is5b-map-probe8.mjs",
+    "_tmp/is5b-map-probe9.mjs",
+    "_tmp/is5b-map-probe10.mjs",
+    "_tmp/is5b-map-probe11.mjs",
+    "_tmp/is5b-map-probe12.mjs",
+    "_tmp/is5b-map-probe12b.mjs",
+    "_tmp/is5b-map-probe13.mjs",
+    "_tmp/is5b-map-probe14.mjs",
+    "_tmp/is5b-map-probe15.mjs",
+    "_tmp/is5b-map-probe16.mjs",
+    "_tmp/is5b-map-hover-retest.mjs",
+    "_tmp/is5b-scada-probe.mjs",
+    "_tmp/is5b-scada-probe2.mjs",
+    "_tmp/is5b-scada-probe3.mjs",
+    "_tmp/is5b-scada-probe4.mjs",
+    "_tmp/is5b-scada-wheel-probe.mjs",
+    "_tmp/is5b-pressure-probe.mjs",
+    "_tmp/is5b-edge-probe.mjs",
+    "_tmp/is5b-edge-probe2.mjs",
+    "_tmp/is5b-perf-probe.mjs",
+    "_tmp/is5b-three-probe.mjs",
+    "_tmp/is5b-three-probe2.mjs",
+    "_tmp/is5b-three-probe3.mjs",
+    "_tmp/is5b-three-ind-probe.mjs"
+  ],
+  "survey": [
+    {
+      "page": "map-demo",
+      "route": "#/map-demo",
+      "h1": "Map Demo (OpenLayers)",
+      "buttons": 14,
+      "inputs": 0,
+      "canvases": 3,
+      "scrollables": 1,
+      "maps": 4,
+      "dialogs": 0
+    },
+    {
+      "page": "scada-demo",
+      "route": "#/scada-demo",
+      "h1": "scada-demo 工艺流程组态演示页",
+      "buttons": 15,
+      "inputs": 2,
+      "canvases": 3,
+      "scrollables": 0,
+      "scadaRoots": [{ "status": "ready" }],
+      "dialogs": 0
+    },
+    {
+      "page": "scada-pressure-demo",
+      "route": "#/scada-pressure-demo",
+      "h1": "scada-pressure-demo 大屏/复杂组态示例页",
+      "buttons": 4,
+      "inputs": 0,
+      "canvases": 3,
+      "scrollables": 0,
+      "scadaRoots": [{ "status": "ready" }]
+    },
+    {
+      "page": "scada-edge-cases",
+      "route": "#/scada-edge-cases",
+      "h1": "scada 边界用例测试页（I15.1）",
+      "buttons": 7,
+      "inputs": 0,
+      "canvases": 6,
+      "scrollables": 0,
+      "scadaRoots": [{ "status": "ready" }, { "status": "ready" }]
+    },
+    {
+      "page": "scada-perf-scale",
+      "route": "#/scada-perf-scale",
+      "h1": "scada-perf-scale 性能基准测量页",
+      "buttons": 6,
+      "inputs": 0,
+      "canvases": 3,
+      "scrollables": 0,
+      "scadaRoots": [{ "status": "ready" }]
+    },
+    {
+      "page": "three-canvas-demo",
+      "route": "#/three-canvas-demo",
+      "h1": "three-canvas 数据驱动 3D 场景演示页",
+      "buttons": 4,
+      "inputs": 0,
+      "canvases": 2,
+      "scrollables": 0
+    },
+    {
+      "page": "three-industrial-demo",
+      "route": "#/three-industrial-demo",
+      "h1": "three-industrial 数据源演示页（plan 534 D2）",
+      "buttons": 2,
+      "inputs": 0,
+      "canvases": 0,
+      "scrollables": 0
+    }
+  ],
+  "findings": [
+    {
+      "id": "IS-map-demo-001",
+      "page": "map-demo",
+      "category": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "symptom": "Region/pin feature click dispatches onClick but the action fails silently (template evaluation error swallowed); zero visible feedback despite schema-promised toast",
+      "evidence": "verified-hit click (getFeaturesAtPixel + getEventPixel confirmed; singleclick fired once; latestRef.onClick invoked with payload.name='四川省') → dispatch result {ok:false,error,attempts:1,failureCount:1}, error.message='Template evaluation failed for: ${event.name}：${event.value}' (stack: flux-formula formula-compiler.ts:297); no console notify, no DOM toast; control: direct invocation with clean evaluationBindings logs '[info] 四川省：54' (works)",
+      "probes": [
+        "is5b-map-probe10.mjs",
+        "is5b-map-probe13.mjs",
+        "is5b-map-probe14.mjs",
+        "is5b-map-probe15.mjs",
+        "is5b-map-probe16.mjs",
+        "is5b-map-probe8.mjs"
+      ],
+      "ownership": "renderer (candidate chain: packages/flux-renderers-map/src/map-renderer.tsx singleclick handler evaluationBindings:payload vs packages/flux-formula template segment eval; failure unsurfaced in packages/flux-runtime/src/action-adapter.ts showToast path)",
+      "redE2eSketch": "load #/map-demo → find hit pixel via window.__flux_map_demoChinaSales.map.getFeaturesAtPixel grid → page.mouse.click → expect a '[info]' console notify line (red: absent) or wrap latestRef.onClick and expect dispatch result ok===true (red: ok:false)"
+    },
+    {
+      "id": "IS-scada-edge-001",
+      "page": "scada-edge-cases",
+      "category": "A",
+      "priority": "P2",
+      "invariant": "V2",
+      "symptom": "Same minimal config remount computes a different fit viewport after a screen round-trip (fresh {x:84.52,y:100,scale:8.633} vs returned {x:-50.83,y:100,scale:3.6})",
+      "evidence": "probe: fresh-load vp vs round-trip vp JSON-differs; same config, same container (900x480), MAX_SCALE not involved",
+      "probes": ["is5b-edge-probe2.mjs"],
+      "ownership": "renderer (candidate chain: packages/flux-renderers-industrial/src/renderer/hooks/use-scada-config-sync.ts refit/fit timing against unsettled container metrics on key-remount)",
+      "redE2eSketch": "read minimal vp → switch to line-poly screen → switch back → expect(returnedVp).toEqual(freshVp) (red)"
+    },
+    {
+      "id": "IS-three-canvas-001",
+      "page": "three-canvas-demo",
+      "category": "F",
+      "priority": "P2",
+      "invariant": "V3",
+      "symptom": "ThreeCanvasEvents declares onReady (schemas.ts:16) and demo schema wires onReady showToast ('场景就绪'), but renderer never dispatches it — ready toast never appears",
+      "evidence": "live: [data-testid='three-demo-notify'] empty 2.5s after load; source: three-canvas.tsx dispatches only onError (lines 62-63) + pick/hover via use-three-events; engine.onReady consumed only for internal state (line 108)",
+      "probes": ["is5b-three-probe.mjs"],
+      "ownership": "renderer (half-wiring: contract key declared, host dispatch missing — same shape as IS-4 WorkbenchShell collapsed family)",
+      "redE2eSketch": "load page → expect notify area to contain '场景就绪' within timeout (red: never appears)"
+    },
+    {
+      "id": "IS-scada-family-001",
+      "page": "scada-demo + scada-pressure-demo",
+      "category": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "symptom": "Page copy claims '滚轮缩放' (wheel zoom) but plain wheel only pans (scale constant 0.75, y shifts -106.67/notch); zoom works only via ctrl+wheel (0.75→1.5)",
+      "evidence": "viewport handle readings: plain wheel up x2 → scale unchanged; ctrl+wheel → scale 0.75→1.5; page text: scada-demo '画布支持平移/缩放（滚轮）', pressure header '滚轮缩放 / 拖拽平移 / 悬停高亮'",
+      "probes": ["is5b-scada-wheel-probe.mjs", "is5b-pressure-probe.mjs"],
+      "ownership": "demo copy + engine gesture mapping (leafer-in viewport plugin: plain wheel = scroll pan, ctrl/pinch = zoom); fix either copy or gesture mapping",
+      "redE2eSketch": "read viewport → plain-wheel over canvas → expect scale to change per page claim (red: unchanged) — or assert copy updated"
+    },
+    {
+      "id": "IS-scada-edge-002",
+      "page": "scada-edge-cases",
+      "category": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "symptom": "onError notify text persists across all subsequent screens ('notify: edge-onerror-fired' never cleared after leaving invalid-json)",
+      "evidence": "after switching back to minimal (status all ready), notify element still shows the error text",
+      "probes": ["is5b-edge-probe.mjs", "is5b-edge-probe2.mjs"],
+      "ownership": "demo wiring (apps/playground/src/pages/scada-edge-demo.tsx setNotifyMessage has no reset path)",
+      "redE2eSketch": "trigger invalid-json → switch to minimal → expect notify element empty (red)"
+    },
+    {
+      "id": "IS-three-industrial-001",
+      "page": "three-industrial-demo",
+      "category": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "symptom": "Reconnect counter reads 1 on fresh load with zero drops, violating the page contract '首次建连不计'",
+      "evidence": "fresh-load reading reconnects=1 before any drop; apps/playground/src/main.tsx:21 React.StrictMode → double effect → two openSocket calls → connectAttempts=2 → reconnects=max(2-1,0)=1",
+      "probes": ["is5b-three-ind-probe.mjs"],
+      "ownership": "demo (candidate chain: counter = openSocket call count not deduped against StrictMode remount; dev-only skew, production build single-mount)",
+      "redE2eSketch": "fresh load → expect reconnects text to contain 0 before any drop click (red: 1 in dev StrictMode)"
+    },
+    {
+      "id": "IS-scada-demo-001",
+      "page": "scada-demo",
+      "category": "C",
+      "priority": "P3-observation",
+      "invariant": "V3",
+      "symptom": "button-1 symbol ajax request has no visible feedback (console only); schema promises no feedback — recorded as observation, not convicted defect",
+      "evidence": "click at button-1 → console '[scada-demo] ajax get /api/scada-demo/points', no toast/overlay/dialog",
+      "probes": ["is5b-scada-probe.mjs"],
+      "ownership": "demo wiring (schema gives no success feedback action)",
+      "redE2eSketch": "n/a (observation)"
+    }
+  ],
+  "watch": [
+    {
+      "page": "three-canvas-demo",
+      "topic": "wheel zoom truthfulness",
+      "detail": "real wheel over canvas scrolled the page (scrollY 405→165) while synthetic wheel on canvas is preventDefault'ed (OrbitControls listener executes); camera state has no DOM reading; conflicting evidence — unproven both ways"
+    },
+    {
+      "page": "three-canvas-demo",
+      "topic": "Retry button liveness",
+      "detail": "error UI persists after retry (expected for permanently bad url); retryKey→reloadKey wiring present in source; live discrimination between 'retried and failed again' vs 'dead button' not possible (no loading intermediate, no notify)"
+    },
+    {
+      "page": "scada-edge-cases",
+      "topic": "error-state transient canvas size",
+      "detail": "canvas boundingBox read 1374x2784 during invalid-json activation; suspected remount transient layout overflow; not reproduced in stable state"
+    }
+  ],
+  "exemptions": [
+    {
+      "page": "scada-perf-scale",
+      "ruling": "perf baseline; no suppressed feedback surface found — pan/zoom/injection all truthful; page copy claims only measurement entry, no interaction feedback promise; IS-3 perf-scale exemption not needed"
+    },
+    {
+      "page": "three-industrial-demo",
+      "ruling": "no renderer canvas interactive surface (pure HTML panel page) — proven by survey readings (canvases: 0), n/a per brief"
+    }
+  ]
+}

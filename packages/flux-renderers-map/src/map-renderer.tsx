@@ -322,9 +322,13 @@ export function MapRenderer(props: RendererComponentProps<MapSchema>) {
       );
       const handler = latestRef.current.onClick;
       if (handler) {
+        // Template args resolve against the bindings root (CX-10 action-eval
+        // contract): expose the payload under `event` so schema args like
+        // '${event.name}' evaluate — root-level payload alone has no `event`
+        // key and the whole action fails silently.
         void handler(payload, {
           event: payload,
-          evaluationBindings: payload,
+          evaluationBindings: { ...payload, event: payload },
           scope: latestRef.current.scope,
         });
       }

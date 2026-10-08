@@ -5,6 +5,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import type { RendererEnv } from '@nop-chaos/flux-core';
+import { notifyWithToast } from './notify-toast.js';
 import { ArrowLeft } from 'lucide-react';
 
 interface MapDemoPageProps {
@@ -64,7 +65,10 @@ const env: RendererEnv = {
     }
     return { status: 0, data: null as T };
   },
-  notify: (level, msg) => console.log(`[${level}] ${msg}`),
+  // plan 548 (IS-map-demo-001 follow-through): the schema promises showToast
+  // feedback for feature clicks — the console-only notify kept the success
+  // path invisible. Same surface as the IS-4 taskflow-3 notify wiring.
+  notify: (level, msg) => notifyWithToast(level, msg),
 };
 
 const REGION_SCHEMA = {

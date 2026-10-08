@@ -212,41 +212,26 @@ const ACTIONS_SCHEMA: SchemaInput = {
   type: 'container',
   className: 'hstack-sm flex-wrap',
   body: [
+    // plan 548 (IS-perf-001): the row transforms used to be inline
+    // object-spread expressions, which the formula engine cannot parse — the
+    // compile failure fell back to writing the raw template string into
+    // perfRows (table emptied, header counts lied). The transforms live on
+    // the host now (perfDemo namespaced actions), matching the calendarDemo/
+    // dashboardDemo wiring pattern.
     {
       type: 'button',
       label: 'Shuffle Scores',
-      onClick: {
-        action: 'setValue',
-        args: {
-          path: 'perfRows',
-          value:
-            '${perfRows.map((row, idx) => ({ ...row, score: ((row.score + idx + 13) % 100) + 1, scoreBand: ((row.score + idx + 13) % 100) + 1 < 60 ? "low" : (((row.score + idx + 13) % 100) + 1 < 85 ? "mid" : "high"), progress: ((row.progress + idx + 17) % 100) }))}',
-        },
-      },
+      onClick: { action: 'perfDemo:shuffleScores' },
     },
     {
       type: 'button',
       label: 'Toggle Active Flags',
-      onClick: {
-        action: 'setValue',
-        args: {
-          path: 'perfRows',
-          value:
-            '${perfRows.map((row, idx) => idx % 3 === 0 ? { ...row, active: !row.active, verified: !row.verified } : row)}',
-        },
-      },
+      onClick: { action: 'perfDemo:toggleActiveFlags' },
     },
     {
       type: 'button',
       label: 'Append Tag To All Rows',
-      onClick: {
-        action: 'setValue',
-        args: {
-          path: 'perfRows',
-          value:
-            '${perfRows.map((row, idx) => ({ ...row, tags: [...row.tags, "burst-" + (idx % 4)], tagsText: [...row.tags, "burst-" + (idx % 4)].join(", ") }))}',
-        },
-      },
+      onClick: { action: 'perfDemo:appendTag' },
     },
     {
       type: 'button',

@@ -136,7 +136,15 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
     dispatchEventRef.current = (type, payload, action) => {
       const normalized = createNormalizedActionEvent({ type, ...payload });
       if (typeof action !== 'function') return undefined;
-      return action(normalized, { scope: scopeRefRef.current });
+      // Template args resolve against the bindings root (CX-10 action-eval
+      // contract): expose the payload under `event` and as bare keys so the
+      // onSave chain ('${event.serialized}') can evaluate — a bare {scope}
+      // ctx makes every template arg fail and the save dies silently.
+      return action(normalized, {
+        scope: scopeRefRef.current,
+        event: normalized,
+        evaluationBindings: { ...payload, event: normalized },
+      });
     };
   });
   const notifySave = (serialized: string): void => {
@@ -151,6 +159,10 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
   // plan 538：左右面板收起态（WorkbenchShell collapsed 契约；本地 useState 会话内，同宽度接线口径）。
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  // plan 548（IS-dash-003）：resize 契约是受控 width + change 回调——只传常量
+  // width 不传 change 通道时拖拽预览释放即回弹（假供纳）。
+  const [leftWidth, setLeftWidth] = useState(220);
+  const [rightWidth, setRightWidth] = useState(280);
 
   // 会话创建（mount）+ controlled push-back：host 经 layout prop 回推新布局且与
   // committed 不同 → dispose 旧会话并重建。ref 只在 effect 内读写（React Compiler 纪律）。
@@ -454,7 +466,8 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       onLeftToggle={() => setLeftCollapsed((v) => !v)}
       leftLabel={t('flux.dashboard.editor.expandPalette')}
       leftResizable
-      leftWidth={220}
+      leftWidth={leftWidth}
+      onLeftWidthChange={setLeftWidth}
       leftMinWidth={180}
       leftMaxWidth={360}
       canvas={canvas}
@@ -471,7 +484,8 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       onRightToggle={() => setRightCollapsed((v) => !v)}
       rightLabel={t('flux.dashboard.editor.expandInspector')}
       rightResizable
-      rightWidth={280}
+      rightWidth={rightWidth}
+      onRightWidthChange={setRightWidth}
       rightMinWidth={220}
       rightMaxWidth={420}
     />

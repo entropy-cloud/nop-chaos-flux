@@ -172,6 +172,7 @@ export interface PerformanceSchemaStageProps {
   schema: ReturnType<typeof createPerformanceSchema>;
   data: Record<string, unknown>;
   env: RendererEnv;
+  actionScope?: Parameters<typeof SchemaRenderer>[0]['actionScope'];
   onProfilerCommit: (actualDuration: number) => void;
   debuggerController?: NopDebuggerController;
   diagnosticsEnabled: boolean;
@@ -182,6 +183,7 @@ export const PerformanceSchemaStage = memo(function PerformanceSchemaStage({
   schema,
   data,
   env,
+  actionScope,
   onProfilerCommit,
   debuggerController,
   diagnosticsEnabled,
@@ -207,6 +209,7 @@ export const PerformanceSchemaStage = memo(function PerformanceSchemaStage({
         env={decoratedEnv}
         registry={registry}
         formulaCompiler={formulaCompiler}
+        actionScope={actionScope}
         plugins={plugins}
         onRuntimeChange={
           diagnosticsEnabled && debuggerController
