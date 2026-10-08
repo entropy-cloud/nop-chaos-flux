@@ -61,7 +61,10 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
   const stepCount = steps.length;
   const linear = schemaProps.linear !== false; // default true per design
   const allowStepJump = schemaProps.allowStepJump === true;
-  const mountOnEnter = schemaProps.mountOnEnter === true;
+  // plan 552 R1 (IS-lab-wizard-002): keep visited step bodies mounted by
+  // default — the previous false default unmounted the step (and its embedded
+  // form store) on leave, so 上一步 always returned to a blank step.
+  const mountOnEnter = schemaProps.mountOnEnter !== false;
   const unmountOnExit = schemaProps.unmountOnExit === true;
   const mode = schemaProps.mode === 'vertical' ? 'vertical' : 'horizontal';
   const componentRegistry = useCurrentComponentRegistry();

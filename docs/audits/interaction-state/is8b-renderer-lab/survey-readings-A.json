@@ -1,0 +1,202 @@
+{
+  "batch": "IS-8b",
+  "group": "A (layout/navigation/feedback, 12 pages)",
+  "plan": 553,
+  "date": "2026-10-07",
+  "method": "fresh-session live browser audit per docs/skills/interaction-state-audit-prompt.md §4/§5/§6/§9; Playwright chromium on http://127.0.0.1:4175 (strict-validation); convictions by programmatic readings only, zero screenshots; fixtures errorMonitor asserted zero console.error/pageerror on all runs",
+  "rawReadings": "_tmp/is8bA-survey-<page>.json (12 files, session-level, gitignored)",
+  "surveyReadings": {
+    "lab-grid": {
+      "interactiveSurface": 0,
+      "sequences": 4,
+      "key": [
+        "basic colSpan=2 cell w=608 = 2x298+12 gap; cols repeat(3) gap 12px",
+        "raw '1fr 2fr 1fr' gap 1rem -> 222/443/222",
+        "host responsiveColumns @1280 repeat(2) wide-cell 918 full-span; @640 repeat(1) all 518",
+        "marker nop-grid on root; display-only verdict"
+      ]
+    },
+    "lab-collapse": {
+      "interactiveSurface": "9 triggers + 3 host buttons across 3 scenarios",
+      "sequences": 9,
+      "key": [
+        "basic multiple: openA/openB/closeA -> aria-expanded + body text track (V3 real)",
+        "single: openY closes X; re-click Y closes (deselect)",
+        "host local: l1 expands",
+        "host controlled: host button a -> report none->a, Controlled A expands; direct trigger click NO flip",
+        "host scope: valueStatePath none->s1->s2->none with switch/deselect"
+      ]
+    },
+    "lab-resizable": {
+      "interactiveSurface": "2 resize handles (role=separator, tabindex=0, aria-label, aria-valuenow)",
+      "sequences": 10,
+      "key": [
+        "drag mid-state geometry: handle follows pointer +40/+80 exactly (V4 pass)",
+        "clamps: left min 2% (18.3px), max 40% (366.4px); persisted [2,74.7,23.3] / [40,36.7,23.3]",
+        "keyboard ArrowRight +5%; hover cursor ew-resize",
+        "scope writeback real: [7,69.8,23.3] -> [15.7,61,23.3] (V3)",
+        "V1: window scroll 0 before/during/after drag",
+        "Escape during drag: NO cancel (library react-resizable-panels@4.9.0 has no Escape handling; unclaimed) -> n-a",
+        "seed-on-remount unobservable at page level (nav destroys instance scope) -> watch"
+      ]
+    },
+    "lab-wizard": {
+      "interactiveSurface": "4 scenarios: nav buttons, prev/next/finish, dialog host",
+      "sequences": 14,
+      "key": [
+        "basic: prev disabled at step1; 3C nav disabled until reached; nav-click jumps to unvisited NEXT step (finding 001 evidence)",
+        "basic finish click: zero observable change (finding 003)",
+        "step-validation: Next with empty required field blocked with inline error + '步骤校验未通过' (healthy)",
+        "step-validation: nav '2Review' click with empty field JUMPS to Review, validation bypassed (finding 001 conviction: reviewVisible:true)",
+        "value-before 'Acme Corp' -> after next+back input.value '' (finding 002: back loses data)",
+        "refill -> next -> finish: wizard-done:no->yes, onComplete chain healthy",
+        "gate scenario: Next and nav-jump both blocked by beforeEnter probe; beforeLeave fired (left-a:yes); toast shows raw probe JSON (watch)",
+        "dialog wizard: opens, steps, finish -> window probe =1 (onComplete once); Esc closes dialog"
+      ]
+    },
+    "lab-button-group": {
+      "interactiveSurface": "8 items across 3 scenarios",
+      "sequences": 8,
+      "key": [
+        "action group: Save flips report clicked:no->yes (V3); Cancel inert = declared",
+        "multiple: aria-pressed toggles independently (t1+t3 true, un-t1 false)",
+        "single host: mutual exclusion opt1->opt2; payload opt1|opt1|single ('${value}|${selectedKeys}|${selectionMode}' all resolved)"
+      ]
+    },
+    "lab-dropdown-button": {
+      "interactiveSurface": "3 triggers + menus + CRUD row scenario",
+      "sequences": 9,
+      "key": [
+        "V4: menu anchorBelow trigger, in viewport, unclipped (menuRect 301,307,128x92)",
+        "Set Flag dispatch + menu closes + report dropdown:idle->clicked",
+        "View Details/Delete inert by declared pattern; menu still closes",
+        "hover trigger opens; Esc closes, no residue",
+        "CRUD row: row2 preload RowTwoNick -> submit probe {id:'2',nickName:'RowTwoEdited'}; row1 {id:'1',nickName:'RowOneEdited'} — row-scope isolation regression green; onSubmitSuccess->closeSurface consumed"
+      ]
+    },
+    "lab-steps": {
+      "interactiveSurface": "11 indicators + 3 host buttons across 3 scenarios",
+      "sequences": 8,
+      "key": [
+        "basic: initial current=Review (value:'review'); click navigates back/forward; aria-current follows",
+        "owner: local click moves; controlled buttons drive (direct indicator click no-move); scope writes valueStatePath none->c",
+        "change payload: s2|1|s2 then s1|0|s1 ('${value}|${stepIndex}|${stepKey}' resolved)"
+      ]
+    },
+    "lab-timeline": {
+      "interactiveSurface": 0,
+      "sequences": 2,
+      "key": [
+        "declared display-only (no owner state, no events) — confirmed 0 interactive elements",
+        "left mode vertical stack; alternate sides (Alt-A x=329 / Alt-B x=301); reverse DOM order 3/2/1; horizontal H-A/H-B side-by-side (y 1193/1194)"
+      ]
+    },
+    "lab-responsive": {
+      "interactiveSurface": 0,
+      "sequences": 10,
+      "key": [
+        "named: >=1024 DESKTOP; 1023/768/500 MOBILE (max exclusive) — exact",
+        "numeric: >=1024 WIDE; 768-1023 TABLET; <768 DEFAULT — exact",
+        "exactly one variant rendered at every viewport (count:1)"
+      ]
+    },
+    "lab-empty": {
+      "interactiveSurface": "1 CTA button",
+      "sequences": 2,
+      "key": ["host CTA: report cta:pending->fired (V3)", "basic: title+desc, 0 stray buttons"]
+    },
+    "lab-result": {
+      "interactiveSurface": "2 action buttons",
+      "sequences": 3,
+      "key": [
+        "'Back to list'/'View record' clicks: hash unchanged, no toast, no dialog — fully inert (finding)",
+        "status gallery 3 icons; custom icon 1 svg — display healthy"
+      ]
+    },
+    "lab-separator": {
+      "interactiveSurface": 0,
+      "sequences": 1,
+      "key": [
+        "horizontal 918x1 role=separator aria-orientation=horizontal",
+        "vertical 1x24 vertical",
+        "labelled: data-orientation=horizontal + 'Section' label slot (line halves each role=separator — structure noted)",
+        "decorative: role='none' + aria-hidden='true' exactly as declared"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "IS-lab-wizard-001",
+      "page": "lab-wizard",
+      "symptom": "Linear wizard step-nav allows one-click jump to the immediately-next unvisited step, bypassing the commit layer (formId validation + onStepCommit)",
+      "class": "C",
+      "invariant": "V3-adjacent (declared blocking gate ineffective on nav path)",
+      "priority": "P1",
+      "ownership": "renderer — packages/flux-renderers-layout/src/wizard-step-helpers.ts computeCanGoTo L74 (furthestReached+1 always allowed) + wizard-step-nav.tsx L82-88 (onGoToStep skips commit)",
+      "evidence": "empty required field + click '2Review' nav -> {navs cur=step on Review, reviewVisible:true}, no error; control: Next button correctly blocked with inline error",
+      "redE2eSketch": "goto /#/lab/wizard -> stage host-wizard-step-validation -> with empty required input click nav nth(1) -> expect aria-current stays on Details (currently red: jumps to Review)"
+    },
+    {
+      "id": "IS-lab-wizard-002",
+      "page": "lab-wizard",
+      "symptom": "Back navigation loses typed step-form data (inactive step bodies unmount by default)",
+      "class": "C",
+      "invariant": "V3 (silent data loss on standard navigation, no feedback)",
+      "priority": "P1",
+      "ownership": "renderer default semantics × demo wiring — packages/flux-renderers-layout/src/wizard-step-body.tsx L34-36 shouldRender (mountOnEnter default false unmounts inactive bodies); apps/playground/src/component-lab/renderers/data-c5c1-host.ts c5c1WizardStepSchema lacks mountOnEnter",
+      "evidence": "value-before 'Acme Corp' -> at-review true -> after back input.value '' (scope dump never held it)",
+      "redE2eSketch": "fill input 'Acme Corp' -> next -> prev -> expect input.value === 'Acme Corp' (currently red: '')"
+    },
+    {
+      "id": "IS-lab-wizard-003",
+      "page": "lab-wizard",
+      "symptom": "Basic wizard '完成' click produces zero observable change (no completed state, no feedback, button does not reset)",
+      "class": "D",
+      "invariant": "V3 (no feedback for terminal lifecycle action)",
+      "priority": "P3",
+      "ownership": "demo wiring (no onComplete in basic schema) + renderer (lastCommitStatus success not surfaced in UI) — dual candidates",
+      "evidence": "before/after finish readings identical: nav data-status all equal (C stays process/active), aria-current unchanged, toasts []",
+      "redE2eSketch": "advance to last step, click finish, assert any observable completion reading (currently none exists -> red as zero-feedback)"
+    },
+    {
+      "id": "IS-lab-result-001",
+      "page": "lab-result",
+      "symptom": "Result actions-region buttons ('Back to list' / 'View record') are fully inert despite navigational labels",
+      "class": "D",
+      "invariant": "V3 (affordance-outcome mismatch: clickable-looking controls with no outcome)",
+      "priority": "P3",
+      "ownership": "demo wiring — apps/playground/src/component-lab/renderers/result-lab-page.tsx successResult.actions declare labels with no actions",
+      "evidence": "before {url:#/lab/result, toasts:[]} -> after both clicks identical (hash, toast, dialog all unchanged)",
+      "redE2eSketch": "click each button, assert any observable change (currently all-empty -> red)"
+    }
+  ],
+  "watchList": [
+    "resizable seed-on-remount contract unobservable at lab page level (navigation destroys the SchemaRenderer instance scope; seeding path exists in normalizePersistedSizes/useState) — needs renderer-level test",
+    "resizable drag causes container height reflow (192->120->96->72) — content-driven flex height, cosmetic candidate",
+    "wizard gate-block toast displays raw probe JSON ({\"ok\":false,...}) — honest but dev-facing feedback quality",
+    "wizard dialog stays open after finish (explicit Close provided; onComplete fired exactly once, probe=1) — design choice on record",
+    "separator labelled variant root has no role=separator (two line halves each carry role=separator) — no declared contract broken; a11y semantics candidate",
+    "resizable handle hit band ~4px (w-px + after:w-1) — shadcn-standard, cursor/aria/keyboard channels all present; discoverability candidate, not filed"
+  ],
+  "naRegistrations": [
+    "lab-grid display-only (geometry verified) — ✓",
+    "lab-timeline display-only per intro declaration, 0 interactive elements, display modes verified — ✓",
+    "lab-separator display-only, all four contracts (h/v/labelled/decorative) verified — ✓",
+    "lab-responsive viewport-driven only; breakpoint boundaries exact, single-variant guarantee verified — ✓",
+    "resizable V5 Esc-cancel: NOT CLAIMED by intro; library has no Escape handling (bundle grep=0) — n-a with observation recorded",
+    "anti-pattern (a) ${event.*}/payload templates: all resolved on group A pages (bg/steps payloads) — absent",
+    "anti-pattern (b) object-spread setValue: no occurrences in group A schemas — n-a",
+    "anti-pattern (c) controlled props without change channels: collapse/steps controlled instances are declared semantics (page text explains no-flip), not dead controls — n-a",
+    "anti-pattern (d) button-ajax onSuccess: dropdown CRUD onSubmitSuccess->closeSurface consumed correctly — absent",
+    "anti-pattern (e) SchemaRenderer schema-prop updates: all group A schemas static — n-a",
+    "anti-pattern (f) Playwright auto-scroll: zero scroll-reset convictions; resizable V1 scroll readings flat (0/0 throughout)"
+  ],
+  "summary": {
+    "pagesCovered": 12,
+    "pagesTotal": 12,
+    "rawObservations": 4,
+    "ledgerRowsAfterDedup": 4,
+    "byPriority": { "P0": 0, "P1": 2, "P2": 0, "P3": 2 },
+    "consoleErrorsAcrossRuns": 0
+  }
+}

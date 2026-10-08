@@ -79,7 +79,15 @@ export function WizardStepNavItem(props: WizardStepNavItemProps) {
 
   // G1-R3-视角3-01: committing locks step-nav — the click path already
   // no-ops (goToStep guard), this renders the lock on the button.
-  const clickable = reachable && !isActive && !isStepDisabled(step) && !committing;
+  // plan 552 R1 (IS-lab-wizard-001): in linear mode the next unvisited step
+  // (furthestReached + 1) is reachable ONLY through the step-commit path (the
+  // 下一步 button runs formId validation / onStepCommit) — a direct nav click
+  // used to bypass that gate entirely. computeCanGoTo still reports it
+  // reachable for the goToStep guard; the nav click opts out here.
+  const gatedByCommit =
+    linear && !allowStepJump && index === furthestReached + 1;
+  const clickable =
+    reachable && !isActive && !isStepDisabled(step) && !committing && !gatedByCommit;
   const handleStepClick = clickable
     ? (event: ReactMouseEvent<HTMLButtonElement>) => {
         event.preventDefault();

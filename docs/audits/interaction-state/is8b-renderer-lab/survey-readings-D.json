@@ -1,0 +1,404 @@
+{
+  "batch": "IS-8b-group-D",
+  "plan": 553,
+  "date": "2026-10-07",
+  "reviewer": "review-group D (fresh session, AI conversation lab pages, 14 pages)",
+  "env": "http://127.0.0.1:4175 strict-validation, Playwright chromium, programmatic readings only, screenshots unused",
+  "rawReadings": "_tmp/is8bD-r-*.json (23 files)",
+  "summary": {
+    "pagesCovered": 14,
+    "loadConsoleErrors": 0,
+    "findingsRaw": 6,
+    "findingsLedgerRows": 6,
+    "priority": { "P0": 0, "P1": 0, "P2": 3, "P3": 3 },
+    "watch": 3,
+    "probeArtifactsWithdrawn": 3,
+    "naOrUndriven": 3
+  },
+  "findings": [
+    {
+      "id": "IS-lab-ai-conversations-001",
+      "page": "lab-ai-conversations",
+      "symptom": "新建会话 click only echoes probe: list unchanged (2→2), no toast, no new item — declared create has no visible outcome",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "demo/lab schema（ai-conversations-lab-page 场景 onCreate 仅 probe echo，无 controller/数据回写通道）",
+      "evidence": {
+        "before": { "items": 2 },
+        "afterCreateClick": { "items": 2, "clickProbe": "create", "toasts": [] },
+        "reproducedRuns": 2
+      },
+      "redE2eSketch": "点击 新建会话 → expect 列表 children>=3 或可见 toast（当前红）；修复=onCreate then:setValue 追加会话项"
+    },
+    {
+      "id": "IS-lab-ai-conversations-002",
+      "page": "lab-ai-conversations",
+      "symptom": "rename commit (Enter) closes the inline input but title unchanged, zero feedback — onItemRename unwired dead channel",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "demo/lab schema（场景未声明 onItemRename；页面 intro 宣称 rename/delete events 与实况不符）",
+      "evidence": {
+        "before": { "titles": ["First chat", "Second chat"] },
+        "afterRenameEnter": {
+          "titles": ["First chat", "Second chat"],
+          "renameInputStill": 0,
+          "toasts": []
+        },
+        "contrast": "Esc 取消路径干净（V5 通过）"
+      },
+      "redE2eSketch": "c2 铅笔 → 键入 Renamed chat → Enter → expect 标题含 Renamed chat（当前红）"
+    },
+    {
+      "id": "IS-lab-ai-conversations-003",
+      "page": "lab-ai-conversations",
+      "symptom": "delete confirm (删除) closes the armed AlertDialog but item remains, zero feedback — onItemDelete unwired; irreversible-action confirm chain ends in nothing",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "demo/lab schema（onItemDelete 未接线；renderer G5 确认武装本身正常）",
+      "evidence": {
+        "cancelPathV5": { "dialogGone": true, "items": 2 },
+        "escPathV5": { "dialogGone": true, "items": 2 },
+        "confirmCommit": { "items": 2, "titles": ["First chat", "Second chat"], "toasts": [] }
+      },
+      "redE2eSketch": "c2 X → 删除 → expect items=1 或 toast（当前红）"
+    },
+    {
+      "id": "IS-lab-ai-sender-001",
+      "page": "lab-ai-sender",
+      "symptom": "scenario-declared 'counter flips to destructive over the cap' unreachable: 65-char input natively clamped to 60, Enter submits the 60-char draft normally",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "demo schema（场景描述）× renderer 耦合（ai-sender.tsx:195 maxLength 传入 textarea 原生截断，overLimit UI 分支经输入路径为死态）",
+      "evidence": {
+        "fill65": {
+          "valueLen": 60,
+          "countText": "60/60",
+          "countClassHasDestructive": false,
+          "submitDisabled": false
+        },
+        "enterThen": { "submitProbeLen": 60, "inputCleared": true }
+      },
+      "redE2eSketch": "fill 65 chars → expect counter 含 text-destructive（当前红）；修复=去原生 maxLength 保软上限，或改场景描述为 clamped-at-cap"
+    },
+    {
+      "id": "IS-lab-ai-prompts-001",
+      "page": "lab-ai-prompts",
+      "symptom": "prompt card select has no visible outcome: dialog stays open, no selected state, no toast (payload dispatch itself correct: Summarize|0, Debug help|2)",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "demo/lab schema（onSelect 仅 probe echo；renderer 无状态契约，host 未给结果面）",
+      "evidence": {
+        "afterClick": {
+          "dialogOpen": true,
+          "dataSelected": null,
+          "itemBg": "rgb(241, 245, 249)",
+          "toasts": []
+        },
+        "payloadOk": ["Summarize|0", "Debug help|2"]
+      },
+      "redE2eSketch": "点 Summarize 卡 → expect 对话框关闭或 toast/选中标记（当前红）"
+    },
+    {
+      "id": "IS-lab-ai-suggestions-001",
+      "page": "lab-ai-suggestions",
+      "symptom": "suggestion pill select has no visible outcome: overflow popover stays open after select, no selected state, no toast (payload dispatch correct incl. global index Expand|4)",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "demo/lab schema（onSelect 仅 probe echo；与 IS-lab-ai-prompts-001 同根，可共享修复面）",
+      "evidence": {
+        "surface": { "visibleItems": 3, "overflowTrigger": "+2" },
+        "payloadOk": ["Translate|1", "Expand|4"],
+        "afterOverflowSelect": { "popoverStillOpen": true, "dataSelected": null, "toasts": [] }
+      },
+      "redE2eSketch": "+2 展开 → 点 Refine → expect popover 关闭或选中回显（当前红）"
+    }
+  ],
+  "watch": [
+    "bubble hover-reveal action bar：常态 pointer-events:none（styles.css:615 设计），hover 稳定后点击成功（clipboard+aria 已复制）——与 IS-6 IS-ai-chat-001（E/P3 renderer）同根，不重复立案；自动化需 hover settle 属探针伪影",
+    "voice-input listening 态由 wave 元素 + aria-pressed + 文案 voiceListening 表达（源 270/291 行），aria-label 恒定为设计选择；fake mic 1.5s 内 no-result 回 idle 致中间态文案未捕获——状态链完整",
+    "prompts/suggestions 两条 P3 同根（family onSelect 无状态契约 + host echo-only），建议合并修复一次性回归"
+  ],
+  "probeArtifactsWithdrawn": [
+    "bubble copy 首探超时：hover-reveal 过渡期 hit-test 落在 content div（pointer-events:none 契约行为）；hover settle 后 geo1/geo2 读数证明点击可达——非缺陷",
+    "conversations 首探 rename-input 定位失败：探针用 item-button 文本过滤 li，而 renaming 时 button 被输入框替换（renderer 正确行为）；改 data-id 定位后全通——探针伪影",
+    "suggestions overflow 项定位失败：overflow 列表项无 ai-suggestions-item-text 包装（与可见 pill 结构不同，源码 175-190 行）；改 ai-suggestions-item 后全通——探针伪影"
+  ],
+  "antiPatternVerdicts": {
+    "a_eventTemplates": "549 结论在 lab 形态成立：15 处 dispatch-ctx 模板全数求值成功（approve|call_c8_1、reject|call_c8_2、c2|Second chat、conversationChange c2、sender submit/change、1|Doc A、2|Doc B、like|m_fb、copy|m_fb、42、Summarize|0、Debug help|2、Translate|1、Expand|4、no-result、attachment-too-large、ctaCount 0→1）",
+    "b_objectSpreadSetValue": "未涉罪：4 条 setValue 路径（activeConversationId/approval/toolStatus/ctaCount）全部写入并响应式再渲染",
+    "c_controlledWithoutChangeChannel": "定罪于 lab-ai-conversations：rename/delete affordance 渲染但 schema events 未接线（-002/-003），dead-control 家族",
+    "d_streamCancelSemantics": "549 结论在 lab schema 成立：cancel 中流点击→state=aborted、partial 'Echo: cancel me now Hello' 保留、已停止生成 标记、sender 复能、cancel 钮移除、下一 turn 完整完成"
+  },
+  "surveyReadings": {
+    "lab-ai-chat": {
+      "scenarios": 3,
+      "dialogSendStream": {
+        "stateBefore": "idle",
+        "bubblesBefore": 0,
+        "stateAfter": "completed",
+        "assistantText": "Echo: Dialog hello Hello from the mock AI connector! Streaming works.06:10 AM",
+        "inputCleared": true
+      },
+      "dialogEsc": { "dialogGone": true },
+      "cancelMidStream": {
+        "cancelClicked": true,
+        "state": "aborted",
+        "bubbles": 2,
+        "partial": "Echo: cancel me now Hello",
+        "abortedMarker": "已停止生成",
+        "inputReEnabled": true,
+        "cancelBtnRemoved": true
+      },
+      "secondTurn": {
+        "state": "completed",
+        "assistants": 2,
+        "full": "Echo: second full turn Hello from the mock AI connector! Streaming works."
+      },
+      "hitlWired": {
+        "requiresApproval": "",
+        "approveAutoFocused": true,
+        "probe": "approve|call_c8_1",
+        "dispatchCount": 1,
+        "dataApprovalAfter": "approved",
+        "buttonsLeft": 0
+      },
+      "hitlNoHandler": { "approveEnabled": false, "rejectEnabled": false },
+      "pageErrors": 0,
+      "checks": 7
+    },
+    "lab-ai-message-list": {
+      "scenarios": 1,
+      "streamContract": {
+        "role": "log",
+        "ariaBusyBefore": null,
+        "ariaBusyDuring": "true",
+        "ariaBusyAfter": null,
+        "streamingBubblesDuring": 1,
+        "echoAfter": "Echo: scroll test message Hello from the mock AI connector! Streaming works."
+      },
+      "autoScroll4Turns": {
+        "bubbles": 8,
+        "scrollHeight": 854,
+        "clientHeight": 336,
+        "scrollTop": 518,
+        "gapToBottom": 0
+      },
+      "pageErrors": 0,
+      "checks": 6,
+      "na": ["200-message virtual windowing 无注入面（n-a#2）"]
+    },
+    "lab-ai-bubble": {
+      "scenarios": 1,
+      "markers": {
+        "nopClass": true,
+        "role": "assistant",
+        "placement": "start",
+        "shape": "rounded",
+        "timestamp": "08:30 AM",
+        "mdBold": "lab",
+        "mdItems": 2
+      },
+      "copyAction": {
+        "hoverRevealPointerEventsBefore": "none",
+        "afterHover": "auto",
+        "click": "ok",
+        "clipboard": "Hello from the **lab** bubble.\n\n- item one\n- item two",
+        "ariaAfter": "已复制"
+      },
+      "pageErrors": 0,
+      "checks": 4
+    },
+    "lab-ai-sender": {
+      "scenarios": 1,
+      "empty": { "submitDisabled": true, "count": "0/60" },
+      "typed": { "count": "12/60", "changeProbe": "hello sender", "submitEnabled": true },
+      "enterSubmit": { "submitProbe": "hello sender", "inputCleared": true, "countReset": "0/60" },
+      "shiftEnter": { "newlineInserted": true, "noSubmit": true },
+      "overCap": {
+        "fillLen": 65,
+        "clampedLen": 60,
+        "count": "60/60",
+        "destructive": false,
+        "enterSubmittedLen": 60
+      },
+      "pageErrors": 0,
+      "checks": 5,
+      "findings": ["IS-lab-ai-sender-001"]
+    },
+    "lab-ai-conversations": {
+      "scenarios": 1,
+      "before": { "items": 2, "activeId": "c1", "createBtn": "新建会话" },
+      "create": { "itemsAfter": 2, "probe": "create", "toasts": [] },
+      "switchC2": { "activeIdAfter": "c2", "probe": "c2|Second chat", "conversationChange": "c2" },
+      "renameEnter": {
+        "titlesAfter": ["First chat", "Second chat"],
+        "inputClosed": true,
+        "toasts": []
+      },
+      "renameEsc": { "inputGone": true, "titleUnchanged": true },
+      "deleteCancel": { "dialogGone": true, "items": 2 },
+      "deleteEsc": { "dialogGone": true, "items": 2 },
+      "deleteConfirm": { "itemsAfter": 2, "toasts": [] },
+      "search": {
+        "filterFirst": 1,
+        "noMatchText": "没有匹配“zzz-no-match”的会话",
+        "noMatchItems": 0
+      },
+      "pageErrors": 0,
+      "checks": 6,
+      "findings": [
+        "IS-lab-ai-conversations-001",
+        "IS-lab-ai-conversations-002",
+        "IS-lab-ai-conversations-003"
+      ]
+    },
+    "lab-ai-tool-call": {
+      "scenarios": 2,
+      "dialogRunning": { "status": "running", "ariaExpanded": "false" },
+      "argsToggle": {
+        "expand": {
+          "dataOpen": "",
+          "ariaExpanded": "true",
+          "argsPrettyJson": true,
+          "argsCity": "Hangzhou"
+        },
+        "collapse": { "ariaExpanded": "false", "argsGone": true }
+      },
+      "markSuccess": { "status": "success", "spinnerLeft": 0 },
+      "hitlReject": {
+        "probe": "reject|call_c8_2",
+        "count": 1,
+        "approval": "rejected",
+        "buttonsLeft": 0
+      },
+      "hitlNoHandler": { "approveEnabled": false, "rejectEnabled": false },
+      "escClosesDialog": true,
+      "pageErrors": 0,
+      "checks": 6
+    },
+    "lab-ai-attachments": {
+      "scenarios": 2,
+      "dialogUpload": { "itemsBefore": 0, "itemsAfterAdd": 1, "thumb": 1 },
+      "oversize": {
+        "items": 1,
+        "errorProbe": "attachment-too-large",
+        "inlineRejection": "文件过大",
+        "noPhantomItem": true,
+        "toasts": []
+      },
+      "remove": { "itemsAfter": 0 },
+      "safety": {
+        "jsUrlAnchors": 0,
+        "jsUrlImgs": 1,
+        "maliciousNameEscaped": true,
+        "rawHtmlInjected": false
+      },
+      "pageErrors": "1 expected console noise (C8.2 deliberate javascript: resource, fixtures.ts documents allowance)",
+      "checks": 5
+    },
+    "lab-ai-citations": {
+      "scenarios": 1,
+      "markers": { "triggers": 2, "indexes": ["1", "2"] },
+      "popover1": {
+        "title": "Doc A",
+        "urlHref": "https://source-a.example",
+        "safeAnchor": true,
+        "inViewport": true
+      },
+      "urlClickProbe": { "value": "1|Doc A", "count": 1 },
+      "noUrlSource": { "openBtn": "打开来源", "probe": "2|Doc B", "count": 2 },
+      "pageErrors": 0,
+      "checks": 5
+    },
+    "lab-ai-feedback": {
+      "scenarios": 1,
+      "like": { "likeActive": "", "dislikeActive": null, "probe": "like|m_fb", "count": 1 },
+      "dislike": { "likeActive": null, "dislikeActive": "", "probe": "dislike|m_fb", "count": 2 },
+      "toggleOff": { "dislikeActive": null },
+      "copy": { "probe": "copy|m_fb", "clipboard": "hello world" },
+      "pageErrors": 0,
+      "checks": 6
+    },
+    "lab-ai-token-usage": {
+      "scenarios": 1,
+      "display": {
+        "total": "42",
+        "prompt": "↑40",
+        "completion": "↓2",
+        "contextText": "42 / 1,000",
+        "matchesSchemaUsage": true
+      },
+      "clickProbe": { "value": "42", "count": 1 },
+      "emptyState": { "dataEmptyPresent": true, "text": "用量未上报" },
+      "pageErrors": 0,
+      "checks": 4
+    },
+    "lab-ai-prompts": {
+      "scenarios": 1,
+      "surface": {
+        "items": 3,
+        "labels": ["Summarize", "Translate", "Debug help"],
+        "badge": ["P1"],
+        "description": ["Get a quick summary"]
+      },
+      "selectProbes": ["Summarize|0", "Debug help|2"],
+      "outcomeAfterClick": { "dialogOpen": true, "dataSelected": null, "toasts": [] },
+      "pageErrors": 0,
+      "checks": 3,
+      "findings": ["IS-lab-ai-prompts-001"]
+    },
+    "lab-ai-suggestions": {
+      "scenarios": 1,
+      "surface": {
+        "visibleItems": 3,
+        "texts": ["Summarize", "Translate", "Explain"],
+        "overflowTrigger": "+2"
+      },
+      "popover": { "items": 2, "texts": ["Refine", "Expand"], "inViewport": true },
+      "selectProbes": ["Translate|1", "Expand|4"],
+      "outcomeAfterOverflowSelect": {
+        "popoverStillOpen": true,
+        "dataSelected": null,
+        "toasts": []
+      },
+      "pageErrors": 0,
+      "checks": 5,
+      "findings": ["IS-lab-ai-suggestions-001"]
+    },
+    "lab-ai-voice-input": {
+      "scenarios": 1,
+      "envNote": "Chromium exposes SpeechRecognition → live path driven; degradation branch n/a (n-a#1)",
+      "livePath": {
+        "enabledBefore": true,
+        "waveDuring": true,
+        "waveAfterStop": false,
+        "onErrorProbe": "no-result"
+      },
+      "stateSurface": {
+        "ariaPressed": "源码 270 行 listening 时 true",
+        "labelSwap": "源码 291 行 voiceListening"
+      },
+      "pageErrors": 0,
+      "checks": 3
+    },
+    "lab-ai-welcome": {
+      "scenarios": 1,
+      "surface": {
+        "title": "Welcome",
+        "description": "Ask me anything.",
+        "icon": 1,
+        "footerButtons": 1,
+        "footerText": "Ask somethingnested footer text"
+      },
+      "ctaReactivity": { "click1": "0", "click2": "1" },
+      "pageErrors": 0,
+      "checks": 3
+    }
+  }
+}

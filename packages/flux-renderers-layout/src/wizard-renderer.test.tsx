@@ -44,8 +44,9 @@ describe('WizardRenderer (W2a — layered interaction/lifecycle state)', () => {
     expect(root.getAttribute('data-step-count')).toBe('3');
     expect(root.getAttribute('data-last-commit-status')).toBe('idle');
 
-    // Step 0 body is active; only the active step body renders by default
-    // (mountOnEnter=false, unmountOnExit=false — other steps are unmounted).
+    // Step 0 body is active; by default visited steps stay mounted
+    // (mountOnEnter defaults true — step 0 is the only visited step at first
+    // render, so unvisited bodies are still unmounted; unmountOnExit opts out).
     expect(screen.getByText('step-0-body')).toBeTruthy();
     const bodySlots = document.querySelectorAll('[data-slot="wizard-step-body"]');
     expect(bodySlots.length).toBe(1);

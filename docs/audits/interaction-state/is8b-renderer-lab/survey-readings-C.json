@@ -1,0 +1,299 @@
+{
+  "batch": "IS-8b group C (plan 553 Phase 1) — 媒体/移动 10 页",
+  "date": "2026-10-07",
+  "method": "interaction-state-audit-prompt §4/§6/§9; fresh-session Playwright chromium; strict-validation; readings convict, screenshots unused; ~50 sequences across 10 pages; every page passed the fixtures console-error assertion (zero unfiltered console.error/pageerror on all 10 pages); mobile gesture pages driven at 375x667 hasTouch (549 precedent) with async-gap TouchEvent synthesis (60ms inter-event, React discrete-event flush)",
+  "devServer": "http://127.0.0.1:4175 (strict-validation)",
+  "pages": [
+    "audio",
+    "video",
+    "carousel",
+    "qrcode",
+    "diff-view",
+    "pull-refresh",
+    "infinite-scroll",
+    "swipe-cell",
+    "countdown",
+    "notice-bar"
+  ],
+  "summary": {
+    "rawObservations": 6,
+    "ledgerRows": 3,
+    "byPriority": { "P0": 0, "P1": 0, "P2": 1, "P3": 2 },
+    "dismissedProbeArtifacts": 3,
+    "watch": 4,
+    "naRegistrations": 4
+  },
+  "findings": [
+    {
+      "id": "IS-lab-carousel-001",
+      "page": "lab-carousel",
+      "symptom": "声明开启的 autoplay 挂载后不自推进（4/5 独立加载复现，inViewport=true、reducedMotion=false、resolved prop autoPlay=true）；own next 箭头同 embla 实例可推进；autoPlay off→on toggle 循环（重建 interval effect）后 2/3 次恢复推进、1 次仍冻结",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P2",
+      "route": "#/lab/carousel",
+      "sequence": "load -> scrollIntoView(c6c4-carousel-auto) -> observe data-active-index 2-2.5s -> discriminator: click own carousel-next arrow",
+      "evidence": {
+        "deadFromMount": "idxAfter25sAutoplay:'0' (runs 2x2/4/6); t0='0' -> t2s='0' with inViewport=true (run2b, run4)",
+        "discriminator": "idxAfterOwnNextArrow:'1' then frozen 2s more (run6) — embla api healthy, autoplay effect interval/pause-source stuck",
+        "recoversAfterToggleCycle": "run1 0->2, run2b 0->2 after autoPlay off->on; run4 still frozen",
+        "correctPaths": "offscreen pause + hover pause frozen=true (declared WCAG); 1/5 loads (run5, IO-patched timing) ticked 0->1->2->0 at ~800ms from mount",
+        "consoleErrors": 0
+      },
+      "ownership": "renderer (packages/flux-renderers-content/src/carousel.tsx autoplay effect pause-source lifecycle)",
+      "candidateRootCause": "UNPROVEN — mount-order race between IntersectionObserver initial callback (visible flag), api-ready effect re-runs and StrictMode remount leaves interval started-but-paused or never started; stale-api hypothesis excluded by arrow discriminator; fiber-prop reads unreliable under React Compiler (abandoned as evidence)",
+      "redE2eSketch": "renderer-lab-b-interaction-state.spec.ts: goto #/lab/carousel -> c6c4-carousel-auto scrollIntoView center -> expect.poll(getAttribute data-active-index).not.toBe('0') within 2500ms (red on 4/5 observed loads)"
+    },
+    {
+      "id": "IS-lab-infinite-scroll-001",
+      "page": "lab-infinite-scroll",
+      "symptom": "retry 场景点击重试按钮派发 onLoadMore('retry') 但可见状态零变化（status 保持 error、文案不变）；场景描述承诺 'clicking retry resumes loading' 不可观测",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P3",
+      "route": "#/lab/infinite-scroll",
+      "sequence": "load -> read c7-retry status -> click retry button -> re-read",
+      "evidence": {
+        "before": "{status:'error', statusText:'加载失败，点击重试', probe:null}",
+        "after": "{status:'error', statusText:'加载失败，点击重试', probe:'retry'}",
+        "secondClick": "identical (probe stays 'retry')",
+        "relatedSemantic": "dialog immediateCheck fires once (probe 'immediate') then in-flight guard stays locked because static host never flips loading/error — renderer-documented conservative over-lock"
+      },
+      "ownership": "demo 接线 (c7RetrySchema static payload-proof host without a loading/error state bridge)",
+      "candidateRootCause": "PROVEN — static schema has no state write-back channel; same family as IS-crud-003 / IS-queryfilter-001 static hosts",
+      "redE2eSketch": "goto #/lab/infinite-scroll -> read status attr -> click retry button -> assert visible status transition (currently stays 'error' => red until demo bridge implemented or scenario description corrected to payload-only wording)"
+    },
+    {
+      "id": "IS-lab-video-001",
+      "page": "lab-video",
+      "symptom": "media fallback 分支（error/empty）静默丢弃声明的 title：error 卡片仅渲染 加载失败 + poster，无 video-title/audio-title 节点，用户无法辨识失败媒体",
+      "class": "D",
+      "invariant": "V6",
+      "priority": "P3",
+      "route": "#/lab/video (same code shape applies to #/lab/audio fallback branch)",
+      "sequence": "load #/lab/video (basic video is by-design broken data-URI) -> read figure attributes",
+      "evidence": {
+        "videoBasic": "{testid:'demo-video-lab', state:'error', fallback:'加载失败', title:null} while schema declares title:'Lab video clip'",
+        "controlCase": "audio with src renders title:'Lab audio track' — title value-or-region only wired in the has-src branch",
+        "errorStateStylingTruthful": "destructive color rgb(197,17,17) + border verified"
+      },
+      "ownership": "renderer (packages/flux-renderers-content/src/video.tsx and audio.tsx fallback early-return branch)",
+      "candidateRootCause": "PROVEN — fallback branch renders only poster+figcaption, never the title slot; conflicts with the intro's 'title value-or-region' claim in error/empty states",
+      "redE2eSketch": "goto #/lab/video -> expect demo-video-lab [data-slot=video-title] to contain 'Lab video clip' (currently null => red)"
+    }
+  ],
+  "dismissedProbeArtifacts": [
+    {
+      "id": "dismissed-swipe-sync-dispatch",
+      "page": "lab-swipe-cell",
+      "note": "first probe dispatched touchstart/moves/touchend synchronously in one JS task; 3/4 first swipes did not commit and the follow-up button click appeared 'intercepted by scenario stage div' — actually the cell was still closed (button clipped by overflow:hidden, elementFromPoint hit the stage div). Re-probe with 60ms async gaps between events: FULL GREEN (open, in-gap hit test, pointer action probe 'open-left|0' + auto-close, keyboard 'open-left|2', outside close, partial rebound, touchcancel no-commit, re-arm). Same family as the mobile-components.spec.ts honest-skip precedent."
+    },
+    {
+      "id": "dismissed-trace-enoent",
+      "page": "batch-wide",
+      "note": "3 occurrences of 'browserContext.close: ENOENT ... test-results/.playwright-artifacts-0/traces/*.trace' under 2 parallel workers — Playwright infra artifact, solo re-runs green, not a page defect."
+    },
+    {
+      "id": "dismissed-carousel-offscreen-run1",
+      "page": "lab-carousel",
+      "note": "first autoplay sequence read the carousel while offscreen — no advance is the DECLARED WCAG offscreen-pause behavior, not a defect; superseded by visibility-corrected sequences that fed IS-lab-carousel-001."
+    }
+  ],
+  "watch": [
+    "diff-view split view renders clickable add-typed rows in the OLD column mirroring new-side content (e.g. 上海市浦东新 at x=401); click resolves side=old consistently with the clicked cell — no invariant violated; rendering semantics for old-column add cells to be adjudicated against design.md",
+    "notice-bar marquee/string[] multi-text path has no declared scenario on this page (three single-text bars, data-scrollable all false) — scenario coverage out of scope per plan Non-Goals; renderer path unit-tested",
+    "carousel autoplay dead-state precise mechanism (visible flag vs interval start vs StrictMode remount order) unproven — needs component-level fake-timers repro",
+    "React Compiler memoization makes fiber memoizedProps reads inconsistent across runs on the same DOM node (autoPlay true vs false mutually exclusive) — fiber inspection is unreliable as audit evidence; use DOM behavior readings"
+  ],
+  "naRegistrations": [
+    "lab-diff-view: SchemaRenderer schema-prop non-propagation (IS-diff-view-001 precedent) n-a — all 5 scenarios mount static schemas and are driven via scope/component handles, no schema-prop hot update dependency",
+    "lab-countdown: data-remaining holds initial value until the first 1s tick (1500 at wall 510ms) — interval granularity, not drift (tick at 1003ms -> remaining 497 = 1500-1003 exact)",
+    "lab-audio/video playing states: native controls, headless drive limited to paused/ended readings (IS-6 w4a same scope; playing state stays watch)",
+    "lab-pull-refresh/infinite-scroll/swipe-cell: demo hosts are payload-proof static bridges (beyond IS-lab-infinite-scroll-001's visibility gap, accepted per declared payload behavior)"
+  ],
+  "antiPatternChecklist": {
+    "a_templateEventBindings": "GREEN — 6/6 resolved: carousel '${activeIndex}|${slides.length}|${item.title}'->'1|3|Second'; pull-refresh '${direction}|${threshold}'->'down|50'; swipe '${side}|${$slot.index}'->'open-left|0'/'open-left|2'; countdown '${type}'->'finish'; infinite-scroll '${source}'->'immediate'/'retry'; diff '${lineNumber}|${side}|${type}'->'3|old|add'/'17|new|add'",
+    "b_objectSpreadSetValue": "GREEN — all setValue expression args wrote correct types (boolean flips for autoPlay/viewMode/toggle, strings for qrValue); carousel autoplay prop verified boolean at mount via live read before fiber evidence was abandoned",
+    "c_controlledPropsNoChangeChannel": "GREEN — no dead controls found; swipe-cell archive button has no own onClick but is wired via cell-level onAction capture handler per design.md §8/§11",
+    "d_strictModeTimerHazard": "NEGATIVE — pull-refresh loading->success->normal settles <=950ms; infinite-scroll immediate single-fire settles normal; countdown finish fires once and stays stable; renderer-side isMountedRef/finishedRef guards present",
+    "e_scrollResetArtifacts": "no scroll-reset convictions attempted; V1 readings (window/dialog/body scrollTop) all zero throughout, no unintended scroll"
+  },
+  "surveyReadings": {
+    "consoleErrorsOnLoad": { "all10Pages": 0 },
+    "audio": {
+      "surfaces": { "scenarioStages": 2, "audioFigures": 2, "dialogButtons": 1 },
+      "sequences": {
+        "S1_playReadiness": {
+          "pristine": { "paused": true, "readyState": 4, "controls": true },
+          "playDrive": { "playResolved": true, "pausedAfterPlay": false },
+          "after300ms": { "paused": true, "ended": true }
+        },
+        "S2_emptyVariant": { "state": "empty", "fallback": "无来源" },
+        "S3_dialogChain": {
+          "audio": { "readyState": 4 },
+          "videoErrorFallback": "加载失败",
+          "probeMediaError": "video-error-fired",
+          "escClean": true
+        }
+      }
+    },
+    "video": {
+      "surfaces": { "scenarioStages": 2, "videoFigures": 2 },
+      "sequences": {
+        "S1_brokenSource": {
+          "state": "error",
+          "fallback": "加载失败",
+          "color": "rgb(197, 17, 17)",
+          "title": null
+        },
+        "S2_emptyVariant": { "state": "empty", "fallback": "无来源" },
+        "S3_dialogChain": {
+          "audio": { "readyState": 4 },
+          "videoErrorFallback": "加载失败",
+          "probeMediaError": "video-error-fired",
+          "escClean": true
+        }
+      }
+    },
+    "carousel": {
+      "surfaces": { "scenarioStages": 3, "carousels": 3 },
+      "sequences": {
+        "S1_basic": {
+          "next": "0->1",
+          "nextWrap2Items": "1->0",
+          "prev": "->0",
+          "indicatorJump": "truthful",
+          "indicatorsSync": "data-active + aria-current"
+        },
+        "S2_handles": {
+          "next": "0->1 probe '1|3|Second'",
+          "setValue2": "->2 probe '2|3|Third'",
+          "prev": "->1 probe '1|3|Second'"
+        },
+        "S3_autoplay": {
+          "deadFromMount": "4/5 loads: data-active-index stays '0' over 2-2.5s while inViewport=true, reducedMotion=false",
+          "discriminator": "own next arrow 0->1 while autoplay frozen; still frozen 2s after",
+          "toggleCycleRecovery": "advances in 2/3 runs after autoPlay off->on",
+          "offscreenPause": "declared behavior verified",
+          "hoverPause": "frozen=true verified",
+          "finding": "IS-lab-carousel-001"
+        }
+      }
+    },
+    "qrcode": {
+      "surfaces": { "scenarioStages": 2, "qrcodes": 3 },
+      "sequences": {
+        "S1_basic": { "canvas": "128x128 painted", "label": "Lab QR", "empty": "无值" },
+        "S2_updateChain": {
+          "t0Len": 2426,
+          "setALen": 2378,
+          "setBLen": 2422,
+          "clearFallback": "无值",
+          "recoverLen": 2378,
+          "allDistinct": true
+        }
+      }
+    },
+    "diffView": {
+      "surfaces": { "scenarioStages": 5, "diffViews": 9 },
+      "sequences": {
+        "S1_dialogLineClick": {
+          "oldPaneAdd": "3|old|add",
+          "newPaneAdd": "17|new|add",
+          "escClean": true
+        },
+        "S2_crossFileClamp": {
+          "activeFileIndex99": "clamps to last file (utils.js)",
+          "activeFileIndexMinus5": "clamps to first (profile.ts)",
+          "navClick": "content switches 22->4 lines"
+        },
+        "S3_reactions": {
+          "toggle": "split->unified->split",
+          "setUnified": "unified",
+          "setSplit": "split"
+        },
+        "S4_expandCollapse": { "expandAll": "hunks false->true", "collapseAll": "true->false" },
+        "S5_empty": "无变化"
+      }
+    },
+    "pullRefresh": {
+      "viewport": "375x667 hasTouch",
+      "sequences": {
+        "S1_fullChain": {
+          "midDrag140": {
+            "status": "loosing",
+            "indicator": "释放刷新",
+            "translateY": "70px (damped)"
+          },
+          "release": {
+            "status": "success",
+            "indicator": "刷新成功",
+            "translateY": "50px",
+            "probe": "down|50"
+          },
+          "settleMs": "<=950",
+          "backToNormal": { "translateY": "0px" }
+        },
+        "S2_shortPull": { "status": "normal", "probeUnchanged": true },
+        "S3_touchCancel": { "status": "normal", "probeUnchanged": true, "residue": "none" },
+        "S4_reArm": { "secondChain": "success again then normal" }
+      }
+    },
+    "infiniteScroll": {
+      "viewport": "375x667 hasTouch (dialog scenario); desktop 1280x720 for retry scenario",
+      "sequences": {
+        "S1_retry": {
+          "t0": "error + button 加载失败，点击重试",
+          "afterClick": { "status": "error", "probe": "retry", "visibleChange": "none" },
+          "finding": "IS-lab-infinite-scroll-001"
+        },
+        "S2_dialogImmediate": {
+          "probe": "immediate",
+          "scrollBottomRefire": "none (in-flight guard, host never flips loading)",
+          "windowScroll": { "x": 0, "y": 0 }
+        }
+      }
+    },
+    "swipeCell": {
+      "viewport": "375x667 hasTouch",
+      "sequences": {
+        "S1_openAndPointerAction": {
+          "open": "open-left translateX(47.6px)",
+          "hitTest": "button",
+          "actionProbe": "open-left|0",
+          "autoClose": true
+        },
+        "S2_outsideClick": { "closes": true, "probeUnchanged": true },
+        "S3_partialSwipe20": "rebounds closed (threshold 30)",
+        "S4_keyboardActionRow2": { "probe": "open-left|2" },
+        "S5_reopenSecondAction": { "probe": "open-left|0", "reArm": true },
+        "touchCancel": "no commit",
+        "note": "sync-dispatch first attempt produced non-commit artifact — dismissed after async re-probe (see dismissedProbeArtifacts)"
+      }
+    },
+    "countdown": {
+      "sequences": {
+        "samples": [
+          { "wallMs": 0, "remaining": "1500", "text": "01", "finished": "false" },
+          { "wallMs": 510, "remaining": "1500", "text": "01", "finished": "false" },
+          { "wallMs": 921, "remaining": "497", "text": "00", "finished": "false" },
+          { "wallMs": 1935, "remaining": "0", "text": "00", "finished": "true", "probe": "finish" },
+          { "wallMs": 2944, "remaining": "0", "finished": "true", "probe": "finish" }
+        ],
+        "verdict": "wall-clock exact (497 = 1500-1003 at tick), finish once, no re-tick; prefix/suffix rendered"
+      }
+    },
+    "noticeBar": {
+      "sequences": {
+        "S0_roles": {
+          "clickBar": { "actionRole": "button", "tabindex": 0 },
+          "closeBar": { "rootRole": "status", "closeAriaLabel": "关闭" },
+          "staticBar": { "rootRole": "status", "tabindex": null }
+        },
+        "S1_click": { "probe": "clicked", "keyboardEnter": "works", "barStays": true },
+        "S2_close": { "barCountAfter": 0, "probe": "closed", "othersRemain": 2 },
+        "S4_marquee": "n-a on this page (no overflowing/multi-text scenario declared)"
+      }
+    }
+  }
+}

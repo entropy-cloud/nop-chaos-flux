@@ -1,0 +1,408 @@
+{
+  "batch": "IS-8b group B (content display, 12 pages, plan 553 Phase 1)",
+  "date": "2026-10-07",
+  "reviewer": "review-group B, independent fresh session",
+  "method": "docs/skills/interaction-state-audit-prompt.md §4 five-step; Playwright chromium against dev server 127.0.0.1:4175 (strict-validation); convictions from programmatic readings only; screenshots unused; clipboard conviction via navigator.clipboard.readText() read-back",
+  "pagesCovered": 12,
+  "summary": {
+    "rawObservations": 3,
+    "ledgerRows": 3,
+    "byPriority": { "P0": 0, "P1": 0, "P2": 2, "P3": 1 },
+    "probeArtifactsWithdrawn": 3
+  },
+  "antiPatternCandidates": {
+    "eventTemplateBindings": {
+      "verdict": "not-reproduced",
+      "readings": [
+        "cards onItemClick Beta|2, Gamma|3",
+        "alert onClose warning|closed",
+        "link setValue link-clicked:true"
+      ]
+    },
+    "expressionSetValueRawString": {
+      "verdict": "not-reproduced",
+      "readings": ["card innerCount inner:1 -> inner:2 numeric"]
+    },
+    "controlledWithoutChangeChannel": {
+      "verdict": "not-reproduced",
+      "readings": ["cards single report follows clicks; none-mode inert is declared contract"]
+    },
+    "clipboardTruthfulness": {
+      "verdict": "pass",
+      "readings": [
+        "button Copy->Copied->Copy lifecycle; readText() === JSON.stringify(value,null,2) byte-equal"
+      ]
+    }
+  },
+  "findings": [
+    {
+      "id": "IS-lab-json-view-001",
+      "page": "lab-json-view",
+      "symptom": "nested json-view expanders not keyboard-reachable: root arrow tabindex=0 but ALL nested arrows tabindex=-1 (aria-expanded truthful; mouse expansion contract healthy)",
+      "class": "E",
+      "priority": "P2",
+      "invariant": "V6",
+      "route": "#/lab/json-view",
+      "evidence": {
+        "clickableKeys": [
+          { "label": "{", "tabindex": "0", "ariaExpanded": "true" },
+          { "label": "a:", "tabindex": "-1", "ariaExpanded": "false" }
+        ],
+        "expansionByClick": ["{a:{}}", "{a:{b:{}}}", "{a:{b:{c:1}}}"]
+      },
+      "ownership": "renderer/ui (react-json-view-lite wrapper)",
+      "candidateRootCause": "library default exposes only root node in tab order (unconfirmed to library line level)",
+      "redE2eSketch": "Tab-walk assert nested expander present in tab order; currently red"
+    },
+    {
+      "id": "IS-lab-link-001",
+      "page": "lab-link",
+      "symptom": "link indistinguishable from body text at rest: WCAG contrast 1.057 vs paragraph color, no underline, zero hover delta; only affordances are cursor:pointer and default focus outline; .nop-link has no style definition anywhere",
+      "class": "D",
+      "priority": "P2",
+      "invariant": "V6",
+      "route": "#/lab/link",
+      "evidence": {
+        "base": { "color": "rgb(33, 53, 71)", "textDecoration": "none" },
+        "hover": { "color": "rgb(33, 53, 71)", "textDecoration": "none" },
+        "focus": { "outline": "auto", "outlineWidth": "1px" },
+        "contrastVsParagraph": 1.0570500340085467
+      },
+      "ownership": "design-system + renderer (nop-link marker without styling contract)",
+      "candidateRootCause": "global anchor reset to body color with no .nop-link affordance styles (global reset line unconfirmed)",
+      "redE2eSketch": "assert hover computedStyle diff non-empty OR link/body contrast >= 3; currently red"
+    },
+    {
+      "id": "IS-lab-alert-001",
+      "page": "lab-alert",
+      "symptom": "demo schema dead echo: close-report line references closeReported which no action writes — echo stays 'pending' after real close; actual close contract truthful (node removed, onClose ${level} payload resolves)",
+      "class": "D",
+      "priority": "P3",
+      "invariant": "V3",
+      "route": "#/lab/alert",
+      "evidence": {
+        "afterClose": {
+          "closableAlert": false,
+          "closeReport": "close-report:pending",
+          "probe": "warning|closed",
+          "toasts": 0
+        }
+      },
+      "ownership": "demo schema (playground data-c6c3-host.ts)",
+      "candidateRootCause": "leftover echo instrument line; probe namespace already observable",
+      "redE2eSketch": "assert close-report flips to fired after X click; currently red"
+    }
+  ],
+  "withdrawnProbeArtifacts": [
+    "markdown s2 'script literal visible / <b> missing': scope-debug dump polluted textContent + wrong tag query (strong vs b); corrected readings show sanitize gate healthy (bold:['bold ok'], literalScriptText:false, script 0, xss null)",
+    "card s2 'Inner action button x2': second element is the scope-debug collapse button whose accessible name embeds the schema JSON; actual DOM has exactly 1 business button (census reading kept)",
+    "json-view s3 'collapsed contains :1': scope-debug dump pollution; stripped reading is exactly {a:{}}"
+  ],
+  "surveyReadings": {
+    "lab-markdown": {
+      "s1": {
+        "h2": ["Release notes"],
+        "tableRows": [
+          ["a", "b"],
+          ["1", "2"]
+        ],
+        "overflowX": "auto",
+        "dataSlot": "markdown"
+      },
+      "s2": {
+        "before": { "bold": ["bold ok"], "heading": ["Safe"], "scriptTags": 0, "xss": null },
+        "after": {
+          "bold": ["still bold"],
+          "heading": ["Evil"],
+          "scriptTags": 0,
+          "literalScriptText": false,
+          "xss": null
+        },
+        "restored": { "heading": ["Safe"], "bold": ["bold ok"] },
+        "scrollYBeforeAfter": [0, 0]
+      },
+      "s3": {
+        "okSrcLoaded": "true",
+        "okH1": ["Fetched from env.fetcher"],
+        "errState": "error",
+        "errRoleAlert": "加载失败",
+        "errDestructive": true
+      }
+    },
+    "lab-html": {
+      "s1": { "strong": ["HTML"], "scriptTags": 0, "xss": null },
+      "s2": {
+        "after": { "p": ["Evil html"], "scriptTags": 0, "xss": null },
+        "restoredStrong": ["html"]
+      },
+      "s3": { "text": "No HTML content" }
+    },
+    "lab-json-view": {
+      "s1": {
+        "buttonLabel": "复制",
+        "immediateLabel": "已复制",
+        "settledLabel": "复制",
+        "clipboardByteEqual": true
+      },
+      "s2": {
+        "emptyState": "empty + 'No data to inspect'",
+        "objectViaScopeButton": "tree with Alice",
+        "nullRestoresEmpty": true
+      },
+      "s3": {
+        "before": "{a:{}}",
+        "afterOneClick": "{a:{b:{}}}",
+        "afterTwoClicks": "{a:{b:{c:1}}}",
+        "arrows": [{ "tabindex": "0" }, { "tabindex": "-1" }]
+      }
+    },
+    "lab-link": {
+      "s1": {
+        "href": "https://example.com/",
+        "target": "_blank",
+        "rel": "noopener noreferrer",
+        "popupOpened": "https://example.com/",
+        "pageUrlAfter": "#/lab/link",
+        "contrastVsParagraph": 1.057,
+        "hoverDelta": "none"
+      },
+      "s2": {
+        "report": "link-clicked:true",
+        "hashUnchanged": true,
+        "evilHrefAttr": null,
+        "xss": null
+      },
+      "s3": {
+        "href": null,
+        "ariaDisabled": "true",
+        "pointerEvents": "none",
+        "opacity": "0.6",
+        "clickNoNav": true
+      }
+    },
+    "lab-image": {
+      "s1": {
+        "naturalWidth": 160,
+        "loading": "lazy",
+        "objectFit": "cover",
+        "nonInteractive": true
+      },
+      "s2": {
+        "initial": {
+          "state": "error",
+          "fallbackText": "lifecycle image",
+          "destructiveStyle": true
+        },
+        "afterValidSrc": { "naturalWidth": 160, "srcHead": "data:image" },
+        "afterMissingAgain": { "state": "error" }
+      },
+      "s3": { "fetcherFlag": "true", "naturalWidth": 160, "srcHead": "data:image" }
+    },
+    "lab-card": {
+      "s1": {
+        "title": "Card title",
+        "regions": ["header", "body", "footer"],
+        "actionsButton": "Action",
+        "border": "rgb(225, 231, 239)"
+      },
+      "s2": {
+        "cardClick": "card-clicked:true",
+        "innerAccumulator": [1, 2],
+        "bubblingCardAlsoFires": true,
+        "buttonCensus": 1
+      }
+    },
+    "lab-cards": {
+      "s1": { "items": 3, "role": "listitem" },
+      "s2": {
+        "singleReport": ["1", "2", "[]"],
+        "singlePressed": [
+          ["true", "false", "false"],
+          ["false", "true", "false"],
+          ["false", "false", "false"]
+        ],
+        "multiPressed": ["true", "false", "true"],
+        "noneMode": {
+          "report": "pending",
+          "pressed": [null, null, null],
+          "tabindex": [null, null, null]
+        }
+      },
+      "s3": {
+        "pickBeta": "Beta",
+        "probeBeta": "Beta|2",
+        "pickGamma": "Gamma",
+        "probeGamma": "Gamma|3"
+      }
+    },
+    "lab-progress": {
+      "s1": {
+        "ariaNow": "65",
+        "display": "65",
+        "fillPct": 64.99869281045751,
+        "label": "Uploading"
+      },
+      "s2": {
+        "initial250": { "ariaNow": "100", "display": "100" },
+        "neg10": { "ariaNow": "0", "display": "0" },
+        "mid42": { "ariaNow": "42", "display": "42", "fillPct": 41.99858387799564 },
+        "over250": { "ariaNow": "100", "display": "100" }
+      }
+    },
+    "lab-spinner": {
+      "s1": { "node": true, "size": "md", "label": "Loading…", "ariaLabel": "加载中..." },
+      "s2": { "before": { "spinnerNodes": 1 }, "after": { "spinnerNodes": 0, "residue": false } }
+    },
+    "lab-alert": {
+      "s1": { "level": "info", "icon": true, "closeButton": false, "border": "rgb(225, 231, 239)" },
+      "s2": {
+        "before": { "alertCloseCount": 1, "report": "pending" },
+        "afterClose": {
+          "nodeRemoved": true,
+          "report": "pending (DEAD ECHO — finding IS-lab-alert-001)",
+          "probe": "warning|closed",
+          "toasts": 0,
+          "actionsAlertStillVisible": true
+        },
+        "afterAction": { "probe": "inner-fired" }
+      }
+    },
+    "lab-mapping": {
+      "s1": { "state": "hit", "text": "Active" },
+      "s2": {
+        "rows": ["Active(hit)", "Idle(hit)", "Unknown(miss+defaultLabel)"],
+        "pickAlpha": "Alpha|active",
+        "pickGamma": "Gamma|pending"
+      },
+      "s3": {
+        "hit": { "regionRenders": true, "actionProbe": "region-fired" },
+        "miss": { "regionTextLeak": false, "state": "miss" }
+      }
+    },
+    "lab-status": {
+      "s1": {
+        "state": "hit",
+        "level": "success",
+        "badgeText": "Completed",
+        "badgeBgNonTransparent": true
+      },
+      "s2": { "rows": ["Active/success", "Idle/info", "Pending/warning"], "escResidue": [0, 0, 0] }
+    }
+  },
+  "perPageChecks": {
+    "lab-markdown": [
+      "gfm-table+overflow-x",
+      "dynamic-content-roundtrip-V3",
+      "update-path-sanitize",
+      "allowHtml-b-renders",
+      "xss-flag-null",
+      "fetcher-src-loaded",
+      "missing-src-error-state",
+      "scrollY-stable-V1"
+    ],
+    "lab-html": [
+      "basic-sanitize",
+      "update-path-sanitize",
+      "xss-flag-null",
+      "safe-roundtrip",
+      "empty-slot",
+      "data-slot-present"
+    ],
+    "lab-json-view": [
+      "tree+copy-toolbar",
+      "copy-label-lifecycle",
+      "clipboard-readback-byte-equal",
+      "null-empty-state",
+      "object-via-scope-V3",
+      "null-restores-empty",
+      "collapsed-folds",
+      "click-expands-levelwise",
+      "aria-expanded-truthful"
+    ],
+    "lab-link": [
+      "href-target-rel",
+      "real-popup-nav",
+      "onClick-href-coexist",
+      "javascript-stripped",
+      "disabled-no-href-aria",
+      "disabled-pointer-events-click-blocked",
+      "label-renders"
+    ],
+    "lab-image": [
+      "lazy-attr",
+      "loaded-naturalWidth-cover",
+      "non-interactive-by-default",
+      "error-fallback-truthful",
+      "retry-clears-error",
+      "re-error-on-missing-src",
+      "fetcher-data-uri"
+    ],
+    "lab-card": [
+      "five-regions-render",
+      "border-visible-V6",
+      "card-onclick-V3",
+      "inner-action-accumulator",
+      "bubbling-declared-semantics",
+      "button-census-unique"
+    ],
+    "lab-cards": [
+      "three-rows-per-row-scope",
+      "role-listitem",
+      "single-move-report-ring",
+      "single-toggle-off",
+      "multiple-accumulate",
+      "none-fully-inert",
+      "per-row-pick-row-scoped",
+      "aria-pressed-truthful",
+      "focus-visible-ring-class"
+    ],
+    "lab-progress": [
+      "65-aria-display-fill-equal-V3",
+      "clamp-250-to-100",
+      "clamp-neg10-to-0",
+      "pass-through-42",
+      "label+value-rendered"
+    ],
+    "lab-spinner": [
+      "node-renders",
+      "size-md",
+      "label-renders",
+      "aria-label",
+      "visible-false-removes-node",
+      "no-residue-V5"
+    ],
+    "lab-alert": [
+      "info-level-icon-title-body",
+      "level-semantic-styling",
+      "default-not-closable",
+      "closable-X-count-1",
+      "close-removes-node-no-false-toast",
+      "onClose-level-payload-resolves",
+      "actions-button-independent",
+      "dual-alert-isolation"
+    ],
+    "lab-mapping": [
+      "hit-renders",
+      "per-row-no-pollution",
+      "miss-defaultLabel",
+      "row-pick-row-scoped",
+      "item-region-hit-action",
+      "miss-region-not-rendered"
+    ],
+    "lab-status": [
+      "hit-label-level-badge",
+      "dialog-row-scope-evaluation",
+      "badge-bg-level-distinct",
+      "esc-zero-residue-V5",
+      "miss-placeholder-path"
+    ]
+  },
+  "watch": [
+    ".nop-link style-contract gap may affect the site-wide link family (only content-link path convicted this batch)",
+    "react-json-view-lite nested tabindex root cause at library level (upgrade vs wrapper-layer fix tradeoff)",
+    "scope-debug dump text pollution pattern for text/count probes (3 same-type artifacts this batch; propose固化 into probe discipline, not product defects)"
+  ],
+  "environmentNotes": [
+    "local Playwright trace teardown intermittent ENOENT caused first-attempt flakes with identical readings on retry; product-independent, recorded honestly"
+  ]
+}

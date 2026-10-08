@@ -89,9 +89,9 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
       mountOnEnter: {
         shape: { kind: 'boolean' },
         displayName: 'Mount On Enter',
-        description: 'Mount step body on first enter (keep mounted after).',
+        description: 'Mount step body on first enter (keep mounted after). Defaults to true: visited steps stay mounted (back preserves values) unless unmountOnExit opts out.',
         editorType: 'switch',
-        defaultValue: false,
+        defaultValue: true,
       },
       unmountOnExit: {
         shape: { kind: 'boolean' },
