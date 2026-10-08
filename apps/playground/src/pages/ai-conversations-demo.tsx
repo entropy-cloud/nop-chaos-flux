@@ -54,8 +54,14 @@ export function AiConversationsDemoPage({ onBack }: Props) {
       // Expose the controller through the page scope so the schema can bind it
       // via `conversationController: "${controller}"` (relative scope read).
       controller: conversations.controller,
+      // plan 549 (IS-ai-conversations-001, bug-163 mitigation): the page
+      // schema no longer declares xui:imports (its overlay captured schema
+      // event writes and blocked page-data notifications — the sidebar was
+      // functionally dead), so the connector is handed through page data
+      // like the ai-coverage fixture precedent.
+      connector,
     }),
-    [conversations.conversations, conversations.activeConversationId, conversations.controller],
+    [conversations.conversations, conversations.activeConversationId, conversations.controller, connector],
   );
 
   return (

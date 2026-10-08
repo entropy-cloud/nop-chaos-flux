@@ -219,6 +219,12 @@ export function DiffDemoPage({ onBack }: DiffDemoPageProps) {
       </div>
       <div className="flex-1 min-h-0">
         <SchemaRenderer
+          // plan 549 (IS-diff-view-001): SchemaRenderer does not propagate
+          // schema-prop updates into a mounted renderer (framework semantic,
+          // cf. IS-scheduling-calendar-004 watch) — the host controls updated
+          // state while the mounted diff-view never saw them. Remount on
+          // control-state change, the calendar-demo rendererRevision precedent.
+          key={`diff-demo:${mode}:${viewType}:${showInlineDiff}:${showLineNumbers}`}
           schemaUrl="diff-view://demo"
           schema={schema as any}
           registry={registry as any}

@@ -148,9 +148,8 @@
                                       "method": "POST",
                                       "data": "${$slot.item}"
                                     },
-                                    "onSuccess": {
-                                      "action": "notify",
-                                      "args": { "level": "success", "message": "已加入购物车" }
+                                    "messages": {
+                                      "success": "已加入购物车"
                                     }
                                   }
                                 }
@@ -366,9 +365,8 @@
                   "onClick": {
                     "action": "ajax",
                     "args": { "url": "/api/order/submit", "method": "POST" },
-                    "onSuccess": {
-                      "action": "notify",
-                      "args": { "level": "success", "message": "订单提交成功！" }
+                    "messages": {
+                      "success": "订单提交成功！"
                     }
                   }
                 }

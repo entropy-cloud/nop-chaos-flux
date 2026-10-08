@@ -21,6 +21,70 @@ function Calendar({
   buttonVariant?: React.ComponentProps<typeof Button>['variant'];
 }) {
   const defaultClassNames = getDefaultClassNames();
+  // plan 549 (IS-w2b-date-family-001): the components object must be identity-
+  // stable. Built inline, every parent re-render swapped the DayButton
+  // component identity (RDP memoizes components per identity) and remounted
+  // the whole day tree mid-click: a real pointerdown focuses the day button,
+  // the bubbling focus re-renders DateFieldControl (onFocus lives on the
+  // PopoverContent wrapper), the fresh components object drops in, and the
+  // pressed button is replaced before mouseup — day clicks were silently dead
+  // in every date control.
+  const dayButtonComponent = React.useCallback(
+    (dayButtonProps: React.ComponentProps<typeof DayButton>) => (
+      <CalendarDayButton locale={locale} {...dayButtonProps} />
+    ),
+    [locale],
+  );
+  const chevronComponent = React.useCallback(
+    ({ className, orientation, size, disabled }: { className?: string; size?: number; disabled?: boolean; orientation?: 'down' | 'left' | 'right' | 'up' }) => {
+      const iconProps = { className: cn('size-4', className), size, 'aria-disabled': disabled || undefined };
+      if (orientation === 'left') {
+        return <ChevronLeftIcon {...iconProps} />;
+      }
+
+      if (orientation === 'right') {
+        return <ChevronRightIcon {...iconProps} />;
+      }
+
+      return <ChevronDownIcon {...iconProps} />;
+    },
+    [],
+  );
+  const weekNumberComponent = React.useCallback(
+    ({ children, ...weekNumberProps }: React.ComponentProps<'td'>) => {
+      return (
+        <td {...weekNumberProps}>
+          <div className="flex size-(--cell-size) items-center justify-center text-center">
+            {children}
+          </div>
+        </td>
+      );
+    },
+    [],
+  );
+  const rootComponent = React.useCallback(
+    ({ className, rootRef, ...rootProps }: React.ComponentProps<'div'> & { rootRef?: React.Ref<HTMLDivElement> }) => {
+      return (
+        <div
+          data-slot="calendar"
+          ref={rootRef}
+          className={className}
+          {...rootProps}
+        />
+      );
+    },
+    [],
+  );
+  const mergedComponents = React.useMemo(
+    () => ({
+      Root: rootComponent,
+      Chevron: chevronComponent,
+      DayButton: dayButtonComponent,
+      WeekNumber: weekNumberComponent,
+      ...components,
+    }),
+    [rootComponent, chevronComponent, dayButtonComponent, weekNumberComponent, components],
+  );
 
   return (
     <DayPicker
@@ -113,40 +177,7 @@ function Calendar({
         hidden: cn('invisible', defaultClassNames.hidden),
         ...classNames,
       }}
-      components={{
-        Root: ({ className, rootRef, ...props }) => {
-          return (
-            <div
-              data-slot="calendar"
-              ref={rootRef}
-              className={className}
-              {...props}
-            />
-          );
-        },
-        Chevron: ({ className, orientation, ...props }) => {
-          if (orientation === 'left') {
-            return <ChevronLeftIcon className={cn('size-4', className)} {...props} />;
-          }
-
-          if (orientation === 'right') {
-            return <ChevronRightIcon className={cn('size-4', className)} {...props} />;
-          }
-
-          return <ChevronDownIcon className={cn('size-4', className)} {...props} />;
-        },
-        DayButton: ({ ...props }) => <CalendarDayButton locale={locale} {...props} />,
-        WeekNumber: ({ children, ...props }) => {
-          return (
-            <td {...props}>
-              <div className="flex size-(--cell-size) items-center justify-center text-center">
-                {children}
-              </div>
-            </td>
-          );
-        },
-        ...components,
-      }}
+      components={mergedComponents}
       {...props}
     />
   );

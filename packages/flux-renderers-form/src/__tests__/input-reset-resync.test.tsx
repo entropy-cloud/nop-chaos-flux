@@ -123,9 +123,12 @@ describe('I2: reset resynchronizes the displayed DOM value (controlled write is 
     await waitFor(() => expect(formStateText('name')).toBe('"changed-by-user"'));
 
     fireEvent.click(screen.getByText('Reset Form'));
+    // plan 549 (IS-component-handles-002): argumentless form-level reset
+    // restores the creation-time data defaults (previously it wiped every
+    // field — the false affordance the IS-6 review convicted).
     await waitFor(() => {
-      expect(input.value).toBe('');
+      expect(input.value).toBe('initial');
     });
-    await waitFor(() => expect(formStateText('name')).toBe('null'));
+    await waitFor(() => expect(formStateText('name')).toBe('"initial"'));
   });
 });

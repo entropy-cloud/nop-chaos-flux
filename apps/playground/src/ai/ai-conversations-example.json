@@ -1,6 +1,5 @@
 {
   "type": "page",
-  "xui:imports": [{ "from": "ai", "as": "ai" }],
   "body": [
     {
       "type": "flex",
@@ -46,7 +45,7 @@
             {
               "type": "ai-chat",
               "testid": "ai-conversations-chat",
-              "connector": "${$ai.connectors.mock}",
+              "connector": "${connector}",
               "conversationController": "${controller}",
               "activeConversationId": "${activeConversationId}",
               "placeholder": "Ask the mock AI…",

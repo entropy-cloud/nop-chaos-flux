@@ -110,8 +110,11 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
   const pathToRegistrationId = new Map<string, string>();
   const childPathToRegistrationId = new Map<string, string>();
   const validationAsyncGovernance = createAsyncGovernanceStore();
+  // plan 549 (IS-component-handles-002): creation-time defaults — the anchor
+  // for reset() without explicit values (resetting to {} wiped every field).
+  const creationInitialValues = inputValue.initialValues ?? {};
   const initialFieldState = buildInitialFieldState(
-    inputValue.initialValues ?? {},
+    creationInitialValues,
     inputValue.validation,
   );
   const defaultValidationTriggers = inputValue.validation?.behavior.triggers ?? ['blur'];
@@ -514,7 +517,9 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     },
 
     reset(values) {
-      const nextValues = toRecord(values);
+      // No explicit values → restore the creation-time defaults (an
+      // argumentless component:reset used to wipe every field to empty).
+      const nextValues = values === undefined ? creationInitialValues : toRecord(values);
       const nextInitialFieldState = buildInitialFieldState(nextValues, currentValidation);
 
       initialFieldState.initialValues = nextInitialFieldState.initialValues;

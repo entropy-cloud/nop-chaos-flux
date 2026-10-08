@@ -1,0 +1,464 @@
+{
+  "batch": "IS-6",
+  "group": "C",
+  "date": "2026-10-07/08",
+  "environment": {
+    "devServer": "http://127.0.0.1:4175 (strict-validation)",
+    "browser": "playwright chromium",
+    "viewports": {
+      "mobileEmulated": [
+        "mobile-components",
+        "m1-responsive",
+        "m2-touch",
+        "m3-layout",
+        "m4-data (375x667 hasTouch; m4 also re-read at 1280 desktop for breakpoint对照)"
+      ],
+      "desktop": [
+        "mobile-infrastructure 1280x720",
+        "m5-showcase 1280x900 (phone frame 390 logical)",
+        "kanban/kanban-perf-scale/diff-perf-scale 1440x900",
+        "wave pages 1280x800/900",
+        "index pages 1440x900"
+      ]
+    }
+  },
+  "surveyReadings": [
+    {
+      "page": "mobile-infrastructure",
+      "viewport": "1280x720",
+      "sequences": 4,
+      "keyReadings": {
+        "dialogZ": "2000",
+        "popoverWrapperZ": "2002",
+        "toastAfterPopoverClose": "visible z-claim unverified",
+        "escCancel": "all overlays closed"
+      }
+    },
+    {
+      "page": "mobile-components",
+      "viewport": "375x667 hasTouch",
+      "sequences": 8,
+      "keyReadings": {
+        "countdown": "00:30->00:27",
+        "noticeClose": "removed from DOM",
+        "swipeOpen": "translateX(-47.6px)",
+        "outsideClose": "translateX(0)",
+        "deleteClick": "no change, no toast",
+        "pullRefresh": "loosing->success->normal, indicator texts truthful",
+        "infiniteScroll": "timerLog SET:8:400ms->CLEAR:8; items=4, data-status=loading across 6 scrolls + 2.5s"
+      }
+    },
+    {
+      "page": "m1-responsive",
+      "viewport": "375x667 hasTouch",
+      "sequences": 6,
+      "keyReadings": {
+        "tableExpandRows": 3,
+        "dialog": "style 100vw/100vh, rect 343x635",
+        "drawerY": 558,
+        "selectSheet": "sheet-content y=328",
+        "tabs": "aria-selected + panel switch ok"
+      }
+    },
+    {
+      "page": "m2-touch",
+      "viewport": "375x667 hasTouch",
+      "sequences": 4,
+      "keyReadings": {
+        "inputMode": "email/tel/decimal",
+        "inputFontSize": "16px",
+        "hitAreas": "44-140px",
+        "btnHeights": { "default": 44, "lg": 44, "sm": 28, "block": 44 }
+      }
+    },
+    {
+      "page": "m3-layout",
+      "viewport": "375x667 hasTouch",
+      "sequences": 6,
+      "keyReadings": {
+        "navigateToasts": ["navigate → /home", "navigate → /category", "navigate → -1"],
+        "deadCtas": ["navbar-more", "actionbar-cart", "actionbar-buy", "submitbar-submit"],
+        "stickyBars": "not captured (sequence interrupted)"
+      }
+    },
+    {
+      "page": "m4-data",
+      "viewport": "375x667 hasTouch + 1280 对照",
+      "sequences": 3,
+      "keyReadings": {
+        "at375": {
+          "gridCols": 1,
+          "cardsCols": 1,
+          "chartH": 300,
+          "perPageSelect": false,
+          "toolbarDir": "column",
+          "listHairline": 4,
+          "responsive": "narrow"
+        },
+        "at1280": { "gridCols": 3, "cardsCols": 3, "chartH": 400, "responsive": null }
+      }
+    },
+    {
+      "page": "m5-showcase",
+      "viewport": "1280x900 (frame 390)",
+      "sequences": 7,
+      "keyReadings": {
+        "tabSwitch": "content follows tabs",
+        "innerTabs": "aria-selected truthful",
+        "addToCart": "0 toasts via real click (hit-test clean), JS click, force click",
+        "cartList": "结算(3) unchanged after add",
+        "checkout": "0 toasts",
+        "qtyButtons": "no handlers, 0 toasts"
+      }
+    },
+    {
+      "page": "kanban",
+      "viewport": "1440x900",
+      "sequences": 7,
+      "keyReadings": {
+        "initial": "3/2/3/0",
+        "dragToNonEmpty": "card-1 moved, 3->2 / 2->3",
+        "dragToEmpty": "no move x3 attempts + pragmatic-dnd duplicate-dropTarget warnings",
+        "filterAPI": "only card-4 visible, restore ok",
+        "addCard": "3->4 instant"
+      }
+    },
+    {
+      "page": "kanban-perf-scale",
+      "viewport": "1440x900",
+      "sequences": 2,
+      "keyReadings": {
+        "render": "20 cols x 300 cards",
+        "controlledDragV1": "scrollLeft 800->800, col1 300->301",
+        "retractedFirstReading": "800->0 was Playwright dragTo auto-scroll pollution"
+      }
+    },
+    {
+      "page": "diff-perf-scale",
+      "viewport": "1440x900",
+      "sequences": 4,
+      "keyReadings": {
+        "render": "14492 line elements, docH 10166",
+        "collapse": "label -> 已折叠 4992 行, reversible",
+        "unifiedToggle": "window.scrollY 4000->0 reproduced x2 fresh loads"
+      }
+    },
+    {
+      "page": "w1a-content",
+      "viewport": "1280x800",
+      "sequences": 4,
+      "keyReadings": {
+        "imageError": "'missing image' fallback, no img element",
+        "jsonView": "copy buttons only, no expand/collapse surface"
+      }
+    },
+    {
+      "page": "w1b-content",
+      "viewport": "1280x800",
+      "sequences": 5,
+      "keyReadings": {
+        "spinnerToggle": "mounted->unmounted",
+        "cardBodyClick": "flag pending->clicked",
+        "actionBtnClick": "flag also flipped (bubbling)"
+      }
+    },
+    {
+      "page": "w2a-data-composition",
+      "viewport": "1280x800",
+      "sequences": 9,
+      "keyReadings": {
+        "pagination": "untouched->touched",
+        "cardSelection": "card:selected",
+        "alertClose": "removed + alert:closed",
+        "wizard": "step0->1->2, next@end -> complete:yes (finish semantics), prev works"
+      }
+    },
+    {
+      "page": "w3a-w3b-layout-action-family",
+      "viewport": "1280x900",
+      "sequences": 8,
+      "keyReadings": {
+        "collapse": "absent->inline + report touched",
+        "buttonGroup": "aria-pressed truthful + report",
+        "dropdownRealClick": "menu opens (3 items), Esc closes, Set Flag -> dropdown:clicked",
+        "retraction": "earlier 'dead dropdown' was probe clicking 514px root empty area; trigger button is 92px"
+      }
+    },
+    {
+      "page": "w4a-multimedia",
+      "viewport": "1280x800",
+      "sequences": 6,
+      "keyReadings": {
+        "audio": "data-URI wav, paused readable; error variant '加载失败' truthful",
+        "carouselHandles": "data-active-index 0->1->2->1 via external handles, ->2 via internal arrow, indicators sync",
+        "qrcode": "2 canvases painted"
+      }
+    },
+    {
+      "page": "w4b-process-display",
+      "viewport": "1280x800",
+      "sequences": 5,
+      "keyReadings": {
+        "stepsLocal": "touched:yes",
+        "timelineScope": "active t1 + touched:yes",
+        "timelineControlled": "value stays c2 (preset) + touched:yes = controlled semantics truthful",
+        "unmatched": "renders"
+      }
+    },
+    {
+      "page": "barcode-input",
+      "viewport": "1280x900",
+      "sequences": 5,
+      "keyReadings": {
+        "scanButtons": 2,
+        "typeValue": "clear button appears",
+        "clear": "value emptied + button disappears",
+        "scanClickHeadless": "no overlay, no scanner-error, no console (silent)"
+      }
+    },
+    {
+      "page": "env-stream",
+      "viewport": "1280x800",
+      "sequences": 5,
+      "keyReadings": {
+        "sseRun": "3 chunks@700ms progressive",
+        "abort": "chunks frozen at 3, buttons reset",
+        "statusLine": "'— aborted — stream completed (3 chunks)' contradictory wording",
+        "fullRun": "5 chunks completed ([DONE] excluded, matches claim)"
+      }
+    },
+    {
+      "page": "flux-basic",
+      "viewport": "1280x900",
+      "sequences": 8,
+      "keyReadings": {
+        "tabs": "aria-pressed truthful",
+        "dialog": "open + Esc closed",
+        "reviewerAdd": "1->2",
+        "kvAdd": "1->2",
+        "submitEmpty": "no error text anywhere (required field!)",
+        "submitFilled": "no toast/dialog feedback"
+      }
+    },
+    {
+      "page": "home",
+      "viewport": "1440x900",
+      "sequences": 4,
+      "keyReadings": {
+        "navTruth": "Component Lab->#/lab, Kanban Board->#/kanban, Barcode Input->#/barcode-input all match claims"
+      }
+    },
+    {
+      "page": "lab-index",
+      "viewport": "1440x900",
+      "sequences": 2,
+      "keyReadings": {
+        "navTruth": "Pull Refresh -> #/lab/pull-refresh + title hit",
+        "categoryCounts": "Layout23/Content23 visible"
+      }
+    },
+    {
+      "page": "complex-pages-index",
+      "viewport": "1440x900",
+      "sequences": 2,
+      "keyReadings": {
+        "navTruth": "标准增删改查 -> #/complex-pages/standard-crud + h1 hit",
+        "categoryCounts": "数据列表6/主从详情3/复杂表单4/外部应用复刻26 visible"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "id": "IS-mobile-components-001",
+      "page": "mobile-components",
+      "symptom": "infinite-scroll permanently stuck '加载中...' — first load-more 400ms pagination timer cleared in StrictMode double-mount cleanup (timer ledger SET:8:400ms->CLEAR:8); items=4 and data-status=loading forever; loading indicator false",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "ownership": "demo bridge (InfiniteScrollDemoHost cleanup) + framework StrictMode semantics; renderer contract-correct",
+      "suspectedFile": "apps/playground/src/pages/mobile-components-demo.tsx (InfiniteScrollDemoHost)",
+      "redE2e": "goto page, wait 3s, expect data-status idle or items>4 (red: loading/4)"
+    },
+    {
+      "id": "IS-m5-showcase-001",
+      "page": "m5-showcase",
+      "symptom": "加入购物车/结算 zero feedback despite schema onClick.ajax.onSuccess->notify; cart list never reflects add; runtime never consumes actionNode.onSuccess on button ajax path (lifecycle onSuccess only wired for data-source controllers)",
+      "class": "F",
+      "priority": "P1",
+      "invariant": "V3",
+      "ownership": "renderer/runtime (flux-runtime action-adapter ajax path contract drift; schema types accept onSuccess) + demo schema relying on it",
+      "suspectedFile": "packages/flux-runtime/src/runtime-action-helpers.ts + apps/playground/src/schemas/m5-showcase-app.json",
+      "redE2e": "click 加入购物车 -> expect toast 已加入购物车 within 2s (red: zero)"
+    },
+    {
+      "id": "IS-kanban-001",
+      "page": "kanban",
+      "symptom": "dropping card onto empty column never moves it despite explicit '拖拽卡片到此处' drop affordance (3 controlled drags, no feedback); non-empty drops work; pragmatic-dnd 'already registered dropTarget on same element' warnings (registerColumn + registerBoardDropZone double registration on column root)",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "renderer (flux-renderers-scheduling kanban-column registration effect); double-registration->lost-drop is candidate chain",
+      "suspectedFile": "packages/flux-renderers-scheduling/src/kanban/kanban-column.tsx",
+      "redE2e": "drag card to empty column, expect count 0->1 (red: 0)"
+    },
+    {
+      "id": "IS-flux-basic-001",
+      "page": "flux-basic",
+      "symptom": "Submit Form zero visible response in both states: empty form (required username, showErrorOn submit) shows no validation error anywhere; valid submit shows no success feedback",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "demo schema wiring + candidate chain: component:submit dispatch vs validation display (root cause unproven)",
+      "suspectedFile": "apps/playground/src/pages/fluxBasicPageSchema.json",
+      "redE2e": "submit empty form -> expect [role=alert] required error (red: none)"
+    },
+    {
+      "id": "IS-mobile-infrastructure-001",
+      "page": "mobile-infrastructure",
+      "symptom": "popover physically occludes 'Show toast' button (elementFromPoint=popover P); raw click swallowed by popover without closing; declared toast>dialog>popover 3-layer scenario undrivable as instructed",
+      "class": "B",
+      "priority": "P3",
+      "invariant": "V4",
+      "ownership": "demo wiring + ui popover placement",
+      "suspectedFile": "apps/playground/src/pages/mobile-infrastructure-demo.tsx"
+    },
+    {
+      "id": "IS-diff-perf-scale-001",
+      "page": "diff-perf-scale",
+      "symptom": "unified/split view toggle silently resets window scroll 4000->0 (reproduced x2 fresh loads); docH ~unchanged",
+      "class": "A",
+      "priority": "P3",
+      "invariant": "V1",
+      "ownership": "renderer candidate (flux-renderers-content diff-view re-render without scroll preservation)",
+      "suspectedFile": "packages/flux-renderers-content/src (diff-view)"
+    },
+    {
+      "id": "IS-env-stream-001",
+      "page": "env-stream",
+      "symptom": "after Abort, status line reads '— aborted — stream completed (3 chunks)' — contradictory completion claim after user abort (chunk freezing itself truthful)",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "demo wiring (runStream appends completed regardless of abort)",
+      "suspectedFile": "apps/playground/src/pages/env-stream-demo.tsx"
+    },
+    {
+      "id": "IS-barcode-input-001",
+      "page": "barcode-input",
+      "symptom": "scan button click in camera-less environment silently no-ops (no overlay/scanner-error/console) — !isAvailable return branch has no user feedback",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "renderer (barcode-input.tsx silent return branch); severity environment-dependent",
+      "suspectedFile": "packages/flux-renderers-scheduling/src/barcode-input/barcode-input.tsx"
+    },
+    {
+      "id": "IS-w1b-content-001",
+      "page": "w1b-content",
+      "symptom": "inner Action button click also fires card-level onClick (card-click-flag pending->clicked from inner button) — bubbling not stopped, double action semantics",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "renderer (card stopPropagation) / demo schema nesting — candidate chain",
+      "suspectedFile": "packages/flux-renderers-content/src (card renderer)"
+    },
+    {
+      "id": "IS-mobile-components-002",
+      "page": "mobile-components",
+      "symptom": "swipe-cell 删除 destructive button is dead control: click leaves cell open, zero feedback, no data change (no onClick in schema)",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "demo wiring",
+      "suspectedFile": "apps/playground/src/pages/mobile-components-demo.tsx"
+    },
+    {
+      "id": "IS-m3-layout-001",
+      "page": "m3-layout",
+      "symptom": "navbar 更多 / actionbar 加入购物车+立即购买 / submitbar 结算(3) all dead CTAs (no onClick): zero feedback while sibling navigate buttons toast — inconsistent affordance honesty",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "demo wiring (skeleton template CTAs unwired)",
+      "suspectedFile": "apps/playground/src/pages/m3-layout-demo.tsx"
+    },
+    {
+      "id": "IS-m5-showcase-002",
+      "page": "m5-showcase",
+      "symptom": "cart quantity -/+ and 编辑 buttons dead (no handlers): zero feedback, counts unchanged",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "demo wiring",
+      "suspectedFile": "apps/playground/src/schemas/m5-showcase-app.json"
+    }
+  ],
+  "watchList": [
+    "kanban drop-indicator mid-drag geometry (V4) — CDP dispatchDragEvent rejected, cannot sample mid-drag",
+    "kanban Esc/pointercancel drag-cancel path (V5) — dragTo atomic, pragmatic-dnd builtin untested",
+    "mobile-infra haptics :active opacity 0.7 + hairline scaleY(0.5) claims — readings not produced (sequence interrupted)",
+    "m1 dialog 'fullscreen' claim vs rect 343x635 at 375x667 (~91.5%x95% with margin)",
+    "m3 sticky pinning + footer-bar geometry + submitbar checkbox — sequence interrupted before readings",
+    "m5-showcase profile collapse toggle + pull-refresh sequences not driven",
+    "w2a card re-click stays selected (deselect semantics unverified)",
+    "w4a video/audio playing states not driven (native controls, headless)",
+    "demo setValue writes with no display binding: w1a linkClicked, w1b resetClicked, mobile-components refreshedAt/finished/noticeClosed (writes real, invisible by design)",
+    "flux-basic submit-validation root cause split (dispatch failure vs display missing) unproven",
+    "Toaster z=10000 claim unverified (scenario occluded, see IS-mobile-infrastructure-001)"
+  ],
+  "naRegistrations": [
+    {
+      "page": "kanban",
+      "items": [
+        "WIP limit (not configured)",
+        "column reorder (no handle exposed)",
+        "card remove (no button)",
+        "card click feedback (schema binds no onCardClick)"
+      ]
+    },
+    {
+      "page": "barcode-input",
+      "items": ["batch-mode camera overlay + torch (headless, no camera)"]
+    },
+    { "page": "env-stream", "items": ["openSocket (text-only mention, no interactive surface)"] },
+    {
+      "page": "w1a-content",
+      "items": [
+        "json-view expand/collapse (copy buttons only)",
+        "link flag display (no display bound)"
+      ]
+    },
+    { "page": "w1b-content", "items": ["empty-cta flag display (no display bound)"] },
+    {
+      "page": "flux-basic",
+      "items": ["Search Directory / Inspect not driven (representative sample covered)"]
+    },
+    { "page": "all", "items": ["global theme-switcher = playground chrome, out of audit scope"] }
+  ],
+  "exemptions": [
+    {
+      "page": "kanban-perf-scale",
+      "reason": "measurement-pollution precedent (IS-3/IS-5): no interactive affordances beyond dnd by design (20x300 render baseline); controlled drag V1 reading 800->800 clean; no real defect found",
+      "precedent": "IS-3/IS-5-B"
+    },
+    {
+      "page": "diff-perf-scale",
+      "reason": "defaultCollapsedLines:0 full-render baseline documented in source comment; collapse feedback truthful; scroll-reset on view toggle registered as real finding (not exempted)",
+      "precedent": "IS-3/IS-5-B"
+    }
+  ],
+  "retractions": [
+    "kanban-perf-scale scroll reset 800->0 — Playwright dragTo auto-scroll pollution; controlled re-test 800->800, case dismissed",
+    "w3a-w3b dropdown 'dead control' — probe clicked 514px root empty area; real trigger (92px button) full chain passes, case dismissed",
+    "flux-basic 添加项 'no effect' — wrong counter (键 vs Reviewer); corrected reading 1->2 works, case dismissed"
+  ],
+  "summary": {
+    "pages": 22,
+    "findings": 12,
+    "byPriority": { "P0": 0, "P1": 2, "P2": 2, "P3": 8 },
+    "watch": 11,
+    "na": 7,
+    "exemptions": 2,
+    "retractions": 3
+  }
+}

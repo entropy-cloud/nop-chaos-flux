@@ -1,0 +1,250 @@
+{
+  "batch": "IS-6 group A (form/input/editor, 16 pages, plan 549)",
+  "date": "2026-10-07",
+  "surveyReadings": [
+    {
+      "page": "condition-builder",
+      "route": "#/condition-builder",
+      "h1": "条件构建器测试",
+      "buttons": 14,
+      "inputs": 0,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "condition-builder-formula",
+      "route": "#/condition-builder-formula",
+      "h1": "条件构建器 Formula 集成",
+      "buttons": 11,
+      "inputs": 1,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "code-editor",
+      "route": "#/code-editor",
+      "h1": "Code Editor Playground",
+      "buttons": 2,
+      "inputs": 0,
+      "dialogs": 0,
+      "scrollables": 1
+    },
+    {
+      "page": "input-suggest",
+      "route": "#/input-suggest",
+      "h1": "Input Autocomplete — Data-Source Async Suggestions",
+      "buttons": 2,
+      "inputs": 2,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "form-input-enhancements",
+      "route": "#/form-input-enhancements",
+      "h1": "表单输入控件增强 — 长按步进 + min/max + 重排",
+      "buttons": 19,
+      "inputs": 7,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "boolean-control-value-contract",
+      "route": "#/boolean-control-value-contract",
+      "h1": "布尔控件值契约 — trueValue / falseValue",
+      "buttons": 3,
+      "inputs": 4,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "text-icon-visual-fields",
+      "route": "#/text-icon-visual-fields",
+      "h1": "text copyable/maxLine + icon size/color",
+      "buttons": 4,
+      "inputs": 0,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "diff-view",
+      "route": "#/diff-view",
+      "h1": "Diff View Demo",
+      "buttons": 5,
+      "inputs": 2,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "tree-display-ux",
+      "route": "#/tree-display-ux",
+      "h1": "tree 搜索/图标/引导线",
+      "buttons": 16,
+      "inputs": 2,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "component-handles",
+      "route": "#/component-handles",
+      "h1": "component:* Capability Handles Playground",
+      "buttons": 46,
+      "inputs": 15,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "event-prevention",
+      "route": "#/event-prevention",
+      "h1": "X2 Schema-Driven preventDefault / stopPropagation",
+      "buttons": 4,
+      "inputs": 5,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "w2b-date-family",
+      "route": "#/w2b-date-family",
+      "h1": "日期族 — input-date / input-datetime / input-time / date-range",
+      "buttons": 7,
+      "inputs": 1,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "w3c-value-mapping",
+      "route": "#/w3c-value-mapping",
+      "h1": "值映射组 — mapping / status",
+      "buttons": 2,
+      "inputs": 0,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "w3d-advanced-input-family",
+      "route": "#/w3d-advanced-input-family",
+      "h1": "高级输入族 — period / markdown-editor / upload / editor",
+      "buttons": 47,
+      "inputs": 8,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "w4c-composite-form-family",
+      "route": "#/w4c-composite-form-family",
+      "h1": "复合表单族 — combo / input-table / transfer / picker",
+      "buttons": 27,
+      "inputs": 17,
+      "dialogs": 0,
+      "scrollables": 0
+    },
+    {
+      "page": "layout-family-enhancements",
+      "route": "#/layout-family-enhancements",
+      "h1": "flex / page / tabs 布局族能力补齐",
+      "buttons": 6,
+      "inputs": 0,
+      "dialogs": 0,
+      "scrollables": 0
+    }
+  ],
+  "findings": [
+    {
+      "id": "IS-w2b-date-family-001",
+      "page": "w2b-date-family",
+      "category": "C",
+      "priority": "P1",
+      "symptom": "日历日格选择在全部 4 个日期族控件（input-date x2 / input-datetime / date-range）零提交：坐标点击 data-day 单元仅 hover 环、选中停留原日、触发钮文案不变；Enter 关浮层同样不写值（time 夹逼写值真实，缺陷隔离在日选路径）",
+      "evidence": "DATE5: 坐标点击 button[data-day='2024/6/15'] -> trigger 恒 '09/06/2024', aria-selected 仍在 9; DATE6: Enter -> 浮层关(open:0)但 label 不变; DATE8: datetime '2024-06-09 14:30'/range '2024-06-01 , 2024-06-10' 均不变; DATE7: time 23:45->22:00 且 1.5s 不回弹(form 回写链路真实); 佐证截图 _tmp/is6a-date5-after-click.png。违反 V3",
+      "ownership": "renderer — flux-renderers-form date-field-control.tsx + @nop-chaos/ui calendar.tsx (react-day-picker v9.14 桥); handleSelect/commitDate/onSelect 源码接线正确, 根因未证实(候选: RDP onSelect 未达 / PopoverContent blur 链重挂载)"
+    },
+    {
+      "id": "IS-diff-view-001",
+      "page": "diff-view",
+      "category": "F",
+      "priority": "P1",
+      "symptom": "demo 宿主控件全死: Mode select(three-column/cross-file 不可达, DiffFileList 恒不挂载)、View Type select(切 unified 结构零变化)、Inline/LineNumbers checkbox 同链; renderer 内部「统一视图」钮真实生效",
+      "evidence": "DV4 双轮: HOST_UNIFIED 读数与 SPLIT 逐字节相同(仍 nop-diff-split-view/add 14); 点内部钮 -> panes 3->1/add 14->7/nop-diff-unified-view; cross-file -> fileList:0 恒. 宿主 select value 回读正常(host state 更新未达 renderer)。违反 V3+E",
+      "ownership": "demo 桥 + SchemaRenderer schema-prop 更新语义(候选链): schema-renderer.tsx compile memo 含 props.schema(L88-96)但 live 树不更新; demo 侧常量 schemaUrl 'diff-view://demo' 无 remount key(diff-demo.tsx L214)"
+    },
+    {
+      "id": "IS-component-handles-001",
+      "page": "component-handles",
+      "category": "C",
+      "priority": "P1",
+      "symptom": "「Clear Checkbox Group」(component:clear -> tags-field)死控件: 点击后 Apple/Banana 仍 checked:true",
+      "evidence": "CH2_CBG_BEFORE [{Apple:true},{Banana:true}] -> AFTER 恒等。违反 V3",
+      "ownership": "renderer/runtime — checkbox-group clearValue 绑定缺失候选(input-component-handle clear 需要 bindings.clearValue)"
+    },
+    {
+      "id": "IS-component-handles-002",
+      "page": "component-handles",
+      "category": "C",
+      "priority": "P1",
+      "symptom": "「Reset Form」(component:reset -> handles-form)假反馈: 全部字段清成空串而非还原表单 data 初值(Alice/initial bio/7); 字段级 reset(Reset Name -> Alice)真实",
+      "evidence": "CH2_RESET_FORM_AFTER_EDIT: 改 name=Bob -> 点 Reset Form -> {name:'',bio:'',count:''}。违反 V3",
+      "ownership": "renderer/runtime — form 级 handle reset 语义(flux-react form handle; 候选: reset 落到清空而非 data 初值)"
+    },
+    {
+      "id": "IS-condition-builder-001",
+      "page": "condition-builder",
+      "category": "F",
+      "priority": "P2",
+      "symptom": "uniqueFields=true 仅对 group 嵌套字段生效: 平铺 fields 下第二行下拉仍提供已占用字段且接受重复(两行同持 active), 页面导语宣称「唯一字段约束」",
+      "evidence": "CB9_FIELD_OPTS_ITEM2 含 是否激活; CB12_INPUTS_AFTER_DUP 两行 field 均为 {name:'active'...}; 源码 field-select.tsx buildItems L47-49 平铺分支无 disabled 标记(仅 group 子字段 L42-43 有)",
+      "ownership": "renderer — flux-renderers-form-advanced condition-builder/field-select.tsx buildItems 平铺分支"
+    },
+    {
+      "id": "IS-input-suggest-001",
+      "page": "input-suggest",
+      "category": "C",
+      "priority": "P2",
+      "symptom": "demo fetcher 读 scopeData.fruit ?? scopeData.fruitTpl: 第一输入非空时第二输入建议按第一输入值查询('gr' 得 0 条), 模板变体不可用",
+      "evidence": "IS2: fruit='zzz' 后 tpl 输入 'gr' -> options:[]; IS3 fresh 页 -> 26 条模板建议正常。违反 V3",
+      "ownership": "demo 接线 — apps/playground/src/pages/input-suggest-demo.tsx L123"
+    },
+    {
+      "id": "IS-form-input-enhancements-001",
+      "page": "form-input-enhancements",
+      "category": "D",
+      "priority": "P2",
+      "symptom": "「Live form values」面板渲染 tags = [object Object],[object Object] / headers 同型 — 专用反馈面不可辨读",
+      "evidence": "FIE2/FIE4 live 区读数恒为 '[object Object],[object Object]'(count 行正常)。违反 V3(可辨读性)",
+      "ownership": "demo 模板(数组对象串 ${tags})+ 框架缺省序列化候选"
+    },
+    {
+      "id": "IS-w4c-composite-form-family-001",
+      "page": "w4c-composite-form-family",
+      "category": "D",
+      "priority": "P2",
+      "symptom": "两个 picker demo 未配 options: 「Pick owner」对话框零可选项, 确认空提交, 触发钮永驻「未选择」, picker 交互闭环不可演示",
+      "evidence": "W4C2_PICKER_DIALOG: optionEls:[], fullText 仅标题+取消/确认; w4c demo schema picker 无 options 字段(transfer 有)。违反 V3",
+      "ownership": "demo 接线 — w4c-composite-form-family-demo.tsx picker 节点"
+    },
+    {
+      "id": "IS-condition-builder-002",
+      "page": "condition-builder",
+      "category": "C",
+      "priority": "P3",
+      "symptom": "「取反」初始 aria-pressed 缺省(undefined), 取消后为 'false' — toggle 态表示不一致",
+      "evidence": "CB5: 初始 pressed:null -> 激活 'true' -> 取消 'false'",
+      "ownership": "renderer — condition-group.tsx aria-pressed={value.not} undefined 缺省"
+    }
+  ],
+  "watchList": [
+    "code-editor expression lint: 'SELE ## (((' 无可见诊断文本(lint:true 承诺面无法程序化证实)",
+    "condition-builder-formula: 非法 formula '${((((' 零诊断(schema 未明确承诺)",
+    "event-prevention Demo 1: 阻断/放行仅能以整页重载观测, 无页内事件日志面板",
+    "form-input-enhancements: input-number 未配 min -> 0 减到 -1 无界(schema 选择; 标题宣称 min/max)",
+    "tree 单选模式 aria-selected=tabbable(tree-renderer.tsx L289, G3-9-03 文档化语义): 单选树无视觉选中态",
+    "component-handles Submit Form: 提交无可见反馈(console-only)",
+    "layout-family-enhancements 「备注」icon 钮已枚举未驱动",
+    "date 缺陷根因候选: PopoverContent onFocus/onBlur -> 表单校验重入 -> 浮层内容重挂载(未证实)",
+    "w4c: 复合表单 required 校验环未驱动(页内无统一提交钮)"
+  ],
+  "naRegistrations": [
+    {
+      "page": "w3c-value-mapping",
+      "reason": "交互面 n/a: 读数证明零 renderer 交互面(仅 Back/主题 selects/壳层钮); mapping/status 为纯展示元素(命中/未命中/placeholder 兜底文案齐全)"
+    }
+  ]
+}

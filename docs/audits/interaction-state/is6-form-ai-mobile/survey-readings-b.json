@@ -1,0 +1,303 @@
+{
+  "batch": "IS6-B (AI conversation family, plan 549, review group B)",
+  "date": "2026-10-07",
+  "environment": {
+    "server": "http://127.0.0.1:4175",
+    "browser": "playwright chromium",
+    "mode": "strict-validation env, hash routes"
+  },
+  "pagesCovered": 14,
+  "surveyReadings": {
+    "ai-chat": {
+      "initial": { "bubbleCount": 0, "submitDisabled": true },
+      "v6BubbleStyles": {
+        "user": { "bg": "rgb(236,243,254)", "x": 779 },
+        "assistant": { "bg": "rgb(255,255,255)", "x": 411 }
+      },
+      "duringProcessing": {
+        "buttons": [
+          "ai-sender-cancel(enabled)",
+          "ai-action-retry(disabled)",
+          "ai-bubble-edit-toggle(disabled)"
+        ],
+        "streamingCaret": "Echo:▍"
+      },
+      "cancelMidStream": { "partialKept": "Echo: cancel me", "cancelButtonRemovedAfter": true },
+      "emptyInput": { "submitDisabled": true },
+      "escAfterTyping": {
+        "inputValueKept": "esc target",
+        "note": "no promised affordance -> watch"
+      },
+      "enterSubmit": { "accumulatedBubbles": 8, "inputCleared": true },
+      "retryHover": {
+        "coldHit": "ai-bubble-content",
+        "hoverHit": "svg(ai-action-retry)",
+        "rectShiftY": "452->346",
+        "retryRealMouse": { "cancelVisibleAt150ms": true }
+      }
+    },
+    "ai-conversations": {
+      "createClicks": {
+        "runsReproduced": 3,
+        "listChildrenAfter": 0,
+        "toasts": [],
+        "consoleErrors": []
+      },
+      "chatWorks": {
+        "externalAiSend": "echo bubble appeared",
+        "typedSend": "echo bubble appeared"
+      },
+      "coverageHostDiscriminators": {
+        "onCreate": "CONVCREATE:fired",
+        "onItemClickIdBinding": "aria-current cc1->cc2",
+        "rename": "CONVRENAME:fired",
+        "deleteDialog": {
+          "title": "删除此会话？",
+          "cancelKeepsItem": true,
+          "confirm": "CONVDELETE:fired"
+        }
+      },
+      "persistenceHostContrast": "same controller fully functional without xui:imports"
+    },
+    "ai-tools": {
+      "turn": {
+        "bubbles": [
+          "user",
+          "tool card get_weather 18°C sunny (San Francisco)",
+          "role:tool result",
+          "assistant final"
+        ],
+        "toolCardClass": "border-success/30",
+        "dataStateAttr": null
+      }
+    },
+    "ai-attachments": {
+      "attach": { "previewImg": "blob:url + probe-pixel.png", "previewNodes": 7 },
+      "remove": { "imgs": 0, "previewNodes": 2, "residue": false },
+      "send": {
+        "userBubbleImgCount": 0,
+        "trayStillShowsAttachment": true,
+        "note": "mock echo drops image_url parts"
+      }
+    },
+    "ai-component-handle": {
+      "externalSend": {
+        "userBubble": "sent via component handle",
+        "assistantEcho": true,
+        "inputCleared": true
+      },
+      "directSend": { "bubblesAfter": 4 }
+    },
+    "ai-virtual-scroll": {
+      "initial": { "mounted": 10, "lastVisible": "1000", "scrollTop": 119173 },
+      "scrollUp": { "mounted": 17, "window": "823-839", "duplicates": false },
+      "sendWhileScrolledUp": { "scrollTopBefore": 99023, "scrollTopAfter": 99023, "jumped": false },
+      "sendAtBottom": { "stickToNewBottom": true },
+      "jumpAffordance": { "label": "回到底部", "present": true }
+    },
+    "ai-persistence": {
+      "initial": { "items": 0, "emptyState": true, "localStorage": null },
+      "create": { "item": "Chat 1", "lsWritten": true },
+      "send": { "messagesSavedInLs": true },
+      "reload": {
+        "itemsRestored": 1,
+        "bubblesRestored": ["persist me", "echo"],
+        "claimTruthful": true
+      },
+      "deleteActive": { "fallsBackToRemaining": true },
+      "deleteAll": {
+        "items": 0,
+        "emptyState": true,
+        "ls": "{\"conversations\":[],\"messages\":{}}"
+      }
+    },
+    "ai-citations": {
+      "markers": { "sups": ["[1]", "[2]", "[1, 2]"] },
+      "popoverClick": {
+        "cardVisible": true,
+        "text": "title+snippet+url",
+        "anchoredNearTrigger": true,
+        "inViewport": true
+      },
+      "inlineClickToast": "Citation #1 → flux-renderers-ai design.md",
+      "listClickToast": "List source #1 → flux-renderers-ai design.md"
+    },
+    "ai-hitl": {
+      "pending": { "buttons": ["拒绝", "批准"], "approvalAttr": "pending" },
+      "approve": {
+        "badge": "已批准",
+        "log": "Approved → executing transfer_funds… result: ok",
+        "buttonsRemoved": true
+      },
+      "secondApproveClick": { "noDoubleCommit": true },
+      "reject": { "badge": "已拒绝", "log": "Rejected → posted role:\"tool\" denial message" },
+      "escOnPending": { "stateUnchanged": true }
+    },
+    "ai-p4": {
+      "token": { "text": "500 / 4,096 ↑320 · ↓180 · $0.0012", "svg": true },
+      "suggestionsExpand": { "count": 5, "clickToast": "P4 suggestion: Summarize" },
+      "suggestionsPopover": {
+        "visible": 2,
+        "overflow": "+3",
+        "menuOpens": true,
+        "clickToast": "P4 popover suggestion: Explain"
+      },
+      "voice": {
+        "start": "listening aria-pressed=true",
+        "stopToast": "P4 voice error: no-result",
+        "reasonBindingResolved": true
+      }
+    },
+    "ai-linkage": {
+      "send1": { "formFieldSerialized": true, "reloadCount": 1 },
+      "send2": { "reloadCount": 2 },
+      "regenerate": {
+        "newReply": "Reply #3",
+        "branchBadge": "2/2",
+        "lastBranch": "branch-1",
+        "reloadCount": 3
+      },
+      "picker": {
+        "prevNextPresent": true,
+        "switchBack": { "counter": "1/2", "transcriptReloaded": "Reply #1" }
+      }
+    },
+    "ai-rich-text": {
+      "surface": { "isTiptap": true, "templateButtons": ["Greeting", "Summary", "Code"] },
+      "templateInitialState": { "disabled": [false, false, false] },
+      "insertAtInitial": { "text": "Hello! How can I help?" },
+      "mention": { "popup": "@alice", "picked": "hi @alice", "sent": true },
+      "slash": { "popup": "summarize", "inserted": "Summarize this:" },
+      "stuckTemplateBar": {
+        "t300ms": [true, true, true],
+        "t1000ms": [true, true, true],
+        "t3000ms": [true, true, true],
+        "afterSecondTurn": [true, true, true],
+        "editorIsEditable": true,
+        "typingWorks": true,
+        "secondSendWorks": true
+      }
+    },
+    "ai-widgets": {
+      "slotsEnumerated": 39,
+      "promptClick": { "draft": "What is the weather?" },
+      "suggestionClick": {
+        "draft": "What is the weather?\nSummarize",
+        "note": "append vs prompt replace — watch"
+      },
+      "feedbackLike": {
+        "toast": "feedback: like on m_fb_widgets",
+        "ariaPressedTrue": "赞",
+        "ariaPressedFalse": "踩"
+      },
+      "toolRoundFixtures": {
+        "bubbles": ["user", "tool card", "role:tool", "assistant markdown table"]
+      }
+    },
+    "ai-coverage": {
+      "probesInitial": "all 16 probes at seed (KEY:) values",
+      "slowChat": { "onResponseComplete": "COMPLETE:fired", "replyStreamed": true },
+      "flakyChat": { "onError": "ERROR:fired", "ui": "AI 请求失败 重试" },
+      "eofChat": { "partialReply": "Partial reply", "noErrorFeedback": true },
+      "noConnector": { "inputPresent": false, "feedback": "none" },
+      "editChat": {
+        "editModeValue": "edit this message",
+        "saveCommit": "edited by probe v2",
+        "assistantRerun": true
+      },
+      "toolApprove": { "probe": "TOOL:fired" },
+      "citationClick": { "probe": "CITATION:fired" },
+      "attachmentOverLimit": { "probe": "ATTERR:fired", "ui": "文件过大" },
+      "senderModes": {
+        "ctrlEnter": "SENDCTRL:fired",
+        "plainEnterNoFire": true,
+        "shiftEnter": "SENDSHIFT:fired"
+      },
+      "widgets": {
+        "prompt": "fired",
+        "feedback": "fired",
+        "tokenClick": "fired",
+        "suggestion": "fired"
+      },
+      "conversations": {
+        "create": "fired",
+        "itemClick": "activeId cc1->cc2",
+        "rename": "fired",
+        "deleteCancel": "no residue",
+        "deleteConfirm": "fired"
+      }
+    }
+  },
+  "findings": [
+    {
+      "id": "IS-ai-conversations-001",
+      "page": "ai-conversations",
+      "symptom": "「新建会话」click has zero visible effect (reproduced 3x): conversation list stays empty, no toast, no console error; switch/rename/delete unreachable — sidebar functionally dead on this demo page while chat streaming works",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "ownership": "framework import-overlay write/notify seam (docs/bugs/163, successor required) x demo wiring (page declares xui:imports); renderer + ${id} bindings exonerated via coverage host; controller exonerated via persistence host (no imports)",
+      "candidateRootCause": "unproven chain per bug 163 layer-1/layer-2; alternatively conversationController prop resolves empty (fail branch invisible — action may never dispatch)",
+      "redE2e": "goto #/ai-conversations -> click [data-slot=ai-conversations-create] -> expect list children >= 1 (currently red: 0)"
+    },
+    {
+      "id": "IS-ai-rich-text-001",
+      "page": "ai-rich-text",
+      "symptom": "template bar (Greeting/Summary/Code) permanently disabled after first completed turn ([true,true,true] at t+1s/t+3s/after second turn) while editor isEditable=true and typing+Enter submit still work — disabled-rule inputs all false yet rendered disabled (stale state)",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "renderer candidate: packages/flux-renderers-ai/src/rich-text/tiptap-sender.tsx TemplateBar locked/loading chain (senderExtensions path)",
+      "redE2e": "send one message -> wait for assistant completion -> expect template buttons enabled (currently red)"
+    },
+    {
+      "id": "IS-ai-attachments-001",
+      "page": "ai-attachments",
+      "symptom": "attachment remains in tray after send (7 ai-attachment* nodes, img kept, remove button kept — UI implies still pending); user bubble shows no image part (mock echo drops image_url) so the advertised image_url send flow is unverifiable on this page",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "demo echo (mock-ai-env drops parts) primary; tray clear-after-send semantics (renderer/demo contract) candidate"
+    },
+    {
+      "id": "IS-ai-coverage-001",
+      "page": "ai-coverage (cov-chat-noconnector)",
+      "symptom": "no-connector chat renders as a silent empty shell: sender absent entirely (inputPresent=false), no emptyState/hint explaining the missing capability (contrast: nullengine fixture has emptyState copy)",
+      "class": "D",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "renderer (ai-chat connector-missing degraded state lacks feedback) candidate; may be intentional bare fixture — adjudicate"
+    },
+    {
+      "id": "IS-ai-chat-001",
+      "page": "ai-chat (family: ai-bubble action bars)",
+      "symptom": "hover-reveal action bars (retry/edit/copy) hidden-box and revealed-box geometrically mismatched (retry rect y 452->346, ~106px): at hidden box center elementFromPoint=ai-bubble-content, Playwright native click persistently intercepted (224 retries); real-mouse hover->click verified working (retry re-streamed with cancelVisible=true; edit toggle hit=self after hover)",
+      "class": "E",
+      "priority": "P3",
+      "invariant": "V4-adjacent+E",
+      "ownership": "renderer (ai-bubble action-bar show/hide geometry) candidate; no defect for mouse users, registered as discoverability/testability gap"
+    }
+  ],
+  "watchList": [
+    "ai-chat: Esc does not clear typed draft — no promised affordance, not convicted",
+    "ai-chat/ai-bubble: ~106px shift of action bar between hidden and revealed boxes — possible layout shift on hover (V4-adjacent), needs CSS-level isolation",
+    "all ai-chat pages: console '[ai-chat] ActionScope namespace ai is already registered' — single-chat pages = StrictMode dev double-mount pseudo-signal; coverage multi-chat = real instances, delegated semantics are documented known-limitation (ai-chat.tsx R1-F5, design.md §14.2)",
+    "ai-coverage eof chat: truncated stream renders 'Partial reply' as a normal bubble with no error/unfinished feedback — engine EOF-tolerance contract question",
+    "ai-persistence demo: delete has no confirmation (host drives manager directly, bypassing renderer confirm dialog which is verified intact on coverage host)",
+    "ai-widgets: ai-prompts onSelect replaces draft while ai-suggestions onSelect appends — both modeless setSenderDraft; per-widget default or drift, adjudicate",
+    "ai-tools: tool-call card exposes no data-state attribute (success conveyed by border-success/30 class only) — testability hook gap, IS-9 candidate",
+    "ai-conversations: namespaced action failure has zero user-visible surface (no toast/console) — independent guard gap to adjudicate alongside bug-163 successor",
+    "ai-citations route description says 'hoverable <sup> source cards' but interaction is click-popover — description drift (P3 wording fix suggestion)"
+  ],
+  "naRegistrations": [
+    "voice real transcription (ai-p4/coverage): headless has no audio; state machine + no-result error path verified truthfully (toast with ${reason} resolved)",
+    "ai-widgets voice button: same renderer already verified on ai-p4, not re-driven",
+    "ai-conversations switch/rename/delete on the demo page itself: unreachable due to IS-ai-conversations-001; evidence taken on coverage host (setValue-bound) + persistence host (controller-driven)"
+  ],
+  "crossBatchAntiPatternVerification": {
+    "eventTemplates": "all payload templates in ai schemas resolve live (${id}, ${index}, ${source.title}, ${item.text}, ${transcript}, ${reason}, ${action}, ${message.id}) — CX-10/C8.1 dispatchCtx convention applied package-wide; no IS-5-type P1",
+    "objectSpreadInSetValue": "not present in ai schemas — n/a",
+    "streamingAndVirtualScroll": "V1 preserved (send while scrolled up: scrollTop 99023->99023); V3 streaming feedback truthful (caret, cancel, stop)",
+    "hitlCommitTruthfulness": "approve/reject commit truthfully, double-commit guarded, Esc harmless, reset path verified"
+  }
+}

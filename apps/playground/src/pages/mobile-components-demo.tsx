@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { Button, Card, CardContent, CardHeader, CardTitle, toast } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
@@ -193,19 +193,19 @@ function InfiniteScrollDemoHost() {
   const [items, setItems] = useState<string[]>(() => buildPageItems(0));
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
+  // plan 549 (IS-mobile-components-001): deliberately NO unmount clearTimeout.
+  // The pending timer IS the in-flight request; StrictMode's mount → cleanup →
+  // mount simulation cleared it right after the sentinel's initial load-more,
+  // and nothing re-armed the flow (renderer in-flight guard stays set, host
+  // loading stays true) — the demo stuck on「加载中...」forever. Letting the
+  // timer complete mirrors a real fetch surviving a transient unmount; the
+  // post-unmount setState it may hit is a no-op in React 18+.
   const handleLoadMore = useCallback(() => {
     // Ignore requests while a page is already in-flight or once finished.
     if (loading || !hasMore) return;
     setLoading(true);
-    timerRef.current = setTimeout(() => {
+    setTimeout(() => {
       const nextPage = page + 1;
       setItems((prev) => [...prev, ...buildPageItems(nextPage)]);
       setPage(nextPage);

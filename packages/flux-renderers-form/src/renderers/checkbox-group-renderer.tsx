@@ -14,7 +14,10 @@ import {
 } from './input-choice-renderers.js';
 import { shouldStackChoicesVertically } from './mobile-touch-utils.js';
 
-const FOCUS_ONLY_METHODS = ['focus'] as const;
+// plan 549 (IS-component-handles-001): clear was a dead control — the handle
+// only declared focus, so component:clear resolved to "Unsupported component
+// method" and was silently swallowed.
+const CHECKBOX_GROUP_METHODS = ['focus', 'clear'] as const;
 
 export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGroupSchema>) {
   const name = String(props.props.name ?? '');
@@ -41,11 +44,12 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
     name,
     type: 'checkbox-group',
     cid: props.meta.cid,
-    methods: FOCUS_ONLY_METHODS,
+    methods: CHECKBOX_GROUP_METHODS,
     getFocusTarget: () =>
       wrapperRef.current?.querySelector<HTMLElement>('button, [role="checkbox"], input') ?? null,
     isInteractive: () => presentation.interactive,
     isVisible: () => props.meta.visible !== false,
+    clearValue: () => commit([]),
   });
 
   const checkAllEnabled = props.props.checkAll === true;
