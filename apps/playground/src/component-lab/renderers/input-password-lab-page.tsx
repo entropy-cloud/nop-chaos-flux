@@ -25,6 +25,19 @@ const confirmPassword = {
     {
       type: 'form',
       name: 'passwordForm',
+      // Plan 552 / IS-lab-input-password-001: the confirm-password rule was a
+      // dead declaration — field-level `validations: [{rule: 'custom', ...}]`
+      // is not a supported contract in any package, so mismatched submits
+      // passed silently. Use the supported form-level cross-field rule
+      // (`rules` + equalsField) so the validator actually fires.
+      rules: [
+        {
+          rule: 'equalsField',
+          field: 'confirmPassword',
+          target: 'password',
+          message: 'Passwords must match',
+        },
+      ],
       body: [
         {
           type: 'input-password',
@@ -38,13 +51,6 @@ const confirmPassword = {
           name: 'confirmPassword',
           label: 'Confirm Password',
           required: true,
-          validations: [
-            {
-              rule: 'custom',
-              expression: '${confirmPassword === password}',
-              message: 'Passwords must match',
-            },
-          ],
         },
       ],
       actions: [{ type: 'button', label: 'Set Password', onClick: { action: 'submitForm' } }],
@@ -87,7 +93,7 @@ export function InputPasswordLabPage() {
         {
           title: 'New password with confirm-password validator',
           description:
-            'Two password fields are rendered together so authoring can express confirm-password rules. The current lab validates stable masked input behavior rather than overclaiming richer validation UI.',
+            'Two password fields are rendered together and a form-level equalsField rule blocks mismatched submits with an inline "Passwords must match" error on the confirm field.',
           schema: confirmPassword,
         },
         {

@@ -22,6 +22,20 @@ describe('Rating', () => {
     expect(onValueChange).toHaveBeenCalledWith(4);
   });
 
+  // Plan 552 / IS-lab-rating-001: an unset `max` used to default to 5, so on
+  // count>5 groups every commit clamped to 5 (clicking star 8 committed 5).
+  it('commits clicked stars beyond 5 on count>5 groups (max defaults to count)', () => {
+    const onValueChange = vi.fn();
+    render(<Rating count={10} value={5} onValueChange={onValueChange} />);
+
+    const stars = screen.getAllByRole('radio');
+    expect(stars).toHaveLength(10);
+    fireEvent.click(stars[7]!);
+    expect(onValueChange).toHaveBeenCalledWith(8);
+    fireEvent.click(stars[9]!);
+    expect(onValueChange).toHaveBeenCalledWith(10);
+  });
+
   it('supports uncontrolled usage with defaultValue', () => {
     function Harness() {
       const [value, setValue] = React.useState<number | undefined>(1);

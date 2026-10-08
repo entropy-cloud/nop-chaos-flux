@@ -127,6 +127,15 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
     : undefined;
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
+  // Plan 552 / IS-lab-date-range-001: with react-day-picker's default
+  // `resetOnSelect: false`, a click while a complete range was displayed fed
+  // `addToRange`, which kept the OLD start and demoted the clicked day to the
+  // end (clicking 2024-06-03 on a 06-01..06-10 selection committed
+  // 2024-06-01,2024-06-03). With `resetOnSelect`, RDP emits the anchor click
+  // as a half range `{from, to: undefined}`; we hold it in local state (no
+  // half-value is written to the form scope) and commit only the completed
+  // pair on the second click.
+  const [pendingAnchor, setPendingAnchor] = useState<Date | undefined>(undefined);
 
   const rawRange = parseDateRange(storedValue, delimiter, valueFormat, options);
   // Calendar operates on local wall-clock Dates; bridge UTC storage so the
@@ -207,6 +216,14 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
   function handleCalendarSelect(range: { from?: Date; to?: Date } | undefined) {
     const from = range?.from;
     const to = range?.to;
+    if (from && !to) {
+      // Anchor click (resetOnSelect half range): park the new start locally —
+      // the calendar highlights it, the form value stays untouched until the
+      // user completes the range.
+      setPendingAnchor(from);
+      return;
+    }
+    setPendingAnchor(undefined);
     commitRange(from, to);
   }
 
@@ -258,6 +275,7 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
   }
 
   function handleClear() {
+    setPendingAnchor(undefined);
     handlers.onChange(undefined);
     setOpen(false);
   }
@@ -280,7 +298,16 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
 
   return (
     <div className={cn('nop-date-range', 'relative flex items-center', props.meta.className)}>
-      <Popover open={open && presentation.interactive} onOpenChange={setOpen}>
+      <Popover
+        open={open && presentation.interactive}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) {
+            // Discard an unfinished anchor selection when the popover closes.
+            setPendingAnchor(undefined);
+          }
+        }}
+      >
         <PopoverTrigger
           render={
             <Button
@@ -319,11 +346,14 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
             <Calendar
               mode="range"
               selected={
-                startDate || endDate
-                  ? { from: startDate, to: endDate }
-                  : undefined
+                pendingAnchor
+                  ? { from: pendingAnchor, to: undefined }
+                  : startDate || endDate
+                    ? { from: startDate, to: endDate }
+                    : undefined
               }
-              defaultMonth={startDate ?? new Date()}
+              defaultMonth={pendingAnchor ?? startDate ?? new Date()}
+              resetOnSelect
               onSelect={(range) =>
                 handleCalendarSelect(
                   range

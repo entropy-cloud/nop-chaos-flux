@@ -278,7 +278,11 @@ describe('DialogHost', () => {
       'calc(var(--dialog-top-offset) + 1 * var(--dialog-stack-step))',
     );
 
-    expect(full?.getAttribute('data-size')).toBe('');
+    // Plan 552 / IS-lab-dialog-001: `full` previously mapped to an undefined
+    // primitive size, so the ui primitive kept its 1rem-edge max-width clamp
+    // and 100vw surfaces were clamped to 100%-2rem. The size is now forwarded
+    // so the primitive can drop the clamp for full-bleed surfaces.
+    expect(full?.getAttribute('data-size')).toBe('full');
     expect(full?.getAttribute('data-top-anchored')).toBe('false');
     expect(full?.getAttribute('data-style-top')).toBe('');
   });

@@ -116,7 +116,7 @@ const DialogContent = React.forwardRef<
     showCloseButton?: boolean;
     offsetRef?: React.MutableRefObject<{ x: number; y: number }>;
     baseTransform?: string;
-    size?: 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl' | 'default';
+    size?: 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl' | 'full' | 'default';
     topAnchored?: boolean;
   }
 >(function DialogContent(
@@ -190,8 +190,14 @@ const DialogContent = React.forwardRef<
           data-size={size}
           className={cn(
             'nop-dialog ',
-            'flex w-full max-w-[calc(100%-2rem)] flex-col rounded-[var(--overlay-anatomy-content-border-radius)] bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
-            'max-h-[calc(100dvh-2rem)]',
+            // Plan 552 / IS-lab-dialog-001: `full` is a full-bleed size (the
+            // host sets width/height 100vw/100vh inline); the shared 1rem-edge
+            // max-width clamp must not shrink it back to 100%-2rem.
+            size === 'full'
+              ? 'flex w-full max-w-none flex-col'
+              : 'flex w-full max-w-[calc(100%-2rem)] flex-col',
+            'rounded-[var(--overlay-anatomy-content-border-radius)] bg-popover text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
+            size === 'full' ? 'max-h-none' : 'max-h-[calc(100dvh-2rem)]',
             isContained ? 'absolute' : 'fixed',
             noCenter
               ? ''

@@ -8,6 +8,7 @@ interface RatingProps {
   defaultValue?: number;
   onValueChange?: (value: number | undefined) => void;
   min?: number;
+  /** Value ceiling; defaults to the star count (plan 552 / IS-lab-rating-001). */
   max?: number;
   /** Star count (>= 1, default 5). */
   count?: number;
@@ -32,7 +33,7 @@ function Rating({
   defaultValue,
   onValueChange,
   min = 0,
-  max = 5,
+  max,
   count = 5,
   allowHalf = false,
   allowClear = false,
@@ -42,13 +43,17 @@ function Rating({
   className,
 }: RatingProps) {
   const starCount = Math.max(1, Math.floor(count));
+  // Plan 552 / IS-lab-rating-001: an unset `max` previously defaulted to 5,
+  // clamping every commit on count>5 star groups down to 5 (clicking star 8
+  // committed 5). Default the value ceiling to the star count instead.
+  const valueMax = Math.min(max ?? starCount, starCount);
   const [uncontrolled, setUncontrolled] = React.useState<number | undefined>(defaultValue);
   const [hoverValue, setHoverValue] = React.useState<number | null>(null);
   const isControlled = valueProp !== undefined;
   const value = isControlled ? valueProp : uncontrolled;
 
   const commit = (next: number | undefined) => {
-    const clamped = next === undefined ? undefined : Math.min(Math.max(next, min), Math.min(max, starCount));
+    const clamped = next === undefined ? undefined : Math.min(Math.max(next, min), valueMax);
     if (!isControlled) {
       setUncontrolled(clamped);
     }

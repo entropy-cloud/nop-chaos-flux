@@ -255,6 +255,18 @@ function createCompositeScopeStore(
     unsubscribe();
   }
 
+  // Plan 552 (IS-lab-hidden-001/002): lastChange must track the own store
+  // EAGERLY — from store creation, not from the first subscriber. Mount-time
+  // writes (field default-value pushes, hiddenFieldPolicy clears) fire before
+  // later sibling nodes subscribe; with listener-scoped tracking the missed
+  // change was never replayed, getLastChange() kept returning the initial
+  // wildcard change, and the useSyncExternalStore subscribe-time consistency
+  // check saw "no change" — the node latched its first evaluation forever.
+  const trackLastChange = ownStore.subscribe((change) => {
+    lastChange = change;
+  });
+  activeUnsubscribers.add(trackLastChange);
+
   const store: ScopeStore<Record<string, any>> & { dispose?: () => void } = {
     getSnapshot: readVisible,
     getLastChange() {

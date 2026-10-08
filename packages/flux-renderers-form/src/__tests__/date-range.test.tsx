@@ -101,13 +101,17 @@ describe('date-range renderer — rangeKind=date selection + delimiter writeback
     } as any);
 
     const popover = await openRange();
-    // Seed anchors the month to June 2024; clicking day 18 (after the range)
-    // extends the end, exercising real calendar writeback + delimiter join.
+    // Plan 552 / IS-lab-date-range-001: the first click on a displayed range
+    // anchors a NEW start at the clicked day (previously it demoted the click
+    // to the end, swallowing the start). The anchor click parks locally — the
+    // stored value only changes once the second click completes the pair.
+    pickDay(popover, 12);
+    expect(screen.getByTestId('range-display').textContent).toBe('2024-06-10 , 2024-06-10');
     pickDay(popover, 18);
 
     fireEvent.click(screen.getByText('Submit'));
     await waitFor(() => expect(submitCalls.length).toBe(1));
-    expect(submitCalls[0].range).toBe('2024-06-10,2024-06-18');
+    expect(submitCalls[0].range).toBe('2024-06-12,2024-06-18');
   });
 
   it('honors a custom delimiter', async () => {
@@ -127,11 +131,13 @@ describe('date-range renderer — rangeKind=date selection + delimiter writeback
     } as any);
 
     const popover = await openRange();
+    // Plan 552 / IS-lab-date-range-001 two-click contract (see above).
+    pickDay(popover, 12);
     pickDay(popover, 18);
 
     fireEvent.click(screen.getByText('Submit'));
     await waitFor(() => expect(submitCalls.length).toBe(1));
-    expect(submitCalls[0].range).toBe('2024-06-10~2024-06-18');
+    expect(submitCalls[0].range).toBe('2024-06-12~2024-06-18');
   });
 });
 
@@ -278,16 +284,19 @@ describe('date-range renderer — D7 immediate-commit (no pending/preview leak)'
     } as any);
 
     const popover = await openRange();
+    // Plan 552 / IS-lab-date-range-001: the anchor click parks locally without
+    // writing a half-value; the display only moves when the pair completes.
+    pickDay(popover, 12);
     pickDay(popover, 18);
 
     // Immediate-commit contract: the visible display already reflects the picked
     // value (there is no pending/preview state that could leak). No confirm step.
-    expect(screen.getByTestId('range-display').textContent).toBe('2024-06-10 , 2024-06-18');
+    expect(screen.getByTestId('range-display').textContent).toBe('2024-06-12 , 2024-06-18');
 
     fireEvent.click(screen.getByText('Submit'));
     await waitFor(() => expect(submitCalls.length).toBe(1));
     // Displayed value == committed/submitted value (no divergence).
-    expect(submitCalls[0].range).toBe('2024-06-10,2024-06-18');
+    expect(submitCalls[0].range).toBe('2024-06-12,2024-06-18');
   });
 });
 

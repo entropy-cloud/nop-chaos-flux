@@ -1,0 +1,461 @@
+{
+  "batch": "IS-8a group C (plan 552 Phase 1) — 选择与数组 18 页",
+  "date": "2026-10-07",
+  "method": "interaction-state-audit-prompt §4/§6/§9; fresh-session Playwright chromium; strict-validation; readings convict, screenshots unused; ~60 sequences across 18 pages; every page opened through the real dev server with console-error assertion (zero unfiltered console.error on all 18 pages)",
+  "devServer": "http://127.0.0.1:4175 (strict-validation)",
+  "pages": [
+    "select",
+    "checkbox",
+    "switch",
+    "radio-group",
+    "checkbox-group",
+    "button-group-select",
+    "input-tree",
+    "tree-select",
+    "user-select",
+    "department-select",
+    "tag-list",
+    "key-value",
+    "array-editor",
+    "combo",
+    "input-table",
+    "transfer",
+    "detail-field",
+    "detail-view"
+  ],
+  "surveyReadings": {
+    "consoleErrorsOnLoad": { "all18Pages": 0 },
+    "mandatoryRegression": {
+      "id": "plan-552 反模式⑧ / IS-combo-editor-001 回归面",
+      "combo.pristineSubmit": { "toasts": [], "fieldErrors": [] },
+      "input-table.pristineSubmit": { "toasts": [], "fieldErrors": [] },
+      "array-editor.pristineSubmit": { "toasts": [], "fieldErrors": [] },
+      "array-editor.emptyAddSubmit": { "toasts": [], "fieldErrors": ["Task 3不能为空"] },
+      "combo.emptyAddSubmit": {
+        "toasts": [],
+        "fieldErrors": [],
+        "note": "items 字段无 required 声明，静默接受与 schema 一致"
+      },
+      "combo.nestedSubmitRowIsolation": {
+        "echo": "Combo: [{\"name\":\"Alice2\",\"phone\":\"P-100\"},{\"name\":\"Bob\",\"phone\":\"P-200\"},{\"name\":\"Cara\",\"phone\":\"P-300\"}]"
+      },
+      "verdict": "GREEN — 三页 pristine 合法提交均无假 required toast；empty-add 按声明产 per-field 错误或按无 required 接受"
+    },
+    "select": {
+      "surfaces": { "buttons": 27, "comboboxTriggers": 5, "inputs": 16, "scenarioStages": 7 },
+      "sequences": {
+        "S1_requiredInlineError": {
+          "pristineErr": ["Country不能为空"],
+          "toasts": [],
+          "triggerAfterSelect": "United Kingdom",
+          "stored": "\"uk\"",
+          "errAfterValidSubmit": 0
+        },
+        "S2_commitLabelVsValue": { "trigger": "PostgreSQL", "stored": "\"postgres\"" },
+        "S3_searchOptionTemplate": {
+          "filteredOptions": ["Carol LeeProduct DesignerOnline"],
+          "committedValue": "\"carol\"",
+          "note": "commit 绑定 value 而非展示文本"
+        },
+        "S4_choiceFamilyComposite": {
+          "echo": "Choice: de | yes | on | pro | stable | secondary | admin,viewer",
+          "echoEqualsStored": true
+        },
+        "S5_falsyValues": {
+          "select0": { "live": "native-zero", "trigger": "Zero", "stored": "\"level\": 0" },
+          "selectEmpty": { "live": "native-empty", "trigger": "Empty" }
+        },
+        "S6_remoteSearch": {
+          "optionsForAp": ["Apple", "Apricot"],
+          "echo": "Fruit: apple",
+          "failFeedback": "搜索失败。"
+        },
+        "S7_controlledEcho": {
+          "externalSetValue": "trigger L2 + echo Level 2",
+          "userCommit": "trigger L3 + echo Level 3",
+          "switchEcho": "notify on"
+        }
+      }
+    },
+    "checkbox": {
+      "surfaces": { "buttons": 6, "checkboxes": 4, "switches": 1, "scenarioStages": 3 },
+      "sequences": {
+        "S1_required": {
+          "pristineErr": ["I accept the terms and conditions不能为空"],
+          "ariaCheckedAfterClick": "true",
+          "errAfterValidSubmit": 0,
+          "stored": "\"acceptTerms\": true"
+        },
+        "S2_liveSummary": {
+          "summaryOn": "Email: ON | SMS: ON",
+          "summaryOff": "Email: ON | SMS: OFF",
+          "aria": ["true", "false"]
+        },
+        "S3_enterNoSubmit": {
+          "echoAfterEnter": "",
+          "ajaxRequests": 0,
+          "echoAfterSubmit": "Submitted: unchecked / off",
+          "verdict": "Enter 不触发提交（P1-C 修复保持绿）；ajaxRequests=0 系 default fetcher 客户端短路（obs-1 plan 483），探针伪影受控撤案"
+        }
+      }
+    },
+    "switch": {
+      "surfaces": { "buttons": 4, "switches": 4, "scenarioStages": 2 },
+      "sequences": {
+        "S1_stateVsValue": {
+          "aria": "false→true→false",
+          "summary": "OFF→ON→OFF",
+          "stored": "\"enabled\": true",
+          "verdict": "V3 一致"
+        },
+        "S2_prefsThree": {
+          "states0": ["false", "false", "false"],
+          "states1": ["false", "false", "true"],
+          "errorsAfterSave": 0
+        }
+      }
+    },
+    "radio-group": {
+      "surfaces": { "buttons": 4, "radios": 7, "scenarioStages": 2 },
+      "sequences": {
+        "S1_initialAndExclusive": {
+          "proCheckedInitial": "true",
+          "afterEnterprise": { "ent": "true", "pro": "false" },
+          "stored": "\"enterprise\"",
+          "errorsAfterSubmit": 0
+        },
+        "S2_horizontalLive": {
+          "before": "Selected priority: (none)",
+          "afterHigh": "Selected priority: high",
+          "errorsAfterSave": 0
+        }
+      }
+    },
+    "checkbox-group": {
+      "surfaces": { "buttons": 4, "checkboxes": 9, "scenarioStages": 2 },
+      "sequences": {
+        "S1_basic": { "stored": "ts+rust", "errorsAfterSave": 0 },
+        "S2_minMax": {
+          "hintAtLoad": null,
+          "sumBefore": "Selected: (none)",
+          "sumOne": "Selected: ts",
+          "submitWithOneSelection": { "fieldErrors": [], "toasts": [] },
+          "submitWithTwo": { "fieldErrors": 0 },
+          "fifthClickOverMax": {
+            "dockerChecked": "true",
+            "dockerDisabled": false,
+            "stored": ["ts", "react", "node", "postgres", "docker"]
+          },
+          "verdict": "minSelect/maxSelect 完全未生效（见 IS-lab-checkbox-group-001）；live summary 本身随选随更（场景描述中『summary 静态』一句已过时——watch）"
+        }
+      }
+    },
+    "button-group-select": {
+      "surfaces": { "buttons": 10, "bgsItems": 6, "scenarioStages": 2 },
+      "sequences": {
+        "S1_singleExclusive": {
+          "pressedMain": "true",
+          "afterSecondary": { "main": "false", "sec": "true" },
+          "stored": "\"secondary\""
+        },
+        "S2_multiToggle": {
+          "adminPressedAfterReclick": "false",
+          "viewerPressed": "true",
+          "stored": "[\"viewer\"]"
+        }
+      }
+    },
+    "input-tree": {
+      "surfaces": { "buttons": 29, "treeNodes": 23, "scenarioStages": 3 },
+      "sequences": {
+        "S1_radio": { "summary": "(none)→frontend→backend", "stored": "\"frontend\"" },
+        "S2_checkbox": { "summary": "(none)→frontend→ux", "storedUxOnly": true },
+        "S3_lazyFailRetry": {
+          "chevronExpandLoads": "Sub A of a",
+          "retryBtnAfterFail": 1,
+          "retriedChild": "Retried child of c",
+          "echo": "MR-TREE:{\"node\":\"a-a\",\"nodeFail\":\"c-r\"}"
+        }
+      }
+    },
+    "tree-select": {
+      "surfaces": { "buttons": 10, "scenarioStages": 3 },
+      "sequences": {
+        "S1_single": {
+          "popoverOpen": 1,
+          "nodesOnOpen": 10,
+          "trigger": "Frontend",
+          "summary": "Selected: frontend",
+          "stored": "\"frontend\""
+        },
+        "S2_multi": {
+          "trigger": "Frontend, UX Research",
+          "summary": "Selected: frontend, ux",
+          "stored": true
+        },
+        "S3_lazyFailRetry": {
+          "errRow": "子节点加载失败：Lazy load failed (first attempt)",
+          "retry": 1,
+          "retried": 1,
+          "echo": "MR-TREESELECT:{\"node\":\"a-a\",\"nodeFail\":\"d-r\"}"
+        }
+      }
+    },
+    "user-select": {
+      "surfaces": { "buttons": 10, "orgTriggers": 5, "scenarioStages": 5 },
+      "sequences": {
+        "S1_staticClear": {
+          "options": 2,
+          "value": "Frank Zhao✕",
+          "summary": "Reviewer: u-frank",
+          "clear": "选择人员 + Reviewer 空白"
+        },
+        "S2_orgMulti": {
+          "resolvedChip": ["Alice Zhang"],
+          "navigateViaChevron": ["Alice Zhang›", "Bob Li›", "Platform›"],
+          "bobDisabled": { "dataDisabled": "true", "lockedCheck": true },
+          "chipsAfterCarol": ["Alice Zhang", "Carol Wang"]
+        },
+        "S3_failRetry": {
+          "errText": "子节点加载失败: Request failed (status=500)重试",
+          "retryStaysFailing": true
+        },
+        "S4_pagedRoot": {
+          "page1": ["Engineering›", "Sales›"],
+          "loadMore": 1,
+          "page2": ["Engineering›", "Sales›", "HR›"],
+          "loadMoreAfter": 0
+        },
+        "S5_replaceSearch": {
+          "searchNodes": ["Alice Zhang", "Carol Wang"],
+          "clearedRestoresTree": ["Engineering›", "Sales›"]
+        }
+      }
+    },
+    "department-select": {
+      "surfaces": { "buttons": 4, "orgTriggers": 2, "scenarioStages": 2 },
+      "sequences": {
+        "S1_lazyMulti": {
+          "root": ["Headquarters›", "R&D Center›"],
+          "hqChildren": ["Finance Dept›", "HR Dept›"],
+          "financeEmpty": "暂无数据",
+          "hrChecked": { "chip": "HR Dept", "summary": "Selected: hq-hr" },
+          "doneButton": 1
+        },
+        "S2_searchEcho": {
+          "triggerResolved": "Frontend Team✕",
+          "searchFront": ["Frontend Team", "HR Dept"],
+          "reselectStable": "Frontend Team✕"
+        }
+      }
+    },
+    "tag-list": {
+      "surfaces": { "buttons": 35, "tagButtons": 17, "scenarioStages": 4 },
+      "sequences": {
+        "S1_toggle": {
+          "summary": "react, typescript, vite → +vitest → -react → +react",
+          "storedMatchesSummary": true,
+          "note": "重新勾回的 react 追加到数组末尾（顺序语义 watch）"
+        },
+        "S2_emptyStart": { "counts": "0→1→2→1 label(s) added" },
+        "S3_hostEcho": { "echo": "LE-TAG:[\"react\",\"vite\"]" },
+        "S4_readOnly": {
+          "tagButtonsInRoControl": 3,
+          "clickNoScopeChange": true,
+          "roTagPointerEvents": "none",
+          "inputsDisabled": "3/3",
+          "echo": "LE-RO:{...unchanged...}"
+        }
+      }
+    },
+    "key-value": {
+      "surfaces": { "buttons": 27, "kvRows": 6, "scenarioStages": 3 },
+      "sequences": {
+        "S1_crudReorder": {
+          "rows": "3→4→3",
+          "moveDown": "Authorization 成为首行",
+          "storedHasCustom": "X-Custom-Header",
+          "errorsAfterSave": 0
+        },
+        "S2_placeholders": {
+          "expected": "VARIABLE_NAME / value",
+          "actual": "键 / 值",
+          "verdict": "见 IS-lab-key-value-001"
+        },
+        "S3_hostEcho": { "echo": "LE-KV:[{key:Accept,value:text/html},{key:X-Trace,value:abc123}]" }
+      }
+    },
+    "array-editor": {
+      "surfaces": { "buttons": 28, "arrayRows": 5, "scenarioStages": 3 },
+      "sequences": {
+        "pristineSubmit": { "toasts": [], "errors": [] },
+        "S1_crudReorder": {
+          "rows": "2→3→2",
+          "moveUp": "New Contact 到首行",
+          "storedMatches": true
+        },
+        "S3_hostEcho": { "echo": "LE-SUBMIT:{reviewers:[bob-edited,carol],headers:[env=prod]}" },
+        "emptyAdd": { "rowsAfterAdd": 3, "fieldErrors": ["Task 3不能为空"], "toasts": [] }
+      }
+    },
+    "combo": {
+      "surfaces": { "buttons": 26, "comboItems": 5, "scenarioStages": 3 },
+      "sequences": {
+        "pristineSubmit": { "toasts": [], "errors": [] },
+        "S1_crud": {
+          "items": "2→3→2",
+          "storedAfterRemove": "Bob+Carol 保留、行内编辑生效",
+          "actionsButtons": 3
+        },
+        "S2_minMax": {
+          "removeDisabledAtMin1": true,
+          "addDisabledAtMax5": true,
+          "maxMarker": "已达最大条目数（5/5）"
+        },
+        "S3_nestedSubmit": { "echo": "三行精确提交、row-scope 无泄漏" },
+        "emptyAdd": {
+          "toasts": [],
+          "fieldErrors": [],
+          "note": "无 required 声明 → 静默接受（与 array-editor 的默认 required 行为不一致——watch）"
+        }
+      }
+    },
+    "input-table": {
+      "surfaces": { "buttons": 32, "tableRows": 6, "scenarioStages": 3 },
+      "sequences": {
+        "pristineSubmit": { "toasts": [], "errors": [] },
+        "S1_crud": { "rows": "2→3→2", "stored": "B2+C3(7) 与 UI 一致", "removeBtns": 3 },
+        "S2_hostEcho": {
+          "echo": "Table: [{sku:Z9,amount:3},{sku:B2,amount:5},{sku:NEW,amount:42}]"
+        },
+        "S3_readOnly": {
+          "inputs": 4,
+          "readonlyAttr": "4/4",
+          "addRemoveHidden": true,
+          "echo": "RO: 原值不变"
+        }
+      }
+    },
+    "transfer": {
+      "surfaces": { "buttons": 15, "transferOptions": 9, "scenarioStages": 3 },
+      "sequences": {
+        "S1_shuttle": {
+          "right": "Editor → Editor,Admin → Admin",
+          "left": "回退 Editor,Viewer",
+          "stored": "[\"admin\"]"
+        },
+        "S2_controlledEcho": {
+          "external": "Set admin → 右栏 Admin + echo T:[\"admin\"]",
+          "userShuttle": "echo T:[\"admin\",\"viewer\"]"
+        },
+        "S3_toggleAll": {
+          "saFlag": "false→true",
+          "candidateChecked": ["true", "true", "true"],
+          "thenBulkMove": {
+            "right": "已选项（3/3）AdminEditorViewer",
+            "left": "候选项（0/0）暂无候选项"
+          },
+          "note": "toggle-all 语义=勾选全部候选+触发 onSelectAll，不直接移动（与场景描述一致）"
+        }
+      }
+    },
+    "detail-field": {
+      "surfaces": { "buttons": 9, "dialogTriggers": 3, "scenarioStages": 3 },
+      "sequences": {
+        "S1_profileDialog": {
+          "prefill": "Ada",
+          "cancelPath": { "viewerUnchanged": true, "dialogClosed": 0 },
+          "confirmPath": { "viewer": "Ada M Lovelace...", "stored": "Ada M" }
+        },
+        "S2_shippingDialog": { "fieldCount": 4, "zipPrefill": "20500", "escClean": 0 },
+        "S3_projectedSubmit": {
+          "draftNoLeak": "echo/编辑中 viewer 均未提前发布",
+          "echoAfterSubmit": "Detail: {\"street\":\"700 in-the-draft\",...}",
+          "viewerFallback": "[object Object]",
+          "verdict": "见 IS-lab-detail-field-001"
+        }
+      }
+    },
+    "detail-view": {
+      "surfaces": { "buttons": 6, "dialogTriggers": 2, "scenarioStages": 2 },
+      "sequences": {
+        "S1_reportEdit": { "prefill": "48", "confirm": "viewer Pages 48→999", "stored": "999" },
+        "S2_userRoleChange": {
+          "roleOptions": ["Administrator", "Editor", "Viewer"],
+          "cancelPath": { "viewerUnchanged": true, "dialogClosed": true },
+          "confirmPath": { "badge": "Administrator→Editor", "dialogClosed": 0 }
+        }
+      }
+    }
+  },
+  "findings": [
+    {
+      "id": "IS-lab-checkbox-group-001",
+      "page": "checkbox-group",
+      "symptom": "场景声明的 minSelect=2/maxSelect=4 完全未生效：仅选 1 项提交零错误零 toast（min 假通过），选满 5 项全部入库、第 5 项不封顶、limit-hint 永不出现（max 失效）",
+      "class": "C",
+      "invariant": "V3(反模式 c：声明 props 无生效通道)",
+      "priority": "P2",
+      "evidence": "submitWithOneSelection{fieldErrors:[],toasts:[]}；fifthClickOverMax{dockerChecked:'true',dockerDisabled:false,stored:[ts,react,node,postgres,docker]}；hintAtLoad=null。渲染器契约读 props.props.minSelected/maxSelected（checkbox-group-renderer.tsx:56-62，schemas.ts:178-179），lab schema 写的是 minSelect/maxSelect——名字不匹配 → 静默死声明",
+      "ownership": "demo schema（checkbox-group-lab-page.tsx 使用了契约外的 prop 名；渲染器按 minSelected/maxSelected 实现且有单测覆盖）",
+      "redE2e": "选 1 项 → Submit → 断言出现 min 错误（当前红：无任何错误）；连选 5 项 → 断言第 5 项被拒/有 hint（当前红：全部入库）"
+    },
+    {
+      "id": "IS-lab-key-value-001",
+      "page": "key-value",
+      "symptom": "场景声明的 keyPlaceholder='VARIABLE_NAME'/valuePlaceholder='value' 无效果，实际渲染 i18n 默认占位 键/值",
+      "class": "C",
+      "invariant": "V3(反模式 c)",
+      "priority": "P2",
+      "evidence": "phKey='键', phVal='值'（期望 VARIABLE_NAME/value）。keyPlaceholder/valuePlaceholder 在 key-value.tsx/key-value-row.tsx/任何 schema 契约中均不存在（全仓 grep 仅 i18n locale 与 condition-builder 内部使用同名常量）",
+      "ownership": "demo schema（key-value-lab-page.tsx 声明了渲染器契约外的 props；若判定应支持则属能力缺口，随批裁决）",
+      "redE2e": "断言 env 场景 key 输入框 placeholder === 'VARIABLE_NAME'（当前红：'键'）"
+    },
+    {
+      "id": "IS-lab-detail-field-001",
+      "page": "detail-field",
+      "symptom": "未声明 viewer slot 且值为对象时，viewer 回退渲染 String(fieldValue) → 界面显示字面量 '[object Object]'",
+      "class": "D",
+      "invariant": "V6",
+      "priority": "P3",
+      "evidence": "projected 场景 s3viewerBefore/Mid/After 均为 '[object Object]'。detail-field.tsx:333-336 回退分支 `String(fieldValue)`；对象值产出无意义文本（详情编辑入口的常态展示不可辨）",
+      "ownership": "renderer（回退序列化策略）× demo（projected 场景未配 viewer slot 触发）",
+      "redE2e": "打开 lab-detail-field projected 场景 → 断言 detail-field-viewer 文本不含 '[object Object]'（应显示 JSON 摘要或占位符）"
+    }
+  ],
+  "watchList": [
+    "tag-list 重新勾选把已删项追加到数组末尾（顺序≠声明顺序；显示与存储一致 V3 无违例）——数组顺序语义对 schema 作者的暗示，未定罪",
+    "combo 空行提交被静默接受（无 required 声明）而 array-editor 空行默认 required 报『Task 3不能为空』——两类复合编辑器空行语义不一致，候选契约对齐议题",
+    "checkbox-group S2 场景描述声称『summary 为静态前缀』实况已随选随更、『exercises min/max validation』实况未生效（IS-lab-checkbox-group-001 修复时描述需同步）",
+    "combobox/tree-select popover 关闭后列表内容仍挂载在 DOM（隐藏），18 页 DOM 权重观察项，无用户可见影响",
+    "user-select S1 summary '${reviewer}' 显示原始 id（u-frank）而 chip 显示解析 label——schema 自declare 文本所致，场景作者注意项",
+    "input-tree lazy 失败的行内错误文本挂在节点行内（retry 按钮可见、重试成功路径完整）；input-tree-source-error slot 仅覆盖 root source 失败——探测定位粒度注记，未定罪"
+  ],
+  "naRegistrations": [
+    {
+      "page": "detail-field/detail-view",
+      "scope": "S1/S2 dialog 提交 ajax",
+      "reason": "lab 默认 env fetcher 客户端短路全部 /api 请求（obs-1 plan 483），网络层 n/a；回写行为经 scope + viewer 读数验证"
+    },
+    {
+      "page": "select",
+      "scope": "clearable 清除路径",
+      "reason": "全部 7 场景均未声明 clearable，无该交互面"
+    }
+  ],
+  "probeArtifactsRetracted": [
+    "checkbox S3 'submitAction 未发请求' → default fetcher 客户端短路（packages/flux-react/src/defaults.ts obs-1），submitAction→onSubmitSuccess 链路完整，撤案",
+    "tree-select S1 首探 committed 'backend' → Playwright 点击 hasText 'Frontend' 命中 Engineering 群组容器（容器含子行，几何中心落在 Backend 行）——定位伪影，改用 exact-text 后 'frontend' 正确，撤案",
+    "input-tree/tree-select lazy '无错误行' → chevron 点击才触发 expand（label 点击=选中），chevron 路径下错误行+retry+重试成功全部在位，撤案"
+  ],
+  "counts": {
+    "findings": 3,
+    "P0": 0,
+    "P1": 0,
+    "P2": 2,
+    "P3": 1,
+    "watch": 6,
+    "naRegistrations": 2,
+    "probeArtifactsRetracted": 3
+  }
+}

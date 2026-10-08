@@ -29,7 +29,7 @@ import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with
 
 type FluxSurfaceSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
-type PrimitiveDialogSize = 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl' | undefined;
+type PrimitiveDialogSize = 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl' | 'full' | undefined;
 
 function resolveDialogPrimitiveSize(size: FluxSurfaceSize | undefined): PrimitiveDialogSize {
   if (!size) {
@@ -40,6 +40,9 @@ function resolveDialogPrimitiveSize(size: FluxSurfaceSize | undefined): Primitiv
   if (size === 'md') return 'base';
   if (size === 'lg') return 'md';
   if (size === 'xl') return 'lg';
+  // Plan 552 / IS-lab-dialog-001: forward `full` so the primitive drops its
+  // 1rem-edge max-width clamp (previously 100vw was clamped to 100%-2rem).
+  if (size === 'full') return 'full';
   return undefined;
 }
 

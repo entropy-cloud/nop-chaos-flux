@@ -68,13 +68,18 @@ export function InputCityRenderer(props: RendererComponentProps<InputCitySchema>
     openMenu: () => setPanelOpen(true),
   });
 
-  const commit = (node: OrgNode, selectedPath: OrgNode[]) => {
+  const commit = (node: OrgNode, selectedPath: OrgNode[], options?: { keepOpen?: boolean }) => {
     if (!isNodeSelectable(node, selectableTypes)) {
       return;
     }
     setPathTable((previous) => ({ ...previous, [node.id]: selectedPath }));
     handlers.onChange(node.id);
-    setPanelOpen(false);
+    // Plan 552 / IS-lab-input-city-001: a name-click on a non-leaf level used
+    // to slam the panel shut, making deeper cascade levels unreachable. When
+    // the click also drills down, the panel stays open for the next level.
+    if (options?.keepOpen !== true) {
+      setPanelOpen(false);
+    }
   };
 
   const valueKey = value == null ? '' : String(value);

@@ -1,0 +1,457 @@
+{
+  "batch": "IS-8a group A (structure/layout/feedback, 20 pages, plan 552 Phase 1)",
+  "date": "2026-10-07",
+  "reviewer": "review-group A, independent fresh session",
+  "method": "docs/skills/interaction-state-audit-prompt.md §4 five-step; Playwright chromium against dev server 127.0.0.1:4175; convictions from programmatic readings only; screenshots unused",
+  "pagesCovered": 20,
+  "summary": {
+    "rawObservations": 12,
+    "ledgerRows": 10,
+    "byPriority": { "P0": 0, "P1": 2, "P2": 4, "P3": 4 }
+  },
+  "surveyReadings": {
+    "lab-page": {
+      "scenarios": 2,
+      "interactiveControls": 0,
+      "checks": { "titleHeaderFooterRendered": true, "badges": true, "bodyOnlyNoHeader": true }
+    },
+    "lab-container": {
+      "scenarios": 3,
+      "v6Cards": [
+        { "text": "Card A", "border": "1px solid rgb(225,231,239)", "radius": "12px" },
+        { "text": "Card B", "border": "1px solid rgb(225,231,239)", "sideBySide": 1 }
+      ],
+      "semanticRow": { "sameRow": true, "gapBetweenFirstTwo": 16, "itemCountTemplate": "3 items" }
+    },
+    "lab-fragment": {
+      "injection": { "parentVisible": true, "fragmentData": true, "parentVarInsideFragment": true },
+      "isolation": {
+        "secretInsideFragment": "",
+        "parentStillResolves": "should-not-leak",
+        "isolationWorks": true
+      }
+    },
+    "lab-flex": {
+      "justifyBetween": {
+        "justifyContent": "space-between",
+        "firstLeft": 314,
+        "lastRight": 1206,
+        "rowRight": 1219
+      },
+      "columnGap": { "direction": "column", "gap": "24px", "stacked": true },
+      "wrap": { "flexWrap": "wrap", "distinctRows": 1, "badgeCount": 8 }
+    },
+    "lab-dialog": {
+      "s1": {
+        "openTitle": "Example Dialog",
+        "closeButton": true,
+        "escCloses": true,
+        "v5NoResidue": true,
+        "focusMovedIntoDialog": true,
+        "winScrollYBeforeAfter": [0, 0]
+      },
+      "s2": {
+        "inputs": 2,
+        "confirmCloses": true,
+        "reopenedFieldValue": "",
+        "writebackPersists": false,
+        "cancelIdenticalToConfirm": true
+      },
+      "s3": {
+        "loadedNickName": "Original",
+        "submitProbe": {
+          "userName": "RowUser",
+          "status": 1,
+          "nickName": "EditedNick",
+          "email": "old@x.com",
+          "phone": "111",
+          "remark": "orig remark"
+        },
+        "editedWins": true
+      },
+      "s4": {
+        "loadedFields": "userName(ro)/status=1/nickName=Original/email/phone...",
+        "submitProbeRemark": "edited-remark-8a",
+        "dialogClosedAfterSubmit": true
+      },
+      "s5": {
+        "dropdownMenuVisible": true,
+        "dialogTitle": "Edit Row",
+        "loadedNick": "Original",
+        "submitProbe": {
+          "userName": "RowUser",
+          "status": 1,
+          "nickName": "RowEdited",
+          "email": "old@x.com",
+          "phone": "111"
+        },
+        "rowScopeBindingsResolved": true
+      },
+      "s6": {
+        "ladder": {
+          "xs": [360, 360],
+          "sm": [480, 480],
+          "md": [560, 560],
+          "lg": [720, 720],
+          "xl": [960, 960],
+          "full": [1248, 1280]
+        },
+        "stackedStep": 30,
+        "escTopmostFirst": true,
+        "v5Clean": true
+      }
+    },
+    "lab-drawer": {
+      "s1": {
+        "openRect": { "x": 801, "w": 479, "title": "Add Note" },
+        "emptyRequiredSave": { "drawerStaysOpen": true, "falseSuccessToast": null },
+        "saveFlow": {
+          "closesDrawer": true,
+          "echoAfterReopen": "Submitted message: (none)",
+          "textareaAfterReopen": "",
+          "writebackObservable": false
+        },
+        "cancelPath": { "closes": true, "v5NoResidue": true },
+        "escPath": { "closes": true, "v5NoResidue": true }
+      },
+      "s2": { "openRect": { "x": 0, "w": 479 }, "escCloses": true, "closeButtonCloses": true }
+    },
+    "lab-command-palette": {
+      "s1": {
+        "defaultOpen": true,
+        "items": 5,
+        "focusInInput": true,
+        "filteredGoItems": ["Go to Issues", "Go to Board", "Toggle Theme(disabled)"],
+        "enterExecutes": "go-issues",
+        "lastCommandText": "Last command: go-issues",
+        "paletteClosedAfterExecute": true,
+        "v3Truthful": true
+      },
+      "s2": { "ctrlKOpens": true, "items": ["Cut", "Copy", "Paste"], "escClosesAndUnmounts": true },
+      "s3": {
+        "foreignMasksAtT0": ["lab-palette-basic", "lab-palette-source"],
+        "clicksNeededToReachButton": 2,
+        "hitTestAtButtonCenter": {
+          "t0": "mask",
+          "afterClick1": "Open palette",
+          "afterClick2": "controlled palette open"
+        },
+        "controlledOpenBinding": true,
+        "executeClosesAndScopeSync": true,
+        "escSyncsScopeFalse": true,
+        "toastAfterShowToastCommand": []
+      },
+      "s4": { "defaultOpen": true, "items": ["Refresh data", "Deploy project", "Rollback release"] }
+    },
+    "lab-tabs": {
+      "s1": {
+        "switchToTeam": { "ariaSelectedSync": true, "panelSwapped": true },
+        "disabledSettingsProgrammaticClick": "selection unchanged"
+      },
+      "s2": { "archiveSelected": true, "panelText": "Content for archive tab." },
+      "s3": { "verticalNav": { "tabsShareX": 304, "stackedY": [1005, 1031, 1057] } },
+      "s5": { "listX": 301, "panelX": 400, "navRightOfPanel": false },
+      "s6": {
+        "emptySaveInvalid": ["firstName", "lastName"],
+        "hiddenPanelFieldsInvalid": null,
+        "crossFormLeak": false
+      },
+      "s7": {
+        "dialogSubmitProbe": { "note": "tab note 8a" },
+        "typedWins": true,
+        "dialogResidue": 0,
+        "drawerOpenCloseClean": true
+      }
+    },
+    "lab-loop": {
+      "s1": { "lines": ["1. Alice — Admin", "2. Bob — Editor", "3. Carol — Viewer"] },
+      "s2": { "rowsRendered": ["Wireless Headphones", "$89.99", "Standing Desk"] },
+      "s3": {
+        "rowA": {
+          "dialogTitle": "Edit Alice",
+          "probe": { "rowId": "row-a", "rowName": "Alice", "nick": "nick-a" }
+        },
+        "rowB": {
+          "dialogTitle": "Edit Bob",
+          "probe": { "rowId": "row-b", "rowName": "Bob", "nick": "nick-b" },
+          "noPollution": true
+        }
+      }
+    },
+    "lab-recurse": {
+      "s1": { "labels": ["Root A", "Child A1", "Child A2", "Root B", "Child B1"] },
+      "s2": {
+        "labels": ["Acme Corp", "Engineering", "Frontend"],
+        "depthBadges": ["L0", "L1", "L2"]
+      },
+      "s3": { "levels": ["Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"] },
+      "s4": {
+        "declaredMaxDepth": 2,
+        "levelsRendered": ["Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"],
+        "truncationWorks": false
+      }
+    },
+    "lab-dynamic-renderer": {
+      "s1": { "badgeLoaded": "Rendered from loadAction", "placeholderReplaced": true },
+      "s2": {
+        "badge": true,
+        "afterShowText": "Dynamically rendered text content.",
+        "afterShowButton": "A button from dynamic schema",
+        "renderingLabelSync": true
+      },
+      "s3": {
+        "deferredBefore": true,
+        "loadedAfterComponentRefresh": "Loaded via component:refresh"
+      },
+      "s4": {
+        "errorNode": "[data-error]",
+        "errorText": "错误：Request failed (status=500)",
+        "expectedBehavior": true
+      }
+    },
+    "lab-reaction": {
+      "s1": {
+        "sequence": [
+          ["counter: 0", "doubled: 0"],
+          ["counter: 1", "doubled: 2"],
+          ["counter: 2", "doubled: 4"]
+        ],
+        "watcherTruthful": true
+      },
+      "s2": { "charCount": { "abc": 3, "hello!": 6 } }
+    },
+    "lab-keyboard": {
+      "s1": { "ctrlShiftS": "hits: 1" },
+      "s2": {
+        "chordGO": "last chord: g o",
+        "bareGFallbackAfterTimeout": "g (fallback)",
+        "onTriggerToast": []
+      },
+      "s3": {
+        "crossScenarioTaint": {
+          "gatedHitsAtT0": 2,
+          "expected": 0,
+          "cause": "S2 chord keystrokes g,o,g incremented S3 binding"
+        },
+        "gateHeldWhileTyping": true,
+        "modEnterToast": "absent",
+        "blurThenGIncrements": true
+      }
+    },
+    "lab-scope-debug": {
+      "s1": {
+        "scopeBefore": { "count": 0, "status": "idle" },
+        "scopeAfterInc": { "count": 1, "status": "idle" }
+      },
+      "s2": { "fragmentScope": { "user": { "name": "Alice", "role": "admin", "debugMode": true } } }
+    },
+    "lab-fieldset": {
+      "s1": { "legend": "Profile", "inputs": ["username", "email"] },
+      "s2": { "collapsedInitially": true, "legendClickExpands": true },
+      "s3": {
+        "enterOnLegendExpandsNotSubmits": true,
+        "submitEcho": "Submitted: alice8a / tok8a",
+        "echoCorrect": true
+      }
+    },
+    "lab-hidden": {
+      "s1": {
+        "hiddenDom": { "name": "orderId", "value": "A100" },
+        "submitEcho": "Submitted orderId: A100 / customer: Cust8a"
+      },
+      "s2": {
+        "hiddenDomValue": "seed",
+        "scopeEchoText": "Hidden field value echoed from scope: (empty)",
+        "seedReachesScope": false
+      },
+      "s3": {
+        "policyText": "clearValueWhenHidden policy: tenantId resolves as \"T1\"",
+        "hiddenDomValue": "",
+        "scopeCleared": false
+      }
+    },
+    "lab-text": {
+      "interpolation": "Hello, Alice! You have 3 messages.",
+      "expression": { "score": "Score: 82", "grade": "Grade: B", "pass": "Pass: Yes" },
+      "tags": ["H3", "P", "LABEL"],
+      "nameBinding": { "before": "Initial", "afterChangeName": "Updated" },
+      "maxLine": {
+        "lineClamp": "5",
+        "overflowHidden": true,
+        "note": "sample string unbreakable, single line observed"
+      }
+    },
+    "lab-icon": { "gallery": 4, "inline": 3, "fallbackRendersCircle": 2, "noCrash": true },
+    "lab-badge": {
+      "variants": ["secondary", "success", "warning", "destructive"],
+      "dynamicLevel": "userStatus=error maps to danger classes",
+      "counter": { "t0": "0", "after3Adds": "3" }
+    },
+    "lab-button": {
+      "variants": [
+        "Default",
+        "Secondary",
+        "Outline",
+        "Ghost",
+        "Destructive",
+        "Disabled(disabled=true)"
+      ],
+      "counter": { "inc": "Clicks: 1", "reset": "Clicks: 0" },
+      "countdown": {
+        "t0": { "text": "10s", "disabled": true },
+        "localStorageKey": "flux-countdown-/-lab-countdown-btn",
+        "afterReloadWithinWindow": { "text": "8s", "disabled": true, "persistenceVerified": true },
+        "afterExpiry": { "text": "Send Code", "disabled": false, "lsCleared": true }
+      }
+    }
+  },
+  "findings": [
+    {
+      "id": "IS-lab-recurse-001",
+      "page": "lab-recurse",
+      "symptom": "maxDepth: 2 ignored — recursion renders all 6 levels, identical to unlimited tree; scenario claims truncation termination guard",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P1",
+      "evidence": { "declaredMaxDepth": 2, "levelsRendered": 6 },
+      "ownership": "renderer (candidate chain: packages/flux-renderers-basic/src/recurse.tsx:102 props.props.maxDepth -> renderStructuralLoop; drop point unproven)",
+      "redE2eSketch": "open #/lab/recurse, assert maxDepth-2 scenario stage does NOT contain 'Level 2' (currently fails)"
+    },
+    {
+      "id": "IS-lab-hidden-001",
+      "page": "lab-hidden",
+      "symptom": "hidden value-prop seeds DOM input ('seed') but not form scope; sibling renderer reads empty",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P1",
+      "evidence": { "domValue": "seed", "scopeEcho": "" },
+      "ownership": "renderer (candidate: flux-renderers-basic hidden renderer seeding path)",
+      "redE2eSketch": "assert seeded-value scenario echo text contains 'seed' (currently fails)"
+    },
+    {
+      "id": "IS-lab-dialog-001",
+      "page": "lab-dialog",
+      "symptom": "size:'full' dialog renders 1248px on 1280 viewport (32px short of 100vw); ladder text asserts full 100vw; xs-xl ladder exact",
+      "class": "B",
+      "invariant": "V4",
+      "priority": "P2",
+      "evidence": {
+        "fullMeasured": 1248,
+        "viewport": 1280,
+        "ladderMatches": { "xs": 360, "sm": 480, "md": 560, "lg": 720, "xl": 960 }
+      },
+      "ownership": "design-system ui primitive (proven chain: flux-react dialog-host writes width:100vw, clamped by unconditional max-w-[calc(100%-2rem)] in packages/ui/src/components/ui/dialog.tsx:193)",
+      "redE2eSketch": "open 'Open full', assert surface width === window.innerWidth (currently fails)"
+    },
+    {
+      "id": "IS-lab-command-palette-001",
+      "page": "lab-command-palette (shared root: all lab pages)",
+      "symptom": "showToast is a silent no-op on lab pages: env.notify() = () => undefined in createDefaultEnv; app Toaster mounted but never invoked (3 convicted surfaces: palette 'Show toast' item, keyboard chord onTrigger toast, keyboard allowInInput toast)",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P2",
+      "evidence": {
+        "toastPolls3s": [[], [], []],
+        "chain": "flux-runtime/src/action-adapter.ts:379 -> env.notify -> packages/flux-react/src/defaults.ts notify noop"
+      },
+      "ownership": "host wiring (apps/playground/src/component-lab/multi-scenario-lab-page.tsx env assembly)",
+      "redE2eSketch": "execute controlled-palette 'Show toast' command, assert toast text visible (currently fails); expected to affect groups B/C/D pages too — cross-group merge candidate"
+    },
+    {
+      "id": "IS-lab-command-palette-002",
+      "page": "lab-command-palette",
+      "symptom": "sibling scenarios' defaultOpen palettes share one modal layer masking the document: controlled-palette 'Open palette' button needs 2 clicks (first consumed dismissing foreign palettes); keyboard path works",
+      "class": "B",
+      "invariant": "V4",
+      "priority": "P2",
+      "evidence": {
+        "openPalettesAtT0": ["lab-palette-basic", "lab-palette-source"],
+        "hitTestAtButtonCenter": "mask -> button -> palette",
+        "clicksToOpen": 2
+      },
+      "ownership": "demo schema + host composition (MultiScenarioLabPage scenario SchemaRenderers share document modal layer)",
+      "redE2eSketch": "single click on 'Open palette' must open controlled palette (currently fails)"
+    },
+    {
+      "id": "IS-lab-hidden-002",
+      "page": "lab-hidden",
+      "symptom": "hiddenFieldPolicy clearValueWhenHidden half-wired: DOM input cleared but scope still resolves 'T1'; scenario expects 'undefined'",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P2",
+      "evidence": { "scopeEcho": "T1", "domValue": "" },
+      "ownership": "renderer (candidate: policy clears input without notifying form owner scope)",
+      "redE2eSketch": "assert policy scenario echo contains 'undefined' (currently fails)"
+    },
+    {
+      "id": "IS-lab-dialog-002",
+      "page": "lab-dialog",
+      "symptom": "scenario 2 'Dialog with form fields and writeback': Confirm wired to closeSurface only — typed data silently discarded, no submit/validation/writeback; Confirm ≡ Cancel; title promises writeback",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P3",
+      "evidence": { "reopenedFieldValue": "", "writebackPersists": false, "cancelIdentical": true },
+      "ownership": "demo schema (apps/playground/src/component-lab/renderers/dialog-lab-page.tsx formDialog)",
+      "redE2eSketch": "fill -> Confirm -> reopen -> assert persisted (currently fails)"
+    },
+    {
+      "id": "IS-lab-tabs-001",
+      "page": "lab-tabs",
+      "symptom": "'Sidebar tabs (right)' renders nav on the LEFT — schema lacks tabsMode:'sidebar'/sidePosition:'right'; right-sidebar variant never exercised though renderer supports it",
+      "class": "E",
+      "invariant": "V6",
+      "priority": "P3",
+      "evidence": {
+        "listX": 301,
+        "panelX": 400,
+        "navRightOfPanel": false,
+        "rendererSupport": "tabs.tsx:164-166"
+      },
+      "ownership": "demo schema (tabs-lab-page.tsx sidebarRightTabs)",
+      "redE2eSketch": "assert scenario-5 tablist x > panel x (currently fails)"
+    },
+    {
+      "id": "IS-lab-drawer-001",
+      "page": "lab-drawer",
+      "symptom": "right-drawer 'writeback' unobservable: Save runs setValue('submitted') then closeSurface destroys the scope; reopen always shows '(none)'; description claims writeback to parent scope",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P3",
+      "evidence": { "echoAfterReopen": "Submitted message: (none)", "writebackObservable": false },
+      "ownership": "demo schema (drawer-lab-page.tsx rightDrawer)",
+      "redE2eSketch": "save -> reopen -> assert echo shows submitted state (currently fails)"
+    },
+    {
+      "id": "IS-lab-keyboard-001",
+      "page": "lab-keyboard",
+      "symptom": "keyboard bindings are window-global, not scoped to their schema surface: S2 chord keystrokes increment S3 scenario counter (t0 gatedHits=2)",
+      "class": "F",
+      "invariant": "V3",
+      "priority": "P3",
+      "evidence": { "gatedHitsAtT0": 2, "expected": 0 },
+      "ownership": "renderer candidate (keyboard.tsx window listener scope) + lab multi-renderer composition",
+      "redE2eSketch": "load page fresh, assert scenario-3 counter is 0 before any interaction (currently fails after S2 keys)"
+    }
+  ],
+  "watchList": [
+    "dialog S4 real-schema: avatar input-file renders a stray input with literal value '\"\"' — display oddity, not convicted",
+    "button countdown: one batch-4 reading showed no countdown start after click; 3 controlled re-runs (incl. reload persistence + expiry) all pass — probe race, withdrawn; note label-based locator fragility",
+    "keyboard onTrigger '${keys}' template evaluation unverifiable until notify wiring fixed (anti-pattern (a) family candidate to recheck)",
+    "palette S1 filter 'go' keeps 'Toggle Theme' in cmdk results (fuzzy scoring semantics)",
+    "lab-text maxLine: CSS mechanism present but unbreakable sample renders 1 line; 5-line clamp visual unproven"
+  ],
+  "naRegistrations": [
+    "lab-page/lab-container/lab-flex/lab-fragment/lab-icon: pure display, zero scenario interactive controls (scope-debug collapse buttons are audit attachments, excluded)",
+    "V2 viewport stability: no canvas/transform surfaces in this batch",
+    "V1 scroll preservation: no scrollable containers; dialog/drawer open/close window.scrollY 0->0 verified",
+    "lab-dynamic-renderer S4 error state is the declared expected behavior (registered as pass, not a finding)"
+  ],
+  "probeArtifactsControlled": [
+    "palette first-pass stage-scoped queries invalid (portal to document modal layer) — re-probed document-wide; initial 'not visible' verdicts withdrawn",
+    "drawer/hidden echo regex char-class escaping bug truncated readings — re-extracted with full-text reads; S2 seed missing / S3 T1 residue confirmed real",
+    "tabs S6 invalidMarks=4 initial cross-form leak suspicion — attribution re-probe disproved (hidden-panel fields invalid=null)",
+    "tabs S1 click on disabled tab timed out (Playwright refuses disabled elements = correct behavior); programmatic click confirmed inert",
+    "button countdown single race reading withdrawn after 3 controlled passes",
+    "recurring browserContext.close ENOENT trace noise is infrastructure, unrelated to app"
+  ]
+}

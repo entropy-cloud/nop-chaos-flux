@@ -100,17 +100,25 @@ export function TableQuickEditCell(props: TableQuickEditCellProps) {
     },
   });
 
-  const draftValue = rowDraft && field ? rowDraft.getFieldValue(field) : ownCtrl.draftValue;
+  // Plan 552 / IS-crud-002: a dialog-mode cell with a custom body writes through
+  // its OWN controller (draftRowScope + markBodyDirty), but the dirty/saving/
+  // runSave accessors below preferred the ROW draft whenever one was mounted —
+  // the row draft never sees the dialog body's writes, so `disabled={!dirty}`
+  // kept the dialog save button permanently disabled after real typing. In
+  // dialog mode the dialog is a self-contained editor: resolve every accessor
+  // from ownCtrl; row-draft accessors remain the inline-mode path.
+  const useRowDraftAccessors = rowDraft !== null && !isDialogMode;
+  const draftValue = useRowDraftAccessors && field ? rowDraft!.getFieldValue(field) : ownCtrl.draftValue;
   const draftRowScope = hasRowLevelSave && rowDraft ? rowDraft.draftRowScope : ownCtrl.draftRowScope;
-  const saving = rowDraft && !isSaveImmediately ? rowDraft.saving : ownCtrl.saving;
+  const saving = useRowDraftAccessors && !isSaveImmediately ? rowDraft!.saving : ownCtrl.saving;
   const dialogOpen = ownCtrl.dialogOpen;
-  const dirty = rowDraft && field ? rowDraft.isFieldDirty(field) : ownCtrl.dirty;
+  const dirty = useRowDraftAccessors && field ? rowDraft!.isFieldDirty(field) : ownCtrl.dirty;
 
-  const handleInlineValueChange = rowDraft && field
-    ? (value: string) => rowDraft.setFieldValue(field, value)
+  const handleInlineValueChange = useRowDraftAccessors && field
+    ? (value: string) => rowDraft!.setFieldValue(field, value)
     : ownCtrl.handleInlineValueChange;
 
-  const runSave = rowDraft ? rowDraft.runSave : ownCtrl.runSave;
+  const runSave = useRowDraftAccessors ? rowDraft!.runSave : ownCtrl.runSave;
 
   const editorNode = hasCustomBody ? (
     quickEditBodyRegion

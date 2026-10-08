@@ -1,0 +1,399 @@
+{
+  "batch": "IS-8a-group-B",
+  "plan": 552,
+  "date": "2026-10-07",
+  "reviewer": "review-group B (fresh session, input & date lab pages, 22 pages)",
+  "env": "http://127.0.0.1:4175 strict-validation, Playwright chromium, programmatic readings only; raw per-page readings in _tmp/is8aB-readings/*.json",
+  "mandatoryRegression": {
+    "id": "IS-w2b-date-family-001 (ui Calendar day-cell commit, fixed IS-6)",
+    "result": "PASS",
+    "evidence": "real coordinate clicks (page.mouse at live boundingRect centers) commit on every day-grid control: lab-input-date (2024/6/10 -> when=2024-06-10, display DD/MM/YYYY updates, popover closes), lab-input-datetime (2024/6/10 -> at=2024-06-10 14:30, popover stays open for time adjust), lab-date-range end click (2024/6/12 -> end committed), input-date Birthday clamp view renders all 35 cells disabled outside 2000-2010 and disabled-cell click commits nothing"
+  },
+  "surveyReadings": {
+    "lab-form": {
+      "surface": "6 scenarios; s1: Username(input)+Email(input)+Role select(aria-label 清除 clear btn)+Submit; scope-debug panel per scenario",
+      "s1_emptySubmit": { "invalid": ["Username"], "errors": ["Username不能为空"], "toasts": [] },
+      "s1_validSubmit": {
+        "scope": { "username": "alice", "role": "editor", "email": "alice@example.com" },
+        "invalid": []
+      },
+      "s2_submit": { "successEchoVisible": true },
+      "s3_hiddenRequired": {
+        "hiddenSubmitBlocksNothing": true,
+        "revealWorks": true,
+        "revealedSubmitInvalid": ["Secret Code"],
+        "errorText": "Secret Code不能为空"
+      },
+      "s4_ajaxSubmit": {
+        "endpointCalled": null,
+        "savedEchoVisible": true,
+        "note": "default lab env fetcher resolves in-process; echo (onSubmitSuccess setValue) fires; no drift"
+      },
+      "s5_valuesPath": { "echoVisible": true },
+      "s6_clearOnHidden": {
+        "scopeAfterHide": { "collectSecret": false },
+        "valueStaysClearedOnReveal": "",
+        "echoArtifact": "Done. secretCode=undefined (raw undefined leak in demo text template)"
+      },
+      "consoleErrors": 0
+    },
+    "lab-input-text": {
+      "s1_emptySubmit": { "invalid": ["Full Name"], "errors": ["Full Name不能为空"] },
+      "s2_maxLength": { "typed": 120, "committedLength": 100, "capped": true },
+      "s3_compositeSubmit": {
+        "echo": "Family: lin | lin@x.io | s3cret | 7 | n7",
+        "echoComplete": true
+      },
+      "s4_suggest": {
+        "options": ["Apple", "Apricot", "Avocado", "Banana", "Cherry"],
+        "commit": { "inputValue": "apple", "liveEcho": "Fruit: apple" },
+        "clear": { "ariaLabel": "清除", "afterClick": { "value": "", "liveEcho": "" } }
+      },
+      "consoleErrors": 0
+    },
+    "lab-input-email": {
+      "s1": {
+        "emptySubmit": "Email Address不能为空",
+        "blurInvalid": "Email Address必须是有效的邮箱地址",
+        "validBlurClears": true
+      },
+      "s2_prepopulatedInvalid": {
+        "initialValue": "not-a-valid-email",
+        "submitError": "Work Email必须是有效的邮箱地址"
+      },
+      "consoleErrors": 0
+    },
+    "lab-input-password": {
+      "s1": { "inputType": "password", "emptySubmit": "Password不能为空", "commit": true },
+      "s2_confirmValidator": {
+        "mismatchSubmit": {
+          "invalid": [],
+          "toasts": [],
+          "stageErrors": 0,
+          "formState": "valid:true errorCount:0",
+          "scopeAcceptedBoth": { "password": "abc12345", "confirmPassword": "zzz99999" }
+        },
+        "schemaDeclares": "validations custom rule ${confirmPassword === password} message 'Passwords must match'",
+        "finding": "custom cross-field validation never fires; silent accept"
+      },
+      "s3_revealToggle": {
+        "before": "password",
+        "afterReveal": "text",
+        "afterToggleBack": "password",
+        "valueKept": "peekaboo"
+      },
+      "consoleErrors": 0
+    },
+    "lab-input-number": {
+      "s1": {
+        "initial": { "count": "", "stepper": "10" },
+        "arrowUp": "15 (step 5)",
+        "stepperButtons": ["增加", "减少"],
+        "minClamp": { "typed": "-5", "afterBlur": "0", "silent": true },
+        "submit": "count=0 commits (required satisfied by clamp)"
+      },
+      "s2": {
+        "maxClamp": { "typed": "2000", "afterBlur": "1440", "silentlyClamped": true },
+        "precision": { "price": "19.99 -> 9.5 ok" }
+      },
+      "crossRef": "same root as registered IS-antdpro-form-basic-001 (input-number clamp without feedback)",
+      "consoleErrors": 0
+    },
+    "lab-slider": {
+      "thumbDom": {
+        "tag": "div",
+        "role": null,
+        "tabindex": "-1",
+        "ariaValuenow": null,
+        "ariaValuemin": null,
+        "ariaValuemax": null
+      },
+      "mouseDrag": { "volume": "40 -> 73 committed (V3 ok)" },
+      "keyboard": {
+        "focusThumb": "activeElement=DIV tabindex -1",
+        "focusThenArrowRight": "no change (scope 40)",
+        "clickTrackThenArrow": "activeElement=BODY, no change",
+        "verdict": "keyboard stepping dead via all paths"
+      },
+      "disabled": { "scopeAfterDrag": { "disabledSlider": 60 }, "unchanged": true },
+      "steps": {
+        "coarse25": "scope committed via form",
+        "zeroStepFallsBack": "zeroStep=10 untouched by dead keyboard; untestable via keyboard"
+      },
+      "introClaims": "keyboard stepping claimed in page introDescription",
+      "consoleErrors": 0
+    },
+    "lab-rating": {
+      "starMap_halfGroup_count5": [
+        { "star": 1, "committed": 1 },
+        { "star": 2, "committed": 2 },
+        { "star": 3, "committed": 3 },
+        { "star": 4, "committed": 4 },
+        { "star": 5, "committed": 5 }
+      ],
+      "starMap_tenScale_count10": [
+        { "star": 1, "committed": 1 },
+        { "star": 2, "committed": 2 },
+        { "star": 3, "committed": 3 },
+        { "star": 4, "committed": 4 },
+        { "star": 5, "committed": 5 },
+        { "star": 6, "committed": 5 },
+        { "star": 7, "committed": 5 },
+        { "star": 8, "committed": 5 },
+        { "star": 9, "committed": 5 },
+        { "star": 10, "committed": 5 }
+      ],
+      "halfStarClickLeftEdge": { "halfRating": 2.5 },
+      "allowClear": { "secondClickSameStar": "halfRating removed from scope" },
+      "readOnly": { "buttonDisabled": true, "forceClickNoChange": true },
+      "consoleErrors": 0
+    },
+    "lab-input-color": {
+      "popover": { "swatches": 10, "hexTextInput": true },
+      "swatchClick": { "clicked": "rgb(220,38,38)", "scope": { "accent": "#dc2626" } },
+      "hexInput": { "typed": "#00aa55", "scope": { "accent": "#00aa55" } },
+      "escClose": true,
+      "readOnlyTrigger": { "popoverOpened": false, "scopeChanged": false },
+      "consoleErrors": 0
+    },
+    "lab-textarea": {
+      "s1_emptySubmit": "Biography不能为空",
+      "s1_commit": { "bio": "line1\nline2" },
+      "s2_rows": { "notes": "5", "summary": "3" },
+      "consoleErrors": 0
+    },
+    "lab-markdown-editor": {
+      "previewSync": { "typed": "# Hello Flux", "previewH1": "Hello Flux" },
+      "toolbar": [
+        "粗体",
+        "斜体",
+        "删除线",
+        "代码",
+        "标题",
+        "引用",
+        "无序列表",
+        "有序列表",
+        "分割线",
+        "链接",
+        "图片"
+      ],
+      "toolbarClick": { "before": "# Hello Flux", "after": "# Hello Flux**bold**" },
+      "compositeSubmit": { "report": "MD-SUBMIT:# Report body" },
+      "xssSanitize": {
+        "scriptTags": 0,
+        "imgsWithOnerror": 0,
+        "xssGlobal": null,
+        "xssImgGlobal": null
+      },
+      "controlledExternalSet": {
+        "echoBefore": "local draft",
+        "echoAfter": "# Echoed externally",
+        "editorValueAfter": "# Echoed externally"
+      },
+      "disabledReadOnly": { "textareaCount": 2 },
+      "consoleErrors": 0
+    },
+    "lab-input-signature": {
+      "draw": { "commits": "data:image/png;base64,...", "echoShowsValue": true },
+      "undo": "echo -> empty",
+      "clear": { "echo": null, "scopeCleared": true },
+      "styledCanvas": { "commits": true },
+      "readOnly": {
+        "freshLoadScope": "lockedSignature SET at page load (1x1 blank PNG, form dirty:true)",
+        "drawAttemptIgnored": true
+      },
+      "consoleErrors": 0
+    },
+    "lab-verification-code": {
+      "s1": {
+        "input": "single input maxLength 6 numeric",
+        "typed": "123456",
+        "readout": "Code: 123456",
+        "scope": { "code": "123456" },
+        "backspace": "value removed from scope when below length"
+      },
+      "s2_masked": {
+        "typed": "2468",
+        "inputType": "text",
+        "computedColor": "rgba(0, 0, 0, 0)",
+        "verdict": "masking via transparent text as described; committed value unaffected"
+      },
+      "consoleErrors": 0
+    },
+    "lab-input-city": {
+      "level1": [["Guangdong›", "Zhejiang›"]],
+      "provinceClick": {
+        "committed": { "echo": "Region: gd", "scope": { "region": "gd" } },
+        "panelClosed": true,
+        "level2Columns": []
+      },
+      "finding": "clicking level-1 province commits raw node id immediately and closes panel; city/district levels unreachable; three-level cascade cannot be completed",
+      "clear": { "works": true, "echoGone": true },
+      "preselectedEcho": {
+        "triggerText": "Guangdong / Guangzhou / Tianhe",
+        "panelOnOpen": "shows only level-1 columns (path not reflected/expanded)"
+      },
+      "consoleErrors": 0
+    },
+    "lab-picker": {
+      "s1_single": {
+        "dialog": { "buttons": ["取消", "确认", "关闭"], "rows": 3 },
+        "pickAliceConfirm": { "owner": "u1", "selectedLabel": "u1" },
+        "finding": "trigger shows raw id u1, not labelField title 'Alice'"
+      },
+      "s2_multi": {
+        "checked": ["u2", "u3"],
+        "scopeAfterConfirm": { "reviewers": ["u2", "u3"] },
+        "clear": "picker-clear disabled when empty (good), clears when set"
+      },
+      "s3_rowIsolation": {
+        "echoAfterRow0": "R0 owner=a0",
+        "echoAfterRow1": "R0 owner=a0, R1 owner=b1",
+        "isolationHolds": true
+      },
+      "consoleErrors": 0
+    },
+    "lab-icon-picker": {
+      "grid": 200,
+      "pick": { "picked": "a-large-small", "scope": { "menuIcon": "a-large-small" } },
+      "escClose": true,
+      "disabled": { "triggerDisabled": true, "gridOpened": 0 },
+      "hostEcho": { "scopeAfterSubmit": { "icon": "activity" } },
+      "consoleErrors": 0
+    },
+    "lab-input-date": {
+      "mandatoryRegression": "PASS (see mandatoryRegression)",
+      "s1": {
+        "initialDisplay": "09/06/2024 (schema data 2024-06-09, DD/MM/YYYY honored)",
+        "dayCellClick": {
+          "day": "2024/6/10",
+          "committed": "2024-06-10",
+          "displayAfter": "10/06/2024",
+          "popoverClosed": true
+        },
+        "clearInline": { "works": true },
+        "birthdayClamp": {
+          "allCellsDisabledOutsideRange": true,
+          "disabledCellClickCommits": false
+        },
+        "escCloses": true
+      },
+      "s2_utc": {
+        "clicked": "2024/6/5",
+        "stored": "2024-06-05",
+        "note": "utc shifts instant; valueFormat YYYY-MM-DD storage round-trips same components"
+      },
+      "s3_compositeSubmit": {
+        "scope": {
+          "when": "2024-06-08",
+          "at": "2024-06-09 14:30",
+          "open": "08:30",
+          "range": "2024-06-01,2024-06-10",
+          "month": "2024-06",
+          "quarter": "2024-Q3",
+          "year": "2024"
+        }
+      },
+      "consoleErrors": 0
+    },
+    "lab-input-datetime": {
+      "dayCellClick": {
+        "day": "2024/6/10",
+        "committed": "2024-06-10 14:30",
+        "popoverStaysOpenForTimeAdjust": true
+      },
+      "timeControls": "2 selects (hour/minute) inside popover",
+      "escCloseKeepsValue": true,
+      "clearableNotDeclared": "no clear button (schema has no clearable) — consistent",
+      "consoleErrors": 0
+    },
+    "lab-input-time": {
+      "s1": {
+        "nativeInput": "input[type=time]",
+        "typed": "09:30",
+        "scope": { "at": "09:30" },
+        "clearButton": "time-clear works"
+      },
+      "boundsClamp": {
+        "typed": "02:15",
+        "minTime": "06:00",
+        "stored": "06:00",
+        "silent": true,
+        "domMinAttr": ""
+      },
+      "s2_hhmm": { "typed": "08:45", "valueFormat": "HHmm" },
+      "consoleErrors": 0
+    },
+    "lab-date-range": {
+      "startClickAttribution": {
+        "clickedDay": "2024/6/3",
+        "committedRange": "2024-06-01,2024-06-03",
+        "finding": "start commits month-1st instead of clicked cell"
+      },
+      "afterEndClick": {
+        "clickedDay": "2024/6/12",
+        "committedRange": "2024-06-01,2024-06-12",
+        "endCorrect": true
+      },
+      "shortcuts": ["Last 7 days", "Whole month"],
+      "afterShortcut": { "range": "2024-06-03,2024-06-10" },
+      "clear": { "works": true, "placeholderBack": "选择范围" },
+      "escClose": true,
+      "rangeKindTime": { "timeInputs": 2 },
+      "rangeKindDatetime": { "timeInputs": 2, "calendarDays": 35 },
+      "consoleErrors": 0
+    },
+    "lab-input-month": {
+      "s1": {
+        "typed": "2024-08",
+        "scope": { "month": "2024-08" },
+        "belowMinType": {
+          "typed": "2023-05",
+          "stored": "2024-01",
+          "silent": true,
+          "domMinAttr": ""
+        },
+        "clear": true
+      },
+      "s2_range": { "committed": "2024-01,2024-03" },
+      "s3_composite": {
+        "scope": {
+          "monthRange": "2024-02,2024-04",
+          "quarterRange": "2024-Q1,2024-Q4",
+          "year": "2024"
+        }
+      },
+      "consoleErrors": 0
+    },
+    "lab-input-quarter": {
+      "s1_single": {
+        "yearTyped": "2025",
+        "selectIndex2": "Q2 (options Q,Q1..Q4)",
+        "committed": "2025-Q2",
+        "clear": true
+      },
+      "s2_rangeEditChain": {
+        "initial": "2024-Q1,2024-Q4",
+        "typedStartYear": {
+          "typed": "2025",
+          "inputRevertedTo": "2024",
+          "scopeBecame": "2024-Q4,2025-Q1",
+          "note": "typing in start year reverts in input AND mutates the end bound"
+        },
+        "selectStartQ1": { "scopeBecame": "2024-Q1,2025-Q1" },
+        "afterEndYear2025_Q3": { "scopeBecame": "2024-Q1,2025-Q2" }
+      },
+      "consoleErrors": 0
+    },
+    "lab-input-year": {
+      "typed": { "value": "2027", "scope": { "year": "2027" } },
+      "alphaStripped": {
+        "typed": "9abc9",
+        "valueAfter": "9",
+        "note": "native input allows letters (maxLength counts them); renderer strips to digit residue; year '9' commits"
+      },
+      "clear": true,
+      "consoleErrors": 0
+    }
+  }
+}

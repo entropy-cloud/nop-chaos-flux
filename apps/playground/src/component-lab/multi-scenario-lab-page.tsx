@@ -16,6 +16,7 @@ import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerAiRenderers } from '@nop-chaos/flux-renderers-ai';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import type { BaseSchema, RendererEnv, ActionScope } from '@nop-chaos/flux-core';
+import { notifyWithToast } from '../pages/notify-toast';
 import { attachScopeDebugToSchema } from './scope-debug';
 
 const registry = createDefaultRegistry();
@@ -31,7 +32,14 @@ registerSchedulingRenderers(registry);
 
 const SchemaRenderer: SchemaRendererComponent = createSchemaRenderer();
 const formulaCompiler = createFormulaCompiler();
-const defaultEnv = createDefaultEnv();
+// Plan 552 / IS-labenv-001: the lab shell previously used createDefaultEnv()'s
+// no-op notify, silently swallowing every toast on all lab pages (showToast
+// actions, quick-save feedback, keyboard-chord acknowledgements). The App shell
+// owns a persistent <Toaster/>, so the lab env routes notify through it — same
+// wiring as the complex-pages showcase host; flux-react defaults stay untouched.
+const defaultEnv = createDefaultEnv({
+  notify: (level, message) => notifyWithToast(level, message),
+});
 
 export interface ScenarioBlockProps {
   title: string;

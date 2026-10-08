@@ -1,0 +1,452 @@
+{
+  "batch": "IS-8a-group-D",
+  "plan": 552,
+  "date": "2026-10-07",
+  "reviewer": "review-group D (fresh session, condition/editor/field/data-display lab pages, 22 pages)",
+  "env": "http://127.0.0.1:4175 strict-validation, Playwright chromium, programmatic readings only, screenshots unused",
+  "rawReadings": "_tmp/is8aD-r-*.json",
+  "summary": {
+    "pagesCovered": 22,
+    "loadConsoleErrors": 0,
+    "findingsRaw": 10,
+    "findingsLedgerRows": 9,
+    "priority": { "P0": 0, "P1": 1, "P2": 6, "P3": 2 },
+    "watch": 3,
+    "probeArtifactsWithdrawn": 3,
+    "naOrUndriven": 4
+  },
+  "findings": [
+    {
+      "id": "IS-crud-002",
+      "page": "crud",
+      "symptom": "对话框式 quick-edit（mode:dialog + 自定义 body）保存按钮在真实键入后永久 disabled，对话框编辑无法提交",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "ownership": "renderer（候选链路：table-quick-edit-cell.tsx:107 dirty 解析与自定义 body scope 写入不贯通；未证实到行）",
+      "evidence": {
+        "before": { "dialogSaveDisabled": false },
+        "afterTyping": { "dlgInputValue": "activeX-EDITED", "dialogSaveDisabledAfterTyping": true },
+        "reproducedRuns": 2,
+        "contrast": "同场景行内 quick-edit 列 dirty 正常（行级 取消/保存 出现且可点击）"
+      },
+      "redE2eSketch": "打开 Dialog Status → pressSequentially 键入 → expect(保存).toBeEnabled()（当前红）→ 修复后点击 保存 → toast/值提交断言"
+    },
+    {
+      "id": "IS-crud-001",
+      "page": "crud",
+      "symptom": "行内 quick-edit 保存后零反馈（声明 toast 'Saved item' 不出现）且保存钮不复位、无 saving 指示——成功/失败不可辨",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "demo/lab 宿主接线（主：default env notify no-op）+ renderer dirty 复位（次候选，未证实）",
+      "evidence": {
+        "rowSaveClick": {
+          "toasts": [],
+          "saveDisabledAfter": false,
+          "savingIndicator": null,
+          "inputValue": "Commit-Check"
+        },
+        "root": "flux-react/src/defaults.ts:26 notify:()=>undefined；multi-scenario-lab-page.tsx:34 createDefaultEnv()",
+        "contrast": "showcase-env.ts:514 已接线 notify"
+      },
+      "redE2eSketch": "编辑行内格→点行级 保存→expect(toast 'Saved item')（当前红）；修复随 IS-labenv-001"
+    },
+    {
+      "id": "IS-table-001",
+      "page": "table",
+      "symptom": "selection 场景声明的 onSelectionChange toast:echo 死通道：勾选行零 toast 零回显（勾选本身生效）",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "demo schema（table-lab-page.tsx:180 toast:echo 全库未注册）+ lab 宿主 notify 未接线",
+      "evidence": {
+        "rowCheck": {
+          "checked": [false, true, false],
+          "toastsAfterSelect": [],
+          "scopeSelectionState": "absent"
+        },
+        "actionRegistry": "唯一 toast 动作名 showToast（built-in-actions.ts:163）"
+      },
+      "redE2eSketch": "勾选行→expect 可见回显/toast（当前红）；修复方案二选一：改 showToast 或接 selectionStatePath 回显"
+    },
+    {
+      "id": "IS-crud-003",
+      "page": "crud",
+      "symptom": "三个 source 驱动 crud 场景（query workflow/source-result/client-mode baseline）queryForm 无提交通道且 Enter 无效——查询不可达",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "demo schema（queryForm 未声明提交）+ renderer 设计缺口候选（仅 loadAction 路径注入 搜索/重置）",
+      "evidence": {
+        "queryWorkflowEnter": { "rows": 3, "footer": "Visible rows: 3", "searchButtonsInStage": 0 },
+        "clientModeEnter": { "rows": 3, "footer": "Visible rows: 3; Total: 42; Query: none" },
+        "healthyContrast": "host queryLoad：搜索点击→行内容 AllRows→Found-Kappa→重置还原（契约⑥本体健康）"
+      },
+      "redE2eSketch": "在 queryCrud queryForm 输入 Beta→点 搜索→expect 行内容含 Beta（当前：按钮不存在，红）"
+    },
+    {
+      "id": "IS-queryfilter-001",
+      "page": "query-filter",
+      "symptom": "搜索/重置声明的 onSubmit/onReset 动作链零可见效果：Last action 回显与 scope lastQuery 全程为空（重置仅清字段）",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "renderer 候选（动作在内嵌 form scope 执行，页面级回显读不到；根因未证实）",
+      "evidence": {
+        "before": "Last action: 空 / lastQuery:''",
+        "afterSearch": "同前",
+        "afterReset": "同前；inputs 清空（表单管线部分生效）"
+      },
+      "redE2eSketch": "输入 keyword→点 搜索→expect 'Last action: searched'（当前红）"
+    },
+    {
+      "id": "IS-labenv-001",
+      "page": "lab 全家（#/lab/*）",
+      "symptom": "组件 lab 共享壳使用 createDefaultEnv 的 no-op notify——所有 toast/notify 反馈被静默吞掉（showcase 宿主已接线，同族不一致）",
+      "class": "F",
+      "priority": "P2",
+      "invariant": "V3",
+      "ownership": "demo 宿主接线（playground component-lab）",
+      "evidence": {
+        "labEnv": "multi-scenario-lab-page.tsx:34 createDefaultEnv()",
+        "defaultNotify": "flux-react/src/defaults.ts:26 notify:()=>undefined",
+        "wiredContrast": "complex-pages/shared/showcase-env.ts:514 notify 已接 toast",
+        "liveCasualties": ["IS-crud-001", "IS-table-001"]
+      },
+      "redE2eSketch": "任一 lab showToast 交互→expect toast 渲染（当前红）；修复=lab env 接 playground Toaster（App:259 已挂常驻 Toaster）"
+    },
+    {
+      "id": "IS-table-002",
+      "page": "table",
+      "symptom": "列拖拽排序场景（draggable:true / L4.11a）零拖拽供纳：表头与列设置面板 0 个 draggable 源/0 grip；th 拖拽无效果，列序不变",
+      "class": "E",
+      "priority": "P2",
+      "invariant": "V3/E",
+      "ownership": "renderer（该面未接线）；crud 页 schema 自述 draggable still deferred——table lab 场景宣称与实况漂移",
+      "evidence": {
+        "before": ["Name", "Email", "Role"],
+        "afterDragTo": ["Name", "Email", "Role"],
+        "affordance": {
+          "gripIcons": 0,
+          "draggable": 0,
+          "panel": "table-column-settings 仅有 resize handles"
+        }
+      },
+      "redE2eSketch": "枚举场景内 [draggable=true]/grip 数量→expect>0（当前红）；或如实降级场景宣称"
+    },
+    {
+      "id": "IS-list-001",
+      "page": "list",
+      "symptom": "多选列表选中行无 aria-selected/data-state（视觉选中态存在：bg muted/primary tint）",
+      "class": "D",
+      "priority": "P3",
+      "invariant": "V6",
+      "ownership": "renderer（list-renderer 行项）",
+      "evidence": {
+        "computedStyles": [
+          { "state": "unselected", "bg": "rgba(0,0,0,0)", "ariaSel": null },
+          { "state": "selected", "bg": "rgb(241,245,249)", "ariaSel": null },
+          { "state": "lastSelected", "bg": "oklab(.../0.1)", "ariaSel": null }
+        ]
+      },
+      "redE2eSketch": "点击项→expect aria-selected=true（当前红）"
+    },
+    {
+      "id": "IS-condition-builder-001",
+      "page": "condition-builder",
+      "symptom": "未完成的规则/空分组静默提交（无值规则提交无 right 键、空分组提交 children:[]，零校验反馈）",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "ownership": "renderer 语义（待裁决；可能属 AMIS 允许语义）",
+      "evidence": {
+        "emptyRuleEcho": "{\"id\":\"item-16\",…,\"op\":\"select_equals\"}",
+        "emptyGroupEcho": "{\"id\":\"group-16\",\"conjunction\":\"and\",\"children\":[]}"
+      },
+      "redE2eSketch": "裁决驱动：若需校验则 断言提交截断/标记；若保留则文档注记豁免"
+    }
+  ],
+  "watch": [
+    "chart legend toggle：图例项存在（'Revenue'）但无可定位点击目标，探针不可驱动——能力存在性未知",
+    "table select-all + 翻页后全部行 checked=true：跨页/本页语义歧义（受 IS-table-001 死通道牵连），待 feedback 修复后复测",
+    "echarts dataset 数据换批：canvas 渲染、无报错，像素级 diff 超出本轮读数协议——部分取证"
+  ],
+  "probeArtifactsWithdrawn": [
+    "list/gotoPage/pagination 项点击超时：元素在视口外（elementFromPoint null）；scrollIntoView 后全部点击成功（onItemClick 对话框、Page2/3 行集、aria-current 均正常）——非页面缺陷",
+    "pagination 页码首探误点 li 包装层（无 handler）导致假'无状态变化'；改点 a[role=button] 后 aria-current 正确——撤案",
+    "dialog quick-edit 首探误点包装层 关闭 钮；改点精确 保存 后暴露真缺陷 IS-crud-002——首读数撤案"
+  ],
+  "surveyReadings": {
+    "condition-builder": {
+      "scenarios": 6,
+      "addRule": { "inputsBefore": 4, "inputsAfter": 8 },
+      "combinatorSwitch": { "andActiveBefore": true, "orActiveAfter": true },
+      "valueSelect": { "options": ["Active", "Inactive"], "echoAfterInactive": "right:inactive" },
+      "nestedGroup": { "orButtonsAfter": 2, "echoContainsGroup": true },
+      "disabledFreeze": { "allAffordancesDisabled": true, "echoUnchanged": true },
+      "readOnlyFreeze": { "echoUnchanged": true },
+      "customEditorWriteback": { "viewer": true, "frozenCopyUnchanged": true },
+      "pageErrors": 0
+    },
+    "input-file": {
+      "scenarios": 3,
+      "sandboxUploadFailFeedback": "上传失败：上传动作未返回可用结果",
+      "hostSuccess": { "value": "https://cdn.example.com/ok.txt", "clearButtonAppears": true },
+      "hostFail": { "message": "上传失败：Upload rejected by host", "valueClean": true },
+      "submitEcho": "MR-UPLOAD:{\"ok\":\"…ok.txt\"}",
+      "clearV5": { "valueGone": true, "clearButtonGone": true },
+      "pageErrors": 0
+    },
+    "input-image": {
+      "scenarios": 2,
+      "sandboxUploadFailFeedback": true,
+      "hostSuccess": { "thumbnailImg": "cdn…/good2.png", "w": 48 },
+      "clearV5": { "urlGone": true },
+      "failMessage": "上传失败：Image upload rejected",
+      "pageErrors": 0
+    },
+    "editor": {
+      "scenarios": 5,
+      "engine": "tiptap ProseMirror",
+      "toolbarButtons": [
+        "加粗",
+        "斜体",
+        "下划线",
+        "删除线",
+        "一级标题",
+        "二级标题",
+        "无序列表",
+        "有序列表",
+        "行内代码",
+        "引用",
+        "链接",
+        "图片",
+        "高亮",
+        "撤销",
+        "重做"
+      ],
+      "typing": "appends",
+      "boldWithSelection": "<strong> 包裹成功",
+      "undo": "reverts; redo initially disabled",
+      "readOnly": "contenteditable=false",
+      "hostEcho": "MR-EDITOR:\"<p>Initial <strong>rich</strong> text.Audit content</p>\"",
+      "sanitize": { "html": "<p>ok</p><p>bad</p>", "scripts": 0, "inlineHandlers": 0 },
+      "pageErrors": 0
+    },
+    "object-field": {
+      "scenarios": 3,
+      "requiredValidation": { "clearedCitySave": "City不能为空", "invalidEls": 2 },
+      "refillSave": "committed",
+      "nestedSubmitEcho": "ObjArr address+contacts 行 scope 隔离（第三行为 schema 允许的空行）",
+      "pageErrors": 0
+    },
+    "array-field": {
+      "scenarios": 3,
+      "addItem": { "inputs": "4→6" },
+      "removeFirst": { "valuesKept": ["Bob", "editor", "新成员", ""] },
+      "saveEcho": "[{Bob,editor},{新成员}]",
+      "pageErrors": 0
+    },
+    "variant-field": {
+      "scenarios": 2,
+      "stringListSwitch": { "inputs": "1↔2", "valuePreservedOnReturn": "status = active" },
+      "variantSwitch": {
+        "options": ["Single Contact", "Multiple Contacts"],
+        "afterSwitchInputs": ["multiple", "a@example.com", "b@example.com"]
+      },
+      "submitEcho": "Variant: [\"a@example.com\",\"b@example.com\"]",
+      "pageErrors": 0
+    },
+    "cron-editor": {
+      "scenarios": 4,
+      "textInvalid": {
+        "expr": "0 0 0 30 2 ?",
+        "diagnostic": "该表达式永远不会匹配（如 2 月 30 日）",
+        "committed": false
+      },
+      "textValid": { "echo": "0 30 8 * * ?", "previewUpdated": true },
+      "visualSegmentEdit": { "hour": "9→20", "echo": "0 0 20 * * ?", "previewUpdated": true },
+      "wizardTiers": ["每天", "每周", "每月", "每年", "自定义"],
+      "customTierRawSegments": 6,
+      "presets": [
+        "每小时",
+        "每天 9:00",
+        "工作日 9:00",
+        "每周一 10:00",
+        "每月 1 日 9:00",
+        "每月最后一天 23:00",
+        "每年 1 月 1 日"
+      ],
+      "presetApplyWorkday9": { "segments": "0 0 9 …", "previewUpdated": true },
+      "repeatBlock": { "every": 2, "unit": "week", "anchor": "2026-01-05", "preserved": true },
+      "clearable": {
+        "clearedAll": true,
+        "preview": "当前表达式没有后续触发时间",
+        "submitEcho": "Submitted: {}"
+      },
+      "modeSwitchRoundtrip": true,
+      "pageErrors": 0
+    },
+    "table": {
+      "scenarios": 9,
+      "sort": {
+        "ariaSortCycle": "none→ascending→descending",
+        "rowOrderDesc": ["5", "4", "3", "2", "1"]
+      },
+      "headerSearchPopover": {
+        "keywordAli": "5→1 rows",
+        "roleFilterEditor": "2 rows (bob,eve)",
+        "clear": "5 rows"
+      },
+      "rowSelection": {
+        "checked": true,
+        "wrapperClick": true,
+        "selectAll": true,
+        "page2Retention": "checked (语义歧义→watch)"
+      },
+      "selectionFeedback": "DEAD (IS-table-001)",
+      "quickEditInline": "save feedback DEAD (IS-crud-001)",
+      "quickEditDialog": "save permanently disabled (IS-crud-002)",
+      "columnDrag": "no affordance (IS-table-002)",
+      "density": { "compact": 32, "default": 41, "relaxed": 48 },
+      "pageErrors": 0
+    },
+    "tree": {
+      "scenarios": 3,
+      "expandCollapse": { "childrenHiddenThenShown": true },
+      "searchFilter": {
+        "query": "Platform",
+        "result": "Engineering>Platform",
+        "ancestorsAutoExpanded": true
+      },
+      "noMatch": "暂无数据",
+      "pageErrors": 0
+    },
+    "list": {
+      "scenarios": 6,
+      "onItemClick": { "dialog": "Item click / Hello from item click", "escCloses": true },
+      "multiSelectVisual": true,
+      "multiSelectAria": "absent (IS-list-001)",
+      "gotoPage": { "page2": "Task #5-8", "page3": "Task #9-12" },
+      "pageErrors": 0
+    },
+    "pagination": {
+      "scenarios": 4,
+      "pageItemSemantics": "li > a[role=button]",
+      "ariaCurrentTransfer": "page 2 → aria-current=page",
+      "boundaryClamp": { "atLastPage": "下一页 aria-disabled=true" },
+      "hostDrivenList": { "page2": "Record 3/4 + page:2" },
+      "pageSizeSelector": ["10", "20", "50", "100"],
+      "pageErrors": 0
+    },
+    "crud": {
+      "scenarios": 17,
+      "hostQueryLoad": {
+        "search": "AllRows→Found-Kappa (行内容)",
+        "reset": "还原",
+        "footerQuery": "Kappa→none"
+      },
+      "selectionRefresh": {
+        "select2": "Selected rows: 2 + Bulk Delete enabled",
+        "refresh": "cleared (autoClearSelectionOnRefresh)"
+      },
+      "quickEditInline": "row-level 取消/保存 出现；保存零反馈 (IS-crud-001)",
+      "quickEditDialog": "保存 disabled after typing (IS-crud-002)",
+      "sourceDrivenQueryForms": "inert (IS-crud-003): query workflow / source-result / client-mode baseline",
+      "cardsMode": { "select": "✓ Selected", "footer": "Selected: 1 / Total: 25" },
+      "listMode": { "footer": "Selected: 1 / Total: 25" },
+      "pageErrors": 0
+    },
+    "batch-bar": {
+      "scenarios": 3,
+      "crudHost": {
+        "select2": "已选择 2 项 + Bulk activate enabled",
+        "clear": "envelope gone + all unchecked (V5)"
+      },
+      "tableHost": { "select1": "已选 1 项 + Bulk close enabled" },
+      "defaultCount": { "i18nCount": "已选择 1 项", "selectionPathEcho": "[\"x\"]" },
+      "pageErrors": 0
+    },
+    "query-filter": {
+      "scenarios": 3,
+      "buttons": ["搜索", "重置"],
+      "resetClearsFields": true,
+      "onSubmitOnResetActions": "zero visible effect (IS-queryfilter-001)",
+      "inlineLabels": ["Filter", "Clear"],
+      "collapsible": {
+        "defaultCollapsed": true,
+        "expandIcon": true,
+        "roundtrip": "0→2→0 visible inputs"
+      },
+      "pageErrors": 0
+    },
+    "data-source": {
+      "scenarios": 4,
+      "refresh": ["User2-*", "User3-*", "User4-*"],
+      "failureRetry": {
+        "before": "state failed keeps InitialUser",
+        "afterRetry": "state ok FlakyRecovered"
+      },
+      "pageErrors": 0
+    },
+    "chart": {
+      "scenarios": 8,
+      "barMarks": 30,
+      "hostUpdateData": "Alpha/Beta→Gamma/Delta (行内容级)",
+      "hostClearData": "暂无数据",
+      "legendToggle": "图例项存在，探针不可驱动（watch）",
+      "pageErrors": 0
+    },
+    "echarts": {
+      "scenarios": 18,
+      "dataSwapButton": "canvas render, no errors (部分取证 watch)",
+      "clickEventEcho": { "before": "", "after": "Feb5,100" },
+      "canvasScenarios": [
+        "sankey",
+        "treemap",
+        "tree",
+        "gauge",
+        "funnel",
+        "radar",
+        "map",
+        "candlestick",
+        "graph",
+        "sunburst",
+        "themeRiver",
+        "custom"
+      ],
+      "pageErrors": 0
+    },
+    "statistics": { "display": "共 60 条 == totalCount 60", "pageErrors": 0, "na": "纯展示" },
+    "stat-tile": {
+      "tiles": [
+        {
+          "label": "本月营收",
+          "rendered": "¥1,234,567.89万 + 同比 +12.5% + sparkline",
+          "formatterMatch": "thousands+decimals2 声明一致"
+        },
+        { "label": "订单数", "rendered": "8421 + 同比 -3.2%" },
+        { "label": "未发布指标", "rendered": "-- 占位", "noCrash": true }
+      ],
+      "pageErrors": 0
+    },
+    "sparkline": {
+      "scenarios": [
+        "基本趋势 1svg/1path",
+        "变体 5svg/6path",
+        "降级路径 无迷你图不崩",
+        "stat-tile 组合位 ¥1234568万"
+      ],
+      "pageErrors": 0
+    },
+    "dashboard-filter": {
+      "scenarios": 2,
+      "regionSwitch": { "east": "3 行华东", "north": "3 行华北", "south": "3 行华南" },
+      "refreshKeepsFilter": "华南 保持",
+      "dateRangeInput": "2026-01-01 , 2026-03-31 + 预设在位",
+      "kpiScenario": "stat-tile SUM/ARRAYMAP 聚合在位（区域切换未完成——探针命中已选 option）",
+      "pageErrors": 0
+    }
+  }
+}

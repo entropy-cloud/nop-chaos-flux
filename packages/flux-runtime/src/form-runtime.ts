@@ -156,16 +156,36 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
           store.setValues(next);
         },
         subscribe: (listener) => {
-          let previousValues = store.getState().values;
+          let previousState = store.getState();
 
           return store.subscribe(() => {
-            const nextValues = store.getState().values;
+            const nextState = store.getState();
 
-            if (nextValues === previousValues) {
+            // Plan 552 (IS-lab-input-password-001): values-only gating left
+            // fieldState-only transitions (validation errors attached on
+            // submit) invisible to scope subscribers — `${$form.valid}` /
+            // `${$form.errorCount}` templates latched their first evaluation.
+            // FieldState transitions are low-frequency (first edit/blur,
+            // validation runs), so replaying them as a wildcard change keeps
+            // the $form binding honest without widening per-keystroke churn.
+            if (
+              nextState.values === previousState.values &&
+              nextState.fieldStates === previousState.fieldStates
+            ) {
+              return;
+            }
+            if (nextState.values === previousState.values) {
+              previousState = nextState;
+              setLastChange({
+                paths: ['*'],
+                sourceScopeId: formId,
+                kind: 'replace',
+              });
+              listener(lastChange);
               return;
             }
 
-            previousValues = nextValues;
+            previousState = nextState;
             listener(lastChange);
           });
         },

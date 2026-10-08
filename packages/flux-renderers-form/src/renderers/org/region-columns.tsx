@@ -90,8 +90,10 @@ function Column(input: {
 
 /**
  * Desktop cascader columns for input-city (plan 506): province → city →
- * district. Clicking a name commits that level; the chevron drills down
- * (lazy-loads the next level via the shared org data surface). Selecting a
+ * district. Plan 552 (IS-lab-input-city-001): a name click on a non-leaf node
+ * selects that level AND drills into the next column (the panel stays open),
+ * so the cascade stays reachable through the primary affordance; leaf clicks
+ * commit and close. The chevron remains a pure expand. Selecting a
  * higher-level column node truncates the path back to that depth.
  */
 export function RegionColumns(input: {
@@ -99,7 +101,7 @@ export function RegionColumns(input: {
   staticOptions: OrgNode[];
   path: OrgNode[];
   interactive: boolean;
-  onCommit: (node: OrgNode, path: OrgNode[]) => void;
+  onCommit: (node: OrgNode, path: OrgNode[], options?: { keepOpen?: boolean }) => void;
   onPathChange: (path: OrgNode[]) => void;
 }) {
   const { data, staticOptions, path, interactive, onCommit, onPathChange } = input;
@@ -141,7 +143,15 @@ export function RegionColumns(input: {
           interactive={interactive}
           error={column.error}
           hasMore={column.hasMore}
-          onSelectNode={(node) => onCommit(node, [...path.slice(0, depth), node])}
+          onSelectNode={(node) => {
+            const nextPath = [...path.slice(0, depth), node];
+            const canDrill = node.leaf !== true;
+            if (canDrill) {
+              data.children.loadNode(node, depth + 1);
+              onPathChange(nextPath);
+            }
+            onCommit(node, nextPath, { keepOpen: canDrill });
+          }}
           onExpandNode={(node) => {
             data.children.loadNode(node, depth + 1);
             onPathChange([...path.slice(0, depth), node]);

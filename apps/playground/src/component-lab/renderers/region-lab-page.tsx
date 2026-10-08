@@ -79,7 +79,7 @@ const cascadePage = {
           label: 'Region (lazy cascade)',
           clearable: true,
           sourceChildren: regionSourceChildren,
-          description: 'Drill province → city → district; clicking a name at any level commits that level.',
+          description: 'Drill province → city → district; clicking a name selects that level and keeps the cascade open for the next level (leaf clicks commit and close).',
         },
         { type: 'text', text: 'Region: ${region}' },
       ],
