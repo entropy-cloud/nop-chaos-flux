@@ -281,11 +281,25 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
       }
     };
 
-    publish();
+    // Plan 550 / IS-form-wizard-001: createManagedFormRuntime runs inside
+    // FormRenderer's render (useMemo). The initial publish() writes status/
+    // values into the parent scope, which synchronously notifies scope
+    // subscribers — a React "setState during render" contract violation in the
+    // host tree (observed as "Cannot update a component (NodeRendererResolved)
+    // while rendering a different component (FormRenderer)" on wizard step
+    // mount). Defer the FIRST publication to a microtask; the subscription
+    // below keeps later publications on the store's own (event-time) schedule.
+    let publicationActive = true;
+    queueMicrotask(() => {
+      if (publicationActive) {
+        publish();
+      }
+    });
 
     const unsubscribe = store.subscribe(publish);
     clearExternalPublication = () => {
       unsubscribe();
+      publicationActive = false;
       if (statusPath) {
         publishOwnerStatus(parentScope, statusPath, undefined);
       }

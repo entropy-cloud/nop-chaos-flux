@@ -12,6 +12,11 @@ import {
   hasCompiledValidationNodes,
   validationErrorsEqual,
 } from '@nop-chaos/flux-core';
+import {
+  resolveArrayTemplateChildExpansion,
+  validateArrayTemplateChildInstances,
+  VALIDATION_CANCELLED,
+} from './form-runtime-validation-array-template.js';
 import { findRuntimeRegistration, syncRegisteredFieldValue } from './form-runtime-registration.js';
 import {
   collectSubtreeNodePaths,
@@ -37,6 +42,10 @@ function shouldValidateHiddenRuntimeRegistration(
 
   return sharedState.inputValue.validation?.defaultHiddenFieldPolicy?.validateWhenHidden === true;
 }
+
+// Plan 550 / IS-combo-editor-001 + IS-business-document-002: array row child
+// rule templates expand to their runtime item instances — see
+// form-runtime-validation-array-template.ts.
 
 function createValidationResult(errors: ValidationError[]): ValidationResult {
   return {
@@ -82,7 +91,6 @@ export async function waitForActiveLifecycle(sharedState: FormRuntimeValidationS
   return sharedState.lifecycleState === 'active';
 }
 
-const VALIDATION_CANCELLED = Symbol('validation-cancelled');
 
 function isPathHidden(sharedState: FormRuntimeValidationState, path: string): boolean {
   return isPathHiddenByOwner(sharedState as FormRuntimeValidationState & Parameters<typeof isPathHiddenByOwner>[0], path);
@@ -553,6 +561,20 @@ export async function validatePath(
 
   if (!field && runtimeRegistration?.validate) {
     return validateRuntimeRegistrationRoot(sharedState, path, runtimeRegistration);
+  }
+
+  if (field) {
+    const arrayTemplateExpansion = resolveArrayTemplateChildExpansion(sharedState, path);
+    if (arrayTemplateExpansion) {
+      return validateArrayTemplateChildInstances(
+        sharedState,
+        field,
+        arrayTemplateExpansion,
+        validateCompiledField,
+        reason,
+        options,
+      );
+    }
   }
 
   if (!field) {

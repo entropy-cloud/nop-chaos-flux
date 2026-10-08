@@ -13,7 +13,7 @@ function createStubScope(initialValues: Record<string, unknown> = {}): ScopeRef 
 }
 
 describe('createManagedFormRuntime external publication', () => {
-  it('publishes status and values through the runtime lifecycle', () => {
+  it('publishes status and values through the runtime lifecycle', async () => {
     const parentScope = createStubScope();
     const form = createManagedFormRuntime({
       id: 'profile-form',
@@ -25,6 +25,12 @@ describe('createManagedFormRuntime external publication', () => {
       executeValidationRule: async () => undefined,
       validateRule: () => undefined,
     });
+
+    // Plan 550 / IS-form-wizard-001: the initial publication is deferred to a
+    // microtask so createManagedFormRuntime (called during FormRenderer's
+    // render) never writes the parent scope synchronously mid-render.
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(parentScope.get('ui.status')).toMatchObject({
       id: 'profile-form',
@@ -50,7 +56,7 @@ describe('createManagedFormRuntime external publication', () => {
     expect(parentScope.get('ui.values')).toBeUndefined();
   });
 
-  it('dedupes unchanged summaries and values snapshots', () => {
+  it('dedupes unchanged summaries and values snapshots', async () => {
     const parentScope = createStubScope();
     const updateSpy = parentScope.update;
     const form = createManagedFormRuntime({
@@ -62,6 +68,11 @@ describe('createManagedFormRuntime external publication', () => {
       executeValidationRule: async () => undefined,
       validateRule: () => undefined,
     });
+
+    // Plan 550 / IS-form-wizard-001: initial publication is deferred to a
+    // microtask; flush it before capturing the delta baseline.
+    await Promise.resolve();
+    await Promise.resolve();
 
     const initialCallCount = (updateSpy as any).mock.calls.length;
 

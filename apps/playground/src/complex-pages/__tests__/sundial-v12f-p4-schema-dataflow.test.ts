@@ -148,7 +148,10 @@ describe('V12f P4 — cross-page contracts', () => {
       body: Array<{ queryForm?: { body: Array<{ name: string; clearable?: boolean }> } }>;
     };
     const queryForm = schema.body[0]?.queryForm;
-    const dateRange = queryForm?.body.find((f) => f.name === 'dateRange');
+    // Plan 550 / IS-advanced-query-001: the field is named `createTimeRange`
+    // (the client-side query channel's `<field>Range` convention targets the
+    // row's createTime); it was `dateRange` before the fix.
+    const dateRange = queryForm?.body.find((f) => f.name === 'createTimeRange');
     expect(dateRange?.clearable).toBe(true);
   });
 

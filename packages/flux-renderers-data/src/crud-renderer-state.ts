@@ -157,6 +157,98 @@ function areCrudFilterStatesEqual(left: CrudFilterState, right: CrudFilterState)
   });
 }
 
+// Dict-projection cells arrive as { value, label } records (e.g. role columns);
+// query values are the raw option values, so matching resolves through `.value`.
+function resolveComparableCell(cell: unknown): unknown {
+  if (isRecord(cell) && 'value' in cell) {
+    return cell.value;
+  }
+  return cell;
+}
+
+function asRangeBound(value: unknown): string | number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : value.trim();
+  }
+  return undefined;
+}
+
+// Plan 550 IS-advanced-query-001: the client-side query channel (loadAllData
+// mode) must honor the same range conventions the request channel documents:
+// `min<Field>`/`max<Field>` bound a comparable row field, `<field>Range`
+// carries a 'start,end' (or [start, end]) pair. Bounds compare numerically
+// when both sides are numeric, otherwise as strings (ISO dates compare
+// lexicographically).
+const MIN_RANGE_KEY = /^min([A-Z])(.*)$/;
+const MAX_RANGE_KEY = /^max([A-Z])(.*)$/;
+const FIELD_RANGE_KEY = /^(.+[a-z])Range$/;
+
+function compareRangeCell(cell: unknown, bound: string | number, side: 'min' | 'max'): boolean {
+  const cellNumber =
+    typeof cell === 'number'
+      ? cell
+      : typeof cell === 'string' && cell.trim() !== '' && Number.isFinite(Number(cell))
+        ? Number(cell)
+        : undefined;
+  if (cellNumber !== undefined && typeof bound === 'number') {
+    return side === 'min' ? cellNumber >= bound : cellNumber <= bound;
+  }
+  const cellText = String(cell ?? '');
+  if (!cellText) {
+    return false;
+  }
+  return side === 'min' ? cellText >= String(bound) : cellText <= String(bound);
+}
+
+function resolveQueryRangeFilter(
+  row: Record<string, unknown>,
+  field: string,
+  value: unknown,
+): boolean | undefined {
+  const minMatch = MIN_RANGE_KEY.exec(field);
+  const maxMatch = MAX_RANGE_KEY.exec(field);
+  if (minMatch || maxMatch) {
+    const bound = asRangeBound(value);
+    if (bound === undefined) {
+      return undefined;
+    }
+    const match = (minMatch ?? maxMatch)!;
+    const target = match[1].toLowerCase() + match[2];
+    return compareRangeCell(row[target], bound, minMatch ? 'min' : 'max');
+  }
+
+  const fieldRangeMatch = FIELD_RANGE_KEY.exec(field);
+  if (fieldRangeMatch) {
+    const parts = Array.isArray(value)
+      ? value
+      : typeof value === 'string' && value.includes(',')
+        ? value.split(',')
+        : undefined;
+    if (!parts) {
+      return undefined;
+    }
+    const start = asRangeBound(parts[0]);
+    const end = asRangeBound(parts[1]);
+    if (start === undefined && end === undefined) {
+      return undefined;
+    }
+    const cell = row[fieldRangeMatch[1]];
+    if (start !== undefined && !compareRangeCell(cell, start, 'min')) {
+      return false;
+    }
+    if (end !== undefined && !compareRangeCell(cell, end, 'max')) {
+      return false;
+    }
+    return true;
+  }
+
+  return undefined;
+}
+
 export function applyQueryToRows(rows: unknown[], query: Record<string, unknown>) {
   const entries = Object.entries(query).filter(([, value]) => {
     if (value == null) return false;
@@ -175,7 +267,11 @@ export function applyQueryToRows(rows: unknown[], query: Record<string, unknown>
     }
 
     return entries.every(([field, value]) => {
-      const cell = row[field];
+      const rangeResult = resolveQueryRangeFilter(row, field, value);
+      if (rangeResult !== undefined) {
+        return rangeResult;
+      }
+      const cell = resolveComparableCell(row[field]);
       if (Array.isArray(value)) {
         return value.includes(cell as never);
       }
@@ -186,7 +282,7 @@ export function applyQueryToRows(rows: unknown[], query: Record<string, unknown>
         }
         if (field.toLowerCase().includes('keyword')) {
           return Object.values(row).some((part) =>
-            String(part ?? '')
+            String(resolveComparableCell(part) ?? '')
               .toLowerCase()
               .includes(needle),
           );

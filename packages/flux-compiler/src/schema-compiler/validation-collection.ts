@@ -184,11 +184,20 @@ export function collectValidationModel(
           return;
         }
 
+        // Plan 550 / IS-combo-editor-001: a composite (array/object) field's
+        // region children live under the composite's own instance scope. When
+        // the definition omits getChildFieldPathPrefix, the child prefix must
+        // default to the composite's own fieldPath — falling back to the
+        // INCOMING prefix compiled combo/input-table row children at the form
+        // root (`name` instead of `lines.name`), where their required rules
+        // validated a scope path that never exists and failed every submit.
         const nextChildPrefix = childPrefix
           ? fieldPathPrefix
             ? `${fieldPathPrefix}.${childPrefix}`
             : childPrefix
-          : fieldPathPrefix;
+          : fieldPathPrefix
+            ? `${fieldPathPrefix}.${fieldPath}`
+            : fieldPath;
 
         for (const region of Object.values(entry.regions)) {
           if (!region.node) {

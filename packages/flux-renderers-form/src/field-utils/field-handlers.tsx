@@ -45,6 +45,56 @@ function attachValidationRejectionHandler(result: void | Promise<unknown>, prefi
   }
 }
 
+// Plan 550 / IS-form-wizard-002: a control that was focused PROGRAMMATICALLY
+// (APG wizard step-entry focus, dialog autofocus) and blurred without a single
+// real user gesture on it must not be treated as touched — its blur would run
+// blur-validation, insert a required error mid-press, shift the layout between
+// pointerdown and pointerup, and swallow the in-flight click on another control
+// (the wizard department picker trigger died exactly this way). Track whether a
+// real pointerdown/keydown landed inside the focused element; a silent blur
+// skips touchField + validateField. Missing tracking (unknown target) never
+// suppresses — the gate only downgrades the programmatic-focus case.
+interface ControlEngagementState {
+  engaged: boolean;
+  cleanup(): void;
+}
+
+const controlEngagement = new WeakMap<Element, ControlEngagementState>();
+
+function armControlEngagement(target: unknown) {
+  if (!(target instanceof Element)) {
+    return;
+  }
+  controlEngagement.get(target)?.cleanup();
+  const state: ControlEngagementState = { engaged: false, cleanup: () => {} };
+  const markEngaged = (event: Event) => {
+    if (event.target instanceof Node && (target === event.target || target.contains(event.target))) {
+      state.engaged = true;
+    }
+  };
+  document.addEventListener('pointerdown', markEngaged, { capture: true });
+  document.addEventListener('keydown', markEngaged, { capture: true });
+  state.cleanup = () => {
+    document.removeEventListener('pointerdown', markEngaged, { capture: true });
+    document.removeEventListener('keydown', markEngaged, { capture: true });
+  };
+  controlEngagement.set(target, state);
+}
+
+function isControlEngaged(target: unknown): boolean {
+  if (!(target instanceof Element)) {
+    return true;
+  }
+  return controlEngagement.get(target)?.engaged ?? true;
+}
+
+function disarmControlEngagement(target: unknown) {
+  if (target instanceof Element) {
+    controlEngagement.get(target)?.cleanup();
+    controlEngagement.delete(target);
+  }
+}
+
 export function useBoundFieldValue(
   name: string,
   currentForm: FormRuntime | undefined,
@@ -77,7 +127,8 @@ export function createFieldHandlers(args: {
   const validationOwnerWithFieldState = currentValidationScope as Partial<FormRuntime> | undefined;
 
   return {
-    onFocus() {
+    onFocus(handlerEvent?: { target?: unknown }) {
+      armControlEngagement(handlerEvent?.target);
       if (currentForm) {
         currentForm.visitField(name);
         return;
@@ -130,7 +181,14 @@ export function createFieldHandlers(args: {
         void result;
       }
     },
-    onBlur() {
+    onBlur(handlerEvent?: { target?: unknown }) {
+      const blurTarget = handlerEvent?.target;
+      if (!isControlEngaged(blurTarget)) {
+        disarmControlEngagement(blurTarget);
+        return;
+      }
+      disarmControlEngagement(blurTarget);
+
       if (currentForm) {
         currentForm.touchField(name);
 
@@ -444,12 +502,12 @@ export function useFormFieldController(
         name,
       });
     },
-    onBlur() {
+    onBlur(handlerEvent?: { target?: unknown }) {
       if (readOnly) {
         return;
       }
 
-      handlers.onBlur();
+      handlers.onBlur(handlerEvent);
       dispatchFieldEvent({
         eventName: 'onBlur',
         payload: { name, value },

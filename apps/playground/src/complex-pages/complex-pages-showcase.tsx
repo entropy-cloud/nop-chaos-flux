@@ -165,7 +165,10 @@ export function ComplexPagesShowcase({
 
       <main className="flex-1 min-h-0 overflow-hidden flex flex-col" data-testid="complex-pages-main">
         {PageComponent && activeEntry ? (
-          <div className="p-6 flex-1 min-h-0 flex flex-col" data-testid={`complex-page-${activeEntry.id}`}>
+          // pb-20 让出壳层固定右下 theme-switcher 停靠带（ux-r12 cp2 同款让带模式：
+          // 让带在 main 自身，页面卡片物理上不进入 switcher 区，任意滚动位无碰撞）——
+          // IS-business-document-001。
+          <div className="p-6 pb-20 flex-1 min-h-0 flex flex-col" data-testid={`complex-page-${activeEntry.id}`}>
             <div className="mb-4 flex items-start justify-between gap-4 shrink-0">
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-1">

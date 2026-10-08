@@ -1,0 +1,341 @@
+{
+  "batch": "IS-7a-review-group-A",
+  "plan": 550,
+  "date": "2026-10-07/08",
+  "method": "interaction-state-audit-prompt §4/§6/§9; Playwright chromium live-driven, readings-only convictions, zero screenshots; throwaway specs deleted",
+  "pagesCovered": [
+    "standard-crud",
+    "tree-crud",
+    "inline-edit-table",
+    "advanced-query",
+    "crud-views-export",
+    "dynamic-tabs",
+    "combo-editor",
+    "master-detail",
+    "detail-subtables",
+    "business-document"
+  ],
+  "surveyReadings": {
+    "standard-crud": {
+      "surface": {
+        "queryControls": 4,
+        "toolbarButtons": 2,
+        "sortableHeaders": 2,
+        "rowCheckboxes": 10,
+        "rowEditButtons": 10,
+        "rowDeleteButtons": 10,
+        "paginationLinks": "1-4 + prev/next"
+      },
+      "addConfirm": {
+        "before": { "rowCount": 10 },
+        "after": { "toast": "新增成功", "newRowPage": 4, "dialogClosed": true }
+      },
+      "addCancelEsc": {
+        "rowsAfterCancel": 10,
+        "dialogOpenAfterCancel": false,
+        "rowsAfterEsc": 10,
+        "dialogOpenAfterEsc": false
+      },
+      "edit": {
+        "prefilledName": "张三",
+        "afterToast": "更新成功",
+        "rowAfter": "1审计改名验证张三@example.com启用2024-01-01 08:00:00"
+      },
+      "deleteConfirm": {
+        "confirmText": "确认删除该用户？",
+        "afterToast": "删除成功",
+        "firstIdAfter": "2"
+      },
+      "deleteEsc": {
+        "rowPreserved": true,
+        "toasts": ["User declined the confirmation prompt.", "删除成功(残留)"]
+      },
+      "bulkDelete": {
+        "checked": 2,
+        "confirmTemplateEvaluated": "确认删除选中的 2 条记录？",
+        "afterToast": "批量删除成功",
+        "firstIdAfter": "3"
+      },
+      "query": {
+        "keyword": "Alice",
+        "rowsAfter": 1,
+        "hash": "#/complex-pages/standard-crud?keyword=Alice"
+      },
+      "resetResidue": {
+        "afterReset": { "hash": "?keyword=Alice", "inputVal": "", "rowCount": 10 },
+        "afterReload": { "inputVal": "Alice", "rowCount": 1 }
+      },
+      "pagination": { "page2Ids": ["11", "...", "20"], "ariaCurrentMoves": true },
+      "sort": {
+        "asc": "Alice first, aria-sort=ascending",
+        "desc": "黄十五 first, aria-sort=descending"
+      },
+      "v1Scrollables": "none (590/590) -> n/a"
+    },
+    "tree-crud": {
+      "treeItems": 35,
+      "nodeCrudButtons": 0,
+      "selectD1": {
+        "report": "当前过滤：d1",
+        "rows": 6,
+        "depts": ["总公司", "研发中心", "前端组", "后端组", "产品中心", "运营中心"]
+      },
+      "selectD1_1_1": { "report": "当前过滤：d1-1-1", "rows": 1 },
+      "expandStateAcrossSelection": "aria-expanded stays true",
+      "clearButton": {
+        "appearsWhenSelected": true,
+        "afterClick": { "report": "当前过滤：全部部门", "rows": 10 }
+      },
+      "reClickSelectedNode": "does not deselect (radio semantics), clear button covers reset"
+    },
+    "inline-edit-table": {
+      "quickEditInputsPerRow": 4,
+      "rowSaveBar": "appears on dirty (取消/保存)",
+      "multiCellSave": { "inputs": [40, 123, 50, 321], "totalAfter": "534", "toast": "保存成功" },
+      "cancelDiscard": { "filled": 888, "afterCancel": [40, 55, 50, 60] },
+      "escNoRevert": {
+        "filled": 777,
+        "afterEsc": [40, 777, 50, 60],
+        "savedAfterEsc": { "total": 927, "toast": "保存成功" }
+      },
+      "minClampSilent": {
+        "typed": -5,
+        "afterEnter": -5,
+        "afterSave": { "value": 0, "total": "150", "toast": "保存成功", "inlineErrors": 0 }
+      }
+    },
+    "advanced-query": {
+      "keywordAlice": { "ids": ["4"], "ok": true },
+      "statusDisabled": { "ids": ["4", "8", "12", "16", "20", "24", "28", "32"], "ok": true },
+      "sortIdAscDesc": { "asc": "1..10", "desc": "33..24" },
+      "minId5Search": {
+        "tbody": "single empty-state cell 暂无数据 colspan=7",
+        "persistentSeconds": 5,
+        "expectedRows": 29
+      },
+      "minId1Search": { "rows": 0, "expectedRows": 33 },
+      "roleGuestSearch": { "rows": 0, "expectedRows": 11, "hiddenInputValue": "guest" },
+      "roleAdminPlusKeywordAlice": { "rows": 0, "expectedRows": 1 },
+      "repeat5x": "identical empty result each round",
+      "probeFindings": {
+        "userFilterPredicatesExecuted": 0,
+        "responseCloneObserved": false,
+        "consoleErrors": 0
+      },
+      "schemaNote": "only page hand-writing ${query.* ?? ''} args map in loadAction.data"
+    },
+    "crud-views-export": {
+      "exportClick": {
+        "toast": "导出成功，后台已生成文件",
+        "report": "已生成 users-*.csv（共 33 条）→",
+        "linkHref": "data:text/csv;charset=utf-8,..."
+      },
+      "csvContent": {
+        "lines": 34,
+        "header": "id,name,email,role,status,deptId,createTime",
+        "dataRows": 33
+      },
+      "downloadEvent": { "fired": true, "filename": "users-*.csv" },
+      "viewSwitch": { "tabs": ["表格视图", "卡片视图"], "switchStable": true }
+    },
+    "dynamic-tabs": {
+      "overviewTab": { "staticCardPresent": true },
+      "remoteTab": {
+        "loadsVia": "POST /r/RemoteTabContent",
+        "remoteRows": 3,
+        "paginationText": "第 1-3 条，共 3 条"
+      },
+      "roundTrips": "stable across overview<->remote x2; mountOnEnter keeps content mounted after first activation"
+    },
+    "combo-editor": {
+      "initialItems": ["张三/manager/13800000001", "李四/colleague/13800000002"],
+      "report": "保存状态：未保存（共 2 位）",
+      "saveOnPristineData": {
+        "toast": "姓名不能为空",
+        "ariaInvalidFlags": 0,
+        "inlineErrors": 0,
+        "reportStays": "未保存"
+      },
+      "reorderButtons": { "firstItemUpDisabled": true, "lastItemDownDisabled": true },
+      "addButton": "添加项 present"
+    },
+    "master-detail": {
+      "masterSelectO1": {
+        "detail": "NO-20240701/440.25/待付款/官网",
+        "items": 1,
+        "logs": 1,
+        "addr": 1
+      },
+      "masterSelectO2": { "detail": "NO-20240702/4160/已付款/APP", "items": 2 },
+      "quickEditRowSave": { "qty": 99, "toast": "保存成功", "valueKept": true },
+      "addItemDialog": { "cancelResidue": false, "confirmToast": "新增成功", "newRow": "SKU-Z99" },
+      "operationColumn": {
+        "thead": ["SKU", "商品", "数量", "单价", "小计", "操作", "行操作"],
+        "buttonsInOperationCell": 0,
+        "deleteButtonsAnywhere": 0,
+        "testidsPresent": ["btn-add-item"]
+      },
+      "amountConsistency": "order header amount stale after item save/add (mock does not recompute)"
+    },
+    "detail-subtables": {
+      "defaultO1": {
+        "header": "NO-20240701/440.25/待付款",
+        "subtablesPopulated": ["items", "logs", "addr", "payments", "shipments"]
+      },
+      "switchO2": "all subtables sync",
+      "switchO3WhileAddrTabActive": "addr table + header sync",
+      "subtableCrudAffordances": "none declared (read-only tables) -> task claims n/a"
+    },
+    "business-document": {
+      "initialTotals": { "qty": 3, "subtotal": 42800, "grand": 48364, "rowAmounts": [36000, 6800] },
+      "qtyEditLiveTotals": { "qty": 5, "rowAmount": 90000, "subtotal": 96800, "grand": 109384 },
+      "inputTableAddRemove": { "rows": "2->3->2" },
+      "submitOcclusion": {
+        "viewport": "1280x720",
+        "btnRectNatural": { "x": 1132, "y": 912 },
+        "btnRectScrolledToMax": { "x": 1132, "y": "664..696" },
+        "switcherRect": { "x": 1068, "y": 670, "w": 200, "h": 38 },
+        "overlapAtMaxScroll": true,
+        "clickRetryFailures": "84x theme-switcher intercepts pointer events"
+      },
+      "keyboardSubmitValidForm": {
+        "toast": "name不能为空",
+        "supplierAriaInvalid": null,
+        "reportStays": "未提交"
+      }
+    }
+  },
+  "findings": [
+    {
+      "id": "IS-standard-crud-001",
+      "page": "standard-crud",
+      "symptom": "重置后 URL 残留 ?keyword=Alice，刷新静默复活已重置的过滤",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V5-adjacent (state residue)",
+      "evidence": "after-reset {hash:'...?keyword=Alice', inputVal:'', rowCount:10} -> after-reload {inputVal:'Alice', rowCount:1}",
+      "ownership": "renderer candidate: packages/flux-renderers-data/src/use-url-filter-sync.ts (no reset-path URL rewrite); unproven alternative: crud-renderer-ownership resetQueryValues",
+      "redE2e": "search Alice -> reset -> expect(hash).not.toContain('keyword'); reload -> expect rowCount 10"
+    },
+    {
+      "id": "IS-standard-crud-002",
+      "page": "standard-crud",
+      "symptom": "取消确认框弹出英文 toast「User declined the confirmation prompt.」（中文界面噪声反馈）",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3 (noise feedback)",
+      "evidence": "delete -> Esc -> toasts ['User declined the confirmation prompt.']",
+      "ownership": "flux-runtime runtime-action-helpers.ts:155 cancelled constant x demo bridge surfacing policy (showcase-env/confirm-bridge)",
+      "redE2e": "delete -> Esc -> expect no toast containing 'User declined'"
+    },
+    {
+      "id": "IS-inline-edit-table-001",
+      "page": "inline-edit-table",
+      "symptom": "quickEdit 单元格 Esc 不回滚：编辑值留在行草稿且可被保存",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V5",
+      "evidence": "fill 777 -> Esc -> inputs [40,777,50,60] + save-bar present; subsequent 保存 -> toast 保存成功 total 927",
+      "ownership": "renderer: table-quick-edit-cell.tsx has no Escape handling (table-editable-cell.tsx:348 does, for the editable two-state path)",
+      "redE2e": "fill 777 -> Esc -> expect input value 55"
+    },
+    {
+      "id": "IS-inline-edit-table-002",
+      "page": "inline-edit-table",
+      "symptom": "min=0 越界输入保存时静默钳为 0，无校验展示（写库值≠输入值零提示）",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "evidence": "fill -5 -> Enter (no error, value -5) -> 保存 -> input 0 / total 150 / toast 保存成功, zero inline errors",
+      "ownership": "renderer candidate: input-number clamp at quickSave commit + missing validation-display channel on quickSaveItemAction",
+      "redE2e": "fill -5 -> save -> expect visible validation error or toast disclosing clamp"
+    },
+    {
+      "id": "IS-advanced-query-001",
+      "page": "advanced-query",
+      "symptom": "角色/最小ID/最大ID 过滤搜索永久空结果（暂无数据），keyword/status 正常；零错误反馈；fetch 未达 mock 过滤层",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "evidence": "W1 keyword=Alice n=1; W2 role=admin n=0 (expect 11); W3 admin+Alice n=0 (expect 1); M2 minId=1 n=0 (expect 33); AQ14 empty-state cell persists >5s; AQ11 no mock filter predicates executed; no console errors",
+      "ownership": "candidate chain (unproven): demo schema advanced-query.json hand-written '${query.* ?? \"\"}' args map (unique among 10 pages; implicit-wiring pages work) x crud query-submit/reactive dispatch bindings shape; framework-side silent-empty without diagnostics secondary",
+      "redE2e": "minId=5 -> 搜索 -> expect >=1 row"
+    },
+    {
+      "id": "IS-combo-editor-001",
+      "page": "combo-editor",
+      "symptom": "初始合法数据点保存被假 required 校验阻断：toast「姓名不能为空」、无字段标记、保存链路全断（三态报告不可达）",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3 (false failure feedback)",
+      "evidence": "pristine load -> contacts-submit -> toasts ['姓名不能为空']; 6 inputs aria-invalid all null; zero inline errors; report stays 未保存",
+      "ownership": "candidate chain (unproven): form validation engine value-source for array-row required fields (seeded data invisible to validator) — flux-runtime form validation x flux-renderers-form-advanced/combo-renderer.tsx validateSubtree/validateField call sites",
+      "redE2e": "load -> click save -> expect success toast (or no failure toast)"
+    },
+    {
+      "id": "IS-master-detail-001",
+      "page": "master-detail",
+      "symptom": "明细行操作列声明的 保存/删除 按钮永不渲染：操作列空壳，删除能力不可达",
+      "class": "C/E",
+      "priority": "P1",
+      "invariant": "V3 (declared affordance missing)",
+      "evidence": "thead has 操作 column but 0 buttons in its cells across clean/dirty rows and multi-row order; btn-save-item/btn-delete-item testids absent from whole table; schema buttons lack type:'button' and use unknown key actionType:'quickSaveItem' (standard-crud buttons with type render fine)",
+      "ownership": "candidate chain (unproven): demo schema master-detail.json button entries (missing type / unknown actionType) silently dropped by compiler button-region build (strict-validation emitted no diagnostic); packages/flux-compiler table buttons region x demo schema",
+      "redE2e": "expect [data-testid=btn-delete-item] to exist in md-items-table rows"
+    },
+    {
+      "id": "IS-master-detail-002",
+      "page": "master-detail",
+      "symptom": "明细保存/新增后订单头金额不勾稽（mock 不重算 order.amount）",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "evidence": "o1 header 440.25 unchanged after qty=99 save and after SKU-Z99 add",
+      "ownership": "demo bridge: mock-backend.ts OrderItem__save/delete paths do not recompute order.amount (seed-time derivation only)",
+      "redE2e": "edit qty -> save -> expect header amount == sum(items qty*price)"
+    },
+    {
+      "id": "IS-business-document-001",
+      "page": "business-document",
+      "symptom": "固定悬浮 theme-switcher 完全遮挡 提交采购单 按钮：所有滚动位置下指针不可达，误点有误切主题风险",
+      "class": "B",
+      "priority": "P1",
+      "invariant": "V4",
+      "evidence": "btn rect 1132..1224 x 664..696 (card scrolled to max) fully inside switcher 1068..1268 x 670..708; Playwright click retried 84x 'theme-switcher intercepts pointer events'; natural position button below fold y=912",
+      "ownership": "playground shell: apps/playground/src/theme-switcher.tsx fixed placement x page frame content height; not renderer",
+      "redE2e": "getByTestId('order-submit').click() must not be intercepted"
+    },
+    {
+      "id": "IS-business-document-002",
+      "page": "business-document",
+      "symptom": "合法表单提交被假校验「name不能为空」阻断（裸键名文案）；供应商 required 错误被遮蔽；提交链全断",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "evidence": "supplier filled + seeded item names present -> keyboard-activated submit -> toasts ['name不能为空'], report stays 未提交; empty-supplier submit same toast, supplier aria-invalid null",
+      "ownership": "same family as IS-combo-editor-001 (array-row field validation value-source脱节); message key uses raw field name (次生 D 类)",
+      "redE2e": "fill supplier -> submit (keyboard) -> expect success toast / report 已提交"
+    }
+  ],
+  "watchList": [
+    "tree-crud filter report shows raw deptId (d1-1-1) instead of label — demo template choice, D/P3 candidate",
+    "advanced-query dateRange filter not verified with a legitimately matching range; same failure family as role/minId suspected, cover with IS-advanced-query-001 fix",
+    "combo-editor/business-document false-required root cause mechanism unproven (validator value-source candidate); likely shared fix surface",
+    "master-detail operation-column button drop: exact trigger (missing type vs unknown actionType) unproven; discriminate via red e2e after schema key fix",
+    "inline-edit: no hint that Enter only commits the cell and row needs explicit 保存 (ergonomics candidate)",
+    "console.error '[showcase] action error' observed only from probe-induced invalid submits (mock backend rejection log), not a page defect"
+  ],
+  "naRegistrations": [
+    "tree-crud: tree node add/edit/delete at depth — schema implements filter-tree only; expand-state persistence verified",
+    "detail-subtables: sub-row CRUD and subtable selection independence — subtables are read-only tables (no selection/CRUD declared); master-switch sync verified for all 5 subtables",
+    "business-document: draft->submit->approve state machine — schema declares submit only; approve not implemented",
+    "dynamic-tabs: closable tabs / dirty-tab indicators — schema declares fixed 2 tabs, no such claims",
+    "standard-crud: V1 scroll preservation — no scrollable container in page (scrollHeight==clientHeight 590/590), n/a",
+    "anti-pattern dispositions: (a) ${$crud.selectionCount} template in confirmText evaluates correctly; (d) ajax onSuccess/then consumed correctly in crud-views-export; (e) dynamic-renderer remote schema mounts correctly"
+  ],
+  "counts": { "P0": 0, "P1": 5, "P2": 3, "P3": 2, "total": 10 },
+  "deliverables": {
+    "report": "_tmp/is7aA-review-report.md",
+    "survey": "_tmp/is7aA-survey.json"
+  }
+}

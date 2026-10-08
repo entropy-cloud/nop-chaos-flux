@@ -91,6 +91,45 @@ describe('crud-renderer-state helpers', () => {
     expect(applyQueryToRows(rows as any, { name: '   ' })).toBe(rows);
   });
 
+  // Plan 550 / IS-advanced-query-001: dict-shaped cells and range query keys.
+  it('matches dict-shaped { value, label } cells by their raw value', () => {
+    const rows = [
+      { id: 1, role: { value: 'admin', label: '管理员' } },
+      { id: 2, role: { value: 'guest', label: '访客' } },
+    ];
+
+    expect(applyQueryToRows(rows as any, { role: 'admin' })).toEqual([rows[0]]);
+    expect(applyQueryToRows(rows as any, { role: ['guest'] })).toEqual([rows[1]]);
+  });
+
+  it('applies min<Field>/max<Field> numeric bounds to the target row field', () => {
+    const rows = [{ id: 1 }, { id: 5 }, { id: 12 }];
+
+    expect(applyQueryToRows(rows as any, { minId: 5 })).toEqual([{ id: 5 }, { id: 12 }]);
+    expect(applyQueryToRows(rows as any, { maxId: 5 })).toEqual([{ id: 1 }, { id: 5 }]);
+    expect(applyQueryToRows(rows as any, { minId: 5, maxId: 11 })).toEqual([{ id: 5 }]);
+    // A bound on a missing field excludes the row instead of passing it.
+    expect(applyQueryToRows([{ name: 'x' }] as any, { minId: 5 })).toEqual([]);
+  });
+
+  it('applies <field>Range pair bounds (string or array) lexicographically for dates', () => {
+    const rows = [
+      { id: 1, createTime: '2024-06-01 10:00:00' },
+      { id: 2, createTime: '2024-07-15 09:30:00' },
+      { id: 3, createTime: '2024-08-02 12:00:00' },
+    ];
+
+    expect(applyQueryToRows(rows as any, { createTimeRange: '2024-07-01,2024-07-31' })).toEqual([
+      rows[1],
+    ]);
+    expect(applyQueryToRows(rows as any, { createTimeRange: ['2024-07-01', '2024-08-31'] })).toEqual([
+      rows[1],
+      rows[2],
+    ]);
+    // A single-sided bound keeps the convention honest.
+    expect(applyQueryToRows(rows as any, { createTimeRange: '2024-07-01,' })).toEqual([rows[1], rows[2]]);
+  });
+
   it('normalizes array and record-based CRUD source values', () => {
     expect(normalizeCrudSourceValue([{ id: 1 }])).toEqual({ rows: [{ id: 1 }], total: 1 });
     expect(normalizeCrudSourceValue({ items: [{ id: 2 }], total: 9 })).toEqual({

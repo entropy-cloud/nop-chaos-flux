@@ -337,6 +337,31 @@ export function buildFormOwnerRuntime(input: {
     const errors: ValidationError[] = [];
     const validatedPaths = new Set<string>();
     const pathsToPreserve = new Set<string>();
+    // Plan 550 / IS-combo-editor-001: an array-template child validation
+    // reports one error per instance under the instance path. The same
+    // logical error can reach this aggregate twice through clone boundaries
+    // (template-path result + the instance fieldState tail-scan below);
+    // dedupe on the error identity triple so each finding is reported once.
+    const reportedValidationErrorKeys = new Set<string>();
+
+    const validationErrorDedupeKey = (error: ValidationError) =>
+      `${error.path}\u0000${error.ruleId ?? ''}\u0000${error.message}`;
+
+    function pushAggregateErrors(pathErrors: ValidationError[] | undefined) {
+      if (!pathErrors || pathErrors.length === 0) {
+        return;
+      }
+      const fresh = pathErrors.filter(
+        (error) => !reportedValidationErrorKeys.has(validationErrorDedupeKey(error)),
+      );
+      if (fresh.length === 0) {
+        return;
+      }
+      for (const error of fresh) {
+        reportedValidationErrorKeys.add(validationErrorDedupeKey(error));
+      }
+      errors.push(...fresh);
+    }
 
     const validationPaths = getCompiledValidationTraversalOrder(currentValidation);
 
@@ -377,7 +402,7 @@ export function buildFormOwnerRuntime(input: {
         const result = await validatePath(input.sharedState, path, reason, options);
         if (!result.ok) {
           fieldErrors[path] = result.errors;
-          errors.push(...result.errors);
+          pushAggregateErrors(result.errors);
         }
       } catch (error) {
         if (isAbortError(error)) {
@@ -526,7 +551,7 @@ export function buildFormOwnerRuntime(input: {
       }
 
       fieldErrors[path] = pathErrors;
-      errors.push(...pathErrors);
+      pushAggregateErrors(pathErrors);
     }
 
     for (const path of pathsToPreserve) {
@@ -540,7 +565,7 @@ export function buildFormOwnerRuntime(input: {
       }
 
       fieldErrors[path] = pathErrors;
-      errors.push(...pathErrors);
+      pushAggregateErrors(pathErrors);
     }
 
     return {

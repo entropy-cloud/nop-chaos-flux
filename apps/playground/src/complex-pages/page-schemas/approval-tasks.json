@@ -10,7 +10,6 @@
       "loadAllData": true,
       "loadAction": {
         "action": "ajax",
-        "dependsOn": ["__approval_load__"],
         "args": {
           "url": "/r/ApprovalTask__findPage",
           "method": "get"

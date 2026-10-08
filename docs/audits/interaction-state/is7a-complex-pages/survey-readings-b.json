@@ -1,0 +1,456 @@
+{
+  "batch": "IS-7a group B (plan 550)",
+  "date": "2026-10-07",
+  "reviewer": "review-group B, independent fresh session",
+  "environment": {
+    "server": "http://127.0.0.1:4175 (vite dev, strict-validation, in-page mock fetcher)",
+    "viewport": "1440x900",
+    "tool": "playwright chromium, throwaway specs tests/e2e/_tmp-is7aB-*.spec.ts (deleted after extraction)",
+    "evidencePolicy": "readings convict; screenshots unused; 5 probe artifacts retracted after controlled retests (see report)"
+  },
+  "pages": [
+    "form-wizard",
+    "complex-form",
+    "approval-tasks",
+    "dashboard",
+    "sundial-workbench",
+    "sundial-analytics",
+    "sundial-detail",
+    "sundial-settings",
+    "sundial-todo-dialog"
+  ],
+  "surveyReadings": {
+    "form-wizard": {
+      "surface": {
+        "inputs": [
+          "name",
+          "email",
+          "role-combobox",
+          "dept-picker",
+          "budget-number",
+          "notify-switch"
+        ],
+        "nav": ["wizard-prev", "wizard-next", "finish"],
+        "cancel": null
+      },
+      "sequences": {
+        "emptyRequiredGate": {
+          "step1StillVisible": true,
+          "gateShown": true,
+          "errorText": "姓名不能为空/邮箱不能为空/步骤校验未通过"
+        },
+        "confirmStepValues": {
+          "name": "王小明",
+          "email": "wxm@example.com",
+          "role": "admin",
+          "budget": "120",
+          "notify": "开启"
+        },
+        "prevPreservation": {
+          "name": "王小明",
+          "budget": "120",
+          "notifyAriaChecked": "true",
+          "roleLabel": "管理员"
+        },
+        "finish": {
+          "toast": "提交成功",
+          "reportAfter": "提交状态：已完成 ✓",
+          "reportAfterModify": "提交状态：已修改，未重新提交"
+        },
+        "pickerDiscriminator": {
+          "trustedClickOpens": false,
+          "focusThenTrustedClickOpens": false,
+          "domClickOpens": true,
+          "openedDialogContentRows": 0,
+          "loadActionMocked": false
+        },
+        "consoleErrorOnStep2Enter": "Cannot update a component (NodeRendererResolved) while rendering a different component (FormRenderer)"
+      }
+    },
+    "complex-form": {
+      "surface": {
+        "fields": 13,
+        "submit": "[data-testid=complex-form-submit]",
+        "report": "[data-testid=complex-form-report]"
+      },
+      "sequences": {
+        "agreedGate": {
+          "submitDisabledBefore": true,
+          "submitDisabledAfterAgreed": false,
+          "agreedChecked": true
+        },
+        "emptySubmit": {
+          "validationToast": "姓名不能为空；邮箱不能为空；电话不能为空",
+          "blocked": true
+        },
+        "enterpriseLinkage": { "companyBefore": false, "companyAfter": true, "taxAfter": true },
+        "provinceCityCascade": {
+          "cityAfterPick": "城市浦东新区",
+          "cityAfterProvinceChange": "城市请先选择省份",
+          "reactionClearWorks": true
+        },
+        "advancedReveal": { "budgetBefore": false, "budgetAfter": true, "remarkAfter": true },
+        "save": {
+          "toast": "保存成功",
+          "reportAfterSave": "保存状态：已保存 ✓",
+          "reportAfterModify": "保存状态：已修改，未重新保存"
+        }
+      }
+    },
+    "approval-tasks": {
+      "surface": {
+        "rows": 10,
+        "handleButtons": 10,
+        "dialog": "dialog-surface",
+        "confirm": "alert-dialog-content",
+        "queryForm": ["keyword", "status-combobox"],
+        "batchOps": null
+      },
+      "sequences": {
+        "approve": {
+          "dialogAppeared": true,
+          "toast": "已通过",
+          "row1Before": "待审批",
+          "row1After": "已通过",
+          "dialogClosed": true
+        },
+        "rejectConfirm": {
+          "confirmAppeared": true,
+          "confirmText": "确认操作 确认驳回该申请？ 取消 确认",
+          "afterConfirmClickTimeline": "alertVisible true @400/1000/2000/3500/5000ms; toasts []; row unchanged; console clean",
+          "committed": false
+        },
+        "cancelPath": {
+          "taskDialogStillOpenAfterCancel": true,
+          "rowsUnchanged": true,
+          "declinedToast": "User declined the confirmation prompt. (observed on sundial-detail DET3)"
+        },
+        "esc": { "escClosesDialog": true },
+        "processedRow": {
+          "approveVisible": false,
+          "rejectVisible": false,
+          "processedLabel": true,
+          "commentVisible": false
+        },
+        "statusFilter": {
+          "labelBefore": "全部状态",
+          "labelAfter": "已通过",
+          "rowsAt1s": 10,
+          "rowsAt3s": 10,
+          "contentsChanged": false
+        },
+        "keywordFilter": { "enterPressed": true, "rows": 10, "contentsChanged": false }
+      }
+    },
+    "dashboard": {
+      "surface": {
+        "pageButtons": 0,
+        "pageTabs": 0,
+        "pageInputs": 0,
+        "charts": 3,
+        "tables": ["recentOrders", "approvals"]
+      },
+      "sequences": {
+        "displayTruthfulness": { "totalOrders": 30, "todayOrders": 1, "revenue": "106,995.3元" },
+        "chartHoverTooltip": true
+      }
+    },
+    "sundial-workbench": {
+      "surface": {
+        "nav": ["workbench", "lists->settings", "analytics"],
+        "views": ["all", "today", "scheduled", "completed", "trash"],
+        "searchInput": true,
+        "taskCheckboxes": 7,
+        "dialogs": ["task-detail", "add-todo"]
+      },
+      "sequences": {
+        "viewSwitch": {
+          "sectionsBefore": "all 5",
+          "sectionsOnToday": "today only",
+          "toast": "视图：今天",
+          "restored": true
+        },
+        "search": { "filterWorks": true, "牙医": "only future-1 visible", "clearRestores": true },
+        "checkboxT3": {
+          "checkedBefore": false,
+          "checkedAfter": true,
+          "dataOrViewChange": false,
+          "toast": null,
+          "taskDialogOpenedByCheckboxClick": false
+        },
+        "taskDetail": {
+          "opened": true,
+          "datePickerCommit": "8/18 -> 明天",
+          "flagToggle": "未标记 -> 已标记"
+        },
+        "addTodo": {
+          "emptySubmitBlocked": true,
+          "navCounter": "工作台9 -> 工作台10",
+          "toast": "待办已添加",
+          "dialogClosed": true,
+          "boardHasNewRow": false,
+          "taskRowCount": 7
+        },
+        "trashInDialog": {
+          "confirmAppeared": true,
+          "afterConfirmToast": null,
+          "commitSignal": false,
+          "sameRootAs": "IS-approval-tasks-001"
+        },
+        "navHashes": {
+          "lists": "#/complex-pages/sundial-settings",
+          "analytics": "#/complex-pages/sundial-analytics",
+          "settingsIcon": "#/complex-pages/sundial-settings"
+        }
+      }
+    },
+    "sundial-analytics": {
+      "surface": { "charts": 3, "chartOnClick": true, "focusCard": "sundial-chart-focus-card" },
+      "sequences": {
+        "trendClick": {
+          "cardVisible": true,
+          "text": "完成趋势（最近 7 天）：8/13 达到峰值 7 件",
+          "toast": "聚焦：完成趋势"
+        },
+        "energyClick": {
+          "text": "精力输出（按复杂度）：8/13 输出 12 点",
+          "toast": "聚焦：精力输出"
+        }
+      }
+    },
+    "sundial-detail": {
+      "surface": {
+        "pickers": ["date(datetime)", "recurrence", "list"],
+        "flagRow": true,
+        "subtasks": 3,
+        "subtaskAddForm": true,
+        "moveList": true,
+        "trash": true,
+        "inputDateDemo": true
+      },
+      "sequences": {
+        "recurrence": {
+          "before": "每周",
+          "afterPickMonthly": "每月",
+          "cancelKeepsValue": true,
+          "dialogClosed": true
+        },
+        "listPick": { "before": "列表工作", "after": "列表家庭" },
+        "flagToggle": { "before": true, "after": false, "toast": "旗标已切换" },
+        "clearDateGuard": { "toastWhenEmpty": [], "secondClickNoNewToast": true },
+        "subtaskAdd": {
+          "toast": "子任务已添加",
+          "inputCleared": true,
+          "newRowVisible": false,
+          "rowsBefore": 3,
+          "rowsAfter": 3
+        },
+        "subtaskDelete": {
+          "cancelKeepsRow": true,
+          "confirmRemovesRow": true,
+          "toast": "子任务已删除",
+          "declinedToast": "User declined the confirmation prompt."
+        },
+        "subtaskDialog": { "titleViaArrayfind": "整理 OKR 回顾", "closeWorks": true },
+        "moveList": { "after": "列表家庭", "dialogClosed": true },
+        "trash": { "toast": "已移到垃圾箱", "pageStillShowsTaskAsActive": true }
+      }
+    },
+    "sundial-settings": {
+      "surface": {
+        "modeChoices": ["local", "supabase", "selfhost(disabled)"],
+        "save": true,
+        "panels": ["sync", "lists", "appearance", "data", "about"],
+        "placeholderButtons": ["导出 CSV", "清空缓存", "新建列表"]
+      },
+      "sequences": {
+        "modeSwitch": {
+          "localSelectedBefore": true,
+          "supabaseSelectedAfter": true,
+          "connectionInfoAppeared": true,
+          "statusCard": "已连接"
+        },
+        "save": { "toast": "保存成功（已写入演示后端）", "mockValidatesMode": true },
+        "navPanels": { "listsPanelRows": 4 },
+        "placeholders": { "exportToast": "导出 CSV（demo 占位）", "honest": true },
+        "selfhostClick": { "dataSelectedAfter": "false", "truthfullyDisabled": true },
+        "back": { "hash": "#/complex-pages/sundial-workbench" }
+      }
+    },
+    "sundial-todo-dialog": {
+      "surface": {
+        "openButton": true,
+        "dialog": [
+          "title(autoFocus)",
+          "note",
+          "dateRow->radioPicker",
+          "flagRow",
+          "listRow->radioPicker",
+          "cancel",
+          "add"
+        ],
+        "closeOnOutsideClick": false
+      },
+      "sequences": {
+        "open": { "dialogAppeared": true, "autofocus": "INPUT placeholder=标题" },
+        "flagToggle": { "before": "未标记", "after": "已标记" },
+        "emptySubmit": { "validationBlocked": true },
+        "commit": { "dialogClosed": true },
+        "cancelReopen": {
+          "stateReset": true,
+          "dateValue": "无",
+          "flagValue": "未标记",
+          "listValue": "收件箱",
+          "dialogsAfterCancel": 0
+        },
+        "outsideClick": { "dialogStillOpen": true }
+      }
+    }
+  },
+  "findings": [
+    {
+      "id": "IS-form-wizard-001",
+      "page": "form-wizard",
+      "route": "#/complex-pages/form-wizard",
+      "symptom": "进入 step2（mountOnEnter 挂载）触发 React 渲染期 setState console.error（NodeRendererResolved × FormRenderer）；仓库 e2e 门禁（允许 0 console.error）因此必红",
+      "class": "F",
+      "priority": "P2",
+      "invariant": "V4/渲染纪律",
+      "evidence": "load errCount=0 -> step2 errCount=1（两次复现，mark 时间线）",
+      "ownership": "renderer 候选（packages/flux-react/src/node-renderer-resolved.tsx；位点未证实）",
+      "redE2e": "驱动 step1->step2，断言 consoleErrors.length===0（fixtures 门禁即断言）"
+    },
+    {
+      "id": "IS-form-wizard-002",
+      "page": "form-wizard",
+      "route": "#/complex-pages/form-wizard",
+      "symptom": "部门 picker 触发钮对真实指针点击死控：trusted click 不开弹层（含 focus-first 复试），合成 el.click() 可开——IS-w2b-001 同判别签名（mid-click 重挂载）",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3/E",
+      "evidence": "trustedClickOpens:false; focusThenTrustedClickOpens:false; domClickOpens:true(aria-expanded true); trigger enabled/pointer-events:auto",
+      "ownership": "renderer 候选（picker-renderer trigger × FormRenderer 步骤重挂载；根因未证实）",
+      "redE2e": "坐标点击 [data-slot=picker-trigger] -> 断言 [data-slot=picker-dialog-content] 可见（红）"
+    },
+    {
+      "id": "IS-form-wizard-003",
+      "page": "form-wizard",
+      "route": "#/complex-pages/form-wizard",
+      "symptom": "部门 picker 弹层空：loadAction /r/Department__findPage 未被 showcase mock 覆盖，无行无列，选择闭环不可完成",
+      "class": "D",
+      "priority": "P2",
+      "invariant": "V3",
+      "evidence": "picker rowCount=0、无表头；showcase-env.ts 无该端点分支（兜底 {status:0,data:null}）",
+      "ownership": "demo 接线（mock 缺端点）",
+      "redE2e": "打开 picker 断言 tbody tr >= 1（红）"
+    },
+    {
+      "id": "IS-approval-tasks-001",
+      "page": "approval-tasks（表现点另见 sundial-workbench 移到垃圾箱）",
+      "route": "#/complex-pages/approval-tasks",
+      "symptom": "confirmText 动作在 dialog surface 内为死提交：AlertDialog 确认后 ajax/then/toast 全不执行、确认框永不关闭（5s 时间线 alertVisible 恒 true）；判别矩阵——同 dialog 无 confirmText 的通过动作完整提交；页面体上的 confirmText 动作完整提交",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3/V5",
+      "evidence": "AT-G5 seal: t=400..5000ms alertVisible:true, taskDialogVisible:true, toasts:[], row 待审批 unchanged, console 零错误；AT-E1 approve 绿；DET3/DET4 页面体 confirmText 绿",
+      "ownership": "框架（候选链 packages/flux-runtime runtime-action-helpers confirm 门 × packages/flux-react dialog-host/ConfirmHost 层叠；根因未证实）",
+      "redE2e": "驳回->确认 -> 断言 4s 内 toast 出现且 alert 关闭且行状态翻转（红）"
+    },
+    {
+      "id": "IS-approval-tasks-002",
+      "page": "approval-tasks",
+      "route": "#/complex-pages/approval-tasks",
+      "symptom": "查询表单死控件：状态筛选 label 提交但 crud 永不重筛（3s 后 10 行原样）；关键字+Enter 同死；queryForm 无查询按钮、loadAction dependsOn 哨兵 __approval_load__ 无更新者",
+      "class": "C",
+      "priority": "P1",
+      "invariant": "V3",
+      "evidence": "AT-G7: labelAfter=已通过, rowsAt1s/3s=10, contentsChanged=false; keyword Enter rows=10 unchanged",
+      "ownership": "demo 接线候选（queryForm->crud 重查链未接；若契约应自动触发则 renderer 契约缺口——需与组 A standard-crud 对账裁定）",
+      "redE2e": "选已通过 -> 断言行数<10（红）"
+    },
+    {
+      "id": "IS-common-confirm-declined-toast",
+      "page": "approval-tasks / sundial-detail / sundial-workbench（凡取消 confirmText 确认框处）",
+      "route": "multiple",
+      "symptom": "取消确认框向用户弹出英文开发者文案 error toast「User declined the confirmation prompt.」",
+      "class": "C",
+      "priority": "P3",
+      "invariant": "V3",
+      "evidence": "DET3 toast 数组读数",
+      "ownership": "框架（packages/flux-runtime/src/runtime-action-helpers.ts:155 createCancelledResult -> notify error）",
+      "redE2e": "取消确认 -> 断言无 error toast（红）"
+    },
+    {
+      "id": "IS-sundial-workbench-001",
+      "page": "sundial-workbench",
+      "route": "#/complex-pages/sundial-workbench",
+      "symptom": "任务圆圈 checkbox（t1–t7）纯展示死控：勾选仅 input.checked 翻转，无数据/视图/toast 后果（完成语义未接线）",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "evidence": "checked false->true, todosDone 计数不变, 行样式不变, schema 无 onChange",
+      "ownership": "demo 接线",
+      "redE2e": "勾选 t3 -> 断言 todosDone.total +1 或行样式变化（红）"
+    },
+    {
+      "id": "IS-sundial-workbench-002",
+      "page": "sundial-workbench",
+      "route": "#/complex-pages/sundial-workbench",
+      "symptom": "添加待办提交成功（计数 9->10、toast、dialog 关）但新待办在全部/今天/已安排看板均不显示（静态 schema 行，仅计数器动）",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "evidence": "boardHasNewRow:false, taskRowCount 7 不变, navCounter +1",
+      "ownership": "demo 接线（mock 已持久化，看板未 loop 数据源）",
+      "redE2e": "添加后断言看板含新标题行（红）"
+    },
+    {
+      "id": "IS-sundial-detail-001",
+      "page": "sundial-detail",
+      "route": "#/complex-pages/sundial-detail",
+      "symptom": "添加子任务提交成功（toast、输入清空）但列表不显示新子任务（静态 3 行）",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "evidence": "rowsBefore/After 均 3, newSubtaskRowVisible:false",
+      "ownership": "demo 接线",
+      "redE2e": "添加后断言列表含新子任务行（红）"
+    },
+    {
+      "id": "IS-sundial-detail-002",
+      "page": "sundial-detail",
+      "route": "#/complex-pages/sundial-detail",
+      "symptom": "移到垃圾箱提交成功（toast）后页面无任何显示变化，继续以活跃任务展示（taskTrashed 无消费方）",
+      "class": "C",
+      "priority": "P2",
+      "invariant": "V3",
+      "evidence": "afterTrash.pageStillShowsTask=true，全部 UI 原样",
+      "ownership": "demo 接线",
+      "redE2e": "trash 后断言页面进入已删态（置灰/跳转）（红）"
+    }
+  ],
+  "watchList": [
+    "W-1 form-wizard 确认步角色显示原始值 admin（非 label 管理员）",
+    "W-2 input-datetime / picker hidden radio 无法程序化设值（自动化/无障碍观测；DET1 日期写回与 TD 日期/列表写回未闭环）",
+    "W-3 settings supabase-url/key 输入值不可在 payload 观测（in-page fetcher；mock 仅消费 mode）",
+    "W-4 sundial-detail picker/form testid 多路复用（sundial-list-dialog x3 等）与 approval btn-handle x10 同族——测试id 卫生",
+    "W-5 workbench add-todo dialog 打开瞬间 activeElement=DIV（autoFocus 读数与 TD 页不一致，疑似时序）",
+    "W-6 AT AlertDialog 取消钮曾报 element not stable 3s（动画/重渲染抖动，settle 后可点）",
+    "W-7 approval loadAction dependsOn 哨兵 __approval_load__ 模式（IS-approval-tasks-002 修复参考）"
+  ],
+  "naRegistrations": [
+    "dashboard 页面级交互面 n/a（0 控件程序化为证；tab/filter/refresh/图表-表格联动未声明）",
+    "approval-tasks 批量操作 n/a（schema 未声明）；驳回/筛选交互面被 P1 阻断（复现序列留档）",
+    "form-wizard cancel(V5) n/a（无取消供纳）；部门选择闭环被 IS-form-wizard-002/003 阻断",
+    "sundial-settings appearance 静态展示无控件；payload 观测豁免（in-page fetcher）",
+    "全组网络层观测豁免（in-page mock fetcher——提交真伪以 mock db/依赖源刷新/toast 为证）",
+    "跨批反模式核销: (a)$formData 写回实证工作 (b)无对象展开形态 (c)未复现 (d)wizard onComplete 完整消费 (e)静态 schema n/a (f)无 ui Calendar 弹层 n/a"
+  ],
+  "retractions": [
+    "处理按钮/dialog 不开初判撤案（探测槽位错：flux 声明式 dialog 为 dialog-surface 非 dialog-content；重测后 approve 全链绿）",
+    "wizard 完成无 toast/无提交撤案（首轮未选 role 未达完成步；补全后 toast+报告全绿）",
+    "WB 日期写回「今天」改判（label 点击命中容器；精确文本复测 8/18->明天 提交成功）",
+    "AT 取消连带关闭 task dialog 改判（offsetParent 判据对 fixed 元素失效；boundingRect 重测 dialog 保持打开）",
+    "TD 提交无 toast 撤案（toast 读取时序 >4s，sonner 已过期）"
+  ]
+}

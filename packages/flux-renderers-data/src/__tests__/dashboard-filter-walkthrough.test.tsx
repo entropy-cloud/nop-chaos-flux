@@ -54,10 +54,18 @@ describe('dashboard-filter 编排约定 — scope 联动走查', () => {
 
     // valuesPath 发布：兄弟节点直接读到 filter.region。
     await waitFor(() => expect(screen.getByText(/Filter: east/)).toBeTruthy());
-    // 初始请求已携带初始筛选值（发布先于/并行于 data-source 注册；请求构造器把
-    // 非空 params 内联进 query string）。
-    await waitFor(() => expect(fetcher).toHaveBeenCalled());
-    expect(String(fetcher.mock.calls[0][0].url)).toContain('region=east');
+    // 初始请求已携带初始筛选值（请求构造器把非空 params 内联进 query string）。
+    // Plan 550 / IS-form-wizard-001: valuesPath 的首次发布推迟到 microtask
+    //（createManagedFormRuntime 在 FormRenderer 渲染期内运行，同步发布会在
+    // 渲染期同步通知 scope 订阅者，违反 React 渲染期契约）。发布落地后依赖
+    // 收集命中 `filter` 根，data-source 自动重载——携带筛选值的请求出现在
+    // 跟进调用上，而非 mount 后的第一次调用。
+    await waitFor(() =>
+      expect(
+        fetcher.mock.calls.some((call) => String(call[0].url).includes('region=east')),
+        'the published filter values must reach a request',
+      ).toBeTruthy(),
+    );
     await waitFor(() => expect(screen.getByText(/Region: east/)).toBeTruthy());
   });
 

@@ -13,15 +13,7 @@
         "dependsOn": ["__advq__"],
         "args": {
           "url": "/r/User__findPage",
-          "method": "get",
-          "data": {
-            "keyword": "${query.keyword ?? \"\"}",
-            "status": "${query.status ?? \"\"}",
-            "role": "${query.role ?? \"\"}",
-            "minId": "${query.minId ?? \"\"}",
-            "maxId": "${query.maxId ?? \"\"}",
-            "dateRange": "${query.dateRange ?? \"\"}"
-          }
+          "method": "get"
         }
       },
       "filterTogglable": { "defaultCollapsed": false },
@@ -55,7 +47,7 @@
           },
           {
             "type": "date-range",
-            "name": "dateRange",
+            "name": "createTimeRange",
             "label": "创建时间",
             "clearable": true,
             "placeholder": "选择日期范围"
