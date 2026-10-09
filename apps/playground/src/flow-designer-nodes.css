@@ -234,3 +234,107 @@
     --dt-node-muted: #64748b;
   }
 }
+
+/* plan 557: taskflow tree-mode node cards (tf-* tree designer). Mirrors the
+   dt-node pattern above: card chrome + per-variant header accents. */
+@layer utilities {
+  [data-slot='tf-node'] {
+    background: white;
+    border-radius: 8px;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    cursor: pointer;
+    min-width: 220px;
+  }
+
+  [data-slot='tf-node'] [data-slot='tf-node-header'] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--fd-node-accent-tf-generic, hsl(var(--primary)));
+  }
+
+  [data-slot='tf-node'] [data-slot='tf-node-icon'] {
+    width: 14px;
+    height: 14px;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  [data-slot='tf-node'] [data-slot='tf-node-title'] {
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-slot='tf-node'] [data-slot='tf-node-subtitle'] {
+    padding: 6px 12px 8px;
+    font-size: 12px;
+    color: var(--dt-node-muted, hsl(var(--muted-foreground)));
+  }
+
+  [data-slot='tf-node'][data-node-variant='entry'] [data-slot='tf-node-header'],
+  [data-slot='tf-node'][data-node-variant='sequential'] [data-slot='tf-node-header'] {
+    background: var(--fd-node-accent-tf-sequential, #14b8a6);
+  }
+
+  [data-slot='tf-node'][data-node-variant='entry'],
+  [data-slot='tf-node'][data-node-variant='end'] {
+    min-width: 200px;
+  }
+
+  [data-slot='tf-node'][data-node-variant='end'] [data-slot='tf-node-header'] {
+    background: var(--fd-node-accent-tf-end, #f43f5e);
+  }
+
+  [data-slot='tf-node'][data-node-variant='parallel'] [data-slot='tf-node-header'] {
+    background: var(--fd-node-accent-tf-parallel, #6366f1);
+  }
+
+  [data-slot='tf-node'][data-node-variant='script'] [data-slot='tf-node-header'] {
+    background: var(--fd-node-accent-tf-script, #0ea5e9);
+  }
+
+  [data-slot='tf-node'][data-node-variant='invoke'] [data-slot='tf-node-header'] {
+    background: var(--fd-node-accent-tf-invoke, #8b5cf6);
+  }
+
+  [data-slot='tf-node'][data-node-variant='delay'] [data-slot='tf-node-header'] {
+    background: var(--fd-node-accent-tf-delay, #f97316);
+  }
+
+  /* Condition-family cards follow the dt-condition treatment: transparent
+     header, green title, inline padding. */
+  [data-slot='tf-node'][data-node-variant='if'],
+  [data-slot='tf-node'][data-node-variant='choose'] {
+    padding: 10px 12px;
+  }
+
+  [data-slot='tf-node'][data-node-variant='if'] [data-slot='tf-node-header'],
+  [data-slot='tf-node'][data-node-variant='choose'] [data-slot='tf-node-header'] {
+    background: transparent;
+    padding: 0;
+  }
+
+  [data-slot='tf-node'][data-node-variant='if'] [data-slot='tf-node-icon'],
+  [data-slot='tf-node'][data-node-variant='choose'] [data-slot='tf-node-icon'] {
+    color: var(--fd-node-accent-tf-condition, #15bc83);
+  }
+
+  [data-slot='tf-node'][data-node-variant='if'] [data-slot='tf-node-title'],
+  [data-slot='tf-node'][data-node-variant='choose'] [data-slot='tf-node-title'] {
+    color: var(--fd-node-accent-tf-condition, #15bc83);
+  }
+
+  [data-slot='tf-node'][data-node-variant='if'] [data-slot='tf-node-subtitle'],
+  [data-slot='tf-node'][data-node-variant='choose'] [data-slot='tf-node-subtitle'] {
+    padding: 4px 0 0;
+  }
+}

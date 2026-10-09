@@ -50,7 +50,6 @@ import { DefaultInspector } from './designer-inspector.js';
 import { DesignerToolbarContent } from './designer-toolbar.js';
 import { useDesignerAutoLayout } from './use-designer-auto-layout.js';
 import { useDesignerShortcuts } from './use-designer-shortcuts.js';
-import { emitTreeLayoutDebugSnapshot } from './tree-layout-debug.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -149,12 +148,6 @@ export function DesignerPageBody({
 
   const isTreeMode = config.documentMode === 'tree';
 
-  useEffect(() => {
-    if (!isTreeMode) {
-      return;
-    }
-    emitTreeLayoutDebugSnapshot(env, statusSnapshot);
-  }, [env, isTreeMode, statusSnapshot]);
   const onPlusButtonClick = useCallback(
     (
       sourceId: string,

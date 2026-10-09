@@ -23,7 +23,10 @@ test.describe('IS-4 designer interaction state (plan 547)', () => {
     const treeTab = page.getByRole('tab', { name: /Tree/i }).first();
     await treeTab.click();
     await page.waitForTimeout(1200);
-    await page.locator('.react-flow__pane').click({ button: 'right' });
+    // plan 557: tree cards are larger now — the canvas center can hit a node
+    // (node context menu has no paste item). Right-click an explicitly empty
+    // pane spot (left margin of the canvas, empty in any layout).
+    await page.locator('.react-flow__pane').click({ button: 'right', position: { x: 60, y: 300 } });
     const pasteItem = page.getByRole('menuitem', { name: /粘贴|Paste/ }).first();
     await expect(pasteItem).toBeVisible({ timeout: 5_000 });
     await pasteItem.click();

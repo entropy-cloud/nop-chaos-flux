@@ -246,3 +246,64 @@ test('TaskFlow (Graph) renders edges', async ({ page }) => {
 
   await assertTrackedPageErrors(page);
 });
+
+// plan 557 Phase 1 (D1): the tree-mode debug emitter in designer-page-body
+// unconditionally notifies "[flow-designer tree-layout] {...}" on every
+// snapshot change — entering the Tree tab stacks info toasts over the
+// inspector. The emission is a debug leftover; pin its removal: no sonner
+// toast may contain the layout dump marker.
+test('Tree tab produces no tree-layout debug toasts (plan 557 D1)', async ({ page }) => {
+  await openTaskFlowDesigner(page);
+
+  const taskflowTreeTab = page.getByRole('tab', { name: 'TaskFlow (Tree)' });
+  await taskflowTreeTab.click();
+  await page.waitForTimeout(3000);
+
+  // Trigger at least one editor interaction so post-mount snapshot changes are
+  // covered too (the old emitter fired on every statusSnapshot change).
+  const canvas = page.locator('.react-flow__node').first();
+  await canvas.click();
+  await page.waitForTimeout(1000);
+
+  const layoutToasts = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-sonner-toast]')]
+      .map((el) => el.textContent ?? '')
+      .filter((text) => text.includes('tree-layout')),
+  );
+  expect(layoutToasts).toEqual([]);
+
+  await assertTrackedPageErrors(page);
+});
+
+// plan 557 Phase 2 (D2): taskflow tree nodes previously rendered as minimal
+// icon+text pills (minWidth 130/140); the redesigned node bodies render real
+// cards (tf-node data-slot, 220px-class rendered width) matching the
+// dingtalk-workflow-tree reference. Measured via offsetWidth (layout pixels):
+// tree mode sizes come from tree.layoutSize layout writes, and the canvas
+// fit-view transform makes getBoundingClientRect read the zoomed visual size.
+test('Tree tab renders carded taskflow nodes (plan 557 D2)', async ({ page }) => {
+  await openTaskFlowDesigner(page);
+
+  const taskflowTreeTab = page.getByRole('tab', { name: 'TaskFlow (Tree)' });
+  await taskflowTreeTab.click();
+  await page.waitForTimeout(3000);
+
+  const cardReadout = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('[data-slot="tf-node"]')];
+    // offsetWidth = layout pixels, unaffected by the canvas fit-view transform
+    // (getBoundingClientRect would read the zoomed visual size).
+    return {
+      count: cards.length,
+      minWidth: cards.length ? Math.min(...cards.map((c) => c.offsetWidth)) : 0,
+      hasHeader: cards.filter((c) => c.querySelector('[data-slot="tf-node-header"]')).length,
+      hasSubtitle: cards.filter((c) => c.querySelector('[data-slot="tf-node-subtitle"]')).length,
+    };
+  });
+
+  expect(cardReadout.count).toBeGreaterThanOrEqual(5);
+  expect(cardReadout.minWidth).toBeGreaterThanOrEqual(200);
+  expect(cardReadout.hasHeader).toBe(cardReadout.count);
+  expect(cardReadout.hasSubtitle).toBe(cardReadout.count);
+
+  await assertTrackedPageErrors(page);
+});

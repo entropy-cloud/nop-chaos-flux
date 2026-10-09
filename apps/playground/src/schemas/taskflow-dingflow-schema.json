@@ -128,8 +128,8 @@
     "treeConfig": {
       "layout": {
         "direction": "TB",
-        "nodeSpacing": 40,
-        "layerSpacing": 80
+        "nodeSpacing": 60,
+        "layerSpacing": 100
       },
       "showGatewayNodes": true,
       "showMergeNodes": false,
@@ -147,30 +147,46 @@
           "maxInstances": 1
         },
         "appearance": {
-          "minWidth": 80,
-          "minHeight": 32,
+          "minWidth": 200,
+          "minHeight": 64,
           "borderRadius": 16
         },
         "tree": {
           "allowChild": true,
           "isTerminal": false,
           "layoutSize": {
-            "width": 80,
-            "height": 32
+            "width": 200,
+            "height": 64
           }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-1 px-2 py-1",
-          "body": [
+          "direction": "column",
+          "gap": 4,
+          "className": "tf-node-root",
+          "data-slot": "tf-node",
+          "data-node-variant": "entry",
+          "items": [
             {
-              "type": "icon",
-              "icon": "log-in",
-              "className": "text-green-500 w-3 h-3"
+              "type": "flex",
+              "data-slot": "tf-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "log-in",
+                  "data-slot": "tf-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${step.common.displayName || step.common.name}",
+                  "data-slot": "tf-node-title"
+                }
+              ]
             },
             {
               "type": "text",
-              "text": "Entry"
+              "body": "流程开始",
+              "data-slot": "tf-node-subtitle"
             }
           ]
         }
@@ -181,8 +197,8 @@
         "icon": "list-ordered",
         "description": "Sequential step container",
         "appearance": {
-          "minWidth": 130,
-          "minHeight": 44
+          "minWidth": 220,
+          "minHeight": 80
         },
         "defaults": {
           "step": {
@@ -198,22 +214,38 @@
           "allowChild": true,
           "isTerminal": false,
           "layoutSize": {
-            "width": 130,
-            "height": 44
+            "width": 220,
+            "height": 80
           }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
+          "direction": "column",
+          "gap": 4,
+          "className": "tf-node-root",
+          "data-slot": "tf-node",
+          "data-node-variant": "sequential",
+          "items": [
             {
-              "type": "icon",
-              "icon": "list-ordered",
-              "className": "text-teal-500 w-4 h-4"
+              "type": "flex",
+              "data-slot": "tf-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "list-ordered",
+                  "data-slot": "tf-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${step.common.displayName || step.common.name}",
+                  "data-slot": "tf-node-title"
+                }
+              ]
             },
             {
               "type": "text",
-              "text": "${step.common.displayName || step.common.name}"
+              "body": "顺序执行",
+              "data-slot": "tf-node-subtitle"
             }
           ]
         },
@@ -236,8 +268,8 @@
         "icon": "columns",
         "description": "Parallel execution",
         "appearance": {
-          "minWidth": 130,
-          "minHeight": 44
+          "minWidth": 220,
+          "minHeight": 80
         },
         "defaults": {
           "step": {
@@ -256,22 +288,38 @@
           "maxBranches": 10,
           "isTerminal": false,
           "layoutSize": {
-            "width": 130,
-            "height": 44
+            "width": 220,
+            "height": 80
           }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
+          "direction": "column",
+          "gap": 4,
+          "className": "tf-node-root",
+          "data-slot": "tf-node",
+          "data-node-variant": "parallel",
+          "items": [
             {
-              "type": "icon",
-              "icon": "columns",
-              "className": "text-cyan-500 w-4 h-4"
+              "type": "flex",
+              "data-slot": "tf-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "columns",
+                  "data-slot": "tf-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${step.common.displayName || step.common.name}",
+                  "data-slot": "tf-node-title"
+                }
+              ]
             },
             {
               "type": "text",
-              "text": "${step.common.displayName || step.common.name}"
+              "body": "并行分支",
+              "data-slot": "tf-node-subtitle"
             }
           ]
         },
@@ -311,8 +359,8 @@
         "icon": "code",
         "description": "Script step",
         "appearance": {
-          "minWidth": 130,
-          "minHeight": 44
+          "minWidth": 220,
+          "minHeight": 80
         },
         "defaults": {
           "step": {
@@ -329,22 +377,38 @@
           "allowChild": true,
           "isTerminal": false,
           "layoutSize": {
-            "width": 130,
-            "height": 44
+            "width": 220,
+            "height": 80
           }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
+          "direction": "column",
+          "gap": 4,
+          "className": "tf-node-root",
+          "data-slot": "tf-node",
+          "data-node-variant": "script",
+          "items": [
             {
-              "type": "icon",
-              "icon": "code",
-              "className": "text-blue-500 w-4 h-4"
+              "type": "flex",
+              "data-slot": "tf-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "code",
+                  "data-slot": "tf-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${step.common.displayName || step.common.name}",
+                  "data-slot": "tf-node-title"
+                }
+              ]
             },
             {
               "type": "text",
-              "text": "${step.common.displayName || step.common.name}"
+              "body": "脚本节点",
+              "data-slot": "tf-node-subtitle"
             }
           ]
         },
@@ -384,8 +448,8 @@
         "icon": "zap",
         "description": "Invoke bean method",
         "appearance": {
-          "minWidth": 130,
-          "minHeight": 44
+          "minWidth": 220,
+          "minHeight": 80
         },
         "defaults": {
           "step": {
@@ -403,22 +467,38 @@
           "allowChild": true,
           "isTerminal": false,
           "layoutSize": {
-            "width": 130,
-            "height": 44
+            "width": 220,
+            "height": 80
           }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
+          "direction": "column",
+          "gap": 4,
+          "className": "tf-node-root",
+          "data-slot": "tf-node",
+          "data-node-variant": "invoke",
+          "items": [
             {
-              "type": "icon",
-              "icon": "zap",
-              "className": "text-yellow-500 w-4 h-4"
+              "type": "flex",
+              "data-slot": "tf-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "zap",
+                  "data-slot": "tf-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${step.common.displayName || step.common.name}",
+                  "data-slot": "tf-node-title"
+                }
+              ]
             },
             {
               "type": "text",
-              "text": "${step.common.displayName || step.common.name}"
+              "body": "服务调用",
+              "data-slot": "tf-node-subtitle"
             }
           ]
         },
@@ -451,8 +531,8 @@
         "icon": "git-branch",
         "description": "Conditional with then/else branches",
         "appearance": {
-          "minWidth": 140,
-          "minHeight": 44
+          "minWidth": 220,
+          "minHeight": 80
         },
         "defaults": {
           "step": {
@@ -471,22 +551,38 @@
           "maxBranches": 2,
           "isTerminal": false,
           "layoutSize": {
-            "width": 140,
-            "height": 44
+            "width": 220,
+            "height": 80
           }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
+          "direction": "column",
+          "gap": 4,
+          "className": "tf-node-root",
+          "data-slot": "tf-node",
+          "data-node-variant": "if",
+          "items": [
             {
-              "type": "icon",
-              "icon": "git-branch",
-              "className": "text-purple-500 w-4 h-4"
+              "type": "flex",
+              "data-slot": "tf-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "git-branch",
+                  "data-slot": "tf-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${step.common.displayName || step.common.name}",
+                  "data-slot": "tf-node-title"
+                }
+              ]
             },
             {
               "type": "text",
-              "text": "${step.common.displayName || step.common.name}"
+              "body": "条件分支",
+              "data-slot": "tf-node-subtitle"
             }
           ]
         },
@@ -514,8 +610,8 @@
         "icon": "list",
         "description": "Multi-branch choose",
         "appearance": {
-          "minWidth": 140,
-          "minHeight": 44
+          "minWidth": 220,
+          "minHeight": 80
         },
         "defaults": {
           "step": {
@@ -534,22 +630,38 @@
           "maxBranches": 10,
           "isTerminal": false,
           "layoutSize": {
-            "width": 140,
-            "height": 44
+            "width": 220,
+            "height": 80
           }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
+          "direction": "column",
+          "gap": 4,
+          "className": "tf-node-root",
+          "data-slot": "tf-node",
+          "data-node-variant": "choose",
+          "items": [
             {
-              "type": "icon",
-              "icon": "list",
-              "className": "text-orange-500 w-4 h-4"
+              "type": "flex",
+              "data-slot": "tf-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "list",
+                  "data-slot": "tf-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${step.common.displayName || step.common.name}",
+                  "data-slot": "tf-node-title"
+                }
+              ]
             },
             {
               "type": "text",
-              "text": "${step.common.displayName || step.common.name}"
+              "body": "选择分支",
+              "data-slot": "tf-node-subtitle"
             }
           ]
         },
@@ -577,8 +689,8 @@
         "icon": "clock",
         "description": "Delay step",
         "appearance": {
-          "minWidth": 130,
-          "minHeight": 44
+          "minWidth": 220,
+          "minHeight": 80
         },
         "defaults": {
           "step": {
@@ -595,22 +707,38 @@
           "allowChild": true,
           "isTerminal": false,
           "layoutSize": {
-            "width": 130,
-            "height": 44
+            "width": 220,
+            "height": 80
           }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-2 px-3 py-2",
-          "body": [
+          "direction": "column",
+          "gap": 4,
+          "className": "tf-node-root",
+          "data-slot": "tf-node",
+          "data-node-variant": "delay",
+          "items": [
             {
-              "type": "icon",
-              "icon": "clock",
-              "className": "text-gray-500 w-4 h-4"
+              "type": "flex",
+              "data-slot": "tf-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "clock",
+                  "data-slot": "tf-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${step.common.displayName || step.common.name}",
+                  "data-slot": "tf-node-title"
+                }
+              ]
             },
             {
               "type": "text",
-              "text": "${step.common.displayName || step.common.name}"
+              "body": "${(step.props && step.props.delayMillisExpr) ? step.props.delayMillisExpr + 'ms' : '定时延时'}",
+              "data-slot": "tf-node-subtitle"
             }
           ]
         },
@@ -641,30 +769,46 @@
           "maxInstances": 1
         },
         "appearance": {
-          "minWidth": 80,
-          "minHeight": 32,
+          "minWidth": 200,
+          "minHeight": 64,
           "borderRadius": 16
         },
         "tree": {
           "allowChild": false,
           "isTerminal": true,
           "layoutSize": {
-            "width": 80,
-            "height": 32
+            "width": 200,
+            "height": 64
           }
         },
         "body": {
           "type": "flex",
-          "className": "items-center gap-1 px-2 py-1",
-          "body": [
+          "direction": "column",
+          "gap": 4,
+          "className": "tf-node-root",
+          "data-slot": "tf-node",
+          "data-node-variant": "end",
+          "items": [
             {
-              "type": "icon",
-              "icon": "stop-circle",
-              "className": "text-red-500 w-3 h-3"
+              "type": "flex",
+              "data-slot": "tf-node-header",
+              "items": [
+                {
+                  "type": "icon",
+                  "icon": "stop-circle",
+                  "data-slot": "tf-node-icon"
+                },
+                {
+                  "type": "text",
+                  "body": "${step.common.displayName || step.common.name}",
+                  "data-slot": "tf-node-title"
+                }
+              ]
             },
             {
               "type": "text",
-              "text": "End"
+              "body": "流程结束",
+              "data-slot": "tf-node-subtitle"
             }
           ]
         }
