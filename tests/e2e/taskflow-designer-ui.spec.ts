@@ -307,3 +307,94 @@ test('Tree tab renders carded taskflow nodes (plan 557 D2)', async ({ page }) =>
 
   await assertTrackedPageErrors(page);
 });
+
+// plan 557 follow-up (IS-taskflow-designer-007, user-reported): the tree chain
+// + button appeared offset right of the vertical connector line. Root cause:
+// the tree handle carried a DOUBLE centering shift (xyflow base
+// `transform: translate(-50%, 6px)` plus the Tailwind `translate: -50%`
+// property from `!-translate-x-1/2` — two independent CSS channels, -12px
+// total), so every chain edge line ran 6px left of the card center while the
+// + button centered on the card. This guard pins the concentric invariant:
+// line center ≈ handle/card center ≈ + center (screen px, tolerance 2px).
+test('Tree chain + button is concentric with the connector line (plan 557 follow-up)', async ({ page }) => {
+  await openTaskFlowDesigner(page);
+  const taskflowTreeTab = page.getByRole('tab', { name: 'TaskFlow (Tree)' });
+  await taskflowTreeTab.click();
+  await page.waitForTimeout(3000);
+
+  // Edges re-mount on container resizes, so a single instantaneous read can
+  // catch a half-mounted frame — sample in-page (yielding between samples so
+  // React can commit) until the connector lines are settled, then extract the
+  // vertical segments and measure lines, + buttons and cards from that frame.
+  const geometry = await page.evaluate(async () => {
+    const centerX = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return +(r.x + r.width / 2).toFixed(1);
+    };
+    // Extract the x of every VERTICAL segment from an edge path (M/L point
+    // pairs sharing the same x — chains are single verticals, branch elbows
+    // contribute their split/merge verticals). Segment local x maps to screen
+    // x through the path bbox→rect scale, so everything below compares in
+    // screen pixels.
+    const verticalSegmentXs = () => {
+      const xs: number[] = [];
+      for (const p of document.querySelectorAll('path')) {
+        const d = p.getAttribute('d') ?? '';
+        if (!d.startsWith('M') || !d.includes('L')) continue;
+        const points = d
+          .slice(1)
+          .split('L')
+          .map((pair) => pair.trim().split(/\s+/).map(Number));
+        const bbox = p.getBBox();
+        const rect = p.getBoundingClientRect();
+        const scaleX = bbox.width > 0 ? rect.width / bbox.width : 1;
+        for (let i = 1; i < points.length; i++) {
+          const [x1, y1] = points[i - 1];
+          const [x2, y2] = points[i];
+          if (x1 === x2 && Math.abs(y2 - y1) >= 20) {
+            xs.push(+(rect.x + (x1 - bbox.x) * scaleX).toFixed(1));
+          }
+        }
+      }
+      return xs;
+    };
+    const plusCenters = () =>
+      [...document.querySelectorAll('button.absolute')]
+        .filter((b) => (b.getAttribute('aria-label') ?? '').includes('节点'))
+        .map(centerX);
+    const cardCenters = () => [...document.querySelectorAll('[data-slot="tf-node"]')].map(centerX);
+
+    const deadline = Date.now() + 10_000;
+    let best = { segments: verticalSegmentXs(), plusCenters: plusCenters(), cardCenters: cardCenters() };
+    while (best.segments.length < 3 && Date.now() < deadline) {
+      // Yield so React can commit edge re-renders between samples — a busy
+      // loop would block the very commit this wait is for.
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const next = { segments: verticalSegmentXs(), plusCenters: plusCenters(), cardCenters: cardCenters() };
+      if (next.segments.length >= best.segments.length) best = next;
+    }
+    return best;
+  });
+
+  expect(geometry.segments.length).toBeGreaterThanOrEqual(3);
+  expect(geometry.plusCenters.length).toBeGreaterThanOrEqual(5);
+  expect(geometry.cardCenters.length).toBeGreaterThanOrEqual(5);
+
+  // Concentric invariant: every chain/branch + sits on a vertical connector
+  // segment (≤2 screen px), every connector segment runs through a card
+  // center, and every + sits on its card center. The handle double-translate
+  // (IS-taskflow-designer-007) pushed segments 6 layout px left of the card
+  // centers — ~4 screen px, which this tolerance convicts.
+  for (const plus of geometry.plusCenters) {
+    const nearestSegment = Math.min(...geometry.segments.map((x) => Math.abs(x - plus)));
+    expect(nearestSegment, `+ at ${plus} must sit on a connector segment`).toBeLessThanOrEqual(2);
+    const nearestCard = Math.min(...geometry.cardCenters.map((c) => Math.abs(c - plus)));
+    expect(nearestCard, `+ at ${plus} must sit on a card center`).toBeLessThanOrEqual(2);
+  }
+  for (const segment of geometry.segments) {
+    const nearestCard = Math.min(...geometry.cardCenters.map((c) => Math.abs(c - segment)));
+    expect(nearestCard, `connector segment at ${segment} must run through a card center`).toBeLessThanOrEqual(2);
+  }
+
+  await assertTrackedPageErrors(page);
+});
