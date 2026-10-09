@@ -214,6 +214,12 @@ export function renderPorts(
   direction: 'TB' | 'LR' = 'TB',
 ) {
   if (treeMode) {
+    // plan 557 follow-up (taskflow tree + button off-center): the xyflow base
+    // handle CSS already centers the 12px handle via its own
+    // `transform: translate(-50%, …)`; adding Tailwind's independent
+    // `translate: -50%` channel doubled the shift (-12px total), so the handle
+    // center — and with it every chain edge line — sat 6px left of the card
+    // center while the + button centered on the card.
     if (direction === 'LR') {
       return (
         <>
@@ -221,14 +227,14 @@ export function renderPorts(
             portId: 'tree-in',
             direction: 'input',
             position: Position.Left,
-            className: '!-left-1.5 !top-1/2 !-translate-y-1/2',
+            className: '!-left-1.5 !top-1/2',
             testId: 'designer-handle-target-tree-in',
           })}
           {renderHandle({
             portId: 'tree-out',
             direction: 'output',
             position: Position.Right,
-            className: '!-right-1.5 !top-1/2 !-translate-y-1/2',
+            className: '!-right-1.5 !top-1/2',
             testId: 'designer-handle-source-tree-out',
           })}
         </>
@@ -240,14 +246,14 @@ export function renderPorts(
           portId: 'tree-in',
           direction: 'input',
           position: Position.Top,
-          className: '!-top-1.5 !left-1/2 !-translate-x-1/2',
+          className: '!-top-1.5 !left-1/2',
           testId: 'designer-handle-target-tree-in',
         })}
         {renderHandle({
           portId: 'tree-out',
           direction: 'output',
           position: Position.Bottom,
-          className: '!-bottom-1.5 !left-1/2 !-translate-x-1/2',
+          className: '!-bottom-1.5 !left-1/2',
           testId: 'designer-handle-source-tree-out',
         })}
       </>
