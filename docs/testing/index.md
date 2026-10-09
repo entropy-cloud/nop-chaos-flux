@@ -22,6 +22,10 @@ docs/testing/
 
 ## Index (Reverse Chronological)
 
+### 2026-10
+
+- [10-10](2026/10-10.md) — taskflow 树模式"+"按钮相对连线右偏不居中；taskflow 设计器 UI 整体与 flow designer 差距明显（树节点裸文本/导出假反馈/Import 无输入）；gantt 连线删除 X 钮 hover 反复闪烁
+
 ### 2026-07
 
 - [07-12](2026/07-12.md) — CRUD listActions/toolbarLayout 重复渲染；footer 统计重复；分页器和选择器重复渲染；query form 不必要包裹；查询表单字段少；Cards view 初始空内容；分页器缺少首页/末页按钮；Picker CRUD 确认按钮无法点击；Picker 初始显示 ID 而非名称；表单操作按钮未右对齐；Picker CRUD 翻页失效
