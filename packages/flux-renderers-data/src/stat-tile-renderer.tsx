@@ -172,21 +172,21 @@ export function StatTileRenderer(props: RendererComponentProps<StatTileSchema>) 
       data-slot="stat-tile-root"
     >
       {hasLabel ? <div data-slot="stat-tile-label">{labelContent}</div> : null}
-      <div className="flex items-baseline gap-1">
+      <div className="flex min-w-0 items-baseline gap-1">
         {prefix ? (
-          <span data-slot="stat-tile-prefix" className="text-lg text-muted-foreground">
+          <span data-slot="stat-tile-prefix" className="shrink-0 text-lg text-muted-foreground">
             {prefix}
           </span>
         ) : null}
         <span
           data-slot="stat-tile-value"
           data-value={value === undefined ? 'null' : String(value)}
-          className="text-3xl font-semibold tabular-nums tracking-tight"
+          className="min-w-0 truncate text-3xl font-semibold tabular-nums tracking-tight"
         >
           {value === undefined ? '--' : formatValue(value, formatter, i18n.language)}
         </span>
         {suffix ? (
-          <span data-slot="stat-tile-suffix" className="text-lg text-muted-foreground">
+          <span data-slot="stat-tile-suffix" className="shrink-0 text-lg text-muted-foreground">
             {suffix}
           </span>
         ) : null}

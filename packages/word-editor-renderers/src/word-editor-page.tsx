@@ -171,9 +171,9 @@ export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchem
             />
           </div>
         )}
-        <div className="min-w-0 flex-1">
-          <span className="font-medium text-foreground">{t('flux.wordEditor.documentPreview')}</span>
-          <span className="ml-2 truncate" data-testid="word-editor-saved-preview">
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+          <span className="shrink-0 font-medium text-foreground">{t('flux.wordEditor.documentPreview')}</span>
+          <span className="min-w-0 flex-1 truncate" data-testid="word-editor-saved-preview">
             {visiblePreviewText || t('flux.wordEditor.noDocumentData')}
           </span>
         </div>
