@@ -1,0 +1,211 @@
+{
+  "batch": "IS-8c group (plan 554 Phase 1) — scheduling renderer lab 4 页",
+  "date": "2026-10-07",
+  "method": "interaction-state-audit-prompt §4/§6/§9; single review group, fresh-session Playwright chromium; strict-validation; readings convict, screenshots unused; ~30 driven sequences across 4 pages (enumeration + per-page probes + discriminators); every probe passed the fixtures console-error assertion (zero unfiltered console.error/pageerror on all 4 pages); anti-pattern (a) `${event.*}` templates REFUTED with correct-key readings; probe-key casing artifact (lowercase vs camelCase window keys) retracted under §9 with committed-spec cross-check; gantt scroll convictions use raw mouse coordinates at elements already in view (551 auto-scroll discipline)",
+  "devServer": "http://127.0.0.1:4175 (strict-validation)",
+  "pages": ["gantt", "kanban", "calendar", "barcode-input"],
+  "routes": ["#/lab/gantt", "#/lab/kanban", "#/lab/calendar", "#/lab/barcode-input"],
+  "summary": {
+    "rawObservations": 12,
+    "ledgerRows": 8,
+    "byPriority": { "P0": 0, "P1": 1, "P2": 2, "P3": 5 },
+    "watchOnly": 2,
+    "dismissedProbeArtifacts": 1,
+    "watch": 5,
+    "naRegistrations": 4,
+    "perFindingsClass": { "A": 0, "B": 2, "C": 5, "D": 0, "E": 1 }
+  },
+  "readings": "_tmp/is8c-r-*.json (enumerate, gantt, gantt-diag, gantt-diag2, kanban..kanban5, calendar, barcode, barcode2, reverify, ab)",
+  "findings": [
+    {
+      "id": "IS-lab-gantt-001",
+      "page": "lab-gantt",
+      "symptom": "甘特条逃逸对话框表面与时间线 overflow 裁剪（条渲染至 x=1613，对话框表面仅 570..1130，裁剪视口 ~936..1090）；在表面外可见可点的条上下文上 pointerdown 会立即关闭宿主对话框并静默杀死拖拽会话（ghost 从不出现、无 commit、无 toast、无 console error）",
+      "class": "B",
+      "invariant": "V4",
+      "priority": "P1",
+      "route": "#/lab/gantt",
+      "sequence": "open dialog -> read dialog-surface rect {x1:570,x2:1130} + bar3 rect {x:1333..1613} -> mouse.down @bar3 center (1473) -> mid-drag ghost read -> mouse.up -> re-read dialog/gantt presence",
+      "evidence": {
+        "midDrag": "ghostStyle:null (drag session never established)",
+        "after": "dialogPresent:false, ganttPresent:false, bars:[], taskRows:[] (reproduced 2x + first-run same-shape disappearance)",
+        "silent": "zero toasts, zero console.error/pageerror across all runs",
+        "control": "in-surface bar1 click/drag fully works (selection, store commit, scroll preserved)"
+      },
+      "ownership": "renderer (gantt bars layer not clipped into the timeline scroll viewport — gantt-bars.tsx scroll-sync outside-layer pattern candidate; unproven to line) + co-factor demo (560px dialog hosting 1120px content)",
+      "candidateRootCause": "bars absolutely positioned in an unclipped bars layer synced via JS scrollLeft/transform; no overflow clip or max-width clamp; outside-surface hit-testing falls through to dialog dismiss layer",
+      "redE2eSketch": "renderer-lab-c-interaction-state.spec.ts: goto #/lab/gantt -> open dialog -> assert bar3 rect fully inside dialog-surface rect (RED today: 1333..1613 vs 570..1130); alt assertion: mouse.down at bar3 center -> expect dialog-surface still visible after pointerup"
+    },
+    {
+      "id": "IS-lab-gantt-002",
+      "page": "lab-gantt",
+      "symptom": "条边缘 resize 供纳在对话框几何内不可达/无效果：左缘 4px 手势（阈值 6px, gantt-bars.tsx:67）无 commit 且 grid scrollLeft 0→54；右缘 zone 横跨对话框边界不可用",
+      "class": "B",
+      "invariant": "V4",
+      "priority": "P3",
+      "route": "#/lab/gantt",
+      "sequence": "open dialog -> mouse.down @bar1 left edge +4px -> move +80px -> up -> read rows/bars/scrolls",
+      "evidence": "{rows unchanged, bars unchanged, gridScrollLeft 0->54} (once); right-edge zone 1127..1133 vs dialog edge 1130",
+      "ownership": "renderer×demo geometry (secondary manifestation of IS-lab-gantt-001 root family)",
+      "candidateRootCause": "UNPROVEN — bar layer overlapped by grid cells (gesture lands on grid) and/or sync-scroll side effect; 54px mechanism unlocated",
+      "redE2eSketch": "watch-only; re-test resize full path after IS-lab-gantt-001 fix",
+      "watchOnly": true
+    },
+    {
+      "id": "IS-lab-kanban-001",
+      "page": "lab-kanban",
+      "symptom": "空列指针投放永不注册：空列渲染投放邀请（拖拽卡片到此处）但拖拽中 data-drop-target 从未落到空列，drop 后列计数/数据零变化、零反馈；判别组证明卡片落点、列头拖拽、键盘路径（含空列目标）全部正常",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P2",
+      "route": "#/lab/kanban",
+      "sequence": "open kanban dialog -> drag Card Alpha onto empty Done column (raw mouse AND locator.dragTo, 3 specs) -> mid-drag read data-drop-target -> drop -> read column counts + probe; discriminators: keyboard pre-move Alpha->Done then pointer Beta->Done-body (fail) / Beta->Alpha-card (succeed, __c9KanbanMove='kc2|k2|0'); column-header dragTo reorder (succeed)",
+      "evidence": {
+        "emptyDrop": "midDrag {dragging:'Card Alpha', dropTargetCol:null}; after {k1:2,k2:0} unchanged; probe absent; toasts [] — reproduced with both raw mouse and dragTo",
+        "cardTarget": "pointer drop onto card succeeds: cols {k1:0,k2:2}, __c9KanbanMove='kc2|k2|0' count 2",
+        "keyboard": "Space+ArrowRight into empty column succeeds 2/0->1/1 (V5 Escape cancel clean)",
+        "headerDrag": "column reorder k1,k2->k2,k1 succeeds (DnD layer receives Playwright drag events — empty-body failure is not a probe artifact)"
+      },
+      "ownership": "renderer (kanban column drop-zone registration; pragmatic-dnd registerColumn+registerBoardDropZone double-registration candidate from IS-kanban-001)",
+      "candidateRootCause": "same family as IS-kanban-001 (domain page watch); this batch sharpens the failure surface to 'column body never registered as drop zone (empty or not)', card/card-header registration healthy",
+      "redE2eSketch": "goto #/lab/kanban -> open dialog -> dragTo card onto empty column center -> expect k2 card-count 1 (RED today); companion assertion: mid-drag data-drop-target=data-column-id of empty column"
+    },
+    {
+      "id": "IS-lab-calendar-001",
+      "page": "lab-calendar",
+      "symptom": "跨 resource 拖拽出现确认对话框（取消/确认），点确认后事件纹丝不动、零 toast —— lab schema 未声明 onEventChange/onEventCreate，确认链路是保证无操作（承诺改变的反馈为假）",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P2",
+      "route": "#/lab/calendar",
+      "sequence": "open calendar dialog -> drag Morning shift to distant cell -> confirm dialog appears -> click 确认 -> read event titles + toasts + probe channel",
+      "evidence": "after confirm: {eventTitles unchanged, toasts:[], no dispatch evidence}; schema c9CalendarDialogSchema declares only loadAction+onEventClick; mid-drag ghost/preview reads null (long-press threshold not met — probe limitation, watch)",
+      "ownership": "demo wiring (lab schema lacks persistence events; IS-scheduling-calendar-001 adjudicated renderer payload sufficient, demo owns persistence) × renderer secondary (confirm dialog offered with no possible persistence — honest-feedback gap candidate)",
+      "candidateRootCause": "calendar executeSwap dispatches onEventChange (undefined) and closes; renderer does not degrade confirm flow when no handler declared (unproven)",
+      "redE2eSketch": "goto #/lab/calendar -> open dialog -> drag event cross-resource -> confirm -> expect event block moved to target cell OR explicit preview-only notice (RED today: neither)"
+    },
+    {
+      "id": "IS-lab-calendar-002",
+      "page": "lab-calendar",
+      "symptom": "grid monthShape 场景页面文案承诺 'Clicking a date cell dispatches onDateSelect'，schema 未声明 onDateSelect —— 点击只有本地选择视觉（data-selected + bg/border 变化），dispatch 不存在",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P3",
+      "route": "#/lab/calendar",
+      "sequence": "read scenario description -> click grid cell -15 -> read selection attrs/styles + probe",
+      "evidence": "before {ariaSelected:null, dataSelected:null, bg transparent} -> after {dataSelected:'true', bg rgb(236,243,254), border rgb(28,110,242)}; schema gridCalendarSchema has no onDateSelect; description text renders in scenario-description element",
+      "ownership": "demo schema/copy (description-wiring mismatch, IS-lab-checkbox-group-001 dead-declaration family)",
+      "candidateRootCause": "scenario copy written from renderer capability list without wiring onDateSelect in schema",
+      "redE2eSketch": "n/a behavioral (visual feedback real); fix is schema+copy alignment; note: cell lacks aria-selected (a11y side-note on this row)"
+    },
+    {
+      "id": "IS-lab-barcode-input-001",
+      "page": "lab-barcode-input",
+      "symptom": "扫描钮在 camera-less 环境静默 no-op：click 后 1.5s/5.5s 双时点读数 overlay/video/error/toast 全空、按钮驻留（IS-barcode-input-001 域页 watch 的 lab 形态读数确认）",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P3",
+      "route": "#/lab/barcode-input",
+      "sequence": "click barcode-scan-button -> read overlay/video/error/toasts at t1500 and t5500",
+      "evidence": "{overlay:false, video:false, scanBtnStill:true, errorRegion:null, toasts:[]} at both timestamps; headless environment caveat per precedent (severity environment-dependent)",
+      "ownership": "renderer (!isAvailable branch has no user feedback; precedent IS-barcode-input-001 watch-only)",
+      "candidateRootCause": "checkCameraAvailability resolves isAvailable=false -> silent return; no inline notice, button not hidden",
+      "redE2eSketch": "watch-only (environment-dependent); fix path: inline camera-unavailable notice or hide scan button when unavailable",
+      "watchOnly": true
+    },
+    {
+      "id": "IS-lab-barcode-input-002",
+      "page": "lab-barcode-input",
+      "symptom": "required 校验失败的 toast 同文重复：'Barcode不能为空；Barcode不能为空'（t3000 仍驻留），行内错误仅 1 份 —— 双通知候选",
+      "class": "C",
+      "invariant": "V3",
+      "priority": "P3",
+      "route": "#/lab/barcode-input",
+      "sequence": "empty submit -> read toast text + inline error at t500 and t3000",
+      "evidence": "toast textContent 'Barcode不能为空；Barcode不能为空' persists to t3000; inline error single 'Barcode不能为空' (text-xs text-destructive); reproduced in dedicated run",
+      "ownership": "renderer/form notify channel candidate (dual notify aggregation; channel unlocated — candidate chain)",
+      "candidateRootCause": "UNPROVEN — submit validation failure notifying through both form-level and field-level channels, aggregated by toast",
+      "redE2eSketch": "goto #/lab/barcode-input -> empty submit -> expect toast message count 1 / text without duplicate (RED today)"
+    },
+    {
+      "id": "IS-lab-barcode-input-003",
+      "page": "lab-barcode-input",
+      "symptom": "表单级校验错误未与输入编程关联：错误文本可见但 input 无 aria-invalid/aria-describedby（aria 关联仅接本地扫描校验通道）",
+      "class": "E",
+      "invariant": "V6",
+      "priority": "P3",
+      "route": "#/lab/barcode-input",
+      "sequence": "empty submit -> read input aria attributes + error element",
+      "evidence": "{ariaDescribedBy:null, ariaRequired:null} while error element 'Barcode不能为空' renders; source: aria-describedby bound only to local scan validationError, formError not wired",
+      "ownership": "renderer (form-error -> aria channel missing in barcode-input.tsx)",
+      "candidateRootCause": "aria-describedby = validationError ? errorId : undefined — form model errors bypass",
+      "redE2eSketch": "empty submit -> expect input[aria-invalid=true][aria-describedby] resolving to the error element (RED today)"
+    }
+  ],
+  "dismissedProbeArtifacts": [
+    {
+      "observation": "四页全部 probe:* 动作静默无执行（__c9ganttClick 等窗口键读空）——曾立案 'schema host 动作通道死'",
+      "retraction": "审查组键名大小写伪影：data-c9-host.ts 键为 __c9GanttClick（camelCase），探针读 __c9ganttClick；对照 committed tests/e2e/component-lab/c9-host-surfaces.spec.ts（4/4 绿）+ 正确键全量重测（_tmp/is8c-r-reverify.json）：__c9GanttClick='g1', __c9KanbanCard='kc1|0', __c9KanbanMove='kc1|k2|0'(kb)/'kc2|k2|0'(pointer-to-card), __c9CalLoad='loaded', __c9CalEvent='ce1|Morning shift', __c9BarcodeSubmit='6901234567892' 全部解析（recurse-001 同型教训）"
+    }
+  ],
+  "watch": [
+    "gantt 左缘 resize 无 commit + grid scrollLeft 0→54 机制链（IS-lab-gantt-002 内注记，候选链路未证实）",
+    "月矩阵事件块 11px 宽可读性密度（域页 IS-3 范围，不重复立案）",
+    "calendar 拖拽 mid-drag ghost/preview null（长按阈值探针局限）",
+    "barcode 扫描钮 cameraAvailable=false 后按钮去留与反馈（IS-barcode-input-001 watch 范围）",
+    "invalid submit 双通知确切通道（IS-lab-barcode-input-002 承载表现定罪，通道候选未证实）"
+  ],
+  "naRegistrations": [
+    "lab-gantt 键盘编辑器/link 拖拽/undo 栈（schema 未声明、编辑器形态；plan 554 Non-Goals 场景覆盖度不审）",
+    "lab-kanban 列宽 resize 手柄/tag filter（无触发条件场景未渲染）",
+    "calendar print/PNG/ICal reactions（@reserved 非交互状态面）",
+    "barcode WASM 扫描成功路径（headless 无摄像头，环境性 n-a，IS-barcode-input-001 同口径）"
+  ],
+  "checklists": {
+    "gantt": [
+      "工具栏四钮齐全 + icon 钮 aria-label（缩小/放大）",
+      "bar 点击选中态 + __c9GanttClick='g1'（${_taskId} 解析, V3）",
+      "点选前后 timeline/grid scrollLeft 163/0 不变（V1）",
+      "对话框内拖拽提交：store 更新 + 行日期改写 + 条位移（V3）",
+      "拖拽提交前后 scrollLeft 不变（V1，IS-2 契约 lab 形态成立）",
+      "放大锚定今日线视口 x 不动（cellWidth ×2, sl 163→403, V2）",
+      "缩小/适应/今日读数自洽",
+      "拖拽 ghost + 2px 落点指示跟手（表面内 V4）",
+      "今日线/周末底色/可见数播报渲染（纯展示）",
+      "zero console.error/pageerror"
+    ],
+    "kanban": [
+      "卡片点击 payload kc1|0（V3）",
+      "键盘 reorder 全链路 Space/Arrow/Escape，空列目标可达（V3+V5）",
+      "指针 卡片→卡片 跨列移动 + onCardMove payload（V3）",
+      "列头拖拽换序 k1,k2→k2,k1（V3）",
+      "cardTemplate 面 'FACE Alpha · idx 0'（$slot 绑定解析, V3）",
+      "搜索过滤/恢复（V3）",
+      "+添加卡片 2→3（V3）",
+      "空列邀请槽存在（存在性 ✓；诚实性见 IS-lab-kanban-001）",
+      "data-card-count/aria-grabbed/data-keyboard-dragging 状态属性如实翻转",
+      "对话框 Escape 关闭（V5）；zero console.error/pageerror"
+    ],
+    "calendar": [
+      "loadAction 挂载即发 'loaded'（V3）",
+      "onEventClick payload 'ce1|Morning shift'（${event.id}|${event.title} 解析）",
+      "月/周/日切换 cells 62→21→25、事件 2→1 真实变化（V3）",
+      "视图钮 aria-pressed 翻转（V6）",
+      "拖选创建提示可见且文案具体（IS-3 E 类补课生效）",
+      "事件块按 resource 行落位（纯展示）",
+      "grid 月网格 42 格（V3 形状）",
+      "grid 日格点击选择反馈 data-selected+bg/border（V3 视觉）",
+      "跨列拖拽确认对话框 affordance 存在（诚实性见 IS-lab-calendar-001）",
+      "Escape 关闭（V5）；zero console.error/pageerror"
+    ],
+    "barcode-input": [
+      "手动输入提交 echo '6901234567892'（V3）",
+      "空值提交拦截：行内错误 + 提交计数 0（V3）",
+      "扫描钮 aria-label 扫描条码",
+      "clearable 未声明 → 无 clear 钮（schema-honest，非死供纳）",
+      "聚焦边框变色 rgb(28,110,242)（V6）",
+      "提交成功后无异常视图跳变（V1）",
+      "zero console.error/pageerror"
+    ]
+  }
+}
