@@ -56,7 +56,11 @@ export function GanttLinks({ store, className, onLinkClick, onLinkRemove }: Gant
       {links.map((link) => {
         const isHovered = hoveredLink === link.id;
         return (
-          <g key={String(link.id)}>
+          <g
+            key={String(link.id)}
+            onMouseEnter={() => setHoveredLink(link.id)}
+            onMouseLeave={() => setHoveredLink(null)}
+          >
             <polyline
               points={link.$p}
               fill="none"
@@ -85,10 +89,8 @@ export function GanttLinks({ store, className, onLinkClick, onLinkRemove }: Gant
                   return;
                 }
               }}
-              onMouseEnter={() => setHoveredLink(link.id)}
-              onMouseLeave={() => { setHoveredLink(null); }}
-              onClick={() => { handleLinkClick(link.id); setHoveredLink(link.id === hoveredLink ? null : link.id); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { handleLinkClick(link.id); setHoveredLink(link.id === hoveredLink ? null : link.id); } }}
+              onClick={() => { handleLinkClick(link.id); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { handleLinkClick(link.id); } }}
               role="button"
               tabIndex={0}
               aria-label={t('scheduling.gantt.linkLabel', { id: String(link.id) })}

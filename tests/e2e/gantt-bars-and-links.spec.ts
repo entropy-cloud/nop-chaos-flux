@@ -257,3 +257,100 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
     await assertTrackedPageErrors(page);
   });
 });
+
+// IS-taskflow-designer-007 family (gantt sibling, user-reported): the link
+// delete (X) button renders conditionally at the link midpoint INSIDE the
+// hit polyline's hover area — parking the pointer there oscillated (X mounts
+// → steals the pointer → polyline mouseleave → X unmounts → re-entered →
+// remounts …). The fix scopes hover clearing to the link group: the X stays
+// mounted and stable while the pointer rests on it.
+test('link delete button is stable when hovering the link midpoint (no flicker)', async ({ page }) => {
+  await page.goto(ROUTE, { waitUntil: 'commit' });
+  await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.nop-gantt-link-line').first()).toBeVisible({ timeout: 10_000 });
+
+  // Engage the link hover: the demo loads with the links right of the
+  // viewport and bars can cover segments, so iterate over polyline vertices
+  // (find → move → verify hovered) until the hover engages.
+  const collectCandidates = () =>
+    page.evaluate(() => {
+      const svg = document.querySelector('.nop-gantt-links');
+      if (!svg) return [];
+      const sr = svg.getBoundingClientRect();
+      const out: Array<{ x: number; y: number }> = [];
+      for (const pl of svg.querySelectorAll('.nop-gantt-link-line')) {
+        const pts = (pl.getAttribute('points') ?? '').split(' ').map((p) => p.split(',').map(Number));
+        for (const pt of pts) {
+          const x = Math.round(sr.x + pt[0]);
+          const y = Math.round(sr.y + pt[1]);
+          if (x > 320 && x < 1150 && y > 150 && y < 640) out.push({ x, y });
+        }
+      }
+      return out;
+    });
+
+  let hoveredEngaged = 0;
+  outer: for (let round = 0; round < 4; round++) {
+    const candidates = await collectCandidates();
+    if (candidates.length === 0) {
+      // The timeline scroll is managed by the gantt's own scroll-sync — use
+      // the toolbar fit button to bring every link into view instead.
+      const fit = page.getByRole('button', { name: /適応|适应|fit/i });
+      if ((await fit.count()) > 0) {
+        await fit.first().click();
+        await page.waitForTimeout(500);
+      }
+      continue;
+    }
+    for (const c of candidates) {
+      await page.mouse.move(c.x, c.y);
+      await page.mouse.move(c.x + 1, c.y);
+      hoveredEngaged = await page.evaluate(
+        () => document.querySelectorAll('.nop-gantt-link-line.hovered').length,
+      );
+      if (hoveredEngaged > 0) break outer;
+    }
+  }
+  expect(hoveredEngaged, 'hover never engaged on any link vertex').toBeGreaterThan(0);
+
+  // The X mounts at the hovered link's midpoint. Move the pointer onto the X
+  // itself: pre-fix this covered the hit polyline with the X, firing the
+  // polyline's mouseleave and unmounting the X under the pointer (flicker);
+  // post-fix the link group keeps it mounted and stable.
+  const xRect = await page.evaluate(() => {
+    const el = document.querySelector('[class*="link-delete-btn"]');
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) };
+  });
+  expect(xRect).toBeTruthy();
+
+  await page.mouse.move(xRect.x, xRect.y);
+  await page.mouse.move(xRect.x + 1, xRect.y);
+  await page.waitForTimeout(400);
+
+  // Stability: the X must stay mounted with the pointer resting on it.
+  const stability = await page.evaluate(async () => {
+    let mounts = 0;
+    let unmounts = 0;
+    let present = false;
+    const probe = () => {
+      const el = document.querySelector('[class*="link-delete-btn"]');
+      if (el && !present) { present = true; mounts++; }
+      if (!el && present) { present = false; unmounts++; }
+    };
+    const iv = setInterval(probe, 20);
+    const t0 = Date.now();
+    while (Date.now() - t0 < 1000) {
+      probe();
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    clearInterval(iv);
+    probe();
+    return { mounts, unmounts, presentAtEnd: present };
+  });
+  expect(stability.unmounts, `X flickered: ${JSON.stringify(stability)}`).toBe(0);
+  expect(stability.presentAtEnd).toBe(true);
+
+  await assertTrackedPageErrors(page);
+});
