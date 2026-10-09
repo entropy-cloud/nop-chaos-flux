@@ -48,3 +48,31 @@
 判别口径修正（先红后绿纪律保留的红用例现全绿）：taskflow Delete 断言改为 `.react-flow__node[data-id="script-2"]` 计数 0（原"总数减一"断言对分支占位卡渲染不判别）；spreadsheet 按钮判别用标准 `disabled` 属性 + 双语 aria-label 集合（getByRole button name）。
 
 e2e 全量：tests/e2e/designer-interaction-state.spec.ts 5/5 passed（2026-10-08，修复后复检；closure audit R1 修 SS-1 判别 + host-1 abort 语义后复跑 5/5 passed）。原始 survey 读数存本目录 survey-readings.json。
+
+## plan 556 附节：taskflow-002 残余收口（2026-10-09）
+
+### tree 投影同步 v1 契约（Decision 落定）
+
+- 判定输入（探针，生产同路径）：`createTreeDesignerCore(demo treeDocument, demo config)` + `buildDesignerHostProjection({ snapshot })` 实测投影形状——graph 形 nodes（id/type/position，**无 data/step 载荷**）+ edges（id/source/target，**无 branch/continuation 判别数据**：内部 `__fdTree` 载荷被宿主投影 `sanitizeProjectedEdgeForHost` 剥离）；节点类型 `tf-entry/tf-sequential/tf-script/tf-if/tf-invoke`，`tf-` 前缀剥离后即 lib step 类型（复用 `resolveGraphNodeStepType`）。
+- v1 契约（`syncFromTreeProjectionDoc`，sync.ts）：从 tf-entry（或首个无入边节点）链式行走；branch-capable 类型（if/choose/parallel）的全部出边按投影边序读作分支（`if`→then/else[/case…]；`choose`→case…[otherwise]；`parallel`→parallel-body），fan-out 终结主链（**continuation-after-branch 不可从消毒后投影重建**——v1 显式不支持）；step 载荷按 id 自既有模型合并、否则按类型默认（**显示名默认为节点 id**——画布标签存于 data.step，不达 imported-library scope）。
+- bootstrap：fresh tree page 的 save/export 走 `bootstrapTreeModel`（dingflow profile root + `syntheticRootId: '__synthetic_root__'`，与 dsl.ts 解析先例一致）——旧实现报 "No authoring model available." 的两面（Save/Export）收敛。
+- 判别性单测（旧实现必挂）：sync.test.ts plan 556 组 4 例（save bootstrap / export lowering / re-save 不重复 / import-json 返回 `projectedTreeDoc`）红→绿实测；既有 7 例零回归。
+- import-json 扩展：dingflow-profile DSL 返回 `projectedTreeDoc`（`projectToTreeDocument`），供宿主注入 schema `treeDocument` 键（graph 注入 `document` 的对称通道）。
+
+### 宿主现场读数（修复前基线，2026-10-09 live）
+
+- tree tab Save → 错误 toast "No authoring model available."；tree tab Export → "No authoring model available. Call set-authoring-model first."；Import（两 tab）→ "import-json requires a valid nop-task JSON payload"（工具栏 `invokeAction` 恒 payload=undefined，结构性不可传参）。
+- graph tab Export 假反馈：成功 toast "已导出到检查器输出" 但 DSL 无任何去处（toolbar 丢弃返回值、lib 纯函数、无剪贴板/检查器 sink——右侧检查器实测仅节点属性）。
+- 附带捕获：切 tree tab 宿主拒绝噪声 "Tree host input rejected: tree-host-epoch-required"（来源 tree-session epoch 契约，Phase 3 裁定）。
+
+### Phase 3 处置（demo Export/Import 真实化）
+
+- Export：两 schema Export 按钮改 `designer:export`（designer 内建 JSON panel，`data-slot="designer-json-panel"`，真实文档 JSON 面），假 toast 链（"已导出到检查器输出"）删除。注意：该 panel 为模态对话框（Base UI 默认 modal，背景 aria-hidden）——`taskflow-designer-ui.spec.ts` 旧行为断言（Export 后直接点 Save）按新现实更新为 Export→panel 可见→Escape 关闭→Save。
+- Import：schema Import 按钮改 `taskflow-page:request-import`（页面自注册 namespace——**不可用 `designer:` 前缀**：designer 页面体在子 scope 注册了带契约表的 `designer` namespace，会遮蔽页面同名 namespace 并以 "not a published host method" 拒绝）；页面级粘贴 dialog（@nop-chaos/ui Dialog+Textarea）→ 页面自持 lib 实例 `import-json` 解析 → 成功把投影注入 schema 文档键（graph `document` / tree `treeDocument`）并按 key 重挂载 + success toast（N 个节点）；失败 error toast（导入失败：<原因>）。画布文档替换后渲染器 import frame 重建 lib 实例，无跨实例状态共享。
+- 顺带修复休眠缺陷：`projection.ts` `stepToTreeNode` 原样把 step 类型写入树节点 type（`'script'`），而 dingflow 设计器注册的是 `tf-*` 节点类型——`projectToTreeDocument` 产物此前从未被真正喂回设计器（本批导入流程为首个消费者），首次接线即 createTreeDesignerCore 校验失败、画布空。修复：`stepTypeToTreeNodeType`（`tf-` 前缀；`graph` 步类型无树节点等价物 → 投影为 `tf-sequential` 容器节点，注释在案）。
+- 反馈语言统一：导入成功/失败 toast 中文（与 demo 既有 toast 一致）。
+- e2e：`tests/e2e/taskflow-io-interaction-state.spec.ts`（新，5 用例：tree Save 已保存 / graph+tree Export 打开 JSON panel 且无假 toast / import 全旅程含画布节点替换断言 / 非法粘贴 error toast + 画布不变）5/5 绿；重挂载吞 toast 的时序用 initScript 单调 toast 记录器判别（活体 DOM 轮询在重挂载主线程阻塞下不可靠）。既有 `taskflow-designer-ui.spec.ts` 8 例 + `designer-interaction-state.spec.ts` 5 例回归全绿（Export 断言按新面更新）。
+
+### tree-host-epoch-required 裁定（Decision）
+
+切 tree tab 即弹 "Tree host input rejected: tree-host-epoch-required" 错误 toast（零用户操作；经 `reportRuntimeHostIssue` 默认 `notify!==false` → `env.notify` → 用户可见，非纯 console 噪声）。定位：`tree-session.ts` `applyHostInput` 无 ack 字段路径的 echo-miss 分支（`:430` `no-change-action-epoch-required`，dingflow demo 未声明 `treeDocumentChangeAction`）；完整 epoch/ack 握手溯源（为何 entry 时 echo-miss）属独立 successor。**显式 watch-only**（新台账行 IS-taskflow-designer-004，P3/F 类），不静默。

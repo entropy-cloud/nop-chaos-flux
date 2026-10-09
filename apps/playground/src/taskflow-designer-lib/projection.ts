@@ -128,10 +128,17 @@ function buildTreeFromSteps(steps: TaskFlowStep[]): TreeNode {
   return syntheticRoot;
 }
 
+// plan 556: the dingflow designer's config registers `tf-*` node types — a
+// bare step type ('script') fails createTreeDesignerCore validation. 'graph'
+// has no tree node equivalent; it projects as a sequential container node.
+function stepTypeToTreeNodeType(stepType: TaskFlowStep['type']): string {
+  return stepType === 'graph' ? 'tf-sequential' : `tf-${stepType}`;
+}
+
 function stepToTreeNode(step: TaskFlowStep): TreeNode {
   const node: TreeNode = {
     id: step.id,
-    type: step.type,
+    type: stepTypeToTreeNodeType(step.type),
     data: { step },
   };
 
@@ -143,10 +150,10 @@ function stepToTreeNode(step: TaskFlowStep): TreeNode {
       };
 
       if (branch.steps.length > 0) {
-        let current: TreeNode = { id: branch.steps[0].id, type: branch.steps[0].type, data: { step: branch.steps[0] } };
+        let current: TreeNode = { id: branch.steps[0].id, type: stepTypeToTreeNodeType(branch.steps[0].type), data: { step: branch.steps[0] } };
         tb.child = current;
         for (let i = 1; i < branch.steps.length; i++) {
-          const next: TreeNode = { id: branch.steps[i].id, type: branch.steps[i].type, data: { step: branch.steps[i] } };
+          const next: TreeNode = { id: branch.steps[i].id, type: stepTypeToTreeNodeType(branch.steps[i].type), data: { step: branch.steps[i] } };
           current.child = next;
           current = next;
         }

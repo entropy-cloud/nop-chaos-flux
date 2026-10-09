@@ -12,7 +12,7 @@ import type {
 } from './types.js';
 import { createContainerStack, type TaskFlowContainerStack } from './types.js';
 import { projectToGraphDocument, projectToTreeDocument } from './projection.js';
-import { syncFromGraphDocument, syncFromTreeDocument } from './sync.js';
+import { syncFromGraphDocument, syncFromTreeDocument, syncFromTreeProjectionDoc } from './sync.js';
 import { lowerToTaskFlowDSL } from './lowering.js';
 import { validateAuthoringModel } from './validation.js';
 import { parseNopTaskDSL, tryParseJson as parseTaskflowJson, type NopTaskDSLInput } from './dsl.js';
@@ -76,31 +76,43 @@ function buildGraphDocFromProjection(doc: DesignerProjection['doc']): GraphDocum
   };
 }
 
+function bootstrapTreeModel(doc: DesignerProjection['doc']): TaskFlowAuthoringModel {
+  return {
+    kind: 'nop-taskflow',
+    schemaVersion: '1.0',
+    task: { version: 1, graphMode: false, restartable: false, defaultSaveState: true, useParentBeanContainer: false, recordMetrics: false },
+    root: { id: 'root', profile: 'dingflow', name: doc.name, steps: [], syntheticRootId: '__synthetic_root__' },
+  } as unknown as TaskFlowAuthoringModel;
+}
+
 function flushDesignerProjectionIntoModel(
   ctx: ActionContext,
   model: TaskFlowAuthoringModel | null,
   containerId: string | null,
 ): TaskFlowAuthoringModel | null {
   const designerDoc = getDesignerDoc(ctx);
-  // (doc.kind: workflow tab = 'nop-taskflow-workflow' → graph sync; tree tab doc → successor gap)
-  if (!designerDoc || designerDoc.kind !== 'nop-taskflow-workflow') {
-    // plan 547 (taskflow-1): tree (dingflow) documents need a tree-structure
-    // doc→model sync that the lib does not provide yet — registered as a
-    // successor gap (plan 547 Deferred); graph documents take the full path.
-    return model;
-  }
+  if (!designerDoc) return model;
   // plan 547 (taskflow-1): a fresh page has no authoring model until
-  // set-authoring-model is dispatched — previously save/export on a
-  // never-initialized page failed with 'No authoring model available.' even
-  // though the designer document holds the full current state. Bootstrap a
-  // minimal workflow model + root container and let the projection sync fill.
+  // set-authoring-model is dispatched — bootstrap a minimal model and let the
+  // projection sync fill.
+  if (designerDoc.kind !== 'nop-taskflow-workflow') {
+    // plan 556 (taskflow-002): tree (dingflow) documents take the
+    // tree-projection sync; the host projection is graph-shaped without step
+    // payloads, so the sync is structure-level (see syncFromTreeProjectionDoc
+    // v1 contract in sync.ts).
+    if (designerDoc.kind !== 'nop-taskflow-dingflow') {
+      return model;
+    }
+    const effectiveModel = model ?? bootstrapTreeModel(designerDoc);
+    return syncFromTreeProjectionDoc(effectiveModel, containerId ?? 'root', designerDoc);
+  }
   const bootstrapped = !model;
   const effectiveModel = model ?? {
     kind: 'nop-taskflow',
     schemaVersion: '1.0',
     task: { version: 1, graphMode: true, restartable: false, defaultSaveState: true, useParentBeanContainer: false, recordMetrics: false },
     root: { id: 'root', profile: 'workflow', enterStepRefs: [], exitStepRefs: [], nodes: [], edges: [] },
-  };
+  } as unknown as TaskFlowAuthoringModel;
   const effectiveContainerId = containerId ?? 'root';
 
   const synced = syncFromGraphDocument(effectiveModel, effectiveContainerId, buildGraphDocFromProjection(designerDoc));
@@ -357,6 +369,12 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
             const projectedDoc = parsed.model.root.profile === 'workflow'
               ? projectToGraphDocument({ authoringModel: parsed.model, containerId: activeContainerId })
               : null;
+            // plan 556 (taskflow-002): tree-profile imports project a
+            // TreeDocument too so the host can inject it into the designer's
+            // `treeDocument` schema key (graph imports inject `document`).
+            const projectedTreeDoc = parsed.model.root.profile === 'workflow'
+              ? null
+              : projectToTreeDocument({ authoringModel: parsed.model, containerId: activeContainerId });
 
             return {
               ok: true,
@@ -365,6 +383,7 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
                 containerId: activeContainerId,
                 profile: parsed.model.root.profile,
                 projectedDoc,
+                projectedTreeDoc,
               },
             };
           }

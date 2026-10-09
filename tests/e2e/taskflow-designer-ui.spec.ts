@@ -183,10 +183,16 @@ test('TaskFlow (Graph) toolbar buttons are functional (export + save)', async ({
   const toolbar = page.locator('[data-testid="designer-toolbar"]').first();
   await expect(toolbar).toBeVisible();
 
+  // plan 556: Export toggles the designer's built-in JSON panel (a real
+  // surface). The panel is modal — background content (the toolbar) is
+  // aria-hidden while it is open, so close it before pressing Save.
   const exportBtn = toolbar.getByRole('button', { name: 'Export' });
   await expect(exportBtn).toBeVisible();
   await exportBtn.click();
-  await page.waitForTimeout(500);
+  const jsonPanel = page.locator('[data-slot="designer-json-panel"]');
+  await expect(jsonPanel).toBeVisible({ timeout: 10_000 });
+  await page.keyboard.press('Escape');
+  await expect(jsonPanel).toBeHidden({ timeout: 10_000 });
 
   const saveBtn = toolbar.getByRole('button', { name: 'Save' });
   await expect(saveBtn).toBeVisible();

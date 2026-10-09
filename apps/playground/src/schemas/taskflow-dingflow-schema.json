@@ -717,22 +717,13 @@
         },
         {
           "type": "button",
-          "action": "taskflow:export-json",
+          "action": "designer:export",
           "label": "Export",
-          "icon": "download",
-          "then": [
-            {
-              "action": "showToast",
-              "args": {
-                "message": "已导出到检查器输出",
-                "level": "success"
-              }
-            }
-          ]
+          "icon": "download"
         },
         {
           "type": "button",
-          "action": "taskflow:import-json",
+          "action": "taskflow-page:request-import",
           "label": "Import",
           "icon": "upload"
         },

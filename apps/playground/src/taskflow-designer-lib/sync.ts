@@ -300,3 +300,122 @@ export function syncFromTreeDocument(
 
   return authoringModel;
 }
+
+// plan 556: branch-capable step types whose projection out-edges are read as
+// branch fan-outs in the tree-projection sync below.
+const TREE_BRANCH_STEP_TYPES: ReadonlySet<TaskFlowStepType> = new Set<TaskFlowStepType>([
+  'if',
+  'choose',
+  'parallel',
+]);
+
+function treeBranchTypeFor(stepType: TaskFlowStepType, index: number, total: number): TaskFlowTreeBranchType {
+  if (stepType === 'if') {
+    return index === 0 ? 'then' : index === 1 ? 'else' : 'case';
+  }
+  if (stepType === 'choose') {
+    return index === total - 1 ? 'otherwise' : 'case';
+  }
+  if (stepType === 'parallel') {
+    return 'parallel-body';
+  }
+  return 'case';
+}
+
+/**
+ * plan 556: sync a dingflow tab's host projection doc (graph-shaped summary:
+ * nodes id/type/position + edges in tree-emission order — NO step payloads and
+ * NO branch/continuation discriminator, the internal `__fdTree` payload is
+ * sanitized away by the host projection) into a dingflow-profile container.
+ *
+ * V1 contract: chain walk from the synthetic entry; a branch-capable step's
+ * out-edges ALL become branches in edge order (`if` → then/else[/case…]);
+ * fan-outs terminate the chain (continuation-after-branch is not
+ * reconstructable from the sanitized projection). Step payloads are preserved
+ * from the existing model by step id, else defaulted from the node type.
+ */
+export function syncFromTreeProjectionDoc(
+  authoringModel: TaskFlowAuthoringModel,
+  containerId: string,
+  doc: {
+    nodes: ReadonlyArray<{ id: string; type: string }>;
+    edges: ReadonlyArray<{ source: string; target: string }>;
+  },
+): TaskFlowAuthoringModel {
+  const container = findContainer(authoringModel, containerId);
+  if (!container || container.profile !== 'dingflow') {
+    throw new Error(`Container not found or not tree mode: ${containerId}`);
+  }
+  const treeContainer = container as TaskFlowTreeContainer;
+
+  const existingSteps = new Map<string, TaskFlowStep>();
+  const indexExisting = (steps: TaskFlowStep[]) => {
+    for (const step of steps) {
+      existingSteps.set(step.id, step);
+      if (step.branches) {
+        for (const branch of step.branches) indexExisting(branch.steps);
+      }
+    }
+  };
+  indexExisting(treeContainer.steps);
+
+  const nodeMap = new Map(doc.nodes.map((node) => [node.id, node]));
+  const outgoing = new Map<string, string[]>();
+  const incoming = new Set<string>();
+  for (const edge of doc.edges) {
+    const targets = outgoing.get(edge.source) ?? [];
+    targets.push(edge.target);
+    outgoing.set(edge.source, targets);
+    incoming.add(edge.target);
+  }
+
+  const buildStep = (nodeId: string, visited: Set<string>): TaskFlowStep | null => {
+    const node = nodeMap.get(nodeId);
+    if (!node) return null;
+    const existing = existingSteps.get(nodeId);
+    const stepType = resolveGraphNodeStepType(node.type, existing);
+    const step = existing ? cloneTreeStep(existing) : createDefaultStep(stepType, nodeId);
+    step.id = nodeId;
+
+    if (TREE_BRANCH_STEP_TYPES.has(stepType)) {
+      const targets = outgoing.get(nodeId) ?? [];
+      step.branches = targets.map((target, index) => ({
+        id: `${nodeId}-b${index + 1}`,
+        data: createBranchData({ branchType: treeBranchTypeFor(stepType, index, targets.length) }),
+        steps: collectChain(target, visited),
+      }));
+    }
+    return step;
+  };
+
+  const collectChain = (startId: string, visited: Set<string>): TaskFlowStep[] => {
+    const steps: TaskFlowStep[] = [];
+    let cursor: string | undefined = startId;
+    while (cursor && !visited.has(cursor)) {
+      visited.add(cursor);
+      const node = nodeMap.get(cursor);
+      if (!node) break;
+      const stepType = resolveGraphNodeStepType(node.type, existingSteps.get(cursor));
+      if (TREE_BRANCH_STEP_TYPES.has(stepType)) {
+        const branchStep = buildStep(cursor, visited);
+        if (branchStep) steps.push(branchStep);
+        // v1: fan-out terminates the chain — out-edges were consumed as branches.
+        break;
+      }
+      const step = buildStep(cursor, visited);
+      if (step) steps.push(step);
+      cursor = outgoing.get(cursor)?.[0];
+    }
+    return steps;
+  };
+
+  const entryNode = doc.nodes.find((node) => node.type === 'tf-entry');
+  const fallbackStart = entryNode
+    ? undefined
+    : (doc.nodes.find((node) => !incoming.has(node.id))?.id ?? doc.nodes[0]?.id);
+  const chainStart = entryNode ? outgoing.get(entryNode.id)?.[0] : fallbackStart;
+  const visited = new Set<string>(entryNode ? [entryNode.id] : []);
+  treeContainer.steps = chainStart ? collectChain(chainStart, visited) : [];
+
+  return authoringModel;
+}
