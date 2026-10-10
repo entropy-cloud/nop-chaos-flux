@@ -1,4 +1,4 @@
-# 102. 空依赖 loadAction reaction fail-open：wizard 内 picker 弹框真实点击主线程卡死 30s+
+# 169. 空依赖 loadAction reaction fail-open：wizard 内 picker 弹框真实点击主线程卡死 30s+
 
 - **日期**: 2026-10-11
 - **受影响组件**: `flux-runtime` renderer-reaction-handle × `flux-react` fragment scope × `flux-renderers-layout` wizard（valuesPath 表单）× `flux-renderers-data` crud（loadAction reaction）
