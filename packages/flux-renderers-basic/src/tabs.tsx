@@ -314,10 +314,15 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
       className={cn(
         orientation === 'horizontal'
           ? isMobile
-            ? 'nop-scrollbar-hide overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+            ? 'nop-scrollbar-hide overflow-x-auto overflow-y-hidden whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
             : // [G1-R6-视角8-01] desktop shares the horizontal overflow contract:
               // a w-fit TabsList in a narrow container must scroll, not clip.
-              'overflow-x-auto whitespace-nowrap'
+              // overflow-y-hidden pairs with overflow-x-auto (computed y would
+              // otherwise become auto): the triggers' line-variant after:
+              // indicator (bottom-[-5px]) extends past the list padding box by
+              // ~1px, and a phantom vertical scrollbar appeared on every
+              // horizontal tab bar (docs/testing/2026/10-10.md #39).
+              'overflow-x-auto overflow-y-hidden whitespace-nowrap'
           : undefined,
       )}
     >

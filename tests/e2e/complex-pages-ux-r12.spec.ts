@@ -226,3 +226,29 @@ test('cp8-linear-polish: topbar unclipped, dark table header, bulk bar selection
   );
   expect(state.bulkHidden, 'bulk bar hidden at zero selection').toBe(true);
 });
+
+// docs/testing/2026/10-10.md #39：tabs 触发器的 line-variant after: 指示条
+// （bottom-[-5px]）伸出 TabsList padding 盒 ~1px，而渲染器只声明了
+// overflow-x-auto（未声明的 y 轴按 CSS 规则计算为 auto）→ 所有水平 tab 栏
+// 出现幻影垂直滚动条。修复契约 = 水平 tablist 的 computed overflow-y 必须
+// 不是 auto/scroll（scrollHeight 在 hidden 下仍报告溢出内容，不作判据）。
+test('cp9-tabs-y-overflow: horizontal tab lists never scroll vertically', async ({ page }) => {
+  for (const id of ['dynamic-tabs', 'master-detail', 'notion-database']) {
+    await page.goto('about:blank');
+    await openComplexPage(page, id);
+    const lists = await page.evaluate(() =>
+      [...document.querySelectorAll('[role="tablist"]')].map((el) => {
+        const cs = getComputedStyle(el);
+        return { overflowX: cs.overflowX, overflowY: cs.overflowY };
+      }),
+    );
+    expect(lists.length, `${id}: tablist present`).toBeGreaterThan(0);
+    for (const list of lists) {
+      expect(
+        ['auto', 'scroll'].includes(list.overflowY),
+        `${id}: tablist overflow-y=${list.overflowY} materializes a vertical scrollbar`,
+      ).toBe(false);
+      expect(list.overflowX, `${id}: horizontal scroll contract intact`).toBe('auto');
+    }
+  }
+});

@@ -199,6 +199,54 @@ describe('basicRendererDefinitions tabs behavior', () => {
     expect(document.querySelector('.nop-tabs-root')).toBeNull();
     expect(document.querySelector('.nop-tabs-content')).toBeNull();
   });
+
+  // docs/testing/2026/10-10.md #39: a horizontal TabsList scrolls horizontally
+  // only — overflow-y must be hidden, because the triggers' line-variant
+  // after: indicator extends ~1px past the list padding box and computed
+  // overflow-y:auto (the CSS default when only overflow-x is set) materialized
+  // a phantom vertical scrollbar on every horizontal tab bar.
+  it('scrolls horizontal tab lists on the x axis only (no phantom vertical scrollbar)', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout-tabs-overflow-contract"
+        schema={{
+          type: 'tabs',
+          items: [
+            { key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] },
+            { key: 'second', title: 'Second', body: [{ type: 'text', text: 'Second body' }] },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.className).toContain('overflow-x-auto');
+    expect(tablist.className).toContain('overflow-y-hidden');
+  });
+
+  it('leaves vertical (sidebar) tab lists without the horizontal overflow contract', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/page-layout-tabs-overflow-vertical"
+        schema={{
+          type: 'tabs',
+          tabsMode: 'sidebar',
+          items: [
+            { key: 'first', title: 'First', body: [{ type: 'text', text: 'First body' }] },
+            { key: 'second', title: 'Second', body: [{ type: 'text', text: 'Second body' }] },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.className).not.toContain('overflow-x-auto');
+    expect(tablist.className).not.toContain('overflow-y-hidden');
+  });
 });
 
 describe('basicRendererDefinitions tabs onChange type namespace + ctx (CX-10 / 09-03)', () => {
