@@ -55,18 +55,7 @@ const UNKNOWN_PROPERTY_BASELINE: Record<string, string[]> = {
   'combo-editor.json': [],
   'complex-form.json': ['select:placeholder', 'input-number:min'],
   'crud-views-export.json': ['tabs:mountOnEnter'],
-  'form-wizard.json': [
-    'input-number:min',
-    // docs/testing/2026/10-10.md #41: the step-2 department picker is still on
-    // the pre-v3 dead-prop shape (empty popup) — migrating it to pickerSchema
-    // exposed a real-pointer-click instability (page jam) that needs a
-    // renderer-level root cause first. Shrink these when #41 lands.
-    'picker:loadAction',
-    'picker:columns',
-    'picker:valueKey',
-    'picker:labelKey',
-    'picker:searchable',
-  ],
+  'form-wizard.json': ['input-number:min'],
   'inline-edit-table.json': ['input-number:min'],
   'linear-issues.json': ['select:defaultValue', 'select:placeholder'],
   'linear-settings.json': ['switch:onValue'],

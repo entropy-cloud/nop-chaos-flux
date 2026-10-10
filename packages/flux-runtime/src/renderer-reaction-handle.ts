@@ -84,6 +84,16 @@ export function createRendererReactionHandle(input: {
   const ignoreWritesTo = plan.ignoreWritesTo;
   const dependsOnRoots = plan.dependsOn;
   const dependencySet = createRootDependencySet(dependsOnRoots);
+  // docs/testing/2026/10-10.md #41: an empty dependsOn must fail CLOSED. The
+  // compiler already emits invalid-reaction-deps for a missing/empty set, so a
+  // reaction reaching runtime without one has no declared trigger surface —
+  // treating that as "fire on every visible scope change" turned any unrelated
+  // ancestor publication (e.g. a valuesPath form writing wizardData.*) into a
+  // reactive trigger, feeding fetch → state-write → fetch loops (observed as a
+  // 30s+ main-thread jam when a picker's popup CRUD mounted inside a wizard
+  // step form). Imperative dispatch, ready()/force() flushes, and renderer
+  // state-driven refetch (CRUD's own load effect) are unaffected.
+  const hasDeclaredDependencies = dependencySet !== undefined;
   const ignoredRootsSet =
     ignoreWritesTo && ignoreWritesTo.length > 0 ? new Set(ignoreWritesTo) : undefined;
 
@@ -152,6 +162,11 @@ export function createRendererReactionHandle(input: {
 
   function handleScopeChange(change: { paths: readonly string[] }): void {
     if (phase === 'disposed') {
+      return;
+    }
+
+    // No declared dependsOn → no reactive triggers at all (fail-closed).
+    if (!hasDeclaredDependencies) {
       return;
     }
 

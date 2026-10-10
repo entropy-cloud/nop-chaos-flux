@@ -119,6 +119,41 @@ describe('registerRendererReaction (Phase 4)', () => {
     expect(dispatchCalls).toHaveLength(0);
   });
 
+  it('does NOT reactively fire with an EMPTY dependsOn (fail-closed, #41)', async () => {
+    const { runtime, page } = setup();
+    const dispatchCalls: unknown[] = [];
+    const handle = runtime.registerRendererReaction({
+      id: 'r4b-empty-deps',
+      scope: page.scope,
+      compiledReactionPlan: makePlan([], ['pagination']),
+      dispatch: async () => {
+        dispatchCalls.push(true);
+        return { ok: true };
+      },
+    });
+    handle.ready();
+
+    // Any scope change — even outside the declared (nonexistent) roots — must
+    // not reactively fire. #41: undefined dependency sets used to match every
+    // change, so an ancestor valuesPath publication re-triggered a popup CRUD's
+    // loadAction forever (fetch → state-write → fetch main-thread jam).
+    page.scope.update('pagination', { page: 2 });
+    page.scope.update('user', { id: 'u2' });
+    await Promise.resolve();
+
+    expect(dispatchCalls).toHaveLength(0);
+    expect(handle.getDebugState().pendingChange).toBe(false);
+
+    // Imperative dispatch and explicit force() still work.
+    const result = await handle.dispatch();
+    expect(result.ok).toBe(true);
+    expect(dispatchCalls).toHaveLength(1);
+    handle.force();
+    await vi.waitFor(() => {
+      expect(dispatchCalls).toHaveLength(2);
+    });
+  });
+
   it('filters self-writes via ignoreWritesTo', async () => {
     const { runtime, page } = setup();
     const dispatchCalls: unknown[] = [];

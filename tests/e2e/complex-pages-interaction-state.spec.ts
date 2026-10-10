@@ -170,6 +170,13 @@ test.describe('IS-7a complex-pages interaction state (plan 550)', () => {
   // Green: real coordinate click opens the picker dialog with zero console
   // errors (the step-2-mount render-phase setState warning is gone too —
   // IS-form-wizard-001, fixed by deferring the initial form publication).
+  // docs/testing/2026/10-10.md #41: under the v3 pickerSchema contract this
+  // wizard composition used to HARD-JAM the main thread (30s+) on real
+  // pointer clicks — the popup crud's loadAction reaction had no dependsOn,
+  // so the undefined dependency set matched every scope change and the step
+  // form's valuesPath publication (wizardData.step2) re-triggered the fetch
+  // forever (fetch → state-write → fetch loop). Green now asserts the full
+  // chain: real click → crud rows render → pick → confirm → value writeback.
   test('form-wizard: picker opens on a real pointer click', async ({ page }) => {
     await gotoPage(page, '/#/complex-pages/form-wizard');
     await page.locator('input').first().fill('王小明');
@@ -188,13 +195,24 @@ test.describe('IS-7a complex-pages interaction state (plan 550)', () => {
       'true',
       { timeout: 3_000 },
     );
-    await expect(page.locator('[data-slot="picker-dialog-content"]')).toBeVisible();
+    const popup = page.locator('[data-slot="picker-dialog-content"][data-open]');
+    await expect(popup).toBeVisible();
+    await expect(
+      popup.locator('tbody tr').first(),
+      '选择部门 popup must render department rows (pre-v3 dead props and the #41 load loop both shipped here)',
+    ).toBeVisible({ timeout: 5_000 });
     const roleError = await page.evaluate(() =>
       [...document.querySelectorAll('.field-error, [data-slot="field-error"]')].some((el) =>
         (el.textContent ?? '').includes('角色不能为空'),
       ),
     );
     expect(roleError, 'no spurious role required error may appear').toBe(false);
+
+    await popup.locator('tbody tr').first().locator('[role="radio"]').click();
+    await popup.locator('[data-slot="picker-confirm"]').click();
+    await expect(popup).not.toBeVisible();
+    await expect(trigger).not.toHaveText('未选择');
+    await expect(page.locator('[data-testid="picker-value"]').first()).toHaveValue(/d\d/);
     await assertTrackedPageErrors(page);
   });
 

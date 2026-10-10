@@ -61,32 +61,42 @@
                   "type": "picker",
                   "name": "deptId",
                   "label": "部门",
-                  "valueKey": "id",
-                  "labelKey": "name",
-                  "searchable": true,
+                  "valueField": "id",
+                  "labelField": "name",
+                  "multiple": false,
                   "pickerPopup": {
                     "title": "选择部门"
                   },
-                  "loadAction": {
-                    "action": "ajax",
-                    "args": {
-                      "url": "/r/Department__findPage",
-                      "method": "get",
-                      "selection": "id,name"
-                    }
-                  },
-                  "columns": [
-                    {
-                      "name": "id",
-                      "label": "编码",
-                      "width": 120
+                  "pickerSchema": {
+                    "type": "crud",
+                    "loadAction": {
+                      "action": "ajax",
+                      "args": {
+                        "url": "/r/Department__findPage",
+                        "method": "get",
+                        "selection": "id,name"
+                      }
                     },
-                    {
-                      "name": "name",
-                      "label": "部门名称",
-                      "width": 200
-                    }
-                  ]
+                    "columns": [
+                      {
+                        "name": "id",
+                        "label": "编码",
+                        "width": 120
+                      },
+                      {
+                        "name": "name",
+                        "label": "部门名称",
+                        "width": 200
+                      }
+                    ],
+                    "selection": {
+                      "type": "radio"
+                    },
+                    "selectionOwnership": "scope",
+                    "selectionStatePath": "$_picker.selection",
+                    "dataStatePath": "$_picker.rows",
+                    "autoClearSelectionOnRefresh": false
+                  }
                 },
                 {
                   "type": "input-number",
