@@ -159,7 +159,7 @@ export function ScadaGalleryDemoPage({ onBack }: ScadaGalleryDemoPageProps) {
   const lowTank = scene === 'filling' && sim.lowTank === 1;
 
   return (
-    <main className="min-h-screen flex flex-col p-4 gap-3">
+    <main className="h-screen flex flex-col p-4 gap-3 overflow-hidden">
       <header className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="sm" onClick={onBack} data-testid="scada-gallery-back">
           ← Back to Home

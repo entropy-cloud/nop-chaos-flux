@@ -98,6 +98,8 @@ export function galleryPageSchema(canvasId: string, controls: unknown[], config:
         id: canvasId,
         width: 960,
         height,
+        // 画布 flex-1 填充剩余高度:main 为 h-screen 有界链(scada-demo 同款),
+        // 无界 min-h-screen 列里 flex-1 会把画布撑到千px 级致 fit 内容落到折叠线以下。
         className: 'flex-1 min-h-0',
         viewport: { fit: 'contain' },
         config: config as never,

@@ -27,6 +27,7 @@ const config: ScadaConfig = {
     { id: 'outTankLevel', source: 'flux', flux: 'outTankLevel' },
     { id: 'flowRate', source: 'flux', flux: 'flowRate' },
     { id: 'pressure', source: 'flux', flux: 'pressure' },
+    { id: 'phValue', source: 'flux', flux: 'phValue' },
     { id: 'alarmActive', source: 'flux', flux: 'alarmActive' },
     { id: 'pumpA', source: 'static', value: 1 },
     { id: 'pumpB', source: 'static', value: 0 },
@@ -52,8 +53,8 @@ const config: ScadaConfig = {
       events: [{ on: 'click', action: { action: 'openDialog', args: { title: '集水井 T-101', body: [{ type: 'text', text: 'device-tank 新图元：液柱高度由 wetWellLevel 液位绑定（height scale 换算）驱动。' }] } } }],
     },
     // 吸水干管 + 弯头（新管件）+ 三通（新管件）分双泵
-    { id: 'water-pipe-suction', type: 'scada-pipe', x: 93, y: 320, width: 130, height: 0, fill: galleryTheme.pipeRun, stroke: galleryTheme.pipeRun, strokeWidth: 8, flow: { enabled: true, speed: 2 }, states: { states: { run: {} }, booleanMap: { true: 'run', false: 'stop' } } as const },
-    { id: 'water-elbow-in', type: 'scada-pipe-elbow', x: 63, y: 290, width: 60, height: 60, fill: galleryTheme.pipeRun, stroke: galleryTheme.pipeRun, strokeWidth: 8 },
+    { id: 'water-pipe-suction', type: 'scada-pipe', x: 93, y: 330, width: 130, height: 0, fill: galleryTheme.pipeRun, stroke: galleryTheme.pipeRun, strokeWidth: 8, flow: { enabled: true, speed: 2 }, states: { states: { run: {} }, booleanMap: { true: 'run', false: 'stop' } } as const },
+    { id: 'water-elbow-in', type: 'scada-pipe-elbow', x: 63, y: 270, width: 60, height: 60, fill: galleryTheme.pipeRun, stroke: galleryTheme.pipeRun, strokeWidth: 8 },
     { id: 'water-tee-split', type: 'scada-pipe-tee', x: 223, y: 300, width: 80, height: 60, fill: galleryTheme.pipeRun, stroke: galleryTheme.pipeRun, strokeWidth: 8, flow: { enabled: true, speed: 2 }, states: { states: { run: {} }, booleanMap: { true: 'run', false: 'stop' } } as const },
     // 泵 A（运行）+ 止回阀 + 闸阀（排水）
     {
@@ -142,7 +143,7 @@ const config: ScadaConfig = {
       bindings: { rotation: { point: 'pressure', scale: { k: 2.7, b: -135 } }, text: { point: 'pressure', format: '%d kPa' } },
     },
     ...galleryNumeric('water-flow-numeric', 620, 300, 140, '出水流量 FI-201', 'flowRate', '%d', 'm³/h'),
-    ...galleryNumeric('water-ph-numeric', 790, 300, 120, '出水 pH', 'phValue', '%.1f', 'pH'),
+    ...galleryNumeric('water-ph-numeric', 790, 300, 120, '出水 pH', 'phValue', '%d', 'pH'),
     {
       id: 'water-flow-trend',
       type: 'scada-instrument-trend',
@@ -169,7 +170,7 @@ const config: ScadaConfig = {
     { id: 'water-txt-wet', type: 'scada-text', x: 93, y: 310, text: '集水井 T-101', textSize: 11, textColor: galleryTheme.textLabel, align: 'center' },
     { id: 'water-txt-pump-a', type: 'scada-text', x: 346, y: 216, text: '供水泵 P-101A', textSize: 11, textColor: galleryTheme.textLabel, align: 'center' },
     { id: 'water-txt-pump-b', type: 'scada-text', x: 346, y: 326, text: '供水泵 P-101B', textSize: 11, textColor: galleryTheme.textLabel, align: 'center' },
-    { id: 'water-txt-out', type: 'scada-text', x: 685, y: 310, text: '清水池 T-102', textSize: 11, textColor: galleryTheme.textLabel, align: 'center' },
+    { id: 'water-txt-out', type: 'scada-text', x: 685, y: 128, text: '清水池 T-102', textSize: 11, textColor: galleryTheme.textLabel, align: 'center' },
     { id: 'water-txt-trend', type: 'scada-text', x: 765, y: 452, text: '流量趋势（trend 图元，height 绑定环形缓冲）', textSize: 10, textColor: galleryTheme.textTip, align: 'center' },
     { id: 'water-txt-tip', type: 'scada-text', x: 480, y: 470, text: '压力 > 88 kPa 联动警灯闪烁；单击设备/警灯查看详情', textSize: 11, textColor: galleryTheme.textTip },
   ],
