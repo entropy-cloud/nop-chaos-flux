@@ -198,6 +198,45 @@ test.describe('IS-7a complex-pages interaction state (plan 550)', () => {
     await assertTrackedPageErrors(page);
   });
 
+  // docs/testing/2026/10-10.md #40: the add-dialog pickers shipped months of
+  // EMPTY 选择部门/选择标签 popups — the pre-v3 schema (loadAction/columns on
+  // the picker) is silently dead under the v3 pickerSchema contract, and the
+  // old e2e only asserted that the popup surface opens. Green: real pointer
+  // click opens the popup WITH its crud content rows, selection commits, and
+  // the picked value lands in the form field.
+  test('standard-crud: add-dialog picker popup renders rows and commits a pick', async ({
+    page,
+  }) => {
+    await gotoPage(page, '/#/complex-pages/standard-crud');
+    await page.getByTestId('btn-add').click();
+    const dialog = page.locator('[data-testid="user-add-dialog"]');
+    await expect(dialog).toBeVisible();
+
+    const trigger = dialog.locator('[data-slot="picker-trigger"]').first();
+    const box = await trigger.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+    const popup = page.locator(
+      '[data-slot="picker-dialog-content"][data-open]',
+    );
+    await expect(popup, 'open picker popup must carry its crud content').toBeVisible();
+    await expect(
+      popup.locator('tbody tr').first(),
+      '选择部门 popup must render department rows (pre-v3 dead-prop drift shipped empty popups)',
+    ).toBeVisible({ timeout: 5_000 });
+
+    // pick the first row, confirm, and assert the form field received the value
+    await popup.locator('tbody tr').first().locator('[role="radio"]').click();
+    await popup.locator('[data-slot="picker-confirm"]').click();
+    await expect(popup).not.toBeVisible();
+    await expect(
+      dialog.locator('[data-slot="picker-trigger"]').first(),
+    ).not.toHaveText('未选择');
+    await expect(dialog.locator('[data-testid="picker-value"]').first()).toHaveValue(/d\d/);
+    await assertTrackedPageErrors(page);
+  });
+
   // IS-approval-tasks-001: confirmText actions inside a dialog surface were
   // dead — the confirm alert reserved its z-index at page load and rendered
   // below the task dialog's overlay, so 确认 clicks landed on the overlay.

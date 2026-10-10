@@ -109,47 +109,63 @@
                       "name": "departmentId",
                       "label": "部门（弹出选择）",
                       "className": "col-span-2",
-                      "valueKey": "id",
-                      "labelKey": "name",
+                      "valueField": "id",
+                      "labelField": "name",
                       "multiple": false,
-                      "searchable": true,
                       "pickerPopup": { "title": "选择部门" },
-                      "loadAction": {
-                        "action": "ajax",
-                        "args": {
-                          "url": "/r/Department__findPage",
-                          "method": "get",
-                          "selection": "id,name"
-                        }
-                      },
-                      "columns": [
-                        { "name": "id", "label": "编码", "width": 120 },
-                        { "name": "name", "label": "部门名称", "width": 200 }
-                      ]
+                      "pickerSchema": {
+                        "type": "crud",
+                        "testid": "picker-dept-crud-add",
+                        "loadAction": {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/Department__findPage",
+                            "method": "get",
+                            "selection": "id,name"
+                          }
+                        },
+                        "columns": [
+                          { "name": "id", "label": "编码", "width": 120 },
+                          { "name": "name", "label": "部门名称", "width": 200 }
+                        ],
+                        "selection": { "type": "radio" },
+                        "selectionOwnership": "scope",
+                        "selectionStatePath": "$_picker.selection",
+                        "dataStatePath": "$_picker.rows",
+                        "autoClearSelectionOnRefresh": false
+                      }
                     },
                     {
                       "type": "picker",
                       "name": "tagIds",
                       "label": "标签（多选）",
                       "className": "col-span-2",
-                      "valueKey": "id",
-                      "labelKey": "name",
+                      "valueField": "id",
+                      "labelField": "name",
                       "multiple": true,
-                      "searchable": true,
                       "pickerPopup": { "title": "选择标签" },
-                      "loadAction": {
-                        "action": "ajax",
-                        "args": {
-                          "url": "/r/Tag__findPage",
-                          "method": "get",
-                          "selection": "id,name,category"
-                        }
-                      },
-                      "columns": [
-                        { "name": "id", "label": "编码", "width": 100 },
-                        { "name": "name", "label": "标签名称", "width": 160 },
-                        { "name": "category", "label": "分类", "width": 120 }
-                      ]
+                      "pickerSchema": {
+                        "type": "crud",
+                        "testid": "picker-tag-crud-add",
+                        "loadAction": {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/Tag__findPage",
+                            "method": "get",
+                            "selection": "id,name,category"
+                          }
+                        },
+                        "columns": [
+                          { "name": "id", "label": "编码", "width": 100 },
+                          { "name": "name", "label": "标签名称", "width": 160 },
+                          { "name": "category", "label": "分类", "width": 120 }
+                        ],
+                        "selection": { "type": "checkbox" },
+                        "selectionOwnership": "scope",
+                        "selectionStatePath": "$_picker.selection",
+                        "dataStatePath": "$_picker.rows",
+                        "autoClearSelectionOnRefresh": false
+                      }
                     }
                   ],
                   "actions": [
@@ -272,47 +288,63 @@
                           "name": "departmentId",
                           "label": "部门（弹出选择）",
                           "className": "col-span-2",
-                          "valueKey": "id",
-                          "labelKey": "name",
+                          "valueField": "id",
+                          "labelField": "name",
                           "multiple": false,
-                          "searchable": true,
                           "pickerPopup": { "title": "选择部门" },
-                          "loadAction": {
-                            "action": "ajax",
-                            "args": {
-                              "url": "/r/Department__findPage",
-                              "method": "get",
-                              "selection": "id,name"
-                            }
-                          },
-                          "columns": [
-                            { "name": "id", "label": "编码", "width": 120 },
-                            { "name": "name", "label": "部门名称", "width": 200 }
-                          ]
+                          "pickerSchema": {
+                            "type": "crud",
+                            "testid": "picker-dept-crud-edit",
+                            "loadAction": {
+                              "action": "ajax",
+                              "args": {
+                                "url": "/r/Department__findPage",
+                                "method": "get",
+                                "selection": "id,name"
+                              }
+                            },
+                            "columns": [
+                              { "name": "id", "label": "编码", "width": 120 },
+                              { "name": "name", "label": "部门名称", "width": 200 }
+                            ],
+                            "selection": { "type": "radio" },
+                            "selectionOwnership": "scope",
+                            "selectionStatePath": "$_picker.selection",
+                            "dataStatePath": "$_picker.rows",
+                            "autoClearSelectionOnRefresh": false
+                          }
                         },
                         {
                           "type": "picker",
                           "name": "tagIds",
                           "label": "标签（多选）",
                           "className": "col-span-2",
-                          "valueKey": "id",
-                          "labelKey": "name",
+                          "valueField": "id",
+                          "labelField": "name",
                           "multiple": true,
-                          "searchable": true,
                           "pickerPopup": { "title": "选择标签" },
-                          "loadAction": {
-                            "action": "ajax",
-                            "args": {
-                              "url": "/r/Tag__findPage",
-                              "method": "get",
-                              "selection": "id,name,category"
-                            }
-                          },
-                          "columns": [
-                            { "name": "id", "label": "编码", "width": 100 },
-                            { "name": "name", "label": "标签名称", "width": 160 },
-                            { "name": "category", "label": "分类", "width": 120 }
-                          ]
+                          "pickerSchema": {
+                            "type": "crud",
+                            "testid": "picker-tag-crud-edit",
+                            "loadAction": {
+                              "action": "ajax",
+                              "args": {
+                                "url": "/r/Tag__findPage",
+                                "method": "get",
+                                "selection": "id,name,category"
+                              }
+                            },
+                            "columns": [
+                              { "name": "id", "label": "编码", "width": 100 },
+                              { "name": "name", "label": "标签名称", "width": 160 },
+                              { "name": "category", "label": "分类", "width": 120 }
+                            ],
+                            "selection": { "type": "checkbox" },
+                            "selectionOwnership": "scope",
+                            "selectionStatePath": "$_picker.selection",
+                            "dataStatePath": "$_picker.rows",
+                            "autoClearSelectionOnRefresh": false
+                          }
                         }
                       ],
                       "actions": [
