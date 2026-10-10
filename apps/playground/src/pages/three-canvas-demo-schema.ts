@@ -80,31 +80,23 @@ export const threeCanvasDemoSchema = {
           id: 'pedestal-spring',
           target: { modelId: 'pedestal', path: 'position.y', type: 'position' },
           source: { expression: '${heat}' },
-          transform: {
-            range: { input: [0, 100], output: [-0.1, 0.2] },
-            animation: { type: 'spring', stiffness: 120, damping: 14 },
-          },
+          transform: { range: { input: [0, 100], output: [-0.1, 0.2] } },
         },
         {
           id: 'pyramid-step',
           target: { modelId: 'pyramid', path: 'rotation.y', type: 'rotation' },
           source: { expression: '${spin}' },
-          transform: { animation: { type: 'step' } },
         },
         {
           id: 'cube-spin',
           target: { modelId: 'cube', path: 'rotation.y', type: 'rotation' },
           source: { expression: '${spin}' },
-          transform: { animation: { type: 'tween', duration: 450, easing: 'easeOut' } },
         },
         {
           id: 'orb-hover',
           target: { modelId: 'orb', path: 'position.y', type: 'position' },
           source: { expression: '${heat}' },
-          transform: {
-            range: { input: [0, 100], output: [-0.4, 2.4] },
-            animation: { type: 'tween', duration: 400 },
-          },
+          transform: { range: { input: [0, 100], output: [-0.4, 2.4] } },
         },
         {
           id: 'cube-heat-color',
@@ -116,40 +108,6 @@ export const threeCanvasDemoSchema = {
           target: { modelId: 'ring', path: 'visible', type: 'visible' },
           source: { expression: '${heat}' },
           condition: { expression: 'value > 70', trueValue: true, falseValue: false },
-        },
-      ],
-      animations: [
-        {
-          id: 'pyramid-bob',
-          trigger: { type: 'time', source: 'auto' },
-          target: { modelId: 'pyramid', property: 'position.y' },
-          keyframes: [
-            { time: 0, value: 0.6 },
-            { time: 900, value: 1.6, easing: 'easeInOut' },
-            { time: 1800, value: 0.6, easing: 'easeInOut' },
-          ],
-          loop: { type: 'loop' },
-        },
-        {
-          // plan 473 (V3-F6): event 触发 clip——单击 orb 转一圈
-          id: 'orb-spin-on-click',
-          trigger: { type: 'event', source: 'object:click' },
-          target: { modelId: 'orb', property: 'rotation.y' },
-          keyframes: [
-            { time: 0, value: 0 },
-            { time: 700, value: Math.PI * 2, easing: 'easeOut' },
-          ],
-        },
-        {
-          // plan 473 (V3-F6): state 触发 clip——heat>70 时 ring 跳动一次
-          id: 'ring-pulse-on-hot',
-          trigger: { type: 'state', source: 'heat', value: 70 },
-          target: { modelId: 'ring', property: 'position.y' },
-          keyframes: [
-            { time: 0, value: 2.6 },
-            { time: 350, value: 3.4, easing: 'easeOut' },
-            { time: 700, value: 2.6, easing: 'easeInOut' },
-          ],
         },
       ],
       events: {
@@ -166,7 +124,7 @@ export const threeCanvasDemoSchema = {
       direction: 'row',
       className: 'flex-wrap gap-x-5 gap-y-1 text-sm text-[var(--nop-body-copy)]',
       body: [
-        { type: 'text', text: '绑定负载：spin→cube.rotation.y（tween）· heat→orb（range+tween）· heat→pedestal（spring）· spin→pyramid（step）· heatColor→cube 材质色 · heat>70→ring 显隐（condition）' },
+        { type: 'text', text: '绑定负载：spin→cube/pyramid rotation（即时写）· heat→orb/pedestal（range）· heatColor→cube 材质色 · heat>70→ring 显隐（condition）——纯数据映射，无过渡插值' },
         { type: 'text', text: '阴影：directional castShadow + ground receiveShadow + cube/orb castShadow（plan 473）· 悬停 cube/orb 触发真 hover（pointermove + emissive 高亮）' },
         { type: 'text', text: '关键帧：pyramid position.y 循环浮动（time 触发）· 单击 cube/orb 触发 onObjectClick toast' },
       ],

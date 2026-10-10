@@ -62,14 +62,14 @@ PBR 通道 `metalness` / `roughness`(standard)/ 自发光 `emissive` + `emissive
 缺省锚定包围盒上方,`labelOffset` 显式定位)、`castShadow` / `receiveShadow`、
 `initialAnimation`(GLTF clip 按名自动播放)。
 
-## 绑定与关键帧
+## 绑定(纯数据映射)
 
 ```json
 {
   "bindings": [
     {
       "id": "level",
-      "target": { "modelId": "tank-a-core", "path": "scale", "type": "scale" },
+      "target": { "modelId": "tank-a-core", "path": "scale.y", "type": "scale" },
       "source": { "expression": "${tagTemp}" },
       "transform": { "range": { "input": [0, 100], "output": [0.15, 1] } }
     },
@@ -79,30 +79,18 @@ PBR 通道 `metalness` / `roughness`(standard)/ 自发光 `emissive` + `emissive
       "source": { "expression": "${tagTemp}" },
       "transform": { "convert": "value > 80 ? 2.2 : 0.05" }
     }
-  ],
-  "animations": [
-    {
-      "id": "spin",
-      "trigger": { "type": "time", "source": "auto" },
-      "target": { "modelId": "spinner", "property": "rotation.y" },
-      "keyframes": [
-        { "time": 0, "value": 0 },
-        { "time": 2400, "value": 6.283 }
-      ],
-      "loop": { "type": "loop" }
-    }
   ]
 }
 ```
 
-- `target.path` 为点分路径(`position` / `material.color` / `material.emissiveIntensity` /
-  `visible`…),`modelId` 在 models 形态是模型 id、在 json 形态是对象 name;
+- `target.path` 为点分路径(`position` / `rotation.y` / `material.color` /
+  `material.emissiveIntensity` / `visible`…),`modelId` 在 models 形态是模型 id、
+  在 json 形态是对象 name;
 - `transform.range` 线性映射(clamp)、`convert` flux 表达式(注入 `value`)、
-  `condition` 真值二选一;`transform.animation` 可选 tween/spring/step 过渡
-  (离散数据 → 连续过渡的桥接胶水);
-- `animations` 为自研关键帧 clip(time/state/event 三种触发,once/loop/pingpong),
-  **能力冻结**——时间线动画优先用 GLTF clip(`initialAnimation`)与 three 原生动画体系,
-  flux clip 只承担「数据/事件触发的场景反应」。
+  `condition` 真值二选一——三者皆**即时写**(纯数据映射,无过渡插值);
+- **时间线/插值动画不在此层**:自研 tween/关键帧 clip 已删除(559 后记,2026-10-10 用户裁定),
+  动画统一走 three 原生体系——GLTF clip(`initialAnimation` 自动播放)、SceneJSON 自带动画资产;
+  「数据变化触发场景反应」用绑定表达(告警变色、液位联动、随帧旋转)。
 
 ## 数据源接入(数字孪生)
 
@@ -137,5 +125,5 @@ pointer cursor。
 | 灯光与阴影         | ambient/directional/point/spot 四类灯 + 阴影 + 相机 controls(autoRotate/距离/极角限制) |
 | 原生 three.js JSON | `{ json }` 装配 + name 寻址绑定(吊车臂摆动/吊钩升降/状态灯发光)                        |
 | GLB 加载           | GLTFExporter 现场导出组合场景 → url 喂第二画布(零外部资产的全链路)                     |
-| 关键帧与交互       | time/state/event 三触发 clip + hover 高亮 + 点击 toast                                 |
+| 交互与标注         | 数据驱动自旋/热度变色(纯数据映射)+ hover 高亮 + 点击事件 + label 标注                  |
 | 数字孪生泵站       | IndustrialAdapter 标签帧端到端:泵转速/罐液位/信标告警/点击详情                         |

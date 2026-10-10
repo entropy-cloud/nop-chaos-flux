@@ -24,9 +24,10 @@ export interface DataBinding {
 export interface TransformConfig {
   convert?: string; // flux 表达式，注入 value 变量
   range?: { input: [number, number]; output: [number, number] }; // 线性映射 + clamp
-  animation?: { type: 'tween' | 'spring' | 'step'; duration?: number; easing?: string }; // I2.2 实现插值
 }
 ```
+
+> **559 后记（2026-10-10，用户裁定删除）**：自研绑定过渡插值 `transform.animation`（tween/spring/step）与自研关键帧 clip（`AnimationConfig`，原 §6）已整体删除——数据绑定只保留纯数据映射（range/convert/condition，即时写），时间线/插值动画统一走 three 原生体系（GLTF clip `initialAnimation`、SceneJSON 自带动画资产）。删除记录见 design-renderer.md「自研动画体系删除」节。
 
 ## 2. 表达式求值与依赖提取（决策 D4）
 
@@ -121,19 +122,9 @@ export class TransformEngine {
 
 错误语义与绑定求值一致：单项失败回退原值、不阻塞其他绑定、`reportOnce` 去重。
 
-## 6. AnimationConfig（keyframes，I2.2 交付）
+## 6. （已删除）AnimationConfig（keyframes）——559 后记
 
-```typescript
-export interface AnimationConfig {
-  id: string;
-  trigger: { type: 'state' | 'event' | 'time'; source: string; value?: unknown };
-  target: { modelId: string; property: string };
-  keyframes: Array<{ time: number; value: unknown; easing?: string }>;
-  loop?: { type: 'once' | 'loop' | 'pingpong'; count?: number };
-}
-```
-
-运行模型：state 触发订阅 scope 路径；event 触发经 `useThreeEvents` 派发链；time 触发随帧时钟。插值器（linear/easing）与 tween/spring/step 属 I2.2 实现细节，契约以本结构为准。
+原 I2.2 交付的自研关键帧 clip（time/state/event 触发 + once/loop/pingpong）与 tween/spring/step 绑定过渡已于 2026-10-10 **整体删除**（用户裁定：three-canvas 是 three.js 的薄桥接，插值/时间线动画不做二次发明）。替代路径：GLTF clip（`initialAnimation` 自动播放）、SceneJSON 自带动画资产、数据驱动的纯映射绑定（range/convert/condition 即时写）。历史契约文本见 git 历史（本文件 v5 原始版）。
 
 ## 7. 性能契约
 

@@ -61,3 +61,33 @@ describe('PrimitiveFactory (plan 466 Phase 3)', () => {
     expect(resolvePrimitiveModel({} as never)?.kind).toBe('invalid');
   });
 });
+
+describe('559 geometry default fallback matrix (empty args)', () => {
+  it('applies per-type defaults when args is an empty object', () => {
+    const box = createPrimitiveMesh({ geometry: { type: 'box', args: {} } })!;
+    expect((box.geometry as THREE.BoxGeometry).parameters.width).toBe(1);
+    const sphere = createPrimitiveMesh({ geometry: { type: 'sphere', args: {} } })!;
+    expect((sphere.geometry as THREE.SphereGeometry).parameters.radius).toBe(1);
+    expect((sphere.geometry as THREE.SphereGeometry).parameters.widthSegments).toBe(32);
+    const cylinder = createPrimitiveMesh({ geometry: { type: 'cylinder', args: {} } })!;
+    expect((cylinder.geometry as THREE.CylinderGeometry).parameters.radiusTop).toBe(1);
+    const plane = createPrimitiveMesh({ geometry: { type: 'plane', args: {} } })!;
+    expect((plane.geometry as THREE.PlaneGeometry).parameters.width).toBe(1);
+    const cone = createPrimitiveMesh({ geometry: { type: 'cone', args: {} } })!;
+    expect((cone.geometry as THREE.ConeGeometry).parameters.radius).toBe(1);
+    const torus = createPrimitiveMesh({ geometry: { type: 'torus', args: {} } })!;
+    expect((torus.geometry as THREE.TorusGeometry).parameters.radius).toBe(1);
+    expect((torus.geometry as THREE.TorusGeometry).parameters.tube).toBe(0.4);
+  });
+
+  it('capsule and tube default their parameters with empty args', () => {
+    const capsule = createPrimitiveMesh({ geometry: { type: 'capsule', args: {} } })!;
+    expect((capsule.geometry as THREE.CapsuleGeometry).parameters.radius).toBe(0.5);
+    expect((capsule.geometry as THREE.CapsuleGeometry).parameters.height).toBe(1);
+    const tube = createPrimitiveMesh({ geometry: { type: 'tube', args: {}, path: [[0, 0, 0], [1, 1, 1]] } })!;
+    expect((tube.geometry as THREE.TubeGeometry).parameters.radius).toBe(0.2);
+    expect((tube.geometry as THREE.TubeGeometry).parameters.tubularSegments).toBe(64);
+    const degenerate = createPrimitiveMesh({ geometry: { type: 'tube', args: { closed: 0 }, path: [] } })!;
+    expect(degenerate.geometry).toBeInstanceOf(THREE.TubeGeometry);
+  });
+});

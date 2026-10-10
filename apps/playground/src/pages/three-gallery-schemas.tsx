@@ -219,7 +219,7 @@ export function buildGltfLoadedSchema(glbUrl: string): ThreeCanvasSchema {
   };
 }
 
-export function buildKeyframesSchema(): ThreeCanvasSchema {
+export function buildInteractionsSchema(): ThreeCanvasSchema {
   return {
     type: 'three-canvas',
     testid: 'three-gallery-canvas-keyframes',
@@ -233,51 +233,18 @@ export function buildKeyframesSchema(): ThreeCanvasSchema {
       ],
       models: [
         { id: 'floor', primitive: { geometry: { type: 'plane', args: { width: 10, height: 10 } }, material: { type: 'standard', color: '#141f33', roughness: 0.9 } }, rotation: [-Math.PI / 2, 0, 0], receiveShadow: true },
-        { id: 'spinner', primitive: { geometry: { type: 'torus', args: { radius: 0.7, tube: 0.14 } }, material: { type: 'standard', color: '#7ea6ff', metalness: 0.5, roughness: 0.3 } }, position: [-1.6, 1.2, 0], castShadow: true, label: 'time 循环自旋' },
-        { id: 'bobber', primitive: { geometry: { type: 'sphere', args: { radius: 0.5 } }, material: { type: 'standard', color: '#26a69a' } }, position: [0.4, 1, 0], castShadow: true, label: 'state 热度跳动 + 点击弹跳', interactive: true },
+        { id: 'spinner', primitive: { geometry: { type: 'torus', args: { radius: 0.7, tube: 0.14 } }, material: { type: 'standard', color: '#7ea6ff', metalness: 0.5, roughness: 0.3 } }, position: [-1.6, 1.2, 0], castShadow: true, label: '数据驱动自旋' },
+        { id: 'bobber', primitive: { geometry: { type: 'sphere', args: { radius: 0.5 } }, material: { type: 'standard', color: '#26a69a' } }, position: [0.4, 1, 0], castShadow: true, label: '热度变色 + 点击事件', interactive: true },
         { id: 'spinner-inner', primitive: { geometry: { type: 'torus', args: { radius: 0.42, tube: 0.1 } }, material: { type: 'standard', color: '#ffb86b', emissive: '#ff8f6b', emissiveIntensity: 0.6 } }, position: [-1.6, 1.2, 0] },
       ],
     },
     bindings: [
+      { id: 'spinner-spin', target: { modelId: 'spinner', path: 'rotation.y', type: 'rotation' }, source: { expression: '${spin}' } },
       { id: 'bob-color', target: { modelId: 'bobber', path: 'material.color', type: 'material' }, source: { expression: '${heatColor}' } },
       { id: 'bob-scale', target: { modelId: 'bobber', path: 'scale.y', type: 'scale' }, source: { expression: '${heat}' }, transform: { range: { input: [0, 100], output: [0.8, 1.25] } } } as never,
     ] as never,
-    animations: [
-      {
-        id: 'spin-loop',
-        trigger: { type: 'time', source: 'always' },
-        target: { modelId: 'spinner', property: 'rotation.y' },
-        keyframes: [
-          { time: 0, value: 0 },
-          { time: 2400, value: Math.PI * 2 },
-        ],
-        loop: { type: 'loop' },
-      },
-      {
-        id: 'bob-heat',
-        trigger: { type: 'state', source: 'heat', value: 70 },
-        target: { modelId: 'bobber', property: 'position.y' },
-        keyframes: [
-          { time: 0, value: 0.6 },
-          { time: 300, value: 1.5 },
-          { time: 600, value: 0.6 },
-        ],
-        loop: { type: 'loop' },
-      },
-      {
-        id: 'bob-click-pop',
-        trigger: { type: 'event', source: 'object:click' },
-        target: { modelId: 'bobber', property: 'scale' },
-        keyframes: [
-          { time: 0, value: [1, 1, 1] },
-          { time: 160, value: [1.5, 1.5, 1.5] },
-          { time: 420, value: [1, 1, 1] },
-        ],
-        loop: { type: 'once' },
-      },
-    ] as never,
     events: {
-      onObjectClick: { action: 'showToast', args: { message: '点击设备：event clip 触发弹跳动画' } },
+      onObjectClick: { action: 'showToast', args: { message: '点击设备：详情走事件桥接（hover 高亮同步生效）' } },
     },
   };
 }

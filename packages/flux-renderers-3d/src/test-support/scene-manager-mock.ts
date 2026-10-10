@@ -40,7 +40,6 @@ export class SceneManager {
   updateProperty = vi.fn();
   registerClips = vi.fn();
   startClip = vi.fn();
-  notifyEvent = vi.fn();
   dispose = vi.fn();
   getScene = vi.fn(() => new THREE.Scene());
   getRenderer = vi.fn(() => ({ shadowMap: { enabled: true } }));

@@ -1,4 +1,4 @@
-import type { AnimationConfig, DataBinding, LightConfig, PrimitiveGeometryType, ThreeCanvasSchema } from '../schemas.js';
+import type { DataBinding, LightConfig, PrimitiveGeometryType, ThreeCanvasSchema } from '../schemas.js';
 import type { SchemaObject } from '@nop-chaos/flux-core';
 import { SchemaValidator, type ValidationError } from './schema-validator.js';
 
@@ -112,7 +112,6 @@ export class AISchemaGenerator {
         models,
       } as unknown as ThreeCanvasSchema['scene'],
       bindings: bindings as (DataBinding & SchemaObject)[],
-      animations: [] as (AnimationConfig & SchemaObject)[],
       events: events as ThreeCanvasSchema['events'],
     };
   }

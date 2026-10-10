@@ -14,8 +14,8 @@ import { threeCanvasDemoSchema, type ThreeDemoSim } from './three-canvas-demo-sc
 //
 // 绑定负载（flux 轨，scada-demo 点表刷新同法）：10Hz setInterval 生成模拟数据注入 page
 // scope → three-canvas 绑定管线（useScopeSelector paths 订阅 → 求值 → TransformEngine →
-// SceneManager.updateProperty），spin 弧度持续积分驱动 cube 自旋、heat 驱动 orb 高度 /
-// ring 显隐 / cube 材质色，构成 fps 基准的绑定热路径负载。
+// SceneManager.updateProperty 即时写），spin 弧度持续积分驱动 cube 自旋、heat 驱动 orb 高度 /
+// ring 显隐 / cube 材质色，构成 fps 基准的绑定热路径负载（559 后记：无过渡插值，纯数据映射）。
 
 const registry = createDefaultRegistry();
 registerBasicRenderers(registry);
@@ -138,7 +138,7 @@ export function ThreeCanvasDemoPage({ onBack }: ThreeCanvasDemoPageProps) {
         <h1 className="m-0 mb-2">three-canvas 数据驱动 3D 场景演示页</h1>
         <p className="text-lg leading-relaxed text-[var(--nop-body-copy)]">
           声明式图元（box/sphere/cylinder/cone/torus/plane）+ 相机/四类灯光 + 表达式绑定
-          （tween 过渡、range 映射、condition 显隐）+ time 触发循环关键帧 + onObjectClick。
+          （range 映射、condition 显隐，纯数据映射）+ onObjectClick/hover；时间线动画走 three 原生 GLTF clip。
           页面 10Hz 注入模拟数据驱动绑定热路径（cube 自旋 / orb 浮沉 / ring 报警显隐 / 立方体热度变色）。
           画布支持轨道控制（拖拽旋转、滚轮缩放）。
         </p>

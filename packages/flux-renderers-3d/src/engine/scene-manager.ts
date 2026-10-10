@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { ModelLoader, type LoadedModel, type LoaderFactory } from './model-loader.js';
-import { TweenRegistry } from './tween-registry.js';
 import { HoverHighlighter, type HoverHighlightOptions } from './hover-highlight.js';
 import {
   DEFAULT_ASPECT,
@@ -20,16 +19,12 @@ import {
 } from './shadow-setup.js';
 import { createPrimitiveMesh, resolvePrimitiveModel } from './primitive-factory.js';
 import { assembleSceneJsonObjects, attachModelLabel, disposeLabelSprite } from './scene-json-assembly.js';
-import { KeyframeClip } from '../binding/keyframes.js';
-import type { AnimationConfig } from '../schemas.js';
-import type { BindingAnimationConfig, LightConfig, ModelConfig, ThreeSceneConfig } from '../schemas.js';
+import type { LightConfig, ModelConfig, ThreeSceneConfig } from '../schemas.js';
 
 interface FrameUpdate {
   modelId: string;
   path: string;
   value: unknown;
-  /** 绑定级过渡动画（transform.animation，design-data-binding.md §1）；缺省即时写 */
-  animation?: BindingAnimationConfig;
 }
 
 interface FrameUpdateQueue {
@@ -61,8 +56,6 @@ export interface SceneManagerOptions {
   controlsFactory?: ControlsFactory;
   loaderFactory?: LoaderFactory;
   scheduleFrame?: ScheduleFrame;
-  /** TweenRegistry 时钟注入（测试确定性） */
-  now?: () => number;
   /** hover 高亮可配（plan 533 D1：emissive 色/强度；缺省 = 内置常量；Basic 白提亮通道默认启用）。 */
   hoverHighlight?: HoverHighlightOptions;
 }
@@ -111,9 +104,6 @@ export class SceneManager {
   private disposed = false;
   private loader: ModelLoader;
   private lastFrameTime = 0;
-  private tweenRegistry: TweenRegistry;
-  private clips = new Map<string, KeyframeClip>();
-  private clipNow: () => number;
   private onErrorSink: ((e: DiagnosticEvent) => void) | null = null;
   container: HTMLElement | null;
   private readonly rendererFactory: RendererFactory;
@@ -140,10 +130,6 @@ export class SceneManager {
     // plan 533 D1：hover 高亮可配（缺省 = 内置常量；Basic 白提亮通道默认启用）。
     this.highlighter = new HoverHighlighter(options.hoverHighlight);
     this.scheduleFrame = options.scheduleFrame ?? DEFAULT_SCHEDULE_FRAME;
-    this.tweenRegistry = new TweenRegistry({ now: options.now, onError: (code, message) => {
-      this.onErrorSink?.({ code, message });
-    } });
-    this.clipNow = options.now ?? (() => performance.now());
     this.container = null;
   }
 
@@ -414,51 +400,6 @@ export class SceneManager {
     this.queue = queue;
   }
 
-  /**
-   * 关键帧 clip 注册（plan 466 Phase 4，design-data-binding.md §6）：
-   * time 触发注册即播；state/event 触发等待 startClip（hook 经 scope/事件满足条件后调用）。
-   * 空 keyframes 拒绝注册并诊断 keyframes-degenerate。
-   */
-  registerClips(animations: AnimationConfig[], onError?: (e: DiagnosticEvent) => void): void {
-    if (this.disposed) return;
-    for (const config of animations) {
-      if (!Array.isArray(config.keyframes) || config.keyframes.length === 0) {
-        onError?.({ code: 'keyframes-degenerate', message: `Clip '${config.id}' has no keyframes` });
-        continue;
-      }
-      const clip = new KeyframeClip(config, {
-        now: this.clipNow,
-        apply: (value) => {
-          const model = this.models.get(config.target.modelId);
-          if (!model) return; // 目标未就绪：本帧跳过（late-binding 重评估）
-          this.applyUpdate(model.root, config.target.property, value);
-        },
-        onError: (code, message) => {
-          this.onErrorSink?.({ code, message });
-        },
-      });
-      this.clips.set(config.id, clip);
-      if (config.trigger.type === 'time') {
-        clip.start();
-      }
-    }
-  }
-
-  /** state/event 触发满足时的 clip 启动入口（use-animation-clips hook 调用）。 */
-  startClip(id: string): void {
-    this.clips.get(id)?.start();
-  }
-
-  /** 事件触发分发：source 匹配 normalized event type 的 clip 启动。 */
-  notifyEvent(type: string): void {
-    for (const clip of this.clips.values()) {
-      const config = clip.config;
-      if (config.trigger.type === 'event' && config.trigger.source === type) {
-        clip.start();
-      }
-    }
-  }
-
   onPick(listener: (e: PickEvent) => void): () => void {
     this.pickListeners.add(listener);
     return () => this.pickListeners.delete(listener);
@@ -490,46 +431,17 @@ export class SceneManager {
    * 绑定引擎写入入口（design-renderer.md §5）：点分路径导航 + `.set()` 类型分派；
    * 模型未就绪进 pending buffer（`modelId::path` 键），注册时按插入序回放。
    */
-  updateProperty(modelId: string, path: string, value: unknown, animation?: BindingAnimationConfig): void {
+  updateProperty(modelId: string, path: string, value: unknown): void {
     if (this.disposed) return;
     const model = this.models.get(modelId);
     if (!model) {
-      // 回放不携带动画（裁定：初值不丢失、即时应用，不做过渡）——buffer 条目只存 path/value
+      // 绑定写入先入 pending buffer（初值不因异步装配丢失），注册时按插入序回放
       const buffer = this.pendingByModel.get(modelId) ?? new Map<string, { path: string; value: unknown; order: number }>();
       buffer.set(`${modelId}::${path}`, { path, value, order: this.pendingOrder++ });
       this.pendingByModel.set(modelId, buffer);
       return;
     }
-    if (animation) {
-      const key = `${modelId}::${path}`;
-      this.tweenRegistry.start(
-        key,
-        () => this.toTweenable(this.readCurrent(model.root, path)),
-        (v) => this.applyUpdate(model.root, path, v),
-        value,
-        animation,
-      );
-      return;
-    }
-    this.tweenRegistry.stop(`${modelId}::${path}`);
     this.applyUpdate(model.root, path, value);
-  }
-
-  /** three 原生值 → 可插值形态（Vector3/Euler → 三元数组；Color → hex 串）。 */
-  private toTweenable(value: unknown): unknown {
-    if (value instanceof THREE.Vector3 || value instanceof THREE.Euler) return value.toArray();
-    if (value instanceof THREE.Color) return `#${value.getHexString()}`;
-    return value;
-  }
-
-  private readCurrent(root: THREE.Object3D, path: string): unknown {
-    const parts = path.split('.');
-    let node: unknown = root;
-    for (let i = 0; i < parts.length; i++) {
-      if (node === null || typeof node !== 'object') return undefined;
-      node = (node as Record<string, unknown>)[parts[i]];
-    }
-    return node;
   }
 
   private applyUpdate(root: THREE.Object3D, path: string, value: unknown): void {
@@ -581,14 +493,8 @@ export class SceneManager {
     this.controls?.update();
     if (this.queue) {
       for (const update of this.queue.drain()) {
-        this.updateProperty(update.modelId, update.path, update.value, update.animation);
+        this.updateProperty(update.modelId, update.path, update.value);
       }
-    }
-    // 帧序契约：transition tween 先推进、关键帧 clip 后应用——同一 target 属性上 clip 优先
-    this.tweenRegistry.advance();
-    const frameNow = this.clipNow();
-    for (const clip of this.clips.values()) {
-      clip.advance(frameNow);
     }
     const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
     const delta = Math.max(0, (now - this.lastFrameTime) / 1000);
@@ -659,9 +565,6 @@ export class SceneManager {
     this.pointer = null;
     this.highlighter.revert();
     this.loader.cancel();
-    this.tweenRegistry.clear();
-    for (const clip of this.clips.values()) clip.stop();
-    this.clips.clear();
     this.onErrorSink = null;
     // 在途 loadModels 承诺落定（dispose 竞态下悬挂即泄漏）
     const settlers = this.loadSettlers.splice(0);

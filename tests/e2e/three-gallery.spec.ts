@@ -69,7 +69,7 @@ test.describe('Three Gallery (559 Phase 4)', () => {
     );
   });
 
-  test('keyframes example mounts with time/state/event clips wired', async ({ page }) => {
+  test('interactions example mounts with data-driven bindings and event toasts', async ({ page }) => {
     await gotoGallery(page);
     await page.getByTestId('three-gallery-tab-keyframes').click();
     await expectTabReady(page, 'three-gallery-canvas-keyframes');

@@ -137,6 +137,63 @@ describe('SceneJSON thin-bridge path (559 Phase 2)', () => {
     manager.dispose();
   });
 
+  it('reports model-load-failed and settles when the loader rejects (models-form)', async () => {
+    const onError = vi.fn();
+    const scheduled: Array<() => void> = [];
+    const manager = new SceneManager(
+      { camera: { position: [0, 0, 5] }, lights: [], models: [{ id: 'broken', url: 'broken.glb' }] } as unknown as ThreeSceneConfig,
+      {
+        rendererFactory: () => ({ domElement: { addEventListener: vi.fn(), removeEventListener: vi.fn(), style: {} }, setSize: vi.fn(), render: vi.fn(), dispose: vi.fn() }) as unknown as THREE.WebGLRenderer,
+        scheduleFrame: (cb) => {
+          scheduled.push(cb);
+          return () => undefined;
+        },
+        controlsFactory: () => ({ update: vi.fn(), dispose: vi.fn() }) as never,
+        loaderFactory: () => ({ loadAsync: () => Promise.reject(new Error('404')) }) as never,
+      },
+    );
+    manager.init();
+    const settled = manager.loadModels(onError);
+    await settled;
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ code: 'model-load-failed' }));
+    expect(manager.getModel('broken')).toBeUndefined();
+    manager.dispose();
+  });
+
+  it('forwards loader progress ratios and ignores resolutions after dispose', async () => {
+    const progress: Array<number | null> = [];
+    let resolveLoad: ((gltf: unknown) => void) | null = null;
+    const scheduled: Array<() => void> = [];
+    const manager = new SceneManager(
+      { camera: { position: [0, 0, 5] }, lights: [], models: [{ id: 'late', url: 'late.glb' }] } as unknown as ThreeSceneConfig,
+      {
+        rendererFactory: () => ({ domElement: { addEventListener: vi.fn(), removeEventListener: vi.fn(), style: {} }, setSize: vi.fn(), render: vi.fn(), dispose: vi.fn() }) as unknown as THREE.WebGLRenderer,
+        scheduleFrame: (cb) => {
+          scheduled.push(cb);
+          return () => undefined;
+        },
+        controlsFactory: () => ({ update: vi.fn(), dispose: vi.fn() }) as never,
+        loaderFactory: () => ({
+          loadAsync: (_config: unknown, onProgress?: (e: { loaded: number; total: number }) => void) =>
+            new Promise((resolve) => {
+              resolveLoad = resolve;
+              onProgress?.({ loaded: 25, total: 100 });
+            }),
+        }) as never,
+      },
+    );
+    manager.init();
+    const settled = manager.loadModels(undefined, (ratio) => progress.push(ratio));
+    await Promise.resolve();
+    expect(progress).toEqual([0.25]);
+    manager.dispose();
+    // dispose 后 loader 落定：early-return 分支，不注册不崩
+    // (TS 无法追踪 promise executor 内的赋值，显式宽化)
+    (resolveLoad as ((gltf: unknown) => void) | null)?.({ scene: new THREE.Group(), animations: [] });
+    await settled;
+    expect(manager.getModel('late')).toBeUndefined();
+  });
+
   it('skips json assembly before init (no scene yet) without throwing', () => {
     const onError = vi.fn();
     const { manager } = makeManager({ json: makeSceneJson() });

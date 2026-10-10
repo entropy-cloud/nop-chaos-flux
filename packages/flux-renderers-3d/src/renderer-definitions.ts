@@ -39,12 +39,6 @@ export const threeCanvasRendererDefinition: RendererDefinition = {
         'DataBinding[]: scope expression → model property with optional transform/condition (I2.2). See design-data-binding.md §1.',
       editorType: 'code',
     },
-    animations: {
-      shape: { kind: 'unknown' },
-      displayName: 'Animations',
-      description: 'AnimationConfig[] keyframe animations (consumed from I2.2).',
-      editorType: 'code',
-    },
     events: {
       // events 对象整体 prop（design.md D3）：classifyField 仅顶层 key 精确匹配、无点号路径，
       // 子键无法注册为 event 字段（industrial renderer-definitions.ts:37-38 先例）。
@@ -67,7 +61,6 @@ export const threeCanvasRendererDefinition: RendererDefinition = {
   fields: [
     { key: 'scene', kind: 'prop' },
     { key: 'bindings', kind: 'prop' },
-    { key: 'animations', kind: 'prop' },
     { key: 'events', kind: 'prop' },
     { key: 'height', kind: 'prop' },
     { key: 'loading', kind: 'region', regionKey: 'loading' },

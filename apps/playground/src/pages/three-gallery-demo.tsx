@@ -14,7 +14,7 @@ import {
 } from './three-gallery-shared.js';
 import {
   buildGltfLoadedSchema,
-  buildKeyframesSchema,
+  buildInteractionsSchema,
   buildLightsSchema,
   buildPrimitivesSchema,
   buildRobotExportGroup,
@@ -218,7 +218,7 @@ export function ThreeGalleryDemoPage({ onBack }: ThreeGalleryDemoPageProps) {
       case 'gltf':
         return buildRobotSourceSchema();
       case 'keyframes':
-        return buildKeyframesSchema();
+        return buildInteractionsSchema();
       default:
         return buildTwinSchema();
     }

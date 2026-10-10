@@ -43,6 +43,6 @@ export const GALLERY_EXAMPLES: GalleryExampleMeta[] = [
   { id: 'lights', label: '灯光与阴影', testid: 'three-gallery-tab-lights', description: '三点布光（directional/point/spot）+ 阴影 + 相机 controls（autoRotate/距离限制）' },
   { id: 'scene-json', label: '原生 three.js JSON', testid: 'three-gallery-tab-scene-json', description: 'three.js SceneJSON 经 ObjectLoader 直载（薄桥接）：绑定按对象 name 寻址驱动吊车臂旋转/吊钩升降' },
   { id: 'gltf', label: 'GLB 加载', testid: 'three-gallery-tab-gltf', description: 'GLTFExporter 现场导出组合场景 → GLB url 喂给第二画布（模型加载全链路，零外部资产）' },
-  { id: 'keyframes', label: '关键帧与交互', testid: 'three-gallery-tab-keyframes', description: 'time/state/event 三种触发关键帧 clip + hover 高亮 + 点击事件 + label 标注' },
+  { id: 'keyframes', label: '交互与标注', testid: 'three-gallery-tab-keyframes', description: '数据驱动自旋/热度变色（纯数据映射）+ hover 高亮 + 点击事件 + label 标注' },
   { id: 'twin', label: '数字孪生泵站', testid: 'three-gallery-tab-twin', description: 'IndustrialAdapter + 合成 openSocket 标签帧 → flux 绑定 → 泵旋转/罐液位/告警发光/点击详情（数据源端到端打通）' },
 ];

@@ -17,12 +17,12 @@ describe('three-canvas renderer definition (plan 465 Phase 2)', () => {
     expect(registry.get('three-canvas')).toBe(threeCanvasRendererDefinition);
   });
 
-  it('declares scene/bindings/animations/events as prop fields (D3: events object as single prop)', () => {
+  it('declares scene/bindings/events as prop fields (D3: events object as single prop; animations 已随 559 后记删除)', () => {
     const fields = threeCanvasRendererDefinition.fields ?? [];
     const kindOf = (key: string) => fields.find((f) => f.key === key)?.kind;
     expect(kindOf('scene')).toBe('prop');
     expect(kindOf('bindings')).toBe('prop');
-    expect(kindOf('animations')).toBe('prop');
+    expect(kindOf('animations')).toBeUndefined();
     expect(kindOf('events')).toBe('prop');
   });
 
@@ -38,10 +38,10 @@ describe('three-canvas renderer definition (plan 465 Phase 2)', () => {
 
   it('exposes propContracts for the four source-enabled props', () => {
     const contracts = threeCanvasRendererDefinition.propContracts ?? {};
-    expect(Object.keys(contracts).sort()).toEqual(['animations', 'bindings', 'events', 'height', 'scene']);
+    expect(Object.keys(contracts).sort()).toEqual(['bindings', 'events', 'height', 'scene']);
     // plan 473: height joins as a plain string prop (editorType text); the
     // four structured props keep the source-enabled code editor
-    for (const key of ['animations', 'bindings', 'events', 'scene']) {
+    for (const key of ['bindings', 'events', 'scene']) {
       expect(contracts[key]?.editorType).toBe('code');
     }
     expect(contracts.height?.editorType).toBe('text');

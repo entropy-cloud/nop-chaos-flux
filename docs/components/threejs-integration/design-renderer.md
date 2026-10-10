@@ -291,11 +291,13 @@ export class ModelLoader {
 | `PrimitiveGeometryType` `capsule`                    | primitive              | `args.radius/length/capSegments/radialSegments`                                                                                             |
 | `ModelConfig.label` / `labelOffset`                  | 通用                   | CanvasTexture Sprite 标注（`engine/label-sprite.ts`）；缺省锚定包围盒上方，Sprite 材质/贴图随 dispose 链回收（Sprite 共享几何体不 dispose） |
 
-### 能力冻结裁定
+### 自研动画体系删除（559 后记，2026-10-10 用户裁定）
 
-自研 TweenRegistry/KeyframeClip（binding 过渡与 time/state/event clip）**冻结不再扩展**：
-时间线动画优先走 three 原生体系（GLTF clip `initialAnimation`、SceneJSON 自带动画资产），
-flux clip 仅承担「数据/事件触发的场景反应」。既有行为与测试保留。
+原 559 Phase 2 的「能力冻结」裁定升级为**整体删除**（用户明确指示：薄桥接不做二次发明，不用的部分删除）：
+
+- **已删除**：`engine/tween-registry.ts`（tween/spring/step 绑定过渡）、`binding/keyframes.ts`（time/state/event 关键帧 clip）、`renderer/hooks/use-animation-clips.ts`、`schemas.ts` 的 `AnimationConfig`/`AnimationKeyframe`/`BindingAnimationConfig`/`TransformConfig.animation`/`ThreeCanvasSchema.animations`、SceneManager 的 `registerClips`/`startClip`/`notifyEvent`/tween 帧推进、AI 校验 schema 对应节。
+- **替代路径**：时间线/插值动画走 three 原生体系——GLTF clip（`ModelConfig.initialAnimation` 自动播放）、SceneJSON 自带动画资产；「数据/事件触发的场景反应」用纯数据映射绑定（range/convert/condition，即时写）表达。
+- **保留**：`TransformEngine` 的 range/convert/condition（纯数据映射，桥接胶水）、`DataBinding.condition`、事件桥接（onObjectClick/Hover/Ready/Error）。
 
 ### 演示面（plan 559 Phase 4）
 

@@ -24,5 +24,4 @@ export type {
   LightConfig,
   DataBinding,
   ThreeCanvasEvents,
-  AnimationConfig,
 } from './schemas.js';

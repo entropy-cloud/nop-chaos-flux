@@ -18,12 +18,6 @@
         "$ref": "#/definitions/DataBinding"
       }
     },
-    "animations": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/AnimationConfig"
-      }
-    },
     "events": {
       "type": "object"
     },
@@ -382,22 +376,6 @@
                   "maxItems": 2
                 }
               }
-            },
-            "animation": {
-              "type": "object",
-              "required": ["type"],
-              "properties": {
-                "type": {
-                  "enum": ["tween", "spring", "step"]
-                },
-                "duration": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "easing": {
-                  "type": "string"
-                }
-              }
             }
           }
         },
@@ -410,70 +388,6 @@
             },
             "trueValue": {},
             "falseValue": {}
-          }
-        }
-      }
-    },
-    "AnimationConfig": {
-      "type": "object",
-      "required": ["id", "trigger", "target", "keyframes"],
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "trigger": {
-          "type": "object",
-          "required": ["type", "source"],
-          "properties": {
-            "type": {
-              "enum": ["state", "event", "time"]
-            },
-            "source": {
-              "type": "string"
-            },
-            "value": {}
-          }
-        },
-        "target": {
-          "type": "object",
-          "required": ["modelId", "property"],
-          "properties": {
-            "modelId": {
-              "type": "string"
-            },
-            "property": {
-              "type": "string"
-            }
-          }
-        },
-        "keyframes": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["time", "value"],
-            "properties": {
-              "time": {
-                "type": "number",
-                "minimum": 0
-              },
-              "value": {},
-              "easing": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "loop": {
-          "type": "object",
-          "required": ["type"],
-          "properties": {
-            "type": {
-              "enum": ["once", "loop", "pingpong"]
-            },
-            "count": {
-              "type": "number",
-              "minimum": 1
-            }
           }
         }
       }

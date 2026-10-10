@@ -3,8 +3,10 @@ import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject } from '@nop-c
 /**
  * three-canvas 渲染器 schema（design-renderer.md §1，v5）。
  *
- * `AnimationConfig` 与 `DataBinding.transform`/`condition` 在 I2.1 仅类型声明：
- * TransformEngine/插值消费在 I2.2（plan 465 Non-Goals），绑定管线内 transform 阶段为 identity 接缝。
+ * 559 后记（2026-10-10，用户裁定）：自研绑定过渡（tween/spring/step）与自研关键帧 clip
+ * （time/state/event）已整体删除——时间线动画统一走 three 原生体系（GLTF clip
+ * `initialAnimation`、SceneJSON 自带动画资产）；绑定只保留纯数据映射
+ * （range/convert/condition），事件只有 onObjectClick/Hover/Ready/Error。
  */
 
 export interface ThreeCanvasEvents extends SchemaObject {
@@ -23,7 +25,6 @@ export interface ThreeCanvasSchema extends BaseSchema {
   /** 结构化 prop 按平台索引签名约束以 `& SchemaObject` 承载（scada config 字段同法），渲染期经 parseThreeSceneConfig 收紧 */
   scene: ThreeSceneConfig & SchemaObject;
   bindings?: (DataBinding & SchemaObject)[];
-  animations?: (AnimationConfig & SchemaObject)[];
   /**
    * events 对象整体注册为 kind: 'prop'（design.md D3）：平台 classifyField 仅按顶层 key
    * 精确分类、无点号路径（industrial renderer-definitions.ts:37-38 先例）；
@@ -185,7 +186,6 @@ export interface TransformConfig {
   /** flux 表达式，注入 value 变量 */
   convert?: string;
   range?: RangeConfig;
-  animation?: BindingAnimationConfig;
 }
 
 export interface RangeConfig {
@@ -193,11 +193,6 @@ export interface RangeConfig {
   output: [number, number];
 }
 
-export interface BindingAnimationConfig {
-  type: 'tween' | 'spring' | 'step';
-  duration?: number;
-  easing?: string;
-}
 
 export interface ConditionConfig {
   expression: string;
@@ -205,26 +200,3 @@ export interface ConditionConfig {
   falseValue: unknown;
 }
 
-export interface AnimationKeyframe {
-  time: number;
-  value: unknown;
-  easing?: string;
-}
-
-export interface AnimationConfig {
-  id: string;
-  trigger: {
-    type: 'state' | 'event' | 'time';
-    source: string;
-    value?: unknown;
-  };
-  target: {
-    modelId: string;
-    property: string;
-  };
-  keyframes: AnimationKeyframe[];
-  loop?: {
-    type: 'once' | 'loop' | 'pingpong';
-    count?: number;
-  };
-}
