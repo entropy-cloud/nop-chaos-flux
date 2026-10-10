@@ -19,6 +19,7 @@ import {
   hasShadowCastingLights,
 } from './shadow-setup.js';
 import { createPrimitiveMesh, resolvePrimitiveModel } from './primitive-factory.js';
+import { assembleSceneJsonObjects, attachModelLabel, disposeLabelSprite } from './scene-json-assembly.js';
 import { KeyframeClip } from '../binding/keyframes.js';
 import type { AnimationConfig } from '../schemas.js';
 import type { BindingAnimationConfig, LightConfig, ModelConfig, ThreeSceneConfig } from '../schemas.js';
@@ -71,6 +72,8 @@ interface ManagedModel {
   root: THREE.Object3D;
   mixer: THREE.AnimationMixer | null;
   actions: THREE.AnimationAction[];
+  /** 559 Phase 2：模型标注 Sprite（config.label），dispose 统一回收 */
+  sprites: THREE.Sprite[];
 }
 
 /* v8 ignore next */
@@ -160,6 +163,12 @@ export class SceneManager {
       return;
     }
     this.renderer = renderer;
+    // 559 Phase 2：toneMapping 可配（缺省 none 维持既有视觉；headless stub 无 setter 时跳过）
+    const toneMapping = this.config.environment?.toneMapping;
+    if (toneMapping && toneMapping !== 'none' && typeof (renderer as unknown as Record<string, unknown>).toneMapping !== 'undefined') {
+      (renderer as unknown as Record<string, unknown>).toneMapping =
+        toneMapping === 'aces' ? THREE.ACESFilmicToneMapping : THREE.ReinhardToneMapping;
+    }
     // plan 533 D1：HiDPI 清晰渲染（headless 守卫；上限 MAX_PIXEL_RATIO）。
     const ratio = resolveDevicePixelRatio();
     // 真实 WebGLRenderer 恒有 setPixelRatio；headless stub 缺失时静默跳过（降级族同 cursor 守卫）。
@@ -199,10 +208,24 @@ export class SceneManager {
       }
     }
     this.controls = this.controlsFactory(camera, renderer.domElement as unknown as HTMLElement);
+    this.applyControlsConfig();
     this.bindPointerHandlers(renderer.domElement as unknown as HTMLElement);
     this.resizeToContainer();
     this.lastFrameTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
     this.scheduleTick();
+  }
+
+  /** 559 Phase 2：OrbitControls schema 可配面（缺省字段不触碰，维持引擎内置）。 */
+  private applyControlsConfig(): void {
+    const controlsConfig = this.config.camera.controls;
+    if (!controlsConfig || !this.controls) return;
+    const controls = this.controls as unknown as Record<string, unknown>;
+    if (controlsConfig.autoRotate !== undefined) controls.autoRotate = controlsConfig.autoRotate;
+    if (controlsConfig.autoRotateSpeed !== undefined) controls.autoRotateSpeed = controlsConfig.autoRotateSpeed;
+    if (controlsConfig.minDistance !== undefined) controls.minDistance = controlsConfig.minDistance;
+    if (controlsConfig.maxDistance !== undefined) controls.maxDistance = controlsConfig.maxDistance;
+    if (controlsConfig.maxPolarAngle !== undefined) controls.maxPolarAngle = controlsConfig.maxPolarAngle;
+    if (controlsConfig.enablePan !== undefined) controls.enablePan = controlsConfig.enablePan;
   }
 
   private assembleEnvironment(scene: THREE.Scene): void {
@@ -246,7 +269,14 @@ export class SceneManager {
 
   loadModels(onError?: (e: DiagnosticEvent) => void, onProgress?: (ratio: number | null) => void): Promise<void> {
     if (this.disposed) return Promise.resolve();
-    const pending = [...this.config.models];
+    // 559 Phase 2：SceneJSON 薄桥接形态优先——three 原生 JSON 经 ObjectLoader 同步装配，
+    // 带 name 对象注册进 models Map（绑定/待写回放/拾取与 models 形态同管线）。
+    if (this.config.json !== undefined && this.config.json !== null) {
+      this.loadSceneJson(this.config.json, onError);
+      this.emitReady();
+      return Promise.resolve();
+    }
+    const pending = [...(this.config.models ?? [])];
     if (pending.length === 0) {
       this.emitReady();
       return Promise.resolve();
@@ -323,6 +353,25 @@ export class SceneManager {
     });
   }
 
+  /**
+   * SceneJSON 装配（559 Phase 2）：ObjectLoader.parse 同步构建 → add 进场景 →
+   * traverse 注册 name 非空对象（首名注册；重名 `scene-json-duplicate-name` 诊断跳过；
+   * interactive 仅 `interactiveObjects` 点名者开启）。解析失败 `scene-json-invalid` 诊断，
+   * 画布空置不崩溃（Failure Paths 契约）。装配逻辑在 scene-json-assembly.ts。
+   */
+  private loadSceneJson(json: unknown, onError?: (e: DiagnosticEvent) => void): void {
+    if (!this.scene) return;
+    assembleSceneJsonObjects(json, this.scene, {
+      interactiveObjects: this.config.interactiveObjects,
+      onDuplicate: (name) => onError?.({ code: 'scene-json-duplicate-name', message: `Duplicate object name '${name}' in scene JSON; first occurrence wins` }),
+      onError: (event) => onError?.(event),
+      register: (name, object, config) => {
+        this.models.set(name, { config, root: object, mixer: null, actions: [], sprites: [] });
+        this.replayPendingForModel(name, object);
+      },
+    });
+  }
+
   private registerModel(config: ModelConfig, gltf: LoadedModel): void {
     if (!this.scene) return;
     const root = gltf.scene;
@@ -342,7 +391,8 @@ export class SceneManager {
       if (clip) actions.push(mixer.clipAction(clip));
       for (const action of actions) action.play();
     }
-    this.models.set(config.id, { config, root, mixer, actions });
+    const sprites = attachModelLabel(config, root);
+    this.models.set(config.id, { config, root, mixer, actions, sprites });
     this.replayPendingForModel(config.id, root);
   }
 
@@ -512,9 +562,9 @@ export class SceneManager {
     return this.scene;
   }
 
-  getModel(id: string): { config: ModelConfig; root: THREE.Object3D } | undefined {
+  getModel(id: string): { config: ModelConfig; root: THREE.Object3D; sprites: THREE.Sprite[] } | undefined {
     const model = this.models.get(id);
-    return model ? { config: model.config, root: model.root } : undefined;
+    return model ? { config: model.config, root: model.root, sprites: model.sprites } : undefined;
   }
 
   private scheduleTick(): void {
@@ -619,7 +669,10 @@ export class SceneManager {
     for (const model of this.models.values()) {
       model.actions.forEach((action) => action.stop());
       model.mixer?.uncacheRoot(model.mixer.getRoot());
+      model.sprites.forEach(disposeLabelSprite);
       model.root.traverse((child) => {
+        // Sprite 几何体为 three 共享单例，不 dispose（材质/贴图已由 disposeLabelSprite 回收）
+        if ((child as THREE.Sprite).isSprite) return;
         const mesh = child as THREE.Mesh;
         if (mesh.geometry) mesh.geometry.dispose();
         const material = mesh.material as THREE.Material | THREE.Material[] | undefined;

@@ -40,11 +40,22 @@ export interface ThreeCanvasSchema extends BaseSchema {
   height?: string;
 }
 
+/**
+ * 场景双形态（559 Phase 2，薄桥接裁定）：
+ * - `{ models: [...] }`：自定义声明式图元（兼容保留，primitive 直建 / GLTF loader）；
+ * - `{ json: <SceneJSON> }`：three.js 原生 SceneJSON（Object3D.toJSON / three 编辑器导出），
+ *   经 THREE.ObjectLoader 直接装配——外部引擎 JSON 即渲染契约；绑定按对象 `name` 寻址
+ *   （traverse 注册 name 非空对象，首名注册、重名 `scene-json-duplicate-name` 诊断跳过）；
+ *   拾取交互缺省关闭，`interactiveObjects` 点名开启。二选一：json 存在时优先。
+ */
 export interface ThreeSceneConfig {
   camera: CameraConfig;
   lights: LightConfig[];
   environment?: EnvironmentConfig;
-  models: ModelConfig[];
+  models?: ModelConfig[];
+  json?: unknown;
+  /** json 形态下参与射线拾取（click/hover）的对象 name 清单；models 形态忽略。 */
+  interactiveObjects?: string[];
 }
 
 export interface CameraConfig {
@@ -52,11 +63,24 @@ export interface CameraConfig {
   fov?: number;
   near?: number;
   far?: number;
+  /** 轨道控制可配置面（559 Phase 2）；缺省维持引擎内置（damping 开、其余 three 默认）。 */
+  controls?: CameraControlsConfig;
+}
+
+export interface CameraControlsConfig {
+  autoRotate?: boolean;
+  autoRotateSpeed?: number;
+  minDistance?: number;
+  maxDistance?: number;
+  maxPolarAngle?: number;
+  enablePan?: boolean;
 }
 
 export interface EnvironmentConfig {
   background?: string;
   fog?: FogConfig;
+  /** 色调映射（559 Phase 2）；缺省 none 维持既有视觉（NoToneMapping）。 */
+  toneMapping?: 'none' | 'aces' | 'reinhard';
 }
 
 export interface FogConfig {
@@ -65,12 +89,14 @@ export interface FogConfig {
   far: number;
 }
 
-export type PrimitiveGeometryType = 'box' | 'sphere' | 'cylinder' | 'plane' | 'cone' | 'torus';
+export type PrimitiveGeometryType = 'box' | 'sphere' | 'cylinder' | 'plane' | 'cone' | 'torus' | 'tube' | 'capsule';
 
 export interface PrimitiveGeometryConfig {
   type: PrimitiveGeometryType;
   /** 几何参数（按 type 约定：box width/height/depth；sphere radius/widthSegments/heightSegments 等） */
   args?: Record<string, number>;
+  /** tube 专用：CatmullRom 样条控制点序列（工业管线布线）；args.radius/args.tubularSegments/args.closed 配合 */
+  path?: [number, number, number][];
 }
 
 export type PrimitiveMaterialType = 'standard' | 'basic' | 'lambert' | 'phong';
@@ -82,6 +108,12 @@ export interface PrimitiveMaterialConfig {
   transparent?: boolean;
   wireframe?: boolean;
   flatShading?: boolean;
+  /** PBR 参数（standard 材质；559 Phase 2）：金属度/粗糙度。 */
+  metalness?: number;
+  roughness?: number;
+  /** 自发光（standard/lambert/phong；告警变色通道）：颜色 + 强度。 */
+  emissive?: string;
+  emissiveIntensity?: number;
 }
 
 /** 声明式图元（无 GLB）：geometry 必填，material 缺省 MeshStandardMaterial */
@@ -103,6 +135,10 @@ export interface ModelConfig {
   scale?: [number, number, number];
   /** false 的模型不参与射线拾取（默认 false） */
   interactive?: boolean;
+  /** 模型标注文字（559 Phase 2）：CanvasTexture Sprite 挂为子节点，锚定包围盒上方或 labelOffset。 */
+  label?: string;
+  /** label 悬挂偏移；缺省自动置于包围盒上方。 */
+  labelOffset?: [number, number, number];
   /** plan 473 (V3-F2): mesh-level shadow flags (applied to all child meshes). */
   castShadow?: boolean;
   receiveShadow?: boolean;

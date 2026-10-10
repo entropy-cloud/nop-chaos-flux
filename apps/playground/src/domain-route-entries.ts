@@ -498,11 +498,25 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'plan 469 three-canvas 演示：声明式图元 + 表达式绑定（tween/range/condition）+ 循环关键帧 + 对象点击，10Hz 模拟数据驱动绑定热路径（fps e2e 基准演示场景）。',
   },
   {
+    id: 'three-gallery',
+    title: 'Three Gallery',
+    eyebrow: '3D Rendering',
+    description:
+      '559 3D 示例画廊：图元材质（tube/capsule/PBR/toneMapping/label）/ 灯光阴影（相机 controls）/ 原生 three.js SceneJSON（ObjectLoader 薄桥接 + name 寻址绑定）/ GLTFExporter 导出-加载全链路 / 关键帧交互 / 数字孪生泵站（IndustrialAdapter 标签帧端到端驱动）。',
+  },
+  {
     id: 'three-industrial-demo',
     title: 'Three Industrial Demo',
     eyebrow: '3D Rendering',
     description:
       'plan 534 IndustrialAdapter + ReconnectionManager 数据源演示：合成 openSocket 标签源（float32/bool/int16 帧）+ 退避重连可观测（重连尝试计数 = 合成源建连次数）。',
+  },
+  {
+    id: 'scada-gallery',
+    title: 'Scada Gallery',
+    eyebrow: 'Industrial HMI',
+    description:
+      '559 场景画廊：水处理泵房 / 配电监控 / 灌装产线三行业组态场景（37 图元库中的 tank/heat-exchanger 族、gate/check-valve、elbow/tee/cross、breaker/transformer、trend/numeric、alarm-light 实景用法），共享信号模拟器实时驱动 + 越限告警联动 + 句柄轨远程控制。',
   },
   {
     id: 'scada-pressure-demo',

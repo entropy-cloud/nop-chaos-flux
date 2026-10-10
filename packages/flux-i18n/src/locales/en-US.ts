@@ -1699,6 +1699,7 @@ export const enUS: Resource = {
           device: 'Devices',
           instrument: 'Instruments',
           'sensor-control': 'Sensor & Control',
+          electrical: 'Electrical',
           pipe: 'Pipes',
           other: 'Other',
         },

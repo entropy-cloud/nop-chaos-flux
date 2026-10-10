@@ -12,8 +12,8 @@ interface ScadaPaletteGroup {
   symbols: ScadaSymbolDefinition[];
 }
 
-/** 分类稳定序（symbol-types.ts:12 五分类 + 缺省 other 兜底组）。 */
-const CATEGORY_ORDER: ScadaPaletteCategory[] = ['shape', 'device', 'instrument', 'sensor-control', 'pipe', 'other'];
+/** 分类稳定序（symbol-types.ts:12 六分类 + 缺省 other 兜底组）。 */
+const CATEGORY_ORDER: ScadaPaletteCategory[] = ['shape', 'device', 'instrument', 'sensor-control', 'electrical', 'pipe', 'other'];
 
 export function matchesScadaPaletteQuery(
   def: ScadaSymbolDefinition,

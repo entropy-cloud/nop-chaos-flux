@@ -2,3 +2,5 @@ export { scadaInstrumentGaugeDefinition, scadaInstrumentGaugeType } from './gaug
 export { scadaInstrumentLevelDefinition, scadaInstrumentLevelType } from './level.js';
 export { scadaInstrumentThermometerDefinition, scadaInstrumentThermometerType } from './thermometer.js';
 export { scadaInstrumentProgressDefinition, scadaInstrumentProgressType } from './progress.js';
+export { scadaInstrumentTrendDefinition, scadaInstrumentTrendType } from './trend.js';
+export { scadaInstrumentNumericDefinition, scadaInstrumentNumericType } from './numeric.js';

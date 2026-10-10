@@ -181,8 +181,8 @@ describe('builtin base shapes (I5.4)', () => {
       config: { world: { x: 0, y: 0, scale: 1 } },
     }) as unknown as Record<string, unknown>;
 
-  it('should register exactly the 24 builtin symbols on load (8 shapes + image/video placeholders + group + device/instrument/sensor-control 4 族 12 个 + pipe-junction)', () => {
-    expect(builtinScadaSymbolDefinitions).toHaveLength(24);
+  it('should register exactly the 37 builtin symbols on load (8 shapes + image/video placeholders + group + device 9 + instrument 6 + sensor-control 5 + electrical 2 + pipe 4)', () => {
+    expect(builtinScadaSymbolDefinitions).toHaveLength(37);
     for (const def of builtinScadaSymbolDefinitions) {
       expect(hasScadaSymbol(def.type)).toBe(true);
     }
@@ -437,9 +437,9 @@ describe('builtin base shapes (I5.4)', () => {
   });
 
   // I15.1 V5 体积面补强（I5 plan Deferred：I9 设备库落地后 20+ 真实工业图元覆盖断言）：
-  // 24 个内置图元定义（8 基础形状 + image/video 占位 + group + 4 族 12 个 + pipe-junction）
+  // 37 个内置图元定义（8 基础形状 + image/video 占位 + group + device 9 + instrument 6 + sensor-control 5 + electrical 2 + pipe 4；559 Phase 1 扩充）
   // 全量经引擎场景树加载（validate → engine.reset → getSymbols/registry 覆盖），不弱化既有用例。
-  it('should full-path load all 24 builtin symbols through the engine scene tree (I15.1 V5 volume)', () => {
+  it('should full-path load all 37 builtin symbols through the engine scene tree (I15.1 V5 volume)', () => {
     const config = {
       version: 1 as const,
       symbols: builtinScadaSymbolDefinitions.map((def, index) => ({
@@ -457,7 +457,7 @@ describe('builtin base shapes (I5.4)', () => {
 
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     engine.reset(config as never);
-    expect(engine.registry.size()).toBe(24);
+    expect(engine.registry.size()).toBe(37);
     // scada-group 容器节点按设计不挂 symbol definition（design-symbols.md §4.3 容器语义），
     // 经 node tag（Group）归位；其余图元经 definition.type 断言。
     const loadedTypes = new Set(

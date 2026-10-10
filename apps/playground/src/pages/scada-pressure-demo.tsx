@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
@@ -6,6 +6,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial';
 import type { ScadaConfig, ScadaSymbolNode } from '@nop-chaos/flux-renderers-industrial';
 import { Button } from '@nop-chaos/ui';
+import { createSignalSimulator } from './scada-industrial-simulator.js';
 
 // I13.2 scada-pressure-demo 大屏/复杂组态示例页：万级图元压力示例 + 多画面切换。
 //
@@ -93,13 +94,14 @@ function generatePressureSymbols(count: number): ScadaSymbolNode[] {
 const PRESSURE_COUNT = 10_000;
 
 // 工艺流程大屏画面（多画面切换之一）：设备 + 管道 + 仪表大屏总览（~40 图元）。
+// 559 Phase 3：工艺量从 static 死点升级为共享信号模拟器 flux 轨实时驱动（液位/压力/流量/温度 + 越限告警联动）。
 const overviewSymbols: ScadaSymbolNode[] = [
   { id: 'ov-title', type: 'scada-text', x: 40, y: 30, text: '生产总览大屏', textSize: 24, textColor: '#e3f2fd' },
   { id: 'ov-subtitle', type: 'scada-text', x: 40, y: 66, text: '整厂工艺流程运行状态总览（I13.2 画面一）', textSize: 12, textColor: '#90caf9' },
   { id: 'ov-tank', type: 'scada-instrument-level', x: 120, y: 160, width: 80, height: 200, custom: { min: 0, max: 100, unit: '%' }, bindings: { height: { point: 'ovLevel', scale: { k: 2 } }, text: { point: 'ovLevel', format: '%d%%' } } },
   { id: 'ov-pipe-1', type: 'scada-pipe', x: 200, y: 330, width: 140, height: 0 },
   { id: 'ov-pump', type: 'scada-device-pump', x: 340, y: 300, width: 80, height: 60 },
-  { id: 'ov-pipe-2', type: 'scada-pipe', x: 420, y: 320, width: 120, height: 0 },
+  { id: 'ov-pipe-2', type: 'scada-pipe', x: 420, y: 320, width: 120, height: 0, fill: '#3f7b5a', stroke: '#3f7b5a', strokeWidth: 6, flow: { enabled: true, speed: 2 }, states: { states: { run: {} }, booleanMap: { true: 'run', false: 'stop' } } as const },
   { id: 'ov-valve', type: 'scada-device-valve', x: 540, y: 300, width: 80, height: 40, custom: { openRatio: 1 } },
   { id: 'ov-pipe-3', type: 'scada-pipe', x: 620, y: 310, width: 130, height: 0 },
   { id: 'ov-motor', type: 'scada-device-motor', x: 780, y: 120, width: 80, height: 60 },
@@ -107,7 +109,7 @@ const overviewSymbols: ScadaSymbolNode[] = [
   { id: 'ov-gauge-1', type: 'scada-instrument-gauge', x: 980, y: 100, width: 140, height: 140, custom: { min: 0, max: 100, unit: 'MPa' }, bindings: { rotation: { point: 'ovPressure', scale: { k: 2.7, b: -135 } }, text: { point: 'ovPressure', format: '%d MPa' } } },
   { id: 'ov-gauge-2', type: 'scada-instrument-gauge', x: 980, y: 280, width: 140, height: 140, custom: { min: 0, max: 100, unit: 'L/min' }, bindings: { rotation: { point: 'ovFlow', scale: { k: 2.7, b: -135 } }, text: { point: 'ovFlow', format: '%d L/min' } } },
   { id: 'ov-thermo', type: 'scada-instrument-thermometer', x: 200, y: 90, width: 50, height: 180, bindings: { height: { point: 'ovTemp', scale: { k: 1.5 } }, text: { point: 'ovTemp', format: '%d °C' } } },
-  { id: 'ov-ind-1', type: 'scada-sensor-control-indicator', x: 420, y: 90, width: 64, height: 36 },
+  { id: 'ov-ind-1', type: 'scada-sensor-control-indicator', x: 420, y: 90, width: 64, height: 36, bindings: { fill: { point: 'ovAlarm' } }, states: { states: {}, valueMap: { '1': 'fault', '0': 'stop' } } },
   { id: 'ov-ind-2', type: 'scada-sensor-control-indicator', x: 540, y: 90, width: 64, height: 36 },
   { id: 'ov-txt-1', type: 'scada-text', x: 120, y: 370, text: '储罐 LT-1', textSize: 12, textColor: '#90caf9' },
   { id: 'ov-txt-2', type: 'scada-text', x: 340, y: 368, text: '泵 P-1', textSize: 12, textColor: '#90caf9' },
@@ -119,10 +121,11 @@ const overviewSymbols: ScadaSymbolNode[] = [
 const overviewConfig: ScadaConfig = {
   version: 1,
   variables: [
-    { id: 'ovLevel', source: 'static', value: 62 },
-    { id: 'ovPressure', source: 'static', value: 45 },
-    { id: 'ovFlow', source: 'static', value: 60 },
-    { id: 'ovTemp', source: 'static', value: 48 },
+    { id: 'ovLevel', source: 'flux', flux: 'ovLevel' },
+    { id: 'ovPressure', source: 'flux', flux: 'ovPressure' },
+    { id: 'ovFlow', source: 'flux', flux: 'ovFlow' },
+    { id: 'ovTemp', source: 'flux', flux: 'ovTemp' },
+    { id: 'ovAlarm', source: 'flux', flux: 'ovAlarm' },
   ],
   symbols: overviewSymbols,
 };
@@ -171,6 +174,20 @@ export function ScadaPressureDemoPage({ onBack }: ScadaPressureDemoPageProps) {
   const [screen, setScreen] = useState<'overview' | 'pressure'>('overview');
   const schema = useMemo(() => buildSchema(screen), [screen]);
 
+  // 559 Phase 3：overview 工艺量实时模拟（共享信号模拟器；压力越限联动告警指示灯）
+  const [sim, setSim] = useState<Record<string, number>>({ ovLevel: 62, ovPressure: 45, ovFlow: 60, ovTemp: 48, ovAlarm: 0 });
+  useEffect(() => {
+    if (screen !== 'overview') return;
+    const simulator = createSignalSimulator([
+      { tag: 'ovLevel', kind: 'sine', base: 62, amplitude: 18, periodSec: 14, min: 15, max: 95 },
+      { tag: 'ovPressure', kind: 'randomWalk', base: 55, amplitude: 16, periodSec: 6, min: 20, max: 92 },
+      { tag: 'ovFlow', kind: 'sine', base: 60, amplitude: 22, periodSec: 10, min: 5, max: 100 },
+      { tag: 'ovTemp', kind: 'sine', base: 48, amplitude: 8, periodSec: 20, min: 20, max: 80 },
+    ]);
+    simulator.start((values) => setSim({ ...values, ovAlarm: values.ovPressure > 80 ? 1 : 0 }));
+    return () => simulator.stop();
+  }, [screen]);
+
   return (
     <main className="min-h-screen flex flex-col p-4 gap-3">
       <header className="flex items-center gap-3 flex-wrap">
@@ -215,6 +232,7 @@ export function ScadaPressureDemoPage({ onBack }: ScadaPressureDemoPageProps) {
           key={screen}
           schemaUrl="playground://pages/scada-pressure-demo"
           schema={schema}
+          data={screen === 'overview' ? sim : undefined}
           env={env}
           registry={registry as never}
           formulaCompiler={formulaCompiler}

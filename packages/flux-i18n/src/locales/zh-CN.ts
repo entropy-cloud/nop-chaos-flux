@@ -1693,6 +1693,7 @@ export const zhCN: Resource = {
           device: '设备',
           instrument: '仪表',
           'sensor-control': '传感控制',
+          electrical: '电气',
           pipe: '管道',
           other: '其他',
         },

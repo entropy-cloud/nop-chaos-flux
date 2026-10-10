@@ -11,24 +11,33 @@ import {
   scadaVideoDefinition,
 } from './base-shapes/index.js';
 import {
+  scadaDeviceCheckValveDefinition,
+  scadaDeviceConveyorDefinition,
   scadaDeviceFanDefinition,
+  scadaDeviceGateValveDefinition,
+  scadaDeviceHeatExchangerDefinition,
   scadaDeviceMotorDefinition,
   scadaDevicePumpDefinition,
+  scadaDeviceTankDefinition,
   scadaDeviceValveDefinition,
 } from './device/index.js';
 import {
   scadaInstrumentGaugeDefinition,
   scadaInstrumentLevelDefinition,
+  scadaInstrumentNumericDefinition,
   scadaInstrumentProgressDefinition,
   scadaInstrumentThermometerDefinition,
+  scadaInstrumentTrendDefinition,
 } from './instrument/index.js';
 import {
+  scadaSensorControlAlarmLightDefinition,
   scadaSensorControlButtonDefinition,
   scadaSensorControlIndicatorDefinition,
   scadaSensorControlSensorDefinition,
   scadaSensorControlSwitchDefinition,
 } from './sensor-control/index.js';
-import { scadaPipeJunctionDefinition } from './pipe/index.js';
+import { scadaPipeJunctionDefinition, scadaPipeCrossDefinition, scadaPipeElbowDefinition, scadaPipeTeeDefinition } from './pipe/index.js';
+import { scadaElecBreakerDefinition, scadaElecTransformerDefinition } from './electrical/index.js';
 import { hasScadaSymbol, registerScadaSymbol } from './symbol-registry.js';
 import { scadaGroupDefinition } from './compound.js';
 
@@ -48,15 +57,28 @@ export const builtinScadaSymbolDefinitions = [
   scadaDevicePumpDefinition,
   scadaDeviceValveDefinition,
   scadaDeviceFanDefinition,
+  scadaDeviceTankDefinition,
+  scadaDeviceHeatExchangerDefinition,
+  scadaDeviceConveyorDefinition,
+  scadaDeviceGateValveDefinition,
+  scadaDeviceCheckValveDefinition,
   scadaInstrumentGaugeDefinition,
   scadaInstrumentLevelDefinition,
   scadaInstrumentThermometerDefinition,
   scadaInstrumentProgressDefinition,
+  scadaInstrumentTrendDefinition,
+  scadaInstrumentNumericDefinition,
   scadaSensorControlSensorDefinition,
   scadaSensorControlIndicatorDefinition,
   scadaSensorControlSwitchDefinition,
   scadaSensorControlButtonDefinition,
+  scadaSensorControlAlarmLightDefinition,
+  scadaElecBreakerDefinition,
+  scadaElecTransformerDefinition,
   scadaPipeJunctionDefinition,
+  scadaPipeElbowDefinition,
+  scadaPipeTeeDefinition,
+  scadaPipeCrossDefinition,
 ];
 
 export function registerBuiltinScadaSymbols(): void {

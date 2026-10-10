@@ -102,7 +102,7 @@ describe('industrialRendererDefinitions', () => {
 
 // Phase 1（plan 2026-08-04-1558-1）+ 统一延迟加载：注册语义与幂等。
 // index.ts / renderer-definitions 无模块加载副作用、注册路径不静态触达 leafer-ui；
-// 内置 24 图元随 scada-canvas 异步 chunk 装载自注册（scada-canvas-lazy.ts）。
+// 内置 37 图元随 scada-canvas 异步 chunk 装载自注册（scada-canvas-lazy.ts；559 Phase 1 扩充后计数）。
 describe('registration semantics (scada-canvas chunk load → builtin symbols)', () => {
   beforeEach(() => {
     clearScadaSymbolRegistry();
@@ -124,13 +124,13 @@ describe('registration semantics (scada-canvas chunk load → builtin symbols)',
     expect(hasScadaSymbol('scada-device-motor')).toBe(false);
   });
 
-  it('scada-canvas chunk load self-registers all 24 builtin symbols without a prior registerBuiltinScadaSymbols call (full list)', async () => {
+  it('scada-canvas chunk load self-registers all 37 builtin symbols without a prior registerBuiltinScadaSymbols call (full list)', async () => {
     const registry = createRendererRegistry();
     registerScadaRenderers(registry);
 
     await loadScadaCanvasRenderer();
     const expectedTypes = builtinScadaSymbolDefinitions.map((def) => def.type);
-    expect(expectedTypes).toHaveLength(24);
+    expect(expectedTypes).toHaveLength(37);
     for (const type of expectedTypes) {
       expect(hasScadaSymbol(type), `expected ${type} to be registered`).toBe(true);
     }

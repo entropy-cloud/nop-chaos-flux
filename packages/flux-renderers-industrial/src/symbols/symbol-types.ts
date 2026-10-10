@@ -9,7 +9,7 @@ import type {
 
 export type LeafNode = IUI;
 
-export type ScadaSymbolCategory = 'shape' | 'device' | 'instrument' | 'sensor-control' | 'pipe';
+export type ScadaSymbolCategory = 'shape' | 'device' | 'instrument' | 'sensor-control' | 'electrical' | 'pipe';
 
 export type ScadaFillStyle = Record<string, unknown> | string;
 

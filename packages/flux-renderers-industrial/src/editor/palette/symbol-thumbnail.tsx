@@ -36,6 +36,8 @@ const ICONS: Record<string, IconPaths> = {
   button: { stroke: ['M4 6h16v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z'], extra: ['M8 10h8'] },
   indicator: { stroke: ['M12 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12z'], extra: ['M5 2L7 5M19 2l-2 3M2 10h3M19 10h3'] },
   sensor: { stroke: ['M8 3h8v6a4 4 0 0 1-8 0z', 'M12 13v4'], extra: ['M8 20h8M10 6h4'] },
+  'elec-breaker': { stroke: ['M2 12h4M18 12h4M6 12l12-5'], extra: ['M6 10v4M18 10v4'] },
+  'elec-transformer': { stroke: ['M12 3a5 5 0 1 0 0 10 5 5 0 1 1 0 10'], extra: ['M12 3v18M7 8h10'] },
 };
 
 const CATEGORY_ICONS: Record<ScadaSymbolCategory, IconPaths> = {
@@ -43,6 +45,7 @@ const CATEGORY_ICONS: Record<ScadaSymbolCategory, IconPaths> = {
   device: { stroke: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z'], extra: ['M12 8v4l3 2'] },
   instrument: { stroke: ['M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z'], extra: ['M12 17l4-6'] },
   'sensor-control': { stroke: ['M3 8a5 5 0 0 1 5-5h8a5 5 0 0 1 0 10H8a5 5 0 0 1-5-5z'] },
+  electrical: { stroke: ['M13 2L5 13h5l-1 9 8-11h-5z'] },
   pipe: { stroke: ['M2 9h20M2 15h20M2 9v6M22 9v6'] },
 };
 

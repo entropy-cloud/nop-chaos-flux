@@ -265,3 +265,40 @@ export class ModelLoader {
 - 现状即合规：`three-canvas-visual.spec.ts` 为 L1 DOM（lifecycle UI）/ L2 geometry（height prop）/ L4 handles（场景树/shadowMap）三层程序化断言，无 `toHaveScreenshot` 判据。
 - 深色模式覆盖：demo 页/测试当前未覆盖 `data-mode` 翻转——补强方式 = 程序化断言（`data-mode='dark'` 翻转后 `scene.background`/DOM 令牌的 computed 断言），**不引入**截图对比；是否为 demo 页加 dark 开关 = 独立 UX 打磨项（非本 plan）。
 - 3D 渲染为 WebGL 画布——截图对比天然受 GL 实现差异影响，程序化断言是该域的正确形态（与 Spline 锚点的「质感」靠 D1 契约保障，非回归截图）。
+
+## scene 双形态与契约扩充（plan 559 Phase 2，2026-10-10 落地）
+
+薄桥接取向（用户 2026-10-10 指示）：three 原生能力直接进，flux 只做数据驱动注入。
+
+### scene 双形态
+
+- `{ models: [...] }`：既有自定义声明式图元（兼容保留），`models` 由必填改为 optional。
+- `{ json: <SceneJSON> }`：three.js 原生 SceneJSON（`Object3D.toJSON()` / three 编辑器导出）经 `THREE.ObjectLoader().parse` 同步装配（`scene-manager.ts loadSceneJson`）。**json 存在时优先**，`loadModels` 直接 emitReady（同步装配、无 loader 往返）。
+- 绑定寻址：装配后 traverse 注册带 `name` 的对象进 models Map（`config = { id: name, interactive }`），bindings/events/pending 回放/tween/clip 全管线与 models 形态共用。首名注册；重名诊断 `scene-json-duplicate-name`（first-wins）。解析失败诊断 `scene-json-invalid`，画布空置不崩溃。
+- 交互门控：json 形态对象缺省 `interactive: false`（与既有拾取门控一致），`scene.interactiveObjects: [name…]` 点名开启。
+- 空态判别：`three-canvas.tsx` 以 `json != null` 判非空（否则按 models 数组）；`data-three-scene-state` 语义不变。
+- SceneJSON 自带相机/动画不单独消费：视图相机恒由 `camera` 配置驱动；时间线动画走 GLTF clip 或 flux clip。
+
+### 契约扩充（全部缺省保持既有视觉）
+
+| 字段                                                 | 形态                   | 说明                                                                                                                                        |
+| ---------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------- |
+| `camera.controls`                                    | 通用                   | OrbitControls 可配面：`autoRotate/autoRotateSpeed/minDistance/maxDistance/maxPolarAngle/enablePan`；缺省字段不触碰（damping 恒开）          |
+| `environment.toneMapping`                            | 通用                   | `'none'（缺省，NoToneMapping）                                                                                                              | 'aces' | 'reinhard'` |
+| `PrimitiveMaterialConfig.metalness/roughness`        | standard               | PBR 通道；按材质能力守卫（basic 等无该字段时忽略）                                                                                          |
+| `PrimitiveMaterialConfig.emissive/emissiveIntensity` | standard/lambert/phong | 自发光（告警变色通道）                                                                                                                      |
+| `PrimitiveGeometryType` `tube`                       | primitive              | `path: [[x,y,z]…]` CatmullRom 样条 + `args.radius/tubularSegments/radialSegments/closed`（管道布线）                                        |
+| `PrimitiveGeometryType` `capsule`                    | primitive              | `args.radius/length/capSegments/radialSegments`                                                                                             |
+| `ModelConfig.label` / `labelOffset`                  | 通用                   | CanvasTexture Sprite 标注（`engine/label-sprite.ts`）；缺省锚定包围盒上方，Sprite 材质/贴图随 dispose 链回收（Sprite 共享几何体不 dispose） |
+
+### 能力冻结裁定
+
+自研 TweenRegistry/KeyframeClip（binding 过渡与 time/state/event clip）**冻结不再扩展**：
+时间线动画优先走 three 原生体系（GLTF clip `initialAnimation`、SceneJSON 自带动画资产），
+flux clip 仅承担「数据/事件触发的场景反应」。既有行为与测试保留。
+
+### 演示面（plan 559 Phase 4）
+
+playground `#/three-gallery` 六示例画廊：图元材质 / 灯光阴影 / 原生 SceneJSON /
+GLTFExporter 导出-加载全链路 / 关键帧交互 / 数字孪生泵站（IndustrialAdapter 标签帧 →
+flux 绑定端到端）；`#/three-industrial-demo` 保持数据源独立演示。

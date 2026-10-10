@@ -2,3 +2,8 @@ export { scadaDeviceMotorDefinition, scadaDeviceMotorType } from './motor.js';
 export { scadaDevicePumpDefinition, scadaDevicePumpType } from './pump.js';
 export { scadaDeviceValveDefinition, scadaDeviceValveType } from './valve.js';
 export { scadaDeviceFanDefinition, scadaDeviceFanType } from './fan.js';
+export { scadaDeviceTankDefinition, scadaDeviceTankType } from './tank.js';
+export { scadaDeviceHeatExchangerDefinition, scadaDeviceHeatExchangerType } from './heat-exchanger.js';
+export { scadaDeviceConveyorDefinition, scadaDeviceConveyorType } from './conveyor.js';
+export { scadaDeviceGateValveDefinition, scadaDeviceGateValveType } from './gate-valve.js';
+export { scadaDeviceCheckValveDefinition, scadaDeviceCheckValveType } from './check-valve.js';

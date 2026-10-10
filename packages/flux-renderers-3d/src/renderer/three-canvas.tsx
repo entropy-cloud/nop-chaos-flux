@@ -41,8 +41,12 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
   const progressRef = useRef<number | null>(null);
   const progressFrameRef = useRef<number | null>(null);
 
-  const models = (scene as ThreeSceneConfig | undefined)?.models;
-  const isEmpty = !Array.isArray(models) || models.length === 0;
+  // 559 Phase 2：scene 双形态空态判别——json（SceneJSON）存在即非空，
+  // 否则按 models 数组判（models 形态语义不变）。
+  const sceneConfig = scene as ThreeSceneConfig | undefined;
+  const models = sceneConfig?.models;
+  const hasSceneJson = sceneConfig?.json !== undefined && sceneConfig?.json !== null;
+  const isEmpty = !hasSceneJson && (!Array.isArray(models) || models.length === 0);
 
   const engineOptions = useMemo(
     () => ({} as ConstructorParameters<typeof SceneManager>[1]),

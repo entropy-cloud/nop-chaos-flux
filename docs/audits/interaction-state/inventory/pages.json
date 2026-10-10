@@ -614,12 +614,28 @@
       "profile": "scroll+feedback+dialog+selection"
     },
     {
+      "id": "three-gallery",
+      "hash": "#/three-gallery",
+      "family": "domain",
+      "title": "Three Gallery",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
       "id": "three-industrial-demo",
       "hash": "#/three-industrial-demo",
       "family": "domain",
       "title": "Three Industrial Demo",
       "batch": "IS-5",
       "profile": "scroll+feedback+dialog+selection"
+    },
+    {
+      "id": "scada-gallery",
+      "hash": "#/scada-gallery",
+      "family": "domain",
+      "title": "Scada Gallery",
+      "batch": "IS-6",
+      "profile": "dynamic"
     },
     {
       "id": "scada-pressure-demo",

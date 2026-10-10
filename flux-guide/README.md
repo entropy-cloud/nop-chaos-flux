@@ -145,6 +145,8 @@ const SchemaRenderer = createSchemaRenderer();
 | `16-monitor.md`           | 运行时遥测监控（event-based monitor，独立 prop，自动捕获 notify + fetcher，E2E 友好）                                          |
 | `17-debugging.md`         | 三层定位法（配置/生成/渲染）、`__fluxDebug` 环形缓冲、后端 schema 直读、渲染器补测试规范、CRUD 缺按钮实战案例                  |
 | `18-reactions.md`         | 联动与响应式：表达式自动求值、reaction 节点、dependsOn、两层依赖追踪、微任务批量、性能优化                                     |
+| `19-scada.md`             | SCADA 工业组态：37 内置图元总表、点表/绑定/状态机/动画、电气族、画廊场景组合范式                                               |
+| `20-three-canvas.md`      | 3D 渲染：scene 双形态（声明式图元 / 原生 three.js SceneJSON 薄桥接）、图元材质、绑定关键帧、GLTF、数字孪生数据源接入           |
 | `flux-types/`             | 所有组件的 TypeScript 接口（字段知识源）。入口见 `flux-types/index.ts`                                                         |
 | `design-patterns/`        | 常见业务场景的完整解法 cookbook（单组件/单特性）                                                                               |
 | `examples/`               | 多技术组合的端到端页面范例（主从联动 / 行内编辑 / 业务单据公式 / 分步向导）                                                    |

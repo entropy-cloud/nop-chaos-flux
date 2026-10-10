@@ -25,17 +25,36 @@ export function resolvePrimitiveModel(config: ModelConfig): PrimitiveResolution 
   };
 }
 
-type GeometryFactory = (args: Record<string, number>) => THREE.BufferGeometry;
+type GeometryFactory = (config: PrimitiveGeometryConfigLike) => THREE.BufferGeometry;
+
+interface PrimitiveGeometryConfigLike {
+  type: string;
+  args?: Record<string, number>;
+  path?: [number, number, number][];
+}
 
 const GEOMETRIES: Record<string, GeometryFactory> = {
-  box: (a) => new THREE.BoxGeometry(a.width ?? 1, a.height ?? 1, a.depth ?? 1),
-  sphere: (a) => new THREE.SphereGeometry(a.radius ?? 1, a.widthSegments ?? 32, a.heightSegments ?? 16),
-  cylinder: (a) =>
-    new THREE.CylinderGeometry(a.radiusTop ?? 1, a.radiusBottom ?? 1, a.height ?? 1, a.radialSegments ?? 32),
-  plane: (a) => new THREE.PlaneGeometry(a.width ?? 1, a.height ?? 1),
-  cone: (a) => new THREE.ConeGeometry(a.radius ?? 1, a.height ?? 1, a.radialSegments ?? 32),
-  torus: (a) =>
-    new THREE.TorusGeometry(a.radius ?? 1, a.tube ?? 0.4, a.radialSegments ?? 16, a.tubularSegments ?? 48),
+  box: (c) => new THREE.BoxGeometry(c.args?.width ?? 1, c.args?.height ?? 1, c.args?.depth ?? 1),
+  sphere: (c) => new THREE.SphereGeometry(c.args?.radius ?? 1, c.args?.widthSegments ?? 32, c.args?.heightSegments ?? 16),
+  cylinder: (c) =>
+    new THREE.CylinderGeometry(c.args?.radiusTop ?? 1, c.args?.radiusBottom ?? 1, c.args?.height ?? 1, c.args?.radialSegments ?? 32),
+  plane: (c) => new THREE.PlaneGeometry(c.args?.width ?? 1, c.args?.height ?? 1),
+  cone: (c) => new THREE.ConeGeometry(c.args?.radius ?? 1, c.args?.height ?? 1, c.args?.radialSegments ?? 32),
+  torus: (c) =>
+    new THREE.TorusGeometry(c.args?.radius ?? 1, c.args?.tube ?? 0.4, c.args?.radialSegments ?? 16, c.args?.tubularSegments ?? 48),
+  // 559 Phase 2：管道布线（工业孪生管线）——CatmullRom 平滑样条沿 path 挤出圆管
+  tube: (c) => {
+    const points = (c.path ?? []).map((p) => new THREE.Vector3(p[0], p[1], p[2]));
+    if (points.length < 2) return new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)]), 8, c.args?.radius ?? 0.2, 8, false);
+    return new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3(points),
+      c.args?.tubularSegments ?? 64,
+      c.args?.radius ?? 0.2,
+      c.args?.radialSegments ?? 8,
+      (c.args?.closed ?? 0) !== 0,
+    );
+  },
+  capsule: (c) => new THREE.CapsuleGeometry(c.args?.radius ?? 0.5, c.args?.length ?? 1, c.args?.capSegments ?? 4, c.args?.radialSegments ?? 16),
 };
 
 type MaterialFactory = (config: NonNullable<PrimitiveModelConfig['material']>) => THREE.Material;
@@ -54,16 +73,21 @@ function applyMaterialProps(material: THREE.Material, config: NonNullable<Primit
   if (config.transparent !== undefined) meshMaterial.transparent = config.transparent;
   if (config.wireframe !== undefined) meshMaterial.wireframe = config.wireframe;
   if (config.flatShading !== undefined) meshMaterial.flatShading = config.flatShading;
+  // 559 Phase 2：PBR/自发光通道——按材质能力守卫（basic 无 emissive/metalness 等字段）
+  if (config.metalness !== undefined && 'metalness' in meshMaterial) meshMaterial.metalness = config.metalness;
+  if (config.roughness !== undefined && 'roughness' in meshMaterial) meshMaterial.roughness = config.roughness;
+  if (config.emissive !== undefined && 'emissive' in meshMaterial) meshMaterial.emissive = new THREE.Color(config.emissive);
+  if (config.emissiveIntensity !== undefined && 'emissiveIntensity' in meshMaterial) meshMaterial.emissiveIntensity = config.emissiveIntensity;
 }
 
 /**
- * 图元网格工厂（plan 466 Phase 3）：六种基础几何 × 四种材质。
+ * 图元网格工厂（plan 466 Phase 3；559 Phase 2 扩至 8 种几何 + PBR 材质字段）。
  * 未知 geometry type 返回 undefined（调用方走 primitive-invalid-config 诊断，不抛错）。
  */
 export function createPrimitiveMesh(config: PrimitiveModelConfig): THREE.Mesh | undefined {
   const geometryFactory = GEOMETRIES[config.geometry.type];
   if (!geometryFactory) return undefined;
-  const geometry = geometryFactory(config.geometry.args ?? {});
+  const geometry = geometryFactory(config.geometry as PrimitiveGeometryConfigLike);
   const materialConfig = config.material ?? { type: 'standard' as const };
   const materialFactory = MATERIALS[materialConfig.type ?? 'standard'];
   const material = materialFactory(materialConfig);

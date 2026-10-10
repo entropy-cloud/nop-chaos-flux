@@ -162,6 +162,9 @@ const LazyScadaPerfScaleDemoPage = lazy(() =>
 const LazyScadaPressureDemoPage = lazy(() =>
   import('./pages/scada-pressure-demo').then((m) => ({ default: m.ScadaPressureDemoPage })),
 );
+const LazyScadaGalleryDemoPage = lazy(() =>
+  import('./pages/scada-gallery-demo').then((m) => ({ default: m.ScadaGalleryDemoPage })),
+);
 const LazySpreadsheetPage = lazy(() =>
   import('./pages/spreadsheet-page').then((m) => ({ default: m.SpreadsheetPage })),
 );
@@ -170,6 +173,9 @@ const LazyThreeCanvasDemoPage = lazy(() =>
 );
 const LazyThreeIndustrialDemoPage = lazy(() =>
   import('./pages/three-industrial-demo').then((m) => ({ default: m.ThreeIndustrialDemoPage })),
+);
+const LazyThreeGalleryDemoPage = lazy(() =>
+  import('./pages/three-gallery-demo').then((m) => ({ default: m.ThreeGalleryDemoPage })),
 );
 const LazyWordEditorPage = lazy(() =>
   import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })),
@@ -246,10 +252,12 @@ export const DOMAIN_ROUTE_PAGES: Record<string, (ctx: DomainPageContext) => Reac
   'diff-view': (ctx) => <LazyDiffDemoPage onBack={ctx.goHome} />,
   'scada-demo': (ctx) => <LazyScadaDemoPage onBack={ctx.goHome} />,
   'scada-pressure-demo': (ctx) => <LazyScadaPressureDemoPage onBack={ctx.goHome} />,
+  'scada-gallery': (ctx) => <LazyScadaGalleryDemoPage onBack={ctx.goHome} />,
   'scada-perf-scale': (ctx) => <LazyScadaPerfScaleDemoPage onBack={ctx.goHome} />,
   'leafer-examples': (ctx) => <LazyLeaferExamplesDemoPage onBack={ctx.goHome} />,
   'three-canvas-demo': (ctx) => <LazyThreeCanvasDemoPage onBack={ctx.goHome} />,
   'three-industrial-demo': (ctx) => <LazyThreeIndustrialDemoPage onBack={ctx.goHome} />,
+  'three-gallery': (ctx) => <LazyThreeGalleryDemoPage onBack={ctx.goHome} />,
   'scada-edge-cases': (ctx) => <LazyScadaEdgeDemoPage onBack={ctx.goHome} />,
   'scada-editor-demo': (ctx) => <LazyScadaEditorDemoPage onBack={ctx.goHome} />,
   'print-designer': () => <LazyPrintDesignerDemoPage />,

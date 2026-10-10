@@ -50,6 +50,7 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
     device: 'industrial.scada.category.device',
     instrument: 'industrial.scada.category.instrument',
     'sensor-control': 'industrial.scada.category.sensor-control',
+    electrical: 'industrial.scada.category.electrical',
     pipe: 'industrial.scada.category.pipe',
     other: 'industrial.scada.category.other',
   };

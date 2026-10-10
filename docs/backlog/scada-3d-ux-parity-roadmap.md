@@ -47,13 +47,14 @@
 
 ## Phase Status
 
-| Work Item                      | 状态   | 计划                                                   |
-| ------------------------------ | ------ | ------------------------------------------------------ |
-| S1 SCADA 编辑器视觉与令牌基础  | `done` | `docs/plans/530-scada-visual-token-foundation-plan.md` |
-| S2 SCADA 拖拽便捷性与 palette  | `done` | `docs/plans/531-scada-drag-palette-ux-plan.md`         |
-| S3 SCADA 菜单与面板收尾        | `done` | `docs/plans/532-scada-menu-panel-plan.md`              |
-| D1 3D 渲染器 UX 打磨           | `done` | `docs/plans/533-three-renderer-ux-plan.md`             |
-| D2 3D 文档一致性与演示路由收尾 | `done` | `docs/plans/534-three-docs-demo-plan.md`               |
+| Work Item                                                         | 状态   | 计划                                                       |
+| ----------------------------------------------------------------- | ------ | ---------------------------------------------------------- |
+| S1 SCADA 编辑器视觉与令牌基础                                     | `done` | `docs/plans/530-scada-visual-token-foundation-plan.md`     |
+| S2 SCADA 拖拽便捷性与 palette                                     | `done` | `docs/plans/531-scada-drag-palette-ux-plan.md`             |
+| S3 SCADA 菜单与面板收尾                                           | `done` | `docs/plans/532-scada-menu-panel-plan.md`                  |
+| D1 3D 渲染器 UX 打磨                                              | `done` | `docs/plans/533-three-renderer-ux-plan.md`                 |
+| D2 3D 文档一致性与演示路由收尾                                    | `done` | `docs/plans/534-three-docs-demo-plan.md`                   |
+| G1 演示丰富度与薄桥接收敛（符号库 24→37 + scene 双形态 + 双画廊） | `done` | `docs/plans/559-scada-3d-bridge-and-demo-richness-plan.md` |
 
 ## Phases
 

@@ -6,18 +6,34 @@
   "type": "object",
   "required": ["type", "scene"],
   "properties": {
-    "type": { "const": "three-canvas" },
-    "scene": { "$ref": "#/definitions/ThreeSceneConfig" },
-    "bindings": { "type": "array", "items": { "$ref": "#/definitions/DataBinding" } },
-    "animations": { "type": "array", "items": { "$ref": "#/definitions/AnimationConfig" } },
-    "events": { "type": "object" },
+    "type": {
+      "const": "three-canvas"
+    },
+    "scene": {
+      "$ref": "#/definitions/ThreeSceneConfig"
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DataBinding"
+      }
+    },
+    "animations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/AnimationConfig"
+      }
+    },
+    "events": {
+      "type": "object"
+    },
     "loading": {},
     "empty": {}
   },
   "definitions": {
     "ThreeSceneConfig": {
       "type": "object",
-      "required": ["camera", "lights", "models"],
+      "required": ["camera", "lights"],
       "properties": {
         "camera": {
           "type": "object",
@@ -25,59 +41,172 @@
           "properties": {
             "position": {
               "type": "array",
-              "items": { "type": "number" },
+              "items": {
+                "type": "number"
+              },
               "minItems": 3,
               "maxItems": 3
             },
-            "fov": { "type": "number", "minimum": 1, "maximum": 180 },
-            "near": { "type": "number", "minimum": 0 },
-            "far": { "type": "number", "minimum": 0 }
-          }
-        },
-        "lights": { "type": "array", "items": { "$ref": "#/definitions/LightConfig" } },
-        "environment": {
-          "type": "object",
-          "properties": {
-            "background": { "type": "string" },
-            "fog": {
+            "fov": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 180
+            },
+            "near": {
+              "type": "number",
+              "minimum": 0
+            },
+            "far": {
+              "type": "number",
+              "minimum": 0
+            },
+            "controls": {
               "type": "object",
-              "required": ["color", "near", "far"],
               "properties": {
-                "color": { "type": "string" },
-                "near": { "type": "number" },
-                "far": { "type": "number" }
+                "autoRotate": {
+                  "type": "boolean"
+                },
+                "autoRotateSpeed": {
+                  "type": "number"
+                },
+                "minDistance": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "maxDistance": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "maxPolarAngle": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "enablePan": {
+                  "type": "boolean"
+                }
               }
             }
           }
         },
-        "models": { "type": "array", "items": { "$ref": "#/definitions/ModelConfig" } }
-      }
+        "lights": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LightConfig"
+          }
+        },
+        "environment": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "fog": {
+              "type": "object",
+              "required": ["color", "near", "far"],
+              "properties": {
+                "color": {
+                  "type": "string"
+                },
+                "near": {
+                  "type": "number"
+                },
+                "far": {
+                  "type": "number"
+                }
+              }
+            },
+            "toneMapping": {
+              "enum": ["none", "aces", "reinhard"]
+            }
+          }
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ModelConfig"
+          }
+        },
+        "json": {
+          "description": "three.js native SceneJSON (Object3D.toJSON); rendered via ObjectLoader; bindings address objects by name."
+        },
+        "interactiveObjects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": ["models"]
+        },
+        {
+          "required": ["json"]
+        }
+      ]
     },
     "ModelConfig": {
       "type": "object",
       "required": ["id"],
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$" },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+        },
         "url": {
           "type": "string",
           "description": "GLTF/GLB asset. XOR primitive preferred; dual-source tolerated (primitive wins)."
         },
-        "primitive": { "$ref": "#/definitions/PrimitiveModelConfig" },
+        "primitive": {
+          "$ref": "#/definitions/PrimitiveModelConfig"
+        },
         "position": {
           "type": "array",
-          "items": { "type": "number" },
+          "items": {
+            "type": "number"
+          },
           "minItems": 3,
           "maxItems": 3
         },
         "rotation": {
           "type": "array",
-          "items": { "type": "number" },
+          "items": {
+            "type": "number"
+          },
           "minItems": 3,
           "maxItems": 3
         },
-        "scale": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
-        "interactive": { "type": "boolean" },
-        "initialAnimation": { "type": "string" }
+        "scale": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "interactive": {
+          "type": "boolean"
+        },
+        "initialAnimation": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "labelOffset": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "castShadow": {
+          "type": "boolean"
+        },
+        "receiveShadow": {
+          "type": "boolean"
+        }
       },
       "description": "Source discipline: url XOR primitive preferred; dual-empty is invalid, dual-source tolerated with primitive precedence."
     },
@@ -89,19 +218,67 @@
           "type": "object",
           "required": ["type"],
           "properties": {
-            "type": { "enum": ["box", "sphere", "cylinder", "plane", "cone", "torus"] },
-            "args": { "type": "object", "additionalProperties": { "type": "number" } }
+            "type": {
+              "enum": ["box", "sphere", "cylinder", "plane", "cone", "torus", "tube", "capsule"]
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "description": "tube path control points"
+            }
           }
         },
         "material": {
           "type": "object",
           "properties": {
-            "type": { "enum": ["standard", "basic", "lambert", "phong"] },
-            "color": { "type": "string" },
-            "opacity": { "type": "number" },
-            "transparent": { "type": "boolean" },
-            "wireframe": { "type": "boolean" },
-            "flatShading": { "type": "boolean" }
+            "type": {
+              "enum": ["standard", "basic", "lambert", "phong"]
+            },
+            "color": {
+              "type": "string"
+            },
+            "opacity": {
+              "type": "number"
+            },
+            "transparent": {
+              "type": "boolean"
+            },
+            "wireframe": {
+              "type": "boolean"
+            },
+            "flatShading": {
+              "type": "boolean"
+            },
+            "metalness": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "roughness": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "emissive": {
+              "type": "string"
+            },
+            "emissiveIntensity": {
+              "type": "number",
+              "minimum": 0
+            }
           }
         }
       }
@@ -110,59 +287,97 @@
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": { "enum": ["ambient", "directional", "point", "spot", "hemisphere"] },
-        "color": { "type": "string" },
-        "intensity": { "type": "number" },
+        "type": {
+          "enum": ["ambient", "directional", "point", "spot", "hemisphere"]
+        },
+        "color": {
+          "type": "string"
+        },
+        "intensity": {
+          "type": "number"
+        },
         "position": {
           "type": "array",
-          "items": { "type": "number" },
+          "items": {
+            "type": "number"
+          },
           "minItems": 3,
           "maxItems": 3
         },
-        "target": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
-        "groundColor": { "type": "string" },
-        "castShadow": { "type": "boolean" }
+        "target": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "groundColor": {
+          "type": "string"
+        },
+        "castShadow": {
+          "type": "boolean"
+        }
       }
     },
     "DataBinding": {
       "type": "object",
       "required": ["id", "target", "source"],
       "properties": {
-        "id": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
         "target": {
           "type": "object",
           "required": ["modelId", "path", "type"],
           "properties": {
-            "modelId": { "type": "string" },
-            "path": { "type": "string" },
-            "type": { "enum": ["position", "rotation", "scale", "material", "visible", "custom"] }
+            "modelId": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "type": {
+              "enum": ["position", "rotation", "scale", "material", "visible", "custom"]
+            }
           }
         },
         "source": {
           "type": "object",
           "required": ["expression"],
           "properties": {
-            "expression": { "type": "string", "description": "Flux ${expr} syntax" },
-            "scope": { "type": "string" }
+            "expression": {
+              "type": "string",
+              "description": "Flux ${expr} syntax"
+            },
+            "scope": {
+              "type": "string"
+            }
           }
         },
         "transform": {
           "type": "object",
           "properties": {
-            "convert": { "type": "string" },
+            "convert": {
+              "type": "string"
+            },
             "range": {
               "type": "object",
               "required": ["input", "output"],
               "properties": {
                 "input": {
                   "type": "array",
-                  "items": { "type": "number" },
+                  "items": {
+                    "type": "number"
+                  },
                   "minItems": 2,
                   "maxItems": 2
                 },
                 "output": {
                   "type": "array",
-                  "items": { "type": "number" },
+                  "items": {
+                    "type": "number"
+                  },
                   "minItems": 2,
                   "maxItems": 2
                 }
@@ -172,9 +387,16 @@
               "type": "object",
               "required": ["type"],
               "properties": {
-                "type": { "enum": ["tween", "spring", "step"] },
-                "duration": { "type": "number", "minimum": 0 },
-                "easing": { "type": "string" }
+                "type": {
+                  "enum": ["tween", "spring", "step"]
+                },
+                "duration": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "easing": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -183,7 +405,9 @@
           "type": "object",
           "required": ["expression", "trueValue", "falseValue"],
           "properties": {
-            "expression": { "type": "string" },
+            "expression": {
+              "type": "string"
+            },
             "trueValue": {},
             "falseValue": {}
           }
@@ -194,13 +418,19 @@
       "type": "object",
       "required": ["id", "trigger", "target", "keyframes"],
       "properties": {
-        "id": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
         "trigger": {
           "type": "object",
           "required": ["type", "source"],
           "properties": {
-            "type": { "enum": ["state", "event", "time"] },
-            "source": { "type": "string" },
+            "type": {
+              "enum": ["state", "event", "time"]
+            },
+            "source": {
+              "type": "string"
+            },
             "value": {}
           }
         },
@@ -208,8 +438,12 @@
           "type": "object",
           "required": ["modelId", "property"],
           "properties": {
-            "modelId": { "type": "string" },
-            "property": { "type": "string" }
+            "modelId": {
+              "type": "string"
+            },
+            "property": {
+              "type": "string"
+            }
           }
         },
         "keyframes": {
@@ -218,9 +452,14 @@
             "type": "object",
             "required": ["time", "value"],
             "properties": {
-              "time": { "type": "number", "minimum": 0 },
+              "time": {
+                "type": "number",
+                "minimum": 0
+              },
               "value": {},
-              "easing": { "type": "string" }
+              "easing": {
+                "type": "string"
+              }
             }
           }
         },
@@ -228,8 +467,13 @@
           "type": "object",
           "required": ["type"],
           "properties": {
-            "type": { "enum": ["once", "loop", "pingpong"] },
-            "count": { "type": "number", "minimum": 1 }
+            "type": {
+              "enum": ["once", "loop", "pingpong"]
+            },
+            "count": {
+              "type": "number",
+              "minimum": 1
+            }
           }
         }
       }

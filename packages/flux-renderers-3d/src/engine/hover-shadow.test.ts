@@ -71,7 +71,7 @@ function makeHarness(
         interactive: true,
         castShadow: true,
         receiveShadow: true,
-      } as unknown as ThreeSceneConfig['models'][number],
+      } as unknown as import('../schemas.js').ModelConfig,
     ],
     ...configOverrides,
   };
