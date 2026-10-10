@@ -1,0 +1,25 @@
+{
+  "name": "workaround-code-smell-audit",
+  "description": "nop-chaos-flux 逐模块临时方案与坏味道审计 + 据报告修复 mission：以 docs/skills/workaround-code-smell-audit-prompt.md 为统一方法（九类信号 A–I + W1–W6 判定基准 + §5 取证协议 + §3 重复代码两步协议），对全部 41 个包 + apps/playground（约 31 万行非测试源码，live 实测 2026-10-10）分 20 个工作项（WA-0 基建 + WA-1..WA-15c 逐批审计 + WA-16 收口）执行「审计 → 报告（docs/audits/workaround-code-smell/wa-<N>/report.md + 台账 ledger.md，全量登记零静默）→ 修复」闭环。范围排除：概念级重复/文件过大/过度拆分等结构维度归 code-refactor-discovery-prompt 不重复立案；交互/视觉/DOM 契约问题转发对应轨道。自动修复机制沿用 roadmap「自动修复机制（Auto-Remediation Contract）」节（禁互指悬空）：批内 P0/P1 单点行为缺陷同 plan 先红后绿修复并验证临时方案本体删除；P2 低成本当场修否则显式裁决；P3 仅记录。代码变更授权范围：全部保护区域（以 docs/context/ai-autonomy-policy.md Protected Areas 表为准：flux-core/src/、Schema/contract validation、ui/src/index.ts、Renderer 定义、样式契约、认证/安全边界）——ui/src/index.ts 公共导出变更维持 ask-first（须先说明理由），结构性重构（公共 API/包边界/编译期机制）执行前人工确认。共性发现（同根因 ≥2 模块或跨包机制）按 roadmap 契约 §7 以 CX-n 工作项插入并拟制独立修改计划（独立 draft review + closure audit），不在批内硬修。中断恢复：扫描 unfinished plans + 台账状态为恢复点。",
+  "model": "opencode-go/deepseek-v4-flash",
+  "variant": "max",
+  "roadmapPath": "docs/backlog/workaround-code-smell-audit-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits/workaround-code-smell",
+  "contextDir": "docs/context",
+  "moduleDir": ".",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "prompts": {
+    "workaroundAudit": "docs/skills/workaround-code-smell-audit-prompt.md",
+    "refactorDiscovery": "docs/skills/code-refactor-discovery-prompt.md",
+    "testFirst": "docs/skills/test-first-implementation-prompt.md",
+    "deprecatedCleanup": "docs/skills/deprecated-feature-cleanup.md"
+  },
+  "commitFormat": "fix(workaround-audit): <description>"
+}
