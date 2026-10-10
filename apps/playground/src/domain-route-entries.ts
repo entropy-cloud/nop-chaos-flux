@@ -495,14 +495,14 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     title: 'Three Canvas Demo',
     eyebrow: '3D Rendering',
     description:
-      'plan 469 three-canvas 演示：声明式图元 + 表达式绑定（tween/range/condition）+ 循环关键帧 + 对象点击，10Hz 模拟数据驱动绑定热路径（fps e2e 基准演示场景）。',
+      'plan 469 three-canvas 演示：声明式图元 + 表达式绑定（range/condition 纯数据映射，即时写）+ 对象点击，10Hz 模拟数据驱动绑定热路径（fps e2e 基准演示场景；559 后记：自研 tween/关键帧 clip 已删除，时间线动画走 GLTF clip 原生路径）。',
   },
   {
     id: 'three-gallery',
     title: 'Three Gallery',
     eyebrow: '3D Rendering',
     description:
-      '559 3D 示例画廊：图元材质（tube/capsule/PBR/toneMapping/label）/ 灯光阴影（相机 controls）/ 原生 three.js SceneJSON（ObjectLoader 薄桥接 + name 寻址绑定）/ GLTFExporter 导出-加载全链路 / 关键帧交互 / 数字孪生泵站（IndustrialAdapter 标签帧端到端驱动）。',
+      '559 3D 示例画廊：图元材质（tube/capsule/PBR/toneMapping/label）/ 灯光阴影（相机 controls）/ 原生 three.js SceneJSON（ObjectLoader 薄桥接 + name 寻址绑定）/ GLTFExporter 导出-加载全链路 / 交互与标注（数据驱动 + hover/click + label）/ 数字孪生泵站（IndustrialAdapter 标签帧端到端驱动）。',
   },
   {
     id: 'three-industrial-demo',
