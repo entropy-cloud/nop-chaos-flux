@@ -1,3 +1,5 @@
+import { createLazyLibLoader } from '@nop-chaos/flux-core';
+
 export type BarcodeFormat =
   | 'aztec' | 'code_39' | 'code_93' | 'code_128'
   | 'data_matrix' | 'ean_8' | 'ean_13' | 'itf'
@@ -8,39 +10,40 @@ export interface BarcodeDetectResult {
   format: string;
 }
 
+// decodeFromCanvas 在 @zxing/library 0.21 的 .d.ts 中未声明（原实现经 any 触达运行时方法），
+// 显式结构契约替代裸 any。
+interface ZxingReaderLike {
+  decodeFromCanvas: (canvas: HTMLCanvasElement) => Promise<{ getText(): string; getBarcodeFormat(): unknown }>;
+}
+
 function createZxingDetector(formats?: BarcodeFormat[]): {
   detect: (source: HTMLVideoElement | HTMLCanvasElement) => Promise<BarcodeDetectResult[]>;
   supportsSkewRetry: boolean;
 } {
-  let zxingModule: Promise<any> | null = null;
+  // 统一延迟加载机制（flux-core createLazyLibLoader）：@zxing/library 的 promise 记忆化
+  // 不再本文件手写（失败清除缓存 → 下次 detect 重试）。
+  const loadZxingReader = createLazyLibLoader(async (): Promise<ZxingReaderLike> => {
+    const { BrowserMultiFormatReader, BarcodeFormat: ZXingFormat, DecodeHintType } = await import('@zxing/library');
+    let formatHints: Map<any, any> | undefined;
+    if (formats && formats.length > 0) {
+      const possibleFormats = formats
+        .map((f) => {
+          const zxingName = BARCODE_FORMAT_TO_ZXING[f];
+          if (!zxingName) return null;
+          return (ZXingFormat as any)[zxingName] ?? null;
+        })
+        .filter((f): f is NonNullable<typeof f> => f != null);
+      if (possibleFormats.length > 0) {
+        formatHints = new Map<any, any>();
+        formatHints.set(DecodeHintType.POSSIBLE_FORMATS, possibleFormats);
+      }
+    }
+    return new BrowserMultiFormatReader(formatHints) as unknown as ZxingReaderLike;
+  });
 
   return {
     detect: async (source) => {
-      if (!zxingModule) {
-        zxingModule = (async () => {
-          const { BrowserMultiFormatReader, BarcodeFormat: ZXingFormat, DecodeHintType } = await import('@zxing/library');
-          let formatHints: Map<any, any> | undefined;
-          if (formats && formats.length > 0) {
-            const possibleFormats = formats
-              .map((f) => {
-                const zxingName = BARCODE_FORMAT_TO_ZXING[f];
-                if (!zxingName) return null;
-                return (ZXingFormat as any)[zxingName] ?? null;
-              })
-              .filter((f): f is NonNullable<typeof f> => f != null);
-            if (possibleFormats.length > 0) {
-              formatHints = new Map<any, any>();
-              formatHints.set(DecodeHintType.POSSIBLE_FORMATS, possibleFormats);
-            }
-          }
-          return new BrowserMultiFormatReader(formatHints);
-        })().catch(() => null);
-      }
-
-      const reader = await zxingModule;
-      if (!reader) {
-        throw new Error('ZXing module failed to load');
-      }
+      const reader = await loadZxingReader();
 
       try {
         let canvas: HTMLCanvasElement;

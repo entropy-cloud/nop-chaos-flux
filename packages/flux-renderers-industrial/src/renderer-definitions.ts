@@ -1,5 +1,5 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { ScadaCanvasRenderer } from './renderer/scada-canvas.js';
+import { LazyScadaCanvasRenderer } from './scada-canvas-lazy.js';
 
 /**
  * 事件载荷共享 shape（design-renderer.md §8.2 `ScadaSymbolEventPayload`）：
@@ -54,7 +54,7 @@ export const industrialRendererDefinitions: RendererDefinition[] = [
     // config 字面量与 scada-canvas.tsx EMPTY_SCADA_CONFIG 结构一致（{ version:1, variables:[], symbols:[] }）。
     defaultSchema: { type: 'scada-canvas', config: { version: 1, variables: [], symbols: [] } },
     rendererClass: 'instance-renderer',
-    component: ScadaCanvasRenderer,
+    component: LazyScadaCanvasRenderer,
     propContracts: {
       config: {
         // 组态 JSON：内嵌字符串（JSON 文本）或对象（已解析）；source-enabled。

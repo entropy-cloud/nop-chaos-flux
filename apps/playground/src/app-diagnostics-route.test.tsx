@@ -10,6 +10,8 @@ const performanceTablePageSpy = vi.fn();
 vi.mock('@nop-chaos/flux-react', () => ({
   createDefaultRegistry: () => ({ register: () => undefined }),
   createSchemaRenderer: () => () => null,
+  // graph-definitions（本测试未 mock graph 包）经统一延迟加载机制消费该导出。
+  createLazyRendererComponent: () => () => null,
 }));
 
 vi.mock('@nop-chaos/flux-renderers-basic', () => ({

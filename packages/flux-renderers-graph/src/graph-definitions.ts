@@ -1,5 +1,11 @@
 import type { RendererDefinition } from '@nop-chaos/flux-core';
-import { GraphRenderer } from './graph-renderer.js';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
+import type { GraphSchema } from './schemas.js';
+
+// 统一延迟加载机制：@xyflow/react + dagre 全量留在 graph 异步 chunk。
+const LazyGraphRenderer = createLazyRendererComponent<GraphSchema>(
+  () => import('./graph-renderer.js').then((m) => m.GraphRenderer),
+);
 
 export const graphRendererDefinitions: RendererDefinition[] = [
   {
@@ -7,7 +13,7 @@ export const graphRendererDefinitions: RendererDefinition[] = [
     displayName: 'Graph',
     category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-graph',
-    component: GraphRenderer,
+    component: LazyGraphRenderer,
     componentCapabilityContracts: [
       { handle: 'zoomIn', displayName: 'Zoom In', description: 'Zoom the graph viewport in one step.' },
       { handle: 'zoomOut', displayName: 'Zoom Out', description: 'Zoom the graph viewport out one step.' },

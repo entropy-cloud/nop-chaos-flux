@@ -1,9 +1,16 @@
 import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
-import { ThreeCanvasRenderer } from './renderer/three-canvas.js';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
+import type { ThreeCanvasSchema } from './schemas.js';
+
+// 统一延迟加载机制（flux-react createLazyRendererComponent）：three.js 全量留在
+// three-canvas 异步 chunk（renderer-definitions 是宿主注册路径，禁止静态触达 three）。
+const LazyThreeCanvasRenderer = createLazyRendererComponent<ThreeCanvasSchema>(
+  () => import('./renderer/three-canvas.js').then((m) => m.ThreeCanvasRenderer),
+);
 
 export const threeCanvasRendererDefinition: RendererDefinition = {
   type: 'three-canvas',
-  component: ThreeCanvasRenderer,
+  component: LazyThreeCanvasRenderer,
   propContracts: {
     scene: {
       shape: { kind: 'unknown' },

@@ -1,3 +1,4 @@
+import { createLazyLibLoader } from '@nop-chaos/flux-core';
 import type OlMap from 'ol/Map';
 import type OlView from 'ol/View';
 import type OlTileLayer from 'ol/layer/Tile';
@@ -43,9 +44,10 @@ export interface OlApi {
 
 /**
  * 懒加载 OL 模块（ES modules tree-shaking，随 map chunk 动态加载）。
- * 失败由调用方捕获（map-ol-import-fail → 错误占位，不白屏）。
+ * promise 记忆化走统一机制（flux-core `createLazyLibLoader`）：并发共享同一 in-flight
+ * promise，失败清除缓存可重试。失败由调用方捕获（map-ol-import-fail → 错误占位，不白屏）。
  */
-export async function loadOlApi(): Promise<OlApi> {
+export const loadOlApi = createLazyLibLoader(async (): Promise<OlApi> => {
   const [Map, View, TileLayer, VectorLayer, VectorSource, XYZ, TileWMS, Cluster, GeoJSON, Feature, Point, Style, Fill, Stroke, Circle, Text, proj] =
     await Promise.all([
       import('ol/Map'),
@@ -85,4 +87,4 @@ export async function loadOlApi(): Promise<OlApi> {
     Text: Text.default,
     fromLonLat: proj.fromLonLat,
   };
-}
+});

@@ -1,5 +1,4 @@
 import { registerRendererDefinitions, type RendererRegistry } from '@nop-chaos/flux-core';
-import { registerScadaSymbols } from './symbols/register-builtin.js';
 import { industrialRendererDefinitions } from './renderer-definitions.js';
 
 /**
@@ -43,7 +42,9 @@ export {
   listScadaSymbols,
 } from './symbols/symbol-registry.js';
 
-// 内置图元注册入口（幂等；registerScadaRenderers 内部亦调用）。
+// 内置图元注册入口（幂等）。统一延迟加载（scada-canvas-lazy.ts）：图元定义随 scada-canvas
+// 异步 chunk 装载时自注册；本导出供需在首次画布挂载前消费符号注册表的宿主显式触发
+// （编辑器图元库面板 / SCADA_EDITOR_DEMO_RECIPE 先例）。
 export { registerScadaSymbols, builtinScadaSymbolDefinitions } from './symbols/register-builtin.js';
 
 /**
@@ -71,12 +72,12 @@ export { industrialRendererDefinitions } from './renderer-definitions.js';
 /**
  * `scada-canvas` renderer 注册入口（design-renderer.md §11）。
  *
- * 注册内置 SCADA 图元（`registerScadaSymbols()`，幂等）+ 注册 `scada-canvas` renderer 定义。
- * 调用方仅需 `registerScadaRenderers(registry)` 即完成全部注册——不再依赖模块加载副作用
- * （plan 2026-08-04-1558-1 Phase 1：移除历史 `registerBuiltinScadaSymbols()` 顶层副作用调用，
- * 该副作用曾强制任何 `import type` 消费者拖入 leafer-ui canvas 运行时）。
+ * 注册 `scada-canvas` renderer 定义；renderer 组件经统一延迟加载机制
+ * （`scada-canvas-lazy.ts`，flux-react `createLazyRendererComponent`）在首次挂载时装载，
+ * 内置 SCADA 图元（`registerScadaSymbols()`，幂等）随同一异步 chunk 自注册——本函数保持
+ * 同步且不静态触达 leafer-ui（plan 2026-08-04-1558-1 Phase 1 移除模块加载副作用的延续：
+ * 现连注册期调用也不再拖入 leafer）。需提前消费符号注册表的宿主显式调 `registerScadaSymbols()`。
  */
 export function registerScadaRenderers(registry: RendererRegistry) {
-  registerScadaSymbols();
   return registerRendererDefinitions(registry, industrialRendererDefinitions);
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { ActionSchema, ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
+import { createLazyLibLoader } from '@nop-chaos/flux-core';
 import {
   createNormalizedActionEvent,
   hasRendererSlotContent,
@@ -55,17 +56,11 @@ interface ResolvedMapBinding {
 
 type EChartsSetupModule = typeof import('./echarts-setup.js');
 
-let echartsSetupPromise: Promise<EChartsSetupModule> | null = null;
-
-function loadEChartsSetup(): Promise<EChartsSetupModule> {
-  if (!echartsSetupPromise) {
-    echartsSetupPromise = import('./echarts-setup.js').catch((error: unknown) => {
-      echartsSetupPromise = null;
-      throw error;
-    });
-  }
-  return echartsSetupPromise;
-}
+// 统一延迟加载机制（flux-core createLazyLibLoader）：echarts 全量模块的 promise 记忆化
+// 不再本文件手写（失败清除缓存 → 下次挂载重试，语义与原实现一致）。
+const loadEChartsSetup = createLazyLibLoader(
+  (): Promise<EChartsSetupModule> => import('./echarts-setup.js'),
+);
 
 export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
   const componentRegistry = useCurrentComponentRegistry();

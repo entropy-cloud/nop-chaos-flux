@@ -1,6 +1,11 @@
 import type { BaseSchema, RendererDefinition, RendererSchemaValidationContext } from '@nop-chaos/flux-core';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import type { PivotTableSchema } from './schemas.js';
-import { PivotTableRenderer } from './pivot-renderer.js';
+
+// 统一延迟加载机制：@visactor/vtable 全量留在 pivot 异步 chunk。
+const LazyPivotTableRenderer = createLazyRendererComponent<PivotTableSchema>(
+  () => import('./pivot-renderer.js').then((m) => m.PivotTableRenderer),
+);
 
 const VALID_AGGREGATION_TYPES = ['SUM', 'AVG', 'COUNT', 'MIN', 'MAX', 'NONE'];
 const VALID_CELL_TYPES = ['text', 'progressbar', 'sparkline'];
@@ -119,7 +124,7 @@ export const pivotRendererDefinitions: RendererDefinition[] = [
     displayName: 'Pivot Table',
     category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-pivot',
-    component: PivotTableRenderer,
+    component: LazyPivotTableRenderer,
     schemaValidator: validatePivotSchema,
     propContracts: {
       records: {

@@ -59,6 +59,8 @@ export {
   markImportErrorReported,
   reportImportFailure,
 } from './utils/import-failure.js';
+export { createLazyLibLoader } from './utils/lazy-lib.js';
+export type { LazyLibLoader } from './utils/lazy-lib.js';
 export { reportRuntimeHostIssue } from './utils/runtime-host-reporting.js';
 
 export { createNamedActionProvider } from './named-action-provider.js';

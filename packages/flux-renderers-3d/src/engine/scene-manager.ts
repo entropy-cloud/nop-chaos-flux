@@ -23,7 +23,7 @@ import { KeyframeClip } from '../binding/keyframes.js';
 import type { AnimationConfig } from '../schemas.js';
 import type { BindingAnimationConfig, LightConfig, ModelConfig, ThreeSceneConfig } from '../schemas.js';
 
-export interface FrameUpdate {
+interface FrameUpdate {
   modelId: string;
   path: string;
   value: unknown;
@@ -31,11 +31,11 @@ export interface FrameUpdate {
   animation?: BindingAnimationConfig;
 }
 
-export interface FrameUpdateQueue {
+interface FrameUpdateQueue {
   drain(): FrameUpdate[];
 }
 
-export interface PickEvent {
+interface PickEvent {
   modelId: string;
   point: THREE.Vector3;
 }

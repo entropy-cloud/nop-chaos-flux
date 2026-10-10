@@ -5,6 +5,14 @@ declare module 'node:fs' {
   export function existsSync(path: string | URL): boolean;
 }
 
+declare module 'node:fs/promises' {
+  export function readFile(path: string | URL, encoding: string): Promise<string>;
+}
+
+declare module 'node:url' {
+  export function fileURLToPath(url: string | URL): string;
+}
+
 declare module 'node:path' {
   export function extname(path: string): string;
   export function join(...paths: string[]): string;

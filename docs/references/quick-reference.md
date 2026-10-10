@@ -219,6 +219,25 @@ Register: `registry.register({ type: 'my-type', component: MyRenderer })`
 
 ---
 
+## Heavy-lib lazy loading — unified mechanism
+
+Renderers embedding external heavy libs (three/leafer/ol/echarts/codemirror/xyflow/vtable/zxing) MUST delay-load via the two shared helpers — never hand-roll a promise cache, never statically import the lib on the registration path. Full convention: `docs/architecture/renderer-lazy-loading.md`.
+
+```ts
+// Component level (flux-react): heavy lib lands in the async chunk.
+const LazyThreeCanvasRenderer = createLazyRendererComponent<ThreeCanvasSchema>(() =>
+  import('./renderer/three-canvas.js').then((m) => m.ThreeCanvasRenderer),
+);
+
+// Module level (flux-core): memoized dynamic import inside a lazy chunk.
+// Shared in-flight promise; failure clears cache → next call retries.
+const loadEChartsSetup = createLazyLibLoader(
+  (): Promise<EChartsSetupModule> => import('./echarts-setup.js'),
+);
+```
+
+---
+
 ## RendererRuntime — Central orchestrator
 
 Key methods (full definition in `packages/flux-core/src/types/renderer-core.ts`):

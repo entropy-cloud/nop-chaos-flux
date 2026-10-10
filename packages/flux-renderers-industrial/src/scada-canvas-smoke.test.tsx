@@ -2,7 +2,7 @@ import React from 'react';
 import { createSchemaRenderer, createDefaultEnv } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { industrialRendererDefinitions } from './renderer-definitions.js';
 import { registerBuiltinScadaSymbols } from './symbols/register-builtin.js';
@@ -42,10 +42,18 @@ describe('scada-canvas render smoke', () => {
         formulaCompiler={createFormulaCompiler()}
       />,
     );
-    const root = container.querySelector('[data-slot="scada-canvas"]') as HTMLElement;
-    expect(root).toBeTruthy();
+    // 统一延迟加载：首帧为 Suspense fallback，chunk 装载完成后 canvas 才入树。
+    const root = await waitFor(() => {
+      const el = container.querySelector('[data-slot="scada-canvas"]') as HTMLElement | null;
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
     expect(root.className).toContain('nop-scada-canvas');
-    const canvas = container.querySelector('[data-slot="scada-canvas-canvas"]') as HTMLElement;
+    const canvas = await waitFor(() => {
+      const el = container.querySelector('[data-slot="scada-canvas-canvas"]') as HTMLElement | null;
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
     expect(canvas).toBeTruthy();
     const handles = Object.keys(window).filter((key) => key.startsWith('__flux_scada_'));
     expect(handles.length).toBeGreaterThan(0);
@@ -61,7 +69,7 @@ describe('scada-canvas render smoke', () => {
     expect(root.getAttribute('data-status')).toBe('ready');
   });
 
-  it('renders ready (empty scene) when config is missing — author-less schema fallback (plan 2026-08-04-1558-1 Phase 3)', () => {
+  it('renders ready (empty scene) when config is missing — author-less schema fallback (plan 2026-08-04-1558-1 Phase 3)', async () => {
     // P3 fix: parseAndValidateConfig 兜底返回最小合法空场景 { version:1, variables:[], symbols:[] }，
     // renderer 构建 empty 画布并进入 ready（不再永久 loading）。defaultSchema 元数据同步含 config。
     const SchemaRenderer = createSchemaRenderer(industrialRendererDefinitions);
@@ -73,8 +81,13 @@ describe('scada-canvas render smoke', () => {
         formulaCompiler={createFormulaCompiler()}
       />,
     );
-    const root = container.querySelector('[data-slot="scada-canvas"]') as HTMLElement;
-    expect(root).toBeTruthy();
+    // 统一延迟加载：等待 chunk 装载 + 空场景构建完成。
+    const root = await waitFor(() => {
+      const el = container.querySelector('[data-slot="scada-canvas"]') as HTMLElement | null;
+      if (!el) throw new Error('scada-canvas root not mounted yet');
+      expect(el.getAttribute('data-status')).toBe('ready');
+      return el;
+    });
     expect(root.className).toContain('nop-scada-canvas');
     // 状态须为 ready（非 loading）；空场景经 useScadaConfigSync onBuilt 翻转 status。
     expect(root.getAttribute('data-status')).toBe('ready');
@@ -83,7 +96,7 @@ describe('scada-canvas render smoke', () => {
     expect(container.querySelector('[data-slot="scada-canvas-loading"]')).toBeNull();
   });
 
-  it('emits a11y role/aria-label on the canvas wrapper (HCA1 P2-1 / HCAX-2)', () => {
+  it('emits a11y role/aria-label on the canvas wrapper (HCA1 P2-1 / HCAX-2)', async () => {
     const SchemaRenderer = createSchemaRenderer(industrialRendererDefinitions);
     const { container } = render(
       <SchemaRenderer
@@ -93,8 +106,11 @@ describe('scada-canvas render smoke', () => {
         formulaCompiler={createFormulaCompiler()}
       />,
     );
-    const root = container.querySelector('[data-slot="scada-canvas"]') as HTMLElement;
-    expect(root).toBeTruthy();
+    const root = await waitFor(() => {
+      const el = container.querySelector('[data-slot="scada-canvas"]') as HTMLElement | null;
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
     expect(root.getAttribute('role')).toBe('application');
     expect(root.getAttribute('aria-label')).toBe('Industrial SCADA canvas');
   });
