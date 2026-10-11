@@ -48,7 +48,11 @@ export default defineConfig({
     rolldownOptions: {
       external: hostOwnedExternal,
       output: {
-        codeSplitting: false,
+        // 动态 chunk 必须落盘为独立文件（echarts-setup / chart-renderer /
+        // three-canvas 等懒实现，重库只被这些 chunk 引用）：false 会把动态
+        // import 内联回单文件，重库相对主 chunk 变静态依赖，宿主侧失去
+        // 按需加载边界。
+        codeSplitting: true,
       },
     },
   },

@@ -68,8 +68,61 @@ export async function verifyTarball({ tarballPath }) {
   const jsEntries = tarEntries.filter(
     (entry) => entry.startsWith('package/dist/') && entry.endsWith('.js') && !entry.endsWith('.js.map'),
   );
-  if (jsEntries.length !== 1 || jsEntries[0] !== 'package/dist/index.js') {
-    throw new Error(`Expected a single JS entry chunk, found: ${jsEntries.join(', ')}`);
+  if (!jsEntries.includes('package/dist/index.js')) {
+    throw new Error(`Missing tarball entry: package/dist/index.js`);
+  }
+  if (jsEntries.length < 2) {
+    throw new Error(
+      'Expected the lazy renderer implementation chunks (echarts-setup / chart-renderer / ' +
+        `three-canvas) to ship as separate async chunks, found only: ${jsEntries.join(', ')}`,
+    );
+  }
+
+  const expectedAsyncChunkStems = ['echarts-setup-', 'chart-renderer-', 'three-canvas-'];
+  for (const stem of expectedAsyncChunkStems) {
+    if (!jsEntries.some((entry) => entry.startsWith(`package/dist/${stem}`))) {
+      throw new Error(`Missing async chunk for lazy renderer implementation: dist/${stem}*.js`);
+    }
+  }
+
+  const readTarText = async (entry) =>
+    (await execFileAsync('tar', ['-xOf', tarballPath, entry], { maxBuffer: 64 * 1024 * 1024 })).stdout;
+
+  const indexJs = await readTarText('package/dist/index.js');
+
+  // 主 chunk 守卫：echarts / recharts / three 只允许被异步 chunk 引用。
+  // codeSplitting 若被关掉，动态 chunk 会被内联回 index.js 并把重库顶成
+  // 静态依赖——宿主侧因此失去按需加载边界（回归守卫）。
+  // 只解析文件头部 import 块（ESM 语义保证静态 import 提升到顶部）：依赖包
+  // JSDoc 里的 @typedef {import('echarts')} 样本文本会让全文正则误报。
+  function collectHeaderImportSpecifiers(jsText) {
+    const specifiers = new Set();
+    let cursor = 0;
+    const headerImportPattern =
+      /^import\s+(?:\{[^}]*\}|\*\s+as\s+[\w$]+|[\w$]+(?:\s*,\s*\{[^}]*\})?)?\s*(?:from\s*)?["']([^"']+)["'];?\s*/;
+    for (;;) {
+      const match = jsText.slice(cursor).match(headerImportPattern);
+      if (!match) {
+        break;
+      }
+      specifiers.add(match[1]);
+      cursor += match[0].length;
+    }
+    return specifiers;
+  }
+
+  const heavyLibSpecifiers = ['echarts', 'recharts', 'three'];
+  const headerSpecifiers = collectHeaderImportSpecifiers(indexJs);
+  const leakedHeavyLibs = heavyLibSpecifiers.filter(
+    (lib) =>
+      headerSpecifiers.has(lib) ||
+      [...headerSpecifiers].some((specifier) => specifier.startsWith(`${lib}/`)),
+  );
+  if (leakedHeavyLibs.length > 0) {
+    throw new Error(
+      `dist/index.js statically imports heavy renderer lib(s): ${leakedHeavyLibs.join(', ')}. ` +
+        'Lazy implementation chunks were inlined back into the main chunk.',
+    );
   }
 
   const { stdout: manifestRaw } = await execFileAsync('tar', [

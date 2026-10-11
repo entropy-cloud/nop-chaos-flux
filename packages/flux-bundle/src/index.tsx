@@ -9,6 +9,7 @@ import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-ad
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form/definitions';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
+import { registerThreeRenderers } from '@nop-chaos/flux-renderers-3d';
 import './style.css';
 
 import type {
@@ -42,6 +43,9 @@ export function registerDefaultFluxRenderers(registry: FluxRendererRegistry): Fl
   registerContentRenderers(registry);
   registerLayoutRenderers(registry);
   registerSchedulingRenderers(registry);
+  // 3D 渲染族：注册同步、实现经 createLazyRendererComponent 落在 three-canvas
+  // 异步 chunk——three.js 只在首个 three-canvas 节点渲染时加载，不进主 chunk
+  registerThreeRenderers(registry);
   return registry;
 }
 

@@ -52,6 +52,7 @@
     "@nop-chaos/flux-renderers-form-advanced": "workspace:*",
     "@nop-chaos/flux-renderers-layout": "workspace:*",
     "@nop-chaos/flux-renderers-scheduling": "workspace:*",
+    "@nop-chaos/flux-renderers-3d": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "echarts": "^6.0.0",
     "react": "^19.0.0",
@@ -67,5 +68,5 @@
     "pack:release": "node ../../scripts/pack-flux-bundle.mjs",
     "check:pack": "node ../../scripts/check-flux-bundle-pack.mjs"
   },
-  "description": "Default Flux renderer stack (basic, form, form-advanced, data, content, layout, scheduling); mobile / ai / graph registered on demand"
+  "description": "Default Flux renderer stack (basic, form, form-advanced, data, content, layout, scheduling, three-canvas); mobile / ai / graph registered on demand"
 }
