@@ -551,6 +551,9 @@ export const enUS: Resource = {
       close: 'Close',
       resize: 'Resize',
     },
+    jsonViewer: {
+      yamlError: 'Failed to serialize the data as YAML.',
+    },
     tabs: {
       newTab: 'New Tab',
       closeTab: 'Close tab',

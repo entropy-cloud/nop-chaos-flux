@@ -2,6 +2,7 @@ import * as React from 'react';
 import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
 import { stringify } from 'yaml';
 import { Tabs, TabsList, TabsTrigger } from './tabs.js';
+import { t } from '../../lib/i18n.js';
 import { cn } from '../../lib/utils.js';
 
 type JsonViewerProps = {
@@ -37,12 +38,15 @@ function DataViewer({ data, defaultExpand = true, className }: DataViewerProps) 
 
   // YAML serialization only when the YAML tab is actually shown — stringifying
   // large documents on every render while the JSON tab is active is waste.
-  const yamlText = format === 'yaml' ? safeYaml() : '';
-  function safeYaml(): string {
+  const yaml = format === 'yaml' ? safeYaml() : undefined;
+  function safeYaml(): { text: string } | { failed: true } {
     try {
-      return stringify(data, { lineWidth: 0 });
-    } catch {
-      return '';
+      return { text: stringify(data, { lineWidth: 0 }) };
+    } catch (error) {
+      // WA-ui-005: swallowing into '' rendered a blank pane indistinguishable
+      // from empty data — keep the failure observable and surface a placeholder.
+      console.warn('[ui] DataViewer: YAML serialization failed', error);
+      return { failed: true };
     }
   }
 
@@ -59,7 +63,9 @@ function DataViewer({ data, defaultExpand = true, className }: DataViewerProps) 
           {format === 'json' ? (
             <JsonViewer data={data} defaultExpand={defaultExpand} />
           ) : (
-            <pre className="font-mono text-xs leading-relaxed whitespace-pre">{yamlText}</pre>
+            <pre className="font-mono text-xs leading-relaxed whitespace-pre">
+              {yaml && 'text' in yaml ? yaml.text : t('flux.jsonViewer.yamlError')}
+            </pre>
           )}
         </div>
       </div>

@@ -1,4 +1,4 @@
-const messages: Record<string, string> = {
+export const builtinMessages: Readonly<Record<string, string>> = {
   'flux.breadcrumb.more': 'More',
   'flux.carousel.label': 'Carousel',
   'flux.carousel.previous': 'Previous slide',
@@ -18,8 +18,12 @@ const messages: Record<string, string> = {
     'Your edits have not been saved. Closing now will discard them.',
   'flux.dialog.unsavedChangesKeep': 'Keep editing',
   'flux.dialog.unsavedChangesDiscard': 'Discard changes',
+  'flux.dialog.moveDialog': 'Draggable dialog header. Use arrow keys to move the dialog.',
+  'flux.dialog.moveDialogInstructions':
+    'Use the arrow keys to move the dialog. Press Enter or Escape to finish moving.',
   'flux.drawer.close': 'Close drawer',
   'flux.drawer.resize': 'Resize drawer',
+  'flux.jsonViewer.yamlError': 'Failed to serialize the data as YAML.',
   'flux.page.asideResize': 'Resize aside',
   'flux.page.asideToggle': 'Toggle aside',
   'flux.page.remark': 'Remark',
@@ -61,5 +65,5 @@ export function t(key: string) {
   if (translated && translated !== key) {
     return translated;
   }
-  return messages[key] ?? key;
+  return builtinMessages[key] ?? key;
 }

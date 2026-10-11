@@ -547,6 +547,9 @@ export const zhCN: Resource = {
       close: '关闭',
       resize: '调整大小',
     },
+    jsonViewer: {
+      yamlError: 'YAML 序列化失败，无法展示该数据。',
+    },
     tabs: {
       newTab: '新标签页',
       closeTab: '关闭标签页',

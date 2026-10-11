@@ -7,18 +7,42 @@ import { type InputProps } from './input.js';
 import { Input } from './input.js';
 import { Textarea } from './textarea.js';
 
+// WA-ui-006: the addon's focus delegation addresses controls by registration
+// (the module-owned control components self-register here), falling back to
+// the `input-group-control` slot contract for foreign controls (command-style
+// raw inputs). It must never address controls by tag name — that silently
+// missed InputGroupTextarea.
+// External refs are forwarded at mount only (React 19 ref-callback semantics:
+// the registry delete is the detach — refs are not re-called with null on
+// unmount), so consumers must not rely on unmount null-calls.
+type InputGroupControlsRegistry = { current: Set<HTMLElement> };
+
+const InputGroupControlsContext = React.createContext<InputGroupControlsRegistry | null>(null);
+
+function focusFirstInputGroupControl(registry: InputGroupControlsRegistry | null, group: HTMLElement | null): void {
+  const first = registry?.current.values().next().value;
+  if (first) {
+    first.focus();
+    return;
+  }
+  group?.querySelector<HTMLElement>('[data-slot="input-group-control"]')?.focus();
+}
+
 function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
+  const controlsRef = React.useRef<Set<HTMLElement>>(new Set());
   return (
-    <div
-      data-slot="input-group"
-      role="group"
-      className={cn(
-        'nop-input-group ',
-        'group/input-group relative flex h-8 w-full min-w-0 items-center rounded-lg border border-input transition-colors outline-none in-data-[slot=combobox-content]:focus-within:border-inherit in-data-[slot=combobox-content]:focus-within:ring-0 has-disabled:bg-input/50 has-disabled:opacity-50 has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-3 has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto dark:bg-input/30 dark:has-disabled:bg-input/80 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40 has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5',
-        className,
-      )}
-      {...props}
-    />
+    <InputGroupControlsContext.Provider value={controlsRef}>
+      <div
+        data-slot="input-group"
+        role="group"
+        className={cn(
+          'nop-input-group ',
+          'group/input-group relative flex h-8 w-full min-w-0 items-center rounded-lg border border-input transition-colors outline-none in-data-[slot=combobox-content]:focus-within:border-inherit in-data-[slot=combobox-content]:focus-within:ring-0 has-disabled:bg-input/50 has-disabled:opacity-50 has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-3 has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto dark:bg-input/30 dark:has-disabled:bg-input/80 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40 has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5',
+          className,
+        )}
+        {...props}
+      />
+    </InputGroupControlsContext.Provider>
   );
 }
 
@@ -48,6 +72,7 @@ function InputGroupAddon({
   align = 'inline-start',
   ...props
 }: React.ComponentProps<'div'> & VariantProps<typeof inputGroupAddonVariants>) {
+  const controlsRef = React.useContext(InputGroupControlsContext);
   return (
     <div
       role="group"
@@ -59,12 +84,12 @@ function InputGroupAddon({
         if ((e.target as HTMLElement).closest('button')) {
           return;
         }
-        e.currentTarget.parentElement?.querySelector('input')?.focus();
+        focusFirstInputGroupControl(controlsRef, e.currentTarget.parentElement);
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          e.currentTarget.parentElement?.querySelector('input')?.focus();
+          focusFirstInputGroupControl(controlsRef, e.currentTarget.parentElement);
         }
       }}
       {...props}
@@ -119,9 +144,19 @@ function InputGroupText({ className, ...props }: React.ComponentProps<'span'>) {
   );
 }
 
-function InputGroupInput({ className, ...props }: InputProps) {
+function InputGroupInput({ className, ref, ...props }: InputProps) {
+  const controlsRef = React.useContext(InputGroupControlsContext);
   return (
     <Input
+      ref={(node) => {
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+        if (!node || !controlsRef) return;
+        controlsRef.current.add(node);
+        return () => {
+          controlsRef.current.delete(node);
+        };
+      }}
       data-slot="input-group-control"
       className={cn(
         'flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent',
@@ -132,9 +167,23 @@ function InputGroupInput({ className, ...props }: InputProps) {
   );
 }
 
-function InputGroupTextarea({ className, ...props }: React.ComponentProps<'textarea'>) {
+function InputGroupTextarea({
+  className,
+  ref,
+  ...props
+}: React.ComponentPropsWithRef<'textarea'>) {
+  const controlsRef = React.useContext(InputGroupControlsContext);
   return (
     <Textarea
+      ref={(node) => {
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+        if (!node || !controlsRef) return;
+        controlsRef.current.add(node);
+        return () => {
+          controlsRef.current.delete(node);
+        };
+      }}
       data-slot="input-group-control"
       className={cn(
         'flex-1 resize-none rounded-none border-0 bg-transparent py-2 shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent',
