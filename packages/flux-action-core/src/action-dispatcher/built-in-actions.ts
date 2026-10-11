@@ -58,6 +58,30 @@ function evaluateSurfaceArgs(
   return result;
 }
 
+function extractMessageTitleArgs(payload: unknown): {
+  message?: string;
+  title?: string;
+} {
+  const read = (key: 'message' | 'title') =>
+    payload && typeof payload === 'object' && key in payload
+      ? (payload as Record<string, unknown>)[key]
+      : undefined;
+  const message = read('message');
+  const title = read('title');
+  return {
+    message: typeof message === 'string' ? message : undefined,
+    title: typeof title === 'string' ? title : undefined,
+  };
+}
+
+function resolveCloseSurfaceArgs(targeting: CompiledActionNode['targeting']) {
+  return targeting.surfaceId
+    ? { surfaceId: String(targeting.surfaceId) }
+    : targeting.dialogId
+      ? { surfaceId: String(targeting.dialogId) }
+      : undefined;
+}
+
 export async function runBuiltInAction(
   action: CompiledActionNode,
   ctx: ActionContext,
@@ -146,14 +170,12 @@ export async function runBuiltInAction(
       };
       break;
     }
-    case 'closeDrawer': {
+    case 'closeDrawer':
+    case 'closeDialog':
+    case 'closeSurface': {
       invocation = {
         action: 'closeSurface',
-        args: action.targeting.surfaceId
-          ? { surfaceId: String(action.targeting.surfaceId) }
-          : action.targeting.dialogId
-            ? { surfaceId: String(action.targeting.dialogId) }
-            : undefined,
+        args: resolveCloseSurfaceArgs(action.targeting),
         targeting: action.targeting,
         actionNode: action,
         signal,
@@ -171,72 +193,12 @@ export async function runBuiltInAction(
       };
       break;
     }
-    case 'confirm': {
-      const payload = evaluateActionArgs(action, ctx, internals.evaluator);
-      const message =
-        payload && typeof payload === 'object' && 'message' in payload
-          ? (payload as { message?: unknown }).message
-          : undefined;
-      const title =
-        payload && typeof payload === 'object' && 'title' in payload
-          ? (payload as { title?: unknown }).title
-          : undefined;
-      invocation = {
-        action: 'confirm',
-        args: {
-          message: typeof message === 'string' ? message : undefined,
-          title: typeof title === 'string' ? title : undefined,
-        },
-        targeting: action.targeting,
-        actionNode: action,
-        signal,
-      };
-      break;
-    }
+    case 'confirm':
     case 'alert': {
       const payload = evaluateActionArgs(action, ctx, internals.evaluator);
-      const message =
-        payload && typeof payload === 'object' && 'message' in payload
-          ? (payload as { message?: unknown }).message
-          : undefined;
-      const title =
-        payload && typeof payload === 'object' && 'title' in payload
-          ? (payload as { title?: unknown }).title
-          : undefined;
       invocation = {
-        action: 'alert',
-        args: {
-          message: typeof message === 'string' ? message : undefined,
-          title: typeof title === 'string' ? title : undefined,
-        },
-        targeting: action.targeting,
-        actionNode: action,
-        signal,
-      };
-      break;
-    }
-    case 'closeDialog': {
-      invocation = {
-        action: 'closeSurface',
-        args: action.targeting.surfaceId
-          ? { surfaceId: String(action.targeting.surfaceId) }
-          : action.targeting.dialogId
-            ? { surfaceId: String(action.targeting.dialogId) }
-            : undefined,
-        targeting: action.targeting,
-        actionNode: action,
-        signal,
-      };
-      break;
-    }
-    case 'closeSurface': {
-      invocation = {
-        action: 'closeSurface',
-        args: action.targeting.surfaceId
-          ? { surfaceId: String(action.targeting.surfaceId) }
-          : action.targeting.dialogId
-            ? { surfaceId: String(action.targeting.dialogId) }
-            : undefined,
+        action: action.action,
+        args: extractMessageTitleArgs(payload),
         targeting: action.targeting,
         actionNode: action,
         signal,
@@ -308,33 +270,17 @@ export async function runBuiltInAction(
       };
       break;
     }
-    case 'download': {
-      const payload = evaluateActionArgs(action, ctx, internals.evaluator);
-      if (!payload || typeof payload !== 'object') {
-        return {
-          ok: false,
-          error: new Error('download requires args payload'),
-        };
-      }
-      invocation = {
-        action: 'download',
-        args: payload,
-        targeting: action.targeting,
-        actionNode: action,
-        signal,
-      };
-      break;
-    }
+    case 'download':
     case 'copy': {
       const payload = evaluateActionArgs(action, ctx, internals.evaluator);
       if (!payload || typeof payload !== 'object') {
         return {
           ok: false,
-          error: new Error('copy requires args payload'),
+          error: new Error(`${action.action} requires args payload`),
         };
       }
       invocation = {
-        action: 'copy',
+        action: action.action,
         args: payload,
         targeting: action.targeting,
         actionNode: action,
