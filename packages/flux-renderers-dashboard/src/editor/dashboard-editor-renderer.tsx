@@ -28,7 +28,7 @@ import {
 import { DEFAULT_DASHBOARD_PALETTE_CATALOG } from './editor-palette.js';
 import { useDashboardEditorHandles } from './use-dashboard-editor-handles.js';
 import { useEditorCoreSession } from './editor-session-hook.js';
-import { resolveCols, resolveGapPx, resolveRowHeight, findFreePosition } from '../layout-math.js';
+import { resolveCols, resolveGapPx, resolveRowHeight, findFreePosition, buildDashboardPanelFragment } from '../layout-math.js';
 
 export interface DashboardEditorSchema extends BaseSchema {
   type: 'dashboard-editor';
@@ -226,6 +226,9 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
   // P3.2（plan 553）：sessionChange/modeChange 推送事件（裁决③最小事件集对齐）。
   // effect 内 core 守卫（core 建立后的首次快照派发一次初始 sessionChange——挂载时派发为裁定行为）；
   // session 为逐 notify 新对象（buildSnapshot），值驱动派发。payload = EditorSessionState 全量会话摘要。
+  // WA-dashboard-003 (plan 568): the deps array was missing, so every parent
+  // re-render re-dispatched the event (the comment above promises per-notify
+  // dispatch). A host handler that writes scope from this event would loop.
   useEffect(() => {
     if (!core) return;
     dispatchEventRef.current(
@@ -239,7 +242,7 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       },
       eventsRef.current?.onSessionChange,
     );
-  });
+  }, [core, session]);
   const lastModeRef = useRef<EditorMode | null>(null);
   useEffect(() => {
     if (!core) return;
@@ -288,13 +291,10 @@ export function DashboardEditorRenderer(props: RendererComponentProps<DashboardE
       console.warn(`[dashboard-editor] panel type "${panel.type}" is not registered, skipped`);
       return null;
     }
-    const fragment: BaseSchema = {
-      type: panel.type,
-      ...(panel.props !== undefined && panel.props !== null && typeof panel.props === 'object'
-        ? (panel.props as object)
-        : {}),
-      ...(panel.source !== undefined ? { data: panel.source, source: panel.source } : {}),
-    } as unknown as BaseSchema;
+    // WA-dashboard-001 (plan 568): fragment assembly moved to the shared
+    // layout-math builder (was a near-verbatim twin of the runtime
+    // renderer's copy, seams included).
+    const fragment = buildDashboardPanelFragment(panel);
     return asReactNode(helpers.render(fragment, { pathSuffix: 'editor-panel' }));
   };
 

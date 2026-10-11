@@ -1,4 +1,14 @@
+// WA-scheduling-002 (plan 568) — DESIGN-RESERVE, UNWIRED. This module is a
+// fully built tool layer (JSON/PNG snapshot + download helpers) whose
+// product wiring (KanbanHandle saveSnapshot/loadSnapshot + toolbar entry +
+// failure toast, per docs/components/kanban/design-export-snapshot.md,
+// Status: final 2026-07-20) has never landed; design.md:446 defers export to
+// P3. Its only importer is this module's own test suite. The html2canvas
+// loader below is shared with the calendar export hook (one strategy, not
+// three); if the P3 deferral stands, decide explicitly whether this layer
+// moves out of src/ — do not let it silently persist.
 import type { BoardData } from '../kanban.types.js';
+import { loadHtml2canvas } from '../../shared/html2canvas-loader.js';
 
 const exportInProgress = new WeakMap<HTMLElement, boolean>();
 
@@ -14,8 +24,6 @@ export function boardDataFromJson(json: string): BoardData {
   return parsed as BoardData;
 }
 
-type Html2CanvasFn = (element: HTMLElement, options?: Record<string, unknown>) => Promise<HTMLCanvasElement>;
-
 export async function exportBoardToPng(boardElement: HTMLElement, signal?: AbortSignal): Promise<Blob> {
   if (exportInProgress.get(boardElement)) {
     throw new Error('Export already in progress for this board');
@@ -23,10 +31,10 @@ export async function exportBoardToPng(boardElement: HTMLElement, signal?: Abort
   exportInProgress.set(boardElement, true);
   try {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    const html2canvas = await tryLoadHtml2canvas(signal);
-    if (!html2canvas) {
-      throw new Error('html2canvas not available');
-    }
+    // WA-scheduling-002: loader errors now propagate directly (the
+    // soft-null path was unreachable on abort — the check above already
+    // throws — and less observable on load failure).
+    const html2canvas = await loadHtml2canvas();
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     if (boardElement.scrollWidth > 4096 || boardElement.scrollHeight > 4096) {
       throw new Error('Board too large for PNG export');
@@ -56,15 +64,4 @@ export function downloadBlob(blob: Blob, filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-async function tryLoadHtml2canvas(signal?: AbortSignal): Promise<Html2CanvasFn | null> {
-  try {
-    if (signal?.aborted) return null;
-    const mod = await import('html2canvas');
-    return (mod.default || mod) as unknown as Html2CanvasFn;
-  } catch (err) {
-    console.warn('[kanban-export] Failed to load html2canvas:', err instanceof Error ? err.message : String(err));
-    return null;
-  }
 }

@@ -525,10 +525,10 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
                 columnFooterClassName={columnFooterClassName}
                 columnAggregate={columnAggregate}
                 onAggregateFallback={warnAggregateFallback}
-                columnHeaderRegion={regions.columnHeader as any}
-                columnHeaderToolbarRegion={regions.columnHeaderToolbar as any}
-                cardTemplateRegion={regions.cardTemplate as any}
-                columnFooterRegion={regions.columnFooter as any}
+                columnHeaderRegion={regions.columnHeader}
+                columnHeaderToolbarRegion={regions.columnHeaderToolbar}
+                cardTemplateRegion={regions.cardTemplate}
+                columnFooterRegion={regions.columnFooter}
                 selectedTagIds={selectedTagIds}
                 filterCardFn={filter.matchesCard}
                 helpers={helpers}

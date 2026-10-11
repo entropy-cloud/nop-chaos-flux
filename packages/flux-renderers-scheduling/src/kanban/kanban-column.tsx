@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { cn, Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { RendererHelpers } from '@nop-chaos/flux-core';
+import type { RenderRegionHandle, RendererHelpers } from '@nop-chaos/flux-core';
 import type { BoardData, BoardItem, KanbanCardConfig } from './kanban.types.js';
 import { computeColumnAggregate, type KanbanColumnAggregateConfig } from './kanban-aggregate.js';
 import { KanbanColumnHeader } from './kanban-column-header.js';
@@ -14,10 +14,15 @@ export interface KanbanColumnProps {
   collapsed: boolean;
   onToggleCollapse: (columnId: string) => void;
   configMap?: Record<string, KanbanCardConfig>;
-  columnHeaderRegion?: { render: () => React.ReactNode } | null;
-  columnHeaderToolbarRegion?: { render: () => React.ReactNode } | null;
-  cardTemplateRegion?: { render: (options?: { bindings?: Record<string, unknown> }) => React.ReactNode } | null;
-  columnFooterRegion?: { render: () => React.ReactNode } | null;
+  // WA-scheduling-003 (plan 568): the four region props use the shared
+  // RenderRegionHandle instead of hand-rolled narrow shapes (which forced
+  // `as any` at every board → column boundary). The single React.ReactNode
+  // boundary cast lives at each render() call site, mirroring the calendar
+  // event-template convention.
+  columnHeaderRegion?: RenderRegionHandle | null;
+  columnHeaderToolbarRegion?: RenderRegionHandle | null;
+  cardTemplateRegion?: RenderRegionHandle | null;
+  columnFooterRegion?: RenderRegionHandle | null;
   onCardClick?: (cardId: string, columnId: string, index: number) => void;
   onColumnClick?: (columnId: string) => void;
   onAddCard?: (columnId: string) => void;
@@ -358,7 +363,7 @@ function KanbanColumnInner({
         >
           {t('scheduling.kanban.addCard')}
         </Button>
-        {columnFooterRegion?.render()}
+        {columnFooterRegion?.render() as React.ReactNode}
       </div>
     </div>
   );

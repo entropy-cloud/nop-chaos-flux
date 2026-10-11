@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useLayoutEffect } from 'react';
+import { moveGridFocus } from '../grid-roving-focus.js';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -130,53 +131,32 @@ export function CalendarMonthView({
     [anyCellExpanded, events, resources, dateRange],
   );
 
-  const handleDateCellKeyDown = (e: React.KeyboardEvent, dateStr: string, resourceId: string) => {
+  // WA-scheduling-001 (plan 568): the three views' roving-focus walkers are
+  // extracted into moveGridFocus; this handler keeps only view-specific
+  // behavior — the weekend guard, Enter/Space create entry (args at hand),
+  // and the focusedCell state sync after focus lands.
+  const handleDateCellKeyDown = (e: React.KeyboardEvent<HTMLElement>, dateStr: string, resourceId: string) => {
     if (!showWeekends && isWeekend(new Date(dateStr))) return;
-    const grid = e.currentTarget.closest('[role="grid"]');
-    if (!grid) return;
-    const cells = Array.from(grid.querySelectorAll('[data-slot="calendar-cell"]:not([data-empty])')) as HTMLElement[];
-    const currentIdx = cells.indexOf(e.currentTarget as HTMLElement);
-    let nextIdx = currentIdx;
-    switch (e.key) {
-      case 'ArrowRight':
-        e.preventDefault();
-        nextIdx = Math.min(currentIdx + 1, cells.length - 1);
-        break;
-      case 'ArrowLeft':
-        e.preventDefault();
-        nextIdx = Math.max(currentIdx - 1, 0);
-        break;
-      case 'ArrowDown': {
-        e.preventDefault();
-        const daysCount = days.slice(0, 7).length;
-        nextIdx = Math.min(currentIdx + daysCount, cells.length - 1);
-        break;
-      }
-      case 'ArrowUp': {
-        e.preventDefault();
-        const daysCount = days.slice(0, 7).length;
-        nextIdx = Math.max(currentIdx - daysCount, 0);
-        break;
-      }
-      case 'Enter':
-      case ' ':
-        e.preventDefault();
-        // G4-R3-视角10-02: keyboard create completes directly — a synthetic
-        // pointer event here would arm the 500ms long-press timer that no
-        // keyboard session can release.
-        onCellKeyboardCreate?.(dateStr, resourceId);
-        return;
-      default:
-        return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      // G4-R3-视角10-02: keyboard create completes directly — a synthetic
+      // pointer event here would arm the 500ms long-press timer that no
+      // keyboard session can release.
+      onCellKeyboardCreate?.(dateStr, resourceId);
+      return;
     }
-    if (nextIdx !== currentIdx && nextIdx >= 0 && nextIdx < cells.length) {
-      cells[nextIdx]?.focus();
-      const nextDate = cells[nextIdx]?.getAttribute('data-date');
-      const nextResource = cells[nextIdx]?.getAttribute('data-resource');
-      if (nextDate && nextResource) {
-        setFocusedCell({ resourceId: nextResource, dateStr: nextDate });
-      }
-    }
+    moveGridFocus(e, {
+      selector: '[data-slot="calendar-cell"]:not([data-empty])',
+      colStride: 1,
+      rowStride: days.slice(0, 7).length,
+      onMove: (target) => {
+        const nextDate = target.getAttribute('data-date');
+        const nextResource = target.getAttribute('data-resource');
+        if (nextDate && nextResource) {
+          setFocusedCell({ resourceId: nextResource, dateStr: nextDate });
+        }
+      },
+    });
   };
 
   const headerCells = days.slice(0, 7).map((day, i) => (

@@ -1,4 +1,5 @@
 import type { BaseSchema, RendererDefinition, RendererSchemaValidationContext } from '@nop-chaos/flux-core';
+import { PIVOT_AGGREGATION_TYPES, PIVOT_CELL_TYPES, PIVOT_CORNER_TITLE_VALUES } from './pivot-vocabulary.js';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import type { PivotTableSchema } from './schemas.js';
 
@@ -7,9 +8,11 @@ const LazyPivotTableRenderer = createLazyRendererComponent<PivotTableSchema>(
   () => import('./pivot-renderer.js').then((m) => m.PivotTableRenderer),
 );
 
-const VALID_AGGREGATION_TYPES = ['SUM', 'AVG', 'COUNT', 'MIN', 'MAX', 'NONE'];
-const VALID_CELL_TYPES = ['text', 'progressbar', 'sparkline'];
-const VALID_CORNER_VALUES = ['row', 'column', 'none', 'all'];
+// WA-pivot-001 (plan 568): vocabulary lives in pivot-vocabulary.ts (single
+// source with the schema unions and the option normalizer).
+const VALID_AGGREGATION_TYPES = PIVOT_AGGREGATION_TYPES;
+const VALID_CELL_TYPES = PIVOT_CELL_TYPES;
+const VALID_CORNER_VALUES = PIVOT_CORNER_TITLE_VALUES;
 
 function toPointer(path: string, ...segments: Array<string | number>): string {
   return [path, ...segments.map((segment) => String(segment))].join('.');

@@ -8,9 +8,11 @@ export interface PivotDimensionSchema extends SchemaObject {
   headerStyle?: Record<string, SchemaValue>;
 }
 
-export type PivotAggregationType = 'SUM' | 'AVG' | 'COUNT' | 'MIN' | 'MAX' | 'NONE';
+import type { PivotAggregationType, PivotCellType, PivotCornerTitleOnDimension } from './pivot-vocabulary.js';
 
-export type PivotCellType = 'text' | 'progressbar' | 'sparkline';
+export type { PivotAggregationType } from './pivot-vocabulary.js';
+
+export type { PivotCellType } from './pivot-vocabulary.js';
 
 export interface PivotIndicatorSchema extends SchemaObject {
   field: string;
@@ -62,7 +64,7 @@ export interface PivotDataConfigSchema extends SchemaObject {
   filterRules?: PivotFilterRuleSchema[];
 }
 
-export type PivotCornerTitleOnDimension = 'row' | 'column' | 'none' | 'all';
+export type { PivotCornerTitleOnDimension } from './pivot-vocabulary.js';
 
 export interface PivotTableSchema extends BaseSchema {
   type: 'pivot-table';

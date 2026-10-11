@@ -1,12 +1,16 @@
 import React from 'react';
-import type { BaseSchema, RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { useRendererRuntime } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { DashboardLayoutSchema, DashboardPanelSchema } from './schemas.js';
 import {
+  buildDashboardPanelFragment,
   panelToPixels,
   resolveCanvasHeight,
+  resolveCols,
+  resolveGapPx,
+  resolveRowHeight,
   sanitizePanels,
   type PanelPixelRect,
 } from './layout-math.js';
@@ -23,20 +27,23 @@ interface LayoutProps {
   height?: number;
 }
 
+// WA-dashboard-001 (plan 568): defaults resolve through the layout-math
+// shared face (the editor side already consumed it; this hand-rolled copy
+// kept 12/40/8 as a second source of truth). `height` has no shared resolver
+// — it is renderer-local presentation state.
 function resolveLayoutProps(schemaProps: {
   cols?: unknown;
   rowHeight?: unknown;
   gap?: unknown;
   height?: unknown;
 }): LayoutProps {
+  const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined);
+  const height = num(schemaProps.height);
   return {
-    cols: typeof schemaProps.cols === 'number' && schemaProps.cols > 0 ? Math.floor(schemaProps.cols) : 12,
-    rowHeight:
-      typeof schemaProps.rowHeight === 'number' && schemaProps.rowHeight > 0
-        ? schemaProps.rowHeight
-        : 40,
-    gap: typeof schemaProps.gap === 'number' && schemaProps.gap >= 0 ? schemaProps.gap : 8,
-    height: typeof schemaProps.height === 'number' && schemaProps.height > 0 ? schemaProps.height : undefined,
+    cols: resolveCols(num(schemaProps.cols)),
+    rowHeight: resolveRowHeight(num(schemaProps.rowHeight)),
+    gap: resolveGapPx(num(schemaProps.gap)),
+    height: height !== undefined && height > 0 ? height : undefined,
   };
 }
 
@@ -52,16 +59,6 @@ function panelChrome(panel: DashboardPanelSchema): React.ReactNode {
       {panel.title}
     </div>
   );
-}
-
-function buildPanelFragment(panel: DashboardPanelSchema): BaseSchema {
-  return {
-    type: panel.type,
-    ...(panel.props !== undefined && panel.props !== null && typeof panel.props === 'object'
-      ? (panel.props as object)
-      : {}),
-    ...(panel.source !== undefined ? { data: panel.source, source: panel.source } : {}),
-  } as unknown as BaseSchema;
 }
 
 /**
@@ -111,7 +108,7 @@ export function DashboardRenderer(props: RendererComponentProps<DashboardLayoutS
       return null;
     }
     return asReactNode(
-      helpers.render(buildPanelFragment(panel), { pathSuffix: `panel.${panel.id}` }),
+      helpers.render(buildDashboardPanelFragment(panel), { pathSuffix: `panel.${panel.id}` }),
     );
   };
 

@@ -190,10 +190,12 @@ export class DeleteTaskCommand implements Command {
   }
 }
 
-// FIXME: Both Gantt and Kanban use command-based undo, but with different
-// granularity — Gantt commands are class-based with execute/undo/redo methods,
-// while Kanban stores typed operation deltas applied via helpers.
-// These could be unified in a future refactor.
+// WA-scheduling-005 (plan 568) — adjudicated dual-track design, not an open
+// TODO: Gantt and Kanban both run command-based undo with deliberately
+// different granularity (Gantt: class-based commands with execute/undo/redo
+// methods; Kanban: typed operation deltas applied via helpers). Unification
+// is a possible future refactor, not a pending fix — pick it up only if a
+// third command consumer appears.
 export class UndoStack {
   private commands: Command[] = [];
   private pointer = -1;

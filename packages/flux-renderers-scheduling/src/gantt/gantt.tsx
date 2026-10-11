@@ -226,38 +226,38 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
       store.editTask(id);
     };
 
+    // WA-scheduling-009 (plan 568): the four keyboard-edit cases shared one
+    // 8-10 line shape (UTC day shift → payload → dispatch → update → undo);
+    // these two micro-primitives hold the date math, the cases stay one call
+    // each. Resize keeps its boundary check at the call site (real semantic
+    // difference per the audit adjudication).
+    const shiftTaskDatesUtc = (startIso: string, endIso: string, days: number): { start: string; end: string } => {
+      const newStart = new Date(startIso);
+      newStart.setUTCDate(newStart.getUTCDate() + days);
+      const newEnd = new Date(endIso);
+      newEnd.setUTCDate(newEnd.getUTCDate() + days);
+      return { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) };
+    };
+    const resizeTaskEndUtc = (endIso: string, days: number): string => {
+      const newEnd = new Date(endIso);
+      newEnd.setUTCDate(newEnd.getUTCDate() + days);
+      return newEnd.toISOString().slice(0, 10);
+    };
+
     const handleBarKeyAction = (taskId: string | number, action: 'move-up' | 'move-down' | 'resize-left' | 'resize-right' | 'select') => {
       const task = store.tasks.get(taskId);
       if (!task) return;
       const oldStart = task.start;
       const oldEnd = task.end;
       const oldStartDt = new Date(oldStart);
-      const oldEndDt = new Date(oldEnd);
       switch (action) {
-        case 'move-up': {
-          const newStart = new Date(oldStartDt);
-          newStart.setUTCDate(newStart.getUTCDate() - 1);
-          const newEnd = new Date(oldEndDt);
-          newEnd.setUTCDate(newEnd.getUTCDate() - 1);
-          const startVal = newStart.toISOString().slice(0, 10);
-          const endVal = newEnd.toISOString().slice(0, 10);
-          const payload = { _taskId: taskId, changes: { start: startVal, end: endVal } };
+        case 'move-up':
+        case 'move-down': {
           // 2-19 adjudication: keyboard date edits are EDIT-type changes —
           // dispatched through onTaskEdit (design §8.1 split), NOT the
           // drag-end channel. Hosts persisting via onTaskEdit no longer miss
           // keyboard rescheduling.
-          dispatchTaskEdit(payload);
-          store.updateTask(taskId, { start: startVal, end: endVal });
-          undoStack.push(new UpdateTaskCommand(store, taskId, { start: oldStart, end: oldEnd }, { start: startVal, end: endVal }));
-          break;
-        }
-        case 'move-down': {
-          const newStart = new Date(oldStartDt);
-          newStart.setUTCDate(newStart.getUTCDate() + 1);
-          const newEnd = new Date(oldEndDt);
-          newEnd.setUTCDate(newEnd.getUTCDate() + 1);
-          const startVal = newStart.toISOString().slice(0, 10);
-          const endVal = newEnd.toISOString().slice(0, 10);
+          const { start: startVal, end: endVal } = shiftTaskDatesUtc(oldStart, oldEnd, action === 'move-up' ? -1 : 1);
           const payload = { _taskId: taskId, changes: { start: startVal, end: endVal } };
           dispatchTaskEdit(payload);
           store.updateTask(taskId, { start: startVal, end: endVal });
@@ -265,10 +265,8 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           break;
         }
         case 'resize-left': {
-          const newEnd = new Date(oldEndDt);
-          newEnd.setUTCDate(newEnd.getUTCDate() - 1);
-          if (newEnd > oldStartDt) {
-            const endVal = newEnd.toISOString().slice(0, 10);
+          const endVal = resizeTaskEndUtc(oldEnd, -1);
+          if (new Date(endVal) > oldStartDt) {
             const payload = { _taskId: taskId, changes: { end: endVal } };
             dispatchTaskEdit(payload);
             store.updateTask(taskId, { end: endVal });
@@ -277,9 +275,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
           break;
         }
         case 'resize-right': {
-          const newEnd = new Date(oldEndDt);
-          newEnd.setUTCDate(newEnd.getUTCDate() + 1);
-          const endVal = newEnd.toISOString().slice(0, 10);
+          const endVal = resizeTaskEndUtc(oldEnd, 1);
           const payload = { _taskId: taskId, changes: { end: endVal } };
           dispatchTaskEdit(payload);
           store.updateTask(taskId, { end: endVal });

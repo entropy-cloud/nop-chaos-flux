@@ -1,6 +1,6 @@
-import html2canvas from 'html2canvas';
 import { useState, useRef } from 'react';
 import { t } from '@nop-chaos/flux-i18n';
+import { loadHtml2canvas } from '../../shared/html2canvas-loader.js';
 
 export interface UseCalendarExportResult {
   exportToPrint: () => void;
@@ -36,7 +36,11 @@ export function useCalendarExport(calendarRef?: React.RefObject<HTMLDivElement |
     try {
       throwIfAborted();
 
-      const canvas: any = await html2canvas(target, {
+      // WA-scheduling-002 (plan 568): lazy-loaded via the shared
+      // scheduling loader — the static import pinned html2canvas (~200KB)
+      // into the main chunk, against the c21e2dea9 lazy-loading direction.
+      const html2canvas = await loadHtml2canvas();
+      const canvas = await html2canvas(target, {
         scale: 2,
         useCORS: true,
         allowTaint: false,

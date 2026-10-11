@@ -8,12 +8,11 @@ import type {
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
-
-// 加载默认 locale（en-US），使 dashboard i18n 键在测试中断言真实文案。
-initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 import React from 'react';
 import type { DashboardEditorSchema } from './editor/dashboard-editor-renderer.js';
 import type { DashboardLayoutSchema } from './schemas.js';
+import { dashboardRendererDefinition } from './dashboard-definitions.js';
+import { dashboardEditorRendererDefinition } from './editor/dashboard-editor-definitions.js';
 
 const env: RendererEnv = {
   fetcher: async function <T>() {
@@ -67,32 +66,25 @@ function contentStub(type: string, testId: string): RendererDefinition {
 export const chartStubRenderer = contentStub('chart', 'chart-stub');
 export const tableStubRenderer = contentStub('table', 'table-stub');
 export const htmlStubRenderer = contentStub('html', 'html-stub');
+// WA-dashboard-002 (plan 568): test definitions derive from the production
+// tables ({...base}) so a new production field can no longer be silently
+// missing from the test surface (the fields table was copied verbatim twice).
 const dashboardEditorDefinitionForTest: RendererDefinition = {
-  type: 'dashboard-editor',
-  displayName: 'Dashboard Editor',
-  category: 'layout',
-  sourcePackage: '@nop-chaos/flux-renderers-dashboard',
+  ...dashboardEditorRendererDefinition,
   component: DashboardEditorRendererForTest,
-  fields: [
-    { key: 'layout', kind: 'prop' },
-    { key: 'cols', kind: 'prop' },
-    { key: 'rowHeight', kind: 'prop' },
-    { key: 'gap', kind: 'prop' },
-    { key: 'height', kind: 'prop' },
-    { key: 'mode', kind: 'prop' },
-    { key: 'commitPolicy', kind: 'prop' },
-    { key: 'onSave', kind: 'event' },
-    { key: 'onError', kind: 'event' },
-    { key: 'onSessionChange', kind: 'event' },
-    { key: 'onModeChange', kind: 'event' },
-    { key: 'statusPath', kind: 'prop' },
-  ],
 };
 
 export function createDashboardSchemaRenderer(
   extra: RendererDefinition[] = [],
   editorDefinition: RendererDefinition = dashboardEditorDefinitionForTest,
 ) {
+  // 加载默认 locale（en-US），使 dashboard i18n 键在测试中断言真实文案。
+  // WA-dashboard-002 (plan 568): the init used to run at module-evaluation
+  // time (WA-content-009 pattern) — a singleton write on import freezes the
+  // language for any test file imported later. Explicit init inside the
+  // factory keeps first-initializer-wins semantics without the import-order
+  // side effect.
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
   return createSchemaRenderer([
     pageRenderer,
     textRenderer,
@@ -102,19 +94,8 @@ export function createDashboardSchemaRenderer(
     htmlStubRenderer,
     ...extra,
     {
-      type: 'dashboard',
-      displayName: 'Dashboard',
-      category: 'layout',
-      sourcePackage: '@nop-chaos/flux-renderers-dashboard',
+      ...dashboardRendererDefinition,
       component: DashboardRendererForTest,
-      fields: [
-        { key: 'panels', kind: 'prop' },
-        { key: 'cols', kind: 'prop' },
-        { key: 'rowHeight', kind: 'prop' },
-        { key: 'gap', kind: 'prop' },
-        { key: 'height', kind: 'prop' },
-        { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-      ],
     },
     editorDefinition,
   ]);
@@ -149,25 +130,8 @@ export function createSpiedEditorDefinition(
     return <DashboardEditorRendererForTest {...props} events={spiedEvents} />;
   }
   return {
-    type: 'dashboard-editor',
-    displayName: 'Dashboard Editor',
-    category: 'layout',
-    sourcePackage: '@nop-chaos/flux-renderers-dashboard',
+    ...dashboardEditorRendererDefinition,
     component: SpiedEditor,
-    fields: [
-      { key: 'layout', kind: 'prop' },
-      { key: 'cols', kind: 'prop' },
-      { key: 'rowHeight', kind: 'prop' },
-      { key: 'gap', kind: 'prop' },
-      { key: 'height', kind: 'prop' },
-      { key: 'mode', kind: 'prop' },
-      { key: 'commitPolicy', kind: 'prop' },
-      { key: 'onSave', kind: 'event' },
-      { key: 'onError', kind: 'event' },
-      { key: 'onSessionChange', kind: 'event' },
-      { key: 'onModeChange', kind: 'event' },
-      { key: 'statusPath', kind: 'prop' },
-    ],
   };
 }
 

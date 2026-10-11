@@ -1,4 +1,5 @@
 import React from 'react';
+import { moveGridFocus } from '../grid-roving-focus.js';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
@@ -85,47 +86,25 @@ export function CalendarWeekView({
   // focusable cells previously had zero onKeyDown, so keyboard users could
   // reach a cell but never move between them. Left/Right walk days, Up/Down
   // walk resource rows.
+  // [G4-R3-视角9-01] gridcell keyboard model (WA-scheduling-001: now via the
+  // shared moveGridFocus — the hand-rolled walker here was a month-view
+  // mirror). Left/Right walk days, Up/Down walk resource rows. Enter/Space
+  // create entry reads the cell's data attributes (no args in this view).
   const handleCellKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    const grid = e.currentTarget.closest('[role="grid"]');
-    if (!grid) return;
-    const cells = Array.from(
-      grid.querySelectorAll<HTMLElement>('[role="gridcell"][data-slot="calendar-cell"]'),
-    );
-    const currentIdx = cells.indexOf(e.currentTarget);
-    if (currentIdx < 0) return;
-    let nextIdx = currentIdx;
-    switch (e.key) {
-      case 'ArrowRight':
-        e.preventDefault();
-        nextIdx = Math.min(currentIdx + 1, cells.length - 1);
-        break;
-      case 'ArrowLeft':
-        e.preventDefault();
-        nextIdx = Math.max(currentIdx - 1, 0);
-        break;
-      case 'ArrowDown':
-        e.preventDefault();
-        nextIdx = Math.min(currentIdx + displayDays.length, cells.length - 1);
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        nextIdx = Math.max(currentIdx - displayDays.length, 0);
-        break;
-      case 'Enter':
-      case ' ':
-        // [G4-R3-视角11-02] 键盘创建直接进入创建会话，不经长按定时器。
-        e.preventDefault();
-        onCellKeyboardCreate?.(
-          e.currentTarget.getAttribute('data-date') ?? '',
-          e.currentTarget.getAttribute('data-resource') ?? '',
-        );
-        return;
-      default:
-        return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      // [G4-R3-视角11-02] 键盘创建直接进入创建会话，不经长按定时器。
+      e.preventDefault();
+      onCellKeyboardCreate?.(
+        e.currentTarget.getAttribute('data-date') ?? '',
+        e.currentTarget.getAttribute('data-resource') ?? '',
+      );
+      return;
     }
-    if (nextIdx !== currentIdx) {
-      cells[nextIdx]?.focus();
-    }
+    moveGridFocus(e, {
+      selector: '[role="gridcell"][data-slot="calendar-cell"]',
+      colStride: 1,
+      rowStride: displayDays.length,
+    });
   };
 
   return (

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
@@ -10,8 +11,8 @@ export interface KanbanColumnHeaderProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   className?: string;
-  columnHeaderRegion?: { render: () => React.ReactNode } | null;
-  columnHeaderToolbarRegion?: { render: () => React.ReactNode } | null;
+  columnHeaderRegion?: RenderRegionHandle | null;
+  columnHeaderToolbarRegion?: RenderRegionHandle | null;
   dndEnabled?: boolean;
   onResizeStart?: (e: React.PointerEvent) => void;
   onResizeKeyDown?: (e: React.KeyboardEvent) => void;
@@ -61,7 +62,7 @@ export function KanbanColumnHeader({
       // [G4-视角9-01] group 而非 button——头内含真实拖拽/折叠按钮，交互角色
       // 不得嵌套；点击选择列的行为保留在可聚焦的 group 上。
       <div ref={headerRef} data-slot="kanban-column-header" data-dnd-column-header={dndEnabled || undefined} data-column-id={column.id} onClick={onClick} role="group" aria-label={title} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }} className={cn('nop-kanban-column-header', className)}>
-        {columnHeaderRegion.render()}
+        {columnHeaderRegion.render() as React.ReactNode}
         {onResizeStart && (
           <div
             data-slot="kanban-column-resize-handle"
@@ -150,7 +151,7 @@ export function KanbanColumnHeader({
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </Button>
-      {columnHeaderToolbarRegion?.render()}
+      {columnHeaderToolbarRegion?.render() as React.ReactNode}
     </div>
   );
 }

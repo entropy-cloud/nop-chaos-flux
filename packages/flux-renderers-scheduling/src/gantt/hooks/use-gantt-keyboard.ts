@@ -70,25 +70,20 @@ export function useGanttKeyboard({
         }
         break;
       }
-      case 'ArrowLeft': {
-        if (!getSelectedId()) break;
-        e.preventDefault();
-        const task = store.tasks.get(getSelectedId()!);
-        if (!task) break;
-        const children = store.getVisibleDescendantCount(getSelectedId()!);
-        if (children > 0 && store.isOpen(getSelectedId()!)) {
-          store.toggleOpen(getSelectedId()!);
-        }
-        break;
-      }
+      // WA-scheduling-009 (plan 568): the Left/Right cases were verbatim
+      // mirrors (only the isOpen polarity differed) — one parameterized
+      // block toggles toward the pressed direction.
+      case 'ArrowLeft':
       case 'ArrowRight': {
         if (!getSelectedId()) break;
         e.preventDefault();
-        const task = store.tasks.get(getSelectedId()!);
+        const expand = e.key === 'ArrowRight';
+        const selectedId = getSelectedId()!;
+        const task = store.tasks.get(selectedId);
         if (!task) break;
-        const children = store.getVisibleDescendantCount(getSelectedId()!);
-        if (children > 0 && !store.isOpen(getSelectedId()!)) {
-          store.toggleOpen(getSelectedId()!);
+        const children = store.getVisibleDescendantCount(selectedId);
+        if (children > 0 && store.isOpen(selectedId) !== expand) {
+          store.toggleOpen(selectedId);
         }
         break;
       }

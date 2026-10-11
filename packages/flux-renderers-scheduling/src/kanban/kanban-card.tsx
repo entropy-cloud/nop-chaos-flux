@@ -1,4 +1,5 @@
 import React from 'react';
+import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import { cn, Button } from '@nop-chaos/ui';
 import { X } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -12,7 +13,7 @@ export interface KanbanCardProps {
   column: BoardItem;
   index: number;
   configMap?: Record<string, KanbanCardConfig>;
-  cardTemplateRegion?: { render: (options?: { bindings?: Record<string, unknown> }) => React.ReactNode } | null;
+  cardTemplateRegion?: RenderRegionHandle | null;
   onCardClick?: (cardId: string, columnId: string, index: number) => void;
   onCardRemove?: (cardId: string) => void;
   className?: string;

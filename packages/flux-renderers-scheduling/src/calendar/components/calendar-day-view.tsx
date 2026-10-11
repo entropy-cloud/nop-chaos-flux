@@ -1,4 +1,5 @@
 import React from 'react';
+import { moveGridFocus } from '../grid-roving-focus.js';
 import { t } from '@nop-chaos/flux-i18n';
 import type { RenderRegionHandle } from '@nop-chaos/flux-core';
 import type { CalendarEvent, CalendarResource } from '../../schemas.js';
@@ -69,36 +70,17 @@ export function CalendarDayView({
 
   // [G4-R3-视角9-01] focusable hour gridcells previously had zero onKeyDown.
   // Up/Down walk hours within a resource row; Left/Right walk resource rows.
+  // [G4-R3-视角9-01] focusable hour gridcells previously had zero onKeyDown.
+  // Up/Down walk hours within a resource row; Left/Right walk resource rows.
+  // WA-scheduling-001 (plan 568): walker extracted into the shared
+  // moveGridFocus; the day view keeps its own selector (hour cells carry no
+  // data-slot) and transposed strides, and has no create entry.
   const handleHourCellKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    const grid = e.currentTarget.closest('[role="grid"]');
-    if (!grid) return;
-    const cells = Array.from(grid.querySelectorAll<HTMLElement>('[role="gridcell"]'));
-    const currentIdx = cells.indexOf(e.currentTarget);
-    if (currentIdx < 0) return;
-    let nextIdx = currentIdx;
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        nextIdx = Math.min(currentIdx + 1, cells.length - 1);
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        nextIdx = Math.max(currentIdx - 1, 0);
-        break;
-      case 'ArrowRight':
-        e.preventDefault();
-        nextIdx = Math.min(currentIdx + totalHours, cells.length - 1);
-        break;
-      case 'ArrowLeft':
-        e.preventDefault();
-        nextIdx = Math.max(currentIdx - totalHours, 0);
-        break;
-      default:
-        return;
-    }
-    if (nextIdx !== currentIdx) {
-      cells[nextIdx]?.focus();
-    }
+    moveGridFocus(e, {
+      selector: '[role="gridcell"]',
+      colStride: totalHours,
+      rowStride: 1,
+    });
   };
 
   return (

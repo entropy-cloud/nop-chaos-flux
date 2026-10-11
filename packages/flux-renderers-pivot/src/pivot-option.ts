@@ -12,6 +12,8 @@ import type {
   SortType,
   Totals,
 } from '@visactor/vtable/es/ts-types';
+import { PIVOT_AGGREGATION_TYPES, PIVOT_CELL_TYPES, PIVOT_CORNER_TITLE_VALUES } from './pivot-vocabulary.js';
+import type { PivotCellType } from './pivot-vocabulary.js';
 import type {
   PivotAggregationType,
   PivotDimension,
@@ -23,14 +25,9 @@ import type {
 } from './schemas.js';
 import { warnOnce } from './pivot-warn.js';
 
-const VALID_AGGREGATION_TYPES: readonly PivotAggregationType[] = [
-  'SUM',
-  'AVG',
-  'COUNT',
-  'MIN',
-  'MAX',
-  'NONE',
-];
+// WA-pivot-001 (plan 568): shared with pivot-vocabulary.ts (was a second
+// hand-copied runtime list).
+const VALID_AGGREGATION_TYPES: readonly PivotAggregationType[] = PIVOT_AGGREGATION_TYPES;
 
 const FALLBACK_THEME_TOKENS: Required<DesignTokenThemeInput> = {
   background: '#ffffff',
@@ -150,7 +147,9 @@ function normalizeIndicators(indicators: PivotIndicatorSchema[] | undefined): No
       devWarn(`indicator "${field}" aggregationType "${String(entry.aggregationType)}" 非法，降级 NONE`);
       aggregationType = 'NONE';
     }
-    const cellType = entry.cellType === 'progressbar' || entry.cellType === 'sparkline' ? entry.cellType : 'text';
+    const cellType = (PIVOT_CELL_TYPES as readonly unknown[]).includes(entry.cellType)
+      ? (entry.cellType as PivotCellType)
+      : 'text';
     const indicator: IIndicator = {
       indicatorKey: field,
       title: entry.title ?? field,
@@ -297,7 +296,7 @@ function normalizeCorner(schema: PivotOptionInput): { titleOnDimension: ShowColu
   if (value === undefined) {
     return undefined;
   }
-  if (value === 'row' || value === 'column' || value === 'none' || value === 'all') {
+  if ((PIVOT_CORNER_TITLE_VALUES as readonly unknown[]).includes(value)) {
     return { titleOnDimension: value as ShowColumnRowType };
   }
   devWarn(`cornerTitleOnDimension "${String(value)}" 非法，忽略`);

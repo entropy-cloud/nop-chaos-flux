@@ -1,3 +1,4 @@
+import type { BaseSchema } from '@nop-chaos/flux-core';
 import type { DashboardPanelSchema } from './schemas.js';
 
 /**
@@ -34,6 +35,27 @@ export function resolveCols(cols: number | undefined): number {
 
 export function resolveRowHeight(rowHeight: number | undefined): number {
   return rowHeight !== undefined && rowHeight > 0 ? rowHeight : DEFAULT_ROW_HEIGHT;
+}
+
+/**
+ * WA-dashboard-001 (plan 568): single panel→schema fragment builder shared by
+ * the runtime renderer and the editor renderer (both previously hand-rolled
+ * this assembly, including the same `as unknown as BaseSchema` seam — the
+ * panel props/source pass-through is structurally wider than BaseSchema by
+ * design, so the seam lives in exactly one place now).
+ */
+export function buildDashboardPanelFragment(panel: {
+  type: string;
+  props?: unknown;
+  source?: unknown;
+}): BaseSchema {
+  return {
+    type: panel.type,
+    ...(panel.props !== undefined && panel.props !== null && typeof panel.props === 'object'
+      ? (panel.props as object)
+      : {}),
+    ...(panel.source !== undefined ? { data: panel.source, source: panel.source } : {}),
+  } as unknown as BaseSchema;
 }
 
 export function resolveGapPx(gap: number | undefined): number {

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import {
@@ -477,5 +477,63 @@ describe('DashboardEditorRenderer declarative palette (P4.1)', () => {
     expect(screen.getByTestId('palette-chart')).toBeTruthy();
     expect(screen.getByTestId('palette-table')).toBeTruthy();
     expect(screen.getByTestId('palette-text')).toBeTruthy();
+  });
+});
+
+describe('DashboardEditorRenderer sessionChange dispatch discipline (WA-dashboard-003)', () => {
+  it('does not re-dispatch on unrelated re-renders (effect deps [core, session])', async () => {
+    const dispatch = vi.fn();
+    const SchemaRenderer = createDashboardSchemaRenderer([], createSpiedEditorDefinition(dispatch));
+    const sessionCalls = () =>
+      dispatch.mock.calls.filter((call) => {
+        const event = (call[1] as { event?: { type?: string } } | undefined)?.event;
+        return event?.type === 'dashboard-editor:sessionChange';
+      });
+
+    const editorNode = (statusPath: string) => ({
+      type: 'page',
+      body: [
+        {
+          type: 'dashboard-editor',
+          layout: initialLayout,
+          statusPath,
+          onSessionChange: { action: 'noop', args: {} },
+        },
+      ],
+    });
+
+    const view = render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/editor-session-discipline"
+        schema={editorNode('dashboardHostStatus')}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    await waitFor(() => {
+      expect(sessionCalls().length).toBeGreaterThanOrEqual(1);
+    });
+    const countAfterMount = sessionCalls().length;
+
+    // Unrelated re-render: a schema-prop-only change re-renders the editor
+    // with a fresh statusPath while the session is untouched — the effect
+    // must not fire again.
+    view.rerender(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/editor-session-discipline"
+        schema={editorNode('dashboardHostStatusV2')}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('palette-chart')).toBeTruthy();
+    });
+    // Settle one macrotask for any stray effect flush.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(sessionCalls().length).toBe(countAfterMount);
   });
 });
