@@ -112,3 +112,20 @@ export function validatePrintTemplate(template: PrintTemplateSchema): PrintDiagn
 
   return diagnostics;
 }
+
+/**
+ * WA-print-core-001 (plan 570): shared validation gate for the print and
+ * export-pdf pipelines (was a verbatim 9-line twin `assertPrintable` /
+ * `assertExportable` born in the same commit fa3c2b623). Message text is
+ * kept byte-identical — pinned by the existing PRINT_VALIDATION_BLOCKED
+ * assertions.
+ */
+export function assertNoErrorDiagnostics(template: PrintTemplateSchema, validate: boolean): void {
+  if (!validate) return;
+  const errors = validatePrintTemplate(template).filter((diagnostic) => diagnostic.level === 'error');
+  if (errors.length > 0) {
+    throw new Error(
+      `[flux-print-core] PRINT_VALIDATION_BLOCKED: 模板存在 ${errors.length} 个 error 级诊断（${errors.map((e) => e.code).join('、')}）`,
+    );
+  }
+}

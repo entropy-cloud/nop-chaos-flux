@@ -1,13 +1,11 @@
 import { useSyncExternalStore } from 'react';
 import { createEditorCore, type EditorCore, type EditorSessionState } from '@nop-chaos/editor-core';
-import {
-  validatePrintTemplate,
+import { createEmptyPrintTemplate, validatePrintTemplate,
   type PrintDiagnostic,
   type PrintElementSchema,
   type PrintElementType,
   type PrintPageSchema,
-  type PrintTemplateSchema,
-} from '@nop-chaos/flux-print-core';
+  type PrintTemplateSchema, } from '@nop-chaos/flux-print-core';
 import { createPrintDomainAdapter, type PrintDocument, type PrintTemplateDiff } from './print-domain-adapter.js';
 import { createDefaultElement, nextPrintElementId, seedPrintElementIdSeq, type CreateDefaultElementOverrides } from '../schemas.js';
 
@@ -212,8 +210,11 @@ export function createPrintEditorController(options: PrintEditorOptions): PrintE
 
 const EMPTY_SNAPSHOT: PrintEditorSnapshot = {
   state: {
-    working: createEmptyTemplate(),
-    committed: createEmptyTemplate(),
+    // WA-print-renderers-001 (plan 570): empty-document construction via the
+    // flux-print-core single source (the inline twin had diverged at birth —
+    // no paperName field).
+    working: createEmptyPrintTemplate(''),
+    committed: createEmptyPrintTemplate(''),
     selection: [],
     mode: 'edit',
     canUndo: false,
@@ -224,19 +225,6 @@ const EMPTY_SNAPSHOT: PrintEditorSnapshot = {
   },
   zoom: 1,
 };
-
-function createEmptyTemplate(): PrintDocument {
-  return {
-    kind: 'print-template',
-    schemaVersion: 1,
-    name: '',
-    page: {
-      paper: { width: 210, height: 297, direction: 'vertical', margins: [15, 15, 15, 15] },
-      unit: 'mm',
-    },
-    elements: [],
-  };
-}
 
 /** React 适配：useSyncExternalStore 订阅会话（core 变更与 zoom 变更统一投影）。 */
 export function usePrintEditorSnapshot(controller: PrintEditorController | null): PrintEditorSnapshot {

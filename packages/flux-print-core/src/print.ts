@@ -1,5 +1,5 @@
 import { renderPrintTemplateToHtml, type RenderHtmlOptions } from './render-html.js';
-import { validatePrintTemplate } from './validate.js';
+import { assertNoErrorDiagnostics } from './validate.js';
 import type { PrintTemplateSchema } from './schemas.js';
 
 export interface PrintPrintOptions extends RenderHtmlOptions {
@@ -9,15 +9,6 @@ export interface PrintPrintOptions extends RenderHtmlOptions {
   validate?: boolean;
 }
 
-function assertPrintable(template: PrintTemplateSchema, validate: boolean): void {
-  if (!validate) return;
-  const errors = validatePrintTemplate(template).filter((diagnostic) => diagnostic.level === 'error');
-  if (errors.length > 0) {
-    throw new Error(
-      `[flux-print-core] PRINT_VALIDATION_BLOCKED: 模板存在 ${errors.length} 个 error 级诊断（${errors.map((e) => e.code).join('、')}）`,
-    );
-  }
-}
 
 /** 隐藏打印 iframe 挂载：写入 srcdoc 并返回元素（单独导出便于测试注入）。 */
 export function mountPrintFrame(html: string, doc: Document = document): HTMLIFrameElement {
@@ -60,7 +51,7 @@ export function printPrintTemplate(
   if (typeof document === 'undefined') {
     throw new Error('[flux-print-core] print requires a DOM document (print-blocked)');
   }
-  assertPrintable(template, options.validate !== false);
+  assertNoErrorDiagnostics(template, options.validate !== false);
   const html = renderPrintTemplateToHtml(template, data, options);
   const iframe = mountPrintFrame(html, document);
   // review D23-01：无条件等 srcdoc 加载完成后再 print（同步调用会打出 about:blank）

@@ -1,6 +1,15 @@
+import { EditorView } from '@codemirror/view';
+import {
+  createEditorCompartments,
+  editorUpdateListener,
+  contentAttributesReconfigure,
+  extensionsReconfigure,
+  initialCompartmentExtensions,
+  placeholderReconfigure,
+  readOnlyReconfigure,
+} from './shared/editor-compartments.js';
 import { useEffect, useRef, useState } from 'react';
-import { Compartment, EditorState } from '@codemirror/state';
-import { EditorView, placeholder as cmPlaceholder } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
 import { history } from '@codemirror/commands';
 import type { Extension } from '@codemirror/state';
 
@@ -23,10 +32,9 @@ export interface UseCodeMirrorResult {
   view: EditorView | null;
 }
 
-const readOnlyCompartment = new Compartment();
-const extensionsCompartment = new Compartment();
-const placeholderCompartment = new Compartment();
-const contentAttributesCompartment = new Compartment();
+// WA-code-editor-001 (plan 570): compartment quartet + reconfigure builders
+// single-sourced in shared/editor-compartments.
+const compartments = createEditorCompartments();
 
 function createEditorState(
   options: UseCodeMirrorOptions,
@@ -38,24 +46,8 @@ function createEditorState(
 ): EditorState {
   const extensions: Extension[] = [
     history(),
-    readOnlyCompartment.of(EditorState.readOnly.of(options.readOnly ?? false)),
-    extensionsCompartment.of(options.extensions ?? []),
-    placeholderCompartment.of(options.placeholder ? cmPlaceholder(options.placeholder) : []),
-    contentAttributesCompartment.of(
-      EditorView.contentAttributes.of(options.contentAttributes ?? {}),
-    ),
-    EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
-        callbacks.onChange(update.state.doc.toString());
-      }
-      if (update.focusChanged) {
-        if (update.view.hasFocus) {
-          callbacks.onFocus();
-        } else {
-          callbacks.onBlur();
-        }
-      }
-    }),
+    ...initialCompartmentExtensions(compartments, options),
+    editorUpdateListener(callbacks),
   ];
 
   return EditorState.create({
@@ -127,7 +119,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions): UseCodeMirrorResul
     if (!editorView) return;
 
     editorView.dispatch({
-      effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(options.readOnly ?? false)),
+      effects: readOnlyReconfigure(compartments, options.readOnly),
     });
   }, [options.readOnly]);
 
@@ -136,7 +128,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions): UseCodeMirrorResul
     if (!editorView) return;
 
     editorView.dispatch({
-      effects: extensionsCompartment.reconfigure(options.extensions ?? []),
+      effects: extensionsReconfigure(compartments, options.extensions),
     });
   }, [options.extensions]);
 
@@ -145,9 +137,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions): UseCodeMirrorResul
     if (!editorView) return;
 
     editorView.dispatch({
-      effects: placeholderCompartment.reconfigure(
-        options.placeholder ? cmPlaceholder(options.placeholder) : [],
-      ),
+      effects: placeholderReconfigure(compartments, options.placeholder),
     });
   }, [options.placeholder]);
 
@@ -156,9 +146,7 @@ export function useCodeMirror(options: UseCodeMirrorOptions): UseCodeMirrorResul
     if (!editorView) return;
 
     editorView.dispatch({
-      effects: contentAttributesCompartment.reconfigure(
-        EditorView.contentAttributes.of(options.contentAttributes ?? {}),
-      ),
+      effects: contentAttributesReconfigure(compartments, options.contentAttributes),
     });
   }, [options.contentAttributes]);
 

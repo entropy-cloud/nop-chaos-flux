@@ -19,8 +19,6 @@ vi.mock('./hooks/use-scene-manager.js', () => ({
     return {
       onReady: vi.fn(() => () => undefined),
       updateProperty: vi.fn(),
-      registerClips: vi.fn(),
-      startClip: vi.fn(),
       notifyEvent: vi.fn(),
       dispose: vi.fn(),
       getScene: vi.fn(),

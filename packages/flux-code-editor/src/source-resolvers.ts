@@ -14,7 +14,9 @@ import type {
   TableSchema,
 } from './types.js';
 
-function getDataAtPath(data: unknown, path: string | undefined): unknown {
+/** WA-code-editor-002 (plan 570): exported as the package's single point-path
+ * walker (was private; the sql-result-panel copy is now a delegate). */
+export function getDataAtPath(data: unknown, path: string | undefined): unknown {
   if (!path) return data;
   const parts = path.split('.');
   let current: unknown = data;

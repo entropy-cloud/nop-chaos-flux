@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Compartment, EditorState } from '@codemirror/state';
+import { EditorState } from '@codemirror/state';
 import { EditorView, placeholder as cmPlaceholder } from '@codemirror/view';
+import {
+  contentAttributesReconfigure,
+  createEditorCompartments,
+  editorUpdateListener,
+  extensionsReconfigure,
+  placeholderReconfigure,
+  readOnlyReconfigure,
+} from './shared/editor-compartments.js';
 import { history } from '@codemirror/commands';
 import { MergeView } from '@codemirror/merge';
 import type { Extension } from '@codemirror/state';
@@ -24,31 +32,10 @@ export interface UseMergeViewResult {
   mergeView: MergeView | null;
 }
 
-const readOnlyCompartment = new Compartment();
-const extensionsCompartment = new Compartment();
-const placeholderCompartment = new Compartment();
-const contentAttributesCompartment = new Compartment();
+// WA-code-editor-001 (plan 570): compartment quartet + reconfigure builders
+// single-sourced in shared/editor-compartments.
+const compartments = createEditorCompartments();
 
-function rightEditorListener(
-  callbacks: {
-    onChange(value: string): void;
-    onFocus(): void;
-    onBlur(): void;
-  },
-): Extension {
-  return EditorView.updateListener.of((update) => {
-    if (update.docChanged) {
-      callbacks.onChange(update.state.doc.toString());
-    }
-    if (update.focusChanged) {
-      if (update.view.hasFocus) {
-        callbacks.onFocus();
-      } else {
-        callbacks.onBlur();
-      }
-    }
-  });
-}
 
 interface EditorStateConfig {
   doc: string;
@@ -72,10 +59,10 @@ function buildEditorConfig(
 ): EditorStateConfig {
   const extensions: Extension[] = [
     history(),
-    readOnlyCompartment.of(EditorState.readOnly.of(options.readOnly)),
-    extensionsCompartment.of(options.extensions),
-    placeholderCompartment.of(options.placeholder ? cmPlaceholder(options.placeholder) : []),
-    contentAttributesCompartment.of(
+    compartments.readOnly.of(EditorState.readOnly.of(options.readOnly)),
+    compartments.extensions.of(options.extensions),
+    compartments.placeholder.of(options.placeholder ? cmPlaceholder(options.placeholder) : []),
+    compartments.contentAttributes.of(
       EditorView.contentAttributes.of({
         ...(options.ariaLabel ? { 'aria-label': options.ariaLabel } : {}),
         ...(options.contentAttributes ?? {}),
@@ -83,7 +70,7 @@ function buildEditorConfig(
     ),
   ];
   if (listeners) {
-    extensions.push(rightEditorListener(listeners));
+    extensions.push(editorUpdateListener(listeners));
   }
   return { doc, extensions };
 }
@@ -189,7 +176,7 @@ export function useMergeView(options: UseMergeViewOptions): UseMergeViewResult {
     const instance = mergeViewRef.current;
     if (!instance) return;
     instance.b.dispatch({
-      effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(options.readOnly ?? false)),
+      effects: readOnlyReconfigure(compartments, options.readOnly),
     });
   }, [options.readOnly]);
 
@@ -198,8 +185,9 @@ export function useMergeView(options: UseMergeViewOptions): UseMergeViewResult {
     const instance = mergeViewRef.current;
     if (!instance) return;
     const ext = options.extensions ?? [];
-    instance.a.dispatch({ effects: extensionsCompartment.reconfigure(ext) });
-    instance.b.dispatch({ effects: extensionsCompartment.reconfigure(ext) });
+    const extEffect = extensionsReconfigure(compartments, ext);
+    instance.a.dispatch({ effects: extEffect });
+    instance.b.dispatch({ effects: extEffect });
   }, [options.extensions]);
 
   // Reconfigure placeholder on the right editor.
@@ -207,9 +195,7 @@ export function useMergeView(options: UseMergeViewOptions): UseMergeViewResult {
     const instance = mergeViewRef.current;
     if (!instance) return;
     instance.b.dispatch({
-      effects: placeholderCompartment.reconfigure(
-        options.placeholder ? cmPlaceholder(options.placeholder) : [],
-      ),
+      effects: placeholderReconfigure(compartments, options.placeholder),
     });
   }, [options.placeholder]);
 
@@ -217,9 +203,9 @@ export function useMergeView(options: UseMergeViewOptions): UseMergeViewResult {
   useEffect(() => {
     const instance = mergeViewRef.current;
     if (!instance) return;
-    const attrs = EditorView.contentAttributes.of(options.contentAttributes ?? {});
-    instance.a.dispatch({ effects: contentAttributesCompartment.reconfigure(attrs) });
-    instance.b.dispatch({ effects: contentAttributesCompartment.reconfigure(attrs) });
+    const attrsEffect = contentAttributesReconfigure(compartments, options.contentAttributes);
+    instance.a.dispatch({ effects: attrsEffect });
+    instance.b.dispatch({ effects: attrsEffect });
   }, [options.contentAttributes]);
 
   return { editorRef: containerRef, view: rightView, mergeView: mergeViewState };

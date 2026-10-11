@@ -1,5 +1,5 @@
 import { renderPrintPages, type RenderHtmlOptions } from './render-html.js';
-import { validatePrintTemplate } from './validate.js';
+import { assertNoErrorDiagnostics } from './validate.js';
 import type { PrintTemplateSchema } from './schemas.js';
 
 export interface ExportPdfOptions extends RenderHtmlOptions {
@@ -9,15 +9,6 @@ export interface ExportPdfOptions extends RenderHtmlOptions {
   validate?: boolean;
 }
 
-function assertExportable(template: PrintTemplateSchema, validate: boolean): void {
-  if (!validate) return;
-  const errors = validatePrintTemplate(template).filter((diagnostic) => diagnostic.level === 'error');
-  if (errors.length > 0) {
-    throw new Error(
-      `[flux-print-core] PRINT_VALIDATION_BLOCKED: 模板存在 ${errors.length} 个 error 级诊断（${errors.map((e) => e.code).join('、')}）`,
-    );
-  }
-}
 
 /** 逐页渲染为位图（html2canvas）；独立导出便于测试注入。 */
 export async function renderPageToCanvas(pageHtml: string, widthMm: number, heightMm: number): Promise<HTMLCanvasElement> {
@@ -45,7 +36,7 @@ export async function exportPrintTemplateToPdf(
   if (typeof document === 'undefined') {
     throw new Error('[flux-print-core] pdf export requires a DOM document (print-blocked)');
   }
-  assertExportable(template, options.validate !== false);
+  assertNoErrorDiagnostics(template, options.validate !== false);
   const pageItems = renderPrintPages(template, data, options);
   if (pageItems.length === 0) {
     throw new Error('[flux-print-core] nothing to export: template rendered 0 pages (EXPORT_EMPTY)');

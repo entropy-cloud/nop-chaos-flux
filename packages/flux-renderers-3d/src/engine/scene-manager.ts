@@ -87,6 +87,9 @@ export class SceneManager {
   private scene: THREE.Scene | null = null;
   private camera: THREE.PerspectiveCamera | null = null;
   private renderer: THREE.WebGLRenderer | null = null;
+  // WA-industrial-003 → plan 570 WA-3d-002: controlsConfig writes arbitrary
+  // numeric fields (autoRotate/Speed/min/maxDistance) — the field keeps the
+  // Pick<> contract for readers and widens at this single write seam.
   private controls: Pick<OrbitControls, 'update' | 'dispose'> | null = null;
   private models = new Map<string, ManagedModel>();
   private pendingByModel = new Map<string, Map<string, { path: string; value: unknown; order: number }>>();
@@ -161,7 +164,7 @@ export class SceneManager {
     if (ratio !== null && typeof renderer.setPixelRatio === 'function') renderer.setPixelRatio(ratio);
     if (this.container && renderer.domElement && typeof this.container.appendChild === 'function') {
       // plan 533 D1：canvas a11y 契约（engine 侧 role/tabIndex；aria-label 由组件侧后置设置）。
-      const el = renderer.domElement as unknown as HTMLElement;
+      const el = renderer.domElement;
       // 真实 DOM 恒有 setAttribute；headless stub 缺失时静默跳过（降级族同 cursor/pixelRatio 守卫）。
       if (typeof el.setAttribute === 'function') {
         el.setAttribute('role', 'application');
@@ -193,9 +196,9 @@ export class SceneManager {
         scene.add(lightObj.target);
       }
     }
-    this.controls = this.controlsFactory(camera, renderer.domElement as unknown as HTMLElement);
+    this.controls = this.controlsFactory(camera, renderer.domElement);
     this.applyControlsConfig();
-    this.bindPointerHandlers(renderer.domElement as unknown as HTMLElement);
+    this.bindPointerHandlers(renderer.domElement);
     this.resizeToContainer();
     this.lastFrameTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
     this.scheduleTick();
@@ -205,7 +208,7 @@ export class SceneManager {
   private applyControlsConfig(): void {
     const controlsConfig = this.config.camera.controls;
     if (!controlsConfig || !this.controls) return;
-    const controls = this.controls as unknown as Record<string, unknown>;
+    const controls = this.controls as Record<string, unknown>;
     if (controlsConfig.autoRotate !== undefined) controls.autoRotate = controlsConfig.autoRotate;
     if (controlsConfig.autoRotateSpeed !== undefined) controls.autoRotateSpeed = controlsConfig.autoRotateSpeed;
     if (controlsConfig.minDistance !== undefined) controls.minDistance = controlsConfig.minDistance;
@@ -591,7 +594,10 @@ export class SceneManager {
     this.controls?.dispose();
     this.controls = null;
     this.renderer?.dispose();
-    const domElement = this.renderer?.domElement as unknown as { parentNode?: { removeChild: (c: unknown) => void } } | undefined;
+    // WA-3d-002 (plan 570): structural cast → single HTMLElement assertion
+    // (parentNode.removeChild kept — headless stubs mock the parentNode
+    // contract, not Element.remove).
+    const domElement = this.renderer?.domElement as HTMLElement | undefined;
     if (domElement?.parentNode) {
       domElement.parentNode.removeChild(domElement);
     }

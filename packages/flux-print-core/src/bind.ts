@@ -48,6 +48,12 @@ function getDefaultEnv(): RendererEnv {
   return cachedDefaultEnv;
 }
 
+/**
+ * WA-code-editor-002 (plan 570) 语义注记：字面键优先——path 逐段先作 scope
+ * 自身的字面 key 查找，命中即返回（即使该段同时可解释为嵌套路径）；未命中
+ * 才落入下一层。与 flux-core getIn 的合并为挂账观察（同形不同义，合并需
+ * 契约评审，见台账 WA-code-editor-002 行）。
+ */
 export function resolveDataPath(scope: Record<string, unknown>, path: string): unknown {
   if (path in scope) return scope[path];
   return path.split('.').reduce<unknown>((acc, key) => {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { getDataAtPath } from '../source-resolvers.js';
 import { isAbortError, type ActionResult, type ActionSchema, type SchemaValue } from '@nop-chaos/flux-core';
 import type { EditorView } from '@codemirror/view';
 import { formatSQL } from '../extensions/sql/format.js';
@@ -45,13 +46,9 @@ function readScopePath(props: CodeEditorRendererProps, path: string): SchemaValu
       return isSchemaValue(currentValue) ? currentValue : undefined;
     }
 
-    let current: unknown = currentValue;
-    for (const key of rest.split('.')) {
-      if (current == null || typeof current !== 'object') {
-        return undefined;
-      }
-      current = (current as Record<string, unknown>)[key];
-    }
+    // WA-code-editor-002 (plan 570): point-path walking via the shared
+    // source-resolvers walker (was an inline hand-rolled twin).
+    const current = getDataAtPath(currentValue, rest);
     return isSchemaValue(current) ? current : undefined;
   }
 
@@ -100,14 +97,8 @@ function mapExecutionResult(result: ActionResult, resultPath: string | undefined
 
   let data: unknown = result.data;
   if (resultPath) {
-    const parts = resultPath.split('.');
-    for (const key of parts) {
-      if (data == null || typeof data !== 'object') {
-        data = undefined;
-        break;
-      }
-      data = (data as Record<string, unknown>)[key];
-    }
+    // WA-code-editor-002 (plan 570): shared point-path walker.
+    data = getDataAtPath(data, resultPath);
   }
 
   if (Array.isArray(data)) {
