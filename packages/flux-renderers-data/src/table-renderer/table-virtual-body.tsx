@@ -1,9 +1,8 @@
 import React from 'react';
-import { RadioGroup, TableBody, TableCell, TableRow } from '@nop-chaos/ui';
+import { TableCell, TableRow } from '@nop-chaos/ui';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { TableSchema } from '../schemas.js';
-import { formatGroupAggregateText } from './table-grouping.js';
-import { TableGroupHeaderRow } from './table-group-header-row.js';
+import { renderGroupHeaderRow, withRadioGroupBody } from './table-body-shell.js';
 import { buildGroupedFlattenedItems } from './table-flattened-items.js';
 import {
   buildFlattenedItems,
@@ -165,19 +164,7 @@ export function VirtualBody({
             if (!item) return null;
 
             if (item.kind === 'group') {
-              const { group, collapsed } = item.item;
-              return (
-                <TableGroupHeaderRow
-                  key={virtualRow.key}
-                  groupKey={group.key}
-                  label={group.label}
-                  count={group.count}
-                  aggregateText={formatGroupAggregateText(group.aggregates)}
-                  collapsed={collapsed}
-                  columnCount={columnCount}
-                  onToggle={onToggleGroupCollapse ?? (() => undefined)}
-                />
-              );
+              return renderGroupHeaderRow(item, virtualRow.key, columnCount, onToggleGroupCollapse);
             }
 
             if (item.kind === 'data') {
@@ -242,18 +229,5 @@ export function VirtualBody({
     </>
   );
 
-  if (schemaProps.rowSelection?.type === 'radio') {
-    return (
-      <RadioGroup
-        render={<TableBody />}
-        className={undefined}
-        value={radioSelectionValue ?? ''}
-        onValueChange={(value) => onSelectRow(String(value), true)}
-      >
-        {bodyContent}
-      </RadioGroup>
-    );
-  }
-
-  return <TableBody>{bodyContent}</TableBody>;
+  return withRadioGroupBody(schemaProps, radioSelectionValue, onSelectRow, bodyContent);
 }

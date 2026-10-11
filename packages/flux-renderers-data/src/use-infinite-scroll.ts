@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { interpretActionResultError } from './infinite-load.js';
 
 interface MockableIntersectionObserver {
   __fireIntersection: (target: Element) => void;
@@ -129,13 +130,9 @@ export function useInfiniteScroll(args: UseInfiniteScrollArgs): UseInfiniteScrol
         (value) => {
           loadingRef.current = false;
           setLoading(false);
-          // The action dispatcher normally converts failures into a resolved
-          // `{ ok: false, error }` ActionResult rather than a rejected promise;
-          // treat that as a load error so the error UI is reachable (G5).
-          const ok =
-            value && typeof value === 'object' ? (value as { ok?: boolean }).ok : undefined;
-          if (ok === false) {
-            setError((value as { error?: unknown }).error ?? new Error('Load failed'));
+          const loadError = interpretActionResultError(value);
+          if (loadError !== undefined) {
+            setError(loadError);
             return;
           }
           // Short-page continuation (G5): if the sentinel is still inside the

@@ -5,6 +5,7 @@ import { ChevronDownIcon, ChevronRightIcon, GripVerticalIcon } from 'lucide-reac
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
+import { warnOnce } from './warn-once.js';
 import type { RowSelectionModifiers } from './use-table-selection.js';
 
 type TableHelpers = RendererComponentProps<TableSchema>['helpers'];
@@ -74,6 +75,11 @@ export function TableExpandCell(props: {
           } catch {
             // expr-eval-error Failure Path: degrade to expandable (do not block rendering).
             canExpand = true;
+            // WA-data-009: keep the degrade, surface the failure (warn-once).
+            warnOnce(
+              'gd-table-expandable-when-eval',
+              '[TableRenderer] expandableWhen evaluation failed — degrading to expandable for this row.',
+            );
           }
         }
         if (!canExpand) return null;

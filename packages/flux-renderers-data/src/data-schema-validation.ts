@@ -4,50 +4,9 @@ import type { CrudSchema, CrudSelectionConfig } from './crud-schema.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
 import type { TableSchema } from './schemas.js';
 import { validateColumnEditableConfig, validateTableGroupConfig } from './table-schema-validation.js';
+import { buildEmbeddedQueryFormCarrier } from './query-form-carrier.js';
 
-// The form renderer recognizes these label position values:
-//   'normal'     → labels above inputs (default)
-//   'horizontal' → labels left of inputs (same row, labelWidth applies)
-//   'inline'     → labels and inputs on same line (compact)
-// 'vertical' is an alias for 'normal' (used in `layout`); we normalize it.
-const LABEL_POSITION_MODES = new Set(['normal', 'horizontal', 'inline']);
-const MODE_TO_FORM_MODE: Record<string, string> = {
-  horizontal: 'horizontal',
-  inline: 'inline',
-  normal: 'normal',
-  vertical: 'normal', // alias
-};
-
-/**
- * Resolve the rendered form mode from `queryForm.mode` and `queryForm.layout`.
- *
- * Priority:
- *   1. Explicit `mode` if it is a label position value ('normal' | 'horizontal'
- *      | 'inline'). 'vertical' is accepted as an alias for 'normal' and
- *      normalized — the form renderer only recognizes 'normal' for vertical
- *      label stacking.
- *   2. Fallback to `layout`-based derivation:
- *        horizontal → horizontal, inline → inline, vertical/undefined → normal.
- *
- * The legacy `'manual' | 'auto'` mode values (autoGenerateQueryFilter behavior)
- * never collide with label position values, so they fall through to the layout
- * branch — preserving backwards compatibility for existing callers that use
- * `mode: 'manual'` without a layout.
- *
- * Exported for unit testing.
- */
-export function resolveFormMode(
-  layout: string | undefined,
-  mode: string | undefined,
-): string {
-  if (mode && (LABEL_POSITION_MODES.has(mode) || mode in MODE_TO_FORM_MODE)) {
-    return MODE_TO_FORM_MODE[mode];
-  }
-  if (layout && layout in MODE_TO_FORM_MODE) {
-    return MODE_TO_FORM_MODE[layout];
-  }
-  return 'normal';
-}
+export { resolveFormMode } from './query-form-carrier.js';
 
 function createCrudQueryFormRegion(schema: CrudSchema, path: string) {
   const queryForm = schema.queryForm;
@@ -55,21 +14,14 @@ function createCrudQueryFormRegion(schema: CrudSchema, path: string) {
     return undefined;
   }
 
-  const region: BaseSchema & Record<string, unknown> = {
-    type: 'form',
+  const region = buildEmbeddedQueryFormCarrier({
     id: createCrudQueryFormId(createNodeId(path, schema), path),
     body: queryForm.body,
-    mode: resolveFormMode(queryForm.layout, queryForm.mode),
-    actionsClassName: 'flex justify-end gap-2',
-  };
-
-  if (queryForm.columnCount !== undefined) {
-    region.columnCount = queryForm.columnCount;
-  }
-
-  if (queryForm.gap !== undefined) {
-    region.gap = queryForm.gap;
-  }
+    layout: queryForm.layout,
+    mode: queryForm.mode,
+    columnCount: queryForm.columnCount,
+    gap: queryForm.gap,
+  });
 
   if (queryForm.labelWidth !== undefined) {
     region.labelWidth = queryForm.labelWidth;

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { EnvLocation, ScopeRef } from '@nop-chaos/flux-core';
+import { warnOnce } from './table-renderer/warn-once.js';
 
 /**
  * filter↔URL sync (host-channels contract, plan 512 L3.5): bridges a crud's
@@ -118,11 +119,22 @@ export function useUrlFilterSync(args: {
       // registers in a child effect, so retry briefly if it is not up yet.
       if (applyToForm) {
         let attempts = 0;
-        const push = () => {
+        const push = (): void => {
           const applied = applyToForm(restored);
           if (!applied && attempts < 5) {
             attempts += 1;
             setTimeout(push, 50);
+            return;
+          }
+          // WA-data-008: exhaustion previously failed silently — scope was
+          // restored but the form inputs never echoed the deep link, with no
+          // observable trace. The registration-race root cause (form bridge
+          // ready signal) stays a registered watch item.
+          if (!applied) {
+            warnOnce(
+              'gd-url-sync-form-handle-exhausted',
+              "[url-sync] query-form handle did not register within 5 retries (250ms) — deep-link filters reached query state but form inputs were not echoed. Check that the embedded query form rendered for this crud instance.",
+            );
           }
         };
         void push();

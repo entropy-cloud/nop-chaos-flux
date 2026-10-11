@@ -7,6 +7,7 @@ import type {
   TableSummaryRow as TableSummaryRowSchema,
 } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
+import { warnOnce } from './warn-once.js';
 
 function asReactNode(value: unknown): React.ReactNode {
   return value as React.ReactNode;
@@ -52,6 +53,11 @@ function resolveCellValue(
       }
       return asReactNode(evaluated);
     } catch {
+      // WA-data-009: degrade to an empty cell, surface the failure (warn-once).
+      warnOnce(
+        'gd-table-summary-expr-eval',
+        '[TableRenderer] summary expression evaluation failed — rendering an empty cell.',
+      );
       return '';
     }
   }

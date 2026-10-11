@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getIn } from '@nop-chaos/flux-core';
+import { parseColumnWidth } from './parse-column-width.js';
 import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableColumnSchema } from '../schemas.js';
@@ -11,23 +12,8 @@ function isDevRuntime() {
   return importMeta.env?.DEV === true;
 }
 
-function toNumericWidth(value: number | string | undefined, fallback: number): number {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    const parsed = Number(value.replace(/px$/, ''));
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return parsed;
-    }
-  }
-
-  return fallback;
-}
-
 export function resolveColumnWidth(column: TableColumnSchema, fallback = 120): number {
-  return toNumericWidth(column.width, fallback);
+  return parseColumnWidth(column.width, fallback);
 }
 
 export function resolveColumnMinWidth(column: TableColumnSchema): number {
@@ -98,7 +84,7 @@ function normalizeWidthsRecord(value: unknown): Record<string, number> | undefin
     const numeric = typeof raw === 'number'
       ? raw
       : typeof raw === 'string'
-        ? toNumericWidth(raw, NaN)
+        ? parseColumnWidth(raw, NaN)
         : NaN;
     if (Number.isFinite(numeric) && numeric > 0) {
       result[key] = numeric;
@@ -147,7 +133,7 @@ export function useColumnResize(
       // no-width column must NOT be prefilled with the 120 fallback — otherwise
       // getColumnWidth/effectiveMainColumns turn the fallback into a hard cap
       // and a write-back (P1-01).
-      if (!Number.isFinite(toNumericWidth(column.width, NaN))) {
+      if (!Number.isFinite(parseColumnWidth(column.width, NaN))) {
         return;
       }
       const key = column.name ?? `column-${index}`;
@@ -271,7 +257,7 @@ export function useColumnResize(
       // 120px schema fallback diverges from the auto layout (IS-5 colw-001:
       // 200px rendered vs 120px anchor → 80px dead zone) and negative drags
       // get silently swallowed while polluting tracked state.
-      const startWidth = widths[key] ?? toNumericWidth(measuredWidth, resolveColumnWidth(column));
+      const startWidth = widths[key] ?? parseColumnWidth(measuredWidth, resolveColumnWidth(column));
       const { effectiveOwnership: eo, onWidthsChange: oc } = latest.current;
 
       stopListeners();
@@ -368,7 +354,7 @@ export function useColumnResize(
       const minWidth = resolveColumnMinWidth(column);
       const maxWidth = resolveColumnMaxWidth(column);
       const current =
-        widths[key] ?? toNumericWidth(measuredWidth, resolveColumnWidth(column));
+        widths[key] ?? parseColumnWidth(measuredWidth, resolveColumnWidth(column));
       let next = current + delta;
       if (next < minWidth) next = minWidth;
       if (maxWidth !== undefined && next > maxWidth) next = maxWidth;

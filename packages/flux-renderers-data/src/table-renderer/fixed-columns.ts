@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { TableColumnSchema, TableSchema } from '../schemas.js';
+import { parseColumnWidth } from './parse-column-width.js';
 
 const CONTROL_COLUMN_WIDTH = 40;
 const DEFAULT_FIXED_COLUMN_WIDTH = 160;
@@ -20,21 +21,6 @@ interface FixedColumnEntry {
   key: string;
   fixed: 'left' | 'right';
   width: number;
-}
-
-function toWidth(value: number | string | undefined, fallback: number) {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    const parsed = Number(value.replace(/px$/, ''));
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return parsed;
-    }
-  }
-
-  return fallback;
 }
 
 function createStickyStyle(
@@ -95,7 +81,7 @@ export function createFixedColumnLayout(
     entries.push({
       key: getFixedColumnKey(column, index),
       fixed: column.fixed,
-      width: toWidth(column.width, DEFAULT_FIXED_COLUMN_WIDTH),
+      width: parseColumnWidth(column.width, DEFAULT_FIXED_COLUMN_WIDTH),
     });
   });
 

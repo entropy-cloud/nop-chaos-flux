@@ -139,26 +139,46 @@ export function BatchBarRenderer(props: RendererComponentProps<BatchBarSchema>) 
     // unreachable (known targets always report ok), but a dropped `void` would
     // silently hide future failures — surface them as a one-shot dev warn.
     if (hasClearSelection) {
-      void Promise.resolve(handle.capabilities.invoke('clearSelection', undefined, {})).then((result) => {
-        if (isDevRuntime() && result?.ok === false && !targetWarnedRef.current) {
-          targetWarnedRef.current = true;
-          console.warn(
-            '[flux:batch-bar] batch-bar-clear-failed: clearSelection capability returned ok:false; selection was not cleared.',
-          );
-        }
-      });
+      void Promise.resolve(handle.capabilities.invoke('clearSelection', undefined, {}))
+        .then((result) => {
+          if (isDevRuntime() && result?.ok === false && !targetWarnedRef.current) {
+            targetWarnedRef.current = true;
+            console.warn(
+              '[flux:batch-bar] batch-bar-clear-failed: clearSelection capability returned ok:false; selection was not cleared.',
+            );
+          }
+        })
+        // WA-data-009 #19: the invoke contract does not guarantee non-rejection —
+        // a dropped rejection would hide the failure behind an unhandledrejection.
+        .catch(() => {
+          if (isDevRuntime() && !targetWarnedRef.current) {
+            targetWarnedRef.current = true;
+            console.warn(
+              '[flux:batch-bar] batch-bar-clear-failed: clearSelection capability invoke rejected; selection was not cleared.',
+            );
+          }
+        });
       return;
     }
 
     if (hasSetSelection) {
-      void Promise.resolve(handle.capabilities.invoke('setSelection', { selectedRowKeys: [] }, {})).then((result) => {
-        if (isDevRuntime() && result?.ok === false && !targetWarnedRef.current) {
-          targetWarnedRef.current = true;
-          console.warn(
-            '[flux:batch-bar] batch-bar-clear-failed: setSelection capability returned ok:false; selection was not cleared.',
-          );
-        }
-      });
+      void Promise.resolve(handle.capabilities.invoke('setSelection', { selectedRowKeys: [] }, {}))
+        .then((result) => {
+          if (isDevRuntime() && result?.ok === false && !targetWarnedRef.current) {
+            targetWarnedRef.current = true;
+            console.warn(
+              '[flux:batch-bar] batch-bar-clear-failed: setSelection capability returned ok:false; selection was not cleared.',
+            );
+          }
+        })
+        .catch(() => {
+          if (isDevRuntime() && !targetWarnedRef.current) {
+            targetWarnedRef.current = true;
+            console.warn(
+              '[flux:batch-bar] batch-bar-clear-failed: setSelection capability invoke rejected; selection was not cleared.',
+            );
+          }
+        });
       return;
     }
 

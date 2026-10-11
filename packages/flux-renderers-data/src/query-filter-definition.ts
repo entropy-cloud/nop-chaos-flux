@@ -2,7 +2,7 @@ import type { ActionSchema, RendererDefinition, RendererAuthoringTransformContex
 import { t } from '@nop-chaos/flux-i18n';
 import { QueryFilterRenderer } from './query-filter.js';
 import type { QueryFilterSchema } from './schemas.js';
-import { resolveFormMode } from './data-schema-validation.js';
+import { buildEmbeddedQueryFormCarrier } from './query-form-carrier.js';
 
 function createQueryFilterFormId(nodeId: unknown, path: string): string {
   if (typeof nodeId === 'string' && nodeId.length > 0) {
@@ -33,21 +33,14 @@ export function transformQueryFilterAuthoringSchema(
   }
 
   const formId = createQueryFilterFormId(schema.id ?? schema.name, context.path);
-  const form: BaseSchema & Record<string, unknown> = {
-    type: 'form',
+  const form = buildEmbeddedQueryFormCarrier({
     id: formId,
     body: schema.body,
-    mode: resolveFormMode(schema.layout, schema.mode),
-    actionsClassName: 'flex justify-end gap-2',
-  };
-
-  if (schema.columnCount !== undefined) {
-    form.columnCount = schema.columnCount;
-  }
-
-  if (schema.gap !== undefined) {
-    form.gap = schema.gap;
-  }
+    layout: schema.layout,
+    mode: schema.mode,
+    columnCount: schema.columnCount,
+    gap: schema.gap,
+  });
 
   if (schema.onSubmit !== undefined) {
     form.submitAction = schema.onSubmit;

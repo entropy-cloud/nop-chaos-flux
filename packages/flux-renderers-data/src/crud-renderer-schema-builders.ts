@@ -132,13 +132,13 @@ export function buildCrudTableSchema(input: {
 
 function extractRegionSchema(
   region: { templateNode: unknown } | undefined,
-): BaseSchema | undefined {
+): BaseSchema | BaseSchema[] | undefined {
   if (!region?.templateNode) return undefined;
   const nodes = Array.isArray(region.templateNode) ? region.templateNode : [region.templateNode];
   const schemas = nodes.map((n) => (n as TemplateNode).schema);
   if (schemas.length === 0) return undefined;
   if (schemas.length === 1) return schemas[0] as BaseSchema;
-  return schemas as unknown as BaseSchema;
+  return schemas;
 }
 
 /**

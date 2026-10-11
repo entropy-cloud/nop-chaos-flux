@@ -89,4 +89,29 @@ describe('crud polling resolve retry cap (R3-P30)', () => {
     rerender({ registry: populated.registry });
     expect(populated.startSpy).toHaveBeenCalledTimes(1);
   });
+  // WA-data-009: capability invoke failures were swallowed with zero trace
+  // ("best-effort" remains, but the failure is now observable once).
+  it('surfaces a warn-once when the data-source capability invoke throws (WA-data-009)', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { registry, startSpy } = makeRegistry({ withSource: true });
+    startSpy.mockImplementation(() => {
+      throw new Error('capability exploded');
+    });
+
+    renderHook(() =>
+      useCrudPolling({
+        polling: { enabled: true, sourceId: 'ds1' } as CrudPollingConfig,
+        componentRegistry: registry,
+        scope: undefined,
+      }),
+    );
+
+    await vi.advanceTimersByTimeAsync(RETRY_MS);
+    expect(startSpy).toHaveBeenCalled();
+    const capWarns = warnSpy.mock.calls.filter((call) =>
+      String(call[0]).includes('capability invoke'),
+    );
+    expect(capWarns).toHaveLength(1);
+  });
+
 });

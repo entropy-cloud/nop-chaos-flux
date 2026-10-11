@@ -5,6 +5,7 @@ import type { TableSchema } from '../schemas.js';
 import { toStringArray } from './table-data.js';
 import { createTableEventContext } from './table-event-context.js';
 import type { TableRowEntry } from './types.js';
+import { warnOnce } from './warn-once.js';
 
 /** Modifier keys captured at gesture time (mousedown/click) and handed to selection handlers. */
 export interface RowSelectionModifiers {
@@ -158,6 +159,11 @@ export function useTableSelection(
           isCheckable = Boolean(result);
         } catch {
           isCheckable = false;
+          // WA-data-009: degrade, and surface the failure (warn-once).
+          warnOnce(
+            'gd-table-checkable-when-eval',
+            '[TableRenderer] checkableWhen evaluation failed — treating affected rows as not checkable.',
+          );
         }
       } else {
         const rowScope = helpers.createScope({
@@ -170,6 +176,10 @@ export function useTableSelection(
           isCheckable = Boolean(result);
         } catch {
           isCheckable = false;
+          warnOnce(
+            'gd-table-checkable-when-eval',
+            '[TableRenderer] checkableWhen evaluation failed — treating affected rows as not checkable.',
+          );
         } finally {
           helpers.disposeScope(rowScope.id);
         }

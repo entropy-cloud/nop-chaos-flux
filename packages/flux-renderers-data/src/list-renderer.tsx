@@ -23,6 +23,7 @@ import {
   type ResolvedListPagination,
 } from './list-pagination.js';
 import { useInfiniteScroll } from './use-infinite-scroll.js';
+import { consumeLoadResult } from './infinite-load.js';
 import { useListWindowing } from './use-list-windowing.js';
 import { ListItemView } from './list-item-view.js';
 
@@ -537,28 +538,7 @@ export function ListRenderer(props: ListOwner) {
               data-slot="list-infinite-retry"
               onClick={() => {
                 infiniteState.setError(undefined);
-                const result = retryLoadMore();
-                if (result && typeof (result as Promise<unknown>).then === 'function') {
-                  infiniteState.setLoading(true);
-                  void Promise.resolve(result)
-                    .then((value) => {
-                      const ok =
-                        value && typeof value === 'object'
-                          ? (value as { ok?: boolean }).ok
-                          : undefined;
-                      if (ok === false) {
-                        infiniteState.setError(
-                          (value as { error?: unknown }).error ?? new Error('Load failed'),
-                        );
-                      }
-                    })
-                    .catch((err: unknown) => {
-                      infiniteState.setError(err);
-                    })
-                    .finally(() => {
-                      infiniteState.setLoading(false);
-                    });
-                }
+                consumeLoadResult(retryLoadMore(), infiniteState);
               }}
             >
               {t('flux.common.retry')}

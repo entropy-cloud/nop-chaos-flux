@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 afterEach(() => cleanup());
@@ -63,13 +63,19 @@ describe('Table expandable.expandableWhen', () => {
   // table-row-leading-cells degrades to expandable on evaluation errors
   // (expr-eval-error Failure Path) — pin it so a refactor cannot flip the
   // degradation direction.
-  it('degrades to expandable (toggle shown) when expandableWhen throws at evaluation', () => {
+  // WA-data-009: the failure is also observable now (dev warn-once). The
+  // assertion lives in this first-triggering test because warnOnce is
+  // session-once — a later test in this file would never see the warn.
+  it('degrades to expandable (toggle shown) and warns once when expandableWhen throws', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { container } = renderTable({
-      expandable: { expandableWhen: 'nonexistent.function(unknownRef' },
+      expandable: { expandableWhen: 'name.nonexistent.deepField' },
     });
     const expandCells = container.querySelectorAll('[data-slot="table-expand-cell"]');
     expect(expandCells.length).toBe(2);
     expect(expandCells[0].querySelector('button')).toBeTruthy();
     expect(expandCells[1].querySelector('button')).toBeTruthy();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('expandableWhen'));
+    warn.mockRestore();
   });
 });

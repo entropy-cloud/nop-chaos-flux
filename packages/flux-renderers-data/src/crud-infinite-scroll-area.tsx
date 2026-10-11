@@ -1,6 +1,7 @@
 import { type RefObject } from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Spinner } from '@nop-chaos/ui';
+import { consumeLoadResult } from './infinite-load.js';
 
 export function CrudInfiniteScrollArea({
   loadDataOnce,
@@ -61,28 +62,7 @@ export function CrudInfiniteScrollArea({
           size="sm"
           onClick={() => {
             infiniteState.setError(undefined);
-            const result = onRetry();
-            if (result && typeof (result as Promise<unknown>).then === 'function') {
-              infiniteState.setLoading(true);
-              void Promise.resolve(result)
-                .then((value) => {
-                  const ok =
-                    value && typeof value === 'object'
-                      ? (value as { ok?: boolean }).ok
-                      : undefined;
-                  if (ok === false) {
-                    infiniteState.setError(
-                      (value as { error?: unknown }).error ?? new Error('Load failed'),
-                    );
-                  }
-                })
-                .catch((err: unknown) => {
-                  infiniteState.setError(err);
-                })
-                .finally(() => {
-                  infiniteState.setLoading(false);
-                });
-            }
+            consumeLoadResult(onRetry(), infiniteState);
           }}
         >
           {t('flux.common.retry')}

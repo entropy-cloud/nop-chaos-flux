@@ -6,6 +6,7 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import type { CrudPollingConfig } from './crud-schema.js';
+import { warnOnce } from './table-renderer/warn-once.js';
 
 interface ResolvedDataSourceHandle {
   id?: string;
@@ -71,7 +72,12 @@ function invokeCapability(
   try {
     handle.capabilities.invoke(method, undefined, {} as never);
   } catch {
-    // ignore capability invocation errors; polling orchestration is best-effort
+    // Polling orchestration stays best-effort, but the failure is no longer
+    // fully silent (WA-data-009): one dev warn per session.
+    warnOnce(
+      'gd-crud-polling-capability-invoke',
+      '[CrudPolling] data-source capability invoke failed — polling orchestration continues best-effort.',
+    );
   }
 }
 

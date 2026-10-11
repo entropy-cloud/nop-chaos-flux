@@ -109,6 +109,49 @@ describe('useTableSelection checkableWhen — persistent scope reuse', () => {
     expect(disposed.length).toBe(0);
   });
 
+  // WA-data-009: checkableWhen evaluation failures previously degraded to
+  // not-checkable with zero observable trace — pin the dev warn-once.
+  it('surfaces a warn-once when checkableWhen evaluation throws (WA-data-009)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let api: any;
+    const throwingHelpers = {
+      createScope: vi.fn((patch: Record<string, unknown>) => ({
+        id: 'throwing-scope',
+        get: (key: string) => (patch as Record<string, unknown>)[key],
+        has: (key: string) => key in patch,
+      })),
+      disposeScope: vi.fn(),
+      evaluate: vi.fn(() => {
+        throw new Error('boom');
+      }),
+    };
+    render(
+      <SelectionProbe
+        schemaProps={{
+          rowSelection: {
+            type: 'checkbox',
+            checkableWhen: 'enabled',
+          },
+        }}
+        source={[{ id: 'r1' }, { id: 'r2' }]}
+        helpers={throwingHelpers as any}
+        resolveRowScope={
+          ((cacheKey: string) => ({
+            id: `persistent-${cacheKey}`,
+            get: () => true,
+          })) as unknown as UseTableSelectionOptions['resolveRowScope']
+        }
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    expect(api.isRowCheckable('r1')).toBe(false);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('checkableWhen'));
+    warn.mockRestore();
+  });
+
   it('falls back to create/dispose for rows the resolver does not cover', () => {
     const { created, disposed, helpers } = createSpyHelpers();
     let api: any;

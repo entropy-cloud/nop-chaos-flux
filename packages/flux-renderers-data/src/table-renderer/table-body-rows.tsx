@@ -1,12 +1,11 @@
 import React from 'react';
 import type { InstanceFrame, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
-import { RadioGroup, TableBody, TableCell, TableRow } from '@nop-chaos/ui';
+import { TableCell, TableRow } from '@nop-chaos/ui';
 import type { TableSchema } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import type { TableRowEntry } from './types.js';
 import type { GroupedDisplayItem } from './table-grouping.js';
-import { formatGroupAggregateText } from './table-grouping.js';
-import { TableGroupHeaderRow } from './table-group-header-row.js';
+import { renderGroupHeaderRow, withRadioGroupBody } from './table-body-shell.js';
 import { buildGroupedFlattenedItems } from './table-flattened-items.js';
 import { renderDataRow, renderExpandedRow } from './table-body-row-rendering.js';
 import { computeCombinePlan, type CombinePlan } from './combine-cells.js';
@@ -226,19 +225,7 @@ function NonVirtualBody({
     ) : groupedFlattenedItems ? (
       groupedFlattenedItems.map((item, displayIndex) => {
         if (item.kind === 'group') {
-          const { group, collapsed } = item.item;
-          return (
-            <TableGroupHeaderRow
-              key={`group-${group.key}`}
-              groupKey={group.key}
-              label={group.label}
-              count={group.count}
-              aggregateText={formatGroupAggregateText(group.aggregates)}
-              collapsed={collapsed}
-              columnCount={columnCount}
-              onToggle={onToggleGroupCollapse ?? (() => undefined)}
-            />
-          );
+          return renderGroupHeaderRow(item, `group-${item.item.group.key}`, columnCount, onToggleGroupCollapse);
         }
 
         if (item.kind === 'expanded') {
@@ -366,18 +353,5 @@ function NonVirtualBody({
       })
     );
 
-  if (schemaProps.rowSelection?.type === 'radio') {
-    return (
-      <RadioGroup
-        render={<TableBody />}
-        className={undefined}
-        value={radioSelectionValue ?? ''}
-        onValueChange={(value) => onSelectRow(String(value), true)}
-      >
-        {rows}
-      </RadioGroup>
-    );
-  }
-
-  return <TableBody>{rows}</TableBody>;
+  return withRadioGroupBody(schemaProps, radioSelectionValue, onSelectRow, rows);
 }

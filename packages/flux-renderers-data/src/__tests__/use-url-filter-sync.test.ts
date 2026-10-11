@@ -159,4 +159,48 @@ describe('useUrlFilterSync', () => {
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
   });
+
+  it('warns once when the query-form handle never registers (WA-data-008)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { scope } = updateCalls();
+    const location = { getQuery: () => ({ keyword: '顾' }), setQuery: vi.fn() };
+    const applyToForm = vi.fn(() => false);
+    renderHook(() =>
+      useUrlFilterSync({
+        enabled: true,
+        instanceId: 't8',
+        location,
+        scope: scope as never,
+        queryStatePath: '$crud.query',
+        query: {},
+        defaultQuery: {},
+        applyToForm,
+      }),
+    );
+    // Exhausts the 50ms×5 retry window, then surfaces exactly one diagnostic
+    // (session-once via warnOnce) instead of failing silently.
+    await waitFor(() => expect(warn).toHaveBeenCalledWith(expect.stringContaining('form handle')));
+    expect(applyToForm).toHaveBeenCalledTimes(6);
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not warn when the query-form handle applies (WA-data-008 green path)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { scope } = updateCalls();
+    const location = { getQuery: () => ({ keyword: '顾' }), setQuery: vi.fn() };
+    renderHook(() =>
+      useUrlFilterSync({
+        enabled: true,
+        instanceId: 't8-ok',
+        location,
+        scope: scope as never,
+        queryStatePath: '$crud.query',
+        query: {},
+        defaultQuery: {},
+        applyToForm: () => true,
+      }),
+    );
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
 });
