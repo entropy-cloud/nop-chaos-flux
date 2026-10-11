@@ -1,6 +1,6 @@
 import { Line, Rect, Text } from 'leafer-ui';
 import { createCompositeGroup, createInstrumentSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { glassShinePaint, INDUSTRIAL_TOKENS, liquidPaint } from '../visuals.js';
 
 export const scadaInstrumentLevelType = 'scada-instrument-level';
@@ -101,7 +101,7 @@ export const scadaInstrumentLevelDefinition = createInstrumentSymbol({
   },
   applyProps: (node, parts, props) => {
     if (typeof props.height !== 'number' || !parts.extent) return;
-    const tankHeight = (parts.body as unknown as { height: number }).height;
+    const tankHeight = (parts.body as GeometryLeaf).height!;
     parts.extent.set({ y: tankHeight - props.height });
   },
 });

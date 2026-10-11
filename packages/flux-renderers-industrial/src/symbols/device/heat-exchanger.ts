@@ -1,6 +1,6 @@
 import { Line, Rect } from 'leafer-ui';
 import { createCompositeGroup, createDeviceSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { INDUSTRIAL_TOKENS, linearPaint } from '../visuals.js';
 
 export const scadaDeviceHeatExchangerType = 'scada-device-heat-exchanger';
@@ -143,7 +143,7 @@ export const scadaDeviceHeatExchangerDefinition = createDeviceSymbol({
       }
       const newShellTop = value * 0.24;
       const newShellHeight = value * 0.52;
-      const w = (body as unknown as { width: number }).width + (body as unknown as { x: number }).x * 2;
+      const w = (body as GeometryLeaf).width! + (body as GeometryLeaf).x! * 2;
       setAttrs(body, { y: newShellTop, height: newShellHeight });
       setAttrs(capL, { y: newShellTop + newShellHeight * 0.14, height: newShellHeight * 0.72 });
       setAttrs(capR, { y: newShellTop + newShellHeight * 0.14, height: newShellHeight * 0.72 });

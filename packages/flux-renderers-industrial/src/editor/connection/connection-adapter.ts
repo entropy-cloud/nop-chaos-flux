@@ -1,4 +1,5 @@
 import type { ScadaPipeConnection } from '../../symbols/pipe/pipe-junction.js';
+import { collectAllIds } from '../../shared/symbol-tree-ops.js';
 import type { ScadaSymbolNode } from '../../serialization/config-types.js';
 import { collectWorldBounds } from '../editor-working-helpers.js';
 import {
@@ -275,14 +276,9 @@ export function listAllConnections(args: {
   symbols: ScadaSymbolNode[];
 }): Array<{ junctionId: string; connection: ScadaPipeConnection; dangling: boolean }> {
   // 递归收集全部节点 id（含 group 子树），消除「顶层 id only」误报 dangling。
-  const ids = new Set<string>();
-  const collectIds = (nodes: ScadaSymbolNode[]): void => {
-    for (const node of nodes) {
-      ids.add(node.id);
-      if (node.children) collectIds(node.children);
-    }
-  };
-  collectIds(args.symbols);
+  // WA-industrial-001 (plan 569): shared symbol-tree walk (was an inline
+  // closure twin of the inspector's collectIds).
+  const ids = new Set<string>(collectAllIds(args.symbols));
   const out: Array<{ junctionId: string; connection: ScadaPipeConnection; dangling: boolean }> = [];
   const walk = (nodes: ScadaSymbolNode[]): void => {
     for (const node of nodes) {

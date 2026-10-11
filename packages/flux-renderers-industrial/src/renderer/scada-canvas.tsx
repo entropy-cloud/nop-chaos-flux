@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useScadaErrorText } from './scada-errors.js';
+import { observeFirstCanvasTagging, parseAndValidateScadaConfig } from '../shared/canvas-shell.js';
+// WA-industrial-008 ③: shared asReactNode (`?? null` form — the runtime copy
+// was the bare-cast drift twin).
+import { asReactNode } from '../editor/canvas-view-helpers.js';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRendererRuntime } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { cn, Spinner } from '@nop-chaos/ui';
-import { parseScadaConfig } from '../serialization/parse.js';
-import { validateScadaConfig } from '../serialization/validate.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 import type { ScadaCanvasSchema, ScadaCanvasEvents } from '../schemas.js';
 import type { ScadaCanvasEngine } from '../engine/scada-engine.js';
 import { useScadaEngine, type ScadaCanvasRuntime } from './hooks/use-scada-engine.js';
-import { errorMessage, useScadaErrorText } from './scada-errors.js';
 import { useScadaConfigSync } from './hooks/use-scada-config-sync.js';
 import { useScadaPointsBridge } from './hooks/use-scada-points-bridge.js';
 import { useScadaEvents } from './hooks/use-scada-events.js';
@@ -33,32 +35,7 @@ export const EMPTY_SCADA_CONFIG: ScadaConfig = {
   symbols: [],
 };
 
-function parseAndValidateConfig(
-  raw: unknown,
-): { config?: ScadaConfig; error?: ScadaCanvasErrorInfo } {
-  if (raw === undefined || raw === null || raw === '') {
-    return { config: EMPTY_SCADA_CONFIG };
-  }
-  try {
-    const config = parseScadaConfig(raw as string | object);
-    const result = validateScadaConfig(config);
-    if (!result.ok) {
-      return { error: { code: 'config-invalid', message: result.errors.join('; ') } };
-    }
-    return { config };
-  } catch (error) {
-    return {
-      error: {
-        code: 'config-parse',
-        message: errorMessage(error),
-      },
-    };
-  }
-}
 
-function asReactNode(value: unknown): ReactNode {
-  return value as ReactNode;
-}
 
 /**
  * `scada-canvas` 主渲染器（I10.1，design-renderer.md §1/§8/§10）：
@@ -80,7 +57,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   const resolveErrorText = useScadaErrorText();
 
   const { config: parsedConfig, error: parseError } = useMemo(
-    () => parseAndValidateConfig(props.props.config),
+    () => parseAndValidateScadaConfig(props.props.config, EMPTY_SCADA_CONFIG),
     [props.props.config],
   );
 
@@ -251,12 +228,15 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
   // plan 2026-08-04-1558-3 Phase 1：canvas slot 落点——把 data-slot 与 marker 语义落到真实 leafer
   // canvas DOM 元素（leafer App 在 containerRef 内创建 <canvas>）。wrapper 占位 div 仅保留 marker class
   // （styles.css 定位规则目标一致，F8）；mock 环境经 MockApp 同样挂 canvas 元素（mock↔真实对齐）。
+  // WA-industrial-002 (plan 569): marker tagging moved to the shared
+  // canvas-shell (the one-shot effect here was the drifted twin — leafer
+  // recreating the canvas after this effect lost the data-slot anchor that
+  // host/e2e geometry assertions rely on; the MutationObserver fallback is
+  // the editor-side W7 fix, now shared).
   useEffect(() => {
     if (!runtime || !containerRef.current) return;
-    const canvas = containerRef.current.querySelector('canvas');
-    if (!canvas) return;
-    canvas.setAttribute('data-slot', 'scada-canvas-canvas');
-    canvas.classList.add('nop-scada-canvas-canvas');
+    const detach = observeFirstCanvasTagging(containerRef.current, 'scada-canvas-canvas', 'nop-scada-canvas-canvas');
+    return detach;
   }, [runtime]);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { Ellipse, Rect } from 'leafer-ui';
 import { createCompositeGroup, createDeviceSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { INDUSTRIAL_TOKENS, linearPaint } from '../visuals.js';
 
 export const scadaDeviceGateValveType = 'scada-device-gate-valve';
@@ -130,7 +130,7 @@ export const scadaDeviceGateValveDefinition = createDeviceSymbol({
   applyProps: (_node, parts, props) => {
     const ratio = props.custom?.openRatio;
     if (typeof ratio !== 'number' || !parts.core) return;
-    const h = (parts.core as unknown as { height: number }).height;
+    const h = (parts.core as GeometryLeaf).height!;
     const baseY = h / 0.3 * 0.35;
     const travel = h * 0.9;
     parts.core.set({ y: baseY - ratio * travel });

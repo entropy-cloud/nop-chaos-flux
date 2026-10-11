@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { attachResizeRefit, syncContainerDrivenSize, type CanvasResizeRuntime } from '../../shared/canvas-shell.js';
 import type { ExpressionCompiler, RendererEnv } from '@nop-chaos/flux-core';
 import { ScadaCanvasEngine } from '../../engine/scada-engine.js';
 import { PointStore } from '../../binding/point-store.js';
@@ -247,28 +248,13 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
       }
     }
 
-    if (typeof ResizeObserver !== 'undefined') {
-      observerRef.current = new ResizeObserver((entries) => {
-        const entry = entries[0];
-        if (!entry) return;
-        const width = Math.round(entry.contentRect.width);
-        const height = Math.round(entry.contentRect.height);
-        cancelPendingResize();
-        rafIdRef.current = requestAnimationFrame(() => {
-          rafIdRef.current = 0;
-          const current = runtimeRef.current;
-          if (!current?.engine) return;
-          // plan 2026-08-08-1809-3 Phase 3 / P1-5：setSize 后重应用声明的 viewport fit policy。
-          // 旧实现仅 setSize 不 refit → schema width:960 + fit:contain 渲染进 ~302px 容器时，
-          // mount 期按 960 算 scale≈1，ResizeObserver 把 DOM 缩到 302 后 scale 不变 → 内容落画布外。
-          // refitViewportOnResize 由 use-scada-config-sync 装配（复用 applyScadaViewportPolicy，
-          // 无声明 policy 时 no-op → 用户 viewport 保留）。rAF 已节流，无每帧 refit 风险。
-          current.engine.setSize(width, height);
-          current.refitViewportOnResize?.();
-        });
-      });
-      observerRef.current.observe(container);
-    }
+    // WA-industrial-002 (plan 569): ResizeObserver → rAF → setSize + refit
+    // assembly single-sourced in shared/canvas-shell (was a ~20-line twin of
+    // use-editor-engine; the host keeps owning observer/raf cleanup).
+    attachResizeRefit(container, { observerRef, rafIdRef }, {
+      cancelPendingResize,
+      readRuntime: () => runtimeRef.current as CanvasResizeRuntime | undefined,
+    });
 
     return () => {
       releaseRuntime();
@@ -276,22 +262,15 @@ export function useScadaEngine(args: UseScadaEngineArgs) {
   }, [containerRef, cancelPendingResize, releaseRuntime]);
 
   useEffect(() => {
-    const current = runtimeRef.current;
-    if (!current) return;
-    // plan 2026-08-09-0121-1 Phase 2（e2e-residual-healing）：container-driven DOM sizing。
-    // schema width/height 表达 world design space，不是 leafer canvas DOM 尺寸——post-P1-5 DOM 必须跟随
-    // container 真实尺寸（与构造器 container-first + ResizeObserver 一致）。旧实现把 schema width 当 DOM
-    // 尺寸，mount 期 setSize(960,520) 覆盖构造器的 container 尺寸(303)，applyInitialViewportState 用错配
-    // size(960) fit → scale≈1，而 ready 在 ResizeObserver 修正前触发 → pointer 落画布外（hover/click 离屏
-    // residual 根因）。现 container 优先，schema 仅在 container=0（jsdom 无布局）时 fallback。
-    // setSize 后 refit 保持 viewport 与 size 一致（与 ResizeObserver handler 对称）。
-    const container = containerRef.current;
-    const targetWidth = container?.clientWidth || latest.current.width || 0;
-    const targetHeight = container?.clientHeight || latest.current.height || 0;
-    if (targetWidth > 0 && targetHeight > 0) {
-      current.engine.setSize(targetWidth, targetHeight);
-      current.refitViewportOnResize?.();
-    }
+    // plan 2026-08-09-0121-1 Phase 2（e2e-residual-healing）：container-driven DOM sizing
+    // （WA-industrial-002: shared syncContainerDrivenSize — schema width/height 是 world
+    // design space，DOM 跟随 container 真实尺寸，container=0 时 schema fallback）。
+    syncContainerDrivenSize(
+      containerRef.current,
+      latest.current.width || 0,
+      latest.current.height || 0,
+      runtimeRef.current as CanvasResizeRuntime | undefined,
+    );
   }, [runtime, containerRef, args.width, args.height]);
 
   /**

@@ -144,10 +144,10 @@ export const EXEMPTIONS = [
     source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记（R2 G5 组静态口径）；plan 483 A1 文件级展开',
   },
   {
-    path: 'packages/flux-renderers-industrial/src/symbols/base-shapes/arrow.ts',
+    path: 'packages/flux-renderers-industrial/src/symbols/base-shapes/points-geometry-shape.ts',
     rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记（R2 G5 组静态口径）；plan 483 A1 文件级展开',
+    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量）；WA-industrial-004（plan 569）line/arrow/pipe points 骨架收敛为 createPointsGeometryShape 工厂，共享 default stroke 字面随实体迁移至此（原 arrow.ts 条目改指）',
+    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记（R2 G5 组静态口径）；plan 483 A1 文件级展开；WA-9 plan 569 批内修复随迁',
   },
   {
     path: 'packages/flux-renderers-industrial/src/symbols/device/tank.ts',
@@ -235,12 +235,6 @@ export const EXEMPTIONS = [
   },
   {
     path: 'packages/flux-renderers-industrial/src/symbols/base-shapes/image.ts',
-    rule: 'hardcoded-literal-color',
-    reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
-    source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记（R2 G5 组静态口径）；plan 483 A1 文件级展开',
-  },
-  {
-    path: 'packages/flux-renderers-industrial/src/symbols/base-shapes/line.ts',
     rule: 'hardcoded-literal-color',
     reason: 'plan 483 A1 前缀收紧展开：继承原包级前缀豁免（域字面色存量，见上方原条目 reason）',
     source: 'D2 plan 2026-08-31-1522-1 Phase 2 豁免登记（R2 G5 组静态口径）；plan 483 A1 文件级展开',

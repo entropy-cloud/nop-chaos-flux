@@ -1,6 +1,6 @@
 import { Ellipse, Rect } from 'leafer-ui';
 import { createCompositeGroup, createSensorControlSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 
 export const scadaSensorControlIndicatorType = 'scada-sensor-control-indicator';
 
@@ -63,8 +63,8 @@ export const scadaSensorControlIndicatorDefinition = createSensorControlSymbol({
     // 重算 housing/lamp（body）/高光几何。
     parts.resize = (key, value) => {
       setAttrs(housing, { [key]: value });
-      const w = (housing as unknown as { width: number }).width;
-      const h = (housing as unknown as { height: number }).height;
+      const w = (housing as GeometryLeaf).width!;
+      const h = (housing as GeometryLeaf).height!;
       const d = h * 0.72;
       setAttrs(lamp, { x: w / 2, y: h / 2, width: d, height: d });
       setAttrs(shine, { x: w / 2 - d * 0.18, y: h / 2 - d * 0.18, width: d * 0.32, height: d * 0.32 });

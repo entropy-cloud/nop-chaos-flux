@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
+import { observeFirstCanvasTagging, parseAndValidateScadaConfig } from '../shared/canvas-shell.js';
 import type { ActionSchema, RendererComponentProps, RendererHelpers, ScopeRef } from '@nop-chaos/flux-core';
 import { createNormalizedActionEvent, useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
-import { parseScadaConfig } from '../serialization/parse.js';
-import { validateScadaConfig } from '../serialization/validate.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 import type { ScadaEditorCanvasSchema, ScadaEditorCanvasEvents } from './schemas.js';
 import { useEditorEngine } from './renderer/hooks/use-editor-engine.js';
@@ -36,28 +35,6 @@ const EMPTY_EDITOR_CONFIG: ScadaConfig = {
   symbols: [],
 };
 
-function parseAndValidateConfig(
-  raw: unknown,
-): { config?: ScadaConfig; error?: ScadaEditorCanvasErrorInfo } {
-  if (raw === undefined || raw === null || raw === '') {
-    return { config: EMPTY_EDITOR_CONFIG };
-  }
-  try {
-    const config = parseScadaConfig(raw as string | object);
-    const result = validateScadaConfig(config);
-    if (!result.ok) {
-      return { error: { code: 'config-invalid', message: result.errors.join('; ') } };
-    }
-    return { config };
-  } catch (error) {
-    return {
-      error: {
-        code: 'config-parse',
-        message: error instanceof Error ? error.message : String(error),
-      },
-    };
-  }
-}
 
 
 /**
@@ -120,7 +97,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // useMemo 保留：parsedConfig 经 useEditorEngine useEffect identity check（args.initialConfig === loadedConfigRef.current），
   // 移除会导致每次渲染新对象 → load 循环（load-bearing，非冗余）。
   const { config: parsedConfig, error: parseError } = useMemo(
-    () => parseAndValidateConfig(props.props.config),
+    () => parseAndValidateScadaConfig(props.props.config, EMPTY_EDITOR_CONFIG),
     [props.props.config],
   );
 
@@ -250,21 +227,13 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // 用 MutationObserver 兜底重标记，消除「effect 先于 canvas 创建 → marker 永不落地」竞态。
   // 只标记**第一个** canvas（主 view 层）——leafer 含多 canvas 层，marker 契约保持唯一
   // （host/e2e 以该 marker 定位画布几何）。
+  // WA-industrial-002 (plan 569): marker tagging via the shared canvas-shell
+  // (the W7 MutationObserver robustification, now single-sourced with the
+  // runtime canvas — which inherits the race fix).
   useEffect(() => {
     if (!runtime || !containerRef.current) return;
-    const container = containerRef.current;
-    const tagFirst = () => {
-      const canvas = container.querySelector('canvas');
-      if (canvas && !canvas.hasAttribute('data-slot')) {
-        canvas.setAttribute('data-slot', 'scada-editor-canvas-canvas');
-        canvas.classList.add('nop-scada-editor-canvas-canvas');
-      }
-    };
-    tagFirst();
-    if (typeof MutationObserver === 'undefined') return;
-    const observer = new MutationObserver(() => tagFirst());
-    observer.observe(container, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    const detach = observeFirstCanvasTagging(containerRef.current, 'scada-editor-canvas-canvas', 'nop-scada-editor-canvas-canvas');
+    return detach;
   }, [runtime]);
 
   const effectiveStatus: ScadaEditorCanvasStatus = parseError ? 'error' : status;

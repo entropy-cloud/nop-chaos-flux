@@ -1,6 +1,6 @@
 import { Ellipse, Rect } from 'leafer-ui';
 import { createCompositeGroup, deviceRunRotateAnimation, createDeviceSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { hubPaint, INDUSTRIAL_TOKENS, linearPaint } from '../visuals.js';
 
 export const scadaDeviceMotorType = 'scada-device-motor';
@@ -115,8 +115,8 @@ export const scadaDeviceMotorDefinition = createDeviceSymbol({
     // + 装饰件（端盖/接线盒/轴伸）+ rotor 中心/半径 + hub。
     parts.resize = (key, value) => {
       setAttrs(body, { [key]: value });
-      const w = (body as unknown as { width: number }).width;
-      const h = (body as unknown as { height: number }).height;
+      const w = (body as GeometryLeaf).width!;
+      const h = (body as GeometryLeaf).height!;
       const bell = Math.max(5, w * 0.1);
       const r = Math.min(w, h) * 0.3;
       setAttrs(endL, { width: bell, height: h });

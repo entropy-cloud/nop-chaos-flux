@@ -1,4 +1,5 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
+import { collectAllIds, findNodeById } from '../../shared/symbol-tree-ops.js';
 import { Badge, Button } from '@nop-chaos/ui';
 import { ChevronRight } from 'lucide-react';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
@@ -56,7 +57,7 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
   // 反应式：父 canvas 经 sessionVersion bump 触发重渲染，本组件每次都从最新 runtime.session 重派生。
   // 不使用 useMemo（React Compiler 自动 memoize；且 useMemo deps 需显式纳入 sessionVersion 才能刷新）。
   const node: ScadaSymbolNode | undefined = selectedNodeId
-    ? findNode(runtime.session.workingConfig.symbols, selectedNodeId)
+    ? findNodeById(runtime.session.workingConfig.symbols, selectedNodeId)
     : undefined;
   const definition = node ? getScadaSymbolDefinition(node.type) : undefined;
   const fieldGroups = definition ? extractPanelFields(definition) : [];
@@ -68,7 +69,7 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
   const connectionRows = node
     ? extractJunctionConnections(
         node,
-        new Set(collectIds(runtime.session.workingConfig.symbols)),
+        new Set(collectAllIds(runtime.session.workingConfig.symbols)),
       )
     : undefined;
   // plan 522 / L5.3：点引用候选集（binding/state 结构化编辑面消费，design-binding-panel.md §2.2）。
@@ -159,27 +160,4 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
       <div className="text-xs opacity-60">{t('industrial.scada.editor.inspector.noSelection')}</div>
     </aside>
   );
-}
-function findNode(symbols: ScadaSymbolNode[], id: string): ScadaSymbolNode | undefined {
-  for (const node of symbols) {
-    if (node.id === id) return node;
-    if (node.children) {
-      const found = findNode(node.children, id);
-      if (found) return found;
-    }
-  }
-  return undefined;
-}
-
-/** 递归收集全部节点 id（含 group 子树；与 listAllConnections dangling 检测同语义，plan 521 / U6）。 */
-function collectIds(symbols: ScadaSymbolNode[]): string[] {
-  const out: string[] = [];
-  const walk = (nodes: ScadaSymbolNode[]): void => {
-    for (const node of nodes) {
-      out.push(node.id);
-      if (node.children) walk(node.children);
-    }
-  };
-  walk(symbols);
-  return out;
 }

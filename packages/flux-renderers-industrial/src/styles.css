@@ -20,6 +20,7 @@
   --ind-interaction-selected-shadow: 0 4px 16px rgba(255, 127, 42, 0.35);
   --ind-interaction-disabled: #9ca3af;
   --ind-node-selected-ring: #ff7f2a;
+  --ind-connection-drag: #22c55e;
 }
 
 [data-mode='dark'] .nop-scada-canvas {
@@ -32,6 +33,7 @@
   --ind-interaction-selected-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
   --ind-interaction-disabled: #6b7280;
   --ind-node-selected-ring: #ffa04d;
+  --ind-connection-drag: #34d399;
 }
 
 .nop-scada-canvas .nop-scada-canvas-canvas {

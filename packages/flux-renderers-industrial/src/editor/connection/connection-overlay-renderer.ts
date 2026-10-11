@@ -1,4 +1,5 @@
 import { Line, Rect, type IGroup } from 'leafer-ui';
+import { CONNECTION_DRAG_FALLBACK, CONNECTION_DRAG_VAR, readIndTokenVar } from '../../engine/interaction-tokens.js';
 import type { ConnectionOverlayState } from './connection-overlay.js';
 import type { ScadaEditorEngine } from '../renderer/editor-engine.js';
 
@@ -20,12 +21,21 @@ export class ConnectionOverlayRenderer {
     this.clear();
     const sky = this.engine.sky as IGroup | undefined;
     if (!sky || typeof sky.add !== 'function') return;
+    // WA-industrial-006 (plan 569): drag-line/snap-dot green was hardcoded
+    // (#22c55e) — the plan 530 tokenization wave only touched the engine
+    // stylesheets, so the overlay ignored dark mode. Read the shared token
+    // with the named fallback (light value unchanged, dark follows).
+    const dragGreen = readIndTokenVar(
+      this.engine.container,
+      CONNECTION_DRAG_VAR,
+      CONNECTION_DRAG_FALLBACK,
+    );
     for (const line of state.dragLines) {
       const from = this.engine.getViewportPoint(line.from);
       const to = this.engine.getViewportPoint(line.to);
       const node = new Line({
         points: [from.x, from.y, to.x, to.y],
-        stroke: '#22c55e',
+        stroke: dragGreen,
         strokeWidth: 2,
         dashPattern: [6, 4],
       });
@@ -39,7 +49,7 @@ export class ConnectionOverlayRenderer {
         y: vp.y - 6,
         width: 12,
         height: 12,
-        fill: '#22c55e',
+        fill: dragGreen,
         stroke: '#ffffff',
         strokeWidth: 2,
         cornerRadius: 6,

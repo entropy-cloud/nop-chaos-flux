@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { errorMessage } from '../scada-errors.js';
 import { diffScadaConfig } from '../../serialization/diff.js';
 import type { ScadaConfig, ScadaSymbolNode } from '../../serialization/config-types.js';
 import { getScadaSymbolDefinition } from '../../symbols/symbol-registry.js';
@@ -294,7 +295,7 @@ export function useScadaConfigSync(
       prevRef.current = undefined;
       latest.current.onBuildError?.(
         'config-build-failed',
-        error instanceof Error ? error.message : String(error),
+        errorMessage(error),
       );
     }
   }, [config, runtime, reloadBindings]);
@@ -324,7 +325,7 @@ export function useScadaConfigSync(
       prevRef.current = undefined;
       buildError?.(
         'config-build-failed',
-        error instanceof Error ? error.message : String(error),
+        errorMessage(error),
       );
     }
   }, []);

@@ -1,6 +1,6 @@
 import { Line, Rect, Text } from 'leafer-ui';
 import { createCompositeGroup, createInstrumentSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 
 export const scadaInstrumentTrendType = 'scada-instrument-trend';
 
@@ -107,7 +107,7 @@ export const scadaInstrumentTrendDefinition = createInstrumentSymbol({
     parts.resize = (key, value) => {
       if (key !== 'width') return;
       setAttrs(body, { width: value });
-      const h = (body as unknown as { height: number }).height;
+      const h = (body as GeometryLeaf).height!;
       grid.forEach((node, index) => {
         if (index < 3) {
           setAttrs(node, { points: [4, (h * (index + 1)) / 4, value - 4, (h * (index + 1)) / 4] });
@@ -131,8 +131,8 @@ export const scadaInstrumentTrendDefinition = createInstrumentSymbol({
     if (typeof props.height === 'number') {
       state.samples.push(props.height);
       while (state.samples.length > state.capacity) state.samples.shift();
-      const w = (parts.body as unknown as { width: number }).width;
-      const h = (parts.body as unknown as { height: number }).height;
+      const w = (parts.body as GeometryLeaf).width!;
+      const h = (parts.body as GeometryLeaf).height!;
       redraw(state, w, h);
     }
     if (props.textColor !== undefined && typeof props.textColor === 'string') {

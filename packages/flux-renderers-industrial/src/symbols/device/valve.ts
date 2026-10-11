@@ -1,6 +1,6 @@
 import { Ellipse, Rect } from 'leafer-ui';
 import { createCompositeGroup, createDeviceSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { INDUSTRIAL_TOKENS, linearPaint } from '../visuals.js';
 
 export const scadaDeviceValveType = 'scada-device-valve';
@@ -120,8 +120,8 @@ export const scadaDeviceValveDefinition = createDeviceSymbol({
     // （法兰/阀杆/阀盖/手轮）+ core 相对锚点（保留 openRatio rotation）。
     parts.resize = (key, value) => {
       setAttrs(body, { [key]: value });
-      const w = (body as unknown as { width: number }).width;
-      const h = (body as unknown as { height: number }).height;
+      const w = (body as GeometryLeaf).width!;
+      const h = (body as GeometryLeaf).height!;
       const flange = Math.max(4, w * 0.08);
       setAttrs(flangeL, { y: h * 0.18, width: flange, height: h * 0.64 });
       setAttrs(flangeR, { x: w - flange, y: h * 0.18, width: flange, height: h * 0.64 });

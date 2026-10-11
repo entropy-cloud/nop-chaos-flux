@@ -1,6 +1,6 @@
 import { Rect } from 'leafer-ui';
 import { createCompositeGroup, createSensorControlSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 
 export const scadaSensorControlSwitchType = 'scada-sensor-control-switch';
 
@@ -54,10 +54,10 @@ export const scadaSensorControlSwitchDefinition = createSensorControlSymbol({
     // （on/off 由 lever.x 是否等于 OFF 锚判定——applyProps(custom.on) 先于 resize 写 lever.x，resize 读其当前位态）。
     parts.resize = (key, value) => {
       setAttrs(base, { [key]: value });
-      const w = (base as unknown as { width: number }).width;
-      const h = (base as unknown as { height: number }).height;
+      const w = (base as GeometryLeaf).width!;
+      const h = (base as GeometryLeaf).height!;
       setAttrs(base, { cornerRadius: h / 2 });
-      const onState = (lever as unknown as { x: number }).x !== LEVER_OFF_X;
+      const onState = (lever as GeometryLeaf).x !== LEVER_OFF_X;
       setAttrs(lever, {
         x: onState ? w - h + 3 : LEVER_OFF_X,
         width: h - 6,
@@ -69,8 +69,8 @@ export const scadaSensorControlSwitchDefinition = createSensorControlSymbol({
   },
   applyProps: (node, parts, props) => {
     if (!parts.core || typeof props.custom?.on !== 'boolean') return;
-    const width = (parts.body as unknown as { width: number }).width;
-    const height = (parts.body as unknown as { height: number }).height;
+    const width = (parts.body as GeometryLeaf).width!;
+    const height = (parts.body as GeometryLeaf).height!;
     parts.core.set({ x: props.custom.on ? width - height + 3 : 3 });
   },
 });

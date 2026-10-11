@@ -32,8 +32,8 @@
 - WA-6. 数据展示渲染器审计批（flux-renderers-data，inventory 22,319 行/114 文件）: `done`（plan: `docs/plans/566-workaround-audit-wa6-data-plan.md`，closure audit 2026-10-11 R1 0B/1M/2m→修正后收口；12 findings=fixed→verified 7+CX-11/13 扩围去向 2+watch-only 3，产出共性工作项 CX-13/CX-11 扩围登记）
 - WA-7. 内容/布局/移动渲染器审计批（flux-renderers-content + flux-renderers-layout + flux-renderers-mobile，约 11.7k 行）: `done`（plan: `docs/plans/567-workaround-audit-wa7-content-layout-mobile-plan.md`，closure audit 2026-10-12 R1 approved[0B/0M/2m 随收口修正]；14 findings=fixed→verified 10+CX-11 扩围/CX-15 拟制去向 2+watch-only 2，执行期披露批内回归 WA-content-009 当场修复，产出共性工作项 CX-15+CX-11 扩围登记）
 - WA-8. 调度与企业排程审计批（flux-renderers-scheduling + flux-renderers-dashboard + flux-renderers-pivot，约 17.1k 行）: `done`（plan: `docs/plans/568-workaround-audit-wa8-scheduling-dashboard-pivot-plan.md`，closure audit 2026-10-12 R1 approved[0B/0M/2m 随收口修正]；13 findings=fixed→verified 8+successor-required 1[002 接线]+watch-only 4，装载收敛批内修+接线显式登记，产出 CX-15/CX-11 扩围登记）
-- WA-9. 工业画布渲染器审计批（flux-renderers-industrial，约 21.4k 行）: `todo`（plan: —）
-- WA-10. 轻型可视化与打印/代码编辑审计批（flux-renderers-3d + flux-renderers-graph + flux-renderers-map + flux-print-core + flux-print-renderers + flux-code-editor，约 12.7k 行）: `todo`（plan: —）
+- WA-9. 工业画布渲染器审计批（flux-renderers-industrial，约 21.4k 行）: `done`（plan: `docs/plans/569-workaround-audit-wa9-industrial-plan.md`，closure audit 2026-10-12 R1 approved[0B/0M/6m 随收口修正]；8 findings=fixed→verified 6+watch-only 2+008 余量同行挂账，零新增 CX[001/002 为 wa-8 dashboard-001 同型判例引用]）
+- WA-10. 轻型可视化与打印/代码编辑审计批（flux-renderers-3d + flux-renderers-graph + flux-renderers-map + flux-print-core + flux-print-renderers + flux-code-editor，约 12.7k 行）: `planned`（plan: `docs/plans/570-workaround-audit-wa10-viz-print-code-editor-plan.md`，draft review 2026-10-12 revised→共识[0B/2M/2m 全修；inventory 实测 13,252 行/92 文件以枚举器为准]）
 - WA-11. AI 渲染器审计批（flux-renderers-ai，约 12.6k 行）: `todo`（plan: —）
 - WA-12. 设计器内核层审计批（editor-core + page-designer-core + flow-designer-core + report-designer-core + spreadsheet-core + word-editor-core，约 17.0k 行）: `todo`（plan: —）
 - WA-13a. 设计器渲染层审计批一（flow-designer-renderers + page-designer-renderers，约 14.0k 行）: `todo`（plan: —）

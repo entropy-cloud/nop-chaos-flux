@@ -1,6 +1,6 @@
 import { Ellipse, Rect } from 'leafer-ui';
 import { createCompositeGroup, createSensorControlSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 
 export const scadaSensorControlSensorType = 'scada-sensor-control-sensor';
 
@@ -45,7 +45,7 @@ export const scadaSensorControlSensorDefinition = createSensorControlSymbol({
     // 重算 body 容器尺寸 + probe 中心 x/尺寸（随 width 派生）。
     parts.resize = (key, value) => {
       setAttrs(stem, { [key]: value });
-      const w = (stem as unknown as { width: number }).width;
+      const w = (stem as GeometryLeaf).width!;
       setAttrs(probe, { x: w / 2, width: w * 0.6, height: w * 0.6 });
     };
     return { root, parts };

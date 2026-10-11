@@ -1,6 +1,6 @@
 import { Line, Rect } from 'leafer-ui';
 import { applyCompositeProps, compositePropSchema, createCompositeGroup, setAttrs } from '../composite.js';
-import type { LeafNode, ScadaSymbolDefinition, ScadaSymbolProps } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode, ScadaSymbolDefinition, ScadaSymbolProps } from '../symbol-types.js';
 
 /**
  * 管件族（559 Phase 1，对标 ThingsBoard 连接件族：弯头/三通/四通）：
@@ -88,8 +88,8 @@ function createPipeFitting(
       const state = stateOf.get(node);
       if (!state) return;
       if (props.width !== undefined || props.height !== undefined) {
-        const width = props.width ?? (state.body as unknown as { width: number }).width;
-        const height = props.height ?? (state.body as unknown as { height: number }).height;
+        const width = props.width ?? (state.body as GeometryLeaf).width!;
+        const height = props.height ?? (state.body as GeometryLeaf).height!;
         setAttrs(state.body, { width, height });
         state.segments.forEach((segment, index) => {
           const s = layout(width, height)[index];

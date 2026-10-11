@@ -1,4 +1,5 @@
 import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
+import { findNodeById } from '../shared/symbol-tree-ops.js';
 import type { ScadaEditorSession } from './editor-session.js';
 import { recomputeJunctionAfterMove, collectSymbolBounds } from './connection/connection-adapter.js';
 import { readConnections } from './connection/anchor-snap.js';
@@ -94,16 +95,9 @@ function cloneNodeDeep(node: ScadaSymbolNode): ScadaSymbolNode {
   return clone;
 }
 
-/** 在 working copy 中按 id 递归查找节点（含 group 子树）。 */
+/** 在 working copy 中按 id 递归查找节点（含 group 子树；WA-industrial-001 走共享原语）。 */
 export function findNodeInWorking(symbols: ScadaSymbolNode[], id: string): ScadaSymbolNode | undefined {
-  for (const node of symbols) {
-    if (node.id === id) return node;
-    if (node.children) {
-      const found = findNodeInWorking(node.children, id);
-      if (found) return found;
-    }
-  }
-  return undefined;
+  return findNodeById(symbols, id);
 }
 
 /** 在 working copy 中按 id 递归查找节点并应用 patch（含 group 子树）。 */

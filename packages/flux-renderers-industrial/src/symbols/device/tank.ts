@@ -1,6 +1,6 @@
 import { Ellipse, Rect } from 'leafer-ui';
 import { createCompositeGroup, createDeviceSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { glassShinePaint, INDUSTRIAL_TOKENS, liquidPaint } from '../visuals.js';
 
 export const scadaDeviceTankType = 'scada-device-tank';
@@ -114,7 +114,7 @@ export const scadaDeviceTankDefinition = createDeviceSymbol({
   },
   applyProps: (_node, parts, props) => {
     if (typeof props.height !== 'number' || !parts.extent) return;
-    const body = parts.body as unknown as { y: number; height: number };
-    parts.extent.set({ y: body.y + body.height - props.height });
+    const body = parts.body as GeometryLeaf;
+    parts.extent.set({ y: body.y! + body.height! - props.height });
   },
 });

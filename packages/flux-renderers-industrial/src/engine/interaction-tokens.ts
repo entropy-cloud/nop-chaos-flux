@@ -28,6 +28,10 @@ export const INTERACTION_STYLE_PRESETS: Record<InteractionState, InteractionStyl
 
 /** 编辑器 EditBox 选中框令牌（D-530-2，与 --ind-interaction-selected 同源值）。 */
 export const EDITOR_SELECTED_RING_VAR = '--ind-node-selected-ring';
+
+/** 连线 overlay 拖拽线/吸附点令牌（WA-industrial-006，plan 530 令牌化波次的范围缺口；fallback 具名常量）。 */
+export const CONNECTION_DRAG_VAR = '--ind-connection-drag';
+export const CONNECTION_DRAG_FALLBACK = '#22c55e';
 export const EDITOR_SELECTED_RING_FALLBACK = INTERACTION_STYLE_PRESETS.selected.stroke as string;
 
 const TOKEN_VARS: Record<InteractionState, { stroke: string; fill?: string; shadow?: string }> = {

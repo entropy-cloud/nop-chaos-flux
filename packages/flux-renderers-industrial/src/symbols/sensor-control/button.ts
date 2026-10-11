@@ -1,6 +1,6 @@
 import { Ellipse, Rect } from 'leafer-ui';
 import { createCompositeGroup, createSensorControlSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { linearPaint } from '../visuals.js';
 
 export const scadaSensorControlButtonType = 'scada-sensor-control-button';
@@ -63,8 +63,8 @@ export const scadaSensorControlButtonDefinition = createSensorControlSymbol({
     // 重算 body 容器尺寸 + cap 宽高（保留 cap 内边距锚点 x=4/y=3）+ 高光条。
     parts.resize = (key, value) => {
       setAttrs(base, { [key]: value });
-      const w = (base as unknown as { width: number }).width;
-      const h = (base as unknown as { height: number }).height;
+      const w = (base as GeometryLeaf).width!;
+      const h = (base as GeometryLeaf).height!;
       setAttrs(cap, { width: w - 8, height: h - 6 });
       setAttrs(shine, { x: w / 2, y: 3 + (h - 6) * 0.3, width: (w - 8) * 0.42 });
     };

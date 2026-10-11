@@ -1,6 +1,6 @@
 import { Line, Rect } from 'leafer-ui';
 import { applyCompositeProps, compositePropSchema, createCompositeGroup, setAttrs } from '../composite.js';
-import type { LeafNode, ScadaSymbolDefinition, ScadaSymbolProps } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode, ScadaSymbolDefinition, ScadaSymbolProps } from '../symbol-types.js';
 
 export const scadaPipeJunctionType = 'scada-pipe-junction';
 
@@ -110,8 +110,8 @@ export const scadaPipeJunctionDefinition: ScadaSymbolDefinition = {
     // pipe-junction 借用 applyCompositeProps 但 parts 无 extent/resize，width/height 原被 EXTENT_FIELDS 静默丢弃；
     // setSymbolProps / width 绑定改尺寸时须重算 body 尺寸 + stubs 按 connection 归一化坐标 × 新尺寸派生。
     if (props.width !== undefined || props.height !== undefined) {
-      const newWidth = props.width ?? (state.body as unknown as { width: number }).width;
-      const newHeight = props.height ?? (state.body as unknown as { height: number }).height;
+      const newWidth = props.width ?? (state.body as GeometryLeaf).width!;
+      const newHeight = props.height ?? (state.body as GeometryLeaf).height!;
       setAttrs(state.body, { width: newWidth, height: newHeight });
       const centerX = newWidth / 2;
       const centerY = newHeight / 2;

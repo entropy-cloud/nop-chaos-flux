@@ -51,3 +51,16 @@ export function applyUpdates(
     });
   return apply(symbols);
 }
+
+/** Depth-first collection of every node id (includes group subtrees). */
+export function collectAllIds(nodes: ScadaSymbolNode[]): string[] {
+  const out: string[] = [];
+  const walk = (nodes: ScadaSymbolNode[]): void => {
+    for (const node of nodes) {
+      out.push(node.id);
+      if (node.children) walk(node.children);
+    }
+  };
+  walk(nodes);
+  return out;
+}

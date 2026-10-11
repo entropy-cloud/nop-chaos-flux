@@ -1,6 +1,6 @@
 import { Ellipse, Rect } from 'leafer-ui';
 import { createCompositeGroup, deviceRunRotateAnimation, createDeviceSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { hubPaint, INDUSTRIAL_TOKENS, linearPaint } from '../visuals.js';
 
 export const scadaDevicePumpType = 'scada-device-pump';
@@ -125,8 +125,8 @@ export const scadaDevicePumpDefinition = createDeviceSymbol({
     // + 装饰件（脚/接管/蜗壳圈/hub）+ impeller 中心/半径。
     parts.resize = (key, value) => {
       setAttrs(body, { [key]: value });
-      const w = (body as unknown as { width: number }).width;
-      const h = (body as unknown as { height: number }).height;
+      const w = (body as GeometryLeaf).width!;
+      const h = (body as GeometryLeaf).height!;
       setAttrs(body, { cornerRadius: w * 0.5 });
       const min = Math.min(w, h);
       const r = min * 0.32;

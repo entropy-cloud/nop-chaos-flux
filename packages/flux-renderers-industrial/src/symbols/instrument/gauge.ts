@@ -1,7 +1,7 @@
 import { Ellipse, Line, Text } from 'leafer-ui';
 import { createCompositeGroup, createInstrumentSymbol, setAttrs } from './common.js';
 import { createDial, dialChildren, relayoutDial, type DialCustom } from './dial.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { INDUSTRIAL_TOKENS } from '../visuals.js';
 
 export const scadaInstrumentGaugeType = 'scada-instrument-gauge';
@@ -85,8 +85,8 @@ export const scadaInstrumentGaugeDefinition = createInstrumentSymbol({
     // 重算 body 表圈尺寸/中心 + 表盘刻度族（dial relayout）+ needle 中心/points + label 锚点/宽度。
     parts.resize = (key, value) => {
       setAttrs(body, { [key]: value });
-      const w = (body as unknown as { width: number }).width;
-      const h = (body as unknown as { height: number }).height;
+      const w = (body as GeometryLeaf).width!;
+      const h = (body as GeometryLeaf).height!;
       const r = Math.min(w, h) / 2;
       setAttrs(body, { x: w / 2, y: h / 2 });
       relayoutDial(dial, w, h, props.custom as DialCustom | undefined);

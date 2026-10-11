@@ -49,6 +49,12 @@ const GROUP_CONTAINER_TYPE = 'scada-group';
  */
 export class ScadaEditorEngine {
   readonly app: App;
+  /** WA-industrial-006 (plan 569): token reads (readIndTokenVar) resolve
+   * computed styles against this container — exposed for same-package
+   * overlay renderers so live dark-mode flips are followed per update. */
+  get container(): HTMLElement {
+    return this.options.container;
+  }
   readonly registry = new TreeRegistry();
   private readonly cid: number;
   private root: Group | null = null;

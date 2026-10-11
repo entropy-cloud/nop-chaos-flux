@@ -1,4 +1,5 @@
 import type { HitResolver } from './hit.js';
+import { errorMessage } from '../renderer/scada-errors.js';
 
 export type ScadaSymbolEventName = 'symbol:click' | 'symbol:dblclick' | 'symbol:hover' | 'symbol:hover-miss';
 
@@ -164,7 +165,7 @@ export class EventBridge {
   }
 
   private reportHandlerError(site: string, error: unknown): void {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = errorMessage(error);
     // plan 2026-08-09-0121-2 Workstream A 本轮-4/F9：去重键加 call-site 维度——同文案不同 call-site
     // （tap vs pointer.move）的错误不再互吞；仅同 site 同 message 去重（保留 report-once 反风暴语义）。
     const key = `${site}:${message}`;

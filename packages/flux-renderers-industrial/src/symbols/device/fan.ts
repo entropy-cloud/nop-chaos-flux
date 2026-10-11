@@ -1,6 +1,6 @@
 import { Ellipse, Group, Line, Rect } from 'leafer-ui';
 import { createCompositeGroup, deviceRunRotateAnimation, createDeviceSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { hubPaint, INDUSTRIAL_TOKENS, linearPaint } from '../visuals.js';
 
 export const scadaDeviceFanType = 'scada-device-fan';
@@ -118,8 +118,8 @@ export const scadaDeviceFanDefinition = createDeviceSymbol({
     // 支架/护罩圈/护网 + blades 中心 + 各扇叶尺寸 + hub。
     parts.resize = (key, value) => {
       setAttrs(body, { [key]: value });
-      const w = (body as unknown as { width: number }).width;
-      const h = (body as unknown as { height: number }).height;
+      const w = (body as GeometryLeaf).width!;
+      const h = (body as GeometryLeaf).height!;
       const min = Math.min(w, h);
       const r = min * 0.32;
       const gr = min * 0.46;

@@ -1,6 +1,6 @@
 import { Ellipse, Line, Rect, Text } from 'leafer-ui';
 import { createCompositeGroup, createInstrumentSymbol, setAttrs } from './common.js';
-import type { LeafNode } from '../symbol-types.js';
+import type { GeometryLeaf, LeafNode } from '../symbol-types.js';
 import { INDUSTRIAL_TOKENS, liquidPaint } from '../visuals.js';
 
 export const scadaInstrumentThermometerType = 'scada-instrument-thermometer';
@@ -124,7 +124,7 @@ export const scadaInstrumentThermometerDefinition = createInstrumentSymbol({
   },
   applyProps: (node, parts, props) => {
     if (typeof props.height !== 'number' || !parts.extent) return;
-    const tubeHeight = (parts.body as unknown as { height: number }).height;
+    const tubeHeight = (parts.body as GeometryLeaf).height!;
     parts.extent.set({ y: tubeHeight + BULB_RESERVE - props.height });
   },
 });

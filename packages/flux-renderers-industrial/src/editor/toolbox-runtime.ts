@@ -1,13 +1,6 @@
 import type { ScadaConfig, ScadaSymbolNode, ScadaConfigDiff } from '../serialization/config-types.js';
 import type { Bounds } from '../engine/viewport.js';
-import {
-  cloneConfigSnapshot,
-  applyPatchToWorkingNode,
-  collectAllSymbols,
-  collectWorldBounds,
-  findNodeInWorking,
-  pruneDanglingConnections,
-} from './editor-working-helpers.js';
+import { cloneConfigSnapshot, applyPatchToWorkingNode, collectAllSymbols, findNodeInWorking, pruneDanglingConnections } from './editor-working-helpers.js';
 import { resetSession } from './editor-session.js';
 import { serializeScadaConfig } from '../serialization/serialize.js';
 import { parseScadaConfig } from '../serialization/parse.js';
@@ -34,6 +27,7 @@ import {
   programmaticDisconnect,
 } from './connection/connection-adapter.js';
 import type { EditorRuntimeContext } from './runtime-factories.js';
+import { computeAggregateViewportBounds } from './canvas-view-helpers.js';
 
 /**
  * E9.1 工具箱 runtime（plan 2026-08-07-1835-2 Phase 1 / multi P1-03）：
@@ -75,24 +69,11 @@ export function buildToolboxRuntime(ctx: EditorRuntimeContext): EditorToolboxRun
    * group 节点（无 width/height 但有 children）的世界范围由 children 决定 → 全选 group 后 fit/center
    * 不再退化（{0,0,0,0}）。
    */
-  const computeBounds = (): Bounds | undefined => {
-    const worldBounds = collectWorldBounds(session.workingConfig.symbols, 0, 0);
-    let out: Bounds | undefined;
-    for (const b of worldBounds) {
-      // 跳过零尺寸节点（无 width/height 的 group 容器自身；其 children 已贡献 bounds）。
-      if (b.width <= 0 || b.height <= 0) continue;
-      if (out === undefined) {
-        out = { x: b.x, y: b.y, width: b.width, height: b.height };
-      } else {
-        const minX = Math.min(out.x, b.x);
-        const minY = Math.min(out.y, b.y);
-        const maxX = Math.max(out.x + out.width, b.x + b.width);
-        const maxY = Math.max(out.y + out.height, b.y + b.height);
-        out = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-      }
-    }
-    return out;
-  };
+  // WA-industrial-008 ①: delegate to the shared aggregate-bounds helper
+  // (was a verbatim 17-line twin of canvas-view-helpers
+  // computeAggregateViewportBounds).
+  const computeBounds = (): Bounds | undefined =>
+    computeAggregateViewportBounds(session.workingConfig.symbols);
 
   const fitView = (): boolean => {
     const bounds = computeBounds();

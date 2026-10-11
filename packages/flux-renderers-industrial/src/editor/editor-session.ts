@@ -1,4 +1,5 @@
 import type { ScadaConfig, ScadaSymbolNode } from '../serialization/config-types.js';
+import { findNodeById } from '../shared/symbol-tree-ops.js';
 import { UndoStack } from './undo-redo/undo-stack.js';
 import { cloneConfigSnapshot } from './editor-working-helpers.js';
 
@@ -103,16 +104,9 @@ export function findWorkingNode(session: ScadaEditorSession, nodeId: string): Sc
   return findNodeInSymbols(session.workingConfig.symbols, nodeId);
 }
 
-/** 在 symbols 数组中按 id 递归查找节点（含 group 子树）。 */
+/** 在 symbols 数组中按 id 递归查找节点（含 group 子树；WA-industrial-001 走共享原语）。 */
 export function findNodeInSymbols(symbols: ScadaSymbolNode[], id: string): ScadaSymbolNode | undefined {
-  for (const node of symbols) {
-    if (node.id === id) return node;
-    if (node.children) {
-      const found = findNodeInSymbols(node.children, id);
-      if (found) return found;
-    }
-  }
-  return undefined;
+  return findNodeById(symbols, id);
 }
 
 /** 投影 session → onSessionChange 载荷（canUndo/canRedo 经 undoStack 派生，E7.2 落地）。 */

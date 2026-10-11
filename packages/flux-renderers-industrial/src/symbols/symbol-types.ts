@@ -9,6 +9,22 @@ import type {
 
 export type LeafNode = IUI;
 
+/**
+ * WA-industrial-003 (plan 569): geometry-reading view of a leaf node. The
+ * leafer `IUI` type does not declare the geometry members every composite
+ * part actually carries, which had forced 42 `as unknown as { width... }`
+ * casts across the symbol factories — cast once via this narrowed view
+ * instead. Members stay optional: readers must keep their `?? fallback`
+ * semantics (the parts always carry the members they read).
+ */
+export type GeometryLeaf = LeafNode & {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  points?: number[];
+};
+
 export type ScadaSymbolCategory = 'shape' | 'device' | 'instrument' | 'sensor-control' | 'electrical' | 'pipe';
 
 export type ScadaFillStyle = Record<string, unknown> | string;
