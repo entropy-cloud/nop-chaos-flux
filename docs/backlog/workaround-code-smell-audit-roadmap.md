@@ -24,7 +24,7 @@
 > 状态流转：plan 通过独立 draft review → `todo` 改 `planned`；plan 通过 closure audit → `planned` 改 `done`（不得提前）。一个 plan 对应本文一个工作项；**执行顺序 = 本列表顺序**（AI 不得重排、不得跳项）。单个工作项执行中证实无法被一个 plan 收口时，经人工确认拆分为 successor 工作项（component-audit 先例），不得静默缩水验收口径。
 
 - WA-0. 审计基建（模块清单程序化枚举 + findings 台账 + 审计报告模板 + 字面/模式扫描脚本化基线）: `done`（plan: `docs/plans/560-workaround-audit-wa0-infra-plan.md`，closure audit 2026-10-11 通过）
-- WA-1. 编译与公式层审计批（flux-core + flux-formula + flux-compiler，约 19.9k 行）: `todo`（plan: —）
+- WA-1. 编译与公式层审计批（flux-core + flux-formula + flux-compiler，约 19.9k 行）: `done`（plan: `docs/plans/561-workaround-audit-wa1-compile-formula-plan.md`，closure audit 2026-10-11 approved；产出 CX-1/CX-2 两共性工作项）
 - WA-2. 运行时层审计批（flux-action-core + flux-runtime，约 20.5k 行）: `todo`（plan: —）
 - WA-3. React 渲染层与 UI 库审计批（flux-react + ui，约 17.8k 行）: `todo`（plan: —）
 - WA-4. 基础与表单渲染器审计批（flux-renderers-basic + flux-renderers-form，约 21.5k 行）: `todo`（plan: —）
@@ -42,6 +42,8 @@
 - WA-15a. playground 审计批一（complex-pages + taskflow-designer-lib + designer-hosts + ai + env + `src/` 根级散文件（App/main/route 等，约 2.5k 行）；注：`*-replica/` 目录仅含 CSS、`schemas/` 仅含 JSON，非 TS 审计对象；复刻页 schema 与行为面（`complex-pages/page-schemas/*.json` + `complex-pages/shared/mock-backend-*.ts`）随 complex-pages 在本批范围内；合计约 13.9k 行）: `todo`（plan: —）
 - WA-15b. playground 审计批二（pages 域 demo 页目录，约 20.1k 行）: `todo`（plan: —）
 - WA-15c. playground 审计批三（component-lab 组件实验场，约 17.6k 行）: `todo`（plan: —）
+- CX-1. 共性重构：编译公式层复制沉积收敛批（WA-1 批发现 WA-formula-001 状态提交策略块 4 份跨包逐字重复 ~110 行——formula/evaluate.ts ↔ compiler/runtime-value-compilation.ts，8181fff2a 提取时复制未共享，object key 检查已单向/双向分叉；WA-core-002 value-adapter in/out/validate 三联 ~95 行双份——ccc4ac7ed cq-4 Phase 2 整段复制，formatIssues 接缝单侧生效；根因=两次"提取"均选择复制而非共享原语；受影响模块 flux-formula + flux-compiler + flux-core；修复方向=flux-core 增 commitCompositeState 共享原语（4 份收敛）+ value-adapter 内部 buildActionBackedMethods 骨架提取（零 API 变更）；均非结构性增量，契约 §7c 无需人工确认；~250 行冗余 + 漂移面消除）: `todo`（plan: —；建议处理时机=WA-16 收口前，不阻断 WA-2 起线性批次）
+- CX-2. 共性重构：`CompiledTemplate.repeatedTemplates` 转正空壳契约字段移除（WA-1 批发现 WA-core-001，I 类转正：Plan 40 未竟特性的契约壳先行发布——出生 c6a3245a2 自述 transitional，`repeatedTemplates.set` 全历史零填充 6 个月+，W2 无出口；受影响模块 flux-core 契约（types/node-identity.ts）+ flux-compiler 三处空构造 + flux-react 守卫分支；修复方向=deprecated-feature-cleanup 流程（`@deprecated` + 文档记录在先）后删字段/伴生类型/空构造/守卫分支；**公共 API 删除属结构性重构，执行前人工确认**）: `todo`（plan: —；执行前人工确认门）
 - WA-16. 收口复检与门禁固化（跨批共性裁决对账 + 转正清单清零对账 + 复检轮 + 静态门禁扩展评估）: `todo`（plan: —）
 
 行数口径：2026-10-10 live 实测非测试源码行数（`find <pkg>/src -name "*.ts" -o -name "*.tsx" | grep -v test | xargs wc -l`），用于批次体量参考；批次内审计对象清单以 WA-0 枚举器输出为准，不手抄。

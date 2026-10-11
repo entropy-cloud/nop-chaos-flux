@@ -37,6 +37,9 @@ export type SchemaDiagnosticCode =
   | 'invalid-reaction-deps'
   | 'invalid-reaction-deep-path'
   | 'invalid-reaction-immediate'
+  | 'invalid-reaction-debounce'
+  | 'invalid-reaction-once'
+  | 'invalid-reaction-control'
   | 'conflicting-field-definition';
 
 export interface SchemaDiagnosticSourceLocation {

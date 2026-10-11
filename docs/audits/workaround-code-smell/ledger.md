@@ -20,9 +20,9 @@
 | flux-action-core             | package    | WA-2   | pending | 2087  | 11    |      |
 | flux-bundle                  | package    | WA-14  | pending | 145   | 3     |      |
 | flux-code-editor             | package    | WA-10  | pending | 3376  | 25    |      |
-| flux-compiler                | package    | WA-1   | pending | 7762  | 40    |      |
-| flux-core                    | package    | WA-1   | pending | 9202  | 71    |      |
-| flux-formula                 | package    | WA-1   | pending | 3515  | 20    |      |
+| flux-compiler                | package    | WA-1   | audited | 7744  | 40    |      |
+| flux-core                    | package    | WA-1   | audited | 9211  | 71    |      |
+| flux-formula                 | package    | WA-1   | audited | 3515  | 20    |      |
 | flux-i18n                    | package    | WA-14  | pending | 4212  | 6     |      |
 | flux-print-core              | package    | WA-10  | pending | 1548  | 10    |      |
 | flux-print-renderers         | package    | WA-10  | pending | 2052  | 11    |      |
@@ -32,17 +32,17 @@
 | flux-renderers-basic         | package    | WA-4   | pending | 6527  | 34    |      |
 | flux-renderers-content       | package    | WA-7   | pending | 5879  | 39    |      |
 | flux-renderers-dashboard     | package    | WA-8   | pending | 2629  | 16    |      |
-| flux-renderers-data          | package    | WA-6   | pending | 22302 | 114   |      |
-| flux-renderers-form          | package    | WA-4   | pending | 15398 | 91    |      |
+| flux-renderers-data          | package    | WA-6   | pending | 22319 | 114   |      |
+| flux-renderers-form          | package    | WA-4   | pending | 15464 | 91    |      |
 | flux-renderers-form-advanced | package    | WA-5   | pending | 17863 | 70    |      |
 | flux-renderers-graph         | package    | WA-10  | pending | 1402  | 10    |      |
 | flux-renderers-industrial    | package    | WA-9   | pending | 22307 | 165   |      |
-| flux-renderers-layout        | package    | WA-7   | pending | 4226  | 19    |      |
+| flux-renderers-layout        | package    | WA-7   | pending | 4254  | 19    |      |
 | flux-renderers-map           | package    | WA-10  | pending | 1924  | 11    |      |
 | flux-renderers-mobile        | package    | WA-7   | pending | 2156  | 11    |      |
 | flux-renderers-pivot         | package    | WA-8   | pending | 1228  | 7     |      |
 | flux-renderers-scheduling    | package    | WA-8   | pending | 13436 | 90    |      |
-| flux-runtime                 | package    | WA-2   | pending | 18416 | 84    |      |
+| flux-runtime                 | package    | WA-2   | pending | 18420 | 84    |      |
 | nop-debugger                 | package    | WA-14  | pending | 7429  | 30    |      |
 | page-designer-core           | package    | WA-12  | pending | 1722  | 13    |      |
 | page-designer-renderers      | package    | WA-13a | pending | 3910  | 25    |      |
@@ -66,5 +66,12 @@
 
 <!-- ledger:findings -->
 
-| id  | module | category | severity | location | status | disposition | note |
-| --- | ------ | -------- | -------- | -------- | ------ | ----------- | ---- |
+| id              | module        | category | severity | location                                                                                          | status   | disposition        | note                                                                                                                                                                                                                                                                                                            |
+| --------------- | ------------- | -------- | -------- | ------------------------------------------------------------------------------------------------- | -------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WA-core-001     | flux-core     | I        | P1       | types/node-identity.ts:207-216（+ flux-compiler schema-compiler.ts:154,195,222 空构造）           | found    | successor-required | 转正过渡字段 repeatedTemplates 空壳 6 个月（出生 c6a3245a2 Plan 40 自述 transitional，全历史零填充）；公共 API 删除走 deprecated-feature-cleanup 流程，结构性→执行前人工确认；successor=CX-2                                                                                                                    |
+| WA-core-002     | flux-core     | H        | P2       | value-adapter.ts:286-390 ↔ :503-599                                                               | found    | successor-required | in/out/validate 三联 ~95 行双份（出生 ccc4ac7ed cq-4 Phase 2，formatIssues 接缝单侧生效）；内部提取零 API 变更，并入 CX-1 Phase 2                                                                                                                                                                               |
+| WA-formula-001  | flux-formula  | H        | P1       | evaluate.ts:154-181,219-246（+ flux-compiler runtime-value-compilation.ts:164-187,266-289）       | found    | successor-required | 状态提交策略 4 份跨包 ~110 行（8181fff2a 提取时复制未共享）；提取 flux-core commitCompositeState 共享原语；CX-1 Phase 1                                                                                                                                                                                         |
+| WA-formula-002  | flux-formula  | H        | P3       | compile/pipe-syntax.ts:17-60 ↔ :66-113                                                            | found    | watch-only         | 顶层扫描骨架 2 份 ~35 行稳定（末次实质修改 a8002125c）；与 lexer 引号集一致无分叉；登记防漂移                                                                                                                                                                                                                   |
+| WA-formula-003  | flux-formula  | H        | P3       | builtins.ts:100-150（ARRAY\* ×6）                                                                 | found    | watch-only         | 表状注册惯用形 ~24 行零漂移；P1 默认降档理由在案（§3 两份稳定/惯用形不立案精神）；防缓增                                                                                                                                                                                                                        |
+| WA-compiler-001 | flux-compiler | H        | P1       | schema-compiler/shape-validation-rules-reaction.ts:126-215,220-271（+ rules-structural.ts:43-95） | verified |                    | 根路径数组校验 3 份收敛（validateRootPathArray 原语）+ v1 禁用块表驱动 + debounce/once/control 独立诊断码（union 纯增量 3 字面量）；红→绿 13/13、包全量 558/558、core 655/655；复检：closure audit（agent_daec2974）动态判别力实证（回退源文件保留新测试→恰好 4 failed）+ 本体删除三连验证 + 隔离五门禁全绿复现 |
+| WA-compiler-002 | flux-compiler | D        | P3       | action-compiler.ts:121-135（对照 source-compiler.ts:13-22）                                       | found    | watch-only         | asRuntimeValue 接缝半程收口（注释宣称六处仅兑现三处）；~15 分钟修复候选随下次触碰顺带；登记 W3 不一致                                                                                                                                                                                                           |

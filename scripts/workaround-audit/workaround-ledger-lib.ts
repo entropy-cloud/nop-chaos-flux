@@ -43,11 +43,6 @@ export interface ParsedLedger {
   findings: Map<string, string[]>;
 }
 
-interface LedgerFindingRef {
-  status: string;
-  disposition: string;
-}
-
 function parseSection(
   ledgerText: string,
   sectionMarker: string,
@@ -138,12 +133,4 @@ export function serializeLedger(
       'note',
     ]);
   return preamble + '\n' + moduleSection + '\n\n' + findingsSection + '\n';
-}
-
-export function isUnresolvedFinding(finding: LedgerFindingRef): boolean {
-  const status = finding.status;
-  const disposition = finding.disposition;
-  if (status === 'pending') return true;
-  if (status === 'found') return !FINDING_DISPOSITIONS.includes(disposition);
-  return false;
 }
