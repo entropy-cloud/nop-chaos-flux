@@ -357,6 +357,13 @@ export const enUS: Resource = {
     cron: {
       modeVisual: 'Visual',
       modeText: 'Expression',
+      dowSunday: 'Sunday',
+      dowMonday: 'Monday',
+      dowTuesday: 'Tuesday',
+      dowWednesday: 'Wednesday',
+      dowThursday: 'Thursday',
+      dowFriday: 'Friday',
+      dowSaturday: 'Saturday',
       segSecond: 'Second',
       segMinute: 'Minute',
       segHour: 'Hour',

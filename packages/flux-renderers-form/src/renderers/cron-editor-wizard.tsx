@@ -59,7 +59,10 @@ function numberOrUndefined(v: string): number | undefined {
   return v === '' ? undefined : Number(v);
 }
 
-const DOW_LABEL_KEYS = ['Second', 'Minute', 'Hour', 'Day', 'Month', 'Week', 'Year'];
+// WA-form-002: weekday option labels keyed by their own i18n vocabulary — the
+// previous list copied the CRON_SEGMENTS-derived keys, rendering segment names
+// (秒/分/时/…) as weekday labels.
+const DOW_LABEL_KEYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** 四档结构化字段编辑（时间三段 + 档位专属字段）；编译提交由调用方经 commitWizard 门控 */
 export function CronEditorWizard({ tier, fields, disabled, onFieldsChange }: CronEditorWizardProps) {
@@ -95,7 +98,7 @@ export function CronEditorWizard({ tier, fields, disabled, onFieldsChange }: Cro
           >
             {[0, 1, 2, 3, 4, 5, 6].map((dow) => (
               <option key={dow} value={dow}>
-                {t(`flux.cron.seg${DOW_LABEL_KEYS[dow]}` as Parameters<typeof t>[0])}
+                {t(`flux.cron.dow${DOW_LABEL_KEYS[dow]}` as Parameters<typeof t>[0])}
               </option>
             ))}
           </NativeSelect>

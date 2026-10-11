@@ -180,7 +180,16 @@ function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
         nextActiveValue = candidate;
       }
     }
-    commitCollection(() => next);
+    // WA-basic-002: resolve against the live collection at commit time — a
+    // snapshot-committed absolute value would drop a same-tick sibling
+    // mutation (the 13-03 mechanism, fixed here for the remaining three ops).
+    commitCollection((prev) => {
+      const at = prev.findIndex((item, i) => getItemValue(item, i) === value);
+      if (at < 0) {
+        return prev;
+      }
+      return prev.filter((_, i) => i !== at);
+    });
     const closePayload = {
       type: 'tabs:tab-close',
       value,
@@ -203,7 +212,13 @@ function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
       return { ok: false };
     }
     const next = source.map((item, i) => (i === index ? { ...item, title: normalized } : item));
-    commitCollection(() => next);
+    commitCollection((prev) => {
+      const at = prev.findIndex((item, i) => getItemValue(item, i) === value);
+      if (at < 0) {
+        return prev;
+      }
+      return prev.map((item, i) => (i === at ? { ...item, title: normalized } : item));
+    });
     const renamePayload = {
       type: 'tabs:tab-rename',
       value,
@@ -228,7 +243,17 @@ function createTabsViewOps(input: TabsViewOpsInput): TabsViewOps {
     const next = [...source];
     const [moved] = next.splice(fromIndex, 1);
     next.splice(clamped, 0, moved!);
-    commitCollection(() => next);
+    commitCollection((prev) => {
+      const from = prev.findIndex((item, i) => getItemValue(item, i) === value);
+      if (from < 0) {
+        return prev;
+      }
+      const target = Math.max(0, Math.min(prev.length - 1, Math.trunc(toIndex)));
+      const arr = [...prev];
+      const [movedItem] = arr.splice(from, 1);
+      arr.splice(target, 0, movedItem!);
+      return arr;
+    });
     const movePayload = { type: 'tabs:tab-move', value, fromIndex, toIndex: clamped };
     void events.onTabMove?.(movePayload, eventDispatchCtx(movePayload));
     return { ok: true, toIndex: clamped };

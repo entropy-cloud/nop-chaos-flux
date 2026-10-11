@@ -354,6 +354,13 @@ export const zhCN: Resource = {
     cron: {
       modeVisual: '可视化',
       modeText: '表达式',
+      dowSunday: '周日',
+      dowMonday: '周一',
+      dowTuesday: '周二',
+      dowWednesday: '周三',
+      dowThursday: '周四',
+      dowFriday: '周五',
+      dowSaturday: '周六',
       segSecond: '秒',
       segMinute: '分',
       segHour: '时',
