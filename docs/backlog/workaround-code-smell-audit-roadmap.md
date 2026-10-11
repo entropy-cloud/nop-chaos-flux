@@ -23,7 +23,7 @@
 > **这是全文件唯一的动态状态区。更新状态只改这里。**
 > 状态流转：plan 通过独立 draft review → `todo` 改 `planned`；plan 通过 closure audit → `planned` 改 `done`（不得提前）。一个 plan 对应本文一个工作项；**执行顺序 = 本列表顺序**（AI 不得重排、不得跳项）。单个工作项执行中证实无法被一个 plan 收口时，经人工确认拆分为 successor 工作项（component-audit 先例），不得静默缩水验收口径。
 
-- WA-0. 审计基建（模块清单程序化枚举 + findings 台账 + 审计报告模板 + 字面/模式扫描脚本化基线）: `todo`（plan: —）
+- WA-0. 审计基建（模块清单程序化枚举 + findings 台账 + 审计报告模板 + 字面/模式扫描脚本化基线）: `done`（plan: `docs/plans/560-workaround-audit-wa0-infra-plan.md`，closure audit 2026-10-11 通过）
 - WA-1. 编译与公式层审计批（flux-core + flux-formula + flux-compiler，约 19.9k 行）: `todo`（plan: —）
 - WA-2. 运行时层审计批（flux-action-core + flux-runtime，约 20.5k 行）: `todo`（plan: —）
 - WA-3. React 渲染层与 UI 库审计批（flux-react + ui，约 17.8k 行）: `todo`（plan: —）
@@ -103,6 +103,7 @@
 
 - 模块清单程序化枚举：生成 41 包 + playground 三族批次的对象清单（包 × 非测试源码行数 × 文件清单 × 字面/模式扫描基线计数），落 `docs/audits/workaround-code-smell/inventory/`，带再生成命令。
 - findings 台账 `docs/audits/workaround-code-smell/ledger.md`：ID 规则 `WA-<pkg短名>-<seq>`（如 `WA-runtime-001`）、状态机、去向四态、对账命令。**对账口径**：`uncovered` = 枚举清单中未出现在任何批次报告覆盖声明里的模块/文件；`未处置` = 台账仍处 `pending`/`found` 的行；对账命令须输出可机器判定的计数（`audited / uncovered / findings / found / fixed / verified / watch / withdrawn / n-a`），**uncovered=0 且未处置=0 为 WA-16 关闭前置**。
+  - 勘误（plan 560 draft review R1 裁定，2026-10-11）：`未处置` 精化为 **`pending` 行 + 无显式去向的 `found` 行**——`found` 带去向四态之一即已显式处置。理由：上行原字面定义与本表自动修复契约 §5「批 closure 前 P0/P1 不得残留 `found` 未处置」的偏正结构矛盾（该句预设 found 行可已处置），且 strict 读法下任何合法 watch-only 行都使 WA-16「未处置=0」数学上不可满足，与去向四态零静默设计矛盾。
 - 审计报告模板：按 prompt §6 单条发现模板 + 汇总五项固化为 `docs/audits/workaround-code-smell/report-template.md`。**批次报告目录命名钉死为小写批次号**：`docs/audits/workaround-code-smell/wa-1/` … `wa-16/`（CX-n 项报告目录 `cx-<n>/`）。
 - 不做产品代码修改。
 

@@ -78,7 +78,9 @@
     "visual:inventory": "vitest run --config scripts/visual-quality/vitest.inventory.config.ts",
     "visual:reconcile": "node scripts/visual-quality/reconcile-coverage.mjs",
     "interaction:inventory": "vitest run --config scripts/interaction-state/vitest.inventory.config.ts",
-    "interaction:reconcile": "node scripts/interaction-state/reconcile-coverage.mjs"
+    "interaction:reconcile": "node scripts/interaction-state/reconcile-coverage.mjs",
+    "workaround:inventory": "vitest run --config scripts/workaround-audit/vitest.inventory.config.ts",
+    "workaround:reconcile": "node scripts/workaround-audit/reconcile-coverage.ts"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
