@@ -650,7 +650,6 @@
   }
 }
 
-
 /* ═══════════════════════════════════════════════════════════════
    Dark-mode token overrides (plan 2026-09-29-5 R2-U2).
    Selector follows the repo mechanism: [data-mode='dark'] with a
@@ -796,4 +795,100 @@
 .nop-diff-view [data-slot='diff-file-list'] [role='button']:focus-visible {
   outline: 2px solid var(--nop-diff-accent);
   outline-offset: -2px;
+}
+
+/* Syntax highlighting token colors (WA-content-007, plan 567). The highlight
+   adapter emits `hl-hljs-*` classes (its `hl-` prefix joined onto lowlight's
+   `hljs-*` grammar classes); before this block those classes had zero CSS
+   rules — the second link of the dead-feature chain. Following the file's
+   token discipline, palette values live in `--nop-diff-hl-*` variables with
+   dark-mode overrides driven by the same mechanism as the token block above
+   ([data-mode='dark'] + prefers-color-scheme fallback). */
+.nop-diff-view {
+  --nop-diff-hl-keyword: oklch(50% 0.16 275);
+  --nop-diff-hl-string: oklch(48% 0.12 150);
+  --nop-diff-hl-number: oklch(55% 0.12 65);
+  --nop-diff-hl-comment: var(--nop-diff-gutter-text);
+  --nop-diff-hl-title: oklch(48% 0.12 230);
+  --nop-diff-hl-attr: oklch(52% 0.1 45);
+  --nop-diff-hl-deletion: oklch(48% 0.14 25);
+}
+
+[data-mode='dark'] .nop-diff-view {
+  --nop-diff-hl-keyword: oklch(78% 0.12 275);
+  --nop-diff-hl-string: oklch(78% 0.1 150);
+  --nop-diff-hl-number: oklch(80% 0.1 65);
+  --nop-diff-hl-comment: oklch(65% 0.01 250);
+  --nop-diff-hl-title: oklch(78% 0.1 230);
+  --nop-diff-hl-attr: oklch(78% 0.08 45);
+  --nop-diff-hl-deletion: oklch(75% 0.1 25);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode='light']) .nop-diff-view {
+    --nop-diff-hl-keyword: oklch(78% 0.12 275);
+    --nop-diff-hl-string: oklch(78% 0.1 150);
+    --nop-diff-hl-number: oklch(80% 0.1 65);
+    --nop-diff-hl-comment: oklch(65% 0.01 250);
+    --nop-diff-hl-title: oklch(78% 0.1 230);
+    --nop-diff-hl-attr: oklch(78% 0.08 45);
+    --nop-diff-hl-deletion: oklch(75% 0.1 25);
+  }
+}
+
+.nop-diff-view .hl-hljs-keyword,
+.nop-diff-view .hl-hljs-selector-tag,
+.nop-diff-view .hl-hljs-literal,
+.nop-diff-view .hl-hljs-section,
+.nop-diff-view .hl-hljs-doctag,
+.nop-diff-view .hl-hljs-type,
+.nop-diff-view .hl-hljs-name,
+.nop-diff-view .hl-hljs-strong {
+  color: var(--nop-diff-hl-keyword);
+  font-weight: 600;
+}
+
+.nop-diff-view .hl-hljs-string,
+.nop-diff-view .hl-hljs-regexp,
+.nop-diff-view .hl-hljs-addition,
+.nop-diff-view .hl-hljs-quote,
+.nop-diff-view .hl-hljs-meta .hl-hljs-string {
+  color: var(--nop-diff-hl-string);
+}
+
+.nop-diff-view .hl-hljs-number,
+.nop-diff-view .hl-hljs-symbol,
+.nop-diff-view .hl-hljs-bullet,
+.nop-diff-view .hl-hljs-link {
+  color: var(--nop-diff-hl-number);
+}
+
+.nop-diff-view .hl-hljs-comment,
+.nop-diff-view .hl-hljs-meta {
+  color: var(--nop-diff-hl-comment);
+  font-style: italic;
+}
+
+.nop-diff-view .hl-hljs-title,
+.nop-diff-view .hl-hljs-title.function_,
+.nop-diff-view .hl-hljs-built_in,
+.nop-diff-view .hl-hljs-class .hl-hljs-title {
+  color: var(--nop-diff-hl-title);
+}
+
+.nop-diff-view .hl-hljs-attr,
+.nop-diff-view .hl-hljs-attribute,
+.nop-diff-view .hl-hljs-variable,
+.nop-diff-view .hl-hljs-template-variable,
+.nop-diff-view .hl-hljs-property,
+.nop-diff-view .hl-hljs-params {
+  color: var(--nop-diff-hl-attr);
+}
+
+.nop-diff-view .hl-hljs-deletion {
+  color: var(--nop-diff-hl-deletion);
+}
+
+.nop-diff-view .hl-hljs-emphasis {
+  font-style: italic;
 }

@@ -210,7 +210,6 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
   const schemaViewType = (resolved.viewType || 'split') as 'split' | 'unified';
   const [singleViewType, setSingleViewType] = useState<'split' | 'unified'>(schemaViewType);
   const [expansionState, setExpansionState] = useState<ExpansionState>('normal');
-  const [remountKey, setRemountKey] = useState(0);
   const viewTypeRef = useRef(singleViewType);
   useEffect(() => {
     viewTypeRef.current = singleViewType;
@@ -295,12 +294,10 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
             }
             case 'expandAll':
               setExpansionState('all-expanded');
-              setRemountKey((k) => k + 1);
               dispatchReaction('expandAll');
               return { ok: true };
             case 'collapseAll':
               setExpansionState('all-collapsed');
-              setRemountKey((k) => k + 1);
               dispatchReaction('collapseAll');
               return { ok: true };
             default:
@@ -344,7 +341,6 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
     }
     return (
       <CrossFileDiffView
-        key={remountKey}
         files={files ?? []}
         activeFileIndex={resolved.activeFileIndex ?? 0}
         language={language}
@@ -380,7 +376,6 @@ export function DiffViewRenderer(allProps: RendererComponentProps<DiffViewSchema
 
   return (
     <SingleFileDiff
-      key={remountKey}
       oldContent={oldContent}
       newContent={newContent}
       middleContent={middleContent}

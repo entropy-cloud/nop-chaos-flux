@@ -1,9 +1,16 @@
-import React, { startTransition, useEffect, useMemo, useRef, useState } from 'react';
-import { getIn, type RendererComponentProps, type RendererRenderOutput } from '@nop-chaos/flux-core';
-import { unwrapPreservedLiteral, useRenderScope, useScopeSelector, unwrapBooleanLiteral } from '@nop-chaos/flux-react';
+import React, { useMemo, useState } from 'react';
+import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import { unwrapPreservedLiteral, unwrapBooleanLiteral } from '@nop-chaos/flux-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import type { CollapseItemSchema, CollapseSchema } from './schemas.js';
+import { compiledItems } from './compiled-items.js';
+import {
+  resolveOwnershipMode,
+  useOwnershipScopeValue,
+  useScopeWrite,
+  useWarnScopeDegraded,
+} from './value-ownership.js';
 
 type CompiledCollapseItem = CollapseItemSchema & {
   titleRegionKey?: string;
@@ -26,14 +33,6 @@ function isItemDisabled(item: CompiledCollapseItem): boolean {
   return unwrapBooleanLiteral(item.disabled);
 }
 
-function warnScopeDegraded() {
-  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-    console.warn(
-      '[nop-collapse] valueOwnership=scope requires valueStatePath; falling back to local controlled.',
-    );
-  }
-}
-
 function toKeyArray(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value.map((v) => String(v));
@@ -44,43 +43,17 @@ function toKeyArray(value: unknown): string[] {
   return [];
 }
 
-const UNUSED: unique symbol = Symbol('unused');
-
 function useCollapseValue(props: RendererComponentProps<CollapseSchema>) {
   const schemaProps = props.props;
-  const declaredOwnership = (schemaProps.valueOwnership as string) ?? 'local';
-  const statePath =
-    typeof schemaProps.valueStatePath === 'string' ? schemaProps.valueStatePath : undefined;
-  // Effective ownership: scope without valueStatePath degrades to local controlled
-  // (+ dev warning), matching the steps renderer (C5.1 P1-1) — a silent no-op
-  // click target would be an un-recoverable control.
-  const scopeDegraded = declaredOwnership === 'scope' && !statePath;
-  const ownership = scopeDegraded ? 'local' : (declaredOwnership as 'local' | 'controlled' | 'scope');
-
-  const warnedRef = useRef(false);
-  useEffect(() => {
-    if (scopeDegraded && !warnedRef.current) {
-      warnScopeDegraded();
-      warnedRef.current = true;
-    }
-  }, [scopeDegraded]);
+  const { ownership, statePath, scopeDegraded } = resolveOwnershipMode(schemaProps);
+  // Scope without valueStatePath degrades to local controlled (+ dev warning),
+  // matching the steps renderer (C5.1 P1-1) — a silent no-op click target
+  // would be an un-recoverable control.
+  useWarnScopeDegraded(scopeDegraded, 'nop-collapse');
 
   const multiple = schemaProps.multiple !== false;
-  const renderScope = useRenderScope();
 
-  const scopeValue = useScopeSelector(
-    ownership === 'scope' && statePath
-      ? (scopeData) => getIn(scopeData, statePath) as unknown
-      : () => UNUSED as unknown,
-    Object.is,
-    {
-      enabled: ownership === 'scope' && Boolean(statePath),
-      fallback: undefined,
-      paths: ownership === 'scope' && statePath ? [statePath] : undefined,
-    },
-  );
-
-  const effectiveScopeValue = scopeValue === (UNUSED as unknown) ? undefined : scopeValue;
+  const effectiveScopeValue = useOwnershipScopeValue(ownership, statePath);
 
   const computeInitial = (): string[] => {
     const source =
@@ -103,13 +76,13 @@ function useCollapseValue(props: RendererComponentProps<CollapseSchema>) {
 
   const expandedSet = useMemo(() => new Set(expanded), [expanded]);
 
+  const writeScope = useScopeWrite();
+
   const setExpanded = (next: string[]) => {
     if (ownership === 'local') {
       setLocalExpanded(next);
     } else if (ownership === 'scope' && statePath) {
-      startTransition(() => {
-        renderScope.update(statePath, multiple ? next : (next[0] ?? null));
-      });
+      writeScope(statePath, multiple ? next : (next[0] ?? null));
       setLocalExpanded(next);
     }
   };
@@ -127,9 +100,7 @@ function useCollapseValue(props: RendererComponentProps<CollapseSchema>) {
 
 export function CollapseRenderer(props: RendererComponentProps<CollapseSchema>) {
   const schemaProps = props.props;
-  const rawItems = Array.isArray(schemaProps.items)
-    ? (schemaProps.items as unknown as CompiledCollapseItem[])
-    : [];
+  const rawItems = compiledItems<CompiledCollapseItem>(schemaProps.items);
   const collapsible = schemaProps.collapsible !== false;
   const { multiple, expandedSet, toggleKey, setExpanded } = useCollapseValue(props);
 

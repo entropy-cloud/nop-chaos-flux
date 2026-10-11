@@ -94,6 +94,14 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
     }
   }, [effectiveSrc]);
 
+  // The failure notification is read through a ref so the fetch effect keeps
+  // its [fetcher, helpers] identity deps (re-running it would re-dispatch the
+  // fetch on every events-object rotation).
+  const onLoadErrorRef = React.useRef<(() => void) | undefined>(undefined);
+  React.useEffect(() => {
+    onLoadErrorRef.current = props.events.onLoadError;
+  });
+
   React.useEffect(() => {
     if (!fetcher) {
       setFetcherSrc(undefined);
@@ -110,12 +118,17 @@ export function ImageRenderer(props: RendererComponentProps<ImageSchema>) {
         if (uri) {
           setFetcherSrc(uri);
         } else {
+          // WA-content-005: the src path fires onLoadError on failure — the
+          // fetcher path must honor the same schema contract (both paths show
+          // the fallback placeholder, so both must notify).
           setErrored(true);
+          void onLoadErrorRef.current?.();
         }
       })
       .catch(() => {
         if (signal.aborted) return;
         setErrored(true);
+        void onLoadErrorRef.current?.();
       })
       .finally(() => {
         if (!signal.aborted) setFetcherLoading(false);

@@ -1,4 +1,4 @@
-import { memo, useCallback, useState, type CSSProperties } from 'react';
+import { memo, useState, type CSSProperties } from 'react';
 import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffHunk as DiffHunkType } from '../model/diff-file.js';
@@ -17,6 +17,12 @@ interface DiffHunkProps {
   onLineClick?: (lineNumber: number, type: string) => void;
 }
 
+function computeDefaultHidden(defaultCollapsedLines: number, contextLines: number): boolean {
+  if (defaultCollapsedLines < 0) return true;
+  if (defaultCollapsedLines === 0) return false;
+  return contextLines > defaultCollapsedLines;
+}
+
 export const DiffHunkComponent = memo(function DiffHunkComponent({
   hunk,
   hunkIndex,
@@ -28,20 +34,25 @@ export const DiffHunkComponent = memo(function DiffHunkComponent({
   onHunkExpand,
   onLineClick,
 }: DiffHunkProps) {
-  const [isHidden, setIsHidden] = useState(() => {
-    if (defaultCollapsedLines < 0) return true;
-    if (defaultCollapsedLines === 0) return false;
-    const contextLines = hunk.lines.filter((l) => l.type === 'context').length;
-    return contextLines > defaultCollapsedLines;
-  });
+  const contextLines = hunk.lines.filter((l) => l.type === 'context').length;
 
-  const toggleExpand = useCallback(() => {
-    setIsHidden((prev) => {
-      const next = !prev;
-      onHunkExpand?.(hunkIndex, !next);
-      return next;
-    });
-  }, [hunkIndex, onHunkExpand]);
+  // WA-content-004 (plan 567): expansion commands (expandAll/collapseAll) flow
+  // down as a changed `defaultCollapsedLines` (derived from expansionState).
+  // The mount-time capture ignored those changes, which is why the renderer
+  // used to force a full remount (remountKey) — discarding cross-file
+  // selection along the way. Derived at render time instead: a user toggle is
+  // recorded together with the default it was made against, so it wins until
+  // the next command arrives (a changed default invalidates the override).
+  const [userOverride, setUserOverride] = useState<{ from: number; hidden: boolean } | null>(null);
+  const isHidden =
+    userOverride && userOverride.from === defaultCollapsedLines
+      ? userOverride.hidden
+      : computeDefaultHidden(defaultCollapsedLines, contextLines);
+
+  const toggleExpand = () => {
+    setUserOverride({ from: defaultCollapsedLines, hidden: !isHidden });
+    onHunkExpand?.(hunkIndex, isHidden);
+  };
 
   const contentStyle: CSSProperties = {
     maxHeight: isHidden ? '0' : '9999px',

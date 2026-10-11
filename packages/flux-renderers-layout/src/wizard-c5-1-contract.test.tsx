@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createLayoutSchemaRenderer, env, formulaCompiler } from './test-support.js';
 
 function wizardRoot() {
@@ -166,6 +166,10 @@ describe('WizardRenderer C5.1 audit contract regression', () => {
       />,
     );
 
+    // WA-layout-003: the abort is safe, but the guard throw must be observable
+    // (dev, once) — this first-triggering test pins the warn (warn semantics
+    // are once-per-session, so a later test would never see it).
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     fireEvent.click(
       document.querySelector(
         '[data-slot="wizard-step-nav-button"][data-step-index="1"]',
@@ -177,6 +181,8 @@ describe('WizardRenderer C5.1 audit contract regression', () => {
     await waitFor(() =>
       expect(wizardRoot().getAttribute('data-current-step-index')).toBe('0'),
     );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('wizard-transition-guard-blocked'));
+    warn.mockRestore();
   });
 
   it('skips hidden steps in the nav and linear progression, and completes on the last visible step', async () => {

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { unwrapPreservedLiteral } from '@nop-chaos/flux-react';
 import { Button, ButtonGroup, cn } from '@nop-chaos/ui';
 import type { ButtonGroupItemSchema, ButtonGroupSchema } from './schemas.js';
+import { compiledItems } from './compiled-items.js';
 
 type ResolvedItem = ButtonGroupItemSchema;
 
@@ -43,9 +44,7 @@ function resolveSelectionMode(value: unknown): 'none' | 'single' | 'multiple' {
 
 export function ButtonGroupRenderer(props: RendererComponentProps<ButtonGroupSchema>) {
   const schemaProps = props.props;
-  const rawItems = Array.isArray(schemaProps.items)
-    ? (schemaProps.items as unknown as ResolvedItem[])
-    : [];
+  const rawItems = compiledItems<ResolvedItem>(schemaProps.items);
   const orientation =
     schemaProps.orientation === 'vertical' ? 'vertical' : 'horizontal';
   const groupVariant = (schemaProps.variant as string) ?? 'outline';

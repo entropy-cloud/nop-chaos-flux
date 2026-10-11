@@ -1,6 +1,5 @@
-import React, { startTransition, useEffect, useRef, useState } from 'react';
-import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import React from 'react';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { resolveCurrentIndex } from './step-index.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn, resolveLucideIcon } from '@nop-chaos/ui';
@@ -10,16 +9,7 @@ import type {
   TimelineMode,
   TimelineSchema,
 } from './schemas.js';
-
-const UNUSED: unique symbol = Symbol('unused');
-
-function warnScopeDegraded() {
-  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-    console.warn(
-      '[nop-timeline] valueOwnership=scope requires valueStatePath; falling back to local controlled.',
-    );
-  }
-}
+import { useValueOwnershipValue } from './value-ownership.js';
 
 const LEVEL_DOT_CLASS: Record<TimelineItemLevel, string> = {
   default: 'bg-muted-foreground',
@@ -65,78 +55,6 @@ const timelineItemValue = (item: TimelineItemSchema) => item.value;
 const resolveEventIndex = (value: unknown, items: TimelineItemSchema[]) =>
   resolveCurrentIndex(value, items, timelineItemValue);
 
-function useTimelineValue(props: RendererComponentProps<TimelineSchema>) {
-  const schemaProps = props.props;
-  const declaredOwnership = (schemaProps.valueOwnership as string) ?? 'local';
-  const statePath =
-    typeof schemaProps.valueStatePath === 'string' ? schemaProps.valueStatePath : undefined;
-
-  // Effective ownership: scope without valueStatePath degrades to local controlled (+ dev warn).
-  const scopeDegraded = declaredOwnership === 'scope' && !statePath;
-  const ownership = scopeDegraded ? 'local' : (declaredOwnership as 'local' | 'controlled' | 'scope');
-
-  const warnedRef = useRef(false);
-  useEffect(() => {
-    if (scopeDegraded && !warnedRef.current) {
-      warnScopeDegraded();
-      warnedRef.current = true;
-    }
-  }, [scopeDegraded]);
-
-  const renderScope = useRenderScope();
-
-  const scopeValue = useScopeSelector(
-    ownership === 'scope' && statePath
-      ? (scopeData) => getIn(scopeData, statePath) as unknown
-      : () => UNUSED as unknown,
-    Object.is,
-    {
-      enabled: ownership === 'scope' && Boolean(statePath),
-      fallback: undefined,
-      paths: ownership === 'scope' && statePath ? [statePath] : undefined,
-    },
-  );
-  const effectiveScopeValue = scopeValue === (UNUSED as unknown) ? undefined : scopeValue;
-
-  const computeInitial = (): string | number | undefined => {
-    if (ownership === 'controlled') return schemaProps.value as string | number | undefined;
-    if (ownership === 'scope') {
-      return (
-        (effectiveScopeValue as string | number | undefined) ??
-        schemaProps.value ??
-        schemaProps.defaultValue
-      );
-    }
-    return (
-      (schemaProps.value as string | number | undefined) ??
-      (schemaProps.defaultValue as string | number | undefined)
-    );
-  };
-
-  const [localValue, setLocalValue] = useState<string | number | undefined>(computeInitial);
-
-  const currentValue =
-    ownership === 'controlled'
-      ? schemaProps.value
-      : ownership === 'scope'
-        ? effectiveScopeValue ?? schemaProps.value ?? localValue
-        : localValue;
-
-  const setValue = (next: string | number | undefined) => {
-    if (ownership === 'local') {
-      setLocalValue(next);
-    } else if (ownership === 'scope' && statePath) {
-      startTransition(() => {
-        renderScope.update(statePath, next ?? null);
-      });
-      setLocalValue(next);
-    }
-    // controlled: clicks dispatch onChange but do NOT mutate (parent must update value).
-  };
-
-  return { ownership, currentValue, setValue };
-}
-
 export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) {
   const schemaProps = props.props;
   const items = normalizeItems(schemaProps.items);
@@ -144,7 +62,7 @@ export function TimelineRenderer(props: RendererComponentProps<TimelineSchema>) 
   const orientation = schemaProps.orientation === 'horizontal' ? 'horizontal' : 'vertical';
   const reverse = schemaProps.reverse === true;
   const clickable = typeof props.events.onChange === 'function';
-  const { ownership, currentValue, setValue } = useTimelineValue(props);
+  const { ownership, currentValue, setValue } = useValueOwnershipValue(schemaProps, 'nop-timeline');
 
   // Render-layer adjudication (v2): current value -> key/index match; unmatched
   // falls back to defaultValue; still unmatched -> NO active state (explicitly

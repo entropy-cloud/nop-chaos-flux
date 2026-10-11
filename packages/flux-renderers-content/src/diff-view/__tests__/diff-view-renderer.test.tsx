@@ -396,6 +396,26 @@ describe('DiffViewRenderer', () => {
     expect(fileName).toBe('src/index.ts');
   });
 
+  // WA-content-004: expandAll/collapseAll used to force a remount (remountKey)
+  // to propagate collapse state — which reset CrossFileDiffView's active index
+  // back to the initial file, discarding the user's selection.
+  it('keeps the user file selection when expandAll is invoked after switching files (WA-content-004)', () => {
+    render(
+      <DiffViewRenderer
+        {...createMockProps({ files: crossFileFiles, activeFileIndex: 0 })}
+      />,
+    );
+    fireEvent.click(screen.getByText('src/utils.ts'));
+    expect(document.querySelector('.nop-diff-file-name')?.textContent).toBe('src/utils.ts');
+
+    const handle = lastHandle();
+    act(() => {
+      handle.capabilities.invoke('expandAll', {}, {} as never);
+    });
+
+    expect(document.querySelector('.nop-diff-file-name')?.textContent).toBe('src/utils.ts');
+  });
+
   it('clamps an out-of-range activeFileIndex to the last file', () => {
     render(
       <DiffViewRenderer

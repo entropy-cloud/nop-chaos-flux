@@ -43,6 +43,97 @@ function paneRowHandlers(
   };
 }
 
+function isConflictRow(row: ThreeWayRow): boolean {
+  return row.type === 'conflict' || row.type === 'conflict-start' || row.type === 'conflict-separator' || row.type === 'conflict-end';
+}
+
+function isMarkerRow(row: ThreeWayRow): boolean {
+  return row.type === 'conflict-start' || row.type === 'conflict-separator' || row.type === 'conflict-end';
+}
+
+// WA-content-003 (plan 567): the three panes were three verbatim copies of the
+// same rows.map JSX (~70 lines, born in cdab2db0f, resynced by aa5155530).
+// One parameterized pane renderer; the real per-pane differences (key prefix,
+// gutter tag, line-number/content fields, change-old/new class) live in the
+// spec, and the row predicates are computed once per row instead of 3×.
+interface ThreeColPaneSpec {
+  key: 'old' | 'mid' | 'new';
+  handlerSide: 'old' | 'middle' | 'new';
+  headerKey: 'flux.diff.oldPane' | 'flux.diff.midPane' | 'flux.diff.newPane';
+  paneClass: string;
+  lineNum: (row: ThreeWayRow) => number | string;
+  content: (row: ThreeWayRow) => string;
+  changeClass?: (row: ThreeWayRow) => string | false;
+}
+
+const THREE_COL_PANES: ThreeColPaneSpec[] = [
+  {
+    key: 'old',
+    handlerSide: 'old',
+    headerKey: 'flux.diff.oldPane',
+    paneClass: 'nop-diff-three-col-pane nop-diff-three-col-old border-r',
+    lineNum: (row) => row.oldLineNum ?? '',
+    content: (row) => row.oldContent,
+    changeClass: (row) => row.type === 'change-old' && 'nop-diff-line-change-old',
+  },
+  {
+    key: 'mid',
+    handlerSide: 'middle',
+    headerKey: 'flux.diff.midPane',
+    paneClass: 'nop-diff-three-col-pane nop-diff-three-col-mid border-r',
+    lineNum: (row) => row.middleLineNum ?? '',
+    content: (row) => row.middleContent,
+  },
+  {
+    key: 'new',
+    handlerSide: 'new',
+    headerKey: 'flux.diff.newPane',
+    paneClass: 'nop-diff-three-col-pane nop-diff-three-col-new',
+    lineNum: (row) => row.newLineNum ?? '',
+    content: (row) => row.newContent,
+    changeClass: (row) => row.type === 'change-new' && 'nop-diff-line-change-new',
+  },
+];
+
+function ThreeColPaneRow(props: {
+  row: ThreeWayRow;
+  flags: { conflict: boolean; marker: boolean };
+  spec: ThreeColPaneSpec;
+  showLineNumbers: boolean | undefined;
+  language: string | undefined;
+  onLineClick?: (lineNumber: number, side: 'old' | 'middle' | 'new', type: string) => void;
+}) {
+  const { row, flags, spec, showLineNumbers, language, onLineClick } = props;
+  return (
+    <div
+      key={`${spec.key}-${row.lineNum}`}
+      data-line={row.lineNum}
+      data-diff-type={row.type}
+      className={cn(
+        'nop-diff-three-col-line',
+        flags.conflict && 'nop-diff-line-conflict',
+        flags.marker && 'nop-diff-line-conflict-marker',
+        spec.changeClass?.(row),
+      )}
+      {...paneRowHandlers(row, spec.handlerSide, onLineClick)}
+    >
+      {showLineNumbers && (
+        <span data-slot="diff-gutter" data-diff-gutter={spec.key} className="nop-diff-gutter">
+          {spec.lineNum(row)}
+        </span>
+      )}
+      <span
+        className="nop-diff-content"
+        dangerouslySetInnerHTML={{
+          __html: flags.marker
+            ? generateConflictMarkerHtml(row.type as ThreeWayRowType)
+            : highlight(spec.content(row), language || 'plaintext'),
+        }}
+      />
+    </div>
+  );
+}
+
 export function DiffThreeColumnView({
   oldContent,
   middleContent,
@@ -55,6 +146,8 @@ export function DiffThreeColumnView({
     () => computeThreeWayDiff(oldContent, middleContent, newContent),
     [oldContent, middleContent, newContent],
   );
+
+  const rowFlags = rows.map((row) => ({ conflict: isConflictRow(row), marker: isMarkerRow(row) }));
 
   const [currentDiffIndex, setCurrentDiffIndex] = useState(() => conflictZones.length > 0 ? 0 : -1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -129,110 +222,22 @@ export function DiffThreeColumnView({
           flex: 1,
         }}
       >
-        <div className="nop-diff-three-col-pane nop-diff-three-col-old border-r">
-          <div className="nop-diff-pane-header">{t('flux.diff.oldPane')}</div>
-          {rows.map((row) => {
-            const isConflict = row.type === 'conflict' || row.type === 'conflict-start' || row.type === 'conflict-separator' || row.type === 'conflict-end';
-            const isMarker = row.type === 'conflict-start' || row.type === 'conflict-separator' || row.type === 'conflict-end';
-            return (
-              <div
-                key={`old-${row.lineNum}`}
-                data-line={row.lineNum}
-                data-diff-type={row.type}
-                className={cn(
-                  'nop-diff-three-col-line',
-                  isConflict && 'nop-diff-line-conflict',
-                  isMarker && 'nop-diff-line-conflict-marker',
-                  row.type === 'change-old' && 'nop-diff-line-change-old',
-                )}
-                {...paneRowHandlers(row, 'old', onLineClick)}
-              >
-                {showLineNumbers && (
-                  <span data-slot="diff-gutter" data-diff-gutter="old" className="nop-diff-gutter">
-                    {row.oldLineNum ?? ''}
-                  </span>
-                )}
-                <span
-                  className="nop-diff-content"
-                  dangerouslySetInnerHTML={{
-                    __html: isMarker
-                      ? generateConflictMarkerHtml(row.type as ThreeWayRowType)
-                      : highlight(row.oldContent, language || 'plaintext'),
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-        <div className="nop-diff-three-col-pane nop-diff-three-col-mid border-r">
-          <div className="nop-diff-pane-header">{t('flux.diff.midPane')}</div>
-          {rows.map((row) => {
-            const isConflict = row.type === 'conflict' || row.type === 'conflict-start' || row.type === 'conflict-separator' || row.type === 'conflict-end';
-            const isMarker = row.type === 'conflict-start' || row.type === 'conflict-separator' || row.type === 'conflict-end';
-            return (
-              <div
-                key={`mid-${row.lineNum}`}
-                data-line={row.lineNum}
-                data-diff-type={row.type}
-                className={cn(
-                  'nop-diff-three-col-line',
-                  isConflict && 'nop-diff-line-conflict',
-                  isMarker && 'nop-diff-line-conflict-marker',
-                )}
-                {...paneRowHandlers(row, 'middle', onLineClick)}
-              >
-                {showLineNumbers && (
-                  <span data-slot="diff-gutter" data-diff-gutter="mid" className="nop-diff-gutter">
-                    {row.middleLineNum ?? ''}
-                  </span>
-                )}
-                <span
-                  className="nop-diff-content"
-                  dangerouslySetInnerHTML={{
-                    __html: isMarker
-                      ? generateConflictMarkerHtml(row.type as ThreeWayRowType)
-                      : highlight(row.middleContent, language || 'plaintext'),
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-        <div className="nop-diff-three-col-pane nop-diff-three-col-new">
-          <div className="nop-diff-pane-header">{t('flux.diff.newPane')}</div>
-          {rows.map((row) => {
-            const isConflict = row.type === 'conflict' || row.type === 'conflict-start' || row.type === 'conflict-separator' || row.type === 'conflict-end';
-            const isMarker = row.type === 'conflict-start' || row.type === 'conflict-separator' || row.type === 'conflict-end';
-            return (
-              <div
-                key={`new-${row.lineNum}`}
-                data-line={row.lineNum}
-                data-diff-type={row.type}
-                className={cn(
-                  'nop-diff-three-col-line',
-                  isConflict && 'nop-diff-line-conflict',
-                  isMarker && 'nop-diff-line-conflict-marker',
-                  row.type === 'change-new' && 'nop-diff-line-change-new',
-                )}
-                {...paneRowHandlers(row, 'new', onLineClick)}
-              >
-                {showLineNumbers && (
-                  <span data-slot="diff-gutter" data-diff-gutter="new" className="nop-diff-gutter">
-                    {row.newLineNum ?? ''}
-                  </span>
-                )}
-                <span
-                  className="nop-diff-content"
-                  dangerouslySetInnerHTML={{
-                    __html: isMarker
-                      ? generateConflictMarkerHtml(row.type as ThreeWayRowType)
-                      : highlight(row.newContent, language || 'plaintext'),
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
+        {THREE_COL_PANES.map((spec) => (
+          <div key={spec.key} className={spec.paneClass}>
+            <div className="nop-diff-pane-header">{t(spec.headerKey)}</div>
+            {rows.map((row, rowIndex) => (
+              <ThreeColPaneRow
+                key={`${spec.key}-${row.lineNum}`}
+                row={row}
+                flags={rowFlags[rowIndex]}
+                spec={spec}
+                showLineNumbers={showLineNumbers}
+                language={language}
+                onLineClick={onLineClick}
+              />
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );

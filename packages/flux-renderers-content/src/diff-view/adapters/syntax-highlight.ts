@@ -1,13 +1,34 @@
-import { createLowlight } from 'lowlight';
+import { createLowlight, common } from 'lowlight';
 
-let lowlightInstance: ReturnType<typeof createLowlight> | null = null;
+// WA-content-007 (plan 567): the adapter was born dead (cdab2db0f) — a bare
+// `createLowlight()` registers zero languages, so `highlight()` threw for
+// every call and the catch silently degraded to escaped plain text (feature
+// dead on arrival, zero observability). Register the common language set and
+// surface unknown languages with a dev warn instead of a silent swallow.
+// Bundle note: `common` (37 grammars) was chosen over per-language lazy
+// registration because lowlight@3 `register` is synchronous and exposes no
+// per-language subpath imports; slimming the set is a product decision that
+// can land later without touching this contract.
+const lowlightInstance = createLowlight(common);
 
-function getLowlight() {
-  if (!lowlightInstance) {
-    lowlightInstance = createLowlight();
-  }
-  return lowlightInstance;
-}
+/** Schema-facing aliases: schema authors write short names, hl.js uses full ones. */
+const LANGUAGE_ALIASES: Record<string, string> = {
+  js: 'javascript',
+  ts: 'typescript',
+  py: 'python',
+  rb: 'ruby',
+  sh: 'bash',
+  shell: 'bash',
+  zsh: 'bash',
+  yml: 'yaml',
+  md: 'markdown',
+  'c++': 'cpp',
+  'c#': 'csharp',
+};
+
+const PLAIN_LANGUAGES = new Set(['plaintext', 'text', 'txt', 'none', 'plain']);
+
+let warnedUnknownLanguage = false;
 
 interface CacheEntry {
   html: string;
@@ -42,17 +63,17 @@ class LRUCache {
 const cache = new LRUCache(50);
 
 export function highlight(code: string, language: string): string {
-  if (!language || language === 'plaintext') {
+  if (!language || PLAIN_LANGUAGES.has(language)) {
     return escapeHtml(code);
   }
 
-  const cacheKey = `${language}:${code}`;
+  const resolved = LANGUAGE_ALIASES[language] ?? language;
+  const cacheKey = `${resolved}:${code}`;
   const cached = cache.get(cacheKey);
   if (cached) return cached.html;
 
   try {
-    const lowlight = getLowlight();
-    const result = lowlight.highlight(language, code);
+    const result = lowlightInstance.highlight(resolved, code);
     let html = '';
     for (const node of result.children) {
       if (node.type === 'text') {
@@ -71,6 +92,15 @@ export function highlight(code: string, language: string): string {
     cache.set(cacheKey, { html });
     return html;
   } catch {
+    // Unknown/unregistered language: degrade to plain text, but keep the
+    // failure observable (dev, once) — never cache the degraded result so a
+    // later language-set change takes effect immediately.
+    if (import.meta.env?.DEV === true && !warnedUnknownLanguage) {
+      warnedUnknownLanguage = true;
+      console.warn(
+        `[flux:diff-view] diff-highlight-unknown-language: language "${language}" is not registered — rendering plain text (registered set: lowlight common).`,
+      );
+    }
     return escapeHtml(code);
   }
 }

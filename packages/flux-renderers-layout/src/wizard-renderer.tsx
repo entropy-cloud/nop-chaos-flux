@@ -21,6 +21,25 @@ import {
   resolveStepLifecycleAction,
   toStepKeyString,
 } from './wizard-step-helpers.js';
+import { compiledItems } from './compiled-items.js';
+
+// WA-layout-003 (plan 567): the two guard abort exits were fully silent. A
+// guard that returns ok:false is the documented blocking convention, but a
+// user clicking "next" with zero feedback is also the classic schema-author
+// debugging hole ("why won't my wizard advance?") — and a guard that THROWS
+// reaches the same silent abort via the dispatcher's ActionResult folding.
+// Both abort kinds get one dev warn per session, keyed by kind.
+const wizardGuardWarned = new Set<'blocked' | 'threw'>();
+
+function warnWizardGuardOnce(
+  kind: 'blocked' | 'threw',
+  phase: 'beforeLeave' | 'beforeEnter' | 'beforeLeave/beforeEnter',
+  detail: string,
+): void {
+  if (import.meta.env?.DEV !== true || wizardGuardWarned.has(kind)) return;
+  wizardGuardWarned.add(kind);
+  console.warn(`[flux:wizard] wizard-transition-guard-${kind}: ${phase} guard ${detail} — navigation aborted.`);
+}
 
 // ───────────────────────────── Interaction state (step switching) ─────────────────────────────
 // Per design §6.1: step navigation is the interaction owner layer. This is intentionally
@@ -54,9 +73,7 @@ export { isStepDisabled };
 
 export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
   const schemaProps = props.props;
-  const rawSteps = Array.isArray(schemaProps.steps)
-    ? (schemaProps.steps as unknown as CompiledWizardStep[])
-    : [];
+  const rawSteps = compiledItems<CompiledWizardStep>(schemaProps.steps);
   const steps = rawSteps;
   const stepCount = steps.length;
   const linear = schemaProps.linear !== false; // default true per design
@@ -245,6 +262,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           },
         });
         if (result && (result as { ok?: boolean }).ok === false) {
+          warnWizardGuardOnce('blocked', 'beforeLeave', 'returned ok:false');
           return false;
         }
       }
@@ -261,10 +279,16 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           },
         });
         if (result && (result as { ok?: boolean }).ok === false) {
+          warnWizardGuardOnce('blocked', 'beforeEnter', 'returned ok:false');
           return false;
         }
       }
     } catch {
+      // WA-layout-003: a guard throw means a schema-author bug — aborting the
+      // navigation is safe, but it must be observable (the commit path already
+      // reports via lastCommitStatus/stepError; this nav path was fully
+      // silent). Never a user-facing leak (cd4953f3d contract preserved).
+      warnWizardGuardOnce('threw', 'beforeLeave/beforeEnter', 'threw');
       return false;
     }
 

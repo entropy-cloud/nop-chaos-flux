@@ -1,8 +1,5 @@
-import { useMemo } from 'react';
 import type { DiffFile } from '../model/diff-file.js';
-import type { InlineToken } from '../model/diff-inline.js';
-import { computeInlineTokensForLine } from '../model/diff-inline.js';
-import { highlight } from '../adapters/syntax-highlight.js';
+import { useHighlightedHtmlMaps, useInlineTokensMaps } from '../model/use-diff-line-maps.js';
 import { DiffHunkComponent } from './diff-hunk.js';
 
 interface DiffUnifiedViewProps {
@@ -24,43 +21,9 @@ export function DiffUnifiedView({
   onLineClick,
   onHunkExpand,
 }: DiffUnifiedViewProps) {
-  'use no memo';
-  const inlineTokensMaps = useMemo(() => {
-    if (!showInlineDiff) return undefined;
-    const maps: Map<number, Map<number, InlineToken[]>> = new Map();
-    for (let hunkIdx = 0; hunkIdx < file.hunks.length; hunkIdx++) {
-      const hunk = file.hunks[hunkIdx];
-      const lineMap = new Map<number, InlineToken[]>();
-      for (let lineIdx = 0; lineIdx < hunk.lines.length; lineIdx++) {
-        const line = hunk.lines[lineIdx];
-        if (line.type === 'add' || line.type === 'delete') {
-          const prevLine = lineIdx > 0 ? hunk.lines[lineIdx - 1] : null;
-          if (prevLine && (prevLine.type !== line.type)) {
-            const oldText = line.type === 'add' ? prevLine.content : line.content;
-            const newText = line.type === 'add' ? line.content : prevLine.content;
-            lineMap.set(lineIdx, computeInlineTokensForLine(oldText, newText, line.type));
-          }
-        }
-      }
-      maps.set(hunkIdx, lineMap);
-    }
-    return maps;
-  }, [file, showInlineDiff]);
+  const inlineTokensMaps = useInlineTokensMaps(file, showInlineDiff);
 
-  const highlightedHtmlMaps = useMemo(() => {
-    if (!language || language === 'plaintext') return undefined;
-    const maps: Map<number, Map<number, string>> = new Map();
-    for (let hunkIdx = 0; hunkIdx < file.hunks.length; hunkIdx++) {
-      const hunk = file.hunks[hunkIdx];
-      const lineMap = new Map<number, string>();
-      for (let lineIdx = 0; lineIdx < hunk.lines.length; lineIdx++) {
-        const line = hunk.lines[lineIdx];
-        lineMap.set(lineIdx, highlight(line.content, language));
-      }
-      maps.set(hunkIdx, lineMap);
-    }
-    return maps;
-  }, [file, language]);
+  const highlightedHtmlMaps = useHighlightedHtmlMaps(file, language);
 
   return (
     <div data-view="unified" className="nop-diff-unified-view">

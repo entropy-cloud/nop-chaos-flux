@@ -2,6 +2,7 @@ import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/fl
 import { cn, useIsMobile } from '@nop-chaos/ui';
 import { resolveGap } from '@nop-chaos/flux-react';
 import type { GridItemSchema, GridResponsiveColumns, GridSchema } from './schemas.js';
+import { compiledItems } from './compiled-items.js';
 
 type CompiledGridItem = GridItemSchema & {
   bodyRegionKey?: string;
@@ -93,9 +94,7 @@ function buildGridStyle(
 export function GridRenderer(props: RendererComponentProps<GridSchema>) {
   const schemaProps = props.props;
   const isMobile = useIsMobile();
-  const rawItems = Array.isArray(schemaProps.items)
-    ? (schemaProps.items as unknown as CompiledGridItem[])
-    : [];
+  const rawItems = compiledItems<CompiledGridItem>(schemaProps.items);
 
   const responsiveConfigured = isResponsiveColumnsObject(schemaProps.responsiveColumns);
   const effectiveColumns = resolveEffectiveColumnCount(

@@ -1,21 +1,11 @@
-import React, { useEffect, useRef, startTransition, useState } from 'react';
 import { resolveFinalIndex } from './step-index.js';
-import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { CheckIcon, XIcon } from 'lucide-react';
 import { Button, cn } from '@nop-chaos/ui';
 import type { StepsItemSchema, StepsItemStatus, StepsSchema } from './schemas.js';
-
-const UNUSED: unique symbol = Symbol('unused');
-
-function warnScopeDegraded() {
-  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
-    console.warn(
-      '[nop-steps] valueOwnership=scope requires valueStatePath; falling back to local controlled.',
-    );
-  }
-}
+import { compiledItems } from './compiled-items.js';
+import { useValueOwnershipValue } from './value-ownership.js';
 
 function isItemDisabled(item: StepsItemSchema): boolean {
   return item.disabled === true;
@@ -36,71 +26,6 @@ function deriveStatus(
   return 'wait';
 }
 
-function useStepsValue(props: RendererComponentProps<StepsSchema>) {
-  const schemaProps = props.props;
-  const declaredOwnership = (schemaProps.valueOwnership as string) ?? 'local';
-  const statePath =
-    typeof schemaProps.valueStatePath === 'string' ? schemaProps.valueStatePath : undefined;
-
-  // Effective ownership: scope without valueStatePath degrades to local controlled (+ dev warn).
-  const scopeDegraded = declaredOwnership === 'scope' && !statePath;
-  const ownership = scopeDegraded ? 'local' : (declaredOwnership as 'local' | 'controlled' | 'scope');
-
-  const warnedRef = useRef(false);
-  useEffect(() => {
-    if (scopeDegraded && !warnedRef.current) {
-      warnScopeDegraded();
-      warnedRef.current = true;
-    }
-  }, [scopeDegraded]);
-
-  const renderScope = useRenderScope();
-
-  const scopeValue = useScopeSelector(
-    ownership === 'scope' && statePath
-      ? (scopeData) => getIn(scopeData, statePath) as unknown
-      : () => UNUSED as unknown,
-    Object.is,
-    {
-      enabled: ownership === 'scope' && Boolean(statePath),
-      fallback: undefined,
-      paths: ownership === 'scope' && statePath ? [statePath] : undefined,
-    },
-  );
-  const effectiveScopeValue = scopeValue === (UNUSED as unknown) ? undefined : scopeValue;
-
-  const computeInitial = (): string | number | undefined => {
-    if (ownership === 'controlled') return schemaProps.value as string | number | undefined;
-    if (ownership === 'scope') {
-      return (effectiveScopeValue as string | number | undefined) ?? schemaProps.value ?? schemaProps.defaultValue;
-    }
-    return (schemaProps.value as string | number | undefined) ?? (schemaProps.defaultValue as string | number | undefined);
-  };
-
-  const [localValue, setLocalValue] = useState<string | number | undefined>(computeInitial);
-
-  const currentValue =
-    ownership === 'controlled'
-      ? schemaProps.value
-      : ownership === 'scope'
-        ? effectiveScopeValue ?? schemaProps.value ?? localValue
-        : localValue;
-
-  const setValue = (next: string | number | undefined) => {
-    if (ownership === 'local') {
-      setLocalValue(next);
-    } else if (ownership === 'scope' && statePath) {
-      startTransition(() => {
-        renderScope.update(statePath, next ?? null);
-      });
-      setLocalValue(next);
-    }
-    // controlled: clicks dispatch onChange but do NOT mutate (parent must update value).
-  };
-
-  return { ownership, currentValue, setValue };
-}
-
 const STATUS_INDICATOR_CLASS: Record<StepsItemStatus, string> = {
   wait: 'border-border bg-background text-muted-foreground',
   process: 'border-primary bg-primary text-primary-foreground',
@@ -110,11 +35,9 @@ const STATUS_INDICATOR_CLASS: Record<StepsItemStatus, string> = {
 
 export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
   const schemaProps = props.props;
-  const rawItems = Array.isArray(schemaProps.items)
-    ? (schemaProps.items as unknown as StepsItemSchema[])
-    : [];
+  const rawItems = compiledItems<StepsItemSchema>(schemaProps.items);
   const orientation = schemaProps.orientation === 'vertical' ? 'vertical' : 'horizontal';
-  const { ownership, currentValue, setValue } = useStepsValue(props);
+  const { ownership, currentValue, setValue } = useValueOwnershipValue(schemaProps, 'nop-steps');
 
   const currentIndex = resolveFinalIndex(currentValue, schemaProps.defaultValue, rawItems, stepsItemKey);
   const rootDisabled = props.meta.disabled === true;

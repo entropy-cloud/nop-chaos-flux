@@ -78,4 +78,43 @@ describe('ImageRenderer — DD7 fetcher-backed mode', () => {
       expect(el).toBeTruthy();
     });
   });
+
+  // WA-content-005: the src path fires onLoadError on failure — the fetcher
+  // path must honor the same schema contract (both show the fallback, so both
+  // must notify; audio/video/qrcode already do).
+  it('fires onLoadError when the fetcher rejects (WA-content-005)', async () => {
+    const helpers = {
+      dispatch: vi.fn().mockRejectedValue(new Error('Network error')),
+    };
+    const onLoadError = vi.fn();
+    const props = createMockRendererProps<ImageSchema>({
+      schema: { type: 'image' },
+      props: { fetcher: { action: 'ajax', args: { url: '/api/image' } } },
+      events: { onLoadError },
+      helpers: helpers as unknown as RendererComponentProps<ImageSchema>['helpers'],
+    });
+    render(<ImageRenderer {...props} />);
+
+    await waitFor(() => {
+      expect(onLoadError).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('fires onLoadError when the fetcher resolves with no uri (WA-content-005)', async () => {
+    const helpers = {
+      dispatch: vi.fn().mockResolvedValue({ ok: true, data: {} }),
+    };
+    const onLoadError = vi.fn();
+    const props = createMockRendererProps<ImageSchema>({
+      schema: { type: 'image' },
+      props: { fetcher: { action: 'ajax', args: { url: '/api/image' } } },
+      events: { onLoadError },
+      helpers: helpers as unknown as RendererComponentProps<ImageSchema>['helpers'],
+    });
+    render(<ImageRenderer {...props} />);
+
+    await waitFor(() => {
+      expect(onLoadError).toHaveBeenCalledTimes(1);
+    });
+  });
 });

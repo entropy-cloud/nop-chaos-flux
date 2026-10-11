@@ -2,8 +2,10 @@
  * Shared step-style index resolution (cq-3 Phase 5) — previously duplicated
  * across steps-renderer/timeline-renderer. `keyOf` absorbs the one semantic
  * difference: steps matches `item.value ?? item.key`, timeline matches
- * `item.value` only. The ownership hooks stay per-renderer on purpose (their
- * fallback chains diverge by documented adjudication).
+ * `item.value` only. (WA-layout-001, plan 567: the ownership hooks are no
+ * longer per-renderer — they share value-ownership.ts; the diverging fallback
+ * chains this comment used to justify live in the renderer bodies'
+ * resolveFinalIndex layers, not in the hooks.)
  */
 function clampIndex(idx: number, count: number): number {
   if (count <= 0) return 0;
