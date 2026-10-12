@@ -5,6 +5,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import { DEFAULT_FILTERS } from '../diagnostics.js';
 import type { NopDebugEvent, NopDebuggerFilterKind } from '../types.js';
 import { DisclosureTrigger } from './disclosure-trigger.js';
+import { formatClock } from './format.js';
 import type { ErrorGroup } from './event-groups.js';
 import { JsonViewer } from './json-viewer.js';
 
@@ -43,14 +44,6 @@ function renderHighlightedText(text: string, query: string) {
     ) : (
       <span key={partKey}>{part}</span>
     );
-  });
-}
-
-function formatClock(timestamp: number) {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
   });
 }
 

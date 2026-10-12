@@ -279,6 +279,53 @@ export function compareComponentTreeItems(left: NopComponentTreeItem, right: Nop
   return left.cid - right.cid;
 }
 
+/**
+ * inspected payload 装配单源（WA-debugger-007）：buildInspectByCid /
+ * buildInspectByElement 的 resolved / notMaterialized / fallback 三分支装配体；
+ * 两 builder 仅保留各自的元素解析路径。fallback 分支语义经 fallbackMounted /
+ * fallbackRequiresAnchor 参数化，与原两份实现的求值顺序逐分支一致。
+ */
+function resolveInspectResult(input: {
+  cid: number;
+  handle: ReturnType<NonNullable<ComponentHandleRegistry['getHandleByCid']>> | undefined;
+  inspected: ReturnType<NonNullable<ComponentHandleRegistry['inspectCid']>> | undefined;
+  element: HTMLElement | undefined;
+  registry: ComponentHandleRegistry | undefined;
+  runtime: RendererRuntime | undefined;
+  fallbackMounted: boolean;
+  /** fallback 分支前置守卫：无 handle 且无 element 时不构造结果（byCid 语义）。 */
+  fallbackRequiresAnchor?: boolean;
+}): NopComponentInspectResult | undefined {
+  const { cid, handle, inspected, element, registry, runtime } = input;
+
+  if (inspected?.kind === 'resolved') {
+    const result = buildInspectResult(
+      cid,
+      handle,
+      inspected.payload.state?.mounted ?? handle?._mounted !== false,
+      element,
+      registry,
+      runtime,
+    );
+    result.instancePath = inspected.payload.instancePath;
+    result.scopeChain = inspected.payload.scopeChain as typeof result.scopeChain;
+    applyResolvedInspectFallbacks(result, inspected.payload);
+    return result;
+  }
+
+  if (inspected?.kind === 'notMaterialized') {
+    const result = buildInspectResult(cid, handle, false, element, registry, runtime);
+    result.instancePath = inspected.instancePath;
+    return result;
+  }
+
+  if (input.fallbackRequiresAnchor && !handle && !element) {
+    return undefined;
+  }
+
+  return buildInspectResult(cid, handle, input.fallbackMounted, element, registry, runtime);
+}
+
 export function buildInspectByCid(
   componentRegistry: ComponentHandleRegistry | undefined,
   getRuntime?: () => RendererRuntime | undefined,
@@ -290,43 +337,16 @@ export function buildInspectByCid(
     const inspected = componentRegistry.inspectCid?.(cid);
     const handle = componentRegistry.getHandleByCid?.(cid);
 
-    if (inspected?.kind === 'resolved') {
-      const result = buildInspectResult(
-        cid,
-        handle,
-        inspected.payload.state?.mounted ?? handle?._mounted !== false,
-        (element as HTMLElement) ?? undefined,
-        componentRegistry,
-        runtime,
-      );
-      result.instancePath = inspected.payload.instancePath;
-      result.scopeChain = inspected.payload.scopeChain as typeof result.scopeChain;
-      applyResolvedInspectFallbacks(result, inspected.payload);
-      return result;
-    }
-
-    if (inspected?.kind === 'notMaterialized') {
-      const result = buildInspectResult(
-        cid,
-        handle,
-        false,
-        (element as HTMLElement) ?? undefined,
-        componentRegistry,
-        runtime,
-      );
-      result.instancePath = inspected.instancePath;
-      return result;
-    }
-
-    if (!handle && !element) return undefined;
-    return buildInspectResult(
+    return resolveInspectResult({
       cid,
       handle,
-      !!element || handle?._mounted !== false,
-      (element as HTMLElement) ?? undefined,
-      componentRegistry,
+      inspected,
+      element: (element as HTMLElement) ?? undefined,
+      registry: componentRegistry,
       runtime,
-    );
+      fallbackMounted: !!element || handle?._mounted !== false,
+      fallbackRequiresAnchor: true,
+    });
   };
 }
 
@@ -347,35 +367,17 @@ export function buildInspectByElement(
     const inspected = componentRegistry?.inspectCid?.(cid);
     const handle = componentRegistry?.getHandleByCid?.(cid);
 
-    if (inspected?.kind === 'resolved') {
-      const result = buildInspectResult(
-        cid,
-        handle,
-        inspected.payload.state?.mounted ?? handle?._mounted !== false,
-        owner ?? undefined,
-        componentRegistry,
-        runtime,
-      );
-      result.instancePath = inspected.payload.instancePath;
-      result.scopeChain = inspected.payload.scopeChain as typeof result.scopeChain;
-      applyResolvedInspectFallbacks(result, inspected.payload);
-      return result;
-    }
-
-    if (inspected?.kind === 'notMaterialized') {
-      const result = buildInspectResult(
-        cid,
-        handle,
-        false,
-        owner ?? undefined,
-        componentRegistry,
-        runtime,
-      );
-      result.instancePath = inspected.instancePath;
-      return result;
-    }
-
-    return buildInspectResult(cid, handle, true, owner ?? undefined, componentRegistry, runtime);
+    // fallback mounted=true 属刻意（与 byCid 的推断式 fallback 不同）：owner 已由
+    // isWithinRuntimeRoot 守卫，物理存在于运行时根内。
+    return resolveInspectResult({
+      cid,
+      handle,
+      inspected,
+      element: owner ?? undefined,
+      registry: componentRegistry,
+      runtime,
+      fallbackMounted: true,
+    });
   };
 }
 

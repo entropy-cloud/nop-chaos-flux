@@ -3,15 +3,8 @@ import { Button, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { NopComponentInspectResult, NopComponentTreeItem, NopNodeDiagnostics } from '../types.js';
 import { DisclosureTrigger } from './disclosure-trigger.js';
+import { formatClock } from './format.js';
 import { JsonViewer } from './json-viewer.js';
-
-function formatClock(timestamp: number) {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
 
 export function NodeTab(props: {
   componentTree: NopComponentTreeItem[];
@@ -250,7 +243,7 @@ export function NodeTab(props: {
                    variant="ghost"
                    className={cn(
                      itemClassName,
-                     'h-auto w-full justify-start whitespace-normal px-2 py-1 active:translate-y-0',
+                     'h-auto w-full justify-start whitespace-normal px-2 py-1',
                    )}
                    onClick={() => inspectTreeItem(item)}
                    style={{ paddingLeft: `${item.depth * 16 + 8}px` }}

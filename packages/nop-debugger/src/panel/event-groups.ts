@@ -1,3 +1,4 @@
+import { t } from '@nop-chaos/flux-i18n';
 import type { NopDebugEvent, NopInteractionTrace } from '../types.js';
 
 export type MergedRequest = {
@@ -22,8 +23,8 @@ export type ErrorGroup = {
 export function formatTraceSummary(trace: NopInteractionTrace | undefined) {
   if (!trace || trace.totalEvents === 0) {
     return {
-      headline: 'No correlated trace yet',
-      detail: 'Run an action or request to infer the latest chain.',
+      headline: t('flux.debugger.noTraceYet'),
+      detail: t('flux.debugger.noTraceHint'),
     };
   }
 
@@ -32,7 +33,7 @@ export function formatTraceSummary(trace: NopInteractionTrace | undefined) {
     trace.latestError?.summary ??
     trace.latestApi?.summary ??
     trace.latestAction?.summary ??
-    'Recent interaction';
+    t('flux.debugger.recentInteraction');
   const relatedBits = [
     trace.resolvedQuery.nodeId ? `node ${trace.resolvedQuery.nodeId}` : undefined,
     trace.resolvedQuery.actionType ? `action ${trace.resolvedQuery.actionType}` : undefined,

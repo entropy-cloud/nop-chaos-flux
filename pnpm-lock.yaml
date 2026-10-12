@@ -360,6 +360,9 @@ importers:
 
   packages/flux-bundle:
     dependencies:
+      '@nop-chaos/ui':
+        specifier: workspace:*
+        version: link:../ui
       i18next:
         specifier: ^26.0.0
         version: 26.0.5(typescript@6.0.3)
@@ -369,6 +372,9 @@ importers:
       recharts:
         specifier: ^3.8.0
         version: 3.8.1(@types/react@19.3.0)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
+      zustand:
+        specifier: ^5.0.12
+        version: 5.0.12(@types/react@19.3.0)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
     devDependencies:
       '@nop-chaos/flux-core':
         specifier: workspace:*
@@ -376,9 +382,6 @@ importers:
       '@nop-chaos/flux-formula':
         specifier: workspace:*
         version: link:../flux-formula
-      '@nop-chaos/flux-i18n':
-        specifier: workspace:*
-        version: link:../flux-i18n
       '@nop-chaos/flux-react':
         specifier: workspace:*
         version: link:../flux-react
@@ -406,9 +409,6 @@ importers:
       '@nop-chaos/flux-renderers-scheduling':
         specifier: workspace:*
         version: link:../flux-renderers-scheduling
-      '@nop-chaos/ui':
-        specifier: workspace:*
-        version: link:../ui
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -424,9 +424,6 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.4(react@19.2.4)
-      zustand:
-        specifier: ^5.0.12
-        version: 5.0.12(@types/react@19.3.0)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
 
   packages/flux-code-editor:
     dependencies:

@@ -261,43 +261,20 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     createDiagnosticReport: createReport,
     exportSession,
     waitForEvent,
-    clear() {
-      store.clear();
-    },
-    pause() {
-      store.pause();
-    },
-    resume() {
-      store.resume();
-    },
-    show() {
-      store.show();
-      persistPanelOpen(debuggerId, true);
-    },
-    hide() {
-      store.hide();
-      persistPanelOpen(debuggerId, false);
-    },
-    minimize() {
-      store.minimize();
-      persistMinimized(debuggerId, true);
-    },
-    unminimize() {
-      store.unminimize();
-      persistMinimized(debuggerId, false);
-    },
-    toggle() {
-      store.toggle();
-      const snap = store.getSnapshot();
-      persistPanelOpen(debuggerId, snap.panelOpen);
-    },
-    setActiveTab(tab: NopDebuggerTab) {
-      store.setActiveTab(tab);
-    },
-    setPanelPosition(position: { x: number; y: number }) {
-      store.setPosition(position);
-      persistPosition(debuggerId, position);
-    },
+    // [WA-debugger-002] mutation 面单源：引用 controller 同名成员，避免
+    // 「store 调用 + persist 调用」方法体在 automation/controller 双面逐字双写；
+    // controller 于下方构建，此处闭包仅在构造完成后被调用。
+    clear: () => controller.clear(),
+    pause: () => controller.pause(),
+    resume: () => controller.resume(),
+    show: () => controller.show(),
+    hide: () => controller.hide(),
+    minimize: () => controller.minimize(),
+    unminimize: () => controller.unminimize(),
+    toggle: () => controller.toggle(),
+    setActiveTab: (tab) => controller.setActiveTab(tab),
+    setPanelPosition: (position) => controller.setPanelPosition(position),
+    // inspect/evaluate 三方法保留 redaction 包裹：window 暴露面消毒（刻意差异）
     inspectByCid(cid: number) {
       const raw = currentInspectByCid(cid);
       return raw ? (redactData(raw, redaction) as NopComponentInspectResult) : undefined;

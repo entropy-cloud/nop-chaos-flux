@@ -42,7 +42,6 @@
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@nop-chaos/flux-core": "workspace:*",
-    "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
@@ -53,12 +52,10 @@
     "@nop-chaos/flux-renderers-layout": "workspace:*",
     "@nop-chaos/flux-renderers-scheduling": "workspace:*",
     "@nop-chaos/flux-renderers-3d": "workspace:*",
-    "@nop-chaos/ui": "workspace:*",
     "echarts": "^6.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "lucide-react": "^1.17.0",
-    "zustand": "^5.0.12"
+    "lucide-react": "^1.17.0"
   },
   "scripts": {
     "build": "vite build && node ../../scripts/prepare-flux-bundle-dist.mjs",

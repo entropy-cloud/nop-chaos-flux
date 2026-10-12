@@ -8,16 +8,11 @@ import type {
   RendererDefinition,
   RendererEnv,
   RendererRegistry,
-  SchemaObject,
   SchemaInput,
   SchemaValue,
 } from '@nop-chaos/flux-core';
 
 export type FluxSchemaValue = SchemaValue;
-
-export interface FluxSchemaObject extends SchemaObject {
-  [key: string]: FluxSchemaValue;
-}
 
 export type FluxSchemaNode = BaseSchema;
 

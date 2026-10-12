@@ -499,10 +499,6 @@ export const DEBUGGER_STYLES = `
 }
 .nop-debugger .ndbg-inspect-section { gap: 6px; }
 .nop-debugger .ndbg-inspect-header { display: flex; justify-content: space-between; align-items: center; }
-.nop-debugger .ndbg-inspect-section {
-  display: grid;
-  gap: 6px;
-}
 .nop-debugger .ndbg-inspect-section-title {
   font-size: 11px;
   text-transform: uppercase;

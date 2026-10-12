@@ -85,7 +85,7 @@ function getFilterLabels(): Record<NopDebuggerFilterKind, string> {
     action: t('flux.debugger.actionEvents'),
     api: t('flux.debugger.apiEvents'),
     compile: t('flux.debugger.latestCompile'),
-    notify: t('flux.common.more'),
+    notify: t('flux.debugger.notifyEvents'),
     error: t('flux.debugger.error'),
     node: t('flux.debugger.node'),
   };

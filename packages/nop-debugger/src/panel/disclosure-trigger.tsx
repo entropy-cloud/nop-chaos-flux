@@ -15,7 +15,7 @@ export function DisclosureTrigger(props: {
     <Button
       type="button"
       variant="ghost"
-      className={cn('ndbg-entry-trigger active:translate-y-0', className)}
+      className={cn('ndbg-entry-trigger', className)}
       aria-expanded={expanded}
       aria-controls={controlsId}
       onClick={onToggle}

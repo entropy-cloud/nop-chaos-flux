@@ -1,16 +1,9 @@
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { formatClock } from './format.js';
 import type { MergedRequest } from './event-groups.js';
 import { DisclosureTrigger } from './disclosure-trigger.js';
 import { JsonViewer } from './json-viewer.js';
-
-function formatClock(timestamp: number) {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
 
 export function NetworkTab(props: {
   mergedRequests: MergedRequest[];

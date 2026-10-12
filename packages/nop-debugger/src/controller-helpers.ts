@@ -148,12 +148,6 @@ export function createRequestInstanceIdFactory() {
   return () => `req-${nextId++}`;
 }
 
-const createRequestInstanceIdFromDefaultFactory = createRequestInstanceIdFactory();
-
-export function createRequestInstanceId() {
-  return createRequestInstanceIdFromDefaultFactory();
-}
-
 export { buildScopeChain } from '@nop-chaos/flux-core';
 
 export function buildNetworkSummary(input: {
@@ -247,131 +241,99 @@ function getBrowserLocalStorage(): Storage | undefined {
     }
   }
 
-  if (typeof window === 'undefined') {
-    return undefined;
-  }
-
   return undefined;
 }
 
-export function loadPersistedPosition(id: string): { x: number; y: number } | undefined {
+// [WA-debugger-008] 持久化骨架（readPersisted/writePersisted 单源）。观测策略落字：
+// 静默降级为设计——消费面是装饰性偏好（面板位置/开合/最小化/搜索历史），其中
+// persistPosition 位于拖拽高频路径，warn/debug 刷屏代价高于收益；降级语境为
+// Safari 隐私模式/配额满/SSR（跨信任边界），失败被骨架 catch 统一兜为默认值。
+// 空值语义统一裁定：`raw === null || raw === ''` 一律回默认值（八函数曾以 `!raw`
+// 与 `raw === null` 两种判空各自漂移，仅覆盖「存储里出现怪值」边界态，
+// 'true'/'false'/JSON 正常值不受影响）。
+function persistedStorageKey(id: string, key: string) {
+  return `nop-debugger:${id}:${key}`;
+}
+
+function readPersisted<T>(
+  id: string,
+  key: string,
+  parse: (raw: string) => T,
+  fallback: T,
+): T {
   const storage = getBrowserLocalStorage();
   if (!storage) {
-    return undefined;
+    return fallback;
   }
 
   try {
-    const raw = storage.getItem(`nop-debugger:${id}:position`);
-    if (!raw) return undefined;
-    const parsed = JSON.parse(raw);
+    const raw = storage.getItem(persistedStorageKey(id, key));
+    if (raw === null || raw === '') {
+      return fallback;
+    }
+    return parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
+function writePersisted(id: string, key: string, serialize: () => string): void {
+  const storage = getBrowserLocalStorage();
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.setItem(persistedStorageKey(id, key), serialize());
+  } catch {
+    void undefined;
+  }
+}
+
+export function loadPersistedPosition(id: string): { x: number; y: number } | undefined {
+  return readPersisted(id, 'position', (raw) => {
+    const parsed = JSON.parse(raw) as { x?: unknown; y?: unknown };
     if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') {
       return { x: parsed.x, y: parsed.y };
     }
     return undefined;
-  } catch {
-    return undefined;
-  }
+  }, undefined);
 }
 
 export function persistPosition(id: string, position: { x: number; y: number }) {
-  const storage = getBrowserLocalStorage();
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(`nop-debugger:${id}:position`, JSON.stringify(position));
-  } catch {
-    void undefined;
-  }
+  writePersisted(id, 'position', () => JSON.stringify(position));
 }
 
 export function loadPersistedPanelOpen(id: string): boolean | undefined {
-  const storage = getBrowserLocalStorage();
-  if (!storage) {
-    return undefined;
-  }
-
-  try {
-    const raw = storage.getItem(`nop-debugger:${id}:panelOpen`);
-    if (raw === null) return undefined;
-    return raw === 'true';
-  } catch {
-    return undefined;
-  }
+  return readPersisted(id, 'panelOpen', (raw) => raw === 'true', undefined);
 }
 
 export function persistPanelOpen(id: string, panelOpen: boolean) {
-  const storage = getBrowserLocalStorage();
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(`nop-debugger:${id}:panelOpen`, String(panelOpen));
-  } catch {
-    void undefined;
-  }
+  writePersisted(id, 'panelOpen', () => String(panelOpen));
 }
 
 export function persistMinimized(id: string, minimized: boolean) {
-  const storage = getBrowserLocalStorage();
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(`nop-debugger:${id}:minimized`, String(minimized));
-  } catch {
-    void undefined;
-  }
+  writePersisted(id, 'minimized', () => String(minimized));
 }
 
 export function loadPersistedMinimized(id: string): boolean | undefined {
-  const storage = getBrowserLocalStorage();
-  if (!storage) {
-    return undefined;
-  }
-
-  try {
-    const raw = storage.getItem(`nop-debugger:${id}:minimized`);
-    if (raw === null) return undefined;
-    return raw === 'true';
-  } catch {
-    return undefined;
-  }
+  return readPersisted(id, 'minimized', (raw) => raw === 'true', undefined);
 }
 
 export function loadPersistedSearchHistory(id: string): string[] {
-  const storage = getBrowserLocalStorage();
-  if (!storage) {
-    return [];
-  }
-
-  try {
-    const raw = storage.getItem(`nop-debugger:${id}:search-history`);
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === 'string').slice(0, 8)
-      : [];
-  } catch {
-    return [];
-  }
+  return readPersisted(
+    id,
+    'search-history',
+    (raw) => {
+      const parsed = JSON.parse(raw) as unknown;
+      return Array.isArray(parsed)
+        ? parsed.filter((item): item is string => typeof item === 'string').slice(0, 8)
+        : [];
+    },
+    [],
+  );
 }
 
 export function persistSearchHistory(id: string, history: readonly string[]) {
-  const storage = getBrowserLocalStorage();
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(`nop-debugger:${id}:search-history`, JSON.stringify(history.slice(0, 8)));
-  } catch {
-    void undefined;
-  }
+  writePersisted(id, 'search-history', () => JSON.stringify(history.slice(0, 8)));
 }

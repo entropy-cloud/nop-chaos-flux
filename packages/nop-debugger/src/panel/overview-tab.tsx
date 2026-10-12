@@ -1,13 +1,6 @@
 import { t } from '@nop-chaos/flux-i18n';
 import type { NopDebuggerOverview, NopInteractionTrace } from '../types.js';
-
-function formatClock(timestamp: number) {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
+import { formatClock } from './format.js';
 
 export function OverviewTab(props: {
   overview: NopDebuggerOverview;

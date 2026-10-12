@@ -54,24 +54,42 @@ export function useDebuggerSnapshot<T = NopDebuggerSnapshot>(
   );
 }
 
-export function useDraggablePosition(
+type WindowPointerDragState = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  baseX: number;
+  baseY: number;
+  hasMoved: boolean;
+  target: HTMLElement;
+};
+
+type WindowPointerDragConfig = {
+  /** hasMoved 判定阈值（px）；3px/4px 双阈值漂移一次裁定统一为 4px（WA-debugger-001）。 */
+  threshold: number;
+  clampPosition(position: { x: number; y: number }): { x: number; y: number };
+  /** 阈值未到前保持原位（launcher：避免点击意图的微抖位移面板已动的视觉跳变）。 */
+  moveOnlyAfterThreshold?: boolean;
+  onTap?: () => void;
+  onDragStart?(): void;
+  onDragSettled?(hasMoved: boolean): void;
+  resolveDragTarget(event: ReactPointerEvent<HTMLElement>): HTMLElement | null | undefined;
+};
+
+/**
+ * 窗口级指针拖拽共享原语（WA-debugger-001 单源）：dragState 生命周期、
+ * pointermove/up/cancel 监听与清理、buttons===0 断拖守卫、hasMoved 阈值、
+ * docked 首拖按当前盒换算、setPointerCapture 安全包装与拖拽落点持久化。
+ */
+function useWindowPointerDrag(
   controller: NopDebuggerController,
   initial: { x: number; y: number },
-  onTap?: () => void,
-  docked = false,
+  docked: boolean,
+  config: WindowPointerDragConfig,
 ) {
   const [position, setPosition] = useState(initial);
   const positionRef = useRef(initial);
-  const dragState = useRef<{
-    pointerId: number;
-    offsetX: number;
-    offsetY: number;
-    startX: number;
-    startY: number;
-    hasMoved: boolean;
-    target: HTMLElement;
-  } | null>(null);
-  const hasMovedRef = useRef(false);
+  const dragState = useRef<WindowPointerDragState | null>(null);
 
   useEffect(() => {
     positionRef.current = position;
@@ -88,10 +106,10 @@ export function useDraggablePosition(
       if (dragState.current.hasMoved) {
         controller.setPanelPosition(positionRef.current);
       } else {
-        onTap?.();
+        config.onTap?.();
       }
+      config.onDragSettled?.(dragState.current.hasMoved);
 
-      hasMovedRef.current = dragState.current.hasMoved;
       dragState.current = null;
     };
 
@@ -107,14 +125,17 @@ export function useDraggablePosition(
 
       const deltaX = event.clientX - dragState.current.startX;
       const deltaY = event.clientY - dragState.current.startY;
-      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+      if (Math.abs(deltaX) > config.threshold || Math.abs(deltaY) > config.threshold) {
         dragState.current.hasMoved = true;
       }
+      if (config.moveOnlyAfterThreshold && !dragState.current.hasMoved) {
+        return;
+      }
 
-      const next = {
-        x: Math.max(12, event.clientX - dragState.current.offsetX),
-        y: Math.max(12, event.clientY - dragState.current.offsetY),
-      };
+      const next = config.clampPosition({
+        x: dragState.current.baseX + deltaX,
+        y: dragState.current.baseY + deltaY,
+      });
 
       positionRef.current = next;
       setPosition(next);
@@ -129,7 +150,7 @@ export function useDraggablePosition(
       window.removeEventListener('pointerup', clearDrag);
       window.removeEventListener('pointercancel', clearDrag);
     };
-  }, [controller, onTap]);
+  }, [controller, config]);
 
   const bind = {
     onPointerDown(event: ReactPointerEvent<HTMLElement>) {
@@ -137,12 +158,13 @@ export function useDraggablePosition(
         return;
       }
 
-      const target = event.currentTarget.parentElement;
+      const target = config.resolveDragTarget(event);
       if (!target) {
         return;
       }
 
-      hasMovedRef.current = false;
+      config.onDragStart?.();
+
       // docked（bottom-left）锚定渲染无绝对坐标：首拖时按当前盒换算基准位置并转 floating
       let baseX = position.x;
       let baseY = position.y;
@@ -155,10 +177,10 @@ export function useDraggablePosition(
       }
       dragState.current = {
         pointerId: event.pointerId,
-        offsetX: event.clientX - baseX,
-        offsetY: event.clientY - baseY,
         startX: event.clientX,
         startY: event.clientY,
+        baseX,
+        baseY,
         hasMoved: false,
         target,
       };
@@ -167,6 +189,32 @@ export function useDraggablePosition(
       event.preventDefault();
     },
   };
+
+  return { position, bind };
+}
+
+export function useDraggablePosition(
+  controller: NopDebuggerController,
+  initial: { x: number; y: number },
+  onTap?: () => void,
+  docked = false,
+) {
+  const hasMovedRef = useRef(false);
+
+  const { position, bind } = useWindowPointerDrag(controller, initial, docked, {
+    threshold: 4,
+    clampPosition: ({ x, y }) => ({ x: Math.max(12, x), y: Math.max(12, y) }),
+    onTap,
+    onDragStart() {
+      hasMovedRef.current = false;
+    },
+    onDragSettled(hasMoved) {
+      hasMovedRef.current = hasMoved;
+    },
+    resolveDragTarget(event) {
+      return event.currentTarget.parentElement;
+    },
+  });
 
   const consumeClick = () => {
     if (hasMovedRef.current) {
@@ -242,116 +290,29 @@ export function useLauncherDrag(
   initial: { x: number; y: number },
   docked = false,
 ) {
-  const [position, setPosition] = useState(initial);
-  const positionRef = useRef(initial);
-  const dragState = useRef<{
-    pointerId: number;
-    startX: number;
-    startY: number;
-    startPosX: number;
-    startPosY: number;
-    hasMoved: boolean;
-    target: HTMLElement;
-  } | null>(null);
   const wasDraggedRef = useRef(false);
   const suppressNextClickRef = useRef(false);
 
-  useEffect(() => {
-    positionRef.current = position;
-  }, [position]);
-
-  useEffect(() => {
-    const clearDrag = (event: PointerEvent) => {
-      if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
-        return;
-      }
-
-      releasePointerCaptureSafely(dragState.current.target, event.pointerId);
-
-      if (dragState.current.hasMoved) {
-        controller.setPanelPosition(positionRef.current);
+  const { position, bind } = useWindowPointerDrag(controller, initial, docked, {
+    threshold: 4,
+    clampPosition: ({ x, y }) => ({
+      x: Math.max(8, Math.min(window.innerWidth - 80, x)),
+      y: Math.max(8, Math.min(window.innerHeight - 50, y)),
+    }),
+    moveOnlyAfterThreshold: true,
+    onDragStart() {
+      wasDraggedRef.current = false;
+    },
+    onDragSettled(hasMoved) {
+      if (hasMoved) {
         wasDraggedRef.current = true;
         suppressNextClickRef.current = true;
       }
-
-      dragState.current = null;
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!dragState.current || dragState.current.pointerId !== event.pointerId) {
-        return;
-      }
-
-      if (event.buttons === 0) {
-        clearDrag(event);
-        return;
-      }
-
-      const deltaX = event.clientX - dragState.current.startX;
-      const deltaY = event.clientY - dragState.current.startY;
-      if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-        dragState.current.hasMoved = true;
-      }
-      if (!dragState.current.hasMoved) {
-        return;
-      }
-
-      const newX = Math.max(
-        8,
-        Math.min(window.innerWidth - 80, dragState.current.startPosX + deltaX),
-      );
-      const newY = Math.max(
-        8,
-        Math.min(window.innerHeight - 50, dragState.current.startPosY + deltaY),
-      );
-      const next = { x: newX, y: newY };
-
-      positionRef.current = next;
-      setPosition(next);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', clearDrag);
-    window.addEventListener('pointercancel', clearDrag);
-
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', clearDrag);
-      window.removeEventListener('pointercancel', clearDrag);
-    };
-  }, [controller]);
-
-  const bind = {
-    onPointerDown(event: ReactPointerEvent<HTMLElement>) {
-      if (event.button !== 0) {
-        return;
-      }
-
-      const target = event.currentTarget;
-      wasDraggedRef.current = false;
-      // docked（bottom-left）锚定渲染无绝对坐标：首拖时按当前盒换算并转 floating
-      let startPosX = position.x;
-      let startPosY = position.y;
-      if (docked && target instanceof HTMLElement) {
-        const rect = target.getBoundingClientRect();
-        startPosX = rect.left;
-        startPosY = rect.top;
-        positionRef.current = { x: startPosX, y: startPosY };
-        setPosition(positionRef.current);
-      }
-      dragState.current = {
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        startPosX,
-        startPosY,
-        hasMoved: false,
-        target,
-      };
-      setPointerCaptureSafely(target, event.pointerId);
-      event.preventDefault();
     },
-  };
+    resolveDragTarget(event) {
+      return event.currentTarget;
+    },
+  });
 
   const consumeSuppressedClick = () => {
     if (!suppressNextClickRef.current) {

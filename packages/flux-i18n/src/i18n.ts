@@ -57,6 +57,13 @@ export interface FluxI18nOptions {
 
 export function initFluxI18n(options: FluxI18nOptions = {}): i18n {
   if (fluxI18nInstance) {
+    // [WA-i18n-001] singleton idempotency keeps the first instance; a second
+    // call carrying options would silently lose them, so surface the discard.
+    if (Object.keys(options).length > 0) {
+      console.warn(
+        '[flux-i18n] initFluxI18n called again with options; ignored (singleton already initialized)',
+      );
+    }
     return fluxI18nInstance;
   }
 

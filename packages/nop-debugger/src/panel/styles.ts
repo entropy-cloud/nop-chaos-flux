@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import { DEBUGGER_STYLE_ID, DEBUGGER_STYLES } from './styles-css.js';
 
-export { DEBUGGER_STYLE_ID, DEBUGGER_STYLES } from './styles-css.js';
-
 export function useInjectDebuggerStyles(enabled: boolean) {
   useEffect(() => {
     if (!enabled || typeof document === 'undefined') {

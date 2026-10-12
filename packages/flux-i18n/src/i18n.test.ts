@@ -3,7 +3,7 @@
 import React from 'react';
 import { getMessageFormatter } from '@nop-chaos/flux-core';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   addResources,
   changeLanguage,
@@ -28,6 +28,36 @@ describe('flux i18n', () => {
 
     expect(second).toBe(first);
     expect(getMessageFormatter()('flux.common.save')).toBe('Save');
+  });
+
+  // [WA-i18n-001] second initFluxI18n call carrying options must not silently
+  // drop them: the discard is observable via console.warn while the singleton
+  // idempotency semantics (language preserved) stay untouched.
+  it('warns when re-initialized with options after the singleton exists, and keeps the singleton language', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      initFluxI18n();
+      initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(String(warnSpy.mock.calls[0]?.[0])).toContain('initFluxI18n');
+      expect(getCurrentLanguage()).toBe('zh-CN');
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('does not warn when re-initialized without options (lazy bootstrap path)', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
+      initFluxI18n();
+
+      expect(warnSpy).not.toHaveBeenCalled();
+      expect(getCurrentLanguage()).toBe('en-US');
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it('resolves fully-qualified and namespace-relative keys against the flux namespace', async () => {
