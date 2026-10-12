@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { Button, Card, CardContent, CardHeader, CardTitle, toast } from '@nop-chaos/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@nop-chaos/ui';
+import { notifyWithToast } from './notify-toast.js';
 import {
   createSchemaRenderer,
   createDefaultRegistry,
@@ -45,13 +46,7 @@ const env: RendererEnv = {
     }
     return { status: 0, data: null as T };
   },
-  notify: (level, message) => {
-    const text = typeof message === 'string' ? message : String(message ?? '');
-    if (level === 'error') toast.error(text || 'Error');
-    else if (level === 'success') toast.success(text || 'Success');
-    else if (level === 'warning') toast.warning?.(text || 'Warning');
-    else toast.info?.(text || 'Info');
-  },
+  notify: notifyWithToast,
 };
 
 export function W2aDataCompositionDemoPage({ onBack }: W2aDataCompositionDemoPageProps) {

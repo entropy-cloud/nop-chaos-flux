@@ -6,13 +6,13 @@ import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
   createReportTemplateDocument,
   type ReportDesignerConfig,
-  type FieldSourceSnapshot,
 } from '@nop-chaos/report-designer-core';
 import { defineReportDesignerPageSchema } from '@nop-chaos/report-designer-renderers';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { createDesignerRegistry, REPORT_DESIGNER_DEMO_RECIPE } from '../designer-hosts/registry-factory.js';
+import { fieldSources } from './report-designer-demo-shared.js';
 
 declare global {
   interface Window {
@@ -22,26 +22,6 @@ declare global {
     };
   }
 }
-
-const fieldSources: FieldSourceSnapshot[] = [
-  {
-    id: 'orders',
-    label: 'Orders Dataset',
-    groups: [
-      {
-        id: 'basic',
-        label: 'Basic Fields',
-        expanded: true,
-        fields: [
-          { id: 'orderId', label: 'Order ID', path: 'orders.orderId', fieldType: 'number' },
-          { id: 'customer', label: 'Customer', path: 'orders.customer', fieldType: 'string' },
-          { id: 'amount', label: 'Amount', path: 'orders.amount', fieldType: 'number' },
-          { id: 'date', label: 'Order Date', path: 'orders.date', fieldType: 'date' },
-        ],
-      },
-    ],
-  },
-];
 
 function seedSpreadsheet() {
   const doc = createEmptyDocument('report-designer-host-demo');

@@ -31,7 +31,6 @@ import {
   createReportDesignerCore,
   createReportTemplateDocument,
   type ReportDesignerConfig,
-  type FieldSourceSnapshot,
   type FieldDropAdapter,
 } from '@nop-chaos/report-designer-core';
 import {
@@ -43,26 +42,7 @@ import {
 import { t } from '@nop-chaos/flux-i18n';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, cn } from '@nop-chaos/ui';
-
-const fieldSources: FieldSourceSnapshot[] = [
-  {
-    id: 'orders',
-    label: 'Orders Dataset',
-    groups: [
-      {
-        id: 'basic',
-        label: 'Basic Fields',
-        expanded: true,
-        fields: [
-          { id: 'orderId', label: 'Order ID', path: 'orders.orderId', fieldType: 'number' },
-          { id: 'customer', label: 'Customer', path: 'orders.customer', fieldType: 'string' },
-          { id: 'amount', label: 'Amount', path: 'orders.amount', fieldType: 'number' },
-          { id: 'date', label: 'Order Date', path: 'orders.date', fieldType: 'date' },
-        ],
-      },
-    ],
-  },
-];
+import { fieldSources } from './report-designer-demo-shared.js';
 
 const dropAdapter: FieldDropAdapter = {
   id: 'basic-field-drop',

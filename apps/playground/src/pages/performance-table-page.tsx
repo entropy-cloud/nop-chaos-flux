@@ -32,6 +32,7 @@ import {
   hasDiagnosticsProbe,
   performanceEnv,
   readDebuggerSessionSummary,
+  readDiagnosticsProbe,
 } from './performance-table/index.js';
 import { createPerformanceSchema } from './performance-table/schema.js';
 
@@ -46,10 +47,6 @@ interface PerformanceTablePageProps {
   onBack: () => void;
   debuggerController?: NopDebuggerController;
   diagnosticsEnabled?: boolean;
-}
-
-function readDiagnosticsProbe(selector: string) {
-  return document.querySelector(selector) as HTMLElement | null;
 }
 
 function readProbeTrackedValue(testId: string): string | undefined {

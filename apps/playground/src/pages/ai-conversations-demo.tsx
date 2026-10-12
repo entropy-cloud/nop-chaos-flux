@@ -44,7 +44,9 @@ export function AiConversationsDemoPage({ onBack }: Props) {
   );
 
   // Host-side conversation manager (engine.md §8.6). The controller is bound
-  // to ai-chat through the schema expression `${$ai.controller}`.
+  // to ai-chat through page-data relative read `conversationController: "${controller}"`
+  // (see pageData below and plan 549 errata note — the `${$ai.controller}`
+  // channel no longer exists after xui:imports removal).
   const conversations = useConversation({ connector });
 
   const pageData = useMemo(

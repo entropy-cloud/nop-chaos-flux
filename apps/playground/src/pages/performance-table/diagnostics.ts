@@ -267,31 +267,10 @@ export function computeProbeDeltas(input: {
   );
 }
 
-export function diffChangedRowKeys(beforeRows: readonly PerfRow[], afterRows: readonly PerfRow[]): string[] {
-  const maxLength = Math.max(beforeRows.length, afterRows.length);
-  const changed = new Set<string>();
-
-  for (let index = 0; index < maxLength; index += 1) {
-    const before = beforeRows[index];
-    const after = afterRows[index];
-    if (!before || !after) {
-      const rowId = after?.id ?? before?.id;
-      if (rowId) {
-        changed.add(rowId);
-      }
-      continue;
-    }
-    if (JSON.stringify(before) !== JSON.stringify(after)) {
-      changed.add(after.id);
-    }
-  }
-
-  return Array.from(changed);
-}
-
-export function diffChangedItemKeys<T extends { itemKey: string }>(
+export function diffChangedKeys<T>(
   beforeItems: readonly T[],
   afterItems: readonly T[],
+  keyOf: (item: T) => string,
 ): string[] {
   const maxLength = Math.max(beforeItems.length, afterItems.length);
   const changed = new Set<string>();
@@ -300,18 +279,29 @@ export function diffChangedItemKeys<T extends { itemKey: string }>(
     const before = beforeItems[index];
     const after = afterItems[index];
     if (!before || !after) {
-      const itemKey = after?.itemKey ?? before?.itemKey;
-      if (itemKey) {
-        changed.add(itemKey);
+      const key = keyOf((after ?? before) as T);
+      if (key) {
+        changed.add(key);
       }
       continue;
     }
     if (JSON.stringify(before) !== JSON.stringify(after)) {
-      changed.add(after.itemKey);
+      changed.add(keyOf(after));
     }
   }
 
   return Array.from(changed);
+}
+
+export function diffChangedRowKeys(beforeRows: readonly PerfRow[], afterRows: readonly PerfRow[]): string[] {
+  return diffChangedKeys(beforeRows, afterRows, (row) => row.id);
+}
+
+export function diffChangedItemKeys<T extends { itemKey: string }>(
+  beforeItems: readonly T[],
+  afterItems: readonly T[],
+): string[] {
+  return diffChangedKeys(beforeItems, afterItems, (item) => item.itemKey);
 }
 
 declare global {

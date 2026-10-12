@@ -37,7 +37,10 @@ function CellStylePanel() {
     col: anchor.col,
   };
   const style = (patch: Record<string, unknown>) => {
-    void core.dispatch({ target, ...patch } as never);
+    // RD-2: inspector env has no notify bridge, so dispatch failures are only observable here.
+    void core.dispatch({ target, ...patch } as never).catch((error) =>
+      console.error('[report-cell-style-panel] dispatch failed', error),
+    );
   };
   return (
     <div className="flex flex-col gap-2 text-sm" data-slot="report-cell-style-panel">

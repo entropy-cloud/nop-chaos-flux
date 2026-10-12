@@ -20,16 +20,18 @@ test.describe('AI conversations — P1 namespace + conversations + streaming', (
   }) => {
     await openAiConversationsDemo(page);
     // The button is visible and clickable; the action dispatches through the
-    // registered `ai` namespace. The full host-side state cycle (controller →
-    // useConversation → scope sync → list re-render) is covered by the
-    // focused unit tests in use-conversation.test.ts; here we verify the
-    // namespace wiring is live and error-free.
+    // registered `ai` namespace. The list item count +1 assertion below pins
+    // the page-level create loop (controller → useConversation → scope sync →
+    // list re-render); the deeper controller semantics stay covered by the
+    // focused unit tests in use-conversation.test.ts, and the renderer-side
+    // create/rename/delete/switch flows are covered on /#/ai-coverage.
+    const listItems = page.locator('[data-slot="ai-conversations-item"]');
+    const before = await listItems.count();
     await expect(page.locator('[data-slot="ai-conversations-create"]')).toBeVisible();
     await page.locator('[data-slot="ai-conversations-create"]').click();
-    // Namespace dispatch is wired and error-free (the full controller →
-    // scope-sync → list re-render loop is covered by use-conversation unit
-    // tests; the renderer-side create/rename/delete/switch flows are covered
-    // on /#/ai-coverage).
+    // A broken create loop leaves the list unchanged (or empty) — this
+    // assertion is the discriminating check for the full dispatch round-trip.
+    await expect(listItems).toHaveCount(before + 1, { timeout: 10_000 });
     await assertTrackedPageErrors(page);
   });
 

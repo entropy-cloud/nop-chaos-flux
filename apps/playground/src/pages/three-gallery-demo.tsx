@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
-import type { RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 import { IndustrialAdapter, type IndustrialTagConfig } from '@nop-chaos/flux-renderers-3d';
 import { createDefaultEnv } from '@nop-chaos/flux-react';
 import { Button } from '@nop-chaos/ui';
+import { createWritableScopeRef } from './three-writable-scope.js';
 import {
   GALLERY_EXAMPLES,
   GallerySchemaRenderer,
@@ -52,41 +53,6 @@ const TWIN_TAGS: IndustrialTagConfig = {
     { name: 'count', address: '40003', type: 'int16' },
   ],
 };
-
-/** 最小可写 ScopeRef（three-industrial-demo 同法：createPrivateEvalScope 只读，adapter.update 需可写）。 */
-function createWritableScope(): ScopeRef {
-  const data: Record<string, unknown> = { dataSources: {} };
-  const getIn = (path: string): unknown => {
-    let current: unknown = data;
-    for (const segment of path.split('.')) {
-      if (current === null || typeof current !== 'object') return undefined;
-      current = (current as Record<string, unknown>)[segment];
-    }
-    return current;
-  };
-  return {
-    id: 'three-gallery-twin-scope',
-    path: '$',
-    value: data,
-    get: getIn,
-    has: (path) => getIn(path) !== undefined,
-    readOwn: () => data,
-    readVisible: () => data,
-    materializeVisible: () => data,
-    update: (path, value) => {
-      const segments = path.split('.');
-      let current = data;
-      for (let i = 0; i < segments.length - 1; i++) {
-        const key = segments[i];
-        if (typeof current[key] !== 'object' || current[key] === null) current[key] = {};
-        current = current[key] as Record<string, unknown>;
-      }
-      current[segments[segments.length - 1]] = value;
-    },
-    merge: () => undefined,
-    isolate: true,
-  } as ScopeRef;
-}
 
 function heatToColor(value: number): string {
   const t = Math.min(100, Math.max(0, value)) / 100;
@@ -170,7 +136,7 @@ export function ThreeGalleryDemoPage({ onBack }: ThreeGalleryDemoPageProps) {
       },
     } as unknown as RendererEnv;
   }, []);
-  const twinScope = useMemo(() => createWritableScope(), []);
+  const twinScope = useMemo(() => createWritableScopeRef('three-gallery-twin-scope'), []);
   useEffect(() => {
     if (!twinEnabled) return;
     const adapter = new IndustrialAdapter({ env: twinEnv, scope: twinScope, onError: (code, message) => console.warn(`[three-gallery twin] ${code}: ${message}`) });

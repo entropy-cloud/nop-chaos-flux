@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@nop-chaos/ui';
-import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import { AiToolCallView, type ChatToolCall, type ChatToolCallUIState } from '@nop-chaos/flux-renderers-ai';
-
-initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
 interface Props {
   onBack: () => void;

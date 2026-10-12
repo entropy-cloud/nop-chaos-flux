@@ -9,7 +9,6 @@ import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import {
   registerAiRenderers,
   createStreamBasedAiConnector,
-  type ChatMessage,
 } from '@nop-chaos/flux-renderers-ai';
 import { createTiptapSender } from '@nop-chaos/flux-renderers-ai/rich-text';
 import { createMockAiEnv, createAiImportLoader } from '../ai/mock-ai-env.js';
@@ -75,9 +74,6 @@ function createRichTextImportLoader(connector: ReturnType<typeof createStreamBas
     resolveImportUrl: base.resolveImportUrl,
   };
 }
-
-const _unused: ChatMessage | undefined = undefined;
-void _unused;
 
 /**
  * P6 (A6) demo: the `ai-sender` inside `ai-chat` uses a host-injected Tiptap

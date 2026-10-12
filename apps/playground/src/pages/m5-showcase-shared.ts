@@ -1,5 +1,4 @@
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { toast } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
@@ -11,6 +10,7 @@ import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { createDefaultStream } from '../env/stream-impl.js';
 import { createDefaultOpenSocket } from '../env/socket-impl.js';
+import { notifyWithToast } from './notify-toast.js';
 
 export const MOCK_PRODUCTS = [
   { id: '1', name: 'iPhone 15 Pro', price: '¥8,999', tag: '新品', img: 'https://picsum.photos/seed/p1/200/200' },
@@ -83,12 +83,6 @@ export function createEnv(): RendererEnv {
     fetcher: createMockFetcher(),
     stream: createDefaultStream(),
     openSocket: createDefaultOpenSocket(),
-    notify: (level, message) => {
-      const text = typeof message === 'string' ? message : String(message ?? '');
-      if (level === 'error') toast.error(text || 'Error');
-      else if (level === 'success') toast.success(text || 'Success');
-      else if (level === 'warning') toast.warning?.(text || 'Warning');
-      else toast.info?.(text || 'Info');
-    },
+    notify: notifyWithToast,
   };
 }

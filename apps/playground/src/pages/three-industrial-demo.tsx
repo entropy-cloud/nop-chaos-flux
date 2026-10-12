@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@nop-chaos/ui';
 import { createDefaultEnv } from '@nop-chaos/flux-react';
-import type { RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 import { IndustrialAdapter, type IndustrialTagConfig } from '@nop-chaos/flux-renderers-3d';
+import { createWritableScopeRef } from './three-writable-scope.js';
 
 /**
  * three-industrial-demo 演示页（plan 534 D2）：IndustrialAdapter + ReconnectionManager
@@ -83,42 +84,7 @@ export function ThreeIndustrialDemoPage({ onBack }: { onBack: () => void }) {
     } as unknown as RendererEnv;
   }, []);
 
-  // plan 534 执行期发现：createPrivateEvalScope 为只读求值面（update: () => undefined，
-  // flux-react/src/bindings/flux-eval.ts:38）——adapter 的 scope.update 写入会被静默丢弃。
-  // demo 改用最小可写 ScopeRef（仅实现 adapter.update + UI.get 契约）。
-  const scope = useMemo<ScopeRef>(() => {
-    const data: Record<string, unknown> = { dataSources: {} };
-    const getIn = (path: string): unknown => {
-      let current: unknown = data;
-      for (const segment of path.split('.')) {
-        if (current === null || typeof current !== 'object') return undefined;
-        current = (current as Record<string, unknown>)[segment];
-      }
-      return current;
-    };
-    return {
-      id: 'three-industrial-demo-scope',
-      path: '$',
-      value: data,
-      get: getIn,
-      has: (path) => getIn(path) !== undefined,
-      readOwn: () => data,
-      readVisible: () => data,
-      materializeVisible: () => data,
-      update: (path, value) => {
-        const segments = path.split('.');
-        let current = data;
-        for (let i = 0; i < segments.length - 1; i++) {
-          const key = segments[i];
-          if (typeof current[key] !== 'object' || current[key] === null) current[key] = {};
-          current = current[key] as Record<string, unknown>;
-        }
-        current[segments[segments.length - 1]] = value;
-      },
-      merge: () => undefined,
-      isolate: true,
-    } as ScopeRef;
-  }, []);
+  const scope = useMemo(() => createWritableScopeRef('three-industrial-demo-scope'), []);
 
   useEffect(() => {
     const adapter = new IndustrialAdapter({ env, scope, onError: (code, message) => {

@@ -242,7 +242,7 @@ export function getVisibleRowProfile(rowKey: string): string | undefined {
   return row?.querySelectorAll('td')[2]?.textContent?.trim();
 }
 
-function readDiagnosticsProbe(selector: string) {
+export function readDiagnosticsProbe(selector: string) {
   return document.querySelector(selector) as HTMLElement | null;
 }
 
