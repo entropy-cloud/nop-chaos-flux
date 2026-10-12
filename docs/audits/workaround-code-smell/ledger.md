@@ -62,7 +62,7 @@
 | pg-env                       | playground | WA-15a | audited | 438   | 2     |      |
 | pg-src-root                  | playground | WA-15a | audited | 2562  | 17    |      |
 | pg-pages                     | playground | WA-15b | audited | 20134 | 106   |      |
-| pg-component-lab             | playground | WA-15c | pending | 17614 | 156   |      |
+| pg-component-lab             | playground | WA-15c | audited | 17614 | 156   |      |
 
 <!-- ledger:findings -->
 
@@ -284,3 +284,8 @@
 | WA-pages-007 | pg-pages | I邻 | P3 | ai-rich-text-demo.tsx:98-99 \_unused 死变量（唯一职能保住 type ChatMessage import 不报 unused） | verified | | 删两行+移除 import；typecheck/lint 直通；复检：closure audit（agent_fc9316d2，2026-10-12 R1 approved 0B/0M/2m 随收口修正——七条逐一开档+动态判别恰红→字节级恢复绿） |
 | WA-pages-008 | pg-pages | D | P3 | schema/registry 边界 cast 族 93 处（as never ×79+as any 族 ×14）——SchemaObject 索引签名 vs 宿主字面量类型工效缺口（renderer/core 契约缺失升级） | found | successor-required | 根因同 WA-pgai-003（flux-core 契约面）；去向 CX-20 扩围（SchemaInput/registry 类型工效，执行前人工确认门） |
 | WA-pages-009 | pg-pages | H微 | P3 | pages 域微重复清单（①诊断 DOM 读双份 ②fieldSources 表复制 ③diff 函数孪生对 ④包装壳三胞胎 ⑤双诊断场景 ~140 行结构平行） | verified | | ①②③批内修（readDiagnosticsProbe 导出改引/fieldSources 提取 report-designer-demo-shared/diffChangedKeys 泛型合一单行委托，identity 探针红→绿+既有单测直通）；④⑤豁免本行即登记——④三页包装壳 36 行同构裁定刻意模板不裁提取 ⑤双诊断场景量测通道实质不同（scope.update vs form.setValue+validateField）强行提取制造参数化怪物；复检：closure audit（agent_fc9316d2，2026-10-12 R1 approved 0B/0M/2m 随收口修正——七条逐一开档+动态判别恰红→字节级恢复绿） |
+| WA-clab-001 | pg-component-lab | D | P3 | schema 字面尾缀 cast 63 处双峰：59 处可机械去除（80 处剥离 tsc 实证）+ 4 处承重位点[ChatToolCall interface 嵌入 ×3/button 函数值 prop ×1] | found | successor-required | CX-20 根因第三波位点（与 WA-pages-008 93 处同根因；执行期新增承重位点 dialog-lab-page:106 editSubmitProbeLoadDict——mock dict 数据 value number vs DictBean string 契约冲突，与 button:121 同亚族并入）；执行前人工确认门 |
+| WA-clab-002 | pg-component-lab | D邻 | P2 | mock fetcher off-contract 失败形状 ok:false ×9（ok-removal 契约迁移的 cast 屏蔽残留；W4 邻） | verified | | 9 处 reshape 契约形 status:500/404+msg+data（data.message 全保——错误文案链不动）；ok/error 死字段删；envStub cast ×3+T 形 ×4 随车消亡；grep 契约形=0（c5c1 action on-contract 豁免例形保留）；复检：closure audit（agent_edcc7623，2026-10-12 R1 approved 0B/0M/0m——三条逐一开档+identity 污染恰红实验+request-runtime 错误链静态核对） |
+| WA-clab-003 | pg-component-lab | H | P3 | input-tree ↔ tree-select 树宿主孪生：lazyEnv 28 行逐字+orgTreeOptions 27 行数据镜像+(api:any,ctx:any) 签名对（CX-13 Tree 族消费面镜像） | verified | | 提取 renderers/tree-lab-host.ts（createLazyTreeHostEnv 工厂新鲜 lazyFailCalls+orgTreeOptions 单源+收窄注解一处）两页改引；identity 判别测试 4 用例（含 002 契约形判别）；复检：closure audit（agent_edcc7623，2026-10-12 R1 approved 0B/0M/0m——三条逐一开档+identity 污染恰红实验+request-runtime 错误链静态核对） |
+| WA-clab-004 | pg-component-lab | H微 | P3 | mock env 装配形清扫包：echo-fetcher cast ×9+vestigial no-op stub ×2+as unknown as T ×4 | verified | | ①echo-fetcher 8 处改 Case F 泛型直写形（方法级双跳 ×8 消亡；dialog:106 loadDict 承重亚位点停手保留并入 001/CX-20 裁定）②calendar/resizable 无 ajax 路径 stub 整删③T 形 ×4 随车（table:126 落正形 as T）④createLabMockFetcher 工厂方向落字不动实施；探针窗口 cast ×21 未动（e2e 契约通道豁免）；复检：closure audit（agent_edcc7623，2026-10-12 R1 approved 0B/0M/0m——三条逐一开档+identity 污染恰红实验+request-runtime 错误链静态核对） |
+| WA-clab-005 | pg-component-lab | I邻 | P3 | SchemaLabPage 出生即死双位点导出（root 64 行+renderers shim 1 行，全历史零消费，携带 pre-IS-labenv-001 no-op notify 旧装配） | found | successor-required | index.ts 导出面条款②阻却批内；successor 载体裁决（删 root+shim+导出行 或 保留则 notify 接线判别测试对齐）；watch #5 约束随行 |

@@ -1,5 +1,3 @@
-import type { RendererEnv } from '@nop-chaos/flux-core';
-
 /**
  * C4.3 Phase 3 host-scenario fetcher state (real-browser probes).
  * Extracted to keep the lab pages within the lint max-lines budget.
@@ -24,20 +22,19 @@ export const c4c3HostEnv = {
       if (c4c3FlakyFailures < 2) {
         c4c3FlakyFailures += 1;
         return {
-          ok: false,
           status: 500,
-          error: 'simulated flaky failure',
+          msg: 'simulated flaky failure',
           data: null,
-        } as unknown as T;
+        };
       }
       return {
-                status: 0,
+        status: 0,
         data: [{ id: 9, username: 'FlakyRecovered' }] as T,
       };
     }
     return { status: 0, data: null as T };
   },
-} as unknown as Partial<RendererEnv>;
+};
 
 export const c4c3OrgTree = [
   {

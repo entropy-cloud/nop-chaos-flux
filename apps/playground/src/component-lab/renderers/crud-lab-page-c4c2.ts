@@ -1,5 +1,3 @@
-import type { RendererEnv } from '@nop-chaos/flux-core';
-
 /**
  * C4.2 Phase 3 host-scenario fetcher state (real-browser probes).
  * Extracted to keep crud-lab-page.tsx within the lint max-lines budget.
@@ -44,20 +42,19 @@ export const c4c2HostEnv = {
       if (c4c2FlakyFailures < 2) {
         c4c2FlakyFailures += 1;
         return {
-          ok: false,
           status: 500,
-          error: 'simulated load failure',
+          msg: 'simulated load failure',
           data: null,
-        } as unknown as T;
+        };
       }
       return {
-                status: 0,
+        status: 0,
         data: { items: [{ id: 'f1', name: 'RecoveredRow', status: 'active' }], total: 1 } as T,
       };
     }
     return { status: 0, data: null as T };
   },
-} as unknown as Partial<RendererEnv>;
+};
 
 export const c4c2HostSchemas = {
   quickEdit: {

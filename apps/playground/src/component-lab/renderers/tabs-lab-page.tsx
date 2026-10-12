@@ -1,5 +1,4 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
-import type { RendererEnv } from '@nop-chaos/flux-core';
 
 const basicTabs = {
   type: 'page',
@@ -194,15 +193,15 @@ const formTabs = {
  * so the e2e can assert that the typed value (not a stale one) was submitted —
  * the bug 73 pattern check for this family.
  */
-const tabsSurfaceProbeFetcher = (async (api: { url?: string; data?: unknown }) => {
+const tabsSurfaceProbeFetcher = async <T,>(api: { url?: string; data?: unknown }) => {
   const url = api.url ?? '';
   if (url.includes('Note__save')) {
     (window as unknown as { __tabsSurfaceSubmitProbe?: unknown }).__tabsSurfaceSubmitProbe =
       api.data;
-    return { status: 0, data: api.data };
+    return { status: 0, data: api.data as T };
   }
-  return { status: 0, data: null };
-}) as unknown as RendererEnv['fetcher'];
+  return { status: 0, data: null as T };
+};
 
 const tabsWithSurfaces = {
   type: 'page',

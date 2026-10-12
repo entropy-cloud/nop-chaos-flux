@@ -1,5 +1,4 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
-import type { RendererEnv } from '@nop-chaos/flux-core';
 
 const sortableTextTable = {
   type: 'page',
@@ -115,20 +114,19 @@ const tableHostEnv = {
       if (lazyFailFirst) {
         lazyFailFirst = false;
         return {
-          ok: false,
           status: 500,
-          error: 'simulated failure',
+          msg: 'simulated failure',
           data: null,
-        } as unknown as T;
+        };
       }
       return {
-                status: 0,
-        data: [{ id: '1-1', name: 'Lazy Child', __rowKey: '1-1' }] as unknown as T,
+        status: 0,
+        data: [{ id: '1-1', name: 'Lazy Child', __rowKey: '1-1' }] as T,
       };
     }
     return { status: 0, data: null as T };
   },
-} as unknown as Partial<RendererEnv>;
+};
 
 const quickEditTable = {
   type: 'page',

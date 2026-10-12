@@ -60,7 +60,7 @@ const hostUploadEnv = {
       };
     }
     if (url === '/api/upload-fail') {
-      return { ok: false, status: 500, data: { message: 'Upload rejected by host' } as T };
+      return { status: 500, data: { message: 'Upload rejected by host' } as T };
     }
     return { status: 0, data: null as T };
   },

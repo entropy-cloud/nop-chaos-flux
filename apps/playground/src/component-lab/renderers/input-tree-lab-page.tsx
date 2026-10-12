@@ -1,32 +1,5 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
-
-const orgTreeOptions = [
-  {
-    label: 'Engineering',
-    value: 'engineering',
-    children: [
-      { label: 'Frontend', value: 'frontend', children: [] },
-      { label: 'Backend', value: 'backend', children: [] },
-      { label: 'Platform', value: 'platform', children: [] },
-    ],
-  },
-  {
-    label: 'Design',
-    value: 'design',
-    children: [
-      { label: 'UX Research', value: 'ux', children: [] },
-      { label: 'Brand', value: 'brand', children: [] },
-    ],
-  },
-  {
-    label: 'Operations',
-    value: 'ops',
-    children: [
-      { label: 'DevOps', value: 'devops', children: [] },
-      { label: 'Support', value: 'support', children: [] },
-    ],
-  },
-];
+import { createLazyTreeHostEnv, orgTreeOptions } from './tree-lab-host';
 
 const radioMode = {
   type: 'page',
@@ -70,36 +43,9 @@ const checkboxMode = {
 
 // Lazy children host: /api/lazy-ok returns children for the expanded node;
 // /api/lazy-fail rejects the FIRST call per node, then succeeds (retry proof).
-const lazyFailCalls = new Map<string, number>();
-const lazyEnv = {
-  fetcher: async function <T>(api: any, ctx: any) {
-    const body = ctx?.scope?.readOwn?.() ?? {};
-    const url = api?.url;
-    const parent = body.expandedNodeValue;
-    if (url === '/api/lazy-ok') {
-      return {
-                status: 0,
-        data: [
-          { label: `Sub A of ${parent}`, value: `${parent}-a` },
-          { label: `Sub B of ${parent}`, value: `${parent}-b` },
-        ] as T,
-      };
-    }
-    if (url === '/api/lazy-fail') {
-      const key = String(parent ?? '');
-      const calls = (lazyFailCalls.get(key) ?? 0) + 1;
-      lazyFailCalls.set(key, calls);
-      if (calls <= 1) {
-        return { ok: false, status: 500, data: { message: 'Lazy load failed (first attempt)' } as T };
-      }
-      return {
-                status: 0,
-        data: [{ label: `Retried child of ${parent}`, value: `${parent}-r` }] as T,
-      };
-    }
-    return { status: 0, data: null as T };
-  },
-};
+// Host implementation is shared with tree-select via tree-lab-host (WA-clab-003);
+// the factory hands out a fresh per-node fail counter per page.
+const lazyEnv = createLazyTreeHostEnv();
 
 const hostLazyEcho = {
   type: 'page',

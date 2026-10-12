@@ -38,12 +38,12 @@ const fetcherImage = {
   ],
 };
 
-const protectedImageFetcher = (async (api: { url?: string }) => {
+const protectedImageFetcher = async <T,>(api: { url?: string }) => {
   if ((api.url ?? '').includes('protected-image')) {
-    return { status: 0, data: { url: DATA_URI_IMAGE } };
+    return { status: 0, data: { url: DATA_URI_IMAGE } as T };
   }
-  return { status: 0, data: null };
-}) as unknown as RendererEnv['fetcher'];
+  return { status: 0, data: null as T };
+};
 
 export function ImageLabPage() {
   return (

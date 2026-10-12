@@ -165,7 +165,6 @@ const manualLoadOnDemand = {
  */
 const failingLoadEnv: Partial<RendererEnv> = {
   fetcher: async <T,>() => ({
-    ok: false,
     status: 500,
     data: null as T,
   }),

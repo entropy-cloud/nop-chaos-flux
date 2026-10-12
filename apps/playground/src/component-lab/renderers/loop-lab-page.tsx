@@ -1,5 +1,4 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
-import type { RendererEnv } from '@nop-chaos/flux-core';
 
 /**
  * Real-browser composite host scenario (C1.2 Phase 3, bug 73 / row-pollution
@@ -9,14 +8,14 @@ import type { RendererEnv } from '@nop-chaos/flux-core';
  * The e2e asserts each row's submit carries ITS OWN rowId + typed value —
  * proving nested action args do not leak across loop rows.
  */
-const loopRowEditFetcher = (async (api: { url?: string; data?: unknown }) => {
+const loopRowEditFetcher = async <T,>(api: { url?: string; data?: unknown }) => {
   const url = api.url ?? '';
   if (url.includes('Row__save')) {
     (window as unknown as { __loopRowEditProbe?: unknown }).__loopRowEditProbe = api.data;
-    return { status: 0, data: api.data };
+    return { status: 0, data: api.data as T };
   }
-  return { status: 0, data: null };
-}) as unknown as RendererEnv['fetcher'];
+  return { status: 0, data: null as T };
+};
 
 const loopRowEdit = {
   type: 'page',

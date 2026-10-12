@@ -34,7 +34,7 @@ const hostImageEnv = {
       };
     }
     if (url === '/api/image-fail') {
-      return { ok: false, status: 500, data: { message: 'Image upload rejected' } as T };
+      return { status: 500, data: { message: 'Image upload rejected' } as T };
     }
     return { status: 0, data: null as T };
   },

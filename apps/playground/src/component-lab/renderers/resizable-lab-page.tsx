@@ -1,5 +1,4 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
-import type { RendererEnv } from '@nop-chaos/flux-core';
 
 const resizableDemo = {
   type: 'page',
@@ -29,10 +28,6 @@ const resizableDemo = {
   ],
 };
 
-const resizableEnv = {
-  fetcher: async <T,>() => ({ status: 0, data: null as T }),
-} as unknown as Partial<RendererEnv>;
-
 export function ResizableLabPage() {
   return (
     <MultiScenarioLabPage
@@ -43,7 +38,6 @@ export function ResizableLabPage() {
           description:
             'direction horizontal with min/max clamps; dragging a handle writes the size array to $layout.resizableDemo and it is seeded back on remount.',
           schema: resizableDemo,
-          env: resizableEnv,
         },
       ]}
     />

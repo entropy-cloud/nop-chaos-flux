@@ -1,5 +1,4 @@
 import { MultiScenarioLabPage } from '../multi-scenario-lab-page';
-import type { RendererEnv } from '@nop-chaos/flux-core';
 import { c9CalendarDialogSchema, registerC9Probe } from './data-c9-host';
 
 const gridCalendarSchema = {
@@ -14,10 +13,6 @@ const gridCalendarSchema = {
     },
   ],
 };
-
-const gridCalendarEnv = {
-  fetcher: async <T,>() => ({ status: 0, data: null as T }),
-} as unknown as Partial<RendererEnv>;
 
 export function CalendarLabPage() {
   return (
@@ -36,7 +31,6 @@ export function CalendarLabPage() {
           description:
             'monthShape grid: Booker-style six-week date-selection grid with zero events/resources (empty-state gate bypassed). Clicking a date cell dispatches onDateSelect; selection never navigates.',
           schema: gridCalendarSchema,
-          env: gridCalendarEnv,
         },
       ]}
     />

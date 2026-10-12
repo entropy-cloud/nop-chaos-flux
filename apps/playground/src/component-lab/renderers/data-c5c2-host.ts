@@ -1,4 +1,4 @@
-import type { BaseSchema, RendererEnv } from '@nop-chaos/flux-core';
+import type { BaseSchema } from '@nop-chaos/flux-core';
 
 /**
  * C5.2 Phase 3 host-scenario schemas + fetchers (real-browser surfaces).
@@ -271,18 +271,18 @@ const rowGetResponses: Record<string, unknown> = {
 };
 
 /** Mock fetcher: per-row __get (by ?id=) + probe-storing __update. */
-export const c5c2CrudRowFetcher = (async (api: { url?: string; data?: unknown }) => {
+export const c5c2CrudRowFetcher = async <T,>(api: { url?: string; data?: unknown }) => {
   const url = api.url ?? '';
   if (url.includes('__get')) {
     const id = new URLSearchParams(url.split('?')[1] ?? '').get('id') ?? '1';
-    return { status: 0, data: rowGetResponses[id] ?? null };
+    return { status: 0, data: (rowGetResponses[id] ?? null) as T };
   }
   if (url.includes('__update')) {
     (window as unknown as { __c5c2RowEditProbe?: unknown }).__c5c2RowEditProbe = api.data;
-    return { status: 0, data: api.data };
+    return { status: 0, data: api.data as T };
   }
   if (url.includes('__findPage') || url.includes('__findList')) {
-    return { status: 0, data: { total: 0, items: [] } };
+    return { status: 0, data: { total: 0, items: [] } as T };
   }
-  return { status: 0, data: null };
-}) as unknown as RendererEnv['fetcher'];
+  return { status: 0, data: null as T };
+};

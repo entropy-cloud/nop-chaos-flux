@@ -1,4 +1,4 @@
-import type { BaseSchema, RendererEnv } from '@nop-chaos/flux-core';
+import type { BaseSchema } from '@nop-chaos/flux-core';
 
 /**
  * C6.1 Phase 3 host-scenario schemas + fetchers (real-browser surfaces).
@@ -76,16 +76,16 @@ export const c6c1MarkdownSrcSchema = {
 } as unknown as BaseSchema;
 
 /** env.fetcher: /api/markdown-doc returns text, /api/markdown-missing fails. */
-export const c6c1MarkdownSrcFetcher = (async (api: { url?: string }) => {
+export const c6c1MarkdownSrcFetcher = async <T,>(api: { url?: string }) => {
   const url = api.url ?? '';
   if (url.includes('markdown-doc')) {
-    return { status: 0, data: '# Fetched from env.fetcher' };
+    return { status: 0, data: '# Fetched from env.fetcher' as T };
   }
   if (url.includes('markdown-missing')) {
-    return { ok: false, status: 404, data: null };
+    return { status: 404, data: null };
   }
-  return { status: 0, data: null };
-}) as unknown as RendererEnv['fetcher'];
+  return { status: 0, data: null as T };
+};
 
 export const c6c1HtmlSanitizeSchema = {
   type: 'page',

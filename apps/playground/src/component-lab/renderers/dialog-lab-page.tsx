@@ -71,20 +71,27 @@ const formDialog = {
  * so the e2e can assert on it. jsdom unit tests cannot reproduce this
  * (see docs/bugs/73-...); only a real browser can.
  */
-const editSubmitProbeFetcher = (async (api: { url?: string; data?: unknown }) => {
+const editSubmitProbeFetcher = async <T,>(api: { url?: string; data?: unknown }) => {
   const url = api.url ?? '';
   if (url.includes('Record__get')) {
     return {
-            status: 0,
-      data: { userName: 'RowUser', status: 1, nickName: 'Original', email: 'old@x.com', phone: '111', remark: 'orig remark' },
+      status: 0,
+      data: {
+        userName: 'RowUser',
+        status: 1,
+        nickName: 'Original',
+        email: 'old@x.com',
+        phone: '111',
+        remark: 'orig remark',
+      } as T,
     };
   }
   if (url.includes('Record__update')) {
     (window as unknown as { __editSubmitProbe?: unknown }).__editSubmitProbe = api.data;
-    return { status: 0, data: api.data };
+    return { status: 0, data: api.data as T };
   }
-  return { status: 0, data: null };
-}) as unknown as RendererEnv['fetcher'];
+  return { status: 0, data: null as T };
+};
 
 // 异步 dict 加载（模拟真实后端 DictProvider 延迟）
 const editSubmitProbeLoadDict = (async (_name: string) => {
@@ -184,56 +191,103 @@ const editSubmitDialog = {
 
 const realSchemaDialog = {"type": "button", "label": "Edit (real schema)", "level": "primary", "onClick": {"action": "openDialog", "args": {"title": "Edit (real schema)", "body": {"type": "form", "name": "edit", "id": "edit", "mode": "horizontal", "submitScope": "surface", "loadAction": {"action": "ajax", "args": {"url": "/r/Record__get", "method": "post", "includeScope": "*", "selection": "id,userId,userName,status,status_label,nickName,dept{deptName},deptId,avatar,avatarComponentFileStatus{externalPath,fileId,fileSize,lastModified,name,permissions,previewPath,size},userType,userType_label,gender,gender_label,email,phone,expireAt,changePwdAtLogin,idType,idNbr,birthday,workNo,position{name},positionId,telephone,remark"}}, "api": {"data": {"userName": "${userName}", "status": "${status}", "nickName": "${nickName}", "deptId": "${deptId}", "avatar": "${avatar}", "userType": "${userType}", "gender": "${gender}", "email": "${email}", "phone": "${phone}", "expireAt": "${expireAt}", "changePwdAtLogin": "${changePwdAtLogin}", "idType": "${idType}", "idNbr": "${idNbr}", "birthday": "${birthday}", "workNo": "${workNo}", "positionId": "${positionId}", "telephone": "${telephone}", "remark": "${remark}"}, "url": "/r/Record__update", "withFormData": true}, "submitAction": {"action": "ajax", "args": {"url": "/r/Record__update", "method": "post", "data": {"userName": "${userName}", "status": "${status}", "nickName": "${nickName}", "deptId": "${deptId}", "avatar": "${avatar}", "userType": "${userType}", "gender": "${gender}", "email": "${email}", "phone": "${phone}", "expireAt": "${expireAt}", "changePwdAtLogin": "${changePwdAtLogin}", "idType": "${idType}", "idNbr": "${idNbr}", "birthday": "${birthday}", "workNo": "${workNo}", "positionId": "${positionId}", "telephone": "${telephone}", "remark": "${remark}"}}}, "onSubmitSuccess": [{"type": "action", "action": "refreshNearest"}], "body": [{"type": "tabs", "id": "edit-tabs", "items": [{"title": "基本信息", "name": "baseInfo", "key": "baseInfo", "body": [{"type": "flex", "id": "row-userName-status", "body": [{"name": "userName", "label": "用户名", "required": true, "readOnly": true, "type": "text"}, {"name": "status", "label": "用户状态", "required": true, "type": "select", "searchable": true, "clearable": true, "multiple": false, "dict": "auth/user-status"}]}, {"type": "flex", "id": "row-nickName-deptId", "body": [{"name": "nickName", "label": "昵称", "required": true, "type": "input-text", "clearable": true, "validations": {"maxLength": 50}}, {"name": "deptId", "label": "所属部门", "type": "tree-select", "clearable": true, "source": {"url": "@query:NopAuthDept__findList/value:id,label:deptName,%0A%20children%20@TreeChildren(max:5)?filter_parentId=__null"}}]}, {"type": "flex", "id": "row-avatar", "body": {"name": "avatar", "label": "头像", "type": "input-file", "accept": "image/*", "receiver": "/f/upload?bizObjName=NopAuthUser&fieldName=avatar", "useChunk": false}}, {"type": "flex", "id": "row-userType-gender", "body": [{"name": "userType", "label": "用户类型", "required": true, "type": "select", "searchable": true, "clearable": true, "multiple": false, "dict": "auth/user-type"}, {"name": "gender", "label": "性别", "required": true, "type": "select", "searchable": true, "clearable": true, "multiple": false, "dict": "auth/gender"}]}, {"type": "flex", "id": "row-email-phone", "body": [{"name": "email", "label": "邮件", "type": "input-text", "clearable": true, "validations": {"isEmail": true, "maxLength": 100}}, {"name": "phone", "label": "电话", "type": "input-text", "clearable": true, "validations": {"isPhoneNumber": true, "maxLength": 50}}]}, {"type": "flex", "id": "row-expireAt-changePwdAtLogin", "body": [{"name": "expireAt", "label": "用户过期时间", "type": "input-datetime", "format": "YYYY-MM-DD HH:mm:ss"}, {"name": "changePwdAtLogin", "label": "登陆后立刻修改密码", "type": "switch", "trueValue": 1, "falseValue": 0}]}]}, {"title": "扩展信息", "name": "extInfo", "key": "extInfo", "body": [{"type": "flex", "id": "row-idType-idNbr", "body": [{"name": "idType", "label": "证件类型", "type": "input-text", "clearable": true, "validations": {"maxLength": 10}}, {"name": "idNbr", "label": "证件号", "type": "input-text", "clearable": true, "validations": {"maxLength": 100}}]}, {"type": "flex", "id": "row-birthday-workNo", "body": [{"name": "birthday", "label": "生日", "type": "input-date", "format": "YYYY-MM-DD"}, {"name": "workNo", "label": "工号", "type": "input-text", "clearable": true, "validations": {"maxLength": 100}}]}, {"type": "flex", "id": "row-positionId-telephone", "body": [{"type": "picker", "valueField": "positionId", "labelField": "name", "size": "lg", "modalSize": "lg", "source": {"valueField": "positionId", "labelField": "name", "includeScope": "*", "url": "@query:NopAuthPosition__findPage", "gql:selection": "{@pageSelection}", "selection": "total,page,items{ id,positionId,name,createdBy,remark }"}, "pickerSchema": {"name": "crud-grid", "id": "crud-grid", "toolbar": [], "footerToolbar": [{"type": "statistics"}, {"type": "pagination"}], "loadAction": {"action": "ajax", "args": {"includeScope": "*", "url": "@query:NopAuthPosition__findPage", "gql:selection": "{@pageSelection}", "selection": "total,page,items{ id,positionId,name,createdBy,remark }"}}, "columns": [{"name": "name", "label": "名称", "sortable": true, "toggled": true, "fixed": "left", "type": "text"}, {"name": "createdBy", "label": "创建人", "sortable": true, "toggled": true, "type": "text"}, {"name": "remark", "label": "备注", "sortable": true, "toggled": true, "type": "text"}], "type": "crud"}, "name": "positionId", "label": "职务", "joinValues": false, "extractValue": true, "multiple": false}, {"name": "telephone", "label": "座机", "type": "input-text", "clearable": true, "validations": {"maxLength": 50}}]}, {"type": "flex", "id": "row-remark", "body": {"name": "remark", "label": "备注", "type": "textarea", "minRows": 3}}]}]}]}, "actions": [{"type": "button", "id": "_default_cancel", "label": "取消", "onClick": {"action": "closeSurface"}}, {"type": "button", "id": "_default_submit", "label": "确定", "level": "primary", "onClick": {"action": "submitForm", "then": {"action": "closeSurface"}}}]}}};
 
-const realSchemaFetcher = (async (api: { url?: string; data?: unknown }) => {
+const realSchemaFetcher = async <T,>(api: { url?: string; data?: unknown }) => {
   const url = api.url ?? '';
   // 模拟异步数据源成功加载（tree-select / picker），触发 form 重渲染
   if (url.includes('NopAuthDept__findList')) {
     await new Promise((r) => setTimeout(r, 400));
-    return { status: 0, data: { items: [{ id: 'D1', deptName: 'Dev' }] } };
+    return { status: 0, data: { items: [{ id: 'D1', deptName: 'Dev' }] } as T };
   }
   if (url.includes('NopAuthPosition__findPage')) {
     await new Promise((r) => setTimeout(r, 400));
-    return { status: 0, data: { total: 1, items: [{ id: 'P1', positionId: 'P1', name: 'Engineer' }] } };
+    return {
+      status: 0,
+      data: { total: 1, items: [{ id: 'P1', positionId: 'P1', name: 'Engineer' }] } as T,
+    };
   }
   if (url.includes('Record__get')) {
-    return { status: 0, data: {
-      id: '1', userId: '1', userName: 'RowUser', status: 1, status_label: '1-正常',
-      nickName: 'Original', deptId: null, dept: { deptName: 'Dev' }, avatar: null,
-      userType: 1, userType_label: '1-普通用户', gender: 1, gender_label: '1-男',
-      email: 'old@x.com', phone: '111', expireAt: null, changePwdAtLogin: 0,
-      idType: null, idNbr: null, birthday: null, workNo: null, positionId: null,
-      position: { name: 'Engineer' }, telephone: null, remark: 'orig',
-    } };
+    return {
+      status: 0,
+      data: {
+        id: '1',
+        userId: '1',
+        userName: 'RowUser',
+        status: 1,
+        status_label: '1-正常',
+        nickName: 'Original',
+        deptId: null,
+        dept: { deptName: 'Dev' },
+        avatar: null,
+        userType: 1,
+        userType_label: '1-普通用户',
+        gender: 1,
+        gender_label: '1-男',
+        email: 'old@x.com',
+        phone: '111',
+        expireAt: null,
+        changePwdAtLogin: 0,
+        idType: null,
+        idNbr: null,
+        birthday: null,
+        workNo: null,
+        positionId: null,
+        position: { name: 'Engineer' },
+        telephone: null,
+        remark: 'orig',
+      } as T,
+    };
   }
   if (url.includes('Record__update')) {
     (window as unknown as { __editSubmitProbe?: unknown }).__editSubmitProbe = api.data;
-    return { status: 0, data: api.data };
+    return { status: 0, data: api.data as T };
   }
-  return { status: 0, data: null };
-}) as unknown as RendererEnv['fetcher'];
+  return { status: 0, data: null as T };
+};
 
 
-const crudRowEditFetcher = (async (api: { url?: string; data?: unknown }) => {
+const crudRowEditFetcher = async <T,>(api: { url?: string; data?: unknown }) => {
   const url = api.url ?? '';
   if (url.includes('__get')) {
-    return { status: 0, data: {
-      id: '1', userId: '1', userName: 'RowUser', status: 1, status_label: '1-正常',
-      nickName: 'Original', deptId: null, dept: { deptName: 'Dev' }, avatar: null,
-      userType: 1, userType_label: '1-普通用户', gender: 1, gender_label: '1-男',
-      email: 'old@x.com', phone: '111', expireAt: null, changePwdAtLogin: 0,
-      idType: null, idNbr: null, birthday: null, workNo: null, positionId: null,
-      position: { name: 'Engineer' }, telephone: null, remark: 'orig',
-    } };
+    return {
+      status: 0,
+      data: {
+        id: '1',
+        userId: '1',
+        userName: 'RowUser',
+        status: 1,
+        status_label: '1-正常',
+        nickName: 'Original',
+        deptId: null,
+        dept: { deptName: 'Dev' },
+        avatar: null,
+        userType: 1,
+        userType_label: '1-普通用户',
+        gender: 1,
+        gender_label: '1-男',
+        email: 'old@x.com',
+        phone: '111',
+        expireAt: null,
+        changePwdAtLogin: 0,
+        idType: null,
+        idNbr: null,
+        birthday: null,
+        workNo: null,
+        positionId: null,
+        position: { name: 'Engineer' },
+        telephone: null,
+        remark: 'orig',
+      } as T,
+    };
   }
   if (url.includes('__update')) {
     (window as unknown as { __crudRowEditProbe?: unknown }).__crudRowEditProbe = api.data;
-    return { status: 0, data: api.data };
+    return { status: 0, data: api.data as T };
   }
   if (url.includes('__findPage') || url.includes('__findList')) {
-    return { status: 0, data: { total: 1, items: [{ id: '1' }] } };
+    return { status: 0, data: { total: 1, items: [{ id: '1' }] } as T };
   }
-  return { status: 0, data: null };
-}) as unknown as RendererEnv['fetcher'];
+  return { status: 0, data: null as T };
+};
 
 const crudRowEditDialog = {
   type: 'page',
