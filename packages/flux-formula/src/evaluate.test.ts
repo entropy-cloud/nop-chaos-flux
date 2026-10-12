@@ -6,6 +6,7 @@ import type {
   StaticValueNode,
 } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from './compile.js';
+import { createExpressionCompiler } from './expression-compiler.js';
 import { createEvalContext, createStateFromNode, evaluateNode } from './evaluate.js';
 
 const env: RendererEnv = {
@@ -153,6 +154,60 @@ describe('early-exit optimization (FIX-12)', () => {
     const r2 = evaluateNode(node, ctx, env, state.root);
     expect(r2.reusedReference).toBe(true);
     expect(r2.value).toBe(r1.value);
+  });
+});
+
+describe('composite commit protocol (CX-1 characterization)', () => {
+  const expressionCompiler = createExpressionCompiler();
+
+  it('array arm commits a fresh reference when a child value changes, then reuses it', () => {
+    const node: ArrayValueNode = {
+      kind: 'array-node',
+      items: [expressionCompiler.compileNode('${a}'), staticNode('fixed')],
+    };
+    const state = createStateFromNode(node);
+
+    const r1 = evaluateNode(node, createEvalContext(makeScope({ a: 1 })), env, state.root);
+    expect(r1.changed).toBe(true);
+    expect(r1.value).toEqual([1, 'fixed']);
+
+    const r2 = evaluateNode(node, createEvalContext(makeScope({ a: 2 })), env, state.root);
+    expect(r2.changed).toBe(true);
+    expect(r2.reusedReference).toBe(false);
+    expect(r2.value).toEqual([2, 'fixed']);
+    expect(r2.value).not.toBe(r1.value);
+
+    const r3 = evaluateNode(node, createEvalContext(makeScope({ a: 2 })), env, state.root);
+    expect(r3.changed).toBe(false);
+    expect(r3.reusedReference).toBe(true);
+    expect(r3.value).toBe(r2.value);
+  });
+
+  it('object arm commits a fresh reference when a child value changes, then reuses it', () => {
+    const node: ObjectValueNode = {
+      kind: 'object-node',
+      keys: ['dynamic', 'fixed'],
+      entries: {
+        dynamic: expressionCompiler.compileNode('${a}'),
+        fixed: staticNode('fixed'),
+      },
+    };
+    const state = createStateFromNode(node);
+
+    const r1 = evaluateNode(node, createEvalContext(makeScope({ a: 1 })), env, state.root);
+    expect(r1.changed).toBe(true);
+    expect(r1.value).toEqual({ dynamic: 1, fixed: 'fixed' });
+
+    const r2 = evaluateNode(node, createEvalContext(makeScope({ a: 2 })), env, state.root);
+    expect(r2.changed).toBe(true);
+    expect(r2.reusedReference).toBe(false);
+    expect(r2.value).toEqual({ dynamic: 2, fixed: 'fixed' });
+    expect(r2.value).not.toBe(r1.value);
+
+    const r3 = evaluateNode(node, createEvalContext(makeScope({ a: 2 })), env, state.root);
+    expect(r3.changed).toBe(false);
+    expect(r3.reusedReference).toBe(true);
+    expect(r3.value).toBe(r2.value);
   });
 });
 

@@ -283,19 +283,43 @@ export function nullableAdapter<TValue, TContext extends AdapterContext = Adapte
   });
 }
 
-export function actionAdapter(
-  transformInAction?: ActionSchema | ActionSchema[],
-  transformOutAction?: ActionSchema | ActionSchema[],
-  validateAction?: ActionSchema | ActionSchema[],
-  dispatch?: AdapterDispatch,
-): ValueAdapter<unknown, unknown, AdapterActionContext> {
+type ActionBackedMethodPhase = 'transformIn' | 'transformOut' | 'validate';
+
+interface ActionBackedMethodsConfig<TAction extends ValueAdaptationAction | undefined> {
+  transformInAction: TAction;
+  transformOutAction: TAction;
+  validateAction: TAction;
+  /**
+   * Seam shared by actionAdapter and the compiled-program path. The `phase`
+   * tag carries the pinned m3 drift: the compiled-program path must NOT
+   * forward ctx to its runner from validate (runner receives undefined),
+   * while actionAdapter always forwards ctx (runAction reduces it to
+   * {scope, form}). Preserving the asymmetry is intentional — unifying it
+   * would be a behavior change.
+   */
+  execute: (
+    action: TAction,
+    payload: Record<string, unknown>,
+    ctx: AdapterActionContext,
+    phase: ActionBackedMethodPhase,
+  ) => Promise<ActionResult | undefined>;
+  toValidationIssues: (error: unknown) => AdapterValidationIssue[];
+}
+
+function buildActionBackedMethods<TAction extends ValueAdaptationAction | undefined>({
+  transformInAction,
+  transformOutAction,
+  validateAction,
+  execute,
+  toValidationIssues,
+}: ActionBackedMethodsConfig<TAction>): ValueAdapter<unknown, unknown, AdapterActionContext> {
   return {
     async in(value, ctx) {
       if (!transformInAction) {
         return value;
       }
 
-      const result = await runAction(
+      const result = await execute(
         transformInAction,
         {
           value,
@@ -303,7 +327,7 @@ export function actionAdapter(
           ...(ctx.name !== undefined ? { name: ctx.name } : {}),
         },
         ctx,
-        dispatch,
+        'transformIn',
       );
 
       if (!result?.ok) {
@@ -318,7 +342,7 @@ export function actionAdapter(
         return value;
       }
 
-      const result = await runAction(
+      const result = await execute(
         transformOutAction,
         {
           value,
@@ -327,7 +351,7 @@ export function actionAdapter(
           ...(ctx.name !== undefined ? { name: ctx.name } : {}),
         },
         ctx,
-        dispatch,
+        'transformOut',
       );
 
       if (!result?.ok) {
@@ -343,7 +367,7 @@ export function actionAdapter(
       }
 
       try {
-        const result = await runAction(
+        const result = await execute(
           validateAction,
           {
             value,
@@ -351,7 +375,7 @@ export function actionAdapter(
             ...(ctx.name !== undefined ? { name: ctx.name } : {}),
           },
           ctx,
-          dispatch,
+          'validate',
         );
 
         if (!result?.ok) {
@@ -387,6 +411,21 @@ export function actionAdapter(
       }
     },
   };
+}
+
+export function actionAdapter(
+  transformInAction?: ActionSchema | ActionSchema[],
+  transformOutAction?: ActionSchema | ActionSchema[],
+  validateAction?: ActionSchema | ActionSchema[],
+  dispatch?: AdapterDispatch,
+): ValueAdapter<unknown, unknown, AdapterActionContext> {
+  return buildActionBackedMethods({
+    transformInAction,
+    transformOutAction,
+    validateAction,
+    execute: (action, payload, ctx) => runAction(action, payload, ctx, dispatch),
+    toValidationIssues,
+  });
 }
 
 
@@ -500,101 +539,14 @@ export function createActionBackedAdapter(options: ActionBackedAdapterOptions): 
     );
   }
 
-  return {
-    async in(value, ctx) {
-      if (!transformInAction) {
-        return value;
-      }
-
-      const result = await runValueAdaptationAction(
-        transformInAction,
-        {
-          value,
-          readOnly: ctx.readOnly,
-          ...(ctx.name !== undefined ? { name: ctx.name } : {}),
-        },
-        runner,
-        ctx,
-      );
-
-      if (!result?.ok) {
-        throw createActionFailureError('transformIn', result);
-      }
-
-      return getActionResultValue(result, value);
-    },
-
-    async out(value, ctx) {
-      if (!transformOutAction) {
-        return value;
-      }
-
-      const result = await runValueAdaptationAction(
-        transformOutAction,
-        {
-          value,
-          originalValue: ctx.originalValue,
-          readOnly: ctx.readOnly,
-          ...(ctx.name !== undefined ? { name: ctx.name } : {}),
-        },
-        runner,
-        ctx,
-      );
-
-      if (!result?.ok) {
-        throw createActionFailureError('transformOut', result);
-      }
-
-      return getActionResultValue(result, value);
-    },
-
-    async validate(value, ctx) {
-      if (!validateAction) {
-        return { valid: true };
-      }
-
-      try {
-        const result = await runValueAdaptationAction(
-          validateAction,
-          {
-            value,
-            originalValue: ctx.originalValue,
-            ...(ctx.name !== undefined ? { name: ctx.name } : {}),
-          },
-          runner,
-        );
-
-        if (!result?.ok) {
-          return {
-            valid: false,
-            issues: formatIssues(result?.error),
-          };
-        }
-
-        const data = result.data;
-        if (!data || typeof data !== 'object') {
-          return { valid: true };
-        }
-
-        const candidate = data as {
-          valid?: unknown;
-          issues?: AdapterValidationIssue[];
-        };
-
-        if (candidate.valid === false) {
-          return {
-            valid: false,
-            issues: Array.isArray(candidate.issues) ? candidate.issues : [],
-          };
-        }
-
-        return { valid: true };
-      } catch (error) {
-        return {
-          valid: false,
-          issues: formatIssues(error),
-        };
-      }
-    },
-  };
+  return buildActionBackedMethods({
+    transformInAction,
+    transformOutAction,
+    validateAction,
+    // Pinned m3 drift: validate dispatches with ctx omitted, so the runner
+    // receives `undefined` (actionAdapter forwards {scope, form} instead).
+    execute: (action, payload, ctx, phase) =>
+      runValueAdaptationAction(action, payload, runner, phase === 'validate' ? undefined : ctx),
+    toValidationIssues: formatIssues,
+  });
 }

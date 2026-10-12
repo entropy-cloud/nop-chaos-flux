@@ -2,11 +2,17 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   actionAdapter,
   booleanStringAdapter,
+  createActionBackedAdapter,
   identityAdapter,
   nullableAdapter,
   stringAdapter,
   type ActionSchema,
+  type ActionContext,
+  type AdapterActionContext,
+  type CompiledActionProgram,
+  type FormRuntime,
   type ScopeRef,
+  type ValueAdaptationAction,
 } from './index.js';
 
 const scope = {
@@ -21,6 +27,8 @@ const scope = {
   update: () => undefined,
   merge: () => undefined,
 } satisfies ScopeRef;
+
+const form = { id: 'form:test' } as unknown as FormRuntime;
 
 describe('value-adapter', () => {
   it('provides focused sync adapters for identity, string, boolean, and nullable values', async () => {
@@ -184,6 +192,181 @@ describe('value-adapter', () => {
     await expect(
       adapter.validate?.({ amount: 1 }, { readOnly: false, scope, form: null }),
     ).resolves.toEqual({
+      valid: false,
+      issues: [{ level: 'warning', message: 'check value', path: 'value.amount' }],
+    });
+  });
+
+  it('forwards ctx to dispatch as {scope, form} from validate', async () => {
+    const dispatch = vi.fn(
+      async (_action: ActionSchema | ActionSchema[], _ctx?: Partial<ActionContext>) => ({
+        ok: true,
+      }),
+    );
+    const adapter = actionAdapter(undefined, undefined, { action: 'demo:validate' }, dispatch);
+
+    await adapter.validate?.('working', {
+      name: 'profile',
+      readOnly: false,
+      originalValue: 'seed',
+      scope,
+      form,
+    });
+
+    expect(dispatch.mock.calls[0]?.[1]).toEqual({ scope, form });
+    expect(dispatch.mock.calls[0]?.[1]?.scope).toBe(scope);
+    expect(dispatch.mock.calls[0]?.[1]?.form).toBe(form);
+  });
+});
+
+describe('action-backed adapter composition (CX-1 pinned behavior)', () => {
+  function compiledProgram(action: string): CompiledActionProgram {
+    return {
+      nodes: [
+        {
+          action,
+          payload: {},
+          targeting: {},
+          control: {},
+          source: { action },
+        },
+      ],
+      isFullyStatic: false,
+    };
+  }
+
+  const adapterCtx: AdapterActionContext = {
+    name: 'profile',
+    readOnly: false,
+    originalValue: 'seed',
+    scope,
+    form,
+  };
+
+  it('clones payload args into compiled program nodes and forwards ctx for in', async () => {
+    const inputProgram = compiledProgram('demo:in');
+    const runner = vi.fn(
+      async (action: ValueAdaptationAction, ctx?: AdapterActionContext) => ({
+        ok: true as const,
+        data: `transformed:${ctx?.name}`,
+      }),
+    );
+    const adapter = createActionBackedAdapter({
+      transformInAction: inputProgram,
+      runner,
+    });
+
+    await expect(adapter.in('raw', adapterCtx)).resolves.toBe('transformed:profile');
+
+    const received = runner.mock.calls[0]?.[0] as CompiledActionProgram;
+    expect(received).not.toBe(inputProgram);
+    expect(received.nodes[0]?.source.args).toEqual({
+      value: 'raw',
+      readOnly: false,
+      name: 'profile',
+    });
+    expect(received.nodes[0]?.payload.args).toMatchObject({
+      isStatic: true,
+      value: { value: 'raw', readOnly: false, name: 'profile' },
+    });
+    expect(runner.mock.calls[0]?.[1]).toBe(adapterCtx);
+  });
+
+  it('forwards ctx to the runner for out', async () => {
+    const runner = vi.fn(
+      async (_action: ValueAdaptationAction, _ctx?: AdapterActionContext) => ({
+        ok: true as const,
+        data: 'draft',
+      }),
+    );
+    const adapter = createActionBackedAdapter({
+      transformOutAction: compiledProgram('demo:out'),
+      runner,
+    });
+
+    await expect(adapter.out('working', adapterCtx)).resolves.toBe('draft');
+    expect(runner.mock.calls[0]?.[1]).toBe(adapterCtx);
+  });
+
+  it('does not forward ctx to the runner from validate (m3 drift pinned)', async () => {
+    const runner = vi.fn(
+      async (_action: ValueAdaptationAction, _ctx?: AdapterActionContext) => ({
+        ok: true as const,
+        data: { valid: true },
+      }),
+    );
+    const adapter = createActionBackedAdapter({
+      validateAction: compiledProgram('demo:validate'),
+      runner,
+    });
+
+    await expect(adapter.validate?.('working', adapterCtx)).resolves.toEqual({ valid: true });
+
+    const received = runner.mock.calls[0]?.[0] as CompiledActionProgram;
+    expect(received.nodes[0]?.source.args).toEqual({
+      value: 'working',
+      originalValue: 'seed',
+      name: 'profile',
+    });
+    expect(runner.mock.calls[0]?.[1]).toBeUndefined();
+  });
+
+  it('formats validate failures with the injected toValidationIssues on the compiled-program path', async () => {
+    const formatIssues = vi.fn(
+      (error: unknown) =>
+        [
+          {
+            level: 'error' as const,
+            message: `localized:${String(error)}`,
+          },
+        ],
+    );
+    const failing = vi.fn(async () => ({ ok: false as const, error: 'boom' }));
+    const adapter = createActionBackedAdapter({
+      validateAction: compiledProgram('demo:validate'),
+      runner: failing,
+      toValidationIssues: formatIssues,
+    });
+
+    await expect(adapter.validate?.('working', adapterCtx)).resolves.toEqual({
+      valid: false,
+      issues: [{ level: 'error', message: 'localized:boom' }],
+    });
+    expect(formatIssues).toHaveBeenCalledWith('boom');
+  });
+
+  it('keeps the core formatter on the plain-schema fallthrough even when a formatter is injected (m3 drift pinned)', async () => {
+    const formatIssues = vi.fn(
+      (error: unknown) => [{ level: 'error' as const, message: `localized:${String(error)}` }],
+    );
+    const failing = vi.fn(async () => ({ ok: false as const, error: 'boom' }));
+    const adapter = createActionBackedAdapter({
+      validateAction: { action: 'demo:validate' },
+      runner: failing,
+      toValidationIssues: formatIssues,
+    });
+
+    await expect(adapter.validate?.('working', adapterCtx)).resolves.toEqual({
+      valid: false,
+      issues: [{ level: 'error', message: 'boom', cause: 'boom' }],
+    });
+    expect(formatIssues).not.toHaveBeenCalled();
+  });
+
+  it('parses valid:false result shapes from compiled-program validate data', async () => {
+    const runner = vi.fn(async () => ({
+      ok: true as const,
+      data: {
+        valid: false,
+        issues: [{ level: 'warning' as const, message: 'check value', path: 'value.amount' }],
+      },
+    }));
+    const adapter = createActionBackedAdapter({
+      validateAction: compiledProgram('demo:validate'),
+      runner,
+    });
+
+    await expect(adapter.validate?.('working', adapterCtx)).resolves.toEqual({
       valid: false,
       issues: [{ level: 'warning', message: 'check value', path: 'value.amount' }],
     });

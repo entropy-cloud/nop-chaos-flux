@@ -8,7 +8,7 @@ import type {
   RuntimeValueState,
   ValueEvaluationResult,
 } from '@nop-chaos/flux-core';
-import { isPlainObject, shallowEqual } from '@nop-chaos/flux-core';
+import { commitCompositeState, isPlainObject } from '@nop-chaos/flux-core';
 
 type EvaluatedRuntimeTree<T> = T extends CompiledRuntimeValue<infer U>
   ? U
@@ -161,30 +161,7 @@ export function compileRuntimeValueTree<T = unknown>(
           return result.value;
         });
 
-        if (!anyChildChanged && stateRoot.initialized && stateRoot.lastValue) {
-          return {
-            value: stateRoot.lastValue as T,
-            changed: false,
-            reusedReference: true,
-          };
-        }
-
-        if (stateRoot.initialized && stateRoot.lastValue && shallowEqual(stateRoot.lastValue, nextValue)) {
-          return {
-            value: stateRoot.lastValue as T,
-            changed: false,
-            reusedReference: true,
-          };
-        }
-
-        stateRoot.initialized = true;
-        stateRoot.lastValue = nextValue;
-
-        return {
-          value: nextValue as T,
-          changed: true,
-          reusedReference: false,
-        };
+        return commitCompositeState(stateRoot, nextValue as T, anyChildChanged);
       },
       } as CompiledRuntimeValue<EvaluatedRuntimeTree<T>>;
   }
@@ -263,30 +240,7 @@ export function compileRuntimeValueTree<T = unknown>(
           nextValue[key] = result.value;
         }
 
-        if (!anyChildChanged && stateRoot.initialized && stateRoot.lastValue) {
-          return {
-            value: stateRoot.lastValue as T,
-            changed: false,
-            reusedReference: true,
-          };
-        }
-
-        if (stateRoot.initialized && stateRoot.lastValue && shallowEqual(stateRoot.lastValue, nextValue)) {
-          return {
-            value: stateRoot.lastValue as T,
-            changed: false,
-            reusedReference: true,
-          };
-        }
-
-        stateRoot.initialized = true;
-        stateRoot.lastValue = nextValue;
-
-        return {
-          value: nextValue as T,
-          changed: true,
-          reusedReference: false,
-        };
+        return commitCompositeState(stateRoot, nextValue as T, anyChildChanged);
       },
     } as CompiledRuntimeValue<EvaluatedRuntimeTree<T>>;
   }

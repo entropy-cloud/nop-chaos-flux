@@ -10,7 +10,7 @@ import type {
   TemplateValueNode,
   ValueEvaluationResult,
 } from '@nop-chaos/flux-core';
-import { shallowEqual } from '@nop-chaos/flux-core';
+import { commitCompositeState } from '@nop-chaos/flux-core';
 import { createEvalContext, createScopeDependencyCollector } from './scope.js';
 
 function createLeafState<T = unknown>(): RuntimeValueState<T> {
@@ -151,34 +151,7 @@ function evaluateArray(
     return result.value;
   });
 
-  if (!anyChildChanged && stateNode.initialized && stateNode.lastValue) {
-    return {
-      value: stateNode.lastValue,
-      changed: false,
-      reusedReference: true,
-    };
-  }
-
-  if (
-    stateNode.initialized &&
-    stateNode.lastValue &&
-    shallowEqual(stateNode.lastValue, nextValue)
-  ) {
-    return {
-      value: stateNode.lastValue,
-      changed: false,
-      reusedReference: true,
-    };
-  }
-
-  stateNode.initialized = true;
-  stateNode.lastValue = nextValue;
-
-  return {
-    value: nextValue,
-    changed: true,
-    reusedReference: false,
-  };
+  return commitCompositeState(stateNode, nextValue, anyChildChanged);
 }
 
 function evaluateObject(
@@ -216,34 +189,7 @@ function evaluateObject(
     nextValue[key] = result.value;
   }
 
-  if (!anyChildChanged && stateNode.initialized && stateNode.lastValue) {
-    return {
-      value: stateNode.lastValue,
-      changed: false,
-      reusedReference: true,
-    };
-  }
-
-  if (
-    stateNode.initialized &&
-    stateNode.lastValue &&
-    shallowEqual(stateNode.lastValue, nextValue)
-  ) {
-    return {
-      value: stateNode.lastValue,
-      changed: false,
-      reusedReference: true,
-    };
-  }
-
-  stateNode.initialized = true;
-  stateNode.lastValue = nextValue;
-
-  return {
-    value: nextValue,
-    changed: true,
-    reusedReference: false,
-  };
+  return commitCompositeState(stateNode, nextValue, anyChildChanged);
 }
 
 export { createEvalContext, createStateFromNode, evaluateNode };
