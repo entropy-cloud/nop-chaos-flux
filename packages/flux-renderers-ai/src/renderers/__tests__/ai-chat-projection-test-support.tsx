@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
-import { createAiSchemaRenderer } from '../../ai-test-support.js';
+import { createAiSchemaRenderer } from '../../__tests__/ai-test-support.js';
 import { AiChatRenderer } from '../ai-chat.js';
 import { createMessageEngine } from '../../engine/create-engine.js';
 import { createReactMessageAdapter } from '../../adapters/react-adapter.js';

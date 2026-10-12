@@ -3,7 +3,7 @@ import { act, cleanup, render, waitFor } from '@testing-library/react';
 import {
   aiFormulaCompiler,
   aiMockEnv,
-} from '../../ai-test-support.js';
+} from '../../__tests__/ai-test-support.js';
 import { createMessageEngine } from '../../engine/create-engine.js';
 import { createReactMessageAdapter } from '../../adapters/react-adapter.js';
 import type {

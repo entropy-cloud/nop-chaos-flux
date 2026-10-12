@@ -3,7 +3,7 @@ import { cleanup, render, fireEvent, act } from '@testing-library/react';
 import type { ComponentType } from 'react';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import { createMockRendererProps } from '../../test-support.js';
-import { aiFormulaCompiler, aiMockEnv, createAiSchemaRenderer, mockStreamConnector } from '../../ai-test-support.js';
+import { aiFormulaCompiler, aiMockEnv, createAiSchemaRenderer, mockStreamConnector } from '../../__tests__/ai-test-support.js';
 import { AiSenderRenderer } from '../ai-sender.js';
 import { AiVoiceInputRenderer } from '../ai-voice-input.js';
 import { AiFeedbackRenderer } from '../ai-feedback.js';

@@ -10,7 +10,7 @@ import {
   aiMockEnv,
   createAiSchemaRenderer,
   mockStreamConnector,
-} from '../../ai-test-support.js';
+} from '../../__tests__/ai-test-support.js';
 import type { AiConversationController } from '../../adapters/ai-conversation-controller.js';
 import type { AiConnectorChunk } from '../../engine/types.js';
 

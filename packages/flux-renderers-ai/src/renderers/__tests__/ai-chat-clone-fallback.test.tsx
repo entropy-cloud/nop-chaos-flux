@@ -2,7 +2,7 @@ import { afterEach, describe, it, expect, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
-import { aiFormulaCompiler, aiMockEnv, createAiSchemaRenderer } from '../../ai-test-support.js';
+import { aiFormulaCompiler, aiMockEnv, createAiSchemaRenderer } from '../../__tests__/ai-test-support.js';
 import { AiChatRenderer } from '../ai-chat.js';
 import { createMessageEngine } from '../../engine/create-engine.js';
 import { createReactMessageAdapter } from '../../adapters/react-adapter.js';

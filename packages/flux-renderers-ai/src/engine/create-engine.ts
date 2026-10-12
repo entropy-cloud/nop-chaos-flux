@@ -7,11 +7,7 @@ import {
 } from './utils.js';
 import { createNativeMessageAdapter } from './native-adapter.js';
 import { resolveAdapterCachesSnapshot } from './snapshot-cache-detection.js';
-import {
-  createBranchSequencer,
-
-
-} from './branching.js';
+import { createBranchSequencer } from './branching.js';
 import { buildEngineContext } from './build-context.js';
 import {
   executeToolCalls,

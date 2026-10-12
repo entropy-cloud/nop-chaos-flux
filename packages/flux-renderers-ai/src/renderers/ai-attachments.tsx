@@ -1,24 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
 import { Button, Spinner, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { buildDispatchCtx } from './dispatch-ctx.js';
 import { File as FileIcon, ImageIcon, Paperclip, TriangleAlert, X } from 'lucide-react';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
 import type { ChatMessageContentPart } from '../engine/types.js';
 import type { AiAttachmentsSchema, AiAttachmentItem } from '../schemas.js';
-
-/**
- * C8.2 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
- * carries `{ event, evaluationBindings, scope }` so action-args templates can
- * read `${attachments}` / `${reason}` (ai-conversations.tsx:29-33 precedent).
- */
-function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
-  return {
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: nodeScope,
-  };
-}
 
 /**
  * Runtime attachment model (renderers.md §9.1). Mirrors the serializable
@@ -98,7 +86,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
   function reportChange(next: AiAttachment[]) {
     if (!controlledValue) setInternalAttachments(next);
     const payload = { type: 'ai:attachments-change', attachments: next };
-    void props.events.onChange?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+    void props.events.onChange?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
   }
 
   function addFiles(incoming: File[]) {
@@ -131,11 +119,11 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
     }
     if (tooLarge) {
       const errorPayload = { type: 'ai:attachments-error', reason: 'attachment-too-large' };
-      void props.events.onError?.(errorPayload, dispatchCtx(errorPayload, props.node.scope as ScopeRef | undefined));
+      void props.events.onError?.(errorPayload, buildDispatchCtx(errorPayload, props.node.scope as ScopeRef | undefined));
     }
     if (tooMany) {
       const errorPayload = { type: 'ai:attachments-error', reason: 'attachment-too-many' };
-      void props.events.onError?.(errorPayload, dispatchCtx(errorPayload, props.node.scope as ScopeRef | undefined));
+      void props.events.onError?.(errorPayload, buildDispatchCtx(errorPayload, props.node.scope as ScopeRef | undefined));
     }
     // G5-R2-视角5-01: visible feedback alongside the schema event. Cleared on
     // the next fully-accepted batch so the note stays bounded.
@@ -208,7 +196,7 @@ export function AiAttachmentsRenderer(props: RendererComponentProps<AiAttachment
     // imperatively-invoked path and any future trigger.
     if (ctx?.isProcessing) return;
     const uploadPayload = { type: 'ai:attachments-upload', attachments };
-    void props.events.onUpload?.(uploadPayload, dispatchCtx(uploadPayload, props.node.scope as ScopeRef | undefined));
+    void props.events.onUpload?.(uploadPayload, buildDispatchCtx(uploadPayload, props.node.scope as ScopeRef | undefined));
     // open-audit P2-4 (2026-08-10 multi-audit): reuse the shared
     // `buildImageContentParts` helper — the inline filter+map duplication was
     // a second copy of the multimodal assembly logic (drift risk).

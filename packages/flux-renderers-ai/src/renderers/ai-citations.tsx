@@ -1,32 +1,16 @@
 import { Fragment } from 'react';
-import type {
-  FluxActionEvent,
-  RendererComponentProps,
-  RendererRenderOutput,
-  ScopeRef,
-} from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { ChatMessage, ChatMessageContentPart } from '../engine/types.js';
+import { buildDispatchCtx } from './dispatch-ctx.js';
+import { extractMessageText } from './message-text.js';
+import type { ChatMessage } from '../engine/types.js';
 import type { AiCitationSource, AiCitationsSchema } from '../schemas.js';
 
 const UNSAFE_URL_RE = /^(javascript|data):/i;
 
 function sanitizeUrl(url: string): string | undefined {
   return UNSAFE_URL_RE.test(url) ? undefined : url;
-}
-
-/**
- * C8.2 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
- * carries `{ event, evaluationBindings, scope }` so action-args templates can
- * read `${source.title}` / `${index}` (ai-conversations.tsx:29-33 precedent).
- */
-function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
-  return {
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: nodeScope,
-  };
 }
 
 /**
@@ -138,7 +122,7 @@ export function AiCitationsRenderer(props: RendererComponentProps<AiCitationsSch
         props.events?.onSourceClick
           ? (source, index) => {
               const payload = { type: 'ai:citation-click', source, index };
-              void props.events.onSourceClick?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+              void props.events.onSourceClick?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
             }
           : undefined
       }
@@ -432,25 +416,6 @@ function scanTextForCodeRegions(
   return { runs, nextFenceDelimiter: fence, nextInlineOpen: inline };
 }
 
-/** Extract plain text from a ChatMessage content (string or text parts). */
-export function extractMessageText(message: ChatMessage | undefined): string {
-  if (!message) return '';
-  const content = message.content;
-  if (typeof content === 'string') return content;
-  if (Array.isArray(content)) {
-    return content
-      .map((part) => textOfPart(part))
-      .join('');
-  }
-  return '';
-}
-
-function textOfPart(part: ChatMessageContentPart): string {
-  if (part && typeof part === 'object' && (part as { type?: unknown }).type === 'text') {
-    return String((part as { text?: unknown }).text ?? '');
-  }
-  return '';
-}
 
 /**
  * Resolve the citation source list with priority:

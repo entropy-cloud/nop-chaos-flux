@@ -1,5 +1,4 @@
 import type {
-  FluxActionEvent,
   RendererComponentProps,
   RendererRenderOutput,
   ScopeRef,
@@ -8,20 +7,8 @@ import { Languages, Lightbulb, Pencil, Plus, Sparkles } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { buildDispatchCtx } from './dispatch-ctx.js';
 import type { AiSuggestionItem, AiSuggestionsSchema } from '../schemas.js';
-
-/**
- * C8.3 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
- * carries `{ event, evaluationBindings, scope }` so action-args templates can
- * read `${item}` / `${index}` (ai-feedback.tsx:22-28 precedent).
- */
-function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
-  return {
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: nodeScope,
-  };
-}
 
 /**
  * D4 / G9 (plan 2026-08-24-2317-1, product-spec.md §3.3): preset string →
@@ -212,7 +199,7 @@ export function AiSuggestionsRenderer(props: RendererComponentProps<AiSuggestion
         props.events.onSelect
           ? (item, index) => {
               const payload = { type: 'ai:suggestion-select', item, index };
-              void props.events.onSelect?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+              void props.events.onSelect?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
             }
           : undefined
       }

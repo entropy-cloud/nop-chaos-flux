@@ -1,13 +1,13 @@
-import { useState } from 'react';
 import { Check, Copy, RotateCcw } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { clipboardAdapter } from './renderers/markdown.js';
+import { clipboardAdapter, useCopiedFlag } from '../clipboard.js';
+import { extractMessageText } from '../message-text.js';
 import type { ChatMessage, MessageEngine } from '../../engine/types.js';
 
 /**
  * Assistant-side per-bubble action bar (plan 472 V2 / survey §1.4): copy the
- * message text and retry the turn. The copy channel reuses the markdown code
- * block's `clipboardAdapter` (INV-1 adjudicated: user-gesture browser API,
+ * message text and retry the turn. The copy channel reuses the shared
+ * `clipboardAdapter` (INV-1 adjudicated: user-gesture browser API,
  * explicit-failure semantics — a rejected write keeps the button pre-copy).
  *
  * Retry wires the engine's `regenerate()`, which truncates back to the last
@@ -22,21 +22,15 @@ export function AssistantActions(props: {
   /** Streaming window: retry is unavailable while a request is in flight. */
   busy?: boolean;
 }): React.ReactElement {
-  const [copied, setCopied] = useState(false);
-
-  function extractText(content: ChatMessage['content']): string {
-    if (typeof content === 'string') return content;
-    if (Array.isArray(content)) {
-      return content.map((part) => (part.type === 'text' ? String(part.text ?? '') : '')).join('');
-    }
-    return '';
-  }
+  // WA-ai-002: shared copied-flag home — the reset timer cleanup (2-20
+  // discipline) previously went missing when this file was copied from its
+  // siblings; the hook owns the timer and the unmount cleanup.
+  const { copied, markCopied } = useCopiedFlag();
 
   async function handleCopy(): Promise<void> {
     try {
-      await clipboardAdapter.writeText(extractText(props.message.content));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1_500);
+      await clipboardAdapter.writeText(extractMessageText(props.message));
+      markCopied();
     } catch {
       // Rejected/absent clipboard: stay in pre-copy state (no false "copied").
     }

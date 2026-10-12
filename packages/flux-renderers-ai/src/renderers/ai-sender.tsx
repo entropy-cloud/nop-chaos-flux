@@ -4,8 +4,30 @@ import { SendHorizontal, Square } from 'lucide-react';
 import { Button, Textarea, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
-import type { ActionContext, FluxActionEvent, ScopeRef } from '@nop-chaos/flux-core';
+import type { ScopeRef } from '@nop-chaos/flux-core';
+import { buildDispatchCtx } from './dispatch-ctx.js';
 import type { AiSenderExtensionProps, AiSenderSchema } from '../schemas.js';
+
+/**
+ * Word-limit counter shared by both input branches (WA-ai-004: the
+ * extension-path and textarea-path blocks were hand-duplicated; overLimit
+ * styling + aria-live live here now).
+ */
+function WordLimitCounter(props: { id: string; count: number; maxLength: number; overLimit: boolean }) {
+  return (
+    <span
+      id={props.id}
+      data-slot="ai-sender-count"
+      aria-live="polite"
+      className={cn(
+        'absolute bottom-1 right-2 text-xs',
+        props.overLimit ? 'text-destructive' : 'text-muted-foreground',
+      )}
+    >
+      {props.count}/{props.maxLength}
+    </span>
+  );
+}
 
 export interface AiSenderViewProps {
   placeholder?: string;
@@ -199,17 +221,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
             disabled={loading || disabled}
           />
           {props.showWordLimit && typeof maxLength === 'number' ? (
-            <span
-              id={senderCountId}
-              data-slot="ai-sender-count"
-              aria-live="polite"
-              className={cn(
-                'absolute bottom-1 right-2 text-xs',
-                overLimit ? 'text-destructive' : 'text-muted-foreground',
-              )}
-            >
-              {draft.length}/{maxLength}
-            </span>
+            <WordLimitCounter id={senderCountId} count={draft.length} maxLength={maxLength} overLimit={overLimit} />
           ) : null}
         </div>
         {actions}
@@ -245,17 +257,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
           className="max-h-48 min-h-[40px] resize-none overflow-y-auto"
         />
         {props.showWordLimit && typeof maxLength === 'number' ? (
-          <span
-            id={senderCountId}
-            data-slot="ai-sender-count"
-            aria-live="polite"
-            className={cn(
-              'absolute bottom-1 right-2 text-xs',
-              overLimit ? 'text-destructive' : 'text-muted-foreground',
-            )}
-          >
-            {draft.length}/{maxLength}
-          </span>
+          <WordLimitCounter id={senderCountId} count={draft.length} maxLength={maxLength} overLimit={overLimit} />
         ) : null}
       </div>
       {actions}
@@ -271,15 +273,6 @@ export function AiSenderRenderer(props: RendererComponentProps<AiSenderSchema>):
     | ComponentType<AiSenderExtensionProps>
     | undefined
     | null;
-
-  // C8.1 P1 (bug 83 family convention): pass `{ event, evaluationBindings,
-  // scope }` as the second dispatch arg so action-args templates can read the
-  // payload keys (`${text}`) — the runtime resolves bindings + scope only.
-  const dispatchCtx = (payload: Record<string, unknown>): Partial<ActionContext> => ({
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: props.node.scope as ScopeRef | undefined,
-  });
 
   return (
     <AiSenderView
@@ -298,20 +291,20 @@ export function AiSenderRenderer(props: RendererComponentProps<AiSenderSchema>):
         void ctx?.sendMessage(text);
         if (props.events.onSubmit) {
           const payload = { text };
-          void props.events.onSubmit(payload, dispatchCtx(payload));
+          void props.events.onSubmit(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
         }
       }}
       onCancel={() => {
         void ctx?.abortRequest();
         if (props.events.onCancel) {
           const payload = {};
-          void props.events.onCancel(payload, dispatchCtx(payload));
+          void props.events.onCancel(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
         }
       }}
       onChange={(text) => {
         if (props.events.onChange) {
           const payload = { text };
-          void props.events.onChange(payload, dispatchCtx(payload));
+          void props.events.onChange(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
         }
       }}
     />

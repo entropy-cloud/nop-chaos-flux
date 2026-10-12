@@ -2,6 +2,7 @@ import { Button } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../../../adapters/ai-chat-context.js';
 import type { ChatMessage, MessageEngine } from '../../../engine/types.js';
+import { extractMessageText } from '../../../renderers/message-text.js';
 import type { BubbleContentRendererProps } from '../types.js';
 
 /**
@@ -121,14 +122,11 @@ function lastUserTextBefore(messages: ChatMessage[], endExclusive: number): stri
     const m = messages[i];
     if (m.role !== 'user') continue;
     const content = m.content;
+    // String content returns unconditionally (even when the trim is empty) —
+    // preserve that stop-scanning semantics from the pre-shared original.
     if (typeof content === 'string') return content.trim();
-    if (Array.isArray(content)) {
-      const text = content
-        .map((p) => (p && typeof p === 'object' && 'text' in p ? String((p as { text: unknown }).text) : ''))
-        .join('')
-        .trim();
-      if (text) return text;
-    }
+    const text = extractMessageText(m).trim();
+    if (text) return text;
   }
   return '';
 }

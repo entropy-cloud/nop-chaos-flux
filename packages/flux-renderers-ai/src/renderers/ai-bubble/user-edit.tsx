@@ -1,20 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
 import { Check, Copy, Pencil } from 'lucide-react';
 import { Button, Textarea, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../../adapters/ai-chat-context.js';
+import { clipboardAdapter, useCopiedFlag } from '../clipboard.js';
+import { extractMessageText } from '../message-text.js';
 import type { ChatMessage, MessageEngine } from '../../engine/types.js';
-
-function extractText(message: ChatMessage): string {
-  const content = message.content;
-  if (typeof content === 'string') return content;
-  if (Array.isArray(content)) {
-    return content
-      .map((p) => (p && typeof p === 'object' && 'text' in p ? String((p as { text: unknown }).text) : ''))
-      .join('');
-  }
-  return '';
-}
 
 export interface UserMessageActionsProps {
   message: ChatMessage;
@@ -41,21 +31,15 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
   const draft = editingState?.draft ?? '';
 
   // plan 529 Phase 2：用户气泡补 copy（与 assistant-actions 相同的剪贴板纪律：
-  // 只有写入成功才翻 Copied，失败保持原态）
-  const [copied, setCopied] = useState(false);
-  const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    return () => {
-      if (copyResetRef.current) clearTimeout(copyResetRef.current);
-    };
-  }, []);
+  // 只有写入成功才翻 Copied，失败保持原态）。WA-ai-002：收敛到共享 copied-flag
+  // + clipboardAdapter 通道（此前直连 navigator.clipboard 绕开了 R2-F2 显式
+  // 失败语义与测试缝）。
+  const { copied, markCopied } = useCopiedFlag();
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(extractText(message));
-      setCopied(true);
-      if (copyResetRef.current) clearTimeout(copyResetRef.current);
-      copyResetRef.current = setTimeout(() => setCopied(false), 1500);
+      await clipboardAdapter.writeText(extractMessageText(message));
+      markCopied();
     } catch {
       // 失败保持 pre-copy 态（不假成功）
     }
@@ -75,7 +59,7 @@ export function UserMessageActions({ message }: UserMessageActionsProps): React.
 
   function startEdit() {
     if (chatDisabled) return;
-    e.setMessageEditing(message.id, { active: true, draft: extractText(message) });
+    e.setMessageEditing(message.id, { active: true, draft: extractMessageText(message) });
   }
 
   function cancelEdit() {

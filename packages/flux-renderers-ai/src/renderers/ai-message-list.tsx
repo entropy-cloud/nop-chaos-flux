@@ -5,6 +5,7 @@ import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
 import { useAutoScroll } from '../adapters/use-auto-scroll.js';
+import { measureMessageTextLength } from './message-text.js';
 import { useEngineContentTick } from '../adapters/use-engine-view.js';
 import type { ChatMessage } from '../engine/types.js';
 import { AiBubbleView } from './ai-bubble/index.js';
@@ -69,24 +70,6 @@ function AbortedNote(): React.ReactElement {
   );
 }
 
-// The auto-scroll trigger only consumes the LENGTH of the last message's
-// content; joining array parts into a full string per chunk allocated the
-// whole transcript twice per tick (plan 2026-09-29-2 R2-P20).
-function messageContentLength(message: ChatMessage): number {
-  const content = message.content;
-  if (typeof content === 'string') return content.length;
-  if (Array.isArray(content)) {
-    let total = 0;
-    for (const p of content) {
-      if (p && typeof p === 'object' && 'text' in p) {
-        total += String((p as { text: unknown }).text).length;
-      }
-    }
-    return total;
-  }
-  return 0;
-}
-
 /** Internal message-list view — reads engine + messages from ai-chat context. */
 export function AiMessageListView(props: AiMessageListViewProps): React.ReactElement | null {
   const ctx = useAiChatContext();
@@ -125,7 +108,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
   // over as the A-5 error carrier.
   const showListErrorBanner =
     inError && messages.length > 0 && lastMessage?.role !== 'assistant';
-  const trigger = `${messages.length}:${lastMessage ? messageContentLength(lastMessage) : 0}:${loopLimitReached ? 1 : 0}`;
+  const trigger = `${messages.length}:${lastMessage ? measureMessageTextLength(lastMessage) : 0}:${loopLimitReached ? 1 : 0}`;
   const { containerRef, onScroll, scrollToBottom, pinned } = useAutoScroll(autoScrollEnabled ? trigger : null);
 
   const enableVirtual = messages.length > VIRTUAL_SCROLL_THRESHOLD;
@@ -137,6 +120,31 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
     overscan: 6,
     enabled: enableVirtual,
   });
+
+  // WA-ai-004: the virtual and non-virtual branches previously hand-duplicated
+  // the whole bubble props bag (the last-assistant predicate inline ×8, and one
+  // prop addition already had to be made twice for stream signals) — both
+  // branches render through this one local function now.
+  const renderBubble = (message: ChatMessage, index: number) => (
+    <AiBubbleView
+      key={message.id}
+      message={message}
+      isError={inError && index === messages.length - 1 && message.role === 'assistant'}
+      streaming={inStreamingTurn && index === messages.length - 1 && message.role === 'assistant'}
+      streamSignature={
+        inStreamingTurn && index === messages.length - 1 && message.role === 'assistant'
+          ? `tick:${streamTick}`
+          : undefined
+      }
+      actionsEngine={index === messages.length - 1 && message.role === 'assistant' ? ctx?.engine : undefined}
+      showTimestamp={props.showTimestamp}
+      showAvatar={props.showAvatar}
+      branches={ctx?.branches}
+      activeBranchId={ctx?.activeBranchId}
+      onBranchChange={ctx?.onBranchChange}
+      onApproval={ctx?.onApproval}
+    />
+  );
 
   if (messages.length === 0) {
     return (
@@ -190,19 +198,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
                     transform: `translateY(${vi.start}px)`,
                   }}
                 >
-                  <AiBubbleView
-                    message={message}
-                    isError={inError && vi.index === messages.length - 1 && message.role === 'assistant'}
-                    streaming={inStreamingTurn && vi.index === messages.length - 1 && message.role === 'assistant'}
-                    streamSignature={inStreamingTurn && vi.index === messages.length - 1 && message.role === 'assistant' ? `tick:${streamTick}` : undefined}
-                    actionsEngine={vi.index === messages.length - 1 && message.role === 'assistant' ? ctx?.engine : undefined}
-                    showTimestamp={props.showTimestamp}
-                    showAvatar={props.showAvatar}
-                    branches={ctx?.branches}
-                    activeBranchId={ctx?.activeBranchId}
-                    onBranchChange={ctx?.onBranchChange}
-                    onApproval={ctx?.onApproval}
-                  />
+                  {renderBubble(message, vi.index)}
                 </div>
               );
             })}
@@ -213,22 +209,7 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
         </>
       ) : (
         <>
-          {messages.map((message, idx) => (
-            <AiBubbleView
-              key={message.id}
-              message={message}
-              isError={inError && idx === messages.length - 1 && message.role === 'assistant'}
-              streaming={inStreamingTurn && idx === messages.length - 1 && message.role === 'assistant'}
-              streamSignature={inStreamingTurn && idx === messages.length - 1 && message.role === 'assistant' ? `tick:${streamTick}` : undefined}
-              actionsEngine={idx === messages.length - 1 && message.role === 'assistant' ? ctx?.engine : undefined}
-              showTimestamp={props.showTimestamp}
-              showAvatar={props.showAvatar}
-              branches={ctx?.branches}
-              activeBranchId={ctx?.activeBranchId}
-              onBranchChange={ctx?.onBranchChange}
-              onApproval={ctx?.onApproval}
-            />
-          ))}
+          {messages.map((message, idx) => renderBubble(message, idx))}
           {loopLimitReached ? <LoopLimitNote /> : null}
           {inAborted ? <AbortedNote /> : null}
           {showListErrorBanner ? <ListErrorBanner messages={messages} engine={ctx?.engine} /> : null}

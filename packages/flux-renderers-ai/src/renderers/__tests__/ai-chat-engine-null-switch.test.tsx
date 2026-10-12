@@ -6,7 +6,7 @@ import {
   aiFormulaCompiler,
   aiMockEnv,
   createAiSchemaRenderer,
-} from '../../ai-test-support.js';
+} from '../../__tests__/ai-test-support.js';
 import { createStreamBasedAiConnector } from '../../adapters/ai-connector-factory.js';
 
 const SchemaRenderer = createAiSchemaRenderer();

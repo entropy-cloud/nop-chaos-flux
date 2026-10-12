@@ -472,10 +472,10 @@ export function useConversation(options: UseConversationOptions): UseConversatio
 
   async function deleteConversation(id: string): Promise<void> {
     setConversations((prev) => prev.filter((c) => c.id !== id));
-  // R1-F4 (2026-08-11, engine/adapter P2): record the deletion so the pending
-  // bootstrap merge filters it out of the loaded base (K-⑦ merge guard —
-  // see `deletedDuringLoadRef`).
-  deletedDuringLoadRef.current.add(id);
+    // R1-F4 (2026-08-11, engine/adapter P2): record the deletion so the pending
+    // bootstrap merge filters it out of the loaded base (K-⑦ merge guard —
+    // see `deletedDuringLoadRef`).
+    deletedDuringLoadRef.current.add(id);
     // K4/K-K4 (ai-invariant-loop): keep the list mirror in sync SYNCHRONOUSLY —
     // a same-tick reader (renameConversation / deleteConversation fixup /
     // switchConversation exists-check) must see the deletion before the mirror
@@ -666,10 +666,4 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   };
 }
 
-/**
- * Bridge produced by `useConversation` for the `ai-chat` `ai` namespace
- * delegation; structurally assignable to `AiConversationController`
- * (ai-conversation-controller.ts) — keep members lockstep (FIND-19
- * adjudication, plan `2026-08-11-0335-3`).
- */
 export type { ChatMessage, ConversationStorageStrategy };

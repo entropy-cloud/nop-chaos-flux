@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { ActionContext, FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { buildDispatchCtx } from './dispatch-ctx.js';
 import {
   useCurrentActionScope,
   useCurrentComponentRegistry,
@@ -122,20 +123,6 @@ function streamFingerprint(messages: ChatMessage[]): string {
   return `${last.id}|${contentLength}|${reasoningLength}|${toolArgsLength}`;
 }
 
-/**
- * P1 (C8.1): build the dispatch ctx for a schema event so action-args templates
- * can read the payload keys (bug 83 / diff-view P1-10 family convention — the
- * runtime only resolves `evaluationBindings` + scope, never a bare `event`
- * binding). The payload object doubles as the bindings so `${message}` /
- * `${error}` / `${conversationId}` / `${branchId}` resolve to real values.
- */
-function eventCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined): Partial<ActionContext> {
-  return {
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: nodeScope,
-  };
-}
 
 /**
  * ai-chat (Layout, P0/P1): the conversation panel root.
@@ -335,7 +322,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // it via optional chaining so an always-defined stable no-op is equivalent.
   const onBranchChange = useCallback((branchId: string) => {
     const payload = { type: 'ai:branch-change', branchId };
-    void eventsRef.current.onBranchChange?.(payload, eventCtx(payload, nodeScopeRef.current));
+    void eventsRef.current.onBranchChange?.(payload, buildDispatchCtx(payload, nodeScopeRef.current));
   }, []);
   // P2-4 (2026-08-10 multi-audit): HITL approval for the bubble path — the
   // message-level tools renderer (and host-registered tool cards) dispatch
@@ -343,7 +330,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
   // (stable identity, latest events via eventsRef).
   const onApproval = useCallback((action: 'approve' | 'reject') => {
     const payload = { type: 'ai:tool-call-approval', action };
-    void eventsRef.current.onApproval?.(payload, eventCtx(payload, nodeScopeRef.current));
+    void eventsRef.current.onApproval?.(payload, buildDispatchCtx(payload, nodeScopeRef.current));
   }, []);
   // Decision-A (AI-02): project a SNAPSHOT of the engine messages, not the
   // live internal array. Descendants that read `${messages}` (via
@@ -477,7 +464,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
           // message (e.g. on a later regenerate) cannot write back into the
           // engine's internal message object.
           const payload = { message: last ? cloneMessage(last) : last };
-          void events.onResponseComplete(payload, eventCtx(payload, nodeScopeRef.current));
+          void events.onResponseComplete(payload, buildDispatchCtx(payload, nodeScopeRef.current));
         } else if (current === 'error' && events.onError) {
           // AI-19/F1.5: surface the engine's real error cause (written to
           // `state.lastError` by the engine-half, Plan {1} Phase 4) instead of
@@ -486,10 +473,10 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
           const error =
             cause instanceof Error ? cause : new Error(String(cause ?? 'AI request failed'), { cause: cause });
           const payload = { error };
-          void events.onError(payload, eventCtx(payload, nodeScopeRef.current));
+          void events.onError(payload, buildDispatchCtx(payload, nodeScopeRef.current));
         } else if (current === 'aborted' && events.onAbort) {
           const payload = {};
-          void events.onAbort(payload, eventCtx(payload, nodeScopeRef.current));
+          void events.onAbort(payload, buildDispatchCtx(payload, nodeScopeRef.current));
         }
       }
       prev = current;
@@ -509,7 +496,7 @@ export function AiChatRenderer(props: RendererComponentProps<AiChatSchema>): Ren
     prevConversationRef.current = normalizedConversationId;
     if (prev !== normalizedConversationId) {
       const payload = { conversationId: normalizedConversationId };
-      void eventsRef.current.onConversationChange?.(payload, eventCtx(payload, nodeScopeRef.current));
+      void eventsRef.current.onConversationChange?.(payload, buildDispatchCtx(payload, nodeScopeRef.current));
     }
   }, [normalizedConversationId]);
 

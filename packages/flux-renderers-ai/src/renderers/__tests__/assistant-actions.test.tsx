@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { AssistantActions } from '../ai-bubble/assistant-actions.js';
-import { clipboardAdapter } from '../ai-bubble/renderers/markdown.js';
+import { clipboardAdapter } from '../clipboard.js';
 import type { ChatMessage, MessageEngine } from '../../engine/types.js';
 
 afterEach(() => {

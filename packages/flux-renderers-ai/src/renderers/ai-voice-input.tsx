@@ -1,27 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
-  FluxActionEvent,
   RendererComponentProps,
   RendererRenderOutput,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { buildDispatchCtx } from './dispatch-ctx.js';
 import { Mic } from 'lucide-react';
 import type { AiVoiceInputSchema } from '../schemas.js';
-
-/**
- * C8.3 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
- * carries `{ event, evaluationBindings, scope }` so action-args templates can
- * read `${transcript}` / `${reason}` (ai-feedback.tsx:22-28 precedent).
- */
-function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
-  return {
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: nodeScope,
-  };
-}
 
 /**
  * Minimal SpeechRecognition surface (TS ships no DOM lib types for it). Only
@@ -147,13 +134,13 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
     if (unsupported && !firedUnsupportedRef.current) {
       firedUnsupportedRef.current = true;
       const payload = { type: 'ai:voice-error' as const, reason: 'unsupported' as const };
-      void eventsRef.current.onError?.(payload, dispatchCtx(payload, nodeScopeRef.current));
+      void eventsRef.current.onError?.(payload, buildDispatchCtx(payload, nodeScopeRef.current));
     }
   }, [unsupported]);
 
   function fireError(reason: VoiceErrorReason): void {
     const payload = { type: 'ai:voice-error', reason };
-    void props.events.onError?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+    void props.events.onError?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
   }
 
   function handleStart(): void {
@@ -191,7 +178,7 @@ export function AiVoiceInputRenderer(props: RendererComponentProps<AiVoiceInputS
       }
       if (transcript.trim().length > 0) {
         const payload = { type: 'ai:voice-result', transcript };
-        void props.events.onResult?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+        void props.events.onResult?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
       }
     };
     recognition.onerror = (event) => {

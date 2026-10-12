@@ -1,7 +1,8 @@
-import type { ActionContext, FluxActionEvent, RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
 import { isValidElement } from 'react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { buildDispatchCtx } from '../dispatch-ctx.js';
 import { Bot, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import type { ChatMessage, MessageEngine } from '../../engine/types.js';
 import type { AiBranch, AiBubbleSchema } from '../../schemas.js';
@@ -360,12 +361,7 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
               // carries `{ event, evaluationBindings, scope }` so action-args
               // templates can read `${branchId}`.
               const payload = { type: 'ai:branch-change', branchId };
-              const ctx: Partial<ActionContext> = {
-                event: payload as FluxActionEvent,
-                evaluationBindings: payload,
-                scope: props.node.scope as ScopeRef | undefined,
-              };
-              void props.events.onBranchChange?.(payload, ctx);
+              void props.events.onBranchChange?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
             }
           : undefined
       }
@@ -376,12 +372,7 @@ export function AiBubbleRenderer(props: RendererComponentProps<AiBubbleSchema>):
               // dispatch (in an ai-chat subtree the context-wired callback is
               // used instead). Payload mirrors the ai-tool-call renderer.
               const payload = { type: 'ai:tool-call-approval', action };
-              const ctx: Partial<ActionContext> = {
-                event: payload as FluxActionEvent,
-                evaluationBindings: payload,
-                scope: props.node.scope as ScopeRef | undefined,
-              };
-              void props.events.onApproval?.(payload, ctx);
+              void props.events.onApproval?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
             }
           : undefined
       }

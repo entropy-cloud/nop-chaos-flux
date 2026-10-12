@@ -1,10 +1,6 @@
 import { useEffect, useId as useReactId, useMemo, useRef, useState } from 'react';
-import type {
-  FluxActionEvent,
-  RendererComponentProps,
-  RendererRenderOutput,
-  ScopeRef,
-} from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
+import { buildDispatchCtx } from './dispatch-ctx.js';
 import { Button, Badge, Spinner, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Check, TriangleAlert, Ban, ChevronDown, ChevronRight } from 'lucide-react';
@@ -346,11 +342,7 @@ export function AiToolCallRenderer(props: RendererComponentProps<AiToolCallSchem
                 toolCall,
                 toolCallId: toolCall.id,
               };
-              void props.events.onApproval?.(payload, {
-                event: payload as FluxActionEvent,
-                evaluationBindings: payload,
-                scope: props.node.scope as ScopeRef | undefined,
-              });
+              void props.events.onApproval?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
             }
           : undefined
       }

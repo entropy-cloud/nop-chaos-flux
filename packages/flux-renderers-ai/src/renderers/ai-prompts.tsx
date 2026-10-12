@@ -1,24 +1,11 @@
 import type {
-  FluxActionEvent,
   RendererComponentProps,
   RendererRenderOutput,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
+import { buildDispatchCtx } from './dispatch-ctx.js';
 import type { AiPromptItem, AiPromptsSchema } from '../schemas.js';
-
-/**
- * C8.3 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
- * carries `{ event, evaluationBindings, scope }` so action-args templates can
- * read `${item}` / `${index}` (ai-feedback.tsx:22-28 precedent).
- */
-function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
-  return {
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: nodeScope,
-  };
-}
 
 /**
  * ai-prompts (Widget, P1): recommended prompt cards. Marker `nop-ai-prompts`.
@@ -83,7 +70,7 @@ export function AiPromptsRenderer(props: RendererComponentProps<AiPromptsSchema>
           )}
           onClick={() => {
             const payload = { type: 'ai:prompt-select', item, index };
-            void props.events.onSelect?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+            void props.events.onSelect?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
           }}
         >
           <div className="flex items-center gap-2">

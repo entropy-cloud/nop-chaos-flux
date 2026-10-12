@@ -1,26 +1,13 @@
 import type {
-  FluxActionEvent,
   RendererComponentProps,
   RendererRenderOutput,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import { buildDispatchCtx } from './dispatch-ctx.js';
 import type { ChatMessage } from '../engine/types.js';
 import type { AiTokenUsage, AiTokenUsageSchema } from '../schemas.js';
-
-/**
- * C8.2 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
- * carries `{ event, evaluationBindings, scope }` so action-args templates can
- * read `${total}` / `${usage}` (ai-conversations.tsx:29-33 precedent).
- */
-function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
-  return {
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: nodeScope,
-  };
-}
 
 /**
  * Resolve usage: explicit `usage` prop > `message.metadata.usage`.
@@ -218,7 +205,7 @@ export function AiTokenUsageRenderer(props: RendererComponentProps<AiTokenUsageS
         props.events.onClick
           ? () => {
               const payload = { type: 'ai:token-usage-click', usage };
-              void props.events.onClick?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+              void props.events.onClick?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
             }
           : undefined
       }

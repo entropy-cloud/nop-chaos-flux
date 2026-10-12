@@ -15,7 +15,8 @@ import {
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { Pencil, Plus, X } from 'lucide-react';
-import type { ActionContext, FluxActionEvent, ScopeRef } from '@nop-chaos/flux-core';
+import type { ScopeRef } from '@nop-chaos/flux-core';
+import { buildDispatchCtx } from './dispatch-ctx.js';
 import type { AiConversationInfo } from '../engine/types.js';
 import type { AiConversationsSchema } from '../schemas.js';
 
@@ -51,20 +52,11 @@ export function AiConversationsRenderer(
   }, [conversations, query]);
   const isFiltering = query.trim().length > 0;
 
-  // C8.1 P1 (bug 83 family convention): pass `{ event, evaluationBindings,
-  // scope }` as the second dispatch arg so action-args templates can read the
-  // payload keys (`${id}`, `${conversation.title}`, `${title}`).
-  const dispatchCtx = (payload: Record<string, unknown>): Partial<ActionContext> => ({
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: props.node.scope as ScopeRef | undefined,
-  });
-
   function commitRename() {
     if (disabled) return;
     if (renamingId && draftTitle.trim().length > 0) {
       const payload = { type: 'ai:conversation-rename', id: renamingId, title: draftTitle.trim() };
-      void props.events.onItemRename?.(payload, dispatchCtx(payload));
+      void props.events.onItemRename?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
     }
     setRenamingId(null);
     setDraftTitle('');
@@ -86,7 +78,7 @@ export function AiConversationsRenderer(
           disabled={disabled}
           onClick={() => {
             const payload = { type: 'ai:conversation-create' };
-            void props.events.onCreate?.(payload, dispatchCtx(payload));
+            void props.events.onCreate?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
           }}
         >
           <Plus className="size-4" aria-hidden="true" />
@@ -152,7 +144,7 @@ export function AiConversationsRenderer(
                   disabled={disabled}
                   onClick={() => {
                     const payload = { type: 'ai:conversation-click', id: conv.id, conversation: conv };
-                    void props.events.onItemClick?.(payload, dispatchCtx(payload));
+                    void props.events.onItemClick?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
                   }}
                 >
                   {conv.title?.trim() || t('flux.ai.emptyConversationTitle')}
@@ -215,7 +207,7 @@ export function AiConversationsRenderer(
               onClick={() => {
                 if (disabled || pendingDeleteId === null) return;
                 const payload = { type: 'ai:conversation-delete', id: pendingDeleteId };
-                void props.events.onItemDelete?.(payload, dispatchCtx(payload));
+                void props.events.onItemDelete?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
                 setPendingDeleteId(null);
               }}
             >

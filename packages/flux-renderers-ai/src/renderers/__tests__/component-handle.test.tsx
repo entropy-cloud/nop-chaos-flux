@@ -8,7 +8,7 @@ import {
   aiMockEnv,
   createAiSchemaRenderer,
   mockStreamConnector,
-} from '../../ai-test-support.js';
+} from '../../__tests__/ai-test-support.js';
 import { AiChatRenderer } from '../ai-chat.js';
 import { createAiComponentHandle } from '../../adapters/ai-component-handle.js';
 import { createMessageEngine } from '../../engine/create-engine.js';

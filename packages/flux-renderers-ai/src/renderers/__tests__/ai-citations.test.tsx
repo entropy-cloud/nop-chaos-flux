@@ -8,8 +8,8 @@ import {
   AiCitationsRenderer,
   parseCitations,
   resolveSources,
-  extractMessageText,
 } from '../ai-citations.js';
+import { extractMessageText } from '../message-text.js';
 import type { AiCitationsSchema } from '../../schemas.js';
 import type { ChatMessage } from '../../engine/types.js';
 

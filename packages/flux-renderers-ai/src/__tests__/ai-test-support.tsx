@@ -1,11 +1,17 @@
+/**
+ * Test-only support harness for the ai renderer suites (WA-ai-006, plan 571):
+ * lives under `__tests__/` so the module-eval side effects below (global i18n
+ * reset + re-anchor to en-US, test renderer registration) can never be reached
+ * from a production import path. Do not import from src proper.
+ */
 import React, { useEffect } from 'react';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentActionScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import type { AiConnector, AiConnectorChunk, AiConnectorRequest } from './engine/types.js';
-import { createStreamBasedAiConnector } from './adapters/ai-connector-factory.js';
-import { aiRendererDefinitions } from './ai-renderer-definitions.js';
+import type { AiConnector, AiConnectorChunk, AiConnectorRequest } from '../engine/types.js';
+import { createStreamBasedAiConnector } from '../adapters/ai-connector-factory.js';
+import { aiRendererDefinitions } from '../ai-renderer-definitions.js';
 
 resetFluxI18n();
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
@@ -59,15 +65,10 @@ const capturedScopeHolder: { current: import('@nop-chaos/flux-core').ActionScope
   current: undefined,
 };
 
-export function getCapturedActionScope() {
-  return capturedScopeHolder.current;
-}
-
-export function resetCapturedActionScope(): void {
-  capturedScopeHolder.current = undefined;
-}
-
-export const aiScopeProbeRenderer: RendererDefinition = {
+// Package-private (knip: the probe renderer is consumed only by
+// createAiSchemaRenderer below; the holder accessors had zero consumers and
+// were removed with the WA-ai-006 relocation).
+const aiScopeProbeRenderer: RendererDefinition = {
   type: 'ai-scope-probe',
   component: AiScopeProbe,
 };

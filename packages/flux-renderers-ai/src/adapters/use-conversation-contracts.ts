@@ -66,6 +66,14 @@ export interface UseConversationReturn {
   controller: AiConversationControllerBridge;
 }
 
+/**
+ * Bridge produced by `useConversation` for the `ai-chat` `ai` namespace
+ * delegation; structurally assignable to `AiConversationController`
+ * (ai-conversation-controller.ts) — keep members lockstep (FIND-19
+ * adjudication, plan `2026-08-11-0335-3`). Moved here alongside the type
+ * (WA-ai-007): the note previously sat on `use-conversation.ts`'s trailing
+ * re-export line, anchoring readers to the wrong surface.
+ */
 export interface AiConversationControllerBridge {
   createConversation(params?: { title?: string; metadata?: Record<string, unknown> }): AiConversationInfo | Promise<AiConversationInfo>;
   switchConversation(id: string): void | Promise<void>;

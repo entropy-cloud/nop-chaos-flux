@@ -13,6 +13,8 @@ import type { Components } from 'react-markdown';
 import type { BubbleContentRendererProps } from '../types.js';
 import { safeMarkdownSlice } from '../markdown-buffer.js';
 import { preprocessMathDelimiters } from '../math-delimiter-preprocess.js';
+import { clipboardAdapter, useCopiedFlag } from '../../clipboard.js';
+import { extractTextContent } from '../../message-text.js';
 
 /**
  * Markdown content renderer (A-2 streaming-safe + A-3 code-block copy).
@@ -84,7 +86,7 @@ function useThrottledMarkdownSource(raw: string, streaming: boolean): string {
 }
 
 export function MarkdownContentRenderer({ message, content, streaming: streamingProp }: BubbleContentRendererProps) {
-  const raw = extractContentText(content);
+  const raw = extractTextContent(content);
 
   // A-11: append a blinking cursor while the assistant message is streaming.
   // bug 166 (plan 472 V2): prefer the chat-level streaming signal threaded by
@@ -113,19 +115,6 @@ export function MarkdownContentRenderer({ message, content, streaming: streaming
       {streaming ? <span data-slot="ai-bubble-cursor" aria-hidden="true">▍</span> : null}
     </div>
   );
-}
-
-function extractContentText(content: unknown): string {
-  if (typeof content === 'string') return content;
-  if (
-    typeof content === 'object' &&
-    content !== null &&
-    'type' in content &&
-    (content as { type?: unknown }).type === 'text'
-  ) {
-    return String((content as { text?: unknown }).text ?? '');
-  }
-  return '';
 }
 
 const markdownComponentOverrides: Components = {
@@ -277,18 +266,9 @@ function CodeBlock({
   className?: string;
   children?: React.ReactNode;
 }) {
-  const [copied, setCopied] = useState(false);
-  // 2-20: the copied-reset timer must be cleared on unmount (no setState on
-  // an unmounted component).
-  const copiedResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    return () => {
-      if (copiedResetTimerRef.current) {
-        clearTimeout(copiedResetTimerRef.current);
-        copiedResetTimerRef.current = null;
-      }
-    };
-  }, []);
+  // 2-20 discipline lives inside useCopiedFlag (WA-ai-002 shared home): the
+  // copied-reset timer is cleared before re-arm and on unmount.
+  const { copied, markCopied } = useCopiedFlag();
 
   // D6 (G6): highlight the fenced source when a registered language is
   // declared; unknown languages and grammar failures fall back to the
@@ -302,13 +282,9 @@ function CodeBlock({
     // clipboard-write-failed: only flip to "Copied" when the write resolves.
     // A rejected write (permission lost / no focus) keeps the button as-is so
     // the user does not see a false success.
-    void Promise.resolve(copyToClipboard(text))
+    void Promise.resolve(clipboardAdapter.writeText(text))
       .then(() => {
-        setCopied(true);
-        if (copiedResetTimerRef.current) {
-          clearTimeout(copiedResetTimerRef.current);
-        }
-        copiedResetTimerRef.current = setTimeout(() => setCopied(false), 1500);
+        markCopied();
       })
       .catch(() => {
         // swallow: keep the button in its pre-copy state
@@ -355,29 +331,4 @@ function extractElementText(node: React.ReactNode): string {
     return extractElementText(element.props.children);
   }
   return '';
-}
-
-/**
- * Clipboard write indirection. Tests can stub this; production uses
- * `navigator.clipboard`. Allowed under INV-1 because clipboard is a
- * user-gesture browser API, not a network/storage primitive.
- *
- * R2-F2 (2026-08-11 open-audit): a MISSING clipboard API (non-https /
- * sandboxed / no `writeText`) must be an explicit failure signal, not a
- * silent success — the old `return undefined` resolved through
- * `Promise.resolve(undefined)` and flipped the button to a false "Copied".
- * The rejection flows into `handleCopy`'s `.catch`, keeping the button in its
- * pre-copy state (same behavior as a rejected write).
- */
-export const clipboardAdapter: { writeText(text: string): void | Promise<void> } = {
-  writeText(text: string): void | Promise<void> {
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      return navigator.clipboard.writeText(text);
-    }
-    return Promise.reject(new Error('navigator.clipboard is not available'));
-  },
-};
-
-function copyToClipboard(text: string): void | Promise<void> {
-  return clipboardAdapter.writeText(text);
 }

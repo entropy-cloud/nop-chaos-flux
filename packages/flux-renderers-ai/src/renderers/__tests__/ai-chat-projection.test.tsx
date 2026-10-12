@@ -5,7 +5,7 @@ import type { RendererEnv } from '@nop-chaos/flux-core';
 import {
   aiFormulaCompiler,
   aiMockEnv,
-} from '../../ai-test-support.js';
+} from '../../__tests__/ai-test-support.js';
 import type {
   AiConnector,
   AiConnectorChunk,

@@ -1,14 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import type {
-  FluxActionEvent,
-  RendererComponentProps,
-  RendererRenderOutput,
-  ScopeRef,
-} from '@nop-chaos/flux-core';
+import { useState } from 'react';
+import type { RendererComponentProps, RendererRenderOutput, ScopeRef } from '@nop-chaos/flux-core';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { getOptionRowStateTokens } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
+import { buildDispatchCtx } from './dispatch-ctx.js';
+import { useCopiedFlag } from './clipboard.js';
+import { extractMessageText } from './message-text.js';
 import type { ChatMessage } from '../engine/types.js';
 import type { AiFeedbackSchema } from '../schemas.js';
 
@@ -19,19 +17,6 @@ const DEFAULT_ACTIONS: FeedbackAction[] = ['copy', 'refresh'];
 interface FeedbackSourceEntry {
   label: string;
   url?: string;
-}
-
-/**
- * C8.2 P1-1 (CX-10 / bug-83 family convention): the second dispatch arg
- * carries `{ event, evaluationBindings, scope }` so action-args templates can
- * read `${action}` / `${message.id}` (ai-conversations.tsx:29-33 precedent).
- */
-function dispatchCtx(payload: Record<string, unknown>, nodeScope: ScopeRef | undefined) {
-  return {
-    event: payload as FluxActionEvent,
-    evaluationBindings: payload,
-    scope: nodeScope,
-  };
 }
 
 /**
@@ -107,18 +92,9 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
   const [voted, setVoted] = useState<'like' | 'dislike' | null>(() =>
     (message?.metadata as { feedback?: 'like' | 'dislike' } | undefined)?.feedback ?? null,
   );
-  const [copied, setCopied] = useState(false);
-  // 2-20: the copied-reset timer must be cleared on unmount (no setState on
-  // an unmounted component).
-  const copiedResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    return () => {
-      if (copiedResetTimerRef.current) {
-        clearTimeout(copiedResetTimerRef.current);
-        copiedResetTimerRef.current = null;
-      }
-    };
-  }, []);
+  // WA-ai-002: shared copied-flag home — the hook owns the reset timer and
+  // its unmount cleanup (2-20 discipline).
+  const { copied, markCopied } = useCopiedFlag();
 
   function fire(action: FeedbackAction) {
     if (action === 'copy' && message) {
@@ -127,11 +103,7 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
       // so the user does not see a false success.
       void copyMessageText(message)
         .then(() => {
-          setCopied(true);
-          if (copiedResetTimerRef.current) {
-            clearTimeout(copiedResetTimerRef.current);
-          }
-          copiedResetTimerRef.current = setTimeout(() => setCopied(false), 1500);
+          markCopied();
         })
         .catch(() => {
           // swallow: keep the button in its pre-copy state
@@ -150,7 +122,7 @@ export function AiFeedbackRenderer(props: RendererComponentProps<AiFeedbackSchem
       }
     }
     const payload = { type: 'ai:feedback-action', action, message };
-    void props.events.onAction?.(payload, dispatchCtx(payload, props.node.scope as ScopeRef | undefined));
+    void props.events.onAction?.(payload, buildDispatchCtx(payload, props.node.scope as ScopeRef | undefined));
   }
 
   const sources = message?.metadata?.sources;
@@ -289,18 +261,4 @@ function copyMessageText(message: ChatMessage): Promise<void> {
   // (non-https / sandboxed) is an explicit failure — resolving here flipped
   // the button to a false "Copied" (`fire('copy')` flips on resolve).
   return Promise.reject(new Error('navigator.clipboard is not available'));
-}
-
-function extractMessageText(message: ChatMessage): string {
-  if (typeof message.content === 'string') return message.content;
-  if (Array.isArray(message.content)) {
-    return message.content
-      .map((p: unknown) =>
-        typeof p === 'object' && p !== null && 'text' in p
-          ? String((p as { text: unknown }).text)
-          : '',
-      )
-      .join('');
-  }
-  return '';
 }

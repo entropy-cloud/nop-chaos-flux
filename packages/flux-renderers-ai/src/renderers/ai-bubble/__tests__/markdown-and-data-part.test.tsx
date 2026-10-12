@@ -1,7 +1,7 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { AiBubbleView } from '../index.js';
-import { clipboardAdapter } from '../renderers/markdown.js';
+import { clipboardAdapter } from '../../clipboard.js';
 import { t } from '@nop-chaos/flux-i18n';
 import type { ChatMessage, ChatMessageContentPart } from '../../../engine/types.js';
 
