@@ -6,15 +6,10 @@ import { createTreeDesignerCore } from '@nop-chaos/flow-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { useCurrentActionScope, useRendererEnv } from '@nop-chaos/flux-react';
 import type { DesignerPageSchema } from './schemas.js';
+import { readDesignerResolvedProp } from './designer-resolved-prop.js';
+
 import { DesignerPageInner } from './designer-page-inner.js';
 import { TreeDocumentSession, createTreeSessionId } from './tree-session.js';
-
-function readDesignerResolvedProp<T>(
-  props: RendererComponentProps<DesignerPageSchema>,
-  key: string,
-): T | undefined {
-  return props.props[key] as T | undefined;
-}
 
 function isActionSchemaInput(value: unknown): boolean {
   return (

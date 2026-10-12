@@ -23,6 +23,7 @@ import {
   getSessionId,
 } from '@nop-chaos/page-designer-core';
 import type { DesignerDropHint } from './types.js';
+import { getSchemaType } from './schema-type.js';
 
 export interface PixelRect {
   left: number;
@@ -68,7 +69,7 @@ function walkModel(
   const sid = getSessionId(node);
   const entry: AnchorNodeModel = {
     sid: sid ?? '',
-    type: schema.type as string,
+    type: getSchemaType(schema) ?? '',
     parentSid,
     containerKey,
     index,

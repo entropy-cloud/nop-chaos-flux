@@ -69,9 +69,15 @@ export function TemplateGallery(props: TemplateGalleryProps) {
   useEffect(() => {
     if (!props.open) return;
     let cancelled = false;
-    void Promise.resolve(props.store.list()).then((items) => {
-      if (!cancelled) setTemplates(items);
-    });
+    void Promise.resolve(props.store.list())
+      .then((items) => {
+        if (!cancelled) setTemplates(items);
+      })
+      .catch(() => {
+        // WA-pager-002 (plan 573): a rejecting host store must surface —
+        // previously the panel just stayed empty with an unhandled rejection.
+        if (!cancelled) toast.error(t('flux.pageDesigner.templateLoadFailed'));
+      });
     return () => {
       cancelled = true;
     };
@@ -86,17 +92,25 @@ export function TemplateGallery(props: TemplateGalleryProps) {
       toast.error(t('flux.pageDesigner.templateSaveFailed'));
       return;
     }
-    void Promise.resolve(props.store.save({ name, document })).then(() => {
-      setNameDraft('');
-      setTemplates([...(props.store.list() as PageDesignerTemplate[])]);
-      toast.success(t('flux.pageDesigner.templateSaved'));
-    });
+    void Promise.resolve(props.store.save({ name, document }))
+      .then(() => {
+        setNameDraft('');
+        setTemplates([...(props.store.list() as PageDesignerTemplate[])]);
+        toast.success(t('flux.pageDesigner.templateSaved'));
+      })
+      .catch(() => {
+        toast.error(t('flux.pageDesigner.templateSaveFailed'));
+      });
   };
 
   const remove = (id: string) => {
-    void Promise.resolve(props.store.remove?.(id)).then(() => {
-      setTemplates((prev) => prev.filter((item) => item.id !== id));
-    });
+    void Promise.resolve(props.store.remove?.(id))
+      .then(() => {
+        setTemplates((prev) => prev.filter((item) => item.id !== id));
+      })
+      .catch(() => {
+        toast.error(t('flux.pageDesigner.templateRemoveFailed'));
+      });
   };
 
   return (

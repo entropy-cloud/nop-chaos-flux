@@ -3,11 +3,16 @@ import type {
   GraphDocument,
   GraphNode,
 } from '@nop-chaos/flow-designer-core';
+import { t } from '@nop-chaos/flux-i18n';
 import type { DesignerCommandReason, DesignerCommandResult } from './designer-command-types.js';
+export { viewportsEqual } from './designer-xyflow-canvas/xyflow-utils.js';
 
-const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playground example.';
-const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';
-const EDGE_DUPLICATE_ERROR = 'Duplicate edges are not supported in the playground example.';
+// WA-flowr-010 (plan 573): these surfaced through notify failure toasts; the
+// bare-English constants (with their stale demo-host wording) are now
+// localized via the flux.flowDesigner.command namespace.
+const EDGE_SELF_LOOP_ERROR = () => t('flux.flowDesigner.command.selfLoopEdge');
+const EDGE_MISSING_NODE_ERROR = () => t('flux.flowDesigner.command.missingEdgeNode');
+const EDGE_DUPLICATE_ERROR = () => t('flux.flowDesigner.command.duplicateEdge');
 
 export function createSuccess(
   core: DesignerCore,
@@ -65,13 +70,6 @@ export function hasEdgeConnection(
   );
 }
 
-export function viewportsEqual(
-  left: { x: number; y: number; zoom: number },
-  right: { x: number; y: number; zoom: number },
-): boolean {
-  return left.x === right.x && left.y === right.y && left.zoom === right.zoom;
-}
-
 export function validateEdgeMutation(
   core: DesignerCore,
   source: string,
@@ -84,15 +82,15 @@ export function validateEdgeMutation(
   const config = core.getConfig();
 
   if (!hasNode(doc, source) || !hasNode(doc, target)) {
-    return { error: EDGE_MISSING_NODE_ERROR, reason: 'missing-node' };
+    return { error: EDGE_MISSING_NODE_ERROR(), reason: 'missing-node' };
   }
 
   if (!config.rules.allowSelfLoop && source === target) {
-    return { error: EDGE_SELF_LOOP_ERROR, reason: 'self-loop' };
+    return { error: EDGE_SELF_LOOP_ERROR(), reason: 'self-loop' };
   }
 
   if (hasEdgeConnection(doc, source, target, sourcePort, targetPort, ignoreEdgeId)) {
-    return { error: EDGE_DUPLICATE_ERROR, reason: 'duplicate-edge' };
+    return { error: EDGE_DUPLICATE_ERROR(), reason: 'duplicate-edge' };
   }
 
   return {};
@@ -104,13 +102,13 @@ export function inferAddNodeFailure(
 ): { error: string; reason: DesignerCommandReason } {
   if (!core.getConfig().nodeTypes.has(nodeType)) {
     return {
-      error: `Unknown node type: ${nodeType}`,
+      error: t('flux.flowDesigner.command.unknownNodeType', { nodeType }),
       reason: 'unknown-node-type',
     };
   }
 
   return {
-    error: `Unable to add node: ${nodeType}`,
+    error: t('flux.flowDesigner.command.unableToAddNode', { nodeType }),
     reason: 'constraint',
   };
 }

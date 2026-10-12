@@ -450,17 +450,13 @@ export function createDesignerActionProvider(
           });
           return toActionResult(result);
         }
-        case 'persistViewport': {
-          const result = adapter.execute({
-            type: 'persistViewport',
-            viewport: (args.viewport as { x: number; y: number; zoom: number } | undefined) ?? {
-              x: 0,
-              y: 0,
-              zoom: 1,
-            },
-          });
-          return toActionResult(result);
-        }
+        // WA-flowr-002 (plan 573): no 'persistViewport' action case here. The
+        // manifest/listMethods never declared it, so the action validator has
+        // rejected it since birth (e127635c5) — this routing was unreachable.
+        // Viewport persistence flows through the command channel instead
+        // (designer-canvas dispatch → command-adapter-graph). If persistViewport
+        // is ever meant to be a host-invocable ACTION, declare it in the
+        // manifest + listMethods first, then re-add routing here.
         case 'setPanelWidths': {
           const result = adapter.execute({
             type: 'setPanelWidths',

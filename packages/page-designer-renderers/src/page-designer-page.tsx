@@ -38,6 +38,7 @@ import { DataSourceCatalog, DataBindingPanel } from './data-binding-panel.js';
 import { TemplateGallery } from './template-gallery.js';
 import { createInMemoryTemplateStore } from './template-gallery.js';
 import type { PageDesignerTemplateStore } from './template-gallery.js';
+import { getSchemaType } from './schema-type.js';
 import type { DesignerDragPayload, DesignerDropHint } from './types.js';
 import {
   PageDesignerContextMenu,
@@ -106,13 +107,13 @@ export function PageDesigner(props: PageDesignerProps) {
     () => (selectedNodeId ? findNodeById(state.working, selectedNodeId, registry) ?? null : null),
     [state.working, selectedNodeId, registry],
   );
-  const selectedType = selectedNode ? ((selectedNode as unknown as Record<string, unknown>).type as string) : null;
+  const selectedType = selectedNode ? (getSchemaType(selectedNode) ?? null) : null;
   const selectedDefinition = selectedType ? registry.get(selectedType) : undefined;
 
   const rootSchemaNode = Array.isArray(state.working) ? state.working[0] : state.working;
   const canvasEmpty = useMemo(() => {
     if (!isSchema(rootSchemaNode)) return true;
-    const regions = getDropRegionKeys(registry.get((rootSchemaNode as unknown as Record<string, unknown>).type as string));
+    const regions = getDropRegionKeys(registry.get(getSchemaType(rootSchemaNode) ?? ''));
     return regions.every((key) => getRegionChildren(rootSchemaNode, key).length === 0);
   }, [rootSchemaNode, registry]);
 
@@ -200,7 +201,7 @@ export function PageDesigner(props: PageDesignerProps) {
       if (!targetParent) return;
       if (!targetRegion) {
         const rootRegions = isSchema(root)
-          ? getDropRegionKeys(registry.get((root as unknown as Record<string, unknown>).type as string))
+          ? getDropRegionKeys(registry.get(getSchemaType(root) ?? ''))
           : [];
         /* v8 ignore next -- 根 page 恒含 region（registry 契约面） */
         if (rootRegions.length === 0) return;

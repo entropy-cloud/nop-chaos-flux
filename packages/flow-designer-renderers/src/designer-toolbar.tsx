@@ -163,6 +163,26 @@ export function DesignerToolbarContent(props: {
     [env],
   );
 
+  // WA-flowr-007 (plan 573): the invoke → ok-check → then-chain → catch pipeline
+  // was hand-written three times (button/switch/back); back intentionally skips
+  // the then-chain (no follow-up actions on navigation).
+  const runToolbarAction = React.useCallback(
+    (action: string, thenChain?: unknown) => {
+      void invokeAction(action)
+        .then((result) => {
+          if (result && !result.ok) {
+            handleActionFailure(action, result.error ?? new Error('Action failed'));
+            return;
+          }
+          if (thenChain) {
+            runThenChain(thenChain);
+          }
+        })
+        .catch((error) => handleActionFailure(action, error));
+    },
+    [invokeAction, handleActionFailure, runThenChain],
+  );
+
   const items = (() => {
     const allItems = core.getConfig().toolbar?.items ?? [];
     const filteredItems = props.readOnly
@@ -277,14 +297,7 @@ export function DesignerToolbarContent(props: {
               aria-label={item.label ?? 'Back'}
               className="shrink-0"
               onClick={() => {
-                const action = item.action ?? 'designer:navigate-back';
-                void invokeAction(action)
-                  .then((result) => {
-                    if (result && !result.ok) {
-                      handleActionFailure(action, result.error ?? new Error('Action failed'));
-                    }
-                  })
-                  .catch((error) => handleActionFailure(action, error));
+                runToolbarAction(item.action ?? 'designer:navigate-back');
               }}
             >
               <DesignerIcon icon="arrow-left" />
@@ -330,15 +343,7 @@ export function DesignerToolbarContent(props: {
                 if (!action) {
                   return;
                 }
-                void invokeAction(action)
-                  .then((result) => {
-                    if (result && !result.ok) {
-                      handleActionFailure(action, result.error ?? new Error('Action failed'));
-                      return;
-                    }
-                    runThenChain((item as { then?: unknown }).then);
-                  })
-                  .catch((error) => handleActionFailure(action, error));
+                runToolbarAction(action, (item as { then?: unknown }).then);
               }}
             >
               {item.icon ? <DesignerIcon icon={item.icon} /> : null}
@@ -369,15 +374,7 @@ export function DesignerToolbarContent(props: {
                   if (!action) {
                     return;
                   }
-                  void invokeAction(action)
-                    .then((result) => {
-                      if (result && !result.ok) {
-                        handleActionFailure(action, result.error ?? new Error('Action failed'));
-                        return;
-                      }
-                      runThenChain((item as { then?: unknown }).then);
-                    })
-                    .catch((error) => handleActionFailure(action, error));
+                  runToolbarAction(action, (item as { then?: unknown }).then);
                 }}
               />
             </Label>

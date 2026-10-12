@@ -163,6 +163,59 @@ describe('InspectorPanel', () => {
     expect(onUpdateProps).toHaveBeenCalledWith({ title: 'A' }, 'commit');
   });
 
+  // WA-pager-003 (plan 573): invalid JSON in a json-type field previously
+  // cleared the draft on blur — the user's text vanished silently (contradicting
+  // the branch's own "保留 working" comment) with zero feedback.
+  it('keeps invalid JSON in the json-field draft and surfaces the error line (WA-pager-003)', () => {
+    const registry = createRendererRegistry();
+    registry.register(
+      def({
+        type: 'jsonish',
+        defaultSchema: { type: 'jsonish', payload: { a: 1 } },
+        propContracts: {
+          payload: {
+            shape: { kind: 'object', fields: {} },
+            displayName: 'Payload',
+            description: 'structured payload',
+          },
+        },
+      }) as unknown as RendererDefinition,
+    );
+    const definition = registry.get('jsonish');
+    const node = injectSessionIds(
+      { type: 'jsonish', payload: { a: 1 } },
+      createSeededRandom(12),
+    ) as never;
+    const onUpdateProps = vi.fn();
+    render(
+      <InspectorPanel
+        nodeId="psid-j"
+        node={node}
+        definition={definition}
+        onUpdateProps={onUpdateProps}
+      />,
+    );
+    const fieldBox = document.querySelector('[data-inspector-field="payload"]');
+    expect(fieldBox).toBeTruthy();
+    const textarea = fieldBox!.querySelector('textarea') as HTMLTextAreaElement;
+    expect(textarea.value).toContain('"a":1');
+
+    fireEvent.change(textarea, { target: { value: '{ invalid' } });
+    fireEvent.blur(textarea);
+    expect((textarea as HTMLTextAreaElement).value).toBe('{ invalid');
+    expect(screen.getByTestId('page-designer-inspector-json-error')).toBeTruthy();
+
+    // A later valid edit recovers: error line clears and the value commits.
+    // Re-query: the error-line insertion re-rendered the field subtree.
+    const textareaAfterError = document.querySelector(
+      '[data-inspector-field="payload"] textarea',
+    ) as HTMLTextAreaElement;
+    fireEvent.change(textareaAfterError, { target: { value: '{"b": 2}' } });
+    fireEvent.blur(textareaAfterError);
+    expect(screen.queryByTestId('page-designer-inspector-json-error')).toBeNull();
+    expect(onUpdateProps).toHaveBeenCalledWith({ payload: { b: 2 } }, 'transient');
+  });
+
   it('resets drafts when selection changes to another node', () => {
     const registry = createPageDesignerRegistry();
     const definition = registry.get('button')!;

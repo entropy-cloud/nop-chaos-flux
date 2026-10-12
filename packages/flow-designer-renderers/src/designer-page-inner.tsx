@@ -5,6 +5,8 @@ import { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import type { DesignerConfig, GraphDocument, TreeDocument } from '@nop-chaos/flow-designer-core';
 import { createDesignerCommandAdapter } from './designer-command-adapter.js';
 import type { DesignerPageSchema } from './schemas.js';
+import { readDesignerResolvedProp } from './designer-resolved-prop.js';
+
 import { notifyCommandFailure } from './designer-context.js';
 import { DesignerPageBody } from './designer-page-body.js';
 
@@ -14,13 +16,6 @@ interface DesignerPageInnerProps {
   config: DesignerConfig;
   core?: ReturnType<typeof createDesignerCore>;
   treeDocument?: TreeDocument;
-}
-
-function readDesignerResolvedProp<T>(
-  props: RendererComponentProps<DesignerPageSchema>,
-  key: string,
-): T | undefined {
-  return props.props[key] as T | undefined;
 }
 
 export function DesignerPageInner({

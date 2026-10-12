@@ -73,6 +73,7 @@ function InspectorField(props: {
   const fieldId = `page-designer-inspector-${field.name}`;
   const [numberDraft, setNumberDraft] = useState<string | null>(null);
   const [jsonDraft, setJsonDraft] = useState<string | null>(null);
+  const [jsonError, setJsonError] = useState(false);
 
   if (field.readOnly) {
     return (
@@ -182,15 +183,30 @@ function InspectorField(props: {
             }
             onChange={(event) => setJsonDraft(event.target.value)}
             onBlur={(event) => {
-              setJsonDraft(null);
               try {
-                callbacks.onFieldChange(JSON.parse(event.target.value));
+                const parsed = JSON.parse(event.target.value) as unknown;
+                // WA-pager-003 (plan 573): the parse must succeed before the
+                // draft clears — the old order cleared first, silently
+                // discarding the user's input on invalid JSON (contradicting
+                // this branch's own "保留 working" comment) with zero feedback.
+                setJsonDraft(null);
+                setJsonError(false);
+                callbacks.onFieldChange(parsed);
               } catch {
-                // 非法 JSON：保留 working，收口事务（无变更）。
+                // 非法 JSON：保留 working 供修正，错误面与 raw 编辑器同款。
+                setJsonError(true);
               }
               callbacks.onEditSessionCommit();
             }}
           />
+          {jsonError ? (
+            <p
+              className="text-xs text-[var(--nop-destructive,#ef4444)]"
+              data-testid="page-designer-inspector-json-error"
+            >
+              {t('flux.pageDesigner.rawJsonInvalid')}
+            </p>
+          ) : null}
         </div>
       );
     default:

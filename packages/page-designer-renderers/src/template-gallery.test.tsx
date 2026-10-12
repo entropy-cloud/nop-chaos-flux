@@ -7,7 +7,7 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SchemaInput } from '@nop-chaos/flux-core';
 import { createInMemoryTemplateStore, TemplateGallery } from './template-gallery.js';
-import type { PageDesignerTemplate } from './template-gallery.js';
+import type { PageDesignerTemplate, PageDesignerTemplateStore } from './template-gallery.js';
 
 afterEach(cleanup);
 
@@ -19,6 +19,80 @@ function seed(templates: PageDesignerTemplate[] = []) {
 }
 
 describe('TemplateGallery', () => {
+  // WA-pager-002 (plan 573): a rejecting host store previously produced an
+  // unhandled rejection and a silently dead panel — failures must surface.
+  it('surfaces a load failure toast when store.list rejects', async () => {
+    const { toast } = await import('@nop-chaos/ui');
+    const errorSpy = vi.spyOn(toast, 'error').mockImplementation(() => Number.NaN);
+    const rejectingStore = {
+      list: vi.fn().mockRejectedValue(new Error('store exploded')),
+      save: vi.fn(),
+      remove: vi.fn(),
+    };
+    render(
+      <TemplateGallery
+        open
+        onOpenChange={vi.fn()}
+        store={rejectingStore as unknown as PageDesignerTemplateStore}
+        currentExportedJson={EXPORT_JSON}
+        onInstantiate={vi.fn(() => true)}
+      />,
+    );
+    await waitFor(() => expect(errorSpy).toHaveBeenCalled());
+    errorSpy.mockRestore();
+  });
+
+  it('surfaces an error toast instead of success when store.save rejects', async () => {
+    const { toast } = await import('@nop-chaos/ui');
+    const errorSpy = vi.spyOn(toast, 'error').mockImplementation(() => Number.NaN);
+    const successSpy = vi.spyOn(toast, 'success').mockImplementation(() => Number.NaN);
+    const rejectingStore = {
+      list: vi.fn().mockResolvedValue([]),
+      save: vi.fn().mockRejectedValue(new Error('quota exceeded')),
+      remove: vi.fn(),
+    };
+    const view = render(
+      <TemplateGallery
+        open
+        onOpenChange={vi.fn()}
+        store={rejectingStore as unknown as PageDesignerTemplateStore}
+        currentExportedJson={EXPORT_JSON}
+        onInstantiate={vi.fn(() => true)}
+      />,
+    );
+    fireEvent.change(document.getElementById('page-designer-template-name') as HTMLInputElement, {
+      target: { value: 'T1' },
+    });
+    fireEvent.click(view.getByTestId('page-designer-template-save'));
+    await waitFor(() => expect(errorSpy).toHaveBeenCalled());
+    expect(successSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+    successSpy.mockRestore();
+  });
+
+  it('surfaces an error toast and keeps the row when store.remove rejects', async () => {
+    const { toast } = await import('@nop-chaos/ui');
+    const errorSpy = vi.spyOn(toast, 'error').mockImplementation(() => Number.NaN);
+    const store = seed([{ id: 'tpl-1', name: 'A', document: DOC, createdAt: 1 }]);
+    store.remove = vi.fn().mockRejectedValue(new Error('locked'));
+    const view = render(
+      <TemplateGallery
+        open
+        onOpenChange={vi.fn()}
+        store={store}
+        currentExportedJson={EXPORT_JSON}
+        onInstantiate={vi.fn(() => true)}
+      />,
+    );
+    await waitFor(() => expect(view.getByText('A')).toBeTruthy());
+    const item = view.getByTestId('page-designer-template-item');
+    fireEvent.click(item.querySelector('[data-testid="page-designer-template-remove"]') as HTMLElement);
+    await waitFor(() => expect(errorSpy).toHaveBeenCalled());
+    expect(view.getByText('A')).toBeTruthy();
+    errorSpy.mockRestore();
+  });
+
+
   it('shows the empty state (template-gallery-empty failure path)', async () => {
     const view = render(
       <TemplateGallery

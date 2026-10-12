@@ -209,7 +209,7 @@ describe('designer-page live xyflow intent retention', () => {
     await waitFor(() => {
       expect(view.notify).toHaveBeenCalledWith(
         'warning',
-        'Duplicate edges are not supported in the playground example.',
+        'Duplicate edges are not supported.',
       );
       expect(within(view.container).getByRole('button', {
         name: 'Cancel connection from output port default on node Task 1',
@@ -268,7 +268,7 @@ describe('designer-page live xyflow intent retention', () => {
     await waitFor(() => {
       expect(view.notify).toHaveBeenCalledWith(
         'warning',
-        'Duplicate edges are not supported in the playground example.',
+        'Duplicate edges are not supported.',
       );
       expect(within(view.container).getByRole('button', {
         name: 'Cancel reconnect from output port default on node Task 1',

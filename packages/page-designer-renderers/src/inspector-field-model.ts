@@ -17,6 +17,7 @@ import {
   INSPECTOR_READONLY_KEY,
   SESSION_ID_KEY,
 } from '@nop-chaos/page-designer-core';
+import { getSchemaType } from './schema-type.js';
 
 export interface InspectorEventInfo {
   name: string;
@@ -73,7 +74,7 @@ function toFieldModel(field: BaseSchema): InspectorFieldModel | null {
   return {
     name,
     label: typeof record.label === 'string' ? record.label : name,
-    control: typeof record.type === 'string' ? record.type : 'input',
+    control: getSchemaType(field) ?? 'input',
     value: record.value,
     ...(options ? { options } : {}),
     required: record.required === true,
@@ -124,7 +125,7 @@ export function buildInspectorPanelModel(input: InspectorNodeInput | null): Insp
     fields,
     events,
     nodeId,
-    rendererType: typeof nodeRecord.type === 'string' ? nodeRecord.type : null,
+    rendererType: getSchemaType(node) ?? null,
   };
 }
 

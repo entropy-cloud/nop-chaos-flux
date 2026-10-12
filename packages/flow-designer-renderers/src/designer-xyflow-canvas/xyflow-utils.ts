@@ -7,7 +7,7 @@ import type {
   XyflowViewportChange,
 } from './types.js';
 
-const VIEWPORT_EPSILON = 0.001;
+export const VIEWPORT_EPSILON = 0.001;
 
 function toFiniteNumber(value: unknown): number | undefined {
   if (typeof value !== 'number') {
@@ -131,14 +131,23 @@ export function normalizeControlledViewport(viewport: {
   };
 }
 
+// WA-flowr-004 (plan 573): this comparator previously existed twice with the
+// same name and no cross-reference — exact `===` in designer-command-adapter
+// -helpers (persist dedup: a real viewport change must never be dropped) and
+// this ε-tolerance one (live xyflow float echo suppression). Unified here with
+// an explicit epsilon parameter; callers declare which semantics they need.
 export function viewportsEqual(
   left: DesignerXyflowControlledViewport,
   right: DesignerXyflowControlledViewport,
+  epsilon = 0,
 ) {
+  if (epsilon <= 0) {
+    return left.x === right.x && left.y === right.y && left.zoom === right.zoom;
+  }
   return (
-    Math.abs(left.x - right.x) < VIEWPORT_EPSILON &&
-    Math.abs(left.y - right.y) < VIEWPORT_EPSILON &&
-    Math.abs(left.zoom - right.zoom) < VIEWPORT_EPSILON
+    Math.abs(left.x - right.x) < epsilon &&
+    Math.abs(left.y - right.y) < epsilon &&
+    Math.abs(left.zoom - right.zoom) < epsilon
   );
 }
 

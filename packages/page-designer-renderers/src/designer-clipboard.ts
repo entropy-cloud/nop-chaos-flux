@@ -6,7 +6,7 @@
 
 import { cloneDeep } from '@nop-chaos/flux-core';
 import { isSchema } from '@nop-chaos/flux-core';
-import type { BaseSchema, RendererRegistry, SchemaInput } from '@nop-chaos/flux-core';
+import type { RendererRegistry, SchemaInput } from '@nop-chaos/flux-core';
 import type { SessionNodeId } from '@nop-chaos/page-designer-core';
 import {
   findNodeById,
@@ -14,6 +14,7 @@ import {
   getSessionId,
   locateNode,
 } from '@nop-chaos/page-designer-core';
+import { getSchemaType } from './schema-type.js';
 
 /** 复制：深拷贝剪贴板子树，与宿主文档完全解耦（后续编辑不别名）。 */
 export function copyNodeToClipboard(node: SchemaInput): SchemaInput {
@@ -45,9 +46,7 @@ export function resolvePasteTarget(args: ResolvePasteTargetArgs): ResolvedPasteT
     ? (findNodeById(working, effectiveTargetId, registry) ?? null)
     : null;
   if (effectiveTargetId && effectiveTargetNode) {
-    const definition = registry.get(
-      (effectiveTargetNode as unknown as Record<string, unknown>).type as string,
-    );
+    const definition = registry.get(getSchemaType(effectiveTargetNode) ?? '');
     const regions = getDropRegionKeys(definition);
     if (regions.length > 0) {
       return { parentId: effectiveTargetId, regionKey: regions[0] };
@@ -64,7 +63,7 @@ export function resolvePasteTarget(args: ResolvePasteTargetArgs): ResolvedPasteT
 
   if (!rootSid) return null;
   const rootRegions = isSchema(root)
-    ? getDropRegionKeys(registry.get((root as unknown as BaseSchema & Record<string, unknown>).type as string))
+    ? getDropRegionKeys(registry.get(getSchemaType(root) ?? ''))
     : [];
   if (rootRegions.length === 0) return null;
   return { parentId: rootSid, regionKey: rootRegions[0] };

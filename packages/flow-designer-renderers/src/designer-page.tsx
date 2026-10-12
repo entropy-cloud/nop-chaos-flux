@@ -3,6 +3,8 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { DesignerConfig, GraphDocument } from '@nop-chaos/flow-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DesignerPageSchema } from './schemas.js';
+import { readDesignerResolvedProp } from './designer-resolved-prop.js';
+
 import { TreeModeLayoutWrapper } from './designer-tree-mode.js';
 import { DesignerPageInner } from './designer-page-inner.js';
 import { DesignerPaletteContent } from './designer-palette.js';
@@ -14,13 +16,6 @@ function getRootMetaProps(meta: RendererComponentProps['meta']) {
     'data-testid': meta.testid || undefined,
     'data-cid': meta.cid != null ? String(meta.cid) : undefined,
   };
-}
-
-function readDesignerResolvedProp<T>(
-  props: RendererComponentProps<DesignerPageSchema>,
-  key: string,
-): T | undefined {
-  return props.props[key] as T | undefined;
 }
 
 export function DesignerPageRenderer(props: RendererComponentProps<DesignerPageSchema>) {

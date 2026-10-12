@@ -1,5 +1,13 @@
 import type { DesignerCommand } from '../designer-command-types.js';
 
+// WA-flowr-009 (plan 573): these fallback labels are a cross-file literal
+// contract — designer-command-adapter's defaults merge keys its
+// defaults-derived-name override on the exact 'CC' sentinel. Both sides
+// import from here so the menu wording and the adapter check cannot drift.
+export const DINGFLOW_FALLBACK_LABEL_CC = 'CC';
+const DINGFLOW_FALLBACK_LABEL_APPROVAL = 'Approver';
+const DINGFLOW_FALLBACK_DESC = 'Please set';
+
 export type DingFlowSourceKind = 'node' | 'branch-group' | 'merge' | 'slot';
 
 export function createDingFlowMenuCommand(
@@ -18,7 +26,12 @@ export function createDingFlowMenuCommand(
       ownerId,
       branchId,
       nodeType: type,
-      data: { label: type === 'dt-approval' ? 'Approver' : 'CC', desc: 'Please set' },
+      data: {
+        label: type === 'dt-approval'
+          ? DINGFLOW_FALLBACK_LABEL_APPROVAL
+          : DINGFLOW_FALLBACK_LABEL_CC,
+        desc: DINGFLOW_FALLBACK_DESC,
+      },
     };
   }
 
@@ -30,9 +43,9 @@ export function createDingFlowMenuCommand(
       return {
         type: 'addBranch',
         nodeId: effectiveId,
-        branchData: { title: 'Condition', desc: 'Please set' },
+        branchData: { title: 'Condition', desc: DINGFLOW_FALLBACK_DESC },
         childType: type,
-        childData: { title: 'Condition', desc: 'Please set' },
+        childData: { title: 'Condition', desc: DINGFLOW_FALLBACK_DESC },
       };
     }
 
@@ -40,7 +53,7 @@ export function createDingFlowMenuCommand(
       type: 'insertBranchPair',
       sourceId: effectiveId,
       condNodeType: type,
-      condData: { title: 'Condition', desc: 'Please set' },
+      condData: { title: 'Condition', desc: DINGFLOW_FALLBACK_DESC },
     };
   }
 
@@ -49,7 +62,12 @@ export function createDingFlowMenuCommand(
       type: 'insertChainNodeAtMerge',
       targetId: effectiveId,
       nodeType: type,
-      data: { label: type === 'dt-approval' ? 'Approver' : 'CC', desc: 'Please set' },
+      data: {
+        label: type === 'dt-approval'
+          ? DINGFLOW_FALLBACK_LABEL_APPROVAL
+          : DINGFLOW_FALLBACK_LABEL_CC,
+        desc: DINGFLOW_FALLBACK_DESC,
+      },
     };
   }
 
@@ -57,6 +75,11 @@ export function createDingFlowMenuCommand(
     type: 'insertChainNode',
     sourceId: effectiveId,
     nodeType: type,
-    data: { label: type === 'dt-approval' ? 'Approver' : 'CC', desc: 'Please set' },
+    data: {
+        label: type === 'dt-approval'
+          ? DINGFLOW_FALLBACK_LABEL_APPROVAL
+          : DINGFLOW_FALLBACK_LABEL_CC,
+        desc: DINGFLOW_FALLBACK_DESC,
+      },
   };
 }

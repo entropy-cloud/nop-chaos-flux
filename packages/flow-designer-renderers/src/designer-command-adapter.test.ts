@@ -99,7 +99,7 @@ describe('createDesignerCommandAdapter', () => {
     expect(failure).toMatchObject({
       ok: false,
       reason: 'duplicate-edge',
-      error: 'Duplicate edges are not supported in the playground example.',
+      error: '不支持重复连线。',
     });
   });
 

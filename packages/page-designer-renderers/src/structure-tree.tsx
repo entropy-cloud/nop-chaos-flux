@@ -6,6 +6,7 @@
  */
 
 import './page-designer-tokens.css';
+import { getSchemaType } from './schema-type.js';
 
 import { useMemo } from 'react';
 import { isSchema } from '@nop-chaos/flux-core';
@@ -35,7 +36,7 @@ interface TreeRow {
 
 function labelFor(node: BaseSchema, registry: RendererRegistry): string {
   const record = node as unknown as Record<string, unknown>;
-  const definition = registry.get(record.type as string);
+  const definition = registry.get(getSchemaType(record) ?? '');
   const display =
     typeof record.label === 'string' && record.label.length > 0
       ? record.label
@@ -44,7 +45,7 @@ function labelFor(node: BaseSchema, registry: RendererRegistry): string {
         : typeof record.text === 'string' && record.text.length > 0
           ? record.text
           : undefined;
-  return display ?? definition?.displayName ?? (record.type as string);
+  return display ?? definition?.displayName ?? (getSchemaType(record) ?? '');
 }
 
 function collectRows(
@@ -57,9 +58,9 @@ function collectRows(
   const record = node as unknown as Record<string, unknown>;
   const sid = getSessionId(node);
   if (!sid) return;
-  const definition = registry.get(record.type as string);
+  const definition = registry.get(getSchemaType(record) ?? '');
   const opaque = definition ? classifyNode(definition) === 'opaque-leaf' : false;
-  out.push({ sid, type: record.type as string, label: labelFor(node, registry), depth, selectable: true });
+  out.push({ sid, type: getSchemaType(record) ?? '', label: labelFor(node, registry), depth, selectable: true });
   if (opaque) return;
   const { keys } = getChildContainerKeys(node, registry);
   for (const key of keys) {

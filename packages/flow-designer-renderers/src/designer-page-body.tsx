@@ -29,6 +29,8 @@ import {
 } from '@nop-chaos/ui';
 import { createDesignerCommandAdapter } from './designer-command-adapter.js';
 import type { DesignerPageSchema } from './schemas.js';
+import { readDesignerResolvedProp } from './designer-resolved-prop.js';
+
 import {
   DesignerContext,
   type DesignerContextValue,
@@ -64,13 +66,6 @@ function hasInspectorPanel(config: DesignerConfig): boolean {
     config.nodeTypes.some((nodeType) => nodeType.inspector?.body !== undefined) ||
     (config.edgeTypes ?? []).some((edgeType) => edgeType.inspector?.body !== undefined)
   );
-}
-
-function readDesignerResolvedProp<T>(
-  props: RendererComponentProps<DesignerPageSchema>,
-  key: string,
-): T | undefined {
-  return props.props[key] as T | undefined;
 }
 
 interface DesignerPageBodyProps {

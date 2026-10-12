@@ -8,6 +8,7 @@ import type {
 } from './designer-command-types.js';
 import { createFailure, createSuccess } from './designer-command-adapter-helpers.js';
 import { executeGraphOnlyCommand } from './designer-command-adapter-graph.js';
+import { DINGFLOW_FALLBACK_LABEL_CC } from './dingflow/dingflow-command-dispatch.js';
 
 export type {
   DesignerCommand,
@@ -104,7 +105,11 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
     // 兜底 label（'CC'）与类型无关——defaults 派生名存在时以它为准，
     // 让 inspector「当前选中」与新节点画布标签显示类型相关名字。
     const defaultName = (defaults as Record<string, any>)?.step?.common?.name;
-    if (typeof defaultName === 'string' && defaultName.length > 0 && fallback.label === 'CC') {
+    if (
+      typeof defaultName === 'string' &&
+      defaultName.length > 0 &&
+      fallback.label === DINGFLOW_FALLBACK_LABEL_CC
+    ) {
       merged.label = defaultName;
     }
     return merged;
@@ -261,48 +266,18 @@ export function createDesignerCommandAdapter(core: DesignerCore): DesignerComman
       case 'clearSelection':
         core.clearSelection();
         return createSuccess(core);
-      case 'deleteSelection': {
-        if (!isTreeMode) {
-          return deleteGraphSelection(core);
-        }
-        // plan 547 (taskflow-2): tree mode previously failed unconditionally —
-        // keyboard Delete cleared the selection without deleting anything while
-        // the context menu (deleteNode) worked. Route the selection through the
-        // same tree delete path per node.
-        const snapshot = core.getSnapshot();
-        const nodeIds = [...snapshot.selection.selectedNodeIds];
-        if (nodeIds.length === 0 && snapshot.activeNode?.id) {
-          nodeIds.push(snapshot.activeNode.id);
-        }
-        if (nodeIds.length === 0) {
-          return createFailure(core, 'Nothing to delete', 'unchanged');
-        }
-        let lastResult = createSuccess(core);
-        for (const nodeId of nodeIds) {
-          lastResult = mapTreeCommand(core.deleteTreeNode(nodeId));
-          if (!lastResult.ok) {
-            return lastResult;
-          }
-        }
-        return lastResult;
-      }
+      case 'deleteSelection':
+        // Tree mode never reaches this switch — executeTreeCommand intercepts
+        // tree-owned commands first, and the plan-547 keyboard-Delete fix
+        // (per-node tree delete with transaction + edge-selection rejection)
+        // lives there. This case is the graph-mode path only.
+        return deleteGraphSelection(core);
       case 'copySelection':
         core.copySelection();
         return createSuccess(core);
       case 'pasteClipboard':
         core.pasteClipboard();
         return createSuccess(core);
-      case 'duplicateNode': {
-        const node = core.duplicateNode(command.nodeId);
-        if (!node) {
-          return createFailure(
-            core,
-            t('flux.flowDesigner.command.unknownNode', { nodeId: command.nodeId }),
-            'missing-node',
-          );
-        }
-        return createSuccess(core, { data: node });
-      }
       case 'export': {
         const exported = core.exportDocument();
         return createSuccess(core, { data: exported, exported });

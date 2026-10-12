@@ -13,6 +13,7 @@ import type { RendererRegistry, SchemaInput } from '@nop-chaos/flux-core';
 import { classifyNode, getDropRegionKeys, getRegionChildren, getSessionId } from '@nop-chaos/page-designer-core';
 import type { SessionNodeId } from '@nop-chaos/page-designer-core';
 import { NODE_ANCHOR_ATTRIBUTE } from './constants.js';
+import { getSchemaType } from './schema-type.js';
 
 const EMPTY_CONTAINER_ATTRIBUTE = 'data-pd-empty';
 const EMPTY_CONTAINER_LABEL_ATTRIBUTE = 'data-pd-empty-label';
@@ -30,7 +31,7 @@ export function collectEmptyContainers(doc: SchemaInput, registry: RendererRegis
     if (!isSchema(node)) return;
     const schema = node as unknown as Record<string, unknown>;
     const sid = getSessionId(node);
-    const type = schema.type as string;
+    const type = getSchemaType(schema) ?? '';
     const definition = registry.get(type);
     const regions = getDropRegionKeys(definition);
     const isContainer = regions.length > 0 && definition != null && classifyNode(definition) !== 'opaque-leaf';

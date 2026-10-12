@@ -46,38 +46,16 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
     draftRef.current = draft;
   }, [draft]);
   const fieldCommitTimerRef = useRef<number | undefined>(undefined);
-  const flushDraft = React.useCallback(() => {
-    const pending = draftRef.current;
-    if (!pending) return;
-    draftRef.current = null;
-    setDraft(null);
-    if (pending.kind === 'node') {
-      dispatch({
-        type: 'updateNodeData',
-        nodeId: pending.targetId,
-        data: { [pending.key]: pending.value },
-      });
-    } else if (pending.kind === 'branch') {
-      const [nodeId, branchId] = pending.targetId.split('::');
-      dispatch({
-        type: 'updateBranchData',
-        nodeId: nodeId!,
-        branchId: branchId!,
-        data: { [pending.key]: pending.value },
-      });
-    } else {
-      dispatch({
-        type: 'updateEdgeData',
-        edgeId: pending.targetId,
-        data: { [pending.key]: pending.value },
-      });
-    }
-  }, [dispatch]);
-  React.useEffect(() => {
-    return () => {
-      const pending = draftRef.current;
-      if (!pending) return;
+  // WA-flowr-005 (plan 573): commitDraft was duplicated verbatim for the
+  // flush-on-demand and unmount-flush paths (~27 lines ×2). One commit helper;
+  // the unmount cleanup only skips the setDraft (the state dies with the
+  // component anyway).
+  const commitDraft = React.useCallback(
+    (pending: NonNullable<typeof draftRef.current>, withStateReset: boolean) => {
       draftRef.current = null;
+      if (withStateReset) {
+        setDraft(null);
+      }
       if (pending.kind === 'node') {
         dispatch({
           type: 'updateNodeData',
@@ -99,8 +77,21 @@ export function DefaultInspector(props: DefaultInspectorProps = {}) {
           data: { [pending.key]: pending.value },
         });
       }
+    },
+    [dispatch],
+  );
+  const flushDraft = React.useCallback(() => {
+    const pending = draftRef.current;
+    if (!pending) return;
+    commitDraft(pending, true);
+  }, [commitDraft]);
+  React.useEffect(() => {
+    return () => {
+      const pending = draftRef.current;
+      if (!pending) return;
+      commitDraft(pending, false);
     };
-  }, [dispatch]);
+  }, [commitDraft]);
   const draftFor = (kind: 'node' | 'edge' | 'branch', targetId: string, key: string, current: string) =>
     draft && draft.kind === kind && draft.targetId === targetId && draft.key === key
       ? draft.value

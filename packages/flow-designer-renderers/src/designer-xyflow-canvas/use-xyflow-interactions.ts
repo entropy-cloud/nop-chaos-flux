@@ -9,6 +9,7 @@ import {
   normalizePositionSignature,
   normalizeViewportChange,
   viewportsEqual,
+  VIEWPORT_EPSILON,
 } from './xyflow-utils.js';
 import type { DesignerXyflowControlledViewport, XyflowViewportChange } from './types.js';
 
@@ -111,7 +112,7 @@ export function useXyflowInteractions({
       return;
     }
 
-    if (!viewportsEqual(viewport, normalized)) {
+    if (!viewportsEqual(viewport, normalized, VIEWPORT_EPSILON)) {
       onViewportChange(normalized, undefined);
     }
   }
