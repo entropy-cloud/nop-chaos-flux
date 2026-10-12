@@ -78,7 +78,7 @@ function isCompiledTemplate(input: unknown): input is CompiledTemplate {
 
   const candidate = input as Partial<CompiledTemplate>;
 
-  return !!candidate.root && candidate.repeatedTemplates instanceof Map;
+  return !!candidate.root;
 }
 
 function extractTemplateNodes(template: CompiledTemplate): TemplateNode | readonly TemplateNode[] {

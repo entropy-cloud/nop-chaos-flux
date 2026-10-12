@@ -237,3 +237,5 @@
 | WA-formula-003  | flux-formula  | H        | P3       | builtins.ts:100-150（ARRAY\* ×6）                                                                   | pending     | watch-only  | 表状注册惯用形，零漂移；协议 P1 默认降档理由见报告条目                                               |
 | WA-compiler-001 | flux-compiler | H        | P1       | schema-compiler/shape-validation-rules-reaction.ts:126-215,220-271（+ rules-structural.ts:43-95）   | found→fixed | （修复）    | 已批内修复：validateRootPathArray 收敛 3 份 + 码误标修正（独立码）；特征化+新码红→绿，包全量 558/558 |
 | WA-compiler-002 | flux-compiler | D        | P3       | action-compiler.ts:121-135（对照 source-compiler.ts:13-22 接缝）                                    | pending     | watch-only  | asRuntimeValue 接缝半程收口（接缝注释宣称六处，live 仅 source-compiler 兑现）；~15 分钟修复候选      |
+
+> **勘误注记（2026-10-12，CX-2 执行批 plan 580）**：本报告「删除 repeatedTemplates/RepeatedTemplate/RepeatedTemplateId 三者」的建议经执行期 grep 复核修正——`RepeatedTemplateId` 经 `InstanceFrame.repeatedTemplateId`（node-identity.ts:54-57）被 structural-loop/table/tree/list/cards/input-table/combo/array-field 渲染器活体家族（`createXxxRepeatedTemplateId` + `{repeatedTemplateId, instanceKey}`）持续消费，**保留**；实际删除=字段+`RepeatedTemplate` 接口两项。

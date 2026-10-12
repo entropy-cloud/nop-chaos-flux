@@ -27,7 +27,6 @@ describe('debugger adapters', () => {
     plugin.beforeCompile?.({ type: 'page' });
     plugin.afterCompile?.({
       root: { type: 'page', templatePath: 'root' } as never,
-      repeatedTemplates: new Map(),
     });
     plugin.beforeAction?.(
       { action: 'submitForm' } as never,
@@ -169,7 +168,6 @@ describe('debugger adapters', () => {
     plugin.beforeCompile?.({ type: 'page' });
     plugin.afterCompile?.({
       root: { type: 'page', templatePath: 'root' } as never,
-      repeatedTemplates: new Map(),
     });
     plugin.beforeAction?.({ action: 'submitForm' } as never, {
       nodeInstance: {

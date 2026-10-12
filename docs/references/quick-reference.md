@@ -813,7 +813,7 @@ interface ActionDataSourceSchema {
 
 ````ts
 interface CompiledTemplate {
-  nodes: TemplateNode[];
+  root: TemplateNode | readonly TemplateNode[];
 }
 
 interface CompiledRuntimeValue<T> { /* evaluated by expressionCompiler */ }

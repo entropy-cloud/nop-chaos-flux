@@ -74,8 +74,10 @@ type RepeatedTemplateId = string;
 
 interface CompiledTemplate {
   root: TemplateNode | readonly TemplateNode[];
-  repeatedTemplates: ReadonlyMap<RepeatedTemplateId, RepeatedTemplate>;
 }
+// 2026-10-12（CX-2）：transitional 的 repeatedTemplates 空壳契约字段与伴生 RepeatedTemplate
+// 接口已按 deprecated-feature-cleanup 流程移除（出生 c6a3245a2 后 set 全历史零填充）；
+// RepeatedTemplateId/InstanceFrame 保留（重复渲染活体机制）。
 
 interface TemplateNode {
   templateNodeId: TemplateNodeId; // globally unique within one RendererRuntime

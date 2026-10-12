@@ -151,7 +151,6 @@ export function createSchemaCompiler(input: {
       const nodes = enrichTemplateNodeIds(compiled, cidState, diagnostics);
       const template: CompiledTemplate = applyAfterCompilePlugins({
         root: nodes,
-        repeatedTemplates: new Map(),
       });
       throwIfSchemaDiagnosticsFailed(options, diagnostics);
       return Array.isArray(template.root)
@@ -192,7 +191,6 @@ export function createSchemaCompiler(input: {
 
     const template: CompiledTemplate = applyAfterCompilePlugins({
       root: node,
-      repeatedTemplates: new Map(),
     });
     throwIfSchemaDiagnosticsFailed(options, diagnostics);
     return template.root as TemplateNode | TemplateNode[];
@@ -219,7 +217,6 @@ export function createSchemaCompiler(input: {
       const nodes = compileSchemaToTemplateNodes(schema, options);
       return {
         root: nodes,
-        repeatedTemplates: new Map(),
       };
     },
     async prepare(schema, options) {

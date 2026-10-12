@@ -197,20 +197,8 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
   namedActionPlans?: Readonly<Record<string, TemplateCompiledActionProgram>>;
 }
 
-export interface RepeatedTemplate {
-  repeatedTemplateId: RepeatedTemplateId;
-  root: TemplateNode | readonly TemplateNode[];
-  itemBindings: {
-    item?: string;
-    index?: string;
-    key?: string;
-    record?: string;
-  };
-}
-
 export interface CompiledTemplate {
   root: TemplateNode | readonly TemplateNode[];
-  repeatedTemplates: ReadonlyMap<RepeatedTemplateId, RepeatedTemplate>;
 }
 
 export interface NodeState {

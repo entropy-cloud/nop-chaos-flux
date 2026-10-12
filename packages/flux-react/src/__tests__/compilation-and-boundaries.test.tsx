@@ -599,4 +599,43 @@ describe('createSchemaRenderer compilation and boundary flags', () => {
 
     expect(container.textContent).toBe('');
   });
+
+  it('renders a {root} template shell without repeatedTemplates map (CX-2 shell removal)', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+    const compiled = runtime.compile({ type: 'text', text: 'shell-free root' } as any);
+
+    render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <RenderNodes input={{ root: compiled.root } as never} />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    expect(screen.getByText('shell-free root')).toBeTruthy();
+  });
+
+  it('still rejects a template-shell object without root (CX-2 guard narrowing)', () => {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({});
+
+    const { container } = render(
+      <RuntimeContext.Provider value={runtime}>
+        <ScopeContext.Provider value={page.scope}>
+          <RenderNodes input={{ shellOnly: true } as never} />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>,
+    );
+
+    expect(container.textContent).toBe('');
+  });
 });
