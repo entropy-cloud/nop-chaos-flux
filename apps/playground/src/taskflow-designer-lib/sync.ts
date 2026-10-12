@@ -1,7 +1,6 @@
-import type { GraphDocument, GraphEdge, TreeDocument, TreeNode, TreeNodeBranch } from '@nop-chaos/flow-designer-core';
+import type { GraphDocument, GraphEdge, TreeDocument, TreeNodeBranch } from '@nop-chaos/flow-designer-core';
 import type {
   TaskFlowAuthoringModel,
-  TaskFlowContainer,
   TaskFlowGraphContainer,
   TaskFlowTreeContainer,
   TaskFlowGraphNode,
@@ -15,17 +14,14 @@ import type {
 import {
   SOURCE_PORT_TO_EDGE_KIND,
   EDGE_KIND_TO_SOURCE_PORT,
-  TASKFLOW_STEP_TYPES,
   TASKFLOW_TREE_BRANCH_TYPES,
+  findContainerById,
+  isTaskFlowStepType,
 } from './types.js';
 
 type TaskFlowStepSnapshot = Pick<TaskFlowStep, 'common' | 'props'> & {
   type?: TaskFlowStepType;
 };
-
-function isTaskFlowStepType(value: unknown): value is TaskFlowStepType {
-  return typeof value === 'string' && (TASKFLOW_STEP_TYPES as readonly string[]).includes(value);
-}
 
 function isTaskFlowTreeBranchType(value: unknown): value is TaskFlowTreeBranchType {
   return typeof value === 'string' && (TASKFLOW_TREE_BRANCH_TYPES as readonly string[]).includes(value);
@@ -152,30 +148,6 @@ function cloneTreeStep(step: TaskFlowStep): TaskFlowStep {
   };
 }
 
-function findContainer(model: TaskFlowAuthoringModel, containerId: string): TaskFlowContainer | undefined {
-  if (model.root.id === containerId) return model.root;
-  return findContainerRecursive(model.root, containerId);
-}
-
-function findContainerRecursive(container: TaskFlowContainer, targetId: string): TaskFlowContainer | undefined {
-  if (container.profile === 'workflow') {
-    for (const node of container.nodes) {
-      if (node.step.body && findContainerRecursive(node.step.body, targetId)) {
-        return findContainerRecursive(node.step.body, targetId);
-      }
-    }
-  } else {
-    for (const step of container.steps) {
-      if (step.body) {
-        if (step.body.id === targetId) return step.body;
-        const found = findContainerRecursive(step.body, targetId);
-        if (found) return found;
-      }
-    }
-  }
-  return undefined;
-}
-
 function resolveEdgeKind(
   graphEdge: GraphEdge,
 ): TaskFlowEdgeKind {
@@ -205,7 +177,7 @@ export function syncFromGraphDocument(
   containerId: string,
   graphDoc: GraphDocument,
 ): TaskFlowAuthoringModel {
-  const container = findContainer(authoringModel, containerId);
+  const container = findContainerById(authoringModel, containerId);
   if (!container || container.profile !== 'workflow') {
     throw new Error(`Container not found or not graph mode: ${containerId}`);
   }
@@ -241,28 +213,6 @@ export function syncFromGraphDocument(
   return authoringModel;
 }
 
-function collectStepsFromTree(root: TreeNode): TaskFlowStep[] {
-  const steps: TaskFlowStep[] = [];
-  let current = root.child;
-  while (current) {
-    const step = current.data?.step as TaskFlowStep | undefined;
-    if (step) {
-      const normalizedStep = cloneTreeStep(step);
-      if (current.branches && current.branches.length > 0) {
-        const branches = current.branches.map((branch) => ({
-          id: branch.id,
-          data: createBranchData(branch.data),
-          steps: collectStepsFromBranch(branch),
-        }));
-        normalizedStep.branches = branches;
-      }
-      steps.push(normalizedStep);
-    }
-    current = current.child;
-  }
-  return steps;
-}
-
 function collectStepsFromBranch(branch: TreeNodeBranch): TaskFlowStep[] {
   const steps: TaskFlowStep[] = [];
   let current = branch.child;
@@ -290,13 +240,13 @@ export function syncFromTreeDocument(
   containerId: string,
   treeDoc: TreeDocument,
 ): TaskFlowAuthoringModel {
-  const container = findContainer(authoringModel, containerId);
+  const container = findContainerById(authoringModel, containerId);
   if (!container || container.profile !== 'dingflow') {
     throw new Error(`Container not found or not tree mode: ${containerId}`);
   }
 
   const treeContainer = container as TaskFlowTreeContainer;
-  treeContainer.steps = collectStepsFromTree(treeDoc.root);
+  treeContainer.steps = collectStepsFromBranch(treeDoc.root);
 
   return authoringModel;
 }
@@ -342,7 +292,7 @@ export function syncFromTreeProjectionDoc(
     edges: ReadonlyArray<{ source: string; target: string }>;
   },
 ): TaskFlowAuthoringModel {
-  const container = findContainer(authoringModel, containerId);
+  const container = findContainerById(authoringModel, containerId);
   if (!container || container.profile !== 'dingflow') {
     throw new Error(`Container not found or not tree mode: ${containerId}`);
   }

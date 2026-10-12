@@ -5,11 +5,7 @@ import type {
   TaskFlowStep,
   TaskFlowValidationError,
 } from './types.js';
-import { TASKFLOW_STEP_TYPES } from './types.js';
-
-function isKnownTaskFlowStepType(type: string): boolean {
-  return (TASKFLOW_STEP_TYPES as readonly string[]).includes(type);
-}
+import { isTaskFlowStepType } from './types.js';
 
 export function validateAuthoringModel(model: TaskFlowAuthoringModel): TaskFlowValidationError[] {
   const errors: TaskFlowValidationError[] = [];
@@ -113,7 +109,7 @@ function validateStep(
   path: string,
   _container: TaskFlowGraphContainer,
 ): void {
-  if (!isKnownTaskFlowStepType(step.type)) {
+  if (!isTaskFlowStepType(step.type)) {
     errors.push({
       path: `${path}.type`,
       message: `Unsupported step type: "${step.type}"`,
@@ -121,7 +117,7 @@ function validateStep(
     });
   }
 
-  if (!isKnownTaskFlowStepType(step.props.type)) {
+  if (!isTaskFlowStepType(step.props.type)) {
     errors.push({
       path: `${path}.props.type`,
       message: `Unsupported step props type: "${step.props.type}"`,
@@ -187,7 +183,7 @@ function validateTreeSteps(
   for (const step of steps) {
     const stepPath = `${path}[${step.id}]`;
 
-    if (!isKnownTaskFlowStepType(step.type)) {
+    if (!isTaskFlowStepType(step.type)) {
       errors.push({
         path: `${stepPath}.type`,
         message: `Unsupported step type: "${step.type}"`,
@@ -195,7 +191,7 @@ function validateTreeSteps(
       });
     }
 
-    if (!isKnownTaskFlowStepType(step.props.type)) {
+    if (!isTaskFlowStepType(step.props.type)) {
       errors.push({
         path: `${stepPath}.props.type`,
         message: `Unsupported step props type: "${step.props.type}"`,

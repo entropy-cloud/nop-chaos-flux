@@ -20,8 +20,8 @@ import type {
   StreamFetcher,
   XuiImportSpec,
 } from '@nop-chaos/flux-core';
-import { toast } from '@nop-chaos/ui';
 import { createStreamBasedAiConnector, type AiConnector } from '@nop-chaos/flux-renderers-ai';
+import { notifyWithToast } from '../pages/notify-toast.js';
 
 const WORDS_FAST = ['Hello', 'from', 'coverage', 'mock', 'connector!'];
 const WORDS_SLOW = ['Slowly', 'streamed', 'coverage', 'reply', 'done.'];
@@ -97,13 +97,7 @@ export function createCoverageConnectors(): { connectors: CoverageConnectors; en
   const env: RendererEnv = {
     fetcher: (async () => ({ status: 0, data: null })) as RendererEnv['fetcher'],
     stream,
-    notify: (level, message) => {
-      const text = typeof message === 'string' ? message : String(message ?? '');
-      if (level === 'error') toast.error(text || 'Error');
-      else if (level === 'success') toast.success(text || 'Success');
-      else if (level === 'warning') toast.warning?.(text || 'Warning');
-      else toast.info?.(text || 'Info');
-    },
+    notify: notifyWithToast,
   };
 
   const build = (url: string) =>

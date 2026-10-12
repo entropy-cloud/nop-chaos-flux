@@ -8,7 +8,7 @@ import type {
   TaskFlowTreeBranch,
   TaskFlowTreeContainer,
 } from './types.js';
-import { TASKFLOW_STEP_TYPES } from './types.js';
+import { isTaskFlowStepType } from './types.js';
 
 export interface NopTaskDSLInput {
   kind?: string;
@@ -84,7 +84,7 @@ function getUnsupportedStepTypes(steps: NopDSLStep[] | undefined): string[] {
   const unsupported = new Set<string>();
 
   const visit = (step: NopDSLStep) => {
-    if (!isValidStepType(step.type)) {
+    if (!isTaskFlowStepType(step.type)) {
       unsupported.add(step.type);
     }
 
@@ -233,7 +233,7 @@ export function parseNopTaskDSL(
 }
 
 function dslStepToTaskFlowStep(dsl: NopDSLStep, parseTree = false): TaskFlowStep {
-  const stepType = isValidStepType(dsl.type) ? dsl.type : 'script';
+  const stepType = isTaskFlowStepType(dsl.type) ? dsl.type : 'script';
   const id = dsl.id ?? `step-${dsl.name}-${Date.now()}`;
 
   const step: TaskFlowStep = {
@@ -355,8 +355,4 @@ function buildProps(stepType: TaskFlowStepType, dsl: NopDSLStep): TaskFlowStep['
     default:
       return { type: stepType } as TaskFlowStep['props'];
   }
-}
-
-function isValidStepType(type: string): type is TaskFlowStepType {
-  return (TASKFLOW_STEP_TYPES as readonly string[]).includes(type);
 }

@@ -10,7 +10,7 @@ export const SCHEDULING_RENDERER_ROUTES: RendererRouteEntry[] = [
   {
     id: 'gantt',
     title: 'Gantt',
-    category: 'data',
+    category: 'scheduling',
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     description:
       'Task timeline grid with drag/resize/links and schema events dispatching the { event, evaluationBindings, scope } ctx; reaction fields (zoomIn/zoomOut/scrollToToday/scrollToTask) wired via component handles.',

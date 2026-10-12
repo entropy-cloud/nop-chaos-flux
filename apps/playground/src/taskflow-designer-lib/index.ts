@@ -10,7 +10,7 @@ import type {
   TaskFlowAuthoringModel,
   TaskFlowContainer,
 } from './types.js';
-import { createContainerStack, type TaskFlowContainerStack } from './types.js';
+import { createContainerStack, findContainerById, type TaskFlowContainerStack } from './types.js';
 import { projectToGraphDocument, projectToTreeDocument } from './projection.js';
 import { syncFromGraphDocument, syncFromTreeDocument, syncFromTreeProjectionDoc } from './sync.js';
 import { lowerToTaskFlowDSL } from './lowering.js';
@@ -77,12 +77,13 @@ function buildGraphDocFromProjection(doc: DesignerProjection['doc']): GraphDocum
 }
 
 function bootstrapTreeModel(doc: DesignerProjection['doc']): TaskFlowAuthoringModel {
-  return {
+  const model: TaskFlowAuthoringModel = {
     kind: 'nop-taskflow',
     schemaVersion: '1.0',
     task: { version: 1, graphMode: false, restartable: false, defaultSaveState: true, useParentBeanContainer: false, recordMetrics: false },
     root: { id: 'root', profile: 'dingflow', name: doc.name, steps: [], syntheticRootId: '__synthetic_root__' },
-  } as unknown as TaskFlowAuthoringModel;
+  };
+  return model;
 }
 
 function flushDesignerProjectionIntoModel(
@@ -107,12 +108,13 @@ function flushDesignerProjectionIntoModel(
     return syncFromTreeProjectionDoc(effectiveModel, containerId ?? 'root', designerDoc);
   }
   const bootstrapped = !model;
-  const effectiveModel = model ?? {
+  const bootstrapModel: TaskFlowAuthoringModel = {
     kind: 'nop-taskflow',
     schemaVersion: '1.0',
     task: { version: 1, graphMode: true, restartable: false, defaultSaveState: true, useParentBeanContainer: false, recordMetrics: false },
     root: { id: 'root', profile: 'workflow', enterStepRefs: [], exitStepRefs: [], nodes: [], edges: [] },
-  } as unknown as TaskFlowAuthoringModel;
+  };
+  const effectiveModel = model ?? bootstrapModel;
   const effectiveContainerId = containerId ?? 'root';
 
   const synced = syncFromGraphDocument(effectiveModel, effectiveContainerId, buildGraphDocFromProjection(designerDoc));
@@ -127,6 +129,17 @@ function flushDesignerProjectionIntoModel(
     graphRoot.exitStepRefs = designerDoc.nodes.filter((n) => !sources.has(n.id)).map((n) => n.id);
   }
   return synced;
+}
+
+function resolveInvokePayload(
+  payload: Record<string, unknown> | undefined,
+  authoringModel: TaskFlowAuthoringModel | null,
+  activeContainerId: string | null,
+): { model: TaskFlowAuthoringModel | null; containerId: string | null } {
+  return {
+    model: (payload?.model ?? authoringModel) as TaskFlowAuthoringModel | null,
+    containerId: (payload?.containerId ?? activeContainerId) as string | null,
+  };
 }
 
 export function createNamespace(_context: ImportedNamespaceContext): ActionNamespaceProvider {
@@ -172,8 +185,7 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
             return { ok: true, data: { model: authoringModel, containerId: activeContainerId } };
           }
           case 'project-to-graph': {
-            const model = (payload?.model ?? authoringModel) as TaskFlowAuthoringModel;
-            const containerId = (payload?.containerId ?? activeContainerId) as string;
+            const { model, containerId } = resolveInvokePayload(payload, authoringModel, activeContainerId);
             if (!model || !containerId) {
               return { ok: false, error: new Error('project-to-graph requires model and containerId') };
             }
@@ -181,8 +193,7 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
             return { ok: true, data: doc };
           }
           case 'project-to-tree': {
-            const model = (payload?.model ?? authoringModel) as TaskFlowAuthoringModel;
-            const containerId = (payload?.containerId ?? activeContainerId) as string;
+            const { model, containerId } = resolveInvokePayload(payload, authoringModel, activeContainerId);
             if (!model || !containerId) {
               return { ok: false, error: new Error('project-to-tree requires model and containerId') };
             }
@@ -190,8 +201,7 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
             return { ok: true, data: doc };
           }
           case 'sync-from-graph': {
-            const model = (payload?.model ?? authoringModel) as TaskFlowAuthoringModel;
-            const containerId = (payload?.containerId ?? activeContainerId) as string;
+            const { model, containerId } = resolveInvokePayload(payload, authoringModel, activeContainerId);
             const graphDoc = (payload?.graphDoc ?? payload?.document) as GraphDocument | undefined;
             if (!model || !containerId || !graphDoc) {
               return { ok: false, error: new Error('sync-from-graph requires model, containerId, and graphDoc') };
@@ -201,8 +211,7 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
             return { ok: true, data: result };
           }
           case 'sync-from-tree': {
-            const model = (payload?.model ?? authoringModel) as TaskFlowAuthoringModel;
-            const containerId = (payload?.containerId ?? activeContainerId) as string;
+            const { model, containerId } = resolveInvokePayload(payload, authoringModel, activeContainerId);
             const treeDoc = (payload?.treeDoc ?? payload?.document) as TreeDocument | undefined;
             if (!model || !containerId || !treeDoc) {
               return { ok: false, error: new Error('sync-from-tree requires model, containerId, and treeDoc') };
@@ -276,7 +285,7 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
             }
             const currentAuthoringModel: TaskFlowAuthoringModel = authoringModel;
 
-            const container = findContainerById(currentAuthoringModel.root, containerId);
+            const container = findContainerById(currentAuthoringModel, containerId);
             if (!container) {
               return { ok: false, error: new Error(`Container not found: ${containerId}`) };
             }
@@ -284,7 +293,7 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
             if (activeContainerId) {
               containerStack.push(
                 activeContainerId,
-                findContainerById(currentAuthoringModel.root, activeContainerId)!,
+                findContainerById(currentAuthoringModel, activeContainerId)!,
               );
             }
             activeContainerId = containerId;
@@ -402,26 +411,6 @@ export function createNamespace(_context: ImportedNamespaceContext): ActionNames
       }
     },
   };
-}
-
-function findContainerById(container: TaskFlowContainer, targetId: string): TaskFlowContainer | undefined {
-  if (container.id === targetId) return container;
-  if (container.profile === 'workflow') {
-    for (const node of container.nodes) {
-      if (node.step.body) {
-        const found = findContainerById(node.step.body, targetId);
-        if (found) return found;
-      }
-    }
-  } else {
-    for (const step of container.steps) {
-      if (step.body) {
-        const found = findContainerById(step.body, targetId);
-        if (found) return found;
-      }
-    }
-  }
-  return undefined;
 }
 
 function getBreadcrumb(stack: TaskFlowContainerStack): string[] {

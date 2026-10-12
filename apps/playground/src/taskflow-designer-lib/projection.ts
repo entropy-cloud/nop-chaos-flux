@@ -8,11 +8,11 @@ import type {
 } from '@nop-chaos/flow-designer-core';
 import type {
   TaskFlowAuthoringModel,
-  TaskFlowContainer,
   TaskFlowGraphContainer,
   TaskFlowTreeContainer,
   TaskFlowStep,
 } from './types.js';
+import { findContainerById } from './types.js';
 
 export interface ProjectToGraphOptions {
   containerId: string;
@@ -24,33 +24,9 @@ export interface ProjectToTreeOptions {
   authoringModel: TaskFlowAuthoringModel;
 }
 
-function findContainer(model: TaskFlowAuthoringModel, containerId: string): TaskFlowContainer | undefined {
-  if (model.root.id === containerId) return model.root;
-  return findContainerRecursive(model.root, containerId);
-}
-
-function findContainerRecursive(container: TaskFlowContainer, targetId: string): TaskFlowContainer | undefined {
-  if (container.profile === 'workflow') {
-    for (const node of container.nodes) {
-      if (node.step.body && findContainerRecursive(node.step.body, targetId)) {
-        return findContainerRecursive(node.step.body, targetId);
-      }
-    }
-  } else {
-    for (const step of container.steps) {
-      if (step.body) {
-        if (step.body.id === targetId) return step.body;
-        const found = findContainerRecursive(step.body, targetId);
-        if (found) return found;
-      }
-    }
-  }
-  return undefined;
-}
-
 export function projectToGraphDocument(options: ProjectToGraphOptions): GraphDocument | null {
   const { authoringModel, containerId } = options;
-  const container = findContainer(authoringModel, containerId);
+  const container = findContainerById(authoringModel, containerId);
   if (!container || container.profile !== 'workflow') return null;
   const graphContainer = container as TaskFlowGraphContainer;
 
@@ -87,7 +63,7 @@ export function projectToGraphDocument(options: ProjectToGraphOptions): GraphDoc
 
 export function projectToTreeDocument(options: ProjectToTreeOptions): TreeDocument | null {
   const { authoringModel, containerId } = options;
-  const container = findContainer(authoringModel, containerId);
+  const container = findContainerById(authoringModel, containerId);
   if (!container || container.profile !== 'dingflow') return null;
   const treeContainer = container as TaskFlowTreeContainer;
 
@@ -167,16 +143,7 @@ function stepToTreeNode(step: TaskFlowStep): TreeNode {
 }
 
 export function extractStepsFromTree(root: TreeNode): TaskFlowStep[] {
-  const steps: TaskFlowStep[] = [];
-  let current = root.child;
-  while (current) {
-    const step = current.data?.step as TaskFlowStep | undefined;
-    if (step) {
-      steps.push(step);
-    }
-    current = current.child;
-  }
-  return steps;
+  return extractStepsFromBranch(root);
 }
 
 export function extractStepsFromBranch(branch: TreeNodeBranch): TaskFlowStep[] {

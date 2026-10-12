@@ -29,6 +29,10 @@ export const TASKFLOW_STEP_TYPES = [
   'end',
 ] as const satisfies readonly TaskFlowStepType[];
 
+export function isTaskFlowStepType(value: unknown): value is TaskFlowStepType {
+  return typeof value === 'string' && (TASKFLOW_STEP_TYPES as readonly string[]).includes(value);
+}
+
 export const TASKFLOW_TREE_BRANCH_TYPES = [
   'then',
   'else',
@@ -258,4 +262,28 @@ export function createContainerStack(): TaskFlowContainerStack {
       stack.length = 0;
     },
   };
+}
+
+export function findContainerById(model: TaskFlowAuthoringModel, containerId: string): TaskFlowContainer | undefined {
+  return findContainerRecursive(model.root, containerId);
+}
+
+function findContainerRecursive(container: TaskFlowContainer, targetId: string): TaskFlowContainer | undefined {
+  if (container.id === targetId) return container;
+  if (container.profile === 'workflow') {
+    for (const node of container.nodes) {
+      if (node.step.body) {
+        const found = findContainerRecursive(node.step.body, targetId);
+        if (found) return found;
+      }
+    }
+  } else {
+    for (const step of container.steps) {
+      if (step.body) {
+        const found = findContainerRecursive(step.body, targetId);
+        if (found) return found;
+      }
+    }
+  }
+  return undefined;
 }

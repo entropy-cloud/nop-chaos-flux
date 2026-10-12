@@ -1,5 +1,5 @@
 import type { RendererEnv } from '@nop-chaos/flux-core';
-import { toast } from '@nop-chaos/ui';
+import { notifyWithToast } from '../../pages/notify-toast';
 import {
   buildDeptTreeOptions, clone, collectDeptSubtree, createMockDatabase,
   MOCK_DICTS, nowStamp,
@@ -511,13 +511,7 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
 
   const env: RendererEnv = {
     fetcher,
-    notify: (level, message) => {
-      const text = typeof message === 'string' ? message : String(message ?? '');
-      if (level === 'error') toast.error(text || 'Error');
-      else if (level === 'success') toast.success(text || 'Success');
-      else if (level === 'warning') toast.warning?.(text || 'Warning');
-      else toast.info?.(text || 'Info');
-    },
+    notify: notifyWithToast,
     confirm: (message, title) => confirmBridge.confirm(message, title),
     // Host-channels contract (plan 512 L3.1): page-level print goes through
     // the host — `window.print()` proxy for the browser playground.

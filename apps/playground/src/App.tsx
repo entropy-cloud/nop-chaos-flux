@@ -26,37 +26,6 @@ import { Toaster } from '@nop-chaos/ui';
 
 import { ComponentLabPage } from './component-lab';
 import { ComplexPagesShowcase } from './complex-pages';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';

@@ -94,7 +94,7 @@ export const LINEAR_PRIORITY_COLORS: Record<LinearPriority, string> = {
 
 const LINEAR_LABEL_TAG_COLORS = ['#8a8f98', '#5e6ad2', '#10b981', '#f59e0b', '#e53935', '#a8b1ff'];
 
-const LINEAR_TITLES = [
+export const LINEAR_TITLES = [
   '工作区切换器在多团队视图下出现重复条目',
   '列表视图筛选条件在刷新后未保留',
   '看板列头计数与实际卡片数不一致',

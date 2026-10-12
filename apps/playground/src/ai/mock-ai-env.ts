@@ -15,12 +15,12 @@ import type {
   StreamFetcher,
   XuiImportSpec,
 } from '@nop-chaos/flux-core';
-import { toast } from '@nop-chaos/ui';
 import {
   createStreamBasedAiConnector,
   type AiConnector,
 } from '@nop-chaos/flux-renderers-ai';
 import type { ChatMessage } from '@nop-chaos/flux-renderers-ai';
+import { notifyWithToast } from '../pages/notify-toast.js';
 import { pickAiWidgetsFixture } from './ai-widgets-fixture.js';
 
 const CANNED_REPLY_WORDS = ['Hello', 'from', 'the', 'mock', 'AI', 'connector!', 'Streaming', 'works.'];
@@ -177,22 +177,16 @@ export function createMockAiEnv(options?: MockAiEnvOptions): RendererEnv {
     stream: createMockAiStream(delayMs, fixtures),
     // Plan 461: route `showToast` to the playground's sonner Toaster so wiring
     // actions like `ai-prompts.onSelect` produce visible feedback.
-    notify: (level, message) => {
-      const text = typeof message === 'string' ? message : String(message ?? '');
-      if (level === 'error') toast.error(text || 'Error');
-      else if (level === 'success') toast.success(text || 'Success');
-      else if (level === 'warning') toast.warning?.(text || 'Warning');
-      else toast.info?.(text || 'Info');
-    },
+    notify: notifyWithToast,
   };
 }
 
 /**
  * `xui:imports` loader exposing the `ai` namespace, so the schema can reference
- * the mock connector via `${$ai.connectors.mock}`. P1 also exposes a
- * conversation controller helper so hosts can bind `conversationController`
- * through `${$ai.controller}` if desired. P2 optionally exposes
- * `tools` / `toolExecutor` for the agentic tool-loop demo.
+ * the mock connector via `${$ai.connectors.mock}`; it also exposes `tools` /
+ * `toolExecutor` for the agentic tool-loop demo. No controller is exposed
+ * here: the conversation controller is injected by the host through page-data
+ * (`conversationController: "${controller}"`) — see pages/ai-conversations-demo.
  */
 export function createAiImportLoader(
   connector: AiConnector,

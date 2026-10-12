@@ -327,3 +327,5 @@ oversized 门禁口径：非测试源 ≥500 行 **5 件**全部 WARN 档（inve
 - 本批新增 findings：8 条（WA-ai-001…008）——已登记 ledger（fixed 6 + found/watch-only 2）
 - modules 行翻转 audited：flux-renderers-ai ✅（inventory 重生成：72 文件/12,478 行——报告取证时点口径 70/12,743，差值 = +3 共享件[dispatch-ctx/clipboard/message-text] −1 迁移出非测试枚举[ai-test-support 121 行] −批内净删除 ~280 行（closure audit m2 勘误：生产文件口径 git numstat gross del 434 − ins 154；原稿 ~223 系估算低记）；§批内修复候选清单中「12,743→12,622」系 ai-006 迁移单项预估，实际终值以此处为准）
 - `pnpm workaround:reconcile` 输出摘录：168 findings = pending 0 + found 84 + fixed 6 + verified 78；modules 49/audited 30/uncovered 19/orphan 0；未处置 0；violations 0
+
+> **勘误注记（2026-10-12，WA-15a plan 576 draft review F1）**：本节「缺陷位点在 playground 消费侧（`apps/playground/src/pages/ai-conversations-demo.tsx` 装配面，属 WA-15a 范围）」中的范围归属前提失实——该位点物理路径在 `pages/` 域 = WA-15b 批范围。去向修正：装配材料消费链（pg-ai 域）取证归 WA-15a（plan 576 承接转发①三段式裁决），缺陷本体修复执行归 WA-15b 批。
