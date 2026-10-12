@@ -1,3 +1,4 @@
+import { createPrefixedId } from './id.js';
 import { createStore } from 'zustand/vanilla';
 import type { Dataset, DataColumn, DatasetValidationResult } from './dataset-model.js';
 import { validateDataset, createDataset, createDataColumn } from './dataset-model.js';
@@ -70,7 +71,10 @@ export function createDatasetStore() {
       const newColumn = createDataColumn({
         ...column,
                 // Deliberately not flux-core genId: `col_` underscore-prefixed column-name shape.
-        name: `col_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        // Deliberately not flux-core genId: `col_` underscore-prefixed
+        // column-name shape (WA-word-editor-core-001: generator mechanism is
+        // shared; the prefix shape stays column-specific).
+        name: createPrefixedId('col'),
       });
       const updated = {
         ...current,

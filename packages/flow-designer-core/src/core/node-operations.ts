@@ -8,7 +8,9 @@ function clampCoordinate(value: number): number {
   return Math.max(COORD_MIN, Math.min(COORD_MAX, Math.round(value)));
 }
 
-function clampPosition(pos: { x: number; y: number }): { x: number; y: number } {
+// WA-flow-designer-core-004: shared with core-node-commands (two inline
+// copies of the same clamp sat in the command file, bypassing this helper).
+export function clampPosition(pos: { x: number; y: number }): { x: number; y: number } {
   return { x: clampCoordinate(pos.x), y: clampCoordinate(pos.y) };
 }
 

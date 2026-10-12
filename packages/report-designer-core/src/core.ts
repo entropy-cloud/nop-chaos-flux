@@ -369,7 +369,11 @@ export function createReportDesignerCore(
     onError: options.onError,
   };
 
-  const MUTATION_COMMAND_TYPES = new Set([
+  // WA-report-designer-core-003: typed against the command union — an
+  // unregistered mutation command type is now a compile error instead of a
+  // silent readonly-gate bypass (same technique as COMMAND_TYPE_MAP in
+  // editor-core-adapter.ts).
+  const MUTATION_COMMAND_TYPES = new Set<ReportDesignerCommand['type']>([
     'report-designer:dropFieldToTarget',
     'report-designer:updateMeta',
     'report-designer:replaceMeta',

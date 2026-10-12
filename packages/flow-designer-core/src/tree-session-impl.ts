@@ -52,10 +52,12 @@ export interface TreeSessionContext {
   set doc(value: GraphDocument);
   get docRevision(): number;
   set docRevision(value: number);
-  historyState: import('./core/history.js').DesignerHistoryState;
-  savedTreeDocument: TreeDocument | undefined;
-  savedRevision: number;
-  transactionStack: unknown[];
+  // WA-flow-designer-core-001: transactionStack is read through a live
+  // channel (matches the node/edge ctx getters) — a by-value copy captured
+  // the pre-transaction `[]` forever, making the `length === 0` guards
+  // always-true inside transactions (double history push + premature
+  // treeChanged).
+  readonly transactionStack: unknown[];
   shellState: DesignerShellState;
   isReadonly: boolean;
   assertReadonly(methodName: string): boolean;
@@ -107,10 +109,7 @@ export interface TreeSessionContextInput {
   setDoc(value: GraphDocument): void;
   getDocRevision(): number;
   setDocRevision(value: number): void;
-  historyState: import('./core/history.js').DesignerHistoryState;
-  savedTreeDocument: TreeDocument | undefined;
-  savedRevision: number;
-  transactionStack: unknown[];
+  getTransactionStack(): unknown[];
   shellState: DesignerShellState;
   isReadonly: boolean;
   assertReadonly(methodName: string): boolean;
@@ -150,10 +149,9 @@ export function buildTreeSessionContext(input: TreeSessionContextInput): TreeSes
     set docRevision(value: number) {
       input.setDocRevision(value);
     },
-    historyState: input.historyState,
-    savedTreeDocument: input.savedTreeDocument,
-    savedRevision: input.savedRevision,
-    transactionStack: input.transactionStack,
+    get transactionStack() {
+      return input.getTransactionStack();
+    },
     shellState: input.shellState,
     isReadonly: input.isReadonly,
     assertReadonly: input.assertReadonly,
@@ -185,9 +183,7 @@ export function createTreeSessionSurface(ctx: TreeSessionContext): TreeSessionSu
     method: string,
     compute: () => TreeComputeResult,
     notifyReason: TreeChangeReason = 'command',
-    commandType?: 'transaction',
   ): TreeCommandResult {
-    void commandType;
     if (ctx.isTreeMode) {
       if (ctx.assertReadonly(method)) {
         return makeTreeCommandResult(false, 'unavailable', 'Document is readonly');

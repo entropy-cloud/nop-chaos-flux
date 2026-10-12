@@ -6,6 +6,7 @@ import type {
   DesignerEvent,
   TreeDocument,
   TreeCoreCreationResult,
+  TreeChangeReason,
 } from './types.js';
 import type { DesignerCore } from './designer-core-types.js';
 import { cloneDocument, cloneTreeDocument } from './core/clone.js';
@@ -48,8 +49,6 @@ interface TreeCoreSessionInput {
 interface CreateCoreInternalOptions extends CreateDesignerCoreOptions {
   treeSession?: TreeCoreSessionInput;
 }
-
-export type TreeChangeReason = 'command' | 'undo' | 'redo' | 'restore';
 
 function emitTreeChanged(emit: (event: DesignerEvent) => void, tree: TreeDocument, reason: TreeChangeReason) {
   emit({ type: 'treeChanged', tree, reason } as DesignerEvent);
@@ -673,15 +672,12 @@ function createDesignerCoreInternal(
       setDocRevision: (value: number) => {
         docRevision = value;
       },
-      historyState,
-      savedTreeDocument,
-      savedRevision,
-      transactionStack,
+      getTransactionStack: () => transactionStack,
       shellState,
       isReadonly,
       assertReadonly,
       emit,
-      emitTreeChanged: (tree: TreeDocument, reason: import('./types.js').TreeChangeReason) =>
+      emitTreeChanged: (tree: TreeDocument, reason: TreeChangeReason) =>
         emitTreeChanged(emit, tree, reason),
       replaceDocument,
       replaceHistoryBaseline,

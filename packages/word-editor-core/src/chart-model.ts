@@ -1,3 +1,5 @@
+import { createPrefixedId } from './id.js';
+
 export type ChartType = 'bar' | 'line' | 'pie' | 'scatter' | 'area';
 
 export interface DocChart {
@@ -11,10 +13,8 @@ export interface DocChart {
   seriesField?: string[];
 }
 
-let _chartIdCounter = 0;
-
 function generateChartId(): string {
-  return `chart_${Date.now()}_${++_chartIdCounter}`;
+  return createPrefixedId('chart');
 }
 
 const VALID_CHART_TYPES: ChartType[] = ['bar', 'line', 'pie', 'scatter', 'area'];

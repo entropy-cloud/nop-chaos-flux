@@ -6,7 +6,8 @@ import type {
   ReportTemplateDocument,
 } from '../types.js';
 import { cloneDeep } from '@nop-chaos/flux-core';
-import { getTargetMeta } from '../types.js';
+import { cellAddress } from '@nop-chaos/spreadsheet-core';
+import { getTargetMeta, rangeMetaId } from '../types.js';
 
 export function cloneDocument(document: ReportTemplateDocument): ReportTemplateDocument {
   return cloneDeep(document);
@@ -279,7 +280,7 @@ export function updateMetadata(
     }
     case 'range': {
       const range = target.range;
-      const id = `${range.sheetId}:${range.startRow}:${range.startCol}:${range.endRow}:${range.endCol}`;
+      const id = rangeMetaId(range);
       const currentRanges = document.semantic?.rangeMeta?.[range.sheetId] ?? [];
       const previous = currentRanges.find((item) => item.id === id)?.meta;
       const changed = !shallowEqualMetadata(previous, normalized);
@@ -333,7 +334,10 @@ export function applyFieldDrop(
 
   for (let row = range.startRow; row <= range.endRow; row++) {
     for (let col = range.startCol; col <= range.endCol; col++) {
-      const entryKey = `${String.fromCharCode(65 + col)}${row + 1}`;
+      // WA-report-designer-core-001: canonical spreadsheet column addressing
+      // (the inline charcode formula behind this key only covered A-Z, so
+      // col >= 26 orphaned metadata away from every canonical-address reader).
+      const entryKey = cellAddress(row, col);
       const cellTarget: ReportSelectionTarget = {
         kind: 'cell',
         cell: {

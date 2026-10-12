@@ -1,8 +1,11 @@
 import type { GraphDocument, NormalizedDesignerConfig, NodeConstraintConfig } from '../types.js';
 
-export const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not supported in the playground example.';
+// WA-flow-designer-core-005: these strings predate the playground→core
+// extraction (c936fcc38) and described the demo page; they surface to hosts
+// as reconnect failure reasons, so they describe the rule, not a demo.
+export const EDGE_SELF_LOOP_ERROR = 'Self-loop edges are not allowed.';
 export const EDGE_MISSING_NODE_ERROR = 'Edges must connect existing nodes.';
-export const EDGE_DUPLICATE_ERROR = 'Duplicate edges are not supported in the playground example.';
+export const EDGE_DUPLICATE_ERROR = 'Duplicate edges are not allowed.';
 
 export function countNodesOfType(doc: GraphDocument, type: string): number {
   return doc.nodes.filter((node) => node.type === type).length;

@@ -1,3 +1,5 @@
+import { createPrefixedId } from './id.js';
+
 export type DatasetSourceType = 'sql' | 'api' | 'mongo' | 'static';
 
 export interface DataColumn {
@@ -15,10 +17,8 @@ export interface Dataset {
   columns: DataColumn[];
 }
 
-let _idCounter = 0;
-
 function generateDatasetId(): string {
-  return `ds_${Date.now()}_${++_idCounter}`;
+  return createPrefixedId('ds');
 }
 
 export interface DatasetValidationResult {

@@ -33,9 +33,10 @@ export function cloneDocument(doc: GraphDocument): GraphDocument {
 
 export function cloneTreeDocument(tree: TreeDocument | undefined): TreeDocument | undefined {
   if (!tree) return undefined;
-  // structuredClone primary with JSON round-trip fallback (the only remaining
-  // hand-rolled JSON deep-clone branch — flux-core cloneDeep is the shared
-  // implementation for all other call sites, cq-2 Phase 1).
+  // structuredClone primary with JSON round-trip fallback. Single deep-clone
+  // source for TreeDocument across the package (cq-2 Phase 1; WA-flow-
+  // designer-core-002: the hand-rolled structural clone family that
+  // predated this branch in tree-structure.ts converged here).
   if (typeof structuredClone === 'function') {
     return structuredClone(tree);
   }

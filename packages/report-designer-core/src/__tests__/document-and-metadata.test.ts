@@ -22,6 +22,7 @@ import {
   isSameTarget,
   type ReportSemanticDocument,
 } from '../index.js';
+import { applyFieldDrop, updateMetadata } from '../runtime/metadata.js';
 
 beforeAll(() => {
   resetFluxI18n();
@@ -300,5 +301,41 @@ describe('isSameTarget', () => {
         { kind: 'column', sheetId: 's1', col: 0 },
       ),
     ).toBe(true);
+  });
+});
+
+
+describe('WA-report-designer-core range addressing (plan 572 fixes)', () => {
+  it('range drop on columns beyond Z lands on canonical AA+ addresses (WA-report-designer-core-001)', () => {
+    const spreadsheet = createEmptyDocument();
+    const document = createReportTemplateDocument(spreadsheet, 'Wide Range');
+    const field = { type: 'field', sourceId: 'src-1', fieldId: 'f-1', data: { label: 'Amount' } };
+    // Column index 26 = the first column past `Z` — the old inline
+    // charcode column formula produced the illegal key '[2' here.
+    const target = {
+      kind: 'range' as const,
+      range: { sheetId: 'sheet1', startRow: 1, startCol: 26, endRow: 1, endCol: 26 },
+    };
+
+    const result = applyFieldDrop(document, field, target);
+
+    expect(result.changed).toBe(true);
+    expect(getCellMeta(result.document.semantic, 'sheet1', 'AA2')).toEqual({
+      field: { sourceId: 'src-1', fieldId: 'f-1', data: { label: 'Amount' } },
+    });
+    expect(result.document.semantic?.cellMeta?.['sheet1']?.['[2']).toBeUndefined();
+  });
+
+  it('getTargetMeta resolves the selected range id, not the first entry (WA-report-designer-core-002)', () => {
+    const spreadsheet = createEmptyDocument();
+    let document = createReportTemplateDocument(spreadsheet, 'Two Ranges');
+    const rangeA = { sheetId: 'sheet1', startRow: 0, startCol: 0, endRow: 1, endCol: 1 };
+    const rangeB = { sheetId: 'sheet1', startRow: 5, startCol: 5, endRow: 6, endCol: 6 };
+
+    document = updateMetadata(document, { kind: 'range', range: rangeA }, { title: 'Meta A' }).document;
+    document = updateMetadata(document, { kind: 'range', range: rangeB }, { title: 'Meta B' }).document;
+
+    expect(getTargetMeta(document.semantic, { kind: 'range', range: rangeA })).toEqual({ title: 'Meta A' });
+    expect(getTargetMeta(document.semantic, { kind: 'range', range: rangeB })).toEqual({ title: 'Meta B' });
   });
 });

@@ -8,6 +8,7 @@ import {
   replaceNodeInDocument,
   updateMultipleNodesInDocument,
   updateNodeDataInDocument,
+  clampPosition,
 } from './core/node-operations.js';
 import {
   removeNodeFromSelection,
@@ -67,7 +68,7 @@ export function addNodeCommand(
     id: generateId(),
     type,
     position: Number.isFinite(position.x) && Number.isFinite(position.y)
-      ? { x: Math.max(-10000, Math.min(10000, Math.round(position.x))), y: Math.max(-10000, Math.min(10000, Math.round(position.y))) }
+      ? clampPosition(position)
       : { x: 0, y: 0 },
     data: { ...nodeType.defaults, ...data },
   };
@@ -119,10 +120,7 @@ export function moveNodeCommand(
     return;
   }
 
-  const clamped = {
-    x: Math.max(-10000, Math.min(10000, Math.round(position.x))),
-    y: Math.max(-10000, Math.min(10000, Math.round(position.y))),
-  };
+  const clamped = clampPosition(position);
   const updatedNode = { ...ctx.doc.nodes[nodeIndex], position: clamped };
   ctx.setDocument(replaceNodeInDocument(ctx.doc, nodeId, updatedNode));
 

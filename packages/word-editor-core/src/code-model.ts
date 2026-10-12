@@ -1,3 +1,5 @@
+import { createPrefixedId } from './id.js';
+
 export type CodeType = 'barcode' | 'qrcode';
 
 export interface DocCode {
@@ -8,10 +10,8 @@ export interface DocCode {
   valueField: string;
 }
 
-let _codeIdCounter = 0;
-
 function generateCodeId(): string {
-  return `code_${Date.now()}_${++_codeIdCounter}`;
+  return createPrefixedId('code');
 }
 
 const VALID_CODE_TYPES: CodeType[] = ['barcode', 'qrcode'];

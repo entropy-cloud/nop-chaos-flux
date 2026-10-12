@@ -238,6 +238,43 @@ describe('createDesignerCore', () => {
     expect(core.getTreeDocument()?.root.data.label).toBe('Before Transaction');
   });
 
+  it('defers tree-command history entry to transaction commit (WA-flow-designer-core-001)', () => {
+    const config: DesignerConfig = {
+      ...createTestDesignerConfig(),
+      documentMode: 'tree',
+      treeConfig: {
+        layout: { direction: 'TB', nodeSpacing: 60, layerSpacing: 100 },
+        showGatewayNodes: false,
+        showMergeNodes: false,
+      },
+    };
+    const creation = createTreeDesignerCore(createTreeDocument('Tx Baseline'), config);
+    expect(creation.ok).toBe(true);
+    if (!creation.ok) throw new Error('tree core creation failed');
+    const core = creation.core;
+
+    core.save();
+    expect(core.canUndo()).toBe(false);
+
+    const txId = core.beginTransaction('tree tx');
+    core.updateTreeNodeData('root-1', { label: 'Updated In Tx' });
+    // The in-transaction command must NOT push an undo step of its own and
+    // must NOT make the gesture undoable before the commit lands (the
+    // transaction itself is the single undo step).
+    expect(core.canUndo()).toBe(false);
+
+    const committed = core.commitTransaction(txId);
+    expect(committed).toEqual({ ok: true, transactionId: txId });
+    expect(core.canUndo()).toBe(true);
+
+    // Exactly ONE undo step for the gesture: undoing once restores the
+    // baseline and drains the stack (a phantom mid-transaction entry would
+    // leave a second, no-op undo step behind).
+    core.undo();
+    expect(core.canUndo()).toBe(false);
+    expect(core.getTreeDocument()?.root.data.label).toBe('Tx Baseline');
+  });
+
   it('rejects duplicate edges when allowMultiEdge is false', () => {
     const core = createDesignerCore(
       createDocumentWithEdgeChain(),

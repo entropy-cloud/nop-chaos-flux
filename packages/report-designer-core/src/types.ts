@@ -40,6 +40,19 @@ export interface ReportSemanticDocument {
   rangeMeta?: Record<string, RangeMetaDocument[]>;
 }
 
+/**
+ * WA-report-designer-core-002: single derivation for the range-meta entry id,
+ * shared by the read side (getTargetMeta) and the write side
+ * (runtime/metadata updateMetadata). The read branch previously returned
+ * a first-entry-wins read — mis-serving multi-range sheets and cross-merging
+ * the first range's metadata into the selected range on the adapter drop
+ * path. Package-internal export (index.ts re-exports by name, so this does
+ * not extend the public API surface).
+ */
+export function rangeMetaId(range: SpreadsheetRange): string {
+  return `${range.sheetId}:${range.startRow}:${range.startCol}:${range.endRow}:${range.endCol}`;
+}
+
 export interface RangeMetaDocument {
   id: string;
   range: SpreadsheetRange;
@@ -359,11 +372,9 @@ export function getTargetMeta(
     case 'cell':
       return getCellMeta(semantic, target.cell.sheetId, target.cell.address);
     case 'range': {
+      const id = rangeMetaId(target.range);
       const rangeEntries = semantic?.rangeMeta?.[target.range.sheetId];
-      if (rangeEntries && rangeEntries.length > 0) {
-        return rangeEntries[0].meta;
-      }
-      return undefined;
+      return rangeEntries?.find((item) => item.id === id)?.meta;
     }
     default:
       return undefined;

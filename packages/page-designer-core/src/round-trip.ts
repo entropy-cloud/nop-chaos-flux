@@ -33,8 +33,9 @@ import type { BaseSchema, SchemaInput } from '@nop-chaos/flux-core';
 /** 设计器私有保留键（S1 §6，`xui:*` 保留命名空间）。 */
 export const SESSION_ID_KEY = 'xui:sid';
 
-/** 会话节点标识（`psid-` 前缀 + 随机串）。 */
-export type SessionNodeId = string;
+// WA-page-designer-core-001: SessionNodeId is declared once in types.ts;
+// the second declaration here was a dead twin (knip-registered).
+import type { SessionNodeId } from './types.js';
 
 /** 可注入 PRNG（S1 §6.1）。返回 [0, 1) 随机数；fuzz 用固定种子实现。 */
 export type SidRandom = () => number;

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
-import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
+import { cellAddress, createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
   createReportDesignerCore,
   createReportTemplateDocument,
@@ -295,7 +295,7 @@ describe('field drop to range', () => {
           kind: 'cell',
           cell: {
             sheetId,
-            address: `${String.fromCharCode(65 + c)}${r + 1}`,
+            address: cellAddress(r, c),
             row: r,
             col: c,
           },

@@ -28,7 +28,11 @@ export function ensureSheetCells(
   return { doc: { ...doc, workbook }, sheet, sheetIdx: idx };
 }
 
-export function getCell(
+
+// In-package helper (WA-spreadsheet-core-001 knip cleanup: the `export` was
+// removed, not the function — setCell below reads the existing cell through
+// it; the knip entry was an unused-export registration, not dead code).
+function getCell(
   sheet: WorksheetDocument,
   row: number,
   col: number,

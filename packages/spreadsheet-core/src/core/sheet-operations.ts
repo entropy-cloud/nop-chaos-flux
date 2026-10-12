@@ -1,11 +1,9 @@
 import type {
   SpreadsheetDocument,
-  SpreadsheetRange,
   WorksheetDocument,
   SheetProtectionOptions,
 } from '../types.js';
 import { ensureSheetCells, replaceSheet } from './document-access.js';
-import { applyCellStyleChange, applyMergeRange } from './cell-operations.js';
 
 export function applyResizeRow(
   doc: SpreadsheetDocument,
@@ -172,6 +170,10 @@ export function applyProtectSheet(
   options?: SheetProtectionOptions,
 ): SpreadsheetDocument {
   void password;
+  // WA-spreadsheet-core-003 (watch): the password is declared on
+  // ProtectSheetCommand but silently unsupported until a host-side protection
+  // model exists — contract shrinkage is a public-API decision left to the
+  // owner (see the workaround-audit ledger row).
   const sheets = doc.workbook.sheets.map((sheet) =>
     sheet.id === sheetId ? { ...sheet, protected: true, protectionOptions: options } : sheet,
   );
@@ -197,11 +199,3 @@ export function applyUnfreezePanes(doc: SpreadsheetDocument, sheetId: string): S
   return { ...doc, workbook: { ...doc.workbook, sheets } };
 }
 
-export function applyMergeCellsCenter(
-  doc: SpreadsheetDocument,
-  range: SpreadsheetRange,
-): SpreadsheetDocument {
-  let result = applyMergeRange(doc, range);
-  result = applyCellStyleChange(result, range, { textAlign: 'center', verticalAlign: 'middle' });
-  return result;
-}

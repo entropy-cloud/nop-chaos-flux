@@ -10,55 +10,17 @@ export type TreeStructureResult =
   | { ok: true; tree: TreeDocument }
   | { ok: false; reason: TreeStructureFailureReason };
 
-function cloneTreeValue<T>(value: T): T {
-  if (Array.isArray(value)) {
-    return value.map((item) => cloneTreeValue(item)) as T;
-  }
-  if (value && typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>).map(([key, entryValue]) => [
-      key,
-      cloneTreeValue(entryValue),
-    ]);
-    return Object.fromEntries(entries) as T;
-  }
-  return value;
-}
+// WA-flow-designer-core-002: the hand-rolled structural clone family
+// (cloneTreeValue/cloneTreeNode/cloneTreeDocument, born 0e5c670c3) lived here
+// alongside core/clone.ts's canonical implementation — cq-2's "single source"
+// comment was written without scanning this file. The canonical
+// `cloneTreeDocument` in ./core/clone.js is the single source now; the loose
+// `TreeDocument | undefined` signature is narrowed back locally (it only
+// yields undefined for undefined input).
+import { cloneTreeDocument as cloneTreeDocumentLoose } from './core/clone.js';
 
-export function cloneTreeNode(node: TreeNode): TreeNode {
-  const next: TreeNode = {
-    ...node,
-    data: cloneTreeValue(node.data),
-  };
-  if (node.child) {
-    next.child = cloneTreeNode(node.child);
-  }
-  if (node.branches) {
-    next.branches = node.branches.map((branch) => {
-      const nextBranch: TreeNodeBranch = {
-        ...branch,
-        data: cloneTreeValue(branch.data),
-      };
-      if (branch.child) {
-        nextBranch.child = cloneTreeNode(branch.child);
-      }
-      return nextBranch;
-    });
-  }
-  return next;
-}
-
-export function cloneTreeDocument(tree: TreeDocument): TreeDocument {
-  const next: TreeDocument = {
-    id: tree.id,
-    kind: tree.kind,
-    name: tree.name,
-    version: tree.version,
-    root: cloneTreeNode(tree.root),
-  };
-  if (tree.meta) {
-    next.meta = cloneTreeValue(tree.meta);
-  }
-  return next;
+function cloneTreeDocument(tree: TreeDocument): TreeDocument {
+  return cloneTreeDocumentLoose(tree)!;
 }
 
 export function createTreeNodeId(seed: string): string {

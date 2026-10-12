@@ -7,9 +7,12 @@ import type {
   TreeProjectionErrorCode,
 } from './types.js';
 
-export const TREE_INTERNAL_ID_PREFIX = '__fd_internal__/';
-export const TREE_EMPTY_SLOT_NODE_TYPE = '__fd-tree-empty-slot';
-export const TREE_VIRTUAL_DATA_KEY = '__fdVirtual';
+// WA-flow-designer-core-003: single declaration lives in types.ts (the leaf
+// module — re-declaring here made a second mutable vocabulary); this module
+// imports the vocabulary for its own validators and re-exports it for
+// tree-projection.
+import { TREE_INTERNAL_ID_PREFIX, TREE_EMPTY_SLOT_NODE_TYPE, TREE_VIRTUAL_DATA_KEY } from './types.js';
+export { TREE_INTERNAL_ID_PREFIX, TREE_EMPTY_SLOT_NODE_TYPE, TREE_VIRTUAL_DATA_KEY };
 export const DEFAULT_NODE_WIDTH = 220;
 export const DEFAULT_NODE_HEIGHT = 80;
 export const DEFAULT_EMPTY_BRANCH_SIZE = { width: 220, height: 80 };
