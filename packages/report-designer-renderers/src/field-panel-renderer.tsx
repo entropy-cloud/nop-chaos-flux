@@ -8,13 +8,11 @@ import {
   useRendererRuntime,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, cn } from '@nop-chaos/ui';
+import { cn } from '@nop-chaos/ui';
 import type { FieldSourceSnapshot, ReportSelectionTarget } from '@nop-chaos/report-designer-core';
 import { getFieldCount } from './helpers.js';
-import {
-  createReportFieldDragPayload,
-  writeReportFieldDragPayload,
-} from './report-field-panel.js';
+import { createReportFieldDragPayload, writeReportFieldDragPayload } from './report-field-panel.js';
+import { ReportFieldListItem } from './report-field-list-item.js';
 import type { ReportFieldPanelSchema } from './types.js';
 
 export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFieldPanelSchema>) {
@@ -159,34 +157,20 @@ export function ReportFieldPanelRenderer(props: RendererComponentProps<ReportFie
                   {showHeader ? <strong>{group.label}</strong> : null}
                   <ul data-slot="report-field-panel-items">
                     {group.fields.map((field) => (
-                       <li
-                         key={field.id}
-                         draggable={dragEnabled}
-                          data-field-id={field.id}
-                          data-field-source-id={source.id}
-                          data-slot="report-field-panel-item"
-                          onDragStart={
-                            dragEnabled ? (event) => handleDragStart(event, source, field) : undefined
-                          }
-                       >
+                      <ReportFieldListItem
+                        key={field.id}
+                        source={source}
+                        field={field}
+                        draggable={dragEnabled}
+                        onDragStart={dragEnabled ? handleDragStart : undefined}
+                        showInsert={keyboardInsertEnabled}
+                        insertDisabled={!canInsertToSelection(selectionTarget)}
+                        onInsert={() => {
+                          void handleKeyboardInsert(source, field).catch(handleKeyboardInsertError);
+                        }}
+                      >
                         <span data-slot="report-field-panel-item-label">{field.label}</span>
-                        {keyboardInsertEnabled ? (
-                          <Button
-                            type="button"
-                            size="xs"
-                            variant="ghost"
-                            disabled={!canInsertToSelection(selectionTarget)}
-                            aria-label={t('flux.reportDesigner.insertFieldToSelection', {
-                              field: field.label,
-                            })}
-                            onClick={() => {
-                              void handleKeyboardInsert(source, field).catch(handleKeyboardInsertError);
-                            }}
-                          >
-                            {t('flux.reportDesigner.insert')}
-                          </Button>
-                        ) : null}
-                      </li>
+                      </ReportFieldListItem>
                     ))}
                   </ul>
                 </div>

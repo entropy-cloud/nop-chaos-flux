@@ -30,6 +30,7 @@ vi.mock('@nop-chaos/ui', () => {
     Separator: ({ orientation, className }: any) => (
       <div data-testid="separator" data-orientation={orientation} className={className} />
     ),
+    Spinner: () => <div data-testid="spinner" />,
     cn: (...args: any[]) => args.filter(Boolean).join(' '),
   };
 });

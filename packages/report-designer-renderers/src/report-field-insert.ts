@@ -5,7 +5,7 @@
 // metadata, so the visible document never changed while being marked dirty.
 // Aligned with the demo reference (report-designer-demo insertFieldAtCell:
 // setCellValue then dropFieldToTarget).
-import type { SpreadsheetCommandResult } from '@nop-chaos/spreadsheet-core';
+import { cellAddress, type SpreadsheetCommandResult } from '@nop-chaos/spreadsheet-core';
 import type { FieldDragPayload, ReportDesignerCore, ReportSelectionTarget } from '@nop-chaos/report-designer-core';
 
 interface FieldInsertInput {
@@ -58,9 +58,4 @@ export async function insertFieldWithBinding(input: FieldInsertInput): Promise<v
     field: payload,
     target,
   });
-}
-
-function cellAddress(row: number, col: number): string {
-  const colName = (n: number): string => (n < 26 ? String.fromCharCode(65 + n) : `${colName(Math.floor(n / 26) - 1)}${String.fromCharCode(65 + (n % 26))}`);
-  return `${colName(col)}${row + 1}`;
 }

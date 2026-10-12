@@ -28,6 +28,9 @@ import type {
 import { createWordEditorActionProvider } from '../word-editor-action-provider.js';
 import type { WordEditorPageSchema } from '../types.js';
 
+// 测试专用通道显式豁免声明（WA-13b，editor-designer-standard.md §2.6）：仅本包
+// 测试（word-editor-page-host-scope-projections spec）消费，非宿主契约；卸载时
+// 删除（无泄漏）。
 declare global {
   interface Window {
     __NOP_WORD_EDITOR_PROBE__?: {
@@ -249,6 +252,8 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
     ? datasets.find((ds) => ds.id === editingDatasetId)
     : null;
 
+  // 测试专用通道显式豁免声明（WA-13b，editor-designer-standard.md §2.6）：见文件
+  // 头 declare global 处注记——仅 word-editor-page-host-scope-projections 测试消费。
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;

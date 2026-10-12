@@ -19,6 +19,7 @@ import {
   ScrollArea,
   cn,
 } from '@nop-chaos/ui';
+import { getTypeColor, getTypeLabel } from './dataset-visuals.js';
 
 interface DatasetPanelProps {
   store: DatasetStoreApi;
@@ -61,26 +62,6 @@ export function DatasetPanel({
       onDeleteDataset?.(deleteTarget.id);
       setDeleteTarget(null);
     }
-  };
-
-  const getTypeLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-      sql: t('flux.wordEditor.typeSql'),
-      api: t('flux.wordEditor.typeApi'),
-      mongo: t('flux.wordEditor.mongo'),
-      static: t('flux.wordEditor.static'),
-    };
-    return labels[type] || type;
-  };
-
-  const getTypeColor = (type: string): string => {
-    const colors: Record<string, string> = {
-      sql: 'bg-primary/10 text-primary',
-      api: 'bg-emerald-500/10 text-emerald-700',
-      mongo: 'bg-violet-500/10 text-violet-700',
-      static: 'bg-muted text-muted-foreground',
-    };
-    return colors[type] || 'bg-muted text-muted-foreground';
   };
 
   return (
@@ -146,7 +127,7 @@ export function DatasetPanel({
                           </span>
                           <span
                             className={cn(
-                              'px-1.5 py-0.5 text-[10px] font-medium rounded',
+                              'px-1.5 py-0.5 text-[10px] font-medium rounded border',
                               getTypeColor(dataset.type),
                             )}
                           >

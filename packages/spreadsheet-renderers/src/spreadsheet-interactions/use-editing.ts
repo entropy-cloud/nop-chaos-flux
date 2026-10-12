@@ -2,16 +2,13 @@ import { useCallback } from 'react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
 import { t } from '@nop-chaos/flux-i18n';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
+import { formatFailureMessage } from './error-format.js';
 
 type EditSaveState =
   | { status: 'idle' }
   | { status: 'saving'; message: string }
   | { status: 'cancelled'; message: string }
   | { status: 'failed'; message: string };
-
-function getResultMessage(prefix: string, error: unknown) {
-  return error instanceof Error && error.message ? `${prefix}: ${error.message}` : prefix;
-}
 
 export function useEditing(
   snapshot: SpreadsheetHostSnapshot,
@@ -99,7 +96,7 @@ export function useEditing(
     if (!result.ok) {
       core.setEditSaveStatus(
         'failed',
-        getResultMessage(t('flux.spreadsheet.cellSaveFailed'), result.error),
+        formatFailureMessage(t('flux.spreadsheet.cellSaveFailed'), result.error),
       );
       return;
     }

@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, ArrowLeft, ArrowRight, X, ReplaceAll } from 'lucide-react';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
+import { useRendererRuntimeOrNull } from '@nop-chaos/flux-react';
 import { Button, Input } from '@nop-chaos/ui';
 import { ToolbarButton, ToolbarSeparator } from './shared.js';
+import { invokeCanvasCommand } from './invoke-canvas-command.js';
 
 interface SearchReplaceProps {
   bridge: CanvasEditorBridge | null;
@@ -12,10 +14,10 @@ interface SearchReplaceProps {
 }
 
 export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) {
+  const env = useRendererRuntimeOrNull()?.env;
   const [searchText, setSearchText] = useState('');
   const [replaceText, setReplaceText] = useState('');
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resultCount = searchText ? 1 : 0;
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -23,12 +25,12 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
     }
 
     if (!searchText) {
-      bridge?.command?.executeSearch(null);
+      invokeCanvasCommand(env, () => bridge?.command?.executeSearch(null));
       return;
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      bridge?.command?.executeSearch(searchText);
+      invokeCanvasCommand(env, () => bridge?.command?.executeSearch(searchText));
     }, 300);
 
     return () => {
@@ -36,24 +38,24 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchText, bridge]);
+  }, [searchText, bridge, env]);
 
   const handlePrev = () => {
-    bridge?.command?.executeSearchNavigatePre();
+    invokeCanvasCommand(env, () => bridge?.command?.executeSearchNavigatePre());
   };
 
   const handleNext = () => {
-    bridge?.command?.executeSearchNavigateNext();
+    invokeCanvasCommand(env, () => bridge?.command?.executeSearchNavigateNext());
   };
 
   const handleReplace = () => {
-    bridge?.command?.executeReplace(replaceText);
+    invokeCanvasCommand(env, () => bridge?.command?.executeReplace(replaceText));
   };
 
   const handleClose = () => {
     setSearchText('');
     setReplaceText('');
-    bridge?.command?.executeSearch(null);
+    invokeCanvasCommand(env, () => bridge?.command?.executeSearch(null));
     onClose();
   };
 
@@ -86,7 +88,6 @@ export function SearchReplace({ bridge, visible, onClose }: SearchReplaceProps) 
           title="flux.wordEditor.next"
           testId="search-next"
         />
-        {resultCount > 0 && <span className="text-xs text-muted-foreground">{resultCount}</span>}
       </div>
       <ToolbarSeparator />
       <div className="flex items-center gap-1 flex-1">

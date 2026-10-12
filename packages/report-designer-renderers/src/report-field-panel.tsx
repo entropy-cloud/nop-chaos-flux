@@ -4,6 +4,7 @@ import { useMemo, useState, type DragEvent } from 'react';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
+import { ReportFieldListItem } from './report-field-list-item.js';
 
 /** plan 528 Phase 2：字段拖拽 ghost（对齐 page-designer 模式）——setDragImage
  * feature-detect 守卫，离屏 fixed + pointer-events:none，微任务清理。 */
@@ -180,54 +181,41 @@ export function ReportFieldPanel({
             <div key={group.id} data-slot="report-field-panel-group">
               <ul data-slot="report-field-panel-items">
                 {group.fields.map((field) => {
-                  const fieldPayload = createReportFieldDragPayload(source, field);
                   if (isFiltering && !matchesReportFieldQuery(field, query)) {
                     return null;
                   }
                   return (
-                    <li
+                    <ReportFieldListItem
                       key={field.id}
-                      data-slot="report-field-panel-item"
+                      source={source}
+                      field={field}
                       draggable
-                      data-field-id={field.id}
-                      data-field-source-id={source.id}
+                      showInsert
                       onDragStart={(event) => {
-                        writeReportFieldDragPayload(event, fieldPayload);
+                        writeReportFieldDragPayload(event, createReportFieldDragPayload(source, field));
                         setFieldDragGhost(event, field.fieldType ?? 'field', field.label);
                         onFieldDragStart(source.id, field.id, field.label);
                       }}
-                    >
-                      <div
-                        data-slot="report-field-panel-drag-handle"
-                      >
-                        <span data-slot="report-field-panel-item-type">{field.fieldType}</span>
-                        <span data-slot="report-field-panel-item-label">{field.label}</span>
-                     </div>
-                     <Button
-                       type="button"
-                       size="xs"
-                      variant="ghost"
-                      disabled={
+                      onInsert={() => onFieldInsert?.(source.id, field.id, field.label)}
+                      insertDisabled={
                         !onFieldInsert || (canInsertField ? !canInsertField(source.id, field.id) : false)
                       }
-                      title={
+                      insertTitle={
                         canInsertField && !canInsertField(source.id, field.id)
                           ? t('flux.reportDesigner.insertDisabledNoSelection')
                           : undefined
                       }
-                       aria-label={t('flux.reportDesigner.insertFieldToSelection', {
-                         field: field.label,
-                       })}
-                      aria-describedby={
+                      insertDescribedBy={
                         canInsertField && !canInsertField(source.id, field.id)
                           ? 'report-field-insert-disabled-reason'
                           : undefined
                       }
-                       onClick={() => onFieldInsert?.(source.id, field.id, field.label)}
-                      >
-                        {t('flux.reportDesigner.insert')}
-                      </Button>
-                    </li>
+                    >
+                      <div data-slot="report-field-panel-drag-handle">
+                        <span data-slot="report-field-panel-item-type">{field.fieldType}</span>
+                        <span data-slot="report-field-panel-item-label">{field.label}</span>
+                      </div>
+                    </ReportFieldListItem>
                   );
                 })}
               </ul>

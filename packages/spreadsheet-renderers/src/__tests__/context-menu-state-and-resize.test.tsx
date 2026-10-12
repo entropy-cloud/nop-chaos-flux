@@ -78,7 +78,7 @@ describe('spreadsheet context menu state and resize commands', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-resize-row'));
 
     const dialog = await screen.findByRole('dialog');
-    const input = screen.getByRole('spinbutton', { name: 'Row height' }) as HTMLInputElement;
+    const input = screen.getByRole('spinbutton', { name: '行高' }) as HTMLInputElement;
     fireEvent.change(input, { target: { value: '48' } });
     fireEvent.click(within(dialog).getByRole('button', { name: '确认' }));
 
@@ -116,7 +116,7 @@ describe('spreadsheet context menu state and resize commands', () => {
     fireEvent.click(screen.getByTestId('spreadsheet-context-resize-column'));
 
     const dialog = await screen.findByRole('dialog');
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Column width' }), {
+    fireEvent.change(screen.getByRole('spinbutton', { name: '列宽' }), {
       target: { value: '120' },
     });
     fireEvent.click(within(dialog).getByRole('button', { name: '确认' }));

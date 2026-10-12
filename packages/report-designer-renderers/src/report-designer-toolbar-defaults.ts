@@ -1,5 +1,11 @@
 import type { ToolbarItem } from './report-designer-toolbar-helpers.js';
 
+// Single source for the field-count badge id shared between the default items
+// and the renderer's count-localization special case. Hosts overriding the
+// toolbar via itemsOverride opt out of that localization by design (defaults-
+// driven surface).
+export const TOOLBAR_FIELD_COUNT_ID = 'fieldCount';
+
 export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
   { id: 'title', type: 'title', text: '${documentName}' },
   { id: 'divider-title', type: 'divider' },
@@ -35,7 +41,7 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
     visible: '${preview.running}',
   },
   { id: 'spacer-1', type: 'spacer' },
-  { id: 'fieldCount', type: 'badge', text: '${fieldCount}', level: 'secondary' },
+  { id: TOOLBAR_FIELD_COUNT_ID, type: 'badge', text: '${fieldCount}', level: 'secondary' },
   { id: 'divider-info', type: 'divider' },
   { id: 'save', type: 'button', label: 'flux.reportDesigner.save', action: 'report-designer:save' },
 ];

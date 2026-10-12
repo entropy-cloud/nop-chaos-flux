@@ -9,6 +9,7 @@ export function useClipboard(
   selectedCell: { row: number; col: number } | null,
   getSelectedRange: () => SpreadsheetRange | null,
   addLog: (msg: string) => void,
+  addFailureLog: (msg: string) => void,
 ) {
   const handleCopy = useCallback(async () => {
     const range = getSelectedRange();
@@ -45,9 +46,9 @@ export function useClipboard(
     if (result.ok) {
       addLog(`Pasted to ${cellAddress(targetCell.row, targetCell.col)}`);
     } else {
-      addLog(`Paste failed: ${result.error}`);
+      addFailureLog(`Paste failed: ${result.error}`);
     }
-  }, [selectedCell, getSelectedRange, sheetId, bridge, addLog]);
+  }, [selectedCell, getSelectedRange, sheetId, bridge, addFailureLog, addLog]);
 
   const handleClear = useCallback(async () => {
     const range = getSelectedRange();

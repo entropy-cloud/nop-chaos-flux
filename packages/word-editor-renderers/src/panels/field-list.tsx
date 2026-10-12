@@ -3,6 +3,7 @@ import { Columns, Copy, Info } from 'lucide-react';
 import type { DatasetStoreApi } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, ScrollArea, cn } from '@nop-chaos/ui';
+import { getTypeColor, getTypeLabel } from './dataset-visuals.js';
 
 interface FieldListProps {
   store: DatasetStoreApi;
@@ -24,26 +25,6 @@ export function FieldList({ store, onFieldClick, showHeader = true }: FieldListP
   const handleFieldClick = (column: { name: string; label: string }) => {
     if (!selectedDataset || !onFieldClick) return;
     onFieldClick(selectedDataset.name, column.name);
-  };
-
-  const getTypeLabel = (type: string): string => {
-    const labels: Record<string, string> = {
-      sql: t('flux.wordEditor.typeSql'),
-      api: t('flux.wordEditor.typeApi'),
-      mongo: t('flux.wordEditor.mongo'),
-      static: t('flux.wordEditor.static'),
-    };
-    return labels[type] || type;
-  };
-
-  const getTypeColor = (type: string): string => {
-    const colors: Record<string, string> = {
-      sql: 'bg-primary/10 text-primary border-primary/20',
-      api: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
-      mongo: 'bg-violet-500/10 text-violet-700 border-violet-500/20',
-      static: 'bg-muted text-muted-foreground border-border',
-    };
-    return colors[type] || 'bg-muted text-muted-foreground border-border';
   };
 
   return (

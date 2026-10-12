@@ -21,8 +21,28 @@ export interface SpreadsheetRuntimeSummaryInput {
   dirty?: boolean;
 }
 
+/**
+ * Structural subset of ReportDesignerRuntimeSnapshot consumed by the designer
+ * scope projection. Both the full core snapshot and the page-renderer's
+ * ReportPageSnapshotSlice satisfy it — builders must not reach beyond these
+ * keys or slice-based callers would silently read undefined.
+ */
+type ReportDesignerScopeSnapshotInput = Pick<
+  ReportDesignerRuntimeSnapshot,
+  | 'document'
+  | 'selectionTarget'
+  | 'inspector'
+  | 'fieldDrag'
+  | 'preview'
+  | 'activeMeta'
+  | 'fieldSources'
+  | 'canUndo'
+  | 'canRedo'
+  | 'dirty'
+>;
+
 export function buildAggregatedRuntimeSummary(
-  snapshot: ReportDesignerRuntimeSnapshot,
+  snapshot: Pick<ReportDesignerRuntimeSnapshot, 'canUndo' | 'canRedo' | 'dirty'>,
   spreadsheetSnapshot?: SpreadsheetRuntimeSummaryInput,
 ): ReportDesignerAggregatedRuntimeSummary {
   return {
@@ -32,7 +52,7 @@ export function buildAggregatedRuntimeSummary(
   };
 }
 
-function getActiveSheet(snapshot: ReportDesignerRuntimeSnapshot) {
+function getActiveSheet(snapshot: Pick<ReportDesignerRuntimeSnapshot, 'document' | 'selectionTarget'>) {
   const workbook = snapshot.document.spreadsheet.workbook;
   const target = snapshot.selectionTarget;
 
@@ -58,7 +78,7 @@ function getSpreadsheetActiveSheet(snapshot: SpreadsheetRuntimeSnapshot) {
 }
 
 function resolveActiveSheet(
-  snapshot: ReportDesignerRuntimeSnapshot,
+  snapshot: Pick<ReportDesignerRuntimeSnapshot, 'document' | 'selectionTarget'>,
   spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ) {
   if (spreadsheetSnapshot) {
@@ -157,7 +177,7 @@ function defensiveCopyWorkbook(
 }
 
 function resolveCanonicalWorkbook(
-  snapshot: ReportDesignerRuntimeSnapshot,
+  snapshot: Pick<ReportDesignerRuntimeSnapshot, 'document'>,
   spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ) {
   if (spreadsheetSnapshot) {
@@ -167,7 +187,7 @@ function resolveCanonicalWorkbook(
 }
 
 function buildCanonicalReportDocument(
-  snapshot: ReportDesignerRuntimeSnapshot,
+  snapshot: Pick<ReportDesignerRuntimeSnapshot, 'document'>,
   workbook: ReportDesignerRuntimeSnapshot['document']['spreadsheet']['workbook'],
 ) {
   const doc = snapshot.document;
@@ -177,6 +197,30 @@ function buildCanonicalReportDocument(
       ...doc.spreadsheet,
       workbook,
     },
+  };
+}
+
+function buildDesignerBag(
+  snapshot: ReportDesignerScopeSnapshotInput,
+  fieldCount: number,
+): ReportDesignerHostData['designer'] {
+  return {
+    kind: snapshot.document.kind,
+    dirty: snapshot.dirty,
+    documentId: snapshot.document.id,
+    documentName: snapshot.document.name,
+    selectionTarget: snapshot.selectionTarget,
+    selectionKind: snapshot.selectionTarget?.kind ?? null,
+    inspector: snapshot.inspector,
+    inspectorPanels: snapshot.inspector.resolvedSchema ?? null,
+    fieldDrag: snapshot.fieldDrag,
+    preview: snapshot.preview,
+    activeMeta: snapshot.activeMeta,
+    canUndo: snapshot.canUndo,
+    canRedo: snapshot.canRedo,
+    fieldSources: snapshot.fieldSources,
+    fieldSourceCount: snapshot.fieldSources.length,
+    fieldCount,
   };
 }
 
@@ -190,24 +234,7 @@ export function createHostData(
   const reportDocument = buildCanonicalReportDocument(snapshot, workbook);
 
   return {
-    designer: {
-      kind: snapshot.document.kind,
-      dirty: snapshot.dirty,
-      documentId: snapshot.document.id,
-      documentName: snapshot.document.name,
-      selectionTarget: snapshot.selectionTarget,
-      selectionKind: snapshot.selectionTarget?.kind ?? null,
-      inspector: snapshot.inspector,
-      inspectorPanels: snapshot.inspector.resolvedSchema ?? null,
-      fieldDrag: snapshot.fieldDrag,
-      preview: snapshot.preview,
-      activeMeta: snapshot.activeMeta,
-      canUndo: snapshot.canUndo,
-      canRedo: snapshot.canRedo,
-      fieldSources: snapshot.fieldSources,
-      fieldSourceCount: snapshot.fieldSources.length,
-      fieldCount,
-    },
+    designer: buildDesignerBag(snapshot, fieldCount),
     selectionTarget: snapshot.selectionTarget,
     reportDocument,
     workbook,
@@ -219,7 +246,7 @@ export function createHostData(
 
 export function buildReportDesignerScopeData(
   _core: ReportDesignerCore,
-  snapshot: ReportDesignerRuntimeSnapshot,
+  snapshot: ReportDesignerScopeSnapshotInput,
   spreadsheetSnapshot?: SpreadsheetRuntimeSnapshot,
 ): Record<string, unknown> {
   const fieldCount = getFieldCount(snapshot.fieldSources);
@@ -232,24 +259,7 @@ export function buildReportDesignerScopeData(
   const activeSheet = resolveActiveSheet(snapshot, spreadsheetSnapshot);
 
   return {
-    designer: {
-      kind: snapshot.document.kind,
-      dirty: snapshot.dirty,
-      documentId: snapshot.document.id,
-      documentName: snapshot.document.name,
-      selectionTarget: snapshot.selectionTarget,
-      selectionKind: snapshot.selectionTarget?.kind ?? null,
-      inspector: snapshot.inspector,
-      inspectorPanels: snapshot.inspector.resolvedSchema ?? null,
-      fieldDrag: snapshot.fieldDrag,
-      preview: snapshot.preview,
-      activeMeta: snapshot.activeMeta,
-      canUndo: snapshot.canUndo,
-      canRedo: snapshot.canRedo,
-      fieldSources: snapshot.fieldSources,
-      fieldSourceCount: snapshot.fieldSources.length,
-      fieldCount,
-    },
+    designer: buildDesignerBag(snapshot, fieldCount),
     runtime: {
       canUndo: runtime.canUndo,
       canRedo: runtime.canRedo,

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { cellAddress, type SpreadsheetRange } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
+import { formatCommandFailure } from './error-format.js';
 
 type CommandResultLike = {
   ok?: boolean;
@@ -9,10 +10,6 @@ type CommandResultLike = {
   error?: unknown;
 };
 
-function formatFailureMessage(label: string, error: unknown): string {
-  return error instanceof Error && error.message ? error.message : `${label} failed`;
-}
-
 export function useSheetCommands(
   snapshot: SpreadsheetHostSnapshot,
   bridge: SpreadsheetBridge,
@@ -20,6 +17,7 @@ export function useSheetCommands(
   selectedCell: { row: number; col: number } | null,
   getSelectedRange: () => SpreadsheetRange | null,
   addLog: (msg: string) => void,
+  addFailureLog: (msg: string) => void,
 ) {
   const reportCommandResult = useCallback(
     (label: string, result: CommandResultLike | void, successMessage = label) => {
@@ -34,13 +32,13 @@ export function useSheetCommands(
       }
 
       if (result.ok === false) {
-        addLog(formatFailureMessage(label, result.error));
+        addFailureLog(formatCommandFailure(label, result.error));
         return;
       }
 
       addLog(successMessage);
     },
-    [addLog],
+    [addFailureLog, addLog],
   );
 
   const handleInsertRow = useCallback(async () => {

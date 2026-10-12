@@ -8,6 +8,7 @@ import type {
 } from '@nop-chaos/word-editor-core';
 import { PAPER_SIZE_PRESETS, PageMode, PaperDirection } from '@nop-chaos/word-editor-core';
 import { t } from '@nop-chaos/flux-i18n';
+import { useRendererRuntimeOrNull } from '@nop-chaos/flux-react';
 import {
   Button,
   Dialog,
@@ -21,6 +22,7 @@ import {
   NativeSelectOption,
 } from '@nop-chaos/ui';
 import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js';
+import { invokeCanvasCommand } from './invoke-canvas-command.js';
 
 interface PageControlsProps {
   bridge: CanvasEditorBridge | null;
@@ -32,6 +34,7 @@ function cloneMargins(settings: PaperSettings): [number, number, number, number]
 }
 
 export function PageControls({ bridge, store }: PageControlsProps) {
+  const env = useRendererRuntimeOrNull()?.env;
   const scale = useSyncExternalStoreWithSelector(
     store.subscribe,
     store.getState,
@@ -57,13 +60,15 @@ export function PageControls({ bridge, store }: PageControlsProps) {
     cloneMargins(paperSettings),
   );
 
-  const handleZoomIn = () => bridge?.command?.executePageScaleAdd();
-  const handleZoomOut = () => bridge?.command?.executePageScaleMinus();
-  const handleZoomReset = () => bridge?.command?.executePageScaleRecovery();
+  const handleZoomIn = () => invokeCanvasCommand(env, () => bridge?.command?.executePageScaleAdd());
+  const handleZoomOut = () =>
+    invokeCanvasCommand(env, () => bridge?.command?.executePageScaleMinus());
+  const handleZoomReset = () =>
+    invokeCanvasCommand(env, () => bridge?.command?.executePageScaleRecovery());
 
   const handlePageModeToggle = () => {
     const nextMode = pageMode === PageMode.PAGING ? PageMode.CONTINUITY : PageMode.PAGING;
-    bridge?.command?.executePageMode(nextMode);
+    invokeCanvasCommand(env, () => bridge?.command?.executePageMode(nextMode));
     store.setPageMode(nextMode);
   };
 
@@ -78,7 +83,7 @@ export function PageControls({ bridge, store }: PageControlsProps) {
     if (preset) {
       store.setPaperSettings({ ...paperSettings, width: preset.width, height: preset.height });
       requestAnimationFrame(() => {
-        bridge?.command?.executePaperSize(preset.width, preset.height);
+        invokeCanvasCommand(env, () => bridge?.command?.executePaperSize(preset.width, preset.height));
       });
     }
   };
@@ -91,13 +96,13 @@ export function PageControls({ bridge, store }: PageControlsProps) {
       direction: newDir === PaperDirection.VERTICAL ? 'vertical' : 'horizontal',
     });
     requestAnimationFrame(() => {
-      bridge?.command?.executePaperDirection(newDir);
+      invokeCanvasCommand(env, () => bridge?.command?.executePaperDirection(newDir));
     });
   };
 
   const handleApplyMargins = () => {
     store.setPaperSettings({ ...paperSettings, margins });
-    bridge?.command?.executeSetPaperMargin(margins);
+    invokeCanvasCommand(env, () => bridge?.command?.executeSetPaperMargin(margins));
     setShowMarginDialog(false);
   };
 
@@ -143,7 +148,11 @@ export function PageControls({ bridge, store }: PageControlsProps) {
         title="flux.wordEditor.setMargins"
       />
       <ToolbarSeparator />
-      <ToolbarButton icon={Printer} onClick={() => bridge?.command?.executePrint()} title="flux.wordEditor.print" />
+      <ToolbarButton
+        icon={Printer}
+        onClick={() => invokeCanvasCommand(env, () => bridge?.command?.executePrint())}
+        title="flux.wordEditor.print"
+      />
 
       <Dialog
         open={showMarginDialog}

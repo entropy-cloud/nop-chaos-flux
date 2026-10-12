@@ -4,7 +4,7 @@ import { useOwnScopeSelector, useRendererRuntime } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Badge, Button, Switch, cn } from '@nop-chaos/ui';
 import type { ReportToolbarSchema } from './schemas.js';
-import { DEFAULT_TOOLBAR_ITEMS } from './report-designer-toolbar-defaults.js';
+import { DEFAULT_TOOLBAR_ITEMS, TOOLBAR_FIELD_COUNT_ID } from './report-designer-toolbar-defaults.js';
 import {
   evalBooleanLike,
   evalTextTemplate,
@@ -107,7 +107,7 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
           case 'badge': {
             const text = evalTextTemplate(item.text ?? item.body, runtimeSnapshot);
             const localized =
-              item.id === 'fieldCount' && /^\d+$/.test(text)
+              item.id === TOOLBAR_FIELD_COUNT_ID && /^\d+$/.test(text)
                 ? t('flux.reportDesigner.fieldCount', { count: text })
                 : text;
             return (

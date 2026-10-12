@@ -267,7 +267,11 @@ export function ChartDialog({ open, onClose, onSave, initialData }: ChartDialogP
               </div>
 
               <div>
-                <Label>{t('flux.wordEditor.preview')}</Label>
+                {/* WA-wordr-005: canvas-editor has no headless preview API yet —
+                    this renders fixed mock data to show the chart STYLE only. The
+                    label says so; a real data preview depends on core capability
+                    (watch item in wa-13b report). */}
+                <Label>{t('flux.wordEditor.sampleStylePreview')}</Label>
                 <div className="mt-2 border rounded-lg p-4 bg-background">
                   <ChartContainer config={chartConfig}>
                     <RechartsPrimitive.ResponsiveContainer width="100%" height={200}>

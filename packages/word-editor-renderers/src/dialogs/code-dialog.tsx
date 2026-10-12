@@ -125,7 +125,11 @@ export function CodeDialog({ open, onClose, onSave, initialData }: CodeDialogPro
           </div>
 
           <div className="border-t pt-4">
-            <Label>{t('flux.wordEditor.preview')}</Label>
+            {/* WA-wordr-005: decorative placeholder rendering (fixed barcode
+                strokes / QR pattern) — shows the code STYLE only, not the
+                valueField payload. Real preview depends on canvas-editor
+                headless rendering (watch item in wa-13b report). */}
+            <Label>{t('flux.wordEditor.sampleStylePreview')}</Label>
             <div className="flex items-center justify-center p-4 border rounded-lg bg-muted/20">
               {codeType === 'barcode' ? (
                 <div className="flex items-center gap-[2px] h-16">

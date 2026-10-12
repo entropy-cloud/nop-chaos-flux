@@ -31,10 +31,16 @@ const TITLE_LEVEL_ORDER: Record<TitleLevel, number> = {
 function extractHeadings(elements: WordEditorElement[]): HeadingItem[] {
   const headings: HeadingItem[] = [];
 
-  for (const element of elements) {
+  for (const [index, element] of elements.entries()) {
     if (element.level) {
+      // WA-wordr-007: stable fallback identity — traversal index + content key.
+      // Math.random() here used to regenerate ids on every outline re-read,
+      // silently resetting the collapse state and React keys. The real fix is
+      // upstream: word-editor-core should guarantee titleId completeness
+      // (read-only reference forwarded to WA-12).
+      const fallbackId = `heading-${index}:${element.level}:${element.value ?? ''}`;
       headings.push({
-        id: element.titleId || element.id || Math.random().toString(),
+        id: element.titleId || element.id || fallbackId,
         name: element.value || t('flux.wordEditor.untitledHeading'),
         level: element.level,
         pageNo: 1,

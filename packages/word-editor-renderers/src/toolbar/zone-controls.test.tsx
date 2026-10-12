@@ -69,6 +69,19 @@ describe('ZoneControls', () => {
     expect(executeSetZone).toHaveBeenCalledWith(ZONES.footer);
   });
 
+  it('keeps the store zone untouched when the canvas rejects the switch (WA-wordr-004)', () => {
+    const store = makeStore();
+    const executeSetZone = vi.fn(() => {
+      throw new Error('no page surface');
+    });
+    setup({ store, bridge: makeBridge({ executeSetZone }), activeZone: ZONES.main });
+
+    fireEvent.click(screen.getByTestId('zone-toggle-footer'));
+
+    expect(executeSetZone).toHaveBeenCalledWith(ZONES.footer);
+    expect(store.setActiveZone).not.toHaveBeenCalled();
+  });
+
   it('follows canvas-driven zone changes passed through the active zone state', () => {
     const store = makeStore();
     const { rerender } = render(

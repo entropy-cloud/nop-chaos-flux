@@ -2,6 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { cellAddress } from '@nop-chaos/spreadsheet-core';
 import { t } from '@nop-chaos/flux-i18n';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from './bridge.js';
+import { formatFailureMessage, isAbortLike } from './spreadsheet-interactions/error-format.js';
+import { DEFAULT_GRID_COLS, DEFAULT_GRID_ROWS } from './spreadsheet-interactions/grid-dimensions.js';
 import {
   useSnapshotSelector,
   useSelection,
@@ -20,17 +22,6 @@ import {
   useSpreadsheetShell,
 } from './spreadsheet-interactions/index.js';
 
-function isAbortLike(error: unknown): boolean {
-  return (
-    (error instanceof Error && error.name === 'AbortError') ||
-    ((error as { name?: string } | null | undefined)?.name === 'AbortError')
-  );
-}
-
-function formatFailureMessage(prefix: string, error: unknown): string {
-  return error instanceof Error && error.message ? `${prefix}: ${error.message}` : prefix;
-}
-
 export type {
   DragState,
   ResizeState,
@@ -45,7 +36,11 @@ export interface SpreadsheetInteractionsConfig {
   sheetId: string;
   rows?: number;
   cols?: number;
+  /** Full demo-era log stream (success + failure). Semantics unchanged. */
   onLog?: (msg: string) => void;
+  /** Failure-only observation surface for host assembly points; runs in
+   * addition to onLog so hosts can surface command/selection failures. */
+  onFailure?: (msg: string) => void;
 }
 
 export interface SpreadsheetInteractionsReturn {
@@ -142,7 +137,14 @@ export interface SpreadsheetInteractionsReturn {
 export function useSpreadsheetInteractions(
   config: SpreadsheetInteractionsConfig,
 ): SpreadsheetInteractionsReturn {
-  const { bridge, sheetId, onLog } = config;
+  const { bridge, sheetId, onLog, onFailure } = config;
+  const dimensions = useMemo(
+    () => ({
+      rows: config.rows ?? DEFAULT_GRID_ROWS,
+      cols: config.cols ?? DEFAULT_GRID_COLS,
+    }),
+    [config.rows, config.cols],
+  );
   const workbook = useSnapshotSelector(bridge, (snapshot) => snapshot.workbook);
   const activeSheet = useSnapshotSelector(bridge, (snapshot) => snapshot.activeSheet);
   const selection = useSnapshotSelector(bridge, (snapshot) => snapshot.selection);
@@ -168,6 +170,14 @@ export function useSpreadsheetInteractions(
     : null;
   const { addLog, cellValue, commentText, gridRef } =
     useSpreadsheetShell(snapshot, selectedCell, onLog);
+
+  const addFailureLog = useCallback(
+    (message: string) => {
+      addLog(message);
+      onFailure?.(message);
+    },
+    [addLog, onFailure],
+  );
 
   const {
     editingCell,
@@ -197,6 +207,8 @@ export function useSpreadsheetInteractions(
     bridge,
     sheetId,
     addLog,
+    addFailureLog,
+    dimensions,
   );
 
   const {
@@ -205,7 +217,7 @@ export function useSpreadsheetInteractions(
     isFillPreview,
     handleFillHandleMouseDown,
     handleFillHandleDoubleClick,
-  } = useFillHandle(bridge, snapshot, sheetId, addLog, getSelectedRange);
+  } = useFillHandle(bridge, snapshot, sheetId, addLog, getSelectedRange, dimensions);
 
   const {
     resizeState,
@@ -214,7 +226,7 @@ export function useSpreadsheetInteractions(
     handleColumnResizeStart,
     handleRowResizeStart,
     endResize,
-  } = useResize({ bridge, snapshot, sheetId, onLog });
+  } = useResize({ bridge, snapshot, sheetId, addFailureLog });
 
   const handleMouseUp = useCallback(() => {
     selectionMouseUp(resizeState.isResizing, endResize, getSelectedRange);
@@ -223,10 +235,10 @@ export function useSpreadsheetInteractions(
   const handleCommandError = useCallback(
     (error: unknown) => {
       if (!isAbortLike(error)) {
-        addLog(formatFailureMessage(t('flux.spreadsheet.commandFailed'), error));
+        addFailureLog(formatFailureMessage(t('flux.spreadsheet.commandFailed'), error));
       }
     },
-    [addLog],
+    [addFailureLog],
   );
 
   useMouseUpBinding(handleMouseUp);
@@ -238,6 +250,7 @@ export function useSpreadsheetInteractions(
     selectedCell,
     getSelectedRange,
     addLog,
+    addFailureLog,
   );
 
   const { handleStyleTool } = useStyleCommands(
@@ -266,7 +279,7 @@ export function useSpreadsheetInteractions(
     handleUndo,
     handleRedo,
     getMergeInfo,
-  } = useSheetCommands(snapshot, bridge, sheetId, selectedCell, getSelectedRange, addLog);
+  } = useSheetCommands(snapshot, bridge, sheetId, selectedCell, getSelectedRange, addLog, addFailureLog);
 
   const {
     showFindReplace,
@@ -314,11 +327,11 @@ export function useSpreadsheetInteractions(
     if (editingCell) {
       void handleEditSave().catch((error) => {
         if (!isAbortLike(error)) {
-          addLog(formatFailureMessage(t('flux.spreadsheet.cellSaveFailed'), error));
+          addFailureLog(formatFailureMessage(t('flux.spreadsheet.cellSaveFailed'), error));
         }
       });
     }
-  }, [addLog, editingCell, handleEditSave]);
+  }, [addFailureLog, editingCell, handleEditSave]);
 
   const handleCellValueChange = useCellValueSync({
     bridge,

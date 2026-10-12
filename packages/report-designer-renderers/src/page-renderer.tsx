@@ -238,11 +238,7 @@ function ReportDesignerHostScopeSync(props: {
   );
   const scopeData = useMemo(
     () =>
-      buildReportDesignerScopeData(
-        props.core,
-        props.snapshot as ReturnType<ReportDesignerCore['getSnapshot']>,
-        spreadsheetSnapshot,
-      ),
+      buildReportDesignerScopeData(props.core, props.snapshot, spreadsheetSnapshot),
     [props.core, props.snapshot, spreadsheetSnapshot],
   );
 
@@ -462,11 +458,7 @@ export function ReportDesignerPageRenderer(
   }, [core, spreadsheetSnapshot.document]);
 
   const reportDesignerScope = useHostScope(
-    buildReportDesignerScopeData(
-      core,
-      snapshot as ReturnType<ReportDesignerCore['getSnapshot']>,
-      spreadsheetCore.getSnapshot(),
-    ),
+    buildReportDesignerScopeData(core, snapshot, spreadsheetCore.getSnapshot()),
     props.path,
     'report-designer',
   );

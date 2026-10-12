@@ -103,7 +103,11 @@ export function SpreadsheetGridOverlayControls({
           <DialogBody>
             <Input
               type="number"
-              aria-label={resizeDialog?.axis === 'row' ? 'Row height' : 'Column width'}
+              aria-label={
+                resizeDialog?.axis === 'row'
+                  ? t('flux.spreadsheet.rowHeight')
+                  : t('flux.spreadsheet.columnWidth')
+              }
               value={resizeDialog?.size ?? ''}
               onChange={(event) => {
                 setResizeDialog((current) => (current ? { ...current, size: event.target.value } : current));

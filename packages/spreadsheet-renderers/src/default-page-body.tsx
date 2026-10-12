@@ -1,14 +1,13 @@
 import React from 'react';
 import { cellAddress, type SpreadsheetConfig } from '@nop-chaos/spreadsheet-core';
+import { useRendererRuntimeOrNull } from '@nop-chaos/flux-react';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from './bridge.js';
 import { SpreadsheetGrid } from './spreadsheet-grid.js';
 import { SheetTabBar } from './sheet-tab-bar.js';
 import { SpreadsheetToolbar } from './spreadsheet-toolbar.js';
 import { fire } from './fire.js';
 import { useSpreadsheetInteractions } from './use-spreadsheet-interactions.js';
-
-const DEFAULT_ROWS = 100;
-const DEFAULT_COLS = 26;
+import { DEFAULT_GRID_COLS, DEFAULT_GRID_ROWS } from './spreadsheet-interactions/grid-dimensions.js';
 
 export function resolveGridDimensions(
   snapshot: SpreadsheetHostSnapshot,
@@ -33,8 +32,8 @@ export function resolveGridDimensions(
   );
 
   return {
-    rows: Math.max(DEFAULT_ROWS, lastRowIndex + 1, 1),
-    cols: Math.max(DEFAULT_COLS, lastColumnIndex + 1, 1),
+    rows: Math.max(DEFAULT_GRID_ROWS, lastRowIndex + 1, 1),
+    cols: Math.max(DEFAULT_GRID_COLS, lastColumnIndex + 1, 1),
     defaultRowHeight: config?.defaultRowHeight,
     defaultColumnWidth: config?.defaultColumnWidth,
   };
@@ -47,12 +46,17 @@ export function DefaultSpreadsheetPageBody(props: {
   showToolbar: boolean;
 }) {
   const sheetId = props.snapshot.activeSheet?.id ?? props.snapshot.workbook.sheets[0]?.id ?? '';
+  const env = useRendererRuntimeOrNull()?.env;
   const dimensions = resolveGridDimensions(props.snapshot, props.config);
+  // WA-sheetr-001: surface interaction failures (command rejected, selection
+  // dispatch failure, paste/resize failure) through the host notify channel —
+  // the demo-era onLog stream stays untouched.
   const interactions = useSpreadsheetInteractions({
     bridge: props.bridge,
     sheetId,
     rows: dimensions.rows,
     cols: dimensions.cols,
+    onFailure: (message) => env?.notify?.('warning', message),
   });
   const {
     snapshot,

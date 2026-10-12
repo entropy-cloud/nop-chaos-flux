@@ -110,6 +110,29 @@ describe('OutlinePanel', () => {
     expect(screen.getByRole('button', { name: 'Expand outline' })).toBeInTheDocument();
   });
 
+  it('keeps the collapse state across re-reads for headings without explicit ids (WA-wordr-007)', () => {
+    const bridge = createMockBridge([
+      {
+        value: 'Untitled Chapter',
+        level: 'first',
+        valueList: [{ value: 'Untitled Chapter', level: 'first' }],
+      },
+      {
+        value: 'Untitled Section',
+        level: 'second',
+        valueList: [{ value: 'Untitled Section', level: 'second' }],
+      },
+    ]);
+    const { rerender } = render(<OutlinePanel bridge={bridge as any} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+    expect(screen.getByRole('button', { name: 'Expand outline' })).toBeInTheDocument();
+
+    rerender(<OutlinePanel bridge={bridge as any} />);
+
+    expect(screen.getByRole('button', { name: 'Expand outline' })).toBeInTheDocument();
+  });
+
   it('handles bridge without command gracefully', () => {
     const bridge = {
       subscribeContentChange: () => () => {},

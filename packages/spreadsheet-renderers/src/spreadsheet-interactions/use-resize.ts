@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
+import { formatFailureMessage, isAbortLike } from './error-format.js';
 
 export interface ResizeState {
   isResizing: boolean;
@@ -9,24 +10,13 @@ export interface ResizeState {
   startSize: number;
 }
 
-function isAbortLike(error: unknown): boolean {
-  return (
-    (error instanceof Error && error.name === 'AbortError') ||
-    ((error as { name?: string } | null | undefined)?.name === 'AbortError')
-  );
-}
-
-function formatFailureMessage(prefix: string, error: unknown): string {
-  return error instanceof Error && error.message ? `${prefix}: ${error.message}` : prefix;
-}
-
 export function useResize(input: {
   bridge: SpreadsheetBridge;
   snapshot: SpreadsheetHostSnapshot;
   sheetId: string;
-  onLog?: (msg: string) => void;
+  addFailureLog: (msg: string) => void;
 }) {
-  const { bridge, snapshot, sheetId, onLog } = input;
+  const { bridge, snapshot, sheetId, addFailureLog } = input;
   const [resizeState, setResizeState] = useState<ResizeState>({
     isResizing: false,
     type: 'column',
@@ -133,10 +123,10 @@ export function useResize(input: {
 
     void bridge.dispatch(command).catch((error) => {
       if (!isAbortLike(error)) {
-        onLog?.(formatFailureMessage('Resize failed', error));
+        addFailureLog(formatFailureMessage('Resize failed', error));
       }
     });
-  }, [bridge, columnWidthPreview, columnWidths, onLog, resizeState, rowHeightPreview, rowHeights, sheetId]);
+  }, [addFailureLog, bridge, columnWidthPreview, columnWidths, resizeState, rowHeightPreview, rowHeights, sheetId]);
 
   useEffect(() => {
     if (!resizeState.isResizing) return;

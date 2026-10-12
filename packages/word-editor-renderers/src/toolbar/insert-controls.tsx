@@ -22,6 +22,7 @@ import {
   Input,
 } from '@nop-chaos/ui';
 import { ToolbarButton, ToolbarGroup } from './shared.js';
+import { invokeCanvasCommand } from './invoke-canvas-command.js';
 import { ChartDialog } from '../dialogs/chart-dialog.js';
 import { CodeDialog } from '../dialogs/code-dialog.js';
 
@@ -53,31 +54,31 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      try {
+      invokeCanvasCommand(env, () => {
         const dataUrl = reader.result as string;
         bridge?.command?.executeImage({
           value: dataUrl,
           width: 0,
           height: 0,
         });
-      } catch (error) {
-        notifyInsertFailure(error);
-      }
+      });
     };
     reader.onerror = () => {
-      notifyInsertFailure(reader.error ?? new Error('Image read failed'));
+      notifyInsertFailure(reader.error ?? new Error(t('flux.wordEditor.imageReadFailed')));
     };
     reader.onabort = () => {
-      notifyInsertFailure(new Error('Image read aborted'));
+      notifyInsertFailure(new Error(t('flux.wordEditor.imageReadAborted')));
     };
     reader.readAsDataURL(file);
   };
 
   const handleInsertHyperlink = () => {
     if (!hyperlinkUrl.trim()) return;
-    bridge?.command?.executeHyperlink({
-      valueList: [{ value: hyperlinkDisplay.trim() || hyperlinkUrl.trim() }],
-      url: hyperlinkUrl.trim(),
+    invokeCanvasCommand(env, () => {
+      bridge?.command?.executeHyperlink({
+        valueList: [{ value: hyperlinkDisplay.trim() || hyperlinkUrl.trim() }],
+        url: hyperlinkUrl.trim(),
+      });
     });
     setShowLinkDialog(false);
     setHyperlinkUrl('');
@@ -96,7 +97,7 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
     <ToolbarGroup>
       <ToolbarButton
         icon={Table}
-        onClick={() => bridge?.command?.executeInsertTable(3, 3)}
+        onClick={() => invokeCanvasCommand(env, () => bridge?.command?.executeInsertTable(3, 3))}
         title="flux.wordEditor.insertTable"
         testId="insert-table"
       />
@@ -126,13 +127,13 @@ export function InsertControls({ bridge, onChartSave, onCodeSave }: InsertContro
       />
       <ToolbarButton
         icon={SeparatorHorizontal}
-        onClick={() => bridge?.command?.executeSeparator([])}
+        onClick={() => invokeCanvasCommand(env, () => bridge?.command?.executeSeparator([]))}
         title="flux.wordEditor.separator"
         testId="insert-separator"
       />
       <ToolbarButton
         icon={ArrowDownToLine}
-        onClick={() => bridge?.command?.executePageBreak()}
+        onClick={() => invokeCanvasCommand(env, () => bridge?.command?.executePageBreak())}
         title="flux.wordEditor.pageBreak"
         testId="insert-page-break"
       />

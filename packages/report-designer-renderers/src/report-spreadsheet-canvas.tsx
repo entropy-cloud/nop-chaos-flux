@@ -49,11 +49,28 @@ export function ReportSpreadsheetCanvas({
   // 且键盘不可达）；空模板回落 DEFAULT 基线 100×26，与 spreadsheet host 一致。
   const { rows: derivedRows, cols: derivedCols } = resolveGridDimensions(spreadsheetSnapshot, undefined);
 
+  // WA-sheetr-001: interaction failures route through reportRuntimeHostIssue
+  // (same closed loop as handleFieldDropOnCell below) — the embedded canvas'
+  // command/selection failures were previously silent in this assembly.
   const interactions = useSpreadsheetInteractions({
     bridge: spreadsheetBridge,
     sheetId,
     rows: derivedRows,
     cols: derivedCols,
+    onFailure: (message) => {
+      reportRuntimeHostIssue({
+        env,
+        message,
+        level: 'warning',
+        phase: 'action',
+        path: 'report-designer.spreadsheet-canvas',
+        details: {
+          operation: 'spreadsheet-interaction',
+          sheetId,
+        },
+      });
+      env.notify?.('warning', message);
+    },
   });
 
   const {

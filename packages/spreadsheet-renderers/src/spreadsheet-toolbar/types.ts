@@ -1,17 +1,9 @@
-export type StyleToolType =
-  | 'bold'
-  | 'italic'
-  | 'underline'
-  | 'align-left'
-  | 'align-center'
-  | 'align-right'
-  | 'bg-yellow'
-  | 'bg-green'
-  | 'bg-blue'
-  | 'bg-none'
-  | 'font-color-red'
-  | 'font-color-blue'
-  | 'font-color-black';
+// Single-source the style-tool vocabulary: the union is declared next to its
+// dispatcher (use-style-commands); this module only re-exports it so the
+// toolbar props contract stays import-stable.
+import type { StyleToolType } from '../spreadsheet-interactions/use-style-commands.js';
+
+export type { StyleToolType };
 
 export interface SpreadsheetToolbarProps {
   selectedCell: { row: number; col: number } | null;

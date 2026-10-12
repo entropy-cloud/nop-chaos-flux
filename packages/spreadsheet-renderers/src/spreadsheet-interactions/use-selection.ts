@@ -6,6 +6,8 @@ import {
 } from '@nop-chaos/spreadsheet-core';
 import { t } from '@nop-chaos/flux-i18n';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
+import { formatFailureMessage, isAbortLike } from './error-format.js';
+import { DEFAULT_GRID_COLS, DEFAULT_GRID_ROWS } from './grid-dimensions.js';
 
 export interface DragState {
   isDragging: boolean;
@@ -15,15 +17,9 @@ export interface DragState {
   endCol: number;
 }
 
-function isAbortLike(error: unknown): boolean {
-  return (
-    (error instanceof Error && error.name === 'AbortError') ||
-    ((error as { name?: string } | null | undefined)?.name === 'AbortError')
-  );
-}
-
-function formatFailureMessage(prefix: string, error: unknown): string {
-  return error instanceof Error && error.message ? `${prefix}: ${error.message}` : prefix;
+export interface SelectionDimensions {
+  rows: number;
+  cols: number;
 }
 
 function createRange(
@@ -63,9 +59,11 @@ export function useSelection(
   bridge: SpreadsheetBridge,
   sheetId: string,
   addLog: (msg: string) => void,
+  addFailureLog: (msg: string) => void,
+  dimensions?: SelectionDimensions,
 ) {
-  const totalRows = 100;
-  const totalCols = 26;
+  const totalRows = dimensions?.rows ?? DEFAULT_GRID_ROWS;
+  const totalCols = dimensions?.cols ?? DEFAULT_GRID_COLS;
 
   const selectedCell = useMemo(
     () =>
@@ -91,11 +89,11 @@ export function useSelection(
         }
       } catch (error) {
         if (!isAbortLike(error)) {
-          addLog(formatFailureMessage(t('flux.spreadsheet.selectionFailed'), error));
+          addFailureLog(formatFailureMessage(t('flux.spreadsheet.selectionFailed'), error));
         }
       }
     },
-    [addLog],
+    [addFailureLog, addLog],
   );
 
   const commitEditingCell = useCallback(async () => {
@@ -123,10 +121,10 @@ export function useSelection(
       });
     } catch (error) {
       if (!isAbortLike(error)) {
-        addLog(formatFailureMessage(t('flux.spreadsheet.cellSaveFailed'), error));
+        addFailureLog(formatFailureMessage(t('flux.spreadsheet.cellSaveFailed'), error));
       }
     }
-  }, [addLog, bridge, sheetId]);
+  }, [addFailureLog, bridge, sheetId, totalCols, totalRows]);
 
   const syncSelectionToCore = useCallback(
     async (selection: SpreadsheetSelection) => {
@@ -211,7 +209,15 @@ export function useSelection(
       );
     }
     return null;
-  }, [previewRange, selectedCell, sheetId, snapshot.activeRange, snapshot.selection]);
+  }, [
+    previewRange,
+    selectedCell,
+    sheetId,
+    snapshot.activeRange,
+    snapshot.selection,
+    totalCols,
+    totalRows,
+  ]);
 
   const isInRange = useCallback(
     (row: number, col: number): boolean => {

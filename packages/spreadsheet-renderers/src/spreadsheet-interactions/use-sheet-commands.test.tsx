@@ -27,6 +27,7 @@ describe('useSheetCommands', () => {
       .mockResolvedValueOnce({ ok: false, cancelled: true })
       .mockResolvedValueOnce({ ok: false, error: new Error('Undo failed softly') });
     const addLog = vi.fn();
+    const addFailureLog = vi.fn();
 
     const { result } = renderHook(() =>
       useSheetCommands(
@@ -36,6 +37,7 @@ describe('useSheetCommands', () => {
         { row: 0, col: 0 },
         () => null,
         addLog,
+        addFailureLog,
       ),
     );
 
@@ -49,7 +51,7 @@ describe('useSheetCommands', () => {
     expect(dispatch).toHaveBeenNthCalledWith(1, { type: 'spreadsheet:undo' });
     expect(dispatch).toHaveBeenNthCalledWith(2, { type: 'spreadsheet:undo' });
     expect(addLog).toHaveBeenNthCalledWith(1, 'Undo cancelled');
-    expect(addLog).toHaveBeenNthCalledWith(2, 'Undo failed softly');
+    expect(addFailureLog).toHaveBeenNthCalledWith(1, 'Undo failed softly');
   });
 
   it('reports resolved cancelled and successful redo results honestly', async () => {
@@ -58,6 +60,7 @@ describe('useSheetCommands', () => {
       .mockResolvedValueOnce({ ok: false, cancelled: true })
       .mockResolvedValueOnce({ ok: true });
     const addLog = vi.fn();
+    const addFailureLog = vi.fn();
 
     const { result } = renderHook(() =>
       useSheetCommands(
@@ -67,6 +70,7 @@ describe('useSheetCommands', () => {
         { row: 0, col: 0 },
         () => null,
         addLog,
+        addFailureLog,
       ),
     );
 
@@ -81,11 +85,13 @@ describe('useSheetCommands', () => {
     expect(dispatch).toHaveBeenNthCalledWith(2, { type: 'spreadsheet:redo' });
     expect(addLog).toHaveBeenNthCalledWith(1, 'Redo cancelled');
     expect(addLog).toHaveBeenNthCalledWith(2, 'Redo');
+    expect(addFailureLog).not.toHaveBeenCalled();
   });
 
   it('does not report insert row success after a resolved failure result', async () => {
     const dispatch = vi.fn().mockResolvedValueOnce({ ok: false, changed: false, error: new Error('Insert rejected') });
     const addLog = vi.fn();
+    const addFailureLog = vi.fn();
 
     const { result } = renderHook(() =>
       useSheetCommands(
@@ -95,6 +101,7 @@ describe('useSheetCommands', () => {
         { row: 2, col: 0 },
         () => null,
         addLog,
+        addFailureLog,
       ),
     );
 
@@ -103,7 +110,8 @@ describe('useSheetCommands', () => {
     });
 
     expect(dispatch).toHaveBeenCalledWith({ type: 'spreadsheet:insertRow', sheetId: 'sheet-1', row: 2 });
-    expect(addLog).toHaveBeenCalledWith('Insert rejected');
+    expect(addFailureLog).toHaveBeenCalledWith('Insert rejected');
     expect(addLog).not.toHaveBeenCalledWith('Inserted row at 3');
+    expect(addLog).not.toHaveBeenCalledWith('Insert rejected');
   });
 });

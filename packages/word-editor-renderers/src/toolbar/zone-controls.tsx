@@ -1,8 +1,10 @@
 import { t } from '@nop-chaos/flux-i18n';
+import { useRendererRuntimeOrNull } from '@nop-chaos/flux-react';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import type { EditorStoreApi } from '@nop-chaos/word-editor-core';
 import type { EditorZone } from '@nop-chaos/word-editor-core';
 import { Button, cn } from '@nop-chaos/ui';
+import { invokeCanvasCommand } from './invoke-canvas-command.js';
 
 interface ZoneControlsProps {
   bridge: CanvasEditorBridge | null;
@@ -23,6 +25,7 @@ const ZONE_ITEMS: Array<{
 
 export function ZoneControls({ bridge, editorStore, activeZone, isReady }: ZoneControlsProps) {
   const executeSetZone = bridge?.command?.executeSetZone;
+  const env = useRendererRuntimeOrNull()?.env;
   const zoneApiAvailable = isReady && typeof executeSetZone === 'function';
   const unavailableTitle = t('flux.wordEditor.zoneUnavailable');
 
@@ -45,12 +48,14 @@ export function ZoneControls({ bridge, editorStore, activeZone, isReady }: ZoneC
               if (!zoneApiAvailable) {
                 return;
               }
-              editorStore.setActiveZone(zone);
-              try {
-                executeSetZone(zone);
-              } catch {
-                // canvas-editor may reject zone switches before a page surface exists
-              }
+              // canvas-first-then-store (WA-wordr-004): the highlight state
+              // mirrors the canvas, so the store write happens only after the
+              // canvas accepted the switch — a rejected switch must not leave
+              // a flipped indicator. Rejections surface via notify.
+              invokeCanvasCommand(env, () => {
+                executeSetZone!(zone);
+                editorStore.setActiveZone(zone);
+              });
             }}
             className={cn('flex-shrink-0', activeZone === zone && 'bg-accent text-accent-foreground')}
           >

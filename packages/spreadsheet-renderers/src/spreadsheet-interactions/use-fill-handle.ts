@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cellAddress, type SpreadsheetRange } from '@nop-chaos/spreadsheet-core';
 import type { SpreadsheetBridge, SpreadsheetHostSnapshot } from '../bridge.js';
+import { DEFAULT_GRID_COLS, DEFAULT_GRID_ROWS } from './grid-dimensions.js';
+import type { SelectionDimensions } from './use-selection.js';
 
 export interface FillHandleState {
   isFilling: boolean;
@@ -18,7 +20,10 @@ export function useFillHandle(
   sheetId: string,
   addLog: (msg: string) => void,
   getSelectedRange: () => SpreadsheetRange | null,
+  dimensions?: SelectionDimensions,
 ) {
+  const totalRows = dimensions?.rows ?? DEFAULT_GRID_ROWS;
+  const totalCols = dimensions?.cols ?? DEFAULT_GRID_COLS;
   const [fillHandleState, setFillHandleState] = useState<FillHandleState>({
     isFilling: false,
     startRow: 0,
@@ -80,7 +85,7 @@ export function useFillHandle(
     }
 
     const candidateCols = [] as number[];
-    if (range.endCol + 1 < 26) {
+    if (range.endCol + 1 < totalCols) {
       candidateCols.push(range.endCol + 1);
     }
     if (range.startCol - 1 >= 0) {
@@ -101,7 +106,7 @@ export function useFillHandle(
       }
 
       let probeRow = range.endRow + 1;
-      while (probeRow < 100 && hasValue(probeRow, candidateCol)) {
+      while (probeRow < totalRows && hasValue(probeRow, candidateCol)) {
         fillEndRow = probeRow;
         probeRow += 1;
       }
@@ -129,7 +134,7 @@ export function useFillHandle(
     addLog(
       `Series fill down: ${cellAddress(range.startRow, range.startCol)}:${cellAddress(fillEndRow, range.endCol)}`,
     );
-  }, [addLog, bridge, getSelectedRange, sheetId, snapshot.activeSheet]);
+  }, [addLog, bridge, getSelectedRange, sheetId, snapshot.activeSheet, totalCols, totalRows]);
 
   useEffect(() => {
     if (!fillHandleState.isFilling) return;

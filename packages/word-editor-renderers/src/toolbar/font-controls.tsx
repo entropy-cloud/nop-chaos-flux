@@ -11,6 +11,7 @@ import {
   Paintbrush,
 } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
+import { useRendererRuntimeOrNull } from '@nop-chaos/flux-react';
 import type { CanvasEditorBridge } from '@nop-chaos/word-editor-core';
 import type { EditorSelectionState } from '@nop-chaos/word-editor-core';
 import {
@@ -24,6 +25,7 @@ import {
   cn,
 } from '@nop-chaos/ui';
 import { ToolbarButton, ToolbarSeparator, ToolbarGroup } from './shared.js';
+import { invokeCanvasCommand } from './invoke-canvas-command.js';
 
 interface FontControlsProps {
   bridge: CanvasEditorBridge | null;
@@ -36,14 +38,6 @@ const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72
 const MIN_FONT_SIZE = 5;
 const MAX_FONT_SIZE = 72;
 const DEFAULT_FONT = FONTS[0];
-
-function runCommand(action: () => void) {
-  try {
-    action();
-  } catch {
-    // canvas-editor may reject style commands when no editable range is active yet
-  }
-}
 
 function clampFontSize(raw: string): number | null {
   const trimmed = raw.trim();
@@ -63,6 +57,10 @@ function withCurrentValueAsFreeValue<T>(options: T[], current: T): T[] {
 
 export function FontControls({ bridge, selection }: FontControlsProps) {
   const command = bridge?.command;
+  const env = useRendererRuntimeOrNull()?.env;
+  // canvas-editor may reject style commands when no editable range is active
+  // yet — the unified invokeCanvasCommand surfaces that as a host warning.
+  const runCommand = (action: () => void) => invokeCanvasCommand(env, action);
   const highlightedItemRef = useRef<string | number | null>(null);
 
   const currentFont = selection.font || DEFAULT_FONT;
