@@ -8,9 +8,9 @@ import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
 import { XIcon } from 'lucide-react';
 import { useDialogDrag } from './use-dialog-drag.js';
-import { useDialogInitialFocusFallback } from './use-dialog-initial-focus.js';
+import { createOverlayZIndex } from './overlay-z-index.js';
 import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
-import { wrapSurfaceTabFocus } from './wrap-surface-tab-focus.js';
+import { useSurfaceFocusWrap } from './use-surface-focus-wrap.js';
 
 interface DialogContextValue {
   draggable: boolean;
@@ -35,7 +35,8 @@ const DialogContext = React.createContext<DialogContextValue>({
   containerElement: null,
 });
 
-const DialogZIndexContext = React.createContext<number | undefined>(undefined);
+const { ZIndexContext: DialogZIndexContext, useOverlayZIndex: useDialogOverlayZIndex } =
+  createOverlayZIndex();
 
 const DialogDragContext = React.createContext<DialogDragContextValue>({
   enabled: false,
@@ -89,7 +90,7 @@ function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
 
 function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
   const { containerElement } = React.useContext(DialogContext);
-  const zIndex = React.useContext(DialogZIndexContext);
+  const zIndex = useDialogOverlayZIndex();
   const isContained = containerElement != null;
 
   return (
@@ -169,7 +170,7 @@ const DialogContent = React.forwardRef<
     },
     [contentRef],
   );
-  useDialogInitialFocusFallback(popupElementRef);
+  const { handleSurfaceKeyDown } = useSurfaceFocusWrap(popupElementRef);
   const dragContextValue = React.useMemo(
     () => ({
       enabled: draggable,
@@ -224,7 +225,7 @@ const DialogContent = React.forwardRef<
           }
           onPointerDown={draggable ? handlePointerDown : props.onPointerDown}
           onKeyDown={(event) => {
-            wrapSurfaceTabFocus(event);
+            handleSurfaceKeyDown(event);
             props.onKeyDown?.(event);
           }}
         >

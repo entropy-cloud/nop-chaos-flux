@@ -3,9 +3,12 @@ import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog
 
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
+import { createOverlayZIndex } from './overlay-z-index.js';
 import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
+import { useSurfaceFocusWrap } from './use-surface-focus-wrap.js';
 
-const AlertDialogZIndexContext = React.createContext<number | undefined>(undefined);
+const { ZIndexContext: AlertDialogZIndexContext, useOverlayZIndex: useAlertDialogOverlayZIndex } =
+  createOverlayZIndex();
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -20,7 +23,7 @@ function AlertDialogPortal({ ...props }: AlertDialogPrimitive.Portal.Props) {
 }
 
 function AlertDialogOverlay({ className, ...props }: AlertDialogPrimitive.Backdrop.Props) {
-  const zIndex = React.useContext(AlertDialogZIndexContext);
+  const zIndex = useAlertDialogOverlayZIndex();
 
   return (
     <AlertDialogPrimitive.Backdrop
@@ -47,17 +50,24 @@ const ALERT_DIALOG_TIER: Record<'default' | 'sm', 'sm' | 'xs'> = {
 function AlertDialogContent({
   className,
   size = 'default',
+  onKeyDown: consumerOnKeyDown,
   ...props
 }: AlertDialogPrimitive.Popup.Props & {
   size?: 'default' | 'sm';
 }) {
   const zIndex = useGlobalZIndex();
+  // plan 587 M1 (declared increment): the alert dialog joins the shared
+  // surface focus compensation (wrap + initial-focus fallback) — neither layer
+  // was wired before.
+  const popupRef = React.useRef<HTMLDivElement | null>(null);
+  const { handleSurfaceKeyDown } = useSurfaceFocusWrap(popupRef);
   const tier = ALERT_DIALOG_TIER[size];
   return (
     <AlertDialogPortal>
       <AlertDialogZIndexContext.Provider value={zIndex}>
         <AlertDialogOverlay />
         <AlertDialogPrimitive.Popup
+          ref={popupRef}
           data-slot="alert-dialog-content"
           data-size={tier}
           className={cn(
@@ -66,6 +76,10 @@ function AlertDialogContent({
           )}
           style={{ zIndex }}
           {...props}
+          onKeyDown={(event) => {
+            handleSurfaceKeyDown(event);
+            consumerOnKeyDown?.(event);
+          }}
         />
       </AlertDialogZIndexContext.Provider>
     </AlertDialogPortal>

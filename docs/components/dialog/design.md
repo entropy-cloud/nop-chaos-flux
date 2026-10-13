@@ -165,3 +165,24 @@ Current live implementation note:
 
 - 触摸目标：close button 复用 ui DialogContent 默认尺寸（满足 baseline §3）。
 - 全屏覆盖避免小屏 dialog 内容被裁剪；正文滚动归 `DialogBody`。
+
+## 15. Upstream compensation
+
+> plan 587（WA-ui-001）契约要件：本节是上游升级退出出口的镜像记录（双落之二；主记录在
+> `packages/ui/src/components/ui/use-surface-focus-wrap.ts` 模块 doc block）。
+
+- **补偿对象**：`@base-ui/react` 1.3.0 焦点管理缺陷——(a) focus guard cycle 可让 Tab 焦点逃逸到
+  document body / 页面 chrome（C1.1 a11y-focus-trap 失败路径）；(b) FloatingFocusManager 经模块级
+  rAF（`enqueueFocus`）调度初始焦点，可被竞争管理器取消或 HMR 边界失效丢弃，导致弹层打开后焦点滞留
+  trigger/body（plan 2026-09-28-4 U7）。
+- **补偿实现**：`packages/ui/src/components/ui/use-surface-focus-wrap.ts`——wrap 层（确定性 Tab 环游）
+  - 初始焦点回退层（迟一帧重挂焦点，健康路径 no-op）两层打包为单一共享原语；tabbable 可见性判定统一为
+    B 形（`checkVisibility` 优先 + happy-dom 祖先链回退，plan 587 M1/M2 裁定）。四个模态面
+    dialog/drawer/sheet/alert-dialog 全部接入（sheet/alert-dialog 双层接入与 drawer 初始焦点回退为
+    plan 587 申报增量）。
+- **移除条件（升级出口）**：**上游修复落地并经真浏览器验证后，整体删除 `use-surface-focus-wrap.ts`
+  模块**，四面 Popup 恢复无补偿 handler；同步删除对应测试文件并回填本节状态。不得在补偿层内做增量
+  特性开发。
+- **判别锚**：`tests/e2e/component-lab/c1-1-host-surfaces.spec.ts`（实浏览器 Tab 环游 / 焦点入面）。
+  happy-dom 无法观测真浏览器焦点时序（B 形 `checkVisibility` 路径与 fixed 元素入环游增量均属
+  happy-dom 不可判别面，unit 层以 mock 注入缝判别）。

@@ -5,9 +5,12 @@ import { t } from '../../lib/i18n.js';
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
 import { XIcon } from 'lucide-react';
+import { createOverlayZIndex } from './overlay-z-index.js';
 import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
+import { useSurfaceFocusWrap } from './use-surface-focus-wrap.js';
 
-const SheetZIndexContext = React.createContext<number | undefined>(undefined);
+const { ZIndexContext: SheetZIndexContext, useOverlayZIndex: useSheetOverlayZIndex } =
+  createOverlayZIndex();
 
 // plan 490: Sheet joins the shared overlay size ladder. The cap classes are
 // static literals (Tailwind must see them) keyed by tier; `sm:` below keeps
@@ -58,7 +61,7 @@ function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
 }
 
 function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
-  const zIndex = React.useContext(SheetZIndexContext);
+  const zIndex = useSheetOverlayZIndex();
   return (
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
@@ -78,6 +81,7 @@ function SheetContent({
   side = 'right',
   size = 'sm',
   showCloseButton = true,
+  onKeyDown: consumerOnKeyDown,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: 'top' | 'right' | 'bottom' | 'left';
@@ -85,12 +89,18 @@ function SheetContent({
   showCloseButton?: boolean;
 }) {
   const zIndex = useGlobalZIndex();
+  // plan 587 M1 (declared increment): the sheet joins the shared surface focus
+  // compensation (wrap + initial-focus fallback) — neither layer was wired
+  // before.
+  const popupRef = React.useRef<HTMLDivElement | null>(null);
+  const { handleSurfaceKeyDown } = useSurfaceFocusWrap(popupRef);
   const [sizeCapLeft, sizeCapRight] = SHEET_SIDE_SIZE_CAPS[size];
   return (
     <SheetPortal>
       <SheetZIndexContext.Provider value={zIndex}>
         <SheetOverlay />
         <SheetPrimitive.Popup
+          ref={popupRef}
           data-slot="sheet-content"
           data-side={side}
           data-size={size}
@@ -102,6 +112,10 @@ function SheetContent({
           )}
           style={{ zIndex }}
           {...props}
+          onKeyDown={(event) => {
+            handleSurfaceKeyDown(event);
+            consumerOnKeyDown?.(event);
+          }}
         >
           {children}
           {showCloseButton && (

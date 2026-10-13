@@ -1,42 +1,31 @@
 import * as React from 'react';
 import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from 'lucide-react';
-import { Button } from '../ui/button.js';
-import { cn } from '../../lib/utils.js';
+import { IconToggleControls } from './icon-toggle-controls.js';
+
+type AlignKey = 'left' | 'center' | 'right';
 
 interface AlignmentControlsProps {
-  onAlign: (align: 'left' | 'center' | 'right') => void;
-  getActive?: (align: 'left' | 'center' | 'right') => boolean;
+  onAlign: (align: AlignKey) => void;
+  getActive?: (align: AlignKey) => boolean;
   disabled?: boolean;
   className?: string;
 }
 
-function AlignmentControls({ onAlign, getActive, disabled, className }: AlignmentControlsProps) {
-  const aligns = [
-    { key: 'left' as const, Icon: AlignLeftIcon, label: 'Align Left' },
-    { key: 'center' as const, Icon: AlignCenterIcon, label: 'Align Center' },
-    { key: 'right' as const, Icon: AlignRightIcon, label: 'Align Right' },
-  ];
+const ALIGN_ITEMS = [
+  { key: 'left' as const, Icon: AlignLeftIcon, label: 'Align Left' },
+  { key: 'center' as const, Icon: AlignCenterIcon, label: 'Align Center' },
+  { key: 'right' as const, Icon: AlignRightIcon, label: 'Align Right' },
+];
 
+function AlignmentControls({ onAlign, getActive, disabled, className }: AlignmentControlsProps) {
   return (
-    <div className={cn('flex items-center', className)}>
-      {aligns.map(({ key, Icon, label }) => {
-        const active = getActive?.(key) ?? false;
-        return (
-          <Button
-            key={key}
-            variant="ghost"
-            size="icon-xs"
-            disabled={disabled}
-            aria-label={label}
-            aria-pressed={active}
-            className={cn(active && 'bg-accent text-accent-foreground')}
-            onClick={() => onAlign(key)}
-          >
-            <Icon />
-          </Button>
-        );
-      })}
-    </div>
+    <IconToggleControls
+      items={ALIGN_ITEMS}
+      onToggle={onAlign}
+      getActive={getActive}
+      disabled={disabled}
+      className={className}
+    />
   );
 }
 

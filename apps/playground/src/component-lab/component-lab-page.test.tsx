@@ -98,6 +98,16 @@ describe('ComponentLabPage sidebar usability (R3-U8 / R3-U9)', () => {
 
   it('switches the sidebar to a drawer below 768px with main content full width (R3-U9)', () => {
     vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(375);
+    vi.spyOn(window, 'matchMedia').mockImplementation(((query: string) => ({
+      matches: query === '(max-width: 767px)',
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      onchange: null,
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia);
     render(
       <ComponentLabPage
         activeRendererId={null}

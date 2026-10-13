@@ -7,8 +7,9 @@ import { XIcon } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 import { Button } from './button.js';
 import { t } from '../../lib/i18n.js';
+import { createOverlayZIndex } from './overlay-z-index.js';
 import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
-import { wrapSurfaceTabFocus } from './wrap-surface-tab-focus.js';
+import { useSurfaceFocusWrap } from './use-surface-focus-wrap.js';
 
 type DrawerDirection = 'top' | 'bottom' | 'left' | 'right';
 
@@ -34,7 +35,8 @@ const DrawerContext = React.createContext<DrawerContextValue>({
   containerElement: null,
 });
 
-const DrawerZIndexContext = React.createContext<number | undefined>(undefined);
+const { ZIndexContext: DrawerZIndexContext, useOverlayZIndex: useDrawerOverlayZIndex } =
+  createOverlayZIndex();
 
 // plan 490: side drawers take their initial width from the shared overlay
 // size ladder — `w-3/4` stays the narrow-viewport fallback, the tier cap is
@@ -112,7 +114,7 @@ function DrawerOverlay({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Backdrop>) {
   const { containerElement } = React.useContext(DrawerContext);
-  const zIndex = React.useContext(DrawerZIndexContext);
+  const zIndex = useDrawerOverlayZIndex();
   const isContained = containerElement != null;
 
   return (
@@ -148,6 +150,10 @@ function DrawerContent({
   const isContained = containerElement != null;
   const resizeController = useDrawerResize(direction, resizable);
   const zIndex = useGlobalZIndex();
+  // plan 587 M1 (declared increment): the drawer joins the initial-focus
+  // fallback layer — the wrap layer alone was wired before.
+  const popupRef = React.useRef<HTMLDivElement | null>(null);
+  const { handleSurfaceKeyDown } = useSurfaceFocusWrap(popupRef);
 
   const handleClassName = cn(
     // [G6-视角3-03] keyboard-reachable separator: visible focus state rides on
@@ -187,11 +193,10 @@ function DrawerContent({
         style={{ zIndex }}
       >
         <DrawerPrimitive.Popup
+          ref={popupRef}
           data-slot="drawer-popup"
           data-size={size}
-          onKeyDown={(event) => {
-            wrapSurfaceTabFocus(event);
-          }}
+          onKeyDown={handleSurfaceKeyDown}
           className={cn(
             'pointer-events-auto flex h-auto flex-col bg-popover text-sm text-popover-foreground outline-none',
             isContained ? 'absolute' : 'fixed',

@@ -1,15 +1,5 @@
 import * as React from 'react';
-
-function hasMatchMedia(): boolean {
-  return typeof window !== 'undefined' && typeof window.matchMedia === 'function';
-}
-
-function readAll(queries: string[]): Array<boolean | null> {
-  if (!hasMatchMedia()) {
-    return queries.map(() => null);
-  }
-  return queries.map((query) => window.matchMedia(query).matches);
-}
+import { hasMatchMedia, subscribeMediaQueries } from './use-media-subscription.js';
 
 /**
  * Subscribe to multiple CSS media queries at once. Returns one result per
@@ -17,10 +7,18 @@ function readAll(queries: string[]): Array<boolean | null> {
  * without matchMedia support (SSR / jsdom).
  *
  * The returned array is refreshed on any query's change event and when the
- * query list content changes.
+ * query list content changes. The array API stays independent of the single
+ * `useBreakpoint` primitive (plan 587 WA-ui-004): delegating per query would
+ * mean hooks-in-a-loop, which is forbidden — only the subscription effect core
+ * is shared.
  */
 export function useBreakpoints(queries: string[]): Array<boolean | null> {
-  const [matches, setMatches] = React.useState<Array<boolean | null>>(() => readAll(queries));
+  const [matches, setMatches] = React.useState<Array<boolean | null>>(() => {
+    if (!hasMatchMedia()) {
+      return queries.map(() => null);
+    }
+    return queries.map((query) => window.matchMedia(query).matches);
+  });
   // Stable effect key: media queries never contain '|||', so the joined key
   // both drives effect re-runs and reconstructs the list inside the effect
   // (keeping the effect dependency a primitive, React-Compiler friendly).
@@ -28,24 +26,7 @@ export function useBreakpoints(queries: string[]): Array<boolean | null> {
 
   React.useEffect(() => {
     const qs = queriesKey ? queriesKey.split('|||') : [];
-    if (!hasMatchMedia()) {
-      return;
-    }
-
-    const mqls = qs.map((query) => window.matchMedia(query));
-    const update = () => {
-      setMatches(mqls.map((mql) => mql.matches));
-    };
-
-    // Sync to the latest values without a synchronous setState in the effect
-    // body (the state initializer already covers first render; this handles
-    // query-list changes mid-session).
-    const identity = requestAnimationFrame(update);
-    mqls.forEach((mql) => mql.addEventListener('change', update));
-    return () => {
-      cancelAnimationFrame(identity);
-      mqls.forEach((mql) => mql.removeEventListener('change', update));
-    };
+    return subscribeMediaQueries(qs, (values) => setMatches(values));
   }, [queriesKey]);
 
   return matches;
