@@ -6,7 +6,7 @@ import type {
   SourceObserver,
   TemplateNode,
 } from '@nop-chaos/flux-core';
-import { setIn, shallowEqual, type SourceTransientState } from '@nop-chaos/flux-core';
+import { deepEqual, setIn, shallowEqual, type SourceTransientState } from '@nop-chaos/flux-core';
 import { isSourceSchema } from './use-source-value.js';
 
 function sameInputs(left: readonly unknown[], right: readonly unknown[]) {
@@ -50,46 +50,6 @@ function createSyntheticSourceKey(path: string) {
   return `__source:${path}`;
 }
 
-function arePlainObjectsEqual(
-  left: unknown,
-  right: unknown,
-  visited = new WeakMap<object, object>(),
-): boolean {
-  if (Object.is(left, right)) {
-    return true;
-  }
-
-  if (!left || !right || typeof left !== 'object' || typeof right !== 'object') {
-    return false;
-  }
-
-  if (visited.get(left as object) === (right as object)) {
-    return true;
-  }
-
-  visited.set(left as object, right as object);
-
-  if (Array.isArray(left) || Array.isArray(right)) {
-    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
-      return false;
-    }
-
-    return left.every((item, index) => arePlainObjectsEqual(item, right[index], visited));
-  }
-
-  const leftRecord = left as Record<string, unknown>;
-  const rightRecord = right as Record<string, unknown>;
-  const leftKeys = Object.keys(leftRecord);
-  const rightKeys = Object.keys(rightRecord);
-  if (leftKeys.length !== rightKeys.length) {
-    return false;
-  }
-
-  return leftKeys.every(
-    (key) => key in rightRecord && arePlainObjectsEqual(leftRecord[key], rightRecord[key], visited),
-  );
-}
-
 function areResolvedSourceEntriesEqual(
   left: readonly ResolvedSourceEntry[],
   right: readonly ResolvedSourceEntry[],
@@ -109,7 +69,7 @@ function areResolvedSourceEntriesEqual(
         entry.key === other.key &&
         entry.stateKey === other.stateKey &&
         entry.targetPath === other.targetPath &&
-        arePlainObjectsEqual(entry.source, other.source),
+        deepEqual(entry.source, other.source),
     );
   });
 }
@@ -293,7 +253,7 @@ export function createNodeSourcePropController(
       currentRunState.scopePath === nextRunState.scopePath &&
       currentRunState.scopeStore === nextRunState.scopeStore &&
       currentRunState.ctx === nextRunState.ctx &&
-      arePlainObjectsEqual(currentRunState.baseValue, nextRunState.baseValue) &&
+      deepEqual(currentRunState.baseValue, nextRunState.baseValue) &&
       areResolvedSourceEntriesEqual(currentRunState.entries, nextRunState.entries)
     ) {
       return;

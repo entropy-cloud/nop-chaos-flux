@@ -12,7 +12,7 @@ import type {
   ScopeRef,
   TemplateNode,
 } from '@nop-chaos/flux-core';
-import { isSchema, isSchemaArray } from '@nop-chaos/flux-core';
+import { isSchema, isSchemaArray, isTemplateNode } from '@nop-chaos/flux-core';
 import {
   useCurrentActionScope,
   useCurrentComponentRegistry,
@@ -52,23 +52,6 @@ function getOwnerTemplatePath(input: {
   ownerNodeInstance?: import('@nop-chaos/flux-core').NodeInstance;
 }): string | undefined {
   return input.ownerNodeInstance?.templateNode.templatePath;
-}
-
-function isTemplateNode(input: unknown): input is TemplateNode {
-  if (!input || typeof input !== 'object') {
-    return false;
-  }
-
-  const candidate = input as Partial<TemplateNode>;
-
-  return (
-    typeof candidate.templateNodeId === 'number' &&
-    typeof candidate.templatePath === 'string' &&
-    typeof candidate.type === 'string' &&
-    !!candidate.component &&
-    !!candidate.schema &&
-    !!candidate.regions
-  );
 }
 
 function isCompiledTemplate(input: unknown): input is CompiledTemplate {

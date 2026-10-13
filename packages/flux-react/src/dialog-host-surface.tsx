@@ -9,7 +9,7 @@ import type {
   TemplateNode,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
-import { getIn, isSchema, isSchemaArray, shallowEqual } from '@nop-chaos/flux-core';
+import { getIn, isSchema, isSchemaArray, isTemplateNode, shallowEqual } from '@nop-chaos/flux-core';
 import {
   ActionScopeContext,
   ComponentRegistryContext,
@@ -27,23 +27,6 @@ export interface SurfaceRenderContext {
   componentRegistry?: ComponentHandleRegistry;
   ownerNodeInstance?: NodeInstance;
   surfaceRuntime?: SurfaceRuntime;
-}
-
-function isTemplateNode(input: unknown): input is TemplateNode {
-  if (!input || typeof input !== 'object') {
-    return false;
-  }
-
-  const candidate = input as Partial<TemplateNode>;
-
-  return (
-    typeof candidate.templateNodeId === 'number' &&
-    typeof candidate.templatePath === 'string' &&
-    typeof candidate.type === 'string' &&
-    !!candidate.component &&
-    !!candidate.schema &&
-    !!candidate.regions
-  );
 }
 
 function isTemplateNodeArray(input: unknown): input is TemplateNode[] {

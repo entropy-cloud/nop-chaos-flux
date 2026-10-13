@@ -74,3 +74,43 @@ export function cloneDeep<T>(value: T): T {
   }
   return JSON.parse(JSON.stringify(value)) as T;
 }
+
+export function deepEqual(
+  left: unknown,
+  right: unknown,
+  visited = new WeakMap<object, object>(),
+): boolean {
+  if (Object.is(left, right)) {
+    return true;
+  }
+
+  if (!left || !right || typeof left !== 'object' || typeof right !== 'object') {
+    return false;
+  }
+
+  if (visited.get(left as object) === (right as object)) {
+    return true;
+  }
+
+  visited.set(left as object, right as object);
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false;
+    }
+
+    return left.every((item, index) => deepEqual(item, right[index], visited));
+  }
+
+  const leftRecord = left as Record<string, unknown>;
+  const rightRecord = right as Record<string, unknown>;
+  const leftKeys = Object.keys(leftRecord);
+  const rightKeys = Object.keys(rightRecord);
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  return leftKeys.every(
+    (key) => key in rightRecord && deepEqual(leftRecord[key], rightRecord[key], visited),
+  );
+}

@@ -27,6 +27,7 @@ export {
   toStringArray,
   shallowEqualRecords,
   shallowEqual,
+  deepEqual,
 } from './utils/object.js';
 export { parsePath, normalizeRootPath, normalizeRootPaths, getIn, setIn, resolveRelativePath, toJsonPointer, appendToJsonPointer } from './utils/path.js';
 export {
@@ -53,7 +54,7 @@ export type {
 } from './json-merge/index.js';
 export { genId } from './utils/id.js';
 export { cloneDeep } from './utils/object.js';
-export { isSchema, isSchemaArray, isSchemaInput, createNodeId } from './utils/schema.js';
+export { isSchema, isSchemaArray, isSchemaInput, isTemplateNode, createNodeId } from './utils/schema.js';
 export { decorateRendererEnv } from './utils/renderer-env.js';
 export {
   isReportedImportError,
